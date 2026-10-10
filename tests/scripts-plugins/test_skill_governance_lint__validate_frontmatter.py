@@ -51,7 +51,7 @@ def test_frontmatter_list_comments_do_not_become_dependency_paths(tmp_path):
     text = '---\nscript_refs:\n  - scripts/check.py  # why this checker is required\ndescription: "Review #1 output"\nsource: references/policy.md#contract\n---\n'
     fm = MOD.parse_fm(text)
     assert fm['script_refs'] == ['scripts/check.py']
-    assert fm['description'] == '"Review #1 output"'
+    assert fm['description'] == 'Review #1 output'  # YAML と同じく引用符は値に含めない
     assert fm['source'] == 'references/policy.md#contract'
     assert MOD.check_refs_exist(fm, skill) == []
 

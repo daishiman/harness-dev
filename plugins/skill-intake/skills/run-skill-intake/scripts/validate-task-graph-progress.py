@@ -45,6 +45,11 @@ def fail_unless(condition: bool, message: str) -> None:
         raise ContractViolation(message)
 
 
+def is_int(value: Any) -> bool:
+    """JSON の整数だけを真にする (bool は int の subclass なので True==1 を弾く)。"""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def id_sort_key(item_id: str) -> tuple[int, int, str]:
     match = ID_NUMBER.match(item_id)
     return (0, int(match.group(1)), item_id) if match else (1, 0, item_id)
@@ -178,7 +183,7 @@ def checklist_contract(
         deps = item.get("depends_on") or []
         fail_unless(isinstance(deps, list) and all(isinstance(dep, str) for dep in deps), f"{item_id}: depends_on 不正")
         status = item.get("status")
-        fail_unless(status in {"pending", "done", "blocked"}, f"{item_id}: status 不正: {status}")
+        fail_unless(isinstance(status, str) and status in {"pending", "done", "blocked"}, f"{item_id}: status 不正: {status}")
         created = item.get("created_iteration", 0)
         available = item.get("available_from_iteration", created)
         fail_unless(
@@ -279,7 +284,7 @@ def verify_trace(
         phase_id = record.get("id")
         fail_unless(phase_id == expected_phase["id"], f"trace.phases[{record_index}] id={phase_id!r}, expected={expected_phase['id']!r}")
         attempts[phase_id] += 1
-        fail_unless(record.get("attempt") == attempts[phase_id], f"{phase_id}: attempt 連番不整合")
+        fail_unless(is_int(record.get("attempt")) and record.get("attempt") == attempts[phase_id], f"{phase_id}: attempt 連番不整合")
         fail_unless(record.get("delegateType") == expected_phase["delegateType"], f"{phase_id}: delegateType drift")
         fail_unless(record.get("delegateName") == expected_phase["delegateName"], f"{phase_id}: delegateName drift")
         parsed_times: dict[str, datetime] = {}
@@ -293,27 +298,40 @@ def verify_trace(
         fail_unless(parsed_times["started_at"] <= parsed_times["finished_at"], f"{phase_id}: timestamp 逆転")
 
         status = record.get("status")
-        fail_unless(status in {"PASS", "SKIP", "RETRY"}, f"{phase_id}: completed trace に status={status!r}")
+        fail_unless(isinstance(status, str) and status in {"PASS", "SKIP", "RETRY", "FAIL"}, f"{phase_id}: completed trace に status={status!r}")
+        previous = records[record_index - 1] if record_index > 0 else None
+        resumed_after_fail = isinstance(previous, dict) and previous.get("id") == phase_id and previous.get("status") == "FAIL"
+        exit_code = record.get("exit_code")
         if status == "PASS":
-            fail_unless(record.get("exit_code") == 0, f"{phase_id}: PASS だが exit_code != 0")
+            fail_unless(is_int(exit_code) and exit_code == 0, f"{phase_id}: PASS だが exit_code != 0")
             handoff = {"path": record.get("handoff_path"), "sha256": record.get("handoff_sha256")}
             verify_digest_ref(trace_path, handoff, f"{phase_id} handoff")
             expected_index += 1
         elif status == "SKIP":
+            # FAIL の後の再開は同じ phase の再実行 (PASS / RETRY / FAIL) だけ。SKIP へ切り替えると
+            # 失敗した attempt の原因を解消しないまま後段へ進めるので拒否する。
+            fail_unless(not resumed_after_fail, f"{phase_id}: FAIL の直後に同じ phase を SKIP にしている (再開は attempt+1 の再実行だけ)")
             fail_unless(isinstance(expected_phase.get("skipWhen"), str), f"{phase_id}: manifest に skipWhen がない")
             fail_unless(record.get("skip_reason") == expected_phase.get("skipReason"), f"{phase_id}: skip_reason が manifest と不一致")
             fail_unless(record.get("handoff_path") is None and record.get("handoff_sha256") is None, f"{phase_id}: SKIP に handoff を記録している")
-            fail_unless(record.get("exit_code") == 0, f"{phase_id}: SKIP exit_code 不正")
+            fail_unless(is_int(exit_code) and exit_code == 0, f"{phase_id}: SKIP exit_code 不正")
             expected_index += 1
-        else:
+        elif status == "RETRY":
             retry_to = expected_phase.get("retryTo")
             fail_unless(isinstance(retry_to, str), f"{phase_id}: manifest に retryTo がない")
             fail_unless(record.get("retry_reason") == expected_phase.get("retryOn"), f"{phase_id}: retry_reason が manifest と不一致")
             retry_counts[phase_id] += 1
             fail_unless(retry_counts[phase_id] <= expected_phase.get("maxRetries", 0), f"{phase_id}: retry 上限超過")
             fail_unless(record.get("handoff_path") is None and record.get("handoff_sha256") is None, f"{phase_id}: RETRY に handoff を記録している")
-            fail_unless(record.get("exit_code") == 0, f"{phase_id}: RETRY exit_code 不正")
+            fail_unless(is_int(exit_code) and exit_code == 0, f"{phase_id}: RETRY exit_code 不正")
             expected_index = phase_index[retry_to]
+        else:
+            # FAIL: 停止した attempt を append-only で残す。再開は同じ phase を attempt+1 で
+            # やり直すことだけを認めるため expected_index を進めない (FAIL で終わる trace は終端未到達になる)。
+            error = record.get("error")
+            fail_unless(isinstance(error, str) and bool(error.strip()), f"{phase_id}: FAIL に error がない")
+            fail_unless(is_int(exit_code), f"{phase_id}: FAIL exit_code 不正")
+            fail_unless(record.get("handoff_path") is None and record.get("handoff_sha256") is None, f"{phase_id}: FAIL に handoff を記録している")
 
         hook_name = expected_phase.get("exitHook")
         hook = record.get("exit_hook")
@@ -321,7 +339,7 @@ def verify_trace(
             fail_unless(isinstance(hook, dict), f"{phase_id}: exit_hook 証跡不足")
             fail_unless(hook.get("name") == hook_name, f"{phase_id}: exit_hook name drift")
             allowed_status = {"PASS", "RUNNING"} if phase_id == phases[-1]["id"] else {"PASS"}
-            fail_unless(hook.get("status") in allowed_status, f"{phase_id}: exit_hook 未成功")
+            fail_unless(isinstance(hook.get("status"), str) and hook.get("status") in allowed_status, f"{phase_id}: exit_hook 未成功")
             evidence = hook.get("evidence")
             fail_unless(isinstance(evidence, list) and evidence, f"{phase_id}: exit_hook evidence 不足")
             resolved = [verify_digest_ref(trace_path, item, f"{phase_id} exit_hook") for item in evidence]
@@ -329,6 +347,12 @@ def verify_trace(
                 fail_unless({path.name for path in resolved} >= {"self-update.json", "qb-candidates.json"}, f"{phase_id}: self-update hook 出力不足")
             if hook_name == "validate-task-graph-progress":
                 fail_unless(progress_path.resolve() in resolved and intermediate_path.resolve() in resolved, f"{phase_id}: verifier 入力 evidence 不足")
+        elif status == "FAIL" and hook is not None:
+            # exitHook の失敗で止まった attempt だけが hook を残せる (成功 evidence は要求しない)。
+            fail_unless(
+                bool(hook_name) and isinstance(hook, dict) and hook.get("name") == hook_name and hook.get("status") == "FAIL",
+                f"{phase_id}: FAIL の exit_hook は manifest の hook 名かつ status=FAIL だけ",
+            )
         elif hook is not None:
             fail_unless(False, f"{phase_id}: manifest にない/非PASSの exit_hook 証跡")
 
@@ -336,7 +360,9 @@ def verify_trace(
         raise ContractViolation(f"trace が workflow 終端未到達: next={phases[expected_index]['id']}")
     final_record = records[-1]
     fail_unless(final_record.get("id") == phases[-1]["id"], "trace 終端が final phase でない")
-    final_hook_status = final_record["exit_hook"]["status"]
+    final_hook = final_record.get("exit_hook")
+    fail_unless(isinstance(final_hook, dict) and isinstance(final_hook.get("status"), str), "trace 終端に exit_hook.status がない")
+    final_hook_status = final_hook["status"]
     expected_workflow_status = "in_progress" if final_hook_status == "RUNNING" else "completed"
     fail_unless(trace.get("workflow_status") == expected_workflow_status, "trace.workflow_status と final exitHook が不一致")
     return final_hook_status
@@ -360,7 +386,7 @@ def verify(
     original_hash = progress.get("original_goal_hash")
     fail_unless(isinstance(original_hash, str) and bool(original_hash), "original_goal_hash 必須")
     iteration = progress.get("iteration")
-    fail_unless(isinstance(iteration, int) and iteration >= 0, "progress.iteration 不正")
+    fail_unless(is_int(iteration) and iteration >= 0, "progress.iteration 不正")
     fail_unless(len(rows) == iteration + 1, f"intermediate 行数 {len(rows)} != iteration+1 {iteration + 1}")
 
     selected_sequence: list[str] = []
@@ -369,7 +395,7 @@ def verify(
         missing = REQUIRED_ANCHOR_KEYS - row.keys()
         fail_unless(not missing, f"intermediate[{index}] anchor 必須キー不足: {sorted(missing)}")
         fail_unless("ready_set" in row and "selected_item" in row, f"intermediate[{index}] ready_set/selected_item 不足")
-        fail_unless(row["iteration"] == index, f"intermediate[{index}] iteration 不整合")
+        fail_unless(is_int(row["iteration"]) and row["iteration"] == index, f"intermediate[{index}] iteration 不整合")
         anchor = row["original_goal"]
         fail_unless(isinstance(anchor, str) and bool(anchor.strip()), f"intermediate[{index}] original_goal が空")
         if first_anchor is None:
@@ -381,7 +407,7 @@ def verify(
         fail_unless(isinstance(row["current_goal_snapshot"], str) and row["current_goal_snapshot"], f"intermediate[{index}] current_goal_snapshot が空")
         fail_unless(isinstance(row["delta_from_original"], str), f"intermediate[{index}] delta_from_original 不正")
         fail_unless(isinstance(row["merged_directive_for_next"], str) and row["merged_directive_for_next"], f"intermediate[{index}] merged_directive_for_next が空")
-        fail_unless(row["drift_signal"] in {"initial", "aligned", "compressing", "stagnant", "widening", "oscillating"}, f"intermediate[{index}] drift_signal 不正")
+        fail_unless(isinstance(row["drift_signal"], str) and row["drift_signal"] in {"initial", "aligned", "compressing", "stagnant", "widening", "oscillating"}, f"intermediate[{index}] drift_signal 不正")
 
         ready = row["ready_set"]
         selected = row["selected_item"]
@@ -446,8 +472,12 @@ def main(argv: list[str]) -> int:
         trace = load_object(trace_path, "intake-trace.json")
         manifest, phases = manifest_contract(manifest_path)
         verify(progress, rows, trace, trace_path, manifest, phases, progress_path, intermediate_path)
-    except (ContractViolation, OSError, json.JSONDecodeError) as exc:
+    except (ContractViolation, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"task-graph contract violation: {exc}\n")
+        return 1
+    except (KeyError, TypeError, AttributeError, IndexError) as exc:
+        # 想定外の形 (object のはずの値が配列など) も traceback にせず違反として止める (fail-closed)。
+        sys.stderr.write(f"task-graph contract violation: 入力の形が不正 ({type(exc).__name__}: {exc})\n")
         return 1
     sys.stdout.write("task-graph progress PASS: manifest projection, dependency consumption, phase trace, exit hooks, anchor, hash\n")
     return 0

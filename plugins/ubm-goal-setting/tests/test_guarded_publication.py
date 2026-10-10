@@ -187,3 +187,76 @@ def test_second_write_io_failure_reports_saved_paths_and_failed_target(tmp_path,
     assert (official / "one.md").read_text() == "validated draft"
     assert not (official / "two.md").exists()
     assert list(official.glob(".ubm-publish-*")) == []
+
+
+def test_missing_declared_root_is_not_created(tmp_path):
+    # vault 名の打ち間違いなどで root が実在しないとき、root ごと作って exit 0 にしない。
+    _, official, _, plan, manifest = fixture_plan(tmp_path)
+    typo = tmp_path / "offical"
+    plan["roots"]["vault"] = str(typo)
+    with pytest.raises(ValueError, match="not an existing directory"):
+        M.publish(manifest, save(plan, manifest))
+    assert not typo.exists()
+    assert list(official.iterdir()) == []
+
+
+def test_intermediate_folders_under_existing_root_are_still_created(tmp_path):
+    _, official, draft, plan, manifest = fixture_plan(tmp_path)
+    plan["entries"][0]["path"] = "2026/10/one.md"
+    M.publish(manifest, save(plan, manifest))
+    assert (official / "2026/10/one.md").read_bytes() == draft.read_bytes()
+
+
+def test_case_only_duplicate_targets_are_rejected_before_any_write(tmp_path):
+    # 大文字小文字を区別しない FS では One.md と one.md は同じファイル。書く前に止める。
+    stage, official, _, plan, manifest = fixture_plan(tmp_path)
+    second = stage / "second.md"
+    second.write_text("second")
+    plan["entries"].append({**plan["entries"][0], "path": "One.md", "source": str(second), "new_sha256": sha(second)})
+    with pytest.raises(ValueError, match="duplicate"):
+        M.publish(manifest, save(plan, manifest))
+    assert list(official.iterdir()) == []
+
+
+def test_deeply_nested_manifest_exits_2_without_traceback(tmp_path):
+    _, official, _, _, manifest = fixture_plan(tmp_path)
+    manifest.write_text("[" * 200000 + "]" * 200000, encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--manifest", str(manifest), "--manifest-sha256", sha(manifest)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+    assert json.loads(proc.stderr)["saved"] == []
+    assert list(official.iterdir()) == []
+
+
+def test_nfc_nfd_duplicate_targets_are_rejected_before_any_write(tmp_path):
+    # macOS の FS は NFC と NFD (濁点の合成・分解) を同じ名前として扱う。書く前に止める。
+    import unicodedata
+
+    stage, official, _, plan, manifest = fixture_plan(tmp_path)
+    plan["entries"][0]["path"] = unicodedata.normalize("NFC", "ガイド.md")
+    second = stage / "second.md"
+    second.write_text("second")
+    plan["entries"].append({**plan["entries"][0], "path": unicodedata.normalize("NFD", "ガイド.md"),
+                            "source": str(second), "new_sha256": sha(second)})
+    with pytest.raises(ValueError, match="duplicate"):
+        M.publish(manifest, save(plan, manifest))
+    assert list(official.iterdir()) == []
+
+
+def test_stage_inside_root_is_rejected_even_when_case_differs(tmp_path):
+    # 大文字小文字だけが違う書き方でも、下書き置き場と正式な置き場の重なりを見逃さない。
+    official = tmp_path / "Official"
+    stage = official / "stage"
+    stage.mkdir(parents=True)
+    draft = stage / "draft.md"
+    draft.write_text("validated draft", encoding="utf-8")
+    plan = {"schema_version": 1, "stage_root": str(stage), "roots": {"vault": str(tmp_path / "official")},
+            "entries": [{"root": "vault", "path": "one.md", "operation": "write",
+                         "source": str(draft), "new_sha256": sha(draft), "old_sha256": None}]}
+    manifest = stage / "manifest.json"
+    if not (tmp_path / "official").is_dir():
+        pytest.skip("case-sensitive filesystem: the two spellings are different directories")
+    with pytest.raises(ValueError, match="disjoint"):
+        M.publish(manifest, save(plan, manifest))
+    assert not (official / "one.md").exists()

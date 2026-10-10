@@ -141,6 +141,31 @@ def test_parse_fm_ignores_non_kv_lines(MOD):
     assert fm == {"name": "ref-x"}
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("external-mutation  # 理由", "external-mutation"),
+        ('"a # b"  # c', "a # b"),  # 引用符の中の # はコメントではない
+        ("'it''s # x' # y", "it''s # x"),
+        ("Claude's helper # note", "Claude's helper"),  # 語中の ' は引用符ではない
+        ("a#b", "a#b"),  # 空白の直後でない # は値の一部
+        ("# 未定", ""),
+    ],
+)
+def test_parse_fm_strips_trailing_comment_outside_quotes(MOD, raw, expected):
+    assert MOD.parse_fm(f"---\nvalue: {raw}\n---\n")["value"] == expected
+
+
+def test_parse_fm_value_containing_dashes_does_not_end_frontmatter(MOD):
+    # 値の途中の --- で frontmatter を切ると、後ろの effect を読み落とす
+    fm = MOD.parse_fm("---\nname: run-x\ndescription: before---after\neffect: external-mutation\n---\nbody\n")
+    assert fm == {"name": "run-x", "description": "before---after", "effect": "external-mutation"}
+
+
+def test_parse_fm_tolerates_bom(MOD):
+    assert MOD.parse_fm("\ufeff---\nname: run-x\n---\n") == {"name": "run-x"}
+
+
 # ---------------------------------------------------------------------------
 # _repo_root
 # ---------------------------------------------------------------------------
@@ -203,6 +228,21 @@ def test_collect_inbound_refs_from_list_and_scalar(MOD, tmp_path):
     inbound = MOD._collect_inbound_refs(repo)
     assert "ref-shared" in inbound
     assert "wrap-tool" in inbound
+
+
+def test_collect_inbound_refs_ignores_names_in_comments(MOD, tmp_path):
+    # コメントに書いた名前を参照に数えると、到達不能な ref-* を見逃す
+    repo = _mk_repo(tmp_path)
+    _mk_skill_md(
+        repo,
+        "run-consumer",
+        "name: run-consumer\n"
+        "reference_refs: [../ref-real/a.md]  # 以前は ref-old も使った\n"
+        "script_refs:\n  - ../wrap-tool/run.py  # ref-gone は廃止\n",
+    )
+    inbound = MOD._collect_inbound_refs(repo)
+    assert {"ref-real", "wrap-tool"} <= inbound
+    assert "ref-old" not in inbound and "ref-gone" not in inbound
 
 
 def test_collect_inbound_refs_ignores_non_ref_keys(MOD, tmp_path):
@@ -347,6 +387,26 @@ def test_check_dangerous_run_via_effect(MOD, tmp_path):
     )
     errs = MOD.check_skill(p, inbound_refs=set())
     assert any("Step 7-4" in e for e in errs)
+
+
+def test_check_dangerous_run_effect_with_trailing_comment(MOD, tmp_path):
+    # 行末コメント付きの effect を external-mutation と読めないと、危険判定から漏れて PASS する
+    repo = _mk_repo(tmp_path)
+    p = _mk_skill_md(repo, "run-mutate", "name: run-mutate\neffect: external-mutation  # GitHub へ書く")
+    assert any("Step 7-4" in e for e in MOD.check_skill(p, inbound_refs=set()))
+
+
+@pytest.mark.parametrize("value", ["yes", "on", "True", "true # 外部へ書く"])
+def test_check_dangerous_run_yaml_truthy_danger(MOD, tmp_path, value):
+    repo = _mk_repo(tmp_path)
+    p = _mk_skill_md(repo, "run-mutate", f"name: run-mutate\ndanger: {value}")
+    assert any("Step 7-4" in e for e in MOD.check_skill(p, inbound_refs=set()))
+
+
+def test_check_dangerous_run_after_dashes_in_description(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    p = _mk_skill_md(repo, "run-mutate", "name: run-mutate\ndescription: A---B\ndanger: true")
+    assert any("Step 7-4" in e for e in MOD.check_skill(p, inbound_refs=set()))
 
 
 def test_check_dangerous_run_satisfied_by_dmi(MOD, tmp_path):
@@ -535,3 +595,152 @@ def test_subprocess_skills_dir_ok(MOD, tmp_path):
     r = _run(["--skills-dir", str(skills_dir)])
     assert r.returncode == 0
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# 再発防止 (C1 レビュー): command の Skill 経路・(4) の checker・非 UTF-8
+# ---------------------------------------------------------------------------
+def _mk_command(repo: Path, body: str, frontmatter: str = "allowed-tools: Read, Skill",
+                plugin: str = "harness-creator") -> Path:
+    command = repo / "plugins" / plugin / "commands" / "go.md"
+    command.parent.mkdir(parents=True, exist_ok=True)
+    command.write_text(f"---\n{frontmatter}\n---\n{body}\n", encoding="utf-8")
+    return command
+
+
+def _skills_dir(repo: Path, plugin: str = "harness-creator") -> Path:
+    return repo / "plugins" / plugin / "skills"
+
+
+def test_command_route_positive_local_target(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    _mk_skill_md(repo, "run-x", "name: run-x")
+    _mk_command(repo, "Skill(run-x) を起動する。`run-x` が本体。")
+    assert MOD.check_command_routes(_skills_dir(repo)) == []
+
+
+def test_command_route_bare_skill_call_is_checked(MOD, tmp_path):
+    # backtick で囲まない Skill(run-x) も呼び出しとして確かめる
+    repo = _mk_repo(tmp_path)
+    _mk_command(repo, "Skill(run-missing) を起動する。")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "run-missing does not exist" in errors[0]
+
+
+def test_command_route_cross_plugin_prefix_resolves(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    _mk_skill_md(repo, "run-y", "name: run-y", root="plugins/other")
+    _mk_command(repo, "`other:run-y` を Skill で起動する。")
+    assert MOD.check_command_routes(_skills_dir(repo)) == []
+
+
+def test_command_route_prefix_must_name_the_owning_plugin(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    _mk_skill_md(repo, "run-y", "name: run-y", root="plugins/third")
+    _mk_command(repo, "`other:run-y` を Skill で起動する。")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "other:run-y does not exist" in errors[0]
+
+
+def test_command_route_unprefixed_target_in_other_plugin(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    _mk_skill_md(repo, "run-y", "name: run-y\ndisable-model-invocation: true", root="plugins/other")
+    _mk_command(repo, "`run-y` を Skill で起動する。")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "rejects model invocation" in errors[0]
+
+
+def test_command_route_dependency_table_is_not_a_call(MOD, tmp_path):
+    # 依存を並べた表の行は呼び出しではない (Skill を含む行だけ見る)
+    repo = _mk_repo(tmp_path)
+    _mk_command(repo, "| 依存 | 役割 |\n|---|---|\n| `run-upstream` | 前段 |")
+    assert MOD.check_command_routes(_skills_dir(repo)) == []
+    _mk_command(repo, "| 手順 | 呼び出し |\n|---|---|\n| 1 | Skill で `run-upstream` |")
+    assert len(MOD.check_command_routes(_skills_dir(repo))) == 1
+
+
+def test_command_route_block_list_allowed_tools(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    _mk_command(repo, "`run-missing` を起動する。", frontmatter="allowed-tools:\n  - Read\n  - Skill")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "run-missing does not exist" in errors[0]
+
+
+def test_command_route_allowed_tools_with_trailing_comment(MOD, tmp_path):
+    # allowed-tools の行末コメントで Skill を見落とすと、経路の検査ごと飛ばしてしまう
+    repo = _mk_repo(tmp_path)
+    _mk_command(repo, "`run-missing` を起動する。", frontmatter="allowed-tools: [Read, Skill]  # 本体を呼ぶ")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "run-missing does not exist" in errors[0]
+    _mk_command(repo, "`run-missing` を起動する。", frontmatter="allowed-tools:\n  - Read\n  - Skill  # 本体を呼ぶ")
+    assert len(MOD.check_command_routes(_skills_dir(repo))) == 1
+
+
+def test_command_route_non_utf8_command_is_reported(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    command = _mk_command(repo, "x")
+    command.write_bytes(b"---\nallowed-tools: Skill\n---\n\xff\xfe\n")
+    errors = MOD.check_command_routes(_skills_dir(repo))
+    assert len(errors) == 1 and "cannot read command as UTF-8" in errors[0]
+
+
+def test_main_non_utf8_skill_md_is_reported_not_traceback(MOD, tmp_path, monkeypatch, capsys):
+    repo = _mk_repo(tmp_path)
+    p = _mk_skill_md(repo, "run-x", "name: run-x")
+    p.write_bytes(b"---\nname: run-x\n---\n\xff\xfe\n")
+    monkeypatch.setattr(sys, "argv", ["lint", str(p)])
+    assert MOD.main() == 1
+    assert "cannot read" in capsys.readouterr().err
+
+
+def _mk_checker(repo: Path, body: str) -> Path:
+    checker = repo / "scripts" / "lint-entrypoint-artifact-first.py"
+    checker.parent.mkdir(parents=True, exist_ok=True)
+    checker.write_text(body, encoding="utf-8")
+    return checker
+
+
+_DANGEROUS = "name: run-ext\neffect: external-mutation\ndisable-model-invocation: false"
+
+
+def test_guarded_external_workflow_positive_path_loads_checker_once(MOD, tmp_path, monkeypatch):
+    repo = _mk_repo(tmp_path)
+    counter = tmp_path / "imports.txt"
+    _mk_checker(repo, (
+        "from pathlib import Path\n"
+        f"_c = Path({str(counter)!r})\n"
+        "_c.write_text(_c.read_text() + 'x' if _c.exists() else 'x')\n"
+        "def lint_guarded_external_entrypoint(path):\n"
+        "    return []\n"
+    ))
+    monkeypatch.setattr(MOD, "_CHECKER_DEPENDENCIES", (), raising=False)
+    first = _mk_skill_md(repo, "run-ext", _DANGEROUS)
+    second = _mk_skill_md(repo, "run-ext2", _DANGEROUS.replace("run-ext", "run-ext2"))
+    assert MOD.check_skill(first, inbound_refs=set()) == []
+    assert MOD.check_skill(second, inbound_refs=set()) == []
+    assert counter.read_text() == "x"  # checker は1回だけ読み込む
+
+
+def test_main_unloadable_checker_exits_2_not_violation(MOD, tmp_path, monkeypatch, capsys):
+    # checker を読み込めない (依存 module が無い等) ときは違反 (1) でなく「確かめられない」(2)
+    repo = _mk_repo(tmp_path)
+    _mk_checker(repo, "import definitely_missing_module_c1fix\n")
+    p = _mk_skill_md(repo, "run-ext", _DANGEROUS)
+    monkeypatch.setattr(sys, "argv", ["lint", str(p)])
+    assert MOD.main() == 2
+    err = capsys.readouterr().err
+    assert "cannot verify the guarded external workflow" in err
+    assert "requires disable-model-invocation" not in err
+
+
+@pytest.mark.parametrize("plugin", ["dev-graph", "plugin-dev-planner", "ubm-goal-setting"])
+def test_real_repo_cross_plugin_skills_dirs(plugin):
+    import importlib.util as ilu
+
+    res = _run(["--skills-dir", str(ROOT / "plugins" / plugin / "skills")])
+    if all(ilu.find_spec(m) for m in ("yaml", "jsonschema")):
+        assert res.returncode == 0, res.stderr
+    else:
+        # 依存が無い interpreter では、確かめられない対象を理由つきの exit 2 で示す (偽の違反は出さない)
+        assert res.returncode in (0, 2), res.stderr
+        assert all("cannot verify" in line for line in res.stderr.splitlines() if line.strip())

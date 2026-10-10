@@ -19,7 +19,7 @@
 - `eval-log` 配下のパスはリポジトリのルート起点で解決する（`cwd` 相対解決禁止）。
 - `latest.json` は `{session_id, path}` のポインタだけを持ち、過去の記録を上書きしない。追記専用の `index.jsonl` へ `session_id/path/created_at/status` を追記する。
 - `session_id` は衝突しない識別子、`created_at` は ISO 8601、`retention_until` は既定30日以内。期限後は削除対象。
-- 保存期限切れの掃除: `validate-consult-session.py --gc <sessions root>` が `retention_until` 超過の記録と孤立セッションを走査する。試し実行が既定・`--apply` でのみ実削除し `index.jsonl` へ `status=deleted` 行を追記する。
+- 保存期限切れの掃除: `validate-consult-session.py --gc <sessions root>` が `retention_until` 超過の記録と孤立セッションを走査する。`retention_until` を持たない記録（誘導分岐）は `created_at` から既定の30日で期限を決める。先に全セッションを検査して削除計画を作り、検査の途中では何も消さない。試し実行が既定・`--apply` でのみ実削除し `index.jsonl` へ `status=deleted` 行を追記する（`index.jsonl` を開けなければ1件も消さない）。symlink のセッション・通常ファイルでない／読めない／object でない `handoff.json`・不正な `retention_until`・`retention_until` が無く `created_at` も読めない記録は、誤削除を避けて保持し `needs_review` に理由付きで出すので、手動で確認する。終了コードは 0=走査完了、2=sessions root が無い・削除や追記の失敗（`errors` に残す）・`--gc` と `--record`/`--transcript`/`--ephemeral` の同時指定・`--gc` 無しの `--apply`。
 - 引き継ぎファイルの無い `sessions/<id>/` は中断で孤立したセッションとして `--gc` の回収対象。R1 は開始時に孤立セッションを検出したら再開/破棄をユーザーへ1問確認してよい。
 - `persistence_consent=true` のセッションではユーザー発話のターン ID＋要旨を `intermediate.jsonl` へ周回毎に追記する（コンテキストの圧縮の後で R4 の文字起こしを再構成するため）。
 - vault へは書かない。個人名、連絡先、口座・健康・法的事件などの秘匿情報は `[REDACTED]` または抽象化要約にする。

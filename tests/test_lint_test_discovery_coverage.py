@@ -185,6 +185,61 @@ class TestLintCiRunsRoots:
         assert errors == []
         assert any("skip" in line for line in report)
 
+    # 証跡の文字列が YAML のコメント・step 名・shell のコメント・行末コメントにしか無い workflow。
+    # どれも実行されないので、tests/ を実行する証跡にはならない。
+    COMMENT_ONLY_CI = """jobs:
+  verify:
+    steps:
+      # 機構A `pytest tests/` を回す step (いまは無い)
+      - name: python3 -m pytest tests/ (disabled)
+        run: |
+          # python3 -m pytest tests/ -q
+          echo skipped  # pytest tests/
+      - run: python3 scripts/validate-plugin-test-roots.py --workers 4
+"""
+
+    def test_comment_only_evidence_is_not_counted(self, tmp_path):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=self.COMMENT_ONLY_CI)
+        errors, report = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        assert any("CI runs 'plugins/'" in line for line in report)
+
+    def test_comment_only_evidence_is_not_counted_without_yaml(self, tmp_path, monkeypatch):
+        # PyYAML が無い環境の fallback でも、コメントを除いた本文で照合する。
+        monkeypatch.setitem(sys.modules, "yaml", None)
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=self.COMMENT_ONLY_CI)
+        errors, report = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        assert any("fallback" in line for line in report)
+        good = make_repo(tmp_path / "good", ["tests/test_a.py"], ci_yml=GOOD_CI)
+        assert LINTMOD.check_ci_runs_roots(good)[0] == []
+
+    @pytest.mark.parametrize("removal", ["command-line", "whole-step"])
+    def test_real_workflow_without_pytest_tests_step_fails(self, tmp_path, removal):
+        # 実 workflow から tests/ を実行する step を消すと NG (後ろの YAML コメントの
+        # `pytest tests/` で満たされてはいけない)。消さなければ OK のまま。
+        lines = (ROOT / LINTMOD.CI_WORKFLOW_REL).read_text(encoding="utf-8").splitlines(keepends=True)
+        command = next(i for i, line in enumerate(lines) if line.strip().startswith("python3 -m pytest tests/"))
+        start = command
+        if removal == "whole-step":
+            start = max(i for i in range(command) if line_is_step_start(lines[i]))
+        workflow = "".join(lines[:start] + lines[command + 1:])
+        assert "pytest tests/" in workflow  # コメントには残っている
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=workflow)
+        errors, _ = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        intact = make_repo(tmp_path / "intact", ["tests/test_a.py"], ci_yml="".join(lines))
+        assert LINTMOD.check_ci_runs_roots(intact)[0] == []
+
+    def test_unparsable_workflow_fails_closed(self, tmp_path):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=GOOD_CI + "  bad: [unclosed\n")
+        errors, _ = LINTMOD.check_ci_runs_roots(root)
+        assert any("YAML" in e for e in errors)
+
+
+def line_is_step_start(line: str) -> bool:
+    return line.lstrip().startswith("- name:") or line.lstrip().startswith("- uses:")
+
 
 class TestEvidenceParity:
     def test_real_config_parity_holds(self):
@@ -218,6 +273,23 @@ class TestLintMain:
 
     def test_main_usage_error(self):
         assert LINTMOD.main(["--repo-root"]) == 2
+
+    def test_main_unknown_argument_is_usage_error(self, tmp_path, capsys):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=GOOD_CI)
+        assert LINTMOD.main(["--repo-root", str(root), "--bogus"]) == 2
+        assert "unrecognized arguments" in capsys.readouterr().err
+
+    def test_main_missing_or_file_repo_root_is_usage_error(self, tmp_path, capsys):
+        assert LINTMOD.main(["--repo-root", str(tmp_path / "no-such-dir")]) == 2
+        not_dir = tmp_path / "file.txt"
+        not_dir.write_text("x", encoding="utf-8")
+        assert LINTMOD.main(["--repo-root", str(not_dir)]) == 2
+        assert "usage:" in capsys.readouterr().err
+
+    def test_cli_unknown_argument_exits_2(self):
+        proc = subprocess.run([sys.executable, str(LINT), "--bogus"], capture_output=True, text=True)
+        assert proc.returncode == 2
+        assert "usage:" in proc.stderr
 
 
 class TestRealAllowlistHygiene:

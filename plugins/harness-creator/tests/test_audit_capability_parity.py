@@ -831,3 +831,266 @@ def test_claude_only_mcp_requires_explicit_codex_alternative(tmp_path):
 
     report = mod.audit_plugin(tmp_path, plugin)
     assert "component_alternative_missing" not in codes(report)
+
+
+# --- 入力の型崩れ: traceback で止めず exit 2 (verdict ERROR) とし、--all は残りの plugin を続ける ---
+
+
+def edit_json(path: Path, mutate) -> None:
+    payload = json.loads(path.read_text())
+    mutate(payload)
+    write_json(path, payload)
+
+
+def make_owner_plugin(repo: Path) -> Path:
+    owner = make_plugin(repo / "owner-repo", with_command=False)
+    owner.rename(repo / "plugins" / "owner-plugin")
+    owner = repo / "plugins" / "owner-plugin"
+    for manifest in (owner / ".claude-plugin/plugin.json", owner / ".codex-plugin/plugin.json"):
+        edit_json(manifest, lambda payload: payload.__setitem__("name", "owner-plugin"))
+    edit_json(
+        owner / "references/package-contract.json",
+        lambda payload: payload.__setitem__("plugin_name", "owner-plugin"),
+    )
+    composition = owner / "plugin-composition.yaml"
+    composition.write_text(
+        composition.read_text().replace("name: sample-plugin", "name: owner-plugin"),
+        encoding="utf-8",
+    )
+    edit_json(
+        repo / ".agents/plugins/marketplace.json",
+        lambda payload: payload["plugins"].append(
+            {"name": "owner-plugin", "source": {"source": "local", "path": "./plugins/owner-plugin"}}
+        ),
+    )
+    return owner
+
+
+def runtime_dependency(**overrides) -> dict:
+    item = {
+        "capability": "run-sample",
+        "owner": "owner-plugin",
+        "classification": "runtime",
+        "local_path": "skills/run-sample",
+        "owner_route": "skills/run-sample",
+        "required_entry_point": "run-sample",
+        "purpose": "Use the owner skill at runtime.",
+    }
+    item.update(overrides)
+    return item
+
+
+def run_cli(mod, argv: list[str], capsys) -> tuple[int, dict | None, str]:
+    code = mod.main(argv)
+    captured = capsys.readouterr()
+    return code, (json.loads(captured.out) if captured.out.strip() else None), captured.err
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("depends_on", {"owner-plugin": True}),
+        ("depends_on", [{"name": "owner-plugin"}]),
+        ("entry_points", ["run-sample"]),
+        ("entry_points", {"skills": [{"name": "run-sample"}], "agents": [], "commands": [], "hooks": []}),
+        ("runtime_dependencies", {"run-sample": {}}),
+        ("runtime_dependencies", [1]),
+        ("codex_alternatives", {"commands": [1], "agents": {}}),
+        ("plugin_name", 1),
+    ],
+)
+def test_contract_shape_break_is_an_input_error_not_a_traceback(tmp_path, capsys, field, value):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    edit_json(plugin / "references/package-contract.json", lambda payload: payload.__setitem__(field, value))
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "ERROR", report
+    assert "contract_shape_invalid" in codes(report)
+    code, payload, _ = run_cli(mod, ["--repo-root", str(tmp_path), "--all"], capsys)
+    assert code == 2
+    assert payload["verdict"] == "ERROR" and payload["error_count"] == 1
+
+
+def test_all_records_the_broken_plugin_as_error_and_keeps_auditing_the_rest(tmp_path, capsys):
+    mod = load_module()
+    make_plugin(tmp_path, with_command=False)
+    owner = make_owner_plugin(tmp_path)
+    edit_json(
+        owner / "references/package-contract.json",
+        lambda payload: payload.__setitem__("depends_on", [{"name": "sample-plugin"}]),
+    )
+
+    code, payload, err = run_cli(mod, ["--repo-root", str(tmp_path), "--all"], capsys)
+
+    assert code == 2, err
+    verdicts = {item["plugin"]: item["verdict"] for item in payload["plugins"]}
+    assert verdicts == {"owner-plugin": "ERROR", "sample-plugin": "PASS"}
+    assert (payload["plugin_count"], payload["pass_count"], payload["fail_count"], payload["error_count"]) == (
+        2, 1, 1, 1,
+    )
+
+
+def test_owner_contract_with_array_entry_points_is_an_input_error(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path)
+    owner = make_owner_plugin(tmp_path)
+    edit_json(
+        owner / "references/package-contract.json",
+        lambda payload: payload.__setitem__("entry_points", ["run-sample"]),
+    )
+
+    def route_command(payload):
+        payload["depends_on"] = ["owner-plugin"]
+        payload["codex_alternatives"]["commands"]["sample"] = semantic_route("owner-plugin", "run-sample")
+
+    edit_json(plugin / "references/package-contract.json", route_command)
+    report = mod.audit_plugin(tmp_path, plugin)
+    assert report["verdict"] == "ERROR"
+    assert any(
+        item["code"] == "contract_shape_invalid" and "owner owner-plugin" in item["message"]
+        for item in report["violations"]
+    )
+
+    def route_runtime(payload):
+        payload["codex_alternatives"]["commands"]["sample"] = semantic_route("sample-plugin", "run-sample")
+        payload["runtime_dependencies"] = [runtime_dependency()]
+
+    edit_json(plugin / "references/package-contract.json", route_runtime)
+    edit_json(
+        owner / "references/package-contract.json",
+        lambda payload: payload.__setitem__("entry_points", {"skills": 5}),
+    )
+    report = mod.audit_plugin(tmp_path, plugin)
+    assert report["verdict"] == "ERROR"
+    assert "contract_shape_invalid" in codes(report)
+
+
+def test_marketplace_with_non_array_plugins_stops_with_exit_2(tmp_path, capsys):
+    mod = load_module()
+    make_plugin(tmp_path, with_command=False)
+    edit_json(tmp_path / ".agents/plugins/marketplace.json", lambda payload: payload.__setitem__("plugins", 5))
+
+    code, payload, err = run_cli(mod, ["--repo-root", str(tmp_path), "--all"], capsys)
+
+    assert code == 2 and payload is None
+    assert "marketplace plugins must be an array" in err
+
+
+def test_marketplace_entry_with_unhashable_name_does_not_crash(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    edit_json(
+        tmp_path / ".agents/plugins/marketplace.json",
+        lambda payload: payload["plugins"].append({"name": ["peer-plugin"]}),
+    )
+    edit_json(
+        plugin / "references/package-contract.json",
+        lambda payload: payload.__setitem__("depends_on", ["peer-plugin"]),
+    )
+
+    report = mod.audit_repo(tmp_path)
+
+    assert report["verdict"] == "FAIL"
+    assert "dependency_unreachable" in codes(report["plugins"][0])
+
+
+def test_unreadable_json_is_error_but_a_missing_contract_stays_fail(tmp_path, capsys):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    contract = plugin / "references/package-contract.json"
+    contract.write_bytes(b"\xff\xfe{")
+
+    report = mod.audit_plugin(tmp_path, plugin)
+    assert report["verdict"] == "ERROR"
+    assert "package_contract_missing" in codes(report)
+
+    contract.rename(plugin / "references/package-contract.json.bak")
+    report = mod.audit_plugin(tmp_path, plugin)
+    assert report["verdict"] == "FAIL"
+    code, _, _ = run_cli(mod, ["--repo-root", str(tmp_path), "--all"], capsys)
+    assert code == 1
+
+
+def test_non_utf8_composition_is_reported_not_raised(tmp_path):
+    plugin = make_plugin(tmp_path, with_command=False)
+    (plugin / "plugin-composition.yaml").write_bytes(b"name: \xff\n")
+
+    report = load_module().audit_plugin(tmp_path, plugin)
+
+    assert "composition_missing" in codes(report)
+
+
+def test_runtime_dependency_classification_array_is_a_violation(tmp_path):
+    plugin = make_plugin(tmp_path, with_command=False)
+    edit_json(
+        plugin / "references/package-contract.json",
+        lambda payload: payload.__setitem__(
+            "runtime_dependencies", [runtime_dependency(classification=["runtime"])]
+        ),
+    )
+
+    report = load_module().audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "FAIL"
+    assert "runtime_dependency_invalid" in codes(report)
+
+
+@pytest.mark.parametrize(
+    ("override", "code"),
+    [
+        ({"local_path": "../owner-plugin/skills/run-sample"}, "runtime_dependency_local_missing"),
+        ({"local_path": "/etc"}, "runtime_dependency_local_missing"),
+        ({"owner_route": "../sample-plugin/skills/run-sample"}, "runtime_dependency_owner_route_missing"),
+        ({"owner": "../plugins/owner-plugin"}, "runtime_dependency_owner_route_missing"),
+    ],
+)
+def test_runtime_dependency_paths_stay_inside_their_plugins(tmp_path, override, code):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    make_owner_plugin(tmp_path)
+
+    def declare(payload):
+        payload["depends_on"] = ["owner-plugin"]
+        payload["runtime_dependencies"] = [runtime_dependency()]
+
+    edit_json(plugin / "references/package-contract.json", declare)
+    assert mod.audit_plugin(tmp_path, plugin)["verdict"] == "PASS"
+
+    edit_json(
+        plugin / "references/package-contract.json",
+        lambda payload: payload.__setitem__("runtime_dependencies", [runtime_dependency(**override)]),
+    )
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "FAIL"
+    assert code in codes(report)
+
+
+def test_unexpected_shape_failure_is_recorded_as_error(tmp_path, monkeypatch):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+
+    def explode(_plugin):
+        raise TypeError("unhashable type: 'dict'")
+
+    monkeypatch.setattr(mod, "_portable_root_violations", explode)
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "ERROR"
+    assert codes(report) == {"input_shape_unhandled"}
+
+
+@pytest.mark.parametrize("layout", ["missing", "empty"])
+def test_repo_root_without_plugins_is_exit_2(tmp_path, capsys, layout):
+    mod = load_module()
+    root = tmp_path / "repo"
+    if layout == "empty":
+        write_json(root / ".agents/plugins/marketplace.json", {"plugins": []})
+        (root / "plugins").mkdir()
+
+    code, payload, err = run_cli(mod, ["--repo-root", str(root), "--all"], capsys)
+
+    assert code == 2 and payload is None
+    assert err.strip()

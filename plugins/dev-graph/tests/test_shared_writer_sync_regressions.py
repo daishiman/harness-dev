@@ -5,6 +5,8 @@ import copy
 import importlib.util
 import io
 import json
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -104,6 +106,54 @@ class SharedAtomicWriteTest(unittest.TestCase):
             self.assertEqual(list(target.parent.iterdir()), [target])
 
 
+class ParentNotDirectoryTest(unittest.TestCase):
+    """A parent path occupied by a file must not read as the create-only "target already exists"."""
+
+    def test_file_parent_raises_parent_not_directory_instead_of_file_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            blocker = Path(raw) / "afile"
+            blocker.write_bytes(b"x")
+            for target in (blocker / "x.bin", blocker / "sub" / "x.bin"):
+                for create_only in (True, False):
+                    with self.subTest(target=target.relative_to(raw).as_posix(), create_only=create_only):
+                        with self.assertRaises(common.ParentNotDirectoryError) as error:
+                            common.atomic_bytes(target, b"x", create_only=create_only)
+                        self.assertNotIsInstance(error.exception, FileExistsError)
+                        self.assertIsInstance(error.exception, common.ContractError)
+            self.assertEqual(blocker.read_bytes(), b"x")
+            self.assertEqual(list(Path(raw).iterdir()), [blocker])
+
+    def test_writer_wrappers_label_a_file_parent_distinctly(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            blocker = Path(raw) / "afile"
+            blocker.write_bytes(b"x")
+            target = blocker / "receipt.json"
+            with self.assertRaises(INIT.InitError) as error:
+                INIT._create_file(target, b"new")
+            self.assertEqual(error.exception.code, "parent_not_directory")
+            with self.assertRaises(BGN.WriterError) as error:
+                BGN._write_atomic(target, b"new", create_only=True)
+            self.assertEqual(error.exception.code, "parent_not_directory")
+            with self.assertRaises(BGN.WriterError) as error:
+                BGN._create_receipt(target, {})
+            self.assertEqual(error.exception.code, "parent_not_directory")
+            with self.assertRaises(common.ContractError) as error:
+                RP._atomic_create_json(target, {})
+            self.assertNotIn("already exists", str(error.exception))
+            self.assertIn("not a directory", str(error.exception))
+
+    def test_created_file_mode_follows_the_umask_like_an_ordinary_create(self) -> None:
+        previous = os.umask(0o022)
+        try:
+            with tempfile.TemporaryDirectory() as raw:
+                for create_only in (True, False):
+                    target = Path(raw) / f"mode-{create_only}.json"
+                    common.atomic_json(target, {}, create_only=create_only)
+                    self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o644, create_only)
+        finally:
+            os.umask(previous)
+
+
 class InitRollbackTest(unittest.TestCase):
     def context(self, root: Path) -> dict:
         example = json.loads((PLUGIN / "templates" / "repo-config.example.json").read_text())
@@ -138,6 +188,38 @@ class InitRollbackTest(unittest.TestCase):
                         INIT.scaffold(argparse.Namespace(repo_root=str(root), config=".dev-graph/config.json",
                                                          dry_run=False, hook_source="plugin"))
                 self.assertEqual(self.snapshot(root), before)
+
+    def run_main(self, root: Path, *extra: str) -> tuple[int, dict]:
+        output = io.StringIO()
+        with mock.patch.object(INIT, "_context", return_value=self.context(root)), redirect_stdout(output):
+            code = INIT.main(["--repo-root", str(root), *extra])
+        return code, json.loads(output.getvalue())
+
+    def test_file_ancestor_is_rejected_by_dry_run_exactly_like_apply(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw).resolve()
+            (root / ".dev-graph").write_bytes(b"not a directory\n")
+            before = self.snapshot(root)
+            for extra in (("--dry-run",), ()):
+                with self.subTest(extra=extra):
+                    code, report = self.run_main(root, *extra)
+                    self.assertEqual((code, report["status"], report["code"], report["write_count"]),
+                                     (1, "rejected", "path_not_directory", 0), report)
+                    self.assertIn(".dev-graph", report["error"])
+                    self.assertEqual(self.snapshot(root), before)
+
+    def test_receipt_lists_every_directory_it_created_including_implicit_parents(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw).resolve()
+            code, preview = self.run_main(root, "--dry-run")
+            self.assertEqual(code, 0, preview)
+            code, report = self.run_main(root)
+            self.assertEqual((code, report["status"]), (0, "applied"), report)
+            made = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_dir()}
+            self.assertTrue({".dev-graph", ".dev-graph/state", ".dev-graph/state/receipts"} <= made, made)
+            self.assertEqual(made, {path for path in report["created"] if (root / path).is_dir()})
+            self.assertEqual(preview["created"], report["created"])
+            self.assertEqual(report["planned_changes"], report["write_count"])
 
     def test_incomplete_rollback_reports_remaining_paths_instead_of_zero_writes(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

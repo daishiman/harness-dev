@@ -219,7 +219,8 @@
         "techniques_used": {
           "type": "array",
           "minItems": 1,
-          "items": {"enum": ["5whys", "jtbd", "reverse_brief", "magic_wand", "tacit_extraction", "premortem", "outcome_question", "constraint_relaxation"]}
+          "description": "P5 で使った技法。P5 を SKIP した経路 (interview.json.needs_excavation=false、build-skipped-purpose.py が作る) に限り、印 skip:needs_excavation=false の1要素だけを許す。印と技法の混在は allOf で拒否し、印と interview.json の一致は x-cross-field-rules の excavation_skip_matches_interview で検査する。",
+          "items": {"enum": ["5whys", "jtbd", "reverse_brief", "magic_wand", "tacit_extraction", "premortem", "outcome_question", "constraint_relaxation", "skip:needs_excavation=false"]}
         },
         "rounds": {"type": "integer", "minimum": 1},
         "agreement_loop_detected": {"type": "boolean", "default": false},
@@ -247,7 +248,14 @@
           },
           "default": null
         }
-      }
+      },
+      "allOf": [
+        {
+          "$comment": "2要素以上なら深掘りした経路なので、skip の印を含めず8技法だけにする (印は単独のときだけ許す)。",
+          "if": {"required": ["techniques_used"], "properties": {"techniques_used": {"type": "array", "minItems": 2}}},
+          "then": {"properties": {"techniques_used": {"items": {"enum": ["5whys", "jtbd", "reverse_brief", "magic_wand", "tacit_extraction", "premortem", "outcome_question", "constraint_relaxation"]}}}}
+        }
+      ]
     },
     "option_presenter": {
       "type": "object",
@@ -565,6 +573,16 @@
       "left": "sections.0_executive_summary.handoff_mode",
       "operator": "equals",
       "right": "sections.9_handoff_contract.recommended_next.mode"
+    },
+    {
+      "id": "excavation_skip_matches_interview",
+      "comment": "§3 の skip の印は、P5 を manifest の skipWhen (interview.json.needs_excavation=false) で飛ばした経路だけのもの。intake.json と同じディレクトリの interview.json を読み、needs_excavation が false であることを validate_intake_schema.py で確かめる。interview.json が無い・読めない・値が違うときは違反 (fail-closed)。",
+      "left": "sections.3_purpose_excavator.techniques_used",
+      "operator": "sibling_equals",
+      "when_equals": ["skip:needs_excavation=false"],
+      "sibling_file": "interview.json",
+      "sibling_path": "needs_excavation",
+      "right": false
     }
   ]
 }

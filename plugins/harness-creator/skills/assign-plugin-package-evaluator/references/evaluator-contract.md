@@ -20,7 +20,7 @@
 - 1 件の finding に必ず `pkg_id` フィールド（属する PKG ID）
 - `severity` は PKG ID 別の既定値（`pkg-id-catalog.yaml` の `severity`）を尊重しつつ、特定 finding の重要度で上書き可能
 - `auto_fixable=true` の finding は B 側で自動 commit 候補（`chmod +x` 等）
-- `location` は repo root からの相対 path + 任意 `:line_number`
+- `location` は検査したファイルの path + 任意 `:line_number`。script は plugin ディレクトリを resolve してから検査するので、`--plugin` でも `--plugin-dir` でも絶対 path になる（repo root からの相対 path ではない）。PKG-003 の名前衝突だけは衝突した plugin を並べた `plugins/<a>,<b>/skills/<name>` の形
 
 ## eval-log 保存
 
@@ -29,7 +29,7 @@
 ## 公式制約整合
 
 - 34章公式制約 a/b/e（plugin スコープ・permissions・外部参照）は **B が PKG-009/013 で検査**。本 skill は内部構造の整合性のみ
-- 34a 章 INV-1〜12 は PKG-008 で部分検査（schema 違反のみ）。設定マージ時の動的検証は別 skill
+- 34a 章 INV-1〜12 は PKG-008 の script では見ない。script が見るのは `settings/*.json` の JSON 構文・最上位が object・`$schema` の有無だけで、INV-1〜12 と Layer3 衝突は評価者が読んで判定する（SKILL.md「評価者が読んで判定する条件」）。設定マージ時の動的検証は別 skill
 
 ## 改廃
 

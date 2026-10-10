@@ -56,16 +56,47 @@ run_soft() {
 # Skipped に出す (黙って捨てない)。pip install の行は環境を書き換えないよう除く。
 STEP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/run-ci-checks.XXXXXX")"
 trap 'rm -rf "$STEP_DIR"' EXIT
+
+# GitHub の runner が段に渡す RUNNER_TEMP と GITHUB_ENV を、ローカルでも同じ約束で用意する。
+# workflow には `echo "KEY=VALUE" >> "$GITHUB_ENV"` で後ろの段へ環境変数を渡す段がある
+# (例: PYTHONPYCACHEPREFIX を $RUNNER_TEMP へ向ける段)。これが無いと、その段が手元だけで落ち、
+# 後ろの段は bytecode をツリーへ書いて偽の失敗を出す (PR #85)。GITHUB_ENV は job ごとに分け、
+# 書いた値は同じ job の後ろの段にだけ効かせる (GitHub と同じ)。複数行の値 (KEY<<EOF) は扱わない。
+# GitHub との違い: GITHUB_PATH (PATH への追加) と GITHUB_OUTPUT (段の出力) は用意しないので、
+# それに書く段は手元では効かない。RUNNER_TEMP は job ごとに分けず、全 job で1つのディレクトリを使う
+# (GitHub では job ごとに新しい runner になる)。job をまたいで RUNNER_TEMP のファイルを当てにする段は
+# 手元だけ通りうる。pull_request で起動する workflow の段は、いま GITHUB_PATH・GITHUB_OUTPUT に書かず、
+# RUNNER_TEMP も PYTHONPYCACHEPREFIX の置き場にしか使わない。
+export RUNNER_TEMP="$STEP_DIR/runner-temp"
+mkdir -p "$RUNNER_TEMP" "$STEP_DIR/github-env"
+
+run_step() {
+  local env_file="$1" step="$2"
+  (
+    while IFS= read -r line || [ -n "$line" ]; do
+      case "$line" in *=*) ;; *) continue ;; esac
+      name="${line%%=*}"
+      case "$name" in ''|[0-9]*|*[!A-Za-z0-9_]*) continue ;; esac
+      export "$name=${line#*=}"
+    done < "$env_file"
+    export GITHUB_ENV="$env_file"
+    bash "$step"
+  )
+}
+
 if python3 scripts/extract-ci-workflow-steps.py --out-dir "$STEP_DIR" --skip-jobs "${CI_CHECKS_SKIP_JOBS:-}"; then
   for step in "$STEP_DIR"/*.sh; do
     [ -f "$step" ] || continue
     label="$(sed -n '1s/^# label: //p' "$step")"
     mode="$(sed -n '2s/^# mode: //p' "$step")"
+    # label は "<workflow>:<job>: <段の名前>"。job ごとの GITHUB_ENV のファイル名にする。
+    job_env="$STEP_DIR/github-env/$(printf '%s' "${label%%: *}" | tr -c 'A-Za-z0-9._-' '_').env"
+    : >> "$job_env"
     echo "## $label"
     if [ "$mode" = "soft" ]; then
-      run_soft "$label" bash "$step"
+      run_soft "$label" run_step "$job_env" "$step"
     else
-      run "$label" bash "$step"
+      run "$label" run_step "$job_env" "$step"
     fi
   done
   while IFS="$(printf '\t')" read -r label reason; do
@@ -96,8 +127,7 @@ for skills_dir in plugins/*/skills; do
   run_soft "validate-frontmatter ($plugin)"    python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir "$skills_dir"
 done
 
-# rubric_refs 解決検査は registry/symlink 由来の既存違反棚卸しが済むまで soft 観測
-run_soft "lint-rubric-refs-exist"          python3 plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py
+# lint-rubric-refs-exist は CI の governance job へ fail-closed で移した (harness-aor)。上の CI の段として実行される。
 
 # ── サマリ ──
 echo

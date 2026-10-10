@@ -12,16 +12,16 @@ isolation: fork
 
 ## Layer 1: 基本定義層
 
-ルートの必須入力・停止条件は `references/agent-root-contract.md` をReadして適用する。
+ルートの必須入力・停止条件は、親から受け取った `plugin_root` の下の `references/agent-root-contract.md` を Read して適用する。親が解決した絶対パスだけを使う。
 
 `run-ubm-journal` の Phase4-5 を担う。対話で集めた内容と `build-journal-context.py` の出力を
 受け取り、`skills/run-ubm-journal/references/output-format.md` の骨格へ整形し、検証の合格（PASS）まで責任を持つ。
 
 ## Layer 2: ドメイン定義層
 
-## 責務
+### 責務
 
-### 1. 継承ブロックをそのまま組む
+#### 1. 継承ブロックをそのまま組む
 
 - フロントマター（`tags: - review`）、`# 人生の究極の目標` と埋め込み行、`# No.{番号} - ジャーナル（{日付}）`。
 - `## 人生の究極目的` は `previous_journal.ultimate_purpose` を転記。
@@ -29,7 +29,7 @@ isolation: fork
   報告された項目のチェック状態だけ更新する。
 - 原理原則ブロックは `skills/run-ubm-journal/references/principle-checklist.md` の「出力規則」をReadして従う。前回なし（`previous_journal=null`）と前回ブロックなし（`principle_checklist=""`）は、同じ未チェックテンプレートを使う。設問や注記を自分で補わない。
 
-### 2. 目標4階層をコンテキストから埋める
+#### 2. 目標4階層をコンテキストから埋める
 
 - `goals.yearly / quarterly / monthly / weekly` の `period_start`〜`period_end`・`days_remaining`・`goal`。
 - 見出しは `### 1年目標` `### 3ヶ月目標` `### 1ヶ月目標` `### 1週間目標`。
@@ -38,7 +38,7 @@ isolation: fork
   `残り：0日（{終了日}で満了・超過{N}日／新サイクルの1年目標は要設定）` のように補足する。
 - **番号と日数は自分で計算しない。** コンテキストの値をそのまま使う。
 
-### 3. 対話内容をセクションへ振り分ける
+#### 3. 対話内容をセクションへ振り分ける
 
 - `## 感謝` — `- {名前}: {内容}`。3件を目安。
 - `## 【禁止事項】` — やらないことを行動レベルで。1件以上。
@@ -47,7 +47,7 @@ isolation: fork
 - `## 【行動のジャーナル】` / `## 【時間のジャーナル】` / `## 【お金のジャーナル】` — 各3小節
   （現状を確認する／効果性を評価する／更に良くする方法はないか）に箇条書き1件以上。
 
-### 4. 文章化ルール
+#### 4. 文章化ルール
 
 - ユーザーの発言から**固有名詞・数値・時刻・相手の発言を落とさない**。要約より網羅を優先する。
 - 冗長な言い回し（「〜という感じで」「〜かなと思っています」）は削り、1項目1事実にする。
@@ -56,7 +56,7 @@ isolation: fork
 - 「頑張る」「意識する」「気をつける」は打ち手として書かず、誰に・何を・いつまで・何件へ具体化する。
 - 習慣目標（週報の4群）は独立セクションにせず、該当ジャーナルの小節へ事実として織り込む。
 
-## 出力と検証
+### 出力と検証
 
 1. `context.existing_file.write_mode` が `blocked` なら **Write せず停止し、親へ差し戻す**。
    Write は既存ファイルを全置換するため、別日の内容が入っていれば黙って消える。
@@ -74,24 +74,23 @@ python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skill
 ```
 
 4. 終了コード0で次へ。1なら下書きだけを違反コードに従って最大3回修復・再検証する。収束しなければDailyを変更せず停止し、残違反を親へ返す。2なら内容を修正せず、読込不能・引数不正の対象パスと標準エラーを返す。
-5. 下書きが0なら、絶対パス・SHA256・`context.output_path`（保存予定先）・期待番号/日付・検査受領書を親へ返す。DailyへWrite/Editしない。正式保存と保存後検査は親が `references/guarded-publication-contract.md` に従い実行する。
+5. 下書きの検査が終了コード0なら、絶対パス・SHA256・`context.output_path`（保存予定先）・期待番号/日付・検査受領書を親へ返す。DailyへWrite/Editしない。正式保存と保存後検査は親が `plugin_root` の下の `references/guarded-publication-contract.md` に従い実行する。
 
-## 親へ返す内容
+### 親へ返す内容
 
 - `status`: `draft_ready` / `draft_failed` / `blocked`
 - 下書きの絶対パスとSHA256、保存予定先の絶対パス（この役は保存しない）
 - 下書きの受領書: 対象パス、期待番号、期待日付、終了コード、検査出力。保存後検査は親の責務
 - コンテキストの `warnings` のうちユーザー判断が必要な項目（1年目標の満了、期間ズレなど）
 
-## 参照
+### 参照
 
 - `skills/run-ubm-journal/references/output-format.md`（骨格の正本）
 - `skills/run-ubm-journal/assets/golden-sample.md`（合格する見本 / 例示（few-shot））
 
-
 ## Layer 3: インフラストラクチャ定義層
 
-## 入力
+### 入力
 
 親スキルから次を受け取る。
 
@@ -100,7 +99,7 @@ python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skill
 2. **対話ログ**: ユーザーが語った内容。要約前の生の情報を含む。
 3. **plugin_root**: 親スキルが host-skill-path から解決したプラグインのルートの絶対パス。Task 開始時に `PLUGIN_ROOT` として設定し、未指定または絶対パスでなければ Write 前に停止する。
 4. **保存予定先**: context.output_path。参照情報だけで、保存権限にはならない。
-
+5. **保存可否**: 親がユーザーに確かめた保存の可否。これも参照情報で、正式保存の権限にはならない（`references/guarded-publication-contract.md`。保存可否だけで Write/Edit しない）。この役の作業（一時下書きの作成と検査）は変えず、正式保存するかどうかは親が判断する。
 
 ## Layer 4: 共通ポリシー層
 

@@ -66,7 +66,8 @@ ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # 挑戦の日付。「12月12日」「2026年12月12日」「2026-12-12」を受理する。
 MONTH_DAY_RE = re.compile(r"(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日")
 ISO_IN_TEXT_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
-HEADCOUNT_RE = re.compile(r"\d+\s*(?:人|名)")
+# 数字の途中から読み直さない (後読み)。円や人の付かない長い数字の並びで、探索が二乗にならない。
+HEADCOUNT_RE = re.compile(r"(?<!\d)\d+\s*(?:人|名)")
 # 目標の数値 (G01)。str の \d は全角数字も数える (C01/C02 と同じ)。
 DIGIT_RE = re.compile(r"\d")
 ACTION_ITEM_RE = re.compile(r"^(\d+)\s*[.．、)）]\s*(.*)$")
@@ -115,13 +116,17 @@ PLACEHOLDER_RES = (
 # ---- お金の理由 (M01) の補助 ----------------------------------------------------------------
 
 _YEN_UNITS = {"億": 100_000_000, "万": 10_000, "千": 1_000}
+# 金額・件数として読む数の桁の上限 (桁区切りを除く整数部)。これより長い数は計算に使わず M01 にする。
+# 上限が無いと float の桁あふれ (OverflowError) や int の桁数制限 (ValueError) で traceback になる。
+MAX_NUMBER_DIGITS = 15
+LONG_NUMBER_RE = re.compile(rf"\d(?:,?\d){{{MAX_NUMBER_DIGITS},}}")
 MONEY_TOKEN = r"\d[\d,]*(?:\.\d+)?\s*(?:億|万|千)?\s*円?"
 # 金額と読める数 (単位か「円」が付いたもの)。人数・回数の数字を金額と取り違えないために分ける。
-AMOUNT_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:(?:億|万|千)\s*円?|円)")
+AMOUNT_RE = re.compile(r"(?<![\d,.])\d[\d,]*(?:\.\d+)?\s*(?:(?:億|万|千)\s*円?|円)")
 # 「3万×30人で90万」「5万円×10人＝50万円」を拾う。件数側の「万」は誤記 (例文の「5万×10万」) を
 # 計算違いとして検出するために受理する。
 PRODUCT_RE = re.compile(
-    rf"(?P<unit>{MONEY_TOKEN})\s*[×xX✕*＊]\s*(?P<count>\d[\d,]*)\s*(?P<cunit>人|名|社|口|件|枚|万)?"
+    rf"(?P<unit>(?<![\d,.]){MONEY_TOKEN})\s*[×xX✕*＊]\s*(?P<count>\d[\d,]*)\s*(?P<cunit>人|名|社|口|件|枚|万)?"
     rf"\s*(?:で|＝|=|→|は)\s*(?P<total>{MONEY_TOKEN})"
 )
 # 費用ゼロを示す言い方。
@@ -132,6 +137,47 @@ ZERO_COST_RE = re.compile(
     r"(?:費用ゼロ|ゼロ円|(?<![\d,.])0\s*円|無料|かかって(?:い)?(?:ない|ません)|かからない|かかりません|負担なし)"
     r"(?!\s*[、,]?\s*(?:では|じゃ|でな|とは|(?:という|って)?(?:わけ|こと)(?:では|じゃ|は)(?:な|あり)))"
 )
+# かかる費用を書いた言い方 (「講師料が30万円かかる」「30万円が必要」)。費用ゼロと書いた欄に、
+# 回収済みの記述が無いまま金額付きで出てきたら、費用ゼロの根拠にならない (incurred_cost_clauses)。
+INCURRED_COST_RE = re.compile(
+    r"(?:かか|掛か)(?:る|ります|った|りました|ってい(?:る|ます))|発生(?:する|します|した|しました)"
+    r"|必要(?:だ|です|となる|になる)?(?=[。．、,\n]|$)"
+    # 払う人を書かない支払い (「講師に30万円を支払う」)。
+    r"|(?<!未)支?払(?:う|います|った|いました|ってい(?:る|ます))"
+    # 動詞の無い「費目 + 金額」(「講師料は30万円」「交通費1万円」)。
+    r"|(?:費用|経費|コスト|費|料|代)\s*(?:は|が|に|で|として)?\s*(?:約|およそ)?\s*(?<![\d,.])\d[\d,]*(?:\.\d+)?\s*(?:(?:億|万|千)\s*円?|円)"
+)
+# かかる費用に数えない区切り。参加者から入る額は収入で、「本来なら」「去年は」の額は比べるための仮の額、
+# 「かかるはずだった」は実際にはかからなかった額。「参加者の弁当代」「受講者向けの教材費」のように
+# 参加者のために払う費用、「払わなければならない」の「なら」、「通常どおり」「以前と同じ」は外さない。
+NOT_INCURRED_RE = re.compile(
+    r"参加費|受講料|会費|売上|入金"
+    r"|(?:参加者|受講者|お客様?|顧客)(?:から|が(?:支?払|負担)|の(?:負担|支払))"
+    r"|はず(?:だった|でした|の)"
+    r"|(?:本来|普通|通常|いつも|普段|去年|昨年|前回|以前)(?:なら|は|だと|であれば)"
+    r"|なら(?![なずぬ])|だったら|であれば"
+)
+# 1つの節の中で、別の費用の話に移る区切り。金額の後ろの「で」「だが」(「講師料は30万円で会場費は無料」)と、
+# 動詞の後ろの逆接 (「30万円かかるが会場は無料」)。区切りの語は前の区切りに含める。
+CONTRAST_RE = re.compile(
+    r"(?<=円)(?:で|だが|ですが|だけど|けど|けれど(?:も)?|ものの)"
+    r"|(?<=[るたすだ])(?:が|けど|けれど(?:も)?|ものの)(?=[^\sがのをにはでとも])"
+)
+# 節の区切り。桁区切りの「3,000」の「,」では切らない。
+CLAUSE_SPLIT_RE = re.compile(r"[。．！？!?；;\n、，]|,(?!\d)")
+# お金の理由のラベルの問い (「回収できているor1円も費用がかからない」)。本文に写されたり、
+# ラベルを言い換えて本文の頭に書かれたりしても、回収済み・費用ゼロの答えに数えない。
+MONEY_QUESTION_RE = re.compile(
+    r"回収(?:でき|し)て(?:い)?る\s*[、,，]?\s*(?:or|OR|ｏｒ|ＯＲ|または|もしくは|か)\s*"
+    r"(?:[1１一]\s*円も)?\s*(?:費用|お金)?\s*(?:が|は|も)?\s*(?:一切|全く)?\s*(?:かからない|かかっていない)"
+)
+# 問いの形の節 (「回収できているか、1円も費用がかからないかについて」「費用はかからない？」)。
+# お金の語を含む問いは、回収済み・費用ゼロの答えに数えない。節の単位で見るので、探索は文の長さに比例する。
+_QUESTION_CLAUSE_RE = re.compile(r"[^。．！？!?\n、，]*(?:[。．！？!?\n、，]|$)")
+_QUESTION_TAIL_RE = re.compile(
+    r"(?:ない|ている|てる|ていた|た|る|ます|ません)\s*か(?:どうか)?\s*(?:について|を|が|は|に|も)?\s*$"
+)
+_MONEY_WORD_RE = re.compile(r"回収|入金|決済|費用|お金|かから|かかって|無料|ゼロ|円")
 # 自分で払う費用。費用ゼロ・回収済みと同じ欄にあっても M01 にする (「会場費は無料だが講師料は自分で払う」)。
 # 否定は直後に付く形 (「払わず」「負担しない」「自己負担はゼロ」「自分で払うものは一切ない」) だけを外し、
 # 同じ文の離れた「ない」(「払うしかない」「払い、交通費はない」) と義務 (「払わないといけない」
@@ -145,30 +191,99 @@ SELF_PAY_RE = re.compile(
     r"(?:ゼロ|なし|無し|ない|ありません|0\s*円))"
 )
 # 開催前に回収・確定していることを示す言い方。
-# 回収は否定形 (「回収できていない」「回収できず」「回収していない」) と条件形 (「回収できれば」) を外す。
+# 回収は否定形 (「回収できていない」「回収できず」「回収していない」) と条件形 (「回収できれば」)、
+# 可能形 (「回収できる」「回収できます」。終わったことを言っていない) を外す。
+# 「〜済み」の後ろの否定・これからのこと (「回収済みではない」「回収済みになる予定」) は _settled_claim で外す。
 # 確定は後ろに付く語が多い (「確定予定」「確定前」「確定待ち」「確定次第」…) ので、完了形
 # (「確定済み」「確定した」「確定している」「確定です」「確定額」、文や括弧の終わりの「確定」) だけを拾う。
 COLLECTED_RE = re.compile(
-    r"回収(?:済|して(?!い?な|いませ|おらず)|でき(?!な|ず|ませ|てい?な|ていませ|ておらず|れば|たら))"
-    r"|(?<!未)確定(?:済|額|です|した(?!ら|場合)|しました|して(?:いる|います|おり)|(?=[。．、）)」\n]|$))"
+    r"回収(?:済|して(?!い?な|いませ|おらず)|でき(?!な|ず|ませ|ます|る|てい?な|ていませ|ておらず|れば|たら))"
     r"|入金済|決済済|支払(?:い)?済|受領済"
 )
+# 回収済み・確定の言い方の直後に付くと、終わったことの主張にならない語。否定 (「回収済みではない」
+# 「入金済みじゃありません」「回収済みとは言えない」「回収済みにはまだなっていない」) と、これからのこと
+# (「回収済みになる予定」「回収済みとなる」「回収済みにする」「回収済みの見込み」「回収済みと思う」)。
+# 「回収済みでした」「回収済みであり」「回収済みでもあり」「回収済みとなりました」「回収済みになっています」
+# 「回収済みとはいえ」は外さない。直後だけを見るので、同じ文の離れた予定 (「回収済みで12月12日開催予定」)
+# は外さない。紛らわしい言い方は回収済みに数えない側に倒す。
+_NOT_SETTLED_TAIL = (
+    r"み?\s*(?:"
+    r"(?:で(?:は|も)?|じゃ|とは|には)\s*(?:まだ)?\s*(?:な|(?:言|い)えな|言い(?:難|がた)|いいがた)"
+    r"|(?:では|じゃ)\s*(?:あり|ござ)"
+    r"|(?:に|と)(?:は)?\s*(?:まだ)?\s*(?:なる|なります|なれば|なったら|なり次第|する|します|したい"
+    r"|なって(?:い)?(?:な|ませ)|なっておらず)"
+    r"|(?:の|との|である|が)?\s*(?:予定|見込|見通し|つもり|はず)"
+    r"|と\s*(?:見込|思|考|想定|予想|聞)"
+    r")"
+)
+_NOT_SETTLED_TAIL_RE = re.compile(_NOT_SETTLED_TAIL)
+# 「確定」はお金と関係の無いもの (「日程も確定した」) があるので、同じ文にお金の語があるときだけ数える
+# (collected_after)。
+SETTLED_RE = re.compile(
+    r"(?<!未)確定(?:済|額|です|した(?!ら|場合)|しました|して(?:いる|います|おり)|(?=[。．、）)」\n]|$))"
+)
+_SETTLED_MONEY_RE = re.compile(r"円|万|金|額|費|料|代|売上|協賛|支払|決済|振込|予算")
+_SENTENCE_RE = re.compile(r"[^。\n]*(?:[。\n]|$)")
 # 確定していない言い方。回収「予定」を回収「済み」と書く事故を拾うための材料。
 # 「予定」はお金の動きに付くものだけを拾い、「開催予定」「目標300万円」は見込みと読まない。
 # 否定形 (「未確定」「回収できていない」「入金されていない」) と条件形 (「回収できれば」「確定次第」) も拾い、
 # 回収済みと同じ欄に混ざった未確定の額を数えない。
+# 「〜済み」に否定やこれからのことが付いた言い方 (「回収済みではない」「回収済みとなる予定」
+# 「入金済みになるはず」) も拾う。
 PROSPECT_RE = re.compile(
     r"見込み|想定|見通し|つもり|(?:入金|回収|振込|支払い?|決済|受領|売上)予定"
+    rf"|(?:入金|回収|振込|支払い?|決済|受領|確定)済{_NOT_SETTLED_TAIL}"
     r"|未(?:確定|回収|入金|決済)|確定せず|確定(?:予定|前|待ち)"
     r"|(?:回収|入金|確定)(?:でき|して|され)(?:てい|い)?(?:な|ず|ませ)|(?:回収|入金|確定)(?:でき|し|され)ておらず"
     r"|(?:回収|入金|確定)(?:でき(?:れば|たら)|し?次第|しだい|すれば|したら|され(?:れば|たら))"
 )
 
 
+def _settled_claim(text: str, m: re.Match) -> bool:
+    """回収済み・確定の言い方 m が、終わったことの主張か (直後に否定・これからのことが付いていないか)。"""
+    return not _NOT_SETTLED_TAIL_RE.match(text, m.end())
+
+
+def collected_after(text: str, pos: int = 0) -> bool:
+    """pos より後ろに、開催前に回収・確定したことを示す言い方があるか。"""
+    if any(_settled_claim(text, m) for m in COLLECTED_RE.finditer(text, pos)):
+        return True
+    # 文は1回だけ前から切る (文ごとに前後の区切りを探し直すと、区切りの無い長い入力で2乗の時間になる)
+    for sentence in _SENTENCE_RE.finditer(text):
+        if sentence.end() > pos and _SETTLED_MONEY_RE.search(sentence.group(0)) and any(
+            _settled_claim(text, m)
+            for m in SETTLED_RE.finditer(text, max(pos, sentence.start()), sentence.end())
+        ):
+            return True
+    return False
+
+
+def drop_money_questions(text: str) -> str:
+    """ラベルの問いの文言と、お金の語を含む問いの形の節を外す (答えに数えない)。改行は残す。"""
+    text = MONEY_QUESTION_RE.sub("", text)
+    kept = []
+    for m in _QUESTION_CLAUSE_RE.finditer(text):
+        clause = m.group(0)
+        if not clause:
+            continue
+        body = clause.rstrip("。．！？!?\n、，")
+        delimiter = clause[len(body):]
+        question = delimiter[:1] in ("?", "？") or _QUESTION_TAIL_RE.search(body) is not None
+        if question and _MONEY_WORD_RE.search(body):
+            kept.append("\n" if "\n" in delimiter else "。")
+        else:
+            kept.append(clause)
+    return "".join(kept)
+
+
+def _digit_count(number: str) -> int:
+    return len(number.split(".")[0].replace(",", ""))
+
+
 def parse_yen(token: str) -> int | None:
-    """「100万円」「3万」「50,000円」「2.5万」を円の整数にする。読めなければ None。"""
+    """「100万円」「3万」「50,000円」「2.5万」を円の整数にする。読めない・桁が多すぎるときは None。"""
     m = re.fullmatch(r"\s*(\d[\d,]*(?:\.\d+)?)\s*(億|万|千)?\s*円?\s*", token)
-    if not m:
+    if not m or _digit_count(m.group(1)) > MAX_NUMBER_DIGITS:
         return None
     value = float(m.group(1).replace(",", ""))
     return int(round(value * _YEN_UNITS.get(m.group(2) or "", 1)))
@@ -194,7 +309,7 @@ def find_products(text: str) -> list[Product]:
     for m in PRODUCT_RE.finditer(text):
         unit = parse_yen(m.group("unit"))
         total = parse_yen(m.group("total"))
-        if unit is None or total is None:
+        if unit is None or total is None or _digit_count(m.group("count")) > MAX_NUMBER_DIGITS:
             continue
         count = int(m.group("count").replace(",", ""))
         if m.group("cunit") == "万":
@@ -203,9 +318,10 @@ def find_products(text: str) -> list[Product]:
     return products
 
 
-SUM_RE = re.compile(
-    rf"(?P<terms>{MONEY_TOKEN}(?:\s*[＋+]\s*{MONEY_TOKEN})+)\s*(?:で|＝|=|→|は)\s*(?P<total>{MONEY_TOKEN})"
-)
+# 「A + B + C」の並びと、その直後の「= 合計」を分けて読む。1つの正規表現で並びと合計を探すと、
+# 合計の無い長い並び (加算6000項など) で開始位置ごとに並びを読み直し、時間が二乗で増える。
+SUM_TERMS_RE = re.compile(rf"(?<![\d,.]){MONEY_TOKEN}(?:\s*[＋+]\s*{MONEY_TOKEN})+")
+SUM_TOTAL_RE = re.compile(rf"\s*(?:で|＝|=|→|は)\s*(?P<total>{MONEY_TOKEN})")
 
 
 @dataclass(frozen=True)
@@ -224,12 +340,17 @@ class Sum:
 def find_sums(text: str) -> list[Sum]:
     """お金の理由の本文から「A + B = 合計」の式をすべて拾う。"""
     sums = []
-    for m in SUM_RE.finditer(text):
-        terms = [parse_yen(t) for t in re.split(r"[＋+]", m.group("terms"))]
-        total = parse_yen(m.group("total"))
+    position = 0
+    while (m := SUM_TERMS_RE.search(text, position)) is not None:
+        tail = SUM_TOTAL_RE.match(text, m.end())
+        position = tail.end() if tail else m.end()
+        if not tail:
+            continue
+        terms = [parse_yen(t) for t in re.split(r"[＋+]", m.group(0))]
+        total = parse_yen(tail.group("total"))
         if total is None or any(t is None for t in terms):
             continue
-        sums.append(Sum(m.group(0), tuple(terms), total))
+        sums.append(Sum(text[m.start():tail.end()], tuple(terms), total))
     return sums
 
 
@@ -238,25 +359,65 @@ def self_pay_sentences(text: str) -> list[str]:
     found = []
     for sentence in re.split(r"[。\n]", text):
         for m in SELF_PAY_RE.finditer(sentence):
-            if m.group("advance") and COLLECTED_RE.search(sentence, m.end()):
+            if m.group("advance") and collected_after(sentence, m.end()):
                 continue
             found.append(sentence.strip())
             break
     return found
 
 
+def _cost_segments(clause: str) -> list[str]:
+    """節を、逆接の語の後ろと費用ゼロの言い方の後ろで区切る。
+
+    費用ゼロの言い方は、その前の語と同じ区切りに入れる (「会場費10万円がかからない」の金額は
+    費用ゼロの対象)。後ろは別の区切りにする (「会場費はかからないが講師料が30万円かかる」の後半)。
+    """
+    cuts = sorted({m.end() for m in CONTRAST_RE.finditer(clause)} | {m.end() for m in ZERO_COST_RE.finditer(clause)})
+    bounds = [0, *cuts, len(clause)]
+    return [clause[a:b] for a, b in zip(bounds, bounds[1:]) if clause[a:b].strip()]
+
+
+def incurred_cost_clauses(text: str) -> list[str]:
+    """金額付きでかかる費用を書いた節を返す。
+
+    節は「。」「．」「！」「？」「；」と改行、「、」でも切る (桁区切りの「3,000」は切らない)。節の中は
+    逆接の語と費用ゼロの言い方の後ろでさらに区切る (_cost_segments)。「会場費はかからないが講師料が
+    30万円かかる」「無料で講師料は30万円」の後半を、前半の費用ゼロの語に隠させないため。
+    費用ゼロを言う区切り (「30万円かかるはずの会場費が無料」)、収入の区切り (「参加費3,000円が必要」)、
+    仮の額の区切り (「普通なら10万円かかるが」) は除く。
+    """
+    found = []
+    for clause in CLAUSE_SPLIT_RE.split(text):
+        if any(
+            INCURRED_COST_RE.search(segment) and AMOUNT_RE.search(segment)
+            and not ZERO_COST_RE.search(segment) and not NOT_INCURRED_RE.search(segment)
+            for segment in _cost_segments(clause)
+        ):
+            found.append(clause.strip())
+    return found
+
+
 def check_money_reason(text: str) -> list[str]:
     """お金の理由の本文を受け取り、M01 の違反メッセージを返す (空リストなら合格)。
 
-    合格は「費用ゼロ」か「回収済み + 確定した金額」のどちらか。どちらでも、見込み・予定・未確定の額を書いた行、
-    自分で払う費用を書いた行、単価×件数・合計の計算違いを違反にする。
+    合格は「費用ゼロ」か「回収済み + 確定した金額」のどちらか。ラベルの問いの文言は答えに数えない。
+    費用ゼロで回収済みの記述が無いときは、金額付きでかかる費用の節を違反にする。どちらでも、
+    見込み・予定・未確定の額を書いた行、自分で払う費用を書いた行、単価×件数・合計の計算違いを違反にする。
+    15桁を超える数は計算に使わず、それ自体を違反にする。
     """
+    text = drop_money_questions(text)
     problems: list[str] = []
     if not ZERO_COST_RE.search(text):
-        if not COLLECTED_RE.search(text):
+        if not collected_after(text):
             problems.append("開催前に回収済み (回収・入金・決済済み) か、費用がかからない (0円・無料) かが書かれていません")
         elif not AMOUNT_RE.search(text):
             problems.append("回収済みと書かれていますが、確定した金額がありません")
+    elif not collected_after(text):
+        # 「会場費はかからない。講師料が30万円かかる。」は一部の費用ゼロで、全体の費用ゼロではない。
+        problems += [
+            f"費用ゼロと書かれていますが、かかる費用があり、開催前の回収済みとも書かれていません: {clause}"
+            for clause in incurred_cost_clauses(text)
+        ]
     problems += [
         f"見込み・予定・未確定の金額は回収済みに数えられません: {line.strip()}"
         for line in text.splitlines()
@@ -266,7 +427,13 @@ def check_money_reason(text: str) -> list[str]:
         f"自分で払う費用は、開催前の回収済みにも費用ゼロにも数えられません: {sentence}"
         for sentence in self_pay_sentences(text)
     ]
-    problems += [f"計算が合いません: {calc.raw}" for calc in (*find_products(text), *find_sums(text)) if not calc.consistent]
+    long_number = LONG_NUMBER_RE.search(text)
+    if long_number:
+        problems.append(
+            f"{MAX_NUMBER_DIGITS}桁を超える数は金額・件数として読めず、計算を確かめられません: {long_number.group(0)[:20]}…"
+        )
+    else:
+        problems += [f"計算が合いません: {calc.raw}" for calc in (*find_products(text), *find_sums(text)) if not calc.consistent]
     return problems
 
 
@@ -301,11 +468,18 @@ def split_frontmatter(text: str) -> tuple[dict[str, str] | None, list[str]]:
 def split_sections(body: list[str]) -> tuple[dict[str, list[str]], list[str]]:
     """●見出しごとに直下の行を切り出す。見出しの欠落・順序違いは違反文として返す。"""
     positions: dict[str, int] = {}
+    duplicated: list[str] = []
     for idx, line in enumerate(body):
         stripped = line.strip()
-        if stripped in SECTION_HEADINGS and stripped not in positions:
+        if stripped not in SECTION_HEADINGS:
+            continue
+        if stripped in positions:
+            duplicated.append(stripped)
+        else:
             positions[stripped] = idx
     problems = [f"見出しがありません: {h}" for h in SECTION_HEADINGS if h not in positions]
+    # 2回目の見出しの下は1回目の欄に混ざって読まれるので、重複は書き手に直してもらう。
+    problems += [f"見出しが重複しています: {h}" for h in SECTION_HEADINGS if h in duplicated]
     found = [h for h in SECTION_HEADINGS if h in positions]
     if [positions[h] for h in found] != sorted(positions[h] for h in found):
         problems.append("●見出しの順序がフォーマットと違います")
@@ -324,10 +498,18 @@ def content_lines(lines: list[str], exclude: tuple[str, ...] = ()) -> list[str]:
 def split_by_labels(lines: list[str], labels: tuple[str, ...]) -> tuple[dict[str, list[str]], list[str]]:
     """リスク回避の「・〜理由」ラベルごとに本文を切り出す。"""
     positions = {}
+    duplicated = []
     for idx, line in enumerate(lines):
-        if line.strip() in labels and line.strip() not in positions:
-            positions[line.strip()] = idx
+        stripped = line.strip()
+        if stripped not in labels:
+            continue
+        if stripped in positions:
+            duplicated.append(stripped)
+        else:
+            positions[stripped] = idx
     problems = [f"理由の見出しがありません: {label}" for label in labels if label not in positions]
+    # 2回目のラベルは1回目の本文に混ざって読まれ、ラベルの文言が答えに数えられてしまう。
+    problems += [f"理由の見出しが重複しています: {label}" for label in labels if label in duplicated]
     found = [label for label in labels if label in positions]
     if [positions[label] for label in found] != sorted(positions[label] for label in found):
         problems.append("リスク回避5理由の順序がフォーマットと違います")
@@ -345,7 +527,9 @@ def parse_actions(lines: list[str]) -> list[tuple[int, str]]:
     for line in content_lines(lines, exclude=(CLOSING_LINE,)):
         m = ACTION_ITEM_RE.match(line.strip())
         if m:
-            items.append((int(m.group(1)), m.group(2).strip()))
+            # 桁が多すぎる番号は int にせず -1 とし、番号違い (A01) として返す。
+            digits = m.group(1)
+            items.append((int(digits) if len(digits) <= MAX_NUMBER_DIGITS else -1, m.group(2).strip()))
         elif items:
             number, text = items[-1]
             items[-1] = (number, f"{text} {line.strip()}".strip())
@@ -367,6 +551,9 @@ def challenge_dates(text: str, default_year: int | None) -> list[tuple[int | Non
 
 def validate(text: str, filename: str | None = None) -> list[Violation]:
     v: list[Violation] = []
+    # BOM 付き UTF-8 (Windows のメモ帳など) は、BOM がフロントマターと冒頭タイトルの照合を崩すので外して読む。
+    if text.startswith("\ufeff"):
+        text = text[1:]
     fm, body = split_frontmatter(text)
 
     declared_on = challenge_on = None
@@ -479,8 +666,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--file", required=True, type=Path)
     try:
         args = parser.parse_args(argv)
-    except SystemExit:
-        return 2
+    except SystemExit as exc:
+        return 0 if exc.code == 0 else 2  # --help は 0、引数不正は 2
     try:
         text = args.file.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:

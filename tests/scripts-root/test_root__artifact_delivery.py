@@ -876,6 +876,159 @@ def test_runtime_block_validates_locale_resources_and_content(tmp_path):
         mod._validate_runtime_root_wiring(path)
 
 
+@pytest.mark.parametrize("legacy_language", ["en", "ja"])
+@pytest.mark.parametrize("with_bullets", [True, False], ids=["bullets+prose", "prose-only"])
+def test_legacy_runtime_root_prose_is_moved_after_block_not_dropped(tmp_path, legacy_language, with_bullets):
+    # 旧節の正規形の行は作り直すが、skill 固有の文 (引用・段落) は黙って消さずブロックの直後へ移す。
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    heading = mod.RUNTIME_ROOT_CONTRACT_SECTIONS[legacy_language].splitlines()[0]
+    section = mod.RUNTIME_ROOT_CONTRACT_SECTIONS[legacy_language] if with_bullets else heading + "\n"
+    custom = "> この skill の注記。パス解決は Runtime root contract に従う。\n\n独自の段落。\n続きの行。\n"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA, runtime_root=section + "\n" + custom)
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    block = mod._canonical_runtime_root_block("ja", has_prompts=False)
+    assert migrated.count(block) == 1
+    assert migrated.count(mod.RUNTIME_ROOT_CONTRACT_HEADING_JA) == 1
+    assert mod.RUNTIME_ROOT_CONTRACT_HEADING not in migrated
+    end = migrated.index(mod.RUNTIME_ROOT_BLOCK_END)
+    for line in custom.strip("\n").splitlines():
+        if line:
+            assert migrated.count(line) == 1
+            assert end < migrated.index(line) < migrated.index(mod.POST_CHOICE_HEADING_JA)
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+    path.write_text(migrated, encoding="utf-8")
+    mod._validate_runtime_root_wiring(path)
+
+
+@pytest.mark.parametrize(
+    "relative",
+    sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "plugins").glob("*/skills/*/SKILL.md")
+        if "\neffect: external-mutation\n" in path.read_text(encoding="utf-8")
+    ),
+)
+def test_runtime_root_migration_keeps_every_non_canonical_line_of_real_skills(relative):
+    # 実 repo の外部変更 skill (run-extract-blueprint の引用・run-codex-plugin-install の段落を含む) で、
+    # 移行が落としてよいのは正規形の行・旧見出し・runtime_root_policy の行だけ。書き込みはしない。
+    from collections import Counter
+
+    mod = _load_generator()
+    path = ROOT / relative
+    if mod._frontmatter(path).get("effect") != "external-mutation":
+        pytest.skip("migration targets external-mutation skills only")
+    original = path.read_text(encoding="utf-8")
+    migrated = mod._ensure_runtime_root_contract(original, path)
+    replaceable = {
+        line.strip()
+        for section in mod.RUNTIME_ROOT_CONTRACT_SECTIONS.values()
+        for line in section.splitlines()
+    } | {mod.RUNTIME_ROOT_BLOCK_BEGIN, mod.RUNTIME_ROOT_BLOCK_END}
+
+    def countable(text: str) -> Counter:
+        return Counter(
+            line.strip()
+            for line in text.splitlines()
+            if line.strip() and line.strip() not in replaceable and not line.startswith("runtime_root_policy:")
+        )
+
+    assert countable(original) - countable(migrated) == Counter()
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+
+
+def test_frontmatter_is_closed_only_by_a_dash_only_line(tmp_path):
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA).replace(
+        "name: run-future-external\n", "name: run-future-external\ndescription: before---after\n"
+    )
+    path.write_text(text, encoding="utf-8")
+    assert mod._frontmatter(path)["description"] == "before---after"
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    path.write_text(migrated, encoding="utf-8")
+    frontmatter = mod._frontmatter(path)
+    assert frontmatter["description"] == "before---after"
+    assert frontmatter["runtime_root_policy"] == mod.RUNTIME_ROOT_POLICY
+    body = migrated.split("\n---\n", 1)[1]
+    assert not any(line.startswith("runtime_root_policy:") for line in body.splitlines())
+    unclosed = tmp_path / "unclosed.md"
+    unclosed.write_text("---\nname: x\n# body\n", encoding="utf-8")
+    assert mod._frontmatter(unclosed) == {}
+    with pytest.raises(mod.ContractError, match="frontmatter missing"):
+        mod._ensure_runtime_root_contract(unclosed.read_text(encoding="utf-8"), unclosed)
+
+
+def test_post_choice_heading_is_matched_as_a_whole_line(tmp_path):
+    # 本文中の言及や接尾辞付きの見出しを post-choice 節と取り違えない (移行の挿入位置と検査の両方)。
+    mod = _load_generator()
+    heading = mod.POST_CHOICE_HEADING
+    mention = f"手順は `{heading}` に書く。"
+    text = _external_skill_text(heading).replace("外部の記録を1件更新する。", "外部の記録を1件更新する。" + mention)
+    repo = _copy_contract_repo(tmp_path)
+    skill = _add_external_skill(repo, text)
+    mod.migrate_external_guard_blocks(repo)
+    migrated = skill.read_text(encoding="utf-8")
+    real_heading = migrated.index("\n" + heading + "\n")
+    assert real_heading < migrated.index(mod.EXTERNAL_GUARD_BLOCK_BEGIN)
+    mod._validate_external_guard_wiring(skill)
+
+    # 正しい見出しの前 (言及の後) にブロックを置いた文書は不合格。
+    block = mod._canonical_external_guard_block()
+    moved = migrated.replace(block + "\n", "").replace(mention, mention + "\n\n" + block)
+    skill.write_text(moved, encoding="utf-8")
+    with pytest.raises(mod.ContractError, match="post-choice execution"):
+        mod._validate_external_guard_wiring(skill)
+
+    suffixed = _external_skill_text(heading + "（旧）")
+    assert mod._heading_span(suffixed, heading) is None
+    skill.write_text(suffixed, encoding="utf-8")
+    with pytest.raises(mod.ContractError, match="post-choice execution section missing"):
+        mod.migrate_external_guard_blocks(repo)
+
+
+@pytest.mark.parametrize("broken", ["non-utf8", "directory"])
+@pytest.mark.parametrize("mode", ["--check", "--migrate-external-guard", "--write"])
+def test_unreadable_skill_is_a_contract_error_not_a_traceback(tmp_path, broken, mode):
+    repo = _copy_contract_repo(tmp_path)
+    skill = repo / "plugins/contract-generator/skills/run-unreadable/SKILL.md"
+    if broken == "non-utf8":
+        skill.parent.mkdir(parents=True)
+        skill.write_bytes(b"---\nname: run-unreadable\neffect: external-mutation\n---\n\xff\xfe\n")
+    else:
+        skill.mkdir(parents=True)
+    result = subprocess.run(
+        [sys.executable, str(GENERATOR), "--repo-root", str(repo), mode],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "ARTIFACT_DELIVERY_ERROR" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert ("not UTF-8" if broken == "non-utf8" else "cannot read") in result.stderr
+
+
+def test_unreadable_policy_is_a_contract_error(tmp_path):
+    repo = _copy_contract_repo(tmp_path)
+    (repo / "references" / POLICY.name).write_bytes(b"\xff{}")
+    result = subprocess.run(
+        [sys.executable, str(GENERATOR), "--repo-root", str(repo), "--check"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "not UTF-8" in result.stderr and "Traceback" not in result.stderr
+
+
+def test_help_states_the_write_scope_of_every_mode():
+    result = subprocess.run([sys.executable, str(GENERATOR), "--help"], capture_output=True, text=True, check=False)
+    assert result.returncode == 0
+    for needle in ("書き込み範囲", "artifact-delivery.json", "runtime_root_policy", "runtime root 節", "直接実行の例"):
+        assert needle in result.stdout
+
+
 @pytest.mark.parametrize("separator", ["&&", ";", "|", "||"])
 def test_guard_name_does_not_hide_compound_direct_publication(separator):
     mod = _load_generator()

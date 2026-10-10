@@ -6,8 +6,9 @@
 #   - .github/workflows/*.yml / *.yaml (on に pull_request を持つもの)
 # outputs:
 #   - <out-dir>/NNN.sh: 1 段 1 ファイル (先頭 2 行に label と mode)
-#   - <out-dir>/skipped.tsv: GitHub 上でしか評価できず書き出さなかった段と理由
+#   - <out-dir>/skipped.tsv: GitHub 上でしか評価できず書き出さなかった段・job と理由
 #   - stdout: 書き出し件数のサマリ
+#   - exit: 0=書き出し成功 / 1=対象 workflow の段が 1 つも無い / 2=usage・入力エラー (YAML 構文・型の不正を含む)
 # contexts: [C]
 # network: false
 # write-scope: <out-dir> のみ
@@ -29,13 +30,22 @@
     workflow_dispatch だけの workflow は PR の合否に関わらないので対象外。
   - job か段に if がある段と、run / env / 実効 working-directory に GitHub 式を含む段は、
     ローカルで評価できないので書き出さず、理由を skipped.tsv に残す (黙って捨てない)。
-  - `python3 -m pip install` の行は除く。ローカル環境を書き換えないため
-    (依存は requirements-dev.txt を事前に入れておく前提)。
+  - job 単位の `uses:` (reusable workflow の呼び出し) は、呼び出し先の段を GitHub が展開する
+    ので書き出さず、job ごと skipped.tsv に残す。
+  - `pip install` の行 (`python3 -m pip install`・`pip3 install` など) は、行末が
+    バックスラッシュの継続行ごと除く。ローカル環境を書き換えないため (依存は
+    requirements-dev.txt を事前に入れておく前提)。同じ行の `&&` の先も一緒に消えるので、
+    install と検査は別の行に書く。
   - continue-on-error: true の段は mode=soft、それ以外は mode=hard。
   - working-directory (段 / job の defaults / workflow の defaults) は cd に変換する。
   - literal env は workflow → job → 段の順で上書きし、shell quote した export に変換する。
-  - shell は GitHub の bash 既定 (-eo pipefail) に合わせる。bash 以外の shell の段は
-    再現できないので skipped.tsv に残す。
+  - shell は bash だけを再現し、ローカルでは常に `set -eo pipefail` で実行する。GitHub は
+    shell 未指定の段を `bash -e {0}`、`shell: bash` の段を `bash --noprofile --norc -eo pipefail {0}`
+    で動かすので、未指定の段はローカルの方が pipefail の分だけ厳しい (ローカルで通れば CI でも
+    通る側に倒す)。bash 以外の shell の段は再現できないので skipped.tsv に残す。
+  - YAML は GitHub と同じ 1.2 の真偽値 (true / false だけ) で読む。PyYAML 既定の 1.1 は
+    yes / no / on / off も真偽値にするので、`FLAG: yes` が export FLAG=true に化ける。
+  - YAML の構文エラー、root・jobs・job・steps・段の型の不正は exit 2 で止める (traceback にしない)。
 
 Usage:
   extract-ci-workflow-steps.py --out-dir DIR [--workflows-dir DIR] [--skip-jobs "JOB ..."]
@@ -55,7 +65,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 GITHUB_EXPR = "${{"
-PIP_INSTALL_PREFIX = "python3 -m pip install"
+PIP_INSTALL_RE = re.compile(r"\s*(?:python(?:3(?:\.\d+)?)?\s+-m\s+)?pip3?\s+install\b")
 ENV_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
@@ -69,8 +79,8 @@ class Step:
 
 
 def _triggers(data: dict) -> set[str]:
-    # PyYAML は YAML 1.1 の真偽値として `on:` キーを True に読む。
-    on = data.get("on", data.get(True))
+    # _yaml12_loader で読むので `on:` キーは文字列 "on" のまま (1.1 の True に化けない)。
+    on = data.get("on")
     if isinstance(on, str):
         return {on}
     if isinstance(on, list):
@@ -80,14 +90,50 @@ def _triggers(data: dict) -> set[str]:
     return set()
 
 
+def _yaml12_loader():
+    """真偽値を YAML 1.2 (GitHub と同じ) の true / false だけにした SafeLoader を返す。"""
+    import yaml
+
+    bool_tag = "tag:yaml.org,2002:bool"
+
+    class Loader(yaml.SafeLoader):
+        pass
+
+    Loader.yaml_implicit_resolvers = {
+        first: [(tag, regexp) for tag, regexp in resolvers if tag != bool_tag]
+        for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+    }
+    Loader.add_implicit_resolver(
+        bool_tag, re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"), list("tTfF")
+    )
+    return Loader
+
+
 def iter_pr_workflows(workflows_dir: Path):
     import yaml
 
+    loader = _yaml12_loader()
     paths = sorted([*workflows_dir.glob("*.yml"), *workflows_dir.glob("*.yaml")])
     for path in paths:
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        try:
+            data = yaml.load(path.read_text(encoding="utf-8"), Loader=loader)
+        except (OSError, UnicodeDecodeError, RecursionError, yaml.YAMLError) as exc:
+            raise ValueError(f"{path.name}: workflow を読めない: {exc}") from exc
+        if data is None:
+            data = {}
+        if not isinstance(data, dict):
+            raise ValueError(f"{path.name}: workflow の root が mapping でない ({type(data).__name__})")
         if "pull_request" in _triggers(data):
             yield path, data
+
+
+def _mapping(value, what: str) -> dict:
+    """省略 (None) は空の mapping、mapping 以外は入力エラーにする。"""
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(f"{what} が mapping でない ({type(value).__name__})")
+    return value
 
 
 def _github_only_reason(job: dict, step: dict) -> str | None:
@@ -104,10 +150,14 @@ def _github_only_reason(job: dict, step: dict) -> str | None:
 
 
 def _strip_local_only(body: str) -> str:
-    kept = [
-        line for line in body.splitlines()
-        if not line.strip().startswith(PIP_INSTALL_PREFIX)
-    ]
+    kept = []
+    continuing = False
+    for line in body.splitlines():
+        if continuing or PIP_INSTALL_RE.match(line):
+            # 行末の `\` は次の行も同じ pip install の引数であることを示す。
+            continuing = line.rstrip().endswith("\\")
+            continue
+        kept.append(line)
     return "\n".join(kept).strip("\n")
 
 
@@ -134,14 +184,29 @@ def build_steps(
     steps: list[Step] = []
     skipped: list[tuple[str, str]] = []
     for path, data in iter_pr_workflows(workflows_dir):
-        wf_run = (data.get("defaults") or {}).get("run") or {}
+        where = path.name
+        wf_run = _mapping(_mapping(data.get("defaults"), f"{where}: defaults").get("run"),
+                          f"{where}: defaults.run")
         if data.get("env") and GITHUB_EXPR in str(data["env"]):
             wf_reason = "workflow の env が GitHub 式 (${{ }}) に依存する"
         else:
             wf_reason = None
-        for job_id, job in (data.get("jobs") or {}).items():
-            job_run = (job.get("defaults") or {}).get("run") or {}
-            for idx, step in enumerate(job.get("steps") or [], start=1):
+        for job_id, job in _mapping(data.get("jobs"), f"{where}: jobs").items():
+            job = _mapping(job, f"{where}: jobs.{job_id}")
+            if "uses" in job:
+                skipped.append((
+                    f"{path.name}:{job_id}: (reusable workflow)",
+                    f"reusable workflow の job (uses: {job['uses']}) は呼び出し先の段を"
+                    " GitHub 上で展開するので、ローカルでは再現しない",
+                ))
+                continue
+            job_run = _mapping(_mapping(job.get("defaults"), f"{where}: jobs.{job_id}.defaults")
+                               .get("run"), f"{where}: jobs.{job_id}.defaults.run")
+            job_steps = job.get("steps") or []
+            if not isinstance(job_steps, list):
+                raise ValueError(f"{where}: jobs.{job_id}.steps が list でない")
+            for idx, step in enumerate(job_steps, start=1):
+                step = _mapping(step, f"{where}: jobs.{job_id}.steps[{idx}]")
                 if "run" not in step:
                     continue
                 label = f"{path.name}:{job_id}: {step.get('name') or f'step {idx}'}"

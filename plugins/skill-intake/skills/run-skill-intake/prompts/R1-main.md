@@ -45,7 +45,7 @@
 
 ### 2.4 出力契約
 - schema: `schemas/output.schema.json`
-- 必須フィールド: `session_id`, `phases` (11 要素), `artifacts.intake_md`, `artifacts.intake_json`。`notion_url` は required ではなく Notion 公開成功時のみ `artifacts.notion_url` に設定する。
+- 必須フィールド: `session_id`, `workflow_status`, `phases` (11 phase の attempt を追記した列。Gate A retry や失敗からの再開で 11 件を超え得る)。`workflow_status` が `in_progress` / `completed` のときは `artifacts.intake_md`, `artifacts.intake_json` も必須。`failed` (FAIL 行で停止) のときは途中までの attempt だけでよい。`notion_url` は required ではなく Notion 公開成功時のみ `artifacts.notion_url` に設定する。
 - Notion 指定ありの場合は `artifacts.intake_json` が指す実ファイル内の `notion_target` と `notion-publish-result.json.page_id` の一致を必須とする。
 
 ## Layer 3: インフラ層 (外部依存)
@@ -60,6 +60,7 @@
 | measure-value | ../../scripts/measure_value_realized.py | P9 exitHook の post-finalize 価値計測 |
 | update-question-bank | ../../scripts/update_question_bank.py | P9 exitHook の候補導出・重複排除・dry-run・承認後適用 |
 | verify-task-graph | scripts/validate-task-graph-progress.py | P11 exitHook の依存順消費・anchor 検査 |
+| build-skipped-purpose | scripts/build-skipped-purpose.py | P5 を SKIP する直前 (SKILL.md の「P5 skip 時の purpose.json」) |
 
 ### 3.2 外部ツール / API
 - Skill / SubAgent 起動 (workflow-manifest.json の delegateType / delegateName 駆動)
@@ -67,8 +68,8 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 失敗時挙動
-- 任意 phase が FAIL → `eval-log/intake-trace.json` に error を記録し中断、exit 非 0。
-- 中断後の再開は手動 (orchestrator は冪等な resume 機構を持たない)。
+- 任意 phase が FAIL → その attempt を `status=FAIL`・`error`・`exit_code` 付き、handoff なしで `eval-log/intake-trace.json` に追記し、`workflow_status=failed` にして停止する。
+- 再開は SKILL.md の「失敗からの再開」に従う: 原因の解消後、同じ trace で同じ phase を attempt+1 で再実行する (SKIP への切り替えは不可)。前段を作り直すときは trace・progress・intermediate を mv で退避して P1 から新しく実行する。
 
 ### 4.2 観測 / ロギング
 - `eval-log/intake-trace.json` に各 phase の入出力パス、exit code、所要時間を残す。
@@ -137,7 +138,7 @@ orchestrator 実行完了後に以下を自己確認する。未達項目があ�
 | 薄さ維持 | orchestrator 本体に 5 軸ヒアリング / 可視化 / Notion 公開のロジックが混入していない | PASS/FAIL |
 | hard stop 遵守 | `run-skill-create` 等のスキル生成 skill を起動していない | PASS/FAIL |
 | handoff 整合 | 各 phase 出力が handoff-contract.md の次 phase 入力 schema に適合している | PASS/FAIL |
-| 中断契約 | 任意 phase FAIL で即中断し `eval-log/intake-trace.json` に error 行が残っている | PASS/FAIL |
+| 中断契約 | 任意 phase FAIL で即中断し、`eval-log/intake-trace.json` に status=FAIL・error・exit_code の行が残り workflow_status=failed になっている。再開は同じ phase の attempt+1 だけ | PASS/FAIL |
 | artifacts 完全性 | artifacts は実在 path のみを持ち、final exitHook PASS 前に workflow_status=completed へ遷移していない | PASS/FAIL |
 
 ---
@@ -146,6 +147,6 @@ orchestrator 実行完了後に以下を自己確認する。未達項目があ�
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`{{initial_utterance}}` を起点に `workflow-manifest.json` の phases を dependsOn 充足順に起動し、各 attempt の delegate・handoff path/SHA・status を `intake-trace.json` に追記して次 phase へ渡せ。skip/retry は manifest の明示条件だけを使う。P9 では先に `run-intake-finalize` を起動し、生成された `intake.json` に対して exitHook の2つの script resource を起動せよ。`measure_value_realized.py` 出力を `self-update.json` へ保存し、`update_question_bank.py --derive-from-intake <intake.json> --out <qb-candidates.json>` の後に `--diff <qb-candidates.json>` を dry-run する。question-bank は別ターンの明示承認後だけ `--apply` する。P11 exitHook は trace/progress=in_progress、hook=RUNNING で task-graph verifier を3入力実行する。exit 0 後に hook=PASS・両 status=completed・P11 progress evidence digestを更新し、同じ verifierを再実行する。2回目 exit 0 後だけ完了を確定する。不在・不整合は FAIL とし、trace に error を記録すること。artifacts は実在 path だけを記録し、schemas/output.schema.json 準拠の JSON を出力せよ。前置き・後書き禁止。
+`{{initial_utterance}}` を起点に `workflow-manifest.json` の phases を dependsOn 充足順に起動し、各 attempt の delegate・handoff path/SHA・status を `intake-trace.json` に追記して次 phase へ渡せ。skip/retry は manifest の明示条件だけを使う。P5 を SKIP するときは SKIP 行の前に `scripts/build-skipped-purpose.py` で purpose.json を作り、exit 1 なら SKIP せず P5 を実行せよ。phase が失敗したら FAIL 行 (error・exit_code 付き) を追記して workflow_status=failed で停止し、再開は同じ phase の attempt+1 だけとする (SKILL.md の「失敗からの再開」)。P9 では先に `run-intake-finalize` を起動し、生成された `intake.json` に対して exitHook の2つの script resource を起動せよ。`measure_value_realized.py` 出力を `self-update.json` へ保存し、`update_question_bank.py --derive-from-intake <intake.json> --out <qb-candidates.json>` の後に `--diff <qb-candidates.json>` を dry-run する。question-bank は別ターンの明示承認後だけ `--apply` する。P11 exitHook は trace/progress=in_progress、hook=RUNNING で task-graph verifier を3入力実行する。exit 0 後に hook=PASS・両 status=completed・P11 progress evidence digestを更新し、同じ verifierを再実行する。2回目 exit 0 後だけ完了を確定する。不在・不整合は FAIL とし、trace に error を記録すること。artifacts は実在 path だけを記録し、schemas/output.schema.json 準拠の JSON を出力せよ。前置き・後書き禁止。
 
 **Phase 11 (next-action) 完了でワークフローは終了する。`next-action.json` の `mode` を推奨として提示したら停止し、`run-skill-create` / `run-build-skill` / `capability-build` 等のスキル生成を続けて起動してはならない (Layer 1.1 hard stop)。**

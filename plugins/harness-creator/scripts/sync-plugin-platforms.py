@@ -3,14 +3,19 @@
 # name: sync-plugin-platforms
 # purpose: 新規/既存 Claude plugin から Codex manifest と repo marketplace を決定論生成する。
 # inputs:
-#   - argv: --repo-root PATH (--plugin PLUGIN_DIR|--all) [--apply|--check]
+#   - argv: --repo-root PATH (--plugin PLUGIN_DIR|--all) [--apply|--check（既定）]
+#           [--marketplace-name NAME] [--intent create|update（非推奨の文脈ラベル）]
 # outputs:
 #   - stdout: plugin別upsert/check receipt JSON
 #   - exit: 0=整合 / 1=drift・検証違反 / 2=引数不正 / 3=入力・契約を読めない
+#           （repo-root や その plugins/ が無い場合を含む）
 # contexts: [C, E]
 # network: false
-# write-scope: <plugin>/.codex-plugin, <plugin>/hooks/hooks.json (inline hooks の初回正規化),
-#              <repo>/.agents/plugins/marketplace.json
+# write-scope: --apply のときだけ次へ書く: <plugin>/.claude-plugin/plugin.json（hooks 参照の正規化）,
+#              <plugin>/.codex-plugin/plugin.json, manifest・override の hooks が指す hook file
+#              （root 変数の正規化）, <plugin>/hooks/hooks.json（inline hooks の初回正規化）,
+#              <repo>/.agents/plugins/marketplace.json。
+#              --check を含む全 mode で $TMPDIR/harness-plugin-sync-<repo hash>.lock を作って排他に使う
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -101,7 +106,7 @@ def desired_codex_manifest(claude: dict, overrides: dict, *, language: str | Non
     }
     author = claude.get("author") if isinstance(claude.get("author"), dict) else {}
     language = language or overrides.get("output_language", "en")
-    if language not in {"ja", "en"}:
+    if not isinstance(language, str) or language not in {"ja", "en"}:
         raise PlatformSyncError("Codex output_language must be ja or en")
     default_interface = {
         "displayName": _display_name(claude["name"]),
@@ -527,6 +532,13 @@ def _repo_lock(repo: Path):
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
 
 
+def _require_repo(repo: Path) -> None:
+    # 存在しない repo-root でも --apply は .agents/ を mkdir して空の marketplace を作れてしまう。
+    # 打ち間違いの path へ書き出さないよう、書き込みと lock より前に入力不正として止める。
+    if not (repo / "plugins").is_dir():
+        raise PlatformSyncError(f"repo-root must contain a plugins directory: {repo}")
+
+
 def _validate_plugin_location(repo: Path, plugin: Path) -> None:
     try:
         relative = plugin.relative_to(repo / "plugins")
@@ -593,6 +605,7 @@ def run(
         raise PlatformSyncError("intent must be create or update")
     if mode not in {"apply", "check"}:
         raise PlatformSyncError("mode must be apply or check")
+    _require_repo(repo)
     _validate_plugin_location(repo, plugin)
 
     with _repo_lock(repo):
@@ -641,6 +654,7 @@ def run_all(
     repo = repo.resolve()
     if mode not in {"apply", "check"}:
         raise PlatformSyncError("mode must be apply or check")
+    _require_repo(repo)
     with _repo_lock(repo):
         plugins = discover_codex_plugins(repo)
         marketplace_path = repo / ".agents" / "plugins" / "marketplace.json"

@@ -257,11 +257,13 @@ def test_bd001_bd002_pass_with_japanese_headings():
     ],
 )
 def test_bd001_bd002_japanese_heading_requires_whole_line(body):
-    # 日本語の見出しは行全体の一致だけを受け入れ、失敗の文言は英語版から変えない。
+    # 日本語の見出しは行全体の一致だけを受け入れる。失敗の文言は英語の見出しで始め
+    # (既存の grep を壊さない)、日本語の正規形でも直せることを併記する。
     f1 = RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path("."))
     f2 = RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path("."))
-    assert f1 is not None and f1["message"] == "missing '## Purpose & Output Contract'"
-    assert f2 is not None and f2["message"] == "missing '## Gotchas'"
+    assert f1 is not None and f1["message"] == (
+        "missing '## Purpose & Output Contract' (or '## 目的と出力契約')")
+    assert f2 is not None and f2["message"] == "missing '## Gotchas' (or '## つまずきやすい点')"
 
 
 def test_rubric_bd_checks_name_both_heading_forms():
@@ -1182,3 +1184,69 @@ def test_knowledge_denominator_excludes_graph_and_relation_indexes(tmp_path):
     card.pop("source")
     (tmp_path / "category.json").write_text(json.dumps({"entries": [card]}))
     assert "source" in RFS._check_knowledge_loop("KL-002", tmp_path, tmp_path, lambda msg, loc: msg)
+
+
+# --- review B の [低] の回帰 ----------------------------------------------------
+
+@pytest.mark.parametrize("fence", ["```", "~~~", "````markdown"])
+def test_japanese_heading_inside_code_fence_is_not_a_heading(fence):
+    """フェンスの中の「## 目的と出力契約」は見出しではないので BD-001・BD-002・PD-002 を通さない。"""
+    close = fence.rstrip("markdown")
+    body = f"{fence}\n## 目的と出力契約\n## つまずきやすい点\n## 守ること\n{close}\n本文\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is not None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is not None
+    assert RFS.check_rule(_rule("PD-002", "medium", "body"), {}, body, Path(".")) is not None
+
+
+def test_japanese_heading_after_closed_fence_is_accepted():
+    body = "```\n# example\n```\n## 目的と出力契約\nx\n## 守ること\ny\n## つまずきやすい点\nz\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("PD-002", "medium", "body"), {}, body, Path(".")) is None
+
+
+def test_pd002_fail_message_names_japanese_forms():
+    f = RFS.check_rule(_rule("PD-002", "medium", "body"), {}, "## 目的と出力契約\nx\n", Path("."))
+    assert f is not None and "## 守ること" in f["message"]
+
+
+def _cli(*args):
+    return subprocess.run([sys.executable, str(SCRIPT), *args],
+                          capture_output=True, text=True, timeout=60)
+
+
+def test_cli_broken_rubric_json_is_input_error(tmp_path):
+    bad = tmp_path / "bad.json"
+    bad.write_text("not json", encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    proc = _cli("--rubric-refs", str(bad), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_cli_array_rubric_is_input_error(tmp_path):
+    bad = tmp_path / "arr.json"
+    bad.write_text("[1, 2]", encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    proc = _cli("--rubric-refs", str(bad), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_cli_non_utf8_skill_md_is_input_error(tmp_path):
+    l0 = ROOT / "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    d, md = _write_skill_dir(tmp_path)
+    md.write_bytes(b"\xff\xfe" + md.read_bytes())
+    proc = _cli("--rubric-refs", str(l0), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_header_has_frontmatter_keys_and_exit_codes():
+    text = SCRIPT.read_text(encoding="utf-8")
+    head = text.split('"""', 1)[0]
+    for key in ("name", "purpose", "inputs", "outputs", "contexts", "network",
+                "write-scope", "dependencies"):
+        assert f"# {key}:" in head, key
+    assert "complex checks are TODO" not in text
+    assert "exit codes:" in text

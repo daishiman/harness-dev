@@ -189,11 +189,32 @@ def read_skill_frontmatter_name(skill_dir):
     return None
 
 
+# .gitignore が無視する生成物。作業ツリーにだけ在り CI には無いので、hash に入れると
+# 同じ commit でも実行場所によって実体コピーの shared 判定が conflict に変わってしまう。
+_BUILD_CACHE_DIRS = frozenset({"__pycache__"})
+_BUILD_CACHE_SUFFIXES = (".pyc", ".pyo", ".pyd")
+_OS_JUNK_NAMES = frozenset({".DS_Store", "Thumbs.db"})
+
+
+def is_build_artifact(relative):
+    """`relative` (item からの相対 Path) が .gitignore 対象の生成物なら True。"""
+    return (
+        any(part in _BUILD_CACHE_DIRS for part in relative.parts)
+        or relative.name in _OS_JUNK_NAMES
+        or relative.suffix in _BUILD_CACHE_SUFFIXES
+    )
+
+
 def content_sha256(path):
-    """Hash one bundled namespace item, including relative paths and symlinks."""
+    """Hash one bundled namespace item, including relative paths and symlinks.
+
+    .gitignore 対象の生成物 (__pycache__ / *.pyc / .DS_Store) は除く。
+    """
     path = Path(path)
     digest = hashlib.sha256()
-    candidates = [path] if path.is_file() else sorted(path.rglob("*"))
+    candidates = [path] if path.is_file() else sorted(
+        c for c in path.rglob("*") if not is_build_artifact(c.relative_to(path))
+    )
     for candidate in candidates:
         relative = candidate.relative_to(path).as_posix() if candidate != path else path.name
         if candidate.is_symlink():

@@ -24,7 +24,7 @@ in-process(monkeypatch sys.stdin/io.StringIO + capsys)で全分岐を踏み、
   * jsonschema 経路: 合格(stderr 無) / 違反(errors stderr, schema_used true)
   * validator 例外経路(schema 破損で validate が ValidationError 以外を投げる)
   * fallback 経路(HAS_JSONSCHEMA=False / schema=None): name 欠落検出
-  * トップレベル例外握り潰し(read_text 失敗)→ return 0
+  * トップレベル例外 → return 0 のまま internal error を stderr に出す
 
 network: false, keychain: なし, 実 repo 書換: なし。
 """
@@ -320,8 +320,8 @@ def test_main_fallback_when_schema_none_passes_with_required_keys(
     assert _stderr(capsys) == ""
 
 
-def test_main_top_level_exception_swallowed(monkeypatch, capsys, tmp_path):
-    # _is_target が例外を投げてもトップレベル try/except で握り潰し return 0。
+def test_main_top_level_exception_reported_not_swallowed(monkeypatch, capsys, tmp_path):
+    # _is_target が例外を投げても return 0 (非ブロック) のまま、内部の不具合を stderr に出す。
     def _boom(_path):
         raise RuntimeError("boom")
 
@@ -329,7 +329,8 @@ def test_main_top_level_exception_swallowed(monkeypatch, capsys, tmp_path):
     p = _write_target(tmp_path, VALID_FM)
     rc = _run_main(monkeypatch, {"tool_input": {"file_path": str(p)}})
     assert rc == 0
-    assert _stderr(capsys) == ""
+    err = json.loads(_stderr(capsys))
+    assert err["error"] == "internal error: RuntimeError: boom"
 
 
 # ── main: subprocess end-to-end ──────────────────────────────────────────────

@@ -6,12 +6,13 @@
 #   - argv: skill_dir / --strict / --store-only / --self-test
 # outputs:
 #   - stdout: findings JSON (status / error_count / warn_count)
-#   - stderr: ディレクトリ不在の診断
+#   - stderr: 入力エラーの診断 JSON (ディレクトリ不在・読めないファイル)
+# exit: 0 = 正常 (skip/warn を含む) / 1 = --strict で違反あり / 2 = 引数エラー・入力エラー
 # contexts: [C, E]
 # network: false
 # write-scope: none
 # dependencies: [../../../scripts/plugin_resources.py]
-# requires-python: ">=3.10"
+# requires-python: ">=3.9"
 # ///
 # -*- coding: utf-8 -*-
 """
@@ -19,7 +20,12 @@ lint-knowledge-loop.py — knowledge-loop capability lint スクリプト
 
 exit_code (Claude Code Hook 準拠):
   0 = 正常 (skip/warn を含む)
-  1 = --strict モードで違反あり / 引数エラー
+  1 = --strict モードで違反あり
+  2 = 引数エラー (argparse) / skill_dir が無い・ディレクトリでない /
+      SKILL.md などを読めない (権限・非 UTF-8)。stderr に {"error": ...} を出す
+  knowledge/ の JSON が壊れている・非 UTF-8 のときは入力エラーではなく finding にする。
+  harness-creator/scripts/plugin_resources.py が無い (script だけを持ち出した) ときも
+  KL-001..007 は動き、KL-008 は正本 engine が見つからない error になる。
 
 検査ルール:
   KL-001: knowledge/ ディレクトリ内に index.json または router.json が存在し、
@@ -54,6 +60,8 @@ exit_code (Claude Code Hook 準拠):
   python3 lint-knowledge-loop.py --self-test
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
@@ -61,8 +69,21 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
-from plugin_resources import ResolverUnavailable, resolve_root
+_RESOURCE_DIR = str(Path(__file__).resolve().parents[3] / "scripts")
+sys.path.insert(0, _RESOURCE_DIR)
+try:
+    from plugin_resources import ResolverUnavailable, resolve_root
+except ImportError:
+    # 持ち出した script 単体でも KL-001..007 は検査する。KL-008 は sentinel のパスで
+    # 「正本 engine が見つからない」error になり、推測したパスへは落ちない。
+    class ResolverUnavailable(RuntimeError):
+        """plugin_resources.py が無いときの代わり。"""
+
+    def resolve_root(name: str, plugin_root: Path, cwd: Path | None = None) -> Path | None:
+        raise ResolverUnavailable("plugin_resources.py is missing from harness-creator/scripts")
+finally:
+    # 標準ライブラリなどの import を harness-creator/scripts が横取りしないよう、import 後に外す。
+    sys.path.remove(_RESOURCE_DIR)
 
 
 REQUIRED_ENTRY_TITLE = {"title", "content"}
@@ -96,7 +117,7 @@ def load_json_safe(path: Path) -> tuple[dict | None, str | None]:
             return json.load(f), None
     except json.JSONDecodeError as e:
         return None, f"JSON解析失敗: {e}"
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         return None, f"ファイル読み込みエラー: {e}"
 
 
@@ -380,10 +401,11 @@ def check_kl007(knowledge_dir: Path, store_only: bool) -> list[dict]:
 
     data, err = load_json_safe(decl_path)
     if err or not isinstance(data, dict):
+        reason = err or f"最上位が JSON の object でない ({type(data).__name__})"
         findings.append({
             "rule": "KL-007",
             "severity": "error",
-            "message": f"{decl_path.name}: consult_at を読むための JSON 解析に失敗 ({err})"
+            "message": f"{decl_path.name}: consult_at を読むための JSON 解析に失敗 ({reason})"
         })
         return findings
 
@@ -700,8 +722,8 @@ def self_test() -> None:
         kl003 = [f for f in result["findings"] if f["rule"] == "KL-003"]
         kl004 = [f for f in result["findings"] if f["rule"] == "KL-004"]
         kl006 = [f for f in result["findings"] if f["rule"] == "KL-006"]
-        assert len(kl003) > 0, f"KL-003 が検出されない"
-        assert len(kl004) > 0, f"KL-004 が検出されない"
+        assert len(kl003) > 0, "KL-003 が検出されない"
+        assert len(kl004) > 0, "KL-004 が検出されない"
         assert len(kl006) > 0 and kl006[0]["severity"] == "warn", \
             f"KL-006 が warn で検出されない: {kl006}"
 
@@ -718,7 +740,7 @@ def self_test() -> None:
         # KL-005: 分割閾値の記述なし
         result = run_lint(skill_dir, strict=False)
         kl005 = [f for f in result["findings"] if f["rule"] == "KL-005"]
-        assert len(kl005) > 0, f"KL-005 が検出されない"
+        assert len(kl005) > 0, "KL-005 が検出されない"
 
         # SKILL.md に分割閾値を記述
         (skill_dir / "SKILL.md").write_text("# テスト\n\n分割閾値: 500行/25エントリ", encoding="utf-8")
@@ -864,9 +886,14 @@ def main() -> None:
     skill_dir = Path(args.skill_dir).resolve()
     if not skill_dir.is_dir():
         print(json.dumps({"error": f"ディレクトリが存在しない: {skill_dir}"}), file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
 
-    result = run_lint(skill_dir, args.strict, store_only=args.store_only)
+    try:
+        result = run_lint(skill_dir, args.strict, store_only=args.store_only)
+    except (OSError, UnicodeDecodeError) as exc:
+        # 違反 (1) と区別するため、読めない入力は traceback ではなく入力エラー (2) にする。
+        print(json.dumps({"error": f"入力を読めない: {exc}"}), file=sys.stderr)
+        sys.exit(2)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
     if result["status"] == "fail":

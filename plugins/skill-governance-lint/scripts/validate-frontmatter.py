@@ -3,10 +3,11 @@
 # name: validate-frontmatter
 # purpose: Validate SKILL.md frontmatter fields and combination rules.
 # inputs:
-#   - argv: SKILL.md path or --skills-dir
+#   - argv: SKILL.md path, --skills-dir <dir>, or --self-test (schema と fallback の drift 検査)
 # outputs:
-#   - stdout: OK status
-#   - stderr: frontmatter findings
+#   - stdout: OK status (--help は usage)
+#   - stderr: frontmatter findings (warn: で始まる指摘は exit に影響しない)
+#   - exit: 0=ok (warn だけを含む) / 1=findings or self-test drift / 2=usage error
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -18,6 +19,13 @@
 Usage:
   validate-frontmatter.py /path/to/SKILL.md
   validate-frontmatter.py --skills-dir plugins/harness-creator/skills
+  validate-frontmatter.py --self-test
+
+frontmatter は YAML の部分集合として読む。scalar と list の要素は引用符を外し、
+block list の途中のコメント行や空行は list を終わらせない。読めない・UTF-8 でない
+SKILL.md は traceback にせず指摘として報告する。
+
+Exit 0 = ok (warn: だけの指摘を含む), 1 = 指摘あり / self-test の drift, 2 = usage error.
 """
 from __future__ import annotations
 import datetime
@@ -131,11 +139,26 @@ def _without_yaml_comment(value: str) -> str:
     return value.strip()
 
 
+def _unquote(value: str) -> str:
+    """YAML の引用符つき scalar ('a''b' / "a\\"b") を値に戻す。引用符が無ければそのまま。"""
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] == "'":
+        return value[1:-1].replace("''", "'")
+    if len(value) >= 2 and value[0] == value[-1] == '"':
+        try:
+            decoded = json.loads(value)
+        except ValueError:  # JSON に無い YAML の escape は中身をそのまま使う
+            return value[1:-1]
+        return decoded if isinstance(decoded, str) else value[1:-1]
+    return value
+
+
 def parse_fm(text: str) -> dict:
     """Parse YAML-ish frontmatter. Supports scalar values and `- ` list items.
 
-    List values (e.g. `rubric_refs:` followed by `  - item`) become a list of
-    strings. Scalars remain strings (trimmed).
+    List values (e.g. `rubric_refs:` followed by `  - item`, or `[a, b]`) become a
+    list of strings. Scalars and list items are trimmed and unquoted. As in YAML,
+    blank and comment lines inside a block list do not end it; the next key does.
     """
     if not text.startswith("---"):
         return {}
@@ -147,17 +170,14 @@ def parse_fm(text: str) -> dict:
     for raw in parts[1].splitlines():
         line = raw.rstrip()
         if not line.strip() or line.lstrip().startswith("#"):
-            # blank or comment line ends list-context only if non-indented
-            if line.strip() == "" or not line.startswith(" "):
-                current_list_key = None
-            continue
+            continue  # blank and comment lines never end a block list in YAML
         # list item under current key
-        m_item = re.match(r"^\s+-\s+(.+?)\s*$", line)
+        m_item = re.match(r"^\s*-\s+(.+?)\s*$", line)
         if m_item and current_list_key is not None:
             if fm.get(current_list_key) == "":
                 fm[current_list_key] = []
             if isinstance(fm[current_list_key], list):
-                fm[current_list_key].append(_without_yaml_comment(m_item.group(1)))
+                fm[current_list_key].append(_unquote(_without_yaml_comment(m_item.group(1))))
             continue
         m = re.match(r"^([a-zA-Z_-]+):\s*(.*)$", line)
         if m:
@@ -170,13 +190,13 @@ def parse_fm(text: str) -> dict:
             elif val.startswith("[") and val.endswith("]"):
                 inner = val[1:-1].strip()
                 fm[key] = [
-                    item.strip().strip('"').strip("'")
+                    _unquote(item)
                     for item in inner.split(",")
                     if item.strip()
                 ]
                 current_list_key = None
             else:
-                fm[key] = val
+                fm[key] = _unquote(val)
                 current_list_key = None
     return fm
 
@@ -193,8 +213,9 @@ def _repo_root(p: Path) -> Path:
 def check_refs_exist(fm: dict, skill_path: Path) -> list[str]:
     """Verify rubric_refs / reference_refs / script_refs targets exist.
 
-    - `ref-*` style entries: require `plugins/harness-creator/skills/<name>/` or
-      `.claude/skills/<name>/` to exist at repo root.
+    - `ref-*` style entries (ref/run/assign/wrap/delegate-*): require `<name>/` to
+      exist in the same skills dir as this SKILL.md (同じ plugin), under any
+      `plugins/*/skills/`, or under `.claude/skills/` at repo root.
     - other entries: treat as path; first try repo-root relative, then
       skill-directory relative.
     Returns a list of `MISSING_REF:` error strings.
@@ -202,6 +223,7 @@ def check_refs_exist(fm: dict, skill_path: Path) -> list[str]:
     errs: list[str] = []
     repo = _repo_root(skill_path)
     skill_dir = skill_path.parent
+    skill_roots = [skill_dir.parent, *sorted((repo / "plugins").glob("*/skills")), repo / ".claude" / "skills"]
     for field in ("rubric_refs", "reference_refs", "script_refs"):
         items = fm.get(field)
         if not items:
@@ -214,12 +236,10 @@ def check_refs_exist(fm: dict, skill_path: Path) -> list[str]:
             if not entry:
                 continue
             if re.match(r"^(ref|run|assign|wrap|delegate)-[a-z0-9-]+$", entry):
-                cand1 = repo / "plugins" / "harness-creator" / "skills" / entry
-                cand2 = repo / ".claude" / "skills" / entry
-                if not (cand1.exists() or cand2.exists()):
+                if not any((root / entry).exists() for root in skill_roots):
                     errs.append(
-                        f"MISSING_REF: {field} '{entry}' not found "
-                        f"under plugins/harness-creator/skills/ or .claude/skills/"
+                        f"MISSING_REF: {field} '{entry}' not found under "
+                        f"{skill_dir.parent}/, plugins/*/skills/ or .claude/skills/"
                     )
             else:
                 cand_root = repo / entry
@@ -307,7 +327,10 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
     if not p.exists():
         return str(p), [f"not found: {p}"]
 
-    text = p.read_text(encoding="utf-8")
+    try:
+        text = p.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        return str(p), [f"cannot read as UTF-8: {p} ({type(e).__name__}: {e})"]
     fm = parse_fm(text)
 
     # SKILL.md 以外で非 skill kind を宣言する Capability は専用検証へ分岐
@@ -454,9 +477,13 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
 
 def main() -> int:
     args = sys.argv[1:]
+    usage = "usage: validate-frontmatter.py /path/to/SKILL.md | --skills-dir /path/to/skills | --self-test"
     if not args:
-        print("usage: validate-frontmatter.py /path/to/SKILL.md | --skills-dir /path/to/skills | --self-test", file=sys.stderr)
+        print(usage, file=sys.stderr)
         return 2
+    if args[0] in ("-h", "--help"):
+        print(usage)
+        return 0
 
     # --self-test: schema(正本) と fallback 定数の drift を検出するゲート。
     # 三重定義の再発防止: schema を改訂したら fallback も同期されているかを CI で機械検証する。
@@ -500,6 +527,9 @@ def main() -> int:
         print(f"ok: {skills_dir} ({scanned} skills)")
         return 0
 
+    if args[0].startswith("-"):
+        print(f"unknown option: {args[0]}\n{usage}", file=sys.stderr)
+        return 2
     p = Path(args[0])
     name, errs = validate_file(p)
     if errs:

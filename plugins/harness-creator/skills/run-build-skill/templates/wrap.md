@@ -73,7 +73,7 @@ runtime_root_policy: host-skill-path
 ## 検証
 {{generated_checks}}
 
-## 注意点
+## つまずきやすい点
 {{generated_gotchas}}
 
 ## 変数化契約

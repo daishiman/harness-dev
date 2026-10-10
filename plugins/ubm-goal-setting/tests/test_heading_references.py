@@ -38,7 +38,7 @@ def active_text(text: str) -> str:
 
 
 def resolve_document(doc: Path, name: str, root: Path) -> Path:
-    if name.startswith(("/skills/", "/agents/")):
+    if name.startswith(("/skills/", "/agents/", "/references/")):
         name = name.lstrip("/")  # suffix of a documented ${PLUGIN_ROOT}/... path
     if name == "SKILL.md":
         for parent in [doc.parent, *doc.parents]:

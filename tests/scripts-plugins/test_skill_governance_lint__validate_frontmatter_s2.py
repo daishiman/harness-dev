@@ -29,7 +29,7 @@ def _write_skill(tmp_path, fm: str, body: str = "本文\n"):
 
 
 # --------------------------------------------------------------------------
-# parse_fm: block-list append (line 125) と comment 行による list-context リセット
+# parse_fm: block-list append と、comment 行・空行が list を終わらせないこと
 # --------------------------------------------------------------------------
 
 def test_parse_fm_block_list_appends_items():
@@ -37,15 +37,20 @@ def test_parse_fm_block_list_appends_items():
     assert fm["rubric_refs"] == ["ref-one", "ref-two"]
 
 
-def test_parse_fm_comment_line_resets_list_context():
-    # 非インデントのコメント行は current_list_key をリセットする
+def test_parse_fm_comment_line_keeps_list_context():
+    # YAML では 0 列目のコメント行や空行は block list を終わらせない。終わらせるのは次の key。
+    # 以前はここで list を切り、ref-two を黙って捨てていた (参照の実在検査が漏れる)。
     fm = MOD.parse_fm(
         "---\n"
         "refs:\n"
+        "  - ref-one\n"
         "# top-level comment\n"
+        "\n"
+        "  - ref-two\n"
         "name: y\n"
         "---\n"
     )
+    assert fm["refs"] == ["ref-one", "ref-two"]
     assert fm["name"] == "y"
 
 
@@ -431,3 +436,77 @@ def test_main_module_entry_point(monkeypatch, capsys):
     with pytest.raises(SystemExit) as exc:
         runpy.run_path(str(SCRIPT), run_name="__main__")
     assert exc.value.code == 0
+
+
+# --------------------------------------------------------------------------
+# C1 レビューの再発防止: ref-* の探索先、引用符、CLI の入口
+# --------------------------------------------------------------------------
+
+def _ref_repo(tmp_path, ref_location: str):
+    """repo/plugins/p/skills/assign-x/SKILL.md と、ref_location に置いた ref-y を作る。"""
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    skill = repo / "plugins" / "p" / "skills" / "assign-x" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("---\nname: assign-x\n---\n", encoding="utf-8")
+    (repo / ref_location / "ref-y").mkdir(parents=True)
+    return skill
+
+
+@pytest.mark.parametrize("ref_location", [
+    "plugins/p/skills",          # 同じ plugin の skills/ (guide-doc-generator の形)
+    "plugins/q/skills",          # 別の plugin の skills/
+    ".claude/skills",
+])
+def test_check_refs_exist_finds_ref_skill_in_any_skills_root(tmp_path, ref_location):
+    # 以前は plugins/harness-creator/skills と .claude/skills だけを探し、
+    # 同じ plugin に実在する ref skill を MISSING_REF として誤って FAIL にしていた
+    skill = _ref_repo(tmp_path, ref_location)
+    fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-y\n---\n")
+    assert MOD.check_refs_exist(fm, skill) == []
+
+
+def test_check_refs_exist_still_reports_absent_ref_skill(tmp_path):
+    skill = _ref_repo(tmp_path, "plugins/q/skills")
+    fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-absent\n---\n")
+    errs = MOD.check_refs_exist(fm, skill)
+    assert len(errs) == 1 and "ref-absent" in errs[0]
+
+
+def test_real_repo_guide_doc_generator_skills_dir_passes(monkeypatch, capsys):
+    # レビューの再現手順: 同じ plugin の ref-handout-design-system を参照する skill
+    rc = _run_main(monkeypatch, "--skills-dir", str(ROOT / "plugins" / "guide-doc-generator" / "skills"))
+    err = capsys.readouterr().err
+    assert "MISSING_REF" not in err
+    assert rc == 0, err
+
+
+@pytest.mark.parametrize("text, key, expected", [
+    ('---\nrefs:\n  - "ref-c"\n  - \'ref-d\'\n---\n', "refs", ["ref-c", "ref-d"]),
+    ('---\nrefs: ["ref-c", \'ref-d\']\n---\n', "refs", ["ref-c", "ref-d"]),
+    ('---\nname: "assign-x"\n---\n', "name", "assign-x"),
+    ("---\nname: 'it''s'  # c\n---\n", "name", "it's"),
+])
+def test_parse_fm_unquotes_block_flow_and_scalar_alike(text, key, expected):
+    # block list・flow list・scalar のどれでも、引用符は値に含めない (YAML と同じ)
+    assert MOD.parse_fm(text)[key] == expected
+
+
+def test_main_help_returns_0(monkeypatch, capsys):
+    rc = _run_main(monkeypatch, "--help")
+    assert rc == 0
+    assert "usage" in capsys.readouterr().out
+
+
+def test_main_unknown_option_returns_2(monkeypatch, capsys):
+    rc = _run_main(monkeypatch, "--bogus")
+    assert rc == 2
+    assert "unknown option" in capsys.readouterr().err
+
+
+def test_main_non_utf8_skill_md_is_reported_not_traceback(monkeypatch, tmp_path, capsys):
+    p = tmp_path / "SKILL.md"
+    p.write_bytes(b"---\nname: run-x\ndescription: \xff\xfe\n---\n")
+    rc = _run_main(monkeypatch, str(p))
+    assert rc == 1
+    assert "cannot read as UTF-8" in capsys.readouterr().err

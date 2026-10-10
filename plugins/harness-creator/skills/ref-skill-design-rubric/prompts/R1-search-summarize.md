@@ -52,7 +52,9 @@
 - inline schema (object, required: [rubric_version, summary, matches])
   - `rubric_version`: string
   - `summary`: string (50-800 字)
-  - `matches`: array<{id: string, area: string, severity: string, check: string, rationale?: string}>
+  - `matches`: array<{id: string, area: string, severity: string, check: string, rationale?: string, hints?: array<string> (1-3 件。rubric 内の rule に紐づくものだけ)}>
+  - `suggestions?`: array<string> (該当ゼロのときだけ。近傍の rule id を最大 3 件。下の正規化方針を参照)
+- 失敗時だけ、上の形の代わりに `{"error": "rubric_unreadable", "path": "<読めなかった path>"}` を返す (4.1)。
 
 ## Layer 3: インフラ層 (外部依存)
 
@@ -70,14 +72,19 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 失敗時挙動
-- rubric.json 欠損 → exit 1 + stderr に欠損 path。
-  - 目的: silent fallback で空 matches[] を返し caller が誤判定するのを防ぐ。
+- references/rubric.json を読めない・JSON として壊れている → 記憶や推測で rule を埋めず、`{"error": "rubric_unreadable", "path": ...}` だけを返して止まる。
+  - 目的: 空の matches[] や記憶の rule を返して、caller が「該当なし」や古い版と取り違えるのを防ぐ。
+  - prompt なので exit code は持たない。caller は `error` キーの有無で失敗を判定する。
 
 ### 4.2 観測 / ロギング
-- 標準出力に JSON。stderr は診断情報のみ。
+- 応答は JSON 1つだけにする。診断や思考過程は応答に混ぜない。
 
 ### 4.3 セキュリティ
 - 読み取り専用、外部送信なし。
+
+### 4.4 最大反復回数
+- 5.4 の自己評価の反復は最大 3 回。3 回で完了チェックリストを満たせないときは、満たせない項目を summary に書いて返す。
+  - 目的: 検索だけの責務で反復が際限なく続き、caller の待ち時間と token を消費するのを防ぐ。
 
 ## Layer 5: エージェント層 (実行主体定義)
 
@@ -98,10 +105,10 @@
 - [ ] matches[].severity が rubric.json の当該 rule の severity と一致している
 - [ ] 改善 hint が rubric 内 rule に紐づいている (捏造禁止)
 - [ ] summary が 50-800 字に収まる
-- [ ] 該当ゼロ時は `matches: []` + `suggestions` を返す (exit 0)
+- [ ] 該当ゼロ時は `matches: []` + `suggestions` (2.4 の出力契約) を返す
 
 ### 5.4 実行方式
-固定手順は持たず、完了チェックリストの未充足項目を都度特定 → 解消手順を自ら立案 → 実行 → 自己評価を反復する (上限: Layer 4 最大反復回数)。
+固定手順は持たず、完了チェックリストの未充足項目を都度特定 → 解消手順を自ら立案 → 実行 → 自己評価を反復する (上限: 4.4 の最大反復回数 3 回)。
 
 ## Layer 6: オーケストレーション層
 
@@ -115,7 +122,7 @@
 ## Layer 7: UI / 提示層
 
 ### 7.1 ユーザー提示形式
-- JSON (rubric_version / summary / matches)。
+- JSON (rubric_version / summary / matches、該当ゼロのときは suggestions も)。rubric を読めないときは 2.4 の失敗時の形。
 
 ### 7.2 言語
 - 本文: 日本語 (parameter / schema key は英語のまま)。
@@ -131,5 +138,6 @@
 ## 出力指示 (LLM 実行時に読む箇所)
 
 LLM は references/rubric.json を `{{target_layer}}` + `{{query}}` で検索し、
-`rubric_version` / `summary` / `matches` を JSON で返す。
+`rubric_version` / `summary` / `matches`（該当ゼロのときは `suggestions` も）を JSON で返す。
+rubric を読めないときは `{"error": "rubric_unreadable", "path": ...}` だけを返す。
 余計な前置き・後書き・思考過程出力は禁止。

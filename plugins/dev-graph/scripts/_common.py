@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # /// script
 # name: dev-graph-common
-# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write and identity primitives.
+# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write, identity and package-membership (is_package_member) primitives.
 # inputs: ["Python imports only"]
 # outputs: ["Reusable helper functions"]
-# requires-python = ">=3.10"
+# requires-python: ">=3.10"
 # dependencies: []
 # contexts: [A, B, C, E]
 # network: false
@@ -24,6 +24,14 @@ from typing import Any, Sequence
 
 class ContractError(RuntimeError):
     """A fail-closed contract violation (exit 1)."""
+
+
+class ParentNotDirectoryError(ContractError):
+    """The parent of a write target (or one of its ancestors) exists but is not a directory.
+
+    Kept distinct from FileExistsError so that create-only callers can tell "the target
+    already exists" apart from "the target's parent path is occupied by a file".
+    """
 
 
 def run(argv: Sequence[str], *, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -57,11 +65,36 @@ def json_bytes(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
+def _ensure_parent_directory(parent: Path) -> None:
+    """Create ``parent`` (and missing ancestors) or raise ParentNotDirectoryError.
+
+    ``Path.mkdir(parents=True, exist_ok=True)`` raises FileExistsError when the parent is a
+    regular file and NotADirectoryError when a deeper ancestor is; both are reported as
+    ParentNotDirectoryError so they never read as the create-only "target exists" signal.
+    """
+    for ancestor in (parent, *parent.parents):
+        if ancestor.exists() or ancestor.is_symlink():
+            if not ancestor.is_dir():
+                raise ParentNotDirectoryError(f"parent path is not a directory: {ancestor}")
+            break
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except (FileExistsError, NotADirectoryError) as exc:
+        raise ParentNotDirectoryError(f"parent path is not a directory: {parent}") from exc
+
+
 def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:
-    """Write complete bytes; create-only preserves an existing target and raises FileExistsError."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """Write complete bytes; create-only preserves an existing target and raises FileExistsError.
+
+    FileExistsError means only that the target itself already exists. A parent path that is
+    occupied by a non-directory raises ParentNotDirectoryError (a ContractError) instead.
+    The file is created with the umask-derived mode, like an ordinary ``open(..., "w")``.
+    """
+    _ensure_parent_directory(path.parent)
     fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
+        # mkstemp creates 0o600; give the target the same mode an ordinary create would get.
+        os.fchmod(fd, 0o666 & ~_current_umask())
         with os.fdopen(fd, "wb") as stream:
             stream.write(data)
             stream.flush()
@@ -75,6 +108,12 @@ def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:
             os.unlink(temp)
         except FileNotFoundError:
             pass
+
+
+def _current_umask() -> int:
+    mask = os.umask(0)
+    os.umask(mask)
+    return mask
 
 
 def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:

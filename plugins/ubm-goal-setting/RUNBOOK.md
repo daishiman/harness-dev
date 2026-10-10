@@ -84,7 +84,7 @@ python3 plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtu
 1回きりの実行は標準出力に同期の報告（JSON・正本形式は `skills/run-ubm-youtube-ingest/references/sync-report-format.md`）を出す。スケジューラのログでは以下を確認する:
 
 - **`temporary_failure`**: `alerts` に `[temporary_failure] <video_id> (attempt N)`。次回の実行で自動で再試行され、復旧すると `ingested` に計上される（`attempts` が増える）。`--max-retries`（既定 3）超過は `[retry_exhausted]`。
-- **`quota` / `auth`**: `stopped_reason` が `quota` / `auth`。穏当な停止（終了コード 0）でスケジューラは次の実行周期で再開する。`alerts` に `[quota]` / `[auth]`。
+- **`quota` / `auth` / `provider_error`**: `stopped_reason` が `quota` / `auth` / `provider_error`。動画の列挙でも字幕の取得でも、その時点で取得をやめる穏当な停止（終了コード 0）で、台帳に実行を残し実行権の占有を解放する。スケジューラは次の実行周期で再開する。`alerts` に `[quota]` / `[auth]` / `[provider_error]`（`provider_error` は要人間確認）。
 - **実行権の占有（lease）**: スケジューラの二重発火時、期限切れでない実行権の占有を持つ実行が居れば `stopped_reason=lease_held` で何もしない（終了コード 0）。`--lease-ttl`（既定 900 秒）を運用の実行周期に合わせる。
 - **冪等性**: 同一動画は `already_ingested` に写像され二度取り込まれない（冪等キー=`video_id`）。二回目の実行は `ingested=0`。
 
@@ -187,7 +187,7 @@ python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
 - 目標設定出力が検証に失敗した場合、未展開 `{{...}}`、全角数字、差分の `+/-`、やらないこと3項目（月報・期報）、種別別必須見出し、逆算チェーン（C1〜C6: 売上貢献の式の明示と検算・実行完了型・突合・成果グループ見出しでの紐づけ）を優先して直す。
 - (v0.2.0) `youtube-registry.json` 未存在時、1回きりの実行は `required-primary` + 保留中の第2ソースで自動初期化する（`--dry-run` は初期化も書込まない）。破損した登録簿は上書きしない（終了コード 1）ため、破損時はバックアップから復旧して再実行する。
 - (v0.2.0) `--backfill` の完全性ゲートが終了コード 1 の場合、標準エラー出力の `pending` / `temporary_failure` / `unapproved_unavailable` / 免除の欠落 / 重複 ID / ページ送りの欠落 の動画 ID を確認し、除外で分母を縮めず取得を再試行する。承認済み除外は `waiver_ref` を付ける。
-- (v0.2.0) `validate-knowledge-graph.py` が終了コード 1 の場合、標準エラー出力の違反（自己ループ / 根拠の欠落 / 確信度の範囲外 / `review_status` 欠落 / 循環）を確認し、C08（`knowledge-relation-extractor`）の辺の引き継ぎを修正して再生成する。`related` は無方向連想（循環の対象外）である点に注意する。
+- (v0.2.0) `validate-knowledge-graph.py` が終了コード 1 の場合、標準エラー出力の違反（自己ループ / 根拠の欠落 / 確信度の範囲外 / `review_status` 欠落 / 循環）を確認し、C08（`knowledge-relation-extractor`）の辺の引き継ぎを修正して再生成する。`related` は無方向連想（循環の対象外）である点に注意する。読めない・非 UTF-8・形の違う入力（`knowledge-relations.json` の object が `edges[]` と `relations[]` のちょうど一方を持たない場合を含む）も終了コード 1 で、書き込み失敗と引数の誤りは終了コード 2 になる。
 - (v0.2.0) 宙に浮いた辺（端点のエントリ不在）は終了コード 1 にならず、WARN 付きで `knowledge/knowledge-relations-quarantine.json` へ自動退避され `knowledge-relations.json` から除去された上で、残辺によりグラフの再生成が継続する（エントリ削除でグラフが恒久的に止まらない縮退）。**確認**: 隔離ファイルの `edges[]` を見る。**復旧**: 対象エントリを復活（または辺の端点の ID を実在するエントリへ修正）し、該当辺を隔離ファイルから `knowledge-relations.json` の `edges[]` へ戻して `validate-knowledge-graph.py` で再検証・再生成する。**破棄**: 辺自体が無効なら隔離ファイルから該当辺を削除する（隔離ファイルはグラフ生成に影響しない退避先のため放置しても機能劣化はないが、棚卸しで空に保つ）。
 
 ## 共通の入力と検証の正本

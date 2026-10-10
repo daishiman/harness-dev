@@ -3,8 +3,8 @@
 # name: build-init-scaffold
 # purpose: C01 init の決定論本体。C24 で解決した呼出し元 repo 内に 6 content root と .dev-graph の config/state/graph/cache/locks/templates を欠落時だけ作り、planned changes 0 の再実行は noop を返し、変更したときだけ immutable init receipt を残す。
 # inputs: ["argv: --repo-root PATH [--config PATH] [--hook-source plugin|project-fallback] [--dry-run]"]
-# outputs: ["stdout: JSON preview/noop/receipt or rejection report"]
-# requires-python = ">=3.10"
+# outputs: ["stdout: JSON preview/noop/receipt or rejection report", "exit: 0=preview/noop/applied, 1=rejected (InitError: unsafe path, failed pre-write gate, rollback_incomplete), 2=other contract/IO/JSON error"]
+# requires-python: ">=3.10"
 # dependencies: [_common.py, validate-graph-schema.py, resolve-repo-context.py]
 # contexts: [A, B, C, E]
 # network: false
@@ -24,7 +24,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from _common import ContractError, atomic_bytes, contained, dump, json_bytes as _json_bytes, load_json, utc_now
+from _common import (ContractError, ParentNotDirectoryError, atomic_bytes, contained, dump,
+                     json_bytes as _json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -100,10 +101,25 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
     preserved: list[Path] = []
     migration: list[dict[str, str]] = []
 
-    def directory(path: Path) -> None:
+    def missing_parents(path: Path) -> None:
+        """Plan every missing ancestor below root; an ancestor that is not a directory fails here, not at apply."""
+        ancestors = [parent for parent in path.parents if parent != root and parent.is_relative_to(root)]
+        for parent in reversed(ancestors):
+            if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+                raise InitError("path_not_directory",
+                                f"{parent.relative_to(root).as_posix()} exists but is not a plain directory")
+            if not parent.exists() and parent not in dirs:
+                dirs.append(parent)
+
+    def directory(path: Path, *, report_preserved: bool = True) -> None:
+        missing_parents(path)
         if path.is_symlink() or (path.exists() and not path.is_dir()):
             raise InitError("path_not_directory", f"{path.relative_to(root).as_posix()} exists but is not a plain directory")
-        (preserved if path.is_dir() else dirs).append(path)
+        if path.is_dir():
+            if report_preserved:
+                preserved.append(path)
+        elif path not in dirs:
+            dirs.append(path)
 
     content = {key: contained(Path(ctx["content_roots"][key]), root, must_exist=False) for key in CONTENT_KEYS}
     local = {key: contained(Path(ctx["local_state_paths"][key]), root, must_exist=False)
@@ -114,6 +130,7 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
 
     for source in sorted(item for item in (PLUGIN_ROOT / "templates").iterdir() if item.is_file()):
         target = local["templates"] / source.name
+        missing_parents(target)
         data = source.read_bytes()
         if not (target.exists() or target.is_symlink()):
             files.append((target, data))
@@ -129,6 +146,7 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
 
     config_path, graph_path = local["config"], local["graph"]
     for path in (config_path, graph_path):
+        missing_parents(path)
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise InitError("path_not_file", f"{path.relative_to(root).as_posix()} exists but is not a plain file")
     if config_path.exists():
@@ -152,6 +170,7 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
         # 既存の config/graph が gate を通らないまま scaffold を進めると、部分成功を成功に見せてしまう。
         raise InitError("pre_write_validation_failed", f"{len(findings)} config/graph finding(s)", findings)
     receipts = graph_path.parent / "receipts"
+    directory(receipts, report_preserved=False)
     existing = sorted(receipts.glob("init-*.json")) if receipts.is_dir() else []
     return {"content": content, "local": local, "dirs": dirs, "files": files, "preserved": preserved,
             "migration": migration, "receipts": receipts, "existing": existing,
@@ -165,6 +184,8 @@ def _create_file(path: Path, data: bytes) -> None:
         atomic_bytes(path, data, create_only=True)
     except FileExistsError as exc:
         raise InitError("path_appeared_during_init", str(path)) from exc
+    except ParentNotDirectoryError as exc:
+        raise InitError("parent_not_directory", str(exc)) from exc
 
 
 def scaffold(args: argparse.Namespace) -> dict[str, Any]:
@@ -197,18 +218,16 @@ def scaffold(args: argparse.Namespace) -> dict[str, Any]:
     made_dirs: list[Path] = []
     made_files: list[Path] = []
     try:
-        # Include parents that atomic file/receipt creation would otherwise create implicitly.
-        directories = [*plan["dirs"], *(path.parent for path, _ in plan["files"]), receipt_path.parent]
-        for path in dict.fromkeys(directories):
-            missing = [parent for parent in [path, *path.parents] if not parent.exists()]
-            for directory in reversed(missing):
-                try:
-                    directory.mkdir()
-                except FileExistsError:
-                    if not directory.is_dir():
-                        raise
-                else:
-                    made_dirs.append(directory)
+        # plan["dirs"] already lists every missing ancestor (parents first), including the ones that
+        # file/receipt creation would otherwise create implicitly, so the receipt's created[] is complete.
+        for directory in plan["dirs"]:
+            try:
+                directory.mkdir()
+            except FileExistsError:
+                if not directory.is_dir():
+                    raise
+            else:
+                made_dirs.append(directory)
         for path, data in plan["files"]:
             _create_file(path, data)
             made_files.append(path)

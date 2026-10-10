@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # /// script
 # name: test-spec-transition
-# version: 0.1.0
-# purpose: run-system-spec-elicit の受入テスト。IN1(validate-coverage-matrix.py が fixture spec-state に exit0)/OUT1(最終 spec-state が未収集0で --require-complete exit0)/5周目 resume の状態保存/単一 transition writer の確定巻き戻し拒否を検証する。
+# version: 0.2.0
+# purpose: run-system-spec-elicit の受入テスト。IN1(validate-coverage-matrix.py が fixture spec-state に exit0)/OUT1(最終 spec-state が未収集0で --require-complete exit0)/5周目 resume の状態保存/単一 transition writer の確定巻き戻し拒否/根拠参照の実在/required-info catalog 不正の exit2/書込の原子性を検証する。
 # inputs:
 #   - argv: pytest 収集 (引数なし)
 # outputs:
@@ -302,7 +302,8 @@ def test_reopen_then_reconfirm_allowed():
     )
     assert state["matrix"]["database"]["web"]["state"] == "未収集"
     assert state["reopen_log"][-1]["reason"] == "追加要件が判明"
-    # reopen 後は confirm へ再遷移できる
+    # reopen 後は confirm へ再遷移できる (取り直した回答を qa_log に載せてから確定する)
+    mod.apply_turn(state, {"qa_id": "qa-002", "question": "q2", "answer": "a2"})
     mod.apply_cell_op(
         state, {"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-002"}
     )
@@ -500,9 +501,17 @@ def test_cli_init_chunk_apply_aggregate(tmp_path):
     assert mod.main(["aggregate", "--state", str(state_path)]) == 0
 
 
+def _cli_register_qa(tmp_path, state_path, qa_id="qa-001") -> None:
+    """CLI の apply は op だけを受けるので、確定の根拠になる回答は先に chunk で qa_log へ載せる。"""
+    turns_path = tmp_path / f"turns-{qa_id}.json"
+    turns_path.write_text(json.dumps([{"qa_id": qa_id, "question": "q", "answer": "a"}]))
+    assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path)]) == 0
+
+
 def test_cli_apply_rollback_returns_1(tmp_path):
     state_path = tmp_path / "spec-state.json"
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    _cli_register_qa(tmp_path, state_path)
     confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
     assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 0
     # 確定セルを exclude で直接巻き戻し → CLI も拒否 (exit 1)
@@ -716,6 +725,7 @@ def test_set_foundation_rejects_non_object():
 # --------------------------------------------------------------------------- #
 def test_confirm_with_serves_goals():
     state = mod.init_state(_taxonomy())
+    mod.apply_turn(state, {"qa_id": "qa-001", "question": "q", "answer": "a"})
     mod.apply_cell_op(
         state,
         {"action": "confirm", "category": "database", "platform": "web",
@@ -907,6 +917,7 @@ def test_cli_set_foundation_confirm_gate_returns_1(tmp_path):
 def test_cli_apply_set_serves(tmp_path):
     state_path = tmp_path / "spec-state.json"
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    _cli_register_qa(tmp_path, state_path)
     confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
     assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 0
     serves = json.dumps({"action": "set-serves", "category": "database", "platform": "web", "serves_goals": ["G1"]})
@@ -1054,3 +1065,119 @@ def test_cli_set_knowledge_candidate(tmp_path):
     ) == 0
     written = json.loads(state_path.read_text(encoding="utf-8"))
     assert written["knowledge_candidates"][0]["status"] == "discovered"
+
+
+# --------------------------------------------------------------------------- #
+# 根拠参照の実在・required-info catalog の不正・書込の原子性                    #
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    "op",
+    [
+        {"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-missing"},
+        {"action": "confirm", "category": "database", "platform": "web", "qa_ref": ["qa-001"]},
+        {"action": "exclude", "category": "database", "platform": "web", "reason": "x", "qa_ref": "qa-missing"},
+        {"action": "exclude", "category": "database", "platform": "web", "approval_ref": "appr-missing"},
+    ],
+)
+def test_cell_op_rejects_dangling_reference(op):
+    """validate-coverage-matrix が落とす宙に浮いた参照を、writer が書く前に拒否する。"""
+    state = mod.init_state(_taxonomy())
+    mod.apply_turn(state, {"qa_id": "qa-001", "question": "q", "answer": "a"})
+    before = copy.deepcopy(state)
+    with pytest.raises(mod.TransitionError, match="存在しない|非空文字列でない"):
+        mod.apply_cell_op(state, op)
+    assert state == before
+
+
+def test_confirm_may_cite_approval_log_entry():
+    """validate-coverage-matrix は確定 qa_ref を qa_log ∪ approval_log に照合する。writer も同じ範囲を認める。"""
+    state = mod.init_state(_taxonomy())
+    mod.apply_turn(state, {"approval_id": "appr-1", "approval_note": "利用者が承認"})
+    mod.apply_cell_op(state, {"action": "confirm", "category": "database", "platform": "web", "qa_ref": "appr-1"})
+    mod.apply_cell_op(state, {"action": "exclude", "category": "database", "platform": "mobile", "approval_ref": "appr-1"})
+    assert state["matrix"]["database"]["web"] == {"state": "確定", "qa_ref": "appr-1"}
+    assert state["matrix"]["database"]["mobile"] == {"state": "対象外", "approval_ref": "appr-1"}
+
+
+def test_cli_apply_dangling_qa_ref_keeps_state_file(tmp_path):
+    state_path = tmp_path / "spec-state.json"
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    before = state_path.read_bytes()
+    confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
+    assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 1
+    assert state_path.read_bytes() == before
+
+
+def _broken_catalogs() -> dict:
+    base = json.loads(REQUIRED_INFO.read_text(encoding="utf-8"))
+    in_scope_obj = copy.deepcopy(base)
+    in_scope_obj["in_scope_domains"] = [{"x": 1}]
+    domain_list = copy.deepcopy(base)
+    domain_list["items"][0]["domain"] = [domain_list["items"][0]["domain"]]
+    depends_obj = copy.deepcopy(base)
+    depends_obj["items"][1]["depends_on"] = [{"item_id": "product-goal"}]
+    na_list = copy.deepcopy(base)
+    na_list["na_domains"] = [{"domain": ["ui-ux"], "approval_state": "approved", "reason": "x"}]
+    return {
+        "list-root": [],
+        "empty-items": {"items": []},
+        "in-scope-object": in_scope_obj,
+        "domain-list": domain_list,
+        "depends-on-object": depends_obj,
+        "na-domain-list": na_list,
+    }
+
+
+@pytest.mark.parametrize("name", sorted(_broken_catalogs()))
+def test_broken_required_info_catalog_is_usage_error_not_traceback(tmp_path, capsys, name):
+    """catalog 自体の不正は rc 2。候補 state の接地不足 (rc 1) と区別し、state も書かない。"""
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(json.dumps(_broken_catalogs()[name], ensure_ascii=False), encoding="utf-8")
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(mod.init_state(_taxonomy()), ensure_ascii=False))
+    before = state_path.read_bytes()
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(json.dumps([_block_answer_turn()], ensure_ascii=False))
+    rc = mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path), "--required-info", str(catalog_path)])
+    assert rc == 2
+    assert capsys.readouterr().err.startswith("CatalogError: ")
+    assert state_path.read_bytes() == before
+
+
+def test_write_failure_keeps_previous_state_file(tmp_path):
+    """書込の途中で落ちても前の spec-state.json が残り、一時ファイルも残らない。
+
+    JSON の `\\ud800` は読めるが UTF-8 へは書けない (lone surrogate)。従来の write_text は
+    先にファイルを切り詰めてから失敗したため、正本の spec-state.json が空になっていた。
+    """
+    state_path = tmp_path / "spec-state.json"
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    before = state_path.read_bytes()
+    op = '{"action": "exclude", "category": "database", "platform": "web", "reason": "\\ud800"}'
+    assert mod.main(["apply", "--state", str(state_path), "--op", op]) == 1
+    assert state_path.read_bytes() == before
+    assert [p.name for p in tmp_path.iterdir()] == ["spec-state.json"]
+
+
+def test_write_keeps_mode_and_follows_symlink(tmp_path):
+    real = tmp_path / "real-state.json"
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(real)]) == 0
+    real.chmod(0o640)
+    link = tmp_path / "spec-state.json"
+    link.symlink_to(real)
+    reason = json.dumps({"action": "exclude", "category": "database", "platform": "web", "reason": "対象外"})
+    assert mod.main(["apply", "--state", str(link), "--op", reason]) == 0
+    assert link.is_symlink()
+    assert (real.stat().st_mode & 0o777) == 0o640
+    assert json.loads(real.read_text(encoding="utf-8"))["matrix"]["database"]["web"]["state"] == "対象外"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["real-state.json", "spec-state.json"]
+
+
+def test_frontmatter_declares_required_info_validator_dependency():
+    """--required-info は plugin の scripts/validate-knowledge-graph.py を読み込むので dependencies に載せる。"""
+    script = SKILL_DIR / "scripts" / "apply-spec-transition.py"
+    header = script.read_text(encoding="utf-8").split("# ///", 2)[1]
+    line = next(row for row in header.splitlines() if row.startswith("# dependencies:"))
+    deps = [d.strip() for d in line.split(":", 1)[1].strip().strip("[]").split(",") if d.strip()]
+    assert "scripts/validate-knowledge-graph.py" in deps
+    assert all((PLUGIN_ROOT / dep).is_file() for dep in deps)

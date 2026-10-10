@@ -1,10 +1,29 @@
 #!/usr/bin/env python3
+# /// script
+# name: plan-verification-obligations
+# purpose: 検証 obligation の DAG を LLM を起動せずに解決し、再利用できる PASS 証跡と未解決の claim を分けた plan を出す
+# inputs:
+#   - argv: --contract <json> --evidence-dir <dir>（必須） [--repo-root] [--profile] [--stage] [--max-context-bytes] [--max-llm-batches] [--run-id] [--max-model-actions] [--out <json>]
+# outputs:
+#   - stdout: plan JSON（--out を付けたときは同じ内容をそのファイルにも書く）
+#   - exit: 0=OK / 2=contract を読めない・不正（非 UTF-8、NaN・Infinity・1e999 などの有限でない数を含む）、fingerprint 対象のディレクトリを読めない、--out に書けない
+# requires-python: ">=3.10"
+# dependencies: []
+# contexts: [C]
+# network: false
+# write-scope: --out の指定先のみ（同じディレクトリの一時ファイルに書いてから置き換える。--evidence-dir は読むだけ）
+# ///
 """Resolve a verification-obligation DAG without launching an LLM.
 
 The planner makes verification cost proportional to changed claims and unresolved
 uncertainty, not to route, agent, or thought-method counts.  Exact PASS evidence
 is reusable only while the claim inputs, checker contract, and dependency
 fingerprints remain unchanged.
+
+Fingerprints fail closed: a subdirectory that cannot be read stops the plan with
+exit 2 instead of being skipped, because skipping it would let edits inside it
+reuse a stale PASS receipt.  Directory walks have no size cap; --max-context-bytes
+limits only the LLM context packing.
 """
 
 from __future__ import annotations
@@ -12,9 +31,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import sys
+import tempfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -47,6 +68,7 @@ DEFAULT_STAGE = "draft"
 DRAFT_KINDS = {"generative", "deterministic"}
 DRAFT_DEFER_REASON = "not-run(stage=draft)"
 RISK_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+ACTIVATIONS = {"changed", "always", "exhaustive"}
 DEFAULT_MAX_CONTEXT_BYTES = 120_000
 DEFAULT_INCREMENTAL_LLM_BATCHES = 1
 DEFAULT_INCREMENTAL_MODEL_ACTIONS = 4
@@ -54,6 +76,26 @@ DEFAULT_INCREMENTAL_MODEL_ACTIONS = 4
 
 class ContractError(ValueError):
     """Raised when a contract cannot be resolved safely."""
+
+
+def _reject_json_constant(name: str) -> Any:
+    # NaN・Infinity は JSON の規格外。読むと plan の stdout が strict JSON でなくなる
+    raise ContractError(f"contract must not contain {name}")
+
+
+def _reject_non_finite_float(text: str) -> float:
+    # 1e999 は parse_constant を通らずに inf になる。NaN・Infinity と同じく読む時点で拒否し、
+    # 出力の時点の「Out of range float values」(どの値か分からない) にしない
+    value = float(text)
+    if not math.isfinite(value):
+        raise ContractError(f"contract must not contain a non-finite number: {text}")
+    return value
+
+
+def _raise_unreadable(exc: OSError) -> None:
+    # 読めないサブディレクトリを黙って飛ばすと、その中を書き換えても fingerprint が変わらず、
+    # 古い PASS receipt を再利用してしまう。fingerprint を作れないので計画ごと止める (exit 2)
+    raise ContractError(f"cannot read a directory for the fingerprint: {exc.filename}: {exc.strerror}")
 
 
 def _canonical_sha(value: Any) -> str:
@@ -68,6 +110,46 @@ def _safe_rel(raw: str) -> Path:
     return path
 
 
+def _update_with_link_target(digest: Any, link: Path) -> int:
+    """symlink のリンク先の中身を digest に入れ、読んだ byte 数を返す。
+
+    リンク先の文字列だけを hash すると、リンク先のファイルを書き換えても fingerprint が変わらず、
+    古い PASS receipt を再利用してしまう。ディレクトリは os.walk(followlinks=False) で辿るので、
+    祖先を指すリンクでも無限に潜らない (中の symlink はリンク先の文字列で hash する)。
+    """
+    try:
+        real = link.resolve()
+    except (OSError, RuntimeError):
+        digest.update(b"target-unresolvable\0")
+        return 0
+    if real.is_file():
+        data = real.read_bytes()
+        digest.update(b"target-file\0")
+        digest.update(data)
+        digest.update(b"\0")
+        return len(data)
+    if not real.is_dir():
+        digest.update(b"target-missing\0")
+        return 0
+    total = 0
+    digest.update(b"target-dir\0")
+    for root, dirs, files in os.walk(real, followlinks=False, onerror=_raise_unreadable):
+        dirs.sort()
+        base = Path(root)
+        for name in sorted(files + [d for d in dirs if (base / d).is_symlink()]):
+            child = base / name
+            rel = child.relative_to(real).as_posix()
+            if child.is_symlink():
+                digest.update(f"symlink\0{rel}\0{os.readlink(child)}\0".encode("utf-8"))
+            elif child.is_file():
+                data = child.read_bytes()
+                digest.update(f"file\0{rel}\0".encode("utf-8"))
+                digest.update(data)
+                digest.update(b"\0")
+                total += len(data)
+    return total
+
+
 def snapshot_path(repo_root: Path, raw: str) -> dict:
     """Return a deterministic digest/size snapshot for a file, dir, or symlink."""
     rel = _safe_rel(raw)
@@ -79,19 +161,24 @@ def snapshot_path(repo_root: Path, raw: str) -> dict:
     if path.is_symlink():
         target = os.readlink(path)
         digest.update(f"symlink\0{rel.as_posix()}\0{target}".encode("utf-8"))
-        return {"path": rel.as_posix(), "sha256": digest.hexdigest(), "bytes": len(target), "files": 1, "missing": False}
+        size = _update_with_link_target(digest, path)
+        return {"path": rel.as_posix(), "sha256": digest.hexdigest(), "bytes": len(target) + size, "files": 1, "missing": False}
     if path.is_file():
         data = path.read_bytes()
         digest.update(f"file\0{rel.as_posix()}\0".encode("utf-8"))
         digest.update(data)
         return {"path": rel.as_posix(), "sha256": digest.hexdigest(), "bytes": len(data), "files": 1, "missing": False}
     if path.is_dir():
-        for child in sorted(path.rglob("*"), key=lambda item: item.relative_to(repo_root).as_posix()):
+        # rglob と同じ集合 (symlink のディレクトリには潜らない) を、読めないディレクトリで止まる os.walk で集める
+        children = [Path(root) / name
+                    for root, dirs, files in os.walk(path, followlinks=False, onerror=_raise_unreadable)
+                    for name in dirs + files]
+        for child in sorted(children, key=lambda item: item.relative_to(repo_root).as_posix()):
             child_rel = child.relative_to(repo_root)
             if child.is_symlink():
                 target = os.readlink(child)
                 digest.update(f"symlink\0{child_rel.as_posix()}\0{target}\0".encode("utf-8"))
-                total_bytes += len(target)
+                total_bytes += len(target) + _update_with_link_target(digest, child)
                 file_count += 1
             elif child.is_file():
                 data = child.read_bytes()
@@ -107,8 +194,17 @@ def snapshot_path(repo_root: Path, raw: str) -> dict:
     return {"path": rel.as_posix(), "sha256": digest.hexdigest(), "bytes": 0, "files": 0, "missing": True}
 
 
+def _is_one_of(value: Any, allowed: Any) -> bool:
+    # 集合の要素かを見る前に文字列であることを確かめる (配列や dict だと unhashable で TypeError になる)
+    return isinstance(value, str) and value in allowed
+
+
 def _validate_contract(contract: dict) -> list[dict]:
-    if contract.get("schema_version") != 1 or not str(contract.get("subject", "")).strip():
+    # 後段が添字で読む key と型はここで全部確かめ、KeyError/TypeError の traceback (exit 1) にしない。
+    if not isinstance(contract, dict):
+        raise ContractError("contract must be a JSON object")
+    subject = contract.get("subject")
+    if contract.get("schema_version") != 1 or not isinstance(subject, str) or not subject.strip():
         raise ContractError("contract requires schema_version=1 and a non-empty subject")
     obligations = contract.get("obligations")
     if not isinstance(obligations, list) or not obligations:
@@ -117,27 +213,53 @@ def _validate_contract(contract: dict) -> list[dict]:
     for item in obligations:
         if not isinstance(item, dict):
             raise ContractError("every obligation must be an object")
-        oid = str(item.get("id", ""))
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:._-]*", oid):
+        oid = item.get("id")
+        if not isinstance(oid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:._-]*", oid):
             raise ContractError(f"invalid obligation id: {oid!r}")
         if oid in ids:
             raise ContractError(f"duplicate obligation id: {oid}")
         ids.add(oid)
-        if item.get("kind") not in KINDS:
+        if not _is_one_of(item.get("kind"), KINDS):
             raise ContractError(f"unknown obligation kind for {oid}: {item.get('kind')}")
-        if not str(item.get("claim", "")).strip():
-            raise ContractError(f"obligation claim is empty: {oid}")
+        if not _is_one_of(item.get("risk"), RISK_ORDER):
+            raise ContractError(f"obligation risk must be one of {sorted(RISK_ORDER)}: {oid}")
+        if not _is_one_of(item.get("activation"), ACTIVATIONS):
+            raise ContractError(f"obligation activation must be one of {sorted(ACTIVATIONS)}: {oid}")
+        if "stage" in item and not _is_one_of(item["stage"], STAGES):
+            raise ContractError(f"obligation stage must be one of {sorted(STAGES)}: {oid}")
+        depends_on = item.get("depends_on")
+        if depends_on is not None and (not isinstance(depends_on, list) or not all(isinstance(dep, str) for dep in depends_on)):
+            raise ContractError(f"obligation depends_on must be an array of ids: {oid}")
+        if depends_on and len(set(depends_on)) != len(depends_on):
+            raise ContractError(f"obligation depends_on has duplicate ids: {oid}")
+        confidence = item.get("minimum_confidence", 0.8)
+        if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+            raise ContractError(f"obligation minimum_confidence must be a number in 0..1: {oid}")
+        claim = item.get("claim")
+        if not isinstance(claim, str) or not claim.strip():
+            # null・[]・false・0 を str() で「空でない」とみなして通さない
+            raise ContractError(f"obligation claim must be a non-empty string: {oid}")
+        if "reuse" in item and not isinstance(item["reuse"], bool):
+            # 文字列 "false" は真とみなされ、再利用を禁じたつもりで許してしまう
+            raise ContractError(f"obligation reuse must be a boolean: {oid}")
         inputs = item.get("inputs")
         if not isinstance(inputs, list):
             raise ContractError(f"obligation inputs must be an array: {oid}")
         if not inputs and not isinstance(item.get("parameters"), dict):
             raise ContractError(f"obligation requires path inputs or inline parameters: {oid}")
         for entry in inputs:
-            if not isinstance(entry, dict) or not isinstance(entry.get("required"), bool) or not isinstance(entry.get("context"), bool):
+            if (not isinstance(entry, dict) or not isinstance(entry.get("required"), bool)
+                    or not isinstance(entry.get("context"), bool)
+                    or not isinstance(entry.get("path"), str) or not entry["path"]):
                 raise ContractError(f"invalid input entry for {oid}")
-            _safe_rel(str(entry.get("path", "")))
-        for raw_path in item.get("expected_evidence_paths") or []:
-            _safe_rel(str(raw_path))
+            _safe_rel(entry["path"])
+        expected = item.get("expected_evidence_paths")
+        if expected is not None and (not isinstance(expected, list)
+                                     or not all(isinstance(raw, str) and raw for raw in expected)):
+            # 文字列 "abc" を1文字ずつのパスとして通さない
+            raise ContractError(f"obligation expected_evidence_paths must be an array of paths: {oid}")
+        for raw_path in expected or []:
+            _safe_rel(raw_path)
         if item["kind"] == "generative" and not isinstance(item.get("model_required"), bool):
             raise ContractError(f"generative obligation requires model_required boolean: {oid}")
         if item["kind"] == "deterministic":
@@ -146,7 +268,7 @@ def _validate_contract(contract: dict) -> list[dict]:
                 raise ContractError(f"deterministic obligation requires checker.id and checker.argv: {oid}")
         if item["kind"] == "audit" and item.get("activation") != "exhaustive":
             raise ContractError(f"audit obligation must use activation=exhaustive: {oid}")
-        if item["kind"] == "observational" and item.get("observation_tier") not in {"fork", "live"}:
+        if item["kind"] == "observational" and not _is_one_of(item.get("observation_tier"), {"fork", "live"}):
             raise ContractError(f"observational obligation requires observation_tier=fork|live: {oid}")
     for item in obligations:
         unknown = set(item.get("depends_on") or []) - ids
@@ -156,50 +278,72 @@ def _validate_contract(contract: dict) -> list[dict]:
 
 
 def _topological(obligations: list[dict]) -> list[dict]:
+    # 再帰ではなく明示の stack で深さ優先にする (長い依存の鎖で RecursionError にしない)。順序は再帰版と同じ後行順。
     by_id = {item["id"]: item for item in obligations}
     state: dict[str, int] = {}
     ordered: list[dict] = []
 
-    def visit(oid: str) -> None:
-        if state.get(oid) == 1:
-            raise ContractError(f"dependency cycle contains: {oid}")
-        if state.get(oid) == 2:
-            return
-        state[oid] = 1
-        for dep in sorted(by_id[oid].get("depends_on") or []):
-            visit(dep)
-        state[oid] = 2
-        ordered.append(by_id[oid])
+    def deps_of(oid: str) -> Any:
+        return iter(sorted(by_id[oid].get("depends_on") or []))
 
-    for oid in sorted(by_id):
-        visit(oid)
+    for root in sorted(by_id):
+        if state.get(root) == 2:
+            continue
+        state[root] = 1
+        stack = [(root, deps_of(root))]
+        while stack:
+            oid, deps = stack[-1]
+            dep = next(deps, None)
+            if dep is None:
+                stack.pop()
+                state[oid] = 2
+                ordered.append(by_id[oid])
+            elif state.get(dep) == 1:
+                raise ContractError(f"dependency cycle contains: {dep}")
+            elif state.get(dep) != 2:
+                state[dep] = 1
+                stack.append((dep, deps_of(dep)))
     return ordered
 
 
-def _load_receipts(evidence_dir: Path) -> list[tuple[Path, dict]]:
+def _load_receipts(evidence_dir: Path, unreadable: list[dict] | None = None) -> list[tuple[Path, dict]]:
+    """構造が正しい receipt を返す。
+
+    unreadable を渡すと、subject・obligation_id・fingerprint は読めるが構造が壊れていて、
+    status が PASS でない receipt (finding_codes が整数の FAIL など) をそこに積む。
+    読めない FAIL を捨てて同じ fingerprint の PASS を再利用しないよう、呼び出し側で矛盾として扱う。
+    """
     receipts: list[tuple[Path, dict]] = []
     if not evidence_dir.is_dir():
         return receipts
     for path in sorted(evidence_dir.rglob("*.json")):
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, ValueError, RecursionError):
+            # 壊れた receipt (非 UTF-8 の UnicodeDecodeError を含む) は読み飛ばし、計画全体を止めない
             continue
         required = {"schema_version", "subject", "obligation_id", "fingerprint_sha256", "status", "confidence", "verifier", "evidence", "finding_codes", "produced_at"}
         structurally_valid = (
             isinstance(doc, dict)
             and required <= set(doc)
             and doc.get("schema_version") == 1
-            and doc.get("status") in {"PASS", "FAIL", "INCONCLUSIVE"}
+            and _is_one_of(doc.get("status"), {"PASS", "FAIL", "INCONCLUSIVE"})
+            and not isinstance(doc.get("confidence"), bool)
             and isinstance(doc.get("confidence"), (int, float))
             and 0 <= doc["confidence"] <= 1
             and isinstance(doc.get("verifier"), dict)
+            and isinstance(doc["verifier"].get("kind", ""), str)
             and isinstance(doc.get("evidence"), list)
             and isinstance(doc.get("finding_codes"), list)
+            and all(isinstance(code, str) for code in doc["finding_codes"])
             and re.fullmatch(r"[0-9a-f]{64}", str(doc.get("fingerprint_sha256", "")))
         )
         if structurally_valid:
             receipts.append((path, doc))
+        elif (unreadable is not None and isinstance(doc, dict) and doc.get("status") != "PASS"
+              and all(isinstance(doc.get(key), str)
+                      for key in ("subject", "obligation_id", "fingerprint_sha256"))):
+            unreadable.append(doc)
     return receipts
 
 
@@ -299,7 +443,8 @@ def build_plan(
     repo_root = repo_root.resolve()
     obligations = _topological(_validate_contract(contract))
     subject = str(contract["subject"])
-    receipts = _load_receipts(evidence_dir.resolve())
+    unreadable_receipts: list[dict] = []
+    receipts = _load_receipts(evidence_dir.resolve(), unreadable_receipts)
 
     snapshots: dict[str, dict] = {}
     fingerprints: dict[str, str] = {}
@@ -337,8 +482,6 @@ def build_plan(
         oid = item["id"]
         fingerprint = fingerprints[oid]
         item_stage = str(item.get("stage") or DEFAULT_STAGE)
-        if item_stage not in STAGES:
-            raise ContractError(f"unknown obligation stage for {oid}: {item_stage}")
         blocked_by = [dep for dep in item.get("depends_on") or [] if actions.get(dep) != "reuse"]
         context_paths = [str(entry["path"]) for entry in item["inputs"] if entry["context"]]
         record = {
@@ -396,8 +539,15 @@ def build_plan(
                 (path, doc) for path, doc in matching
                 if doc.get("status") == "PASS" and float(doc.get("confidence", 0)) >= minimum_confidence
             ]
-            may_reuse = item.get("reuse", True) is not False and item.get("activation") != "always"
-            if len(statuses) > 1:
+            may_reuse = item.get("reuse", True) and item.get("activation") != "always"
+            unreadable_non_pass = any(
+                doc.get("subject") == subject
+                and doc.get("obligation_id") == oid
+                and doc.get("fingerprint_sha256") == fingerprint
+                and _receipt_artifacts_current(repo_root, doc)
+                for doc in unreadable_receipts
+            )
+            if len(statuses) > 1 or (passes and unreadable_non_pass):
                 record.update(action="escalate", reason="contradictory-current-evidence")
             elif may_reuse and passes:
                 path, _ = sorted(passes, key=lambda pair: str(pair[0]))[-1]
@@ -551,6 +701,22 @@ def build_plan(
     }
 
 
+def _write_atomic(out: Path, rendered: str) -> None:
+    # 途中で止まっても半端な plan を残さないよう、同じディレクトリの一時ファイルから置き換える
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=f".{out.name}.", suffix=".tmp")
+    try:
+        umask = os.umask(0)
+        os.umask(umask)
+        os.fchmod(fd, 0o666 & ~umask)  # mkstemp の 0600 ではなく、従来の write_text と同じ権限にする
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
+        os.replace(tmp_name, out)
+    except BaseException:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--contract", required=True)
@@ -570,7 +736,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out")
     args = parser.parse_args(argv)
     try:
-        contract = json.loads(Path(args.contract).read_text(encoding="utf-8"))
+        contract = json.loads(Path(args.contract).read_text(encoding="utf-8"),
+                              parse_constant=_reject_json_constant,
+                              parse_float=_reject_non_finite_float)
         plan = build_plan(
             contract,
             Path(args.repo_root),
@@ -582,14 +750,13 @@ def main(argv: list[str] | None = None) -> int:
             args.max_model_actions,
             args.stage,
         )
-    except (OSError, json.JSONDecodeError, ContractError) as exc:
+        rendered = json.dumps(plan, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+        if args.out:
+            _write_atomic(Path(args.out), rendered)
+    except (OSError, ValueError, RecursionError, ContractError) as exc:
+        # ValueError は JSONDecodeError と非 UTF-8 の UnicodeDecodeError を含む
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 2
-    rendered = json.dumps(plan, ensure_ascii=False, indent=2) + "\n"
-    if args.out:
-        out = Path(args.out)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
     return 0
 

@@ -126,6 +126,55 @@ def test_other_project_cache_is_not_reselected(tmp_path, homes, scope, market):
     assert MOD.resolve("skill-governance-adapters", me, tmp_path / "other-project") == private.resolve()
 
 
+@pytest.mark.parametrize("scope", ["project", "local"])
+def test_older_cached_version_of_other_project_plugin_is_not_reselected(tmp_path, homes, scope):
+    """他プロジェクト専用の plugin は、upgrade 後に残った古い version dir も含めて plugin 単位で除く。"""
+    claude, _ = homes
+    cache = claude / "plugins" / "cache"
+    me = _plugin(cache / "harness-local" / "dev-graph" / "0.1.14", "dev-graph")
+    _plugin(cache / "harness-local" / "skill-governance-adapters" / "1.0.0", "skill-governance-adapters")
+    private = _plugin(cache / "harness-local" / "skill-governance-adapters" / "1.1.0", "skill-governance-adapters")
+    _installed(claude, {
+        "skill-governance-adapters@harness-local": [{
+            "scope": scope, "projectPath": str(tmp_path / "other-project"), "installPath": str(private),
+        }],
+    })
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "current-project") is None
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "other-project") == private.resolve()
+
+
+def test_other_project_plugin_does_not_block_a_different_marketplace(tmp_path, homes):
+    claude, _ = homes
+    cache = claude / "plugins" / "cache"
+    me = _plugin(cache / "harness-local" / "dev-graph" / "0.1.14", "dev-graph")
+    private = _plugin(cache / "harness-local" / "skill-governance-adapters" / "1.1.0", "skill-governance-adapters")
+    public = _plugin(cache / "harness-hub" / "skill-governance-adapters" / "0.9.0", "skill-governance-adapters")
+    _installed(claude, {
+        "skill-governance-adapters@harness-local": [{
+            "scope": "project", "projectPath": str(tmp_path / "other-project"), "installPath": str(private),
+        }],
+    })
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "current-project") == public.resolve()
+
+
+# 期待する最新を先に作り、mtime の新しさでは正解にたどり着けないようにする。
+@pytest.mark.parametrize("names, newest", [
+    (["1.2.0-rc.1", "1.1.0"], "1.2.0-rc.1"),
+    (["1.2.0", "1.2.0-rc.1"], "1.2.0"),
+    (["1.2.0-rc.10", "1.2.0-rc.2"], "1.2.0-rc.10"),
+    (["1.2.0-alpha", "1.2.0-1"], "1.2.0-alpha"),
+    (["0.0.1-beta+build.5", "0abc1234"], "0.0.1-beta+build.5"),
+])
+def test_prerelease_version_dirs_follow_semver_precedence(tmp_path, homes, names, newest):
+    claude, _ = homes
+    cache = claude / "plugins" / "cache"
+    me = _plugin(cache / "harness-local" / "dev-graph" / "0.1.14", "dev-graph")
+    for name in names:
+        _plugin(cache / "harness-local" / "skill-governance-adapters" / name, "skill-governance-adapters")
+    expected = cache / "harness-local" / "skill-governance-adapters" / newest
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path) == expected.resolve()
+
+
 def test_cache_shared_with_user_registration_remains_available(tmp_path, homes):
     claude, _ = homes
     cache = claude / "plugins" / "cache" / "harness-local"

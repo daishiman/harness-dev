@@ -33,8 +33,8 @@
       "parallel": false,
       "actor": "run-ubm-goal-setting",
       "input": "引数で渡された種別か、AskUserQuestion への回答",
-      "output": "goal_type（weekly|monthly|quarterly）と実行日。bimonthly は quarterly の後方互換の別名として受理する",
-      "gate": "goal_type が [weekly, monthly, quarterly] のいずれか。bimonthly は受理して quarterly へ正規化する",
+      "output": "goal_type（yearly|weekly|monthly|quarterly）と実行日。bimonthly は quarterly の後方互換の別名として受理する",
+      "gate": "goal_type が [yearly, weekly, monthly, quarterly] のいずれか。bimonthly は受理して quarterly へ正規化する",
       "resourceIds": ["SKILL.md"]
     },
     {
@@ -112,7 +112,7 @@
       "dependsOn": ["phase4-format", "phase4b-submission"],
       "parallel": false,
       "actor": "output-formatter + 検査スクリプト",
-      "input": "Markdown ファイル候補と goal_type。期報・月報・週報のファイルがあればそれも",
+      "input": "Markdown ファイル候補と goal_type。1年目標・期報・月報・週報のファイルがあればそれも",
       "output": "各スクリプトの rc の値そのものと、使った引数。期報か月報のファイルが無いときは、validate-cross-level.py について rc ではなく not_applicable を記録する。保存した目標設定ファイルと、「（提出）」付きの既存ファイルが見つかったときだけ、それを削除せず 05_Project/UBM/目標設定/archive/ へ移した結果",
       "gate": "validate-goal-output.py と validate-goal-linkage.py がどちらも終了コード 0（rc=3 は何も検査していないので失敗）。期報と月報のファイルがどちらもあるときは、validate-cross-level.py も終了コード 0（rc=3 は失敗。--weekly は週報のファイルがあるときだけ渡す）。いずれも output-formatter の改善3回以内で満たす",
       "commands": [
@@ -120,7 +120,7 @@
         "python3 scripts/validate-goal-linkage.py --file <candidate> > <log> 2>&1; echo \"rc=$?\" >> <log>",
         "python3 scripts/validate-cross-level.py --quarterly <quarterly> --monthly <monthly> > <log> 2>&1; echo \"rc=$?\" >> <log>"
       ],
-      "commands_note": "すべてのコマンドを実行し、rc を1本ずつ別に記録する（&& でつながない。最初の失敗でほかの結果が隠れないようにするため）。--weekly <weekly> は、週報のファイルがあるときだけ validate-cross-level.py のコマンドに足す。期報か月報のファイルが無いときは validate-cross-level.py を飛ばし、rc ではなく not_applicable を記録する。",
+      "commands_note": "すべてのコマンドを実行し、rc を1本ずつ別に記録する（&& でつながない。最初の失敗でほかの結果が隠れないようにするため）。--weekly <weekly> は、週報のファイルがあるときだけ validate-cross-level.py のコマンドに足す。1年目標のファイルがある期では --yearly <yearly> を必ず足す（省くと1年層のアンカーが照合されず [未照合] のまま rc=0 になるため、省いたときはその件数を記録する）。期報か月報のファイルが無いときは validate-cross-level.py を飛ばし、rc ではなく not_applicable を記録する。",
       "fatal_exit_codes": [1, 2, 3],
       "resourceIds": ["scripts/validate-goal-output.py", "scripts/validate-goal-linkage.py", "scripts/validate-cross-level.py", "references/data-contract.md"]
     },

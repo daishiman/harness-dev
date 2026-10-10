@@ -9,11 +9,11 @@ prefix: ref
 effect: none
 owner: team-platform
 since: 2026-05-17
-version: 0.1.0
+version: 0.2.0
 # auto-backfilled by backfill-source-tier.py (doc/21)
 source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
-last-audited: 2026-05-19
+last-audited: 2026-10-10
 audit-trigger: quarterly
 responsibility_refs:
   - prompts/R1-search-summarize.md
@@ -33,27 +33,27 @@ Skill 設計の評価基準の **正本（upstream rubric）**。
 1. **本Skillが唯一の正本**: 他Skillの `references/rubric.json` は本ファイルを upstream とし deep-merge する（29章）。
 2. **threshold 80 / max 100**: severity weights は high -20, medium -10, low -3 固定。
 3. **rubric_version は semver**: minor=緩和、major=厳格化、patch=文言だけ（`run-skill-rubric-governance` 参照、27章）。
-4. **改正は governance runbook 経由**: 直接編集禁止。
+4. **rubric.json の改正は governance runbook 経由**: rule・閾値・版を直接編集しない。
 5. **判断箇所は AI 起案 + 根拠記録 (TODO(human) で凍結しない)**: 方針決定を要する rule も固定 `TODO(human)` で空欄放置せず、AI が文脈から check 式を起案し rationale に根拠を残す。人間関与は governance runbook の承認段 (proposer≠approver) で担保する。BD-004 はこの方針に従い 1.2.0 で実ルール化済 (description↔body 整合の LLM judge)。
 
 ## 評価軸サマリ
 
-kind 別ディスパッチ (rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow)。共通核 (kind=skill) の FM/BD/NM/PD/RG に加え、1.2.0 で kind 別 area、1.3.0 で KL を追加した全 41 rule。1.4.0 で BD-001・BD-002・PD-002 に日本語の正規形の見出しを別名として追加した。1.5.0 は PD-002 の禁則見出しに `## 守ること` の行全体一致を追加し、冒頭30行の要件を維持する。BD-001 の存在検査だけでは PD-002 の冒頭集約と禁則は保証されない。
+rubric 1.5.0 の全 41 rule。各 rule の `applies_to_kinds` で、どの kind（rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow）に適用するかが決まる。`*` は全 kind 共通、それ以外はその kind を評価するときだけ採点する。1.2.0 で kind 別 area、1.3.0 で KL、1.4.0 で BD-001・BD-002・PD-002 の日本語の正規形の見出し、1.5.0 で PD-002 の禁則見出し `## 守ること`（行全体の一致）を追加した。BD-001 の存在検査だけでは PD-002 の冒頭集約と禁則は保証されない。
 
-- **FM (Frontmatter, kind=skill)**: name kebab+prefix / description="Use when" / trigger 2-3 / 動作詳細混入なし / 動詞ベース
-- **BD (Body, kind=skill)**: Output contract / Gotchas 節 / <=300行 / BD-004=description↔body 整合 (LLM judge)
-- **NM (Naming, kind=skill)**: ディレクトリ名一致 / 第1〜5条 / 第8〜13条
-- **PD (Progressive Disclosure, kind=skill)**: 本文 <=100 or references/ 存在
-- **RG (Governance, kind=skill)**: rubric_hash 埋込
+- **FM (Frontmatter, kind=skill)**: name kebab+prefix / description の発動句（Use when・Read when、または 〜とき・〜場合・〜際・〜時） / trigger 2-3（rubric の FM-003。ただし validate-frontmatter と lint R1 は 2 個ちょうどを強制） / 動作詳細混入なし / 動詞ベース
+- **BD (Body)**: BD-001 目的と出力契約の節（`## Purpose & Output Contract` または `## 目的と出力契約`） / BD-002 Gotchas 節（`## Gotchas` または `## つまずきやすい点`） / BD-003 <=300行（`*`） / BD-004 description↔body 整合 (LLM judge)。BD-003 以外は kind=skill
+- **NM (Naming, kind=skill)**: ディレクトリ名一致 / 第1〜5,7条 / 第8〜13条
+- **PD (Progressive Disclosure)**: PD-001 本文 <=100 or references/ 存在（`*`） / PD-002 冒頭30行に目的・出力契約の見出しと禁則（kind=skill）
+- **RG (Governance, `*`)**: rubric_hash 埋込
 - **AG (Agent, kind=agent)**: tools 明示 allowlist / Isolation・Context Boundary 節 / phase 一意 id / Handoff・Output Contract 節
 - **HK (Hook, kind=hook)**: event enum / matcher 具体 (wildcard 不可) / timeout bound / 副作用明記
 - **CM (Command, kind=command)**: argument-hint / allowed-tools 最小 allowlist / entrypoint skill 実在
 - **PC (Plugin Composition, kind=plugin-composition)**: capabilities[] 列挙 / 依存 DAG (循環なし) / rubric 参照解決 / hook 配線
 - **PR (Prompt Structure, kind=prompt)**: 7 層構造 / Self-Evaluation 節 / Output Format・Output Contract 節
 - **WF (Workflow Structure, kind=workflow)**: phase 順序番号 / gate 条件 / max_iterations 安全弁
-- **KL (Knowledge Loop)**: knowledge/ 6 必須フィールド / 決定論 script + LLM 段分離 / §12 feedback 配線 / 分割閾値 (500行/25エントリ)
+- **KL (Knowledge Loop, `*`)**: 索引とデータの分離 / knowledge/ 6 必須フィールド / 決定論 script + LLM 段分離 / §12 feedback 配線 / 分割閾値 (500行/25エントリ)。knowledge/ か frontmatter.knowledge_loop が無ければ無条件 PASS
 
-各ルールの check 式と rationale は `references/rubric.json` を参照 (kind 別 rule は 1.2.0、KL-* は 1.3.0 追加。`_kind_dispatch_doc` 参照)。
+各ルールの check 式と rationale は `references/rubric.json` を参照 (kind 別 rule は 1.2.0、KL-* は 1.3.0 追加。`_kind_dispatch_doc` 参照)。版ごとの変更は `references/CHANGELOG.md`、人向けの理由は `references/rubric-rationale.md`。
 
 ## Steps
 
@@ -61,12 +61,15 @@ kind 別ディスパッチ (rubric.json `supported_kinds` = skill/agent/hook/com
 
 ## Gotchas
 
-- **本Skillを直接編集しない**: `run-skill-rubric-governance` の Runbook 経由でのみ更新（27章）。
+- **rubric.json を直接編集しない**: rule・閾値・版の変更は `run-skill-rubric-governance` の Runbook 経由でのみ行う（27章）。本 SKILL.md・`rubric-rationale.md`・`CHANGELOG.md` を rubric.json の現状に合わせるだけの文書の同期は P2_content（governance-policy.json: auto_apply + post_review）で、版は上げない。
 - **rule の check 式変更は governance を通す**: rubric 変更は minor/major 扱い。直接編集は禁止 (KeyRule4)。新規 rule も TODO(human) で凍結せず AI が起案し rationale を残す (KeyRule5)。
+- **trigger は 2 個ちょうどで書く**: FM-003 は 2〜3 個を許すので 3 個でも rubric は合格するが、`validate-frontmatter.py`（==2）と `lint-skill-description.py` の R1（3 個以上で違反）で落ちる。rubric と機械ゲートの食い違いを直すときは governance を通す。
 
 ## Additional Resources
 
 - `references/rubric.json` — 機械可読rubric（正本）
 - `references/rubric-rationale.md` — 各ルールのwhy
+- `references/CHANGELOG.md` — 版ごとの変更の要約（承認の正本は governance-log）
+- `prompts/R1-search-summarize.md` — rubric から rule を引く責務プロンプト。query・target_layer・scope を受け、rubric_version・summary・matches の JSON を返す（副作用なし）
 - 関連: `assign-skill-design-evaluator/references/rubric.json`（override層）
 - 関連: `run-skill-rubric-governance/` — 改正Runbook

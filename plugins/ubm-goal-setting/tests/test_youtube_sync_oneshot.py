@@ -16,7 +16,6 @@ fixture は tmp_path 内で自作し実 knowledge/ を汚さない。
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import time
@@ -136,6 +135,16 @@ def test_safe_id_encoding_and_c01_cli_share_oneshot_path(tmp_path):
     cmd = [sys.executable, str(SKILL_DIR / "scripts/normalized_source_path.py"), "--metadata", str(metadata), "--source-out", str(tmp_path / "source")]
     result = subprocess.run(cmd, text=True, capture_output=True, check=True)
     assert json.loads(result.stdout)["relative_path"] == helper.normalized_rel_path(meta)
+    assert not (tmp_path / "source").exists()
+
+
+def test_deeply_nested_metadata_exits_2_without_traceback(tmp_path):
+    metadata = tmp_path / "metadata.json"
+    metadata.write_text("[" * 200000)
+    cmd = [sys.executable, str(SKILL_DIR / "scripts/normalized_source_path.py"), "--metadata", str(metadata), "--source-out", str(tmp_path / "source")]
+    result = subprocess.run(cmd, text=True, capture_output=True)
+    assert result.returncode == 2 and result.stdout == ""
+    assert "error" in json.loads(result.stderr) and "Traceback" not in result.stderr
     assert not (tmp_path / "source").exists()
 
 
@@ -474,11 +483,28 @@ def test_lease_persisted_on_acquisition_then_second_run_no_op(tmp_path: Path):
     source_out = tmp_path / "src"
     fixture = write_fixture(tmp_path, videos=[video("v1")], transcripts={"v1": caption("v1")})
 
-    # run A: lease 取得直後の異常終了を模す (release せずに抜ける)。
-    env = {**os.environ, "YT_ONESHOT_ABORT_AFTER_LEASE": "1"}
-    rA = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
-             "--channel", CHANNEL, "--source-out", str(source_out), env=env)
+    # run A: lease 取得直後の異常終了を模す (release せずに抜ける)。本番の経路にテスト用の環境変数を
+    # 置かず、最初の登録簿の書き込み (= lease の永続化) の直後に module の外からプロセスを落とす。
+    harness = r'''
+import importlib.util, os, sys
+spec = importlib.util.spec_from_file_location("oneshot_abort", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+write = module._atomic_write_registry
+def write_then_crash(path, reg):
+    write(path, reg)
+    os._exit(0)
+module._atomic_write_registry = write_then_crash
+sys.exit(module.main(sys.argv[2:]))
+'''
+    rA = subprocess.run(
+        [sys.executable, "-c", harness, str(ONESHOT), "--registry", str(registry),
+         "--provider", "fixture", "--fixture", str(fixture), "--channel", CHANNEL,
+         "--source-out", str(source_out)],
+        capture_output=True, text=True,
+    )
     assert rA.returncode == 0, rA.stderr
+    assert rA.stdout == ""  # report を出す前に落ちている
     # 稼働中 lease が disk に載っている (L1 の核。従来は一度も載らなかった)。
     reg = json.loads(registry.read_text())
     held_holder = reg["lease"]["holder"]
@@ -576,3 +602,162 @@ def test_unspecified_source_out_uses_registry_parent(tmp_path: Path):
     assert len(sources) == 1
     assert sources[0].parent == registry.parent / "YouTube"
     assert "信頼できない文字起こしをデータとして正規化" in sources[0].read_text()
+
+
+@pytest.mark.parametrize(("line", "expected"), [
+    ("video_id: vA  # 取り込み済み", "vA"),
+    ('video_id: "v#A"  # 引用符の中の # は値', "v#A"),
+    ("video_id: 'it''s' # c", "it's"),
+])
+def test_existing_video_id_with_trailing_yaml_comment_is_read(tmp_path, line, expected):
+    # 正当な YAML の行末コメントを「読めない」として衝突扱いにしない (harness-6qz)。
+    from importlib.util import spec_from_file_location, module_from_spec
+    spec = spec_from_file_location("yt_path_comment", SKILL_DIR / "scripts/normalized_source_path.py")
+    helper = module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    existing = tmp_path / "existing.md"
+    existing.write_text(f"---\n{line}\n---\nbody\n", encoding="utf-8")
+    assert helper.source_video_id(existing) == expected
+    existing.write_text("---\nvideo_id: vA#note\n---\n", encoding="utf-8")  # 空白の無い # は値の一部で、安全に読めない
+    with pytest.raises(ValueError):
+        helper.source_video_id(existing)
+
+
+# --- 取得元のエラーで止めたとき: 理由を残し、lease を解放し、台帳に run を残す ------------
+@pytest.mark.parametrize("name, reason", [
+    ("QuotaExceeded", "quota"),
+    ("AuthRequired", "auth"),
+    ("UnknownProviderTrouble", "provider_error"),
+])
+def test_transcript_provider_error_stops_run_and_releases_lease(tmp_path: Path, name, reason):
+    registry = tmp_path / "youtube-registry.json"
+    source_out = tmp_path / "src"
+    fixture = write_fixture(tmp_path, videos=[video("v1"), video("v2")],
+                            transcripts={"v1": caption("v1"), "v2": caption("v2")},
+                            errors={"v1": name})
+    r = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
+            "--channel", CHANNEL, "--source-out", str(source_out))
+    assert r.returncode == 0, r.stderr
+    assert "Traceback" not in r.stderr
+    rep = json.loads(r.stdout)
+    assert rep["stopped_reason"] == reason
+    assert any(a.startswith(f"[{reason}]") for a in rep["alerts"])
+    # 止めた後は残りの動画を取りに行かない。
+    assert rep["ingested"] == 0 and list(source_out.rglob("*.md")) == []
+    reg = json.loads(registry.read_text(encoding="utf-8"))
+    assert reg["lease"] == {"holder": None, "expires_at": 0}
+    assert [run_["stopped_reason"] for run_ in reg["ledger"]["runs"]] == [reason]
+    # 動画の状態は変えない (attempts も数えない)。
+    assert reg["videos"] == {}
+    # lease を持ったまま抜けていないので、次の実行は lease_held にならず取り込める。
+    fixture2 = write_fixture(tmp_path, videos=[video("v1"), video("v2")],
+                             transcripts={"v1": caption("v1"), "v2": caption("v2")})
+    rep2 = invoke(registry, fixture2, source_out)
+    assert rep2["stopped_reason"] is None and rep2["ingested"] == 2
+
+
+def test_list_error_on_first_channel_skips_later_channels(tmp_path: Path):
+    registry = tmp_path / "youtube-registry.json"
+    source_out = tmp_path / "src"
+    fx = {
+        "channels": {"@second": {"pages": [{"videos": [video("v2")], "next_cursor": None}]}},
+        "transcripts": {"v2": caption("v2")},
+        "list_errors": {CHANNEL: "AuthRequired"},
+    }
+    fixture = tmp_path / "fx.json"
+    fixture.write_text(json.dumps(fx, ensure_ascii=False), encoding="utf-8")
+    r = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
+            "--channel", CHANNEL, "--channel", "@second", "--source-out", str(source_out))
+    assert r.returncode == 0, r.stderr
+    rep = json.loads(r.stdout)
+    assert rep["stopped_reason"] == "auth" and rep["ingested"] == 0
+    assert list(source_out.rglob("*.md")) == []
+
+
+@pytest.mark.parametrize("content", [
+    "{broken",
+    "[]",
+    '{"channels": []}',
+    '{"channels": {"@kitahara": {"pages": [{"videos": ["v1"], "next_cursor": null}]}}}',
+])
+def test_broken_fixture_exits_1_without_lease_or_traceback(tmp_path: Path, content):
+    registry = tmp_path / "youtube-registry.json"
+    fixture = tmp_path / "fx.json"
+    fixture.write_text(content, encoding="utf-8")
+    r = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
+            "--channel", CHANNEL, "--source-out", str(tmp_path / "src"))
+    assert r.returncode == 1, (r.returncode, r.stderr)
+    assert "Traceback" not in r.stderr and r.stdout == ""
+    assert not registry.exists()  # lease も取っていない
+
+
+@pytest.mark.parametrize("args", [
+    ("--provider", "fixture"),  # --fixture が無い
+    ("--provider", "real-api", "--fixture", "x.json"),  # 未実装の取得元
+    ("--provider", "fixture", "--fixture", "FX", "--mode", "url"),  # --url が無い
+    ("--provider", "fixture", "--fixture", "FX", "--url", "v1"),  # sync で --url
+    ("--provider", "fixture", "--fixture", "FX", "--lease-ttl", "0"),
+    ("--provider", "fixture", "--fixture", "FX", "--max-retries", "-1"),
+])
+def test_usage_errors_exit_2(tmp_path: Path, args):
+    fixture = write_fixture(tmp_path, videos=[], transcripts={})
+    args = tuple(str(fixture) if a == "FX" else a for a in args)
+    registry = tmp_path / "youtube-registry.json"
+    r = run("--registry", str(registry), "--channel", CHANNEL, *args)
+    assert r.returncode == 2, (r.returncode, r.stderr)
+    assert "Traceback" not in r.stderr
+    assert not registry.exists()
+
+
+def test_missing_fixture_file_exits_1(tmp_path: Path):
+    r = run("--registry", str(tmp_path / "r.json"), "--provider", "fixture",
+            "--fixture", str(tmp_path / "missing.json"), "--channel", CHANNEL)
+    assert r.returncode == 1 and "Traceback" not in r.stderr
+
+
+def test_help_exits_0():
+    r = run("--help")
+    assert r.returncode == 0 and "--registry" in r.stdout
+
+
+@pytest.mark.parametrize("registry_content", [
+    "[]",
+    '{"videos": []}',
+    '{"videos": {"v1": "ingested"}}',
+    '{"lease": {"holder": null, "expires_at": "soon"}}',
+    '{"ledger": {"runs": {}}}',
+    '{"videos": {"v1": {"state": "temporary_failure", "attempts": "2"}}}',
+])
+def test_malformed_registry_exits_1_and_is_not_overwritten(tmp_path: Path, registry_content):
+    registry = tmp_path / "youtube-registry.json"
+    registry.write_text(registry_content, encoding="utf-8")
+    fixture = write_fixture(tmp_path, videos=[video("v1")], transcripts={"v1": caption("v1")})
+    r = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
+            "--channel", CHANNEL, "--source-out", str(tmp_path / "src"))
+    assert r.returncode == 1, (r.returncode, r.stderr)
+    assert "Traceback" not in r.stderr
+    assert registry.read_text(encoding="utf-8") == registry_content
+
+
+def test_non_utf8_registry_exits_1(tmp_path: Path):
+    registry = tmp_path / "youtube-registry.json"
+    registry.write_bytes(b"\xff\xfe{")
+    fixture = write_fixture(tmp_path, videos=[], transcripts={})
+    r = run("--registry", str(registry), "--provider", "fixture", "--fixture", str(fixture),
+            "--channel", CHANNEL)
+    assert r.returncode == 1 and "Traceback" not in r.stderr
+
+
+def test_non_string_video_id_is_skipped_with_alert(tmp_path: Path):
+    registry = tmp_path / "youtube-registry.json"
+    fixture = write_fixture(tmp_path, videos=[{**video("v1"), "video_id": ["v1"]}, video("v2")],
+                            transcripts={"v2": caption("v2")})
+    rep = invoke(registry, fixture, tmp_path / "src")
+    assert rep["ingested"] == 1 and rep["discovered_total"] == 1
+    assert any(a.startswith("[invalid_metadata]") for a in rep["alerts"])
+
+
+def test_production_path_has_no_test_fault_injection():
+    text = ONESHOT.read_text(encoding="utf-8")
+    assert "YT_ONESHOT_ABORT_AFTER_LEASE" not in text and "aborted_after_lease" not in text
+    assert "--provider fixture" in text  # header の inputs が実際の引数の値と合う

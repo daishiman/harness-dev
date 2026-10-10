@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 DETECT = PLUGIN_ROOT / "skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py"
 
@@ -203,3 +205,56 @@ def test_all_user_record_output_directories_are_excluded(tmp_path: Path):
     assert output_roots <= set(module.EXCLUDED_SUBDIRS)
     # Daily lives outside --sources and therefore needs no extra detector exclusion.
     assert "Daily" not in module.EXCLUDED_SUBDIRS
+
+
+# --- 壊れた registry・--help・`.md` という名前のディレクトリ ---
+
+
+@pytest.mark.parametrize("content", [
+    "{broken",
+    "[]",
+    json.dumps({"files": {"a": "b"}}),
+    json.dumps({"files": ["05_Project/UBM/YouTube/2025-05-25 - test.md"]}),
+    json.dumps({"files": [{"file_path": "05_Project/UBM/YouTube/2025-05-25 - test.md", "file_hash": 12345}]}),
+    json.dumps({"files": [{"file_path": 3, "file_hash": "x"}]}),
+    b"\xff\xfe{",
+])
+def test_broken_registry_is_input_error_without_traceback(tmp_path: Path, content):
+    ubm = make_vault(tmp_path)
+    reg = tmp_path / "registry.json"
+    if isinstance(content, bytes):
+        reg.write_bytes(content)
+    else:
+        reg.write_text(content, encoding="utf-8")
+    result = run("--registry", str(reg), "--sources", str(ubm))
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "Traceback" not in result.stderr
+    assert "registry" in result.stderr
+    assert "NEW|" not in result.stdout
+
+
+def test_null_file_hash_entry_is_accepted(tmp_path: Path):
+    # 直接貼付のソースは file_hash が null。形の検査で落とさない。
+    ubm = make_vault(tmp_path)
+    reg = write_registry(tmp_path, [
+        {"file_path": "05_Project/UBM/貼付/x.md", "file_hash": None, "_note": "file_hash なし"},
+    ])
+    result = run("--registry", str(reg), "--sources", str(ubm))
+    assert result.returncode == 0, result.stderr
+
+
+def test_help_exits_0():
+    result = run("--help")
+    assert result.returncode == 0
+    assert "--registry" in result.stdout
+
+
+def test_directory_named_md_is_not_a_source(tmp_path: Path):
+    ubm = make_vault(tmp_path)
+    (ubm / "YouTube" / "folder.md").mkdir()
+    reg = write_registry(tmp_path, [])
+    result = run("--registry", str(reg), "--sources", str(ubm))
+    assert result.returncode == 0, result.stderr
+    assert "Traceback" not in result.stderr
+    assert "folder.md" not in result.stdout
+    assert "スキャン: 2 件" in result.stdout

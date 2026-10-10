@@ -21,7 +21,7 @@
 - **CONST_001 (PKG ID 一次情報)**: PKG ID 表の再定義禁止。`ref-pkg-contract` を一次情報として参照
   - **目的**: 契約 drift を物理的に不可能にするため
   - **背景**: 複数定義は 36章本文との齟齬を生む
-- **CONST_002 (eval-log path 規約)**: 27章 §3.1 規約厳守 `eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.{json,log}`
+- **CONST_002 (eval-log path 規約)**: 27章 §3.1 規約厳守 `eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.{json,log}`。PKG-002〜008 を evaluator へまとめて委譲した結果は `eval-log/<plugin>/pkg-batch/<YYYY-MM-DD>-<run>.json`。集約は同じ `<YYYY-MM-DD>-<run>` のログだけを読む
   - **目的**: 集約 script が単一規約で走査できるようにするため
   - **背景**: 自由パスは aggregate スクリプトを壊す
 - **CONST_003 (dry_run 副作用ゼロ)**: `dry_run=true` のとき副作用なし (実行予定 PKG ID 列挙のみ)
@@ -95,12 +95,12 @@
 - exit 0: 全 pass / not_applicable / skip
 - exit 1: 1 件以上 fail
 - PKG-001 claude CLI 不在 → exit 2 → 当該 PKG `status: skip`、全体は続行
-- aggregate-pkg-findings.py 失敗 → exit 3（structural error）
+- aggregate-pkg-findings.py が exit 2（引数の誤り・manifest を読めない・集約結果を書けない）→ orchestrator は exit 3（structural error）で止まる
 - `dry_run=true` → 副作用なし、`{planned_pkg_ids: [...]}` を返す
 
 ### 4.2 観測 / ロギング
 
-- eval-log: 各 PKG 結果は `eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.json`、集約は `eval-log/<plugin>/pkg-summary/<YYYY-MM-DD>-<run>.json`
+- eval-log: 各 PKG 結果は `eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.json`（PKG-002〜008 の一括委譲は `eval-log/<plugin>/pkg-batch/<YYYY-MM-DD>-<run>.json`）、集約は `eval-log/<plugin>/pkg-summary/<YYYY-MM-DD>-<run>.json`
 - 35章 observable: `verdict.fail > 0` で `aggregate-pkg-findings.py` が `pkg_check_failed` event を `.claude/logs/meta-harness.jsonl` に append
 - stdout markdown サマリ:
   ```markdown
@@ -134,7 +134,7 @@
 - [ ] `failure_action: abort` Step fail 後の以降 Step が `status: skip`
 - [ ] `package_mode=skill-only` で PKG-002/004 以外は `not_applicable`
 - [ ] PKG-013 は a/b/c/d 全 pass のときのみ全体 pass
-- [ ] eval-log path が 27章 §3.1 規約準拠（`eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.{json,log}`）
+- [ ] eval-log path が 27章 §3.1 規約準拠（`eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.{json,log}`、一括委譲は `pkg-batch/`）
 - [ ] `dry_run=true` 時に副作用ゼロ（実行予定 ID 列挙のみ）
 - [ ] 集約は `aggregate-pkg-findings.py` 経由（observable emit は集約 script に一本化）
 - [ ] §2.4 schema validation を通過、§4.2 markdown サマリが stdout に出力

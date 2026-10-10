@@ -5,6 +5,7 @@
 # inputs: ["--manifest absolute-json", "--manifest-sha256 SHA256"]
 # outputs: ["stdout JSON receipt", "exit 0=saved / 2=contract or IO error"]
 # contexts: [E]
+# requires-python: ">=3.9"
 # network: false
 # write-scope: manifest.roots配下の明示されたファイルのみ
 # dependencies: []
@@ -13,6 +14,13 @@
 
 All entries are checked before the first mutation. Each replacement is atomic,
 but the batch is not transactional; a mid-write IO error must be reported.
+
+Known race (TOCTOU): the path and old_sha256 are rechecked just before each
+write or delete, but nothing locks the target between that recheck and
+os.replace/unlink. A writer that changes the target or swaps a parent for a
+symlink inside that window is not detected. This is accepted because the
+official roots are a single user's vault and the guard runs one publication
+at a time; do not run this against a directory that other processes write to.
 """
 from __future__ import annotations
 
@@ -24,6 +32,7 @@ from pathlib import Path, PurePosixPath
 import re
 import sys
 import tempfile
+import unicodedata
 
 SHA = re.compile(r"^[0-9a-f]{64}$")
 
@@ -46,6 +55,11 @@ def absolute(raw: object) -> Path:
     if ".." in path.parts or any(p.is_symlink() for p in (path, *path.parents)):
         raise ValueError("parent traversal or symlink is forbidden")
     return path.resolve()
+
+
+def folded(path: Path) -> PurePosixPath:
+    """Identity key on case- and normalization-insensitive filesystems (macOS: One.md = one.md, NFD = NFC)."""
+    return PurePosixPath(unicodedata.normalize("NFC", str(path)).casefold())
 
 
 def current_hash(path: Path) -> str | None:
@@ -72,7 +86,10 @@ def publish(manifest_path: Path, expected_hash: str) -> dict:
         raise ValueError("stage_root, roots and nonempty entries required")
     resolved = {key: absolute(value) for key, value in roots.items()}
     for root in resolved.values():
-        if stage == root or stage.is_relative_to(root) or root.is_relative_to(stage):
+        # A mistyped root must not be created by the mkdir below; only folders under it may be.
+        if not root.is_dir():
+            raise ValueError(f"declared root is not an existing directory: {root}")
+        if folded(stage).is_relative_to(folded(root)) or folded(root).is_relative_to(folded(stage)):
             raise ValueError("staging and official roots must be disjoint")
     prepared = []
     seen = set()
@@ -86,9 +103,10 @@ def publish(manifest_path: Path, expected_hash: str) -> dict:
         if rel.is_absolute() or ".." in rel.parts or str(rel) == ".":
             raise ValueError("entry escapes declared root")
         target = absolute(str(resolved[entry["root"]] / relative))
-        if not target.is_relative_to(resolved[entry["root"]]) or target in seen:
+        key = folded(target)
+        if not target.is_relative_to(resolved[entry["root"]]) or key in seen:
             raise ValueError("duplicate target or root escape")
-        seen.add(target)
+        seen.add(key)
         old = entry.get("old_sha256")
         if "old_sha256" not in entry or (old is not None and (not isinstance(old, str) or not SHA.fullmatch(old))):
             raise ValueError("old_sha256 must explicitly be SHA256 or null")
@@ -140,7 +158,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         receipt = publish(Path(args.manifest), args.manifest_sha256)
-    except (OSError, ValueError, TypeError, KeyError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
         print(json.dumps({"saved": getattr(exc, "saved", []),
                           "failed_target": getattr(exc, "failed_target", None),
                           "error": str(exc), "batch_atomic": False}, ensure_ascii=False), file=sys.stderr)

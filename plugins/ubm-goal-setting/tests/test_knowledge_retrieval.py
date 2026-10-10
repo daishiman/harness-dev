@@ -1,6 +1,7 @@
 """実ファイルで検索順位・不正入力停止・採用と反応の観測を検証する。"""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -76,7 +77,7 @@ def test_nfkc_dedup_exact_id_and_zero_hit(corpus):
     assert result["total_hits"] == 0
 
 
-@pytest.mark.parametrize("terms,limit,categories", [([], 20, None), ([""], 20, None), (["x" * 121], 20, None), (["x"] * 13, 20, None), (["x"], 0, None), (["x"], 51, None), (["x"], True, None), (["x"], 20, ["unknown"])])
+@pytest.mark.parametrize("terms,limit,categories", [([], 20, None), ([""], 20, None), (["x" * 121], 20, None), (["xy"] * 13, 20, None), (["xy"], 0, None), (["xy"], 51, None), (["xy"], True, None), (["xy"], 20, ["unknown"])])
 def test_query_bounds_fail_closed(corpus, terms, limit, categories):
     with pytest.raises(ValueError):
         S.search(corpus, terms, categories, limit)
@@ -116,7 +117,7 @@ def test_size_entry_and_field_shape_bounds(corpus, monkeypatch):
     data = json.loads((corpus / "principles-test.json").read_text())
     data["entries"][0]["tags"] = [True]
     write(corpus / "principles-test.json", data)
-    with pytest.raises(ValueError, match="boolean/number"):
+    with pytest.raises(ValueError, match="not boolean"):
         S.search(corpus, ["組織"])
 
 
@@ -244,3 +245,129 @@ def test_bundled_router_real_domain_entries_are_searchable_without_writes():
     assert result["entries_scanned"] > 900 and len(result["matched_ids"]) == 3
     assert all(hit["source"] and hit["entry"]["id"] == hit["id"] for hit in result["matches"])
     assert (root / "router.json").read_bytes() == before
+
+
+def test_numeric_field_is_searched_as_text_not_a_whole_search_failure(corpus):
+    # 1 件の数値フィールド (result: 5 など) で全カテゴリの検索を止めない。値の文字列として当てる。
+    data = json.loads((corpus / "consultation-test.json").read_text())
+    data["entries"][0]["result"] = 2026
+    data["entries"][0]["outcome"] = [1.5, {"rate": 30}]
+    write(corpus / "consultation-test.json", data)
+    assert S.search(corpus, ["組織"])["matched_ids"] == ["PR-001", "PR-002", "PR-003"]
+    hit = S.search(corpus, ["2026"])
+    assert hit["matched_ids"] == ["CP-001"] and hit["matches"][0]["field_hits"] == {"result": {"terms": ["2026"], "weight": 2}}
+    assert S.search(corpus, ["1.5"])["matched_ids"] == ["CP-001"]
+
+
+def test_boolean_field_error_names_file_entry_and_field(corpus):
+    data = json.loads((corpus / "consultation-test.json").read_text())
+    data["entries"][0]["advice"] = {"ok": True}
+    write(corpus / "consultation-test.json", data)
+    with pytest.raises(ValueError, match=r"consultation-test\.json#entries\[id=CP-001\]\.advice"):
+        S.search(corpus, ["資金"])
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", "資金"], text=True, capture_output=True)
+    assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
+    assert "consultation-test.json#entries[id=CP-001].advice" in json.loads(result.stderr)["error"]
+
+
+def test_duplicate_id_error_names_the_file_and_index(corpus):
+    data = json.loads((corpus / "principles-test.json").read_text())
+    data["entries"].append(dict(data["entries"][1]))
+    write(corpus / "principles-test.json", data)
+    with pytest.raises(ValueError, match=r"principles-test\.json#entries\[3\]"):
+        S.search(corpus, ["組織"])
+
+
+@pytest.mark.parametrize("term", ["x", "組", " a ", "ｶﾞ"])
+def test_one_character_term_is_rejected(corpus, term):
+    # 部分一致なので 1 字の語はほぼ全件に当たる。NFKC で 1 字になる語 (ｶﾞ → ガ) も同じ。
+    with pytest.raises(ValueError, match="2..120"):
+        S.search(corpus, [term])
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", term], text=True, capture_output=True)
+    assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("version", [True, 1.0])
+def test_candidate_schema_version_must_be_the_integer_1(corpus, tmp_path, version):
+    # True == 1 と 1.0 == 1 を版 1 と取り違えない。schema_version は search_id の fingerprint に入らない。
+    candidate = {**S.search(corpus, ["組織"]), "schema_version": version}
+    with pytest.raises(ValueError, match="shape"):
+        U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, observation())
+    assert not (tmp_path / "eval-log").exists()
+
+
+def test_log_row_with_boolean_schema_version_is_not_extended(corpus, tmp_path):
+    candidate = S.search(corpus, ["組織"])
+    U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, {**observation(), "usage_id": "first"})
+    log = tmp_path / U.LOG_RELATIVE
+    row = json.loads(log.read_text())
+    row["schema_version"] = True
+    log.write_text(json.dumps(row) + "\n")
+    before = log.read_bytes()
+    with pytest.raises(ValueError, match="complete observation"):
+        U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, observation())
+    assert log.read_bytes() == before
+
+
+@pytest.mark.parametrize("tamper", ["search_id", "terms", "files", "missing-key"])
+def test_search_id_must_match_the_candidate_fingerprint(corpus, tmp_path, tamper):
+    # 別の検索の search_id や、手で書き換えた検索条件を記録しない。
+    candidate = S.search(corpus, ["組織"])
+    if tamper == "search_id":
+        candidate["search_id"] = S.search(corpus, ["資金"])["search_id"]
+    elif tamper == "terms":
+        candidate["terms"] = ["資金"]
+    elif tamper == "files":
+        candidate["files"] = {name: "0" * 64 for name in candidate["files"]}
+    else:
+        del candidate["router_sha256"]
+    with pytest.raises(ValueError, match="fingerprint"):
+        U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, observation())
+    assert not (tmp_path / "eval-log").exists()
+
+
+@pytest.mark.parametrize("swapped", ["eval-log", "eval-log/ubm-goal-setting", "eval-log/ubm-goal-setting/knowledge", "eval-log/ubm-goal-setting/knowledge/usage-log.jsonl"])
+def test_symlink_swapped_in_after_the_check_does_not_receive_rows(corpus, tmp_path, monkeypatch, swapped):
+    # 事前検査の後に途中の段が symlink へ差し替えられた状態を、検査を素通しさせて再現する (TOCTOU)。
+    candidate = S.search(corpus, ["組織"])
+    project = tmp_path / "project"
+    project.mkdir()
+    external = tmp_path / "external"
+    external.mkdir()
+    link = project / swapped
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if swapped.endswith(".jsonl"):
+        target = external / "usage-log.jsonl"
+        target.write_text("")
+        link.symlink_to(target)
+    else:
+        link.symlink_to(external, target_is_directory=True)
+    monkeypatch.setattr(U, "reject_symlinked_log", lambda log: None)
+    with pytest.raises(OSError):
+        U.record_usage(project, "run-ubm-goal-setting", candidate, observation())
+    assert all(p.is_dir() or p.read_text() == "" for p in external.rglob("*"))
+    assert not any(p.is_dir() for p in external.iterdir())
+
+
+def test_missing_fcntl_stops_persistent_record_but_not_ephemeral(corpus, tmp_path, monkeypatch):
+    candidate = S.search(corpus, ["組織"])
+    monkeypatch.setattr(U, "fcntl", None)
+    with pytest.raises(OSError, match="fcntl"):
+        U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, observation())
+    assert not (tmp_path / "eval-log").exists()
+    assert U.record_usage(tmp_path, "run-ubm-goal-setting", candidate, observation(), ephemeral=True)["status"] == "ephemeral"
+
+
+def test_usage_log_that_is_not_a_regular_file_exits_2(corpus, tmp_path):
+    # FIFO を追記先として開くと、既存行の読み取りで止まる。通常ファイル以外は開いた直後に拒否する。
+    candidate = tmp_path / "candidate.json"
+    usage = tmp_path / "usage.json"
+    write(candidate, S.search(corpus, ["組織"]))
+    write(usage, observation())
+    project = tmp_path / "project"
+    log = project / U.LOG_RELATIVE
+    log.parent.mkdir(parents=True)
+    os.mkfifo(log)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/record-knowledge-usage.py"), "--project-root", str(project), "--entrypoint", "run-ubm-goal-setting", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True, timeout=30)
+    assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
+    assert "regular file" in json.loads(result.stderr)["error"]

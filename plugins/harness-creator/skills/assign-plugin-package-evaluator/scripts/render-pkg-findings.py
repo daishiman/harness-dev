@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+# /// script
+# name: render-pkg-findings
+# version: 0.2.0
+# purpose: validate-plugin-package.py の findings JSON を人が読む markdown レポートへ変換する
+# inputs:
+#   - argv: findings JSON のパス、または - で stdin
+# outputs:
+#   - stdout: markdown レポート
+#   - stderr: 入力エラーの診断 (error: ...)
+#   - exit: 0=変換した / 2=読めない・JSON でない・findings JSON の形でない
+# requires-python: ">=3.9"
+# dependencies: []
+# contexts: [E, C]
+# network: false
+# write-scope: none
+# ///
 """findings JSON → 人間可読 markdown レポート変換。"""
 from __future__ import annotations
 import argparse
@@ -35,11 +51,21 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("input", help="findings JSON path or - for stdin")
     args = ap.parse_args()
-    if args.input == "-":
-        data = json.load(sys.stdin)
-    else:
-        data = json.loads(Path(args.input).read_text())
-    print(render(data))
+    try:
+        if args.input == "-":
+            data = json.load(sys.stdin)
+        else:
+            data = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        # ValueError は JSONDecodeError と UnicodeDecodeError の両方を含む
+        print(f"error: cannot read findings JSON: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
+    try:
+        report = render(data)
+    except (KeyError, TypeError, AttributeError) as e:
+        print(f"error: not a findings JSON of validate-plugin-package: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
+    print(report)
     return 0
 
 

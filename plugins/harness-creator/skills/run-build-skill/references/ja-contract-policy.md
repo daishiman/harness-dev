@@ -29,5 +29,8 @@ package-contract の codex_alternatives の purpose は表示文として同じl
 | goal_definition | Goal definition | ゴール定義 |
 | completion_checklist | Completion checklist | 完了チェックリスト |
 | achievement_goal | Achievement goal | 達成ゴール |
+| gotchas | Gotchas | つまずきやすい点 |
+
+gotchas の見出しは rubric BD-002 の照合対象なので、この2つ以外の名前（例: 「注意点」）で出さない。
 
 これは表示名の対応であり、Layer番号やschema keyを訳す指示ではない。上の2型骨格と各lintの正規見出しの行一致を保つ。

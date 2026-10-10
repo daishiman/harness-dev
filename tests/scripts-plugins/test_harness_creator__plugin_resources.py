@@ -36,6 +36,24 @@ def test_resolver_uses_each_caller_root_without_module_cache_aliasing(tmp_path, 
         MOD.resolve_root("provider", tmp_path / "missing", tmp_path)
 
 
+def test_resolver_load_leaves_sys_modules_alone_and_reuses_per_path(tmp_path, monkeypatch):
+    # 共有の sys.modules の名前を毎回上書きすると、別の root の resolver を取り違える (再発防止)
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / "claude"))
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex"))
+    sentinel = object()
+    monkeypatch.setitem(sys.modules, "_harness_creator_plugin_root", sentinel)
+    monkeypatch.setattr(MOD, "_RESOLVERS", {})
+    host = plugin(tmp_path / "harness-creator", "harness-creator")
+    provider = plugin(tmp_path / "provider", "provider")
+    (host / "scripts").mkdir()
+    (host / "scripts" / "extract-plugin-root.py").write_bytes((ROOT / "scripts" / "extract-plugin-root.py").read_bytes())
+    assert MOD.resolve_root("provider", host, tmp_path) == provider.resolve()
+    first = MOD._RESOLVERS[(host / "scripts" / "extract-plugin-root.py").resolve()]
+    assert MOD.resolve_root("provider", host, tmp_path) == provider.resolve()
+    assert list(MOD._RESOLVERS.values()) == [first]
+    assert sys.modules["_harness_creator_plugin_root"] is sentinel
+
+
 @pytest.mark.parametrize("filename", ["build-external-intelligence.py", "build-external-intelligence-runtime.py"])
 def test_historical_forwarder_runs_and_exports_provider_from_cache(tmp_path, filename):
     config = tmp_path / "config path"

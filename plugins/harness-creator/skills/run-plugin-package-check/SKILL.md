@@ -33,7 +33,7 @@ manifest: workflow-manifest.json
 responsibility_refs:
   - prompts/R1-orchestrate.md
   - prompts/R2-gate-decide.md
-rubric_refs:
+reference_refs:
   - ref-pkg-contract
 schema_refs:
   - schemas/run-report.schema.json
@@ -168,9 +168,11 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
    ▼
 [Step 2] PKG-002〜008 委譲
    │     Skill(assign-plugin-package-evaluator, target_plugin=<name>, context=fork)
+   │     → eval-log/<name>/pkg-batch/<date>-<run>.json（PKG ID ごとの pkg_checks を 1 ファイルに束ねる）
    ▼
 [Step 3] PKG-009 外部参照ゼロ
    │     scripts/lint-pkg-009.py --skills-dir plugins/<name>/skills --fail-on-external
+   │     → eval-log/<name>/pkg-009/<date>-<run>.json（pkg_id・status を持つ PKG-009 result JSON）
    ▼ (phase >= 1)
 [Step 4] PKG-010 install smoke
    │     scripts/smoke-plugin-install.sh
@@ -179,17 +181,20 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
    │     smoke-plugin-uninstall.sh / smoke-plugin-upgrade.sh
    ▼
 [Step 6] PKG-013a〜d permission scope
-   │     scripts/validate-plugin-permissions.py --check 013<a-d>
+   │     scripts/validate-plugin-permissions.py --plugin <name> --check 013a,013b,013c,013d
    ▼
 [Step 7] PKG-014 runtime contract
    │     assign-plugin-package-evaluator (delegated, --check pkg-014)
    ▼
 [Step 8] PKG-015 rubric 違反率
-│     scripts/run-pkg-015.py --plugin <name> --log-dir eval-log/<name> --out eval-log/<name>/pkg-015/rubric-violation.json
-│     (履歴 bootstrap 中は明示 not_applicable、開each 時は fail、それ以外は pass へ正規化)
+   │     scripts/run-pkg-015.py --plugin <name> --log-dir eval-log/<name> --out eval-log/<name>/pkg-015/<date>-<run>.json
+   │     (履歴 bootstrap 中は明示 not_applicable、違反率が閾値を超えた breach 時は fail、それ以外は pass へ正規化)
    ▼
 [Step 9] findings 集約 + observable 配線
-   │     scripts/aggregate-pkg-findings.py
+   │     scripts/aggregate-pkg-findings.py --plugin <name> --run <date>-<run> --phase <phase> [--pkg <PKG ID,...>]
+   │       --out eval-log/<name>/pkg-summary/<date>-<run>.json
+   │     (この run の pkg-batch/ と pkg-<id>/ のログだけを PKG ID ごとに束ねる。別の run のログは新しくても読まない。
+   │      phase の required_pkg のうちこの run のログが無い ID と、status を読めないログは fail と数える)
    ▼
 [Step 10] run-report.json 生成 + verdict markdown 出力
 ```
@@ -215,7 +220,7 @@ Phase 別の実行 Step は `workflow-manifest.json phases[].id` 参照。
 3. **PKG-013 sub-check の合算**: 1 件でも fail なら PKG-013 全体を fail として集約。サマリ表記は `PKG-013(a:pass, b:fail, c:pass, d:pass)`
 4. **35章 observable 配線の二重発火禁止**: 1 run につき 1 line。複数 PKG fail でも `pkg_check_failed` event は集約して 1 件
 5. **`eval-log/<plugin>/` の append-only**: 過去ログを上書き禁止（27章 §10 アンチパターン #6 準用）
-6. **兄弟 plugin `skill-governance-lint` が未導入の環境**: PKG-009 (`lint-pkg-009.py`)、PKG-010 (`sandbox-plugin-lifecycle.py`)、PKG-015 (`run-pkg-015.py`) は同梱 resolver で兄弟 plugin を探し、見つからなければ推測 path で lint を呼ばずに止まる。PKG-009/015 は停止理由を `status: fail` のログに残すので、skill-governance-lint を install してから再実行する
+6. **兄弟 plugin `skill-governance-lint` が未導入の環境**: PKG-009 (`lint-pkg-009.py`)、PKG-010 (`sandbox-plugin-lifecycle.py`)、PKG-015 (`run-pkg-015.py`) は同梱 resolver で兄弟 plugin を探し、見つからなければ推測 path で lint を呼ばずに止まる。3 つとも停止理由を `status: fail` のログに残すので、skill-governance-lint を install してから再実行する
 
 ## Additional Resources
 

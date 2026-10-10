@@ -10,7 +10,7 @@
 # outputs:
 #   - stdout: 更新サマリ JSON
 #   - stderr: ValueError (不正遷移/理由欠落/成果物欠落/covered 不一致・不在/未知 task-id/再pin 異値) メッセージ
-#   - exit: 0=OK / 1=ValueError (状態違反) / 2=usage/IO error
+#   - exit: 0=OK / 1=ValueError (状態違反) / 2=usage/IO error (読めない・UTF-8 でない・JSON でない task-state / task-graph を含む)
 #   - write-scope: <--task-state> task-state.json (canonical 上書き・単一 writer) + <--events> task-events.jsonl (append-only)
 # contexts: [C, E]
 # network: false
@@ -27,8 +27,11 @@ blocked_reason?, route_report?, handoff_notes?}]}`) を、consumer=harness-creat
 producer 必須キー id/state/started_at/lease_expires_at + blocked 時 blocked_reason を
 壊さない。canonical serialization は producer 側 derive-task-graph.canonicalize() が採用する
 決定論規約 (id 昇順ソート・json.dumps indent=2 ensure_ascii=False) を task-state の shape へ
-そのまま踏襲する (独自シリアライザは発明しない)。cross-plugin import を避け stdlib のみで
-自己完結する (TG-C05 summarize / TG-C07 manage-build-lease は resolve_build_dir を import 再利用)。
+そのまま踏襲する (独自シリアライザは発明しない)。cross-plugin import はしない。標準ライブラリの
+ほかに読むのは同じ scripts/ の plugin_resources.py だけで、resolve_planner_root が使う。
+plugin_resources.py が無い配置でも import は失敗させず、resolve_planner_root は sentinel を返す。
+scripts/ を sys.path に足すのは import の間だけで、この module を import する側の sys.path は
+変えない (TG-C05 summarize / TG-C07 manage-build-lease は resolve_build_dir を import 再利用)。
 """
 from __future__ import annotations
 
@@ -40,8 +43,21 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from plugin_resources import ResolverUnavailable, resolve_root
+_SCRIPTS_DIR = str(Path(__file__).resolve().parent)
+sys.path.insert(0, _SCRIPTS_DIR)
+try:
+    from plugin_resources import ResolverUnavailable, resolve_root
+except ImportError:
+    # dispatch-ready-set などが import 時に読むので、resolver が無くても止めない。
+    # resolve_planner_root は sentinel の path を返し、存在検査は呼び出し側に任せる。
+    class ResolverUnavailable(RuntimeError):
+        """plugin_resources.py が無いときの代わり。"""
+
+    def resolve_root(name: str, plugin_root: Path, cwd: Path | None = None) -> Path | None:
+        raise ResolverUnavailable("plugin_resources.py is missing from harness-creator/scripts")
+finally:
+    # import する側の sys.path に harness-creator/scripts を残さない。
+    sys.path.remove(_SCRIPTS_DIR)
 
 # ── 状態遷移表 (producer component C16 永続 4 値。done は通常遷移で終端) ───
 # done→pending は accepted graph 再 pin に伴う dependency dirty-closure 再開のみ、
@@ -55,6 +71,9 @@ ALLOWED_TRANSITIONS: dict[str, set[str]] = {
 # blocked 遷移の第一級 field 値域 (origin-failure=起点故障 / propagated=下流連鎖)。
 BLOCKED_REASONS = {"origin-failure", "propagated"}
 DEFAULT_LEASE_SECONDS = 3600
+# JSON 入力を読めないときの例外。UnicodeDecodeError は ValueError の子なので、明示しないと
+# 状態違反 (exit 1) や traceback に紛れる。
+_JSON_READ_ERRORS = (OSError, UnicodeDecodeError, json.JSONDecodeError)
 # task-graph edge 方向は type ごとに異なる。depends_on は consumer task→producer
 # task、produces は producer task→artifact、consumes は artifact→consumer task。
 # consumes を depends_on と同じ endpoint として扱う edge-type 集合は持たない。
@@ -113,7 +132,7 @@ def _assert_covered(route_report_path: str, task_id: str, require_covered: bool 
     """
     try:
         data = json.loads(Path(route_report_path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except _JSON_READ_ERRORS as exc:
         raise ValueError(f"route-report 読込/parse 失敗: {route_report_path}: {exc}")
     covered = data.get("covered_task_ids")
     if covered is None:
@@ -649,9 +668,10 @@ def resolve_planner_root() -> Path:
     """producer (plugin-dev-planner) の plugin root を返す。C01/C03/C07 が import 再利用する SSOT。
 
     repo では plugins/plugin-dev-planner だが、install 先は <cache>/<marketplace>/<plugin>/<version>/
-    なので親ディレクトリ経由では兄弟に届かない。同梱の scripts/extract-plugin-root.py で解決する。
-    dispatch-ready-set が import 時に呼ぶので、見つからなくても例外にせず実在しない path を返し、
-    存在検査は呼び出し側に任せる。
+    なので親ディレクトリ経由では兄弟に届かない。同梱の plugin_resources.py が
+    scripts/extract-plugin-root.py を読んで解決する。dispatch-ready-set が import 時に呼ぶので、
+    plugin_resources.py・extract-plugin-root.py・planner のどれが見つからなくても例外にせず
+    実在しない sentinel の path (plugin:plugin-dev-planner) を返し、存在検査は呼び出し側に任せる。
     """
     harness_root = Path(__file__).resolve().parents[1]
     try:
@@ -725,7 +745,7 @@ def main(argv: list[str] | None = None) -> int:
     if state_path.exists():
         try:
             state = json.loads(state_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except _JSON_READ_ERRORS as exc:
             print(f"task-state 読込/parse 失敗: {state_path}: {exc}", file=sys.stderr)
             return 2
     else:
@@ -739,7 +759,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             try:
                 task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
+            except _JSON_READ_ERRORS as exc:
                 print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                 return 2
             before_ids = {n.get("id") for n in state.get("nodes", []) if isinstance(n, dict)}
@@ -773,7 +793,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             try:
                 task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
+            except _JSON_READ_ERRORS as exc:
                 print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                 return 2
             state, projected = project_phase_gates(state, task_graph)
@@ -789,7 +809,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             try:
                 task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
+            except _JSON_READ_ERRORS as exc:
                 print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                 return 2
             state = repin_graph_hash(state, args.repin_graph_hash, set(args.authorized_hash))
@@ -812,7 +832,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             try:
                 task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
+            except _JSON_READ_ERRORS as exc:
                 print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                 return 2
             origin = args.reactivate_cascade
@@ -838,7 +858,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.task_graph:
                 try:
                     task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError) as exc:
+                except _JSON_READ_ERRORS as exc:
                     print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                     return 2
                 for task_id in args.task_id:

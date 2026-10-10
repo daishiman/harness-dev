@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: detect-knowledge-updates
-# version: 0.2.0
+# version: 0.2.1
 # purpose: ナレッジソース (.md) を registry.json と MD5 照合し NEW/MODIFIED を検知する決定論ゲート。
 #          旧 detect-knowledge-updates.sh 183 行の契約移植 (bash3.2 declare -A / md5 -q 分岐を stdlib 化)。
 #          検知は sources 配下を再帰スキャンする。除外の正本は EXCLUDED_SUBDIRS (目標設定/・挑戦宣言/)
@@ -10,7 +10,8 @@
 #   - argv: --registry FILE --sources DIR [--since YYYY-MM-DD] [--all] [--dry-run]
 # outputs:
 #   - stdout: 検知サマリ + {STATUS}|{source_type}|{file_hash}|{file_path} 形式で NEW/MODIFIED を列挙
-#   - exit: 0=検知完了(未接続sourcesは0件正常終了) / 1=入力異常 / 2=usage
+#   - exit: 0=検知完了(未接続sourcesは0件正常終了・--help) / 2=usage
+#           1=入力異常 (--since 不正・registry が無い/読めない/形が違う・ソースの .md を読めない)
 # contexts: [E, C]
 # network: false
 # write-scope: none
@@ -69,14 +70,36 @@ def md5_of(path: Path) -> str:
     return h.hexdigest()
 
 
+class RegistryError(Exception):
+    """registry.json を読めない・形が違う。traceback ではなく exit 1 (入力異常) にする。"""
+
+
 def load_registry(registry_file: Path) -> dict[str, str]:
-    """file_path -> file_hash の辞書を返す。"""
-    data = json.loads(registry_file.read_text(encoding="utf-8"))
+    """file_path -> file_hash の辞書を返す。
+
+    file_hash は md5 の文字列か null (vault に実ファイルが無い直接貼付のソース)。
+    形の違う entry を読み飛ばすと、そのソースが毎回 NEW になって再抽出されるので止める。
+    """
+    try:
+        data = json.loads(registry_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RecursionError) as exc:
+        raise RegistryError(f"registry を読めません: {registry_file}: {type(exc).__name__}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise RegistryError(f"registry のトップが object ではありません: {registry_file}")
+    files = data.get("files", [])
+    if not isinstance(files, list):
+        raise RegistryError(f"registry の files が配列ではありません: {registry_file}")
     out: dict[str, str] = {}
-    for entry in data.get("files", []):
+    for i, entry in enumerate(files):
+        if not isinstance(entry, dict):
+            raise RegistryError(f"registry の files[{i}] が object ではありません")
         fp = entry.get("file_path")
-        if fp:
-            out[fp] = entry.get("file_hash") or ""
+        file_hash = entry.get("file_hash")
+        if not isinstance(fp, str) or not fp:
+            raise RegistryError(f"registry の files[{i}].file_path が空でない文字列ではありません")
+        if file_hash is not None and not isinstance(file_hash, str):
+            raise RegistryError(f"registry の files[{i}].file_hash が文字列か null ではありません ({fp})")
+        out[fp] = file_hash or ""
     return out
 
 
@@ -108,8 +131,9 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--dry-run", action="store_true", help="検知のみ。互換フラグとして受理し、このスクリプト自体は常に書き込まない")
     try:
         args = ap.parse_args(argv)
-    except SystemExit:
-        return 2
+    except SystemExit as exc:
+        # --help は argparse が SystemExit(0) を投げる。2 に潰すと「usage は出たのに異常終了」になる。
+        return 0 if exc.code == 0 else 2
 
     if args.since:
         try:
@@ -130,7 +154,11 @@ def main(argv: list[str]) -> int:
         print(f"エラー: registry ファイルが見つかりません: {registry_file}", file=sys.stderr)
         return 1
 
-    registry = {} if args.all else load_registry(registry_file)
+    try:
+        registry = {} if args.all else load_registry(registry_file)
+    except RegistryError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 1
 
     # registry キー再構成用 prefix = --sources 末尾2成分 (05_Project/UBM)
     parts = sources.resolve().parts
@@ -151,6 +179,9 @@ def main(argv: list[str]) -> int:
     total_excluded = 0
 
     for md in sorted(sources.rglob("*.md")):
+        # `x.md` という名前のディレクトリや壊れたリンクはソースではない。
+        if not md.is_file():
+            continue
         rel_path = md.relative_to(sources)
         if is_excluded(rel_path.parts):
             total_excluded += 1
@@ -158,9 +189,13 @@ def main(argv: list[str]) -> int:
         total_scanned += 1
         rel = rel_path.as_posix()
         registry_key = f"{prefix}/{rel}"
-        current_hash = md5_of(md)
+        try:
+            current_hash = md5_of(md)
+            mod_date = datetime.fromtimestamp(md.stat().st_mtime).strftime("%Y-%m-%d")
+        except OSError as exc:
+            print(f"エラー: ソースを読めません: {md}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return 1
         source_type = get_source_type(registry_key)
-        mod_date = datetime.fromtimestamp(md.stat().st_mtime).strftime("%Y-%m-%d")
 
         if args.all:
             print(f"  [全件] {registry_key} ({source_type})")

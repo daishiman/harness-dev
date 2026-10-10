@@ -53,7 +53,7 @@
         "build-preflight",
         "ci"
       ],
-      "ci_scope": "governance-check.yml で plugins/harness-creator/scripts (plugin-root 直下 scripts) を CI 配線し、メタプラグイン自身の flow-level scripts の frontmatter 自己免除を解消 (dogfooding 破れの中核=compute-dogfooding-metrics.py/notion_config.py を封鎖)。plugins/harness-creator/skills/*/scripts と full plugins/ tree は既存 backlog (PENDING_FILES + hook scripts 等 16 本) で未配線=段階棚卸し後に拡張する。build-preflight は従来どおり新規生成物を強制。"
+      "ci_scope": "governance-check.yml で plugins/harness-creator/scripts (plugin-root 直下 scripts) を CI 配線し、メタプラグイン自身の flow-level scripts の frontmatter 自己免除を解消 (dogfooding 破れの中核=compute-dogfooding-metrics.py/notion_config.py を封鎖)。skill の scripts は、frontmatter の欠けたファイルが無いディレクトリだけを別の段で配線する (全 plugin の run-skill-feedback/scripts・ubm-goal-setting の run-ubm-*/scripts・run-build-skill/scripts・assign-skill-design-evaluator/scripts・assign-plugin-package-evaluator/scripts・run-plugin-dev-plan/scripts・run-prompt-creator-7layer/scripts・run-system-spec-elicit/scripts。段は先にディレクトリの存在を確かめる)。plugins/*/skills/*/scripts の残りと full plugins/ tree は、frontmatter の無いファイル (2026-10-10 時点で harness-creator・skill-intake の 23 本と PENDING_FILES) が残るので未配線=段階棚卸し後に拡張する。build-preflight は従来どおり新規生成物を強制。"
     },
     {
       "id": "skill-completeness",

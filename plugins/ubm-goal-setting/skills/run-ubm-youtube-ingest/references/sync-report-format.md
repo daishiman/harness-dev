@@ -30,8 +30,8 @@
 - **`ingested`**: 本実行で新規に永続化した件数。**冪等性の核**: 同一入力の二回目は `ingested=0`、`already_ingested` が増える。
 - **`already_ingested`**: 既に `ingested` 済みで飛ばした件数 (冪等キー=`video_id`)。
 - **`temporary_failure` / `terminal_unavailable` / `waived`**: 各状態に写像された件数。取得不能を `ingested` に混ぜない。
-- **`alerts`**: 監視向けの行。`[temporary_failure]` / `[terminal_unavailable]` / `[quota]` / `[auth]` / `[retry_exhausted]` / `[lease]` を接頭辞にする。
-- **`stopped_reason`**: `null` | `quota` | `auth` | `lease_held`。穏当な停止の理由。停止でも終了コード 0 (スケジューラが次の周期で再開)。`lease_held` は稼働中の実行権の占有（lease）を別の実行が保持している間の、何もしない終了 (二重起動の排他)。(`aborted_after_lease` は `YT_ONESHOT_ABORT_AFTER_LEASE` を立てたときのみ現れるテスト専用のフォールト注入値で、通常運用では出ない。)
+- **`alerts`**: 監視向けの行。`[temporary_failure]` / `[terminal_unavailable]` / `[quota]` / `[auth]` / `[provider_error]` / `[retry_exhausted]` / `[lease]` / `[provenance_gap]` / `[source_conflict]` / `[invalid_metadata]` を接頭辞にする。
+- **`stopped_reason`**: `null` | `quota` | `auth` | `provider_error` | `lease_held`。穏当な停止の理由。停止でも終了コード 0 (スケジューラが次の周期で再開)。`quota`/`auth`/`provider_error` は動画の列挙でも字幕の取得でも、取得元がエラーを出した時点で残りの取得をやめ、台帳に実行を記録して lease を解放してから終える。`provider_error` は `QuotaExceeded`/`AuthRequired`/`TemporaryFailure`/`TerminalUnavailable` 以外の `ProviderError` (未知のエラー名、取得元の返した形の違いなど) で、要人間確認。`lease_held` は稼働中の実行権の占有（lease）を別の実行が保持している間の、何もしない終了 (二重起動の排他)。
 
 ## 受入テストが照合する不変則 (OUT1)
 
@@ -51,6 +51,6 @@
 
 ## 終了コード
 
-- `0`: 完了 (`quota`/`auth`/`lease` による穏当な停止を含む)。
-- `1`: 入力/登録簿の破損。壊れた登録簿を上書きしない。
-- `2`: 使い方のエラー (引数不足等)。
+- `0`: 完了 (`quota`/`auth`/`provider_error`/`lease` による穏当な停止を含む)。`--help` も 0。
+- `1`: 登録簿か fixture が読めない・壊れている・形が違う。壊れた登録簿を上書きせず、lease も取らない。
+- `2`: 使い方のエラー (引数不足、`--mode url` に `--url` が無い、`--url` を他のモードで使う、`--provider fixture` に `--fixture` が無い、未実装の取得元など)。

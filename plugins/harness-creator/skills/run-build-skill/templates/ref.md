@@ -37,7 +37,7 @@ runtime_root_policy: host-skill-path
 ## 手順
 参照用。手順なし。
 
-## 注意点
+## つまずきやすい点
 {{generated_gotchas}}
 
 ## 変数化契約

@@ -290,8 +290,8 @@ def test_main_no_description_fallback(tmp_path, monkeypatch, capsys):
     assert 'description: "Subagent derived from nodesc"' in content
 
 
-def test_main_no_tools_omits_tools_line(tmp_path, monkeypatch, capsys):
-    # allowed-tools 無し → tools 行は出力しない
+def test_main_no_tools_defaults_to_read(tmp_path, monkeypatch, capsys):
+    # allowed-tools 無し → 全道具を継承させないよう tools: Read を出す
     skill = tmp_path / "SKILL.md"
     _write(skill, "---\nname: notools\ndescription: d\n---\n## Steps\n### A: x\n")
     out_dir = tmp_path / "agents"
@@ -410,3 +410,66 @@ def test_auto_writer_role_and_advisor_rejection_share_normalized_tools(tmp_path,
     result = subprocess.run(args + ['--role', 'advisor'], capture_output=True, text=True)
     assert result.returncode == 2
     assert 'advisor role cannot' in result.stderr
+
+
+# ===================== review B の [低] の回帰 =====================
+
+@pytest.mark.parametrize("tools", ["[Read, MultiEdit]", "[Read, NotebookEdit]", "Read MultiEdit"])
+def test_advisor_rejects_every_write_tool(tmp_path, tools):
+    """Write・Edit 以外の書き込みの道具 (MultiEdit・NotebookEdit) でも advisor を拒否する。"""
+    skill = tmp_path / "SKILL.md"
+    _write(skill, f"---\nname: run-x\ndescription: d\nallowed-tools: {tools}\n---\n## Purpose & Output Contract\nx\n")
+    base = [sys.executable, str(SCRIPT), "--skill-name", "run-x", "--skill-md", str(skill),
+            "--output-dir", str(tmp_path / "agents")]
+    r = subprocess.run(base + ["--role", "advisor"], capture_output=True, text=True)
+    assert r.returncode == 2 and "advisor role cannot" in r.stderr
+    r = subprocess.run(base, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "(writer)" in (tmp_path / "agents/run-x-subagent.md").read_text(encoding="utf-8")
+
+
+def test_map_tools_space_separated_scalar_keeps_every_tool():
+    assert BS.map_tools("Read Grep Glob") == "Read, Grep, Glob"
+    assert BS.map_tools("Read Bash(python3 *) Grep") == "Read, Bash, Grep"
+
+
+@pytest.mark.parametrize("name", ["../esc", "a/b", "..", ""])
+def test_invalid_skill_name_is_rejected(tmp_path, name):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: x\ndescription: d\n---\n")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--skill-name", name, "--skill-md", str(skill),
+                        "--output-dir", str(tmp_path / "r" / "c")], capture_output=True, text=True)
+    assert r.returncode == 2
+    assert not list(tmp_path.rglob("*-subagent.md"))
+
+
+def test_output_dir_is_file_and_non_utf8_skill_are_input_errors(tmp_path):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: x\ndescription: d\n---\n")
+    blocker = tmp_path / "blocker"
+    blocker.write_text("x", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--skill-name", "x", "--skill-md", str(skill),
+                        "--output-dir", str(blocker)], capture_output=True, text=True)
+    assert r.returncode == 2 and "Traceback" not in r.stderr
+    skill.write_bytes(b"\xff---\n")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--skill-name", "x", "--skill-md", str(skill),
+                        "--output-dir", str(tmp_path / "a")], capture_output=True, text=True)
+    assert r.returncode == 2 and "Traceback" not in r.stderr
+
+
+def test_quoted_description_escapes_are_decoded():
+    fm, _ = BS.parse_frontmatter('---\ndescription: "say \\"hi\\""\nname: \'it\'\'s\'\n---\n')
+    assert fm["description"] == 'say "hi"'
+    assert fm["name"] == "it's"
+
+
+def test_layer2_and_layer4_are_not_duplicates():
+    body = BS.render_agent_body("x-subagent", "p", "", "ja", "advisor")
+    l2 = body.split("## Layer 2", 1)[1].split("## Layer 3", 1)[0].split("\n", 1)[1].strip()
+    l4 = body.split("## Layer 4", 1)[1].split("## Layer 5", 1)[0].split("\n", 1)[1].strip()
+    assert l2 != l4
+
+
+def test_header_documents_language_and_role():
+    head = SCRIPT.read_text(encoding="utf-8").split('"""', 1)[0]
+    assert "--language" in head and "--role" in head

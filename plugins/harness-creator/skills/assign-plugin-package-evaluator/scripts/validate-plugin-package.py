@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+# /// script
+# name: validate-plugin-package
+# purpose: 1 つの plugin を PKG-002〜008 と PKG-014 で検査し、findings JSON を出す（読むだけで書かない。--output だけ書く）
+# inputs:
+#   - argv: [--check pkg-002..pkg-008|pkg-014|all] (--plugin-dir DIR | --plugin NAME [--plugins-root DIR]) [--output PATH|-]
+#   - env: CLAUDE_PLUGIN_ROOT（--plugin-dir も --plugin も無いときの検査対象）
+#   - files: <plugin>/.claude-plugin/plugin.json, references/package-contract.json, skills/*/SKILL.md, agents/, hooks/, scripts/, settings/*.json
+# outputs:
+#   - stdout: findings JSON（--output - のとき）
+#   - stderr: 入力エラーの説明
+#   - exit: 0=全 pass か not_applicable / 1=fail あり / 2=入力エラー（plugin ディレクトリが無い・--check が不正・読み書きできない）
+# contexts: [C, E]
+# network: false
+# write-scope: --output に渡したファイルだけ
+# dependencies: []
+# requires-python: ">=3.9"
+# ///
 """PKG-002〜008 / PKG-014 sub-check 実装。
 
 正本仕様: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
@@ -11,7 +28,11 @@ findings schema: ../schemas/findings.schema.json
 exit codes:
   0  全 PKG check pass または not_applicable
   1  1 件以上 fail
-  2  schema 違反・入力エラー
+  2  入力エラー (plugin ディレクトリが無い・--check が不正・検査対象や --output を読み書きできない)。
+     findings の schema 検証はこの script ではしない (../schemas/findings.schema.json は出力の契約)
+
+run_id は findings.schema.json の pattern (pkg-validate-<plugin>-<YYYYMMDD>-<3桁>) に従う。日付までしか
+持たないので、同じ日の run を区別するには pkg_checks[*].last_run_at を見る。
 """
 
 from __future__ import annotations
@@ -52,6 +73,9 @@ SKILL_FRONTMATTER_REQUIRED = {"name", "description", "kind"}
 SKILL_FRONTMATTER_RECOMMENDED = {"responsibility_refs", "schema_refs", "manifest"}
 PLUGIN_JSON_REQUIRED = {"name", "version", "description"}
 PACKAGE_CONTRACT_REQUIRED = {"package_mode", "entry_points"}
+# ../../ref-pkg-contract/schemas/package-contract.schema.json と ../schemas/findings.schema.json の
+# package_mode の enum と同じ (一致は test で固定している)
+PACKAGE_MODES = ("bundle", "skill-only")
 SKILL_KINDS = {"run", "ref", "assign", "wrap", "delegate"}
 LOOP_KINDS = {"run", "wrap", "delegate"}
 KNOWN_COMBINATORS = {
@@ -107,6 +131,11 @@ def _as_list(value: object) -> list[str]:
     return [item for item in (_unquote(v) for v in raw) if item and item != "[]"]
 
 
+def _str_list(value: object) -> list[str]:
+    """JSON の配列から文字列だけを返す。配列でなければ空 (型の崩れで TypeError にしない)。"""
+    return [item for item in value if isinstance(item, str)] if isinstance(value, list) else []
+
+
 def _parse_completeness_exemptions(fm: dict) -> dict[str, str]:
     """Parse only reasoned ``<category>: <reason>`` exemptions.
 
@@ -149,34 +178,47 @@ def _mapping_scalar(block: str | None, key: str) -> str:
     return _unquote(match.group(1)) if match else ""
 
 
+def _load_json_object(path: Path) -> dict | None:
+    """JSON object を読む。壊れた JSON と object でない JSON は None（検査の fail として扱う）。
+
+    読めない・非 UTF-8 は OSError・UnicodeDecodeError のまま上げ、main が exit 2 にする。
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
 def load_plugin_json(plugin_dir: Path) -> dict | None:
     pj = plugin_dir / ".claude-plugin" / "plugin.json"
     if not pj.exists():
         return None
-    try:
-        return json.loads(pj.read_text())
-    except json.JSONDecodeError:
-        return None
+    return _load_json_object(pj)
 
 
 def load_package_contract(plugin_dir: Path) -> dict | None:
     pc = plugin_dir / "references" / "package-contract.json"
     if not pc.exists():
         return None
-    try:
-        return json.loads(pc.read_text())
-    except json.JSONDecodeError:
-        return None
+    return _load_json_object(pc)
 
 
 def get_package_mode(plugin_dir: Path) -> str:
+    """検査に使う package_mode。範囲外の値は bundle として全 check を流す (PKG-002 が fail にする)。
+
+    範囲外の値を素通しすると、typo 1 つで skill-only の not_applicable にも落ちず、出力の
+    package_mode が findings.schema.json の enum を外れる。
+    """
     pc = load_package_contract(plugin_dir)
     if pc and "package_mode" in pc:
-        return pc["package_mode"]
-    pj = load_plugin_json(plugin_dir)
-    if pj and "package_mode" in pj:
-        return pj["package_mode"]
-    return "skill-only"
+        mode = pc["package_mode"]
+    else:
+        pj = load_plugin_json(plugin_dir)
+        if not (pj and "package_mode" in pj):
+            return "skill-only"
+        mode = pj["package_mode"]
+    return mode if mode in PACKAGE_MODES else "bundle"
 
 
 def make_finding(pkg_id: str, idx: int, location: str, evidence: str,
@@ -201,7 +243,7 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
         findings.append(make_finding(
             "PKG-002", 1,
             f"{plugin_dir}/.claude-plugin/plugin.json",
-            "plugin.json が存在しないか JSON 解析エラー",
+            "plugin.json が存在しないか、JSON の object として読めない",
             suggested_fix="plugin.json を新規作成し PLUGIN_JSON_REQUIRED キーを揃える"))
         return findings
     missing = PLUGIN_JSON_REQUIRED - pj.keys()
@@ -217,7 +259,7 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
         findings.append(make_finding(
             "PKG-002", start_idx,
             f"{plugin_dir}/references/package-contract.json",
-            "package-contract.json が存在しないか JSON 解析エラー",
+            "package-contract.json が存在しないか、JSON の object として読めない",
             suggested_fix="references/package-contract.json に package_mode と entry_points を追加"))
         return findings
     missing_contract = PACKAGE_CONTRACT_REQUIRED - contract.keys()
@@ -227,14 +269,19 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
             f"{plugin_dir}/references/package-contract.json",
             f"package contract 必須キー欠落: {key}",
             suggested_fix=f"references/package-contract.json に {key} を追加"))
+    if "package_mode" in contract and contract["package_mode"] not in PACKAGE_MODES:
+        findings.append(make_finding(
+            "PKG-002", len(findings) + 1,
+            f"{plugin_dir}/references/package-contract.json#package_mode",
+            f"package_mode の値が範囲外: {contract['package_mode']!r}（bundle として全 check を流した）",
+            suggested_fix=f"package_mode を {' / '.join(PACKAGE_MODES)} のどれかにする"))
     scoped = contract.get("skill_dependencies")
     if scoped is not None:
         entry_points = contract.get("entry_points", {})
         declared_skills = set(
-            entry_points.get("skills", []) if isinstance(entry_points, dict) else []
+            _str_list(entry_points.get("skills")) if isinstance(entry_points, dict) else []
         )
-        depends_on = contract.get("depends_on", [])
-        allowed_dependencies = set(depends_on if isinstance(depends_on, list) else [])
+        allowed_dependencies = set(_str_list(contract.get("depends_on")))
 
         def scoped_finding(evidence: str) -> None:
             findings.append(make_finding(
@@ -272,15 +319,45 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
     return findings
 
 
+# byte-compile の生成物は配布物ではない。.pyc には元ファイルの絶対パスと mtime が埋まるので、
+# 正本とコピーで別々に生成されると中身が同じでも fingerprint がずれ、PKG-003 の偽陽性になる。
+# macOS の Finder が置く .DS_Store も同じ理由で除く。
+# 除外と算出は plugins/harness-creator/scripts/feedback_contract_ssot.py の directory_content_sha256 と
+# 同じにする (配布物では SSOT を import できる位置に無いので写す。一致は test で固定している)。
+_BYTECODE_CACHE_DIR = "__pycache__"
+_BYTECODE_SUFFIXES = (".pyc", ".pyo")
+_FINDER_METADATA = ".DS_Store"
+
+
+def _is_local_artifact(relative: Path) -> bool:
+    """fingerprint に含めない、手元で生成されるファイル (bytecode cache と .DS_Store)。"""
+    return (
+        _BYTECODE_CACHE_DIR in relative.parts
+        or relative.suffix in _BYTECODE_SUFFIXES
+        or relative.name == _FINDER_METADATA
+    )
+
+
 def _tree_fingerprint(root: Path) -> str:
-    """Directory内容をpath込みでhashし、物理vendored copyの同一性を判定する。"""
+    """Directory 内容を path・種類 (file/dir/symlink) 込みで hash し、物理 vendored copy の同一性を判定する。
+
+    symlink は辿らず link 先の文字列を hash する。空のディレクトリも数える。
+    bytecode cache と .DS_Store は除く。読めないファイルは OSError を上げる (main で exit 2)。
+    """
     digest = hashlib.sha256()
-    for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
-        relative = path.relative_to(root).as_posix()
-        digest.update(relative.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(path.read_bytes())
-        digest.update(b"\0")
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+        rel = path.relative_to(root)
+        if _is_local_artifact(rel):
+            continue
+        if path.is_symlink():
+            kind, payload = b"L", os.readlink(path).encode("utf-8")
+        elif path.is_file():
+            kind, payload = b"F", path.read_bytes()
+        elif path.is_dir():
+            kind, payload = b"D", b""
+        else:
+            kind, payload = b"O", b""
+        digest.update(kind + b"\0" + rel.as_posix().encode("utf-8") + b"\0" + payload + b"\0")
     return digest.hexdigest()
 
 
@@ -302,7 +379,8 @@ def check_pkg_003(plugin_dir: Path) -> list[dict]:
                 continue
             name = sk.parent.name
             skill_names.setdefault(name, []).append(plug.name)
-            skill_fingerprints.setdefault(name, []).append(_tree_fingerprint(sk.parent))
+            if name == "run-skill-feedback":  # 一致を見るのは配布コピーだけ
+                skill_fingerprints.setdefault(name, []).append(_tree_fingerprint(sk.parent))
         for ag in (plug / "agents").glob("*.md") if (plug / "agents").exists() else []:
             if ag.is_symlink():
                 continue
@@ -379,21 +457,39 @@ def check_pkg_004(plugin_dir: Path) -> list[dict]:
     return findings
 
 
+def _agent_ref_name(ref: str) -> str:
+    """subagent_refs の 1 件を agent 名にする (`agents/x.md` と書いた参照も x として扱う)。"""
+    return Path(ref).stem if ref.endswith(".md") else ref
+
+
 def check_pkg_005(plugin_dir: Path) -> list[dict]:
+    """agents/*.md の frontmatter name と SKILL.md の subagent_refs を突き合わせる。
+
+    見るのは 2 方向: (1) 各 agent ファイルの name が無いか、ファイル名 (拡張子を除く) と違う、
+    (2) subagent_refs (block list でも flow list `[a, b]` でもよい) が指す agent が無い。
+    """
     findings: list[dict] = []
     agents_dir = plugin_dir / "agents"
     skills_dir = plugin_dir / "skills"
-    if not agents_dir.exists():
-        return findings
-    declared_agents: set[str] = set()
-    for sk_md in skills_dir.glob("*/SKILL.md") if skills_dir.exists() else []:
-        fm = parse_frontmatter(sk_md.read_text())
-        if fm and "subagent_refs" in fm:
-            refs = fm["subagent_refs"]
-            if isinstance(refs, list):
-                declared_agents.update(refs)
-    actual_agents = {p.stem for p in agents_dir.glob("*.md")}
     idx = 1
+    actual_agents: set[str] = set()
+    for agent_md in sorted(agents_dir.glob("*.md")) if agents_dir.is_dir() else []:
+        actual_agents.add(agent_md.stem)
+        fm = parse_frontmatter(agent_md.read_text(encoding="utf-8"))
+        declared_name = _unquote(fm.get("name")) if fm else ""
+        if declared_name != agent_md.stem:
+            findings.append(make_finding(
+                "PKG-005", idx, str(agent_md),
+                f"agent の frontmatter name ({declared_name or '<なし>'}) がファイル名 {agent_md.stem} と一致しない",
+                suggested_fix=f"frontmatter に name: {agent_md.stem} を書くか、ファイル名を name に合わせる"))
+            idx += 1
+    declared_agents: set[str] = set()
+    for sk_md in skills_dir.glob("*/SKILL.md") if skills_dir.is_dir() else []:
+        if sk_md.parent.is_symlink():
+            continue
+        fm = parse_frontmatter(sk_md.read_text(encoding="utf-8"))
+        if fm and "subagent_refs" in fm:
+            declared_agents.update(_agent_ref_name(ref) for ref in _as_list(fm["subagent_refs"]))
     for missing in sorted(declared_agents - actual_agents):
         findings.append(make_finding(
             "PKG-005", idx,
@@ -405,21 +501,36 @@ def check_pkg_005(plugin_dir: Path) -> list[dict]:
 
 
 def check_pkg_006(plugin_dir: Path) -> list[dict]:
+    """hook の登録と実体を両方向で突き合わせる。名前は拡張子まで含めて完全一致で比べる。
+
+    登録元: hooks/hooks.json (plugin.json に hooks キーが無くても Claude Code が読む既定の場所)・
+    plugin.json の hooks (object ならその中身、文字列か文字列の配列なら指す hooks file)・package
+    contract と plugin.json の entry_points.hooks・settings/*.json の hooks。
+    (1) hooks/ 直下の *.py / *.sh が、どの登録元にも登録されていない。
+    (2) 登録だけあって実体が無い。command は `${CLAUDE_PLUGIN_ROOT}/hooks/...` のように plugin root
+    から hooks/ を指す token だけを見る (`~/.claude/hooks/` や `.git/hooks/` は plugin の外なので見ない)。
+    hooks file が JSON の object として読めないときも fail にする (Claude Code はその hook を読めない)。
+    """
     findings: list[dict] = []
     hooks_dir = plugin_dir / "hooks"
     settings_dir = plugin_dir / "settings"
-    if not hooks_dir.exists():
-        return findings
-    actual_hooks = {p for p in hooks_dir.glob("*") if p.is_file() and p.suffix in {".py", ".sh"}}
+    actual_hooks = (
+        {p for p in hooks_dir.glob("*") if p.is_file() and p.suffix in {".py", ".sh"}}
+        if hooks_dir.is_dir() else set()
+    )
     registered: set[str] = set()
+    # (登録元, 登録された文字列, plugin 内で解決した path)
+    referenced: list[tuple[str, str, Path]] = []
 
     def register_hook_name(value: str) -> None:
-        """Extension の有無に関係なく hook entrypoint を同一視する。"""
-        name = Path(value).name
-        registered.add(name)
-        registered.add(Path(name).stem)
+        registered.add(Path(value).name)
 
-    def register_hook_commands(hooks: object) -> None:
+    def register_entry_point(source: str, value: str) -> None:
+        register_hook_name(value)
+        target = plugin_dir / value if "/" in value else hooks_dir / value
+        referenced.append((source, value, target))
+
+    def register_hook_commands(source: str, hooks: object) -> None:
         """Claude/Codex hook map に含まれる command entrypoint を登録する。"""
         if not isinstance(hooks, dict):
             return
@@ -427,45 +538,72 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
             for entry in event_hooks if isinstance(event_hooks, list) else []:
                 if not isinstance(entry, dict):
                     continue
-                for hook in entry.get("hooks", []):
+                inner = entry.get("hooks", [])
+                for hook in inner if isinstance(inner, list) else []:
                     command = hook.get("command") if isinstance(hook, dict) else None
-                    if not command:
+                    if not isinstance(command, str) or not command:
                         continue
                     try:
                         tokens = shlex.split(command)
                     except ValueError:
                         tokens = command.split()
                     for token in tokens:
-                        if "/hooks/" in token:
-                            register_hook_name(token)
+                        if "/hooks/" not in token:
+                            continue
+                        register_hook_name(token)
+                        prefix, rest = token.split("/hooks/", 1)
+                        if rest and ("PLUGIN_ROOT" in prefix or prefix in {"", "."}):
+                            referenced.append((source, token, hooks_dir / rest))
+
+    read_hook_files: set[Path] = set()
+
+    def register_hook_file(label: str, hook_file: Path) -> None:
+        """hooks file 1 つの command を登録する。同じ file を 2 回読まない。"""
+        resolved = hook_file.resolve()
+        if resolved in read_hook_files:
+            return
+        read_hook_files.add(resolved)
+        try:
+            hook_data = _load_json_object(hook_file)
+        except OSError:
+            hook_data = None
+        if hook_data is None:
+            findings.append(make_finding(
+                "PKG-006", len(findings) + 1, str(hook_file),
+                f"hooks file を JSON の object として読めない: {label}",
+                suggested_fix="hooks file を {\"hooks\": {<event>: [...]}} の JSON object に直す"))
+            return
+        register_hook_commands(label, hook_data.get("hooks", {}))
+
+    # plugin.json に hooks キーが無くても、Claude Code は hooks/hooks.json を読む
+    default_hook_file = hooks_dir / "hooks.json"
+    if default_hook_file.is_file():
+        register_hook_file("hooks/hooks.json", default_hook_file)
 
     plugin_json = plugin_dir / ".claude-plugin" / "plugin.json"
     if plugin_json.exists():
-        try:
-            data = json.loads(plugin_json.read_text())
-        except json.JSONDecodeError:
-            data = {}
+        data = _load_json_object(plugin_json) or {}
         hooks = data.get("hooks", {})
         if isinstance(hooks, dict):
-            register_hook_commands(hooks)
-        elif isinstance(hooks, str):
-            plugin_root = plugin_dir.resolve()
-            hook_file = (plugin_dir / hooks).resolve()
+            register_hook_commands("plugin.json hooks", hooks)
+        resolved_root = plugin_dir.resolve()
+        for hook_ref in [hooks] if isinstance(hooks, str) else _str_list(hooks):
+            hook_file = (plugin_dir / hook_ref).resolve()
             try:
-                hook_file.relative_to(plugin_root)
+                hook_file.relative_to(resolved_root)
             except ValueError:
                 hook_file = Path()
             if hook_file.is_file():
-                try:
-                    hook_data = json.loads(hook_file.read_text())
-                except (OSError, json.JSONDecodeError):
-                    hook_data = {}
-                register_hook_commands(hook_data.get("hooks", {}))
+                register_hook_file(hook_ref, hook_file)
+            else:
+                findings.append(make_finding(
+                    "PKG-006", len(findings) + 1, str(plugin_json),
+                    f"plugin.json の hooks が指す file が plugin の中に無い: {hook_ref}",
+                    suggested_fix="hooks に plugin root からの相対 path で実在する hooks file を書く"))
         entry_points = data.get("entry_points", {})
         if isinstance(entry_points, dict):
-            for hook_name in entry_points.get("hooks", []):
-                if isinstance(hook_name, str):
-                    register_hook_name(hook_name)
+            for hook_name in _str_list(entry_points.get("hooks")):
+                register_entry_point("plugin.json entry_points.hooks", hook_name)
 
     # Harness-only entrypoint 台帳の正本は package-contract sidecar。
     # 公式 Claude plugin manifest に entry_points を混在させない。
@@ -473,30 +611,44 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
     if isinstance(contract, dict):
         entry_points = contract.get("entry_points", {})
         if isinstance(entry_points, dict):
-            for hook_name in entry_points.get("hooks", []):
-                if isinstance(hook_name, str):
-                    register_hook_name(hook_name)
-    if settings_dir.exists():
+            for hook_name in _str_list(entry_points.get("hooks")):
+                register_entry_point("package-contract entry_points.hooks", hook_name)
+    if settings_dir.is_dir():
         for cfg in settings_dir.glob("*.json"):
-            try:
-                data = json.loads(cfg.read_text())
-            except json.JSONDecodeError:
+            data = _load_json_object(cfg)
+            if data is None:
                 continue
             hooks = data.get("hooks", {})
             if isinstance(hooks, dict):
                 for event_hooks in hooks.values():
                     for h in event_hooks if isinstance(event_hooks, list) else []:
                         cmd = h.get("command") if isinstance(h, dict) else None
-                        if cmd:
+                        if isinstance(cmd, str) and cmd:
                             register_hook_name(cmd)
-    idx = 1
-    for hook in actual_hooks:
-        if hook.name not in registered and hook.stem not in registered:
+                register_hook_commands(f"settings/{cfg.name}", hooks)
+    idx = len(findings) + 1
+    for hook in sorted(actual_hooks):
+        if hook.name not in registered:
             findings.append(make_finding(
                 "PKG-006", idx, str(hook),
                 "hook ファイル実体は存在するが plugin hook 契約に未登録",
                 suggested_fix=f"hooks/hooks.json または package contract に {hook.name} を追加"))
             idx += 1
+    plugin_root = os.path.normpath(plugin_dir)
+    seen: set[str] = set()
+    for source, value, target in referenced:
+        normalized = os.path.normpath(target)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        inside = normalized == plugin_root or normalized.startswith(plugin_root + os.sep)
+        if inside and Path(normalized).is_file():
+            continue
+        findings.append(make_finding(
+            "PKG-006", idx, normalized,
+            f"{source} に登録された hook の実体が plugin の中に無い: {value}",
+            suggested_fix="登録を実在する hooks/ のファイルに直すか、登録を外す"))
+        idx += 1
     return findings
 
 
@@ -536,12 +688,19 @@ def check_pkg_008(plugin_dir: Path) -> list[dict]:
     idx = 1
     for cfg in settings_dir.glob("*.json"):
         try:
-            data = json.loads(cfg.read_text())
+            data = json.loads(cfg.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             findings.append(make_finding(
                 "PKG-008", idx, str(cfg),
                 f"JSON 解析エラー: {exc}",
                 suggested_fix="JSON 構文を修正"))
+            idx += 1
+            continue
+        if not isinstance(data, dict):
+            findings.append(make_finding(
+                "PKG-008", idx, str(cfg),
+                f"JSON の最上位が object でない ({type(data).__name__})",
+                suggested_fix="settings の JSON を object にする"))
             idx += 1
             continue
         if "$schema" not in data:
@@ -696,7 +855,8 @@ def run_checks(plugin_dir: Path, pkg_ids: list[str]) -> dict:
     for v in result_checks.values():
         counts[v["status"]] += 1
     return {
-        "run_id": f"pkg-validate-{plugin_dir.name}-{datetime.now().strftime('%Y%m%d-%H%M%S')[:11].replace('-', '')[:8]}-001",
+        # last_run_at と同じ UTC の日付にする (ローカル日付だと日付の境目でずれる)
+        "run_id": f"pkg-validate-{plugin_dir.name}-{datetime.now(timezone.utc).strftime('%Y%m%d')}-001",
         "target_plugin": plugin_dir.name,
         "package_mode": package_mode,
         "pkg_checks": result_checks,
@@ -718,14 +878,14 @@ def main() -> int:
     if plugin_dir is None:
         print("error: --plugin-dir, --plugin, or CLAUDE_PLUGIN_ROOT is required", file=sys.stderr)
         return 2
-    if not plugin_dir.exists():
-        print(f"error: plugin not found: {plugin_dir}", file=sys.stderr)
+    if not plugin_dir.is_dir():
+        print(f"error: plugin not found (ディレクトリでない): {plugin_dir}", file=sys.stderr)
         return 2
 
     if args.check == "all":
         pkg_ids = PKG_IDS
     else:
-        pid = args.check.upper().replace("PKG-", "PKG-")
+        pid = args.check.upper()
         if not pid.startswith("PKG-"):
             pid = "PKG-" + pid.split("-")[-1]
         if pid not in PKG_IDS:
@@ -733,13 +893,18 @@ def main() -> int:
             return 2
         pkg_ids = [pid]
 
-    result = run_checks(plugin_dir, pkg_ids)
-    output = json.dumps(result, ensure_ascii=False, indent=2)
-    if args.output == "-":
-        print(output)
-    else:
-        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.output).write_text(output)
+    try:
+        result = run_checks(plugin_dir, pkg_ids)
+        output = json.dumps(result, ensure_ascii=False, indent=2)
+        if args.output == "-":
+            print(output)
+        else:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(output, encoding="utf-8")
+    except (OSError, ValueError, RecursionError) as exc:
+        # 読めないファイル・非 UTF-8 の SKILL.md・書けない --output を fail (1) と混ぜない
+        print(f"error: 入力を読めない、または出力を書けない: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
     return 1 if result["verdict"]["fail"] > 0 else 0
 
 

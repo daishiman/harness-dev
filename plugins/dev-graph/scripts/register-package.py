@@ -4,11 +4,11 @@
 # purpose: Validate and atomically register one promoted exact-13 system-dev-planner package in the dev graph.
 # inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
 # outputs: ["stdout: JSON preview/receipt/preflight report"]
-# requires-python = ">=3.10"
+# requires-python: ">=3.10"
 # dependencies: [_common.py, extract-plugin-root.py]
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: explicitly selected dev-graph output and immutable receipt
+# write-scope: explicitly selected dev-graph output, immutable receipt, and the single-writer lock file .<output>.register.lock beside the output (left in place; shared with build-graph-node.py)
 # ///
 """C02 exact-13 package registration consumer and cross-plugin preflight."""
 from __future__ import annotations
@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-from _common import ContractError, atomic_json, contained, dump, load_json, utc_now
+from _common import ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained, dump, load_json, utc_now
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -343,6 +343,8 @@ def _atomic_create_json(path: Path, value: dict[str, Any]) -> None:
         atomic_json(path, value, create_only=True)
     except FileExistsError as exc:
         raise ContractError(f"immutable receipt already exists: {path}") from exc
+    except ParentNotDirectoryError as exc:
+        raise ContractError(f"immutable receipt parent is not a directory: {exc}") from exc
 
 
 @contextmanager
@@ -433,11 +435,12 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
         _validate_schema(receipt, receipt_schema, receipt_schema, "registration-receipt")
         if args.dry_run:
             return {**receipt, "dry_run": True, "idempotent": False, "write_count": 0}
-        original = copy.deepcopy(current)
+        # Restore the exact original bytes (not a canonical re-serialization) if the receipt cannot be created.
+        original = output_path.read_bytes()
         atomic_json(output_path, proposed)
         try: _atomic_create_json(receipt_path, receipt)
         except Exception:
-            atomic_json(output_path, original)
+            atomic_bytes(output_path, original)
             raise
         return {**receipt, "dry_run": False, "idempotent": False}
 

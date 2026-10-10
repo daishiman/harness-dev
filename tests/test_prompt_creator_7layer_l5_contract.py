@@ -23,6 +23,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SEVEN_LAYER_SKILL = ROOT / "plugins" / "prompt-creator" / "skills" / "run-prompt-creator-7layer"
 VERIFY = SEVEN_LAYER_SKILL / "scripts" / "verify-completeness.py"
@@ -164,6 +166,81 @@ def test_verify_negation_guard_does_not_flag_prohibition_notes(tmp_path):
     p.write_text(_seven_layers(l5), encoding="utf-8")
     res = _run(VERIFY, "--input", str(p))
     assert res.returncode == 0, res.stderr
+
+
+# ── 英語の Layer 5 (build-subagent.py --language en と同じ見出し) ─────────────
+EN_STYLE_L5 = """### 5.1 Assigned agent
+- fixture-agent
+
+### 5.2 Goal definition
+- Purpose: satisfy the fixture contract.
+- Achievement goal: the output is validated and its evidence can be traced.
+
+### 5.3 Completion checklist
+- [ ] The output passes schema validation.
+
+### 5.4 Execution mode
+- Read the goal and the checklist, choose actions for unmet items, execute, and validate."""
+
+
+def _verify_l5(tmp_path, l5: str) -> subprocess.CompletedProcess:
+    p = tmp_path / "prompt.md"
+    p.write_text(_seven_layers(l5), encoding="utf-8")
+    return _run(VERIFY, "--input", str(p))
+
+
+def test_verify_english_goal_seek_keys_pass(tmp_path):
+    res = _verify_l5(tmp_path, EN_STYLE_L5)
+    assert res.returncode == 0, res.stderr
+
+
+def test_verify_english_keys_are_case_insensitive(tmp_path):
+    l5 = (EN_STYLE_L5.replace("Goal definition", "Goal Definition")
+          .replace("Completion checklist", "Completion Checklist")
+          .replace("Achievement goal", "Achievement Goal"))
+    res = _verify_l5(tmp_path, l5)
+    assert res.returncode == 0, res.stderr
+
+
+def test_verify_missing_english_key_names_the_english_heading(tmp_path):
+    # 英語のプロンプトの作者にも、何を足せばよいかが伝わること。
+    res = _verify_l5(tmp_path, EN_STYLE_L5.replace("Achievement goal", "Outcome"))
+    assert res.returncode == 1
+    assert "Achievement goal" in res.stderr
+
+
+def test_verify_english_thinking_process_steps_fail(tmp_path):
+    l5 = EN_STYLE_L5 + "\n\nThinking process:\nStep 1 read the input\nStep 2 write the output\n"
+    res = _verify_l5(tmp_path, l5)
+    assert res.returncode == 1
+    assert "Thinking process + Step N" in res.stderr
+
+
+def test_verify_english_procedure_heading_with_numbered_list_fails(tmp_path):
+    l5 = EN_STYLE_L5 + "\n\n### Procedure\n1. read the input\n2. write the output\n"
+    res = _verify_l5(tmp_path, l5)
+    assert res.returncode == 1
+    assert "『### Procedure』見出し配下の連番列挙" in res.stderr
+
+
+def test_verify_legacy_pair_does_not_cross_languages(tmp_path):
+    # 「思考プロセス」と英語の「Step 5」の組は数えない (NEW_STYLE_L5 は Step 5=Anchor を持つ)。
+    res = _verify_l5(tmp_path, NEW_STYLE_L5 + "\n- 思考プロセスを固定しない。\n")
+    assert res.returncode == 0, res.stderr
+
+
+@pytest.mark.parametrize("kind", ["missing", "directory", "non_utf8"])
+def test_verify_unreadable_input_exit_2_without_traceback(tmp_path, kind):
+    # 「不備あり」の exit 1 と区別できるよう、読めない入力は exit 2。
+    target = tmp_path / "prompt.md"
+    if kind == "directory":
+        target.mkdir()
+    elif kind == "non_utf8":
+        target.write_bytes(b"\xff" + _seven_layers(NEW_STYLE_L5).encode("utf-8"))
+    res = _run(VERIFY, "--input", str(target))
+    assert res.returncode == 2
+    assert "cannot read --input" in res.stderr
+    assert "Traceback" not in res.stderr
 
 
 # ── A3-04: --layers サブセット ───────────────────────────────────────────────

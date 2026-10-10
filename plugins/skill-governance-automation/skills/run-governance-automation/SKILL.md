@@ -17,6 +17,9 @@ since: 2026-08-20
 last-audited: 2026-08-20
 source: plugins/skill-governance-automation
 source-tier: internal
+completeness_exempt:
+  - "prompts: 仕事は目的に合う scripts/ の entrypoint を選んで help・preflight・実行の receipt を返すことだけで、サブエージェントの LLM に任せる責務が無い。選び方は本文の「目的とentrypointの対応」を正本とし、R-id 単位の 7 層プロンプトは適用外。"
+  - "manifest: goal_seek.engine=inline が目的から entrypoint を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行 を正本とする。"
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -68,6 +71,26 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 `scripts/`のautomation entrypointを利用目的に対応付け、help/preflight後に実行結果を返す。
 
+## 目的とentrypointの対応
+
+「既定で書き込む」entrypoint（`compute-rubric-hash.py`・`write-eval-log.py`）は、`--dry-run` を付けない限り呼んだ時点でファイルを変える。preflightでは、この2本に必ず `--dry-run` を付ける。ほかの entrypoint の多くは `--dry-run` を受け付けず、付けると argparse の exit 2 になる（`rollback-to-stable.py` は互換のため受け付けるが、動きは変わらない）。
+
+| 目的 | entrypoint | 既定の動き | 書き込み |
+|---|---|---|---|
+| manifest登録 | `build-manifest-registration-plan.py` | 未登録ファイルの追加計画を出す。legacy の manifest.json 形式で追加候補があり `--apply` が無いと `needs_confirmation` で exit 1。plugin.json 形式（この plugin 自身など）では必須キーを検査するだけで、proposals は空の exit 0（実質何もしない） | `--apply` を付けたときだけ manifest.json を変える |
+| rubric合成 | `compose-rubrics.py` | 合成した rubric JSON を stdout に出す | しない |
+| rubric hash | `compute-rubric-hash.py` | **既定で書き込む**（rubric.json の rubric_hash と rubric.normalized.json） | `--dry-run` で hash の計算だけにする |
+| 再評価 | `re-evaluate-on-rubric-bump.py` | major bump の再評価対象を、スキルごとに最新の評価記録で判定して出す（plugin が違えば同じ名前でも別のスキル。別の rubric_id の記録は比べない）。対象があっても exit 0。rubric を読めない・score ログに版を読めない行がある・`--eval-log-dir` がディレクトリでないと exit 2。`--post-tool-use`（PostToolUse hook）では L0 rubric の編集のときだけ走査し、結果を additionalContext で返して常に exit 0 | しない |
+| rollback | `rollback-to-stable.py` | `--rubric` と同じ rubric_id の節のうち、現行版より古く ceiling 以下の最新の正式版への巻き戻し計画（照合用の hash と手順）を出す。rubric.json に rubric_id があれば、rubric_id の行が無い節は候補にしない（安全側）。`params_source` が `default` なら ceiling は既定値。`--rubric` の rubric.json が無い・rubric_id が文字列でないと exit 2 | しない。巻き戻しは承認後に、対象の版を発効した commit の L0 rubric.json と assign 側の派生 rubric.json を一組で戻し（ref-skill-design-rubric に templates/ は無い）、`compute-rubric-hash.py` で hash を再計算して照合する |
+| 変更カテゴリ判定 | `guard-change-category.py` | 変更を P0〜P3 に分類し、未承認か cooldown 違反なら exit 1。policy が無い・不正、`--base` の ref が無いときは exit 2 | しない |
+| 招集通知 | `notify-if-governance-trigger.py` | trigger.json の breached があれば招集文を出す。どの hooks.json にも登録しておらず、手で呼ぶ。読めないときは stderr に警告して exit 0。未知の引数だけ exit 2 | しない |
+| 評価記録 | `write-eval-log.py` | **既定で書き込む**（score JSONL へ1行追記） | `--dry-run` で記録内容の表示だけにする |
+| 設計書の採点準備 | `doc-to-skill-adapter.py` | `--doc` の設計書を、assign-skill-design-evaluator に渡す brief JSON に変える（26章）。exit 1=入力エラー、2=usage | `--out` に書く |
+| session event の収集 | `extract-session-events.py` | hook の JSON（stdin）を受け取り、session event を記録する（35章。opt-in で、hooks に登録したときだけ動く） | `.claude/logs/<YYYY-MM-DD>.jsonl` に追記する |
+| 兄弟 plugin の root | `extract-plugin-root.py` | `<plugin-name>` の root を絶対パスで返す。exit 1=見つからない、2=usage | しない |
+
+**receipt**：実行したcommand、exit code、stdoutの要点（計画JSON・hash・対象一覧）、書き込むentrypointでは変わったpath（`git status --short` で確かめる）の4つ。どれかが欠けた実行は成功として報告しない。
+
 ## Key Rules
 
 - plugin rootは「Runtime root contract」の手順で解決する。
@@ -80,6 +103,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## ゴールシーク実行
 
 目的に合う実在scriptを選び、入力・write scope・rollbackを確認する。read-only checkがあれば先に実行し、許可された操作だけを続行する。
+
+停止条件: receipt の4つが揃ったら完了とする。exit 非0、receipt の欠落、承認の無い書き込み（apply・rollback・通知）のどれかに当たったら、その場で止めて報告する。
 
 ## 検証
 

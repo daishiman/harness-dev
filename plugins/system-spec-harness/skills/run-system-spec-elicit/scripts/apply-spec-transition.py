@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # /// script
 # name: apply-spec-transition
-# version: 0.1.0
+# version: 0.2.0
 # purpose: run-system-spec-elicit が所有する spec-state.json の単一 transition writer。カテゴリ×platform セルの 未収集/対象外/確定 遷移を規則付きで適用し、確定セルの直接巻き戻し (rollback) を Bash/script 経由でも拒否し、R4-reopen 経由のみ確定変更を許す。goal-seek chunk (per-invocation max_loops) の状態保存/resume も担う。
 # inputs:
 #   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops (apply/chunk は --required-info CATALOG で候補state検証)
 # outputs:
-#   - spec-state.json (stdout or --out)
-#   - exit: 0=OK / 1=TransitionError or IO / 2=usage error
+#   - spec-state.json (stdout or --out。同じディレクトリの一時ファイルから置き換える)
+#   - exit: 0=OK / 1=TransitionError or IO / 2=usage error・required-info catalog の形が不正
 # contexts: [E, C]
 # network: false
 # write-scope: spec-state.json (単一 writer)
-# dependencies: []
+# dependencies: [scripts/validate-knowledge-graph.py]
 # requires-python: ">=3.9"
 # ///
 """spec-state.json の単一 transition writer (run-system-spec-elicit 所有)。
@@ -40,8 +40,10 @@ import argparse
 from datetime import datetime, timezone
 import importlib.util
 import json
+import os
 import re
 import sys
+import tempfile
 import unicodedata
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -109,6 +111,10 @@ RFC3339_RE = re.compile(
 
 class TransitionError(Exception):
     """禁止された遷移 (確定巻き戻し等) を検出したときに送出する。"""
+
+
+class CatalogError(Exception):
+    """--required-info に渡した catalog 自体が不正 (遷移の可否を判定できない) ときに送出する。"""
 
 
 # --------------------------------------------------------------------------- #
@@ -227,6 +233,27 @@ def _cell(state: dict, cat: str, pf: str) -> dict:
     return state["matrix"][cat][pf]
 
 
+def _require_known_ref(state: dict, ref, label: str, logs: tuple[str, ...]) -> None:
+    """セルが指す根拠 id が、指定した log に実在することを書込前に確かめる。
+
+    validate-coverage-matrix.py は確定 qa_ref を qa_log ∪ approval_log に、承認だけで外した
+    対象外の approval_ref を approval_log に照合する。writer が宙に浮いた参照を受け入れると、
+    検証で落ちる state を single writer 自身が公開してしまうので、同じ照合を先にかける。
+    """
+    if not isinstance(ref, str) or not ref.strip():
+        raise TransitionError(f"{label} は非空文字列でない: {ref!r}")
+    known = {
+        entry.get("id")
+        for log in logs
+        for entry in state.get(log) or []
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+    }
+    if ref not in known:
+        raise TransitionError(
+            f"{label}={ref!r} が {' / '.join(logs)} に存在しない (根拠のない参照は書き込めない)"
+        )
+
+
 def apply_cell_op(state: dict, op: dict) -> None:
     """1 セルの遷移を規則付きで適用する (state を破壊的に更新)。
 
@@ -237,6 +264,8 @@ def apply_cell_op(state: dict, op: dict) -> None:
       - confirm / exclude: 対象セルが確定なら TransitionError (rollback 拒否)。
         確定変更は必ず reopen を先に経由すること。
       - confirm は qa_ref 必須 (任意で serves_goals を同時付与可)、exclude は reason か approval_ref 必須。
+        どちらも指した id は log に実在しなければならない (qa_ref は qa_log か approval_log、
+        approval_ref は approval_log)。
     """
     action = op.get("action")
     cat, pf = op.get("category"), op.get("platform")
@@ -352,6 +381,7 @@ def apply_cell_op(state: dict, op: dict) -> None:
         qa_ref = op.get("qa_ref")
         if not qa_ref:
             raise TransitionError(f"confirm には qa_ref が必須: {cat}/{pf}")
+        _require_known_ref(state, qa_ref, f"confirm {cat}/{pf} の qa_ref", ("qa_log", "approval_log"))
         retired = _qa_entry(state, qa_ref)
         if retired is not None and retired.get("superseded_by") is not None:
             # supersede-qa は「主たる接地根拠のままでは置き換えない」を課すが、置き換えた後に
@@ -377,12 +407,14 @@ def apply_cell_op(state: dict, op: dict) -> None:
         if reason:
             newcell["reason"] = reason
         if approval_ref:
+            _require_known_ref(state, approval_ref, f"exclude {cat}/{pf} の approval_ref", ("approval_log",))
             newcell["approval_ref"] = approval_ref
         # 対象外にした根拠の質疑も記録できるようにする。従来は reason の散文だけが残り、
         # 「どの質疑でこの platform を外したのか」を機械で辿れなかった。除外は収集した
         # 結論の一種であって未検討ではない、という区別をデータに持たせる。
         qa_ref = op.get("qa_ref")
         if qa_ref:
+            _require_known_ref(state, qa_ref, f"exclude {cat}/{pf} の qa_ref", ("qa_log", "approval_log"))
             newcell["qa_ref"] = qa_ref
         state["matrix"][cat][pf] = newcell
     else:
@@ -1638,11 +1670,37 @@ def dump_state(state: dict) -> str:
 
 
 def _emit(state: dict, out: str | None) -> None:
+    """state を stdout か out へ書く。out は同じディレクトリの一時ファイルから置き換える。
+
+    spec-state.json はこの writer だけが書く正本なので、書込の途中で落ちても (容量不足・
+    中断) 前の版か新しい版のどちらかが残り、途中まで書いた JSON が残らないようにする。
+    symlink はその先のファイルを置き換え、既存ファイルの permission を引き継ぐ。
+    """
     text = dump_state(state)
-    if out:
-        Path(out).write_text(text, encoding="utf-8")
-    else:
+    if not out:
         sys.stdout.write(text)
+        return
+    target = Path(os.path.realpath(out))
+    try:
+        mode = target.stat().st_mode & 0o7777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        mode = 0o666 & ~umask
+    fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp, mode)
+        os.replace(tmp, target)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def _validate_candidate_required_info(state: dict, catalog_path: str | None) -> None:
@@ -1650,16 +1708,30 @@ def _validate_candidate_required_info(state: dict, catalog_path: str | None) -> 
 
     CLI は入力をメモリへ load して遷移を適用するため、元ファイルの確定を
     先に変える必要はない。検証器を再実装せず、同じ postcondition を候補へ適用する。
+
+    catalog 自体の不正 (object でない・validator が catalog 単体で findings を返す・型の
+    崩れで validator が例外を出す) は、候補 state の接地不足 (TransitionError) と分けて
+    CatalogError にする。前者は呼び出し側の設定の誤りで、遷移の可否を判定できていない。
     """
     if catalog_path is None:
         return  # 既存 caller 互換。収集promptは confirm 時にこの引数を必須にする。
     catalog = load_json(catalog_path)
     if not isinstance(catalog, dict):
-        raise TransitionError("required-info catalog は object 必須")
+        raise CatalogError(f"required-info catalog は object 必須: {catalog_path}")
     path = Path(__file__).resolve().parents[3] / "scripts" / "validate-knowledge-graph.py"
     spec = importlib.util.spec_from_file_location("required_info_candidate_validator", path)
     validator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(validator)
+    try:
+        catalog_findings, _ = validator.validate_required_info(catalog)
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise CatalogError(
+            f"required-info catalog の形が不正で検証できない ({type(exc).__name__}: {exc}): {catalog_path}"
+        ) from exc
+    if catalog_findings:
+        raise CatalogError(
+            f"required-info catalog が不正: {catalog_path}: " + "; ".join(catalog_findings)
+        )
     findings, _ = validator.validate_required_info(catalog, state)
     if findings:
         raise TransitionError("required-info 候補state検証失敗: " + "; ".join(findings))
@@ -1783,7 +1855,11 @@ def main(argv: list[str]) -> int:
     except TransitionError as exc:
         print(f"TransitionError: {exc}", file=sys.stderr)
         return 1
-    except (OSError, json.JSONDecodeError) as exc:
+    except CatalogError as exc:
+        print(f"CatalogError: {exc}", file=sys.stderr)
+        return 2
+    except (OSError, json.JSONDecodeError, UnicodeError) as exc:
+        # UnicodeError: JSON の `\ud800` などは読めても UTF-8 へ書けない (書込前の版は残る)。
         print(f"IO/JSON error: {exc}", file=sys.stderr)
         return 1
     return 0

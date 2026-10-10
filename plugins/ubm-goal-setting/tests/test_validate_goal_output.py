@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -94,17 +95,36 @@ def test_explicit_type_enforces_monthly_headings(tmp_path: Path, golden_text: st
 
 
 def test_missing_file_input_error(tmp_path: Path):
+    # 入力を読めないのは検査の FAIL (1) ではなく呼び出しの誤り (2)。validate-goal-linkage と揃える。
     r = run(tmp_path / "nope.md", "weekly")
-    assert r.returncode == 1
+    assert r.returncode == 2
+    assert "Traceback" not in r.stderr
 
 
 def test_invalid_type_usage(tmp_path: Path, golden_text: str):
+    # 未知の種別は検査せず usage エラー（rc=2）で落とす。黙って既定種別へ寄せると、
+    # 打ち間違えた種別で「PASS」が返り、別種別の必須見出しが検査されないまま通る。
+    # `annual` は `yearly` の言い換えとして打ちそうな語だが、受理語ではない。
+    p = write(tmp_path, WEEKLY_NAME, golden_text)
+    r = subprocess.run(
+        [sys.executable, str(VALIDATE), "--file", str(p), "--type", "annual"],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 2
+
+
+def test_yearly_type_is_accepted(tmp_path: Path, golden_text: str):
+    # `yearly`（4層の最上位）は受理語。週報本文を渡しているので内容は FAIL するが、
+    # それは rc=1（検査して落ちた）であって rc=2（種別を知らないので検査していない）
+    # ではない。この2つを混ぜると、yearly の必須見出しが一度も当たらないまま
+    # 「通らないのは種別が無いからだ」と読み違える。
     p = write(tmp_path, WEEKLY_NAME, golden_text)
     r = subprocess.run(
         [sys.executable, str(VALIDATE), "--file", str(p), "--type", "yearly"],
         capture_output=True, text=True,
     )
-    assert r.returncode == 2
+    assert r.returncode == 1, r.stdout
+    assert "1年の目標" in r.stdout
 
 
 def test_weekly_title_mismatch_fails(tmp_path: Path, golden_text: str):
@@ -311,7 +331,7 @@ def test_weekly_file_with_period_peer_skips_key_number(tmp_path: Path, golden_te
 def test_peer_missing_file_errors(tmp_path: Path):
     p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", ANCHORS_OK, ANCHOR_AMOUNT))
     r = run(p, "quarterly", [tmp_path / "nope.md"])
-    assert r.returncode == 1
+    assert r.returncode == 2
 
 
 def test_duplicate_heading_fails(tmp_path: Path, golden_text: str):
@@ -643,6 +663,48 @@ def test_submission_action_section_is_outside_group_checks(tmp_path: Path, golde
     assert "行動目標 8 件（上限8件）" in r.stdout
 
 
+def test_submission_action_section_is_outside_date_and_number_checks(
+    tmp_path: Path, golden_text: str
+):
+    # 提出用は期日を書かない箇条書きの規定（期日と内訳は管理用の側に置く）。規定どおりの
+    # ファイルが「数値のない行動目標」「期日のない行動目標」の WARN を出さないことを固定する。
+    flat = "・既存の単発を月額継続へ変える条件の1枚を提示する\n・毎週の定例で論点を突き合わせる\n"
+    head = "## 【今週の行動目標（行動管理・優先順位付き）】"
+    assert head in golden_text
+    text = golden_text.replace(head, "## 【今週の行動目標（提出）】\n" + flat + "\n" + head, 1)
+    p = write(tmp_path, WEEKLY_NAME, text)
+    r = run(p, "weekly")
+    assert r.returncode == 0, r.stdout
+    assert "期日のない行動目標" not in r.stdout
+    assert "数値のない行動目標" not in r.stdout
+
+
+def test_managed_action_section_still_warns_on_missing_date(
+    tmp_path: Path, golden_text: str
+):
+    # 上の除外が「検査そのものを殺した」のではないことの対照。管理用の側に期日の無い行を
+    # 置けば WARN は出る。これが無いと、提出用を外した結果として管理用の期日落ちも
+    # 見逃す形になっていても、どちらのテストも通ってしまう。
+    head = "## 【今週の行動目標（行動管理・優先順位付き）】"
+    text = golden_text.replace(head, head + "\n- 期日を書いていない行動を3件出す", 1)
+    p = write(tmp_path, WEEKLY_NAME, text)
+    r = run(p, "weekly")
+    assert "期日のない行動目標" in r.stdout
+
+
+def test_submission_action_section_still_rejects_spirit_words(
+    tmp_path: Path, golden_text: str
+):
+    # 精神論は提出用でも許さない。NG表現だけは提出用・管理用の両方を対象に残している。
+    flat = "・事業者様への連絡を頑張る\n"
+    head = "## 【今週の行動目標（行動管理・優先順位付き）】"
+    text = golden_text.replace(head, "## 【今週の行動目標（提出）】\n" + flat + "\n" + head, 1)
+    p = write(tmp_path, WEEKLY_NAME, text)
+    r = run(p, "weekly")
+    assert r.returncode == 1, r.stdout
+    assert "精神論" in r.stdout
+
+
 def test_goal_action_language_profile_keeps_legacy_compatibility():
     import importlib.util
     policy_script = Path(__file__).resolve().parents[1] / "skills/run-ubm-goal-setting/scripts/validate-goal-output.py"
@@ -653,3 +715,131 @@ def test_goal_action_language_profile_keeps_legacy_compatibility():
         assert module.GOAL_SPIRIT_RE.search(phrase)
     for phrase in ["なるべく", "できるだけ"]:
         assert module.GOAL_SPIRIT_RE.search(phrase) is None
+
+
+# --- 入力を読めないとき・語彙契約が壊れているときの終了コード ---
+
+def test_unreadable_inputs_exit_2_without_traceback(tmp_path: Path, golden_text: str):
+    # 入力を読めないのは検査の FAIL (1) ではない。ディレクトリや非 UTF-8 も 2 にする。
+    good = write(tmp_path, WEEKLY_NAME, golden_text)
+    folder = tmp_path / "folder.md"
+    folder.mkdir()
+    binary = tmp_path / "binary.md"
+    binary.write_bytes(b"\xff\xfe\x00broken")
+    for file_, peers in [(folder, []), (binary, []), (good, [binary]), (good, [folder])]:
+        r = run(file_, "weekly", peers)
+        assert r.returncode == 2, (file_, peers, r.stdout, r.stderr)
+        assert "Traceback" not in r.stderr
+        assert "ERROR:" in r.stderr
+
+
+def _sandbox_validator(tmp_path: Path, policy) -> Path:
+    root = tmp_path / "plugin"
+    script = root / VALIDATE.relative_to(PLUGIN_ROOT)
+    script.parent.mkdir(parents=True)
+    script.write_text(VALIDATE.read_text(encoding="utf-8"), encoding="utf-8")
+    if policy is not None:
+        (root / "references").mkdir()
+        (root / "references/action-language-policy.json").write_text(
+            json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    return script
+
+
+@pytest.mark.parametrize("policy", [None, {"goal_exact_phrases": []}])
+def test_help_works_without_action_policy(tmp_path: Path, policy):
+    script = _sandbox_validator(tmp_path, policy)
+    r = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "--file" in r.stdout
+
+
+def test_whitespace_only_phrase_in_policy_is_rejected(tmp_path: Path, golden_text: str):
+    # 空白1字の語を受け入れると、空白を含む行すべてが精神論として FAIL になる。
+    script = _sandbox_validator(tmp_path, {"goal_exact_phrases": ["頑張る", " "]})
+    p = write(tmp_path, WEEKLY_NAME, golden_text)
+    r = subprocess.run([sys.executable, str(script), "--file", str(p), "--type", "weekly"],
+                       capture_output=True, text=True)
+    assert r.returncode == 2, r.stdout
+    assert "語彙契約" in r.stderr
+    assert "Traceback" not in r.stderr
+
+
+# --- 「やらないこと」の表の数え方 ---
+
+NOT_DOING = "今期やらないこと（明確に排除するもの）"
+
+
+def test_not_doing_counts_table_rows_not_lines_minus_two(tmp_path: Path):
+    # 表が2つ（見出し行＋区切り行＋1行ずつ）なら項目は2つ。「表の行数 - 2」だと 4 と数えて通してしまう。
+    two_tables = "\n".join([
+        "| やらないこと | 理由 |", "|---|---|", "| 交流会に参加しない | 時間 |", "",
+        "| やらないこと | 理由 |", "| :--- | ---: |", "| 新しい商品を作らない | 集中 |",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: two_tables}))
+    r = run(p, "quarterly")
+    assert r.returncode == 1, r.stdout
+    assert "「やらないこと」が2項目です" in r.stdout
+
+
+def test_not_doing_table_with_three_rows_passes(tmp_path: Path):
+    table = "\n".join([
+        "| やらないこと | 理由 |", "|---|---|",
+        "| 交流会に参加しない | 時間 |", "| 無料の勉強会をやらない | 集中 |", "| 新しい商品を作らない | 集中 |",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 0, r.stdout
+    assert "「やらないこと」3項目" in r.stdout
+
+
+def test_not_doing_table_with_short_separator_is_not_counted(tmp_path: Path):
+    # GFM の区切り行はハイフン1個以上。`|--|` を区切り行と見ないと、見出し行と区切り行を
+    # データ行として数え、2項目しか無い表を4項目として通してしまう。
+    table = "\n".join([
+        "| やらないこと | 理由 |", "|--|:-:|",
+        "| 交流会に参加しない | 時間 |", "| 新しい商品を作らない | 集中 |",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 1, r.stdout
+    assert "「やらないこと」が2項目です" in r.stdout
+
+
+# --- 1年目標（yearly）が通る形 ---
+
+YEARLY_NAME = "UBM - 4-年報（１年） 2026-10-01〜2027-09-30.md"
+
+
+def yearly_text(key_number: str = "- 月間売上到達点：1500000\n- 継続コンサル人数：10") -> str:
+    """期報の最小本文の期間語を「今年/前年」に置き換え、【今年の最重要数字】を足した1年目標。
+
+    1年層は期報と同じ骨格（validate-goal-output.py の kind=year）なので、骨格を別に
+    書かずに期報から作る。別に書くと、期報の必須見出しが増えたときに片方だけ古くなる。
+    """
+    text = period_text("1年の目標").replace("2026-06-29〜2026-09-27", "2026-10-01〜2027-09-30")
+    text = text.replace("今期", "今年").replace("前期", "前年")
+    return text + f"## 【今年の最重要数字】\n\n{key_number}\n"
+
+
+def test_yearly_minimal_document_passes(tmp_path: Path):
+    p = write(tmp_path, YEARLY_NAME, yearly_text())
+    r = run(p, "yearly")
+    assert r.returncode == 0, r.stdout
+    assert "STATUS: PASS" in r.stdout
+
+
+def test_yearly_without_key_number_fails(tmp_path: Path):
+    # 【今年の最重要数字】は下位3層の分母の起点なので必須。無ければ rc=1。
+    text = yearly_text().split("## 【今年の最重要数字】")[0]
+    p = write(tmp_path, YEARLY_NAME, text)
+    r = run(p, "yearly")
+    assert r.returncode == 1, r.stdout
+    assert "今年の最重要数字" in r.stdout
+
+
+def test_yearly_with_project_tasks_fails(tmp_path: Path):
+    text = yearly_text() + "\n## 【プロジェクト別タスク】\n\n- [ ] [青木さん] [提案] 提案書を出す\n"
+    p = write(tmp_path, YEARLY_NAME, text)
+    r = run(p, "yearly")
+    assert r.returncode == 1, r.stdout
+    assert "1年目標にプロジェクト別タスクが含まれています" in r.stdout

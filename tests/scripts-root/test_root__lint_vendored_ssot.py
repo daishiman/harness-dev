@@ -108,3 +108,15 @@ def test_all_feedback_anchor_validators_are_content_bound():
     assert expected
     assert actual == expected
     assert MOD.check_pairs([(c, v) for c, v in MOD.VENDORED_PAIRS if v in expected]) == []
+
+
+def test_every_anchor_validator_copy_is_byte_identical_to_canonical():
+    # lint-vendored-ssot.py が縛るのは run-skill-feedback の写しだけ。plugin 直下の写し
+    # (ubm-goal-setting・slide-report-generator・spec-drift-guardian) も生成元と byte 一致であることを縛る。
+    canonical = MOD.ROOT / "plugins/harness-creator/skills/run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py"
+    copies = sorted(
+        p for p in MOD.ROOT.glob("plugins/**/validate-inline-goal-seek-anchor.py") if p != canonical
+    )
+    assert len(copies) >= 25
+    canonical_bytes = canonical.read_bytes()
+    assert [p for p in copies if p.read_bytes() != canonical_bytes] == []

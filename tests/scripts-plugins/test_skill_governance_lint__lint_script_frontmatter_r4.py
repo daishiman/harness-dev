@@ -236,13 +236,47 @@ def test_main_default_dir_when_no_argv(MOD, tmp_path, monkeypatch, capsys):
     assert "checked=0" in capsys.readouterr().err
 
 
-def test_main_not_a_directory_warns_and_skips(MOD, tmp_path, monkeypatch, capsys):
-    # 存在しないパスは "not a directory" 警告を出し走査対象から外す
-    _argv(monkeypatch, str(tmp_path / "ghost"))
+def test_main_missing_path_is_usage_error(MOD, tmp_path, monkeypatch, capsys):
+    # 存在しないパスは警告で飛ばさず exit 2。名前の変更で対象が黙って消えるのを防ぐ (0.3.0)
+    _write_py(tmp_path / "real", "bad.py", "print('x')\n")
+    _argv(monkeypatch, str(tmp_path / "real"), str(tmp_path / "ghost"))
+    assert MOD.main() == 2
+    cap = capsys.readouterr()
+    assert f"not found: {tmp_path / 'ghost'}" in cap.err
+    assert "OK (" not in cap.err and cap.out == ""
+
+
+def test_main_file_argument_is_checked(MOD, tmp_path, monkeypatch, capsys):
+    # .py ファイルを渡すと、そのファイルを検査する (以前は checked=0 の OK で素通りした)
+    bad = _write_py(tmp_path, "bad.py", "print('x')\n")
+    _argv(monkeypatch, str(bad))
+    assert MOD.main() == 1
+    assert "bad.py: missing # /// script" in capsys.readouterr().out
+
+
+def test_main_good_file_argument_passes_and_counts_once(MOD, tmp_path, monkeypatch, capsys):
+    good = _write_py(tmp_path, "good.py", GOOD_FM)
+    _argv(monkeypatch, str(good), str(tmp_path))  # ファイルとその親を両方渡しても1回だけ数える
     assert MOD.main() == 0
-    err = capsys.readouterr().err
-    assert "not a directory" in err
-    assert "checked=0" in err
+    assert "OK (checked=1" in capsys.readouterr().err
+
+
+def test_main_skips_directories_named_like_py(MOD, tmp_path, monkeypatch, capsys):
+    # plugins/*/tests/<script>.py/ のような .py で終わるディレクトリはファイルとして読まない
+    _write_py(tmp_path / "tests" / "tool.py", "test_tool.py", GOOD_FM)
+    _argv(monkeypatch, str(tmp_path))
+    assert MOD.main() == 0
+    cap = capsys.readouterr()
+    assert "IsADirectoryError" not in cap.out + cap.err
+    assert "OK (checked=1" in cap.err
+
+
+def test_main_non_py_file_is_usage_error(MOD, tmp_path, monkeypatch, capsys):
+    note = tmp_path / "notes.md"
+    note.write_text("# x\n", encoding="utf-8")
+    _argv(monkeypatch, str(note))
+    assert MOD.main() == 2
+    assert "not a .py file" in capsys.readouterr().err
 
 
 def test_main_multiple_target_dirs(MOD, tmp_path, monkeypatch, capsys):
@@ -270,3 +304,35 @@ def test_subprocess_fail(tmp_path):
     r = _run([str(tmp_path)])
     assert r.returncode == 1
     assert "missing # /// script" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# 引数の取り違えと読めないファイル (0.2.0)
+# ---------------------------------------------------------------------------
+def test_subprocess_help_exits_zero_without_scanning():
+    r = _run(["--help"])
+    assert r.returncode == 0
+    assert "usage:" in r.stdout
+    assert "not a directory" not in r.stderr
+
+
+def test_subprocess_unknown_option_is_usage_error(tmp_path):
+    # 綴り違いのオプションをディレクトリと見なして OK を返さない
+    _write_py(tmp_path, "bad.py", "print('x')\n")
+    r = _run(["--chek", str(tmp_path)])
+    assert r.returncode == 2
+    assert "unknown option: --chek" in r.stderr
+
+
+def test_main_broken_symlink_is_violation(MOD, tmp_path, monkeypatch, capsys):
+    (tmp_path / "dangling.py").symlink_to(tmp_path / "missing-target.py")
+    _argv(monkeypatch, str(tmp_path))
+    assert MOD.main() == 1
+    assert "dangling.py: unreadable (FileNotFoundError)" in capsys.readouterr().out
+
+
+def test_main_non_utf8_is_violation(MOD, tmp_path, monkeypatch, capsys):
+    (tmp_path / "latin1.py").write_bytes(b"# \xff\xfe\n")
+    _argv(monkeypatch, str(tmp_path))
+    assert MOD.main() == 1
+    assert "latin1.py: unreadable (UnicodeDecodeError)" in capsys.readouterr().out

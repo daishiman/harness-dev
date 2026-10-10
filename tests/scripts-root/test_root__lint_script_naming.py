@@ -16,7 +16,10 @@ subprocess で実 CLI の exit code / 出力も確認する。
     PENDING_RENAME 個別パス (PENDING_RENAME_PATHS)
     PENDING_RENAME hook-*.py prefix (PENDING_RENAME_PATTERNS)
 - find_scripts: 非存在 root skip / SKIP_PARTS 除外 / scripts/ 配下 / scripts ルート直下
-- main: report モード JSON / text モード / VIOLATION 検出時 exit 1 / クリーン時 exit 0
+- main: report モード JSON / text モード / VIOLATION 検出時 exit 1 / クリーン時 exit 0 /
+    設定エラー exit 2 (存在しない path・走査 0 件・未知の option) / 明示した .py ファイル
+- 照合キー: 絶対パス・別の cwd でも repo 相対の登録に当たる、repo 外の祖先 dir 名に引きずられない
+- 登録の鮮度: PENDING_RENAME_PATHS の全 path が repo に実在する
 - CLI: 実 repo (--report) が exit 0、明示の違反 fixture で exit 1
 
 network: false, keychain: なし, 実ファイル書換: なし (tmp_path のみ)。
@@ -287,3 +290,79 @@ def test_cli_violation_fixture_exit_one(tmp_path):
                          text=True, capture_output=True)
     assert res.returncode == 1
     assert "run.py" in res.stderr
+
+
+# ── 照合キー: 絶対パス・別の cwd ────────────────────────────────────────────
+def test_classify_absolute_repo_path_matches_relative_registration():
+    # 登録は repo 相対。絶対パスで渡しても同じ登録に当たり、VIOLATION に化けない。
+    status, _ = _classify(str(ROOT / "scripts" / "feedback_contract_ssot.py"))
+    assert status == "PENDING_RENAME"
+
+
+def test_main_absolute_repo_roots_from_other_cwd_have_no_violation(tmp_path, monkeypatch, capsys):
+    # CI と同じ repo を、別の cwd から絶対パスで走査しても結果は変わらない。
+    monkeypatch.chdir(tmp_path)
+    rc = MOD.main(["lint-script-naming.py", str(ROOT / "scripts"), str(ROOT / "plugins")])
+    captured = capsys.readouterr()
+    assert rc == 0, captured.err
+    assert "VIOLATION=0" in captured.out
+
+
+def test_find_scripts_ignores_scripts_named_ancestor_outside_repo(tmp_path, monkeypatch):
+    # repo の外の祖先 dir が scripts という名前でも、その下の lib/ は scripts 扱いしない。
+    project = tmp_path / "scripts" / "proj"
+    lib = project / "lib"
+    lib.mkdir(parents=True)
+    (lib / "validate-thing.py").write_text("x", encoding="utf-8")
+    monkeypatch.chdir(project)
+    assert list(MOD.find_scripts([str(lib)])) == []
+
+
+# ── main: 設定エラー (exit 2) と明示ファイル ────────────────────────────────
+def test_main_missing_path_is_config_error(tmp_path, monkeypatch, capsys):
+    _make_clean_tree(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    rc = MOD.main(["lint-script-naming.py", "scripts", "nosuchdir"])
+    assert rc == 2
+    assert "path not found: nosuchdir" in capsys.readouterr().err
+
+
+def test_main_zero_scanned_from_wrong_cwd_is_config_error(tmp_path, monkeypatch, capsys):
+    # path を省略して scripts/ も plugins/ も無い cwd で起動すると、検査が空振りする。
+    monkeypatch.chdir(tmp_path)
+    rc = MOD.main(["lint-script-naming.py"])
+    assert rc == 2
+    assert "no scripts scanned" in capsys.readouterr().err
+
+
+def test_main_dir_without_scripts_is_config_error(tmp_path, monkeypatch, capsys):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "note.md").write_text("x", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    rc = MOD.main(["lint-script-naming.py", "docs"])
+    assert rc == 2
+    assert "no scripts scanned" in capsys.readouterr().err
+
+
+def test_main_unknown_option_is_config_error(tmp_path, monkeypatch, capsys):
+    _make_clean_tree(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    rc = MOD.main(["lint-script-naming.py", "--repot", "scripts"])
+    assert rc == 2
+    assert "unknown option(s): --repot" in capsys.readouterr().err
+
+
+def test_main_explicit_file_is_checked(tmp_path, monkeypatch, capsys):
+    # 置き場所が scripts/ でなくても、明示したファイルは照合する (0 件で素通りしない)。
+    bad = tmp_path / "emit-bad.py"
+    bad.write_text("x", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert MOD.main(["lint-script-naming.py", str(bad)]) == 1
+    assert "emit-bad.py" in capsys.readouterr().err
+
+
+# ── 登録の鮮度 ──────────────────────────────────────────────────────────────
+def test_every_pending_rename_path_exists_in_repo():
+    # repo から消えた path を登録に残すと、後で同じ path に置いた別物を黙って通す。
+    missing = sorted(p for p in MOD.PENDING_RENAME_PATHS if not (ROOT / p).exists())
+    assert missing == []

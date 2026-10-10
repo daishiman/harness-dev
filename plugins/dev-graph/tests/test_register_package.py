@@ -347,6 +347,15 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         self.assertEqual(json.loads(self.output.read_text()), before)
         self.assertFalse(self.receipt.exists())
 
+    def test_receipt_failure_restores_the_original_graph_bytes_not_a_canonical_rewrite(self) -> None:
+        self.output.write_text(json.dumps(json.loads(self.output.read_text()), indent=4) + "\n\n", encoding="utf-8")
+        before = self.output.read_bytes()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")):
+            with self.assertRaisesRegex(OSError, "receipt disk failure"):
+                RP._register(self.args())
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertFalse(self.receipt.exists())
+
     def test_in_process_lock_contention_is_fail_closed(self) -> None:
         lock_path = self.output.with_name(f".{self.output.name}.register.lock")
         with lock_path.open("a+") as stream:

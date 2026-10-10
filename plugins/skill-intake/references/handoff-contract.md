@@ -32,13 +32,27 @@ intake.json の正規スキーマは **`references/intake.schema.json` (schema_v
 
 ## バリデーション
 
-- `scripts/validate_intake_schema.py` が `references/intake.schema.json` 準拠を検証 (pre-publish hook 兼用。cross-field rule `handoff_mode_consistency` = §0 `handoff_mode` と §9 `recommended_next.mode` の一致検証を含む)
+- `scripts/validate_intake_schema.py` が `references/intake.schema.json` 準拠を検証 (pre-publish hook 兼用。cross-field rule `handoff_mode_consistency` = §0 `handoff_mode` と §9 `recommended_next.mode` の一致検証と、`excavation_skip_matches_interview` = §3 の skip の印と同じディレクトリの `interview.json` の `needs_excavation=false` の一致検証を含む)
 - `scripts/validate_intake.py` が 5 軸 + user_profile の必須キー存在を検証 (v1 flat / v2 双方を正規化して受理する後方互換レイヤー)
 - 必須欠落 → ヒアリング差し戻し
 - `sections.8_open_questions.blocking_count` は 0 必須 (blocking 残存のまま handoff へ進めない)
 - `sections.6_five_axes_summary.axes[]` は 5 軸 (knowledge_asset 含む) 全件必須
 - `scripts/validate-procedure-completeness.py` が `sections.6_five_axes_summary.procedure` (現状手順) の mode 別完全性 (detailed の `steps[]` / overview_fallback の `difficulty_flag`+`overview`) と、as-is フィールド (`procedure.*` / 真の課題 content) への to-be 語彙非混入 (contamination check) を検証する。結果は `validation.procedure_completeness` に格納
 - `scripts/quality_gate.py --require-procedure` が true_purpose (本質的課題) と procedure (現状手順) の両方非空を強制し、いずれか欠落・to-be 混入のまま handoff へ進めない (procedure 拡張 intake のみ発火。procedure 導入前の旧 intake は migration_warn で通す後方互換)
+
+### P5 を SKIP した経路の §3 (`sections.3_purpose_excavator`)
+
+`interview.json.needs_excavation=false` で P5 を SKIP したときは、`run-skill-intake/scripts/build-skipped-purpose.py` が作る purpose.json を §3 へ写す。深掘りした経路と同じ写し方で、値を補わない。
+
+| §3 のフィールド | purpose.json からの写し方 |
+|---|---|
+| `techniques_used` | `techniques_used` をそのまま写す。SKIP 経路では印 `["skip:needs_excavation=false"]` の1要素だけ (技法名を足さない。印と技法の混在は schema が拒否する) |
+| `rounds` | `rounds[]` の件数 (どちらの経路も同じ。SKIP 経路は interview.json の qa_log の写しなので 1 以上) |
+| `agreement_loop_detected` | `agreement_loop_detected` (SKIP 経路は常に false) |
+| `true_purpose` / `underlying_motivation` | `true_purpose.verb_object` / `true_purpose.underlying_motivation` |
+| `differentiation` / `output_priority` / `tacit_locus` | 深掘りした経路と同じく P9 の finalize (`prompts.purpose`) が埋める |
+
+`validate_intake_schema.py` は印を見ると同じディレクトリの `interview.json` を読み、`needs_excavation` が `false` でなければ違反にする (interview.json が無い・読めないときも違反)。P10 の公開前 hook も同じ validator を通るので、印だけを写して深掘りを省いた intake.json は公開できない。
 
 ## harness-creator 論理マッピング (現行 runtime では未自動射影)
 

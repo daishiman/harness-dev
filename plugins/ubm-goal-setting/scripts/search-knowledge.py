@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # /// script
 # name: search-knowledge
+# version: 0.2.0
 # purpose: routerが列挙するカテゴリentriesだけをフィールド重み付きで検索する読み取り専用stage。
-# inputs: ["--knowledge-dir absolute-path", "--term keyword (repeatable)", "--category category (repeatable)", "--limit 1..50"]
-# outputs: ["stdout candidate JSON", "exit 0=success including zero-hit / 2=invalid input"]
+# inputs: ["--knowledge-dir absolute-path", "--term keyword (repeatable, NFKC 正規化後 2..120 文字)", "--category category (repeatable)", "--limit 1..50"]
+# outputs: ["stdout candidate JSON", "exit 0=success including zero-hit (--help も 0) / 2=invalid input (stderr の error は file#entries[id=...].field の場所を含む)"]
 # contexts: [C, E]
 # network: false
 # write-scope: none
 # dependencies: []
+# requires-python: ">=3.9"
 # ///
 from __future__ import annotations
 
@@ -33,6 +35,9 @@ FIELD_WEIGHTS = {
 MAX_FILE_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_BYTES = 16 * 1024 * 1024
 MAX_ENTRIES = 10000
+# 部分一致なので 1 字の語はほぼ全 entry に当たり、順位が意味を失う。ID の完全一致も 2 字以上で足りる。
+MIN_TERM_CHARS = 2
+MAX_TERM_CHARS = 120
 
 
 def sha(data: bytes) -> str:
@@ -54,7 +59,10 @@ def text_value(value: object, depth: int = 0) -> str:
         return "\n".join(text_value(v, depth + 1) for v in value)
     if isinstance(value, dict):
         return "\n".join(text_value(value[k], depth + 1) for k in sorted(value))
-    raise ValueError("search fields must be text, list or object (not boolean/number)")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        # 数値は値そのものが本文 (例 result: 5)。型ずれ 1 件で全カテゴリの検索を止めない。
+        return normalize(json.dumps(value))
+    raise ValueError("search fields must be text, number, list or object (not boolean)")
 
 
 def load_json(path: Path) -> tuple[object, str, int]:
@@ -71,8 +79,9 @@ def search(knowledge_dir: Path, terms: list[str], categories: list[str] | None =
         raise ValueError("knowledge-dir must be absolute")
     if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 50:
         raise ValueError("limit must be 1..50")
-    if not isinstance(terms, list) or not 1 <= len(terms) <= 12 or any(not isinstance(t, str) or not 1 <= len(t.strip()) <= 120 for t in terms):
-        raise ValueError("1..12 nonempty terms of at most 120 characters required")
+    if (not isinstance(terms, list) or not 1 <= len(terms) <= 12
+            or any(not isinstance(t, str) or not MIN_TERM_CHARS <= len(normalize(t)) <= MAX_TERM_CHARS for t in terms)):
+        raise ValueError(f"1..12 terms of {MIN_TERM_CHARS}..{MAX_TERM_CHARS} characters (after NFKC) required")
     query_terms = sorted({normalize(term) for term in terms})
     root = knowledge_dir.resolve(strict=True)
     router, router_sha, total_bytes = load_json(root / "router.json")
@@ -107,23 +116,27 @@ def search(knowledge_dir: Path, terms: list[str], categories: list[str] | None =
                 raise ValueError("selected knowledge exceeds total size bound")
             entries = data.get("entries") if isinstance(data, dict) else None
             if not isinstance(entries, list):
-                raise ValueError("category file must have entries array")
+                raise ValueError(f"category file must have entries array: {filename}")
             files[filename] = file_sha
-            for entry in entries:
+            for index, entry in enumerate(entries):
                 entries_seen += 1
                 if entries_seen > MAX_ENTRIES:
                     raise ValueError("selected entry count exceeds bound")
                 identifier = entry.get("id") if isinstance(entry, dict) else None
                 if not isinstance(identifier, str) or not identifier.strip() or identifier in ids:
-                    raise ValueError("entry id missing or duplicated")
+                    raise ValueError(f"entry id missing or duplicated: {filename}#entries[{index}]")
                 if not isinstance(entry.get("source"), (str, dict, list)) or not entry["source"]:
-                    raise ValueError(f"entry source missing: {identifier}")
+                    raise ValueError(f"entry source missing: {filename}#entries[id={identifier}]")
                 ids.add(identifier)
                 field_hits = {}
                 for field, weight in FIELD_WEIGHTS.items():
                     if field not in entry:
                         continue
-                    value = text_value(entry[field])
+                    try:
+                        value = text_value(entry[field])
+                    except ValueError as exc:
+                        # どの entry のどのフィールドかを示さないと、壊れた 1 件を探せない。
+                        raise ValueError(f"{exc}: {filename}#entries[id={identifier}].{field}") from None
                     hits = [term for term in query_terms if (term == value if field == "id" else term in value)]
                     if hits:
                         field_hits[field] = {"terms": hits, "weight": weight}

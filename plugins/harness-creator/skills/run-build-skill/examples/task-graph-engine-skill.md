@@ -194,7 +194,7 @@ PY
 ## 検証
 同梱の task-graph 消費検査 bash (下記ゴールシーク検証節) が intermediate.jsonl の `ready_set`/`selected_item` トレースから依存順消費・消費完全性・self-reflect 完了 gate を 機械検査し exit0 を返す。
 
-## 注意点
+## つまずきやすい点
 - `max_loops` は checklist item 数 × 1.5 目安以上に設定する (bound 不足は completed 構造的不能)。
 - intermediate.jsonl を書かない harness は消費検査が exit1 で落とす (absence-as-violation)。
 

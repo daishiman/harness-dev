@@ -7,6 +7,7 @@
 # outputs:
 #   - stdout: OK status
 #   - stderr: violation findings
+#   - exit: 0=ok / 1=violation (unreadable agent files included) / 2=usage error or unreadable/invalid --brief
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -18,6 +19,7 @@
 Required sections (agent-template.md):
   - ## Prompt Templates   (日本語の正規形: ## プロンプトの型)
   - ## Self-Evaluation    (日本語の正規形: ## 自己採点)
+見出しは英語も日本語も行全体の一致で照合し、code fence の中の行は見出しとして数えない。
 
 Skip rule:
   If body contains the literal '(対話なし: 自動実行 agent)' then Prompt Templates
@@ -25,7 +27,9 @@ Skip rule:
 
 Tier 2 (responsibility coverage) is enabled by `--strict-coverage --brief <path>`.
 It cross-checks brief.responsibilities[] ids with `<!-- responsibility: <id> -->`
-anchors inside the Prompt Templates section.
+anchors inside the Prompt Templates section. brief が読めない・JSON object でない・
+responsibilities が無いか配列でないときは、Tier 2 を飛ばさず exit 2 で止める。
+responsibilities が空、または kind が delegate のときだけ Tier 2 を適用外とし、OK 行にそう書く。
 
 Usage:
   lint-agent-prompt-section.py path/to/agent.md
@@ -33,7 +37,8 @@ Usage:
   lint-agent-prompt-section.py --plugins-root plugins
   lint-agent-prompt-section.py --strict-coverage --brief eval-log/skill-brief.json path/to/agent.md
 
-Exit 0 = ok, 1 = violation, 2 = usage error.
+Exit 0 = ok (--help も 0), 1 = violation (読めない agent file も violation として報告),
+2 = usage error (未知の option・対象なし) または --brief を読めない・形が違う.
 """
 from __future__ import annotations
 import json
@@ -49,19 +54,50 @@ DIMENSIONS = ("完全性", "一貫性", "深度", "検証可能性", "簡潔性"
 AUTO_AGENT_MARKER = "(対話なし: 自動実行 agent)"
 ANCHOR_RE = re.compile(r"<!--\s*responsibility:\s*(R[0-9]+)\s*-->")
 PLACEHOLDER_RE = re.compile(r"(?:<[^>]+>|\bTODO\b)")
+FENCE_RE = re.compile(r"^[ \t]*(```|~~~)")
+USAGE = (
+    "usage: lint-agent-prompt-section.py <agent.md> | "
+    "--agents-dir <dir> | --plugins-root <dir> "
+    "[--strict-coverage --brief <skill-brief.json>]\n"
+)
+
+
+class BriefError(ValueError):
+    """--brief を読めない、または Tier 2 に使える形でない (exit 2)。"""
+
+
+def _mask_fences(text: str) -> str:
+    """code fence の中の行を同じ長さの空白にする (見出しの照合から外し、位置は保つ)。"""
+    out: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines(keepends=True):
+        m = FENCE_RE.match(line)
+        if fence is None and m:
+            fence = m.group(1)
+            out.append(line)
+        elif fence is not None:
+            if m and m.group(1) == fence:
+                fence = None
+                out.append(line)
+            else:
+                out.append("".join(c if c == "\n" else " " for c in line))
+        else:
+            out.append(line)
+    return "".join(out)
 
 
 def find_section(text: str, heading: str) -> str | None:
+    """行全体が heading の見出しから次の `## ` 見出しまでの本文を返す (fence の中の見出しは数えない)。"""
     pattern = re.compile(
-        rf"^{re.escape(heading)}\s*\n(.*?)(?=^## |\Z)",
+        rf"^{re.escape(heading)}[ \t]*(?:\n|\Z)(.*?)(?=^## |\Z)",
         re.MULTILINE | re.DOTALL,
     )
-    m = pattern.search(text)
-    return m.group(1) if m else None
+    m = pattern.search(_mask_fences(text))
+    return text[m.start(1):m.end(1)] if m else None
 
 
 def has_heading_line(text: str, heading: str) -> bool:
-    return re.search(rf"^{re.escape(heading)}[ \t]*$", text, re.MULTILINE) is not None
+    return re.search(rf"^{re.escape(heading)}[ \t]*$", _mask_fences(text), re.MULTILINE) is not None
 
 
 def find_required_section(text: str, index: int) -> tuple[str, str | None]:
@@ -94,11 +130,26 @@ def extract_anchor_blocks(prompt_body: str) -> list[tuple[str, str]]:
 
 
 def load_brief_responsibilities(brief_path: Path) -> tuple[list[dict], str | None]:
+    """brief の (responsibilities, kind) を返す。読めない・形が違うときは BriefError。
+
+    responsibilities が null なら空として扱う (Tier 2 適用外)。キーが無いときは、
+    別の JSON を渡した取り違えを見逃さないよう形の誤りとする。
+    """
     try:
         brief = json.loads(brief_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        return [], f"brief read error: {e}"
-    return brief.get("responsibilities", []) or [], brief.get("kind")
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as e:
+        raise BriefError(f"brief read error: {brief_path}: {e}") from e
+    if not isinstance(brief, dict):
+        raise BriefError(f"brief must be a JSON object: {brief_path} is {type(brief).__name__}")
+    if "responsibilities" not in brief:
+        raise BriefError(f"brief has no 'responsibilities': {brief_path}")
+    responsibilities = brief["responsibilities"] or []
+    if not isinstance(responsibilities, list) or not all(isinstance(r, dict) for r in responsibilities):
+        raise BriefError(f"brief 'responsibilities' must be an array of objects: {brief_path}")
+    kind = brief.get("kind")
+    if kind is not None and not isinstance(kind, str):
+        raise BriefError(f"brief 'kind' must be a string: {brief_path}")
+    return responsibilities, kind
 
 
 def lint_file(
@@ -106,10 +157,11 @@ def lint_file(
     strict_coverage: bool = False,
     brief_path: Path | None = None,
 ) -> list[str]:
+    """Tier 1 (と strict なら Tier 2) の違反を返す。brief の誤りは BriefError で投げる。"""
     findings: list[str] = []
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         return [f"{path}: read error: {e}"]
 
     locales = [
@@ -119,10 +171,13 @@ def lint_file(
     if any(len(item) > 1 for item in locales) or (all(locales) and locales[0] != locales[1]):
         findings.append(f"{path}: agent canonical section headings are mixed/duplicated languages")
 
-    # Tier 1: 形式検査 (英語は現行ロジック維持、日本語の見出しは行全体の一致で受け入れる)
-    for heading, heading_ja in zip(REQUIRED_HEADINGS, REQUIRED_HEADINGS_JA):
-        if heading not in text and not has_heading_line(text, heading_ja):
-            findings.append(f"{path}: missing required heading '{heading}'")
+    # Tier 1: 形式検査 (英語も日本語も見出しは行全体の一致で受け入れる)
+    # 日本語の見出しだけを使う file には、欠けた見出しも日本語の名前で報告する。
+    japanese = set().union(*locales) == {"ja"}
+    for index in range(2):
+        if not locales[index]:
+            missing = (REQUIRED_HEADINGS_JA if japanese else REQUIRED_HEADINGS)[index]
+            findings.append(f"{path}: missing required heading '{missing}'")
 
     prompt_label, prompt_body = find_required_section(text, 0)
     if prompt_body is not None and AUTO_AGENT_MARKER not in prompt_body:
@@ -161,16 +216,12 @@ def _lint_responsibility_coverage(
       (b) カウント比較: anchor 数 >= responsibilities 数 (順序問わない)
       (c) 順序一致: brief 配列順と anchor 出現順が一致
 
-    どれを採用するかは「責務 prompt の再現性」の解釈次第。Phase 3 の TODO(human)。
+    (a) を採用する。brief の誤りは BriefError で投げる (Tier 2 を黙って飛ばさない)。
     """
     findings: list[str] = []
-    responsibilities, _kind = load_brief_responsibilities(brief_path)
-    if not responsibilities:
-        return findings  # brief に責務が無いなら Tier 2 適用外
-
-    # kind 別適用: delegate は Tier 2 skip (agent-template.md kind 表)
-    _, kind = load_brief_responsibilities(brief_path)
-    if kind == "delegate":
+    responsibilities, kind = load_brief_responsibilities(brief_path)
+    # 責務が無い brief と kind=delegate (agent-template.md kind 表) は Tier 2 適用外
+    if not responsibilities or kind == "delegate":
         return findings
 
     brief_ids = [r.get("id") for r in responsibilities if r.get("id")]
@@ -238,7 +289,7 @@ def _lint_responsibility_coverage(
 def parse_args(argv: list[str]) -> tuple[list[Path], bool, Path | None, int | None]:
     """Returns (targets, strict_coverage, brief_path, error_code).
 
-    error_code is None on success, else the exit code to return.
+    error_code is None on success, else the exit code to return (--help は 0)。
     """
     strict_coverage = False
     brief_path: Path | None = None
@@ -246,6 +297,9 @@ def parse_args(argv: list[str]) -> tuple[list[Path], bool, Path | None, int | No
     i = 0
     while i < len(argv):
         a = argv[i]
+        if a in ("-h", "--help"):
+            sys.stdout.write(USAGE)
+            return [], False, None, 0
         if a == "--strict-coverage":
             strict_coverage = True
             i += 1
@@ -255,6 +309,9 @@ def parse_args(argv: list[str]) -> tuple[list[Path], bool, Path | None, int | No
                 return [], False, None, 2
             brief_path = Path(argv[i + 1])
             i += 2
+        elif a.startswith("-") and not (not positional and a in ("--agents-dir", "--plugins-root")):
+            sys.stderr.write(f"unknown option: {a}\n" + USAGE)
+            return [], False, None, 2
         else:
             positional.append(a)
             i += 1
@@ -290,25 +347,39 @@ def main(argv: list[str]) -> int:
     if err is not None:
         return err
     if not targets:
-        sys.stderr.write(
-            "usage: lint-agent-prompt-section.py <agent.md> | "
-            "--agents-dir <dir> | --plugins-root <dir> "
-            "[--strict-coverage --brief <skill-brief.json>]\n"
-        )
+        sys.stderr.write(USAGE)
         return 2
 
+    tier = "Tier 1"
+    if strict_coverage and brief_path is not None:
+        # 対象 file に関係なく、brief の誤りを最初に exit 2 で止める。
+        try:
+            responsibilities, kind = load_brief_responsibilities(brief_path)
+        except BriefError as e:
+            sys.stderr.write(f"{e}\n")
+            return 2
+        if kind == "delegate":
+            tier = "Tier 1; Tier 2 not applicable: brief kind is delegate"
+        elif not responsibilities:
+            tier = "Tier 1; Tier 2 not applicable: brief has no responsibilities"
+        else:
+            tier = "Tier 1+2"
+
     all_findings: list[str] = []
-    for path in targets:
-        all_findings.extend(
-            lint_file(path, strict_coverage=strict_coverage, brief_path=brief_path)
-        )
+    try:
+        for path in targets:
+            all_findings.extend(
+                lint_file(path, strict_coverage=strict_coverage, brief_path=brief_path)
+            )
+    except BriefError as e:  # 検査中に brief が変わったときも黙って飛ばさない
+        sys.stderr.write(f"{e}\n")
+        return 2
 
     if all_findings:
         for f in all_findings:
             sys.stderr.write(f + "\n")
         return 1
 
-    tier = "Tier 1+2" if strict_coverage else "Tier 1"
     sys.stdout.write(f"OK: {len(targets)} agent file(s) passed ({tier})\n")
     return 0
 

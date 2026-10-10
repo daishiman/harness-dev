@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-subagent
-# purpose: Emit a Claude Code subagent markdown derived from a SKILL.md
+# purpose: Emit a Claude Code subagent markdown (7-layer body, advisor/writer role) derived from a SKILL.md
 # inputs:
-#   - argv: --skill-name, --skill-md, --output-dir, --model
+#   - argv: --skill-name NAME --skill-md PATH [--output-dir DIR] [--language auto|ja|en] [--role auto|advisor|writer] [--model M]
 # outputs:
 #   - file: <output-dir>/<skill-name>-subagent.md
 #   - stdout: generated path
+#   - stderr: 入力エラーの説明
+#   - exit: 0=生成した / 2=入力エラー（SKILL.md が無い・読めない、--skill-name が不正、advisor に書き込みの道具、--output-dir に書けない）
 # contexts: [C]
 # network: false
 # write-scope: output-dir
@@ -18,16 +20,22 @@ SKILL.md. Stdlib only. Simple YAML 1-level parser tuned for SKILL frontmatter.
 Usage:
   build-subagent.py --skill-name run-build-skill \\
       --skill-md /path/to/SKILL.md \\
-      [--output-dir .claude/agents/]
+      [--output-dir .claude/agents/] [--language auto|ja|en] [--role auto|advisor|writer]
 
 Output format (Anthropic Claude Code subagent spec):
   ---
   name: <skill-name>-subagent
   description: <from SKILL.md description>
-  tools: <comma-joined from allowed-tools>
+  tools: <comma-joined from allowed-tools; 無ければ Read>
   model: opus  # default changed to opus (PF-F3-001)
   ---
-  # role / thinking / output sections derived from SKILL.md
+  # <skill-name>-subagent
+  ## Layer 1〜7 (7 層の骨格。Layer 5 にゴール定義・完了チェックリスト・達成ゴール)
+  ## Prompt Templates / Self-Evaluation (ja は プロンプトの型 / 自己採点)
+
+--language auto は SKILL.md の正規見出しから ja/en を継ぐ。--role auto は書き込みの道具
+(WRITE_TOOLS) を持てば writer、持たなければ advisor。advisor に書き込みの道具があれば exit 2。
+exit codes: 0 = 生成した / 2 = 入力エラー。
 """
 from __future__ import annotations
 import argparse
@@ -35,6 +43,24 @@ import json
 import re
 import sys
 from pathlib import Path
+
+# ファイルを書き換えられる道具。advisor (読み取り専用) はこれらを宣言できない。
+# Bash は検証 script の実行に使う advisor が多いので含めない (権限は allowed-tools の引数で絞る)。
+WRITE_TOOLS = frozenset({"Write", "Edit", "MultiEdit", "NotebookEdit"})
+SKILL_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
+
+
+def _unquote_scalar(val: str) -> str:
+    """YAML の引用符を 1 組だけ外し、エスケープを戻す。"""
+    if len(val) >= 2 and val[0] == val[-1] == '"':
+        try:
+            decoded = json.loads(val)
+        except ValueError:
+            return val[1:-1]
+        return decoded if isinstance(decoded, str) else val[1:-1]
+    if len(val) >= 2 and val[0] == val[-1] == "'":
+        return val[1:-1].replace("''", "'")
+    return val
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -64,7 +90,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
             fm[key] = [v.strip() for v in inner.split(",") if v.strip()] if inner else []
             cur_list_key = None
         else:
-            fm[key] = val.strip().strip('"').strip("'")
+            fm[key] = _unquote_scalar(val.strip())
             cur_list_key = None
     return fm, body
 
@@ -80,9 +106,30 @@ def extract_section(body: str, heading: str) -> str:
     return body[start:end].strip()
 
 
+def _split_tool_scalar(value: str) -> list[str]:
+    """allowed-tools の文字列を、括弧の外のカンマと空白で区切る (「Read Grep」も「Read, Grep」も可)。"""
+    items: list[str] = []
+    buf = ""
+    depth = 0
+    for ch in value:
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        if depth == 0 and (ch == "," or ch.isspace()):
+            if buf.strip():
+                items.append(buf.strip())
+            buf = ""
+            continue
+        buf += ch
+    if buf.strip():
+        items.append(buf.strip())
+    return items
+
+
 def map_tools(allowed: list[str] | str) -> str:
     if isinstance(allowed, str):
-        items = re.split(r",\s*(?![^(]*\))", allowed)
+        items = _split_tool_scalar(allowed)
     else:
         items = list(allowed or [])
     # strip parenthesized arg patterns: "Bash(python3 *)" -> "Bash"
@@ -135,7 +182,7 @@ def render_agent_body(name: str, purpose: str, source_operations: str, language:
 
 ## Layer 4: {labels[3]}
 
-{role_rule}
+{"根拠の無い断定をせず、確かめられなかったことは未確認として親へ返す。秘密情報や個人情報を出力に写さない。" if ja else "Do not assert without evidence; report anything you could not verify as unverified. Do not copy secrets or personal data into the output."}
 
 ## Layer 5: {labels[4]}
 
@@ -185,11 +232,19 @@ def main() -> int:
     ap.add_argument("--model", default="opus")  # PF-F3-001: 全Opus既定 (ユーザー方針)
     args = ap.parse_args()
 
+    if not SKILL_NAME_RE.fullmatch(args.skill_name):
+        # パス区切りや .. を含む名前は --output-dir の外へ書けてしまう
+        print(f"invalid --skill-name (英数字・-・_ だけ): {args.skill_name!r}", file=sys.stderr)
+        return 2
     skill_md = Path(args.skill_md)
-    if not skill_md.exists():
+    if not skill_md.is_file():
         print(f"SKILL.md not found: {skill_md}", file=sys.stderr)
         return 2
-    text = skill_md.read_text(encoding="utf-8")
+    try:
+        text = skill_md.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"SKILL.md を読めない: {skill_md}: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
     fm, body = parse_frontmatter(text)
 
     desc = fm.get("description", "") or f"Subagent derived from {args.skill_name}"
@@ -198,13 +253,13 @@ def main() -> int:
     steps = extract_section(body, "## ゴールシーク実行") or extract_section(body, "## Steps")
     purpose = extract_section(body, "## 目的と出力契約") or extract_section(body, "## Purpose & Output Contract")
     language = resolve_language(body, args.language)
-    role = args.role if args.role != "auto" else ("writer" if {"Write", "Edit"} & set(tools.split(", ")) else "advisor")
-    if role == "advisor" and {"Write", "Edit"} & set(tools.split(", ")):
-        print("advisor role cannot declare Write/Edit tools", file=sys.stderr)
+    write_tools = sorted(WRITE_TOOLS & set(tools.split(", ")))
+    role = args.role if args.role != "auto" else ("writer" if write_tools else "advisor")
+    if role == "advisor" and write_tools:
+        print(f"advisor role cannot declare write tools: {', '.join(write_tools)}", file=sys.stderr)
         return 2
 
     out_dir = Path(args.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{args.skill_name}-subagent.md"
 
     fm_lines = [
@@ -220,7 +275,12 @@ def main() -> int:
     operations = "\n".join(f"- {line[4:].strip()}" if line.startswith("### ") else line for line in steps.splitlines())
     md = "\n".join(fm_lines) + "\n\n" + render_agent_body(args.skill_name + "-subagent", purpose or desc, operations, language, role)
 
-    out_path.write_text(md, encoding="utf-8")
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(md, encoding="utf-8")
+    except OSError as exc:
+        print(f"出力を書けない: {out_path}: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
     print(str(out_path))
     return 0
 

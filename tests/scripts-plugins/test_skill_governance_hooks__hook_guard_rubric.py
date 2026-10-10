@@ -371,3 +371,51 @@ def test_subprocess_bypass_env(tmp_path):
 def test_subprocess_empty_stdin_fail_open(tmp_path):
     res = _run_subprocess("", cwd=tmp_path)
     assert res.returncode == 0
+
+
+# --------------------------------------------------------------------------
+# C1 レビューの再発防止: object でない入力、出力の形、大文字小文字、無駄な再帰
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize("stdin_text", [
+    json.dumps([{"tool_name": "Edit"}]),                       # object でない stdin
+    json.dumps({"tool_name": "Edit", "tool_input": "p/skills/assign-x/rubric.json"}),
+    json.dumps({"tool_name": "Edit", "tool_input": {"file_path": "p/assign-x/\u0000/rubric.json"}}),
+])
+def test_main_non_object_or_nul_input_fails_open(monkeypatch, tmp_path, capsys, stdin_text):
+    # 以前は .get の AttributeError や resolve() の ValueError で traceback になり rc=1 だった。
+    # NUL を含むパスは OS が開けないので allow。3.11 と 3.9 で判定を揃える (3.11 の normpath は NUL で切る)
+    assert _run_main(monkeypatch, tmp_path, stdin_text) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_deny_json_names_the_hook_event(monkeypatch, tmp_path, capsys):
+    rc = _run_main(
+        monkeypatch,
+        tmp_path,
+        json.dumps({"tool_name": "Edit", "tool_input": {"file_path": "p/skills/assign-foo/rubric.json"}}),
+    )
+    assert rc == 2  # 主系は exit 2 と stderr
+    assert json.loads(capsys.readouterr().out)["hookSpecificOutput"]["hookEventName"] == "PreToolUse"
+
+
+@pytest.mark.parametrize("path", [
+    "x/ref-skill-design-rubric/references/Rubric.json",
+    "x/REF-SKILL-DESIGN-RUBRIC/rubric.json",
+    "p/skills/assign-foo/RUBRIC.JSON",
+])
+def test_is_guarded_ignores_case(tmp_path, monkeypatch, path):
+    # macOS の既定の FS では大文字小文字だけが違う名前も同じ rubric を指す
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    assert MOD.is_guarded(path) is True
+
+
+def test_is_guarded_backslash_posix_path_reads_registry_once(tmp_path, monkeypatch):
+    # 以前は resolve() 後のパスで自分を呼び直し、約1000段再帰して毎段 registry を読んでいた
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    calls = []
+    original = MOD.registry_guarded_suffixes
+    monkeypatch.setattr(MOD, "registry_guarded_suffixes", lambda: calls.append(1) or original())
+    assert MOD.is_guarded(str(tmp_path / "a\\b.txt")) is False
+    assert len(calls) == 1

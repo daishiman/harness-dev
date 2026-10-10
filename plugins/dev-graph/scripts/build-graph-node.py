@@ -27,8 +27,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-from _common import (PACKAGE_KEYS, ContractError, atomic_bytes, atomic_json, contained, dump,
-                     is_package_member, json_bytes, load_json, utc_now)
+from _common import (PACKAGE_KEYS, ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained,
+                     dump, is_package_member, json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -148,6 +148,8 @@ def _write_atomic(path: Path, data: bytes, *, create_only: bool) -> None:
         atomic_bytes(path, data, create_only=create_only)
     except FileExistsError as exc:
         raise WriterError("artifact_path_exists", str(path)) from exc
+    except ParentNotDirectoryError as exc:
+        raise WriterError("parent_not_directory", str(exc)) from exc
 
 
 def _canonical_digest(value: Any) -> str:
@@ -1309,6 +1311,8 @@ def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
     try:
         _write_atomic(path, data, create_only=True)
     except WriterError as exc:
+        if exc.code != "artifact_path_exists":
+            raise
         raise WriterError("immutable_receipt_exists", str(path)) from exc
 
 

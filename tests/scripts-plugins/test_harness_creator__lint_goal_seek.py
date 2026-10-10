@@ -739,6 +739,15 @@ def test_subprocess_clean_exits_0(tmp_path):
 
 
 # A canonical local reference supplies shared tokens, but cannot replace execution.
+# validator は検査契約をコードとして持つ最小形 (コメントの語だけでは通らない)。
+VALIDATOR_CODE = (
+    "import hashlib\n"
+    "REQUIRED_KEYS = {'iteration'}\n"
+    "def check(progress, encoded):\n"
+    "    return progress.get('original_goal_hash') == hashlib.sha256(encoded).hexdigest()\n"
+)
+
+
 def _canonical_plugin(tmp_path, *, reference_text=None, command=None):
     plugin = tmp_path / "plugin"
     (plugin / ".claude-plugin").mkdir(parents=True)
@@ -751,8 +760,7 @@ def _canonical_plugin(tmp_path, *, reference_text=None, command=None):
     contract.write_text(reference_text if reference_text is not None else
                         "intermediate.jsonl original_goal merged_directive_for_next required_keys original_goal_hash hashlib.sha256 "
                         "iteration current_goal_snapshot delta_from_original drift_signal UTF-8 validate-inline-goal-seek-anchor.py")
-    (plugin / "scripts/validate-inline-goal-seek-anchor.py").write_text(
-        "REQUIRED_KEYS original_goal_hash sha256")
+    (plugin / "scripts/validate-inline-goal-seek-anchor.py").write_text(VALIDATOR_CODE)
     body = CLEAN_RUN.split("### ゴールシーク配線")[0] + "### ゴールシーク配線\n"
     body += "`../../references/goal-seek-anchor-contract.md` が正本。\n```bash\n"
     body += command if command is not None else 'python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"'
@@ -813,3 +821,59 @@ def test_missing_validator_is_a_violation(MOD, tmp_path):
     (path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py").unlink()
     findings, _ = MOD.lint_file(path)
     assert any("validator が不在" in finding for finding in findings)
+
+
+# --- 再レビュー B の [低] 指摘の再発防止 ---
+
+
+def test_validator_with_contract_words_only_in_comment_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    (path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py").write_text(
+        "# REQUIRED_KEYS original_goal_hash sha256\n")
+    findings, _ = MOD.lint_file(path)
+    assert any("validator の検査契約が不足" in finding for finding in findings)
+
+
+def test_validator_symlink_outside_plugin_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    validator = path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py"
+    outside = tmp_path / "foreign-validator.py"
+    outside.write_text(validator.read_text())
+    validator.unlink()
+    validator.symlink_to(outside)
+    findings, _ = MOD.lint_file(path)
+    assert any("validator が不在・root 外" in finding for finding in findings)
+
+
+def test_bare_filename_mention_in_wiring_is_not_a_declaration(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    path.write_text(path.read_text().replace(
+        "が正本。\n", "が正本。`goal-seek-anchor-contract.md` は別の plugin の話。\n"))
+    assert MOD.lint_file(path) == ([], [])
+
+
+def test_lint_file_non_utf8_is_read_error_finding(MOD, tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_bytes(b"---\nprefix: run\n---\n\xff\xfe\n")
+    findings, _ = MOD.lint_file(p)
+    assert findings and "read error" in findings[0]
+
+
+@pytest.mark.parametrize("kind", ["non_utf8", "directory", "missing"])
+def test_subprocess_unreadable_input_exits_2_without_traceback(tmp_path, kind):
+    p = tmp_path / "SKILL.md"
+    if kind == "non_utf8":
+        p.write_bytes(b"---\nprefix: run\n---\n\xff\xfe\n")
+    elif kind == "directory":
+        p.mkdir()
+    proc = _run([str(p)])
+    assert proc.returncode == 2
+    assert "入力を読めない" in proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+@pytest.mark.parametrize("flag", ["-h", "--help"])
+def test_subprocess_help_exits_0(flag):
+    proc = _run([flag])
+    assert proc.returncode == 0
+    assert "usage:" in proc.stdout

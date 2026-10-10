@@ -12,7 +12,7 @@ responsibility_id: R-extract-relations
 source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md
 ---
 
-ルートの必須入力・解決・停止条件は `references/agent-root-contract.md` を Read して適用する。親が解決した絶対パスだけを使う。
+ルートの必須入力・解決・停止条件は、親から受け取った `plugin_root` の下の `references/agent-root-contract.md` を Read して適用する。親が解決した絶対パスだけを使う。
 
 # プロンプト: knowledge-relation-extractor
 
@@ -67,14 +67,15 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 ### 2.3 入力契約
 
-意味的な隣接候補の選定は `${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadして行う。入力 `knowledge_candidates` は、親が各起点エントリの問題・意図・タグから実行した重み付き検索のJSON配列。全件の構造索引は保持するが、辺候補の意味選択は順位付き検索結果から行う。追加IDが必要なら親へ検索を依頼し結果を受ける。既存のrelatedはヒントに限り、候補外IDの採用や逐語根拠の代用にしない。
+意味的な隣接候補の選定は `${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadして行う。入力 `knowledge_candidates` は、親が各起点エントリの問題・意図・タグから実行した重み付き検索のJSON配列。全件を読むのは ID と出典の索引を作り、逐語の根拠を確かめるためで、辺のペアは「起点エントリ × その起点の検索結果の `matched_ids`」に限って選ぶ。全ペアの総当たりや無検査の全文検索へ切り替えない。起点の検索結果が `zero_hit` ならその起点からは辺を出さず、被覆漏れとして報告する。追加IDが必要なら、検索語と理由を親へ返して検索を依頼し、その結果を受けてから比較する。既存のrelatedはヒントに限り、候補外IDの採用や逐語根拠の代用にしない。
 
 | フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
 | `plugin_root` | `path` | はい | 親が解決したプラグインの絶対パス。共通 agent-root 契約を適用する |
 | `knowledge_dir` | `path` | はい | `knowledge/*.json` を含むディレクトリ。`router.json` の categories.files が列挙する各カテゴリファイルの `entries[]` が対象 (`id`/`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote`/`tags`/`phase`/`source`/`related` 等) |
+| `knowledge_candidates` | `array` | はい | 起点エントリごとに、親が `scripts/search-knowledge.py` を実行した標準出力 (`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持つ JSON) と、その起点の ID を組にした配列。辺のペアはこの `matched_ids` から選ぶ |
 
-- ルーターが列挙する全カテゴリファイルを読み、ID→エントリと ID→`source.file` の索引を構築してから辺抽出に入る。`related` は探索ヒントとして参照するが辺の根拠にはしない。
+- ルーターが列挙する全カテゴリファイルを読み、ID→エントリと ID→格納ファイル (`knowledge/<file>.json`) の索引を構築してから辺抽出に入る。`related` は探索ヒントとして参照するが辺の根拠にはしない。
 
 ### 2.4 出力契約 (辺配列 JSON)
 
@@ -88,9 +89,9 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
     "relation_type": "derived_from",
     "evidence": [
       "施策を考える前に「世の中の何を解決する会社か」を一文で定義する。チームには売上目標ではなくビジョンを落とす。",
-      "「人がついてくる人間かどうか」が経営の最重要基準。大義・思想・ビジョンを語れる人間になれ"
+      "人がついてくる人間かどうかという経営の最重要基準は、大義・思想・ビジョンを語れる人間になることを求める。"
     ],
-    "source_ref": "CP-033:knowledge/consultation-organization.json / PR-043:knowledge/principles-relationship.json",
+    "source_ref": "CP-033:knowledge/consultation-organization-purpose.json / PR-043:knowledge/principles-relationship-trust-leadership.json",
     "confidence": 0.78,
     "review_status": "pending_review"
   }
@@ -100,7 +101,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 - `source_id`/`target_id`: 実在するエントリ ID (PR/CP/PA/AG/MS/CS-連番)。`source_id != target_id`。
 - `relation_type`: `depends_on` | `supports` | `contradicts` | `derived_from` のいずれか。
 - `evidence`: エントリ本文からの逐語引用を1件以上。起点側・行き先側いずれか (可能なら双方) から取る。
-- `source_ref`: `<source_id>:<file> / <target_id>:<file>` 形式で両端の出典ファイルを示す。
+- `source_ref`: `<source_id>:<file> / <target_id>:<file>` 形式で両端の格納ファイル (`knowledge/<file>.json`。router の categories.files が列挙する実在のファイル名) を示す。
 - `confidence`: 0.0〜1.0 の `float`。根拠の明示度が高いほど高く、示唆に留まるものは低くする。
 - `review_status`: 常に `"pending_review"` (全辺は C06 検証・人手レビュー前の候補である)。
 - 過去分の埋め戻しに使う既存の検証用の入力データ (現行 `knowledge/*.json`) では 0 より多い件数の辺を返すこと。1件も抽出できないのは被覆漏れであり完了としない。
@@ -111,7 +112,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 | ID | パス | 読むとき |
 |---|---|---|
-| ナレッジエントリ | `knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く各カテゴリ) | 実行開始時に全件読み込み、ID の索引と `source.file` の索引を構築 |
+| ナレッジエントリ | `knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く各カテゴリ) | 実行開始時に全件読み込み、ID の索引と格納ファイルの索引を構築 |
 | スキーマ | `knowledge/schema.json` | エントリのフィールド構造・カテゴリ定義を確認する時 |
 | ルーター | `knowledge/router.json` | カテゴリと格納ファイルの対応を確認する時 |
 | `knowledge-extractor` の契約 | `agents/knowledge-extractor.md` | エントリの各フィールド (`background`/`intent`/`root_cause` 等) の意味を確認する時 |
@@ -156,7 +157,8 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] `knowledge/*.json` の全カテゴリファイル (`router.json`/`registry.json`/`schema.json` を除く) を読み、ID の索引と `source.file` の索引を構築した
+- [ ] `knowledge/*.json` の全カテゴリファイル (`router.json`/`registry.json`/`schema.json` を除く) を読み、ID の索引と格納ファイルの索引を構築した
+- [ ] 辺のペアを起点ごとの `knowledge_candidates` の `matched_ids` からだけ選び、`zero_hit` の起点を被覆漏れとして報告した
 - [ ] 出力した全辺の `source_id`/`target_id` が実在するエントリ ID であり、`source_id == target_id` の自己ループが無いことを確認した
 - [ ] 全辺の `evidence` が起点・行き先の本文からの逐語引用を1件以上含み、要約・捏造でないことを確認した
 - [ ] 全辺の `relation_type` が4種の列挙値のいずれかで、方向 (起点→行き先) が定義どおりであることを確認した
@@ -201,13 +203,13 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 > (対話なし: 自動実行 agent) — 本エージェントは `isolation: fork` で親から分離起動され、ユーザーとの往復対話を行わず、下記テンプレートに従って全ナレッジの関係抽出を一度で完遂し、辺配列 JSON と走査サマリを返す。
 
-`knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く全カテゴリ) の `entries[]` を全件読み込み、ID→エントリと ID→`source.file` の索引を構築する。次にエントリのペアについて本文 (`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote` 等) を精読し、`depends_on` (前提の先行) / `supports` (裏付け) / `contradicts` (対立) / `derived_from` (具体化・派生) の有方向辺の候補を抽出する。各辺には起点・行き先の本文からの**逐語引用**を `evidence` に1件以上入れ (要約・捏造禁止)、`source_ref` に両端の出典ファイルを、`confidence` に 0.0〜1.0 を、`review_status` に `"pending_review"` を付す。`source_id == target_id` の自己ループと、`depends_on` の相互辺 (循環) は出力しない。`related` は候補ペアの探索ヒントに留め、辺の根拠にはしない (本文根拠が無ければ辺にしない)。
+`knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く全カテゴリ) の `entries[]` を全件読み込み、ID→エントリと ID→格納ファイルの索引を構築する。次に起点エントリごとに、`knowledge_candidates` にあるその起点の検索結果の `matched_ids` だけを相手として組み (総当たりにしない。`zero_hit` の起点は辺を出さず被覆漏れとして報告する)、そのペアの本文 (`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote` 等) を精読し、`depends_on` (前提の先行) / `supports` (裏付け) / `contradicts` (対立) / `derived_from` (具体化・派生) の有方向辺の候補を抽出する。各辺には起点・行き先の本文からの**逐語引用**を `evidence` に1件以上入れ (要約・捏造禁止)、`source_ref` に両端の出典ファイルを、`confidence` に 0.0〜1.0 を、`review_status` に `"pending_review"` を付す。`source_id == target_id` の自己ループと、`depends_on` の相互辺 (循環) は出力しない。`related` は候補ペアの探索ヒントに留め、辺の根拠にはしない (本文根拠が無ければ辺にしない)。
 
 具体例 (実在するエントリ2件からの1辺):
 
-- 入力 A = `CP-033` (`consultation-organization` / `advice`: 「施策を考える前に『世の中の何を解決する会社か』を一文で定義する。チームには売上目標ではなくビジョンを落とす。」)。このエントリの `related` は `["PR-042","MS-025","CP-007"]` で `PR-043` を**含まない**。
-- 入力 B = `PR-043` (`principles-relationship` / `content`: 「『人がついてくる人間かどうか』が経営の最重要基準。大義・思想・ビジョンを語れる人間になれ」)。
-- 出力辺 = `CP-033` --`derived_from`--> `PR-043`。CP-033 の「ビジョンを一文で定義し、売上目標でなくビジョンを落とす」という具体的相談指針は、PR-043 の「大義・思想・ビジョンを語れる人間になれ」という一般原則の具体化であり、方向は個別→一般 (派生)。`related` に PR-043 が無くても、本文の大義/ビジョン論の共有という**逐語根拠**から辺を立てる (`related` 由来ではない)。
+- 入力 A = `CP-033` (`knowledge/consultation-organization-purpose.json` / `advice`: 「施策を考える前に『世の中の何を解決する会社か』を一文で定義する。チームには売上目標ではなくビジョンを落とす。」)。このエントリの `related` は `["PR-042","MS-025","CP-007"]` で `PR-043` を**含まない**。
+- 入力 B = `PR-043` (`knowledge/principles-relationship-trust-leadership.json` / `content`: 「人がついてくる人間かどうかという経営の最重要基準は、大義・思想・ビジョンを語れる人間になることを求める。」)。CP-033 を起点にした検索の `matched_ids` に PR-043 が入っているとする。
+- 出力辺 = `CP-033` --`derived_from`--> `PR-043`。CP-033 の「ビジョンを一文で定義し、売上目標でなくビジョンを落とす」という具体的相談指針は、PR-043 の「大義・思想・ビジョンを語れる人間になる」という一般原則の具体化であり、方向は個別→一般 (派生)。`related` に PR-043 が無くても、本文の大義/ビジョン論の共有という**逐語根拠**から辺を立てる (`related` 由来ではない)。
 
 ```json
 [
@@ -217,9 +219,9 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
     "relation_type": "derived_from",
     "evidence": [
       "施策を考える前に「世の中の何を解決する会社か」を一文で定義する。チームには売上目標ではなくビジョンを落とす。",
-      "「人がついてくる人間かどうか」が経営の最重要基準。大義・思想・ビジョンを語れる人間になれ"
+      "人がついてくる人間かどうかという経営の最重要基準は、大義・思想・ビジョンを語れる人間になることを求める。"
     ],
-    "source_ref": "CP-033:knowledge/consultation-organization.json / PR-043:knowledge/principles-relationship.json",
+    "source_ref": "CP-033:knowledge/consultation-organization-purpose.json / PR-043:knowledge/principles-relationship-trust-leadership.json",
     "confidence": 0.78,
     "review_status": "pending_review"
   }

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # /// script
-# name: normalized-source-path
+# name: normalized_source_path
 # purpose: C01/oneshot共通の動画ID付き保存パスを決め既存ファイルの所有IDを検査する。
 # inputs: ["--metadata JSON", "--source-out absolute-directory"]
 # outputs: ["stdout JSON relative_path/absolute_path", "exit 0=valid / 2=invalid or conflict"]
 # contexts: [C, E]
+# requires-python: ">=3.9"
 # network: false
 # write-scope: none
 # dependencies: []
@@ -44,6 +45,9 @@ def normalized_rel_path(meta: dict) -> str:
     return f"YouTube/{published} - {sanitize_title(title)} [id-{token}].md"
 
 
+SCALAR_RE = re.compile(r"""(?P<value>"(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[A-Za-z0-9_-]+)(?:\s+#.*)?""")
+
+
 def source_video_id(path: Path) -> str:
     with path.open(encoding="utf-8") as handle:
         prefix = handle.read(65536)
@@ -54,21 +58,31 @@ def source_video_id(path: Path) -> str:
     ids = [line[len("video_id:"):].strip() for line in lines[1:closing] if line.startswith("video_id:")]
     if len(ids) != 1:
         raise ValueError("existing source has missing/ambiguous video_id")
-    raw = ids[0]
+    # A trailing YAML comment (`video_id: abc  # note`) is legal and must not read as a conflict.
+    scalar = SCALAR_RE.fullmatch(ids[0])
+    if not scalar:
+        raise ValueError("existing video_id scalar is not safely readable")
+    raw = scalar.group("value")
     if raw.startswith('"'):
         value = json.loads(raw)
-    elif len(raw) >= 2 and raw.startswith("'") and raw.endswith("'"):
+    elif raw.startswith("'"):
         value = raw[1:-1].replace("''", "'")
-    elif re.fullmatch(r"[A-Za-z0-9_-]+", raw):
-        value = raw
     else:
-        raise ValueError("existing video_id scalar is not safely readable")
+        value = raw
     if not isinstance(value, str) or not value:
         raise ValueError("existing source video_id invalid")
     return value
 
 
 def checked_source_path(source_out: Path, meta: dict) -> Path:
+    """保存先のパスを決め、symlink・root の外・別の video_id のファイルが無いことを確かめて返す。
+
+    この関数は確かめるだけで書かない (write-scope: none)。確かめてから呼び出し側が書くまでの間に
+    ほかのプロセスがファイルを置き換えたり親を symlink にしたりしても、検出できない (TOCTOU)。
+    1回きりの実行 (run-youtube-sync-oneshot.py) は登録簿の lock を握ったまま確かめて書くので、
+    実行どうしは競合しない。lock を取らない書き手 (C01 の経路や手作業) との競合は残るが、保存先は
+    1人の利用者の vault なので受け入れている。
+    """
     if not source_out.is_absolute():
         raise ValueError("source-out must be absolute")
     root = source_out.resolve()
@@ -94,7 +108,7 @@ def main() -> int:
             raise ValueError("metadata must be an object")
         path = checked_source_path(Path(args.source_out), meta)
         result = {"relative_path": normalized_rel_path(meta), "absolute_path": str(path)}
-    except (OSError, ValueError, TypeError, KeyError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
     print(json.dumps(result, ensure_ascii=False))

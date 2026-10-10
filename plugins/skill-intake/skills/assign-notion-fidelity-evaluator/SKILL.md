@@ -16,7 +16,10 @@ source-tier: internal
 last-audited: 2026-05-24
 audit-trigger: template-change
 hierarchy_level: L1
-rubric_refs: [ref-output-routing]
+# 以前の rubric_refs: [ref-output-routing] は外した。ref-output-routing は出力先 adapter を選ぶ契約で
+# rubric.json を持たず、出力先が固定のローカルファイルのこの skill とは関係が無い (harness-aor)
+completeness_exempt:
+  - "rubric: 採点は rubric.json の観点別採点ではなく、重みを references/granularity-rubric.md、閾値を references/fidelity-check-rules.md に置き、scripts/validate-notion-fidelity.py が決定論で算出する (harness-aor)"
 role_suffix: evaluator
 owner: team-platform
 since: 2026-05-22

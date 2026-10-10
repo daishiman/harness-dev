@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: verify-completeness
-# purpose: 正規形プロンプト YAML/Markdown の7層構造網羅・Layer5 ゴールシーク必須要素・固定手順不在を検証する (l5-contract v2.0.0 準拠)
+# purpose: 正規形プロンプト YAML/Markdown の7層構造網羅・Layer5 ゴールシーク必須要素 (ゴール定義・完了チェックリスト・達成ゴール / 英語の Goal definition・Completion checklist・Achievement goal)・固定手順不在 (日本語と英語) を検証する (l5-contract v2.0.0 準拠)
 # inputs:
 #   - argv: --input <prompt.yaml|md> [--layers L1,L2,...]
 #   - file: --input の正規形 YAML / Markdown プロンプト
 # outputs:
 #   - stdout: OK サマリ / N/A skip 一覧 (--layers 指定時)
 #   - stderr: FAIL incomplete の不備一覧
-#   - exit: 0=OK / 1=不備あり / 2=引数エラー
+#   - exit: 0=OK / 1=不備あり / 2=引数エラー・読めない --input (不在・ディレクトリ・UTF-8 でない)
 # contexts: [C]
 # network: false
 # write-scope: none
@@ -17,25 +17,34 @@
 # verify-completeness.py — 正規形プロンプト（merge-layers.py 出力 YAML / Markdown 提示形）の網羅性検証
 #   1. 構造網羅: 必須 Layer (既定は 7 層全て、--layers で brief.layers_required のサブセットに限定可)
 #      に最低 1 要素があるか。--layers 宣言外の Layer は N/A 理由付き skip で PASS。
-#   2. ゴールシーク要素が Layer 5 に在るか（ゴール定義 / 完了チェックリスト / 達成ゴール）
+#   2. ゴールシーク要素が Layer 5 に在るか（ゴール定義 / 完了チェックリスト / 達成ゴール。
+#      英語は Goal definition / Completion checklist / Achievement goal で、大文字と小文字を区別しない）。
+#      照合は部分一致なので、要素の名前が文中に出るだけでも在ると数える。
 #   3. 固定手順の不在（l5-contract v2.0.0 の禁止事項）:
-#      a. 「思考プロセス」+「ステップN」の共起 (legacy 検出、維持)
-#      b. Layer 5 内の『推論手順』『思考プロセス』『手順』『Steps』見出し (markdown 見出し /
-#         YAML キー) 配下の連番列挙 (2 行以上)
+#      a. 「思考プロセス」+「ステップN」の共起 (legacy 検出、維持)。英語は
+#         「Thinking process」+「Step N」の共起。言語をまたいだ組は数えない。
+#      b. Layer 5 内の『推論手順』『思考プロセス』『手順』見出し、英語の『Steps』『Procedure』
+#         『Reasoning steps』『Thinking process』見出し (markdown 見出し / YAML キー。英語は
+#         大文字と小文字を区別しない) 配下の連番列挙 (「1.」や「ステップ1」「Step 1」が 2 行以上)
 #      allowlist (正当パターン): 5.4 実行方式 / 実行方式.ループ / ゴールシークループ配下の
 #      6 ステップループ宣言 (goal-seek-paradigm 準拠のメタ手順)。banned 見出し名に該当しない
 #      キー配下の連番は構造上検出対象外となるため、構成的に許容される。
 #      加えて負例ガード: 禁止・注意書き行 (「〜書かない」「〜禁止」等) は見出し扱いしない。
+#      英語の注意書きの除外は持たない (英語の『Steps』見出しは従来どおり除外せず検出する)。
 # サブ構造の正本: references/seven-layer-format.md「Layer 5 契約」(l5-contract v2.0.0)。
 # マーカーは scaffold-prompt.py / merge-layers.py が出力する「# Layer N:」に一致させる。
-# Exit: 0=OK, 1=不備あり, 2=引数エラー (未知引数は argparse が failfast で exit 2)
+# Exit: 0=OK, 1=不備あり, 2=引数エラー (未知引数は argparse が failfast で exit 2)・
+#       読めない --input (不在・ディレクトリ・UTF-8 でない)
 """verify_completeness.js の python 移植 + l5-contract v2.0.0 追従強化。終了コード契約を維持する。"""
 import argparse
 import re
 import sys
 
-# 固定手順とみなす見出し/キー名 (l5-contract v2.0.0 禁止事項)
-BANNED_HEADING_TOKENS = r"(?:推論手順|思考プロセス|手順|[Ss]teps?)"
+# 固定手順とみなす見出し/キー名 (l5-contract v2.0.0 禁止事項)。英語は大文字と小文字を区別しない。
+BANNED_HEADING_TOKENS = (
+    r"(?:推論手順|思考プロセス|手順"
+    r"|(?i:steps?|procedures?|reasoning[ \t]+(?:steps?|procedures?)|thinking[ \t]+process))"
+)
 # markdown 見出し: 「### 5.2 推論手順 (再現可能)」「#### 手順」「## Steps」等。
 # 見出しタイトルが banned トークンで始まる場合のみ一致 (「実行方式」「固定手順…禁止」等の
 # 注意書き・別名見出しには一致しない)。
@@ -47,13 +56,19 @@ MD_BANNED_HEADING_RE = re.compile(
 YAML_BANNED_KEY_RE = re.compile(
     rf"^(\s*){BANNED_HEADING_TOKENS}\s*[:：]\s*(?:[|>][+-]?)?\s*$"
 )
-# 連番列挙行: 「1. …」「- "2. …"」「ステップ3 …」等
+# 連番列挙行: 「1. …」「- "2. …"」「ステップ3 …」「Step 3 …」等
 ENUM_LINE_RE = re.compile(
-    r"^\s*(?:[-*]\s*)?[\"'「]?\s*(?:[0-9０-９]{1,3}\s*[.)．）、]\s*\S|ステップ\s*[0-9０-９])"
+    r"^\s*(?:[-*]\s*)?[\"'「]?\s*"
+    r"(?:[0-9０-９]{1,3}\s*[.)．）、]\s*\S|ステップ\s*[0-9０-９]|(?i:step)\s*[0-9０-９])"
 )
 MD_ANY_HEADING_RE = re.compile(r"^#{1,6}\s+\S")
 # 負例ガード: 禁止・注意書きの文言を含む行は見出し検出から除外する
 NEGATION_MARKERS = ("禁止", "書かない", "書いてはならない", "持たせない", "収集しない", "列挙しない")
+# legacy 検出 (3a) の組。日本語どうし・英語どうしの共起だけを数える。
+LEGACY_FIXED_PROCEDURE_PAIRS = (
+    (re.compile(r"思考プロセス"), re.compile(r"ステップ\s*[0-9０-９]")),
+    (re.compile(r"(?i:thinking[ \t]+process)"), re.compile(r"(?<![A-Za-z])(?i:step)\s*[0-9０-９]")),
+)
 
 LAYER_TOKEN_RE = re.compile(r"^[Ll]?([1-7])$")
 
@@ -173,8 +188,13 @@ def main():
     except ValueError as e:
         sys.stderr.write(f"usage: --layers L1,L2,... — {e}\n")
         sys.exit(2)
-    with open(input_path, "r", encoding="utf-8") as f:
-        text = f.read()
+    try:
+        with open(input_path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except (OSError, UnicodeDecodeError) as e:
+        # 「不備あり」の exit 1 と区別できるよう、読めない入力は引数エラーと同じ exit 2 にする。
+        sys.stderr.write(f"error: cannot read --input {input_path}: {e}\n")
+        sys.exit(2)
     sections = split_layers(text)
     problems = []
     skipped = []
@@ -192,24 +212,33 @@ def main():
             skipped.append(f"Layer {n}: N/A skip (--layers 宣言外のため必須としない)")
 
     # 2. ゴールシーク要素: Layer 5 にゴール定義・完了チェックリスト・達成ゴールが在る
-    #    (Layer 5 が必須宣言されている場合のみ)
+    #    (Layer 5 が必須宣言されている場合のみ)。英語の見出しは「Goal Definition」のように
+    #    単語ごとに大文字にする書き方もあるので、大文字と小文字を区別しない。
     layer5 = sections[5] or ""
     if 5 in required_layers:
+        layer5_folded = layer5.casefold()
         goal_seek_required = [
-            {"key": ("ゴール定義", "Goal definition"), "label": "ゴール定義（目的・背景・達成ゴール）"},
-            {"key": ("完了チェックリスト", "Completion checklist"), "label": "完了チェックリスト（停止条件）"},
-            {"key": ("達成ゴール", "Achievement goal"), "label": "達成ゴール（成果状態）"},
+            {"key": ("ゴール定義", "Goal definition"),
+             "label": "ゴール定義 / Goal definition（目的・背景・達成ゴール）"},
+            {"key": ("完了チェックリスト", "Completion checklist"),
+             "label": "完了チェックリスト / Completion checklist（停止条件）"},
+            {"key": ("達成ゴール", "Achievement goal"),
+             "label": "達成ゴール / Achievement goal（成果状態）"},
         ]
         for r in goal_seek_required:
-            if sections[5] is not None and not any(key in layer5 for key in r["key"]):
+            if sections[5] is not None and not any(
+                key.casefold() in layer5_folded for key in r["key"]
+            ):
                 problems.append(f"Layer 5: {r['label']} がない（ゴールシーク必須要素）")
 
     # 3a. 固定手順の不在 (legacy): 「思考プロセス」+「ステップN」列挙はゴールシーク違反
     #     実行方式.ループ の箇条書きは許容（「思考プロセス」キーを伴わない）。
-    if re.search(r"思考プロセス", layer5) and re.search(r"ステップ\s*[0-9０-９]", layer5):
+    #     英語の「Thinking process」+「Step N」も同じ扱い。
+    if any(name.search(layer5) and step.search(layer5)
+           for name, step in LEGACY_FIXED_PROCEDURE_PAIRS):
         problems.append(
-            "Layer 5: 固定手順（思考プロセスのステップ列挙）が検出された "
-            "— ゴール定義+完了チェックリストに置換すること"
+            "Layer 5: 固定手順（思考プロセスのステップ列挙 / Thinking process + Step N）が検出された "
+            "— ゴール定義+完了チェックリスト (Goal definition + Completion checklist) に置換すること"
         )
 
     # 3b. 固定手順の不在 (l5-contract v2.0.0): banned 見出し配下の連番列挙。
@@ -218,7 +247,8 @@ def main():
         problems.append(
             f"Layer 5: 固定手順（『{heading}』見出し配下の連番列挙）が検出された "
             "— l5-contract v2.0.0 では 5.2 ゴール定義 / 5.3 完了チェックリスト / "
-            "5.4 実行方式 (ゴールシークループ) に置換すること"
+            "5.4 実行方式 (ゴールシークループ) に置換すること "
+            "(英語は 5.2 Goal definition / 5.3 Completion checklist / 5.4 Execution mode)"
         )
 
     if len(problems) > 0:

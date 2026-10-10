@@ -139,11 +139,12 @@ def test_inline_rejects_unused_task_graph_assets(tmp_path: Path) -> None:
 def test_goal_seek_anchor_validator_must_match_canonical(tmp_path: Path) -> None:
     root, skill = _skill(tmp_path)
     skill.write_text(
-        skill.read_text(encoding="utf-8") + "\nvalidate-inline-goal-seek-anchor.py\n",
+        skill.read_text(encoding="utf-8")
+        + '\npython3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-inline-goal-seek-anchor.py"\n',
         encoding="utf-8",
     )
     profile = MODULE.inspect_skill(skill, root / "plugins")
-    assert any("plugin scripts/ に不在" in finding for finding in profile.findings)
+    assert any("plugin の scripts/ に写しが不在" in finding for finding in profile.findings)
 
     canonical = (
         root
@@ -295,6 +296,8 @@ def test_report_exit_uses_legacy_ratchet(tmp_path: Path, monkeypatch, capsys) ->
     monkeypatch.setattr(
         MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset({DEMO_SKILL_PATH})
     )
+    # 実 repo の FORK_TOOLS_BASELINE は一時 repo に無いので、全体実行では陳腐化になる。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
     assert MODULE.main(["--repo-root", str(root)]) == 0
     captured = capsys.readouterr()
     assert "legacy=1 registered=1 unlisted=0 stale=0" in captured.out
@@ -363,7 +366,9 @@ def test_stale_check_is_skipped_when_scope_is_filtered(
     assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 0
     captured = capsys.readouterr()
     assert "免除が陳腐化" not in captured.err
-    assert "stale=0" in captured.out
+    # 検査していないことを 0 件と区別して出す。
+    assert "stale=skipped" in captured.out
+    assert "stale=0" not in captured.out
 
 
 def test_replica_skill_name_is_allowed_without_path_registration(
@@ -373,6 +378,8 @@ def test_replica_skill_name_is_allowed_without_path_registration(
     root, _skill_path = _skill(tmp_path, goal_seek="")
     monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
     monkeypatch.setattr(MODULE, "LEGACY_LOOP_REPLICA_SKILLS", frozenset({"run-demo"}))
+    # 実 repo の FORK_TOOLS_BASELINE は一時 repo に無いので、全体実行では陳腐化になる。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
     assert MODULE.main(["--repo-root", str(root)]) == 0
     assert "[legacy]" in capsys.readouterr().err
 
@@ -407,3 +414,131 @@ def test_manifest_agent_ref_must_exist(tmp_path: Path) -> None:
     )
     profile = MODULE.inspect_skill(skill, root / "plugins")
     assert any("delegate agent が不在" in finding for finding in profile.findings)
+
+
+ANCHOR = "validate-inline-goal-seek-anchor.py"
+
+
+def _anchor_skill(tmp_path: Path, call: str) -> tuple[Path, Path, Path]:
+    root, skill = _skill(tmp_path)
+    skill.write_text(skill.read_text(encoding="utf-8") + f"\n{call}\n", encoding="utf-8")
+    canonical = (
+        root / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts" / ANCHOR
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    return root, skill, canonical
+
+
+def _place(path: Path, data: bytes) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return path
+
+
+def test_skill_root_call_needs_the_skill_copy_not_only_the_plugin_copy(tmp_path: Path) -> None:
+    # 実行時は $SKILL_ROOT/scripts を呼ぶので、plugin 側にだけ写しがあっても動かない。
+    root, skill, canonical = _anchor_skill(
+        tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}" p i'
+    )
+    _place(root / "plugins/demo/scripts" / ANCHOR, canonical.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("skill の scripts/ に写しが不在" in f for f in findings), findings
+    _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_plugin_root_call_needs_the_plugin_copy_not_only_the_skill_copy(tmp_path: Path) -> None:
+    root, skill, canonical = _anchor_skill(
+        tmp_path, f'python3 "${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT}}}}/scripts/{ANCHOR}" p i'
+    )
+    _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("plugin の scripts/ に写しが不在" in f for f in findings), findings
+    _place(root / "plugins/demo/scripts" / ANCHOR, canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_prose_mention_of_the_anchor_is_not_a_call(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8")
+        + f"\nこの skill は {ANCHOR} を使わない。正本は "
+        f"`run-build-skill/templates/goal-seek-runtime/scripts/{ANCHOR}`。\n",
+        encoding="utf-8",
+    )
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_missing_canonical_is_reported_as_missing_not_as_drift(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8") + f'\npython3 "$SKILL_ROOT/scripts/{ANCHOR}"\n',
+        encoding="utf-8",
+    )
+    _place(skill.parent / "scripts" / ANCHOR, b"# copy\n")
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("正本が見つからない" in f for f in findings), findings
+    assert not any("正本と不一致" in f for f in findings)
+
+
+def test_anchor_copy_symlinked_outside_the_plugin_is_rejected(tmp_path: Path) -> None:
+    root, skill, canonical = _anchor_skill(tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}"')
+    outside = _place(tmp_path / "elsewhere" / ANCHOR, canonical.read_bytes())
+    (skill.parent / "scripts").mkdir()
+    (skill.parent / "scripts" / ANCHOR).symlink_to(outside)
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("plugin の外を指す symlink" in f for f in findings), findings
+
+
+def test_unreadable_anchor_copy_exits_2_without_traceback(tmp_path: Path, monkeypatch, capsys) -> None:
+    import os
+    import pytest
+
+    if os.geteuid() == 0:
+        pytest.skip("root は chmod 000 でも読める")
+    root, skill, canonical = _anchor_skill(tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}"')
+    copy = _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    copy.chmod(0)
+    try:
+        assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 2
+    finally:
+        copy.chmod(0o644)
+    err = capsys.readouterr().err
+    assert "入力を読めない" in err and ANCHOR in err
+
+
+def test_non_utf8_skill_md_is_a_read_error_finding(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_bytes(b"\xff" + skill.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert len(findings) == 1 and findings[0].startswith("read error:")
+
+
+def test_stale_fork_tools_baseline_entry_fails_only_in_full_scope(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    root, _skill_path = _skill(tmp_path)  # fork=inline: Agent/Task 不足の finding は無い
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset({DEMO_SKILL_PATH}))
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "fork/allowed-tools ratchet の免除が陳腐化" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+    assert "fork_tools_stale=1" in captured.out
+
+    assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 0
+    assert "fork_tools_stale=skipped" in capsys.readouterr().out
+
+
+def test_json_report_marks_whether_stale_was_checked(tmp_path: Path, monkeypatch, capsys) -> None:
+    import json
+
+    root, _skill_path = _skill(tmp_path)
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    assert MODULE.main(["--repo-root", str(root), "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["summary"]["stale_checked"] is True
+    assert MODULE.main(["--repo-root", str(root), "--plugin", "demo", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["summary"]["stale_checked"] is False

@@ -199,6 +199,14 @@ jobs:
       - name: Lint doc/20 dependency contract
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/harness-creator/skills
 
+      # 全 plugin と .claude/skills の SKILL.md の rubric_refs が、repo の中の実在のファイルに解決すること
+      # (ref- の名前は <ref>/references/rubric.json、それ以外は SKILL.md からの相対パス)。
+      # rubric-registry.json の rubric と upstream も確かめる。既存14件 (harness-aor) を0件にしてから fail-closed で足した。
+      # guide-doc-generator の C03 の1件だけは plan と契約 test (AC-C03-17) で決められているので、
+      # script の EXEMPT_UNRESOLVED で理由つきで免除する (使われなくなった免除は lint が FAIL にする)。
+      - name: Lint rubric_refs resolve to existing rubric files
+        run: python3 plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py
+
       # prompt-placement-convention.md 準拠を機械検証 (SSOT: validate-build-trace.py LAYER_YAML_PATH_PATTERNS)
       - name: Lint prompt placement (skill-local-v1 regex)
         run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py
@@ -276,12 +284,14 @@ jobs:
                   print(f"ERROR: {e}", file=__import__("sys").stderr)
               sys.exit(1)
           INNEREOF
-      # P1-4: rubric bump 再評価 (notification 用途、exit 0 固定)
-      - name: Re-evaluate on rubric bump (notification only)
+      # P1-4: rubric bump 再評価。major bump の再評価対象の一覧は通知だけで、対象があっても exit 0。
+      # upstream rubric を読めない・score ログの版を読めない (exit 2) は入力の破損なので落とす。
+      # 以前はこの script が受け付けない --skills-dir を渡し、その argparse エラーを
+      # `|| true` で握りつぶしていたため、何も検査していなかった (harness-9vu)。
+      - name: Re-evaluate on rubric bump (targets are notification only)
         run: |
           python3 plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py \
-            --skills-dir plugins/harness-creator/skills 2>&1 || true
-          echo "re-evaluate-on-rubric-bump completed (non-blocking)"
+            --eval-log-dir eval-log
 
   # Branch protection が参照する従来の check 名 `verify` は維持し、
   # 並列な2 jobのどちらかが失敗・cancelなら fail-closed で赤にする。

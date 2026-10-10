@@ -104,16 +104,16 @@ rubric は全 Skill 採点の SSOT であり、直接編集や手順抜けは採
 
 - [ ] `resolve-skill-dirs.py` で SKILL_DIR が解決され `eval-log/skill-dirs.json` 出力済み
 - [ ] `templates/proposal.json` が rule_id / change_type / bump / rationale / sunset_days を埋めた状態で存在
-- [ ] 時系列違反率 (`lint-rubric-violation.py --log-dir eval-log --n 3 --threshold 0.20`) を評価し `trigger.json` 出力済み（eval-log 件数が `governance-params.json` の `bootstrap_mode.min_eval_log_records`（既定 20）未満なら exit 3=pending を許容、bootstrap 時は `solo_operator_mode: true` を log 記録し major bump は禁止）
+- [ ] 時系列違反率 (`lint-rubric-violation.py --log-dir eval-log --n 3 --threshold 0.20`) を評価し `trigger.json` 出力済み（score ログのレコード数が `--bootstrap-threshold`（既定 20）未満なら exit 3=pending を許容、bootstrap 時は `solo_operator_mode: true` を log 記録し major bump は禁止）
 - [ ] ルール別違反集計 (`$SKILL_DIR/scripts/lint-rubric-violation.py --rule $RULE_ID`) と差分影響評価 (`diff-rubric-impact.py`) を実施済み
 - [ ] 合否変動率が 30% 超なら bump を major へ強制昇格している
 - [ ] 猶予期間（major≥14日 / minor≥7日 / patch即時）を governance log（jsonl 1行）に記録し、旧ルールを warning（severity→low）へダウングレード済み
 - [ ] `rubric.json` 編集後 `rubric_version` を semver で bump 済み
-- [ ] `assign-skill-design-evaluator/references/rubric.json` を deep-merge 同期済み
-- [ ] `compute-rubric-hash.py` で `rubric.normalized.json` と `rubric_hash` を再計算済み（27章§8.2）
+- [ ] `compute-rubric-hash.py` で `rubric.normalized.json` と `rubric_hash` を再計算済み（27章§8.2。L0 の rubric.json に rubric_hash を書き込むので、ファイルの sha256 が変わる）
+- [ ] その後で `assign-skill-design-evaluator/references/rubric.json` を deep-merge 同期し、その `rubric_hash` を L0 のファイルの sha256 にそろえ済み（先に同期すると、上の書き込みで RUBRIC_DRIFT になる）
 - [ ] `check-rubric-sync.py` が exit 0（`RUBRIC_DRIFT:` でない）であることを確認済み
-- [ ] `git commit` 実行し governance log を closed に更新済み
-- [ ] 1 release 後に違反率が悪化した場合、安定版凍結条件（`freeze.consecutive_runs` × `violation_rate_ceiling`）を満たす版へ `rollback-to-stable.py` で巻き戻し可能な状態（PostToolUse Hook 連携、27章§9）
+- [ ] 発効した版の節を `eval-log/rubric-versions.md` に27章§8.3 のひな形で追記済み（`hash: sha256:<hex>` を含む。値は `compute-rubric-hash.py` が出す正規化 JSON の hash で、ファイルの sha256 ではない。`sha256:` を付けないと巻き戻しの計画が hash を読めない）
+- [ ] `git commit` 実行し governance log を closed に更新済み（rubric-versions.md への追記も同じ commit に入れる）
 
 ### ゴールシークループ
 
@@ -133,14 +133,31 @@ rubric は全 Skill 採点の SSOT であり、直接編集や手順抜けは採
   python3 "$SKILL_DIR/scripts/lint-rubric-violation.py" --logs "$SKILL_DIR/log" --rule "$RULE_ID"
   python3 "$SKILL_DIR/scripts/diff-rubric-impact.py" --proposal proposal.json --logs "$SKILL_DIR/log"
   ```
-- 発効: `compute-rubric-hash.py --rubric plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json` → `check-rubric-sync.py`（exit 0 確認）→ `git commit`
-- 自動 rollback:
-  ```bash
-  python3 plugins/skill-governance-automation/scripts/rollback-to-stable.py \
-    --rubric plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json \
-    --versions-md eval-log/rubric-versions.md \
-    --params references/governance-params.json --dry-run
-  ```
+- 発効: `compute-rubric-hash.py --rubric plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json` → assign 側の派生 rubric.json を同期し `rubric_hash` を L0 のファイルの sha256 にそろえる → `check-rubric-sync.py`（exit 0 確認）→ `eval-log/rubric-versions.md` に版の節を追記 → `git commit`
+- 巻き戻しの計画（違反率が悪化したときだけ。完了条件ではない）: 下の「巻き戻し」を参照
+
+### 巻き戻し（違反率が悪化したときだけ）
+
+1 release 後に違反率が悪化したら、`rollback-to-stable.py` で巻き戻しの計画を出す（27章§9）。この script は計画を出すだけで、書き込まない。
+
+- **選ぶ版**: `--rubric` と同じ `rubric_id` の節で、rubric_version（現行版）より古い正式版のうち、`violation_rate_avg` が `freeze.violation_rate_ceiling` 以下で、日付が最も新しいもの。rubric-versions.md には別の rubric の版も並ぶので、`rubric_id` の行が無い節は、どの rubric の版か確かめられず候補にしない（安全側。27章§8.3 のひな形は各節に `- rubric_id: <id> / hash: ...` を書く）。プレリリース、暦に無い日付の版、同じ版の見出しが2つある版（1.3 と 1.3.0 は同じ版）も候補にしない。`--rubric` の rubric.json が無いと exit 2。
+- **前提**: `eval-log/rubric-versions.md` は 2026-10-10 時点で repo に無い（発効の手順で版の節を追記したときに作る）。無いうちは下のコマンドは `versions-md not found` で exit 1 になる。各版の節に `- violation_rate_avg: <0〜1>` の行が要る。27章§8.3 のひな形にこの行は無く、計算して書く仕組みも無い。巻き戻しを考える時点で、候補にする版の節に手で書き足す。`lint-rubric-violation.py` が出すのは release ごと・rule ごとの違反率で、版ごとの値は出さない。
+- **violation_rate_avg の出し方**（L0 の版ごと）:
+  1. その版で採点した score ログを集める。`eval-log/*/*-score.jsonl` のうち、`rubric.rubric_hash` が「その版を発効した commit の L0 rubric.json のファイル sha256」（`git show <commit>:<L0 のパス> | shasum -a 256`）と同じ行。`rubric.rubric_version` では絞らない。これは合成後の rubric の版で、most-specific-wins により assign 側（L2）の版が出るので、L0 の版と対応しない（今の score ログでは、L0 1.3.0 で採点した 16 レコードが 1.2.0・1.3.0・1.3.1 に分かれる）。rubric-versions.md の `hash:` は正規化 JSON の hash なので、これとも照合できない。発効した commit が repo に無い版（今の L0 の履歴は 1.3.0 と 1.5.0 だけ）は値を出せないので、行を書かない。
+  2. レコードごとの違反率は「findings に出た `rubric_item_id` の異なり数 ÷ そのレコードの `coverage.applicable_rules`」。分母は評価器がその kind に当てた rule の数で、L0 の rule 数ではない（kind=skill では 24。L0 の 41 rule のうち 21 は skill に当たらず、assign 側の 4 rule が加わる）。`coverage` の無いレコードは、`composition_hash` が同じになる `--rubric-refs` と同じ `--kind` で `render-findings-score.py` を流し、出た `coverage.applicable_rules` を使う。合成を再現できないレコードは数えず、外した件数を節に注記する。
+  3. `violation_rate_avg` はレコードの違反率の平均（rule ごとの違反率の平均と同じ値）。
+  4. ceiling とは平均だけでなく最大でも比べる。rule ごとの違反率（その rule が findings に出たレコード数 ÷ レコード数）の最大が ceiling を超える版には、平均が ceiling 以下でも `violation_rate_avg` の行を書かない。`rollback-to-stable.py` は平均しか比べず、値の行が無い版は候補にしないので、この除外は値を書く段で行う。平均だけで比べると、毎回違反する rule が 1 つあっても 1/24 ≈ 0.042 で ceiling 0.05 を下回ってしまう。
+  - 例: L0 1.3.0（ファイル sha256 `6e1843e5…`）の 16 レコードのうち `coverage` のある 14 レコードの平均は 0.0774（L0 の rule 数 41 で割ると 0.0453 になり、ceiling を下回ってしまう）。PD-002 はこの 14 レコードすべてに出ていて最大が 1.0 なので、どちらで見ても候補にしない。
+- **まだ無いもの**: 27章§9 の表は「自動 rollback・PostToolUse」とするが、hook にはつないでいない。`freeze.consecutive_runs`（連続 run 数）による安定版の凍結判定も無い。
+- **計画の後**: 承認を得てから、計画の `steps` に従う。対象の版を発効した commit の L0 rubric.json と、assign 側の派生 rubric.json（`assign-skill-design-evaluator/references/rubric.json`）を一組で戻す（版の名前だけを書き換えない。片方だけ戻すと `check-rubric-sync.py` が RUBRIC_DRIFT になる。ref-skill-design-rubric に templates/ は無い）。戻した L0 に `compute-rubric-hash.py --dry-run --rubric <L0>` を流し、出た hash を計画の `target_hash`（rubric-versions.md に記録した hash）と照合する。`--dry-run` を付けないと L0 に rubric_hash を書き込んでファイルの sha256 が変わり、一組で戻した assign 側と合わず RUBRIC_DRIFT になる（rubric_hash を持たない版を戻したとき）。書き込んで再計算するなら、発効の手順と同じく assign 側の `rubric_hash` を L0 の新しいファイル sha256 にそろえてから `check-rubric-sync.py` を流す。
+
+```bash
+python3 plugins/skill-governance-automation/scripts/rollback-to-stable.py \
+  --rubric plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json \
+  --versions-md eval-log/rubric-versions.md
+```
+
+正本の `governance-params.json` は repo root の `references/governance-params.json`（27章§11 の置き場所で、`--params` の既定。作業ディレクトリ基準）だが、まだ無い。`--params` を省くと、警告を出して既定の ceiling 0.05 を使う（`params_source: "default"`）。作るときは同じディレクトリの `references/governance-params.json.example`（freeze 10 / 0.05）を写す。repo にはほかに 2 つある。`plugins/skill-governance-config/config/governance-params.json.example` は freeze の値は同じだが、`solo_operator_mode.enabled` の既定が false で `bootstrap_mode` を持つ。`plugins/prompt-creator/skills/run-prompt-create/references/governance-params.json` は run-prompt-create の自動承認用の実ファイルで、`freeze` を持たないので ceiling の出どころにしない。
 
 ## Gotchas
 
@@ -148,6 +165,7 @@ rubric は全 Skill 採点の SSOT であり、直接編集や手順抜けは採
 - **assign 側 override をrebaseし忘れる事故**: deep-merge の most-specific-wins が壊れる（29章）。
 - **eval-log がない**: 影響評価できないので `diff-rubric-impact.py` は exit 2 でフェイルセーフ。
 - **緊急パッチ**: high severity の誤検出固定は patch 例外（log に `emergency: true`）。
+- **時系列違反率は release を区別しないと発火しない**: `lint-rubric-violation.py`（0.2.0）は、`passed` を持たない finding を違反として数え、「違反したレコードの数 ÷ その release のレコードの数」を rule ごとに出す。ただし今の score ログは全レコードが `release: "local"` なので、連続 N release の条件を満たせず、breached は空のままになる。`write-eval-log.py` は入力 JSON の `release` を使い、無ければ環境変数 `RELEASE_VERSION`、それも無ければ `"local"` を入れる。版や日付で区別するには `RELEASE_VERSION=<版> python3 plugins/skill-governance-automation/scripts/write-eval-log.py --input <評価 JSON>` で記録する（または入力 JSON に `release` を入れる）。そう記録するまでは、招集の判断は score ログの findings を直接見て行う。
 
 ## Additional Resources
 
@@ -156,8 +174,8 @@ rubric は全 Skill 採点の SSOT であり、直接編集や手順抜けは採
 - `$SKILL_DIR/scripts/lint-rubric-violation.py` — ルール別違反集計（単一 release/proposal 単位）
 - `$SKILL_DIR/scripts/diff-rubric-impact.py` — 差分影響評価
 - `plugins/skill-governance-automation/scripts/compute-rubric-hash.py` — rubric_hash 再計算（27章§8.2）
-- `plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py` — Stop Hook 用招集通知（27章§3.4）
-- `plugins/skill-governance-automation/scripts/rollback-to-stable.py` — 安定版凍結条件を満たす版への自動 rollback（27章§9）
+- `plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py` — 招集通知（27章§3.4）。どの hooks.json にも登録しておらず、手で呼ぶ。exit は 0（未知の引数だけ 2）
+- `plugins/skill-governance-automation/scripts/rollback-to-stable.py` — 現行版より古く violation_rate_avg が ceiling 以下の最新の版への巻き戻し計画（書き込みはしない。27章§9）
 - `plugins/skill-governance-automation/scripts/doc-to-skill-adapter.py` — 設計書を Skill artifact 化して自己採点する起動装置（26章）
 - `references/governance-board.md` — ボード構成
 - `references/version-rules.md` — semver規約

@@ -15,14 +15,14 @@ owner: harness-maintainers
 
 ## 位置づけ（コマンドが推奨の入口）
 
-本コマンド `/ubm-consult "相談内容"` を推奨のユーザー入口とし、`run-ubm-consult` スキルを `Skill` ツールで明示起動する。スキルは `disable-model-invocation: false` で、コマンドから `Skill` ツールで呼べる（`true` だとモデルからの起動を拒むので `Skill` ツールで呼べず、`lint-skill-dep-step7.py` がこの配線を不合格にする）。
+本コマンド `/ubm-consult "相談内容"` を推奨のユーザー入口とし、`run-ubm-consult` スキルを `Skill` ツールで明示起動する。スキルは `disable-model-invocation: false` なので、コマンドから `Skill` ツールで呼べる。
 
 ## 実行
 
 `run-ubm-consult` スキルを `Skill` ツールで起動し、その指示に従って実行する。
 
 - 引数 `$ARGUMENTS`（相談内容の自由文）をスキルの `topic` 引数へそのまま引き渡す。
-- 引数が空の場合は、まず「どんなことを相談したいか」を1問だけ確認してからスキルを起動する（処方せず引き出す姿勢を入口から保つ）。
+- 引数が空でも、そのままスキルを起動する。相談の原文はスキルの R1 が最初の発話から受け取る（`prompts/R1-intake-issue.md` の `user_topic`）。本コマンドは自分で質問しない。
 - 協働モード、安全/重大な判断の分岐、質問の要否、`action`/`reflection` の収束、保存同意はすべてスキル側が所有し、本コマンドは別の判断ロジックを持たない。
 
 ## 引数

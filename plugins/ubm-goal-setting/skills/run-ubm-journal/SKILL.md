@@ -229,7 +229,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/bu
 
 - Taskのルート入力と停止条件は `../../references/agent-root-contract.md` が正本。`journal-composer` へ Phase0 のコンテキストJSON、対話内容、親が `host-skill-path` から解決した絶対パスの `PLUGIN_ROOT`、保存可否を渡す。整形・一時下書きの検証・最大3回の修復は同エージェントだけが担う。正式保存と保存後検査は親が担う。親は対話・保存可否・入力スナップショットを持つ。`PLUGIN_ROOT` が未指定か絶対パスでなければ書き込み前に停止する。
 - 下書きの絶対パスはエージェントが `Bash` の `tempfile.mkdtemp(prefix="ubm-journal-")` で実行専用ディレクトリを一度作り、その中の `{YYYY-MM-DD}.md` として解決する。この観測値を `Write` と検証の `--file` に同じ値で渡す。シェル変数を含む文字列を `Write` に渡さない。保存の手順と返す受領書は `../../agents/journal-composer.md` の「出力と検証」が正本。
-- 下書きが0なら親が正式保存の契約でmanifestを作り、ユーザー確認と受領書を取得して中央executeから保存する。保存後には次を実行する。親は同じファイルを再編集せず、下書きと保存後の受領書の終了コード 0、保存先・期待番号・期待日付の一致で完了を判定する:
+- 下書きの検証の終了コードが 0 なら、親が正式保存の契約でmanifestを作り、ユーザー確認と受領書を取得して中央executeから保存する。保存後には次を実行する。親は同じファイルを再編集せず、下書きと保存後の受領書の終了コード 0、保存先・期待番号・期待日付の一致で完了を判定する:
 
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/validate-journal-output.py" \

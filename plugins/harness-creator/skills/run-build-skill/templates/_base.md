@@ -71,7 +71,7 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
 ## 検証
 {{generated_checks}}
 
-## 注意点
+## つまずきやすい点
 {{generated_gotchas}}
 
 ## 変数化契約

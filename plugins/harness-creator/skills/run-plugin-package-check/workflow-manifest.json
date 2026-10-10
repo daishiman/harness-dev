@@ -129,7 +129,7 @@
       "step": 9,
       "phase_gate": "all",
       "command": "scripts/aggregate-pkg-findings.py",
-      "args": ["--plugin", "${plugin}", "--out", "eval-log/${plugin}/pkg-summary/${date}-${run}.json"],
+      "args": ["--plugin", "${plugin}", "--run", "${date}-${run}", "--phase", "${phase}", "--out", "eval-log/${plugin}/pkg-summary/${date}-${run}.json"],
       "side_effects": ["observable_emit:pkg_check_failed (if verdict.fail > 0)"]
     }
   ],

@@ -128,7 +128,7 @@ dependencies:
   - { from: commands/ubm-goal-setting,   to: skills/run-ubm-goal-setting,   type: calls }
   - { from: commands/ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync, type: calls }
   # 共有データ層 (実行時 depends_on ではなく schema 契約による整合)
-  - { from: agents/info-collector,      to: knowledge/router.json, type: reads, note: "router で必要カテゴリを解決し knowledge/*.json を読取" }
+  - { from: agents/info-collector,      to: knowledge/router.json, type: reads, note: "router の abstraction_layers を読む。ナレッジ本文は親が渡す knowledge_candidates の source_ref の knowledge/*.json だけを読む" }
   - { from: agents/knowledge-extractor, to: knowledge/schema.json, type: reads, note: "schema を検証契約として読み、6カテゴリdataを準拠形式で書込" }
 
   # [2026-07-11 improvement-plan] YouTube ingest + knowledge/harness graph + consult の主要 DAG。
@@ -152,7 +152,7 @@ dependencies:
   - { from: skills/run-ubm-challenge, to: agents/challenge-advisor, type: calls }
   - { from: skills/run-ubm-challenge, to: skills/run-ubm-challenge/scripts/validate-challenge-output.py, type: calls }
   - { from: skills/run-ubm-challenge, to: agents/phase3-coordinator, type: reads, note: "question-map の「返し方」が回答パターンと3ステップを phase3 の定義ファイルから参照し、差分だけを持つ" }
-  - { from: agents/challenge-advisor, to: knowledge/router.json, type: reads, note: "question-map の各欄のレンズに紐づくものが無いとき quick_lookup.by_issue から辿り、knowledge/*.json で実在を確かめる" }
+  - { from: agents/challenge-advisor, to: references/knowledge-retrieval-contract.md, type: reads, note: "親が渡す knowledge_candidates の中からレンズを選び、source_ref の knowledge/*.json で原文を確かめる。候補に無い ID は採用せず、追加の検索を親へ頼む" }
   - { from: agents/challenge-advisor, to: skills/run-ubm-challenge/references/question-map.md, type: reads, note: "原則・返し方・欄ごとの問い・戻りゲートを読む" }
   - { from: agents/challenge-advisor, to: skills/run-ubm-challenge/references/challenge-format.md, type: reads, note: "「各欄の合格条件」の対象欄を読み、答えが足りているか (missing) を決める" }
   - { from: agents/challenge-advisor, to: agents/phase3-coordinator, type: reads, note: "question-map の「返し方」が指す「ナレッジ活用原則」と「品質基準（回答パターン別対応ルール）」を読む" }

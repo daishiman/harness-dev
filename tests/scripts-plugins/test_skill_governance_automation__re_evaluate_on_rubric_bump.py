@@ -292,7 +292,7 @@ def test_main_detects_major_bump_from_nested_score_log(monkeypatch, tmp_path, ca
     assert _run_main(monkeypatch) == 0
     out = capsys.readouterr().out
     assert "eval-log files scanned: 1" in out
-    assert "run-nested (from 2026-01-01-score.jsonl)\tpast=1.5.0\tcurrent=2.0.0" in out
+    assert "run-nested (from plugin-a/2026-01-01-score.jsonl)\tpast=1.5.0\tcurrent=2.0.0" in out
 
 
 def test_main_unreadable_score_record_lists_targets_then_exits_2(monkeypatch, tmp_path, capsys):
@@ -304,7 +304,7 @@ def test_main_unreadable_score_record_lists_targets_then_exits_2(monkeypatch, tm
     )
     assert _run_main(monkeypatch) == 2
     captured = capsys.readouterr()
-    assert "run-old (from 2026-01-01-score.jsonl)\tpast=1.0.0" in captured.out
+    assert "run-old (from plugin-a/2026-01-01-score.jsonl)\tpast=1.0.0" in captured.out
     assert "1 score record(s) had no readable rubric_version" in captured.err
 
 
@@ -337,3 +337,135 @@ def test_cli_missing_explicit_rubric_exits_2(tmp_path):
     )
     assert res.returncode == 2
     assert "upstream rubric not found" in res.stderr
+
+
+# ── eval-log の置き場 (write-eval-log.py と同じ順) ───────────────────────────
+def test_default_eval_log_dir_follows_write_eval_log_order(monkeypatch, tmp_path):
+    monkeypatch.setattr(MOD, "EVAL_LOG_DIR", None)
+    monkeypatch.delenv("EVAL_LOG_DIR", raising=False)
+    monkeypatch.delenv("PROJECT_ROOT", raising=False)
+    monkeypatch.chdir(tmp_path)
+    assert MOD.default_eval_log_dir() == tmp_path / "eval-log"
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path / "proj"))
+    assert MOD.default_eval_log_dir() == tmp_path / "proj" / "eval-log"
+    monkeypatch.setenv("EVAL_LOG_DIR", str(tmp_path / "logs"))
+    assert MOD.default_eval_log_dir() == tmp_path / "logs"
+
+
+def test_main_reads_score_logs_from_env_eval_log_dir(monkeypatch, tmp_path, capsys):
+    rubric = _write_json(tmp_path / "rubric.json", {"rubric_version": "3.0.0"})
+    logs = tmp_path / "logs"
+    _write(
+        logs / "plugin-a" / "2026-10-10-score.jsonl",
+        json.dumps({"skill": "run-old", "rubric": {"rubric_version": "2.0.0"}}) + "\n",
+    )
+    monkeypatch.setattr(MOD, "EVAL_LOG_DIR", None)
+    monkeypatch.setenv("EVAL_LOG_DIR", str(logs))
+    assert MOD.main(["--rubric", str(rubric)]) == 0
+    out = capsys.readouterr().out
+    assert "re-evaluation targets (major bump detected): 1" in out
+    assert "run-old (from plugin-a/2026-10-10-score.jsonl)" in out
+
+
+# ── --post-tool-use (Claude Code の PostToolUse hook) ────────────────────────
+def test_edited_rubric_path_only_matches_rubric_json():
+    assert MOD.edited_rubric_path('{"tool_input": {"file_path": "a/b/rubric.json"}}') == "a/b/rubric.json"
+    assert MOD.edited_rubric_path('{"tool_input": {"file_path": "a/b/SKILL.md"}}') is None
+    assert MOD.edited_rubric_path('{"tool_input": {"file_path": "a/rubric.json.bak"}}') is None
+    assert MOD.edited_rubric_path("not json") is None
+    assert MOD.edited_rubric_path('["tool_input"]') is None
+    assert MOD.edited_rubric_path('{"tool_input": "x"}') is None
+
+
+def _hook(tmp_path, payload, rubric):
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--post-tool-use", "--rubric", str(rubric)],
+        input=payload if isinstance(payload, str) else json.dumps(payload),
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert proc.returncode == 0
+    return proc
+
+
+def _context(proc) -> str:
+    out = json.loads(proc.stdout)["hookSpecificOutput"]
+    assert out["hookEventName"] == "PostToolUse"
+    return out["additionalContext"]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"tool_input": {"file_path": "x/SKILL.md"}},
+        # upstream でない rubric.json の編集は走査しない (比べる相手は upstream の L0 だけ)
+        {"tool_input": {"file_path": "other/references/rubric.json"}},
+        "broken",
+    ],
+)
+def test_post_tool_use_ignores_non_upstream_edits(tmp_path, payload):
+    proc = _hook(tmp_path, payload, tmp_path / "x" / "references" / "rubric.json")
+    assert proc.stdout == "" and proc.stderr == ""
+
+
+def test_post_tool_use_reports_scan_failure_in_additional_context(tmp_path):
+    # upstream rubric が無い (scan なら exit 2) 状況でも、hook モードは exit 0 で編集を止めない。
+    # 結果は素の stdout でなく additionalContext に入れて Claude の文脈に届ける。
+    proc = _hook(tmp_path, {"tool_input": {"file_path": "x/references/rubric.json"}},
+                 tmp_path / "x" / "references" / "rubric.json")
+    ctx = _context(proc)
+    assert "# rubric edited: x/references/rubric.json" in ctx
+    assert "upstream rubric not found" in ctx
+    assert "hook mode only notifies" in ctx
+    assert proc.stderr == ""
+
+
+def test_post_tool_use_lists_targets_for_upstream_edit(tmp_path):
+    rubric = _write_json(tmp_path / "x" / "references" / "rubric.json",
+                         {"rubric_id": "skill-design", "rubric_version": "2.0.0"})
+    _write(tmp_path / "eval-log" / "log.jsonl",
+           json.dumps({"skill_name": "run-ü", "rubric_version": "1.0.0"}) + "\n")
+    proc = _hook(tmp_path, {"tool_input": {"file_path": str(rubric)}}, rubric)
+    ctx = _context(proc)
+    assert "# upstream rubric_version: 2.0.0" in ctx
+    assert "run-ü (from log.jsonl)\tpast=1.0.0\tcurrent=2.0.0" in ctx
+    assert "hook mode only notifies" not in ctx
+
+
+# ── plugin の区別 (レビュー A の指摘) ─────────────────────────────────────────
+def test_same_skill_name_in_different_plugins_is_not_merged(monkeypatch, tmp_path, capsys):
+    # 以前は skill_name だけで key を作り、plugB の 2.0.0 の記録で plugA の 1.3.0 を隠していた
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(eval_dir / "plugA" / "2026-01-01-score.jsonl",
+           json.dumps({"plugin": "plugA", "skill_name": "run-skill-feedback",
+                       "rubric": {"rubric_id": "skill-design", "rubric_version": "1.3.0"}}) + "\n")
+    _write(eval_dir / "plugB" / "2026-01-01-score.jsonl",
+           json.dumps({"plugin": "plugB", "skill_name": "run-skill-feedback",
+                       "rubric": {"rubric_id": "skill-design", "rubric_version": "2.0.0"}}) + "\n")
+    assert _run_main(monkeypatch) == 0
+    out = capsys.readouterr().out
+    assert "re-evaluation targets (major bump detected): 1" in out
+    assert "- run-skill-feedback (from plugA/2026-01-01-score.jsonl)\tpast=1.3.0\tcurrent=2.0.0" in out
+
+
+def test_skill_key_prefers_the_plugin_in_the_skill_path(tmp_path):
+    src = tmp_path / "core" / "2026-06-06-score.jsonl"
+    # 記録の plugin (core) や置き場より、SKILL.md のパスの plugins/<plugin>/skills/<skill> を使う。
+    # checkout が違っても同じスキルになる
+    a = {"plugin": "core", "skill_name": "/a/xl-skills/plugins/skill-intake/skills/run-intake/SKILL.md"}
+    b = {"skill_name": "/b/.worktrees/wt-5/plugins/skill-intake/skills/run-intake/SKILL.md"}
+    assert MOD.skill_key(a, src, "core") == MOD.skill_key(b, src, "other") == ("skill", "skill-intake", "run-intake")
+    assert MOD.skill_key({"plugin": "plugA", "skill": "run-x"}, src, "core") == ("skill", "plugA", "run-x")
+    assert MOD.skill_key({"skill": "run-x"}, src, "core") == ("skill", "core", "run-x")
+    assert MOD.skill_key({"skill": "run-x"}, tmp_path / "top.json") == ("skill", "", "run-x")
+
+
+def test_unknown_records_are_grouped_per_file_not_per_file_name(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(eval_dir / "plugA" / "2026-01-01-score.jsonl", '{"rubric": {"rubric_version": "1.0.0"}}\n')
+    _write(eval_dir / "plugB" / "2026-01-01-score.jsonl", '{"rubric": {"rubric_version": "2.0.0"}}\n')
+    assert _run_main(monkeypatch) == 0
+    out = capsys.readouterr().out
+    assert "- <unknown> (from plugA/2026-01-01-score.jsonl)\tpast=1.0.0\tcurrent=2.0.0" in out
+    assert "plugB" not in out

@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+# /// script
+# name: build-artifact-delivery
+# purpose: plugin ごとの artifact-delivery.json 投影を policy と central schema から生成・検査し、外部変更の SKILL.md へ正規の guard CLI ブロックと runtime root 節を置く
+# inputs:
+#   - argv: --repo-root, --check（既定）, --write, --migrate-external-guard, --plugin, --skill
+#   - fs: references/artifact-delivery-policy.json, references/artifact-delivery.schema.json
+#   - fs: plugins/*/.claude-plugin/plugin.json, plugins/*/hooks/hooks.json, plugins/*/skills/*/SKILL.md
+#   - fs: policy が参照する skill-governance-adapters の runtime・schema・契約文書
+# outputs:
+#   - stdout: ARTIFACT_DELIVERY_OK / ARTIFACT_DELIVERY_GENERATED / EXTERNAL_MUTATION_GUARD_MIGRATED
+#   - stderr: ARTIFACT_DELIVERY_ERROR（契約違反・読めない入力。exit 1）
+# contexts: [C, E]
+# network: false
+# write-scope: --check は書かない。--write は plugins/*/artifact-delivery.json。
+#              --migrate-external-guard は effect: external-mutation の plugins/*/skills/*/SKILL.md
+#              （frontmatter の runtime_root_policy、runtime root 節の置換と移動、guard CLI ブロック、直接実行の例の書き換え）
+# dependencies: [pyyaml, jsonschema]
+# requires-python: ">=3.9"
+# ///
 """Build and verify thin artifact-delivery projections for every plugin."""
 from __future__ import annotations
 
@@ -193,11 +212,42 @@ def _relative(root: pathlib.Path, path: pathlib.Path) -> str:
     return path.relative_to(root).as_posix()
 
 
+def _read_text(path: pathlib.Path, missing: str = "required file missing") -> str:
+    """読めない入力 (無い・ディレクトリ・非 UTF-8) は traceback にせず契約違反として返す。"""
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise ContractError(f"{missing}: {path}") from exc
+    except UnicodeDecodeError as exc:
+        raise ContractError(f"not UTF-8: {path}: {exc}") from exc
+    except OSError as exc:
+        raise ContractError(f"cannot read {path}: {exc}") from exc
+
+
+def _split_frontmatter(text: str) -> tuple[str, str] | None:
+    """`---` だけの行で frontmatter を切り、(front, body) を返す。閉じが無ければ None。
+
+    `"---" + front + "---" + body` で元の text に戻る形で返す。値の中の `a---b` では切らない。
+    """
+    first, newline, _ = text.partition("\n")
+    if not newline or first.rstrip() != "---":
+        return None
+    closing = re.search(r"^---[ \t\r]*$", text[len(first) + 1:], re.M)
+    if closing is None:
+        return None
+    close_at = len(first) + 1 + closing.start()
+    return text[3:close_at], text[close_at + 3:]
+
+
+def _heading_span(text: str, heading: str) -> tuple[int, int] | None:
+    """見出しが行全体で一致する最初の位置 (前後の空白は無視)。本文中の言及や接尾辞付きの行は数えない。"""
+    match = re.search(rf"^[ \t]*{re.escape(heading)}[ \t]*$", text, re.M)
+    return (match.start(), match.end()) if match else None
+
+
 def _load_json(path: pathlib.Path) -> dict[str, Any]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise ContractError(f"required file missing: {path}") from exc
+        data = json.loads(_read_text(path))
     except json.JSONDecodeError as exc:
         raise ContractError(f"invalid JSON {path}: {exc}") from exc
     if not isinstance(data, dict):
@@ -248,6 +298,8 @@ def _raw_sha256(path: pathlib.Path) -> str:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except FileNotFoundError as exc:
         raise ContractError(f"external intelligence reference missing: {path}") from exc
+    except OSError as exc:
+        raise ContractError(f"cannot read {path}: {exc}") from exc
 
 
 def _manifest_sha256(path: pathlib.Path) -> str:
@@ -292,9 +344,7 @@ def _effect_values_from_source(root: pathlib.Path, ref: str) -> set[str]:
     path_text, symbol = ref.rsplit("#", 1)
     path = _repo_path(root, path_text)
     try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except FileNotFoundError as exc:
-        raise ContractError(f"effect enum SSOT missing: {path}") from exc
+        tree = ast.parse(_read_text(path, "effect enum SSOT missing"), filename=str(path))
     except SyntaxError as exc:
         raise ContractError(f"effect enum SSOT is invalid Python: {path}: {exc}") from exc
     for node in tree.body:
@@ -316,17 +366,12 @@ def _effect_values_from_source(root: pathlib.Path, ref: str) -> set[str]:
 
 
 def _frontmatter(path: pathlib.Path) -> dict[str, Any]:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except FileNotFoundError as exc:
-        raise ContractError(f"entrypoint missing: {path}") from exc
-    if not text.startswith("---"):
-        return {}
-    parts = text.split("---", 2)
-    if len(parts) < 3:
+    text = _read_text(path, "entrypoint missing")
+    parts = _split_frontmatter(text)
+    if parts is None:
         return {}
     try:
-        frontmatter = yaml.safe_load(parts[1]) or {}
+        frontmatter = yaml.safe_load(parts[0]) or {}
     except yaml.YAMLError as exc:
         raise ContractError(f"invalid SKILL.md frontmatter: {path}: {exc}") from exc
     if not isinstance(frontmatter, dict):
@@ -529,7 +574,7 @@ def _external_mutation_runtime_projection(
         if not path.is_file():
             raise ContractError(f"external mutation runtime {key} target missing: {path}")
 
-    runner_text = paths["runner_ref"].read_text(encoding="utf-8")
+    runner_text = _read_text(paths["runner_ref"])
     try:
         runner_tree = ast.parse(runner_text, filename=str(paths["runner_ref"]))
     except SyntaxError as exc:
@@ -605,7 +650,7 @@ def _external_runtime_projection(root: pathlib.Path, policy: dict[str, Any]) -> 
             raise ContractError(f"external intelligence {key} target missing: {ref_path}")
     caller_path = _plugin_ref_path(root, pointer["caller_ref"])
     adapter_path = _plugin_ref_path(root, pointer["adapter_ref"])
-    caller_text = caller_path.read_text(encoding="utf-8")
+    caller_text = _read_text(caller_path)
     try:
         caller_tree = ast.parse(caller_text, filename=str(caller_path))
     except SyntaxError as exc:
@@ -661,7 +706,7 @@ def _external_runtime_projection(root: pathlib.Path, policy: dict[str, Any]) -> 
 
 def _external_guard_contradiction(path: pathlib.Path) -> str | None:
     """Reject explicit prose that contradicts the structured declaration."""
-    text = path.read_text(encoding="utf-8").lower()
+    text = _read_text(path).lower()
     immediate = (
         r"\bmutate\s+(?:the\s+)?remote\b.{0,40}\bimmediately\b",
         r"\bimmediately\s+mutate\s+(?:the\s+)?remote\b",
@@ -844,10 +889,27 @@ def _canonical_runtime_root_block(language: str, *, has_prompts: bool) -> str:
     return RUNTIME_ROOT_BLOCK_BEGIN + "\n" + section + RUNTIME_ROOT_BLOCK_END + "\n"
 
 
+def _runtime_root_extra_text(section: str) -> str:
+    """旧 runtime root 節から正規形の行を除いた残り (skill 固有の文) を返す。
+
+    正規形の行はブロックとして作り直すので捨ててよいが、それ以外の文は skill の作者が書いたもの。
+    黙って消さず、呼び出し側でブロックの直後へ移す。
+    """
+    canonical = {
+        line.strip()
+        for section_text in RUNTIME_ROOT_CONTRACT_SECTIONS.values()
+        for line in section_text.splitlines()[1:]
+        if line.strip()
+    }
+    kept = [line for line in section.splitlines() if line.strip() not in canonical]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip("\n")
+
+
 def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
-    if not text.startswith("---"):
+    parts = _split_frontmatter(text)
+    if parts is None:
         raise ContractError(f"{path}: SKILL.md frontmatter missing")
-    _, front, body = text.split("---", 2)
+    front, body = parts
     if f"runtime_root_policy: {RUNTIME_ROOT_POLICY}" not in front:
         line = f"runtime_root_policy: {RUNTIME_ROOT_POLICY}"
         if re.search(r"^runtime_root_policy:", front, re.M):
@@ -857,16 +919,29 @@ def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
     language = _skill_language(text)
     block = _canonical_runtime_root_block(language, has_prompts=(path.parent / "prompts").is_dir())
     markers = (RUNTIME_ROOT_BLOCK_BEGIN, RUNTIME_ROOT_BLOCK_END)
+    # 節の見出しはブロックの中にあるので、ブロックの後ろから次の "## " までも同じ節。
+    # 前回の移行で移した skill 固有の文がここに居るので、拾い直して同じ位置へ戻す (冪等)。
+    extras: list[str] = []
     if any(marker in body for marker in markers):
         if any(body.count(marker) != 1 for marker in markers):
             raise ContractError(f"{path}: runtime root block missing/duplicated marker")
         start, end = body.index(markers[0]), body.index(markers[1])
         if end < start:
             raise ContractError(f"{path}: runtime root block markers out of order")
-        body = body[:start] + body[end + len(markers[1]):].lstrip("\n")
+        tail_start = end + len(markers[1])
+        following = re.search(r"^## ", body[tail_start:], re.M)
+        tail_end = tail_start + following.start() if following else len(body)
+        extras.append(_runtime_root_extra_text(body[tail_start:tail_end]))
+        body = body[:start] + body[tail_end:]
     # Convert either legacy locale; relocate the managed block directly after purpose.
+    # 旧節は正規形の行だけ捨て、skill 固有の文はブロックの直後へ移す (黙って消さない)。
     headings = "|".join(re.escape(h) for h in (RUNTIME_ROOT_CONTRACT_HEADING, RUNTIME_ROOT_CONTRACT_HEADING_JA))
-    body = re.sub(rf"^(?:{headings})[ \t]*\n.*?(?=^## |\Z)", "", body, flags=re.M | re.S)
+    legacy = re.compile(rf"^(?:{headings})[ \t]*\n(.*?)(?=^## |\Z)", re.M | re.S)
+    extras.extend(_runtime_root_extra_text(match.group(1)) for match in legacy.finditer(body))
+    body = legacy.sub("", body)
+    extra_text = "\n\n".join(extra for extra in extras if extra)
+    if extra_text:
+        block += "\n" + extra_text + "\n"
     purpose = re.search(r"^## (?:Purpose & Output Contract|目的と出力契約)[ \t]*$", body, re.M)
     if purpose:
         following = re.search(r"^## ", body[purpose.end():], re.M)
@@ -881,7 +956,7 @@ def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
 
 
 def _validate_runtime_root_wiring(path: pathlib.Path) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = _read_text(path)
     language = _skill_language(text)
     other = "en" if language == "ja" else "ja"
     if re.search(rf"^{re.escape(RUNTIME_ROOT_CONTRACT_SECTIONS[other].splitlines()[0])}[ \t]*$", text, re.M):
@@ -923,15 +998,16 @@ def migrate_external_guard_blocks(root: pathlib.Path, plugin_names: set[str] | N
             if identity in seen_inodes:
                 continue
             seen_inodes.add(identity)
-            text = block_pattern.sub("\n", path.read_text(encoding="utf-8"))
+            original = _read_text(path)
+            text = block_pattern.sub("\n", original)
             text = _migrate_external_direct_examples(text)
             text = _ensure_runtime_root_contract(text, path)
             language = _skill_language(text)
             heading = POST_CHOICE_HEADINGS[language]
-            heading_at = text.find(heading)
-            if heading_at < 0:
+            heading_span = _heading_span(text, heading)
+            if heading_span is None:
                 raise ContractError(f"{path}: canonical post-choice execution section missing")
-            paragraph_start = text.find("\n\n", heading_at + len(heading))
+            paragraph_start = text.find("\n\n", heading_span[1])
             paragraph_end = text.find("\n\n", paragraph_start + 2)
             if paragraph_start < 0 or paragraph_end < 0:
                 raise ContractError(f"{path}: post-choice execution paragraph malformed")
@@ -942,7 +1018,7 @@ def migrate_external_guard_blocks(root: pathlib.Path, plugin_names: set[str] | N
                 + "\n\n"
                 + text[paragraph_end + 2 :].lstrip("\n")
             )
-            if updated != path.read_text(encoding="utf-8"):
+            if updated != original:
                 path.write_text(updated, encoding="utf-8")
     return logical_entrypoints
 
@@ -1017,7 +1093,7 @@ def _direct_external_mutation_instruction(text: str) -> str | None:
 
 
 def _validate_external_guard_wiring(path: pathlib.Path) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = _read_text(path)
     language = _skill_language(text)
     # もう一方の言語のマーカーは 1 つでも残っていれば不合格 (言語の不一致・両言語の併存)。
     for other, markers in EXTERNAL_GUARD_BLOCK_MARKERS.items():
@@ -1035,8 +1111,8 @@ def _validate_external_guard_wiring(path: pathlib.Path) -> None:
     if end < 0:
         raise ContractError(f"{path}: external-mutation canonical CLI wiring block markers out of order")
     block = text[start : end + len(end_marker)]
-    post_choice = text.find(POST_CHOICE_HEADINGS[language])
-    if post_choice < 0 or start < post_choice:
+    post_choice = _heading_span(text, POST_CHOICE_HEADINGS[language])
+    if post_choice is None or start < post_choice[0]:
         raise ContractError(f"{path}: canonical CLI wiring must be in post-choice execution")
     runner = f'python3 "{EXTERNAL_GUARD_SHELL_RUNNER}"'
     required = (
@@ -1272,47 +1348,65 @@ def lint_repository(root: pathlib.Path) -> list[str]:
     return errors
 
 
+WRITE_SCOPE_HELP = """\
+書き込み範囲:
+  --check (既定)            何も書かない。
+  --write                   plugins/*/artifact-delivery.json だけを書く。
+  --migrate-external-guard  effect: external-mutation の plugins/*/skills/*/SKILL.md だけを書く:
+                            frontmatter の runtime_root_policy を入れる・置き換える、
+                            runtime root 節を正規ブロックへ置き換えて目的の節の直後へ移す
+                            (旧節の正規形以外の文はブロックの直後へ移して残す)、
+                            guard CLI ブロックを置き直す、直接実行の例を guard への入力へ書き換える。
+"""
+
+
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog=WRITE_SCOPE_HELP,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--repo-root", type=pathlib.Path, default=pathlib.Path.cwd())
     parser.add_argument("--skill", action="append", help="limit migration to named skill (repeatable)")
     parser.add_argument("--plugin", action="append", help="limit migration to named plugin (repeatable)")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--write", action="store_true", help="write every projection")
+    group.add_argument("--write", action="store_true", help="write plugins/*/artifact-delivery.json for every plugin")
     group.add_argument("--check", action="store_true", help="read-only parity check (default)")
     group.add_argument(
         "--migrate-external-guard",
         action="store_true",
-        help="place/update the canonical CLI block in every external-mutation SKILL",
+        help=(
+            "rewrite external-mutation SKILL.md: runtime_root_policy frontmatter, "
+            "runtime root section (replace + move; non-canonical prose is kept after the block), "
+            "canonical CLI block, direct mutation examples"
+        ),
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    if args.migrate_external_guard:
-        try:
-            changed = migrate_external_guard_blocks(args.repo_root.resolve(), set(args.plugin) if args.plugin else None, set(args.skill) if args.skill else None)
-        except ContractError as exc:
-            print(f"ARTIFACT_DELIVERY_ERROR: {exc}", file=sys.stderr)
-            return 1
-        print(f"EXTERNAL_MUTATION_GUARD_MIGRATED: {changed} skills")
-        return 0
     root = args.repo_root.resolve()
-    if args.write:
-        try:
+    try:
+        if args.migrate_external_guard:
+            changed = migrate_external_guard_blocks(root, set(args.plugin) if args.plugin else None, set(args.skill) if args.skill else None)
+            print(f"EXTERNAL_MUTATION_GUARD_MIGRATED: {changed} skills")
+            return 0
+        if args.write:
             count = write_projections(root)
-        except ContractError as exc:
-            print(f"ARTIFACT_DELIVERY_ERROR: {exc}", file=sys.stderr)
-            return 1
-        print(f"ARTIFACT_DELIVERY_GENERATED: {count} plugins")
-        return 0
-    errors = lint_repository(root)
+            print(f"ARTIFACT_DELIVERY_GENERATED: {count} plugins")
+            return 0
+        errors = lint_repository(root)
+        plugin_count = len(discover_plugin_dirs(root))
+    except (ContractError, OSError, UnicodeDecodeError) as exc:
+        # 読めない入力や書けない出力も traceback にせず、契約違反と同じ形で止める。
+        print(f"ARTIFACT_DELIVERY_ERROR: {exc}", file=sys.stderr)
+        return 1
     if errors:
         for error in errors:
             print(f"ARTIFACT_DELIVERY_ERROR: {error}", file=sys.stderr)
         return 1
-    print(f"ARTIFACT_DELIVERY_OK: {len(discover_plugin_dirs(root))} plugins")
+    print(f"ARTIFACT_DELIVERY_OK: {plugin_count} plugins")
     return 0
 
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -177,6 +177,46 @@ def test_resolve_planner_root_points_to_producer_plugin():
     assert root.name == "plugin-dev-planner"
     assert root == SCRIPTS.resolve().parents[1] / "plugin-dev-planner"
     assert root.is_dir()  # producer 実在 (C01/C03/C07 の import 前提)
+
+
+@pytest.mark.parametrize("outcome", ["unavailable", "not_found"])
+def test_resolve_planner_root_falls_back_to_sentinel(monkeypatch, outcome):
+    # dispatch-ready-set が import 時に呼ぶので、resolver が無くても planner が無くても例外にしない。
+    def fake_resolve_root(name, plugin_root, cwd=None):
+        if outcome == "unavailable":
+            raise sts.ResolverUnavailable("no resolver")
+        return None
+
+    monkeypatch.setattr(sts, "resolve_root", fake_resolve_root)
+    assert sts.resolve_planner_root() == Path("plugin:plugin-dev-planner")
+
+
+def test_import_does_not_leave_scripts_dir_on_sys_path():
+    before = sys.path.count(str(SCRIPTS))
+    _load("sync-task-state")
+    assert sys.path.count(str(SCRIPTS)) == before
+
+
+def test_script_without_plugin_resources_imports_and_runs(tmp_path):
+    # 同梱の plugin_resources.py が欠けた配置でも、import 側と CLI を止めず sentinel へ倒す。
+    import shutil
+    import subprocess
+
+    alone = tmp_path / "alone" / "scripts" / "sync-task-state.py"
+    alone.parent.mkdir(parents=True)
+    shutil.copy2(SCRIPTS / "sync-task-state.py", alone)
+    run = subprocess.run([sys.executable, str(alone), "--help"],
+                         capture_output=True, text=True, cwd=tmp_path)
+    assert run.returncode == 0, run.stderr
+    probe = (
+        "import importlib.util, sys\n"
+        f"spec = importlib.util.spec_from_file_location('sts', {str(alone)!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "print(m.resolve_planner_root())\n"
+    )
+    run = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, cwd=tmp_path)
+    assert run.returncode == 0, run.stderr
+    assert run.stdout.strip() == "plugin:plugin-dev-planner"
 
 
 # ─────────────────────────── transition: running ───────────────────────────
@@ -839,3 +879,45 @@ def test_cli_same_hash_reconciles_false_done_and_records_events(tmp_path):
         "dirty_origin_task_ids": ["A"],
         "unsatisfied_dependency_ids": ["U"],
     }
+
+
+# ─────────────────────────── 読めない入力は exit 2 ───────────────────────────
+NON_UTF8 = b"\xff{}"
+
+
+def test_main_non_utf8_task_state_exits_2(tmp_path, capsys):
+    state_path = tmp_path / "task-state.json"
+    state_path.write_bytes(NON_UTF8)
+    rc = sts.main(["--task-state", str(state_path), "--events", str(tmp_path / "e.jsonl"),
+                   "--pin-graph-hash", "abc"])
+    assert rc == 2
+    assert "task-state 読込/parse 失敗" in capsys.readouterr().err
+    assert state_path.read_bytes() == NON_UTF8
+
+
+@pytest.mark.parametrize("operation", [
+    ["--initialize-from-graph"],
+    ["--project-phase-gates"],
+    ["--repin-graph-hash", "abc"],
+    ["--reactivate-cascade", "T1"],
+    ["--task-id", "T1", "--to-state", "running"],
+])
+def test_main_non_utf8_task_graph_exits_2_not_state_violation(tmp_path, capsys, operation):
+    # UnicodeDecodeError は ValueError の子なので、捕まえないと「state violation」(exit 1) に紛れる。
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_bytes(NON_UTF8)
+    rc = sts.main(["--task-state", str(tmp_path / "task-state.json"),
+                   "--events", str(tmp_path / "e.jsonl"),
+                   "--task-graph", str(graph_path), *operation])
+    err = capsys.readouterr().err
+    assert rc == 2, err
+    assert "task-graph 読込/parse 失敗" in err
+    assert "state violation" not in err
+    assert not (tmp_path / "task-state.json").exists()
+
+
+def test_non_utf8_route_report_is_named_as_route_report_failure(tmp_path):
+    report = tmp_path / "route-r1.json"
+    report.write_bytes(NON_UTF8)
+    with pytest.raises(ValueError, match="route-report 読込/parse 失敗"):
+        sts._assert_covered(str(report), "T1")

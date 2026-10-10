@@ -1,31 +1,34 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-cross-level
-# version: 0.1.0
-# purpose: 期報と月報（週報は任意。渡せば三層）を読み、期アンカーの値が層をまたいで一致しているかを照合する
+# version: 0.2.0
+# purpose: 期報と月報（1年目標と週報は任意。全部渡せば四層）を読み、アンカーの値が層をまたいで一致しているかを照合する
 # inputs:
-#   - argv: --quarterly PATH --monthly PATH [--weekly PATH] [--month N]
+#   - argv: [--yearly PATH] --quarterly PATH --monthly PATH [--weekly PATH] [--month N]
 # outputs:
-#   - stdout: アンカーごとの三層並記 / 照合対象 N 件中 不一致 M 件（抽出不可 K 件）/ STATUS
-#   - exit: 0=全一致 / 1=不一致または抽出不可あり / 2=引数・入力不正 / 3=抽出0件（何も判定していない）
+#   - stdout: アンカーごとの層並記 / 照合対象 N 件中 不一致 M 件（抽出不可 K 件）/ 未照合のアンカー / STATUS
+#   - exit: 0=全一致 / 1=不一致または抽出不可あり / 2=引数・入力不正（UTF-8 で読めないファイルを含む） / 3=抽出0件（何も判定していない）
 # contexts: [E, C]
 # network: false
 # write-scope: none
 # dependencies: []
 # requires-python: ">=3.9"
 # ///
-"""UBM目標設定 三層（期報・月報・週報）アンカー横断照合。
+"""UBM目標設定 四層（1年目標・期報・月報・週報）アンカー横断照合。
 
 `validate-goal-output.py --peer` との役割分担:
 
 - `validate-goal-output.py --peer` は **2ファイルの総当たり・WARN のみ・3アンカー**。
   単一ファイルの保存前バリデーションに付随する補助検査で、不一致でも rc は上がらない。
-- 本スクリプトは **期報と月報（週報は任意）を同時に読む・rc を持つ・8アンカー**。期報を正本とした継承関係が
-  崩れていないかを判定するための独立した検査スクリプトで、不一致があれば rc=1 を返す。
+- 本スクリプトは **期報と月報（1年目標と週報は任意）を同時に読む・rc を持つ・10アンカー**。上位層を正本とした
+  継承関係が崩れていないかを判定するための独立した検査スクリプトで、不一致があれば rc=1 を返す。
+  10アンカーのうち2つ（1年後の月間売上到達点・継続コンサル人数）は 1年層のもので、`--yearly` を
+  渡したときだけ照合する。渡さなければ「未照合」と明記し、照合対象の件数には数えない。
 
 照合の考え方:
 
-期報が正本で、月報・週報がそれを継承する。ただし継承の形は2種類ある。
+1年層のアンカーは1年目標が正本で、期報・月報が注記行で書き写す。それ以外のアンカーは期報が正本で、
+月報・週報がそれを継承する。ただし継承の形は2種類ある。
 
 1. **同値継承**: 期全体の値をそのまま下位層が書き写す（今期の売上目標 など）。
 2. **内訳継承**: 期報が月別内訳として書いた値を、月報が自分の層の値として書く
@@ -34,6 +37,7 @@
 内訳継承のアンカーは「期報が当月について書いた数」と「月報が自分の数として書いた数」を
 比べる。期合計と月の値を直接比べると必ず不一致になるため、そうはしない。
 対象月は月報のファイル名の末尾の日付から決める（最終月曜起点のため、期間終了日の月が当月）。
+月の数字の直前に数字があれば当てない（1月の照合で「11月」の値を拾わない）。
 
 **rc=1（照合して不一致あり）と rc=3（1件も抽出できず何も判定していない）は別物。**
 抽出できなかったアンカーは「不一致」に混ぜず「抽出不可」として個別に列挙し、1件でも
@@ -53,17 +57,17 @@ import re
 import sys
 from pathlib import Path
 
-LEVELS = ("quarterly", "monthly", "weekly")
-LEVEL_JA = {"quarterly": "期報", "monthly": "月報", "weekly": "週報"}
+LEVELS = ("yearly", "quarterly", "monthly", "weekly")
+LEVEL_JA = {"yearly": "1年目標", "quarterly": "期報", "monthly": "月報", "weekly": "週報"}
 
 # 抽出範囲から外す節。## の見出しで判定し、配下の ### も自動的に外れる。
 _EXCLUDE_SECTION = re.compile(
     r"仮置き事項"
     r"|衝突"
-    r"|来(?:週|月|期)以降に対応すること"
+    r"|来(?:週|月|期|年)以降に対応すること"
     r"|確定済み|解消済み"
     r"|追随させる箇所"
-    r"|前(?:週|月|期)の"
+    r"|前(?:週|月|期|年)の"
 )
 
 # 節本文に限って落とす前処理。validate-journal-output.py と同じ形を使う
@@ -103,10 +107,16 @@ class Spec:
 
 
 class Anchor:
-    def __init__(self, name, kind, specs):
+    def __init__(self, name, kind, specs, requires_level=None):
         self.name = name
         self.kind = kind  # "number" | "date"
         self.specs = specs  # dict[level] -> list[Spec]
+        # この層のファイルが渡されていないときは、このアンカーを照合しない。
+        # 1年層のアンカーは期報・月報の両方にも spec を持つため、これが無いと
+        # --yearly を渡していない呼び出し（1年目標を置く前の期・過去期の再検査）でも
+        # active 2層として数えられ、注記が無いことを「抽出不可」として FAIL させる。
+        # 照合しなかったことは出力に明記する（黙って件数から消すと分母が変わる）。
+        self.requires_level = requires_level
 
 
 _NUM = r"([0-9][0-9,]*)"
@@ -120,6 +130,31 @@ def _scalar(head: str, pattern: str = None) -> list:
 
 
 ANCHORS = [
+    # 0. 1年層の到達点。挑戦宣言（05_Project/UBM/挑戦宣言/）が正本で、ここが4層の起点。
+    #    1年層は【今年の最重要数字】に本文として置き、3ヶ月・1ヶ月は注記行で継承する。
+    #    片方だけ直すと下位層の分母が黙って変わるため、同値継承で縛る。
+    Anchor("1年後の月間売上到達点", "number", {
+        "yearly": [Spec(r"^【今年の最重要数字】$", r"月間売上到達点[：:]\s*" + _NUM,
+                        allow_note=True,
+                        why="【今年の最重要数字】に「月間売上到達点：…」が無い")],
+        "quarterly": [Spec(r"^【今期の売上以外の成果目標】$", r"月間売上到達点[：:]\s*" + _NUM,
+                           allow_note=True,
+                           why="【今期の売上以外の成果目標】に「月間売上到達点：…」の注記が無い")],
+        "monthly": [Spec(r"^【今月の最重要数字】$", r"月間売上到達点[：:]\s*" + _NUM,
+                         allow_note=True,
+                         why="【今月の最重要数字】に「月間売上到達点：…」の注記が無い")],
+    }, requires_level="yearly"),
+    Anchor("1年後の月額継続コンサル人数", "number", {
+        "yearly": [Spec(r"^【今年の最重要数字】$", r"継続コンサル人数[：:]\s*" + _NUM,
+                        allow_note=True,
+                        why="【今年の最重要数字】に「継続コンサル人数：…」が無い")],
+        "quarterly": [Spec(r"^【今期の売上以外の成果目標】$", r"継続コンサル人数[：:]\s*" + _NUM,
+                           allow_note=True,
+                           why="【今期の売上以外の成果目標】に「継続コンサル人数：…」の注記が無い")],
+        "monthly": [Spec(r"^【今月の最重要数字】$", r"継続コンサル人数[：:]\s*" + _NUM,
+                         allow_note=True,
+                         why="【今月の最重要数字】に「継続コンサル人数：…」の注記が無い")],
+    }, requires_level="yearly"),
     # 1. 同値継承。三層とも同じ見出しに同じ数字が立つ。
     Anchor("今期の売上目標", "number", {
         "quarterly": _scalar(r"^【今期の売上目標】$"),
@@ -258,7 +293,8 @@ def extract(sections: list[Section], specs: list[Spec], month: int | None):
             if month is None:
                 reasons.append("対象月が決まらない（月報のファイル名に日付が無い）")
                 continue
-            pattern = re.compile(spec.pattern.replace("{M}", str(month)))
+            # 直前が数字なら月ではない（1月の照合で「11月」「21月」の1を拾わない）。
+            pattern = re.compile(spec.pattern.replace("{M}", r"(?<![0-9０-９])" + str(month)))
             why = spec.why.replace("{M}", str(month))
         else:
             pattern = re.compile(spec.pattern)
@@ -297,7 +333,7 @@ def normalize(value: str, kind: str) -> str:
 def verify(docs: dict, month: int | None) -> tuple[int, list[str]]:
     """docs: level -> (path, sections)。未指定レベルは含めない。"""
     lines: list[str] = []
-    lines.append("UBM目標設定 三層（期報・月報・週報）アンカー横断照合")
+    lines.append("UBM目標設定 四層（1年目標・期報・月報・週報）アンカー横断照合")
     lines.append(f"対象月: {month}月" if month else "対象月: 不明")
     for level in LEVELS:
         if level in docs:
@@ -311,7 +347,15 @@ def verify(docs: dict, month: int | None) -> tuple[int, list[str]]:
     unextractable: list[str] = []
     extracted_total = 0
 
+    skipped: list[str] = []
     for anchor in ANCHORS:
+        if anchor.requires_level and anchor.requires_level not in docs:
+            skipped.append(anchor.name)
+            lines.append(
+                f"[未照合] {anchor.name}"
+                f"（{LEVEL_JA[anchor.requires_level]}が未指定のため照合していない）"
+            )
+            continue
         active = [lv for lv in LEVELS if lv in docs and lv in anchor.specs]
         if len(active) < 2:
             lines.append(f"[対象外] {anchor.name}（照合できる層が1つ以下）")
@@ -350,6 +394,11 @@ def verify(docs: dict, month: int | None) -> tuple[int, list[str]]:
         lines.append("不一致のアンカー: " + " / ".join(mismatched))
     if unextractable:
         lines.append("抽出不可のアンカー: " + " / ".join(unextractable))
+    if skipped:
+        lines.append(
+            f"未照合のアンカー {len(skipped)} 件（1年目標を渡せば照合する）: "
+            + " / ".join(skipped)
+        )
 
     if extracted_total == 0:
         lines.append(
@@ -369,8 +418,9 @@ def _print_trailer(measured_at: str, argv: list[str]) -> None:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
-        description="UBM目標設定 期報・月報・週報の期アンカー横断照合", add_help=True
+        description="UBM目標設定 1年目標・期報・月報・週報のアンカー横断照合", add_help=True
     )
+    ap.add_argument("--yearly", metavar="PATH", help="1年目標（任意・4層の最上位）")
     ap.add_argument("--quarterly", required=True, metavar="PATH", help="期報（正本）")
     ap.add_argument("--monthly", required=True, metavar="PATH", help="月報")
     ap.add_argument("--weekly", metavar="PATH", help="週報（任意）")
@@ -388,6 +438,7 @@ def main(argv: list[str]) -> int:
     docs = {}
     texts = {}
     for level, path_str in (
+        ("yearly", args.yearly),
         ("quarterly", args.quarterly),
         ("monthly", args.monthly),
         ("weekly", args.weekly),
@@ -399,6 +450,10 @@ def main(argv: list[str]) -> int:
             text = read_doc(path)
         except OSError as e:
             print(f"入力不正: {LEVEL_JA[level]} を読めません: {path} ({e})")
+            _print_trailer(measured_at, argv)
+            return 2
+        except UnicodeDecodeError:
+            print(f"入力不正: {LEVEL_JA[level]} を UTF-8 として読めません: {path}")
             _print_trailer(measured_at, argv)
             return 2
         texts[level] = text

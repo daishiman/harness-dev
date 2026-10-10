@@ -3,10 +3,11 @@
 # name: lint-goal-seek
 # purpose: 実行系 Skill が固定手順ではなくゴールシーク (Goal+Checklist+Loop) で構成されているか検査する。
 # inputs:
-#   - argv: SKILL.md path(s) or --skills-dir <dir>
+#   - argv: SKILL.md path(s) | --skills-dir <dir> | --self-test | -h/--help
 # outputs:
-#   - stdout: OK status
-#   - stderr: violation findings
+#   - stdout: OK status (--help は usage)
+#   - stderr: violation findings / WARN 助言 / 入力エラー
+# exit: 0 = 合格 (warning のみを含む) / 1 = violation / 2 = usage・読めない入力 (不在・非 UTF-8)
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -21,11 +22,24 @@
   - 固定手順の連番羅列 (`## 手順` セクション直下の番号付き / `### Step N:` の 2 連以上が
     局面カタログ「見出しセクション」外で出現) は violation。本文引用のラベルは効力なし。
   - ref-* (read-only) は対象外 (skip)。
+  - loop 実行系 (run / wrap / delegate) の `### ゴールシーク配線` は、中間成果物アンカーと
+    機械検証 bash のトークンを持つこと (欠落は warning)。
+  - 共通アンカー参照: 配線がバッククォートでパス (`/` を含む) として
+    `…/goal-seek-anchor-contract.md` を書いたときだけ宣言とみなす。宣言は
+    SKILL.md から解決して plugin root の references/goal-seek-anchor-contract.md と一致し、
+    root の中にあって必須契約トークンを全部持つこと。root の
+    scripts/validate-inline-goal-seek-anchor.py も root の中に実在し、REQUIRED_KEYS の代入・
+    "original_goal_hash" の文字列・sha256 の呼び出しをコードとして持つこと (コメントだけでは不可)。
+    さらに bash フェンスの中に progress と intermediate の 2 引数で validator を呼ぶ 1 行が要る。
+    どれかが欠けると violation。ファイル名だけの言及は SKILL.md から正本へ届かないので宣言ではない。
+    コマンドの検査は静的で、`if false; then` の中に置いた行も実行行とみなす。
 
-Exit 0 = ok, 1 = violation, 2 = usage error。
+Exit 0 = ok, 1 = violation, 2 = usage error・読めない入力 (不在・ディレクトリ・非 UTF-8)。
+-h / --help は usage を stdout に出して 0。
 """
 from __future__ import annotations
 
+import ast
 import json
 import re
 import sys
@@ -119,12 +133,13 @@ def checklist_region(body: str) -> str | None:
     return body[start:end]
 
 
-
 ANCHOR_CONTRACT_REQUIRED_TOKENS = (INTERMEDIATE_REQUIRED_TOKENS + VERIFICATION_REQUIRED_TOKENS
                                    + ("iteration", "current_goal_snapshot", "delta_from_original",
                                       "drift_signal", "UTF-8", "validate-inline-goal-seek-anchor.py"))
 
-ANCHOR_REFERENCE_RE = re.compile(r"`([^`\s]*goal-seek-anchor-contract\.md)`")
+# パスとして書いた参照 (`/` を含む) だけを宣言とみなす。散文でファイル名に触れただけの
+# `goal-seek-anchor-contract.md` は SKILL.md から正本へ届かないので宣言にしない。
+ANCHOR_REFERENCE_RE = re.compile(r"`([^`\s]*/goal-seek-anchor-contract\.md)`")
 ANCHOR_COMMAND_RE = re.compile(
     r'^\s*(?:python3|/usr/bin/python3)\s+["\']?\$'
     r'(?:PLUGIN_ROOT|\{PLUGIN_ROOT(?::[?][^}]+)?\}|\{PLUGIN_ROOT:-\$\{CLAUDE_PLUGIN_ROOT\}\})'
@@ -132,6 +147,26 @@ ANCHOR_COMMAND_RE = re.compile(
     r'\s+(?:"[^"\n]+"|[^\s\n]+)\s+(?:"[^"\n]+"|[^\s\n]+)\s*$',
     re.MULTILINE,
 )
+
+
+def _validator_contract_missing(source: str) -> list[str]:
+    """validator の検査契約がコードとして在るかを AST で見る。コメントや docstring の語は数えない。"""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return ["Python として構文解析できない"]
+    targets = [t for node in tree.body if isinstance(node, (ast.Assign, ast.AnnAssign))
+               for t in (node.targets if isinstance(node, ast.Assign) else [node.target])]
+    nodes = list(ast.walk(tree))
+    missing = []
+    if not any(isinstance(t, ast.Name) and t.id == "REQUIRED_KEYS" for t in targets):
+        missing.append("REQUIRED_KEYS の代入")
+    if not any(isinstance(n, ast.Constant) and n.value == "original_goal_hash" for n in nodes):
+        missing.append("original_goal_hash の参照")
+    if not any(isinstance(n, ast.Call) and isinstance(n.func, (ast.Attribute, ast.Name))
+               and getattr(n.func, "attr", getattr(n.func, "id", "")) == "sha256" for n in nodes):
+        missing.append("sha256 の呼び出し")
+    return missing
 
 
 def canonical_anchor_reference(path: Path, wiring_text: str) -> tuple[str, list[str]]:
@@ -167,13 +202,17 @@ def canonical_anchor_reference(path: Path, wiring_text: str) -> tuple[str, list[
             errors.append(f"{path}: 共通アンカー正本の必須契約が不足: {missing}")
         else:
             content = candidate
-    validator = root / "scripts/validate-inline-goal-seek-anchor.py"
-    try:
-        implementation = validator.read_text(encoding="utf-8")
-        if any(token not in implementation for token in ("REQUIRED_KEYS", "original_goal_hash", "sha256")):
-            errors.append(f"{path}: 共通アンカー validator の検査契約が不足")
-    except (OSError, UnicodeError):
-        errors.append(f"{path}: 共通アンカー validator が不在または読めない")
+    # 正本 contract と同じく resolve 後に root の中かを見る (root 外への symlink を拒否する)。
+    validator = (root / "scripts/validate-inline-goal-seek-anchor.py").resolve()
+    if not validator.is_relative_to(root) or not validator.is_file():
+        errors.append(f"{path}: 共通アンカー validator が不在・root 外")
+    else:
+        try:
+            missing_code = _validator_contract_missing(validator.read_text(encoding="utf-8"))
+            if missing_code:
+                errors.append(f"{path}: 共通アンカー validator の検査契約が不足: {missing_code}")
+        except (OSError, UnicodeError):
+            errors.append(f"{path}: 共通アンカー validator が不在または読めない")
     joined = re.sub(r"\\\n\s*", " ", wiring_text)
     # Require the command inside a Bash fence, not a quoted sentence or comment.
     commands = "\n".join(re.findall(r"```(?:bash|sh)\s*\n(.*?)```", joined, re.DOTALL))
@@ -181,13 +220,14 @@ def canonical_anchor_reference(path: Path, wiring_text: str) -> tuple[str, list[
         errors.append(f"{path}: 共通アンカー validator の実行コマンドに progress/intermediate 両引数が無い")
     return (content if not errors else ""), errors
 
+
 def lint_file(path: Path) -> tuple[list[str], list[str]]:
     """(findings=exit1 違反, warnings=exit0 助言) を返す。"""
     findings: list[str] = []
     warnings: list[str] = []
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         return [f"{path}: read error: {e}"], warnings
 
     fm = parse_frontmatter(text)
@@ -564,7 +604,13 @@ def collect_targets(argv: list[str]) -> list[Path]:
     return [Path(p) for p in argv]
 
 
+USAGE = "usage: lint-goal-seek.py <SKILL.md> | --skills-dir <dir> | --self-test\n"
+
+
 def main(argv: list[str]) -> int:
+    if argv and argv[0] in ("-h", "--help"):
+        sys.stdout.write(USAGE)
+        return 0
     if argv and argv[0] == "--self-test":
         drift = check_default_drift()
         if drift:
@@ -576,10 +622,15 @@ def main(argv: list[str]) -> int:
 
     targets = collect_targets(argv)
     if not targets:
-        sys.stderr.write(
-            "usage: lint-goal-seek.py <SKILL.md> | --skills-dir <dir> | --self-test\n"
-        )
+        sys.stderr.write(USAGE)
         return 2
+    # 読めない入力 (不在・ディレクトリ・非 UTF-8) は violation (1) ではなく入力エラー (2)。
+    for path in targets:
+        try:
+            path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            sys.stderr.write(f"error: 入力を読めない: {path}: {exc}\n")
+            return 2
 
     all_findings: list[str] = []
     all_warnings: list[str] = []

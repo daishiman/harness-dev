@@ -18,8 +18,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     REPO_ROOT
@@ -513,9 +511,10 @@ def test_cli_store_only_flag(tmp_path):
     assert json.loads(r.stdout)["status"] == "pass"
 
 
-def test_cli_missing_dir_exit1(tmp_path):
+def test_cli_missing_dir_exit2(tmp_path):
+    # 入力エラーは --strict の違反 (1) と区別して 2 にする。
     r = _run(str(tmp_path / "does-not-exist"))
-    assert r.returncode == 1
+    assert r.returncode == 2
     # error is emitted as JSON on stderr (ensure_ascii default → escaped unicode)
     err = json.loads(r.stderr)
     assert "error" in err and "does-not-exist" in err["error"]
@@ -584,3 +583,54 @@ def test_check_ci_wiring_skips_when_ci_missing(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(MOD, "__file__", str(deep))
     MOD.check_ci_wiring()
     assert "スキップ" in capsys.readouterr().out
+
+
+# ── 再レビュー B の [低] 指摘の再発防止 ─────────────────────────────────
+def test_kl007_non_object_json_says_why(tmp_path):
+    kdir = tmp_path / "knowledge"
+    kdir.mkdir()
+    (kdir / "knowledge-index.json").write_text("[1, 2]", encoding="utf-8")
+    out = MOD.check_kl007(kdir, store_only=False)
+    assert out and "object でない (list)" in out[0]["message"]
+    assert "(None)" not in out[0]["message"]
+
+
+def test_load_json_safe_non_utf8_is_error_not_exception(tmp_path):
+    p = tmp_path / "x.json"
+    p.write_bytes(b'{"a": "\xff"}')
+    data, err = MOD.load_json_safe(p)
+    assert data is None and "読み込みエラー" in err
+
+
+def test_cli_non_utf8_skill_md_exits_2_without_traceback(tmp_path):
+    skill = _make_pass_skill(tmp_path)
+    (skill / "SKILL.md").write_bytes(b"# t\n\xff\xfe")
+    r = _run(str(skill), "--strict")
+    assert r.returncode == 2
+    assert "Traceback" not in r.stderr
+    assert "入力を読めない" in json.loads(r.stderr)["error"]
+
+
+def test_cli_runs_without_plugin_resources(tmp_path):
+    # script だけを持ち出しても KL-001..007 は動き、KL-008 は正本不在の error になる。
+    copied = tmp_path / "plugin/skills/run-build-skill/scripts/lint-knowledge-loop.py"
+    copied.parent.mkdir(parents=True)
+    copied.write_bytes(SCRIPT.read_bytes())
+    skill = _make_pass_skill(tmp_path)
+    (skill / "SKILL.md").write_text(
+        "分割閾値: 500行/25エントリ\n"
+        "knowledge_loop:\n"
+        "  contract_version: 1\n"
+        "  pattern: index-search\n"
+        "  consult_at: [runtime]\n"
+        "  runtime_store: external-intelligence-v1\n"
+        "  runtime_scope: project\n",
+        encoding="utf-8",
+    )
+    (skill / "scripts/build-external-intelligence.py").write_text("generated", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(copied), str(skill)], text=True, capture_output=True)
+    assert r.returncode == 0, r.stderr
+    assert "Traceback" not in r.stderr
+    findings = json.loads(r.stdout)["findings"]
+    assert any(f["rule"] == "KL-008" and "正本 engine が見つからない" in f["message"] for f in findings)
+    assert not any(f["rule"] in {"KL-001", "KL-002", "KL-007"} for f in findings)

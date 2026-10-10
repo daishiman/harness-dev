@@ -273,7 +273,9 @@ def test_days_remaining_uses_report_period(vault: Path):
     assert weekly["period_end"] == "2026-08-23"
     assert weekly["days_remaining"] == 5
     assert weekly["expired"] is False
-    assert weekly["source"] == "report"
+    # 目標本文は前回ジャーナルから、期間は週報から来る。出所は別のキーで返す。
+    assert weekly["source"] == "previous_journal"
+    assert weekly["period_source"] == "report"
 
 
 def test_expired_goal_reports_overdue(vault: Path):
@@ -820,3 +822,70 @@ def test_retrospective_only_heading_still_reports_after_buffering():
     goals = mod.extract_journal_goals("### 3ヶ月目標の振り返り\n- 目標：先期の結果\n", notes=notes)
     assert "quarterly" not in goals
     assert [n for n in notes if "振り返り節と判定して除外" in n], notes
+
+
+def test_time_range_child_task_is_not_a_day_heading():
+    """`- 10-12：定例MTG` は時刻の範囲。10/12 の見出しにすると以降の当日タスクが消える。"""
+    from datetime import date
+
+    mod = _mod()
+    text = (
+        "## 今週の大きな到達ライン\n"
+        "- 8/18（月）：\n"
+        "- 本命タスク\n"
+        "- 10-12：定例MTG\n"
+        "- 夕方の振り返り\n"
+        "- 8/19（火）：\n"
+        "- 火曜のタスク\n"
+    )
+    tasks, ambiguous = mod.extract_day_tasks(text, date(2026, 8, 18))
+    assert tasks == ["本命タスク", "10-12：定例MTG", "夕方の振り返り"]
+    assert ambiguous == ["- 10-12：定例MTG"]  # 子タスクへ倒したことは warnings に出る
+    assert mod.extract_day_tasks(text, date(2026, 10, 12))[0] == []
+
+
+@pytest.mark.parametrize("line", ["- 8-19（火）：", "- 2026-08-19：", "2026-8-19（火）"])
+def test_hyphen_day_heading_with_weekday_or_year_is_recognised(line):
+    from datetime import date
+
+    mod = _mod()
+    text = f"## 今週の大きな到達ライン\n- 8/18（月）：\n- 月曜\n{line}\n- 火曜\n"
+    assert mod.extract_day_tasks(text, date(2026, 8, 19))[0] == ["火曜"]
+    assert mod.extract_day_tasks(text, date(2026, 8, 18))[0] == ["月曜"]
+
+
+def test_empty_judgment_criteria_and_revenue_goal_warn(vault: Path):
+    goals = vault / "05_Project" / "UBM" / "目標設定"
+    path = goals / "UBM - 1-週報 - 2026-08-17〜2026-08-23.md"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("250,000\n", "").replace("迷ったら「依頼アプリの稼働に効く行動か」で選ぶ。\n", "")
+    path.write_text(text, encoding="utf-8")
+    ctx = run(vault, "2026-08-18")
+    assert ctx["weekly_report"]["judgment_criteria"] == ""
+    assert ctx["weekly_report"]["weekly_revenue_goal"] == ""
+    assert any("「今週の判断基準」が空" in w for w in ctx["warnings"]), ctx["warnings"]
+    assert any("「今週の売上目標」が空" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+@pytest.mark.parametrize("breakage", ["directory", "non_utf8"])
+def test_unreadable_daily_habits_is_exit_2(vault: Path, tmp_path: Path, breakage):
+    """daily-habits.json がディレクトリ・非 UTF-8 でも traceback 付き exit 1 にしない。"""
+    import os
+    import shutil
+
+    sandbox = tmp_path / f"sandbox-{breakage}"
+    shutil.copytree(SCRIPT.parent.parent, sandbox)
+    path = sandbox / "references" / "daily-habits.json"
+    path.unlink()
+    if breakage == "directory":
+        path.mkdir()
+    else:
+        path.write_bytes(b"\xff\xfe{")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / SCRIPT.name), "--date", "2026-08-18"],
+        capture_output=True,
+        text=True,
+        env={**dict(os.environ), "UBM_VAULT_ROOT": str(vault)},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr, proc.stderr

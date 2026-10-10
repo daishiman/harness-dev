@@ -400,3 +400,305 @@ def test_money_miscalculation_fails_end_to_end(tmp_path, golden):
     r = run("--file", str(write(tmp_path, text)))
     assert r.returncode == 1
     assert "[M01]" in r.stdout
+
+
+# ---- 独立レビューの減点の再発防止 (harness-6qz) ---------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "会場費はかからない。講師料が30万円かかる。",
+        "会場は無料。講師料30万円が必要。",
+        "会場費はかからない。\n交通費5万円が発生する。",
+    ],
+)
+def test_partial_zero_cost_with_incurred_cost_is_m01(text):
+    problems = V.check_money_reason(text)
+    assert any("かかる費用があり" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "30万円かかるはずの会場費が無料。",  # 費用ゼロを言う文の中の金額は、かかる費用と読まない
+        "会場費はかからない。講師料30万円がかかるが、参加費90万円を開催前に回収済み。",
+        "会場は無料。準備に3時間かかる。",  # 金額でない「かかる」は数えない
+    ],
+)
+def test_zero_cost_without_uncovered_cost_still_passes(text):
+    assert V.check_money_reason(text) == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "スポンサーで" + "1" * 400 + "円を回収済み。" + "1" * 400 + "円×3人で3万円",  # float の桁あふれ
+        "スポンサーで100万円を回収済み。3万円×" + "1" * 5000 + "人で90万円",  # int の桁数制限
+        "1" * 310 + "万円＋1万円で2万円を回収済み。",
+    ],
+)
+def test_huge_numbers_are_m01_without_exception(text):
+    problems = V.check_money_reason(text)
+    assert any("15桁を超える数" in p for p in problems), problems
+
+
+def test_huge_numbers_do_not_crash_parsers():
+    assert V.parse_yen("1" * 400 + "円") is None
+    assert V.find_products("3万円×" + "1" * 5000 + "人で90万円") == []
+    assert V.parse_actions(["1" * 5000 + ". 何かをする"]) == [(-1, "何かをする")]
+
+
+def test_long_sum_without_total_is_linear():
+    import time
+
+    text = "＋".join(["1万円"] * 6000) + "。"
+    started = time.perf_counter()
+    assert V.find_sums(text) == []
+    assert time.perf_counter() - started < 1.0
+
+
+def test_find_sums_keeps_each_formula_separate():
+    sums = V.find_sums("1万+2万で3万。4万+5万は9万")
+    assert [(s.terms_yen, s.total_yen) for s in sums] == [((10_000, 20_000), 30_000), ((40_000, 50_000), 90_000)]
+
+
+def test_duplicate_section_heading_is_f02(structural_codes, golden):
+    text = golden.rstrip("\n") + "\n" + V.SECTION_REPORT + "\n毎週月曜に報告する。\n"
+    assert "F02" in structural_codes(text)
+
+
+def test_utf8_bom_is_ignored(tmp_path, golden):
+    p = tmp_path / GOLDEN_NAME
+    p.write_bytes(b"\xef\xbb\xbf" + golden.encode("utf-8"))
+    r = run("--file", str(p))
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+# ---- 2回目の独立レビューの減点の再発防止 (harness-6qz) --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "会場費はかからないが、講師料が30万円かかる。",  # 1文の中の「、」の後ろ
+        "会場費はかからない、講師料が30万円かかる。",
+        "会場費は無料。講師料は30万円。",  # 動詞の無い「費目 + 金額」
+        "会場は無料。講師に30万円を支払う。",  # 払う人を書かない支払い
+        "会場費0円。講師料30万円を払う。",
+    ],
+)
+def test_incurred_cost_in_same_sentence_or_without_verb_is_m01(text):
+    problems = V.check_money_reason(text)
+    assert any("かかる費用があり" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "会場費は無料。参加費3,000円が必要。",  # 参加者が払う収入。桁区切りの「,」で節を切らない
+        "普通なら10万円かかるが、知人の店を無料で借りる。",  # 比べるための仮の額
+        "会場費・講師料ともに0円。",
+    ],
+)
+def test_revenue_or_hypothetical_amount_is_not_incurred_cost(text):
+    assert V.check_money_reason(text) == []
+
+
+def test_money_label_question_is_not_counted_as_answer():
+    text = "開催前にお金が全て回収できているor1円も費用がかからない理由は次のとおり。講師料が30万円かかる。"
+    problems = V.check_money_reason(text)
+    assert any("書かれていません" in p for p in problems), problems
+
+
+def test_duplicate_risk_label_is_r01(tmp_path, golden):
+    text = replace_once(golden, "会場費はかかっていない。", V.MONEY_REASON + "\n講師料が30万円かかる。\n")
+    r = run("--file", str(write(tmp_path, text)))
+    assert r.returncode == 1
+    assert "[R01] 理由の見出しが重複しています" in r.stdout
+
+
+def test_long_digit_runs_are_linear():
+    import time
+
+    text = "1" * 20000
+    started = time.perf_counter()
+    V.AMOUNT_RE.search(text)
+    V.HEADCOUNT_RE.search(text)
+    V.check_money_reason(text)
+    assert time.perf_counter() - started < 1.0
+
+
+# ---- 3回目の独立レビューの減点の再発防止 (harness-6qz) --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "会場費はかからないが講師料が30万円かかる。",  # 「、」の無い1文の逆接
+        "無料で講師料は30万円かかる。",  # 費用ゼロの語の後ろ
+        "会場は無料だけど講師料が30万円かかる。",
+        "会場費は0円．講師料は30万円かかる．",  # 全角ピリオド・感嘆符・セミコロンでの区切り
+        "会場費は0円！講師料は30万円かかる",
+        "会場費は0円；講師料は30万円かかる",
+        "会場費は無料。講師料30万円を払わなければならない。",  # 「なら」を含むが仮定ではない
+        "会場費は無料。参加者の弁当代3万円がかかる。",  # 参加者のために払う費用は収入ではない
+        "会場費は無料。受講者向けの教材費5万円がかかる。",
+        "会場費は無料。お客様へのお土産代2万円がかかる。",
+        "会場費は無料。講師料30万円がかかるはずだ。",  # 「はずだった」でない「はず」
+        "会場費は無料。講師料は通常どおり30万円かかる。",
+        "会場費は無料。講師料は以前と同じ30万円かかる。",
+    ],
+)
+def test_incurred_cost_hidden_by_split_or_broad_exclusion_is_m01(text):
+    problems = V.check_money_reason(text)
+    assert any("かかる費用があり" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "30万円かかるはずの会場費が無料。",
+        "普通なら10万円かかるが、知人の店を無料で借りる。",
+        "会場費は無料。参加費3,000円が必要。",
+        "会場費・講師料ともに0円。",
+        "会場費10万円がかからない。",  # 費用ゼロの語の前の金額は、費用ゼロの対象
+        "協賛金30万円が確定した。",  # 確定は、同じ文にお金の語があれば回収済み
+    ],
+)
+def test_narrowed_exclusions_keep_accepted_examples(text):
+    assert V.check_money_reason(text) == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "回収できているか、1円も費用がかからないかについて。講師料が30万円かかる。",  # 言い換えたラベル
+        "回収できている、または1円も費用がかからない。講師料が30万円かかる。",
+        "回収できているか費用はかからないか。講師料が30万円かかる。",
+        "費用はかからない？",  # 問いの形の節
+        "日程も確定した。講師料30万円がかかる。",  # お金と関係の無い「確定」
+    ],
+)
+def test_paraphrased_question_or_unrelated_settled_is_not_an_answer(text):
+    problems = V.check_money_reason(text)
+    assert any("書かれていません" in p for p in problems), problems
+
+
+@pytest.mark.parametrize("unit", ["1,,", " 確定。", "かからないか、", "円で", "るが"])
+def test_clause_splitting_and_settled_check_are_linear(unit):
+    import time
+
+    text = unit * 20000
+    started = time.perf_counter()
+    V.check_money_reason(text)
+    V.incurred_cost_clauses(text)
+    assert time.perf_counter() - started < 1.0
+
+
+# ---- 否定・予定の付いた「回収済み」 (PR #85 の独立レビューの [中]) -----------------------------------
+
+GOLDEN_MONEY_BODY = (
+    "会場費はかかっていない。スポンサーのブース出展で100万円を回収済み。\n"
+    "有料運営メンバーは3万円×30人で90万円を入金済み。\n"
+    "VIP先行予約は5万円×10人で50万円を決済済み。\n"
+    "チケット販売前の時点で、100万円＋90万円＋50万円で240万円の利益が確定している。\n"
+)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # 否定が後ろに付く
+        "会場費10万円がかかる。スポンサー協賛30万円は回収済みではない。",
+        "スポンサー30万円は回収済みではありません。",
+        "30万円はまだ入金済みではありません。",
+        "協賛金30万円は回収済みじゃない。",
+        "協賛金30万円は決済済みでない。",
+        "協賛金30万円は回収済みとは言えない。",
+        "協賛金30万円は回収済みにはまだなっていない。",
+        "協賛金30万円は確定済みではない。",
+        # これからのことが後ろに付く
+        "スポンサーから30万円を12月1日に回収済みとなる予定。",
+        "スポンサーから30万円を12月1日に回収済みになる予定です。",
+        "スポンサー30万円は回収済みの予定。",
+        "スポンサー30万円は入金済みになる見込み。",
+        "スポンサー30万円は入金済みになる見通し。",
+        "スポンサー30万円は回収済みになるはず。",
+        "スポンサー30万円は開催前に回収済みにする。",
+        # 可能形は、回収が終わったことを言っていない
+        "協賛金30万円は確実に回収できる。",
+        "協賛金30万円は回収できます。",
+        "協賛金30万円は回収できる見込み。",
+    ],
+)
+def test_negated_or_planned_collection_is_not_collected(text):
+    problems = V.check_money_reason(text)
+    assert any("書かれていません" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "スポンサーで100万円を回収済み。物販30万円は回収済みとなる予定。",
+        "スポンサーで100万円を回収済み。物販30万円は入金済みになるはず。",
+        "スポンサーで100万円を回収済み。\n物販30万円は回収済みではない。",
+        "スポンサーで100万円を回収済み。\n物販30万円はまだ入金済みではありません。",
+    ],
+)
+def test_planned_or_negated_amount_beside_collected_is_prospect(text):
+    problems = V.check_money_reason(text)
+    assert any("見込み・予定・未確定" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "スポンサー30万円を回収済み。",
+        "スポンサー30万円は回収済みです。",
+        "スポンサー30万円は回収済みでした。",
+        "スポンサー30万円は回収済みであり、会場費に充てる。",
+        "スポンサー30万円は回収済みでございます。",
+        "スポンサー30万円は回収済みとなりました。",
+        "スポンサー30万円は回収済みになっています。",
+        "スポンサー30万円は回収済み、予定どおり会場費に充てる。",  # 「、」の後ろの予定は別の節
+        "スポンサー30万円は回収済みで12月12日開催予定。",  # 直後でない予定は開催の予定
+        "スポンサー30万円は回収済みでもあり、会場費に充てる。",
+        "スポンサー30万円は回収済みとはいえ、会場費に充てる。",
+        "協賛金30万円は回収できた。",
+        "協賛金30万円は回収できました。",
+        "協賛金30万円は確定済みです。",
+    ],
+)
+def test_completed_collection_still_passes(text):
+    assert V.check_money_reason(text) == []
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "会場費10万円がかかる。スポンサー協賛30万円は回収済みではない。\n",
+        "スポンサーから30万円を12月1日に回収済みになる予定。\n",
+        "会場費10万円がかかる。30万円はまだ入金済みではありません。\n",
+    ],
+)
+def test_negated_or_planned_collection_fails_end_to_end(tmp_path, golden, body):
+    r = run("--file", str(write(tmp_path, replace_once(golden, GOLDEN_MONEY_BODY, body))))
+    assert r.returncode == 1
+    assert "[M01]" in r.stdout
+
+
+@pytest.mark.parametrize("unit", ["回収済", "回収済み", "入金済みで", "回収できる", "確定済。"])
+def test_collected_tail_check_is_linear(unit):
+    import time
+
+    text = unit * 20000
+    started = time.perf_counter()
+    V.check_money_reason(text)
+    assert time.perf_counter() - started < 1.0
+
+
+def test_help_exits_0():
+    r = run("--help")
+    assert r.returncode == 0
+    assert "--file" in r.stdout

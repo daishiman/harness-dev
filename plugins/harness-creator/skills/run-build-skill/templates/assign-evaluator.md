@@ -59,7 +59,7 @@ runtime_root_policy: host-skill-path
 ### 手順（採点の素描。文脈に応じ AI が調整）
 rubric.json ロード → findings 収集 → score算出 → JSON出力。
 
-## 注意点
+## つまずきやすい点
 {{generated_gotchas}}
 
 ## 変数化契約

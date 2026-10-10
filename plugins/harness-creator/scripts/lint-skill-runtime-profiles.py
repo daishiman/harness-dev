@@ -5,8 +5,9 @@
 # inputs:
 #   - argv: [--repo-root PATH] [--plugin NAME] [--skill NAME] [--json]
 # outputs:
-#   - stdout: 対象数・profile 内訳または JSON report
-#   - stderr: fail-closed finding
+#   - stdout: 対象数・profile 内訳または JSON report (絞り込み実行の stale は skipped)
+#   - stderr: fail-closed finding / 読めない入力の診断
+# exit: 0 = 全対象整合 / 1 = finding・ratchet 違反 / 2 = usage error・読めない入力
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -22,7 +23,18 @@
 と content-review に委ねる。workflow manifest は依存先解決・非循環と
 delegate Skill/Agent の実在を併せて検査する。
 
-Exit 0 = 全対象整合、1 = finding、2 = usage error。
+共通アンカーの validator は、SKILL.md が呼ぶパスのルートで写しの置き場所を決める。
+`$SKILL_ROOT/scripts/…` と skill 相対の `scripts/…` は skill の scripts/、
+`$PLUGIN_ROOT`・`${CLAUDE_PLUGIN_ROOT}`・`../../scripts/…` は plugin の scripts/ に
+写しが要る。ファイル名に散文で触れただけの行は呼び出しとみなさない。置いてある写しは、
+呼ばれていない側も含めて正本と byte 一致し、plugin の外を指す symlink であってはならない。
+
+ratchet の免除リスト (LEGACY_LOOP_BASELINE_PATHS・FORK_TOOLS_BASELINE) は、全体実行の
+ときだけ陳腐化 (返済済み・消滅済み) を検査する。--plugin/--skill の絞り込み実行では
+検査しないので、stdout は stale=skipped と出す。
+
+Exit 0 = 全対象整合、1 = finding・ratchet 違反、2 = usage error・読めない入力
+(写しや正本を読めない、plugins/ を列挙できない)。
 """
 
 from __future__ import annotations
@@ -46,6 +58,19 @@ TASK_GRAPH_ASSETS = (
     "build-capability-graph-knowledge-entry.py",
 )
 GOAL_SEEK_ANCHOR = "validate-inline-goal-seek-anchor.py"
+# SKILL.md が anchor validator を呼ぶ・参照するパス。ルートで写しの置き場所が決まる。
+# 直前が語・パスの文字なら別の場所 (正本の templates/ など) への言及なので数えない。
+ANCHOR_CALL_RE = re.compile(
+    r"(?:(?P<skill>\$\{?SKILL_ROOT\}?/)"
+    r"|(?P<plugin>\$\{?(?:CLAUDE_)?PLUGIN_ROOT(?::-\$\{?CLAUDE_PLUGIN_ROOT\}?)?\}?/"
+    r"|(?<![\w./-])\.\./\.\./)"
+    r"|(?<![\w./-])(?:\./)?)"
+    r"scripts/" + re.escape(GOAL_SEEK_ANCHOR)
+)
+ANCHOR_CANONICAL_PARTS = (
+    "harness-creator", "skills", "run-build-skill", "templates",
+    "goal-seek-runtime", "scripts", GOAL_SEEK_ANCHOR,
+)
 
 # goal_seek block 未宣言のまま残る既存 loop skill の ratchet。
 # 数を数えず「何が残っているか」で固定する。数値 ratchet は「別の新規 legacy が
@@ -177,6 +202,24 @@ def _stale_legacy_paths(paths: Iterable[str], *, full_scope: bool) -> tuple[str,
     return tuple(sorted(LEGACY_LOOP_BASELINE_PATHS - set(paths)))
 
 
+def _stale_fork_tools_paths(
+    profiles: Iterable["RuntimeProfile"], *, full_scope: bool
+) -> tuple[str, ...]:
+    """FORK_TOOLS_BASELINE のうち、もう Agent/Task 不足の finding を出さない登録を返す。
+
+    allowed-tools を直した・skill が消えた登録を残すと、同じ path が将来また不整合に
+    なったときに黙って免除される。絞り込み実行では範囲外の登録を判定できないので空を返す。
+    """
+    if not full_scope:
+        return ()
+    still_failing = {
+        profile.path
+        for profile in profiles
+        if any(FORK_TOOLS_MARKER in finding for finding in profile.findings)
+    }
+    return tuple(sorted(FORK_TOOLS_BASELINE - still_failing))
+
+
 def _strip_scalar(value: str) -> str:
     """単純 YAML scalar から末尾コメントと引用符を除く。"""
 
@@ -275,7 +318,7 @@ def _manifest_findings(
         return []
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return [f"manifest が読めない: {manifest_ref}: {exc}"]
     phases = payload.get("phases")
     if not isinstance(phases, list):
@@ -355,13 +398,72 @@ def _manifest_findings(
     return findings
 
 
+class UnreadableInput(Exception):
+    """比べるべき写しや正本を読めない。finding (1) と区別して main が 2 を返す。"""
+
+
+def _read_bytes(path: Path) -> bytes:
+    try:
+        return path.read_bytes()
+    except OSError as exc:
+        raise UnreadableInput(f"{path}: {exc.strerror or exc}") from exc
+
+
+def _anchor_findings(
+    text: str, path: Path, plugins_root: Path, plugin: str
+) -> list[str]:
+    """共通アンカー validator の写しを、SKILL.md が呼ぶパスのルートと突き合わせる。"""
+
+    skill_copy = path.parent / "scripts" / GOAL_SEEK_ANCHOR
+    plugin_copy = plugins_root / plugin / "scripts" / GOAL_SEEK_ANCHOR
+    required: dict[str, Path] = {}
+    for match in ANCHOR_CALL_RE.finditer(text):
+        if match.group("plugin") is not None:
+            required["plugin の scripts/"] = plugin_copy
+        else:
+            required["skill の scripts/"] = skill_copy
+    if not required:
+        return []
+
+    repo_root = plugins_root.parent
+    findings = [
+        f"{GOAL_SEEK_ANCHOR} を呼ぶが、呼び出しのルートに当たる {where} に写しが不在: "
+        f"{copy.relative_to(repo_root).as_posix()}"
+        for where, copy in sorted(required.items())
+        if not copy.is_file()
+    ]
+    plugin_dir = (plugins_root / plugin).resolve()
+    present: list[Path] = []
+    for copy in (skill_copy, plugin_copy):
+        if not copy.is_file():
+            continue
+        if not copy.resolve().is_relative_to(plugin_dir):
+            findings.append(
+                f"{GOAL_SEEK_ANCHOR} の写しが plugin の外を指す symlink: "
+                f"{copy.relative_to(repo_root).as_posix()}"
+            )
+            continue
+        present.append(copy)
+    canonical = plugins_root.joinpath(*ANCHOR_CANONICAL_PARTS)
+    if not canonical.is_file():
+        findings.append(
+            f"{GOAL_SEEK_ANCHOR} の Harness Creator 正本が見つからない: "
+            f"{canonical.relative_to(repo_root).as_posix()}"
+        )
+    elif present:
+        expected = _read_bytes(canonical)
+        if any(_read_bytes(copy) != expected for copy in present):
+            findings.append(f"{GOAL_SEEK_ANCHOR} が Harness Creator 正本と不一致")
+    return findings
+
+
 def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
     plugin, skill = _skill_identity(path, plugins_root)
     relative = path.relative_to(plugins_root.parent).as_posix()
     findings: list[str] = []
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         return RuntimeProfile(
             relative, plugin, skill, "", False, None, None, False, (f"read error: {exc}",)
         )
@@ -401,37 +503,7 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
                 "allowed-tools に Agent/Task がないが本文が分離委譲を必須化: "
                 + " | ".join(undeclared[:3])
             )
-        if GOAL_SEEK_ANCHOR in text:
-            # skill 同梱 ($SKILL_ROOT/scripts) と plugin scripts/ のどちらの写しでも呼べる。
-            anchor_scripts = [
-                candidate
-                for candidate in (
-                    path.parent / "scripts" / GOAL_SEEK_ANCHOR,
-                    plugins_root / plugin / "scripts" / GOAL_SEEK_ANCHOR,
-                )
-                if candidate.is_file()
-            ]
-            canonical_anchor = (
-                plugins_root
-                / "harness-creator"
-                / "skills"
-                / "run-build-skill"
-                / "templates"
-                / "goal-seek-runtime"
-                / "scripts"
-                / GOAL_SEEK_ANCHOR
-            )
-            if not anchor_scripts:
-                findings.append(
-                    f"{GOAL_SEEK_ANCHOR} を呼ぶが skill の scripts/ と plugin scripts/ に不在"
-                )
-            elif not canonical_anchor.is_file() or any(
-                script.read_bytes() != canonical_anchor.read_bytes()
-                for script in anchor_scripts
-            ):
-                findings.append(
-                    f"{GOAL_SEEK_ANCHOR} が Harness Creator 正本と不一致"
-                )
+        findings.extend(_anchor_findings(text, path, plugins_root, plugin))
         if fork == "agent-team":
             missing_team_wiring = [
                 token
@@ -472,8 +544,8 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
                 name
                 for name in present_assets
                 if not (canonical_dir / name).is_file()
-                or (scripts_dir / name).read_bytes()
-                != (canonical_dir / name).read_bytes()
+                or _read_bytes(scripts_dir / name)
+                != _read_bytes(canonical_dir / name)
             )
             if drifted:
                 findings.append(
@@ -577,8 +649,9 @@ def build_report(
         legacy_total += len(legacy)
         legacy_skills += profile.is_legacy_loop
     legacy_paths = tuple(entry["path"] for entry in skill_entries if entry["is_legacy_loop"])
+    full_scope = plugin is None and skill is None
     return {
-        "schema_version": "1.1.0",
+        "schema_version": "1.2.0",
         "repo_root": str(repo_root),
         "summary": {
             "skills": len(profiles),
@@ -591,9 +664,13 @@ def build_report(
             "legacy_loop_unlisted": list(_unlisted_legacy_paths(legacy_paths)),
             # 返済済み/消滅済みの登録は削除を強制する。免除リストを両方向で実態へ縛るため。
             "legacy_loop_stale": list(
-                _stale_legacy_paths(
-                    legacy_paths, full_scope=plugin is None and skill is None
-                )
+                _stale_legacy_paths(legacy_paths, full_scope=full_scope)
+            ),
+            # 絞り込み実行では陳腐化を検査しない。空リストを「0 件」と読み違えないための印。
+            "stale_checked": full_scope,
+            "fork_tools_registered": len(FORK_TOOLS_BASELINE),
+            "fork_tools_stale": list(
+                _stale_fork_tools_paths(profiles, full_scope=full_scope)
             ),
             "by_profile": dict(sorted(by_profile.items())),
         },
@@ -619,12 +696,18 @@ def main(argv: list[str]) -> int:
     if not (repo_root / "plugins").is_dir():
         sys.stderr.write(f"plugins directory not found: {repo_root / 'plugins'}\n")
         return 2
-    report = build_report(repo_root, plugin=args.plugin, skill=args.skill)
+    try:
+        report = build_report(repo_root, plugin=args.plugin, skill=args.skill)
+    except (UnreadableInput, OSError) as exc:
+        sys.stderr.write(f"error: 入力を読めない: {exc}\n")
+        return 2
     if not report["skills"]:
         sys.stderr.write("no canonical SKILL.md target found\n")
         return 2
 
     summary = report["summary"]
+    stale = len(summary["legacy_loop_stale"]) if summary["stale_checked"] else "skipped"
+    fork_stale = len(summary["fork_tools_stale"]) if summary["stale_checked"] else "skipped"
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     else:
@@ -636,7 +719,8 @@ def main(argv: list[str]) -> int:
             f"legacy={summary['legacy_loop_skills']} "
             f"registered={summary['legacy_loop_registered']} "
             f"unlisted={len(summary['legacy_loop_unlisted'])} "
-            f"stale={len(summary['legacy_loop_stale'])} "
+            f"stale={stale} "
+            f"fork_tools_stale={fork_stale} "
             f"profiles={summary['by_profile']}"
         )
         for profile in report["skills"]:
@@ -660,6 +744,13 @@ def main(argv: list[str]) -> int:
             f"({len(summary['legacy_loop_stale'])} 件)。返済済みなら "
             "LEGACY_LOOP_BASELINE_PATHS から削って ratchet を締めること: "
             f"{summary['legacy_loop_stale']}\n"
+        )
+        return 1
+    if summary["fork_tools_stale"]:
+        sys.stderr.write(
+            "fork/allowed-tools ratchet の免除が陳腐化: 登録済み path が既に Agent/Task 不足でない"
+            f"({len(summary['fork_tools_stale'])} 件)。解消済みなら FORK_TOOLS_BASELINE から"
+            f"削って ratchet を締めること: {summary['fork_tools_stale']}\n"
         )
         return 1
     return 0

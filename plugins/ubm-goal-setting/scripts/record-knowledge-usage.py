@@ -1,28 +1,78 @@
 #!/usr/bin/env python3
 # /// script
 # name: record-knowledge-usage
+# version: 0.2.0
 # purpose: matched_ids/used_ids/satisfactionを呼出元eval-logのusage-log.jsonlへ記録する。
-# inputs: ["--project-root absolute-path", "--entrypoint skill-name", "--search-result JSON", "--usage JSON", "--transcript JSON (feedback only)", "--ephemeral"]
-# outputs: ["stdout usage receipt", "exit 0=recorded / 2=invalid input"]
+# inputs: ["--project-root absolute-path", "--entrypoint skill-name", "--search-result JSON (search-knowledge の stdout そのまま。search_id は検索条件・コーパスの fingerprint と一致すること)", "--usage JSON", "--transcript JSON (feedback only)", "--ephemeral"]
+# outputs: ["stdout usage receipt", "exit 0=recorded・already_recorded・ephemeral (--help も 0) / 2=invalid input・読めない入力・usage-log の経路が symlink や通常ファイル以外・POSIX の fcntl が無い"]
 # contexts: [C, E]
 # network: false
 # write-scope: caller-project/eval-log/ubm-goal-setting/knowledge/usage-log.jsonl only (ephemeral writes none)
 # dependencies: []
+# requires-python: ">=3.9"
 # ///
 from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
-import fcntl
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import stat
 import sys
+
+try:
+    import fcntl
+except ImportError:  # Windows: 排他ロックを取れないので永続記録だけ止める (--ephemeral は動く)
+    fcntl = None
 
 ENTRYPOINTS = {"run-ubm-" + name for name in ("goal-setting", "journal", "challenge", "consult", "knowledge-sync", "youtube-ingest")}
 LOG_RELATIVE = Path("eval-log/ubm-goal-setting/knowledge/usage-log.jsonl")
 OFFICIAL_KNOWLEDGE = Path(__file__).resolve().parents[1] / "knowledge"
+# search-knowledge.py が search_id を計算する fingerprint のキー。search_id を候補の中身へ結びつけるのに使う。
+FINGERPRINT_KEYS = ("terms", "categories", "limit", "router_sha256", "files", "field_weights")
+
+
+def is_schema_v1(value: object) -> bool:
+    # True == 1 と 1.0 == 1 を版 1 と取り違えない。
+    return type(value) is int and value == 1
+
+
+def fingerprint_search_id(candidate: dict) -> str:
+    fingerprint = {key: candidate[key] for key in FINGERPRINT_KEYS}
+    return hashlib.sha256(json.dumps(fingerprint, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def reject_symlinked_log(log: Path) -> None:
+    if any(p.is_symlink() for p in (log, *log.parents)) or log.resolve() != log:
+        raise ValueError("usage-log path symlink or root escape")
+
+
+def open_log_nofollow(root: Path) -> int:
+    """root から usage-log まで各段を O_NOFOLLOW で開いてたどり、追記用の fd を返す。
+
+    事前の symlink 検査の後に途中の段が symlink へ差し替えられても、外のファイルへ書かない (TOCTOU 対策)。
+    """
+    dir_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(root, dir_flags)
+    try:
+        for part in LOG_RELATIVE.parent.parts:
+            try:
+                os.mkdir(part, 0o777, dir_fd=fd)
+            except FileExistsError:
+                pass
+            next_fd = os.open(part, dir_flags, dir_fd=fd)
+            os.close(fd)
+            fd = next_fd
+        log_fd = os.open(LOG_RELATIVE.name, os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o666, dir_fd=fd)
+    finally:
+        os.close(fd)
+    if not stat.S_ISREG(os.fstat(log_fd).st_mode):
+        os.close(log_fd)
+        raise ValueError("usage-log is not a regular file")
+    return log_fd
 
 
 def read_json(path: str) -> object:
@@ -36,11 +86,13 @@ def record_usage(project_root: Path, entrypoint: str, candidate: dict, usage: di
     root = project_root.resolve()
     if root == OFFICIAL_KNOWLEDGE.resolve() or OFFICIAL_KNOWLEDGE.resolve() in root.parents:
         raise ValueError("caller usage-log cannot be inside official knowledge")
-    if not isinstance(candidate, dict) or candidate.get("schema_version") != 1 or not isinstance(usage, dict):
+    if not isinstance(candidate, dict) or not is_schema_v1(candidate.get("schema_version")) or not isinstance(usage, dict):
         raise ValueError("candidate/usage shape invalid")
     search_id = candidate.get("search_id")
     if not isinstance(search_id, str) or not re.fullmatch(r"[0-9a-f]{64}", search_id):
         raise ValueError("search_id invalid")
+    if any(key not in candidate for key in FINGERPRINT_KEYS) or fingerprint_search_id(candidate) != search_id:
+        raise ValueError("search_id does not match the candidate's search fingerprint")
     matched_ids = candidate.get("matched_ids")
     used_ids = usage.get("used_ids")
     usage_id = usage.get("usage_id")
@@ -77,11 +129,11 @@ def record_usage(project_root: Path, entrypoint: str, candidate: dict, usage: di
     row = {**core, "recorded_at": datetime.now(timezone.utc).isoformat()}
     if ephemeral:
         return {"status": "ephemeral", "row": row, "path": None}
+    if fcntl is None:
+        raise OSError("usage-log の排他ロックには POSIX の fcntl が要る (--ephemeral なら記録せずに受領書だけ返す)")
     log = root / LOG_RELATIVE
-    if any(p.is_symlink() for p in (log, *log.parents)) or log.resolve() != log:
-        raise ValueError("usage-log path symlink or root escape")
-    log.parent.mkdir(parents=True, exist_ok=True)
-    with log.open("a+", encoding="utf-8") as handle:
+    reject_symlinked_log(log)
+    with os.fdopen(open_log_nofollow(root), "a+", encoding="utf-8") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         handle.seek(0)
         duplicate = None
@@ -90,7 +142,7 @@ def record_usage(project_root: Path, entrypoint: str, candidate: dict, usage: di
             if not line.endswith("\n"):
                 raise ValueError("existing usage-log has an incomplete final line")
             previous = json.loads(line)
-            if not isinstance(previous, dict) or not all(k in previous for k in (*core, "recorded_at")) or previous["schema_version"] != 1:
+            if not isinstance(previous, dict) or not all(k in previous for k in (*core, "recorded_at")) or not is_schema_v1(previous["schema_version"]):
                 raise ValueError("existing usage-log row is not a complete observation")
             prior_id = previous["usage_id"]
             if not isinstance(prior_id, str) or prior_id in seen_usage_ids:

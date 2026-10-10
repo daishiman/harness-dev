@@ -71,7 +71,14 @@ INTENT_PATTERNS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
 ENTRYPOINT_RE = re.compile(r"^plugin:[a-z0-9][a-z0-9-]*/skills/[a-z0-9][a-z0-9-]*/SKILL\.md$")
 PYTHON_RE = re.compile(r"^python3(?:\.\d+)?$")
 RUNNER_NAME = "build-external-mutation-guard.py"
+# 早期許可してよい guard の実体は、動いている guard 自身の plugin と、cwd の project の正本だけ。
+GUARD_PLUGIN_REL = Path("plugins/skill-governance-adapters")
+RUNNER_DIRS = ("scripts", "hooks")
 SHELL_CONTROL_TOKENS = frozenset({";", "&", "&&", "|", "||", "<", ">", "<<", ">>", "(", ")"})
+SHELL_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+# 未クォートのとき shell が解釈し、shlex の token 列と意味がずれる文字。
+# 改行は shlex では空白だが shell ではコマンド区切り、\r は逆に shell では語の一部。
+UNQUOTED_SHELL_SYNTAX = frozenset("\n\r;&|<>()`#*?[]{}\\")
 CANONICAL_ACTION_FLAGS = {
     "preview": frozenset(
         {
@@ -709,9 +716,67 @@ def has_unsafe_shell_expansion(command: str) -> bool:
     return False
 
 
-def _canonical_guard_action(command: str) -> str | None:
-    """Return the action only when the entire shell command is one canonical guard call."""
-    if has_unsafe_shell_expansion(command):
+def _parameter_expansion_end(command: str, index: int) -> int | None:
+    """Return the index after `$NAME` or `${NAME}`; None for every other `$` form."""
+    if command.startswith("{", index + 1):
+        match = SHELL_NAME_RE.match(command, index + 2)
+        if match and command.startswith("}", match.end()):
+            return match.end() + 1
+        return None
+    match = SHELL_NAME_RE.match(command, index + 1)
+    return match.end() if match else None
+
+
+def _has_unmodeled_shell_syntax(command: str) -> bool:
+    """Fail closed on shell syntax that the canonical shlex tokenization does not model.
+
+    The canonical form is one simple command made of unquoted words, single-quoted
+    literals, and double-quoted strings whose only expansions are `$NAME`/`${NAME}`.
+    Newlines, operators, redirections, globs, comments, unquoted escapes and every other
+    expansion make the shell's reading diverge from the token list. An unquoted `$NAME`
+    is word-split and globbed by bash and elided when empty by zsh, so it can shift the
+    flag/value positions; only the double-quoted form stays exactly one word.
+    """
+    quote = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if quote == "'":
+            if char == "'":
+                quote = None
+        elif char == "$":
+            if quote != '"':
+                return True
+            end = _parameter_expansion_end(command, index)
+            if end is None:
+                return True
+            index = end
+            continue
+        elif char == "`":
+            return True
+        elif quote == '"':
+            if char == '"':
+                quote = None
+            elif char == "\\":
+                # bash と shlex が同じに読むのは \" と \\ だけ (\$ \` \<改行> は食い違う)
+                if not command.startswith(('\\"', "\\\\"), index):
+                    return True
+                index += 2
+                continue
+        elif char in ("'", '"'):
+            quote = char
+        elif char in UNQUOTED_SHELL_SYNTAX:
+            return True
+        index += 1
+    return quote is not None
+
+
+def _canonical_guard_tokens(command: str) -> tuple[str, str] | None:
+    """Return (action, runner word) when the command has the canonical shape.
+
+    The runner word is only checked lexically here; `_canonical_guard_action` resolves it.
+    """
+    if has_unsafe_shell_expansion(command) or _has_unmodeled_shell_syntax(command):
         return None
     try:
         lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|<>()")
@@ -722,9 +787,13 @@ def _canonical_guard_action(command: str) -> str | None:
         return None
     if len(tokens) < 3 or any(token in SHELL_CONTROL_TOKENS for token in tokens):
         return None
-    if not PYTHON_RE.fullmatch(Path(tokens[0]).name) or Path(tokens[1]).name != RUNNER_NAME:
+    interpreter, runner, action = tokens[:3]
+    # 1語目は PATH で引く素の python3 だけ。2語目は python の option (先頭 -)、shell の展開
+    # (先頭 ~ と =)、hook から値の見えない $ を含まない、文字どおりのパスだけを認める。
+    if not PYTHON_RE.fullmatch(interpreter):
         return None
-    action = tokens[2]
+    if Path(runner).name != RUNNER_NAME or runner.startswith(("-", "~", "=")) or "$" in runner:
+        return None
     expected_flags = CANONICAL_ACTION_FLAGS.get(action)
     rest = tokens[3:]
     if expected_flags is None or len(rest) != 2 * len(expected_flags):
@@ -735,7 +804,55 @@ def _canonical_guard_action(command: str) -> str | None:
         if flag not in expected_flags or flag in supplied or not value:
             return None
         supplied[flag] = value
-    return action if set(supplied) == expected_flags else None
+    return (action, runner) if set(supplied) == expected_flags else None
+
+
+def _trusted_runner_paths(cwd: str | None) -> set[Path]:
+    """Real paths of the guard copies whose canonical call may be allowed early.
+
+    The guard's own plugin (scripts/ and hooks/, whether hooks/ holds a symlink or a copy)
+    and the project's canonical copy under the hook payload's cwd.
+    """
+    own = Path(__file__)
+    roots = {own.absolute().parent.parent, own.resolve().parent.parent}
+    if cwd:
+        try:
+            roots.add(_project_root(cwd) / GUARD_PLUGIN_REL)
+        except GuardError:
+            pass
+    trusted: set[Path] = set()
+    for root in roots:
+        for folder in RUNNER_DIRS:
+            try:
+                candidate = (root / folder / RUNNER_NAME).resolve(strict=True)
+            except (OSError, RuntimeError):
+                continue
+            if candidate.is_file():
+                trusted.add(candidate)
+    return trusted
+
+
+def _canonical_guard_action(command: str, cwd: str | None) -> str | None:
+    """Return the action only when the entire command is one canonical call of a trusted guard.
+
+    The basename alone proves nothing: `-c…/<name>`, `-X…/<name>` and an attacker's
+    `/tmp/x/<name>` all end in the runner name. The runner word must resolve, from the
+    shell's cwd, to the real path of a trusted guard copy.
+    """
+    parsed = _canonical_guard_tokens(command)
+    if parsed is None:
+        return None
+    action, runner = parsed
+    path = Path(runner)
+    if not path.is_absolute():
+        if not cwd:
+            return None
+        path = Path(cwd) / path
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError):
+        return None
+    return action if resolved.is_file() and resolved in _trusted_runner_paths(cwd) else None
 
 
 def _has_pending_guard_context(payload: dict[str, Any]) -> bool:
@@ -806,12 +923,17 @@ def pretool() -> dict[str, Any] | None:
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if not isinstance(command, str) or not command.strip():
         return None
-    if _canonical_guard_action(command) is not None:
+    cwd = payload.get("cwd")
+    if _canonical_guard_action(command, cwd if isinstance(cwd, str) else None) is not None:
         return None
     if RUNNER_NAME in command:
+        actions = ", ".join(sorted(CANONICAL_ACTION_FLAGS))
         return _deny(
             "Malformed central guard invocation is blocked: the full Bash command must be "
-            "exactly one canonical preview, authorize, or execute call with no shell operators."
+            f"exactly one canonical call ({actions}) that starts with a bare python3 and the "
+            "literal path of the installed guard or of the project's "
+            f"{GUARD_PLUGIN_REL.as_posix()}/scripts copy, with no shell operators, newlines, "
+            "redirections, globs, comments, or expansions other than $NAME inside double quotes."
         )
     if _has_pending_guard_context(payload):
         return _deny(

@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# /// script
+# name: lint-script-naming
+# purpose: 28章 §4.1-§4.6 の script 命名規約 (<verb>-<target>.py・許可動詞・例外節) を機械強制する。
+# inputs:
+#   - argv: [path...] [--report] (path 省略時は cwd の scripts / plugins)
+# outputs:
+#   - stdout: summary 行、--report なら summary・violations・pending_rename の JSON
+#   - stderr: VIOLATION / PENDING の一覧と設定エラー
+#   - exit: 0=違反なし / 1=違反あり / 2=設定エラー (存在しない path・走査 0 件・未知の option)
+# contexts: [E, C]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.9"
+# ///
 """lint-script-naming.py
 
 28章 §4.1-§4.6 のscript命名規約を機械強制する。
@@ -11,17 +26,25 @@ usage:
   python3 scripts/lint-script-naming.py [path...]
   python3 scripts/lint-script-naming.py --report
 
+個別パスの照合キーは repo root (この script の 2 階層上。その外なら cwd) からの相対パス。
+絶対パスや別の cwd から渡しても同じ登録に当たる。symlink は実体へ解決せず、渡された
+path のまま照合する (scripts/ 直下の symlink は自分の path で登録している)。
+
 exit code:
   0 違反なし
   1 違反検出
-  2 設定エラー
+  2 設定エラー (存在しない path・走査対象 0 件・未知の option)。検査が空振りしたまま
+    0 を返すと、別の cwd や打ち間違いの path で CI が素通りするので止める。
 
 CONVENTIONS: stdlib only.
 """
 import json
+import os
 import pathlib
 import re
 import sys
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 ALLOWED_VERBS = {
     "lint", "validate", "format", "render",
@@ -41,11 +64,15 @@ PENDING_RENAME_PATTERNS = [
     re.compile(r"^hook-[a-z0-9-]+\.py$"),
 ]
 
-# 暫定例外: 個別パス (初回投入時の既存スクリプト群、33章 Change Governance 管理下)
-# リネーム計画は .claude/changelog/governance-log.jsonl 参照
+# 暫定例外: 個別パス (33章 Change Governance 管理下)。既存スクリプトの移行に加え、許可動詞に
+# 写像できない新規 script (新 verb pending) と、import される Python module (§4.3 恒久例外) を置く。
+# 例外節 (EXCEPTION) は §4.4・§4.6 に限り、その拡大は P1 Structural change なので、ここでは増やさない。
+# 改名の条件と時期は各 entry の直前のコメントに書く (governance-log.jsonl に記録があるものは
+# そちらも参照)。repo に無くなった path は残さない (同じ path に置いた別物を黙って通す穴になる)。
 PENDING_RENAME_PATHS = {
-    # HC consumers import this plugin-local module; kebab-case cannot be used
-    # in the normal Python import that replaces repeated importlib bootstraps.
+    # harness-creator の consumer 群 (sync-task-state.py・run-pkg-015.py・lint-pkg-009.py など) が
+    # importlib の bootstrap の代わりに通常の import で読む plugin-local module。Python import 上
+    # ハイフン不可 (§4.3 恒久例外・feedback_contract_ssot.py と同列)。
     "plugins/harness-creator/scripts/plugin_resources.py",
     # PR #41: Claude/Codex fleet の公開 CLI 名と、既存 Python import/module 名。
     # 利用者向け command・文書・hook・contract が参照するため、この PR では個別 path を
@@ -67,28 +94,8 @@ PENDING_RENAME_PATHS = {
     "scripts/tenant_runtime.py",
     "plugins/harness-creator/scripts/tenant_runtime.py",
     "plugins/skill-intake/scripts/tenant_runtime.py",
-    "plugins/company-master/scripts/tenant_runtime.py",
-    "plugins/mf-kessai-invoice-check/lib/tenant_runtime.py",
     "plugins/contract-generator/lib/tenant_runtime.py",
-    "plugins/notion-gmail-send/lib/tenant_runtime.py",
     "plugins/skill-governance-automation/scripts/tenant_runtime.py",
-    # company-master (PR: 日本郵便 addresszip 移行): scripts/*.py は相互 import される
-    # Python モジュール (import notion_config / postal_api 等) のため §4.3 のハイフン命名を
-    # 適用できず underscore 許容。skill-intake の同種モジュール群と同じ PENDING 扱い
-    # (後続 Change Governance PR で一括リネーム検討。正本 harness-creator/scripts/notion_config.py も PENDING)。
-    "plugins/company-master/scripts/notion_config.py",
-    "plugins/company-master/scripts/notion_upsert.py",
-    "plugins/company-master/scripts/postal_api.py",
-    "plugins/company-master/scripts/postal_proxy.py",
-    "plugins/company-master/scripts/enrich_company.py",
-    "plugins/company-master/scripts/resolve_company.py",
-    "plugins/company-master/scripts/validate_company_master.py",
-    "plugins/company-master/scripts/company_master.py",
-    "plugins/company-master/scripts/confirm_url.py",
-    "plugins/company-master/scripts/bootstrap_plugin.py",
-    "plugins/company-master/scripts/normalize.py",
-    "plugins/company-master/scripts/remarks.py",
-    "plugins/company-master/scripts/backfill.py",
     "scripts/detect-repeated-rubric-violations.py",
     "scripts/inventory-skill-references.py",
     "scripts/skill-fixture-runner.py",
@@ -115,7 +122,6 @@ PENDING_RENAME_PATHS = {
     "scripts/phase2/gen-rollback.py",
     # skill-intake js→py migration (PR #4): keep snake_case until kebab-case rename PR
     "plugins/skill-intake/scripts/append_eval_log.py",
-    "plugins/skill-intake/scripts/apply_section_template.py",
     "plugins/skill-intake/scripts/check_completeness.py",
     "plugins/skill-intake/scripts/compose_diagram.py",
     "plugins/skill-intake/scripts/convert_md_to_json.py",
@@ -135,7 +141,6 @@ PENDING_RENAME_PATHS = {
     "plugins/skill-intake/scripts/render_notion_page.py",
     "plugins/skill-intake/scripts/render_to_image.py",
     "plugins/skill-intake/scripts/render_to_svg.py",
-    "plugins/skill-intake/scripts/section_quality_check.py",
     "plugins/skill-intake/scripts/select_diagram_type.py",
     "plugins/skill-intake/scripts/select_diagrams_per_section.py",
     "plugins/skill-intake/scripts/update_question_bank.py",
@@ -243,81 +248,6 @@ PENDING_RENAME_PATHS = {
     # SKILL.md/Makefile/README/test 参照と同時にリネームする後続 Change Governance PR まで PENDING。
     "scripts/contract-intake-enum-ssot.py",
     "plugins/skill-intake/scripts/smoke_notion_publish.py",
-    # PR #34: mf-kessai-invoice-check 初回投入。check_invoice_gaps.py は
-    # tests/test_check_invoice_gaps.py から `import check_invoice_gaps` される module の
-    # ため §4.3 例外 (ハイフン不可)。verb 'check' の許可動詞化 (diff/extract 等) と
-    # verify/build の kebab 化は SKILL.md/prompts/README/manifest/test 参照と同時に
-    # 実施する後続 Change Governance PR まで PENDING。
-    "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-check/scripts/check_invoice_gaps.py",
-    # reconcile_invoices.py: 月次1コマンド orchestrator。tests/test_reconcile_invoices.py から
-    # `import reconcile_invoices` される module のため §4.3 例外 (ハイフン不可)。許可動詞化
-    # (reconcile→diff/build 等) は SKILL.md/README/manifest/test 参照と同時に実施する後続
-    # Change Governance PR まで PENDING (check_invoice_gaps.py と同じ扱い)。
-    "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py",
-    # build_reconcile_dbs.py: reconcile DB1/DB2 冪等 find-or-create ビルダー。
-    # tests/test_build_reconcile_dbs.py から `import build_reconcile_dbs` される module のため
-    # §4.3 例外 (ハイフン不可)。許可動詞化は reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING。
-    "plugins/mf-kessai-invoice-check/scripts/build_reconcile_dbs.py",
-    # backfill_sheet_contract_dates.py / clear_unsupported_end_dates.py: 請求確認シート契約日の
-    # 保守スクリプト (独立パス・dry-run 既定)。tests/test_backfill_sheet_contract_dates.py /
-    # test_clear_unsupported_end_dates.py から `import backfill_sheet_contract_dates` /
-    # `import clear_unsupported_end_dates` される module のため §4.3 例外 (ハイフン不可)。
-    # 許可動詞化は reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING。
-    "plugins/mf-kessai-invoice-check/scripts/backfill_sheet_contract_dates.py",
-    "plugins/mf-kessai-invoice-check/scripts/clear_unsupported_end_dates.py",
-    # mfk_period_report.py (C05・前月↔今月分類エンジン) / notion_report_sink.py (C06・月次 DB sink):
-    # run-mf-invoice-report が使う正本スクリプト。tests/test_mfk_period_report.py が
-    # `import mfk_period_report`、tests/test_notion_report_sink.py が `import notion_report_sink`
-    # する module のため §4.3 例外 (ハイフン不可)。mfk_period_report.py は guard-mfk-no-reinvent.py の
-    # SANCTIONED basename でもあり、notion_report_sink.py は build_notion_db を再利用する。許可動詞化は
-    # reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING。
-    "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
-    "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
-    # 取得忠実性 (fidelity) 改善 で追加。mfk_actuals.py (C05・MF実績 issued/実発行額 SSOT) は
-    # mfk_period_report.py / lib/mfk_reconcile.py / tests/test_mfk_actuals.py が `import mfk_actuals`、
-    # mfk_fetch_audit.py (C06・fetch fidelity 監査器) は tests/test_mfk_fetch_audit.py が
-    # `import mfk_fetch_audit` する module のため §4.3 例外 (ハイフン不可)。許可動詞化は
-    # reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING (既存 mfk_* と同じ扱い)。
-    "plugins/mf-kessai-invoice-check/scripts/mfk_actuals.py",
-    "plugins/mf-kessai-invoice-check/scripts/mfk_fetch_audit.py",
-    # 照合層 根本原因 根治 (matching rootcause) で追加。mfk_verdict_export.py (C05・R1 決定論 producer=
-    # reconcile 全 row+orphans を carrier 込みで無損失直列化し LLM 手組みの curr=None を根治) は
-    # tests/test_mfk_verdict_export.py / tests/test_mfk_matching_rootcause_golden.py が
-    # `import mfk_verdict_export`、mfk_collect_status.py (C01・発行後 status 収集 SSOT) は
-    # scripts/reconcile_invoices.py / scripts/mfk_fetch_audit.py / tests が `import mfk_collect_status`、
-    # mfk_customer_id_resolve.py (顧客 ID 解決) は lib/notion_sheet_writeback.py / lib/sheet_to_master.py /
-    # tests が `import mfk_customer_id_resolve` する module のため §4.3 例外 (ハイフン不可)。
-    # mfk_verdict_export.py / mfk_collect_status.py は guard-mfk-no-reinvent.py の SANCTIONED basename
-    # でもある。許可動詞化は reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING (既存 mfk_* と同じ扱い)。
-    "plugins/mf-kessai-invoice-check/scripts/mfk_verdict_export.py",
-    "plugins/mf-kessai-invoice-check/scripts/mfk_collect_status.py",
-    "plugins/mf-kessai-invoice-check/scripts/mfk_customer_id_resolve.py",
-    # 請求書確認シート 月次アーカイブ&ロールオーバー (R5-archive・C07) で追加。
-    # mfk_sheet_archive.py (C07 CLI) は tests/test_notion_sheet_archive.py が `import mfk_sheet_archive`
-    # する module のため §4.3 例外 (ハイフン不可)。engine 本体 lib/notion_sheet_archive.py も同 test が
-    # `import notion_sheet_archive` するが lib/ 配下は本 lint の scripts 走査対象外。許可動詞化は
-    # reconcile_invoices.py と同時の後続 Change Governance PR まで PENDING (既存 mfk_* と同じ扱い)。
-    "plugins/mf-kessai-invoice-check/scripts/mfk_sheet_archive.py",
-    "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-db-setup/scripts/verify_db_schema.py",
-    "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-db-setup/scripts/build_notion_db.py",
-    # run-mf-initial-month-enrich (取得担当向け任意スキル): MFクラウド請求書 OAuth エンリッチの
-    # 実体スクリプト群。相互 import する module (api→oauth, enrich→api/oauth) で Python import 上
-    # underscore 必須のため §4.3 例外。許可動詞化は SKILL.md/README 参照と同時の後続 PR まで PENDING。
-    "plugins/mf-kessai-invoice-check/skills/run-mf-initial-month-enrich/scripts/mf_invoice_enrich.py",
-    "plugins/mf-kessai-invoice-check/skills/run-mf-initial-month-enrich/scripts/mf_invoice_oauth.py",
-    "plugins/mf-kessai-invoice-check/skills/run-mf-initial-month-enrich/scripts/mf_invoice_api.py",
-    "plugins/mf-kessai-invoice-check/skills/run-mf-initial-month-enrich/scripts/mf_invoice_csv_match.py",
-    # mf_invoice_names.py: enrich/csv_match が `import mf_invoice_names` する名寄せ正規化の
-    # 共有 module (SSOT)。同上の §4.3 例外 (Python import 上 underscore 必須)。
-    "plugins/mf-kessai-invoice-check/skills/run-mf-initial-month-enrich/scripts/mf_invoice_names.py",
-    # notion-gmail-send 初回投入: §4.3 (kebab-case) は満たすが verb が ALLOWED_VERBS 外。
-    # send (一斉送信実行) / verify (送信前再検査) / setup (送信ログ DB 冪等構築) は許可動詞に
-    # 対応語が無いため、許可動詞化 (allowed-list 拡張 or build/validate 系へのリネーム) は
-    # SKILL.md/prompts/agent/README/test 参照と同時に実施する後続 Change Governance PR まで
-    # PENDING。emit-observable / notion-submit-improvement と同種の「新 verb pending」扱い。
-    "plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/send-campaign.py",
-    "plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/verify-plan.py",
-    "plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/scripts/setup-send-log-db.py",
     # plugin-dev-planner 初回投入: §4.3 (kebab-case) は満たすが verb が ALLOWED_VERBS 外。
     # check (構造/ゲート検証) / verify (top-sort 検証) / evaluate (plan 評価) / detect (未配置検出) は
     # 許可動詞 (validate/lint 等) に機械置換すると SKILL.md(script_refs)/prompts/manifest/test/CI
@@ -515,14 +445,16 @@ PENDING_RENAME_PATHS = {
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-narrative.py",
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-selfcontained.py",
     "plugins/guide-doc-generator/tests/run-handout-extract/fixtures/accept/scripts/verify-handout-selfcontained.py",
-    # ubm-goal-setting 0.7.0 (elegant-review 継続 run): 新設スクリプトは SKILL.md・agent・
-    # tests・content-review verdict の依存 SHA (3,457 件) から名前で参照される。ここで改名
-    # すると独立評価の verdict が全件無効になるため、改名は別 PR で verdict の取り直しと
-    # 一組で行う。normalized_source_path.py は import される Python module。
+    # ubm-goal-setting 0.7.0 (elegant-review 継続 run) の新 verb pending: record / evaluate /
+    # search / publish は許可動詞に対応する語が無い。SKILL.md・agent・tests と content-review
+    # verdict の依存 SHA (3,457 件) が名前で参照するので、ここで改名すると独立評価の verdict が
+    # 全件無効になる。改名 (または ALLOWED_VERBS の改正) は、verdict の取り直しと一組の別 PR で行う。
     "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
     "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
     "plugins/ubm-goal-setting/scripts/search-knowledge.py",
     "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+    # run-youtube-sync-oneshot.py と tests が `from normalized_source_path import ...` で読む
+    # module。Python import 上ハイフン不可 (§4.3 恒久例外・youtube_provider.py と同列)。
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
 }
 
@@ -537,18 +469,43 @@ def find_scripts(roots):
         rp = pathlib.Path(root)
         if not rp.exists():
             continue
+        if rp.is_file():
+            # 明示されたファイルは置き場所を問わず照合する。
+            if rp.suffix == ".py":
+                yield rp
+            continue
         for p in rp.rglob("*.py"):
             if any(part in SKIP_PARTS for part in p.parts):
                 continue
-            if "/scripts/" in str(p) or str(p.parent).endswith("scripts"):
+            # 判定は repo 相対の path で行う (repo の外にある祖先 dir の名前に引きずられない)。
+            rel = pathlib.PurePosixPath(repo_key(p))
+            if "scripts" in rel.parts[:-1] or rel.parent.name.endswith("scripts"):
                 yield p
             elif rp.name == "scripts":
                 yield p
 
 
+def repo_key(path) -> str:
+    """個別パスの照合キー: repo root (その外なら cwd) からの posix 相対パス。
+
+    symlink は実体へ解決しない。/tmp と /private/tmp のような親 dir の別名だけは、親を
+    実パスにしてから照合する。どちらの root の下にも無ければ、渡された path のまま返す。
+    """
+    path = pathlib.Path(path)
+    absolute = pathlib.Path(os.path.abspath(path))
+    forms = (absolute, pathlib.Path(os.path.realpath(absolute.parent)) / absolute.name)
+    for base in (REPO_ROOT, pathlib.Path.cwd().resolve()):
+        for form in forms:
+            try:
+                return form.relative_to(base).as_posix()
+            except ValueError:
+                continue
+    return path.as_posix()
+
+
 def classify(path: pathlib.Path):
     name = path.name
-    posix = path.as_posix()
+    posix = repo_key(path)
     if name in BANNED_NAMES:
         return ("VIOLATION", f"banned name: {name}")
     if path.parent.name == "adapters":
@@ -573,9 +530,25 @@ def classify(path: pathlib.Path):
 
 
 def main(argv):
-    report_mode = "--report" in argv
+    options = [a for a in argv[1:] if a.startswith("--")]
+    unknown = [a for a in options if a != "--report"]
+    if unknown:
+        print(f"config error: unknown option(s): {' '.join(unknown)}", file=sys.stderr)
+        return 2
+    report_mode = "--report" in options
     paths = [a for a in argv[1:] if not a.startswith("--")]
+    missing = [a for a in paths if not pathlib.Path(a).exists()]
+    if missing:
+        print(f"config error: path not found: {' '.join(missing)}", file=sys.stderr)
+        return 2
     scripts = list(find_scripts(paths or SCAN_ROOTS))
+    if not scripts:
+        print(
+            f"config error: no scripts scanned under {' '.join(paths or SCAN_ROOTS)} "
+            f"(cwd={pathlib.Path.cwd()})",
+            file=sys.stderr,
+        )
+        return 2
     results = {"OK": [], "EXCEPTION": [], "PENDING_RENAME": [], "VIOLATION": []}
     for p in scripts:
         status, reason = classify(p)

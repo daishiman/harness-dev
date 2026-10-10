@@ -667,3 +667,112 @@ def test_codex_locale_defaults_are_opt_in_and_keep_structural_values():
     assert explicit['interface']['defaultPrompt'] == ['既存の明示文']
     with pytest.raises(mod.PlatformSyncError, match='output_language'):
         mod.desired_codex_manifest(claude, {'output_language': 'fr'})
+
+
+@pytest.mark.parametrize("language", [["ja"], {"ja": True}, 1])
+def test_non_string_output_language_is_a_contract_error_not_a_traceback(tmp_path, capsys, language):
+    claude = {"name": "example-plugin", "version": "1.0.0", "description": "Example plugin"}
+    with pytest.raises(mod.PlatformSyncError, match="output_language"):
+        mod.desired_codex_manifest(claude, {"output_language": language})
+
+    repo = tmp_path / "repo"
+    plugin = make_plugin(repo, "sample-plugin", existing_codex=False)
+    (plugin / mod.OVERRIDE_FILE).write_text(
+        json.dumps({"output_language": language}), encoding="utf-8"
+    )
+    code = mod.main(["--repo-root", str(repo), "--all", "--check"])
+    report = json.loads(capsys.readouterr().out)
+    assert code == 3
+    assert report["status"] == "invalid"
+    assert "output_language" in report["error"]
+
+
+@pytest.mark.parametrize("mode", ["--check", "--apply"])
+@pytest.mark.parametrize("layout", ["missing", "without-plugins"])
+def test_repo_root_without_plugins_stops_before_writing(tmp_path, capsys, mode, layout):
+    # 打ち間違えた repo-root へ --apply しても .agents/ と空の marketplace を作らない。
+    repo = tmp_path / "repo"
+    if layout == "without-plugins":
+        repo.mkdir()
+    for argv in (["--all"], ["--plugin", str(repo / "plugins" / "sample-plugin")]):
+        code = mod.main(["--repo-root", str(repo), *argv, mode])
+        report = json.loads(capsys.readouterr().out)
+        assert code == 3, argv
+        assert report["status"] == "invalid"
+        assert "plugins directory" in report["error"]
+    assert not (repo / ".agents").exists()
+    assert repo.exists() == (layout == "without-plugins")
+
+
+def _header_lines() -> list[str]:
+    text = SCRIPT.read_text(encoding="utf-8")
+    return text.split("# ///", 2)[1].splitlines()
+
+
+def _header_block(key: str) -> str:
+    lines, block = _header_lines(), []
+    for index, line in enumerate(lines):
+        if line.startswith(f"# {key}:"):
+            block.append(line)
+            for following in lines[index + 1:]:
+                if not following.startswith("#   ") and not following.startswith("#              "):
+                    break
+                block.append(following)
+    return "\n".join(block)
+
+
+def test_header_inputs_list_every_cli_option():
+    inputs = _header_block("inputs")
+    options = {
+        option
+        for action in mod.build_parser()._actions
+        for option in action.option_strings
+        if option.startswith("--") and option != "--help"
+    }
+    assert options
+    for option in sorted(options):
+        assert option in inputs, option
+
+
+def test_header_write_scope_names_every_file_the_script_writes(tmp_path):
+    write_scope = _header_block("write-scope")
+    for target in (
+        "<plugin>/.claude-plugin/plugin.json",
+        "<plugin>/.codex-plugin/plugin.json",
+        "hooks が指す hook file",
+        "<plugin>/hooks/hooks.json",
+        "<repo>/.agents/plugins/marketplace.json",
+        "$TMPDIR/harness-plugin-sync-",
+    ):
+        assert target in write_scope, target
+    assert "harness-plugin-sync-" in SCRIPT.read_text(encoding="utf-8").split("# ///", 2)[2]
+
+    # --apply で実際に書かれる file が宣言の範囲に収まることを、hook 参照と inline hooks の
+    # 両方を正規化させる fixture で確かめる。
+    repo = tmp_path / "repo"
+    plugin = make_plugin(repo, "sample-plugin", existing_codex=False)
+    manifest_path = plugin / ".claude-plugin" / "plugin.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["hooks"] = {
+        "SessionStart": [{
+            "hooks": [{"type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/start.py"}]
+        }]
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    before = {path: path.read_bytes() for path in repo.rglob("*") if path.is_file()}
+    report, code = mod.run(
+        repo=repo, plugin=plugin, intent=None, mode="apply", marketplace_name="fixture-marketplace"
+    )
+    assert code == 0
+    written = {
+        str(path.relative_to(repo))
+        for path in repo.rglob("*")
+        if path.is_file() and before.get(path) != path.read_bytes()
+    }
+    assert written == {
+        "plugins/sample-plugin/.claude-plugin/plugin.json",
+        "plugins/sample-plugin/.codex-plugin/plugin.json",
+        "plugins/sample-plugin/hooks/hooks.json",
+        ".agents/plugins/marketplace.json",
+    }
+    assert sorted(written) == sorted(report["paths"])
