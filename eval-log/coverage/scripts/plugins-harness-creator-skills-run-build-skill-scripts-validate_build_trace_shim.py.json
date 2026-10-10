@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"ハイフン名スクリプトのregex SSOTをimportlibで再エクスポートする薄いshim; ロード成功確認済; spec/loader None時ImportErrorでfail-closed; 二重定義せず元から取得しdrift防止; 副作用無。frontmatter無いがlib的shimで実行entryでなく許容範囲"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 2f3f1ffbef294c66f08e4f60aa31671e1142b13b1ed9a54ebe9a6cd9c0626e92 をレビュー。実行検証あり）。範囲: 39 行全体、読み込み先 validate-build-trace.py の import 時に走る top-level（L574 _load_feedback_contract_ssot、L846 _load_schema。どちらも読み取りだけで fail-soft）、唯一の利用側 lint-prompt-placement.py L37。確かめたこと: python3.10・3.11・3.13 で import でき、LAYER_YAML_PATH_PATTERNS の key は agents-legacy・skill-local-v1。SKILL_LOCAL_V1_RE は source と同じ pattern で、plugins/harness-creator/skills/run-build-skill/prompts/R1-scaffold.md に一致する。header の requires-python >=3.10 は validate-build-trace.py L11 と同じ（test_build_trace_shim_requires_the_same_python_as_its_source が固定）。write-scope none・network false は実装どおり。shim だけを scratch に置いて import すると FileNotFoundError。pytest: tests/scripts-plugins/test_harness_creator__lint_prompt_placement_r4.py 31 passed、plugins/harness-creator/tests/test_verification_evidence_input_guards.py passed。lint-script-frontmatter.py（scripts ディレクトリを指定）OK checked=30。指摘: [低] L34 の exec_module が validate-build-trace.py の top-level 全体（feedback contract と capability schema の読み込み）を import のたびに走らせる。欲しいのは正規表現 2 つだけ（読み取りだけなので -2）。[低] L31-32 の ImportError guard は spec・loader が None のときしか効かない。現実に起きる source の欠落は spec_from_file_location を通った後の exec_module で FileNotFoundError になり、guard が狙う分かりやすい ImportError に届かない（shim だけの fixture で再現）。DEDUCTION: -2（top-level を全部実行）-2（guard が FileNotFoundError を拾わない）→ 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

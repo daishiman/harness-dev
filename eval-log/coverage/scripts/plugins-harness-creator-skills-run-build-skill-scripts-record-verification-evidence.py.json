@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/record-verification-evidence.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 3581b6c889e123089c9e56198c9b2ac4cbbce15c2cd181b5aa9c529228d303c8 をレビュー。実行検証あり）。範囲: 全 150 行と差分 +52/-10（PEP 723 header、FINGERPRINT_RE、69-86 行の plan・obligation・record・fingerprint・subject の検証、例外を exit 2 にする処理、125-128 行の usage 値の math.isfinite 検査、139-144 行の mkdir と write_text を囲む try で exit 2）。確かめたこと: PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider -q で plugins/harness-creator/tests/test_verification_evidence_input_guards.py 49 passed、test_verification_obligation_planner.py 37 passed、test_capability_build_runtime_contract.py 4 passed、tests/test_iter_improve_contract.py 33 passed（4 ファイルで 123 passed）。lint-script-frontmatter.py は親ディレクトリを渡して OK (checked=30 pending=0)、このファイルの指摘なし。header と実装の一致は読んで確かめた。fixture（covR/work-s1/f7）で: --help は 0。正常系は ev/gen-a-677b96ae56dc.json を書き、stdout に receipt と status を出し、planner がそれを reuse する。obligation id の不在・plan の不在・壊れた plan・証跡ファイルの不在・`../` の evidence-path・confidence が NaN・estimated-cost が inf・evidence-dir がファイル・evidence-path 無しは、いずれも traceback なしで exit 2。書き込みは --evidence-dir の receipt 1 件だけで、write-scope どおり。指摘: [低] 5-8 行の header: inputs に --run-id・--model-action-id・--note が無い。outputs の <obligation-id> は、実際には 137 行で記号を - に置き換えた safe_id になる（gen:a → gen-a）。[低] 141 行の write_text は tmp+replace ではない。書き込みの途中で失敗すると、途中までの receipt が残る（139-144 行は exit 2 を返すが、そのファイルを消さない）。planner の _load_receipts は壊れた JSON を黙って読み飛ばすので、途中で切れた FAIL の receipt は数えられない。直し方は、planner と同じ _write_atomic にそろえること。DEDUCTION: -2（header の入出力）-2（atomic でない receipt の書き込み）→ 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

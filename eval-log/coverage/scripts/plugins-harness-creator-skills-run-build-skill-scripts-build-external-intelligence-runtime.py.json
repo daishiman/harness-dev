@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 43f6bab9d9c23c9822f3621cefc31dfd0eec590b928c5ebc9b814d54c6275789 をレビュー。実行検証あり）。範囲: 24 行の転送 script 全体（build-external-intelligence.py とは name・purpose・docstring だけが違う。diff で確認）と git diff origin/main（PEP 723 header の追加、旧 inline resolver を plugin_resources.forward_external_intelligence(globals()) へ置換。作業ツリーで mode 100644→100755）、転送先 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py（exit 0/2、--request | --request-json）、plugin_resources.py L62-87。確かめたこと: 実 repo で --help rc0、引数なし rc2、--request-json '{bad' は rc2 で invalid_request の JSON、存在しない --request は rc2、--request-json '[]' は rc2（request must be an object）。provider を置かない隔離 fixture（iso1・iso2、HOME・CLAUDE_CONFIG_DIR・CODEX_HOME を scratch に向ける）では --help でも RuntimeError の traceback で rc1。header の contexts [A, C, E]・network false・write-scope・requires-python >=3.10 は転送先と合う。lint-script-frontmatter.py（scripts ディレクトリを指定）OK checked=30。pytest（9 file・計 274 passed）: plugins/harness-creator/tests/test_verification_evidence_input_guards.py、test_harness_creator__external_intelligence.py・test_harness_creator__external_intelligence_hook.py・test_harness_creator__external_intelligence_runtime.py・test_harness_creator__plugin_resources.py・test_harness_creator__auto_record_lesson.py・test_harness_creator__lint_knowledge_loop_r4.py・test_harness_creator__validate_build_plan.py、tests/scripts-root/test_root__artifact_delivery.py。指摘: [低] provider を解決できない環境では plugin_resources.py L77 の RuntimeError が traceback のまま rc1 で出る。header は RuntimeError を宣言しているが、呼び出し側は 1 行の原因と決めた exit を得られず、--help も同じになる（iso1・iso2 で再現）。直し方: 転送の前に RuntimeError を捕まえ、1 行の [ERROR] と決めた exit で返す。DEDUCTION: -3（[低] provider 欠落時の traceback）→ 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

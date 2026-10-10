@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":72,"notes":"裏取り: assign-skill-design-evaluator dir/references/rubric.json/quality-rubric.md は実在し閉ループ概念は整合。dangling参照2件で減点: (1)中核機構の scripts/doc_to_skill_adapter.py が repo 全域に不在(設計書→Skill candidate変換器が未実装)。(2)Artifact path xl-skills/doc/スキルの設計書/*.md は実dir ClaudeCodeスキルの設計書/ と不一致で doc25 の長名表記とも内部不整合。構造/Why駆動は良好だが実装整合が80未達"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 e9a2403ecd17a21865357ff000d336ce3095281ea6b8d5bc66ecb2fc7a4f163c をレビュー。実行検証あり）。範囲: 全 100 行（ロール表、現行の手順、計画中の手順、再帰的 rubric チェック、自己採点の観点、自己進化フィードバック、skill-only の恒久例外、運用ルール）。前回（i 回目）の指摘の確認: 中程度の指摘 2 件は直った。doc-to-skill-adapter.py の実パスは plugins/skill-governance-automation/scripts/ に直り、実在する。閉ループ（evaluator による設計書の機械採点、1 本ごとのマージ禁止 gate、TaskCompleted での再採点）は『未実装（計画）』と明記され（L5・L32-35・L94）、マージを止める条件は make harness-ratchet の floor に直った（L93）。前回の軽微な指摘（本数 26、300 行の規則と実態、PKG の範囲、MVP の rubric）も直った（L3 は 41 本、L49 は例外と残課題を明記、L86 は PKG-001〜009 任意・010 以降対象外、L22 は ref-skill-design-rubric）。確かめたこと: (1) adapter を fixture で実行 → exit 0。出力は skill_name / description / trigger_conditions / artifact_path の brief JSON。(2) 設計書 md と brief JSON を render-findings-score.py --kind skill で採点 → どちらも score 0（BD-001/002、FM-001/002/003、NM-001/002、PD-002）。L34 の記述どおり。(3) ls doc/ClaudeCodeスキルの設計書/[0-9]* → 41 本。300 行を超えるのは 03・06・16・17・18・22・23・27・28・29・34・34a で、L49『例外以外にも複数』と合う。(4) validate-harness-coverage.py の measure_docs と DOC_EXTERNAL_REFERENCE、Makefile の harness-coverage / harness-ratchet、harness-creator-kit-ci.yml L105-107 で ratchet が blocking、floor は eval-log/harness-coverage-floor.json、--update-floor は引き上げだけ。(5) 36章 L42・L49・L193・L221 の skill-only の範囲と本章への逆リンク。(6) TaskCompleted hook は evaluator の JSON の検証で、再採点ではない（L94 の『未実装』と合う）。参考: 現在の docs の llm_eval PASS 率は 65.5% で floor 69.8% を下回る（--json で work ディレクトリへ出力。本章の欠陥ではない）。指摘: [低] L86 は dogfooding の記録として『completeness check: not applicable (dogfooding)』の 1 行を完了レポートに残すとするが、36章 L193 §status: not_applicable は各 PKG ID に status: \"not_applicable\" と skip_reason を明示するよう求める。同じ場面の記録形式が 2 章で食い違う。直し方: 36章の形式に合わせるか、36章側で本章の 1 行形式を許す。DEDUCTION: [低] -2（記録形式の食い違い）→ 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-d2",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

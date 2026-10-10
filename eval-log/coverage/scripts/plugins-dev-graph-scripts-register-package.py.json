@@ -4,9 +4,15 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 90,
-    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope: explicitly selected dev-graph output and immutable receipt, dependencies:[_common.py])。3 サブコマンド (register / preflight / execution-context)。_validate_schema は stdlib-only JSON Schema subset ($ref 内部限定・allOf・if/then・prefixItems・items:false・contains・min/maxProperties 被覆)。preflight_contract は system-dev-planner plugin.json version・package-contract entry_points の物理存在・schema version pin を検証 (cross-plugin 契約ゲート)。_validate_registration が要: REGISTRATION_KEYS 完全一致、exact-13 P01..P13、node_ids==package.task_node_ids(phase 順)、binding_intents key 集合一致、repo-config-default sentinel 強制、source_lineage digest 一致、tasks/ path、forward phase 依存のみ。_resolved_nodes が tracker binding と github_publication.mode を解決し sentinel 残存を拒否。register 書込は _single_writer(fcntl LOCK_EX|NB) で単一 writer、graph は atomic_json、receipt は os.link で immutable 化 (FileExistsError→immutable receipt already exists)、receipt 作成失敗時は graph を original へ rollback。既存 13 node は resolved と厳密一致 + receipt identity/revision 照合で冪等 replay。execution-context projection は worktree_id で dedup、revision bump、graph_sha256 を書込後に再計算。main は broad except→{valid:false,error} exit2 で fail-closed。SMELL: os.link rollback 経路は graph を書換→復元の二重原子書込 (許容範囲)、_validate_schema 重複 (validate-graph-schema.py と別実装で微妙に差) は SSOT 観点の軽微 smell。TESTS: test_register_package.py が register/preflight/execution-context/idempotency を exercise。"
+    "score": 96,
+    "notes": "genuine review（sha256 9272ba6feb0c7c515c5fc60305b9a7b58134ea23e96b9ce0b16bb6025f65b2c1 をレビュー。実行検証あり）。範囲: 全 586 行と git diff origin/main（11 行目 write-scope に lock を追記、_atomic_create_json 341–347、元の byte に戻す 438–444、main 569–583 の applied_count）。確かめたこと: dev-graph の全 test（python 3.11.4、pytest -p no:cacheprovider -q plugins/dev-graph/tests）は 273 passed / 9 failed（9 件は test_skill_criteria_evidence の既知の失敗で対象と無関係）。test_build_graph_node・test_shared_writer_sync_regressions・test_register_package の 3 ファイルは 103 passed。pyflakes は clean。lint-script-frontmatter plugins/dev-graph/scripts は OK (checked=18 pending=0)。requires-python は >=3.10 なので 3.9 での確認は対象外。--help rc 0。preflight rc 0（system-dev-planner の package-contract を読むだけで外部送信なし）。execution-context: 壊れた JSON・配列 → rc 2 の JSON 拒否、--graph /etc/hosts → rc 2 path escapes。register: 存在しない package・存在しない repo-root・配列の package → rc 2・applied_count 0 で書き込みなし（dry-run では lock file も作らない）。test_register_package（receipt 失敗時に元の byte に戻る test を含む）が pass。再現: test の fixture で _atomic_create_json と復元の atomic_bytes の両方に OSError を注入すると、rc 2・{applied_count: 0, error: \"restore failed (injected)\"} なのに graph は 14 node・graph_revision 5 に書き換わったままで receipt は無い。指摘: [中] 以上なし。[低] 441–444 で receipt の作成に失敗し、続く graph の復元（atomic_bytes）も失敗すると、復元の例外がそのまま上がって元の失敗理由（receipt 側）が error に出ない。main（579–583）は applied_count=0 を付けるが、graph には 13 node が登録されたまま receipt が無い（次の実行は「registered nodes exist without immutable receipt」で止まり、手で直すしかない）。build-graph-node は同じ場面を rollback_incomplete として報告する。起きるのは 2 つの書き込みが続けて失敗したときだけ。直し方: 復元を try で包み、失敗したら元の例外と復元の失敗をまとめた ContractError にして、applied_count は null にする。DEDUCTION: [低] 二重失敗のときの誤った報告 -4 → 96。"
   },
-  "reviewed_by": "workflow-code-review",
-  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
 }

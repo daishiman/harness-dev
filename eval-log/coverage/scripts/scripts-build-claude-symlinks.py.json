@@ -1,1 +1,18 @@
-{"artifact":"scripts/build-claude-symlinks.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":83,"notes":"Sound; --check/--dry-run exit 0 on real data. Good dry-run guard, conflict/orphan/broken-symlink detection, scoped LayoutError/OSError exits, relative symlink targets. Minor: L213 ternary both branches identical (dead branch / no-op), and no PEP723 frontmatter though 118 repo scripts have it."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "scripts/build-claude-symlinks.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 079a4642fa01afe790eecc2d454dfc25648d11fc2c963c7f0a269dbeca288e19 をレビュー。実行検証あり）。範囲: 全 405 行と git diff HEAD（tree_fingerprint に is_build_artifact を足した）。確かめたこと: tests/test_build_claude_symlinks.py と tests/scripts-root/test_root__build_claude_symlinks.py で 81 passed、harness-creator の統合 test で 155 passed。実 repo で --dry-run は exit 0（noop 181、create 24、conflict 0）。--check は exit 1 だが、create の 24 件は guide-doc-generator・spec-drift-guardian・system-briefing-book の scope 外の plugin で、呼び出し側の sync-native-surfaces.py が --exclude-plugin で外す（3 つを外すと --check は exit 0）。存在しない --plugins-dir は --check・--dry-run とも exit 3、未知の引数は exit 2。work-j-s3/bcrepo の一時 repo で、consumer にだけ __pycache__ の .pyc を置いても --dry-run --kinds skills は create 1 件で exit 0（今回の修正は効いている）。.claude は作業の前後で変わっていない。指摘: [低] 除外は .gitignore の一部だけ（114-124 行）。consumer にだけ .pytest_cache/v/cache/nodeids を置くと、--dry-run が name conflict 2 件で exit 2 になった。定義は build-claude-settings.py 194-204 行と重複し、片方だけ直すと 2 本の判定がずれる。直し方: 判定を 1 か所に置き、.pytest_cache を足すか git の ignore 判定を使う。[低] 281 行の三項演算子は両方の枝が \"orphan symlink\" で、is_known_source（235 行）の結果が捨てられる（前回の記録の指摘が残っている）。[低] PEP 723 ヘッダが無い（lint-script-frontmatter で missing block、exit 1）。DEDUCTION: 生成物の除外の漏れ -3、死んだ三項演算子 -2、PEP 723 なし -2 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

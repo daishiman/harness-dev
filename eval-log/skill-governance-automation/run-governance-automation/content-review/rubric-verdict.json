@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-governance-automation",
     "skill": "run-governance-automation",
-    "skill_md_sha256": "e19eb26609c8d478e3e0a6290df7c8335c06f7722616152e97479c530c9875a1"
+    "skill_md_sha256": "3ab3e6f7c1eee83d6bf597e66fc07ab9bf3f77dc8fb56f6558c047f6f2524aea"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
-  "reviewed_at": "2026-10-10T00:52:13Z",
-  "iterations": 2,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 1,
     "smell": 1
   },
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-10T09:42:34Z",
+  "iterations": 3,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -24,17 +24,24 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "render-findings-score.py（L0 ref-skill-design-rubric と L2 の evaluator override）を実行した。score 100/80、passed=true、機械検査の findings は0件、rubric_hash は sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452（rubric.json の実ファイルの sha256 と一致）",
-      "kind=skill に適用される規則（FM-001..005、BD-001..004、NM-001..003、PD-001/002、RG-001、KL-*）に high 違反は無い。本文は43行（BD-003 と PD-001 を満たす）。19行目に ## Purpose & Output Contract、23行目に Key Rules（必ず・しない）があり、PD-002 を満たす。## Gotchas もある。knowledge/ が無いので KL-* は無条件で PASS",
-      "validate-frontmatter、lint-skill-description（VIOLATION=0）、lint-skill-name、lint-skill-tree、lint-feedback-contract --all、lint-artifact-delivery は、いずれも exit 0"
+      "rubric 1.5.0 の機械採点は 100/100（threshold 80、findings 0、passed）。render-findings-score.py --rubric-refs <L0 ref-skill-design-rubric> <L2 assign-skill-design-evaluator> --kind skill で、applicable 24・scored 23・pending_human 1（BD-004）・unscored 0・not_applicable 21。rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241。rubric の high は 0 件。",
+      "BD-004（LLM が判定）は PASS。description の 2 つの発動条件（governance の登録・rubric 合成を実行したい／再評価・rollback automation を安全に選びたい）は、対応表の manifest登録・rubric合成の行（80・81 行目）と、再評価・rollback の行（83・84 行目）、承認の規則（100 行目）に対応する。",
+      "IN1: 対応表の 11 行を --help・header・コード・実行で 1 行ずつ照合した。re-evaluate-on-rubric-bump.py 0.3.0 は --eval-log-dir がファイルだと exit 2（scratchpad/crauto/notdir）、存在しないだけなら exit 0。rollback-to-stable.py 0.4.0 は rubric_id が整数や空文字列で exit 2、params が無いと警告して params_source=default。guard-change-category.py は一時 git repo（scratchpad/crauto/g1）で未承認 exit 1、--base に無い ref で exit 2、policy が無いと exit 2、--dry-run は argparse の exit 2。extract-plugin-root.py skill-governance-config は実在する絶対パスを返す。表の「既定の動き」と「書き込み」は、指摘した点を除いて実物と合う。",
+      "IN1: receipt を 4 要素（command、exit code、stdout の要点、変わった path）で定義し、どれかが欠けた実行を成功として報告しないと書いた（92 行目）。107 行目は停止条件を「receipt の 4 つが揃ったら完了、exit 非 0・receipt の欠落・承認の無い書き込みで止める」と明示した。",
+      "OUT1: apply・rollback・通知は明示承認なしに実行しない（100 行目、107 行目）。rollback は計画を出すだけで、書き戻しは承認後と書いた（84 行目）。外部作用の境界が表・Key Rules・停止条件で一致している。",
+      "前回の 6 件はすべて解消した。80 行目に needs_confirmation の exit 1 と plugin.json 形式の no-op、85 行目に cooldown 違反の exit 1 と --base の exit 2、83 行目に --eval-log-dir がディレクトリでないときの exit 2、88〜90 行目に表外だった 3 本の entrypoint、84 行目に L0 と assign を一組で戻すことと templates/ が無いこと、107 行目に停止条件、86 行目に hooks.json への未登録が書かれた。"
     ],
     "negative_feedback": [
-      "smell（low）: BD-004 は LLM judge が必要なため、render-findings-score.py では pending_human になった。本レビューで判定した結果は満たすとした。trigger1（登録・rubric 合成）は Purpose とゴールシーク節の『目的に合う実在 script を選び、read-only check を先に実行』に対応し、trigger2（再評価・rollback を安全に選択）は Key Rules の『apply/rollback は明示承認なしに実行しない』とゴールシーク節の『rollback を確認』に対応する。ただし、どちらも汎用の手順を経由した対応で、entrypoint 名との1対1にはなっていない（既知 low の対応表欠如と同じ根）"
+      "[low / inconsistency / SKILL.md 76 行目と 88・89 行目（今回の差分）] 76 行目は「既定で書き込む」entrypoint を compute-rubric-hash.py と write-eval-log.py の 2 本とし、preflight ではこの 2 本に --dry-run を付けるとする。しかし今回足した 88 行目の doc-to-skill-adapter.py（--out が必須で、そこに書く）と 89 行目の extract-session-events.py（.claude/logs に追記）も、呼べば必ず書き込み、--dry-run を持たない（doc-to-skill-adapter.py --dry-run は argparse の exit 2）。76 行目の規則は、この 2 本の preflight をどうするかを決めていない。再現: doc-to-skill-adapter.py の add_argument（--doc・--out が required）と extract-session-events.py の LOG_ROOT（48〜53 行目）を見る。直し方: 76 行目の「既定で書き込む」にこの 2 本を足し、preflight は --help だけにする（または一時の --out・CLAUDE_LOG_ROOT に向ける）と書く。",
+      "[low / omission / SKILL.md 89 行目（今回の差分）] extract-session-events.py は --help に対応しない。argv[1] に user_prompt | tool_use | stop の位置引数が要り、それ以外（--help・--dry-run を含む）は stderr に WARN を出して exit 0 で終わる。97 行目「最初に対象 script の --help を実行する」が働かず、exit 0 なので help を読めたように見える。また既定の書き込み先は、CLAUDE_LOG_ROOT、無ければ PROJECT_ROOT、それも無ければ script の 2 つ上（plugin root）に .claude/logs を付けたもので、consumer の作業ディレクトリの .claude/logs ではない。install 先の plugin に書くと consumer の git status --short に出ないので、92 行目の receipt（変わった path）を確かめられない。再現: scratchpad/crauto/sev に plugin と consumer を分けて置き、--help で WARN・exit 0、stop を渡すと plugin 側の .claude/logs/<日付>.jsonl に追記され、consumer 側には何も出ないことを確かめた。直し方: 89 行目に、位置引数が要ること、--help に対応しないこと、書き込み先の決まり方（CLAUDE_LOG_ROOT で consumer 側に向ける）を書く。",
+      "[low / dependency_break / SKILL.md 84 行目（今回の差分）] rollback の行は、一組で戻した後に「compute-rubric-hash.py で hash を再計算して照合する」と書くが、--dry-run を付けていない。82 行目のとおり既定で書き込むので、rubric_hash を持たない版（今の 1.5.0 など）を戻した後に実行すると L0 のファイル sha256 が変わり、check-rubric-sync.py が RUBRIC_DRIFT（exit 1）になる。再現: scratchpad/crauto/fr3（f807ec06 の L0 と assign）で、--dry-run なら sync は OK のまま、書き込みありでは 9bd1769f… から 23f5ccb4… に変わって exit 1。run-skill-rubric-governance の 146 行目と同じ問題。直し方: 「compute-rubric-hash.py --dry-run で hash を出して照合する」と書く。",
+      "[low / omission / SKILL.md 84 行目] rollback-to-stable.py の exit 1（versions-md が無い・候補が無い）を書いていない。この repo には eval-log/rubric-versions.md が無いので、run-skill-rubric-governance が示すコマンド（--versions-md eval-log/rubric-versions.md）は versions-md not found で exit 1 になる。preflight で exit 1 を見ても、壊れたのか候補が無いだけなのかを表から読めない。また exit 2 の条件を「rubric_id が文字列でない」と書くが、script（0.4.0、header 14 行目）は空文字列でも exit 2 にする。再現: scratchpad/crauto/rb の v-none.md（候補なし）で exit 1、r-empty.json（rubric_id \"\"）と r-int.json（整数）で exit 2。直し方: 「exit 1=versions-md が無い・候補が無い」「rubric_id が空でない文字列でないと exit 2」と書く。",
+      "[low / smell / SKILL.md 80 行目と 3 行目] build-manifest-registration-plan.py は KIT_DIR を script の parents[1]（この plugin）に固定し、対象を選ぶ option が無い。この plugin には manifest.json が無いので、どこから呼んでも plugin.json の分岐で {\"status\":\"ok\",\"format\":\"plugin\",\"proposals\":{}} の exit 0 になり、legacy の manifest.json の分岐（needs_confirmation・exit 1・--apply）には届かない。80 行目の「plugin.json 形式（この plugin 自身など）」の「など」は、ほかの plugin も対象にできるように読める。description の「governance の登録」は実質 no-op で、plugin.json 形式の登録は script の docstring のとおり repo root の scripts/validate-plugin-completeness.py --fix（plugin の外）が担う。再現: build-manifest-registration-plan.py を作業ディレクトリを変えて実行し、出力が同じことを確かめる。直し方: 80 行目に「対象はこの plugin に固定で、今は常に no-op」と書き、plugin.json 形式の登録の担い手を示す。または description から「登録」を外す。"
     ],
-    "iteration": 2,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:20261010-pr-final-review",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 1.5.0（threshold 80、重みは high -20 / medium -10 / low -3）で評価した。機械採点は score 100 で findings 0件、high severity も0件。BD-004（medium、LLM judge）は本レビューで満たすと判定した（汎用の手順を経由した対応で、対応表欠如の既知 low と同じ根）。rubric の観点で新たな medium 以上は無い。evaluator が持つ write-eval-log への追記は、read-only の制約により実行していない。"
+  "notes": "elegance 側と同じ focused combined review（独立レビュアーの 1 context）を rubric 側に写したもの。rubric は render-findings-score.py --rubric-refs <L0 ref-skill-design-rubric> <L2 assign-skill-design-evaluator> --kind skill で機械採点した（rubric 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241、score 100、applicable 24・scored 23・pending_human 1・unscored 0）。pending_human の BD-004 は本レビュアーが PASS と判定した。high・medium は 0 件、low 5 件なので PASS、next_action は none。確かめた内容・コマンド・範囲外の気づきは elegance-verdict.json の notes に書いた。PASS の範囲は設計の記述と script の実物の照合に限り、本物の rollback や apply は実行していない。30 種の思考法は使っておらず、使ったとも申告しない。"
 }

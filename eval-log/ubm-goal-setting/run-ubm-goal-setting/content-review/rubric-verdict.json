@@ -2,20 +2,20 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "26ad8ff31583e227e32a9e6d1e2886ba55a73e37db964d275a3da50348c24d2f"
+    "skill_md_sha256": "79092fb341eb72bc0428d59090206d82c00f46c089b31fe8121dee4f015685d4"
   },
   "review_kind": "rubric",
-  "verdict": "PASS",
-  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
-  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
-  "iterations": 1,
+  "verdict": "FAIL",
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-10-10T14:36:34Z",
+  "iterations": 2,
   "human_review_required": false,
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "contradiction": 1,
+    "omission": 3,
+    "inconsistency": 4,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,15 +27,27 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Canonical IN1→IN2→conditional IN3 before/after exact staged save; rc3 cannot pass; monthly one file/two sections. Parent owns dialogue,formatter draft only,separate staged Daily publication.",
-      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
-      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
+      "validate-cross-level.py 0.2.0 は、月の数字の直前に数字があれば当てない後読みで「11月」と「1月」を分け、UTF-8 で読めない入力を4つの引数のどれでも rc=2（traceback なし）で止める。work-ubm/probe_vcl.py で、--month 1 に11月と1月が混ざる入力は rc=0 で1月の値を取り、1月が無ければ抽出不可で rc=1（11月を拾わない）。Shift_JIS と不正なバイト列は rc=2 になることを確かめた。test_validate_cross_level.py（32件）に、{M}月・UTF-8・--yearly の一致／不一致／注記なし／未指定の test が入り、j 回目の [低] が回帰テストで守られるようになった。",
+      "1年層の到達点アンカー2件（#0a 月間売上到達点・#0b 継続コンサル人数）は requires_level=\"yearly\" で宣言されている。--yearly が無いと分母から黙って落とさず、[未照合]2件・照合対象8件と印字する。この「照合していない分を合格に数えない」設計は保たれている（probe で rc=0・[未照合]2件、--yearly ありで照合対象10件を確認）。",
+      "validate-goal-output.py の yearly の必須23見出し（L1002-1010）は、output-formats.md L1474-1500 の「必須見出し23件（この順）」と順序まで一致する。test_yearly_minimal_document_passes・test_yearly_without_key_number_fails・test_yearly_with_project_tasks_fails で、1年目標の肯定と否定の両方が回帰テストに入った（j 回目の [medium] の解消）。",
+      "Phase0 の選択肢（1=週報・2=月報・3=期報・4=1年目標・5=既存目標の見直し）は、SKILL.md L203、execution-prompts.md L65-79・L125・L143、commands/ubm-goal-setting.md L31 の4か所でそろった。番号を使う箇所を grep 'オプション[0-9]' で全件確かめられる。",
+      "R2 の「1年層の初回」（R2-step2-gap-analysis.md L119-120・L130-132）は、前年が無いからと Step 2 を飛ばさず、比較対象を期報・月報の積み上げと挑戦宣言の到達点に差し替える。data-contract.md L442 がその理由（新設層なので初回が必ず前年なしになり、スキップを許すと到達点との差を一度も見ない）まで書いており、層を足すときの良い型になっている（下の [medium] は、この型が一部に伝わっていないことへの指摘）。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "[medium / 矛盾（4層化の伝え漏れ） / plugins/ubm-goal-setting/agents/phase3-coordinator.md:246（と L232）, plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:618, plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:145] 何が起きるか: data-contract.md:442 と R2-step2-gap-analysis.md:119-120・130-132 は、Step 2 の初回スキップについて「種別が yearly で前年の1年目標が無い初回はスキップしない。比較対象を差し替えて実施し、root_cause と bottleneck を null にしない」と定めている。ところが次の3か所は、例外の無いまま「初回は Step 2 をスキップ」と書いている。(1) phase3-coordinator.md:246 の遷移表「Step 2 → Step 3 | 根本原因が1つ特定されている（初回の場合はStep 2スキップ）」。この agent は L239 で「Step の遷移条件だけを持つ」と言い、transition_ready を Layer 6「フェーズ間遷移」の条件で返す（L152）。矛盾したときの優先規則（L239）は R5 にしか触れていない。(2) data-contract.md:618 の Phase 3 のエラー処理表「ユーザーが初回（前回データなし）| Step 2 をスキップ（root_cause = null）」。同じ文書の L442 と食い違う。(3) R3:145「初回（前回目標なし）は Step 2 がスキップされるため root_cause / bottleneck を null で受領する」。1年層は新設の層なので、この初回は必ず起きる。親が phase3-coordinator に助言を求めるか、エラー処理表を読むと、到達点との差を見ないまま1年目標を立てる道が開く（data-contract.md:442 自身が避けたいと書いている事態）。同じ変更で phase3-coordinator.md の Step 4→5 の行（L248）は1年に合わせて直したのに、Step 2→3 の行は HEAD のまま（git diff HEAD で確認）。再現: grep -rn '初回.\\{0,20\\}スキップ' plugins/ubm-goal-setting --include=*.md で、例外のある2か所（data-contract:442、R2:120・132）と無い3か所が並ぶ。直し方: 3か所に「yearly で前年の1年目標が無い初回はスキップしない（R2 の 2.2・6.2、data-contract の Step 2→3）」を足す。phase3-coordinator.md:232 の Step 2 の完了条件にも同じ注記を置く。",
+      "[low / 不整合 / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1188-1205] 区切り行の regex が両端の | を必須にしている。GFM では両端の | は省ける。`| やらないこと | 理由 |` の次の区切り行が `|---|---`（末尾の | なし）だと、見出し行と区切り行もデータに数えられ、データ1行で「3項目」として rc=0 になる（偽 PASS）。先頭の | が無い表は、データ3行でも0項目で rc=1 になる（偽 FAIL）。再現: work-ubm/probe_vgo.py の sep-no-trailing-pipe-1row（rc=0、3項目）と no-leading-pipe-3rows（rc=1）。テンプレートは両端に | を付けるので起きにくい。直し方: 区切り行の regex の両端の | を任意にし、表の行の判定も先頭の | を任意にそろえ、test を足す。",
+      "[low / 不整合 / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1244-1253] read_input が encoding=\"utf-8\" で開くので、BOM 付きの UTF-8 では1行目に BOM が残り、「必須タイトル見出し「## 【1年の目標】」がありません」で rc=1 になる。validate-cross-level.py は同じ BOM を rc=0 で読むので、2本で扱いが違う。再現: probe_vgo.py の yearly-bom。止める側に倒れるので害は小さい。直し方: utf-8-sig で開く。",
+      "[low / 不整合 / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py:46-47] docstring の除外節の列挙が「【前期/前月/前週の振り返り】」のままで、年の変種が無い。実装の _EXCLUDE_SECTION（L64-71）は 来(週|月|期|年)・前(週|月|期|年)の で年に対応しているので、挙動ではなく説明のずれ。直し方: docstring に年の変種を足す。",
+      "[low / 漏れ / plugins/ubm-goal-setting/agents/phase3-coordinator.md:16] 参照元の説明が「R1〜R3 は Layer 2 の「プロセス制約」も名前で指す」だけで、R4:124（プロセス制約・出力評価基準）と R5:94・97（Layer 4・自己採点・最大改善回数）が抜けている（j 回目の修正で R1〜R3 は足された）。再現: grep -n 'phase3-coordinator' plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R*.md。見出しを変えるときの直し漏れにつながる。直し方: R4 と R5 を足す。",
+      "[low / 不整合 / plugins/ubm-goal-setting/agents/phase3-coordinator.md:272] Round 1 の型が「前回の目標に対して、今週の実績はどうでしたか？」と、週報の期間語に固定されている。1年・期報・月報でもこの型を使う。直し方: 「今回の期間の実績」にするか、期間語（今週・今月・今期・今年）を差し込む形にする。",
+      "[low / 漏れ（j 回目の [low] が未修正） / plugins/ubm-goal-setting/references/agent-info-collector-steps.md:14] 継承文脈の抽出元が「yearly は『前回の1年目標』から今期文脈10種」のまま。data-contract.md:291 は「文脈フィールド #22-31 の1年層での必須度はまだ決めていない」としており、1年目標がこの10種を持つ保証が無い。初回は前回の1年目標も存在しない。[要ヒアリング] への逃げ道があるので low。直し方: 1年層の抽出元を「現在の期報（無ければ要ヒアリング）」にするか、data-contract が決まるまで yearly の行に「未決」と書く。",
+      "[low / 漏れ（j 回目の [low] が未修正） / plugins/ubm-goal-setting/references/agent-output-formatter-steps.md:10-12, plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md（期報・月報のテンプレート）] 期報と月報を書くときに、1年目標の到達点2件を【今期の売上以外の成果目標】・【今月の最重要数字】の注記行へ写す手順が、まだどこにも無い。output-formatter の手順にあるのは yearly のとき【今年の最重要数字】へ写す手順（steps:10-12、output-formatter.md:243-244）だけ。output-formats.md で「月間売上到達点」が出てくるのも1年目標の節（L498・L1522-1537）だけ。1年目標がある期に期報・月報を作ると、--yearly を必ず渡す決まりなので IN3 が抽出不可で rc=1 を返し、改善ループに入って初めて注記が足される。再現: grep -n '月間売上到達点' plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md plugins/ubm-goal-setting/references/agent-output-formatter-steps.md。検査は止める側に倒れ、直す先も出力されるので low。直し方: steps の Step 1 に「quarterly/monthly で peer_paths.yearly があれば、その到達点2件を注記行で写す」を足し、期報・月報のテンプレートに注記の例を置く。",
+      "[low / 規約（smell） / plugins/ubm-goal-setting/agents/phase3-coordinator.md（見出し構成）] rubric の AG-002 の見出し「## Isolation」または「## Context Boundary」と、AG-004 の見出し「## Handoff」または「## Output Contract」が無い（採点器は判定の実装が無く unscored）。中身は L13・5.1・L257（親だけが質問し interview_data を更新する、読み取り専用）と「#### 出力」（L149）にあり、tools も Read だけなので実質は満たす。同じ plugin の goal-reviewer など4本は見出しを持つ。直し方: 2つの見出しを立てて、既存の記述を寄せる。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
-    "next_action": "none"
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
+    "next_action": "improve"
   },
-  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
+  "notes": "評価の射程: 静的な設計の妥当性と、script の fixture 実行まで。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は、受け入れの手順（SKILL.md L276）と Phase0〜6 の契約が合っているかを静的に判定しただけ。 SKILL.md の sha256 は 79092fb341eb72bc0428d59090206d82c00f46c089b31fe8121dee4f015685d4（担当の表と一致）。 流したコマンドと rc: (1) env -u UBM_VAULT_ROOT PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests → 1021 passed、rc=0。うち test_validate_cross_level.py 32 passed、test_validate_goal_output.py と test_notation_consistency.py 95 passed、test_challenge_contract.py と test_heading_references.py 29 passed。 (2) repo 直下の tests 5本（lint_skill_dep_step7・entrypoint_artifact_first・lint_vendored_ssot・lint_distributable_ssot・test_hook_router）→ 158 passed、rc=0。 (3) tests/criteria/test_all_skills_criteria.py -k run-ubm-goal-setting → IN1〜IN3 の3件 passed。OUT1・OUT2 の2件は failed で、既存の elegance-verdict.json が FAIL であることに連動しているだけ（この verdict も FAIL なので、書いた後も同じ）。 (4) render-findings-score.py --kind skill --target plugins/ubm-goal-setting/skills/run-ubm-goal-setting → rc=0、score 100、threshold 80、passed=True、rubric_version 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241。applicable 25・scored 23・pending_human 2・findings 0件（FM-003 は出ない）。 pending_human の LLM judge: BD-004 は PASS。description の発動条件2つのうち「1年目標から週報までの4層の目標設定を生成したいとき」は、## 全体の流れの Phase0-init〜Phase5-validate と ## 対象種別（4層）に対応する。「振り返り対話を統一ハイブリッド構造で作成したいとき」は、Phase2b-review・Phase3-dialogue（Step 1 の前回振り返り）・Phase4-format に対応する。KL-002 は PASS。plugin の knowledge/ にある982件から3件（CP-039・PR-326・AG-228）を抜き出し、6フィールドが具体的な中身で埋まっていることを確かめた（抜き取りでの判定）。 (5) 依存の機械採点: --kind agent（phase3-coordinator）→ 97（PD-001 low のみ。AG-001〜004 は unscored）。--kind command（commands/ubm-goal-setting.md）→ 100（CM-001〜003 は unscored で、手で PASS と判定）。lint-script-frontmatter（validate-cross-level と validate-goal-output）・validate-frontmatter（agent と command）・lint-agent-prompt-section・lint-agent-prompt-content（--mode agent と --mode prompt）は、どれも rc=0 か OK。 (6) fixture での実行: work-ubm/probe_vcl.py（約30通り）と work-ubm/probe_vgo.py（約20通り）。fixture は work ディレクトリだけに置き、vault は読んでも書いてもいない。 j 回目の [medium] 3件の扱い: ① Phase0 の選択肢番号 → 直った。SKILL.md L203 は「オプション4は1年目標（yearly）、オプション5は既存目標見直しモード（goal-reviewer）」。execution-prompts.md L75-76・L79・L125・L143 と commands L31 もそろっている（grep 'オプション[0-9]' で確認）。 ② FM-003（発動条件の数）→ 直った。description は「1年目標から週報までの4層の目標設定を生成したいとき、振り返り対話を…作成したいときに使う」で、機械採点の findings は0件、score 100。 ③ 1年目標が rc=0 で通る test が無い → 直った。test_validate_goal_output.py L824 の test_yearly_minimal_document_passes ほか2件が通る。probe でも、output-formats の順序と到達点アンカーの注記で組んだ1年目標が rc=0・STATUS PASS。 j 回目の [low] は、cross-level のヘッダ・UTF-8・{M}月・--yearly の test、data-contract の2フィールドと `>` の扱い、「四層横断照合」の名前が直った。直っていない2件は low として残した。info-collector の継承文脈（references/agent-info-collector-steps.md:14）と、期報・月報へ到達点の注記を写す手順（output-formatter の手順には yearly の分しか無い）。到達点ラベルの衝突は data-contract L358 の規則として書かれた。 新しい [medium] 1件: 1年の初回に Step 2 をスキップしない例外が、phase3-coordinator.md:246・data-contract.md:618・R3:145 に伝わっていない（negative_feedback の1件目）。このため両 verdict を FAIL、next_action=improve とした。 k 回目はこの PR の最後のレビューなので、ここでの指摘は残課題になる。"
 }

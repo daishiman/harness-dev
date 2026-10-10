@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-journal.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 66fb5587f118215a6341acdd109d854c6d3019a969e5ab1abe62dcc034a0855e をレビュー。実行検証あり）。範囲: 31行（origin/main から +3/-7、HEAD から +2/-6）。allowed-tools は「Read, Bash, Skill」、argument-hint は「[YYYY-MM-DD]」。確かめたこと: 共通の実行検証: `validate-frontmatter.py` → rc=0。`lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills` → 「Step 7 全5条件 PASS・command の Skill 経路 PASS (7 skills)」rc=0（Skill を許可した command が名指しする run-* の実在と disable-model-invocation を検査する）。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（command→skill の calls 辺6本がある）。`pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。CM-001（argument-hint）・CM-003（実在する入口 skill の名指し）を満たし、skill 側の argument-hint と一致する。skill 側は disable-model-invocation: false で、Skill ツールから呼べる。個別: 14〜15行の保存先と採番は build-journal-context.py の DAILY_REL（88行）と 716〜727行（regenerate なら番号を維持、それ以外は最大値+1）と一致する。番号と見出しの日付は同じ正規表現 HEADING_RE（96行）から取るので、regenerate で番号が欠けることはない。31行が引く SKILL の「Phase1-3: 対話」（214行。開き方と目標セクションの自動）と references/interview-map.md（7行 1ターン1〜2問、8行 事実→解釈→打ち手、10行 固有名詞）は実在する。前回の指摘（regenerate の書き漏れ、会話規則の複製）は直っている。指摘: [低] 15行は既存ファイルの扱いとして regenerate だけを書く。対象日のパスに別の日の内容か日付の分からない内容があると write_mode=blocked で停止する（build-journal-context.py 687〜693行、SKILL 211〜212行）ことを書いていない。-2。[低] CM-002 の最小権限: allowed-tools に Bash があるが、本文は Skill で skill を起動するだけで Bash を使わない（Bash が要る手順は skill 側の allowed-tools が持つ。同じ plugin の ubm-consult は Read, Skill で足りている）。-2。DEDUCTION: -2 -2 = -4 → 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

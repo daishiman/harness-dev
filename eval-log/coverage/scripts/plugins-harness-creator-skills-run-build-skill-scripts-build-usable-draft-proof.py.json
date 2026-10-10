@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-usable-draft-proof.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 8537bfba1a0ddfa76596ff2fbf41a499fd721d915273824ae1b6d7631408dce2 をレビュー。実行検証あり）。範囲: 全 323 行。今回の差分（header の contexts を [C, E] から [A, C, E] に変更）と、plan・receipt・artifact の検証（86-154 行）、validate-build-trace.py の再実行（157-200 行）、repo 内だけに書く _write_atomic（278-293 行）を見た。確かめたこと: pytest で build 系 5 ファイル（test_harness_creator__build_usable_draft_proof.py・__build_review_launch.py・__plan_improvement_gate.py、plugins/harness-creator/tests の test_verification_evidence_input_guards.py・test_capability_build_runtime_contract.py）を流して 243 passed。fixture（scratchpad/covR/work-s1/f4/udp、test の _fixture で作成、kind=agent）で --help exit 0、正常系 exit 0（validator の mode=manifest・reported_kind=agent）、--out がディレクトリだと OSError を捕まえて exit 2（一時ファイルは残らない）、--out が repo root の外だと exit 2、存在しない --repo-root で exit 2、receipt 1 件だけで「requires exactly generation and kind-lint receipts」の exit 2、evidence を書き換えると「evidence sha256 mismatch」の exit 2、不正な --capability-kind は argparse exit 2。書き込みは --out だけで、header の write-scope と合う。lint-script-frontmatter.py は run-build-skill/scripts をディレクトリで流して checked=30・違反 0。指摘: [低] 非 UTF-8 の verification plan は 57 行の read_text の UnicodeDecodeError が 58 行の except（OSError, JSONDecodeError）に入らず traceback で exit 1、receipt の receipt_type が配列だと 122 行の「not in {…}」が TypeError の traceback で exit 1。決めた exit 2 で止まらない。[低] 存在しない --capability-artifact で「path must remain inside repo root」と出る（81-82 行が FileNotFoundError も同じ文言に包む）ため、原因が分からない。[低] contexts の C（28章 §2 の PreToolUse/PostToolUse hook）に当たる呼び出し元が無い（hooks/ と .github に参照 0。E は tests を CI で流す経路と読める）。A を足した今回の差分は正しい。DEDUCTION: 未捕捉の例外 2 経路 -3、誤解を招く停止理由 -2、contexts の C -2 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

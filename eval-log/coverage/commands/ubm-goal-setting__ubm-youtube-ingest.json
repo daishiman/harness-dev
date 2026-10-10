@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-youtube-ingest.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 3685715dd90a052af30b1a194a0c93d0bad10cfeb150d2e45d501826d5bcf6aa をレビュー。実行検証あり）。範囲: 53行（origin/main から +14/-11、HEAD から +4/-1）。allowed-tools は「Read, Bash, Skill」、argument-hint は「[--url URL | --backfill | --sync] [--source SOURCE] [--dry-run]」。確かめたこと: 共通の実行検証: `validate-frontmatter.py` → rc=0。`lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills` → 「Step 7 全5条件 PASS・command の Skill 経路 PASS (7 skills)」rc=0（Skill を許可した command が名指しする run-* の実在と disable-model-invocation を検査する）。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（command→skill の calls 辺6本がある）。`pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。CM-001（argument-hint）・CM-003（実在する入口 skill の名指し）を満たし、skill 側の argument-hint と一致する。skill 側は disable-model-invocation: false で、Skill ツールから呼べる。個別: 18・33行の scripts/run-youtube-sync-oneshot.py（--help で --mode {sync,backfill,url}・--dry-run・--channel を確認）と 32行の check-youtube-backfill-completeness.py は実在する。20・46行の「スキル経由だけが同じセッションで R3 まで通す」は SKILL 196行の「`--sync` のグラフ反映」と、33行の「親の承認を得てから実行」と35行の dry-run は SKILL 194行のモードの記述と、45・47行の冪等性と dry-run は SKILL の「守ること」（239行）「つまずきやすい点」（250行、256行で dry-run は占有を取らず書き込み 0）と一致する。前回の指摘（--sync の説明の食い違い、手動と自動の違いの書き漏れ）は直っている。指摘: [低] 39〜40行の排他と既定の規則が R1 と食い違う。40行はモードが無いとき `--sync` を「既定候補として提示」するが、prompts/R1-source-mode.md 74行は「既定を `--sync` とせず、ユーザーへ1問で確定を促す」。39行は複数指定でスキルを起動せずに止まるが、R1 35・74行は1問で1つに確定させる。薄いアダプタ（14・27行）なのに、command が別の判断を持っている。-3。[低] 32行の「完全性ゲートが緑になるまで」は何を緑とするかを書いていない。終了コード 0 は承認済みの免除を含む ACCOUNTABILITY_PASS でも出る（check-youtube-backfill-completeness.py 34〜35行）ので、SKILL 213・236行は標準出力の `full_backfill_pass==true` を IN1 とし、終了コード 0 の ACCOUNTABILITY_PASS は未達として扱うよう求めている。command はスクリプト名を挙げて「緑」とだけ書くので、終了コード 0 と読める。-2。[低] CM-002 の最小権限: allowed-tools に Bash があるが、本文は Skill で skill を起動するだけで Bash を使わない（Bash が要る手順は skill 側の allowed-tools が持つ。同じ plugin の ubm-consult は Read, Skill で足りている）。-2。DEDUCTION: -3 -2 -2 = -7 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

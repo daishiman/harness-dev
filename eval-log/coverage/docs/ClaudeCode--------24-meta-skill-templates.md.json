@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":68,"notes":"内部矛盾あり: frontmatterテンプレが kind:workflow(L43)/kind:evaluator(L112)/kind:reference(L198) を採るが、実SKILL.md(kind:run/assign/ref)・22章のenum(ref|run|wrap|assign|delegate)・23a§2・本章自身のL306『kind:runのまま』と全て不一致。テンプレを写経するgeneratorが誤kindを吐く再現性リスク。さらにcreator-kit/manifest.json正本前提が当repo非存在(plugins/移行済)で古い。rubric.json例が本文の『JSON正本』方針に反しYAML(L246-)で記述。補助ファイル/combinator(with-run.patch等は実在)/構成は妥当だが上記欠陥でPASS基準未達"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 55b806e2a5afc66fe43a8ca039b5c62811026de31de0a91f7ec993aa134de1cc をレビュー。実行検証あり）。範囲: 全247行（run-build-skill の SKILL.md 抜粋 L18-77、ref-skill-design-rubric、assign-skill-design-evaluator 抜粋 L106-146、補助ファイル木、installers、関連章）。抜粋は実物 plugins/harness-creator/skills/run-build-skill/SKILL.md と1行ずつ照合した。前回（j 回目）の指摘の確認: [中]『抜粋の流れが usable-first と逆』は直っている。抜粋の手順（draft → class 別の最小 guard → 提示 → 利用者の選択 → 深度を選んだときだけ evaluator、pre_choice_forbidden、accept-as-is は evaluator 0・improver 0、release は明示したときだけ）が実物 L182-186・L240・L252・L260・L355 と合う。[低]『KL の kind 分類』も直っている（rubric.json で RG・KL の applies_to_kinds が `*`、AG〜WF が単一 kind）。確かめたこと: (1) rubric.json: rubric_version 1.5.0、41 rules、threshold 80、BD-003 high、FM-003・FM-004 medium、top-level キーが本文どおり。(2) 抜粋2つを work-docs2/ex24/ に SKILL.md として取り出し、render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --kind skill で採点 → 両方 score 100・passed=True・findings 0（scored 19/20、pending_human 1）。(3) lint-goal-seek.py: 抜粋2つは exit 1（『## ゴールシーク実行 見出しがない』）。実物 run-build-skill は警告3件で通り、実物 assign-skill-design-evaluator は exit 0。lint-matrix.json で goal-seek の contexts は [build-preflight, ci]、governance-check.yml L233 が CI で実行する。(4) ref-skill-design-rubric の見出し・kind/owner・Gotchas、補助ファイル木2つ、11章 run-build-skill-example、installers/manifest.json のキー、.ps1 が 0 件、36章 §package_mode（L35）、trigger 数 ==2 を validate-frontmatter.py L368 と lint-skill-description.py L138 が強制すること、例示スキルの実在を、すべて実物で確かめた。合っている。指摘: [低] L20 は抜粋を『render-findings-score.py と rubric.json（--kind skill）で採点して合格する形にしてある』雛形として示す。しかし合格するのは rubric 採点だけで、build-preflight と CI の lint-goal-seek.py には抜粋2つとも exit 1 で落ちる（Key Rule 19 はゴールシーク型を求める）。雛形として写すと preflight で止まる。同じ L20 で実物がゴールシーク型（局面カタログ）だと断っているので軽度とした。直し方: L20 の合格の範囲を『rubric 採点では合格。lint-goal-seek を通すには ## ゴールシーク実行 が要る』と限る。[低] 抜粋と実物のずれが2か所ある。L60『rubric を編集しない。変更は rubric governance を通す（27章）』は、実物 SKILL.md にも templates/ にも無い規則（HEAD L70 からの持ち越し）。L54 の release 完了条件は、実物 L183 の『obligation DAG が current PASS proof で閉じる』を落としている。観察（減点しない）: 11章 L73 が 24章を『正本仕様』と呼び、24章 L5（本章は実装の正本ではない）と食い違う。直すなら 11章側。DEDUCTION: [低] -3（L20 の合格の範囲。lint-goal-seek は exit 1）、[低] -2（L60 実物に無い規則、L54 DAG 条件の欠落）→ 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-docs",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

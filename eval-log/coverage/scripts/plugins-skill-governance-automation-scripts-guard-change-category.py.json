@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-automation/scripts/guard-change-category.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":82,"notes":"ast/pyflakes clean; CalledProcessError and JSONDecodeError caught narrowly with safe defaults; tz-aware cooldown; read-only git diff with no destructive ops; deduction: lacks # /// script frontmatter block (only the other 4 scripts have it) and import datetime placed inside function"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-automation/scripts/guard-change-category.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine review（sha256 047c469e341db2c578313a4ca7b535ccfa2748bb236a02115b680940a6235cb2 をレビュー。実行検証あり）。canonical scripts/guard-change-category.py と byte 一致（cmp で確認）。範囲: 全 634 行と git diff HEAD（merge-base の policy を読む load_base_policy L305-325 と _blob_at L128-133、governance-log の追記だけを認める check_changelog_append_only L328-344、壊れた行を ConfigError にする _entries L403-423、cooldown のある分類にだけ効く --bypass-cooldown L506-533、git diff の --no-color --no-ext-diff --no-textconv L206、policy 自身を P1 にする L234-236、_evaluate L582-629）、呼び出し元 .github/workflows/governance-check.yml（--base origin/main。--policy なし）、governance-policy.json の change_categories と cooldown_rules。確かめたこと: tests/scripts-plugins/test_skill_governance_automation__guard_change_category.py と tests/scripts-root/test_scripts__guard_change_category.py で 171 passed（3.11）／171 passed（3.9）。pyflakes 0 件、lint-script-frontmatter OK（3.11・3.9）。実 repo の --base origin/main --report は total=1303 blocked=0（P1 50・P2 1253）。壊れた入力: --help は 0、存在しない ref・-x・相対の --policy・git でない dir はどれも exit 2。前回の指摘を一時 repo（work-j-s2/gcc の場面 A〜N）で再現した: plugin.json だけを変える → exit 1。同じ PR で policy の P0・P1 を auto_apply にしても plugin.json は proposal_required のまま、policy 自身も P1 で exit 1（前回の [中] の前半は直った）。governance-log の前日の行を消す → exit 2、その行の timestamp を書き換える → exit 2、追記だけ → cooldown 違反で exit 1（前回の [中] の後半も直った）。壊れた行 → exit 2（直った）。P2 だけの差分は --bypass-cooldown の有無にかかわらず exit 0、incident 承認のある P1 は両方 exit 0（直った）。color.ui=always と diff.external=/bin/false でも frontmatter の name 変更は P0（直った）。作業ツリーの policy を壊すと exit 2。policy を初めて入れる PR は新しい plugin として P0。CRLF の log は exit 2（fail-closed。CI は ubuntu なので減点しない）。--policy に HEAD の policy を渡すと HEAD を信じるのは docstring 43-52 行どおり。rubric-registry.json を P1 に上げないのは docstring 52 行に理由が書いてある（減点しない）。plugin 側の写しは mode 755、root は 644（CI は python3 で呼ぶので影響なし）。指摘: [低] ゲート自身（scripts/guard-change-category.py と plugin 側の写し）と .github/workflows/governance-check.yml が L263-264 の P2 fallback に落ち、承認が要らない。CI は PR 側の script を動かすので、同じ PR で script を書き換えれば、policy と log を merge-base に固定した効果（docstring 43-45 行の目的）を外せる（一時 repo で script の変更が P2_content・exit 0）。直し方: これらを P1 に分類し、workflow で merge-base の script を動かす（または CODEOWNERS で守る）。[低] 分類の取りこぼし（前回から残る）: L247-249 のコメントは policy の P1 の例『manifest.json forbidden_dependencies追加』を plugin.json に当てたままで、実在する installers/manifest.json の変更は P2。L175-176 の正規表現が plugins/ に限るので、.claude/skills の新しい Skill の追加も P2（一時 repo で両方 P2_content）。[低] cooldown の値の単位を見ない（L480-487 は最初の数字だけを読む）: 『1週間』は 1 日、『72時間』は 72 日として扱う（一時 repo で、前日の変更があっても『1週間』で exit 0、4 日前の変更でも『72時間』で exit 1）。cooldown_rules に分類の key が無いと L515 で黙って cooldown なしになる（L298 の検査も key があるときだけ。P1 の key を消すと exit 0）。DEDUCTION: 100 -3（ゲート自身と workflow が P2）-3（分類の取りこぼし）-2（cooldown の単位と key の欠落）→ 92。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s2",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

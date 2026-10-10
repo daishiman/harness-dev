@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":61,"notes":"実装台帳ゆえ impl-alignment が本章の存在価値だが大幅に陳腐化。本章が『正本』と宣言する top-level creator-kit/ と creator-kit/manifest.json は実在せず、現実は installers/(+installers/creator-kit/ は CONVENTIONS.md/README.md/migrate-log のみ)と installers/manifest.json。skill群も .claude/skills 直下でなく plugins/harness-creator/skills 配下+plugins/skill-governance-* へ再編済。よって『正本の分担』表・『成果物マップ』ツリーの大半が dangling path。lint-forbidden-deps.py/compose系の実体は plugins/skill-governance-lint 等へ移動。migrate-log は .gitkeep のみで P0残課題記述自体は整合。内部整合性は高いが現物と乖離し設計判断の再現性を毀損するため 80 未達"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 bc92c52da7f38b313115912090dc84886edc6f8bc6872f4e9cc1e862a0d1f809 をレビュー。実行検証あり）。範囲: 全144行（置き場所の注記、正本の分担、3軸、実装履歴 A-J、成果物マップ、設計判断、レビュー履歴、現在の判定、残課題、更新ルール）。前回（j 回目）の指摘の確認: [低]『symlink の範囲の書き方が実物より広い』は直っている。L22 は『plugins への symlink と通常ファイルの混在』、L71 は『94件は symlink、21件は aidd-agent-kit 由来の通常ディレクトリ』、L72-73 は『adapter-registry.json・output-routing.json.example は symlink、meta-harness-observables.json は通常ファイル（複製）』、L74 は『直下の13本は symlink、残り71本は通常ファイル』と範囲を限っている。[低]『creator-kit の移行元』も直っている。L5・L46 は『creator-kit/ は git 履歴に一度も現れない（git log --all -- creator-kit は 0 件）。移行かは git で確かめられない』と書き、事実と合う。確かめたこと: (1) git show 4cd8faf8 の日付（2026-07-12）と件名が L5 と一致。(2) find scripts -maxdepth 1: symlink 13・通常ファイル 71（L74 どおり）。.claude/config は adapter-registry.json と output-routing.json.example が plugins/skill-governance-config/config/ への symlink、meta-harness-observables.json は通常ファイルで、cmp で plugins 側と同じ内容（L72-73 どおり）。git ls-files では scripts/ 直下の symlink が 12 本になるが、re-evaluate-on-rubric-bump.py が作業ツリーで通常ファイルから symlink へ typechange しているためで、この PR の状態としては 13 が正しい。(3) 成果物マップ（L54-77）のパスを ls で1つずつ確かめ、すべて実在。(4) python3 scripts/lint-script-naming.py → summary OK=272 EXCEPTION=19 PENDING=251 VIOLATION=0（L133 どおり）。(5) 残課題 L127: installers/harness-creator-kit/migrate-log/ は .gitkeep のみ。(6) L47 の installers/harness-creator-kit/CONVENTIONS.md と repo 直下 CONVENTIONS.md（用語規約）の区別が実物どおり。(7) 文書内リンクと参照章のファイルはすべて実在（work-docs2/fs-links.txt・git-links.txt）。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-docs",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

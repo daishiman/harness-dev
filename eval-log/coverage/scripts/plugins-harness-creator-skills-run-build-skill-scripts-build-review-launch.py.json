@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-review-launch.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 3ee08d8a2b24561488389f846bcb1a264623bed575a49ccb6e19df41c9f51d42 をレビュー。実行検証あり）。範囲: 全 580 行。今回の差分（header の contexts を [C] から [A, C] に変更）と、gate plan の検証（241-296 行）、lock 下での lease の取得と stale 回復（481-533 行）、main の例外処理（549-576 行）を見た。確かめたこと: pytest で test_harness_creator__build_review_launch.py・__build_usable_draft_proof.py・__plan_improvement_gate.py と plugins/harness-creator/tests の test_verification_evidence_input_guards.py・test_capability_build_runtime_contract.py の 5 ファイルを流して 243 passed。fixture（scratchpad/covR/work-s1/f4/brl、test の _gate_plan で作成）で --help exit 0、正常系 exit 0（.launch.json と .json.lock を作成）、すぐの再実行は「lease is active」の authorized=false と exit 2、不正な --runtime・存在しない gate plan・壊れた JSON はどれも authorized=false の JSON と exit 2。295・304・432 行で同じ pre-diagnostic 検証を 3 回呼ぶ（artifact の hash も 3 回）が、結果は同じで害は無いので減点しない。lint-script-frontmatter.py は run-build-skill/scripts をディレクトリで流して checked=30・違反 0。指摘: [低] --out への書き込み（544-546 行）の OSError を main（561 行）が捕まえず、--out がディレクトリの fixture で IsADirectoryError の traceback と exit 1 になった。しかも 530 行で lease（.launch.json）を書いた後なので、同じ gate plan の再実行は 300 秒「lease is active」で拒否され、request が失われる（stale 回復は設計どおり 300 秒後）。直し方: --out の書き込み失敗を LaunchError に包むか、lease を書く前に --out を確かめる。[低] 非 UTF-8 の gate plan は 538 行の UnicodeDecodeError が except（OSError, JSONDecodeError）に入らず traceback で exit 1、artifact_presentation_receipt.artifact_path が配列だと 179 行の dict.get が TypeError の traceback で exit 1。どちらも launch はしないが、authorized=false の JSON を出さない。[低] header の write-scope に、368-371 行で作って消さない <state_ref>.lock が無い。[低] contexts の C（28章 §2 の PreToolUse/PostToolUse hook）に当たる呼び出し元が無い（hooks/ と .github に参照 0。呼び出しは SKILL.md と plugin-composition.yaml の calls だけ）。A を足した今回の差分は正しい。DEDUCTION: --out 失敗の traceback と lease の消費 -3、未捕捉の例外 2 経路 -3、write-scope の lock 漏れ -2、contexts の C -2 → 90。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

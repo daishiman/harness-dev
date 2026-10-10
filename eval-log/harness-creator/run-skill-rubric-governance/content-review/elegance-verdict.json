@@ -2,21 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-rubric-governance",
-    "skill_md_sha256": "e679df133d961e0710a4deb3733648b20662a70843197d36352782f6c8a707a3"
+    "skill_md_sha256": "3373d34c08d78d4f098c1c71eab3f6c45b1115aba815582183d73a870af1dc7e"
   },
   "review_kind": "elegance",
-  "verdict": "PASS",
+  "verdict": "FAIL",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
+    "inconsistency": 2,
+    "dependency_break": 3,
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
-  "iterations": 1,
-  "human_review_required": false,
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-10-10T14:03:17Z",
+  "iterations": 4,
+  "human_review_required": true,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -26,13 +26,25 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/inline がrubric提案・検査・記録を単一制御contextで行う境界に一致し、評価器との役割分離も保つ。"
+      "機械採点は 100/100（threshold 80、passed、findings 0）。render-findings-score.py --rubric-refs <L0 ref-skill-design-rubric> <L2 assign-skill-design-evaluator> --kind skill で rubric_version 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241、applicable 24・scored 23・pending_human 1（BD-004）・unscored 0・not_applicable 21。rubric の high は 0 件。BD-004 は LLM judge として PASS と判定した。description の 2 つの発動条件（rubric 変更を提案する／rubric 改正を施行する）が、本文の提案（106〜110 行目と 130〜135 行目）と発効（111〜116 行目と 136 行目）に対応する。",
+      "人が承認した分母の決め方を、文書は正しく矛盾なく書いている。SKILL.md 145〜150 行目と references/governance-board.md 37 行目が同じ定義（rubric.rubric_hash で版を絞る、分母は各レコードの coverage.applicable_rules、rule ごとの違反率の最大が ceiling を超える版は候補にしない、平均だけで比べない理由は 1/24 ≈ 0.042）を使う。149 行目の「rollback-to-stable.py は平均しか比べず、値の行が無い版は候補にしない」は script の実物（平均だけを ceiling と比べ、violation_rate_avg の行が無い節を候補から外す）と一致し、除外を「値を書く段」に置いた理由が通る。",
+      "実データの例は repo から再現できた。eval-log/*/*-score.jsonl は 22 レコードで、rubric.rubric_hash が L0 1.3.0 のファイル sha256（6e1843e5…）のものが 16（rubric.rubric_version は 1.2.0 が 1・1.3.0 が 1・1.3.1 が 14。146 行目の記述どおり）。coverage のある 14 レコードはすべて applicable_rules 24 で、レコードの違反率の平均は 0.07738（150 行目の 0.0774）、÷41 で 0.04530（0.0453）。rule ごとの違反率は PD-002 が 14/14 = 1.0、FM-005 が 10/14、PD-001 が 2/14 で、rule ごとの率の和 ÷24 も 0.07738（148 行目）。L0 の git 履歴は 4cd8faf8（1.3.0、sha256 6e1843e5…）と f807ec06（1.5.0、9bd1769f…）の 2 つだけ（146 行目）。L0 は 41 rule、kind=skill の not_applicable 21、L2 の 4 rule（PG-001・PG-002・BND-001・REG-001）が加わって 24（147 行目）。",
+      "前回の low 4 件と info 1 件はすべて直った。(1) 版は rubric.rubric_version ではなく rubric.rubric_hash で絞る（146 行目）。(2) governance-params の 3 つの所在（160 行目・governance-board.md 33 行目）を現物で確認した（references/governance-params.json.example は freeze 10/0.05、config 側の .example は solo_operator_mode.enabled false と bootstrap_mode あり、prompt-creator の実ファイルは freeze が無い）。(3) RELEASE_VERSION の使い方（168 行目）は write-eval-log.py の setdefault と一致し、--dry-run で release が付くことを確かめた。(4) 照合は compute-rubric-hash.py --dry-run（152 行目）で、--dry-run は書き込まずに sha256:073f6cfe… を出す。info だった rubric-versions.md の追記と git commit の順も、116 行目で同じ commit に入れる形に直った。",
+      "IN1: check-rubric-sync.py は repo で OK・rc 0（rubric_hash 9bd1769f…・1.5.0）。チェックリスト 112〜114 行目の順（compute → assign 側の rubric_hash を L0 の新しいファイル sha256 にそろえる → check-rubric-sync）と、書き込みで sha256 が変わる注記が保たれている。IN2: diff-rubric-impact.py の判定の部分は正しく、score ログ（eval-log/core）を渡すと severity high の提案で flip_rate 0.7143・required_bump major に昇格する（問題は渡す --logs の場所。negative_feedback の medium を参照）。OUT1: governance-board.md の 4 ロール・議決ルール・solo_operator_mode の 3 条件は保たれている。OUT2: 猶予期間と旧ルールの warning へのダウングレード（110 行目）、git commit と governance log の closed（116 行目）がチェックリストにある。",
+      "巻き戻しの節（139〜160 行目）は script の現物と一致する。rollback-to-stable.py（worktree の 0.4.0）は rubric_id で節を絞り、プレリリース・暦に無い日付・同じ版の重複見出しを候補から外し、rubric が無いと exit 2、versions-md が無いと exit 1（実行して `versions-md not found`・rc 1 を確認）、params が無いと警告して params_source=default・ceiling 0.05 を使い、出力に target_hash と steps を持つ。143〜144・160 行目の記述はこれと合う。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "[medium / dependency_break / SKILL.md:133-134（局面カタログ、今回は変わっていない行）・SKILL.md:166・templates/proposal.json:18] 影響評価のコマンドが `--logs \"$SKILL_DIR/log\"` を渡すが、そこにあるのは governance log（governance-log.jsonl の 4 レコード。どれも score キーを持たない）で、過去の eval-log（score ログ）ではない。83・122 行目は $SKILL_DIR/log/*.jsonl を governance log と定め、Key Rule 4（90 行目）は「過去 eval-log の合否変動率」を測ると書く。diff-rubric-impact.py は log_dir.glob(\"*.jsonl\")（57 行目）を読み、score の無いレコードを 100 点として数える（67 行目）ので、書いたとおりに流すと flip_rate は常に 0 になり、30% 超で major へ強制昇格する仕組み（IN2・Key Rule 4・109 行目）が発火しない。166 行目の「eval-log がない: exit 2 でフェイルセーフ」も、$SKILL_DIR/log は常にあるのでこの経路では成り立たず、fail-open になる。再現: severity high・bump minor の提案（scratchpad/covR/work-rg/prop-high.json）で `diff-rubric-impact.py --proposal <p> --logs plugins/harness-creator/skills/run-skill-rubric-governance/log` は total 4・flip_rate 0.0・required_bump minor（rc 0）。同じ提案で `--logs eval-log/core`（score ログ 7 レコード）は flip_rate 0.7143・required_bump major。`--logs eval-log` は直下の score でない jsonl 3 ファイル（16 レコード）を読んで 0.0。133 行目のスキル内 lint-rubric-violation.py も `--logs $SKILL_DIR/log --rule PD-002` で by_rule {}・total 4（`--logs eval-log/system-briefing-book` なら PD-002 が 14）。templates/proposal.json の impact_assessment.past_eval_logs も governance log の場所を指す。実例として proposals/2026-10-09-ja-heading-alias.md 41 行目の影響評価は total 1・flip_rate 0.0 と記録されており、score ログの 22 レコードを数えていない。直し方: --logs に score ログのディレクトリ（eval-log/<plugin>）を渡すと書く。または 2 つの script を rglob(\"*-score.jsonl\") にして eval-log を渡す形にし、score を持たないレコードは数えず、score を持つレコードが 0 件なら exit 2 にして 166 行目のフェイルセーフを実際に成り立たせる。proposal.json の past_eval_logs も合わせる。",
+      "[low / dependency_break / SKILL.md:147] coverage の無いレコードを「composition_hash が同じになる --rubric-refs と同じ --kind で再計算する」手順は、ほぼ再現できない。compose-rubrics.py は ref と path（絶対パス）を hash の入力に含める（156〜157 行目）ので、同じ内容の L0・L2 でも置き場所が違うと hash が変わる（scratchpad/covR/work-rg/repro で 4ad1b2a5… と 91b365f4…）。git show で取り出した 4cd8faf8・6e903cad の L2 でも、記録の 964f754f…・1671bf26… と一致しなかった。coverage の無いレコードは target_kind も持たないので「同じ --kind」も決められない。結果は常に「数えずに注記」になるので安全側ではあるが、読み手が成り立たない再計算に時間を使う。直し方: 「coverage の無いレコードは数えず、外した件数を注記する」と短くするか、composition_hash が絶対パスを含むことを書く。",
+      "[low / inconsistency / plugins/skill-governance-automation/scripts/rollback-to-stable.py:340（docstring 26〜27 行目）・SKILL.md:152] 計画の steps の 2 つ目は「compute-rubric-hash.py で rubric.normalized.json と rubric_hash を再計算し…」で --dry-run が無い。SKILL.md 152 行目は「計画の steps に従う」と書いた後で --dry-run での照合を勧めるので、steps をそのまま実行すると、rubric_hash を持たない版（今の 1.5.0 など）を戻したときに RUBRIC_DRIFT になる。steps の 3 つ目の check-rubric-sync.py が検出するので被害は止まる。直し方: steps の文言に --dry-run を入れるか、SKILL.md に「steps の compute は --dry-run で行う」と書く。",
+      "[low / dependency_break / references/governance-board.md:38] solo_operator_mode の条件 2 は「diff-rubric-impact.py 出力の newly_failing_count == 0」だが、diff-rubric-impact.py の出力は total・would_flip・flip_rate・proposed_bump・required_bump だけで、newly_failing_count は無い（77〜83 行目）。再現: 上の medium と同じコマンドの出力を見る。直し方: would_flip == 0 と書き換えるか、script に newly_failing_count を足す。",
+      "[low / inconsistency / SKILL.md:168] 「lint-rubric-violation.py（0.2.0）」と版を書くが、worktree の plugins/skill-governance-lint/scripts/lint-rubric-violation.py は `# version: 0.3.0`（4 行目）。HEAD は 0.1.0。直し方: 版を書かないか、実物の版に合わせる。",
+      "[low / smell / SKILL.md:148] 「violation_rate_avg はレコードの違反率の平均（rule ごとの違反率の平均と同じ値）」は、全レコードの coverage.applicable_rules が等しいときだけ成り立つ。kind や L2 の違うレコードが混ざると、rule ごとの率の平均の分母が決まらず値も一致しない。今のデータ（14 レコードすべて 24）では問題は無い。直し方: 「applicable_rules がすべて等しいとき」と条件を付ける。"
+    ],
+    "iteration": 4,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
-    "next_action": "none"
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
+    "next_action": "human_review"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "反復上限到達後の人の判断（2026-10-10T13:26Z、利用者が分母の決め方を承認）を受けた再評価。incremental profile の focused combined review。作者とは別の独立評価者（rg）が 1 つの context で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high が 0 件、を判定した。30 種の思考法は使っておらず、使ったとも申告しない。評価対象は worktree の現物（SKILL.md sha256 3373d34c08d78d4f098c1c71eab3f6c45b1115aba815582183d73a870af1dc7e。担当表の値と一致）。前回（iterations 3、SKILL.md b640e8eb…、FAIL・medium 1・low 4）の verdict は指摘を知るためだけに読み、結論は写していない。人の判断の扱い: 分母の決め方（各レコードの coverage.applicable_rules、rule ごとの違反率の最大が ceiling 0.05 を超える版は候補にしない）は設計の選択として再指摘しない。そのうえで、文書の書き方・実データの例・script との整合を独立に確かめ、いずれも合っていた（positive_feedback の 2・3 件目）。前回の medium は、この承認された決め方で 145〜150 行目と governance-board.md 37 行目が書き直され、解消した。流したコマンドと rc（Python は PYTHONDONTWRITEBYTECODE=1、repo に書いたのは verdict の 2 ファイルだけ）: (1) render-findings-score.py --rubric-refs <L0> <L2> --kind skill --target <skill>: rc 0、score 100、threshold 80、passed、findings 0、rubric_version 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241、applicable 24・scored 23・pending_human 1（BD-004、PASS と判定）・unscored 0・not_applicable 21。(2) check-rubric-sync.py: OK・rc 0。(3) compute-rubric-hash.py --dry-run --rubric <L0>: sha256:073f6cfe…・rc 0（書き込みなし）。(4) rollback-to-stable.py --rubric <L0> --versions-md eval-log/rubric-versions.md: params の警告のあと `versions-md not found`・rc 1。(5) plugins/skill-governance-lint/scripts/lint-rubric-violation.py --log-dir eval-log --threshold 0.20: --n 3 は rc 0・breached []（release がすべて local）、--n 1 は rc 2（FM-005 0.727・PD-002 0.636）、log-dir が無いと rc 3。(6) diff-rubric-impact.py（severity high の提案）: --logs $SKILL_DIR/log は total 4・flip_rate 0.0・minor、--logs eval-log は total 16・0.0、--logs eval-log/core は total 7・0.7143・major。いずれも rc 0。(7) スキル内 lint-rubric-violation.py --rule PD-002: --logs $SKILL_DIR/log は by_rule {}・total 4、--logs eval-log/system-briefing-book は PD-002 14・total 14。(8) write-eval-log.py --dry-run を RELEASE_VERSION 付きで実行し、release が付くことを確認。(9) score ログの集計（Python で eval-log/*/*-score.jsonl を rubric.rubric_hash で絞って計算）と、git log / git show による L0・L2 の履歴の確認。(10) compose-rubrics.py の composition_hash が置き場所で変わることを scratchpad/covR/work-rg/repro で確認。(11) pytest -p no:cacheprovider -q: render_findings_score・compose_rubrics・rollback_to_stable・write_eval_log_r4・lint_rubric_violation・detect_repeated_rubric_violations の 6 ファイルで 335 passed・rc 0。判定: 新しい medium 1 件（局面カタログ 133〜134 行目の影響評価が governance log を読み、合否変動率が常に 0 になる。今回は変わっていない行で、過去の verdict には無い指摘）と low 5 件があるので、verdict は FAIL。iteration 4 は上限 3 を超えているので human_review_required を true、next_action を human_review にした。k 回目がこの PR の最後のレビューなので、これらの指摘は残課題になる。rollback-to-stable.py と plugins/skill-governance-lint/scripts/lint-rubric-violation.py は HEAD 比で作業中の変更がある worktree の版を評価した。評価の射程は静的な設計の妥当性と、script の単発実行・fixture による再現までで、live trial（実際の rubric 改正を提案から発効まで通す実行）はしていない。"
 }

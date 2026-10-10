@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/lint-rubric-violation.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":82,"notes":"py_compile OK; load/compute/detect/main で責務分割明確; exit code 0/2/3 設計が purpose と整合; --out は指定パスへの書込のみで破壊性低(write-scope:output-dir 宣言)。減点は load() の json.loads(line) 無ガードで 1 行不正 jsonl が全体を未捕捉例外で中断"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/lint-rubric-violation.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 0067722b88508705e1fb04ef13db1b2fb2a5bcc0ee25dfc08fd1a222178150f8 をレビュー。実行検証あり）。範囲: 全 196 行（0.3.0）と git diff HEAD。確かめたこと: 前回の [中]（数字を含まない release が新しい側に並び、連続 N release の判定がずれる）は直った。_release_key が (数字を含むか, tokens) を返し、数字の無い release を古い側に置く。前回の再現（9.0/10.0/11.0 の違反率が各 50%、release の無いレコード 10 件、--n 3）は exit 2、breach X [9.0, 10.0, 11.0] になった。該当 test は 3.11 と 3.9 で 18 passed。実データ（eval-log）は --n 3 で exit 0、22 records、breached 空。--n 1 で exit 2（FM-005 0.727、PD-002 0.636）。壊れた入力（非 UTF-8、int と str の id の混在、list・dict・bool の id、object でない行）はどれも skipped_lines に入り traceback を出さない。--out の親 dir は作り、--out に dir を渡すと exit 1 とメッセージ。--n 0・-1、--threshold 1・nan、--bootstrap-threshold -1、未知の引数は usage error で exit 2、--help は exit 0。lint-script-frontmatter は OK。指摘: [低] 深い入れ子の JSON 行（\"[\" を 200000 個）で RecursionError の traceback を出して exit 1 になる（62 行は ValueError だけを捕まえる。姉妹の notify-if-governance-trigger は RecursionError も捕まえる）。直し方: except (ValueError, RecursionError)。[低] usage error の exit 2 が「招集必要」の exit 2 と重なる（14-15 行）。27章 173 行の「CI が exit 2 を受けて招集する」と組むと、引数の誤りが招集として扱われる。[低] --log-dir が無いかファイルのとき、stderr に何も出さず bootstrap の exit 3 になる（159-161 行。trigger.json の warning だけ）。綴り違いが pending として通る。参考（減点なし）: 27章 377・470・495 行の deadline の強制 inject と freeze は script に無く、文書側の問題。SKILL.md 168 行の版が 0.2.0 のまま。DEDUCTION: RecursionError -2、exit 2 の重なり -2、log-dir の無言 bootstrap -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

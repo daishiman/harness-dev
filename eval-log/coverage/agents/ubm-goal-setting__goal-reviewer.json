@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/goal-reviewer.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":90,"notes":"reference-existence: 参照する $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md を実測で実在確認。$UBM_VAULT_ROOT 配下(合宿/目標設定)は runtime vault パスで repo 外・想定内。schema-conformance: frontmatter name/description(…したいときに使う 形式)/kind=agent/version=0.1.0/owner/tools=Read,Glob,Bash/isolation=fork 妥当。mechanical=true: lint-agent-prompt-section.py --agents-dir plugins/ubm-goal-setting/agents が exit0(5/5 PASS Tier1)・--plugins-root plugins の */agents/*.md glob 被覆下でも本体は PASS。'## Prompt Templates'+marker '(対話なし: 自動実行 agent)'+'## Self-Evaluation'(完全性/一貫性/検証可能性 参照)全て具備。placement-invariant: 自動実行 agent ゆえ運用プロンプト正本を Layer5/6 本文に保持(prompts/ SSOT 対応物なし)=lint skip-rule と整合。single-responsibility: 既存目標の 8 項目(基本2+合宿整合性3+関係構築3)レビューに限定・新規目標設定ヒアリングは phase3-coordinator へ明示的に除外(Layer1 スコープ 33行目)。owner-flow: 北原原則 3ステップ翻訳(kitahara-principles-db.md の intent/background 起点)・出力テンプレートが 8項目チェック→Top3改善→書き直し案の一貫フロー。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 cbd886b7f7570bdd9516f243c1ccfb0b27285c272df466411e6018a5f070e091 をレビュー。実行検証あり）。範囲: 全292行・本文284行（text.split('---',2)[2].splitlines()、BD-003 の300行以下を満たす）、tools は Read, Glob, Bash、参照先 references/agent-goal-reviewer-report-template.md。確かめたこと: 採点器 render-findings-score.py --kind agent（2つの rubric.json を --rubric-refs に渡す）は 97 で、PD-001(low) の -3 だけ。PD-001 は内容を plugin 直下 references/agent-*.md へ段階的に開示する形にしてあるので減点しない。AG-001〜004（unscored）は現物で判定: tools 明示・## Context Boundary・phase id 重複なし・## Handoff をすべて満たす。lint-agent-prompt-section.py（9件 Tier 1 OK, rc=0）と lint-agent-prompt-content.py --mode agent（7層準拠, rc=0）。env -u UBM_VAULT_ROOT pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests → 1021 passed（再実行も同じ）。test_heading_references.py は /skills/・/agents/・/references/ の3種の接頭辞を検査対象に広げ、test_notation_consistency.py は NOTATION_FILES に references/agent-output-formatter-rules.md を足したもので、検査は弱まっていない。参照パスは自作の pathcheck で ${PLUGIN_ROOT}=plugins/ubm-goal-setting と解決して全件実在（agent-root-contract.md の解決と一致）。HEAD の163〜240行のレポートテンプレートが agent-goal-reviewer-report-template.md へ一字一句同じに移ったことを照合。前回の[低]6件の修正を確認（41行 正本の見出し、75行 【前{年/期/月/週}…】、95・134行 原則DBには ID・intent が無いので source_ref で確かめる、132行 Glob `UBM - [1-4]-*.md` と開始日最新の選択規則、119行 Bash 用途に検証スクリプト、282・289行 Context Boundary と Handoff）。244〜249行の検証引数が validate-goal-output.py（--file, --type; choices=TYPE_MAP の weekly/monthly/quarterly/yearly/bimonthly）と validate-cross-level.py（--yearly/--quarterly/--monthly/--weekly/--month）の argparse と一致。Read/Glob/Bash で参照先をすべて読める。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-agents",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

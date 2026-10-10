@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/derive-route-build-obligations.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 fcbb9b2d1cf4a0bc0859a3cf19ff611b8a87e65551ab047d05b02dc9b6532f79 をレビュー。実行検証あり）。範囲: 680 行全体と git diff origin/main（_inside_repo・_graph_list・_route_id・_route_dependencies・_reject_duplicate_obligation_ids の追加、task_graph_ref の repo 境界 L500-503、main の except の拡張と --out 書き込みの try 内への移動）、下流 plan-verification-obligations.py の _safe_rel（L106-110）と循環検出（L302）、manage-build-lease.py の --task-graph 必須（L528-530）。確かめたこと: pytest test_verification_obligation_planner.py・test_verification_evidence_input_guards.py・test_capability_build_runtime_contract.py・tests/test_iter_improve_contract.py で 123 passed。scratch の fixture 29 件と CLI 6 件: 正常系（route a・b、P05 と P04 の node）は rc0 で build:a・build:b（draft）と task:T2（release、build:a に依存）を出し、P05 の node は build:a に畳まれる。--help rc0、引数なし rc2。存在しない handoff、非 UTF-8、壊れた JSON、routes が文字列、未知の depends_on、重複 id、routes に文字列が混ざる、plan_dir と route spec の repo 外参照、build_target 欠落、--out の親がファイル、はすべて rc2 で 1 行の [ERROR]（traceback 無し）。typed path（verification-claim）は execution_stage と route_ref を付けると rc0 で unit:route:a:P05 を出す。route の自己依存・循環は rc0 で出すが、下流の planner が『dependency cycle』で rc2 にする（header は循環検出を約束していないので減点しない）。write-scope は --out の先だけ（親 dir の作成を含む）で実装どおり。lint-script-frontmatter.py（scripts ディレクトリを指定）OK checked=30。指摘: [低] expected_evidence_paths の材料（build_target・target_plugin_slug・cycle_id・route id。L376-378・L399-403・L522-524・L529・L576）は repo 境界を確かめない。build_target=/etc/passwd、slug=../../esc、route id=x/../../../../z でも rc0 のまま repo 外を指す contract を出す（fixture tgt・trav・t2_trav で再現）。下流 plan-verification-obligations.py の _safe_rel が rc2 で止めるので書き込みは起きないが、header の『exit 2=repo の外の参照』は plan_dir・task_graph_ref・spec にしか効いていない。直し方: target と build_dir も相対・.. 無しで検査する。[低] typed path の routes_by_id（L262-267）は route.get(\"id\") の真偽で数えるので、id=0 は『non-empty and unique でない』という誤った理由で rc2、id=True は rc0 で unit:route:True:P05 を出す。legacy path の _route_id（L84-89）は 0 を通し True を拒むので、同じ route の可否が graph の種類で逆になる（t2_id0・t2_idtrue で再現）。直し方: typed path も _route_id を使う。[低] task_graph_ref が存在しないファイルや整数のとき（L494-504、_load_optional L132-135）は、黙って graph 無しとして rc0 になり、task obligation が全部落ちる（tg_missing・tgref_int で再現）。通常の手順では先に manage-build-lease.py が --task-graph を要求するので捕まる。DEDUCTION: -3（evidence path の境界）-2（typed path の id 判定）-2（task graph 欠落の黙認）→ 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

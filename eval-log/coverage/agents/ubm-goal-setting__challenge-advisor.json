@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/agents/challenge-advisor.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 35d1611d8e2c073819d8f56fef9ee78f56b708e3fb32101de8931a959fa2b0a5 をレビュー。実行検証あり）。範囲: 101行（origin/main からは新規 +101、HEAD からは +7/-9）。tools は「Read, Grep, Glob」で、カンマ区切りの明示 allowlist（AG-001 の FAIL 条件には当たらない）。確かめたこと: 共通の実行検証: `pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。`lint-agent-prompt-section.py`（ubm の agents 9本）→ OK: 9 agent file(s) passed (Tier 1)、rc=0。`lint-agent-prompt-content.py` → 9本とも7層に準拠、rc=0。`validate-frontmatter.py` → rc=0。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（WARN 5件は生成前の出力パスで正当）。個別: 52行の field 10キーは question-map.md 7〜20行の「欄とfieldの対応」表と一致する。25行が読む question-map の「原則」「返し方（phase3 との差分）」「戻りゲート」、challenge-format.md の「各欄の合格条件」、phase3-coordinator.md の2節「ナレッジ活用原則（重要）」「品質基準（回答パターン別対応ルール）」は実在する。呼び出し元 run-ubm-challenge/SKILL.md 219〜222行の入力（field/answers/confirmed/depth/lens_limit/plugin_root/knowledge_candidates）と、error のときに1回だけ呼び直す扱いは本文と一致する。58行の「lens.id は matched_ids の部分集合」は search-knowledge.py の出力（object: schema_version/search_id/zero_hit/matched_ids/matches）と合う。前回の指摘は解消している。指摘: [低] 33〜44行の出力 JSON に、27行（原文が候補と食い違ったときの不採用の理由、追加検索の依頼）・58行（knowledge_candidates が無いときの不足）・85行（5.4: 反復上限で未達のときの理由と根拠）で「親へ返す」とするものの置き場が無い。-3。[低] 27行は「この役のツールでは SHA256 を計算できない」と書くだけで、knowledge-retrieval-contract.md 21行の SHA の確認を代わりに誰が行うか（親）を書いていない。-2。[低] AG-002（`## Isolation` か `## Context Boundary`）と AG-004（`## Handoff` か `## Output Contract`）の見出しが無い。中身は7層の Layer の節にあるので -2 にとどめる（ubm の agents 9本に共通）。DEDUCTION: -3 -2 -2 = -7 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

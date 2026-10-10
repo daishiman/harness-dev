@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"py_compile OK. Well decomposed: one check fn per PKG-002..008, clear exit codes (0/1/2). JSONDecodeError caught everywhere, output writes guarded by mkdir(parents,exist_ok); symlink-aware PKG-003 ownership. Minor smells: no-op .replace('PKG-','PKG-') (L382 dead code) and convoluted run_id slice (L357 drops time, keeps date only) reduce uniqueness; no PEP723 frontmatter. Not defects."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 ab1ba2ef7ef27d5357aba3613bf22bc2c5ece5f4640778deb1395a8d739efffc をレビュー。実行検証あり）。範囲: 913行の全体を通読した。j 回目の指摘への手当てと回帰を確かめた。j 回目の指摘は、content-review の [中] 1 件（plugin.json に hooks キーが無い plugin の hooks/hooks.json を読まない）と、この記録の [低] 2 件（package_mode の値を見ない、hook の照合が stem だけ）。確かめたこと: 最小 fixture（work-pkg/fx1、22 plugin）に --check pkg-006 / pkg-002 / all を流した。j の再現 p006h（hooks.json が gaurd-typo.py を登録）は rc1 で、実体が無いことを検出した。p006d（hooks.json だけで登録）は rc0。p006e（guard.sh を登録し、実体は guard.py）は rc1 で、未登録と実体なしの 2 件を出した。plugin.json の hooks の確認: 既定の hooks.json を指す pjdefault は 1 回だけ読み、finding は missing.sh の 1 件。配列の pjarray と inline object の pjinline は pass。外を指す pjescape は fail。hooks.json が `{bad` と `[]` のときは「JSON の object として読めない」で fail。拡張子の無い entry_points（epnoext）は fail。skill-only は not_applicable。package_mode が skil-only・Bundle・[\"bundle\"] のときは、どれも PKG-002 が fail で rc1。--check all でも check を飛ばさない（modetypo は PKG-002 と PKG-006 が fail）。出力 6 件を findings.schema.json（jsonschema 4.25.1）で検証し、errors 0。回帰の確認: python3 scripts/validate-plugin-packages.py は rc0（22 plugin に --check all、blocking 0、advisory は PKG-004/014 だけ）。13 plugin の hooks.json にある command 37 件は、すべて `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/<file>` の平らな形で、新しい PKG-006 の fail は出ない。pytest は PKG 系の 6 ファイルで 208 passed。python3.9 では validate と aggregate の test が 168 passed。lint-script-frontmatter は OK（checked=1）。指摘: [低] command の token の判定（550-556行）は、prefix に \"PLUGIN_ROOT\" を含むかだけを見て、最初の \"/hooks/\" より後ろを hooks/ を基準に解決する。そのため、`python3 ${CLAUDE_PLUGIN_ROOT}/../evil/hooks/guard.py`（hooks/guard.py は実在。fixture prefixesc）は plugin の外を指すのに pass・rc0 になる。逆に `${CLAUDE_PLUGIN_ROOT}/scripts/hooks/x.py`（実体あり。subhooks）は「実体が plugin の中に無い」という偽の fail になる。SKILL.md 100行の「`${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すもの」とも合わない。repo の実 plugin に該当は無い。直し方: prefix を既知の root token（`${CLAUDE_PLUGIN_ROOT}`・`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`・空・`.`）との完全一致に限る。ほかは plugin root から解決し、範囲を確かめる。[低] 読めない hooks file の扱いがそろっていない。hooks/hooks.json が壊れた symlink かディレクトリのときは、578-580行の is_file で黙って読み飛ばす（hjsymlink・hjdir）。`{\"hooks\":\"oops\"}` のように hooks が object でないときも、何も言わずに読み飛ばす（hjshape）。非 UTF-8（hjbad3）は 904行で exit 2 になり、`{bad` は PKG-006 の fail になる。直し方: 作者の主張（hooks/hooks.json を常に読む、読めない hooks file は fail）に合わせ、存在するのに読めない hooks.json は PKG-006 の finding にする。[低] `_resolve_plugin_dir`（56-65行）は --plugin の `../` を拒まない。`--plugin ../plugins/clean` は rc0 で検査が走る。prompts/R1-run-pkg-check.md 103行は「`../` を含む値は exit 2」と書いている。直し方: plugin 名の regex で弾く。DEDUCTION: token の prefix 判定 -3、読めない hooks file -2、--plugin の traversal -2 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-pkg",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

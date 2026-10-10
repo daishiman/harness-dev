@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-automation/scripts/rollback-to-stable.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"ast/pyflakes clean; planning-only (never mutates rubric, only prints plan JSON) so inherently safe; required args validated by argparse; frontmatter complete; minor: params json.loads unguarded (config error raises loudly) and --dry-run is effectively a no-op since script never writes"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-automation/scripts/rollback-to-stable.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 db4d44ad841108956106a1cb5ce44abf57afacc4d8eb0d30fc0095beaef894de をレビュー。実行検証あり）。範囲: rollback-to-stable.py 全 419 行と git diff origin/main（v0.1.0 の素朴な parse・candidates[-1]・現行版の確認なし・write-scope output-dir から、v0.4.0 の節ごとの parse・rubric_id の照合・現行版より古い版だけ・write-scope none への書き直し）、呼び出し元 run-skill-rubric-governance SKILL.md 141-160 行と run-governance-automation SKILL.md 84 行。確かめたこと: pytest tests/scripts-plugins/test_skill_governance_automation__rollback_to_stable.py 99 passed（3.11）/ 99 passed（3.9）。pyflakes 0 件。lint-script-frontmatter OK checked=14。一時 fixture（work-s3/auto/rb）で: 正常 → 現行 1.4.0 より古い 1.3.0 を選び、rc と別 rubric_id の節を除いて exit 0、--params 無し → 警告して既定 0.05、rubric 不在 → 2、versions-md 不在 → 1、ディレクトリ → 2、ceiling が文字列・1e999 → 2、非 UTF-8 の md → 2、全角数字の版 → 2、rubric_id が数値・rubric が list → 2、引数なし → 2。境界値（\"0,03\"・\"3%\"・\"0.01→0.30\"・全角混じり・\"0.02, 0.50\"・2026-13-45・`## [1.2.6]`（警告あり）・HTML コメントとコードフェンスの中の節・装飾付きのキー）も docstring どおり。fixture の外への書き込みなし。repo に eval-log/rubric-versions.md と freeze を持つ governance-params.json が無いことは run-skill-rubric-governance SKILL.md 145・157 行に明記されており、減点しない。指摘: [低] `### 1.2.9 (2026-08-02)` のような ### の版見出しは 78 行の _SECTION_HEADING（^#{1,2}）に当たらず節の区切りにならないため、その下の hash（sha256:1290）と violation_rate_avg 0.01 が、自身には値の無い直前の `## 1.3.0` の値として黙って読まれ、1.3.0 が target_hash sha256:1290 で選ばれる（176-198 行。読めない ## 見出しには警告を出すが ### には出ない。再現 work-s3/auto/rb/v3.md、stderr 空で exit 0）。直し方: ^#{1,6}\\s を節の区切りにし、版らしい ### 見出しにも警告を出す。DEDUCTION: ### の版見出しの混入 -3 → 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

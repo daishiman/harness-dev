@@ -1,1 +1,18 @@
-{"artifact":"plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"genuine code-review(PASS前提なし)。compile OK; 完全な # /// script frontmatter(write-scope:none で read-only, exit 0/1/2, requires-python>=3.9)。CLI契約=呼出側 SKILL.md/workflow-manifest の validate-goal-output.py --file <保存先> --type <weekly|monthly|bimonthly> と一致(argparse choices=TYPE_MAP)。TESTS: test_validate_goal_output.py 11件が golden-sample-weekly.md で PASS + 9変異で FAIL(未展開プレースホルダ/全角数字/欠落必須見出し/NG精神論/不正ファイル名/type明示強制=週報内容を monthly 検証で欠落FAIL/欠落file→1/不正type→2/重複見出し)+usage を実挙動検証。pytest 実走で全緑(3ファイル合計25 passed)。fail-closed(errors>0→exit1, 欠落file→stderr+exit1, argparse usage→2)。設計良: 種別はファイル名推論でなく --type 正本。minor(非ブロック): L322 の table_count-2 は複数表があっても総数から2のみ減算する単一表前提ヒューリスティック、check_goal_section の numeric/bullet 判定も発見的だが契約移植の範囲で機能上妥当。"},"reviewed_by":"harness-ratchet-recovery-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 ffe24e43a6e4549d1a8a9ef8d03e4f921b3f7fc4839db28311b6ec6e3cf7e720 をレビュー。実行検証あり）。範囲: validate-goal-output.py 全1257行（0.3.1）。yearly の必須23見出し（L1002-1010）、1年層のプロジェクト別タスクの禁止（L1130-1131）、やらないことの数え方（TABLE_SEPARATOR_RE L1188-1190 と count_table_data_rows L1193-1205。使うのは L1110 だけ）、read_input（L1244-1253）、語彙契約を読めないときの rc=2（L1216）を読み、j 回目の [中]（1年目標が rc=0 で通る test が無い）と [低]（`|--|` の区切り行）を確かめた。確かめたこと: env -u UBM_VAULT_ROOT で test_validate_goal_output.py と test_notation_consistency.py が 95 passed、plugins/ubm-goal-setting/tests 全体 1021 passed。追加された test_yearly_minimal_document_passes（L824）・test_yearly_without_key_number_fails・test_yearly_with_project_tasks_fails・test_not_doing_table_with_short_separator_is_not_counted が通る。lint-script-frontmatter.py は OK（checked=1、pending=0）。L1002-1010 の23見出しは output-formats.md L1474-1500 と順序まで一致する。work-ubm/probe_vgo.py で、test の helper から作った1年目標と、output-formats の順序と到達点アンカーの注記で作った1年目標は、どちらも rc=0・STATUS PASS。1年目標を --type quarterly で、期報を --type yearly で検査すると、タイトルの不一致で rc=1。やらないことが2つなら rc=1。【今年の最重要数字】が空でも WARN だけで PASS（output-formats L1476 の「存在だけを検査」どおり）。区切り行が `|--|:-:|` でデータ2行なら rc=1（2項目）。`|-|-|` と `| :--: | --- |` でデータ3行なら rc=0。Shift_JIS の --file と --peer は rc=2。--help は rc=0。引数なし・存在しないファイル・ディレクトリ・--type annual は rc=2 で traceback は出ない。書き込みは無い。j 回目の [中] と `|--|` の [低] は直っている。指摘: [低] 区切り行の regex（L1188）が両端の | を必須にしている。GFM では両端の | は省ける。`| やらないこと | 理由 |` の次の区切り行が `|---|---`（末尾の | なし）だと、見出し行と区切り行がデータに数えられ、データ1行で「3項目」として rc=0 になる（偽 PASS。probe の sep-no-trailing-pipe-1row）。先頭の | が無い表は、データ3行でも0項目で rc=1 になる（偽 FAIL）。テンプレートは両端に | を付けるので起きにくい。直し方: 区切り行の regex の両端の | を任意にし、表の行の判定も先頭の | を任意にそろえ、test を足す。[低] read_input（L1244-1253）が encoding=\"utf-8\" で開くので、BOM 付きの UTF-8 では1行目に BOM が残り、「必須タイトル見出し「## 【1年の目標】」がありません」で rc=1 になる（probe の yearly-bom。止める側に倒れるので害は小さい）。validate-cross-level.py は同じ BOM を rc=0 で読むので、2本で扱いが違う。直し方: utf-8-sig で開く。既知で減点しないもの: 全角数字の検査が「（１年）」などを含む行を丸ごと外すこと（SKILL.md L307 と CHANGELOG に記載）。DEDUCTION: 区切り行の両端の | -3、BOM -2 → 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-ubm",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

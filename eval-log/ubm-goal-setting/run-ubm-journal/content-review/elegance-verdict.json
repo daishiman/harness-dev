@@ -2,18 +2,18 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "72a3acce19c981c6b246bd058a23285f7fe6fb1cffcc968afa1f0f7e592de1a8"
+    "skill_md_sha256": "d61ea578f13b2dc585c3ae02b633705a6ef531e9f93842fd10385ffed94af76e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
-  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-10T09:32:36Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 2,
     "dependency_break": 0,
     "smell": 0
   },
@@ -26,15 +26,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Parent owns formal save; composer writes temporary draft only. Expected date/number and outline validator run before and after save; post-save failure never authorizes automatic rewrite.",
-      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
-      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
+      "IN1・IN2: Phase0 の build-journal-context.py は合成 vault で new（2026-08-18、journal_number 389）も regenerate（2026-08-17、388 を維持）も exit 0。--vault-root \"\" と UBM_VAULT_ROOT 未設定は exit 2 で止まる。番号を数えない・推測しない（L205）と write_mode を先に見る（L207〜）の規則が、script の出力（journal_number、existing_file.write_mode）とそのまま対応する。",
+      "下書きと正式保存の分離が SKILL.md L180・L230〜L240、agents/journal-composer.md L59〜L77、references/guarded-publication-contract.md で一貫している。composer は mkdtemp の中に一時下書きだけを書き、親が中央 guard の preview→confirm→authorize→execute で保存し、保存後に同じ validate を再実行する。保存後の失敗で自動の再編集をしない。test_guarded_publication.py が journal の entrypoint でこの流れと受領書の消費を検証している。",
+      "validate-journal-output.py の引数は型で守られている。--expected-number 0、--expected-date 2026-8-18、ファイル無し、未展開の {journal_number} はどれも exit 2 で、内容の違反（番号違いの F04 や Grid ノートの欠落の H01）は exit 1 に分かれる。L240 の「終了コード 2 は内容を修正せず親へ返す」と矛盾しない。golden sample（No.389、2026-08-18）は exit 0。",
+      "習慣の正本を daily-habits.json に、原理原則の出力規則の正本を principle-checklist に一本化し、本文と interview-map の二重定義が無い。warnings の period_source（report／previous_journal）の分離も Phase0 の出力で確かめた。",
+      "OUT1・OUT2 の設計上の前提（Daily へ1件保存して PASS、対話の結果が下書きへ落ちる）は、validate と guard のテストで支えられている。plugins/ubm-goal-setting/tests の関係する9ファイルは 299 passed。rubric（L0+L2）は 100、UBM の evaluate-design-rubric.py（L0+L1+L2）も 100。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / inconsistency / SKILL.md L182 と L230、agents/journal-composer.md L93〜L104] L182 は6 skill 共通の文で「検索結果を knowledge_candidates として担当役へ渡し、返された実使用を実際の出力と照合する」と書く。しかし journal の担当役 journal-composer の入力（コンテキスト JSON、対話ログ、plugin_root、保存予定先、保存可否の5つ）に knowledge_candidates は無く、出力にも実使用の ID は無い。L230 が composer に渡すものも同じ4つ。knowledge-retrieval-contract.md L28 の journal 行は「知識による補助が必要な時に親が検索…採用した知識だけを記録」で、親が完結する設計になっている。加えて、Phase1-3 のどこで検索するかと、search-knowledge.py の --knowledge-dir（相対パスだと exit 2「knowledge-dir must be absolute」）の解決方法が書かれていない。再現: L182 と journal-composer.md の「入力」節を並べ、`PYTHONDONTWRITEBYTECODE=1 python3 plugins/ubm-goal-setting/scripts/search-knowledge.py --knowledge-dir plugins/ubm-goal-setting/knowledge …` を相対パスで実行して exit 2 を確かめる（絶対パスなら exit 0）。直し方: journal では「親が Phase1-3 の中で検索・採用・record-knowledge-usage まで完結し、composer へは渡さない」と書き、KNOWLEDGE_DIR を \"$PLUGIN_ROOT/knowledge\" の絶対パスで解決する一文を足す。",
+      "[low / omission / SKILL.md L207〜L211・L236、references/guarded-publication-contract.md L14] regenerate のとき、manifest の old_sha256 をいつ取るかが journal に書かれていない。契約 L14 は「old_sha256 はコピー開始時の正式先の SHA256…後から再取得して競合を隠さない」だが、journal にはコピーの段階が無い。Phase0 の existing_file は heading_date・number・path・write_mode だけを返し、SHA を持たない。保存の直前に SHA を取ると、対話の間に利用者が Obsidian で同じ Daily を編集していても競合として検出されず、上書きされる。再現: 合成 vault で `build-journal-context.py --date 2026-08-17`（regenerate）を実行し、existing_file に SHA が無いことを見る。直し方: Phase0 で write_mode=regenerate のとき、既存 Daily の SHA256 を取って保持し、それを manifest の old_sha256 に使うと L207〜L211 か L236 に書く（new のときは null）。",
+      "[low / inconsistency / SKILL.md L278〜L281、L207〜L208] L278 の見出しは「保存先の書き込み許可」で、ubm-write-path-guard が 02_Configs/Daily/ への書き込みを許すことを、この skill の保存の前提のように説明している。しかし正式保存は中央 guard の execute から publish-staged-files.py（Bash）で行い、Write/Edit を使わない（L180）。hook は Write/Edit/MultiEdit だけを見て Daily への直接 Write を許すので、L118・L180 の「Daily へ直接書かない」は hook では守られず、規則だけが守る。L207〜L208 の「ジャーナルは Write で全置換される」も、Write で正式保存しない今の設計と言葉がずれている。再現: hooks の ubm-write-path-guard.py を読み、02_Configs/Daily/ への Write を通すことと、L180 を並べる。直し方: L278〜L281 を「hook はこの skill の正式保存（guard execute）には関わらない。Daily への直接 Write は hook が止めないので、L180 の規則だけが守る」と書き直し、L207〜L208 を「正式保存は全置換になる」に直す。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
+  "notes": "incremental profile の focused combined review。作者とは別の独立 evaluator が1 context で (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric の high 0件 を判定した。対象は worktree の未コミットの現物（git diff origin/main -- SKILL.md で差分を確認）。finding は low 3件だけで、high・medium は0件なので PASS・next_action none。実行したコマンドと結果: validate-frontmatter ok、lint-skill-description OK、lint-skill-tree ok（LS-203 の Warn は assets ディレクトリ）、lint-skill-completeness ok、lint-rubric-refs-exist PASS、lint-skill-name ok、lint-path-canonical --skill-md exit 0、lint-manifest-contents OK、lint-skill-dep-step7 ok（disable-model-invocation: false は CHANGELOG の「外部変更ガード受領書と正規 workflow 必須」と commands/ubm-journal.md に整合）。pytest -p no:cacheprovider（test_build_journal_context / test_validate_journal_output / test_guarded_publication / test_write_path_guard / test_heading_references / test_notation_consistency / test_runtime_simplification_contracts / test_knowledge_retrieval / test_content_review_rubric_routing）は 299 passed。fixture は scratchpad/fx_journal.py（合成 vault は test_build_journal_context.py の JOURNAL_TEMPLATE・WEEKLY_REPORT・MONTHLY_REPORT を使い、利用者の vault には触れていない）: new exit 0（No.389、warnings 3件）、regenerate exit 0（No.388）、vault 未指定 exit 2、validate は正常 0・番号違い 1・引数不正 2・Grid 欠落 1、anchor は正常 0・プレースホルダのまま 1。search-knowledge.py は相対パス exit 2・絶対パス exit 0、record-knowledge-usage.py --entrypoint run-ubm-journal --ephemeral は exit 0。publish-staged-files.py は直接実行せず、テストと読解で確かめた。OUT1（test）と OUT2（live-trial）は実際の対話と保存が要るので、静的レビューでは実証していない。範囲外で気づいたこと: (1) L137〜L143 の pre-choice / post-choice の定型文は、選ぶ前に実成果物を見せるとするが、journal では実成果物を作るのに Phase0〜4 が要り、accept-as-is ではゴール（Daily 保存と PASS）に届かない。同じ定型文は repo の多くの SKILL.md に共通する。(2) L182 と同じ文が UBM の6 skill にあり、KNOWLEDGE_DIR の解決はどの SKILL.md にも書かれていない。PASS の射程は静的な設計の妥当性まで。"
 }

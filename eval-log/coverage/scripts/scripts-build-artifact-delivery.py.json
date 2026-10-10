@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/build-artifact-delivery.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 3cd303c3698878fa6a01c3a42684cddb57150509dbf9de703e4ba9e527cf5c0a をレビュー。実行検証あり）。範囲: 全 1414 行。git diff HEAD（+145/-51: PEP 723 header、_read_text L215-224、_split_frontmatter L227-239、_heading_span L242-245、_runtime_root_extra_text L892-905、_ensure_runtime_root_contract L908-955 の書き直し、migrate での _heading_span の利用 L1007、WRITE_SCOPE_HELP L1351-1360、main の例外のまとめ L1401-1404）を重点に読み、_direct_external_mutation_instruction L1043-1092 と _validate_external_guard_wiring・_validate_runtime_root_wiring も読み直した。確かめたこと: 実 repo で --check は ARTIFACT_DELIVERY_OK: 22 plugins、exit 0（読むだけ）。test_root__artifact_delivery・test_root__entrypoint_artifact_first・test_root__ja_contract_parity・test_harness_creator__render_combinators で 243 passed、test_phase3_artifact_delivery_contract で 9 passed（3.11）。test_root__artifact_delivery は 3.9 でも 128 passed。lint-script-frontmatter OK（checked=1）、pyflakes 0 件、--help は exit 0 で書き込み範囲の epilog を表示、--write と --check の同時指定は exit 2。references/ と plugins/ を work-j-s2/adrepo に写し、--repo-root をそこにして --migrate-external-guard → 2 回目の migrate → --write → --check を流した（実 repo には書いていない）。31 ファイル書き換わり、2 回目は差分ゼロ（冪等）、最後の --check は OK。前回の [中] だった run-extract-blueprint/SKILL.md の 138 行の blockquote と run-codex-plugin-install/SKILL.md の 112〜116 行（共有正本へのリンクと『installer に渡す repository root は…明示入力にする』）は、どちらもブロックの直後に 1 回ずつ残った。書き換わった 31 ファイルで、元にあって今は無い正規形以外の非空行は 0 行。ブロックの後ろに文が残ったのはこの 2 件だけ（重複は無い）。--help と header の write-scope（L15-17）は frontmatter・runtime root 節・guard ブロック・直接例の書き換えを宣言している。前回の [中] は直った。前回の [低] も直った: 非 UTF-8 の policy・schema・plugin.json・SKILL.md・投影、ディレクトリになった SKILL.md、書き込めない SKILL.md の migrate はどれも ARTIFACT_DELIVERY_ERROR で exit 1、traceback なし。header あり。本物より前に『### 選んだ深さでの改善の実行 (メモ)』や『### Post-choice …』があってもブロックは本物の見出しの下に入る。値に x---y を含む frontmatter も migrate される。回帰を探した: 旧節とブロックの併存・旧節が最後の節・目的の節が無い場合も、文を落とさず冪等。指摘: [低] 旧節の切り出し（L939 の (.*?)(?=^## |\\Z)）とブロックの後ろの範囲（L932）が、コードフェンスの中の『## 』の行でも節の終わりとみなす。旧節にフェンスで囲んだ『## Example』があると、フェンスの開きと前の文だけがブロックの後ろへ移り、残りはもとの場所に残るので、フェンスの対応が崩れる（文は消えず冪等で、--check も通る。実 repo の 31 件には該当なし）。L905 の \\n{3,} の畳み込みも移した文のフェンスの中の空行を変える。[低] SKILL.md の直接実行の検査に穴がある。L1083 は setup-send-log-db.py を含む行をすべての検査から外すので、`python3 \"$P/setup-send-log-db.py\" --db-id X --apply` も、外部変更のコマンドの行の末尾に # setup-send-log-db.py と書いたものも None になる（migrate 後の文は L1081 の『Construct <MUTATION_ARGV_JSON>』で既に外れるので、この除外は要らない）。L1071-1073 はガードの名前を tokens[1] の basename でしか見ないので、`python3 '-c…os.system(<外部変更のコマンド>)…;1/<ガードの名前>' cancel …` の行も None になる（ガード本体の L780 と同じ原因）。特定の skill の文を書き換える規則（L812-881）がこの汎用の builder に埋め込まれていることも、責務の混在になっている。直し方: L1083 の除外を消し、tokens[1] が - で始まるものと、ガードの写しの path でないものを canonical と扱わない。DEDUCTION: 100 -2（フェンスの中の『## 』で節を切る）-3（直接実行の検査の穴と skill 固有の規則の混在）→ 95。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s2",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

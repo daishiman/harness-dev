@@ -2,21 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-plugin-package-check",
-    "skill_md_sha256": "a97b4789e6fddcab95dea9d1dcb3e311f63fb76fefa16cb0d81890b8a7eff50c"
+    "skill_md_sha256": "4570962d23bb959e33bd806c6f75701bea14954b18a9bba1c9e94ee4038cfd3a"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "/root/independent_review (independent focused design)",
-  "reviewed_at": "2026-10-05T08:51:14.559099Z",
-  "iterations": 2,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 2,
     "dependency_break": 0,
     "smell": 1
   },
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-10-10T14:26:03Z",
+  "iterations": 3,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -25,15 +25,21 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "Actual shared loader and dynamic resolver now invalidate current closure together; existing canonical provider and caller failure policies retained."
+      "j 回目の [medium]（run を区別せず mtime が最新のログを採るので、偽の緑と偽の赤が出る）は直った。aggregate は --run と --phase を必須にし、`pkg-*/<run>.json` だけを読む（L241-242）。偽の緑の再現（ag1 の s_otherrun。r1 は全 pass、r2 は pkg-batch が無い）: r2 は rc1 で、PKG-002〜008 が「この run のログが無い」の fail。偽の赤の再現（s_redother。別の run に pkg-011 の fail と pkg-batch の fail がある）: r1 の phase 0 は rc0。ログが 0 件（s_none）は rc1 で verdict_note が付く。",
+      "fail-closed の各経路を fixture で確かめた。壊れた JSON・壊れた symlink・ディレクトリの pkg-batch は、manifest の step 2 が割り当てた PKG-002〜008 の fail になり、traceback は出ない。同じ run の食い違い（s_conflict）は fail を採る。skill-only の evaluator ログだけなら、PKG-002/004 は pass、ほか 13 件は not_applicable（Key Rule 4・R1 L135 と一致）。skill-only と bundle の混在は not_applicable を使わない。phase 2 の全 pass で PKG-013 は 013a のログから単一の key に畳まれ（R2 CONST_004 と一致）、rc0。--run・--plugin の traversal、--phase 3、--out がディレクトリはどれも rc2。",
+      "IN2: 出力 16 件を run-report.schema.json で検証し、errors 0。pkg_check_failed は fail の 9 run に 1 行ずつで、pass の run では書かない（Gotcha 4・Key Rule 6 と一致）。j 回目の low の R1 CONST_002 と §4.2 は、pkg-batch と「同じ run だけ読む」を足して直った（R1 L24・L103）。Step 9（L193-197）の記述は、script の引数（--run・--phase・--pkg・--out）と、読む範囲・fail の数え方に一致する。",
+      "OUT1: PKG の定義は ref-pkg-contract に置いている。PKG-002〜008/014 は evaluator へ fork で委譲している（Key Rule 2、Step 2・7）。Step 5/5.5/6 の役割を分けた表（L204-214）も保たれている。C5: render-findings-score.py の機械採点は 97/100（threshold 80）で、減点は NM-003 の low 1 件だけ。pending_human の BD-004 は LLM judge として PASS と判定した。description の「出荷前に検査したい」は L105 の --phase all の注記が受け、「PKG-001〜015 gate を一括実行したい」は局面カタログ Step 0-10 が受ける。"
     ],
     "negative_feedback": [
-      "Inherited nonblocking NM-003 (low): scripts/ has non-py file: smoke-plugin-uninstall.sh"
+      "[low / omission / scripts/aggregate-pkg-findings.py:210-219] pkg_id も pkg_checks も無く、status だけを持つログ（例 `{\"status\":\"pass\"}`）が pkg-batch にあると、fallback の PKG-002〜008 の 7 件がすべてその status になる。再現: ag1 の s_bare（pkg-001・pkg-009 は pass、pkg-batch は `{\"status\":\"pass\"}`）で --phase 0 を流すと、rc0・9 件 pass になる。evaluator はこの形を書かないので、実害の経路は手書きのログに限られる。しかし docstring 33-37行の fail-closed の趣旨に合わない。直し方: ID を 2 件以上割り当てた出力先では、evaluator 形式か pkg_id を求め、それ以外は読めないログとして fail にする。",
+      "[low / inconsistency / prompts/R1-orchestrate.md:64] 出力契約に「schemas/run-report.schema.json（additionalProperties: false）」とある。しかし schema で閉じているのは pkg_checks の key だけで、トップレベルは開いている。aggregate は run・phase・verdict_note をトップレベルに出し、schema の検証は通る（ag1 の出力 16 件で errors 0）。R1 だけを読むと、これらを違反とみなしうる。直し方: 「pkg_checks の key は PKG-001〜015 に閉じる」と書き、任意のキーとして run・phase・verdict_note を挙げる。",
+      "[low / inconsistency / SKILL.md:21-68（frontmatter）] j 回目から続いている。goal_seek と feedback_contract はあるが combinators の宣言が無い。そのため、pair の evaluator の PKG-014 がこの skill を fail にする（validate-plugin-package.py --plugin harness-creator --check pkg-014 の F-PKG014-017/018）。直し方: combinators を宣言するか、PKG-014 の規則を fleet の規約に合わせる。",
+      "[low / smell / rubric NM-003] j 回目から続いている。scripts/ に .sh がある（smoke-plugin-uninstall.sh など）。機械採点の -3 はこの 1 件。"
     ],
-    "iteration": 2,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "user branch review iteration2 independent F4002 dependency omission",
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
     "next_action": "none"
   },
-  "notes": "Static DESIGN PASS for new two-reference declaration and current all-criteria contract preservation only. Fresh source/import/policy/rubric judgments plus exact-body comparison and copied mutation/missing-file proof: /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/harness-creator/run-plugin-package-check/focused-design-review.json. Full Capability build, package/lifecycle/install tests, nested runtime/user dialogue, external mutation and release behavior are NOT accepted here. New independent focused judgments projected into legacy elegance/rubric artifacts; no old PASS reuse or SHA-only update; branch30-method coverage separate. Current rubric 97/100 threshold80 high0; BD004 independently adjudicated; inherited low/medium observations disclosed."
+  "notes": "rubric の機械採点は 97 点で、減点は NM-003 の low 1 件だけ。negative_feedback の low 4 件は elegance と同じ combined review の投影で、どれも判定規則（high か medium が 1 件でもあれば FAIL）にはかからない。作者とは別 context の独立評価者（pkg）が、incremental profile の focused combined review で 1 context でまとめて判定した。判定した観点は C1 矛盾、C2 漏れ、C3 規約、C4 依存、C5 rubric の high が 0。対象は worktree の現物（SKILL.md sha256 4570962d23bb959e33bd806c6f75701bea14954b18a9bba1c9e94ee4038cfd3a）。流したコマンドと rc: shasum -a 256 SKILL.md（2 スキルとも担当表の値に一致）。PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q で tests/scripts-plugins/test_harness_creator__{aggregate_pkg_findings,run_pkg_015,lint_pkg_009,validate_plugin_package,render_pkg_findings}.py と tests/scripts-root/test_root__validate_plugin_packages.py を流し、208 passed・rc0。python3.9 では aggregate と validate の test が 168 passed。python3 scripts/validate-plugin-packages.py は rc0（22 plugin、blocking failure 0、advisory は PKG-004・PKG-014）。lint-script-frontmatter は validate-plugin-package.py と aggregate-pkg-findings.py の両方で OK。validate-plugin-package.py --plugin harness-creator --check pkg-014 は rc1（findings 34 件）。fixture は scratchpad の work-pkg/fx1（validate 用の 22 plugin）と work-pkg/ag1（aggregate 用の fixture repo、CLAUDE_PROJECT_DIR で指定）。aggregate-pkg-findings.py を ag1 で 21 通り流した。CLAUDE_PROJECT_DIR を ag1 に向け、manifest は実物を使った。rc0: s_allpass・s_otherrun r1・s_redother・s_skillonly・s_p014 phase 0・s_bare・s_phase2。rc1: s_otherrun r2・s_none・s_brokenbatch・s_symlink・s_conflict・s_p014 phase 2・s_mixmode・s_dir・--pkg 指定。rc2: --run の traversal 2 件、--plugin の traversal、--phase 3、--out がディレクトリ。Step の出力形式も確かめた。run-plugin-validate-strict.sh・lint-pkg-009.py・sandbox-plugin-lifecycle.py・validate-plugin-permissions.py・run-pkg-015.py は、どれも pkg_id と status を持つ JSON を出し、aggregate が読める。機械採点: render-findings-score.py --kind skill は rc0、score 97、threshold 80、rubric_version 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241。findings は NM-003 の low 1 件。pending_human は BD-004 の 1 件で、LLM judge として PASS と判定した。前回の [medium] の確認: j の偽の緑（s_otherrun r2）は rc1 で、PKG-002〜008 がログ無しの fail になった。偽の赤（s_redother）は rc0 になった。よって直ったと判断した。IN1 は満たす。前回の low のうち、R1 CONST_002 は直った。combinators と NM-003 は残っている。新しい low は 2 件: aggregate の単発形式の fallback と、R1 L64 の additionalProperties の記述。criteria_evaluated は frontmatter の feedback_contract.criteria にある IN1・IN2・OUT1 の全件。判定: high と medium が 0 件なので、elegance と rubric の両方を PASS とした（low 4 件は negative_feedback に残す）。評価の射程は、静的な設計の妥当性と、最小 fixture での script の実行まで。Claude Code に plugin を入れて hook を発火させる live trial や、Skill 経由の fork 委譲の実走はしていない。incremental profile の focused combined review なので、30 種の思考法は使っていない。"
 }

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 6af4fb3a00ab095a85866b5bac46810948b7e4ec7949d826229703c04c3fc9fb をレビュー。実行検証あり）。範囲: 24 行の転送 script 全体と git diff origin/main（PEP 723 header の追加、旧 inline resolver を plugin_resources.forward_external_intelligence(globals()) へ置換。作業ツリーで mode 100644→100755）、転送先 plugins/skill-governance-adapters/scripts/build-external-intelligence.py、plugins/harness-creator/scripts/plugin_resources.py L62-87。確かめたこと: 実 repo で --help rc0、引数なし rc2（argparse）、未知の subcommand rc2、--state-dir <scratch> init rc0（scratch の下に entries/・events.jsonl・index.json だけを作る）、search rc0。python3 -I で import すると転送先の CANONICAL_PATH は skill-governance-adapters を指し、run_name は main 実行時だけ __main__。sys.path に harness-creator/scripts が残るが、同名 module（tenant_runtime）は中身が同じで実害なし。provider を置かない隔離 fixture（iso1: extract-plugin-root.py あり、iso2: なし。HOME・CLAUDE_CONFIG_DIR・CODEX_HOME を scratch に向ける）では --help でも RuntimeError の traceback で rc1。header の contexts [A, C, E]・network false・write-scope「転送先に従う」・requires-python >=3.10 は転送先と合う。lint-script-frontmatter.py（scripts ディレクトリを指定）OK checked=30。pytest（9 file・計 274 passed）: plugins/harness-creator/tests/test_verification_evidence_input_guards.py、test_harness_creator__external_intelligence.py・test_harness_creator__external_intelligence_hook.py・test_harness_creator__external_intelligence_runtime.py・test_harness_creator__plugin_resources.py・test_harness_creator__auto_record_lesson.py・test_harness_creator__lint_knowledge_loop_r4.py・test_harness_creator__validate_build_plan.py、tests/scripts-root/test_root__artifact_delivery.py。指摘: [低] provider（skill-governance-adapters）を解決できない環境では plugin_resources.py L77 の RuntimeError が traceback のまま rc1 で出る。header は RuntimeError を宣言しているが、転送先の exit 1 と区別できず、--help も同じになる（iso1・iso2 で再現）。直し方: 転送の前に RuntimeError を捕まえ、1 行の [ERROR] と決めた exit で返す。DEDUCTION: -3（[低] provider 欠落時の traceback）→ 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

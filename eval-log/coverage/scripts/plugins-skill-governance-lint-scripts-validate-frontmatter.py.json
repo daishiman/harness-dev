@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/validate-frontmatter.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":91,"notes":"self-test ok (schema==fallback) and runs cleanly. SSOT schema loader walks up for capability-manifest.schema.json with documented fallback + scoped except (JSONDecodeError,KeyError,OSError) + --self-test drift gate. Robust parser, warn-vs-hard exit separation, clear enums. Minor: file is long with many inline rules but single-responsibility holds."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine review（sha256 4765880b31c735646435f46dc5940493935984baf8c12388aae5cf1daac08f27 をレビュー。実行検証あり）。範囲: 546 行全体と git diff origin/main（_without_yaml_comment・_unquote、block list の中のコメント行と空行で list を終わらせない、字下げなしの - item、ref-* を同じ skills dir・plugins/*/skills・.claude/skills で探す、読めない file を指摘にする、--help、未知 option→exit 2）。requires-python >=3.10 のため 3.9 では流していない。確かめたこと: pytest（test_skill_governance_lint__validate_frontmatter.py・_s2・test_skill_governance_hooks__hook_validate_skill_md.py・test_plugin_lint_coverage.py・test_iter_improve_contract.py・test_harness_creator__render_frontmatter.py・_main_r4・test_root__skill_fixture_runner.py）230 passed。--self-test→ok（schema == fallback）。全 plugin の skills に --skills-dir で当てて全部 exit 0（warn だけ）、.claude/skills は 21 skill の version/owner/kind 欠落などで exit 1（CI 対象外）。origin/main 版と全 dir の出力を比べて同一（195 行）で、実データでの退行は無い。fixture: コメントつき list・'a # b'・CRLF→正しく読む、非 UTF-8・dir・無いパス→exit 1、BOM→必須欠落で exit 1、--skills-dir の不在・引数なし・--bogus→exit 2、--help→exit 0。書き込みは無い。lint-script-frontmatter をこの scripts dir に流して OK。指摘: [低] scalar のはずのキーが list だと traceback で exit 1（kind の block list→337 行 TypeError unhashable、effect: [..]→386 行、source→404 行、disable-model-invocation→455 行、name→469 行 AttributeError）。--skills-dir では 1 件の traceback で残りの skill の報告が止まる。[低] 単一ファイルの形は args[0] だけを見て、2 つ目以降のパスや後ろの option を黙って捨てる（533-534 行。good bad の順で exit 0）。いまの呼び出し元は 1 件ずつ渡しているので実害は無い。[低] 読める YAML の範囲が狭く、description: >- の折り返しは値が \">-\" になって trigger count = 0 の誤検出、flow list の引用符の中のカンマ（[\"a,b\"]）は 191-196 行の split で切れて誤 MISSING_REF。[低] パス形の ref は repo の外も通る（245-247 行。/etc/hosts が OK）。lint-rubric-refs-exist.py はリポジトリの外を FAIL にしており、扱いが食い違う。[低] --skills-dir が空のディレクトリでも「ok: … (0 skills)」exit 0（516-528 行。件数は出る）。DEDUCTION: list 値の traceback -3、余分な引数の黙殺 -2、YAML の範囲 -2、repo の外のパス -2、0 件の ok -2 → 89。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":92,"notes":"self-test exit0 (schema-drift/CI-wiring meta-checks PASS含む)。narrow except(JSONDecodeError/OSError)で診断付き、bare exceptなし。read-only(network:false/write-scope:none)。frontmatter完備。KL検査が小関数分割で可読。drift/wiring検査がassertでpython -Oで除去されうるがself-test専用なので許容"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 2c66016fec1c10e6631087115e728553a6e35226874a14caecc02206d775703e をレビュー。実行検証あり）。範囲: 全 905 行と origin/main からの差分、依存の plugins/harness-creator/scripts/plugin_resources.py。差分の中身は、requires-python の >=3.9 への変更、from __future__ import annotations、plugin_resources の import と ImportError 時の代わり、load_json_safe の UnicodeDecodeError、KL-007 の理由文、canonical_external_intelligence_engine の resolve_root、main の exit 2。確かめたこと: test_harness_creator__lint_knowledge_loop_r4.py は 3.11 で 57 passed、python3.9 でも 57 passed。3.9 で ast.parse(feature_version=(3,9)) が通り、-W error で import でき、resolve_root は本物の plugin_resources から来る。注釈以外の場所に、BitOr、list[...] などの添字型、match 文、dataclass は無い（AST で確認）。注釈の `X | None` は future import により評価されない。3.9 で --self-test は PASS（drift 検査と CI 配線検査も PASS）。--store-only --strict plugins/harness-creator は pass（error 0・warn 0）。fixture は 3.11 と 3.9 の両方で流し、結果は同じだった。契約 v1 の skill に正本 engine を byte copy すると pass。engine を変えると KL-008 の不一致で、--strict なら exit 1。engine の欠落と runtime_scope=global は KL-008 error。--store-only で consult_at=[runtime] なら KL-007。knowledge/ の壊れた JSON と非 UTF-8 は KL-002 の finding。index が配列なら KL-007。SKILL.md が非 UTF-8 なら exit 2。knowledge/ が無ければ skip。存在しない dir やファイルを渡すと exit 2。引数なしと --bogus は argparse の exit 2。plugin_resources の無い深い場所へ写すと KL-001..007 は動き、KL-008 は sentinel のパスで「正本 engine が見つからない」error になる。ここは 27-28 行の主張どおり。書き込みは無く、write-scope none と一致する。lint-script-frontmatter.py は scripts ディレクトリで OK (checked=30)。指摘: [低] 写しを持ち出しても動くという 27-28 行の主張が、一部で崩れる。72 行の Path(__file__).resolve().parents[3] は、親が 3 段しかない場所（例: /Users/<名前>/lint-knowledge-loop.py）では import 時に IndexError の traceback になる（__file__ を差し替えて評価して再現）。深い場所に写した場合も、--self-test は 771-772 行で sentinel のパスを read_bytes し、FileNotFoundError の traceback（exit 1）になる。parents の長さを見て代わりの値を使い、self-test は正本が無ければその段を飛ばせば直る（-3）。 [低] ヘッダの requires-python は >=3.9 だが、14 行で依存に挙げた plugin_resources.py のヘッダは >=3.10 を宣言している。実際には 3.9 で import と KL-008 の解決まで動くので、依存側の宣言が狭すぎる。ヘッダ同士が矛盾している（-2）。 [低] 888 行と 895 行の stderr の JSON は ensure_ascii が既定のままで、日本語が \\uXXXX になる（897 行の stdout は ensure_ascii=False）。また、ファイルを渡したときも「ディレクトリが存在しない」と出る（-2）。DEDUCTION: -3-2-2 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

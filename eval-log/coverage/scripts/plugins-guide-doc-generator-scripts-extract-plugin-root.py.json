@@ -4,10 +4,10 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 88,
-    "notes": "正本 scripts/extract-plugin-root.py と byte 一致（sha256: 5a3474b7d67c255990481e41726bc4a173283a00b5b8619d53e3737afcf00223）。正本のレビュー結果を適用。cmp で一致を確認し、このコピーも個別に py_compile OK。正本の要点: 兄弟 plugin の root を、自 plugin、`<root>/../<name>`、installed_plugins.json、cache の順に探し、manifest の name が一致した候補だけを返す。見つからなければ exit 1 (fail-closed)、不正な名前は exit 2、読取りだけ。`# /// script` frontmatter あり。TESTS: tests/scripts-root/test_root__extract_plugin_root.py 10 件全 PASS (vendor コピーから自 plugin を起点に解決するケースを含む)。scripts/lint-vendored-ssot.py が、manifest を持つ全 plugin への同梱と byte 一致を強制する。指摘は正本と同じ (いずれも low): prerelease の version dir が semver より後ろに並ぶ。最後の fallback が、uninstall 後も cache に残った古い version を拾いうる。別の marketplace にある同名 plugin も候補になる。"
+    "score": 98,
+    "notes": "genuine review（sha256 4dbdbf4948d71439d4f96b6ffb8b105a15055443d4c2be01fc8905579d81d841 をレビュー。実行検証あり）。canonical scripts/extract-plugin-root.py と byte 一致（cmp で確認）。scripts/lint-vendored-ssot.py が manifest を持つ全 plugin への写しとして byte 一致を強制している。結論は canonical のレビューと同じ。範囲: 全 257 行。origin/main からの差分（0.2.0。SEMVER_RE の prerelease と build metadata、_prerelease_key による正式版 > prerelease と識別子の比較、他プロジェクト専用（scope=project/local）の登録の除外を _Blocked で path と marketplace 単位の plugin dir の両方に効かせること、兄弟配置・同じ marketplace の version 群・cache の候補への適用）を重点に読んだ。確かめたこと: tests/scripts-root/test_root__extract_plugin_root.py（この script を呼ぶ）で 25 passed（3.11.4 と 3.9.18）。pyflakes は 0 件、lint-script-frontmatter は OK。合成 fixture（CLAUDE_CONFIG_DIR を work-s3 の下に向ける）で、1.0.0 > 1.0.0-rc.2 > 1.0.0-rc.1 > 1.0.0-alpha と semver でない dir は最後、private にしか登録の無い marketplace の全 version が除かれ、同じ path に有効な登録があれば共有 install として残ることを確認。壊れた installed_plugins.json（不正 JSON、root が list、plugins が list、entry が文字列、installPath が数値、projectPath が数値）の 6 種はどれも traceback なしで次の候補へ進む。無引数と不正な plugin 名は exit 2、--help は 0、未知の option は 2、見つからないと 1。指摘: [低] installPath または projectPath が symlink loop だと、Path.resolve が RuntimeError を上げて traceback で exit 1 になる（166 行と 171 行の resolve、132 行の _Blocked.__contains__。110 行の _is_within は OSError と ValueError しか捕まえない）。installPath を相互参照の symlink の下に向けた fixture で 3.11 と 3.9 の両方で再現した。ほかの壊れた登録は飛ばして次へ進む設計なので、これだけ扱いがそろっていない。DEDUCTION: symlink loop の traceback -2 → 98。"
   },
-  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
   "checked": [
     "soundness",
     "responsibility",

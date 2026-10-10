@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-plugin-package-check/scripts/lint-pkg-009.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 d9b1d72f2f52e85247a63713932219262fffaee9e108e2e5c5c3643a4de4dfb7 をレビュー。実行検証あり）。範囲: 119行の全体を通読し、`git diff HEAD` で前回の指摘への手当てを確認。確かめたこと: 前回の [中] は直っている。`normalize`（67-89行）が集約側の読む {pkg_id, status, last_run_at, findings, analysis, source_exit_code} を出し、aggregate-pkg-findings の fixture e1 で fail として数えられた。前回の [低] も直っている。56-59行が兄弟 plugin や lint-external-refs.py の欠落を LinterUnavailable にし、fail JSON と exit 2 を出す（test あり）。存在しない --skills-dir は status fail・rc1。lint-external-refs.py の出力の形（132・166・178-182行）と normalize の読み方が合う。pytest は PKG 系 5 ファイルで 53 passed、python3.9 で 42 passed。lint-script-frontmatter は OK。指摘: [低] 自前の argparse が無い。`--help` が lint-external-refs.py にそのまま渡って help の本文は捨てられ、status fail の JSON（「JSON を返さなかった (exit 0)」）と rc2 になる（101-113行）。--help を自分で処理する。[低] normalize は external_ref_count が 0 かを確かめない。count=3 で reports が空なら pass になり（84行）、docstring 70行の「外部参照 0 件…だけを pass」と合わない。pass の条件に external_count == 0 を加える。DEDUCTION: --help -2、件数 0 の未確認 -2 → 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

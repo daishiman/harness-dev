@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-plugin-package-check/scripts/sandbox-plugin-lifecycle.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 76eccffa2cbfc0e35cf4fea139adee833bcf4d8906de4f847599eeffeb6302a6 をレビュー。実行検証あり）。範囲: 387行の全体を通読し、`git diff HEAD` で前回の指摘への手当てを確認。確かめたこと: 前回の [中]（uninstall 後に settings の残骸が残る）は直っている。182行で `.claude/settings/<name>` を消し、sb1 の persist uninstall が pass で残骸なし。test_uninstall_removes_settings_namespace_dir がある。前回の [低] も直っている。upgrade の再実行は 309行で upgrade_source を消し、persist upgrade を 2 回流して 2 回とも pass。配列の manifest は 88-89行で fail JSON・rc1。兄弟 plugin の欠落は external_lint_path の RuntimeError を 374行で受けて fail JSON（test_missing_sibling_lint_plugin_is_fail_json・test_missing_lint_script_in_sibling_is_fail_json）。深い入れ子・version 無し・非 UTF-8 の manifest は fail JSON・rc1・traceback なし。plugin が無ければ rc2。一時 sandbox での install/uninstall/upgrade はすべて pass。test_harness_creator__sandbox_plugin_lifecycle.py に test が 12 件。pytest は PKG 系 5 ファイルで 53 passed、python3.9 で 42 passed。lint-script-frontmatter は OK。fixture は work-j-s1/spl（fakehome・sb1）。指摘: [低] --sandbox-root を守る仕組みが無く、今回の修正で影響が広がった。fakehome を --sandbox-root に渡すと、114-115行の `_replace_symlink` が既存の実ディレクトリ `.claude/skills/run-demo`（real.txt 入り）を rmtree して symlink に置き換えた。さらに uninstall の 182行が `.claude/settings/demo` をディレクトリごと消し、plugin が置いていない user.json まで消えた。docstring 21-22行の「user Claude home are read-only inputs」と合わない。呼び出し元（smoke-*.sh）は --sandbox-root をそのまま渡すだけで、既定の経路で実 home を渡すものは無いため [低] にとどめる。既定の一時ディレクトリ以外を受けるときは、空か sandbox の印があることを確かめてから壊す。DEDUCTION: --sandbox-root の無防備 -4 → 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

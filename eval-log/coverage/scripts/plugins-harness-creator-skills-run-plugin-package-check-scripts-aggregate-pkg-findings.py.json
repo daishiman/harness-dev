@@ -1,1 +1,18 @@
-{"artifact": "plugins/harness-creator/skills/run-plugin-package-check/scripts/aggregate-pkg-findings.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "PASS", "score": 83, "notes": "Sound; JSONDecodeError try/except, append-only mkdir-guarded write (non-destructive), correct REPO_ROOT depth. Minor: unused glob/os imports, no # /// script frontmatter (docstring only), arbitrary status pollutes verdict dict but excluded from total."}, "reviewed_by": "workflow-code-review", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-plugin-package-check/scripts/aggregate-pkg-findings.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 4ab9be302befaa59cd3c5ff33c53e3e8c7fb3b9d1376d4126ec55b440bd94713 をレビュー。実行検証あり）。範囲: 334行の全体を通読した。j 回目の指摘への手当てと回帰を確かめた。j 回目の指摘は、content-review の [中] 1 件（run を区別せず mtime が最新のログを採る）と、この記録の [低] 3 件（ログが無いと緑、PKG-BATCH の key、壊れた symlink の traceback）。確かめたこと: fixture repo（work-pkg/ag1。CLAUDE_PROJECT_DIR を向け、manifest は実物）で 21 通りを流した。全 pass の r1 は rc0。j の偽の緑（r1 は全 pass、r2 は pkg-batch が無い）: r2 は rc1 で、PKG-002〜008 が「この run のログが無い」の fail になった。j の偽の赤（別の run に pkg-011 の fail と pkg-batch の fail がある）: r1 の phase 0 は rc0 になった。ログが 0 件のときは rc1 で、9 件が fail になり、verdict_note が付く。skill-only の evaluator ログだけで --phase all を流すと rc0（PKG-002/004 は pass、13 件は not_applicable）。pkg-batch が壊れた JSON・壊れた symlink・ディレクトリのときは、PKG-002〜008 が fail になり、traceback は出ない。同じ run で pkg-batch が pass、pkg-006 が fail のときは fail を採る。phase 0 では pkg-batch にある PKG-014 の fail を数えず rc0、phase 2 では数える。skill-only と bundle が混ざると not_applicable を使わず rc1。phase 2 の全 pass（PKG-013 は 013a の単発ログ）は rc0。--pkg PKG-006,PKG-013a は 2 件だけを数える。rc2 になるもの: --run の `2026-10-10-../../x` と `../x`、--plugin の `../x`、--phase 3、--out がディレクトリ。出力 16 件を run-report.schema.json で検証し、errors 0。meta-harness.jsonl には fail の 9 run が 1 行ずつ書かれ、repo の .claude/logs には書かない。pytest は PKG 系の 6 ファイルで 208 passed、python3.9 では 168 passed。lint-script-frontmatter は OK（checked=1）。指摘: [低] pkg_id も pkg_checks も無く status だけを持つログ（例 `{\"status\":\"pass\"}`）が pkg-batch にあると、210-219行で fallback の PKG-002〜008 がすべてその status になる（fixture s_bare で rc0、9 件 pass）。evaluator はこの形を書かない。しかし docstring 33-37行の fail-closed の趣旨に合わない。直し方: ID を 2 件以上割り当てた出力先では、evaluator 形式か pkg_id を求め、それ以外は読めないログとして fail にする。DEDUCTION: pkg-batch の単発形式 -3 → 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-pkg",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

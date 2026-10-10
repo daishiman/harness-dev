@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/agents/journal-composer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 2b58a4f683e149f6e288f0cc3f7ce00ea7325dd7c3073374e7ee07fb8d52fead をレビュー。実行検証あり）。範囲: 154行（origin/main から +85/-39、HEAD から +12/-13）。tools は「Read, Write, Bash」で、カンマ区切りの明示 allowlist（AG-001 の FAIL 条件には当たらない）。確かめたこと: 共通の実行検証: `pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。`lint-agent-prompt-section.py`（ubm の agents 9本）→ OK: 9 agent file(s) passed (Tier 1)、rc=0。`lint-agent-prompt-content.py` → 9本とも7層に準拠、rc=0。`validate-frontmatter.py` → rc=0。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（WARN 5件は生成前の出力パスで正当）。個別: validate-journal-output.py の引数（--file・--expected-number など）と終了コード 0/1/2 は本文と一致する。一時下書きだけを書き、正式保存は親が中央 guard で行う境界は run-ubm-journal/SKILL.md 230〜240行と一致する。指摘: [低] 57行は週報の習慣目標（4群）の扱いだけで、Phase0 のコンテキストの daily_habits（daily-habits.json の固定習慣。build-journal-context.py 73行）をどの節に書くかが無い。147行「validate-journal-output.py が見るのは骨格の形（見出し・チェックボックス・番号・日付）」も、同スクリプト 26〜27行の H01/H02（固定習慣の記録が search_scopes の節にあるかの検査）と食い違う。-3。[低] 目標の source=unresolved のとき（G03 と build-journal-context.py の warning）に目標本文をどう書くかが無い。-2。[低] AG-002（`## Isolation` か `## Context Boundary`）と AG-004（`## Handoff` か `## Output Contract`）の見出しが無い。中身は7層の Layer の節にあるので -2 にとどめる（ubm の agents 9本に共通）。DEDUCTION: -3 -2 -2 = -7 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

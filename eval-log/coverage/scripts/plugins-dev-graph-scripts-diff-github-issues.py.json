@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/dev-graph/scripts/diff-github-issues.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda をレビュー。実行検証あり）。範囲: 全 207 行と git diff origin/main（is_package_member への共通化 113、missing_issues の counts・unresolved_count・converged・next の分岐 159–170）。呼び先の gh-bridge.py の issue-fetch と normalize_issue（updated_at への変換）も読んだ。確かめたこと: dev-graph の全 test（python 3.11.4、pytest -p no:cacheprovider -q plugins/dev-graph/tests）は 273 passed / 9 failed（9 件は test_skill_criteria_evidence の既知の失敗で対象と無関係）。test_build_graph_node・test_shared_writer_sync_regressions・test_register_package の 3 ファイルは 103 passed。pyflakes は clean。lint-script-frontmatter plugins/dev-graph/scripts は OK (checked=18 pending=0)。requires-python は >=3.10 なので 3.9 での確認は対象外。fixture（config・graph 2 node・--remote）: 通常 node は remote-newer の title import（update_input に expected_graph_revision=3）、package member は local-authority の title export と state の unsupported-export conflict で、changes=2・unresolved_count=1・converged=false。偽の gh（DEV_GRAPH_GH と PATH の先頭に置き、呼び出しをログに記録。外部送信なし）で --remote なしに流すと、gh-bridge issue-fetch が `issue view 7/8 --repo acme/demo --json ...` だけを呼ぶ（読み取りのみ）。--output と --graph を root の外にすると rc 2 path escapes で書き込みなし。--help は rc 0。test_build_graph_node（subprocess）と regressions の test_missing_conflicted_or_flagged_issues_are_not_converged が pass。指摘: [中] 以上なし。[低] 例外は ContractError（rc 2、203–207）しか捕まえない。存在しない --repo-root や config が無い（init 前）と FileNotFoundError、config・graph・--remote・--decisions が object でない JSON（`[1]`）や --remote の issues の値が object でないと AttributeError で、どれも traceback の rc 1 になる（再現済み）。読み取りだけなので副作用は無い。直し方: main で OSError・AttributeError・TypeError も rc 2 の JSON 拒否にまとめるか、読み込んだ後に isinstance(dict) を確かめる。[低] 7 行目 `# requires-python = \">=3.10\"` は repo の正規形 `key: value` でなく、lint-script-frontmatter が読まない。DEDUCTION: [低] 壊れた入力で traceback -4、[低] requires-python の表記 -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/plugin_resources.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 b6c58e01e1b11cdd808c780bed0b832785307dab284d4a1353f08094a46f5015 をレビュー。実行検証あり）。範囲: 87 行の全文（origin/main には無い新規ファイル。git diff origin/main で全体が差分）。sibling plugin の root/resource 解決と、run-build-skill の旧 path 2 本（build-external-intelligence*.py）から skill-governance-adapters への転送をまとめる import 用 module。確かめたこと: resolver は解決後の path ごとに _RESOLVERS に持ち、sys.modules には登録しない（33-50 行。test で sys.modules の同名 entry が変わらないことも確認）。resolver が無ければ ResolverUnavailable（39 行）、forward_external_intelligence はそれを捕まえて sentinel path にし、is_file でなければ RuntimeError（70-80 行）。import のときは run_name=None で転送先の __main__ 節を走らせず、dunder を除いて namespace に写す（81-87 行）。header の write-scope は『自身は書かない。転送先の write-scope の書き込みが起きる』と実装どおり。実行: tests/scripts-plugins/test_harness_creator__plugin_resources.py 単独で 4 passed。利用者の test 9 ファイル（同 __plugin_resources・__external_intelligence・__external_intelligence_hook・__external_intelligence_runtime・__lint_knowledge_loop_r4・__lint_pkg_009・__run_pkg_015・__sandbox_plugin_lifecycle、plugins/harness-creator/tests/test_sync_task_state.py）で 204 passed（PYTHONDONTWRITEBYTECODE=1、-p no:cacheprovider）。scratchpad の probe で、resolver 不在→ResolverUnavailable、resolver が無い置き場の caller→RuntimeError（provider unavailable）を確認。frontmatter lint は親ディレクトリ plugins/harness-creator/scripts で OK（checked=33、このファイルの違反なし）。py_compile OK。指摘: [低] 直接実行と --help は何もせず exit 0（shebang と 100755 を持つ import 専用 module だが、header にも docstring にも import 専用と書いていない）。header に『import 専用。CLI なし』と書くか、__main__ で usage を出して 2 を返す。[低] 71 行の caller.parents[3] は caller が <plugin>/skills/<s>/scripts/ にある前提。浅い path の caller では IndexError: 3（probe で再現）。現行の caller 2 本は前提を満たす。len(caller.parents) を見て RuntimeError にする。[低] 48 行の exec_module は resolver の SyntaxError などをそのまま投げる（壊れた extract-plugin-root.py で SyntaxError を再現）。ResolverUnavailable だけを捕まえて sentinel に倒す呼び手（sync-task-state.py・lint-knowledge-loop.py など）は、壊れた bundle では traceback で止まる。Exception を ResolverUnavailable に包む。DEDUCTION: -2（no-op の直接実行）-2（parents[3] 前提）-2（壊れた resolver の例外が素通り）→ 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

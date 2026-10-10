@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/skill-intake/skills/run-skill-intake/scripts/build-skipped-purpose.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 98063c257936b91a7c555563617fe4593ad73d08786c89770d97cf514c927700 をレビュー。実行検証あり）。範囲: 全 145 行。P5 を skipWhen で飛ばしたとき、interview.json から phase5-purpose.schema.json の形の purpose.json を写す script。前回（j 回目、PASS 93）の [低] 3 件と、workflow-manifest.json の resource 登録（script-build-skipped-purpose、phaseIds=[P5-excavation]）、SKILL.md L218 の呼び方を突き合わせた。確かめたこと: この script を subprocess で呼ぶ plugins/skill-intake/tests/test_skipped_purpose.py で 13 passed（mechanical=true を保つ）。lint-script-frontmatter.py は OK checked=1。work-intake/edge_scripts.py の build 35 項目は NG 0: --help は rc=0、引数なし・--out なし・未知の引数は rc=2。UTF-8 でない入力・壊れた JSON・存在しない入力・--out の親ディレクトリが無い・--out がディレクトリは rc=2。violation 21 種（needs_excavation が true・0・\"false\"・欠落、abstract_answers が残る、「真の課題」が空・行が無い、rows が object、five_axes が list、qa_log が空・str・文字列だけ、true-pain の回答が空、question が int、intent_contract 欠落、raw_materials が空・int、audience 欠落、input_spec が str、interview が list・null）はすべて rc=1 で traceback 無し。rows に文字列の要素が混じっても object の行だけを使い rc=0。qa_log に true-pain の行が無ければ全 3 行を rounds に写す。violation のときは既存の --out を書き換えない。work-intake/e2e_skip.py では、validate-interview-json.py が rc=0 の interview.json から rc=0 で作り、2 回の出力が byte 一致、phase5-purpose.schema に適合、techniques_used は印 1 要素、rounds は true-pain の 2 行、verb_object は「<素材>を<読者>向けに<出力先>へ出力する」。これを §3 に写した intake.json は validate_intake_schema.py rc=0、P10 hook rc=0。verb_object は最短でも 12 字で、intake.schema の true_purpose minLength 8 を下回らない。前回の [低] は 3 件とも直った: UTF-8 でない入力は L125 で rc=2、--help は L122 で rc=0、rows の型違いは L97 で violation rc=1。書き込みは --out の 1 ファイルだけで、header の write-scope と一致する。指摘: なし。補足（減点なし）: 書き込みは一時ファイルを介さない（失敗時に途中のファイルが残りうるが、IO 失敗は rc=2 で止まり SKILL.md は SKIP 行を書く前に実行する順序）。DEDUCTION: 100（減点なし）→ 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-intake",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

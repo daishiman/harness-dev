@@ -4,17 +4,15 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 84,
-    "notes": "実装対齐レビューを実施。Claude/Codex manifest の version=1.4.10、実体 inventory=skills 32/agents 6/commands 6、plugin-composition の skill 32/agent 6/command 6/script 6/hook 1 をリポジトリから再集計し、文書の stale な 1.4.1/31/5 を修正。hook 節は旧来の manifest inline 8 event/11 command 説明を廃止し、共有 hooks/hooks.json の SessionStart 1 event/1 command、Claude 標準自動検出と Codex明示pointer、dual-root、projectへの重複投影禁止に現行化。参照先の主要正本、PKG-001〜015 + 016/017予約、12 combinator、32 skill の実在を突合。派生解説のため将来の inventory/hook drift は tests/test_harness_creator_dissection_doc.py で fail-closed 検出する。残存する非阻害の制約は、655行の網羅的な派生文書であり、可変な全表の内容まで機械生成していない点。",
-    "score_rationale": "最も壊れやすい inventory、product別 hook delivery、配布境界を実装とテストで再確認し、直接矛盾を解消したため PASS。一方、解説全文は派生スナップショットで、全段落が生成済みの機械正本ではないため上位帯から減点。",
-    "review_path": "current manifests/package-contract/plugin-composition/templates/ref-pkg-contract との独立突合 + inventory/hook regression test"
+    "score": 94,
+    "notes": "genuine review（sha256 2bc4bf65a735d976f5b87d958b3ca353dc4b0b176fc51804095653107df53f83 をレビュー。実行検証あり）。範囲: 完全解剖 全 688 行を通して読み、前回（20261010i-d1）の [中]×2・[低]×4 を現物で確かめ直した。確かめたこと: (1) tests/test_harness_creator_dissection_doc.py → 2 passed。(2) §3.5: render-combinators.py を --language ja/en と --kind run/ref/assign/wrap/delegate で work-j-d1/rc/ に描画し見出し順を照合。ja の run は 目的と出力契約 → 境界 → 守ること → 評価・改善ループ契約 → 実行時のルートの決め方 → ゴールシーク実行 → 検証 → つまずきやすい点 → 変数化契約 → 追加リソース → セキュリティと権限 で本文 L361-381 と一致。ref は「参照内容」、assign は「生成契約」を目的と出力契約の直後に持ち評価・改善ループ契約を持たない（L365・L368 と一致）。--with-knowledge で「ナレッジループ」が評価・改善ループ契約の直後に入る（L369 と一致）。en は Purpose & Output Contract・Boundary・Key Rules・Runtime root contract・Gotchas の 5 つだけ英語（L385 と一致）。複合テンプレート 3 本は 実行時のルートの決め方 を先頭に持ち、局面カタログを持ち、Gotchas・Additional Resources（orchestrator.md は Security & Permissions も）を英語で持つ（L387 と一致）。(3) §3.7・§2.4: run-build-skill/SKILL.md の Step 5（release のみ、draft は deferred_to_release）、Step 6（release は score>=80 かつ high=0、draft は決定論ゲートと修復 1 周）、Step 10（--with-knowledge か brief.knowledge_loop）、Step 10.6（goal_seek.engine: task-graph 明示時のみ、既定 inline）、CL-10（5 スクリプト同梱）、Step 12.4-12.8（12.7 は workflow-manifest.json の step 12.7）と照合し一致。build-steps.md H.7 の 5 本と templates/knowledge-skeleton の seed 名（knowledge-index.json・knowledge-{{category}}.json・registry.json・schema.json・router.json）が §3.6 と一致。templates/combinators/with-goal-seek.patch は実在。(4) §2.2: pipeline-boundary-contract.md の E1-E4 行（PB-C04・PB-C08・PB-C05/PB-C11/PB-C10・TG-C08）と一致。本文が引く TG-C01・C02・C05・C07・C08・C09 はすべて同ファイルに実在。(5) §3.3: run-plugin-package-check の frontmatter の最上位キー 27 個と本文の列挙が一致し、rubric_refs は capability-manifest.schema.json の commonCore.properties にある任意項目。(6) §3.9: plugin-composition.yaml の capabilities は skill 32・script 16・hook 13・agent 8・command 6、invariant 15 件（いずれも文字列）で本文と一致。(7) §4.1: lint-matrix.json の lints 20 件と id・script 名が表と全件一致、build-preflight の 14 件と Step 4 の 14 コマンドが一致。(8) §4.2: ref-skill-design-rubric の rubric.json（rubric_version 1.5.0）、rule 41、threshold 80、max_skill_md_lines 300、trigger 2/3、applies_to_kinds（skill: FM・BD-001/002/004・NM・PD-002、`*`: BD-003・PD-001・RG-001・KL-001〜005）、HK-001 の 9 event が本文と一致。前回指摘の確認: [中] §3.5 の見出し順と composite の例外 → 実出力と一致し例外も明記（解消）。[中] §3.7 の knowledge ループを既定 ON とした記述 → 見出し・表・まとめ文とも opt-in に直った（解消）。[低] §2.2 の gate 列、§2.4 の Step 5・6 の draft/release、knowledge の 4 本→5 本、§3.3 の rubric_refs → すべて解消。指摘: [低] L383「run は ### ゴールシークループ の後に配線と機械検査の小節を足す」は wrap・delegate を落としている。ja 描画で wrap・delegate も ### ゴールシーク配線（実行可能機構）・### ゴールシーク検証（機械検査）・task-graph 変種・### dependency graph knowledge consult を run と同じく持つ（L368 の「run・wrap・delegate のとき」とも不揃い）。直し方: 「run・wrap・delegate は」にする。[低] L385「1つのファイルで両方を混ぜないのが原則」が、同じ段落の en の説明（5 つだけ英語、残りは日本語）と食い違い、ja の wrap・delegate も `## Wrapped CLI`・`## Delegation Target` を英語で出す。ja-contract-policy.md L5 の禁止は目的・実行時ルート・選択前後の定型見出しなど特定の役割の見出しに限られる。直し方: 混ぜないのは対応表の定型見出しだと範囲を書き、en と wrap・delegate の kind 節が混在することを例外として記す。[低] L296（§3.1 hook の `event`（9 種））と L581（HK-001 の 9 種）は別の集合なのに同じ「9 種」と書き、差を説明しない。capability-manifest.schema.json の kindHook.event enum は PostToolUseFailure を含み SessionStart を含まず、rubric HK-001 はその逆。L477-478 の harness-creator 自身の hook は SessionStart と PostToolUseFailure の両方を使う。直し方: §3.1 に schema の 9 値を列挙し、HK-001 との差を注記する。DEDUCTION: [低] L383 -2、[低] L385 -2、[低] L296/L581 -2 → 94。"
   },
-  "reviewed_by": "independent-doc-implementation-review-20260820",
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-d1",
   "checked": [
-    "internal-consistency",
-    "implementation-alignment",
-    "inventory-drift",
-    "claude-codex-hook-delivery",
-    "reference-resolution"
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "previous-findings-recheck"
   ]
 }

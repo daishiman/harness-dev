@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-governance-automation",
     "skill": "run-governance-automation",
-    "skill_md_sha256": "e19eb26609c8d478e3e0a6290df7c8335c06f7722616152e97479c530c9875a1"
+    "skill_md_sha256": "3ab3e6f7c1eee83d6bf597e66fc07ab9bf3f77dc8fb56f6558c047f6f2524aea"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
-  "reviewed_at": "2026-10-10T00:52:13Z",
-  "iterations": 2,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 2,
-    "inconsistency": 2,
-    "dependency_break": 0,
-    "smell": 4
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 1
   },
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-10T09:42:34Z",
+  "iterations": 3,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -24,29 +24,24 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "前回の dependency_break（medium）は解決した。commit 44b8bbbe で package-contract の depends_on と plugin-composition の external_dependencies に skill-governance-config を足した。installer の resolve_dependency_order を実測すると、closure は (harness-creator, skill-governance-adapters, skill-governance-config) になる。修正前の depends_on を in-memory で差し替えて比べると config が入っておらず、この修正で closure に加わったことを確かめた",
-      "新しい循環は無い。skill-governance-config の depends_on は [harness-creator] だけ。cycle_groups に出る harness-creator↔skill-governance-adapters の SCC は修正前から同じで、installer はこれを scc_members として扱い、エラーにはしない。lint-dependency-direction も no cycles",
-      "plugin.json の dependencies は [skill-governance-adapters] のままで、package-contract の depends_on とは食い違う。これは repo の規約どおり。validate-plugin-completeness の DEP-001 は、manifest に runtime provider（adapters）だけを書かせ、harness の依存は sidecar の package-contract に分けている。22 plugin のうち harness-creator 以外の全てが同じ形で、ubm-goal-setting は skill-governance-config の宣言（version 範囲・required_entry_points）まで同じ形の前例になっている。version 範囲 >=0.1.0 <1.0.0 は実際の 0.1.14 を満たし、run-governance-config も実在する",
-      "F1 は解決済みのまま。guard は plugin 版と root 版で byte 一致している（cmp exit 0）。--base no-such-ref-xyz、相対パスの --policy、存在しない policy、引数の無い --policy は、いずれも exit 2 で止まる。--base HEAD で差分が空のときは exit 0 で、report は空になる",
-      "F2 は解決済みのまま。re-evaluate に --rubric /nonexistent.json を渡すと exit 2。既定の実行では、extract-plugin-root で harness-creator の rubric 1.5.0 を解決し、36 ファイルを走査して exit 0 になる",
-      "兄弟 plugin を ../ で辿らず、extract-plugin-root.py で manifest の name を照合し、見つからなければ exit 1 で止める作りになっている。そのため、host 標準の marketplace 経由で config が入っていない場合も、--policy の解決に失敗して guard が exit 2 で止まり、成功扱いにならない。lint-sibling-plugin-paths と lint-vendored-ssot（56 件が byte 一致）も OK",
-      "IN1（script）: 主要な entrypoint 7本は --help が exit 0。read-only の preflight を実測した。registration-plan は --apply なしで提案だけを出して exit 0。compose-rubrics は正常系が exit 0、存在しない入力で exit 1。rollback-to-stable の --dry-run は versions-md が無いと exit 1。非0を成功扱いにする経路は無かった",
-      "OUT1（evaluator、静的）: Key Rules の『apply/rollback/通知は明示承認なしに実行しない』と、検証節の『command・exit code・changed paths・残リスクを報告』が、OUT1 の文言と1対1で対応している。build-manifest-registration-plan は既定では提案だけを出し、--apply を承認ゲートの後に置く設計で、この方針と整合している"
+      "4 条件の観点では、76 行目の --dry-run の規則、表の「既定の動き」「書き込み」の 2 列、92 行目の receipt、107 行目の停止条件がひと続きになり、どの entrypoint をどう preflight し、何が揃えば完了かを本文だけで決められる。",
+      "BD-004（LLM が判定）は PASS。description の 2 つの発動条件（governance の登録・rubric 合成を実行したい／再評価・rollback automation を安全に選びたい）は、対応表の manifest登録・rubric合成の行（80・81 行目）と、再評価・rollback の行（83・84 行目）、承認の規則（100 行目）に対応する。",
+      "IN1: 対応表の 11 行を --help・header・コード・実行で 1 行ずつ照合した。re-evaluate-on-rubric-bump.py 0.3.0 は --eval-log-dir がファイルだと exit 2（scratchpad/crauto/notdir）、存在しないだけなら exit 0。rollback-to-stable.py 0.4.0 は rubric_id が整数や空文字列で exit 2、params が無いと警告して params_source=default。guard-change-category.py は一時 git repo（scratchpad/crauto/g1）で未承認 exit 1、--base に無い ref で exit 2、policy が無いと exit 2、--dry-run は argparse の exit 2。extract-plugin-root.py skill-governance-config は実在する絶対パスを返す。表の「既定の動き」と「書き込み」は、指摘した点を除いて実物と合う。",
+      "IN1: receipt を 4 要素（command、exit code、stdout の要点、変わった path）で定義し、どれかが欠けた実行を成功として報告しないと書いた（92 行目）。107 行目は停止条件を「receipt の 4 つが揃ったら完了、exit 非 0・receipt の欠落・承認の無い書き込みで止める」と明示した。",
+      "OUT1: apply・rollback・通知は明示承認なしに実行しない（100 行目、107 行目）。rollback は計画を出すだけで、書き戻しは承認後と書いた（84 行目）。外部作用の境界が表・Key Rules・停止条件で一致している。",
+      "前回の 6 件はすべて解消した。80 行目に needs_confirmation の exit 1 と plugin.json 形式の no-op、85 行目に cooldown 違反の exit 1 と --base の exit 2、83 行目に --eval-log-dir がディレクトリでないときの exit 2、88〜90 行目に表外だった 3 本の entrypoint、84 行目に L0 と assign を一組で戻すことと templates/ が無いこと、107 行目に停止条件、86 行目に hooks.json への未登録が書かれた。"
     ],
     "negative_feedback": [
-      "low（既知・PR 残課題）omission: SKILL.md に、目的（登録・rubric 合成・再評価・rollback）と entrypoint（build-manifest-registration-plan / compose-rubrics / re-evaluate-on-rubric-bump / rollback-to-stable）の対応表が無い。選択は汎用の手順（--help → read-only → 承認）に任されている",
-      "low（新規）omission: compute-rubric-hash.py は --dry-run を付けないと rubric.json と rubric.normalized.json をその場で書き換える。registration-plan のように --apply が要る設計とは逆の既定値なのに、SKILL.md はこの違いを区別していない。対応表を作るときに『既定で書き込む entrypoint』の印を付けることを推奨する",
-      "low（既知）inconsistency: CI（.github/workflows/harness-creator-kit-ci.yml:271-272）が re-evaluate に受け付けない引数 --skills-dir を渡し、その argparse エラー（exit 2）を `|| true` で握りつぶしている。CI 上の再評価通知は実質的に動いていない",
-      "low（既知）inconsistency: scripts/re-evaluate-on-rubric-bump.py（root 版）が plugin 版と分かれている（cmp で line 6 から差分）",
-      "low（既知）smell: notify-if-governance-trigger.py は、trigger.json が無いときや JSON が壊れているときも、何も言わずに exit 0 で返す",
-      "low（既知）smell: re-evaluate の EVAL_LOG_DIR は module 定数（None）のままで、環境変数を読まない",
-      "low（新規）smell: rollback-to-stable.py の --params の既定値 references/governance-params.json は consumer の cwd 基準になっている。実在するのは .example だけなので、ceiling 0.05 に黙って fallback する。また、このスクリプトは書き込みをしないので --dry-run は効果が無く、header の write-scope: output-dir も実態と合わない",
-      "low（新規）smell: Key Rules と IN1 にある『receipt』が何を指すのか、この skill の entrypoint 群に対して定義されていない"
+      "[low / inconsistency / SKILL.md 76 行目と 88・89 行目（今回の差分）] 76 行目は「既定で書き込む」entrypoint を compute-rubric-hash.py と write-eval-log.py の 2 本とし、preflight ではこの 2 本に --dry-run を付けるとする。しかし今回足した 88 行目の doc-to-skill-adapter.py（--out が必須で、そこに書く）と 89 行目の extract-session-events.py（.claude/logs に追記）も、呼べば必ず書き込み、--dry-run を持たない（doc-to-skill-adapter.py --dry-run は argparse の exit 2）。76 行目の規則は、この 2 本の preflight をどうするかを決めていない。再現: doc-to-skill-adapter.py の add_argument（--doc・--out が required）と extract-session-events.py の LOG_ROOT（48〜53 行目）を見る。直し方: 76 行目の「既定で書き込む」にこの 2 本を足し、preflight は --help だけにする（または一時の --out・CLAUDE_LOG_ROOT に向ける）と書く。",
+      "[low / omission / SKILL.md 89 行目（今回の差分）] extract-session-events.py は --help に対応しない。argv[1] に user_prompt | tool_use | stop の位置引数が要り、それ以外（--help・--dry-run を含む）は stderr に WARN を出して exit 0 で終わる。97 行目「最初に対象 script の --help を実行する」が働かず、exit 0 なので help を読めたように見える。また既定の書き込み先は、CLAUDE_LOG_ROOT、無ければ PROJECT_ROOT、それも無ければ script の 2 つ上（plugin root）に .claude/logs を付けたもので、consumer の作業ディレクトリの .claude/logs ではない。install 先の plugin に書くと consumer の git status --short に出ないので、92 行目の receipt（変わった path）を確かめられない。再現: scratchpad/crauto/sev に plugin と consumer を分けて置き、--help で WARN・exit 0、stop を渡すと plugin 側の .claude/logs/<日付>.jsonl に追記され、consumer 側には何も出ないことを確かめた。直し方: 89 行目に、位置引数が要ること、--help に対応しないこと、書き込み先の決まり方（CLAUDE_LOG_ROOT で consumer 側に向ける）を書く。",
+      "[low / dependency_break / SKILL.md 84 行目（今回の差分）] rollback の行は、一組で戻した後に「compute-rubric-hash.py で hash を再計算して照合する」と書くが、--dry-run を付けていない。82 行目のとおり既定で書き込むので、rubric_hash を持たない版（今の 1.5.0 など）を戻した後に実行すると L0 のファイル sha256 が変わり、check-rubric-sync.py が RUBRIC_DRIFT（exit 1）になる。再現: scratchpad/crauto/fr3（f807ec06 の L0 と assign）で、--dry-run なら sync は OK のまま、書き込みありでは 9bd1769f… から 23f5ccb4… に変わって exit 1。run-skill-rubric-governance の 146 行目と同じ問題。直し方: 「compute-rubric-hash.py --dry-run で hash を出して照合する」と書く。",
+      "[low / omission / SKILL.md 84 行目] rollback-to-stable.py の exit 1（versions-md が無い・候補が無い）を書いていない。この repo には eval-log/rubric-versions.md が無いので、run-skill-rubric-governance が示すコマンド（--versions-md eval-log/rubric-versions.md）は versions-md not found で exit 1 になる。preflight で exit 1 を見ても、壊れたのか候補が無いだけなのかを表から読めない。また exit 2 の条件を「rubric_id が文字列でない」と書くが、script（0.4.0、header 14 行目）は空文字列でも exit 2 にする。再現: scratchpad/crauto/rb の v-none.md（候補なし）で exit 1、r-empty.json（rubric_id \"\"）と r-int.json（整数）で exit 2。直し方: 「exit 1=versions-md が無い・候補が無い」「rubric_id が空でない文字列でないと exit 2」と書く。",
+      "[low / smell / SKILL.md 80 行目と 3 行目] build-manifest-registration-plan.py は KIT_DIR を script の parents[1]（この plugin）に固定し、対象を選ぶ option が無い。この plugin には manifest.json が無いので、どこから呼んでも plugin.json の分岐で {\"status\":\"ok\",\"format\":\"plugin\",\"proposals\":{}} の exit 0 になり、legacy の manifest.json の分岐（needs_confirmation・exit 1・--apply）には届かない。80 行目の「plugin.json 形式（この plugin 自身など）」の「など」は、ほかの plugin も対象にできるように読める。description の「governance の登録」は実質 no-op で、plugin.json 形式の登録は script の docstring のとおり repo root の scripts/validate-plugin-completeness.py --fix（plugin の外）が担う。再現: build-manifest-registration-plan.py を作業ディレクトリを変えて実行し、出力が同じことを確かめる。直し方: 80 行目に「対象はこの plugin に固定で、今は常に no-op」と書き、plugin.json 形式の登録の担い手を示す。または description から「登録」を外す。"
     ],
-    "iteration": 2,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:20261010-pr-final-review",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "HEAD 44b8bbbe、SKILL.md の sha256 は指定値と一致した。手順の正本どおり、1つの context で focused combined review を行った（矛盾なし・漏れなし・規約整合・依存関係整合 + rubric の high が0件）。30種の思考法は使っていない。前回の medium（dependency_break）は、installer の closure の実測と、修正前の状態との in-memory 比較で解決を確認した。plugin.json の dependencies との食い違いは、DEP-001 の規約と ubm-goal-setting の前例から、許容される分離だと判断した。F1 と F2 は再確認の3点がすべて期待どおりだった（cmp 0、exit 2、exit 2）。medium 以上の新たな finding は無い。low は8件（既知5件、新規3件）。OUT1 は静的な設計主張として評価した。apply・rollback・通知・install は実行していない。pytest は、一時ファイルを作るのを避けるため実行していない（F1 と F2 のテストによる確認は前回の独立レビューの結果に依拠している）。validate-plugin-package は exit 1 だったが、原因は advisory 扱いの PKG-004 と PKG-014 だけで、fleet 全体で同じ状態にある。全体の validate-plugin-packages は exit 0。review の後、worktree に変更が無いこと（git status --ignored が0行）を確認した。"
+  "notes": "incremental profile の focused combined review。作者とは別の独立レビュアーが 1 つの context で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high が 0 件、を判定した。30 種の思考法は使っておらず、使ったとも申告しない。評価対象は worktree の現物（SKILL.md sha256 3ab3e6f7c1eee83d6bf597e66fc07ab9bf3f77dc8fb56f6558c047f6f2524aea。前回の記録 861aa292… は古い）と、変更された rollback-to-stable.py 0.4.0・re-evaluate-on-rubric-bump.py 0.3.0。前回の verdict（PASS、low 5・info 1）は前回の指摘を知るためだけに読み、結論は写していない。実行したこと（repo に書いたのは verdict の 4 ファイルだけ。書き込みのある実行は scratchpad の fixture だけ。Python は PYTHONDONTWRITEBYTECODE=1、pytest は -p no:cacheprovider）: (1) render-findings-score.py --rubric-refs <L0> <L2> --kind skill: 100/100、threshold 80、findings 0、applicable 24・scored 23・pending_human 1（BD-004）・unscored 0・not_applicable 21。BD-004 は PASS と判定。(2) 対応表の各 entrypoint を --help・header・コードで読み、次を実行した。build-manifest-registration-plan.py は {\"status\":\"ok\",\"format\":\"plugin\",\"proposals\":{}} で exit 0。re-evaluate-on-rubric-bump.py 0.3.0 は --eval-log-dir がファイルで exit 2、存在しないだけなら exit 0、--post-tool-use は L0 以外の編集では何もせず exit 0。rollback-to-stable.py 0.4.0 は候補なし（scratchpad/crauto/rb/v-none.md）と versions-md 不在で exit 1、rubric_id が \"\" と整数で exit 2、--versions-md は必須。guard-change-category.py は scratchpad/crauto/g1 の一時 git repo で、未承認 exit 1、無い --base で exit 2、無い --policy で exit 2、--dry-run で exit 2。notify-if-governance-trigger.py は trigger が無いと無言で exit 0、読めないと警告して exit 0、bootstrap=true で無言、未知の引数で exit 2。どの hooks.json・settings.json にも登録されていない。write-eval-log.py の --dry-run は 'would append to eval-log/<plugin>/<日付>-score.jsonl' を出すだけ。doc-to-skill-adapter.py は --doc と --out が必須で --dry-run は exit 2。extract-session-events.py は --help で WARN・exit 0、scratchpad/crauto/sev で plugin 側の .claude/logs に追記されることを確認。compute-rubric-hash.py は repo には --dry-run だけ、scratchpad/crauto/fr3 のコピーで書き込みありの実行が RUBRIC_DRIFT を起こすことを確認。(3) check-rubric-sync.py（repo）: OK、exit 0。(4) pytest -p no:cacheprovider: governance 関連 14 ファイル（この plugin の各 script、lint_rubric_violation、extract_plugin_root、extract_session_events、root の guard と re-evaluate）で 599 passed。判定: high・medium は 0 件、low 5 件なので verdict は PASS、next_action は none。low は negative_feedback に入れた。範囲外・info: 100 行目と 107 行目は通知を承認の要る書き込みとして扱うが、86 行目の表では通知の書き込みは「しない」になっている（安全側なので指摘にはしない）。re-evaluate-on-rubric-bump.py は score ログの rubric.rubric_version（合成後の版で、L2 の版が勝つ）を L0 の rubric_version と比べる。run-skill-rubric-governance の verdict に書いた版のずれ（score ログの 1.3.1 は L0 に無い版）と同じ根を持つ。notify-if-governance-trigger.py の header の purpose は「Stop Hook 経由」と書くが、本文 86 行目のとおり登録はされていない。"
 }

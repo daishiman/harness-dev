@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "364dd503724ac1c24eb24f4933697f95bb3bdbe6cc47605d7093a8edaf290e72"
+    "skill_md_sha256": "0109649eee01cdd2f7a8da9e5cfc78c1811dca05b145a180a85fc0a73ff57dad"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
-  "reviewed_at": "2026-10-10T00:38:18Z",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 2,
+    "contradiction": 1,
+    "omission": 1,
     "inconsistency": 1,
-    "dependency_break": 0,
-    "smell": 3
+    "dependency_break": 1,
+    "smell": 1
   },
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-10-10T14:35:13Z",
+  "iterations": 3,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -25,23 +25,23 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: 本文は workflow-manifest.json の phases[]（id・dependsOn・delegate）を複製していない。今回の差分も frontmatter の参照先を直しただけ。lint-manifest-contents.py は2本とも exit 0。ただしこの lint は plugin manifest の必須キーを検査するもので、SKILL.md への phases の複製は実読で確かめた。",
-      "IN2: tests/test_skill_intake_guard_skillgen.py が pass した（単独実行と、9ファイル237件の一括実行の両方）。hooks.json は hook-guard-skillgen.py を PreToolUse などに配線している。",
-      "OUT1: 業務ロジックを持たず、各 phase を委譲して handoff JSON 契約だけで橋渡しする薄い orchestrator の設計は変わっていない。参照切れが直ったことで、frontmatter・manifest・本文・resource-map が同じ2ファイルを指すようになり、依存関係の整合が強まった。",
-      "rubric 1.5.0 の high に当たる違反は0件。FM-001・NM-001（name とディレクトリ名がともに run-skill-intake）、BD-001（## Purpose &amp; Output Contract）、BD-003（本文181行で300行以下）を確認した。medium の FM-002・FM-003（発動条件2個で、末尾は「。」）、BD-002（## Gotchas）、PD-002（本文の冒頭30行以内に Purpose と Key Rule）も満たす。参照先は validate-frontmatter の MISSING_REF が0件で、PC-003 系の参照切れも無い。"
+      "前回の medium（dependency_break: P5 skip 経路の purpose.json を intake.json §3 へ正直な値で写せない）は解消した。intake.schema.json の §3 techniques_used が 8 技法の enum に印 skip:needs_excavation=false を足し、allOf で 2 要素以上のときは印を拒み、x-cross-field-rules の excavation_skip_matches_interview が印のとき隣の interview.json の needs_excavation が false（型まで一致）であることを要求する。写し方は正本 plugins/skill-intake/references/handoff-contract.md L43-55 の表にあり、skill 側の references/handoff-contract.md L8 と SKILL.md L218 から辿れ、section_canonical_map.json L107 と intake-final-source-map.yaml L117 にも例外が書かれた。評価者の e2e（work-intake/e2e_skip.py、70 項目 NG 0）で、validate-interview-json.py rc=0 の interview.json → build-skipped-purpose.py rc=0（2 回で byte 一致、phase5-purpose.schema 適合） → 表どおり §3 へ写した intake.json → validate_intake_schema.py rc=0 → P10 の hooks/pre-publish-schema-validate.py rc=0 と端から端まで通った。",
+      "照合は fail-closed に働く。interview.json が無い・壊れた JSON・UTF-8 でない・list・キー無し・ディレクトリ、needs_excavation が 0・\"false\"・true・null、印と技法の混在（両方の順）・印 2 つ・[]・skip:other の 15 種はすべて validator rc=1（traceback 無し）、P10 hook rc=2（BLOCK）。正しい interview.json に戻すと rc=0。深掘り経路の回帰も無い（既存 fixture 3 本と golden の sample-intake.json、8 技法すべて、needs_excavation=true の深掘り、単独技法はいずれも rc=0）。skip 経路の intake.json を validator に通すテスト plugins/skill-intake/tests/test_skip_path_intake_schema.py（8 passed）も足された。",
+      "前回の low 4 件と smell 1 件も直った。workflow-manifest.json に resource script-build-skipped-purpose が登録され P5 の resourceIds から辿れる。prompts/R1-main.md は L48・L63・L71-72・L141・L150 で build-skipped-purpose と FAIL 行の追記→attempt+1 の再開に追従した。validate-task-graph-progress.py は FAIL の直後の SKIP を拒む（L303・L313。評価者 fixture で P5 FAIL→SKIP と FAIL→FAIL→SKIP は rc=1、FAIL→PASS は rc=0）。schemas/output.schema.json は workflow_status=failed の途中 trace（phases 4 件・artifacts 無し）と FAIL の exit_hook（evidence 無し）を受け、in_progress の短い trace・completed で artifacts 無し・RUNNING の hook で evidence 無しは拒む。excavator の起動条件（L50・L52・L131・L152）は SKILL.md L218 の「build-skipped-purpose が exit 1 なら SKIP せず起動」と一致し、exit 1 の条件（「真の課題」が空、abstract_answers が残る）は実測で rc=1。FM-005 は description の書き直しで消え、機械採点は 97 → 100。",
+      "壊れた入力への耐性が上がった。validate-task-graph-progress.py は bool を整数として数えず（is_int、L48）、評価者 fixture の壊れた入力 30 種以上（evidence の要素が文字列、naive の時刻、drift_signal が list、progress.json が UTF-8 でない等）をすべて traceback 無しの rc=1 で止める。build-skipped-purpose.py は --help で rc=0、UTF-8 でない入力で rc=2、violation 21 種で rc=1、violation のとき既存の --out を書き換えない。",
+      "P6・P7・P11 は skip の有無に関係なく purpose.json を読み、decide-mode.py に skip 用の分岐を持たせない、という方針（SKILL.md L218）は、skip の扱いを P5 の境界 1 か所に閉じ込める良い設計で、横展開できる。"
     ],
     "negative_feedback": [
-      "[low / omission / 差分外・既存] Key Rule 3 と handoff 検証の「各 delegate の schemas/ 契約」は、schemas/ を持たない P6 の run-intake-option-catalog と P10 の run-notion-intake-publish を覆えていない。機械 verifier は outputSchemaId がある phase だけを検査するので、実行は壊れない。elegance 側と同じ finding の投影。",
-      "[low / inconsistency / reference の内容・既存] skill 内の references/handoff-contract.md が参照する節名「harness-creator 入力契約マッピング」が、正本の実際の見出し「harness-creator 論理マッピング」と一致しない。",
-      "[low / smell / reference の内容・既存] references/workflow-sequence.md の「失敗時の戻り先」列は、本文の「停止し、自動再試行しない」と読み違えられうる。P11 の入力も簡略化されている。",
-      "[low / smell / 前回から継続、本回で再確認] Key Rule 9 の hook 配線先の記述（`.claude-plugin/plugin.json`）が、実際の配線（hooks/hooks.json）と一致しない。",
-      "[low / omission / 前回から継続、本回は再検証していない] guard block の「other Bash is blocked while the confirmation is pending」は、遮断が続く範囲と cancel を書いていない。guard block は差分外で、内容は変わっていない。",
-      "[low / smell / 前回から継続、本回は再検証していない] resolver の探索段階5・6が、別の copy を返しうる。fail-closed は保たれる。"
+      "[low / omission / plugins/skill-intake/skills/run-intake-finalize/SKILL.md:91-100,plugins/skill-intake/scripts/validate_intake_schema.py:77-86] P9 が §3 へ写すときの担保が片側だけ。§3 を組み立てる委譲先 run-intake-finalize の SKILL.md には skip 経路・印・handoff-contract の §3 の表への言及が無く（P9 の manifest resourceIds の ref-handoff-contract 経由でしか届かない）、validator の excavation_skip_matches_interview は §3 が印のときだけ interview.json を読むので、skip 経路で §3 に行っていない深掘りを書いても通る。再現: e2e の skip 経路（needs_excavation=false、purpose.json は印 1 要素）で §3.techniques_used を [\"reverse_brief\",\"5whys\",\"tacit_extraction\"] に置き換えると validator rc=0、hook rc=0。直し方: §3.techniques_used を隣の purpose.json の techniques_used と照合する cross-field ルール（sibling の値と比べる operator）を足し、run-intake-finalize の完了条件から handoff-contract の「P5 を SKIP した経路の §3」を参照する。",
+      "[low / contradiction / plugins/skill-intake/references/intake-final-prompts.yaml:111-112] prompts.purpose の success_criteria が「techniques_used_str に 3 種以上の手法名」「true_purpose が 40 字以上」のままで、skip 経路（印 1 要素、verb_object は「<素材>を<読者>向けに<出力先>へ出力する」の定型）と矛盾する。再現: build-skipped-purpose.py の出力は techniques_used が 1 要素で、素材「メモ」・読者「自分」・出力先「Notion」なら verb_object は 19 字。この yaml は intake-final-source-map.yaml からしか参照されず runtime の gate ではないので low。直し方: 2 つの基準に「P5 を SKIP した経路は除く（handoff-contract の §3 の表に従う）」を足す。",
+      "[low / inconsistency / plugins/skill-intake/skills/run-skill-intake/references/workflow-sequence.md:13] Phase 5 の入力欄が「sheet.md (needs_excavation=true 時のみ)」のままで、SKILL.md L218 と excavator L52 の「false でも build-skipped-purpose.py が exit 1 なら excavator を起動する」が反映されていない（同じ行の出力欄は skip 時の build を書いている）。表は人が読む写しなので影響は小さい。直し方: 入力欄を「needs_excavation=true のとき、または false でも build-skipped-purpose.py が exit 1 のとき」にする。",
+      "[low / dependency_break / plugins/skill-intake/agents/skill-intake-purpose-excavator.md:36,125, plugins/skill-intake/references/elicitation-techniques.md:15-22, plugins/skill-intake/references/intake.schema.json（§3 techniques_used の enum）] P5 の深掘り経路で、excavator が使う 8 技法（Day in the Life と Pain Story を含む）と、技法カタログ（Stakeholder Map と Current Workaround を含み Tacit Extraction と Pre-mortem が無い）と、§3 の enum（outcome_question と constraint_relaxation を含む）の 3 つが食い違う。phase5-purpose.schema は任意の string を受けるので P5 は通るが、P9 で §3 へ写すと enum 外になり P10 hook が BLOCK する。再現: §3.techniques_used を [\"pain_story\"] や [\"day_in_the_life\"] にすると validator rc=1。この PR より前からある。直し方: 8 技法と記法を enum に合わせ、カタログの表を同じ 8 つにそろえる。",
+      "[smell / error-handling / plugins/skill-intake/scripts/validate_intake_schema.py:94-99,121-122,133-145] P10 の gate になる validator が、壊れた JSON・UTF-8 でない・ディレクトリの intake.json と、list や tool_input が str の stdin で traceback を出して rc=1 になり（docstring では IO error は 2）、schema のエラーがあると cross-field のエラーを表示しない。hook 側では rc=1 も BLOCK になるので fail-closed は保たれる。前からある。直し方: 読み込みを try に入れて 2 を返し、payload の形を確かめ、schema と cross-field のエラーを両方表示する。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:20261010-pr-final-review",
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
     "next_action": "none"
   },
-  "notes": "elegance 側と同じ focused combined review（独立 evaluator context）を rubric 側へ投影したもの。ref-skill-design-rubric 1.5.0 の全 rule を機械で実行して数値 score を出したのではない。frontmatter の feedback_contract.criteria 全3件（IN1/IN2/OUT1）を評価したこと、rubric の high に当たる違反が0件であることを、実読と決定論の確認で確かめた。決定論の確認: lint-skill-description、audit-capability-parity --all、validate-frontmatter、lint-skill-completeness、lint-skill-dep-step7、lint-skill-name、lint-manifest-contents、build-artifact-delivery --check、pytest 237件がすべて exit 0。旧値と新値は、check_refs_exist を read-only で呼んで比べた。finding は low 6件で、high と medium は0件。PASS の射程は design claim に限り、live trial や criteria の受け入れ証拠の代わりにはならない。30種の思考法は実施しておらず、実施したとも申告しない。"
+  "notes": "incremental profile の focused combined review。作者とは別の独立 evaluator が 1 つの context で (a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 件を判定し、elegance と rubric の 2 つに投影した（verdict・iterations・findings_summary は同じ）。対象は worktree の未コミットの現物で、SKILL.md の sha256 は 0109649eee01cdd2f7a8da9e5cfc78c1811dca05b145a180a85fc0a73ff57dad（担当表と一致）。【判定】(a) low の contradiction 1 件（intake-final-prompts.yaml L111-112 と skip 経路）。(b) low の omission 1 件（P9 の写し方の担保が片側だけ）。(c) low の inconsistency 1 件（workflow-sequence.md L13）と smell 1 件（validator の traceback）。(d) low の dependency_break 1 件（excavator の技法名と §3 の enum。前からある）。(e) high は 0 件。medium 以上が無いので両 verdict を PASS・next_action=none とした。【前回の medium】dependency_break（P5 skip 経路の §3）は解消。intake.schema の enum に印を足し、2 要素以上で印を拒み、excavation_skip_matches_interview で interview.json と照合し、写し方を handoff-contract の表に定め、skip 経路の intake.json を validator に通すテストが足された。評価者の e2e で build → §3 → validator rc=0 → P10 hook rc=0 を確かめ、照合で止まる 15 種は validator rc=1・hook rc=2 だった。前回の low 4 件（manifest 未登録、R1 の未追従、verifier が FAIL→SKIP を通す、output.schema の failed 状態）と low の contradiction（excavator の起動条件）、smell（FM-005）もすべて直っていることを現物と実行で確かめた。【流したコマンドと rc】shasum -a 256 SKILL.md（担当表と一致）; python3 scripts/lint-manifest-contents.py plugins/skill-intake/skills/run-skill-intake rc=0; python3 scripts/lint-skill-name.py <SKILL.md> rc=0; python3 plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py <SKILL.md> rc=0; python3 scripts/lint-feedback-contract.py --all rc=0（run-skill-intake は live-trial の baseline 免除の WARN のみ）; lint-script-frontmatter.py: build-skipped-purpose.py と validate-task-graph-progress.py は OK、validate_intake_schema.py は rc=1（PEP 723 ヘッダ無し。plugin 直下 48 本中 42 本が同じで前からある）; lint-agent-prompt-content.py --mode agent --plugins-dir plugins/skill-intake rc=0。【テスト】pytest -p no:cacheprovider -q plugins/skill-intake/tests → 76 passed; tests/test_skill_intake_guard_skillgen.py と tests/test_skill_intake_notion_contract.py → 30 passed; repo 直下で skill-intake を参照する 37 ファイル → 1222 passed / 1 skipped; smoke -k intake → 67 passed / 3 skipped; criteria -k intake → 書く前は 38 passed / 1 failed（OUT1。前回の elegance-verdict が FAIL だったため）、この verdict を書いた後の再実行で 39 passed。scripts/lint-content-review.py --all に run-skill-intake の違反は無い（rc=1 の 4 件はほかの評価者が担当する 2 スキルの FAIL verdict）。評価者 fixture: work-intake/e2e_skip.py 70 項目 NG 0; edge_scripts.py 48 項目のうち build 35 項目は NG 0、validator 13 項目の NG 6 件はすべて前からある traceback と cross-field エラーの非表示; edge_verifier.py 34 項目 NG 0; edge_verifier2.py（前回の traceback 6 種ほか）8 項目 NG 0。【機械採点】render-findings-score.py --kind skill: score=100, threshold=80, passed=true, rubric_version=1.5.0, rubric_hash=sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452, composition_hash=sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241。findings 0 件（前回の FM-005 は消えた）、適用 24・採点 23・not_applicable 21、pending_human は BD-004 の 1 件。【BD-004 の LLM judge】PASS。description の「非エンジニアからスキル要件を引き出したいとき」は P1-P8（kickoff→仮説→profile→interview→深掘り→options→図解→summary と Gate A）に、「manifest 駆動で要件書（intake）と Notion ページを生成したいとき」は P9 finalize・P10 Notion・P11 next-action に対応し、手順の無い trigger も trigger の無い主要手順も無い。【criteria】IN1 は lint-manifest-contents rc=0 で満たす。IN2 は hook-guard-skillgen のテスト（上の 30 passed に含まれる）で満たす。OUT1（薄い orchestrator）は、skip の扱いを P5 の境界の決定論 script 1 本に閉じ込め、P6・P7・P11 に分岐を持たせず、§3 の契約を schema と cross-field ルールで機械的に確かめる形になり、満たす。残る low は P9 の写し方の担保と文書の追従で、橋渡しの目的は損なわない。【射程】評価は静的な設計の妥当性と、評価者が work ディレクトリに作った最小の fixture で script を動かした範囲まで。対話・Notion への実際の書き込みを含む live trial はしていない。作業の前後で対象スキルのディレクトリの sha256 は 1 byte も変わっていない。30 種の思考法は使っていない（incremental profile）。"
 }

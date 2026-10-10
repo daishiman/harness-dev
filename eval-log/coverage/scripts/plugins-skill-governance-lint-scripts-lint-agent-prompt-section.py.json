@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":86,"notes":"Well-factored Tier1 form check + Tier2 responsibility coverage; targeted OSError/JSONDecodeError handling, no bare except, clear arg parsing with usage errors (exit 2). Minor redundancy: load_brief_responsibilities called twice in _lint_responsibility_coverage. No side effects, frontmatter complete with requires-python."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 91,
+    "notes": "genuine review（sha256 efbb28f0fbeace3a60b622c63f40dec1cb22e3aad21a73e4a7b5e4634c60e08d をレビュー。実行検証あり）。範囲: 388 行全体と git diff origin/main（日本語の正規見出し・fence の mask・行全体の見出し一致・言語混在の検出・BriefError→exit 2・--help・未知 option→exit 2）。requires-python >=3.10 のため 3.9 では流していない。確かめたこと: --plugins-root plugins で全 68 agent に当てて exit 1・違反 5 件（harness-creator elegant-bounded-improvement-executor×2、plugin-dev-planner の architect/elicitor の Self-Evaluation、system-briefing-book briefing-reviewer。いずれも既存の agent 側の不備）。origin/main 版は 23 件で、減った 18 件は ubm-goal-setting の日本語見出し。新しい誤検出は無い。pytest（test_skill_governance_lint__lint_agent_prompt_section.py・test_prompt_creator_7layer_l5_contract.py・test_harness_creator__build_subagent.py・test_root__ja_contract_parity.py）161 passed、guide-doc-generator test_lint_gates 7 passed、plugin-dev-planner test_specfm 52 passed。fixture: 日本語だけ→OK、英日混在→指摘、fence の中の見出し→欠落扱い、brief 不在・JSON 配列の brief→exit 2、agents-dir 不在→exit 2、存在しない .md→exit 1（read error）、-x→exit 2。書き込みは無い（stdout/stderr のみ）。lint-script-frontmatter をこの scripts dir に流して OK。指摘: [低] 同じ言語の見出しの重複を検出しない（168-172 行は has_heading_line の有無だけを見るので、## Prompt Templates が 2 回あっても OK。メッセージは mixed/duplicated と言う）。[低] Tier 2 で brief の id が list だと unhashable、int と str が混ざると sorted(missing) で TypeError の traceback（229-244 行。BriefError の exit 2 にならない）。[低] --strict-coverage の無い --brief は黙って無視され exit 0、--agents-dir/--plugins-root の後ろの余分な位置引数も黙って捨てる（parse_args 289-324 行・collect_targets 327-336 行）。[低] Tier 2 の anchor 抽出（extract_anchor_blocks 118 行）は fence を mask しないので、code fence の中の例の anchor も責務の anchor として数える（コードで確認）。DEDUCTION: 重複見出し -2、Tier 2 の traceback -3、引数の黙殺 -2、fence 内 anchor -2 → 91。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

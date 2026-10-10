@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-vendored-ssot.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 21a4e40e5516586810208ddb6b9a1009fe8f98ebfe1a6ea08729321cc5f38cb3 をレビュー。実行検証あり）。範囲: 全 156 行。origin/main からの差分（guard-change-category.py の root と skill-governance-automation の組、run-skill-feedback を持つ各 skill への validate-inline-goal-seek-anchor.py の組を glob で足す）を重点に読んだ。確かめたこと: tests/scripts-root/test_root__lint_vendored_ssot.py（import と subprocess でこの script を呼ぶ。mechanical=true）で 10 passed（3.11 と 3.9）。実 repo で「vendored SSOT 56 件が正本と byte 一致」、rc=0。run-skill-feedback は 22 plugin にあり、dir も SKILL.md も symlink でなく、22 件とも validator がある。CI は harness-creator-kit-ci.yml 115 行で流す。指摘: [低] symlink への回帰の検査（128 行の vendored.is_symlink()）は最後の要素しか見ない。work-s3 の一時 dir で plugins/a/scripts を ../../scripts への dir の symlink にすると、check_pairs は [] を返した（単独 install で dangling になる形を通す）。[低] vendored の path がディレクトリだと 134 行の read_bytes が IsADirectoryError の traceback になる（再現済み。exit は非 0 だが FAIL の一覧にならない）。[低] docstring の 13〜15 行「正本は repo-root scripts/ 側、vendored は plugin/scripts/ 側」「doc は対象外」が、表の実態（plugin 間の組、templates や vendor/ への組、references の .md と schemas の .json も byte 一致を強制）と食い違う。[低] PEP 723 の `# /// script` header が無く（lint-script-frontmatter で missing block の違反）、requires-python も宣言されていない（3.9 の Path.readlink を使う）。DEDUCTION: dir の symlink を通す -3、traceback -2、docstring の食い違い -2、header なし -3 → 90。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

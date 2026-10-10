@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/plan-verification-obligations.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 4758021ad1335559ab3f196b70c85bc7843d57e8474e0656a940a0f295b117f6 をレビュー。実行検証あり）。範囲: 全 765 行と origin/main からの差分 +209/-42（PEP 723 header、_reject_json_constant・_reject_non_finite_float、rglob から os.walk への置き換えと _raise_unreadable、_update_with_link_target、_validate_contract の強化、反復版 _topological、_load_receipts の unreadable、_write_atomic、main の例外を exit 2 にする処理）。確かめたこと: PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider -q で plugins/harness-creator/tests/test_verification_obligation_planner.py 37 passed、plugins/harness-creator/tests/test_capability_build_runtime_contract.py 4 passed、tests/test_iter_improve_contract.py 33 passed（record 側の test_verification_evidence_input_guards.py 49 と合わせて 4 ファイル 123 passed）。lint-script-frontmatter.py は親ディレクトリ run-build-skill/scripts を渡して OK (checked=30 pending=0)、このファイルの指摘なし。lint は必須キーの有無しか見ないので、header と実装の一致は読んで確かめた（exit 0/2、write-scope の --out への tmp+replace、--evidence-dir の読み取り専用は実装どおり）。scratchpad の fixture（covR/work-s1/f7）で: --help は 0。draft では gen:a が generate、chk:a が blocked、sem:a が defer not-run(stage=draft)。PASS の receipt を記録して再計画すると gen:a が reuse exact-proof-current。contract の不在・壊れた JSON・配列の root・非 UTF-8・NaN・1e999・--max-context-bytes 0・risk が list・activation の欠落・絶対パスの input・依存の循環は、いずれも traceback なしで exit 2。symlink 先の読めないディレクトリは exit 2。--out がディレクトリなら exit 2 で .tmp を残さない。入れ子の --out は作られる。symlink 先の外部ディレクトリの内容を変えると fingerprint が変わる。`..` への symlink ループでも止まる。指摘: [低] 319-324 行: evidence-dir を rglob で歩き、読めない subdir（chmod 000）や、読めない receipt・JSON が壊れた receipt を黙って読み飛ばす。314 行の docstring は「読めない FAIL を捨てて同じ fingerprint の PASS を再利用しない」と書くが、FAIL の receipt を chmod 000 の subdir に置くと、同じ fingerprint の PASS が reuse される（両方読めるときは escalate contradictory-current-evidence）。直し方は、os.walk に onerror を付け、壊れた receipt があれば escalate すること。[低] 142-143 行: symlink 先の中にある symlink は link の文字列だけを hash する。r4/src/ext→o4a、o4a/inner→o4b の配置で o4b/deep.txt を変えても、chk:a の fingerprint は c68308b487… のままで、古い PASS が再利用されうる。関数の docstring には書いてあるが、module docstring の「Fingerprints fail closed」と食い違う。[低] 267 行: checker は id と argv の truthiness しか見ないため、argv が文字列 \"true\" でも exit 0 になる。verification-contract.schema.json は argv を文字列の配列（minItems 1）、id を minLength 1 の文字列と定めている。ほかの項目を型まで締めた今回の差分とも揃っていない。DEDUCTION: -3（receipt の黙った読み飛ばし）-2（入れ子の symlink）-2（checker の型）→ 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

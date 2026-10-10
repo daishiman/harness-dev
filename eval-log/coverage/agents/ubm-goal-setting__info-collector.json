@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/info-collector.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":90,"notes":"reference-existence: 参照する knowledge/router.json 実在。デュアルパス検索が依存する router キーを python で実測: abstraction_layers.concept_mapping / abstraction_layers.meta_themes / quick_lookup.by_issue / quick_lookup.by_phase / routing_rules / categories 全て存在。total_entries=154 ゆえ主経路(router 経由)が live で fallback(動画教材 Tier1)は真の縮退路。schema-conformance: frontmatter tools=Read,Grep,Glob,Bash/isolation=fork/kind=agent 妥当・description が Phase1-2 収集を的確に要約。mechanical=true: lint-agent-prompt-section.py exit0(Tier1 5/5)・marker '(対話なし: 自動実行 agent)' と Self-Evaluation(完全性/一貫性/検証可能性)具備。placement-invariant: 自動実行 agent で Layer5/6 に手順正本を保持・prompts/ 逆転なし=skip-rule 整合。single-responsibility: 過去目標/合宿/ナレッジ/journal の並列収集と [自動取得]/[要ヒアリング] マーク付き構造化サマリー生成に限定・対話/目標設定/ファイル保存は Layer1 で明示除外。owner-flow: goal_type 別取得スコープ表→Step1-3.7 並列→Step4 統合が矛盾なく、出力テンプレートの継承文脈10種が Step1-6 の抽出項目と一致。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/info-collector.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 d3a7044742d1fc495aa1eaea107a06aacd0b9248a9d8f15a70144a0d47bb6d58 をレビュー。実行検証あり）。範囲: 全293行・本文285行（採点器と同じ数え方、BD-003 を満たす）、tools は Read, Grep, Glob, Bash。確かめたこと: 採点器 render-findings-score.py --kind agent（2つの rubric.json を --rubric-refs に渡す）は 97 で、PD-001(low) の -3 だけ。PD-001 は内容を plugin 直下 references/agent-*.md へ段階的に開示する形にしてあるので減点しない。AG-001〜004（unscored）は現物で判定: tools 明示・## Context Boundary・phase id 重複なし・## Handoff をすべて満たす。lint-agent-prompt-section.py（9件 Tier 1 OK, rc=0）と lint-agent-prompt-content.py --mode agent（7層準拠, rc=0）。env -u UBM_VAULT_ROOT pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests → 1021 passed（再実行も同じ）。test_heading_references.py は /skills/・/agents/・/references/ の3種の接頭辞を検査対象に広げ、test_notation_consistency.py は NOTATION_FILES に references/agent-output-formatter-rules.md を足したもので、検査は弱まっていない。参照パスは自作の pathcheck で ${PLUGIN_ROOT}=plugins/ubm-goal-setting と解決して全件実在（agent-root-contract.md の解決と一致）。移す前の本文と references 側を行単位で照合し（linecover）、欠けた27行はすべて言い換えか意図した直しで、規則の欠落は無い。前回の[低]の修正を確認（22・140行、89行、116行の shasum -a 256 を実行して手順どおりの値が得られる、283・290行の Context Boundary/Handoff）。指摘: [低] 160行のエラー表「日付パターン不正 → ファイル更新日時（`ls -lt`）で代替ソート」は、67・168・287行で Bash の用途を合宿ディレクトリの一覧・shasum・グラフ索引に限っている記述と合わず、目標ファイルの代替ソートに Bash を使ってよいかが読み取れない。[低] 91行は1年目標と最新の挑戦宣言のどちらからも `## 【今年の最重要数字】` の注記（`月間売上到達点：`/`継続コンサル人数：`）で到達点を取ると書くが、references/challenge-format.md の挑戦宣言の骨格（【挑戦宣言と企画】●目的…●目標ー…）にはその見出しもラベルも無い。また同行の「1年目標が存在しない期だけ null」は data-contract.md 87行（現行の1年目標か最新の挑戦宣言から取る）と summary-template 18行（1年目標／最新の挑戦宣言から継承）に反し、output-formatter の steps 11行が2番目の出所に挙げる挑戦宣言由来の値が渡らない。DEDUCTION: [低] -2（160行 Bash 用途との不一致）、[低] -3（91行 挑戦宣言からの到達点の取り方と null 条件）→ 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-agents",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

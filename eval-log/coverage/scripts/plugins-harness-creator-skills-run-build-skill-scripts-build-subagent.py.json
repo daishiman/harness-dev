@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"compile OK; 完全な # /// script frontmatter(network:false/write-scope:output-dir明記); stdlib only; SKILL.md不在時exit2でstderr報告; 書込はoutput-dir限定; argparse明快・関数分割妥当; 減点=自作1段YAMLパーサはエッジ脆弱(本人docstringで簡易と明記済)"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 03d715a88cfdc75244ec9accc17d4bd3d7b4f5f7f1df2e842740d1c5fee870a1 をレビュー。実行検証あり）。範囲: 289 行全体と git diff origin/main（+164/-29: header の inputs/outputs/exit、_unquote_scalar、_split_tool_scalar、resolve_language、render_agent_body の 7 層、role の検査）、build-steps.md H.2 の呼び方、ref-skill-naming-convention。確かめたこと: pytest test_harness_creator__build_subagent.py・test_harness_creator__build_subagent_r4.py・tests/test_prompt_creator_7layer_l5_contract.py で 115 passed（python3.11）。build_subagent の 2 本は python3.9 でも 87 passed。fixture: 空白区切りの tools は 'Read, Grep, Glob'。[Read, MultiEdit] に --role advisor は rc2、auto なら writer。入力エラー（../esc の skill-name、存在しない SKILL.md、非 UTF-8、output-dir がファイル、--skill-md がディレクトリ）はすべて rc2 と 1 行の説明。実物の run-build-skill/SKILL.md は『## ゴールシーク実行』を持ち、Layer 3 に手順が入る。build-steps.md H.2 の引数（--skill-name・--skill-md・--output-dir・--model）は実装と合う。write-scope output-dir・network false は実装どおり。lint-script-frontmatter.py（scripts ディレクトリを指定）OK checked=30。指摘: [低] L78-79（block list の項目）と L88-90（inline list の項目）は値を _unquote_scalar に通さない。そのため引用符付きの項目で tools 行が `tools: \"Read\", \"Write\"` と壊れ、引用符付きの \"Write\" が WRITE_TOOLS に一致しない。--role advisor でも rc0 で通り、header が exit 2 と言う『advisor に書き込みの道具』を止められない（fixture s2・s5 で再現。repo の SKILL.md 144 本に引用符付きの allowed-tools は無く、今は潜在）。直し方: list の項目にも _unquote_scalar を当てる。[低] header に requires-python が無い（同じ scripts/ の 30 本のうち 26 本は宣言している。実装は 3.9 で動く）。[低] L139 の re.split(r\"[\\s(]\", t, 1) は maxsplit を位置引数で渡すので、python3.13 -W default で DeprecationWarning が出る。[低] L50 の SKILL_NAME_RE が大文字と _ を許すので、--skill-name Foo_Bar が rc0 で name: Foo_Bar-subagent を出す（ref-skill-naming-convention 第1条の kebab-case 小文字と食い違う）。DEDUCTION: -4（引用符付き list 項目と advisor 判定）-2（requires-python が無い）-2（DeprecationWarning）-2（名前の正規表現）→ 90。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

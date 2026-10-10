@@ -2,26 +2,46 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "assign-plugin-package-evaluator",
-    "skill_md_sha256": "9cd38c57a9ceda7814cda556e1dc7529dc9cb557163023b7c3e8dd3be818b91e"
+    "skill_md_sha256": "f4b7c03272c090eb6ce980e800343658c879be6df86d85848584c4873eaab6e7"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 2,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-10-10T14:26:03Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
-    "positive_feedback": [
-      "検査スコープ (PKG-002〜008 / PKG-014 = 8 件) が Purpose・入力 pkg_ids 配列・PKG 詳細表 (8 行)・完了チェックリスト・findings 例・Gotchas の全箇所で完全一致し、B (run-plugin-package-check) が担う対象外 (PKG-001/009/010〜013/015) の帰属も矛盾なく明示されている。",
-      "PKG ID 表を ref-pkg-contract に委ね本 skill 内で再定義しない DRY 徹底 (Key Rule 1) と context:fork による親 sycophancy 排除 (Key Rule 7) が frontmatter 宣言と本文で整合。assign 系として goal-seek は Goal+Checklist 形のみで runtime loop を配線しない評価系の正しい扱いになっている。"
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "positive_feedback": [
+      "j 回目の [medium]（hooks/hooks.json を plugin.json が指すときしか読まない）は直った。L578-581 で既定の hooks/hooks.json を常に読み、resolve で同じ file を 2 回読まない。再現 fixture p006h（hooks.json が gaurd-typo.py を登録）は rc1 で実体なしを検出した。p006d（hooks.json だけで登録）は rc0 で偽の未登録が消えた。pjdefault（plugin.json が既定の hooks.json を指す）でも finding は 1 件だけで、重複しない。",
+      "j 回目の low 2 件も直った。p006e（guard.sh を登録し、実体は guard.py）は未登録と実体なしの 2 件で fail した（拡張子まで完全一致）。package_mode の skil-only・Bundle・[\"bundle\"] は、どれも PKG-002 が fail（L96 のとおり、check を飛ばさず bundle として流す）。PACKAGE_MODES は schema の enum と test で固定されている。j 回目の low の --check all の件は、aggregate が phase の required_pkg だけを数えるようになったので、phase 0 の pkg-batch にある PKG-014 の fail は数えない（ag1 の s_p014 で rc0）。害は消えた。",
+      "plugin.json の hooks を string・array・inline object のどれでも読み（pjarray・pjinline は pass）、外を指す参照（pjescape）と拡張子の無い entry_points（epnoext）は fail にする。L100 の記述と一致する。skill-only は PKG-003/005/006/007/008/014 が not_applicable で、Rule 3・Checklist・R1 L46 と一致する。出力 6 件は findings.schema.json の検証で errors 0。",
+      "C5（rubric の high が 0）: render-findings-score.py の機械採点は 100/100（threshold 80、findings 0 件）。pending_human の BD-004 は LLM judge として PASS と判定した。description の 2 つの発動条件のうち、「PKG-002〜008 / PKG-014 sub-check を実行したい」は採点フロー（L86）と表（L94-103）が受け、「findings JSON で得たい」は出力契約（L50）と出力フォーマット（L117-153）が受ける。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency / scripts/validate-plugin-package.py:550-556 と SKILL.md:100] PKG-006 は、command の token の prefix に \"PLUGIN_ROOT\" を含むかだけを見て、最初の \"/hooks/\" より後ろを hooks/ を基準に解決する。再現（work-pkg/fx1）: `python3 ${CLAUDE_PLUGIN_ROOT}/../evil/hooks/guard.py` を登録し、hooks/guard.py を置く（prefixesc）。plugin の外を指すのに pass・rc0 になる。`${CLAUDE_PLUGIN_ROOT}/scripts/hooks/x.py`（実体あり。subhooks）は、「実体が plugin の中に無い」という偽の fail になる。L100 の「`${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すもの」とも範囲が合わない。repo の 13 plugin の hooks.json にある command 37 件は、すべて `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/<file>` の平らな形なので、今は影響が無い。直し方: prefix を既知の root token（`${CLAUDE_PLUGIN_ROOT}`・`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`・空・`.`）との完全一致に限る。ほかは plugin root から解決して範囲を確かめる。L100 も同じ範囲に書きそろえる。",
+      "[low / omission / scripts/validate-plugin-package.py:578-580, :558-576, :904] 読めない hooks file の扱いがそろっていない。hooks/hooks.json が壊れた symlink かディレクトリのときは、is_file で黙って読み飛ばす（fixture hjsymlink・hjdir。fail は hooks/ の script が未登録になる分だけ）。hooks が object でない `{\"hooks\":\"oops\"}`（hjshape）も黙って読み飛ばす。非 UTF-8 の hooks.json（hjbad3）は exit 2 になり、`{bad` は PKG-006 の fail になる。L100 の「hooks file が JSON の object として読めない」と、作者の主張（hooks/hooks.json を常に読む）に合わせるなら、存在するのに読めない hooks.json は PKG-006 の finding にする。",
+      "[low / inconsistency / prompts/R1-run-pkg-check.md:103 と scripts/validate-plugin-package.py:56-65] R1 は「target_plugin の `../` を含む値は exit 2」と書く。しかし `_resolve_plugin_dir` は `--plugin ../plugins/clean` を受け、rc0 で検査を走らせる（fx1 で再現）。script は読むだけなので害は小さい。直し方: --plugin を plugin 名の regex（aggregate の _PLUGIN と同じ）で弾く。",
+      "[low / omission / SKILL.md:7, :86, :115] j 回目から続いている。評価者の表（L107-115）で見つけた違反を findings に足し、verdict を数え直し、schema で検証する手段が script に無い。--check は単一の ID か all しか受けず、--extra-findings のような option も無い。allowed-tools に Write は無く、python3 で JSON を手で書き換えることになる。直し方: 追加の findings を取り込んで数え直す option か、findings JSON を検証する小さな script を足す。"
+    ],
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 9cd38c57a9ceda7814cda556e1dc7529dc9cb557163023b7c3e8dd3be818b91e) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 8 件スコープが Purpose/入力/PKG 詳細表/checklist/findings 例/Gotchas 全体で一致し、対象外 PKG も B 帰属で一貫。②漏れなし: 入力/出力/完了条件、package_mode=skill-only 時の not_applicable 判定 (Key Rule3・checklist・Gotcha4)、schema 準拠、schema 違反 exit2、exit!=0 でも findings は stdout 出力、が全て記述され欠落なし。③整合性: pair=run-plugin-package-check が B 側 pair 宣言と双方向一致し kind/prefix/effect/role_suffix も整合。④依存整合: responsibility_refs (R1-run-pkg-check.md)/schema_refs (findings.schema.json・ref-pkg-contract package-contract)/script_refs (validate-plugin-package.py・render-pkg-findings.py)/reference_refs (evaluator-contract.md)/rubric_refs (ref-pkg-contract) 及び goal-seek 正本 (../run-build-skill/references/goal-seek-paradigm.md) を実ディスクで確認、全て resolve し dangling なし。重大問題は検出されず PASS。"
+  "notes": "作者とは別 context の独立評価者（pkg）が、incremental profile の focused combined review で 1 context でまとめて判定した。判定した観点は C1 矛盾、C2 漏れ、C3 規約、C4 依存、C5 rubric の high が 0。対象は worktree の現物（SKILL.md sha256 f4b7c03272c090eb6ce980e800343658c879be6df86d85848584c4873eaab6e7）。流したコマンドと rc: shasum -a 256 SKILL.md（2 スキルとも担当表の値に一致）。PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q で tests/scripts-plugins/test_harness_creator__{aggregate_pkg_findings,run_pkg_015,lint_pkg_009,validate_plugin_package,render_pkg_findings}.py と tests/scripts-root/test_root__validate_plugin_packages.py を流し、208 passed・rc0。python3.9 では aggregate と validate の test が 168 passed。python3 scripts/validate-plugin-packages.py は rc0（22 plugin、blocking failure 0、advisory は PKG-004・PKG-014）。lint-script-frontmatter は validate-plugin-package.py と aggregate-pkg-findings.py の両方で OK。validate-plugin-package.py --plugin harness-creator --check pkg-014 は rc1（findings 34 件）。fixture は scratchpad の work-pkg/fx1（validate 用の 22 plugin）と work-pkg/ag1（aggregate 用の fixture repo、CLAUDE_PROJECT_DIR で指定）。validate-plugin-package.py を fx1 の各 plugin に --check pkg-006 / pkg-002 / all で流した。--check pkg-006 の rc1: p006h・p006e・pjdefault・pjescape・epnoext・hjbad1・hjbad2・hjdir・hjempty・hjshape・hjsymlink・modetypo・subhooks。rc0: clean・modecase・modelist・p006d・pjarray・pjinline・prefixesc・skillonly。rc2: hjbad3。--check pkg-002 の rc1: modetypo・modecase・modelist。rc0: skillonly。--check all の modetypo は rc1（PKG-002 と PKG-006 が fail）。機械採点: render-findings-score.py --kind skill は rc0、score 100、threshold 80、rubric_version 1.5.0、rubric_hash sha256:9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452、composition_hash sha256:b00ef4ebdae05a5455a2f1c477ba6975ca815d23c7e6592e11d9e3e9fd6cb241。pending_human は BD-004 の 1 件で、LLM judge として PASS と判定した。前回の [medium] の確認: j の再現 p006h は rc1 で、PKG-006 が hooks/hooks.json の gaurd-typo.py に実体が無いことを検出した。逆向きの p006d は rc0。test にも p006d・p006h に当たるものがある。よって直ったと判断した。前回の low は、拡張子と package_mode の 2 件が直り、--check all の件は aggregate 側で害が消えた。findings を足す手段の件は残っている。新しい low は 3 件: token の prefix 判定、読めない hooks file の扱い、R1 の traversal の記述。どれも repo の実 plugin には該当が無い。criteria_evaluated: frontmatter に feedback_contract が無いので、前回にならって C1〜C5 とした。判定: high と medium が 0 件なので、elegance と rubric の両方を PASS とした（low 4 件は negative_feedback に残す）。評価の射程は、静的な設計の妥当性と、最小 fixture での script の実行まで。Claude Code に plugin を入れて hook を発火させる live trial や、Skill 経由の fork 委譲の実走はしていない。incremental profile の focused combined review なので、30 種の思考法は使っていない。"
 }

@@ -1,37 +1,41 @@
 {
-  "target": {
-    "plugin": "skill-intake",
-    "skill": "assign-notion-fidelity-evaluator",
-    "skill_md_sha256": "626054974f643017fd1a0232b393ebe9e07fa5c26bf48b2fc9a705050ac3d1a4"
-  },
-  "review_kind": "elegance",
-  "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
-  },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
-  "iterations": 1,
-  "human_review_required": false,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "IN2",
-      "OUT1"
-    ],
-    "positive_feedback": [
-      "`pair: run-notion-intake-publish` が追加され、publish側の本文・composition dependencyにも evaluator 呼出しが実在するため pair は架空参照でない。assign kind には runtime goal_seek を追加せず fork evaluator の責務を保持した。"
-    ],
-    "negative_feedback": [],
-    "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
-    "next_action": "none"
-  },
-  "notes": "現行全文、pair先、composition、canonical map/result schema、criteriaをfresh review。runtime-profileはnot-applicable finding 0、frontmatter/tree lintはexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+ "target": {
+  "plugin": "skill-intake",
+  "skill": "assign-notion-fidelity-evaluator",
+  "skill_md_sha256": "f2ce5d0ad0ca1e6a232cf8618c1ac8368503fca0cee28c032b06c181fb15cbe7"
+ },
+ "review_kind": "elegance",
+ "verdict": "PASS",
+ "findings_summary": {
+  "contradiction": 0,
+  "omission": 0,
+  "inconsistency": 0,
+  "dependency_break": 0,
+  "smell": 1
+ },
+ "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+ "reviewed_at": "2026-10-10T09:30:00Z",
+ "iterations": 1,
+ "human_review_required": false,
+ "feedback_loop": {
+  "loop_scope": "both",
+  "criteria_evaluated": [
+   "IN1",
+   "IN2",
+   "OUT1"
+  ],
+  "positive_feedback": [
+   "前回の F1 は解消した。ref-output-routing が frontmatter の参照キー (rubric_refs / reference_refs) のどこにも無くなり、live-trial の behavior closure が解決できない名前を探さなくなった。plan-live-trials.py --plugin-dir plugins/skill-intake は build-only / incremental / exhaustive の 3 profile とも exit 0 で、skill-intake の 12 skill すべての Gate D 計画が止まらなくなった。",
+   "前回の F2 も解消した。出力先が output/<hint>/fidelity-report.{json,md} に固定され、Key Rule 3 で Notion API の直接呼び出しを禁じるこの skill に、adapter を選ぶ契約の ref-output-routing は関係が無い。コメントはその理由 (rubric.json を持たない、出力先が固定) を正しく書いており、依存グラフ (lint-skill-dep-step7 の inbound 集計、inventory-skill-references) に誤った辺が入らなくなった。",
+   "completeness_exempt の rubric 理由は実物と合っている。重みは references/granularity-rubric.md (0.30/0.40/0.30)、閾値は references/fidelity-check-rules.md (pass>=0.85 / warn>=0.70) にあり、scripts/validate-notion-fidelity.py が決定論で算出する。lint-skill-completeness の parse_exempt が求める '<category>: <理由>' の形式どおりで、assign-plugin-package-evaluator の前例 (harness-aor) と揃っている。"
+  ],
+  "negative_feedback": [
+   "[low / smell] 重みと閾値が references (granularity-rubric.md / fidelity-check-rules.md)、script (validate-notion-fidelity.py の重みと既定閾値)、prompts/R2.md の 3 か所に書かれ、同期を確かめる機械の検査が無い。変更前からの問題で、今回の免除理由の主張そのものは正しい。免除で rubric.json による検査を外した以上、references と script の値が一致するかを確かめるテストを 1 本足すと、免除の根拠が崩れたときに気付ける。"
+  ],
+  "iteration": 1,
+  "iteration_limit": 3,
+  "hook_trigger": "manual:fresh-review",
+  "next_action": "none"
+ },
+ "notes": "incremental profile の focused combined review (再レビュー)。今回の差分は frontmatter だけで、rubric_refs: [ref-output-routing] を外し、外した理由をコメントに、rubric の免除理由を completeness_exempt に書いた。確かめたこと: plan-live-trials.py --plugin-dir plugins/skill-intake を build-only / incremental / exhaustive で実行し 3 つとも exit 0 (前回は 'declared behavior dependency missing: ref-output-routing' で exit 2)。lint-rubric-refs-exist は 'PASS: rubric_refs 全件解決 (1 SKILL.md checked)' で exit 0。lint-skill-completeness は 'ok: ... (completeness)' で exit 0。validate-frontmatter は exit 0、lint-skill-dep-step7 は exit 0。test_skill_intake__validate_notion_fidelity.py は 45 件合格。前回の F1 (high / dependency_break) と F2 (medium / inconsistency) は解消した。残るのは変更前からの low smell 1 件だけ。範囲外の観察: (1) この skill の frontmatter の effect は conversation-output だが、script は output/<hint>/fidelity-report.{json,md} を書き出す。今回の差分では変わっておらず、本レビューの判定には入れない。(2) 作業ツリーでは別の作業者が lint script を変更中で、r4 系のテストが一時 1 件 fail したことがあるが、この SKILL.md とは無関係 (再実行では lint 系 101 件合格)。(3) strict manifest の warning は他の skill のもの。exhaustive の 30 思考法は実施していない。"
 }

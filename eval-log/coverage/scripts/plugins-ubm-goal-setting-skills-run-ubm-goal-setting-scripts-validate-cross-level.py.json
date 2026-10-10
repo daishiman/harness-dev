@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 0687fb4d2f1c00bcb9517c9b5acce492f967c1e159621106d7e0eecc2a8eb781 をレビュー。実行検証あり）。範囲: validate-cross-level.py 全477行（0.2.0）。PEP 723 ヘッダ・docstring・_EXCLUDE_SECTION（L64-71）・_NOTE_PREFIXES（L80）・10アンカーの定義（1年層の2件は allow_note=True・requires_level=\"yearly\"、L136-157）・{M}月 の照合・read_doc・main を読み、j 回目の [低]（ヘッダと docstring が三層のまま、UTF-8 で読めない入力で traceback と rc=1、1月の照合で11月の値を拾う、--yearly の test が0件、到達点ラベルの衝突）を現物で確かめた。確かめたこと: env -u UBM_VAULT_ROOT で plugins/ubm-goal-setting/tests/test_validate_cross_level.py 32 passed、plugins/ubm-goal-setting/tests 全体 1021 passed。lint-script-frontmatter.py は OK（checked=1、pending=0）。work-ubm/probe_vcl.py（test の quarterly・monthly・weekly に1年目標を足した約30通り）で、--month 1 に11月と1月が混ざる入力は rc=0 で1月の値（600000）を取り、1月が無ければ4アンカーが抽出不可で rc=1（11月を拾わない）。--month 2 で12月と2月が混ざる入力、1月が先頭に来る順序も rc=0。Shift_JIS を --yearly・--quarterly・--monthly・--weekly のどれに渡しても、不正なバイト列でも、rc=2 で「UTF-8 として読めません」と出て traceback は出ない。--yearly の一致は照合対象10件で rc=0。期報や月報の到達点の不一致は [NG] で rc=1。--yearly を省くと [未照合]2件・照合対象8件で rc=0。1年目標の見出し違いは抽出不可2件で rc=1。BOM と `>` の注記は1年目標でも期報でも rc=0。1年目標の全角数字は抽出不可で rc=1。期報の本文の成果目標に同じラベルがあると [NG] になるが、data-contract L358 に「下位層の成果の行で到達点のラベルを使い回さない」と書かれた既知の制約なので減点しない。--help は rc=0。引数なし・存在しないパス・ディレクトリ・--month 0/13/x・存在しない --yearly は、どれも rc=2 で traceback は出ない。書き込みは無く、write-scope: none と一致する。j 回目の [低] はすべて直っている。指摘: [低] docstring L46-47 の除外節の列挙が「【前期/前月/前週の振り返り】」のままで、年の変種（前年の振り返り・来年以降）が無い。実装の _EXCLUDE_SECTION（L64-71）は 来(週|月|期|年)・前(週|月|期|年)の で年に対応しているので、挙動ではなく説明のずれ。直し方: docstring に年の変種を足す。DEDUCTION: docstring の除外節の列挙 -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-ubm",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

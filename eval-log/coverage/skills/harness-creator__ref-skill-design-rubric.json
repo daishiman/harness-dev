@@ -1,1 +1,20 @@
-{"artifact":"plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md","type":"skills","kind":"ref","mechanical":true,"llm_eval":{"verdict":"FAIL","score":76,"notes":"source(doc/ClaudeCodeスキルの設計書/)実在・引用章(07/08/09/21/24/27/28/29)題名一致, 下流upstream/governance/knowledge-loop参照も実在しread-only境界明確だが, prompts/R1-search-summarize.md がrubric.jsonに存在しないaxes[]/axes[].aliases/keywords/weight合計1.0モデルを記述しrules[]+severity_weights実体と矛盾(内部schema不整合)"},"reviewed_by":"workflow-ref-review","checked":["source-traceability","reference-accuracy","self-containment","boundary"]}
+{
+  "artifact": "plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md",
+  "type": "skills",
+  "kind": "ref",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 78908c80ac627bd1aeea834d2ab315a89366f64b6c0f1c8a28de51bd848bcc28 をレビュー。実行検証あり）。範囲: SKILL.md 全75行（kind: ref）を、references/rubric.json（rubric 1.5.0）・references/rubric-rationale.md・assign-skill-design-evaluator/scripts/render-findings-score.py と突き合わせた。確かめたこと: validate-frontmatter rc=0 ok、lint-skill-description OK=189、lint-skill-name（SKILL.md を渡す）ok、lint-skill-tree ok、render-findings-score --kind skill（L0+L2）で 97・passed、関連 pytest 3ファイル 164 passed。rubric.json の 41 rule、supported_kinds 7種（skill/agent/hook/command/plugin-composition/prompt/workflow）、severity_weights（high -20 / medium -10 / low -3）、threshold 80、BD-003 の applies_to [\"*\"]（本文 300 行以下）が本文の記述と一致する。前回（i 回目）の [低] 3件（43・45・66・73行）は直っていることを現物で確認した。指摘: [低] Gotchas（62〜66行）は FM-003 と機械ゲート（validate-frontmatter の ==2、lint R1）の食い違いを書くが、43行の「動詞ベース」（FM-005, low）が repo の「〜とき…使う」という description の書き方とぶつかることを書いていない。FM-005 の日本語の判定語は rubric.json の check 文（11語）と render-findings-score.py 206〜208行（16語）で一致せず、採点器の判定を repo の全127 SKILL.md に当てると39件が fail する。直し方: Gotchas に FM-005 の扱い（low の減点として受け入れるか、判定語の正本をどちらに置くか）を1行足す。DEDUCTION: [低] -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "source-traceability",
+    "ref-review"
+  ]
+}
