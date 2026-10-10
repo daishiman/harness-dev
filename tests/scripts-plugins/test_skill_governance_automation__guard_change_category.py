@@ -20,7 +20,7 @@ network/git/changelog 依存は次の境界で stub する:
   - check_cooldown (bypass / なし / 数値抽出失敗 / changelog 無し / 期間内違反 / 期間外OK /
     不正 timestamp / target 不一致)
   - main (report 経路 / block 検出で exit 1 / 全承認で exit 0 / cooldown 違反 block /
-    --base 引数 / --bypass-cooldown / git 失敗で空)
+    --base 引数 / --bypass-cooldown / git 失敗で exit 2)
 すべて実入力で assert し、pass のみの空テストは作らない。
 """
 import importlib.util
@@ -166,11 +166,12 @@ def test_name_field_changed_no_name_line(monkeypatch):
     assert G._name_field_changed("p/SKILL.md") is False
 
 
-def test_name_field_changed_git_error_returns_false(monkeypatch):
+def test_name_field_changed_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G._name_field_changed("p/SKILL.md") is False
+    with pytest.raises(G.GitDiffError):
+        G._name_field_changed("p/SKILL.md")
 
 
 # ===========================================================================
@@ -185,11 +186,12 @@ def test_changed_files_parses_lines(monkeypatch):
     assert G.changed_files("origin/main") == ["a.py", "b.txt", "c.md"]
 
 
-def test_changed_files_git_error_returns_empty(monkeypatch):
+def test_changed_files_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_files("origin/main") == []
+    with pytest.raises(G.GitDiffError):
+        G.changed_files("origin/main")
 
 
 def test_changed_file_statuses_parses(monkeypatch):
@@ -205,11 +207,12 @@ def test_changed_file_statuses_parses(monkeypatch):
     assert "bad-line" not in st
 
 
-def test_changed_file_statuses_git_error_returns_empty(monkeypatch):
+def test_changed_file_statuses_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_file_statuses("origin/main") == {}
+    with pytest.raises(G.GitDiffError):
+        G.changed_file_statuses("origin/main")
 
 
 # ===========================================================================
@@ -493,6 +496,18 @@ def test_main_no_changes_exit0(policy_file, changelog_file, monkeypatch, capsys)
     rc = G.main(["prog"])
     assert rc == 0
     assert "total=0 blocked=0" in capsys.readouterr().out
+
+
+def test_main_git_failure_exits_2_not_empty_pass(policy_file, changelog_file, monkeypatch, capsys):
+    """base が解決できない等で git diff が落ちたら、空の差分として exit 0 にしない。"""
+    def boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+    monkeypatch.setattr(G.subprocess, "check_output", boom)
+    rc = G.main(["prog", "--base", "no-such-ref"])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "ERROR: git diff" in captured.err
+    assert "summary:" not in captured.out
 
 
 # ===========================================================================

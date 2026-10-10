@@ -12,10 +12,13 @@ usage:
 承認済み記録の target_sha256 が現物と一致すれば、その記録だけを過去の変更から除く。
 以前の変更の cooldown は維持し、incident_fix=true の承認だけを規約の例外とする。
 
+git diff が失敗したとき (base が無い、shallow clone で merge-base が取れない等) は
+「変更なし」に畳まず exit 2 で止める。空の差分を承認済みと誤認させないため。
+
 exit code:
   0 承認済み or auto_apply 範囲のみ
   1 proposal/承認が必要な変更を検出 (CI block)
-  2 設定エラー
+  2 設定エラー、または git diff の失敗
 """
 import json
 import fnmatch
@@ -31,25 +34,24 @@ POLICY_PATH_CANDIDATES = (
 CHANGELOG_PATH = pathlib.Path(".claude/changelog/governance-log.jsonl")
 
 
-def changed_files(base: str):
+class GitDiffError(RuntimeError):
+    """git diff が失敗した。変更なしとして扱わず、呼び出し側で exit 2 にする。"""
+
+
+def _git_diff(args: list[str]) -> str:
     try:
-        out = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{base}...HEAD"],
-            text=True,
-        )
-    except subprocess.CalledProcessError:
-        return []
+        return subprocess.check_output(["git", "diff", *args], text=True)
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise GitDiffError(f"git diff {' '.join(args)} failed: {exc}") from exc
+
+
+def changed_files(base: str):
+    out = _git_diff(["--name-only", f"{base}...HEAD"])
     return [line for line in out.splitlines() if line.strip()]
 
 
 def changed_file_statuses(base: str) -> dict[str, str]:
-    try:
-        out = subprocess.check_output(
-            ["git", "diff", "--name-status", f"{base}...HEAD"],
-            text=True,
-        )
-    except subprocess.CalledProcessError:
-        return {}
+    out = _git_diff(["--name-status", f"{base}...HEAD"])
     statuses = {}
     for line in out.splitlines():
         parts = line.split("\t")
@@ -72,12 +74,7 @@ _P3_SUFFIXES = (".gitignore", ".editorconfig")
 
 def _name_field_changed(path: str, base: str = "HEAD") -> bool:
     """SKILL.md の `name:` 行が変更されたか git diff で確認 (P0_breaking)。"""
-    try:
-        out = subprocess.check_output(
-            ["git", "diff", "--unified=0", base, "--", path], text=True
-        )
-    except subprocess.CalledProcessError:
-        return False
+    out = _git_diff(["--unified=0", base, "--", path])
     return any(re.match(r"^[+-]name:\s", line) for line in out.splitlines())
 
 
@@ -293,6 +290,15 @@ def main(argv):
         if a == "--proposal-id" and i + 1 < len(argv):
             proposal_id = argv[i + 1]
     policy = load_policy(policy_path) if policy_path is not None else load_policy()
+    try:
+        return _evaluate(policy, base, report, bypass_cooldown, proposal_id)
+    except GitDiffError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+
+
+def _evaluate(policy: dict, base: str, report: bool, bypass_cooldown: bool,
+              proposal_id: str | None) -> int:
     files = changed_files(base)
     statuses = changed_file_statuses(base)
     new_plugins = set()

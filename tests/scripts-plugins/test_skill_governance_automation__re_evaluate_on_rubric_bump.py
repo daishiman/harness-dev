@@ -258,6 +258,56 @@ def test_main_major_bump_json_array(monkeypatch, tmp_path, capsys):
     assert "bob (from batch.json)\tpast=2.0.0\tcurrent=4.0.0" in out
 
 
+# ── score ログ (eval-log/<plugin>/*-score.jsonl) ─────────────────────────────
+def test_extract_version_prefers_nested_rubric_version():
+    rec = {"rubric": {"rubric_version": "1.5.0"}, "version": "9.9.9"}
+    assert MOD.extract_version(rec) == (1, 5, 0)
+
+
+def test_extract_version_nested_without_version_falls_back_to_top_level():
+    assert MOD.extract_version({"rubric": {"name": "x"}, "rubric_version": "2.0.0"}) == (2, 0, 0)
+
+
+def test_read_score_log_counts_broken_and_versionless_lines(tmp_path):
+    p = tmp_path / "s-score.jsonl"
+    _write(
+        p,
+        '{"rubric": {"rubric_version": "1.0.0"}, "skill_name": "ok"}\n'
+        "\n"
+        "{broken\n"
+        '["not", "object"]\n'
+        '{"skill_name": "no-version"}\n',
+    )
+    records, unreadable = MOD.read_score_log(p)
+    assert [r["skill_name"] for r in records] == ["ok"]
+    assert unreadable == 3
+
+
+def test_main_detects_major_bump_from_nested_score_log(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(
+        eval_dir / "plugin-a" / "2026-01-01-score.jsonl",
+        '{"rubric": {"rubric_version": "1.5.0"}, "skill_name": "run-nested"}\n',
+    )
+    assert _run_main(monkeypatch) == 0
+    out = capsys.readouterr().out
+    assert "eval-log files scanned: 1" in out
+    assert "run-nested (from 2026-01-01-score.jsonl)\tpast=1.5.0\tcurrent=2.0.0" in out
+
+
+def test_main_unreadable_score_record_lists_targets_then_exits_2(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(
+        eval_dir / "plugin-a" / "2026-01-01-score.jsonl",
+        '{"rubric": {"rubric_version": "1.0.0"}, "skill_name": "run-old"}\n'
+        '{"skill_name": "run-versionless"}\n',
+    )
+    assert _run_main(monkeypatch) == 2
+    captured = capsys.readouterr()
+    assert "run-old (from 2026-01-01-score.jsonl)\tpast=1.0.0" in captured.out
+    assert "1 score record(s) had no readable rubric_version" in captured.err
+
+
 # ── subprocess: 実 repo に対する CLI 経路 ─────────────────────────────────────
 def test_cli_resolves_sibling_rubric_and_exits_0():
     # 兄弟 plugin harness-creator の references/rubric.json を extract-plugin-root.py で解決する。

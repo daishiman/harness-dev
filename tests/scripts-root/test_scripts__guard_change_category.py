@@ -287,12 +287,13 @@ def test_changed_files_parses_output(monkeypatch):
     assert G.changed_files("base") == ["a.py", "b.md"]
 
 
-def test_changed_files_git_error_returns_empty(monkeypatch):
+def test_changed_files_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_files("base") == []
+    with pytest.raises(G.GitDiffError):
+        G.changed_files("base")
 
 
 def test_changed_file_statuses_parses(monkeypatch):
@@ -305,12 +306,13 @@ def test_changed_file_statuses_parses(monkeypatch):
     assert statuses == {"new.py": "A", "mod.py": "M"}
 
 
-def test_changed_file_statuses_git_error_returns_empty(monkeypatch):
+def test_changed_file_statuses_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_file_statuses("base") == {}
+    with pytest.raises(G.GitDiffError):
+        G.changed_file_statuses("base")
 
 
 def test_name_field_changed_true(monkeypatch):
@@ -330,12 +332,13 @@ def test_name_field_changed_false_when_no_name_line(monkeypatch):
     assert G._name_field_changed("p/SKILL.md") is False
 
 
-def test_name_field_changed_git_error_false(monkeypatch):
+def test_name_field_changed_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G._name_field_changed("p/SKILL.md") is False
+    with pytest.raises(G.GitDiffError):
+        G._name_field_changed("p/SKILL.md")
 
 
 # --- check_cooldown additional paths ----------------------------------------
@@ -371,6 +374,20 @@ def test_check_cooldown_bad_timestamp_format_skipped(tmp_path, monkeypatch):
 
 
 # --- main() called in-process (deps monkeypatched, no real git) -------------
+def test_main_inprocess_git_failure_exits_2(monkeypatch, capsys):
+    # git diff 失敗は「変更なし」ではなく exit 2 (fail-closed)
+    def boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+
+    monkeypatch.setattr(G, "load_policy", lambda: PolicyDict)
+    monkeypatch.setattr(G.subprocess, "check_output", boom)
+    rc = G.main(["prog"])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "ERROR: git diff" in captured.err
+    assert "blocked=" not in captured.out
+
+
 def test_main_inprocess_no_changes(monkeypatch, capsys):
     monkeypatch.setattr(G, "load_policy", lambda: PolicyDict)
     monkeypatch.setattr(G, "changed_files", lambda base: [])

@@ -1,0 +1,10 @@
+version: 1
+read_when:
+  - file: schemas/wrap-io.schema.json
+    when: base Skill (run-build-skill) との入出力の受け渡し形を確認するとき
+  - file: scripts/preflight-git-commit.py
+    when: commit 前の staged 範囲・hook 無視・保護ブランチの検査内容を確認するとき
+  - file: scripts/pre-commit-secret-scan.py
+    when: 機密ファイルや秘密情報の検出規則を確認するとき
+  - file: templates/commit-template.md
+    when: commit メッセージの type・scope・制約を確認するとき

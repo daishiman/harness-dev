@@ -81,7 +81,6 @@ schema_refs:
   - schemas/usable-draft-proof.schema.json
 prompt_format: markdown # 既定: Markdown (.md)。YAML (.yaml) は legacy 許容、新規禁止
 script_refs:
-  - ../../scripts/plugin_resources.py
   - ../../scripts/extract-plugin-root.py
   - scripts/build-external-intelligence.py
   - scripts/auto-record-lesson.py

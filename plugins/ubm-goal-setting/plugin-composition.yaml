@@ -212,6 +212,12 @@ dependencies:
   - { from: skills/run-ubm-youtube-ingest, to: scripts/record-knowledge-usage.py, type: calls }
 
   - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/evaluate-design-rubric.py, type: calls }
 
 external_dependencies:
   harness-creator:
@@ -221,6 +227,7 @@ external_dependencies:
   skill-governance-config:
     version: ">=0.1.0 <1.0.0"
     relation: content-review-rubric-registry
+    required_entry_points: [run-governance-config]
 
 eval_sinks:
   - EVALS.json
