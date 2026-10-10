@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "ea98d05b77aacb99a5619166069a8e3ea201eb5b97843efedd061186c8fa77da"
+    "skill_md_sha256": "364dd503724ac1c24eb24f4933697f95bb3bdbe6cc47605d7093a8edaf290e72"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 2
-  },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:05Z",
+  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
+  "reviewed_at": "2026-10-10T00:38:18Z",
   "iterations": 1,
   "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 3
+  },
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -25,20 +25,23 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: 差分は guard block に限られ、workflow-manifest.json の phases[] を複製せず manifest を唯一の SSOT として参照する構成には触れていない。",
-      "IN2: hook-guard-skillgen.py の DENY_COMMAND_RE は生成スキル名の完全トークン一致で、resolver の呼び出しを遮断しない。生成スキル起動禁止の機械強制と新しい手順が両立している（tests/test_skill_intake_guard_skillgen.py が pass）。",
-      "OUT1: 業務ロジックを持たず各 phase を委譲する薄い orchestrator の設計は保たれている。P10 の外部変更は従来どおり receipt flow だけを通り、install 先でも guard に確実に届くようになった。",
-      "rubric の high severity に当たる問題（外部変更の無承認実行、guard の迂回、存在しない参照先）は 0。resolver・guard script・plugin.json の dependencies は実在して整合する。"
+      "IN1: 本文は workflow-manifest.json の phases[]（id・dependsOn・delegate）を複製していない。今回の差分も frontmatter の参照先を直しただけ。lint-manifest-contents.py は2本とも exit 0。ただしこの lint は plugin manifest の必須キーを検査するもので、SKILL.md への phases の複製は実読で確かめた。",
+      "IN2: tests/test_skill_intake_guard_skillgen.py が pass した（単独実行と、9ファイル237件の一括実行の両方）。hooks.json は hook-guard-skillgen.py を PreToolUse などに配線している。",
+      "OUT1: 業務ロジックを持たず、各 phase を委譲して handoff JSON 契約だけで橋渡しする薄い orchestrator の設計は変わっていない。参照切れが直ったことで、frontmatter・manifest・本文・resource-map が同じ2ファイルを指すようになり、依存関係の整合が強まった。",
+      "rubric 1.5.0 の high に当たる違反は0件。FM-001・NM-001（name とディレクトリ名がともに run-skill-intake）、BD-001（## Purpose &amp; Output Contract）、BD-003（本文181行で300行以下）を確認した。medium の FM-002・FM-003（発動条件2個で、末尾は「。」）、BD-002（## Gotchas）、PD-002（本文の冒頭30行以内に Purpose と Key Rule）も満たす。参照先は validate-frontmatter の MISSING_REF が0件で、PC-003 系の参照切れも無い。"
     ],
     "negative_feedback": [
-      "[low / omission / 差分由来] 「other Bash is blocked while the confirmation is pending」は、遮断が completion か cancellation の receipt、または TTL 900 秒の失効まで続くこと（公開失敗時や未確認時も含む）を書いておらず、解除手段の cancel action も載っていない（cancel の漏れは差分前から）。外部変更の安全性には影響しない。elegance 側と同じ finding の投影。",
-      "[low / smell / 差分外・既存・前回から継続] Key Rule 9 の hook 配線先の記述（`.claude-plugin/plugin.json`）が実配線（plugins/skill-intake/hooks/hooks.json）と一致しない。保証の実体（hook と回帰テスト）は実在する。",
-      "[low / smell / 依存先 resolver] resolver の探索段階 5・6 は当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と receipt 契約で fail-closed は保たれる。"
+      "[low / omission / 差分外・既存] Key Rule 3 と handoff 検証の「各 delegate の schemas/ 契約」は、schemas/ を持たない P6 の run-intake-option-catalog と P10 の run-notion-intake-publish を覆えていない。機械 verifier は outputSchemaId がある phase だけを検査するので、実行は壊れない。elegance 側と同じ finding の投影。",
+      "[low / inconsistency / reference の内容・既存] skill 内の references/handoff-contract.md が参照する節名「harness-creator 入力契約マッピング」が、正本の実際の見出し「harness-creator 論理マッピング」と一致しない。",
+      "[low / smell / reference の内容・既存] references/workflow-sequence.md の「失敗時の戻り先」列は、本文の「停止し、自動再試行しない」と読み違えられうる。P11 の入力も簡略化されている。",
+      "[low / smell / 前回から継続、本回で再確認] Key Rule 9 の hook 配線先の記述（`.claude-plugin/plugin.json`）が、実際の配線（hooks/hooks.json）と一致しない。",
+      "[low / omission / 前回から継続、本回は再検証していない] guard block の「other Bash is blocked while the confirmation is pending」は、遮断が続く範囲と cancel を書いていない。guard block は差分外で、内容は変わっていない。",
+      "[low / smell / 前回から継続、本回は再検証していない] resolver の探索段階5・6が、別の copy を返しうる。fail-closed は保たれる。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:20261010-pr-final-review",
     "next_action": "none"
   },
-  "notes": "elegance 側と同一の focused combined review（独立 evaluator context）の rubric 投影。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではなく、差分（guard block の差し替え）が frontmatter の feedback_contract.criteria 全 3 件（IN1/IN2/OUT1）の対象を崩していないこと、rubric の high severity に当たる問題が 0 であることを、実読と決定論の確認（resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check、lint-sibling-plugin-paths.py、lint-vendored-ssot.py、pytest 28 件と 30 件 pass）で確かめた。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、live trial や criteria acceptance の証拠を代替しない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "elegance 側と同じ focused combined review（独立 evaluator context）を rubric 側へ投影したもの。ref-skill-design-rubric 1.5.0 の全 rule を機械で実行して数値 score を出したのではない。frontmatter の feedback_contract.criteria 全3件（IN1/IN2/OUT1）を評価したこと、rubric の high に当たる違反が0件であることを、実読と決定論の確認で確かめた。決定論の確認: lint-skill-description、audit-capability-parity --all、validate-frontmatter、lint-skill-completeness、lint-skill-dep-step7、lint-skill-name、lint-manifest-contents、build-artifact-delivery --check、pytest 237件がすべて exit 0。旧値と新値は、check_refs_exist を read-only で呼んで比べた。finding は low 6件で、high と medium は0件。PASS の射程は design claim に限り、live trial や criteria の受け入れ証拠の代わりにはならない。30種の思考法は実施しておらず、実施したとも申告しない。"
 }
