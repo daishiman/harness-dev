@@ -27,7 +27,8 @@
     ".claude/ (挑戦宣言の skill・agent・command の symlink、governance-log の承認記録)",
     "marketplaces/local、.claude-plugin/marketplace.json・bundles.json、config-version-lock.json (正規ツールでの再生成)",
     "eval-log (ubm-goal-setting の elegant-review 2 run の証跡、各スキルの content-review verdict、この受領書)",
-    "eval-log/coverage/scripts (この PR で足した script と、この PR で中身が変わった validate-inline-goal-seek-anchor.py の独立コードレビューの記録)"
+    "eval-log/coverage/scripts (この PR で足した script と、この PR で中身が変わった validate-inline-goal-seek-anchor.py の独立コードレビューの記録)",
+    "作業ツリーの残りの差分すべて (fdc93c12、533件 = 変更102件・新規431件): epic harness-bzn の修正 (22プラグイン共通の extract-plugin-root.py、dev-graph の同期の収束判定と原子的書き込みの共通化、harness-creator の plugin_resources.py、plugin-dev-planner の spec gate、system-spec-harness の確定章ガード hook と apply-spec-transition、root の scripts と tests) と、その証跡 (eval-log/dev-graph の live-trial・criteria-test・content-review、eval-log/worktree/elegant-review/20261005-harness-bzn ほか)、ubm-goal-setting の goal-seek-progress.json、.beads/interactions.jsonl、plugin-plans/dev-graph、外部変更ガードの受領書"
   ],
   "canonical_spec_locations_probe": {
     "docs/": "absent",
@@ -202,16 +203,45 @@
         "eval-log/coverage/scripts/ の記録",
         "eval-log/harness-coverage.json (再生成)"
       ]
+    },
+    {
+      "id": "worktree/full-import-harness-bzn",
+      "summary": "ユーザーの指示「このワークツリー上にある全ての内容を PR に上げる」に従い、本体の作業ツリーに残っていた未 commit の差分 526件と、このセッションの外部変更ガードの受領書 7件を fdc93c12 に入れた。取り込みは git diff --binary を 3-way で当て、未追跡は tar で写した。写した後に cmp で全件を照合し、違いは2件だけだった: marketplaces/local/plugin-fingerprints.json (この PR の正規ツールの出力を採った) と scripts/lint-script-naming.py (この PR の PENDING_RENAME_PATHS と本体側の1件の登録の両方を残した)。変更区分は guard-change-category の classify_change で全件 P2_content (auto_apply + post_review) で、P0・P1 は0件、SKILL.md の name の変更も0件。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md と prompts/R3-sync.md (同期の完了は両計画の converged=true で判定する。changes=0 は書き込み予定が無いことだけを示す)",
+        "plugins/dev-graph/skills/run-dev-graph-*/SKILL.md の script_refs (_common.py を明示)",
+        "plugins/dev-graph/schemas/criteria-scenario-verdict.schema.json",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md・prompts (R2・R3・R5)・references/spec-state-contract.md・elicit-question-bank.md (--required-info による候補 state の検査)",
+        "plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の先頭の説明 (相対パスと symlink を project root 起点で解決する)",
+        "plugins/harness-creator/skills/run-plugin-package-check/SKILL.md、run-skill-create/workflow-manifest.json",
+        "plugins/harness-creator/scripts/plugin_resources.py の先頭の宣言と、scripts/lint-script-naming.py の PENDING_RENAME_PATHS (理由付き)"
+      ],
+      "commit": "fdc93c12"
+    },
+    {
+      "id": "ci/align-tests-with-imported-harness-bzn",
+      "summary": "fdc93c12 の取り込みで GitHub の governance の pytest が新しく落ちた3件を直した。(1) test_harness_creator__external_intelligence_hook: harness-creator の互換入口が plugin_resources.forward_external_intelligence を呼ぶ形に変わり、転送先 skill-governance-adapters は plugin_resources.py が持つ。test を新しい形の確認に改めた。(2)(3) lint-test-discovery-coverage: 取り込んだ証跡 test_skill_criteria_evidence.*before-iteration3.py の2件は改善前の test のバイト単位の写しで、JSON の before_bytes_path がこのパスで参照する。名前を変えずに ALLOWLIST に理由付きで宣言し、実 repo の orphan の test を ALLOWLIST と整合させた。",
+      "spec_impact": false,
+      "spec_impact_reason": "root の test と lint の例外の宣言だけで、プラグインの中身・schema・SKILL.md・公開 API は変えていない。lint の判定規則 (CI 到達集合) も変えておらず、例外の宣言の仕組みは lint の docstring に元から書かれている",
+      "commit": "e896c729"
+    },
+    {
+      "id": "ci/fix-checks-hidden-by-skipped-steps",
+      "summary": "GitHub Actions では手前の段が落ちると後ろの段が skip されるので、GitHub の結果に出ていなかった2件を、手元で全段を流して見つけて直した。main ではどちらも通っていた。(1) PKG-007: 取り込んだ plugins/harness-creator/scripts/plugin_resources.py に shebang と実行ビットが無かった。plugin の scripts/ の他の import 用 module (_common.py、feedback_contract_ssot.py、tenant_runtime.py) と同じく #!/usr/bin/env python3 を付けて chmod +x した。(2) lint-skill-runtime-profiles: この PR の run-skill-feedback は goal-seek の anchor を skill の中 ($SKILL_ROOT/scripts) に同梱しているが、lint は plugin の scripts/ の写ししか見ておらず『不在』と判定していた。skill 同梱と plugin scripts/ のどちらの写しも認め、見つかった写しはすべて Harness Creator の正本とバイト単位で一致することを求めるように直し、test を1本足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "lint の検査対象を、SKILL.md が既に宣言している呼び出し経路 ($SKILL_ROOT/scripts) に合わせただけで、正本との一致を求める規則は弱めていない。plugin_resources.py は実行ビットと shebang だけの変更で、公開 API・schema・SKILL.md は変えていない",
+      "commit": "790e320b"
+    },
+    {
+      "id": "eval-log/regenerate-harness-coverage-after-import",
+      "summary": "eval-log/harness-coverage.json は 3d24214e のときの数 (scripts 485本) のままで、fdc93c12 で取り込んだ plugins/harness-creator/scripts/plugin_resources.py の分が入っていなかった。make harness-coverage で作り直した (scripts 486本、llm_eval 64.5% → 64.4%。floor 64.3% は上回り、ratchet は RATCHET OK)。",
+      "spec_impact": false,
+      "spec_impact_reason": "正規のツールが出力する集計の記録で、floor・閾値・判定の規則は変えていない",
+      "commit": "この受領書と同じ commit"
     }
   ],
-  "excluded_from_commit": [
-    "本体の作業ツリーに残る、別 session (epic harness-bzn) の未 commit の変更一式。plugins/*/scripts/extract-plugin-root.py、plugins/dev-graph・system-spec-harness・harness-creator・plugin-dev-planner の変更、未追跡の plugins/harness-creator/scripts/plugin_resources.py ほか、scripts/lint-script-naming.py の先頭3行、marketplaces/local/plugin-fingerprints.json、eval-log/dev-graph の content-review・criteria-test・live-trial、eval-log/worktree/。この PR の内容ではないため外し、作業ツリーには触らずに残した",
-    "eval-log/ubm-goal-setting の goal-seek-progress.json (個人の利用データ。リポジトリは PUBLIC)",
-    "自動生成の .claude/changelog/proposals/2026-10-05〜09-rubric-update.md (hook が作った下書きで、承認の記録ではない)",
-    "scripts/.claude/、scripts/.artifact-delivery/、リポジトリ直下の .artifact-delivery/ (誤った作業ディレクトリで作られた生成物)",
-    ".beads/interactions.jsonl (Beads の対話ログ)",
-    "plugin-plans/dev-graph の変更 (別作業)"
-  ],
+  "excluded_from_commit": [],
   "remaining_work": [
     "dev-graph の9スキルの live-trial のやり直し。共通の外部変更ガードの runtime と dev-graph の版が behavior closure に入っているため、既存の verdict (20261005 p83m・p83o・p83x) が stale-sha になった。CI の lint-live-trial-verdict はこの PR では FAIL のまま。やり直しは既存の harness-bzn.4 (進行中) が扱う",
     "run-ubm-challenge の live-trial (harness-ead) と、残りの判断 (harness-kt9・harness-y7n)",
@@ -225,7 +255,15 @@
     "Plugin Governance CI の plugin-tests job で plugins/dev-graph の9件が落ち、verify job も failure になる。dev-graph の live-trial の stale と同じ原因で、harness-bzn.4 が扱う",
     "feedback_contract_ssot.directory_content_sha256 は __pycache__ と .pyc も hash に入れる。CI は eb7b1bc1 で止めたが、手元で PYTHONDONTWRITEBYTECODE を付けずにコピーのスクリプトを import すると同じずれが起こりうる。harness-creator の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で直す",
     "validate-inline-goal-seek-anchor.py (26本・22プラグインの byte 一致コピー) の FAIL を直すこと。47行目の except が (OSError, json.JSONDecodeError) だけで、UTF-8 でない入力で UnicodeDecodeError の traceback を出して exit 1 になる。(OSError, ValueError, RecursionError) にして26本を byte 一致のまま直し、test を足し、記録を取り直す。plugin.json の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で行う",
-    "ubm-goal-setting の新設 script の独立レビューで減点された点: publish-staged-files.py が存在しない root を作って exit 0 で返すこと、大文字小文字を区別しない APFS で重複の検査をすり抜けること。validate-challenge-output.py の M01 が「会場費はかからない。講師料が30万円かかる。」を通すこと。evaluate-design-rubric.py が object でない JSON で AttributeError の traceback を出すこと、normalized_source_path.py の main が RecursionError を捕まえないこと。いずれも PASS (85〜92) の範囲の減点。詳細は eval-log/coverage/scripts/ の各記録の notes"
+    "ubm-goal-setting の新設 script の独立レビューで減点された点: publish-staged-files.py が存在しない root を作って exit 0 で返すこと、大文字小文字を区別しない APFS で重複の検査をすり抜けること。validate-challenge-output.py の M01 が「会場費はかからない。講師料が30万円かかる。」を通すこと。evaluate-design-rubric.py が object でない JSON で AttributeError の traceback を出すこと、normalized_source_path.py の main が RecursionError を捕まえないこと。いずれも PASS (85〜92) の範囲の減点。詳細は eval-log/coverage/scripts/ の各記録の notes",
+    "22プラグインの版上げが未了 (fdc93c12 で取り込んだ extract-plugin-root.py ほかの変更のため)。build-plugin-release --check は 『version 上げ忘れ 22 件』で FAIL。版上げは plugin.json (P1_structural、cooldown 3日) を変え、この PR の P1 承認 48件 (PROP-2026-10-10-UBM-JA-RELEASE、2026-10-10T00:06Z) の対象を書き換えるので、2026-10-13T00:06Z 以降に正規の提案と承認を経て build-plugin-release で行う。fingerprint の台帳は手で書き換えていない。incident_fix も使っていない。",
+    "dev-graph の9スキルの live-trial: fdc93c12 で取り込んだ 10-05 の再 trial (bzn4-current・bzn4-init-retry) の verdict が FAIL (5件) と BLOCKED (4件、tmux 不在などの fail-closed で降格) で、lint-live-trial-verdict は 9件から22件の違反になった。やり直しは harness-bzn.4 が扱う。",
+    "dev-graph の9スキルの criteria-test: 取り込んだ再評価の scenario-verdict.json が9件とも FAIL で、plugins/dev-graph の test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria が9件落ちる。取り込み前 (3d24214e) も同じ9件が『stale behavior closure digest』で落ちていた。verdict は書き換えていない。やり直しは harness-bzn.4 が扱う。",
+    "eval-log/ubm-goal-setting/run-ubm-challenge/goal-seek-progress.json は、ユーザーの挑戦宣言の内容 (イベントの会場の確保の計画) と /var/folders のパスを含む。リポジトリは PUBLIC なので、ユーザーの指示で公開された。不要なら別 commit で消す。",
+    "取り込んだ live-trial の transcript には、ユーザーのメールアドレスが入っている (既に main に入っている live-trial の記録 45件と同じ種類)。認証情報の写しは 10-05 の後始末 (auth-copy-cleanup.json) で削除済みで、トークンや鍵は0件だった。",
+    "harness-creator/run-build-skill の content-review の verdict (b802732a) は『plugin_resources の import は無い』と記録しているが、fdc93c12 の取り込み後は run-build-skill/scripts の build-external-intelligence*.py と lint-knowledge-loop.py が plugin_resources を import する。SKILL.md の SHA は変わらないので lint は通るが、verdict の記述は古い。次の content-review で取り込み後の内容を見直す。verdict は書き換えていない。",
+    "手元で run-ci-checks.sh を流すと、『Keep bytecode caches outside the checkout』の段が $GITHUB_ENV の無い環境では効かず、py_compile がツリーに __pycache__ を作る。feedback_contract_ssot と validate-plugin-package の _tree_fingerprint は __pycache__ も hash するので、PKG-003、native-surfaces の conflict、llm-coverage の数え違い、lint-feedback-contract の FAIL (criteria の test 約200件) が偽の失敗として出る。harness-20h で扱う。",
+    "plugins/harness-creator/scripts/plugin_resources.py (fdc93c12 で取り込み) に、独立コードレビューの記録 (eval-log/coverage/scripts) が無い。harness-coverage の分母にだけ入っている (llm_eval 64.4%、floor 64.3%)。次に scripts を足すと floor を割りうるので、先にレビューの記録を足す。"
   ],
   "verification": {
     "verified_at_commit": "b802732a",
@@ -399,10 +437,46 @@
         "coverage_records_integrity_test": "tests/test_coverage_records_integrity.py 502 passed",
         "remaining_governance_steps_local": "ratchet-floor の後で skip された governance の25 step を、workflow の run をそのまま抜き出して手元で実行し、25 step すべて rc=0"
       }
+    },
+    "full_worktree_import": {
+      "commit": "fdc93c12",
+      "files": {
+        "total": 533,
+        "modified": 102,
+        "added": 431
+      },
+      "integrity": "本体の作業ツリーと cmp で全件照合。違いは plugin-fingerprints.json と lint-script-naming.py の2件だけで、どちらも意図した合わせ方",
+      "secrets_audit": "AWS・GitHub・OpenAI・Anthropic・Slack・Google のキーの形、秘密鍵、JSON の password/secret/token の値、accessToken/refreshToken/oauthAccount を全件で検索して0件。認証ファイル (.credentials.json・.claude.json) の写しは含まれない",
+      "change_category": "classify_change で 533件すべて P2_content。P0・P1 は0件",
+      "local_ci": {
+        "summary": "790e320b のクリーンな worktree (PYTHONPYCACHEPREFIX をツリーの外に向けた) で scripts/run-ci-checks.sh を全段実行した: PASS 159 / WARN 14 / SKIP 3 / FAIL 6。FAIL 6件は、既知の4件 (live-trial の lint、版上げ忘れ、plugin-tests の dev-graph の9件、governance の pytest の drift の1件) と、手元では $GITHUB_ENV が無いために落ちる『Keep bytecode caches outside the checkout』の2段だけ。GitHub Actions (790e320b) も同じ: Plugin Governance CI run 38025214077 は governance の pytest が 1 failed, 8102 passed, 7 skipped (drift の1件)、plugin-tests は 9 failed, 267 passed (dev-graph の9件)。governance-check run 38025214025 は lint-live-trial-verdict で止まった (後ろの70段は skip。その70段は手元の全段の実行で確かめた)。contract-generator は success。",
+        "failed": [
+          "governance-check.yml:change-category-guard: lint live-trial verdict 突合 (既知。dev-graph の9スキル、22件の違反。harness-bzn.4)",
+          "governance-check.yml:change-category-guard: validate plugin release (既知。version 上げ忘れ 22 件。cooldown のため 2026-10-13T00:06Z 以降に版上げ)",
+          "harness-creator-kit-ci.yml:plugin-tests: Run plugin behavior tests (既知。plugins/dev-graph の test_independent_scenario_receipt_covers_exact_criteria の9件。9 failed, 267 passed)",
+          "harness-creator-kit-ci.yml:governance: Run behavior tests (既知。test_checked_in_state_has_no_drift の1件。1 failed, 8105 passed, 4 skipped。版上げで解消)",
+          "harness-creator-kit-ci.yml:plugin-tests と governance: Keep bytecode caches outside the checkout (手元だけ。$GITHUB_ENV に書く段なので GitHub では通る)"
+        ],
+        "notes": [
+          "e896c729 の時点で wtpy (__pycache__ が159か所ある) で流した一括検査は FAIL 10 で、governance の pytest は 210 failed だった。同じ commit のクリーンな worktree では lint-feedback-contract が rc=0、手元だけで落ちた test 289件はすべて passed だった。差は __pycache__ による偽の失敗 (残課題の harness-20h)。",
+          "GitHub では手前の段で skip されて見えていなかった PKG-007 と lint-skill-runtime-profiles の2件は、790e320b で直した。クリーンな worktree の全段の実行で、どちらも通った。native-surfaces --check、ratchet-floor (RATCHET OK) も通った。",
+          "eval-log/harness-coverage.json は 3d24214e のときの数 (scripts 485本) のままで、fdc93c12 で取り込んだ plugins/harness-creator/scripts/plugin_resources.py の分が入っていなかった。make harness-coverage で作り直し (scripts 486本、llm_eval 64.5% → 64.4%。floor 64.3% は上回る)、クリーンな worktree の出力とバイト単位で同じことを確かめて、この受領書と同じ commit に入れた。plugin_resources.py の独立コードレビューの記録はまだ無い。"
+        ]
+      }
     }
   },
   "planned_beads": {
-    "status": "外部変更ガードでユーザーの確認待ち。起票後に PR のコメントで ID を追記する",
+    "status": "起票済み (2026-10-10、外部変更ガードを通した)。PR のコメント https://github.com/daishiman/harness-dev/pull/85#issuecomment-6093429440 に記録",
+    "ids": [
+      "harness-eef",
+      "harness-9vu",
+      "harness-2ix",
+      "harness-5ww",
+      "harness-aor",
+      "harness-20h",
+      "harness-6rh",
+      "harness-6qz"
+    ],
     "titles": [
       "ubm-goal-setting: 新設スクリプト5本を動詞規則に合わせて改名し verdict を取り直す",
       "re-evaluate-on-rubric-bump: CI の step の引数の誤りと root 版・plugin 版の二重実装を直す",
@@ -412,6 +486,10 @@
       "feedback_contract_ssot: 配布コピーの内容 hash から __pycache__ と .pyc を外す",
       "validate-inline-goal-seek-anchor: UTF-8 でない入力で traceback を出す (26本・22プラグイン)",
       "ubm-goal-setting: 新設 script の独立レビューの減点 (publish-staged-files ほか)"
+    ],
+    "notes_appended": [
+      "harness-bzn.4"
     ]
-  }
+  },
+  "excluded_from_commit_note": "fdc93c12 で、前回まで外していた差分 (epic harness-bzn の変更一式、goal-seek-progress.json、rubric-governance の提案の下書き、.beads/interactions.jsonl、plugin-plans/dev-graph、.artifact-delivery の受領書) をすべて取り込んだ。scripts/.claude/ と scripts/.artifact-delivery/ はユーザーが削除済みで、存在しない。.gitignore の対象 (.claude/settings.local.json、.notion-config.json、.beads/embeddeddolt/、キャッシュなど) は、ローカルの設定と秘密情報を含みうるので git の管理外のままにした。"
 }
