@@ -514,6 +514,13 @@
       "spec_impact": false,
       "spec_impact_reason": "独立評価者と正規のツールが出力する記録だけで、rubric・閾値・判定の規則は変えていない",
       "commit": "記録の commit (この受領書の直前)"
+    },
+    {
+      "id": "tests/test_feedback_contract_ssot.py#ci-pycache-prefix",
+      "summary": "12 (harness-20h) で足した test_vendored_feedback_skill_ignores_bytecode_caches が、CI (d0a9a552 の run 38089716882) だけで FileNotFoundError になった。CI は PYTHONPYCACHEPREFIX で .pyc をツリーの外へ逃がすので、py_compile がツリーの中に __pycache__ を作らず、test の前提の確認が落ちていた。py_compile に cfile を明示して、ツリーの中に .pyc を作るようにした。",
+      "spec_impact": false,
+      "spec_impact_reason": "test の前提の作り方だけを直した。feedback_contract_ssot の判定 (.pyc と __pycache__ を内容 hash から外す) と、test が確かめる意図は変えていない",
+      "commit": "この受領書の更新と同じ commit"
     }
   ],
   "excluded_from_commit": [],
@@ -940,7 +947,38 @@
       "rereview_round_k": "j 回目の指摘を直したものだけを、j 回目とも作者とも別の独立評価者がもう一度読んだ。設計書 24・32・34・34a は PASS (95・100・98・94)、外部変更ガード PASS 94、PKG PASS、skill-intake PASS、ubm の agent は PASS 3・FAIL 1 (knowledge-extractor 81)、ubm の script と command は PASS で phase3-coordinator は FAIL 82、content-review は run-skill-rubric-governance と run-ubm-goal-setting が FAIL。k 回目で出た指摘は直さずに remaining_work に足した (k_residuals)",
       "not_run": "dev-graph の9スキルの live-trial のやり直し (tmux が要る。harness-bzn.4)"
     },
-    "latest_verified_code_commit": "6257499e"
+    "latest_verified_code_commit": "6257499e",
+    "ci_fix_after_review": {
+      "note": "d0a9a552 の CI で、手元では出ていなかった失敗が1件あった。原因を手元で再現してから直した。",
+      "ci_run": "https://github.com/daishiman/harness-dev/actions/runs/38089716882",
+      "ci_result_at_d0a9a552": {
+        "governance_pytest": "6 failed, 8787 passed, 7 skipped。既知の5件 (test_checked_in_state_has_no_drift と tests/criteria の4件) と、この修正の1件",
+        "plugin_tests": "dev-graph の9件だけ (既知)",
+        "change_category_guard_job": "lint-content-review --all で rc 1 (rg と ubm の FAIL の記録4件。既知)"
+      },
+      "tests": [
+        {
+          "target": "修正前の test を PYTHONPYCACHEPREFIX ありで実行",
+          "result": "1 failed (CI と同じ FileNotFoundError を再現)"
+        },
+        {
+          "target": "tests/test_feedback_contract_ssot.py (PYTHONPYCACHEPREFIX あり・なし、3.11)",
+          "result": "17 passed・17 passed"
+        },
+        {
+          "target": "tests/test_feedback_contract_ssot.py (PYTHONPYCACHEPREFIX あり、3.9)",
+          "result": "17 passed"
+        },
+        {
+          "target": "tests 全体 (手元、d0a9a552)",
+          "result": "5 failed, 8785 passed, 4 skipped。落ちたのは既知の5件だけ"
+        },
+        {
+          "target": "guard-change-category --base origin/main",
+          "result": "total=1538 blocked=0"
+        }
+      ]
+    }
   },
   "planned_beads": {
     "status": "起票済み (2026-10-10、外部変更ガードを通した)。PR のコメント https://github.com/daishiman/harness-dev/pull/85#issuecomment-6093429440 に記録",

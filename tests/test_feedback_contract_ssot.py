@@ -101,8 +101,9 @@ def test_vendored_feedback_skill_requires_exact_noncanonical_copy(tmp_path):
 
 
 def test_vendored_feedback_skill_ignores_bytecode_caches(tmp_path):
-    # CI の py_compile は正本とコピーに別々の .pyc (元パス入り) を作る。
+    # py_compile は正本とコピーに別々の .pyc (元パス入り) を作る。
     # それでも配布コピーと判定できないと、全プラグインのコピーが重複計上される。
+    # CI は PYTHONPYCACHEPREFIX で .pyc をツリーの外へ逃がすので、cfile を明示してツリーの中に作る。
     import py_compile
 
     plugins = tmp_path / "plugins"
@@ -113,7 +114,8 @@ def test_vendored_feedback_skill_ignores_bytecode_caches(tmp_path):
         (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
         script = skill / "scripts" / "check.py"
         script.write_text("VALUE = 1\n", encoding="utf-8")
-        py_compile.compile(str(script), doraise=True)
+        cfile = skill / "scripts" / "__pycache__" / f"check.{sys.implementation.cache_tag}.pyc"
+        py_compile.compile(str(script), cfile=str(cfile), doraise=True)
     (copied / "scripts" / "legacy.pyc").write_bytes(b"legacy")
 
     assert any((canonical / "scripts" / "__pycache__").iterdir())
