@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # /// script
 # name: plugin_resources
 # purpose: Harness Creator 内の sibling plugin root/resource 解決と intelligence 互換入口の転送を共有する。

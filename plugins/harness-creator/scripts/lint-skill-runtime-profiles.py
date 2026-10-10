@@ -402,7 +402,15 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
                 + " | ".join(undeclared[:3])
             )
         if GOAL_SEEK_ANCHOR in text:
-            anchor_script = plugins_root / plugin / "scripts" / GOAL_SEEK_ANCHOR
+            # skill 同梱 ($SKILL_ROOT/scripts) と plugin scripts/ のどちらの写しでも呼べる。
+            anchor_scripts = [
+                candidate
+                for candidate in (
+                    path.parent / "scripts" / GOAL_SEEK_ANCHOR,
+                    plugins_root / plugin / "scripts" / GOAL_SEEK_ANCHOR,
+                )
+                if candidate.is_file()
+            ]
             canonical_anchor = (
                 plugins_root
                 / "harness-creator"
@@ -413,11 +421,14 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
                 / "scripts"
                 / GOAL_SEEK_ANCHOR
             )
-            if not anchor_script.is_file():
+            if not anchor_scripts:
                 findings.append(
-                    f"{GOAL_SEEK_ANCHOR} を呼ぶが plugin scripts/ に不在"
+                    f"{GOAL_SEEK_ANCHOR} を呼ぶが skill の scripts/ と plugin scripts/ に不在"
                 )
-            elif not canonical_anchor.is_file() or anchor_script.read_bytes() != canonical_anchor.read_bytes():
+            elif not canonical_anchor.is_file() or any(
+                script.read_bytes() != canonical_anchor.read_bytes()
+                for script in anchor_scripts
+            ):
                 findings.append(
                     f"{GOAL_SEEK_ANCHOR} が Harness Creator 正本と不一致"
                 )

@@ -161,6 +161,36 @@ def test_goal_seek_anchor_validator_must_match_canonical(tmp_path: Path) -> None
     assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
 
 
+def test_goal_seek_anchor_validator_may_be_bundled_in_skill(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8")
+        + '\npython3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py"\n',
+        encoding="utf-8",
+    )
+    canonical = (
+        root
+        / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py"
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    bundled = skill.parent / "scripts/validate-inline-goal-seek-anchor.py"
+    bundled.parent.mkdir(parents=True)
+    bundled.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
+    bundled.write_bytes(canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+    # plugin scripts/ にも写しがあるなら、どちらも正本と一致していなければならない。
+    plugin_copy = root / "plugins/demo/scripts/validate-inline-goal-seek-anchor.py"
+    plugin_copy.parent.mkdir(parents=True)
+    plugin_copy.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
+
+
 def test_agent_team_requires_fan_out_fan_in_and_ownership(tmp_path: Path) -> None:
     root, skill = _skill(
         tmp_path,
