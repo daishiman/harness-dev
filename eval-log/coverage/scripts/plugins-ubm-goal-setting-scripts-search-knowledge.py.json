@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/search-knowledge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine code-review（実行検証あり）。責務は、router.json が列挙するカテゴリのファイルだけを読み、決められたフィールドの重みで決定論的に検索して候補の JSON を返すことに閉じる。書き込みはしない（write-scope:none・network:false と一致）。term と本文はどちらも NFKC＋casefold で正規化し、1 つの term がどの意味フィールドに当たったかで加点する（頻度は数えない）。id だけは完全一致で 20 点。同点は id と source_ref の順に並べるので、順序が安定する。search_id は term・カテゴリ・limit・router と各ファイルの sha256・重みの表から作る。絶対パスを含まないので、別の環境でも同じ値になる。入力の境界：limit は 1..50 で bool を拒否する。term は 1..12 個で、それぞれ 120 字以内。次のどれでも止まる：未知のカテゴリ、router に無いファイル、registry/router/schema、平らでないファイル名、symlink、カテゴリの重複、id の重複、source の欠落、8 段を超える入れ子、真偽値や数値のフィールド、ファイル 4MB・合計 16MB・1 万件の上限。test は重みによる順位と同点の安定、旧 problem/advice の保持、NFKC、zero-hit、各上限、symlink、CLI の exit 2、同梱の実ナレッジ 900 件超の検索を確かめる。実測（scratchpad）：正常系に加え、相対の dir、存在しない dir、limit 0 と abc、未知のカテゴリ、router が list、カテゴリの定義が文字列、ファイルが list、entry が文字列、数値のフィールド、UTF-8 でないファイル、20 万段の入れ子、はすべて exit 2 で traceback 無し。DEDUCTION(-3): どれか 1 件の entry に数値のフィールド（例 result: 5）があるだけで、全カテゴリの検索が exit 2 で止まる。fail-closed としては正しいが、ナレッジ側の小さな型ずれで検索全体が使えなくなる。DEDUCTION(-2): 部分一致に最小の長さが無く、1 字の term でも大量に当たる（設計上の選択だが、順位の質に効く）。DEDUCTION(-1): requires-python の宣言が無い。 TESTS: plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py（30 passed in 1.07s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

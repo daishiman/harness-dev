@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "genuine code-review（実行検証あり）。責務は、UBM の entrypoint を既存の design-rubric evaluator（render-findings-score.py）へ渡すとき、登録済みの UBM の L1 を L0 と L2 の間に必ず挟むことだけに閉じ、意味の評価はしない（docstring と一致）。evaluation_command は次のことを確かめる。script 自身の位置で plugin を固定する。plugin.json の name を確かめる。target が resolve 後に plugins/ubm-goal-setting/skills/run-ubm-*/SKILL.md であること。registry の UBM entry がちょうど 1 件であること。L1 が宣言どおりのローカル正本で symlink でないこと。layer/domain/deep-merge/most-specific-wins の合成契約。どれかが崩れると L0 へ黙って落ちずに止まる。実測：実リポジトリで run-ubm-challenge と run-ubm-journal（--repo-root は相対の .）を通すと、exit 0 で evaluator の JSON が出た。存在しない target、他 plugin の SKILL.md、ディレクトリ、誤った repo-root、引数不足は、すべて UBM_REVIEW_ROUTING_INVALID か argparse で exit 2 になった。network:false・write-scope:none は守られている。子の render-findings-score と、その先の compose-rubrics・validate-plugin-completeness（--fix なし）・validate-build-trace も書き込まない。実行後に git status が変わらないことも確認した。test は全 run-ubm-* への注入、6 種の registry 破損、他 plugin の target、symlink による差し替え、KL-002 の差分を確かめる。DEDUCTION(-6): registry・plugin.json・L1 の JSON が object でないとき、または registry.rubrics の要素が object でないとき、.get() で AttributeError の traceback（exit 1）になる（scratchpad の複製で実測）。evaluator は走らず L0 にも落ちないので fail-closed は保たれる。ただし except に AttributeError が無く、自分で決めた exit 2 と診断文が出ない。宣言された入力（--repo-root / --target）ではなく、リポジトリ内の設定ファイルの破損なので blocking にはしない。DEDUCTION(-4): 子の returncode をそのまま返すため、子の exit 2（evaluator が見つからないときの can't open file も含む）と自分の routing 不正の exit 2 を区別できない。evaluator の存在確認も無い。DEDUCTION(-3): frontmatter に exit code・contexts・requires-python が無い（is_relative_to は 3.9 以降）。DEDUCTION(-2): test は evaluation_command だけを呼び、main() と subprocess の経路を通さない（手で実行して確認済み）。 TESTS: plugins/ubm-goal-setting/tests/test_content_review_rubric_routing.py（16 passed in 0.17s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

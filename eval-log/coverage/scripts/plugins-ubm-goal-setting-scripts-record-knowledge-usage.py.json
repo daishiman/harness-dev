@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine code-review（実行検証あり）。責務は、search-knowledge の候補と、実際に使った id・ユーザーの反応を、呼び出し元プロジェクトの eval-log/ubm-goal-setting/knowledge/usage-log.jsonl に 1 行追記することに閉じる。入力の検査は細かい。entrypoint は 6 つの run-ubm-* に限る。project-root は絶対パスの既存ディレクトリで、公式 knowledge の内側を拒否する。search_id は 64 桁の hex。matched_ids と used_ids は、重複の無い 50 件以内の文字列。matches の id の並びが matched_ids と一致し、used_ids は matched_ids の部分集合。satisfaction は明示の null か positive/negative/mixed で、null 以外は transcript 内のちょうど 1 つの user ターン（中身が空でない）を指す必要がある。log には本文や発話を書かず、hash と id だけを残す。書き込みは fcntl.flock の排他ロックの下で既存の行を全件検査する（末尾改行の無い行、欠けた行、usage_id の重複で止まる）。同じ usage_id は中身が同じなら already_recorded、違えば拒否、と冪等にしている。--ephemeral はファイルを作らない。frontmatter の write-scope は実際の振る舞いと一致する。実測（scratchpad）：ephemeral では eval-log が作られない。記録したあとの再実行は already_recorded になる。usage や候補が list、search_id 不正、used_ids に list、satisfaction が list、transcript が dict、相対の project-root、未知の entrypoint、UTF-8 でない usage、深い入れ子の usage、log 内の欠けた行・list の行・UTF-8 でない行、はすべて exit 2 で traceback 無し。log は 1 行のままだった。DEDUCTION(-3): 候補の形は検査するが、search_id が候補の中身と対応するか（本当に search-knowledge の出力か）は確かめられず、search_result_sha256 を残すだけ。DEDUCTION(-2): fcntl は POSIX 専用で、Windows では import で落ちる。リポジトリ内に同じ前提の script は多いが、frontmatter に書かれていない。DEDUCTION(-2): symlink の検査から mkdir・open までの TOCTOU が理論上残る。DEDUCTION(-1): requires-python の宣言が無い。 TESTS: plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py（30 passed in 1.07s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts/validate-challenge-output.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "genuine code-review（実行検証あり）。責務は、挑戦宣言の Markdown のうち機械で判定できる形だけを見ることに絞られている。対象はフロントマター、冒頭のタイトル、● 見出し 6 欄の順序、挑戦の日付・規模・注記 2 行、リスク回避の 5 理由、お金の理由、行うこと 5 項目と締め文、定期報告の頻度かタイミング、未置換のプレースホルダ、精神論の語。中身の質は対話に任せると docstring で明言している。見出しなどの定数は references/challenge-format.md と test で突き合わせている。精神論の語は action-language-policy.json を唯一の正本として読み、読めなければ exit 2。frontmatter は exit 0/1/2・fs の入力・requires-python まで揃い、実際に読み取りしかしない。test は format 文書との一致、各違反コード、M01 の受理と拒否の表、計算違い、golden の CLI を確かめる。実測（scratchpad）：golden とその CRLF 版は PASS。UTF-8 でないファイル、ディレクトリ、存在しないファイルは exit 2。空のファイルは exit 1。回収予定は M01、13月45日は D01。DEDUCTION(-8): 『会場費はかからない。講師料が30万円かかる。』が M01 を通って PASS する（実測）。ZERO_COST_RE が本文のどこかに 1 つ当たれば費用ゼロの枝が成り立ち、残りの費用が回収済みかを見ない。docstring の M01 の定義どおりの挙動ではあるが、『開催前にお金が全て回収できている』を確かめるゲートとしては、よくある書き方を取りこぼす。DEDUCTION(-3): 309 桁を超える金額で float→int の OverflowError、5000 桁の件数で int の桁上限の ValueError になり、どちらも traceback（exit 1）。加算 6000 項の式では 11.6 秒かかる（計算量が二乗）。どれも現実の入力ではないので blocking にはしない。DEDUCTION(-2): 同じ ● 見出しが 2 回あっても、2 回目は前の欄の本文に混ざって PASS する。DEDUCTION(-2): BOM 付きの UTF-8 が F04/F01 になり、原因が分かりにくい。--help が exit 2 になる。 TESTS: plugins/ubm-goal-setting/tests/test_validate_challenge_output.py（134 passed in 1.11s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

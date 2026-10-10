@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "genuine code-review（test と、scratchpad の一時ディレクトリでの実行検証あり。リポジトリや vault は対象にしていない）。責務は guard execute から呼ばれ、承認済み manifest と下書きの sha256 を照合してから、正式な場所へ書き込む・消すことに閉じる。最初の変更の前に全 entry を検査する。対象は manifest の hash、schema_version、stage と roots が重ならないこと、相対 POSIX パスであること（.. とバックスラッシュを拒否）、経路上の symlink、old_sha256 を null か SHA で必ず書かせること、source が stage 内の通常ファイルであること、new_sha256 の照合。下書きの bytes は検査時に読んでメモリに持つので、検査後に差し替えられても効かない。実行時にも経路と old hash を確かめ直す。mkstemp→fsync→os.replace で 1 件ずつ原子的に置き換え、書き込みを削除より先に並べてアーカイブを先に残す。途中の IO 失敗では saved と failed_target を stderr の JSON で返し、batch_atomic:false を明示する。test は改ざん、競合、root 外への脱出、symlink、二重 target、削除の順、CLI で traceback が出ないこと、実 guard の preview/authorize/execute と使い回し拒否、2 件目の IO 失敗を確かめる。実測（scratchpad）：正常系で bytes が一致し、一時ファイルが残らない。同じ manifest を再実行すると old_sha256 の不一致で exit 2。entry の root に list、roots の値に数値、stage 不在、root が stage を含む、未知の operation、存在しないファイルの delete、UTF-8 でない manifest、/tmp 経由の symlink の祖先、はすべて exit 2 で traceback 無し。DEDUCTION(-6): 存在しない root（例えば vault 名の打ち間違い）を宣言すると、mkdir(parents=True) が root ごと作って exit 0 になる（実測）。write-scope『roots 配下の明示されたファイルのみ』より広く、root の is_dir 確認が要る。root の path 自体は承認済み manifest で宣言されているので blocking にはしない。DEDUCTION(-4): 大文字小文字を区別しない APFS では、One.md と one.md が seen の重複検査をすり抜け、1 件目を書いたあとで changed during publication で止まる（実測。saved には正しく載る）。docstring の『最初の変更の前に全 entry を検査』は、この場合は成り立たない。DEDUCTION(-3): hash を合わせた 20 万段の入れ子の manifest で、RecursionError の traceback（exit 1）。DEDUCTION(-2): 経路の再確認から mkdir・mkstemp までの間に、親を symlink へ差し替える TOCTOU が理論上残る。 TESTS: plugins/ubm-goal-setting/tests/test_guarded_publication.py（14 passed in 0.53s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

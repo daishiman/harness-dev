@@ -26,7 +26,8 @@
     "doc/ClaudeCodeスキルの設計書 (08章・27章・33章) と doc/harness-creator-完全解剖.md (版表記)",
     ".claude/ (挑戦宣言の skill・agent・command の symlink、governance-log の承認記録)",
     "marketplaces/local、.claude-plugin/marketplace.json・bundles.json、config-version-lock.json (正規ツールでの再生成)",
-    "eval-log (ubm-goal-setting の elegant-review 2 run の証跡、各スキルの content-review verdict、この受領書)"
+    "eval-log (ubm-goal-setting の elegant-review 2 run の証跡、各スキルの content-review verdict、この受領書)",
+    "eval-log/coverage/scripts (この PR で足した script と、この PR で中身が変わった validate-inline-goal-seek-anchor.py の独立コードレビューの記録)"
   ],
   "canonical_spec_locations_probe": {
     "docs/": "absent",
@@ -191,6 +192,16 @@
       "reflected_in": [
         ".github/workflows/harness-creator-kit-ci.yml (Keep bytecode caches outside the checkout の step とコメント)"
       ]
+    },
+    {
+      "id": "ci/coverage-records-for-new-scripts",
+      "summary": "bytecode の修正後の CI (run 38013812634) で governance の pytest は通ったが、次の Harness coverage ratchet-floor が scripts/llm_eval 63.7% < floor 64.3% で落ちた。この PR で足した script 28本 (run-skill-feedback の validate-inline-goal-seek-anchor.py の正本と配布コピー22本、ubm-goal-setting の6本) に、独立コードレビューの記録 (eval-log/coverage/scripts/<slug>.json) が無かったため。floor は回帰を焼かない作り (--update-floor は下げない) なので、内容が異なる7本を独立レビュアーにレビューしてもらい、その判定どおりに 34 件の記録を書いた。ubm-goal-setting の6本は PASS (85〜94)。validate-inline-goal-seek-anchor.py は FAIL (82): UTF-8 でない入力で UnicodeDecodeError の traceback を出し、宣言の『2=IO/JSON error』と合わない (実測)。この PR で2行 (progress が object でない場合の exit 1) を足しており、既存の4件の PASS 記録は変更前の内容 (sha256 87b5dddb…) のレビューだったので、26本すべてを今の内容のレビュー (FAIL) で書いた。直すには26本 (22プラグイン) の版上げが要り、plugin.json は P1 で cooldown 3日のため follow-up に回した。A が FAIL のままでは 311/485 (64.1%) で floor に届かないので、記録の無い 配布コピーのうち、今の内容のままレビュー済みの正本と byte 一致し、同じ内容の全コピーの記録が PASS で揃うもの2本 (extract-system-blueprint の extract-ready-set-from-checklist.py と build-self-reflection-entry.py) に、PR #83 の前例どおり正本のレビューを当てた。build-capability-graph-knowledge-entry.py のコピー5本は、正本テンプレートの記録 (PASS 83) とコピーの独立レビュー (FAIL 74) が割れているので、PASS で上書きしなかった。",
+      "spec_impact": false,
+      "no_impact_reason": "評価の記録 (eval-log) を足しただけで、script・スキル・契約・lint の規則・ratchet の floor は変えていない。記録の書き方は PR #83 の前例 (byte 一致コピーには代表のレビューを当て、sha256 で一致を確かめる) に合わせた。",
+      "reflected_in": [
+        "eval-log/coverage/scripts/ の記録",
+        "eval-log/harness-coverage.json (再生成)"
+      ]
     }
   ],
   "excluded_from_commit": [
@@ -212,7 +223,9 @@
     "run-build-skill の独立レビューで low として残した点: skills/run-build-skill/scripts の4本に PEP 723 の script ブロックが無い。本文が299行で上限300行に近い。ゴールシーク配線の見出しとアンカーが無い (engine=inline なので違反ではない)",
     "run-skill-intake の独立レビューで low として残した点: schemas/ を持たない phase (P6・P10) の検証方法が Key Rule 3 に書かれていない。references/handoff-contract.md が参照する正本の節名が古い。workflow-sequence.md の「失敗時の戻り先」が自動の巻き戻しと読める。Key Rule 9 の hook の配線先が実際 (hooks/hooks.json) と違う。詳細は eval-log/skill-intake/run-skill-intake/content-review/elegance-verdict.json の negative_feedback",
     "Plugin Governance CI の plugin-tests job で plugins/dev-graph の9件が落ち、verify job も failure になる。dev-graph の live-trial の stale と同じ原因で、harness-bzn.4 が扱う",
-    "feedback_contract_ssot.directory_content_sha256 は __pycache__ と .pyc も hash に入れる。CI は eb7b1bc1 で止めたが、手元で PYTHONDONTWRITEBYTECODE を付けずにコピーのスクリプトを import すると同じずれが起こりうる。harness-creator の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で直す"
+    "feedback_contract_ssot.directory_content_sha256 は __pycache__ と .pyc も hash に入れる。CI は eb7b1bc1 で止めたが、手元で PYTHONDONTWRITEBYTECODE を付けずにコピーのスクリプトを import すると同じずれが起こりうる。harness-creator の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で直す",
+    "validate-inline-goal-seek-anchor.py (26本・22プラグインの byte 一致コピー) の FAIL を直すこと。47行目の except が (OSError, json.JSONDecodeError) だけで、UTF-8 でない入力で UnicodeDecodeError の traceback を出して exit 1 になる。(OSError, ValueError, RecursionError) にして26本を byte 一致のまま直し、test を足し、記録を取り直す。plugin.json の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で行う",
+    "ubm-goal-setting の新設 script の独立レビューで減点された点: publish-staged-files.py が存在しない root を作って exit 0 で返すこと、大文字小文字を区別しない APFS で重複の検査をすり抜けること。validate-challenge-output.py の M01 が「会場費はかからない。講師料が30万円かかる。」を通すこと。evaluate-design-rubric.py が object でない JSON で AttributeError の traceback を出すこと、normalized_source_path.py の main が RecursionError を捕まえないこと。いずれも PASS (85〜92) の範囲の減点。詳細は eval-log/coverage/scripts/ の各記録の notes"
   ],
   "verification": {
     "verified_at_commit": "b802732a",
@@ -290,7 +303,102 @@
         "summary": "8052 passed, 4 skipped in 506.15s (rc=0)"
       },
       "gates_after_fix": "42件中41件が rc=0 (FAIL は既知の lint-live-trial-verdict の1件だけ)",
-      "deferred": "SSOT 側で __pycache__ と .pyc を内容 hash から外す強化は、harness-creator の版上げ (plugin.json は P1、cooldown 3日) が要るので follow-up に回した (planned_beads の6)"
+      "deferred": "SSOT 側で __pycache__ と .pyc を内容 hash から外す強化は、harness-creator の版上げ (plugin.json は P1、cooldown 3日) が要るので follow-up に回した (planned_beads の6)",
+      "run_after_bytecode_fix": {
+        "run_id": 38013812634,
+        "head": "253dc978",
+        "governance": "pytest は 8049 passed, 7 skipped で通った (bytecode の修正が効いた)。その次の Harness coverage ratchet-floor が scripts/llm_eval 63.7% < floor 64.3% で failure、後続の25 step は skip",
+        "plugin-tests": "failure: plugins/dev-graph の9件だけ (既知。harness-bzn.4)",
+        "verify": "failure (上の2つの job の結果をまとめる job)",
+        "governance-check": "failure: lint-live-trial-verdict の dev-graph 9件の stale-sha だけ (既知。harness-bzn.4)"
+      },
+      "coverage_fix": {
+        "independent_review": [
+          {
+            "artifact": "plugins/harness-creator/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py",
+            "sha256": "be89aacb88f1db33a29700e93128e51a5d2c76c59163564c444c1cd8dde0e521",
+            "verdict": "FAIL",
+            "score": 82,
+            "mechanical": true,
+            "tests": [
+              "plugins/harness-creator/tests/test_validate_goal_seek_anchor.py",
+              "tests/scripts-root/test_root__lint_vendored_ssot.py"
+            ],
+            "test_result": "4 passed in 0.04s (test_validate_goal_seek_anchor.py) / 9 passed in 0.24s (test_root__lint_vendored_ssot.py)"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
+            "sha256": "a322e8a155f440d3f225a0323fb5f774ecfb681619984053febb500ed31f9fba",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_content_review_rubric_routing.py"
+            ],
+            "test_result": "16 passed in 0.17s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+            "sha256": "d904181c1bb233a12ad233cbf2189e5866614d91678ab70cb293f6e4f8b54a34",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_guarded_publication.py"
+            ],
+            "test_result": "14 passed in 0.53s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
+            "sha256": "25f843694b8301ca94bd4032e0e0ad22287cfdccf51330dd1b3954c98eaec975",
+            "verdict": "PASS",
+            "score": 92,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py"
+            ],
+            "test_result": "30 passed in 1.07s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/search-knowledge.py",
+            "sha256": "b78ab3f50d1b9757a16b38d1a5f5efca1ddd6a81f3dc0ef73f9ae51ff2cff633",
+            "verdict": "PASS",
+            "score": 94,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py"
+            ],
+            "test_result": "30 passed in 1.07s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts/validate-challenge-output.py",
+            "sha256": "68df12efed2850f4d3983276a65adb0a612b3640739189f4f49d5fc479db5803",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_validate_challenge_output.py"
+            ],
+            "test_result": "134 passed in 1.11s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
+            "sha256": "443fd0472c1b1bbf6a2403b8e445a3258647ef3fdd41561ad3f7171c9bf36927",
+            "verdict": "PASS",
+            "score": 92,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_youtube_sync_oneshot.py"
+            ],
+            "test_result": "36 passed in 11.51s"
+          }
+        ],
+        "reviewed_by": "coverage-reviewer-pr85-20261010 (作者とは別の subagent)",
+        "records_written": 34,
+        "ratchet_after": "rc=0、scripts/llm_eval 64.5%（313/485、floor 64.3%）",
+        "coverage_records_integrity_test": "tests/test_coverage_records_integrity.py 502 passed",
+        "remaining_governance_steps_local": "ratchet-floor の後で skip された governance の25 step を、workflow の run をそのまま抜き出して手元で実行し、25 step すべて rc=0"
+      }
     }
   },
   "planned_beads": {
@@ -301,7 +409,9 @@
       "run-governance-automation: content-review の残り low 6件",
       "run-build-skill・run-skill-intake: content-review の残り low",
       "lint-rubric-refs-exist: 他プラグインの既存14件の rubric_refs 未解決",
-      "feedback_contract_ssot: 配布コピーの内容 hash から __pycache__ と .pyc を外す"
+      "feedback_contract_ssot: 配布コピーの内容 hash から __pycache__ と .pyc を外す",
+      "validate-inline-goal-seek-anchor: UTF-8 でない入力で traceback を出す (26本・22プラグイン)",
+      "ubm-goal-setting: 新設 script の独立レビューの減点 (publish-staged-files ほか)"
     ]
   }
 }
