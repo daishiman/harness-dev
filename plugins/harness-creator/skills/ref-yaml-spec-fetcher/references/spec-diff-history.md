@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-10-12T04:16:04Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -97,8 +97,50 @@
+ Skill
+ in the Purpose column.
+ ​
++Check your setup with
++/doctor
++Run
++/doctor
++at the Claude Code prompt for a setup checkup that diagnoses issues and can fix them. Claude reports its findings first and asks for confirmation before changing anything. The checkup covers these areas:
++Installation health
++: duplicate or leftover installs,
++PATH
++problems, unparseable settings files, and whether a newer version is available on your
++release channel
++Extensions
++: unused skills, MCP servers, and plugins compared with their context cost, and slow
++hooks
++CLAUDE.md
++files
++: local
++CLAUDE.md
++files that duplicate checked-in ones, checked-in
++CLAUDE.md
++content Claude could derive from the codebase
++, and the always-loaded guidance that remains, which Claude offers to migrate into skills and nested
++CLAUDE.md
++files that load on demand
++Permissions
++: an offer to make
++auto mode
++your default permission mode and to
++pre-approve
++read-only commands that you frequently deny
++For read-only installation diagnostics without starting a session, run
++claude doctor
++in your terminal instead.
++To audit your instructions rather than your setup, run
++/doctor prompt-audit
++at the Claude Code prompt. Claude
++checks your
++CLAUDE.md
++files, skills, and other configuration
++for outdated or conflicting instructions instead of running the checkup. The
++prompt-audit
++subcommand requires Claude Code v2.1.283 or later.
++​
+ Run and verify your app
+-Three bundled skills work together to launch your app and confirm changes against the running app instead of just tests:
++Three bundled skills work together to launch your app and confirm changes against the running app instead of tests alone:
+ Skill
+ Purpose
+ /run
+@@ -134,7 +176,7 @@
+ .claude/skills/verify/SKILL.md
+ at the repo root, or in the touched package directory in a monorepo, so later runs and other agents follow the same steps. At the repo root, the recorded skill replaces the bundled
+ /verify
+-. This requires Claude Code v2.1.200 or later.
++.
+ Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs. Before v2.1.205, the bundled skill told Claude to fold in anything a run learned, which caused frequent merge conflicts.
+ ​
+ Run your checks before each commit
+@@ -199,6 +241,15 @@
+ managed-agents-onboard
+ Walk through creating a new Managed Agent
+ Earlier than v2.1.221
++managed-agents-onboard <url>
++Build the Managed Agent that the page at the URL describes, such as a page in the
++Managed Agents docs
++v2.1.290 or later
++managed-agents-onboard <quickstart-name>
++Build one of the Console’s quickstart templates, such as
++deep-researcher
++. If you give one word that isn’t a template name, Claude lists the valid names
++v2.1.290 or later
+ prompt-audit
+ Flag instructions written for older models in your prompts, skills, and tool descriptions and propose fixes as a diff
+ v2.1.221 or later
+@@ -373,6 +424,10 @@
+... (1953 more lines)
+```
+
 ## 2026-10-05T03:59:23Z
 
 実仕様ページに変更を検知。
