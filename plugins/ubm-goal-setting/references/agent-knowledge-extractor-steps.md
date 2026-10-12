@@ -4,13 +4,17 @@
 
 ## Step 0: `mode` の決定（必須・最初に実行）
 
-`detect-knowledge-updates.py` 出力の先頭フィールドから `mode` を決定する:
+**入力の `mode` が正本で、STATUS より優先する。** 親（run-ubm-knowledge-sync の SKILL.md）は検知の行を NEW→`new`、MODIFIED→`update` に分けて渡し、`--all` のときだけ `full` を渡す。`--all` では検知が全件を NEW として出すので、STATUS からは `full` を導けない。入力の `mode` があるときは、STATUS が何であってもそれに従う。
+
+入力に `mode` が無いときだけ、`detect-knowledge-updates.py` 出力の先頭フィールドから導く:
 
 ```
 入力形式: {STATUS}|{source_type}|{file_hash}|{file_path}
 STATUS = NEW      → mode: "new"（新規ファイル：registry.json に未登録）
 STATUS = MODIFIED → mode: "update"（更新ファイル：ハッシュ変化あり）
 ```
+
+入力の `mode` が `new` / `update` / `full` のどれでもないときは、推測で補わずに処理を始めず、親へ返す。
 
 利用者自身の記録（`05_Project/UBM/目標設定/`・`05_Project/UBM/挑戦宣言/`）は、`detect-knowledge-updates.py` が検知の段階で除くので、この入力には現れない。除外の正本は同スクリプトの `EXCLUDED_SUBDIRS` で、このエージェントの側で行を除く手順は持たない。
 
@@ -37,12 +41,13 @@ mode: "full"
 
 ## Step 1: ファイル読み込みと分類
 
-1. 対象ファイルの種別を判定:
-   - `YouTube/` → YouTube議事録
-   - `合宿/` → 合宿記録
-   - `月報フィードバック/` → 月報FB
-   - `動画教材/` → 公式教材
-   - UBMルート直下 → セミナー・イベント記録
+1. 対象ファイルの種別は、target_files の行の `source_type`（`detect-knowledge-updates.py` の `SOURCE_TYPE_RULES` のラベル）で決める。パスから判定し直さない。この値はエントリの `source.type` にそのまま書く（値の正本は `knowledge/schema.json` の `source.type` の enum）:
+   - `youtube` → YouTube議事録
+   - `camp` → 合宿記録
+   - `monthly-feedback` → 月報FB
+   - `teaching-material` → 公式教材
+   - `seminar` / `event` → セミナー・イベント記録
+   - `other` → その他（どのラベルにも当たらないファイル）
 
 2. ファイルサイズに応じた読み込み戦略: `agents/knowledge-extractor.md` の Layer 4「ファイルサイズ別読み込み戦略」に従う（5万文字以下は全文、5万文字以上は先頭200行で構造把握 → 見出し一覧取得 → 関連セクションのみ精読）。
 
@@ -79,7 +84,7 @@ Rule A を実行:
 ```
 
 1. 格納先ファイルが存在しない場合は `schema.json` に準拠した構造で新規作成
-2. 重複チェック: 同じ `content` のエントリが既存の場合は `source` を追記するのみ
+2. 重複チェック: 同じ `content` のエントリが既にある場合は、新しいエントリを足さない。既存エントリはそのまま残し、その `source` も書き換えない（`source` は `file` と `type` を持つ単一の object で、2つ目のソースを足す欄は無い）。足さなかった件数は出力サマリーの抽出件数に「重複で見送り」として書く
 3. エントリの `id` を **Rule C（ID採番アルゴリズム）** に従って採番
 4. `entries` 配列に新エントリを追加し `entry_count` を更新して Write で保存
 5. `router.json` を **Rule D（更新順序）** に従って更新
@@ -115,6 +120,14 @@ Rule A を実行:
    | `action-guides` | `daily-routine`, `networking`, `follow-up`, `content` |
    | `mindset` | `fear`, `perfectionism`, `comparison`, `self-worth` |
    | `case-studies` | `tax-accountant`, `freelance`, `growth-success`, `failure` |
+
+**格納の確定**（1つのソースのエントリをすべて格納したあと、Step 4（`update` では U-4）の前に毎回実行）:
+
+```bash
+python3 "${PLUGIN_ROOT}/skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py" --knowledge-dir "$KNOWLEDGE_DIR"
+```
+
+一時 `knowledge_dir` の全カテゴリファイルについて、各エントリの `source` が `file` と `type` を持つ単一の object で、`source.type` が `schema.json` の enum に入るかを検査する。終了コード 1 なら、stderr の見出しごとに直して再実行する（「読めないファイル」はその JSON を、「source の契約から外れた箇所」は `ファイル#entries[id=...]` の場所を直す）。直せないときは Step 4（`update` では U-4）へ進まず、`router.json` の再集計・`sync-log.jsonl`・`registry.json` を書かずに止まり、stderr を親へ返す。終了コード 2 は引数の誤り（`KNOWLEDGE_DIR` の未設定や相対パスなど）なので、エントリを直さずに止まり、stderr を親へ返す。argv と終了コードは出力サマリーの検査受領書に入れる。
 
 ## Step 4: ルーターとレジストリの更新
 

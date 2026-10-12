@@ -8,8 +8,8 @@
     "violation_rate_ceiling": 0.05
   },
   "grace_period": {
-    "min_releases": 1,
-    "min_days": 30
+    "min_days": 14,
+    "note": "min_days は major（厳格化）の最低日数。minor と patch の日数と、猶予期間を 0 日にできる条件は run-skill-rubric-governance の Key Rule 3（references/version-rules.md）に従う。"
   },
   "limits": {
     "manual_proposals_per_quarter": 1,
@@ -19,7 +19,7 @@
     "enabled": true,
     "self_approval_conditions": [
       "安定版凍結済み: freeze.consecutive_runs 連続で violation_rate <= freeze.violation_rate_ceiling",
-      "newly_failing_count == 0 (assess-rubric-impact.py 出力)",
+      "would_flip == 0 (plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py --logs eval-log の出力。合格から不合格に変わるレコードが無い。緩和の宣言では定義上 0 なので、緩和の定義を満たす根拠も evidence に書く)",
       "LLM-reviewer pass: run-skill-rubric-governance の Step2 影響評価で problem=none"
     ],
     "note": "solo_operator_mode が true の場合、Proposer と Approver の兼任を例外的に許可する。governance log に solo_operator: true と evidence を必ず記録し、major bump は禁止する。"

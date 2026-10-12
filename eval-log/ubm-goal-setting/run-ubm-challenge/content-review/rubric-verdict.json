@@ -2,17 +2,17 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-challenge",
-    "skill_md_sha256": "ada351fde9b1ec8f1a1d5397d4f4388eda4a809fa494e911f4b59ec4d22582d9"
+    "skill_md_sha256": "6afadaa7d6bbb00e6925576197e00ac1cf07b024a9da68cf71662915fa4c532b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
-  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T14:18:00Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
+    "omission": 1,
     "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
@@ -26,15 +26,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Resolve TEMP once and reuse observed absolute path; initial trial1,total3/max2repair reviews. User-approved parent guarded formal save precedes same saved-file validation; missing facts are not fabricated.",
-      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
-      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
+      "L0 単独の機械採点（brief のコマンド。rubric 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash sha256:2713eeaf2ead46a2760bc5f1e4195f429883a8cd14cecdf0e7f7a8323655ec98）は score 100、threshold 80、passed、findings 0件。",
+      "L0+L2（render-findings-score.py --kind skill --emit-hash、composition_hash sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c）も score 100・passed・findings 0件。coverage は applicable 25・scored 23・pending_human 2（BD-004・KL-002）。",
+      "UBM の validate-design-rubric.py（L0 + L1 run-ubm-knowledge-sync/references/rubric.json + L2、composition_hash sha256:b8437e1bb4d5793c79dc84c267c4cc91f082be0e6009aa85584c6c4311cd8120）も score 100・passed。",
+      "high の rule は全件 PASS: FM-001、NM-001、BD-001（L122 `## 目的と出力契約`）、BD-003（本文 180 行 ≤ 300）。前回の KL-003 の機械判定の退行は採点器の修正で PASS に戻った。",
+      "IN1（script）は validate-challenge-output.py を保存前の下書きと保存後のファイルで実行する指示（L242）と検査内容の照合、IN2（test）は tests/test_validate_challenge_output.py（と test_challenge_contract.py）の通過で評価した。OUT1（live-trial）と OUT2（human）は実際の対話を回していないので、SKILL.md の段階表・保存の境界・提出テキストの表示と、challenge-format.md・handoff-format.md の記述の照合で評価した（矛盾と依存の切れは無い）。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "rubric の観点でも elegance と同じ1回の評価の指摘を持つ（同じ内容を両ファイルに書いた）。rubric の rule としては減点されていない。",
+      "[low / omission / plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md L212] 「同日のファイルが既にあれば…（既存SHA256を固定し、上書きは正式保存の契約の中央guard executeで行う）」は、既存ファイルの SHA256 を何で取るか、いつ取るかを書いていない。共有の guarded-publication-contract.md にも SHA256 を取るコマンドは無いので、shasum など python3 以外の実行ファイルを選ぶと Bash(python3 *) の事前許可に当たらない。今回 run-ubm-journal は L211-214 で取り方と時点を明記したので、スキル間で書き方もずれた。直し方の案: L212 に journal と同じ `python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],\"rb\").read()).hexdigest())' \"<既存ファイルの絶対パス>\"` を書き、「上書きと決めた時点で一度取り、manifest の old_sha256 に使う。保存の直前に取り直さない」と時点を足す。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
+  "notes": "incremental の focused review（content-review-protocol の「incremental: unresolved semantic batch」に従い、1つの context で (a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high severity が0件 をまとめて判定）で、exhaustive の30思考法は実施していない。比較の基準は commit 03050251（PR #85 の head）で、作業ツリーにある未 commit の修正を評価した。 必須確認: (1) allowed-tools は Bash(python3 *)。SKILL.md・references・prompts・関係する agents・command で、python3 以外の実行ファイルを Bash で呼ぶ指示や、`VAR=... python3` / `export` のように先頭が python3 でない形の指示が無いことを確かめた。(2) frontmatter の参照と本文の相対パスはすべて実在し（実行時に生成される knowledge/*.json の glob・knowledge-relations.json・knowledge-capability-graph.json だけ例外）、旧名（evaluate-design-rubric・search-knowledge.py・record-knowledge-usage・publish-staged-files）は eval-log と .beads の外に残っていない。(3) feedback_contract.criteria の全 id を criteria_evaluated に入れた。 テスト: plugins/ubm-goal-setting/tests を PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider で実行し 1025 passed。 criteria の評価: IN1（script）は validate-challenge-output.py を保存前の下書きと保存後のファイルで実行する指示（L242）と検査内容の照合、IN2（test）は tests/test_validate_challenge_output.py（と test_challenge_contract.py）の通過で評価した。OUT1（live-trial）と OUT2（human）は実際の対話を回していないので、SKILL.md の段階表・保存の境界・提出テキストの表示と、challenge-format.md・handoff-format.md の記述の照合で評価した（矛盾と依存の切れは無い）。 findings は low のみで、medium 以上と rubric の high は0件なので PASS・next_action none とした（low は negative_feedback に直し方の案つきで記録）。 採点コマンド: PYTHONDONTWRITEBYTECODE=1 python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --kind skill --target <SKILL.md>（L0 単独）と、同じ script に assign-skill-design-evaluator/references/rubric.json を足して --target <skill dir> --emit-hash（L0+L2）、python3 plugins/ubm-goal-setting/scripts/validate-design-rubric.py --repo-root . --target <SKILL.md>（L0+L1+L2）。 迷った例（FAIL にしていない・数えていない）: (i) 共有の references/knowledge-retrieval-contract.md L10・L45 の `$PLUGIN_ROOT` / `$KNOWLEDGE_DIR` / `$PROJECT_ROOT` はシェル変数で、今回 goal-seek-anchor-contract.md L22 に足された「シェル変数は Bash の呼び出しをまたいで残らないので、変数に頼らない」と書き方がずれる。コマンドの先頭は python3 のままなので事前許可は壊れていないことと、anchor 契約の文はアンカーのコマンドに限った文であることから、スキル固有の finding にしていない。揃えるなら `{resolved_plugin_root}` / `{resolved_knowledge_dir}` / `{resolved_project_root}` の形に書き換える（plugin 共有の修正）。 (ii) runtime-root-contract:v1 ブロック（リポジトリ全体の生成ブロック）の「シェルを呼ぶたびに、その中で解決済みの絶対パスを PLUGIN_ROOT に入れる」は、`PLUGIN_ROOT=... python3` や `export` の形で読まれると Bash(python3 *) に当たらない。本文のコマンドは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の形で python3 始まりのまま実行できるので FAIL にしない。直すなら生成元の scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION_JA を「解決済みの絶対パスをコマンドへ書き込み、先頭は python3 のままにする」へ。 (iii) 外部変更 guard の生成ブロックの `--project-root \"$PWD\"` は、guarded-publication-contract.md L10 が「$PWD を使う場合は cwd を project_root へ固定する」と定めており、PWD はシェルが毎回設定するので数えていない。 BD-004（LLM judge）は description の発動条件（挑戦宣言と企画を会話で引き出しながら作りたいとき）が C0〜C7 の対話と保存に対応するので PASS と判定した。KL-002 は pending_human だが、今回の差分は knowledge/ を変えていないので判定していない。"
 }

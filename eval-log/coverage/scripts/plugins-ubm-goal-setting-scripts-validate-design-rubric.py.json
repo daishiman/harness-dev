@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/validate-design-rubric.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 796c1353f8af4c75d1f899214b2c1359ecf6d5d3f9afa1ec25f8820dea0035e7 をレビュー。実行検証あり）。範囲: 全147行。evaluate-design-rubric.py からの改名（git diff -M で対応を確認）で、差分は header の name 行だけ。version は 0.2.0。確かめたこと: --help は rc=0、未知の option は rc=2 で UBM_REVIEW_ROUTING_INVALID の印が出る。実物の plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md を --target にすると rc=0。plugins/ubm-goal-setting/tests 全体 1025 passed。子の異常終了を crash_reason で区別して rc=2 にすること、write-scope: none のとおり書き込みの経路が無いことは、差分が名前だけなので前回の記録から引き継ぐ。指摘: なし。付記（減点なし）: L108 の subprocess.run に timeout が無い。呼ぶ先は repo 内の決定論 script なので止まる経路は見つからない。DEDUCTION: 減点なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

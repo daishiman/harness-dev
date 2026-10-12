@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # /// script
 # name: test-spec-transition
-# version: 0.2.0
-# purpose: run-system-spec-elicit の受入テスト。IN1(validate-coverage-matrix.py が fixture spec-state に exit0)/OUT1(最終 spec-state が未収集0で --require-complete exit0)/5周目 resume の状態保存/単一 transition writer の確定巻き戻し拒否/根拠参照の実在/required-info catalog 不正の exit2/書込の原子性を検証する。
+# version: 0.2.1
+# purpose: run-system-spec-elicit の受入テスト。IN1(validate-coverage-matrix.py が fixture spec-state に exit0)/OUT1(最終 spec-state が未収集0で --require-complete exit0)/5周目 resume の状態保存/単一 transition writer の確定巻き戻し拒否/根拠参照の実在/required-info catalog 不正の exit2/confirm に --required-info が無いときの exit2/state・turns・taxonomy の形の崩れの exit1/書込の原子性を検証する。
 # inputs:
 #   - argv: pytest 収集 (引数なし)
 # outputs:
@@ -488,9 +488,14 @@ def test_cli_init_chunk_apply_aggregate(tmp_path):
     turns_path.write_text(TURNS.read_text(encoding="utf-8"), encoding="utf-8")
 
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    # block の必須情報を先に接地する (confirm を含む chunk は候補 state の接地検証を通ってから書く)
+    grounding_path = tmp_path / "grounding.json"
+    grounding_path.write_text(json.dumps([_block_answer_turn()], ensure_ascii=False), encoding="utf-8")
+    assert mod.main(["chunk", "--state", str(state_path), "--turns", str(grounding_path),
+                     "--required-info", str(REQUIRED_INFO)]) == 0
     # chunk invocation1
     assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path),
-                     "--max-loops", "5"]) == 0
+                     "--max-loops", "5", "--required-info", str(REQUIRED_INFO)]) == 0
     st = json.loads(state_path.read_text(encoding="utf-8"))
     assert st["hearing_progress"]["complete"] is False
     # apply 単一 op: reopen 確定セル → 未収集
@@ -502,9 +507,12 @@ def test_cli_init_chunk_apply_aggregate(tmp_path):
 
 
 def _cli_register_qa(tmp_path, state_path, qa_id="qa-001") -> None:
-    """CLI の apply は op だけを受けるので、確定の根拠になる回答は先に chunk で qa_log へ載せる。"""
+    """CLI の apply は op だけを受けるので、確定の根拠になる回答は先に chunk で qa_log へ載せる。
+
+    confirm には --required-info が要るので、block の必須情報を満たす回答を載せる (confirm はしない)。
+    """
     turns_path = tmp_path / f"turns-{qa_id}.json"
-    turns_path.write_text(json.dumps([{"qa_id": qa_id, "question": "q", "answer": "a"}]))
+    turns_path.write_text(json.dumps([{**_block_answer_turn(qa_id), "ops": []}], ensure_ascii=False))
     assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path)]) == 0
 
 
@@ -513,7 +521,7 @@ def test_cli_apply_rollback_returns_1(tmp_path):
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
     _cli_register_qa(tmp_path, state_path)
     confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
-    assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 0
+    assert mod.main(["apply", "--state", str(state_path), "--op", confirm, "--required-info", str(REQUIRED_INFO)]) == 0
     # 確定セルを exclude で直接巻き戻し → CLI も拒否 (exit 1)
     bad = json.dumps({"action": "exclude", "category": "database", "platform": "web", "reason": "x"})
     assert mod.main(["apply", "--state", str(state_path), "--op", bad]) == 1
@@ -919,7 +927,7 @@ def test_cli_apply_set_serves(tmp_path):
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
     _cli_register_qa(tmp_path, state_path)
     confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
-    assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 0
+    assert mod.main(["apply", "--state", str(state_path), "--op", confirm, "--required-info", str(REQUIRED_INFO)]) == 0
     serves = json.dumps({"action": "set-serves", "category": "database", "platform": "web", "serves_goals": ["G1"]})
     assert mod.main(["apply", "--state", str(state_path), "--op", serves]) == 0
     st = json.loads(state_path.read_text(encoding="utf-8"))
@@ -1104,7 +1112,7 @@ def test_cli_apply_dangling_qa_ref_keeps_state_file(tmp_path):
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
     before = state_path.read_bytes()
     confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
-    assert mod.main(["apply", "--state", str(state_path), "--op", confirm]) == 1
+    assert mod.main(["apply", "--state", str(state_path), "--op", confirm, "--required-info", str(REQUIRED_INFO)]) == 1
     assert state_path.read_bytes() == before
 
 
@@ -1173,6 +1181,15 @@ def test_write_keeps_mode_and_follows_symlink(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["real-state.json", "spec-state.json"]
 
 
+def test_bootstrap_creates_missing_parent_directory(tmp_path):
+    """対象 repo に system-spec/ がまだ無い状態からでも bootstrap が通る (SKILL.md の手順 1)。"""
+    state_path = tmp_path / "project" / "system-spec" / "spec-state.json"
+    assert not state_path.parent.exists()
+    assert mod.main(["bootstrap", "--out", str(state_path)]) == 0
+    assert json.loads(state_path.read_text(encoding="utf-8")) == mod.bootstrap_state()
+    assert [p.name for p in state_path.parent.iterdir()] == ["spec-state.json"]
+
+
 def test_frontmatter_declares_required_info_validator_dependency():
     """--required-info は plugin の scripts/validate-knowledge-graph.py を読み込むので dependencies に載せる。"""
     script = SKILL_DIR / "scripts" / "apply-spec-transition.py"
@@ -1181,3 +1198,149 @@ def test_frontmatter_declares_required_info_validator_dependency():
     deps = [d.strip() for d in line.split(":", 1)[1].strip().strip("[]").split(",") if d.strip()]
     assert "scripts/validate-knowledge-graph.py" in deps
     assert all((PLUGIN_ROOT / dep).is_file() for dep in deps)
+
+
+# --------------------------------------------------------------------------- #
+# 入力の形の崩れ (traceback ではなく exit 1) と confirm の収集ゲート (exit 2)      #
+# --------------------------------------------------------------------------- #
+_STATE_COMMANDS = {
+    "apply": ["--op", json.dumps({"action": "reopen", "category": "database", "platform": "web",
+                                  "reason": "r", "reopened_at": "2026-01-01T00:00:00Z"})],
+    "chunk": ["--turns", None],
+    "aggregate": [],
+    "set-targets": ["--targets", "[]"],
+    "set-foundation": ["--foundation", "{}"],
+    "set-decision": ["--decision", "{}"],
+    "set-knowledge-candidate": ["--candidate", "{}"],
+}
+_MALFORMED_STATES = {
+    "list": "[]",
+    "string": '"x"',
+    "number": "3",
+    "empty-object": "{}",
+    "categories-object": json.dumps({"categories": {}, "matrix": {}, "qa_log": [], "approval_log": [],
+                                     "hearing_progress": {}}),
+}
+
+
+@pytest.mark.parametrize("shape", sorted(_MALFORMED_STATES))
+@pytest.mark.parametrize("command", sorted(_STATE_COMMANDS))
+def test_malformed_state_is_transition_error_not_traceback(tmp_path, capsys, command, shape):
+    """state が [] などのとき、どのサブコマンドも traceback ではなく exit 1 で止まり、state を書かない。"""
+    body = _MALFORMED_STATES[shape]
+    state_path = tmp_path / "state.json"
+    state_path.write_text(body, encoding="utf-8")
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text("[]", encoding="utf-8")
+    extra = [str(turns_path) if arg is None else arg for arg in _STATE_COMMANDS[command]]
+    assert mod.main([command, "--state", str(state_path), *extra]) == 1
+    assert capsys.readouterr().err.startswith("TransitionError: spec-state ")
+    assert state_path.read_text(encoding="utf-8") == body
+
+
+def test_optional_envelope_key_of_wrong_type_is_rejected(tmp_path, capsys):
+    state = mod.init_state(_taxonomy())
+    state["decisions"] = {}
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    assert mod.main(["aggregate", "--state", str(state_path)]) == 1
+    assert "decisions (list 必須)" in capsys.readouterr().err
+
+
+def test_state_without_optional_envelope_keys_is_still_accepted(tmp_path):
+    """古い state に無い knowledge_candidates などは、writer が補うので必須にしない。"""
+    state = mod.init_state(_taxonomy())
+    for key in ("reopen_log", "decisions", "knowledge_candidates", "design_applications"):
+        del state[key]
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    assert mod.main(["aggregate", "--state", str(state_path)]) == 0
+
+
+@pytest.mark.parametrize(
+    "taxonomy",
+    [
+        [],
+        "x",
+        {},
+        {"platforms": "web", "categories": []},
+        {"platforms": [{"id": pf} for pf in mod.CANONICAL_PLATFORMS], "categories": [{"id": "db"}]},
+    ],
+)
+def test_init_malformed_taxonomy_is_transition_error(tmp_path, capsys, taxonomy):
+    tax_path = tmp_path / "taxonomy.json"
+    tax_path.write_text(json.dumps(taxonomy), encoding="utf-8")
+    out = tmp_path / "state.json"
+    assert mod.main(["init", "--taxonomy", str(tax_path), "--out", str(out)]) == 1
+    assert capsys.readouterr().err.startswith("TransitionError: taxonomy")
+    assert not out.exists()
+
+
+def test_init_rejects_non_object_existing_state(tmp_path, capsys):
+    """object でない --state を空として扱うと、bootstrap 済みの foundation を黙って捨ててしまう。"""
+    state_path = tmp_path / "state.json"
+    state_path.write_text("[]", encoding="utf-8")
+    out = tmp_path / "out.json"
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--state", str(state_path), "--out", str(out)]) == 1
+    assert capsys.readouterr().err.startswith("TransitionError: spec-state ")
+    assert not out.exists()
+
+
+@pytest.mark.parametrize("turns", [{}, [1], [{"ops": "confirm"}], [{"ops": [1]}]])
+def test_chunk_malformed_turns_is_transition_error(tmp_path, capsys, turns):
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(mod.init_state(_taxonomy()), ensure_ascii=False), encoding="utf-8")
+    before = state_path.read_bytes()
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(json.dumps(turns), encoding="utf-8")
+    assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path)]) == 1
+    assert capsys.readouterr().err.startswith("TransitionError: turns")
+    assert state_path.read_bytes() == before
+
+
+@pytest.mark.parametrize("op", ["[]", '"confirm"', "3"])
+def test_apply_non_object_op_is_transition_error(tmp_path, capsys, op):
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(mod.init_state(_taxonomy()), ensure_ascii=False), encoding="utf-8")
+    before = state_path.read_bytes()
+    assert mod.main(["apply", "--state", str(state_path), "--op", op]) == 1
+    assert capsys.readouterr().err.startswith("TransitionError: --op は object 必須")
+    assert state_path.read_bytes() == before
+
+
+@pytest.mark.parametrize("command", ["apply", "chunk"])
+def test_confirm_without_required_info_is_usage_error(tmp_path, capsys, command):
+    """SKILL.md の収集ゲート: confirm を含む apply / chunk は --required-info を必ず付ける。
+
+    接地済みの回答があっても、catalog が無ければ候補 state を検証できないので書かない。
+    """
+    state = mod.init_state(_taxonomy())
+    turn = _block_answer_turn()
+    if command == "apply":
+        mod.apply_turn(state, {**turn, "ops": []})
+        args = ["apply", "--op", json.dumps({**turn["ops"][0], "qa_ref": turn["qa_id"]})]
+    else:
+        turns_path = tmp_path / "turns.json"
+        turns_path.write_text(json.dumps([turn], ensure_ascii=False), encoding="utf-8")
+        args = ["chunk", "--turns", str(turns_path)]
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    before = state_path.read_bytes()
+    assert mod.main(args + ["--state", str(state_path)]) == 2
+    assert capsys.readouterr().err.startswith("usage error: confirm を含む apply / chunk は --required-info")
+    assert state_path.read_bytes() == before
+
+
+def test_chunk_without_applied_confirm_needs_no_required_info(tmp_path):
+    """回答の蓄積は --required-info なしで通る。--max-loops の外にあって適用しない confirm は数えない。"""
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(mod.init_state(_taxonomy()), ensure_ascii=False), encoding="utf-8")
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(
+        json.dumps([{**_block_answer_turn(), "ops": []}, _block_answer_turn("qa-later")], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path), "--max-loops", "1"]) == 0
+    actual = json.loads(state_path.read_text(encoding="utf-8"))
+    assert [entry["id"] for entry in actual["qa_log"]] == ["qa-block"]
+    assert actual["matrix"]["backend"]["web"]["state"] == "未収集"

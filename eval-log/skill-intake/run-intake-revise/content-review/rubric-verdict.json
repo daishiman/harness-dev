@@ -2,19 +2,19 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-revise",
-    "skill_md_sha256": "fcdc9764089f67a44987eaca0ba2d5dc67e56a795ac1775ae54eb5dd171640b2"
+    "skill_md_sha256": "0e40c04996102f81d9f258630e4942b0d770fd2f485a912f472e51f0db40db45"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 2,
-    "inconsistency": 1,
+    "omission": 0,
+    "inconsistency": 2,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:05Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T13:56:54Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,21 +25,18 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: 差分は guard block に限られ、revision-log.jsonl の 1 行と schemas/output.schema.json の必須項目、日本語と英語の使い分けの記述には触れていない。",
-      "IN2: 既存の exit code（60/51/44/2/61）と、PATCH 失敗時に notion-rollback-<rev>.json を保存して旧版を保つ契約は変わっていない。resolver の失敗は PATCH より前に止まるので、旧版を壊す経路を足していない（exit code 表に載っていない点は low として別掲）。",
-      "OUT1: 同じ Notion ページへの PATCH に責務を絞る設計、All-or-Nothing、internal-analysis.json の非開示は保たれている。外部変更は従来どおり receipt flow だけを通り、install 先でも guard に確実に届くようになった。",
-      "rubric の high severity に当たる問題（外部変更の無承認実行、guard の迂回、存在しない参照先）は 0。resolver・guard script・plugin.json の dependencies は実在して整合する。"
+      "rubric 1.6.0 の機械採点: score 87 / threshold 80、high 0 件。FM-001・NM-001・BD-001 (L120)・BD-002 (L192)・BD-003 (220行) を満たす。",
+      "落ちた rule は PD-002 (medium) と FM-005 (low) で、差分前からある。今回の差分で増えた違反は無い。"
     ],
     "negative_feedback": [
-      "[low / omission / 差分由来] 「other Bash is blocked while the confirmation is pending」は、遮断が completion か cancellation の receipt、または TTL 900 秒の失効まで続くこと（PATCH 失敗時や未確認時も含む）を書いておらず、解除手段の cancel action も載っていない（cancel の漏れは差分前から）。外部変更の安全性には影響しない。elegance 側と同じ finding の投影。",
-      "[low / omission / 差分由来] resolver が非 0 で止まったときの skill の exit code が exit code 表に無い。既存ページに触れる前に止まるので安全側。",
-      "[low / inconsistency / 差分外・既存] 例示コマンドの ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake} という cwd 相対の fallback が Runtime root contract（host-skill-path）と食い違う。今回の差分が持ち込んだものではない。",
-      "[low / smell / 依存先 resolver] resolver の探索段階 5・6 は当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と receipt 契約で fail-closed は保たれる。"
+      "[low / inconsistency・差分前から] prompts/R1-main.md:157 は PATCH 用の publish pipeline を直接実行するように読める書き方で、SKILL.md:95-103 の guard 経由の receipt flow (preview → authorize → execute) と表現が食い違う。直し方の案: R1-main.md:157 を『PATCH は SKILL.md の receipt flow の execute で行う』と書き換える。",
+      "[medium / inconsistency・差分前から] rubric PD-002: 本文の先頭30行に `## Purpose` / `## Output Contract` (または `## 目的と出力契約`) が無い (見出しは L120)。直し方の案: 冒頭の定型ブロックを後ろへ移すか、先頭に出力契約の要約を置く。",
+      "[low / smell・差分前から] rubric FM-005: description の先頭語 '既存' が動詞でない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "elegance 側と同一の focused combined review（独立 evaluator context）の rubric 投影。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではなく、差分（guard block の差し替え）が frontmatter の feedback_contract.criteria 全 3 件（IN1/IN2/OUT1）の対象を崩していないこと、rubric の high severity に当たる問題が 0 であることを、実読と決定論の確認（resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check、lint-sibling-plugin-paths.py、lint-vendored-ssot.py、pytest 28 件と 30 件 pass）で確かめた。finding は low 4 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、Notion や対話型 Gate R の live trial、criteria acceptance の証拠を代替しない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (220行) と git diff 03050251、prompts/R1-main.md、references (keychain-setup.md への案内を含む)、共有 scripts の実在、external-mutation-guard の receipt flow (extract-plugin-root.py → preview → authorize → execute)。 確かめたこと: Bash の実行指示 (SKILL.md:86・95・102・103・171・174・179・182・195) はすべて python3 で始まり、参照先の script も実在する。外部変更 guard の receipt flow もどの段も python3 で始まる。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:117 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: prompts/R1-main.md:60・63・64 と SKILL.md:151・158・162 は script を python3 を付けない省略記法で挙げている。validate-notion-ready.py・update_question_bank.py の python3 形は SKILL.md:179-195 にあり、PATCH 用の pipeline は guard の execute が起動するので、指摘にしない。"
 }

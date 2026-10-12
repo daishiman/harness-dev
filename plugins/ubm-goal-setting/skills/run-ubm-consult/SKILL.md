@@ -10,7 +10,7 @@ allowed-tools:
   - Write
   - Edit
   - AskUserQuestion
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -51,9 +51,9 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
   - ../../scripts/consult-harness-artifact-graph.py
   - ../../scripts/validate-consult-session.py
   - ../../scripts/validate-inline-goal-seek-anchor.py

@@ -7,7 +7,7 @@
 この作業ツリーでは、親が解決した絶対パスを使って次を実行する。
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/evaluate-design-rubric.py" --repo-root "$HARNESS_ROOT" --target "$PLUGIN_ROOT/skills/<run-ubm-入口名>/SKILL.md"
+python3 "$PLUGIN_ROOT/scripts/validate-design-rubric.py" --repo-root "$HARNESS_ROOT" --target "$PLUGIN_ROOT/skills/<run-ubm-入口名>/SKILL.md"
 ```
 
 runnerはUBMの実manifest・対象の帰属・登録済みL1の所在を確認して、既存の `render-findings-score.py` へL0、登録L1、既存L2の順で渡す。`--repo-root` がこのrunnerを含まない・登録が無い・重複する・別ドメインの対象・L1の差替え・JSONがobjectでない・L0やL2や `render-findings-score.py` が無い・evaluatorを起動できない・引数が不正なものは終了コード2で止め、stderrに `UBM_REVIEW_ROUTING_INVALID:` の行を出す（引数不正ではargparseのusageの後に出るので、行単位で探す）。evaluatorが契約どおりに返した終了コード（0=採点できた・合否はJSONの `passed`、1=`--rubric-refs` の先頭がL0でない、2=入力エラー）はそのまま返し、非0ならstderrに `UBM_REVIEW_EVALUATOR_EXIT=<code>` を出すので、同じ2でもどちらで止まったかを区別できる。evaluatorが契約の外で終わったとき（signal・未捕捉例外のTraceback・0/1/2以外の終了コード・終了コード0なのに `passed` を持つJSON objectを出さない）は判定が無いので終了コード2にし、`UBM_REVIEW_EVALUATOR_CRASHED:` の行を加える（signalなら `UBM_REVIEW_EVALUATOR_EXIT=-<signal>` も出る）。runnerは0/1/2以外を返さない。stdoutへは採点できたときだけevaluatorのJSONを流す。インストール先でレビューする場合も、親は同じ登録済みL1と依存evaluatorの実パスを解決して、その3パスを既存CLIの `--rubric-refs` に渡す。registryの登録だけで自動注入されたとはみなさない。

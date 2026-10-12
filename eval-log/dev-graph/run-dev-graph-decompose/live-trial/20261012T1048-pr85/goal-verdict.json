@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill を起動している。transcript の L35 で dev-graph:run-dev-graph-init、L59 で dev-graph:run-dev-graph-decompose、L125 で C02 の dev-graph:run-dev-graph-node を Skill tool から起動した",
+    "責務 prompt を出力の前に読んでいる。L73 で prompts/R1-elicit.md と R2-plan.md を全文読み、L81 で R3・R6・R2b・R4 の Layer2〜4 と Layer6〜7 を読んだ。どちらも、最初の成果物である C02 入力を書いた L123 より前である。R3〜R4 で読んでいない Layer1 と Layer5 は summary と受入条件の重複で、実質的な指示は読まれている",
+    "graph は単一 writer を通っている。L123 で C02 の入力 fx/.dev-graph/cache/decompose-macro-input.json（arch-todo-api、feature-auth、feature-todo）を書き、L145 で ws/plugins/dev-graph の build-graph-node.py add --dry-run を実行した。L146 の preview は write_count 0、applied 0 で、3 件とも decision=c14_macro_contract だった。preview は fx/eval-log/run-dev-graph-decompose-c02-preview.json として残っている。graph を直接書いたり、自作 script で成果物を作ったりした形跡はない",
+    "循環はない。依存は feature-todo→feature-auth の 1 辺だけで、DAG である（L123 の入力、L146 の preview、L198 の auditor check 1）",
+    "task 粒度のものは混ざっていない。node の kind は arch と feature だけで、parent_feature・feature_package_id・phase_ref はない（L123、L198 の check 2）",
+    "feature は通常の classification ではなく c14_macro_contract として扱われている。macro の 6 フィールド（purpose、goal、scope_in、scope_out、acceptance、architecture_refs）がそろい、arch-todo-api は同じ batch の feature-todo から参照されている（L123、L146）",
+    "全 node が draft になる。ws/plugins/dev-graph の build-graph-node.py の add 経路（L700–800）は、confirmation_evidence がなければ status=draft、confirmation_status=draft、evaluation_status=pending に固定する。L123 の入力に confirmation_evidence はない",
+    "graph は変わっていない。L106 と L207 の digest がどちらも 27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177 で、評価の時点で fx/.dev-graph/state/graph.json の sha256 を取り直しても同じ値だった（graph_revision 0、nodes []）",
+    "local の書込みは境界の内側に収まっている。fx の git status で新しく増えたのは、init が作った .dev-graph（config、templates、state/graph.json、init の receipt）と、cache/decompose-macro-input.json と、eval-log/run-dev-graph-decompose-*.json(l) の 5 件だけだった。features/、architecture/、tasks/、issues/ は空のままで、apply の receipt もない",
+    "外部への書込みは 0 件である。collect/guard.jsonl は 33 行すべて allow で deny は 0 件、gh と bd の呼出しもない。全 node が tracker_binding=none である",
+    "必須の Agent verifier を実際に起動している。L181 で dev-graph:dev-graph-integrity-auditor を起動した。subagent の transcript（collect/subagent-transcripts/agent-a7087e59851bf0e03.jsonl、agentType は dev-graph:dev-graph-integrity-auditor）には、DAG・schema・orphan・境界を調べる Bash が 4 回あった。L198 で verdict PASS を受け取り、fx/eval-log/run-dev-graph-decompose-audit.json に記録している",
+    "artifact_delivery の順序が守られている。L174 で成果物を提示し、L175 で task.md の事前回答どおり standard を記録した。auditor の起動（L181）はその後で、pre-choice の段階では subagent を起動していない。goal-seek の記録として goal-spec.json、progress.json、intermediate.jsonl が fx/eval-log にある",
+    "完了の表示は pane.txt の最後の『DONE: PASS』と collect/out/status.json の PASS で、上の実ファイルと transcript の内容と食い違いはない（判定の根拠には使っていない）",
+    "blocker ではない注記が 3 点ある。(1) L174 の成果物の提示は文章としては弱い。path・sha・開き方は goal-spec に記録されている。(2) R2b は dry-run のため起動しておらず、progress に NOT_APPLICABLE_DRY_RUN と記録されている。(3) OUT2 と OUT4〜OUT7 は feedback_contract で test が検証する項目なので、この trial では実行していない。auditor 側で validate-graph-schema.py を python3 -I で実行すると _common の import で rc=1 になり、-I を外した再実行では rc=0、valid=true になった（L198 の auditor 内）"
+  ],
+  "skill_defects": [
+    "dev-graph の build-graph-node.py add --dry-run（C02 の preview receipt）について。artifacts[] の各要素に出るのは classification、file_path、graph_node_id、implementation_readiness、missing_sections、readiness_fill、sha256_before/after だけで、作られる node の status、confirmation_status、evaluation_status、tracker_binding が出ない。そのため、decompose の合格条件『全 node が draft』と外部投影なしを preview からは確かめられず、auditor は writer のコードから推論するしかなかった（transcript L198 の findings 2 件目）。再現手順: init 済みの repo で `PYTHONDONTWRITEBYTECODE=1 python3 ws/plugins/dev-graph/scripts/build-graph-node.py add --repo-root <fx> --input <fx>/.dev-graph/cache/decompose-macro-input.json --dry-run` を実行し、出力 JSON の artifacts[] に status、confirmation_status、tracker_binding のキーがないことを確かめる"
+  ],
+  "evaluator_agent_id": "aa904964b3f110814"
+}

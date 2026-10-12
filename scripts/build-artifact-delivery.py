@@ -905,6 +905,43 @@ def _runtime_root_extra_text(section: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip("\n")
 
 
+_FENCE_OPEN = re.compile(r" {0,3}(`{3,}|~{3,})")
+_FENCE_CLOSE = re.compile(r" {0,3}(`{3,}|~{3,})[ \t]*")
+_PURPOSE_HEADING = re.compile(r"## (?:Purpose & Output Contract|目的と出力契約)[ \t]*")
+
+
+def _section_headings(body: str) -> list[tuple[int, str]]:
+    """code fence の外にある "## " 見出し行の (開始位置, 行の文字列) を順に返す。
+
+    fence の中の "## " (例に書いた Markdown・shell の comment) を節の境界にすると、
+    ブロックを fence の途中へ挿したり、旧節の除去が fence を切ったりする。fence の判定は
+    CommonMark に合わせる: 行頭の空白 0-3 個に続く ``` か ~~~ (3 個以上) で開き、
+    同じ文字・同じ長さ以上の行で閉じる。閉じないまま終わった fence は末尾までが中身。
+    """
+    headings: list[tuple[int, str]] = []
+    fence: tuple[str, int] | None = None
+    offset = 0
+    for line in body.split("\n"):
+        if fence is None:
+            opened = _FENCE_OPEN.match(line)
+            # ``` の info string に ` は書けない (書いてあれば inline code で、fence ではない)。
+            if opened and not (opened.group(1)[0] == "`" and "`" in line[opened.end():]):
+                fence = (opened.group(1)[0], len(opened.group(1)))
+            elif line.startswith("## "):
+                headings.append((offset, line))
+        else:
+            closed = _FENCE_CLOSE.fullmatch(line)
+            if closed and closed.group(1)[0] == fence[0] and len(closed.group(1)) >= fence[1]:
+                fence = None
+        offset += len(line) + 1
+    return headings
+
+
+def _section_end(headings: list[tuple[int, str]], after: int, body: str) -> int:
+    """after より後ろで最初に始まる見出しの位置。無ければ body の末尾。"""
+    return next((start for start, _ in headings if start > after), len(body))
+
+
 def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
     parts = _split_frontmatter(text)
     if parts is None:
@@ -929,28 +966,33 @@ def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
         if end < start:
             raise ContractError(f"{path}: runtime root block markers out of order")
         tail_start = end + len(markers[1])
-        following = re.search(r"^## ", body[tail_start:], re.M)
-        tail_end = tail_start + following.start() if following else len(body)
+        tail_end = _section_end(_section_headings(body), tail_start - 1, body)
         extras.append(_runtime_root_extra_text(body[tail_start:tail_end]))
         body = body[:start] + body[tail_end:]
     # Convert either legacy locale; relocate the managed block directly after purpose.
     # 旧節は正規形の行だけ捨て、skill 固有の文はブロックの直後へ移す (黙って消さない)。
-    headings = "|".join(re.escape(h) for h in (RUNTIME_ROOT_CONTRACT_HEADING, RUNTIME_ROOT_CONTRACT_HEADING_JA))
-    legacy = re.compile(rf"^(?:{headings})[ \t]*\n(.*?)(?=^## |\Z)", re.M | re.S)
-    extras.extend(_runtime_root_extra_text(match.group(1)) for match in legacy.finditer(body))
-    body = legacy.sub("", body)
+    # 節の境界はどれも fence の外の見出しで決める (_section_headings)。
+    legacy_headings = {RUNTIME_ROOT_CONTRACT_HEADING, RUNTIME_ROOT_CONTRACT_HEADING_JA}
+    headings = _section_headings(body)
+    legacy = [
+        (start, start + len(line) + 1, _section_end(headings, start, body))
+        for start, line in headings
+        if line.rstrip(" \t") in legacy_headings and body[start + len(line):start + len(line) + 1] == "\n"
+    ]
+    extras.extend(_runtime_root_extra_text(body[content:stop]) for _, content, stop in legacy)
+    for start, _, stop in reversed(legacy):
+        body = body[:start] + body[stop:]
     extra_text = "\n\n".join(extra for extra in extras if extra)
     if extra_text:
         block += "\n" + extra_text + "\n"
-    purpose = re.search(r"^## (?:Purpose & Output Contract|目的と出力契約)[ \t]*$", body, re.M)
-    if purpose:
-        following = re.search(r"^## ", body[purpose.end():], re.M)
-        at = purpose.end() + following.start() if following else len(body)
+    headings = _section_headings(body)
+    purpose = next((start for start, line in headings if _PURPOSE_HEADING.fullmatch(line)), None)
+    if purpose is not None:
+        at = _section_end(headings, purpose, body)
+    elif headings:
+        at = headings[0][0]
     else:
-        first = re.search(r"^## ", body, re.M)
-        if first is None:
-            raise ContractError(f"{path}: no section to anchor runtime root contract")
-        at = first.start()
+        raise ContractError(f"{path}: no section to anchor runtime root contract")
     body = body[:at].rstrip("\n") + "\n\n" + block + "\n" + body[at:].lstrip("\n")
     return "---" + front + "---" + body
 
@@ -1278,6 +1320,11 @@ def write_projections(root: pathlib.Path) -> int:
     return len(expected)
 
 
+# どの drift 理由にも同じ案内を付ける。理由ごとに書き足す形にすると、分岐を増やした人が
+# 案内を忘れても気付けない（具体的な理由のメッセージが、直し方のメッセージを抑制する）。
+REGENERATE_HINT = "; regenerate with build-artifact-delivery.py --write"
+
+
 def _projection_drift_errors(
     root: pathlib.Path,
     path: pathlib.Path,
@@ -1285,22 +1332,20 @@ def _projection_drift_errors(
     expected: dict[str, Any],
 ) -> list[str]:
     relative = _relative(root, path)
-    errors: list[str] = []
+    reasons: list[str] = []
     if actual.get("policy_sha256") != expected["policy_sha256"]:
-        errors.append(f"{relative}: policy_sha256 drift")
+        reasons.append("policy_sha256 drift")
     if actual.get("schema_sha256") != expected["schema_sha256"]:
-        errors.append(f"{relative}: schema_sha256 drift")
+        reasons.append("schema_sha256 drift")
     if actual.get("entrypoints") != expected["entrypoints"]:
-        errors.append(
-            f"{relative}: entrypoints/effect/guard/guard_contract coverage drift"
-        )
+        reasons.append("entrypoints/effect/guard/guard_contract coverage drift")
     if actual.get("external_mutation_runtime") != expected["external_mutation_runtime"]:
-        errors.append(f"{relative}: external_mutation_runtime pointer/hook/hash drift")
+        reasons.append("external_mutation_runtime pointer/hook/hash drift")
     if actual.get("external_intelligence_runtime") != expected["external_intelligence_runtime"]:
-        errors.append(f"{relative}: external_intelligence_runtime pointer/hash drift")
-    if actual != expected and not errors:
-        errors.append(f"{relative}: projection drift; regenerate with build-artifact-delivery.py --write")
-    return errors
+        reasons.append("external_intelligence_runtime pointer/hash drift")
+    if actual != expected and not reasons:
+        reasons.append("projection drift")
+    return [f"{relative}: {reason}{REGENERATE_HINT}" for reason in reasons]
 
 
 def lint_repository(root: pathlib.Path) -> list[str]:

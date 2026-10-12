@@ -9,9 +9,9 @@ effect: conversation-output
 prefix: run
 hierarchy: L1
 user-invocable: true
-argument-hint: "[--repo-root PATH] [--id ID] [--kind KIND] [--project ID] [--domain NAME] [--status STATUS] [--tag TAG] [--keyword TEXT]"
+argument-hint: "[--repo-root PATH] [--id ID] [--kind KIND] [--project ID] [--domain NAME] [--status STATUS] [--feature ID] [--tag TAG] [--tag-mode any|all] [--keyword TEXT]"
 allowed-tools: [Read, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/extract-graph-status.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -92,9 +92,9 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 出力: node identity、classification、path、status/closed_at、依存関係、feature/tracker linkage を持つ検索 report。
 - 完了条件: report が graph 実状態と一致し、実行前後の graph/config/content digest が不変で外部副作用0である。
 
-C24 で caller root を固定し、C11 の read-only validation 後に graph store を検索する。全 filter は AND、複数 tag は明示された match mode に従う。結果は `graph_node_id/artifact_kind/project_id/domain/tags/file_path/status/closed_at/depends_on/dependents/parent_feature/feature_package_id/tracker_binding/linkage` を返す。
+検索と状態表示の行は `extract-graph-status.py --repo-root <root> [filter...]` だけが作る。script は C24 (`resolve-repo-context.py --mode read`) で caller root を固定し、一度だけ読んだ graph の bytes を C11 (`validate-graph-schema.py` の validate) に通し、violation と必須キー欠落が0件のときだけ行を返す。全 filter は AND、同じ filter の繰り返しは OR、`--feature` は parent_feature か feature_package_id、2つ以上の `--tag` は `--tag-mode any|all` を明示する (無ければ exit 2)。各行は `graph_node_id/artifact_kind/title/project_id/domain/tags/file_path/status/closed_at/depends_on/dependents/parent_feature/feature_package_id/tracker_binding/issue_linkage/beads_linkage/github_project_linkages` を持つ。closed_at は graph の値、dependents は graph 全体の depends_on の逆引きで、LLM が補わない。
 
-検索前後の graph/config/content digest を比較し、変化があれば失敗。GitHub/Beads command、writer、render、sync を呼ばない。該当なしは空 result の成功、schema 不正・root 外 file_path・dangling dependency は診断付き失敗。
+script は検索前後の graph/config/content digest を比べ、変化があれば `read_only.changed` を付けて失敗する。GitHub/Beads command、writer、render、sync の呼び出しは禁止。該当なしは `result: empty` (exit 0)、schema 不正・root 外 file_path・dangling dependency・必須キー欠落は `result: rejected` (exit 1、rows 0件) で診断を返す。
 
 ## ゴールシーク実行
 
@@ -109,8 +109,8 @@ C24 で caller root を固定し、C11 の read-only validation 後に graph sto
 ### 完了チェックリスト
 
 - [ ] query は許可 filter field と明示 tag match mode だけを持つ
-- [ ] `validate-graph-schema.py` が exit0 で root 外 file_path と dangling dependency が0件である
-- [ ] report の status/closed_at/depends_on/dependents/linkage が graph snapshot と一致する
+- [ ] `extract-graph-status.py` が exit0 で `validation.status=pass`、`missing_required_keys` と root 外 file_path と dangling dependency が0件である
+- [ ] report の status/closed_at/depends_on/dependents/linkage が `extract-graph-status.py` の rows そのもので、graph snapshot と一致する
 - [ ] 該当なしが空 result の成功として返る
 - [ ] 実行前後の graph/config/content digest が同一で外部 write が0件である
 
@@ -147,13 +147,13 @@ PY
 
 ## Criteria acceptance
 
-- `criteria:IN1`: `validate-graph-schema.py`後の結果は必須キー欠落が0件である。
+- `criteria:IN1`: `extract-graph-status.py`が`validate-graph-schema.py`(C11)と同じ検証を通したgraphから行を作り、`validation.status=pass`で必須キー欠落が0件(`missing_required_keys`が空)のときだけ行を返す。
 - `criteria:OUT1`: reportの`status/closed_at/依存関係`はgraphの実状態と一致する。
 - `criteria:OUT2`: 実行前後のdigestを比較し、graph/content/GitHubの副作用0件を保証する。
 
 ## Gotchas
 
 - filter 間は OR に緩めず、全て AND で適用する。複数 tag は指定された match mode に従う。
-- node 本文から status を推測せず、graph の `status/closed_at` をそのまま報告する。
+- node 本文から status を推測せず、`extract-graph-status.py` の rows にある `status/closed_at` をそのまま報告する。
 - 該当なしは空 result の成功とし、schema 不正や dangling dependency と混同しない。
 - writer、sync、render、GitHub/Beads command を呼び出さない。

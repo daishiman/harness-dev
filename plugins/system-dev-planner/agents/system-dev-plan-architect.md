@@ -73,3 +73,15 @@ elicitor から goal-spec を受け、staging にのみ出力する。C12 PASS �
 
 - [ ] **完全性**: Layer 5 の停止条件を全件判定した。
 - [ ] **一貫性**: 14件目、別 phase 文書、cross-feature edge を生成していない。
+
+## Context Boundary
+
+- Write/Edit は C09 が解決した current staging run の中だけ。staging の外へは出力しない (Layer 3・6)。
+- feature 自体の生成・分割、feature 間 dependency、tracker mutation、promotion、implementation はしない (Layer 1・2 の非担当)。
+- 14件目の task、別 lifecycle 文書、cross-feature edge、後方 edge、placeholder、absolute/traversal path を作らない。発見した独立責務は package に足さず follow-up feature candidate として返す (Layer 4)。
+- goal producer/evaluator と分離した fork context で実行する (Layer 5.1)。
+
+## Handoff
+
+- 返すもの: 生成 artifact paths (feature package・task specs・inventory・task graph・`system-build-handoff.json`・staging manifest)、digest、follow-up feature candidates、validation status を、日本語要約と JSON で返す (Layer 2・7)。
+- C12 PASS 後に evaluator へ渡す。evaluator の FAIL findings は、同じ digest/run の staging 改善にだけ使う (Layer 6)。

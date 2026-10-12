@@ -1,0 +1,71 @@
+{
+  "label": "sync3",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-sync",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-sync/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync3/fx",
+  "head": "727cd1e84fa9ba940a2ef6b652b820ce395c6b65",
+  "tracked_files_committed": 38,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3392565b6f2846f6d0c97d35f0c3bd0135b3982cf2cbeb95d02e8d66801b9979",
+      "local:sha256:740f0446359b77e3235276ddd5109d8aca61af4c5532c107a15e4bbb815cf8ea"
+    ],
+    "worktree_id": [
+      "wt_be49c8ccb7b424c8",
+      "wt_70a9de08bf3247be"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "post_rekey_commit": "rekey した tracked の .dev-graph/config.json を 2 つ目の commit (0b6e612) にした (sync2 と同じ手順)",
+  "fake_gh_patch": {
+    "why": "前回 sync (20261012T0708-pr85) は fixture の tools/fake-gh.py が diff-github-project-fields.py の ITEM_QUERY (L57-62) に答えられず 'unsupported graphql query for this fixture' で止まった。fixture 側の不足なので、この run の写し (runs/sync2/fx/tools/fake-gh.py) だけを直した。plugins/dev-graph と元 fixture は変えていない。",
+    "path": "tools/fake-gh.py",
+    "commit": "9dba69e (fixture の 3 つ目の commit)。中身は sync2 の bf99890 の tools/fake-gh.py と同じ (git show で取り出して置いた。sha256 025f9bdd…)",
+    "sha256_before": "6f63037f73f4104a9ffe2a17894ebd6a42440f740b5a7c28af21ad7193301c27",
+    "md5_before": "e431d8fdff3de6bfcec8fcc9455cf694",
+    "sha256_after": "025f9bddfb9d7200a5decab80b3e9ad48d2ec8882a495dcb6c877dde810816c7",
+    "added": [
+      "ITEM_QUERY (query 文字列に '... on ProjectV2Item{' と 'fieldValues(' を含むもの): github-adapter.json の projects.<alias>.items[] から id が一致する item を探し、{data:{node:{id, fieldValues:{nodes:[...]}}}} を返す。各 node は field 名を field.name に持ち、値のキーは adapter の field 定義で決める (options あり=name、configuration あり=title、数値=number、YYYY-MM-DD=date、それ以外=text)。値が null の field は返さない。id が無い item は {data:{node:null}} (planner はこれを missing item として扱う)。読取りなので adapter は書かず、github-adapter-calls.jsonl に op=project-item-fields (mutation=false) を 1 行残す。",
+      "clearProjectV2ItemFieldValue: project/item/field の id を adapter と照合し (見つからなければ既存の op と同じく exit 1)、値があれば items[].fields から外し、field_updated_at に clock.issue_update_updated_at を入れ、mutation_log に op=project-item-clear を足して save する。値が無ければ書かない (冪等)。github-adapter-calls.jsonl に op=project-item-clear (mutation=true) を残し、{data:{clearProjectV2ItemFieldValue:{projectV2Item:{id}}}} を返す。"
+    ],
+    "not_added": "updateProjectV2ItemFieldValue は従来どおり single select (option) だけ。date/text/number の書込みは足していない。この fixture は local と remote と snapshot の field 値が一致していて、Projects の export/import は 0 件の想定のため (smoke で確認)。",
+    "network": "fake-gh はネットワークを使わない。読み書きは fixture の github-adapter.json と github-adapter-calls.jsonl だけ。",
+    "smoke_offline": {
+      "where": "fx の別の写し (wttrial/smoke/sync2-fx と sync2-fx-b)。この run の fx では試していない (calls.jsonl を作らないため)。",
+      "env": "lt-env.sh (stub の gh と bd)、DEV_GRAPH_GH=<写し>/tools/fake-gh.py",
+      "results": [
+        "gh-bridge.graphql(ITEM_QUERY): 0101={Priority:High, Status:In Progress, Target date:2026-08-20}、0102={Priority:Medium, Status:In Progress, Target date:2026-08-25}、未知の id は null",
+        "gh-bridge.py --op project-item-edit --clear (0102 の Target date): rc=0、adapter から値が外れ mutation_log 1 件。もう一度呼んでも mutation_log は 1 件のまま",
+        "diff-github-project-fields.py --repo-root <写し>: rc=0、exports 0・imports 0・conflicts 0・missing_items 0・links 2 (next=apply link_input)。fixture の field_snapshot のキーが project の field 名 (Priority など) で、planner は local_field (priority など) をキーにするため、1 回目は snapshot の書直しが link_input として出る"
+      ]
+    },
+    "unified_diff": "diff --git a/tools/fake-gh.py b/tools/fake-gh.py\nindex b7743d6..15660ae 100755\n--- a/tools/fake-gh.py\n+++ b/tools/fake-gh.py\n@@ -4,10 +4,16 @@\n All reads and writes are closed inside the fixture directory: remote state lives in\n `github-adapter.json` and every call is appended to `github-adapter-calls.jsonl`.\n No network access exists in this process by construction.\n+\n+pr85 sync2 additions (orchestrator, before the trial session): the Projects item field-value read\n+(`node(id:$id){... on ProjectV2Item{id fieldValues(first:100){...}}}`, the ITEM_QUERY of\n+diff-github-project-fields.py) and the `clearProjectV2ItemFieldValue` mutation, both answered from the\n+adapter state like the existing ops.\n \"\"\"\n from __future__ import annotations\n \n import json\n+import re\n import sys\n from pathlib import Path\n \n@@ -46,6 +52,21 @@ def option_value(state: dict, alias: str, field_id: str, option_id: str) -> tupl\n     raise AssertionError\n \n \n+def field_value(field: dict, name: str, value) -> dict:\n+    \"\"\"One fieldValues node in the GraphQL shape: the value key follows the field kind of the adapter.\"\"\"\n+    if \"options\" in field:\n+        key = \"name\"  # ProjectV2ItemFieldSingleSelectValue\n+    elif \"configuration\" in field:\n+        key = \"title\"  # ProjectV2ItemFieldIterationValue\n+    elif isinstance(value, (int, float)) and not isinstance(value, bool):\n+        key = \"number\"\n+    elif isinstance(value, str) and re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", value):\n+        key = \"date\"  # the adapter has no dataType; a YYYY-MM-DD value is a date field (Target date)\n+    else:\n+        key = \"text\"\n+    return {key: value, \"field\": {\"name\": name}}\n+\n+\n def flag(argv: list[str], name: str) -> str | None:\n     if name in argv:\n         index = argv.index(name)\n@@ -144,6 +165,44 @@ def handle_graphql(state: dict, argv: list[str]) -> None:\n \n     alias_of = {value[\"id\"]: key for key, value in projects.items()}\n \n+    if \"... on ProjectV2Item{\" in query and \"fieldValues(\" in query:\n+        item_id = variables.get(\"id\")\n+        found = next(((key, item) for key, value in projects.items() for item in value[\"items\"]\n+                      if item[\"id\"] == item_id), None)\n+        if found is None:  # an item gone from the project: the planner reports it as missing\n+            log_call(\"project-item-fields\", {\"item_id\": item_id, \"found\": False}, False)\n+            print(json.dumps({\"data\": {\"node\": None}}, ensure_ascii=False))\n+            return\n+        alias, item = found\n+        fields = {field[\"name\"]: field for field in projects[alias][\"fields\"]}\n+        nodes = [field_value(fields.get(name, {}), name, value)\n+                 for name, value in sorted(item[\"fields\"].items()) if value is not None]\n+        log_call(\"project-item-fields\", {\"alias\": alias, \"item_id\": item_id, \"fields\": len(nodes)}, False)\n+        print(json.dumps({\"data\": {\"node\": {\"id\": item_id, \"fieldValues\": {\"nodes\": nodes}}}}, ensure_ascii=False))\n+        return\n+\n+    if \"clearProjectV2ItemFieldValue\" in query:\n+        project_id, item_id, field_id = variables.get(\"project\"), variables.get(\"item\"), variables.get(\"field\", \"\")\n+        alias = alias_of.get(project_id)\n+        if alias is None:\n+            fail(f\"project id not found in fixture: {project_id}\")\n+        item = next((row for row in projects[alias][\"items\"] if row[\"id\"] == item_id), None)\n+        if item is None:\n+            fail(f\"project item not found in fixture: {item_id}\")\n+        name = next((field[\"name\"] for field in projects[alias][\"fields\"] if field[\"id\"] == field_id), None)\n+        if name is None:\n+            fail(f\"unknown field {field_id}\")\n+        if item[\"fields\"].get(name) is not None:\n+            item[\"fields\"].pop(name)\n+            item[\"field_updated_at\"][name] = state[\"clock\"][\"issue_update_updated_at\"]\n+            state[\"mutation_log\"].append({\"op\": \"project-item-clear\", \"alias\": alias, \"item_id\": item_id,\n+                                          \"field\": name})\n+            save(state)\n+        log_call(\"project-item-clear\", {\"alias\": alias, \"item_id\": item_id, \"field\": name}, True)\n+        print(json.dumps({\"data\": {\"clearProjectV2ItemFieldValue\": {\"projectV2Item\": {\"id\": item_id}}}},\n+                         ensure_ascii=False))\n+        return\n+\n     if \"items(first:100,after:$cursor)\" in query:\n         project_id = variables.get(\"id\")\n         alias = alias_of.get(project_id)\n"
+  },
+  "session_layout": {
+    "why": "sync2 (20261012T0828-pr85) の DEGRADED は配置が原因だった。session の cwd が ws、fixture が fx で、UserPromptSubmit hook (build-external-mutation-guard の hook_confirm) は payload の cwd を project root とみなすので、fx に作られた preview と照合できず confirmation-unmatched になった。guard は緩めず、配置だけを変える。",
+    "session_cwd": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync3/fx",
+    "plugins": "fx/plugins/ に 5 plugin (dev-graph・harness-creator・skill-governance-adapters・system-dev-planner・system-spec-harness) を wtpy から cp -R した。live-trial-boot.py は cwd/plugins/<slug> だけを --plugin-dir に許すので、写しは session の cwd の下に置く必要がある。",
+    "settings": "fx/.claude/settings.local.json (mksettings.py --session-root fx)。中身の隔離条件は sync2 と同じ (deniedDomains [\"*\"]・stub gh/bd・PreToolUse 隔離ガード)。",
+    "git_exclude": "fx/.git/info/exclude に /plugins/ と /.claude/ を足した (追跡されないローカルの除外。fixture の git status は clean のまま)。",
+    "closure_sha_of_copy": "1ee65e4f (wtpy と一致)",
+    "trust": {
+      "fake_home_entry": "projects[/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync3/fx].hasTrustDialogAccepted=true",
+      "why": "fx は独立した git repo のため、偽 HOME で信頼済みにした runs/ の信頼を引き継がず、起動時に workspace の信頼確認が出た。live-trial-boot.py は bypass の確認にしか自動で答えないので 90 秒で TIMEOUT した (attempt 1)。ws を cwd にした既存の run と同じく、session の cwd を偽 HOME で信頼済みにしてから起動し直した。",
+      "backup": "audit/home-claude-json/before-sync3-trust.json",
+      "attempt1": {
+        "result": "TIMEOUT (90s)",
+        "logs": [
+          "workdir/boot-attempt1-timeout.log",
+          "workdir/send-attempt1-failed.log"
+        ],
+        "transcript": "なし (session は boot が kill した)"
+      }
+    }
+  },
+  "retry_of": "sync2 (20261012T0828-pr85)"
+}

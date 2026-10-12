@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: validate-graph-schemaとRead。
+- 使用資産: `extract-graph-status.py` の filter (`--id/--kind/--project/--domain/--status/--feature/--tag/--tag-mode/--keyword`)。plan はこの argv に写せる条件だけで組み、2つ以上の tag には match mode を必ず決める。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

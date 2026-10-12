@@ -1,0 +1,111 @@
+{
+  "kind": "independent-approval-review",
+  "proposal_id": "PROP-2026-10-12-SCRIPT-VERBS",
+  "proposal_path": "eval-log/governance/20261012-script-verbs-proposal.json",
+  "proposal_sha256": "13bf2130a87b0e899adcf362d954cf0082eb613c5d93ed195857c86e53694716",
+  "review_round": "3回目（2回目の blocking 1件を直した提案 JSON の再確認。1回目は blocking 2件、2回目は blocking 1件で、どちらも changes_requested だった）",
+  "review_scope": "直した提案 JSON（sha256 13bf2130…、未追跡のファイル）を全部読み、G0（提案 JSON の記述）を再確認した。主に見たのは、2回目の blocking だった scope_additions[1].measured_by の書き直しで、lint-skill-tree.py・lint-script-naming.py の merge-base 70aeb8c27f0406e2a2aff69e819c519e901caa06 からの差分と照らした。あわせて、team-lead が直した non-blocking（rollback_plan・changelog_draft・impact_assessment.after_note・scope_additions[0].what）も、06章・28章・build-steps.md の現物と guard-change-category.py の照合の処理に照らして確かめた。06章・28章の sha256 は2回目の審査の値と同じなので、差分の hunk と提案の記述の対応（G1・G2）は2回目の結果を引き継ぐ。承認の対象は guard が P1 にする2件（06章と28章）だけで、target_paths・target_sha256・target_manifest_sha256 はこの2件に結び付く。",
+  "target_paths": [
+    "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+    "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md"
+  ],
+  "target_sha256": {
+    "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md": "01b8a481cdb6fdad9df64f7ef66bac2116ac522526b14939d766a9cadd199076",
+    "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md": "0a110cfe116abc304e0166bd8d15b291e864db89be107afac92db70ff74614a0"
+  },
+  "target_manifest_sha256": "b3e8bf1525c052470821685969ce4874e4007d6a7f88d3cbb4c746920297b53d",
+  "target_manifest_format": "対象パスの昇順で '<path> <sha256>' を改行区切りにし末尾改行を付けた UTF-8 バイト列の sha256",
+  "related_files_sha256": {
+    "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md": "01b8a481cdb6fdad9df64f7ef66bac2116ac522526b14939d766a9cadd199076",
+    "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md": "0a110cfe116abc304e0166bd8d15b291e864db89be107afac92db70ff74614a0",
+    "installers/harness-creator-kit/CONVENTIONS.md": "61f8b77b30adcb7a54c985e8d6808ec68fcb10884cf222bcf7d449e16cc69c52",
+    "plugins/harness-creator/skills/run-build-skill/references/build-steps.md": "a76f50def0f7f074f6fa579fc93898f15db82ee104069d1147aaf90db81f167e",
+    "scripts/lint-script-naming.py": "12b69feb4b0ab8e9fbb1066d33269c96b9d05239f4885ddc07fb0195c53d6795",
+    "tests/scripts-root/test_root__lint_script_naming.py": "56eb2949e8a4d7dede7b9df6c99128c029037d1f5098a42eb680303c3782f566"
+  },
+  "related_files_manifest_sha256": "91a9d0246e6cc56f5690dde772ffa71c5e7a25974510c1469b662c84fbf0b2a7",
+  "related_files_note": "06章・28章と、提案の changelog_draft.related_files の4件（P2）。manifest の形は target_manifest_format と同じ。値は 2026-10-12T01:56Z ごろの作業ツリーのもので、6件とも2回目の審査のときと同じ。P2 の4件は承認の対象に入れていない。scripts/lint-script-naming.py には、この提案のほかに別の担当の未コミットの変更も載っていて、まだ変わりうる。",
+  "review": {
+    "reviewer": "independent-approval-reviewer (Claude subagent, read-only)",
+    "reviewed_head": "030502510abeda87138b896dfebb7d5245818711",
+    "groups": {
+      "G0_proposal_json": {
+        "verdict": "approve",
+        "checked": [
+          "提案 JSON（sha256 13bf2130…）を全部読んだ。git status では未追跡（??）のまま。",
+          "2回目の blocking（scope_additions[1].measured_by）の書き直しを差分で確かめた。(1) scripts/lint-skill-tree.py と plugins/skill-governance-lint/scripts/lint-skill-tree.py は、git diff --stat 70aeb8c2 が空。(2) scripts/lint-script-naming.py は merge-base から +355/-184 で変わっていて、文はそのことを書いている。(3) VALID_NAME = re.compile(r\"^([a-z]+)-[a-z0-9-]+\\.py$\") と `for p in rp.rglob(\"*.py\")` の行は merge-base（517行・528行）と今（480行・505行）で同じで、git diff 70aeb8c2 の追加・削除の行に VALID_NAME と rglob を含むものは無い。(4) 差分で .py に関わる追加の行は2つある。1つは find_scripts に足した「明示されたファイル」の分岐（rp.is_file() のとき rp.suffix == \".py\" だけを返す）。もう1つは import の参照を数える関数の `filename.endswith(\".py\")`。どちらも、.py だけを見る挙動と、`.` で区切った sub-target を通さない挙動を変えない。だから、文の結論（scope_additions[1] の文書の変更は lint と CI の判定を変えない）は正しい。前の版の誤り（「lint-script-naming.py は変更していない」）は無くなった。",
+          "rollback_plan に scope_additions の2件の戻し方が足されている。build-steps.md について戻すのは、script type の列挙（258行）の5語だけと書いている。merge-base からの build-steps.md の差分には、動詞の追加と関係の無い変更（Phase E・H.2.5・I.0〜I.3、grace_period の行）もあるので、ファイルの全体ではなくこの1行だけを戻すという書き方は正しい。06章と28章について、戻し先を merge-base 70aeb8c2 の文と書いている。merge-base・HEAD・origin/main で両章の中身は同じなので、その文は一意に決まる。",
+          "changelog_draft の確認。target_path は P1 の2件、target_sha256 は2件の dict で、値はこのレビューの target_sha256 と同じ。related_files は P2 の4件で、昇順。guard-change-category.py の _matches_target は target_path を文字列の list として、_approved_current_content は target_sha256 を path をキーにした dict として照合するので、この形で読める。status と approver は pending のまま（entry を書くときに埋める）。",
+          "impact_assessment.after_note: 今回 python3 scripts/lint-script-naming.py を回し直すと rc 0、「OK=294 EXCEPTION=19 PERMANENT=27 PENDING=205 (P=7 G=0 H=15 UNDECIDED=183) VIOLATION=0 stale=0」だった。after_note の数と同じで、git status は前後で同じだった。",
+          "scope_additions[0].what に足した第10条の説明を、現物と照らした。merge-base の230行は「`<verb>-<target>[.<sub-target>].<ext>` 形式。verb は lint / validate / build / format / check / score / extract / convert」で、引用と一致する。今の230行は「`.py` のファイル名は `<verb>-<target>[-<scope>].py` 形式 … `.` で区切った sub-target は使わない … 本章には列挙を置かない」で、説明と一致する。但書は「動詞の追加は 28章 §4.7 のとおり 33章の P1 … SKILL.md で宣言しても lint は SKILL.md を読まない」に変わっている。lint-script-naming.py で SKILL.md が出てくるのはコメントの中だけで、SKILL.md を読むコードは無い。28章の中で check・score・convert が出てくるのは、§3.1 の `--check` と、名前の悪い例の `check.py` だけ。§4.1.1 の別名の列には無いので、「今の28章は、これらを別名としても挙げていない」は正しい。",
+          "06章・28章の sha256 は2回目の審査の値（01b8a481…・0a110cfe…）と同じ。change.files と scope_additions[1].targets も変わっていないので、G1・G2 の hunk の対応はそのまま成り立つ。"
+        ],
+        "findings": [
+          "2回目の blocking は解消した。measured_by の根拠（lint-skill-tree.py の差分が空、VALID_NAME と rglob の行が同じ）は事実で、結論を支えている。",
+          "[non-blocking・承認の entry の前に直すことを勧める] 書き直した measured_by は「lint-script-naming.py は、この提案の change.files[0] として ALLOWED_VERBS・恒久例外の区分・PENDING_RENAME_PATHS・stale の数え方を変えた」と書いている。このうち「恒久例外の区分」と「stale の数え方」は、提案のほかの記述と合わない。PERMANENT_EXCEPTION_PATHS、PENDING の区分（UNDECIDED）、_stale_registrations、VERB_LIST_CHANGE_PATHS は、merge-base にも HEAD にも無く、作業ツリーの未コミットの変更にある。そして提案の impact_assessment.before は、変更の前の同じ作業ツリーで、すでに「PERMANENT=27 … (P=6 G=0 H=15 UNDECIDED=198)」と数えている。change.files[0].what と rollback_plan も、この2つを本提案の変更として挙げていない。だから、この2つはこの提案の前から作業ツリーにあったと読むのが自然である（誰が入れたかは確かめていない）。直し方の例:「lint-script-naming.py は merge-base から変わっている（本提案の分は change.files[0] の what のとおりで、ほかに別の担当の未コミットの変更が載っている）」。結論と承認の対象には影響しないので、blocking にはしない。",
+          "[non-blocking] measured_by の「対象を集める rglob(\"*.py\") は merge-base と同じ」は、rglob の行については正しい。ただし、それを囲む find_scripts は変わっている（明示されたファイルの分岐と、repo 相対の path で scripts の配下かを判定する処理）。どちらも .py だけを見るので、§4.1 の拡張子の行には影響しない。厳密に書くなら「名前の形（VALID_NAME）と、拡張子で絞る処理（rglob(\"*.py\") と、明示されたファイルの分岐の suffix の判定）は .py だけを見る点で merge-base と同じ」。",
+          "[non-blocking] changelog_draft.target_sha256_note は P2 の4件を「related_files_sha256 として記録する」と書くが、changelog_draft には related_files（パスの配列）しか無く、sha256 は無い。entry に sha256 を残すなら、このレビューの related_files_sha256 の値を、entry を書く直前に取り直して入れる。残さないなら、note の文を「related_files として記録する」に直す。",
+          "[non-blocking] 本文の rollback_plan の最初の文は、28章の戻す箇所として §3・§3.1・§4.1.1・§4.7・§6.1・§9.1・付録を挙げるが、§4.1 の動詞の行を挙げていない（changelog_draft.rollback_plan には §4.1 がある）。test が28章 §4.1 と ALLOWED_VERBS の一致を確かめるので、戻し忘れは test が拾う。",
+          "[non-blocking] rollback_plan は、06章の第10条を merge-base の文に戻すと書く。merge-base の第10条は、check・score・convert を含む古い動詞の一覧を持つ。だから、戻すと28章との食い違い（scope_additions[0] が直した問題）が元に戻る。rollback_plan 自身も「戻さなくても食い違わない」と書いているので、動詞を8語に戻すときは、第10条は今の文のまま残すほうがよい。",
+          "[non-blocking] scope_additions[0].what は、第10条の形式と但書の変更を書くようになった。しかし、足した「拡張子」の行と、書き換えた「違反検出」の行（lint-script-naming.py は .sh を見ない、拡張子は lint-skill-tree.py が見る）は、まだ書いていない。targets は第10条の全体を指しているので、範囲から漏れてはいない。"
+        ]
+      },
+      "G1_doc_28": {
+        "verdict": "approve",
+        "checked": [
+          "28章の sha256 は 0a110cfe… のままで、2回目の審査と同じ。2回目に確かめた結果をそのまま引き継ぐ。差分の9個の hunk は、どれも change.files[1] か scope_additions[1] に対応する。sync の contexts（A o / B - / C - / D x / E o）と contexts_note は、§3 の表、§3.1、auto-sync-on-session-start.py の実物に合う。§4.1 の13語は ALLOWED_VERBS と一致する。",
+          "cooldown: 28章の直前の記録は 2026-05-18 で、3日は明けている。"
+        ],
+        "findings": [
+          "28章の現物（sha256 0a110cfe…）は承認してよい。"
+        ]
+      },
+      "G2_doc_06": {
+        "verdict": "approve",
+        "checked": [
+          "06章の sha256 は 01b8a481… のままで、2回目の審査と同じ。2回目に確かめた結果をそのまま引き継ぐ。差分の6つの部分は、どれも scope_additions[0] か [1] に対応する。第8条・第9条・第10条・表・条番号の段落の中身は、lint-skill-tree.py・lint-skill-name.py・guard-change-category.py と CI の workflow の実物に合う。",
+          "今回、第10条の merge-base の文と今の文を読み直し、scope_additions[0].what の説明と合うことを確かめた（G0）。",
+          "cooldown: 06章の直前の記録は 2026-05-18 で、3日は明けている。"
+        ],
+        "findings": [
+          "06章の現物（sha256 01b8a481…）は承認してよい。"
+        ]
+      },
+      "G3_companion_p2_not_bound": {
+        "verdict": "approve",
+        "checked": [
+          "P2 の4件の sha256 は2回目の審査と同じ（CONVENTIONS.md 61f8b77b…、build-steps.md a76f50de…、lint-script-naming.py 12b69feb…、test 56eb2949…）。",
+          "test（72件すべて通過）は、test と lint の sha256 が2回目と同じなので、今回は回し直していない。lint は今回回し直した（G0 の after_note の項。rc 0、VIOLATION=0）。"
+        ],
+        "findings": [
+          "P2 なので承認の対象には入れない。build-steps.md の grace_period の行（動詞の追加と関係が無い。0日の条件に「承認者が確かめた」を書いていない）は、前回からの持ち越しの所見。"
+        ]
+      }
+    },
+    "overall_verdict": "approve",
+    "blocking_findings": [],
+    "non_blocking_followups": [
+      "承認の entry を書く前に直すことを勧める: measured_by の「この提案の change.files[0] として … 恒久例外の区分・… stale の数え方を変えた」。impact_assessment.before と change.files[0].what に合わない（G0）。直すと提案 JSON の sha256 は変わるが、承認の対象（06章・28章）の target_sha256 は変わらない。直したら、その1文だけを確かめ直す。",
+      "governance-policy.json の P1_structural の workflow は「proposal_required + human_approval + cooldown_3d」で、approver は solo_operator。このレビューは独立レビューで、人の承認の代わりにはならない。entry の approver は、承認した利用者の名前にする（guard は auto と pending を拒む）。status は approved にする。",
+      "承認の entry は一度だけ書く。target_path は06章・28章、target_sha256 はこのレビューの値（manifest b3e8bf15…）にし、書く直前に現物と一致することを確かめる。同じ proposal_id で書き直すと、cooldown は最初の entry から数え直しになる。",
+      "changelog_draft の target_sha256_note と related_files の食い違い（sha256 を記録すると書いているが、パスしか無い）を、どちらかにそろえる。",
+      "rollback_plan の最初の文に28章 §4.1 の動詞の行を足すとよい。06章の第10条は、動詞を8語に戻すときも今の文のまま残すほうがよい（G0）。",
+      "scope_additions[0].what に、第10条に足した拡張子の行と、書き換えた違反検出の行を一文足すとよい。",
+      "提案 JSON は未追跡（??）。承認の entry が proposal_id で引くので、PR に含める。",
+      "33章への追記（提案の followups）は 2026-10-13T00:06:16Z より後に行う。",
+      "team-lead が残課題に回すと決めたものは、この提案では直さないことで合意する。06章の条番号の段落のほかのずれ（lint-skill-name.py の「第5条」の長さ、「第6条 補助」の予約語、「第16条 補助」の禁則 prefix）、record-verification-evidence.py の `# contexts: [A, C]` と exit 2、§4.1.1 と §4.7 の食い違い、CONVENTIONS.md の例が該当する。Beads などに起票して追えるようにしておく。",
+      "reviewers.third_party は空。Reviewer の要件をこの独立レビューで満たすとみなすかは、人が判断して PR に書く（team-lead の方針のとおり）。",
+      "scripts/lint-script-naming.py には別の担当の未コミットの変更が載っていて、entry のあとでも sha256 が変わりうる。P2 で承認の対象ではないので guard は止めないが、changelog に P2 の sha256 を残すなら、書く直前に取り直す。"
+    ],
+    "limitations": [
+      "承認の対象は06章と28章の2件だけ。P2 の4件の sha256 は related_files_sha256 に記録したが、target_sha256 と target_manifest_sha256 には入れていない。",
+      "提案 JSON は未追跡で、直す前の版（60f4402c…）を手元に持っていない。team-lead が挙げた直した点は、今の版を全部読んで確かめた。それ以外に変わったところが無いかは、前の版と比べて確かめてはいない。",
+      "G1・G2 の hunk の対応は、06章・28章の sha256 が同じであることをもとに、2回目の結果を引き継いだ。今回、差分の全部を読み直してはいない（第10条は読み直した）。",
+      "lint-script-naming.py の未コミットの変更のうち、どれがこの提案の担当の分で、どれが別の担当の分かは、確かめていない。G0 の所見は、提案の中の記述（impact_assessment.before と change.files[0].what）どうしの食い違いを根拠にしている。",
+      "test は今回は回し直していない（test と lint の sha256 が2回目と同じなので）。lint は回し直した。",
+      "作業ツリーのファイルは書き換えていない（編集・作成・移動・削除のどれもしていない）。git の commit・stash・checkout・reset もしていない。ネットワークは使っていない。lint を回す前後で git status --porcelain の sha256 は同じだった。",
+      "依頼の制約から外れて作ったファイルがある。今回、lint の出力を approval-review/.lint-out.txt にリダイレクトしてしまった（書いてよいのは3つの JSON だけなのに、4つ目のファイルができた）。消そうとしたが rm は権限で拒否され、残っている。中身は lint の標準出力だけ。前回の審査で作ったもの（scratchpad/approval-review-work/ の hash_targets.py と snapshot0.json、/tmp/null_dummy_never）も残っている。",
+      "作業ツリーは、審査中も別のセッションに書き換えられている。この JSON の sha256 は、2026-10-12T01:56Z ごろに取った値。"
+    ]
+  }
+}

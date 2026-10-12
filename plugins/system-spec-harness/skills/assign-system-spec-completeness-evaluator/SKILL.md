@@ -19,7 +19,7 @@ last-audited: 2026-07-11
 audit-trigger: quarterly
 allowed-tools:
   - Read
-  - Bash
+  - Bash(python3 *)
   - Task
 responsibility_refs:
   - prompts/R1-score.md

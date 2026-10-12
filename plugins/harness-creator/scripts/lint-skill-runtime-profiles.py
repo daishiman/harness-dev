@@ -208,7 +208,9 @@ def _stale_fork_tools_paths(
     """FORK_TOOLS_BASELINE のうち、もう Agent/Task 不足の finding を出さない登録を返す。
 
     allowed-tools を直した・skill が消えた登録を残すと、同じ path が将来また不整合に
-    なったときに黙って免除される。絞り込み実行では範囲外の登録を判定できないので空を返す。
+    なったときに黙って免除される。`_stale_legacy_paths` と同じく両方向の ratchet にする
+    (以前は返済検知が無く、解消しても登録が残る片方向 ratchet だった)。
+    絞り込み実行では範囲外の登録を判定できないので空を返す。
     """
     if not full_scope:
         return ()
@@ -320,6 +322,10 @@ def _manifest_findings(
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return [f"manifest が読めない: {manifest_ref}: {exc}"]
+    if not isinstance(payload, dict):
+        return [
+            f"manifest の top-level が object でない ({type(payload).__name__}): {manifest_ref}"
+        ]
     phases = payload.get("phases")
     if not isinstance(phases, list):
         return [f"manifest.phases が array でない: {manifest_ref}"]
@@ -651,6 +657,7 @@ def build_report(
     legacy_paths = tuple(entry["path"] for entry in skill_entries if entry["is_legacy_loop"])
     full_scope = plugin is None and skill is None
     return {
+        # 1.2.0: summary へ stale_checked / fork_tools_registered / fork_tools_stale を additive 追加。
         "schema_version": "1.2.0",
         "repo_root": str(repo_root),
         "summary": {
@@ -748,8 +755,8 @@ def main(argv: list[str]) -> int:
         return 1
     if summary["fork_tools_stale"]:
         sys.stderr.write(
-            "fork/allowed-tools ratchet の免除が陳腐化: 登録済み path が既に Agent/Task 不足でない"
-            f"({len(summary['fork_tools_stale'])} 件)。解消済みなら FORK_TOOLS_BASELINE から"
+            "fork/allowed-tools ratchet の免除が陳腐化: 登録済み path が既に Agent/Task 不足でない、"
+            f"または実在しない ({len(summary['fork_tools_stale'])} 件)。解消済みなら FORK_TOOLS_BASELINE から"
             f"削って ratchet を締めること: {summary['fork_tools_stale']}\n"
         )
         return 1

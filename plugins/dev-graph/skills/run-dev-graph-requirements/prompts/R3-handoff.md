@@ -14,10 +14,14 @@
 ### 入力契約
 
 - PASS receipt、trace plan、validated system plan、requirements candidate。
+- `validate-readiness-binding.py` の binding report と、handoff 対象 node と binding の `graph.digest` (`--expect-graph-digest`) を渡した `guard-requirements-handoff.py` の guard report。
 
 ### 出力契約
 
 - atomic requirements document、capability-build handoff ref、snapshot digest。
+- guard が exit 1 のときは handoff 0件と、guard report の `missing_sections` (closure 全件) と `blocked[].remediation` (owner・upstream・owners・referenced_by)。
+- guard が exit 2 (`status: snapshot_mismatch`) のときは handoff 0件と、guard report の `graph.digest`・`graph.expected_digest`・`graph.graph_revision`。
+- guard が report の無い exit 2 (usage・C24・IO の例外。stdout は空で、stderr に理由が出る) のときは handoff 0件と、止まった理由としての stderr の例外の内容。
 
 ### 責務境界
 
@@ -26,10 +30,13 @@
 ### 受入条件
 
 - 全requirement/source/package refを持ちdigest一致、self-generated code 0になる。
+- handoff する node は guard report の `handoff` と同じ集合で、snapshot digest は binding report の `graph.digest` と同じである。
+- binding report の `graph.digest` と guard report の `graph.digest` が一致する (guard の `graph.digest_match: true`)。2つの script が同じ graph の snapshot を見たことを、この一致で確かめる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: WriteとSkill capability-buildへのhandoff。
+- 使用資産: `guard-requirements-handoff.py --repo-root <root> --node <id> [--node <id>]... --expect-graph-digest <binding の graph.digest>`、WriteとSkill capability-buildへのhandoff。
+- Write と Skill は、`validate-readiness-binding.py` と `guard-requirements-handoff.py` がともに exit 0 (guard の `handoff_count` が scope 全件) で、binding の `graph.digest` と guard の `graph.digest` が一致するときだけ使う。guard が exit 1 (`status: withheld`) なら何も書かず、`missing_sections` と `remediation` をそのまま返して止まる。guard が exit 2 (`status: snapshot_mismatch`。binding の後に graph が変わった) なら何も書かず、binding からやり直す。report の無い exit 2 (usage・C24・IO の例外) も何も書かず、stderr の例外の内容を止まった理由として返して止まる。closure の一部だけを handoff しない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -52,6 +59,8 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 全requirement/source/package refを持ちdigest一致、self-generated code 0になる
+- [ ] guard が exit 1 のとき、handoff と Write が0件で、guard report の `missing_sections` と `remediation` を全件返している
+- [ ] handoff したとき、binding report の `graph.digest` と guard report の `graph.digest` が一致し、記録した snapshot digest もその値である
 
 ## Layer 6: オーケストレーション層
 

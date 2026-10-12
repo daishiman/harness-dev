@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec/fx --resume",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "goal が達成されていない。goal は、仕様書とアーキテクチャを出典・確定状態・上位目的の trace 付きで dev-graph の specification/architecture ノード（C02）へ取り込むこと。実際は fx/.dev-graph/state/graph.json が graph_revision=0、nodes=0 のままで、fx/eval-log/run-dev-graph-system-spec-progress.json も C02 の項目が NOT_RUN、imported_node_ids=[] になっている。task.md の合格条件である C02 登録、source_lineage、evaluated_digest、C11/C19 gate、receipt がどれもできていない。",
+      "system-spec-harness の completeness evaluator が総合で FAIL を出した（主 transcript 247 行目、fx/eval-log/completeness-report.json の verdict=FAIL）。6 観点のうち FAIL は foundation_trace、decision_guidance、matrix_coverage、design_knowledge_reflection、doc_freshness の 5 つで、PASS は prompt_quality だけ。G-hearing（aggregate-completeness --hearing）は exit 1、blocking=6。SKILL.md は evaluator が PASS でなければ C02 に登録しないと定めているので、正しく取込み前で止まった。",
+      "fixture そのものが goal に届かない入力になっている（fx/system-spec/spec-state.json と fetched-references.json）。foundation の U1〜U5 と U7 は qa_log のユーザー発言に根拠がなく、一括承認 appr-foundation だけで支えられている。収集マトリクスの全セルの serves_goals が [G1] だけで、G2 に紐づくセルが 0 件ある。O1 には serves がない。decisions=[]、design_applications={} が空。qa-001 は PostgreSQL 15 と答えているのに、引用は docs/16 の 16.1 で合っていない。これを PASS にするにはユーザーの新しい回答と決定が要る。承認を勝手に作ることは禁止されているので、この trial の中では解消できない。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "7423682475d3a366710933a5815af4eb11002e0d988cec7fa13e99efc9b6339f",
+  "transcript_sha256": "27662a0a31038e1d09838c158fa1ea6187a62306666bfd32862b4ba8b6ee5baf",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 649.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage"
+}

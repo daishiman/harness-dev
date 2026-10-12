@@ -592,6 +592,9 @@ def test_skill_uses_only_c01_native_surface_apply_then_check():
     assert "make sync" not in text
     assert "sync-skills-to-claude.sh --apply" not in text
     assert "共通 `usable-draft-proof` (Step 12.4)" in text
-    assert "`initial-draft-review` (Step 12.5) へ合流" in text
+    assert (
+        "`usable-draft-proof` (Step 12.4) → `artifact-present-handoff` (Step 12.45)"
+        " → `diagnostic-choice` (Step 12.5) へ合流"
+    ) in text
     assert "評価Agent・改善Agentによる捏造" in text
     assert "別turn" in text

@@ -1,0 +1,34 @@
+{
+  "label": "init",
+  "retry_of": null,
+  "evaluator_agent_id": "a9ce1fcca2d747787",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "run-dev-graph-init/SKILL.md の 148 行目 (目的・背景) は「初期化レポートにはgh CLI認証状態も含める」としているが、138 行目の Receipt 項目にも scripts/build-init-scaffold.py にも gh の認証状態を出す処理がない。再現手順: 素の git repo で build-init-scaffold.py --repo-root <repo> --hook-source plugin を実行し、.dev-graph/state/receipts/init-*.json を見る。gh 関連の key がない。",
+    "feedback_contract の OUT1 と SKILL.md 148 行目は「routing policy (小規模は flat、大規模だけ段階分割する hybrid policy) を初期化時に敷く」としている。しかし schemas/repo-config.schema.json の properties に routing や partition の項目がなく、build-init-scaffold.py も書かない。init 後に残るのは content_roots の kind と dir の対応だけ。再現手順: init 後の .dev-graph/config.json と repo-config.schema.json に routing や partition の key がないことを確かめる。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/init/ws/plugins/dev-graph/skills/run-dev-graph-init",
+  "closure_sha_tested_copy": "ec3bb68b2139eae198794fae13b9dbece83ec56922009f5a30acd36cd3713d65",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 3,
+    "occurrences": 6,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:20:57+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "ec3bb68b2139eae198794fae13b9dbece83ec56922009f5a30acd36cd3713d65",
+      "transcript_sha256": "c0cb54ca072265d4d20b2bdbaf706a470351b82a5e61c79ae6b0a39aa3f4aff3"
+    },
+    "after": {
+      "skill_dir_tree_sha": "ec3bb68b2139eae198794fae13b9dbece83ec56922009f5a30acd36cd3713d65",
+      "transcript_sha256": "7f95ed019f60caf3dd6042c8603676ca1d50bfba0a40f8fb989ab01db7f18ecf"
+    },
+    "backup": "audit/reverdict/run-dev-graph-init/20261012T0630-pr85"
+  }
+}

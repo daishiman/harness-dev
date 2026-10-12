@@ -1,0 +1,26 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "goal の ready handoff に届いていない。fixture に .dev-graph/handoff も requirements document も capability-build handoff もできていない。被験 session は validate-system-plan が exit 2 (32 件の違反) を返した時点で handoff を 0 件のまま止め、status.json に FAIL を書いた (transcript 95, 109-115)。task.md の検証条件『system plan validator が exit 0』を満たしていない。",
+    "直接の原因は fixture の準備 (orchestrator 側) にあり、被験 skill ではない。fixture-provenance.json の rekeyed_files に挙がった 17 個の system-plan ファイル (staging-manifest.json, system-build-handoff.json, workstream-inventory.json, task-specs 13 本) は、中の repository_id と worktree_id が書き換えられた。一方で staging-manifest.json の files に記録された digest、canonical_digest、handoff_contract.sha256 と、system-build-handoff.json の source_inputs、canonical_digest_before_handoff は元の値のまま残った。このため、書き換えたファイルの数だけ digest 違反が出た。",
+    "この移植のやり方では、どちらにしても validator を通らない。repository_id は git common-dir の realpath から sha256 で作られる (resolve-project-context.py 153-176) ので、新しく git init した fx では値が変わる。書き換えなければ repo-identity / handoff-identity で落ち (validate-system-plan.py 290-296, 365-366)、書き換えれば file-digest / canonical-digest で落ちる。通すには、元の common dir (f11-requirements/.git) の worktree で走らせて repository_id を保つか、新しい repo で system-dev-planner の正規 promote 経路を使って package を作り直す必要がある。manifest の digest を手で計算し直すのは gate の迂回になるので不可。"
+  ],
+  "evidence": [
+    "transcript 35-37: 正規の Skill dev-graph:run-dev-graph-requirements を指定の args で起動し、読み込みに成功した。",
+    "transcript 52-53, 56-62: 出力を作る前に責務 prompt R1-elicit / R2-plan / R2b-readiness / R3-handoff と prompt-common-layers.md、feature-execution-package-contract.md を読んだ。",
+    "transcript 81-82: C24 resolve-repo-context.py --mode read は exit 0 (repository_id=local:sha256:a6d3de39…, worktree_id=wt_8e11999186abf7ca)。C11 validate-graph-schema.py も exit 0 (valid=true, implementation_readiness=complete, violations 0)。",
+    "transcript 94-95: system-dev-planner の validate-system-plan.py --staging system-plan/LT-FEATURE-001 は exit 2、status=fail。内訳は file-digest 15 件、handoff-source-digest 14 件、canonical-digest、handoff-source-canonical-digest、handoff-manifest-contract が各 1 件。repo-identity・handoff-identity・exact-13・DAG・placeholder・section の違反は 0 件で、失敗は digest 系だけ。",
+    "元の manifest との照合: 元 fixture /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-requirements/system-plan/LT-FEATURE-001 の実ファイルの sha256 (例: system-build-handoff.json=6e2e6608…, phase-01=c5265e06…, workstream-inventory.json=c2561659…) は、transcript 95 の expected 値と 15 件すべて一致した。",
+    "置換の記録との照合: fx の rekeyed ファイルに provenance の rekey を逆方向にかけた (a6d3de39…→81e4f1cb…, wt_8e11…→wt_ad43…, メモリ上のみ) ところ、17 ファイルすべてが元 fixture とバイト単位で一致した。差分は置換だけである。書き換えていない package.json は元と同一だった。",
+    "元 fixture を元の repo で validate-system-plan.py にかけると (読取りのみ) status=pass、violations 0、validated_digest=sha256:0a7b1d0d…で、manifest の canonical_digest と一致した。同じ validator を fx にかけると、transcript 95 と同じ 32 件で fail し、actual digest は sha256:669109fc… になった。",
+    "repository_id の導出: sha256(realpath(f11-requirements/.git)) は 81e4f1cb…、sha256(realpath(fx/.git)) は a6d3de39… で、provenance の rekey 前後の値と一致する。",
+    "fail-closed の正しさ: SKILL.md 98 行 (完了条件は C11/C02/validate-system-plan の三 gate が同一 digest で PASS)、104-106 行 (stale が 1 件でもあれば handoff 0 件で停止し、全 gate PASS のときだけ emit)、161 行 (stale digest 0 件) と 168 行 (validate-system-plan を独自ロジックで代替しない)、R2b-readiness 29 行、R3-handoff 9 行 (未達なら停止し code 0)。digest の照合は、内容をあとから書き換えた package を弾くための仕組みそのものである。被験 session は manifest を書き直したり digest を計算し直したりして gate を迂回せずに止まった。これは skill の契約どおりの正しい挙動である。",
+    "経路の制約: guard.jsonl は全 13 件が allow で deny は 0 件。被験 session の Write は workdir/out/status.json の 1 回だけ (transcript 110)。graph や content への書込み、自作 driver、実装 code の生成はない。fx の中に session 開始 (start.epoch=1791754984) より新しいファイルはなく、rekeyed ファイルの mtime 06:41 は開始時刻 06:43:04 より前。fx/eval-log も handoff も存在しない。",
+    "Agent verifier について: frontmatter の pre_choice_forbidden が subagent を禁じており、goal_seek と feedback_contract は semantic_evaluator_started から有効になる。今回は gate の失敗で成果物を作る前に止まったので、Agent を起動しなかったことは違反に当たらない。",
+    "transcript 104-105: 被験 session は fixture-provenance.json と system-plan 内の repository_id を grep で確かめ、原因が移植時の書き換えにあると突き止めてから止まった。ただし最後の出力は task の指示どおり『DONE: FAIL』の 1 行だけで、blocked の判定、missing_sections、remediation owner は出していない (transcript 115)。"
+  ],
+  "skill_defects": [
+    "(軽微。task の『1 行だけ報告』の指示と交絡しているため確度は低い。FAIL の原因ではない) SKILL.md 104-105 行と R2b-readiness の出力契約 (21 行) は、停止時に missing_sections と remediation owner を返すよう求めている。しかし、その出力先と形式、validate-system-plan の違反コード (file-digest や canonical-digest など) を missing_sections と remediation owner (例: system-dev-planner での再 promote) に対応づける規則が書かれていない。再現手順: digest 違反のある package を渡して handoff を実行すると、blocked の判定や remediation owner を機械で読める形で残す手順がなく、session は FAIL と書くだけで終わる (transcript 109-115)。"
+  ],
+  "evaluator_agent_id": "a73436decc6a2a42c"
+}

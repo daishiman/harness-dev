@@ -13,7 +13,7 @@
 
 ### 入力契約
 
-- C24 receipt、effective plugin hook検出、既存settings、C10/C25 event contract。
+- C24 receipt、`validate-harness-link.py` の preflight report (`status=pass`)、effective plugin hook検出、既存settings、C10/C25 event contract。
 
 ### 出力契約
 
@@ -26,10 +26,11 @@
 ### 受入条件
 
 - 全eventが一経路だけに配線され既存key/hash変更0、rollbackで完全復元できる。
+- project fallback の preview/apply の前に `validate-harness-link.py --hook-source project-fallback` が pass で、link chain の切断・張り替え・entrypoint 欠落が0件である。
 
 ## Layer 3: インフラ層
 
-- 使用資産: `../../scripts/build-project-hook-fallback.py --repo-root <path> --mode preview|apply|rollback [--manifest <path>]` (skill root 起点) と Claude hook contract の Read。`.claude/settings.json` を Write/Edit や heredoc で直接書かず、この script に委譲する。plugin hook 既定 (`hook_source=plugin`) では script を起動せず、settings に触れない。
+- 使用資産: `../../scripts/build-project-hook-fallback.py --repo-root <path> [--config <path>] --mode preview|apply|rollback [--manifest <path>]` (skill root 起点) と Claude hook contract の Read。`.claude/settings.json` を Write/Edit や heredoc で直接書かず、この script に委譲する。その前に plugin 実体から `../../scripts/validate-harness-link.py --repo-root <path> [--config <path>] --hook-source project-fallback` を起動し (`--config` は fallback と同じ値)、rejected なら `remediation` の選択肢を利用者に示して、選ばれた argv の実行後に preflight が pass へ戻るまで preview/apply を始めない。plugin hook 既定 (`hook_source=plugin`) では script を起動せず、settings に触れない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -52,6 +53,7 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 全eventが一経路だけに配線され既存key/hash変更0、rollbackで完全復元できる
+- [ ] preview/apply の前の `validate-harness-link.py --hook-source project-fallback` が pass である
 
 ## Layer 6: オーケストレーション層
 

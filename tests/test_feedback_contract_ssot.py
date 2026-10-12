@@ -125,6 +125,36 @@ def test_vendored_feedback_skill_ignores_bytecode_caches(tmp_path):
     assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
 
 
+def test_vendored_feedback_skill_ignores_caches_left_by_running_scripts(tmp_path):
+    """Running a copy's scripts must not make it look different from canonical.
+
+    Regression: bytecode caches once took part in the digest, so a copy whose
+    scripts had been executed stopped being recognised as vendored and entered
+    repository-wide quality measurement as a duplicate.
+    """
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    for skill in (canonical, copied):
+        (skill / "scripts").mkdir(parents=True)
+        (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
+        (skill / "scripts" / "run.py").write_text("print(1)\n", encoding="utf-8")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    cache = copied / "scripts" / "__pycache__"
+    cache.mkdir()
+    (cache / "run.cpython-313.pyc").write_bytes(b"\x00bytecode")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    canonical_cache = canonical / "scripts" / "__pycache__"
+    canonical_cache.mkdir()
+    (canonical_cache / "run.cpython-311.pyc").write_bytes(b"\x00other")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    (copied / "scripts" / "run.py").write_text("print(2)\n", encoding="utf-8")
+    assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+
 def test_vendored_feedback_skill_ignores_finder_metadata(tmp_path):
     # macOS の Finder は開いたディレクトリに .DS_Store を置く。片方だけにあっても配布コピーと判定する。
     plugins = tmp_path / "plugins"

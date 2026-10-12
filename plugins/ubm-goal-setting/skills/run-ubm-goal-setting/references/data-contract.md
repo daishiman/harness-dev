@@ -366,11 +366,12 @@ rc=0 全一致 / rc=1 不一致または抽出不可あり / rc=2 引数・入�
   「照合して一致していた」ではない
 
 ```bash
-/usr/bin/python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \
+python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \
   --yearly "<1年目標の絶対パス>" --quarterly "<期報の絶対パス>" \
-  --monthly "<月報の絶対パス>" --weekly "<週報の絶対パス>" \
-  > out.txt 2>&1; rc=$?; echo "rc=$rc" >> out.txt
+  --monthly "<月報の絶対パス>" --weekly "<週報の絶対パス>"
 ```
+
+rc の取り方と出力の扱いは `validation-gates.md` の「決定論ゲート」が正本（rc は Bash ツールが返す終了コードをそのまま記録する。Bash は `python3` の実行だけに許可されているので、リダイレクトや `echo` で rc やログを書き足さない）。
 
 | # | アンカー | 継承の形 | 1年目標の抽出元 | 期報の抽出元 | 月報の抽出元 | 週報の抽出元 |
 |---|---------|---------|---------------|------------|------------|------------|
@@ -615,7 +616,8 @@ rc=0 全一致 / rc=1 不一致または抽出不可あり / rc=2 引数・入�
 
 | 状況 | 対応 | 後続Phaseへの影響 |
 |------|------|-----------------|
-| ユーザーが初回（前回データなし） | Step 2 をスキップ（`root_cause = null`） | Phase 4 では差分セクションを省略 |
+| ユーザーが初回（前回データなし。種別が `yearly` の初回は次の行） | Step 2 をスキップ（`root_cause = null`） | Phase 4 では差分セクションを省略 |
+| 種別が `yearly` で前年の1年目標が無い初回 | Step 2 をスキップしない。比較対象を直近の期報・月報の積み上げと挑戦宣言の到達点アンカー2件へ差し替えて実施し、`root_cause` / `bottleneck` を `null` にせず Step 3 へ渡す（`prev_sales_diff` は `null`。正本は §3.4 の Step 2 → Step 3 と `prompts/R2-step2-gap-analysis.md` の 2.2・6.2） | Phase 4 では差分の行に数字を置かず、比較対象が無い理由だけを書く（`references/output-formats.md` の数値ルール） |
 | 曖昧回答 | 選択肢を3つ提示して選択 | 具体化されるまで次Stepに進まない |
 | 精神論の回答 | 「仕組みで考えましょう」と再質問 | 具体化されるまで次Stepに進まない |
 

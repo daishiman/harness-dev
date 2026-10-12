@@ -11,7 +11,7 @@ import yaml
 
 PLUGIN = Path(__file__).resolve().parents[1]
 ROOT = PLUGIN.parent.parent
-SCRIPT = PLUGIN / "scripts/evaluate-design-rubric.py"
+SCRIPT = PLUGIN / "scripts/validate-design-rubric.py"
 REGISTRY = "plugins/skill-governance-config/config/rubric-registry.json"
 L1 = "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/rubric.json"
 L0 = "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
@@ -43,7 +43,7 @@ def test_actual_entrypoints_inject_the_registered_domain(skill):
 
 @pytest.fixture
 def routing_fixture(tmp_path):
-    script = tmp_path / "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py"
+    script = tmp_path / "plugins/ubm-goal-setting/scripts/validate-design-rubric.py"
     script.parent.mkdir(parents=True)
     script.write_bytes(SCRIPT.read_bytes())
     for relative in [REGISTRY, L1, L0, L2, RENDERER, "plugins/ubm-goal-setting/.claude-plugin/plugin.json"]:
@@ -148,7 +148,7 @@ def test_non_object_json_fails_closed_without_attribute_error(routing_fixture, r
 
 
 def run_main(module, monkeypatch, capsys, root, source):
-    monkeypatch.setattr(module.sys, "argv", ["evaluate-design-rubric.py", "--repo-root", str(root), "--target", str(source)])
+    monkeypatch.setattr(module.sys, "argv", ["validate-design-rubric.py", "--repo-root", str(root), "--target", str(source)])
     code = module.main()
     return code, capsys.readouterr().err
 
@@ -156,7 +156,7 @@ def run_main(module, monkeypatch, capsys, root, source):
 def run_with_child(module, monkeypatch, capsys, root, source, child_code):
     """evaluator の代わりに実プロセスの子 (python -c) を起動し、runner の終了コード・stdout・stderr を返す。"""
     monkeypatch.setattr(module, "evaluation_command", lambda repo_root, target: [sys.executable, "-c", child_code])
-    monkeypatch.setattr(module.sys, "argv", ["evaluate-design-rubric.py", "--repo-root", str(root), "--target", str(source)])
+    monkeypatch.setattr(module.sys, "argv", ["validate-design-rubric.py", "--repo-root", str(root), "--target", str(source)])
     code = module.main()
     captured = capsys.readouterr()
     return code, captured.out, captured.err

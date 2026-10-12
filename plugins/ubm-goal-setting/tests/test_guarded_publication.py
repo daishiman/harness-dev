@@ -10,7 +10,7 @@ from argparse import Namespace
 import pytest
 
 PLUGIN = Path(__file__).resolve().parents[1]
-SCRIPT = PLUGIN / "scripts/publish-staged-files.py"
+SCRIPT = PLUGIN / "scripts/guard-staged-publication.py"
 spec = importlib.util.spec_from_file_location("ubm_publication", SCRIPT)
 M = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(M)
@@ -260,3 +260,35 @@ def test_stage_inside_root_is_rejected_even_when_case_differs(tmp_path):
     with pytest.raises(ValueError, match="disjoint"):
         M.publish(manifest, save(plan, manifest))
     assert not (official / "one.md").exists()
+
+
+def test_replaced_file_keeps_its_permission_bits(tmp_path):
+    # mkstemp の一時ファイルは 0o600。そのまま os.replace すると、既存のノートが利用者だけの権限に変わる。
+    import os
+    import stat
+
+    _, official, draft, plan, manifest = fixture_plan(tmp_path)
+    target = official / "one.md"
+    target.write_text("old", encoding="utf-8")
+    os.chmod(target, 0o640)
+    plan["entries"][0]["old_sha256"] = sha(target)
+    M.publish(manifest, save(plan, manifest))
+    assert target.read_bytes() == draft.read_bytes()
+    assert stat.S_IMODE(target.stat().st_mode) == 0o640
+
+
+@pytest.mark.parametrize("umask, expected", [(0o022, 0o644), (0o027, 0o640), (0o077, 0o600)],
+                         ids=["umask022", "umask027", "umask077"])
+def test_new_file_gets_the_umask_mode_not_mkstemp_0600(tmp_path, umask, expected):
+    # 新しく作るファイルは、ふつうに open() で作ったときと同じ 0o666 & ~umask にする。
+    import os
+    import stat
+
+    _, official, _, plan, manifest = fixture_plan(tmp_path)
+    previous = os.umask(umask)
+    try:
+        M.publish(manifest, save(plan, manifest))
+    finally:
+        os.umask(previous)
+    assert stat.S_IMODE((official / "one.md").stat().st_mode) == expected
+    assert [p.name for p in official.iterdir()] == ["one.md"]  # 一時ファイルを残さない

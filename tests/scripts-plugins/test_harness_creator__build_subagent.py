@@ -473,3 +473,31 @@ def test_layer2_and_layer4_are_not_duplicates():
 def test_header_documents_language_and_role():
     head = SCRIPT.read_text(encoding="utf-8").split('"""', 1)[0]
     assert "--language" in head and "--role" in head
+
+
+# ===================== 引用符付きの道具名 (advisor のすり抜け) の回帰 =====================
+
+@pytest.mark.parametrize("tools_block", [
+    "allowed-tools:\n  - Read\n  - \"Write\"\n",
+    "allowed-tools:\n  - Read\n  - 'Edit'\n",
+    "allowed-tools: [\"Write\"]\n",
+    "allowed-tools: [Read, 'MultiEdit']\n",
+    "allowed-tools: Read \"Write\"\n",
+])
+def test_advisor_rejects_quoted_write_tools(tmp_path, tools_block):
+    """引用符で囲んだ書き込みの道具も、advisor では exit 2 で止める。"""
+    skill = tmp_path / "SKILL.md"
+    _write(skill, f"---\nname: run-x\ndescription: d\n{tools_block}---\n## Purpose & Output Contract\nx\n")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--skill-name", "run-x", "--skill-md", str(skill),
+                        "--output-dir", str(tmp_path / "agents"), "--role", "advisor"],
+                       capture_output=True, text=True)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "advisor role cannot" in r.stderr
+    assert not (tmp_path / "agents" / "run-x-subagent.md").exists()
+
+
+def test_parse_frontmatter_unquotes_list_items():
+    fm, _ = BS.parse_frontmatter('---\na:\n  - "Write"\n  - \'Edit\'\nb: ["Read", Grep]\n---\n')
+    assert fm["a"] == ["Write", "Edit"]
+    assert fm["b"] == ["Read", "Grep"]
+    assert BS.map_tools(fm["a"]) == "Write, Edit"

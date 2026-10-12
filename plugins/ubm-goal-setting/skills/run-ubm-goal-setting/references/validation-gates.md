@@ -35,9 +35,7 @@
 ```bash
 python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \
   --yearly "{{yearly_path}}" --quarterly "{{quarterly_path}}" \
-  --monthly "{{monthly_path}}" --weekly "{{weekly_path}}" \
-  > "$gate_log" 2>&1
-rc=$?
+  --monthly "{{monthly_path}}" --weekly "{{weekly_path}}"
 ```
 
 - `--quarterly` と `--monthly` は必須、`--yearly` と `--weekly` は任意。
@@ -45,12 +43,14 @@ rc=$?
 - 1年目標が未作成の期では `--yearly` を省略してよい（この2件が `[未照合]` になるのが正常）。その場合も省略した事実と未照合件数を受領書に残す。
 - アンカーの一覧・置き場・継承の形は `references/data-contract.md` §3.1.3「四層横断照合（validate-cross-level.py）の対象一覧」を正本とする。
 
-表の順に実行する。出力を保存し終了コードを直後に取る（`| tail` 等を挟まない）。すべてのパスとプレースホルダーを確定値へ展開してから起動する。
+表の順に1行ずつ、`python3` で始まる1つのコマンドとして起動する。すべてのパスとプレースホルダーを確定値へ展開してから起動する。
 
 ```bash
-python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/<スクリプト>" <展開済み引数> > "$gate_log" 2>&1
-rc=$?
+python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/<スクリプト>" <展開済み引数>
 ```
+
+- **rc は Bash ツールが返す終了コードをそのまま記録する。** 許可は `Bash(python3 *)` だけなので、リダイレクト（`> ログ 2>&1`）・`; rc=$?`・`; echo`・パイプ（`| tail` 等）を付けない。付けるとコマンドが許可の外に出るか、別の値に化ける（パイプでは末尾のコマンドの終了コード、未定義のシェル変数をログ先にするとリダイレクトが失敗して python3 が起動しないまま rc=1、`rc=$?` を別の Bash 呼び出しで取ると新しいシェルの rc=0 になり、偽の合格につながる）。
+- 出力は Bash ツールの結果に全文が返る。受領書には末尾の `STATUS:` 行・件数行（cross-level は `照合対象 N 件中 不一致 M 件（抽出不可 K 件）` と未照合件数）・`ARGS:` 行（出す検査のみ）を写す。ファイルに残す必要があるときは、`draft_path` と同じ一時ディレクトリの下に Write で書く（Bash のリダイレクトは使わない）。
 
 `rc=1` の本文違反はユーザーが確定した内容を変えない範囲で最大3回修復する。`rc=2` は実行環境・引数・入力を直すまで停止し、本文の修復ループを回さない。`rc=3` は対象を抽出できなかった理由を報告し、完了扱いしない。月報も1ファイルなので各検査は保存前/保存後に各1回ずつ当てる。
 

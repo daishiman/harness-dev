@@ -76,7 +76,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         if line.startswith("  - ") and cur_list_key:
-            fm[cur_list_key].append(line[4:].strip())
+            fm[cur_list_key].append(_unquote_scalar(line[4:].strip()))
             continue
         m = re.match(r"^([a-zA-Z_-]+):\s*(.*)$", line)
         if not m:
@@ -87,7 +87,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
             cur_list_key = key
         elif val.startswith("[") and val.endswith("]"):
             inner = val[1:-1].strip()
-            fm[key] = [v.strip() for v in inner.split(",") if v.strip()] if inner else []
+            fm[key] = [_unquote_scalar(v.strip()) for v in inner.split(",") if v.strip()] if inner else []
             cur_list_key = None
         else:
             fm[key] = _unquote_scalar(val.strip())
@@ -133,10 +133,11 @@ def map_tools(allowed: list[str] | str) -> str:
     else:
         items = list(allowed or [])
     # strip parenthesized arg patterns: "Bash(python3 *)" -> "Bash"
+    # 文字列の中の '"Write"' も引用符を外してから比べる (advisor の書き込み道具の検出を抜けさせない)。
     cleaned = []
     seen = set()
     for t in items:
-        base = re.split(r"[\s(]", t, 1)[0].strip()
+        base = re.split(r"[\s(]", _unquote_scalar(t.strip()), maxsplit=1)[0].strip()
         if base and base not in seen:
             cleaned.append(base)
             seen.add(base)

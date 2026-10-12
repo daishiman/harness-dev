@@ -1,0 +1,20 @@
+{
+  "label": "decompose2",
+  "retry_of": "decompose (20261012T0630-pr85)",
+  "evaluator_agent_id": "aa904964b3f110814",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/decompose2/ws/plugins/dev-graph/skills/run-dev-graph-decompose",
+  "closure_sha_at_launch": "e80984f7d11b1f99a00702dce06e4a7a3e9f075dd0cd0818814bfc07b0443b11",
+  "closure_sha_tested_copy": "e80984f7d11b1f99a00702dce06e4a7a3e9f075dd0cd0818814bfc07b0443b11",
+  "closure_sha_wtpy_at_verdict": "e80984f7d11b1f99a00702dce06e4a7a3e9f075dd0cd0818814bfc07b0443b11",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 2,
+    "occurrences": 4,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "dev-graph の build-graph-node.py add --dry-run（C02 の preview receipt）について。artifacts[] の各要素に出るのは classification、file_path、graph_node_id、implementation_readiness、missing_sections、readiness_fill、sha256_before/after だけで、作られる node の status、confirmation_status、evaluation_status、tracker_binding が出ない。そのため、decompose の合格条件『全 node が draft』と外部投影なしを preview からは確かめられず、auditor は writer のコードから推論するしかなかった（transcript L198 の findings 2 件目）。再現手順: init 済みの repo で `PYTHONDONTWRITEBYTECODE=1 python3 ws/plugins/dev-graph/scripts/build-graph-node.py add --repo-root <fx> --input <fx>/.dev-graph/cache/decompose-macro-input.json --dry-run` を実行し、出力 JSON の artifacts[] に status、confirmation_status、tracker_binding のキーがないことを確かめる"
+  ]
+}

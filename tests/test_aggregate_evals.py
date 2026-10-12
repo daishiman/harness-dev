@@ -2,12 +2,20 @@
 
 外ループの負フィードバック検知 (連続 FAIL / スコア低下) と、
 sink 断線解消で追加された score.jsonl + content-review verdict の合流が要点。
-末尾に書込先移植性 (3 段 fallback: read-only install での graceful degrade) を追加。
+末尾に書込先 (env の明示 → project の state → user の state。plugin のツリーには書かない) と、
+read-only での graceful degrade、提案を両方の置き場から読むことを追加。
+引数は、hook が渡さない（空のときだけ hook の経路）ことと、引数があれば --list-proposals だけを受け、
+綴り違いなどは exit 2 で止めて何も書かないことを固定する。
 """
 import importlib.util
 import io
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -369,23 +377,247 @@ def _anomalous_score_jsonl(eval_log: Path) -> None:
     (d / "2026-06-03-score.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def test_default_proposals_dir_is_plugin_root(monkeypatch):
+def _state_env(monkeypatch, tmp_path, *, project=True):
+    """書込先を決める env を tmp にそろえる。実 repo と実 home の state を指さない。"""
     monkeypatch.delenv("HARNESS_CREATOR_PROPOSALS_DIR", raising=False)
     monkeypatch.delenv("CLAUDE_PLUGIN_ROOT", raising=False)
-    d = MOD._proposals_dir()
-    assert d.name == "proposals"
-    assert d.parent.name == "run-skill-rubric-governance"
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "xdg"))
+    if project:
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path / "proj"))
+    else:
+        monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    project_dir = tmp_path / "proj" / ".claude" / "state" / "harness-creator" / "proposals"
+    user_dir = tmp_path / "xdg" / "harness-creator" / "proposals"
+    return project_dir, user_dir
+
+
+def test_default_proposals_dir_is_project_state(monkeypatch, tmp_path):
+    project_dir, _ = _state_env(monkeypatch, tmp_path)
+    assert MOD._proposals_dir() == project_dir
     assert MOD._plugin_root().name == "harness-creator"
 
 
 def test_proposals_env_override_is_sole_candidate(monkeypatch, tmp_path):
+    _state_env(monkeypatch, tmp_path)
     monkeypatch.setenv("HARNESS_CREATOR_PROPOSALS_DIR", str(tmp_path / "pd"))
     assert MOD._candidate_proposals_dirs() == [(tmp_path / "pd").resolve()]
 
 
-def test_state_fallback_prefers_project_dir(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path / "proj"))
-    assert MOD._state_fallback_root() == tmp_path / "proj" / ".claude" / "state" / "harness-creator"
+def test_candidates_are_project_state_then_user_state(monkeypatch, tmp_path):
+    project_dir, user_dir = _state_env(monkeypatch, tmp_path)
+    assert MOD._candidate_proposals_dirs() == [project_dir, user_dir]
+
+
+def test_candidates_without_project_dir_use_user_state_once(monkeypatch, tmp_path):
+    _, user_dir = _state_env(monkeypatch, tmp_path, project=False)
+    assert MOD._candidate_proposals_dirs() == [user_dir]
+
+
+def test_candidates_never_point_into_the_plugin_tree(monkeypatch, tmp_path):
+    """plugin のディレクトリを cwd にして session を回すと $CLAUDE_PROJECT_DIR が plugin 自身を
+    指す。そのまま書くと plugin の中に生成物が落ち、fingerprint が動く。"""
+    _, user_dir = _state_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(MOD._plugin_root()))
+    candidates = MOD._candidate_proposals_dirs()
+    assert candidates == [user_dir]
+    assert not any(MOD._is_inside_plugin(d) for d in candidates)
+
+
+def test_main_writes_to_project_state_not_plugin_tree(monkeypatch, tmp_path, capsys):
+    """候補の決め方を差し替えずに main を流し、書いた先が project の state であって、
+    手書きの提案が残る従来の置き場には何も増えないことを確かめる。"""
+    project_dir, user_dir = _state_env(monkeypatch, tmp_path)
+    eval_log = tmp_path / "eval-log"
+    _anomalous_score_jsonl(eval_log)
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: eval_log)
+    monkeypatch.setattr(MOD, "_evals_path", lambda: tmp_path / "EVALS.json")
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    legacy = MOD._legacy_proposals_dir()
+    before = sorted(p.name for p in legacy.glob("*"))
+    assert MOD.main() == 0
+    written = list(project_dir.glob("*-rubric-update.md"))
+    assert len(written) == 1, "project の state に提案が書かれていない"
+    assert MOD._GENERATED_MARKER in written[0].read_text(encoding="utf-8")
+    assert not user_dir.exists()
+    assert sorted(p.name for p in legacy.glob("*")) == before, "plugin のツリーに書いた"
+    assert str(written[0]) in capsys.readouterr().err
+
+
+def test_list_proposals_reads_both_places(monkeypatch, tmp_path, capsys):
+    """自動ドラフトは state に、手書きの提案は従来の置き場にある。片方だけ読むと見落とす。"""
+    project_dir, _ = _state_env(monkeypatch, tmp_path)
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "2026-10-09-ja-heading-alias.md").write_text("status: applied\n", encoding="utf-8")
+    monkeypatch.setattr(MOD, "_legacy_proposals_dir", lambda: legacy)
+    project_dir.mkdir(parents=True)
+    (project_dir / "2026-10-12-rubric-update.md").write_text(
+        MOD._render_proposal([], [], {}), encoding="utf-8"
+    )
+    assert MOD.main(["--list-proposals"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["dirs"][0] == str(project_dir)
+    assert out["dirs"][-1] == str(legacy)
+    assert {(Path(p["path"]).name, p["generated"]) for p in out["proposals"]} == {
+        ("2026-10-12-rubric-update.md", True),
+        ("2026-10-09-ja-heading-alias.md", False),
+    }
+
+
+# --- 引数: hook は渡さない。手で流すときは --list-proposals だけ ---
+
+HOOK_ENTRY = ROOT / "plugins" / "harness-creator" / "hooks" / "aggregate-evals.py"
+HOOK_CONFIGS = (
+    ROOT / "plugins" / "harness-creator" / "hooks" / "hooks.json",
+    ROOT / ".codex" / "hooks" / "registry.json",
+)
+
+
+def _anomalous_main_env(monkeypatch, tmp_path):
+    """hook の経路へ進めば必ず提案を書く状態にする。書いたかどうかで、どちらの経路へ進んだかが分かる。"""
+    project_dir, user_dir = _state_env(monkeypatch, tmp_path)
+    eval_log = tmp_path / "eval-log"
+    _anomalous_score_jsonl(eval_log)
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: eval_log)
+    monkeypatch.setattr(MOD, "_evals_path", lambda: tmp_path / "EVALS.json")
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    return project_dir, user_dir
+
+
+@pytest.mark.parametrize("argv", [
+    ["--list-proposal"], ["--list"], ["--list-proposals", "extra"], ["--"], ["-x"], ["--dry-run"],
+])
+def test_unknown_args_exit_2_without_writing(monkeypatch, tmp_path, capsys, argv):
+    # 以前は --list-proposals と完全に一致しない引数を hook の経路へ流し、一覧のつもりの綴り違いで提案を書いていた
+    project_dir, user_dir = _anomalous_main_env(monkeypatch, tmp_path)
+    with pytest.raises(SystemExit) as exc:
+        MOD.main(argv)
+    assert exc.value.code == 2
+    assert "usage:" in capsys.readouterr().err
+    assert not project_dir.exists() and not user_dir.exists()
+
+
+def test_help_prints_usage_and_exits_0(monkeypatch, tmp_path, capsys):
+    project_dir, user_dir = _anomalous_main_env(monkeypatch, tmp_path)
+    with pytest.raises(SystemExit) as exc:
+        MOD.main(["--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    assert "usage:" in out and "--list-proposals" in out
+    assert not project_dir.exists() and not user_dir.exists()
+
+
+def test_empty_argv_is_the_hook_path(monkeypatch, tmp_path):
+    project_dir, _ = _anomalous_main_env(monkeypatch, tmp_path)
+    assert MOD.main([]) == 0
+    assert len(list(project_dir.glob("*-rubric-update.md"))) == 1
+
+
+def _commands(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "command" and isinstance(value, str):
+                yield value
+            else:
+                yield from _commands(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _commands(value)
+
+
+def test_hook_configs_call_the_entry_without_args():
+    """hook の経路は argv が空のときだけ。設定が引数を付けると、SessionEnd のたびに exit 2 で止まる。"""
+    for config in HOOK_CONFIGS:
+        commands = [c for c in _commands(json.loads(config.read_text(encoding="utf-8")))
+                    if "hooks/aggregate-evals.py" in c]
+        assert commands, config
+        for command in commands:
+            assert command.rstrip().endswith('hooks/aggregate-evals.py"'), (config, command)
+
+
+def test_hook_entry_forwards_args_to_the_parser(tmp_path):
+    """shim は argv を素通しする。shim を手で叩いても、綴り違いは exit 2 で止まり何も書かない。"""
+    proposals = tmp_path / "pd"
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PLUGIN_ROOT"}
+    env.update(HOME=str(tmp_path / "home"), CLAUDE_PROJECT_DIR=str(tmp_path / "proj"),
+               XDG_STATE_HOME=str(tmp_path / "xdg"), HARNESS_CREATOR_PROPOSALS_DIR=str(proposals),
+               PYTHONDONTWRITEBYTECODE="1")
+
+    def run(*args):
+        return subprocess.run([sys.executable, str(HOOK_ENTRY), *args], env=env, stdin=subprocess.DEVNULL,
+                              capture_output=True, text=True, timeout=30)
+
+    bad = run("--list-proposal")
+    assert bad.returncode == 2 and "usage:" in bad.stderr, bad.stderr
+    shown = run("--help")
+    assert shown.returncode == 0 and "--list-proposals" in shown.stdout, shown.stderr
+    assert not proposals.exists()
+
+
+def _git_repo_with_draft(tmp_path) -> tuple[Path, Path]:
+    """.git のある作業ツリーと、その project の state に置いた自動ドラフトを作る。"""
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    (repo / "sub").mkdir()
+    state = repo / ".claude" / "state" / "harness-creator" / "proposals"
+    state.mkdir(parents=True)
+    (state / "2026-10-12-rubric-update.md").write_text(MOD._render_proposal([], [], {}), encoding="utf-8")
+    return repo.resolve(), state.resolve()
+
+
+def test_list_proposals_without_project_dir_reads_git_toplevel_state(monkeypatch, tmp_path, capsys):
+    """Bash から手で流すと CLAUDE_PROJECT_DIR が無い。hook が project の state に書いた自動ドラフトを
+    見落とさないよう、cwd を含む git の作業ツリーの root を project とみなして読む。"""
+    _, user_dir = _state_env(monkeypatch, tmp_path, project=False)
+    repo, state = _git_repo_with_draft(tmp_path)
+    monkeypatch.chdir(repo / "sub")
+    assert MOD.main(["--list-proposals"]) == 0
+    captured = capsys.readouterr()
+    out = json.loads(captured.out)
+    assert str(state) in out["dirs"]
+    assert str(user_dir) in out["dirs"]
+    assert (str(state / "2026-10-12-rubric-update.md"), True) in {
+        (p["path"], p["generated"]) for p in out["proposals"]
+    }
+    assert "CLAUDE_PROJECT_DIR が無い" in captured.err
+
+
+def test_list_proposals_without_project_dir_reads_cwd_state(monkeypatch, tmp_path):
+    """git の作業ツリーの外でも、cwd を project とみなして読む。"""
+    _state_env(monkeypatch, tmp_path, project=False)
+    proj = tmp_path / "plain"
+    state = proj / ".claude" / "state" / "harness-creator" / "proposals"
+    state.mkdir(parents=True)
+    monkeypatch.chdir(proj)
+    assert state.resolve() in MOD._proposal_read_dirs()
+
+
+def test_inferred_project_state_is_read_only(monkeypatch, tmp_path):
+    """推し量った project は読む側だけで使う。書き先には足さない（hook の書き先とずれると提案が散らばる）。"""
+    _, user_dir = _state_env(monkeypatch, tmp_path, project=False)
+    repo, state = _git_repo_with_draft(tmp_path)
+    monkeypatch.chdir(repo)
+    assert MOD._candidate_proposals_dirs() == [user_dir]
+    assert state in MOD._proposal_read_dirs()
+
+
+def test_inferred_project_state_skips_plugin_tree(monkeypatch, tmp_path):
+    """cwd が plugin の中でも、推し量った置き場が plugin のツリーを指すことはない。"""
+    _state_env(monkeypatch, tmp_path, project=False)
+    monkeypatch.chdir(MOD._plugin_root())
+    dirs = MOD._proposal_read_dirs()
+    inside = [d for d in dirs if MOD._is_inside_plugin(d)]
+    assert inside == [MOD._legacy_proposals_dir()]
+
+
+def test_project_dir_env_disables_inference(monkeypatch, tmp_path):
+    """CLAUDE_PROJECT_DIR があれば、それだけを project とみなす（cwd は推し量らない）。"""
+    project_dir, _ = _state_env(monkeypatch, tmp_path)
+    repo, state = _git_repo_with_draft(tmp_path)
+    monkeypatch.chdir(repo)
+    dirs = MOD._proposal_read_dirs()
+    assert dirs[0] == project_dir
+    assert state not in dirs
 
 
 def test_main_writes_to_primary_when_writable(monkeypatch, tmp_path, capsys):

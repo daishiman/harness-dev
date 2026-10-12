@@ -3,7 +3,7 @@ name: assign-notion-fidelity-evaluator
 description: Notion ページを描画する直前に粒度を検証したいとき、info-collector-agent ページと同等の section 充足度を section_canonical_map 基準で機械検証したいときに使う。
 allowed-tools:
   - Read
-  - Bash
+  - Bash(python3 *)
   - Grep
   - Glob
 kind: assign

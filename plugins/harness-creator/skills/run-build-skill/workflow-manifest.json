@@ -33,7 +33,7 @@
       "resourceIds": ["schema-template-selection"],
       "output_artifact": "(kind / skeleton / kind別lint 選択の決定のみ。ファイル成果物なし)",
       "terminal_condition": "kind != skill AND skeleton/output destinationが対応表に一致 AND kind別lintがexit 0",
-      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skillはinit以降のskill固有phaseへ、非skill kindは対応表のskeleton/出力先/lintへ進む。どちらもusable-draft proof後はCapability共通のinitial-draft-reviewへ合流する。",
+      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skillはinit以降のskill固有phaseへ、非skill kindは対応表のskeleton/出力先/lintへ進む。どちらもusable-draft proof後はCapability共通のartifact-present-handoff → diagnostic-choiceへ合流する。",
       "transition": {"gate": "kind=skill AND subtypeがrun/ref/assign/delegate/wrapのいずれか AND build flowが一意", "on_pass": "init", "on_fail": "abort"}
     },
     {

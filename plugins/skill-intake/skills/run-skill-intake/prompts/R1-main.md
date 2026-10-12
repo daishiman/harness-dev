@@ -69,7 +69,7 @@
 
 ### 4.1 失敗時挙動
 - 任意 phase が FAIL → その attempt を `status=FAIL`・`error`・`exit_code` 付き、handoff なしで `eval-log/intake-trace.json` に追記し、`workflow_status=failed` にして停止する。
-- 再開は SKILL.md の「失敗からの再開」に従う: 原因の解消後、同じ trace で同じ phase を attempt+1 で再実行する (SKIP への切り替えは不可)。前段を作り直すときは trace・progress・intermediate を mv で退避して P1 から新しく実行する。
+- 再開は SKILL.md の「失敗からの再開」に従う: 原因の解消後、同じ trace で同じ phase を attempt+1 で再実行する (SKIP への切り替えは不可)。前段を作り直すときは trace・progress・intermediate をそれぞれ `python3 -c 'import os,sys; os.replace(sys.argv[1], sys.argv[2])' <元のパス> <退避先のパス>` で別名に退避して P1 から新しく実行する。
 
 ### 4.2 観測 / ロギング
 - `eval-log/intake-trace.json` に各 phase の入出力パス、exit code、所要時間を残す。
@@ -94,7 +94,7 @@
 - 達成ゴール: `eval-log/intake-trace.json` と完成 artifacts が schema 準拠で揃い、いずれかの phase が FAIL したときは artifacts が未充填かつ error が trace に明記された状態。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
-- [ ] Step 0 前提検証 PASS (`validate-notion-ready.py --check-api` exit 0)。PASS 済みなら API キー / Notion トークンをユーザーに再質問しない。exit 44 のときだけ `references/keychain-setup.md` を案内し停止
+- [ ] Step 0 前提検証 PASS (`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-notion-ready.py" --check-api` exit 0)。PASS 済みなら API キー / Notion トークンをユーザーに再質問しない。exit 44 のときだけ `references/keychain-setup.md` を案内し停止
 - [ ] orchestrator 内に業務ロジック (5 軸ヒアリング / 可視化 / Notion 公開等) が混入していない (薄さ維持)
 - [ ] 各 phase の出力が handoff-contract.md の次 phase 入力 schema に適合
 - [ ] P9 で `run-intake-finalize` が `intake.json` を生成した後、`measure_value_realized.py` 出力を `self-update.json` へ保存し、`update_question_bank.py --derive-from-intake` で `qb-candidates.json` を生成して dry-run 済み。`--apply` は別ターンの明示承認後だけで、`declining=true` では未実行
@@ -147,6 +147,6 @@ orchestrator 実行完了後に以下を自己確認する。未達項目があ�
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`{{initial_utterance}}` を起点に `workflow-manifest.json` の phases を dependsOn 充足順に起動し、各 attempt の delegate・handoff path/SHA・status を `intake-trace.json` に追記して次 phase へ渡せ。skip/retry は manifest の明示条件だけを使う。P5 を SKIP するときは SKIP 行の前に `scripts/build-skipped-purpose.py` で purpose.json を作り、exit 1 なら SKIP せず P5 を実行せよ。phase が失敗したら FAIL 行 (error・exit_code 付き) を追記して workflow_status=failed で停止し、再開は同じ phase の attempt+1 だけとする (SKILL.md の「失敗からの再開」)。P9 では先に `run-intake-finalize` を起動し、生成された `intake.json` に対して exitHook の2つの script resource を起動せよ。`measure_value_realized.py` 出力を `self-update.json` へ保存し、`update_question_bank.py --derive-from-intake <intake.json> --out <qb-candidates.json>` の後に `--diff <qb-candidates.json>` を dry-run する。question-bank は別ターンの明示承認後だけ `--apply` する。P11 exitHook は trace/progress=in_progress、hook=RUNNING で task-graph verifier を3入力実行する。exit 0 後に hook=PASS・両 status=completed・P11 progress evidence digestを更新し、同じ verifierを再実行する。2回目 exit 0 後だけ完了を確定する。不在・不整合は FAIL とし、trace に error を記録すること。artifacts は実在 path だけを記録し、schemas/output.schema.json 準拠の JSON を出力せよ。前置き・後書き禁止。
+`{{initial_utterance}}` を起点に `workflow-manifest.json` の phases を dependsOn 充足順に起動し、各 attempt の delegate・handoff path/SHA・status を `intake-trace.json` に追記して次 phase へ渡せ。skip/retry は manifest の明示条件だけを使う。P5 を SKIP するときは SKIP 行の前に `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/build-skipped-purpose.py" output/<hint>/interview.json --out output/<hint>/purpose.json` で purpose.json を作り、exit 1 なら SKIP せず P5 を実行せよ。phase が失敗したら FAIL 行 (error・exit_code 付き) を追記して workflow_status=failed で停止し、再開は同じ phase の attempt+1 だけとする (SKILL.md の「失敗からの再開」)。P9 では先に `run-intake-finalize` を起動し、生成された `intake.json` に対して exitHook の2つの script resource を起動せよ。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/measure_value_realized.py"` 出力を `self-update.json` へ保存し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update_question_bank.py" --derive-from-intake <intake.json> --out <qb-candidates.json>` の後に `--diff <qb-candidates.json>` を dry-run する。question-bank は別ターンの明示承認後だけ `--apply` する。P11 exitHook は trace/progress=in_progress、hook=RUNNING で `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/validate-task-graph-progress.py" eval-log/run-skill-intake-progress.json eval-log/run-skill-intake-intermediate.jsonl eval-log/intake-trace.json` を実行する。exit 0 後に hook=PASS・両 status=completed・P11 progress evidence digestを更新し、同じ verifierを再実行する。2回目 exit 0 後だけ完了を確定する。不在・不整合は FAIL とし、trace に error を記録すること。artifacts は実在 path だけを記録し、schemas/output.schema.json 準拠の JSON を出力せよ。前置き・後書き禁止。
 
 **Phase 11 (next-action) 完了でワークフローは終了する。`next-action.json` の `mode` を推奨として提示したら停止し、`run-skill-create` / `run-build-skill` / `capability-build` 等のスキル生成を続けて起動してはならない (Layer 1.1 hard stop)。**

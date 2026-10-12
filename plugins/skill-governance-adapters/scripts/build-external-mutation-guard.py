@@ -103,7 +103,7 @@ CANONICAL_ACTION_FLAGS = {
 }
 DIRECT_MUTATION_PATTERNS = (
     # ubm staged publication is bound to the canonical execute receipt.
-    re.compile(r"\bpublish-staged-files\.py\b", re.I),
+    re.compile(r"\bguard-staged-publication\.py\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:--data(?:-raw|-binary)?|-d)\s", re.I),
     # `pr` を対象から外してある（2026-08-21、利用者の判断）。

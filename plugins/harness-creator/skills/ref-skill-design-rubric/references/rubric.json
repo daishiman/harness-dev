@@ -1,7 +1,7 @@
 {
   "version": 1,
   "rubric_id": "skill-design",
-  "rubric_version": "1.5.0",
+  "rubric_version": "1.6.0",
   "layer": "L0",
   "threshold": 80,
   "max_skill_md_lines": 300,
@@ -188,7 +188,7 @@
       "area": "hook-frontmatter",
       "severity": "high",
       "applies_to_kinds": ["hook"],
-      "check": "frontmatter 'event:' field is one of {PreToolUse, PostToolUse, UserPromptSubmit, Stop, SubagentStop, Notification, SessionStart, SessionEnd, PreCompact}",
+      "check": "frontmatter 'event:' field is one of {PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, Stop, SubagentStop, Notification, SessionStart, SessionEnd, PreCompact}",
       "rationale": "未対応 event 名は Claude Code 側で no-op となり、hook が永久に発火しない。"
     },
     {

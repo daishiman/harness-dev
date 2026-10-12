@@ -1,5 +1,6 @@
 {
   "$comment": "lint 集合の単一正本 (LS-02/LS-07)。build-preflight = run-build-skill SKILL.md Step4 bash ブロック / p0-gate = run-skill-create workflow-manifest.json p0-lint.commands / ci = CI workflow の実効集合。各消費面との突合は plugins/skill-governance-lint/scripts/lint-matrix-sync.py が機械検査する。lint の追加・削除は本ファイルを先に更新し、消費面 (SKILL.md / manifest / CI) を追従させること。ci を持たない lint は ci_exclusion_reason 必須。PostToolUse hook 配線 lint (lint-capability-manifest.py) は本 matrix の 3 context (build-preflight/p0-gate/ci) のスコープ外 — hook 層で常時発火し、配線正本は .claude-plugin/plugin.json の hooks。",
+  "$comment_script_location": "本ファイルは harness-creator に置かれた台帳だが、lints[].script の実体は harness-creator 配下に限らない (2026-10-10 21:35 実測: 分母 20 に対し harness-creator 配下 8 / 配下外 12。配下外は skill-governance-lint 10 + repo-root scripts/ 2)。所在が台帳から読めないと「harness-creator の台帳が外部実体を指している」ことが分からないため、各エントリに owner_plugin (実体の所有単位。harness-creator / skill-governance-lint / repo-root) と script_path (repo-root 相対の実在パス) を併記する。この2フィールドは lint-matrix-sync.py の突合 (script basename のみ参照) には影響せず、実在性は plugins/harness-creator/tests/test_lint_matrix_script_locations.py が検査する。repo-root scripts/ 配下には skill-governance-lint 実体への symlink が複数あるが、script_path は symlink 先ではなく正本実体のパスを書く。",
   "version": 1,
   "consumers": {
     "build-preflight": "plugins/harness-creator/skills/run-build-skill/SKILL.md#Step 4 の bash ブロック",
@@ -13,6 +14,8 @@
     {
       "id": "skill-name",
       "script": "lint-skill-name.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-skill-name.py",
       "contexts": [
         "build-preflight",
         "p0-gate",
@@ -22,6 +25,8 @@
     {
       "id": "skill-description",
       "script": "lint-skill-description.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-skill-description.py",
       "contexts": [
         "build-preflight",
         "p0-gate",
@@ -31,6 +36,8 @@
     {
       "id": "skill-tree",
       "script": "lint-skill-tree.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-skill-tree.py",
       "contexts": [
         "build-preflight",
         "p0-gate",
@@ -40,6 +47,8 @@
     {
       "id": "frontmatter",
       "script": "validate-frontmatter.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
       "contexts": [
         "build-preflight",
         "p0-gate",
@@ -49,6 +58,8 @@
     {
       "id": "script-frontmatter",
       "script": "lint-script-frontmatter.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -58,6 +69,8 @@
     {
       "id": "skill-completeness",
       "script": "lint-skill-completeness.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-skill-completeness.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -66,6 +79,8 @@
     {
       "id": "goal-seek",
       "script": "lint-goal-seek.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -74,6 +89,8 @@
     {
       "id": "feedback-contract",
       "script": "lint-feedback-contract.py",
+      "owner_plugin": "repo-root",
+      "script_path": "scripts/lint-feedback-contract.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -82,6 +99,8 @@
     {
       "id": "ssot-duplication",
       "script": "lint-ssot-duplication.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -90,6 +109,8 @@
     {
       "id": "knowledge-loop",
       "script": "lint-knowledge-loop.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -98,6 +119,8 @@
     {
       "id": "build-trace",
       "script": "validate-build-trace.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -106,6 +129,8 @@
     {
       "id": "readme-portability",
       "script": "lint-readme-plugin-root-portability.py",
+      "owner_plugin": "repo-root",
+      "script_path": "scripts/lint-readme-plugin-root-portability.py",
       "contexts": [
         "build-preflight",
         "ci"
@@ -114,6 +139,8 @@
     {
       "id": "dependency-direction",
       "script": "lint-dependency-direction.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-dependency-direction.py",
       "contexts": [
         "p0-gate",
         "ci"
@@ -122,6 +149,8 @@
     {
       "id": "dep-step7",
       "script": "lint-skill-dep-step7.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
       "contexts": [
         "p0-gate",
         "ci"
@@ -130,6 +159,8 @@
     {
       "id": "forbidden-deps",
       "script": "lint-forbidden-deps.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-forbidden-deps.py",
       "contexts": [
         "p0-gate",
         "ci"
@@ -138,6 +169,8 @@
     {
       "id": "manifest-contents",
       "script": "lint-manifest-contents.py",
+      "owner_plugin": "skill-governance-lint",
+      "script_path": "plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
       "contexts": [
         "p0-gate",
         "ci"
@@ -146,6 +179,8 @@
     {
       "id": "build-plan",
       "script": "validate-build-plan.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py",
       "contexts": [
         "build-preflight",
         "p0-gate"
@@ -155,6 +190,8 @@
     {
       "id": "capability-graph-knowledge",
       "script": "lint-capability-graph-knowledge.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-graph-knowledge.py",
       "contexts": [
         "build-preflight"
       ],
@@ -163,6 +200,8 @@
     {
       "id": "prompt-placement",
       "script": "lint-prompt-placement.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py",
       "contexts": [
         "ci"
       ],
@@ -171,6 +210,8 @@
     {
       "id": "agent-prompt-content",
       "script": "lint-agent-prompt-content.py",
+      "owner_plugin": "harness-creator",
+      "script_path": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
       "contexts": [
         "ci"
       ],

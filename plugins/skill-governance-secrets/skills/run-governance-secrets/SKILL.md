@@ -9,7 +9,7 @@ goal_seek:
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: Bash, Read, Glob
+allowed-tools: Bash(python3 *), Read, Glob
 effect: conversation-output
 owner: team-platform
 since: 2026-08-20

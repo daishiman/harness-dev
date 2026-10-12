@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-skill-rubric-governance/scripts/lint-rubric-violation.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":82,"notes":"PEP723 frontmatter present; missing-dir -> graceful warning+exit0; invalid jsonl warned+skipped (not silent); read-only no side effects. Defect (moderate): line45 finding.get('id') AttributeError-crashes on string findings, which sibling aggregate-evals explicitly treats as valid; real sink uses dict findings so unfired in practice."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-skill-rubric-governance/scripts/lint-rubric-violation.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 4795f4ee7142e128670b135093ac480ea32c0a60a2a5903b430db91aa52ba8b6 をレビュー。実行検証あり）。範囲: 全 121 行と、origin/main からの未コミットの差分（+81/-17）。差分の中身は、PEP 723 ヘッダの項目をそろえたこと、読む対象を `--logs` 配下の `*-score.jsonl` の再帰に絞ったこと（41・73 行）、has_score（44-48 行。bool・NaN・inf を score と認めない）、rule_id（51-55 行。id か rubric_item_id）、読めないファイルを warning と unreadable_logs で数えること（74-79 行）、JSON の object でない行と score の無い行を数えずに件数を出すこと（84-93 行）、`--logs` がディレクトリでないときと score を持つレコードが 0 件のときに exit 2 で止めること（66-68・108-112 行）。確かめたこと: tests/scripts-plugins/test_harness_creator__lint_rubric_violation.py と tests/scripts-plugins/test_skill_governance_lint__lint_rubric_violation.py で 22 passed。--help は exit 0。引数なし・`--logs` の値なし・`--bogus x`・省略形の `--log`（allow_abbrev=False）は argparse の exit 2。`--logs /nonexistent` は理由つきで exit 2。repo の `--logs eval-log` は score ログ 4 本・22 件を数えて exit 0（FM-005 16・PD-002 14 など。実際のログの findings は 35 件すべて dict で、id と rubric_item_id が同じ値）。`--rule FM-005` は FM-005 だけを返す。governance log の置き場所（run-skill-rubric-governance/log）を渡すと、score を持つレコードが無いとして exit 2。scratch の崩れたログで、NaN と bool の score は「score なし」、壊れた行と配列の行は「object でない」、非 UTF-8 のファイルは unreadable_logs、名前が `x-score.jsonl` のディレクトリと governance.jsonl は読まない、を確かめた。書き込みは無く、write-scope none と一致する。lint-script-frontmatter.py は scripts ディレクトリで OK（checked=3 pending=0）。前回の指摘の扱い: 前回の [中]（45 行の finding.get('id') が文字列の finding で AttributeError を出す）は直った。97-98 行で dict でない finding を飛ばすので、文字列の finding を入れても traceback は出ず exit 0 になる（再現）。前回の notes が英語だった点は、この記録で日本語に書き直した。指摘: [低] 新規: 形の崩れた findings を黙って捨てる。96 行は findings が list でないとき（例: {\"FM-001\": 1}）を「finding なし」とし、そのレコードを total に足す。97-98 行は文字列の finding を数えずに捨てる。どちらも stats にも warning にも出ない。docstring 30 行が避けたいと書いた「違反の無い評価として total だけが増える」と同じ形の取りこぼしになる。今の記録元の write-eval-log.py（82-91 行）は findings を dict の list に限るので、手で書いたログや壊れたログでしか起きない。捨てた finding とレコードを skipped_invalid か別の件数に足して warning に出す。[低] 新規: passed: true の finding も違反として数える。兄弟の plugins/skill-governance-lint/scripts/lint-rubric-violation.py（71 行）と 27章§3.1 は passed が true の finding を合格として除くので、同じログで数が食い違う（fixture で、PD-002 の passed true と false の 2 件を、この script は 2、兄弟の定義では 1 と数える）。SKILL.md 111 行と prompts/R1-govern.md 33 行はこの出力を「違反の件数」として使う。今の評価器は passed を書かないので表に出ていない。`finding.get(\"passed\") is True` を飛ばす。[低] 新規: 前回の欠陥を直した 97-98 行の分岐（文字列の finding）と、list でない findings の分岐を確かめるテストが無い。test_harness_creator__lint_rubric_violation.py の 4 本は、ディレクトリ・score の有無・rule ごとの数だけを見る。DEDUCTION: -2（崩れた findings を黙って捨てる）、-2（passed: true を数える）、-1（直した分岐のテストが無い）→ 95。前回の [中] は直り、[高] と [中] は無いので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-requirements",
+  "args": "handoff --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements/fx --feature-id LT-FEATURE-001 --package /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements/fx/system-plan/LT-FEATURE-001/package.json",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "goal の ready handoff に届いていない。fixture に .dev-graph/handoff も requirements document も capability-build handoff もできていない。被験 session は validate-system-plan が exit 2 (32 件の違反) を返した時点で handoff を 0 件のまま止め、status.json に FAIL を書いた (transcript 95, 109-115)。task.md の検証条件『system plan validator が exit 0』を満たしていない。",
+      "直接の原因は fixture の準備 (orchestrator 側) にあり、被験 skill ではない。fixture-provenance.json の rekeyed_files に挙がった 17 個の system-plan ファイル (staging-manifest.json, system-build-handoff.json, workstream-inventory.json, task-specs 13 本) は、中の repository_id と worktree_id が書き換えられた。一方で staging-manifest.json の files に記録された digest、canonical_digest、handoff_contract.sha256 と、system-build-handoff.json の source_inputs、canonical_digest_before_handoff は元の値のまま残った。このため、書き換えたファイルの数だけ digest 違反が出た。",
+      "この移植のやり方では、どちらにしても validator を通らない。repository_id は git common-dir の realpath から sha256 で作られる (resolve-project-context.py 153-176) ので、新しく git init した fx では値が変わる。書き換えなければ repo-identity / handoff-identity で落ち (validate-system-plan.py 290-296, 365-366)、書き換えれば file-digest / canonical-digest で落ちる。通すには、元の common dir (f11-requirements/.git) の worktree で走らせて repository_id を保つか、新しい repo で system-dev-planner の正規 promote 経路を使って package を作り直す必要がある。manifest の digest を手で計算し直すのは gate の迂回になるので不可。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "d9eb6a322ec9e2e74ad482e8bf01654c1fbe23cc32679c7d3ef996fe1564cf60",
+  "transcript_sha256": "2206a43c795db9b3519544fc85df4d6c197f9ba27f9049115dd7e2c72cf07099",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 146.0
+  },
+  "scenario_id": "C04-OUT1-positive-ready-handoff-fixture-standard-v2"
+}

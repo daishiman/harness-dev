@@ -2,6 +2,16 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`extract-system-blueprint` plugin の変更履歴を記録する。harness-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.2.16] - 2026-10-10
+
+投影の追従版である。他 plugin が所有する正本（`scripts/extract-plugin-root.py` と、`run-skill-feedback` に同梱する validator）と guard runtime の更新を写した。本 plugin 固有の機能変更はない。0.2.15（節なし）からの変更をまとめる。
+
+### Changed
+
+- **`scripts/extract-plugin-root.py` を正本の 0.2.0 へ追随**: 他プロジェクト専用（`scope` が `project` / `local`）の install 先を、`installed_plugins.json` 由来の行だけでなく sibling と cache fallback の候補からも除く。そうした登録しか無い `<plugin>@<marketplace>` は、cache の `<marketplace>/<plugin>/` の下を version を問わず除く（upgrade 後に残った古い version のディレクトリも含む）。同じ marketplace に有効な登録があれば、除くのは他プロジェクト専用の installPath だけにする。同じ path に有効な登録もあれば共有 install として許可する。semver の prerelease と build metadata を読み、同じ X.Y.Z なら正式版を先に選ぶ。
+- **`skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を正本へ追随**: 中間成果物の iteration が0以上の整数の連番であること、progress の iteration が最後の iteration と一致することを検査する。非 UTF-8・深すぎる入れ子・OSError は終了コード 2、`original_goal` が文字列でないときと対になっていない surrogate を含むときは 1 で止まる。
+- **guard runtime 固定値**: `artifact-delivery.json` の `runner_sha256` を、いまの guard runtime に合わせた。
+
 ## [0.2.0] - 2026-07-11
 
 **破壊的変更 (配布前): MCP 接続と Notion 公開を全廃し、ローカル完結ハーネスへ縮約。** 初回 build (0.1.0・未公開) は browser-runtime MCP による実行時観測 (screenshot/JS 後 DOM/computed style) と、C02 PASS 後の Notion (`system-blueprint-catalog`) 公開を持っていたが、本バージョンで両者を撤去した。ブラウザがレンダリングした情報 (JS 実行後 DOM・viewport screenshot) は **MCP を使わずローカル headless Chrome/Chromium を Bash 経由 subprocess 起動する `scripts/browser-render.py` (C15)** で取得する (= MCP サーバー接続ではない・任意依存)。ブラウザバイナリが無い環境では browser-render が exit 3 (browser-unavailable) を返し、該当観測を `observation_gap` として記録して **WebFetch + 静的 HTTP snapshot (stdlib: html.parser + urllib)** のみで続行する (progressive enhancement)。成果物は**ローカル完結** (md + json + 5 種 Mermaid + rendered DOM/screenshot + (取得時) layout/overlay + 合成 design-tokens + サイト被覆 manifest + request ledger)。C02 の独立 verdict は Notion 公開ゲートではなくローカル draft の品質ゲート (proposer≠approver) となった。

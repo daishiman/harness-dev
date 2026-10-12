@@ -8,17 +8,17 @@ rubric 改正手続きを「**自動検出 → 招集 → 評価 → 猶予 → 
 
 ### 出力
 
-- `eval-log/violation-rate.csv` を観測する自動検出 script
-- 改正提案 YAML テンプレ
-- 影響評価 script（新 rubric で全 Skill 再採点）
-- deprecation warning パターン
-- `rubric-versions.md` 発効記録
+- score ログ（`eval-log/**/*-score.jsonl`）を集計する自動検出 script（`plugins/skill-governance-lint/scripts/lint-rubric-violation.py`）
+- 改正提案テンプレ（実装は `run-skill-rubric-governance` の `templates/proposal.json`。§5 の YAML は素案）
+- 影響評価 script（過去の score ログに提案を当てて合否の変動を見積もる。§6）
+- deprecation warning パターン（evaluator 側は未実装（計画）。§7）
+- `eval-log/rubric-versions.md` 発効記録（まだ無い。最初の発効で作る。§8.3）
 
 ### 禁則
 
 - rubric を evaluator/generator が編集（09 章 Goodhart（評価基準を都合よく歪める罠） 対策）
 - 提案者と承認者の兼任（自己承認）
-- `newly_failing>0` で猶予ゼロ発効
+- `would_flip>0` で猶予ゼロ発効
 - script に標準ライブラリ外を import（22 章準拠）
 - templates と rubric の個別凍結（23 章 同時凍結ルール）
 
@@ -44,37 +44,38 @@ rubric 改正手続きを「**自動検出 → 招集 → 評価 → 猶予 → 
 | 06 第15条 | 命名規約専用手続き | 提案/影響評価/猶予 |
 | **27（本章）** | 実装 Runbook | script・JSON設定・Hook・CI の具体形、責務分担表 |
 
-23 章既定値（`連続3×20%`、凍結 `N=10, M%=5%`）を継承し、調整可能パラメータとして `references/governance-params.json` に外出しする。06 章との接続は §3.3。
+23 章既定値（`連続3×20%`、凍結 `N=10, M%=5%`）を継承し、調整可能パラメータとして repo root の `references/governance-params.json` に外出しする（まだ無い。§11）。06 章との接続は §3.3。
 
 ---
 ## 2. governance 自動化アーキテクチャ
 
 ```text
-  eval-log/*-score.jsonl (09)  ──┐
-  eval-log/violation-rate.csv ──┤ release tag (CI)
-                                 ▼
-        scripts/lint-rubric-violation.py  (§3.1, 決定論)
-              │ trigger.json / exit 2
+  eval-log/**/*-score.jsonl (09)
+              │ (人が回す。release tag の CI は未実装)
               ▼
-        Hook: Stop  (§3.4)  ── governance ボード招集通知
+        lint-rubric-violation.py  (§3.2, 決定論)
+              │ eval-log/trigger.json / exit 2
+              ▼
+        notify-if-governance-trigger.py  (§3.4)  ── governance ボード招集通知
+              │ (人が手で呼ぶ。Stop Hook への登録は未実装)
               │ (人手: 提案者起票)
               ▼
-        PR: 改正提案 YAML  (§5)
-              │ (CI 自動)
+        PR: 改正提案  (§5。proposals/<date>-<slug>.md + proposal.json)
+              │ (人が回す。PR 時の CI は未実装)
               ▼
-        scripts/diff-rubric-impact.py  (§6)  → impact-report.json
+        diff-rubric-impact.py  (§6)  → stdout の JSON (would_flip / required_bump)
               │
               ▼
         第三者レビュアー → 承認者  (§4, §7)
               │ approve
               ▼
-        猶予期間: 旧/新 rubric_version 併走採点 + deprecation warning  (§7)
+        猶予期間: 旧ルールを warning (severity→low) に下げて残す  (§7。旧/新の併走採点は未実装)
               │ 期間満了
               ▼
-        発効: version bump + hash 記録 + rubric-versions.md / CHANGELOG  (§8)
+        発効: version bump + compute-rubric-hash.py + eval-log/rubric-versions.md / CHANGELOG  (§8)
 ```
 
-縦軸が時間。人手 / 自動の境界は §9 で表化する。
+縦軸が時間。人手 / 自動の境界は §9 で表化する。script の置き場は、`lint-rubric-violation.py` が `plugins/skill-governance-lint/scripts/`、`notify-if-governance-trigger.py` と `compute-rubric-hash.py` が `plugins/skill-governance-automation/scripts/`、`diff-rubric-impact.py` が `plugins/harness-creator/skills/run-skill-rubric-governance/scripts/`。
 
 ---
 ## 3. 改正トリガー自動検出
@@ -103,7 +104,7 @@ rubric 改正手続きを「**自動検出 → 招集 → 評価 → 猶予 → 
 
 ### 3.2 違反率集計 script
 
-`scripts/lint-rubric-violation.py`（Python 3 標準ライブラリのみ。22 章準拠）:
+`lint-rubric-violation.py` の素案（Python 3 標準ライブラリのみ。22 章準拠。実装は下の注記）:
 
 ```python
 #!/usr/bin/env python3
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-判定は決定論。LLM は使わない。CI は exit code で招集 Hook を発火する。
+判定は決定論。LLM は使わない。上は設計時の素案で、実装は `plugins/skill-governance-lint/scripts/lint-rubric-violation.py`。`--log-dir` の下の `*-score.jsonl` を再帰で読み、`--out` に trigger.json（置き場は `eval-log/trigger.json`）を書く。exit は 0=招集不要、2=招集必要、3=score ログが `--bootstrap-threshold`（既定 20）件に満たず判定を保留、1=trigger.json を書けない。rule ごとの件数は `run-skill-rubric-governance/scripts/lint-rubric-violation.py` が別に数える。この script を CI で回す job と、exit 2 を受けて招集の Hook を起こす配線は未実装（計画）で、今は `run-skill-rubric-governance` の手順で人が回す。
 
 ### 3.3 しきい値判定と 06 章第15条との関係
 
@@ -166,16 +167,16 @@ if __name__ == "__main__":
 | 凍結 `N` | 10 | 23 章 安定版凍結 | 同上 |
 | 凍結 `M%` | 5% | 同上 | 同上 |
 
-06 章 第15条は命名規約改正だが、命名規約条文も `naming-*` prefix の rubric 項目として eval-log に記録するため、本章の検出ロジックがそのまま適用できる。第15条が要求する「影響を受ける Skill リスト」は §6 の `diff-rubric-impact.py` が自動生成する。
+06 章 第15条は命名規約改正だが、命名規約条文も `naming-*` prefix の rubric 項目として eval-log に記録するため、本章の検出ロジックがそのまま適用できる。第15条が要求する「影響を受ける Skill リスト」は、§6 の `diff-rubric-impact.py` が件数（`would_flip`）しか出さないので、今は人が score ログから拾う（Skill の一覧を出す機能は未実装（計画））。
 
 ### 3.4 検出時の通知（Hook で発火）
 
-CI から `lint-rubric-violation.py` の exit 2 を受け、`Stop` Hook で招集メッセージを表示。`.claude/settings.json`（抜粋）:
+`lint-rubric-violation.py` の exit 2 を受け、`Stop` Hook で招集メッセージを表示する設計である。script の実体は `plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py`（`--trigger` の既定は `eval-log/trigger.json`）。Hook への登録は未実装（計画）で、どの hooks.json にも `.claude/settings.json` にも入っておらず、今は人が手で呼ぶ。登録するときの `.claude/settings.json`（抜粋）:
 
 ```json
 { "hooks": { "Stop": [ { "matcher": ".*", "hooks": [
   { "type": "command",
-    "command": "python3 .claude/scripts/notify-if-governance-trigger.py --trigger xl-skills/eval-log/trigger.json" }
+    "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py --trigger ${CLAUDE_PROJECT_DIR}/eval-log/trigger.json" }
 ] } ] } }
 ```
 
@@ -191,7 +192,7 @@ CI から `lint-rubric-violation.py` の exit 2 を受け、`Stop` Hook で招�
 | **提案者** | 改正動機・rubric diff・期待効果を作成 | 人 |
 | **第三者レビュアー** | Goodhart（評価基準を都合よく歪める罠） リスク評価、影響評価妥当性 | 人（提案者と非兼任） |
 | **承認者** | merge 権限、猶予期間長確定 | 人（提案者と非兼任） |
-| **tooling 役（新規）** | script/Hook/CI 維持、`impact-report.json` の品質保証 | 人または `assign-governance-tooling-contributor` |
+| **tooling 役（新規）** | script/Hook/CI 維持、`diff-rubric-impact.py` が出す JSON の品質保証 | 人（`assign-governance-tooling-contributor` は未実装（計画）） |
 
 tooling 役は人手判断をしない。「人手判断に必要な数値が揃っているか」だけを保証する。提案者と承認者の兼任は禁止（23 章踏襲）。tooling 役は他役と兼任可。
 
@@ -201,17 +202,17 @@ tooling 役は人手判断をしない。「人手判断に必要な数値が揃
 
 | 操作 | 承認要件 |
 |---|---|
-| PKG ID 新設 | 36章正本への追加 PR + 本章 §5 改正提案 YAML（`trigger.type: "manual"` で起票、提案者≠承認者） |
+| PKG ID 新設 | 36章正本への追加 PR + 本章 §5 の改正提案（`trigger.type: "manual"` で起票、提案者≠承認者） |
 | PKG ID 分割（例: 013 → 013a〜d） | 上記に加え、旧 ID を deprecated として 1 release 以上猶予（§7） |
 | PKG ID 削除 | 上記に加え、`diff-rubric-impact.py` 相当の影響評価（既存 plugin の PKG fail 履歴に対する影響）を添付 |
 | PKG ID 意味変更 | 36章 + 本章で **major bump 扱い**。新 ID（例: `PKG-001-v2`）を発行し旧 ID を deprecated（§10 #7 準用） |
 
-PKG ID の改廃を 36章単独で行うことは禁止。本章承認を経ない PKG ID 変更は CI block 対象とする。
+PKG ID の改廃を 36章単独で行うことは禁止。本章承認を経ない PKG ID 変更は CI block 対象とする（それを検査する CI の job は未実装（計画））。
 
 ---
 ## 5. 改正提案テンプレ（YAML）
 
-PR 起票時 `docs/rubric-proposals/<YYYY-MM-DD>-<slug>.yaml`:
+PR 起票時、人が読む提案書（front matter つきの md）を `plugins/harness-creator/skills/run-skill-rubric-governance/proposals/<YYYY-MM-DD>-<slug>.md` に置き（実例は `2026-10-09-ja-heading-alias.md`）、`diff-rubric-impact.py --proposal` に渡す機械可読の提案を同じ Skill の `templates/proposal.json` の形で作る。下の YAML は設計時の素案で、YAML の提案ファイルは実装していない（項目の対応は下の注記）。
 
 ```yaml
 # rubric-proposal schema v1
@@ -223,12 +224,12 @@ motivation: |
   templates/ 修正だけでは収まらず rubric 文言の明確化が必要。
 trigger:
   type: "violation_rate"   # violation_rate | new_official_spec | naming_amendment | manual
-  detected_by: "scripts/lint-rubric-violation.py"
-  trigger_artifact: "xl-skills/eval-log/trigger.json"
+  detected_by: "plugins/skill-governance-lint/scripts/lint-rubric-violation.py"
+  trigger_artifact: "eval-log/trigger.json"
 rubric_diff:
   rubric_id: "skill-design"
   from_version: "1.2.0"
-  to_version:   "1.3.0"
+  to_version:   "2.0.0"    # tighten は厳格化なので major（§8.1）
   changes:
     - rubric_item_id: "fm-description-length"
       kind: "tighten"      # tighten | loosen | add | remove | clarify
@@ -238,16 +239,18 @@ expected_effect:
   - "違反率が次 release で 10% 以下に低下する見込み"
   - "templates/ の description 欄を同時更新"
 impact_assessment_required: true  # §6 で自動生成
-grace_period: {policy: "auto", min_releases: 1, min_days: 30}
+grace_period: {min_days: 14}   # major>=14d / minor>=7d / patch 0d（Key Rule 3。§8.1）
 approvers: {reviewer: "@TBD", approver: "@TBD"}
 ```
+
+素案と `templates/proposal.json` の対応: `rubric_diff.changes[].kind` は `change.type`（add / remove / modify）と、modify のときの `change.direction`（tighten / relax）に当たる。tighten と add は厳格化で major（猶予 14 日以上）、loosen（relax）と remove は緩和で最低 minor（猶予 7 日。§8.1 の条件を満たせば 0 日）、clarify は判定を変えない文言の修正だけなら patch で、判定が変わるなら厳格化か緩和として扱う（§6 の注記と同じ規則）。`from_version` は `current_version`、`to_version` は `current_version` に `bump` を当てた版（提案書の front matter では `proposed_version`）、`grace_period.min_days` は `sunset_days`、`approvers` は `reviewers` に当たる。
 
 `trigger.type == "naming_amendment"` の場合は 06 章 第15条を優先し、本テンプレの `rubric_diff` は naming 連動項目の追従に限定する。
 
 ---
 ## 6. 影響評価（破壊度測定 script）
 
-`scripts/diff-rubric-impact.py`（Python 3 標準ライブラリのみ）:
+`diff-rubric-impact.py` の素案（Python 3 標準ライブラリのみ。実装は下の注記）:
 
 ```python
 #!/usr/bin/env python3
@@ -287,14 +290,16 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-LLM 採点は別 process、本 script は JSON Lines の差分だけを決定論で計算する。`newly_failing_count > 0` なら必ず猶予期間を設定する（§7）。
+LLM 採点は別 process、本 script は JSON Lines の差分だけを決定論で計算する。
+
+上は設計時の素案である。実装（`plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py` 0.5.1）は `--proposal <proposal.json> --logs eval-log [--threshold 80]` を取り、過去の score ログに提案を当てて `would_flip`・`flip_rate`・`required_bump` を出す。見積もりの模型は提案の向きで選ぶ。厳格化（`change.type: add`、または `modify` で `change.direction: tighten`）は最悪の場合で数え、緩和（`remove`、または `modify` で `relax`）は定義上 `would_flip` が 0 になる。direction の無い `modify` は厳格化とみなす（`direction_source: assumed`）。`required_bump` は、厳格化なら合否変動率に関わらず major（`run-skill-rubric-governance` の SKILL.md Key Rule 2）、緩和なら提案の bump と minor の大きい方（閾値や severity を変えるなら最低 minor。下回ってよいのは文言だけの patch と緊急パッチだけ）。bump（最上位か `change.bump`）が無いか major・minor・patch 以外なら exit 2 で止まる。両方に書いてあり、どちらかが不正か値が違うときも exit 2 で止まる（片方を黙って選ばない）。厳格化で `change.severity` が無いか high・medium・low 以外のときは、一番重い重み（high の -20）で見積もり、stderr に warning を出す。使った重みは出力の `severity_weight` に、その出どころは `severity_source`（`change.severity` どおりなら `declared`、推し量ったなら `assumed`。緩和はどちらも null）に残す。合否変動率が 30% を超えたか（`exceeds_flip_rate_limit`）は bump を決めず、猶予期間と board 招集の根拠として別に出す。`would_flip > 0` なら必ず猶予期間を設定する（§7）。`would_flip` が 0 の緩和の minor の猶予期間は §8.1 のとおり。
 
 ---
 ## 7. 猶予期間運用（Skill 側 deprecation warning）
 
-猶予期間中、evaluator は **旧/新 rubric_version の両方で採点**し、新で fail / 旧で pass の Skill に warning を出す。
+猶予期間中、evaluator は **旧/新 rubric_version の両方で採点**し、新で fail / 旧で pass の Skill に warning を出す設計である。この二重採点は未実装（計画）で、`assign-skill-design-evaluator` に `grace_period` を読む処理は無い。evaluator の採点で落ちる CI の job も無い（rubric に関わる CI は §9 の表）。今の猶予は、`run-skill-rubric-governance` の手順どおり、厳格化した旧ルールの severity を low に下げて warning として残し、その記録を governance log に書く形で行う。
 
-`assign-skill-design-evaluator/SKILL.md`（抜粋パターン）:
+実装するときの `assign-skill-design-evaluator/SKILL.md` の抜粋パターン（計画）:
 
 ```markdown
 ## 猶予期間運用
@@ -308,34 +313,38 @@ references/rubric.json に grace_period: がある場合:
 5. 発効後（effective_release 到達）は warning を廃止し passed_new で gate。
 ```
 
-これにより作者は猶予期間中に修正でき、発効日に一斉に CI が赤くなる事態を避けられる。
+これにより作者は猶予期間中に修正でき、発効日に一斉に fail が出る事態を避けられる。
 
 ---
 ## 8. 発効と版管理（semver / hash / changelog）
 
 ### 8.1 version 規約
 
-| 変更種別 | bump | 例 |
-|---|---|---|
-| 項目追加（緩和） | minor | 1.2.0 → 1.3.0 |
-| 項目厳格化/削除 | major | 1.2.0 → 2.0.0 |
-| 文言修正・誤字 | patch | 1.2.0 → 1.2.1 |
+| 変更種別 | bump | 猶予期間 | 例 |
+|---|---|---|---|
+| ルール追加・weight↑（厳格化） | major | 14 日以上 | 1.2.0 → 2.0.0 |
+| ルール削除・しきい値↓（緩和） | minor | 7 日（下の条件を満たせば 0 日） | 1.2.0 → 1.3.0 |
+| 文言修正・誤字 | patch | 即時 | 1.2.0 → 1.2.1 |
 
-major bump は必ず猶予期間（最低 1 release / 30 日）を伴う。
+向きと猶予日数の正本は `run-skill-rubric-governance` の SKILL.md（Key Rule 2 と Key Rule 3。細目は同じ Skill の `references/version-rules.md`）で、この表はそれに合わせる。緩和とは、今まで合格したものがすべて合格のままである変更をいい、そうでない変更は厳格化として扱う（§6 の注記）。
+
+緩和の minor で、`diff-rubric-impact.py` の `would_flip` が 0 であり、承認者が緩和の根拠を確かめたものは、猶予期間を 0 日にできる。その理由は governance log に残す。23章「改正の段階」3 の、影響を受ける Skill が 0 なら猶予期間を置かないのと同じ考えである。
 
 ### 8.2 hash 算出
 
-evaluator は `rubric_hash` を出力に含める（09 章踏襲）。算出は `hashlib.sha256` + 正規化 JSON。22 章準拠で yaml を import せず、`rubric.json` を CI で正規化 JSON に変換した `references/rubric.normalized.json` を hash 入力とする。発効時に hash を `rubric-versions.md` に記録。
+evaluator は `rubric_hash` を出力に含める（09 章踏襲）。その値は rubric.json のファイルの sha256 である（`assign-skill-design-evaluator/scripts/render-findings-score.py`）。
+
+発効時に記録する hash は、これとは別に `plugins/skill-governance-automation/scripts/compute-rubric-hash.py --rubric <rubric.json>` が出す。この script は `rubric_hash` を除いた rubric.json を正規化 JSON（キーを並べ替え、区切りの空白なし）にして `hashlib.sha256` を取り、rubric.json の `rubric_hash` に書き戻し、同じディレクトリに `rubric.normalized.json` を書く（22 章準拠で yaml は import しない）。`rubric.normalized.json` は commit しておらず repo に無い。この変換を CI で回す job も無く（未実装）、発効の手順で人が回す。正規化 JSON の hash を `eval-log/rubric-versions.md` に記録する（§8.3）。
 
 ### 8.3 rubric-versions.md 追記
 
-`eval-log/rubric-versions.md`（plugin 移行後は `eval-log/<plugin>/rubric-versions.md`）:
+`eval-log/rubric-versions.md`。まだ無く、最初の発効で版の節を追記したときに作る。複数の rubric の版を1つのファイルに並べ、各節の `rubric_id` 行で区別する（`run-skill-rubric-governance` の発効手順と `rollback-to-stable.py --versions-md` がこのパスを使う）。ひな形（§5 の素案の厳格化を発効した例なので major）:
 
 ```markdown
-## 1.3.0 (2026-06-01)
+## 2.0.0 (2026-06-01)
 - rubric_id: skill-design / hash: sha256:abcd...
-- proposal: docs/rubric-proposals/2026-05-17-tighten-fm-description.yaml
-- changes: tighten fm-description-length (200文字 / trigger 条件含む)
+- proposal: plugins/harness-creator/skills/run-skill-rubric-governance/proposals/2026-05-17-tighten-fm-description.md
+- changes: tighten fm-description-length (200文字 / trigger 条件含む。厳格化なので major)
 - grace_period: from 1.2.0, 2026-05-17 → 2026-06-01
 - impact: affected=12, newly_failing_at_announce=4, at_enactment=0
 ```
@@ -363,6 +372,8 @@ CHANGELOG.md にも同 release エントリを追加する。
 
 これは double-loop 学習 (前回 review の改善が次回に反映されているか) を機械観測可能にするため。手作業での .md 直接編集は禁止 (CI lint で diff 検出 → exit 1)。
 
+この節はすべて未実装（計画）である。再生成の script、`eval-log/<plugin>/rubric-governance-log.jsonl`、手編集を検出する CI lint はどれも無く、`quality-rubric.md` は今は手で直している。
+
 ### 8.5 elegant-review v2 governance-log: 範囲外 finding のスキップ記録 (2026-05-23 セッション)
 
 `run-elegant-review` v2 改善実行で **規模・新規実装リスク** から本セッションで未着手とした finding を記録する。再評価条件と次セッション開始時の必須確認項目を明示し、永久 deferral を防止する。
@@ -374,39 +385,39 @@ CHANGELOG.md にも同 release エントリを追加する。
 | G6 | rate-limit (7 日/1 PR) 計測 script | `plugins/skill-governance-automation/scripts/check-emit-rate-limit.py` 新規。observable jsonl 集計 + PR メタ照合実装が必要 | 即時実装で elegant-review 範囲超 | observable jsonl の record 数が rate-limit 想定の最小 sample (>=10) を満たすか確認後 | jsonl 母数 + PR メタソース仕様 (gh api or PR title prefix) | 2026-06-06 |
 | G7 | classify/accumulate 中間層実装 (`classify-meta-harness.py` / `accumulate-observables.py`) | 35 章 3 層モデルの新規 script 2 件、データフロー設計が未確定 | 即時実装で 35 章設計と二重実装の risk | 35 章 §3 層メタモデルが Layer 2/3 入出力 schema を確定 | classify 出力 schema + accumulate 集計鍵 | 2026-06-13 |
 
-**自動 escalation**: deadline 超過 release で本 §8.5 表に残存している ID は、`scripts/lint-rubric-violation.py` の検出対象に **強制 inject** する (CI で表を parse し deadline < today なら exit 2)。これにより人手で deferral を継続できない。
+**自動 escalation**: deadline 超過 release で本 §8.5 表に残存している ID は、`lint-rubric-violation.py` の検出対象に **強制 inject** する (CI で表を parse し deadline < today なら exit 2)。これにより人手で deferral を継続できない。この escalation は未実装（計画）で、`lint-rubric-violation.py` はこの表を読まず、表を parse する CI の job も無い。
 
-**proposer ≠ approver**: 本表への ID 追加は提案者起票だが、削除 (= 完了マーク) は別 SubAgent または別人間が `eval-log/<plugin>/rubric-governance-log.jsonl` への完了 event 追記と引換に行う (§4 governance 役割表に準拠)。
+**proposer ≠ approver**: 本表への ID 追加は提案者起票だが、削除 (= 完了マーク) は別 SubAgent または別人間が governance log（`plugins/harness-creator/skills/run-skill-rubric-governance/log/governance-log.jsonl`）への完了 event 追記と引換に行う (§4 governance 役割表に準拠)。
 
 ---
 ## 9. 自動化責務分担表
 
 | ステップ | 人 | script | Hook | CI |
 |---|---|---|---|---|
-| eval-log への append | – | evaluator 出力を追記 | – | ○ |
-| 違反率集計 | – | `lint-rubric-violation.py` | – | ○（release tag） |
-| 招集通知 | – | – | `Stop` | ○（exit 2 受信） |
-| 改正提案 YAML 作成 | ○ 提案者 | テンプレ展開のみ | – | – |
+| eval-log への append | – | evaluator 出力を `write-eval-log.py` で追記 | – | 未実装 |
+| 違反率集計 | 回す | `lint-rubric-violation.py` | – | 未実装（release tag の job は無い） |
+| 招集通知 | 回す | `notify-if-governance-trigger.py` | 未実装（`Stop` への登録は計画） | 未実装 |
+| 改正提案作成 | ○ 提案者 | –（`templates/proposal.json` を埋める） | – | – |
 | rubric diff | ○ 提案者 | – | – | – |
-| 影響評価 | – | `diff-rubric-impact.py` | – | ○（PR 時自動） |
+| 影響評価 | 回す | `diff-rubric-impact.py` | – | 未実装（PR 時の job は無い） |
 | Goodhart（評価基準を都合よく歪める罠） リスク評価 | ○ 第三者レビュアー | – | – | – |
 | 猶予期間長確定 | ○ 承認者 | – | – | – |
-| 猶予中 warning | – | evaluator 内ロジック | – | ○（warning 限定） |
-| 発効（version bump） | ○ 承認者（merge） | `compute-rubric-hash.py` | – | ○ |
-| `rubric-versions.md` 追記 | ○ 提案者 | テンプレ展開 | – | ○（lint） |
-| 安定版凍結判定 | – | detect script 凍結モード | – | ○ |
-| 自動 rollback | – | `rollback-to-stable.py` | `PostToolUse` | ○ |
+| 猶予中 warning | 旧ルールの severity を low に下げる | 未実装（evaluator の二重採点は計画。§7） | – | 未実装 |
+| 発効（version bump） | ○ 承認者（merge） | `compute-rubric-hash.py` | `PostToolUse`（`.claude/settings.json` の `re-evaluate-on-rubric-bump.py --post-tool-use`） | `harness-creator-kit-ci.yml` の job `governance`: `check-rubric-sync.py`（L0/L2 の版ずれで fail）と `re-evaluate-on-rubric-bump.py`（major bump の再評価対象は通知だけで、対象があっても exit 0。入力を読めないときだけ fail） |
+| `rubric-versions.md` 追記 | ○ 提案者 | –（§8.3 のひな形を手で書く） | – | 未実装（lint は無い） |
+| 安定版凍結判定 | 数える | 未実装（`lint-rubric-violation.py` に凍結の判定は無い。数え方は `run-skill-rubric-governance/references/governance-board.md`） | – | 未実装 |
+| 自動 rollback（計画） | 回す | `rollback-to-stable.py`（巻き戻しの計画を出すだけで、書き込まない） | `PostToolUse`（計画。未実装で、hook にはつないでいない） | 未実装 |
 
-**人手判断は 5 箇所のみ**（提案 / リスク評価 / 期間確定 / merge / versions 追記）。残りは決定論または LLM 採点の集計。
+**人手判断は 5 箇所のみ**（提案 / リスク評価 / 期間確定 / merge / versions 追記）。残りは決定論または LLM 採点の集計。ただし「未実装」の欄を自動化するまでは、人の欄に「回す」「数える」と書いたステップも、`run-skill-rubric-governance` の手順で人が script を回すか数える。script の置き場は §2 の図の下に書いた（`write-eval-log.py` と `rollback-to-stable.py` は `plugins/skill-governance-automation/scripts/`）。
 
 ---
 ## 10. アンチパターン集（Goodhart（評価基準を都合よく歪める罠） / 濫用防止）
 
 | # | アンチパターン | 症状 | 対策 |
 |---|---|---|---|
-| 1 | 緩和ばかりの連発 | minor bump 連続で違反率が機械的に下がる | tooling 役が直近 3 release の tighten/loosen 比率を `impact-report.json` に出し、loosen 連続を第三者レビュアーが拒否 |
+| 1 | 緩和ばかりの連発 | minor bump 連続で違反率が機械的に下がる | tooling 役が直近 3 release の tighten/loosen 比率を影響評価の結果に添え（`diff-rubric-impact.py` は比率を出さないので、governance log から数える）、loosen 連続を第三者レビュアーが拒否 |
 | 2 | 提案者=承認者 | 自己承認で Goodhart（評価基準を都合よく歪める罠） | CI で PR author と approver の重複を lint、重複時 merge block |
-| 3 | 猶予ゼロ強行 | `newly_failing>0` なのに即発効 | `diff-rubric-impact.py` exit 1 で CI fail |
+| 3 | 猶予ゼロ強行 | `would_flip>0` なのに即発効 | `diff-rubric-impact.py` の `would_flip`・`required_bump` を承認レビューで確かめ、猶予期間の無い発効を拒否する（道具は exit 0 で数字を出すだけで、CI を止めない） |
 | 4 | rubric を generator/evaluator が改変 | 評価対象が基準を書換 | permissions で `references/rubric.json` への Write/Edit を deny |
 | 5 | trigger なし「気分」改正 | `manual` 連発 | 四半期 1 件まで（governance-params） |
 | 6 | eval-log の選択削除 | 不利な release log 削除で違反率を下げる | append-only、削除 PR を CI block |
@@ -415,10 +426,12 @@ CHANGELOG.md にも同 release エントリを追加する。
 | 9 | 安定版の個別解除 | templates だけ更新、rubric 据え置き | templates + rubric（評価基準）は同時凍結・同時解除のみ（23 章踏襲）、個別操作 CI block |
 | 10 | 猶予中 warning の無視蓄積 | 発効日に大量 fail | warning 件数を `eval-log/grace-warnings.csv` に記録、発効 2 週間前に Hook で再通知 |
 
+この表の対策のうち、CI で止めるもの（#2・#6・#9）、四半期の件数制限（#5）、`eval-log/grace-warnings.csv` と発効前の Hook 再通知（#10）は未実装（計画）で、今は承認レビューで確かめる。#4 は permissions ではなく、`.claude/settings.json` の PreToolUse に登録した `scripts/hook-guard-rubric.py`（`ALLOW_RUBRIC_EDIT=1` が無ければ canonical rubric の編集を止める）で実装している。
+
 ---
 ## 11. パラメータ正本（governance-params.json）
 
-`xl-skills/references/governance-params.json`:
+repo root の `references/governance-params.json`（`rollback-to-stable.py --params` の既定。作業ディレクトリ基準）。このファイルはまだ無い。ひな形は同じディレクトリの `references/governance-params.json.example` で、作るときはこれを写す。無いあいだ `rollback-to-stable.py` は警告を出して既定の ceiling 0.05 を使う。形（`solo_operator_mode` の条件文と `note` は example を参照）:
 
 ```json
 {
@@ -431,18 +444,20 @@ CHANGELOG.md にも同 release エントリを追加する。
     "violation_rate_ceiling": 0.05
   },
   "grace_period": {
-    "min_releases": 1,
-    "min_days": 30
+    "min_days": 14
   },
   "limits": {
     "manual_proposals_per_quarter": 1,
     "major_bump_items_per_pr": 3
   },
-  "solo_operator_mode": false
+  "solo_operator_mode": {
+    "enabled": true,
+    "self_approval_conditions": ["..."]
+  }
 }
 ```
 
-数値正本はここに集約し、23 章のデフォルト値とこのファイルを一致させて二重管理を避ける。
+数値正本はここに集約し、23 章のデフォルト値とこのファイルを一致させて二重管理を避ける。ただし猶予日数の正本は `run-skill-rubric-governance` の Key Rule 3（`references/version-rules.md`）で、`grace_period.min_days` はそこから major の最低日数を写した値である（major>=14d / minor>=7d / patch 0d。緩和の minor で would_flip が 0 であり、承認者が緩和の根拠を確かめたものは、理由を記録して 0d にできる）。Key Rule 3 が決めるのは日数だけで、release の回数の下限は決めていない。そのため `grace_period` には `min_days` だけを置き、release の回数のキーは置かない（2本の `governance-params.json.example` も同じ形）。
 
 ---
 ## 12. 他章との関係マップ
@@ -461,14 +476,14 @@ CHANGELOG.md にも同 release エントリを追加する。
 ---
 ## 13. solo_operator_mode（A1/C1, CD-009 パッチ）
 
-1人運用環境では提案者と承認者の兼任が構造上不可避になる。`references/governance-params.json` に `"solo_operator_mode": true` を設定し、下記3条件をすべて満たす場合に限り自己承認を許可する。
+1人運用環境では提案者と承認者の兼任が構造上不可避になる。repo root の `references/governance-params.json`（まだ無い。§11）で `solo_operator_mode.enabled` を `true` にし、下記3条件をすべて満たす場合に限り自己承認を許可する。
 
 ### 自己承認条件
 
 | # | 条件 | 確認方法 |
 |---|---|---|
-| 1 | 安定版凍結済み | `lint-rubric-violation.py` が freeze 条件（連続10 release × 5%以下）を報告 |
-| 2 | newly_failing=0 | `diff-rubric-impact.py` 出力の `newly_failing_count == 0` |
+| 1 | 安定版凍結済み | freeze 条件（連続10 run × 5%以下）を人が score ログから数えて evidence に書く（`lint-rubric-violation.py` に freeze の判定は無い。数え方は `run-skill-rubric-governance/references/governance-board.md`） |
+| 2 | would_flip=0 | `diff-rubric-impact.py` 出力の `would_flip == 0` |
 | 3 | LLM-reviewer pass | `run-skill-rubric-governance` Step2 影響評価で problem=none |
 
 ### solo_operator_mode 有効中の制約
@@ -479,7 +494,7 @@ CHANGELOG.md にも同 release エントリを追加する。
 
 ### 解除条件
 
-- 組織メンバー追加時は `solo_operator_mode: false` に戻し、通常の4ロールに移行する
+- 組織メンバー追加時は `solo_operator_mode.enabled` を `false` に戻し、通常の4ロールに移行する
 - TODO(human): メンバー追加時の解除手順を PR checklist に追加すること
 
 ---
@@ -492,7 +507,7 @@ CHANGELOG.md にも同 release エントリを追加する。
 | フェーズ | 前提条件 | 確認方法 |
 |---|---|---|
 | MVP (案A) → 昇格版 (案B) | evaluator が2つ以上存在 OR rubric の独立 versioning が必要 | スキルディレクトリ数 + 運用判断 |
-| 昇格版 (案B) 安定 | 連続3 release で violation_rate <= 5% | `lint-rubric-violation.py` freeze モード |
+| 昇格版 (案B) 安定 | 連続3 release で violation_rate <= 5% | 人が score ログから数える（`lint-rubric-violation.py` の freeze モードは未実装（計画）） |
 | 案C/D/E 検討 | 社外配布・機械契約中心化 | TODO(human): 要件が具体化した時点で再検討 |
 
 ### 昇格禁止条件

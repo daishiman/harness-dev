@@ -9,7 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -49,10 +49,10 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
-  - ../../scripts/publish-staged-files.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
+  - ../../scripts/guard-staged-publication.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
   - scripts/run-youtube-sync-oneshot.py
   - scripts/normalized_source_path.py
@@ -228,7 +228,8 @@ Task のルート入力は `../../references/agent-root-contract.md` が正本�
 完了前に共通アンカー契約を Read し、host が示す project_root を起点に frontmatter の進捗/中間ファイルを絶対パスへ解決して実行する。共通検査は本文・グラフの検査を代行しない。
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "{resolved_progress_path}" "{resolved_intermediate_path}"
 ```
 
 終了コード0のみアンカー合格。1/2 は停止して親へ原因と open_issues を返し、完了扱いしない。

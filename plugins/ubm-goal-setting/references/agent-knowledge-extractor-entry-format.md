@@ -145,11 +145,13 @@ background: "活動量を積み上げているのに成果が出ない経営者�
   },
   "source": {
     "file": "{target_files の file_path（registry のキー）をそのまま。YouTube 取り込みで正規化したソースはファイル名に [id-<16進>] が付く}",
-    "type": "{youtube/camp/monthly-fb/material/seminar}",
+    "type": "{youtube/camp/teaching-material/monthly-feedback/seminar/event/other}",
     "date": "{YYYY-MM-DD}",
     "section": "{セクション名}"
   }
 }
 ```
+
+**source の書き方**: `source` はエントリごとに1つの object で、`file` と `type` を必ず持つ。`type` には target_files の行の `source_type`（detect-knowledge-updates.py のラベル）をそのまま書く。値の正本は `knowledge/schema.json` の `source.type` の enum で、テンプレートの7値はどれもその中にある（enum の残りの値は過去に取り込んだエントリのもので、この役は新しく選ばない）。略称（`monthly-fb` など）や enum に無い値は、格納の確定（`references/agent-knowledge-extractor-steps.md` の Step 3 の最後）で `validate-knowledge-entry-source.py` が止める。
 
 **品質チェック**: `background`・`intent` が空の場合は抽出として不完全。ソースに情報が見つからない場合でも「この文脈では読み取れなかった」ではなく、前後の会話や北原さんの考え方から推論して記述する。

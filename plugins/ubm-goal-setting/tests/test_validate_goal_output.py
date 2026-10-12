@@ -805,6 +805,67 @@ def test_not_doing_table_with_short_separator_is_not_counted(tmp_path: Path):
     assert "「やらないこと」が2項目です" in r.stdout
 
 
+def test_not_doing_separator_without_trailing_pipe_is_not_counted(tmp_path: Path):
+    # GFM では区切り行の末尾の `|` を省ける。`|---|---` を区切り行と見ないと、見出し行と
+    # 区切り行もデータ行と数え、1項目しか無い表を3項目として通してしまう（偽 PASS）。
+    table = "\n".join([
+        "| やらないこと | 理由 |", "|---|---",
+        "| 交流会に参加しない | 時間 |",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 1, r.stdout
+    assert "「やらないこと」が1項目です" in r.stdout
+
+
+@pytest.mark.parametrize("separator, row_end", [("---|---|", " |"), ("---|---", "")])
+def test_not_doing_table_without_leading_pipe_counts_three_rows(
+    tmp_path: Path, separator: str, row_end: str
+):
+    # GFM では行の先頭の `|` も省ける。先頭が `|` の行だけを表の行と見ると、データが3行あっても
+    # 0項目と数えて落としてしまう（偽 FAIL）。
+    table = "\n".join([
+        f"やらないこと | 理由{row_end}", separator,
+        f"交流会に参加しない | 時間{row_end}",
+        f"無料の勉強会をやらない | 集中{row_end}",
+        f"新しい商品を作らない | 集中{row_end}",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 0, r.stdout
+    assert "「やらないこと」3項目" in r.stdout
+
+
+def test_not_doing_table_cells_starting_with_hash_are_counted(tmp_path: Path):
+    # 先頭の `|` を省いた表で、セルが `#1` のように `#` で始まっても見出しではない。
+    # `#` 1文字で表を閉じると、3行あっても0項目と数えて落としてしまう（偽 FAIL）。
+    table = "\n".join([
+        "番号と内容 | 理由", "---|---",
+        "#1 交流会に参加しない | 時間",
+        "#2 無料の勉強会をやらない | 集中",
+        "#3 新しい商品を作らない | 集中",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 0, r.stdout
+    assert "「やらないこと」3項目" in r.stdout
+
+
+def test_not_doing_heading_after_table_closes_it(tmp_path: Path):
+    # `### ` の見出しは `|` を含んでも表の行ではない。表を閉じて見出しの項目として1つだけ数える
+    # （表の行としても数えると 4 になる）。
+    table = "\n".join([
+        "やらないこと | 理由", "---|---",
+        "交流会に参加しない | 時間",
+        "新しい商品を作らない | 集中",
+        "### 無料の勉強会をやらない | 集中",
+    ])
+    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", {NOT_DOING: table}))
+    r = run(p, "quarterly")
+    assert r.returncode == 0, r.stdout
+    assert "「やらないこと」3項目" in r.stdout
+
+
 # --- 1年目標（yearly）が通る形 ---
 
 YEARLY_NAME = "UBM - 4-年報（１年） 2026-10-01〜2027-09-30.md"
@@ -843,3 +904,14 @@ def test_yearly_with_project_tasks_fails(tmp_path: Path):
     r = run(p, "yearly")
     assert r.returncode == 1, r.stdout
     assert "1年目標にプロジェクト別タスクが含まれています" in r.stdout
+
+
+def test_yearly_with_utf8_bom_passes(tmp_path: Path):
+    # BOM 付き UTF-8 でも1行目のタイトル見出しを読めること。BOM が残ると「## 【1年の目標】」が
+    # 行頭に来ず、必須タイトル見出しが無いと誤って FAIL する（validate-cross-level.py は通す）。
+    p = tmp_path / YEARLY_NAME
+    p.write_text(yearly_text(), encoding="utf-8-sig")
+    assert p.read_bytes().startswith(b"\xef\xbb\xbf")
+    r = run(p, "yearly")
+    assert r.returncode == 0, r.stdout
+    assert "STATUS: PASS" in r.stdout

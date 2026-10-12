@@ -9,7 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -30,10 +30,10 @@ subagent_refs:
 schema_refs:
   - references/output-format.md
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
-  - ../../scripts/publish-staged-files.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
+  - ../../scripts/guard-staged-publication.py
   - scripts/build-journal-context.py
   - scripts/validate-journal-output.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
@@ -179,7 +179,7 @@ python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute -
 
 `../../references/guarded-publication-contract.md` をReadして適用する。書き手のWriteは一時下書きだけとし、正式保存・archive移動・Daily更新・ナレッジ/台帳/グラフの更新は親がユーザー承認とcommand-bound受領書を揃えた中央guard `execute`だけで実行する。保存可否booleanだけで直接Write/Editしない。
 
-`../../references/knowledge-retrieval-contract.md` をReadし、同契約の入力表に従って決定論の重み付き検索→候補の意味選択→親による実利用IDと取得済みユーザー反応の記録を実行する。検索結果を `knowledge_candidates` として担当役へ渡し、返された実使用を実際の出力と照合する。
+`../../references/knowledge-retrieval-contract.md` をReadし、同契約の入力表に従って決定論の重み付き検索→候補の意味選択→親による実利用IDと取得済みユーザー反応の記録を実行する。journal では検索・意味選択・実利用の記録をすべて親が Phase1-3 の対話の中で持つ。`journal-composer` は整形だけを担い、`knowledge_candidates` を受け取らず、検索も実利用の返却もしない。
 
 ## 全体の流れ
 
@@ -208,6 +208,10 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/bu
   ここを飛ばすと利用者の既存ファイルが消える。
   - `new`: そのまま新規作成して進む。
   - `regenerate`: 同じ日のジャーナルを作り直す。番号を維持し、更新であることを伝えてから進む。
+    このとき対話を始める前に、既存ファイルの絶対パスを渡して
+    `python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "<既存ファイルの絶対パス>"`
+    を一度実行し、出た値を正式保存の manifest の `old_sha256` に使う。保存の直前に取り直さない
+    （対話中に Obsidian などで編集されていれば、guard が競合として止める）。
   - `blocked`: **Write せず停止する。** 対象ファイルに別日の内容が入っている。
     どうするか（別名で作る／既存を退避する／中止する）を必ずユーザーへ確認してから動く。
 
@@ -279,6 +283,8 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
   `02_Configs/Templates/Daily.md`（完全一致）への書き込みを許し、それ以外の `02_Configs/` 配下は止める。
   一方、本スキルが書くのは `02_Configs/Daily/{YYYY-MM-DD}.md` だけで、`Templates/Daily.md` は書かない
   （それを更新するのは `run-ubm-goal-setting` の Phase6）。この線引きはフックではなく本スキルの規則が守る。
+  なお正式保存は中央 guard の `execute`（Bash）だけで行い、Write/Edit を使わない。フックは Daily への直接の
+  Write を許すので、「直接 Write しない」という禁則（正式保存の実行境界）をフックは守らない。守るのは本スキルの規則である。
 - **`UBM_VAULT_ROOT` 未設定**: Phase0 が終了コード 2 で終わる。vault のパスをユーザーに確認してから再実行する。
   Phase0 の終了コード 2 は「引数不正・vault 解決不能・`Daily` ディレクトリ不在・daily-habits.json 破損」の総称なので、
   標準エラー出力の 1 行目を必ず読んでから対処すること。

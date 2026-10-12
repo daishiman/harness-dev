@@ -385,6 +385,18 @@ def test_main_skills_dir_not_a_dir_returns_2(monkeypatch, tmp_path, capsys):
     assert "not a directory" in capsys.readouterr().err
 
 
+def test_main_skills_dir_zero_scanned_returns_2(monkeypatch, tmp_path, capsys):
+    # 直下に */SKILL.md が無い (SKILL.md が 1 段深い) → 走査 0 件の空振りを合格にしない
+    nested = tmp_path / "skills" / "plugin-a" / "skills" / "run-a"
+    nested.mkdir(parents=True)
+    (nested / "SKILL.md").write_text("---\nname: run-a\n---\n", encoding="utf-8")
+    rc = _run_main(monkeypatch, "--skills-dir", str(tmp_path / "skills"))
+    assert rc == 2
+    captured = capsys.readouterr()
+    assert "no SKILL.md scanned" in captured.err
+    assert captured.out == ""
+
+
 def test_main_skills_dir_ok_returns_0(monkeypatch, tmp_path, capsys):
     skills = tmp_path / "skills"
     s1 = skills / "run-a"
@@ -454,16 +466,26 @@ def _ref_repo(tmp_path, ref_location: str):
 
 
 @pytest.mark.parametrize("ref_location", [
-    "plugins/p/skills",          # 同じ plugin の skills/ (guide-doc-generator の形)
-    "plugins/q/skills",          # 別の plugin の skills/
+    "plugins/p/skills",               # 同じ plugin の skills/ (guide-doc-generator の形)
+    "plugins/harness-creator/skills",  # 共有 skill の正本
     ".claude/skills",
 ])
-def test_check_refs_exist_finds_ref_skill_in_any_skills_root(tmp_path, ref_location):
-    # 以前は plugins/harness-creator/skills と .claude/skills だけを探し、
-    # 同じ plugin に実在する ref skill を MISSING_REF として誤って FAIL にしていた
+def test_check_refs_exist_finds_ref_skill_in_allowed_skills_roots(tmp_path, ref_location):
+    # ref-* の解決先は harness-creator/skills、.claude/skills、参照元と同じ plugin の skills/ の3つ。
+    # 同じ plugin に実在する ref skill を MISSING_REF にしない (以前は兄弟を探さず誤って FAIL にしていた)
     skill = _ref_repo(tmp_path, ref_location)
     fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-y\n---\n")
     assert MOD.check_refs_exist(fm, skill) == []
+
+
+def test_check_refs_exist_rejects_ref_skill_only_in_another_plugin(tmp_path):
+    # install された plugin が持つのは自分の skills/ だけ。別の plugin にだけある ref は
+    # 配布先で参照が切れるので、「どこかの plugin にあれば通る」にしない
+    skill = _ref_repo(tmp_path, "plugins/q/skills")
+    fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-y\n---\n")
+    errs = MOD.check_refs_exist(fm, skill)
+    assert len(errs) == 1
+    assert errs[0].startswith("MISSING_REF: rubric_refs 'ref-y'")
 
 
 def test_check_refs_exist_still_reports_absent_ref_skill(tmp_path):

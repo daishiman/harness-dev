@@ -255,7 +255,7 @@ score >= 80 かつ high=0 で完了。
     "scripts": [
       {
         "path": "scripts/<script-name>.py",
-        "type": "lint|validate|format|render|extract|diff|guard|build|adapter",
+        "type": "lint|validate|format|render|extract|diff|guard|build|sync|install|record|manage|migrate|adapter",
         "allowed_contexts": ["C", "E"],
         "frontmatter_status": "PASS|PENDING_RENAME|EXCEPTION|N/A"
       }
@@ -267,7 +267,7 @@ score >= 80 かつ high=0 で完了。
     "proposal_required": "yes|no|N/A",
     "impact_assessment": "impact-report.json|N/A reason",
     "newly_failing_count": 0,
-    "grace_period": "min 1 release / 30 days when newly_failing_count > 0",
+    "grace_period": "major>=14d / minor>=7d / patch 0d (run-skill-rubric-governance Key Rule 3; a relaxing minor with would_flip 0 may be 0d with the reason logged)",
     "roles": {
       "proposer": "<owner or N/A>",
       "reviewer": "<different owner or N/A>",

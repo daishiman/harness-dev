@@ -9,7 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -49,10 +49,10 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
-  - ../../scripts/publish-staged-files.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
+  - ../../scripts/guard-staged-publication.py
   - scripts/detect-knowledge-updates.py
   - scripts/check-knowledge-split.py
   - scripts/extract-ready-set-from-checklist.py
@@ -60,6 +60,7 @@ script_refs:
   - scripts/extract-capability-dependency-graph.py
   - scripts/build-capability-graph-knowledge-entry.py
   - scripts/validate-knowledge-sync-task-graph.py
+  - scripts/validate-knowledge-entry-source.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
   - ../../scripts/validate-knowledge-graph.py
 domain: ubm-goal-setting
@@ -242,7 +243,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scr
 - **必須フィールド**: 各エントリに `content`/`background`/`intent`/`root_cause`/`expected_outcome` などを持たせる（`schema.json` に従う）。引用は北原さんの原文を正確に抜き出す（要約ではなく引用）。分類はソースの種類ではなく、**内容の種類**で行う。
 - **命名規則（厳守）**: `{category}-{subtopic}.json`。`{subtopic}` は内容を英語で表す（relationship/organization/0to1 など）。**連番 `-1`/`-2`/`-a`/`-b` は絶対禁止**（ファイル名だけで、誰向けの内容かが分かるようにする）。
 - **分割基準は二層**: 25エントリを超えたら、意味のまとまりでの分割を検討するきっかけにする。500行を超えたかどうかは、`check-knowledge-split.py` が肥大を防ぐガードとして機械的に調べる。両者がぶつかるときは、25エントリの基準でサブテーマを設計し、500行のガードを必ず解消する。
-- **登録簿の `file_hash`**: Bash の md5 で求めた32文字のハッシュを記録する。日付の文字列や偽の値を使うのは禁止。`extracted_entry_ids` を `null` にするのは禁止（次に `MODIFIED` を検知したときの削除に使う）。
+- **登録簿の `file_hash`**: `detect-knowledge-updates.py` の出力行（`target_files` の `{STATUS}|{source_type}|{file_hash}|{file_path}`）にある32文字の MD5 をそのまま記録し、計算し直さない（正本は `knowledge-extractor` の Step 4）。日付の文字列や偽の値を使うのは禁止。`extracted_entry_ids` を `null` にするのは禁止（次に `MODIFIED` を検知したときの削除に使う）。
 - **`MODIFIED` の処理**: 登録簿の `extracted_entry_ids` をたどって既存のエントリを削除 → 全件を再抽出 → 登録簿を上書き（Case A/B は `knowledge-extractor` の Step U-1〜U-4 を正本とする）。
 - **旧形式の `null` の移行**: 初期データの登録簿にある `extracted_entry_ids: null` の7件（`_note: legacy`）は、初めて `MODIFIED` を検知したときに、そのソース由来のエントリをすべて削除 → 再抽出して `extracted_entry_ids` を埋め直す（過去分の埋め戻し）。それ以降は `null` の禁止を適用する。
 - **途中で失敗したときの再開**: 最大20ファイルは、並列のトランザクションにせず、1ソースずつ処理する。ソースごとに `knowledge/*.json` → ルーターの再集計 → 冪等キー付きの `sync-log.jsonl` → 登録簿の順に確定し、registry の `(file_path,file_hash,status=processed)` を唯一の commit point（確定点）とする。登録簿の確定前に失敗したら同じソースを再実行し、`content`/`source` の重複検査と `sync-log.jsonl` のキーで冪等に収束させる。確定したソースは、検知の段階（`detect-knowledge-updates.py`）が選び直さない。確定していないソースを残したまま次へ進まない。
@@ -257,7 +258,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scr
 ## 関連資料
 
 - **エージェント**: `knowledge-extractor`（6カテゴリへの分類・Rule A-F・ルーターと登録簿の更新）/ `knowledge-relation-extractor`（読み取り専用で候補の辺を作る）。どちらもプラグイン直下の `agents/` にある。
-- **スクリプト**: スキル直下には、差分の検知・分割・実行できる項目の計算・自己反映・依存グラフ・`task-graph` の実行記録の検査のスクリプトがある。プラグイン直下には `validate-knowledge-graph.py` / `validate-inline-goal-seek-anchor.py` がある。実際のパスの正本は、フロントマターの `script_refs` とする。
+- **スクリプト**: スキル直下には、差分の検知・分割・実行できる項目の計算・自己反映・依存グラフ・`task-graph` の実行記録の検査と、格納したエントリの `source` の検査（`knowledge-extractor` の格納の確定で呼ぶ）のスクリプトがある。プラグイン直下には `validate-knowledge-graph.py` / `validate-inline-goal-seek-anchor.py` がある。実際のパスの正本は、フロントマターの `script_refs` とする。
 - **参照資料**: `references/knowledge-sources.md`（取得方法・優先順位）/ `references/knowledge-design-principles.md`（記録対象・必須フィールド・命名規則）。
 - **付属資料**: `assets/kitahara-principles-db.md`（北原さんの原則の DB。新しい原則を見つけたときに追記する、書き換えてよい L3 のアセット）。
 - **ナレッジ**: プラグイン直下の `knowledge/`（`schema.json`/`router.json`/`registry.json`/`sync-log.jsonl` と、6カテゴリの `*.json`）。

@@ -12,8 +12,8 @@ Step A-1: router.json の routing_rules[カテゴリ名] を Read
 Step A-2: 各サブトピックファイルに対してスコアを計算
   score[ファイル名] = count(entry.tags ∩ routing_rule[ファイル名].tags)
   例:
-    action-guides-relationship.json → tags: ["外交","接点","フォロー","メッセージ",...] → score: 4
-    action-guides-content.json      → tags: ["発信","SNS","コンテンツ",...]           → score: 0
+    action-guides-relationship-networking.json → tags: ["外交","接点","フォロー","メッセージ",...] → score: 4
+    action-guides-content.json                 → tags: ["発信","SNS","コンテンツ",...]           → score: 0
 Step A-3: 最大スコアのファイルを格納先に決定
   タイ（同スコア）の場合: subcategory_counts が大きいファイルを優先
   全スコアが 0 の場合: default: true のファイルを使用
@@ -111,25 +111,25 @@ Step C-4: 3桁ゼロ埋めで統一 (PR-001 / PR-013 / PR-099 / PR-100)
   consultation-organization.json (26エントリ) を分析:
     - 採用・育成タグ: 19件 (73%) → "hiring" サブテーマが明確
     - 組織構造タグ:   7件 (27%)
-  → consultation-hiring.json を新設
+  → consultation-organization-hiring.json を新設（growth_rules.new_file_naming の {category}-{existing_topic}-{new_subtopic}.json）
      routing_rules に Rule B に従い tags を設定
      旧ファイルから該当エントリを移行
 ```
 
 ## Rule F: `mode` 別処理フロー
 
-`detect-knowledge-updates.py` の出力ステータス（`NEW`/`MODIFIED`）から `mode` を自動決定する。
+**入力の `mode` が正本で、出力ステータス（`NEW`/`MODIFIED`）より優先する**（`agent-knowledge-extractor-steps.md` の Step 0）。親は NEW→`new`、MODIFIED→`update` に分けて渡し、`--all` のときだけ `full` を渡す。`--all` では検知が全件を `NEW` として出すので、ステータスからは `full` を導けない。下の表のステータスからの導き方は、入力に `mode` が無いときだけ使う。
 
 | 入力ステータス | `mode` | 意味 |
 |-------------|------|------|
 | `NEW` | `new` | `registry.json` に存在しない新規ファイル |
 | `MODIFIED` | `update` | ハッシュが変化した更新ファイル |
-| `--all` オプション | `full` | 全ファイル強制再構築（通常は使用禁止） |
+| `--all` オプション | `full` | 全ファイル強制再構築（通常は使用禁止）。親が入力の `mode` で渡したときだけ |
 
 ### `mode: "new"` — 新規ファイル処理
 
 ファイル全体を読み込んでナレッジを抽出し、全エントリを JSON に追加する。
-重複チェック（同 `content` が既存なら `source` 追記のみ）を適用。
+重複チェック（同じ `content` が既にあれば新しいエントリを足さず、既存エントリとその `source` は変えない。`source` は単一の object。Step 3 の手順2）を適用。
 
 ### `mode: "update"` — 更新ファイルの上書き処理
 

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-governance-migration",
     "skill": "run-governance-migration",
-    "skill_md_sha256": "5405e885fd9142a1f11a11d83158e645bfedfb447dcb3d4489e1ac6bbad9c066"
+    "skill_md_sha256": "ed03757cafd2db805275cf92cc71fffc030da5c3fc81513b6c848f2578771bd0"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
+  "reviewed_at": "2026-10-11T13:50:36Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,13 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "version確認→help/dry-run/check→別承認後applyの直列migrationを inline で実行する宣言は責務と一致する。backup/rollback・部分適用を成功へ畳まない境界と scripts/migrate の参照も維持される。"
+      "source/target version と backup/rollback を確定するまで apply しない、help→dry-run→check の順で検証する、apply は承認後のみ、という段階の筋が明確で、部分適用を成功へ畳まない報告規則も保たれている。",
+      "本文の実行指示は python3 の migrate script に限られ、`Bash(python3 *)` への絞り込みと矛盾しない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low・smell・迷った例] SKILL.md:66、:72、:76 と criteria（L25・L29）は backup、rollback command、before/after digest、changed paths を求めているが、scripts/migrate/（audit.py、backfill-source-tier.py の --dry-run、to-brief.py）はいずれもそれらを出力しない。自然な手段は cp、shasum、git diff で、`Bash(python3 *)` の外になる。`python3 -c` で hashlib や shutil を使えば実現できるため dependency_break とはしない。直し方の案: digest と backup を作る python3 の手段（既存 script の引数か、新しい helper）を本文に明記する。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "現行全文、diff、composition、migrate scripts、criteriaをfresh review。runtime-profile/frontmatter/tree lintはexit 0。full combinator wiringの推奨warning 3件はexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "読んだもの: SKILL.md 全文と差分、scripts/migrate/ の audit.py、backfill-source-tier.py、to-brief.py。確かめたこと: 参照先はすべて実在する。python3 以外の実行ファイルを呼ぶ明示的な指示は無い。criteria: IN1（実在 migration を順に選び help/dry-run/check と digest を検証）と OUT1（changed paths と残件の報告）は本文の手順として満たされるが、digest と backup を作る手段は本文に書かれていない（smell 1件）。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。backup・digest・rollback を何で作るかも迷った例として記録した。incremental の focused review で、exhaustive の30思考法は実施していない。"
 }

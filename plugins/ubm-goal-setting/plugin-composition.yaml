@@ -6,7 +6,7 @@
 name: ubm-goal-setting
 description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。会話で作る日次ジャーナルと挑戦宣言と企画も同じ plugin で扱う。
 kind: plugin-composition
-version: 0.7.0
+version: 0.8.1
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
@@ -72,6 +72,7 @@ capabilities:
   - { kind: script, ref: skills/run-ubm-goal-setting/scripts/validate-goal-output.py,      tier: core }  # C01
   - { kind: script, ref: skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py, tier: core }  # C02
   - { kind: script, ref: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py,    tier: core }  # C03
+  - { kind: script, ref: skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py, tier: core }  # source.type の enum を格納の確定で止める (knowledge-extractor の Step 3)
 
   # === [2026-07-11 improvement-plan · component-inventory.json C01-C09] additive・非後退 ===
   # 2-source YouTube 全量/自動同期、根拠付き knowledge 依存グラフ、harness 実成果物グラフ、既存 goal-setting への consult を追加する。
@@ -97,13 +98,13 @@ capabilities:
   - { kind: script, ref: skills/run-ubm-journal/scripts/build-journal-context.py, tier: core }
   - { kind: script, ref: skills/run-ubm-journal/scripts/validate-journal-output.py, tier: core }
   - { kind: script, ref: scripts/validate-inline-goal-seek-anchor.py, tier: core }
-  - { kind: script, ref: scripts/evaluate-design-rubric.py, tier: ref }
+  - { kind: script, ref: scripts/validate-design-rubric.py, tier: ref }
 
-  - { kind: script, ref: scripts/publish-staged-files.py, tier: core }
+  - { kind: script, ref: scripts/guard-staged-publication.py, tier: core }
 
   - { kind: script, ref: skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py, tier: core }
-  - { kind: script, ref: scripts/search-knowledge.py, tier: core }
-  - { kind: script, ref: scripts/record-knowledge-usage.py, tier: core }
+  - { kind: script, ref: scripts/extract-knowledge-matches.py, tier: core }
+  - { kind: script, ref: scripts/build-knowledge-usage-log.py, tier: core }
 
 dependencies:
   # 主要 DAG。lint-dependency-direction.py で循環検出 (skill 間実行時 depends_on は張らない)。
@@ -114,6 +115,7 @@ dependencies:
   - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md,    type: reads }
   - { from: agents/output-formatter,   to: skills/run-ubm-goal-setting/scripts/validate-goal-output.py, type: calls }
   - { from: agents/knowledge-extractor, to: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py, type: calls }
+  - { from: agents/knowledge-extractor, to: skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py, type: calls }
   - { from: skills/run-ubm-goal-setting,   to: agents/info-collector,      type: calls }
   - { from: skills/run-ubm-goal-setting,   to: agents/goal-reviewer,       type: calls }
   - { from: skills/run-ubm-goal-setting,   to: agents/phase3-coordinator,  type: calls }
@@ -123,6 +125,7 @@ dependencies:
   # skill frontmatter script_ref ↔ calls edge の対応 (lint-plugin-composition check (e))
   - { from: skills/run-ubm-goal-setting,   to: skills/run-ubm-goal-setting/scripts/validate-goal-output.py, type: calls }
   - { from: skills/run-ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py, type: calls }
   - { from: skills/run-ubm-knowledge-sync, to: scripts/validate-knowledge-graph.py, type: calls }
   - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/youtube_provider.py, type: calls }
   - { from: commands/ubm-goal-setting,   to: skills/run-ubm-goal-setting,   type: calls }
@@ -192,32 +195,35 @@ dependencies:
 
   - { from: skills/run-ubm-challenge, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
 
-  - { from: skills/run-ubm-goal-setting, to: scripts/publish-staged-files.py, type: calls }
-  - { from: skills/run-ubm-journal, to: scripts/publish-staged-files.py, type: calls }
-  - { from: skills/run-ubm-challenge, to: scripts/publish-staged-files.py, type: calls }
-  - { from: skills/run-ubm-knowledge-sync, to: scripts/publish-staged-files.py, type: calls }
-  - { from: skills/run-ubm-youtube-ingest, to: scripts/publish-staged-files.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/guard-staged-publication.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/guard-staged-publication.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/guard-staged-publication.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/guard-staged-publication.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/guard-staged-publication.py, type: calls }
 
-  - { from: skills/run-ubm-goal-setting, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-goal-setting, to: scripts/record-knowledge-usage.py, type: calls }
-  - { from: skills/run-ubm-journal, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-journal, to: scripts/record-knowledge-usage.py, type: calls }
-  - { from: skills/run-ubm-challenge, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-challenge, to: scripts/record-knowledge-usage.py, type: calls }
-  - { from: skills/run-ubm-consult, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-consult, to: scripts/record-knowledge-usage.py, type: calls }
-  - { from: skills/run-ubm-knowledge-sync, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-knowledge-sync, to: scripts/record-knowledge-usage.py, type: calls }
-  - { from: skills/run-ubm-youtube-ingest, to: scripts/search-knowledge.py, type: calls }
-  - { from: skills/run-ubm-youtube-ingest, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/build-knowledge-usage-log.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/build-knowledge-usage-log.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/build-knowledge-usage-log.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/build-knowledge-usage-log.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/build-knowledge-usage-log.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/extract-knowledge-matches.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/build-knowledge-usage-log.py, type: calls }
 
   - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py, type: calls }
-  - { from: skills/run-ubm-challenge, to: scripts/evaluate-design-rubric.py, type: calls }
-  - { from: skills/run-ubm-consult, to: scripts/evaluate-design-rubric.py, type: calls }
-  - { from: skills/run-ubm-goal-setting, to: scripts/evaluate-design-rubric.py, type: calls }
-  - { from: skills/run-ubm-journal, to: scripts/evaluate-design-rubric.py, type: calls }
-  - { from: skills/run-ubm-knowledge-sync, to: scripts/evaluate-design-rubric.py, type: calls }
-  - { from: skills/run-ubm-youtube-ingest, to: scripts/evaluate-design-rubric.py, type: calls }
+
+  # 設計ルーブリック評価 (skill-governance-config の rubric-registry 経由で L0+L1 を合成) は
+  # 全 run-ubm-* が frontmatter script_refs で宣言しているので、対応する calls edge を持つ。
+  - { from: skills/run-ubm-challenge, to: scripts/validate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/validate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/validate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/validate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/validate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/validate-design-rubric.py, type: calls }
 
 external_dependencies:
   harness-creator:

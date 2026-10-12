@@ -1,0 +1,33 @@
+{
+  "label": "sync",
+  "retry_of": null,
+  "evaluator_agent_id": "af936cae12a6f1f55",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "(直接の原因ではない、契約上の隙間) plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json の C03-OUT1 にある task_args_template は --adapter-fixture と --repeat 2 を渡す。しかし SKILL.md の argument-hint ([--repo-root PATH] [--dry-run] [--resolve-conflicts PATH]) にも、どの script にもこの 2 つを読む箇所が無い。adapter に届く道は gh-bridge.py 59 行目の環境変数 DEV_GRAPH_GH だけで、これは plugin のどの .md にも書かれていない。fixture_contract も、adapter が答えるべき gh/GraphQL の op (ITEM_QUERY、clearProjectV2ItemFieldValue など) を決めていない。そのため planner の読取り query が増えたときに fixture の不足が見えず、今回の停止につながった。再現手順は次のとおり。(1) grep -rn 'adapter-fixture\\|--repeat' plugins/dev-graph --include=*.py --include=*.md の結果が 0 件になる。(2) fx で DEV_GRAPH_GH=tools/fake-gh.py を指定して diff-github-project-fields.py --repo-root fx を実行すると、'fake-gh: unsupported graphql query for this fixture' で rc=2 になる。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync/ws/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_tested_copy": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 1,
+    "occurrences": 2,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:11+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+      "transcript_sha256": "3758b7699459021bfc1e00ec7a457ede9ab86a98fba1a5ed25b7fe3752ed82ca"
+    },
+    "after": {
+      "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+      "transcript_sha256": "bf1a0d2d9b4ecf2cac1c41145c2982de279617f8b6882c5a6f6c8ed19370b1eb"
+    },
+    "backup": "audit/reverdict/run-dev-graph-sync/20261012T0708-pr85"
+  }
+}

@@ -60,7 +60,7 @@
 - `validate-notion-ready.py --check-api` (PATCH 前提の Notion 疎通検証。exit 0 なら API キー / トークン再質問禁止、exit 44 のみ `keychain-setup.md` を案内し停止)
 - `analyze_user_intent.py` (internal-analysis 再生成)
 - `render-intake-final.py` (正本再 render)
-- `intake_publish_pipeline.py --intake <intake.json> --manifest <notion-manifest.json> --revise --page-id` (Notion PATCH。`--intake` 必須。欠くと exit 2 で停止)
+- `intake_publish_pipeline.py --intake <intake.json> --manifest <notion-manifest.json> --revise --page-id` (Notion PATCH。`--intake` 必須。欠くと exit 2 で停止)。外部変更なので直接は実行せず、argv を SKILL.md の Canonical external mutation receipt flow (`preview` → 利用者の確認 → `authorize` → `execute`) に渡す
 - `update_question_bank.py --diff <question-bank-update.json> --hint <hint>` (question-bank 追記候補の dry-run。結果提示と別承認後だけ `--apply`)
 - AskUserQuestion (差分ヒアリング / Gate R)
 
@@ -103,7 +103,7 @@
 - [ ] analyze_user_intent.py を再実行し internal-analysis.json を更新した (非開示)
 - [ ] 差分プレビュー + 要約理解テキストを Gate R 直前に提示した
 - [ ] Gate R 判定 (apply/re-revise/cancel) を取得した
-- [ ] apply 時に render-intake-final.py → intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID> で PATCH を完了した
+- [ ] apply 時に render-intake-final.py で正本を再生成し、intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID> の argv を receipt flow の `execute` で実行して PATCH を完了した
 - [ ] PNG/mermaid 欠落時は旧版維持し rollback JSON を保存した
 - [ ] revision-log.jsonl に schemas/output.schema.json 準拠の 1 行を追記した
 - [ ] 「足りなかった質問」を `question-bank-update.json.questions[]` に記録し、`update_question_bank.py` dry-run 結果を提示した
@@ -154,4 +154,4 @@ revision-log.jsonl 追記後に以下を自己確認する。未達があれば�
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-引数 `{{hint}}` (+ optional `--dry-run`) を受け取り、`output/{{hint}}/` 配下の既存 4 ファイルをロードせよ。revision_no を確認し 5 を超えるなら exit 60。AskUserQuestion で対象章 / 変更内容 / 変更理由 (必要なら 5 軸再確認) を収集し、`analyze_user_intent.py` を再実行して `internal-analysis.json` を更新せよ (ユーザーには直接見せない)。差分プレビューと要約理解テキストを提示後、Gate R (apply / re-revise / cancel) を `AskUserQuestion` で取得。apply のとき `render-intake-final.py` → `intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID>` を実行し、成功したら `output/{{hint}}/revision-log.jsonl` に schemas/output.schema.json 準拠の 1 行を追記せよ。次に、今回足りなかった質問を `output/{{hint}}/question-bank-update.json` の `{session_id:"revision-<revision_no>",hint:"{{hint}}",questions:[...]}` に記録し、`update_question_bank.py --diff ... --hint {{hint}}` を dry-run せよ。結果を提示し、question-bank 変更の別承認が approve の場合だけ同命令を `--apply` 付きで実行せよ。decline の場合は `question-bank-update.json` へ `status:"skipped"` / `skip_reason:"question_bank_update_declined"` を記録し、Notion PATCH と revision-log を巻き戻さず P8 success / exit 0 で停止せよ。失敗時は rollback JSON を保存し、対応する exit code (2/44/51/60/61) を返却。出力は revision-log.jsonl の 1 行 JSON のみ、余計な前置き・後書き・思考過程出力は禁止。
+引数 `{{hint}}` (+ optional `--dry-run`) を受け取り、`output/{{hint}}/` 配下の既存 4 ファイルをロードせよ。revision_no を確認し 5 を超えるなら exit 60。AskUserQuestion で対象章 / 変更内容 / 変更理由 (必要なら 5 軸再確認) を収集し、`analyze_user_intent.py` を再実行して `internal-analysis.json` を更新せよ (ユーザーには直接見せない)。差分プレビューと要約理解テキストを提示後、Gate R (apply / re-revise / cancel) を `AskUserQuestion` で取得。apply のとき `render-intake-final.py` で正本を再生成せよ。Notion PATCH は直接実行せず、`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/intake_publish_pipeline.py` の解決済み absolute path と `--intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID>` を `<MUTATION_ARGV_JSON>` に組み、SKILL.md の Canonical external mutation receipt flow で実行せよ (`extract-plugin-root.py skill-governance-adapters` で guard root を1回だけ解決 → `preview` の出力を利用者へ提示 → `preview` が示した返答を利用者がそのまま返したときだけ確認とする → `authorize` → `execute`)。Gate R の apply はこの確認を兼ねない。resolver が非0 なら外部変更をせず `skill-governance-adapters` の install を案内して停止せよ。`execute` が成功したら `output/{{hint}}/revision-log.jsonl` に schemas/output.schema.json 準拠の 1 行を追記せよ。次に、今回足りなかった質問を `output/{{hint}}/question-bank-update.json` の `{session_id:"revision-<revision_no>",hint:"{{hint}}",questions:[...]}` に記録し、`update_question_bank.py --diff ... --hint {{hint}}` を dry-run せよ。結果を提示し、question-bank 変更の別承認が approve の場合だけ同命令を `--apply` 付きで実行せよ。decline の場合は `question-bank-update.json` へ `status:"skipped"` / `skip_reason:"question_bank_update_declined"` を記録し、Notion PATCH と revision-log を巻き戻さず P8 success / exit 0 で停止せよ。失敗時は rollback JSON を保存し、対応する exit code (2/44/51/60/61) を返却。出力は revision-log.jsonl の 1 行 JSON のみ、余計な前置き・後書き・思考過程出力は禁止。

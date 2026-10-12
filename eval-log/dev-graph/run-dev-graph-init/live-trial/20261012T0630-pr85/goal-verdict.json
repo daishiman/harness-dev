@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill を起動している。transcript L35 で Skill(dev-graph:run-dev-graph-init) を task.md と同じ引数 (--repo-root <RUN>/fx --hook-source plugin) で呼び、L36 で Launching skill、L37 で SKILL 本文がロードされた。Unknown skill にはなっていない。",
+    "責務 prompt を出力の前に読んでいる。L44 で R1-R5 の prompt 全文を読み (結果は L50)、L57 で references/prompt-common-layers.md を読んだ (L58)。どちらも最初の書込みである L76 の apply より前。",
+    "C24 を実行している。L63 で resolve-repo-context.py --mode write が exit 0 になり、L64 で repo_root と content_roots.repository が同じ fx を指す。repository_id は local:sha256:b8feade2…、selected_by は explicit --repo-root。",
+    "1 回目の init は正規の writer で作られている。L68/L74 の dry-run は status=preview、write_count=0、planned_changes=36。L76/L78 の apply は status=applied、write_count=36 で、6 root (issues/tasks/specs/architecture/features/docs)、.dev-graph/{config.json, state/graph.json, cache, locks}、templates 21 件、receipt init-20261011T213153215623Z.json ができた。",
+    "成果物を提示してから standard を記録している。L83-84 で 6 root の存在、JSON の parse-ok、config・graph・receipt の sha256 を出し、config の絶対 path・token・node ID の grep が 0 件だった。そのうえで L92 で eval-log/run-dev-graph-init-goal-spec.json に artifact_delivery の履歴と user_choice=standard (task.md の事前回答) を記録した。ただし提示は tool 出力だけで、「開き方」を文で示した箇所はない。",
+    "2 回目の init は noop で、利用者の編集を保った。L96 で .dev-graph/templates/task.md に編集を追記し docs/user-note.md を作ってから、同じ引数で build-init-scaffold.py を再実行した。L97 の結果は status=noop、planned_changes=0、write_count=0、created=[] で、migration_preview に task.md (local fd62c498…、plugin 5dc37581…) が入り、前後の sha256 の差分は空 (NO FILE CHANGES)。Skill tool の再起動ではなく正規 writer の再実行だが、task.md の「実行の意味」節が求める「同じ正規initをもう1回実行」に当たる。",
+    "C11 を通っている。L101/L107 で validate-graph-schema.py が exit 0、valid=true、violation_count=0。.dev-graph に絶対 path はなく、fx/.claude もない (plugin hook が既定、settings は変更 0)。",
+    "必須の Agent verifier を別 context で実際に起動している。L115 で dev-graph:dev-graph-integrity-auditor、L117 で general-purpose の R1-R5 verifier を起動した。subagent-transcripts/agent-a44bbe76fd4588bda.jsonl の L10-18 で validate-graph-schema と jsonschema の Draft2020-12 検証、realpath を実行している。agent-af38d6cad7b264416.jsonl の L12-24 では resolve --mode read、scaffold の --dry-run (planned_changes=0)、template 21 件の cmp を実行し、fx の前後 sha256 も一致した。L129 と L134 でどちらも PASS。起動は choice を記録した L92 の後なので、pre_choice_forbidden に反しない。",
+    "goal-seek を記録している。L137 で progress.json と intermediate.jsonl (必須 6 key) を書き、SKILL の検証 snippet が exit 0 (L143) になった。",
+    "自作の driver で成果を作っておらず、graph の writer は 1 つだけ。config・graph・templates・receipt はすべて build-init-scaffold.py が作った (receipt の created 一覧)。inline python が書いたのは eval-log の goal-seek 記録 (L92, L137) と、検証のために入れた利用者編集 (L96) だけ。graph.json の sha256 は 27ef0078… のまま最後まで変わっていない。",
+    "書込みは境界の内側に収まっている。collect/guard.jsonl の 25 件はすべて allow で deny は 0。書込み先は fx、wttrial/tmp ($TMPDIR)、workdir/out だけ。gh・bd・network・sandbox 解除の呼出しはない。status.json は L145 で workdir/out に 1 ファイルだけ書かれた (collect/out/status.json と同じ内容)。",
+    "fixture の最終状態を実測した。git -C fx status では .dev-graph の 25 file、docs/user-note.md、eval-log の 3 file が untracked。config.json の sha256 596acaaa… と graph.json の 27ef0078… は L84 の提示値と一致し、task.md は fd62c498… (編集が残っている)。receipt は 1 件だけ。github.enabled=false。.dev-graph に /private・/Users・/tmp・ghp_・PVT_ は見つからなかった (template 本文の単語 tokens がヒットするだけ)。",
+    "補足 (判定は変えない)。fx/eval-log/run-dev-graph-init-progress.json は OUT3 を PASS と自己申告しているが、repo A/B の試験はしていない。ただし OUT3 は本 scenario (C01-OUT1) の範囲外。guard.jsonl の 25 行目には DONE の後に agent a230e9ad5af770b11 の AskUserQuestion が残っているが、main と subagent のどちらの transcript にもない。完了後の付随の呼出しなので trial には影響しない。"
+  ],
+  "skill_defects": [
+    "run-dev-graph-init/SKILL.md の 148 行目 (目的・背景) は「初期化レポートにはgh CLI認証状態も含める」としているが、138 行目の Receipt 項目にも scripts/build-init-scaffold.py にも gh の認証状態を出す処理がない。再現手順: 素の git repo で build-init-scaffold.py --repo-root <repo> --hook-source plugin を実行し、.dev-graph/state/receipts/init-*.json を見る。gh 関連の key がない。",
+    "feedback_contract の OUT1 と SKILL.md 148 行目は「routing policy (小規模は flat、大規模だけ段階分割する hybrid policy) を初期化時に敷く」としている。しかし schemas/repo-config.schema.json の properties に routing や partition の項目がなく、build-init-scaffold.py も書かない。init 後に残るのは content_roots の kind と dir の対応だけ。再現手順: init 後の .dev-graph/config.json と repo-config.schema.json に routing や partition の key がないことを確かめる。"
+  ],
+  "evaluator_agent_id": "a9ce1fcca2d747787"
+}

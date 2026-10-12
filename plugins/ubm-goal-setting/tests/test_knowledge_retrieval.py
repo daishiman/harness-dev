@@ -18,8 +18,8 @@ def load(name):
     return module
 
 
-S = load("search-knowledge")
-U = load("record-knowledge-usage")
+S = load("extract-knowledge-matches")
+U = load("build-knowledge-usage-log")
 
 
 def write(path, data):
@@ -123,9 +123,25 @@ def test_size_entry_and_field_shape_bounds(corpus, monkeypatch):
 
 def test_cli_invalid_corpus_returns_2_without_stdout_or_traceback(corpus):
     (corpus / "principles-test.json").write_text("broken")
-    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", "組織"], text=True, capture_output=True)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/extract-knowledge-matches.py"), "--knowledge-dir", str(corpus), "--term", "組織"], text=True, capture_output=True)
     assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
     assert "error" in json.loads(result.stderr)
+
+
+@pytest.mark.parametrize("name, raw", [
+    ("router.json", b"{"),
+    ("principles-test.json", b"broken"),
+    ("consultation-test.json", b"\xff\xfe{}"),
+    ("principles-test.json", b"[" * 100000 + b"]" * 100000),
+])
+def test_unreadable_json_error_names_the_file(corpus, name, raw):
+    # 壊れた・UTF-8 でない・深すぎる JSON のエラーに、どのファイルかを入れる。無いと親は直す先を探せない。
+    (corpus / name).write_bytes(raw)
+    with pytest.raises(ValueError, match=rf"invalid JSON in {name}"):
+        S.search(corpus, ["組織"])
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/extract-knowledge-matches.py"), "--knowledge-dir", str(corpus), "--term", "組織"], text=True, capture_output=True)
+    assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
+    assert f"invalid JSON in {name}" in json.loads(result.stderr)["error"]
 
 
 def observation(used=None):
@@ -216,19 +232,19 @@ def test_usage_cli_rejects_foreign_used_id_without_mutation(corpus, tmp_path):
     usage = tmp_path / "usage.json"
     write(candidate, S.search(corpus, ["組織"]))
     write(usage, observation(["PR-999"]))
-    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/record-knowledge-usage.py"), "--project-root", str(tmp_path), "--entrypoint", "run-ubm-goal-setting", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/build-knowledge-usage-log.py"), "--project-root", str(tmp_path), "--entrypoint", "run-ubm-goal-setting", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True)
     assert result.returncode == 2 and "subset" in json.loads(result.stderr)["error"]
     assert not (tmp_path / "eval-log").exists()
 
 
 def test_actual_search_stdout_consumed_by_usage_cli_and_jsonl(corpus, tmp_path):
-    query = [sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", "組織", "--limit", "2"]
+    query = [sys.executable, str(PLUGIN / "scripts/extract-knowledge-matches.py"), "--knowledge-dir", str(corpus), "--term", "組織", "--limit", "2"]
     searched = subprocess.run(query, text=True, capture_output=True, check=True)
     candidate = tmp_path / "observed-search.json"
     candidate.write_text(searched.stdout)
     usage = tmp_path / "actual-use.json"
     write(usage, observation(["PR-002"]))
-    recorded = subprocess.run([sys.executable, str(PLUGIN / "scripts/record-knowledge-usage.py"), "--project-root", str(tmp_path), "--entrypoint", "run-ubm-journal", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True, check=True)
+    recorded = subprocess.run([sys.executable, str(PLUGIN / "scripts/build-knowledge-usage-log.py"), "--project-root", str(tmp_path), "--entrypoint", "run-ubm-journal", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True, check=True)
     receipt = json.loads(recorded.stdout)
     rows = [json.loads(row) for row in (tmp_path / U.LOG_RELATIVE).read_text().splitlines()]
     assert len(rows) == 1 and receipt["status"] == "recorded"
@@ -265,7 +281,7 @@ def test_boolean_field_error_names_file_entry_and_field(corpus):
     write(corpus / "consultation-test.json", data)
     with pytest.raises(ValueError, match=r"consultation-test\.json#entries\[id=CP-001\]\.advice"):
         S.search(corpus, ["資金"])
-    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", "資金"], text=True, capture_output=True)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/extract-knowledge-matches.py"), "--knowledge-dir", str(corpus), "--term", "資金"], text=True, capture_output=True)
     assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
     assert "consultation-test.json#entries[id=CP-001].advice" in json.loads(result.stderr)["error"]
 
@@ -283,7 +299,7 @@ def test_one_character_term_is_rejected(corpus, term):
     # 部分一致なので 1 字の語はほぼ全件に当たる。NFKC で 1 字になる語 (ｶﾞ → ガ) も同じ。
     with pytest.raises(ValueError, match="2..120"):
         S.search(corpus, [term])
-    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/search-knowledge.py"), "--knowledge-dir", str(corpus), "--term", term], text=True, capture_output=True)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/extract-knowledge-matches.py"), "--knowledge-dir", str(corpus), "--term", term], text=True, capture_output=True)
     assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
 
 
@@ -368,6 +384,6 @@ def test_usage_log_that_is_not_a_regular_file_exits_2(corpus, tmp_path):
     log = project / U.LOG_RELATIVE
     log.parent.mkdir(parents=True)
     os.mkfifo(log)
-    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/record-knowledge-usage.py"), "--project-root", str(project), "--entrypoint", "run-ubm-goal-setting", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True, timeout=30)
+    result = subprocess.run([sys.executable, str(PLUGIN / "scripts/build-knowledge-usage-log.py"), "--project-root", str(project), "--entrypoint", "run-ubm-goal-setting", "--search-result", str(candidate), "--usage", str(usage)], text=True, capture_output=True, timeout=30)
     assert result.returncode == 2 and not result.stdout and "Traceback" not in result.stderr
     assert "regular file" in json.loads(result.stderr)["error"]

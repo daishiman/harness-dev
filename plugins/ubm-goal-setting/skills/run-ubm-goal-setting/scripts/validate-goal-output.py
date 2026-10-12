@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-goal-output
-# version: 0.3.1
+# version: 0.3.3
 # purpose: 目標設定・振り返り対話の出力 Markdown を保存前に検証する決定論ゲート。
 #          未展開プレースホルダ/ファイル名日付パターン/全角数字/差分+-表記/種別別必須見出し/
 #          見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針 等を検査。
@@ -375,7 +375,7 @@ class Validator:
     def check_goal_section(self, pattern: str, label: str, mode: str) -> None:
         for start, body in self.sections_by_regex(pattern):
             if mode == "numeric":
-                table_hit = [l for l in body if re.match(r"^\|", l)]
+                table_hit = has_markdown_table(body)
                 subhead_hit = [l for l in body if re.match(r"^### ", l)]
                 if table_hit or subhead_hit:
                     self.fail(
@@ -393,7 +393,7 @@ class Validator:
                 if len(non_empty) > 1:
                     self.warn(f"売上系セクション「{label}」が複数行になっています（数値1つのみ推奨）")
             elif mode == "bullet":
-                table_hit = [l for l in body if re.match(r"^\|", l)]
+                table_hit = has_markdown_table(body)
                 if table_hit:
                     self.fail(f"「{label}」セクションに Markdown 表が含まれています（箇条書きのみ許可）")
 
@@ -1186,22 +1186,48 @@ class Validator:
 
 
 # GFM の区切り行はハイフン1個以上（`|--|`・`|:-:|` も区切り行）。3個以上に絞ると短い区切り行を
-# データ行と数え、表の行数が1つ多くなる。
-TABLE_SEPARATOR_RE = re.compile(r"^\|(?:\s*:?-+:?\s*\|)+\s*$")
+# データ行と数え、表の行数が1つ多くなる。GFM では行の両端の `|` も省ける（`|---|---`・`---|---|`・
+# `---|---` も区切り行）。両端を必須にすると、末尾の `|` が無い区切り行で見出し行と区切り行を
+# データ行と数え（偽 PASS）、先頭の `|` が無い表を0行と数える（偽 FAIL）。ただし `|` を1つも
+# 含まない `---` は区切り線（水平線）なので、先読みで `|` を1つ以上要求する。
+TABLE_SEPARATOR_RE = re.compile(r"^(?=[^|]*\|)\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*$")
+
+# 表の途中でも、ここに当たる行は別のブロック（箇条書き・見出し・引用）の始まりなので表を閉じる。
+# 見出しは `#`〜`######` の後に空白か行末が続く行だけ。`#1 交流会 | 時間` のように `#` で始まる
+# セルは見出しではないので、`#` 1文字で閉じると先頭の `|` を省いた表の行を数え落とす。
+_BLOCK_START_RE = re.compile(r"^\s*(?:[*+-]\s|・|#{1,6}(?:\s|$)|>)")
+
+
+def has_markdown_table(lines: list[str]) -> bool:
+    """`|` で始まる行か区切り行が1行でもあれば、節に表があるとみなす。
+
+    先頭の `|` を省いた表も区切り行は必ず持つので、区切り行の有無で拾える。
+    """
+    return any(line.startswith("|") or TABLE_SEPARATOR_RE.match(line) for line in lines)
 
 
 def count_table_data_rows(lines: list[str]) -> int:
     """表の行のうち、見出し行（区切り行の直前の行）と区切り行を除いた行数を返す。
 
     「表の行数 - 2」と決め打ちすると、区切り行の無い表や、表が2つある節で数がずれる。
+    区切り行の後に続く `|` を含む行は、先頭が `|` でなくても表の行として数える（GFM は
+    両端の `|` を省ける）。表は空行・`|` を含まない行・別のブロックの始まりで閉じる。
+    区切り行の無い `|` 始まりの行は、これまでどおり表の行として数える。
     """
     count = 0
+    in_table = False
     for i, line in enumerate(lines):
-        if not line.startswith("|") or TABLE_SEPARATOR_RE.match(line):
+        if TABLE_SEPARATOR_RE.match(line):
+            in_table = True
             continue
         if i + 1 < len(lines) and TABLE_SEPARATOR_RE.match(lines[i + 1]):
+            continue  # 見出し行
+        if in_table and "|" in line and not _BLOCK_START_RE.match(line):
+            count += 1
             continue
-        count += 1
+        in_table = False
+        if line.startswith("|"):
+            count += 1
     return count
 
 
@@ -1242,12 +1268,16 @@ def main(argv: list[str]) -> int:
 
 
 def read_input(path: Path, flag: str) -> str | None:
-    """入力ファイルを UTF-8 で読む。読めなければ stderr に理由を出して None を返す。"""
+    """入力ファイルを UTF-8 で読む。読めなければ stderr に理由を出して None を返す。
+
+    utf-8-sig で開いて先頭の BOM を外す。BOM が残ると1行目のタイトル見出しが `## ` で始まらず、
+    必須タイトル見出しが無いと誤って FAIL する（validate-cross-level.py は BOM 付きでも通る）。
+    """
     if not path.is_file():
         print(f"ERROR: {flag} のファイルが見つかりません（またはファイルでない）: {path}", file=sys.stderr)
         return None
     try:
-        return path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeDecodeError) as exc:
         print(f"ERROR: {flag} のファイルを UTF-8 で読めません: {path}: {type(exc).__name__}", file=sys.stderr)
         return None

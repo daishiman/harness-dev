@@ -17,7 +17,7 @@
 
 ### 1.1 不変ルール
 - `確定` セルの状態を動かせるのは `action=reopen` (要 `reason` と `reopened_at`) だけ。
-- `reopened_at` は `date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を渡す。未来値は writer が拒否する。
+- `reopened_at` は `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'` の実測値を渡す。未来値は writer が拒否する。
   時刻が無いと「差し替え後の主根拠がこの reopen より後に取り直された回答か」を検査できず、
   先に確定を壊してから既存の回答を主根拠に流用した場合と正当な取り直しが同じ見た目になる。
 - reopen 非経由の `確定`→`未収集`/`対象外` 直接変更は writer が `TransitionError` で拒否する (C11 hook も遮断)。
@@ -59,7 +59,8 @@
 | neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 
 ### 3.2 外部ツール
-- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>","reopened_at":"<date -u +%Y-%m-%dT%H:%M:%SZ の実測値>"}'`
+- `Bash`: 時刻の実測値 `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'`
+- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>","reopened_at":"<上で取った実測値>"}'`
 
 ## Layer 4: 共通ポリシー
 

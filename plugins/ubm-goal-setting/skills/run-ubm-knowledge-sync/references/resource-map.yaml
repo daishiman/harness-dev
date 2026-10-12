@@ -1,8 +1,13 @@
-version: 1
-read_when:
-  - file: references/knowledge-sources.md
-    when: ナレッジソースの取得方法・優先順位・更新検知と全件再構築の手順を確認するとき
-  - file: references/knowledge-design-principles.md
-    when: ナレッジの記録対象・必須フィールド・命名規則を確認するとき
-  - file: references/rubric.json
-    when: UBM の L1 rubric (rubric-registry の domain ubm-goal-setting に登録) を確認するとき
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-ubm-knowledge-sync の段階的開示（Progressive Disclosure）の索引。
+# references/* はナレッジ差分同期の検知・抽出・格納と、抽出カードの採点が参照する正本文書。
+resources:
+  - file: knowledge-design-principles.md
+    topic: ナレッジデータ設計方針（記録するのは北原さんの知恵の構造で相談者の個人情報ではない核心原則・必須フィールド7種の書き方・サブトピックファイルの命名ルールと6カテゴリの現行一覧・同期コマンドの引数）
+    read_when: knowledge/*.json へカードを書くとき / 格納先ファイルを router.json 経由で決めるとき (最初に読む)
+  - file: knowledge-sources.md
+    topic: ナレッジソースガイド（情報の流れ・`05_Project/UBM/` のディレクトリ構成と検知の除外・Tier 1/1.5/2/3 の優先順位マップ・過去目標ファイルの命名と取得スコープ・ナレッジ検索の実行手順）
+    read_when: 差分検知の対象と除外を確かめるとき / 未同期で vault の生ソースから読むとき / 目標種別ごとに読む過去ファイルを選ぶとき
+  - file: rubric.json
+    topic: 'UBM ドメインの L1 設計ルーブリック（`rubric_id: domain-ubm-goal-setting`・upstream の L0 へ deep-merge・同一 ID の KL-002 の check だけを差分として持つ）'
+    read_when: validate-design-rubric.py が rubric-registry.json 経由で合成ルーブリックを引くとき / KL-002 の background 基準を確かめるとき

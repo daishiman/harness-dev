@@ -11,7 +11,7 @@
 3. 該当ファイルをReadで読み込み（複数ファイルは並列Read）、目標値・実績値・行動変化を抽出
 4. **プロジェクト別タスクの抽出**: 前回月報（`monthly` 時）の【プロジェクト別タスク】セクションがある場合、各プロジェクト名・目的・タスク（[ ]/[x]）・サブプロジェクトを抽出。完了/未完了の比率と、未完了のまま繰り越されているタスクをリストアップする。未完了[ ]のタスクは当月月報への繰越供給候補として明示する
 5. **習慣目標の抽出（`weekly` のみ）**: 前回週報に【習慣目標】セクションがある場合、3原則（30分切替・大物分散・粒度の粗さ）の各チェック項目の達成状況を抽出
-6. **継承文脈フィールドの抽出**: `weekly` は『現在の月報』、`monthly`/`quarterly` は『現在の期報』、`yearly` は『前回の1年目標』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定 `null`。取得不可の項目は[要ヒアリング]を付与する
+6. **継承文脈フィールドの抽出**: `weekly` は『現在の月報』、`monthly`/`quarterly`/`yearly` は『現在の期報』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定 `null`。取得不可の項目は[要ヒアリング]を付与する。`yearly` で現在の期報が無ければ10種すべてに[要ヒアリング]を付与する（前回の1年目標は抽出元にしない。1年層での10種の必須度は `skills/run-ubm-goal-setting/references/data-contract.md` §3.1.3 の「1年層（yearly）の扱い」の段落で未決のままで、1年目標がこの10種を持つ保証が無く、初回は前回の1年目標そのものが無い）
 
 **完了条件**: 前回の目標と実績の数値、プロジェクト別タスクの継続状況、習慣目標の達成状況（`weekly` のみ）、継承文脈フィールドが抽出済みまたは[要ヒアリング]付与済みである
 
@@ -146,6 +146,8 @@ python3 "$PLUGIN_ROOT/scripts/consult-harness-artifact-graph.py" \
 Step 1/2/3/3.5/3.7/3.8 と並列実行可能。`$UBM_VAULT_ROOT/05_Project/UBM/挑戦宣言/UBM - 挑戦宣言 - *.md` を Glob し、ファイル名の宣言日が対象期間の終了日以前のものから直近1件を Read する。不在は [挑戦宣言なし] でスキップ。形式と field の正本は `$PLUGIN_ROOT/skills/run-ubm-challenge/references/challenge-format.md`。
 
 目的・確定した目標・行うこと・報告周期を、source_path/declared_on と元の文を保って構造化サマリーの「挑戦宣言からの文脈」へ載せる。保留/未確定の欄は候補へ昇格させない。Phase3 で利用者が今回の目標として確認するまでは文脈にとどめる。ユーザーの記録を北原ナレッジの引用や更新ソースとして扱わない。ファイルを更新しない。
+
+この1件は1年層の到達点の出所にもなる（`agents/info-collector.md` の「ビジネスルール（取得スコープ）」にある、1年層の到達点を種別を問わず集める規則）。挑戦宣言は `## 【今年の最重要数字】` の注記を持たないので、`●目標ーその目的に近づくための数値的な目標` の箇条書きのうち、月間売上か継続コンサル人数と読み取れる数値目標だけを、元の文と source_path を付けて「1年層の到達点」へ載せる。読み取れない項目は推測で埋めない。
 
 **完了条件**: 出所付きの文脈か [挑戦宣言なし] を返す。
 

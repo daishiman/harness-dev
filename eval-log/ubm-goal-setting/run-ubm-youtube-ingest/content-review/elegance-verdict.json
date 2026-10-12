@@ -2,12 +2,12 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-youtube-ingest",
-    "skill_md_sha256": "41ab73b141af565f333b4b029c2a3832cf04bb62145bc0c28c5e4cd2077d3ca5"
+    "skill_md_sha256": "4cea8a98f609a6a94ee6e16f7bf881f2ffeac331b9d1e4732474dc19f1fdf967"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
-  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T14:18:00Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -24,15 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "Shared normalized_source_path.py binds valid date,bounded96byteNFC title,full ID UTF8hex suffix across C01/oneshot. Foreign/symlink mismatch refuses write; legacy ledger readonly compatibility. Strict full_backfill_pass retains denominator; dry-run nonpersistent.",
-      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
-      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
+      "前回の low 2件が直った。(1) L230-233 の anchor は `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py\" \"{resolved_progress_path}\" \"{resolved_intermediate_path}\"` になり、`$PLUGIN_ROOT` や `$progress_path` のシェル変数に頼らない。goal-seek-anchor-contract.md L19・L22 と一致する。(2) references/resource-map.yaml に normalized-source-schema.md の項目（topic と read_when）が足され、実在する4本の reference がすべて索引に載った。",
+      "Bash(python3 *) の下で、SKILL.md の実行指示（L230-233 の anchor、L237 の IN1 の check-youtube-backfill-completeness.py）はすべて python3 で始まる。prompts/R1-R4・references/*.md・workflow-manifest.json（L95・L123・L147 はすべて python3 始まり）・commands/ubm-youtube-ingest.md にも、python3 以外の実行ファイルを Bash で呼ぶ指示は無い。",
+      "取得（R2）・抽出とグラフ（R3）・同期と照合（R4）の分け方と、--sync の新着をスキル経由なら同じセッションで R3 まで反映し、スケジューラ直のときは次のスキル実行に持ち越すという線引きが、SKILL.md・commands/ubm-youtube-ingest.md・workflow-manifest.json の sync_mode_note で一致している。L178 で knowledge_candidates を担当役へ渡す記述も knowledge-retrieval-contract.md と一致する。",
+      "(a)〜(e) を1つの context でまとめて判定し、矛盾・漏れ・規約との不整合・依存の切れは見つからなかった。rubric の high は0件。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
+  "notes": "incremental の focused review（content-review-protocol の「incremental: unresolved semantic batch」に従い、1つの context で (a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high severity が0件 をまとめて判定）で、exhaustive の30思考法は実施していない。比較の基準は commit 03050251（PR #85 の head）で、作業ツリーにある未 commit の修正を評価した。 必須確認: (1) allowed-tools は Bash(python3 *)。SKILL.md・references・prompts・関係する agents・command で、python3 以外の実行ファイルを Bash で呼ぶ指示や、`VAR=... python3` / `export` のように先頭が python3 でない形の指示が無いことを確かめた。(2) frontmatter の参照と本文の相対パスはすべて実在し（実行時に生成される knowledge/*.json の glob・knowledge-relations.json・knowledge-capability-graph.json だけ例外）、旧名（evaluate-design-rubric・search-knowledge.py・record-knowledge-usage・publish-staged-files）は eval-log と .beads の外に残っていない。(3) feedback_contract.criteria の全 id を criteria_evaluated に入れた。 テスト: plugins/ubm-goal-setting/tests を PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider で実行し 1025 passed。 criteria の評価: IN1（script）は test_check_youtube_backfill_completeness.py・test_youtube_provider.py、OUT1（test）は test_youtube_sync_oneshot.py・test_validate_knowledge_graph.py・test_e2e_graph_chain.py の通過と、sync-report-format.md の不変則との照合で評価した。 findings は0件なので PASS・next_action none とした。 採点コマンド: PYTHONDONTWRITEBYTECODE=1 python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --kind skill --target <SKILL.md>（L0 単独）と、同じ script に assign-skill-design-evaluator/references/rubric.json を足して --target <skill dir> --emit-hash（L0+L2）、python3 plugins/ubm-goal-setting/scripts/validate-design-rubric.py --repo-root . --target <SKILL.md>（L0+L1+L2）。 迷った例（FAIL にしていない・数えていない）: (i) 共有の references/knowledge-retrieval-contract.md L10・L45 の `$PLUGIN_ROOT` / `$KNOWLEDGE_DIR` / `$PROJECT_ROOT` はシェル変数で、今回 goal-seek-anchor-contract.md L22 に足された「シェル変数は Bash の呼び出しをまたいで残らないので、変数に頼らない」と書き方がずれる。コマンドの先頭は python3 のままなので事前許可は壊れていないことと、anchor 契約の文はアンカーのコマンドに限った文であることから、スキル固有の finding にしていない。揃えるなら `{resolved_plugin_root}` / `{resolved_knowledge_dir}` / `{resolved_project_root}` の形に書き換える（plugin 共有の修正）。 (ii) runtime-root-contract:v1 ブロック（リポジトリ全体の生成ブロック）の「シェルを呼ぶたびに、その中で解決済みの絶対パスを PLUGIN_ROOT に入れる」は、`PLUGIN_ROOT=... python3` や `export` の形で読まれると Bash(python3 *) に当たらない。本文のコマンドは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の形で python3 始まりのまま実行できるので FAIL にしない。直すなら生成元の scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION_JA を「解決済みの絶対パスをコマンドへ書き込み、先頭は python3 のままにする」へ。 (iii) 外部変更 guard の生成ブロックの `--project-root \"$PWD\"` は、guarded-publication-contract.md L10 が「$PWD を使う場合は cwd を project_root へ固定する」と定めており、PWD はシェルが毎回設定するので数えていない。 (iv) workflow-manifest.json L95・L123・L147 の command は `python3 scripts/...` / `python3 ../../scripts/...` のようにスキルのディレクトリからの相対パスで、runtime-root 契約の「cwd からルートを推測しない」と書き方がずれる。先頭は python3 で事前許可は壊れておらず、実際に実行する指示は SKILL.md L237 の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の形にあり、manifest は基準 commit から変わっていないので数えていない。揃えるなら manifest の command も `{resolved_plugin_root}/skills/run-ubm-youtube-ingest/scripts/...` の形にする。 BD-004（LLM judge）は description の3つのモード（URL 単発・全量・差分）が R1-source-mode の分岐に対応するので PASS と判定した。KL-002 は pending_human だが、今回の差分は knowledge/ を変えていないので判定していない。"
 }

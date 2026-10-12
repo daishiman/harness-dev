@@ -5,9 +5,9 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 100,
-    "notes": "genuine review（sha256 f94ecc60226a76ab01c57d797c69a0c7d712b3d0df9ad365b21ec76ace93a465 をレビュー。実行検証あり）。範囲: 全294行・本文286行（採点器と同じ数え方、BD-003 を満たす）、tools は Read, Write, Bash、参照先 references/agent-output-formatter-rules.md・agent-output-formatter-steps.md。確かめたこと: 採点器 render-findings-score.py --kind agent（2つの rubric.json を --rubric-refs に渡す）は 97 で、PD-001(low) の -3 だけ。PD-001 は内容を plugin 直下 references/agent-*.md へ段階的に開示する形にしてあるので減点しない。AG-001〜004（unscored）は現物で判定: tools 明示・## Context Boundary・phase id 重複なし・## Handoff をすべて満たす。lint-agent-prompt-section.py（9件 Tier 1 OK, rc=0）と lint-agent-prompt-content.py --mode agent（7層準拠, rc=0）。env -u UBM_VAULT_ROOT pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests → 1021 passed（再実行も同じ）。test_heading_references.py は /skills/・/agents/・/references/ の3種の接頭辞を検査対象に広げ、test_notation_consistency.py は NOTATION_FILES に references/agent-output-formatter-rules.md を足したもので、検査は弱まっていない。参照パスは自作の pathcheck で ${PLUGIN_ROOT}=plugins/ubm-goal-setting と解決して全件実在（agent-root-contract.md の解決と一致）。移す前の本文と linecover で照合し、欠けた17行はすべて言い換えか yearly の直し（rules・steps と本文232〜258行へ移動）で欠落なし。実行プロンプトの変数 {{plugin_root, project_root, vault_root, goal_type, start_date, end_date, interview_data, peer_paths, past_data}} はすべてパラメータ節で定義済み。validate-goal-output.py 937〜950行が「##」行と １ヶ月・２ヶ月・３ヶ月・１年 を含む行を除いて全角数字を検査する実装と、rules 48行の説明が一致。前回の[低]の修正も確認。指摘: なし。DEDUCTION: なし → 100。"
+    "notes": "genuine review（sha256 7f95ccbf008a87f23af923b7fc164ef8028cdfc952d3fa37facf6593902c286a をレビュー。実行検証あり）。範囲: 全295行・本文287行。前回の記録（sha256 f94ecc60…）からの差分は L186 の1行の追加で、`quarterly` / `monthly` のとき peer_paths の `yearly` があれば読み込む（到達点2件を注記行へ写すため。output-formats.md と並列）としたもの。確かめたこと: 追加の記述は references/agent-output-formatter-steps.md の項目5、output-formats.md の月報（L1380）・期報（L1470）の到達点の注記行、skills/run-ubm-goal-setting/references/data-contract.md L346 の「4層ロールアップ契約」、info-collector の L127・L260 と合う。採点器 render-findings-score.py --kind agent は 97 で PD-001 だけ（段階的開示なので減点しない）。lint-agent-prompt-section・content は rc=0。本文287行で BD-003 の上限300以内。plugins/ubm-goal-setting/tests 全体 1025 passed。指摘: なし。DEDUCTION: なし → 100。"
   },
-  "reviewed_by": "coverage-reviewer-pr85-20261010k-agents",
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
   "checked": [
     "accuracy",
     "completeness",

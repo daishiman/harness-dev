@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-prompt-contract-drift
-# version: 0.1.0
+# version: 0.1.1
 # purpose: 7 層プロンプト本文の契約記述が実装 (referenced path / allowed-tools / CLI) と機械的に整合するか検証する
 # inputs:
 #   - --all: plugins/*/skills/*/prompts/*.md を全走査
@@ -272,7 +272,7 @@ def _parse_skill_allowed_tools(skill_root: Path):
             return None  # allowed-tools 宣言なし → 照合対象外
     tools = set()
     for it in items:
-        base = re.split(r"[(\s]", it, 1)[0].strip()
+        base = re.split(r"[(\s]", it, maxsplit=1)[0].strip()
         if base:
             tools.add(_norm_tool(base))
     return tools

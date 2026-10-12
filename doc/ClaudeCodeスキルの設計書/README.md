@@ -29,11 +29,11 @@
 | Skill 設計思想・命名・評価概念 | 元記事本文・画像、`01` / `06` / `09` | 公式仕様ではなく本設計書の提唱体系として扱う |
 | 画像由来の主張 | `12-image-extraction-map.md` | 画像解釈は `12` の行番号で追跡する |
 | 実装テンプレート | `24-meta-skill-templates.md` | `11` は汎用例、`24` はメタSkill正本 |
-| creator-kit 配布構成 | `creator-kit/manifest.json` と `23` / `25` | kit に含める Skill / script / config は manifest を優先する |
-| Bash / Python 実装規約 | `28-script-execution-model.md` と `creator-kit/CONVENTIONS.md` | Bash は lifecycle、Python は stdlib logic。禁止依存は `manifest.json` を優先する |
+| creator-kit 配布構成 | `installers/manifest.json` と `23` / `25` | kit に含める Skill / script / config は manifest を優先する |
+| Bash / Python 実装規約 | `28-script-execution-model.md` と `installers/harness-creator-kit/CONVENTIONS.md` | Bash は lifecycle、Python は stdlib logic。禁止依存は `installers/manifest.json` を優先する |
 | 出力routing / adapter / secret | `31-output-routing-adapter-architecture.md` | Sink Contract、Keychain、adapter例外は `31` を優先する |
 | creator-kit 実装状態・残課題 | `32-creator-kit-implementation-ledger.md` | Phase A-J の履歴、レビュー結果、未移行項目、C1-C4 判定は `32` に集約する |
-| 変更ガバナンス | `33-change-governance.md` と `creator-kit/config/governance-policy.json` | P0-P3カテゴリ、cooldown、blast radius、承認フローは `33` を優先する |
+| 変更ガバナンス | `33-change-governance.md` と `plugins/skill-governance-config/config/governance-policy.json` | P0-P3カテゴリ、cooldown、blast radius、承認フローは `33` を優先する |
 | plugin 移行ロードマップ | `34-plugin-governance-roadmap.md` | Phase 0-4 ゲート、公式制約照合、3アナリスト収束証拠は `34` を優先する |
 | settings.json マージ仕様 | `34a-settings-merge-spec.md` | `.claude/settings.json` の管理メタデータ、INV-1〜12、衝突検出、名前空間 preflight は `34a` を優先する |
 | Meta-Harness FBループ | `35-meta-harness-feedback-loop.md` + `.claude/config/meta-harness-observables.json` | log-driven ref-* 改善のパイプライン、observables 列挙、Goodhart 予防は `35` を優先する |
@@ -140,10 +140,10 @@ Markdown は README を含めて 41 本。README を除く設計書は 40 本で
 | **scripts/ 実行モデル** | `28-script-execution-model.md` | `05` (層責務) / `22` (cross-platform) / `04` (Hook権限) | 5実行コンテキスト × script種別マトリクス |
 | **rubric_refs 依存注入と多重継承** | `29-multi-project-rubric-composition.md` | `03` (frontmatter) / `09` (evaluator) / `23` (アーキ) | L0/L1/L2 3層、deep-merge / strict / override / layered |
 | **既存パラダイム類推（学習導線）** | `30-paradigm-analogy-map.md` | 全章 | ESLint / pytest / LSP / Terraform / Hexagonal Arch との対応 |
-| **creator-kit 配布・再利用境界** | `23-meta-skill-architecture.md` / `25-meta-skill-runbook.md` | `creator-kit/manifest.json` / `creator-kit/README.md` | 13 meta-skills、install/migrate、submodule/copy/symlink |
-| **Bash/Python 2層規約** | `28-script-execution-model.md` | `22` / `creator-kit/CONVENTIONS.md` / `manifest.json` | Bash lifecycle、Python stdlib logic、forbidden deps lint |
+| **creator-kit 配布・再利用境界** | `23-meta-skill-architecture.md` / `25-meta-skill-runbook.md` | `installers/manifest.json` / `installers/harness-creator-kit/README.md` | 13 meta-skills、install/migrate、submodule/copy/symlink |
+| **Bash/Python 2層規約** | `28-script-execution-model.md` | `22` / `installers/harness-creator-kit/CONVENTIONS.md` / `installers/manifest.json` | Bash lifecycle、Python stdlib logic、forbidden deps lint |
 | **出力routing / APIキー保護** | `31-output-routing-adapter-architecture.md` | `28` / `22` / `scripts/secrets` | Sink Contract v1.0、Keychain、adapter例外、JSON設定 |
-| **creator-kit 実装台帳** | `32-creator-kit-implementation-ledger.md` | `23` / `25` / `28` / `31` / `creator-kit/manifest.json` | Phase A-J、レビュー2周、残課題、C1-C4現況 |
+| **creator-kit 実装台帳** | `32-creator-kit-implementation-ledger.md` | `23` / `25` / `28` / `31` / `installers/manifest.json` | Phase A-J、レビュー2周、残課題、C1-C4現況 |
 | **自己進化ループの終了条件** | `23-meta-skill-architecture.md` | `13` (P2 計測) | 安定版凍結ルール / 退避ルール |
 | **命名規約との連動マトリクス** | `23-meta-skill-architecture.md` | `06` (全条) | `run-build-skill` 内での適用方法 |
 | **汎用 evaluator + domain（ドメイン） rubric（評価基準）** | `09-evaluation-orchestration.md` | `05` (依存方向) / `23` (最小 Skill 数) | 評価 Skill を増やしすぎず基準を差し替える |

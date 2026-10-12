@@ -9,7 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -53,10 +53,10 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
-  - ../../scripts/publish-staged-files.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
+  - ../../scripts/guard-staged-publication.py
   - scripts/validate-goal-output.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
   - scripts/validate-goal-linkage.py
@@ -266,7 +266,8 @@ python3 "$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.p
 共通アンカーは `../../references/goal-seek-anchor-contract.md` を Read し、初回固定と各周回の追記を行う。完了前に親が frontmatter の progress/intermediate を `project_root` から絶対パスへ解決して次を実行し、終了コード 0 を必須とする。
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"
+python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" \
+  "{resolved_progress_path}" "{resolved_intermediate_path}"
 ```
 
 - **内側ループ（IN1）**: Phase5 で `validate-goal-output.py` を実行する（回す条件・引数・rc の意味は、`references/validation-gates.md` の「決定論ゲート」の表が正本。IN2・IN3 も同じ。`--type` は4層の `weekly`/`monthly`/`quarterly`/`yearly` を受け、`bimonthly` は `quarterly` の後方互換の別名として受理される）。`--type yearly` は1年層の必須見出し（期報と同じ骨格で期間語を「今年/前年」に置き換えたもの。`【今年の最重要数字】` は期報と違い必須）を検査し、1年層では**プロジェクト別タスクを出力しない**ことも含めて見る。統一ハイブリッド構造の公式21ブロック・NG表現・やらないこと3項目以上・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）に加え、**`--type` と本文タイトル見出しラベルの一致**を出力前に検証し、種別の取り違えを止める。違反0件になるまで `output-formatter` が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を警告（WARN）として併せて報告する（任意・rc には影響しない）。

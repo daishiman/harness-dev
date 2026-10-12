@@ -1,0 +1,21 @@
+{
+  "label": "sync3",
+  "retry_of": "sync2 (20261012T0828-pr85)",
+  "evaluator_agent_id": "a0093ca2cdfdac134",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync3/fx/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_at_launch": null,
+  "closure_sha_tested_copy": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "closure_sha_wtpy_at_verdict": "b39c3819305ca0ebd9336a06937b0dafca23be1190164764d3066b15cada6226",
+  "closure_matches_wtpy": false,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 2,
+    "occurrences": 4,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "[被験 skill の外: skill-governance-adapters] build-external-mutation-guard.py の hook_confirm (L395-412) は prompt の出所を区別しない。subagent の結果である <task-notification> も INTENT_PATTERNS で検査し、_grant_intent (L468-491、docstring は human asked を前提にしている) で intent receipt を発行する。authorize_intent (L518-557) はこの receipt を使い、それより後に発行された auto-grant class (github-issue-write、beads-issue-write など、L44) の preview を authorize できる。つまり subagent の出力の文面だけで、人間の確認なしに Issue/Beads への変更が承認されうる。本 trial では 267 行目で発行されたが使われていない (269/270 行目)。",
+    "[被験 skill run-dev-graph-sync、軽微] SKILL.md L234 は「未達 responsibility を Agent で分離 context に fork する」と書いている。これは frontmatter の goal_seek.engine: inline、および prompt-common-layers.md Layer 5 (fork するのは重い判断と独立検証だけ) と食い違う。また本文は、必須の独立 verifier の agent 名 (dev-graph-sync-conflict-verifier) を挙げていない。本 trial では R1-R8 を inline で実行し、verifier だけを fork した (259 行目)。結果には影響していない。"
+  ]
+}

@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.44 / skills 32 + agents 8 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.47 / skills 32 + agents 8 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -125,9 +125,11 @@ harness 側が task-graph を直接書かないのは 4 つの理由による: �
 
 正本: `plugins/harness-creator/commands/capability-build.md`
 
-## 2.4 生成エンジン — run-build-skill の Step 0〜12
+## 2.4 生成エンジン — run-build-skill の Step 0〜12.8
 
-「どうやって作るか」の実体。全 7 kind の生成本体がここにある。
+「どうやって作るか」の実体。全 7 kind の生成本体がここにある。SKILL.md 上の見出しは「局面カタログ（順序は都度判断）」であり、下表は**固定順序の手順表ではなく局面メニュー**。
+
+**usable-first stage（段階は `draft` / `release` の 2 つだけ）**: 無指定の既定は `draft`。draft では生成 + class 別最小 guard（parse/open・secret・不可逆操作・破損）だけを解き、修復は 1 周。7 kind のいずれも `artifact_created → minimal_guard_passed → artifact_presented → user_choice_recorded → semantic_evaluator_started` の順を守り、**現物の path と試し方を提示した後にだけ**診断深度を聞く。`release` / `exhaustive` は明示選択なしに自動昇格しない。
 
 | Step | 内容 | 使う script |
 |---|---|---|
@@ -137,23 +139,23 @@ harness 側が task-graph を直接書かないのは 4 つの理由による: �
 | **3** | 補助 references 生成 | — |
 | **3.5** | 再現性トレース生成 + RTM(`requirement_coverage[]`) + `prompt_provenance` | → `eval-log/skill-build-trace.json` |
 | **4** | 命名・構造 Lint（14 コマンドの bash ブロック） | 下表参照 |
-| **5** | フォーク評価（release のときだけ。draft は起動せず `deferred_to_release` に回す） | `Skill(assign-skill-design-evaluator)` |
+| **5** | 出荷用フォーク評価（**release のみ**。draft は起動せず Step 12 の `deferred_to_release` に回す） | `Skill(assign-skill-design-evaluator)` |
 | **6** | ゲート判定 | release は score ≥ 80 かつ high=0、最大 3 周。draft は決定論ゲートと修復 1 周 |
 | **7** | subagent 派生（9 セクション固定構造） | — |
 | **7.5** | prompt-creator ループ（R-id 単位） | — |
 | **8** | evaluator ペア生成 | — |
 | **9** | Hook 配線生成（**自動 merge 禁止**） | — |
 | **10** | ナレッジループ注入（`--with-knowledge` か `brief.knowledge_loop` を指定したときだけ） | knowledge/ 雛形 + 5 script + `## ナレッジループ` 節 |
-| **10.6** | task-graph engine 同梱（brief が `goal_seek.engine: task-graph` を明示したときだけ。byte 一致で冪等コピー） | ENG-C01/C02/C06/C07 |
+| **10.6** | task-graph engine 同梱（brief が `goal_seek.engine: task-graph` を**明示したときだけ**。byte 一致で冪等コピー） | ENG-C01/C02/C06/C07 |
 | **11** | Notion スキル一覧 DB へ upsert | token は Keychain 経由。CI では `INTAKE_ALLOW_ENV_TOKEN=1` 明示時のみ `$NOTION_TOKEN` 可 |
 | **11.5** | feedback-loop 同梱と配備（default-ON） | `run-skill-feedback` を実体コピー。**symlink 禁止** |
-| **12** | 証拠 DAG 解決（verification obligations） | `plan-verification-obligations.py` |
-| **12.4** | 全7 kind 共通の usable-draft proof（artifact と validator を sha256 で束縛） | `build-usable-draft-proof.py` |
-| **12.45** | 実物の最小 guard（parse・秘密情報・不可逆操作・破損）と利用者への提示 | — |
-| **12.5** | 提示の後に診断の深さを選ぶ（accept-as-is / light / standard / detailed。draft のみ） | — |
-| **12.6** | 選んだときだけ read-only の評価 Agent を1つ起動する | `build-improvement-gate.py` / `build-review-launch.py` |
-| **12.7** | 利用者が選んだ finding だけを、決めた周回の中で直す | `elegant-bounded-improvement-executor` |
-| **12.8** | 改善後の決定論検証（選んだ範囲の外の diff・周回上限・C1-C4） | `validate-improvement-result.py` |
+| **12** | 証拠 DAG 解決（verification obligations）。draft は `generate/check` だけを解決 | `derive-verification-contract.py` / `plan-verification-obligations.py` |
+| **12.4** | 全7 kind 共通の usable-draft proof（artifact と validator を sha256 で束縛し、upstream receipt を 1 つだけ DAG provenance 検査する） | `build-usable-draft-proof.py` / `validate-build-trace.py` |
+| **12.45** | 実物の最小 guard（parse・秘密情報・不可逆操作・破損）と利用者への提示（path・開き方・試し方を先に渡す） | — |
+| **12.5** | 提示の後に診断の深さを選ぶ（`accept-as-is` / `light` / `standard` / `detailed`。draft のみ） | — |
+| **12.6** | 選んだときだけ read-only の評価 Agent を1つ起動する（semantic 診断） | `build-improvement-gate.py` → `build-review-launch.py` → `elegant-initial-draft-evaluator` |
+| **12.7** | 利用者が選んだ finding だけを、決めた周回の中で直す（有界改善。phase は `workflow-manifest.json` の `bounded-improvement`） | `elegant-bounded-improvement-executor` |
+| **12.8** | 改善後の決定論検証（選択集合の閉性・許可 path だけの diff・周回上限・C1-C4） | `validate-improvement-result.py` |
 
 **Key Rules（19 項目のうち構造を決める主要なもの）**
 
@@ -283,6 +285,10 @@ claim を `deterministic` / `semantic` / `observational` / `audit` の 4 種に 
 
 Loop B が dogfooding の実体。過去 build で得た知見が次の build の入力になる。
 
+**curated seed と runtime state の責務分離**: `knowledge/` に展開されるのは immutable な curated seed だけで、運用中に観測した外部知能（observe / 重複統合 / 再利用 / 昇格）の実装正本は配布可能な `skill-governance-adapters` plugin 側にある（engine / adapter / caller / schema / contract 各 1 件）。harness-creator が持つ `skills/run-build-skill/scripts/build-external-intelligence.py` と `build-external-intelligence-runtime.py` は、`scripts/plugin_resources.py` の `forward_external_intelligence(provider="skill-governance-adapters")` を呼ぶだけの**薄い互換転送シム**であり、runtime state は plugin package の外に置く。`lessons-learned/` や `knowledge/` へ hook が直接追記することは禁止。
+
+正本: `plugins/harness-creator/plugin-composition.yaml` の `contract.invariant`（knowledge-loop 責務分離の項）
+
 ---
 
 # 第3部 出来上がったハーネスは何で構成されるか（産物の要素）
@@ -293,7 +299,7 @@ Loop B が dogfooding の実体。過去 build で得た知見が次の build �
 |---|---|---|
 | **skill** | `skills/<name>/SKILL.md` + 付帯資産 | （commonCore のみ） |
 | **agent** | `agents/<name>.md` | `tools`, `isolation`（fork / worktree / inherit。`assign-*` は必ず fork） |
-| **hook** | `hooks/hooks.json` の共有定義 + script（Claude=標準自動検出 / Codex=manifest 明示参照） | `event`（9 種）, `command`（+ `exit_code_policy`, `side_effect_scope`） |
+| **hook** | `hooks/hooks.json` の共有定義 + script（Claude=標準自動検出 / Codex=manifest 明示参照） | `event`（schema enum 10 種）, `command`（+ `exit_code_policy`, `side_effect_scope`） |
 | **command** | `commands/<name>.md` | `argument-hint`, `allowed-tools`（entrypoint は薄いラッパであること） |
 | **plugin-composition** | `plugin-composition.yaml` | `capabilities` |
 | **prompt** | `prompts/R<n>-<role>.md` | `layers`（minItems=maxItems=7 の 7 層構造） |
@@ -397,23 +403,28 @@ skills/<name>/
 ├── references/               # 静的参照。本文から溢れた仕様
 ├── schemas/                  # 入出力 JSON Schema
 ├── scripts/                  # Python 標準ライブラリのみ（.sh/.js 新規禁止）
+│                             # Step 10 時はここへ 5 本が入る（search_knowledge /
+│                             # build_index / record_usage / add_entry +
+│                             # build-external-intelligence.py）
 ├── templates/                # 生成物の雛形
-├── knowledge/                # ナレッジループの seed（knowledge を指定したときだけ。Step 10 で注入）
+├── knowledge/                # ナレッジループの curated seed（knowledge を指定したときだけ。Step 10 で注入）
+│                             # templates/knowledge-skeleton/<pattern>/ を展開
+│                             # （index-search 型 or router-registry 型のいずれか）
 └── workflow-manifest.json    # phase 定義（workflow kind のとき）
 ```
 
 knowledge を指定したときは、`knowledge/` に選んだパターンの seed（index-search なら `knowledge-index.json` と `knowledge-{{category}}.json`、router-registry なら `registry.json`・`schema.json`・`router.json`）を展開し、`search_knowledge.py`・`build_index.py`・`record_usage.py`・`add_entry.py`・`build-external-intelligence.py` の 5 本を `knowledge/` ではなく `scripts/` へコピーする（正本は `run-build-skill/references/build-steps.md` の H.7）。
 
-## 3.7 生成時に同梱される 4 機構（goal-seek と feedback は既定で ON、knowledge は指定したときだけ、task-graph engine は明示したときだけ）
+## 3.7 生成時に同梱される 4 機構（既定 ON は 2 つ）
 
-| 機構 | 注入 Step | 実体 |
-|---|---|---|
-| **goal-seek 配線** | Step 2 | `with-goal-seek.patch` combinator（default-ON） |
-| **knowledge ループ** | Step 10 | **`--with-knowledge` か `brief.knowledge_loop` を指定したときだけ**（`validate-build-plan.py` は `with_knowledge` を `brief.knowledge_loop` から決める）。`knowledge/` 雛形 + 5 script + `## ナレッジループ` 節 + `consult_at: ["runtime"]` |
-| **feedback ループ** | Step 11.5 | `run-skill-feedback` を**実体コピー**で冪等配備（symlink 禁止） |
-| **task-graph engine** | Step 10.6 | **brief が `goal_seek.engine: task-graph` を明示したときだけ**。ENG-C01/C02/C06/C07 を byte 一致でコピー。`engine_profile: checklist-graph` / `full_task_spec_graph: false`。無指定の既定は inline で、資産を持ち込まない |
+| 機構 | 注入 Step | 既定 | 実体 |
+|---|---|---|---|
+| **goal-seek 配線** | Step 2 | **default-ON**（`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 内に入った配線の無い loop 系スキルは、plugin を問わず `lint-goal-seek.py` の ratchet が落とす。harness-creator のスキルは `GRANDFATHERED_WARNINGS` へ根拠付きで登録するか配線を戻し、ほかの plugin のスキルは baseline が追記禁止なので配線を戻す） | `with-goal-seek.patch` combinator |
+| **feedback ループ** | Step 11.5 | **default-ON**（`--no-feedback-loop` か `brief.no_feedback_loop: true` で opt-out） | `run-skill-feedback` を**実体コピー**で冪等配備（symlink 禁止） |
+| **knowledge ループ** | Step 10 | `--with-knowledge` か `brief.knowledge_loop` を**指定したときだけ**（`validate-build-plan.py` は `with_knowledge` を `brief.knowledge_loop` から決める） | `knowledge/` 雛形（curated seed）+ 5 script + `## ナレッジループ` 節 + `consult_at: ["runtime"]` / `runtime_store: external-intelligence-v1` |
+| **task-graph engine** | Step 10.6 | brief が `goal_seek.engine: task-graph` を**明示したときだけ**（無指定の既定は `inline` で、資産を持ち込まない） | ENG-C01/C02/C06/C07 を byte 一致でコピー。`engine_profile: checklist-graph` / `full_task_spec_graph: false` |
 
-つまり生成された harness は、既定で**自分で反復し・自己採点できる**状態で出荷される。知見を貯めるループ（knowledge）と並列実行（task-graph engine）は、必要なときに指定して足す。
+つまり生成された harness は、既定で**自分で反復し・自己採点できる**状態で出荷される。知見を貯めるループ（knowledge）と並列実行（task-graph engine）は、必要なときに指定して足す。task-graph engine を既定で ON にしないのは、依存グラフが実在しない対象へ engine 資産を持ち込まないため。
 
 ## 3.8 テンプレート体系（templates/）
 
@@ -435,7 +446,7 @@ knowledge を指定したときは、`knowledge/` に選んだパターンの se
 | `with-subagent.patch` | subagent 派生 |
 | `with-hooks.patch` | hook 配線 |
 
-**同梱ディレクトリ**: `knowledge-skeleton/`（index-search / router-registry / scripts）、`task-graph-engine/scripts/`
+**同梱ディレクトリ（4）**: `combinators/`（上記 12 patch + README）、`knowledge-skeleton/`（index-search / router-registry / scripts）、`task-graph-engine/scripts/`（ENG 4 本）、`goal-seek-runtime/scripts/`（`validate-inline-goal-seek-anchor.py` — `inline` engine のアンカー検査）
 
 この「skeleton × combinator」の組合せ設計により、7 kind × 各種フラグの直積を、テンプレート数を線形に保ったまま表現できている。
 
@@ -448,11 +459,11 @@ distribution: codex-marketplace
 contract:
   intent:      <このハーネスは何のために存在するか>
   interface:   { inputs: [...], outputs: [...] }
-  invariant:   # harness-creator 実測 15 個。1項目1文字列で、末尾に enforcement 注記を付ける
-    - "<不変条件の文> (enforcement: <機械執行する script 名> または manual。manual 維持の理由: ...)"
+  invariant:   # harness-creator 実測 15 個。1 項目 = 1 文字列で、文末に enforcement 注記を埋める
+    - "<守るべきこと> (enforcement: <機械執行する script 名> または manual。manual 維持の理由: <意図的残置の理由>)"
 
 capabilities:   # {kind, ref, tier} の列挙
-  # harness-creator 実測: skill 32 / agent 8 / command 6 / script 16 / hook 13 / plugin-composition 1
+  # harness-creator 実測: skill 32 / agent 8 / command 6 / script 16 / hook 13（計 75）
   # tier: core | ref | extension
 
 dependencies:   # {from, to, type} の DAG
@@ -468,7 +479,7 @@ observability:
   hooks / metrics / lessons_path
 ```
 
-**`invariant[]` の各項目に `enforcement:` が必須**なのが特徴。「守るべきこと」を書いたら「誰が守らせるか」を同時に書かせる。manual の場合は意図的に人間に残した理由の明記が要る。
+**`invariant[]` の各項目に enforcement 注記が必須**なのが特徴（別キーではなく同じ文字列の末尾に `(enforcement: ...)` として埋める）。「守るべきこと」を書いたら「誰が守らせるか」を同時に書かせる。manual の場合は意図的に人間に残した理由の明記が要る。
 
 正本: `plugins/harness-creator/plugin-composition.yaml`（リファレンス実装）
 
@@ -534,37 +545,39 @@ UserPromptSubmit / PreToolUse / PostToolUseFailure / Stop / SessionEnd）。共�
 | `p0-gate` | `run-skill-create/workflow-manifest.json` の `phases[id=p0-lint].commands` |
 | `ci` | `.github/workflows/governance-check.yml`, `harness-creator-kit-ci.yml` |
 
-lint-matrix.json の `lints` は 20 件（2026-10-10 時点）。
+lint-matrix.json の `lints` は 20 件（2026-10-10 時点）。`contexts` 欄がどの消費面で強制されるかを示す。
 
-| lint id | script | 検出するもの |
-|---|---|---|
-| skill-name | `lint-skill-name.py` | 命名規約 第1〜5,7 条 |
-| skill-description | `lint-skill-description.py` | trigger phrase 数・内部詳細の漏れ |
-| skill-tree | `lint-skill-tree.py` | ディレクトリ構造 第8〜13 条 |
-| frontmatter | `validate-frontmatter.py` | CapabilityManifest 適合 |
-| script-frontmatter | `lint-script-frontmatter.py` | script の frontmatter |
-| skill-completeness | `lint-skill-completeness.py` | 必須節の欠落 |
-| **goal-seek** | `lint-goal-seek.py` | **固定 `### Step N:` 羅列**（ゴールシーク違反） |
-| feedback-contract | `lint-feedback-contract.py` | criteria の id / verify_by / derived_from |
-| **ssot-duplication** | `lint-ssot-duplication.py` | DUP-SCHEMA-ID / REDIRECT-FAT-BODY / DUP-REQUIRED-SET / DUP-PASSAGE |
-| knowledge-loop | `lint-knowledge-loop.py` | knowledge/ の 6 必須フィールド等 |
-| build-trace | `validate-build-trace.py` | トレースの完全性 |
-| readme-portability | `lint-readme-plugin-root-portability.py` | install 配置依存の混入 |
-| dependency-direction | `lint-dependency-direction.py` | skill 依存の循環と向きの違反 |
-| dep-step7 | `lint-skill-dep-step7.py` | 移行した skill の doc/20 Step 7 依存制約 |
-| forbidden-deps | `lint-forbidden-deps.py` | 禁止された外部依存の使用 |
-| manifest-contents | `lint-manifest-contents.py` | manifest の各項目が実在ファイルを指すか |
-| build-plan | `validate-build-plan.py` | build-plan の決定論導出との drift |
-| capability-graph-knowledge | `lint-capability-graph-knowledge.py` | task-graph engine 資産と profile claim |
-| prompt-placement | `lint-prompt-placement.py` | `skills/*/prompts/*` が配置規約に沿うか |
-| agent-prompt-content | `lint-agent-prompt-content.py` | agents と prompts の本文が7層構造（l5-contract v2.0.0）に沿うか |
-| （hook 層・matrix 外） | `lint-capability-manifest.py` | PostToolUse:Edit\|Write で常時発火 |
+| lint id | script | 検出するもの | contexts（強制される消費面） |
+|---|---|---|---|
+| skill-name | `lint-skill-name.py` | 命名規約 第1〜5,7 条 | build-preflight / p0-gate / ci |
+| skill-description | `lint-skill-description.py` | trigger phrase 数・内部詳細の漏れ | build-preflight / p0-gate / ci |
+| skill-tree | `lint-skill-tree.py` | ディレクトリ構造 第8〜13 条 | build-preflight / p0-gate / ci |
+| frontmatter | `validate-frontmatter.py` | CapabilityManifest 適合 | build-preflight / p0-gate / ci |
+| script-frontmatter | `lint-script-frontmatter.py` | script の frontmatter | build-preflight / ci |
+| skill-completeness | `lint-skill-completeness.py` | 必須節の欠落 | build-preflight / ci |
+| **goal-seek** | `lint-goal-seek.py` | **固定 `### Step N:` 羅列**（ゴールシーク違反） | build-preflight / ci |
+| feedback-contract | `lint-feedback-contract.py` | criteria の id / verify_by / derived_from | build-preflight / ci |
+| **ssot-duplication** | `lint-ssot-duplication.py` | DUP-SCHEMA-ID / REDIRECT-FAT-BODY / DUP-REQUIRED-SET / DUP-PASSAGE | build-preflight / ci |
+| knowledge-loop | `lint-knowledge-loop.py` | knowledge/ の 6 必須フィールド等 | build-preflight / ci |
+| build-trace | `validate-build-trace.py` | トレースの完全性 | build-preflight / ci |
+| readme-portability | `lint-readme-plugin-root-portability.py` | install 配置依存の混入 | build-preflight / ci |
+| dependency-direction | `lint-dependency-direction.py` | skill 依存グラフの循環と上流参照（`ref-*` → `run-*`/`assign-*` の逆流） | p0-gate / ci |
+| dep-step7 | `lint-skill-dep-step7.py` | 移行した skill の doc/20 Step 7 依存制約 5 条件（`wrap-*` の `base:` / `assign-*-evaluator` の `pair:` 等） | p0-gate / ci |
+| forbidden-deps | `lint-forbidden-deps.py` | `forbidden_dependencies`（ライブラリ追加禁止）の混入 | p0-gate / ci |
+| manifest-contents | `lint-manifest-contents.py` | `plugin.json` の宣言が package 内の実在ファイルを指すか | p0-gate / ci |
+| build-plan | `validate-build-plan.py` | brief→build-plan の決定論導出との drift と成果物突合 | build-preflight / p0-gate（`ci_exclusion_reason` 付き） |
+| capability-graph-knowledge | `lint-capability-graph-knowledge.py` | ENG-C08。engine:task-graph harness の task-graph engine 資産・profile claim と依存グラフ knowledge 利用契約 | build-preflight（`ci_exclusion_reason` 付き） |
+| prompt-placement | `lint-prompt-placement.py` | `skills/*/prompts/*` の配置規約（`prompts/`=7層 SSOT と `agents/`=薄アダプタの配置逆転） | ci |
+| agent-prompt-content | `lint-agent-prompt-content.py` | `agents/*.md` / `skills/*/prompts/*.md` 本文の 7 層（l5-contract v2.0.0）準拠 | ci |
+| （hook 層・matrix 外） | `lint-capability-manifest.py` | PostToolUse:Edit\|Write で常時発火 | — |
 
 **lint の追加・削除は必ず `lint-matrix.json` を先に更新**し、消費面（SKILL.md / manifest / CI）を追従させる。`ci` を持たない lint は `ci_exclusion_reason` が必須。
 
+> script の実体は 1 プラグインに閉じていない。命名・構造・frontmatter・依存系の 10 本は `plugins/skill-governance-lint/scripts/`、生成物固有の 7 本は `plugins/harness-creator/skills/run-build-skill/scripts/`、`lint-agent-prompt-content.py` は `plugins/harness-creator/scripts/`、`lint-feedback-contract.py` と `lint-readme-plugin-root-portability.py` は repo-root `scripts/` にある（Step 4 は `extract-plugin-root.py` で `skill-governance-lint` の root を解決してから起動する）。
+
 ## 4.2 設計 rubric（41 rule / threshold 80 / L0）
 
-`rubric_id: skill-design`, `rubric_version: 1.5.0`, `threshold: 80`, `max_skill_md_lines: 300`, `trigger_count_min/max: 2/3`。
+`rubric_id: skill-design`, `rubric_version: 1.6.0`, `threshold: 80`, `max_skill_md_lines: 300`, `trigger_count_min/max: 2/3`。
 
 各 rule は `applies_to_kinds` でどの kind に適用するかを宣言する（`*` = 全 kind 共通核）。FM・NM と、BD・PD の大半は `skill` だけに適用する。`*` は BD-003・PD-001・RG-001・KL-* だけ。
 
@@ -578,7 +591,7 @@ lint-matrix.json の `lints` は 20 件（2026-10-10 時点）。
 | **PD** | PD-001 は `*`、PD-002 は skill | PD-001 本文 ≤100 行 or references 有 / PD-002 冒頭 30 行に目的の見出し（`## Purpose`・`## Output Contract`・`## 目的と出力契約`）**と**禁則（`MUST`・`NEVER`・`禁止`・`必ず`・`Key Rule`、または見出し行 `## 守ること`）の両方 |
 | **RG** | `*` | RG-001 出力 JSON に `rubric_hash`(rubric 自身の sha256) |
 | **AG**（agent） | agent | AG-001 tools 明示 allowlist(high) / AG-002 `## Isolation` or `## Context Boundary`(high) / AG-003 phase 一意 id / AG-004 `## Handoff` or `## Output Contract` |
-| **HK**（hook） | hook | HK-001 event が 9 種（PreToolUse / PostToolUse / UserPromptSubmit / Stop / SubagentStop / Notification / SessionStart / SessionEnd / PreCompact）のいずれか(high) / HK-002 matcher が具体的（**ワイルドカード禁止**, high） / HK-003 timeout 有界（無限待ち禁止） / HK-004 副作用の文書化 |
+| **HK**（hook） | hook | HK-001 event が 10 種（PreToolUse / PostToolUse / PostToolUseFailure / UserPromptSubmit / Stop / SubagentStop / Notification / SessionStart / SessionEnd / PreCompact）のいずれか(high) / HK-002 matcher が具体的（**ワイルドカード禁止**, high） / HK-003 timeout 有界（無限待ち禁止） / HK-004 副作用の文書化 |
 | **CM**（command） | command | CM-001 argument-hint / CM-002 allowed-tools が最小 allowlist（ワイルドカード・欠落禁止, high） / CM-003 実在する entrypoint skill を参照(high) |
 | **PC**（composition） | plugin-composition | PC-001 capabilities[] 列挙(high) / PC-002 **依存が DAG（循環禁止）**(high) / PC-003 rubric 参照が解決可能 / PC-004 hook が実在 event に配線 |
 | **PR**（prompt） | prompt | PR-001 **ちょうど 7 層**(high) / PR-002 `## Self-Evaluation` / PR-003 `## Output Format` 明示(high) |
@@ -637,7 +650,7 @@ phase で段階が分かれる。**`--phase all` を明示しないと 010〜015
 - `thought_method_coverage.used + skipped_with_reason == 30`（**スキップは理由付きでのみ許される**）
 - `fail_counts.{contradiction, omission, inconsistency, dependency_break} == 0`
 
-references: `30-paradigms-full.md` / `thought-methods.yaml` / `convergence-policy.json` / `amplified-patterns.json` ほか 8 種。
+references: `30-paradigms-full.md` / `thought-methods.yaml` / `convergence-policy.json` / `amplified-patterns.json` ほか 7 種（計 11 ファイル）。
 
 正本: `plugins/harness-creator/skills/run-elegant-review/SKILL.md`
 

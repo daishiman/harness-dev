@@ -130,6 +130,16 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
+# run-dev-graph-sync
+
+## Purpose & Output Contract
+
+- 入力: C24/C11 検証済み local graph/config、last-synced snapshot、binding 別 remote state、任意の dry-run/confirmation。
+- 出力: 3-way imports/exports/conflicts/tombstones/pending-retry plan、binding 別 linkage、更新済み snapshot receipt。
+- 完了条件: binding ごとの mutation authority が一意で、同一状態の2回目 changes=0。GitHub の両計画は `converged=true` を確認する。done は default-branch merge evidence 満足時にだけ反映される。
+
+local graph が正本。`tracker_binding=beads` は C28 の status/depends_on exact-set parity と push-only viewer mirror、`github` は C12 の Issue/Projects、`none` は external write なし。authority の混在は禁止で、検出したら拒否する。
+
 ## Runtime root contract
 
 - `runtime_root_policy: host-skill-path` を適用する。
@@ -179,26 +189,16 @@ python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute -
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
 <!-- /external-mutation-guard-cli:v1 -->
 
-
-# run-dev-graph-sync
-
-## Purpose & Output Contract
-
-- 入力: C24/C11 検証済み local graph/config、last-synced snapshot、binding 別 remote state、任意の dry-run/confirmation。
-- 出力: 3-way imports/exports/conflicts/tombstones/pending-retry plan、binding 別 linkage、更新済み snapshot receipt。
-- 完了条件: binding ごとの mutation authority が一意で、同一状態の2回目 changes=0。GitHub の両計画は `converged=true` を確認する。done は default-branch merge evidence 満足時にだけ反映される。
-
-local graph が正本。`tracker_binding=beads` は C28 の status/depends_on exact-set parity と push-only viewer mirror、`github` は C12 の Issue/Projects、`none` は external write なし。authority の混在は拒否する。
-
 ## Protocol
 
 1. schema と repo config を検証し、last-synced snapshot を base に 3-way plan を作る。GitHub 計画の `changes=0` は書込み予定がないことだけを示す。同期の完了は両計画の `converged=true` で判定し、`unresolved_count` が残る場合は計画の `next` に従って確認・競合解決・再取得を行う。
 2. beads は `bd-bridge.py` だけを使う。GitHub mutation を併用しない。github は `gh-bridge.py --dry-run` preview 後だけ apply する。
 3. Issue は id+updated_at、Project field は field value updatedAt を conflict hint とする。Status は local→Project 一方向で、remote Status を done authority にしない。exact-13 package member は内容を system-dev-planner が持ち C02 `update` が拒否するので、Issue も Project field も local 側を採り import しない。
    - Issue の計画は `diff-github-issues.py` (read-only) が title と state (open/closed) で作る。updated_at が新しい側を採り、node が新しければ gh-bridge `issue-update`/`issue-close` へ export、Issue が新しければ C02 `update` で title か status=closed を import する。同時刻は書込み 0 で GitHub の値を表示値に採り (`adopted: remote`)、`confirmations` に手動確認フラグを残す。フラグは観測値から毎回導くので、R6 の decision (フラグ行の local/remote/updated_at を写したもの) を `--decisions` に渡し、選んだ側を反映した次の計画で消える。reopen はどちら向きも conflict に残す。
+   - 読めない Issue は同じ計画が gh の失敗文で分ける。削除 (linked number が解決しない・HTTP 410) は `kind: remote-deleted` の import (C02 `update` の status=tombstoned) になり、当てた後の計画では `deleted_issues` (解決済み) に移って missing を残さず収束する。一時的な失敗 (rate limit・HTTP 429/5xx・timeout) は `missing_issues` の `action: retry`、権限・repository・HTTP 404 など削除と言い切れない失敗は `action: investigate` に残し、どちらも tombstone にしない。package member の削除は C02 が拒否するので `remote-deleted` の conflict (local-authority) に残す。
    - Projects field の計画は `diff-github-project-fields.py` (read-only) が `github_project_linkages[].field_snapshot` を base に作る。双方変更は自動上書きせず manual conflict。export は計画の `bridge_args` (型ごとの値か値を消す `--clear`) で gh-bridge `project-item-edit`、import は C02 `update` で反映し、計画し直して両側一致を観測した値だけを C02 `link-github` で snapshot に記録する。manual conflict は R6 の decision (conflict 行の base/local/remote を写したもの) を `--decisions` に渡したときだけ export/import に変わる。field の option や iteration に無い名前は書けないので `unsupported-export` の conflict に残る。その `cause` が manual 由来 (no-base/both-changed と decided-*) なら remote を採る decision (import) で、local-only/local-authority なら Project field に option/iteration を足す (次の計画で export になる) か local を戻すと解消する。
    - 順序は Issue が先。Projects の import も C02 `update` なので node の updated_at を進め、Issue の新旧比較を傾ける。Issue の計画を反映して計画し直し、その計画を `diff-github-project-fields.py --issue-plan` に渡す。Issue 側に行 (差分・確認フラグ・conflict・取得できない Issue) が残る node への Projects import は `held` に保留され、Issue 側が片付いた次の計画で import になる。`--issue-plan` が無ければ Issue linkage を持つ node の import はすべて保留、別の graph_revision で作った Issue の計画は拒否される。
-4. close/delete は node 物理削除でなく tombstone/status transition。部分的な Project failure は local promotion を戻さず alias 単位 `pending_retry`。
+4. close/delete は node 物理削除でなく tombstone/status transition。どちらも `diff-github-issues.py` の計画 (close は status=closed、削除は status=tombstoned) を C02 `update` に渡して反映し、LLM が削除かどうかを判定しない。部分的な Project failure は local promotion を戻さず alias 単位 `pending_retry`。
 5. C26 で default-branch merge evidence と C27 pending event を reconcile する。closed-unmerged、dirty/feature worktree、policy/evidence 不足は done にしない。
 
 同一 state の二回目は changes=0。`--dry-run` は外部 write 0。report は imports/exports/conflicts/tombstones/pending_retry/project snapshots を返す。
@@ -219,7 +219,7 @@ tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGi
 - [ ] task ごとの mutation authority が beads/C28、github/C12、none の一経路だけである
 - [ ] `--dry-run` の local/Beads/GitHub/Projects write count が0である
 - [ ] 双方変更は manual conflict、片側変更は mapping どおりの反映 receipt を持つ
-- [ ] close/delete は graph_node_id を保持した tombstone/status transition になる
+- [ ] close/delete は graph_node_id を保持した tombstone/status transition になり、削除の tombstone を当てた後の再計画に missing_issues が残らない
 - [ ] default-branch merge evidence を満たす場合だけ done となり、dirty/feature worktree event は pending に残る
 - [ ] 同一状態の二回目 sync の imports/exports/Project item add が0件である
 
@@ -227,11 +227,14 @@ tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGi
 
 frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
 
+`engine` と `fork` は別の軸である。`engine: inline` は、周回の駆動 (未達 checklist の選択・停止判定・intermediate の記録) を main context がこの本文に沿って行い、`run-goal-seek` や task-graph の engine を使わないことを指す。`fork: subagent` は、各周回の responsibility の実行と独立検証を `Agent` で分離 context に出すことを指す。したがって下の配線の `Agent` による fork は `engine: inline` と矛盾しない。
+
 ### ゴールシーク配線
 
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する (`fork: subagent`。周回の駆動は main context のまま)。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 必須の独立 verifier は `dev-graph-sync-conflict-verifier` (`../../agents/dev-graph-sync-conflict-verifier.md`。plugin 経由の名前は `dev-graph:dev-graph-sync-conflict-verifier`) である。各周回の sync plan/receipt、last-synced snapshot、local graph、linkage ledger を `Agent` で read-only の fork context に渡し、producer の推論や期待 verdict は渡さない。authority・3-way conflict・冪等性・tombstone/pending retry・edge parity の verdict が PASS でない周回は完了扱いにしない。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 
@@ -259,7 +262,7 @@ PY
 - `criteria:IN1`: `validate-graph-schema.py` と `gh-bridge.py` の送信前検証で必須キー欠落が0件である。
 - `criteria:OUT1`: 同一状態を二回同期し、2回目のimports/exportsは`changes=0`、両GitHub計画は`converged=true`になる。
 - `criteria:OUT2`: Issue `updated_at`競合は新しい方を採用し、同時刻はGitHub優先と手動確認フラグを残す。
-- `criteria:OUT3`: close/deleteは物理削除せず`tombstone/status`遷移として反映する。
+- `criteria:OUT3`: close/deleteは物理削除せず`tombstone/status`遷移として反映する。削除は`diff-github-issues.py`がC02 `update`のstatus=tombstoned計画にし、当てた後の再計画は`missing_issues`0件で`converged=true`になる。rate limitや5xxは`retry`に残してtombstoneにしない。
 - `criteria:OUT4`: `--dry-run`ではGitHub/Beadsを含む外部write 0件である。
 - `criteria:OUT5`: 手動確認フラグは確認結果を適用した再同期で解消する。
 - `criteria:OUT6`: Project itemは重複0件でitem IDが安定し、aliasごとに1 itemだけを保持する。

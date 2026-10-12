@@ -59,8 +59,8 @@
 ### 2.4 入力契約
 | フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| root_cause | string | はい (初回スキップ時は `null` を許容) | 差分の根本原因 (Step 2 から) |
-| bottleneck | string | はい (初回スキップ時は `null` を許容) | ボトルネック箇所 (Step 2 から) |
+| root_cause | string | はい (初回スキップ時は `null` を許容。種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしないので `null` を許容しない) | 差分の根本原因 (Step 2 から) |
+| bottleneck | string | はい (初回スキップ時は `null` を許容。種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしないので `null` を許容しない) | ボトルネック箇所 (Step 2 から) |
 | camp_date | string | いいえ | 直近のアカデミー参加日 (自動取得) |
 | camp_advice_summary | string | いいえ | アカデミーアドバイス要約 (自動取得) |
 
@@ -142,7 +142,7 @@
 
 ### 6.1 上位スキルとの接続
 - 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 3)。
-- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため `root_cause` / `bottleneck` を `null` で受領する。
+- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため `root_cause` / `bottleneck` を `null` で受領する。ただし種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしない (比較対象を直近の期報・月報の積み上げと挑戦宣言の到達点アンカー 2 件へ差し替えて実施する) ので、`root_cause` / `bottleneck` を値で受領する。`null` で届いたら Step 2 へ戻す (正本: R2-step2-gap-analysis の 2.2・6.2、`references/data-contract.md` §3.4 の Step 2 → Step 3)。
 - 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (`sales_target`)、成果目標 (`other_targets`)。
 
 ### 6.2 ハンドオフ / 並列性

@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":83,"notes":"内部整合性高く5prefix×4軸×条文が首尾一貫。裏取り: ref-skill-design-rubric/assign-skill-design-evaluator/lint-skill-name.py/lint-skill-tree.py 全て実在。減点: 第8条の許可ディレクトリ語彙(eval-log/_drafts)が実装 ALLOWED_DIRS(hooks/log/schemas)と乖離、第10条のverb先頭規則は lint で未強制(.py/.sh拡張子のみ検査)、第7条 lint-name-uniqueness.sh は未実装。lint-plugin-namespace.py は Phase0後実装と明示済で許容範囲。"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 01b8a481cdb6fdad9df64f7ef66bac2116ac522526b14939d766a9cadd199076 をレビュー。実行検証あり）。範囲: 全421行と git diff origin/main（+26/-21、すべて未コミット。第8条、第9条の但書、第10条、違反検出の表、条番号のずれの段落が変わった）。前回レビューした版（sha256 6cc82852…）の指摘5件と照らし、scripts/lint-skill-tree.py・lint-skill-name.py・lint-script-naming.py・guard-change-category.py と28章 §4.1・§4.7 に突き合わせた。確かめたこと: (1) 第10条（230行）の形式 `<verb>-<target>[-<scope>].py` は、lint-script-naming の VALID_NAME（480行 `^([a-z]+)-[a-z0-9-]+\\.py$`）と28章 §4.1 に合う。lint が `.py` だけを見る（502行）ことも本文に書いてある。(2) 第10条の但書は「動詞の追加は33章の P1」になり、28章 §4.7 と合う。挙げている台帳 PENDING_RENAME_PATHS（144行）も実在する。(3) 第8条の8語は ALLOWED_DIRS（lint-skill-tree 28行）と同じ。repo の Skill にある一覧の外の dir は tests 9・assets 4・fixtures 2・proposals 1 で、但書の列挙と合う。fixture で、一覧の外の dir だけを持つ Skill（../work-b-r2/d/fx2）は LS-203 の warning で exit 0、scripts/ に .ps1 を置いた Skill（../work-b-r2/d/fx）は「第10条違反」で exit 1 になり、第8〜10条の記述どおりだった。(4) 違反検出の表: CI の行（governance-check.yml、harness-creator-kit-ci.yml）は workflow の実物に合う。第6条の guard-change-category.py が改名を P0 と判定することも確かめた。plugins/skill-governance-lint/scripts/ の写しは、scripts/ の lint-skill-name.py・lint-skill-tree.py と byte 一致した。(5) 実 repo で lint-script-naming は VIOLATION=0・stale=0・exit 0。lint-skill-name と lint-skill-tree は22 plugin すべて ok。前回の指摘の扱い: [中] 第10条の形式が28章・lint と食い違う点は解消。[中] 但書が28章 §4.7・lint と食い違う点は解消。[低] 違反検出の表のずれは解消（存在しない .sh の lint を挙げなくなり、まだ無い検査は「未実装」と書いた）。[低] 第8条の語彙のずれは解消。[低] .ps1 の扱いのずれは、木と第9条の但書から外して「今は置けない」と書いたので解消。指摘: [低] 第13条（245行・256行）と115行の表は、resource-map.yaml を「推奨」「lint 警告」「warning と人間レビュー」と書く。しかし lint-skill-tree.py（261〜270行）は、references/ に3ファイル以上あって resource-map.yaml が無いと「P1-2違反」を出し、exit 1 にする。fixture で確かめた（references が3件で exit 1、2件で exit 0。../work-b-r2/d/fx3・fx4）。今回の変更で表の13の行が lint-skill-tree.py を指すようになったので、読む人は warning だと思って書き、CI で止まる。直し方: 本文を「lint は失格（exit 1）にする」に直すか、lint を warning に下げるかを決める。[低] 307行の条番号のずれの段落が足りない。lint-skill-name.py の「第5条違反」には名前の長さ（60字超、94行）も入る。「第6条違反」は予約語の単独使用（99行）で、本章の第6条（改名）ではない。「第16条違反」（禁止の prefix、103行）に当たる条は本章に無い。lint の「第4条違反」は run-*・wrap-*・delegate-* が user-invocable でないときにも出る（87行）が、本章の第4条の本文は逆の向き（user-invocable なら run・wrap・delegate）だけを書く。直し方: 段落にこの4つを足すか、lint の出力の条番号を本章に合わせる。DEDUCTION: 第13条の重さが lint と食い違う -2、条番号のずれの段落の不足 -2 → 96。前回の5件はすべて直り、lint との対応は実物で確かめられた。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "internal-consistency",
+    "impl-alignment",
+    "completeness",
+    "structure"
+  ]
+}

@@ -60,7 +60,7 @@ git status --short
 - Last deploy SHA: !`python3 -c "import json; print(json.load(open('deploy.json'))['last_deploy']['sha'])"`
 ```
 
-この例は Python 3 標準ライブラリを前提にした Skill 向けである。Mac / Windows 両対応 Skill では、後述の OS プリアンブルと OS 別分岐を使い、PowerShell fallback を含める。
+この例は Python 3 標準ライブラリを前提にした Skill 向けである。Mac / Windows 両対応 Skill では、後述の OS プリアンブルと OS 別分岐を使い、Python が無い Windows ではユーザーに尋ねる経路を含める (22 章「フォールバック動線」。PowerShell で代わりに動かすのは計画)。
 
 向いている情報:
 
@@ -169,7 +169,8 @@ OS 分岐を行うすべての Skill は、本文先頭付近に次の 1 行を�
 意図:
 
 - `uname -s` は Mac / Linux で `Darwin` / `Linux` を返す
-- 不在の Windows では `||` で `ver` にフォールバックし `Microsoft Windows ...` を返す
+- Windows の Claude Code は Git Bash で動かすので、`uname -s` は成功して `MINGW64_NT-…` のような文字列 (`MSYS` / `CYGWIN` で始まることもある) を返し、`ver` には落ちない。本文はこれを `os=windows` に読む (22 章「OS 判定マトリクス」)
+- `uname` が無い shell では `||` で `ver` にフォールバックし `Microsoft Windows ...` を返す。これも `os=windows` に読む
 - 双方失敗した場合は空または非ゼロ — `os=unknown` と扱い、ユーザーへ OS を問い合わせる
 
 ### 本文側の分岐
@@ -178,11 +179,11 @@ OS 分岐を行うすべての Skill は、本文先頭付近に次の 1 行を�
 
 ```markdown
 <important if="os=mac">
-`python3 scripts/build_skill.py --name $1` を実行する。
+`python3 scripts/build-skill.py --name $1` を実行する。
 </important>
 
 <important if="os=windows">
-`powershell -ExecutionPolicy Bypass -File scripts\build_skill.ps1 -Name $1` を実行する。
+`python scripts\build-skill.py --name $1` を実行する。`python` が無ければユーザーに尋ねる (22 章「フォールバック動線」)。`powershell -ExecutionPolicy Bypass -File scripts\build-skill.ps1 -Name $1` で代わりに動かすのは計画（今の lint は `.ps1` を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）。
 </important>
 
 <important if="os=unknown">
@@ -277,4 +278,4 @@ Skill 本文側はこの出力を踏まえ、以下を続ける。
 
 **no-deps 原則との整合**: 自動挿入されるコマンド `uname -s 2>/dev/null || ver` は OS 標準同梱のみを使用し、外部ライブラリに依存しない（22 章ホワイトリスト準拠）。`!` 構文の決定論的情報注入の原則とも矛盾しない。
 
-**lint との連携**: 挿入後、`creator-kit/scripts/lint-skill-tree.py` の `check_os_preamble` が OSプリアンブルの存在を検証する（欠落時 exit 1）。量産パイプラインでの自動検証が完結する。
+**lint との連携**: 挿入後、`scripts/lint-skill-tree.py` の `check_os_preamble` が OSプリアンブルの存在を検証する（欠落時 exit 1）。量産パイプラインでの自動検証が完結する。

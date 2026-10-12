@@ -183,6 +183,7 @@ Step 1 内のファイル読み込みは並列で実行する:
 - output-formats.md の読み込み
 - `quarterly` の場合: 既存期報ファイルの読み込み（output-formats.md と並列。旧名の期報ファイルも対象）
 - `yearly` の場合: past_data の出所にある挑戦宣言と、peer_paths の `yearly`（既存の1年目標）の読み込み（output-formats.md と並列。ディレクトリを探して選ばない）
+- `quarterly` / `monthly` の場合: peer_paths の `yearly` があれば、その読み込み（到達点2件を注記行へ写すため。output-formats.md と並列）
 
 Step 2〜4 は前のステップの結果に依存するため順次実行する。
 ただし Step 3 のバリデーション失敗→修正→再バリデーションは品質チェック（手動確認）とバリデーション（スクリプト実行）を連続で行う。

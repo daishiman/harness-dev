@@ -86,7 +86,6 @@ allowed-tools:
   - Bash(ver)
   - Bash(python *)
   - Bash(python3 *)
-  - Bash(powershell *)
 owner: team-platform
 ---
 
@@ -100,23 +99,23 @@ owner: team-platform
 
 - 生成された SKILL.md パス
 - 検出 OS (mac / windows / linux / unknown)
-- 使用ランタイム (python3 / powershell)
+- 使用した Python の起動コマンド (python3 / python)
 
 ## Steps
 
 <important if="os=mac">
-1. `python3 scripts/build_skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
+1. `python3 scripts/build-skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
 2. 終了コード 0 と書き込みパスを返す。
 </important>
 
 <important if="os=linux">
-1. `python3 scripts/build_skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
+1. `python3 scripts/build-skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
 2. 終了コード 0 と書き込みパスを返す。
 </important>
 
 <important if="os=windows">
-1. `python` が PATH にあれば `python scripts\build_skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
-2. 無ければ `powershell -ExecutionPolicy Bypass -File scripts\build_skill.ps1 -Name "$1" -Description "$2" -Out SKILL.md` を実行する。
+1. `python` が PATH にあれば `python scripts\build-skill.py --name "$1" --description "$2" --out SKILL.md` を実行する。
+2. 無ければ Python の起動コマンド (python3 / python / 未インストール) をユーザーに尋ね、答えのコマンドで 1 を実行する。未インストールなら止まる。`powershell -ExecutionPolicy Bypass -File scripts\build-skill.ps1 -Name "$1" -Description "$2" -Out SKILL.md` で代わりに動かすのは計画（今の lint は `.ps1` を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）。
 3. 終了コード 0 と書き込みパスを返す。
 </important>
 
@@ -130,8 +129,8 @@ owner: team-platform
 
 ## Gotchas（落とし穴）
 
-- 追加ライブラリは導入しない (Python 標準ライブラリのみ / PowerShell 5.1 標準のみ)
-- パス区切りは hardcode しない (Python は `pathlib.Path`、PowerShell は `Join-Path`)
+- 追加ライブラリは導入しない (Python 標準ライブラリのみ。PowerShell 版の計画でも 5.1 標準のみ)
+- パス区切りは hardcode しない (Python は `pathlib.Path`。PowerShell 版の計画では `Join-Path`)
 - OS 判定結果を長期記憶へ保存しない
 ```
 

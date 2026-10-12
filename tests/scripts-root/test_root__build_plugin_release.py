@@ -14,9 +14,11 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import importlib.util
 import json
 import pathlib
+import re
 import subprocess
 
 import pytest
@@ -72,7 +74,27 @@ def test_cache_dir_name_matches_observed_normalization(mod):
 
 
 def test_checked_in_state_has_no_drift(mod):
-    """commit 済み対応表が現在の plugins/ と一致する (CI と同じ検査)。"""
+    """commit 済み対応表が現在の plugins/ と一致する (CI と同じ検査)。
+
+    **このテストは作業ツリーの現在の状態を見るので、plugins/ を編集している最中は
+    構造的に赤くなる。** test_untracked_but_unignored_files_are_content のとおり
+    未 commit の新規ファイルも内容に数えられるため、誰かが plugins/ に 1 ファイル
+    置いた瞬間に rc=1 へ変わる。実測 (2026-10-10) でも、別の作業が新規ファイルを
+    作った瞬間に緑から赤へ戻った。
+
+    これは検査の欠陥ではなく、fingerprint が「作業ツリーの内容」を基準にすることの
+    裏側である (基準を commit にすると未 commit の編集を install が copy する事実と
+    食い違う。module docstring の「なぜ git commit hash を使わないのか」)。だから
+    **ここを緩めてはいけない**。緩めると本来の上げ忘れを見逃す。
+
+    赤を見たときの読み分け:
+      - plugins/ を自分 (または同時に走っている別の作業) が編集中 → それが原因。
+        異常ではない
+      - 編集していないのに赤 → 本物の drift
+
+    運用: **commit 前の最後の工程として `build-plugin-release.py` を再実行する**。
+    編集が止まった状態で台帳を合わせ直せば緑になる。
+    """
     assert mod.main(["--check"]) == 0
 
 
@@ -126,6 +148,61 @@ def test_manual_version_bump_is_respected(mod, tmp_path, monkeypatch):
     mod.write_version(plugin, "1.0.0")
     assert mod.main([]) == 0
     assert mod.read_version(plugin) == "1.0.0"
+
+
+@pytest.mark.parametrize("blank", ["", "   ", "\t"])
+def test_blank_version_of_new_plugin_is_rejected_with_exit_2(mod, tmp_path, monkeypatch, capsys, blank):
+    """採番を通らない new の行は version をそのまま書く。空なら書く前に exit 2 で止める。"""
+    plugin = _fake_plugin(tmp_path, "probe", blank)
+    _isolate(mod, monkeypatch, tmp_path)
+    manifest = plugin / ".claude-plugin" / "plugin.json"
+    before = manifest.read_bytes()
+    assert mod.main(["--check"]) == 2
+    assert mod.main([]) == 2
+    assert "probe: version が空" in capsys.readouterr().err
+    assert manifest.read_bytes() == before
+    assert not (tmp_path / "fingerprints.json").exists()
+    assert not (tmp_path / "marketplace.json").exists()
+
+
+def test_blank_version_of_released_plugin_is_rejected_with_exit_2(mod, tmp_path, monkeypatch, capsys):
+    """記録済みの plugin の version を手で空にした (released) 場合も記録・同期しない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    recorded = (tmp_path / "fingerprints.json").read_bytes()
+    manifest = plugin / ".claude-plugin" / "plugin.json"
+    manifest.write_text(manifest.read_text(encoding="utf-8").replace('"0.1.0"', '"  "'), encoding="utf-8")
+    assert mod.main([]) == 2
+    assert "version が空" in capsys.readouterr().err
+    assert (tmp_path / "fingerprints.json").read_bytes() == recorded
+    assert mod.read_version(plugin) == "  "
+
+
+def test_blank_version_blocks_the_whole_run(mod, tmp_path, monkeypatch):
+    """1 件でも空の version があれば、正しい plugin も含めて何も書かない (部分書き込みを作らない)。"""
+    good = _fake_plugin(tmp_path, "good", "0.1.0")
+    _fake_plugin(tmp_path, "blank", "")
+    _isolate(mod, monkeypatch, tmp_path)
+    before = (good / ".claude-plugin" / "plugin.json").read_bytes()
+    assert mod.main([]) == 2
+    assert (good / ".claude-plugin" / "plugin.json").read_bytes() == before
+    assert not (tmp_path / "fingerprints.json").exists()
+
+
+@pytest.mark.parametrize("blank", ["", "  ", None])
+def test_write_version_refuses_blank_version(mod, tmp_path, monkeypatch, capsys, blank):
+    """write_version を直接呼んでも、空の版を plugin.json と派生面へ広げない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    manifest = plugin / ".claude-plugin" / "plugin.json"
+    before = manifest.read_bytes()
+    with pytest.raises(SystemExit) as excinfo:
+        mod.write_version(plugin, blank)
+    assert excinfo.value.code == 2
+    assert "version が空" in capsys.readouterr().err
+    assert manifest.read_bytes() == before
+    assert not (tmp_path / "marketplace.json").exists()
 
 
 def test_manual_version_record_repairs_release_surfaces(mod, tmp_path, monkeypatch):
@@ -257,6 +334,202 @@ def test_build_artifacts_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
     assert mod.main(["--check"]) == 0
 
 
+def test_root_changelog_is_not_content_but_everything_else_still_is(mod, tmp_path, monkeypatch):
+    """plugin 直下の CHANGELOG.md だけを fingerprint から外す。
+
+    外す理由は副産物だからではなく、**採番の入力でありながら出力でないため不動点が
+    存在しなくなる**ことである (script 側 EXCLUDED_ROOT_FILE_NAMES のコメント)。
+
+    除外が検査を殺していないことを同じテストの中で対照する。CHANGELOG 以外の内容
+    変更は従来どおり bump を要求し、全階層での名前一致にはしない (skill が
+    reference として読む `.../references/CHANGELOG.md` が実在し、それは内容である)。
+    """
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (plugin / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 - 2026-10-10\n", encoding="utf-8")
+    assert mod.main([]) == 0  # 初回記録
+    assert mod.main(["--check"]) == 0
+
+    # 1. 直下 CHANGELOG のみの変更は bump を要求しない (今回入れた除外)
+    (plugin / "CHANGELOG.md").write_text(
+        "# Changelog\n\n## 0.2.0 - 2026-10-11\n\n新しい節。\n", encoding="utf-8"
+    )
+    assert mod.main(["--check"]) == 0
+    assert mod.read_version(plugin) == "0.1.0"
+
+    # 2. 除外は直下だけ。入れ子の CHANGELOG.md は依然として内容
+    (plugin / "references").mkdir()
+    (plugin / "references" / "CHANGELOG.md").write_text("rubric history", encoding="utf-8")
+    assert mod.main(["--check"]) == 1
+    assert mod.main([]) == 0
+    assert mod.read_version(plugin) == "0.1.1"
+
+    # 3. CHANGELOG 以外の内容変更は従来どおり bump を要求する (対照)
+    (plugin / "SKILL.md").write_text("changed", encoding="utf-8")
+    assert mod.main(["--check"]) == 1
+
+
+def test_bump_adds_the_changelog_section_for_the_version_it_distributes(
+    mod, tmp_path, monkeypatch
+):
+    """bump が CHANGELOG へ節を足し、版数整合が遅れないこと。
+
+    fingerprint から除外しているのは「節を足した書き込み自体が次の bump を呼ぶ」
+    不動点の不在を避けるためで、CHANGELOG を採番の出力から外すためではない。除外した
+    うえで write_version() が節を書くことで、除外と追従が両立する。
+
+    以前はここで「bump した直後の CHANGELOG 見出しは必ず 1 つ古い」を副作用として
+    固定していた。実測 (2026-10-10 22:26) でその副作用が CHANGELOG を持つ 6 plugin
+    全件のズレとして現れていたため、追従させる側へ不変条件を入れ替えた。
+
+    既存の履歴の穴は埋めない (script 側 sync_changelog_section の docstring)。ここで
+    見るのは「配っている版の節が在る」ことだけで、全履歴の網羅ではない。
+    """
+    def changelog_head_version(plugin_dir: pathlib.Path) -> str | None:
+        text = (plugin_dir / "CHANGELOG.md").read_text(encoding="utf-8")
+        match = re.search(r"^##\s*\[?v?(\d+\.\d+\.\d+[^\]\s]*)", text, re.MULTILINE)
+        return match.group(1) if match else None
+
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (plugin / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 - 2026-10-10\n", encoding="utf-8")
+    assert mod.main([]) == 0
+    assert changelog_head_version(plugin) == mod.read_version(plugin)
+
+    # 本体を変えて bump させると CHANGELOG も同じ工程で追従する
+    (plugin / "SKILL.md").write_text("changed", encoding="utf-8")
+    assert mod.main([]) == 0
+    assert mod.read_version(plugin) == "0.1.1"
+    assert changelog_head_version(plugin) == "0.1.1"
+    # 既存の節は残る (履歴を書き換えない)
+    assert "## 0.1.0 - 2026-10-10" in (plugin / "CHANGELOG.md").read_text(encoding="utf-8")
+    # 書式を踏襲する (fixture は角括弧なし・半角ハイフン)
+    assert re.search(r"^## 0\.1\.1 - \d{4}-\d{2}-\d{2}$",
+                     (plugin / "CHANGELOG.md").read_text(encoding="utf-8"), re.MULTILINE)
+
+    # 追従しても fingerprint は動かない (除外が効いている)。動くと次回が
+    # 「上げ忘れ」になり、解消の bump がまた節を足して落ち着かない。
+    assert mod.main(["--check"]) == 0
+
+    # 検出器は無力化されていない: 手で見出しを戻すとズレを掴む
+    text = (plugin / "CHANGELOG.md").read_text(encoding="utf-8")
+    (plugin / "CHANGELOG.md").write_text(
+        text.replace("## 0.1.1 -", "## 0.0.9 -", 1), encoding="utf-8"
+    )
+    assert changelog_head_version(plugin) != mod.read_version(plugin)
+
+
+def test_changelog_section_is_written_below_an_unreleased_heading(mod, tmp_path, monkeypatch):
+    """`## [Unreleased]` がある CHANGELOG では、新しい節をその下へ入れる。
+
+    Keep a Changelog の通例であると同時に、読む側 (notifier-check の
+    `_extract_latest_version`) が版の形をしていない見出しを飛ばして次へ進むため、
+    下へ入れても版数整合検査は通る (2026-10-10 22:26 実測)。飛ばすのは先頭の 1 つ
+    だけにする — Unreleased を全部飛ばすと、2 つ以上ある CHANGELOG (実測:
+    prompt-creator) で新しい節が古い節より下へ回って新旧の順序が壊れる。
+    """
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (plugin / "CHANGELOG.md").write_text(
+        "# Changelog\n\n## [Unreleased]\n\n- 未リリース分\n\n"
+        "## [Unreleased] - 2026-05-24\n\n- 版へ昇格しなかった古い節\n",
+        encoding="utf-8",
+    )
+    mod.write_version(plugin, "0.2.0")
+
+    headings = [
+        line for line in (plugin / "CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+        if line.startswith("## ")
+    ]
+    assert headings == [
+        "## [Unreleased]",
+        "## [0.2.0] - " + __import__("datetime").date.today().isoformat(),
+        "## [Unreleased] - 2026-05-24",
+    ]
+    # 冪等: 同じ版で二度呼んでも節は増えない
+    before = (plugin / "CHANGELOG.md").read_bytes()
+    mod.sync_changelog_section(plugin, "0.2.0")
+    assert (plugin / "CHANGELOG.md").read_bytes() == before
+
+
+def _declare_derived(mod, monkeypatch, tmp_path, plugin_name="probe"):
+    """宣言テーブルを tmp 側の成果物へ差し替え、実 doc を触らずに追従を見る。"""
+    doc = tmp_path / "doc" / "derived.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "DERIVED_VERSION_SURFACES",
+        (
+            (
+                plugin_name,
+                "doc/derived.md",
+                r"version \S+ / skills \d+ \+ agents \d+ \+ commands \d+",
+                "version {version} / skills {skills} + agents {agents} + commands {commands}",
+            ),
+        ),
+    )
+    return doc
+
+
+def test_bump_rewrites_declared_derived_surfaces(mod, tmp_path, monkeypatch):
+    """宣言した派生成果物が、bump の工程で版数と実数へ書き直されること。
+
+    ソーステキスト検査 (write_version の本文に呼び出しが在るか) は、呼び出し行を
+    コメントへ落とす改変で騙される — 文字列がコメントの中に残るため。実測
+    (2026-10-10 22:47) で `pass  # MUTATION: sync_derived_version_surfaces(...)` は
+    rc=0 / 51 passed のまま通った。呼び出しを実際に走らせて結果を見るのはここだけ。
+    """
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    for name in ("alpha", "beta", "gamma"):
+        (plugin / "skills" / name).mkdir(parents=True)
+        (plugin / "skills" / name / "SKILL.md").write_text("x", encoding="utf-8")
+    (plugin / "agents").mkdir()
+    (plugin / "agents" / "one.md").write_text("x", encoding="utf-8")
+    (plugin / "commands").mkdir()
+    for name in ("a.md", "b.md"):
+        (plugin / "commands" / name).write_text("x", encoding="utf-8")
+    doc = _declare_derived(mod, monkeypatch, tmp_path)
+    doc.write_text(
+        "> 対象: probe (version 0.0.1 / skills 1 + agents 1 + commands 1)\n",
+        encoding="utf-8",
+    )
+
+    mod.write_version(plugin, "0.2.0")
+
+    assert doc.read_text(encoding="utf-8") == (
+        "> 対象: probe (version 0.2.0 / skills 3 + agents 1 + commands 2)\n"
+    )
+    # 冪等: 同じ版で二度呼んでも文面は動かない
+    before = doc.read_bytes()
+    mod.sync_derived_version_surfaces(plugin, "0.2.0")
+    assert doc.read_bytes() == before
+
+
+def test_derived_surface_sync_fails_loudly_on_a_broken_declaration(mod, tmp_path, monkeypatch):
+    """宣言と文面が食い違ったら黙って通さない。
+
+    通すと「追従の仕組みが在るのに効いていない」状態になり、版数は静かに遅れ始める。
+    """
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    doc = _declare_derived(mod, monkeypatch, tmp_path)
+
+    # 1. 宣言した path が無い
+    with pytest.raises(SystemExit):
+        mod.sync_derived_version_surfaces(plugin, "0.2.0")
+
+    # 2. path は在るが正規表現が 1 件も当たらない (文面の書き換えで切れた場合)
+    doc.write_text("version の記述を言い換えて消した本文\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        mod.sync_derived_version_surfaces(plugin, "0.2.0")
+
+    # 3. 対象外 plugin の bump では何も要求しない (宣言の plugin 名で絞る)
+    other = _fake_plugin(tmp_path, "other", "0.1.0")
+    mod.sync_derived_version_surfaces(other, "0.2.0")
+
+
 def test_bump_syncs_public_marketplace_version(mod, tmp_path, monkeypatch):
     """公開 marketplace も version を二重に持つ。片方だけ動かすと
     lint-config-version-sync が落ち、bump のたびに CI が赤くなる。"""
@@ -362,6 +635,98 @@ def test_handoff_exclusion_is_anchored_to_dot_claude(mod, tmp_path, monkeypatch)
     (plugin / "skills" / "handoff").mkdir(parents=True)
     (plugin / "skills" / "handoff" / "SKILL.md").write_text("real content", encoding="utf-8")
     assert mod.main(["--check"]) == 1
+
+
+_GOV_PROPOSALS = "skills/run-skill-rubric-governance/proposals"
+_GENERATED_BODY = (
+    "---\nkind: rubric-update-proposal\n---\n\n"
+    "本ドラフトは aggregate-evals.py により自動生成された。PR 起票は別工程。\n"
+)
+_HANDWRITTEN_BODY = (
+    "---\nkind: rubric-update-proposal\n---\n\n"
+    "BD-001 の見出し別名を追加する。承認者は利用者。\n"
+)
+
+
+def _write_proposal(plugin: pathlib.Path, name: str, body: str) -> pathlib.Path:
+    d = plugin / _GOV_PROPOSALS
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / name
+    p.write_text(body, encoding="utf-8")
+    return p
+
+
+def test_generated_rubric_proposals_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
+    """SessionEnd hook (aggregate-evals.py) は以前 session を終えるたびに
+    proposals/<today>-rubric-update.md を書いていた。今の書き先は plugin の外だが、
+    手元に残った旧生成物や古い版の hook が書いたもので version が上がると、
+    「セッションを終えた」だけで誰も待っていない版が日ごとに増える。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    mod.main([])
+    _write_proposal(plugin, "2026-10-11-rubric-update.md", _GENERATED_BODY)
+    assert mod.main(["--check"]) == 0
+
+
+def test_handwritten_rubric_proposals_are_still_content(mod, tmp_path, monkeypatch):
+    """除外は marker を持つ機械生成ドラフトだけ。同じディレクトリの手書き提案は
+    rubric 採番の根拠として governance-log から参照される監査記録なので、
+    追加・書き換えが黙って通ってはいけない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    mod.main([])
+    _write_proposal(plugin, "2026-10-09-ja-heading-alias.md", _HANDWRITTEN_BODY)
+    assert mod.main(["--check"]) == 1
+
+
+def test_generated_proposal_exclusion_is_anchored_to_the_governance_dir(
+    mod, tmp_path, monkeypatch
+):
+    """marker 行だけを根拠に全階層で消すと、その語を引用した実コンテンツを
+    取りこぼす。除外はこの proposals/ 配下に限る。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    mod.main([])
+    (plugin / "skills" / "run-skill-rubric-governance").mkdir(parents=True, exist_ok=True)
+    (plugin / "skills" / "run-skill-rubric-governance" / "SKILL.md").write_text(
+        _GENERATED_BODY, encoding="utf-8"
+    )
+    assert mod.main(["--check"]) == 1
+
+
+_GENERATED_NAME_GLOB = "*-rubric-update.md"
+
+
+def test_real_proposals_dir_keeps_handwritten_and_ignores_generated(mod):
+    """自動ドラフトの書き先は plugin の外 ($CLAUDE_PROJECT_DIR/.claude/state/...) へ
+    移したので、clean clone の proposals/ には手書きしか無い (機械生成 0 件は正常)。
+    手元に旧書き先の生成物が残っていても、.gitignore のファイル名パターンが
+    生成物だけに当たり、手書きの監査記録には当たらないことを実 repo で押さえる。
+    手書きが 0 件になったら、パターンか marker 判定が手書きまで飲み込んでいる。"""
+    d = ROOT / "plugins" / "harness-creator" / _GOV_PROPOSALS
+    assert d.is_dir()
+    files = sorted(d.glob("*.md"))
+    generated = [p.name for p in files if mod._is_generated_proposal(p)]
+    handwritten = [p.name for p in files if not mod._is_generated_proposal(p)]
+    assert len(handwritten) >= 2, f"手書きが少なすぎる: {handwritten}"
+    assert not [n for n in handwritten if fnmatch.fnmatch(n, _GENERATED_NAME_GLOB)]
+    assert all(fnmatch.fnmatch(n, _GENERATED_NAME_GLOB) for n in generated), generated
+    ignore = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert f"plugins/harness-creator/{_GOV_PROPOSALS}/{_GENERATED_NAME_GLOB}" in ignore
+
+
+def test_generated_marker_matches_the_writer(mod):
+    """除外の根拠は生成器が本文へ書く marker 行。書く側の文言が変わると、
+    旧書き先に残った生成物が手書き扱いになり fingerprint を揺らす。"""
+    script = (
+        ROOT / "plugins" / "harness-creator" / "skills"
+        / "run-skill-rubric-governance" / "scripts" / "aggregate-evals.py"
+    )
+    spec = importlib.util.spec_from_file_location("aggregate_evals_for_marker", script)
+    writer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(writer)
+    assert writer._GENERATED_MARKER == mod.GENERATED_PROPOSAL_MARKER
+    assert mod.GENERATED_PROPOSAL_MARKER in writer._render_proposal([], [], {})
 
 
 def test_tests_dir_is_part_of_fingerprint(mod, tmp_path, monkeypatch):

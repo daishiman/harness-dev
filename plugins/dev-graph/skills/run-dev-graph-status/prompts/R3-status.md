@@ -1,12 +1,13 @@
 # Prompt: R3-status
 
-> validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
+> `extract-graph-status.py` (C24 の read と C11 の validate を中で通す) が返す rows から該当ノードを取り出し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R3-status`
 - `skill`: `run-dev-graph-status`
-- 不変目的: validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
+- 不変目的: `extract-graph-status.py` (C24 の read と C11 の validate を中で通す) が返す rows から該当ノードを取り出し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
+- inventory の summary (frontmatter の responsibilities と一致させる文で、ここでは書き換えない): 「validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)」。今の手順では graph の読み取りと検索は `extract-graph-status.py` が行い、この責務はその rows だけを使う。
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -26,10 +27,11 @@
 ### 受入条件
 
 - reportが実状態一致、前後digest同一、external write 0になる。
+- report の行は `extract-graph-status.py` の rows と一致し、`missing_required_keys` が0件である。
 
 ## Layer 3: インフラ層
 
-- 使用資産: Readとvalidate-graph-schema。
+- 使用資産: `extract-graph-status.py` (C24 の read と C11 の validate を中で通す)。行は script の `rows` だけを使い、graph を自分で読んで行を組み立てない。R2 の query plan を `--id/--kind/--project/--domain/--status/--feature/--tag/--tag-mode/--keyword` に写して起動し、exit 1 (`result: rejected`) なら行を出さず `validation.violations` と `missing_required_keys` を診断として返す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -46,12 +48,13 @@
 
 ### 5.2 ゴール定義
 
-- 目的: validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
+- 目的: `extract-graph-status.py` (C24 の read と C11 の validate を中で通す) が返す rows から該当ノードを取り出し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
 - 達成ゴール: node status/dependencies/linkage reportと検索後digest比較が生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] reportが実状態一致、前後digest同一、external write 0になる
+- [ ] report の行が `extract-graph-status.py` の rows そのもので、`read_only.changed` と `missing_required_keys` が0件である
 
 ## Layer 6: オーケストレーション層
 

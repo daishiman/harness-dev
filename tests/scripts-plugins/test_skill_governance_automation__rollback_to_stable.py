@@ -255,6 +255,80 @@ def test_subheading_stays_inside_the_version_section():
     assert [(r["version"], r["violation_rate_avg"], r["issue"]) for r in rows] == [("1.0.0", 0.02, None)]
 
 
+@pytest.mark.parametrize("heading", ["### 1.2.0 (2026-03-01)", "#### v1.2.0", "###### 1.2 の計測"])
+def test_version_like_subheading_closes_the_section(heading):
+    # coverage レビュー: 以前は ### 以下をすべて小見出しとして扱い、版らしい小見出しの下の値を直前の版に数えていた
+    warnings: list[str] = []
+    text = f"## 1.3.0 (2026-04-01)\n- rubric_id: skill-design\n{heading}\n- violation_rate_avg: 0.01\n"
+    rows = R.parse_versions_md(text, warnings)
+    assert [(r["version"], r["violation_rate_avg"], r["issue"]) for r in rows] == [("1.3.0", None, None)]
+    assert warnings == [f"見出し {heading!r} を版の見出しとして読めない（版の見出しなら `## <版> (YYYY-MM-DD)` で書く。"
+                        "1.3.0 の節の小見出しなら、1.3.0 のほかに版の番号や小数を入れない）。この節の値は使わない"]
+
+
+@pytest.mark.parametrize("heading", ["### 1.3.0 の計測", "#### v1.3 の補足", "### 計測（1.3.0）", "### 1.3.0の計測"])
+def test_subheading_with_the_same_version_stays_inside(tmp_path, heading):
+    # 評価者の指摘 (b): 以前は今の節と同じ版を含む小見出しでも節を閉じ、下の値を落として 1.0.0 を選び、
+    # 「## で書く」と誤って勧めていた。同じ版の番号（1.3 と 1.3.0 は同じ。v が付いてもよい）は数えない
+    text = ("## 1.0.0 (2026-01-01)\n- violation_rate_avg: 0.02\n"
+            f"## 1.3.0 (2026-04-01)\n{heading}\n- violation_rate_avg: 0.01\n")
+    warnings: list[str] = []
+    rows = R.parse_versions_md(text, warnings)
+    assert [(r["version"], r["violation_rate_avg"], r["issue"]) for r in rows] == [("1.0.0", 0.02, None),
+                                                                                  ("1.3.0", 0.01, None)]
+    assert warnings == []
+    proc = _cli(tmp_path, text, current="1.4.0")
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["target_version"] == "1.3.0"
+    assert "見出し" not in proc.stderr
+
+
+def test_rubric_id_under_a_same_version_subheading_is_read(tmp_path):
+    # 評価者の指摘 (c): 以前は「### 1.3.0 の補足」で節を閉じて下の rubric_id を落とし、rubric_id の無い現行の
+    # rubric に、別の rubric (other) の 1.3.0 を選んでいた。いまは rubric_id を節に読み、照合できないので外す
+    text = ("## 1.3.0 (2026-04-01)\n- violation_rate_avg: 0.01\n### 1.3.0 の補足\n- rubric_id: other\n"
+            "## 1.0.0 (2026-01-01)\n- violation_rate_avg: 0.02\n")
+    proc = _cli(tmp_path, text, current="1.4.0")
+    assert proc.returncode == 0, proc.stderr
+    assert (json.loads(proc.stdout)["target_version"], json.loads(proc.stdout)["rubric_id"]) == ("1.0.0", None)
+    assert "rubric_id other を、rubric_id の無い現行の rubric と照合できない" in proc.stderr
+
+
+@pytest.mark.parametrize("heading", ["### 1.3.0-rc.1 (2026-03-01)", "### 1.3.0 と 1.2.0 の比較", "### 1.3.0.1"])
+def test_subheading_with_another_version_still_closes_the_section(heading):
+    # 同じ版の番号のほかに、別の版（プレリリースや、1.3.0 に続く桁を含む）があれば、これまでどおり閉じる
+    text = f"## 1.3.0 (2026-04-01)\n{heading}\n- violation_rate_avg: 0.01\n"
+    warnings: list[str] = []
+    rows = R.parse_versions_md(text, warnings)
+    assert [(r["version"], r["violation_rate_avg"], r["issue"]) for r in rows] == [("1.3.0", None, None)]
+    assert len(warnings) == 1 and warnings[0].startswith(f"見出し {heading!r} を版の見出しとして読めない")
+
+
+def test_version_like_subheading_does_not_lend_its_value_to_the_previous_version(tmp_path):
+    # 以前は 1.2.0 の 0.01 を 1.3.0 の値に読み、1.3.0 を安定版に選んでいた。いまは 1.0.0 を選び、見出しを stderr に出す
+    text = ("## 1.0.0 (2026-01-01)\n- violation_rate_avg: 0.02\n"
+            "## 1.3.0 (2026-04-01)\n### 1.2.0 (2026-03-01)\n- violation_rate_avg: 0.01\n")
+    proc = _cli(tmp_path, text)
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["target_version"] == "1.0.0"
+    assert "見出し '### 1.2.0 (2026-03-01)' を版の見出しとして読めない" in proc.stderr
+
+
+def test_version_like_subheading_alone_leaves_no_candidate(tmp_path):
+    # 値が版らしい小見出しの下にしか無ければ候補なし（exit 1）。exit code の契約は変えない
+    proc = _cli(tmp_path, "## 1.3.0 (2026-04-01)\n### 1.2.0 (2026-03-01)\n- violation_rate_avg: 0.01\n")
+    assert proc.returncode == 1
+    assert "見出し '### 1.2.0 (2026-03-01)' を版の見出しとして読めない" in proc.stderr
+
+
+def test_plain_subheadings_at_deeper_levels_stay_inside(tmp_path):
+    text = "## 1.0.0 (2026-01-01)\n#### 計測の詳細\n###### 補足\n- violation_rate_avg: 0.02\n"
+    warnings: list[str] = []
+    rows = R.parse_versions_md(text, warnings)
+    assert [(r["version"], r["violation_rate_avg"], r["issue"]) for r in rows] == [("1.0.0", 0.02, None)]
+    assert warnings == []
+
+
 def test_heading_inside_code_fence_does_not_close_the_section():
     rows = R.parse_versions_md("## 1.0.0 (2026-01-01)\n```bash\n# run\n```\n- violation_rate_avg: 0.02\n")
     assert [(r["version"], r["violation_rate_avg"]) for r in rows] == [("1.0.0", 0.02)]
@@ -467,9 +541,15 @@ def test_plan_restores_content_and_carries_the_recorded_hash(tmp_path):
     # run-governance-automation の手順と同じく、派生の rubric.json を一組で戻し、templates/ はあれば戻す
     assert "派生した rubric.json" in plan["steps"][0] and "templates/ があれば" in plan["steps"][0]
     assert plan["target_hash"] in plan["steps"][1]
+    # hash の照合は書き込まずに行う。--dry-run が無いと rubric_hash を書き込み、一組で戻した派生の
+    # rubric.json と合わなくなる（rubric_hash を持たない版を戻したときに RUBRIC_DRIFT）
+    assert "compute-rubric-hash.py --dry-run --rubric" in plan["steps"][1]
     proc = _cli(tmp_path, "## 1.0.0 (2026-01-01)\n- violation_rate_avg: 0.01\n")
     plan = json.loads(proc.stdout)
     assert plan["target_hash"] is None and "hash の記録が無い" in plan["steps"][1]
+    assert "compute-rubric-hash.py --dry-run --rubric" in plan["steps"][1]
+    # 照合先として、repo に無い rubric.normalized.json を指さない
+    assert "rubric.normalized.json" not in plan["steps"][1]
 
 
 # --- レビュー A の指摘の再発防止 ----------------------------------------------

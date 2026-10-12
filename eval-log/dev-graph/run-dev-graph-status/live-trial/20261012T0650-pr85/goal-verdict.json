@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規経路での Skill 起動を確認した。init は transcript 35 行目、node は 126 行目、被験の status は 224 行目で起動している (`--repo-root <fx> --id task-lt-task-001`)。guard.jsonl でも Skill 3 件が allow になっている。",
+    "責務 prompt は出力より先に読まれている。init は 45 行目で R1〜R5 を全文読み、scaffold の適用は 74 行目。node は 136・140 行目で R0〜R4 の Layer 1/2/3/5/6 を読み、共通層は 54 行目で読んでいる。writer の実行は 167・181・189 行目。status は 205 行目で SKILL.md と R1〜R3 を全文読み、その後 224 行目で Skill を起動し、report は 256・276 行目に出ている。",
+    "status の処理内容: 236 行目で C24 (`resolve-repo-context.py --mode read`) を実行し、repo_root と content_roots.repository の realpath が一致した。続けて C11 を実行し exit 0 (238 行目)。237 行目で graph.json を Read し、その実データから report を組み立てている。status の責務を代行する自作の検索 script は無い (R3 の使用資産は Read と validate-graph-schema)。",
+    "report は 276 行目でそのまま出力されている (status=closed, closed_at=2026-10-11T21:55:07.866901Z, depends_on=[task-lt-task-002, task-lt-task-003], dependents=[])。fx/.dev-graph/state/graph.json の実値 (revision 2) と照合して全項目が一致した。task-lt-task-001 を depends_on に持つ node は 0 件、依存先の 002 と 003 はどちらも closed。256 行目の Agent prompt 内の report と 276 行目の report は同一の文字列。",
+    "C11 を評価者として再実行した (`validate-graph-schema.py --graph fx/.dev-graph/state/graph.json --repo-root fx`)。exit 0、valid=true、violation 0、readiness complete 3。",
+    "read-only の確認。実行前の digest は 221 行目 (21:58:10Z) で取られ、Skill 起動 (224 行目, 21:58:13Z) より前。249 行目で DIGEST_UNCHANGED。評価時点の fx を graph.json・config.json・templates・6 content root で digest し直した結果は /tmp/claude-501/digest-before.txt と完全一致した。graph.json の sha256 は 5790573e…55b9 のまま、config.json は 0b51e472…0980。graph.json・receipt 3 件・tasks/*.md の mtime はすべて 06:55:08 以前で、status 開始 (06:58:13) より前。06:58 以降に変わった fx 内のファイルは eval-log/ の goal-seek 記録だけ。",
+    "fx の git 状態。`git status --porcelain --untracked-files=all` の結果は、未追跡の .dev-graph/、tasks/lt-task-00{1,2,3}.md、eval-log/ だけ。HEAD は 5b55406 `fixture: initial` のまま、.git/index は 06:33 から変わっていない。.beads は存在しない。config は github.enabled=false で、tracker_binding は none。",
+    "GitHub / Beads への write は 0 件。main と subagent 3 本の transcript の全 tool 呼出しを走査したが、gh・bd・gh-bridge・bd-bridge・build-github-projection・reconcile-github の呼出しは 0 件。sandbox 解除 (dangerouslyDisableSandbox) の使用も 0 件。",
+    "graph は C02 writer (build-graph-node.py) だけを通して書かれている。add は 181 行目 (revision 0→1)、update で status=closed にしたのは 189 行目 (revision 1→2)。receipt は node-r000001-add.json と node-r000002-update.json。node evaluator (agent-a669e610810653c94) が、現在の 3 ファイルの sha256 が receipt r2 の sha256_after と一致し、graph の digest が r2 の graph_digest_after と一致することを確かめている。",
+    "必須の Agent verifier は実際に起動されている (91・196・256 行目)。subagent の transcript 3 本に実際の tool 呼出しが残っている。status evaluator (agent-abdad631b69e57f0f) は validator を exit 0 で再実行し、dangling と root 外の file_path を独立に検査して ALL_PASS を返した (268 行目)。完了マーカーは workdir/out/status.json だけ (272 行目)。",
+    "deny の影響。guard.jsonl の deny は 21 行目の 1 件だけで、init の evaluator subagent (agent-a966c6a9f2c02d63d、transcript 39〜40 行目) が偽 HOME の .claude/settings.json を読み、user scope に hook が重複していないかを確かめようとした呼出しだった。subagent は回避を試みず、HOME を外したコマンドで再実行している (43 行目)。この確認が欠けたことは非 blocker として申告されている (51 行目)。deny が影響したのは準備段階である init の補助確認 1 つだけで、status の goal に必要な手順は妨げていない。status 段階での deny は 0 件。",
+    "goal に影響しない逸脱 (blocker にはしない)。(1) artifact_delivery の順序: report をユーザーに提示する前に、253 行目で standard を記録し、256 行目で evaluator を起動している。提示は 276 行目。ただし 256 行目と 276 行目の report は同一なので、結果には影響していない。(2) node の close 処理 (update) は、add 引数でロードした同じ Skill の中で実行されている。経路は C02 writer のまま。(3) checklist の「該当なし=空 result」は、存在しない id で status を実際に実行して確かめたものではなく、evaluator の推論に基づく判定。"
+  ],
+  "skill_defects": [
+    "読取り専用であるはずの status skill が、呼出し元 repo にファイルを書き残す。run-dev-graph-status/SKILL.md は「副作用なし」をうたい、allowed-tools に Write が無く、R3 の責務境界は「Write/Edit/external mutationを呼ばず」としている。一方で同じ SKILL.md の ## ゴールシーク配線は、$DEV_GRAPH_ROOT/eval-log/run-dev-graph-status-{goal-spec.json,progress.json,intermediate.jsonl} の作成と追記を要求している。再現手順: 初期化済みの fx で status を standard 選択で 1 回実行する → git status に eval-log/run-dev-graph-status-* の未追跡ファイルが 3 件増える (今回は Bash の heredoc で書かれた)。intermediate.jsonl は append-only なので、実行のたびに伸び続ける。OUT2 の digest 範囲 (graph/config/content) に eval-log が入っていないため検査は通るが、repo への副作用は 0 ではない。",
+    "status には検索と report 生成の正規 script も report の schema も無い。R2・R3 の使用資産は Read と validate-graph-schema だけで、AND filter、tag match mode、dependents の逆引き、該当なしの空 result、schema 不正時の診断は、すべて LLM がその場で組み立てる。そのため Layer 4 の「同一入力では同じ output shape」も checklist の「該当なしが空 result の成功」も機械的には保証できない。再現手順: 同じ `--id` で 2 回実行すると report の形式が自由記述になる。存在しない id で実行して空 result を確かめる決定論的な手段が無く、今回も evaluator の推論で PASS とされた (transcript 268 行目)。",
+    "SKILL.md の ## Pre-choice usable artifact execution は「現物path・digest・開き方を提示してから」選択を記録すると定めている。しかし effect: conversation-output の status には file path が無く、提示すべきものが曖昧になっている。今回はこれが原因で、report の提示 (276 行目) が standard の記録 (253 行目) と evaluator の起動 (256 行目) より後になった。"
+  ],
+  "evaluator_agent_id": "af96151d6e51ee84c"
+}

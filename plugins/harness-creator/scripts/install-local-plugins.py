@@ -7,7 +7,7 @@
 # outputs:
 #   - stdout: product別install/verification receipt JSON
 #   - exit: 0=verified / 1=pending user gate / 3=catalog・CLI・artifact契約違反
-# contexts: [C, E]
+# contexts: [A, E]
 # network: false
 # write-scope: ${CLAUDE_CONFIG_DIR:-~/.claude}, ${CODEX_HOME:-~/.codex} (明示実行時のみ)
 # dependencies: [claude, codex]

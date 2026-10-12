@@ -365,7 +365,7 @@ def test_pending_guard_context_blocks_unknown_binary(tmp_path):
 
 def test_pretool_blocks_known_entrypoint_mutation_clis_without_central_execute():
     commands = (
-        'python3 "/installed/ubm/scripts/publish-staged-files.py" --manifest staged.json --manifest-sha256 abc',
+        'python3 "/installed/ubm/scripts/guard-staged-publication.py" --manifest staged.json --manifest-sha256 abc',
         'python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py" '
         "--auto-approve",
         'python3 "$CLAUDE_PLUGIN_ROOT/scripts/gh-bridge.py" apply --plan sync.json',
@@ -667,7 +667,7 @@ def _plugin_copy(root: pathlib.Path, *, hooks_symlink: bool) -> pathlib.Path:
 
 def test_canonical_action_rejects_substitution_but_keeps_json_literals():
     module = _guard_module(name="guard_syntax_negative")
-    for expression in ['$(python3 publish-staged-files.py --manifest plan.json)', '`python3 publish-staged-files.py --manifest plan.json`', '<(python3 publish-staged-files.py --manifest plan.json)']:
+    for expression in ['$(python3 guard-staged-publication.py --manifest plan.json)', '`python3 guard-staged-publication.py --manifest plan.json`', '<(python3 guard-staged-publication.py --manifest plan.json)']:
         command = f"""{CANONICAL_PREFIX} execute --project-root "{expression}" --authorization-receipt receipt --command-json '["python3","worker.py"]'"""
         assert _shape(module, command) is None
     command = f"""{CANONICAL_PREFIX} execute --project-root "$PWD" --authorization-receipt receipt --command-json '["python3","worker.py","literal $(value) and `data`"]'"""

@@ -20,7 +20,7 @@
 - 1年後の月額継続コンサル人数: {{yearly_continuous_consult_count}} [自動取得] / [要ヒアリング] / null（理由）
 - 出所: 1年目標ファイルのパス {{yearly_path}} ／ 挑戦宣言のパス {{challenge_declaration_path}}
 
-### 継承文脈（現在の月報/期報/1年目標から継承）
+### 継承文脈（現在の月報/期報から継承。1年も現在の期報から）
 - 今期の売上目標: {{period_sales_target}} [自動取得] / [要ヒアリング]
 - 今期の累計売上実績: {{period_sales_cumulative}} [自動取得] / [要ヒアリング]
 - 現在事業パートナー数: {{business_partner_count}} [自動取得] / [要ヒアリング]

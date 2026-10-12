@@ -6,11 +6,13 @@
 #   - argv: --check, --install, --only, --dry-run, --project-dir, --scope, --quiet-period, --lock
 #   - fs: plugins/*/**, marketplaces/local/plugin-fingerprints.json
 # outputs:
-#   - fs: plugins/*/.claude-plugin/plugin.json (version), marketplaces/local/**
+#   - fs: plugins/*/.claude-plugin/plugin.json (version), plugins/*/CHANGELOG.md (節), marketplaces/local/**
 #   - stdout: 変更検出 / bump / install の要約
 # contexts: [A]
 # network: false  (--install 時のみ claude CLI がローカル marketplace を読む。外部通信はしない)
 # write-scope: plugins/*/.claude-plugin/plugin.json, plugins/*/.codex-plugin/plugin.json,
+#              plugins/*/CHANGELOG.md, plugins/*/plugin-composition.yaml,
+#              DERIVED_VERSION_SURFACES で宣言した doc/**,
 #              .agents/plugins/marketplace.json, .claude-plugin/marketplace.json,
 #              marketplaces/local, config-version-lock.json, --lock で指定した lock file
 # dependencies: []
@@ -43,6 +45,8 @@ version を上げ忘れることが即「反映されない」に直結する。
 hash が記録されたときの version を持つ。内容 hash が変わったのに version が同じなら
 「上げ忘れ」であり、`--check` が exit 1 で落とす (CI ゲート)。引数なしで実行すれば
 version を進めて対応表を書き直し、ローカル marketplace まで再生成する。
+記録か bump の対象に version が空 (空白だけ・文字列でないものを含む) の plugin が
+あれば、`--check` でも書き込みでも何もせず exit 2 で止める。
 
 3 番目は `claude plugin update` が担う。`--install` はそれを CLI で駆動する:
 
@@ -65,6 +69,9 @@ fingerprint から除外するもの
 `__pycache__` / `.pytest_cache` / `.DS_Store` / `.build` / `node_modules`。
 いずれも実行の副産物で、内容が変わっても plugin の振る舞いは変わらない。ここを
 含めると「pytest を回しただけで version が上がる」ノイズになる。
+加えて plugin 直下の `CHANGELOG.md`。これは副産物ではなく、**採番の入力でもあり
+出力でもあるため含めると不動点が存在しない**という別の理由による (詳細は
+`EXCLUDED_ROOT_FILE_NAMES` のコメント)。
 逆に `tests/` は **含める**。install は tests/ ごと copy しており、除外すると
 「copy される内容」と fingerprint がずれて対応表としての意味が消えるためである。
 """
@@ -72,6 +79,7 @@ fingerprint から除外するもの
 from __future__ import annotations
 
 import argparse
+import datetime
 import fcntl
 import hashlib
 import importlib.util
@@ -101,6 +109,77 @@ EXCLUDED_FILE_NAMES = frozenset({".DS_Store"})
 # "handoff" という一般名を全階層で消してしまうため、相対パスの前方一致で絞る。
 EXCLUDED_RELPATH_PREFIXES = (".claude/handoff/",)
 
+# harness-creator の SessionEnd hook (hooks/aggregate-evals.py → skills/
+# run-skill-rubric-governance/scripts/aggregate-evals.py) が、session を終えるたびに
+# skills/run-skill-rubric-governance/proposals/<today>-rubric-update.md を upsert する。
+# .claude/handoff/ とまったく同じ形で、「セッションを終えた」だけで fingerprint が動く。
+# 実測 (2026-10-11 06:11): この 1 ファイルだけで harness-creator 1.4.46 が changed に
+# なり --check が rc=1。退避すると rc=0 に戻った。
+#
+# ただしこのディレクトリは機械の置き場ではなく、**人が書いた提案も同居する**。
+# 実測 (2026-10-11 06:16): 27 件中 25 件が自動生成、2 件
+# (2026-08-14-pg001-reg001-text-fix.md / 2026-10-09-ja-heading-alias.md) が手書きで、
+# 後者は governance-log.jsonl が rubric 1.4.0 採番の根拠として参照する監査記録である。
+# ディレクトリ名やパス前方一致で丸ごと除外すると、**その監査記録を後から書き換えても
+# 削除しても --check が黙って通る**ようになる。そこで除外は、生成器が自分で本文へ書く
+# marker 行を持つファイルだけに絞る (パスだけでは機械と人を分けられない)。
+#
+# 受け入れる副作用: 自動生成ドラフトの追加・更新・削除は bump を起こさない。内容は
+# eval-log の集計であって plugin の実行時の振る舞いではないので挙動は変わらないが、
+# 「過去の自動ドラフトを後から書き換えた」は本検査では見えなくなる。
+#
+# 2026-10-12: 根本策として生成器の書き先を plugin の外
+# ($CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/) へ移し、旧書き先の
+# *-rubric-update.md は .gitignore で追跡外にした。この除外は、手元に残った旧生成物と
+# 古い版の hook が書くものへの防御として残す。marker は生成器の _GENERATED_MARKER と
+# 一致させる (tests/scripts-root/test_root__build_plugin_release.py が照合する)。
+GENERATED_PROPOSAL_RELPATH_PREFIXES = (
+    "skills/run-skill-rubric-governance/proposals/",
+)
+GENERATED_PROPOSAL_MARKER = "aggregate-evals.py により自動生成された"
+
+
+def _is_generated_proposal(path: pathlib.Path) -> bool:
+    """生成器が書く marker 行の有無で、機械生成ドラフトと手書き提案を分ける。
+
+    読めなかったものは手書き扱い (= fingerprint に含める)。判定できないものを黙って
+    除外側へ寄せると、検査が弱くなる方向へ fail-open するため。
+    """
+    try:
+        return GENERATED_PROPOSAL_MARKER in path.read_text(
+            encoding="utf-8", errors="replace"
+        )
+    except OSError:
+        return False
+
+# plugin 直下の CHANGELOG.md。**bump の入力でも出力でもあるため、含めると
+# 不動点が存在しなくなる**。write_version() は 5 面 (.claude-plugin /
+# .codex-plugin / 公開 marketplace / plugin-composition.yaml / CHANGELOG) に書き、
+# _run() は status=="changed" に対して必ず next_version() を呼ぶので「bump せずに
+# 台帳だけ更新する」経路が無い。CHANGELOG を内容に数えると、節を足した書き込み自体が
+# fingerprint を動かして次回の「上げ忘れ」になり、解消には bump が要り、bump すると
+# また節が足されて fingerprint が動く — どこにも落ち着かない。実際に
+# x-longpost-creator で踏み、「版数を先に見出しへ書いてから bump を 1 回」で手で
+# 抜けた。ここを除外することで、採番と同じ工程で CHANGELOG へ書き戻せる。
+#
+# 版数整合の検査は無力化しない。fingerprint は「配布内容が変わったか」の検知で
+# あって版数整合の検査ではなく、整合は CHANGELOG と plugin.json を直接読む別の
+# 検査が見ている (tests/scripts-plugins/test_plugins__changelog_version_parity.py が
+# CHANGELOG を持つ plugin 全件を対象にする。対象 0 件での空振りは下限 assert で
+# 潰してある)。
+#
+# 受け入れる副作用: **CHANGELOG だけの修正は install 済み copy へ届かなくなる**。
+# fingerprint が動かないので bump されず、キャッシュは前の版の CHANGELOG を持ち
+# 続ける。CHANGELOG は実行時に読まれないので挙動は変わらないが、install 済み
+# plugin の CHANGELOG を最新にしたい場合は、本体の変更に相乗りさせるか手で
+# plugin.json の版を上げる (status が released になり採番を尊重して記録される。
+# その経路でも write_version() を通るので節は追従する)。
+#
+# 除外は **plugin 直下の 1 件だけ**に限る。全階層で名前一致にすると
+# plugins/harness-creator/skills/ref-skill-design-rubric/references/CHANGELOG.md
+# のような、skill が reference として読む実コンテンツを取りこぼす。
+EXCLUDED_ROOT_FILE_NAMES = frozenset({"CHANGELOG.md"})
+
 
 def is_excluded(plugin_dir: pathlib.Path, path: pathlib.Path) -> bool:
     rel = path.relative_to(plugin_dir)
@@ -108,7 +187,12 @@ def is_excluded(plugin_dir: pathlib.Path, path: pathlib.Path) -> bool:
         return True
     if path.name in EXCLUDED_FILE_NAMES:
         return True
-    return rel.as_posix().startswith(EXCLUDED_RELPATH_PREFIXES)
+    if len(rel.parts) == 1 and rel.name in EXCLUDED_ROOT_FILE_NAMES:
+        return True
+    relposix = rel.as_posix()
+    if relposix.startswith(GENERATED_PROPOSAL_RELPATH_PREFIXES):
+        return _is_generated_proposal(path)
+    return relposix.startswith(EXCLUDED_RELPATH_PREFIXES)
 
 
 # ── plugin 走査 ────────────────────────────────────────────────────
@@ -132,6 +216,23 @@ def read_version(plugin_dir: pathlib.Path) -> str:
     return json.loads(manifest_path(plugin_dir).read_text(encoding="utf-8"))["version"]
 
 
+def is_blank_version(version: object) -> bool:
+    """version が文字列でないか、空・空白だけなら True。
+
+    空の version を書くと plugin.json・marketplace・CHANGELOG の節・派生面がすべて
+    空の版で揃い、キャッシュ名も空になる。採番 (next_version) を通らない `new` /
+    `released` の行はそのまま書き込まれるので、書き込む前にここで止める。
+    """
+    return not (isinstance(version, str) and version.strip())
+
+
+def _blank_version_message(name: str, version: object) -> str:
+    return (
+        f"[build-plugin-release] {name}: version が空か文字列でない ({version!r})。"
+        "plugin.json に major.minor.patch を書くこと"
+    )
+
+
 def write_version(plugin_dir: pathlib.Path, version: str) -> None:
     """version の値だけを原文置換する。
 
@@ -139,7 +240,13 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
     のような 1 行記法が展開されて無関係な行まで差分に乗る (実測で確認)。
     fingerprint は内容 hash なので、その巻き添え整形自体が「変更」として次回の
     bump を誘発し、bump が bump を呼ぶ。だから原文には触らず値だけ差し替える。
+
+    空の version は書かない (exit 2)。呼び出し側の _run も事前に止めるが、
+    関数を直接呼ぶ経路でも派生面へ空の版を広げない。
     """
+    if is_blank_version(version):
+        print(_blank_version_message(plugin_dir.name, version), file=sys.stderr)
+        raise SystemExit(2)
     path = manifest_path(plugin_dir)
     text = path.read_text(encoding="utf-8")
     current = json.loads(text)["version"]
@@ -155,6 +262,197 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
     sync_public_marketplace_version(plugin_dir.name, version)
     sync_codex_manifest_version(plugin_dir, version)
     sync_plugin_composition_version(plugin_dir, version)
+    sync_changelog_section(plugin_dir, version)
+    sync_derived_version_surfaces(plugin_dir, version)
+
+
+# ── CHANGELOG 追従 ─────────────────────────────────────────────────
+
+# plugin 直下 CHANGELOG の見出しのうち「版の節」と読めるもの。
+# `notifier-check.py` の `_VERSION_RE` と同じ形を採る。読む側と書く側で形が違うと、
+# 書いた節が読まれないという最も静かな壊れ方をする。
+_CHANGELOG_VERSION_HEADING_RE = re.compile(r"^##\s*\[?v?(\d+\.\d+\.\d+[^\]\s]*)")
+
+
+def _changelog_section_format(lines: list[str]) -> tuple[bool, str]:
+    """既存の版見出しから (角括弧を使うか, 日付前のダッシュ) を読み取る。
+
+    書式は plugin ごとに実際に割れている (2026-10-10 22:26 実測):
+        `## [0.2.0] - 2026-07-11`   extract-system-blueprint / skill-intake
+        `## 0.8.0 - 2026-10-10`     ubm-goal-setting
+        `## 1.3.5 — 2026-10-10`     x-longpost-creator (em dash)
+    どれかへ揃えさせるのではなく、その plugin の書き方を踏襲する。揃えさせると
+    既存の全節を書き換えることになり、履歴の原文を機械が改変する。
+
+    版見出しが 1 つも無い場合 (実測: prompt-creator は `## [Unreleased]` だけで
+    版の節が無く、読む側は None を返す) は Keep a Changelog の表記
+    `## [X.Y.Z] - YYYY-MM-DD` を既定にする。repo 内の 6 件中 2 件がこの形で最多かつ、
+    読む側の正規表現が明示的に角括弧を許容している形でもある。
+    """
+    for line in lines:
+        match = _CHANGELOG_VERSION_HEADING_RE.match(line)
+        if not match:
+            continue
+        bracketed = line.lstrip("#").strip().startswith("[")
+        dash = "—" if "—" in line else "-"
+        return bracketed, dash
+    return True, "-"
+
+
+def _changelog_insertion_index(lines: list[str]) -> int:
+    """新しい節を挿し込む行番号を決める。
+
+    `## [Unreleased]` が先頭の h2 なら **その節の下**へ入れる。Keep a Changelog の
+    通例であると同時に、読む側 (`notifier-check.py` の `_extract_latest_version`) が
+    版の形をしていない見出しを飛ばして次へ進むことを実測で確かめてあるため
+    (2026-10-10 22:26: `## [Unreleased]` の下に `## [1.0.0]` を置いた probe が
+    "1.0.0" を返した)。Unreleased の上へ入れると Unreleased が未リリース分でなく
+    なり、下へ入れても検査は通る。だから通例を崩す理由が無い。
+
+    飛ばすのは **先頭の 1 つだけ**にする。prompt-creator には `## [Unreleased]` が
+    2 つあり (2 つ目は 2026-05-24 の、版へ昇格しないまま残ったもの)、Unreleased を
+    全部飛ばすと新しい節が古い節より下へ回って新旧の順序が壊れる。
+    """
+    h2 = [i for i, line in enumerate(lines) if line.startswith("## ")]
+    if not h2:
+        return len(lines)
+    if "Unreleased" in lines[h2[0]]:
+        return h2[1] if len(h2) > 1 else len(lines)
+    return h2[0]
+
+
+def sync_changelog_section(plugin_dir: pathlib.Path, version: str) -> None:
+    """配っている版の節が CHANGELOG に在る状態を保つ。
+
+    CHANGELOG は版数整合検査の **入力**でありながら、採番の出力ではなかった。
+    その結果 bump のたびに CHANGELOG だけが 1 版遅れ、2026-10-10 22:26 の実測では
+    CHANGELOG を持つ 6 plugin が 6 件とも plugin.json とズレていた。遅れを人手で
+    追いかける規律に頼ると漏れるので、採番と同じ工程で節を足す。
+
+    守りたい不変条件は **「配っている版の節が CHANGELOG にある」ことだけ**で、
+    全履歴の網羅ではない。だから既存の履歴の穴 (実測: extract-system-blueprint は
+    0.2.0 の次が 0.2.16) は埋めない。埋めるには存在しない 15 版ぶんの変更内容を
+    創作するほかなく、それは台帳を嘘で満たす行為である。穴が開いていることは
+    「その間の版について記述が無い」という正しい情報を伝えている。
+
+    本文も同じ理由で中身を創作しない。この script が知っているのは「内容が変わった」
+    ことだけで、何がどう変わったかは知らない。自動採番で作られた版であること自体を
+    書き、記述が未記入であることを明示する。
+
+    CHANGELOG を持たない plugin では何もしない。`--check` はこの経路を通らない
+    (write_version を呼ばない) ので、検査に副作用は出ない。
+    """
+    path = plugin_dir / "CHANGELOG.md"
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    # 冪等。既に当該版の節があれば触らない。手で中身を書いた節を
+    # 自動生成の placeholder で上書きしないためでもある。
+    for line in lines:
+        match = _CHANGELOG_VERSION_HEADING_RE.match(line)
+        if match and match.group(1) == version:
+            return
+
+    bracketed, dash = _changelog_section_format(lines)
+    label = f"[{version}]" if bracketed else version
+    today = datetime.date.today().isoformat()
+    section = [
+        f"## {label} {dash} {today}",
+        "",
+        "- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。",
+        "",
+    ]
+
+    index = _changelog_insertion_index(lines)
+    updated = lines[:index] + section + lines[index:]
+    path.write_text("\n".join(updated).rstrip("\n") + "\n", encoding="utf-8")
+
+
+# ── 版数を埋めた派生成果物 ─────────────────────────────────────────
+
+# 版数や実数を本文へ埋めた成果物の宣言。(plugin 名, ROOT 相対パス, 探す正規表現,
+# 書き込む文面) の 4 つ組で、文面は `_plugin_facts()` の値で format される。
+#
+# CHANGELOG と同じ非対称がここにもある。これらは版数を **入力**にしながら bump の
+# **出力**ではなかったので、bump のたびに 1 版遅れて検査が赤くなる。実測
+# (2026-10-10 22:19 の bump 後): doc/harness-creator-完全解剖.md が 1.4.45 のまま
+# 残り tests/test_harness_creator_dissection_doc.py が落ちた。手で直しても次の bump で
+# また古くなるので、採番と同じ工程で書き直す。
+#
+# **同じ形の成果物が増えたら、ここへ 1 行足すだけで追従する。** bump 経路の側に
+# plugin 名を直書きしないのはそのためで、追従の対象が宣言として 1 箇所に並ぶ。
+#
+# 数え方は検査側 (tests/test_harness_creator_dissection_doc.py) と同じにする。実測
+# (2026-10-10 22:40) で skills=32 / agents=8 / commands=6、検査側は
+# `skills/*/SKILL.md` の存在数・`agents/*.md`・`commands/*.md` の glob 件数で数えて
+# おり、`_plugin_facts()` はそれと同じ数え方を持つ。別の数え方にすると、追従した
+# つもりの値で検査が落ちる。
+#
+# CHANGELOG と違って fingerprint の不動点問題は起きない。これらは `plugins/` の外
+# (`doc/` 配下) にあり、どの plugin の内容にも数えられていないため、書き換えても
+# fingerprint は動かない。
+DERIVED_VERSION_SURFACES: tuple[tuple[str, str, str, str], ...] = (
+    (
+        "harness-creator",
+        "doc/harness-creator-完全解剖.md",
+        r"version \S+ / skills \d+ \+ agents \d+ \+ commands \d+",
+        "version {version} / skills {skills} + agents {agents} + commands {commands}",
+    ),
+    (
+        "harness-creator",
+        "doc/harness-creator-完全解剖.md",
+        r"\d+ 個の skill 名",
+        "{skills} 個の skill 名",
+    ),
+)
+
+
+def _plugin_facts(plugin_dir: pathlib.Path, version: str) -> dict[str, object]:
+    """宣言の文面へ差し込める実数。検査側と同じ数え方で数える。"""
+    skills = plugin_dir / "skills"
+    return {
+        "version": version,
+        "skills": (
+            sum((d / "SKILL.md").is_file() for d in skills.iterdir())
+            if skills.is_dir() else 0
+        ),
+        "agents": len(list((plugin_dir / "agents").glob("*.md"))),
+        "commands": len(list((plugin_dir / "commands").glob("*.md"))),
+    }
+
+
+def sync_derived_version_surfaces(plugin_dir: pathlib.Path, version: str) -> None:
+    """宣言された派生成果物の埋め込み値を実数へ書き直す。
+
+    正規表現が 1 件も当たらなければ **握り潰さず止める**。ここを黙って通すと、
+    成果物側の文面を書き換えた拍子に追従が静かに止まり、次の bump から検査だけが
+    赤くなる — 追従の仕組みが在るのに効いていない、という最も分かりにくい状態に
+    なる。宣言とファイルの食い違いは宣言を直すべき事象なので、その場で見える形に
+    する。
+    """
+    facts = None
+    for name, relative, pattern, template in DERIVED_VERSION_SURFACES:
+        if name != plugin_dir.name:
+            continue
+        path = ROOT / relative
+        if not path.exists():
+            raise SystemExit(
+                f"[build-plugin-release] 宣言された派生成果物 {relative} が無い。"
+                "DERIVED_VERSION_SURFACES の宣言を直すこと"
+            )
+        if facts is None:
+            facts = _plugin_facts(plugin_dir, version)
+        text = path.read_text(encoding="utf-8")
+        replaced, count = re.subn(pattern, template.format(**facts), text)
+        if count == 0:
+            raise SystemExit(
+                f"[build-plugin-release] {relative} で {pattern!r} が 1 件も当たらない。"
+                "成果物の文面か DERIVED_VERSION_SURFACES の宣言が食い違っている"
+            )
+        if replaced != text:
+            path.write_text(replaced, encoding="utf-8")
 
 
 def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
@@ -678,6 +976,14 @@ def _run(args) -> int:
         for row in editing:
             print(f"  skip  {row['name']}: 直近 {args.quiet_period:g} 分以内に更新 (編集中とみなす)")
         pending = [r for r in pending if r not in editing]
+
+    # 空の version は設定の誤りなので、--check でも書き込みでも exit 2 で止める。
+    # 1 件でもあれば何も書かない (一部の plugin だけ書かれた状態を作らない)。
+    blank = [r for r in pending if is_blank_version(r["version"])]
+    if blank:
+        for row in blank:
+            print(_blank_version_message(row["name"], row["version"]), file=sys.stderr)
+        return 2
 
     if args.check:
         stale = [r for r in pending if r["status"] == "changed"]

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -248,7 +249,8 @@ def test_intake_prompts_do_not_reask_api_key_after_ready_check():
         encoding="utf-8"
     )
     for text in (skill, prompt, publish, revise):
-        assert "validate-notion-ready.py --check-api" in text
+        # 解決済みパスを引用符で囲んだ形 (`.../validate-notion-ready.py" --check-api`) も同じ指示として認める
+        assert re.search(r'validate-notion-ready\.py"? --check-api', text)
         assert "再質問しない" in text or "再入力を求めない" in text
 
 

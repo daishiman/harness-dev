@@ -9,9 +9,9 @@ effect: local-artifact
 prefix: run
 hierarchy: L1
 user-invocable: true
-argument-hint: "[--repo-root PATH] [--feature-id ID] [--handoff-target PATH]"
+argument-hint: "[--repo-root PATH] [--feature-id ID] [--package-dir REL] [--receipt REL] [--system-planner-root PATH] [--handoff-target PATH]"
 allowed-tools: [Read, Write, Bash, Skill, AskUserQuestion, Agent]
-script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/register-package.py, ../../scripts/validate-readiness-binding.py, ../../scripts/guard-requirements-handoff.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]
 reference_refs: [../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -97,13 +97,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 出力: requirements document、readiness matrix、snapshot digest に固定した capability-build/task-graph handoff。
 - 完了条件: C11/C02/validate-system-plan の三 gate が同一 digest で PASS し、missing section が0、本 skill による実装 code 生成が0である。
 
-実装コードは生成しない。graph の5 artifact kind、C19 が取り込んだ system-spec lineage、external system-dev-planner の feature execution package を引用して requirements handoff を作る。
+実装コードの生成は禁止。graph の5 artifact kind、C19 が取り込んだ system-spec lineage、external system-dev-planner の feature execution package を引用して requirements handoff を作る。
 
 1. 対象 feature/subgraph と handoff target を確定する。
-2. C11 の純粋 validation report と node の `implementation_readiness/evaluation_status/confirmation_status` を照合する。
-3. system-dev-planner の version/entry point と `validate-system-plan.py` を preflight し、P01..P13 exact set・13-node DAG・package receipt を外部 validator で検証する。13 task の生成ロジックは複製しない。
-4. incomplete/pending/fail/stale、不足 section、lineage/confirmation 不整合が1件でもあれば `missing_sections` と remediation owner を返して handoff 0件で停止する。
-5. 全 gate PASS 時だけ requirements document、graph snapshot digest、package reference、capability-build handoff reference を atomic emit する。
+2. 三 gate の照合は `validate-readiness-binding.py --repo-root <root> --package-dir <published package> --receipt <C02 receipt> [--system-planner-root PATH]` だけが行う。script は C24 (`resolve-repo-context.py --mode read`) で root を固定し、system-dev-planner の `validate-system-plan.py` を起動して `validated_digest` を得る (P01..P13 exact set・13-node DAG・共通 `parent_feature/feature_package_id` の検証は外部 validator のまま。13 task の生成ロジックは複製しない)。
+3. 同じ script が、C02 の registration manifest・promotion receipt・C02 receipt の `source_digest` と `validated_digest` の一致、C11 (`validate-graph-schema.py` の validate) を通した graph の package member の readiness view (`status/confirmation_status/evaluation_status/implementation_readiness/source_digest/evaluated_digest`) の digest と C02 が保存した同じ view の digest の一致、receipt の `graph_revision_after` と同じ revision なら graph 全体の digest と `graph_digest_after` の一致を確かめる。exit 1 なら `violations` (code と node) をそのまま返して止まる。LLM が digest や readiness を読み比べて代わりに判定しない。
+4. handoff 対象の node は `guard-requirements-handoff.py --repo-root <root> --node <id> [--node <id>]... --expect-graph-digest <binding の graph.digest>` に渡す。script は参照 closure (`depends_on/related_nodes/architecture_refs/parent_feature` と package member) をたどり、incomplete/unknown/pending/fail/stale/draft/superseded/tombstoned・参照切れ・C11 violation が1件でもあれば exit 1 (`status: withheld`、`handoff_count: 0`) で、closure 全件の `missing_sections` と各 blocked node の `remediation.owner` を返す。一部の node だけを handoff しない。guard は自分が読んだ graph の `graph.digest` と `graph.graph_revision` を binding と同じ定義 (C02 の canonical digest) で返し、`--expect-graph-digest` と違えば (binding の後に graph が変わった) exit 2 (`status: snapshot_mismatch`、`handoff_count: 0`) で止まる。そのときは binding からやり直す。exit 2 には report の無いもの (usage・C24・IO の例外。stdout は空で、stderr に理由が出る) もある。これも handoff 0件で止め、stderr の例外の内容を止まった理由として返す (binding からやり直すのは `status: snapshot_mismatch` の report があるときだけ)。
+5. `validate-readiness-binding.py` と `guard-requirements-handoff.py` がともに exit 0 で、binding の `graph.digest` と guard の `graph.digest` が一致する (guard の `graph.digest_match: true`) ときだけ、guard の `handoff` に並んだ node について requirements document、graph snapshot digest (binding の `graph.digest`)、package reference、capability-build handoff reference を atomic emit する。
 
 出力は readiness matrix と handoff package。`run-system-dev-plan` の出力を消費するが dev-graph 自身は task spec を作らない。
 
@@ -120,9 +120,9 @@ system-spec-harness確定成果物とsystem development task planを含むグラ
 ### 完了チェックリスト
 
 - [ ] scope 内 node の feature/package/system-spec lineage closure が欠落0である
-- [ ] C11 report と C02 保存済み readiness/evaluation/source digest が一致する
-- [ ] incomplete/pending/fail/stale node の missing_sections と remediation owner が全件表示される
-- [ ] 全 gate PASS の場合だけ requirements と capability-build handoff が同一 snapshot digest で生成される
+- [ ] `validate-readiness-binding.py` が exit 0 で `violations` 0件、`readiness_digest.c11` と `readiness_digest.c02` が一致する
+- [ ] `guard-requirements-handoff.py` の `missing_sections` と `blocked[].remediation` が全件表示され、exit 1 のとき handoff が0件である
+- [ ] 全 gate PASS で、binding の `graph.digest` と guard の `graph.digest` が一致する場合だけ、requirements と capability-build handoff が同一 snapshot digest で生成される
 - [ ] 本 skill が生成した実装 code file が0件である
 
 ### ゴールシークループ
@@ -158,13 +158,13 @@ PY
 
 ## Criteria acceptance
 
-- `criteria:IN1`: C11のreadiness validation digestとC02保存済みimplementation_readiness/evaluation_status/source_digestが一致し、system-dev-plannerの`validate-system-plan.py`がP01..P13 exact 13・共通`parent_feature/feature_package_id`・機能内前方dependencyを検証して必須キー欠落が0件、stale digestが0件になる。`gh-bridge.py` 由来のissue contextは補助入力に留め、この三gateの代替にしない。
+- `criteria:IN1`: `validate-readiness-binding.py`が、C11のreadiness validation digestとC02保存済みimplementation_readiness/evaluation_status/source_digestの一致、system-dev-plannerの`validate-system-plan.py`の`validated_digest`(P01..P13 exact 13・共通`parent_feature/feature_package_id`・機能内前方dependencyの検証結果)との一致を照合し、exit 0で必須キー欠落が0件、stale digestが0件になる。`gh-bridge.py` 由来のissue contextは補助入力に留め、この三gateの代替にしない。
 - `criteria:OUT1`: requirementsを`capability-build/task-graph`へhandoffし、本skill自身は実装コードを生成しない。
-- `criteria:OUT2`: `implementation_readiness=incomplete`では全`missing_sections`をsurfaceし、該当handoffを保留する。
+- `criteria:OUT2`: `guard-requirements-handoff.py`が、`implementation_readiness=incomplete`の参照ノードが1件でもあればclosure全件の`missing_sections`とremediation ownerを返し、`handoff_count: 0`で該当handoffを保留する。R3はこのscriptのexit 0のときだけhandoffする。
 
 ## Gotchas
 
-- node 内の readiness 値だけを信頼せず、C11 report、C02 saved state、source digest を同時に照合する。
+- node 内の readiness 値だけを信頼せず、C11 report、C02 saved state、source digest の照合は `validate-readiness-binding.py` に任せる。sync などで graph の revision が登録より進んだ場合は graph 全体の digest ではなく readiness view の digest で照合される (`graph.relation: later_revision`)。登録より古い graph は拒否される。
 - `validate-system-plan.py` の exact-13 検証を独自ロジックで代替しない。
-- incomplete/pending/fail/stale を一部 handoff で回避せず、対応する `missing_sections` を全件返す。
+- incomplete/pending/fail/stale を一部 handoff で回避せず、`guard-requirements-handoff.py` の `missing_sections` を全件返す。`schedule-graph.py` の ready set は依存の準備だけを見るので、handoff の可否には使わない。
 - 実装は capability-build/task-graph に引き渡し、本 skill 内で code を生成しない。

@@ -1,0 +1,33 @@
+{
+  "label": "schedule",
+  "retry_of": null,
+  "evaluator_agent_id": "ad44ce6b067d71dde",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "軽微な不具合。場所は plugins/dev-graph/scripts/manage-worktree-lease.py の L171-174。C27 の `--op list` は読取りの snapshot 取得なのに、`coord.mkdir(...)` と `lock_path.open(\"a+\")` を list の分岐より前に実行するため、`<git_common_dir>/dev-graph/` と空の `leases.lock` が作られる。SKILL.md の「read-only で graph/tracker/lease を変更しない」と食い違う。再現手順: .git/dev-graph が無い repo で `python3 scripts/manage-worktree-lease.py --repo-root <repo> --op list` を実行すると、.git/dev-graph/leases.lock が生成される。この trial でも L80 の時点では存在せず、L135 の時点では存在していた。lease ledger (leases.json) と graph の digest は変わっていない。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule/ws/plugins/dev-graph/skills/run-dev-graph-schedule",
+  "closure_sha_tested_copy": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 3,
+    "occurrences": 6,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:08+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+      "transcript_sha256": "11423dcff98dd840777458a07f856d4a79b74a952fd47e9fe1daf3779e5a7ca5"
+    },
+    "after": {
+      "skill_dir_tree_sha": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+      "transcript_sha256": "7fa89993ae73c39afc19781dfb1b65602d242e1cde48c0b32900b0286559e7f9"
+    },
+    "backup": "audit/reverdict/run-dev-graph-schedule/20261012T0650-pr85"
+  }
+}

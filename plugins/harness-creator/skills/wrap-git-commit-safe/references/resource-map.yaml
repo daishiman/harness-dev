@@ -1,10 +1,17 @@
-version: 1
-read_when:
-  - file: schemas/wrap-io.schema.json
-    when: base Skill (run-build-skill) との入出力の受け渡し形を確認するとき
-  - file: scripts/preflight-git-commit.py
-    when: commit 前の staged 範囲・hook 無視・保護ブランチの検査内容を確認するとき
-  - file: scripts/pre-commit-secret-scan.py
-    when: 機密ファイルや秘密情報の検出規則を確認するとき
-  - file: templates/commit-template.md
-    when: commit メッセージの type・scope・制約を確認するとき
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# wrap-git-commit-safe の段階的開示（Progressive Disclosure）の索引。
+# 本 skill は references/ 配下に正本文書を持たず、決定論検査を scripts/ に寄せる
+# wrap 実装のため、索引は scripts / schemas / templates を指す。
+resources:
+  - file: ../scripts/pre-commit-secret-scan.py
+    topic: 決定論的事前スキャンの正本（ステージング済みファイル名の機密パターン・ファイル内容の API トークン疑似パターン・コマンドラインへの --no-verify / --no-gpg-sign 混入の 3 検査。stdlib のみ / no-deps）
+    read_when: 機密ファイル検出の局面で BLOCK 判定を行うとき（最初に読む）/ 検査対象パターンと exit code (0=pass, 2=BLOCK) を確認するとき
+  - file: ../scripts/preflight-git-commit.py
+    topic: PreToolUse:Bash hook 側の preflight（警告対象 WARN_PATTERNS=--no-verify/--amend/--no-gpg-sign/git add -A/force push と明示拒否対象 DENY_PATTERNS=.env・credentials.json の add/commit。git は実行しない）
+    read_when: hook として commit コマンド文字列を事前判定するとき / warn (exit 0) と拒否 (exit 2) の線引きを確認するとき
+  - file: ../schemas/wrap-io.schema.json
+    topic: 本 skill の I/O 契約（input=staged_files/commit_message/allow_no_verify、output.status enum=committed/aborted-secret/aborted-hook-bypass/skipped・commit_sha・scan_findings）
+    read_when: BLOCK 理由を status として返すとき / 呼び出し元 base (run-build-skill) との受け渡し構造を確認するとき
+  - file: ../templates/commit-template.md
+    topic: 'commit message の骨格（type(scope): summary / why 優先の body / footer）と制約（1 行目 72 文字以内）'
+    read_when: base の commit 実行前に commit message を整形するとき

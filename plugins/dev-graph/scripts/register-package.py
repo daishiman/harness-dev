@@ -44,6 +44,18 @@ RECEIPT_STABLE_KEYS = {
 }
 
 
+class RollbackIncompleteError(ContractError):
+    """The receipt could not be created and restoring the original graph failed as well.
+
+    The output graph is left holding the new nodes without a receipt, so the report carries both
+    failures and an unknown (null) applied/write count, like build-graph-node's rollback_incomplete.
+    """
+
+    def __init__(self, detail: str, findings: list[dict[str, str]]) -> None:
+        super().__init__(detail)
+        self.findings = findings
+
+
 def _schema_error(path: str, detail: str) -> ContractError:
     return ContractError(f"schema violation at {path}: {detail}")
 
@@ -395,6 +407,12 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
         if present and len(present) != 13: raise ContractError(f"partial registration detected: {len(present)}/13 nodes")
         if package_members and {node.get("graph_node_id") for node in package_members} != set(incoming_ids):
             raise ContractError("conflicting or partial feature_package_id already exists")
+        # C11 の feature_package_not_exact_13 と同じ規則: 1 feature の子 task は1つの exact-13 package だけ。
+        siblings = sorted(str(node.get("graph_node_id")) for node in existing
+                          if node.get("parent_feature") == package["parent_feature"] and node.get("graph_node_id") not in incoming_ids)
+        if siblings:
+            raise ContractError(f"parent feature {package['parent_feature']} already has tasks outside this package "
+                                f"({len(siblings)}: {', '.join(siblings[:3])}); one feature holds exactly one exact-13 package")
         revision_before = current.get("graph_revision", 0)
         if not isinstance(revision_before, int) or revision_before < 0: raise ContractError("invalid graph_revision")
         if len(present) == 13:
@@ -439,8 +457,15 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
         original = output_path.read_bytes()
         atomic_json(output_path, proposed)
         try: _atomic_create_json(receipt_path, receipt)
-        except Exception:
-            atomic_bytes(output_path, original)
+        except Exception as exc:
+            try: atomic_bytes(output_path, original)
+            except Exception as restore_exc:
+                raise RollbackIncompleteError(
+                    f"receipt creation failed ({type(exc).__name__}: {exc}) and restoring the graph failed "
+                    f"({type(restore_exc).__name__}: {restore_exc}); restore the listed path by hand",
+                    [{"node": output_path.relative_to(root).as_posix(), "code": "rollback_failed",
+                      "detail": f"restore sha256 {hashlib.sha256(original).hexdigest()}: {restore_exc}"}],
+                ) from exc
             raise
         return {**receipt, "dry_run": False, "idempotent": False}
 
@@ -577,7 +602,11 @@ def main(argv: list[str] | None = None) -> int:
         dump(report); return 0
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         report = {"valid": False, "error": str(exc)}
-        if args.command == "register":
+        if isinstance(exc, RollbackIncompleteError):
+            # 復元できなかった graph には新しい node が残るので、件数は 0 ではなく不明 (null) とする。
+            report.update({"code": "rollback_incomplete", "findings": exc.findings,
+                           "applied_count": None, "write_count": None})
+        elif args.command == "register":
             # 拒否は graph にも receipt にも書かないので、適用件数は 0 と明示する (build-graph-node の拒否出力と同じ)。
             report["applied_count"] = 0
         dump(report); return 2

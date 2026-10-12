@@ -15,10 +15,12 @@
 ### 入力契約
 
 - C11 report、C02保存readiness/evaluation、source digest。
+- これらの照合は `validate-readiness-binding.py` の binding report として受け取る。
 
 ### 出力契約
 
 - ready/blocked/stale verdictとnode/section別missing_sections。
+- verdict は binding report の `status` と `violations`、`members[].implementation_readiness.missing_sections` をそのまま写したもの。
 
 ### 責務境界
 
@@ -27,10 +29,11 @@
 ### 受入条件
 
 - C11 reportとC02 saved state/source digestが一致し、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる。
+- `validate-readiness-binding.py` が exit 0 で `violations` 0件、`readiness_digest.c11` と `readiness_digest.c02` が一致したときだけ ready とする。exit 1 なら `violations` の code と node を省かずに返す。
 
 ## Layer 3: インフラ層
 
-- 使用資産: validate-graph-schemaとvalidate-system-plan。
+- 使用資産: `validate-readiness-binding.py --repo-root <root> --package-dir <published package> --receipt <C02 receipt> [--system-planner-root PATH]` (C24 の read、`validate-system-plan.py`、C11 の validate、C02 と同じ canonical digest を中で通す)。digest と readiness を自分で読み比べて代わりに判定しない。exit 2 (C24・system-dev-planner の解決・IO の失敗) は ready にも blocked にもせず blocker として返す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -53,6 +56,7 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] C11 reportとC02 saved state/source digestが一致し、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる
+- [ ] verdict が `validate-readiness-binding.py` の exit code と `violations` に一致する
 
 ## Layer 6: オーケストレーション層
 

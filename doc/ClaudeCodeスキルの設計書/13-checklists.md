@@ -147,12 +147,12 @@ P0 は 4条件を機械判定へ近づける最小ゲートである。P0 が未
 
 - [ ] **P0**: `scripts/lint-skill-name.{sh,py}` が第1〜5,7条を検出する
 - [ ] **P0**: `scripts/lint-skill-tree.{sh,py}` が第8〜13条を検出する
-- [ ] **P0**: `creator-kit/scripts/lint-skill-tree.py` の `check_os_preamble` が、`cross_platform: true` または `os_preamble_required: true` の Skill に ``!`uname -s 2>/dev/null || ver` `` があることを検出する
+- [ ] **P0**: `scripts/lint-skill-tree.py` の `check_os_preamble` が、`cross_platform: true` または `os_preamble_required: true` の Skill に ``!`uname -s 2>/dev/null || ver` `` があることを検出する
 - [ ] **P0/P1**: `scripts/validate-build-trace.py` が `eval-log/skill-build-trace.json` の `doc_coverage.ch14_dynamic_injection` / `ch15_official_spec_checked` / `ch16_frontmatter_spec` を検出する
 - [ ] **P1**: PreToolUse hook が evaluator から rubric.* への Write を deny する
 - [ ] **P1**: PreCompact hook が handoff file を生成する
 - [ ] **P1**: `lint-skill-description.py R6` が `assign-*` evaluator の `rubric_refs` 欠落を検出する
-- [ ] **P1**: `creator-kit/scripts/lint-manifest-contents.py` が `yaml-spec-cache.md` の `last_fetched` 30 日超過を WARNING にする
+- [ ] **P1**: `scripts/lint-manifest-contents.py` が `yaml-spec-cache.md` の `last_fetched` 30 日超過を WARNING にする
 - [ ] **P2**: CI workflow が改名・改正手続き（第6・15条）を検証する
 - [ ] **P2**: `poll-llms-txt.yml` が `https://code.claude.com/docs/llms.txt` 目次の週次チャーンを `eval-log/spec-drift.json` に記録する（record-only・Issue は起票しない）
 - [ ] **P2**: `update-yaml-spec.yml` が実仕様ページ群（skills / settings / sub-agents / hooks / permissions / agent-teams / commands / plugins など）と製品 CHANGELOG の変更を検知し `references/spec-diff-history.md` へ差分記録して dedup 付き spec-drift Issue を起票する（監視対象の正本は `scripts/build-yaml-spec-cache.py` の `SOURCES`）

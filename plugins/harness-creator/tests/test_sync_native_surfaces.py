@@ -6,7 +6,8 @@ conftest 非依存で module-level に importlib ロードする (自己完結)�
 
 網羅: write-scope 境界 (allow/forbid)・fingerprint/atomic replace・lock 取得/steal/timeout/
 解放・activation scope filter (enabled のみ対象・非 enabled skipped)・adapter 委譲 (subprocess を
-fake で stub)・各 exit code (0 noop/skipped, 1 drift, 2 lock-timeout/conflict, 3 invalid)・
+fake で stub)・各 exit code (0 noop/skipped, 1 drift, 2 lock-timeout/conflict/usage, 3 invalid)・
+child の --json report が object でないときの invalid 分類・--lock-ttl 0 以下の usage error・
 exit 優先順位 (3>2>1>0)・--check/--dry-run が無書込・実 generator 委譲の isolation。
 """
 from __future__ import annotations
@@ -878,6 +879,55 @@ def test_adapter_codex_readonly_in_apply_mode(monkeypatch, tmp_path, dummy_scrip
     assert r["exit"] == 1 and r["changed"] == 0 and len(calls) == 1
 
 
+# ═══════════════════════ adapter_codex_project_settings ═══════════════════════
+def make_codex_project(check_ret, apply_ret=(0, "{}"), calls=None):
+    def _f(script, repo_root, contract, *, apply):
+        if calls is not None:
+            calls.append("apply" if apply else "check")
+        return apply_ret if apply else check_ret
+    return _f
+
+
+_TRACEBACK = (1, "", "Traceback (most recent call last):\n  ...\nKeyError: 'codex'\n")
+
+
+def _cxp(mode, dummy, repo):
+    return mod.adapter_codex_project_settings(mode, script=dummy[0], repo_root=repo, contract=repo / "n.toml")
+
+
+@pytest.mark.parametrize("check_ret", [
+    (0, ""), _TRACEBACK, (1, "[1, 2]"), (0, "null"),
+    (0, json.dumps(list(range(10000)))),  # 切り詰めると dict の形になる大きな配列
+], ids=["empty", "traceback", "array", "null", "large-array"])
+def test_adapter_codex_project_non_object_report_is_invalid_not_drift(monkeypatch, tmp_path, dummy_scripts, check_ret):
+    """child の --json report が object でないとき、AttributeError で落ちず invalid(3) と理由を出す。"""
+    calls = []
+    monkeypatch.setattr(mod, "_run_codex_project", make_codex_project(check_ret, calls=calls))
+    r = _cxp("apply", dummy_scripts, tmp_path)
+    assert r["status"] == "invalid" and r["exit"] == 3
+    assert "--check の --json report が JSON object でない" in r["warning"]
+    assert r["remediation"] == mod.REMEDIATION_INVALID
+    assert calls == ["check"]  # 読めない check の後に apply へ進まない
+
+
+def test_adapter_codex_project_apply_traceback_is_invalid(monkeypatch, tmp_path, dummy_scripts):
+    monkeypatch.setattr(mod, "_run_codex_project", make_codex_project(
+        (1, json.dumps({"status": "drift", "changed": 2})), apply_ret=_TRACEBACK))
+    r = _cxp("apply", dummy_scripts, tmp_path)
+    assert r["status"] == "invalid" and r["exit"] == 3
+    assert "--apply の --json report" in r["warning"] and "KeyError" in r["stderr"]
+
+
+def test_adapter_codex_project_object_report_keeps_classification(monkeypatch, tmp_path, dummy_scripts):
+    drift = (1, json.dumps({"status": "drift", "changed": 2}))
+    monkeypatch.setattr(mod, "_run_codex_project", make_codex_project(
+        drift, apply_ret=(0, json.dumps({"status": "synced", "changed": 2}))))
+    applied = _cxp("apply", dummy_scripts, tmp_path)
+    assert (applied["status"], applied["changed"], applied["exit"]) == ("synced", 2, 0)
+    checked = _cxp("check", dummy_scripts, tmp_path)
+    assert (checked["status"], checked["changed"], checked["exit"]) == ("drift", 2, 1)
+
+
 # ═══════════════════════ orchestrate ═══════════════════════
 def test_orchestrate_check_clean_exit0(monkeypatch, tmp_path, dummy_scripts):
     repo = mk_repo(tmp_path, enabled=["harness-creator"])
@@ -1127,6 +1177,38 @@ def test_main_apply_uses_tempdir_lock(monkeypatch, tmp_path, dummy_scripts, caps
 def test_main_missing_repo_root_errors(capsys):
     code = mod.main(["--check"])
     assert code == 2  # argparse usage error
+
+
+def test_main_child_report_traceback_exits_3_not_drift(monkeypatch, tmp_path, dummy_scripts, capsys):
+    """child の traceback (exit 1・stdout 空) を drift(1) と取り違えず、理由付きの invalid(3) で返す。"""
+    repo = mk_repo(tmp_path, enabled=["harness-creator"])
+    monkeypatch.setattr(mod, "_run_symlinks", make_sym((0, _sym_summary())))
+    monkeypatch.setattr(mod, "_run_settings", make_set((0, "")))
+    monkeypatch.setattr(mod, "_run_codex", make_codex((0, "")))
+    monkeypatch.setattr(mod, "_run_codex_project", make_codex_project(_TRACEBACK))
+    args = _main_args(repo, dummy_scripts, "--check")
+    args[args.index("--codex-settings-script") + 1] = str(dummy_scripts[0])
+    code = mod.main(args)
+    out = capsys.readouterr().out
+    assert code == 3 and "verdict: invalid" in out
+    assert "adapter codex_project_settings: invalid" in out and "JSON object でない" in out
+
+
+@pytest.mark.parametrize("ttl", ["0", "-1", "nan", "inf"])
+def test_main_rejects_non_positive_lock_ttl(monkeypatch, tmp_path, dummy_scripts, capsys, ttl):
+    """0 以下の ttl は生きた lock を即 stale とみなして奪えるため、lock に触れず exit 2。"""
+    repo = mk_repo(tmp_path, enabled=["harness-creator"])
+    lock = repo / ".build" / "locks" / "l"
+    _write_lock(lock, started_at=mod._iso(mod._now_utc() - timedelta(seconds=1)), pid=os.getppid(), host=HOST)
+    before = lock.read_bytes()
+    calls = []
+    monkeypatch.setattr(mod, "_run_symlinks", make_sym((0, _sym_summary()), calls=calls))
+    monkeypatch.setattr(mod, "_run_settings", make_set((0, "")))
+    monkeypatch.setattr(mod, "_run_codex", make_codex((0, "")))
+    code = mod.main(_main_args(repo, dummy_scripts, "--apply", "--lock-ttl", ttl,
+                               "--lock-timeout", "0", "--lock-path", str(lock)))
+    assert code == 2 and "--lock-ttl" in capsys.readouterr().err
+    assert lock.read_bytes() == before and calls == []
 
 
 # ═══════════════════════ integration: 実 generator を tempdir へ isolation 実行 ═══════════════════════

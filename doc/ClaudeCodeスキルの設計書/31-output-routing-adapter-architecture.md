@@ -267,8 +267,8 @@ adapter は Skill ではない (workflow ではないため)。`scripts/adapters
 | `.claude/skills/ref-output-routing/SKILL.md` | port skill本体 |
 | `.claude/skills/ref-output-routing/references/sink-contract.md` | Sink Contract v1.0仕様 |
 | `.claude/skills/ref-output-routing/references/security-model.md` | Keychain設計詳細 |
-| `creator-kit/config/output-routing.json.example` | routing雛形 |
-| `creator-kit/config/adapter-registry.json` | adapter登録正本 |
+| `plugins/skill-governance-config/config/output-routing.json.example` | routing雛形 |
+| `plugins/skill-governance-config/config/adapter-registry.json` | adapter登録正本 |
 | `scripts/adapters/resolve_route.py` | routing解決 |
 | `scripts/adapters/dispatch.py` | 統合dispatcher |
 | `scripts/adapters/sink_local.py` | ローカル保存 |

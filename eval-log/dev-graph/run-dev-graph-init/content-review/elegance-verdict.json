@@ -2,21 +2,21 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
-    "skill_md_sha256": "0d1044ec34fd444a74869104984e23f6f978d86c8b7e73c1860d289c9e2ca341"
+    "skill_md_sha256": "aec775ce12acf2dad96fa5f3f1e72beb384db6c206ae4c96c28f44a1ff6ede76"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "/root/independent_review (independent focused design)",
-  "reviewed_at": "2026-10-05T08:38:49.158703Z",
-  "iterations": 2,
-  "human_review_required": false,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-fix)",
+  "reviewed_at": "2026-10-12T04:30:43Z",
+  "iterations": 3,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -28,13 +28,16 @@
       "OUT5"
     ],
     "positive_feedback": [
-      "One canonical imported helper is now explicitly tracked; all nine skills invalidate on semantic helper mutation and fail closed if it disappears."
+      "2回目の low (手順0の argv に --config が無い) は解消した。L135 の validate-harness-link.py の argv に `[--config <path>]` があり、「`--config` には手順 1-3 と同じ値を渡す (違う config を読むと、preflight だけが別の link を検査する)」と理由も書く。手順4 (L139) の build-project-hook-fallback.py、R1-elicit L33 の preflight、R5-hooks L33 の preflight と fallback の起動行も同じ `[--config <path>]` を持ち、script 側 (validate-harness-link.py の rerun と reapply-hook-fallback、build-project-hook-fallback.py L357) の受け口とそろった。",
+      "手順0の preflight が resolve-repo-context を --mode read で呼び、config 欠落を診断として続行するので、初回 init (config 無し) を止めずに、どの write よりも前に link chain の切断・loop・張り替え・entrypoint 欠落を書込み0で検出できる。remediation は実行可能な argv の選択肢で、どれも同じ --config での preflight の再実行で終わる (test_acceptance_gaps_a1 L841-859)。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "inconsistency (low、前回から残る。Beads 行き): frontmatter の OUT3 text (L73) は「harness link切断は host launcher preflight が起動前検出する」のまま。本文 (L128・L135・L198) は validate-harness-link.py が plugin 実体から write 前に検出すると書く。inventory との完全一致を test_run_skill_frontmatter_is_inventory_exact[C01] が求めるので、inventory から直す。"
+    ],
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "user branch review iteration2 after independent F-4001 dependency omission",
+    "hook_trigger": "manual: team-lead request to re-take content-review of init/requirements after dg-fix fixed 3 lows from the 2nd pass (incremental focused combined review, 3rd pass)",
     "next_action": "none"
   },
-  "notes": "Static DESIGN PASS for F-4001 one-ref change and current all-criteria contract preservation only. Actual current refs/imports, body diff, full criterion judgments, rubric and copied-closure mutation/missing-file proof are in /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dev-graph/run-dev-graph-init/focused-design-review.json. Live-trial/host dialogue, browser artifact, external GitHub/Beads mutation, package handoff and release execution are NOT accepted by this verdict. New independent focused context judgments projected to legacy elegance/rubric artifacts; old verdict PASS is not evidence and this is not a SHA-only update. Branch30-method coverage is separate."
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。2回目の verdict (同じ reviewer) の low に対する dg-fix の修正を、SKILL.md・responsibility prompt・script_refs の script で確かめた。read-only で回したもの: test_acceptance_gaps_a1/a2 と test_skill_mass_production_contracts (合わせて 55 passed。inventory と frontmatter の完全一致を含む)、lint-skill-name.py / lint-skill-tree.py (2 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話・外部 mutation・release 実行はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文と PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
 }

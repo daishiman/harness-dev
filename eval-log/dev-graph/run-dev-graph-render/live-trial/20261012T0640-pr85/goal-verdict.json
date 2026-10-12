@@ -1,0 +1,28 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "ブラウザでの live trial を実行できていません。この確認は goal に必須です。SKILL.md の完了条件 (L89「ブラウザ上で SVG と feature X/Y が表示され」)、完了チェックリスト (L115「ブラウザ live trial で追加 runtime なしに SVG と feature X/Y progress が表示される」)、feedback_contract の OUT1 (L52-55、verify_by: live-trial)、Criteria acceptance (L151) のすべてが要求しています。R3-render.md も受入条件 (L28) と 5.3 checklist (L54) に browser live trial での表示を入れ、Layer 3 (L32) で使用資産に指定しています。task.md は「checklist が PARTIAL なら PASS にしない」と定めており、progress.json は overall=PARTIAL、OUT1=BLOCKED です。",
+    "原因は隔離環境です。R3 subagent (agent-a9e21e50ad4ed4db7.jsonl) では、Chrome headless=new が rc=21 で終わりました (L49-50、process_singleton_posix「Failed to create socket directory」)。Chrome headless=old と Brave も rc=21 です (L65-66)。L61-62 では $TMPDIR への書込みと mkdir は通り、AF_UNIX の bind だけが PermissionError [Errno 1] になることを確かめています。python playwright は driver/node が無く起動前に失敗しました (L57-58)。sandbox の外へ出ないかぎり、この session では実行できない手順です。",
+    "軽微な境界接触があります。R3 subagent の L53 が、Chrome 用の短い TMPDIR として許可された書込み領域の外にある /tmp/claude/r3c を mkdir しようとし、OS sandbox に拒否されました (Operation not permitted。何も書かれず、結果にも影響していません)。L39-40 では ~/Library/Caches/ms-playwright への言及が guard に deny され (guard.jsonl 31 行目、全 41 件のうち唯一の deny)、L43 でその部分を外して再実行しています。sandbox の解除要求 (dangerouslyDisableSandbox) は、どの transcript の tool 呼出しにもありません。"
+  ],
+  "evidence": [
+    "Skill の正規起動: transcript L36 で Skill(dev-graph:run-dev-graph-render) を指定 args 付きで呼び、L37-38 でロードに成功しています。",
+    "責務 prompt を先に読んでいます: main は L45 で prompts/*.md と prompt-common-layers.md を cat し、そのあと L82 で pre-choice の成果物を作りました。R1/R2/R3 の各 subagent も、作業の前に自分の R*.md を読んでいます (各 subagent transcript の L12)。",
+    "C24/C11: L61/L67 で resolve-repo-context.py --mode read が rc=0 を返し、repo_root と content_roots.repository が一致しました。validate-graph-schema.py は valid=true、violations 0、15/15 complete です。",
+    "canonical writer による render が 2 回あります: main の L82-83 と R3 subagent の L24-25 で render-graph-html.py を実行しました。receipt-1 と receipt-2 は diff で完全に一致し、output_sha256=c4bf5ed6…7eb838、input_sha256=2ed57eab…932fd0b です。fx の実ファイルの shasum とも一致し、決定論を確認できました。",
+    "外部参照 0 件と inline SVG を独立に確認しました: fx/.dev-graph/render/index.html では、script src / link / http(s) / cdn / @import / url( / src= / href= がすべて 0 件です。svg は 1、.node は 15 (data-id は一意 15)、path (edge) は 12、script は 2 (application/json の graph-data と inline JS) です。",
+    "X/13 と receipt の照合を独立に確認しました: graph.json で parent_feature=LT-FEATURE-001 の task は 13 件、うち done は 5 件です。HTML の LT-FEATURE-001 行は「active · feature · 5/13」です。package-registration-receipt-LT-FEATURE-001.json は applied_count=13、expected_count=13 で、node_ids は graph の子 13 件と一致します。source_digest sha256:d85dfa3d…aa7e84 は feature-execution-package.json の実 sha256 と一致します。",
+    "fork と順序: pre-choice の成果物を main で作成 (L82) し、artifact_delivery=standard を記録 (L86-87、eval-log/run-dev-graph-render-artifact-delivery.json) したあとで、Agent で R1 (L92)、R2 (L94)、R3 (L115) を起動しています。pre_choice_forbidden への違反はありません。",
+    "goal-seek の記録: goal-spec.json、progress.json (overall=PARTIAL、OUT1=BLOCKED)、intermediate.jsonl (6 キー揃い) があり、L130-131 の検証スクリプトは OK を返しました。status.json は FAIL です (L138、collect/out/status.json)。",
+    "graph と content は変わっていません: fx の graph.json (2ed57eab…) と registration receipt (cba8ce0d…) の sha256 は元 fixture と一致します。diff -rq の差分は、orchestrator が rekey した 3 ファイル (fixture-provenance.json に記載) と新規の eval-log/ だけです。",
+    "fixture 準備の不一致 (被験 skill の問題ではありません): task.md は前回の .dev-graph/render を除いたと書いていますが、session 開始時点で index.html (10月5日付、sha256 c4bf5ed6…) が既にありました (L67、元 fixture にも同じ digest があります)。今回の 2 回の render が同じ digest を再生成しているので、決定論の判定には影響しません。"
+  ],
+  "skill_defects": [
+    "OUT1 の文言が成立しない比較を求めています (SKILL.md L54・L151): 「featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致」と書かれていますが、X は done 数 (今回は 5)、applied_count は登録数 (今回は 13) です。全 task が完了するまで X/Y (5/13) と applied/expected (13/13) は一致しません。task.md 側は total=expected の照合と解釈して運用しています。再現: 今回の fx で receipt の applied_count=13 と HTML の 5/13 を比べると、文言どおりの判定は不一致になります。",
+    "render-graph-html.py が registration receipt を一切読みません: applied_count/expected_count/source_digest との照合経路が script に無く、OUT1 の照合は agent の手作業に頼っています。再現: scripts/render-graph-html.py L27-115 に receipt の入力引数も読込みもありません。",
+    "feature 間 edge と task 内 edge を区別して描画していません (SKILL.md L94、R2-plan.md の責務境界に反します): render-graph-html.py L79-82 は、すべての depends_on を同じ style の <path> として単一の <g class=\"edges\"> に入れ、kind や parent_feature で分けていません。parent_feature による包含関係も edge として描きません。今回の fixture は feature 間 edge が 0 本なので表に出ませんが、feature 間の depends_on を持つ graph を render すると区別がつかなくなります。",
+    "renderer receipt に環境固有の絶対 path が入ります: render-graph-html.py L106-108 が resolve 済みの絶対 path を \"out\" として出力しており、R1/R2/R3 の Layer 3「環境固有の絶対 path を成果物へ保存しない」に反します。再現: 任意の repo で render-graph-html.py --graph … --out … を実行すると、stdout JSON の out が絶対 path になります (fx/eval-log/run-dev-graph-render-receipt-1.json)。",
+    "必須の browser live trial に代替経路も環境要件の宣言もありません: SKILL.md は unix socket bind などブラウザの起動要件を書いておらず、ブラウザを起動できない環境 (CI や sandbox) では完了チェックリストが構造的に PARTIAL で終わります。Purpose の「CI 生成可能な成果物」とも緊張関係にあります。再現: unix socket の bind が EPERM になる sandbox で実行すると、毎回 OUT1 が BLOCKED になります。"
+  ],
+  "evaluator_agent_id": "a53bd51ae720945c8"
+}

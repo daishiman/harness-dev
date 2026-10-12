@@ -5,7 +5,7 @@
 このファイルは、Skill 群が **macOS / Linux / Windows のどれで実行されても同じ契約**を返すための実行基盤を定義する。
 原則は次の 3 点。
 
-1. **追加ライブラリ導入なし**で動く (`pip install` / `npm i` / `brew install` などを Skill が要求しない)。ただし Windows では Python 実行系そのものが無い場合があるため、PowerShell 経路またはユーザー確認フォールバックを必須にする。
+1. **追加ライブラリ導入なし**で動く (`pip install` / `npm i` / `brew install` などを Skill が要求しない)。ただし Windows では Python 実行系そのものが無い場合があるため、そのときにユーザーへ尋ねるフォールバック（後述「フォールバック動線」）を必須にする。PowerShell で代わりに動かす経路は計画（今の lint は `.ps1` を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）。
 2. **OS 差分は Skill 側で吸収**し、ユーザーには単一 interface を見せる
 3. OS 判定に失敗したら **Claude がユーザーに OS を尋ねる**フォールバックを必ず持つ
 
@@ -13,14 +13,17 @@
 
 ## OS 判定マトリクス
 
-Skill 内で OS を識別する方法を次に固定する。判定キーが揃わない場合は「未判定」とみなし、後述のフォールバックへ落とす。
+Skill 内で OS を識別する方法を次に固定する。判定は次の 2 か所で行う。判定キーが揃わない場合は「未判定」とみなし、後述のフォールバックへ落とす。
 
-| OS      | shell 既定           | 判定コマンド            | 期待 stdout (前方一致) | python3 同梱 |
-| ------- | -------------------- | ----------------------- | ---------------------- | ------------ |
-| macOS   | zsh / bash           | `uname -s`              | `Darwin`               | あり (3.x)   |
-| Linux   | bash                 | `uname -s`              | `Linux`                | あり         |
-| Windows | PowerShell 5.1+      | `ver` または `$PSVersionTable.PSVersion` | `Microsoft Windows` を含む | なし (要インストール) |
-| 未判定  | -                    | 上記いずれも失敗        | -                      | -            |
+- **Skill 本文**: 共通プリアンブル (14 章) の `!` 注入で `uname -s` の出力を読み、`<important if="os=...">` で分岐する。
+- **script の中**: Python 標準ライブラリの `platform.system()` で OS を、`shutil.which` で Python の起動コマンドを判定する。`ref-cross-platform-runtime` の雛形と同じ形にする。
+
+| OS      | shell 既定           | 本文の判定 (プリアンブルの出力、前方一致) | script の判定 (`platform.system()`) | python3 同梱 |
+| ------- | -------------------- | ----------------------------------------- | ----------------------------------- | ------------ |
+| macOS   | zsh / bash           | `Darwin`                                  | `Darwin`                            | あり (3.x)   |
+| Linux   | bash                 | `Linux`                                   | `Linux`                             | あり         |
+| Windows | PowerShell 5.1+      | `MINGW` / `MSYS` / `CYGWIN`、または `ver` の `Microsoft Windows` | `Windows`       | なし (要インストール) |
+| 未判定  | -                    | 上記のどれでもない・失敗                  | 上記以外、または Python が無い      | -            |
 
 Skill 共通プリアンブル (14 章) で次の 1 行を `!` 注入する。
 
@@ -28,7 +31,20 @@ Skill 共通プリアンブル (14 章) で次の 1 行を `!` 注入する。
 !`uname -s 2>/dev/null || ver`
 ```
 
-この出力を `<important if="os=...">` 分岐で本文側が読む。
+この出力を `<important if="os=...">` 分岐で本文側が読む。Windows の Claude Code は Bash tool を Git Bash で動かすので、`uname -s` は `MINGW64_NT-…` のような文字列を返し、`ver` には落ちない。`MINGW` / `MSYS` / `CYGWIN` で始まる出力を `os=windows` に読むのは `installers/install.sh` の判定と同じ対応である。
+
+script の中の判定は次の雛形を使う (`ref-cross-platform-runtime` の SKILL.md と同じ)。結果は後述「OS 確認プロンプト Skill 例」の Output contract の `os` / `python_cmd` / `python_available` で返す。
+
+```python
+import platform
+import shutil
+
+system = platform.system().lower()
+os_kind = {"darwin": "mac", "linux": "linux", "windows": "windows"}.get(system, "unknown")
+order = ("python", "python3") if os_kind == "windows" else ("python3", "python")  # Windows は python を先に探す
+python_cmd = next((c for c in order if shutil.which(c)), "unknown")  # path でなく名前を返す
+python_available = python_cmd != "unknown"
+```
 
 ## 許可 CLI ホワイトリスト (no-deps 原則)
 
@@ -55,22 +71,25 @@ creator-kit は「追加導入なしの macOS」で動くことを配布条件�
 
 この制約を保つため、機械処理する構成ファイルは JSON を正本とし、Python 標準ライブラリ `json` で読む。例外は Claude Code 仕様としての `SKILL.md` frontmatter と、GitHub Actions workflow (`.yml`) など外部仕様が要求するファイルに限定する。YAML という形式そのものを一般禁止するのではなく、実行時依存としての PyYAML と、Bash 内での ad hoc YAML 解析を禁止する。
 
-言語選択の詳細は 28 章と `creator-kit/CONVENTIONS.md` に委譲する。要点は、Bash が install / uninstall / migrate などの lifecycle を担い、Python が lint / validation / adapter / secret helper などの structured logic を担う、という2層モデルである。
+言語選択の詳細は 28 章と `installers/harness-creator-kit/CONVENTIONS.md` に委譲する。要点は、Bash が install / uninstall / migrate などの lifecycle を担い、Python が lint / validation / adapter / secret helper などの structured logic を担う、という2層モデルである。
 
 ## OS 分岐パターン
 
-### bash 版 (Mac / Linux)
+### bash 版 (Mac / Linux / Windows の Git Bash)
 
 ```bash
 OS_KIND="$(uname -s 2>/dev/null || echo unknown)"
 case "$OS_KIND" in
   Darwin) echo "mac" ;;
   Linux)  echo "linux" ;;
+  MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
   *)      echo "unknown" ;;
 esac
 ```
 
 ### PowerShell 版 (Windows)
+
+計画。今は script の中の判定を Python の `platform.system()` に閉じ、PowerShell の構文を本文に直書きしない (`ref-cross-platform-runtime` の Gotchas)。
 
 ```powershell
 $osKind = if ($IsWindows -or $env:OS -like '*Windows*') { 'windows' }
@@ -88,11 +107,11 @@ Write-Output $osKind
 !`uname -s 2>/dev/null || ver`
 
 <important if="os=mac">
-Mac の場合は `python3 scripts/build_skill.py` を呼ぶ。
+Mac の場合は `python3 scripts/build-skill.py` を呼ぶ。
 </important>
 
 <important if="os=windows">
-Windows の場合は `powershell -File scripts\build_skill.ps1` を呼ぶ。
+Windows の場合は `python scripts\build-skill.py` を呼ぶ。`python` が無ければ、後述「OS 確認プロンプト」でユーザーに尋ねる。`powershell -File scripts\build-skill.ps1` で代わりに動かすのは計画（今の lint は `.ps1` を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）。
 </important>
 
 <important if="os=unknown">
@@ -102,8 +121,8 @@ OS 判定に失敗した。後述「OS 確認プロンプト」を起動する�
 
 ## フォールバック動線 (OS 未判定時)
 
-判定コマンドが両方失敗、もしくは想定外文字列が返った場合、Claude は自走を停止し
-**必ず**ユーザーへ問い合わせる。文面例:
+判定コマンドが両方失敗した、想定外文字列が返った、または script を回す Python が見つからない (`python_cmd` が `unknown`) 場合、Claude は自走を停止し
+**必ず**ユーザーへ問い合わせる。Python が見つからないときは、Python の起動コマンド (`python3` / `python` / 未インストール) も併せて尋ね、未インストールなら script を回さずに止まる。文面例:
 
 > お使いの OS を判定できませんでした。次のいずれかでお答えください。
 > 1. macOS
@@ -124,7 +143,7 @@ OS 判定に失敗した。後述「OS 確認プロンプト」を起動する�
 
 ```python
 #!/usr/bin/env python3
-# scripts/build_skill.py
+# scripts/build-skill.py
 # Python 3.8+ 標準ライブラリのみ。Mac は同梱、Windows は python.org 公式 installer で導入。
 
 import argparse
@@ -194,12 +213,12 @@ if __name__ == "__main__":
 
 pip 不要・追加 install 不要で完結する。
 
-## PowerShell 5.1 ラッパー例 (Python 不在 Windows 用)
+## PowerShell 5.1 ラッパー例 (計画。Python 不在 Windows 用)
 
-Windows に `python` が無い環境向けフォールバック。PowerShell 5.1 は Windows 10 以降に標準同梱。
+Windows に `python` が無い環境で代わりに動かす経路の計画。今の lint は `.ps1` を Skill 配下の scripts/ に置けないので、今は `python` が無ければユーザーに尋ねる (前述「フォールバック動線」)。PowerShell 5.1 は Windows 10 以降に標準同梱。
 
 ```powershell
-# scripts/build_skill.ps1
+# scripts/build-skill.ps1（計画。今の lint は .ps1 を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$Name,
@@ -261,8 +280,10 @@ uname -s 2>/dev/null || ver
 
 - `Darwin*`        -> os=mac
 - `Linux*`         -> os=linux
-- `Microsoft Windows*` -> os=windows
+- `MINGW*` / `MSYS*` / `CYGWIN*` / `Microsoft Windows*` -> os=windows
 - それ以外         -> os=unknown
+
+script の中は `platform.system()` と `shutil.which` で判定する (雛形は設計書 22 章「OS 判定マトリクス」)。
 
 ## If os=unknown
 
@@ -272,6 +293,8 @@ uname -s 2>/dev/null || ver
 > 1. macOS
 > 2. Windows
 > 3. Linux
+
+`python_cmd` が unknown のときは、Python の起動コマンド (python3 / python / 未インストール) も併せて尋ねる。
 
 回答を `OS_KIND_USER_DECLARED` として会話スコープのみで保持する。
 長期記憶・設定ファイルには書き込まない。
@@ -287,7 +310,7 @@ uname -s 2>/dev/null || ver
 呼び出し元 Skill へ次を返す:
 
 - `os`: mac | windows | linux | unknown
-- `shell`: bash | powershell
+- `python_cmd`: python3 | python | unknown (起動コマンドの名前。path ではない)
 - `python_available`: true | false
 - `fallback_used`: true | false
 ```
@@ -298,6 +321,7 @@ uname -s 2>/dev/null || ver
 - [ ] OS 分岐は `<important if="os=...">` で表現されている
 - [ ] OS 判定失敗時にユーザーへ問い合わせる文面がある
 - [ ] Python を使う場合、import が標準ライブラリのみ
-- [ ] PowerShell 版があり Windows で `python` 不在でも動く
-- [ ] パス区切りは hardcode せず `pathlib` / `Join-Path` を使う
+- [ ] Windows で `python` が無いときは、ユーザーに尋ねる経路に落ちる (PowerShell 版で代わりに動かすのは計画。今の lint は `.ps1` を Skill 配下の scripts/ に置けない)
+- [ ] script の中の判定は `platform.system()` と `shutil.which` で行い、`os` / `python_cmd` / `python_available` / `fallback_used` を返す
+- [ ] パス区切りは hardcode せず `pathlib` を使う (PowerShell 版の計画では `Join-Path`)
 - [ ] 長期記憶に OS 情報を焼き込んでいない

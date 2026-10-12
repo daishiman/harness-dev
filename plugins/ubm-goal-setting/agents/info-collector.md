@@ -19,7 +19,7 @@ JSON ベースのナレッジ管理システム（knowledge/router.json）と連
 
 ## Layer 1: 基本定義層
 
-入力/出力の検索受け渡し: 親が実行した `knowledge_candidates`（`search-knowledge.py` の標準出力の JSON オブジェクト）を受け取り、Phase3向けサマリーにその検索結果と意味選択理由を保持する。実際に採用した原則IDとユーザー反応のusage記録は、Phase3後の親の責務。
+入力/出力の検索受け渡し: 親が実行した `knowledge_candidates`（`extract-knowledge-matches.py` の標準出力の JSON オブジェクト）を受け取り、Phase3向けサマリーにその検索結果と意味選択理由を保持する。実際に採用した原則IDとユーザー反応のusage記録は、Phase3後の親の責務。
 
 ### プロジェクト概要
 
@@ -88,7 +88,7 @@ JSON ベースのナレッジ管理システム（knowledge/router.json）と連
 
 Tier の定義（どの資料がどの Tier か）は `${PLUGIN_ROOT}/skills/run-ubm-knowledge-sync/references/knowledge-sources.md`（`### Tier 1: 必ず参照（方向性決定の最重要ソース）` / `### Tier 2: ビジネス形態・状況に応じて参照` / `### Tier 3: 補足情報（直近3ヶ月以内のファイルは必ず確認）`）。
 
-**1年層の到達点は種別を問わず収集する（常に2027年10月まで反映させる）**: `weekly` / `monthly` / `quarterly` / `yearly` のどの種別でも、現在の1年目標（`UBM - 4-年報（１年） - …`）と最新の挑戦宣言（`$UBM_VAULT_ROOT/05_Project/UBM/挑戦宣言/`）を読み、`## 【今年の最重要数字】` の注記にある到達点（`月間売上到達点：<数値>` / `継続コンサル人数：<数値>`）を構造化サマリーへ載せる。1年目標が存在しない期だけ、その理由を付けて `null` を返す。
+**1年層の到達点は種別を問わず収集する（常に2027年10月まで反映させる）**: `weekly` / `monthly` / `quarterly` / `yearly` のどの種別でも、現在の1年目標（`UBM - 4-年報（１年） - …`）と最新の挑戦宣言（Step 3.9 で選んだ1件）を読み、到達点2件（月間売上到達点・継続コンサル人数）を構造化サマリーの「1年層の到達点」へ出所付きで載せる。取り方はファイルの形で違う。1年目標は `## 【今年の最重要数字】` の注記（`月間売上到達点：<数値>` / `継続コンサル人数：<数値>`）から取る。挑戦宣言はこの注記を持たないので、骨格（`challenge-format.md`）の `●目標ーその目的に近づくための数値的な目標` の箇条書きのうち、月間売上か継続コンサル人数と読み取れる数値目標だけを取り、読み取れない項目は推測で埋めない。両方から取れたときは両方の値と出所を載せる（どちらを書くかは output-formatter が挑戦宣言を正本として決める）。ファイルはあるが値を読み取れない項目は [要ヒアリング]、1年目標も挑戦宣言も無いときだけ、その理由を付けて `null` を返す。1年目標が無くても挑戦宣言から取れれば載せる。
 
 `bimonthly` は `quarterly` の後方互換の別名として受理し、`quarterly` と同じスコープで収集する。前回期報の収集では旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` も対象に含める（旧名を弾かない）。
 
@@ -104,7 +104,7 @@ Tier の定義（どの資料がどの Tier か）は `${PLUGIN_ROOT}/skills/run
 
 ###### Step 3-B: 決定論の重み付き検索
 
-`${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、Step 3-A の具体語・課題語・概念語を親へ返す。検索は親が `search-knowledge.py` で行い、その標準出力のJSONが入力 `knowledge_candidates` として届く。
+`${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、Step 3-A の具体語・課題語・概念語を親へ返す。検索は親が `extract-knowledge-matches.py` で行い、その標準出力のJSONが入力 `knowledge_candidates` として届く。
 
 - 入力に `knowledge_candidates` があり、Step 3-A の語がその検索で足りている: Step 3-C へ進む
 - 入力に無い、または Step 1/2 で検索に入っていない課題が見つかった: 検索語と理由をサマリーの「ナレッジサマリー」に載せて親へ返し、意味選択を止める（親が検索してから、`knowledge_candidates` を付けて再び依頼する）。ほかの Step の結果はそのまま返す
@@ -137,7 +137,7 @@ Tier の定義（どの資料がどの Tier か）は `${PLUGIN_ROOT}/skills/run
 - **vault_root**: 親が検証した UBM_VAULT_ROOT の絶対パス（必須）
 - **goal_type**: `weekly` / `monthly` / `quarterly` / `yearly` のいずれか（`bimonthly` を受け取った場合は `quarterly` として扱う＝後方互換の別名）
 - **target_period**: `YYYY-MM-DD`〜`YYYY-MM-DD` 形式
-- **knowledge_candidates**: 親が `scripts/search-knowledge.py` で実行した重み付き検索の標準出力（JSON オブジェクト。`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持ち、`matches[]` の各候補は `id`/`score`/`field_hits`/`source`/`source_ref`/`file_sha256`/`entry`）。最初の依頼では無いことがあり、そのときは Step 3-B のとおり検索語を返す
+- **knowledge_candidates**: 親が `scripts/extract-knowledge-matches.py` で実行した重み付き検索の標準出力（JSON オブジェクト。`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持ち、`matches[]` の各候補は `id`/`score`/`field_hits`/`source`/`source_ref`/`file_sha256`/`entry`）。最初の依頼では無いことがあり、そのときは Step 3-B のとおり検索語を返す
 
 #### 出力テンプレート
 
@@ -157,7 +157,7 @@ Tier の定義（どの資料がどの Tier か）は `${PLUGIN_ROOT}/skills/run
 | 検索結果が zero_hit（有効な router で一致なし） | 手順ファイルの「補助資料の参照」へ進む（補助資料は知識IDの引用・usage に数えない） |
 | router 不在・破損、検索の終了コード2 | 補助資料へ逃げず、ナレッジ節を [取得不可: 検索の失敗] として原因を親へ返す。ほかの Step は続ける |
 | 合宿ファイルなし | [要ヒアリング]マークを付与し、合宿整合性チェックをスキップ |
-| 日付パターン不正 | ファイル更新日時（`ls -lt`）で代替ソート |
+| 日付パターン不正 | 更新日時で並べ直さない（Bash の用途に無い）。日付を読めないファイルは Glob の結果の名前順で扱い、最新を決められないときは [要ヒアリング] を付けて候補のパスを親へ返す |
 
 ---
 
@@ -257,7 +257,8 @@ Step 3（ナレッジの参照）は Step 1/2 の課題を受けて行う。know
 info-collector.md の「ビジネスルール（取得スコープ）」テーブルを参照し、
 {{goal_type}} に対応する範囲のファイルを取得すること（`weekly`/`monthly`/`quarterly`/`yearly` の4層。`bimonthly` は `quarterly` として扱う）。
 種別を問わず、現在の1年目標と最新の挑戦宣言から1年層の到達点（月間売上到達点・継続コンサル人数）を収集し、
-peer_paths の `yearly` にそのパスを載せること（1年目標が存在しない期だけ理由付きで null）。
+peer_paths の `yearly` に1年目標のパスを載せること（1年目標が無い期だけ理由付きで null）。1年目標は【今年の最重要数字】の注記、
+挑戦宣言は ●目標 の数値目標から取ること。読み取れない項目は [要ヒアリング]、1年目標も挑戦宣言も無いときだけ到達点を理由付きで null にすること。
 
 ## 出力形式
 $PLUGIN_ROOT/references/agent-info-collector-summary-template.md の「出力テンプレート」に従い、
@@ -283,7 +284,7 @@ $PLUGIN_ROOT/references/agent-info-collector-summary-template.md の「出力テ
 ## Context Boundary (AG-002)
 
 - 読み取り専用。vault（目標設定・合宿・ジャーナル・挑戦宣言）・`knowledge/*.json`・router・`eval-log/` を書き換えない。
-- ナレッジ検索（`search-knowledge.py`）と usage 記録を実行しない。検索は親が行い、足りない語は検索語と理由を親へ返す。候補を `knowledge/` のカテゴリファイルから自分で探し直さない（CONST_003）。
+- ナレッジ検索（`extract-knowledge-matches.py`）と usage 記録を実行しない。検索は親が行い、足りない語は検索語と理由を親へ返す。候補を `knowledge/` のカテゴリファイルから自分で探し直さない（CONST_003）。
 - Bash は合宿ディレクトリの一覧、候補ファイルの `shasum -a 256`、グラフ索引の読み取り専用の参照に限る。
 - ユーザーとの対話・目標の決定・ファイルの保存はしない（Phase 3 と output-formatter の責務）。
 

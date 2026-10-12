@@ -2,21 +2,21 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "c42c1b8b3efd3add4690ed8b8cf89f9dc85a5d0981bcf4fb623ef30e8aa34daa"
+    "skill_md_sha256": "1cb093c395720360d17a9b178e1db0aafa7958d33e13822933d0cc9548ce9e48"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "/root/independent_review (focused design, proposer distinct)",
-  "reviewed_at": "2026-10-05T08:17:56.854339Z",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T20:45:16Z",
+  "iterations": 3,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -25,15 +25,14 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Reuse the existing required-info postcondition on an in-memory candidate, then publish through the same single writer."
+      "rubric 1.6.0 の機械採点: score 100 / threshold 80 (前回 90)、required_fixes 0、high 0 件、落ちた rule なし (pending_human は意味判断の BD-004 の1件だけ)。前回ただ1件落ちていた PD-002 (medium) が通った。validate-frontmatter は rc=0 (警告は source field missing の1件だけで、前回と同じ)。",
+      "前回の medium (PD-002) は解消した。`## Purpose & Output Contract` は L124 にあり、frontmatter の終端 L111 から数えて本文の13行目で、PD-002 の『本文の先頭30行』(L112-141) に入る。同じ範囲の L133 に『prompt へ直書き禁止』があり、禁則の条件 (『禁止』を含む) も満たす。"
     ],
-    "negative_feedback": [
-      "Nonblocking inherited PD-002 (medium): body head 30 lines lack '## Purpose' / '## Output Contract'"
-    ],
-    "iteration": 1,
+    "negative_feedback": [],
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual user branch review; parent delegated focused changed-SKILL review",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "Static DESIGN adequacy PASS only for changed slice: Candidate-state required-info publication barrier, first confirmation and reconfirm contract, R2/R3/R5 producer/reference consistency. All criteria were assessed for contract preservation; current evidence/hash/rubric judgment and exact independent cases are in /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review/system-spec-harness/run-system-spec-elicit/focused-design-review.json. This does not close live-trial, real dialogue, external GitHub/Beads mutation, nested-runtime completion or release claims. Combined focused review projected to separate legacy verdicts; no per-skill30-method rerun or old verdict SHA refresh is claimed. Current rubric score=90/100, threshold=80, high=0. BD-004 independently adjudicated PASS; inherited medium/low findings are disclosed, not erased."
+  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review (iteration 3、上限3の最後の周回) で、exhaustive の30思考法は実施していない。builder とは別 context の独立レビュアーが、前回 (iteration 2) の negative_feedback の各項目の解消を行番号つきで現物で確かめ、修正と本体からの merge で生じた変更とその周辺について (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。作者の修正要約は使わず、git diff HEAD と現物だけで判断した。HEAD には前回のレビュー以降のコミットが無く、差分はすべて作業ツリーの未コミット分で、plugin 側の変化は版の更新と artifact-delivery.json の runner_sha256 だけだった。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (stdout だけで、ファイルは書いていない)。テストは pytest -q -p no:cacheprovider (plugins/skill-intake・plugins/system-spec-harness・plugins/system-dev-planner・tests/test_skill_intake_notion_contract.py) で 771 passed、rc=0。対象スキルの本体 (SKILL.md・prompts・references・scripts・agents) は編集していない。 読んだもの: git diff HEAD の SKILL.md (24行)、SKILL.md の 105-190 行、Runtime root contract を扱う lint 3本の該当箇所、rubric.json の PD-002 の定義。迷った例: 移動した完了条件 (L128) の `validate-coverage-matrix.py --require-complete --require-basis --require-foundation` は python3 の付かない書き方だが、完了条件の記述で、実行の形は L152・L186 に解決済みパスで書かれている。前回から1字も変わっていないので指摘に数えなかった。迷った例: Purpose が上位概念 anchor より前に来たので、L127 の `requirements_foundation` が説明より先に出る。ただし L127 自身が『上位概念 `requirements_foundation`』と言い添えており読めるので、指摘にしなかった。前回 (iteration 2) の FAIL は PD-002 の1件だけによるもので、今回それが解消し、修正で生じた新しい high・medium も無いので PASS とした。"
 }

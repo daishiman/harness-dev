@@ -192,6 +192,42 @@ def test_goal_seek_anchor_validator_may_be_bundled_in_skill(tmp_path: Path) -> N
     assert any("正本と不一致" in finding for finding in profile.findings)
 
 
+def test_goal_seek_anchor_accepts_run_skill_feedback_vendor_path(tmp_path: Path) -> None:
+    # 配布コピーの run-skill-feedback は plugin 直下に写しを持たず、自分の skills/…/scripts/ に
+    # 同梱して $SKILL_ROOT から呼ぶ。この置き場所を認め、正本との drift は検出する。
+    root, demo = _skill(tmp_path)
+    skill = demo.parent.parent / "run-skill-feedback" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        demo.read_text(encoding="utf-8").replace("name: run-demo", "name: run-skill-feedback")
+        + '\npython3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py"\n',
+        encoding="utf-8",
+    )
+    canonical = (
+        root
+        / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py"
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    vendored = (
+        root
+        / "plugins/demo/skills/run-skill-feedback/scripts"
+        / "validate-inline-goal-seek-anchor.py"
+    )
+    vendored.parent.mkdir(parents=True)
+    vendored.write_bytes(canonical.read_bytes())
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert not any(
+        "validate-inline-goal-seek-anchor.py" in finding
+        for finding in profile.findings
+    )
+
+    vendored.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
+
+
 def test_agent_team_requires_fan_out_fan_in_and_ownership(tmp_path: Path) -> None:
     root, skill = _skill(
         tmp_path,
@@ -384,6 +420,30 @@ def test_replica_skill_name_is_allowed_without_path_registration(
     assert "[legacy]" in capsys.readouterr().err
 
 
+def test_stale_fork_tools_registration_fails(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """FORK_TOOLS_BASELINE も両方向 ratchet であること (返済済み/消滅済みの登録で落ちる)。
+
+    legacy loop 側にだけ陳腐化検査があり、fork/tools 側は片方向だった。解消しても登録が
+    残り、同じ path が将来再び不整合になった時に黙って再免除される。
+    """
+    root, _skill_path = _skill(tmp_path, goal_seek="  engine: inline\n  fork: inline\n")
+    # fork=inline なので allowed-tools 不整合 finding は出ない = 登録は返済済み。
+    # legacy 側の実登録は tmp root に実在せず陳腐化で先に落ちるので空へ差し替える。
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset({DEMO_SKILL_PATH}))
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "fork/allowed-tools ratchet の免除が陳腐化" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+
+    # 対照: 登録を外せば通る。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 0
+    assert "fork_tools_stale=0" in capsys.readouterr().out
+
+
 def test_unlisted_legacy_paths_matches_skill_segment_not_substring(monkeypatch) -> None:
     """複製判定は skill ディレクトリ名の完全一致であり、部分一致で緩まないこと。"""
     monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
@@ -414,6 +474,42 @@ def test_manifest_agent_ref_must_exist(tmp_path: Path) -> None:
     )
     profile = MODULE.inspect_skill(skill, root / "plugins")
     assert any("delegate agent が不在" in finding for finding in profile.findings)
+
+
+def test_manifest_non_object_top_level_is_finding(tmp_path: Path) -> None:
+    """top-level が配列などの manifest は traceback ではなく finding で fail-closed にする。"""
+    root, skill = _skill(tmp_path)
+    text = skill.read_text(encoding="utf-8").replace(
+        "prefix: run\n", "prefix: run\nmanifest: workflow-manifest.json\n"
+    )
+    skill.write_text(text, encoding="utf-8")
+    manifest = skill.parent / "workflow-manifest.json"
+    for body, kind in (
+        ('[{"id": "P1", "dependsOn": []}]', "list"),
+        ('"phases"', "str"),
+        ("null", "NoneType"),
+        ("1", "int"),
+    ):
+        manifest.write_text(body, encoding="utf-8")
+        profile = MODULE.inspect_skill(skill, root / "plugins")
+        assert any(
+            f"manifest の top-level が object でない ({kind})" in finding
+            and "workflow-manifest.json" in finding
+            for finding in profile.findings
+        ), (body, profile.findings)
+
+
+def test_manifest_non_object_top_level_exits_1(tmp_path: Path, monkeypatch, capsys) -> None:
+    root, skill = _skill(tmp_path)
+    text = skill.read_text(encoding="utf-8").replace(
+        "prefix: run\n", "prefix: run\nmanifest: workflow-manifest.json\n"
+    )
+    skill.write_text(text, encoding="utf-8")
+    (skill.parent / "workflow-manifest.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    assert "manifest の top-level が object でない (list)" in capsys.readouterr().err
 
 
 ANCHOR = "validate-inline-goal-seek-anchor.py"

@@ -29,7 +29,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 | `prompt_type` | `sub-agent` |
 | `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
 | `downstream` | C06 (`validate-knowledge-graph.py`) が永続化後のグラフを検証 |
-| `reproducible` | `true` (同一のナレッジ入力に対し同一の辺の集合・同一の確信度を返す) |
+| `reproducible` | `false` (辺の選択と `confidence` は LLM の意味判断なので、同じナレッジ入力でも実行ごとに変わり得る。決定論なのは呼び出し側の永続化 (同じ辺の非破壊・冪等な追加) と C06 `validate-knowledge-graph.py` によるグラフの再生成・検証で、再現性と安全はそこで担保する) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -73,7 +73,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 |---|---|---|---|
 | `plugin_root` | `path` | はい | 親が解決したプラグインの絶対パス。共通 agent-root 契約を適用する |
 | `knowledge_dir` | `path` | はい | `knowledge/*.json` を含むディレクトリ。`router.json` の categories.files が列挙する各カテゴリファイルの `entries[]` が対象 (`id`/`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote`/`tags`/`phase`/`source`/`related` 等) |
-| `knowledge_candidates` | `array` | はい | 起点エントリごとに、親が `scripts/search-knowledge.py` を実行した標準出力 (`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持つ JSON) と、その起点の ID を組にした配列。辺のペアはこの `matched_ids` から選ぶ |
+| `knowledge_candidates` | `array` | はい | 起点エントリごとに、親が `scripts/extract-knowledge-matches.py` を実行した標準出力 (`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持つ JSON) と、その起点の ID を組にした配列。辺のペアはこの `matched_ids` から選ぶ |
 
 - ルーターが列挙する全カテゴリファイルを読み、ID→エントリと ID→格納ファイル (`knowledge/<file>.json`) の索引を構築してから辺抽出に入る。`related` は探索ヒントとして参照するが辺の根拠にはしない。
 
@@ -105,6 +105,24 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 - `confidence`: 0.0〜1.0 の `float`。根拠の明示度が高いほど高く、示唆に留まるものは低くする。
 - `review_status`: 常に `"pending_review"` (全辺は C06 検証・人手レビュー前の候補である)。
 - 過去分の埋め戻しに使う既存の検証用の入力データ (現行 `knowledge/*.json`) では 0 より多い件数の辺を返すこと。1件も抽出できないのは被覆漏れであり完了としない。
+- 走査サマリ: 辺配列とは別の JSON オブジェクトで返す (辺配列の形は変えない)。`<…>` はプレースホルダで、件数は整数、一覧は配列 (無ければ空配列) で書く。
+
+```json
+{
+  "scanned_entries": "<走査したエントリ総数>",
+  "edge_count": "<出力辺数>",
+  "by_relation_type": {"depends_on": "<件数>", "supports": "<件数>", "contradicts": "<件数>", "derived_from": "<件数>"},
+  "self_loops_excluded": "<除外した自己ループ数>",
+  "skipped_without_evidence": "<evidence 欠落で見送ったペア数>",
+  "uncovered_ids": ["<zero_hit の起点の ID>"],
+  "unreadable_files": ["<読めなかったカテゴリファイル>"],
+  "knowledge_used_ids": [{"search_id": "<その起点の検索結果の search_id>", "used_ids": ["<辺の根拠に使った候補 ID>"]}],
+  "search_requests": [{"terms": ["<追加の検索語>"], "reason": "<なぜ要るか>"}]
+}
+```
+
+- `knowledge_used_ids`: 検索結果 (`search_id`) ごとに、出力辺の逐語根拠に実際に使った候補 ID だけを `used_ids` に入れる (その検索結果の `matched_ids` の部分集合)。読んだだけの候補・辺にしなかった候補・起点自身の ID は入れない。親が辺と照合して usage を記録する。
+- `search_requests`: 追加の ID が要るときの検索の依頼 (検索語と理由)。無ければ空配列。親の検索結果を受けてから比較する。
 
 ## Layer 3: インフラ層 (外部依存)
 
@@ -112,7 +130,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 | ID | パス | 読むとき |
 |---|---|---|
-| ナレッジエントリ | `knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く各カテゴリ) | 実行開始時に全件読み込み、ID の索引と格納ファイルの索引を構築 |
+| ナレッジエントリ | `knowledge/*.json` のうち、`router.json` の categories.files が列挙するカテゴリファイルだけ。`router.json`・`registry.json`・`schema.json`・`youtube-registry.json`・`knowledge-graph.json`・`harness-artifact-graph.json`・`knowledge-relations*.json` などの管理・生成ファイルはエントリとして読まない | 実行開始時に全件読み込み、ID の索引と格納ファイルの索引を構築 |
 | スキーマ | `knowledge/schema.json` | エントリのフィールド構造・カテゴリ定義を確認する時 |
 | ルーター | `knowledge/router.json` | カテゴリと格納ファイルの対応を確認する時 |
 | `knowledge-extractor` の契約 | `agents/knowledge-extractor.md` | エントリの各フィールド (`background`/`intent`/`root_cause` 等) の意味を確認する時 |
@@ -133,7 +151,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 ### 4.2 観測 / ロギング
 
 - 出力には、走査したエントリ総数・出力辺数・`relation_type` 別内訳・自己ループ除外数・`evidence` 欠落で見送ったペア数を含める。
-- 親へのサマリーに検索結果ごとの `knowledge_used_ids` を付ける。出力辺の逐語根拠に実際に使用した候補IDだけを列挙し、親が辺と照合してusageを記録する（辺配列JSON自体の形は変えない）。
+- 走査サマリ (2.4) に検索結果ごとの `knowledge_used_ids` を付ける。出力辺の逐語根拠に実際に使用した候補IDだけを列挙し、親が辺と照合してusageを記録する（辺配列JSON自体の形は変えない）。
 - 秘密情報・個人情報の復唱をしない。
 
 ### 4.3 セキュリティ
@@ -157,7 +175,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] `knowledge/*.json` の全カテゴリファイル (`router.json`/`registry.json`/`schema.json` を除く) を読み、ID の索引と格納ファイルの索引を構築した
+- [ ] `router.json` の categories.files が列挙する全カテゴリファイルを読み (管理・生成ファイルは読まない)、ID の索引と格納ファイルの索引を構築した
 - [ ] 辺のペアを起点ごとの `knowledge_candidates` の `matched_ids` からだけ選び、`zero_hit` の起点を被覆漏れとして報告した
 - [ ] 出力した全辺の `source_id`/`target_id` が実在するエントリ ID であり、`source_id == target_id` の自己ループが無いことを確認した
 - [ ] 全辺の `evidence` が起点・行き先の本文からの逐語引用を1件以上含み、要約・捏造でないことを確認した
@@ -188,7 +206,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 ### 7.1 ユーザー提示形式
 
-- 有方向辺の JSON 配列 (Layer 2.4 の契約) と、走査サマリ (エントリ総数 / 出力辺数 / `relation_type` 別内訳 / 自己ループ除外数 / `evidence` 欠落見送り数 / 被覆漏れ ID)。
+- 有方向辺の JSON 配列と、走査サマリ (エントリ総数 / 出力辺数 / `relation_type` 別内訳 / 自己ループ除外数 / `evidence` 欠落見送り数 / 被覆漏れ ID / 読めなかったファイル / `knowledge_used_ids` / 追加検索の依頼)。どちらも Layer 2.4 の契約の形。
 - 辺配列は呼び出し側が `knowledge/knowledge-relations.json` へそのまま渡せる形にする。
 
 ### 7.2 言語
@@ -203,7 +221,7 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 
 > (対話なし: 自動実行 agent) — 本エージェントは `isolation: fork` で親から分離起動され、ユーザーとの往復対話を行わず、下記テンプレートに従って全ナレッジの関係抽出を一度で完遂し、辺配列 JSON と走査サマリを返す。
 
-`knowledge/*.json` (`router.json`/`registry.json`/`schema.json` を除く全カテゴリ) の `entries[]` を全件読み込み、ID→エントリと ID→格納ファイルの索引を構築する。次に起点エントリごとに、`knowledge_candidates` にあるその起点の検索結果の `matched_ids` だけを相手として組み (総当たりにしない。`zero_hit` の起点は辺を出さず被覆漏れとして報告する)、そのペアの本文 (`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote` 等) を精読し、`depends_on` (前提の先行) / `supports` (裏付け) / `contradicts` (対立) / `derived_from` (具体化・派生) の有方向辺の候補を抽出する。各辺には起点・行き先の本文からの**逐語引用**を `evidence` に1件以上入れ (要約・捏造禁止)、`source_ref` に両端の出典ファイルを、`confidence` に 0.0〜1.0 を、`review_status` に `"pending_review"` を付す。`source_id == target_id` の自己ループと、`depends_on` の相互辺 (循環) は出力しない。`related` は候補ペアの探索ヒントに留め、辺の根拠にはしない (本文根拠が無ければ辺にしない)。
+`router.json` の categories.files が列挙する全カテゴリファイル (`knowledge-graph.json`・`youtube-registry.json`・`knowledge-relations*.json` などの管理・生成ファイルは除く) の `entries[]` を全件読み込み、ID→エントリと ID→格納ファイルの索引を構築する。次に起点エントリごとに、`knowledge_candidates` にあるその起点の検索結果の `matched_ids` だけを相手として組み (総当たりにしない。`zero_hit` の起点は辺を出さず被覆漏れとして報告する)、そのペアの本文 (`content`/`background`/`intent`/`root_cause`/`advice`/`key_insight`/`quote` 等) を精読し、`depends_on` (前提の先行) / `supports` (裏付け) / `contradicts` (対立) / `derived_from` (具体化・派生) の有方向辺の候補を抽出する。各辺には起点・行き先の本文からの**逐語引用**を `evidence` に1件以上入れ (要約・捏造禁止)、`source_ref` に両端の出典ファイルを、`confidence` に 0.0〜1.0 を、`review_status` に `"pending_review"` を付す。`source_id == target_id` の自己ループと、`depends_on` の相互辺 (循環) は出力しない。`related` は候補ペアの探索ヒントに留め、辺の根拠にはしない (本文根拠が無ければ辺にしない)。
 
 具体例 (実在するエントリ2件からの1辺):
 
@@ -241,3 +259,16 @@ source_contract_ref: plugins/prompt-creator/skills/run-prompt-creator-7layer/ref
 - [ ] **簡潔性**: 冗長・重複辺を排し、根拠の薄い辺を `confidence` と併せ整理している
 
 中でも検証可能性・深度・完全性を優先して確かめる。自己ループ・幻覚引用・`depends_on` の循環・`related` の素通し変換のいずれかが残る場合も、完了として返さない。
+
+## Context Boundary (AG-002)
+
+- 読み取り専用。ナレッジ JSON・`router.json`・`schema.json`・`knowledge-relations.json`・`knowledge-graph.json` を Write/Edit しない (tools は Read だけ)。辺の永続化とグラフの再生成は呼び出し側と C06 の責務。
+- 読むのは、`plugin_root` の下の正本 (本ファイル、`references/agent-root-contract.md`・`references/knowledge-retrieval-contract.md`、`agents/knowledge-extractor.md`) と、`knowledge_dir` のうち `router.json`・`schema.json` と、router の categories.files が列挙するカテゴリファイルだけ。管理・生成ファイル (`registry.json`・`youtube-registry.json`・`knowledge-graph.json`・`harness-artifact-graph.json`・`knowledge-relations*.json`) はエントリとして読まない。
+- ナレッジの検索 (`extract-knowledge-matches.py`) と usage の記録をしない。辺の相手は入力 `knowledge_candidates` の `matched_ids` からだけ選ぶ。
+- ユーザーとの対話・エントリ本文の編集・新しいエントリの生成・`related` の書き換えはしない。
+
+## Handoff
+
+- 親へ返すもの: Layer 2.4 の辺配列 JSON と走査サマリ (`knowledge_used_ids`・被覆漏れ・追加検索の依頼を含む)。
+- 親が続けること: `knowledge_used_ids` を辺と照合した usage の記録、辺の `knowledge/knowledge-relations.json` への非破壊・冪等な追加、C06 `validate-knowledge-graph.py` によるグラフの再生成と検証 (Layer 6.1)。
+- 止まるとき: `plugin_root`・`knowledge_dir` が `references/agent-root-contract.md` を満たさないときは読む前に止まり、理由を返す。カテゴリを読めない・全件で `evidence` が取れず辺が0件のときは、理由と対象を返して完了としない (Layer 6.2)。追加の ID が要るときは `search_requests` を返して検索結果を待つ。

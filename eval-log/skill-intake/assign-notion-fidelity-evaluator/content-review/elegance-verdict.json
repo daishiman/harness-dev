@@ -1,41 +1,39 @@
 {
- "target": {
-  "plugin": "skill-intake",
-  "skill": "assign-notion-fidelity-evaluator",
-  "skill_md_sha256": "f2ce5d0ad0ca1e6a232cf8618c1ac8368503fca0cee28c032b06c181fb15cbe7"
- },
- "review_kind": "elegance",
- "verdict": "PASS",
- "findings_summary": {
-  "contradiction": 0,
-  "omission": 0,
-  "inconsistency": 0,
-  "dependency_break": 0,
-  "smell": 1
- },
- "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
- "reviewed_at": "2026-10-10T09:30:00Z",
- "iterations": 1,
- "human_review_required": false,
- "feedback_loop": {
-  "loop_scope": "both",
-  "criteria_evaluated": [
-   "IN1",
-   "IN2",
-   "OUT1"
-  ],
-  "positive_feedback": [
-   "前回の F1 は解消した。ref-output-routing が frontmatter の参照キー (rubric_refs / reference_refs) のどこにも無くなり、live-trial の behavior closure が解決できない名前を探さなくなった。plan-live-trials.py --plugin-dir plugins/skill-intake は build-only / incremental / exhaustive の 3 profile とも exit 0 で、skill-intake の 12 skill すべての Gate D 計画が止まらなくなった。",
-   "前回の F2 も解消した。出力先が output/<hint>/fidelity-report.{json,md} に固定され、Key Rule 3 で Notion API の直接呼び出しを禁じるこの skill に、adapter を選ぶ契約の ref-output-routing は関係が無い。コメントはその理由 (rubric.json を持たない、出力先が固定) を正しく書いており、依存グラフ (lint-skill-dep-step7 の inbound 集計、inventory-skill-references) に誤った辺が入らなくなった。",
-   "completeness_exempt の rubric 理由は実物と合っている。重みは references/granularity-rubric.md (0.30/0.40/0.30)、閾値は references/fidelity-check-rules.md (pass>=0.85 / warn>=0.70) にあり、scripts/validate-notion-fidelity.py が決定論で算出する。lint-skill-completeness の parse_exempt が求める '<category>: <理由>' の形式どおりで、assign-plugin-package-evaluator の前例 (harness-aor) と揃っている。"
-  ],
-  "negative_feedback": [
-   "[low / smell] 重みと閾値が references (granularity-rubric.md / fidelity-check-rules.md)、script (validate-notion-fidelity.py の重みと既定閾値)、prompts/R2.md の 3 か所に書かれ、同期を確かめる機械の検査が無い。変更前からの問題で、今回の免除理由の主張そのものは正しい。免除で rubric.json による検査を外した以上、references と script の値が一致するかを確かめるテストを 1 本足すと、免除の根拠が崩れたときに気付ける。"
-  ],
-  "iteration": 1,
-  "iteration_limit": 3,
-  "hook_trigger": "manual:fresh-review",
-  "next_action": "none"
- },
- "notes": "incremental profile の focused combined review (再レビュー)。今回の差分は frontmatter だけで、rubric_refs: [ref-output-routing] を外し、外した理由をコメントに、rubric の免除理由を completeness_exempt に書いた。確かめたこと: plan-live-trials.py --plugin-dir plugins/skill-intake を build-only / incremental / exhaustive で実行し 3 つとも exit 0 (前回は 'declared behavior dependency missing: ref-output-routing' で exit 2)。lint-rubric-refs-exist は 'PASS: rubric_refs 全件解決 (1 SKILL.md checked)' で exit 0。lint-skill-completeness は 'ok: ... (completeness)' で exit 0。validate-frontmatter は exit 0、lint-skill-dep-step7 は exit 0。test_skill_intake__validate_notion_fidelity.py は 45 件合格。前回の F1 (high / dependency_break) と F2 (medium / inconsistency) は解消した。残るのは変更前からの low smell 1 件だけ。範囲外の観察: (1) この skill の frontmatter の effect は conversation-output だが、script は output/<hint>/fidelity-report.{json,md} を書き出す。今回の差分では変わっておらず、本レビューの判定には入れない。(2) 作業ツリーでは別の作業者が lint script を変更中で、r4 系のテストが一時 1 件 fail したことがあるが、この SKILL.md とは無関係 (再実行では lint 系 101 件合格)。(3) strict manifest の warning は他の skill のもの。exhaustive の 30 思考法は実施していない。"
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "assign-notion-fidelity-evaluator",
+    "skill_md_sha256": "142328bddbabff1860d6e78b1f5af1de1e3d45370902c59ac1969df75b846f95"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T13:56:54Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "4条件: 差分は allowed-tools の1行だけで、本文の Bash 実行指示 (SKILL.md:119-131 の3コマンド) はすべて `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/assign-notion-fidelity-evaluator/scripts/*.py` の形で始まる。絞り込みと本文の間に矛盾も漏れも無く、依存先の3 script も実在する。",
+      "設計の筋: 判定も書き出しも scripts/*.py に寄せている (Key Rule 5 Script First)。fidelity-report.json/md は validate-notion-fidelity.py 自身が書くので、Write を持たない Read・Bash(python3 *)・Grep・Glob の構成で出力契約まで完結する。Notion API を呼ばない read-only の fidelity ガードという責務と、ツールの構成がそろっている。",
+      "criteria: IN1 (granularity_score の算出) と IN2 (fidelity-report.json の形) は validate-notion-fidelity.py を python3 で起動すれば確かめられる。OUT1 (責務の単一化と API 不使用) は今回の絞り込みでむしろ強まった。3件とも評価した。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:fresh-review",
+    "next_action": "none"
+  },
+  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (160行) と git diff 03050251、prompts/R3.md の実行指示、references/ 4件 (resource-map.yaml・fidelity-check-rules.md・granularity-rubric.md・abstraction-contract.md)、scripts/ 3件の実在、skill-intake の commands からの呼び出し。 確かめたこと: Bash の実行指示は SKILL.md:119-131 の3コマンドで、すべて python3 で始まる。fidelity-report.json/md は validate-notion-fidelity.py 自身が書くので、Write を持たない allowed-tools と矛盾しない。参照先の scripts 3件と references 4件は実在する。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:59 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: SKILL.md:96 のチェック項目 `scripts/validate-notion-fidelity.py <intake-final-context.json>` は python3 を付けない省略記法だが、同じ script の python3 形が SKILL.md:127 にあるので指摘にしない。"
 }

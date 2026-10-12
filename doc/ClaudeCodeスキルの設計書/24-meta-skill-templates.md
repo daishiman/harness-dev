@@ -205,7 +205,7 @@ ref-skill-design-rubric/
 
 ### rubric の hard limits（本章が由来）
 
-rule の本数・check 式・severity の正本は `ref-skill-design-rubric/references/rubric.json` である（rubric 1.5.0 時点で 41 rule、threshold 80、severity_weights は high -20 / medium -10 / low -3）。本章が由来になっている上限値は次のとおりで、値は rubric.json の最上位キーに置かれている。
+rule の本数・check 式・severity の正本は `ref-skill-design-rubric/references/rubric.json` である（rubric 1.6.0 時点で 41 rule、threshold 80、severity_weights は high -20 / medium -10 / low -3）。本章が由来になっている上限値は次のとおりで、値は rubric.json の最上位キーに置かれている。
 
 | キー | 値 | 対応する rule |
 |---|---|---|

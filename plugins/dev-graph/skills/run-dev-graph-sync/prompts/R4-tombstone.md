@@ -1,12 +1,13 @@
 # Prompt: R4-tombstone
 
-> GitHub Issue の close/delete を検知し、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
+> `diff-github-issues.py` の計画が示す GitHub Issue の close/delete (自分では判定しない) を受け取り、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R4-tombstone`
 - `skill`: `run-dev-graph-sync`
-- 不変目的: GitHub Issue の close/delete を検知し、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
+- 不変目的: `diff-github-issues.py` の計画が示す GitHub Issue の close/delete (自分では判定しない) を受け取り、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
+- inventory の summary (frontmatter の responsibilities と一致させる文で、ここでは書き換えない): 「GitHub Issue の close/delete を検知し、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する」。今の手順では close/delete の判定は `diff-github-issues.py` が行い、この責務はその計画を C02 に渡すだけである。
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -26,10 +27,12 @@
 ### 受入条件
 
 - graph_node_id/linkageを保持し許可transitionだけが反映される。
+- 削除は `diff-github-issues.py` の tombstone 計画を当てた後の再計画が `converged` になり、一時的な失敗は tombstone にならず retry に残る。
 
 ## Layer 3: インフラ層
 
-- 使用資産: gh-bridgeとSkill run-dev-graph-node。Issue の close は `diff-github-issues.py` の state import (status=closed) として、取得できない Issue は同計画の `missing_issues` として受け取る。
+- 使用資産: gh-bridgeとSkill run-dev-graph-node。Issue の close と削除は `diff-github-issues.py` の計画から受け取り、自分で判定しない。close は state import (status=closed)、削除 (linked number が解決しない・HTTP 410) は `kind: remote-deleted` の import (status=tombstoned) として同計画の `update_input` に入るので、それを C02 `update` に渡す。tombstone 済みの node は次の計画で `deleted_issues` (解決済み) に移り、missing を残さず収束する。
+- 一時的な失敗 (rate limit・HTTP 429/5xx・timeout) は `missing_issues` の `action: retry`、権限・repository・HTTP 404 の失敗は `action: investigate` で、どちらも tombstone にしない。package member の削除は C02 が拒否するので `conflicts` の `remote-deleted` (local-authority) として R6 に渡す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -46,12 +49,13 @@
 
 ### 5.2 ゴール定義
 
-- 目的: GitHub Issue の close/delete を検知し、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
+- 目的: `diff-github-issues.py` の計画が示す GitHub Issue の close/delete (自分では判定しない) を受け取り、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する
 - 達成ゴール: C02向けtombstone/status transition requestとpropagation resultが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] graph_node_id/linkageを保持し許可transitionだけが反映される
+- [ ] 削除の tombstone 計画を当てた後の再計画で missing_issues が0件になり、一時的な失敗は retry のまま残る
 
 ## Layer 6: オーケストレーション層
 

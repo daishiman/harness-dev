@@ -15,8 +15,11 @@
 親は host から解決した絶対 `project_root` を起点に、各 SKILL frontmatter の progress / intermediate を展開する。consult の session_id などのプレースホルダーも確定値で展開し、絶対 `progress_path` / `intermediate_path` を渡す。plugin_root は「実行時のルートの決め方」で解決する。
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "{resolved_progress_path}" "{resolved_intermediate_path}"
 ```
+
+`{resolved_progress_path}` / `{resolved_intermediate_path}` は上で展開した絶対パスの確定値に置き換えてから実行する。シェル変数（`$progress_path` など）は Bash の呼び出しをまたいで残らないので、変数に頼らない。
 
 共通 validator が検査するのは進捗/中間ファイルの実在、JSONL が空でないこと、全行の必須キー、空でなく全行で不変の original_goal、進捗の original_goal_hash と UTF-8 SHA-256 の一致。本文の内容・日付・保存パスと受領書の対応・周回上限・task-graph の依存順を検査したとは扱わない。本文と受領書の検証は各スキルの専用ゲートで行う。
 

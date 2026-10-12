@@ -2,20 +2,20 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-consult",
-    "skill_md_sha256": "0b2bd554ab57d1926ac1684fdb21b67ceb3a4de9310248cf418bc8536295f5ee"
+    "skill_md_sha256": "920199cff2605e48095988ced5417cac6da077b463890e9bab54f9a30a447567"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
-  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T13:55:23Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,15 +25,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Safety/redirect branch deliberately bypasses ordinary issue confirmation. Exact outcome enum and actual role/source_turn_ids preserve provenance; default no-save validates ephemerally and writes no sessions/usage; actual consent is required.",
-      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
-      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
+      "L0+L2 の機械採点（render-findings-score.py --kind skill、rubric 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c）は score 90、threshold 80、passed。coverage は applicable 25・scored 23・pending_human 2（BD-004・KL-002）。減点は KL-003 の1件だけ（negative_feedback 参照）。",
+      "UBM の validate-design-rubric.py（L0 + L1 run-ubm-knowledge-sync/references/rubric.json + L2、composition_hash sha256:b8437e1bb4d5793c79dc84c267c4cc91f082be0e6009aa85584c6c4311cd8120）も score 90・passed。",
+      "high の rule は全件 PASS: FM-001、NM-001、BD-001（L113 `## 目的と出力契約`）、BD-003（本文 121 行 ≤ 300）。",
+      "BD-004（LLM judge）は PASS と判定した。description の2つの発動条件（相談を構造化するとき／考え方・思考フレームを引き出し型の共創で提示しユーザー主導で解決策を言語化したいとき）が、R1-intake-issue・R2-elicit と R3-frame-consult・R4-cocreate-converge に対応する。",
+      "IN1・OUT1（test）は test_ubm_consult_contract.py・test_validate_consult_session.py の通過（担当5スキルの関係テスト 662 passed）で裏づけた。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "rubric の観点でも elegance と同じ1回の評価の指摘を持つ（同じ内容を両ファイルに書いた）。",
+      "[medium 相当の機械判定の退行 / inconsistency / plugins/ubm-goal-setting/scripts/extract-knowledge-matches.py（改名）と plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py L422〜L436] 決定論の rubric 採点で KL-003（medium）が FAIL になり、score が 100 から 90 に下がった。evaluator は plugin の scripts/ から名前に \"search\" を含む .py を探して weight の有無を見るが、改名後の extract-knowledge-matches.py は名前に search を含まないので「決定論的な検索 stage の script が無い」と判定される。基準 commit 03050251 では search-knowledge.py（weight を含む）で KL-003 はPASS だった（git archive で取り出した基準の木で再現）。中身は満たしている（extract-knowledge-matches.py L25 の FIELD_WEIGHTS と、knowledge-retrieval-contract.md の決定論の検索→意味選択の分離）ので SKILL.md の欠陥ではなく、evaluator の名前による探索と改名の食い違い。high は0件、score 90 は threshold 80 以上なので PASS は保つ。直し方の案: render-findings-score.py の KL-003 を、名前でなく SKILL.md の script_refs が指す script や FIELD_WEIGHTS/weight を持つ script で探すよう直す（harness-creator 側の修正）。名前に search を足す改名は、lint-script-naming の許可動詞に search が無いことと、名前合わせで通す形になることから勧めない。",
+      "[low / smell / skills/run-ubm-consult/references/session-record-format.md L31・L33] 「同意なしでは破棄する」「一時ファイルは検証後に削除する」は手段を決めていない。rm で消すと Bash(python3 *) の事前許可に当たらず確認が出る。直し方の案: `python3 -c 'import shutil,sys; shutil.rmtree(sys.argv[1])' \"{観測した一時ディレクトリ}\"` のように python3 始まりの削除手順を書き、mkdtemp で作った実行専用ディレクトリだけを消すという条件も添える。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
+  "notes": "incremental の focused review（content-review-protocol の「incremental: unresolved semantic batch」に従い、1つの context で (a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high severity が0件 をまとめて判定）で、exhaustive の30思考法は実施していない。比較の基準は commit 03050251。今回の差分は allowed-tools の Bash→Bash(python3 *) と script_refs の改名。 読んだもの: SKILL.md 全文、references/（consult-frames.md・session-record-format.md・resource-map.yaml）、prompts/R1〜R4、commands/ubm-consult.md、共有の references（knowledge-retrieval-contract.md・goal-seek-anchor-contract.md・agent-root-contract.md・content-review-rubric.md）。 確かめたこと: (1) Bash で python3 以外の実行ファイルを呼ぶ指示や、先頭が python3 でない形の指示が無いか（SKILL.md・references・prompts・agents・command）。(2) frontmatter の参照と本文の相対パスの実在、改名後の script の実在と旧名の残り。(3) feedback_contract.criteria の全 ID。 criteria の評価: IN1 と OUT1（test）はテストの通過と記述の照合で評価した。OUT2（live-trial）は実際の相談が要るので静的レビューでは実証しておらず、R1→R4 と validate-consult-session.py（--ephemeral を含む）が実行できる形で書かれているかだけを確かめた。 迷った例（FAIL にしていない）: runtime-root-contract ブロック（SKILL.md L128）の「シェルを呼ぶたびに、その中で解決済みの絶対パスを PLUGIN_ROOT に入れる」は、`PLUGIN_ROOT=... python3 ...` や `export` のように先頭が python3 でない形で読まれると Bash(python3 *) の事前許可に当たらない。本文のコマンドは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` と絶対パスの置き換えで python3 始まりのまま実行できるので FAIL にしない。knowledge-retrieval-contract.md L10・L45 の `$PLUGIN_ROOT` / `$KNOWLEDGE_DIR` / `$PROJECT_ROOT` も同じ扱い。直すなら「変数に入れる」でなく「解決済みの絶対パスをコマンドへ書き込み、先頭は python3 のままにする」と書くと迷いが消える。 判定は PASS・none。採点コマンド: python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json --kind skill --target plugins/ubm-goal-setting/skills/run-ubm-consult --emit-hash と、python3 plugins/ubm-goal-setting/scripts/validate-design-rubric.py --repo-root . --target plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md。KL-002（ナレッジの品質レベル）は pending_human だが、今回の差分は knowledge/ を変えていない（git diff 03050251 -- plugins/ubm-goal-setting/knowledge が空）ので、この review では判定していない。"
 }

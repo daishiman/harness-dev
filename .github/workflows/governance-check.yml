@@ -232,6 +232,9 @@ jobs:
       - name: lint goal-seek conformance (実行系の固定手順禁止)
         run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins/harness-creator/skills
         continue-on-error: false
+      - name: lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json
+        continue-on-error: false
       - name: lint runtime profiles and workflow dependencies (all plugins)
         run: python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --repo-root .
         continue-on-error: false

@@ -3,7 +3,7 @@
 # name: diff-github-issues
 # purpose: Plan the C03 reconciliation of linked GitHub Issue title/state by updated_at (newer side wins; the same instant keeps GitHub and flags a manual confirmation) without writing anything.
 # inputs: ["argv: --repo-root PATH [--config PATH] [--graph PATH] [--remote FILE] [--decisions FILE] [--output PATH]"]
-# outputs: ["stdout: JSON plan with exports (gh-bridge argv), imports (C02 update input), confirmations (manual confirmation flags) and conflicts"]
+# outputs: ["stdout: JSON plan with exports (gh-bridge argv), imports (C02 update input, including status=tombstoned for a deleted Issue), confirmations (manual confirmation flags), conflicts, missing_issues (retry/investigate) and deleted_issues (settled tombstones)"]
 # requires-python = ">=3.10"
 # dependencies: [_common.py, gh-bridge.py]
 # contexts: [A, B, C, E]
@@ -31,12 +31,25 @@ gh-bridge has no reopen and a closed node is not reopened from GitHub unasked, s
 conflict. exact-13 package members belong to system-dev-planner (C02 update refuses them), so their local side
 always wins. A missing or unreadable timestamp is a conflict, never a guess. The remote is read with gh-bridge
 issue-fetch (read-only) unless ``--remote`` supplies {issues: {"OWNER/REPO#N": {title, state, updated_at}}}.
+
+An Issue that cannot be read is classified by the error kept for it (``errors`` of the remote snapshot):
+
+* deleted: GitHub answers that the linked number itself does not resolve (``Could not resolve to an issue or pull
+  request with the number of N``) or ``HTTP 410``. The node is never removed: the plan imports status=tombstoned
+  through C02 update, and once the node is tombstoned the row is reported in ``deleted_issues`` as settled.
+  A package member stays a local-authority conflict because C02 update refuses it.
+* transient: rate limit, HTTP 429 / 5xx, time-outs and dropped connections. Nothing is planned for the node; the row
+  stays in ``missing_issues`` with ``action: retry``.
+* anything else (no error kept, HTTP 401 / 403 / 404, an unresolved repository) is never read as a deletion, because
+  GitHub answers the same way for a private repository it hides. The row stays in ``missing_issues``; without an error
+  the snapshot simply lacks it (``action: retry``), with one a human checks access first (``action: investigate``).
 """
 from __future__ import annotations
 
 import argparse
 import datetime
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,6 +59,11 @@ from _common import ContractError, atomic_json, contained, dump, is_package_memb
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
 CLOSED = {"done", "closed", "tombstoned"}
 BOUND_KEYS = ("local", "remote", "local_updated_at", "remote_updated_at")
+DELETED_NUMBER = re.compile(r"Could not resolve to an issue or pull request with the number of (\d+)")
+DELETED_GONE = re.compile(r"\bHTTP 410\b")
+TRANSIENT = re.compile(r"rate limit|abuse detection|\bHTTP (?:429|5\d\d)\b|bad gateway|service unavailable|gateway time-?out"
+                       r"|internal server error|timed out|\btimeout\b|connection (?:reset|refused)|temporar(?:y|ily)", re.I)
+ACTIONS = {"transient": "retry", "not-fetched": "retry", "unclassified": "investigate"}
 
 
 def _path(root: Path, value: str, *, must_exist: bool = True) -> Path:
@@ -85,6 +103,16 @@ def fetch_remote(targets: list[tuple[str, int]]) -> dict[str, Any]:
     return {"issues": issues, "errors": errors}
 
 
+def classify_error(error: Any, number: int) -> str:
+    """deleted / transient / not-fetched / unclassified for the error kept for Issue ``number``."""
+    if not isinstance(error, str) or not error.strip():
+        return "not-fetched"
+    resolved = DELETED_NUMBER.search(error)
+    if (resolved and int(resolved.group(1)) == number) or DELETED_GONE.search(error):
+        return "deleted"
+    return "transient" if TRANSIENT.search(error) else "unclassified"
+
+
 def _decisions(path: Path | None) -> dict[tuple[str, str], dict[str, Any]]:
     if path is None:
         return {}
@@ -103,14 +131,28 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
     conflicts: list[dict[str, Any]] = []
     stale: list[dict[str, Any]] = []
     missing: list[dict[str, Any]] = []
+    deleted: list[dict[str, Any]] = []
     used: set[tuple[str, str]] = set()
     for node, repo, number in linked_issues(graph, github):
         node_id = node.get("graph_node_id")
         issue = issues.get(f"{repo}#{number}")
-        if issue is None:
-            missing.append({"graph_node_id": node_id, "repo": repo, "issue_number": number, "error": errors.get(f"{repo}#{number}")})
-            continue
         package_member = is_package_member(node)
+        if issue is None:
+            error = errors.get(f"{repo}#{number}")
+            row = {"graph_node_id": node_id, "repo": repo, "issue_number": number, "error": error}
+            error_class = classify_error(error, number)
+            if error_class != "deleted":
+                missing.append({**row, "error_class": error_class, "action": ACTIONS[error_class]})
+            elif node.get("status") == "tombstoned":
+                deleted.append({**row, "status": "tombstoned"})
+            else:
+                row = {**row, "field": "status", "local": node.get("status"), "remote": "deleted",
+                       "local_updated_at": node.get("updated_at"), "remote_updated_at": None}
+                if package_member:
+                    conflicts.append({**row, "kind": "remote-deleted", "cause": "local-authority"})  # C02 update refuses it
+                else:
+                    imports.append({**row, "kind": "remote-deleted", "node_patch": {"status": "tombstoned"}})
+            continue
         local_at, remote_at = _instant(node.get("updated_at")), _instant(issue.get("updated_at"))
         local_state = "closed" if node.get("status") in CLOSED else "open"
         for field, local, remote_value in (("title", node.get("title"), issue.get("title")),
@@ -160,12 +202,14 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
     unresolved = len(confirmations) + len(conflicts) + len(missing)
     return {"schema_version": "1.0.0", "graph_revision": revision, "exports": exports, "imports": imports,
             "confirmations": confirmations, "conflicts": conflicts, "stale_decisions": stale, "unused_decisions": unused,
-            "missing_issues": missing, "update_input": update_input,
+            "missing_issues": missing, "deleted_issues": deleted, "update_input": update_input,
             "counts": {"exports": len(exports), "imports": len(imports), "confirmations": len(confirmations),
-                       "conflicts": len(conflicts), "missing_issues": len(missing)},
+                       "conflicts": len(conflicts), "missing_issues": len(missing), "deleted_issues": len(deleted),
+                       "tombstones": sum(entry["kind"] == "remote-deleted" for entry in imports)},
             "changes": changes, "unresolved_count": unresolved, "converged": changes == 0 and unresolved == 0,
             "next": ("apply exports and imports, then plan again" if exports or imports
-                     else "retry missing Issues, then plan again" if missing
+                     else "retry missing Issues, then plan again" if any(row["action"] == "retry" for row in missing)
+                     else "check access to the missing Issues (R6), then plan again" if missing
                      else "resolve the reported conflicts (R6), then plan again" if conflicts
                      else "confirm each flagged row (R6), then plan again with --decisions" if confirmations else "converged")}
 

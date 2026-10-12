@@ -133,9 +133,9 @@ rubric の正本は段階で変わる。
 
 ## creator-kit への配布形態
 
-`creator-kit/` は、本章で定義するメタSkill群を別repoで再利用するための配布単位である。新しいアーキテクチャ案ではなく、案A/案Bの実装物を portable kit として束ねたものとして扱う。
+creator-kit（harness-creator-kit。旧 `creator-kit/`。今の置き場所は `installers/` と `plugins/` で、[32章](./32-creator-kit-implementation-ledger.md) 冒頭の注記のとおり）は、本章で定義するメタSkill群を別repoで再利用するための配布単位である。新しいアーキテクチャ案ではなく、案A/案Bの実装物を portable kit として束ねたものとして扱う。
 
-`creator-kit/manifest.json` を kit 構成の正本とし、含めるものは「複数プロジェクトで同じものを使う」メタSkill、rubric/reference、lint/hook scripts、出力routing/adapter、設定雛形に限定する。業務workflow skill、プロジェクト固有設計書、分析ログ、具体的な routing 設定値は kit 外に置く。
+`installers/manifest.json` を kit 構成の正本とし、含めるものは「複数プロジェクトで同じものを使う」メタSkill、rubric/reference、lint/hook scripts、出力routing/adapter、設定雛形に限定する。業務workflow skill、プロジェクト固有設計書、分析ログ、具体的な routing 設定値は kit 外に置く。
 
 現行 kit は `run-skill-create` を E2E オーケストレーターとして持ち、`run-skill-elicit` → `run-build-skill` → creator-kit登録判定 → P0 lint → `assign-skill-design-evaluator` → `run-elegant-review` → governance の順にゲート付きで連鎖する。独立した出力先や秘密管理は 31 章の `ref-output-routing` と adapter scripts に委譲し、Bash/Python 規約は 28 章に委譲する。
 
@@ -144,7 +144,7 @@ rubric の正本は段階で変わる。
 自然言語で「Harness Creator を改善して」「この補助Skillも横展開して」と依頼された場合、Claude Code は次の順で扱う。
 
 1. 追加物が複数プロジェクトで再利用される共通基盤か判定する。
-2. 共通基盤なら `creator-kit/skills/`、`creator-kit/scripts/`、`creator-kit/config/` のいずれかへ配置する。
+2. 共通基盤なら `plugins/<plugin>/skills/`、`plugins/<plugin>/scripts/`、`plugins/skill-governance-config/config/` のいずれかへ配置する。
 3. `scripts/build-manifest-registration-plan.py` で `manifest.json` 登録案を生成する。
 4. 登録案をユーザーに提示し、承認後だけ `--apply` で `manifest.json` を更新する。
 5. `lint-manifest-contents.py`、`lint-forbidden-deps.py`、`audit_secret_leak.py` を通す。
@@ -197,7 +197,7 @@ Skill を増やしすぎないため、役割を「実行エンジン」と「�
 | workflow engine | 少数 | `run-build-skill`, `run-execute-task` | 手順や副作用の種類が根本的に違う |
 | evaluator engine | 少数 | `assign-generic-artifact-evaluator`, `assign-skill-design-evaluator` | 評価対象の artifact 種別が違う |
 | reference / rubric | domain ごと | `ref-skill-design-rubric`, `ref-security-rules`, `ref-marketing-quality-rubric` | 基準・用語・禁止事項が違う |
-| deterministic script | check ごと | `lint-skill-name.py`, `validate-frontmatter.ps1` | 機械判定できる規則が増えた |
+| deterministic script | check ごと | `lint-skill-name.py`, `validate-frontmatter.py` | 機械判定できる規則が増えた |
 
 原則: **Skill は orchestration、基準は references、判定可能な検査は scripts** に置く。新しい案件やプロジェクトが増えた時は、まず `ref-*` / `references/` / config を追加し、`run-*` や `assign-*` を増やすのは最後にする。
 
@@ -281,7 +281,7 @@ rubric（評価基準）は read-only でも「永久不変」ではない。Goo
 
 1. **提案 (Proposal)**: PR で rubric の `diff` と「影響を受ける既存 Skill のリスト」を提示。
 2. **影響評価 (Impact Assessment)**: 全 Skill に対し**新 rubric** で採点をシミュレーションし、score 低下 Skill 数を記録。
-3. **猶予期間 (Grace Period)**: 影響 Skill 数が 0 でない場合、`rubric_version` を bump し、最低 1 release（または 30 日）の deprecation 期間を設ける。
+3. **猶予期間 (Grace Period)**: 影響 Skill 数が 0 でない場合、`rubric_version` を bump し、deprecation 期間を設ける。期間の長さは bump の種類で決まり、`run-skill-rubric-governance` の Key Rule 3（`references/version-rules.md`）を正本とする。
 4. **発効 (Enactment)**: 猶予期間後、新 rubric が evaluator のデフォルトになる。
 
 ### ガバナンス・ボード

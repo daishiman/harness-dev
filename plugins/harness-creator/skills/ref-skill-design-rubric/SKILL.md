@@ -38,7 +38,7 @@ Skill 設計の評価基準の **正本（upstream rubric）**。
 
 ## 評価軸サマリ
 
-rubric 1.5.0 の全 41 rule。各 rule の `applies_to_kinds` で、どの kind（rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow）に適用するかが決まる。`*` は全 kind 共通、それ以外はその kind を評価するときだけ採点する。1.2.0 で kind 別 area、1.3.0 で KL、1.4.0 で BD-001・BD-002・PD-002 の日本語の正規形の見出し、1.5.0 で PD-002 の禁則見出し `## 守ること`（行全体の一致）を追加した。BD-001 の存在検査だけでは PD-002 の冒頭集約と禁則は保証されない。
+rubric 1.6.0 の全 41 rule。各 rule の `applies_to_kinds` で、どの kind（rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow）に適用するかが決まる。`*` は全 kind 共通、それ以外はその kind を評価するときだけ採点する。1.2.0 で kind 別 area、1.3.0 で KL、1.4.0 で BD-001・BD-002・PD-002 の日本語の正規形の見出し、1.5.0 で PD-002 の禁則見出し `## 守ること`（行全体の一致）、1.6.0 で HK-001 の event `PostToolUseFailure` を追加した。BD-001 の存在検査だけでは PD-002 の冒頭集約と禁則は保証されない。
 
 - **FM (Frontmatter, kind=skill)**: name kebab+prefix / description の発動句（Use when・Read when、または 〜とき・〜場合・〜際・〜時） / trigger 2-3（rubric の FM-003。ただし validate-frontmatter と lint R1 は 2 個ちょうどを強制） / 動作詳細混入なし / 動詞ベース
 - **BD (Body)**: BD-001 目的と出力契約の節（`## Purpose & Output Contract` または `## 目的と出力契約`） / BD-002 Gotchas 節（`## Gotchas` または `## つまずきやすい点`） / BD-003 <=300行（`*`） / BD-004 description↔body 整合 (LLM judge)。BD-003 以外は kind=skill

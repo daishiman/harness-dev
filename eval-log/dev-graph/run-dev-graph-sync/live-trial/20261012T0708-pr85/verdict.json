@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-sync",
+  "args": "sync --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync/fx --binding github --adapter-fixture /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync/fx/github-adapter.json --repeat 2",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "1 回目の export も import も適用されていない。fixture の github-adapter.json は HEAD から変わっておらず (mutation_log=[])、git status に出るのは未追跡の eval-log/sync-pass1-issue-plan.json と github-adapter-calls.jsonl の 2 つだけ。graph.json、tasks、snapshot は変わっておらず、.dev-graph/state/receipts もできていない。C02 update、gate preview、authorize、execute はどれも呼ばれていない。",
+      "2 回目の sync は実行されていない。2 つの GitHub 計画で converged=true と unresolved_count=0 を確かめる、という OUT1 の追加観測は 1 件も取れていない。",
+      "直接の原因は fixture 側にある。被験の diff-github-project-fields.py は Project item の field 値を ITEM_QUERY (node(id:$id){... on ProjectV2Item{fieldValues(first:100)...}}) で読む。fixture の tools/fake-gh.py はこの query に対応しておらず、'unsupported graphql query for this fixture' で exit 1 した。そのため Projects の 3-way 計画が作れず、gate preview の前で止まった (transcript 97・103 行目)。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "transcript_sha256": "bf1a0d2d9b4ecf2cac1c41145c2982de279617f8b6882c5a6f6c8ed19370b1eb",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 172.0
+  },
+  "scenario_id": "C03-OUT1-positive-second-sync-zero-fixture-standard-v2"
+}

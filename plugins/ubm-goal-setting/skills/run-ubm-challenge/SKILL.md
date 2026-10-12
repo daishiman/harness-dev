@@ -8,7 +8,7 @@ arguments: [title]
 allowed-tools:
   - Read
   - Write
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - Task
@@ -40,10 +40,10 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
-  - ../../scripts/evaluate-design-rubric.py
-  - ../../scripts/search-knowledge.py
-  - ../../scripts/record-knowledge-usage.py
-  - ../../scripts/publish-staged-files.py
+  - ../../scripts/validate-design-rubric.py
+  - ../../scripts/extract-knowledge-matches.py
+  - ../../scripts/build-knowledge-usage-log.py
+  - ../../scripts/guard-staged-publication.py
   - scripts/validate-challenge-output.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
 domain: ubm-goal-setting
@@ -206,7 +206,7 @@ python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute -
 
 ## C0: 文脈解決
 
-- 最初に `UBM_VAULT_ROOT` が空でないかを `Bash` で確かめる。未設定なら先へ進まず、「つまずきやすい点」のとおりユーザーに vault のパスを確かめて設定してから再実行してもらう。
+- 最初に `UBM_VAULT_ROOT` が空でないかを `Bash` で `python3 -c 'import os,sys; sys.exit(0 if os.environ.get("UBM_VAULT_ROOT","").strip() else 1)'` を実行して確かめる（終了コード0が設定済み）。未設定なら先へ進まず、「つまずきやすい点」のとおりユーザーに vault のパスを確かめて設定してから再実行してもらう。
 - 宣言日 `declared_on` は今日。保存先は `challenge-format.md`。
 - `original_goal` は `挑戦宣言を作成する / 宣言日:{declared_on} / 仮タイトル:{引数の値、無ければ未指定}` という非空文字列としてC0で固定する。後のタイトル変更は `current_goal_snapshot` に記録し、固定値とハッシュを書き換えない。
 - 同日のファイルが既にあれば、上書きか中止をユーザーに聞く（既存SHA256を固定し、上書きは正式保存の契約の中央guard executeで行う）。

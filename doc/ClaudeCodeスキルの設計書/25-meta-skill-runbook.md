@@ -4,7 +4,7 @@
 
 ## creator-kit を使うE2E運用
 
-別プロジェクトでメタSkill基盤を使う場合は、個別Skillを手でコピーせず `creator-kit/` を配布単位にする。配布形態は git submodule、単純コピー、同一マシン内 symlink の3つで、詳細手順は `creator-kit/README.md` に委譲する。
+別プロジェクトでメタSkill基盤を使う場合は、個別Skillを手でコピーせず harness-creator-kit（旧 `creator-kit/`。今の置き場所は `installers/` と `plugins/` で、[32章](./32-creator-kit-implementation-ledger.md) 冒頭の注記のとおり）を配布単位にする。配布形態は git submodule、単純コピー、同一マシン内 symlink の3つで、詳細手順は `installers/harness-creator-kit/README.md` に委譲する。
 
 ### 配布レイヤーの時系列分離（manifest 二義性の解消）
 
@@ -12,14 +12,14 @@
 
 | フェーズ | 配布単位 | `manifest` が指す実体 | `name:` 表記 |
 |---|---|---|---|
-| 現行（creator-kit 配布 = `skill-only` 相当の移行期表現） | `creator-kit/` | `creator-kit/manifest.json`（kit 内の Skill 収録目録） | kebab-case の Skill 名（plugin 名は不在） |
+| 現行（creator-kit 配布 = `skill-only` 相当の移行期表現） | harness-creator-kit（旧 `creator-kit/`） | `installers/manifest.json`（kit 内の Skill 収録目録） | kebab-case の Skill 名（plugin 名は不在） |
 | Phase 2 以降（36章 `package_mode != skill-only`） | `plugins/<plugin-name>/` plugin package | `plugins/<plugin-name>/.claude-plugin/plugin.json`（Claude Code 公式 plugin manifest） | kebab-case の Skill 名のみ。plugin 名は配置パスで表現（06章第17条） |
 
-Phase 2 以降の標準運用では、配布単位は `creator-kit/` ではなく `plugins/<plugin-name>/` の plugin package になる。ユーザーは `/plugin install <plugin>` だけで必要な Skill / Agent / Hook / script / settings を利用できる状態を完了条件とする。どの component を同梱するか、どの検査を package completeness check とするかは [36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) を正本とする。`skill-only` は legacy / dev-only / migration exception 扱いであり（36章 §`skill-only`）、新規量産では選択しない。
+Phase 2 以降の標準運用では、配布単位は harness-creator-kit ではなく `plugins/<plugin-name>/` の plugin package になる。ユーザーは `/plugin install <plugin>` だけで必要な Skill / Agent / Hook / script / settings を利用できる状態を完了条件とする。どの component を同梱するか、どの検査を package completeness check とするかは [36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) を正本とする。`skill-only` は legacy / dev-only / migration exception 扱いであり（36章 §`skill-only`）、新規量産では選択しない。
 
 標準のE2E入口は `run-skill-create` である。`run-skill-create` は要望から完成までを、`run-skill-elicit` → `run-build-skill` → creator-kit登録判定 → P0 lint → `assign-skill-design-evaluator` → `run-elegant-review` → governance の順でゲート付きに連鎖させる。新規作成と更新のどちらもこの入口から開始し、途中でユーザー判断が必要な箇所だけ gate template に従って確認する。
 
-既存プロジェクトを kit 化する場合は、まず `bash creator-kit/migrate-from-project.sh --dry-run` で移動対象を確認し、問題なければ本実行する。kit 由来 symlink だけを uninstall 対象とし、プロジェクト固有 Skill や業務設計書は移動しない。`xl-skills` 本体の symlink 配置は完了しており、`.claude/skills/` は `creator-kit/skills/*` への symlink 参照として確認済みである。ただし `migrate-from-project.sh` の正式実行ログは未取得であり、C4は暫定PASSとして扱う (32章参照)。
+既存プロジェクトを kit 化する場合は、まず `bash installers/migrate-from-project.sh --dry-run` で移動対象を確認し、問題なければ本実行する。ただしこの script は旧 `creator-kit/` の配置（kit 直下の `skills/`・`scripts/`・`config/`）へ移す作りのままで、今の `plugins/` の配置には移さない。`--dry-run` でも `installers/` の下に空の dir を作る。kit 由来 symlink だけを uninstall 対象とし、プロジェクト固有 Skill や業務設計書は移動しない。`xl-skills` 本体の symlink 配置は完了しており、`.claude/skills/` の大半は `plugins/*/skills/*` への symlink である（32章冒頭の注記）。ただし `migrate-from-project.sh` の正式実行ログは未取得であり、C4は暫定PASSとして扱う (32章参照)。
 
 ## 自動フロー (全体図)
 
@@ -39,10 +39,10 @@ Phase 2 以降の標準運用では、配布単位は `creator-kit/` ではな�
    │     03/11 → frontmatter & 雛形
    │
    ▼
-[Step 4] 雛形展開 + scripts 生成 (Python3 + ps1)
+[Step 4] 雛形展開 + scripts 生成 (Python 標準ライブラリ。ps1 版は計画。22章)
    │
    ▼
-[Step 5] creator-kit登録判定（現行: creator-kit/manifest.json）
+[Step 5] creator-kit登録判定（現行: installers/manifest.json）
    │     scripts/build-manifest-registration-plan.py
    │     ├── 共通基盤なら登録案を提示 → 承認後 apply
    │     └── project固有なら登録せず理由を記録
@@ -67,7 +67,7 @@ Phase 2 以降の標準運用では、配布単位は `creator-kit/` ではな�
 | 3 分類 | 06 / 09 / 10 | - |
 | 4 frontmatter | 03-yaml-frontmatter-reference | `templates/<kind>.md` |
 | 4 本文 | 07 / 08 / 11 | `examples/*.md` |
-| 4 scripts | 22 | `scripts/render-frontmatter.{py,ps1}` |
+| 4 scripts | 22 | `scripts/render-frontmatter.py`（ps1 版は計画） |
 | 4 self-check | 13-checklists | チェックリスト雛形 |
 | 5 creator-kit登録判定 | 23 / 28 / 32 | `scripts/build-manifest-registration-plan.py` |
 | 6 evaluator | 09-evaluation-orchestration | `assign-skill-design-evaluator/references/rubric.json` |
@@ -100,7 +100,7 @@ python3 scripts/lint-manifest-contents.py
 
 承認なしに `manifest.json` を更新しない。登録しない場合も、完了レポートに `creator_kit_registration: skipped` と理由を残す。
 
-ここで `manifest.json` が指すのは `creator-kit/manifest.json`（kit 収録目録）であり、Claude Code 公式 plugin manifest（`plugins/<plugin-name>/.claude-plugin/plugin.json`）とは別物である。Phase 2 以降の plugin package mode では、本ゲートは PKG completeness check（36章フロー[5]、PKG-001〜010）に置き換わる。本 runbook で「manifest」と書かれた箇所は、文脈が creator-kit 配布なら前者、plugin package 配布なら後者を指す。
+ここで `manifest.json` が指すのは `installers/manifest.json`（kit 収録目録）であり、Claude Code 公式 plugin manifest（`plugins/<plugin-name>/.claude-plugin/plugin.json`）とは別物である。Phase 2 以降の plugin package mode では、本ゲートは PKG completeness check（36章フロー[5]、PKG-001〜010）に置き換わる。本 runbook で「manifest」と書かれた箇所は、文脈が creator-kit 配布なら前者、plugin package 配布なら後者を指す。
 
 ## 失敗時 retry ルール
 
@@ -129,7 +129,7 @@ threshold は `references/rubric.json` の `threshold: 80` をデフォルトと
 ```text
 これから Skill を作ります。実行 OS を選択してください:
   1) macOS / Linux  (python3 を使用)
-  2) Windows        (powershell 5.1+ を使用 / Windows 10 標準同梱)
+  2) Windows        (python を使用。無ければ起動コマンドを尋ねる)
 ```
 
 選択結果を `$SKILL_BUILD_OS` に保持して以後の Bash 呼び出しで分岐。
@@ -138,7 +138,8 @@ threshold は `references/rubric.json` の `threshold: 80` をデフォルトと
 
 ```bash
 python3 .claude/skills/run-build-skill/scripts/render-frontmatter.py \
-  --name run-foo --kind run --out .claude/skills/run-foo/SKILL.md
+  --name run-foo --kind run --template .claude/skills/run-build-skill/templates/run.md \
+  --out .claude/skills/run-foo/SKILL.md
 ```
 
 前提:
@@ -149,14 +150,16 @@ python3 .claude/skills/run-build-skill/scripts/render-frontmatter.py \
 ### Windows
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .claude/skills/run-build-skill/scripts/render-frontmatter.ps1 `
-  -Name run-foo -Kind run -Out .claude/skills/run-foo/SKILL.md
+python .claude\skills\run-build-skill\scripts\render-frontmatter.py `
+  --name run-foo --kind run --template .claude\skills\run-build-skill\templates\run.md `
+  --out .claude\skills\run-foo\SKILL.md
 ```
 
 前提:
 
-- PowerShell 5.1+ (`powershell`) が利用可能 (Windows 10 以降に標準同梱、追加インストール不要)
-- ps1 は原則として PowerShell 標準機能だけで完結させる。`.py` を呼ぶ実装にする場合は、Python 不在時の純 PowerShell fallback を同梱する (22 参照)。
+- Python 3.9+ が `python` で起動できる (Windows では別途 install が要る。22章「許可 CLI ホワイトリスト」)。
+- `python` が無ければ、Python の起動コマンド (python3 / python / 未インストール) をユーザーに尋ね、答えのコマンドで上を実行する。未インストールなら止まる (22章「フォールバック動線」)。
+- `render-frontmatter.ps1` で代わりに動かすのは計画（今の lint は `.ps1` を Skill 配下の scripts/ に置けない。06章 第10条、28章 §4.1）。
 
 ### 共通の後処理
 

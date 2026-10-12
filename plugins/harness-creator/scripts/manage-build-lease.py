@@ -9,9 +9,9 @@
 # outputs:
 #   - stdout: 結果 JSON ({"lock":...}/{"graph_hash_pin":...}/{"lock":..,"reaped_task_ids":[..],"graph_hash_pin":..})
 #   - stderr: エラーメッセージ
-#   - exit: 0=OK / 1=already-held or graph_hash mismatch or renew lost/foreign (fail-closed) / 2=usage/IO error・producer scripts 欠落
+#   - exit: 0=OK / 1=already-held or graph_hash mismatch or renew lost/foreign (fail-closed) / 2=usage/IO error (lease/ttl 秒数が 0 以下を含む)・producer scripts 欠落
 #   - write-scope: <build-dir>/.build.lock のみ (task-state.json/task-events.jsonl は TG-C02 へ委譲)
-# contexts: [C, E]
+# contexts: [A, E]
 # network: false
 # write-scope: <build-dir>/.build.lock (co-located build dir・lock ファイルのみ)
 # dependencies: []
@@ -24,10 +24,12 @@ lease 回収・build lock 排他・graph_hash pin 検証の 3 検査を
 dispatcher 側の呼び出し漏れ (lock だけ取得し pin 検証を呼び忘れる等) を防ぐ。
 
 lock 中身は `{started_at, pid, host, owner_token}` JSON で、os.O_CREAT|os.O_EXCL の排他生成で取得する。
-既存 lock が heartbeat 途絶 (ttl 超過) または同一ホストで pid 非生存の場合のみ孤児と判定して
-steal し、dispatcher クラッシュ後の残留 lock による恒久 lockout (resume 時の自己締め出し) を防ぐ。
-owner_token 導入前の legacy lock は、生存中なら自動移行せず already-held を返す。TTL 超過/死 pid
-なら通常の stale steal で owner-token 形式へ移行し、緊急時だけ人間が `force-release --admin` を使う。
+owner-token 形式の lock は heartbeat 途絶 (ttl 超過) だけで孤児と判定して steal する。pid は CLI
+プロセス自身のもので CLI は都度すぐ終わるため、pid の死は保持者 (dispatcher) の死を意味しない。
+pid の死で steal すると同一ホストの 2 回目の acquire が生きた build の lock を奪ってしまう。
+dispatcher クラッシュ後の残留 lock は TTL 失効で回収し、恒久 lockout にはしない。
+owner_token 導入前の legacy lock は、生存中なら自動移行せず already-held を返す。TTL 超過/同一ホストの
+死 pid なら通常の stale steal で owner-token 形式へ移行し、緊急時だけ人間が `force-release --admin` を使う。
 
 実書込 (task-state.json への lease 回収 / graph_hash pin) は TG-C02 sync-task-state.py へ subprocess
 委譲し、TG-C07 自身は task-state を直接書かない (単一 writer 規約の維持)。resolve_build_dir は
@@ -94,10 +96,6 @@ def pid_alive(pid: int) -> bool:
 
 
 # ── lock 中身の直列化 ─────────────────────────────────────────────────────────
-def _lock_content(now: datetime) -> dict:
-    return _lock_content_for_owner(now, secrets.token_hex(16))
-
-
 def _lock_content_for_owner(now: datetime, owner_token: str) -> dict:
     return {
         "started_at": _iso(now), "pid": os.getpid(), "host": socket.gethostname(),
@@ -213,7 +211,8 @@ def _is_stale(existing: dict | None, now: datetime, lock_ttl_seconds: int) -> bo
     """既存 lock が孤児 (回収可) か判定する。
 
     is_stale = (now - started_at) > ttl  (heartbeat 途絶)
-               or (host == 現ホスト and not pid_alive(pid))  (同一ホストの死んだ dispatcher)
+               or (legacy lock and host == 現ホスト and not pid_alive(pid))  (legacy の死んだ保持者)
+    owner-token 形式は pid の死を見ない (pid は終了済みの CLI プロセスなので、生きた build でも死んでいる)。
     parse 不能な破損 lock は恒久 lockout 回避のため stale とみなす。
     """
     if not isinstance(existing, dict):
@@ -225,9 +224,9 @@ def _is_stale(existing: dict | None, now: datetime, lock_ttl_seconds: int) -> bo
         return True
     if age > lock_ttl_seconds:
         return True
-    if existing.get("host") == socket.gethostname() and not pid_alive(existing.get("pid")):
-        return True
-    return False
+    if _lock_format(existing) == "owner-token":
+        return False
+    return existing.get("host") == socket.gethostname() and not pid_alive(existing.get("pid"))
 
 
 # ── 公開 API: lock 取得/更新/解放 ─────────────────────────────────────────────
@@ -281,10 +280,11 @@ def acquire_lock(lock_path: Path, now: datetime, lock_ttl_seconds: int) -> LockL
 def renew_lock(lock_path: Path, now: datetime, owner_token: str | None) -> str:
     """保持中 lock の started_at のみ now へ更新する (heartbeat・pid/host は保持)。
 
-    lock 不在 (parse 不能含む) は "lost"、別ホストまたは同一ホストで生存中の他プロセスが
-    保持する lock は "foreign" を返し再作成しない (lock 喪失/横取りを隠蔽せず dispatcher へ
-    通知し二重 build を防ぐ)。CLI 都度呼出し運用では lock 所有者 pid は過去の自 subprocess
-    (非生存) が正常のため、同一ホストの死 pid は自己継続とみなし更新して "renewed"。
+    所有の判定は owner_token の一致だけで、host と pid は見ない (CLI 都度呼出し運用では pid は
+    終了済みの過去の自 subprocess が正常なため)。lock 不在 (parse 不能含む) は "lost"、
+    owner_token が無いか一致しない lock (legacy lock・steal された lock を含む) は "foreign" を
+    返し再作成しない (lock 喪失/横取りを隠蔽せず dispatcher へ通知し二重 build を防ぐ)。
+    一致すれば読取時と inode/content が同一の場合だけ更新して "renewed"、途中で置換されたら "lost"。
     """
     lock_path = Path(lock_path)
     snapshot = _read_lock_bytes(lock_path)
@@ -397,23 +397,28 @@ def _verify_graph_hash_pin(check_script: Path, state_path: Path, task_graph_path
     return proc.returncode == 0
 
 
-def _scan_authorized_hashes(inbox_dir: Path) -> set[str]:
-    """外ループ再入認可: accepted discovered-task form の resulting_graph_hash 集合を返す (SS-4)。
+def _scan_authorized_hashes(inbox_dir: Path) -> tuple[set[str], list[str]]:
+    """外ループ再入認可: (accepted discovered-task form の resulting_graph_hash 集合, 読めない form 名) を返す (SS-4)。
 
     planner drain が accepted form へ焼いた最終 graph_hash のみが正当な再入先。これに一致
     しない graph 差替えは TG-C07 が fail-closed 拒否する (実行中の不正混入=F10 を維持)。
+    読めない form (非 UTF-8・JSON 不正・object 以外) は認可に数えず、名前を返して理由として出させる。
     """
     out: set[str] = set()
+    invalid: list[str] = []
     if not inbox_dir.is_dir():
-        return out
-    for form_path in inbox_dir.glob("*.json"):
+        return out, invalid
+    for form_path in sorted(inbox_dir.glob("*.json")):
         try:
             form = json.loads(form_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            form = None
+        if not isinstance(form, dict):
+            invalid.append(form_path.name)
             continue
         if form.get("status") == "accepted" and isinstance(form.get("resulting_graph_hash"), str):
             out.add(form["resulting_graph_hash"])
-    return out
+    return out, invalid
 
 
 def _repin_graph_hash(sync_script: Path, state_path: Path, events_path: Path,
@@ -438,7 +443,7 @@ def _read_state(state_path: Path) -> dict:
         return {"schema_version": "1.0", "graph_hash": None, "nodes": []}
     try:
         data = json.loads(state_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return {"schema_version": "1.0", "graph_hash": None, "nodes": []}
     return data if isinstance(data, dict) else {"schema_version": "1.0", "graph_hash": None, "nodes": []}
 
@@ -522,6 +527,11 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
                 "legacy lock は生存中のため自動移行しない。owner の終了または TTL 失効を待つ。"
                 "緊急時のみ人間が --lock-action force-release --admin を実行する"
             )
+        elif lock_format == "owner-token":
+            payload["remediation"] = (
+                "別の build が保持中。保持者の release か lock TTL の失効を待つ。"
+                "保持者が異常終了して待てない緊急時のみ人間が --lock-action force-release --admin を実行する"
+            )
         print(json.dumps(payload, ensure_ascii=False))
         return 1
 
@@ -568,7 +578,9 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
             # 現 task-graph の hash が accepted discovered-task の resulting_graph_hash と一致すれば
             # 正当な再入として provenance-gated 再 pin する。一致しなければ fail-closed 拒否 (F10)。
             new_hash = _derive_graph_hash(derive_script, args.task_graph)
-            authorized = _scan_authorized_hashes(build_dir / "discovered-tasks")
+            authorized, invalid_forms = _scan_authorized_hashes(build_dir / "discovered-tasks")
+            for name in invalid_forms:
+                print(f"warning: discovered-task form を読めないため認可に数えない ({name})", file=sys.stderr)
             if new_hash is not None and new_hash in authorized:
                 if _repin_graph_hash(
                     sync_script, state_path, events_path, args.task_graph, new_hash, authorized
@@ -579,7 +591,10 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
                 graph_hash_pin = "repinned"  # 外ループ再入: 改善済み graph を新 pin で再消費
             else:
                 release_lock(lock_path, lease)
-                print(json.dumps({"graph_hash_pin": "mismatch"}, ensure_ascii=False))
+                payload = {"graph_hash_pin": "mismatch"}
+                if invalid_forms:
+                    payload["invalid_forms"] = invalid_forms
+                print(json.dumps(payload, ensure_ascii=False))
                 return 1
 
     # (5) 全成功。lock は build 完了まで維持し dispatcher の明示 release まで解放しない。
@@ -598,6 +613,12 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(argv)
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 2
+
+    # 0 以下の lease/ttl は経過 0 秒の生きた lock まで孤児扱いにして steal させるため usage error。
+    for flag, value in (("--lease-seconds", args.lease_seconds), ("--lock-ttl-seconds", args.lock_ttl_seconds)):
+        if value is not None and value <= 0:
+            print(f"{flag} は正の整数が必須 (指定値 {value})", file=sys.stderr)
+            return 2
 
     # lock-ttl 既定 = 2×lease (heartbeat 2 周期の途絶で孤児判定)。明示指定はそのまま優先。
     if args.lock_ttl_seconds is None:

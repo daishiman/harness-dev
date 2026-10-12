@@ -72,3 +72,16 @@ caller repository 内の feature context と system-spec-harness confirmed artif
 
 - [ ] **完全性**: Layer 5 の停止条件を全件判定した。
 - [ ] **一貫性**: feature 分割・task 生成・root 外 read/write を行っていない。
+
+## Context Boundary
+
+- Read は caller repository 内の feature context と system-spec-harness の confirmed artifacts だけ。絶対 path と traversal は拒否する (Layer 3・4)。
+- Write は現在 run の staging `goal-spec.json` だけ。confirmed system-spec と feature context は書き換えず、仕様を再生成せずに lineage で引用する (Layer 1・3)。
+- feature 分割、P01..P13 task 生成、readiness promotion はしない (Layer 2 の非担当)。
+- caller context の思い込みを避けるため fork context で実行する (Layer 5.1)。
+
+## Handoff
+
+- 成功時: digest-bound な staging `goal-spec.json` と source digest を、`run-system-dev-plan` を通じて architect へ渡す (Layer 2・6)。
+- 失敗時: missing fields を caller (`run-system-dev-plan`) へ返す。fail-closed にする欠落・不一致は Layer 4 のとおり。
+- 返す形: JSON key は英語、根拠説明は日本語。推定値を confirmed と表示しない (Layer 7)。

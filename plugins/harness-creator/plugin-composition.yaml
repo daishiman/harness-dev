@@ -5,7 +5,7 @@
 name: harness-creator
 description: Codex / Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.4.44
+version: 1.4.47
 owner: team-platform
 since: 2026-05-17
 last-audited: 2026-07-13
@@ -16,7 +16,8 @@ contract:
   intent: Claude Code 拡張資産(Capability)を一貫した品質で生成・改良するため、共通核 + kind 固有スキーマで統一抽象を提供する。
   interface:
     inputs: [user-request, plugin-composition.yaml, rubric.json]
-    outputs: [CapabilityManifest, EVALS.json, curated-lessons, proposals/*.md, external-intelligence-state]
+    # rubric-update-proposals: 自動ドラフトは plugin の外 ($CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/)、手書きは skills/run-skill-rubric-governance/proposals/
+    outputs: [CapabilityManifest, EVALS.json, curated-lessons, rubric-update-proposals, external-intelligence-state]
   invariant:
     # enforcement 注記: 機械執行(lint/hook)がある項目はその名前を、無い項目は manual を併記する。
     - "全 Capability は CapabilityManifest を持ち kind を宣言すること (enforcement: hook:PostToolUse-EditWrite/lint-capability-manifest)"

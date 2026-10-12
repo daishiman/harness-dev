@@ -1,0 +1,58 @@
+{
+  "label": "render3",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render3/fx",
+  "head": "3db6cd06cde2d7117ac9a8f7654c9dccaa5ad041",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:4aa2661259bdd692a00da57a26482790a2c6d20d8c03ad220185f0d423f61c4a"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_84b7b24b8558307f"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "retry_of": "render (20261012T0640-pr85)",
+  "environment_change": {
+    "why": "前回 (20261012T0640-pr85) の goal FAIL は、必須の browser live trial で Chrome が rc=21 で落ちたため。原因は sandbox が AF_UNIX の bind を EPERM で拒否したこと (process_singleton_posix: Failed to create socket directory)。skill の欠陥ではなく隔離の条件によるもの。",
+    "sandbox_network": {
+      "allowedDomains": [
+        "live-trial-no-egress.invalid"
+      ],
+      "strictAllowlist": true,
+      "deniedDomains": [
+        "*"
+      ],
+      "allowUnixSockets": [
+        "/private/tmp/ltpr85/cr3"
+      ]
+    },
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "/private/tmp/ltpr85/cr3"
+    },
+    "unchanged": "deniedDomains [\"*\"] による外部ネットワークの全拒否、書込み境界、permissions.deny、PreToolUse の guard、gh/bd の stub は前回と同じ。allowMachLookup は使っていない。",
+    "socket_dir_note": "macOS の sun_path は 104 byte までなので、scratchpad の下では長すぎる。そのため短い /private/tmp/ltpr85/cr3 を使った。",
+    "browser": {
+      "path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render3/browser/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+      "source": "~/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64 (preflight7 で写し、preflight8 から cp -R)",
+      "sha256": "a0bfe7b4da4787b66058477d696cd1d09065d25f06a548947722b9af77ee8282"
+    },
+    "task_note": "task.md の末尾に『ブラウザの注記』を足した。使えるブラウザの場所、AF_UNIX を許した dir、複数 process の起動は mach の登録 (bootstrap_check_in) で落ちるので --single-process --headless=new で起動すること、profile と出力を run の内側に置くこと、を伝えている。render の手順そのものには触れていない。",
+    "preflight": "preflight6/7/8 の実測は isolation-check.md の『AF_UNIX 許可 (render3)』の節にある。"
+  }
+}

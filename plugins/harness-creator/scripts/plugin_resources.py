@@ -59,13 +59,14 @@ def resolve_resource(name: str, relative_path: str, plugin_root: Path) -> Path |
     return None if root is None else root / relative_path
 
 
-def forward_external_intelligence(namespace: dict[str, object]) -> None:
+def forward_external_intelligence(namespace: dict[str, object], *, provider: str) -> None:
     """Keep both historical skill script paths while forwarding their provider APIs.
 
+    The caller names its own provider plugin: which distributable plugin owns the
+    long implementation is the forwarder's contract, not this bootstrap's.
     転送先は runpy で同じ process に実行する。転送先の書き込み・stdout・exit は呼び手のものになる。
     """
     caller = Path(str(namespace["__file__"])).resolve()
-    provider = "skill-governance-adapters"
     relative_path = f"scripts/{caller.name}"
     try:
         canonical = resolve_resource(provider, relative_path, caller.parents[3])
@@ -75,8 +76,8 @@ def forward_external_intelligence(namespace: dict[str, object]) -> None:
     namespace["CANONICAL_PATH"] = canonical
     if not canonical.is_file():
         raise RuntimeError(
-            "external-intelligence provider is unavailable; install "
-            "skill-governance-adapters or use a standard bundle"
+            f"external-intelligence provider is unavailable; install {provider} "
+            "or use a standard bundle"
         )
     forwarded = runpy.run_path(
         str(canonical), run_name="__main__" if namespace["__name__"] == "__main__" else None

@@ -863,9 +863,44 @@ def test_main_aggregates_parse_errors_across_fleet(tmp_path):
 
     proc = run_cli(str(first), str(second))
 
-    assert proc.returncode == 2
+    # parse/IO 不能は violation (1) 側。usage error (2) と共有すると「引数を間違えた
+    # だけ」と読み分けられる。
+    assert proc.returncode == 1
     assert str(first) in proc.stderr
     assert str(second) in proc.stderr
+
+
+def test_main_parse_error_is_fail_closed_and_declares_unmeasured_checks(tmp_path):
+    """parse error 中は構造検査が 1 件も走らない。それを「違反 0 件」と見せない。
+
+    実測 (2026-10-10): 修正前は semver 違反 + ref 重複を同時に仕込んだ入力が
+    parse error だけを出し、違反 2 件がどちらも出力に現れず rc=2 (= repo 規約では
+    「検査 FAIL ではない」) を返していた。対照は同じ違反から parse error だけを
+    除いたケースで、そちらは rc=1 + 違反 2 件が出る。
+    """
+    broken = VALID_COMPOSITION.replace("version: 1.2.3", "version: release-1")
+    broken += "  - { kind: skill, ref: skills/run-alpha, tier: core }\n"
+    broken += "\ndependencies:\n  this line is not a supported mapping\n"
+    comp = build_plugin(tmp_path / "broken", broken, VALID_PLUGIN_JSON)
+
+    proc = run_cli(str(comp))
+
+    assert proc.returncode == 1, proc.stderr
+    assert "is not a supported mapping" in proc.stderr
+    assert "構造検査" in proc.stderr
+    # 分母は roster の実件数。検査を足して roster を更新し忘れたら roster drift で落ちる。
+    assert f"{len(MOD.STRUCTURAL_CHECK_NAMES)} 件は未実施" in proc.stderr
+    assert "OK:" not in proc.stdout
+
+    # 対照: parse error を除くと同じ入力から violation が実際に出る。
+    parseable = broken.replace(
+        "\ndependencies:\n  this line is not a supported mapping\n", ""
+    )
+    control = build_plugin(tmp_path / "control", parseable, VALID_PLUGIN_JSON)
+    control_proc = run_cli(str(control))
+    assert control_proc.returncode == 1
+    assert "must be SemVer X.Y.Z" in control_proc.stderr
+    assert "duplicate capability ref" in control_proc.stderr
 
 
 def test_main_self_test():

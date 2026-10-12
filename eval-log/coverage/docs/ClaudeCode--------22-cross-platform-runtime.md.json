@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/22-cross-platform-runtime.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":89,"notes":"OS判定マトリクス/no-deps許可CLIホワイトリスト/未判定フォールバック/bash・PowerShell・<important if=os>分岐が一貫。裏取り: plugins/harness-creator/skills/ref-cross-platform-runtime 実在し kind:ref がdoc記載のenum(ref|run|wrap|assign|delegate)と一致。build_skill.py等は明示的なexample(実ファイル前提でない)。設計判断を再現可能。減点小: 辞書型Skill例のfrontmatter(owner/hierarchy_level)が他章テンプレと厳密一致しない例示揺れ"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/22-cross-platform-runtime.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 99,
+    "notes": "genuine review（sha256 2788902117f236faece176e4a4b74f89ca78a629419110a48b2ec8a6e549d6b0 をレビュー。実行検証あり）。範囲: 全327行。前回の記録（sha256 8ca64594…、PASS 90）からの差分を全部読んだ。主なものは L8 の原則、L16-27 の OS 判定マトリクス（本文の判定と script の判定の2列）、L34 の Git Bash の説明、L36-47 の雛形（python_cmd を名前で返す）、L74 の installers/harness-creator-kit/CONVENTIONS.md、L78・L85 の MINGW*|MSYS*|CYGWIN*、L92・L216-221 の PowerShell 版を「計画」とした注、L110・L114・L146 の build-skill、L124-125 の python_cmd が unknown のときのフォールバック、L313 の Output contract、L324-326 のチェック項目。確かめたこと: (1) 雛形は ref-cross-platform-runtime の雛形とバイト単位で同じで、8通りの OS と python の有無4通りで契約どおりに動く（work-cov3/sim_template.py）。(2) 本文の case の分岐を、模擬した uname で回した。Darwin→mac、Linux→linux、MINGW64・MSYS・CYGWIN→windows、FreeBSD・空・uname が無い→unknown（work-cov3/case.sh）。installers/install.sh の L48・L52 も同じ対応。(3) 実装例の Python（`def main` を含む block）を build-skill.py として取り出し、/usr/bin/python3（3.9.6）で `--name run-demo --description demo --out` を scratch に向けて回すと rc=0 で、frontmatter と Detected OS: mac を書いた。lint-script-naming は build-skill.py を OK、build_skill.py を VIOLATION にする。(4) .ps1 を Skill 配下の scripts/ に置くと lint-skill-tree が「第10条違反」で exit 1 にする（work-cov3/fx）。06章 第10条と 28章 §4.1 も同じなので、「計画」の注は正しい。(5) L74 の .sh の範囲は 28章 §3.2（L1 は Bash で install/uninstall/migrate、L2 は Python）に合う。Output contract の4欄は ref の Purpose & Output Contract と同じ。(6) python_cmd の言い方（名前で返す）、.ps1 の「計画」の注、.sh の範囲は、ref・11章・14章・25章と食い違わない。前回の指摘の解消: [中] Windows の経路の食い違い（L8・L301 のチェック・L197 の見出し）は、L8・L92・L216-221・L324-326 で「計画」と「ユーザーに尋ねる経路」に直った。[低] build_skill の underscore は build-skill に直った。そのほかの [低] 3件も解けた。指摘: [低] L306 の No-deps 原則は存在チェックを「`command -v` / `Get-Command`」と書く。script の中では `shutil.which`（Rule と雛形）、本文では Git Bash の `command -v` で足りるので、`Get-Command` は計画の PowerShell 版にしか当たらない。ref の Gotchas「PowerShell 固有構文を本文に直書きしない」とも少し食い違う。直し方: 「script では `shutil.which`、本文では `command -v`（PowerShell 版は計画）」と書く。観察（減点なし）: macOS の /usr/bin/python3 は Command Line Tools が無いと入れるように促すだけで動かない（L23・L70 の「あり」「最低前提」）。表の「未判定」の script の列にある「Python が無い」は、script を回せない場合なので少し変。Windows の App Execution Alias と `py` launcher は Beads 22 にある。DEDUCTION: L306 の Get-Command -1 → 99。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "internal-consistency",
+    "impl-alignment",
+    "completeness",
+    "structure"
+  ]
+}

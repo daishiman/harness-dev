@@ -11,7 +11,7 @@ source: plugin-plans/system-dev-planner/component-inventory.json#C01
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "--feature-id <graph-node-id> --feature-context <repo-relative-json> [--repo-root DIR] [--config .dev-graph/config.json]"
-allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, Skill, Task]
+allowed-tools: [Read, Write, Edit, Bash(python3 *), Glob, Grep, Skill, Task]
 context: inherit
 manifest: workflow-manifest.json
 responsibility_refs:
@@ -38,6 +38,7 @@ script_refs:
   - ../../scripts/build-system-handoff.py
   - ../../scripts/validate-system-plan.py
   - ../../scripts/promote-system-plan.py
+  - ../../scripts/extract-plugin-root.py
 combinators:
   - with-feedback-contract
 feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
@@ -94,6 +95,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # System development planning
 
+## Purpose & Output Contract
+
+dev-graph の1 feature を、確定 system-spec を起点に P01..P13 各1件の exact 13 executable task specs へ分解し、13-entry inventory と 13-node の intra-feature DAG を持つ package にまとめる。
+
+- **入力**: `--feature-id <graph-node-id>` と `--feature-context <repo-relative-json>` (必須)、任意の `--repo-root` と `--config`。`init` は caller repository の layout だけを用意する。
+- **出力 (pre-choice)**: staging の exact-13 package (`feature-package.json`・`task-specs/phase-01..13.md`・`workstream-inventory.json`・`task-graph.json`・`system-build-handoff.json`・`staging-manifest.json`)。C12 deterministic validation を通した path・digest・開き方を示す。
+- **出力 (light/standard/detailed 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
+- **禁則**: 1 run で2つ以上の feature を扱わない。14件目の task と別の13 phase 文書を作らない。staging lock の JSON を C13 以外から作成・書換・削除しない。途中で失敗しても published/current の旧世代を壊さない。
+
 ## Runtime root contract
 
 - `runtime_root_policy: host-skill-path` を適用する。
@@ -131,11 +141,21 @@ pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生�
 - C11 が same-filesystem atomic promotion、immutable receipt、registration manifest、current pointerを生成している。
 - C11 が promotion receipt/registration request を所有し、dev-graph の all-or-none apply が発行する registration receipt と境界が一意である。C13 lock が解放され、published path/digest/receipt が dev-graphへ返されている。
 - **計画構造レポート (plan-structure) が生成されている**: promotion 済み `task-graph.json` から「この feature で何をやるか + exact-13 タスク・ノード・依存の関係性」を 1 枚の自己完結 HTML (`plan-structure-report.html`) へ投影する。目的/本質的課題/できることの価値セクション (goal-spec / `value-narrative.json` 由来・非エンジニア/技術者の dual audience) と依存関係表を携帯し、build 前に計画の全体像を確認できるようにする。**plugin-dev-planner と共通の完了ステップ**として、両プランナーとも同一の共有 reporter を best-effort で呼ぶ (harness-creator 未配備環境では skip・非ゲート):
-  `python3 plugins/harness-creator/scripts/project-task-status.py --task-graph <PLAN_DIR>/task-graph.json --goal-spec <PLAN_DIR>/goal-spec.json --out-html <PLAN_DIR>/plan-structure-report.html --out-md <PLAN_DIR>/plan-structure.md --out-json <PLAN_DIR>/plan-structure-status.json`
+  共有 reporter は別 plugin (harness-creator) にあるので、`${PLUGIN_ROOT}/..` から推測せず、先に1回 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py" harness-creator` で root を解決し、表示された absolute path を `<HARNESS_CREATOR_ROOT>` に使う。非0 で終わったら未配備としてこのステップと次の仕様書ブラウザを skip する。
+  `python3 "<HARNESS_CREATOR_ROOT>/scripts/project-task-status.py" --task-graph <PLAN_DIR>/task-graph.json --goal-spec <PLAN_DIR>/goal-spec.json --out-html <PLAN_DIR>/plan-structure-report.html --out-md <PLAN_DIR>/plan-structure.md --out-json <PLAN_DIR>/plan-structure-status.json`
   `--goal-spec` を渡さないと reporter の価値セクション (目的/本質的課題/できること) は fail-soft で沈黙欠落する。非エンジニア向け平易層 (`plain_intro` 等) を出すには curated `value-narrative.json` を PLAN_DIR に用意する (未用意なら平易層のみ省略)。
 - **仕様書ブラウザ (task-specs.html) が生成されている**: 13 フェーズ仕様書 (phase-01..13) と `task-specs/*.md` の本文を、サイドバー index → 各仕様書へページ遷移 → ブラウザ back で戻れる自己完結 HTML にする (中身閲覧ビュー)。構造/依存/価値の `plan-structure-report.html` と対になり、相互リンクで往復できる。**plugin-dev-planner と共通の完了ステップ** (best-effort・非ゲート):
-  `python3 plugins/harness-creator/scripts/render-spec-browser.py --plan-dir <PLAN_DIR>`
+  `python3 "<HARNESS_CREATOR_ROOT>/scripts/render-spec-browser.py" --plan-dir <PLAN_DIR>`
 
 ## Failure handling
 
 light/standard/detailed選択後だけ `component-inventory.json` の `goal_seek.max_loops=5` を有効化する。5周で未達なら自動続行せず findings と staging path を報告する。accept-as-isではこの周回を0回のまま終了する。途中失敗時も published/current は旧世代を維持する。発見した独立作業は package に追加せず follow-up feature candidate として返す。
+
+## Gotchas
+
+- **`${PLUGIN_ROOT}` は caller の authority ではない**: plugin root は script と asset の位置決めにだけ使う。caller repository の文書・状態の解決と path 検査は `resolve-project-context.py` に任せる。
+- **feature context の id 不一致は staging の前に止まる**: JSON の `graph_node_id` と `--feature-id` が違うと、C09 は staging を作らずに停止する。absolute path、`..`、root 外 symlink、別 repository の context も拒否される。
+- **lock は C13 だけが触る**: 開始時の `acquire`、各反復の `renew`、成否にかかわらない終了時の `release` を `manage-system-plan-lock.py` で行う。lock JSON を手で書き換えて形が崩れると、guard hook が malformed lock として fail-closed で拒否する。
+- **兄弟 plugin を `${PLUGIN_ROOT}/..` で探さない**: install 先では `..` の先が同じ plugin の別 version 群になる。harness-creator の reporter は `extract-plugin-root.py` で解決する。
+- **reporter に `--goal-spec` を渡し忘れない**: 渡さないと `plan-structure-report.html` の価値セクションが警告なしに欠ける。
+- **accept-as-is は周回を回さない**: `goal_seek.max_loops=5` が有効になるのは light/standard/detailed を選んだ後だけで、5周で未達なら自動続行せず findings と staging path を返す。

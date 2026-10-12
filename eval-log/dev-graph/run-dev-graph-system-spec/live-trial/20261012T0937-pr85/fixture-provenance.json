@@ -1,0 +1,107 @@
+{
+  "label": "sysspec2",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec2/fx",
+  "head": null,
+  "tracked_files_committed": 0,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3895f1a0b3afd722abe3e6a1b2b66b4c020c10fb94b01a99ea76ae2bd8473d53",
+      "local:sha256:0a91b2bb13231f6d9e59c5ea88f84a605efe0d7128a8294debefa43e0e8c7d41"
+    ],
+    "worktree_id": [
+      "wt_c94a9fc0e159b391",
+      "wt_8a852a5929e6f168"
+    ]
+  },
+  "rekeyed_files": [],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "post_seed_commit": {
+    "sha": "55332b6ba047a1a2a09a02228a90f70e4cb1c10e",
+    "subject": "isolated current-source input",
+    "note": "mkseed の直後に orchestrator が作った空の commit。system-spec/ は元の fixture と同じく未追跡のまま。"
+  },
+  "retry_of": "sysspec (20261012T0708-pr85)",
+  "spec_state_rebuild": {
+    "why": "前回 (20261012T0708-pr85) の goal FAIL は、fixture の spec-state が completeness evaluator の6観点を根拠つきで満たしていなかったため。U1〜U5 と U7 に qa_log の根拠が無く一括承認だけで支えられていた。matrix の全セルが G1 だけで G2 に紐づくセルが無く、O1 に serves が無かった。decisions と design_applications が空だった。qa-001 の PostgreSQL 15 と、取得済み公式文書 docs/16 (16.1) が合っていなかった。skill の欠陥ではなく fixture の不足として、trial の開始前に作り直した。",
+    "path": "system-spec/spec-state.json",
+    "sha256_before": "87b95a77a6f117aba37dee3a8cb09079beadfe71249e4014657eaa051005b697",
+    "bytes_before": 12588,
+    "sha256_after": "69ae5215d64925e54dadc6769e9f679edfa1e6678bc820b25646738d75de3828",
+    "bytes_after": 69346,
+    "fetched_references_unchanged": {
+      "path": "system-spec/fetched-references.json",
+      "sha256": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539"
+    },
+    "method": "正規の writer だけで作った。被験に渡す写し (runs/sysspec2/ws/plugins/system-spec-harness) の skills/run-system-spec-elicit/scripts/apply-spec-transition.py を 48 回呼び、すべて exit 0 だった。作業用の写し (smoke/sysspec2/work-state.json) に書き、最後に fixture へ置いた。spec-state.json を手で書き換えたことは一度も無い。",
+    "writer_ops": {
+      "chunk": 10,
+      "apply": 31,
+      "set-decision": 4,
+      "set-foundation": 1,
+      "set-knowledge-candidate": 1,
+      "aggregate": 1
+    },
+    "writer_ops_total": 48,
+    "ops_log": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/smoke/sysspec2/ops-log.txt",
+    "inputs_dir": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/smoke/sysspec2",
+    "rebuilt_by": "orchestrator の補助 subagent a089f86bbad40c916。被験 session の前に行ったもので、被験 skill の挙動ではない。",
+    "added": {
+      "qa_log": "qa-010〜qa-033 の 24 件を足した。basis はすべて user-decision。各 qa の provenance には『シナリオ上の利用者発言として記録した。実利用者との対話ログではない』と書いた。qa-009 は qa-019 で置き換えた (superseded)。qa-001 には訂正の注記を足したが、writer は本文を書き換えられないので『15』の文言は残っている。",
+      "reopen_log": "database/web を再オープンした。理由は、qa-001 の 15 と公式文書 16.1 が食い違い、qa-018 で社内基盤の提供版が 15 と 16 だと分かったこと。",
+      "decisions": [
+        {"id": "D1", "category": "database", "status": "confirmed", "options": ["pg15", "pg16"], "serves_goals": ["G1"]},
+        {"id": "D2", "category": "frontend", "status": "confirmed", "options": ["server-templates", "react-spa"], "serves_goals": ["G2"]}
+      ],
+      "decision_choices": "D1 は qa-031 で pg16、D2 は qa-032 で React + TypeScript の SPA を選んだ。これで qa と公式文書 (docs/16) の版が一致する。",
+      "requirements_foundation": "qa-033 (U1〜U9 の要約の確定) を根拠に appr-foundation-v2 を足した。古い appr-foundation は残っている。",
+      "serves": "objective は O1→G1、O2→G2。intent は I1 と I3→G1、I2→G2。matrix は ui-ux と frontend→G2、infrastructure と backend→G1 と G2、その他→G1。",
+      "design_applications": 8,
+      "doctrine_applications": 8,
+      "knowledge_candidates": ["k8s-workload-observability"]
+    },
+    "aspects_targeted": {
+      "foundation_trace": "U ごとに qa_log の利用者発言の根拠を足し、qa-033 で確定した (appr-foundation-v2)。",
+      "decision_guidance": "D1 と D2 を、2 案、cost_model、選んだ qa の根拠つきで足した。",
+      "matrix_coverage": "G2 に紐づくセル (ui-ux、frontend、infrastructure、backend) を作った。",
+      "design_knowledge_reflection": "design_applications 8 件と doctrine_applications 8 件を足した。infrastructure は設計知識カードが無いので、knowledge candidate として欠けを記録した。",
+      "doc_freshness": "変えていない。fetched-references.json はそのまま (下の remaining_risks を参照)。",
+      "prompt_quality": "fixture からは変えられない (前回は PASS)。"
+    },
+    "gates": {
+      "01-coverage": 0,
+      "02-kg-required-info": 0,
+      "03-kg-knowledge": 0,
+      "04-kg-doctrine": 0,
+      "05-kg-cross": 0,
+      "06-source-citation": 0,
+      "07-compile": 0,
+      "08-spec-doc-sync": 0,
+      "09-agg-matrix": 0,
+      "10-agg-kg": 0,
+      "11-build-fetched-references(offline, 既存 record を素材に再組立)": 1,
+      "11b-build-fetched-references(offline, records 形へ包み直した既存 record から再組立)": 0,
+      "12a-SYNTHETIC-hearing(supersession_valid=true)": 0,
+      "12b-SYNTHETIC-hearing(supersession_valid=false)": 0
+    },
+    "gate_notes": [
+      "gate の出力は smoke/sysspec2/gates/ にある。01 の coverage は --require-complete --require-basis --require-foundation で exit 0 だった。",
+      "11 の build-fetched-references は、元の 'references' の形を受け付けず exit 1 だった。'records' の形に包み直した 11b は exit 0 で、出力は元と同じだった (新しい時刻は入らない)。fetched-references.json 自体は変えていない。",
+      "12a と 12b は、C06 hearing auditor の入力の形を確かめるための SYNTHETIC な入力にすぎない。本物の C06 の判定ではない。"
+    ],
+    "date_handling": "新しい qa と receipt の時刻は、writer が付けた 2026-10-12T00:16 (UTC) 以降のもの。公式文書の確認時刻 (latest_checked_at 2026-07-11) は変えていない。",
+    "remaining_risks": [
+      "doc_freshness は PASS にならない見込みが高い。この観点は C08 の doc-freshness-auditor が公式サイトに照らし直すことを一次根拠にしている (aspect-criteria.md §3、到達できない target は『鮮度未確認』とされ PASS にならない)。この trial は deniedDomains [\"*\"] でネットワークを全部拒否しているので、照らし直しはできない。そのうえ、版 16.1 と 19.0 の確認時刻 2026-07-11 から約 93 日たっている。fixture の作り直しでは解けない、隔離の条件による制約。",
+      "prompt_quality は fixture からは変えられない。",
+      "qa-001 の本文は『15』のまま残っている。訂正の注記、reopen、D1 で上書きの関係を示した。",
+      "選択肢の無い開いた問いの答えに付けた basis=user-decision は、強すぎるかもしれない。",
+      "infrastructure の設計知識カードは 0 件のまま。knowledge candidate の k8s-workload-observability で欠けを記録した。",
+      "本物の C06 auditor が、qa-031 と qa-032 を誘導的な問いと見るかもしれない。",
+      "古い appr-foundation が approval_log に残っている。"
+    ],
+    "plugin_unchanged_check": "13-plugin-unchanged-check (2026-10-12): __pycache__ の dir の数は前後とも 14。PL の下で pycache-before.txt (08:51:31) より新しいファイルは 0 件。.pyc の最新の mtime は 2026-10-12T08:30:14 (元からあったもの)。"
+  }
+}

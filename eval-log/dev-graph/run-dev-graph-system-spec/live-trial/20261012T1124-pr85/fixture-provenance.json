@@ -1,0 +1,167 @@
+{
+  "label": "sysspec3",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec3/fx",
+  "head": null,
+  "tracked_files_committed": 0,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3895f1a0b3afd722abe3e6a1b2b66b4c020c10fb94b01a99ea76ae2bd8473d53",
+      "local:sha256:cffc1cc715b7af912a2107dcb6c8b21ffd1589c52843bbbfc5ed5bf54d53355f"
+    ],
+    "worktree_id": [
+      "wt_c94a9fc0e159b391",
+      "wt_acce707a17a52dcf"
+    ]
+  },
+  "rekeyed_files": [],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "post_seed_commit": {
+    "sha": "e97a175ae54504af65332d52f1708ca122f1ffae",
+    "subject": "isolated current-source input",
+    "note": "mkseed の直後に orchestrator が作った空の commit (sysspec2 と同じ手順)。system-spec/ は元の fixture と同じく未追跡のまま。"
+  },
+  "retry_of": "sysspec2 (20261012T0937-pr85)",
+  "spec_state": {
+    "path": "system-spec/spec-state.json",
+    "seed_sha256": "87b95a77a6f117aba37dee3a8cb09079beadfe71249e4014657eaa051005b697",
+    "placed_sha256": "69ae5215d64925e54dadc6769e9f679edfa1e6678bc820b25646738d75de3828",
+    "placed_from": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/smoke/sysspec2/work-state.json",
+    "note": "sysspec2 の前に正規の writer を 48 回呼んで作り直した spec-state をそのまま置いた (作り方は runs/sysspec2/workdir/fixture-provenance.json の spec_state_rebuild)。cp で置いただけで、中身は手で変えていない。",
+    "sha256_after_trial": "ff9271540b55daaa771e726342e8636ec6b2dfb749bb495250b844613c27407f",
+    "changed_during_trial": false
+  },
+  "targets_fix": {
+    "why": "sysspec2 の completeness-report の gaps 2 件目「decisions D1/D2 の evidence_refs (PostgreSQL 15 docs / versioning / FastAPI templates / TypeScript docs) が targets[] に未登録」への対処。team-lead の指示「D1・D2 の evidence_refs が targets に無い件は、正規の writer で fixture を直す (手で書かない)」に従った。",
+    "writer": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec3/ws/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+    "op": "set-targets --state <fx>/system-spec/spec-state.json --targets smoke/sysspec3/targets.json",
+    "exit": 0,
+    "targets_before": [
+      {
+        "target_id": "postgres",
+        "category": "database"
+      },
+      {
+        "target_id": "react",
+        "category": "frontend"
+      }
+    ],
+    "targets_after": [
+      {
+        "target_id": "postgres",
+        "category": "database"
+      },
+      {
+        "target_id": "react",
+        "category": "frontend"
+      },
+      {
+        "target_id": "fastapi",
+        "category": "backend",
+        "also_categories": [
+          "frontend"
+        ]
+      },
+      {
+        "target_id": "typescript",
+        "category": "frontend"
+      }
+    ],
+    "sha256_before": "69ae5215d64925e54dadc6769e9f679edfa1e6678bc820b25646738d75de3828",
+    "sha256_after": "ff9271540b55daaa771e726342e8636ec6b2dfb749bb495250b844613c27407f",
+    "changed_top_level_keys": [
+      "targets"
+    ],
+    "category_choice": "fastapi は backend 章の技術 (D2 の server-templates 案の根拠でもある) なので category=backend、also_categories=[frontend]。typescript は D2 の react-spa 案の根拠なので category=frontend。postgres の docs/15 と versioning は既存の target postgres の下の文書で、target は足していない。",
+    "rejected_alternative": "set-decision で D1/D2 の evidence_refs を登録済みの target (postgres/react) に寄せる案は採らなかった。D2 の server-templates 案の根拠 (FastAPI の文書) を別の技術の文書に差し替えることになり、根拠を偽るため。",
+    "in1_after_fix": {
+      "gate": "validate-source-citation.py --targets <spec-state> --references <fetched-references> (ws の写し)",
+      "exit": 1,
+      "output": "VIOLATION: 対象 target_id の参照欠落: ['fastapi', 'typescript']\nFAIL: 1 件の出典記録違反",
+      "meaning": "fastapi と typescript の record が fetched-references に無い。被験の正規の flow (doc-fetch) がこの 2 件を取得しないと先へ進めない状態で渡す。"
+    },
+    "plugin_unchanged_check": "ws/plugins の __pycache__ の dir は前後とも 47、.pyc は前後とも 296 (writer と gate は python3 -B で呼んだ)。",
+    "hook_note": "最初の試行で、cp と writer の呼出しを 1 つの Bash にまとめ、パスを変数で書いたところ、system-spec-harness の guard-confirmed-chapter-overwrite (PreToolUse) が『書込み先を静的に特定できない』として止めた。guard は迂回せず、書込み先を絶対パスで書いた 2 つの呼出し (cp と writer) に分けてやり直した。この fixture の spec-state は、本体の作業ツリーの正本 (wtpy の system-spec/spec-state.json) ではない。"
+  },
+  "fetched_references": {
+    "path": "system-spec/fetched-references.json",
+    "seed_sha256": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539",
+    "records": "postgres 16.1 と react 19.0。latest_checked_at はどちらも 2026-07-11。fastapi と typescript の record は無い。",
+    "rewritten_during_trial": {
+      "rewritten": true,
+      "sha256_before": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539",
+      "sha256_after": "da2bce5dcb130fb149955ebcf70cbddfb7d7e549f5ecccdb198ee340d30feef0",
+      "bytes_after": 2771,
+      "mtime_after": "2026-10-12 11:29:11 JST",
+      "writer": "被験に渡した写しの run-system-spec-doc-fetch/scripts/build-fetched-references.py assemble (--records <ws>/doc-fetch-records.json --targets <fx>/system-spec/spec-state.json --out <fx>/system-spec/fetched-references.json)",
+      "transcript_line": 201,
+      "fetched_by": "被験本体の WebFetch 8 件 (02:28:22〜02:28:34Z、guard.jsonl の agent_id なし)",
+      "records_after": [
+        {
+          "target_id": "postgres",
+          "version": "16.15",
+          "source_url": "https://www.postgresql.org/docs/16/",
+          "latest_checked_at": "2026-10-12T02:28:51Z"
+        },
+        {
+          "target_id": "react",
+          "version": "19.3",
+          "source_url": "https://react.dev/versions",
+          "latest_checked_at": "2026-10-12T02:28:51Z"
+        },
+        {
+          "target_id": "fastapi",
+          "version": "0.143.0",
+          "source_url": "https://fastapi.tiangolo.com/release-notes/",
+          "latest_checked_at": "2026-10-12T02:28:51Z"
+        },
+        {
+          "target_id": "typescript",
+          "version": "7.0",
+          "source_url": "https://www.typescriptlang.org/download/",
+          "latest_checked_at": "2026-10-12T02:28:51Z"
+        }
+      ],
+      "recorded_by": "orchestrator (dg-live)。trial の後に fixture の実ファイルを読んで記録した。fixture は変えていない"
+    },
+    "note": "trial の後に、被験が書き直したかどうかと前後の sha を rewritten_during_trial に記録する。"
+  },
+  "web_fetch_allowance": {
+    "allowed_hosts": [
+      "www.postgresql.org",
+      "react.dev",
+      "fastapi.tiangolo.com",
+      "www.typescriptlang.org"
+    ],
+    "reason": "doc_freshness は公式サイトとの照合が仕様上必須で、ネットワークを全部拒否すると仕組みの上で PASS にならないため",
+    "authorized_by": "team-lead (2026-10-12 のメッセージ。sysspec3 の doc_freshness に限り、読み取りの WebFetch を許可)",
+    "host_basis": "直した後の targets (postgres・react・fastapi・typescript) と D1/D2 の evidence_refs が指す公式文書の host。ワイルドカードは使わず完全一致で並べた。",
+    "scope": "sysspec3 の session の設定 (runs/sysspec3/ws/.claude/settings.local.json と runs/sysspec3/policy.json) だけ。実 HOME と repo の .claude/ は変えていない。測定のために同じ設定で起動した preflight9 にも同じ host を入れた。",
+    "layers": {
+      "guard": "hook/guard.py: policy の allowed_fetch_hosts と URL の host を完全一致で照合する。https だけ、userinfo は拒否、port は 443 だけ。WebSearch は常に拒否。",
+      "permissions": "deny から WebFetch を外し、allow に WebFetch(domain:<host>) を 4 件足した。WebSearch の deny は残した。",
+      "sandbox": "Bash の network は deniedDomains [\"*\"] のまま (Bash からの通信は今までどおり遮断)。"
+    },
+    "not_allowed": [
+      "WebSearch",
+      "上の 4 つ以外の host (www の付け外しを含む)",
+      "http と 443 以外の port",
+      "認証が要る先",
+      "書込みのある外部サービス",
+      "Bash のネットワーク CLI"
+    ],
+    "preflight": "preflight9 の結果は scratchpad/wttrial/isolation-check.md の『WebFetch の許可 (sysspec3)』の節。"
+  },
+  "task_md_changes": {
+    "base": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec2/workdir/task.md",
+    "changes": [
+      "runs/sysspec2/ を runs/sysspec3/ に置き換えた。",
+      "targets の説明を postgres/react から postgres/react/fastapi/typescript にし、fastapi/typescript は fixture の準備で set-targets により足したもので、fetched-references に record が無いことを書いた。",
+      "『既にcitation入力が揃うため、実在外部サービスへ接続しない』を、WebFetch で 4 host への https の読み取りだけ許すという記述に置き換えた。『正規flowがそれ以外の外部取得を必須とするなら迂回せずFAILとする』は残した。",
+      "末尾の隔離の注記を sysspec3 の条件に書き直した。sysspec2 の注記は書込みの境界を runs/sysspec と書いていた (誤記。実際の境界は runs/sysspec2)。"
+    ]
+  }
+}

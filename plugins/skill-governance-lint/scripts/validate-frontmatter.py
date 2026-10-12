@@ -3,11 +3,11 @@
 # name: validate-frontmatter
 # purpose: Validate SKILL.md frontmatter fields and combination rules.
 # inputs:
-#   - argv: SKILL.md path, --skills-dir <dir>, or --self-test (schema と fallback の drift 検査)
+#   - argv: SKILL.md path, --skills-dir <dir>, or --self-test (schema と fallback の drift 検査)。どの形も余分な引数は usage error
 # outputs:
 #   - stdout: OK status (--help は usage)
 #   - stderr: frontmatter findings (warn: で始まる指摘は exit に影響しない)
-#   - exit: 0=ok (warn だけを含む) / 1=findings or self-test drift / 2=usage error
+#   - exit: 0=ok (warn だけを含む) / 1=findings or self-test drift / 2=usage error (--skills-dir の走査 0 件と余分な引数を含む)
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -23,9 +23,14 @@ Usage:
 
 frontmatter は YAML の部分集合として読む。scalar と list の要素は引用符を外し、
 block list の途中のコメント行や空行は list を終わらせない。読めない・UTF-8 でない
-SKILL.md は traceback にせず指摘として報告する。
+SKILL.md は traceback にせず指摘として報告する。scalar のはずのキーが list で書かれて
+いても、型の指摘にして残りの検査と残りの skill を続ける。パス形の参照は、実在しても
+repo の外を指すなら指摘にする。
 
-Exit 0 = ok (warn: だけの指摘を含む), 1 = 指摘あり / self-test の drift, 2 = usage error.
+Exit 0 = ok (warn: だけの指摘を含む), 1 = 指摘あり / self-test の drift, 2 = usage error
+(余分な引数を含む。2つ目以降のパスを黙って捨てると、検査したつもりの SKILL.md が素通りする).
+--skills-dir は直下の */SKILL.md だけを見る。走査が 0 件なら 2 を返す。検査が空振り
+したまま 0 を返すと、`--skills-dir plugins` のような打ち間違いで CI が素通りするので止める。
 """
 from __future__ import annotations
 import datetime
@@ -103,6 +108,36 @@ EFFECT_VALUES = {"none", "conversation-output", "local-artifact", "external-muta
 MERGE_STRATEGY_VALUES = {"deep-merge", "strict", "override", "layered"}
 CONFLICT_POLICY_VALUES = {"most-specific-wins", "error", "warn-and-merge"}
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# 検査が文字列として読むキー。list で書かれたら型の指摘にし、以降の検査では空の scalar として
+# 扱う。traceback で落とすと --skills-dir の残りの skill が報告されないまま終わる。
+SCALAR_FIELDS = tuple(dict.fromkeys((
+    *COMMON_CORE_REQUIRED, "effect", "merge_strategy", "conflict_policy", "source",
+    "source-tier", "last-audited", "cross_platform", "disable-model-invocation",
+    "user-invocable", "context",
+)))
+
+
+def _scalar(fm: dict, key: str, default: str = "") -> str:
+    """fm[key] を scalar として返す。list なら default (型の指摘は _scalar_type_errors が出す)。"""
+    value = fm.get(key, default)
+    return value if isinstance(value, str) else default
+
+
+def _scalar_type_errors(fm: dict) -> list[str]:
+    return [
+        f"field '{key}' must be a scalar, got list: {fm[key]!r}"
+        for key in SCALAR_FIELDS
+        if isinstance(fm.get(key), list)
+    ]
+
+
+def _inside(repo: Path, path: Path) -> bool:
+    """symlink をたどった実体が repo の中にあるか (lint-rubric-refs-exist.py と同じ扱い)。"""
+    try:
+        path.resolve().relative_to(repo.resolve())
+    except (ValueError, OSError):
+        return False
+    return True
 
 
 def _without_yaml_comment(value: str) -> str:
@@ -213,17 +248,32 @@ def _repo_root(p: Path) -> Path:
 def check_refs_exist(fm: dict, skill_path: Path) -> list[str]:
     """Verify rubric_refs / reference_refs / script_refs targets exist.
 
-    - `ref-*` style entries (ref/run/assign/wrap/delegate-*): require `<name>/` to
-      exist in the same skills dir as this SKILL.md (同じ plugin), under any
-      `plugins/*/skills/`, or under `.claude/skills/` at repo root.
+    - `ref-*` style entries (ref/run/assign/wrap/delegate-*): require one of
+      `plugins/harness-creator/skills/<name>/` (共有 skill の正本)、
+      `.claude/skills/<name>/`（vault 側）、
+      または参照元 skill の兄弟 `<この skill の skills/>/<name>/`（同一 plugin 内）
+      が存在すること。兄弟を解決先に含めるのは、plugin が自前の `skills/` に
+      L1 rubric を持つ配置が実在するため（例 guide-doc-generator の
+      `assign-handout-readability-evaluator` → `ref-handout-design-system`）。
+      harness-creator と `.claude/` だけを見ると、同じ plugin 内の実在する
+      参照先を「無い」と報告してしまう。
+      一方、別の plugin の `skills/` は解決先に含めない。install された plugin が
+      持つのは自分の `skills/` だけなので、「どこかの plugin にあれば通る」を
+      許すと配布先で参照が切れることを見逃す。
     - other entries: treat as path; first try repo-root relative, then
-      skill-directory relative.
-    Returns a list of `MISSING_REF:` error strings.
+      skill-directory relative. 解決先が repo の外 (`../` や絶対パス、外を指す
+      symlink) なら、実在しても参照として認めない。
+    Returns a list of `MISSING_REF:` / `OUTSIDE_REPO_REF:` error strings.
     """
     errs: list[str] = []
     repo = _repo_root(skill_path)
     skill_dir = skill_path.parent
-    skill_roots = [skill_dir.parent, *sorted((repo / "plugins").glob("*/skills")), repo / ".claude" / "skills"]
+    skill_roots = [
+        repo / "plugins" / "harness-creator" / "skills",
+        repo / ".claude" / "skills",
+        # 参照元と同じ `skills/` 配下の兄弟 skill
+        skill_dir.parent,
+    ]
     for field in ("rubric_refs", "reference_refs", "script_refs"):
         items = fm.get(field)
         if not items:
@@ -239,15 +289,22 @@ def check_refs_exist(fm: dict, skill_path: Path) -> list[str]:
                 if not any((root / entry).exists() for root in skill_roots):
                     errs.append(
                         f"MISSING_REF: {field} '{entry}' not found under "
-                        f"{skill_dir.parent}/, plugins/*/skills/ or .claude/skills/"
+                        f"plugins/harness-creator/skills/, .claude/skills/, "
+                        f"or {skill_dir.parent}/ (同一 plugin 内の兄弟 skill)"
                     )
             else:
                 cand_root = repo / entry
                 cand_local = skill_dir / entry
-                if not (cand_root.exists() or cand_local.exists()):
+                found = [c for c in (cand_root, cand_local) if c.exists()]
+                if not found:
                     errs.append(
                         f"MISSING_REF: {field} '{entry}' not found "
                         f"(tried {cand_root} and {cand_local})"
+                    )
+                elif not any(_inside(repo, c) for c in found):
+                    errs.append(
+                        f"OUTSIDE_REPO_REF: {field} '{entry}' resolves outside the repository "
+                        f"({repo})"
                     )
     return errs
 
@@ -279,6 +336,8 @@ def _check_source_tier_demotion(
             repo = _repo_root(skill_path)
             if not (repo / source).exists():
                 return f"source path not found: {source}"
+            if not _inside(repo, repo / source):
+                return f"source path outside the repository: {source}"
 
     if last_audited and ISO_DATE_RE.match(last_audited):
         audited = datetime.date.fromisoformat(last_audited)
@@ -294,9 +353,9 @@ def validate_capability(p: Path, fm: dict, text: str) -> tuple[str, list[str]]:
     CapabilityManifest (capability-manifest.schema.json) に整合。skill 専用ルール
     (trigger count==2 / assign fork / source-tier skill enum) は適用しない。
     """
-    errs: list[str] = []
-    kind = fm.get("kind", "").split("#", 1)[0].strip()
-    name = fm.get("name", "")
+    errs = _scalar_type_errors(fm)
+    kind = _scalar(fm, "kind").split("#", 1)[0].strip()
+    name = _scalar(fm, "name")
 
     # commonCore 必須
     for field in COMMON_CORE_REQUIRED:
@@ -304,7 +363,7 @@ def validate_capability(p: Path, fm: dict, text: str) -> tuple[str, list[str]]:
             errs.append(f"commonCore: missing required field '{field}' for kind={kind} "
                         "(capability-manifest.schema.json#/definitions/commonCore)")
     # version は SemVer
-    ver = fm.get("version", "")
+    ver = _scalar(fm, "version")
     if ver and not SEMVER_RE.match(str(ver).split("#", 1)[0].strip()):
         errs.append(f"version '{ver}' must be SemVer (X.Y.Z)")
     # name は kebab-case
@@ -334,10 +393,10 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
     fm = parse_fm(text)
 
     # SKILL.md 以外で非 skill kind を宣言する Capability は専用検証へ分岐
-    if p.name != "SKILL.md" and fm.get("kind", "").split("#", 1)[0].strip() in NON_SKILL_KINDS:
+    if p.name != "SKILL.md" and _scalar(fm, "kind").split("#", 1)[0].strip() in NON_SKILL_KINDS:
         return validate_capability(p, fm, text)
 
-    errs: list[str] = []
+    errs = _scalar_type_errors(fm)
 
     # commonCore 必須項目の存在検査。SKILL.md も非SKILL.md と同一の必須集合
     # (COMMON_CORE_REQUIRED = schema 由来 SSOT) を共有する。検査は「存在 + 形式」のみ。
@@ -350,14 +409,14 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
 
     # version: SemVer 形式 (X.Y.Z)。存在は上記 commonCore ループが担保。
     # kind は SKILL.md では sub-role prefix のため KIND_VALUES (下記) で別途 enum 評価。
-    ver = fm.get("version", "")
+    ver = _scalar(fm, "version")
     ver_norm = str(ver).split("#", 1)[0].strip()
     if ver_norm and not SEMVER_RE.match(ver_norm):
         errs.append(f"version '{ver_norm}' must be SemVer (X.Y.Z)")
 
     # description quality: 日本語トリガー句 (〜とき/〜場合/〜際/〜時) または
     # 英語の "Use when" / "Read when" のいずれかを含むこと。
-    desc = fm.get("description", "")
+    desc = _scalar(fm, "description")
     JP_TRIGGERS = ("とき", "場合", "際", "時に")
     has_en_trigger = ("Use when" in desc) or ("Read when" in desc)
     has_jp_trigger = any(t in desc for t in JP_TRIGGERS)
@@ -378,32 +437,32 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
             errs.append(f"trigger count = {n} (expected exactly 2; hard rule)")
 
     # kind enum
-    k = fm.get("kind", "")
+    k = _scalar(fm, "kind")
     if k and k not in KIND_VALUES:
         errs.append(f"kind '{k}' not in {sorted(KIND_VALUES)}")
     # effect フィールド: 存在する場合は許容値を検証 (P1-1)
-    effect_val = fm.get("effect", "")
+    effect_val = _scalar(fm, "effect")
     if effect_val and effect_val.split("#")[0].strip() not in EFFECT_VALUES:
         errs.append(
             f"effect '{effect_val.split('#')[0].strip()}' not in {sorted(EFFECT_VALUES)}"
         )
 
-    merge_strategy = fm.get("merge_strategy", "")
+    merge_strategy = _scalar(fm, "merge_strategy")
     if merge_strategy and merge_strategy not in MERGE_STRATEGY_VALUES:
         errs.append(
             f"merge_strategy '{merge_strategy}' not in {sorted(MERGE_STRATEGY_VALUES)}"
         )
-    conflict_policy = fm.get("conflict_policy", "")
+    conflict_policy = _scalar(fm, "conflict_policy")
     if conflict_policy and conflict_policy not in CONFLICT_POLICY_VALUES:
         errs.append(
             f"conflict_policy '{conflict_policy}' not in {sorted(CONFLICT_POLICY_VALUES)}"
         )
 
     # --- doc/21 source-traceability 検証 ---
-    kind_val = fm.get("kind", "")
-    source_val = fm.get("source", "").strip().strip('"').strip("'")
-    source_tier = fm.get("source-tier", "").strip().strip('"').strip("'")
-    last_audited = fm.get("last-audited", "").strip().strip('"').strip("'")
+    kind_val = _scalar(fm, "kind")
+    source_val = _scalar(fm, "source").strip().strip('"').strip("'")
+    source_tier = _scalar(fm, "source-tier").strip().strip('"').strip("'")
+    last_audited = _scalar(fm, "last-audited").strip().strip('"').strip("'")
 
     # ref-* は source 必須、それ以外は WARN
     if kind_val in SOURCE_REQUIRED_FOR_KIND:
@@ -430,7 +489,7 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
     # frontmatter に cross_platform: true があれば、本文に <important if="os=...">
     # 分岐が最低 1 つは存在することを要求する。OS 分岐の機械検証は creator-kit
     # 量産時に Windows 経路の欠落を防ぐ。
-    cross_platform = fm.get("cross_platform", "false").lower() == "true"
+    cross_platform = _scalar(fm, "cross_platform", "false").lower() == "true"
     if cross_platform:
         # text 全体（frontmatter 含む）に OS 分岐タグが含まれるかを確認
         if not re.search(r"<important\s+if\s*=\s*[\"']?os=", text):
@@ -452,8 +511,8 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
                     errs.append(f"unresolved template variable in '{_k}' list: {_item}")
 
     # combo sanity
-    dmi = fm.get("disable-model-invocation", "false").lower() == "true"
-    ui = fm.get("user-invocable", "true").lower()
+    dmi = _scalar(fm, "disable-model-invocation", "false").lower() == "true"
+    ui = _scalar(fm, "user-invocable", "true").lower()
     ui_false = ui == "false"
     if dmi and not ui_false:
         # ref系: disable-model + user-invocable false ok
@@ -465,9 +524,9 @@ def validate_file(p: Path) -> tuple[str, list[str]]:
     errs.extend(check_refs_exist(fm, p))
 
     # assign系の必須
-    name = fm.get("name", "")
+    name = _scalar(fm, "name")
     if name.startswith("assign-"):
-        if fm.get("context", "") != "fork":
+        if _scalar(fm, "context") != "fork":
             errs.append("assign-* requires context: fork")
         if ui != "false":
             errs.append("assign-* requires user-invocable: false")
@@ -488,6 +547,9 @@ def main() -> int:
     # --self-test: schema(正本) と fallback 定数の drift を検出するゲート。
     # 三重定義の再発防止: schema を改訂したら fallback も同期されているかを CI で機械検証する。
     if "--self-test" in args:
+        if args != ["--self-test"]:
+            print(f"--self-test takes no other arguments: {args}\n{usage}", file=sys.stderr)
+            return 2
         schema = _find_schema()
         if schema is None:
             print(f"self-test FAIL: schema not found ({_SCHEMA_RELPATH})", file=sys.stderr)
@@ -502,19 +564,24 @@ def main() -> int:
         return 0
 
     if "--skills-dir" in args:
-        idx = args.index("--skills-dir")
-        if idx + 1 >= len(args):
+        if len(args) != 2 or args[0] != "--skills-dir":
             print("usage: validate-frontmatter.py --skills-dir /path/to/skills", file=sys.stderr)
             return 2
-        skills_dir = Path(args[idx + 1])
+        skills_dir = Path(args[1])
         if not skills_dir.is_dir():
             print(f"not a directory: {skills_dir}", file=sys.stderr)
             return 2
+        skill_mds = sorted(skills_dir.glob("*/SKILL.md"))
+        if not skill_mds:
+            print(
+                f"config error: no SKILL.md scanned under {skills_dir}/*/SKILL.md "
+                f"(cwd={Path.cwd()})",
+                file=sys.stderr,
+            )
+            return 2
         total_errs: list[str] = []
         warn_only = True
-        scanned = 0
-        for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
-            scanned += 1
+        for skill_md in skill_mds:
             name, errs = validate_file(skill_md)
             for e in errs:
                 total_errs.append(f"{skill_md.parent.name}: {e}")
@@ -524,11 +591,16 @@ def main() -> int:
             for e in total_errs:
                 print(e, file=sys.stderr)
             return 0 if warn_only else 1
-        print(f"ok: {skills_dir} ({scanned} skills)")
+        print(f"ok: {skills_dir} ({len(skill_mds)} skills)")
         return 0
 
     if args[0].startswith("-"):
         print(f"unknown option: {args[0]}\n{usage}", file=sys.stderr)
+        return 2
+    if len(args) != 1:
+        # 2つ目以降のパスを黙って捨てると、検査したつもりの SKILL.md が素通りする
+        print(f"only one SKILL.md path is accepted, got {len(args)}: {args}\n{usage}",
+              file=sys.stderr)
         return 2
     p = Path(args[0])
     name, errs = validate_file(p)

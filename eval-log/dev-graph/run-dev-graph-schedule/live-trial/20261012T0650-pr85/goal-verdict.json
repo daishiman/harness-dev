@@ -1,0 +1,23 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "SKILL.md が必須とする C17 独立 verifier (Agent dev-graph:dev-graph-parallel-safety-verifier) の判定が得られていない。原因は隔離ガードの誤検知で、被験 skill の不具合ではない。verifier は読取りだけの Bash 1 本目で拒否された (agent-ac81dc1df6832d6a7.jsonl の L10 が command、L11 が拒否)。その command は `R=.../scratchpad/wttrial; S=$R/tmp/...; cat $S/schedule.json; cat $S/leases.json; head -c 6000 $R/runs/schedule/fx/.dev-graph/state/graph.json; wc -c ...` だった。変数を展開した後の実際のパスは、どれも allowed_write_roots (wttrial/tmp と wttrial/runs/schedule) の内側にある。ところが guard.py の L96-100 は guarded_root を正規表現の文字列一致で見るため、許可 root の祖先にすぎない `.../scratchpad/wttrial` という文字列を「監査対象の領域への言及」として deny した。verifier はこれを回避せず、判定不能 (undetermined) を返した (同ファイル L15)。",
+    "その結果、SKILL 本文 5 の「C17 独立 verifier が不一致を出したら推薦しない」に基づく検証済みの推薦が成立していない。goal-seek の progress は 4 項目が pass-unverified のままで、handoff_complete に達していない。R2-plan と R3-schedule の Agent fork も実行されずに FAIL で終わった (transcript L134-141、fx/eval-log/run-dev-graph-schedule-progress.json の blocker 欄)。"
+  ],
+  "evidence": [
+    "transcript L35-37: 正規の Skill(dev-graph:run-dev-graph-schedule, --repo-root fx --max-parallel 4) を起動し、ロードに成功した。",
+    "transcript L45: 出力より前に `cat prompts/*.md` で R1/R2/R3 の責務 prompt を読んでいる。schedule の算出は L96。",
+    "transcript L80: 全 node が tracker_binding=none なので、ready は local graph から自前で算出する経路になる。この時点で fx/.git/dev-graph は存在しない。",
+    "transcript L96-97: manage-worktree-lease.py --op list の結果は leases [] / events 0。schedule-graph.py --ready-source self --leases で schedule.json (sha256 782a126c...) を生成した。ready は 5 task、batches は [[task-api-orders, task-api-users, task-cache-warmup, task-docs-runbook], [task-api-users-cache]]、conflicts は []。",
+    "evaluator が fx/.dev-graph/state/graph.json から独立に再計算した結果: 期待される ready-set は schedule.json と完全一致した。task-api-users-e2e (依存先 task-api-users が active)、task-release-gate (blocked)、draft / unconfirmed / evaluation=fail / readiness=incomplete の 4 件は ready-set に 0 件。batch 内の resource_scope 重複 (接頭辞の重なりを含む) も 0 件、batch の大きさは 4 以下、suggested_branch=devgraph/<id> と claim_command はいずれも一意。ただしこれは evaluator の確認であり、skill が要求する C17 verifier の判定の代わりにはならない。",
+    "transcript L102: standard の選択を fx/eval-log の goal-spec に記録したのは subagent 起動 (L112, L114) より前で、pre_choice_forbidden を守っている。",
+    "transcript L114: C17 verifier を Agent tool で実際に起動している。guard.jsonl の 2026-10-11T21:52:27Z (agent_id ac81dc1df6832d6a7) が唯一の deny の行で、理由は「監査対象の領域への言及 (.../scratchpad/wttrial)」。",
+    "wttrial/hook/guard.py の L92-95 のコメントに、06:58 JST の修正が記録されている。内容は「許可 root の祖先そのもの (R=<T>; cat $R/runs/<label>/...) は通す」で、schedule の verifier が T を変数に置いただけの読取りで止められた誤検知への対処と明記されている。trial の deny は 06:52:27 JST で、この修正より前に起きている。",
+    "transcript L121-123: main は verifier が undetermined だったことを受け取り、回避も自己判定での代替もしていない。L134-138: intermediate.jsonl を追記し、goal-seek check は OK。graph.json (b2f40bab...) と config.json (e2ed26eb...) の digest は実行前後で同じ。L141: status.json に FAIL を書いた。collect/out/status.json も FAIL。",
+    "書込みの境界: Write tool の使用は L141 の status.json だけで、config / graph / init-receipt への直接の書込みはない。fixture への書込みは fx/eval-log/ の 3 ファイルと fx/.git/dev-graph/leases.lock だけ。guard.jsonl には、ほかに deny も境界外の呼出しもない。"
+  ],
+  "skill_defects": [
+    "軽微な不具合。場所は plugins/dev-graph/scripts/manage-worktree-lease.py の L171-174。C27 の `--op list` は読取りの snapshot 取得なのに、`coord.mkdir(...)` と `lock_path.open(\"a+\")` を list の分岐より前に実行するため、`<git_common_dir>/dev-graph/` と空の `leases.lock` が作られる。SKILL.md の「read-only で graph/tracker/lease を変更しない」と食い違う。再現手順: .git/dev-graph が無い repo で `python3 scripts/manage-worktree-lease.py --repo-root <repo> --op list` を実行すると、.git/dev-graph/leases.lock が生成される。この trial でも L80 の時点では存在せず、L135 の時点では存在していた。lease ledger (leases.json) と graph の digest は変わっていない。"
+  ],
+  "evaluator_agent_id": "ad44ce6b067d71dde"
+}

@@ -1,5 +1,6 @@
 """x-longpost-creator の配布面と実行手順が同じ公開契約を指すことを確かめる。"""
 
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -7,6 +8,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "x-longpost-creator"
+
+# CHANGELOG 先頭の版数を取る口は repo 内に 1 つだけ置く。ここで独自の正規表現を立てると、
+# その書式で書いた plugin だけが検査に当たり、当たらない書式へ逃げる圧力になる
+# (実測: 書式を要求する形は CHANGELOG を持つ 6 plugin のうち 1 件にしか当たらず、
+#  残り 5 件では検査が何もしていなかった)。
+_NOTIFIER = (ROOT / "plugins" / "harness-creator" / "skills"
+             / "run-skill-update-notifier" / "scripts" / "notifier-check.py")
+_SPEC = importlib.util.spec_from_file_location("notifier_check_parity", _NOTIFIER)
+NOTIFIER = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(NOTIFIER)
 
 
 def _json(relative_path: str):
@@ -41,13 +52,13 @@ def test_release_metadata_and_visual_capability_match_on_both_hosts():
     # 落ちる。しかし守りたいのは「配布面どうしが食い違っていないこと」であって番号の
     # 値ではない。CHANGELOG の最上位見出しを基準に据えると、番号が動いても検査は生き
     # 続け、さらに「CHANGELOG に節の無い版を配らない」ことまで同時に保証される。
-    changelog_version = re.search(r"^## (\S+) — ", _text("CHANGELOG.md"), re.MULTILINE)
-    assert changelog_version, "CHANGELOG.md の最上位に `## <version> — <date>` の節がない"
+    changelog_version = NOTIFIER._extract_latest_version(PLUGIN / "CHANGELOG.md")
+    assert changelog_version, "CHANGELOG.md の最上位に版数の節がない"
     assert (
         claude["version"]
         == codex["version"]
         == composition_version.group(1)
-        == changelog_version.group(1)
+        == changelog_version
     )
     assert claude["description"] == codex["description"] == codex["interface"]["longDescription"]
     assert "図解" in claude["description"] and "サムネイル" in claude["description"]

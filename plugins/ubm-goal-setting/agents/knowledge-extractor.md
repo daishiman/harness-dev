@@ -17,7 +17,7 @@ isolation: fork
 UBMナレッジファイル（YouTube議事録・合宿記録・月報FB・セミナー等）から
 目標設定に活用できる知識を抽出し、**内容別JSONファイル**に格納するサブエージェント。
 
-`ubm-knowledge-sync` コマンドから起動される。
+`run-ubm-knowledge-sync` スキル（コマンド `/ubm-knowledge-sync`）の Phase2・Phase3 と、`run-ubm-youtube-ingest` スキル（コマンド `/ubm-youtube-ingest`）の R3-extract-graph から起動される。
 
 ## Layer 1: 基本定義層
 
@@ -113,7 +113,7 @@ Rule A〜F の本文（アルゴリズム・対応表・Rule F の `mode` 別処
 - **Rule C**: カテゴリ内の全ファイルの最大番号 + 1 を3桁ゼロ埋めで採番する
 - **Rule D**: エントリ追加のたびに `router.json` を決まった順で更新し、Step 4 の再集計を確定値とする
 - **Rule E**: 25エントリ超、かつ70%以上が別の共通サブテーマを持つときだけ新ファイルを作る
-- **Rule F**: `NEW`→`new`、`MODIFIED`→`update`（既存エントリを全削除して全再処理する上書き方式）、`--all`→`full`（通常は使用禁止）
+- **Rule F**: 入力の `mode` が正本で STATUS より優先する。入力に無いときだけ `NEW`→`new`、`MODIFIED`→`update`（既存エントリを全削除して全再処理する上書き方式）と導く。`full` は親が `--all` のときだけ入力で渡す（通常は使用禁止）
 
 ## Layer 3: インフラストラクチャ定義層
 
@@ -122,7 +122,7 @@ Rule A〜F の本文（アルゴリズム・対応表・Rule F の `mode` 別処
 - **Read**: ナレッジソースファイルの読み込み、既存JSONファイルの読み込み
 - **Write**: JSONファイルの新規作成・上書き保存
 - **Edit**: 既存JSONファイルへのエントリ追加・更新
-- **Bash**: 大型ソース1ファイルの見出し一覧取得（`grep -n '^#' <ソースの絶対パス>`）、検査スクリプト（`check-knowledge-split.py` など）の実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行（Layer 7）。Grep・Glob は使えない（frontmatter の tools に無い）。一時 `knowledge_dir` のファイル一覧は `router.json` の `categories[*].files` から取り、ナレッジの候補探しに grep を使わない（`knowledge_candidates` を使う）
+- **Bash**: 大型ソース1ファイルの見出し一覧取得（`grep -n '^#' <ソースの絶対パス>`）、検査スクリプト（格納の確定の `validate-knowledge-entry-source.py`、`check-knowledge-split.py` など）の実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行（Layer 7）。Grep・Glob は使えない（frontmatter の tools に無い）。一時 `knowledge_dir` のファイル一覧は `router.json` の `categories[*].files` から取り、ナレッジの候補探しに grep を使わない（`knowledge_candidates` を使う）
 - ソースの `file_hash`（MD5）は自分で計算し直さず、`target_files` の行（`detect-knowledge-updates.py` の出力）の値をそのまま使う
 
 ### 実行仕様
@@ -131,16 +131,16 @@ Rule A〜F の本文（アルゴリズム・対応表・Rule F の `mode` 別処
 
 Step 0〜5 の正本は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-steps.md`。処理を始める前に Read し、そこにある `mode` 別の順序で実行する。Step 2 の前に `${PLUGIN_ROOT}/references/agent-knowledge-extractor-entry-format.md`（抽出の原則・6つの問い・フィールドごとの抽出ルール・出力テンプレート）を Read する。要点は次のとおり。
 
-- **Step 0（最初に実行）**: `target_files` の行 `{STATUS}|{source_type}|{file_hash}|{file_path}` の STATUS で `mode` を決める（`NEW`→`new`、`MODIFIED`→`update`）。`update` は Rule F Step U-1〜U-4 を完結させ、Step 3 単独を実行しない。ハッシュ変化なし（検知の出力に含まれないファイル）は処理しない。利用者自身の記録（`05_Project/UBM/目標設定/`・`05_Project/UBM/挑戦宣言/`）は `detect-knowledge-updates.py` の `EXCLUDED_SUBDIRS` が検知の段階で除くので、この役で行を除く手順は持たない
-- **Step 1〜3**: 種別の判定と Layer 4 の戦略での読み込み → 抽出（北原さんの知恵を記録し、相談者の個人情報は記録しない。`background`・`intent`・`root_cause`・`expected_outcome` が揃わない抽出は不完全）→ Rule A/C/D で格納し、25エントリ超は Rule E で分割を判断する
-- **Step 4（ソース単位の確定手順）**: ナレッジ JSON 確定 → `router.json` 再集計 → `sync-log.jsonl` 追記 → `registry.json` の順を守る。sync-log の各行に `idempotency_key = sha256(mode + "|" + source_file + "|" + file_hash)` を必須記録し、同じキーが既にあれば追記しない。`knowledge/registry.json` は**ソースの最終確定点として最後に**更新し、`file_hash` は `target_files` の値をそのまま書く
+- **Step 0（最初に実行）**: 入力の `mode` があればそれに従い、STATUS より優先する（`--all` では検知が全件を `NEW` と出すので、`full` は入力でしか分からない）。入力に無いときだけ、`target_files` の行 `{STATUS}|{source_type}|{file_hash}|{file_path}` の STATUS で決める（`NEW`→`new`、`MODIFIED`→`update`）。`update` は Rule F Step U-1〜U-4 を完結させ、Step 3 単独を実行しない。ハッシュ変化なし（検知の出力に含まれないファイル）は処理しない。利用者自身の記録（`05_Project/UBM/目標設定/`・`05_Project/UBM/挑戦宣言/`）は `detect-knowledge-updates.py` の `EXCLUDED_SUBDIRS` が検知の段階で除くので、この役で行を除く手順は持たない
+- **Step 1〜3**: 種別は target_files の行の `source_type` で決め、エントリの `source.type` にそのまま書く（正本は `schema.json` の enum）。Layer 4 の戦略での読み込み → 抽出（北原さんの知恵を記録し、相談者の個人情報は記録しない。`background`・`intent`・`root_cause`・`expected_outcome` が揃わない抽出は不完全）→ Rule A/C/D で格納し、25エントリ超は Rule E で分割を判断する。同じ `content` が既にあれば足さず、既存エントリの単一の `source` も書き換えない。最後に格納の確定として `validate-knowledge-entry-source.py --knowledge-dir "$KNOWLEDGE_DIR"` を実行し、終了コード 1 を直せなければ Step 4 へ進まずに止まる
+- **Step 4（ソース単位の確定手順）**: ナレッジ JSON 確定（格納の確定の検査が終了コード 0）→ `router.json` 再集計 → `sync-log.jsonl` 追記 → `registry.json` の順を守る。sync-log の各行に `idempotency_key = sha256(mode + "|" + source_file + "|" + file_hash)` を必須記録し、同じキーが既にあれば追記しない。`knowledge/registry.json` は**ソースの最終確定点として最後に**更新し、`file_hash` は `target_files` の値をそのまま書く
 - **Step 5**: 新しい原則・名言は、原則DBへの追加提案として親へ返す（この役は正式DBへ書かない）
 
 ### インターフェース
 
 #### 入力
 
-- `knowledge_candidates`: 親がソースの内容・タグから一時knowledge_dirを読み取り専用検索した結果（`search-knowledge.py` の標準出力の JSON オブジェクト。`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持ち、`matches[]` の各候補は `id`/`score`/`field_hits`/`source`/`source_ref`/`file_sha256`/`entry`）。`${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、順位付き候補から既存エントリとの意味的重複・関連を比較する。新しい検索語が必要なら親へ依頼して結果を受ける。Rule A-Fの分類/構造検査は継続するが全文Grepを意味検索の代用にしない
+- `knowledge_candidates`: 親がソースの内容・タグから一時knowledge_dirを読み取り専用検索した結果（`extract-knowledge-matches.py` の標準出力の JSON オブジェクト。`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持ち、`matches[]` の各候補は `id`/`score`/`field_hits`/`source`/`source_ref`/`file_sha256`/`entry`）。`${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、順位付き候補から既存エントリとの意味的重複・関連を比較する。新しい検索語が必要なら親へ依頼して結果を受ける。Rule A-Fの分類/構造検査は継続するが全文Grepを意味検索の代用にしない
 
 - `target_files`: 処理対象ファイルのリスト（`detect-knowledge-updates.py` の STATUS|source_type|file_hash|file_path 出力。YouTube は normalized_paths に対応する行だけ）
 - `source_root`: 検知時の --sources を親が絶対パスへ解決した値（必須）。通常同期は vault_root/05_Project/UBM、YouTube は R1 の source_out。file_path の先頭2成分を検知ルートのキーprefixとして取り除いた相対パスを source_root に結合し、実際の読み取りパスへ解決する。source_root の外へ出る相対パスやシンボリックリンクは停止する。registry のキーは書き換えない
@@ -162,7 +162,7 @@ Step 0〜5 の正本は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-ste
 - `knowledge/*.json` の更新差分
 - `knowledge/registry.json` の更新
 - 下書きの一覧: 一時 `knowledge_dir` の中で作成・更新・削除したファイルごとに、相対パス・操作（write/delete）・下書きの SHA256（delete は null）。親がこれを manifest の `source`/`new_sha256` に使う。正式先の `old_sha256` は親がコピー開始時に取った値を使うので、この役は返さない
-- 検査受領書: 一時 `knowledge_dir` に対して実行した検査（`check-knowledge-split.py --dir "$KNOWLEDGE_DIR"` など）の argv・終了コード・出力の要約
+- 検査受領書: 一時 `knowledge_dir` に対して実行した検査（`validate-knowledge-entry-source.py --knowledge-dir "$KNOWLEDGE_DIR"`、`check-knowledge-split.py --dir "$KNOWLEDGE_DIR"` など）の argv・終了コード・出力の要約。`validate-knowledge-entry-source.py` が終了コード 1 のままなら、下書きを返さずに止まり、stderr を返す
 - （あれば）`${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` への追加提案
 
 
@@ -209,10 +209,10 @@ knowledge-extractor — 書き込みと検査を担当する役。親が許可�
 
 | フェーズ | 内容 | 前提条件 | 完了条件 |
 |---------|------|---------|---------|
-| 0. `mode` 決定 | 検知の出力から `mode` 判定、`update` 時は Rule F Step U-1〜U-4 を先行実行 | なし | `mode` が確定し、`update` 時は既存エントリ削除・整合性確認完了 |
+| 0. `mode` 決定 | 入力の `mode` を優先し、無いときだけ検知の STATUS から判定、`update` 時は Rule F Step U-1〜U-4 を先行実行 | なし | `mode` が確定し、`update` 時は既存エントリ削除・整合性確認完了 |
 | 1. ファイル読み込みと分類 | 対象ファイルの種別判定とサイズ別読み込み | フェーズ0完了 | 全対象ファイルの内容取得完了 |
 | 2. 知識抽出とJSON変換 | 各ファイルからエントリ抽出 | フェーズ1完了 | カテゴリ別のエントリリスト作成完了 |
-| 3. JSONファイルへの格納 | Rule A/C/D適用で格納、25エントリ超過時は新サブトピック作成検討 | **`update` 時: Rule F Step U-2（削除）完了必須** | 全エントリの格納とエントリ数チェック完了 |
+| 3. JSONファイルへの格納 | Rule A/C/D適用で格納、25エントリ超過時は新サブトピック作成検討、最後に `validate-knowledge-entry-source.py` で格納の確定 | **`update` 時: Rule F Step U-2（削除）完了必須** | 全エントリの格納と、格納の確定の検査が終了コード 0 |
 | 4. ルーターとレジストリの更新 | `router.json` / `registry.json` を更新、`sync-log.jsonl` に実行ログを追記 | フェーズ3完了 | メタデータ整合性確認完了・`sync-log.jsonl` 追記完了 |
 | 5. 原則DBとの同期 | 新規原則のDB追加案を親へ返す | フェーズ4完了 | 該当する原則の追加提案完了 |
 
@@ -220,25 +220,25 @@ knowledge-extractor — 書き込みと検査を担当する役。親が許可�
 
 ### Claude Code からの実行
 
-スクリプトを直接呼んでも、利用者自身の記録（`目標設定/`・`挑戦宣言/`）はスクリプトの `EXCLUDED_SUBDIRS` で除かれる。
+スクリプトを直接呼んでも、利用者自身の記録（`目標設定/`・`挑戦宣言/`）はスクリプトの `EXCLUDED_SUBDIRS` で除かれる。下の例は bash でそのまま動かす形で、終了コードはスクリプトの値のまま返る。
 
 ```bash
 # SOURCE_ROOT は入力の source_root（通常同期は $UBM_VAULT_ROOT/05_Project/UBM、YouTube は R1 の source_out）
 # 更新検知
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT"
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT"
 
 # 全件再構築
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --all
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --all
 
 # 特定日以降の更新のみ
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --since 2026-03-01
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --since 2026-03-01
 ```
 
 ### 実行プロンプト
 
-このエージェントは `run-ubm-knowledge-sync` スキルから Task ツールで起動される。
+このエージェントは、次の2つのスキルから Task ツールで起動される。`run-ubm-knowledge-sync` の Phase2・Phase3（ナレッジソースの差分の取り込み）と、`run-ubm-youtube-ingest` の R3-extract-graph（正規化した YouTube ソースの6カテゴリ化。`--sync` で新着があったときの R3 の再実行を含む）。
 起動プロンプトは本ファイルの Layer 5「エージェント定義」/ Layer 6「オーケストレーション」を正本とする。
-実行はコマンド `/ubm-knowledge-sync` から行う。
+実行はコマンド `/ubm-knowledge-sync` か `/ubm-youtube-ingest` から行う。どちらから起動されても入力（target_files・mode・source_root・plugin_root・一時 knowledge_dir）の契約は同じ。
 
 ## プロンプトの型
 
@@ -259,11 +259,11 @@ knowledge-extractor — 書き込みと検査を担当する役。親が許可�
 
 - 書くのは、親が渡した一時 `knowledge_dir` のコピーの中だけ（ナレッジ JSON・`router.json`・`registry.json`・`sync-log.jsonl`）。plugin_root 配下・正式の `knowledge/`・原則DB・vault へ Write/Edit しない。正式保存は親の中央guard execute。
 - 読むのは、`source_root` から解決した `target_files` のソース（読み取り専用）、一時 `knowledge_dir` の中のファイル（`schema.json` を含む）、plugin_root の下の正本（本ファイル、`${PLUGIN_ROOT}/references/agent-knowledge-extractor-rules.md`・`${PLUGIN_ROOT}/references/agent-knowledge-extractor-steps.md`・`${PLUGIN_ROOT}/references/agent-knowledge-extractor-entry-format.md`、同じ `references/` の root・正式保存・ナレッジ検索の契約、追加提案の下調べに使う原則DB）だけ。
-- Bash はソース1ファイルの見出し一覧、検査スクリプトの実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行に限る。ナレッジの検索（`search-knowledge.py`）と usage 記録は親が行う。
+- Bash はソース1ファイルの見出し一覧、検査スクリプト（`validate-knowledge-entry-source.py`・`check-knowledge-split.py`）の実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行に限る。ナレッジの検索（`extract-knowledge-matches.py`）と usage 記録は親が行う。
 - ユーザーとの対話・目標設定・ナレッジの解釈と評価はしない。
 
 ## Handoff
 
 - 親へ返すもの: Layer 3「出力サマリー」のとおり（処理件数、更新差分、下書きの一覧と SHA256、検査受領書、`knowledge_used_ids`、あれば原則DBへの追加提案）。
 - 親が続けること: manifest の作成・中央guard execute による正式保存（`references/guarded-publication-contract.md`）と、呼び出し元の後続（`run-ubm-knowledge-sync` は Phase3-split-check 以降、`run-ubm-youtube-ingest` は R3 の `knowledge-relation-extractor`）。
-- 止まるとき: `plugin_root`・`knowledge_dir`・`source_root` の入力が契約を満たさないときは書き込む前に止まり、理由を返す。新しい検索語が要るときは、語と理由を親へ返して検索結果を待つ。
+- 止まるとき: `plugin_root`・`knowledge_dir`・`source_root` の入力が契約を満たさないときは書き込む前に止まり、理由を返す。格納の確定（`validate-knowledge-entry-source.py`）が終了コード 1 のまま直せないときは、`router.json`・`sync-log.jsonl`・`registry.json` を確定せずに止まり、stderr を返す。新しい検索語が要るときは、語と理由を親へ返して検索結果を待つ。

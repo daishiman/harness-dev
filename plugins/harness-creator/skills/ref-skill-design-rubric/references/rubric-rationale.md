@@ -1,6 +1,6 @@
 # Rubric Rationale
 
-各ルールの why。条文番号と設計書章への参照付き。rubric 1.5.0（41 rule）に対応する。
+各ルールの why。条文番号と設計書章への参照付き。rubric 1.6.0（41 rule）に対応する。
 
 check 式の正本は `rubric.json`。この文書は人が読むための理由の説明で、食い違ったときは `rubric.json` を正とする。
 
@@ -77,7 +77,7 @@ check 式の正本は `rubric.json`。この文書は人が読むための理由
 - **AG-004 Handoff・Output Contract 節（medium）**: 出力契約が無いと、親 agent が結果を集約できない。
 
 ## HK-001〜004 Hook（kind=hook）
-- **HK-001 event の enum（high）**: 未対応の event 名は Claude Code で no-op になり、hook が永久に発火しない。
+- **HK-001 event の enum（high）**: 未対応の event 名は Claude Code で no-op になり、hook が永久に発火しない。候補は実際に配線している event と capability manifest の schema の enum に揃える（1.6.0 で `PostToolUseFailure` を追加。3つの一致は `test_hook_event_vocabulary_parity.py` が検査する）。
 - **HK-002 matcher の具体性（high）**: 全 tool に当たる matcher は noise を増やす。PreToolUse・PostToolUse では最小の範囲で宣言する。
 - **HK-003 timeout の上限（medium）**: hook が止まるとセッション全体が止まる。
 - **HK-004 副作用の明記（medium）**: hook は宣言外の副作用を持ちやすく、追いにくい。`## Side Effects` に書いて監査できるようにする。

@@ -264,6 +264,28 @@ def test_policy_sha_drift_fails_closed(tmp_path):
     assert any("policy_sha256" in error for error in mod.lint_repository(repo))
 
 
+def test_projection_drift_errors_name_the_regeneration_command(tmp_path):
+    mod = _load_generator()
+    path = tmp_path / "plugins/temp/artifact-delivery.json"
+    expected = {
+        "policy_sha256": "a" * 64,
+        "schema_sha256": "b" * 64,
+        "entrypoints": [{"skill": "run-temp"}],
+        "external_mutation_runtime": {"runner_sha256": "c" * 64},
+        "external_intelligence_runtime": {"runner_sha256": "d" * 64},
+    }
+    drifted = mod._projection_drift_errors(
+        tmp_path, path, {key: None for key in expected}, expected
+    )
+    assert len(drifted) == len(expected)
+    assert all("build-artifact-delivery.py --write" in error for error in drifted)
+    unclassified = mod._projection_drift_errors(
+        tmp_path, path, dict(expected, unknown_key="drifted"), expected
+    )
+    assert len(unclassified) == 1
+    assert "build-artifact-delivery.py --write" in unclassified[0]
+
+
 def test_entrypoint_effect_coverage_drift_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
@@ -901,6 +923,77 @@ def test_legacy_runtime_root_prose_is_moved_after_block_not_dropped(tmp_path, le
     mod._validate_runtime_root_wiring(path)
 
 
+def test_section_headings_skip_code_fences():
+    # 節の境界は fence の外の "## " 行だけ。閉じは同じ文字・同じ長さ以上 (CommonMark)。
+    mod = _load_generator()
+    body = (
+        "## A\n"
+        "```\n## x\n```\n"
+        "   ~~~~ text\n## y\n~~~\n```\n## まだ fence の中\n~~~~~\n"
+        "## B\n"
+        "``` `fence ではない`\n"
+        "## C\n"
+    )
+    headings = mod._section_headings(body)
+    assert [line for _, line in headings] == ["## A", "## B", "## C"]
+    assert all(body[start:].startswith(line + "\n") for start, line in headings)
+
+
+_FENCED_EXAMPLES = {
+    "backtick": "```markdown\n## 例の見出し\n本文\n```\n",
+    "tilde": "~~~markdown\n## 例の見出し\n```\n## まだ fence の中\n~~~\n",
+    "longer-backtick": "````\n```\n## 例の見出し\n```\n````\n",
+}
+
+
+@pytest.mark.parametrize("fence", _FENCED_EXAMPLES.values(), ids=_FENCED_EXAMPLES.keys())
+def test_runtime_root_block_is_not_inserted_inside_code_fence(tmp_path, fence):
+    # 目的と出力契約の節に "## " を含む fence があっても、ブロックは fence の後ろ (節の終わり) へ入る。
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA).replace(
+        "外部の記録を1件更新する。\n", "外部の記録を1件更新する。\n\n" + fence
+    )
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    assert migrated.count(fence) == 1
+    begin = migrated.index(mod.RUNTIME_ROOT_BLOCK_BEGIN)
+    assert migrated.index(fence) + len(fence) <= begin < migrated.index(mod.POST_CHOICE_HEADING_JA)
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+    path.write_text(migrated, encoding="utf-8")
+    mod._validate_runtime_root_wiring(path)
+
+
+def test_legacy_runtime_root_section_moves_fenced_lines_together(tmp_path):
+    # 旧節の中の fence に "## " があっても節はそこで切れない。fence は丸ごとブロックの直後へ移る。
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    fence = "~~~bash\n## shell の comment\necho ok\n~~~\n"
+    section = mod.RUNTIME_ROOT_CONTRACT_SECTION + "\n" + fence
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA, runtime_root=section)
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    assert mod.RUNTIME_ROOT_CONTRACT_HEADING not in migrated
+    assert migrated.count(fence) == 1
+    end = migrated.index(mod.RUNTIME_ROOT_BLOCK_END)
+    assert end < migrated.index(fence) < migrated.index(mod.POST_CHOICE_HEADING_JA)
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+    path.write_text(migrated, encoding="utf-8")
+    mod._validate_runtime_root_wiring(path)
+
+
+def test_runtime_root_heading_inside_fence_is_not_a_legacy_section(tmp_path):
+    # fence に例として書いた旧節は、本物の旧節ではないので消さない。
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    fence = "```markdown\n" + mod.RUNTIME_ROOT_CONTRACT_SECTION_JA + "```\n"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA).replace(
+        "外部の記録を1件更新する。\n", "外部の記録を1件更新する。\n\n" + fence
+    )
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    assert migrated.count(fence) == 1
+    assert migrated.count(mod._canonical_runtime_root_block("ja", has_prompts=False)) == 1
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+
+
 @pytest.mark.parametrize(
     "relative",
     sorted(
@@ -1032,17 +1125,17 @@ def test_help_states_the_write_scope_of_every_mode():
 @pytest.mark.parametrize("separator", ["&&", ";", "|", "||"])
 def test_guard_name_does_not_hide_compound_direct_publication(separator):
     mod = _load_generator()
-    line = f"""python3 "/guard/build-external-mutation-guard.py" execute --command-json '["python3", "worker.py"]' {separator} python3 publish-staged-files.py --manifest plan.json"""
+    line = f"""python3 "/guard/build-external-mutation-guard.py" execute --command-json '["python3", "worker.py"]' {separator} python3 guard-staged-publication.py --manifest plan.json"""
     assert mod._direct_external_mutation_instruction(line)
 
 
 def test_canonical_guard_can_bind_quoted_mutation_argv():
     mod = _load_generator()
-    line = """python3 "/guard/build-external-mutation-guard.py" execute --project-root "$PWD" --command-json '["python3", "publish-staged-files.py", "--manifest", "plan.json"]'"""
+    line = """python3 "/guard/build-external-mutation-guard.py" execute --project-root "$PWD" --command-json '["python3", "guard-staged-publication.py", "--manifest", "plan.json"]'"""
     assert mod._direct_external_mutation_instruction(line) is None
 
 
-@pytest.mark.parametrize("expression", ['$(python3 publish-staged-files.py --manifest plan.json)', '`python3 publish-staged-files.py --manifest plan.json`', '<(python3 publish-staged-files.py --manifest plan.json)'])
+@pytest.mark.parametrize("expression", ['$(python3 guard-staged-publication.py --manifest plan.json)', '`python3 guard-staged-publication.py --manifest plan.json`', '<(python3 guard-staged-publication.py --manifest plan.json)'])
 def test_guard_substitution_is_rejected_before_execution(expression):
     mod = _load_generator()
     line = f"""python3 "/guard/build-external-mutation-guard.py" execute --project-root "{expression}" --command-json '["python3","worker.py"]'"""

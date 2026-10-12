@@ -60,7 +60,7 @@
 | resource-map | references/resource-map.yaml |
 
 ### 3.2 ツール
-- python3 (`scripts/aggregate-completeness.py` / plugin-root の `validate-coverage-matrix.py`)
+- python3 (`scripts/aggregate-completeness.py` / plugin-root の `validate-coverage-matrix.py` の実行と、4.3 の評価出力先への書き出し)
 - Read (仕様書・spec-state・fetched-references の読み込み) / Task (R2-delegate の監査 fork)
 
 ## Layer 4: 共通ポリシー
@@ -74,7 +74,8 @@
 - 評価レポートに全観点verdict / gate exit code / high数 / gaps数を含める。
 
 ### 4.3 セキュリティ
-- 仕様書ディレクトリを書き換えない (read-only)。Bash は検証スクリプトの実行と、評価出力先 (仕様書ディレクトリ外) への書き出しに限る。書き出すのは R2-delegate が渡す C06 出力 (`hearing-audit.json`。無改変) と、`--report` で検証する評価レポートだけ。
+- 仕様書ディレクトリを書き換えない (read-only)。Bash(python3 *) は検証スクリプトの実行と、評価出力先 (仕様書ディレクトリ外) への書き出しに限る。書き出すのは R2-delegate が渡す C06 出力 (`hearing-audit.json`。無改変) と、`--report` で検証する評価レポートだけ。
+- 書き出しは R2-delegate 2.4 と同じ形で行う。python3 の `pathlib.Path("<absolute path>").write_text(sys.stdin.read(), ...)` に保存先を literal で書き、本文は引用符付きの heredoc で stdin に渡す。Write はこの skill の allowed-tools に無く、`cat >` やリダイレクトは `Bash(python3 *)` の外になる。
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 

@@ -1,0 +1,36 @@
+{
+  "label": "sync2",
+  "retry_of": "sync",
+  "evaluator_agent_id": "a86e3e559393e785e",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync2/ws/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_tested_copy": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "closure_sha_wtpy_at_verdict": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "潜在的な欠陥で、この trial の直接原因ではない。場所は ws/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md。argument-hint で `--repo-root PATH` を受け付け、ゴールシーク配線では「DEV_GRAPH_ROOT=<receipt.repo_root> に固定し、cwd から再解決しない」としている。ところが guard ブロックは `preview --project-root \"$PWD\"` と `authorize --project-root \"$PWD\"` を使う。そのうえ、hook-confirm が session cwd を基準に preview を探すという前提も、repo-root と session cwd が違うときの事前検知も書かれていない。再現手順は、session を A で起動し、`--repo-root B` (B≠A) で export を伴う sync を実行し、preview を B に作ること。CONFIRM を送ると hook は A を探すので confirmation-unmatched になり、export は適用できない。逆に \"$PWD\" に従うと、guard の receipt が repo の外の A に置かれる。",
+    "軽微な欠陥。diff-github-issues.py の計画にある update_input を、build-graph-node.py update (C02) に渡す正規の CLI 経路が SKILL.md と scripts に無い。計画をそのまま渡すと \"update input needs updates[] objects\" で拒否される (transcript L110-111)。そのため、ad-hoc な抽出 (L181 の python -c) が必要になる。再現手順は、github binding で import がある fixture に対して diff-github-issues.py の出力 plan を build-graph-node.py update にそのまま入力すること。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 3,
+    "occurrences": 6,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:11+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+      "transcript_sha256": "64e46e3d2f2d6319b59431f2b4190d9affc3762e5389ff8cf7e0b831f67b0d71"
+    },
+    "after": {
+      "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+      "transcript_sha256": "7a49db4be2db2f8e278b86e2ca9afd5fb3f758d6369310948432b6a0ac0e067c"
+    },
+    "backup": "audit/reverdict/run-dev-graph-sync/20261012T0828-pr85"
+  }
+}

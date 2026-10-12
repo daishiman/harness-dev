@@ -20,7 +20,7 @@
 manifestの実SHA256を取得し、次の**文字列配列argv**を中央guardのpreviewに渡す。placeholderを実値へ置換してJSONとしてシリアライズし、preview/executeで同一配列を使う（shellの手書き連結やevalは禁止）。guardのルート解決・exact reply・authorize・executeは各SKILLの受領書手順に従う。
 
 ```json
-["python3","/resolved/plugin/scripts/publish-staged-files.py","--manifest","/observed/temp/publication.json","--manifest-sha256","実manifestSHA256"]
+["python3","/resolved/plugin/scripts/guard-staged-publication.py","--manifest","/observed/temp/publication.json","--manifest-sha256","実manifestSHA256"]
 ```
 
 ユーザーが保存範囲と差分を確認し、guardの確認受領書と承認受領書が揃った場合だけ、親が中央`execute`でこのargvを起動する。helperを直接Bash実行しない。exit0と正式先の保存後検査0が両方必要。2なら停止し、部分保存の可能性を含め対象と結果を報告する。自動で同じ承認を再使用しない。

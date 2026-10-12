@@ -15,7 +15,7 @@ argument-hint: "[--spec-state <path>] [--resume]"
 allowed-tools:
   - Read
   - Write
-  - Bash
+  - Bash(python3 *)
   - Glob
   - Grep
   - WebSearch
@@ -121,6 +121,17 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-system-spec-elicit
 
+## Purpose & Output Contract
+
+**入力**: ヒアリング応答 (対話) / 既存 `spec-state.json` (resume 時) / C04 taxonomy。
+**出力**: `spec-state.json` (`references/spec-state-contract.md` の形状。plugin 共有データ契約。上位概念 `requirements_foundation` を含む)。
+**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-basis --require-foundation` が exit0 (`--require-basis` は確定セルごとに、根拠 `qa_ref` と `qa_refs` のうち少なくとも 1 件が `basis` を宣言していることを課す。宣言された `basis` がすべて推定 `agent-inference` のセルは、このフラグが無くても違反になる)。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
+
+- **platforms (6)**: `web` / `mobile` / `tablet` / `desktop-windows` / `desktop-linux` / `desktop-macos`。
+- **cell states (3値, loop 中)**: `未収集` / `対象外` / `確定`。最終時は `未収集` を0にする。
+- **category_aggregate (4値)**: 真理値表から導出 (直接指定しない)。全セル未収集=未着手 / 未収集混在=収集中 / 全セル対象外=対象外 / それ以外で未収集0=確定。
+- **カテゴリ初期集合の正本**: C04 `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json` を Read して得る (prompt へ直書き禁止)。
+
 ## Runtime root contract
 
 - `runtime_root_policy: host-skill-path` を適用する。
@@ -139,17 +150,6 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 各 `確定` セルに `serves_goals: [<goal_id>, ...]` を付与 (confirm 同時付与 or `set-serves` op) し、どの上位概念に資するかを明示する。
 - C03 (`run-system-spec-compile`) は `requirements_foundation` を `system-spec/00-requirements-definition.md` (要件定義書=憲法) として先頭章に生成し、各技術章 frontmatter に `serves_goals` を持たせて全章を貫通させる。
 - 検証: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --require-foundation` が U1-U9 (U1/U2/U3 は値必須、他は値または理由付きの明示 N/A)・decisions 契約・各確定セルの serves_goals トレース・drift 候補を機械検証する (opt-in)。
-
-## Purpose & Output Contract
-
-**入力**: ヒアリング応答 (対話) / 既存 `spec-state.json` (resume 時) / C04 taxonomy。
-**出力**: `spec-state.json` (`references/spec-state-contract.md` の形状。plugin 共有データ契約。上位概念 `requirements_foundation` を含む)。
-**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-basis --require-foundation` が exit0 (`--require-basis` は確定セルごとに、根拠 `qa_ref` と `qa_refs` のうち少なくとも 1 件が `basis` を宣言していることを課す。宣言された `basis` がすべて推定 `agent-inference` のセルは、このフラグが無くても違反になる)。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
-
-- **platforms (6)**: `web` / `mobile` / `tablet` / `desktop-windows` / `desktop-linux` / `desktop-macos`。
-- **cell states (3値, loop 中)**: `未収集` / `対象外` / `確定`。最終時は `未収集` を0にする。
-- **category_aggregate (4値)**: 真理値表から導出 (直接指定しない)。全セル未収集=未着手 / 未収集混在=収集中 / 全セル対象外=対象外 / それ以外で未収集0=確定。
-- **カテゴリ初期集合の正本**: C04 `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json` を Read して得る (prompt へ直書き禁止)。
 
 ## 単一 transition writer 防御 (SSOT)
 

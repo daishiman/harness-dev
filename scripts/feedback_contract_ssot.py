@@ -170,6 +170,8 @@ VENDORED_FEEDBACK_SKILL = "run-skill-feedback"
 # byte-compile の生成物は配布物ではない。.pyc には元ファイルの絶対パスと mtime が
 # 埋まるため、CI の py_compile や pytest の import で正本とコピーに別々に生成されると、
 # 中身が同じでもツリーが不一致になり配布コピーが独立 skill として重複計上される。
+# スクリプトを実行しただけで隣に __pycache__ ができるので、パスで除外して digest を
+# 「実行したかどうか」ではなく配布する中身だけで決まる値にする。
 _BYTECODE_CACHE_DIR = "__pycache__"
 _BYTECODE_SUFFIXES = (".pyc", ".pyo")
 # macOS の Finder がディレクトリを開くと置く .DS_Store も配布物ではない。正本とコピーの片方だけに

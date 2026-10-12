@@ -26,10 +26,11 @@
 ### 受入条件
 
 - 全content realpathがresolved root内、host project rootと一致し、broken/out-of-root linkがfail-closedになる。
+- harness link の切断・張り替えは `validate-harness-link.py` が write より前に検出し、切れた hop と修復導線を返す。
 
 ## Layer 3: インフラ層
 
-- 使用資産: `resolve-repo-context.py --mode write`とRead。
+- 使用資産: plugin 実体から起動する `validate-harness-link.py --repo-root <path> [--config <path>]` (preflight。`--config` は R3 の `build-init-scaffold.py` と同じ値)、`resolve-repo-context.py --mode write`とRead。preflight は C24 より前、init のどの write よりも前に実行し、rejected なら切れた hop (`broken_hop`/`missing_target`) と `remediation` の選択肢を利用者に示して、pass に戻るまで先へ進まない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -52,6 +53,7 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 全content realpathがresolved root内、host project rootと一致し、broken/out-of-root linkがfail-closedになる
+- [ ] `validate-harness-link.py` が write より前に pass で、harness link の切断は切れた hop と修復導線つきで止まる
 
 ## Layer 6: オーケストレーション層
 

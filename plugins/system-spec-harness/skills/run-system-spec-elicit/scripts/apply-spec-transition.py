@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # /// script
 # name: apply-spec-transition
-# version: 0.2.0
+# version: 0.2.1
 # purpose: run-system-spec-elicit が所有する spec-state.json の単一 transition writer。カテゴリ×platform セルの 未収集/対象外/確定 遷移を規則付きで適用し、確定セルの直接巻き戻し (rollback) を Bash/script 経由でも拒否し、R4-reopen 経由のみ確定変更を許す。goal-seek chunk (per-invocation max_loops) の状態保存/resume も担う。
 # inputs:
-#   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops (apply/chunk は --required-info CATALOG で候補state検証)
+#   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops (confirm を含む apply/chunk は --required-info CATALOG が必須で、候補stateを検証)
 # outputs:
-#   - spec-state.json (stdout or --out。同じディレクトリの一時ファイルから置き換える)
-#   - exit: 0=OK / 1=TransitionError or IO / 2=usage error・required-info catalog の形が不正
+#   - spec-state.json (stdout or --out。親ディレクトリが無ければ作り、同じディレクトリの一時ファイルから置き換える)
+#   - exit: 0=OK / 1=TransitionError (state・turns・taxonomy の形の崩れを含む) or IO / 2=usage error (confirm を含む apply/chunk に --required-info が無い)・required-info catalog の形が不正
 # contexts: [E, C]
 # network: false
 # write-scope: spec-state.json (単一 writer)
@@ -117,6 +117,10 @@ class CatalogError(Exception):
     """--required-info に渡した catalog 自体が不正 (遷移の可否を判定できない) ときに送出する。"""
 
 
+class UsageError(Exception):
+    """引数の組合せが契約に反する (confirm を含むのに --required-info が無い等) ときに送出する。"""
+
+
 # --------------------------------------------------------------------------- #
 # 集約状態 (真理値表)                                                          #
 # --------------------------------------------------------------------------- #
@@ -188,8 +192,20 @@ def init_state(taxonomy: dict, existing_state: dict | None = None) -> dict:
     """C04 taxonomy からカテゴリ×必須platform マトリクスを初期化する。
 
     必須 platform 行 (CANONICAL_PLATFORMS) の全存在を検証し、欠落があれば
-    TransitionError を送出する (R1-init の必須行全存在検証)。
+    TransitionError を送出する (R1-init の必須行全存在検証)。taxonomy の形が崩れている
+    (object でない・platforms/categories が id/label を持つ object の配列でない) ときも
+    traceback ではなく TransitionError にする。
     """
+    if not isinstance(taxonomy, dict):
+        raise TransitionError(f"taxonomy は object 必須 (got {type(taxonomy).__name__})")
+    for key, fields in (("platforms", ("id",)), ("categories", ("id", "label"))):
+        items = taxonomy.get(key)
+        if not isinstance(items, list) or not all(
+            isinstance(item, dict) and all(f in item for f in fields) for item in items
+        ):
+            raise TransitionError(
+                f"taxonomy.{key} は {'/'.join(fields)} を持つ object の配列必須"
+            )
     tax_platforms = [p["id"] for p in taxonomy.get("platforms", [])]
     missing = [p for p in CANONICAL_PLATFORMS if p not in tax_platforms]
     if missing:
@@ -717,7 +733,9 @@ def _require_past_rfc3339(value, label: str) -> None:
         raise TransitionError(
             f"{label} が未来の時刻 ({value}, 現在より {int(skew)} 秒先)。"
             "まだ起きていない照合・採択を記録済みとして書けない。"
-            "`date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を使うこと"
+            "`python3 -c 'import datetime; "
+            "print(datetime.datetime.now(datetime.timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\"))'` "
+            "の実測値を使うこと"
         )
 
 
@@ -1657,6 +1675,78 @@ def load_json(path: str) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+# writer が存在を前提に state[...] で読む envelope のキー。
+STATE_REQUIRED_KEYS = {
+    "categories": list,
+    "matrix": dict,
+    "qa_log": list,
+    "approval_log": list,
+    "hearing_progress": dict,
+}
+# 古い state には無いことがある (writer が get/setdefault で補う) キー。あれば型を確かめる。
+STATE_OPTIONAL_KEYS = {
+    "platforms": list,
+    "reopen_log": list,
+    "category_aggregate": dict,
+    "targets": list,
+    "requirements_foundation": dict,
+    "decisions": list,
+    "knowledge_candidates": list,
+    "design_applications": dict,
+}
+
+
+def load_state(path: str) -> dict:
+    """spec-state を読み、writer が前提にする envelope の形を遷移の前に確かめる。
+
+    JSON として読めても object でない state (``[]`` など) や envelope の型が崩れた state を
+    遷移へ渡すと、KeyError や AttributeError の traceback で落ちる。形の崩れは遷移の可否を
+    判定できない入力なので TransitionError (exit 1) にし、元の state は変えない。
+    """
+    state = load_json(path)
+    if not isinstance(state, dict):
+        raise TransitionError(f"spec-state は object 必須 (got {type(state).__name__}): {path}")
+    broken = [
+        f"{key} ({kind.__name__} 必須)"
+        for key, kind in STATE_REQUIRED_KEYS.items()
+        if not isinstance(state.get(key), kind)
+    ] + [
+        f"{key} ({kind.__name__} 必須)"
+        for key, kind in STATE_OPTIONAL_KEYS.items()
+        if key in state and not isinstance(state[key], kind)
+    ]
+    if broken:
+        raise TransitionError(f"spec-state の envelope が不正: {', '.join(broken)}: {path}")
+    return state
+
+
+def _require_ops(ops, label: str) -> list:
+    if not isinstance(ops, list) or not all(isinstance(op, dict) for op in ops):
+        raise TransitionError(f"{label} は object の配列必須")
+    return ops
+
+
+def load_turns(path: str) -> list:
+    """chunk の turns を読み、object の配列で各 ops も object の配列であることを確かめる。"""
+    turns = load_json(path)
+    _require_ops(turns, f"turns ({path})")
+    for i, turn in enumerate(turns):
+        _require_ops(turn.get("ops", []), f"turns[{i}].ops ({path})")
+    return turns
+
+
+def _require_catalog_for_confirm(ops: list, catalog_path: str | None) -> None:
+    """confirm を含む apply / chunk は --required-info を必須にする (SKILL.md の収集ゲート)。
+
+    回答を蓄積するだけの turn や reopen は引数なしで通す (spec-state-contract.md)。
+    """
+    if catalog_path is None and any(op.get("action") == "confirm" for op in ops):
+        raise UsageError(
+            "confirm を含む apply / chunk は --required-info <required-info-catalog.json> が必須"
+            " (候補 state の必須情報の接地を確かめてから書く)"
+        )
+
+
 def load_json_arg(raw: str):
     """JSON文字列またはファイルpathを安全に読む (長いJSONをpath扱いしない)。"""
     stripped = raw.lstrip()
@@ -1675,6 +1765,7 @@ def _emit(state: dict, out: str | None) -> None:
     spec-state.json はこの writer だけが書く正本なので、書込の途中で落ちても (容量不足・
     中断) 前の版か新しい版のどちらかが残り、途中まで書いた JSON が残らないようにする。
     symlink はその先のファイルを置き換え、既存ファイルの permission を引き継ぐ。
+    親ディレクトリが無ければ作る (bootstrap は対象 repo にまだ system-spec 配下が無い状態から始まる)。
     """
     text = dump_state(state)
     if not out:
@@ -1687,6 +1778,7 @@ def _emit(state: dict, out: str | None) -> None:
         umask = os.umask(0)
         os.umask(umask)
         mode = 0o666 & ~umask
+    target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
@@ -1714,7 +1806,7 @@ def _validate_candidate_required_info(state: dict, catalog_path: str | None) -> 
     CatalogError にする。前者は呼び出し側の設定の誤りで、遷移の可否を判定できていない。
     """
     if catalog_path is None:
-        return  # 既存 caller 互換。収集promptは confirm 時にこの引数を必須にする。
+        return  # confirm を含まない apply / chunk。confirm を含むときは main が先に拒否する。
     catalog = load_json(catalog_path)
     if not isinstance(catalog, dict):
         raise CatalogError(f"required-info catalog は object 必須: {catalog_path}")
@@ -1754,14 +1846,14 @@ def main(argv: list[str]) -> int:
     p_apply = sub.add_parser("apply", help="単一セル op を適用")
     p_apply.add_argument("--state", required=True)
     p_apply.add_argument("--op", required=True, help="JSON 文字列の cell op")
-    p_apply.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog")
+    p_apply.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog (confirm を含むときは必須)")
     p_apply.add_argument("--out")
 
     p_chunk = sub.add_parser("chunk", help="ターン列を 1 invocation ぶん適用")
     p_chunk.add_argument("--state", required=True)
     p_chunk.add_argument("--turns", required=True, help="ターン列 JSON ファイル")
     p_chunk.add_argument("--max-loops", type=int, default=MAX_LOOPS_DEFAULT)
-    p_chunk.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog")
+    p_chunk.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog (confirm を含むときは必須)")
     p_chunk.add_argument("--out")
 
     p_agg = sub.add_parser("aggregate", help="集約状態を再計算")
@@ -1809,26 +1901,34 @@ def main(argv: list[str]) -> int:
         if args.cmd == "bootstrap":
             _emit(bootstrap_state(), args.out)
         elif args.cmd == "init":
-            existing = load_json(args.state) if args.state else None
+            existing = load_state(args.state) if args.state else None
             state = init_state(load_json(args.taxonomy), existing)
             _emit(state, args.out)
         elif args.cmd == "apply":
-            state = load_json(args.state)
-            apply_turn(state, {"ops": [json.loads(args.op)]})
+            op = json.loads(args.op)
+            if not isinstance(op, dict):
+                raise TransitionError(f"--op は object 必須 (got {type(op).__name__})")
+            _require_catalog_for_confirm([op], args.required_info)
+            state = load_state(args.state)
+            apply_turn(state, {"ops": [op]})
             _validate_candidate_required_info(state, args.required_info)
             _emit(state, args.out or args.state)
         elif args.cmd == "chunk":
-            state = load_json(args.state)
-            turns = load_json(args.turns)
+            turns = load_turns(args.turns)
+            applied = turns[: max(args.max_loops, 0)]
+            _require_catalog_for_confirm(
+                [op for turn in applied for op in turn.get("ops", [])], args.required_info
+            )
+            state = load_state(args.state)
             run_chunk(state, turns, max_loops=args.max_loops)
             _validate_candidate_required_info(state, args.required_info)
             _emit(state, args.out or args.state)
         elif args.cmd == "aggregate":
-            state = load_json(args.state)
+            state = load_state(args.state)
             recompute_aggregates(state)
             _emit(state, args.out or args.state)
         elif args.cmd == "set-targets":
-            state = load_json(args.state)
+            state = load_state(args.state)
             raw = args.targets
             targets = load_json_arg(raw)
             if isinstance(targets, dict) and "targets" in targets:
@@ -1836,19 +1936,19 @@ def main(argv: list[str]) -> int:
             set_targets(state, targets)
             _emit(state, args.out or args.state)
         elif args.cmd == "set-foundation":
-            state = load_json(args.state)
+            state = load_state(args.state)
             raw = args.foundation
             foundation = load_json_arg(raw)
             set_foundation(state, foundation)
             _emit(state, args.out or args.state)
         elif args.cmd == "set-decision":
-            state = load_json(args.state)
+            state = load_state(args.state)
             raw = args.decision
             decision = load_json_arg(raw)
             set_decision(state, decision)
             _emit(state, args.out or args.state)
         elif args.cmd == "set-knowledge-candidate":
-            state = load_json(args.state)
+            state = load_state(args.state)
             candidate = load_json_arg(args.candidate)
             set_knowledge_candidate(state, candidate)
             _emit(state, args.out or args.state)
@@ -1857,6 +1957,9 @@ def main(argv: list[str]) -> int:
         return 1
     except CatalogError as exc:
         print(f"CatalogError: {exc}", file=sys.stderr)
+        return 2
+    except UsageError as exc:
+        print(f"usage error: {exc}", file=sys.stderr)
         return 2
     except (OSError, json.JSONDecodeError, UnicodeError) as exc:
         # UnicodeError: JSON の `\ud800` などは読めても UTF-8 へ書けない (書込前の版は残る)。

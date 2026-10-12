@@ -1,17 +1,40 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# /// script
+# name: aggregate-evals
+# version: 0.2.1
+# purpose: SessionEnd hook で評価の記録を集計し、連続 FAIL・平均スコアの低下・苦戦の重なりを見つけたら rubric 改正の提案ドラフトを plugin の外の state に書く
+# inputs:
+#   - stdin: SessionEnd hook の payload（使わずに読み捨てる）
+#   - argv: 無ければ SessionEnd hook の経路。--list-proposals（書かずに、自動ドラフトと手書きの提案の両方の置き場を一覧する。CLAUDE_PROJECT_DIR が無ければ cwd と git の作業ツリーの root を project とみなして読む）。ほかの引数は受けない（--help は usage を出す）
+#   - files: plugins/harness-creator/EVALS.json、eval-log/**/*-score.jsonl、eval-log/**/content-review/*-verdict.json、eval-log/*/*/live-trial/*/verdict.json
+#   - env: HC_ROOT・CLAUDE_PLUGIN_ROOT（plugin root）、HARNESS_CREATOR_PROPOSALS_DIR（書き込み先の明示）、CLAUDE_PROJECT_DIR（既定の書き込み先。--list-proposals では読む先）、XDG_STATE_HOME（書けないときの退避先）
+# outputs:
+#   - file: $CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/<date>-rubric-update.md（同じ日は上書き。書けなければ退避先へ、どこにも書けなければ書かない。plugin のツリーには書かない）
+#   - stdout: --list-proposals のときだけ、置き場と提案の一覧の JSON（--help のときは usage）
+#   - stderr: 書いた先 / 読めなかった記録 / 書けなかった理由 / --list-proposals で project を推し量ったこと / 引数の誤り
+#   - exit: 0（hook を止めない。提案が要らないとき・書けないときも 0）/ 2（--list-proposals 以外の引数。hook は引数を渡さないので、hook の経路では返さない）
+# requires-python: ">=3.9"
+# dependencies: []
+# contexts: [D]
+# network: false
+# write-scope: output-dir（state の proposals/ の提案ドラフトだけ。plugin のツリーと git は触らない）
+# ///
 """aggregate-evals.py
 
 SessionEnd hook から発火し、plugins/harness-creator/EVALS.json を集計する。
 閾値超え変動 (連続 FAIL / 平均スコア低下) を検出したら
-run-skill-rubric-governance/proposals/ に rubric-update 提案ドラフトを書き出す。
+$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/ に rubric-update 提案ドラフトを書き出す。
 
 副作用境界:
-    - proposals/ ディレクトリへの書き込みのみ。git は触らない。
+    - state の proposals/ ディレクトリへの書き込みのみ。git は触らない。
+    - plugin のツリー (run-skill-rubric-governance/proposals/) には書かない。そこは手書きの
+      提案が tracked で残る置き場で、読むだけにする。書くと配布物に生成物が混ざり、
+      session を終えるたびに plugin の fingerprint が動く。
 
 exit_code 仕様 (Claude Code Hooks 準拠):
     0  非ブロック (正常 / 提案不要 / 提案書き込み成功)
-    2  明示拒否 (本 hook は使用しない)
+    2  明示拒否 (hook の経路では使わない。手で流したときの引数の誤りに argparse が返す)
     その他 非ブロック警告
 
 閾値:
@@ -23,6 +46,7 @@ exit_code 仕様 (Claude Code Hooks 準拠):
 
 from __future__ import annotations
 
+import argparse
 import datetime as _dt
 import json
 import os
@@ -53,6 +77,10 @@ _FRICTION_FINDINGS_MIN = 3  # 1 レコードの findings が 3 件以上 (score.
 # (投影の数が変わればまた壊れる)。
 _FRICTION_MIN_RECORDS = 2
 _FRICTION_RECENT_WINDOW = 6  # 苦戦密度の直近窓
+
+# 自動ドラフトの本文に必ず入る行。手書きの提案と分ける唯一の手がかりで、
+# scripts/build-plugin-release.py の GENERATED_PROPOSAL_MARKER と同じ文字列にする。
+_GENERATED_MARKER = "aggregate-evals.py により自動生成された"
 
 
 def _manifest_name(root: Path) -> str | None:
@@ -112,15 +140,40 @@ def _plugin_root() -> Path:
     return _hc_env_root() or Path(__file__).resolve().parents[3]
 
 
-def _state_fallback_root() -> Path:
-    """plugin-root が書込不能な install (read-only / 次回 update で消失) 用の退避先。
-
-    手本: notifier-check.py の `Path.home()/.cache/harness` (user 領域退避)。
-    優先順: $CLAUDE_PROJECT_DIR → $XDG_STATE_HOME → ~/.claude/state。
-    """
+def _project_state_root() -> Path | None:
+    """自動ドラフトの既定の置き場 (project の state)。$CLAUDE_PROJECT_DIR が無ければ None。"""
     project = os.environ.get("CLAUDE_PROJECT_DIR")
     if project:
         return Path(project) / ".claude" / "state" / "harness-creator"
+    return None
+
+
+def _inferred_project_state_roots() -> list[Path]:
+    """$CLAUDE_PROJECT_DIR が無いときに、project の state を推し量る。読む側だけで使う。
+
+    SessionEnd hook は $CLAUDE_PROJECT_DIR のある環境で動くので、自動ドラフトはその project の
+    state に書かれる。一方、Bash から手で --list-proposals を流すときは $CLAUDE_PROJECT_DIR が無い。
+    project は Claude Code を起動したディレクトリで、ふつうは cwd か、cwd を含む git の作業ツリーの
+    root (.git のあるディレクトリ。`git rev-parse --show-toplevel` と同じ) なので、両方を候補にする。
+    書く側には使わない。推し量った先に書くと、hook の書き先とずれたときに提案が散らばる。
+    """
+    if os.environ.get("CLAUDE_PROJECT_DIR"):
+        return []
+    try:
+        cwd = Path.cwd()
+    except OSError:
+        return []
+    toplevel = next((d for d in (cwd, *cwd.parents) if (d / ".git").exists()), None)
+    projects = dict.fromkeys(d for d in (cwd, toplevel) if d is not None)
+    return [d / ".claude" / "state" / "harness-creator" for d in projects]
+
+
+def _state_fallback_root() -> Path:
+    """project の state に書けないとき (CLAUDE_PROJECT_DIR 未設定・read-only) の退避先。
+
+    手本: notifier-check.py の `Path.home()/.cache/harness` (user 領域退避)。
+    優先順: $XDG_STATE_HOME → ~/.claude/state。
+    """
     xdg = os.environ.get("XDG_STATE_HOME")
     base = Path(xdg) if xdg else Path.home() / ".claude" / "state"
     return base / "harness-creator"
@@ -150,33 +203,75 @@ def _evals_path() -> Path:
     return _plugin_root() / "EVALS.json"
 
 
-def _proposals_dir() -> Path:
-    """rubric-update 提案ドラフトの書込先。env override > plugin-root (既定)。
+def _legacy_proposals_dir() -> Path:
+    """手書きの提案が tracked で残る従来の置き場 (plugin のツリーの中)。読むだけで書かない。"""
+    return _plugin_root() / "skills" / "run-skill-rubric-governance" / "proposals"
 
-    既定を plugin-root 配下に保つことで maintainer の読取フロー (proposals/ 直読み)
-    を壊さない。read-only install での fallback は呼び出し側 (main) が担う。
+
+def _proposals_dir() -> Path:
+    """rubric-update 提案ドラフトの第一の書込先。env の明示 > project の state。
+
+    $CLAUDE_PROJECT_DIR が無いときは user の state を返す。
+    read-only のときの退避は呼び出し側 (_candidate_proposals_dirs / main) が担う。
     """
     override = os.environ.get("HARNESS_CREATOR_PROPOSALS_DIR")
     if override:
         return Path(override).resolve()
-    return (
-        _plugin_root()
-        / "skills"
-        / "run-skill-rubric-governance"
-        / "proposals"
-    )
+    return (_project_state_root() or _state_fallback_root()) / "proposals"
+
+
+def _is_inside_plugin(d: Path) -> bool:
+    plugin = _plugin_root().resolve()
+    target = d.resolve()
+    return target == plugin or plugin in target.parents
 
 
 def _candidate_proposals_dirs() -> list[Path]:
-    """書込先候補を優先順で返す (3 段 fallback)。
+    """書込先候補を優先順で返す。
 
-    (a) 既定 = plugin-root 配下 proposals/ (dev 既存挙動・maintainer 読取互換)
-    (b) plugin-root が書込不能なら user state 領域へ退避
-    env override 明示時はそれを単独で使う。
+    (a) env HARNESS_CREATOR_PROPOSALS_DIR の明示。あればそれだけを使う
+    (b) $CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals
+    (c) 書けなければ user の state ($XDG_STATE_HOME か ~/.claude/state) へ退避
+    (b)(c) のうち plugin のツリーの中に落ちるものは外す。plugin のディレクトリを
+    cwd にして session を回すと $CLAUDE_PROJECT_DIR が plugin 自身を指し、(b) が
+    plugin の中になる。(a) は利用者の明示なので外さない。
     """
     if os.environ.get("HARNESS_CREATOR_PROPOSALS_DIR"):
         return [_proposals_dir()]
-    return [_proposals_dir(), _state_fallback_root() / "proposals"]
+    candidates = dict.fromkeys([_proposals_dir(), _state_fallback_root() / "proposals"])
+    return [d for d in candidates if not _is_inside_plugin(d)]
+
+
+def _proposal_read_dirs() -> list[Path]:
+    """提案を読む・数えるときに見る置き場。書込先の候補すべてと、従来の置き場。
+
+    自動ドラフトは書込先の候補のどれかに、手書きの提案は従来の置き場にある。
+    片方だけを見ると、もう片方の提案を見落とす。
+    $CLAUDE_PROJECT_DIR が無いと書込先の候補に project の state が入らないので、推し量った
+    project の state を先頭に足す。plugin のツリーの中に落ちるものは、書く側と同じく外す。
+    """
+    inferred = [r / "proposals" for r in _inferred_project_state_roots()]
+    inferred = [d for d in inferred if not _is_inside_plugin(d)]
+    return list(dict.fromkeys([*inferred, *_candidate_proposals_dirs(), _legacy_proposals_dir()]))
+
+
+def _is_generated_proposal(path: Path) -> bool:
+    """本文に生成器の marker 行があれば自動ドラフト。読めなければ手書き扱い。"""
+    try:
+        return _GENERATED_MARKER in path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+
+
+def _list_proposals() -> dict[str, Any]:
+    dirs = _proposal_read_dirs()
+    proposals = [
+        {"path": str(p), "generated": _is_generated_proposal(p)}
+        for d in dirs
+        if d.is_dir()
+        for p in sorted(d.glob("*.md"))
+    ]
+    return {"dirs": [str(d) for d in dirs], "proposals": proposals}
 
 
 def _date_of(ts: Any) -> str | None:
@@ -622,7 +717,7 @@ def _render_proposal(
         "",
         "## 備考",
         "",
-        "本ドラフトは aggregate-evals.py により自動生成された。PR 起票は別工程。",
+        f"本ドラフトは {_GENERATED_MARKER}。PR 起票は別工程。",
         "",
     ]
     return "\n".join(lines)
@@ -640,11 +735,28 @@ def _compute_summary(evals: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    # SessionEnd hook は引数を付けずに呼ぶ（hooks/hooks.json）。引数があれば手で流したとみなして argparse に渡す。
+    # 知らない引数や綴りの誤りは exit 2 で止める。hook の経路へ落とすと、一覧のつもりで提案を書いてしまう。
+    if argv:
+        ap = argparse.ArgumentParser(
+            allow_abbrev=False,
+            description="引数なしでは SessionEnd hook として評価を集計し、異常があれば提案ドラフトを書く。",
+        )
+        ap.add_argument("--list-proposals", action="store_true", required=True,
+                        help="書かずに、自動ドラフトと手書きの提案の両方の置き場を一覧する（JSON）")
+        ap.parse_args(argv)
+        listing = _list_proposals()
+        if not os.environ.get("CLAUDE_PROJECT_DIR"):
+            print("[aggregate-evals] CLAUDE_PROJECT_DIR が無いので、cwd と git の作業ツリーの root を "
+                  "project とみなして読んだ。見た置き場は dirs にある", file=sys.stderr)
+        print(json.dumps(listing, ensure_ascii=False, indent=2))
+        return 0
+
     # stdin は SessionEnd hook payload。本 script では使わないが drain しておく。
     try:
         sys.stdin.read()
-    except Exception:
+    except Exception:  # 捨てる payload なので、stdin が None・閉じている・decode できないのどれでも集計へ進む
         pass
 
     data = _load_evals()
@@ -663,7 +775,7 @@ def main() -> int:
     today = _dt.date.today().isoformat()
     filename = f"{today}-rubric-update.md"
 
-    # 3 段 fallback: 書込可能な最初の候補へ。全滅なら (c) silent no-op exit 0。
+    # 書込可能な最初の候補へ (_candidate_proposals_dirs の順)。全滅なら silent no-op exit 0。
     # 同日複数発火に備え、内容ハッシュではなく単純な upsert (上書き) でドラフトを更新。
     last_exc: OSError | None = None
     for out_dir in _candidate_proposals_dirs():
@@ -687,4 +799,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

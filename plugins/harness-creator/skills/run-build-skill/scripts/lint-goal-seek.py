@@ -3,7 +3,8 @@
 # name: lint-goal-seek
 # purpose: 実行系 Skill が固定手順ではなくゴールシーク (Goal+Checklist+Loop) で構成されているか検査する。
 # inputs:
-#   - argv: SKILL.md path(s) | --skills-dir <dir> | --self-test | -h/--help
+#   - argv: SKILL.md path(s) | --skills-dir <dir> [--baseline <json>] | --self-test | -h/--help
+#   - file: --baseline の JSON (既知の違反を (path, 規則) で固定した台帳。任意)
 # outputs:
 #   - stdout: OK status (--help は usage)
 #   - stderr: violation findings / WARN 助言 / 入力エラー
@@ -34,7 +35,17 @@
     どれかが欠けると violation。ファイル名だけの言及は SKILL.md から正本へ届かないので宣言ではない。
     コマンドの検査は静的で、`if false; then` の中に置いた行も実行行とみなす。
 
-Exit 0 = ok, 1 = violation, 2 = usage error・読めない入力 (不在・ディレクトリ・非 UTF-8)。
+配線系の 3 warning は既存スキルの grace だが、grace は新規スキルにも効くので
+`GRANDFATHERED_WARNINGS` に登録された (path, kind) 以外は violation にする
+(未登録の新規不足と、返済済みのまま残った登録の両方向)。
+
+`--baseline <json>` は CI scope 外 (harness-creator 以外の plugin) に残る既知の違反を
+(repo 相対 path, 規則) で固定する。載った違反は猶予し、載っていない違反と、返済済み・
+消滅済みのまま残った登録を violation にする (GRANDFATHERED_WARNINGS と同じ両方向)。
+載せられる規則は BASELINE_RULES だけで、それ以外の違反は新規として常に落ちる。
+
+Exit 0 = ok (登録済み grace warning のみ), 1 = violation,
+2 = usage error・読めない入力 (不在・ディレクトリ・非 UTF-8)。
 -h / --help は usage を stdout に出して 0。
 """
 from __future__ import annotations
@@ -593,6 +604,268 @@ def check_task_graph_variant() -> list[str]:
     return findings
 
 
+# --- 配線 warning の ratchet -------------------------------------------------
+# 配線系 3 warning は「既存スキルの grace」として warning に置かれた。grace は新規
+# スキルにも同じだけ効くので、検出されているのに rc に出ない項目が増え続ける。
+# 残っているものを (repo 相対 path, kind) で固定し、固定外が出たら violation にする。
+#
+# 数ではなく「何が残っているか」で固定する (lint-skill-runtime-profiles.py の
+# LEGACY_LOOP_BASELINE_PATHS と同型)。件数 baseline は「別の新規不足が枠内なら
+# 素通りする」ため、総量しか守れない。
+#
+# この台帳は検査対象に入らない: 走査対象は collect_targets の `**/SKILL.md` だけで、
+# 本ファイルは SKILL.md ではない。登録を足して検査が緑に寄る経路は無い。
+WARNING_KIND_WIRING_SECTION = "wiring-section"
+WARNING_KIND_INTERMEDIATE = "intermediate-tokens"
+WARNING_KIND_VERIFICATION = "verification-tokens"
+WARNING_KINDS = (
+    WARNING_KIND_WIRING_SECTION,
+    WARNING_KIND_INTERMEDIATE,
+    WARNING_KIND_VERIFICATION,
+)
+# grace 未登録で violation に上げた warning の印。baseline_rule() はこの印で配線 kind へ戻す。
+GRACE_UNREGISTERED_MARK = "grace 未登録"
+# 実測 2026-10-10 21:46:10 時点で `--skills-dir plugins/harness-creator/skills`
+# (CI が回す scope・SKILL.md 32 本) が出していた warning 37 件。返済したら削る。
+GRANDFATHERED_WARNINGS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-goal-seek/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-migrate-audit/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-migrate-audit/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-migrate-audit/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-live-trial/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-live-trial/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-live-trial/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-rename/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-rename/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-rename/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-rubric-governance/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-rubric-governance/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-rubric-governance/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/run-skill-update-notifier/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/run-skill-update-notifier/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/run-skill-update-notifier/SKILL.md", "wiring-section"),
+        ("plugins/harness-creator/skills/wrap-git-commit-safe/SKILL.md", "intermediate-tokens"),
+        ("plugins/harness-creator/skills/wrap-git-commit-safe/SKILL.md", "verification-tokens"),
+        ("plugins/harness-creator/skills/wrap-git-commit-safe/SKILL.md", "wiring-section"),
+    }
+)
+_REPO_ROOT = Path(__file__).resolve().parents[5]
+
+
+def warning_kind(message: str) -> str | None:
+    """配線 warning を ratchet の kind へ分類する。未知なら None。
+
+    None は呼び出し側で violation にする (fail-closed)。文面を変えた warning が
+    黙って grace 側へ落ちると、ratchet の分母 (登録 37 件) が嘘になる。
+    """
+    if f"'{WIRING_HEADING}' が無い" in message:
+        return WARNING_KIND_WIRING_SECTION
+    if "中間成果物アンカー必須トークン" in message:
+        return WARNING_KIND_INTERMEDIATE
+    if "機械検証 bash 必須トークン" in message:
+        return WARNING_KIND_VERIFICATION
+    return None
+
+
+def repo_relative(path: Path) -> str | None:
+    """repo 相対 path を "/" 区切りで返す。repo 外なら None。
+
+    repo 外 (run-build-skill が $OUT_BASE へ生成した中間物・テストの tmp fixture) は
+    台帳へ登録できる同一性を持たないので ratchet の対象外にする。repo 内へ入った
+    時点で登録の有無が問われる。
+    """
+    try:
+        return path.resolve().relative_to(_REPO_ROOT).as_posix()
+    except ValueError:
+        return None
+
+
+def stale_registrations(
+    registered: frozenset[tuple[str, str]],
+    seen: set[tuple[str, str]],
+    scanned: set[str],
+    scope_prefix: str | None,
+) -> list[str]:
+    """走査したのに出なかった登録と、走査範囲内に path が実在しない登録を返す。
+
+    `scanned` は今回走査した repo 相対 path。`scope_prefix` は `--skills-dir` 実行時の
+    走査ディレクトリ (repo 相対)。単一ファイル実行や repo 外ディレクトリでは None で、
+    その場合は「登録 path が走査されなかった」を返済の証拠にしない (絞り込み実行では
+    範囲外の登録が常に未走査になり、従うと ratchet を壊す方向へ誘導するため。
+    lint-skill-runtime-profiles.py の `_stale_legacy_paths(full_scope=...)` と同型)。
+    """
+    stale = sorted(
+        f"{rel} [{kind}]"
+        for rel, kind in registered
+        if rel in scanned and (rel, kind) not in seen
+    )
+    if scope_prefix is not None:
+        # path 単位の判定なので kind の数だけ重複しないよう set で畳む。
+        stale += sorted(
+            {
+                f"{rel} [登録 path が走査範囲内に実在しない]"
+                for rel, _kind in registered
+                if rel.startswith(scope_prefix + "/") and rel not in scanned
+            }
+        )
+    return stale
+
+
+def check_warning_ratchet(
+    warned: list[tuple[Path, str]],
+    scanned: set[str],
+    scope_prefix: str | None,
+) -> list[tuple[Path | None, str]]:
+    """grace 未登録の配線 warning と、返済済みなのに残った登録を violation にする。
+
+    violation は (由来の SKILL.md, 文面) で返す。path は baseline 照合の鍵になり、
+    特定の SKILL.md に帰さない違反 (返済済み登録の一覧) は None。
+    """
+    findings: list[tuple[Path | None, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for path, message in warned:
+        rel = repo_relative(path)
+        if rel is None:
+            continue
+        kind = warning_kind(message)
+        if kind is None:
+            findings.append((path,
+                f"{path}: internal: 配線 warning を ratchet の kind へ分類できない "
+                f"(既知 kind={list(WARNING_KINDS)})。warning の文面を変えたなら "
+                "warning_kind() も更新すること: " + message
+            ))
+            continue
+        seen.add((rel, kind))
+        if (rel, kind) not in GRANDFATHERED_WARNINGS:
+            findings.append((path,
+                f"{message} [{GRACE_UNREGISTERED_MARK} (kind={kind})。新規スキルは with-goal-seek "
+                "配線を省略できない。既存負債なら GRANDFATHERED_WARNINGS へ根拠付きで登録]"
+            ))
+    stale = stale_registrations(GRANDFATHERED_WARNINGS, seen, scanned, scope_prefix)
+    if stale:
+        findings.append((None,
+            "grace 登録が返済済み/消滅済みのまま残っている "
+            f"({len(stale)} 件)。GRANDFATHERED_WARNINGS から削って ratchet を締めること "
+            "(片方向 ratchet になると同じ path が将来黙って再免除される): "
+            + ", ".join(stale)
+        ))
+    return findings
+
+
+# --- 全 plugin の既知違反 baseline -------------------------------------------
+# CI scope (harness-creator) の外には、GRANDFATHERED_WARNINGS で猶予できない違反
+# (kind の無い構造違反と、grace 未登録の配線 warning) が残っている。SKILL.md を直して
+# 返すと各スキルの content-review verdict (SKILL.md の sha256 を持つ) が一斉に無効に
+# なるので、返済までは (repo 相対 path, 規則) で固定し、固定外だけを落とす。
+#
+# 載せられる規則は、固定した時点で負債が実在した 6 種だけにする。anchor 参照の root 外
+# 解決や task-graph のトークン欠落などは、今ある負債ではないので載せられず常に落ちる。
+FINDING_RULE_GOAL_SEEK_HEADING = "goal-seek-heading"
+FINDING_RULE_FIXED_PROCEDURE = "fixed-procedure"
+FINDING_RULE_STEP_OUTSIDE_CATALOG = "step-outside-catalog"
+BASELINE_RULES = (
+    FINDING_RULE_GOAL_SEEK_HEADING,
+    FINDING_RULE_FIXED_PROCEDURE,
+    FINDING_RULE_STEP_OUTSIDE_CATALOG,
+) + WARNING_KINDS
+
+
+def baseline_rule(message: str) -> str | None:
+    """violation を baseline の規則へ分類する。載せられない違反なら None。
+
+    warning_kind() と同じく文面で見分ける。None の違反は baseline に載っていても
+    猶予しない (fail-closed): 文面を変えた違反が黙って猶予側へ落ちないようにする。
+    """
+    if GRACE_UNREGISTERED_MARK in message:
+        return warning_kind(message)
+    if f"'{GOAL_SEEK_HEADING}' 見出しがない" in message:
+        return FINDING_RULE_GOAL_SEEK_HEADING
+    if "固定 '## 手順' セクションが残存" in message:
+        return FINDING_RULE_FIXED_PROCEDURE
+    if "局面カタログ見出しセクション外で固定手順の連番" in message:
+        return FINDING_RULE_STEP_OUTSIDE_CATALOG
+    return None
+
+
+def load_baseline(path: Path) -> frozenset[tuple[str, str]]:
+    """baseline JSON を (repo 相対 path, 規則) の集合として読む。形が崩れていれば ValueError。
+
+    形は {"debt": {"<repo 相対 SKILL.md>": ["<規則>", ...]}}。行番号は持たない
+    (本文の編集で行がずれても台帳が動かないように)。
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"baseline を読めない: {path}: {exc}") from exc
+    debt = data.get("debt") if isinstance(data, dict) else None
+    if not isinstance(debt, dict):
+        raise ValueError(f"baseline に debt オブジェクトが無い: {path}")
+    entries: set[tuple[str, str]] = set()
+    for rel, rules in debt.items():
+        if rel.startswith("/") or ".." in rel.split("/") or not rel.endswith("/SKILL.md"):
+            raise ValueError(f"baseline の path は repo 相対の SKILL.md にすること: {rel}")
+        if not isinstance(rules, list) or not rules:
+            raise ValueError(f"baseline の規則は空でない配列にすること: {rel}")
+        for rule in rules:
+            if rule not in BASELINE_RULES:
+                raise ValueError(
+                    f"baseline に載せられない規則: {rel} [{rule}] (載せられる規則={list(BASELINE_RULES)})")
+            if (rel, rule) in entries:
+                raise ValueError(f"baseline の登録が重複している: {rel} [{rule}]")
+            entries.add((rel, rule))
+    return frozenset(entries)
+
+
+def apply_baseline(
+    violations: list[tuple[Path | None, str]],
+    baseline: frozenset[tuple[str, str]],
+    scanned: set[str],
+    scope_prefix: str | None,
+) -> tuple[list[str], int]:
+    """baseline に載った違反を猶予し、(残る violation, 猶予した件数) を返す。
+
+    返済済み・消滅済みのまま残った登録も violation にする。登録を消し忘れると、
+    同じ path の同じ規則が将来黙って再免除されるため (ratchet を一方向に保つ)。
+    """
+    remaining: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    suppressed = 0
+    for path, message in violations:
+        rel = repo_relative(path) if path is not None else None
+        rule = baseline_rule(message)
+        if rel is not None and rule is not None and (rel, rule) in baseline:
+            seen.add((rel, rule))
+            suppressed += 1
+        else:
+            remaining.append(message)
+    stale = stale_registrations(baseline, seen, scanned, scope_prefix)
+    if stale:
+        remaining.append(
+            f"baseline の登録が返済済み/消滅済みのまま残っている ({len(stale)} 件)。"
+            "baseline から削って ratchet を締めること: " + ", ".join(stale)
+        )
+    return remaining, suppressed
+
+
 def collect_targets(argv: list[str]) -> list[Path]:
     if not argv:
         return []
@@ -600,11 +873,29 @@ def collect_targets(argv: list[str]) -> list[Path]:
         if len(argv) < 2:
             return []
         d = Path(argv[1])
-        return sorted(d.glob("**/SKILL.md")) if d.is_dir() else []
+        if not d.is_dir():
+            return []
+        # fixtures/ の SKILL.md は plugin のテストが読む受入・却下の見本で、配布するスキル
+        # ではない (例: guide-doc-generator/tests/*/fixtures/accept/skills/*/SKILL.md)。
+        # 拾うと見本の違反を負債として数えるので外す。走査起点からの相対 path で見るので、
+        # fixtures ディレクトリ自体を --skills-dir に渡せば検査できる。
+        return sorted(p for p in d.glob("**/SKILL.md")
+                      if "fixtures" not in p.relative_to(d).parts)
     return [Path(p) for p in argv]
 
 
-USAGE = "usage: lint-goal-seek.py <SKILL.md> | --skills-dir <dir> | --self-test\n"
+def split_baseline_arg(argv: list[str]) -> tuple[list[str], str | None]:
+    """argv から `--baseline <json>` を抜き出す。値が無ければ ValueError。"""
+    if "--baseline" not in argv:
+        return argv, None
+    i = argv.index("--baseline")
+    if i + 1 >= len(argv) or argv[i + 1].startswith("--"):
+        raise ValueError("--baseline には JSON の path が要る")
+    return argv[:i] + argv[i + 2:], argv[i + 1]
+
+
+USAGE = ("usage: lint-goal-seek.py <SKILL.md> | --skills-dir <dir> [--baseline <json>]"
+         " | --self-test\n")
 
 
 def main(argv: list[str]) -> int:
@@ -620,6 +911,12 @@ def main(argv: list[str]) -> int:
         sys.stdout.write("OK: goal-seek 既定値 SSOT 整合 (engine/fork/max_loops drift なし)\n")
         return 0
 
+    try:
+        argv, baseline_arg = split_baseline_arg(argv)
+        baseline = load_baseline(Path(baseline_arg)) if baseline_arg else None
+    except ValueError as exc:
+        sys.stderr.write(f"error: {exc}\n{USAGE}")
+        return 2
     targets = collect_targets(argv)
     if not targets:
         sys.stderr.write(USAGE)
@@ -632,22 +929,39 @@ def main(argv: list[str]) -> int:
             sys.stderr.write(f"error: 入力を読めない: {path}: {exc}\n")
             return 2
 
-    all_findings: list[str] = []
+    violations: list[tuple[Path | None, str]] = []
     all_warnings: list[str] = []
+    warned: list[tuple[Path, str]] = []
     for path in targets:
         findings, warnings = lint_file(path)
-        all_findings.extend(findings)
+        violations.extend((path, f) for f in findings)
         all_warnings.extend(warnings)
+        warned.extend((path, w) for w in warnings)
 
     for w in all_warnings:
         sys.stderr.write(f"WARN: {w}\n")
+
+    scanned = {rel for rel in (repo_relative(p) for p in targets) if rel is not None}
+    scope_prefix = (
+        repo_relative(Path(argv[1]))
+        if argv[0] == "--skills-dir" and len(argv) >= 2
+        else None
+    )
+    violations.extend(check_warning_ratchet(warned, scanned, scope_prefix))
+    if baseline is None:
+        all_findings, suppressed = [message for _path, message in violations], 0
+    else:
+        all_findings, suppressed = apply_baseline(violations, baseline, scanned, scope_prefix)
 
     if all_findings:
         for f in all_findings:
             sys.stderr.write(f + "\n")
         return 1
 
-    suffix = f" ({len(all_warnings)} warning(s))" if all_warnings else ""
+    notes = [f"{len(all_warnings)} warning(s)"] if all_warnings else []
+    if baseline is not None:
+        notes.append(f"baseline で猶予した既知違反 {suppressed} 件")
+    suffix = f" ({', '.join(notes)})" if notes else ""
     sys.stdout.write(
         f"OK: {len(targets)} skill file(s) passed goal-seek lint{suffix}\n"
     )
