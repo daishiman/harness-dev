@@ -1,0 +1,23 @@
+{
+  "label": "status2",
+  "retry_of": "20261012T0650-pr85",
+  "evaluator_agent_id": "a21597227380250d9",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/status2/ws/plugins/dev-graph/skills/run-dev-graph-status",
+  "closure_sha_at_launch": "b1a7990feff8f6da88276eb4851c67008fbc23ca9366a492251e4704d355efa3",
+  "closure_sha_tested_copy": "b1a7990feff8f6da88276eb4851c67008fbc23ca9366a492251e4704d355efa3",
+  "closure_sha_wtpy_at_verdict": "b1a7990feff8f6da88276eb4851c67008fbc23ca9366a492251e4704d355efa3",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 1,
+    "occurrences": 2,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "読取り専用であるはずの status skill が、対象 repo に eval-log/run-dev-graph-status-*/ (goal-spec・progress・intermediate.jsonl) を書くよう求めている。この skill の allowed-tools に Write は無く、prompts/R3-status.md の『Write/Edit/external mutationを呼ばず』とも、artifact-delivery.json の guard no-target-mutation とも矛盾する。さらに OUT2 の digest は graph.json しか見ないので、この書込みは検出されない。再現: 素の repo で status を standard で 1 回実行し、git status を見ると eval-log/ が未追跡として増えている。",
+    "standard を選んだときに semantic evaluator として何を使うのか (どの Agent を何本起動するか、Agent が必須かどうか) が SKILL.md と prompts に定義されていない。goal-seek の fork は『未達 responsibility がある場合』と読める書き方になっている。同じ配線のまま、前回の run (status) は evaluator Agent を 3 本起動し、今回の run (status2) は 0 本で済ませた。再現: 同じ task.md で standard を指定して 2 回実行し、Agent の呼出し回数を比べる。",
+    "完了条件の『全 checklist と feedback_contract.criteria が PASS』が、1 回の実行の中では満たせない項目を毎回の実行に求めている。live-trial/test の outer criteria と、該当なし経路 (空 result) の実行がそれに当たる。そのため session は NOT_EXERCISED を残したまま完了にするか、『対象外』と言い換えるしかない。再現: --id に実在する node を 1 つ指定して実行し、progress の checklist を見ると、該当なし経路が NOT_EXERCISED のまま残る。",
+    "effect が conversation-output の skill なのに、pre-choice の『現物 path・digest・開き方を提示』で何を提示するのかがはっきりしない。会話への出力そのものなのか、tool の結果の中にあれば足りるのかが決まっていないので、提示したという申告と実際の出力の順序がずれやすい (185 行目で提示したと申告し、実際の提示は 208 行目)。再現: standard の事前指定つきで実行し、選択を記録する前に report の本文が assistant の text として出ているかを transcript で確認する。"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "Skill を起動したのは transcript L35 で、dev-graph:run-dev-graph-schedule を呼んでいる。prompt (R1/R2/R3) を読んだのは L45 で、schedule の出力 (L80-81) より前にある。",
+    "schedule-graph.py の出力 (transcript L80-81) では、ready-set の tasks が [task-api-orders, task-docs-runbook]、features が []、batches が [[task-api-orders, task-docs-runbook]] だった。成果物 fx/eval-log/run-dev-graph-schedule-result.json の ready_set と batches も同じ内容である。",
+    "fx/.dev-graph/state/graph.json と fx/.git/dev-graph/leases.json を、私の側で読取りだけの python で独立に計算し直した。結果は ['task-api-orders', 'task-docs-runbook'] で、成果物と一致した。除外の理由は次のとおり。task-api-users は lease 中 (state=claimed)。task-api-users-cache は src/api/users/ が lease された scope と重なる。task-cache-warmup は、推移的な依存 base-auth→docs-runbook がまだ active。task-api-users-e2e は依存が未完了。task-release-gate は blocked。draft の 4 件 (draft-idea、unconfirmed-migration、eval-failed-report、readiness-incomplete-ui) は、confirmation・evaluation・readiness のどれかが pass していない。",
+    "graph_edge_prep で orchestrator が置いた罠を正しく扱っている。collect/fixture-provenance.json の purpose は『task-cache-warmup は直接の依存 base-auth が done でも ready に入らない』ことの確認で、被験は推移的な依存を理由に task-cache-warmup を除外した (L80-81、L102-108)。",
+    "batch の中で resource_scope が重ならない。task-api-orders(src/api/orders/) と task-docs-runbook(docs/runbook/) の重なりを計算し直すと False だった。assignment_hints の suggested_branch と claim_command はどちらも一意で (True/True)、branch は devgraph/<id> の公開形式になっている。",
+    "feature と task を分けて出力している。features=[] で、13 node はすべて artifact_kind=task である。",
+    "C17 の dev-graph-parallel-safety-verifier を実際に起動した (transcript L122 以降、L124)。subagent の transcript a06fb3ece032c48d8 で ready-set を独立に計算し直し、PASS を返している。",
+    "artifact_delivery の順序を守っている。pre-choice の成果物を提示したのが L116、choice=standard を記録したのが L117 で、そのあとに Agent を起動している (L122 以降)。choice の前に subagent は無い。",
+    "goal-seek の記録 (goal-spec.json、progress.json、intermediate.jsonl) を fx/eval-log の下に残している (L138、L155)。各周回の後の検査も L173-177 と L185-186 で走らせている。",
+    "read-only の制約を守っている。fx の graph.json の sha256 は 2dbfcc8b…、leases.json は 438733a1… で、どちらも lease 準備の後の値 (fixture-provenance の lease_prep) から変わっていない。config.json (4ff29a6f…) と init-receipt.json (b09764bc…) も変わっていない。graph を書いた tool 呼出しは無い。",
+    "collect/guard.jsonl は 41 行で、deny は 0 件。呼出しの内訳は Skill 1、Agent 4 (と最後の noop 1)、Write 1 で、Write の対象は run の dir の中の status.json だけ。workdir/check-post.json では bytecode の増加が無く、被験 skill の閉包は d90fa4d1… のまま変わっていない。外に増えたファイルは orchestrator の stub のログだけである。",
+    "環境の失敗は回避せずに報告している。bd の stub が rc=1 になったとき (L93-94)、回避策を作らなかった。tracker_binding はすべて none なので、ready は local graph から算出した (L65-67、L76-77)。C17 で _common の import が失敗したことも、そのまま記録している (L189)。"
+  ],
+  "skill_defects": [
+    "scripts/schedule-graph.py には --max-parallel の引数が無い。argparse にあるのは --graph、--ready-source、--ready-json、--leases だけである。さらに batches() は貪欲な first-fit で、1 batch の件数に上限を持たない。max_parallel を守るかどうかは、LLM が出力を整形するときに頼っている。再現の手順: resource_scope が互いに重ならず、依存も満たした active・confirmed・pass・complete の task を 5 件以上持つ graph を用意し、schedule-graph.py --graph <g> --leases <l> を実行する。すると 1 batch に全件が入り、config の max_parallel を超える。",
+    "scripts/schedule-graph.py は lease が active かどうかを state not in {released, expired} だけで決めており、expires_at を見ていない。再現の手順: leases.json に state=claimed で、expires_at が過去 (例: 2026-01-01T00:00:00Z) の lease を置いて実行する。その node と、scope が重なる node が ready から外れ続ける。安全側に倒れてはいるが、推薦が漏れる。",
+    "SKILL.md の手順 2 にある『beads binding のとき bd ready を参照』の文言は、config の execution_tracker.mode のことか、node ごとの tracker_binding のことか、読み分けられない。今回の fixture では両者が食い違っていた。被験は node 単位と読んだ (transcript L65-67)。この読みは execution-tracker-contract.md と整合するが、SKILL.md の本文だけでは決まらない。再現の手順: config の mode=beads で、全 node の tracker_binding=none の fixture で skill を回すと、bd ready を呼ぶかどうかの判断が実行ごとに揺れる余地がある。"
+  ],
+  "evaluator_agent_id": "a021fe77f31686f24"
+}

@@ -4,52 +4,54 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
     "component_id": "C18",
-    "skill_md_sha256": "02e267240200b0c8bccacde08d55cedeeb26010a01c887143b6e0cdaf8edb042"
+    "skill_md_sha256": "2313bb65186704752171dc8324b6e31585f8b4a696f07e8d8f6effcc213be40f"
   },
-  "verdict": "FAIL",
-  "reviewer": "/root/independent_review-current-cycle3",
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-pr85",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
     "IN1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c11_uses_canonical_schema_and_frontmatter_path_contract",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/extract-graph-status.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/tests/test_acceptance_gaps_a2.py"
       ],
-      "observed": "Independent current cycle3 assessment of validate-graph-schema.py で読み取ったグラフストアの検索結果に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する: Current C11 canonical-key/schema tests support validation, but do not execute current status/search rendering against graph status/closed_at/dependencies. Planned status target was not booted; full result-consistency criterion is unproven. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "extract-graph-status.py（network false、write-scope none）は、graph の bytes を1回だけ読み、その同じ bytes を C11 の validate に通す（L135-136）。missing_keys（L87-）は、report の必須キーの欠落を node ごとに挙げる。violation・欠落・bytes の変化のどれかが1件でもあれば、rows を空にして exit 1 で返す（L141-）。rows を返すのは、validation が pass で欠落が0件のときだけ。行の値は graph の値をそのまま写し、closed_at も推測しない。test_in1_status_rows_carry_every_column_with_missing_keys_0_and_follow_the_c02_state は、C02 だけで作った graph で全列がそろい、欠落が0件で、C02 の状態の変化に rows が従うことを確かめる。test_in1_missing_key_dangling_dependency_and_outside_path_fail_with_diagnostics_and_no_rows は、キーの欠落・参照切れ・repo の外のパスで、診断を返して rows が0件になることを確かめる。今回、test_acceptance_gaps_a2.py の StatusReadOnlyTest 3件（in1 2件と out2 1件）を自分で回し、すべて PASS。scratch の再現 test_c18_repro.py（repo には置いていない）4件も自分で回し、すべて PASS。再現では、trial が読んだ graph（sha256 57f1cf37…）を写して起こし、row が graph の値と一致すること、graph を変えると row も変わること、キーを1つ消すと exit 1・rows 0 になることを確かめた。live trial 20261012T2229-pr85 の249行でも、exit 0・validation pass・violation 0・missing_required_keys 空。"
     },
     "OUT1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/final-replay-report.json",
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/sandbox-viability-probe.json"
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/goal-verdict.json",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/task.md",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/trial-note.json",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/subagent-transcripts/agent-a4c40d9184f069c38.jsonl",
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/out/status.json",
+        "plugins/dev-graph/scripts/extract-graph-status.py",
+        "plugins/dev-graph/tests/test_acceptance_gaps_a2.py"
       ],
-      "observed": "NOT_EXECUTED / current required live acceptance is unproven. Individual target was NOT booted because mandatory machine containment prerequisite failed; no fabricated individual launch failure/model/transcript. Current canonical BLOCKED metadata exists but is not an executed live goal; live_trial_verdict_ref intentionally omitted. Planned scenario_id identifies the admitted task only. Fresh acceptance FAIL, not a current source implementation defect diagnosis or old PASS refresh.",
-      "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-contained-v3"
+      "observed": "live trial 20261012T2229-pr85（retry_of 20261012T1810-pr85）の verdict は PASS。tier live、downgrade なし、goal_verdict PASS・blockers 0、overall は4項目とも PASS。skill_dir_tree_sha 244ed98a… は、今の behavior closure の digest と一致した。transcript（289行）の sha256 ae2090df… は verdict の値と一致した。この trial では、被験が init と node（C02 の単一 writer）で graph を作り、task-lt-task-001 を closed にしてから、status を起動している（226行）。243-249行で、被験は extract-graph-status.py --id task-lt-task-001 を起こし、exit 0 を得た。validation pass・violation 0・missing_required_keys 空・read_only.changed 空（tracked 5件）。row は status closed、closed_at 2026-10-12T13:36:16.173108Z、depends_on [task-lt-task-dep-a, task-lt-task-dep-b]、dependents []。graph（sha256 57f1cf37…、revision 2、node 3件）の実値と一致することを、自分で照合した。282行以降の report の本文は、この stdout をそのまま載せたもの。SKILL.md L129 のとおり、評価役の Agent（agent-a4c40d9184f069c38）を起こし、評価役は field ごとの一致と、該当なしの検索が result empty・exit 0 になることを確かめて PASS を返した。254-257行で、eval-log を除く fixture の33ファイルの sha256 が前後で同じ（TREE_UNCHANGED）。今回、test_acceptance_gaps_a2.py の StatusReadOnlyTest 3件（in1 2件と out2 1件）を自分で回し、すべて PASS。scratch の再現 test_c18_repro.py（repo には置いていない）4件も自分で回し、すべて PASS。残りの穴：(1) report の文を LLM が rows から写すことは、機械で照合していない（今回はそのまま載せていた）。(2) goal-seek の配線（SKILL.md L127・L130）が、caller repo の eval-log/ に goal-spec・progress・intermediate を書く。description の「副作用なしで確認」と食い違う。extract-graph-status.py の read_only の検査は、この書込みを追わない（trial の評価者が指摘）。(3) SKILL.md L131 は、skill の完了に外ループの OUT1・OUT2 と content-review の PASS を求めるが、skill の中で回す手順が無い。被験は progress に、回していない OUT1・OUT2・content_review を PASS と自己申告で書いた（274行）。",
+      "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20261012T2229-pr85/verdict.json"
     },
     "OUT2": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c10_invokes_c11_then_still_rejects_direct_mutation",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/extract-graph-status.py",
+        "plugins/dev-graph/tests/test_acceptance_gaps_a2.py"
       ],
-      "observed": "Independent current cycle3 assessment of 本 skill 実行後もグラフストアと GitHub Issue 側に一切の変更が生じない (read-only で副作用なし) ことを受入テストが確認する: Current direct-mutation guard tests show guards reject unauthorized changes, but do not establish that this status skill execution leaves both graph and Issue unchanged. The actual current status target was unattempted; no read-only execution claim. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "extract-graph-status.py は、graph・config・content の bytes の digest を、読む前（L135）と後（L139）で取って比べる。変化があれば rows を返さず exit 1 にする。writer・gh・bd は呼ばない（write-scope none、network false）。test_out2_status_closure_writes_nothing_and_calls_no_github_or_beads_even_when_it_fails は、repo を書込み不可にしたうえで、status の script の閉包を、成功（exit 0）と失敗（参照切れで exit 1）の両方で起こす。read_only.changed が空で、graph・config・content・.git の bytes と mtime が前後で同じで、gh と bd の spy に呼び出しが0件で、Issue の linkage も変わらないことを確かめる。閉包の3本の script の header が network false・write-scope none であることも確かめる。今回、test_acceptance_gaps_a2.py の StatusReadOnlyTest 3件（in1 2件と out2 1件）を自分で回し、すべて PASS。scratch の再現 test_c18_repro.py（repo には置いていない）4件も自分で回し、すべて PASS。再現の test_frozen_tree_is_unchanged_and_no_gh_bd も、trial の fixture の写しで同じことを確かめた。live trial 20261012T2229-pr85 でも read_only.changed は空、graph と config の sha256 は前後で同じで、guard.jsonl に gh・bd の呼び出しは無い。判定の読み方：OUT2 の対象は「グラフストアと GitHub Issue 側」と読んだ。その範囲では、決定論の script と test が無変更を保証している。残りの穴：(1) goal-seek の配線（SKILL.md L127・L130）が、caller repo の eval-log/ に3ファイルを書く。graph store でも GitHub でもないが、括弧の「read-only で副作用なし」と description を repo 全体の約束と読むなら、食い違う。記録先を repo の外にするか、例外として明記する必要がある。(2) LLM が writer・gh・bd を別に呼ばないことは、機械では強制されない（allowed-tools と R の文に頼る）。(3) component-inventory.json の C18 の deterministic_checks に extract-graph-status.py が無い（validate-graph-schema.py だけ）。"
     }
   }
 }

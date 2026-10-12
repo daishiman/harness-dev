@@ -2,20 +2,20 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "4ee7c32edf22048862e2191af0c0bf2ceb357e949b24f39dc28e7e740bddf1d1"
+    "skill_md_sha256": "61c26207f905da89da54ef4041971237cfcda91f15a6f725c3174e00577b6996"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-12T10:25:46Z",
+  "iterations": 2,
   "findings_summary": {
     "contradiction": 0,
     "omission": 1,
-    "inconsistency": 1,
-    "dependency_break": 0,
+    "inconsistency": 0,
+    "dependency_break": 1,
     "smell": 1
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T13:56:54Z",
-  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -28,19 +28,18 @@
       "prompt_quality"
     ],
     "positive_feedback": [
-      "4条件: Bash の実行指示 (SKILL.md:144・146・148・154、prompts/R1-score.md:70) はすべて `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` で始まる。監査は Task で3つの sub-agent へ fork し、入力は Read で読むので、Bash を python3 に絞っても評価の経路は保たれる。",
-      "設計の筋: 6観点の総合判定を aggregate-completeness.py の fail-closed 集約で再導出でき (prompts/R1-score.md:37)、C06 の sub-input も `--hearing --state` で決定論的に導く。意味判定は監査 agent、機械判定は python3 の script という分担が明確で、絞り込みと合っている。",
-      "criteria: feedback_contract は skip_reason だけなので、checklist の6評価観点 (foundation_trace・decision_guidance・matrix_coverage・design_knowledge_reflection・doc_freshness・prompt_quality) を評価した。どの観点も python3 の gate か監査 agent の結果で判定でき、差分の影響を受けない。"
+      "依頼7の1回目に挙げた low 1・3・4 が直った。low 1: 完了条件 L71 と R1 5.3 に `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` の exit 0 が入り、R1 2.4・Step 4 L159 と一致する。low 3: R1 4.3 の保存先が `<absolute path>` から `<保存先>` (引数 output の値。相対なら cwd から解決) になり、C19 が渡す repo 相対の `--output` と矛盾しない。low 4 (C の evaluator の側): Step 4 L156 と R1 2.3 に、相対の spec_dir と output を cwd から解決し、入力の読み込み・書き出し・`--report --spec-dir` の検証が同じ cwd を基準にすると書かれ、aggregate-completeness.py の docstring (L202「相対パスは cwd から解決し」) と一致する。",
+      "spec_dir の契約が、report の例 (L105)・Step 4 (L157-159)・Gotcha 6・R1 2.4 と、決定論の照合 (spec_dir_violations: report に spec_dir が無い・同じ dir に解決しないときは spec_dir_mismatch で exit 1、存在しない --spec-dir は exit 2、--report なしの --spec-dir は usage エラー) でそろい、test 4件を含む 162 件が通る。--spec-dir を付けないときの aggregate の出力は前と同じで、後方互換を保つ。guard に止められたときに spec_dir の値を変えて回避することを Gotcha 6 と R1 2.4 が禁じ、保存先を system-spec/ の外の literal にして書き直す道を示す。guard の Bash の判定 (書込み先が静的に読め、.md でも spec-state.json でもなければ曖昧と扱わない) は Step 4 L158 の説明と合う。"
     ],
     "negative_feedback": [
-      "[low / omission] allowed-tools は Read・Bash(python3 *)・Task で Write を持たないが、prompts/R2-delegate.md:47 は C06 の結果 JSON を `hearing-audit.json` へ『Bash で保存』し、prompts/R1-score.md:77 は評価レポートの書き出しも Bash で行うとしている。保存の手段が書かれておらず、Bash を python3 に絞った今は、自然に使いがちな `cat >` やリダイレクトが許可の確認になる。python3 で書けば済むので壊れてはいない。直し方の案: aggregate-completeness.py に stdin から受けて無改変で保存するオプション (例: `--save-hearing <path>`) を足して R2-delegate 2.4 に python3 の形で書く。または allowed-tools に Write を足し、保存は Write で行うと書く。",
-      "[low / smell・前回から持ち越し] 3.2 ツール欄が Bash の書き出し用途に追随していない。prompts/R2-delegate.md:60 は Bash の用途を『決定論ゲート回収』とだけ書き、prompts/R1-score.md:62-64 は Bash を挙げていない。直し方の案: 上の omission と一緒に、保存の手段を3.2 に書く。",
-      "[medium / inconsistency・差分前から] rubric PD-002: 本文の先頭30行に Key Rule や禁則が無い。直し方の案: 冒頭の定型ブロックの後に『仕様書ディレクトリは書き換えない』などの禁則を1行置く。"
+      "omission (low、前から残る。完了条件に aggregate の exit 0 が入ったので目立つようになった。Beads 行き): spec_dir は任意の引数 (argument-hint L7、R1 2.3 で required=no) だが、省いたときにレポートの `spec_dir` に何を書くか、完了条件 (L71・R1 5.3) と Step 4 の `--spec-dir <spec_dir>` に何を渡すかが書かれていない。直し方: 既定値 (例: cwd の `system-spec`) を R1 2.3 に書き、省いたときもその値をレポートと照合に使うと書く。",
+      "dependency_break (low、今回 cwd の基準を明記したことで表に出た): Step 4 L156 と R1 2.3 は相対の output を cwd から解決するとし、L158 は guard が「書き先を判定できて保護領域の外ならば」通すとする。guard は相対の書き先を CLAUDE_PROJECT_DIR (設定されていて dir のとき。無ければ cwd) から解決する (project_root() L168-175、_resolve_target_path L365-372) ので、CLAUDE_PROJECT_DIR と cwd が違うと、guard が判定する書き先と実際の書き先がずれる。C19 は C24 の照合と起動前の cwd の確認でこの2つを一致させるが、ほかの呼び出し側への条件は書かれていない。保護対象は確定章の .md と正本の spec-state.json で、レポートは .json なので、実害の筋は狭い。直し方: Step 4 に「output は絶対パスで渡すか、cwd が CLAUDE_PROJECT_DIR と同じときだけ相対で渡す」と書く。",
+      "smell (low、前から残る。Beads 行き): lint-skill-tree が LS-203 (規約外の top-level dir `tests/`。許可は examples・hooks・log・prompts・references・schemas・scripts・templates) を警告する。tests/ は HEAD からある。直し方: test を plugin の tests/ に移すか、許可する dir の規約に tests を足す。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual: team-lead request to re-take content-review of the completeness evaluator after the spec_dir contract was added (report example, Step 4, Gotcha 6, R1-score, schema description, aggregate-completeness.py --spec-dir) and the follow-up fix (cwd as the base of relative spec_dir/output, aggregate exit 0 in the completion condition, R1 4.3 save path); incremental focused combined review, 7th request, 2nd pass on this skill",
     "next_action": "none"
   },
-  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (171行) と git diff 03050251、prompts/R1-score.md・R2-delegate.md の実行指示とツール欄、references/ (aspect-criteria.md・scoring-rubric.json・resource-map.yaml)、scripts/aggregate-completeness.py の CLI (L418-424)、schemas/completeness-findings.schema.json、agents 3件 (matrix・hearing・doc-freshness の auditor)、plugin root の validate-coverage-matrix.py・validate-source-citation.py・validate-knowledge-graph.py の実在。 確かめたこと: Bash の実行指示 (SKILL.md:144・146・148・154、prompts/R1-score.md:70) はすべて python3 で始まる。監査は Task で fork し、読むのは Read。frontmatter は assign kind として feedback_contract.skip_reason だけを持ち criteria を持たないので、前回の verdict と同じ6評価観点を criteria_evaluated にした。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:62 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: allowed-tools に Write が無く、prompts/R2-delegate.md:47 と prompts/R1-score.md:77 は hearing-audit.json と評価レポートを『Bash で』書き出すとしている。どのコマンドで書くかは書かれていない。python3 で書けば Bash(python3 *) の範囲に収まるので FAIL にせず、low の omission とした。"
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。rubric 側の PD-002 (medium、前から) は rubric-verdict.json に記録した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。この skill を見たのは2回目で、1回目 (依頼7の1回目) は C19 の medium C の evaluator の側と low 1・3・4 を挙げ、verdict を書かずに team-lead へ報告した。どれも作者とは別の修正役が直した。前の verdict (sha 4ee7c32e…、iterations 1) は allowed-tools の1行の差分に対するもので、今回の対象は spec_dir の契約の追加とその後の修正である。SKILL.md と R1-score の全文、aggregate-completeness.py (spec_dir_violations と CLI)、schema の description、test_aggregate_completeness.py、guard-confirmed-chapter-overwrite.py の project_root() (L168-175)・_resolve_target_path (L365-372)・Bash の書き先判定、呼び出し側の C19 の R2・R3 と C02 の _spec_confirmation で確かめた。aggregate-completeness.py・schema・tests・R2-delegate は、C の修正の前に取った控えから変わっていない。criteria_evaluated は、kind=assign で feedback_contract.criteria を持たない (skip_reason) ので、前の verdict と同じく6観点を置いた。PD-002 は team-lead の判断で、前からある medium として PASS の中に載せた。low は team-lead の判断で直さずに Beads に回す。read-only で回したもの (C の修正の後): system-spec-harness の evaluator の tests・test_guard_hook・test_hearing_audit_contract (162 passed)、dev-graph の test_acceptance_gaps_a1・test_semantic_contract_boundaries_c10_c11_c24・test_skill_criteria_contracts・test_skill_mass_production_contracts・test_skill_criteria_evidence (118 passed、8 failed。7件は live trial の取り直しを待つ C01・C03・C05・C14・C15・C18・C19 の behavior closure digest の古さで、この verdict の対象外。1件はこの verdict が解消する C19 の content-review の stale-sha)、test_build_graph_node (54 passed。C の修正の前に回した。build-graph-node.py は不変)、lint-plugin-composition (dev-graph と system-spec-harness で OK。WARN 4件は生成前の output path) と test_skill_governance_lint__lint_plugin_composition (58 passed)、lint-skill-name / lint-skill-tree (2つの skill で exit 0。evaluator に LS-203 の警告)、lint-skill-description (OK=189)、lint-entrypoint-artifact-first (OK)、build-artifact-delivery --check (OK、22 plugins)。build-plugin-release --check は dev-graph 0.1.19 と system-spec-harness 0.1.22 の [changed] で rc 1 だが、版と台帳は別の作業の範囲で、この verdict は触れていない。この review の操作は、4つの verdict のほかに作業ツリーを変えていない。"
 }

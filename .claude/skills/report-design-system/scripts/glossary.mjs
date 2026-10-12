@@ -165,6 +165,16 @@ const TERM_RE = new RegExp(GLOSSARY.map((t) => `(?:${t.find.source})`).join("|")
 const termOf = (text) => GLOSSARY.find((t) => new RegExp(`^(?:${t.find.source})$`).test(text));
 
 /**
+ * 地の文に書かれた URL。どの用語の照合からも外す。
+ * 例: note.com の「/n/」や「?n=3」の n を件数の n と、「?p=0.40」を p値と取り違え、URL の途中へ印を入れて壊さない。
+ * 範囲は http:// か https:// から、ASCII の文字が続くあいだ。空白・タグ・引用符、エスケープ済みの
+ * 引用符・山括弧 (&quot; &#39; &#x27; &lt; &gt;)、ASCII 以外の文字 (全角の括弧・句読点、URL の直後に続く日本語) の手前で終わる。
+ * &amp; は URL の中の区切り (?p=1&amp;n=3) なので止めない。
+ * split で URL を残すため、全体を1つの捕捉グループで囲む。
+ */
+const URL_RE = /(https?:\/\/(?:(?!&(?:quot|#0*39|#x0*27|lt|gt);|[<>"'])[!-~])+)/i;
+
+/**
  * 図の種類ごとの「この図の読み方」。charts.mjs の svgOpen が data-chart に書いた種類で引く。
  * 素人が最初に迷う「どこを見れば良いか」を、軸・向き・色の意味の順で1文にする。
  */
@@ -215,14 +225,14 @@ export function markPolicy(term, seen) {
 /**
  * HTML の本文 (タグの外にある文字) から専門用語を見つけ、用語集へのリンク (.term) で包む。
  * 包まないところ: <svg> の中 (図の文字は別に data-tip がある)、属性値、見出し (h1〜h3)、
- * 目次、初心者向け概要 (.overview。ここは専門用語を使わない約束)。
+ * 目次、初心者向け概要 (.overview。ここは専門用語を使わない約束)、地の文の URL (URL_RE)。
  * @param {string} body セクションを並べた本文の HTML
  * @returns {{html: string, used: {id: string, label: string, what: string, how: string}[]}} used は出てきた順の用語
  */
 export function markTerms(body) {
   const used = new Map();
   let seen = new Set();
-  const markText = (text) =>
+  const markPlain = (text) =>
     text.replace(TERM_RE, (hit) => {
       const term = termOf(hit);
       if (!term || !markPolicy(term, seen)) return hit;
@@ -230,6 +240,8 @@ export function markTerms(body) {
       used.set(term.id, term);
       return termMark(term, hit);
     });
+  // URL は split の奇数番目に分かれて出てくる。そこは照合せずにそのまま残す (まとまりの印の回数も使わない)
+  const markText = (text) => text.split(URL_RE).map((part, i) => (i % 2 ? part : markPlain(part))).join("");
 
   // セクションと、その中の読み手が視線を移すまとまり (統計の要約カード / 解釈 / 仮説) ごとに数え直す。
   // 素通しにするまとまり: <svg> (図の文字は data-tip が担う)、見出し、初心者向け概要 (専門用語を使わない約束)、

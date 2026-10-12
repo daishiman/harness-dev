@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "Skill は正規の経路で起動された。transcript 35 行目で Skill(dev-graph:run-dev-graph-schedule, --repo-root <fx> --max-parallel 4) を呼び、36-37 行目でロード済み (pane.txt にも 'Successfully loaded skill' がある)。guard.jsonl の 2 行目が Skill の allow。",
+    "責務 prompt は出力より前に読まれた。main は 45 行目で prompts/R1-elicit.md・R2-plan.md・R3-schedule.md を cat し (結果は 51 行目)、schedule-graph.py の実行 (98 行目) はその後。R1-R3 を担当した subagent aa099b25c092dc2f8 も、自分の transcript の 12 行目で 3 つの prompt を、18 行目で references/prompt-common-layers.md を読んでいる。",
+    "C24 は 54 行目で resolve-repo-context.py --mode read として回り、55 行目で rc=0。repo_root は fx (content_roots.repository) と一致した。93-94 行目の確認で 13 node とも tracker_binding=none、beads_linkage=null だったので、--ready-source self (local graph) を選んだ。",
+    "成果物は正規 script の出力である。98-99 行目で schedule-graph.py --ready-source self --leases <fx>/.git/dev-graph/leases.json が rc=0 で返した内容は、ready_set.tasks=[task-api-orders, task-cache-warmup, task-docs-runbook]、features=[]、batches.tasks=[[3 件]]、conflicts=[task-api-users, task-api-users-cache]。102-103 行目で JSON として parse でき、secret に当たる文字列は 0 件、sha256 は 4ec59c44…。",
+    "artifact_delivery は定められた順序で進んだ。成果物の作成 (98) → 最小 guard (102) → pane に path と内容の要約を提示 (111 行目の narration) → standard を goal-spec に記録 (112) → subagent 起動 (116/118)。選択の記録より前に subagent は起動していない (pre_choice_forbidden を守っている)。",
+    "必須の独立 verifier は実際に起動された。118 行目で Agent(subagent_type=dev-graph:dev-graph-parallel-safety-verifier) を起動し、130 行目の判定は MATCH。verifier は自分の transcript の 10・15 行目で生の graph と leases を読み、16・20 行目で manage-worktree-lease.py のコードを読んで、13 node すべての採否を再計算した。lease は 17:40:52Z まで有効で、C27 は別 session からの二重 claim を拒否する、とも確かめている。",
+    "評価者として fx の graph を読み直して再計算した。status・確認・評価・readiness・依存の条件を満たすのは task-api-users・api-orders・api-users-cache・cache-warmup・docs-runbook の 5 件。このうち task-api-users は active な lease (claimed、expires 17:40:52Z、trial は 17:11-17:17Z) を持ち、task-api-users-cache は lease を持つ node の src/api/users/ と重なるので、どちらも除外が正しい。release-gate (blocked) と draft・unconfirmed・eval fail・readiness incomplete の 4 件も除外されている。batch 内の scope (src/api/orders/・src/cache/・docs/runbook/) に重なりは無く、件数 3 は上限 4 以内。branch は devgraph/<id> で一意。claim command は commands/dev-graph.md の 36 行目にある公開の 'worktree claim' 形式と一致する。",
+    "読取り専用が守られた。graph/config/leases/events の digest は 85-91 行目 (実行前) と 143-144 行目 (実行後、DIGEST_SAME) で同じ。今の fx の graph.json の sha256 b1dfaf58… は、fixture-provenance の lease_prep 後の値と一致する。git status で増えたのは eval-log/ だけ (goal-spec・progress・intermediate)。graph への書込みは無いので、単一 writer の制約には触れていない。",
+    "goal-seek の配線: 112 行目で goal-spec を、143 行目で progress と intermediate.jsonl を fx/eval-log に記録し、SKILL.md のゴールシーク検証を同じ形で回した (goalseek_verify_rc=0、144 行目)。",
+    "書込みの境界: guard.jsonl は 28 件すべて allow で、deny は 0。書込み先は fx/eval-log、run 内の tmp scratchpad、workdir/out/status.json だけ。workdir/out には status.json 1 件しか無い (内容は PASS、146 行目)。check-post.json の run_bytecode は []。closure-watch.log によると、閉包 dcdfd54b は起動から終了まで変わっていない。"
+  ],
+  "skill_defects": [
+    "scripts/schedule-graph.py は --max-parallel も --scope も受け取らない (argparse は 100-102 行目)。batches() (135-143 行目) も batch の件数を上限で切らない。SKILL.md の argument-hint と R1 は max_parallel と scope を確定させるが、それを適用する決定論の手順が無く、LLM が手で確かめるしかない (R1-R3 の subagent も transcript 135 行目で 'max_parallel is not enforced by the script' と報告した)。再現手順: 依存が無く、status・確認・評価・readiness の条件を満たし、resource_scope が互いに重ならない task を 5 件持つ graph で schedule-graph.py を回すと、上限 4 を指定していても 5 件が 1 batch で返る。",
+    "SKILL.md の Gotchas は「直接依存だけでなく全 depends_on の done を確認する」と言うが、schedule-graph.py の 118・124 行目は直接の depends_on が done かどうかしか見ない。再現手順: A(active・全条件を満たす) が B(done) に依存し、B が C(active) に依存する整合の取れていない graph を作ると、A が ready に入る。",
+    "schedule-graph.py の 128-129 行目は、state が released/expired 以外の lease を expires_at と無関係にすべて active として扱う。期限切れなのに claimed のまま残った lease が、その node と scope の重なる候補を推薦から外し続ける。安全側に倒れる動きだが、SKILL の言う「active lease なし」の意味とずれる。再現手順: leases.json の claimed lease の expires_at を過去にして回すと、その node が conflicts に残る。",
+    "SKILL.md の 95 行目は入力を「C24/C11 検証済み subgraph」とするが、script_refs (14 行目) に validate-graph-schema.py が無く、C11 を回す手順も書かれていない。この trial でも被験の session は C24 (54 行目) しか回しておらず、C11 は orchestrator が被験の外で事前に回したもの (fixture-provenance の fixture_check) に頼っている。"
+  ],
+  "evaluator_agent_id": "a9af1b9ea09724a50"
+}

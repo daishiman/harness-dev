@@ -68,7 +68,7 @@ runtime_root_policy: host-skill-path
 
 **入力**: `system-spec/*.md` + index (C03 出力) / `spec-state.json` (C01) / `fetched-references.json` (C02)
 **出力**: 評価レポート (`schemas/completeness-findings.schema.json` 準拠) — 観点別スコア + 総合判定 + 不足事項一覧
-**完了条件**: 全観点 verdict 付与 + findings[] (info 以上を最低 1 件) + 総合判定が観点スコアからの fail-closed 再導出値と一致 + 総合 FAIL 時は不足事項一覧が非空。
+**完了条件**: 全観点 verdict 付与 + findings[] (info 以上を最低 1 件) + 総合判定が観点スコアからの fail-closed 再導出値と一致 + 総合 FAIL 時は不足事項一覧が非空 + `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` が exit 0 (Step 4)。
 
 各 skill 単独では見えない全体網羅性の欠落を、生成物から独立した context で評価し客観的合否を返す。
 
@@ -102,6 +102,7 @@ runtime_root_policy: host-skill-path
 ```
 {
   "evaluator": {"name": "assign-system-spec-completeness-evaluator", "version": "0.1.0", "context": "fork"},
+  "spec_dir": "<引数 spec_dir の値そのまま>",
   "verdict": "PASS" | "FAIL",
   "aspects": {
     "foundation_trace":             {"verdict": "...", "auditor": "assign-system-spec-completeness-evaluator", "component": "C05", "summary": "...", ...},
@@ -151,7 +152,11 @@ exit0 をマトリクス網羅性観点の一次根拠にする (`python3 "${PLU
 C05 R1-score が `system-spec/*.md` 各章を直接読み、`ref-system-design-knowledge/references/resource-map.yaml` 由来の設計知識ポインタの (1) 存在 (機械層) と (2) その原則が確定セル要件へ具体適用されているか (意味層) を評価する。**存在確認だけで PASS にしない** (compile が機械注入するポインタを自己循環で肯定しない = Goodhart 防止)。汎用ポインタ (resource-map 索引) のみで具体適用が無い章は medium 以上で拾う。C06 のヒアリング品質監査は本観点でなく matrix_coverage の sub-input として使う。
 
 ### Step 4: レポート出力と整合検査
-`schemas/completeness-findings.schema.json` 準拠で評価レポートを出力。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --report <report.json>` で形状 + 総合判定整合 (fail-closed 再導出との一致) を検証する。
+`schemas/completeness-findings.schema.json` 準拠で評価レポートを出力する。
+- 相対の `spec_dir` と `output` は、この skill を起動した cwd から解決する。評価の入力の読み込み、レポートの書き出し、下の `--report <output> --spec-dir <spec_dir>` の検証は、どれも同じ cwd を基準にする。repo 相対の値を渡す呼び出し側 (dev-graph の C19 など) は、起動の前に cwd が repo root と同じことを確かめる。
+- `spec_dir` には引数 `spec_dir` の値をそのまま書く (相対パスなら相対のまま)。説明や注記を足さない。
+- レポートは引数 `output` のパスに書く。そのパスは `system-spec/` の外に置き、書き出しのコマンドの中に文字列のリテラルで書く (変数・`sys.argv`・`$` を使わない。書き方は `prompts/R1-score.md` の 4.3)。`guard-confirmed-chapter-overwrite.py` は、書き先を判定できて保護領域の外ならば、本文に `system-spec` が出てきても通す。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --report <output> --spec-dir <spec_dir>` で、形状 + 総合判定整合 (fail-closed 再導出との一致) と、`spec_dir` が引数と同じ dir に解決することを検証する。`spec_dir_mismatch` の report は、呼び出し側 (dev-graph の C02 など) が確定の取込を拒む。
 
 ## Gotchas
 
@@ -160,6 +165,7 @@ C05 R1-score が `system-spec/*.md` 各章を直接読み、`ref-system-design-k
 3. high severity が 1 件でもあれば総合 FAIL。
 4. INDETERMINATE は fail-closed で FAIL に寄せ、仕様書修正でなく監査再実行/入力補完へ差し戻す。
 5. 本 skill は kind=assign のため feedback_contract.criteria は N/A (評価器自身は評価基準を携帯せず、checklist 観点 + evaluator ゲートで担保。frontmatter の skip_reason 参照)。
+6. `spec_dir` に説明や注記 (`(read-only で評価)` など) を混ぜない。書き出しが guard に止められても、`spec_dir` の値を変えて回避しない。guard が止めるのは書き先を判定できないときなので、保存先を `system-spec/` の外の文字列のリテラルにして書き直す (Step 4)。
 
 ## Additional Resources
 

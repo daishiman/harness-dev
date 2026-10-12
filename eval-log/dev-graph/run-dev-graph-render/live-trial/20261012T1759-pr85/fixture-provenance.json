@@ -1,0 +1,114 @@
+{
+  "label": "render4",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render4/fx",
+  "head": "f31f62a7332bd850d02b30ee62eb072161269c0f",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:1c9814b59d663a76496ede77137aac8183ffbdb8036a9cb5f8b1dc45983b2cb2"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_28b95742223a31e0"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "retry_of": "render3 (20261012T0944-pr85)",
+  "plugins_copy": {
+    "copied_at": "2026-10-12T08:53:05Z",
+    "from": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)",
+    "plugins": [
+      "dev-graph",
+      "harness-creator",
+      "skill-governance-adapters",
+      "system-dev-planner",
+      "system-spec-harness"
+    ],
+    "method": "cp -R。写した直後に diff -rq -x __pycache__ で 5 つとも wtpy と一致を確かめた",
+    "run_dev_graph_render_closure_sha": "cde8d6a38ecda878e334d5c985474309a3272b66baed44345824d40489c97a02 (写しと wtpy で同じ)",
+    "skill_md_sha256": "25b0d1afbfd4d8739f92a057496fe0c85945c24c6c986b415e13000478ab25c1",
+    "render_graph_html_py_sha256": "f277f16d9686bbfb1fd81288bd62f4fc876017cd0f4a138b1a8418a6e7abfa60",
+    "note": "render3 の後に、run-dev-graph-render の SKILL.md・prompts/R3-render.md と scripts/render-graph-html.py が wtpy で更新された (render-graph-html.py に --receipt を足した)。この run はその更新の後の写しで動く。"
+  },
+  "environment_change": {
+    "same_as": "render3 (20261012T0944-pr85) の environment_change と同じ条件。AF_UNIX の socket の dir の名前だけ cr3 から cr4 に変えた。",
+    "sandbox_network": {
+      "allowedDomains": [
+        "live-trial-no-egress.invalid"
+      ],
+      "strictAllowlist": true,
+      "deniedDomains": [
+        "*"
+      ],
+      "allowUnixSockets": [
+        "/private/tmp/ltpr85/cr4"
+      ]
+    },
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "/private/tmp/ltpr85/cr4"
+    },
+    "browser": {
+      "path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render4/browser/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+      "source": "runs/render3/browser から cp -R",
+      "sha256": "a0bfe7b4da4787b66058477d696cd1d09065d25f06a548947722b9af77ee8282"
+    }
+  },
+  "isolation_change": {
+    "why": "team-lead の 2026-10-12 の指示。sync4 (20261012T1358-pr85) で、prompt suggestion の agent の SendFeedback を guard が許した件を受けて、外部へ送る tool を名前で止めるだけでなく、許可一覧に無い tool をすべて止める形にした。締める向きの変更だけ。",
+    "guard_py": {
+      "render3": "7aca6807 (guard.py.v1)",
+      "before": "664f77b5132a (guard.py.v2)",
+      "after": "f23267a3c016e308c611acca24cb71b437758163f4e25ee02118a4e73c321ad5"
+    },
+    "mksettings_py": {
+      "before": "a5d511ea (mksettings.py.v4)",
+      "after": "277ae072da18cc7c3e671cfa04228fab5c453c5672e57d8e0c946fad774f0034"
+    },
+    "guard_changes": [
+      "許可一覧 ALLOW_TOOLS (Read・Glob・Grep・LSP・Bash・Monitor・TaskOutput・TaskStop・Write・Edit・MultiEdit・NotebookEdit・Skill・Agent・Task・ToolSearch・TodoWrite・TaskCreate・TaskUpdate・TaskList・TaskGet・AskUserQuestion・EnterPlanMode・ExitPlanMode) に無い tool を拒否する。WebFetch は許可一覧に入れず、allowed_fetch_hosts の照合を通ったときだけ通す (この run の policy には allowed_fetch_hosts が無いので、WebFetch は拒否)。",
+      "BLOCK_TOOLS に ScheduleWakeup を足した (SendFeedback は 664f77b5 で足してある)。mcp__ で始まる tool は前方一致で拒否 (前から)。",
+      "Agent・Task の isolation (remote・worktree) を拒否する。"
+    ],
+    "permissions_deny_added_since_render3": [
+      "SendFeedback",
+      "ScheduleWakeup",
+      "SendMessage",
+      "ExitWorktree",
+      "DesignSync",
+      "TeamCreate",
+      "TeamDelete",
+      "mcp__plugin_cloudflare_cloudflare",
+      "mcp__claude_ai_Slack",
+      "mcp__claude_ai_Claude_Docs",
+      "mcp__claude_ai_Notion",
+      "mcp__claude_ai_Microsoft_365"
+    ],
+    "smoke": "被験の外で guard を 28 通りの入力で試した (smoke/guard3/guard.jsonl、拒否 22・許可 6)。SendFeedback と mcp__claude_ai_Slack__slack_send_message は、どちらの policy でも exit 2。"
+  },
+  "task_md_changes": {
+    "base": "runs/render3/workdir/task.md",
+    "changes": [
+      "runs/render3 を runs/render4 に置き換えた (7 か所)。socket の dir を cr3 から cr4 に置き換えた (1 か所)。",
+      "scenario の id を render-feature-progress-positive-fixture-standard-v2 から render-feature-progress-receipt-positive-fixture-standard-v3 に変えた。",
+      "準備の節に、registration receipt の path (fx/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json) を 1 文で足した。",
+      "本題の節の末尾に、registration receipt を SKILL.md の手順に従って render-graph-html.py の --receipt で渡すこと、receipt を外して描く経路を使わないことを 1 文で足した。",
+      "検証の receipt の項を、今の SKILL.md の OUT1 の文 (Y と expected_count、子 task の集合と node_ids、表示対象と source_digest) に合わせた。前の文は applied_count/expected_count と表示内容の一致を求めていた。"
+    ],
+    "unchanged": "graph を書き換えない制約、経路の制約、2 回 render の決定論の確認、checklist が PARTIAL なら PASS にしない条件、ブラウザの注記の中身",
+    "task_md_sha256": "b595d9a94822c2d356c7997b730755bb1a102c2aceaf7087521e23cc90898287"
+  }
+}

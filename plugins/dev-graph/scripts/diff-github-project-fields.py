@@ -50,6 +50,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, atomic_json, contained, dump, is_package_member, load_json, run, utc_now
 
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
@@ -132,7 +136,7 @@ def fetch_remote(targets: dict[str, tuple[dict[str, Any], set[str]]]) -> dict[st
     spec.loader.exec_module(gh)
     remote: dict[str, Any] = {}
     for alias, (config, item_ids) in sorted(targets.items()):
-        cp = run([sys.executable, str(BRIDGE), "--op", "project-resolve", "--owner", config["owner_login"],
+        cp = run([sys.executable, "-B", str(BRIDGE), "--op", "project-resolve", "--owner", config["owner_login"],
                   "--project-number", str(config["project_number"])], check=False)
         if cp.returncode:
             raise ContractError(f"project-resolve {alias} failed: {(cp.stderr or cp.stdout).strip()}")

@@ -16,6 +16,7 @@
 - validate_report: golden PASS レポートの形状 + 総合判定整合、各種違反検出
 - run_coverage_gate: validate-coverage-matrix.py 連携 (完全マトリクス exit0 / 未収集残存 exit1)
 - schema: 評価レポートスキーマが有効 JSON で全 6 観点を持つ
+- main --report --spec-dir: report の spec_dir が同じ dir に解決するか (一致 / ラベル / 欠落)
 """
 from __future__ import annotations
 
@@ -296,6 +297,52 @@ def test_main_report_violation(tmp_path):
 
 def test_main_report_missing_file(tmp_path):
     assert MOD.main(["--report", str(tmp_path / "nope.json")]) == 2
+
+
+# ---------- main --report --spec-dir (report の spec_dir の照合) ----------
+
+def _write_report(path: Path, **extra) -> Path:
+    report = _golden_report()
+    report.update(extra)
+    path.write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def test_main_report_spec_dir_resolving_to_the_same_dir_passes(tmp_path, monkeypatch):
+    (tmp_path / "system-spec").mkdir()
+    monkeypatch.chdir(tmp_path)
+    rp = _write_report(tmp_path / "report.json", spec_dir="system-spec")
+    # 相対は cwd から解決する。書き方が違っても同じ dir に解決すれば一致
+    assert MOD.main(["--report", str(rp), "--spec-dir", str(tmp_path / "system-spec")]) == 0
+    assert MOD.main(["--report", str(rp), "--spec-dir", "./system-spec/"]) == 0
+
+
+def test_main_report_spec_dir_with_a_label_is_a_mismatch(tmp_path, monkeypatch, capsys):
+    # live trial で fork が書いたラベル。C02 はこれを invalid_confirmation_evidence で拒む
+    (tmp_path / "system-spec").mkdir()
+    monkeypatch.chdir(tmp_path)
+    rp = _write_report(tmp_path / "report.json", spec_dir="system-spec (read-only evaluated)")
+    assert MOD.main(["--report", str(rp), "--spec-dir", "system-spec"]) == 1
+    err = capsys.readouterr().err
+    assert "VIOLATION: spec_dir_mismatch" in err
+    assert "FAIL: 1 件のレポート整合違反" in err
+    # --spec-dir を渡さなければ、spec_dir は今までどおり照合しない
+    assert MOD.main(["--report", str(rp)]) == 0
+
+
+def test_main_report_without_spec_dir_is_a_mismatch(tmp_path, capsys):
+    (tmp_path / "system-spec").mkdir()
+    rp = _write_report(tmp_path / "report.json")
+    assert "spec_dir" not in json.loads(rp.read_text(encoding="utf-8"))
+    assert MOD.main(["--report", str(rp), "--spec-dir", str(tmp_path / "system-spec")]) == 1
+    assert "VIOLATION: spec_dir_mismatch" in capsys.readouterr().err
+
+
+def test_main_spec_dir_needs_an_existing_dir_and_report(tmp_path):
+    rp = _write_report(tmp_path / "report.json", spec_dir=str(tmp_path / "nope"))
+    assert MOD.main(["--report", str(rp), "--spec-dir", str(tmp_path / "nope")]) == 2
+    with pytest.raises(SystemExit):
+        MOD.main(["--knowledge-graph", "--spec-dir", str(tmp_path)])
 
 
 def test_main_matrix_gate(tmp_path):

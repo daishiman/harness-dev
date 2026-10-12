@@ -1,0 +1,179 @@
+{
+  "label": "schedule6",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-schedule",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-schedule/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/fx",
+  "head": "c25c5b052ba1d354b3ad6526bb669e7b4662b516",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a2e37dcb43ab749d8da53024444eec36327c72fb433998a25a92d546e710800f",
+      "local:sha256:bf40af943408e8f492c27378656a845ce88aedb7649a73f7d776d678d80b6201"
+    ],
+    "worktree_id": [
+      "wt_fbf90453721d70c0",
+      "wt_3b87ceaaf131661e"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。seed と手順は schedule4 と同じ。",
+  "fixture_check": {
+    "why": "schedule4 と同じ seed (live-trial-fixtures/20261005T171515-bzn4-schedule) から作り直した。",
+    "result": "lease の準備の後に、wtpy の script を lt-env.sh と python3 -B で被験の外で回した。C11 (validate-graph-schema.py) は valid・graph_validation pass・violation 0 (workdir/c11.json)、C24 (resolve-repo-context.py --mode write) は rc=0 (workdir/c24.json。stdout に出すだけ)。回す前と後で fx のファイル (.git/objects を除く) の sha256 は同じ (workdir/fx-check-pre.sha と fx-check-post.sha)。",
+    "c24_repository_id": "local:sha256:bf40af943408e8f492c27378656a845ce88aedb7649a73f7d776d678d80b6201"
+  },
+  "lease_prep": {
+    "note": "orchestrator の準備。trial の session を起動する直前に行い、被験 skill の挙動ではない。",
+    "at": "2026-10-12T17:10:51Z",
+    "command": "manage-worktree-lease.py --repo-root <fx> --op claim --graph-node-id task-api-users --branch devgraph/task-api-users --session-id orchestrator-prep-schedule6 (--resource は付けない。wtpy の script を lt-env.sh の隔離 env と python3 -B で回した。手順は smoke/schedule6/leaseprep.sh)",
+    "graph_node_id": "task-api-users",
+    "why_this_node": "schedule4 と同じ。ready になる task のうち、resource_scope が別の ready な task と重なるもの (task-api-users の src/api/users/ は task-api-users-cache の src/api/users/・src/cache/ と重なる)。",
+    "branch_handling": "schedule4 と同じ。claim は今の branch が devgraph/<node> でないと git switch -c を行い、そのとき worktree が clean であることを求める。fx には seed のとおり未追跡の .dev-graph/ と tasks/ があるため、先に git switch -c devgraph/task-api-users をしてから claim を回し、終わったあと git switch main で main に戻した。branch devgraph/task-api-users は fx に残っている (HEAD と同じ commit)。",
+    "lease": {
+      "graph_node_id": "task-api-users",
+      "branch": "devgraph/task-api-users",
+      "session_id": "orchestrator-prep-schedule6",
+      "state": "claimed",
+      "resource_scope": [],
+      "tracker_binding": "github",
+      "worktree_id": "wt_3b87ceaaf131661e",
+      "created_at": "2026-10-12T17:10:52.635930Z",
+      "expires_at": "2026-10-12T17:40:52.591106Z",
+      "execution_context_projection": "applied"
+    },
+    "ledger": ".git/dev-graph/leases.json と events.json (fx の git common dir の下)",
+    "graph_change": {
+      "by": "claim が呼ぶ C02 の execution-context consumer (register-package.py execution-context)",
+      "node": "task-api-users の execution_contexts に 1 行を足した",
+      "graph_revision": [
+        1,
+        2
+      ],
+      "graph_sha256": [
+        "b2f40bab553aba9ef096255024ea19bbafb008aed4d74cc3efcea96d1886b8b8",
+        "b1dfaf58815e135d8b34a07c81d94da112153fbd9d7eddfbfd3ac65e83f60c27"
+      ]
+    },
+    "fx_files_changed": {
+      "changed_or_added": [
+        "./.dev-graph/state/graph.json",
+        "./.git/dev-graph/events.json",
+        "./.git/dev-graph/leases.json",
+        "./.git/dev-graph/leases.lock",
+        "./.git/logs/HEAD",
+        "./.git/logs/refs/heads/devgraph/task-api-users",
+        "./.git/refs/heads/devgraph/task-api-users"
+      ],
+      "removed": [],
+      "source": "workdir/fx-before-lease.sha と fx-after-lease.sha の差 (.git/objects を除く)"
+    }
+  },
+  "isolation_layout": {
+    "same_as": "schedule4 と同じ配置。guard.py と mksettings.py の sha は retake.isolation。",
+    "session_root": "ws (schedule4 と同じ)。fx は別の dir。"
+  },
+  "superseded_attempt": {
+    "label": "schedule5",
+    "what": "schedule4 の後の取り直しの 1 回目 (schedule5) は、2026-10-12T13:35:24Z に写しの閉包 8620bd69 で fixture と plugins の写しまでを準備したが、起動の前に wtpy の dev-graph (bd-bridge.py など) が変わったので、orchestrator が起動せずに止めた。lease は claim していない。verdict は作っていない。記録は runs/schedule5 に残し、参考扱いとする (smoke/schedule5/reference-note.json)。",
+    "this_run": "schedule6 は同じ seed と同じ手順で fixture を作り直し、変わった後の閉包の写しで回す。retry_of は最後に verdict のある schedule4 にする。"
+  },
+  "retry_of": "schedule4 (20261012T2045-pr85)",
+  "retake": {
+    "why": "team-lead の 2026-10-12 12:26Z の指示による全 9 本の取り直し。dev-graph の entry script が bytecode を書かないように直った後の閉包で試す。前の PASS は stale。",
+    "bytecode_fix": "dev-graph の entry script (resolve-repo-context.py・validate-graph-schema.py・bd-bridge.py ほか 16 本ほど) が import の前に sys.dont_write_bytecode = True を置き、sys.executable で起こす子には -B を渡し、hooks.json の 4 本は python3 -B にした。_common.py と plugin.json は変えていない (team-lead の 12:26Z の連絡による)。",
+    "closure_sha": {
+      "expected": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+      "expected_source": "team-lead の連絡「sync7・schedule6 は開始可」",
+      "copy": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+      "wtpy": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+      "all_equal": true
+    },
+    "plugins_copy": {
+      "copied_at": "2026-10-12T16:50:24Z",
+      "from": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins",
+      "to": "runs/schedule6/ws/plugins",
+      "plugins": [
+        "dev-graph",
+        "harness-creator",
+        "skill-governance-adapters",
+        "system-dev-planner",
+        "system-spec-harness"
+      ],
+      "method": "shutil.copytree(symlinks=True, ignore=__pycache__・*.pyc)。写した後に diff -rq -x __pycache__ -x '*.pyc' で 5 つとも一致",
+      "bytecode_in_copy": 0,
+      "from_note": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)"
+    },
+    "tmpdir": {
+      "CLAUDE_CODE_TMPDIR": "/private/tmp/ltpr85/t/sc6",
+      "symlink_target": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/tmp",
+      "TMPDIR_outside_sandbox": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/tmp/",
+      "sandbox_bash_TMPDIR": "/private/tmp/ltpr85/t/sc6/claude-501 (実体は /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/tmp/claude-501)",
+      "why": "team-lead の 2026-10-12 の指示で、被験の一時領域を run の dir の中に向けた。Claude Code は CLAUDE_CODE_TMPDIR が長い (AF_UNIX の socket に使えない、目安 30 byte 超) と sandbox の Bash の TMPDIR を /tmp/claude-<uid> に戻すので、短い symlink を run の tmp に向けて CLAUDE_CODE_TMPDIR にした。preflight10 で、symlink が拒否されず、mktemp と Python の tempfile の実体が run の tmp の下にでき、/private/tmp/claude-501・/private/tmp の直下に差が出ないことを確かめた。",
+      "PYTHONDONTWRITEBYTECODE": "渡していない (lt-env.sh は env -i で起動し、この変数を入れない)"
+    },
+    "isolation": {
+      "guard_py": "f23267a3c016e308c611acca24cb71b437758163f4e25ee02118a4e73c321ad5",
+      "mksettings_py": "277ae072da18cc7c3e671cfa04228fab5c453c5672e57d8e0c946fad774f0034",
+      "launch_sh": "1af200118e4305b3af18305205ce5b798ace26d9dfe03eeabb09d8421ab7b547",
+      "poll_sh": "7fc9405afd874c8497072298f2dd82c76137b14458dbd6df0937fb434072395d",
+      "lt_env_sh": "a24f860dee77750315b99985ff3c9d2ecfc0e8dad59cf6279e1fb3b8539fd807",
+      "note": "guard.py と mksettings.py は render4 から変えていない (締めた形のまま。外へ送る tool と許可一覧に無い tool を拒否)。launch.sh は TMPDIR の向け先と python3 -B を足し、poll.sh は python3 -B にした。"
+    },
+    "task_md_changes": {
+      "base": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule4/workdir/task.md",
+      "replacements": [
+        {
+          "from": "runs/schedule4",
+          "to": "runs/schedule6",
+          "count": 4
+        }
+      ],
+      "unchanged": "置き換え以外は前の run の task.md と同じ",
+      "task_md_sha256": "d73c5a3a7c0c067500de6728d48e6a5bc38d8d84df65fdfd158ecf0868d8a0fa"
+    }
+  },
+  "tool_outside_paths": {
+    "why": "team-lead の 2026-10-12 の依頼。trial の道具が run の dir の外に作ったパスを、被験が書いたものと分けて数えるための記録。どれも消さずに残す (rm は使わない)",
+    "recorded_at": "2026-10-13T02:18:15+0900",
+    "paths": [
+      {
+        "path": "/private/tmp/ltpr85/t/sc6",
+        "kind": "symlink",
+        "target": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/tmp",
+        "created": "2026-10-13T02:11:26+0900",
+        "modified": "2026-10-13T02:11:26+0900",
+        "by": "launch.sh (orchestrator の道具)。被験の CLAUDE_CODE_TMPDIR に使う短い名前",
+        "note": "書込みの実体は target (run の dir の中の tmp) に落ちる"
+      },
+      {
+        "path": "/private/tmp/ltpr85/tmux-501/default",
+        "kind": "socket",
+        "created": "2026-10-13T02:11:27+0900",
+        "modified": "2026-10-13T02:11:27+0900",
+        "by": "tmux の server (lt-env.sh の TMUX_TMPDIR)。launch の boot で起き、後片付けで止まる",
+        "note": "run ごとに作り直されるので、created はこの記録を取った時点で最後に起きた server のもの"
+      }
+    ],
+    "shared_dirs": [
+      {
+        "path": "/private/tmp/ltpr85/t",
+        "kind": "dir",
+        "created": "2026-10-12T22:06:04+0900",
+        "modified": "2026-10-13T02:11:26+0900",
+        "note": "preflight10 で launch.sh が作った。各 run の symlink を置く"
+      },
+      {
+        "path": "/private/tmp/ltpr85/tmux-501",
+        "kind": "dir",
+        "created": "2026-10-12T05:52:51+0900",
+        "modified": "2026-10-13T02:11:27+0900",
+        "note": "tmux が作った socket の dir。各 run の server が使う"
+      }
+    ]
+  }
+}

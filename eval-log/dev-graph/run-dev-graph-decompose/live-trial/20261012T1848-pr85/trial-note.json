@@ -1,0 +1,31 @@
+{
+  "label": "decompose3",
+  "retry_of": "20261012T1048-pr85",
+  "evaluator_agent_id": "adae0f30d1b9c4ca0",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/decompose3/ws/plugins/dev-graph/skills/run-dev-graph-decompose",
+  "closure_sha_at_launch": "f2d80eb5fe6c3e7602e343250bbb1d3824e823e9109160f5666a7f8f10877125",
+  "closure_sha_tested_copy": "f2d80eb5fe6c3e7602e343250bbb1d3824e823e9109160f5666a7f8f10877125",
+  "closure_sha_wtpy_at_verdict": "f2d80eb5fe6c3e7602e343250bbb1d3824e823e9109160f5666a7f8f10877125",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-render) を、その場で git init した repo に写した (最初の commit は bd555e30、README.md だけを追跡)。前回の render の出力 .dev-graph/render は写していない。元の fixture は変えていない。render4 と同じ手順。",
+    "rekey: 写した repo に合わせて repository_id と worktree_id を 3 ファイルで付け替えた (一覧は fixture-provenance.json の rekeyed_files)。graph.json と registration receipt は変えていない。",
+    "偽の bd: fixture の 2 つ目の commit (3889144) で tools/fake-bd.py (新規) と README.md の「Beads の代わり (読取り専用)」の節を足した。fake-bd.py は version と where --json にだけ答え、ほかはすべて exit 4 で拒否し、呼出しを fixture の root の fake-bd-calls.jsonl に残す。書込みの経路は持たない。被験への渡し方は task.md と README.md の文だけで、session の環境変数 DEV_GRAPH_BD は既定の stub のまま (fixture-provenance.json の post_seed_commit)。",
+    "node の状態: bd-bridge.py の昇格の gate に合わせて、graph の node の状態を読取りで確かめた。15 node はすべて confirmed・pass・complete で、変更はしていない (fixture-provenance.json の node_state_check)。",
+    "smoke: 起動の前に、fixture の別の写し (被験には渡していない) で bd-bridge.py を fake-bd.py に向けて試した。この run の fx では試していない (fixture-provenance.json の post_seed_commit.smoke_offline)。",
+    "task.md: decompose2 の task.md から、準備の節 (seed の説明、fake-bd の渡し方、入力を書き換えないこと)、本題の want (新しい feature 2 件、tracker_binding は beads)、検証の節 (OUT1 と OUT3 の文に合わせた)、経路の制約 (Beads への投影は C28 を通す) を変え、scenario の id を v3 にした (fixture-provenance.json の task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。隔離の条件は render4・status3 と同じ。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "promotion gate が tracker_binding と artifact_kind を見ていない。場所は ws/plugins/dev-graph/scripts/bd-bridge.py の 557-592 行目 (_promotion_blockers) で、検査するのは graph にあるかと、PROMOTED=(confirmed, pass, complete) に入っているかの 2 つだけ。再現: fx の graph で、tracker_binding=none の ARCH-LT-001 か LT-FEATURE-001 を対象に create --dry-run を fake-bd に向けて流すと、rc=0 の create preview になる (transcript line 163-164)。binding が beads ではない node や、architecture の node が Beads に起票される対象として出てしまう。",
+    "decompose の --dry-run では、draft の node が止まった理由として、draft だという状態ではなく『not in graph』が出る。C02 の build-graph-node.py add --dry-run は投影後の graph を出力しないので、C28 bd-bridge.py の --dry-run は今の graph.json を読むしかなく、新しい draft の feature は graph に無いと判定されて止まる。再現: transcript line 154-155 の手順のとおり、C02 の preview で作った 2 つの feature id を bd-bridge.py create --dry-run に渡すと、blocker は not in graph になり、NOT_PROMOTED (status=draft) は出ない。結果として起票は 0 件になるが、『未昇格の draft だから起票しない』という理由を preview では示せない。"
+  ]
+}

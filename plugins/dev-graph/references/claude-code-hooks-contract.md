@@ -21,6 +21,7 @@
 ## security / idempotency
 
 - commandは`${CLAUDE_PLUGIN_ROOT}`と`${CLAUDE_PROJECT_DIR}`だけを引用符付き固定command stringで渡す。stdin/tool commandをshellへ連結・再実行せず、script側でevent名・tool名・cwd・session/task identifier・長さを検証する。
+- plugin root は read-only の共有 harness で、bytecode cache (`__pycache__`) も書かない。commandは`python3 -B`で起動し、hook が起こす子 script にも`-B`を渡す。plugin の module を import する script は、import の前に自分で`sys.dont_write_bytecode = True`を置く (呼出し側の`PYTHONDONTWRITEBYTECODE`には頼らない)。`tests/test_no_bytecode_in_harness.py`が静的と実起動の両方で確かめる。0.1.17 までの project fallback が書いた`python3 "…"`の配線は、`-B`の有無だけの違いなので init の再実行が同じ配線とみなし、書き換えない (hook script 自身の止め方で .pyc は書かれない)。
 - C24がcaller root containment、C27がrepository/worktree identityを検証する。tool input、環境変数、gh outputのtoken/authorization値をlogへ出さない。
 - event keyは`repository_id:event:session_id:tool_use_id:head_sha`。git common dir配下のdev-graph event ledgerとatomic lockで重複・再入を抑止する。
 - async hookは状態判定を返さない。TaskCompletedは当該`graph_node_id`のlease transitionだけを行い、無関係なClaude taskは常にno-opとする。PR open検知後はC26/C27が`pending_merge`へ進め、merge後だけdurable doneへ進める。

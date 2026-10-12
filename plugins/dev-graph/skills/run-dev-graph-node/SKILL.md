@@ -13,7 +13,7 @@ argument-hint: "<add|update|bind-github|link-github|register-package> [--repo-ro
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]
 script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-graph-node.py, ../../scripts/register-package.py, ../../scripts/validate-source-lineage.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]
-reference_refs: [../../schemas/graph-node.schema.json, ../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md]
+reference_refs: [../../schemas/graph-node.schema.json, ../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md, ../../agents/dev-graph-integrity-auditor.md]
 responsibility_refs:
   - prompts/R0-context.md
   - prompts/R1-classify.md
@@ -154,27 +154,48 @@ C27 の claim saga は `register-package.py execution-context --graph <path> --g
 - [ ] package は P01..P13 exact 13、共通 parent/package、内部 DAG を満たし、違反時 applied_count が0である
 - [ ] 成功 receipt の graph_revision_after と node_ids が commit 後 graph と一致する
 
+progress.json の `checklist` は、上の5項目を順に id `containment`・`classification`・`schema`・`package`・`receipt` で持ち、各項目の status を `achieved`・`not_achieved`・`not_applicable` のどれかにする。`not_applicable` にしてよいのは次の場合だけで、その項目の `evidence` に代わりに確かめたものを書く。これ以外の未到達は `not_achieved` とする。
+
+- `containment` と `schema` は `not_applicable` にしない。graph だけに書く起動 (`register-package` と、package member への `link-github`。receipt の `graph_only`) と noop の起動の `schema` は、対象の node が `validate-graph-schema.py` の report で finding 0 であることを evidence にして判定する。
+- `classification`: 通常 artifact の `add` をしない起動 (`update`・`bind-github`・`link-github`・`register-package`) と、C14 の macro contract による `add` (feature と、`decision: c14_macro_contract` の architecture) では分類をしない。evidence には起動した verb と `decision` を書く。
+- `package`: `register-package` をしない起動。evidence には起動した verb を書く。
+- `receipt`: receipt を書かない起動。`--dry-run` では、preview の `graph_revision_after`・`node_ids`・`write_count: 0` と、graph の canonical digest が preview の前後で変わらないことを書く。noop (`bind-github` が同じ状態、`link-github` が変化なし) では、その返り値を書く。`register-package` の再実行 (前の receipt を `idempotent: true` で返す) では、前の receipt の path・`graph_revision_after` と、その `node_ids` が今の graph にあることを書く。
+
+pre-choice で commit した run では、checklist はその commit も含めて判定する。pre-choice の receipt は `writer_receipts` に足さない (下のゴールシーク配線) ので、その receipt で判定する項目 (`receipt`、register-package の `package`、分類した `add` の `classification`) は `not_applicable` にせず、`evidence` に receipt の path を書く。`receipt` の `evidence` には、さらに次を書く。
+
+- 最後の pre-choice の receipt の `graph_revision_after`・`graph_digest_after` が `graph_baseline` と一致すること。
+- pre-choice が2回以上 commit したときは、すべての receipt の path と、receipt どうしが鎖になっていること (次の receipt の `graph_revision_before` が前の receipt の `graph_revision_after` と一致する)。
+
+鎖が切れるのは、pre-choice の commit どうしの間に、run の外で revision が進んだときである。最後の receipt が baseline と一致しないのは、最後の commit と post-choice の開始の間に、run の外で graph が変わったときである。どちらのときも `receipt` を `not_achieved` にし、下の配線と同じく baseline を取り直さず、progress.json の `overall` を `blocked` にして親へ handoff する。この照合は、最初の pre-choice の commit より前の graph の変化と、commit どうしの間で revision を進めない書き換えを見ない (receipt は書く前の digest を持たないので、鎖は revision だけを見る。下の配線の post-choice の鎖と同じ限界)。
+
 ### ゴールシークループ
 
-frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
+frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証する。outer criterion (`loop_scope: outer`) は skill の外 (live trial・受入テスト・content review) が最大 `feedback_contract.max_iterations=3` 周で評価するもので、この run の中では判定しない。
+
+`engine` と `fork` は別の軸である。`engine: inline` は、周回の駆動 (未達 checklist の選択・停止判定・intermediate の記録) を main context がこの本文に沿って行うことを指す。`fork: subagent` は、各周回の responsibility の実行と独立検証を `Agent` で分離 context に出すことを指す。
 
 ### ゴールシーク配線
 
-- 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
+- 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>`・`DEV_GRAPH_GRAPH=<receipt.local_state_paths.graph>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する (`fork: subagent`。周回の駆動は main context のまま)。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 必須の独立 verifier は `dev-graph-integrity-auditor` (`../../agents/dev-graph-integrity-auditor.md`。plugin 経由の名前は `dev-graph:dev-graph-integrity-auditor`) である。light/standard/detailed を記録して `semantic_evaluator_started` へ進んだ run では、各周回の writer receipt・commit 後の graph snapshot・`validate-graph-schema.py` の report を `Agent` で read-only の fork context に渡し、writer の推論や期待 verdict は渡さない。返った verdict は progress.json の `independent_verifier` に `{agent, verdict, graph_digest}` として写す。`graph_digest` は verifier が返した値をそのまま写し、main context が計算した値で置き換えない。verifier は、渡された graph の canonical digest を、writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) で返す。verifier の後に graph が進んだら、verifier をもう一度起こす。schema・DAG・orphan・path containment・feature/package 境界の verdict が PASS でない周回は完了扱いにしない。
+- progress.json の `feedback_criteria` には、frontmatter の4つ (IN1・OUT1-OUT3) を1回ずつ書く。IN1 には各周回の検証結果を status に書く。OUT1-OUT3 は `status: external_pending` と判定する場所 (live trial・受入テスト) を書き、writer は PASS などの判定値を書かない。
+- progress.json の `graph_baseline` に、post-choice の開始時の graph の `{graph_revision, graph_digest}` (digest は上と同じ canonical digest) を書く。writer が commit するたびに、その receipt の path を `$DEV_GRAPH_ROOT` からの相対で `writer_receipts` の末尾に足す (build-graph-node は `<graph の dir>/receipts/` に書き、register-package は `--receipt` に渡した path に書く)。noop・register-package の再実行・`--dry-run`・pre-choice の commit は足さない (pre-choice の commit は baseline より前に済んでいて、baseline の graph に含まれる)。receipt は鎖になる。最初の receipt の `graph_revision_before` は baseline の `graph_revision` と、次の receipt の `graph_revision_before` は前の receipt の `graph_revision_after` と一致する。今の graph は、最後の receipt の `graph_revision_after`・`graph_digest_after` と一致し、receipt が無ければ `graph_baseline` と一致する。baseline は post-choice の開始時の graph をそのまま起点にするもので、それより前の graph の変化は、この照合では見ない。baseline は、post-choice の開始時 (C24 の receipt を得た直後、post-choice の最初の writer を起こす前) に1回だけ書き、後から書き直さない。鎖の照合は revision だけを見る (receipt は書く前の digest を持たない) ので、revision を進めずに graph を書き換えると、baseline と最初の receipt の間、receipt と receipt の間では止まらない。最後の receipt の後の書き換えは、今の graph の digest の照合で止まる。run の外で graph が進んだとき (C27 の execution-context は receipt を書かずに revision を進める) は、baseline を取り直さず、`blocked` にして親へ handoff する。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
-- 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
+- progress.json の `overall` は、周回の途中は `in_progress` にする。5周到達時に未達が残れば完了扱いせず、`blocked` にして progress と blocker を親へ handoff する。`PASS` にしてよいのは、全 checklist が `achieved` か上の規則の `not_applicable` (`containment`・`schema` は必ず `achieved`)、IN1 が `PASS`、独立 verifier の verdict が `PASS` のときだけである。skill の完了は、そのうえで外ループの outer criterion (OUT1-OUT3) が PASS になったときとする。
 
 ### ゴールシーク検証
 
-各周回後に次の検査を実行し、中間成果物の欠落・goal drift・hash 不一致を fail-closed にする。
+各周回後に次の検査を実行し、中間成果物の欠落・goal drift・hash 不一致・独立 verifier の欠落・verifier が今の graph を監査していないこと・writer receipt の鎖の切れ目 (最初の receipt が baseline から始まらない、receipt の間で revision が飛ぶ)・最後の writer receipt (receipt が無ければ post-choice の開始時) の後の graph の変化・outer criterion の自己採点・checklist の規則に合わない `not_applicable`・条件を満たさない完了の宣言を fail-closed にする。`not_applicable` で機械が止めるのは、`containment`・`schema` の `not_applicable`、evidence の無い `not_applicable`、writer receipt と食い違う `not_applicable` (receipt を書いた run の `receipt`、register-package の receipt がある run の `package`、分類した `add` の receipt (`decision` が `c14_macro_contract` でない artifact を持つ) がある run の `classification`) である。`writer_receipts` に残らない起動 (`--dry-run`・noop・register-package の再実行・pre-choice の commit) の `not_applicable` が規則に合うかは、evidence を読んで判断する。
 
 ```bash
-python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl" <<'PY'
-import hashlib, json, sys
+python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-progress.json" "$DEV_GRAPH_GRAPH" "$DEV_GRAPH_ROOT" <<'PY'
+import hashlib, json, os, sys
 goal = json.load(open(sys.argv[1], encoding='utf-8'))
 rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
+progress = json.load(open(sys.argv[3], encoding='utf-8'))
+graph = json.load(open(sys.argv[4], encoding='utf-8'))
 required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
 expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
 assert rows, 'intermediate.jsonl is empty'
@@ -182,6 +203,40 @@ for row in rows:
     assert required_keys <= row.keys(), required_keys - row.keys()
     assert row['original_goal'] == goal['original_goal']
     assert row['original_goal_hash'] == expected
+digest = 'sha256:' + hashlib.sha256(json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')).hexdigest()
+receipts = [json.load(open(os.path.join(sys.argv[5], p), encoding='utf-8')) for p in progress.get('writer_receipts') or []]
+baseline = progress.get('graph_baseline') or {}
+revisions = [baseline.get('graph_revision')] + [r.get('graph_revision_after') for r in receipts]
+assert all(r.get('graph_revision_before') == before for r, before in zip(receipts, revisions)), f'writer receipts do not chain from the baseline: {[(r.get("graph_revision_before"), r.get("graph_revision_after")) for r in receipts]}'
+last = (receipts[-1].get('graph_revision_after'), receipts[-1].get('graph_digest_after')) if receipts else (baseline.get('graph_revision'), baseline.get('graph_digest'))
+assert last == (graph.get('graph_revision'), digest), f'graph changed after the last writer receipt or the graph baseline: {last}'
+verifier = progress.get('independent_verifier') or {}
+assert verifier.get('agent') in {'dev-graph-integrity-auditor', 'dev-graph:dev-graph-integrity-auditor'}, 'independent verifier not run'
+assert verifier.get('verdict') in {'PASS', 'FAIL'}, verifier
+assert verifier.get('graph_digest') == digest, f'verifier audited {verifier.get("graph_digest")}, not the current graph {digest}'
+def entries(value):
+    pairs = list(value.items() if isinstance(value, dict) else ((c.get('id'), c) for c in value))
+    out = {cid: (c if isinstance(c, dict) else {'status': c}) for cid, c in pairs}
+    assert len(out) == len(pairs), f'duplicate ids: {sorted(map(str, out))}'
+    return out
+status = {cid: c.get('status') for cid, c in entries(progress.get('feedback_criteria') or {}).items()}
+assert set(status) == {'IN1', 'OUT1', 'OUT2', 'OUT3'}, sorted(map(str, status))
+outer = {cid: s for cid, s in status.items() if cid != 'IN1'}
+assert set(outer.values()) == {'external_pending'}, f'outer criteria are judged outside this run: {outer}'
+checklist = entries(progress.get('checklist') or {})
+assert set(checklist) == {'containment', 'classification', 'schema', 'package', 'receipt'}, sorted(map(str, checklist))
+assert all(c.get('status') in {'achieved', 'not_achieved', 'not_applicable'} for c in checklist.values()), checklist
+assert checklist['containment'].get('status') != 'not_applicable' and checklist['schema'].get('status') != 'not_applicable', 'containment and schema are never not_applicable'
+assert all(str(c.get('evidence') or '').strip() for c in checklist.values() if c.get('status') == 'not_applicable'), 'not_applicable needs evidence'
+na = {cid for cid, c in checklist.items() if c.get('status') == 'not_applicable'}
+classified = any(r.get('operation') == 'add' and any((a.get('classification') or {}).get('decision') != 'c14_macro_contract' for a in r.get('artifacts') or []) for r in receipts)
+required = {'receipt'} if receipts else set()
+required |= {'package'} if any('feature_package_id' in r for r in receipts) else set()
+required |= {'classification'} if classified else set()
+assert not (na & required), f'not_applicable contradicts the writer receipts: {sorted(na & required)}'
+assert progress.get('overall') in {'in_progress', 'blocked', 'PASS'}, progress.get('overall')
+if progress['overall'] == 'PASS':
+    assert verifier['verdict'] == 'PASS' and status['IN1'] == 'PASS' and all(c['status'] != 'not_achieved' for c in checklist.values()), (verifier['verdict'], status['IN1'], checklist)
 PY
 ```
 
@@ -195,6 +250,7 @@ PY
 ## Gotchas
 
 - graph/content を直接書かず、preview と apply のどちらも C02 単一 writer を通す。
+- progress.json の `graph_baseline` を後から書き直さない。検証は baseline を起点に receipt の鎖をたどるので、書き直すと run の中の graph の変化が素通りする。
 - feature は C14 の macro contract から受け取り、通常 artifact routing で新規生成しない。
 - P01..P13 の欠落、重複、混在、cross-feature edge のいずれかがあれば部分登録しない。
 - execution context の repository/worktree identity 不一致を上書きで吸収しない。

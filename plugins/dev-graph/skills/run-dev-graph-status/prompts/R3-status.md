@@ -7,7 +7,7 @@
 - `responsibility_id`: `R3-status`
 - `skill`: `run-dev-graph-status`
 - 不変目的: `extract-graph-status.py` (C24 の read と C11 の validate を中で通す) が返す rows から該当ノードを取り出し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)
-- inventory の summary (frontmatter の responsibilities と一致させる文で、ここでは書き換えない): 「validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)」。今の手順では graph の読み取りと検索は `extract-graph-status.py` が行い、この責務はその rows だけを使う。
+- inventory の summary (frontmatter の responsibilities と一致させる文): 「extract-graph-status.py の rows だけから該当ノードの status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)」。graph の読み取りと検索は `extract-graph-status.py` が行い、この責務はその rows だけを使う。
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層

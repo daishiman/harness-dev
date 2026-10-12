@@ -1,0 +1,112 @@
+{
+  "label": "render5",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/fx",
+  "head": "671e651287939094b88c9e896ee2a444c4f74818",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:054496a0ad85d1fe4f1e147405ab1e21150e30c03a3330270b329c9d57901824"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_11cb3f5a569bbcd8"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "environment_change": {
+    "same_as": "render4 (20261012T1759-pr85) の environment_change と同じ条件。AF_UNIX の socket の dir の名前だけ cr4 から cr5 に変えた。",
+    "sandbox_network": {
+      "allowedDomains": [
+        "live-trial-no-egress.invalid"
+      ],
+      "strictAllowlist": true,
+      "deniedDomains": [
+        "*"
+      ],
+      "allowUnixSockets": [
+        "/private/tmp/ltpr85/cr5"
+      ]
+    },
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "/private/tmp/ltpr85/cr5"
+    },
+    "browser": {
+      "path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/browser/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+      "source": "runs/render4/browser から cp -R",
+      "sha256": "a0bfe7b4da4787b66058477d696cd1d09065d25f06a548947722b9af77ee8282"
+    }
+  },
+  "retry_of": "render4 (20261012T1759-pr85)",
+  "retake": {
+    "why": "team-lead の 2026-10-12 12:26Z の指示による全 9 本の取り直し。dev-graph の entry script が bytecode を書かないように直った後の閉包で試す。前の PASS は stale。",
+    "bytecode_fix": "dev-graph の entry script (resolve-repo-context.py・validate-graph-schema.py・bd-bridge.py ほか 16 本ほど) が import の前に sys.dont_write_bytecode = True を置き、sys.executable で起こす子には -B を渡し、hooks.json の 4 本は python3 -B にした。_common.py と plugin.json は変えていない (team-lead の 12:26Z の連絡による)。",
+    "closure_sha": {
+      "team_lead_12_26Z": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+      "copy": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+      "wtpy": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+      "all_equal": true
+    },
+    "plugins_copy": {
+      "copied_at": "2026-10-12T13:10:49Z",
+      "from": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins",
+      "to": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/ws/plugins",
+      "plugins": [
+        "dev-graph",
+        "harness-creator",
+        "skill-governance-adapters",
+        "system-dev-planner",
+        "system-spec-harness"
+      ],
+      "method": "shutil.copytree(symlinks=True, ignore=__pycache__・*.pyc)。写した後に diff -rq -x __pycache__ -x '*.pyc' で 5 つとも一致",
+      "bytecode_in_copy": 0,
+      "from_note": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)"
+    },
+    "tmpdir": {
+      "CLAUDE_CODE_TMPDIR": "/private/tmp/ltpr85/t/re5",
+      "symlink_target": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/tmp",
+      "TMPDIR_outside_sandbox": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/tmp/",
+      "sandbox_bash_TMPDIR": "/private/tmp/ltpr85/t/re5/claude-501 (実体は /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/tmp/claude-501)",
+      "why": "team-lead の 2026-10-12 の指示で、被験の一時領域を run の dir の中に向けた。Claude Code は CLAUDE_CODE_TMPDIR が長い (AF_UNIX の socket に使えない、目安 30 byte 超) と sandbox の Bash の TMPDIR を /tmp/claude-<uid> に戻すので、短い symlink を run の tmp に向けて CLAUDE_CODE_TMPDIR にした。preflight10 で、symlink が拒否されず、mktemp と Python の tempfile の実体が run の tmp の下にでき、/private/tmp/claude-501・/private/tmp の直下に差が出ないことを確かめた。",
+      "PYTHONDONTWRITEBYTECODE": "渡していない (lt-env.sh は env -i で起動し、この変数を入れない)"
+    },
+    "isolation": {
+      "guard_py": "f23267a3c016e308c611acca24cb71b437758163f4e25ee02118a4e73c321ad5",
+      "mksettings_py": "277ae072da18cc7c3e671cfa04228fab5c453c5672e57d8e0c946fad774f0034",
+      "launch_sh": "1af200118e4305b3af18305205ce5b798ace26d9dfe03eeabb09d8421ab7b547",
+      "poll_sh": "7fc9405afd874c8497072298f2dd82c76137b14458dbd6df0937fb434072395d",
+      "lt_env_sh": "a24f860dee77750315b99985ff3c9d2ecfc0e8dad59cf6279e1fb3b8539fd807",
+      "note": "guard.py と mksettings.py は render4 から変えていない (締めた形のまま。外へ送る tool と許可一覧に無い tool を拒否)。launch.sh は TMPDIR の向け先と python3 -B を足し、poll.sh は python3 -B にした。"
+    },
+    "task_md_changes": {
+      "base": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render4/workdir/task.md",
+      "replacements": [
+        {
+          "from": "runs/render4",
+          "to": "runs/render5",
+          "count": 8
+        },
+        {
+          "from": "/private/tmp/ltpr85/cr4",
+          "to": "/private/tmp/ltpr85/cr5",
+          "count": 1
+        }
+      ],
+      "unchanged": "置き換え以外は前の run の task.md と同じ",
+      "task_md_sha256": "8c876b13a6197bbf59825c90b49af4eaeefdf2ad2842658291e6649f8b4f05ab"
+    }
+  }
+}

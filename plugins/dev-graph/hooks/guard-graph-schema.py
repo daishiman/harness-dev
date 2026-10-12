@@ -62,7 +62,7 @@ def context_ok(root: Path) -> tuple[bool, str]:
     if not resolver.is_file():
         return False, f"required resolver missing: {resolver}"
     proc = subprocess.run(
-        [sys.executable, str(resolver), "--repo-root", str(root), "--mode", "read"],
+        [sys.executable, "-B", str(resolver), "--repo-root", str(root), "--mode", "read"],
         capture_output=True, text=True, check=False,
     )
     return proc.returncode == 0, (proc.stderr.strip() or proc.stdout.strip())
@@ -175,7 +175,7 @@ def schema_ok(root: Path, context_output: str) -> tuple[bool, str]:
     if not graph.is_file():
         return False, f"canonical graph is missing: {graph}"
     proc = subprocess.run(
-        [sys.executable, str(validator), "--graph", str(graph), "--repo-root", str(root)],
+        [sys.executable, "-B", str(validator), "--graph", str(graph), "--repo-root", str(root)],
         capture_output=True, text=True, check=False,
     )
     return proc.returncode == 0, (proc.stderr.strip() or proc.stdout.strip())

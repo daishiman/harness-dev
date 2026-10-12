@@ -149,7 +149,11 @@ def test_bd_helpers_and_all_operations(common, tmp_path, monkeypatch, capsys):
         return {"ok": True, "args": args}
 
     monkeypatch.setattr(mod, "bd", fake_bd)
-    code, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph-node-id", "G1", "--title", "T")
+    # create judges each target on graph.json (C14 OUT1); G1 and G9 are promoted there.
+    promoted = {"confirmation_status": "confirmed", "evaluation_status": "pass", "implementation_readiness": {"status": "complete"}}
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": [{"graph_node_id": node_id, **promoted} for node_id in ("G1", "G9")]}))
+    code, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--graph-node-id", "G1", "--title", "T")
     assert code == 0 and out["result"]["id"] == "new"
     for argv in (
         ("--op", "update", "--repo-root", tmp_path, "--bd-issue-id", "B1", "--status", "in_progress", "--title", "T2"),
@@ -163,11 +167,11 @@ def test_bd_helpers_and_all_operations(common, tmp_path, monkeypatch, capsys):
         ("--op", "gate-check", "--repo-root", tmp_path, "--bd-issue-id", "B1", "--pr", "7"),
     ):
         assert call_main(mod, monkeypatch, capsys, *argv)[0] == 0
-    code, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--dry-run")
+    code, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--graph-node-id", "G1", "--dry-run")
     assert code == 0 and out["dry_run_preview"]["op"] == "create"
 
     monkeypatch.setattr(mod, "bd", lambda args, cwd, check=True: [{"id": "B9", "description": "external_ref:G9"}] if args[0] == "search" else {})
-    _, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph-node-id", "G9", "--title", "T")
+    _, out = call_main(mod, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--graph-node-id", "G9", "--title", "T")
     assert out["result"]["idempotent"] is True
 
 

@@ -1,0 +1,44 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec6/fx --resume",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "goal 未達: C02 による specification と architecture の node の取込が 0 件。graph_revision は 0、nodes は空で、C02 の receipt もない。build-graph-node.py は L306 の --help だけで、dry-run も add も実行していない。直接の原因は completeness evaluator の総合判定 FAIL。matrix_coverage が FAIL (70) で、G-hearing は exit 1、blocking は 2 件 (traceability の medium。auth/web の qa-037・qa-038、security/web の qa-037)。原因の区分は (b) fixture。orchestrator が足した qa-037 と qa-038 は basis=agent-inference の既定値で、利用者の確認を経ていない。aspect-criteria 1a の「medium・軸 2 以外 → FAIL」によって FAIL が機械的に決まる。task は承認を作ることを禁じているので、被験が FAIL で止まって取込に進まなかったのは正しい振る舞いである。",
+      "経路の逸脱 (a: 被験の実行。skill の手順そのものではない): completeness evaluator を L281 で起動し、cwd と DEV_GRAPH_ROOT の一致を確かめたのはその後の L286 (cwdcheck=0)。R2-delegate 5.3 の checklist と SKILL.md の Gotcha 175 が定める順序 (起動の前に確かめる) に反する。L251〜L275 の相対パスはすべて成功しており、cwd は実際に fx だったので実害はない。",
+      "経路の逸脱 (a: 被験の実行): run-system-spec-init の責務 prompt (R1〜R5) を読まずに init の出力を作った。L76 は ls だけで、L88 で適用している。R2-delegate の「出力を作った委譲先ごとに SKILL.md と責務 prompt を全文読む」に反する。",
+      "経路の逸脱 (a: 被験の実行): evaluator の PASS が出る前に、C02 の取込の入力 fx/eval-log/c19-import-input.json を書き (L413)、C02 の Skill を起動した (L452)。R3-import の前提 (evaluator の PASS の後に取込む) に反する順序である。ただし dry-run も add も実行しておらず、graph への書込みはない。",
+      "経路の逸脱 (a: 被験の実行。重みは軽い): SKILL.md の goal-seek の配線 (未達の responsibility の prompts/<R-id>.md を読み、Agent で分離 context に fork する) を使わず、R0〜R3 を inline で実行した。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "562b1bae99a26dd269bbf05d29b27ddcfc872145b3438fc43ad2cafb53548c93",
+  "transcript_sha256": "1ccfe1b712b9da01dc8711e5a4f4657106e54bbf95b7e09fe7d28acc88770d45",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1022.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage"
+}

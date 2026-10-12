@@ -1,0 +1,32 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "L35-37: 正規の Skill dev-graph:run-dev-graph-sync を起動し、skill がロードされた。Unknown skill にはなっておらず、Read で真似た代行もない。",
+    "L85・L94: 最初の出力 (L126-127 の pass-1 計画) より前に、責務 prompt の R1〜R8 と prompt-common-layers を cat で読んでいる。",
+    "L121・L126-127: resolve-repo-context --mode write と validate-graph-schema が pass。diff-github-issues の pass-1 計画は changes 2 (#101 の title の import と #102 の title の export)。",
+    "L136-137: gh-bridge の --dry-run による preview。mutation_suppressed で、この時点の mutation_log は空。",
+    "L163-164・L173-174: import は C02 build-graph-node.py update で dry-run してから apply した (graph_revision 3→4、receipt node-r000004-update)。fx/tasks/T-SYNC-001.md の title は 'Sync import target task (remote revision 2)' になっている (git diff で確認)。",
+    "gate の成立 (1/3): L211-213 で canonical preview を作り、challenge は 310B5EE5226EF8CB8FEE520E。L217 で workdir/gate-request.json を Write した。L221 で GATE-CHALLENGE を報告して turn を終えており、Bash の polling や preview の cancel はしていない。",
+    "gate の成立 (2/3): L228 で 'CONFIRM EXTERNAL MUTATION 310B5EE5226EF8CB8FEE520E' を受信した。L230 には実際の UserPromptSubmit hook が出した hook_additional_context [external-mutation-confirmation] があり、confirmation-87be8388… を発行している。hook は fx/plugins/skill-governance-adapters/hooks/hooks.json で UserPromptSubmit→build-external-mutation-guard.py hook-confirm として登録されている。この receipt は producer が claude-code-user-prompt-submit、challenge_sha256 は preview-2b137905… に束縛されている。user_event_id は sha256(session_id 297a5959…\\0 CONFIRM 行) と一致した。collect/gate-sent.log に send-line は 1 回だけ (rc=0) で、receipt を自作した形跡はない。",
+    "gate の成立 (3/3): L232-233 の authorize で authorization-33aef319… (authorized-once) が出た。L235-236 の execute で issue-update は updated。fx/.artifact-delivery/external-mutation/ には completion-preview-2b137905… (executed-successfully) と consumed-33aef319… がある。",
+    "export が実際に apply された根拠: fx/github-adapter.json の mutation_log に issue-edit #102 が 1 件ある (title 'Sync export target task'→'… (local revision 2)')。fx/github-adapter-calls.jsonl で mutation:true の行はこの 1 件だけ。",
+    "L239-240・L245-251: Issue を再計画すると changes 0、converged、unresolved 0。Projects の計画は links 2 で、C02 link-github が反映した (graph_revision 4→5)。issue-final と project-final はどちらも changes 0、converged=true、unresolved_count 0 で、schema は pass。L256-266: reconcile-github-lifecycle の drain-pending dry-run は空。",
+    "L285-286 (2 回目): Issue と Projects の両 planner が changes 0、converged=true、unresolved_count 0。imports と exports は 0、link_input は None、missing/conflicts/held/skipped もすべて 0。前後で graph・snapshot・tasks の sha と mutation_log の長さ 1 は変わらず、OUT1 を満たす。",
+    "stable ID と base: git diff で graph_node_id、issue 番号 101/102、project item id (PVTI_…0101/0102)、project_id は不変。.dev-graph/state/github-sync-snapshot.json は HEAD から未変更 (git status に出ない、sha d4a5c0a2…)。",
+    "必須 verifier: L280 (agent-a7004390215ed9cc0) と L300 (agent-aca86757a91ad070e) で、dev-graph:dev-graph-sync-conflict-verifier を Agent で実際に起動した。両 subagent transcript の最初の prompt は成果物のパスと検査項目だけで、producer の推論や期待 verdict は入っていない。最終 verdict はどちらも PASS で、L308・L318 で受け取っている。",
+    "単一 writer と自作 driver: graph と tasks への書込みは C02 の update (L173) と link-github (L245-251) だけ。python -c は plan JSON から update_input と link_input を取り出すのに使っただけで、python の heredoc は eval-log の goal-seek 記録 (L271-277・L291-297) に使っただけ。graph や task を直接編集した箇所はない。",
+    "書込み境界: fixture で変わったのは graph.json、github-adapter.json、tasks/T-SYNC-001.md、tasks/T-SYNC-002.md。追跡外のものは .artifact-delivery/、.dev-graph/state/receipts/、eval-log/、github-adapter-calls.jsonl で、すべて fx の中にある。collect/guard.jsonl は 54 件すべて allow で deny は 0 件。隔離を迂回しようとした形跡はない。",
+    "L322・L327: status.json に PASS と書き、DONE: PASS を報告した。上記の独立確認と食い違いはない。",
+    "intent receipt の観察: L307・L317 は task-notification だが、直後に UserPromptSubmit hook の attachment は付いていない。transcript 中の hook_additional_context は L230 の 1 件だけ。fx/.artifact-delivery/external-mutation/ にも intent-* の receipt は無いので、この trial では task-notification への intent receipt の誤発行は起きていない。L201 で intent の文字列が一致したのは Read の tool_result の中で、誤検出。",
+    "観察 (blocker ではない) 1: 責務の実行を Agent に fork せず、main context で行った。L280 の verifier 1 の verdict を待たずに、L285 で 2 回目を始めた。ゴールシーク検証は最後の 1 回 (L291-297) だけだった。artifact_delivery の pre-choice の提示 (L141) は簡素だった。完了を宣言した L322 は両 verdict PASS (L308・L318) を受けた後なので、合格条件には影響しない。",
+    "観察 (blocker ではない) 2: verifier が planner を再実行したため、fake-gh が github-adapter-calls.jsonl に read-only の呼出し記録を追記した (23→28 行)。mutation:true の行は増えていない。"
+  ],
+  "skill_defects": [
+    "Issue の 3-way base が実装されていない。SKILL.md L36・L137-138・L194 は「last-synced snapshot を canonical base とする 3-way diff」と「更新済み snapshot receipt」を約束している。しかし plugins/dev-graph/scripts/diff-github-issues.py は updated_at の新しい側を勝たせる比較で、.dev-graph/state/github-sync-snapshot.json を読む script も更新する script も plugin に無い (grep -rln 'sync-snapshot' plugins/dev-graph で 0 件)。再現: この fixture で sync を完走させると、snapshot は seed のまま (旧 title、last_synced_at 2026-08-01) になる。verifier 1 も、base が進まないことを observation として挙げている。task.md の「3-way の base が保持」は、誰も触らないから成り立っているだけになる。",
+    "C02 build-graph-node.py link-github が、github_project_linkages[].field_snapshot に表示名のキー (Status/Priority/Target date) と snake_case のキー (status/priority/target_date) を重ねて書く。再現: L245-251 の link-github の後に git diff tasks/T-SYNC-00{1,2}.md を見ると、同じ値が 2 つのキーで入っている。diff-github-project-fields.py の base が二重になり、片方のキーだけ更新されると base が食い違うおそれがある。",
+    "skill-governance-adapters の pretool hook は、guard の script 名を含む Bash を、read-only の grep/head/--help でも『Malformed central guard invocation』で deny する。SKILL.md にはこの制約が書かれていない。再現: transcript の L184・L188 で被験が guard を grep/--help して deny され、L200 で Read に切り替えている。",
+    "build-external-mutation-guard.py の DIRECT_MUTATION_PATTERNS は gh-bridge.py の apply 系を塞ぐが、python3 gh-bridge.py --op issue-update を --dry-run なしで直接呼ぶ形は塞がない。preview→confirm→authorize→execute を通らずに export する経路は、SKILL 本文の指示だけで防いでいる (hook 実装を読んで確認。この trial では迂回は起きていない)。"
+  ],
+  "evaluator_agent_id": "abc8671bb10332a69"
+}

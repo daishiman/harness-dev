@@ -1,0 +1,369 @@
+{
+  "label": "requirements4",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-requirements",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11-requirements/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+  "head": "d8f4d85b6cb04c26740c03c00ba7c718b92331b3",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:81e4f1cb92e1cec5587dd1f66743af96b79e394abeb65d82242fbb0def84ca29",
+      "local:sha256:3418c86e48543f894f5628062c564e59deee11b7e401872773cd389c9e0ef540"
+    ],
+    "worktree_id": [
+      "wt_ad43d74db084189a",
+      "wt_da8d429c9c2bc6bf"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json",
+    "system-plan/LT-FEATURE-001/staging-manifest.json",
+    "system-plan/LT-FEATURE-001/task-specs/phase-01-requirements.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-02-architecture.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-03-design-review.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-04-test-design.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-05-implementation.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-06-test-run.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-07-acceptance.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-08-refactoring-migration.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-09-quality-assurance.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-10-final-review.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-11-evidence.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-12-documentation-operations.md",
+    "system-plan/LT-FEATURE-001/task-specs/phase-13-release-deploy.md",
+    "system-plan/LT-FEATURE-001/workstream-inventory.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [
+    "system-plan/LT-FEATURE-001/system-build-handoff.json"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "feature_pin": {
+    "note": "orchestrator による fixture 準備 (trial の前)。promote は package の source_feature_digest が feature context の bytes の sha256 と一致することを求める。旧 fixture の値は features/*.md の sha256 で、feature context の JSON が無かったため、graph.json の feature node から feature context を写し、staging の pin を付け直した。続けて mkreseal が build-system-handoff.py で seal を作り直す。",
+    "feature_context": {
+      "path": "features/LT-FEATURE-001.json",
+      "sha256": "672c06851abc2f480312d48e229aa1b52b89db32f471c8025d46821e770d5d61",
+      "derived_from": ".dev-graph/state/graph.json の LT-FEATURE-001 node (architecture_refs は node の file_path に引き直した)"
+    },
+    "architecture_graph": {
+      "path": "architecture/graph.json",
+      "sha256": "40d3a1d56e41f0de507ae03e0ec96c58ed93e3a0f01ce5fe48db58ef7c38938f",
+      "derived_from": ".dev-graph/state/graph.json の architecture node の id"
+    },
+    "completeness_report": {
+      "path": "system-spec/completeness-findings.json",
+      "sha256": "090477ff83c868eb5797e2224ccc94d5b54331ba87f11e2d4c6f6004d4030110",
+      "produced_by": "ws/plugins/system-dev-planner/tests/test_runtime.py の write_readiness_sources (repo の test helper)",
+      "producer_sha256": "ce85c9cb2bdfe2c0a4addad5500d9a2dd4bc6a8dd481410ac14637e0219cee9a",
+      "note": "system-spec-harness の completeness の評価者は起動していない。aggregate-completeness.py が通る形の合成の report"
+    },
+    "repinned": {
+      "system-plan/LT-FEATURE-001/feature-package.json": {
+        "source_feature_digest": [
+          "sha256:56487b3b80ea6dbec3127dee55414d69c1f1c7e52c3ba67734487f81b5d55808",
+          "sha256:672c06851abc2f480312d48e229aa1b52b89db32f471c8025d46821e770d5d61"
+        ],
+        "sha256": [
+          "067bd9794b84763d8219cc6e4de6a44550e3ee8d9f47737e7a2412b99425458c",
+          "a6d28426964d7d3b5b8d7c785ddbc6fdd53f1f8e5c9f48a961de8968449b40f7"
+        ]
+      },
+      "system-plan/LT-FEATURE-001/package.json": {
+        "source_feature_digest": [
+          "sha256:56487b3b80ea6dbec3127dee55414d69c1f1c7e52c3ba67734487f81b5d55808",
+          "sha256:672c06851abc2f480312d48e229aa1b52b89db32f471c8025d46821e770d5d61"
+        ],
+        "sha256": [
+          "067bd9794b84763d8219cc6e4de6a44550e3ee8d9f47737e7a2412b99425458c",
+          "a6d28426964d7d3b5b8d7c785ddbc6fdd53f1f8e5c9f48a961de8968449b40f7"
+        ]
+      }
+    }
+  },
+  "resealed": {
+    "staging": "system-plan/LT-FEATURE-001",
+    "before": {
+      "canonical_digest": "sha256:0a7b1d0d8d5e485472aaafe121c57784d9a55fb8b9a5de7901a14bafce7f60ab",
+      "handoff_sha256": "6e2e6608d683cf936586c7a68d4129aff287bf556aa30321de030298565b17cc"
+    },
+    "builder_exit": 0,
+    "builder_receipt": {
+      "canonical_digest": "sha256:3c958e5f78e6cc2953dd09a7afcb08d307d3b6da9f07804abb61b61bda94ce11",
+      "handoff_path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx/system-plan/LT-FEATURE-001/system-build-handoff.json",
+      "handoff_sha256": "1fce4327d52b593b56c4c0cec63f5b159c1ec1c8f1cb9892f08543bf67197cc4",
+      "input_count": 17,
+      "manifest_path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx/system-plan/LT-FEATURE-001/staging-manifest.json",
+      "receipt_artifacts_created": false,
+      "schema_version": "1.0.0",
+      "status": "generated"
+    },
+    "validate_exit": 0,
+    "validate_status": "pass",
+    "validate_violations": [],
+    "note": "rekey で file digest が変わるため、handoff 前の manifest に戻し、system-dev-planner の build-system-handoff.py に新 repo の文脈で handoff と最終 manifest を作り直させた。sha256_before_handoff は再構成した handoff 前 manifest の値で、元 fixture の値とは一致しない。"
+  },
+  "promotion": {
+    "note": "orchestrator による fixture 準備 (trial の前)。registration manifest・promotion receipt は promote-system-plan.py が、C02 receipt と 13 member の graph 登録は register-package.py register が書いた。receipt の dir は register が作らないので先に作った (dev-graph の受入 test の PlanRepo と同じ)。最後の validate-readiness-binding.py と guard-requirements-handoff.py は write-scope none の事前確認。",
+    "run_id": "fixture-prep-1",
+    "session_owner": "orchestrator-fixture-prep",
+    "published": ".dev-graph/plans/feature-package-LT-FEATURE-001",
+    "receipt": ".dev-graph/state/registration-receipts/feature-package-LT-FEATURE-001.json",
+    "steps": [
+      {
+        "script": "ws/plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+        "script_sha256": "a4a400ae40c18b2985139e881bdfff4eedcb744cc9dfb1a754de9b8c71801ff7",
+        "argv": [
+          "--lock-action",
+          "acquire",
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--run-id",
+          "fixture-prep-1",
+          "--session-owner",
+          "orchestrator-fixture-prep",
+          "--feature-id",
+          "LT-FEATURE-001",
+          "--feature-digest",
+          "sha256:672c06851abc2f480312d48e229aa1b52b89db32f471c8025d46821e770d5d61"
+        ],
+        "exit": 0,
+        "stdout_sha256": "d3245337b3e4b28595d537dda9acf6e896bbcbf5f2582c422325e2a6cd67459c",
+        "stderr": ""
+      },
+      {
+        "script": "ws/plugins/system-dev-planner/scripts/validate-system-plan.py",
+        "script_sha256": "68e6c4255b7c244f2871dd8ae13c2d2a4ac9f38d9bffc01a56428e87c4a9a46f",
+        "argv": [
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--staging",
+          "system-plan/LT-FEATURE-001"
+        ],
+        "exit": 0,
+        "stdout_sha256": "cbf20c0ae9dfc9cecf41df6400ad0db12af2675000e81152d9d0d04ce827e4c7",
+        "stderr": "",
+        "saved_stdout": {
+          "path": ".dev-graph/state/validation-fixture-prep-1.json",
+          "sha256": "cbf20c0ae9dfc9cecf41df6400ad0db12af2675000e81152d9d0d04ce827e4c7"
+        }
+      },
+      {
+        "script": "ws/plugins/system-dev-planner/scripts/check-implementation-readiness.py",
+        "script_sha256": "c3d90a34e892ce839d945a1548649ae700af30d0b2eccaaf8956b20332b286e1",
+        "argv": [
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--system-spec-root",
+          "system-spec",
+          "--architecture-root",
+          "architecture",
+          "--completeness-report",
+          "system-spec/completeness-findings.json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "5122096498567e08216e560f3b1ce3bb270a462d6b471ec9b9596fdbf50cbeeb",
+        "stderr": "",
+        "saved_stdout": {
+          "path": ".dev-graph/state/readiness-fixture-prep-1.json",
+          "sha256": "5122096498567e08216e560f3b1ce3bb270a462d6b471ec9b9596fdbf50cbeeb"
+        }
+      },
+      {
+        "helper": "ws/plugins/system-dev-planner/tests/test_runtime.py の valid_findings",
+        "helper_sha256": "ce85c9cb2bdfe2c0a4addad5500d9a2dd4bc6a8dd481410ac14637e0219cee9a",
+        "output": {
+          "path": ".dev-graph/state/findings-fixture-prep-1.json",
+          "sha256": "28c09a40771dff13d8c335df9c3659723159e73af1de24f062554298048d600f"
+        },
+        "note": "system-dev-plan-evaluator は起動していない。promote の機械検査を通る形の合成の findings"
+      },
+      {
+        "script": "ws/plugins/system-dev-planner/scripts/promote-system-plan.py",
+        "script_sha256": "ce8a619e81656607e77815a76490e1025a6ca8d67eed634375a250b5082e9851",
+        "argv": [
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--feature-id",
+          "LT-FEATURE-001",
+          "--feature-context",
+          "features/LT-FEATURE-001.json",
+          "--run-id",
+          "fixture-prep-1",
+          "--session-owner",
+          "orchestrator-fixture-prep",
+          "--staging",
+          "system-plan/LT-FEATURE-001",
+          "--findings",
+          ".dev-graph/state/findings-fixture-prep-1.json",
+          "--readiness",
+          ".dev-graph/state/readiness-fixture-prep-1.json",
+          "--validation",
+          ".dev-graph/state/validation-fixture-prep-1.json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "d9549bdd8f4c4884f6b543743aaa1afee60cc45fb46076805520e26811d5fd29",
+        "stderr": ""
+      },
+      {
+        "script": "ws/plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+        "script_sha256": "a4a400ae40c18b2985139e881bdfff4eedcb744cc9dfb1a754de9b8c71801ff7",
+        "argv": [
+          "--lock-action",
+          "release",
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--run-id",
+          "fixture-prep-1",
+          "--session-owner",
+          "orchestrator-fixture-prep",
+          "--feature-id",
+          "LT-FEATURE-001",
+          "--feature-digest",
+          "sha256:672c06851abc2f480312d48e229aa1b52b89db32f471c8025d46821e770d5d61"
+        ],
+        "exit": 0,
+        "stdout_sha256": "74db4f6b300b50a8de9d35b2f274fea6556958ffe888ef4cac7962ee6e73e37c",
+        "stderr": ""
+      },
+      {
+        "script": "ws/plugins/dev-graph/scripts/register-package.py",
+        "script_sha256": "ad1ff7233e7117322f0de885dfc784df52c6e1c5ea9d92e1dc64a7c49701eef8",
+        "argv": [
+          "register",
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--package",
+          ".dev-graph/plans/feature-package-LT-FEATURE-001/feature-package.json",
+          "--graph",
+          ".dev-graph/plans/feature-package-LT-FEATURE-001/dev-graph-registration.json",
+          "--output",
+          ".dev-graph/state/graph.json",
+          "--receipt",
+          ".dev-graph/state/registration-receipts/feature-package-LT-FEATURE-001.json",
+          "--system-planner-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/ws/plugins/system-dev-planner"
+        ],
+        "exit": 0,
+        "stdout_sha256": "a5a74ff74bfbe7d417f66c24f33ae84bd39a8cf3419cbd42b7a44bd980e96cf6",
+        "stderr": ""
+      },
+      {
+        "helper": "ws/plugins/dev-graph/tests/test_acceptance_gaps_a1.py の PlanRepo.materialize_task_artifacts",
+        "helper_sha256": "38f5f98caa5145f67e57c3a66012a140ffa66f7e84c4627b8a172c201591c64a",
+        "outputs_sha256": {
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P01.md": "e65add420ecc4bc159b7c5e4c1d50b33139d4ae6fcab2f6b511639eb4682da04",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P02.md": "9f5b004f69ffb76cf017c19e379bdb86f8f027ec552411731f12cc8e25b5bb8d",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P03.md": "8fc63be641558542e235bba4300a7a9a93c838b3e1ecb2052d63126fd8eac28a",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P04.md": "bf07d9a418c247695a055984de566d662a5e380c8ef6822986db6438a164bfd4",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P05.md": "93dea7dadf10cc3ae5dcef79b298b133bfa661877a57b534638d362bfbcad546",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P06.md": "55c9e4a6c3c14a56ea15c91acfe50a5cf83a3a84bb56d953df751c7e9c3aa392",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P07.md": "f9dd6f3d291d22244e78c51cbc7e4f459faa348ed8df153f88480c6d982404ca",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P08.md": "90365fc7749193cb236f896ee4f4cbaa1cfdd1799e15901aeabde3bb5c6f21b7",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P09.md": "1a210eccf91c3c80ffcfe073dde9aa334b3d4f0a8ad7821de3fd4d822784352c",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P10.md": "ea5ad8136bde1214f049a2d9e9aeffa167791e429074aa370a6334d3d485fd73",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P11.md": "88b63bdc94f694e0cb155b6e768f5fb51a789519a34b5d70e0629a2ee170a4e6",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P12.md": "ef05de57d6fa604ec52f60679cc8552fdff3b858801c494c5b0d26ba58534cc0",
+          "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P13.md": "4b657592c4ecd3617b70ddd572066b474c1d5a09d9fab0cb8d891920c1af8e43"
+        },
+        "note": "package member の task artifact を書く正規の writer が無いため、受入 test の helper で graph の node から作った"
+      },
+      {
+        "script": "ws/plugins/dev-graph/scripts/validate-readiness-binding.py",
+        "script_sha256": "22e80335c65cff37bdb88bd06fa3cb4ba2a0f87ba29bb8417504b30c49a07f2c",
+        "argv": [
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--package-dir",
+          ".dev-graph/plans/feature-package-LT-FEATURE-001",
+          "--receipt",
+          ".dev-graph/state/registration-receipts/feature-package-LT-FEATURE-001.json",
+          "--system-planner-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/ws/plugins/system-dev-planner"
+        ],
+        "exit": 0,
+        "stdout_sha256": "f07cf77f255c44c8eb66c3eb85285fda4655b8d956982b6b3e7f47afaf6472ca",
+        "stderr": ""
+      },
+      {
+        "script": "ws/plugins/dev-graph/scripts/guard-requirements-handoff.py",
+        "script_sha256": "241e62ea8ef4a9e73d7b06914f3387dc85149f74d7c01e3d5a8dd86616207ac7",
+        "argv": [
+          "--repo-root",
+          "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/fx",
+          "--node",
+          "SYS-LT-FEATURE-001-P01",
+          "--node",
+          "SYS-LT-FEATURE-001-P02",
+          "--node",
+          "SYS-LT-FEATURE-001-P03",
+          "--node",
+          "SYS-LT-FEATURE-001-P04",
+          "--node",
+          "SYS-LT-FEATURE-001-P05",
+          "--node",
+          "SYS-LT-FEATURE-001-P06",
+          "--node",
+          "SYS-LT-FEATURE-001-P07",
+          "--node",
+          "SYS-LT-FEATURE-001-P08",
+          "--node",
+          "SYS-LT-FEATURE-001-P09",
+          "--node",
+          "SYS-LT-FEATURE-001-P10",
+          "--node",
+          "SYS-LT-FEATURE-001-P11",
+          "--node",
+          "SYS-LT-FEATURE-001-P12",
+          "--node",
+          "SYS-LT-FEATURE-001-P13",
+          "--expect-graph-digest",
+          "sha256:e35d55e43918e36b2203ca96eb9d6d1e2a9a28d369682b0a4e5482acc3502d41"
+        ],
+        "exit": 0,
+        "stdout_sha256": "9cb98328c44e84932e16495825fa9de3c87a47bdb8ba4cfd13eb945270f43660",
+        "stderr": ""
+      }
+    ],
+    "outputs_sha256": {
+      ".dev-graph/plans/feature-package-LT-FEATURE-001/dev-graph-registration.json": "eb79d219614ff049fe2addfb82b9ed661adbe8c67d2625f7069fd58c05f75336",
+      ".dev-graph/plans/feature-package-LT-FEATURE-001/atomic-promotion-receipt.json": "d9549bdd8f4c4884f6b543743aaa1afee60cc45fb46076805520e26811d5fd29",
+      ".dev-graph/plans/feature-package-LT-FEATURE-001/plan-findings.json": "28c09a40771dff13d8c335df9c3659723159e73af1de24f062554298048d600f",
+      ".dev-graph/state/registration-receipts/feature-package-LT-FEATURE-001.json": "18dc696b57debc425e3cbfb88cacbf9600957979e53b0d989fa70d8fb6dcced3",
+      ".dev-graph/state/graph.json": "0aaab3149ca5218333c2c9fc941b799169f195e2b8dc7134a3e800a226dc8a8a"
+    },
+    "task_artifacts": {
+      "count": 13,
+      "files": {
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P01.md": "e65add420ecc4bc159b7c5e4c1d50b33139d4ae6fcab2f6b511639eb4682da04",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P02.md": "9f5b004f69ffb76cf017c19e379bdb86f8f027ec552411731f12cc8e25b5bb8d",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P03.md": "8fc63be641558542e235bba4300a7a9a93c838b3e1ecb2052d63126fd8eac28a",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P04.md": "bf07d9a418c247695a055984de566d662a5e380c8ef6822986db6438a164bfd4",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P05.md": "93dea7dadf10cc3ae5dcef79b298b133bfa661877a57b534638d362bfbcad546",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P06.md": "55c9e4a6c3c14a56ea15c91acfe50a5cf83a3a84bb56d953df751c7e9c3aa392",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P07.md": "f9dd6f3d291d22244e78c51cbc7e4f459faa348ed8df153f88480c6d982404ca",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P08.md": "90365fc7749193cb236f896ee4f4cbaa1cfdd1799e15901aeabde3bb5c6f21b7",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P09.md": "1a210eccf91c3c80ffcfe073dde9aa334b3d4f0a8ad7821de3fd4d822784352c",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P10.md": "ea5ad8136bde1214f049a2d9e9aeffa167791e429074aa370a6334d3d485fd73",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P11.md": "88b63bdc94f694e0cb155b6e768f5fb51a789519a34b5d70e0629a2ee170a4e6",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P12.md": "ef05de57d6fa604ec52f60679cc8552fdff3b858801c494c5b0d26ba58534cc0",
+        "tasks/LT-FEATURE-001/SYS-LT-FEATURE-001-P13.md": "4b657592c4ecd3617b70ddd572066b474c1d5a09d9fab0cb8d891920c1af8e43"
+      }
+    },
+    "binding_precheck": {
+      "exit": 0,
+      "status": "pass",
+      "violations": [],
+      "write_count": 0,
+      "graph_digest": "sha256:e35d55e43918e36b2203ca96eb9d6d1e2a9a28d369682b0a4e5482acc3502d41"
+    },
+    "guard_precheck": {
+      "exit": 0,
+      "status": "handoff",
+      "handoff_count": 13,
+      "blocked": [],
+      "write_count": 0
+    },
+    "ok": true
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の起動: transcript L35 で Skill tool が dev-graph:run-dev-graph-init を起動し、L36-37 で SKILL.md が読み込まれた。Unknown skill にはなっていない。",
+    "1 回目の init の前に、L58-59 で build-init-scaffold.py の dry-run を実行した。status は preview で write は 0。",
+    "1 回目の init (L62-63): 実装本体の plugin script build-init-scaffold.py で applied、36 writes。内部の validate-harness-link の preflight は pass、schema の検証は valid。自作の driver で成果物を作った跡は無い。",
+    "提示の前の guard (L66-67): config.json の parse は ok で、絶対 path・token・node ID を含まない。sha256 を出し、config を利用者に示した。L75 で task が事前に答えた standard を選択として扱い、semantic_evaluator_started へ進めた。SKILL の pre-choice 契約 (main context で最小の成果物を先に作る) どおりの順序である。",
+    "責務 prompt: L76-77 で R1-R5 の prompts を Read した。2 回目の init (L89) と Agent verifier の起動 (L111-117) より前。最初の apply (L62) より後だが、SKILL の Execution contract 0-5 に同じ手順があり、pre-choice の最小成果物に当たる。",
+    "冪等性と利用者編集 (L89-90): 2 回目の前に issue.md へ追記し、docs/user-note.md を作って利用者の編集を模した。2 回目の結果は noop、planned_changes=0、write_count=0。issue.md は上書きされず、migration_preview に出るだけだった。fx の全 sha と利用者編集の sha は変わっていない。",
+    "C11 (L101-102): validate-graph-schema.py が exit 0 で valid。config に絶対 path は 0、token・node ID も 0。.claude は無く、plugin の sha は不変、__pycache__ も無い。",
+    "必須の Agent verifier: L111/L113/L115/L117 で 4 本を起動し、L129/L134/L140/L151 で完了を受け取った。collect/subagent-transcripts/agent-a80f76de3d844f7be (R1)、agent-a4ad4a959c1b96234 (R2)、agent-a47a4c52f3381a196 (R3/R4)、agent-acbe742bf53871c4b (R5) の 4 本とも、python3 -B で plugin の script を実際に走らせて checklist を確かめている。fixture へは書いていない。",
+    "goal-seek のログ (L107、L153-154): eval-log の goal-spec.json・progress.json・intermediate.jsonl の検査は OK で、絶対 path は 0。L156 で collect/out/status.json を書き、L160 で DONE: PASS を出した。この 2 つは自己申告なので、合格の根拠には使っていない。",
+    "fixture の実ファイル (fx): 6 content root (issues/tasks/specs/architecture/features/docs) が揃っている。.dev-graph/config.json は jsonschema の errors 0。state/graph.json の mtime は 1 回目の apply の時刻で、単一 writer に合う。templates は 21/21 で、plugin の template との差分は利用者が編集した issue.md だけ。receipts の init receipt は 1 件で、cache と locks がある。.claude と .git/dev-graph は無い。git status は `?? .dev-graph/ docs/ eval-log/` だけで、README.md の commit 28e2e4ff は不変。",
+    "私が独立に再検証した: validate-graph-schema.py (出力先なし) を PYTHONDONTWRITEBYTECODE=1 で再実行して exit 0。build-init-scaffold.py L38 のコメントのとおり、system_spec の dir は C19 の担当で、init は作らない仕様。",
+    "書込み境界: collect/guard.jsonl は 36 件で、deny は L32 の 1 件だけ (agent abf0ad22a78835b46 の ListAgents、許可一覧の外)。被験の Agent verifier 4 本とは別の agent で、回避を試みた跡は無い。L34 は Bash echo の allow。workdir/check-post.json では、run_bytecode が []、閉包 sha が expected・wtpy・ws の写しで 6765b1769c22… に一致、run の dir の外に新しくできたもの (new_outside_entries) は全区分で空。",
+    "留意 (blocker ではない): progress.json は、task scenario の外の OUT3 も検証せずに PASS と記録しており、evidence 欄が無い。standard の選択をファイルに記録したのは L107 で、2 回目の run の後。R3 と R4 を 1 本の Agent にまとめている。どれも task.md の合格条件と経路の制約は満たしている。"
+  ],
+  "skill_defects": [],
+  "evaluator_agent_id": "a8dd59c7639b86117"
+}

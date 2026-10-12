@@ -47,6 +47,17 @@ def package_manifest() -> dict:
     }
 
 
+def promoted_graph(root: Path) -> Path:
+    """The graph.json bd-bridge create gates on: the feature and its exact-13 children, all promoted."""
+    manifest = package_manifest()
+    state = {"confirmation_status": "confirmed", "evaluation_status": "pass",
+             "implementation_readiness": {"status": "complete"}}
+    path = root / "graph.json"
+    path.write_text(json.dumps({"nodes": [{"graph_node_id": row["graph_node_id"], **state}
+                                          for row in [manifest["feature"], *manifest["children"]]]}))
+    return path
+
+
 def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_path, monkeypatch, capsys):
     module = load(SCRIPTS / "bd-bridge.py", "c28_projection")
     identity = {"workspace_id": "bdw_fixture"}
@@ -91,16 +102,17 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
     monkeypatch.setattr(module, "bd", fake_bd)
     projection = tmp_path / "projection.json"
     projection.write_text(json.dumps(package_manifest()))
-    code, preview = call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--projection-manifest", projection, "--dry-run")
+    graph = promoted_graph(tmp_path)
+    code, preview = call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--projection-manifest", projection, "--dry-run")
     assert code == 0 and preview["dry_run_preview"]["projection"]["write_count"] == 0
     assert not calls
-    code, receipt = call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--projection-manifest", projection)
+    code, receipt = call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--projection-manifest", projection)
     assert code == 0
     assert receipt["result"]["expected_count"] == receipt["result"]["applied_count"] == 13
     assert issues["B01"]["issue_type"] == "epic"
     assert all(issues[f"B{i:02d}"]["parent"] == "B01" for i in range(2, 15))
     create_count = sum(args[0] == "create" for args in calls)
-    call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--projection-manifest", projection)
+    call_main(module, monkeypatch, capsys, "--op", "create", "--repo-root", tmp_path, "--graph", graph, "--projection-manifest", projection)
     assert sum(args[0] == "create" for args in calls) == create_count
     assert any(args[:2] == ["dep", "add"] and args[-3:] == ["--type", "blocks", "--json"] for args in calls)
 
@@ -168,7 +180,8 @@ def test_c28_reuses_manifest_linkages_when_external_search_is_stale(tmp_path, mo
     projection.write_text(json.dumps(manifest))
     code, receipt = call_main(
         module, monkeypatch, capsys,
-        "--op", "create", "--repo-root", tmp_path, "--projection-manifest", projection,
+        "--op", "create", "--repo-root", tmp_path, "--graph", promoted_graph(tmp_path),
+        "--projection-manifest", projection,
     )
     assert code == 0
     assert receipt["result"]["applied_count"] == 13

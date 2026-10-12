@@ -70,7 +70,7 @@ feedback_contract:
       verify_by: test
     - id: OUT3
       loop_scope: outer
-      text: "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はhost launcher preflightが起動前検出する"
+      text: "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はbuild-init-scaffold.pyがどのwriteよりも前に自ら実行するvalidate-harness-link.pyの検査が検出して書込み0件で止まり修復の選択肢を返す"
       verify_by: test
     - id: OUT4
       loop_scope: outer
@@ -115,30 +115,34 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 出力: `issues/tasks/specs/architecture/features/docs` の6 content root、`.dev-graph/` 配下の config/state/cache/locks/templates、および init receipt。
 - 完了条件: 全 path が resolved repo 内で C11 gate が PASS し、2回目の init が変更0、利用者編集済み成果物の上書0である。
 
-呼出し元 repository を content authority、`$CLAUDE_PLUGIN_ROOT` を read-only code/template authority として分離する。別 repository、root 外 realpath、broken content symlink、絶対 path の永続化は禁止で、検出したら fail-closed で止める。
+呼出し元 repository を content authority、`$CLAUDE_PLUGIN_ROOT` を read-only code/template authority として分離する (read-only には bytecode cache の `__pycache__` も含む。Gotchas を参照)。別 repository、root 外 realpath、broken content symlink、絶対 path の永続化は禁止で、検出したら fail-closed で止める。
 
 ## Input / output
 
 - 入力: `--repo-root` または信頼済み project context、hook source。保存先や node ID は質問しない。
-- 出力: `issues/ tasks/ specs/ architecture/ features/ docs/`、`.dev-graph/{config.json,state/graph.json,cache/,locks/,templates/}` と初期化 receipt (`.dev-graph/state/receipts/init-<UTC>.json`)。
+- 出力: `issues/ tasks/ specs/ architecture/ features/ docs/`、`.dev-graph/{config.json,state/graph.json,cache/,locks/,templates/}` (config は `routing_policy` を含む) と初期化 receipt (`.dev-graph/state/receipts/init-<UTC>.json`)。
 - GitHub は `enabled:false` で初期化し、owner/project number/field name のみ保存する。token と GitHub node ID は保存しない。
 
 ## Execution contract
 
-0. plugin 実体から `validate-harness-link.py` を実行し、`status=pass` のときだけ先へ進む (preflight)。
-1. `resolve-repo-context.py --mode write` を実行し、resolved root と host project root の realpath 一致を確認する。
+この skill が起動する script は、main context でも fork した子の context でも `python3 -B <script>` で起動する (共有 harness に bytecode cache を書かないため。Gotchas を参照)。
+
+0. preflight: `validate-harness-link.py` の検査は、手順 1-3 と 5 の実装本体 `build-init-scaffold.py` が、`--dry-run` を含むすべての起動で C24 の解決とどの write よりも先に自分で実行する。`status=pass` でなければ init は書込み 0 で止まる。
+1. C24 `../../scripts/resolve-repo-context.py --mode write` で repo を解決し、resolved root と host project root の realpath 一致を確認する (`build-init-scaffold.py` が自分で起動する。scaffold の外で単独に起動するのは、ゴールシーク配線で `DEV_GRAPH_ROOT` を固定するときと、fork した R1 が context receipt を R2・R3 へ渡すときで、C24 はどちらでも write しない)。
 2. 既存ファイルを列挙して preview。6 root と repo-local directory は欠落時だけ作る。
 3. plugin の `templates/` 全件を `.dev-graph/templates/` へ欠落時だけコピーする。利用者編集済みファイルは上書きせず `migration_preview` へ記録する。
 4. plugin hook を既定とする。`project-fallback` は plain-symlink 導入かつ effective plugin hook 不在時だけ許可し、既存 `.claude/settings.json` を deep-merge preview 後に更新して rollback manifest を残す。二重登録は拒否する。
 5. `validate-graph-schema.py` で config/graph/template readiness を検証する。二回目実行の planned changes が 0 でなければ完了しない。
 
-手順 0 は `../../scripts/validate-harness-link.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback]` に委譲し、手順 1 以降のどの write よりも先に実行する。`--config` には手順 1-3 と同じ値を渡す (違う config を読むと、preflight だけが別の link を検査する)。repo の plugin link (`claude_hooks.project_plugin_link`、既定 `.claude/dev-graph-plugin`) は共有 harness の symlink を経て plugin 実体へ届くので、途中の hop が切れると link 経由の project hook は次の起動で entrypoint に届かない。script は link を `readlink` で1 hop ずつたどり、切れた hop (`harness_link_broken`、`broken_hop`/`missing_target`)・loop・plugin 実体以外への張り替え (`harness_link_mismatch`)・symlink でない link・使用中なのに無い link・settings が link 経由で参照する entrypoint の欠落を、書込み 0 で `status=rejected` (exit 1) にする。`remediation` は実行できる argv の選択肢 (共有 harness の hop を張り直す / この repo の link だけを張り直す / hook fallback を manifest で戻して入れ直す) で、どれも最後に preflight の再実行を含む。skill は選択肢を利用者に示し、利用者が選んだものを実行して preflight が pass に戻るまで手順 1 へ進まない。link を使わない (`--hook-source plugin` で settings も link を参照しない) repo では link が無くても pass になる。
+手順 0 の検査は `../../scripts/validate-harness-link.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback]` で、`build-init-scaffold.py` は自分が受け取った `--repo-root`・`--config`・`--hook-source` をそのまま渡して subprocess で起動する (違う config を読むと、preflight だけが別の link を検査する)。preflight を省く option も、外で実行した preflight の結果を受け取る口も無いので、skill の手順を飛ばしても init は検査を通らずに書けない。repo の plugin link (`claude_hooks.project_plugin_link`、既定 `.claude/dev-graph-plugin`) は共有 harness の symlink を経て plugin 実体へ届くので、途中の hop が切れると link 経由の project hook は次の起動で entrypoint に届かない。検査は link を `readlink` で1 hop ずつたどり、切れた hop (`harness_link_broken`、`broken_hop`/`missing_target`)・loop・plugin 実体以外への張り替え (`harness_link_mismatch`)・symlink でない link・使用中なのに無い link・settings が link 経由で参照する entrypoint の欠落を `status=rejected` にする。init はその `code`・`findings`・`remediation` と診断 (`preflight`: `link_state`・`broken_hop`・`missing_target`・`in_use_by` など) をそのまま返し、`write_count=0`・exit 1 で止まる (C24 の解決もしない)。preflight 自体が答えない (exit 2 や JSON でない出力) ときも `harness_link_preflight_error` で止まる。`remediation` は実行できる argv の選択肢 (共有 harness の hop を張り直す / この repo の link だけを張り直す / hook fallback を manifest で戻して入れ直す) で、どれも最後に preflight の再実行を含む。link が切れていると link 経由では script に届かないので、init は plugin 実体から起動する。skill は選択肢を利用者に示し、利用者が選んだものを実行して init を再実行する。状態だけを先に見たいときは `validate-harness-link.py` を単独で起動してもよい (write 0)。link を使わない (`--hook-source plugin` で settings も link を参照しない) repo では link が無くても pass になる。
 
-手順 1-3 と 5 は実装本体 `../../scripts/build-init-scaffold.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback] [--dry-run]` に委譲し、skill は scaffold を Write/Edit や heredoc で直接書かない。script は C24 解決、欠落時だけの作成 (既存の config/graph は検証して保持)、書込み前の repo-config schema と `validate-graph-schema.py` の検査、create-only の init receipt (`.dev-graph/state/receipts/init-<UTC>.json`) を一体で持つ。変更があれば `status=applied` と receipt、planned changes 0 なら `status=noop` (`planned_changes=0`・`write_count=0`・既存 `receipt_path`)、`--dry-run` は `status=preview` で write 0、検証失敗は `status=rejected` (exit 1) で何も作らない。
+手順 1-3 と 5 は実装本体 `../../scripts/build-init-scaffold.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback] [--dry-run]` に委譲し、skill は scaffold を Write/Edit や heredoc で直接書かない。script は手順 0 の preflight、C24 解決、欠落時だけの作成 (既存の config/graph は検証して保持)、書込み前の repo-config schema と `validate-graph-schema.py` の検査、create-only の init receipt (`.dev-graph/state/receipts/init-<UTC>.json`) を一体で持つ。変更があれば `status=applied` と receipt、planned changes 0 なら `status=noop` (`planned_changes=0`・`write_count=0`・既存 `receipt_path`)、`--dry-run` は `status=preview` で write 0、検証失敗は `status=rejected` (exit 1) で何も作らない。
 
-手順 4 は `../../scripts/build-project-hook-fallback.py --repo-root <path> [--config <path>] --mode preview|apply|rollback [--manifest <path>]` に委譲し、skill は `.claude/settings.json` を Write/Edit で直接書かない。script は `.claude/dev-graph-plugin` が C24 の plugin source を指す plain symlink であることを確かめ、user/project/local/managed settings を読んで effective plugin hook・`disableAllHooks`・`allowManagedHooksOnly`・他 scope の dev-graph hook を検出したら書込み 0 で `status=rejected` (exit 1) を返す。通れば plugin `hooks/hooks.json` の全 event を `(event, matcher, command)` 単位で追記 merge し、既存 key と既存 hook group の hash 不変・二重登録 0 を自己検証して、rollback manifest (`.dev-graph/state/receipts/hook-fallback-<UTC>.json`) を書換えより先に create-only で残す。同時に config の `claude_hooks.source` を `project` にする。再実行は `status=noop`、rollback は manifest の after digest と一致する file だけを before へ戻し、apply 後に書き換えられた file は `rollback_drift` で拒否する。
+新しい config には `routing_policy` を必ず書く。成果物の物理配置の規則で、値は1通り (`placement: artifact_kind`、`layout: hybrid`、`leaf_threshold: 200`、`partition_order: [domain, project_id, YYYY/MM]`) だけを `repo-config.schema.json` が const で受け付ける。物理配置は artifact_kind ごとの正規 root、横断分類 (domain・project_id) は node の metadata とし (`graph-node.schema.json`)、各 leaf は flat で始め、1 leaf が200件を超えたときだけ `partition_order` の順に1段ずつ分割する。`graph_node_id` は不変で、`file_path` はこの規則と分割の状態から再計算する派生値である。init は規則を敷くだけで、分割と移動はしない。既存 config に `routing_policy` が無いときは書き換えず (init は create-only)、同じ値として読んで receipt に記録し、`migration_preview` に `{path, key: routing_policy, plugin_value}` を挙げる。
 
-Receipt は `repository_id`, repo-relative roots, created/preserved/migration_preview, hook_source, schema_result を含み、`build-init-scaffold.py` が書く (hook_source は選んだ値の記録で、settings の変更は手順 4 の script が別の manifest として残す)。検証失敗時は部分成功を成功扱いしない。
+手順 4 は `../../scripts/build-project-hook-fallback.py --repo-root <path> [--config <path>] --mode preview|apply|rollback [--manifest <path>]` に委譲し、skill は `.claude/settings.json` を Write/Edit で直接書かない。script は `.claude/dev-graph-plugin` が C24 の plugin source を指す plain symlink であることを確かめ、user/project/local/managed settings を読んで effective plugin hook・`disableAllHooks`・`allowManagedHooksOnly`・他 scope の dev-graph hook を検出したら書込み 0 で `status=rejected` (exit 1) を返す。通れば plugin `hooks/hooks.json` の全 event を `(event, matcher, command)` 単位で追記 merge し、既存 key と既存 hook group の hash 不変・二重登録 0 を自己検証して、rollback manifest (`.dev-graph/state/receipts/hook-fallback-<UTC>.json`) を書換えより先に create-only で残す。同時に config の `claude_hooks.source` を `project` にする。再実行は `status=noop` (0.1.17 までの apply が書いた `python3 "…"` の配線は、`-B` の有無だけの違いなので同じ配線とみなし、`already_present` に `legacy_wiring: true` を付けて書き換えない。古い形と今の形が両方あれば、同じ script が2回走る二重登録なので `status=rejected`・`code=merge_not_additive` (`duplicates=N`、write 0、exit 1) で止まる。利用者がどちらかの group を消してから再実行する)、rollback は manifest の after digest と一致する file だけを before へ戻し、apply 後に書き換えられた file は `rollback_drift` で拒否する。
+
+Receipt は `repository_id`, repo-relative roots, `routing_policy`, `preflight` (`status`・`link_state`・`in_use` だけで、絶対 path を持たない), created/preserved/migration_preview, hook_source, schema_result を含み、`build-init-scaffold.py` が書く (hook_source は選んだ値の記録で、settings の変更は手順 4 の script が別の manifest として残す)。検証失敗時は部分成功を成功扱いしない。
 
 ## ゴールシーク実行
 
@@ -152,9 +156,9 @@ symlinkで配布された任意の呼出し元repository/worktreeを解決し、
 
 ### 完了チェックリスト
 
-- [ ] `validate-harness-link.py` が init の write より前に exit0 (`status=pass`) で、link chain の切断・loop・張り替え・entrypoint 欠落が0件である
+- [ ] `build-init-scaffold.py` が write より前に自分で実行した `validate-harness-link.py` が `status=pass` (report の `preflight.status`) で、link chain の切断・loop・張り替え・entrypoint 欠落が0件である
 - [ ] `resolve-repo-context.py` receipt の repository_id/common-dir/content root が caller repo と一致する
-- [ ] `issues/tasks/specs/architecture/features/docs` と `.dev-graph/{config.json,state/graph.json,cache,locks}` が実在する
+- [ ] `issues/tasks/specs/architecture/features/docs` と `.dev-graph/{config.json,state/graph.json,cache,locks}` が実在し、config の `routing_policy` が repo-config schema を通る
 - [ ] `template-contract.json` 列挙資産が欠落0で、利用者編集済み template の digest が不変である
 - [ ] effective hook は plugin または許可済み fallback の一経路だけで、既存 settings key/hash の変更が0件である
 - [ ] `validate-graph-schema.py` が exit0 で、同じ入力の二回目 init の planned changes が0件である
@@ -165,9 +169,9 @@ frontmatterの `goal_seek.activation_state: semantic_evaluator_started` を先�
 
 ### ゴールシーク配線
 
-- 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
+- 開始時に C24 `python3 -B ../../scripts/resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-init-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-init-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。fork する子にも「script は `python3 -B` で起動する」規則を渡す。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-init-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 
@@ -193,16 +197,18 @@ PY
 ## Criteria acceptance
 
 - `criteria:IN1`: `validate-graph-schema.py` の初期 graph 検証で必須キー欠落が0件である。
-- `criteria:OUT1`: `issues/tasks/specs/architecture/features/docs` と graph store が揃い、二回目initの変更が0件である。
+- `criteria:OUT1`: `issues/tasks/specs/architecture/features/docs` と graph store と routing policy (config の `routing_policy`。repo-config schema の const で検証) が揃い、二回目initの変更が0件である。
 - `criteria:OUT2`: 全 kind template を `.dev-graph/templates/` へ配置し、二回目initでも利用者編集を上書きしない。
-- `criteria:OUT3`: repo A/B の cross-read/write 0件、repo と共有 harness の両方で absolute stored path 0件・harness 側の変更0件を確認し、project-root不一致、broken content symlink をfail-closedにする。harness link切断は `validate-harness-link.py` が plugin 実体から起動前・write前に検出し、切れた hop と修復導線 (`remediation`) を返す。
+- `criteria:OUT3`: repo A/B の cross-read/write 0件、repo と共有 harness の両方で absolute stored path 0件・harness 側の変更0件を確認し、project-root不一致、broken content symlink をfail-closedにする。harness link切断は `build-init-scaffold.py` がどの write よりも前に自ら実行する `validate-harness-link.py` の検査が検出し、書込み0件・exit 1 で止まって、切れた hop と修復の選択肢 (`remediation`) を返す。
 - `criteria:OUT4`: GitHub template は `enabled:false` で生成し、tokenまたはproject/item/field node IDを保存しない。
 - `criteria:OUT5`: `project-fallback` の非破壊mergeは二重登録0件、既存key/hash変更0件で、managed/disabled診断とrollbackを再現できる。
 
 ## Gotchas
 
 - symlink 元の plugin directory を content authority にせず、C24 receipt の caller repo だけを書込み先にする。
-- harness link の切断を python の ENOENT で知るのでは遅い。preflight は link 経由ではなく plugin 実体から起動し、`remediation` の argv で直して再実行が pass になるまで write しない。preflight report の絶対 path は stdout の診断であり、config・receipt・eval-log へ保存しない (eval-log には `status` と `code` だけを記録する)。
+- harness link の切断を python の ENOENT で知るのでは遅い。init は link 経由ではなく plugin 実体から起動し (preflight は init の中で最初に走る)、`remediation` の argv で直してから init を再実行する。preflight report の絶対 path は stdout の診断であり、config・receipt・eval-log へ保存しない (eval-log には `status` と `code` だけを記録する)。
+- 共有 harness には bytecode cache も書かない。plugin の module (`_common` ほか) を import する script と hook は、どれも import の前に自分で `sys.dont_write_bytecode = True` を置き、子の起動にも `-B` を渡す。`hooks.json` のコマンドも `python3 -B` で起動する。skill や fork した子が script を直接起動するときも `python3 -B` を付ける (script 自身の止め方との二重の守り。`PYTHONDONTWRITEBYTECODE` は呼出し側の環境しだいなので頼らない)。
 - token、GitHub node ID、環境固有の絶対 path を repo config へ永続化しない。
 - 利用者が編集した template は上書きせず、migration preview に差分を残す。
+- 既存 config に `routing_policy` を init が書き足すことはない。足すかどうかは利用者が `migration_preview` を見て決める (前からある `.dev-graph/templates/repo-config.example.json` も、plugin の雛形と違えば同じく migration preview に出る)。
 - effective plugin hook がある状態で project fallback を追加しない。

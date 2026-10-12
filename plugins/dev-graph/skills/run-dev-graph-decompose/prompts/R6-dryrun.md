@@ -57,6 +57,9 @@
 
 - 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - previewを返し別invocation applyにだけ使う。
+- 手順は SKILL.md の「dry-run の preview」に従う。C02 の preview を保存し、binding=beads の target はその `planned_nodes` を `bd-bridge.py --op create --dry-run --planned-preview` で昇格 gate に当てる。graph にまだ無いことを理由に止まった結果 (`not in graph`) を、予定の node の判定として使わない。
+- 未登録の `--package` の 13 task は C28 に当てず、`register-package.py --dry-run` の receipt で判定する。登録済みの package には register-package を当てず、task ごとに `beads_linkage` を見る (SKILL.md の「dry-run の preview」の 4)。
+- binding=beads の node が github か none の node、またはこの規則で保留にした beads の node に依存する edge は (依存の鎖をたどって当てる)、依存する側を `cross_binding_dependency` で `blocked` と書き、「create の後に張る edge」とは書かない。保留にした beads の node から保留でない beads の node への edge も、dep-add を呼ばず、依存する側の保留の理由とともに書く。
 
 ## Layer 7: UserInput
 

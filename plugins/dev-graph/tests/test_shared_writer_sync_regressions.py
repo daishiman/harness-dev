@@ -155,6 +155,14 @@ class ParentNotDirectoryTest(unittest.TestCase):
 
 
 class InitRollbackTest(unittest.TestCase):
+    def setUp(self) -> None:
+        # rollback の検査は git の無い tmp dir で _context を差し替えて回すので、link preflight (C24 を read で呼ぶ) も
+        # 通過に差し替える。preflight の拒否は test_init_preflight_gate.py が実物の link で確かめる。
+        patcher = mock.patch.object(INIT, "_preflight", return_value={
+            "validator": "validate-harness-link.py", "status": "pass", "link_state": "absent", "in_use": False})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def context(self, root: Path) -> dict:
         example = json.loads((PLUGIN / "templates" / "repo-config.example.json").read_text())
         return {"repo_root": str(root), "repository_id": "local:sha256:" + "a" * 64,

@@ -25,13 +25,15 @@
 
 ### 受入条件
 
-- `repository_id`を含む全必須資産が揃い、二回目planned changeが0、schema gateがexit0になる。
+- script 内の harness link preflight が最初に pass し、`repository_id`と`routing_policy`を含む全必須資産が揃い、二回目planned changeが0、schema gateがexit0になる。
 
 ## Layer 3: インフラ層
 
 - 使用資産: `../../scripts/build-init-scaffold.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback] [--dry-run]` (skill root 起点)。scaffold を Write/Edit や heredoc で直接書かず、この script に委譲する。
+- preflight: script は最初に `validate-harness-link.py` を同じ `--repo-root`・`--config`・`--hook-source` で自分で起動し、pass でなければ C24 の解決もどの write もせずに `status=rejected` (exit 1、`write_count=0`) で、preflight の `code`・`findings`・`remediation`・`preflight` (診断) を返す。`--dry-run` でも同じ。preflight を省く option は無い。link が切れていると link 経由では届かないので、plugin 実体から起動する。
 - status と exit: `applied`/`noop`/`preview` は exit 0、`rejected` は exit 1 (何も作らない)、`error` は exit 2。二回目は `status=noop` (`planned_changes=0`・`write_count=0`) になる。
 - script 内で repo-config schema と `validate-graph-schema.py` を書込み前に通し、create-only の init receipt (`.dev-graph/state/receipts/init-<UTC>.json`) を書く。
+- 新しい config には `routing_policy` (`placement: artifact_kind`、`layout: hybrid`、`leaf_threshold: 200`、`partition_order: [domain, project_id, YYYY/MM]`) を必ず書く。既存 config に無いときは書き換えず、同じ値として読み、`migration_preview` に挙げる。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -53,7 +55,7 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] `repository_id`を含む全必須資産が揃い、二回目planned changeが0、schema gateがexit0になる
+- [ ] script 内の harness link preflight が最初に pass し、`repository_id`と`routing_policy`を含む全必須資産が揃い、二回目planned changeが0、schema gateがexit0になる
 
 ## Layer 6: オーケストレーション層
 

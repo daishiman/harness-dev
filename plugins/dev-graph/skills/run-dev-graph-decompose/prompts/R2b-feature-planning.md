@@ -57,6 +57,7 @@
 
 - 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - PASSだけR3へ渡す。
+- `--dry-run` では system-dev-planner を起動しない (planner 側に staging を書くため)。`--package` で渡された package だけを、SKILL.md の「dry-run の preview」の 4 で検査する。
 
 ## Layer 7: UserInput
 

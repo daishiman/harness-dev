@@ -1,0 +1,31 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill として起動した。準備の dev-graph:run-dev-graph-init は transcript L35-36、被験の dev-graph:run-dev-graph-node は L94-95 で起動している。",
+    "責務 prompt は出力より前に読んだ。init の prompt は L50 で全文を cat し、scaffold (L66) より前。prompt-common-layers.md は L61 で全文を読んだ。node の R0-R4 は L104 (Layer2 から Layer4 の見出しまで) と L109 (5.3 から末尾まで) で、最初の add (L140) より前に読んだ。読んでいないのは Layer1、Layer4 の参照先の案内、5.1/5.2 で、どれも SKILL の要約と共通層に同じ内容がある。",
+    "準備の 5 kind 追加は単一 writer を通した。L140/146 で build-graph-node.py add を dry-run し、preview は rev 0→1、5 件とも decision auto (confidence 0.88-0.92、margin 0.81 以上)。L149/150 で expected_graph_revision=0 を渡して apply し、applied 5、receipt は fx/.dev-graph/state/receipts/node-r000001-add.json (rev 0→1、digest_after sha256:b97285242d34…)。5 kind とも tracker_binding=none。",
+    "本題1の前半。L164/165 で update を dry-run (before 1)、L167/168 で expected_graph_revision=1 を渡して apply した。applied_count 1、sections_appended [調査メモ]、unmanaged_body_preserved true、rev 1→2。receipt は fx/.dev-graph/state/receipts/node-r000002-update.json で、digest_after は sha256:9ec245883581…。",
+    "本題1の後半。L171/172 の差分では、issues/login-timeout.md で変わったのは updated_at、readiness の checked_at、追記した section だけで、全体の置換は無い。tasks・specs・architecture・docs の 4 kind は内容が変わらず、変わった field も []。5 node の graph_node_id と file_path は前後で同じ。",
+    "本題2。L176/182 で artifact_kind feature の入力を、dry-run ではなく実際に writer へ apply した。結果は exit 1、code feature_requires_c14_macro_contract、applied_count 0、write_count 0。graph のバイト列は変わらず、receipt は 3 件のまま、fx/features/ は空、feature node は 0。拒否の出力は L186 で fx/eval-log/feature-direct-add-rejection.json に残した。",
+    "本題3。validate-graph-schema は L186/187 と L205 で exit 0。評価者が出力先なしで再実行しても exit 0、valid true、violations 0 だった。",
+    "必須の verifier を実際に起動した。L190 で Agent dev-graph:dev-graph-integrity-auditor を read-only の指示で起動し、期待する verdict は渡していない。L202 の返答は verdict PASS、graph_digest sha256:9ec245883581…。subagent の transcript (collect/subagent-transcripts/agent-a6c7aef5d5995b919.jsonl) を見ると、tool は 4 回で、graph の読取り、canonical digest の再計算、schema の再実行、features/ と各 file の確認をしている。writer は起動していない。",
+    "評価者が独立に計算した現 graph (rev 2) の canonical digest は sha256:9ec245883581aaf994d66e5bd384c8c838b4948a25cd02aad9d284ab10834d81 だった。r2 の graph_digest_after、verifier の digest、progress.json の independent_verifier.graph_digest の 3 つと一致した。progress.json の graph_baseline {1, sha256:b97285…} は r1 の after と一致した。SKILL のゴールシーク検証は、被験の実行 (L204/205) も評価者の再実行も OK だった。",
+    "書込みの境界は守られた。graph と content の書込みは build-graph-node.py だけで行われた。fx の git は初期 commit de9d2a6 だけで、成果は fx の中に untracked で残っている。collect/guard.jsonl は allow 32 件、deny 0 件。workdir/check-post.json の new_outside_entries はすべて空。被験の skill の閉包は aa526da0 のまま変わっていない (closure-watch.log、check-post.json の closure_unchanged)。",
+    "status.json は collect/out と workdir/out の両方にあり、内容は {\"status\":\"PASS\",\"scenario\":\"C02-OUT1-positive-mixed-artifacts-fixture-standard-v2\"}。ただし判定は上の実物の確認だけに基づき、この記述は根拠にしていない。",
+    "goal 未達ではない逸脱が 3 つある。(1) R0-R4 は Agent へ fork せず main の context で実行し、fork したのは verifier だけ。(2) readiness_fill は使わず、4 node の readiness が incomplete のまま。schema は通り、section の見出しは揃っている。verifier はこれを info として挙げている。(3) input JSON と eval-log は heredoc と python で書いた。graph と content ではないので、単一 writer の制約には当たらない。",
+    "軽微な点がある。verifier は書込み禁止の指示を受けていたが、subagent の L18 で validate の出力を $TMPDIR/o.json (run の dir の中の tmp/claude-501/o.json) へ redirect した。fixture と graph には触れていない。"
+  ],
+  "skill_defects": [
+    "責務を fork する条件が SKILL.md と共通層で食い違っている。SKILL.md 181 行は「未達 responsibility を担当する prompts/<R-id>.md を読み、Agent で分離 context に fork する」と言う。一方 references/prompt-common-layers.md の 5.1 は「重い判断または独立検証は Agent で分離 context に fork する」と言う。再現の手順: 今回の run のように R0-R4 を main の context で実行しても、ゴールシーク検証と goal-spec の check は通る。どちらが規範なのかが決まらない。",
+    "pre-choice の「usable artifact の path・digest・開き方を提示してから、選択を記録する」順序に問題がある。事前に回答済みの非対話の run で、何を提示とみなすかが曖昧で、検証の script もこの提示を確かめない。再現の手順: 今回の run では、目に見える出力は L148 の「Preview OK…」だけだった。path・digest・開き方の提示と standard の選択は、L154 の thinking と L164 の goal-spec の記録にしか無い。それでも goal-seek は OK になった。",
+    "verifier の read-only 指示が守られなかった。dev-graph-integrity-auditor の定義は read-only だが、渡された prompt の「書込み一切禁止」を破って、subagent は $TMPDIR/o.json へ redirect した (subagent transcript の L18)。agent の定義にも検証にも、validator の出力を一時ファイルに書かない手段や、書いたことを検出する仕組みが無い。"
+  ],
+  "observations": [
+    "pre-choice の commit は 1 回だけ。L149/150 の add apply で、receipt は fx/.dev-graph/state/receipts/node-r000001-add.json (rev 0→1)。init-20261012T202947840796Z.json は準備の run-dev-graph-init の receipt で、被験の pre-choice には数えない。",
+    "receipt の evidence は規則どおり書かれている。fx/eval-log/run-dev-graph-node-progress.json の checklist.receipt.evidence には「pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json graph_revision_after=1 graph_digest_after=sha256:b9728524... == graph_baseline」とある。最後の pre-choice の receipt が graph_baseline と一致することを、path つきで書いている (記録は L204)。digest は途中から省略されているが、評価者が照合したところ、r1 の digest_after の全桁 sha256:b97285242d347fb6f586a8f36194b1c571434af86d8bb967ee448f848ff57726 は graph_baseline.graph_digest と一致した。",
+    "pre-choice の commit は 1 回なので、2 回以上のときの receipt の鎖の規定は当てはまらない。被験は「1 回だけなので鎖は不要」とは明記していない。続けて post-choice の node-r000002-update.json (1→2、digest_after が現 graph と一致) も書いている。",
+    "そのほかの規則も守られている。receipt と classification は not_applicable にせず achieved にした。classification の evidence には r1 の path と decision=auto を書いた。writer_receipts は post-choice の r2 だけで、pre-choice の r1 を足していないので、SKILL.md 164-169 行の規則に合う。package だけが not_applicable で、理由は register-package を起動していないこと。"
+  ],
+  "evaluator_agent_id": "a635ac75384164329"
+}

@@ -1,11 +1,11 @@
 {
-  "plan_dir": "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph",
+  "plan_dir": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph",
   "evaluator": {
     "name": "assign-plugin-plan-evaluator",
     "version": "0.2.0",
     "context": "fork"
   },
-  "verdict": "PASS",
+  "verdict": "FAIL",
   "conditions": {
     "C1": {
       "id": "no_contradiction",
@@ -17,25 +17,27 @@
     },
     "C2": {
       "id": "no_missing",
-      "status": "PASS",
-      "summary": "漏れなし: deterministic gates passed",
+      "status": "FAIL",
+      "summary": "漏れなし: failures detected",
       "evidence": [
         "detect-unassigned exit=0",
         "check-spec-frontmatter exit=0",
-        "check-spec-gates exit=0",
+        "check-spec-gates exit=1",
         "check-surface-inventory exit=0",
-        "check-requirements-coverage exit=0"
+        "check-requirements-coverage exit=0",
+        "check-spec-gates exited 1."
       ]
     },
     "C3": {
       "id": "consistent",
-      "status": "PASS",
-      "summary": "整合性あり: deterministic gates passed",
+      "status": "FAIL",
+      "summary": "整合性あり: failures detected",
       "evidence": [
         "check-spec-frontmatter exit=0",
-        "check-spec-gates exit=0",
+        "check-spec-gates exit=1",
         "check-spec-matrix-coverage-self-test exit=0",
-        "check-spec-matrix-coverage-plan exit=0"
+        "check-spec-matrix-coverage-plan exit=0",
+        "check-spec-gates exited 1."
       ]
     },
     "C4": {
@@ -56,9 +58,9 @@
       "id": "G1",
       "name": "verify-index-topsort",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -71,12 +73,12 @@
       "id": "G2",
       "name": "detect-unassigned",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
         "--inventory",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph/component-inventory.json",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph/component-inventory.json",
         "--specs-dir",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -90,10 +92,10 @@
       "id": "G3",
       "name": "check-spec-frontmatter",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
         "--specs-dir",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -107,25 +109,25 @@
       "id": "G4",
       "name": "check-spec-gates",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
         "--specs-dir",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
-      "exit_code": 0,
+      "exit_code": 1,
       "conditions": [
         "C2",
         "C3"
       ],
-      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす",
-      "stderr": ""
+      "stdout": "",
+      "stderr": "index.md: plugin_meta.install が非空 dict でない (plugin 階層コア規律 install 未充足)"
     },
     {
       "id": "G5",
       "name": "check-spec-matrix-coverage-self-test",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
         "--self-test"
       ],
       "exit_code": 0,
@@ -139,9 +141,9 @@
       "id": "G6",
       "name": "check-spec-matrix-coverage-plan",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -154,9 +156,9 @@
       "id": "G7",
       "name": "check-surface-inventory",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph/component-inventory.json"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph/component-inventory.json"
       ],
       "exit_code": 0,
       "conditions": [
@@ -169,9 +171,9 @@
       "id": "G8",
       "name": "check-build-handoff",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"
       ],
       "exit_code": 0,
       "conditions": [
@@ -185,9 +187,9 @@
       "id": "G9",
       "name": "check-requirements-coverage",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -200,9 +202,9 @@
       "id": "G10",
       "name": "check-runtime-portability",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -215,9 +217,9 @@
       "id": "G11",
       "name": "validate-task-graph",
       "command": [
-        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py",
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py",
+        "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugin-plans/dev-graph"
       ],
       "exit_code": 0,
       "conditions": [
@@ -229,12 +231,587 @@
   ],
   "findings": [
     {
-      "severity": "info",
-      "bucket": "C1-C4",
-      "observation": "All deterministic gates exited 0 and plugin-level surfaces were explicit.",
+      "severity": "high",
+      "bucket": "C2",
+      "observation": "check-spec-gates exited 1.",
+      "suggested_fix": "Fix the generated plan artifact and rerun assign-plugin-plan-evaluator.",
       "evidence": [
-        "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/plugin-plans/dev-graph"
+        "index.md: plugin_meta.install が非空 dict でない (plugin 階層コア規律 install 未充足)"
       ]
+    },
+    {
+      "severity": "high",
+      "bucket": "C3",
+      "observation": "check-spec-gates exited 1.",
+      "suggested_fix": "Fix the generated plan artifact and rerun assign-plugin-plan-evaluator.",
+      "evidence": [
+        "index.md: plugin_meta.install が非空 dict でない (plugin 階層コア規律 install 未充足)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "bucket": "C1",
+      "observation": "semantic C1: 変更後の C01 OUT3 は「harness link切断は build-init-scaffold.py が write 前に自ら実行する validate-harness-link.py の検査が検出する」と責務主体を init 自身に置くが、index.md L90・phase-04 L66・phase-12 L48・goal-spec.json L165 criterion・templates/README.md L30・envelope-draft/EVALS.json L17 は『harness自身のbroken symlink は起動前 host launcher/installer preflight の責務』『host launcherによるbroken harness-link preflight』のまま残り、同一事象の検出主体が plan 内で二つに割れている。OUT3 が指す仕組み自体は実在する (build-init-scaffold.py の _preflight が scaffold 先頭で validate-harness-link.py を subprocess 実行、非 pass は InitError で remediation を返し write 前に停止、tests/test_init_preflight_gate.py が書込み0件を検証)。ただし plan に host launcher の実体は無く、phase-12 は存在しない host launcher preflight の文書化を要求し、phase-04 fixture も host launcher 前提で OUT3 の検証対象 (init 自身の preflight) と食い違う。",
+      "evidence": [
+        "component-inventory.json C01 feedback_contract OUT3",
+        "plugins/dev-graph/scripts/build-init-scaffold.py:60-82,224-225",
+        "plugins/dev-graph/scripts/validate-harness-link.py (write-scope: none)",
+        "plugins/dev-graph/tests/test_init_preflight_gate.py",
+        "index.md:90; phase-04-test-design.md:66; phase-12-documentation.md:48; goal-spec.json:165; templates/README.md:30; envelope-draft/EVALS.json:17"
+      ],
+      "suggested_fix": "index.md L90・phase-04 L66・phase-12 L48・goal-spec criterion L165 (checklist)・templates/README.md L30・envelope-draft/EVALS.json の『host launcher/installer preflight』を『C01 build-init-scaffold.py が write 前に自ら実行する validate-harness-link.py の preflight (init 経路)。init 以外の hook/script 起動は同 script の単独実行』へ揃える。goal-spec 変更時は gate (intake-consumption/provenance-chain) の再実行も行う。"
+    },
+    {
+      "severity": "info",
+      "bucket": "C1",
+      "observation": "今回差分の確認: component-inventory C01 OUT3 の loop_scope=outer / verify_by=test は不変で test_init_preflight_gate.py (test) と整合。goal・checklist・他 criteria (OUT1-5) とは矛盾しない。goal-spec source_improvement.ref は pr85-init を指し check-provenance-chain --resolve は親実行で exit0。",
+      "evidence": [
+        "親実行結果 (参考): check-provenance-chain exit0 / check-intake-consumption exit0"
+      ],
+      "suggested_fix": "なし"
     }
-  ]
+  ],
+  "evaluated_inputs": [
+    {
+      "path": ".claude/handoff/20260712T003659.md",
+      "sha256": "1511fd6241ed5bdcadec7de143d8414c4939108ffa974338ebe400a941a40f9a"
+    },
+    {
+      "path": ".claude/handoff/20260712T005001.md",
+      "sha256": "d6ef634d3403f8ad477db6d34b801f7a0353b4b3f3a09a77151c55a9c521d0f7"
+    },
+    {
+      "path": ".claude/handoff/20260712T010218.md",
+      "sha256": "d2cf1c42efcab8442b691fe9a1fca923baeb8fb5e172891226afed10f9906e1d"
+    },
+    {
+      "path": ".gate/intake-consumption.pass",
+      "sha256": "b52182ff3dfe99b2c931c911083659b15f34f65b3a8c1c3b509c5915af31e4ea"
+    },
+    {
+      "path": ".gate/provenance-chain.pass",
+      "sha256": "b52182ff3dfe99b2c931c911083659b15f34f65b3a8c1c3b509c5915af31e4ea"
+    },
+    {
+      "path": "briefs/skill-brief-C01.json",
+      "sha256": "2181e606116bca60ad8b2cb1dd04b789a024dfc742873446730b8c6984bedccb"
+    },
+    {
+      "path": "briefs/skill-brief-C02.json",
+      "sha256": "2441d914117e740462a02d4c314d3b47e94b955e4bfe3783bc04f99227afc63b"
+    },
+    {
+      "path": "briefs/skill-brief-C03.json",
+      "sha256": "1e8ed69bf520cf04bada2df9005c61b9c14b82ea7ab6173a4f4f166b5d48f273"
+    },
+    {
+      "path": "briefs/skill-brief-C04.json",
+      "sha256": "2f6309e9b91fcfa23aae93b15524c50a99b02698b337b6f094143caa141cc5b6"
+    },
+    {
+      "path": "briefs/skill-brief-C05.json",
+      "sha256": "ebf1fa24b0e76bf89fd8432cf116c146e5548cbe5883c9b89a2df061bb194f4b"
+    },
+    {
+      "path": "briefs/skill-brief-C14.json",
+      "sha256": "5b76d3473687de7170cd3f152e7f802ac317ad9f35da2383b6e083a68ee76808"
+    },
+    {
+      "path": "briefs/skill-brief-C15.json",
+      "sha256": "32d8efbf3dc0910131c3bff65e16b19d0860c7f6bfb166216e42ed21f2ba7bd4"
+    },
+    {
+      "path": "briefs/skill-brief-C18.json",
+      "sha256": "ad9ae6eab631fd7a9a7c9373d879e43c6fef861e36430c056e9e96269e4798df"
+    },
+    {
+      "path": "briefs/skill-brief-C19.json",
+      "sha256": "62781197510f5d1f659542731d3d3cc17fec034d033c6bb83e607477c8499693"
+    },
+    {
+      "path": "component-inventory.json",
+      "sha256": "63c4badfe15afd1f97622a13c14c52a7d640a6cd51d880e6d3e4afd871ad172a"
+    },
+    {
+      "path": "elegant-verification-30.json",
+      "sha256": "f2fc001c143a456e2df62691022fa427fc5adfcdfcb13f5a03c320e23da836da"
+    },
+    {
+      "path": "envelope-draft/EVALS.json",
+      "sha256": "c61c2f723bec8eac712ae9f20da1bd669a5d9eef1f9b001296b4481b45c9661b"
+    },
+    {
+      "path": "envelope-draft/hooks.json",
+      "sha256": "8b0375c5aa313e0f06a43e434f06553f425008cb6fe9eebbcb7dc05d18f769e4"
+    },
+    {
+      "path": "envelope-draft/plugin-composition.yaml",
+      "sha256": "4049398d5088ef2dc3434a0717b83d20317f496318f9ade5d72aba9317d0ae98"
+    },
+    {
+      "path": "envelope-draft/plugin.json",
+      "sha256": "db98e38219608d499c2802370f02f7e7b32137f1784418e2d2b00dafd530902d"
+    },
+    {
+      "path": "evidence/D01.json",
+      "sha256": "f6d4ab5526772bd450f76f7012b0e0dd3677ebca35bc6e71f00236455540fa70"
+    },
+    {
+      "path": "evidence/D02.json",
+      "sha256": "34e74dc7677d17e61495730f2d151791fed098b9af7ab4080aa1a9870bd5ea18"
+    },
+    {
+      "path": "evidence/D03.json",
+      "sha256": "6a3f5315a4b6dc2d3d0f3631a1d99ff9d426753b6efc08f3eb41ea69bedd0589"
+    },
+    {
+      "path": "evidence/D04.json",
+      "sha256": "4b8e1879185214da64259217ef43e62273a7d38218f896aeba8e79c44a070858"
+    },
+    {
+      "path": "evidence/D06.json",
+      "sha256": "6c051dc805bfd659b12122219a27a499a059b7094230abbbd6d569a218999d42"
+    },
+    {
+      "path": "evidence/D07.json",
+      "sha256": "caf087ec8fc13ab9be87cc854b42ad427f8a0c6c7c61b97867d54e7f25938213"
+    },
+    {
+      "path": "evidence/D08.json",
+      "sha256": "d6d28761f67015d221bc711b588014785e77587aae6bce2bcc7957266e37b9df"
+    },
+    {
+      "path": "evidence/D09.json",
+      "sha256": "c44f34fb319204db382121b92935a72d393c0f71144242fa2013e76191e25f1a"
+    },
+    {
+      "path": "evidence/D10.json",
+      "sha256": "2650b043a28ed668317f449078b42f8998624c33516c51677cd2678a9183e839"
+    },
+    {
+      "path": "evidence/D11.json",
+      "sha256": "ff5a2c584927799de8b805206da2e7b61497c16f6c069a073e5dcf81c271ffa6"
+    },
+    {
+      "path": "evidence/D12.json",
+      "sha256": "56f3a4b9e31a37cd69fea85479dce2ad30682777568dbbe6e34ba9fbff9c63c4"
+    },
+    {
+      "path": "evidence/D13.json",
+      "sha256": "f09cf1cbb095d8c7b6e5708499f495377c37d2226b09fadddcb07d9cbc396c42"
+    },
+    {
+      "path": "goal-spec.json",
+      "sha256": "e8cd7494630656d74469db42553881d9bd30aa9f578887cc7da248532a07c0c0"
+    },
+    {
+      "path": "handoff-run-plugin-dev-plan.json",
+      "sha256": "7ed7f122b41d44c914a0f0b467756cead914c423c5614d83a09e401fbb2026fb"
+    },
+    {
+      "path": "improvement-handoff-beads-kanban.json",
+      "sha256": "1e3047e61004fe28ef053aec95d1d61301f4d70e534cc4927193665eea455b02"
+    },
+    {
+      "path": "improvement-handoff-beads.json",
+      "sha256": "55eaeec8a95c2c8406e06683cd9b3a81bbdd2e5a2e4a742b79b7ccf29976e2f3"
+    },
+    {
+      "path": "improvement-handoff-macro.json",
+      "sha256": "feac9d6b1c6fd7c173e5ece8e4343a98b017b8869d50f21ffbc8e6e5a393a905"
+    },
+    {
+      "path": "improvement-handoff-pr85-criteria.json",
+      "sha256": "c9c4380715f720adadf0970654a2e3c78cbd845d92d54c463266d57d3efaf370"
+    },
+    {
+      "path": "improvement-handoff-pr85-init.json",
+      "sha256": "e73aee4b5f3330d2fe1736a893d762c4b99ab4d29ed48525df41c1b8cb249c37"
+    },
+    {
+      "path": "improvement-handoff.json",
+      "sha256": "e0665c644e94e32e805f4d14962ed9227bce6ce74d2c2b8b17d2cf01645d1b89"
+    },
+    {
+      "path": "index.md",
+      "sha256": "474f38db858bd474c27502ad1d7efb35a654efffccdd0b0d62d4b81013d70dab"
+    },
+    {
+      "path": "intake.json",
+      "sha256": "d3a457b9815c479f4786d23e0fc0eca1a8a4e467659608479d5029841afde487"
+    },
+    {
+      "path": "phase-01-requirements.md",
+      "sha256": "b9709f2b4831a2d3e62665776bc8421ccf0f341a40f4e42a12d332eb62c1a537"
+    },
+    {
+      "path": "phase-02-design.md",
+      "sha256": "f7c1004d1a8dea7358cb597a7dc0faa5dc8a8a766d70734348613ccc3ad69500"
+    },
+    {
+      "path": "phase-03-design-review.md",
+      "sha256": "e0d89abce0d6e965f34486bd0d943acb90e94932a0d21a57f74379385115f5d3"
+    },
+    {
+      "path": "phase-04-test-design.md",
+      "sha256": "b5ed1a97f7995e0a242d96f495eefe38663d25cf5df361979c9949ef8fe05e2b"
+    },
+    {
+      "path": "phase-05-implementation.md",
+      "sha256": "a3c3f1aa818e79ba2ae2940267ffe651ddcd78b0f406615c582e1f5c28d2807a"
+    },
+    {
+      "path": "phase-06-test-run.md",
+      "sha256": "3bf926841579f021c57f857cea0d42908897814fa36fcdad50e0833895311b7a"
+    },
+    {
+      "path": "phase-07-acceptance-criteria.md",
+      "sha256": "439a89930b4b41dc433c52b0f9ca3b75816f7fbb6ac2f975c8b2900a3416927c"
+    },
+    {
+      "path": "phase-08-refactoring.md",
+      "sha256": "82472dce9334bc5c4c7f4fb4510d707f09d23aae637e10105d7349659c849c20"
+    },
+    {
+      "path": "phase-09-quality-assurance.md",
+      "sha256": "4fa6f0863500ba6200e0eed4426f840c348bec4b53dc491a4780b2e3d0852d34"
+    },
+    {
+      "path": "phase-10-final-review.md",
+      "sha256": "f77b8b7391c94078efd53da6cb9ac02cfbc41311cfe4cde2f043d2ca85d2c94f"
+    },
+    {
+      "path": "phase-11-evidence.md",
+      "sha256": "c39d3cc777c0841ee2946658f562da633649b72964af60d3a2e889f9601275bc"
+    },
+    {
+      "path": "phase-12-documentation.md",
+      "sha256": "a47ce2b3e20787994b90944081dcbf460ec13bd37e20d3e0358d8cec630dab98"
+    },
+    {
+      "path": "phase-13-release.md",
+      "sha256": "fe5f63abd11ef8cd490368ad9c2ee79fa65c0ea81e17d8a375e49b5dc6f828e0"
+    },
+    {
+      "path": "plan-structure-report.html",
+      "sha256": "bb344c2d76705ad9dde528f8086865c25a1a5281d2347603eb7c78d9a3c43749"
+    },
+    {
+      "path": "plan-structure-status.json",
+      "sha256": "448eb47a01385545696b4c585d53f2d2271a12375a102544b52a24ad8143deb5"
+    },
+    {
+      "path": "plan-structure.md",
+      "sha256": "ddec1102049c192521a72e52be3d67dd75639212b6f5e899ccbf44657788978e"
+    },
+    {
+      "path": "prompts/R-audit-integrity.md",
+      "sha256": "07c90827937051f8d840864536d123f471442831af6e53a8340e2eaad36916da"
+    },
+    {
+      "path": "prompts/R-audit-requirements.md",
+      "sha256": "03e3bec38e82c6719823ea29556e3be7589f2aa96fc43b4d48fe1b9d19c03ef9"
+    },
+    {
+      "path": "prompts/R-verify-parallel.md",
+      "sha256": "15b8f430c7080bf7ec59ed426f7f07dd7b689fafffb0d8f1a951b525a3741f01"
+    },
+    {
+      "path": "prompts/R-verify-sync.md",
+      "sha256": "cc448d188e253fef596b03d69f39c155d01e84972f5bbfe4d31809c0663e8fbc"
+    },
+    {
+      "path": "references/claude-code-hooks-contract.md",
+      "sha256": "a2fa12e2c9876c268b07543f2f4e24ef52e79af288f8699162aba00a20053931"
+    },
+    {
+      "path": "references/execution-tracker-contract-draft.md",
+      "sha256": "9cd0eacbf1a4ccf65da5d564207185ca4d8089ce75168ba99ef1cbb74ec69a1d"
+    },
+    {
+      "path": "references/execution-tracker-contract.md",
+      "sha256": "3e62be918d74db7640dfd24955f7d882a13f749f5a612fb08191e25af537133a"
+    },
+    {
+      "path": "references/git-worktree-contract.md",
+      "sha256": "ba54986318a031809ea58d89cbcebf72069065ab89ca07e5552e64b7cb6e8d6b"
+    },
+    {
+      "path": "references/github-lifecycle-contract.md",
+      "sha256": "8ffc0f3a1cd6cf5d24d703c05db8e105e79b003b48eb8da69d2feb6593a7116c"
+    },
+    {
+      "path": "schemas-draft/graph-node.schema.json",
+      "sha256": "f30b9d5d1327c94649a0489eaba203b6c937f345f75b3ca94d05e9667ab20b26"
+    },
+    {
+      "path": "schemas-draft/repo-config.schema.json",
+      "sha256": "48ceb4ba84394e5f07530149a4fbcb5f0ce38283df34c3548f27d2804fa053f2"
+    },
+    {
+      "path": "task-execution-report.html",
+      "sha256": "738236a1529fb155b97201cf42063f71ea9ec2bf099c769311c30be2563c8b09"
+    },
+    {
+      "path": "task-graph-status.json",
+      "sha256": "85ee4ba6654d2caed145daa8e0f66be083e32cba1552486deafa72022e1e1027"
+    },
+    {
+      "path": "task-graph.json",
+      "sha256": "e5a7e873226364eb38bb073c848fb7b7d0986825bea916cd373ca18bb4928f8e"
+    },
+    {
+      "path": "task-progress.md",
+      "sha256": "85971f9ca9f211fe81fc6f082dd8798fe5a67d3023b93977c128ef7ac315bec2"
+    },
+    {
+      "path": "task-specs.html",
+      "sha256": "858f0c4f7c542ec0803cf6b9bfc4bee32a2ee88b0441a442e95c134108481dd8"
+    },
+    {
+      "path": "task-specs/B-C01.md",
+      "sha256": "667ca73c3fee9d42711a321d497e241f3cc347521f170ab6f92b0f10d42d3308"
+    },
+    {
+      "path": "task-specs/B-C02.md",
+      "sha256": "47475e79b62acc0e0e0db190eb031e86a4f7a27a72f4aa2fd32c9589f163704c"
+    },
+    {
+      "path": "task-specs/B-C03.md",
+      "sha256": "ca1177a6075b5d10a84ed7235becb117702658d68eb07932c289a88536c5f1c4"
+    },
+    {
+      "path": "task-specs/B-C04.md",
+      "sha256": "aa7c2a2dab354a11a6f69b38e228575b55ef1c638f677db3d46044f916f0d001"
+    },
+    {
+      "path": "task-specs/B-C05.md",
+      "sha256": "67d85b2dc35a6ee6a8be89c1f0a6ff44513c262a4853bb3039832e44efdff565"
+    },
+    {
+      "path": "task-specs/B-C06.md",
+      "sha256": "b758d7e2bd6e18fb956ed2d6546f59a2b9971aee917c704efc86a98bc4ec4626"
+    },
+    {
+      "path": "task-specs/B-C07.md",
+      "sha256": "b81db9355fd0e713a76773bd251f167fc29e1f0a4c009ae7da274198179b12e2"
+    },
+    {
+      "path": "task-specs/B-C08.md",
+      "sha256": "37994d4e608515124b27c8909df7d09939db6db586d963adc53bcbf656b3c95a"
+    },
+    {
+      "path": "task-specs/B-C09.md",
+      "sha256": "0177f9d4e1e78f19e276274ca50de78b38a537326427fab1eda9ee474fcfdcf8"
+    },
+    {
+      "path": "task-specs/B-C10.md",
+      "sha256": "bb2042518c1a93ae8fd3a3e5d897d022e65bf863761fefb5b1c4128a3570ce41"
+    },
+    {
+      "path": "task-specs/B-C11.md",
+      "sha256": "0b7f5c68d1687d2458cd6bc74d9be7030c68084ac8f4ac51a035527c7b117249"
+    },
+    {
+      "path": "task-specs/B-C12.md",
+      "sha256": "743aef792052d656d081bb5b1d0a5f34b4a69f7085bb42b6378d7f00ed82fb05"
+    },
+    {
+      "path": "task-specs/B-C13.md",
+      "sha256": "c6856dad7d906f094665b19d01f5a3181bef0303e3dc7cfde631c35ab6ba54ba"
+    },
+    {
+      "path": "task-specs/B-C14.md",
+      "sha256": "31d0c52db9fa4bf0411094ba57e95afb844e8119bc55fdddd331836c9afb3a72"
+    },
+    {
+      "path": "task-specs/B-C15.md",
+      "sha256": "1b019004cce6e004369951dcfd046619024cddd9a3de4998d8000dd016c5c9c6"
+    },
+    {
+      "path": "task-specs/B-C16.md",
+      "sha256": "08847435cb1ae6ef1c32fe889dc2e8e05180d80dd3f14b63c140ca02204ae345"
+    },
+    {
+      "path": "task-specs/B-C17.md",
+      "sha256": "7787b37a59be77b087f47fb9aeba174cf339278cf0a822871a6339e5e37deaf5"
+    },
+    {
+      "path": "task-specs/B-C18.md",
+      "sha256": "7c66b82aa7f6b31287d19b6ec364f3bcd90a75b7efe7e963f48139297aef7032"
+    },
+    {
+      "path": "task-specs/B-C19.md",
+      "sha256": "186dae46066b0b7a4046c201a94a57d483dd6ed77cdcf83c027458e82770ad91"
+    },
+    {
+      "path": "task-specs/B-C24.md",
+      "sha256": "fb946786ed66364d8f465e5ad34ec807e7e45c052df43fb5e3d740131a689e91"
+    },
+    {
+      "path": "task-specs/B-C25.md",
+      "sha256": "f88a6bb810a8fb7e43c1ec8c53dde2b11a780ad3426f762c687eb23bc9a42f3e"
+    },
+    {
+      "path": "task-specs/B-C26.md",
+      "sha256": "1ffda2fe7bd8d78521e06ad2750ce20fdf95ee8cbe76f53fc47be49971f70577"
+    },
+    {
+      "path": "task-specs/B-C27.md",
+      "sha256": "5ac4a71149504ae7b4f1994501a760ac5b716fff87003e8c860932e7b7038923"
+    },
+    {
+      "path": "task-specs/B-C28.md",
+      "sha256": "6c29df5f7b4426e422add4e5d3196a1059186a6f7ef7102f57758014450ddc52"
+    },
+    {
+      "path": "task-specs/B-C29.md",
+      "sha256": "a60eb13db2ce4a64ed04b21c55da3eb95854eafd79b308c8d2c42cc801261288"
+    },
+    {
+      "path": "task-specs/D01.md",
+      "sha256": "870daef996576d7788f9d95a7694e7418f5f817e4087c786463f1dab2db3610c"
+    },
+    {
+      "path": "task-specs/D02.md",
+      "sha256": "380ed06f25cc830e2ac975d2f5c9947a32bc5c70f0c2b30efe6072bb7793cc0e"
+    },
+    {
+      "path": "task-specs/D03.md",
+      "sha256": "93e6684fd5efcce88efd7b2ab1a45ada4656f77a8ca9cd8313b4dbdff3e9265b"
+    },
+    {
+      "path": "task-specs/D04.md",
+      "sha256": "62ce609e49cbd3b4872ab077859374ce191209a356e52caf9b65732bb85e329f"
+    },
+    {
+      "path": "task-specs/D06.md",
+      "sha256": "b27a54a082df77fe457bab0bc3bb08c583edf2e48adf8974c478d1d8796e41af"
+    },
+    {
+      "path": "task-specs/D07.md",
+      "sha256": "f2fca22980c9e6b5563b3dbbfbc9b2316952d79a3d870b39cebe9ea591835ee7"
+    },
+    {
+      "path": "task-specs/D08.md",
+      "sha256": "a9a4d220a1d7d22c9019ee07047766a95f3f8f4ebe681700c2c60dff33867dc8"
+    },
+    {
+      "path": "task-specs/D09.md",
+      "sha256": "3007cf08043febbe4eba6af625e7d9fc69b36c3612774123ecc8f8b2af92c1c8"
+    },
+    {
+      "path": "task-specs/D10.md",
+      "sha256": "80c24ef54361db42719b080777aeb373e65c424915e512bf65723ab449c80a16"
+    },
+    {
+      "path": "task-specs/D11.md",
+      "sha256": "4ff05752ff769741c8f90965cb9513983d310a0562b227efa4d06d60989f905c"
+    },
+    {
+      "path": "task-specs/D12.md",
+      "sha256": "4cd45d84092352af50c2ca8edc47784bbd07734835179f8f03015cb08f93cac5"
+    },
+    {
+      "path": "task-specs/D13.md",
+      "sha256": "94ec403764d08c109a0414d311fb5187915470ed8a78f56df4dad0c7a5b427f6"
+    },
+    {
+      "path": "task-specs/D14.md",
+      "sha256": "d5ead038623bac5821c76ff10766f2f035bf778fed47c900ad24ca19facb3467"
+    },
+    {
+      "path": "templates/README.md",
+      "sha256": "5f34a350367ed80619c33e0fa4da2c19a42f21851edf1fa074c972805531878d"
+    },
+    {
+      "path": "templates/api-contract.md",
+      "sha256": "e08a0922daacd2808ccec725e57d31dbc92f0c4b77ef2a1876021c82ac8e45c7"
+    },
+    {
+      "path": "templates/architecture-backend.md",
+      "sha256": "2025c35b90c4be0a2234a9ecf3bd5117be97b5f3954815c61297eade273b0283"
+    },
+    {
+      "path": "templates/architecture-data.md",
+      "sha256": "77a4e47df9e2bc0a0f11907f087c129dcda0747ff600162d78378fddb79746b4"
+    },
+    {
+      "path": "templates/architecture-frontend.md",
+      "sha256": "01e1a178f4bc66dbfbfaaf52248a2df24f4dcd9316b0987bee8852dc3dcd1662"
+    },
+    {
+      "path": "templates/architecture-infrastructure.md",
+      "sha256": "7a14143ff0f247596be2a5e4805a5651ad7c3e11528dcf257dd464f7e30b523c"
+    },
+    {
+      "path": "templates/architecture-security.md",
+      "sha256": "1e93d99ac5f5c9fcc7821d354db1cf235136a1d22e05d996cc31c6e98e4c0f4a"
+    },
+    {
+      "path": "templates/architecture.md",
+      "sha256": "a72264ed55f99cb6dfa379701ab1b069c7b426bf035c4b6c3c6d5733ee3fccc4"
+    },
+    {
+      "path": "templates/claude-settings.example.json",
+      "sha256": "4992683ea5f5ef4c11e101b36a9b64ebc1bf772064f640e661a3d447914c30fa"
+    },
+    {
+      "path": "templates/common-frontmatter.md",
+      "sha256": "77e826615b247e1815e75cefd0a2cd4d69192a986ee5a1919c74c6a31f2b517d"
+    },
+    {
+      "path": "templates/document.md",
+      "sha256": "d8a57cc2bb9a73cd4ab7733f4f840a2be23aecef6f21ac75320a9511a33168e7"
+    },
+    {
+      "path": "templates/feature.md",
+      "sha256": "84b3e840bc057b91699d73197be3d5af7ab51da681306595b8cbeb39bbde1e1f"
+    },
+    {
+      "path": "templates/issue.md",
+      "sha256": "9815d270038a0a25d60346c1763312776a368c4c65ad5947ec6efa464b6ca3bc"
+    },
+    {
+      "path": "templates/repo-config.example.json",
+      "sha256": "44e69087bbca97e6599e467e8c6464b0c52c74fbe1db600ac3f26afe902817bc"
+    },
+    {
+      "path": "templates/specification.md",
+      "sha256": "3fa5e44d9e58a2a821fbdf24ad5d2511853a7e15997cebab2efc6d509fff8a9d"
+    },
+    {
+      "path": "templates/system-phase-spec.md",
+      "sha256": "972ed7b058ff17584bbef64222e64967fb54696cc554a043177b650aa10c66e2"
+    },
+    {
+      "path": "templates/system-plan-contract.json",
+      "sha256": "8fc4d721dd77192a3fcb55ea4c12bb6d75ac744b40f477acb87992c4f21ef1ba"
+    },
+    {
+      "path": "templates/system-task-spec.md",
+      "sha256": "596d758a0f9487bed595edc108e0d025f05224389ef474a5713283a6f7780d99"
+    },
+    {
+      "path": "templates/task-graph-node.md",
+      "sha256": "ba7b377a5db24b7f1bed19b07c32f881f6d771cd06e325767a009cd19ca79ca5"
+    },
+    {
+      "path": "templates/task.md",
+      "sha256": "8b490cbe4fa9f0d27d6d7cdde9b7e60c7a3b03432aa5aa3ad6b9597ca8e6f856"
+    },
+    {
+      "path": "templates/template-contract.json",
+      "sha256": "27babed5b0bbdafa68f494a42ce2a01bba1f51e912add324f1bab0a46efd1cb4"
+    },
+    {
+      "path": "value-narrative.json",
+      "sha256": "fcb6fb465ed2730464cb94264450605fe803bf05d474b2f2bd7758dd732043c9"
+    },
+    {
+      "path": "verification-state.json",
+      "sha256": "342f618956f5937da9527800ce240f6908c966f4493344c89428c903ed436d93"
+    }
+  ],
+  "staleness_rule": "evaluated_inputs は plan 配下の安定 artifact を再帰収集した鮮度台帳である。path 集合または sha256 が現物と一致しない findings は stale とする。この台帳は semantic 再評価範囲を決めず、証拠再利用を認可しない。"
 }

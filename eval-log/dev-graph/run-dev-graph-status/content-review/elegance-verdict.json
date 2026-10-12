@@ -2,16 +2,16 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
-    "skill_md_sha256": "fdfa63ec56f4ce0efc41ac22ebcc8ff89ceafc4e540db0bc4aeea5070126dcd2"
+    "skill_md_sha256": "2313bb65186704752171dc8324b6e31585f8b4a696f07e8d8f6effcc213be40f"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-fix)",
-  "reviewed_at": "2026-10-12T04:20:41Z",
-  "iterations": 2,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-render-status)",
+  "reviewed_at": "2026-10-12T07:58:49Z",
+  "iterations": 3,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
+    "omission": 2,
     "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
@@ -25,18 +25,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "前回の low (R3-status.md の L3/L9/L50 が validate-graph-schema.py を正本と読める) は解消した。L3・L9・5.2 の目的は「extract-graph-status.py が返す rows から」に変わり、inventory の summary は L10 に「inventory の summary (frontmatter の responsibilities と一致させる文で、ここでは書き換えない)」と前置きした引用として1か所だけ残し、直後に「今の手順では graph の読み取りと検索は extract-graph-status.py が行い、この責務はその rows だけを使う」と書く。引用と今の手順を取り違えるおそれは無い。Layer 3 と 5.3 も rows だけを使い graph を自分で読まないと書く。",
-      "検索と状態表示の行を extract-graph-status.py に一本化し、C24 read → 一度だけ読んだ bytes を C11 に通す → 前後の graph/config/content digest 比較、の順で read-only を機械的に保証している。filter の AND/OR、tag-mode の必須、empty (exit 0) と rejected (exit 1) の区別が本文・Gotchas・R2/R3 でそろっている。"
+      "前回の low (R3 summary と IN1 が validate-graph-schema.py のまま) は、inventory C18 から直す正規の流れで解消した。frontmatter L33・L50 が inventory と完全一致し (test_run_skill_frontmatter_is_inventory_exact が pass)、R3-status.md L3・L9-10・Layer 3 と本文 L95・Criteria acceptance L154 が「extract-graph-status.py の rows だけ」でそろった。",
+      "内外ループの書き分けで、完了条件の循環が解けた。L122 が内ループ (checklist と IN1) と外ループ (OUT1 の live-trial・OUT2 の受入テスト・content-review、最大3周) を分け、L131 が内ループの完了と skill の完了を別の文で書く。L129 は semantic_evaluator_started で `Agent` の評価役を少なくとも1回起こし、report と graph の一致と digest の不変を read-only で独立に照合させ、main context の自己照合で代えないと書き、checklist L116 がその PASS を要件にする。"
     ],
     "negative_feedback": [
-      "inconsistency (low、前回から残る。Beads 行き): frontmatter の R3 summary (L33) と IN1 text (L50) は「validate-graph-schema.py で読み取ったグラフストアから」のまま。本文 L95 は extract-graph-status.py だけが rows を作ると書く。inventory との完全一致を test が求めるので、inventory から直す。prompts/R3-status.md の側は直った (下の positive)。",
-      "omission (low、前回から残る): description (L3) は「completion 状態」の確認を約束するが、rows (L92・L95) は status/closed_at だけで completion の根拠 (merge evidence など) を持たない。直し方: description を「close/tombstone 状態」にするか、completion を status (done/closed) で表すと本文に書く。",
-      "smell (low、前回から残る): allowed-tools (L13) に Write が無く、Purpose は外部副作用0を約束するが、ゴールシーク配線 (L124・L126) は eval-log へ goal-spec/progress/intermediate を書く。直し方: eval-log の goal-seek 記録は read_only の digest 対象 (graph/config/content) の外の自己記録だと本文に明記するか、配線を read-only にする。"
+      "omission (low、前回から残る。Beads 行き): description (L3) は「completion 状態」の確認を約束するが、rows (L95) は status/closed_at だけで、graph-node schema の completion_evidence (status・completed_at) を持たない。status=done で代わりに表せるのは completion_evidence.status=done の場合だけ。直し方: description を「close/tombstone 状態」にするか、rows に completion_evidence.status/completed_at を足す。",
+      "omission (low、今回の追加分): L118 の not_applicable の扱いは「例:」で1項目を挙げるだけで、どの checklist 項目を外してよいかが閉じていない。今の checklist (L111-116) で経路に依存するのは「該当なしが空 result」だけで、評価役 (L129) も not_applicable の理由を照合しない。直し方: 外してよい項目を限定列挙にするか、評価役に not_applicable の理由も照合させる。",
+      "inconsistency (low、plan 側。Beads 行き): EVALS.json の C18 IN1 の marker は `validate-graph-schema.py` のままで、IN1 の主語になった `extract-graph-status.py` と `rows` を含まない (今は Criteria acceptance L154 の付記で marker を満たす)。inventory C18 の deterministic_checks も validate-graph-schema.py だけで、R3 が使う extract-graph-status.py が無い。直し方: plugin-dev-planner の update の流れで、C18 の deterministic_checks と EVALS.json の IN1 marker を extract-graph-status.py にそろえる。",
+      "smell (low、前回から残る): allowed-tools (L13) に Write が無く、inventory の boundary は「書込みは一切行わない」だが、配線 L127・L130 は `$DEV_GRAPH_ROOT/eval-log/` に goal-spec・progress・intermediate を書く。Purpose の digest 不変 (graph/config/content) とは両立するが、本文に書かれていない。直し方: eval-log の goal-seek 記録は digest の対象外の自己記録だと本文に明記するか、配線を read-only にする。"
     ],
-    "iteration": 2,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual: team-lead request to re-take content-review after dg-fix fixed the previous medium x2 / low x4 (incremental focused combined review, 2nd pass)",
+    "hook_trigger": "manual: team-lead request to re-take content-review of render/status after dg-render-status rewrote SKILL.md, responsibility prompt and render-graph-html.py (--receipt for render; R3 summary/IN1 and goal-seek wiring for status); incremental focused combined review, 4th request",
     "next_action": "none"
   },
-  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。前回の verdict (同じ reviewer) の findings に対する dg-fix の修正を、SKILL.md・responsibility prompt・script_refs の script で確かめた。read-only で回したもの: 受入テスト test_acceptance_gaps_a1/a2 (28 passed)、test_skill_mass_production_contracts (27 passed。inventory と frontmatter の完全一致を含む)、lint-skill-name.py / lint-skill-tree.py (4 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話・外部 GitHub/Beads mutation・release 実行はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文 (summary・criteria) と PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。dg-render-status の書き換え (render の --receipt と OUT1、status の R3 summary・IN1・評価役・not_applicable・内外ループ) を、SKILL.md・responsibility prompt・script_refs の script・inventory C05/C18・EVALS.json で確かめた。read-only で回したもの: test_render_receipt・test_skill_criteria_contracts・test_skill_mass_production_contracts (合わせて 75 passed。inventory と frontmatter の完全一致を含む)、test_acceptance_gaps_a2・test_runtime_coverage (22 passed)、lint-skill-name.py / lint-skill-tree.py (2 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。render-graph-html.py は scratchpad の graph で、壊れた receipt と描かない feature の receipt の2経路も手で試した (どちらも exit 1・HTML なし)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機のブラウザ表示と host 対話はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文、plan 側 (inventory・EVALS.json) の文、PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
 }

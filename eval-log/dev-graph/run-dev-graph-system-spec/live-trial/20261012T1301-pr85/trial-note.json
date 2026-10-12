@@ -1,0 +1,37 @@
+{
+  "label": "sysspec4",
+  "retry_of": "sysspec3 (20261012T1124-pr85)",
+  "evaluator_agent_id": "a7a97acb80684acc6",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec4/ws/plugins/dev-graph/skills/run-dev-graph-system-spec",
+  "closure_sha_at_launch": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_sha_tested_copy": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_sha_wtpy_at_verdict": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワークは WebFetch による www.postgresql.org・react.dev・fastapi.tiangolo.com・www.typescriptlang.org・kubernetes.io への https の GET だけ許可し、ほかは遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "allowed_fetch_hosts": [
+    "www.postgresql.org",
+    "react.dev",
+    "fastapi.tiangolo.com",
+    "www.typescriptlang.org",
+    "kubernetes.io"
+  ],
+  "fixture_changes": [
+    "spec-state.json: sysspec3 の trial の後の版 (ff927154…) を置き、被験に渡した写しの正規の writer (apply-spec-transition.py) を 5 回呼んだ (set-decision 2 回、set-knowledge-candidate 2 回、apply の set-design-application 1 回。どれも exit 0。JSON は手で書いていない)。後の sha256 は 65ae4241…。trial 中は変わっていない。plugin は変えていない。",
+    "D1/D2 の証拠の更新: set-decision で D1 と D2 の証拠に関わる欄を、sysspec3 の trial で被験が取得した公式文書 (sysspec3 の fetched-references da2bce5d…、確認時刻 2026-10-12T02:28:51Z) の記述に合わせた。id・question・status・options の id・cost_model・user_decision・qa_ref は変えていない。",
+    "seed カード: knowledge_candidates の k8s-workload-observability のカードは orchestrator (trial の準備役) が書いた seed カードで、被験 skill が作ったものではない。orchestrator が kubernetes.io の公式文書 4 頁を WebFetch で取得し (5 回の呼出し、2026-10-12T03:48:57Z〜2026-10-12T03:49:47Z)、その頁と fixture の qa-029・qa-005 から言えることだけで書いた。set-knowledge-candidate で discovered から qualified、deepened に進めた。candidate の provenance の欄と評価者の prompt にも、orchestrator が書いたことを書いた。",
+    "infrastructure の design_applications: set-design-application で書き直した。書いた事実は、curated card は 0 件、project candidate のカードを qa-029・qa-005 に当てた、の 2 点だけ。",
+    "fetched-references.json は seed の版 (48395c3a…) のまま渡した。trial 中に被験が書き直した (f5c9dcb8…)。",
+    "WebFetch の許可: sysspec3 の 4 host に kubernetes.io (seed カードの source_refs の host) を足した 5 host。trial 中の kubernetes.io への WebFetch は 0 件。",
+    "許可: team-lead の 2026-10-12 の承認 (sysspec4 の準備 a と b1〜b4)。詳細は fixture-provenance.json の spec_state・decisions_update・knowledge_seed・fetched_references・web_fetch_allowance。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 9,
+    "occurrences": 20,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "dev-graph の C02 writer と C19 の lineage gate は、imported_at (と source_version) の値を検証していない。build-graph-node.py add (ws/plugins/dev-graph/scripts/build-graph-node.py の L767-771 付近) は、入力の source_lineage をそのまま node に写す。validate-source-lineage.py の lineage_findings (L35-71) が調べるのは source_path と source_digest だけで、imported_at が未来の時刻か、実際の取込時刻と合うか、source_version が plugin.json の version と合うかは見ていない。再現の手順は次のとおり。確定済みの system-spec を置いた repo で、c19-import-input.json の source_lineage.imported_at を現在より後の時刻 (例: 実行時刻が 04:25Z のときに 2026-10-12T04:30:00Z) にして、build-graph-node.py add --repo-root . --input eval-log/c19-import-input.json を実行する。applied_count=2 で登録され、validate-source-lineage も exit 0 になる。graph.json の node には、created_at (実時刻) より後の imported_at が残る (この trial の fx/.dev-graph/state/graph.json がその実例)。imported_at は writer が実時刻で付けるか、未来の値や不一致を拒否する必要がある。",
+    "run-dev-graph-system-spec の完了 checklist の「elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される」(ws/plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md、R2-delegate) には、決定論の検査が無い。progress.json に自由記述の evidence を書けば pass になる。doc-fetch の writer (run-system-spec-doc-fetch/scripts/build-fetched-references.py assemble) も、Skill の起動を示す receipt を求めずに直接呼ばれて書き込む。再現の手順は次のとおり。Skill で doc-fetch を起動せず、WebFetch の結果を records.json に手で書き、assemble を直接実行する。progress の checklist に「Skill 経由」と書けば、validate-source-citation、compile、evaluator、C02、lineage の各 gate はどれも落ちない。この trial はまさにこの経路で PASS を自己申告した。これは今回の逸脱の原因ではなく、検出の欠落である。"
+  ]
+}

@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
     "component_id": "C03",
-    "skill_md_sha256": "000dbe4d04c3cc4599b221256a0c25fb1beab5106658a24d54fb682cd0a38fb2"
+    "skill_md_sha256": "227715b085af8c09b4848ffd337ae2c0b3e5ed88c0761c82caa90e5603024ba6"
   },
-  "verdict": "FAIL",
-  "reviewer": "/root/independent_review-current-cycle3",
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-pr85",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -16,157 +16,139 @@
       "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/gh-bridge.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/schemas/graph-node.schema.json",
+        "plugins/dev-graph/tests/test_runtime_coverage.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/transcript.jsonl"
       ],
-      "observed": "Independent current cycle3 assessment of validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/反映の必須キー欠落が 0 件: Current canonical validation and gh bridge typed-value tests exercise invalid JSON/invalid field values and graph required keys before writes; shared synchronization regression probes preserve fail-closed unresolved payload paths. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "送信前の検証は2つの決定論の script が持つ。gh-bridge.py は、issue 系の op で --repo が無ければ止め（L164）、project-item-edit は project・item・field の id と、値をちょうど1つ求める item_edit_request（L79-97）を dry-run の前にも通す（L165）。本番の送信では、gh を起こす前に op ごとの --number・--title・--project-id と --content-id などを確かめ、欠ければ ContractError で止まる。validate-graph-schema.py は graph-node.schema.json で graph を検証し、必須キーの欠けた node を invalid にする。C02（build-graph-node.py）は書く前にこの検証を通し、finding があれば write 0 で止まる。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_runtime_coverage.py の test_validate_graph_schema_and_main と test_gh_bridge_helpers_and_operations、test_build_graph_node.py の test_update_of_a_node_missing_required_keys_names_the_keys（L1038）を含む。scratch の repro_in1.py で、stub の gh を DEV_GRAPH_GH に置いて gh-bridge.py を回した。--repo の欠け、--number の欠け（issue-update・issue-close）、--title の欠け、item-edit の field-id の欠け・値2つ・値なし（dry-run でも）、item-add の content-id の欠け、の8通りはすべて rc 1 で、gh の呼出しは0。引数の揃った issue-update だけが gh を1回呼んだ。id の欠けた node を持つ graph を validate-graph-schema.py にかけると、rc 1、valid false で、missing_id の違反が出た。live trial 20261013T0145-pr85 の transcript L101-102 でも、validate-graph-schema.py は valid true、violations は空。残りの穴：issue-create・issue-update・issue-close・project-item-add は、--dry-run なら必須キーの欠けた引数でも rc 0 で preview を返す（scratch の repro で4つとも確かめた）。本番の送信では止まるので外部への write は起きないが、dry-run の preview だけでは欠落が見えない。dry-run の前に検証するのは project-item-edit だけ。"
     },
     "OUT1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/final-replay-report.json",
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/sandbox-viability-probe.json"
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/goal-verdict.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/task.md",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/trial-note.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/gate-sent.log",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/out/status.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/subagent-transcripts/agent-a19f972189d94f457.jsonl",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/subagent-transcripts/agent-aca75c14d5b506bfa.jsonl",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/scripts/diff-github-project-fields.py"
       ],
-      "observed": "NOT_EXECUTED / current required live acceptance is unproven. Individual target was NOT booted because mandatory machine containment prerequisite failed; no fabricated individual launch failure/model/transcript. Current canonical BLOCKED metadata exists but is not an executed live goal; live_trial_verdict_ref intentionally omitted. Planned scenario_id identifies the admitted task only. Fresh acceptance FAIL, not a current source implementation defect diagnosis or old PASS refresh.",
-      "scenario_id": "C03-OUT1-positive-second-sync-zero-fixture-standard-contained-v3"
+      "observed": "live trial 20261013T0145-pr85（20261012T1947-pr85 の再試行）の verdict は、scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict はすべて PASS、nudge 0、gate_kind contractual で gate の応答は1回。verdict は live-trial-verdict.schema.json に通り（error 0）、skill_dir_tree_sha（edaa2b91…）は今の skill dir の tree sha と自分で計算して一致し、transcript_sha256 も自分で計算して一致した（247行）。trial-note の closure_matches_wtpy は true。transcript を自分で読んだ。L35 で Skill を起動し、L37 で SKILL.md が読み込まれた。L101-102 で validate-graph-schema.py は valid true。1回目の計画（L106-108）は、Issue が export 1・import 1、Project が links 2。export は guard を通った：preview（L139-140）→ CONFIRM の1行（L149、gate-sent.log に1回）→ hook の確認（L151）→ authorize（L158-159）→ execute（L161-162、#102 の issue-update）。import と link は R3 の fork（L182）が C02 で反映した（fork の transcript の L4-5 で update、L10-11 で link-github、graph_revision は 4 から 5）。2回目（L204-205）は、計画の前後で graph.json・github-sync-snapshot.json・tasks・adapter の sha が同じ（DIGESTS_UNCHANGED）で、diff-github-issues.py と diff-github-project-fields.py の計画はどちらも changes 0、converged true、unresolved_count 0、next converged、imports・exports・conflicts・confirmations・missing・held・skipped・links はすべて0。adapter の mutation_log は1件のまま（1回目の export だけ）。L210-211 で、node ごとの Issue 番号と (alias, project, item) は HEAD と同じ（stable_ids_equal True）。converged は changes と unresolved から決定論で決まり、欠落・衝突・フラグが残る間は converged にならないことを SyncProgressTest が確かめる（今回 PASS）。独立した dev-graph-sync-conflict-verifier（transcript 29行）は L215 と L232 で 条件付きの PASS。guard.jsonl は36行すべて allow、out/status.json は PASS。fixture の変更（seed の写し、rekey、fake-gh の修正、TMPDIR、伏せ字）は orchestrator が行ったもので、fixture-provenance.json と trial-note に記録がある。評価者の skill_defects（last-synced snapshot の github-sync-snapshot.json を読み書きする script が無く、Issue の計画は base の無い 2-way）は、被験自身も L193-203 で気づいている。評価者が書くとおり、OUT1 の文（2回目の changes 0 と converged true）は満たしているので blocker にはしない。この欠陥の扱いは OUT7 に書いた。留意：verifier は Issue の計画を 3-way と説明したが、実装は updated_at の 2-way で、これは LLM の説明の誤り。verifier の task-notification から hook が intent receipt を作ったが、被験はそれを使っていない（skill-governance-adapters の hook の穴で、sync の基準の外）。R7 の C26 reconcile は、この fixture に PR の linkage が無いので trial では通っていない。",
+      "scenario_id": "C03-OUT1-positive-second-sync-zero-fixture-standard-v2",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_issue_updated_at_conflict_takes_the_newer_side_and_flags_the_same_instant",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_issue_manual_confirmation_flag_clears_once_the_confirmed_side_is_applied",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/scripts/build-graph-node.py"
       ],
-      "observed": "Independent current cycle3 assessment of id+updated_at が同時競合するケースを注入した際、規定のタイブレーク規則 (更新が新しい方を採用・同時刻はGitHub優先+ローカル手動確認フラグ) どおりに競合解決されることを受入テストが確認する: Current conflict tests and independent later-heartbeat case exercise newer-side choice, equal-time flags and manual decision binding without timestamp inversion. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "test_issue_updated_at_conflict_takes_the_newer_side_and_flags_the_same_instant（test_build_graph_node.py L743）を読んで確かめた。Issue が新しければ title を C02 update で import し、node が新しければ gh-bridge issue-update で export して import は0。同時刻なら changes 0・write 0 で、表示値は GitHub（adopted remote）、confirmations に手動確認のフラグが1行残り、local の title は変わらない。state も同じ規則で、新しい close は status closed の import、新しい local の close は issue-close の export、closed の node に対する新しい GitHub の reopen は conflict に残る。package member は新しい Issue に対しても local を採る。diff-github-issues.py は updated_at だけを比べる 2-way の決定論の planner で、基準の文（新しい方を採り、同時刻は GitHub 優先と手動確認フラグ）どおり。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。live trial 20261013T0145-pr85 でも、1回目の計画は import 1・export 1 になり（L106-108）、2回目は0。注記：Issue には 3-way の base が無いが、この基準の文は base を求めていない。SKILL.md の文との食い違いは OUT7 に書いた。"
     },
     "OUT3": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_issue_updated_at_conflict_takes_the_newer_side_and_flags_the_same_instant",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_acceptance_gaps_a2.py",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/scripts/build-graph-node.py"
       ],
-      "observed": "Independent current cycle3 assessment of GitHub Issue が close/delete された場合、次回同期でローカルノードが物理削除されず tombstone/status 遷移 (open→closed 等) として双方向伝播されることを受入テストが確認する: Current Issue conflict/gh-close helper tests and tombstone policy reference do not demonstrate full close/delete→retained local tombstone→bidirectional propagation in a current acceptance scenario. No physical deletion claim was observed; full criterion unproven. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "SyncIssueTombstoneTest の6件（test_acceptance_gaps_a2.py）を読んで確かめた。GitHub の close は status closed の import で、node は残る。削除（linked number が解決しない・HTTP 410）は kind remote-deleted の C02 update（status tombstoned）の計画になり、当てた後の再計画は missing_issues 0・converged true。local の tombstone は issue-close の export になり、両側が収束する。package member の削除は local-authority の conflict に残る。rate limit・HTTP 429・5xx は action retry、権限や repository の解決の失敗は action investigate で、どちらも tombstone にしない。diff-github-issues.py も build-graph-node.py も node を消す経路を持たない。削除の判定は gh の失敗文で決まる（L66-67）ので、base の snapshot は要らない。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。残りの穴：削除の判定は gh の失敗文の正規表現（Could not resolve to an issue … と HTTP 410）に頼る。gh の文言が変われば unclassified（investigate）に倒れるので、誤って tombstone にはならない。"
     },
     "OUT4": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_of_every_value_type_is_exported_or_cleared_through_gh_bridge",
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out3_dry_run_previews_every_projection_without_a_write",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/gh-bridge.py",
+        "plugins/dev-graph/scripts/bd-bridge.py",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/tests/test_runtime_coverage.py",
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py"
       ],
-      "observed": "Independent current cycle3 assessment of --dry-run 指定時に GitHub 側への書込みが 0 件のまま反映予定差分のみがプレビューされることを受入テストが確認する (暴発防止): Current gh dry-run/project typed export and projection preview tests assert mutation_suppressed and zero writes; independent copied probes preserve canonical planner behavior. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "外部へ書く力を持つ script は、すべて決定論の --dry-run を持つ。gh-bridge.py は、5つの MUTATIONS（L30）で --dry-run なら、gh を起こさずに mutation_suppressed の preview を返して終わる（L166-168）。bd-bridge.py は、create と reconcile-duplicates の dry-run で preview と write_count 0 を返し、ほかの op でも write() は dry-run なら planned_bd_args を返すだけで bd を起こさない。diff-github-issues.py と diff-github-project-fields.py は GitHub を読む op だけを呼び、--output にだけ書く read-only の planner。build-github-projection.py の --dry-run は、gh の mutation 0・graph 不変で、report も書かない。C02 の dry-run も write 0。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_build_github_projection.py の test_out3_dry_run_previews_every_projection_without_a_write、test_build_graph_node.py の test_revision_conflict_and_dry_run_write_nothing（L252）、test_runtime_coverage.py の test_gh_bridge_helpers_and_operations を含む。scratch の repro_out4.py で、stub の gh を置いて gh-bridge.py の5つの MUTATIONS を正しい引数と --dry-run で回すと、5つとも rc 0、mutation_suppressed true、gh の呼出し0。live trial 20261013T0145-pr85 でも、export の前の preview（L139-140）は gh を呼ばず、adapter の mutation_log は確認の後の本番の1件だけ。残りの穴：run 全体を dry-run にするとき、計画の後で本番の gh-bridge を呼ばないことは LLM の担当。trial では、guard が本番の gh-bridge の呼出しを CONFIRM と authorize まで止めた（L149-162）。issue 系と item-add の --dry-run が必須キーの欠けた引数でも preview を返すことは、IN1 の残りの穴と同じ。"
     },
     "OUT5": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_issue_manual_confirmation_flag_clears_once_the_confirmed_side_is_applied",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_import_waits_while_the_linked_issue_is_unsettled",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_changed_on_both_sides_is_one_manual_conflict_until_a_bound_decision",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/tests/test_shared_writer_sync_regressions.py",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/scripts/build-graph-node.py"
       ],
-      "observed": "Independent current cycle3 assessment of 手動確認フラグが立ったノードについて、確認結果を反映した後の再同期でフラグが解消されることを受入テストが確認する: Current manual flag/Issue hold/Project confirmation fixtures assert bound decision clears flags and unconfirmed conflict is not overwritten; independent multiple-origin case remains unresolved correctly. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "test_issue_manual_confirmation_flag_clears_once_the_confirmed_side_is_applied（test_build_graph_node.py L778）を読んで確かめた。同時刻の差でフラグが1行立ち、決定が無い間は計画し直しても同じ行が残る。フラグ行と値の違う決定は stale_decisions に回り、フラグは残る。行を写した決定（remote を選ぶ）を --decisions に渡すと decided-same-time の import になり、当てた後の再計画は confirmations 0・changes 0・next converged。local を選ぶと decided-same-time の export になり、GitHub がその値を持った後の再計画は confirmations 0・converged。フラグは観測値から毎回導かれ、別に保存された状態を持たない。SyncProgressTest::test_missing_conflicted_or_flagged_issues_are_not_converged（test_shared_writer_sync_regressions.py）は、フラグが残る間は converged にならないことを確かめる。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。"
     },
     "OUT6": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_link_github_records_linkages_without_touching_content_state",
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/tests/test_shared_writer_sync_regressions.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/scripts/build-graph-node.py"
       ],
-      "observed": "Independent current cycle3 assessment of 同一Issue contentを同一Projectへ二回同期してもProject itemが重複せずitem_idが安定し、複数Project targetにはaliasごとに1 itemだけがlinkされる: Current item retry/idempotence and link-only tests assert stable linkage and no content timestamp update; independent equal/multiple Project origin cases preserve all origins and prevent conflicting writes. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "GithubProjectionTest::test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item（test_build_github_projection.py）は、失敗した item-add だけを再実行し、再実行で Issue も item も1件のまま増えないことを確かめる。test_link_github_records_linkages_without_touching_content_state（test_build_graph_node.py L577）は、C02 の link-github が item_id を記録し、内容と状態に触れないことを確かめる。build-graph-node.py は alias ごとに linkage を1つに束ね、同じ alias に別の item_id が来れば project_item_conflict で拒む（L1150-1152）。ProjectImportJoinTest の2件は、同じ Project からの取込が順序によらず1つのpatch になり、食い違えば write 0 の衝突になることを確かめる。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。複数の Project を使う test は repo に無いので、scratch の repro_out6_multi_project.py（製品の script と tests の fixture だけを使う）を今のコードで回した。Project 2つで C14 を回すと、Issue 13件・item 26件で (project, content) の組は重複0、node ごとに alias 2つ・item_id 2つ。再実行は mutation 0、item は26件のまま、item_id は不変、graph は同じ bytes。C02 の link-github に2つの alias を渡すと両方が記録され、再実行は noop。同じ alias に別の item を渡すと project_item_conflict、知らない alias は unknown_project_aliasで、どちらも write 0、graph は同じ bytes。2件 OK。live trial 20261013T0145-pr85 でも、2回目の後の (alias, project, item) は node ごとに1件で、HEAD と同じだった（L210-211）。残りの穴：複数 alias の test が repo に無い。"
     },
     "OUT7": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_changed_on_both_sides_is_one_manual_conflict_until_a_bound_decision",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_changed_on_one_side_follows_the_mapping_and_moves_the_snapshot",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_of_every_value_type_is_exported_or_cleared_through_gh_bridge",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_of_a_package_member_is_never_imported",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/scripts/diff-github-issues.py",
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md"
       ],
-      "observed": "Independent current cycle3 assessment of Projects fieldのlocal/remote双方変更を3-way fixtureで検出して自動上書き0件・manual conflict 1件となり、片側変更だけはmappingどおり同期されsnapshotが更新される: Current 3-way Project fixtures and all-value-type exports cover bilateral conflict versus one-side mapping/snapshot updates; independent three-project permutation case proves order-independent conflicts. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "test_project_field_changed_on_both_sides_is_one_manual_conflict_until_a_bound_decision（test_build_graph_node.py L615）と test_project_field_changed_on_one_side_follows_the_mapping_and_moves_the_snapshot（L643）を読んで確かめた。前者では、base P1・local P3・remote P2 の field は export 0・import 0・conflict 1（both-changed）で、当てた後も local の値と snapshot の P1 は変わらず、sync_state は conflict、再計画は changes 0。行と値の違う決定は stale として残り、行を写した決定で初めて import 1 になり、その後のlink で snapshot が P2・synced に進む。後者では、remote だけの変更は import 1・export 0、local だけの変更は project-item-edit のexport 1（local-only）になり、どちらも両側一致を観測した後の link で snapshot がその値に進み、次の計画は changes 0。Status は local_to_project で、remote の変更は local-authority の export になる。diff-github-project-fields.py は決定論の 3-way の planner で、base を github_project_linkages[].field_snapshot[local_field] から取り（L235）、base が無ければ no-base の manual（L243）、local だけが動けば export（L245）、remote だけなら import（L247）、両方なら both-changed の manual（L249）。export も import も無い周回だけ、両側一致を観測した値を field_snapshot に入れた link を作り（L311-317）、C02 が alias ごとに key 単位で重ねて記録する（build-graph-node.py L1153-1157）。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。scratch の repro_out7_stale_key.py（製品の script を CLI で回す。3件 OK）で snapshot の key の扱いも確かめた。base が Title Case のkey（Priority）にしか無いと no-base の manual 1件で、export 0・import 0、graph は書かれない。local_field の key（priority）と Title Case の key の値が違うと、base には local_field の key だけが使われ、remote だけの変更は import 1件（remote-only）。収束の後のsnapshot では local_field の key が進み、Title Case の古い key は残るが、その後の changes は0。評価者の skill_defect の見方：OUT7 は Project field の基準で、その snapshot は SKILL.md L199 が定める github_project_linkages[].field_snapshot を指す（diff-github-project-fields.py の docstring L16 も、last-synced base を field_snapshot[local_field] と書く）。これは上のとおり決定論の 3-way で実装され、片側の変更の後に C02 link-github で前進するので、OUT7 は PASS とする。評価者の指摘は、別ファイルの last-synced snapshot（.dev-graph/state/github-sync-snapshot.json）を読み書きする script が plugin に無いこと（plugin の中にこのファイル名の参照が0件であることを自分でも確かめた）と、Issue の計画がbase の無い updated_at の 2-way であること。これは Issue 側と契約の文の問題で、Project field の 3-way と snapshot の前進は揺るがない。評価者は L269（criteria:OUT7）も食い違う行に数えたが、L269 は Project field の文で、L199 の field_snapshot で満たされる。Issue の基準の OUT2（新しい方を採り、同時刻は GitHub と手動確認フラグ）と OUT3（gh の失敗文で削除を判定し tombstone にする）は、文のとおり base を要さず、2-way の実装で満たされる。欠陥は残りの穴として書く。食い違っているのは、SKILL.md の L36（R2 の summary）・L137（入力の last-synced snapshot）・L138（出力の更新済み snapshot receipt）・L194（Protocol 1）・L237（verifier の入力）、prompts/R2-plan.md、prompts/R4-tombstone.md、agents/dev-graph-sync-conflict-verifier.md、references/github-lifecycle-contract.md の文で、どれも Issue にも base があり、snapshot のファイルを更新するように読める。直し方は2つ：文を「Issue は updated_at の 2-way（削除は gh の失敗文）、Projects の base は field_snapshot」に直すか、Issue の base（last-synced snapshot の読み書き）を実装するか。fixture の github-sync-snapshot.json は、どの script も読まないまま残る（sync7 でも1回目の後に前進していない）。残りの穴（ほか）：field_snapshot は key ごとに重ねるので、mapping から外れた key や Title Case の古い key は消えない。planner はlocal_field の key だけを読むので、古い key が上書きに使われることはない。"
     },
     "OUT8": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_changed_on_one_side_follows_the_mapping_and_moves_the_snapshot",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_of_every_value_type_is_exported_or_cleared_through_gh_bridge",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_project_field_of_a_package_member_is_never_imported",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_acceptance_gaps_a2.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/scripts/diff-github-project-fields.py"
       ],
-      "observed": "Independent current cycle3 assessment of permission/rate-limit/field削除/option rename/pagination/途中失敗fixtureでローカルtask promotionを維持し、未完了Project writeだけpending_retryとして再実行できる: Current pagination, typed-field and failed-item retry fixtures cover parts of this combined error contract. Current evidence does not exercise every declared permission/rate-limit/field-delete/option-rename failure while verifying local promotion retention and only-pending Project retry. Full conjunction unproven. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "ProjectionFailureRetryTest::test_out8_failures_keep_the_promotion_and_only_pending_project_writes_are_retried（test_acceptance_gaps_a2.py L558）を読んで確かめた。item-add の権限不足（HTTP 403）と item-edit の rate limit（HTTP 429）を途中で起こすと、rc 3 で、その2件だけがpending_retry になり、ほかの node は linked、graph は書かれず、promotion は保たれる。retry の前段で止まる失敗（issue list の権限不足、project resolve の rate limit、Status field の削除、Status の option の rename）は rc 2・mutation 0・report は不変で、pending は次のretry に残る。復旧の後の retry は pending の2件だけを動かし（item-add 1・item-edit 2）、後ろの page の item も pagination で辿る（6 page と 7 page）。通常の再実行は mutation 0 で、Issue ごとに item は1つ。SyncProjectFieldFailureTest::test_out8_sync_planner_leaves_pending_retry_to_c14_and_writes_nothing_for_broken_fields（L644）は、sync の planner が pending_retry の linkage を skipped（C14 の retry の担当）にして何も書かず converged にしないこと、retry の後のlinkage は通常どおり扱うこと、Status field の削除や option の rename では conflict にして書かないことを確かめる。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。残りの穴：pending_retry を再実行した C14 の結果を C02 の link-github に渡す継ぎ目は LLM の担当で、通しの test は無い。"
     },
     "OUT9": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_reconcile_lifecycle_modes",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_worktree_lease_lifecycle",
-        "plugins/dev-graph/tests/test_semantic_c26_completion.py::test_c26_local_first_transaction_calls_c27_before_beads_and_is_idempotent",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "plugins/dev-graph/hooks/reconcile-task-lifecycle.py",
+        "plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "plugins/dev-graph/tests/test_runtime_coverage.py",
+        "plugins/dev-graph/tests/test_semantic_c26_completion.py"
       ],
-      "observed": "Independent current cycle3 assessment of PR closed未mergeではdone 0件、default branchへmergedかつpolicy充足時だけdoneとなり、feature worktreeではpending event、clean default worktreeでのみdurable task spec/graphが更新される: Current lifecycle/completion fixtures assert closed-unmerged remains pending, merged-policy facts, pending events and clean-default owner-controlled durable completion; no real repository mutation is claimed. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "reconcile-github-lifecycle.py は、PR が merged（state MERGED・merged true・mergedAt と merge commit がある。L521）で、base が default branch、今の branch も default、worktree が clean、HEAD が remote の default と同じ（synced_default、L524）、merge commit が HEAD の祖先、linkage が eligible のときだけ decision を true にする（L525）。それ以外は conflicts を返し、check・dry-run・decision なしのどれでも policy_decision pending・rc 1 で止まる（L559-563）。decision が true でも C26 は graph を書かず、C02 への writer request を置いて writer_pending を返す（L597）。hooks/reconcile-task-lifecycle.py の TaskCompleted は done にせず、park で lease を pending_review にするだけ（L425-448、manage-worktree-lease.py L258）。今回、sync の範囲の製品 test 10ファイル・176件（test_acceptance_gaps_a2.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c25_lifecycle_hook_contract.py・test_c27_c28_projection_contract.py・test_runtime_coverage.py・test_semantic_c25_c28.py・test_semantic_c26_completion.py・test_shared_writer_sync_regressions.py）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_runtime_coverage.py の test_reconcile_lifecycle_modes と、test_semantic_c26_completion.py の9件（test_c26_local_first_transaction_calls_c27_before_beads_and_is_idempotent を含む）を含む。repo の test は clean な main だけを使うので、scratch の repro_out9_worktree.py（tests の helper で git と gh の事実を差し替え、製品の reconcile-github-lifecycle.py の main を reconcile mode で呼ぶ）を今のコードで回した。feature branch・dirty な main・remote に追いついていない main・closed で未 merge の4つは、policy_decision pending・rc 1、writer_request も completion_event も null、completion-receipts の dir も作られず、graph と task Markdown と events は同じ bytes、未消費の event は pending_events に残る。clean で追いついた main で merged のときだけ writer_pending になり、request の file は置かれるが graph は同じ bytes。5件 PASS。live trial 20261013T0145-pr85 の fixture には PR のlinkage が無く、この経路は trial では通っていない。残りの穴：これらの否定の分岐の test が repo に無い。"
     }
   }
 }

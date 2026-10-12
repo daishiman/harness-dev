@@ -60,6 +60,35 @@
         }
       }
     },
+    "routing_policy": {
+      "type": "object",
+      "description": "成果物の物理配置の規則 (任意)。物理配置は artifact_kind ごとの正規 root (content_roots)、横断分類 (domain・project_id) は node の metadata とし、各 leaf は flat で始め、1 leaf が leaf_threshold 件を超えたときだけ partition_order の順に1段ずつ分割する hybrid policy。値は1通りだけで、init が新しい config に必ず書く。この key の無い既存 config は同じ値として読み、init は書き換えずに migration_preview へ挙げる。graph_node_id は不変で、file_path はこの policy と partition 状態から再計算する派生値 (graph-node.schema.json)。",
+      "additionalProperties": false,
+      "required": [
+        "placement",
+        "layout",
+        "leaf_threshold",
+        "partition_order"
+      ],
+      "properties": {
+        "placement": {
+          "const": "artifact_kind"
+        },
+        "layout": {
+          "const": "hybrid"
+        },
+        "leaf_threshold": {
+          "const": 200
+        },
+        "partition_order": {
+          "const": [
+            "domain",
+            "project_id",
+            "YYYY/MM"
+          ]
+        }
+      }
+    },
     "local_state": {
       "type": "object",
       "additionalProperties": false,

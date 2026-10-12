@@ -18,7 +18,7 @@ dev-graph snapshot と登録 receipt を変更せず、graph integrity と macro
 ## Layer 2: ドメイン定義層
 
 - 入力: graph snapshot、C02/C14 receipt、schema validation report。
-- 出力: `verdict`, `graph_digest`, `checks`, `findings` を持つ JSON。
+- 出力: `verdict`, `graph_digest`, `checks`, `findings` を持つ JSON。`graph_digest` は、監査した graph snapshot の canonical digest で、C02 writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) にする。file の bytes の sha256 ではない。
 - 担当: schema、DAG、orphan、path containment、feature/package 境界。
 - 非担当: graph 修正、tracker mutation、task spec 生成。
 

@@ -96,8 +96,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 本 skill は仕様生成ロジックを持たない。system-spec-harness を起動し、確定成果物の検証と C02 取込だけを担う。
 
 1. C24 で caller repo の `system-spec/` を解決し、plugin source/別 repo の content を拒否する。
-2. `plugins/system-spec-harness/.claude-plugin/plugin.json` の name/version が `>=0.1.0 <1.0.0`、かつ `references/package-contract.json#entry_points.skills` が `run-system-spec-elicit`, `run-system-spec-doc-fetch`, `run-system-spec-compile`, `assign-system-spec-completeness-evaluator` を持つことを確認する。公式manifestへharness専用キーを混在させず、不在/不一致は fallback を実装せず停止する。
-3. Skill 呼出しで elicit → 必要時 doc-fetch → compile → completeness evaluator を順に委譲する。
+2. `plugins/system-spec-harness/.claude-plugin/plugin.json` の name が一致し、version が `plugin-composition.yaml` の `external_dependencies.system-spec-harness.version` の範囲に入り、かつ `references/package-contract.json#entry_points.skills` が `run-system-spec-elicit`, `run-system-spec-doc-fetch`, `run-system-spec-compile`, `assign-system-spec-completeness-evaluator` を持つことを確認する。公式manifestへharness専用キーを混在させず、不在/不一致は fallback を実装せず停止する。版の範囲の正本は composition で、frontmatter の R1 の summary にある `>=0.1.0` は計画時の値である。
+3. Skill 呼出しで elicit → 必要時 doc-fetch → compile → completeness evaluator を順に委譲する。elicit・doc-fetch・compile の各委譲の前に、cwd が `DEV_GRAPH_ROOT` と同じ dir か、`CLAUDE_PROJECT_DIR` が空でなければそれも同じ dir かを、1つの Bash の呼出しで確かめる (R2)。doc-fetch と compile は相対の書き先 (`fetched-references.json`、`--out-dir` の既定の `system-spec`) を cwd から解決するので、cwd が違うと caller repo の外に書く。elicit の SKILL.md は state の正本を `$CLAUDE_PROJECT_DIR/system-spec/spec-state.json` に置くが、Bash の呼出しにはこの変数が渡らないのが普通で、未設定のままだと `/system-spec/` に書こうとする。そこで、elicit・doc-fetch・compile の手順にある Bash の呼出しでは、毎回その呼出しの先頭で `CLAUDE_PROJECT_DIR` に開始時の C24 receipt の `repo_root` の値を書いて export する (R2)。確認が exit 0 でなければ委譲せず `cwd_not_repo_root` で FAIL として止める。
 4. confirmed 章と evaluator PASS だけを C02 に渡し、`source_lineage={origin_kind,plugin,path,version,digest,imported_at}`, confirmation evidence, readiness を specification/architecture node に保存する。
 
 出力は import report (`system-spec/index.md`, imported node ids, lineage, confirmation_status, readiness)。feature は `architecture_refs` で参照し、内容を複製しない。1 feature→13 task は system-dev-planner の責務であり本 skill は扱わない。
@@ -124,7 +124,7 @@ system-spec-harnessが既に持つヒアリング、カテゴリ×platform matri
 ### 完了チェックリスト
 
 - [ ] system_spec content root が caller repo 内で repository_id/common-dir と一致する
-- [ ] system-spec-harness が version `>=0.1.0 <1.0.0` と required 4 entry points を満たす
+- [ ] system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす
 - [ ] elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される
 - [ ] coverage/source-citation/evaluator gate が全て PASS である
 - [ ] C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である
@@ -136,18 +136,19 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 
 ### ゴールシーク配線
 
-- 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
+- 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。shell 変数は Bash の呼出しをまたいで残らないので、後の呼出しでは、開始時の receipt の `repo_root` の値をそのまま書いて代入する (`pwd` や C24 の再実行から作らない)。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
-- 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
+- progress.json の `checklist` には、完了チェックリストの各項目を順に書き、status を `achieved` か `not_achieved` にして `evidence` を添える。`feedback_criteria` には IN1 と OUT1 を1回ずつ書き、IN1 には各周回の検証結果を status に書く。OUT1 は、この run の後の live trial が判定するので、run の中では PASS と書かず `status: external_pending` と書く。
+- 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist が `achieved` で、IN1 が PASS のときだけ完了する。
 
 ### ゴールシーク検証
 
 各周回後に次の検査を実行し、中間成果物の欠落・goal drift・hash 不一致を fail-closed にする。
 
 ```bash
-python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl" <<'PY'
+DEV_GRAPH_ROOT='<開始時の receipt の repo_root>' && python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl" <<'PY'
 import hashlib, json, sys
 goal = json.load(open(sys.argv[1], encoding='utf-8'))
 rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
@@ -170,5 +171,8 @@ PY
 
 - system-spec-harness 不在や version/entry-point 不一致時に、簡易 fallback を dev-graph 内へ実装しない。
 - plugin source 側や別 repo の `system-spec/` を読まず、C24 receipt の caller repo だけを content authority にする。
-- evaluator PASS と confirmed の両方が揃わない章を C02 へ登録しない。
+- evaluator PASS と confirmed の両方が揃わない章を C02 へ登録しない。evaluator の report が PASS になる前に、取込の入力を書いたり C02 の Skill を起動したりもしない (R3)。
+- evaluator は `--spec-dir <repo 相対の system_spec root> --output <repo の中の eval-log/ 配下の report のパス>` で起動し、report の `spec_dir` は repo root からの相対パス (例: `system-spec`) にする。ラベルや説明の語を書き足すと、C02 が `invalid_confirmation_evidence` で確定の取込を拒む。拒まれたら report を手で書き換えず、evaluator を1回だけ回し直す。それでも一致しなければ FAIL で止め、system-spec-harness の契約の課題として報告する。dry-run を確定の取込の予行にするため、C02 の dry-run にも確定と同じ payload (`confirmation_evidence` を含む) を渡す (R2・R3)。
+- evaluator の args は、cwd が `DEV_GRAPH_ROOT` と同じ dir かの確認 (`[ -n "$DEV_GRAPH_ROOT" ] && [ "$(pwd -P)" = "$(cd "$DEV_GRAPH_ROOT" && pwd -P)" ]`) と同じ1つの Bash の呼出しで、`DEV_GRAPH_ROOT` に開始時の receipt の `repo_root` の値を代入してから、確認が exit 0 のときだけ出力して作る。その出力をそのまま args にして起動し、args を手で書いたり起動の後に確認したりしない。evaluator は相対の `--spec-dir` と `--output` を cwd から、C02 は repo root から解決するので、cwd が違うと別の dir を評価した report が C02 を通りうる。出力が無ければ evaluator を起動せず、`cwd_not_repo_root` で FAIL として止める。`cd` で回避せず、上の「1回だけ回し直す」の対象にもしない (R2・R3)。
+- 委譲先の SKILL.md と責務 prompt は、出力を作る前に全文を読む。一部の Layer だけを読んで委譲先の出力を作らない (R2)。
 - feature に仕様本文を複製せず、`architecture_refs` と source lineage で参照する。

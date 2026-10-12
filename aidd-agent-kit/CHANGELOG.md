@@ -12,6 +12,7 @@ AI開発エージェントキットの版ごとの変更点です。現在の版
 - `check-token-references.mjs` が、読み込んでいない CSS や別の HTML にある定義で、未定義の色トークンを見逃さないようにしました。`tests/test-color-contracts.mjs` で確かめます
 - `catalog-default.mjs` の apply の生成宣言と plan / verify の期待値を同じ契約から作り、生成した CSS の sha256 も記録するようにしました。`spec` / `specs` フォルダと検査用のファイルは、入口 CSS の候補から外します
 - 色の値と版を変える手順に、配色を適用済みのアプリへの再配布 (手順 8) と、操作・用語 UI だけを変えたときの配布証跡の更新を足しました。テストは `node --test 'tests/*.mjs'` (引用符つき) で回します
+- report-design-system で、本文に書いた URL の中 (note.com の `/n/`、`?p=0.40&amp;n=3` の `p=0.40` や `n` など) に用語の印が付き、リンクが壊れていた不具合を直しました。`glossary.mjs` の `markTerms` が本文を URL とそれ以外に分け、URL の部分は照合せず、まとまりごとの印の回数も使いません。URL は `http://` か `https://` から ASCII の文字が続くあいだとし、空白・引用符・山括弧 (エスケープ済みを含む) と全角文字の手前で終わります。`content-selftest.mjs` で確かめます
 
 ## 1.11.0
 

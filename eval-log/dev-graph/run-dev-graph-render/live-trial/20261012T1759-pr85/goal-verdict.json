@@ -1,0 +1,26 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "Skill の正規起動: transcript L36 で Skill({skill:'dev-graph:run-dev-graph-render'}) を task.md のとおりの args で呼んだ。L37 が 'Launching skill'、L38 に SKILL.md 本文が読み込まれている。",
+    "責務 prompt を出力より先に読んだ: main は L45 (結果 L51) で prompts/R1〜R3 を全部 cat した。L51 に R3-render.md の receipt_mismatches の節まで入っている。最初の描画は L68 なので、読んだ後に出力している。R1・R2・R3 の各 subagent も、最初の操作として自分の prompt を Read した (agent-a2e2fbb22ecb4ff8e.jsonl L12、agent-a7e8759af9562ea9d.jsonl L12、agent-ac7caee2691f6c313.jsonl L13)。",
+    "C24 と C11 の確認: L63-64 で resolve-repo-context.py --mode read が exit 0、repo_root と content_roots.repository が一致した。validate-graph-schema.py も valid=true、violations 0、15/15 complete で exit 0。",
+    "--receipt を付けた描画 (選択前、main context): L68 で render-graph-html.py に --receipt fx/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json を渡した。L74 で exit 0。receipt_checks は problems=[]、expected_count=actual_count=13、missing_ids・extra_ids・digest_mismatch_ids はすべて空。input_sha256=2ed57eab…、output_sha256=c4bf5ed6…。receipt を外して描いた呼出しは transcript に 1 つも無い。",
+    "artifact_delivery の順序: 選択前の guard (L79-80: 外部参照 0、svg 1、5/13) を main だけで行った。L84 で standard を goal-spec に記録し、そのあとで Agent を起動している (L97 R1、L99 R2、L119 R3)。pre_choice_forbidden の subagent 禁止は守られている。",
+    "必須の Agent を実際に起動した: L97・L99・L119 の 3 本が subagent-transcripts に実在する。完了通知は L111 (R2)、L116 (R1)、L131 (R3)。R2 は edge 12 本がすべて task→task で、feature 間の edge は 0 本と分類した。",
+    "2 回描画の決定論: R3 subagent の L21 と L25 で、--receipt 付きの描画を 2 回行い、どちらも exit 0、stderr は空。evidence/render1.json・r3-render-a.json・r3-render-b.json の 3 つで output_sha256 がすべて c4bf5ed6… だった。現在の fx/.dev-graph/render/index.html の sha256 もこの値と一致することを、評価者が独立に確かめた。",
+    "ブラウザ実描画: R3 の L29・L32 で、指定の chrome-headless-shell を --single-process --headless=new で動かし、--dump-dom と --screenshot がともに exit 0。DOM には svg 1、g.node 15、path 12、'active · feature · 5/13' があった。評価者も evidence/shot.png を見て、15 行のノード、12 本の曲線 edge、'active · feature · 5/13' が描かれていることを確かめた。",
+    "HTML の独立検査 (評価者): fx/.dev-graph/render/index.html の中で、script src・link・http(s)・@import・url(・img・iframe は 0 件。inline の svg が 1 つ、script は JSON の 1 つと JS の 1 つ。feature・architecture・task の 15 ノードと 12 本の edge が描かれている。絶対 path は含まれていない。",
+    "X/13 と receipt の照合 (評価者): graph の中で parent_feature=LT-FEATURE-001 の子は 13 件で、そのうち done は 5 件。HTML の表示 5/13 と一致する。Y=13 は receipt の expected_count と一致し、子の id の集合も node_ids (P01〜P13) と一致した。13 件すべての source_lineage.source_digest が d85dfa3d…7e84 で、receipt の source_digest から sha256: を除いた値と同じ。",
+    "graph は書き換えられていない: fx の graph.json (2ed57eab…) と receipt (cba8ce0d…) は、seed の 20261005T171515-bzn4-render と完全に同じ。seed と違うのは、provenance に記録された rekey 済みの 3 ファイルだけだった。trial の側でも、L144 で前後の hash 比較が UNCHANGED になっている。",
+    "書込み境界: 書込先は fx/.dev-graph/render/index.html、fx/eval-log/* (SKILL.md の goal-seek の配線どおり)、runs/render4/evidence/*、workdir/out/status.json (out にはこの 1 ファイルだけ)、TMPDIR=/private/tmp/ltpr85/cr4 で、すべて許可された root の中にある。guard.jsonl は 38 件すべて allow で、deny は 0 件。",
+    "checklist が PARTIAL でない: fx/eval-log/run-dev-graph-render-progress.json で 6 項目すべてと IN1・OUT1 が PASS。SKILL.md のゴールシーク検証の script は L149-150 で exit 0。どの項目も、評価者の独立検査で裏づけが取れた。",
+    "観察 (ブラウザの注記との差): R3 は注記の --single-process --headless=new に加えて、--no-sandbox と --disable-gpu を付けた (L119 で main がそう指示した)。--no-sandbox は Chromium 自身の renderer sandbox を切るもので、OS の Seatbelt はそのまま効いていた (dom.stderr に SCDynamicStoreCreate の Permission denied が出ている)。隔離の境界を回避したとは見ない。SKILL.md にはブラウザ手順が書かれていないので、注記に従ったことで skill の手順から外れた点は無い。",
+    "観察 (隔離による失敗): L136 の diff <(…) が /dev/fd/63 Operation not permitted で失敗した。L144 で evidence の中の一時ファイルを使ってやり直している。これは sandbox が原因で、skill の欠陥でも回避行為でもない。",
+    "観察 (軽微な点): 選択前の提示 (L83 の narration) では、path と guard の結果は示したが、digest と開き方は文章で示していない (digest は L80 の tool 出力にだけある)。選択は task.md で事前に指定されていたので、goal の判定には影響しない。receipt の graph_digest_after (8a3f687e…、revision 2) は現在の graph (2ed57eab…、revision 3) と違う。ただし SKILL.md の照合は source_digest で行う設計なので、不一致にはあたらない。"
+  ],
+  "skill_defects": [
+    "潜在的な不一致 (この fixture では試されていない): SKILL.md の手順 5 と prompts/R2-plan.md は『feature 間 edge と task 内 edge を混同せず表示する』と要求している。一方 plugins/dev-graph/scripts/render-graph-html.py の L135-138 は、すべての depends_on を class も style も同じ <path> として 1 つの <g class=\"edges\"> に描く。renderer receipt の edges も合計数だけ (L166) で、edge の種類を区別する手段が無い。再現手順: feature 2 つの間に depends_on を 1 本持ち、task 間にも depends_on を持つ graph を render-graph-html.py で描く。両方の edge が見た目でも DOM でも区別できない。今回の fixture は feature 間 edge が 0 本 (R2 の分類) なので、判定には影響していない。"
+  ],
+  "evaluator_agent_id": "a4897a1bb1cfd4023"
+}

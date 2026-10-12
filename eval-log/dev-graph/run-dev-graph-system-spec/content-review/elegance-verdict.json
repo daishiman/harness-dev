@@ -2,21 +2,21 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
-    "skill_md_sha256": "2029754ddf19cf5c9622450224e3239c0272c6e2aaf1d92780229aeee02c4cdc"
+    "skill_md_sha256": "4d2b72af529bd2605c2fa2cae5ba53989798f2deb2c376789805e04b272e9279"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "/root/independent_review (independent focused design)",
-  "reviewed_at": "2026-10-05T08:38:49.158703Z",
-  "iterations": 2,
-  "human_review_required": false,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-12T17:56:54Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 2,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -24,13 +24,23 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "One canonical imported helper is now explicitly tracked; all nine skills invalidate on semantic helper mutation and fail closed if it disappears."
+      "前のループの3回目の low の1件め (inconsistency) が直った。CLAUDE_PROJECT_DIR を export する範囲は、SKILL.md の手順3 (L100)・R2 L18・R2 5.3 L62 の3か所とも「elicit・doc-fetch・compile の手順にある Bash の呼出し」になり、skill の dir に「委譲先の手順」の語は残っていない。この範囲は、cwd を確かめる範囲 (L100 の「elicit・doc-fetch・compile の各委譲の前に」、R2 L17、5.3 L61) とも同じ3つで、5.3 の L61 と L62 が同じ委譲を対象にするようになった。",
+      "揃えた範囲は、run の中で実際に守れる。委譲先4つの frontmatter で context: fork を持つのは evaluator だけで、elicit・doc-fetch・compile は呼んだ context の中で動くので、その Bash の呼出しの先頭に export を書ける。これで 5.3 L62 を YES にする手立てが、どの委譲にもある。範囲から外れた evaluator は CLAUDE_PROJECT_DIR を使わず (evaluator の SKILL.md と scripts にその語が無い)、cwd の扱いは L176 と R2 L24 の args を作る呼出しが DEV_GRAPH_ROOT で別に受け持つので、外しても穴にならない。doc-fetch と compile もこの変数を読まないので export は無害で、3つに同じ1つの規則を当てる形は、委譲ごとに分岐を書くより読み違えにくい。",
+      "直しは edit-c19-r18f.py の2つの語句の置き換えに閉じている。逆向きに当てると SKILL.md は fe1bb41e、R2 は 2ae5fea3 にそのまま戻り、frontmatter・cwd の確認の式・export の例・検証の snippet・Gotchas は変わっていない。そのため、前のループで直った M1 (elicit の state の書き先)、L-a (snippet での DEV_GRAPH_ROOT の代入)、L-b (doc-fetch と compile の前の確認)、2回目の high (未設定を不一致として扱って毎回止まる) は、直ったままである。",
+      "止まる場所と理由の語が、本文と prompt で揃っている。確認が exit 0 でなければ委譲しない `cwd_not_repo_root` (L100・L176、R2 L17・L24)、evaluator の PASS の前に取込の入力を書かず C02 も起動しないこと (L174、R3 L26)、dry-run にも確定と同じ payload を渡すこと (L175、R3 L27) が、それぞれ同じ言い方で書かれている。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "omission (low、前のループの3回目で挙げたもの。team-lead が Beads に回した): system_spec の content root を `system-spec` 以外にした repo の扱いが無い。resolve-repo-context.py は config の `content_roots` で root を変えられ (L167。既定は L37 の `system-spec`)、R2 L23 は C24 の receipt の system_spec root を evaluator の `--spec-dir` に渡し、C02 もその root から取り込む。一方、R2 L18 の export の例 (`$CLAUDE_PROJECT_DIR/system-spec/spec-state.json`)、compile の出力 (compile の SKILL.md L103・L132)、本文の入力と出力 (L92・L103) は `system-spec/` に固定である。root を変えた repo では、compile が書く dir と、evaluator が評価して C02 が取り込む dir が分かれる。多くは evaluator が章を見つけられずに FAIL で止まるが、変えた root に前からある章が評価され、この run の出力ではないものが取り込まれうる。直し方: 手順1 (L98) に、receipt の system_spec root が repo 相対で `system-spec` でなければ fallback せずに止めると書くか、R2 に compile へ `--out-dir <その root>` を渡すと書き、elicit の state の書き先の扱いも決める。",
+      "omission (low、前のループから形を変えて残る。Beads 行き): 完了の条件 (L144 の「全 checklist が `achieved` で IN1 が PASS」と、L143 の OUT1 を `external_pending` と書くこと) を、検証の snippet (L151-162) が確かめない。snippet は goal-spec と intermediate.jsonl しか読まず、progress.json を読まないので、checklist の status や IN1・OUT1 の書き方が規則どおりかは、run の中で機械では見つからない。同じ PR の node の snippet は progress.json を読んで照合している。直し方: snippet に progress.json を足し、完了と書くなら checklist がすべて `achieved`、IN1 が PASS、OUT1 が `external_pending` であることを assert する。",
+      "inconsistency (low、L-c。team-lead が component-inventory と一緒に Beads に回したもの): 版の範囲の正本は composition (plugin-composition.yaml L112 の `>=0.1.22 <1.0.0`) だと L99・L127 と R1 L17 が決めているが、frontmatter L30 の R1 の summary と、R1 の L3 (blockquote)・L9 (不変目的)・L50 (5.2 の目的) には `>=0.1.0 <1.0.0` が残る。L99 と R1 L17 が「計画時の値」と断っているので実行は composition に従うが、先に目に入る値と正本の値が違う。直し方: component-inventory の `>=0.1.0` と一緒に、4か所を composition の範囲に揃える。",
+      "inconsistency (low、前のループから残る。Beads 行き): allowed-tools (L13) に Write が無いが、ゴールシーク配線は goal-spec.json・progress.json・intermediate.jsonl を書くこと (L140・L142・L143) を前提にし、R3 L26 も取込の入力 (C02 に渡す payload のファイル) を書く。Bash の heredoc で書けるので run は止まらないが、宣言と手順が合わない。直し方: allowed-tools に Write を足すか、これらのファイルは Bash で書くと本文に書く。",
+      "smell (low、前のループから残る。根本の策は system-spec-harness の契約の変更なので Beads 行き): 委譲の順番と cwd の確認を守らせる仕組みが、LLM が手順に従う部分にしか無い。各委譲の前の確認 (L100、R2 L17) と、evaluator の args を確認の出力から作ること (L176、R2 L24) は run に跡を残さないので、確認を飛ばしても、同じ args の文字列を手で書いて起動しても、後からは区別できない。5.3 L61-63 の3項目も自己申告で YES にできる。また、確認が見るのは R2 を動かす context の cwd で、context: fork で動く evaluator の cwd がそれと同じかは、本文も script も確かめていない。直し方: evaluator が評価した dir の realpath か中身の digest を report に書き、C02 の confirmation の照合がそれを取込元と比べる。",
+      "smell (low、前のループから残る。Beads 行き): L177・R2 L30・R2 5.3 L65 の「委譲先の SKILL.md と責務 prompt を全文読む」は自己申告で、読んだことを示す記録が無い。6回目の live trial の被験は、委譲先の責務 prompt を読まずに出力を作った (goal-verdict の blockers[2])。この文があっても、同じ逸脱は run の中で見つからない。直し方: 読んだ file の path と sha256 を progress の evidence に書かせ、5.3 L65 の確認をそれで行う。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "user branch review iteration2 after independent F-4001 dependency omission",
+    "hook_trigger": "前のループの3回目 (fe1bb41e、elegance PASS・rubric PASS 84、iteration_limit 3 の最後) が挙げた elegance の low の1件めの直し。CLAUDE_PROJECT_DIR を export する Bash の呼出しの範囲を、R2 L18 は「elicit・doc-fetch・compile の手順」と書き、SKILL.md L100 と R2 5.3 L62 は「委譲先の手順」と書いていて、後の2か所は context: fork で動く evaluator も含むように読めた。team-lead が edit-c19-r18f.py で、L100 と 5.3 L62 の語句を R2 L18 と同じ言い方に置き換えた (SKILL.md 4d2b72af、R2-delegate.md 33fca45f)。ループの上限の後の直しなので、user の先例に従って新しいループの1回目 (iteration=1) と数える",
     "next_action": "none"
   },
-  "notes": "Static DESIGN PASS for F-4001 one-ref change and current all-criteria contract preservation only. Actual current refs/imports, body diff, full criterion judgments, rubric and copied-closure mutation/missing-file proof are in /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dev-graph/run-dev-graph-system-spec/focused-design-review.json. Live-trial/host dialogue, browser artifact, external GitHub/Beads mutation, package handoff and release execution are NOT accepted by this verdict. New independent focused context judgments projected to legacy elegance/rubric artifacts; old verdict PASS is not evidence and this is not a SHA-only update. Branch30-method coverage is separate."
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) で判定した。high と medium は0件で、low の6件は negative_feedback に場所と直し方を書いた。どれも前のループから残るもので、今回の直しから生じた指摘は無い。判定方法: 1つの context で incremental の focused combined review を行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high 0 を同時に判定した (30思考法は使っていない)。これまでの記録 (schema に history の field が無いので notes に書く): 前のループは live trial の6回目 (20261013T0027-pr85、DEGRADED) の穴の直しから始まった。1回目の c2155e7e は rubric PASS 84 (PD-002 medium・PD-001・FM-005)・elegance PASS (high・medium 0、low 9件)。2回目の e9f441d2 は high が1件 (cwd の確認が CLAUDE_PROJECT_DIR の未設定を不一致として扱い、普通の流れで毎回止まる) で、verdict は書いていない。その直しの b19db8e9 の残りの確認で M1 (medium、elicit の state の書き先) と low の L-a・L-b・L-c が出て、これも verdict は書いていない。3回目の fe1bb41e は M1・L-a・L-b を直した版で、rubric PASS 84・elegance PASS (low 7件) となり、ループの上限で閉じた。そのさらに前のループ (spec_dir の契約と cwd の確認の直し) は 236ed047 の PASS (84) で閉じている。前の verdict の file はこの verdict で置き換わるので、記録はここに残す。前の verdict の文は写さず、今の本文を読み直して判定した。読んだもの: SKILL.md の全文 (4d2b72af、178行)、R2-delegate.md の全文 (33fca45f)、edit-c19-r18f.py、R1 の版の記述 (L3・L9・L17・L50)、R3 L26-27、委譲先4つの SKILL.md の frontmatter (context と goal_seek の fork)、resolve-repo-context.py の content_roots (L37・L167-172)、compile の SKILL.md の出力 (L103・L132)、plugin-composition.yaml の system-spec-harness の版の範囲 (L112)。4d2b72af の版に対して read-only で回したもの: render-findings-score は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20、pending_human は BD-004 だけ)。lint-goal-seek・lint-skill-name・lint-skill-description・validate-frontmatter (SKILL.md の path を渡した)・lint-skill-tree (skill の dir を渡した)・lint-prompt-contract-drift (prompt 4本、どれも fatal 0・warn 0)・lint-feedback-contract --all・lint-plugin-composition (警告 0) はどれも rc 0。dev-graph の test_runtime_coverage・test_skill_mass_production_contracts・test_skill_criteria_contracts は 81 passed。書く前の lint-content-review --all の違反は、C19 の content-review の2件の stale-sha (fe1bb41e の verdict と今の 4d2b72af) だけで、この verdict が解消する。live-trial-verdict.py の behavior_closure_files と skill_dir_tree_sha で数えた C19 の behavior closure は 134 file・21df2f9d005c8f8b4ec6c9f0c2f2d04b287f95ce8cfa66d5bb86854d30af26a1 で、team-lead の知らせた値と一致した。edit-c19-r18f.py の置き換えを ast で読み、新しい語句を古い語句にメモリ上で戻すと、SKILL.md は fe1bb41e、R2-delegate.md は 2ae5fea3 にそのまま戻った。skill の dir に「委譲先の手順」の語は残っていない。R0・R1・R3 と、上に挙げた script・委譲先の SKILL.md・goal-verdict の sha は前の版と同じである。委譲先4つの frontmatter を見ると、context: fork を持つのは evaluator だけで、elicit・doc-fetch・compile には無い。doc-fetch・compile・evaluator の dir の md と py (tests を除く) と system-spec-harness の agents には CLAUDE_PROJECT_DIR の語が無い。今回の差は2つの語句だけで、cwd の確認の式・export の例・検証の snippet は1文字も変わっていないので、新しい実験は回していない。前のループの3回目で回した exp31 (確認の式の10例×3つの shell、export の例を本物の apply-spec-transition.py で、snippet を cwd=/ で) の結果は、同じ文字列なのでそのまま当てはまる。python は -B で回し、__pycache__ は作っていない (worktree の .pyc の数は前後とも 1351)。2つの verdict のほかに作業ツリーは変えていない (cr-dg4 の scratch を除く)。verify_by=live-trial の OUT1 は、受入条件と本文・script の対応を静的に見ただけで、実機の host 対話はこの verdict の対象外である。low は直さず Beads に回す。"
 }

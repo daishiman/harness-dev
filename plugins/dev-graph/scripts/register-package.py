@@ -26,6 +26,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained, dump, load_json, utc_now
 
 HERE = Path(__file__).resolve().parent

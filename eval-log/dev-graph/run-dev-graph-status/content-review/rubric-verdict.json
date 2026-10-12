@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
-    "skill_md_sha256": "fdfa63ec56f4ce0efc41ac22ebcc8ff89ceafc4e540db0bc4aeea5070126dcd2"
+    "skill_md_sha256": "2313bb65186704752171dc8324b6e31585f8b4a696f07e8d8f6effcc213be40f"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-fix)",
-  "reviewed_at": "2026-10-12T04:20:41Z",
-  "iterations": 2,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-render-status)",
+  "reviewed_at": "2026-10-12T07:58:49Z",
+  "iterations": 3,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -25,16 +25,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "前回の PD-002 (medium) は解消した。本文の13行目に `## Purpose & Output Contract` (L89)、21行目 (L97) に「GitHub/Beads command、writer、render、sync の呼び出しは禁止」がある。",
-      "本文83行で BD-003/PD-001 を満たし、description の2つの trigger (metadata 検索・依存/tombstone 状態の副作用なし確認) が L95-97 の filter と rows と read_only の digest 比較に対応する (BD-004 PASS)。"
+      "PD-002 を満たす。本文の13行目 (L89) に `## Purpose & Output Contract`、21行目 (L97) に「GitHub/Beads command、writer、render、sync の呼び出しは禁止」がある。本文87行で PD-001・BD-003 も満たす。",
+      "FM-001..004・BD-001/002・NM-001..003 を満たし (lint-skill-name / lint-skill-tree は exit 0)、description の2つの trigger (metadata での検索・副作用なしの状態確認) が L95・L97 に対応する (BD-004 PASS)。"
     ],
     "negative_feedback": [
       "FM-005 (low、前回から残る。Beads 行き): description (L3) が動詞句でなく「dev-graph node を…」で始まる。直し方: 動詞句で始める (trigger 2個は保つ)。"
     ],
-    "iteration": 2,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual: team-lead request to re-take content-review after dg-fix fixed the previous medium x2 / low x4 (incremental focused combined review, 2nd pass)",
+    "hook_trigger": "manual: team-lead request to re-take content-review of render/status after dg-render-status rewrote SKILL.md, responsibility prompt and render-graph-html.py (--receipt for render; R3 summary/IN1 and goal-seek wiring for status); incremental focused combined review, 4th request",
     "next_action": "none"
   },
-  "notes": "rubric=97/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。前回の verdict (同じ reviewer) の findings に対する dg-fix の修正を、SKILL.md・responsibility prompt・script_refs の script で確かめた。read-only で回したもの: 受入テスト test_acceptance_gaps_a1/a2 (28 passed)、test_skill_mass_production_contracts (27 passed。inventory と frontmatter の完全一致を含む)、lint-skill-name.py / lint-skill-tree.py (4 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話・外部 GitHub/Beads mutation・release 実行はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文 (summary・criteria) と PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
+  "notes": "rubric=97/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。dg-render-status の書き換え (render の --receipt と OUT1、status の R3 summary・IN1・評価役・not_applicable・内外ループ) を、SKILL.md・responsibility prompt・script_refs の script・inventory C05/C18・EVALS.json で確かめた。read-only で回したもの: test_render_receipt・test_skill_criteria_contracts・test_skill_mass_production_contracts (合わせて 75 passed。inventory と frontmatter の完全一致を含む)、test_acceptance_gaps_a2・test_runtime_coverage (22 passed)、lint-skill-name.py / lint-skill-tree.py (2 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。render-graph-html.py は scratchpad の graph で、壊れた receipt と描かない feature の receipt の2経路も手で試した (どちらも exit 1・HTML なし)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機のブラウザ表示と host 対話はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文、plan 側 (inventory・EVALS.json) の文、PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
 }

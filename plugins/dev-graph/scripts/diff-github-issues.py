@@ -54,6 +54,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, atomic_json, contained, dump, is_package_member, load_json, run
 
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
@@ -95,7 +99,7 @@ def fetch_remote(targets: list[tuple[str, int]]) -> dict[str, Any]:
     issues: dict[str, Any] = {}
     errors: dict[str, str] = {}
     for repo, number in sorted(set(targets)):
-        cp = run([sys.executable, str(BRIDGE), "--op", "issue-fetch", "--repo", repo, "--number", str(number)], check=False)
+        cp = run([sys.executable, "-B", str(BRIDGE), "--op", "issue-fetch", "--repo", repo, "--number", str(number)], check=False)
         if cp.returncode:
             errors[f"{repo}#{number}"] = (cp.stderr or cp.stdout).strip()
         else:

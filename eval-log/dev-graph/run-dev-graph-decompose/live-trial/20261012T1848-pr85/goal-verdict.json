@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill 経路で動いている。transcript line 39 で Skill dev-graph:run-dev-graph-decompose を起動し (guard.jsonl 3 行目も allow)、line 89 で dev-graph:run-dev-graph-node を起動した (guard.jsonl 10 行目)。自作の driver で成果を作った形跡は無い。",
+    "責務 prompt を出力の前に読んでいる。line 51 で run-dev-graph-decompose/prompts の R1・R2・R2b・R3・R4・R6 を全件読み、最初の成果 (line 116 の C02 preview) より前に済んでいる。node skill については、line 95 で R1・R2 の Layer 2 を読んだ。R0-context は読んでいないが、それが受け持つ C24 resolve-repo-context.py --mode write は line 73 で実行済みで rc=0。",
+    "C24 と C11 が通っている。line 73-74 で resolve-repo-context は rc=0、validate-graph-schema は valid で violation 0。",
+    "graph の書込みは単一 writer に通している。line 116-117 で build-graph-node.py add --dry-run (C02) を使い、結果は status=preview、decision=c14_macro_contract、planned_count=2、write_count=0、applied_count=0、findings 0。新しい 2 node は差分 feature (LT-FEATURE-001 に依存) と要約 feature (差分 feature に依存) で、architecture は ARCH-LT-001 を共有する。どちらも macro の feature で、task は混ざっていない。入力と preview は fx/eval-log/decompose-macro-add-input.json と decompose-c02-preview.json に残っている。",
+    "新しい node は draft の preview として作られている。build-graph-node.py の 756 行目で add した node は status=draft、764 行目で confirmation_status=draft・evaluation_status=pending になる。",
+    "必須の Agent verifier を実際に起動している。line 152 で Agent dev-graph-integrity-auditor を起動し (guard.jsonl 20 行目)、subagent transcript agent-acf91884600df8b93.jsonl で独立に検査した (guard.jsonl 22・23・25 行目、agent_id=acf91884600df8b93)。line 165 の結果は総合 PASS で、DAG に循環が無く、macro DAG に task が混ざっていないことを確かめている。",
+    "C28 の dry-run で、draft は起票されていない。line 154-155 で bd-bridge.py の preview を確かめた。新しい 2 node は promotion_gate で blocked、write_count=0 で、起票の対象は 0 件。P01 と P13 は preview になった。line 163-164 では ARCH-LT-001、LT-FEATURE-001、P02..P12 の preview も確かめている。",
+    "Beads への書込みは 0 件。fx/fake-bd-calls.jsonl は 30 行で、内訳は version が 15 回、where --json が 15 回だけ。exit 4 になった create/update の呼出しは 1 件も無い。",
+    "fixture の digest は変わっていない。line 179-180 で FIXTURE_UNCHANGED を確かめ、graph.json の sha256 は 2ed57eab5df249146b285318d5ac55027dcb4f67b4878e2199e2df684932fd0b のまま (pane.txt の最後の出力と一致)。fx の git status で新しく増えたのは eval-log/ と fake-bd-calls.jsonl だけで、.dev-graph/state は graph.json、init-receipt.json、package-registration-receipt-LT-FEATURE-001.json の 3 つのまま。",
+    "書込みの境界と隔離を守っている。guard.jsonl の 33 件はすべて allow で、deny は 0 件。sandbox の解除を求めたり、stub を迂回したりした形跡は無い。line 169 で diff が Operation not permitted になったときは、line 179 で読取りだけの cmp に切り替えている。line 188 で pytest が tmp の問題で 52 errors になったときは、line 201 で --basetemp を run dir の中に向け、93 passed になった (line 201-202)。",
+    "goal-seek の記録を検証している。line 206-207 で goal-seek verify OK。その後に status.json を書いた (guard.jsonl 33 行目、PASS、scenario は decompose-macro-promotion-gate-beads-fixture-standard-v3)。status.json の自己申告は判定の根拠にしておらず、上の実物の確認で判定している。",
+    "R2b を起動しなかったのは妥当。新しい feature は draft で commit されておらず、上流の LT-FEATURE-001 も done ではないため ready にならない。PARTIAL 扱いを PASS に読み替えた箇所も無い。",
+    "記録の小さな食い違いが 1 つある。fx/eval-log/progress.json の evidence は「targets = P01..P13 only」と書いているが、line 164 では ARCH-LT-001 と LT-FEATURE-001 も create の preview の対象になっている。合格条件の『draft は 0 件』には影響しない。"
+  ],
+  "skill_defects": [
+    "promotion gate が tracker_binding と artifact_kind を見ていない。場所は ws/plugins/dev-graph/scripts/bd-bridge.py の 557-592 行目 (_promotion_blockers) で、検査するのは graph にあるかと、PROMOTED=(confirmed, pass, complete) に入っているかの 2 つだけ。再現: fx の graph で、tracker_binding=none の ARCH-LT-001 か LT-FEATURE-001 を対象に create --dry-run を fake-bd に向けて流すと、rc=0 の create preview になる (transcript line 163-164)。binding が beads ではない node や、architecture の node が Beads に起票される対象として出てしまう。",
+    "decompose の --dry-run では、draft の node が止まった理由として、draft だという状態ではなく『not in graph』が出る。C02 の build-graph-node.py add --dry-run は投影後の graph を出力しないので、C28 bd-bridge.py の --dry-run は今の graph.json を読むしかなく、新しい draft の feature は graph に無いと判定されて止まる。再現: transcript line 154-155 の手順のとおり、C02 の preview で作った 2 つの feature id を bd-bridge.py create --dry-run に渡すと、blocker は not in graph になり、NOT_PROMOTED (status=draft) は出ない。結果として起票は 0 件になるが、『未昇格の draft だから起票しない』という理由を preview では示せない。"
+  ],
+  "evaluator_agent_id": "adae0f30d1b9c4ca0"
+}

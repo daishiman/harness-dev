@@ -1,0 +1,90 @@
+{
+ "label": "schedule4",
+ "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-schedule",
+ "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-schedule/.git",
+ "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule4/fx",
+ "head": "d97a9653d9182eabf2409dca8f2ca0f4578ce943",
+ "tracked_files_committed": 1,
+ "rekey": {
+  "repository_id": [
+   "local:sha256:a2e37dcb43ab749d8da53024444eec36327c72fb433998a25a92d546e710800f",
+   "local:sha256:83b1b9914615f99cb068457eb09d291be259de1894335ffdf3de126972c8124e"
+  ],
+  "worktree_id": [
+   "wt_fbf90453721d70c0",
+   "wt_bdeaa82069468708"
+  ]
+ },
+ "rekeyed_files": [
+  ".dev-graph/config.json",
+  ".dev-graph/state/init-receipt.json"
+ ],
+ "unmatched_worktree_ids": [],
+ "excluded": [],
+ "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+ "retry_of": "schedule3 (20261012T1923-pr85)",
+ "fixture_check": {
+  "why": "schedule3 と同じ seed (live-trial-fixtures/20261005T171515-bzn4-schedule) から作り直した。",
+  "result": "lease の準備の後に、wtpy の script で C11 (validate-graph-schema.py) は valid・violation 0、C24 (resolve-repo-context.py --mode write) は rc=0。どちらも被験の外で回し、回す前と後で fx のファイルの sha256 が変わらないことを確かめた。"
+ },
+ "lease_prep": {
+  "note": "orchestrator の準備。trial の session を起動する前に行い、被験 skill の挙動ではない。",
+  "at": "2026-10-12T11:44:44Z",
+  "command": "manage-worktree-lease.py --repo-root <fx> --op claim --graph-node-id task-api-users --branch devgraph/task-api-users --session-id orchestrator-prep-schedule4 (--resource は付けない。wtpy の script を lt-env.sh の隔離 env で回した)",
+  "graph_node_id": "task-api-users",
+  "why_this_node": "ready になる task のうち、resource_scope が別の ready な task と重なるもの。task-api-users (src/api/users/) は task-api-users-cache (src/api/users/・src/cache/) と同じパスで重なる。team-lead が候補に挙げた src/db/ と src/db/migrations/ の組は、この seed では ready の task の間に無い (src/db/ の task-base-schema は done、src/db/migrations/ の task-unconfirmed-migration は draft) ため使わなかった。",
+  "branch_handling": "claim は今の branch が devgraph/<node> でないと git switch -c を行い、そのとき worktree が clean であることを求める。fx には seed のとおり未追跡の .dev-graph/ と tasks/ があるため、先に git switch -c devgraph/task-api-users をしてから claim を回し、終わったあと git switch main で main に戻した。branch devgraph/task-api-users は fx に残っている (HEAD と同じ commit)。",
+  "lease": {
+   "graph_node_id": "task-api-users",
+   "branch": "devgraph/task-api-users",
+   "session_id": "orchestrator-prep-schedule4",
+   "state": "claimed",
+   "resource_scope": [],
+   "tracker_binding": "github",
+   "worktree_id": "wt_bdeaa82069468708",
+   "created_at": "2026-10-12T11:44:45.112200Z",
+   "expires_at": "2026-10-12T12:14:45.068928Z",
+   "execution_context_projection": "applied"
+  },
+  "ledger": ".git/dev-graph/leases.json と events.json (fx の git common dir の下)",
+  "graph_change": {
+   "by": "claim が呼ぶ C02 の execution-context consumer (register-package.py execution-context)",
+   "node": "task-api-users の execution_contexts に 1 行を足した",
+   "graph_revision": [
+    1,
+    2
+   ],
+   "graph_sha256": [
+    "b2f40bab553aba9ef096255024ea19bbafb008aed4d74cc3efcea96d1886b8b8",
+    "ba6830bd7985d9878d0309055e5c183060989147d1d2f7b751a29414aa6d2ccf"
+   ]
+  },
+  "fx_files_changed": "workdir/fx-before-lease.sha と fx-after-lease.sha の差: .dev-graph/state/graph.json、.git/dev-graph/{events.json,leases.json,leases.lock} の追加、.git/refs/heads/devgraph/task-api-users と reflog の追加、.git/logs/HEAD"
+ },
+ "plugins_copy": {
+  "copied_at": "2026-10-12T11:45:08Z",
+  "from": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)",
+  "plugins": [
+   "dev-graph",
+   "harness-creator",
+   "skill-governance-adapters",
+   "system-dev-planner",
+   "system-spec-harness"
+  ],
+  "method": "cp -R。写した直後に diff -rq -x __pycache__ で 5 つとも wtpy と一致を確かめた",
+  "run_dev_graph_schedule_closure_sha": "4890cdc2c641faeb40dc69943e54ca0956209ec9ab1ec0d1dfe9c972e0201a41 (写しと wtpy で同じ。scripts/schedule-graph.py は 548ea8c6…)",
+  "skill_md_sha256": "b05089c39f640328…",
+  "changed_since_schedule3": "schedule3 の closure は 0f0037ee。その後に schedule-graph.py が変わった (lease の scope に graph の node の resource_scope を加え、scope の分からない lease は fail-closed にする。75489c56… → 548ea8c6…)。"
+ },
+ "isolation": {
+  "same_as": "schedule3・sync5・init3 と同じ。guard.py f23267a3…、mksettings.py 277ae072…。許可一覧に無い tool と外部へ届く tool は拒否。sandbox の network は deniedDomains ['*']、書込みは runs/schedule4・wttrial/tmp・workdir/out だけ。",
+  "session_root": "ws (schedule3 と同じ)。fx は別の dir。"
+ },
+ "task_md_changes": {
+  "base": "runs/schedule3/workdir/task.md",
+  "changes": [
+   "runs/schedule3 を runs/schedule4 に置き換えた (4 か所)。",
+   "準備の箇条に「active な lease が1件ある」を1行足した。lease の読み方は書いていない。scenario の id は schedule-positive-ready-set-fixture-standard-v2 のまま。"
+  ]
+ }
+}

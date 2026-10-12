@@ -17,6 +17,16 @@ export function runContentChecks(ok) {
   ok(!effect.used.some((term) => term.id === "gl-corr"), "順位効果 r を相関係数の説明へ結び付けない");
   ok(markTerms('<section><p>Cohen の d=-0.8</p></section>').used.some((term) => term.id === "gl-effect"), "dの説明への入口を失わない");
 
+  // 地の文 (表のセルを含む) の URL の中は、どの用語としても読まない。note.com の /n/ や ?p=0.40&amp;n=3 を件数・p値と取り違えない。
+  // URL の外は従来どおり。同じまとまりで URL が先に印の回数を使うと外の n・p に印が付かなくなるので、両方を見る。
+  // 本文の URL は全角の 」 の手前で終わる。後ろの日本語まで URL に含めると、その後の n=12・p=0.40 に印が付かず2件目で落ちる。
+  const noteUrl = "https://note.com/tenshoku_kawai/n/ne65790367dca";
+  const queryUrl = "https://example.com/search?p=0.40&amp;n=3";
+  const linked = markTerms(`<section><table><tr><td>${noteUrl}</td><td>${queryUrl}</td></tr></table><p>出典は「${noteUrl}」で、n=12、p=0.40 でした。</p></section>`);
+  ok(linked.html.split(noteUrl).length === 3 && linked.html.includes(queryUrl), "地の文の URL の中に用語マークを入れない");
+  const prose = linked.html.match(/<p>([\s\S]*?)<\/p>/)?.[1] ?? "";
+  ok(/、<a class="term" href="#gl-n"[^>]*>n<span/.test(prose) && /、<a class="term" href="#gl-p"[^>]*>p=0\.40<span/.test(prose), "URL の外の n と p=0.40 には従来どおり印を付ける");
+
   // 1文字の名前や識別子も、利用者が非表示に指定したらシートと出力の両方で止める。
   const sample = readFileSync(join(SKILL_DIR, "assets/hearing.sample.md"), "utf8");
   const clean = parseSheet(sample);

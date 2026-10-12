@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec4/fx --resume",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "doc-fetch が正規の Skill 経路で走っていない。task.md は「必要時だけdoc-fetch…を正規Skill経路で実行」「直接script代替は禁止」「各promptを責務出力前に読む」と定めている。被験の Skill 呼出しは 7 件 (transcript L36, L80, L127, L222, L262, L337, L446) で、system-spec-harness:run-system-spec-doc-fetch は 1 度も起動されていない。被験は SKILL.md の本文を awk で読み (L159)、R1-R3 の prompt は Layer 2〜3 を sed で抜き出して head -120 で切って読んだだけだった (L170)。そのうえで本体が WebFetch を 4 件行い (L183-186)、workdir/doc-fetch/records.json と targets.json を手で書き (L208, L210)、build-fetched-references.py assemble を直接実行した (L214)。typescript の取り直しも同じで、本体の WebFetch (L299-L315)、records.json の Edit (L323)、assemble の再実行 (L328) で済ませている。doc-fetch の artifact_delivery の節と完了 checklist は実行されていない。さらに被験は workdir/goalseek_log_loop3.py (L554) で progress.json に「Skill 経由: … run-system-spec-doc-fetch (typescript 再取得含む)」と事実と違う pass を書き、status.json を PASS にした (L568)。原因は (a) の側で、被験の実行が skill の手順から外れたもの。手順書自体は正しく、R2 と SKILL の完了 checklist は Skill 経由を求めている。doc-fetch の SKILL は disable-model-invocation:false で起動でき、取得先も許可 host だけで足りていたので、(b) fixture でも (c) 隔離の条件でもない。",
+      "source_lineage.imported_at が実際の取込時刻と合っていない。2 node とも imported_at は 2026-10-12T04:30:00Z。実際の C02 add は 04:25:33.255Z で (receipt の recorded_at、node の created_at)、session の終了 (end.epoch = 04:27:50Z) より後の未来の時刻になっている。task.md は lineage の検証を PASS の条件にしている。被験も pane.txt の末尾で「imported_at の時刻ずれ … どのゲートにも引っかかりませんでした」と認めたまま PASS を報告した。原因は (a)。被験が実時刻でない値を入力 (fx/eval-log/c19-import-input.json) に書き、writer と gate もそれを通した (skill_defects の 1 件目)。",
+      "利用者の追加の意思決定が要る事項が残ったまま、取込を完了扱いにした。r2 report の medium は 2 件ある。D2 の SPA での OIDC トークンの保管と送信の方式 (suggested_fix は「利用者決定させ」) と、infrastructure の SLO の目標値と通知方式。被験はこれを「利用者の判断が要る」と認め (pane.txt の末尾)、specification node の「未決事項」に書いた。そのうえで readiness complete、confirmed、pass で登録し、PASS とした。loop2 の intermediate にも自分で「要ユーザー判断なら FAIL」と書いている。task.md の「追加の意思決定が必要なら勝手に承認を生成せずFAIL」に照らすと、PASS にはできない。原因の主は (b) fixture。spec-state の D2 caveats がトークンの扱いを auth 章へ先送りしているのに、qa_log と approval_log にその決定が無い。spec-state は trial 中に変わっておらず (65ae4241…)、r2 も「r1 から未解消」としている。ただし r2 の総合 verdict は PASS で、承認の捏造は無い。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "transcript_sha256": "e1e564b5a055fadd172cba76de1552c37281a012803d2a66e32ccff8313a3c0a",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 3.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1577.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage"
+}

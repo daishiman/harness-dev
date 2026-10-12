@@ -1,0 +1,31 @@
+{
+  "label": "sync4",
+  "retry_of": "20261012T1018-pr85",
+  "evaluator_agent_id": "abc8671bb10332a69",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync4/fx/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_at_launch": "df26bf9383d07ff567980bbae45c870ff5edca104ba6459879b7cec3b4839c6d",
+  "closure_sha_tested_copy": "df26bf9383d07ff567980bbae45c870ff5edca104ba6459879b7cec3b4839c6d",
+  "closure_sha_wtpy_at_verdict": "df26bf9383d07ff567980bbae45c870ff5edca104ba6459879b7cec3b4839c6d",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-sync) の tracked の 38 ファイルを、その場で git init した repo に写して最初の commit (c072e85) にした。元の fixture は変えていない。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json の repository_id と worktree_id を付け替え、2 つ目の commit (fb82203) にした。sync2・sync3 と同じ手順。",
+    "tools/fake-gh.py: sync3 と同じ修正を当て、3 つ目の commit (f0dd901) にした。Projects の item の field 値の読取り (ITEM_QUERY) と clearProjectV2ItemFieldValue に答えるようにしたもので、sha256 は 6f63037f… から 025f9bdd… になった。plugins/dev-graph は変えていない。",
+    "配置: session の cwd を fixture の root にし、wtpy から 5 plugin (dev-graph・harness-creator・skill-governance-adapters・system-dev-planner・system-spec-harness) を fx/plugins/ に cp -R、隔離の設定を fx/.claude/settings.local.json に置いた。この 2 つは fx/.git/info/exclude に足して git から外した。sync3 と同じ配置。",
+    "信頼: 偽 HOME の .claude.json に、fx の hasTrustDialogAccepted=true を起動の前に足した (backup は audit/home-claude-json/before-sync4-trust.json)。実際の HOME は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。trial 中に orchestrator が fixture を変えたことは無い (gate の応答の 1 行だけを tmux で送った)。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 3,
+    "occurrences": 6,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "Issue の 3-way base が実装されていない。SKILL.md L36・L137-138・L194 は「last-synced snapshot を canonical base とする 3-way diff」と「更新済み snapshot receipt」を約束している。しかし plugins/dev-graph/scripts/diff-github-issues.py は updated_at の新しい側を勝たせる比較で、.dev-graph/state/github-sync-snapshot.json を読む script も更新する script も plugin に無い (grep -rln 'sync-snapshot' plugins/dev-graph で 0 件)。再現: この fixture で sync を完走させると、snapshot は seed のまま (旧 title、last_synced_at 2026-08-01) になる。verifier 1 も、base が進まないことを observation として挙げている。task.md の「3-way の base が保持」は、誰も触らないから成り立っているだけになる。",
+    "C02 build-graph-node.py link-github が、github_project_linkages[].field_snapshot に表示名のキー (Status/Priority/Target date) と snake_case のキー (status/priority/target_date) を重ねて書く。再現: L245-251 の link-github の後に git diff tasks/T-SYNC-00{1,2}.md を見ると、同じ値が 2 つのキーで入っている。diff-github-project-fields.py の base が二重になり、片方のキーだけ更新されると base が食い違うおそれがある。",
+    "skill-governance-adapters の pretool hook は、guard の script 名を含む Bash を、read-only の grep/head/--help でも『Malformed central guard invocation』で deny する。SKILL.md にはこの制約が書かれていない。再現: transcript の L184・L188 で被験が guard を grep/--help して deny され、L200 で Read に切り替えている。",
+    "build-external-mutation-guard.py の DIRECT_MUTATION_PATTERNS は gh-bridge.py の apply 系を塞ぐが、python3 gh-bridge.py --op issue-update を --dry-run なしで直接呼ぶ形は塞がない。preview→confirm→authorize→execute を通らずに export する経路は、SKILL 本文の指示だけで防いでいる (hook 実装を読んで確認。この trial では迂回は起きていない)。"
+  ]
+}

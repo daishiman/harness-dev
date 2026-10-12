@@ -27,6 +27,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import (PACKAGE_KEYS, ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained,
                      dump, is_package_member, json_bytes, load_json, utc_now)
 
@@ -109,7 +113,7 @@ class WriterError(ContractError):
 # ---------------------------------------------------------------- C24 / lock / io
 
 def _context(repo_root: str, config: str) -> dict[str, Any]:
-    argv = [sys.executable, str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
+    argv = [sys.executable, "-B", str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
             "--config", config, "--mode", "write"]
     cp = subprocess.run(argv, text=True, capture_output=True, check=False)
     if cp.returncode:
@@ -1175,6 +1179,10 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
 
 # ---------------------------------------------------------------- transaction
 
+PLANNED_KEYS = ("graph_node_id", "artifact_kind", "status", "confirmation_status", "evaluation_status",
+                "depends_on", "parent_feature", "tracker_binding")
+
+
 def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], staged_ids: set[str],
               staging: Path, root: Path, schema: dict[str, Any], contract: dict[str, Any]) -> list[dict[str, str]]:
     def collect(nodes: list[dict[str, Any]], staged: set[str]) -> list[dict[str, str]]:
@@ -1266,8 +1274,13 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
             "receipt_path": receipt_path.relative_to(root).as_posix(),
         }
         if args.dry_run:
+            # planned_nodes carries the state each node would be registered with, so a downstream dry-run (C28
+            # create --dry-run --planned-preview) judges the promotion gate without this graph write.
+            planned_nodes = [{**{key: item["node"][key] for key in PLANNED_KEYS if key in item["node"]},
+                              "implementation_readiness": {"status": (item["node"].get("implementation_readiness") or {}).get("status")}}
+                             for item in plan]
             return {**receipt, "status": "preview", "valid": True, "dry_run": True, "planned_count": len(plan),
-                    "applied_count": 0, "write_count": 0}
+                    "planned_nodes": planned_nodes, "applied_count": 0, "write_count": 0}
         written: list[tuple[Path, bytes | None]] = []
         graph_written = False
         try:

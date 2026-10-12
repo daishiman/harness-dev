@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規 Skill の起動: transcript L26 で task.md を読み、L35 で Skill(dev-graph:run-dev-graph-init, args \"--repo-root …/fx --hook-source plugin\") を呼んでいる。起動の結果は L36 にある。task が禁じる「Skill 未登録時の script 直接代替」には当たらない。",
+    "手順 0 の preflight と C24: L58-59 で validate-harness-link.py が status=pass (link_state=absent)。L61-62 で resolve-repo-context.py --mode write の後に build-init-scaffold.py --dry-run を実行し、planned_changes=36 になった。",
+    "1 回目の正規 init: L75-76 で build-init-scaffold.py が exit 0、status=applied、write_count=36。fixture の実ファイル fx/.dev-graph/state/receipts/init-20261012T045940279647Z.json も status applied、planned_changes 36、hook_source plugin、schema_result valid である。",
+    "L65-66: $TMPDIR への redirect が Operation not permitted になり、前回 run の stale な内容が表示された。L74 で session がこれに気づき、許可された scratchpad (wttrial/tmp 配下) へ出力先を移した。sandbox の解除要求や別経路での書込みは無く、回避には当たらない。",
+    "C11: L89-90 で validate-graph-schema.py が pass。評価者も PYTHONDONTWRITEBYTECODE=1 python3 validate-graph-schema.py --graph fx/.dev-graph/state/graph.json --repo-root fx を出力先なしで実行し、exit 0、status pass、violation 0 を確認した。graph.json は {\"graph_revision\":0,\"nodes\":[],\"schema_version\":\"1.0.0\"}。",
+    "2 回目の同一 init: L107-108 で利用者編集を模擬し、preflight pass の後に同じ引数で build-init-scaffold.py を再実行した。結果は status=noop、planned_changes=0、write_count=0。migration_preview に task.md が載り、前後の fs digest 差分は無い (NO FS CHANGE)。",
+    "利用者編集の保持: fx/.dev-graph/templates の 21 件を plugin templates の 21 件と比べると、違うのは task.md の追記 \"<!-- user edit: local customization -->\" だけで、上書きされていない。docs/user-note.md も残っている。",
+    "6 root と config・state・templates・hook source: fx/.dev-graph の config.json は claude_hooks.source=plugin、path_policy=repository-relative、github.enabled=false。state/graph.json、receipts、templates がそろっている。hook_source=plugin のため .claude と hook-fallback manifest は作られておらず、R5 Layer 3 の「plugin 既定では script を起動せず settings に触れない」と一致する。",
+    "abs path・token・node ID が無いこと: L80-81 の grep に加え、評価者も fx/.dev-graph と fx/eval-log を grep して 0 件を確認した。config の GitHub 項目は owner_login、project_number、field 名だけで、node ID と token は無い。",
+    "tracker_binding=none の維持: config の execution_tracker は雛形だけで、bd・gh の呼出しは guard.jsonl にも transcript にも無い。",
+    "graph は単一 writer 経由、自作 driver なし: collect/guard.jsonl は 41 行すべて allow、deny 0。内訳は Bash 36、Agent 3、Skill 1、Write 1。Write は workdir/out/status.json の 1 件だけで、graph、config、receipt はすべて build-init-scaffold.py が書いている。",
+    "必須の Agent verifier: L121、L123、L125 で general-purpose の verifier 3 つ (R1/R2、R3/R4、R5) を別 context で起動し、L137、L142、L147 で PASS が届いた。subagent-transcripts を見ると、各 verifier は自分で prompt を読み、read-only で検証している。R3/R4 verifier の $TMPDIR redirect (subagent L18-19) は exit 2 で失敗しており、書込みは起きていない。",
+    "責務 prompt の読込順: R1-R5 と common layers の読込は L94、L102 で、1 回目の init (L75) より後になっている。これは SKILL.md の Pre-choice 節 (101-103 行) と goal-seek 配線 (170 行) の設計どおりで、その設計では main context が最小の成果物を先に作り、prompt は semantic_evaluator_started の後に読む。L93 で standard を記録して遷移した後に prompt を読み、そのうえで 2 回目の init (L107) と verifier (L121-125) を実行しているため、経路違反とはしない。",
+    "goal-seek の記録: L112 で goal-spec を書いた。L155-156 で progress.json と intermediate.jsonl を書き、goalseek 検査は exit 0。",
+    "自己申告の誤り (判定には使っていない): progress.json は OUT3 を pass としているが、repo A/B、broken symlink、link 切断の試験は transcript 上で実施されていない。「22/22 templates」とも書いているが、実際は 21 件である。今回の scenario (C01-OUT1 idempotence) の合格条件の外なので、blocker にはしていない。"
+  ],
+  "skill_defects": [
+    "SKILL.md の Purpose 節 (目的) は「初期化レポートにはgh CLI認証状態も含める」と約束しているが、receipt の契約 (repository_id、roots、created、preserved、migration_preview、hook_source、schema_result) にも scripts/build-init-scaffold.py の出力にも gh 認証状態の項目が無い。再現手順: 任意の repo で build-init-scaffold.py を実行し、出力 JSON と .dev-graph/state/receipts/init-*.json に gh 関連のキーが無いことを確かめる。",
+    "plugin の scripts は import のたびに plugin dir の __pycache__ を書き換える。read-only の code authority と、OUT3 の「harness 側の変更 0 件」に反する。今回の trial でも ws/plugins/dev-graph/scripts/__pycache__/_common.cpython-311.pyc が 13:59:03 に、validate-graph-schema.cpython-311.pyc が 13:59:14 に更新されている。再現手順: pyc が古いか無い plugin copy で、PYTHONDONTWRITEBYTECODE を付けずに validate-harness-link.py か build-init-scaffold.py を実行し、scripts/__pycache__ の mtime が変わることを確かめる。",
+    "SKILL.md の frontmatter は R1-R5 すべてを prompt_required: true にしている (19-43 行)。一方、Pre-choice 節 (101-103 行) は prompt を読まずに main context で init を実行させるため、主成果物 (6 root、config、graph) が責務 prompt を読む前に確定する。再現手順: SKILL.md の指示どおりに pre-choice を実行すると、transcript で build-init-scaffold.py の applied (今回は L75) が prompt の読込 (今回は L94) より先に来る。",
+    "軽微な点として、build-init-scaffold.py の 33 行目のコメントは system_spec を C19 の担当として作らないとしている。しかし生成される config.json の content_roots には system_spec が宣言されており、init 直後は宣言した root のディレクトリが無い。再現手順: init 後に config.json の content_roots.system_spec のパスに対して ls を実行すると、存在しない。"
+  ],
+  "evaluator_agent_id": "a66557246ed2304d2"
+}

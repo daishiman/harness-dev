@@ -1,0 +1,34 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "goal 未達: C02 による specification と architecture の node の取込が 0 件。graph_revision は 0、nodes は空で、C02 の receipt もない。build-graph-node.py は L306 の --help だけで、dry-run も add も実行していない。直接の原因は completeness evaluator の総合判定 FAIL。matrix_coverage が FAIL (70) で、G-hearing は exit 1、blocking は 2 件 (traceability の medium。auth/web の qa-037・qa-038、security/web の qa-037)。原因の区分は (b) fixture。orchestrator が足した qa-037 と qa-038 は basis=agent-inference の既定値で、利用者の確認を経ていない。aspect-criteria 1a の「medium・軸 2 以外 → FAIL」によって FAIL が機械的に決まる。task は承認を作ることを禁じているので、被験が FAIL で止まって取込に進まなかったのは正しい振る舞いである。",
+    "経路の逸脱 (a: 被験の実行。skill の手順そのものではない): completeness evaluator を L281 で起動し、cwd と DEV_GRAPH_ROOT の一致を確かめたのはその後の L286 (cwdcheck=0)。R2-delegate 5.3 の checklist と SKILL.md の Gotcha 175 が定める順序 (起動の前に確かめる) に反する。L251〜L275 の相対パスはすべて成功しており、cwd は実際に fx だったので実害はない。",
+    "経路の逸脱 (a: 被験の実行): run-system-spec-init の責務 prompt (R1〜R5) を読まずに init の出力を作った。L76 は ls だけで、L88 で適用している。R2-delegate の「出力を作った委譲先ごとに SKILL.md と責務 prompt を全文読む」に反する。",
+    "経路の逸脱 (a: 被験の実行): evaluator の PASS が出る前に、C02 の取込の入力 fx/eval-log/c19-import-input.json を書き (L413)、C02 の Skill を起動した (L452)。R3-import の前提 (evaluator の PASS の後に取込む) に反する順序である。ただし dry-run も add も実行しておらず、graph への書込みはない。",
+    "経路の逸脱 (a: 被験の実行。重みは軽い): SKILL.md の goal-seek の配線 (未達の responsibility の prompts/<R-id>.md を読み、Agent で分離 context に fork する) を使わず、R0〜R3 を inline で実行した。"
+  ],
+  "evidence": [
+    "transcript L36・L65・L128・L148・L236・L281・L452: 委譲先は正規の Skill ツールで 7 回起動している。",
+    "transcript L45: C19 の SKILL.md と prompts R0-context・R1-preflight・R2-delegate・R3-import を全文読んでいる。",
+    "transcript L159 → L181: doc-fetch の R1〜R3 を WebFetch の前に読んでいる。L221 で正規の assembler が fetched-references を作り exit 0、L225 の citation の検査も exit 0。",
+    "transcript L242 → L261: compile の R1〜R3 を compile の前に読んでいる。",
+    "subagent (evaluator の fork) L19: R1-score と R2-delegate を読んでいる。fork の L23・L25・L27 で 3 つの auditor を Agent で実際に起動し、fork の L86 で report を出した。",
+    "transcript L281 (evaluator の起動) → L286 (cwd の確認、cwdcheck=0)。順序が逆。L251〜L275 の相対パスの成功から、cwd は fx だったと分かる。",
+    "transcript L76 (init の ls だけ) → L88 (init の出力を適用)。init の責務 prompt は読んでいない。",
+    "transcript L306: build-graph-node.py は --help だけ。L413: c19-import-input.json を Write。L452: C02 の Skill を起動。add も dry-run も呼んでいない。",
+    "fx/eval-log/system-spec-completeness-report.json: verdict は FAIL、spec_dir は repo 相対の system-spec。matrix_coverage は FAIL (70)。foundation_trace (95)・decision_guidance (90)・design_knowledge_reflection (85)・doc_freshness (95)・prompt_quality (85) は PASS。評価者が aggregate-completeness.py --report で検査し直し、exit 0 (形と総合判定が食い違っていない)。",
+    "fx/eval-log/hearing-audit.json: 評価者が aggregate-completeness.py --hearing --state で導出し直し、exit 1。verdict は FAIL で blocking は 2 件 (traceability の medium: auth/web の qa-037/qa-038、security/web の qa-037)。qa-009 は有効に置き換えられた、閉じた検出。aspect-criteria.md 1a の「medium・軸 2 以外 (聞き漏れ・早期停止・トレース・上位概念) → FAIL」どおりに導出されている。",
+    "hearing-audit.json の観測: qa-037 と qa-038 の provenance には「orchestrator が置いた既定値で、利用者の確認を経ていない」と明記されている。fixture の追加が FAIL の原因 (b) である。elicit の --require-basis は「根拠のうち少なくとも 1 件が basis を宣言し、すべてが agent-inference ではない」条件なので、resume の段階では検出されない。elicit の resume は書込みのない gate だけの呼出しなので、R2 の全文読みの規則の例外に当たる。",
+    "spec-state.json は trial の前後で同じ (48bbaa46…)。被験は利用者の確定を改変していない。",
+    "guard.jsonl: deny は 3 件 (15:33:57 の npm install、15:38:40 の被験本体の security の読取り、15:38:44 の fork の security の読取り)。それぞれ L202 → L213・L217・L221、L373 → L379、fork の L64 → fork の L68 で、許された方法で同じ処理を終えている。結論への影響はない (c: 隔離は判定を歪めていない)。",
+    "guard.jsonl: WebFetch は 9 件で、すべて allow、すべて許可した host 宛て。Read は 9 件で、すべて fx の中。Write は 3 件 (TMPDIR の records.json、fx/eval-log/c19-import-input.json、workdir/out/status.json)。sysspec5・smoke・precheck の参照は 0 件。",
+    "subagent fork の L72: validate-prompt.py を探すために find / を実行し、境界の外も走査した。timeout し、結果は使っておらず、fork の L90 で TaskStop した。回避の試みではないが、境界の外の読取りとして記録する。",
+    "collect/pane.txt の末尾と out/status.json ({\"status\":\"FAIL\"}): 被験は FAIL を報告し、cwd の確認が後回しになったことと C02 を実行していないことを自ら開示している。自己申告なので合格の根拠にはせず、実ファイルと食い違わないことだけを確かめた。",
+    "sysspec6/plugin-diff-vs-sysspec5.json: C19 の closure は 562b1bae…。中身が違うのは 14 file で、system-spec-harness では evaluator の 5 file。評価に使った版と一致している。"
+  ],
+  "skill_defects": [
+    "dev-graph:run-dev-graph-system-spec (C19) の R2-delegate 5.3 と SKILL.md の Gotcha 175: evaluator を起動する前の cwd と DEV_GRAPH_ROOT の一致の確認が prose の checklist だけで定められている。起動の前に決定論で強制する gate (起動手順の中の事前の検査や、確認しないと先へ進めない仕組み) がない。そのため被験は L281 で起動し、L286 で事後に確認する順序になった。違反は事後の自己申告でしか表に出なかった。",
+    "system-spec-harness の completeness evaluator (委譲先の skill で、C19 そのものではない): prompt_quality の検査に使う validate-prompt.py の場所を解決する手順 (plugin root からの相対パスや環境変数) を示していない。そのため fork が find / で探し、境界の外まで走査した (fork の L72)。"
+  ],
+  "evaluator_agent_id": "a31fc3e8347da4d41"
+}

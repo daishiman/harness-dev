@@ -35,6 +35,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用 (C01 OUT3)。_common などの import より前に止め、子の起動にも -B を渡して
+# bytecode cache (__pycache__) を harness に書かない。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, contained, dump, load_json, run
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -54,7 +58,7 @@ class Rejected(Exception):
 
 
 def _context(repo_root: str, config: str) -> dict[str, Any]:
-    cp = run([sys.executable, str(RESOLVE), "--repo-root", repo_root, "--config", config, "--mode", "read"], check=False)
+    cp = run([sys.executable, "-B", str(RESOLVE), "--repo-root", repo_root, "--config", config, "--mode", "read"], check=False)
     if cp.returncode:
         raise Rejected("c24_context_failed", (cp.stderr or cp.stdout).strip())
     return json.loads(cp.stdout)
@@ -119,7 +123,7 @@ def _remediation(code: str, root: Path, link_rel: str, plugin_source: Path, shar
         options.append(this_repo)
     if code == "harness_entrypoint_missing":
         manifests = sorted((root / ".dev-graph" / "state" / "receipts").glob("hook-fallback-*.json"))
-        fallback = ["python3", str(FALLBACK), "--repo-root", str(root), "--config", config]
+        fallback = ["python3", "-B", str(FALLBACK), "--repo-root", str(root), "--config", config]
         steps = ([[*fallback, "--mode", "rollback", "--manifest", manifests[-1].relative_to(root).as_posix()],
                   [*fallback, "--mode", "apply"]] if manifests else [[*fallback, "--mode", "preview"]])
         options.append({"option": "reapply-hook-fallback", "scope": "this repository only", "steps": [*steps, rerun]})
@@ -181,7 +185,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
     shared = str(end) if state == "broken" else hops[-1]["path"] if state == "mismatch" else None
     if shared and Path(os.path.realpath(Path(shared).parent)).is_relative_to(root):
         shared = None  # repo の中の hop は共有 harness ではない
-    rerun = ["python3", str(Path(__file__).resolve()), "--repo-root", str(root), "--config", args.config]
+    rerun = ["python3", "-B", str(Path(__file__).resolve()), "--repo-root", str(root), "--config", args.config]
     if args.hook_source:
         rerun += ["--hook-source", args.hook_source]
     return {

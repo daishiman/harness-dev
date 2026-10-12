@@ -89,6 +89,37 @@ class BuildInitScaffoldTest(unittest.TestCase):
         self.assertEqual(template.read_bytes(), edited)
         self.assertEqual(len(list(self.receipts.glob("init-*.json"))), 2)
 
+    def test_init_writes_the_routing_policy_and_the_schema_accepts_only_that_policy(self) -> None:
+        code, report = self.run_cli()
+        self.assertEqual((code, report["status"]), (0, "applied"), report)
+        config = json.loads((self.root / ".dev-graph" / "config.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["routing_policy"], EXAMPLE["routing_policy"])
+        self.assertEqual(VGS.schema_findings(config, CONFIG_SCHEMA, 0), [])
+        receipt = json.loads((self.root / report["receipt_path"]).read_text(encoding="utf-8"))
+        self.assertEqual((report["routing_policy"], receipt["routing_policy"]), (config["routing_policy"],) * 2)
+        # 値は1通り。flat だけ・別の閾値・別の分割順・知らない key は schema が拒む。
+        for key, value in (("layout", "flat"), ("leaf_threshold", 100),
+                           ("partition_order", ["project_id", "domain", "YYYY/MM"]), ("collapse", True)):
+            changed = {**config, "routing_policy": {**config["routing_policy"], key: value}}
+            self.assertNotEqual(VGS.schema_findings(changed, CONFIG_SCHEMA, 0), [], key)
+        code, again = self.run_cli()
+        self.assertEqual((code, again["status"], again["write_count"]), (0, "noop", 0), again)
+        self.assertEqual(again["routing_policy"], config["routing_policy"])
+
+    def test_existing_config_without_routing_policy_is_kept_and_reported_for_migration(self) -> None:
+        self.assertEqual(self.run_cli()[0], 0)
+        config_path = self.root / ".dev-graph" / "config.json"
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        del config["routing_policy"]
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        before = config_path.read_bytes()
+        code, report = self.run_cli()
+        self.assertEqual((code, report["status"], report["write_count"]), (0, "noop", 0), report)
+        self.assertEqual(config_path.read_bytes(), before)
+        self.assertEqual(report["routing_policy"], EXAMPLE["routing_policy"])
+        self.assertIn({"path": ".dev-graph/config.json", "key": "routing_policy", "plugin_value": EXAMPLE["routing_policy"]},
+                      report["migration_preview"])
+
     def test_existing_config_that_fails_the_schema_stops_before_any_write(self) -> None:
         self.assertEqual(self.run_cli()[0], 0)
         config_path = self.root / ".dev-graph" / "config.json"

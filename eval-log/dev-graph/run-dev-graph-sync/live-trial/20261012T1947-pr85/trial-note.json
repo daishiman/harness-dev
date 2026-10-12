@@ -1,0 +1,32 @@
+{
+  "label": "sync5",
+  "retry_of": "20261012T1358-pr85",
+  "evaluator_agent_id": "a3774d4ccf892d9b0",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync5/fx/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_at_launch": "be242a2f764d2e5460c36183197de80c72382c7f3ff6ca46fddd45bdec358895",
+  "closure_sha_tested_copy": "be242a2f764d2e5460c36183197de80c72382c7f3ff6ca46fddd45bdec358895",
+  "closure_sha_wtpy_at_verdict": "be242a2f764d2e5460c36183197de80c72382c7f3ff6ca46fddd45bdec358895",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-sync) を、その場で git init した repo に写した (最初の commit は df49d84、追跡は 38 ファイル)。元の fixture は変えていない。sync4 と同じ seed から作り直した。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json などの repository_id と worktree_id を付け替え、2 つ目の commit (3bfef4a) にした (fixture-provenance.json の rekey・rekeyed_files・post_rekey_commit)。graph.json と content は変えていない。",
+    "fake-gh の修正: tools/fake-gh.py を sync4 の f0dd901 と同じ中身にして、3 つ目の commit (898aa8a) にした。Projects の item の field の値の読取りと clearProjectV2ItemFieldValue に答えるようにしたもの (sha256 6f63037f… → 025f9bdd…。fixture-provenance.json の fake_gh_patch)。",
+    "事前の確認: 起動の前に、被験の外で fx を C11 (validate-graph-schema.py) と C24 (resolve-repo-context.py --mode write) にかけ、.dev-graph/config.json を repo-config の schema で検査した。C11 は pass・違反 0、C24 は rc=0、schema の error は 0。前後で fx のファイルの sha256 は変わらなかった (fixture-provenance.json の fixture_check)。",
+    "task.md: sync4 の task.md から、run の dir の名前 (runs/sync4 を runs/sync5) だけを変えた。scenario の id は C03-OUT1-positive-second-sync-zero-fixture-standard-v2 のまま (fixture-provenance.json の task_md_changes)。",
+    "配置: plugin の写し (fx/plugins/) と隔離の設定 (fx/.claude/settings.local.json) は orchestrator が置き、fx/.git/info/exclude で git から外した。偽 HOME の .claude.json に fx の trust の項目を足した (backup は audit/home-claude-json/before-sync5-trust.json)。隔離の条件は status3・decompose3・schedule3 と同じ (§17 の guard)。plugins/dev-graph は変えていない。",
+    "gate の応答: orchestrator の gatewatch が、被験の出した challenge に対して CONFIRM EXTERNAL MUTATION の 1 行を tmux の send-line で 1 回だけ送った (collect/gate-sent.log、collect/gate-request.json)。",
+    "gate の応答のほかは、どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "3-way base を planner が読んでいない: R2 と fixture の README は .dev-graph/state/github-sync-snapshot.json を last-synced の 3-way base としている。しかし plugins/dev-graph/scripts/diff-github-issues.py と diff-github-project-fields.py はこのファイルを参照せず（transcript 224 行目の grep で 0 件、verifier の所見 262 行目）、同期の後も更新されない。再現: fx で `grep -n snapshot plugins/dev-graph/scripts/diff-github-issues.py plugins/dev-graph/scripts/diff-github-project-fields.py` を実行すると、base snapshot の読込みが無い。同期後の github-sync-snapshot.json の sha は seed と同じ。両側で同じ field が変わったときの 3-way conflict 判定が、この base に基づいて行われない恐れがある。",
+    "link-github が field_snapshot を置き換えずに merge する: 同期後の fx/.dev-graph/state/graph.json の node の field_snapshot に、表示名の key（大文字始まり）と canonical key（小文字）が併存している。再現: seed から sync して link-github（plugins/dev-graph/scripts/build-graph-node.py link-github）を適用した後、`git -C fx diff .dev-graph/state/graph.json` で field_snapshot を見る。",
+    "SKILL.md のゴールシーク配線は「responsibility を Agent で fork」を求めているが、external mutation の gate は main session の UserPromptSubmit でしか成立しない。fork した subagent が execute まで進む場合の扱いが書かれておらず、この run では fork を実施しなかった。再現: SKILL.md のゴールシーク配線節と plugins/skill-governance-adapters/hooks/hooks.json（UserPromptSubmit は main session の入力でしか発火しない）を照らし合わせる。"
+  ]
+}

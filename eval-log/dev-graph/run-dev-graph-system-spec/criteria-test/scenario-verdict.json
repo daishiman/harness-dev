@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
     "component_id": "C19",
-    "skill_md_sha256": "2029754ddf19cf5c9622450224e3239c0272c6e2aaf1d92780229aeee02c4cdc"
+    "skill_md_sha256": "4d2b72af529bd2605c2fa2cae5ba53989798f2deb2c376789805e04b272e9279"
   },
-  "verdict": "FAIL",
-  "reviewer": "/root/independent_review-current-cycle3",
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-pr85",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -16,29 +16,48 @@
       "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
-        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_validate_rejects_invalid_authority_documents",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "plugins/system-spec-harness/tests/test_validate_scripts.py::test_c12_main_ok",
-        "plugins/system-spec-harness/tests/test_validate_scripts.py::test_c13_main_state_no_warning_when_targets_present",
-        "plugins/dev-graph/tests/test_build_graph_node.py::BuildGraphNodeTest::test_system_spec_lineage_must_resolve_before_add",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/scripts/validate-source-lineage.py",
+        "plugins/system-spec-harness/tests/test_validate_scripts.py",
+        "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/tests/test_aggregate_completeness.py",
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py",
+        "plugins/dev-graph/tests/test_validate_source_lineage.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/transcript.jsonl"
       ],
-      "observed": "Independent current cycle3 assessment of system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる: Current system-spec C12/C13 fixture tests and dev-graph authority/schema/source-lineage tests execute the owned coverage/citation and graph gates. Current planned dialog/import execution is unattempted and cannot satisfy OUT1. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md 4d2b72af… と閉包 21df2f9d…（134 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 2029754d…、OUT1 FAIL）の observed は写していない。IN1 の gate は、system-spec-harness の validate-coverage-matrix.py（--require-complete・--require-basis・--require-foundation）と validate-source-citation.py、評価役の aggregate-completeness.py（--report と --spec-dir、--matrix と --require-complete）、dev-graph の validate-graph-schema.py。どれも決定論の script で、違反があれば非0で終わる。trial の fixture を scratch の写しへ（__pycache__ を除いて）写し、閉包と同じ worktree の script を python3 -B で自分で回した（fixture と worktree は変えていない）。coverage・citation・schema（valid true）・aggregate の report（spec_dir は system-spec）・aggregate の matrix は、すべて exit 0。SKILL.md の script_refs にある validate-source-lineage.py も exit 0（checked 2。取り込んだ2 node を node id で絞っても pass）。負の repro：取込元の章 system-spec/00-requirements-definition.md に改行を1つ足すと、lineage は exit 1（lineage_digest_mismatch）になり、schema は exit 0 のままだった（章の変化は schema ではなく lineage の gate が見る）。aggregate に --spec-dir docs を渡すと exit 1（spec_dir_mismatch）。製品 test は、test_validate_source_lineage.py・test_validate_graph_schema_c11_coverage.py と、system-spec-harness の test_validate_scripts.py・評価役の test_aggregate_completeness.py の4ファイル94件、test_build_graph_node.py の取込の7件（test_system_spec_lineage_must_resolve_before_add・test_system_spec_import_confirms_only_with_pass_evidence ほか）を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。回す前と後で plugins の下の pyc の一覧は変わらなかった。live trial 20261013T0349-pr85 では、被験が L524 で aggregate（report と spec_dir）、L609-610 で lineage（exit 0、checked 2）と schema（exit 0、violation 0）、L624-625 で coverage と citation（どちらも exit 0）を回した。"
     },
     "OUT1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/final-replay-report.json",
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/sandbox-viability-probe.json"
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/goal-verdict.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/task.md",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/trial-note.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/out/status.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/subagent-transcripts/agent-a3d4310c8a93dae51.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/subagent-transcripts/agent-af5d404053397a6ce.jsonl",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/scripts/validate-source-lineage.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/plugin-composition.yaml",
+        "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+        "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
+        "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/tests/test_validate_source_lineage.py"
       ],
-      "observed": "NOT_EXECUTED / current required live acceptance is unproven. Individual target was NOT booted because mandatory machine containment prerequisite failed; no fabricated individual launch failure/model/transcript. Current canonical BLOCKED metadata exists but is not an executed live goal; live_trial_verdict_ref intentionally omitted. Planned scenario_id identifies the admitted task only. Fresh acceptance FAIL, not a current source implementation defect diagnosis or old PASS refresh.",
-      "scenario_id": "C19-OUT1-positive-system-spec-lineage-contained-v3"
+      "observed": "判定の対象は SKILL.md 4d2b72af… と閉包 21df2f9d…（134 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 2029754d…、OUT1 FAIL）の observed は写していない。live trial 20261013T0349-pr85（sysspec7。trial-note の retry_of は 20261013T0027-pr85）の verdict は、scenario C19-OUT1-positive-system-spec-lineage、tier live、downgrade なし、goal_verdict PASS で blockers 0、overall の launch・completion・goal_fit・verdict はすべて PASS、nudge 0・gate_response 0。verdict は schema に通り、skill_dir_tree_sha は今の閉包と、transcript_sha256（e2ad1fa5…、656行）は自分で計算した値と一致した。transcript を自分で読んだ。L36 で C19 を起動し、L83 で init を回し、L142 で elicit --resume、L165 で doc-fetch、L286 で compile、L345 で評価役 assign-system-spec-completeness-evaluator（--spec-dir system-spec、fork。中で C06・C07・C08 の監査役を起動）を、system-spec-harness の Skill として呼んだ。L524 で report の PASS を aggregate で確かめ（19:08:50Z）、その後の L550 で取込の payload を書いた（19:10:45Z）。L587・L593 で C02 add --dry-run を回し、L604 で同じ payload（input_sha256 1409baad…）を適用し、L609-610 で lineage と schema を回し、L614 で dev-graph-integrity-auditor を起動した。lineage 付きの引用：取り込んだ spec-billing-audit-system-spec と arch-billing-audit-system-architecture は、どちらも source_lineage（origin_kind system-spec-harness、source_path は system-spec/00-requirements-definition.md と system-spec/index.md、source_digest は現物の sha256 の 82a02bd8… と f7f64767…）と confirmation_evidence（evaluator は評価役、evidence_ref は eval-log/system-spec-completeness-report.json、evaluated_digest は source_digest と同じ）を持ち、confirmed・pass・readiness complete。本文も system-spec/ の章を正本として引く（spec の本文の 00-requirements-definition.md、architecture の本文の index.md など）。決定論の層：C02 の build-graph-node.py は、system-spec-harness 由来の node を登録する前に validate-source-lineage.py の lineage_findings を当て、path が repo の外・存在しない・sha256 が違うときは source_lineage_unverified で拒む（L782-786）。確定の取込は _spec_confirmation（L667-697）が、evaluator の名前、evaluated_digest と source_digest の一致、evidence_ref が repo 内の file で verdict が PASS であること、report の spec_dir が取込元の dir に解決することを求め、readiness が incomplete なら confirmed_import_requires_complete_readiness で拒む（L799）。repro：trial の fixture を scratch の写しへ（__pycache__ を除いて）写し、閉包と同じ worktree の script を python3 -B で自分で回した（fixture と worktree は変えていない）。写しの config.json の repository_id だけを写しの導出値に付け替え、trial の payload の slug に -replay を足して --dry-run に流すと、rc 0 で2 node が confirmed・pass で planned になり、graph は byte で変わらなかった。同じ payload の6つの変種は、report の verdict が FAIL なら confirmation_evidence_not_pass、report の spec_dir が docs・evaluated_digest の不一致・別の evaluator なら invalid_confirmation_evidence、source_digest の誤りと存在しない source_path なら source_lineage_unverified になり、どれも write 0 で止まった。test_build_graph_node.py の test_system_spec_lineage_must_resolve_before_add と test_system_spec_import_confirms_only_with_pass_evidence も同じ拒否を確かめる（自分で回して PASS）。複製の無いこと：dev-graph の plugin の .py に、system-spec-harness の compile・ヒアリング・coverage の logic（compile-spec-doc、validate-coverage-matrix、coverage_matrix、spec-state.json、fetched-references）を参照・実装するものは0件だった（自分の grep）。言及は C19 の SKILL.md と R2-delegate.md の委譲の文だけ。plugin-composition.yaml は「C19はexternal system-spec-harnessを引用しcompilerを複製しない」と宣言し、system-spec-harness の required_entry_points を elicit・doc-fetch・compile・評価役の4つにしている。trial でも、ヒアリングと compile は Skill の呼出しで system-spec-harness に委譲され、被験は L624-625 で同じ向きの grep をして委譲の文だけを見た。開示の扱い：(1) 被験が L296 で compile-spec-doc.py を -B なしで起こし、写しの plugins/system-spec-harness/scripts/__pycache__ に validate-knowledge-graph の pyc が1本でき、L332 で被験が自分で消した。trial の後の写しに bytecode は0件。原因は system-spec-harness の script（importlib で読む前に dont_write_bytecode を置かない）で、C19 の基準の文（lineage 付きの引用と、複製の無いこと）には当たらないので失敗にしない。(2) 評価者の skill_defects 2件（compile-spec-doc.py の L144-145、SKILL.md に python3 -B の指示が無い）は、どちらも origin/main からあり、範囲を dev-graph の plugin に限る利用者の判断で Beads の下書きに回された。これも基準の外。(3) guard.jsonl を自分で数えた。deny は Bash の7件で、6件は語の誤検知、1件は C08 の curl を正しく拒んだもの。WebFetch 13件の宛先は postgresql.org・react.dev・fastapi.tiangolo.com・typescriptlang.org の公式文書だけ。(4) 最後の AskUserQuestion は trial の担当が「DONE: PASS」の後に出したもので、被験と subagent 6本の transcript には無い。(5) 判定の間、閉包は 21df2f9d… のままだった。残る隙間（基準を失敗にはしないが、決定論では閉じていない）：(a) source_version（0.1.22）は LLM が書き写す値で、script は照合しない（trial では system-spec-harness の plugin.json の version と一致した）。(b) lineage は node ごとに1 file だけを pin するので、本文が正本として参照する backend.md・database.md などの章が後で変わっても、lineage gate は落ちない。(c) 複製が無いことを確かめる決定論の test は無く、grep と plugin-composition.yaml の宣言で確かめた。",
+      "scenario_id": "C19-OUT1-positive-system-spec-lineage",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85/verdict.json"
     }
   }
 }

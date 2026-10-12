@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "pr85-render-status-criteria-20261012",
+    "generated_by": "PR #85 の run-dev-graph-render live trial (eval-log/dev-graph/run-dev-graph-render/live-trial/20261012T0944-pr85/goal-verdict.json) の OUT1 FAIL と、run-dev-graph-status の受入基準の文が今の手順 (extract-graph-status.py) とずれている点の指摘 (team-lead の指示)"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "findings": [
+    {
+      "id": "PR85-CR-01",
+      "severity": "high",
+      "summary": "C05 OUT1 は「featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致」を求めるが、X は done の子 task 数で applied_count は登録した子 task 数なので、正しく描いても一致しない (live trial で表示 5/13 と receipt の applied 13/expected 13 が食い違い FAIL)。照合すべきは Y と子 task の集合で、X ではない。",
+      "recommendation": "C05 OUT1 の text を「生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Y（X=doneの子task数、Y=子task数）のYがregistration receiptのexpected_countと一致し、子taskの集合がreceiptのnode_idsと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する」に替える。loop_scope=outer と verify_by=live-trial は変えない。render-graph-html.py に任意の --receipt を足し、集合・数・source_digest の不一致は HTML を書かずに exit 1 で止める。",
+      "target_ref": "component-inventory.json#C05.feedback_contract.criteria.OUT1"
+    },
+    {
+      "id": "PR85-CR-02",
+      "severity": "medium",
+      "summary": "C18 R3-status の summary は「validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し」とあるが、今の手順では graph の読み取りと検索は extract-graph-status.py が行い (C24 の read と C11 の validate を中で通す)、R3-status はその rows だけを使う。summary が実装と違う経路を指している。",
+      "recommendation": "C18 R3-status の summary を「extract-graph-status.py の rows だけから該当ノードの status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)」に替える。",
+      "target_ref": "component-inventory.json#C18.responsibilities.R3-status"
+    },
+    {
+      "id": "PR85-CR-03",
+      "severity": "medium",
+      "summary": "C18 IN1 は「validate-graph-schema.py で読み取ったグラフストアの検索結果に必須キー欠落が0件」とあるが、必須キー欠落 (missing_required_keys) を数えて rows を返すのは extract-graph-status.py で、validate-graph-schema.py 単体は検索結果を返さない。script で検証する対象が実在しない。",
+      "recommendation": "C18 IN1 の text を「extract-graph-status.py の rows に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する」に替える。loop_scope=inner と verify_by=script は変えない。",
+      "target_ref": "component-inventory.json#C18.feedback_contract.criteria.IN1"
+    }
+  ],
+  "provenance": {
+    "source_intake": "intake.json",
+    "prev_goal_spec": "goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "team-lead の teammate-message (PR #85: render と status の受入基準の文と skill 本体を直す、2026-10-12)"
+    }
+  }
+}

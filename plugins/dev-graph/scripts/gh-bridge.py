@@ -21,6 +21,10 @@ import re
 import sys
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, dump, run
 
 MUTATIONS = {"issue-create", "issue-update", "issue-close", "project-item-add", "project-item-edit"}

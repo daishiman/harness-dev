@@ -1,0 +1,26 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "requirements handoff が作られていない。task.md の合格条件「handoff が実在し、capability-build / task-graph 向けの要件・13 task・lineage / digest を持つこと」を満たさない。fixture の system-plan/LT-FEATURE-001/ に handoff の出力は無く、.dev-graph/handoff も無い。trial の開始 (workdir/start.epoch) より後に fx の中で更新されたものは .git の dir の mtime だけ。",
+    "三 gate の照合 validate-readiness-binding.py が exit 2 で止まった。report は出ず、stderr は `[Errno 2] No such file or directory: .../fx/system-plan/LT-FEATURE-001/dev-graph-registration.json` (transcript L95 の呼出しと L101 の結果)。このため guard-requirements-handoff.py まで進めず、handoff は 0 件。",
+    "FAIL の原因は fixture にある。被験 skill でも隔離環境でもない。今の版の binding script は、package dir の dev-graph-registration.json (system-dev-planner の promote-system-plan.py が作る)、その中の promotion_receipt、C02 の register-package receipt を必須の入力として読む (ws/plugins/dev-graph/scripts/validate-readiness-binding.py 119-125 行)。fixture にはこの 3 つがどれも無い。graph.json の node は LT-ARCH-001 と LT-FEATURE-001 の 2 つだけで、package の 13 member は登録されていない。fixture-provenance.json を見ると build-system-handoff.py だけが走っていて (receipt_artifacts_created: false)、promote と C02 登録は走っていない。guard.jsonl は 15 件すべて allow で deny は 0 件なので、隔離の遮断は原因ではない。"
+  ],
+  "evidence": [
+    "L35: 正規の Skill({skill: \"dev-graph:run-dev-graph-requirements\"}) を task.md の args のまま起動し、L36-37 で読み込まれた。guard.jsonl の 2 件目の記録も Skill allow。",
+    "L49: 出力より前に prompts/R1-elicit.md・R2-plan.md・R2b-readiness.md・R3-handoff.md の全文を cat で読んでいる。L58 では references/prompt-common-layers.md も読んでいる。",
+    "L64-65: C24 の resolve-repo-context.py --mode read が exit=0 で fx を root に固定した。",
+    "L77-78: graph.json の node は architecture と feature の 2 つだけで、どちらも confirmed/pass/complete。L90-91: fx の中にある registration・promotion・receipt 系のファイルは .dev-graph/state/init-receipt.json だけ。",
+    "L95/L101: validate-readiness-binding.py --repo-root fx --package-dir system-plan/LT-FEATURE-001 --receipt .dev-graph/state/package-registration-receipt.json の結果は binding_exit=2 で、dev-graph-registration.json が無いという IO 例外。SKILL.md の手順 4 と R2b の Layer 3 にある「report の無い exit 2 は handoff 0 件で止め、stderr の内容を理由として返す」のとおりに止まった。",
+    "L104-105: C11 の validate-graph-schema.py は valid:true、violations:[]。ただし `| tail -5; echo c11_exit=$?` という書き方なので、c11_exit=0 は tail の終了コードで、validator 自身の exit code は取れていない。判定の内容は出力の JSON (valid:true) で確かめられる。",
+    "L107-108: validate-system-plan.py を誤った引数 (--package-dir) で呼び、usage エラー (exit 2) になった。L110-111: --staging で呼び直し、sdp_exit=0、status pass、validated_digest sha256:a184370042a88d0baaacc99f554f4d5fb63dd549bc2ad1608e72b344b9c96223、violations []。fixture-provenance の builder_receipt.canonical_digest と一致する。",
+    "L114: 書いたのは workdir/out/status.json の FAIL 1 件だけ (collect/out/status.json と同じ内容)。ほかには L110 の $TMPDIR/sdp.json があり、これは共有の一時領域。fx の中では、trial 開始より後に更新された file は 0 件。graph と content への直接の書込みも、自作の driver も、手書きの registration や receipt も無い。L118 の最終報告で、手で作るのは制約違反になるので作らなかったと明記している。",
+    "Agent を起動していないが違反ではない。SKILL.md の goal-seek 配線は Post-choice (semantic_evaluator_started) でだけ動き、artifact_delivery.pre_choice_forbidden に subagent が入っている。gate が止まったため成果物の提示と standard の記録に至っておらず、Agent を起動すべき局面に達していない。",
+    "実装 code は 0 件。fx の file 一覧に、既存の seed 以外の file が 1 件も無い。",
+    "guard.jsonl: 15 件すべて decision allow、deny は 0 件 (grep -c deny = 0)。sandbox の回避もしていない。"
+  ],
+  "skill_defects": [
+    "(軽微) package が promote も C02 登録もされていないと、ws/plugins/dev-graph/scripts/validate-readiness-binding.py の bind() (119-125 行) が load_json の IO 例外として exit 2 で終わる。stdout は空で、stderr には生の Errno だけが出る。どの上流の手順が欠けているか (system-dev-planner の promote-system-plan.py → run-dev-graph-node の register-package) と、その remediation owner が構造化して返らない。再現手順: dev-graph-registration.json の無い package dir、たとえば本 fixture の system-plan/LT-FEATURE-001 を対象に `python3 validate-readiness-binding.py --repo-root <fx> --package-dir system-plan/LT-FEATURE-001 --receipt <任意>` を実行する。SKILL.md の手順 4 にこの挙動は書かれているので契約違反ではないが、R2b/R3 が返せる情報が生の例外文だけになる。",
+    "(軽微) SKILL.md の argument-hint は `--receipt REL` を受けるが、C02 receipt の既定の場所も探し方も手順 1 に書かれていない。このため被験 session は `.dev-graph/state/package-registration-receipt.json` を推測で渡した (L95)。今回の結果は registration manifest が無いことで先に決まっており、この点は影響していない。"
+  ],
+  "evaluator_agent_id": "a9cdf9146eb9e7be6"
+}

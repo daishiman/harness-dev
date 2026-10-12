@@ -35,6 +35,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, contained, dump, run
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -55,7 +59,7 @@ def _validator() -> Any:
 
 
 def _context(repo_root: str, config: str) -> dict[str, Any]:
-    cp = run([sys.executable, str(RESOLVE), "--repo-root", repo_root, "--config", config, "--mode", "read"], check=False)
+    cp = run([sys.executable, "-B", str(RESOLVE), "--repo-root", repo_root, "--config", config, "--mode", "read"], check=False)
     if cp.returncode:
         raise ContractError(f"resolve-repo-context failed: {(cp.stderr or cp.stdout).strip()}")
     receipt = json.loads(cp.stdout)

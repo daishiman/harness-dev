@@ -43,11 +43,16 @@
 | spec_state | yes | 収集マトリクス (`spec-state.json`、C01 出力) |
 | fetched_refs | yes | 取得済み公式ドキュメント出典 (`fetched-references.json`、C02 出力) |
 | aspect_audits | yes | R2-delegateの独立監査 + R1自前評価対象の機械根拠 |
+| spec_dir | no | 評価する仕様書ディレクトリ (引数。レポートの `spec_dir` にそのまま書く) |
 | output | no | レポート出力先 (省略時 `eval-log/` 配下) |
+
+- 相対の `spec_dir` と `output` は、この skill を起動した cwd から解決する。評価の入力の読み込み、4.3 の書き出し、2.4 の `--report <output> --spec-dir <spec_dir>` の検証は、どれも同じ cwd を基準にする。
 
 ### 2.4 出力契約
 - schema: `schemas/completeness-findings.schema.json`
 - 必須: evaluator, verdict(PASS/FAIL), aspects(rubric全観点), findings[], gaps[]
+- `spec_dir`: 引数 `spec_dir` の値をそのまま書く (相対パスなら相対のまま)。説明や注記を混ぜない。書き出しが guard に止められても `spec_dir` の値を変えて回避せず、4.3 のとおり保存先を文字列のリテラルにして書き直す。
+- 書き先: 引数 `output` のパス (`system-spec/` の外)。検証は `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` の exit 0 で、`spec_dir_mismatch` が出た report は呼び出し側 (dev-graph の C02 など) が確定の取込を拒む。
 
 ## Layer 3: インフラ層
 
@@ -75,7 +80,7 @@
 
 ### 4.3 セキュリティ
 - 仕様書ディレクトリを書き換えない (read-only)。Bash(python3 *) は検証スクリプトの実行と、評価出力先 (仕様書ディレクトリ外) への書き出しに限る。書き出すのは R2-delegate が渡す C06 出力 (`hearing-audit.json`。無改変) と、`--report` で検証する評価レポートだけ。
-- 書き出しは R2-delegate 2.4 と同じ形で行う。python3 の `pathlib.Path("<absolute path>").write_text(sys.stdin.read(), ...)` に保存先を literal で書き、本文は引用符付きの heredoc で stdin に渡す。Write はこの skill の allowed-tools に無く、`cat >` やリダイレクトは `Bash(python3 *)` の外になる。
+- 書き出しは R2-delegate 2.4 と同じ形で行う。python3 の `pathlib.Path("<保存先>").write_text(sys.stdin.read(), ...)` に保存先を literal で書き、本文は引用符付きの heredoc で stdin に渡す。レポートの保存先には引数 `output` の値を書く。相対パスなら cwd から解決する (2.3)。Write はこの skill の allowed-tools に無く、`cat >` やリダイレクトは `Bash(python3 *)` の外になる。
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
@@ -97,6 +102,7 @@
 - [ ] scoring-rubricの全aspectsが verdict(PASS/FAIL/INDETERMINATE) + auditor + component + summary で埋まっている
 - [ ] findings[] が非空で info 以上の観点を最低 1 件含む。high には suggested_fix を明記した
 - [ ] レポート verdict が `aggregate-completeness.aggregate_verdict` の再導出値と一致する
+- [ ] `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` が exit 0 である
 - [ ] 総合 FAIL のとき gaps (不足事項一覧) を非空にし差し戻し先を記した
 - [ ] 仕様書への書込件数が0件である
 

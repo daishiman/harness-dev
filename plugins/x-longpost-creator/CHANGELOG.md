@@ -3,6 +3,10 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.3.7 — 2026-10-12
+
+- 版番号だけを上げた。中身は 1.3.6 と同じ。利用者の手元の local marketplace には、1.3.6 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
 ## 1.3.6 — 2026-10-10
 
 1.3.5 に続く投影の追従版である。他 plugin が所有する正本（`scripts/extract-plugin-root.py` と、`run-skill-feedback` に同梱する validator）と guard runtime の更新を写した。本 plugin 固有の機能変更はない。

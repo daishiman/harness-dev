@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-decompose",
     "component_id": "C14",
-    "skill_md_sha256": "4769780d0abecaa0cafb139ce121869a854dd7e7d736a12d6138f79b97363e25"
+    "skill_md_sha256": "ee8aa00f2dffc9f674d910b2a36d16cf230804129b5978885d3ac4a931a76bcb"
   },
-  "verdict": "FAIL",
-  "reviewer": "/root/independent_review-current-cycle3",
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-pr85",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -16,124 +16,115 @@
       "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
-        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_domain_dag_exact13_evidence_and_readiness_boundaries",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/transcript.jsonl"
       ],
-      "observed": "Independent current cycle3 assessment of validate-graph-schema.py で分解生成ノードを送信前検証しスキーマの必須キー欠落が 0 件: Current canonical node validator/DAG tests exercise required keys and cycle/exact13 boundaries. The actual macro preview also has pre_write_validation findings0; full trial acceptance fails separately. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。分解で生成した macro node（feature）は C02（build-graph-node.py）の macro 契約でしか登録できない（feature を普通の add に渡すと feature_requires_c14_macro_contract、L518）。C02 の _transact は、書く前に _findings（L1186-1197）で、書いた後の graph にvalidate-graph-schema.py の schema_findings（必須キーの欠落は schema_violation「missing required property」、L138）・domain_findings（dependency_cycle など）・artifact_findings を当て、生成した node の finding か、元の graph に無かった finding が1件でもあれば pre_write_validation_failed で止める（L1260-1262）。--dry-run も同じ検査を通った後でだけ preview を返す（L1276-1283）。本文の変更はこの経路を変えていない（script_refs に build-graph-node.py が足され、手順が明示された）。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_build_graph_node.py は、macro の欠け（invalid_macro）、task への依存（invalid_macro_reference）、書く前の検証の失敗（pre_write_validation_failed）が書かずに止まることを確かめる。scratch の repro_c14.py は、trial の fixture（15 node、graph_revision 3）を case ごとに新しい dir へ写し、orchestrator と同じく repository_id と worktree_id を写しの path に付け替えてから、C02・C11・C28 を python3 -B で回す（fixture と wtpy は変えない。33件すべて PASS、終わった後に fixture の file の sha が全部同じことも確かめた）。trial の C02 入力（feature 2件）を apply した写しで、C11 は rc 0・違反 0。その写しで生成した feature-render-diff から confirmation_status を消すと、C11 は rc 1 で schema_violation（required）を出した。macro の goal を欠いた入力は invalid_macro、新しい feature どうしの循環は --dry-run でも apply でも dependency_cycle で pre_write_validation_failed になり、graph は byte で変わらなかった。live trial 20261013T0331-pr85 では、被験が C11 を回して valid・違反 0（transcript L76-77）、C02 の preview の pre_write_validation の findings は 0 だった。"
     },
     "OUT1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/final-replay-report.json",
-        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T173215-bzn4-current/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T173215-bzn4-current/transcript.jsonl"
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/goal-verdict.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/task.md",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/trial-note.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/out/status.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/subagent-transcripts/agent-ae2b19929a3be36e0.jsonl",
+        "plugins/dev-graph/scripts/bd-bridge.py",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md"
       ],
-      "observed": "Current authentic goal FAIL with source closure unchanged: L120 writes graph-before.sha/tree-before.sha and L136 redirects preview.json into the native scratchpad outside the explicit fixture/proof-dir-only write boundary. Authentic macro preview does not excuse an invalid full trial.; Initialization preparation executed writer at L54 without reading init responsibility prompts before those outputs, contrary to the task's responsibility-prompt-before-output execution rule.. Positive partial component observations do not replace the complete skill goal. Fresh acceptance FAIL, not a current source implementation defect diagnosis or old PASS refresh.",
-      "scenario_id": "decompose-macro-positive-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T173215-bzn4-current/verdict.json"
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。live trial 20261013T0331-pr85（decompose5。20261012T2336-pr85 の取り直し）の verdict は、scenario decompose-macro-promotion-gate-beads-fixture-standard-v3、tier live、downgrade なし、goal_verdict PASS で blockers 0・skill_defects 0、overall の launch・completion・goal_fit・verdict はすべて PASS、nudge 0。verdict は live-trial-verdict.schema.json に通り（error 0）、skill_dir_tree_sha（666d9e0c…）は今の閉包と、transcript_sha256 は自分で計算した値と一致した（220行）。transcript を自分で読んだ。L39 で Skill を起動し、L54 で SKILL.md の本文と prompts の R1〜R6 をすべて読み、L76-77 で C11 を回し（valid、15 node）、L123-129 で C02 add --dry-run を回した（rc 0、planned_nodes は feature-render-diff と feature-render-diff-summary の2件で、どちらも draft・pending）。L133-134 で C28 bd-bridge.py create --dry-run --planned-preview --artifact-kind feature を2件に当て、どちらも blocked（promotion_gate、planned true、write 0、rc 1）。L162 で dev-graph-integrity-auditor を起動し（subagent の transcript 28行）、結論は PASS。fixture を自分で確かめた。graph.json の sha は trial の前と同じ 2ed57eab…（revision 3）で、fake-bd-calls.jsonl は無い（bd の呼出し0回）。.dev-graph/state の file は graph.json・init-receipt.json（trial の前の付け替え）・package-registration-receipt-LT-FEATURE-001.json と、fixture の元からある空の lock file だけで、C02 の receipt の dir も無い。起動より後に変わった fixture の file は、.dev-graph/cache/decompose-input/ の6つ（C02 の入力と preview、C11 の report、C28 の結果2つ、dry-run report）と、eval-log/ のゴールシークの記録6つ（decompose と、被験が transcript L94 で add --dry-run の引数で起動した run-dev-graph-node の、goal-spec・progress・intermediate）だけだった（README.md と tools/fake-bd.py は起動の前に置かれたもので、sha は fixture-provenance.json と一致）。被験の dry-run report では、DAG は LT-FEATURE-001 ← feature-render-diff ← feature-render-diff-summary で循環0、新しい node に task は無く（planned_nodes の artifact_kind は feature、parent_feature なし）、起票対象は0件。粒度閾値は、SKILL.md と R2-plan のとおり「task 粒度の混入なし」と読んだ。さらに、被験は本文の新しい規則に従い、feature-render-diff（beads）が LT-FEATURE-001（none）に依存するので cross_binding_dependency で保留にし、それに依存する summary も鎖で保留にして、dep-add を呼ばず人への確認を書いた。OUT1 の後半（昇格の後だけ起票対象になる）は、この trial では新しい node が draft だけなので動いていない。決定論の層は、bd-bridge.py の昇格 gate（PROMOTED = confirmed・pass・complete、L36。gate は preflight より前に走り、blocked なら bd を起動しない）と、build-github-projection.py の plan()（同じ is_promoted、L92）。test_bd_bridge_promotion_gate.py と test_projection_readiness_gate.py は、同じ node が draft では blocked・skipped で、昇格させると同じ呼出しで1件起票・target になることを確かめる（自分で回して PASS）。scratch の repro_c14.py は、trial の fixture（15 node、graph_revision 3）を case ごとに新しい dir へ写し、orchestrator と同じく repository_id と worktree_id を写しの path に付け替えてから、C02・C11・C28 を python3 -B で回す（fixture と wtpy は変えない。33件すべて PASS、終わった後に fixture の file の sha が全部同じことも確かめた）。C02 を apply した写しで、draft の feature-render-diff は dry-run でも apply でもblocked で bd を起動せず、graph の上で active・confirmed・pass に上げると、同じ create --dry-run は promotion_gate pass・issue_type epic・write 0 になり、bd の呼出しは preflight（version・where）だけだった。draft のままの summary は止まり続けた。trial の preview（revision 3）を revision 4 の graph に当てると planned preview is stale で止まり、apply に --planned-preview を付けると拒否された。本文の変更のうち cross_binding_dependency の規則（SKILL.md の Macro flow と「dry-run の preview」の3）は LLM の手順で、script は強制しない（本文も「C14・C28 の契約にまだ無い」と書く）。決定論の backstop は C28 の parity の照合で、Beads の linkage の無い依存先を持つ node を conflict にして ready から外す（bd-bridge.py L521）。この規則は「保留にした node を投影しない」方向にしか働かないので、OUT1 の「昇格後だけ起票対象」（必要条件）とも、OUT2 の「同じ binding の中で各1組」とも食い違わない。残る観察（基準の外）：trial の写しの ws の plugins/system-dev-planner/scripts/__pycache__ に pyc が2つできた。原因は system-dev-planner の hooks.json の PreToolUse hook が python3 を -B なしで起動すること。dev-graph の hook は -B 付きで、test_no_bytecode_in_harness.py が dev-graph の4つの hook だけを確かめる。ws の dev-graph に pyc は無い。これは C14 の閉包（dev-graph）の外の plugin の hook で、OUT1 の起票や OUT3 の local graph・Beads・GitHub・Projects への write には当たらないので、基準の失敗にしない。system-dev-planner の hook に -B を付ける件として Beads に回す候補。",
+      "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261013T0331-pr85/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_out2_none_and_github_bindings_register_one_local_set_and_rerun_as_noop",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_registers_exact_13_atomically_and_is_idempotent",
-        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py::test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_register_package.py",
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py",
+        "plugins/dev-graph/scripts/register-package.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/scripts/bd-bridge.py"
       ],
-      "observed": "Independent current cycle3 assessment of 同一入力を二回実行してもbinding=beadsはbd issue/blocks edge、binding=githubはIssue/Project item、binding=noneはlocal nodeだけを各1組維持する: Current binding none/github registration and mocked C28 epic/block projection tests check one local set and idempotent external projection; actual account mutation was not performed or claimed. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。beads：bd-bridge.py の _create_one は external_ref の marker で既存を探してから作り、_package_projection は既存の依存を bd show で見てから dep add を張る（L294-301）。test_c27_c28_projection_contract.py の test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready は、epic と13件を作り、2回目に create が増えないこと、dep add が blocks 型であることを確かめる。2回目の dep add の数は assert していないので、scratch の repro_c14.py は、trial の fixture（15 node、graph_revision 3）を case ごとに新しい dir へ写し、orchestrator と同じく repository_id と worktree_id を写しの path に付け替えてから、C02・C11・C28 を python3 -B で回す（fixture と wtpy は変えない。33件すべて PASS、終わった後に fixture の file の sha が全部同じことも確かめた）。で補った。fake の bd に対して _package_projection を3回呼ぶと、create と dep add の数は (14, 12)、(0, 0)、(0, 0) で、marker ごとに issue は1つ、blocks の edge は depends_on と一致した。github：test_build_github_projection.py の test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item は、marker ごとの Issue と content ごとの Project item が1つずつで、3回目の mutation が0件であることを確かめる。none：test_register_package.py の test_out2_none_and_github_bindings_register_one_local_set_and_rerun_as_noop は、2回目が byte で変わらない no-op になることを確かめる。本文の変更のうち cross_binding_dependency の規則（SKILL.md の Macro flow と「dry-run の preview」の3）は LLM の手順で、script は強制しない（本文も「C14・C28 の契約にまだ無い」と書く）。決定論の backstop は C28 の parity の照合で、Beads の linkage の無い依存先を持つ node を conflict にして ready から外す（bd-bridge.py L521）。この規則は「保留にした node を投影しない」方向にしか働かないので、OUT1 の「昇格後だけ起票対象」（必要条件）とも、OUT2 の「同じ binding の中で各1組」とも食い違わない。"
     },
     "OUT3": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out3_dry_run_previews_every_projection_without_a_write",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_dry_run_writes_nothing",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_in_process_register_dry_run_commit_and_idempotency",
-        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py::test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_graph_node.py",
+        "plugins/dev-graph/tests/test_bd_bridge_dry_run_parity.py",
+        "plugins/dev-graph/tests/test_register_package.py",
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py",
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/scripts/bd-bridge.py",
+        "plugins/dev-graph/scripts/register-package.py",
+        "plugins/dev-graph/scripts/build-github-projection.py"
       ],
-      "observed": "Independent current cycle3 assessment of --dry-run時にlocal graph/Beads/GitHub/Projects writeが0件のままbinding解決と投影差分だけがpreviewされる: Current package dry-run and projection dry-run tests assert write suppression with binding/preview facts; actual current macro writer also returned write_count0 and unchanged graph. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。本文の「dry-run の preview」は、C02 add --dry-run・C28 create --dry-run（--planned-preview）・dep-add --dry-run・register-package --dry-run・build-github-projection --dry-run だけを使い、入力と preview の JSON は cache の decompose-input/ に置いて write count に数えない。どれも書く前に止まる決定論の経路がある。C02 は preview を返して書かず、ロックも取らない（build-graph-node.py L1276-1283）。C28 は dry-run の create を preflight の後で返し、ほかの操作は write() で bd の引数だけ返す。register-package は dry_run true・write_count 0 の receipt を返す（L459）。build-github-projection は planned_mutations だけを出し、report を書かない。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_build_graph_node.py の test_revision_conflict_and_dry_run_write_nothing と test_macro_add_preview_feeds_the_beads_promotion_gate_without_a_write、test_bd_bridge_dry_run_parity.py の test_a_valid_dry_run_stops_exactly_at_the_write_the_apply_makes、test_register_package.py の test_dry_run_writes_nothing、test_build_github_projection.py の test_out3_dry_run_previews_every_projection_without_a_write、test_c27_c28_projection_contract.py の dry-run で bd を呼ばない assert が、それぞれ書込み0件を確かめる。binding の解決は C02 の planned_nodes の tracker_binding と register-package の binding_intents の解決で preview に出る。scratch の repro_c14.py は、trial の fixture（15 node、graph_revision 3）を case ごとに新しい dir へ写し、orchestrator と同じく repository_id と worktree_id を写しの path に付け替えてから、C02・C11・C28 を python3 -B で回す（fixture と wtpy は変えない。33件すべて PASS、終わった後に fixture の file の sha が全部同じことも確かめた）。trial の C02 入力の --dry-run の前後で、写しの file は自分が置いた入力 file のほかは1つも変わらなかった。live trial 20261013T0331-pr85 でも graph の sha は変わらず、bd の呼出しは0回だった。trial の写しの system-dev-planner の pyc（OUT1 に書いた）は、この基準の local graph・Beads・GitHub・Projects への write に当たらない。"
     },
     "OUT4": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_out4_publication_authority_conflicts_fail_closed_without_any_write",
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out4_conflicts_and_duplicate_markers_fail_closed_before_any_gh_write",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_in_process_contract_and_binding_failures",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_register_package.py",
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/scripts/register-package.py",
+        "plugins/dev-graph/scripts/build-github-projection.py"
       ],
-      "observed": "Independent current cycle3 assessment of mode=both+auto、github+local_only、beads+Issue publicationを各fixtureでfail-closedし、外部write 0件となる: Current injected publication-authority/binding conflict tests assert fail-closed applied_count0 and no mocked external mutation. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。register-package.py の _resolve_binding（L302-308）は、mode both の auto を ContractError にする（L304）。_resolved_nodes は、github と local_only、beads や none と Issue の publication を publication authority conflict にする（L326）。build-github-projection.py の plan() も、binding と publication の食い違いで mutation の前に止まる（L89）。本文の変更はこの経路に触れていない。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_register_package.py の test_out4_publication_authority_conflicts_fail_closed_without_any_write は、both+auto・github+local_only・beads+issue・none+issue_and_projects を、bd と gh の spy に呼出しが無いまま止める。test_build_github_projection.py の test_out4_conflicts_and_duplicate_markers_fail_closed_before_any_gh_write は、github+local_only と beads+issue で gh を1回も呼ばずに exit 2 になり、marker の重複でも mutation が0件であることを確かめる。"
     },
     "OUT5": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_github_projection.py::GithubProjectionTest::test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_github_projection.py",
+        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py",
+        "plugins/dev-graph/scripts/build-github-projection.py",
+        "plugins/dev-graph/scripts/bd-bridge.py"
       ],
-      "observed": "Independent current cycle3 assessment of local batch成功後の外部mutation失敗でlocal taskを維持し、失敗node/operationだけpending_retryから冪等再実行できる: Current projection retry test observes successful local batch retained and only failed item-add retried; this is deterministic fixture acceptance, not a live external-account trial. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。build-github-projection.py は graph を書かず（local の task はそのまま）、失敗した operation を pending_retry に残して EXIT_PENDING 3 で終わり、--retry-from はその operation だけを回す（L226）。最初の mutation の前に、marker の重複と linkage の食い違いを読み終える（L265-275）。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_build_github_projection.py の test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item は、P05 の item-add だけを失敗させ、retry で add と edit が1回ずつ、3回目は mutation 0件、graph は byte で不変であることを確かめる。test_c27_c28_projection_contract.py の test_c28_reuses_manifest_linkages_when_external_search_is_stale は、Beads 側で検索が遅れても既存の linkage を使い、2つ目を作らないことを確かめる。scratch の repro_c14.py は、trial の fixture（15 node、graph_revision 3）を case ごとに新しい dir へ写し、orchestrator と同じく repository_id と worktree_id を写しの path に付け替えてから、C02・C11・C28 を python3 -B で回す（fixture と wtpy は変えない。33件すべて PASS、終わった後に fixture の file の sha が全部同じことも確かめた）。Beads 側でも、fake の bd で T05 の issue を作る呼出しだけを失敗させると、epic と T01〜T04 の5件で止まり、再実行は T05〜T13 の9件だけを作り、issue は marker ごとに1つ（計14件）、3回目は create も dep add も0件だった。"
     },
     "OUT6": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_registers_exact_13_atomically_and_is_idempotent",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_out2_none_and_github_bindings_register_one_local_set_and_rerun_as_noop",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_out3_injected_packages_are_rejected_without_any_write",
-        "plugins/dev-graph/tests/test_c27_c28_projection_contract.py::test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_acceptance_gaps_a1.py",
+        "plugins/dev-graph/tests/test_register_package.py",
+        "plugins/dev-graph/scripts/register-package.py"
       ],
-      "observed": "Independent current cycle3 assessment of 同一ready featureへの自動起動を二回実行してもP01..P13 exact 13 taskが一組だけ維持され、全taskのparent_feature/feature_package_idが一致する: Current registration and C28 projection tests support exact13 set/idempotence, but no current test or valid trial actually executes automatic run-system-dev-plan dispatch twice for the same ready feature. Full automatic-orchestration criterion is unproven; static design adequacy remains separate. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。register-package.py の _validate_registration は exactly 13・P01..P13・共通の parent_feature と feature_package_id を求め（L225-237）、_register は、同じ feature に別の package の task があれば already has tasks outside this package（L418）、同じ id で中身が違えば duplicate node ids exist with different content（L424）で止め、中身が同じなら登録時の receipt を idempotent true で返す（L443）。本文の変更（dry-run では system-dev-planner を起動しない、登録済みの package には register-package を当てない）は dry-run の preview の手順で、自動起動の登録の経路は変えていない。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_acceptance_gaps_a1.py の test_decompose_out6_second_auto_dispatch_keeps_one_exact13_set は、system-dev-planner の promote と C02 register を2回起動し、2回目が idempotent で graph と receipt が byte で変わらず、13件が一組で parent_feature と feature_package_id が一致することを確かめる。test_decompose_out6_second_dispatch_under_a_new_package_identity_is_refused と test_decompose_out6_second_dispatch_with_changed_content_stops_at_the_promoter は、別の package id や中身の違う2回目が二組目を作らずに止まることを確かめる。"
     },
     "OUT7": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_conflicting_duplicate_registration",
-        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_idempotent_registration_rejects_conflicting_immutable_receipt",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_acceptance_gaps_a1.py",
+        "plugins/dev-graph/tests/test_register_package.py",
+        "plugins/dev-graph/scripts/register-package.py",
+        "plugins/system-dev-planner/commands/system-dev-plan.md"
       ],
-      "observed": "Independent current cycle3 assessment of 同一featureに対する自動起動結果と手動`/system-dev-plan`実行結果は同じparent_featureで登録され、経路の違いによる二重登録が生じない: Current duplicate-package/immutable-receipt tests support shared registration refusal, but do not execute and compare both automatic and manual system-dev-plan paths. No full route-equivalence acceptance claimed. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "判定の対象は SKILL.md ee8aa00f… と閉包 666d9e0c…（84 file）。閉包は、受領書を書く直前に live-trial-verdict.py の skill_dir_tree_sha で自分で計算し直し、trial の verdict の値と一致した。前回の判定（SKILL.md 4769780d…）からの本文の変更は、SKILL.md（script_refs に build-graph-node.py などを足す、Macro flow 4 に「--dry-run では system-dev-planner を起動しない」、binding をまたぐ依存 edge の規則 cross_binding_dependency、progress.json の not_applicable の規則、「dry-run の preview」の6手順、完了の条件を IN1 PASS と checklist にして OUT1〜OUT7 は external_pending）と、R2b・R3・R6 に1〜3行ずつ同じ規則を足したもの。frontmatter の feedback_contract.criteria（IN1・OUT1〜OUT7）の文は変わっていない。手動の /system-dev-plan は、command file が entrypoint run-system-dev-plan で引数を同じ Skill へそのまま渡すので、自動起動と同じ promote と C02 register の経路に入る。register-package.py の冪等の判定（L418-443）は経路を区別しない。decompose の範囲の製品 test 12ファイル・222件（test_acceptance_gaps_a1.py・test_acceptance_gaps_a2.py・test_bd_bridge_dry_run_parity.py・test_bd_bridge_promotion_gate.py・test_build_github_projection.py・test_build_graph_node.py・test_c27_c28_projection_contract.py・test_projection_readiness_gate.py・test_register_package.py・test_runtime_coverage.py・test_validate_graph_schema_c11_coverage.py・test_no_bytecode_in_harness.py）を、今の閉包のまま PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、222件すべて PASS（9分5秒）。test_acceptance_gaps_a1.py の test_decompose_out7_manual_route_converges_on_the_auto_registration は、command file の文を確かめたうえで、別の run の手動の promote が同じ digest になり、register が idempotent で同じ parent_feature と node_ids を返し、graph が byte で変わらないことを確かめる。test_decompose_out7_manual_route_cannot_add_a_second_registration は、手動経路の別の receipt（registered nodes exist without immutable receipt）や別の package（already has tasks outside this package）でも二重登録にならないことを確かめる。"
     }
   }
 }

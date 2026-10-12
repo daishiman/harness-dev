@@ -578,11 +578,18 @@ def test_requirements_handoff_guard_is_pinned_to_the_binding_graph_snapshot(git_
 # --- run-dev-graph-init OUT3 -----------------------------------------------------------------------
 
 
+def without_bytecode_env() -> dict[str, str]:
+    """呼出し側の環境から bytecode の書き方を変える2つ (PYTHONDONTWRITEBYTECODE と、.pyc を harness の外へ逃がす
+    PYTHONPYCACHEPREFIX) を外す。script が自分で bytecode を止めているかだけを見る (test_no_bytecode_in_harness と同じ)。"""
+    return {key: value for key, value in os.environ.items() if key not in ("PYTHONDONTWRITEBYTECODE", "PYTHONPYCACHEPREFIX")}
+
+
 class Harness:
     """repo A/B から同じ symlink harness 経由で init と hook fallback を起動する。
 
-    source を渡すと harness はその複製を指す (harness 側の bytes が変わらないかを見るため)。bytecode cache は
-    interpreter が書くものなので PYTHONDONTWRITEBYTECODE で止め、dev-graph 自身の write だけを比べる。"""
+    source を渡すと harness はその複製を指す (harness 側の bytes が変わらないかを見るため)。harness は読取り専用なので
+    bytecode cache (__pycache__) も harness 側の変更に数える。PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX は外から渡さず (呼出し側の
+    環境にあっても外し)、init の script が自分で cache を止めていることを確かめる。"""
 
     def __init__(self, base: Path, source: Path = PLUGIN) -> None:
         self.base = base.resolve()
@@ -603,7 +610,7 @@ class Harness:
     def run(self, name: str, script: str, *argv: str, project_dir: str | None = None,
             via: Path | None = None) -> tuple[int, dict | str]:
         root = self.repos[name]
-        env = {**os.environ, "CLAUDE_PROJECT_DIR": project_dir or str(root), "PYTHONDONTWRITEBYTECODE": "1"}
+        env = {**without_bytecode_env(), "CLAUDE_PROJECT_DIR": project_dir or str(root)}
         cp = subprocess.run([sys.executable, str((via or self.link) / "scripts" / script), "--repo-root", str(root), *argv],
                             text=True, capture_output=True, env=env, cwd=str(root), check=False)
         try:
@@ -652,9 +659,9 @@ def repair(report: dict, option: str, root: Path) -> None:
     steps = next(item["steps"] for item in report["remediation"] if item["option"] == option)
     for argv in steps[:-1]:
         subprocess.run(argv, check=True, capture_output=True)
-    assert steps[-1][:1] == ["python3"] and steps[-1][1].endswith("/validate-harness-link.py")
+    assert steps[-1][:2] == ["python3", "-B"] and steps[-1][2].endswith("/validate-harness-link.py")
     rerun = subprocess.run([sys.executable, *steps[-1][1:]], text=True, capture_output=True, check=False,
-                           env={**os.environ, "CLAUDE_PROJECT_DIR": str(root), "PYTHONDONTWRITEBYTECODE": "1"})
+                           env={**without_bytecode_env(), "CLAUDE_PROJECT_DIR": str(root)})
     assert rerun.returncode == 0 and json.loads(rerun.stdout)["status"] == "pass", rerun.stdout + rerun.stderr
 
 
@@ -838,7 +845,7 @@ def test_init_out3_preflight_rejects_an_in_use_missing_link_a_plain_directory_a_
     steps = report["remediation"][0]["steps"]
     assert report["remediation"][0]["option"] == "reapply-hook-fallback"
     assert steps[0][-4:-1] == ["--mode", "rollback", "--manifest"] and steps[0][-1].startswith(".dev-graph/state/receipts/hook-fallback-")
-    assert all(step[4:6] == ["--config", ".dev-graph/config.json"] for step in steps[:-1]), steps
+    assert all(step[:2] == ["python3", "-B"] and step[5:7] == ["--config", ".dev-graph/config.json"] for step in steps[:-1]), steps
     assert steps[-1][-2:] == ["--config", ".dev-graph/config.json"], steps[-1]
     assert tree_bytes(a) == snapshot and link.is_symlink()
 
@@ -861,7 +868,7 @@ def test_init_out3_preflight_rerun_reads_the_same_non_default_config(tmp_path: P
         subprocess.run(argv, check=True, capture_output=True)
     # rerun は、直した link (alt の config が指すもの) を見て pass に戻る。既定の config を読み直すと別の link を見る。
     rerun = subprocess.run([sys.executable, *steps[-1][1:]], text=True, capture_output=True, check=False,
-                           env={**os.environ, "CLAUDE_PROJECT_DIR": str(b), "PYTHONDONTWRITEBYTECODE": "1"})
+                           env={**without_bytecode_env(), "CLAUDE_PROJECT_DIR": str(b)})
     again = json.loads(rerun.stdout)
     assert (rerun.returncode, again["status"], again["plugin_link"], again["link_state"]) == (
         0, "pass", ".claude/alt-plugin", "ok"), again

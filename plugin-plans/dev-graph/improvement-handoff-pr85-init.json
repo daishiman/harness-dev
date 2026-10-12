@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "pr85-init-criteria-20261012",
+    "generated_by": "PR #85 の run-dev-graph-init の受入条件判定 (eval-log/dev-graph/run-dev-graph-init/criteria-test/scenario-verdict.json) の OUT3 FAIL の observed と、team-lead の指示 (基準の文を実際に検出する仕組みへ直す)"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "findings": [
+    {
+      "id": "PR85-IN-01",
+      "severity": "high",
+      "summary": "C01 OUT3 は「harness link切断はhost launcher preflightが起動前検出する」で閉じるが、plugin にも host にもそれを実行する launcher は無く、validate-harness-link.py は skill の手順 0 に書かれているだけで build-init-scaffold.py は呼ばない。手順を飛ばせば切れた link のまま init が書き込めるので、文が指す検出の仕組みが実在せず、受入テストで確かめられない (criteria-test で FAIL)。init 側は build-init-scaffold.py がどの write よりも前に validate-harness-link.py を自ら起動し、status=pass でなければ書込み 0 件・exit 1 で切れた hop と修復の選択肢 (remediation) を返す形に直した。",
+      "recommendation": "C01 OUT3 の text を「同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はbuild-init-scaffold.pyがどのwriteよりも前に自ら実行するvalidate-harness-link.pyの検査が検出して書込み0件で止まり修復の選択肢を返す」に替える。最後の節だけを替え、前半 (repo A/B の分離・cross-read/write 0件・absolute stored path 0件・project-root不一致と broken content link の fail-closed) は一字も変えない。loop_scope=outer と verify_by=test は変えない。run-dev-graph-init の SKILL.md frontmatter の OUT3 も同じ文にする (inventory と逐語一致)。index.md・phase-04・phase-12・goal-spec checklist にある「harness自身の broken symlink は起動前 host launcher/installer preflight の責務」という記述は、link 経由の起動一般の責務分担を述べる別の主張なので、この finding では変えない。",
+      "target_ref": "component-inventory.json#C01.feedback_contract.criteria.OUT3"
+    }
+  ],
+  "provenance": {
+    "source_intake": "intake.json",
+    "prev_goal_spec": "goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "team-lead の teammate-message (PR #85: run-dev-graph-init の受入条件 OUT1・OUT3 の FAIL を直す、2026-10-12)"
+    }
+  }
+}

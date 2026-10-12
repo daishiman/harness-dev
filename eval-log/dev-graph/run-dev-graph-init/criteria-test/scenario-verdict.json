@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
     "component_id": "C01",
-    "skill_md_sha256": "0d1044ec34fd444a74869104984e23f6f978d86c8b7e73c1860d289c9e2ca341"
+    "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
   },
-  "verdict": "FAIL",
-  "reviewer": "/root/independent_review-current-cycle3",
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-pr85",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -16,93 +16,91 @@
       "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
-        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_frontmatter_repo_root_and_artifact_failure_classification",
-        "plugins/dev-graph/tests/test_build_init_scaffold.py::BuildInitScaffoldTest::test_first_run_scaffolds_once_and_rerun_is_noop",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/scripts/build-init-scaffold.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/schemas/graph-node.schema.json",
+        "plugins/dev-graph/schemas/repo-config.schema.json",
+        "plugins/dev-graph/tests/test_build_init_scaffold.py",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl"
       ],
-      "observed": "Independent current cycle3 assessment of validate-graph-schema.py で初期グラフストアを送信前検証しスキーマの必須キー欠落が 0 件: Current initializer tests and actual retry writer both execute delegated C11+repo-config validation with validtrue/violation_count0 before commit, while independent rollback counterexample verifies failure restores paths/bytes. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "build-init-scaffold.py の _plan は、どの write よりも前に、config を repo-config.schema.json で、グラフストアを validate-graph-schema.py の validate（L45 の _load_validator で読み込む）で検査し、findings が1件でもあれば pre_write_validation_failed で止まる（L200-207、write 0）。新規のグラフストアは EMPTY_GRAPH（L40。graph_revision 0、nodes []、schema_version 1.0.0）。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、init が作った graph.json を validate-graph-schema.py の CLI にかけ、exit 0、valid true、missing_sections []、violation_count 0。既にある graph.json から nodes を抜いたもの（graph_invalid）と、必須キーの欠けた node を持つもの（schema_violation など）は、dry-run でも本番でも pre_write_validation_failed、write 0、repo の tree は不変。live trial（20261013T0117-pr85）の transcript L101-102 でも、validate-graph-schema.py は exit 0、violation_count 0、missing_sections []。"
     },
     "OUT1": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/elegant-review-20261005-harness-bzn4/final-replay-report.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261005T174417-bzn4-init-retry/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261005T174417-bzn4-init-retry/transcript.jsonl"
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/goal-verdict.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/task.md",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/trial-note.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/out/status.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/subagent-transcripts/agent-a80f76de3d844f7be.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/subagent-transcripts/agent-a4ad4a959c1b96234.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/subagent-transcripts/agent-a47a4c52f3381a196.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/subagent-transcripts/agent-acbe742bf53871c4b.jsonl",
+        "plugins/dev-graph/scripts/build-init-scaffold.py",
+        "plugins/dev-graph/tests/test_build_init_scaffold.py"
       ],
-      "observed": "Current authentic goal FAIL with source closure unchanged: No R1–R5 responsibility prompt was read and no mandatory independent Agent verifier was actually launched, contrary to the explicit clarified task execution contract.; L121 Write used 個人開發 instead of the actual 個人開発 workspace path. Its successful tool result created the PASS marker outside the allowed fixture/proof directory; the specified completion marker remained absent.; No user-edit preservation exercise or before/after digest proof was collected. Two empty-fixture writer calls and a no-op result prove basic idempotence, not preservation of edited templates.. Positive partial component observations do not replace the complete skill goal. First FAIL and one terminal retry FAIL retained; no further rescue. Fresh acceptance FAIL, not a current source implementation defect diagnosis or old PASS refresh.",
+      "observed": "live trial 20261013T0117-pr85（scenario C01-OUT1-positive-idempotence-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict がすべて PASS）。verdict は live-trial-verdict.schema.json に通り、skill_dir_tree_sha は今の skill dir と一致し、transcript_sha256 も自分で計算して一致した。transcript を自分で読んだ。L35 で Skill を起動。L58-59 の dry-run は preview、planned_changes 36、write_count 0、preflight pass（link_state absent）。L62-63 の1回目は applied、write_count 36、schema valid。L89-90 は issue.md の template を編集し docs/user-note.md を足した後の2回目で、noop、planned_changes 0、write_count 0、migration_preview は issue.md だけ、fixture の file の sha の差は0、編集した4ファイルは sha のまま。L101-102 で validate-graph-schema.py は exit 0、保存された絶対パス0、token と node ID の印0、plugin の file の sha は不変。製品の側では、build-init-scaffold.py は欠けている dir と file だけを create_only で作り（L218-225）、変更が無く receipt があれば noop を返す（L246-248）。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro でも、6 root（issues・tasks・specs・architecture・features・docs）が symlink でない dir としてでき、config の routing_policy は example と同じ値、graph は初期値、2回目は noop で repo の tree は bytes ごと不変、receipt は1件のまま。留意：trial の progress.json は OUT3 を検証せずに PASS と書いていたが、OUT3 は test で判定するので、この criterion の判定には使っていない。",
       "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261005T174417-bzn4-init-retry/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_init_scaffold.py::BuildInitScaffoldTest::test_first_run_scaffolds_once_and_rerun_is_noop",
-        "plugins/dev-graph/tests/test_build_init_scaffold.py::BuildInitScaffoldTest::test_edited_template_is_kept_and_only_missing_parts_are_created",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_init_scaffold.py",
+        "plugins/dev-graph/scripts/build-init-scaffold.py",
+        "plugins/dev-graph/templates/template-contract.json"
       ],
-      "observed": "Independent current cycle3 assessment of 初期化後に `.dev-graph/templates/` へ全kind templateがscaffoldされ、二回目initでも利用者編集を上書きしない: Current first-run/no-op and edited-template preservation tests directly assert templates are scaffolded without overwriting user edits; current retry alone did not exercise edits and is not used as that proof. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "_plan は plugin の templates/ の全ファイルを `.dev-graph/templates/` へ、欠けているときだけ写す。既にあって bytes が違うものは preserved と migration_preview（plugin_sha256 と local_sha256）に載せ、上書きしない。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_first_run_scaffolds_once_and_rerun_is_noop と test_edited_template_is_kept_and_only_missing_parts_are_created を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、1回目で `.dev-graph/templates/` が plugin の templates/ の21ファイルと名前も bytes も一致し、template-contract.json が名指す template はすべてある。issue.md を編集して再実行すると noop、tree は不変、migration_preview は issue.md だけ。task.md を消して再実行すると task.md だけが作られ、編集した issue.md は bytes ごと残る。live trial でも templates は 21/21 で、2回目の後も編集は残った（transcript L89-90）。"
     },
     "OUT3": {
-      "status": "FAIL",
+      "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c24_enforces_symlink_containment_and_common_repository_ownership",
-        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c24_discovery_precedence_and_fail_closed_boundaries",
-        "plugins/dev-graph/tests/test_runtime_coverage.py::test_resolve_discover_and_main",
-        "plugins/dev-graph/tests/test_build_project_hook_fallback.py::ProjectHookFallbackTest::test_plugin_disabled_managed_duplicate_and_link_conditions_reject_without_writes",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_acceptance_gaps_a1.py",
+        "plugins/dev-graph/tests/test_init_preflight_gate.py",
+        "plugins/dev-graph/tests/test_no_bytecode_in_harness.py",
+        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py",
+        "plugins/dev-graph/scripts/build-init-scaffold.py",
+        "plugins/dev-graph/scripts/validate-harness-link.py",
+        "plugins/dev-graph/scripts/resolve-repo-context.py",
+        "plugins/dev-graph/scripts/build-project-hook-fallback.py",
+        "plugins/dev-graph/hooks/hooks.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl"
       ],
-      "observed": "Independent current cycle3 assessment of 同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はhost launcher preflightが起動前検出する: Current C24 repo/symlink containment tests establish scoped roots and several fail-closed boundaries, but the full declared host-launcher detection after harness-link severing was not demonstrated by current evidence. Do not replace that host behavior with static instructions. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "前回の FAIL の理由（共有の harness に bytecode を書いていた）は、製品の側で直っている。build-init-scaffold.py（L30）・validate-harness-link.py（L40）・build-project-hook-fallback.py（L34）などは sibling の import より前に sys.dont_write_bytecode = True を置き、子は sys.executable -B で起こす（scaffold の _preflight と _context）。hooks.json の4本は python3 -B で始まる。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_no_bytecode_in_harness.py の4件は、静的な検査3件と、env を外して全 script を --help で、全 hook を -B なしで起こす動的な1件。test_acceptance_gaps_a1.py の OUT3 の test は、env を外し -B なしで、frozen copy の harness を symlink で A と B から使い、相手の repo を chmod 0 で塞いで回す。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。(1) A と B のそれぞれで、相手の repo を chmod 0 にして、preflight、init の dry-run と本番、C24 の write、validate-graph-schema.py、link の作成、preflight（project-fallback）、fallback の preview・apply・再 apply（noop）、hooks.json の4本の link 経由の起動（stub の bd と gh を PATH の先頭に置く。exit はすべて 0）、init の再実行（noop）を回した。相手の repo の tree は不変、harness の tree は bytes も entry も不変で bytecode 0、偽の HOME と TMPDIR は空のまま、.git の外に保存された file に絶対パス0。(2) CLAUDE_PROJECT_DIR を相手の repo にすると c24_context_failed（disagree の診断）、issues を壊れた symlink にすると broken content symlink、相手の repo の issues への symlink は escapes の診断。どれも write 0、両方の repo の tree は不変。(3) harness の実体を rename して link を切ると、dry-run でも本番でも harness_link_broken、write_count 0、planned_changes null、preflight の link_state broken、broken_hop と missing_target を示し、remediation は relink-shared-harness と relink-this-repo（python3 の手順はどれも -B 付き）。返された relink-shared-harness の手順を実行すると init は applied になり、消した docs だけを作る。test_init_preflight_gate.py は、preflight が答えないときに _context を呼ばず harness_link_preflight_error で止まることも見ている。live trial でも plugin の file の sha は不変で、新しい __pycache__ は無かった（transcript L101-102）。残りの穴：reconcile-task-lifecycle.py が detached で起こす子（-B 付き）は、検査の後にも走りうる。"
     },
     "OUT4": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_init_scaffold.py::ExampleConfigTest::test_example_config_satisfies_repo_config_schema_and_names_every_content_root",
-        "plugins/dev-graph/tests/test_build_init_scaffold.py::BuildInitScaffoldTest::test_first_run_scaffolds_once_and_rerun_is_noop",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/schemas/repo-config.schema.json",
+        "plugins/dev-graph/templates/repo-config.example.json",
+        "plugins/dev-graph/tests/test_build_init_scaffold.py",
+        "plugins/dev-graph/scripts/build-init-scaffold.py"
       ],
-      "observed": "Independent current cycle3 assessment of GitHub設定雛形がenabled=falseで冪等生成され、owner/project number/field mappingを保持する一方、token/project/item/field node IDを正本configへ保存しない: Current schema/example-config and initializer tests exercise enabledfalse and portable config templates; actual retry reads portable disabled GitHub config. No token/node-ID storage was observed. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "_new_config は repo-config.example.json を雛形にし、repository_id と issue_prefix だけを埋め、github.enabled は false のまま（L111-121）。repo-config.schema.json は各階層で additionalProperties false で、github.projects の項目は alias・auto_add・default・field_mappings・owner_login・owner_type・project_number だけ。_plan は既存の config もこの schema で検査してから書く。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_example_config_satisfies_repo_config_schema_and_names_every_content_root と test_existing_config_that_fails_the_schema_stops_before_any_write を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、1回目の config は github.enabled false、projects は owner_login・project_number・field の名前（Status と Priority）を持ち、config と receipt の文字列に token・node_id・PVT_ などの印は0、絶対パス0。2回目は noop で config は bytes のまま。既にある config に github.token、projects の project_node_id、field_mappings の field_node_id、github.item_ids、最上位の github_token を足すと、5件とも dry-run でも本番でも pre_write_validation_failed、write 0、tree は不変。残りの穴：alias や option_map の値のような自由な文字列の field に node ID の文字列を書くことは、schema では止まらない。init が作る config は example からなので、そこに node ID は入らない。"
     },
     "OUT5": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "hybrid",
+      "evidence_kind": "pytest",
       "test_refs": [
-        "plugins/dev-graph/tests/test_build_project_hook_fallback.py::ProjectHookFallbackTest::test_plugin_default_then_fallback_merges_every_event_once_and_keeps_existing_hashes",
-        "plugins/dev-graph/tests/test_build_project_hook_fallback.py::ProjectHookFallbackTest::test_rollback_restores_exact_bytes_is_idempotent_and_refuses_drift",
-        "plugins/dev-graph/tests/test_build_project_hook_fallback.py::ProjectHookFallbackTest::test_missing_settings_is_created_and_rollback_removes_it",
-        "plugins/dev-graph/tests/test_build_project_hook_fallback.py::ProjectHookFallbackTest::test_plugin_disabled_managed_duplicate_and_link_conditions_reject_without_writes",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-logical-iteration1.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/dev-graph-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/upstream-criteria-alignment.json",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log",
-        "eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+        "plugins/dev-graph/tests/test_build_project_hook_fallback.py",
+        "plugins/dev-graph/scripts/build-project-hook-fallback.py",
+        "plugins/dev-graph/scripts/build-init-scaffold.py",
+        "plugins/dev-graph/hooks/hooks.json"
       ],
-      "observed": "Independent current cycle3 assessment of plugin hookを既定にしproject fallback選択時だけ既存.claude/settings.jsonへ非破壊mergeされ、二重登録0件、既存key/hash変更0件、managed/disabled診断とrollbackが再現できる: Current project fallback tests check plugin default, all-event non-destructive merge, stable existing hashes, duplicate/managed/disabled refusal and exact rollback; independent init rollback preserves the failure boundary. Current execution basis: worker101 tests (runtime bodies preserved across metadata-only reconciliation), root144 behavioral tests passed with unrelated C03 inventory mismatch subsequently repaired by27 contracts, planner842+2 skips and system394. References were re-read against current source; previous receipt statuses/observations were not copied. Static design PASS is separate; FAIL here denotes incomplete full acceptance evidence, not an inferred new source bug."
+      "observed": "build-init-scaffold.py の --hook-source の既定は plugin で、init は .claude/ を作らない。build-project-hook-fallback.py の既定の mode は preview。apply は既存の settings に追記だけをし（_merge）、既存の key と group の canonical hash と重複を _verify で確かめ、rollback の manifest を create-only で先に書いてから atomic に置き換える。rollback は after の sha が一致する file だけを戻し、ずれていれば rollback_drift で止まる。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_build_project_hook_fallback.py の5件を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、init の後に .claude/ は無く、config の claude_hooks.source は plugin。既存の settings.json（model・permissions・既存の PreToolUse の hook）に apply すると、既存の key と group の hash は不変、hooks.json の全 command が link 経由でそれぞれ1回だけ入り（python3 -B で始まる）、config の source は project になる。再 apply は noop で tree は不変。rollback で settings.json と config.json は bytes ごと戻り、2回目の rollback は noop。apply の後に settings を書き換えると rollback_drift、write 0。user settings の enabledPlugins の dev-graph（plugin_hook_effective）、local settings の disableAllHooks（hooks_disabled）、managed の allowManagedHooksOnly（managed_hooks_only）、user settings の別の dev-graph hook（duplicate_registration）は、preview でも apply でも write 0 で止まる。残りの穴：fallback を選ぶかどうかは R5（LLM）の判断に頼る。plugin hook が効いていれば script が拒む。live trial は plugin を選んだので、fallback の経路は trial では通っていない。"
     }
   }
 }
