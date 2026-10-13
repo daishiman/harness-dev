@@ -39,19 +39,51 @@ def _resolve_dotted(obj, dotted: str):
     return cur
 
 
-def _check_cross_field_rules(schema: dict, instance: dict) -> list[str]:
-    """T6: x-cross-field-rules で宣言した equals ルールを強制。"""
+_MISSING = object()
+
+
+def _read_sibling_value(target: Path, rule: dict):
+    """intake.json と同じディレクトリの sibling_file から sibling_path の値を読む。読めなければ _MISSING。"""
+    sibling = target.parent / rule["sibling_file"]
+    try:
+        data = json.loads(sibling.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return _MISSING
+    cur = data
+    for part in rule["sibling_path"].split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return _MISSING
+        cur = cur[part]
+    return cur
+
+
+def _check_cross_field_rules(schema: dict, instance: dict, target: Path | None = None) -> list[str]:
+    """T6: x-cross-field-rules で宣言した equals / sibling_equals ルールを強制。
+
+    sibling_equals は target (intake.json のパス) の隣のファイルを読む。target が無ければ読めない扱い。
+    """
     errors: list[str] = []
     for rule in schema.get("x-cross-field-rules", []):
+        operator = rule.get("operator")
         left = _resolve_dotted(instance, rule["left"])
-        right = _resolve_dotted(instance, rule["right"])
-        if rule.get("operator") == "equals":
+        if operator == "equals":
+            right = _resolve_dotted(instance, rule["right"])
             if left is None and right is None:
                 continue  # 両方欠落は cross-field エラーではない (schema 側 required で別途検出)
             if left != right:
                 errors.append(
                     f"[{rule['id']}] {rule['left']}={left!r} != {rule['right']}={right!r}"
                 )
+        elif operator == "sibling_equals":
+            # left が when_equals のときだけ、隣の sibling_file の値が right と一致することを要求する。
+            if left != rule["when_equals"]:
+                continue
+            actual = _MISSING if target is None else _read_sibling_value(target, rule)
+            where = f"{rule['sibling_file']}:{rule['sibling_path']}"
+            if actual is _MISSING:
+                errors.append(f"[{rule['id']}] {rule['left']}={left!r} だが {where} を読めない (fail-closed)")
+            elif type(actual) is not type(rule["right"]) or actual != rule["right"]:
+                errors.append(f"[{rule['id']}] {rule['left']}={left!r} だが {where}={actual!r} (期待値 {rule['right']!r})")
     return errors
 
 
@@ -94,7 +126,7 @@ def main(argv: list[str]) -> int:
     validator = validator_cls(schema)
     errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
 
-    cross_errors = _check_cross_field_rules(schema, instance)
+    cross_errors = _check_cross_field_rules(schema, instance, target)
     if not errors and not cross_errors:
         print(f"PASS: {target} conforms to intake.schema.json (incl. cross-field rules)", file=sys.stderr)
         return 0

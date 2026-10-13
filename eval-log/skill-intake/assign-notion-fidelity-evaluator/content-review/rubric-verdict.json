@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "assign-notion-fidelity-evaluator",
-    "skill_md_sha256": "626054974f643017fd1a0232b393ebe9e07fa5c26bf48b2fc9a705050ac3d1a4"
+    "skill_md_sha256": "142328bddbabff1860d6e78b1f5af1de1e3d45370902c59ac1969df75b846f95"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -14,7 +14,7 @@
     "smell": 0
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
+  "reviewed_at": "2026-10-11T13:56:54Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,7 +25,9 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "rubric観点でも確認: `pair: run-notion-intake-publish` が追加され、publish側の本文・composition dependencyにも evaluator 呼出しが実在するため pair は架空参照でない。assign kind には runtime goal_seek を追加せず fork evaluator の責務を保持した。"
+      "rubric 1.6.0 の機械採点: score 100 / threshold 80、findings 0 件、high 0 件。",
+      "FM-001・NM-001: name と directory 名が一致。BD-001: `## Purpose & Output Contract` (L62)。BD-002: `## Gotchas` (L133)。BD-003: 160行で300行以内。PD-001: references/ に4ファイル。",
+      "最小権限: allowed-tools の Bash が python3 の起動だけに絞られ、本文が求める操作 (script 3本の実行) とちょうど一致する。"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -33,5 +35,5 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "現行全文、pair先、composition、canonical map/result schema、criteriaをfresh review。runtime-profileはnot-applicable finding 0、frontmatter/tree lintはexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (160行) と git diff 03050251、prompts/R3.md の実行指示、references/ 4件 (resource-map.yaml・fidelity-check-rules.md・granularity-rubric.md・abstraction-contract.md)、scripts/ 3件の実在、skill-intake の commands からの呼び出し。 確かめたこと: Bash の実行指示は SKILL.md:119-131 の3コマンドで、すべて python3 で始まる。fidelity-report.json/md は validate-notion-fidelity.py 自身が書くので、Write を持たない allowed-tools と矛盾しない。参照先の scripts 3件と references 4件は実在する。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:59 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: SKILL.md:96 のチェック項目 `scripts/validate-notion-fidelity.py <intake-final-context.json>` は python3 を付けない省略記法だが、同じ script の python3 形が SKILL.md:127 にあるので指摘にしない。"
 }

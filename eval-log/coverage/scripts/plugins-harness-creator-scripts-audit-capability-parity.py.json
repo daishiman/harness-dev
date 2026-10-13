@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/audit-capability-parity.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 3df8e6c3fca65ccce2b0a7fe4731205297de2b0e4cbdd4e35235c364961c29e0 をレビュー。実行検証あり）。範囲: 1316行の全体を通読し、`git diff HEAD` で前回（i 回目）の指摘への手当てを確認。確かめたこと: 前回の [中] 以上はすべて直っている。package-contract の形を検査する `_contract_shape_errors`（204-242行）、marketplace の形の崩れを AuditError にする `_marketplace_plugins`（170-177行）、owner 側を解決する `_owner_plugin_dir`/`_owner_declared_skills`（245-284行）、repo 外へのはみ出しを止める `_contained_path`（386-391行）を local_path（1045行）と owner_route（1063行）で使用、audit_plugin が TypeError/AttributeError/KeyError/ValueError を ERROR にする（872-889行）、audit_repo の事前検査（1254-1262行）、main の exit が `{\"PASS\":0,\"FAIL\":1}.get(verdict,2)`。pytest（test_audit_capability_parity.py・test_root__ja_contract_parity.py・test_plugin_fleet_gate_integration.py）77 passed。実 repo の `--all` は 22/22 PASS・rc0。exit code: --help は 0、引数不足・--all と --plugin の併用・未知の plugin・存在しない root・ファイルを root に渡す、はすべて rc2。fixture（work-j-s1/acp）: m1・m3 は ERROR・rc2、m2・n7・n8 は rc2、m4 は FAIL・rc1、n3〜n6 は traceback なしの FAIL。lint-script-frontmatter はファイルで OK（checked=1）、scripts/ ディレクトリで checked=33。CI（governance-check.yml:137、harness-creator-kit-ci.yml:120）は exit code だけを見ており、契約と合う。回帰は見つからなかった。指摘: [低] 464行 `owner_body.split(\"---\", 2)[-1]` は、frontmatter の値に '---' があると frontmatter の後半を本文として扱う。本文にあるべき token が frontmatter にしか無くても欠落を見逃す。行頭の '---' 行で閉じを探す形にする。[低] 言語不一致の分岐（567-570行）と has_prompts=False の経路（462-463・566行）を通す test が無い。[低] `_load_json`（143-146行）は RecursionError を受けない。20 万段の入れ子の `.codex-plugin/plugin.json`・package-contract.json（fixture n1・n2）で traceback・rc1 になり、ERROR（rc2）にならずに run 全体が止まる。except に RecursionError を足す。DEDUCTION: 464行の frontmatter 切り出し -2、test の欠落 -2、RecursionError -3 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

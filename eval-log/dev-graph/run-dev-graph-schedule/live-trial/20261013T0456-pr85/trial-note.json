@@ -1,0 +1,43 @@
+{
+  "label": "schedule7",
+  "retry_of": "20261013T0211-pr85",
+  "evaluator_agent_id": "a021fe77f31686f24",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule7/ws/plugins/dev-graph/skills/run-dev-graph-schedule",
+  "closure_sha_at_launch": "d90fa4d1692a651b382b9b49f6074e09fd27ddd7ef22757b4f199ffce6d8fb3f",
+  "closure_sha_tested_copy": "d90fa4d1692a651b382b9b49f6074e09fd27ddd7ef22757b4f199ffce6d8fb3f",
+  "closure_sha_wtpy_at_verdict": "d90fa4d1692a651b382b9b49f6074e09fd27ddd7ef22757b4f199ffce6d8fb3f",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-schedule) を、その場で git init した repo に写した (最初の commit は 1379692、README.md だけを追跡)。元の fixture は変えていない。schedule4・schedule6 と同じ seed から作り直した。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json と .dev-graph/state/init-receipt.json の repository_id と worktree_id を付け替えた (fixture-provenance.json の rekey と rekeyed_files)。",
+    "依存の辺の準備: team-lead の連絡により、lease の準備の前に、done の task-base-auth の depends_on を [] から [\"task-docs-runbook\"] (active のまま) にした。C02 (build-graph-node.py update) の最初の dry-run は node_missing_required_keys (architecture_refs が無い) で拒まれたので、orchestrator の script (smoke/schedule7/repair7.py) で task-base-auth の node だけに architecture_refs: [] を足し (graph.json b2f40bab…→22d96dd5…、graph_revision は 1 のまま。正規の経路ではない)、同じ入力で dry-run と apply を回した (graph_revision 1→2、graph.json 22d96dd5…→3b26c1fc…、receipt node-r000002-update.json)。apply は tasks/base-auth.md の frontmatter を書き直し、C02 の規則で task-base-auth の evaluation_status が pass から stale になった。apply の後の C11 は valid・violation 0 (fixture-provenance.json の graph_edge_prep)。",
+    "依存の辺のねらい: done の node が open の node に依存し、その先 (task-base-auth に依存する task-cache-warmup) に ready の候補がある形を 1 つ入れ、被験がそれを推移的な依存の未完了として扱うかを評価者が確かめられるようにした。ねらいは trial の後に provenance に書き足し、被験には読ませていない (fixture-provenance.json の graph_edge_prep.purpose)。",
+    "読取りの schedule の確認: C02 の apply の後・lease の準備の前に、wtpy の schedule-graph.py を被験の外で読取りだけで 1 回回した (--leases なし)。前後で fx のファイルの sha256 は同じ (workdir/fx-after-c11-apply.sha と fx-after-schedcheck.sha)。出力は smoke/schedule7/ に置き、被験にも評価者にも渡していない (fixture-provenance.json の graph_edge_prep.schedule_check)。",
+    "lease の準備: 起動の前 (2026-10-12T19:55:51Z) に、manage-worktree-lease.py --op claim --graph-node-id task-api-users --branch devgraph/task-api-users --session-id orchestrator-prep-schedule7 を --resource なしで回し、active な lease を 1 件作った (schedule4・schedule6 と同じ手順)。claim は worktree が clean でないと branch を作れないため、先に git switch -c devgraph/task-api-users をし、claim の後に git switch main で戻した。claim は fx の .git/dev-graph/ に leases.json・events.json・leases.lock を作り、C02 の execution-context consumer を通して graph の task-api-users の execution_contexts に 1 行を足した (graph_revision 2→3、graph.json 3b26c1fc…→2dbfcc8b…)。branch devgraph/task-api-users は fx に残る (fixture-provenance.json の lease_prep)。",
+    "node の選び方: schedule4・schedule6 と同じ。同じパス src/api/users/ で task-api-users-cache と重なる task-api-users を選んだ (fixture-provenance.json の lease_prep.why_this_node)。",
+    "事前の確認: lease の準備の後に、被験の外で fx の graph を C11 (validate-graph-schema.py) と C24 (resolve-repo-context.py --mode write) にかけた。C11 は valid・violation 0、C24 は rc=0 で、前後で fx のファイルの sha256 は変わらなかった (fixture-provenance.json の fixture_check)。",
+    "seed の確認: 起動の前に、fx に seed の要素 (50 項目。空の dir を含む) がそろっていることを読取りで確かめた (seedcheck.py。missing 0・type_mismatch 0。中身が違うのは rekey の 2 つと、依存の辺の準備と lease の準備で変わった graph.json・tasks/base-auth.md。fixture-provenance.json の seed_check)。",
+    "task.md: schedule6 の task.md から、run の dir の名前 (runs/schedule6 → runs/schedule7、4 か所) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。隔離の条件は schedule6 と同じ (§17 の guard: 外へ送る tool と許可一覧に無い tool を拒否。guard.py f23267a3…、mksettings.py 277ae072…)。schedule6 の設定との違いは、前の schedule の run の dir (runs/schedule4〜6) と orchestrator の記録の dir (smoke) への Read の deny を permissions.deny と sandbox.filesystem.denyRead に足したことだけ (fixture-provenance.json の isolation_layout.read_deny)。plugins/dev-graph は変えていない。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/schedule7/tmp。短い symlink /private/tmp/ltpr85/t/sc7 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 d90fa4d1… は team-lead の連絡「schedule7 の開始の合図」の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。trial の間は 30 秒ごとに wtpy の閉包を測り、起動から終わりまで動かなかった (workdir/closure-watch.log)。",
+    "取り直しの経緯: schedule6 (20261013T0211-pr85) の後に被験 skill の閉包が dcdfd54b から d90fa4d1 に変わった (team-lead の連絡「schedule7 の開始の合図」) ので、今の閉包で取り直した。retry_of は schedule6。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 10 か所、アカウント名を 4 か所伏せた (redact.py)。",
+    "伏せ字と、trial の後に provenance に書き足したもの (ねらいと trial の後の事実) のほかは、どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "scripts/schedule-graph.py には --max-parallel の引数が無い。argparse にあるのは --graph、--ready-source、--ready-json、--leases だけである。さらに batches() は貪欲な first-fit で、1 batch の件数に上限を持たない。max_parallel を守るかどうかは、LLM が出力を整形するときに頼っている。再現の手順: resource_scope が互いに重ならず、依存も満たした active・confirmed・pass・complete の task を 5 件以上持つ graph を用意し、schedule-graph.py --graph <g> --leases <l> を実行する。すると 1 batch に全件が入り、config の max_parallel を超える。",
+    "scripts/schedule-graph.py は lease が active かどうかを state not in {released, expired} だけで決めており、expires_at を見ていない。再現の手順: leases.json に state=claimed で、expires_at が過去 (例: 2026-01-01T00:00:00Z) の lease を置いて実行する。その node と、scope が重なる node が ready から外れ続ける。安全側に倒れてはいるが、推薦が漏れる。",
+    "SKILL.md の手順 2 にある『beads binding のとき bd ready を参照』の文言は、config の execution_tracker.mode のことか、node ごとの tracker_binding のことか、読み分けられない。今回の fixture では両者が食い違っていた。被験は node 単位と読んだ (transcript L65-67)。この読みは execution-tracker-contract.md と整合するが、SKILL.md の本文だけでは決まらない。再現の手順: config の mode=beads で、全 node の tracker_binding=none の fixture で skill を回すと、bd ready を呼ぶかどうかの判断が実行ごとに揺れる余地がある。"
+  ]
+}

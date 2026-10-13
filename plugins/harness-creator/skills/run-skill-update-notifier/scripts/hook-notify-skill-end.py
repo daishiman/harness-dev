@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""PostToolUse hook (matcher=Skill): Skill 実行末尾に 1 行通知。常に exit 0。
+"""PostToolUse hook (matcher=Skill): Skill の実行後に版の食い違いを利用者に表示する。常に exit 0。
 
-stdin の payload から plugin 名を推定し、notifier-check.py --mode notify を呼ぶ。
-plugin 名が特定できない場合は no-op (graceful degradation)。
+stdin の payload から plugin 名を推定し、notifier-check.py の notify subcommand を呼ぶ。
+通知があれば `{"systemMessage": "<plugin>: <通知>"}` の JSON 1 個を stdout に出す。
+Claude Code は PostToolUse の素の stdout を debug log に送るだけで利用者に見せないが、
+stdout 全体が JSON 1 個なら JSON として読み、systemMessage を利用者に表示する。
+通知が無いときは何も出さない。plugin 名が特定できない場合も no-op (graceful degradation)。
+payload の session_id を --session-id で渡し、同じ session で同じ plugin の通知を
+2 度出さない (記録は notifier-check.py が cache の notified.<plugin> に残す)。
 """
 from __future__ import annotations
 
@@ -39,13 +44,19 @@ def main() -> int:
         plugin = _extract_plugin_name(payload)
         if not plugin:
             return 0
-        result = subprocess.run(
-            ["python3", str(NOTIFIER), "notify", "--plugin", plugin],
-            capture_output=True, text=True, timeout=5,
-        )
+        args = ["notify", "--plugin", plugin]
+        session_id = payload.get("session_id")
+        if isinstance(session_id, str) and session_id:
+            # `=` で繋ぐ。値が `-` で始まっても option と取り違えない
+            args.append(f"--session-id={session_id}")
+        # 起動するのは notifier-check.py だけ。argv の先頭 2 要素は呼び出しの場で固定する
+        result = subprocess.run(["python3", str(NOTIFIER), *args],
+                                capture_output=True, text=True, timeout=5)
         line = result.stdout.strip()
         if line:
-            print(line)
+            # 通知は作者に向けた版の食い違いで Claude の作業には関係しないので、
+            # additionalContext (Claude への文脈) は付けず、利用者への表示だけにする
+            print(json.dumps({"systemMessage": f"{plugin}: {line}"}, ensure_ascii=False))
     except Exception as exc:
         print(f"[notifier-hook] skipped: {exc}", file=sys.stderr)
     return 0

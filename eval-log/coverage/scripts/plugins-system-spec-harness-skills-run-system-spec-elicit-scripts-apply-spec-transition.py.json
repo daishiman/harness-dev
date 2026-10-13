@@ -4,10 +4,15 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 92,
-    "notes": "soundness=confirm/excludeが確定セルをTransitionErrorで拒否しreopen経由のみ確定変更を許すsingle-writer rollback防御が中核で堅牢。recompute_aggregatesが真理値表で集約を再導出(宣言値でなくセルから再計算)。set-foundationの確定条件(U1-U3値必須・U4-U9は明示N/A+理由可、かつapproval_log実在approval_ref)、set-decisionのcost_model/evidence https URL(username排除)/RFC3339検証、knowledge candidateのkebab id+lifecycle同一/1段階前進のみ、concrete_intents.serves dangling拒否まで機械検証。responsibility=spec-state.jsonへの唯一の書込経路で、bootstrap/init/apply/chunk/aggregate/set-targets/set-foundation/set-decision/set-knowledge-candidateの全subcommandがspec-state遷移という単一責務に凝集(1035行だが凝集高)。error-handling=TransitionError→1・OSError/JSONDecodeError→1・argparse required subparserでusage→2。side-effect-safety=network:false、_emitが--out|--state|stdoutへ書き宣言write-scope=spec-state.json(単一writer)と整合、load_json_argはJSON文字列/pathを安全判別。frontmatter=PEP723完全。近傍tests/test_spec_transition.pyに64テストあり遷移規則を実確認。",
-    "score_scale": "0-100"
+    "score": 99,
+    "notes": "genuine review（sha256 cf2f1246bc9a426a5af4b344389ba5d9a6dcdba07ef2d66c595369984decee5d をレビュー。実行検証あり）。範囲: 全1972行（版 0.2.1）と、前回の記録（sha bf744fa4…、PASS 95）からの差分。UsageError、STATE_REQUIRED_KEYS と STATE_OPTIONAL_KEYS、load_state、_require_ops、load_turns、_require_catalog_for_confirm(ops, catalog_path) を足した。chunk は turns[: max(args.max_loops, 0)] の中の confirm を見て、catalog が要るかを決める。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。scratchpad の work-covc/ast で CLI を当てた。aggregate は state が [] でも {} でも rc 1 で、state は変わらない。init は taxonomy が [] なら rc 1 で、出力を作らない。apply は confirm で catalog が無いと rc 2 で、state は変わらない。--op が [] や \"x\" のときと、壊れた JSON のときは rc 1。chunk は turns が {} や [1] なら rc 1。fixture の hearing-turns で、--max-loops 1（exclude だけ）は catalog なしで rc 0。--max-loops 2 は confirm を含むので rc 2 で、state は変わらない。--max-loops 2 に catalog を付けると rc 1（block が接地していない）で、state の sha は前と同じ。--max-loops 0 と -3 は rc 0 で、何も変わらない。知らない引数と引数なしは rc 2。run_chunk は先頭から max_loops 件を適用するので、confirm を見る範囲と適用する範囲は一致する。確定セルを作るのは confirm だけ。bootstrap と fixture の state は必須キーを持つ。prompts の R2 と R3、SKILL.md 188行、spec-state-contract 109行は、confirm のときに --required-info を付けるよう書いている。plugins/system-spec-harness/skills/run-system-spec-elicit/tests は 153 passed。plugin 全体では 539 passed・2 failed。2件は test_guard_hook で、CLAUDE_PROJECT_DIR を差し替えたため。差し替えを外して流すと test_guard_hook.py は 95 passed。lint-script-frontmatter は OK（checked=1）。前回の指摘の扱い: 前回の2件（壊れた入力での traceback、confirm の catalog を任意の引数に頼ること）は直った。判断の妥当性: 入力の形の誤りを rc 1、使い方の誤りを rc 2 に分け、どちらも state を書く前に止まる。観察（減点なし）: block を warn に替えた catalog（work-covc/ast/cat_weak.json）を渡すと、confirm が rc 0 で確定まで進む。正規の catalog は rc 1、空の catalog は rc 2。ただし SKILL.md 128行の完了条件は、正規のパスの catalog で validate-knowledge-graph.py を流して確かめ直すので、ここで止める必要は薄い。header の argv は、9個あるサブコマンドのうち4つしか挙げていない（origin/main からある）。指摘: [低] STATE_REQUIRED_KEYS は hearing_progress を求めるが、plugins/system-spec-harness/schemas/spec-state.schema.json の required にhearing_progress は無い（properties にはある）。schema に合っていて hearing_progress の無い state は、全サブコマンドで exit 1 になる。writer が作る state には必ずあるので、影響は小さい（-1）。DEDUCTION: -1 → 99。[高] と [中] は無いので PASS。"
   },
-  "reviewed_by": "workflow-code-review",
-  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
 }

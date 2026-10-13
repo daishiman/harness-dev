@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-schedule",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule/fx --max-parallel 4",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "SKILL.md が必須とする C17 独立 verifier (Agent dev-graph:dev-graph-parallel-safety-verifier) の判定が得られていない。原因は隔離ガードの誤検知で、被験 skill の不具合ではない。verifier は読取りだけの Bash 1 本目で拒否された (agent-ac81dc1df6832d6a7.jsonl の L10 が command、L11 が拒否)。その command は `R=.../scratchpad/wttrial; S=$R/tmp/...; cat $S/schedule.json; cat $S/leases.json; head -c 6000 $R/runs/schedule/fx/.dev-graph/state/graph.json; wc -c ...` だった。変数を展開した後の実際のパスは、どれも allowed_write_roots (wttrial/tmp と wttrial/runs/schedule) の内側にある。ところが guard.py の L96-100 は guarded_root を正規表現の文字列一致で見るため、許可 root の祖先にすぎない `.../scratchpad/wttrial` という文字列を「監査対象の領域への言及」として deny した。verifier はこれを回避せず、判定不能 (undetermined) を返した (同ファイル L15)。",
+      "その結果、SKILL 本文 5 の「C17 独立 verifier が不一致を出したら推薦しない」に基づく検証済みの推薦が成立していない。goal-seek の progress は 4 項目が pass-unverified のままで、handoff_complete に達していない。R2-plan と R3-schedule の Agent fork も実行されずに FAIL で終わった (transcript L134-141、fx/eval-log/run-dev-graph-schedule-progress.json の blocker 欄)。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+  "transcript_sha256": "7fa89993ae73c39afc19781dfb1b65602d242e1cde48c0b32900b0286559e7f9",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 210.0
+  },
+  "scenario_id": "schedule-positive-ready-set-fixture-standard-v2"
+}

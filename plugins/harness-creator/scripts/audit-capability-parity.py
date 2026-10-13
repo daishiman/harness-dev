@@ -3,10 +3,12 @@
 # name: audit-capability-parity
 # purpose: Claude/Codex plugin capability parity を user-reachable surface 単位で監査する。
 # inputs:
-#   - argv: --repo-root PATH [--plugin SLUG ...|--all] [--json]
+#   - argv: --repo-root PATH [--plugin SLUG ...|--all] [--json（互換用。出力は常に JSON）]
 # outputs:
-#   - stdout: plugin別のsurface inventory・violations・PASS/FAIL
-#   - exit: 0=全PASS / 1=parity FAIL / 2=入力・layout不正
+#   - stdout: plugin別のsurface inventory・violations・PASS/FAIL/ERROR と集計（error_count を含む）
+#   - exit: 0=全PASS / 1=parity FAIL（file・field の欠落と値の違反）/ 2=入力・layout不正
+#           （引数・repo-root・marketplace の不正は report を出さずに終了。plugin の JSON が読めない、
+#           または field の JSON 型が違う plugin は verdict ERROR として記録し、残りの plugin を続ける）
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -47,6 +49,7 @@ LITERAL_ROOT_PLACEHOLDER_RE = re.compile(
 RUNTIME_ROOT_POLICY = "host-skill-path"
 RUNTIME_ROOT_CONTRACT_TOKENS = (
     "## Runtime root contract",
+    "runtime_root_policy: host-skill-path",
     "Claude Code",
     "`CLAUDE_PLUGIN_ROOT`",
     "この `SKILL.md` のabsolute path",
@@ -55,6 +58,19 @@ RUNTIME_ROOT_CONTRACT_TOKENS = (
     "literal placeholder",
     "各shell invocation",
     "`prompts/` 配下はこのowner Skill契約を継承する",
+)
+# 日本語の正規形 (2つ目の正規形)。英語の組と同じ役割で、どちらかの組が全部揃えば合格。
+RUNTIME_ROOT_CONTRACT_TOKENS_JA = (
+    "## 実行時のルートの決め方",
+    "runtime_root_policy: host-skill-path",
+    "Claude Code",
+    "`CLAUDE_PLUGIN_ROOT`",
+    "この `SKILL.md` の絶対パス",
+    "プラグインの定義ファイル",
+    "`cwd`",
+    "置き換える前のプレースホルダ",
+    "シェルを呼ぶたび",
+    "`prompts/` の下のファイルも、このスキルの決まりに従う",
 )
 RUNTIME_ROOT_CANONICAL_REF = (
     "../ref-cross-platform-runtime/references/runtime-portability.md"
@@ -80,6 +96,10 @@ HOOK_PATH_RE = re.compile(
 
 class AuditError(RuntimeError):
     pass
+
+
+class InputUnreadableError(AuditError):
+    """file はあるが、JSON の object として読めない (exit 2 の入力不正に当たる)。"""
 
 
 def resolve_host_skill_plugin_root(
@@ -122,18 +142,146 @@ def _load_json(path: Path, *, required: bool = True) -> dict:
         return {}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise AuditError(f"invalid JSON {path}: {exc}") from exc
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputUnreadableError(f"invalid JSON {path}: {exc}") from exc
     if not isinstance(payload, dict):
-        raise AuditError(f"JSON root must be an object: {path}")
+        raise InputUnreadableError(f"JSON root must be an object: {path}")
     return payload
 
 
-def _violation(code: str, message: str, *, path: str | None = None) -> dict:
+def _violation(
+    code: str, message: str, *, path: str | None = None, input_error: bool = False
+) -> dict:
     item = {"code": code, "message": message}
     if path is not None:
         item["path"] = path
+    if input_error:
+        # parity の違反ではなく、入力を読めず照合できなかったことを示す。plugin の verdict は ERROR になる。
+        item["input_error"] = True
     return item
+
+
+def _verdict(violations: list[dict]) -> str:
+    if any(item.get("input_error") for item in violations):
+        return "ERROR"
+    return "FAIL" if violations else "PASS"
+
+
+def _marketplace_plugins(repo: Path) -> list:
+    """Codex marketplace の plugins 配列。読めないか配列でなければ repo 全体の入力不正とする。"""
+
+    path = repo / ".agents" / "plugins" / "marketplace.json"
+    entries = _load_json(path).get("plugins")
+    if not isinstance(entries, list):
+        raise AuditError(f"marketplace plugins must be an array: {path}")
+    return entries
+
+
+def _marketplace_names(repo: Path) -> set[str]:
+    return {
+        item["name"]
+        for item in _marketplace_plugins(repo)
+        if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+
+
+CONTRACT_FIELD_TYPES = {
+    "plugin_name": str,
+    "entry_points": dict,
+    "depends_on": list,
+    "runtime_dependencies": list,
+    "codex_alternatives": dict,
+}
+ALTERNATIVE_FIELD_TYPES = {
+    "commands": dict,
+    "agents": dict,
+    "hook_omissions": dict,
+    "component_omissions": dict,
+    "library_entry_skill": str,
+}
+
+
+def _contract_shape_errors(contract: dict, *, label: str) -> list[dict]:
+    """field があるのに JSON 型が違う箇所を入力エラーとして返す。field が無いことは別の規則が FAIL にする。"""
+
+    errors: list[dict] = []
+
+    def wrong(field: str, expected: str) -> None:
+        errors.append(
+            _violation(
+                "contract_shape_invalid",
+                f"{label} {field} must be {expected}",
+                input_error=True,
+            )
+        )
+
+    for field, expected in CONTRACT_FIELD_TYPES.items():
+        if field in contract and not isinstance(contract[field], expected):
+            wrong(field, f"a JSON {expected.__name__}")
+    entry_points = contract.get("entry_points")
+    if isinstance(entry_points, dict):
+        for kind in SURFACE_DIRS:
+            names = entry_points.get(kind)
+            if kind in entry_points and (
+                not isinstance(names, list) or not all(isinstance(name, str) for name in names)
+            ):
+                wrong(f"entry_points.{kind}", "an array of strings")
+    dependencies = contract.get("depends_on")
+    if isinstance(dependencies, list) and not all(isinstance(item, str) for item in dependencies):
+        wrong("depends_on", "an array of plugin-name strings")
+    runtime_dependencies = contract.get("runtime_dependencies")
+    if isinstance(runtime_dependencies, list) and not all(
+        isinstance(item, dict) for item in runtime_dependencies
+    ):
+        wrong("runtime_dependencies", "an array of objects")
+    alternatives = contract.get("codex_alternatives")
+    if isinstance(alternatives, dict):
+        for field, expected in ALTERNATIVE_FIELD_TYPES.items():
+            if field in alternatives and not isinstance(alternatives[field], expected):
+                wrong(f"codex_alternatives.{field}", f"a JSON {expected.__name__}")
+    return errors
+
+
+def _owner_plugin_dir(repo: Path, owner: str) -> Path | None:
+    """owner は plugins/ 直下の directory 名だけを受け付ける (相対 path で repo の外を読まない)。"""
+
+    if owner in {"", ".", ".."} or Path(owner).name != owner:
+        return None
+    return repo / "plugins" / owner
+
+
+def _owner_declared_skills(
+    repo: Path, owner: str, *, self_slug: str, violations: list[dict], code: str
+) -> tuple[Path, list[str]] | None:
+    """owner plugin の directory と、その契約が宣言した skills を返す。照合できなければ violation を足して None。"""
+
+    owner_plugin = _owner_plugin_dir(repo, owner)
+    if owner_plugin is None:
+        violations.append(_violation(code, f"owner is not a plugin directory name: {owner!r}"))
+        return None
+    try:
+        owner_contract = _load_json(
+            owner_plugin / "references" / "package-contract.json", required=False
+        )
+    except AuditError as exc:
+        violations.append(
+            _violation(code, str(exc), input_error=isinstance(exc, InputUnreadableError))
+        )
+        return None
+    entry_points = owner_contract.get("entry_points", {})
+    declared = entry_points.get("skills", []) if isinstance(entry_points, dict) else None
+    if not isinstance(declared, list) or not all(isinstance(item, str) for item in declared):
+        # 自 plugin の契約の型崩れは _contract_shape_errors が先に報告している。
+        if owner != self_slug:
+            violations.append(
+                _violation(
+                    "contract_shape_invalid",
+                    f"owner {owner} package contract entry_points.skills must be an array of strings",
+                    input_error=True,
+                )
+            )
+        return None
+    return owner_plugin, declared
 
 
 def _surface_names(plugin: Path, kind: str) -> list[str]:
@@ -158,7 +306,7 @@ def _composition_surfaces(plugin: Path, actual_hooks: list[str]) -> tuple[dict[s
         return empty, "plugin-composition.yaml is required"
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         return empty, str(exc)
     identity = re.search(r"^(?:name|plugin):\s*([^\s#]+)", text, re.MULTILINE)
     if identity is None or identity.group(1).strip("\"'") != plugin.name:
@@ -235,6 +383,14 @@ def _resolve_component(plugin: Path, value: object) -> Path | None:
     return resolved
 
 
+def _contained_path(base: Path, relative: str) -> Path | None:
+    """契約に書かれた相対 path を base の中に閉じて解決する。絶対 path と外への脱出は None。"""
+
+    if Path(relative).is_absolute():
+        return None
+    return _resolve_component(base, f"./{relative}")
+
+
 def _hook_document(plugin: Path, manifest: dict) -> dict:
     value = manifest.get("hooks")
     if isinstance(value, dict):
@@ -300,15 +456,29 @@ def _owner_skill(path: Path, skills_root: Path) -> Path | None:
     return None
 
 
-def _runtime_root_contract_missing(plugin: Path, owner_body: str) -> list[str]:
-    """Accept a complete inline contract or the complete shared canonical contract."""
+def _runtime_root_contract_missing(plugin: Path, owner_body: str, *, has_prompts: bool = True) -> list[str]:
+    """インラインの契約 (英語か日本語) か、共有の正本の契約が、どれか全部揃っていれば受け入れる。"""
 
+    en_tokens = tuple(t for t in RUNTIME_ROOT_CONTRACT_TOKENS if has_prompts or "`prompts/`" not in t)
+    ja_tokens = tuple(t for t in RUNTIME_ROOT_CONTRACT_TOKENS_JA if has_prompts or "`prompts/`" not in t)
+    body = owner_body.split("---", 2)[-1] if owner_body.startswith("---") else owner_body
     inline_missing = [
-        token for token in RUNTIME_ROOT_CONTRACT_TOKENS if token not in owner_body
+        token for token in en_tokens if token not in body
     ]
     if not inline_missing:
         return []
-    if "## Runtime root contract" not in owner_body:
+    inline_missing_ja = [
+        token for token in ja_tokens if token not in body
+    ]
+    if not inline_missing_ja:
+        return []
+    # どちらの組も揃わないときは、多く含まれている方の欠けを示す (同数なら英語の組)。
+    if (
+        len(RUNTIME_ROOT_CONTRACT_TOKENS_JA) - len(inline_missing_ja)
+        > len(RUNTIME_ROOT_CONTRACT_TOKENS) - len(inline_missing)
+    ):
+        inline_missing = inline_missing_ja
+    if not any(h in body for h in ("## Runtime root contract", "## 実行時のルートの決め方")):
         return inline_missing
     if RUNTIME_ROOT_CANONICAL_REF not in owner_body:
         return inline_missing
@@ -393,7 +563,11 @@ def _portable_root_violations(plugin: Path) -> list[dict]:
             body = owner.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             body = ""
-        missing = _runtime_root_contract_missing(plugin, body)
+        missing = _runtime_root_contract_missing(plugin, body, has_prompts=(owner.parent / "prompts").is_dir())
+        ja_choice = "## 選んだ深さでの改善の実行" in body
+        en_choice = "## Post-choice selected improvement execution" in body
+        if (ja_choice and "## Runtime root contract" in body) or (en_choice and "## 実行時のルートの決め方" in body):
+            missing.append("runtime root contract language mismatch")
         if missing:
             violations.append(
                 _violation(
@@ -406,10 +580,7 @@ def _portable_root_violations(plugin: Path) -> list[dict]:
 
 
 def _marketplace_entry(repo: Path, slug: str) -> dict | None:
-    marketplace = _load_json(repo / ".agents" / "plugins" / "marketplace.json")
-    entries = marketplace.get("plugins")
-    if not isinstance(entries, list):
-        return None
+    entries = _marketplace_plugins(repo)
     matches = [entry for entry in entries if isinstance(entry, dict) and entry.get("name") == slug]
     return matches[0] if len(matches) == 1 else None
 
@@ -497,24 +668,26 @@ def _validate_alternatives(
                 continue
             owner = owner_route["plugin"]
             targets = owner_route["entry_points"]
-            if owner != plugin.name and owner not in contract.get("depends_on", []):
+            dependencies = contract.get("depends_on")
+            if owner != plugin.name and owner not in (
+                dependencies if isinstance(dependencies, list) else []
+            ):
                 violations.append(
                     _violation(
                         "semantic_owner_dependency_missing",
                         f"{kind[:-1]} {name} routes to {owner} without depends_on edge",
                     )
                 )
-            owner_plugin = repo / "plugins" / owner
-            try:
-                owner_contract = _load_json(
-                    owner_plugin / "references" / "package-contract.json", required=False
-                )
-            except AuditError as exc:
-                violations.append(
-                    _violation("semantic_owner_entry_point_missing", str(exc))
-                )
+            resolved_owner = _owner_declared_skills(
+                repo,
+                owner,
+                self_slug=plugin.name,
+                violations=violations,
+                code="semantic_owner_entry_point_missing",
+            )
+            if resolved_owner is None:
                 continue
-            declared = owner_contract.get("entry_points", {}).get("skills", [])
+            owner_plugin, declared = resolved_owner
             owner_actual = set(_surface_names(owner_plugin, "skills"))
             missing = sorted(
                 target
@@ -559,7 +732,13 @@ def _validate_hook_parity(
         claude_events = _hook_events(_hook_document(plugin, claude))
         codex_events = _hook_events(_hook_document(plugin, codex))
     except AuditError as exc:
-        violations.append(_violation("hook_document_invalid", str(exc)))
+        violations.append(
+            _violation(
+                "hook_document_invalid",
+                str(exc),
+                input_error=isinstance(exc, InputUnreadableError),
+            )
+        )
         return {"claude_events": [], "codex_events": []}
     omissions = alternatives.get("hook_omissions", {})
     if not isinstance(omissions, dict):
@@ -691,6 +870,26 @@ def _validate_component_parity(
 
 
 def audit_plugin(repo_root: Path, plugin: Path) -> dict:
+    """1 plugin を監査する。repo 全体の入力不正 (marketplace) だけは AuditError で呼び出し元へ返す。"""
+
+    try:
+        return _audit_plugin(repo_root, plugin)
+    except (TypeError, AttributeError, KeyError, ValueError) as exc:
+        # 型の点検をすり抜けた入力の崩れ。traceback で止めず、この plugin を ERROR として残りを続ける。
+        return {
+            "plugin": Path(plugin).resolve().name,
+            "violations": [
+                _violation(
+                    "input_shape_unhandled",
+                    f"input shape could not be audited: {type(exc).__name__}: {exc}",
+                    input_error=True,
+                )
+            ],
+            "verdict": "ERROR",
+        }
+
+
+def _audit_plugin(repo_root: Path, plugin: Path) -> dict:
     repo = Path(repo_root).resolve()
     plugin = Path(plugin).resolve()
     slug = plugin.name
@@ -709,8 +908,19 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
         claude = _load_json(plugin / ".claude-plugin" / "plugin.json")
         codex = _load_json(plugin / ".codex-plugin" / "plugin.json")
     except AuditError as exc:
-        violations.append(_violation("manifest_missing_or_invalid", str(exc)))
-        return {"plugin": slug, "inventory": inventory, "violations": violations, "verdict": "FAIL"}
+        violations.append(
+            _violation(
+                "manifest_missing_or_invalid",
+                str(exc),
+                input_error=isinstance(exc, InputUnreadableError),
+            )
+        )
+        return {
+            "plugin": slug,
+            "inventory": inventory,
+            "violations": violations,
+            "verdict": _verdict(violations),
+        }
     for field in SHARED_MANIFEST_FIELDS:
         if claude.get(field) != codex.get(field):
             violations.append(_violation("manifest_metadata_drift", f"shared field differs: {field}"))
@@ -733,8 +943,15 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
     try:
         contract = _load_json(contract_path)
     except AuditError as exc:
-        violations.append(_violation("package_contract_missing", str(exc)))
+        violations.append(
+            _violation(
+                "package_contract_missing",
+                str(exc),
+                input_error=isinstance(exc, InputUnreadableError),
+            )
+        )
         contract = {}
+    violations.extend(_contract_shape_errors(contract, label="package contract"))
     if contract.get("plugin_name") != slug:
         violations.append(_violation("package_contract_plugin_mismatch", "package contract plugin_name mismatch"))
     entry_points = contract.get("entry_points")
@@ -743,6 +960,9 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
         entry_points = {}
     for kind in SURFACE_DIRS:
         declared = entry_points.get(kind)
+        if isinstance(declared, list):
+            # 文字列でない要素は _contract_shape_errors が報告済み。ここでは照合から外す。
+            declared = [name for name in declared if isinstance(name, str)]
         declared_set = set(declared) if isinstance(declared, list) else set()
         missing_declared = sorted(declared_set - set(actual[kind]))
         omitted_actual = sorted(set(actual[kind]) - declared_set)
@@ -774,11 +994,10 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
     if not isinstance(dependencies, list):
         violations.append(_violation("dependency_contract_missing", "depends_on array is required"))
     else:
-        marketplace = _load_json(repo / ".agents" / "plugins" / "marketplace.json")
-        known = {
-            item.get("name") for item in marketplace.get("plugins", []) if isinstance(item, dict)
-        }
+        known = _marketplace_names(repo)
         for dependency in dependencies:
+            if not isinstance(dependency, str):
+                continue  # _contract_shape_errors が入力エラーとして報告済み
             if dependency not in known:
                 violations.append(_violation("dependency_unreachable", f"dependency not in Codex marketplace: {dependency}"))
     runtime_dependencies = contract.get("runtime_dependencies")
@@ -798,7 +1017,10 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
             "capability", "owner", "classification", "local_path",
             "owner_route", "required_entry_point", "purpose",
         }
-        if set(item) != required or item.get("classification") not in {"owned-vendored", "runtime"}:
+        classification = item.get("classification")
+        if set(item) != required or not isinstance(classification, str) or classification not in {
+            "owned-vendored", "runtime"
+        }:
             violations.append(
                 _violation("runtime_dependency_invalid", "runtime dependency fields/classification are invalid")
             )
@@ -820,23 +1042,28 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
                 _violation("runtime_dependency_invalid", f"duplicate runtime capability: {capability}")
             )
         seen_runtime.add(capability)
-        if not (plugin / local_path).exists():
+        local_target = _contained_path(plugin, local_path)
+        if local_target is None or not local_target.exists():
             violations.append(
-                _violation("runtime_dependency_local_missing", f"local vendored route is missing: {local_path}")
+                _violation(
+                    "runtime_dependency_local_missing",
+                    f"local vendored route is missing or escapes the plugin: {local_path}",
+                )
             )
-        owner_plugin = repo / "plugins" / owner
-        try:
-            owner_contract = _load_json(
-                owner_plugin / "references" / "package-contract.json", required=False
-            )
-        except AuditError as exc:
-            violations.append(
-                _violation("runtime_dependency_owner_route_missing", str(exc))
-            )
+        resolved_owner = _owner_declared_skills(
+            repo,
+            owner,
+            self_slug=slug,
+            violations=violations,
+            code="runtime_dependency_owner_route_missing",
+        )
+        if resolved_owner is None:
             continue
-        owner_skills = owner_contract.get("entry_points", {}).get("skills", [])
+        owner_plugin, owner_skills = resolved_owner
+        owner_skill = _contained_path(owner_plugin, f"{owner_route}/SKILL.md")
         if (
-            not (owner_plugin / owner_route / "SKILL.md").is_file()
+            owner_skill is None
+            or not owner_skill.is_file()
             or required_entry not in owner_skills
             or Path(owner_route).name != required_entry
         ):
@@ -902,7 +1129,7 @@ def audit_plugin(repo_root: Path, plugin: Path) -> dict:
         "hooks": hook_report,
         "components": component_report,
         "violations": violations,
-        "verdict": "PASS" if not violations else "FAIL",
+        "verdict": _verdict(violations),
     }
 
 
@@ -918,10 +1145,9 @@ def discover_plugins(repo_root: Path) -> list[Path]:
 def _dependency_graph(repo: Path, plugins: list[Path]) -> tuple[dict[str, list[str]], dict[str, list[dict]]]:
     """Load the explicit package graph and return per-plugin resolution failures."""
     slugs = {plugin.name for plugin in plugins}
-    marketplace = _load_json(repo / ".agents" / "plugins" / "marketplace.json")
     entries = {
         item.get("name"): item
-        for item in marketplace.get("plugins", [])
+        for item in _marketplace_plugins(repo)
         if isinstance(item, dict) and isinstance(item.get("name"), str)
     }
     graph: dict[str, list[str]] = {}
@@ -935,7 +1161,11 @@ def _dependency_graph(repo: Path, plugins: list[Path]) -> tuple[dict[str, list[s
         except AuditError as exc:
             graph[slug] = []
             failures[slug].append(
-                _violation("dependency_contract_invalid", str(exc))
+                _violation(
+                    "dependency_contract_invalid",
+                    str(exc),
+                    input_error=isinstance(exc, InputUnreadableError),
+                )
             )
             continue
         dependencies = contract.get("depends_on", [])
@@ -1023,7 +1253,13 @@ def _dependency_scc(graph: dict[str, list[str]]) -> list[dict]:
 
 def audit_repo(repo_root: Path, slugs: list[str] | None = None) -> dict:
     repo = Path(repo_root).resolve()
+    if not repo.is_dir():
+        raise AuditError(f"repo root is not a directory: {repo}")
     discovered = discover_plugins(repo)
+    if not discovered:
+        raise AuditError(f"no plugin with .claude-plugin/plugin.json under {repo / 'plugins'}")
+    # marketplace は全 plugin の照合に使う。読めなければ plugin ごとではなく repo の入力不正として止める。
+    _marketplace_plugins(repo)
     selected = discovered
     if slugs:
         wanted = {Path(item.rstrip("/")).name for item in slugs}
@@ -1036,14 +1272,18 @@ def audit_repo(repo_root: Path, slugs: list[str] | None = None) -> dict:
     for report in reports:
         report["dependencies"] = graph.get(report["plugin"], [])
         report["violations"].extend(dependency_failures.get(report["plugin"], []))
-        report["verdict"] = "PASS" if not report["violations"] else "FAIL"
+        report["verdict"] = _verdict(report["violations"])
+    error_count = sum(item["verdict"] == "ERROR" for item in reports)
+    fail_count = sum(item["verdict"] != "PASS" for item in reports)
     return {
         "plugin_count": len(reports),
-        "pass_count": sum(item["verdict"] == "PASS" for item in reports),
-        "fail_count": sum(item["verdict"] != "PASS" for item in reports),
+        "pass_count": len(reports) - fail_count,
+        # fail_count は PASS 以外の数 (ERROR を含む)。error_count はそのうち入力を読めなかった数。
+        "fail_count": fail_count,
+        "error_count": error_count,
         "dependency_scc": _dependency_scc(graph),
         "plugins": reports,
-        "verdict": "PASS" if reports and all(item["verdict"] == "PASS" for item in reports) else "FAIL",
+        "verdict": "ERROR" if error_count else ("FAIL" if fail_count else "PASS"),
     }
 
 
@@ -1052,7 +1292,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", type=Path, required=True)
     parser.add_argument("--plugin", action="append", default=[])
     parser.add_argument("--all", action="store_true")
-    parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--json", action="store_true", help="互換のため受け付ける。出力は常に JSON"
+    )
     return parser
 
 
@@ -1067,7 +1309,7 @@ def main(argv: list[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return 2
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 0 if report["verdict"] == "PASS" else 1
+    return {"PASS": 0, "FAIL": 1}.get(report["verdict"], 2)
 
 
 if __name__ == "__main__":

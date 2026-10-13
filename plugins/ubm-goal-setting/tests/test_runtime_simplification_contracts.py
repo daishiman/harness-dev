@@ -30,7 +30,7 @@ def test_goal_setting_parent_owns_dialogue_and_coordinator_is_advisory() -> None
 
     for prompt in sorted((PLUGIN_ROOT / "skills/run-ubm-goal-setting/prompts").glob("R*.md")):
         text = prompt.read_text(encoding="utf-8")
-        assert "親contextが本プロンプトを Read して対話を進行" in text
+        assert "親コンテキストが本プロンプトを Read して対話を進行" in text
         assert "coordinator が本プロンプトを Read しインライン進行" not in text
 
 
@@ -40,11 +40,11 @@ def test_delegated_writers_receive_absolute_plugin_root_contract() -> None:
     knowledge_skill = _read("skills/run-ubm-knowledge-sync/SKILL.md")
     knowledge_agent = _read("agents/knowledge-extractor.md")
 
-    assert "absolute `PLUGIN_ROOT` を渡し" in journal_skill
+    assert "../../references/agent-root-contract.md" in journal_skill
     assert "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}" in journal_agent
     assert "$CLAUDE_PLUGIN_ROOT" not in journal_agent
 
-    assert "各 Task input には親が host-skill-path から解決した absolute `PLUGIN_ROOT`" in knowledge_skill
+    assert "../../references/agent-root-contract.md" in knowledge_skill
     assert "`plugin_root`: 親スキルが host-skill-path から解決した" in knowledge_agent
     assert "$CLAUDE_PLUGIN_ROOT" not in knowledge_agent
 
@@ -53,7 +53,9 @@ def test_journal_parent_and_composer_have_one_write_validation_owner() -> None:
     journal_skill = _read("skills/run-ubm-journal/SKILL.md")
 
     assert "| Phase5-validate |" in journal_skill
-    assert "| `journal-composer` + script |" in journal_skill
+    phase5 = next(line for line in journal_skill.splitlines() if line.startswith("| Phase5-validate |"))
+    assert "journal-composer" in phase5 and "検査スクリプト" in phase5
     assert "親は同じファイルを再編集せず" in journal_skill
-    assert "共通validatorがそれらも検査すると扱わない" in journal_skill
-    assert "composerが3回で収束しなければ親がPhase4を自動再起動せず" in journal_skill
+    assert "../../references/goal-seek-anchor-contract.md" in journal_skill
+    assert "親がPhase4を自動再起動せず" in journal_skill
+    assert "Dailyは変更しない" in journal_skill

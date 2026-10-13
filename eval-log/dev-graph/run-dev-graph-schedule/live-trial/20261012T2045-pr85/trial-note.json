@@ -1,0 +1,35 @@
+{
+  "label": "schedule4",
+  "retry_of": "20261012T1923-pr85",
+  "evaluator_agent_id": "aeb63473b5204a37a",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule4/ws/plugins/dev-graph/skills/run-dev-graph-schedule",
+  "closure_sha_at_launch": "4890cdc2c641faeb40dc69943e54ca0956209ec9ab1ec0d1dfe9c972e0201a41",
+  "closure_sha_tested_copy": "4890cdc2c641faeb40dc69943e54ca0956209ec9ab1ec0d1dfe9c972e0201a41",
+  "closure_sha_wtpy_at_verdict": "4890cdc2c641faeb40dc69943e54ca0956209ec9ab1ec0d1dfe9c972e0201a41",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-schedule) を、その場で git init した repo に写した (最初の commit は d97a965、README.md だけを追跡)。元の fixture は変えていない。schedule3 と同じ seed から作り直した。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json と .dev-graph/state/init-receipt.json の repository_id と worktree_id を付け替えた (fixture-provenance.json の rekey と rekeyed_files)。",
+    "lease の準備: 起動の前に、manage-worktree-lease.py --op claim --graph-node-id task-api-users --branch devgraph/task-api-users --session-id orchestrator-prep-schedule4 を --resource なしで回し、active な lease を 1 件作った。claim は worktree が clean でないと branch を作れないため、先に git switch -c devgraph/task-api-users をし、claim の後に git switch main で戻した。claim は fx の .git/dev-graph/ に leases.json・events.json・leases.lock を作り、C02 の execution-context consumer を通して graph の task-api-users の execution_contexts に 1 行を足した (graph_revision 1→2、graph.json b2f40bab…→ba6830bd…)。branch devgraph/task-api-users は fx に残る (fixture-provenance.json の lease_prep)。",
+    "node の選び方: team-lead が候補に挙げた src/db/ と src/db/migrations/ の組は、この seed では ready の task の間に無い (task-base-schema は done、task-unconfirmed-migration は draft)。代わりに、同じパス src/api/users/ で task-api-users-cache と重なる task-api-users を選んだ (fixture-provenance.json の lease_prep.why_this_node)。",
+    "事前の確認: lease の準備の後に、被験の外で fx の graph を C11 (validate-graph-schema.py) と C24 (resolve-repo-context.py --mode write) にかけた。C11 は valid、C24 は rc=0 で、前後で fx のファイルの sha256 は変わらなかった (fixture-provenance.json の fixture_check)。",
+    "task.md: schedule3 の task.md から、run の dir の名前 (runs/schedule3 を runs/schedule4) を変え、準備の箇条に「active な lease が1件ある」を 1 行足した。scenario の id は schedule-positive-ready-set-fixture-standard-v2 のまま (fixture-provenance.json の task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。隔離の条件は schedule3 と同じ。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "max_parallel と scope が正規 script で強制されない: plugins/dev-graph/scripts/schedule-graph.py (96〜98 行目の argparse) には --max-parallel も --scope も無く、batches() は重ならないノードを件数の上限なしに 1 つの batch へ詰める。SKILL の argument-hint にある [--scope ID] [--max-parallel N] は、R3 での LLM の整形に頼っている。再現: 依存なしで active/confirmed/pass/complete、resource_scope が互いに重ならない task を 5 件持つ graph で `schedule-graph.py --graph G --ready-source self` を回すと、5 件の batch が 1 つ返り、上限 4 を超える。",
+    "conflicts が output contract の「conflict pairs」になっていない: schedule-graph.py 142 行目の conflicts は、lease と衝突した node id の一覧でしかない。ready な候補どうしの resource_scope 重複は、batch を分けるだけで pair として報告されない。再現: この fx から lease を外した graph (task-api-users と task-api-users-cache が同時に ready になり、src/api/users/ と src/cache/ で重なる) で script を回すと、両者は別の batch に分かれるが conflicts は [] になり、(task-api-users, task-api-users-cache) と (task-api-users-cache, task-cache-warmup) の pair が出力に現れない。",
+    "推薦する claim command が tracker_binding を運ばない: schedule-graph.py 148 行目の claim_command は '--branch … --session-id <session>' だけを持つ。manage-worktree-lease.py 165 行目の --tracker-binding は default=\"github\" で、claim は node の binding を graph から解決しない。そのため推薦どおりに claim すると、node の binding と違う値が lease に残る。再現: この fx の lease (orchestrator が --tracker-binding なしで claim したもの) は tracker_binding=github だが、graph の task-api-users は tracker_binding=none (leases.json と graph.json で確認できる)。beads に束ねた node なら、beads の claim saga (manage-worktree-lease.py 191・206 行目の分岐) を通らずに claim できてしまう。"
+  ]
+}

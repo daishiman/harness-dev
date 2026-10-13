@@ -1,0 +1,170 @@
+{
+  "label": "sync7",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-sync",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-sync/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/fx",
+  "head": "0790fc5551563ce47edac70b8e4bccfd53555b2c",
+  "tracked_files_committed": 38,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3392565b6f2846f6d0c97d35f0c3bd0135b3982cf2cbeb95d02e8d66801b9979",
+      "local:sha256:6f65940cc53c9450727685cf5b2a9533416647a4aa0053a67162a6a134c81c87"
+    ],
+    "worktree_id": [
+      "wt_be49c8ccb7b424c8",
+      "wt_2313b9df5ddccccf"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。seed (bzn4-sync) と手順は sync5・sync6 と同じ。",
+  "post_rekey_commit": "rekey した tracked の .dev-graph/config.json を 2 つ目の commit (1832f09) にした (sync2 から sync6 と同じ手順)",
+  "fake_gh_patch": {
+    "why": "前回 sync (20261012T0708-pr85) は fixture の tools/fake-gh.py が diff-github-project-fields.py の ITEM_QUERY (L57-62) に答えられず 'unsupported graphql query for this fixture' で止まった。fixture 側の不足なので、sync2 から run の写しの tools/fake-gh.py だけを直している (sync3・sync4・sync5・sync6 と同じ)。plugins/dev-graph と元 fixture は変えていない。",
+    "path": "tools/fake-gh.py",
+    "commit": "fc099fb (fixture の 3 つ目の commit)。中身は sync5 の 898aa8a の tools/fake-gh.py と同じ (git show で取り出して置いた tmp/sync6-fake-gh.py を写した。sha256 025f9bdd…、sync3〜sync6 と同じ)。mode は seed のまま 755",
+    "sha256_before": "6f63037f73f4104a9ffe2a17894ebd6a42440f740b5a7c28af21ad7193301c27",
+    "md5_before": "e431d8fdff3de6bfcec8fcc9455cf694",
+    "sha256_after": "025f9bddfb9d7200a5decab80b3e9ad48d2ec8882a495dcb6c877dde810816c7",
+    "added": [
+      "ITEM_QUERY (query 文字列に '... on ProjectV2Item{' と 'fieldValues(' を含むもの): github-adapter.json の projects.<alias>.items[] から id が一致する item を探し、{data:{node:{id, fieldValues:{nodes:[...]}}}} を返す。各 node は field 名を field.name に持ち、値のキーは adapter の field 定義で決める (options あり=name、configuration あり=title、数値=number、YYYY-MM-DD=date、それ以外=text)。値が null の field は返さない。id が無い item は {data:{node:null}} (planner はこれを missing item として扱う)。読取りなので adapter は書かず、github-adapter-calls.jsonl に op=project-item-fields (mutation=false) を 1 行残す。",
+      "clearProjectV2ItemFieldValue: project/item/field の id を adapter と照合し (見つからなければ既存の op と同じく exit 1)、値があれば items[].fields から外し、field_updated_at に clock.issue_update_updated_at を入れ、mutation_log に op=project-item-clear を足して save する。値が無ければ書かない (冪等)。github-adapter-calls.jsonl に op=project-item-clear (mutation=true) を残し、{data:{clearProjectV2ItemFieldValue:{projectV2Item:{id}}}} を返す。"
+    ],
+    "not_added": "updateProjectV2ItemFieldValue は従来どおり single select (option) だけ。date/text/number の書込みは足していない。この fixture は local と remote と snapshot の field 値が一致していて、Projects の export/import は 0 件の想定のため (smoke で確認)。",
+    "network": "fake-gh はネットワークを使わない。読み書きは fixture の github-adapter.json と github-adapter-calls.jsonl だけ。",
+    "smoke_offline": {
+      "where": "fx の別の写し (wttrial/smoke/sync2-fx と sync2-fx-b)。この run の fx では試していない (calls.jsonl を作らないため)。",
+      "env": "lt-env.sh (stub の gh と bd)、DEV_GRAPH_GH=<写し>/tools/fake-gh.py",
+      "results": [
+        "gh-bridge.graphql(ITEM_QUERY): 0101={Priority:High, Status:In Progress, Target date:2026-08-20}、0102={Priority:Medium, Status:In Progress, Target date:2026-08-25}、未知の id は null",
+        "gh-bridge.py --op project-item-edit --clear (0102 の Target date): rc=0、adapter から値が外れ mutation_log 1 件。もう一度呼んでも mutation_log は 1 件のまま",
+        "diff-github-project-fields.py --repo-root <写し>: rc=0、exports 0・imports 0・conflicts 0・missing_items 0・links 2 (next=apply link_input)。fixture の field_snapshot のキーが project の field 名 (Priority など) で、planner は local_field (priority など) をキーにするため、1 回目は snapshot の書直しが link_input として出る"
+      ],
+      "note": "この smoke は sync2 の準備のときのもの。sync7 では fake-gh の smoke を回していない (中身が sync2 から同じため)。"
+    },
+    "unified_diff": "diff --git a/tools/fake-gh.py b/tools/fake-gh.py\nindex b7743d6..15660ae 100755\n--- a/tools/fake-gh.py\n+++ b/tools/fake-gh.py\n@@ -4,10 +4,16 @@\n All reads and writes are closed inside the fixture directory: remote state lives in\n `github-adapter.json` and every call is appended to `github-adapter-calls.jsonl`.\n No network access exists in this process by construction.\n+\n+pr85 sync2 additions (orchestrator, before the trial session): the Projects item field-value read\n+(`node(id:$id){... on ProjectV2Item{id fieldValues(first:100){...}}}`, the ITEM_QUERY of\n+diff-github-project-fields.py) and the `clearProjectV2ItemFieldValue` mutation, both answered from the\n+adapter state like the existing ops.\n \"\"\"\n from __future__ import annotations\n \n import json\n+import re\n import sys\n from pathlib import Path\n \n@@ -46,6 +52,21 @@ def option_value(state: dict, alias: str, field_id: str, option_id: str) -> tupl\n     raise AssertionError\n \n \n+def field_value(field: dict, name: str, value) -> dict:\n+    \"\"\"One fieldValues node in the GraphQL shape: the value key follows the field kind of the adapter.\"\"\"\n+    if \"options\" in field:\n+        key = \"name\"  # ProjectV2ItemFieldSingleSelectValue\n+    elif \"configuration\" in field:\n+        key = \"title\"  # ProjectV2ItemFieldIterationValue\n+    elif isinstance(value, (int, float)) and not isinstance(value, bool):\n+        key = \"number\"\n+    elif isinstance(value, str) and re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", value):\n+        key = \"date\"  # the adapter has no dataType; a YYYY-MM-DD value is a date field (Target date)\n+    else:\n+        key = \"text\"\n+    return {key: value, \"field\": {\"name\": name}}\n+\n+\n def flag(argv: list[str], name: str) -> str | None:\n     if name in argv:\n         index = argv.index(name)\n@@ -144,6 +165,44 @@ def handle_graphql(state: dict, argv: list[str]) -> None:\n \n     alias_of = {value[\"id\"]: key for key, value in projects.items()}\n \n+    if \"... on ProjectV2Item{\" in query and \"fieldValues(\" in query:\n+        item_id = variables.get(\"id\")\n+        found = next(((key, item) for key, value in projects.items() for item in value[\"items\"]\n+                      if item[\"id\"] == item_id), None)\n+        if found is None:  # an item gone from the project: the planner reports it as missing\n+            log_call(\"project-item-fields\", {\"item_id\": item_id, \"found\": False}, False)\n+            print(json.dumps({\"data\": {\"node\": None}}, ensure_ascii=False))\n+            return\n+        alias, item = found\n+        fields = {field[\"name\"]: field for field in projects[alias][\"fields\"]}\n+        nodes = [field_value(fields.get(name, {}), name, value)\n+                 for name, value in sorted(item[\"fields\"].items()) if value is not None]\n+        log_call(\"project-item-fields\", {\"alias\": alias, \"item_id\": item_id, \"fields\": len(nodes)}, False)\n+        print(json.dumps({\"data\": {\"node\": {\"id\": item_id, \"fieldValues\": {\"nodes\": nodes}}}}, ensure_ascii=False))\n+        return\n+\n+    if \"clearProjectV2ItemFieldValue\" in query:\n+        project_id, item_id, field_id = variables.get(\"project\"), variables.get(\"item\"), variables.get(\"field\", \"\")\n+        alias = alias_of.get(project_id)\n+        if alias is None:\n+            fail(f\"project id not found in fixture: {project_id}\")\n+        item = next((row for row in projects[alias][\"items\"] if row[\"id\"] == item_id), None)\n+        if item is None:\n+            fail(f\"project item not found in fixture: {item_id}\")\n+        name = next((field[\"name\"] for field in projects[alias][\"fields\"] if field[\"id\"] == field_id), None)\n+        if name is None:\n+            fail(f\"unknown field {field_id}\")\n+        if item[\"fields\"].get(name) is not None:\n+            item[\"fields\"].pop(name)\n+            item[\"field_updated_at\"][name] = state[\"clock\"][\"issue_update_updated_at\"]\n+            state[\"mutation_log\"].append({\"op\": \"project-item-clear\", \"alias\": alias, \"item_id\": item_id,\n+                                          \"field\": name})\n+            save(state)\n+        log_call(\"project-item-clear\", {\"alias\": alias, \"item_id\": item_id, \"field\": name}, True)\n+        print(json.dumps({\"data\": {\"clearProjectV2ItemFieldValue\": {\"projectV2Item\": {\"id\": item_id}}}},\n+                         ensure_ascii=False))\n+        return\n+\n     if \"items(first:100,after:$cursor)\" in query:\n         project_id = variables.get(\"id\")\n         alias = alias_of.get(project_id)\n"
+  },
+  "session_layout": {
+    "why": "sync3〜sync6 と同じ配置。sync2 (20261012T0828-pr85) の DEGRADED は配置が原因だった (session の cwd が ws で、UserPromptSubmit hook が fx の preview と照合できなかった)。guard は緩めず、配置だけを変えたもの。",
+    "session_cwd": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/fx",
+    "plugins": "fx/plugins/ に 5 plugin を wtpy から copyplugins.py で写した (__pycache__ と *.pyc は写さない。詳細は retake.plugins_copy)。live-trial-boot.py は cwd/plugins/<slug> だけを --plugin-dir に許すので、写しは session の cwd の下に置く必要がある。",
+    "settings": "fx/.claude/settings.local.json (mksettings.py --session-root fx)。隔離の条件は sync5・sync6 と同じ (§17 の guard: 許可一覧に無い tool と外部へ届く tool は拒否、deniedDomains ['*']、stub gh/bd)。",
+    "git_exclude": "fx/.git/info/exclude に /plugins/ と /.claude/ を足した (追跡されないローカルの除外。fixture の git status は clean のまま)。",
+    "trust": {
+      "fake_home_entry": "projects[\"/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/fx\"].hasTrustDialogAccepted=true",
+      "why": "独立した git repo を cwd にすると親 dir の信頼を引き継がず、起動が信頼確認で止まる (sync3 の 1 回目)。起動前に偽 HOME に足した。",
+      "backup": "audit/home-claude-json/before-sync7-trust.json"
+    }
+  },
+  "fixture_check": {
+    "when": "起動の前。被験の外で、wtpy の script を lt-env.sh (stub の gh と bd) と python3 -B で回した。",
+    "results": [
+      "C11 validate-graph-schema.py --graph fx/.dev-graph/state/graph.json --repo-root fx: rc=0、graph_validation pass・violation 0 (workdir/c11.json)",
+      "C24 resolve-repo-context.py --repo-root fx --mode write: rc=0 (workdir/c24.json。stdout に出すだけで fx には書かない)",
+      ".dev-graph/config.json を schemas/repo-config.schema.json (jsonschema Draft 2020-12) で検査: error 0。execution_tracker.mode は github"
+    ],
+    "unchanged": "前後で fx のファイル (plugins/・.claude/・.git/objects を除く 61 ファイル) の sha256 は同じ (workdir/fx-check-pre.sha と fx-check-post.sha)。graph.json は 0cd59052b9da1390… で sync5・sync6 と同じ"
+  },
+  "superseded_attempt": {
+    "label": "sync6",
+    "what": "sync5 の後の取り直しの 1 回目 (sync6) は、起動の後に wtpy の被験 skill の閉包が変わった (c40163d7 から変わった) ため、orchestrator が途中で止めた (2026-10-12T15:10:26Z)。verdict は作っていない。記録は runs/sync6 に残し、参考扱いとする。",
+    "this_run": "sync7 は同じ seed と同じ手順で fixture を作り直し、変わった後の閉包の写しで回す。retry_of は最後に verdict のある sync5 にする。"
+  },
+  "retry_of": "sync5 (20261012T1947-pr85)",
+  "retake": {
+    "why": "team-lead の 2026-10-12 12:26Z の指示による全 9 本の取り直し。dev-graph の entry script が bytecode を書かないように直った後の閉包で試す。前の PASS は stale。",
+    "bytecode_fix": "dev-graph の entry script (resolve-repo-context.py・validate-graph-schema.py・bd-bridge.py ほか 16 本ほど) が import の前に sys.dont_write_bytecode = True を置き、sys.executable で起こす子には -B を渡し、hooks.json の 4 本は python3 -B にした。_common.py と plugin.json は変えていない (team-lead の 12:26Z の連絡による)。",
+    "closure_sha": {
+      "expected": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+      "expected_source": "team-lead の連絡「sync7・schedule6 は開始可」",
+      "copy": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+      "wtpy": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+      "all_equal": true
+    },
+    "plugins_copy": {
+      "copied_at": "2026-10-12T16:43:25Z",
+      "from": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wtpy/plugins",
+      "to": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/fx/plugins",
+      "plugins": [
+        "dev-graph",
+        "harness-creator",
+        "skill-governance-adapters",
+        "system-dev-planner",
+        "system-spec-harness"
+      ],
+      "method": "shutil.copytree(symlinks=True, ignore=__pycache__・*.pyc)。写した後に diff -rq -x __pycache__ -x '*.pyc' で 5 つとも一致",
+      "bytecode_in_copy": 0,
+      "from_note": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)"
+    },
+    "tmpdir": {
+      "CLAUDE_CODE_TMPDIR": "/private/tmp/ltpr85/t/sy7",
+      "symlink_target": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/tmp",
+      "TMPDIR_outside_sandbox": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/tmp/",
+      "sandbox_bash_TMPDIR": "/private/tmp/ltpr85/t/sy7/claude-501 (実体は /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/tmp/claude-501)",
+      "why": "team-lead の 2026-10-12 の指示で、被験の一時領域を run の dir の中に向けた。Claude Code は CLAUDE_CODE_TMPDIR が長い (AF_UNIX の socket に使えない、目安 30 byte 超) と sandbox の Bash の TMPDIR を /tmp/claude-<uid> に戻すので、短い symlink を run の tmp に向けて CLAUDE_CODE_TMPDIR にした。preflight10 で、symlink が拒否されず、mktemp と Python の tempfile の実体が run の tmp の下にでき、/private/tmp/claude-501・/private/tmp の直下に差が出ないことを確かめた。",
+      "PYTHONDONTWRITEBYTECODE": "渡していない (lt-env.sh は env -i で起動し、この変数を入れない)"
+    },
+    "isolation": {
+      "guard_py": "f23267a3c016e308c611acca24cb71b437758163f4e25ee02118a4e73c321ad5",
+      "mksettings_py": "277ae072da18cc7c3e671cfa04228fab5c453c5672e57d8e0c946fad774f0034",
+      "launch_sh": "1af200118e4305b3af18305205ce5b798ace26d9dfe03eeabb09d8421ab7b547",
+      "poll_sh": "7fc9405afd874c8497072298f2dd82c76137b14458dbd6df0937fb434072395d",
+      "lt_env_sh": "a24f860dee77750315b99985ff3c9d2ecfc0e8dad59cf6279e1fb3b8539fd807",
+      "note": "guard.py と mksettings.py は render4 から変えていない (締めた形のまま。外へ送る tool と許可一覧に無い tool を拒否)。launch.sh は TMPDIR の向け先と python3 -B を足し、poll.sh は python3 -B にした。"
+    },
+    "task_md_changes": {
+      "base": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync5/workdir/task.md",
+      "replacements": [
+        {
+          "from": "runs/sync5",
+          "to": "runs/sync7",
+          "count": 10
+        }
+      ],
+      "unchanged": "置き換え以外は前の run の task.md と同じ",
+      "task_md_sha256": "7c6bc432f12460e3fda9aa1224b4653d1feed538186c71bcc53c38a5cb2fe2fb"
+    }
+  },
+  "tool_outside_paths": {
+    "why": "team-lead の 2026-10-12 の依頼。trial の道具が run の dir の外に作ったパスを、被験が書いたものと分けて数えるための記録。どれも消さずに残す (rm は使わない)",
+    "recorded_at": "2026-10-13T01:56:04+0900",
+    "paths": [
+      {
+        "path": "/private/tmp/ltpr85/t/sy7",
+        "kind": "symlink",
+        "target": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/tmp",
+        "created": "2026-10-13T01:45:07+0900",
+        "modified": "2026-10-13T01:45:07+0900",
+        "by": "launch.sh (orchestrator の道具)。被験の CLAUDE_CODE_TMPDIR に使う短い名前",
+        "note": "書込みの実体は target (run の dir の中の tmp) に落ちる"
+      },
+      {
+        "path": "/private/tmp/ltpr85/tmux-501/default",
+        "kind": "socket",
+        "created": "2026-10-13T01:45:08+0900",
+        "modified": "2026-10-13T01:45:08+0900",
+        "by": "tmux の server (lt-env.sh の TMUX_TMPDIR)。launch の boot で起き、後片付けで止まる",
+        "note": "run ごとに作り直されるので、created はこの記録を取った時点で最後に起きた server のもの"
+      }
+    ],
+    "shared_dirs": [
+      {
+        "path": "/private/tmp/ltpr85/t",
+        "kind": "dir",
+        "created": "2026-10-12T22:06:04+0900",
+        "modified": "2026-10-13T01:45:07+0900",
+        "note": "preflight10 で launch.sh が作った。各 run の symlink を置く"
+      },
+      {
+        "path": "/private/tmp/ltpr85/tmux-501",
+        "kind": "dir",
+        "created": "2026-10-12T05:52:51+0900",
+        "modified": "2026-10-13T01:45:08+0900",
+        "note": "tmux が作った socket の dir。各 run の server が使う"
+      }
+    ]
+  }
+}

@@ -4,9 +4,15 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 90,
-    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope: explicitly selected dev-graph output and immutable receipt, dependencies:[_common.py])。3 サブコマンド (register / preflight / execution-context)。_validate_schema は stdlib-only JSON Schema subset ($ref 内部限定・allOf・if/then・prefixItems・items:false・contains・min/maxProperties 被覆)。preflight_contract は system-dev-planner plugin.json version・package-contract entry_points の物理存在・schema version pin を検証 (cross-plugin 契約ゲート)。_validate_registration が要: REGISTRATION_KEYS 完全一致、exact-13 P01..P13、node_ids==package.task_node_ids(phase 順)、binding_intents key 集合一致、repo-config-default sentinel 強制、source_lineage digest 一致、tasks/ path、forward phase 依存のみ。_resolved_nodes が tracker binding と github_publication.mode を解決し sentinel 残存を拒否。register 書込は _single_writer(fcntl LOCK_EX|NB) で単一 writer、graph は atomic_json、receipt は os.link で immutable 化 (FileExistsError→immutable receipt already exists)、receipt 作成失敗時は graph を original へ rollback。既存 13 node は resolved と厳密一致 + receipt identity/revision 照合で冪等 replay。execution-context projection は worktree_id で dedup、revision bump、graph_sha256 を書込後に再計算。main は broad except→{valid:false,error} exit2 で fail-closed。SMELL: os.link rollback 経路は graph を書換→復元の二重原子書込 (許容範囲)、_validate_schema 重複 (validate-graph-schema.py と別実装で微妙に差) は SSOT 観点の軽微 smell。TESTS: test_register_package.py が register/preflight/execution-context/idempotency を exercise。"
+    "score": 100,
+    "notes": "genuine review（sha256 ad1ff7233e7117322f0de885dfc784df52c6e1c5ea9d92e1dc64a7c49701eef8 をレビュー。実行検証あり）。範囲: 全615行と、前回の記録（sha ff1d230e…、PASS 96。二重失敗で -4）からの差分。class RollbackIncompleteError(ContractError) を足し、findings を持たせた。receipt を書けなかったあと atomic_bytes で graph を元に戻し、それも失敗したら、両方の理由をまとめて raise する。findings は node に output の相対パス、code に rollback_failed、detail に「restore sha256 <元の内容の sha>: <例外>」を持つ。main は code: rollback_incomplete、applied_count: null、write_count: null を出して exit 2。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。probe（scratchpad の work-covc/rp/probe.py・probe_c.py）を当てた。A: receipt の置き場を 0555 にすると rc 2、applied_count 0 で、graph は元に戻る。B: 本物の atomic_bytes を、dir を 0555 にして失敗させると rc 2、rollback_incomplete、件数は null と null、node は14。findings の sha は元の内容と一致し、残るのは lock だけ。C: 同じ parent_feature で別の feature_package_id の task があると、rc 2 で「already has tasks outside this package」と出し、graph は変わらず、receipt も作らない。再実行は「registered nodes exist without immutable receipt」で止まる。test_register_package・test_acceptance_gaps_a1・test_build_graph_node は 104 passed（前回は 101）。lint-script-frontmatter は OK（checked=18）。--help は rc 0、知らない引数は rc 2。前回の指摘の扱い: 前回の二重失敗の指摘（receipt の作成と graph の復元が続けて失敗すると、元の理由が出ず、node が残ったまま applied_count=0 と報告する）は直った。両方の理由と、戻すべき内容の sha が出力に残り、件数は null になる。判断の妥当性: 件数を null にして、成功とも0件とも読めないようにしたのは正しい。観察（減点なし）: build-graph-node の rollback_incomplete は applied_count 0、write_count None を出す（1341-1344行）。docstring は build-graph-node と同じ形（like）と書くが、件数の扱いが食い違う。直すなら build-graph-node の側。手での復元のための元の内容は残さず、sha だけを出す。出力に write_count のある経路と無い経路がある（前からある）。指摘: なし。DEDUCTION: なし → 100。[高] と [中] は無いので PASS。"
   },
-  "reviewed_by": "workflow-code-review",
-  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
 }

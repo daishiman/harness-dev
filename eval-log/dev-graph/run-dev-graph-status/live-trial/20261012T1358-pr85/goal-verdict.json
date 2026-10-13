@@ -1,0 +1,28 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "standard を選んだ後に必須の Agent verifier (semantic evaluator / goal-seek の fork:subagent) が一度も起動されていない。transcript の tool 呼出しは Bash 23・Skill 3・Write 1 で、Agent は 0 件。guard.jsonl (27 行) にも Agent の呼出しは 1 件も無い。init・node・status のどの段でも、評価は main context の自己照合 (186〜187 行目) と自分で書いた eval-log の progress (88・155・194 行目) で代わりに済ませている。evaluator context が 0 の状態は accept-as-is と同じで、task の経路制約『必須の Agent verifier を実際に起動する』と、SKILL.md の goal-seek の配線『prompts/<R-id>.md を読み Agent で分離 context に fork する』を満たしていない。",
+    "SKILL.md の完了条件は『全 checklist と feedback_contract.criteria が PASS のときだけ完了する』だが、checklist『該当なしが空 result の成功として返る』を NOT_EXERCISED のまま loops:1 で完了扱いにした (194 行目)。そのうえで out/status.json に PASS を書いた (203 行目)。未達の項目があるのに fork せずに閉じており、最後の報告 (208 行目) では『すべて PASS または対象外』と言い換えている。"
+  ],
+  "evidence": [
+    "正規 Skill の起動: transcript 35 行目 (run-dev-graph-init)、99 行目 (run-dev-graph-node)、160 行目 (run-dev-graph-status)。",
+    "責務 prompt を出力の前に読んだか: init は 50 行目で全文を読んだ。status は 170 行目で R1/R2/R3 を全文読んだ。node は 104・114 行目で sed を使い部分的に読んだだけ。",
+    "graph の書込みは単一 writer (C02 build-graph-node.py) 経由だけだった: 142・150 行目。自作の driver で graph を書いた形跡は無い。",
+    "status の本文は extract-graph-status.py の rows から作られている (181〜182 行目)。182 行目の script 出力の JSON と、208 行目で最後に出力された report の ```json 本文は完全に一致した (評価者が読取りだけで確認)。",
+    "report の値が fixture の実値と一致した: fx/.dev-graph/graph.json の task-lt-task-001 は status closed、closed_at 2026-10-12T05:02:11.979511Z、depends_on [task-lt-task-002, task-lt-task-003]、file_path tasks/lt-task-001.md、tracker_binding none。002 と 003 は draft。",
+    "前後の digest が同じだった: 182 行目で status 実行の前後とも sha256 17071b6048f4dfbf99e716de8c6844387cf450edbbed236cc7a701e3d0d6efcb。現在の fx/.dev-graph/graph.json も同じ値で、revision は 2。",
+    "C11 validate-graph-schema.py は 151・187 行目で exit 0 だった。評価者が PYTHONDONTWRITEBYTECODE=1 で出力先を持たない形で再実行しても、valid True、violation 0、exit 0 だった。",
+    "gh/bd は 0 回呼ばれている。guard.jsonl で deny は 25 行目の 1 件だけで、stub の wttrial/bin/gh を cat で読もうとしたもの。迂回や書込みにはつながっていない。",
+    "書込み境界: fx の git status で、未追跡は .dev-graph・tasks・eval-log だけ。status を起動した後に変わったのは eval-log/run-dev-graph-status-* (14:03:43) だけで、graph と tasks は変わっていない。",
+    "提示の順序がずれている (blocker にはしない逸脱): 185 行目で『提示しました』と述べたが、その時点では本文は Bash の結果の中にしか無かった。pane.txt では report が『+59 lines (ctrl+o to expand)』と折り畳まれていた。本文を実際に出力したのは 208 行目で、status.json に PASS を書いた 203 行目より後。",
+    "Agent が 0 件であること: transcript 全体の tool_use を数えると Bash 23・Skill 3・Write 1 で、Agent は無い。subagent-transcripts の dir も無い (eval-prompt の補足のとおり)。前回の run (runs/status/collect) では、同じ goal-seek の配線のまま evaluator Agent が 3 本起動されていた。",
+    "SKILL.md (ws/plugins/dev-graph/skills/run-dev-graph-status/SKILL.md) の goal-seek は fork:subagent・max_loops 5 で、完了条件は全 checklist PASS。artifact-delivery-v1 では、standard を選ぶと semantic_evaluator_started に進むと定めている。"
+  ],
+  "skill_defects": [
+    "読取り専用であるはずの status skill が、対象 repo に eval-log/run-dev-graph-status-*/ (goal-spec・progress・intermediate.jsonl) を書くよう求めている。この skill の allowed-tools に Write は無く、prompts/R3-status.md の『Write/Edit/external mutationを呼ばず』とも、artifact-delivery.json の guard no-target-mutation とも矛盾する。さらに OUT2 の digest は graph.json しか見ないので、この書込みは検出されない。再現: 素の repo で status を standard で 1 回実行し、git status を見ると eval-log/ が未追跡として増えている。",
+    "standard を選んだときに semantic evaluator として何を使うのか (どの Agent を何本起動するか、Agent が必須かどうか) が SKILL.md と prompts に定義されていない。goal-seek の fork は『未達 responsibility がある場合』と読める書き方になっている。同じ配線のまま、前回の run (status) は evaluator Agent を 3 本起動し、今回の run (status2) は 0 本で済ませた。再現: 同じ task.md で standard を指定して 2 回実行し、Agent の呼出し回数を比べる。",
+    "完了条件の『全 checklist と feedback_contract.criteria が PASS』が、1 回の実行の中では満たせない項目を毎回の実行に求めている。live-trial/test の outer criteria と、該当なし経路 (空 result) の実行がそれに当たる。そのため session は NOT_EXERCISED を残したまま完了にするか、『対象外』と言い換えるしかない。再現: --id に実在する node を 1 つ指定して実行し、progress の checklist を見ると、該当なし経路が NOT_EXERCISED のまま残る。",
+    "effect が conversation-output の skill なのに、pre-choice の『現物 path・digest・開き方を提示』で何を提示するのかがはっきりしない。会話への出力そのものなのか、tool の結果の中にあれば足りるのかが決まっていないので、提示したという申告と実際の出力の順序がずれやすい (185 行目で提示したと申告し、実際の提示は 208 行目)。再現: standard の事前指定つきで実行し、選択を記録する前に report の本文が assistant の text として出ているかを transcript で確認する。"
+  ],
+  "evaluator_agent_id": "a21597227380250d9"
+}

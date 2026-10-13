@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-knowledge-graph
-# version: 0.1.0
+# version: 0.2.0
 # purpose: C08 (knowledge-relation-extractor) が返した根拠付き有方向辺の候補と knowledge entry から
 #          knowledge/knowledge-graph.json を決定論再生成し検証する共有ゲート (C06)。C08 は read-only
 #          (辺候補 JSON を返すのみ) ゆえ永続化 owner が不在だったため、本 script が --merge-relations で
@@ -14,7 +14,8 @@
 #          ならないため)。quarantine された辺は knowledge-relations.json から除去される。
 # inputs:
 #   - argv: --knowledge-dir DIR [--graph-out FILE] [--merge-relations CANDIDATE_FILE]
-#   - file: <knowledge-dir>/knowledge-relations.json (辺の永続ストア・不在は空辺として扱う)
+#   - file: <knowledge-dir>/knowledge-relations.json (辺の永続ストア・不在は空辺として扱う。
+#           list か、edges[] か relations[] のどちらか一方を持つ object。どちらも無い object は形の違いとして止める)
 #   - file: CANDIDATE_FILE (--merge-relations 時・C08 が返し呼び出し側が materialize した辺候補 JSON)
 #   - file: <knowledge-dir>/*.json のうち entries[] を持つ category ファイル群
 # outputs:
@@ -24,7 +25,7 @@
 #   - file: graph-out (既定 <knowledge-dir>/knowledge-graph.json) ※検証 PASS 時のみ書込
 #   - file: <knowledge-dir>/knowledge-relations.json ※(--merge-relations または quarantine 発生) かつ検証 PASS 時のみ正準書込
 #   - file: <knowledge-dir>/knowledge-relations-quarantine.json ※dangling 辺検出かつ検証 PASS 時のみ冪等追記
-#   - exit: 0=OK / 1=violation / 2=usage
+#   - exit: 0=OK / 1=violation (読めない・非 UTF-8・形の違う入力を含む) / 2=usage・書込失敗
 # contexts: [E, C]
 # network: false
 # write-scope: graph-out / knowledge-relations.json / knowledge-relations-quarantine.json のみ
@@ -46,7 +47,10 @@ canonical 文字列でソートし入力順に非依存)。
 で起動する。merge は canonical key (source_id, target_id, relation_type) で冪等: 既存辺は evidence/
 confidence/review_status を含め保持し (human review 済み status を候補で上書きしない=first-write-wins)、
 未知 key の候補のみ append する。同じ候補を二度 merge しても knowledge-relations.json は byte-identical で
-不変。merge は全候補を先に検証し、PASS 時のみ relations → graph の順に正準書込する。検証 FAIL 時は双方とも書かない。書込中断時は同一候補の再実行で冪等修復する（複数ファイル跨ぎの atomicity は保証しない）
+不変。merge は全候補を先に検証し、PASS 時のみ relations → graph の順に正準書込する。検証 FAIL 時は双方とも書かない。
+各ファイルは一時ファイル + rename で書くので、1ファイルが書きかけで残ることは無い。複数ファイルをまたぐ
+atomicity は保証しない: 途中で止まったら同じ候補で再実行すれば冪等に揃う (quarantine と merge が冪等なため)。
+merge しない経路でも、辺ストアに同じ key の辺が重複していれば最初の1本だけを使う (merge と同じ first-write-wins)。
 (壊れた辺・循環を永続化しない)。
 
 dangling (endpoint の entry 不在) だけは violation でなく縮退: entry 削除で dangling 化した辺が
@@ -58,6 +62,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -94,7 +99,7 @@ def load_entries(knowledge_dir: Path) -> tuple[list[dict], list[str]]:
             continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+        except (OSError, ValueError, RecursionError) as exc:
             violations.append(f"entry file unreadable: {path.name}: {exc}")
             continue
         if not (isinstance(data, dict) and isinstance(data.get("entries"), list)):
@@ -135,16 +140,28 @@ def load_relations(relations_path: Path) -> tuple[list, str, list[str]]:
         return [], "absent", []
     try:
         data = json.loads(relations_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
         return [], "malformed", [f"relations file unreadable: {relations_path.name}: {exc}"]
 
+    edges = _edges_of(data)
+    if edges is not None:
+        return edges, "loaded", []
+    return [], "malformed", [f"relations file shape invalid (list か、edges[] か relations[] のどちらか一方を持つ dict が必要): {relations_path.name}"]
+
+
+def _edges_of(data) -> list | None:
+    """辺ストア・辺候補の形から辺の配列を取り出す。形が違えば None。
+
+    edges も relations も無い object を空の辺として受けると、キーの書き間違い1つで
+    辺 0 本の graph が上書きされる。両方あるときもどちらを正とするか決められないので止める。
+    """
     if isinstance(data, list):
-        return data, "loaded", []
+        return data
     if isinstance(data, dict):
-        edges = data.get("edges", data.get("relations", []))
-        if isinstance(edges, list):
-            return edges, "loaded", []
-    return [], "malformed", [f"relations file shape invalid (list か edges[]/relations[] を持つ dict が必要): {relations_path.name}"]
+        keys = [k for k in ("edges", "relations") if k in data]
+        if len(keys) == 1 and isinstance(data[keys[0]], list):
+            return data[keys[0]]
+    return None
 
 
 def load_candidate_edges(candidate_path: Path) -> tuple[list, list[str]]:
@@ -156,15 +173,12 @@ def load_candidate_edges(candidate_path: Path) -> tuple[list, list[str]]:
     """
     try:
         data = json.loads(candidate_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
         return [], [f"merge 候補ファイル解析不能: {candidate_path.name}: {exc}"]
-    if isinstance(data, list):
-        return data, []
-    if isinstance(data, dict):
-        edges = data.get("edges", data.get("relations", []))
-        if isinstance(edges, list):
-            return edges, []
-    return [], [f"merge 候補ファイル形状不正 (list か edges[]/relations[] を持つ dict が必要): {candidate_path.name}"]
+    edges = _edges_of(data)
+    if edges is not None:
+        return edges, []
+    return [], [f"merge 候補ファイル形状不正 (list か、edges[] か relations[] のどちらか一方を持つ dict が必要): {candidate_path.name}"]
 
 
 def _relation_key(edge: dict) -> tuple[str, str, str]:
@@ -194,6 +208,25 @@ def merge_relations(existing: list, candidate: list) -> tuple[list[dict], int, i
             added += 1
     ordered = [merged[key] for key in sorted(merged)]
     return ordered, added, kept
+
+
+def dedupe_edges(edges: list) -> tuple[list, int]:
+    """同じ canonical key の辺は最初の1本だけを残す (merge_relations と同じ first-write-wins)。
+
+    object でない要素は残し、validate_edges に violation として報告させる。戻り値 (edges, 除いた本数)。
+    """
+    seen: set[tuple[str, str, str]] = set()
+    out: list = []
+    dropped = 0
+    for e in edges:
+        if isinstance(e, dict):
+            key = _relation_key(e)
+            if key in seen:
+                dropped += 1
+                continue
+            seen.add(key)
+        out.append(e)
+    return out, dropped
 
 
 def partition_dangling(edges: list, node_ids: set[str]) -> tuple[list, list[dict]]:
@@ -229,7 +262,7 @@ def load_quarantine(quarantine_path: Path) -> list:
         return []
     try:
         data = json.loads(quarantine_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except (OSError, ValueError, RecursionError):
         return []
     if isinstance(data, list):
         return data
@@ -288,9 +321,11 @@ def validate_edges(edges: list, node_ids: set[str]) -> tuple[list[dict], list[st
             violations.append(f"{ref}: evidence は非空 str を1件以上必要")
 
         # (e) confidence 0..1 (bool 除外)
+        # float() に通すと巨大な整数で OverflowError になる。int と float はそのまま比べられる (NaN は範囲外)。
         conf = edge.get("confidence")
-        if isinstance(conf, bool) or not isinstance(conf, (int, float)) or not (0.0 <= float(conf) <= 1.0):
-            violations.append(f"{ref}: confidence は 0..1 の数値が必要 (got {conf!r})")
+        conf_ok = isinstance(conf, (int, float)) and not isinstance(conf, bool) and 0 <= conf <= 1
+        if not conf_ok:
+            violations.append(f"{ref}: confidence は 0..1 の数値が必要 (got {_short_repr(conf)})")
 
         # (f) review_status 必須
         status = edge.get("review_status")
@@ -310,13 +345,21 @@ def validate_edges(edges: list, node_ids: set[str]) -> tuple[list[dict], list[st
                     "relation_type": rel,
                     "evidence": evidence if isinstance(evidence, list) else [],
                     "source_ref": source_ref if isinstance(source_ref, str) else "",
-                    "confidence": float(conf) if isinstance(conf, (int, float)) and not isinstance(conf, bool) else None,
+                    "confidence": float(conf) if conf_ok else None,
                     "review_status": status if isinstance(status, str) else "",
                 }
             )
 
     canonical_edges.sort(key=_canonical)
     return canonical_edges, violations
+
+
+def _short_repr(value, limit: int = 40) -> str:
+    """巨大な値を violation 行にそのまま出さない (桁の多い整数の repr は遅く、読めもしない)。"""
+    if isinstance(value, int) and not isinstance(value, bool) and value.bit_length() > 128:
+        return f"<{value.bit_length()} bit の整数>"
+    text = repr(value)
+    return text if len(text) <= limit else text[:limit] + "…"
 
 
 def detect_cycle(canonical_edges: list[dict]) -> list[str] | None:
@@ -332,32 +375,31 @@ def detect_cycle(canonical_edges: list[dict]) -> list[str] | None:
     for k in adj:
         adj[k].sort()  # 決定論的な探索順
 
+    # 再帰にすると depends_on の長い鎖 (1000 段程度) で RecursionError になるので、
+    # 明示スタックで同じ順に辿る。path は探索中 (GRAY) のノード列で、再帰版の stack と同じもの。
     WHITE, GRAY, BLACK = 0, 1, 2
     color: dict[str, int] = {}
-    stack: list[str] = []
 
-    def dfs(u: str) -> list[str] | None:
-        color[u] = GRAY
-        stack.append(u)
-        for v in adj.get(u, ()):
+    for root in sorted(adj.keys()):
+        if color.get(root, WHITE) != WHITE:
+            continue
+        color[root] = GRAY
+        path: list[str] = [root]
+        iters = [iter(adj.get(root, ()))]
+        while iters:
+            v = next(iters[-1], None)
+            if v is None:
+                color[path.pop()] = BLACK
+                iters.pop()
+                continue
             c = color.get(v, WHITE)
             if c == GRAY:
                 # v から現在ノードまでが循環
-                start = stack.index(v)
-                return stack[start:] + [v]
+                return path[path.index(v):] + [v]
             if c == WHITE:
-                found = dfs(v)
-                if found is not None:
-                    return found
-        stack.pop()
-        color[u] = BLACK
-        return None
-
-    for node in sorted(adj.keys()):
-        if color.get(node, WHITE) == WHITE:
-            cycle = dfs(node)
-            if cycle is not None:
-                return cycle
+                color[v] = GRAY
+                path.append(v)
+                iters.append(iter(adj.get(v, ())))
     return None
 
 
@@ -370,7 +412,7 @@ def build_associations(entries_nodes: list[dict], knowledge_dir: Path, node_ids:
             continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except (OSError, ValueError, RecursionError):
             continue
         if not (isinstance(data, dict) and isinstance(data.get("entries"), list)):
             continue
@@ -404,6 +446,18 @@ def build_graph(nodes: list[dict], edges: list[dict], associations: list[dict]) 
         "edges": edges,
         "associations": associations,
     }
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    """同じディレクトリの一時ファイルへ書いてから rename する。書きかけのファイルを残さない。"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -447,7 +501,7 @@ def main(argv: list[str] | None = None) -> int:
     # merge は validation-first = 検証 PASS 時のみ relations を書く。merge 入力 (既存 relations か候補) が
     # 壊れていれば何も書かず exit1 で差し戻す。
     merged_relations: list[dict] | None = None
-    merge_added = merge_kept = 0
+    merge_added = merge_kept = duplicate_edges = 0
     if args.merge_relations:
         candidate_path = Path(args.merge_relations)
         if not candidate_path.is_file():
@@ -467,6 +521,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         raw_edges, rel_status, rel_violations = load_relations(relations_path)
         violations.extend(rel_violations)
+        raw_edges, duplicate_edges = dedupe_edges(raw_edges)
 
     # dangling (endpoint 不在) は violation でなく quarantine 縮退: entry 削除で辺が graph 再生成を
     # 恒久ブロックしないよう分離し、残辺で検証・生成を続行する。永続化 (退避先追記 + relations から
@@ -508,8 +563,7 @@ def main(argv: list[str] | None = None) -> int:
             ensure_ascii=False, indent=2, sort_keys=True,
         ) + "\n"
         try:
-            quarantine_path.parent.mkdir(parents=True, exist_ok=True)
-            quarantine_path.write_text(quarantine_payload, encoding="utf-8")
+            _atomic_write(quarantine_path, quarantine_payload)
         except OSError as exc:
             print(f"usage error: {QUARANTINE_FILENAME} 書込失敗: {quarantine_path}: {exc}", file=sys.stderr)
             return 2
@@ -523,8 +577,7 @@ def main(argv: list[str] | None = None) -> int:
             ensure_ascii=False, indent=2, sort_keys=True,
         ) + "\n"
         try:
-            relations_path.parent.mkdir(parents=True, exist_ok=True)
-            relations_path.write_text(relations_payload, encoding="utf-8")
+            _atomic_write(relations_path, relations_payload)
         except OSError as exc:
             print(f"usage error: knowledge-relations.json 書込失敗: {relations_path}: {exc}", file=sys.stderr)
             return 2
@@ -532,24 +585,25 @@ def main(argv: list[str] | None = None) -> int:
     graph = build_graph(nodes, canonical_edges, associations)
     payload = json.dumps(graph, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     try:
-        graph_out.parent.mkdir(parents=True, exist_ok=True)
-        graph_out.write_text(payload, encoding="utf-8")
+        _atomic_write(graph_out, payload)
     except OSError as exc:
         print(f"usage error: graph-out 書込失敗: {graph_out}: {exc}", file=sys.stderr)
         return 2
 
     # 退化セルの可視化: 辺 0 本の graph は zero-hit 正常だが consult 価値が出ないため WARN で表面化する
-    # (exit0 維持・stderr のみ。既存 corpus への初回適用は RUNBOOK の初回 edge backfill 手順)。
+    # (exit0 維持・stderr のみ。既存のコーパスへの初回適用は RUNBOOK の「辺の過去分の初回埋め戻し」の手順)。
     if graph["edge_count"] == 0:
         print(
             "WARN: knowledge graph の edges=0 (辺が1本も無い退化グラフ)。"
-            "既存 corpus への初回適用は RUNBOOK の「初回 edge backfill」手順を参照",
+            "既存のコーパスへの初回適用は RUNBOOK の「辺の過去分の初回埋め戻し」の手順を参照",
             file=sys.stderr,
         )
     if rel_status == "absent":
         print(f"note: {relations_path.name} が無いため空辺として扱った (edges=0)")
     if rel_status == "merged":
         print(f"note: 辺候補を merge した (added={merge_added} kept={merge_kept}) -> {relations_path.name}")
+    if duplicate_edges:
+        print(f"note: {relations_path.name} の同じ key の辺 {duplicate_edges} 本を除いた (最初の1本を使う)")
     if dropped_related:
         print(f"note: 未解決の related 参照を {dropped_related} 件 drop した (無方向連想・非致命)")
     print(

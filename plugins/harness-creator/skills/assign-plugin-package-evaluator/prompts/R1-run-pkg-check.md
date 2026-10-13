@@ -43,7 +43,8 @@
 ### 2.2 ドメインルール
 
 - `package_mode=skill-only` の場合、PKG-003/005/006/007/008/014 を即 `not_applicable` 確定（exec しない）
-- `fail_fast=true` でも全 PKG ID の status を確定する。未実行は `status: skip` + `skip_reason: "fail_fast_triggered"`
+- fail が出ても止めず、指定された全 PKG ID の status を確定する（script に途中停止の option は無い）
+- script の判定に加え、SKILL.md「評価者が読んで判定する条件」の表（PKG-003 の hook・permission 衝突、PKG-007 の `script_refs` 実在と `+x`、PKG-008 の INV-1〜12 と Layer3 衝突）を読んで判定し、違反は当該 PKG ID の findings に足して `status: fail` にする
 - 入力 `pkg_ids` 省略時は中核 8 件を全件実行
 
 ### 2.3 入力契約
@@ -52,7 +53,6 @@
 |---|---|---|---|
 | `target_plugin` | string | yes | kebab-case plugin 名 |
 | `pkg_ids` | string[] | no | 省略時は中核 8 件 |
-| `options.fail_fast` | bool | no | default false |
 | `options.output_path` | path | no | eval-log 保存先（指定なしなら stdout のみ） |
 | `options.render` | enum | no | `markdown` 指定時のみ `render-pkg-findings.py` 経由で markdown サマリも出力（§3.1 renderer / §7.1）。未指定は JSON のみ |
 
@@ -93,7 +93,7 @@
 ### 4.2 観測 / ロギング
 
 - stdout: findings JSON（§2.4 schema 準拠）
-- stderr: 進捗ログ（`PKG-NNN start/end <duration>`）
+- stderr: exit 2 の理由だけ（`validate-plugin-package.py` は進捗ログを出さない）
 - `options.output_path` 指定時は eval-log に保存。27章 §3.1 の規約は **pkg-<id> 単位** (`eval-log/<plugin>/pkg-<id>/...`)。本 worker は 8 件を 1 回で束ねる batch 出力のため、呼出元 manifest 固有の集約パス `eval-log/<plugin>/pkg-batch/<YYYY-MM-DD>-<run>.json` (run-plugin-package-check/workflow-manifest.json の pkg phase output) を用いる
 - 35章 observable は呼出元（run-plugin-package-check の aggregate-pkg-findings.py）が emit
 
@@ -118,7 +118,7 @@
 
 - [ ] 全対象 PKG ID が `pkg_checks` に存在（`pass|fail|skip|not_applicable` のいずれか）
 - [ ] `package_mode=skill-only` のとき PKG-003/005/006/007/008/014 が `not_applicable` で確定
-- [ ] `fail_fast=true` 発火後の残 PKG ID が `status: skip` + `skip_reason: "fail_fast_triggered"`
+- [ ] 「評価者が読んで判定する条件」の表の条件を読んで判定し、違反を findings に反映した
 - [ ] `verdict.{total,pass,fail,skip,not_applicable}` が `pkg_checks` と一致
 - [ ] `schemas/findings.schema.json` の validation を通過
 - [ ] `options.output_path` 指定時、eval-log path が呼出元 manifest の batch 集約規約 (§3.1 pkg-<id> 派生の `pkg-batch/` 集約) に準拠

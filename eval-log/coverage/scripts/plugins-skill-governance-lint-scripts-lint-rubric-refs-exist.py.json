@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine review（sha256 4cbc36d5cbf355cbf67b338fea22bac9f3768dd5adba3c0087856f1111117525 をレビュー。実行検証あり）。範囲: 384 行全体と git diff origin/main（origin/main の簡易 parser は list でない refs を飛ばす fail-open だった。今回は block・flow・複数行 flow・null・コメント・BOM・CRLF を読む parser、EXEMPT_UNRESOLVED、rubric-registry.json の形の検査への作り直し）。確かめたこと: 実 repo で PASS（SKILL.md 148 件、免除 1 件 = guide-doc-generator assign-handout-readability-evaluator → ref-handout-design-system）exit 0。CI は harness-creator-kit-ci.yml 208 行。pytest（test_skill_governance_lint__lint_rubric_refs_exist.py と _r4）3.11 で 118 passed、3.9（py39pt/py39yaml）で 118 passed。fixture で FAIL になるもの: flow で欠けた参照、flow の後ろの余計な文字、空の -、引用符つき空白、list 途中のコメント、CRLF、複数行 flow、カンマ区切り scalar、閉じない flow、list の後ろの字下げ map、ディレクトリの参照（ファイルでない）、/etc/hosts（リポジトリの外）、BOM。registry: JSON でない・list・rubrics が文字列・domain 無し・upstream が文字列・非 UTF-8 → exit 2、ファイル無し・rubric=3 → exit 1、正しい registry → exit 0。非 UTF-8 の SKILL.md → exit 2。書き込みは無い。lint-script-frontmatter をこの scripts dir に流して OK。指摘: [低] 閉じの --- が無い frontmatter は find_frontmatter（146-151 行）が {} を返し、黙って PASS になる（rubric_refs を書いていても検査されない）。[低] YAML の '' escape を扱わず 'ref-a''b' を ref-a と読み、誤 PASS になりうる（parse_scalar 84-90 行。docstring に未対応と明記はある）。[低] EXEMPT_UNRESOLVED（57 行）が共有 lint に guide-doc-generator の (skill, ref) を直書きしており、設定ではなくコードに plugin 固有の免除が入っている。[低] registry が top-level list のときのメッセージが「rubrics が list でない」（296-298 行）で、実際の原因（top-level が object でない）を言わない。DEDUCTION: 閉じなし frontmatter -2、'' escape -2、免除の直書き -2、メッセージ -2 → 92。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

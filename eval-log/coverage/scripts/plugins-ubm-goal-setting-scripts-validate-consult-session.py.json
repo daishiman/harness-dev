@@ -4,11 +4,10 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 87,
-    "notes": "consult session record の分岐別契約検証 + gc (C 系ゲート)。soundness: outcome enum を先頭ゲートに redirect/safety/consult_completed の3分岐で必須項目を分離検査、user_solution.source_turn_ids は role=user turn の実在 id への包含で provenance を機械確認(assistant 発話内の『ユーザー:』偽装を通さない=テストで実証)。IN1/OUT1 マーカー regex を単一正本としてテストが import する SSOT 構造。transcript 未提供時の turn_ids 検査は fail-closed(検証不能を valid にしない)。responsibility: 検証と gc に限定、--ephemeral は persistence_consent のみ免除し他検査を緩めない(コメント+テストで固定)。error-handling: exit 0/1/2 分離、JSON shape 不正は exit2 で valid:false JSON を返す。side-effect-safety: 検証モード書込ゼロ、gc は dry-run 既定・--apply のみ削除+index.jsonl 追記、破損 handoff は誤削除回避で保持(テスト有)、secret 未 redaction を検査項目化。frontmatter: PEP723 様式完備・write-scope が --gc --apply 条件を明記し実装一致。軽微: gc で retention_until 欠落 record は永久保持(保守側に倒す設計だが表面化しない)、--apply の rmtree 成功後 index.jsonl 追記が失敗すると削除記録が残らない稀ケース。tests/test_validate_consult_session.py 21件+test_ubm_consult_contract.py で正例/負例/gc/ephemeral 網羅・全緑。",
-    "score_scale": "0-100"
+    "score": 95,
+    "notes": "genuine review（sha256 f7fd719dab0cf9c7a37a8c656cb837e5b882440567851c86dc41726318d13730 をレビュー。実行検証あり）。範囲: 全 333 行。origin/main との差分（+181/-61。redirect と safety redirect の契約、ISO 8601 の日時検査、session ディレクトリの棚卸しで symlink・通常ファイルでない handoff.json を review にする分岐）は特に丁寧に読んだ。確かめたこと: work-s2/vcs の fixture で、正しい record は valid、created_at が 'yesterday' は『created_at が ISO 8601 の日時でない』で invalid。--record に配列を渡すと exit 2『JSON shape invalid』、壊れた JSON は exit 2 で、どちらも traceback なし。--gc（dry-run、work-s2/vcs/sess）では、retention 超過は削除の候補、symlink の session・読めない handoff.json・不正な retention_until は needs_review になり、dry-run では何も消えない。plugins/ubm-goal-setting/tests 全体で 961 passed。lint-script-frontmatter.py（ディレクトリ指定）は OK checked=10。指摘: [低] 必須項目の欠落判定が真偽だけ（L120、L124-126、L129、L145、L169 の not record.get(...)）なので、空白だけの issue_statement や referral_message、文字列の source_ids（'abc' は真）でも valid になる（vcs/ws.json・redir_ws.json・srcstr.json・wsclosure.json がどれも valid=true）。直し方は str なら strip して空を欠落とし、source_ids は空でない list[str] を要求する。[低] L213-214 は handoff.json の無い session を年齢を見ずに delete（orphan）にする。作ったばかりの session（vcs/sess/justnow）も削除の候補に出た。plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md L38 の『再開するか破棄するかを確認』と衝突し、--apply では書き込み途中の新しい session も消える。直し方は created_at や mtime の閾値を設け、閾値内は review にする。DEDUCTION: 100 -3（空白・文字列で必須を満たす）-2（orphan に年齢の閾値が無い）→ 95。"
   },
-  "reviewed_by": "workflow-code-review",
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s2",
   "checked": [
     "soundness",
     "responsibility",

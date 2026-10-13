@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/x-longpost-creator/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine review（sha256 c79a1c8614b4be712bc050588f694d642e994eff3c32d625a55b93e8ddb99baa をレビュー。実行検証あり）。canonical plugins/harness-creator/skills/run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py と byte 一致（cmp で確認）なので、canonical のレビュー結論をこの写しにも当てる。範囲: 109 行の全体と、origin/main からの差分（header の exit 説明、docstring、ValueError/RecursionError の捕捉、progress の型、iteration の整数・連番・progress との一致、original_goal の型と surrogate の扱い）。確かめたこと: (1) 関連 test を流した。plugins/harness-creator/tests/test_validate_goal_seek_anchor.py 13 passed、tests/scripts-plugins/test_harness_creator__lint_goal_seek.py と tests/scripts-root/test_root__lint_vendored_ssot.py で 91 passed、plugins/harness-creator/tests/test_lint_skill_runtime_profiles.py 34 passed、plugins/ubm-goal-setting/tests/test_runtime_simplification_contracts.py と test_knowledge_sync_task_graph_contract.py で 13 passed（すべて -p no:cacheprovider）。(2) scratchpad の fixture で実行した。正常 3 行は exit 0、引数なしと --help は usage を stderr に出して exit 2（header の 2=引数の誤りどおり）、存在しない path とディレクトリは exit 1（header の「ファイルでない場合を含む」どおり）、壊れた JSON と UTF-8 BOM 付きは exit 2、progress が配列なら exit 1、hash を大文字にすると exit 1、python3.9 でも正常系は exit 0。(3) 写しは repo に 26 か所あり、find で数えた 26 件が担当一覧の 26 行と一致し、26 件すべて canonical と cmp で byte 一致。scripts/lint-vendored-ssot.py は run-skill-feedback の 22 か所を正本と比べて OK（56 件）、plugin 直下の 3 か所（slide-report-generator・spec-drift-guardian・ubm-goal-setting の scripts/）は lint-skill-runtime-profiles.py の _anchor_findings が byte 比較する。(4) frontmatter: lint-script-frontmatter.py はファイルを渡すと checked=0 で何も見ないので、写しのある 26 ディレクトリを渡して流し、どのディレクトリでもこの file は違反に出ない（template 側は checked=1 OK）。header と実装は、argv 2 つ・stdout に PASS 要約・stderr に違反・network false・write-scope none（読むだけ）・dependencies []（標準ライブラリのみ）で一致する。指摘: [低] 45 行の is_file() が try の外にあり、stat の OSError を捕まえない。親ディレクトリに読み取り権限が無い path（chmod 000 のディレクトリの中）や長すぎる名前（300 文字）を渡すと PermissionError / OSError の traceback を出し、exit 1（契約違反と同じ値）で終わる。header は読み取りの OS エラーを exit 2 と宣言し、56 行のコメントも traceback を出さないと書いている。直し方は 45 行も OSError を捕まえて exit 2 を返すこと。fail-closed ではあるので低とした。[低] 51 行の str.splitlines() は U+2028・U+2029・U+0085 でも行を割る。json.dumps(ensure_ascii=False) はこれらを escape しないので、original_goal に U+2028 か U+0085 を含む正しい JSONL が途中で割れて exit 2「JSON を読めない」になる（fixture で再現。ensure_ascii=True で書いた同じ内容は exit 0）。split(\"\\n\") にすれば直る。[低] progress 側の original_goal を見ない。契約（plugins/ubm-goal-setting/references/goal-seek-anchor-contract.md「以後、original_goal と hash は変えない」）では progress の original_goal も不変だが、validator は rows[0] の original_goal と progress の hash しか比べないので、progress の original_goal だけを別の文に書き換えても exit 0（fixture で再現）。progress に original_goal があれば anchor と一致するかを確かめるとよい。[低] iteration の始まりの値を固定しないため、先頭の行（iteration=0）が欠けた intermediate も通る（2・3・4 の 3 行と progress の iteration=4 で exit 0）。run-skill-feedback の SKILL.md は「初回 iteration=0」と書き、docstring は「周回の記録漏れの検出」をうたうが、先頭の欠落は見ないことを docstring に書いていない（理由は test の 1 始まりの既存記録で、意図した設計ではある）。DEDUCTION: 低 -4（45 行の stat の OSError で traceback）、低 -3（splitlines）、低 -3（progress の original_goal を照合しない）、低 -2（開始値を見ないことが docstring に無い） → 88。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

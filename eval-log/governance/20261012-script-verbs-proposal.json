@@ -1,0 +1,303 @@
+{
+  "proposal_id": "PROP-2026-10-12-SCRIPT-VERBS",
+  "proposer": "Claude セッション 077ff83f（team-lead から委任された ap1-verbs 担当）",
+  "date": "2026-10-12",
+  "category": "P1_structural",
+  "category_basis": "governance-policy.json の P1_structural の例に「28章動詞リスト変更」がある。28章 §4.7 も「動詞リスト変更は P1 Structural change として33章ワークフローに従う」と定める。",
+  "purpose": "状態を書き換える script（正本の反映・環境への導入・記録の追記・lock と lease・移行）に当てはまる動詞が §4.1 に無く、規約どおりに名付けられた script まで PENDING の台帳に積まれていた。意味の重ならない最小の5語を足し、同じ意味の別名は寄せ先を決めて足さない。これで台帳の UNDECIDED を減らし、残りを「改名で返せるもの」と「別途決めるもの」に分ける。",
+  "change": {
+    "type": "modify",
+    "direction": "relax",
+    "rule": "28章 §4.1 の動詞リスト（lint-script-naming.py の ALLOWED_VERBS）",
+    "before": [
+      "lint",
+      "validate",
+      "format",
+      "render",
+      "extract",
+      "diff",
+      "guard",
+      "build"
+    ],
+    "after": [
+      "lint",
+      "validate",
+      "format",
+      "render",
+      "extract",
+      "diff",
+      "guard",
+      "build",
+      "sync",
+      "install",
+      "record",
+      "manage",
+      "migrate"
+    ],
+    "added_verbs": [
+      {
+        "verb": "sync",
+        "meaning": "正本から派生物（設定・面・状態ファイル）へ内容を反映する。何度回しても同じ結果になる。",
+        "contexts": {
+          "A": "o",
+          "B": "-",
+          "C": "-",
+          "D": "x",
+          "E": "o"
+        },
+        "contexts_note": "正本を直したあとに明示的に回す（A）。PreToolUse / PostToolUse から回すと tool 呼び出しのたびに書き込みが連鎖するので禁止。Hook（C）で許すのは SessionStart から1セッションに1回だけ回すもので、lock と再入防止を持ち、中身が同じなら書かないものに限る（auto-sync-on-session-start.py が sync-native-surfaces.py を --apply で呼ぶ）。E は --check で差分だけを見る。28章 §3 の表の「-」と §3.1 に合わせた。",
+        "boundary": "build は成果物を新しく作る。sync は既にある派生物を正本に合わせる。diff は差を出すだけで書かない。",
+        "folded_aliases": [
+          "apply",
+          "reconcile"
+        ],
+        "representative": "sync-native-surfaces.py"
+      },
+      {
+        "verb": "install",
+        "meaning": "plugin・runtime・tenant bundle を利用環境へ導入する。",
+        "contexts": {
+          "A": "-",
+          "B": "x",
+          "C": "x",
+          "D": "x",
+          "E": "-"
+        },
+        "contexts_note": "利用者が明示的に頼んだとき（A）と、使い捨ての環境での導入試験（E）に限る。",
+        "boundary": "build は repo の中に成果物を作る。install は repo の外の利用環境を変える。",
+        "folded_aliases": [
+          "setup"
+        ],
+        "representative": "install-local-plugins.py"
+      },
+      {
+        "verb": "record",
+        "meaning": "証跡・ログ・ナレッジを追記する。既存の行は書き換えない。",
+        "contexts": {
+          "A": "o",
+          "B": "o",
+          "C": "-",
+          "D": "x",
+          "E": "-"
+        },
+        "contexts_note": "C は追記だけで、失敗しても止めない（exit 0）ものに限る。",
+        "boundary": "extract は読んで取り出すだけで書かない。build は成果物を作り直す。record は追記のみ。",
+        "folded_aliases": [
+          "write",
+          "log",
+          "append"
+        ],
+        "representative": "record-verification-evidence.py"
+      },
+      {
+        "verb": "manage",
+        "meaning": "lock と lease を取る・延ばす・放す。",
+        "contexts": {
+          "A": "o",
+          "B": "-",
+          "C": "x",
+          "D": "x",
+          "E": "-"
+        },
+        "contexts_note": "作業の始めと終わりに明示的に取り、放す。B は自分が取った lease の延長と解放に限る。C から取ると、取った主体と放す主体がずれるので禁止。",
+        "boundary": "guard は止めるかどうかを判定するだけで状態を持たない。manage は lock・lease の状態を持つ。意味の広い語なので対象を lock と lease に限り、設定や状態一般の書き換えには使わない。",
+        "folded_aliases": [],
+        "representative": "manage-build-lease.py"
+      },
+      {
+        "verb": "migrate",
+        "meaning": "配置や schema を旧版から新版へ一度だけ移す。",
+        "contexts": {
+          "A": "o",
+          "B": "-",
+          "C": "x",
+          "D": "x",
+          "E": "-"
+        },
+        "contexts_note": "版を切り替えるときに一度だけ明示的に回す。C から自動では回さない。",
+        "boundary": "sync は何度でも回して正本に合わせる。migrate は版の切り替えで一度だけ回す。format は中身の意味を変えずに整形するだけ。",
+        "folded_aliases": [
+          "backfill"
+        ],
+        "representative": "migrate-plan-layout.py"
+      }
+    ],
+    "common_constraints": "5つとも D（Stop Hook）は x。frontmatter の write-scope に固定の書き込み先を宣言する（§6.1 の「出力ディレクトリ」は宣言した書き込み先と読む）。名前が規約を満たしてもネットワーク禁止は外れない。外部サービスへ書くなら31章の adapter に従う。§9.1 の連鎖実行の列には入れない。",
+    "not_added": [
+      {
+        "verb": "emit",
+        "reason": "出力を作る系で build / render と重なる。"
+      },
+      {
+        "verb": "apply / reconcile / setup / write / log / append / backfill",
+        "reason": "上の5語と同じ意味の別名。寄せ先で名付ける（§4.1.1・§4.7）。"
+      },
+      {
+        "verb": "promote / accept / register / init / apply（spec transition）",
+        "reason": "ゲート付きの状態遷移で、どれも1本ずつしかない（promote-system-plan・accept-discovered-task・apply-spec-transition・register-package・init-project-layout）。この用途に使う1語は別の P1 で決める。"
+      },
+      {
+        "verb": "rollback",
+        "reason": "rollback-to-stable は戻し方の計画を出すだけで何も書き換えない。状態を書き換える動詞の対象ではない。"
+      }
+    ],
+    "files": [
+      {
+        "path": "scripts/lint-script-naming.py",
+        "what": "ALLOWED_VERBS に5語を足す。docstring の動詞リスト。PENDING_RENAME_PATHS から規約を満たした14件を外す（stale の規則）。寄せた別名の登録（setup-playwright）に寄せ先を書く。VERB_LIST_CHANGE_PATHS の引用行を 28章:199 に直す。"
+      },
+      {
+        "path": "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+        "what": "§3 の表に5行、§3.1 に読み方の箇条、§4.1 の動詞を13語に、§4.1.1 を新設、§4.7・§6.1・§9.1・付録の write-scope 確認項目。"
+      },
+      {
+        "path": "installers/harness-creator-kit/CONVENTIONS.md",
+        "what": "153行の動詞リストの写しを13語に。"
+      },
+      {
+        "path": "tests/scripts-root/test_root__lint_script_naming.py",
+        "what": "28章 §4.1・lint の docstring・CONVENTIONS.md の写しが ALLOWED_VERBS と一致すること、§3 に5語の行があること、寄せた別名7語が VIOLATION のままであることを固定する。"
+      }
+    ]
+  },
+  "impact_assessment": {
+    "measured_by": "python3 scripts/lint-script-naming.py（同じ作業ツリーで変更の前後に実行）",
+    "before": "OK=277 EXCEPTION=19 PERMANENT=27 PENDING=219 (P=6 G=0 H=15 UNDECIDED=198) VIOLATION=0 stale=0",
+    "after": "OK=291 EXCEPTION=19 PERMANENT=27 PENDING=205 (P=7 G=0 H=15 UNDECIDED=183) VIOLATION=0 stale=0",
+    "pending_to_ok": [
+      "plugins/dev-graph/scripts/manage-worktree-lease.py",
+      "plugins/harness-creator/scripts/install-codex-plugin.py",
+      "plugins/harness-creator/scripts/install-local-plugins.py",
+      "plugins/harness-creator/scripts/manage-build-lease.py",
+      "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+      "plugins/harness-creator/scripts/sync-codex-project-settings.py",
+      "plugins/harness-creator/scripts/sync-native-surfaces.py",
+      "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+      "plugins/harness-creator/scripts/sync-task-state.py",
+      "plugins/harness-creator/skills/run-build-skill/scripts/record-verification-evidence.py",
+      "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/migrate-plan-layout.py",
+      "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+      "scripts/install-tenant-bundle.py",
+      "scripts/sync-notion-schema.py"
+    ],
+    "undecided_to_p": [
+      "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/record_usage.py（kebab 化だけで record-usage.py として返せるようになった）"
+    ],
+    "expected_fail_rate_delta": "0（superset の緩和。VIOLATION は 0 のまま）",
+    "after_note": "2026-10-12 の承認レビューの時点の作業ツリーでは OK=294。差の +3 は、別の担当が足した未追跡の新規 script 3本で、この提案の変更によるものではない（承認レビューの G3）。VIOLATION は 0 のまま。"
+  },
+  "rename_candidates": {
+    "note": "この提案では改名しない。寄せ先の動詞で名付け直す候補として列挙する。改名は参照（SKILL.md・README・tests・CI）を同時に直す別の P1 で行う。",
+    "sync": [
+      "plugins/dev-graph/scripts/reconcile-github-lifecycle.py → sync-github-lifecycle.py",
+      "plugins/contract-generator/skills/run-template-sync/scripts/sync.py → sync-template-mapping.py（§4.1 の <対象> を足す）"
+    ],
+    "install": [
+      "plugins/slide-report-generator/scripts/setup-playwright.py → install-playwright-runtime.py",
+      "scripts/link_master_plugins.py → install-master-plugins.py"
+    ],
+    "record": [
+      "plugins/skill-governance-automation/scripts/write-eval-log.py → record-eval-log.py",
+      "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/log-usage.py → record-usage-log.py",
+      "plugins/skill-intake/scripts/append_eval_log.py → record-eval-log.py",
+      "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/record_usage.py → record-usage.py",
+      "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py → record-build-lesson.py"
+    ],
+    "migrate": [
+      "plugins/skill-governance-migration/scripts/migrate/backfill-source-tier.py → migrate-source-tier.py",
+      "plugins/skill-intake/scripts/convert_v1_to_v2_context.py → migrate-context-v2.py"
+    ],
+    "other_verbs": [
+      "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/apply-handoff-notes.py は読み取り専用で中身は extract に近い → extract-handoff-notes.py",
+      "plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py はゲート付きの状態遷移。not_added の別 P1 で決める"
+    ]
+  },
+  "backward_compatibility": "許可する動詞を足すだけの superset。今 OK の script は OK のまま。改名はしないので、script を参照している SKILL.md・hook・CI は何も変わらない。lint の exit code の意味も変わらない。",
+  "rollback_plan": "ALLOWED_VERBS を8語に戻し、28章の §3 の5行・§3.1 の箇条・§4.1 の動詞の行（13語→8語）・§4.1.1・§4.7・§6.1・§9.1・付録の追記を戻し、CONVENTIONS.md の写しを戻し、外した14件を PENDING_RENAME_PATHS に戻す。テストの動詞リスト照合は戻した写しと一致するので、テストも同時に戻す。 scope_additions の1件目は、build-steps.md の script type の列挙から sync・install・record・manage・migrate を外す（動詞を8語に戻すときに必ず一緒に戻す。残すと写しが食い違う）。06章の第10条は今の文のまま残す。第10条は28章 §4.1 を正本として引くだけなので、動詞を8語に戻しても食い違わない。merge-base の文に戻すと、古い動詞の一覧（check・score・convert を含む）に戻り、28章と食い違う。 scope_additions の2件目（28章 §2 の段落・§4.1 の拡張子の行、06章の木・第8条・第9条の2つ目の但書・違反検出の表・条番号の段落）は、merge-base 70aeb8c2 の文に戻す。どれも文書だけの変更で、lint と CI の判定は戻す前後で変わらないので、この部分だけを戻すこともできる。",
+  "cooldown": {
+    "policy": "P1_structural は3日（governance-policy.json の cooldown_rules）。",
+    "doc_28_previous_entry": "2026-05-18T14:00:00Z。cooldown は明けている。",
+    "doc_28_next_change": "この提案の承認 entry の timestamp を T とすると、28章を次に変えられるのは T+3日以降。",
+    "lint_and_others": "scripts/lint-script-naming.py・CONVENTIONS.md・tests は guard の分類で P2_content。cooldown は無い。",
+    "doc_33": "33章の直前の entry は 2026-10-10T00:06:16Z（PROP-2026-10-10-UBM-JA-RELEASE）。2026-10-13T00:06:16Z（JST 09:06）まで cooldown 中なので、この提案では33章を変えない。"
+  },
+  "followups": [
+    {
+      "target": "doc/ClaudeCodeスキルの設計書/33-change-governance.md の「既知の未消化違反 (命名規約)」",
+      "when": "この提案の承認を changelog に記録したあと、かつ 2026-10-13T00:06:16Z 以降（33章の更新ルールと cooldown）。",
+      "draft": "表の前の段落の末尾に「状態を書き換える動詞（sync / install / record / manage / migrate）は PROP-2026-10-12-SCRIPT-VERBS で動詞リストに足した（28章 §4.1.1）。」を足す。表に行「| `setup-*.py` / `reconcile-*.py` / `write-*.py` / `log-*.py` / `append_*.py` / `backfill-*.py`（§4.1.1 の寄せた別名）と、同じ用途の `link_*.py` / `convert_v1_to_v2_*.py` / `auto-record-*.py` / `sync.py` / `record_usage.py` | 11 | P1 リネーム（寄せ先の動詞へ。動詞リストは広げない） |」を足す。件数は rename_candidates の sync・install・record・migrate の合計。`plan-*` などの行は、この提案の対象外なので「要決定」のまま残す。"
+    },
+    {
+      "target": "eval-log/coverage/scripts/scripts-lint-script-naming.py.json と eval-log/coverage/docs/ClaudeCode--------28-script-execution-model.md.json",
+      "what": "記録した sha が古くなる。coverage を作り直す担当で再生成する。"
+    },
+    {
+      "target": "rename_candidates",
+      "what": "寄せた別名の script の改名（参照の原子的な更新を伴う P1）。"
+    }
+  ],
+  "changelog_draft": {
+    "timestamp": "<承認時に記入>",
+    "category": "P1_structural",
+    "proposal_id": "PROP-2026-10-12-SCRIPT-VERBS",
+    "target_path": [
+      "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+      "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md"
+    ],
+    "target_sha256_note": "承認の対象は P1 の2件（06章・28章）。値は 2026-10-12 の承認レビューの target_sha256 で、entry を書く直前に現物と一致することを確かめる。P2 の4件（related_files）は承認の対象に入れない。その sha256 は承認レビューの related_files_sha256 に記録してある。lint-script-naming.py には別の担当の変更が載っていて、まだ変わりうる。",
+    "target_sha256": {
+      "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md": "01b8a481cdb6fdad9df64f7ef66bac2116ac522526b14939d766a9cadd199076",
+      "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md": "0a110cfe116abc304e0166bd8d15b291e864db89be107afac92db70ff74614a0"
+    },
+    "approver": "pending",
+    "status": "pending",
+    "rationale": "28章 §4.1 の動詞リストに状態を書き換える5語（sync/install/record/manage/migrate）を足す。同じ意味の別名は寄せ先を決めて足さない。PENDING 219→205。",
+    "rollback_plan": "ALLOWED_VERBS と28章 §3・§4.1・§4.1.1 ほかの追記、CONVENTIONS.md の写し、テストを戻し、外した14件を PENDING_RENAME_PATHS に戻す。build-steps.md の5語も一緒に戻す。06章の第10条は今の文のまま残す（28章を引くだけなので食い違わない）。scope_additions の2件目の文書の変更は merge-base 70aeb8c2 の文に戻す（単独でも戻せる）。",
+    "related_files": [
+      "installers/harness-creator-kit/CONVENTIONS.md",
+      "plugins/harness-creator/skills/run-build-skill/references/build-steps.md",
+      "scripts/lint-script-naming.py",
+      "tests/scripts-root/test_root__lint_script_naming.py"
+    ]
+  },
+  "reviewers": {
+    "proposer": "Claude セッション 077ff83f",
+    "third_party": "",
+    "approver": "pending",
+    "tooling": "lint-script-naming.py / test_root__lint_script_naming.py / guard-change-category.py"
+  },
+  "notes": "利用者が 2026-10-12 に「今 P1 の提案を作る」と決めた。承認の記録（governance-log の entry）は別の承認レビュアーが作る。この提案では governance-log・fingerprint・plugin.json の版・eval-log の verdict を変えていない。",
+  "scope_additions": [
+    {
+      "date": "2026-10-12",
+      "by": "team-lead（提案者側。承認者ではない）",
+      "targets": [
+        "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md:230（第10条）",
+        "plugins/harness-creator/skills/run-build-skill/references/build-steps.md:258"
+      ],
+      "what": "後続に回していた2件を、この提案の範囲に入れた。06章の第10条は古い別の動詞リスト（check/score/convert を含む）を持ち、28章と食い違っていた。28章 §4.1 を正本として参照する形に直し、列挙を本章から外した。build-steps.md の script type の列挙に sync/install/record/manage/migrate を足した。 第10条の本文は、merge-base の「<verb>-<target>[.<sub-target>].<ext> 形式。verb は lint/validate/build/format/check/score/extract/convert」から、「.py は <verb>-<target>[-<scope>].py 形式。verb は28章 §4.1 の動詞リスト（本章には列挙を置かない）。. で区切った sub-target は使わない」に変えた。旧い一覧にだけあった check・score・convert は28章の動詞リストに無く、本章からも消えた（今の28章は、これらを別名としても挙げていない）。但書の「SKILL.md で未定義の verb を宣言する」は、lint が SKILL.md を読まない実物に合わせ、動詞の追加は33章の P1 で行うと改めた。 第10条には、拡張子の行（lint は Skill 配下の scripts/ に .py と .sh だけを通し、.ps1 は置けない）と、違反検出の行（lint-script-naming.py が .py の形式と先頭の動詞を照合し、.sh は見ない。拡張子は lint-skill-tree.py が見る）も足した。",
+      "why": "同じ規則の第2・第3の写しが正本と食い違ったまま残ると、動詞リストを広げた変更の意味が読み手ごとに変わる。06章の直前の記録は 2026-05-18 で cooldown は明けている。harness-creator は同じ PR で版を進めるので、build-steps.md の変更は追加の版上げを要さない。"
+    },
+    {
+      "date": "2026-10-12",
+      "by": "team-lead（提案者側。承認者ではない）",
+      "trigger": "independent-approval-reviewer の審査（changes_requested）の blocking の2つ目。06章と28章の現物に、提案に書いていない変更があった。",
+      "targets": [
+        "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md §2（表の前の段落）",
+        "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md §4.1（拡張子の行）",
+        "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md（Skill 配下の木の scripts/ の行・第8条・第9条の2つ目の但書・違反検出と改正手続きの表と、その後の条番号の段落）"
+      ],
+      "what": [
+        "28章 §2: SessionStart の hook から回す経路を、表に行を足さずに C として数えると書いた（sync の C を条件つきで許す §3.1 の前提）。",
+        "28章 §4.1: 拡張子の行を lint の実物に合わせた。Skill 配下の scripts/ に置けるのは .py と .sh だけで（lint-skill-tree.py）、.ps1 は置けない。lint-script-naming.py は .py だけを見て、. で区切った sub-target も通さない。",
+        "06章の木: scripts/ の行を .py と .sh だけにし、<verb>-<target>[-<scope>].py の形にした。",
+        "06章 第8条: ディレクトリ名の一覧を lint-skill-tree.py の ALLOWED_DIRS（references / examples / scripts / templates / prompts / schemas / hooks / log）に合わせた。一覧の外は warning（LS-203）で、失格（exit 1）にはしないと書いた。但書を、今の repo にある一覧の外のディレクトリ（tests / assets / fixtures / proposals と第14条の _drafts）の扱いに直した。",
+        "06章 第9条の2つ目の但書: frontmatter の name-policy: pwsh-pascal は未実装で、.ps1 は今は置けないと書いた。",
+        "06章の違反検出の表: 「配置例」を「実物」にし、各条を実在する lint と CI の job に対応させた。実物の無い条（2・7・9・11・12・14）は「未実装」と書いた。第6条は guard-change-category.py の P0 判定を書いた。",
+        "06章の条番号の段落: lint の出力にある条番号が本章の番号と一部ずれることを書いた（lint-skill-name.py の第1・2・7条、lint-skill-tree.py の第13条）。"
+      ],
+      "why": "どれも、本章の記述を、すでに動いている lint と CI の振る舞いに合わせたもので、lint・CI・script の判定は1つも変えていない。06章・28章の coverage の取り直しで、文書が実物より厳しい（失格と書くのに warning だけ）か、実物に無い経路（.ps1・.sh の lint・未実装の検出）を書いていると指摘された。第8条の一覧と失格の扱いは、文書の上では緩和に当たる。しかし実物は以前から warning で、eval-log と _drafts を許可の一覧に持たない。文書を実物に合わせただけで、判定が通るものと落ちるものは変わらない。06章の第10条（動詞の正本を28章にする）と同じ節の中で、同じ規則の写しが食い違ったまま残らないよう、この提案にまとめた。",
+      "measured_by": "lint-skill-tree.py の2本（scripts/ と plugins/skill-governance-lint/scripts/）は、merge-base 70aeb8c2 からの git diff が空。lint-script-naming.py の本提案の分は change.files[0] の what のとおり（ALLOWED_VERBS ほか）。このファイルには、ほかに別の担当の未コミットの変更（恒久例外の区分・UNDECIDED・参照の無い登録を stale にする処理）が同じ PR で載っていて、それは本提案の範囲に入れていない。どちらの変更も、名前の形を判定する VALID_NAME と、対象を集める rglob(\"*.py\") には触れていない（merge-base と同じ）。したがって scope_additions の2件目の文書の変更は、lint と CI の判定を変えない。"
+    }
+  ]
+}

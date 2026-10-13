@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-manifest.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":83,"notes":"compile OK; read-only(stderr出力のみ)・常にexit0で非ブロックhook; jsonschema不在時はfallback必須キー検査へgraceful degrade; target判定/frontmatter抽出を関数分離; 減点=main最外殻 except Exception:pass はlint結果を無音喪失しうる(hook SLA上は妥当だが診断不能)/正式frontmatterブロック不在"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-manifest.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine review（sha256 f2b80faf830c54f2f555ac91f0e47832b39bc4a72f160b7d8c06bc4264ceea13 をレビュー。実行検証あり）。範囲: 全 265 行と origin/main からの差分（PEP 723 ヘッダの追加と、外側の except Exception が internal error を stderr に出すようになった変更）。呼び出し元の hooks/lint-capability-manifest.py（execv で委譲。hooks.json:47 に登録）も見た。確かめたこと: test_harness_creator__lint_capability_manifest.py と test_harness_creator__lint_capability_manifest_r4.py は 3.11 で 73 passed、python3.9 でも 73 passed。fixture の結果は次のとおり。stdin が空または 'not json' なら無出力で exit 0。[1,2] は internal error: AttributeError、file_path=123 は internal error: TypeError。存在しないパスは無出力。SKILL.md の description 欠落は \"'description' is a required property\"、agents/a.md は \"'kind' is a required property\"、frontmatter の無い agents/README.md は frontmatter not found、plugin-composition.yaml の誤りは errors。どの場合も exit 0 で traceback は出ず、python3.9 でも同じ結果。python3 -S と python3.9 -S（jsonschema と yaml を使えない状態）では schema_used=false の縮退検査になり、description と capabilities の欠落を出す。書き込みは stderr だけで、write-scope none と一致する。lint-script-frontmatter.py を scripts ディレクトリに流すと OK (checked=30 pending=0)。repo の実ファイル 258 件に in-process でかけると、190 件が schema エラーになる。内訳は activation_state の additionalProperties が 98 件、kind 欠落が 20 件ほか。これは schema と内容の drift で、この script の欠陥ではないので観察として記す。指摘: [低] 159-165 行の _load_schema は schema の破損を握り潰して None を返す。そのため 224-233 行で name/description だけの縮退検査に黙って落ちる。schema を壊した写しで試すと、余分なキーを持つ SKILL.md が無出力・exit 0 になった（実 schema では \"'kind' is a required property\" が出る）。248 行のコメント「内部の不具合を黙って握り潰さない」と食い違う。schema の読み込み失敗を error として出せば直る（-4）。 [低] 76 行の正規表現は閉じ `---` の後の改行を要求する。末尾が `---` で改行なしの SKILL.md を frontmatter not found と誤判定する（-2）。 [低] 66-67 行は、パスに commands/ か agents/ を含む .md をすべて対象にする。そのため README.md などにも frontmatter not found や kind 欠落を出す（-2）。 [低] 入力 JSON の形が違うとき（配列、数値の file_path）、247-258 行は internal error として報告する。入力の誤りと hook の不具合を区別できない（-2）。 [低] 229 行は最初の ValidationError の message だけを出す。anyOf の失敗では frontmatter の dict 全体がそのまま出て読みにくい（-2）。DEDUCTION: -4-2-2-2-2 → 88。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

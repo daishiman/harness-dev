@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-intake/scripts/validate_intake_schema.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":92,"notes":"vendored _jsonschema_compat exposes validators.validator_for/check_schema/iter_errors all used; clear exit codes (0/1/2/3), stdin+argv dual mode, fail-closed on missing schema, cross-field rules; no bare except; read-only"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-intake/scripts/validate_intake_schema.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine review（sha256 a5df07beb8292257572af6f267bd376623c256fc0f4515d7c7c6783c527d40bd をレビュー。実行検証あり）。範囲: 全 149 行。main との差分（_MISSING、_read_sibling_value、sibling_equals の分岐、_check_cross_field_rules へ target を渡す）を含めて全体を読み、intake.schema.json の §3 techniques_used（8 技法の enum と印 skip:needs_excavation=false、2 要素以上で印を拒む allOf）と x-cross-field-rules の excavation_skip_matches_interview、P10 の hooks/pre-publish-schema-validate.py（validator の rc=0→0、3→3、それ以外→2）と突き合わせた。確かめたこと: この script を呼ぶ tests/scripts-plugins/test_skill_intake__validate_intake_schema_r4.py・test_skill_intake__dogfooding_regression.py・plugins/skill-intake/tests/test_skip_path_intake_schema.py で 71 passed（mechanical=true を保つ）。work-intake/e2e_skip.py（70 項目、NG 0）で、build-skipped-purpose.py の出力を handoff-contract.md の表どおり §3 へ写した intake.json は validator rc=0、P10 hook rc=0。照合で止まる 15 種（interview.json が無い・壊れた JSON・UTF-8 でない・list・キー無し・ディレクトリ、needs_excavation が 0・\"false\"・true・null、印と技法の混在 2 順、印 2 つ、[]、skip:other）はすべて validator rc=1（traceback 無し）、hook rc=2。正しい interview.json に戻すと rc=0。既存 fixture 3 本と golden の sample-intake.json、8 技法すべて、深掘り経路で needs_excavation=true、単独技法はいずれも rc=0（回帰なし）。work-intake/edge_scripts.py の validator 13 項目では、argv・stdin（intake_json、tool_input.file_path）の正常系が rc=0、存在しないパス・stdin の壊れた JSON・対象なしが rc=2。lint-script-frontmatter.py は rc=1（ヘッダ無し）。指摘: [低] 照合が一方向。L77-86 の sibling_equals は §3.techniques_used が印 1 要素のときだけ interview.json を読むので、skip 経路（needs_excavation=false で purpose.json は印）の §3 に実在しない深掘りを書いても通る。再現: e2e の skip 経路で §3 を [\"reverse_brief\",\"5whys\",\"tacit_extraction\"] に置き換えると validator rc=0。直し方: §3.techniques_used を隣の purpose.json の techniques_used と照合する operator（定数でなく sibling の値と比べる）を足し、schema にルールを足す。[低] L121-122 の json.loads と read_text が try の外にあり、壊れた JSON・UTF-8 でない・ディレクトリの intake.json で traceback を出して rc=1 になる（docstring L8-12 では IO error は 2）。hook 側では BLOCK になるので fail-closed は保たれる。前からある。直し方: OSError・UnicodeDecodeError・JSONDecodeError を捕まえて 2 を返す。[低] L94-99 で stdin の payload の形を確かめていない。payload が list、tool_input が str のとき AttributeError の traceback で rc=1（期待は 2）。前からある。[低] L133-145 で schema のエラーがあると cross-field のエラーを表示しない（rc=1 自体は正しい）。§3 rounds=0 と印＋needs_excavation=true を同時に入れると、表示されるのは schema の 1 件だけ。前からある。[低] PEP 723 ヘッダが無い（lint-script-frontmatter.py rc=1）。plugins/skill-intake/scripts/ の 48 本中 42 本が同じで、前からある。補足（減点なし）: 書き込みは無く read-only。sibling の型照合（type(actual) is type(right)）で 0 と false を区別できている。DEDUCTION: 100 -2（照合が一方向）-3（IO 3 種で traceback）-2（stdin の形）-2（cross のエラーが隠れる）-2（PEP 723 ヘッダ無し）→ 89。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-intake",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "label": "init3",
+  "retry_of": "20261012T1358-pr85",
+  "evaluator_agent_id": "a0276c447334d2662",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/init3/ws/plugins/dev-graph/skills/run-dev-graph-init",
+  "closure_sha_at_launch": "9129820ac36e1d848f83d9b700ac317ac90cf91fe7d670a8019c718097c27b16",
+  "closure_sha_tested_copy": "9129820ac36e1d848f83d9b700ac317ac90cf91fe7d670a8019c718097c27b16",
+  "closure_sha_wtpy_at_verdict": "9129820ac36e1d848f83d9b700ac317ac90cf91fe7d670a8019c718097c27b16",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "素の repo: その場で git init し、README.md を runs/init2/fx から写して 1 commit (265ae8d、作者は live-trial@example.invalid) にした。追跡は README.md だけで、起動の前は .dev-graph/ も .claude/ も無かった。init2 と同じ形。",
+    "harness link の事前確認: 起動の前に、被験の外で validate-harness-link.py --repo-root fx --hook-source plugin を 1 回回した (exit 0、status=pass、link_state=absent、in_use=false、write_count=0)。前後で fx の全ファイルの sha256 の一覧が一致した (fixture-provenance.json の harness_link_check)。",
+    "plugin の写し: wtpy の plugins/ から 5 plugin を ws/plugins/ に cp -R で写し、diff -rq -x __pycache__ で一致を確かめた (2026-10-12T11:18:42Z)。run-dev-graph-init の closure は写しと wtpy で 9129820a…、起動の直前と run の後にも一致した。",
+    "隔離の設定: ws/.claude/settings.local.json と policy.json を mksettings.py (277ae072…) で置いた。guard.py は f23267a3…。外へ届く tool の拒否を含み、schedule3・sync5 と同じ条件。",
+    "task.md: init2 のものから runs/init2 を runs/init3 に置き換えた (3 か所)。ほかは変えていない。",
+    "記録の伏せ字: collect の 2 ファイルで利用者のメールを 4 か所伏せた (redact.py)。fixture と被験の成果物は変えていない。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "SKILL.md のゴールシーク配線は、全 checklist と feedback_contract.criteria が PASS のときだけ完了とする。しかし OUT3 (repo A/B の比較、project-root の不一致、broken link) と OUT5 (project-fallback の merge と rollback) は verify_by=test で、1 repo に --hook-source plugin で init を 1 回走らせただけでは検証できない。そうした criteria を deferred や not_applicable として扱う規則が SKILL にも R1-R5 にも無い。そのため実行者は、未検証の criteria を PASS と記録しないと完了できない。再現手順: 素の repo で run-dev-graph-init を --hook-source plugin で実行し、ゴールシークの完了条件に従って progress.json を書く。今回の trial では fx/eval-log/run-dev-graph-init-progress.json に OUT3・OUT5=PASS と書かれ、notes には未実行とある。",
+    "scripts/build-init-scaffold.py は importlib.util.spec_from_file_location で validate-graph-schema.py を、通常の import で _common を読み込むが、sys.dont_write_bytecode を設定していない。このため PYTHONDONTWRITEBYTECODE を付けずに実行すると、plugin 側 (共有 harness) の scripts/__pycache__ に .pyc が書かれる。OUT3 の『harness 側の変更0件』と食い違う。今回の trial でも _common.cpython-311.pyc と validate-graph-schema.cpython-311.pyc が 20:22:44 に書き直された (L124 で本人も検出している)。再現手順: plugin の写しから scripts/__pycache__ を消し、素の repo に対して python3 scripts/build-init-scaffold.py --repo-root <repo> --hook-source plugin を実行すると、__pycache__ ができる。",
+    "SKILL.md の『目的・背景』には『初期化レポートにはgh CLI認証状態も含める』とある。しかし Execution contract の Receipt の項目にも、build-init-scaffold.py にも、R1-R5 にも、gh の認証状態を集めたり記録したりする箇所が無い (scripts/build-init-scaffold.py と prompts を grep して 0 件)。再現手順: init を実行して .dev-graph/state/receipts/init-*.json を見ると、gh の認証状態の field が無い。"
+  ]
+}

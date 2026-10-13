@@ -100,6 +100,90 @@ def test_vendored_feedback_skill_requires_exact_noncanonical_copy(tmp_path):
     assert not FC.is_vendored_feedback_skill(copied.parent / "other", plugins_dir=plugins)
 
 
+def test_vendored_feedback_skill_ignores_bytecode_caches(tmp_path):
+    # py_compile は正本とコピーに別々の .pyc (元パス入り) を作る。
+    # それでも配布コピーと判定できないと、全プラグインのコピーが重複計上される。
+    # CI は PYTHONPYCACHEPREFIX で .pyc をツリーの外へ逃がすので、cfile を明示してツリーの中に作る。
+    import py_compile
+
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    for skill in (canonical, copied):
+        (skill / "scripts").mkdir(parents=True)
+        (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
+        script = skill / "scripts" / "check.py"
+        script.write_text("VALUE = 1\n", encoding="utf-8")
+        cfile = skill / "scripts" / "__pycache__" / f"check.{sys.implementation.cache_tag}.pyc"
+        py_compile.compile(str(script), cfile=str(cfile), doraise=True)
+    (copied / "scripts" / "legacy.pyc").write_bytes(b"legacy")
+
+    assert any((canonical / "scripts" / "__pycache__").iterdir())
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    (copied / "scripts" / "check.py").write_text("VALUE = 2\n", encoding="utf-8")
+    assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+
+def test_vendored_feedback_skill_ignores_caches_left_by_running_scripts(tmp_path):
+    """Running a copy's scripts must not make it look different from canonical.
+
+    Regression: bytecode caches once took part in the digest, so a copy whose
+    scripts had been executed stopped being recognised as vendored and entered
+    repository-wide quality measurement as a duplicate.
+    """
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    for skill in (canonical, copied):
+        (skill / "scripts").mkdir(parents=True)
+        (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
+        (skill / "scripts" / "run.py").write_text("print(1)\n", encoding="utf-8")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    cache = copied / "scripts" / "__pycache__"
+    cache.mkdir()
+    (cache / "run.cpython-313.pyc").write_bytes(b"\x00bytecode")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    canonical_cache = canonical / "scripts" / "__pycache__"
+    canonical_cache.mkdir()
+    (canonical_cache / "run.cpython-311.pyc").write_bytes(b"\x00other")
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    (copied / "scripts" / "run.py").write_text("print(2)\n", encoding="utf-8")
+    assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+
+def test_vendored_feedback_skill_ignores_finder_metadata(tmp_path):
+    # macOS の Finder は開いたディレクトリに .DS_Store を置く。片方だけにあっても配布コピーと判定する。
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    for skill in (canonical, copied):
+        (skill / "scripts").mkdir(parents=True)
+        (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
+    (copied / ".DS_Store").write_bytes(b"\x00\x00\x00\x01Bud1")
+    (copied / "scripts" / ".DS_Store").write_bytes(b"Bud1")
+
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+    assert FC.directory_content_sha256(copied) == FC.directory_content_sha256(canonical)
+
+
+def test_unreadable_symlink_target_yields_none(tmp_path, monkeypatch):
+    # symlink の読み取りに失敗しても例外を投げず、digest を作れない (None) として返す。
+    root = tmp_path / "skill"
+    root.mkdir()
+    (root / "link").symlink_to("target")
+    assert FC.directory_content_sha256(root) is not None
+
+    def broken_readlink(path):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(FC.os, "readlink", broken_readlink)
+    assert FC.directory_content_sha256(root) is None
+
+
 FRONTMATTER_SAMPLE = """---
 name: run-x
 kind: run

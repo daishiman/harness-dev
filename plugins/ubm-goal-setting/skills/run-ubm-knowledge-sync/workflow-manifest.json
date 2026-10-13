@@ -3,17 +3,57 @@
     "contract": "artifact-delivery-v1",
     "state_machine": {
       "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
       ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
     },
     "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
     "release": "explicit-only",
@@ -23,73 +63,109 @@
   "schemaVersion": 1,
   "workflowId": "run-ubm-knowledge-sync",
   "skill": "run-ubm-knowledge-sync",
-  "description": "UBM knowledge source change detection, extraction, split check, and report flow.",
+  "description": "UBM のナレッジソースの変更を検知し、抽出・分割の検査・レポートの順に進める。",
   "max_iterations": 5,
   "phases": [
     {
       "id": "phase1-detect",
-      "title": "Source diff detection",
+      "title": "ソースの差分の検知",
       "dependsOn": [],
       "parallel": false,
       "actor": "detect-knowledge-updates.py",
-      "input": "UBM_VAULT_ROOT/05_Project/UBM and knowledge/registry.json",
-      "output": "NEW/MODIFIED source list excluding goal-setting records",
-      "gate": "registry hash comparison completes; missing vault produces a zero-change report",
+      "input": "UBM_VAULT_ROOT/05_Project/UBM と knowledge/registry.json",
+      "output": "目標設定と挑戦宣言の記録（05_Project/UBM の 目標設定/・挑戦宣言/）を検知の段階で除いた、NEW/MODIFIED のソース一覧",
+      "gate": "registry とのハッシュ照合を最後まで終える。vault が無い場合は差分0件のレポートを出す",
       "command": "python3 scripts/detect-knowledge-updates.py --registry ../../knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM",
-      "fatal_exit_codes": [2],
-      "resourceIds": ["scripts/detect-knowledge-updates.py", "../../knowledge/registry.json"]
+      "fatal_exit_codes": [
+        1,
+        2
+      ],
+      "resourceIds": [
+        "scripts/detect-knowledge-updates.py",
+        "../../knowledge/registry.json"
+      ]
     },
     {
       "id": "phase2-extract",
-      "title": "Knowledge extraction",
-      "dependsOn": ["phase1-detect"],
+      "title": "ナレッジの抽出",
+      "dependsOn": [
+        "phase1-detect"
+      ],
       "parallel": false,
-      "actor": "run-ubm-knowledge-sync (batch control) + knowledge-extractor",
-      "condition": "dry_run == false and NEW/MODIFIED source count > 0",
-      "input": "NEW/MODIFIED source list, knowledge/schema.json, knowledge/router.json",
-      "output": "updated knowledge JSON, router.json, registry.json, and sync-log.jsonl",
-      "gate": "sources are consumed one at a time within batches of at most 20; each source writes knowledge, recomputes router, appends one idempotency-keyed sync-log entry, then records registry (file_path,file_hash,status=processed) last as the sole commit point; no uncommitted source advances",
-      "resourceIds": ["../../agents/knowledge-extractor.md", "../../knowledge/schema.json", "../../knowledge/router.json"]
+      "actor": "run-ubm-knowledge-sync（バッチの制御）+ knowledge-extractor",
+      "condition": "dry_run == false かつ NEW/MODIFIED のソース数 > 0",
+      "input": "NEW/MODIFIED のソース一覧、knowledge/schema.json、knowledge/router.json。target_files は検知出力、NEW/MODIFIED に応じ mode=new/update、明示 --all 時だけ full。plugin_root/source_root は親が解決した絶対パス",
+      "output": "更新したナレッジ JSON・router.json・registry.json・sync-log.jsonl",
+      "gate": "最大20件のバッチの中で、ソースを1件ずつ処理する。ソースごとにナレッジを書き、router を再集計し、冪等キー（idempotency key）付きの sync-log を1件追記し、最後に registry へ (file_path,file_hash,status=processed) を唯一の commit point として記録する。commit していないソースを残したまま次へ進まない",
+      "resourceIds": [
+        "../../agents/knowledge-extractor.md",
+        "../../knowledge/schema.json",
+        "../../knowledge/router.json"
+      ],
+      "publication_boundary": "LLM writers use temporary staging only; parent publishes approved manifest or executes the exact mutation argv through canonical guard execute."
     },
     {
       "id": "phase3-split-check",
-      "title": "Knowledge split check",
-      "dependsOn": ["phase2-extract"],
+      "title": "ナレッジの分割の検査",
+      "dependsOn": [
+        "phase2-extract"
+      ],
       "parallel": false,
       "actor": "check-knowledge-split.py",
       "condition": "dry_run == false",
       "input": "knowledge/*.json",
-      "output": "split threshold report",
-      "gate": "no knowledge JSON exceeds the 500-line hard guard",
+      "output": "分割のしきい値のレポート",
+      "gate": "どのナレッジ JSON も、500行の上限（ハードガード）を超えていない",
       "command": "python3 scripts/check-knowledge-split.py --dir ../../knowledge",
-      "fatal_exit_codes": [1, 2],
-      "resourceIds": ["scripts/check-knowledge-split.py", "references/knowledge-design-principles.md"]
+      "fatal_exit_codes": [
+        1,
+        2
+      ],
+      "resourceIds": [
+        "scripts/check-knowledge-split.py",
+        "references/knowledge-design-principles.md"
+      ],
+      "publication_boundary": "LLM writers use temporary staging only; parent publishes approved manifest or executes the exact mutation argv through canonical guard execute."
     },
     {
       "id": "phase5-graph-sync",
-      "title": "Knowledge relation extraction and dependency graph validation",
-      "dependsOn": ["phase3-split-check"],
+      "title": "ナレッジの関係の抽出と依存グラフの検証",
+      "dependsOn": [
+        "phase3-split-check"
+      ],
       "parallel": false,
       "actor": "knowledge-relation-extractor",
-      "condition": "dry_run == false and NEW/MODIFIED source count > 0",
-      "input": "split-checked and finalized knowledge/*.json entries",
-      "output": "knowledge-relation-extractor (read-only) returns candidate directed edges as JSON; the caller materializes them to eval-log and validate-knowledge-graph.py --merge-relations idempotently merges them into knowledge/knowledge-relations.json by canonical key (source_id,target_id,relation_type), preserving existing edges (first-write-wins), validates the full candidate before writing, then writes canonical relations followed by the regenerated graph; a write interruption converges on retry with the same candidate (cross-file atomicity is not claimed)",
-      "gate": "validate-knowledge-graph.py exits 0: edge source_id/target_id reference existing entries, no self-loop, depends_on graph is acyclic, each edge has evidence>=1, confidence in 0..1, and review_status; related associations are undirected and cycle-exempt",
+      "condition": "dry_run == false かつ NEW/MODIFIED のソース数 > 0",
+      "input": "分割の検査を終えて確定した knowledge/*.json のエントリ。relation-extractor へ plugin_root と knowledge_dir=plugin_root/knowledge を渡す",
+      "output": "knowledge-relation-extractor（読み取り専用）が、向きのある辺の候補を JSON で返す。呼び出し側はそれを eval-log にファイルとして書き出し、validate-knowledge-graph.py --merge-relations が正規のキー (source_id,target_id,relation_type) で knowledge/knowledge-relations.json へ冪等に統合する（既存の辺は残す。先に書いたものを優先する first-write-wins）。書き込む前に候補の全体を検証し、正規の関係ファイル、作り直したグラフの順に書く。途中で書き込みが止まっても、同じ候補で再実行すれば収束する（2つのファイルにまたがる不可分性は主張しない）",
+      "gate": "validate-knowledge-graph.py が終了コード 0。辺の source_id/target_id が実在するエントリを指し、自己ループ（self-loop）が無く、depends_on のグラフが非循環で、各辺が evidence>=1・0..1 の confidence・review_status を持つ。related の関連は向きを持たず、循環の検査から外す",
       "command": "python3 ../../scripts/validate-knowledge-graph.py --knowledge-dir ../../knowledge --merge-relations <c08-candidate> --graph-out ../../knowledge/knowledge-graph.json",
-      "fatal_exit_codes": [1, 2],
-      "note": "knowledge-relations.json / knowledge-graph.json は本 phase の produced output であり事前存在しない (resourceIds には載せない): C08 は書込せず候補を返すのみ・永続化 owner は validate-knowledge-graph.py --merge-relations",
-      "resourceIds": ["../../agents/knowledge-relation-extractor.md", "../../scripts/validate-knowledge-graph.py"]
+      "fatal_exit_codes": [
+        1,
+        2
+      ],
+      "note": "knowledge-relations.json / knowledge-graph.json はこの段階が作る出力で、事前には存在しない（resourceIds には載せない）。C08 は書き込まずに候補を返すだけで、永続化の担い手は validate-knowledge-graph.py --merge-relations",
+      "resourceIds": [
+        "../../agents/knowledge-relation-extractor.md",
+        "../../scripts/validate-knowledge-graph.py"
+      ],
+      "publication_boundary": "LLM writers use temporary staging only; parent publishes approved manifest or executes the exact mutation argv through canonical guard execute."
     },
     {
       "id": "phase4-report",
-      "title": "Sync report",
-      "dependsOn": ["phase5-graph-sync"],
+      "title": "同期レポート",
+      "dependsOn": [
+        "phase5-graph-sync"
+      ],
       "parallel": false,
       "actor": "run-ubm-knowledge-sync",
-      "input": "detect, extraction, split-check, and graph-sync results",
-      "output": "NEW/MODIFIED counts, destinations, split actions, graph validation, dry-run status, and residual risks",
-      "gate": "report includes counts, changed paths, skipped paths with reasons, graph status, dry-run status, and next action when any gate failed",
-      "resourceIds": ["SKILL.md"]
+      "input": "検知・抽出・split-check・graph-sync の結果",
+      "output": "NEW/MODIFIED の件数・格納先・分割の対応・グラフの検証・dry-run かどうか・残るリスク",
+      "gate": "レポートに、件数・変更したパス・飛ばしたパスとその理由・グラフの状態・dry-run かどうか・いずれかのゲートが不合格だったときの次の対応を含む",
+      "resourceIds": [
+        "SKILL.md"
+      ]
     }
-  ]
+  ],
+  "publication_contract": "../../references/guarded-publication-contract.md"
 }

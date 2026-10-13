@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/render-pkg-findings.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":80,"notes":"py_compile OK. Simple findings-JSON to markdown renderer, single responsibility, no bare except, read-only. Minor: read_text() lacks encoding= and required keys (data['target_plugin'] etc.) accessed without guard so malformed input raises uncaught KeyError traceback; no PEP723 frontmatter. Acceptable for internal renderer fed by validated upstream JSON."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/render-pkg-findings.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 57d9f1167fdb25cc1c31ea66625ca1de6633d774a0e7170ec535d4f855f4d6cc をレビュー。実行検証あり）。範囲: 全 73 行（このブランチで足した PEP 723 ヘッダと、入力エラーを exit 2 にした main の 54-67 行を含む）。確かめたこと: tests/scripts-plugins/test_harness_creator__render_pkg_findings.py が 3.11 で 6 passed、3.9（PYTHONPATH=py39pt:py39yaml の python3.9 -m pytest）でも 6 passed。validate-plugin-package.py --plugin-dir plugins/harness-creator の出力を渡す実際のパイプラインが 3.11/3.9 とも exit 0 で Markdown 表を出す。--help は exit 0、引数なしは exit 2。存在しないファイル・ディレクトリ・list の JSON・非 UTF-8・status が未知の値の JSON は、どれも traceback 無しで exit 2（59 行の OSError/ValueError、65 行の KeyError/TypeError/AttributeError）。lint-script-frontmatter.py を親ディレクトリ（assign-plugin-package-evaluator/scripts）に流して OK checked=2 pending=0。ヘッダの inputs/outputs/exit/write-scope none と実装（stdout に出すだけで何も書かない）が一致。単一責務（findings JSON を Markdown にするだけ）。指摘: [低] 深く入れ子にした JSON（[ を 20 万段、400001 bytes）を渡すと json.loads が RecursionError を出し、59 行の except (OSError, ValueError) に入らず traceback と exit 1 で終わる。ヘッダの「入力エラーは exit 2」と食い違う（except に RecursionError を足す。validate-plugin-package.py と render-findings-score.py は足している）。DEDUCTION: [低] -2 → 98。[高]/[中] なし、80 以上なので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -3,6 +3,46 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.3.7 — 2026-10-12
+
+- 版番号だけを上げた。中身は 1.3.6 と同じ。利用者の手元の local marketplace には、1.3.6 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
+## 1.3.6 — 2026-10-10
+
+1.3.5 に続く投影の追従版である。他 plugin が所有する正本（`scripts/extract-plugin-root.py` と、`run-skill-feedback` に同梱する validator）と guard runtime の更新を写した。本 plugin 固有の機能変更はない。
+
+### 変更
+
+- `scripts/extract-plugin-root.py` を正本の 0.2.0 へ追随させた。他プロジェクト専用（`scope` が `project` / `local`）の登録しか無い `<plugin>@<marketplace>` は、cache の `<marketplace>/<plugin>/` の下を version を問わず候補から除く（upgrade 後に残った古い version のディレクトリも含む）。同じ marketplace に有効な登録があれば、除くのはその installPath だけにする
+- 同 script が semver の prerelease と build metadata を読むようになった。同じ X.Y.Z なら正式版を先に選ぶ。docstring に、正本を既定の `--from` で起動すると結果が install の状況に左右されるという注意を足した
+- `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を正本へ追随させた。中間成果物の iteration が0以上の整数の連番であること、progress の iteration が最後の iteration と一致することを検査する。非 UTF-8・深すぎる入れ子・OSError は終了コード 2、`original_goal` が文字列でないときと対になっていない surrogate を含むときは 1 で止まる
+- `artifact-delivery.json` の guard runtime 固定値（`runner_sha256`）を、いまの guard runtime に合わせた
+
+## 1.3.5 — 2026-10-10
+
+他 plugin が所有する正本（共通 skill `run-skill-feedback` と `scripts/extract-plugin-root.py`）と external-mutation guard の runtime が更新されたことに伴う投影の追従版である。本 plugin 固有の機能変更はない。
+
+### 変更
+
+- `skills/run-skill-feedback/SKILL.md` のゴールシーク配線を正本へ追随させた。progress・中間成果物・goal-spec の置き場を host の作業ディレクトリ起点の絶対パスで解決し、環境変数が空なら連結しない。初回の依頼文 `original_goal` とその SHA-256 を固定して周回間の書き換えを許さず、`max_loops: 5` で必ず停止して未達は `open_issues` へ残す
+- 同 SKILL.md にゴールシーク検証の節が入った。毎周回末と完了報告前に同梱 validator を通し、終了コード 0 だけをアンカー合格とする。検査を実行せずに合格を宣言しない
+- `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を同梱した (正本は `plugins/harness-creator/skills/run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py`。`lint-vendored-ssot.py` が byte 一致を検査する)。証跡の実在・非空 JSONL・全行の必須キー・`original_goal` の不変性・SHA-256 一致を見て、契約違反は 1、IO/JSON/引数の誤りは 2 で止まる
+- 同 skill の frontmatter で `description` を短い宣言形へ改め、`combinators: [with-feedback-contract]` と `script_refs` の validator を追加した。あわせてタイトルと Purpose & Output Contract 節を guard CLI ブロックの後ろから frontmatter 直後へ移し、禁則（利用者の承認なしの Notion 登録・未登録プラグインへの投入・実行していない検証の成功報告）を明記した
+- `scripts/extract-plugin-root.py` を正本へ追随させた。他プロジェクト専用 (`scope` が `project` / `local`) の install 先を、sibling 探索と cache fallback の候補からも除くようになった。従来これを候補から外していたのは `installed_plugins.json` 由来の行だけで、同じ場所がディレクトリ探索経由で候補に戻っていた。同じ path に有効な登録もある場合は共有 install として許可する
+- `artifact-delivery.json` の guard runtime 固定値 (`runner_sha256`) を更新した
+
+## 1.3.4 — 2026-10-10
+
+`run-skill-feedback` のゴールシーク配線を、同梱の検査で確かめられる形にした。x-longpost の生成機能そのものは変わらない。
+
+### 変更
+
+- `skills/run-skill-feedback/SKILL.md` のゴールシーク配線を書き直した。`original_goal` と、その SHA-256 を progress に固定する。各周回の中間成果物には validator の `REQUIRED_KEYS`（6キー）を必ず入れる。`max_loops: 5` で止まり、達成できなかった条件を完了として扱わない
+- `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を同梱した。生成元は harness-creator の `run-build-skill/templates/goal-seek-runtime/` で、`lint-vendored-ssot.py` が byte 一致を検査する。検査が終了コード0で終わったときだけアンカーの合格とする
+- 本文の見出しと `## Purpose & Output Contract` を frontmatter の直後へ移した。あわせて禁則（利用者の承認なしの Notion 登録、未登録プラグインへの投入、実行していない検証の成功報告）を明記した。description は「いつ呼ぶか」の2条件に絞った
+- `combinators: [with-feedback-contract]` を frontmatter に足した
+- `artifact-delivery.json` の外部変更ガードの runtime 固定値（`runner_sha256`）を、guard runtime の更新に合わせて変えた
+
 ## 1.3.3 — 2026-10-05
 
 install した環境でも、外部への変更 (Notion への改善要望の起票など) の前に通す確認手順が動くようにした。本 plugin の機能変更はない。

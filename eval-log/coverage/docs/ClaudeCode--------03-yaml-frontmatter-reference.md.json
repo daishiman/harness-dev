@@ -1,1 +1,18 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":71,"notes":"description設計規律は精緻で実装一致良好(merge_strategy/conflict_policy enumがvalidate-frontmatter.py L95-96と完全一致、rubric_refs fail-fast存在検査L159-170実在、lint-skill-description.py R1-R5/280字MAX_LEN一致)。ただし3欠陥で減点: (1)L245 script_refs例のvalidate-rubric-composition.pyが不在(実体はcompose-rubrics.py)=dangling参照, (2)L120 governance-policy.jsonをcreator-kit/config/と記載するが実体はplugins/skill-governance-config/config/でcreator-kitはinstallers配下のみconfig無し=パス誤り, (3)L282 TODO(human)放置"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 b1b3791e26dd2b5f16604a2c2bc1789fb475075562d24b31eb8dd94f641115b3 をレビュー。実行検証あり）。範囲: 03章 全 310 行を通して読み直し、前回（20261010i-d1）の [中]×2・[低]×7 を現物で1件ずつ確かめ直した。確かめたこと: (1) scripts/validate-frontmatter.py（plugins/skill-governance-lint/scripts/ の写しと cmp で一致）の COMMON_CORE_REQUIRED（schema の commonCore.required = name・description・kind・version・owner）、KIND_VALUES 9 値、trigger count `n != 2` でエラー（368-378 行）、kind=ref の source・source-tier 必須と他 kind の `warn: source field missing`。(2) scripts/lint-skill-description.py の R1（138-139 行で 3 個以上を overflow、140-141 行で 0 個かつ Use when 無しを「no trigger condition found」）、R4 280 字、R5 末尾 3 種。(3) rubric.json 1.5.0 の FM-003（check 2..3、trigger_count_min/max 2/3）。governance-policy.json の machine_enforcement.linked_lints に lint-skill-description.py がある。16章 §10 の見出しとアンカー `#10-frontmatter先頭メタ情報-全項目`（L9・L156）が一致。(4) work-j-d1/fx03 に例を SKILL.md として置き validate-frontmatter と lint-skill-description --skills-dir を実行: 3 テンプレート（L25-35・L41-55・L61-86 のコードブロック）は exit 0（warn のみ）・lint OK。良い例 L111・L145 は exit 0・lint OK。悪い例 L106・L148・L151 は validate-frontmatter が trigger count 0 で exit 1、lint が R1/R5（L106・L148 は R2 も）で VIOLATION。L222-244 の rubric_refs 例は fixture では MISSING_REF だが参照先が repo 側にある例示なので問題にしない。前回指摘の確認: [中] FM-003 との食い違い → L113・L117・L139 が「FM-003 は 2〜3、validate-frontmatter は 2 ちょうど、lint R1 は 3 個以上を違反」と分けて書き、三者が揃っていないことも明記（解消）。[中] テンプレートと英語の良い例がゲートに落ちる → テンプレートに kind・version・owner が入り、良い例は日本語 2 トリガー・末尾「使う。」になり、fixture で通過（解消）。[低] governance-policy のパス（L138 で実在パス）、validate-rubric-composition.py（記述が無くなった）、16章アンカー、kind の値（L286 が prefix の 5 値と KIND_VALUES の互換 4 値を記載）、lint の扱い（L299-307 が存在・値の形・参照先・組み合わせの検査を正しく列挙）、TODO(human)（無し）、`hooks: []`（無し）→ すべて解消。指摘: [低] L137「下限を含む『2 個ちょうど』は validate-frontmatter.py が見る（R1 は上限だけを担う）」は lint R1 が 0 個も違反にする（lint-skill-description.py 140-141 行。fixture の L148 例で「R1: no trigger condition found」を再現）ことと合わない。さらに L139「validate-frontmatter.py と lint R1 は…2 個ちょうどを強制する」は L113・L117・L137 の「R1 は 3 個以上を違反」と食い違う（R1 は 1 個を通す）。直し方: R1 は「0 個と 3 個以上」を落とし、2 個ちょうどの強制は validate-frontmatter だけだと揃えて書く。[低] L111 の日本語の良い例が「スキル設計の評価器。」という役割の紹介で始まり、L102（紹介文ではなく trigger 条件）・L124 の落とし穴 (b)（役割を description に混ぜない）・L131（先頭に最も重要な use case）と矛盾し、L145 の Good 例とも形が違う。ゲートは通るが手本として不適。直し方: L145 と同じく発動条件だけの文にする。DEDUCTION: [低] L137/L139 -2、[低] L111 -2 → 96。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-d1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "previous-findings-recheck"
+  ]
+}

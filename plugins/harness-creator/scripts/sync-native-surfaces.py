@@ -10,8 +10,8 @@
 # outputs:
 #   - stdout: 人間可読サマリ (既定) / JSON (--json)。各 adapter の status/changed/skipped_reason/warning/remediation、activation scope、verdict、exit_code。
 #   - write: repo-owned managed projection のみ (.claude/{skills,agents,commands} symlink・.claude/settings.json managed 領域を委譲 generator 経由、owner=repo と宣言された Codex manifest/marketplace file)。--check/--dry-run は無書込。
-#   - exit: 0=success/noop/skipped_not_installed / 1=drift / 2=conflict・lock timeout / 3=parse・invalid layout (重い順に評価: 3>2>1>0)。
-# contexts: [C, E]
+#   - exit: 0=success/noop/skipped_not_installed / 1=drift / 2=conflict・lock timeout・usage error (--lock-ttl が正の有限秒でない等) / 3=parse・invalid layout・child の --json report が object でない (重い順に評価: 3>2>1>0)。
+# contexts: [A, C, E]
 # network: false
 # write-scope: .claude managed projection / .codex/hooks.json / .codex/config.toml / .build lock。Codex project filesは native-surfaces.toml の固定 exact pathsだけを child adapterが非破壊反映する。user global config・.agents tool-owned namespaces・その他 .codex は read-only。
 # dependencies: []
@@ -43,8 +43,9 @@ build/update の単一エントリとして 4 adapter を合成する:
   apply へ進む no-op ゲート)。書込は atomic replace。書込先は write-scope の allowlist 内に限定し、
   それ以外 (user global config・tool-owned namespace・unsupported kind) へは絶対に書かない。
 - **failure taxonomy**: generator 不在のみ ``skipped_not_installed`` (exit 0 側)。
-  drift=1 / conflict・lock timeout=2 / parse・invalid layout=3。drift/conflict/parse/race/timeout を
-  success へ畳まない。exit code は最も重い severity を返す (3>2>1>0)。
+  drift=1 / conflict・lock timeout=2 / parse・invalid layout=3。child の ``--json`` report が読めない
+  (stdout が空・非 JSON・object 以外) ときも parse=3 とし、drift=1 と取り違えない。drift/conflict/parse/
+  race/timeout を success へ畳まない。exit code は最も重い severity を返す (3>2>1>0)。
 
 plugin-root script のため cross-plugin import は行わず Python 標準ライブラリのみで自己完結する。
 """
@@ -54,6 +55,7 @@ import argparse
 import fcntl
 import hashlib
 import json
+import math
 import os
 import secrets
 import socket
@@ -598,6 +600,8 @@ def _child_evidence(result) -> dict:
     remediation = parsed.get("remediation") if isinstance(parsed, dict) else None
     return {
         "code": code,
+        # 切り詰めた report は配列も dict になるため、object かどうかは切り詰める前に記録する。
+        "report_is_object": isinstance(parsed, dict),
         "child_report": _bounded_json(parsed),
         "violations": violations,
         "child_remediation": _bounded_json(remediation),
@@ -756,23 +760,39 @@ def adapter_codex(mode, *, script, repo_root, slug, contract, plan_dir) -> dict:
     return _classify_codex(child["code"], child=child)
 
 
+def _invalid_child_report(phase: str, child: dict) -> dict:
+    """child の --json report が object でないとき invalid(3) にする。traceback の exit 1 を drift と取り違えない。"""
+    return _adapter_result(
+        "codex_project_settings", status="invalid", exit=SEV_INVALID,
+        warning=(f"child {phase} の --json report が JSON object でない "
+                 f"(child exit {child['code']}・stdout が空/非 JSON/object 以外)。child の stderr を確認する"),
+        remediation=REMEDIATION_INVALID, child=child,
+    )
+
+
+def _reported_changed(report: dict, default: int) -> int:
+    value = report.get("changed")
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else default
+
+
 def adapter_codex_project_settings(mode, *, script, repo_root, contract) -> dict:
     if not Path(script).is_file():
         return _skipped("codex_project_settings", f"generator absent: {script}")
     check_child = _child_evidence(_run_codex_project(script, repo_root, contract, apply=False))
+    if not check_child["report_is_object"]:
+        return _invalid_child_report("--check", check_child)
     severity = _map_exit(check_child["code"])
     if mode == "apply" and severity == SEV_DRIFT:
         applied = _child_evidence(_run_codex_project(script, repo_root, contract, apply=True))
-        child_changed = applied.get("child_report", {}).get("changed")
-        changed = child_changed if isinstance(child_changed, int) and not isinstance(child_changed, bool) and child_changed >= 0 else 1
+        if not applied["report_is_object"]:
+            return _invalid_child_report("--apply", applied)
         return _classify_claude(
-            "codex_project_settings", applied["code"], changed=changed, applied=True,
-            repo_root=repo_root, child=applied,
+            "codex_project_settings", applied["code"], changed=_reported_changed(applied["child_report"], 1),
+            applied=True, repo_root=repo_root, child=applied,
         )
-    child_changed = check_child.get("child_report", {}).get("changed")
-    changed = child_changed if isinstance(child_changed, int) and not isinstance(child_changed, bool) and child_changed >= 0 else (1 if severity == SEV_DRIFT else 0)
     return _classify_claude(
-        "codex_project_settings", check_child["code"], changed=changed,
+        "codex_project_settings", check_child["code"],
+        changed=_reported_changed(check_child["child_report"], 1 if severity == SEV_DRIFT else 0),
         applied=False, repo_root=repo_root, child=check_child,
     )
 
@@ -916,7 +936,7 @@ def _build_parser() -> argparse.ArgumentParser:
     ap.set_defaults(mode="check")
     ap.add_argument("--json", dest="as_json", action="store_true", help="機械可読 JSON 出力")
     ap.add_argument("--lock-timeout", type=float, default=DEFAULT_LOCK_TIMEOUT, help="lock 取得の最大待機秒 (既定 30)")
-    ap.add_argument("--lock-ttl", type=float, default=DEFAULT_LOCK_TTL, help="lock heartbeat 途絶判定 ttl 秒 (既定 3600)")
+    ap.add_argument("--lock-ttl", type=float, default=DEFAULT_LOCK_TTL, help="lock heartbeat 途絶判定 ttl 秒 (正の有限値・既定 3600)")
     ap.add_argument("--plugin-slug", default=DEFAULT_PLUGIN_SLUG, help="対象 plugin slug (既定 harness-creator)")
     ap.add_argument("--surface-contract", default=None, help="native-surface-contract.md (既定はプラグイン references 配下)")
     ap.add_argument("--plan-dir", default=None, help="C02 digest input を含む plan dir")
@@ -936,6 +956,10 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(argv)
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 2
+    # 0 以下の ttl は生きた orchestrator の lock を即 stale とみなして奪えるため usage error にする。
+    if not (math.isfinite(args.lock_ttl) and args.lock_ttl > 0):
+        print(f"--lock-ttl は正の有限な秒数が必須 (指定値 {args.lock_ttl})", file=sys.stderr)
+        return 2
 
     repo_root = Path(args.repo_root).resolve()
     c01_dir = Path(__file__).resolve().parent

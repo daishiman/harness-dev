@@ -9,7 +9,7 @@
 #           --repo-root <dir> --out <json>
 # outputs:
 #   - stdout / --out: usable-draft-proof.schema.json 準拠JSON
-# contexts: [C, E]
+# contexts: [A, C, E]
 # network: false
 # write-scope: --out のみ
 # dependencies: []

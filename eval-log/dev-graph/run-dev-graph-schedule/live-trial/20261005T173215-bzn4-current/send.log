@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-send.py", line 120, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-send.py", line 106, in main
+    backend.send_keys(ns.session, "Enter")
+  File "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-backend.py", line 165, in send_keys
+    _tmux("send-keys", "-t", session, *keys, check=True)
+  File "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-backend.py", line 116, in _tmux
+    return subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "/Users/dm/miniconda3/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['tmux', 'send-keys', '-t', 'lt-20261005T173215-bzn4-current-schedule', 'Enter']' returned non-zero exit status 1.

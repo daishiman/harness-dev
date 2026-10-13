@@ -1,347 +1,403 @@
 # 34a 章 settings.json マージ仕様
 
-最終更新: 2026-05-21
+最終更新: 2026-10-10（`scripts/build-claude-settings.py` の今の挙動に合わせて全体を書き直した。本文の行番号は 2026-10-10 時点の同 script のもの）
 
 ## §1 目的
 
-`plugins/<name>/.claude-plugin/plugin.json` と `plugins/<name>/{hooks,settings}/` から、開発用 `.claude/settings.json` の plugin 由来設定区間を決定的に再生成するための正本仕様を定義する。
+`scripts/build-claude-settings.py`（以下 builder）が、開発用 `.claude/settings.json` に対して何をするかの正本仕様を定める。builder がすることは次の3つだけである。
 
-本章は 34章の plugin 物理レイアウトを補完する。CLI 引数の詳細は `doc/migration/phase0/04-settings-merge-cli-specification.md`、実装は `doc/migration/phase0/07-build-claude-settings-implementation.md` が従う。
+1. plugin の permissions（`deny` と `ask`）を `.claude/settings.json` の `permissions` に合わせ、台帳 `_build_claude_settings.managed_permissions` に記録する。
+2. 前の実行で入れた値（台帳の `managed_hooks` と `managed_permissions` に載っている値）を取り除く。台帳に載っていない値は project 所有として残す。
+3. plugin どうしで skill・agent・command の名前がぶつかっていないかを調べる（§4）。
 
-Harness Creator が量産する plugin package にどの hooks / settings / permissions を同梱するかの判定は `36-plugin-package-harness-contract.md` を正本とする。本章は、同梱された設定断片を開発用 `.claude/settings.json` にどう安全に派生生成するかだけを扱う。
+### plugin の hook は settings へ投影しない
+
+当初の案では、plugin の hook（`plugin.json` の inline `hooks` と `hooks/*.json`）を正規化して `.claude/settings.json` の `hooks` へ書き出し、台帳 `managed_hooks` で管理するつもりだった。今の builder はこれをしない。
+
+- **hook の配り元**: Claude Code と Codex の plugin loader が、plugin root の `hooks/hooks.json` から hook を1回だけ読む。2026-10-10 時点で `plugins/*/hooks/hooks.json` は13 plugin にあり、`plugins/*/.claude-plugin/plugin.json` に `hooks` を持つものは無い。
+- **しない理由**: settings にも同じ hook を書くと、plugin loader の配布と合わせて同じ hook が2回動く（[34章](./34-plugin-governance-roadmap.md) の「settings.json マージ仕様（hook 二重発動の予防）」）。
+- **実装**: `discover_plugins()` は hook を読んで正規化し、検証するだけ（L396-398 のコメント）。`build()` は `generated_hooks = []` に固定している（L764-768）。`tests/test_build_claude_settings.py` の `test_inv4_plugin_hooks_are_not_project_managed` が `managed_hooks == []` を、`test_same_plugin_inline_and_hook_file_are_not_projected` が plan の `settings.hooks == []` を固定する。
+- **前に投影した hook**: 台帳 `managed_hooks` に載っている hook は、`remove_managed_values()`（L458-505）が `hooks` から取り除く（`test_plugin_delivered_hooks_are_pruned_from_project_settings`）。今の builder は台帳 `managed_hooks` を毎回 `[]` で書くので、取り除く対象があるのは古い台帳が残っているときだけである。
+
+本章のほかの節で hook に触れるところは、すべてこの節を前提にしている。
+
+plugin package に何を同梱するかは [36章](./36-plugin-package-harness-contract.md) が正本である。本章は、同梱された設定を builder が `.claude/settings.json` にどう反映するかだけを扱う。
 
 ## §2 三層モデル参照と正本境界
 
-34章で定義した三層モデルは、Layer1 `plugin.json`、Layer2 `hooks/` と `settings/`、Layer3 `.claude/settings.json` の順に派生する。本章は Layer3 を自動生成するときの不変条件を固定する。
+34章の三層モデルは、Layer1 `plugin.json`、Layer2 `hooks/` と `settings/`、Layer3 `.claude/settings.json` の3つである。builder が Layer3 へ派生させるのは permissions だけで、hook は派生させない。hook は Layer2 の `hooks/hooks.json` がそのまま配布の正本になる（§1）。
 
 | 領域 | 正本 |
 |---|---|
-| plugin 移行 Phase gate | `34-plugin-governance-roadmap.md` |
-| settings merge 不変条件 | 本章 |
-| CLI 契約 | `doc/migration/phase0/04-settings-merge-cli-specification.md` |
-| 実装検証 | `doc/migration/phase0/07-build-claude-settings-implementation.md` |
+| plugin 移行の Phase gate、hook と設定の置き場所 | [34章](./34-plugin-governance-roadmap.md) |
+| settings に反映するときの不変条件と台帳の構文 | 本章 |
+| CLI 契約 | builder の `USAGE`（L34-42）と `test_help_matches_contract_usage`（§12） |
+| 実装と検証 | `scripts/build-claude-settings.py`、`tests/test_build_claude_settings.py`、`tests/scripts-root/test_root__build_claude_settings.py` |
+| `.claude/{skills,agents,commands}` の symlink と、その名前の衝突 | `scripts/build-claude-symlinks.py`、`tests/test_build_claude_symlinks.py` |
+| plugin package に何を同梱するか | [36章](./36-plugin-package-harness-contract.md) |
+
+以前の版は、CLI 契約・実装検証・symlink の namespace preflight の正本として `doc/migration/phase0/` の 04・07・03 を挙げていた。しかし repo に `doc/migration/` は無い（2026-10-10 に確認）。そのため参照を外し、上の表の実物に置き換えた。
 
 ## §3 対象データと非対象データ
 
-plugin 由来で `.claude/settings.json` にマージする対象は、現時点では下記に限定する。
-
-| 種別 | 入力候補 | 出力先 | マージ規則 |
+| 種別 | builder が読むもの | `.claude/settings.json` へ | 扱い |
 |---|---|---|---|
-| hooks | `plugin.json` inline hooks、`hooks/hooks.json`、`hooks/*.json` | `hooks` | event/matcher/command 単位で正規化し、衝突検出後に公式 hook 構造へ出力 |
-| permissions.deny | `settings/permissions.json` または plugin manifest の permissions 宣言 | `permissions.deny` | 完全一致は重複排除、同一対象の allow/ask/deny 競合は fail |
-| permissions.ask | `settings/permissions.json` または plugin manifest の permissions 宣言 | `permissions.ask` | 完全一致は重複排除、deny と衝突したら deny 優先ではなく fail |
+| hooks | `plugin.json` の `hooks`（object の inline 宣言）、`hooks/*.json` | 書かない（§1） | 読んで正規化し、検証するだけ。`HOOK_EVENTS` に無い event や型の違いは exit 3（L122-148）。`plugin.json` の `hooks` が文字列（参照）なら、参照先が plugin の `hooks/` の下のファイルであることだけを確かめ、中身は `hooks/*.json` の走査で読む。`hooks/` の外を指すか、ファイルが無ければ exit 3（L360-376） |
+| permissions.deny | `plugin.json` の `permissions.deny`、`settings/permissions.json`（`permissions` で包んでも包まなくてもよい） | `permissions.deny` | 完全一致は1件にまとめる。同じ rule を別の plugin が `ask` で宣言したら exit 2（§9） |
+| permissions.ask | 同上の `ask` | `permissions.ask` | 同上 |
+| permissions.allow など | 読まない | 書かない | `normalize_permissions()` は `deny` と `ask` だけを見る（L155）。`allow` があってもエラーにはならず、無視される |
 
-`skills/`、`agents/`、`commands/` の生成は `.claude/settings.json` ではなく `.claude/{skills,agents,commands}/` の symlink 派生で扱う。したがって、同名 skill 等の衝突は本章の settings merge だけでなく、`doc/migration/phase0/03-symlink-build-specification.md` の namespace preflight で必ず検出する。
+`skills/`・`agents/`・`commands/` は settings には入らない。`.claude/{skills,agents,commands}/` の symlink は `scripts/build-claude-symlinks.py` が作る。同名で実体が違うものがあれば、そちらも `conflict` として exit 2 で止まる（同 script L186-221・L384-386）。builder 側も、§4 で同じ名前の衝突を独立に調べる。
 
 ## §4 グローバル名前空間 preflight
 
-本節は 36章 PKG-003 と整合する。PKG-003 が「package 単位の衝突検査」を扱うのに対し、本節は「`.claude/settings.json` 派生生成時の衝突解決」を扱う。両者は同一の名前空間定義を共有する。
+本節は 36章 PKG-003 と名前空間の定義を共有する。PKG-003 は package 単位の衝突検査で、本節は builder が settings に反映する前に plugin 群全体で行う検査（`namespace_preflight()` L513-553）である。
 
-settings merge を実行する前に、plugin 群全体を走査して以下の名前空間を作る。
-
-| 名前空間 | キー | 衝突時の扱い |
+| 名前空間 | キー | 同名のときの扱い |
 |---|---|---|
-| skill | `skills/<dir-name>` と `SKILL.md` の `name` | 同名は exit 2。dev短名 symlinkでは先勝ち禁止 |
-| agent | `agents/<file-name>` | 同名は exit 2 |
-| command | `commands/<file-name>` | 同名は exit 2 |
-| hook | `event + matcher + command` | 異なる plugin 由来の完全一致は exit 2 |
-| permission | `scope + rule` | 完全一致は dedupe。異なる decision 間の競合は exit 2 |
-| plugin | `.claude-plugin/plugin.json` の `name` | 同名 plugin は exit 3 |
+| skill | `skills/<dir-name>` と `SKILL.md` の frontmatter `name` | 実体（`real_path`）が同じか、内容の hash（`content_sha256()` L208-226。`__pycache__`・`*.pyc`・`.DS_Store` などは除く）が同じなら `shared` として通す。違えば `conflict` で exit 2 |
+| agent | `agents/<file-name>`（`.md` を含むファイル名。`.md` ファイル以外のもの（directory を含む）があれば exit 3、L261-262） | skill と同じ |
+| command | `commands/<file-name>`（agent と同じ） | skill と同じ |
+| permission | `rule` | 完全一致は1件にまとめる。`deny` と `ask` に分かれたら exit 2（§9） |
+| plugin | `.claude-plugin/plugin.json` の `name` | 同名は exit 3（`duplicate plugin name`） |
+| hook | なし | builder は調べない。plugin の hook は settings に入らず（§1）、plugin 間の hook の重なりは builder の判定の対象外である（L766-767 のコメント、INV-5） |
 
-公式 plugin 実行時の namespaced invocation と、開発用 `.claude/skills/<short-name>` symlink は別物として扱う。dev短名 symlink では同名を許可しない。許可したい場合は、plugin 側で skill 名または directory 名を変更する。
+36章の PKG-003 は `hook-name` も名前空間に挙げているが、builder の名前空間に hook は無い。
+
+公式 plugin の実行時の namespaced invocation と、開発用の `.claude/skills/<short-name>` symlink は別物として扱う。dev 短名の symlink では、実体の違う同名を許さない。同名を残したい場合は、plugin 側で skill 名か directory 名を変える。
 
 ## §5 settings JSON 構造
 
-生成後の `.claude/settings.json` は、最低限下記の構造を満たす。
+builder が書く `.claude/settings.json` の形は次のとおり。2026-10-10 時点では permissions を持つ plugin が無いので、台帳はどちらも空である。`hooks` に入るのは project 所有の hook だけである。
 
 ```json
 {
   "_build_claude_settings": {
-    "managed_hooks": []
+    "managed_hooks": [],
+    "managed_permissions": []
   },
   "permissions": {
-    "deny": [],
+    "deny": ["Bash(rm -rf*)"],
     "ask": []
   },
   "hooks": {
-    "PreToolUse": []
-  }
+    "SessionStart": [
+      {
+        "hooks": [{"type": "command", "command": "<project 所有の hook>"}]
+      }
+    ]
+  },
+  "enabledPlugins": {}
 }
 ```
 
-構造検証ルール:
+書く順は `_build_claude_settings` → `permissions` → `hooks` → そのほかの key（元の順のまま）である（`build_desired_settings()` L633-679）。台帳の2つの key、`permissions.deny`、`permissions.ask`、`hooks` は毎回書く。`hooks` が空なら `{}` になる。
 
-- `permissions` は object。`deny` と `ask` は存在する場合 array。
-- `hooks` は object。key は公式 hook event 名のみ。hook event 値は array。
-- hook entry は object。`hooks` field は array。
-- hook command entry は object。`type` と `command` を必須とし、`type` は `command` のみ許可。
-- 生成対象の管理情報は top-level `_build_claude_settings` にのみ出力し、`hooks` 配下には番兵キーや unknown hook event を出力しない。
-- user 管理値の unknown top-level key は保存するが、生成管理メタデータには混ぜない。
+構造の検証（`validate_settings_structure()` L411-441）は、target を読むとき（L93）と、書く前の desired（L678）の両方にかける。
+
+- `permissions` は object。`deny` と `ask` があれば array。
+- `hooks` は object。各 key の値は array。array でなければ exit 3。
+- key が `HOOK_EVENTS`（§6）にある event なら、entry は object、entry の `hooks` は array、その各要素は `type: "command"` と空でない `command` を持つ。
+- key が `HOOK_EVENTS` に無い event は、中身を検証せずにそのまま残す（L426-437、`test_target_unknown_hook_event_preserved`）。2026-10-10 の `.claude/settings.json` にある `FileChanged` と `TaskCreated` がこれに当たる。
+- そのほかの top-level key（`enabledPlugins` など）は触らずに残す（INV-6）。
 
 ## §6 管理メタデータ構文
 
-JSON コメントは使えない。また、Claude Code hooks は `hooks` オブジェクト直下の key を hook event として扱うため、`hooks` 配下に `_generated_section_start` などの番兵キーを置いてはならない。
+JSON にはコメントが無い。また Claude Code は `hooks` の直下の key を hook event として読む。そのため `hooks` の下に `_generated_section_start` などの番兵キーを置いてはならない。管理情報は top-level の `_build_claude_settings`（台帳）にだけ置く。
 
-公式 plugin hooks は plugin 内の `hooks/hooks.json` または `plugin.json` inline のどちらでも入力にできる。開発用 `.claude/settings.json` への派生生成では、実 hook 定義は公式構造のまま `hooks` 配下へ出力し、生成管理情報は top-level `_build_claude_settings` に分離する。
+番兵キーの禁止は規則であり、builder が機械的に止めるのは一部だけである（2026-10-10 に scratchpad の fixture で確かめた）。
+
+- builder 自身は番兵キーを書かない。
+- `hooks` の下の key の値が array でなければ exit 3 になる（例: `"_generated_section_start": "x"` は `hooks._generated_section_start must be an array`）。
+- 値が array なら `HOOK_EVENTS` に無い event として扱われ、そのまま残る（exit 0）。この形の番兵キーを builder は見つけられない。
 
 ```bnf
 managed-metadata    ::= "_build_claude_settings": managed-object
-managed-object      ::= "managed_hooks": managed-hook*, "managed_permissions": managed-permission*
+managed-object      ::= {"managed_hooks": [managed-hook*], "managed_permissions": [managed-permission*]}
 managed-hook        ::= {"event": hook-event, "matcher": string-or-null, "command": string, "from_plugin": string}
 managed-permission  ::= {"scope": permission-scope, "decision": permission-decision, "rule": string, "from_plugin": string}
-hook-event          ::= "PreToolUse" | "PostToolUse" | "SubagentStop" | "TaskCompleted" | "TaskCreated" | "FileChanged" | "PreCompact" | "PostCompact"
+hook-event          ::= "PreToolUse" | "PostToolUse" | "PostToolUseFailure" | "UserPromptSubmit" | "UserPromptExpansion" | "Stop" | "SubagentStop" | "SessionStart" | "SessionEnd" | "Notification" | "PreCompact" | "PostCompact" | "TaskCompleted"
 permission-scope    ::= "permissions.deny" | "permissions.ask"
 permission-decision ::= "deny" | "ask"
 ```
 
-`managed_hooks` は前回生成した hook entry を識別するための台帳であり、次回実行時はこの normalized triple (`event`, `matcher`, `command`) に一致する既存 entry だけを置換対象にする。`managed_hooks` に載っていない user 管理 hook は保存する。
+- `hook-event` は builder の `HOOK_EVENTS`（L15-32）である。plugin 側の hook がこれ以外の event を使うと exit 3 になる（`test_managed_source_unknown_hook_event_blocked_exit3`）。target の `.claude/settings.json` 側は、これ以外の event も残す（§5）。
+- `managed_hooks`: 今の builder は毎回 `[]` を書く（§1）。古い台帳を読むときは、`event` と `command` を持つ要素を `(event, matcher または "", command)` で照合する。entry の command が1つでも台帳と一致すれば、その entry ごと `hooks` から取り除く（L461-464・L471-491）。
+- `managed_permissions`: 今回 plugin から入れた rule を記録する。次の実行では、`(scope, rule)` が一致する rule を `permissions` から取り除いてから入れ直す（L465-468・L493-503）。
+- 台帳に載っていない値は project 所有として残す（INV-1）。台帳が object でない場合や、各 key が array でない場合は、空の台帳として扱う（`managed_from_target()` L444-455）。
 
 ## §7 マージアルゴリズム
 
+`build()`（L758-790）と `main()`（L793-826）の流れは次のとおり。
+
 ```text
-load target .claude/settings.json as raw text and JSON AST
-run global namespace preflight for plugins, skills, agents, commands, hooks, permissions
-extract previous managed metadata from _build_claude_settings
-load plugins sorted by plugin name
-for each plugin:
-  load .claude-plugin/plugin.json
-  load hooks/hooks.json and hooks/*.json if present
-  load settings/permissions.json if present
-  normalize every hook as event, matcher, command, from_plugin
-  normalize every permission as scope, decision, rule, from_plugin
-detect duplicate or conflicting namespace entries
-if conflict exists:
-  fail without writing target
-render generated section in deterministic order
-remove previously managed hooks/permissions by metadata, then merge user-managed values + newly generated values
-verify INV-1 through INV-12
-write by tempfile + rename only after every invariant passes
+target = load .claude/settings.json           # 無ければ {}。root が object でない・構造違反は exit 3
+before = user_section_sha256(target)           # 台帳に載った値を除いた残りの sha256
+project_root = target の2つ上の directory
+plugins = discover_plugins(--plugins-dir)      # directory 名の順。--exclude-plugin の名前は manifest を読む前に飛ばす
+  for each plugin:
+    read .claude-plugin/plugin.json            # 無い・壊れている・name の重複は exit 3
+    hooks: inline object + hooks/*.json        # 正規化と検証だけ（§1）
+    permissions: plugin.json の permissions + settings/permissions.json（deny と ask だけ）
+    namespace: skills / agents / commands
+    plugin が project_root の外なら exit 3
+plugins を plugin name の順に並べる
+namespace = namespace_preflight(plugins)       # §4
+generated_hooks = []                           # §1: 投影しない
+permissions, permission_conflicts, dedupe = merge_permissions(plugins)   # §9
+desired:
+  user = remove_managed_values(target)         # 古い台帳の hook と permission を取り除く
+  _build_claude_settings = {managed_hooks: [], managed_permissions: permissions}
+  permissions.deny / ask = user の rule + まだ無い plugin の rule
+  hooks = user の hook のまま
+  そのほかの key = user のまま
+  validate_settings_structure(desired)
+if user_section_sha256(desired) != before:
+  conflicts に INV-1 を足す
+main:
+  --print-user-section-hash → hash を出して exit 0
+  conflicts がある         → plan を出して exit 2（書かない）
+  --dry-run                → plan を出して exit 0（書かない）
+  --check                  → plan を出す。target と desired が同じなら exit 0、違えば exit 1（書かない）
+  それ以外                 → atomic_write（INV-8）。読み直して INV-1 をもう一度確かめる（違えば exit 2）
 ```
+
+`--print-user-section-hash` も先に `build()` を通るので、plugin の形の誤りがあれば exit 3 になる。
 
 ## §8 不変条件
 
-## INV-1 user 管理値保存
+plan の `invariants_checked` は今も INV-1〜INV-12 の12個を並べる（L33）。INV-4 と INV-5 は、§1 のとおり hook を投影しなくなったので、意味を今の実装に合わせて書き直した。
 
-`_build_claude_settings` の `managed_hooks` / `managed_permissions` に載っていない既存設定は保存しなければならない。JSON 全体を parse/serialize する実装では byte 等価ではなく、JSON 値としての意味的等価を検査対象にする。
+### INV-1 user 管理値保存
 
-機械検証: 管理メタデータに載っていない user 管理値を正規化 JSON として抽出し、SHA256 を実行前後で比較する。
+台帳（`managed_hooks` と `managed_permissions`）に載っていない既存の値は残す。比べるのは byte ではなく、台帳の値を除いた JSON を key 順で正規化した sha256 である（`user_section_sha256()` L507-510）。書く前に desired で比べ（L774-778。違えば conflict として exit 2）、書いた後に読み直してもう一度比べる（L810-814。違えば exit 2。このときファイルはもう書き換わっている）。
 
-## INV-2 決定的生成
+注意: project が手で書いた permission と同じ rule を plugin も宣言すると、その rule が台帳に載る。すると「台帳を除いた残り」から消えるので、INV-1 違反として exit 2 になる（2026-10-10 に fixture で確かめた。この場合の test は無い）。plugin の rule を入れたいときは、project 側の同じ rule を先に消す。
 
-入力 plugin 群と target が同じなら、生成される hook / permission / 管理メタデータは常に同じでなければならない。
+機械検証: `test_inv1_user_section_byte_equality`。
 
-機械検証: 固定 fixture に対する golden JSON を比較する。
+### INV-2 決定的生成
 
-## INV-3 冪等性
+同じ plugin 群と target からは、同じ plan と同じ settings ができる。plugin は name の順（L408）、permission は `(from_plugin, scope, rule)` の順（L597）に並べる。
 
-同じ入力で CLI を2回実行した後、`--check` は差分なしで exit 0 を返さなければならない。
+機械検証: `test_inv2_deterministic_output`。同じ入力で `--dry-run --json` を2回実行し、出力が同じかを比べる。
 
-機械検証: 実行、再実行、`--check` の3段階テストを行う。
+### INV-3 冪等性
 
-## INV-4 plugin 順序
+同じ入力で2回書いた後の `--check` は、差分なしで exit 0 を返す。
 
-複数 plugin の hook は plugin name の辞書順、同一 plugin 内では event、matcher、command の順で安定整列する。
+機械検証: `test_inv3_idempotent`。書く、もう一度書く、`--check` の3段階で確かめる。
 
-機械検証: 入力ディレクトリ順を入れ替えた fixture で出力が同一であることを確認する。
+### INV-4 plugin の hook を台帳に載せない
 
-## INV-5 衝突 ERROR
+当初は「複数 plugin の hook を plugin name の順に並べる」という条件だった。hook を投影しなくなったので、意味を変えた。plugin がいくつ hook を宣言しても、台帳 `managed_hooks` は `[]`、plan の `settings.hooks` は `[]` になる。古い台帳に載っている hook は取り除く。
 
-異なる plugin が同一 event、matcher、command を提供した場合、silent merge せず invariant violation として失敗する。
+機械検証: `test_inv4_plugin_hooks_are_not_project_managed`、`test_same_plugin_inline_and_hook_file_are_not_projected`、`test_plugin_delivered_hooks_are_pruned_from_project_settings`。
 
-機械検証: 衝突 fixture で exit 2 と conflict report を確認する。
+### INV-5 plugin 間の hook の重なりは builder の衝突にしない
 
-## INV-6 未知キー保存
+当初は「異なる plugin が同じ event・matcher・command を出したら exit 2」という条件だった。今の builder は hook を settings に書かないので、これを衝突として扱わない。plugin 間で同じ hook があっても exit 0 で、plan の `conflicts` に `type: "hook"` は出ない。
 
-`.claude/settings.json` の未知トップレベルキーと、既知キー内の user 管理値は削除してはならない。
+hook の衝突を判定する `merge_hooks()`（L556-590）は script に残っているが、`build()` からは呼ばれていない。`tests/scripts-root/test_root__build_claude_settings.py` の `test_merge_hooks_*` が、この関数を単体で確かめているだけである。
 
-機械検証: 未知キー fixture の実行前後 SHA256 または AST 等価を比較する。
+機械検証: `test_inv5_shared_plugin_hook_is_outside_project_conflict_scope`。
 
-## INV-7 JSON 正規化
+### INV-6 未知キー保存
 
-生成 hook / permission / 管理メタデータは UTF-8、indent 2、末尾改行あり、schema 順で出力する。user 管理値にはこの正規化を強制しない。
+未知の top-level key、`HOOK_EVENTS` に無い hook event、台帳に載っていない hook と permission は消さない。
 
-機械検証: 生成 hook / permission / 管理メタデータだけを抽出し、formatter fixture と比較する。
+機械検証: `test_inv6_unknown_top_level_preserved`、`test_target_unknown_hook_event_preserved`。
 
-## INV-8 原子的書き込み
+### INV-7 JSON 正規化
 
-すべての検証が PASS するまで target を置換してはならない。書き込みは同一ディレクトリの tempfile に出力し、rename で置換する。
+ファイル全体を UTF-8（`ensure_ascii=False`）、indent 2、末尾改行ありで書き直す（`serialize()` L71-72）。書式は project の値も含めてそろえ直すが、project の key の順は保つ。key の順は §5 のとおり。
 
-機械検証: 書き込み失敗を注入し、target の SHA256 が実行前と一致することを確認する。
+機械検証: `test_inv7_json_normalization`。
 
-## INV-9 グローバル名前空間一意性
+### INV-8 原子的書き込み
 
-plugin、skill、agent、command の dev短名名前空間は一意でなければならない。同名を検出した場合、`.claude/settings.json` も `.claude/skills` 等も更新してはならない。
+同じ directory の一時ファイルに書いてから、`os.rename` で置き換える。失敗したら一時ファイルを消し、元のファイルは残る（`atomic_write()` L732-751）。conflict のとき、`--dry-run` のとき、`--check` のときは書かない。
 
-機械検証: 同名 skill fixture で exit 2、target SHA256 不変を確認する。
+機械検証: `test_inv8_atomic_write_failure_keeps_original`。
 
-## INV-10 settings 構造検証
+### INV-9 グローバル名前空間一意性
 
-生成後の `.claude/settings.json` は、本章「settings JSON 構造」の型制約を満たさなければならない。
+§4 の衝突があれば exit 2 で、`.claude/settings.json` を書かない。`.claude/skills` などの symlink は builder ではなく `build-claude-symlinks.py` が作り、同名の衝突はそちらでも exit 2 になる（§3）。
 
-機械検証: Python stdlib の JSON parse 後、必須 key、型、hook command entry を検査する。
+機械検証: `test_inv9_namespace_conflict_exit2`、`test_distinct_content_same_name_still_conflicts`。共有を衝突にしないことは、`test_symlink_shared_skill_is_not_conflict`、`test_byte_identical_physical_skill_copies_are_shared`、`test_build_cache_in_one_physical_copy_is_still_shared` で確かめる。
 
-## INV-11 permissions マージ安全性
+### INV-10 settings 構造検証
 
-permissions は完全一致のみ dedupe する。deny と ask のように decision が異なる同一 rule は自動優先順位で解決せず、exit 2 とする。
+target を読むときと、書く前の desired に、§5 の構造検証をかける。
 
-機械検証: permissions conflict fixture で exit 2、完全一致 fixture で dedupe 件数が report に出ることを確認する。
+機械検証: `test_inv10_settings_structure_validation`。
 
-## INV-12 plan 完全性
+### INV-11 permissions マージ安全性
 
-`--dry-run --json` の plan は、settings だけでなく skill/agent/command 名前空間 preflight の結果も含めなければならない。
+permissions は、完全一致（scope・decision・rule）だけを1件にまとめる。まとめた数は plan の `summary.dedupe` に出す。同じ rule が `deny` と `ask` に分かれた場合は、自動で優先順位を決めずに exit 2 にする。
 
-機械検証: plan JSON に `namespace`, `settings`, `conflicts`, `invariants_checked` が存在し、INV-1〜INV-12 を列挙することを確認する。
+機械検証: `test_inv11_permissions_dedupe_and_conflict`。
+
+### INV-12 plan 完全性
+
+`--dry-run --json` の plan は、settings だけでなく、§4 の名前空間 preflight の結果も含める。
+
+機械検証: `test_inv12_plan_completeness`。plan に `namespace`・`settings`・`conflicts`・`invariants_checked` があり、`invariants_checked` が INV-1〜INV-12 であることを確かめる。plan のすべての key は §12 にある。
 
 ## §9 衝突検出
 
 ### hook 衝突検出
 
-衝突キーは `event + "\0" + matcher + "\0" + command` とする。`matcher` が省略された hook は空文字として扱う。
-
-```text
-seen = {}
-for hook in normalized_hooks:
-  key = (hook.event, hook.matcher or "", hook.command)
-  if key in seen and seen[key].from_plugin != hook.from_plugin:
-    conflicts.append({key, plugins: [seen[key].from_plugin, hook.from_plugin]})
-  else:
-    seen[key] = hook
-if conflicts:
-  return exit 2 without writing
-```
+builder は hook の衝突を調べない（§1、INV-5）。
 
 ### permissions 衝突検出
 
+`merge_permissions()`（L593-623）の流れは次のとおり。
+
 ```text
-seen = {}
-for permission in normalized_permissions:
-  key = (permission.scope, permission.rule)
-  if key in seen and seen[key].decision != permission.decision:
-    conflicts.append({key, decisions: [seen[key].decision, permission.decision]})
-  else:
-    seen[key] = permission
-dedupe exact duplicates
-if conflicts:
-  return exit 2 without writing
+generated = 全 plugin の permission を (from_plugin, scope, rule) の順に並べたもの
+by_rule = {}; exact = {}
+for p in generated:
+  if p.rule が by_rule にあり、その decision が p.decision と違う:
+    conflicts.append({type: "permission", rule: p.rule, decisions: [2つの decision を並べたもの]})
+    continue
+  by_rule[p.rule] = p.decision
+  if (p.scope, p.decision, p.rule) が exact にある:
+    dedupe += 1
+    continue
+  exact に入れて、出力に加える
+conflicts があれば exit 2（書かない）
 ```
+
+衝突のキーは `rule` だけである。以前の版の疑似コードは `(scope, rule)` をキーにしていた。しかし scope は decision と1対1なので、それでは deny と ask の衝突を見つけられない。実装は `rule` をキーにしている（L605）。
 
 ## §10 例
 
-### 例 1: 単一 plugin
+### 例 1: hook だけを持つ plugin（今の repo の形）
 
-入力:
+`plugins/harness-creator/hooks/hooks.json` のように hook を `hooks/hooks.json` に置く plugin があっても、builder の出力に hook は出ない。2026-10-10 に `python3 scripts/build-claude-settings.py --check --json` を実行した結果は次のとおり。
+
+- exit 0。`plugins` は22件、`excluded_plugins` は空、`conflicts` は空。
+- `settings` は `{"hooks": [], "permissions": []}`。
+- `summary` は `{"add": 0, "keep": 0, "dedupe": 0, "conflict": 0}`、`user_values_preserved` は `true`。
+- `namespace` は skill 127件（`ok` 106・`shared` 21）、agent 68件、command 31件で、衝突は0件。
+
+### 例 2: permissions を持つ plugin
+
+`plugins/a/settings/permissions.json` が `{"permissions": {"ask": ["Bash(curl*)"]}}` で、target がまだ無いとき、builder は次の settings を書く。
 
 ```json
 {
-  "name": "harness-creator",
-  "hooks": {
-    "PreToolUse": [
+  "_build_claude_settings": {
+    "managed_hooks": [],
+    "managed_permissions": [
       {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/scripts/hook-validate-skill-md.py"
-          }
-        ]
+        "scope": "permissions.ask",
+        "decision": "ask",
+        "rule": "Bash(curl*)",
+        "from_plugin": "a"
       }
     ]
-  }
+  },
+  "permissions": {
+    "deny": [],
+    "ask": [
+      "Bash(curl*)"
+    ]
+  },
+  "hooks": {}
 }
 ```
 
-期待出力の生成結果:
+### 例 3: 前に投影した hook を取り除く
+
+`test_plugin_delivered_hooks_are_pruned_from_project_settings` の形である。実行前の target は次のとおり。
 
 ```json
 {
   "_build_claude_settings": {
     "managed_hooks": [
-      {
-        "event": "PreToolUse",
-        "matcher": "Write|Edit",
-        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/scripts/hook-validate-skill-md.py",
-        "from_plugin": "harness-creator"
-      }
-    ]
+      {"event": "PreToolUse", "matcher": "Write|Edit", "command": "python3 stale-plugin-hook.py", "from_plugin": "alpha"}
+    ],
+    "managed_permissions": []
   },
+  "permissions": {"deny": [], "ask": []},
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/scripts/hook-validate-skill-md.py"
-          }
-        ]
-      }
+      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "python3 stale-plugin-hook.py"}]},
+      {"matcher": "Write", "hooks": [{"type": "command", "command": "python3 user-hook.py"}]}
     ]
   }
 }
 ```
 
-### 例 2: 複数 plugin マージ
+実行後は、`managed_hooks` が `[]` になり、`hooks.PreToolUse` には `python3 user-hook.py` の entry だけが残る。
 
-`alpha` と `harness-creator` が異なる matcher または command を提供する場合は、plugin name 辞書順で生成 hook 配列に並べる。
+### 例 4: permission の衝突
 
-### 例 3: 衝突 ERROR
+plugin `a` が `deny: ["R"]`、plugin `b` が `ask: ["R"]` を宣言すると exit 2 になる。plan の `conflicts` は `[{"type": "permission", "rule": "R", "decisions": ["ask", "deny"]}]` で、target は書き換わらない。
 
-`alpha` と `harness-creator` が同一 `PreToolUse`、同一 `Write|Edit`、同一 command を提供する場合は exit 2。target は更新しない。
+### 例 5: project が手で書いた rule と plugin の rule が同じ
+
+target の `permissions.deny` に、台帳に載っていない `"R"` がある。そこへ plugin も `deny: ["R"]` を宣言すると exit 2 になる。plan の `conflicts` は `[{"type": "invariant", "id": "INV-1", "message": "user values changed"}]` である（INV-1 の注意）。
 
 ## §11 機械検証手段
 
 | 条件 | 検証 |
 |---|---|
-| 矛盾なし | 本章、34章、task 04/07 の正本境界を照合する |
-| 漏れなし | INV-1〜INV-12 の fixture を1件以上ずつ持つ |
-| 整合性あり | CLI plan JSON に `invariants_checked` を含め、全 INV と namespace preflight 結果を列挙する |
-| 依存関係整合 | 02 → 04 → 07 → 08 の順序を守り、08 は 34章 Phase 1→2 gate PASS 後に実行する |
+| 矛盾なし | 本章、34章の「settings.json マージ仕様（hook 二重発動の予防）」、builder の実物を照合する |
+| 漏れなし | `tests/test_build_claude_settings.py` が INV-1〜INV-12 の test を1件以上ずつ持つ（§8 の各 INV の「機械検証」）。関数単位の test は `tests/scripts-root/test_root__build_claude_settings.py` にある |
+| 整合性あり | plan の `invariants_checked` が INV-1〜INV-12 を並べ、`namespace` に preflight の結果を含める（INV-12） |
+| CI | `make native-surfaces-check` が `plugins/harness-creator/scripts/sync-native-surfaces.py --check` を実行する。それが builder を `--json --check` で呼ぶ（範囲外の plugin は `--exclude-plugin` で外す。同 script L520-531）。`make native-surfaces-check` は `.github/workflows/governance-check.yml` と `.github/workflows/harness-creator-kit-ci.yml` が実行する |
+
+以前の版にあった task 04・07 を使った照合と「02 → 04 → 07 → 08」の順序は、§2 の理由（`doc/migration/` が無い）で外した。
 
 ## §12 CLI 契約への引き継ぎ
 
-`scripts/build-claude-settings.py` は少なくとも `--plugins-dir`、`--target`、`--dry-run`、`--check`、`--print-user-section-hash`、`--json` を提供する。終了コードは `0=success`、`1=drift`、`2=invariant violation / namespace conflict`、`3=invalid input / invalid plugin layout` とする。
+CLI の正本は builder の `USAGE`（L34-42）で、`test_help_matches_contract_usage` が `--help` の出力を固定している。2026-10-10 の `--help` の出力は次のとおり。
 
-この章と CLI 仕様が競合した場合、INV の意味は本章、引数名と出力スキーマは task 04 を優先する。
-
-## §13 hook の Capability 化 (2026-05-22 補足)
-
-23章 § Capability 抽象への拡張 に従い、`plugin.json` の `hooks` 配下に inline 宣言された hook 群は、**個別の CapabilityManifest (`kind: hook`) として独立宣言可能** とする。本節はその互換性ルールを規定する。
-
-### 二経路の宣言
-
-| 宣言経路 | 配置 | 用途 | settings merge への影響 |
-|---|---|---|---|
-| **(A) inline 宣言** (従来) | `plugin.json` の `hooks` フィールド | bundle に密着し単一目的な小規模 hook | §7 マージアルゴリズム通り、`from_plugin` として直接抽出 |
-| **(B) 独立 CapabilityManifest** (新規) | `plugins/<name>/capabilities/<hook-name>.manifest.json` (`kind: hook`) | bundle 横断で再利用される hook、independent versioning が必要な hook | manifest の `interface.event / matcher / command` を §7 入力として展開 |
-
-経路 (B) の `CapabilityManifest` は、共通核 (`name / description / kind: "hook" / version / owner / tags / since`) と、kind=hook 固有の `interface` (`event / matcher / command`) と `invariant` (`event ∈ 公式 hook event 名 / 副作用境界宣言`) を持つ。schema は `plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json` の `oneOf[kind=hook]` 分岐に従う。
-
-### settings merge への変更点
-
-- §7 マージアルゴリズムの「load hooks/hooks.json and hooks/*.json if present」のステップに、**経路 (B) の `capabilities/*.manifest.json` (where `kind == "hook"`) の追加スキャン** を加える。
-- 経路 (A) と (B) で同一の (event, matcher, command) を宣言した場合は §9 hook 衝突検出と同等に **exit 2** とする (silent merge 禁止)。
-- 経路 (B) の hook は `from_plugin` に加え、`from_capability` (manifest の `name`) を `managed_hooks` に併記する。これにより独立 versioning の追跡が可能になる。
-
-### INV への影響
-
-| INV | 影響 |
-|---|---|
-| INV-1 (user 管理値保存) | 影響なし。経路 (B) も managed_hooks に載るため、user 管理値との区別は維持される |
-| INV-2 (決定的生成) | manifest の scan 順序を plugin name → manifest file 名の辞書順で固定 |
-| INV-4 (plugin 順序) | 同一 plugin 内では (A) 由来 → (B) 由来の順で安定整列 |
-| INV-5 (衝突 ERROR) | (A) vs (B) の同一 (event,matcher,command) は exit 2 |
-| INV-10 (settings 構造検証) | `managed_hooks` の各 entry に `from_capability` (optional string) を追加可能化。schema 後方互換 |
-
-### `managed_hooks` 拡張 BNF
-
-```bnf
-managed-hook        ::= {"event": hook-event, "matcher": string-or-null, "command": string, "from_plugin": string, "from_capability": string-or-null}
+```text
+usage: build-claude-settings.py [-h]
+                                [--plugins-dir PLUGINS_DIR]
+                                [--target TARGET]
+                                [--exclude-plugin PLUGIN]
+                                [--dry-run]
+                                [--check]
+                                [--print-user-section-hash]
+                                [--json]
+                                [--verbose]
 ```
 
-`from_capability` が `null` の場合は経路 (A) (inline), 文字列の場合は経路 (B) (独立 manifest) を示す。既存 settings.json (`from_capability` フィールド不在) は INV-6 (未知キー保存) と整合的に load し、再生成時に追加する。
+| 引数 | 既定 | 意味 |
+|---|---|---|
+| `--plugins-dir` | `plugins` | plugin を探す directory |
+| `--target` | `.claude/settings.json` | 書く settings。target の2つ上の directory を project root とみなし、plugin がその外にあれば exit 3（L399-404・L761） |
+| `--exclude-plugin PLUGIN` | なし（繰り返し指定できる） | directory 名で plugin を外す。manifest を読む前に外すので、壊れた plugin も外せる（L337-338、`test_exclude_plugin_is_repeatable_and_removes_managed_source`・`test_excluded_malformed_plugin_is_not_a_managed_source`） |
+| `--dry-run` | — | 書かない。plan を出して exit 0 |
+| `--check` | — | 書かない。target と desired が同じなら exit 0、違えば exit 1 |
+| `--print-user-section-hash` | — | 台帳の値を除いた部分の sha256 を出して exit 0 |
+| `--json` | — | plan を JSON で出す。指定しなければ `add=… keep=… dedupe=… conflict=…` の1行を出す |
+| `--verbose` | — | `--json` と同じく plan を JSON で出す |
+
+- 終了コード: `0` 成功、`1` drift（`--check`）、`2` 衝突または INV-1 違反、`3` 入力や plugin の形の誤り（`LayoutError`）と `OSError`（L817-825）。
+- 判定の順: `--print-user-section-hash` → 衝突（exit 2）→ `--dry-run` → `--check` → 書き込み（L798-816）。衝突のときは、`--dry-run` を付けただけでも plan を JSON で出す。
+- plan の key（`build_plan()` L681-717）: `target`・`plugins`・`excluded_plugins`・`management_format`・`namespace`・`conflicts`・`settings`（`hooks` と `permissions`）・`user_values_preserved`・`invariants_checked`・`summary`（`add`・`keep`・`dedupe`・`conflict`）。
+- plan の細部: `management_format` は固定の文字列 `"_build_claude_settings.managed_hooks"`、`summary.keep` は常に0。`settings.permissions[].scope` は `deny` か `ask` で、台帳の `scope`（`permissions.deny`）とは書き方が違う。
+
+## §13 hook の Capability 化（2026-05-22 の案。未実装）
+
+2026-05-22 に、23章 § Capability 抽象への拡張 に合わせて、次の案を書いた。hook を `plugins/<name>/capabilities/<hook-name>.manifest.json`（`kind: hook`）として独立に宣言する経路 (B) を足し、builder がそれも読んで、`managed_hooks` に `from_capability` を併記する、という案である。
+
+2026-10-10 時点の実物は次のとおりで、この案は実装されていない。
+
+- builder は `capabilities/` を読まない。`discover_plugins()`（L322-408）が読むのは、`.claude-plugin/plugin.json`、`hooks/*.json`、`settings/permissions.json`、`skills/`・`agents/`・`commands/` だけである。
+- repo に `capabilities/` の下のファイルは無い（`git ls-files` で0件）。台帳の `from_capability` は、builder にも、その test（§2 の表の2本）にも無い。
+- `kind: hook` の schema（`plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json` の `definitions.kindHook`）はある。
+
+また §1 のとおり、builder は hook を settings へ書かない。そのため案にあった「経路 (B) の hook を settings merge の入力にする」「経路 (A) と (B) の重なりを exit 2 にする」「`managed_hooks` に `from_capability` を足す」は、今の builder の役割と合わない。hook の Capability 化を進める場合も、hook の配り元は plugin の `hooks/hooks.json` のままになる。
 
 ### 関連章
 
-- 23章 § Capability 抽象への拡張: kind=hook の三層 contract 写像表
-- 33章 § CapabilityBundle governance: hook 改訂のカテゴリ判定
-- 35章: hook が観測する failure_mode の正本連携
+- [23章](./23-meta-skill-architecture.md) § Capability 抽象への拡張: kind=hook の三層 contract 写像表
+- [33章](./33-change-governance.md) § CapabilityBundle governance: hook 改訂のカテゴリ判定
+- [35章](./35-meta-harness-feedback-loop.md): hook が観測する failure_mode の正本連携

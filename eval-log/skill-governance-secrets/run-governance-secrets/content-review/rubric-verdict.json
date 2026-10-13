@@ -2,19 +2,19 @@
   "target": {
     "plugin": "skill-governance-secrets",
     "skill": "run-governance-secrets",
-    "skill_md_sha256": "66ded3eb4a32a4b8f8c89ed7830a11fee0d5308f5b1dd6156b87dcb847369ddc"
+    "skill_md_sha256": "e2739b1f8f72be3b049bc0bd93f852374901498117faea66f3cf731548d02acb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
+    "omission": 1,
     "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
+  "reviewed_at": "2026-10-11T13:50:36Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,13 +24,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "rubric観点でも確認: secret存在確認を値取得から分離し、報告列を key/backend/present/value_exposed=false に限定する単一責務に inline/inline が適合する。Write/Edit権限を持たず値非露出境界を維持する。"
+      "FM-001: name `run-governance-secrets` は run- 接頭辞で60字以内。NM-001: ディレクトリ名と一致。BD-001: `## Purpose & Output Contract` がある。BD-003: 本文は300行以下。",
+      "allowed-tools は `Bash(python3 *)` に絞った明示的な最小集合になり、secret を扱う skill として外部コマンドの実行面を狭めている。",
+      "feedback_contract.criteria の IN1/OUT1 を全件評価した。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low・漏れ・迷った例] SKILL.md:61 と :72 は「helper で存在を確かめる」「help と存在確認を行う」と書くが、scripts/secrets/keychain_helper.py は CLI を持たず直接実行すると \"library module\" と出して exit 1 になり、audit_secret_leak.py は argparse を持たない。値を取らずに存在だけを確かめる python3 の入口が無い。scripts/secrets/README.md には `security add-generic-password` などの例があるが、同じ README が `security` の直接実行を禁止している。登録手順は利用者が自分で実行するものなので dependency_break とはしない。直し方の案: keychain_helper.py に存在確認だけを行う CLI（例: `--check <key>`、値は出さない）を足し、SKILL.md からその入口を指す。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "current bytes、diff、composition、scripts/secrets ref、criteriaを再確認。runtime-profile/frontmatter/tree lintはexit 0。legacy goal-seek warning 3件はfull wiring推奨で非ブロッキング。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。存在確認の入口の欠如は low の漏れとして扱った。incremental の focused review で、exhaustive の30思考法は実施していない。"
 }

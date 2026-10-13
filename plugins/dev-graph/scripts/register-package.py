@@ -4,11 +4,11 @@
 # purpose: Validate and atomically register one promoted exact-13 system-dev-planner package in the dev graph.
 # inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
 # outputs: ["stdout: JSON preview/receipt/preflight report"]
-# requires-python = ">=3.10"
+# requires-python: ">=3.10"
 # dependencies: [_common.py, extract-plugin-root.py]
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: explicitly selected dev-graph output and immutable receipt
+# write-scope: explicitly selected dev-graph output, immutable receipt, and the single-writer lock file .<output>.register.lock beside the output (left in place; shared with build-graph-node.py)
 # ///
 """C02 exact-13 package registration consumer and cross-plugin preflight."""
 from __future__ import annotations
@@ -22,12 +22,15 @@ import json
 import os
 import re
 import sys
-import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-from _common import ContractError, atomic_json, contained, dump, load_json, utc_now
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
+from _common import ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained, dump, load_json, utc_now
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -43,6 +46,18 @@ RECEIPT_STABLE_KEYS = {
     "expected_count", "applied_count", "phase_refs", "node_ids", "graph_revision_before",
     "graph_revision_after", "graph_digest_after", "output_path",
 }
+
+
+class RollbackIncompleteError(ContractError):
+    """The receipt could not be created and restoring the original graph failed as well.
+
+    The output graph is left holding the new nodes without a receipt, so the report carries both
+    failures and an unknown (null) applied/write count, like build-graph-node's rollback_incomplete.
+    """
+
+    def __init__(self, detail: str, findings: list[dict[str, str]]) -> None:
+        super().__init__(detail)
+        self.findings = findings
 
 
 def _schema_error(path: str, detail: str) -> ContractError:
@@ -340,17 +355,12 @@ def _stable_receipt(value: dict[str, Any]) -> dict[str, Any]:
 
 
 def _atomic_create_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n"); stream.flush(); os.fsync(stream.fileno())
-        try: os.link(temp, path)
-        except FileExistsError as exc: raise ContractError(f"immutable receipt already exists: {path}") from exc
-    finally:
-        try: os.unlink(temp)
-        except FileNotFoundError: pass
+        atomic_json(path, value, create_only=True)
+    except FileExistsError as exc:
+        raise ContractError(f"immutable receipt already exists: {path}") from exc
+    except ParentNotDirectoryError as exc:
+        raise ContractError(f"immutable receipt parent is not a directory: {exc}") from exc
 
 
 @contextmanager
@@ -401,6 +411,12 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
         if present and len(present) != 13: raise ContractError(f"partial registration detected: {len(present)}/13 nodes")
         if package_members and {node.get("graph_node_id") for node in package_members} != set(incoming_ids):
             raise ContractError("conflicting or partial feature_package_id already exists")
+        # C11 の feature_package_not_exact_13 と同じ規則: 1 feature の子 task は1つの exact-13 package だけ。
+        siblings = sorted(str(node.get("graph_node_id")) for node in existing
+                          if node.get("parent_feature") == package["parent_feature"] and node.get("graph_node_id") not in incoming_ids)
+        if siblings:
+            raise ContractError(f"parent feature {package['parent_feature']} already has tasks outside this package "
+                                f"({len(siblings)}: {', '.join(siblings[:3])}); one feature holds exactly one exact-13 package")
         revision_before = current.get("graph_revision", 0)
         if not isinstance(revision_before, int) or revision_before < 0: raise ContractError("invalid graph_revision")
         if len(present) == 13:
@@ -441,11 +457,19 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
         _validate_schema(receipt, receipt_schema, receipt_schema, "registration-receipt")
         if args.dry_run:
             return {**receipt, "dry_run": True, "idempotent": False, "write_count": 0}
-        original = copy.deepcopy(current)
+        # Restore the exact original bytes (not a canonical re-serialization) if the receipt cannot be created.
+        original = output_path.read_bytes()
         atomic_json(output_path, proposed)
         try: _atomic_create_json(receipt_path, receipt)
-        except Exception:
-            atomic_json(output_path, original)
+        except Exception as exc:
+            try: atomic_bytes(output_path, original)
+            except Exception as restore_exc:
+                raise RollbackIncompleteError(
+                    f"receipt creation failed ({type(exc).__name__}: {exc}) and restoring the graph failed "
+                    f"({type(restore_exc).__name__}: {restore_exc}); restore the listed path by hand",
+                    [{"node": output_path.relative_to(root).as_posix(), "code": "rollback_failed",
+                      "detail": f"restore sha256 {hashlib.sha256(original).hexdigest()}: {restore_exc}"}],
+                ) from exc
             raise
         return {**receipt, "dry_run": False, "idempotent": False}
 
@@ -483,7 +507,8 @@ def _project_execution_context(args: argparse.Namespace) -> dict[str, Any]:
             raise ContractError("node execution_contexts must be an array")
         retained = [row for row in existing if not isinstance(row, dict) or row.get("worktree_id") != context["worktree_id"]]
         node["execution_contexts"] = [*retained, context]
-        node["updated_at"] = context["last_seen_at"]
+        # Lease observations have their own last_seen_at; they are not semantic edits.
+        # C03 compares updated_at to Issue content timestamps, so preserve it here.
         _validate_schema(node, node_schema, node_schema, "$.nodes[target]")
         idempotent = proposed == graph
         revision_before = graph.get("graph_revision")
@@ -581,7 +606,11 @@ def main(argv: list[str] | None = None) -> int:
         dump(report); return 0
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         report = {"valid": False, "error": str(exc)}
-        if args.command == "register":
+        if isinstance(exc, RollbackIncompleteError):
+            # 復元できなかった graph には新しい node が残るので、件数は 0 ではなく不明 (null) とする。
+            report.update({"code": "rollback_incomplete", "findings": exc.findings,
+                           "applied_count": None, "write_count": None})
+        elif args.command == "register":
             # 拒否は graph にも receipt にも書かないので、適用件数は 0 と明示する (build-graph-node の拒否出力と同じ)。
             report["applied_count"] = 0
         dump(report); return 2

@@ -14,6 +14,7 @@
 ### 入力契約
 
 - confirmed chapters、evaluator PASS、origin lineage、readiness。
+- evaluator の report の `spec_dir` が、取込元の章があるディレクトリに解決すること。解決しないとき (C02 が `invalid_confirmation_evidence` で拒んだときを含む) は、report を手で書き換えず、R2 に戻して evaluator を正しい `--spec-dir` で1回だけ回し直す。それでも解決しなければ FAIL で止め、report の `spec_dir` と渡した `--spec-dir` を添えて、system-spec-harness の契約の課題として報告する。回し直しでも R2 の起動前の cwd の確認を通す。cwd が `DEV_GRAPH_ROOT` と違うこと (`cwd_not_repo_root`) は回し直しの対象にせず、evaluator を起動せずに FAIL で止める。
 
 ### 出力契約
 
@@ -22,6 +23,8 @@
 ### 責務境界
 
 - C02迂回で書かず内容をfeatureへ複製せず未確定章を登録しない。
+- evaluator の report の `verdict` が `PASS` になるまで、取込の入力 (C02 に渡す payload のファイル) を書かず、C02 の Skill も起動しない。FAIL の report のまま取込の準備を進めない。
+- C02 の `--dry-run` には、確定の add と同じ payload (`confirmation_evidence` を含む) を渡す。payload を変えた dry-run は、確定の取込の予行にならない。
 
 ### 受入条件
 
@@ -54,6 +57,8 @@
 
 - [ ] 全node正規kind、lineage全field/evidence/readiness欠落0になる
 - [ ] import した node id を渡した `validate-source-lineage.py` が exit 0 になる
+- [ ] C02 の dry-run と確定の add に、`confirmation_evidence` を含む同じ payload を渡している
+- [ ] 取込の入力を書いたのも C02 の Skill を起動したのも、evaluator の PASS の report ができた後である
 
 ## Layer 6: オーケストレーション層
 

@@ -607,12 +607,52 @@ def test_is_canonical_spec_state(tmp_path):
     assert g._is_canonical_spec_state(ss / "database.md", tmp_path) is False
 
 
-def test_token_is_canonical_spec_state():
-    assert g._token_is_canonical_spec_state("system-spec/spec-state.json") is True
-    assert g._token_is_canonical_spec_state("/abs/system-spec/spec-state.json") is True
-    assert g._token_is_canonical_spec_state("spec-state.json") is False  # bare = 非正本
-    assert g._token_is_canonical_spec_state("fixtures/spec-state.json") is False
-    assert g._token_is_canonical_spec_state("system-spec/database.md") is False
+def test_canonical_identity_uses_root_not_suffix(tmp_path):
+    root = _make_project(tmp_path)
+    assert g._is_canonical_spec_state(Path("system-spec/spec-state.json"), root) is True
+    assert g._is_canonical_spec_state(root / "fixtures/system-spec/spec-state.json", root) is False
+
+
+@pytest.mark.parametrize("command", [
+    "rm -rf system-spec", "mv system-spec backup",
+    "python3 -c \"import shutil; shutil.rmtree('system-spec')\"",
+])
+def test_bash_directory_mutation_preserves_protected_contents(tmp_path, command):
+    root = _make_project(tmp_path)
+    assert g.decide(_bash(command), root)[0] == 2
+    # These commands are evaluated, never executed on the fixture.
+    assert (root / "system-spec/spec-state.json").is_file()
+
+
+def test_bash_directory_containing_chapter_without_canonical_file_blocked(tmp_path):
+    root = _make_project(tmp_path)
+    chapters = root / "system-spec/chapters"
+    chapters.mkdir()
+    (chapters / "database.md").write_text(_chapter("confirmed", "database"))
+    assert g.decide(_bash("mv system-spec/chapters backup"), root)[0] == 2
+    scratch = root / "scratch"
+    scratch.mkdir()
+    assert g.decide(_bash("rm -rf scratch"), root)[0] == 0
+
+
+@pytest.mark.parametrize("tool", ["Write", "Edit"])
+def test_direct_tools_use_symlink_authority(tmp_path, tool):
+    root = _make_project(tmp_path, reopen="state")
+    for name, chapter, expected in (("confirmed", "database", 2), ("reopened", "auth", 0), ("draft", "ui-ux", 0)):
+        alias = root / (name + "-alias.md")
+        alias.symlink_to(root / "system-spec" / (chapter + ".md"))
+        payload = {"tool_name": tool, "tool_input": {"file_path": str(alias)}}
+        assert g.decide(payload, root)[0] == expected
+
+
+def test_bash_noncanonical_nested_fixture_and_foreign_project_pass(tmp_path):
+    root = _make_project(tmp_path)
+    assert g.decide(_bash("echo x > fixtures/system-spec/spec-state.json"), root)[0] == 0
+    foreign = root / "other-project/system-spec/spec-state.json"
+    assert g.decide(_bash(f"echo x > '{foreign}'"), root)[0] == 0
+    alias = root / "state-alias.json"
+    alias.symlink_to(root / "system-spec/spec-state.json")
+    assert g.decide(_bash("echo x > state-alias.json"), root)[0] == 2
 
 
 def test_refs_protected_area_path_boundary():

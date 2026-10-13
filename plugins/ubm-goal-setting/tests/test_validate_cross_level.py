@@ -396,3 +396,101 @@ def test_month_override_changes_target(tmp_path: Path):
     assert r.returncode == 1, r.stdout
     assert "対象月: 11月" in r.stdout
     assert "当月の売上目標" in r.stdout
+
+
+def test_month_1_does_not_pick_up_november(tmp_path: Path):
+    # 1月の照合で「11月700,000」の「1月700,000」を拾わない。拾うと 700,000 と月報の
+    # 600,000 を比べて、正しく書けている期報を不一致にする。
+    q = quarterly(
+        month_sales="11月700,000・12月1,000,000・1月600,000",
+        consult="無料相談の延べ回数120回：11月32回・12月32回・1月56回",
+        first_meet="無料相談の1回目に会う実人数78名：11月24名・12月24名・1月30名",
+        cumulative="月額継続コンサルの新規成約9件　累積は11月6件・12月9件・1月4件",
+    )
+    r = run_default(tmp_path, q=q, extra=["--month", "1"])
+    assert r.returncode == 0, r.stdout
+    assert "[OK] 当月の売上目標  期報=600000" in r.stdout
+
+
+# --- rc=2: UTF-8 で読めない入力 ---
+
+def test_non_utf8_input_is_rc2_without_traceback(tmp_path: Path):
+    paths = write_set(tmp_path, quarterly(), None, weekly())
+    paths["m"] = tmp_path / M_NAME
+    paths["m"].write_bytes(monthly().encode("shift_jis"))
+    r = run(paths)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "月報 を UTF-8 として読めません" in r.stdout
+    assert "Traceback" not in r.stderr
+
+
+# --- 1年層（--yearly）: 1年目標の到達点を期報・月報が書き写しているか ---
+
+Y_NAME = "UBM - 4-年報（１年） - 2026-10-01〜2027-09-30.md"
+YEARLY_NOTE = "（※ 1年層からの継承　月間売上到達点：{sales}　継続コンサル人数：{count}）"
+
+
+def yearly(sales: str = "1,500,000", count: str = "10") -> str:
+    return "\n".join([
+        "# UBM - 4-年報（１年） - 2026-10-01〜2027-09-30",
+        "",
+        "## 【今年の最重要数字】",
+        f"- 月間売上到達点：{sales}",
+        f"- 継続コンサル人数：{count}",
+        "",
+    ])
+
+
+def run_with_yearly(tmp_path: Path, y: str, q_note: str, m_note: str) -> subprocess.CompletedProcess:
+    q = quarterly(outcome_body="\n".join([
+        "- 無料相談の延べ回数120回：10月56回・11月32回・12月32回",
+        "- 無料相談の1回目に会う実人数78名：10月30名・11月24名・12月24名",
+        "- 月額継続コンサルの新規成約9件　累積は10月4件・11月6件・12月9件",
+        q_note,
+    ]))
+    m = monthly(key_number=(
+        "無料相談を実施した実人数：30名（延べ回数56回以上）　"
+        "そこから月額継続コンサルへつながった件数：4件\n" + m_note
+    ))
+    paths = write_set(tmp_path, q, m, weekly())
+    yp = tmp_path / Y_NAME
+    yp.write_text(y, encoding="utf-8")
+    return run(paths, "--yearly", str(yp))
+
+
+def test_yearly_anchors_match_is_rc0_with_10_targets(tmp_path: Path):
+    note = YEARLY_NOTE.format(sales="1,500,000", count="10")
+    r = run_with_yearly(tmp_path, yearly(), note, note)
+    assert r.returncode == 0, r.stdout
+    assert "照合対象 10 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
+    assert "[OK] 1年後の月間売上到達点  1年目標=1500000" in r.stdout
+    assert "[OK] 1年後の月額継続コンサル人数  1年目標=10" in r.stdout
+    assert "[未照合]" not in r.stdout
+
+
+def test_yearly_anchor_not_followed_by_monthly_is_rc1(tmp_path: Path):
+    # 1年目標の到達点を直したのに月報の注記が古いまま → 下位層の分母が黙ってずれる。
+    r = run_with_yearly(
+        tmp_path, yearly(sales="1,800,000"),
+        YEARLY_NOTE.format(sales="1,800,000", count="10"),
+        YEARLY_NOTE.format(sales="1,500,000", count="10"),
+    )
+    assert r.returncode == 1, r.stdout
+    assert "[NG] 1年後の月間売上到達点" in r.stdout
+    assert "不一致のアンカー: 1年後の月間売上到達点" in r.stdout
+
+
+def test_yearly_note_missing_in_quarterly_is_unextractable(tmp_path: Path):
+    note = YEARLY_NOTE.format(sales="1,500,000", count="10")
+    r = run_with_yearly(tmp_path, yearly(), "", note)
+    assert r.returncode == 1, r.stdout
+    assert "[抽出不可] 1年後の月間売上到達点" in r.stdout
+
+
+def test_without_yearly_the_yearly_anchors_are_listed_as_not_compared(tmp_path: Path):
+    # --yearly を渡さなければ1年層の2アンカーは照合せず、分母にも数えず、そのことを明記する。
+    r = run_default(tmp_path)
+    assert r.returncode == 0, r.stdout
+    assert "[未照合] 1年後の月間売上到達点（1年目標が未指定のため照合していない）" in r.stdout
+    assert "照合対象 8 件中" in r.stdout
+    assert "未照合のアンカー 2 件" in r.stdout

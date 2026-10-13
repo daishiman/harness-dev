@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- 6 root、state/cache/locks、templates、GitHub/worktree/hook policyが重複なくplanに現れる。
+- 6 root、state/cache/locks、templates、routing policy (`routing_policy`)、GitHub/worktree/hook policyが重複なくplanに現れる。
 
 ## Layer 3: インフラ層
 
@@ -51,7 +51,7 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] 6 root、state/cache/locks、templates、GitHub/worktree/hook policyが重複なくplanに現れる
+- [ ] 6 root、state/cache/locks、templates、routing policy (`routing_policy`)、GitHub/worktree/hook policyが重複なくplanに現れる
 
 ## Layer 6: オーケストレーション層
 

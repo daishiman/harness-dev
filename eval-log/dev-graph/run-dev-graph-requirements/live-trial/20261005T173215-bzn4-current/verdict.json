@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-requirements",
+  "args": "handoff --repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-requirements --feature-id LT-FEATURE-001 --package /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-requirements/system-plan/LT-FEATURE-001/package.json",
+  "requested_model": "",
+  "actual_model": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "No current C04 requirements document/readiness matrix/snapshot-bound handoff was emitted. Both complete main and actual fork tool sequences only read/validate the preexisting C12 system-build-handoff.json; the only current Write is the completion marker. Current SKILL step5 and R3 require an atomic requirements document and handoff reference, so a preexisting upstream package is input rather than a new C04 result.",
+      "The fork's R2 verification reads task-graph execution_tasks instead of its actual nodes/tasks contract, obtains zero tasks and nevertheless marks a vacuous all(...) check PASS. This does not establish requirements trace coverage."
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+  "transcript_sha256": "68ffa506701429b4ebf5c092efb1efb605e627266631a09ca8bb47a0d080c106",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.289",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": null
+  },
+  "scenario_id": "C04-OUT1-positive-ready-handoff-fixture-standard-v2"
+}

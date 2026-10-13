@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill から起動した。transcript L35 の Skill 呼出しに対し、L36 で『Launching skill: dev-graph:run-dev-graph-schedule』と返っている。",
+    "責務 prompt を出力より前に読んだ。L41 と L45 で SKILL.md、prompts/R1-elicit.md・R2-plan.md・R3-schedule.md、references/prompt-common-layers.md を読み、成果の生成は L92 で行った。subagent もそれぞれ自分の prompt を読んでいる (R1・R2・R3 とも subagent transcript の L12)。",
+    "repo の文脈を正しく解決した。L59 と L60 で C24 resolve-repo-context の `--mode read` が rc=0 を返し、repo_root と content_roots.repository はどちらも fx を指している。",
+    "ready-set は canonical の script で作った。L92 と L98 で plugin の scripts/schedule-graph.py (`--ready-source self --leases fx/.git/dev-graph/leases.json`) が rc=0 を返した。結果は ready task 5 件 (task-api-orders、task-api-users、task-api-users-cache、task-cache-warmup、task-docs-runbook)、batches は [[orders, users, cache-warmup, docs-runbook], [users-cache]]、features は []、conflicts は []。自作の driver で成果を作った形跡は無い。",
+    "ready-set を graph から自分で再計算し、結果が正しいことを確かめた。e2e は依存先の users が active のまま、release-gate は blocked なので外れる。draft・unconfirmed・eval-fail・readiness-incomplete の 4 件も外れ、base-schema と base-auth は done。batch 1 の resource_scope に重なりは無い。users-cache は users (src/api/users/) とも cache-warmup (src/cache/) とも重なるため、batch 2 に分けたのは正しい。branch はすべて devgraph/<id> の形で、互いに重複しない。",
+    "選択は subagent より前に記録した。L102 で guard の通過を述べ、L103 で fx/eval-log の goal-spec.json と artifact-delivery.json に事前指定の standard を書いた。R1 (L109、a735f922)、R2 (L122、ac76ed65)、R3 (L136、aa457ead) はどれもこの後に起動している。",
+    "必須の Agent verifier を実際に起動した。L138 で subagent_type が dev-graph:dev-graph-parallel-safety-verifier の C17 (ac40b560) を起動し、C17 は graph から独立に再計算して、完了チェックリストの 5 項目すべてで PASS を返した (L150)。R3 も内側で verifier (a6587207、spawnDepth 2) を起動し、L157 で PASS。",
+    "goal-seek の検証を通した。L159 と L165 で progress.json と intermediate.jsonl を記録し、『goal-seek verify OK』を得た。",
+    "fixture は read-only のまま保たれた。終了後の fx の digest は graph が b2f40bab553a…、config が 91a20e80e52e…、init-receipt が 98d970c24d1a… で、fixture-provenance.json の値と一致する。fx/.git/dev-graph は存在しない (lease は作られていない)。git の commit は 473290d の 1 つだけで、tracker への書込みも無い。",
+    "書込みは境界の内側に収まった。被験が書いたのは fx/eval-log/ の 5 ファイル (output、artifact-delivery、goal-spec、progress、intermediate) と workdir/out/status.json (L168 の Write) だけ。graph への書込みは無い。",
+    "隔離ガードを回避していない。collect/guard.jsonl の deny は L21 の 1 件だけで、agent a8b646eb の ListAgents が許可一覧に無いため拒否されたもの。その後に回避を試みた形跡は無く、goal に必要な手順は欠けていない。",
+    "被験の自己申告 (L172 と pane.txt の『DONE: PASS』、status.json の PASS) は判定の根拠に使っていない。上の再計算と fixture の実ファイルで確かめた。",
+    "合格は妨げないが記録しておく点が 3 つある。(1) Pre-choice で求められる成果物の path・digest・開き方の提示が、L98 の tool 出力と L103 の artifact-delivery.json にしか無く、ユーザー向けの文で明示していない。(2) progress の OUT3 にあるとおり、C27 の二重 claim 抑止は read-only の制約のため実地で試していない。(3) L54 と L92 で PYTHONDONTWRITEBYTECODE を付けずに python を回したため、ws の plugin の写しの __pycache__ が更新された可能性がある (書込み境界の内側で、影響は軽微)。"
+  ],
+  "skill_defects": [
+    "plugins/dev-graph/scripts/schedule-graph.py の 131 行目が組み立てる claim_command は `/dev-graph worktree claim <id> --branch devgraph/<id> --session-id <session>` で、SKILL.md の完了チェックリストと出力の節が定める public CLI の形 `dev-graph worktree claim <id>` と一致しない。この trial では R3 が L157 で手で書き換えて辻褄を合わせた。再現: 任意の ready task を持つ graph で `schedule-graph.py --graph <graph.json> --ready-source self` を実行すると、claim_command が slash 付きで余分な引数を伴う形で出る。",
+    "plugins/dev-graph/scripts/schedule-graph.py に max-parallel の引数も上限の制御も無く、first-fit greedy の batch が並列数の上限を超えうる。上限を守るのは R2・R3 の後処理まかせになっている。再現: resource_scope が互いに重ならない ready task を 5 件以上持つ graph で実行すると、1 つの batch に 5 件以上が入る。--max-parallel 4 を渡しても受け付ける引数が無い。"
+  ],
+  "evaluator_agent_id": "aad77848f2ccc5a99"
+}

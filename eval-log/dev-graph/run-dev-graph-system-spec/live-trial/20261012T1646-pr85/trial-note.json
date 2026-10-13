@@ -1,0 +1,40 @@
+{
+  "label": "sysspec5",
+  "retry_of": "20261012T1301-pr85",
+  "evaluator_agent_id": "a36ca12c78f08fa42",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec5/ws/plugins/dev-graph/skills/run-dev-graph-system-spec",
+  "closure_sha_at_launch": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_sha_tested_copy": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_sha_wtpy_at_verdict": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワークは WebFetch による www.postgresql.org・react.dev・fastapi.tiangolo.com・www.typescriptlang.org・kubernetes.io への https の GET だけ許可し、ほかは遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "allowed_fetch_hosts": [
+    "www.postgresql.org",
+    "react.dev",
+    "fastapi.tiangolo.com",
+    "www.typescriptlang.org",
+    "kubernetes.io"
+  ],
+  "fixture_changes": [
+    "spec-state.json: sysspec4 の trial の前に作った版 (65ae4241…。sysspec4 の trial 中には変わっていない) を置き、被験に渡した写しの正規の writer (apply-spec-transition.py) を 7 段で呼んだ (どれも exit 0。JSON は手で書いていない)。後の sha256 は 5ff66436…。sysspec4 の準備で足したもの (D1/D2 の証拠の更新、orchestrator が書いた seed カード k8s-workload-observability、infrastructure の design_applications) はそのまま入っている (fixture-provenance.json の inherited_from_sysspec4)。",
+    "利用者の決定の追加 (sysspec4 の評価者が主な原因とした fixture の欠け 2 件への対処): qa-034 で D3 (OIDC のトークンをどこで持ち、API へどう送るか) を bff-session (バックエンドがトークンを持ち、ブラウザには cookie のセッションだけを渡す方式) に確定した。D3 は recommended_pending_confirmation を経て confirmed にした。qa-035 で月末 3 営業日の応答時間の暫定の目安 (API の p95 が 2 秒、5xx が 1%、どちらも 5 分続いたら)、qa-036 で通知の送り方 (社内監視基盤からオンコール輪番の担当者へ、社内チャットの当番チャンネルとメールの両方) を足した。",
+    "決定の性質: qa-034〜036 の回答と D3 の中身は、orchestrator がシナリオ上の利用者の発言として書いた既定値で、実利用者との対話ではない。各 qa の provenance の欄にも同じことを書いた。team-lead の 2026-10-12 の指示による。",
+    "決定の追加に伴う書換え: D2 の recommendation.caveats の 1 項目 (OIDC のトークンの扱いは未決) を、D3 で決まったことに合わせて書き直した (ほかの項目は変えていない)。matrix の qa_refs に qa-034 (auth.web)、qa-035・qa-036 (infrastructure.web)、qa-036 (maintenance-ops.web) を足した。infrastructure の design_applications と doctrine_applications の reliability を、qa-035・qa-036 に合わせて書き直した。副作用として hearing_progress.loop_count が 1 から 2 になり (writer の仕様)、qa_log は 34 件から 37 件になった。",
+    "orchestrator の WebFetch: D3 の options の evidence_refs と risks・caveats のために、fastapi.tiangolo.com の 3 頁を取得した (2026-10-12T07:24:23Z〜07:24:26Z)。cookie の頁には HttpOnly・Secure・SameSite の具体的な記述が無かったので、D3 には cookie の属性を確かめていないと書いた。取得した内容は fetched-references.json には入れていない。",
+    "fetched-references.json は seed の版 (48395c3a…) のまま渡した。trial 中に被験が build-fetched-references.py で書き直した (7432ce2d…、5 件)。",
+    "spec-state.json は trial 中に 1 回変わった (5ff66436… → 226da763…)。被験が set-targets で targets に kubernetes を足したもので、ほかの key は変わっていない (kubernetes の target を外すと trial の前の sha に戻ることを確かめた)。",
+    "WebFetch の許可: sysspec4 と同じ 5 host。trial 中の WebFetch は 27 件で、すべて 5 host 宛ての allow。",
+    "隔離の設定: permissions.deny と hook/guard.py の BLOCK_TOOLS に SendFeedback を足した (requirements の取り直しの準備で足したもの)。それ以外は sysspec4 と同じ作り方。",
+    "task.md: sysspec4 の文の runs/sysspec4 を runs/sysspec5 に置き換え (6 か所)、入力の説明に、上の決定の追加を伝える 1 文を足した。合格条件・経路の制約・5 host の文は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない (trial 中の spec-state と fetched-references の変化を除く)。詳細は fixture-provenance.json の spec_state・decisions_added・orchestrator_web_fetch・fetched_references・web_fetch_allowance・settings_changes・task_md_changes。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 11,
+    "occurrences": 24,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "場所: ws/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md と SKILL.md。completeness evaluator を呼ぶ引数 (--spec-dir <repo>/system-spec と --output <repo>/eval-log/…) を定めておらず、R3 の確定取込の前に、report の spec_dir が取込元のディレクトリに解決できるかを確かめる手順も無い。一方、同じ plugin の C02 writer (build-graph-node.py:688〜692) は、spec_dir が解決できない report を invalid_confirmation_evidence で拒む。evaluator の schema は spec_dir を自由な string にしているので、今回の 2 つの report はどちらもラベルになった (1 回目は L349 の --repo-root、2 回目は L437 の正規の --spec-dir で呼んでいる)。再現の手順: R2-delegate に従って evaluator を引数なし、または L349 と同じ --repo-root で Skill 起動する。出た report の repo 相対パスを confirmation_evidence.evidence_ref に入れ、confirmation_evidence を外さずに build-graph-node.py add --repo-root <fx> --input <入力> を呼ぶ。evaluator の verdict が PASS でも invalid_confirmation_evidence で止まる見込み (コードを読んだうえでの推定で、trial では未実行)。"
+  ]
+}

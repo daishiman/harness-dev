@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill 起動: transcript 36 行目で Skill({skill: \"dev-graph:run-dev-graph-render\", args: --repo-root fx --output fx/.dev-graph/render/index.html}) を呼び、37〜38 行目で SKILL.md の本文が読み込まれた。guard.jsonl 2 件目は Skill の allow。",
+    "責務 prompt を出力の前に読んだ: 44〜45 行目で SKILL.md の残りと prompts/R1-elicit.md・R2-plan.md・R3-render.md、references/prompt-common-layers.md (48 行すべて) を読んでいる。最初の成果物を作ったのはその後の 61 行目の render。2 つの subagent も、作業の最初に担当する prompt を読んでいる (agent-a5f2c2f70c2a5ac26.jsonl 12〜13 行目と 18〜19 行目、agent-a1306e04b6495a219.jsonl 12〜13 行目)。",
+    "C24 と C11: 57〜58 行目で resolve-repo-context.py --mode read が exit 0 を返し、repo_root と content_roots.repository が一致した。validate-graph-schema.py は valid:true・violation_count 0・node_readiness complete 15 で exit 0。評価者が読取りで再実行した C11 も valid:true・violations [] だった。",
+    "registration receipt は --receipt で渡された: 61 行目の render-graph-html.py --graph … --out fx/.dev-graph/render/index.html --receipt fx/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json が exit 0 で終わった (67 行目)。結果は nodes 15、edges 12、LT-FEATURE-001 done 5 / total 13。receipt_checks[0] は problems・missing_ids・extra_ids・digest_mismatch_ids がすべて空で、expected_count 13 = actual_count 13、source_digest は sha256:d85dfa3d…7e84。receipt を外して描いた呼出しは transcript に無い。",
+    "receipt と graph の照合 (評価者による再計算): fx/.dev-graph/state/graph.json で parent_feature が LT-FEATURE-001 の task は P01〜P13 の 13 件で、receipt の node_ids と集合が一致し、Y=13 は expected_count=13 と一致する。13 件すべての source_lineage.source_digest が receipt の source_digest (prefix を除いた値) と一致し、不一致は 0 件。status=done は P01〜P05 の 5 件で、X=5 になる。",
+    "X/13 の表示と graph の実値が一致: 現物 HTML の SVG では LT-FEATURE-001 の badge が「active · feature · 5/13」と描かれている。task は P01〜P05 が done、P06〜P13 が active。",
+    "外部参照 0 件、inline SVG で描画: 71〜72 行目の最小 guard で src/href/http の参照が 0 件、svg 1、script 2。評価者が現物 index.html (sha256 c4bf5ed6…7eb838) を数え直した結果も、script src 0・link 0・http(s) 0・url( 0・@import 0・img 0・iframe 0、inline svg 1、data-id 15 (feature 1・architecture 1・task 13)、edge の path 12 (depends_on の合計 12 と一致)。",
+    "2 回の render で出力 digest が一致 (決定論): 1 回目 (67 行目) と、R3 subagent の 2 回目 (agent-a1306e04b6495a219.jsonl 18〜19 行目、runs/render5/browser-run/receipt2.json) の output_sha256 は、どちらも c4bf5ed6a687d824cfd30f3ffb5c87f530d05ac645370b836c78bc180d7eb838 だった。2 回目も --receipt を渡し、receipt_checks の problems は空。",
+    "browser live trial: R3 subagent が runs/render5/browser/chrome-headless-shell を --single-process --headless=new で起動し、user-data-dir は browser-run/profile に置いた。--dump-dom と --screenshot はどちらも exit 0 (agent-a1306e04b6495a219.jsonl 42〜43 行目)。dom.html には <svg> と '5/13' がある。評価者も shot.png を見て、SVG の node と edge、『active · feature · 5/13』が表示されていることを確かめた。main も 109〜110 行目で screenshot を読んでいる。",
+    "必須の Agent を実際に起動した: 80 行目で R1-elicit/R2-plan、88 行目で R3-render を Agent で起動し、subagent の transcript 2 本 (general-purpose) が残っている。起動は 76 行目で事前指定の artifact_delivery=standard を goal-spec に記録し、semantic_evaluator_started へ遷移した後なので、pre_choice_forbidden に反していない。75 行目の成果物の提示 (path と digest) は narration として pane.txt に表示されている。",
+    "goal-seek の配線: 76 行目と 121 行目で fx/eval-log/run-dev-graph-render-goal-spec.json・progress.json・intermediate.jsonl を書いた。SKILL.md の「ゴールシーク検証」の script は 122 行目で check=0。progress.json では checklist 6 項目すべてと IN1/OUT1 が pass で、PARTIAL は無い。",
+    "graph は不変で、単一 writer の制約にも反しない: graph.json・config.json・receipt の sha256 は、render 前 (58 行目)、全処理の後 (117 行目)、評価時のいずれも同じ (2ed57eab… / 93cc4ab9… / cba8ce0d…)。書込み系の dev-graph writer は一度も呼ばれていない。",
+    "書込み境界: guard.jsonl の 32 件はすべて allow で、deny は 0 件。書込み先は fx/.dev-graph/render/index.html、fx/eval-log/*、runs/render5/browser-run/*、workdir/out/status.json だけ。workdir/check-post.json では、run の外の新しいエントリが 0 件、run_bytecode_added [] 、wtpy_bytecode_delta はすべて 0、閉包 sha は起動時と同じ 25ac17af…。ws の中にも __pycache__・*.pyc は無かった。main は python3 を -B なしで起こしていたが bytecode は書かれておらず、修正が効いている。",
+    "自作の driver は無い: inline python は最小 guard (HTML の parse、外部参照と secret の検出)、eval-log の記録、subagent の独立した再計算に限られ、HTML はすべて正規の render-graph-html.py が生成した。",
+    "観察 (ブラウザの注記に従った点): SKILL.md は browser live trial の具体的な手段を定めていない。R3 subagent は task.md の注記どおり --single-process --headless=new で起動したので、skill の手順からは外れていない。最初の試行は macOS に timeout コマンドが無く exit 127 で失敗したが (agent-a1306e04b6495a219.jsonl 39〜40 行目)、これは被験が組んだコマンドの誤りで、隔離の条件とも skill とも関係しない。timeout を外した再試行は成功した。",
+    "観察 (fixture の状態): receipt の graph_digest_after (8a3f687e…, revision 2) は今の graph (2ed57eab…, revision 3) と一致しない。理由は fixture の由来 (登録の後に task の status を更新した graph) にある。task.md と SKILL.md の照合対象は expected_count・node_ids・source_digest なので、判定には影響しない。R1/R2 subagent の報告 (transcript 95 行目) も同じ指摘をしている。",
+    "観察: guard.jsonl の 13:15:59 に、subagent の transcript に無い agent_id a15278977cabafa98 の Bash 'true' が 1 件ある。内容は無害で allow。"
+  ],
+  "skill_defects": [
+    "SKILL.md の手順 5 と R2-plan の責務境界は「feature 間 edge と task 内 edge を混同せず表示する」と約束しているが、plugins/dev-graph/scripts/render-graph-html.py は区別を実装していない。すべての depends_on を同じ <g class=\"edges\"> の中に、class も属性も持たない同じ <path> として描く (lines.append(f'<path d=…/>') の箇所)。再現の手順: feature node を 2 つ (A と B) 置き、B.depends_on=[A] とし、各 feature の配下に task 間の depends_on を持たせた graph を render する。feature 間の edge と task 内の edge が、見た目でも DOM でも区別できない形で出力される。今回の fixture は 12 本の edge がすべて LT-FEATURE-001 の中にあり feature 間の edge が無いため、この欠陥は発現せず、今回の判定には影響しない。R1/R2 subagent も同じ点を NO と報告していた (transcript 95 行目、agent-a5f2c2f70c2a5ac26.jsonl)。"
+  ],
+  "evaluator_agent_id": "a8fe33f376fc432ee"
+}

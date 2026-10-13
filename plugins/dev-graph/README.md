@@ -4,7 +4,7 @@ dev-graph は大きな構想を **macro feature graph** にし、tracker/worktre
 
 ## Quickstart
 
-前提は Git repository の root、Python 3.10 以上、Claude Code です。GitHub binding を使う場合は認証済み `gh`、Beads binding を使う場合は初期化済み `bd` も必要です。`plugins/dev-graph/references/package-contract.json` が宣言する `system-spec-harness` と `system-dev-planner` を同じ repository の `plugins/` に配置してください。各 dependency の `.claude-plugin/plugin.json` は公式manifestの `name` と version `>=0.1.0 <1.0.0`、`references/package-contract.json` は次の entry point を満たす必要があります。
+前提は Git repository の root、Python 3.10 以上、Claude Code です。GitHub binding を使う場合は認証済み `gh`、Beads binding を使う場合は初期化済み `bd` も必要です。`plugins/dev-graph/references/package-contract.json` が宣言する `system-spec-harness` と `system-dev-planner` を同じ repository の `plugins/` に配置してください。各 dependency の `.claude-plugin/plugin.json` は公式manifestの `name` と、`plugin-composition.yaml` の `external_dependencies` が宣言する version の範囲 (system-spec-harness は `>=0.1.22 <1.0.0`、system-dev-planner は `>=0.1.0 <1.0.0`)、`references/package-contract.json` は次の entry point を満たす必要があります。
 
 - system-spec-harness: `run-system-spec-elicit`, `run-system-spec-doc-fetch`, `run-system-spec-compile`, `assign-system-spec-completeness-evaluator`
 - system-dev-planner: `run-system-dev-plan`, `assign-system-dev-plan-evaluator`

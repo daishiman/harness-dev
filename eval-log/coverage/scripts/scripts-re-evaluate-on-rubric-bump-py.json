@@ -1,1 +1,18 @@
-{"artifact": "scripts/re-evaluate-on-rubric-bump.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "PASS", "score": 85, "notes": "deep-verify FAIL を genuine 修正: パス2重バグ修正: parents[2]→[1](repo外参照解消)+references/欠落補完。rubric 解決 True、コア major-bump 検出が機能回復。テスト23 passed。"}, "reviewed_by": "objective-recheck-after-fix", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "scripts/re-evaluate-on-rubric-bump.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 4911f0538b704072e0f3965237dcd7325eaa6f5efed8596ae1d745fc1ddc3a9d をレビュー。実行検証あり）。scripts/re-evaluate-on-rubric-bump.py は symlink（readlink → ../plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py）で、実体の plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py と同じものをレビューした（shasum も同じ値）。範囲: re-evaluate-on-rubric-bump.py 全 458 行（v0.3.0、requires-python >=3.9、write-scope none、dependencies [extract-plugin-root.py]）と git diff origin/main（root 側にあった 165 行の別ファイルを本体への symlink に置き換え）、呼び出し元: .github/workflows/harness-creator-kit-ci.yml（--eval-log-dir eval-log、|| true なし）と .claude/settings.json の PostToolUse（Write|Edit、--post-tool-use）、write-eval-log.py と同じ eval-log の解決順。確かめたこと: pytest tests/scripts-plugins/test_skill_governance_automation__re_evaluate_on_rubric_bump.py・tests/scripts-root/test_scripts__re_evaluate_on_rubric_bump.py・同 _r4.py で 110 passed（3.11）/ 110 passed（3.9）。pyflakes 0 件。lint-script-frontmatter OK。実データ: --eval-log-dir eval-log → exit 0、upstream 1.5.0、37 ファイルを走査、別 rubric_id 1 件、対象 0 件、stderr 空。一時 fixture（work-s3/auto/reeval1）: upstream 2.0.0 で plugA の run-x（1.5.0）は対象、2.0.0 で再評価済みの run-y は対象外、plugB の run-x は別に数える、別 rubric_id は件数だけ、版の無い行や壊れた行が score log にあると一覧を出して exit 2、--post-tool-use で upstream を編集 → additionalContext の JSON（scan exited 2 を含む）で exit 0、別の rubric・壊れた stdin → 無言 0、rubric 不在 → 2、eval-log がファイル → 2、eval-log 無し → 0（nothing to do）、rubric_version が版でない・非 UTF-8 の rubric → 2、--bogus → 2、symlink 経由でも同じ。書き込みなし。指摘: [低] eval-log 直下の記録の走査（generic=False）でも 153 行の keys に current_version と target_version が入るため、rubric 以外の版（例: {\"skill\":\"run-w\",\"current_version\":\"0.7.0\"} の release 記録）を rubric の版と読んで再評価の対象に挙げる（再現 work-s3/auto/reeval1/el/release.json。実 repo では該当 0 件）。直し方: 直下の記録は rubric.rubric_version と rubric_version だけを見るか、rubric_id の一致を要る。DEDUCTION: 版のキーの拾いすぎ -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

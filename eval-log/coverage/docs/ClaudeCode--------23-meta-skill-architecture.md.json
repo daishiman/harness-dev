@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/23-meta-skill-architecture.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":81,"notes":"案A-E比較/責務マトリクス/自己進化ループ終了条件/Capability抽象が整合し構造も妥当。裏取り: run-build-skill・assign-skill-design-evaluator・ref-skill-design-rubric・lint-manifest-contents.py・capability-manifest.schema.json・plugin-composition.yaml・EVALS.json/changelog/lessons-learned 全て実在。減点: 古い記述2件—(1)creator-kit/ をmanifest.json正本/配布単位として多用するが当repoにcreator-kitは存在せず plugins/ へ移行済(48 SKILL.md、.claude/skillsはsymlink)、(2)run-skill-rename を2箇所で『未実装』と記すが実体存在。Phase0未完了の前提もmigration実態と乖離"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/23-meta-skill-architecture.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "genuine review（sha256 215380bf0575f59c3f4f7acf5218df8f7ff76034329240e002598ab040854a8f をレビュー。実行検証あり）。範囲: 全468行。前回の記録（sha256 57acf893…、PASS 81）からの差分は L136（creator-kit の説明と 32章の注）、L138（installers/manifest.json）、L147（置き場所を plugins/<plugin>/skills/、plugins/<plugin>/scripts/、plugins/skill-governance-config/config/ にした）、L200（validate-frontmatter.py）。確かめたこと: L147 の3つの置き場所と L200 の validate-frontmatter.py は実在する。32章の冒頭の注記も実在し、symlink 94 と書いてある。L148 の `scripts/build-manifest-registration-plan.py` を回すと、rc=0 で `{\"status\":\"ok\",\"format\":\"plugin\",\"proposals\":{}}` を返した。これは skill-governance-automation の script への symlink で、KIT_DIR が plugins/skill-governance-automation になり、そこに plugin.json があるので plugin の形として扱う。installers/manifest.json は読まない。前回の指摘の解消: [中] creator-kit の配置は一部だけ解けた。L136・L138・L147 は今の置き場所になった。指摘: [中] L148-150 の手順 3〜5 は古い流れのまま。「build-manifest-registration-plan.py で manifest.json の登録案を作り、承認後に --apply で更新」と書くが、上のとおり今は plugin の形として proposals を空で返すだけで、L147 で置いた plugins/ のものを登録する道具にならない。plugins への登録を確かめるのは scripts/validate-plugin-completeness.py（--fix あり、実在）。L150 の lint-forbidden-deps.py は今は SKIP で exit 0 を返す（plugins/skill-governance-lint/manifest.json が無い）。audit_secret_leak.py は scripts/secrets/ にある。直し方: 手順 3〜5 を plugin package の流れ（validate-plugin-completeness）に書き換え、lint-forbidden-deps が SKIP であることと audit_secret_leak.py の path を書く。前回から残るもの: [中] L334・L341 は run-skill-rename を「未実装」と書くが、plugins/harness-creator/skills/run-skill-rename は実在する。[低] L263・L323-325 の xl-skills/eval-log/ は存在しない（実物は eval-log/<plugin>/）。[低] L75 の「classify_change stub 未実装」は古い（scripts/guard-change-category.py に def classify_change がある）。[低] L345-346 の表は見出しが3列なのに区切り行が2列。[低] L284 の「影響 Skill 数が 0 でない場合」は Key Rule 3 の条件と少しずれる。直し方は前回の記録のとおり。DEDUCTION: L148-150 の登録の流れ -3（前回の -6 から一部解けた）、run-skill-rename -5、xl-skills -3、classify_change -2、表の列 -2、L284 の条件 -1 → 84。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "internal-consistency",
+    "impl-alignment",
+    "completeness",
+    "structure"
+  ]
+}

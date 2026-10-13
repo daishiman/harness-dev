@@ -109,10 +109,32 @@ def read_skill_frontmatter_name(skill_dir):
     return None
 
 
+# .gitignore が無視する生成物。作業ツリーにだけ在り CI には無いので、hash に入れると
+# 同じ commit でも実行場所によって vendored copy の同一性が変わってしまう。
+_BUILD_CACHE_DIRS = frozenset({"__pycache__"})
+_BUILD_CACHE_SUFFIXES = (".pyc", ".pyo", ".pyd")
+_OS_JUNK_NAMES = frozenset({".DS_Store", "Thumbs.db"})
+
+
+def is_build_artifact(relative):
+    """`relative` (root からの相対 Path) が .gitignore 対象の生成物なら True。"""
+    return (
+        any(part in _BUILD_CACHE_DIRS for part in relative.parts)
+        or relative.name in _OS_JUNK_NAMES
+        or relative.suffix in _BUILD_CACHE_SUFFIXES
+    )
+
+
 def tree_fingerprint(root):
-    """Directory内容を相対path込みでhashし、vendored copyの同一性を判定する。"""
+    """Directory内容を相対path込みでhashし、vendored copyの同一性を判定する。
+
+    .gitignore 対象の生成物 (__pycache__ / *.pyc / .DS_Store) は除く。
+    """
     digest = hashlib.sha256()
-    for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
+    for path in sorted(
+        candidate for candidate in root.rglob("*")
+        if candidate.is_file() and not is_build_artifact(candidate.relative_to(root))
+    ):
         relative = path.relative_to(root).as_posix()
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")

@@ -29,8 +29,8 @@
 | 用語 | 定義 |
 |---|---|
 | proposal | `templates/proposal.json` 構造に従う改正提案ファイル |
-| 影響評価 | `diff-rubric-impact.py` で影響 Skill 群を列挙 |
-| 猶予 (grace) | warn-only で全 skill に lint を適用する移行期間 |
+| 影響評価 | `diff-rubric-impact.py` で、提案の向き（緩和か厳格化か）に応じて過去の score ログの合否が変わる割合（`flip_rate`）と必要な bump（`required_bump`）を見積もる |
+| 猶予 (grace) | 旧ルールを warning（severity→low）に下げたまま全 skill の採点を続ける移行期間（major 14日以上 / minor 7日 / patch 即時）。緩和の minor で `would_flip` が 0 であり、承認者が緩和の根拠を確かめたものは 0 日にでき、その理由を governance log に残す（`version-rules.md`）。違反の件数は `lint-rubric-violation.py` で見る |
 | 発効 (enact) | `version-rules.md` に従い `rubric_version` を bump し正式適用 |
 
 ### 2.2 ビジネスルール
@@ -43,8 +43,9 @@
 
 | tool | 説明 | 主パラメータ |
 |---|---|---|
-| diff-rubric-impact.py | 改正影響を受ける Skill 群を列挙 | proposal_path |
-| lint-rubric-violation.py | warn-only で全 skill に適用 | warn_only |
+| diff-rubric-impact.py | `--logs` 配下の score ログ（`*-score.jsonl`）に提案を当て、`would_flip`・`flip_rate`・`required_bump`・`exceeds_flip_rate_limit`・`impact_model` を JSON で出す。向きは `change.type`（add=厳格化 / remove=緩和）と、modify なら `change.direction`（relax / tighten）で決める。`required_bump` は厳格化なら常に major、緩和なら提案の bump と minor の大きい方。bump が major・minor・patch 以外なら exit 2 | `--proposal <proposal.json> --logs eval-log [--threshold 80]` |
+| lint-rubric-violation.py（`$SKILL_DIR/scripts/`） | `--logs` 配下の score ログの findings を rule ごとに数える（release は区別しない） | `--logs eval-log [--rule <rule_id>]` |
+| aggregate-evals.py（`$SKILL_DIR/scripts/`） | 改正提案 md の置き場をまとめて JSON で一覧する。手書きは `$SKILL_DIR/proposals/`、SessionEnd hook の自動ドラフト（`generated: true`）は plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` とその退避先。`CLAUDE_PROJECT_DIR` が無ければ cwd と git の作業ツリーの root を project とみなす | `--list-proposals` |
 | version bumper | `rubric_version` を major/minor/patch で bump | bump_kind |
 
 ## Layer 4: 共通ポリシー層
@@ -53,8 +54,8 @@
 - 許可: Read / JSON 書出 / `rubric.json` 編集 (enact のみ)
 - 禁止: 自己承認 / destructive git / 範囲外 bump
 - 入力検証拒否: proposal 構造違反 / `proposer=approver`
-- 事実確認: 各フェーズの決定は `log/*.jsonl` に証跡を残す。影響評価で確証なき Skill は `uncertain` フラグ。
-- エスカレーション: 影響 Skill 数が閾値超 / 猶予 lint で違反多数 → `log/escalation.jsonl` に reason を追記し board レビューへ。
+- 事実確認: 各フェーズの決定は `log/*.jsonl` に証跡を残す。影響評価の出力が `direction_source: assumed`（modify に direction が無く厳格化とみなした値）なら `uncertain` フラグを付け、緩和の提案なら direction を書いて流し直す。`severity_source: assumed`（厳格化の severity が無いか不正で、high の重みで見積もった値）も `uncertain` とし、`change.severity` を書いて流し直す。緩和の宣言が定義（今まで合格したものがすべて合格のまま）を満たすかは道具が確かめないので、根拠を提案に書く。
+- エスカレーション: 厳格化の合否変動率（`flip_rate`）が 30% 超（`exceeds_flip_rate_limit: true`） / 猶予 lint で違反多数 → `log/escalation.jsonl` に reason を追記し board レビューへ。
 
 ## Layer 5: エージェント層
 
@@ -103,7 +104,7 @@
 ## Layer 6: オーケストレーション層
 
 - 実行原則: 完了チェックリストを唯一の停止条件。review は外部承認入力を必須。
-- ハンドオフ直列: `proposal_obj → impacted_skills → decision → violations → rubric.json`
+- ハンドオフ直列: `proposal_obj → impact（would_flip / flip_rate / required_bump） → decision → violations → rubric.json`
 - ゴールシークループ上限: 最大反復回数 2
 - 完了判定: 全項目充足 + Layer 1 成功基準合致。未達は該当フェーズ再実行 or board escalate。
 
@@ -112,8 +113,10 @@
 - 初回質問
   - 改正提案 (`templates/proposal.json`) の path は?
   - 想定する bump 種別は? (`major|minor|patch`)
+  - 変更は緩和か厳格化か? (`change.type` が modify なら `change.direction` に `relax|tighten`)
 - 回答例
-  - `proposal_path: "rubric/proposals/2026-05-add-axis.json"  /  bump_kind: "minor"`
+  - `proposal_path: "rubric/proposals/2026-05-add-axis.json"  /  bump_kind: "major"`（rule の追加は厳格化）
+  - `proposal_path: "rubric/proposals/2026-05-relax-bd004.json"  /  bump_kind: "minor"  /  direction: "relax"`（modify で緩和）
   - `proposal_path: "/abs/path/proposal.json"  /  bump_kind: "patch"`
 
 ---

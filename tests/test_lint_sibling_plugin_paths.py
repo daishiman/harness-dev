@@ -78,6 +78,56 @@ def test_list_after_other_key_is_still_reported():
     assert kinds(text) == [("dotdot", "beta")]
 
 
+@pytest.mark.parametrize("text", [
+    '{"$schema":"../beta/schema.json", "command":"python3 ../beta/scripts/run.py"}',
+    '{"command":"python3 ../beta/scripts/run.py", "$schema":"../beta/schema.json"}',
+    'ROOT.parent / "beta" # $schema annotation',
+    'ROOT.parent / "beta" # 正本スキーマ: annotation',
+])
+def test_schema_metadata_does_not_exempt_runtime_references(text):
+    assert kinds(text) == [("dotdot" if text.startswith("{") else "pyparent", "beta")]
+
+
+def test_minified_schema_metadata_alone_remains_allowed():
+    assert kinds('{"$schema":"../beta/schema.json","title":"metadata"}') == []
+
+
+@pytest.mark.parametrize("text", [
+    # yaml-language-server の modeline。
+    "# yaml-language-server: $schema=../../beta/schemas/x.schema.json\n",
+    # YAML コメントの注記。
+    "# $schema: ../beta/schemas/x.schema.json\n",
+    # TOML の quoted key。
+    '"$schema" = "../beta/schemas/x.schema.json"\n',
+    # markdown の inline code。
+    'manifest の先頭に `"$schema": "../beta/schemas/x.schema.json"` を置く。\n',
+])
+def test_schema_annotation_forms_are_not_reported(text):
+    assert kinds(text) == []
+
+
+@pytest.mark.parametrize("text", [
+    'ROOT.parent / "beta"  # $schema: ../beta/x.json\n',
+    '"$schema" = "../beta/x.json"\ncommand = "python3 ../beta/scripts/run.py"\n',
+    "`../beta/scripts/run.py` を `$schema` と一緒に呼ぶ\n",
+])
+def test_schema_annotation_forms_do_not_exempt_other_references(text):
+    assert len(kinds(text)) == 1
+
+
+@pytest.mark.parametrize("text", [
+    'p = ROOT.parent.joinpath("beta", "x.json")\n',
+    "p = Path(__file__).parents[2].joinpath('beta')\n",
+    'p = (\n    ROOT.parent\n    .joinpath("beta")\n)\n',
+])
+def test_detects_joinpath_from_parent(text):
+    assert kinds(text) == [("pyparent", "beta")]
+
+
+def test_joinpath_with_dotdot_is_detected_as_osjoin():
+    assert kinds('p = HERE.joinpath("..", "beta")\n') == [("osjoin", "beta")]
+
+
 def _make_repo(tmp_path: Path) -> Path:
     for name in ("alpha", "beta"):
         manifest = tmp_path / "plugins" / name / ".claude-plugin" / "plugin.json"
@@ -111,6 +161,28 @@ def test_main_exit_codes(tmp_path, capsys):
     assert MOD.main(["--root", str(root)]) == 1
     assert "plugins/alpha/x.yaml:1 [dotdot] beta" in capsys.readouterr().err
     assert MOD.main(["--root", str(tmp_path / "missing")]) == 2
+
+
+def test_non_utf8_file_is_still_scanned(tmp_path):
+    root = _make_repo(tmp_path)
+    target = root / "plugins" / "alpha" / "scripts" / "b.sh"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"\xff\xfe ../beta/x\n")
+    assert [(f.path, f.kind, f.sibling) for f in MOD.scan(root)] == [
+        ("plugins/alpha/scripts/b.sh", "dotdot", "beta")
+    ]
+
+
+def test_unreadable_file_is_exit_2_not_silently_skipped(tmp_path, capsys):
+    root = _make_repo(tmp_path)
+    broken = root / "plugins" / "alpha" / "scripts" / "gone.py"
+    broken.parent.mkdir(parents=True)
+    broken.symlink_to(root / "nowhere.py")
+    assert MOD.main(["--root", str(root)]) == 2
+    err = capsys.readouterr().err
+    assert "plugins/alpha/scripts/gone.py" in err
+    with pytest.raises(OSError):
+        MOD.scan(root)
 
 
 def test_repository_has_no_parent_relative_sibling_refs():

@@ -71,8 +71,8 @@ def test_frontmatter_core_fields():
     assert re.search(r"^name:\s*run-ubm-consult\s*$", fm, re.M)
     assert re.search(r"^kind:\s*run\s*$", fm, re.M)
     assert re.search(r"^prefix:\s*run\s*$", fm, re.M)
-    # run kind は Step 7-4 で disable-model-invocation: true が必須
-    assert re.search(r"^disable-model-invocation:\s*true\s*$", fm, re.M)
+    # Skill で呼ぶ入口は model-invocable。外部保存は canonical guard が検査する。
+    assert re.search(r"^disable-model-invocation:\s*false\s*$", fm, re.M)
     assert re.search(r"^effect:\s*local-artifact\s*$", fm, re.M)
 
 
@@ -134,8 +134,7 @@ STANCE_MARKERS = [
     "具体解の押し付けゼロ",          # (1) 非処方
     "引き出し質問",                   # (2) 共同判断が残るターンで引き出し
     "ユーザーの発話",                 # (3) 解決策の言語化はユーザー主導
-    "現状→ゴール→ギャップ→次の一歩",  # (4) ゴール指向の締め (action lane)
-    "見えてきたこと→まだ決めないこと→再開条件",  # (4) ゴール指向の締め (reflection lane)
+    "収束の契約",                     # (4) 締め方は記録契約の正本を参照
     "run-ubm-goal-setting へ誘導",    # (5) 責務境界
 ]
 
@@ -207,6 +206,9 @@ def test_manifest_r3_consult_graceful_fallback():
         ("R2-elicit", "2.3", "collaboration_mode"),
         ("R3-frame-consult", "2.3", "collaboration_mode"),
         ("R4-cocreate-converge", "2.3", "persistence_consent"),
+        ("R4-cocreate-converge", "2.3", "collaboration_mode"),
+        ("R4-cocreate-converge", "2.3", "consult_evidence"),
+        ("R4-cocreate-converge", "2.3", "transcript"),
     ],
 )
 def test_prompt_io_tables_carry_manifest_fields(slug, section, field):

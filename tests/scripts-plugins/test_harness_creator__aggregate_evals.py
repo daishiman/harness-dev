@@ -47,15 +47,20 @@ SPEC.loader.exec_module(MOD)
 
 
 # ── path helper(実 repo を参照する純関数。書込はしないので安全に算出のみ確認) ──
-def test_path_helpers_resolve_to_repo_layout():
+def test_path_helpers_resolve_to_repo_layout(monkeypatch):
+    monkeypatch.delenv("HARNESS_CREATOR_PROPOSALS_DIR", raising=False)
     plugin_root = MOD._plugin_root()
     assert plugin_root.name == "harness-creator"
     repo_root = MOD._repo_root()
     assert (repo_root / "plugins").exists() or repo_root.name  # repo 配下
     assert MOD._eval_log_dir() == repo_root / "eval-log"
     assert MOD._evals_path() == plugin_root / "EVALS.json"
-    pd = MOD._proposals_dir()
-    assert pd.parts[-3:] == ("run-skill-rubric-governance", "proposals") or pd.name == "proposals"
+    assert MOD._proposals_dir().name == "proposals"
+    # 書込先は plugin の外の state。$CLAUDE_PROJECT_DIR が何を指していても候補に plugin の中は無い
+    assert not any(MOD._is_inside_plugin(d) for d in MOD._candidate_proposals_dirs())
+    legacy = MOD._legacy_proposals_dir()
+    assert legacy.parts[-2:] == ("run-skill-rubric-governance", "proposals")
+    assert MOD._is_inside_plugin(legacy)  # 従来の置き場は読むだけ
 
 
 # ── _date_of ─────────────────────────────────────────────────────────────────

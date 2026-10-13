@@ -347,6 +347,63 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         self.assertEqual(json.loads(self.output.read_text()), before)
         self.assertFalse(self.receipt.exists())
 
+    def test_receipt_failure_restores_the_original_graph_bytes_not_a_canonical_rewrite(self) -> None:
+        self.output.write_text(json.dumps(json.loads(self.output.read_text()), indent=4) + "\n\n", encoding="utf-8")
+        before = self.output.read_bytes()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")):
+            with self.assertRaisesRegex(OSError, "receipt disk failure"):
+                RP._register(self.args())
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertFalse(self.receipt.exists())
+
+    def test_receipt_and_restore_failures_are_both_reported(self) -> None:
+        before = self.output.read_bytes()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")), \
+                mock.patch.object(RP, "atomic_bytes", side_effect=OSError("restore disk failure")):
+            with self.assertRaises(RP.RollbackIncompleteError) as caught:
+                RP._register(self.args())
+        message = str(caught.exception)
+        self.assertIn("receipt disk failure", message)
+        self.assertIn("restore disk failure", message)
+        self.assertIsInstance(caught.exception.__cause__, OSError)
+        self.assertEqual(caught.exception.findings, [{
+            "node": self.output.name, "code": "rollback_failed",
+            "detail": f"restore sha256 {hashlib.sha256(before).hexdigest()}: restore disk failure",
+        }])
+        # The graph keeps the new nodes without a receipt, which is why the count is not reported as 0.
+        self.assertEqual(len(json.loads(self.output.read_text())["nodes"]), 14)
+        self.assertFalse(self.receipt.exists())
+
+    def test_main_reports_incomplete_rollback_with_unknown_counts(self) -> None:
+        output = io.StringIO()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")), \
+                mock.patch.object(RP, "atomic_bytes", side_effect=OSError("restore disk failure")), \
+                redirect_stdout(output):
+            code = RP.main(["register", "--repo-root", str(self.root), "--package", self.package.name,
+                            "--graph", self.registration.name, "--output", self.output.name,
+                            "--receipt", self.receipt.name])
+        self.assertEqual(code, 2)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["code"], "rollback_incomplete")
+        self.assertIsNone(report["applied_count"])
+        self.assertIsNone(report["write_count"])
+        self.assertIn("receipt disk failure", report["error"])
+        self.assertIn("restore disk failure", report["error"])
+        self.assertEqual([finding["node"] for finding in report["findings"]], [self.output.name])
+
+    def test_main_reports_restored_receipt_failure_as_zero_applied(self) -> None:
+        before = self.output.read_bytes()
+        output = io.StringIO()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")), \
+                redirect_stdout(output):
+            code = RP.main(["register", "--repo-root", str(self.root), "--package", self.package.name,
+                            "--graph", self.registration.name, "--output", self.output.name,
+                            "--receipt", self.receipt.name])
+        self.assertEqual(code, 2)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report, {"valid": False, "error": "receipt disk failure", "applied_count": 0})
+        self.assertEqual(self.output.read_bytes(), before)
+
     def test_in_process_lock_contention_is_fail_closed(self) -> None:
         lock_path = self.output.with_name(f".{self.output.name}.register.lock")
         with lock_path.open("a+") as stream:

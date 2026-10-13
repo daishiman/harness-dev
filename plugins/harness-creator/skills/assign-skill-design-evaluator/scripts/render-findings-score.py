@@ -1,16 +1,38 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.10"
-# dependencies = []
+# name: render-findings-score
+# purpose: L0〜Ln の rubric を compose-rubrics で合成し、1 つの skill を rule ごとに機械採点して findings・coverage・pending_human を JSON で出す（読むだけで書かない）
+# inputs:
+#   - argv: --rubric-refs L0 [L1 ...] Ln | --rubric PATH（legacy）, --target <skill-dir|SKILL.md>, [--kind K] [--merge-strategy S] [--conflict-policy P] [--emit-hash]
+#   - files: rubric.json 群、<skill>/SKILL.md と周辺（knowledge/・prompts/・agents/・scripts/）
+# outputs:
+#   - stdout: 採点結果 JSON（rubric_hash は常に含む。passed が合否）
+#   - stderr: 入力エラーの説明
+#   - exit: 0=採点できた（合否は JSON の passed）/ 1=--rubric-refs の先頭が L0 でない / 2=入力エラー（rubric や SKILL.md が無い・読めない・JSON でない、rubric の必須キーが無い・型が違う、compose-rubrics の失敗）
+# contexts: [C, E]
+# network: false
+# write-scope: none
+# dependencies: [../../../scripts/compose-rubrics.py]
+# requires-python: ">=3.10"
 # ///
 """Score a skill against rubric.json. Emits JSON to stdout.
 
 Usage:
-  render-findings-score.py --rubric <path> --target <skill-dir-or-SKILL.md> [--emit-hash]
+  render-findings-score.py --rubric-refs <L0> [<L1> ...] <L2> --target <skill-dir-or-SKILL.md> [--kind K]
+  render-findings-score.py --rubric <path> --target <skill-dir-or-SKILL.md>   # legacy
+
+exit codes:
+  0  採点できた。合否は出力 JSON の passed を見る
+  1  --rubric-refs の先頭が L0 の rubric でない (合成順序の契約違反)
+  2  入力エラー (rubric や SKILL.md が無い・読めない・JSON object でない、rubric の必須キー
+     (rules・各 rule の id) が無い・採点が読むキーの型が違う、compose-rubrics の失敗)
+
+--emit-hash は互換のために受け付けるだけで、出力は変わらない。rubric_hash は常に出す (RG-001)。
 
 Implementation notes:
 - stdlib only. Rubric files are JSON.
-- Findings collected by simple textual checks; complex checks are TODO.
+- 機械で判定できる rule だけを check_rule() で採点し、判定実装の無い rule は unscored、
+  LLM judge が要る rule は pending_human へ出す (満点へ吸わせない)。
 """
 from __future__ import annotations
 import argparse
@@ -23,6 +45,15 @@ from pathlib import Path
 
 SEVERITY_WEIGHTS = {"high": -20, "medium": -10, "low": -3}
 PREFIXES = ("run-", "ref-", "assign-", "wrap-", "delegate-")
+
+# BD-001 / BD-002 / PD-002 の見出し。英語は従来どおり部分一致、日本語 (2つ目の正規形) は
+# 行全体の一致 (前後の空白は除く) で受け入れる。
+PURPOSE_HEADING = "## Purpose & Output Contract"
+PURPOSE_HEADING_JA = "## 目的と出力契約"
+GOTCHAS_HEADING = "## Gotchas"
+GOTCHAS_HEADING_JA = "## つまずきやすい点"
+# PD-002 の禁則として認める日本語の見出し（rubric 1.5.0）。行全体の一致で受け入れる。
+KEY_RULES_HEADING_JA = "## 守ること"
 
 # check_rule() が実際に判定する rule id。ここに無い id は「合格」ではなく
 # 「未採点」として出力へ現れる。
@@ -97,8 +128,53 @@ def _plugin_name(skill_dir: Path) -> str:
 
 
 def load_rubric(path: Path) -> dict:
-    """Load a JSON rubric."""
-    return json.loads(path.read_text(encoding="utf-8"))
+    """Load a JSON rubric. 形が壊れていれば ValueError (main が exit 2 にする)。"""
+    return validate_rubric(json.loads(path.read_text(encoding="utf-8")), str(path))
+
+
+def _is_threshold(value: object) -> bool:
+    """threshold は整数か、int() で読める文字列 (既定値 "80" と同じ形)。bool・小数は不可。"""
+    if isinstance(value, str):
+        try:
+            int(value)
+        except ValueError:
+            return False
+        return True
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def validate_rubric(data: object, source: str) -> dict:
+    """採点が読むキーの有無と型を確かめ、壊れていれば理由付きの ValueError を出す。
+
+    確かめずに進めると、型の違う値が採点の奥で TypeError の traceback になる
+    (rc 1 で落ち、「--rubric-refs の先頭が L0 でない」の rc 1 と見分けられない)。
+    合成前の各ファイルと合成後の rubric の両方にかける。L1/L2 は一部の rule だけを
+    上書きする差分なので、rules と各 rule の id のほかは「あれば型を見る」に留める。
+    """
+    if not isinstance(data, dict):
+        raise ValueError(f"{source}: rubric が JSON object でない")
+    for key in ("layer", "rubric_id", "rubric_version"):
+        if key in data and not isinstance(data[key], str):
+            raise ValueError(f"{source}: {key} が文字列でない")
+    if "threshold" in data and not _is_threshold(data["threshold"]):
+        raise ValueError(f"{source}: threshold が整数でない: {data['threshold']!r}")
+    rules = data.get("rules")
+    if not isinstance(rules, list):
+        raise ValueError(f"{source}: rules (必須) が配列でない")
+    for i, rule in enumerate(rules):
+        where = f"{source}: rules[{i}]"
+        if not isinstance(rule, dict):
+            raise ValueError(f"{where} が object でない")
+        if not isinstance(rule.get("id"), str) or not rule["id"]:
+            raise ValueError(f"{where}.id (必須) が空でない文字列でない")
+        for key in ("check", "severity", "area"):
+            if key in rule and not isinstance(rule[key], str):
+                raise ValueError(f"{where}.{key} が文字列でない")
+        kinds = rule.get("applies_to_kinds")
+        if kinds is not None and not (isinstance(kinds, list)
+                                      and all(isinstance(k, str) for k in kinds)):
+            raise ValueError(f"{where}.applies_to_kinds が文字列の配列でない")
+    return data
 
 
 def split_frontmatter(text: str) -> tuple[dict, str]:
@@ -176,17 +252,17 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
         first = desc.split(" ", 1)[0] if desc else ""
         starts_en = desc.startswith(en_verbs)
         # 日本語動詞: 最初の句点までに verb marker が含まれる
-        head_jp = re.split(r"[。\.]", desc, 1)[0] if desc else ""
+        head_jp = re.split(r"[。\.]", desc, maxsplit=1)[0] if desc else ""
         has_jp_verb = any(m in head_jp for m in jp_verb_markers)
         if desc and not (starts_en or has_jp_verb):
             return fail(f"description first phrase '{first}' is not a verb",
                         "frontmatter.description")
     elif rid == "BD-001":
-        if "## Purpose & Output Contract" not in body:
-            return fail("missing '## Purpose & Output Contract'", "body")
+        if PURPOSE_HEADING not in body and not _has_heading_line(body, PURPOSE_HEADING_JA):
+            return fail(f"missing '{PURPOSE_HEADING}' (or '{PURPOSE_HEADING_JA}')", "body")
     elif rid == "BD-002":
-        if "## Gotchas" not in body:
-            return fail("missing '## Gotchas'", "body")
+        if GOTCHAS_HEADING not in body and not _has_heading_line(body, GOTCHAS_HEADING_JA):
+            return fail(f"missing '{GOTCHAS_HEADING}' (or '{GOTCHAS_HEADING_JA}')", "body")
     elif rid == "BD-003":
         n = len(body.splitlines())
         if n > 300:
@@ -216,20 +292,23 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
         # 読み手が最初の画面で契約と禁則の両方に当たれるかを見る rule なので、
         # 走査幅を 30 行に固定する (末尾にあっても救済しない)。
         head = "\n".join(body.strip().splitlines()[:30])
-        has_heading = ("## Purpose" in head) or ("## Output Contract" in head)
+        # 日本語の見出しは BD-001 と同じ行全体の一致で受け入れ、BD-001 が認める
+        # 見出し語彙を共有する。PD-002 の冒頭配置と禁則は BD-001 と独立。
+        has_heading = (("## Purpose" in head) or ("## Output Contract" in head)
+                       or _has_heading_line(head, PURPOSE_HEADING_JA))
         # rule 文の列挙は 'e.g.' 付きで例示であり網羅ではない。rule の名前その
         # ものである 'Key Rule' 見出しを禁則の記述と認めないと、'## Key Rules'
         # を持つ skill が語彙不一致だけで落ちる。逆に語彙を広げすぎると
         # 「それらしい単語を 1 語置けば通る」へ退化するので、rubric が名指しした
         # 語とその見出し形だけに留める。
         has_rule = any(k in head for k in
-                       ("MUST", "NEVER", "禁止", "禁則", "必ず", "Key Rule"))
+                       ("MUST", "NEVER", "禁止", "禁則", "必ず", "Key Rule")) or _has_heading_line(head, KEY_RULES_HEADING_JA)
         if not has_heading:
-            return fail("body head 30 lines lack '## Purpose' / '## Output Contract'",
-                        "progressive-disclosure")
+            return fail("body head 30 lines lack '## Purpose' / '## Output Contract' "
+                        f"(or '{PURPOSE_HEADING_JA}')", "progressive-disclosure")
         if not has_rule:
             return fail("body head 30 lines lack a Key Rule / 禁則 "
-                        "(MUST / NEVER / 禁止 / 必ず)", "progressive-disclosure")
+                        f"(MUST / NEVER / 禁止 / 必ず / '{KEY_RULES_HEADING_JA}')", "progressive-disclosure")
     elif rid in ("KL-001", "KL-002", "KL-003", "KL-004", "KL-005"):
         declares = "knowledge_loop" in fm
         kdir = _knowledge_dir(skill_dir, allow_plugin_scope=declares)
@@ -245,9 +324,36 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
     elif rid == "REG-001":
         return _check_registration_and_trace(skill_dir, fail)
     elif rid == "RG-001":
-        # always satisfied since we emit hash
+        # main は rubric_hash を常に出力するので、この rule は常に満たされる
         return None
     return None
+
+
+_FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+
+
+def _unfenced_lines(body: str):
+    """コードフェンス (``` / ~~~) の外の行だけを返す。
+
+    フェンスの中の「## 」行は Markdown の見出しではないので、見出しの照合に使わない。
+    閉じのフェンスは開きと同じ文字で同じ長さ以上、後ろに文字を持たない行。
+    """
+    fence: str | None = None
+    for line in body.splitlines():
+        m = _FENCE_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+                continue
+            yield line
+        elif (m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence)
+              and not line.strip()[len(m.group(1)):].strip()):
+            fence = None
+
+
+def _has_heading_line(body: str, heading: str) -> bool:
+    """heading が 1 行まるごと (前後の空白を除いて) コードフェンスの外に現れるか。"""
+    return any(line.strip() == heading for line in _unfenced_lines(body))
 
 
 def _load_json(path: Path) -> object | None:
@@ -272,9 +378,13 @@ def _knowledge_entries(kdir: Path) -> list[dict]:
         if isinstance(data, list):
             entries.extend(x for x in data if isinstance(x, dict))
         elif isinstance(data, dict):
-            for v in data.values():
-                if isinstance(v, list):
-                    entries.extend(x for x in v if isinstance(x, dict))
+            if isinstance(data.get("entries"), list):
+                entries.extend(x for x in data["entries"] if isinstance(x, dict))
+            else:
+                # Graphs, relation stores and ledgers are derived/index contracts, not category cards.
+                for key, value in data.items():
+                    if key not in {"nodes", "edges", "associations", "relations", "sources", "videos", "runs"} and isinstance(value, list):
+                        entries.extend(x for x in value if isinstance(x, dict))
     return entries
 
 
@@ -305,6 +415,20 @@ def _find_script(skill_dir: Path, name: str) -> Path | None:
         if base is not None and (base / "scripts" / name).is_file():
             return base / "scripts" / name
     return None
+
+
+# 重みの表の定義 (FIELD_WEIGHTS = {...} / DEFAULT_WEIGHTS: dict[...] = {...})。
+_WEIGHT_TABLE_RE = re.compile(r"(?m)^[ \t]*[A-Z][A-Z0-9_]*WEIGHTS[ \t]*(?::[^=\n]+)?=[ \t]*\{")
+
+
+def _declared_scripts(skill_dir: Path) -> list[Path]:
+    """frontmatter script_refs[] のうち、skill dir 起点で実在する .py だけを返す。"""
+    found: list[Path] = []
+    for ref in _frontmatter_list(skill_dir / "SKILL.md", "script_refs"):
+        p = (skill_dir / ref).resolve()
+        if p.suffix == ".py" and p.is_file() and p not in found:
+            found.append(p)
+    return found
 
 
 def _check_knowledge_loop(rid: str, kdir: Path | None, skill_dir: Path, fail) -> dict | None:
@@ -356,20 +480,31 @@ def _check_knowledge_loop(rid: str, kdir: Path | None, skill_dir: Path, fail) ->
         # rule が挙げる search_knowledge.py は knowledge-skeleton の参照実装名。
         # ファイル名で縛ると「名前を合わせれば通る」になるので、決定論 stage を
         # 名乗る script のどれかが実際にフィールド重み付けを持つかを見る。
+        # 名乗り方は 2 通り: 名前に search を含む script と、frontmatter の
+        # script_refs で skill 自身が宣言した script。名前だけで探すと、検索 stage を
+        # 動詞の命名規約に合わせて改名した plugin (例: extract-knowledge-matches.py)
+        # が中身を変えずに FAIL へ落ちる。宣言側は weight の語が出るだけでは数えず、
+        # 重みの表 (XXX_WEIGHTS = {...}) を定義している script に限る。検索結果を
+        # 記録する script も field_weights の語を持つので、語で数えると検索でない
+        # script で通ってしまう。
         script = _find_script(skill_dir, "search_knowledge.py")
-        candidates = [script] if script else [
-            p for base in [skill_dir, _plugin_dir(skill_dir)] if base
-            for p in sorted((base / "scripts").glob("*.py")) if "search" in p.name
-        ]
-        if not candidates:
+        if script:
+            named, declared = [script], []
+        else:
+            named = [p for base in [skill_dir, _plugin_dir(skill_dir)] if base
+                     for p in sorted((base / "scripts").glob("*.py")) if "search" in p.name]
+            declared = [p for p in _declared_scripts(skill_dir) if p not in named]
+        if not named and not declared:
             return fail("決定論的な検索 stage の script が無い "
                         "(scripts/search_knowledge.py 相当)。AI 意味検索のみは FAIL",
                         "knowledge-loop")
-        for p in candidates:
-            src = p.read_text(encoding="utf-8", errors="replace")
-            if re.search(r"weight", src, re.I):
+        for p in named:
+            if re.search(r"weight", p.read_text(encoding="utf-8", errors="replace"), re.I):
                 return None
-        return fail(f"{[p.name for p in candidates]} にフィールド重み付け (weight) が "
+        for p in declared:
+            if _WEIGHT_TABLE_RE.search(p.read_text(encoding="utf-8", errors="replace")):
+                return None
+        return fail(f"{[p.name for p in named + declared]} にフィールド重み付け (weight) が "
                     "見えない — 全文一致のみの検索は FAIL", "knowledge-loop")
 
     if rid == "KL-004":
@@ -509,6 +644,16 @@ def _required_responsibilities(skill_md: Path) -> list[tuple[str, str | None]]:
 
 def _responsibility_ref_paths(skill_md: Path) -> list[str]:
     """frontmatter responsibility_refs[] の明示 path だけを返す。"""
+    return _frontmatter_list(skill_md, "responsibility_refs")
+
+
+def _frontmatter_list(skill_md: Path, key: str) -> list[str]:
+    """frontmatter の `<key>:` 直下のブロック列 (`- item`) を返す。
+
+    split_frontmatter は 1 行 1 key の平坦な解析なので、列の中身は読めない。
+    """
+    if not skill_md.is_file():
+        return []
     text = skill_md.read_text(encoding="utf-8", errors="replace")
     if not text.startswith("---"):
         return []
@@ -519,7 +664,7 @@ def _responsibility_ref_paths(skill_md: Path) -> list[str]:
     refs: list[str] = []
     for line in parts[1].splitlines():
         if not in_block:
-            if re.fullmatch(r"responsibility_refs:\s*", line):
+            if re.fullmatch(rf"{re.escape(key)}:\s*", line):
                 in_block = True
             continue
         if line and not line[0].isspace():
@@ -718,7 +863,10 @@ def compose_rubrics(refs: list[Path], strategy: str, policy: str) -> dict:
     if result.returncode != 0:
         print(result.stderr.strip() or result.stdout.strip(), file=sys.stderr)
         raise SystemExit(2)
-    return json.loads(result.stdout)
+    composed = json.loads(result.stdout)
+    if not isinstance(composed, dict):
+        raise ValueError("compose-rubrics の出力が JSON object でない")
+    return composed
 
 
 def main() -> int:
@@ -732,12 +880,21 @@ def main() -> int:
     ap.add_argument("--merge-strategy", default="deep-merge",
                     choices=["deep-merge", "strict", "override", "layered"])
     ap.add_argument("--target", required=True)
-    ap.add_argument("--emit-hash", action="store_true")
+    ap.add_argument("--emit-hash", action="store_true",
+                    help="互換のために受け付けるだけ。rubric_hash は常に出力する")
     ap.add_argument("--kind", default="skill",
                     help="採点対象の capability kind。rubric の applies_to_kinds と "
                          "突き合わせて非適用 rule を被覆率の分母から外す")
     args = ap.parse_args()
+    try:
+        return _score(args)
+    except (OSError, ValueError, RecursionError) as exc:
+        # 壊れた rubric・非 UTF-8 の SKILL.md などを traceback (rc1) にせず、入力エラー (2) にする
+        print(f"error: 入力を読めない: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
 
+
+def _score(args: argparse.Namespace) -> int:
     refs: list[Path]
     if args.rubric_refs:
         refs = [Path(p).resolve() for p in args.rubric_refs]
@@ -756,11 +913,14 @@ def main() -> int:
         if not rp.exists():
             print(f"rubric not found: {rp}", file=sys.stderr)
             return 2
+    # 合成の前に各ファイルの形を確かめる (壊れた rubric は exit 2。compose-rubrics の
+    # traceback を経由させない)。
+    layers = [load_rubric(rp) for rp in refs]
 
     if args.rubric_refs:
         # refs[0] は L0 正本 (ref-skill-design-rubric/references/rubric.json) 必須。
         # 非 L0 先頭は合成順序 (L0→L1→L2) 契約違反として fail-fast する。
-        first_layer = load_rubric(refs[0]).get("layer")
+        first_layer = layers[0].get("layer")
         if first_layer != "L0":
             print(
                 f"ERROR: --rubric-refs[0] must be the L0 canonical rubric "
@@ -768,7 +928,8 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-    rubric = compose_rubrics(refs, args.merge_strategy, args.conflict_policy)
+    rubric = validate_rubric(compose_rubrics(refs, args.merge_strategy, args.conflict_policy),
+                             "合成した rubric")
     composition_hash = rubric.get("_composition_hash", "")
     # primary rubric hash = first (upstream) layer or only layer
     rubric_path = refs[0]

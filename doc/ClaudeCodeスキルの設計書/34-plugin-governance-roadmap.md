@@ -1,12 +1,12 @@
 # 34. plugin 移行ガバナンスロードマップ
 
-最終更新: 2026-05-18
+最終更新: 2026-10-10（現状とゲートの充足状況を 2026-07-12 の物理移行後の実物に更新）
+
+> **現状（2026-10-10 時点）**: 物理移行は実施済みである。2026-07-12 のコミット `4cd8faf8`（件名「skills/ 単一構成から plugins/ マルチプラグイン構成へ全面再編」、4224 ファイル）で、今の `plugins/<plugin>/`（正本）と `installers/` の構成になり、19 plugin が一度に入った。旧 `creator-kit/` から移したかどうかは git では確かめられない（`git log --all -- creator-kit` は 0 件で、親 `4f566b46` にも `creator-kit/` は無い）。`.claude/{skills,agents,commands}` の大部分は `scripts/build-claude-symlinks.py` が作る plugins への symlink だが（例: `.claude/skills/run-build-skill` → `../../plugins/harness-creator/skills/run-build-skill`）、aidd-agent-kit 由来の通常エントリ（skills 21・agents 1・commands 4、`.claude/aidd-agent-kit.manifest` が管理）は git が通常のファイルとして追跡している。`.claude-plugin/marketplace.json` と `plugins/harness-creator/hooks/hooks.json` も実在する。この移行は下記のゲートがすべてそろう前に行われ、ゲート通過の判定記録は残っていない。そのため以下のゲートとチェックリストは、移行の可否ではなく「移行後に満たすべき条件」の追跡表として読む。[x] は実物と CI 配線で確かめたもの、[ ] は未達または証跡が未記録のものを表す。
 
 ## 目的
 
-本章は、3アナリスト（論理構造9 / メタ発想9 / システム戦略12 = 30 paradigm）の収束的証拠に基づき、plugin 移行を「Phase 0-4 のゲート付きロードマップ」として明文化する。
-
-**ユーザー意向（plugin 化進行）と3アナリスト推奨（Phase 0 即時改善優先）を両立させるための設計書章**。
+本章は、3アナリスト（論理構造9 / メタ発想9 / システム戦略12 = 30 paradigm）の収束的証拠に基づき、plugin 移行を「Phase 0-4 のゲート付きロードマップ」として明文化する。**ユーザー意向（plugin 化進行）と3アナリスト推奨（Phase 0 即時改善優先）を両立させるための設計書章**。
 
 ## 正本の分担
 
@@ -15,7 +15,7 @@
 | plugin アーキテクチャ比較 | `23-meta-skill-architecture.md` 案D/案D' | 案D' 移行の前提条件と Phase 0-4 接続 |
 | plugin 命名規約 | `06-classification-and-naming.md` 第17条 | 命名ゲート (Phase 0 完了後適用) |
 | plugin 境界 governance | `33-change-governance.md` MECE 表 | 境界違反の分類と強制ルール |
-| classify_change stub | `scripts/guard-change-category.py` | Phase 0 の主要未実装タスク |
+| classify_change | `scripts/guard-change-category.py` | 実装済み・CI 配線済み（`.github/workflows/governance-check.yml` が `--base origin/main` で実行）。本章は plugin 境界の運用証跡だけを扱う |
 | eval-log plugin 対応 | `27-rubric-governance-runbook.md` §3.1 | eval-log パスの plugin 拡張（PKG gate 用 `eval-log/<plugin>/pkg-<id>/` も §3.1 に準拠） |
 | plugin package harness | `36-plugin-package-harness-contract.md` | plugin install だけで Skill / Agent / Hook / script / settings を使える同梱契約（PKG-001〜017 の正本） |
 
@@ -31,11 +31,11 @@ plugin 移行前に確認が必要な公式制約を明示する。全て PASS �
 |---|---|---|---|---|
 | a | Skill スコープ制限 | plugin スコープ宣言外の Skill・ファイルへのアクセス禁止 | 未確認 | 全 SKILL.md 外部参照棚卸し |
 | b | permissions 宣言 | plugin 内 permissions は plugin スコープ内でのみ宣言可能 | 設計中 | plugin 境界設計後に反映 |
-| c | CI 強制 | `classify_change` は実装済みだが、plugin境界の棚卸し結果とCI gateへの接続が未完 | **暫定FAIL** | `lint-external-refs.py` による棚卸し + CI強制 |
+| c | CI 強制 | `classify_change` は実装済み・CI 配線済み。`lint-external-refs.py` の CI 検査は harness-creator の skills だけで、全 plugin の境界棚卸しとその CI gate は未完 | **暫定FAIL** | `lint-external-refs.py` による棚卸し + CI強制 |
 | d | marketplace 非可逆 | marketplace 公開は実質不可逆。配布計画なし時点での公開禁止 | 未公開 | 現フェーズでは公開しない方針で OK |
-| e | plugin 外参照禁止 | plugin 内 Skill が plugin 外の scripts/adapters/.claude/config/ を参照することを禁ずる | **未棚卸し** | 外部参照棚卸し完了が Phase 0 の必要条件 |
+| e | plugin 外参照禁止 | plugin 内 Skill が plugin 外の scripts/adapters/.claude/config/ を参照することを禁ずる | **一部棚卸し**（harness-creator のみ） | 外部参照棚卸し完了が Phase 0 の必要条件 |
 
-**制約 c・e が未解決のため、現時点で Phase 2 以降への移行は禁止**。c は「分類器未実装」ではなく「plugin境界の証跡とCI強制が未完」という意味で暫定FAILとする。
+**制約 c・e は未解決のまま、物理移行は 2026-07-12 に実施済み（冒頭の現状を参照）**。残る作業は移行の可否判断ではなく、c・e の解消である。c は「分類器未実装」ではなく「plugin境界の証跡とCI強制が未完」という意味で暫定FAILとする。
 
 ---
 
@@ -50,7 +50,7 @@ plugin 移行前に確認が必要な公式制約を明示する。全て PASS �
 | `classify_change` CI強制確認 | TODO(human) | `guard-change-category.py` が P0/P1/P2/P3 を分類し、plugin境界変更を保守的に P0 としてCIで止められる | 制約 c | Phase 1 設計完了 + P1 変更の手動分類実績 3 件以上 + solo_operator レビュー承認 |
 | OB-09 `target_path` 配列化 | TODO(human) | `target_path` が配列型を受け付けるようになる | changelog 整合性 | N/A（solo_operator 判断で即着手可） |
 | OB-10 `migrate dry-run` ログ取得 | TODO(human) | `migrate-from-project.sh --dry-run` のログが取得できる | 移行前後の状態把握 | N/A（migrate スクリプト実装後に着手） |
-| 全 SKILL.md 外部参照棚卸し | TODO(human) | 全 SKILL.md の外部参照先が `scripts/lint-external-refs.py` または `creator-kit/scripts/lint-external-refs.py` で洗い出されている | 制約 e | N/A（solo_operator 判断で即着手可） |
+| 全 SKILL.md 外部参照棚卸し | TODO(human) | 全 SKILL.md の外部参照先が `scripts/lint-external-refs.py` で洗い出されている | 制約 e | N/A（solo_operator 判断で即着手可） |
 | メタガバナンス集約レイヤー設計 | TODO(human) | plugin 間の共通基準 (rubric/lint/config) の共有方式が決定している | 制約 b | N/A（solo_operator 判断で即着手可） |
 
 > **注意**: `classify_change` 自体は実装済み。TODO(human) は plugin境界の運用証跡、外部参照棚卸し、CI強制確認に限定する。
@@ -61,7 +61,7 @@ plugin 移行前に確認が必要な公式制約を明示する。全て PASS �
 |---|---|---|
 | SKILL.md 外部参照棚卸し完了 | 人間 | 全外部参照が一覧化され、plugin 境界内に収める計画が立っている |
 | メタガバナンス集約レイヤー設計完了 | 人間 | 設計書に反映済み |
-| plugin 試験移行の対象 Skill 選定 | 人間 | harness-creator 1件のみを試験対象に絞り込んでいる |
+| plugin 試験移行の対象 Skill 選定 | 人間 | **廃止**: harness-creator 1件に絞る試験移行は行わず、`4cd8faf8` で 19 plugin を一度に移したため、前提が無くなった |
 | 公式制約 a/b/d/e の PASS 確認 | 人間 + lint | 照合表の a/b/d/e が全て PASS |
 
 ### Phase 2 (1ヶ月: 試験 plugin 移行)
@@ -70,7 +70,7 @@ plugin 移行前に確認が必要な公式制約を明示する。全て PASS �
 
 | タスク | 担当 | 完了条件 |
 |---|---|---|
-| harness-creator 1件のみ試験 plugin 移行 | 人間 + AI | `plugins/harness-creator/` が正常動作 |
+| harness-creator 1件のみ試験 plugin 移行 | 人間 + AI | **読み替え**: 1件の試験移行は行わず、全 plugin を一度に移した（`4cd8faf8`）。以後は `plugins/harness-creator/` を含む全 plugin が正常に動くことを、下の行と Phase 2 ゲートで追う |
 | plugin 境界内での動作確認 | 人間 | 外部参照ゼロを確認 |
 | eval-log plugin 対応パスへの移行 | 人間 | `eval-log/harness-creator/` にログが記録される |
 | 3ヶ月評価開始 | 人間 | 評価基準と観測項目が決定している |
@@ -81,7 +81,7 @@ plugin 移行前に確認が必要な公式制約を明示する。全て PASS �
 
 | タスク | 担当 | 完了条件 |
 |---|---|---|
-| marketplace.json 作成 | 人間 | 公開前のレビュー完了 |
+| marketplace.json 作成 | 人間 | **作成は達成**: `.claude-plugin/marketplace.json` は 2026-01-15（`677321e5`）から実在し、2026-10-10 時点で 17 plugin を載せる。ローカル用の `marketplaces/local/.claude-plugin/marketplace.json` は 22 plugin を載せる。完了条件の「公開前のレビュー」の記録は無い |
 | 手動 merge 運用フロー確立 | 人間 | CONTRIBUTING.md に記載 |
 | plugin 間依存 governance 整備 | 人間 + 33章 MECE 表 | P0_breaking 判定が機械強制されている |
 
@@ -144,7 +144,7 @@ Phase 移行の前にこのチェックリストを確認する。
 
 ### Phase 0 → Phase 1 移行ゲート
 
-- [ ] `classify_change` が実装済みで、plugin境界変更を P0 として分類することを確認
+- [ ] `classify_change` が実装済みで、plugin境界変更を P0 として分類することを確認（実装と CI 配線は済み。plugin 境界変更を P0 に分類することの確認記録は未作成）
 - [ ] OB-09 `target_path` 配列化の要否が判断されている
 - [ ] OB-10 dry-run ログが取得できる
 - [ ] 全 SKILL.md の外部参照棚卸しが開始されている
@@ -154,7 +154,7 @@ Phase 移行の前にこのチェックリストを確認する。
 - [ ] 全 SKILL.md 外部参照棚卸し完了（一覧化 + plugin 境界計画）
 - [ ] 公式制約 a/b/d/e が全て PASS
 - [ ] **制約 c (classify_change CI強制) の状態確認**: CI未接続の場合は手動 P0_breaking 運用で補完
-- [ ] 試験移行対象 Skill が harness-creator 1件のみに絞られている
+- **廃止**: 試験移行対象 Skill を harness-creator 1件に絞る条件（`4cd8faf8` で 19 plugin を一度に移したため、前提が無い）
 - [ ] メタガバナンス集約レイヤー設計完了
 
 ### Phase 2 → Phase 3 移行ゲート
@@ -166,7 +166,7 @@ Phase 移行の前にこのチェックリストを確認する。
 
 ### Phase 3 → Phase 4 移行ゲート
 
-- [ ] **classify_change CI強制完了**（Phase 4 はCI強制完了を必須条件とする）
+- [x] **classify_change CI強制完了**（Phase 4 はCI強制完了を必須条件とする。達成: `governance-check.yml` が pull_request と push で `guard-change-category.py --base origin/main` を流し、承認か cooldown が足りない変更があれば exit 1 で job を落とす。ブランチ保護の必須チェックになっているかは repo の中からは確かめられない）
 - [ ] marketplace.json レビュー完了
 - [ ] 手動 merge 運用確立
 - [ ] plugin 間依存 governance 機械強制
@@ -178,26 +178,26 @@ Phase 移行の前にこのチェックリストを確認する。
 ### 最終形ディレクトリ構造
 
 ```
-xl-skills/                          # marketplace リポジトリ
+<repo root>/                        # marketplace リポジトリ
 ├── .claude-plugin/
 │   └── marketplace.json            # marketplace 宣言（plugins 配列）
 ├── plugins/                        # ★ 正本（source of truth）
-│   ├── harness-creator/              # 現 creator-kit 相当
+│   ├── harness-creator/              # 2026-07-12（4cd8faf8）からこの構成
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json         # name, version, description, hooks 等
+│   │   │   └── plugin.json         # name, version, description 等（hooks は持たない）
 │   │   ├── agents/                 # subagent
 │   │   ├── skills/                 # SKILL.md 群
 │   │   ├── commands/               # slash command
-│   │   ├── hooks/                  # hook 分割保管（任意）
+│   │   ├── hooks/                  # hooks.json = plugin の hook 配布の正本
 │   │   ├── scripts/                # plugin 内 script（plugin 外参照禁止）
 │   │   └── references/             # plugin 内 ref-* 関連
 │   ├── presentation-builder/       # 将来追加 plugin
 │   └── code-review/                # 将来追加 plugin
-├── .claude/                        # ★ 派生（symlink + 自動生成）
-│   ├── agents/                     # → plugins/*/agents/ を集約した symlink 群
-│   ├── skills/                     # → plugins/*/skills/ を集約した symlink 群
-│   ├── commands/                   # → plugins/*/commands/ 同上
-│   ├── settings.json               # build-claude-settings.py で plugin.json から自動生成
+├── .claude/                        # ★ 派生（symlink）と project 所有の設定
+│   ├── agents/                     # → plugins/*/agents/ への symlink 群（aidd-agent-kit 由来の通常ファイル 1 を含む）
+│   ├── skills/                     # → plugins/*/skills/ への symlink 群（同 通常ディレクトリ 21 を含む）
+│   ├── commands/                   # → plugins/*/commands/ への symlink 群（同 通常ファイル 4 を含む）
+│   ├── settings.json               # project 所有の hooks・permissions。plugin の hook は入らない
 │   ├── logs/                       # session log（35章、.gitignore 対象）
 │   └── changelog/                  # governance changelog（git 追跡）
 ├── scripts/                        # marketplace 全体の共通 script
@@ -209,13 +209,14 @@ xl-skills/                          # marketplace リポジトリ
 | 区分 | 場所 | 性質 |
 |---|---|---|
 | **正本** | `plugins/<name>/` | 全変更はここに対して行う。git で履歴管理 |
-| **派生（symlink）** | `.claude/agents/`, `.claude/skills/`, `.claude/commands/` | `plugins/*/` 配下を参照する symlink |
-| **派生（自動生成）** | `.claude/settings.json` | `plugins/*/.claude-plugin/plugin.json` から再生成 |
+| **派生（symlink）** | `.claude/agents/`, `.claude/skills/`, `.claude/commands/` | `plugins/*/` 配下を参照する symlink（git では skills 94・agents 63・commands 24） |
+| **plugin の外の通常エントリ** | 同上の一部 | aidd-agent-kit 由来（skills 21・agents 1・commands 4）。`.claude/aidd-agent-kit.manifest` が管理し、symlink ではない |
+| **project 所有の設定** | `.claude/settings.json` | project の hooks・permissions と `enabledPlugins`。`build-claude-settings.py` は plugin の permissions だけを合わせる（下記） |
 | **ローカル蓄積** | `.claude/logs/*.jsonl` | session log 実体。git 追跡外（35章） |
 
 **不変条件**:
 - `.claude/agents/` 等の symlink 先は **常に `plugins/<name>/` 配下**でなければならない
-- `.claude/settings.json` を**手編集してはならない**（再生成で上書き）
+- `.claude/settings.json` の `_build_claude_settings`（build CLI の管理台帳）を手編集しない。台帳に載っていない値は project 所有として保存される（[34a](./34a-settings-merge-spec.md) INV-1）
 - 逆向き（`.claude/` 正本 / `plugins/` symlink）は禁止：公式 `/plugin install` 配布時に symlink 先が壊れる
 
 ### symlink 構築フロー
@@ -234,56 +235,52 @@ xl-skills/                          # marketplace リポジトリ
 
 ### settings.json マージ仕様（hook 二重発動の予防）
 
-#### 三層モデル
+管理メタデータの構文と不変条件の正本は [34a-settings-merge-spec.md](./34a-settings-merge-spec.md)。本節は 2026-10-10 時点の配線と、`scripts/build-claude-settings.py` が実際にすることだけを書く。
 
-| 層 | 場所 | 役割 |
-|---|---|---|
-| Layer 1 | `plugins/<name>/.claude-plugin/plugin.json` の `hooks` フィールド | 配布時の正本。公式 `/plugin install` でユーザ側に自動配線 |
-| Layer 2 | `plugins/<name>/hooks/*.json`（任意） | 分割保管。plugin.json から参照 |
-| Layer 3 | `.claude/settings.json` | dev 環境の派生。`build-claude-settings.py` で自動生成 |
+#### hook と設定の置き場所
 
-#### Python CLI による派生生成
+| 置き場所 | 役割 |
+|---|---|
+| `plugins/<name>/hooks/hooks.json`（13 plugin が持つ） | plugin の hook 配布の正本。Claude Code / Codex の plugin loader が plugin root から1回だけ読む |
+| `plugins/<name>/.claude-plugin/plugin.json` | `hooks` フィールドは持たない（22 件すべて。`git grep '"hooks"'` は 0 件） |
+| `plugins/<name>/settings/permissions.json`（任意） | plugin 由来の permissions。2026-10-10 時点で持つ plugin は無い |
+| `.claude/settings.json` | project 所有の hooks・permissions と `enabledPlugins`。plugin の hook は入れない |
 
-- スクリプト名: `scripts/build-claude-settings.py`（28章動詞 `build` 準拠、新設予定）
-- 入力: `plugins/*/.claude-plugin/plugin.json` 全数
-- 出力: `.claude/settings.json`（**自動生成区間マーカーで囲んだセクション**として書き戻し）
-- 既存 user セクション（マーカー外）は保護
-- 冪等: 同入力 → 同出力
+#### `build-claude-settings.py` が実際にすること
 
-```json
-{
-  "_generated_section_start": "DO NOT EDIT — built from plugins/*/plugin.json",
-  "hooks": { "...": "merged from plugin.json" },
-  "_generated_section_end": "end",
-  "_user_section": { "...": "手編集可" }
-}
-```
+- 28章動詞 `build` 準拠。test は `tests/test_build_claude_settings.py`、CI は `make native-surfaces-check`（`sync-native-surfaces.py --check` 経由）で `--check`。
+- plugin の hook は読んで正規化し検証するだけで、`.claude/settings.json` へは投影しない（script L396-398・L764-768。`test_inv4_plugin_hooks_are_not_project_managed` が `managed_hooks == []` を固定）。前に投影した hook は台帳 `_build_claude_settings.managed_hooks` で見分けて取り除き、台帳に無い project の hook は残す。
+- plugin の permissions（deny / ask）だけを `permissions` に合わせ、`_build_claude_settings.managed_permissions` に記録する。
+- 管理情報は top-level の `_build_claude_settings` にだけ置く。`hooks` の下に `_generated_section_start` などの番兵キーは置かない（34a §6）。
+- 2026-10-10 の `--check --json` は exit 0 で、`settings.hooks=[]`・`settings.permissions=[]`。
+
+> 34a は 2026-10-10 に、上の実装に合わせて全体を書き直した。hook を settings へ投影しないこと、当初の投影案と、それをやめた理由は 34a §1 にある。§13 の hook の Capability 化は未実装の案である。
 
 #### 二重発動の罠の予防ルール
 
-1. plugin 配下 hook を `.claude/settings.json` に**手書きしない**（`/plugin install` 経路と二重発動する）
-2. `.claude/settings.json` の generated section は手編集禁止（build CLI で上書きされる）
-3. 既存の `.claude/settings.harness-creator-kit-hooks.json.example` は `plugins/harness-creator/hooks/` に移植（Phase 0 完了後の Phase 1 で実施。現在は `.claude/` 直下を維持）
+1. plugin 配下 hook を `.claude/settings.json` に**手書きしない**（plugin loader の配布と二重発動する）
+2. `_build_claude_settings` は build CLI の台帳なので手編集しない（34a §6）
+3. 既存の `.claude/settings.creator-kit-hooks.json.example` は `plugins/harness-creator/hooks/` に移植（Phase 0 完了後の Phase 1 で実施。現在は `.claude/` 直下を維持）
 4. 35章の `.claude/settings.meta-harness-hooks.json.example` も同様に対応 plugin の `hooks/` へ移植（Phase 0 完了後の Phase 1 で実施。現在は `.claude/` 直下を維持）
 
 ### Phase 0 ゲート（実物理移行の前提、再掲）
 
-実物理移行（`creator-kit/` → `plugins/harness-creator/` の P0_breaking 変更）は以下が全て揃ってから着手:
+実物理移行（`plugins/<plugin>/` 構成への P0_breaking 変更）の前提として定めたゲート。移行は 2026-07-12 の `4cd8faf8` で行われ、以下は 2026-10-10 時点の充足状況:
 
-- [ ] `classify_change()` 実装完了
-- [ ] 全 SKILL.md の外部参照棚卸し完了
-- [x] `build-claude-symlinks.py` 実装と test（実装済: `scripts/build-claude-symlinks.py` + `tests/test_build_claude_symlinks.py`、CI `--check` 配線済）
-- [ ] `build-claude-settings.py` 実装と test
-- [ ] migrate スクリプトの `--dry-run` ログ取得
-- [ ] **36章 PKG-001〜009 lint 実装**（package completeness check の P0 セット。`scripts/validate-plugin-package.py` として配置、Python stdlib 限定）
-- [ ] **`references/package-contract.json` の schema 整備と validator script の所在明示**（schema 正本: 36章、validator: `scripts/validate-package-contract.py`、CI 接続点を本章 §更新ルールに記録）
-- [ ] **`claude plugin validate --strict` の harness 内ラッパー**（`scripts/run-plugin-validate-strict.sh` として包み、exit code を CI gate に接続。PKG-001 と同期）
+- [x] `classify_change()` 実装完了（`scripts/guard-change-category.py`、`governance-check.yml` で CI 実行）
+- [ ] 全 SKILL.md の外部参照棚卸し完了（`lint-external-refs.py` の CI 検査は harness-creator の skills のみ）
+- [x] `build-claude-symlinks.py` 実装と test（実装済: `scripts/build-claude-symlinks.py` + `tests/test_build_claude_symlinks.py`、CI は `make native-surfaces-check` 経由で `--check`）
+- [x] `build-claude-settings.py` 実装と test（`scripts/build-claude-settings.py` + `tests/test_build_claude_settings.py`。実装は plugin の hook を settings へ投影しない形で、当初の「plugin.json の hooks から生成区間を作る」案ではない。上の § settings.json マージ仕様）
+- [ ] migrate スクリプトの `--dry-run` ログ取得（`installers/harness-creator-kit/migrate-log/` は `.gitkeep` のみ）
+- [x] **36章 PKG-001〜009 lint 実装**（package completeness check の P0 セット、Python stdlib 限定。当初予定の `scripts/validate-plugin-package.py` ではなく、PKG-002〜008 は `plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py`、PKG-009 は `plugins/harness-creator/skills/run-plugin-package-check/scripts/lint-pkg-009.py`、PKG-001 は下記ラッパーに置いた。repo 全体は `scripts/validate-plugin-packages.py` を `harness-creator-kit-ci.yml` が実行）
+- [ ] **`references/package-contract.json` の schema 整備と validator script の所在明示**（schema 正本: 36章。validator として予定した `scripts/validate-package-contract.py` は未実装で、repo に存在しない）
+- [ ] **`claude plugin validate --strict` の harness 内ラッパー**（ラッパーは `plugins/harness-creator/skills/run-plugin-package-check/scripts/run-plugin-validate-strict.sh` に実装済み。exit code の CI gate への接続は未。PKG-001 と同期）
 
 ### Phase 1 ゲート（PKG smoke 自動化、新設）
 
 Phase 1 完了の追加条件として、以下を満たすこと:
 
-- [ ] **PKG-010 install smoke の自動化**: local marketplace install smoke が `scripts/smoke-plugin-install.sh` 等で再現可能になり、entrypoint / hook registration / script existence の3確認を機械実行できる。実行ログは `eval-log/<plugin>/pkg-010/` に保存（27章 §3.1 に準拠）
+- [ ] **PKG-010 install smoke の自動化**: local marketplace install smoke が `plugins/harness-creator/skills/run-plugin-package-check/scripts/smoke-plugin-install.sh`（実装済み）等で再現可能になり、entrypoint / hook registration / script existence の3確認を機械実行できる。実行ログは `eval-log/<plugin>/pkg-010/` に保存（27章 §3.1 に準拠。2026-10-10 時点でログは未保存）
 
 ### Phase 2 ゲート（出荷前 PKG gate、新設）
 
@@ -294,8 +291,7 @@ Phase 2 完了の追加条件として、以下を満たすこと:
 
 ### Skill 作成側への反映
 
-- `run-build-skill` および 24章テンプレの配置先記述: **現在: `.claude/skills/<skill>/`（`creator-kit/skills/` 正本）→ Phase 0 完了後: `plugins/<plugin-name>/skills/<skill>/`** の二段階表記で統一
-- 現状は `creator-kit/skills/` のまま運用し、Phase 0 完了後に物理移動 + symlink 化を行う
+- `run-build-skill` および 24章テンプレの配置先記述: **正本は `plugins/<plugin-name>/skills/<skill>/`**。`.claude/skills/<skill>/` はそこへの symlink で、`scripts/build-claude-symlinks.py` が作る（aidd-agent-kit 由来の 21 件だけは plugins の外の通常ディレクトリ）
 - 24章テンプレ `frontmatter` の `name:` 命名規約は不変（kebab-case）。所属 plugin 名は `name:` には含めず、配置パスで表現（06章第17条）
 
 ---

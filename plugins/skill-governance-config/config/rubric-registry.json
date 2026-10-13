@@ -11,7 +11,20 @@
       "layer": "L1",
       "rubric": "plugins/harness-creator/skills/ref-domain-task-spec-rubric/references/rubric.json",
       "description": "タスク仕様書 (Phase 1-13, SRP, ユビキタス言語) ドメイン固有 rubric",
-      "upstream": ["plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"],
+      "upstream": [
+        "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+      ],
+      "merge_strategy": "deep-merge",
+      "conflict_policy": "most-specific-wins"
+    },
+    {
+      "domain": "ubm-goal-setting",
+      "layer": "L1",
+      "rubric": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/rubric.json",
+      "description": "UBMの匿名化された構造的背景を原文根拠で評価する局所L1",
+      "upstream": [
+        "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+      ],
       "merge_strategy": "deep-merge",
       "conflict_policy": "most-specific-wins"
     }

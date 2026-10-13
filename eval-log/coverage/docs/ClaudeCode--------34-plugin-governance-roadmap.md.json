@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":66,"notes":"構造(Phase0-4ゲート/公式制約5点/チェックリスト)は明快。実装裏取り: guard-change-category.py/build-claude-symlinks.py/build-claude-settings.py/validate-plugin-package.py/run-plugin-validate-strict.sh/smoke-plugin-install.sh/36章 全て実在。但し本章は plugins/ 物理移行を一貫して未来形(『現在は creator-kit のまま運用』『Phase0完了後に物理移動+symlink化』)と記述するが、実体は creator-kit/ 不在で移行完了済=記述が現実より周回遅れ。migrate-from-project.sh は installers/ に在り本章記載の OB-10 と整合。状態描写のドリフトが大で設計判断の再現性を損なうため減点。"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 77b027d91cf3a8514221fdc7b2913ddf68b3782a50aa239e21463ed903532c9f をレビュー。実行検証あり）。範囲: 全317行（目的、正本の分担、公式制約5点照合表、Phase 0-4、3アナリスト収束、ゲート判定、plugin 物理レイアウトと symlink 戦略、settings.json マージ仕様、Phase 0-2 ゲート、Skill 作成側への反映、関連章）。前回（j 回目）の指摘の確認: [中]『settings.json の派生生成の仕様が実装とも 34a章とも食い違う』は直っている。三層モデルと自動生成区間マーカーの記述は無くなった。L240-247『hook と設定の置き場所』の表と L249-255 が実装どおりになっている（plugin の hook は投影しない、permissions の deny/ask だけ合わせる、管理情報は top-level の _build_claude_settings だけ、番兵キーは置かない）。[低] の Phase 1-4 の表、.claude の実体、creator-kit の移行元も直っている。確かめたこと: (1) scripts/build-claude-settings.py を読んだ。L396-398・L764-768 が hook を投影しないこと（generated_hooks = []）を書いている（本文 L252 の引用どおり）。test_inv4_plugin_hooks_are_not_project_managed も実在する。(2) --help は exit 0。--check --json は exit 0 で settings.hooks=[]・settings.permissions=[]（L255 どおり）。(3) pytest -p no:cacheprovider -q: tests/test_build_claude_settings.py・tests/scripts-root/test_root__build_claude_settings.py・tests/test_build_claude_symlinks.py → 136 passed、plugins/harness-creator/tests/test_native_surface_repo_integration.py・test_sync_native_surfaces.py → 155 passed。(4) L244-246 の表: hooks/hooks.json を持つ plugin は 13。plugin.json は 22 件で、\"hooks\" を含むものは 0 件。settings/permissions.json を持つ plugin は 0。すべて本文どおり。(5) L233『broken symlink は除去』は build-claude-symlinks.py の --prune で成り立つ。sync-native-surfaces の apply が既定で --prune を渡すので、実運用と合う。(6) work-docs2/fx の一時 repo で、hook を投影しないこと、古い台帳 hook の除去、permissions の合流を確かめた。(7) 関連章のリンク、test 名、script のパスはすべて実在。指摘: [低] 本文が 317 行で、26章 L49・L57 の目標 300 行を超える。26章 L49 は超過を残課題として認めており、HEAD の 321 行から少し減ったので -2 とした。DEDUCTION: [低] -2（300 行目標の超過）→ 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-docs",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

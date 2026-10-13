@@ -69,7 +69,9 @@
 
 ### 3.2 外部ツール
 - `AskUserQuestion` / `Task`: 対話ヒアリング。
-- `Bash`: セル反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5`
+- `Bash`: セル反映 (turn 列が `confirm` を含む) `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5 --required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"`
+- `Bash`: 回答の蓄積 (turn 列が `confirm` を含まない) `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5`
+- `confirm` を含む `chunk` / `apply` は `--required-info` を必ず付ける (無いと writer が exit 2 で拒否する)。writer が候補 state の接地を検証してから書き、失敗時は元 state を保つ。回答だけを蓄積する turn 列には付けない (入力未収集 state に事後接地を先に要求しない。付けると、まだ接地していない state では writer が exit 1 で拒否する)。
 - `Bash`: 出典対象反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-targets --state spec-state.json --targets '[{"target_id":"<id>","category":"<category_id>"}]'`
 - `Bash`: 未知知識記録 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-knowledge-candidate --state spec-state.json --candidate <candidate.json>` (`status=discovered`)
 
@@ -103,7 +105,7 @@
 - [ ] 対象platformの回答済みセルがqa_ref付きの`確定`であり、そのセルのために記録した他の qa (開いた問の qa と補った論点の qa) が `add-qa-ref` で同じセルの `qa_refs` に結ばれている
 - [ ] `確定`/`対象外` の付帯 (qa_ref / reason) が全て埋まっている
 - [ ] 確定へ紐づく qa_log entry に `basis` (enum 3値) が付いている (`validate-coverage-matrix.py --require-basis` が exit0)
-- [ ] `missing_effect=block` の必須情報を答えた turn に `required_info_items` が付き、`validate-knowledge-graph.py --profile required-info --state <spec-state>` の `ungrounded_blocking_items` が空である
+- [ ] `missing_effect=block` の必須情報を答えた turn に `required_info_items` が付き、confirm を含む writer を `--required-info` 付きで実行し、候補接地検証の exit0 後だけ確定 state が公開された
 - [ ] 確定qaに現れた外部技術/ツール/フレームワークが`set-targets`で`targets[]`へ反映されている
 - [ ] seedに無い未知の設計領域/技術/パターンを検出した場合`set-knowledge-candidate`(status=discovered)で記録されている
 - [ ] `validate-coverage-matrix.py` (loop) が exit0
@@ -131,4 +133,4 @@
 
 ## 出力指示
 
-references/elicit-question-bank.md の論点に沿って未収集セルへ質問し (問の文面は references/neutral-question-criteria.md の N1-N4 を満たす形にする。この基準が question bank より上位)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。
+references/elicit-question-bank.md の論点に沿って未収集セルへ質問し (問の文面は references/neutral-question-criteria.md の N1-N4 を満たす形にする。この基準が question bank より上位)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する (turn 列が `confirm` を含むときは `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を付ける)。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。

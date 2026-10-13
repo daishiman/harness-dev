@@ -54,9 +54,9 @@
 | staging artifacts | files | yes | feature-package.json / workstream-inventory.json / task-graph.json / task-specs/phase-01..13.md / system-build-handoff.json / staging-manifest.json |
 
 ### 2.4 出力契約
-- schema: `schemas/plan-findings.schema.json`。必須キー: `plan_dir` / `evaluator` / `evaluated_digest` / `verdict` / `conditions`(C1-C4) / `gate_results` / `findings`。
+- schema: `schemas/plan-findings.schema.json`。必須キー: `plan_dir` / `evaluator` / `evaluated_digest` / `verdict` / `conditions`(C1-C4) / `gate_results` / `evaluated_inputs` / `staleness_rule` / `findings`。
 - `evaluator.name`=assign-system-dev-plan-evaluator、`evaluator.context`=fork を固定。`evaluated_digest` は validator の `validated_digest` を pin (`^sha256:[0-9a-f]{64}$`)。各 condition は id/status(PASS|FAIL)/summary/evidence を持つ。staging 外の repo-local state へ発行する。
-- <!-- TODO(human): plan-findings の schema_version version-pin 契約を確定する。plan-findings.schema.json には schema_version が const "1.0.0" の optional property として追加済み (他 6 schema と同型)。この producer 側で (a) 出力する plan-findings.json に `schema_version: "1.0.0"` を emit する指示をここへ 1-2 行で明記するか、(b) emit しない (optional のまま drift gate を弱く保つ) かを決める。emit する場合、schema 側の schema_version を required へ昇格させ C11 promote (promote-system-plan.py が plan-findings.schema で検証) の破壊的変更検知を hard gate 化してよいか (producer↔consumer 同時変更の要否) も合わせて判断する。決めた方針を下の「出力指示」の Write 対象キーへ反映する。 -->
+- `schema_version` は schema 上 optional (const `"1.0.0"`)。出力するなら値は `"1.0.0"` に限る。この producer が必ず出力するか、schema の required へ上げて C11 promote (promote-system-plan.py が plan-findings.schema で検証) の hard gate にするかは**未決**。決めるには producer と consumer を同時に変える判断が要るため、決まるまで「出力指示」の Write 対象キーには加えない。
 
 ## Layer 3: インフラ層 (外部依存)
 

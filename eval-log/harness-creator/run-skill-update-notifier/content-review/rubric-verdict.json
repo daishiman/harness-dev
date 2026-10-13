@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-update-notifier",
-    "skill_md_sha256": "5571fa5820889e02afd3aa80bff4a31af27b271dae65b497e0aa86fe976e7778"
+    "skill_md_sha256": "3828494ac77d677c9f8be62752d6184d0228a2faa32a19cd8cbaad414418f4bd"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
-  "iterations": 1,
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T21:46:01Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,14 +25,19 @@
       "IN3",
       "OUT1"
     ],
-    "positive_feedback": [
-      "inline/inline が更新有無の決定論検査と通知だけを担う軽量責務に適合し、外部委譲を増やしていない。"
-    ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
-    "next_action": "none"
+    "hook_trigger": "manual:iteration-2-findings-fixed",
+    "next_action": "none",
+    "positive_feedback": [
+      "rubric 1.6.0 の機械採点は score 100（threshold 80、passed）、findings 0、required_fixes 0 だった（sha 3828494a… で採った）。適用される20規則のうち19を採点した。残る BD-004（description の発動条件と本文の手順の対応）はレビュアーが判断し、満たすとした。description（SKILL.md:3）は変わっていない。",
+      "iteration 2 の medium（contradiction、IN1 と Key Rules 2）は直った。SKILL.md:33 の IN1 は「CHANGELOG 不在・cache 不在・cache を読めない・HARNESS_SKILLS_NOTIFY=off では空文字列(no-op)、cache を読めるが書けないときは通知を出して記録だけ飛ばし、どの分岐でも例外を握りつぶし exit 0」になった。:92（Key Rules 2）・:144（Checklist）・:180（Gotchas）と同じ切り分けで、同じ分岐を述べる4か所がそろった。IN1 の各分岐は実装とテストに対応している。CHANGELOG 不在は _extract_latest_version が None を返し（test :286）、latest が None なら _format_line が空文字列を返す（test :101）。cache 不在は cmd_notify が空で返す（test :471、:230）。cache を読めないときは、_load_cache の except が {} を返す（壊れた JSON の test :239）か、main（:308-310）が例外を握って 0 を返す（test :596）。HARNESS_SKILLS_NOTIFY=off は test :464。読めるが書けないときに通知が出て記録だけ飛ぶのは、notifier-check.py:270-274（print の後に _record_notified）と _save_cache（:43-50）のとおりで、test :550（test_cmd_notify_prints_even_if_record_cannot_be_saved）が固定している。scratch の HOME での probe（iteration 2 で実施。実装とテストはその後変わっていない）でも、読めない cache は stdout が空で rc 0、読めるが書けない cache は同じ session_id で2回とも通知が出て rc 0 だった。",
+      "iteration 2 の low（omission、Codex では通知が自動で出ないことが書かれていない）も直った。Gotchas の最後（:181）に「Codex では通知が自動で出ない」が足された。中身は根拠と合っている。.codex/hooks/registry.json の harness-creator:PostToolUse:1:0（notify-skill-end.py）は products が ['claude'] だけで、codex の matcher は空である。harness-creator:UserPromptSubmit:0:0（cache-refresh.py）は products が ['claude','codex'] である。plugins/harness-creator/native-surfaces.toml:29-31 は、Codex が plugin 配下の hooks.json を読まず、Codex への配達は build-hook-registry.py が生成する hook-router が担うと書く。Codex で通知を見る手段として示された「局面カタログの通知生成（notifier-check.py notify）を明示して起動する」は、:163 の行と、Runtime root contract（:113-121）の PLUGIN_ROOT の決め方とで実行できる。iteration 2 の probe（CLAUDE_PLUGIN_ROOT なし、上方探索で決めた PLUGIN_ROOT）で rc 0 を確かめている。",
+      "直しは2点だけで、範囲が閉じている。いまの SKILL.md から、IN1 の新しい文面を iteration 2 の文面に戻し、:181 の Codex の項目を取り除くと、SHA-256 が iteration 2 で判定した 0d057529… に一致した。ほかの本文・frontmatter・runtime root の契約ブロックは変わっていない。iteration 2 で正しいとした点（runtime_root_policy と契約ブロックが正規の出力と1バイトも違わないこと、置き場所、局面カタログとの向き、Codex での root の決め方）は、そのまま成り立つ。",
+      "判定器を通る。audit-capability-parity.py --repo-root . --plugin harness-creator は fail_count 0、error_count 0 で、notifier への言及はスキル一覧の1件だけだった。lint-entrypoint-artifact-first.py は OK（127 inventory、101 enforced）。validate-frontmatter.py は ok（rc=0）。",
+      "IN1・IN2・IN3・OUT1 を満たす。test_audit_capability_parity.py と notifier に触れるテスト5本（test_harness_creator__hook_notify_skill_end、test_harness_creator__notifier_check、test_plugins__version_surface_parity、test_x_longpost_creator__contract_parity、test_hook_cache_refresh_portability）で 246 passed（rc=0）。IN1 の文面は tests/criteria/criteria_roster.py:47 が ID だけを固定し、repo の中で SKILL.md の1か所にしか無いので、文面の変更でテストは割れない。"
+    ]
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "rubric の観点: iteration 2 の2件はどちらも直り、新しい high・medium・low は無いので PASS とした。 新サイクルの iteration 3（最終）。iteration 1 は PASS（2026-10-11T20:54:47Z、sha 先頭 7317772765f1）。iteration 2 は FAIL（2026-10-11T21:41:12Z、sha 先頭 0d057529）で、medium 1件（IN1 と Key Rules 2 の矛盾）と low 1件（Codex で通知が自動で出ないことの記載漏れ）を出した。team-lead が2件を直した版（sha 先頭 3828494a）を見直した。 件数に含めない観察: (1) 置き場所と移行関数。scripts/build-artifact-delivery.py の _ensure_runtime_root_contract はブロックを `## Purpose & Output Contract` の直後に置くので、今の置き場所（`## ゴールシーク実行` の直前）とは冪等でない。ただし、この移行は effect: external-mutation のスキルだけに走り、本スキル（conversation-output）では動かない。audit も位置を見ない。 (2) 局面カタログ :159 の「cwd 基準の相対パスでは呼ばない」は、契約 :119 の「cwd から plugin root を推測しない」と重なる。矛盾ではない。 (3) :181 の「Codex に配線されるのは UserPromptSubmit の cache-refresh だけ」は、本スキルの2つの hook（:98-105 の Hook Integration Map）の範囲では正しい。plugin 全体では、harness-creator は SessionStart・PreToolUse・UserPromptSubmit の preload なども Codex へ配線している。文脈で範囲は決まるが、厳密にするなら「本スキルの hook のうち Codex に配線されるのは …」とする。 (4) IN1 の「cache を読めない」の分岐は、壊れた JSON の test :239 と、main が例外を握る test :596 で機械検証されている。読み出しそのもの（read_text）が PermissionError を投げる場合を直接作る単体テストは無い。同じ except 節を通るので IN1 は満たすが、補うなら Path.read_text を monkeypatch で PermissionError にするテストを1本足す。 読んだもの: SKILL.md 全文（iteration 2 の版からの差分を含む）、iteration 2 の2つの verdict、notifier-check.py（_load_cache、_save_cache、cmd_notify、main）、test_harness_creator__notifier_check.py の IN1 の各分岐のテスト（:101、:230、:239、:286、:464、:471、:550、:596）、tests/criteria/criteria_roster.py、.codex/hooks/registry.json の harness-creator の entry、plugins/harness-creator/.codex-plugin/plugin.json、plugins/harness-creator/hooks/hooks.json、native-surfaces.toml:29-31、scripts/lint-content-review.py の verdict 検査、content-review-verdict.schema.json。 自作の確認: 差分を戻して sha を照合する scratch の script、iteration 2 の cache の権限の probe（HOME=scratchpad/cr-notifier-i2-perm-noread と cr-notifier-i2-perm-rowrite）と Codex の root の probe（HOME=scratchpad/cr-notifier-i2-home）。 実行の前後で、~/.cache/harness と ~/.cache/harness/version-snapshot.json の mtime（1791729789）は変わらなかった。incremental の focused review で、exhaustive の30思考法は実施していない。"
 }

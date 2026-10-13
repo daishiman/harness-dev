@@ -1,1 +1,18 @@
-{"artifact": "scripts/build-plugin-release.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "FAIL", "score": 68, "notes": "全文と tests/scripts-root/test_root__build_plugin_release.py を読み、--check (exit 0/22 plugins) と --help を実行。git ls-files 基準の fingerprint、非 git tree での fail-loud、bump 後の hash 再計算は妥当。減点: ①frontmatter の write-scope は plugin.json と marketplaces/local のみだが、実際は .claude-plugin/marketplace.json、.codex-plugin/plugin.json、lint-config-version-sync --write 経由の config-version-lock.json へも書く宣言外書込。②save_fingerprints が marketplace/config-lock 再生成より前にあり、後段が SystemExit しても対応表だけ更新され次回 --check が OK に化ける fail-open。③変更なし経路の run_install が --only を無視し全 install 済み plugin を更新。④next_version の cache 名衝突検査は patch+1 上必ず偽の空検査。"}, "reviewed_by": "independent-fresh-evaluator", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "scripts/build-plugin-release.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine review（sha256 46ef9102fd2121372f32e77b2af4a2b39cc9a49322e4cd1fe49b79eb87c1a3e8 をレビュー。実行検証あり）。範囲: 未コミットの変更を含む今のファイル（1067 行）。前回レビューした版（sha256 85396582…）は残っていないので、前回の notes と git diff origin/main を突き合わせた。今回の差分は is_blank_version（L219）、_blank_version_message、write_version の入口の検査（L247-249）、_run の事前の検査（L980-986。changed・new・released のどれかに空の version があれば、何も書かずに exit 2）、docstring L48-49 の説明。前回の 4 件の箇所も読み直した。実 repo では --check だけを動かした。書き込む経路は、scratch の tmp に git init した fixture（../work-b-r2/c/prfx/drive.py。PLUGINS_DIR・FINGERPRINTS・PUBLIC_MARKETPLACE と再生成の処理を差し替えた）でだけ動かした。確かめたこと: --help は exit 0。--bogus と --scope nope は exit 2。実 repo の --check は exit 1（changed 10 件など）。これは release 前の version の数字のずれによるもので、指示どおり指摘に数えない。実行の前後で、fingerprints・marketplace.json・config-version-lock.json の sha256 と git status は変わらなかった。pytest（tests/scripts-root/test_root__build_plugin_release.py）は 58 passed、2 failed。落ちた test_checked_in_state_has_no_drift と test_recorded_versions_match_plugin_manifests（'0.2.15' == '0.2.16'）は、どちらも version のずれによるもので、数えない。空の version のテスト（L153-203）が新しく入っている。fixture で version を null にすると、--check も書き込みも exit 2 で、何も書かなかった。新しい処理は意図どおりに動く。前回の指摘の扱い: [低] 4 件はどれも残っている。(1) header の outputs（L8-9）が write-scope（L13-17）と合わない。委譲先の sync-plugin-platforms.py（L472）の書き込み範囲も宣言に無い。(2) next_version の衝突検査（L648）は空振りする（bumped と current のキャッシュ名が一致することは無い）。(3) L156 の「write_version() は 5 面」と、L167 が挙げる存在しない tests/scripts-plugins/test_plugins__changelog_version_parity.py（今あるのは test_plugins__version_surface_parity.py）。(4) _is_generated_proposal（L142-153）は marker を部分文字列として探す。手書きの提案に marker の文を引用するだけで fingerprint から外れる（fail-open）。指摘（新しいもの）: [低] 入口の検査は「空かどうか」だけで、version の形を見ていない。fixture で plugin.json から version のキーを消すと、read_version（L215-216）が KeyError の traceback を出して exit 1 になった。Claude Code の plugin.json では version は任意なので、起こりうる入力。version が \" 1.2.3 \"（前後に空白）や \"latest\" の plugin が new または released に入ると、その値のまま全部の面と台帳へ書かれ、exit 0 になった（その後の --check は exit 1）。メッセージは「major.minor.patch を書くこと」と言うが、その形は確かめていない。直し方: version のキーが無いときも同じメッセージで exit 2 にし、is_blank_version を「major.minor.patch（必要なら pre-release と build metadata）の形か」の検査に置き換える。DEDUCTION: 100 -2（outputs と委譲先の書き込み範囲が宣言に無い）-2（空振りする衝突検査）-2（存在しないテストと古い面数の記述）-3（marker の部分文字列の一致による fail-open）-2（version のキーが無いと traceback、空白つきや形の違う version をそのまま書く）→ 89。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

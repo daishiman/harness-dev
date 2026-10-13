@@ -22,9 +22,6 @@ LIVE_TRIAL_ROOT = (
 LIVE_TRIAL_SCHEMA = LIVE_TRIAL_ROOT / "schemas" / "live-trial-verdict.schema.json"
 LIVE_TRIAL_VERDICT = LIVE_TRIAL_ROOT / "scripts" / "live-trial-verdict.py"
 POSITIVE_SCENARIOS = PLUGIN / "tests" / "fixtures" / "live-trial-positive-scenarios.json"
-# content-review-protocol stops at 3 iterations and hands the loop to a human; a limit above 3 exists only
-# where that human chose to continue. run-dev-graph-node: iteration 3 FAILed and the user raised it to 5 (PR #83).
-CONTENT_REVIEW_ITERATION_LIMIT = {"run-dev-graph-node": 5}
 
 
 def _load_content_lint():
@@ -156,6 +153,99 @@ def test_independent_scenario_receipt_covers_exact_criteria(
         ), f"{component_id}/{criterion_id}: stale behavior closure digest"
 
 
+def _synthetic_scenario_receipt(verdict: str, statuses: tuple[str, ...]) -> dict:
+    return {
+        "schema_version": "1.1.0",
+        "target": {
+            "plugin": "dev-graph", "skill": "synthetic-contract-test",
+            "component_id": "C02", "skill_md_sha256": "0" * 64,
+        },
+        "verdict": verdict,
+        "reviewer": "independent-contract-test",
+        "loop_scope": "both",
+        "iteration_limit": 3,
+        "criteria_results": {
+            f"OUT{index}": {
+                "status": status, "verify_by": "test", "evidence_kind": "pytest",
+                "test_refs": ["synthetic/contract-case"], "observed": f"Synthetic result: {status}",
+            }
+            for index, status in enumerate(statuses, start=1)
+        },
+    }
+
+
+@pytest.mark.parametrize(("verdict", "statuses", "valid"), [
+    ("PASS", ("PASS", "PASS"), True),
+    ("FAIL", ("PASS", "FAIL"), True),
+    ("PASS", ("PASS", "FAIL"), False),
+    ("FAIL", ("PASS", "PASS"), False),
+    ("FAIL", ("PASS", "UNKNOWN"), False),
+    ("UNKNOWN", ("PASS", "FAIL"), False),
+])
+def test_failure_receipt_contract_preserves_verdict_consistency(
+    verdict: str, statuses: tuple[str, ...], valid: bool,
+) -> None:
+    schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator.check_schema(schema)
+    validator = jsonschema.Draft202012Validator(schema)
+    receipt = _synthetic_scenario_receipt(verdict, statuses)
+    if valid:
+        validator.validate(receipt)
+    else:
+        with pytest.raises(jsonschema.ValidationError):
+            validator.validate(receipt)
+
+
+@pytest.mark.parametrize(("status", "has_verdict_ref", "valid"), [
+    ("FAIL", False, True),
+    ("FAIL", True, True),
+    ("PASS", False, False),
+    ("PASS", True, True),
+])
+def test_live_receipt_contract_requires_actual_verdict_only_for_pass(
+    status: str, has_verdict_ref: bool, valid: bool,
+) -> None:
+    receipt = _synthetic_scenario_receipt(status, (status,))
+    result = receipt["criteria_results"]["OUT1"]
+    result.update({
+        "verify_by": "live-trial", "evidence_kind": "live-trial",
+        "scenario_id": "synthetic-planned-scenario",
+        "test_refs": ["synthetic/host-blocking-report"],
+        "observed": "Synthetic fixture: prerequisite blocked; no live verdict exists." if not has_verdict_ref
+                    else "Synthetic fixture: attempted run has an explicit verdict reference.",
+    })
+    if has_verdict_ref:
+        result["live_trial_verdict_ref"] = "synthetic/attempted-run/verdict.json"
+    schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+    validator = jsonschema.Draft202012Validator(schema)
+    if valid:
+        validator.validate(receipt)
+    else:
+        with pytest.raises(jsonschema.ValidationError):
+            validator.validate(receipt)
+
+
+def test_failed_receipt_remains_blocked_by_acceptance_gate(tmp_path, monkeypatch) -> None:
+    component_id, skill_name, skill_path, criteria_ids = _targets()[0]
+    receipt = _synthetic_scenario_receipt("FAIL", ("FAIL",))
+    receipt["target"] = {
+        "plugin": "dev-graph", "skill": skill_name, "component_id": component_id,
+        "skill_md_sha256": hashlib.sha256(skill_path.read_bytes()).hexdigest(),
+    }
+    result = receipt["criteria_results"]["OUT1"]
+    receipt["criteria_results"] = {criterion_id: dict(result) for criterion_id in criteria_ids}
+    schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator(schema).validate(receipt)
+    receipt_path = tmp_path / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+    receipt_path.parent.mkdir(parents=True)
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    monkeypatch.setitem(globals(), "REPO", tmp_path)
+    with pytest.raises(AssertionError, match="FAIL"):
+        test_independent_scenario_receipt_covers_exact_criteria(
+            component_id, skill_name, skill_path, criteria_ids,
+        )
+
+
 def test_positive_live_trial_scenarios_cover_out1_without_eval_log_fixture_coupling() -> None:
     suite = json.loads(POSITIVE_SCENARIOS.read_text(encoding="utf-8"))
     scenarios = suite["scenarios"]
@@ -209,6 +299,6 @@ def test_canonical_content_reviews_are_current_and_complete(
         loop = verdict["feedback_loop"]
         assert set(loop["criteria_evaluated"]) == criteria_ids
         assert loop["loop_scope"] == "both"
-        assert loop["iteration_limit"] == CONTENT_REVIEW_ITERATION_LIMIT.get(skill_name, 3)
+        assert loop["iteration_limit"] == 3
         assert loop["iteration"] <= loop["iteration_limit"]
         assert loop["next_action"] == "none"

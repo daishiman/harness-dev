@@ -1,0 +1,37 @@
+{
+  "label": "schedule2",
+  "retry_of": "schedule",
+  "evaluator_agent_id": "a9332950fd83e3fbc",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "plugin/scripts/schedule-graph.py (51-53 行) には max_parallel の引数が無く、batch の大きさに上限がかからない。SKILL.md の argument-hint は --max-parallel N をうたっているのに、正規の経路では効いていない。今回は scope の分かれ方が偶然 4 と 1 だったため問題が出なかった。再現: resource_scope が互いに重ならない eligible な active task を 5 件持つ graph に --max-parallel 4 で schedule をかけると、5 件が 1 つの batch に入る。",
+    "schedule-graph.py (91-92 行) は resource_scope の衝突を文字列の集合の積だけで判定し、パスの前方一致を見ない。再現: resource_scope が ['src/db/'] と ['src/db/migrations/'] の task を両方 eligible にすると、同じ batch に入る。",
+    "SKILL.md の script_refs にある C27 manage-worktree-lease.py は、--op list でも 171 行で .git/dev-graph を mkdir し、174 行で leases.lock を a+ で開いてから 187 行で一覧を返す。つまり lease snapshot を取るだけで書込みが起き、skill の『read-only で lease を変更しない』と矛盾する。今回の session は ledger を直接読んで回避した。再現: .git/dev-graph が無い repo で --op list を実行すると、leases.lock が作られる。",
+    "schedule-graph.py の出力に入力 graph の digest が含まれない。そのため C17 agent 定義のチェックリスト『suggested branch と input digest が一致する』と『同一 snapshot digest に対して判定』を verifier が実行できない。本 trial でも verifier は input digest を未検証と明記したうえで PASS を返した (agent-a00aebbb8151c3a43.jsonl 23 行)。",
+    "軽微な点: SKILL.md は effect=conversation-output かつ read-only と宣言しているが、goal-seek 配線は呼出し元 repo の $DEV_GRAPH_ROOT/eval-log/ に goal-spec・progress・intermediate を書く。このため read-only の実行後も追跡外のファイルが残る (今回の fx の git status で 4 本)。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule2/ws/plugins/dev-graph/skills/run-dev-graph-schedule",
+  "closure_sha_tested_copy": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:09+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+      "transcript_sha256": "f5f6f468ff877611763fe15faa333f44b8382682824ef7217564a62c53d5251a"
+    },
+    "after": {
+      "skill_dir_tree_sha": "36ff1e4855de726eb55d443bb22514654622ab61741fbef25182ae96abe8e74b",
+      "transcript_sha256": "0c779827c71b035a272f5c8c1ab2b9d89ba0cd101c0ec5c27d7ef2d55832cdfc"
+    },
+    "backup": "audit/reverdict/run-dev-graph-schedule/20261012T0701-pr85"
+  }
+}

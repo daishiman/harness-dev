@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-journal-output
-# version: 0.5.0
-# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・骨格15ブロック・
+# version: 0.5.1
+# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・REQUIRED_OUTLINE・
 #          目標4階層の期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート・
 #          毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。習慣の件数と
 #          検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。
 #          未置換プレースホルダと空セクションを FAIL にする。
 # inputs:
-#   - argv: --file <path> [--expected-number N] [--expected-date YYYY-MM-DD]
-#   - fs: {skill}/references/daily-habits.json (欠落・破損は exit 2)
+#   - argv: --file <path> [--expected-number N (1 以上)] [--expected-date YYYY-MM-DD (実在する日付)]
+#   - fs: {skill}/references/daily-habits.json (欠落・破損・非 UTF-8 は exit 2)
 # outputs:
 #   - stdout: PASS/FAIL と違反一覧
 #   - exit: 0=PASS / 1=FAIL / 2=引数不正・ファイル読み込み不能 (fail-closed)
@@ -32,6 +32,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 # 毎日固定の習慣リストの正本。build-journal-context.py と同じファイルを見る (SSOT 一本化)。
@@ -42,7 +43,8 @@ def load_daily_habits() -> list[dict]:
     """固定習慣リストを読む。欠落・壊れは H01 検査を素通しさせないため即時終了する。"""
     try:
         data = json.loads(DAILY_HABITS_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
+        # UnicodeDecodeError と JSONDecodeError はどちらも ValueError の下位。
         sys.stderr.write(f"validate-journal-output: daily-habits.json を読めません: {exc}\n")
         sys.exit(2)
     # top-level が dict でない (例: JSON 配列) と .get が AttributeError になり、
@@ -115,6 +117,9 @@ FILE_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 # output-format.md:70 の `- {名前}: {何をしてもらったか}` が正本)。約束を人手の注意力へ
 # 預けたのが原因なので、tests 側で output-format.md の `{...}` 集合がこのタプルに
 # 含まれることを機械的に固定してある (test_brace_placeholders_cover_output_format)。
+# 逆向き (タプルにあって output-format.md に無い名前) は意図して残している。`{日数}` は旧テンプレの名前、
+# `{days_remaining}` は build-journal-context.py の JSON のキー名で、どちらも置換し忘れると本文に
+# そのまま残る形である。本文に正当に `{日数}` や `{days_remaining}` を書く場面は無いので、偽陽性の実害も無い。
 BRACE_PLACEHOLDERS = (
     "番号", "名前", "終了日", "何をしてもらったか", "journal_number", "N", "YYYY-MM-DD",
     "分類", "日数", "days_remaining",
@@ -128,7 +133,9 @@ HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 # コードフェンスの中身は Obsidian が描画せずそのまま文字として出す。HTML コメントと
 # 同じ「書いてはあるが埋め込まれない」クラスなので、埋め込みの有無を見る検査からは
 # 同じように外す。外さないと ```![[人生の究極の目的]]``` で Y02 が PASS する (実測)。
-FENCED_CODE_RE = re.compile(r"^(?P<f>`{3,}|~{3,}).*?(?:\n(?P=f)`*~*[ \t]*$|\Z)", re.M | re.S)
+# 箇条書きの中のフェンスは字下げして書くので、行頭の空白も許す。行頭に固定すると
+# 2 字下げしたフェンスの中の ![[人生の究極の目的]] で Y02 が PASS する (実測)。
+FENCED_CODE_RE = re.compile(r"^[ \t]*(?P<f>`{3,}|~{3,}).*?(?:\n[ \t]*(?P=f)`*~*[ \t]*$|\Z)", re.M | re.S)
 
 
 def visible_text(text: str) -> str:
@@ -243,6 +250,8 @@ def has_review_tag(fm: str) -> bool:
         inline = m.group("inline").strip()
         if inline:  # `tags: [review, x]` / `tags: review`
             return "review" in re.findall(r"[A-Za-z0-9_-]+", inline)
+        # キーは行頭 (ゼロインデント) に固定する。frontmatter の top-level のキーは行頭に
+        # しか無く、字下げした `tags:` は別のキーの下の値で、ノートのタグではない。
         # ブロック記法。`- item` が続く間だけを値とみなす。インデントを必須にすると
         # YAML として妥当なゼロインデント記法 (`tags:` の次行に `- review`) を
         # Y01 で FAIL にする (偽陽性を実測)。終端は「次のキー行が現れたとき」で見る。
@@ -553,11 +562,9 @@ def check_daily_habits(lines: list[str], habits: list[dict]) -> list[str]:
 
         keywords = habit.get("keywords") or []
         found = False
-        missing_scope = False
         for scope in scopes:
             body = section_lines(lines, scope.get("level", 2), scope["heading"])
             if body is None:
-                missing_scope = True
                 continue
             # HTML コメントは Obsidian で表示されない = 記録として読まれない。
             # 生行のまま照合すると `<!-- Gridノート -->` を貼るだけで H01 が通り、
@@ -575,7 +582,7 @@ def check_daily_habits(lines: list[str], habits: list[dict]) -> list[str]:
                 break
         if found:
             continue
-        # 見出しが無い (missing_scope) 場合も違反にする。欠落は S01/J01 が別途報告するが、
+        # 見出しが無い場合も違反にする。欠落は S01/J01 が別途報告するが、
         # 「書く場所が無かった」を H01 の免罪符にすると記録漏れが見えなくなる。
         # 検査の粒度は search_scopes が指すセクション。メッセージで target_section
         # (より細かい小節) だけを名指しすると「どこを直せば緑になるか」がズレる。
@@ -587,11 +594,37 @@ def check_daily_habits(lines: list[str], habits: list[dict]) -> list[str]:
     return out
 
 
+def positive_int(value: str) -> int:
+    """--expected-number の型。通し番号は 1 から振る (build-journal-context.py の採番)。"""
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"整数ではありません: {value!r}") from None
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"1 以上の整数にしてください: {value!r}")
+    return number
+
+
+def iso_date(value: str) -> str:
+    """--expected-date の型。YYYY-MM-DD で実在する日付だけを受け付ける。
+
+    形を見ないと `2026-8-18` や `abc` が F05 の違反 (exit 1) になり、
+    「ジャーナルが違う」のか「呼び出しが違う」のかを取り違える。
+    """
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise argparse.ArgumentTypeError(f"YYYY-MM-DD の形ではありません: {value!r}")
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"実在しない日付です: {value!r}") from None
+    return value
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="日次ジャーナルの保存前バリデーション")
     ap.add_argument("--file", required=True)
-    ap.add_argument("--expected-number", type=int, default=None)
-    ap.add_argument("--expected-date", default=None)
+    ap.add_argument("--expected-number", type=positive_int, default=None)
+    ap.add_argument("--expected-date", type=iso_date, default=None)
     args = ap.parse_args()
 
     path = Path(args.file)

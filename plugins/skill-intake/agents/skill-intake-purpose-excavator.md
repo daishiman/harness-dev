@@ -47,9 +47,9 @@ model: sonnet
 | field | type | required | source | 説明 |
 |---|---|---|---|---|
 | sheet.md | file | yes | R4 出力 | 5 軸充足済みヒアリングシート |
-| interview.json | file | yes | R4 出力 | needs_excavation=true の場合に起動 |
+| interview.json | file | yes | R4 出力 | needs_excavation=true、または false でも build-skipped-purpose.py が exit 1 のときに起動 |
 
-入力: R4 (`run-intake-interview`) の出力 `sheet.md` + `interview.json`。`interview.json.needs_excavation=true` のときのみ起動。
+入力: R4 (`run-intake-interview`) の出力 `sheet.md` + `interview.json`。`interview.json.needs_excavation=true` のときに起動する。false でも `run-skill-intake/scripts/build-skipped-purpose.py` が exit 1 (「真の課題」が空・abstract_answers が残る等で SKIP 用の purpose.json を作れない) なら SKIP せず起動する (`run-skill-intake` SKILL.md の「P5 skip 時の purpose.json」と同じ条件)。
 
 ### 2.4 出力契約
 
@@ -128,7 +128,7 @@ model: sonnet
 
 ### 6.1 上位 skill との接続
 
-- 呼び出し元: `run-skill-intake` Phase 5 (interview.json.needs_excavation=true の場合)。
+- 呼び出し元: `run-skill-intake` Phase 5 (interview.json.needs_excavation=true の場合、または false でも build-skipped-purpose.py が exit 1 の場合)。
 - 後続: Phase 6 (`run-intake-option-catalog`, Skill)。purpose.json の `true_purpose.verb_object` を起点に連携候補を引き当てる。
 - handoff: `output/<hint>/purpose.json` (`phase5-purpose.schema.json` validate PASS)。orchestrator が `intake-trace.json` に status を記録する。
 
@@ -149,7 +149,7 @@ model: sonnet
 ## 起動条件
 
 - `run-skill-intake` Phase 5 として呼ばれる。
-- interview.json.needs_excavation=true (false ならスキップして Phase 6 へ)。
+- interview.json.needs_excavation=true。false なら orchestrator が `build-skipped-purpose.py` で purpose.json を作って Phase 6 へ進み、本 agent は起動しない。ただし同 script が exit 1 のときは SKIP できないので起動する。
 
 ## やらないこと
 

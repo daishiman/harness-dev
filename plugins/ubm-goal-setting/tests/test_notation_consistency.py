@@ -38,6 +38,7 @@ NOTATION_FILES = [
     SKILL_ROOT / "assets/execution-prompts.md",
     SKILL_ROOT / "SKILL.md",
     PLUGIN_ROOT / "agents/output-formatter.md",
+    PLUGIN_ROOT / "references/agent-output-formatter-rules.md",  # output-formatter から移した対応表
     PLUGIN_ROOT / "agents/phase3-coordinator.md",
 ]
 

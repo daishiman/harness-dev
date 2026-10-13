@@ -1,20 +1,20 @@
-# Prompt: R3-step3-goal-setting
+# プロンプト: R3-step3-goal-setting
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 3 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 3 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step3-goal-setting |
-| skill | run-ubm-goal-setting |
-| responsibility | R3-step3-goal-setting (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 3 担当フィールド) |
-| reproducible | true (設計順序と検証条件は決定論的) |
+| `name` | step3-goal-setting |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R3-step3-goal-setting (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 3 担当フィールド) |
+| `reproducible` | `true` (設計順序と検証条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,7 +28,7 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 前提の問い直し、合宿アドバイスとの整合確認、売上目標・成果目標の数値確定と interview_data への記録。
 - 非担当: 差分分析 (R2)、行動計画への分解 (R4)、最終確認 (R5)。
 
@@ -53,43 +53,46 @@
 - **各成果目標に売上貢献額を式で持たせる** (`→ 売上貢献：<単価> × <件数> = <貢献額>`)。裸の数字1つでは根拠が残らず、後から検算できない。その期間の売上に直接乗らないものは `→ 売上貢献：0（いつ・いくらになるか）` とし、将来の時期と金額を必ず添えさせる。
 - **実行した時点で達成になる項目を成果目標に置かない**。「勉強会を月4回開催する」「アカデミーに参加する」等は成果ではなく行動であり、Step 4 の行動目標へ移す。成果目標は「実行した結果、相手側で何が起きたか」で書く。
 - **売上貢献の合計が売上目標に届くまで Step 4 へ進まない**。届かない場合は成果目標の抜けを埋めるか、売上目標を置き直すかをユーザーに選ばせる。
-- **目標文脈確認 (種別で 3 分岐)**: 月報・期報は「今期の売上目標」「次回のアカデミーへの参加日」「次回の壁打ち予定日」「壁打ち予定月までに目指している状態」「壁打ち予定日までに達成させること」「グリッドパートナー (仲間) を増やす目標」をフル確認する。週報は、これらの文脈を現在の月報/期報から継承し、Step 1 で行った一括確認の結果を引き継ぐのみで、新たな質問は追加しない (週報 5-8 分を維持するため)。
+- **目標文脈確認 (種別で 4 分岐)**: 1年 (`yearly`) は月報・期報と同じ項目をフル確認し、期間語を「今年」に置き換えて確定する。加えて【今年の最重要数字】に到達点 (月間売上到達点・継続コンサル人数) を置き、**その到達点を 3ヶ月 → 1ヶ月 → 1週間 へ割る前提で今年の売上目標・成果目標を決める** (1年層の正本は挑戦宣言)。月報・期報は「今期の売上目標」「次回のアカデミーへの参加日」「次回の壁打ち予定日」「壁打ち予定月までに目指している状態」「壁打ち予定日までに達成させること」「グリッドパートナー (仲間) を増やす目標」をフル確認する。週報は、これらの文脈を現在の月報/期報から継承し、Step 1 で行った一括確認の結果を引き継ぐのみで、新たな質問は追加しない (週報 5-8 分を維持するため)。
 - 壁打ち頻度: 候補生は 6 ヶ月に 1 回／K4 以上は 3 ヶ月に 1 回は必ず厳守。目指す状態・達成事項はアカデミーカリキュラムを参考にする。
 
 ### 2.4 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| root_cause | string | yes (初回スキップ時は null 許容) | 差分の根本原因 (Step 2 から) |
-| bottleneck | string | yes (初回スキップ時は null 許容) | ボトルネック箇所 (Step 2 から) |
-| camp_date | string | no | 直近のアカデミー参加日 (自動取得) |
-| camp_advice_summary | string | no | アカデミーアドバイス要約 (自動取得) |
+| root_cause | string | はい (初回スキップ時は `null` を許容。種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしないので `null` を許容しない) | 差分の根本原因 (Step 2 から) |
+| bottleneck | string | はい (初回スキップ時は `null` を許容。種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしないので `null` を許容しない) | ボトルネック箇所 (Step 2 から) |
+| camp_date | string | いいえ | 直近のアカデミー参加日 (自動取得) |
+| camp_advice_summary | string | いいえ | アカデミーアドバイス要約 (自動取得) |
 
 ### 2.5 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
 | sales_target | number | 今回売上目標 |
 | other_targets | string[] | 今回成果目標 (複数可) |
-| period_sales_target | number | 今期の売上目標 (月報・期報は確認／週報は現在の月報/期報から継承) |
-| next_academy_date | string | 次回のアカデミー参加日 (月報・期報は確認／週報は継承) |
-| next_sparring_date | string | 次回の壁打ち予定日 (月報・期報は確認／週報は継承) |
-| sparring_target_state | string | 壁打ち予定月までに目指す状態 (月報・期報は確認／週報は継承) |
-| sparring_deliverables | string | 壁打ち予定日までに達成させること (月報・期報は確認／週報は継承) |
-| grid_partner_goal | number/null | 今期は何人にするか (半角数字・未設定 null) (月報・期報は確認／週報は継承) |
+| period_sales_target | number | 今期の売上目標 (1年は今年の売上目標・1年/月報・期報は確認／週報は現在の月報/期報から継承) |
+| next_academy_date | string | 次回のアカデミー参加日 (1年・月報・期報は確認／週報は継承) |
+| next_sparring_date | string | 次回の壁打ち予定日 (1年・月報・期報は確認／週報は継承) |
+| sparring_target_state | string | 壁打ち予定月までに目指す状態 (1年・月報・期報は確認／週報は継承) |
+| sparring_deliverables | string | 壁打ち予定日までに達成させること (1年・月報・期報は確認／週報は継承) |
+| grid_partner_goal | number/null | 今期 (1年は今年) は何人にするか (半角数字・未設定は `null`) (1年・月報・期報は確認／週報は継承) |
+| yearly_monthly_sales_goal | number | 1年後の月間売上到達点 (1年のみ・【今年の最重要数字】の注記に `月間売上到達点：<数値>` で置く。期報・月報が同値で継承する4層アンカー) |
+| yearly_continuous_consult_count | number | 1年後の月額継続コンサル人数 (1年のみ・同注記に `継続コンサル人数：<数値>` で置く) |
 
 備考: #22 period_sales_target・#26 grid_partner_goal・#28-31 の取得 Step の契約正本は `references/data-contract.md` §3 (Step 1 起点の継承文脈)。週報は Step 1 の一括確認結果を引き継ぐのみ、月報・期報は本 Step の対話でフル確認して確定値を書き込む。
 
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| ナレッジサマリー | past_summary 内 (info-collector 生成・親 context が受領) | 前提検証の根拠・引用に使うとき |
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| selection-focus-goal-frame | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
+| ナレッジサマリー | past_summary 内 (`info-collector` 生成・親コンテキストが受領) | 前提検証の根拠・引用に使うとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| `selection-focus-goal-frame` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
 
-ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):
+ナレッジ活用 (`info-collector` から渡された翻訳済みデータを使う):
+- `${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、past_summaryの実検索結果 `knowledge_candidates` に含まれるIDから意味を判断する。親は実際に届けた引用・原則IDだけを記録し、追加IDは先に検索で出所へ解決する。
 - **上位概念 (翻訳済み)**: ユーザー状況に翻訳済みの原則 → 前提検証・前提問い直しの根拠として活用。
-- **引用候補**: 対話の中で北原さんの言葉を届ける際に、ハードコードの引用に加えて活用可。
+- **引用候補**: 対話の中で北原さんの言葉を届ける際に、ハードコードの引用も先にIDを検索へ解決してから活用可。
 - 活用例: ユーザーが同じパターンを繰り返している場合 → 翻訳済み原則「関係構築ファースト = (このユーザーの場合は〇〇)」を使って前提を問い直す。
 
 ### 3.2 外部ツール / API
@@ -98,7 +101,7 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 対話の共通制約 (北原原則の引用は 1〜2 個・3 ステップ翻訳必須等) は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 対話の共通制約 (北原原則の引用は 1〜2 個・3 ステップ翻訳必須等) は `agents/phase3-coordinator.md` の Layer 2「ナレッジ活用原則（重要）」と「プロセス制約」が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
 - 「売上を追う」姿勢の回答: 関係構築ファーストへの組み替えへフォールバックする。
@@ -111,8 +114,8 @@
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 前提検証を経た、逆算根拠のある数値目標を確定する。
@@ -137,10 +140,10 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 3)。
-- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため root_cause / bottleneck を null で受領する。
-- 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (sales_target)、成果目標 (other_targets)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 3)。
+- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため `root_cause` / `bottleneck` を `null` で受領する。ただし種別が `yearly` で前年の 1年目標が無い初回は Step 2 をスキップしない (比較対象を直近の期報・月報の積み上げと挑戦宣言の到達点アンカー 2 件へ差し替えて実施する) ので、`root_cause` / `bottleneck` を値で受領する。`null` で届いたら Step 2 へ戻す (正本: R2-step2-gap-analysis の 2.2・6.2、`references/data-contract.md` §3.4 の Step 2 → Step 3)。
+- 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (`sales_target`)、成果目標 (`other_targets`)。
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: 完了チェックリスト充足後にのみ Step 4 へ遷移する。
@@ -160,6 +163,7 @@
 | 売上貢献の合計が売上目標に届かない | ターン3C-5 で不足分の埋め方を選ばせる (Step 4 へ進めない) |
 | 種別=月報・期報 | ターン3E (目標文脈フル確認) |
 | 種別=週報 | ターン3E-週報 (継承のみ・新規質問ゼロ) |
+| 種別=1年 | ターン3E-1年 (目標文脈フル確認＋到達点の確定) |
 
 目標回答の検証:
 | 回答 | 対応 |
@@ -298,3 +302,16 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 **ターン3E-週報（週報・継承のみ・新規質問ゼロ）**:
 > 週報では、今期の目標文脈（今期の売上目標・次回のアカデミー参加日・次回の壁打ち予定日・壁打ちまでに目指す状態・達成させること・グリッドパートナー目標）を現在の月報/期報から継承する。
 > Step 1 のターン1D-週報で実施した一括確認（「変更はありますか？」の確認1問＋今期累計売上実績の週次更新1項目）の結果をそのまま引き継ぎ、ここでは新たな質問を追加しない（週報の所要5-8分を維持）。Step 1 の一括確認で「変更あり」と申告された文脈のみ、その値を反映する。
+
+**ターン3E-1年（1年・目標文脈フル確認＋到達点の確定）**:
+> 1年の目標として、以下も確定しましょう:
+> 1. 今年の売上目標は？（半角数字）
+> 2. 次回のアカデミーへの参加日は？
+> 3. 次回の壁打ち予定日は？（候補生は6ヶ月に1回／K4以上は3ヶ月に1回は必ず厳守）
+> 4. その壁打ち予定月までに目指している状態は？（アカデミーカリキュラム参考）
+> 5. その壁打ち予定日までに達成させることは？（アカデミーカリキュラム参考）
+> 6. グリッドパートナー（共に仕事をやっていく仲間）を今年は何人にしますか？増やす・育てるための一歩は？
+> 7. 1年後の到達点を確定しましょう: 月間売上到達点はいくらで、その内訳の月額継続コンサルは何人ですか？（挑戦宣言の値を正本とし、変更があればここで直す）
+>
+> ※ 7 の 2 つの数値は【今年の最重要数字】の注記に `月間売上到達点：<数値>` / `継続コンサル人数：<数値>` の形で置く（期報・月報が同値で継承する4層アンカー。`validate-cross-level.py` が `--yearly` を渡されたときに照合する）。
+> ※ 今年の売上目標・成果目標は、この到達点から 3ヶ月 → 1ヶ月 → 1週間 へ割れる形に置く。下位層から積み上げて1年を決めない。

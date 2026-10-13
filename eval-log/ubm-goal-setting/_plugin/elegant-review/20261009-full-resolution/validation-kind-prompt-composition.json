@@ -1,0 +1,56 @@
+{
+  "claim": "temporary metadata/body composition fixture, not a real skill live-trial",
+  "manifest_schema_valid": true,
+  "body_sha256": "b13edbe9a5ab1cf68d33b28a2ca3b44f07b51ab1921c006aaedf38a80952b96d",
+  "composite_body_sha256": "b13edbe9a5ab1cf68d33b28a2ca3b44f07b51ab1921c006aaedf38a80952b96d",
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+        "--mode",
+        "prompt",
+        "--plugins-dir",
+        "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example"
+      ],
+      "rc": 0,
+      "stdout": "OK content-lint (--mode prompt): scanned=1 files 全て 7 層準拠 (l5-contract v2.0.0) under /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+        "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example/prompts/example-prompt.md"
+      ],
+      "rc": 0,
+      "stdout": "ok: example-prompt\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py",
+        "--input",
+        "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example/prompts/example-prompt.md"
+      ],
+      "rc": 0,
+      "stdout": "OK layers verified (L1,L2,L3,L4,L5,L6,L7; goal-seek 要素確認済み / l5-contract v2.0.0)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py",
+        "--input",
+        "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example/prompts/example-prompt.md",
+        "--phase",
+        "prompt"
+      ],
+      "rc": 0,
+      "stdout": "OK phase=prompt layers=7 file=/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj/plugins/example/prompts/example-prompt.md\n",
+      "stderr": ""
+    }
+  ],
+  "fixture_path": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/elegant-kind-prompt-sz5_7gcj"
+}

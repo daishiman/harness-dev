@@ -1,0 +1,184 @@
+{
+  "phase": "phase3",
+  "iteration": 3,
+  "finding": "F-4004",
+  "agent": "/root/meta_analysis",
+  "status": "implementation_complete_awaiting_independent_approval",
+  "ownership": "Only dev-graph criteria receipt schema and existing test_skill_criteria_evidence.py",
+  "changed_source_files": [
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_skill_criteria_evidence.py",
+      "sha256": "90dfa562b6da4a6802c9f48110abc0701c34ed2c3a8745d4a5d2d6c6453d3d91",
+      "before_bytes_path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/test_skill_criteria_evidence.failure-contract-before-iteration3.py",
+      "sha256_before": "90dfa562b6da4a6802c9f48110abc0701c34ed2c3a8745d4a5d2d6c6453d3d91",
+      "sha256_after": "eaaad26af2a67820e69f267eca54a794229a4eb142fe7c2387ebc5fe41abe7af"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/criteria-scenario-verdict.schema.json",
+      "sha256": "7509081f11755072dc68b9f2bef8fb9cbbbc2efb013853479da353d71a0d3b8a",
+      "before_bytes_path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/criteria-scenario-verdict.failure-contract-before-iteration3.schema.json",
+      "sha256_before": "7509081f11755072dc68b9f2bef8fb9cbbbc2efb013853479da353d71a0d3b8a",
+      "sha256_after": "cfcd7967f0de9aac4b3305a5e0f88e922b69e0e77775217efd9ae062a3beed4a"
+    }
+  ],
+  "before_snapshot": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-failure-receipt-contract-iteration3-before.json",
+  "diff_path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-failure-receipt-contract-iteration3.diff",
+  "contract_repair": {
+    "root_verdict_enum": [
+      "PASS",
+      "FAIL"
+    ],
+    "criterion_status_enum": [
+      "PASS",
+      "FAIL"
+    ],
+    "consistency": "PASS requires every criterion PASS; FAIL requires at least one FAIL, using standard JSON Schema if/then/else and not.",
+    "live_trial_criterion": "Every live-trial result retains scenario_id and evidence_kind=live-trial. live_trial_verdict_ref required only for status PASS and optional for FAIL. Non-live scenario_id/live_trial_verdict_ref ban remains.",
+    "schema_version": "1.1.0 unchanged",
+    "new_framework_or_field": false
+  },
+  "test": {
+    "argv": [
+      "/Users/dm/miniconda3/bin/python3",
+      "-m",
+      "pytest",
+      "plugins/dev-graph/tests/test_skill_criteria_evidence.py",
+      "-k",
+      "canonical_content_reviews or positive_live_trial_scenarios or failure_receipt_contract or live_receipt_contract or failed_receipt_remains_blocked",
+      "-q"
+    ],
+    "command": "/Users/dm/miniconda3/bin/python3 -m pytest plugins/dev-graph/tests/test_skill_criteria_evidence.py -k \"canonical_content_reviews or positive_live_trial_scenarios or failure_receipt_contract or live_receipt_contract or failed_receipt_remains_blocked\" -q",
+    "exit_code": 0,
+    "passed": 21,
+    "deselected": 9,
+    "selected_expected": 21,
+    "static_current_checks": 10,
+    "new_contract_checks": 11,
+    "canonical_receipt_acceptance_cases_excluded": 9,
+    "started_at": "2026-10-05T09:23:21.057422+00:00",
+    "completed_at": "2026-10-05T09:23:23.664210+00:00",
+    "actual_log_path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-failure-receipt-contract-iteration3-pytest.log",
+    "log_sha256": "3f385ef764c6c0b356dbcb5b0b0828c1ca4a762042617ca347f7b4be346aaae0"
+  },
+  "meaningful_contract_cases": [
+    "all-PASS root PASS accepted",
+    "mixed PASS/FAIL root FAIL accepted",
+    "root PASS with failed criterion rejected",
+    "root FAIL with all criteria PASS rejected",
+    "unknown criterion status rejected",
+    "unknown root verdict rejected",
+    "live FAIL with no verdict reference accepted",
+    "live FAIL with verdict reference accepted",
+    "live PASS with no verdict reference rejected",
+    "live PASS with verdict reference accepted",
+    "temporary schema-valid FAIL receipt rejected by the unchanged actual acceptance function (AssertionError containing FAIL)"
+  ],
+  "acceptance_function": {
+    "function": "test_independent_scenario_receipt_covers_exact_criteria",
+    "unchanged": true,
+    "sha256": "fa82df68d88c923db8d0ea8de1d8627dd9e9060fdb76d8ae51728e89ffd96714"
+  },
+  "fingerprint_function": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py:skill_dir_tree_sha",
+  "fingerprint_implementation_sha256": "882c0dd91144d4a0af0e5c7c146c0289b5ae8067ae5d7c42dda54eedc4e4df8c",
+  "behavior_fingerprint_comparison": [
+    {
+      "component_id": "C01",
+      "skill": "run-dev-graph-init",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-init",
+      "behavior_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+      "before_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+      "after_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+      "unchanged": true
+    },
+    {
+      "component_id": "C02",
+      "skill": "run-dev-graph-node",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node",
+      "behavior_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+      "before_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+      "after_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+      "unchanged": true
+    },
+    {
+      "component_id": "C03",
+      "skill": "run-dev-graph-sync",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync",
+      "behavior_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+      "before_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+      "after_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+      "unchanged": true
+    },
+    {
+      "component_id": "C04",
+      "skill": "run-dev-graph-requirements",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-requirements",
+      "behavior_sha256": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+      "before_sha256": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+      "after_sha256": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+      "unchanged": true
+    },
+    {
+      "component_id": "C05",
+      "skill": "run-dev-graph-render",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-render",
+      "behavior_sha256": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+      "before_sha256": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+      "after_sha256": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+      "unchanged": true
+    },
+    {
+      "component_id": "C14",
+      "skill": "run-dev-graph-decompose",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose",
+      "behavior_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+      "before_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+      "after_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+      "unchanged": true
+    },
+    {
+      "component_id": "C15",
+      "skill": "run-dev-graph-schedule",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-schedule",
+      "behavior_sha256": "9d9e1dd4b268bb8283f7ffd94af53101b774c80f1718906a6cf25ea9d2ef6e8d",
+      "before_sha256": "9d9e1dd4b268bb8283f7ffd94af53101b774c80f1718906a6cf25ea9d2ef6e8d",
+      "after_sha256": "9d9e1dd4b268bb8283f7ffd94af53101b774c80f1718906a6cf25ea9d2ef6e8d",
+      "unchanged": true
+    },
+    {
+      "component_id": "C18",
+      "skill": "run-dev-graph-status",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-status",
+      "behavior_sha256": "e81710850e2111bbc78d3ee9a5b0303a4d7dba097d9f9beba2d555ff5a199c84",
+      "before_sha256": "e81710850e2111bbc78d3ee9a5b0303a4d7dba097d9f9beba2d555ff5a199c84",
+      "after_sha256": "e81710850e2111bbc78d3ee9a5b0303a4d7dba097d9f9beba2d555ff5a199c84",
+      "unchanged": true
+    },
+    {
+      "component_id": "C19",
+      "skill": "run-dev-graph-system-spec",
+      "skill_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec",
+      "behavior_sha256": "9be478fa7e2221c7d7a7e9e69ac694f1b48b2d339fc6064f7ee757f4b9dcc0e9",
+      "before_sha256": "9be478fa7e2221c7d7a7e9e69ac694f1b48b2d339fc6064f7ee757f4b9dcc0e9",
+      "after_sha256": "9be478fa7e2221c7d7a7e9e69ac694f1b48b2d339fc6064f7ee757f4b9dcc0e9",
+      "unchanged": true
+    }
+  ],
+  "all9_behavior_fingerprints_unchanged": true,
+  "eval_only_schema_not_in_behavior_closure": "Verified by actual canonical skill_dir_tree_sha before/after, not assumed from file type.",
+  "prior_intermediate_report": {
+    "path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/phase3-test-contract-iteration3.json",
+    "sha256": "8ff1a60abeedcff0923c78bc2fcec77f1c038c4c8d427f98b63bf20f09b39f76",
+    "unchanged": true
+  },
+  "canonical_or_historical_eval_results_modified": false,
+  "live_trials_executed": false,
+  "runtime_or_SKILL_edits": false,
+  "other_source_edits": false,
+  "git_or_auth_or_global_or_remote_actions": false,
+  "thresholds_or_criteria_weakened": false,
+  "independent_approval_pending": true,
+  "beads_closed": false,
+  "remaining_parent_work": [
+    "Independent reviewer records genuine fresh receipt PASS/FAIL and performs final acceptance; parent owns Beads status."
+  ]
+}

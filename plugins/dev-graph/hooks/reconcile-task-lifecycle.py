@@ -56,7 +56,7 @@ def read_payload() -> dict[str, Any]:
 def invoke(script: Path, *args: str) -> dict[str, Any]:
     if not script.is_file():
         return {"ok": False, "error": f"missing dependency: {script}"}
-    proc = subprocess.run([sys.executable, str(script), *args], capture_output=True, text=True, check=False)
+    proc = subprocess.run([sys.executable, "-B", str(script), *args], capture_output=True, text=True, check=False)
     result: dict[str, Any] = {"ok": proc.returncode == 0, "exit_code": proc.returncode}
     text = proc.stdout.strip()
     if text:
@@ -75,7 +75,7 @@ def spawn(script: Path, *args: str) -> dict[str, Any]:
         return {"ok": False, "spawned": False, "error": f"missing dependency: {script}"}
     try:
         proc = subprocess.Popen(
-            [sys.executable, str(script), *args],
+            [sys.executable, "-B", str(script), *args],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

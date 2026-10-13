@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: verify-handout-a11y-print
-# version: 0.1.0
+# version: 0.1.1
 # purpose: C17 生成 HTML の a11y 属性の適用先と A4 印刷用 @media print 規則の宣言を検査する fail-closed ゲート
 # inputs:
 #   - argv: --html <path> [--json-report <path>]
@@ -80,7 +80,9 @@ TAB_BLOCK_TYPE = "tabs"
 ROOT_ENV_VARS = ("HB_ROOT", "CLAUDE_PLUGIN_ROOT")
 PARTS_RELPATH = Path("config") / "handout-parts.json"
 
-SCREEN_ONLY_PARTS = {"lightbox", "memo", "memo-global", "toolbar"}
+# PRINT-03 の対象の data-hb-part 値も写しを持たない。カタログの non_part_structure_markers
+# (構造・UI 枠の値) から、構造の値 section を除いた残り = 画面専用 UI 枠を実行時に引く。
+SECTION_MARKER = "section"
 SCREEN_ONLY_CLASS_NEEDLES = ("lightbox", "memo")
 
 
@@ -107,11 +109,12 @@ class Node:
         return [c.lower() for c in raw.split() if c]
 
     def descendants(self):
-        stack = list(self.children)
+        # 先行順。末尾から pop するので子は逆順に積む (先頭 pop と list 連結は O(n^2))
+        stack = list(reversed(self.children))
         while stack:
-            n = stack.pop(0)
+            n = stack.pop()
             yield n
-            stack = list(n.children) + stack
+            stack.extend(reversed(n.children))
 
     def subtree_text(self):
         buf = list(self.texts)
@@ -385,7 +388,7 @@ def parse_css_blob(blob, model):
 
 def _consume_block(prelude, body, body_offset, line, col, pos, model):
     if prelude.startswith("@"):
-        name = re.split(r"[\s({]", prelude[1:], 1)[0].strip().lower()
+        name = re.split(r"[\s({]", prelude[1:], maxsplit=1)[0].strip().lower()
         block = AtBlock(name, norm_sel(prelude), line, col)
         if "{" in body:
             ok = _parse_nested_rules(body, body_offset, pos, block, model, prelude, line, col)
@@ -520,20 +523,24 @@ def resolve_root():
     return Path(__file__).resolve().parent.parent
 
 
+def _read_catalog(root=None):
+    path = (Path(root) if root is not None else resolve_root()) / PARTS_RELPATH
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise CatalogError("部品カタログ正本を読めない: {} ({})".format(path, exc))
+    return data if isinstance(data, dict) else {}
+
+
 def load_part_ids_by_block_type(root=None):
     """data_block_type -> 部品 id の対応をカタログ正本から引く。
 
     この script は部品 id の名簿も literal も持たない (P03 Y-05)。
     カタログが引けないときは黙って素通しせず fail-closed で落とす。
     """
-    path = (Path(root) if root is not None else resolve_root()) / PARTS_RELPATH
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise CatalogError("部品カタログ正本を読めない: {} ({})".format(path, exc))
+    data = _read_catalog(root)
     table = {}
-    parts = data.get("parts") if isinstance(data, dict) else None
-    for part in parts or []:
+    for part in data.get("parts") or []:
         if not isinstance(part, dict):
             continue
         block = part.get("data_block_type")
@@ -550,9 +557,27 @@ def load_part_ids_by_block_type(root=None):
     return table
 
 
+def load_screen_only_markers(root=None):
+    """PRINT-03 の data-hb-part 値 = カタログの非部品マーカーから section を除いたもの。
+
+    カタログの改名に黙って遅れないよう写しは持たない。引けない・空のときは
+    PRINT-03 を空振りの PASS にせず fail-closed で落とす。
+    """
+    markers = _read_catalog(root).get("non_part_structure_markers")
+    values = markers.get("values") if isinstance(markers, dict) else None
+    if not isinstance(values, list) or not all(isinstance(v, str) for v in values):
+        raise CatalogError(
+            "部品カタログの non_part_structure_markers.values が文字列の配列でない")
+    screen_only = frozenset(values) - {SECTION_MARKER}
+    if not screen_only:
+        raise CatalogError("部品カタログに画面専用 UI の構造マーカーが無い")
+    return screen_only
+
+
 class Ctx:
-    def __init__(self, doc, css, part_ids):
+    def __init__(self, doc, css, part_ids, screen_only_parts):
         self.part_ids = part_ids
+        self.screen_only_parts = screen_only_parts
         self.toggle_parts = {part_ids[b] for b in TOGGLE_BLOCK_TYPES}
         self.tab_part = part_ids[TAB_BLOCK_TYPE]
         self.doc = doc
@@ -578,7 +603,7 @@ class Ctx:
                 self.non_print_rules.extend(b.rules)
         self.sections = [
             el for el in doc.all
-            if el.tag == "section" or (el.attrs.get("data-hb-part") == "section")
+            if el.tag == "section" or (el.attrs.get("data-hb-part") == SECTION_MARKER)
         ]
 
 
@@ -1025,6 +1050,27 @@ def _collect_positioned(ctx, values):
     return found
 
 
+# 識別子の文字 (英数字・_・- と非 ASCII)。sel が型セレクタのように識別子で始まるときだけ、
+# 直前が識別子の文字か . # なら一致させない (`.pop-header` の中の `header`)。
+_IDENT_START = re.compile(r"[\w-]")
+_IDENT_LEAD = r"(?<![\w.#-])"
+_IDENT_TAIL = r"(?![\w-])"
+
+
+def _print_selector_covers(print_sel, sel):
+    """print 側のセレクタ 1 つが通常規則のセレクタ sel を指すとみなせるか。
+
+    brief の 1 段の緩和どおり、完全一致に加えて sel を部分列として含む print 側
+    (`header.pop-header` と `.pop-header`) も認める。ただし識別子の途中で切れる
+    一致 (`.bar-x` の中の `.bar`、`.pop-header` の中の `header`) は別の要素を指すので
+    認めない。両辺は split_selectors でカンマごとに分けた後の 1 セレクタ。
+    """
+    if print_sel == sel:
+        return True
+    lead = _IDENT_LEAD if _IDENT_START.match(sel) else ""
+    return re.search(lead + re.escape(sel) + _IDENT_TAIL, print_sel) is not None
+
+
 def detect_print02(ctx):
     targets = _collect_positioned(ctx, {"sticky", "fixed"})
     checked = len(targets)
@@ -1032,7 +1078,7 @@ def detect_print02(ctx):
     for sel, rule in targets:
         covered = False
         for pr in ctx.print_rules:
-            if not any(ps == sel or sel in ps for ps in pr.selectors):
+            if not any(_print_selector_covers(ps, sel) for ps in pr.selectors):
                 continue
             for prop, value in pr.decls:
                 if prop == "position" and value in ("static", "relative"):
@@ -1051,16 +1097,16 @@ def detect_print02(ctx):
 # --------------------------------------------------------------------------
 
 
-def _is_screen_only(el):
+def _is_screen_only(el, screen_only_parts):
     part = el.attrs.get("data-hb-part")
-    if part in SCREEN_ONLY_PARTS:
+    if part in screen_only_parts:
         return True
     raw = (el.attrs.get("class") or "").lower()
     return any(needle in raw for needle in SCREEN_ONLY_CLASS_NEEDLES)
 
 
 def detect_print03(ctx):
-    candidates = [el for el in ctx.elements if _is_screen_only(el)]
+    candidates = [el for el in ctx.elements if _is_screen_only(el, ctx.screen_only_parts)]
     cand_set = set(id(e) for e in candidates)
     targets = [el for el in candidates
                if not any(id(a) in cand_set for a in el.ancestors())]
@@ -1234,7 +1280,7 @@ def run(html_path, html_text):
     for blob in doc.styles:
         parse_css_blob(blob, css)
 
-    ctx = Ctx(doc, css, load_part_ids_by_block_type())
+    ctx = Ctx(doc, css, load_part_ids_by_block_type(), load_screen_only_markers())
     anchor_missing = not ctx.parts
 
     results = []

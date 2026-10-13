@@ -1,0 +1,825 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-05T07:29:23.817791+00:00"
+  },
+  "scope": "Phase2 G3 sibling resolver / Python and shell consumers / vendored parity / CI extractor, with limited node prompt and existing-root-helper adjacency checks",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_plugin_root.pyと/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_ci_workflow_steps.pyの評価枠を「件数/返値が正しい」から「選択権限/実行環境/起動後の効果が正しい」へ置き換え、48件PASS後も独立fixtureを実行した。結論:既存PASSだけではscopeと環境同等性を保証しない。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:_installedの拒否とcandidatesの再選択を同一pathのauthority追跡で照合し、他projectのcache pathが再採用されることを確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:104-149 scope無効は候補にしないという宣言とcache選択が矛盾。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_plugin_root.pyのother-project testはcache外pathだけで、cache再選択を被覆しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:137-159 plain envのGitHub実行とローカル実行が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.pyの全登録pairがbyte一致・非symlinkでcheck_pairs=[]。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        }
+      ],
+      "score": 0.67,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "scope=projectでinstallPathを実cache配下へ置き別cwdから呼ぶ。",
+        "plain env VALUEを三階層上書きし生成shellを実行する。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyの共通本質はmanifest名で候補を検証するplugin resource locatorである。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/tenant_runtime.py:58はtenants marker、/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.py:75は.git+config markerを探すのでauthorityが異なり再利用には適さない。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py:18-29ほか7consumerを比較し、探索本体は共通化できているが起動boilerplateが重複。各callerの欠落時契約は用途が異なり一律例外化しないのが適切。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのmanifest名検証とconfig/tenant marker探索は別目的で、無理な統合は不要。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.pyほか7consumerのbootstrap不在/欠損ケースの共有契約は未形成。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py:18-29に同一起動列。機能障害でなく低優先度の重複。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69はsync-task-state.resolve_planner_rootを再利用しprovider notes schemaのSSOTを維持。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+            "line": 18
+          },
+          "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+          "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+          "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。",
+          "id": "F-2006"
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "resolver欠落時に各callerの本来のsentinel/fail log契約を保てるか。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyの「workflowを正本にして段数の写し漏れをなくす」という目標を、「受け入れたrun段の実効env/cwd/exit semanticsを保つ」まで問い直した。plain envとcwd式fixtureで、段の存在だけでは同等性が成立しないと確認した。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/run-ci-checks.sh:55-76は評価不能な段のSkippedを可視化するため、CI完全再現そのものを強制する変更は不要。現在の3skipはNotion remote2件と子job結果集約1件であり、基礎チェック112段の抽出を確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/run-ci-checks.sh:120のCI-equivalent宣言はSkippedの範囲を含めて解釈すべき。現行skip自体は文書化済みで欠陥扱いしない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:140 working-directory式が式依存skip判定から漏れる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:137受け入れたenvを保持せず実行環境がCIと違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/.github/workflows/harness-creator-kit-ci.ymlのsibling lintとvendored gateはPR段に入り、Makefileにもentryがある。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 140
+          },
+          "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+          "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+          "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。",
+          "id": "F-2003"
+        }
+      ],
+      "score": 0.72,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "env三層merge、cwd式の三階層、literal overrideを生成shellの挙動で検査。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.pyほかの重複について5案を比較した。A:現状7callerを保持(追加依存0・同期箇所7)、B:既存CLIをsubprocessで呼ぶ(import boilerplate削減・lookupごとprocess追加)、C:HC内に汎用bootstrap1個(共有箇所1・module探索設定が追加)、D:正本をunderscore moduleへ移し薄いCLI aliasを残す(normal import可能・全vendor/registry/入口を移行)、E:小resourceをすべてvendor(単独install容易・provider資産が増殖し権限scope解決を代替できない)。",
+        "最小案はAで先に/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのscope修正とshell quote/CIモデル修正を行うこと。重複保守が実際に増えた場合のみCをHC内へ導入する。新しい専用forwarderをconsumerごとに増やす案はCより効果が小さい。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyと既存7consumerを5代替の同じ比較軸(ファイル数/権限/欠落契約/起動費用)で評価した。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.pyの全エラー型を抽象化する新APIはbounded audit内では設計しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.pyの重複は改善余地だが、広域renameは今回の最小修正から外せる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.pyのregistryで現在の単独install可能な配置が担保されている。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+            "line": 18
+          },
+          "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+          "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+          "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。",
+          "id": "F-2006"
+        }
+      ],
+      "score": 0.87,
+      "reusable_abstraction": "既存public CLIの契約を安定させ、追加abstractionは重複した変更が実証された範囲だけ導入する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "A/Cどちらでもprovider未導入に各callerが元のfailure契約を返す。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.pyをpath検索の問題から「metadata exceptionの意味境界」の問題へ見直し、同じデータをmultilineからminified JSONへ表現変更して試した。$schemaとruntime commandが同居すると検出0件になるため、文字列ではなく値の役割に沿って除外すべき。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyも行をコピーする抽出器から、受け入れ可能なrun設定を分類する小さなinterpreterへ見直した。cwd式をskip理由へ送るだけで現在の実行モデルを拡張せずに誤実行を減らせる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.pyでschema注記自体を除外する意図は正当で、runtime値まで除外する必要は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py:116 minified JSONのruntime commandが漏れる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/tests/test_lint_sibling_plugin_paths.pyはschema専用行の正例を持つが、同一行のruntime値との合成負例を持たない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:134-136にunsupported fieldを理由付きskipへ送る既存経路がある。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py",
+            "line": 116
+          },
+          "description": "$schemaが行中のどこかにあるだけで全一致を除外するため、JSONを1行へ整形するとruntime commandまで免除される。scan_text('{\"$schema\":\"x\", \"command\":\"python3 ../beta/scripts/x.py\"}', alpha, patterns(alpha,beta))=[]を再現。ROOT.parent / \"beta\" # $schema annotationも[]。editor向けschema値を除外する意図がruntime参照のfail-openに拡大する。",
+          "recommended_intervention": "注記の値そのものだけを除外し、同じ行のcommand/pathなどの別値は走査する。まず$schemaの専用key/value行へ限定し、複数keyのJSON行を丸ごと免除しない最小修正でもよい。回帰: minified JSONのschema+command、Pythonコード後のschema文字列コメント、通常schema専用行の3例を固定する。",
+          "root_cause": "意味単位の例外を行単位のsubstringで実装した。",
+          "id": "F-2004"
+        }
+      ],
+      "score": 0.76,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "minified JSON schema+command、Python path後のschema文字列コメント。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:86-96のコピー群について、単独installで実体を持つ要求と正本1個の要求をbyte parityで同時に満たすことを確認した。resolver root版とHC版はbyte一致、全pairのcheck_pairsは[]で、この二重実体を冗長として削除すべきではない。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyでは「未registryのCodex/cacheも使える」と「他project専用installは使わない」を両立するには、cache全廃ではなく明示的に不適格なregistered pathだけをcache fallbackへ伝播させればよい。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:128でscopeを拒否し149で同じcache pathを許可する二要求の実装が衝突。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:90-96はmanifestから動的列挙し新pluginのresolver vendor欠落を検出する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyとHC vendorはbyte一致しSSOT/doc/runtimeの役割が一致。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:116の非symlink検査はcache移植性と一体である。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        }
+      ],
+      "score": 0.79,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "cache fallbackを維持しつつother-project pathを拒否し、有効user登録も同pathにある場合は許可する。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.py:149-157は明示NOTION_CONFIG_PATH不在時に他configへfall backしない。これを「入力で拒否したauthorityを別経路で再採用しない」という構造として/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyへ類推し、scope拒否をcache経路へ保持すべきと結論した。ただし未registryのcacheを全拒否する点までは類推しない。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69がproducer rootのSSOTを既存sync-task-stateへ委ねる設計を、同目的のHC bootstrap共通化の例として借用した。tenant/notionのroot発見をsibling resolverへ転用するのはauthorityが異なるため不適切。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:149は拒否した登録pathをfallbackで再採用する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのregistry無しcache利用とscope登録付きcache利用を区別する負例が必要。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69はnotes schema root解決の消費者コピーを作らない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.pyの既存helperはconfig authority用でありlocatorへ強制依存を追加しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "explicitly scoped registrationが他cwdの時、一般cache fallbackと別扱いにする。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyに「scope専用pathがcache内なら」「providerは同market未導入なら」「Codex側manifestしか無ければ」を当て、既存repo/Claude/Codex/market順序のテスト48件PASSを確認した上で、cache内scopeだけ負例で後退を発見した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79に「installPathに空白があれば」を当て、unquoted commandはexit2、quoted commandはCHECKER_EXECUTED/exit0を得た。/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyの「新段がplain env/cwd式を持てば」も生成shell実行で検証した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのproject-cache fixtureは_installed=[]でもresolve()!=None。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyのcwd式fixtureはskipped=[]でliteral cdを生成。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyのplain env fixtureはVALUEがexportされずexit1。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79 provider pathの空白で有効dependencyの起動が失敗。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 140
+          },
+          "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+          "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+          "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。",
+          "id": "F-2003"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+            "line": 79
+          },
+          "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+          "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+          "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。",
+          "id": "F-2005"
+        }
+      ],
+      "score": 0.61,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "実cache内other-project登録、plain env precedence、cwd式、space installPathの4fixtureを実行。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:177-200のCLIはplugin名/--from/検索範囲/exit0/1/2を説明し、既存テストでmissing providerとinvalid nameの診断を確認した。PKG-009/015 consumerもplugin未導入をfail logへ出すので初回導入時の停止理由は追える。",
+        "初見の利用者が/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79の提示commandをそのまま使い、providerを空白を含むinstall先へ置くと、未導入案内ではなくpythonの「providerをopenできない」という分割後の誤pathが出る。導入済みなのに壊れる操作入口としてquote修正が必要。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:71はresolverとGOV_LINT_DIRをquoteしており、正しい入口表現は既に隣接正本にある。dev-graphの/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md:38も「skill root起点」を明示し、共有reference読込位置の説明は明確。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:14のexit契約とCLI testのexit0/1/2が一致。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.mdとnode R0/R2のみ補助点検、9skill全promptのclosure再検証は他担当/親の範囲。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79とbuild-steps.md:71で同じresolverのshell quote方針が不一致。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79 valid installed providerが空白pathだけで起動不能。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+            "line": 79
+          },
+          "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+          "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+          "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。",
+          "id": "F-2005"
+        }
+      ],
+      "score": 0.79,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "host rootは空白なし/providerだけ空白ありでもmanifest commandが起動すること。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py scope拒否のcache経路再採用を実行fixtureで確認。"
+      ],
+      "violation_count": 1
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.pyのschema行免除とextract-ci-workflow-stepsのcwd式検査が欠落。"
+      ],
+      "violation_count": 2
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyのplain env保持欠落によりCIとの意味差を実行fixtureで確認。"
+      ],
+      "violation_count": 1
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.jsonのunquoted戻り値がvalid space installPathを分割。"
+      ],
+      "violation_count": 1
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "unique_issues": [
+    {
+      "id": "F-2001",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+        "line": 149
+      },
+      "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+      "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+      "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。"
+    },
+    {
+      "id": "F-2002",
+      "condition": "C3",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "inconsistency",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+        "line": 137
+      },
+      "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+      "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+      "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。"
+    },
+    {
+      "id": "F-2003",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+        "line": 140
+      },
+      "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+      "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+      "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。"
+    },
+    {
+      "id": "F-2004",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py",
+        "line": 116
+      },
+      "description": "$schemaが行中のどこかにあるだけで全一致を除外するため、JSONを1行へ整形するとruntime commandまで免除される。scan_text('{\"$schema\":\"x\", \"command\":\"python3 ../beta/scripts/x.py\"}', alpha, patterns(alpha,beta))=[]を再現。ROOT.parent / \"beta\" # $schema annotationも[]。editor向けschema値を除外する意図がruntime参照のfail-openに拡大する。",
+      "recommended_intervention": "注記の値そのものだけを除外し、同じ行のcommand/pathなどの別値は走査する。まず$schemaの専用key/value行へ限定し、複数keyのJSON行を丸ごと免除しない最小修正でもよい。回帰: minified JSONのschema+command、Pythonコード後のschema文字列コメント、通常schema専用行の3例を固定する。",
+      "root_cause": "意味単位の例外を行単位のsubstringで実装した。"
+    },
+    {
+      "id": "F-2005",
+      "condition": "C4",
+      "severity": "medium",
+      "bucket": "doc",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+        "line": 79
+      },
+      "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+      "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+      "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。"
+    },
+    {
+      "id": "F-2006",
+      "condition": "C3",
+      "severity": "low",
+      "bucket": "other",
+      "condition_signal": "smell",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+        "line": 18
+      },
+      "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+      "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+      "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。"
+    }
+  ],
+  "validation": {
+    "runtime": "/Users/dm/miniconda3/bin/python3",
+    "targeted_tests": "48 passed in 3.92s",
+    "test_files": [
+      "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_plugin_root.py",
+      "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_ci_workflow_steps.py",
+      "/Users/dm/dev/dev/個人開発/harness/tests/test_lint_sibling_plugin_paths.py",
+      "/Users/dm/dev/dev/個人開発/harness/tests/scripts-plugins/test_harness_creator__lint_pkg_009.py",
+      "/Users/dm/dev/dev/個人開発/harness/tests/scripts-plugins/test_harness_creator__run_pkg_015.py"
+    ],
+    "resolver_root_hc_byte_equal": true,
+    "vendored_check_pairs_failures": [],
+    "actual_ci_steps": 112,
+    "actual_ci_skipped": 3,
+    "full_suite_run_by_this_agent": false
+  },
+  "audit_boundaries": {
+    "source_edits": false,
+    "git_commands": false,
+    "external_writes": false,
+    "prior_verdicts_or_other_analyst_findings_read": false,
+    "not_fully_verified": [
+      "9skill全promptのsemantic/content closure",
+      "全Python consumerのreal-host install smoke",
+      "hostがdisabled pluginをどう扱うかのnative API挙動",
+      "全suffix/AST形式を網羅する静的lint completeness",
+      "CI全段のローカル実行(親が担当)"
+    ],
+    "notes": [
+      "plain env/cwd式の課題は現行workflow値に発生していないが、新run段を自動反映する抽出器の入力契約で実行再現した。",
+      "7caller bootstrapの共通化はlowのmaintainability提案で、機能修正のblocking要求ではない。",
+      "temporary fixtureを用いた負例とartifact以外のsource変更はしていない。"
+    ]
+  }
+}

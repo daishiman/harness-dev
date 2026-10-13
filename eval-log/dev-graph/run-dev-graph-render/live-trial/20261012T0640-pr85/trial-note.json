@@ -1,0 +1,37 @@
+{
+  "label": "render",
+  "retry_of": null,
+  "evaluator_agent_id": "a53bd51ae720945c8",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "OUT1 の文言が成立しない比較を求めています (SKILL.md L54・L151): 「featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致」と書かれていますが、X は done 数 (今回は 5)、applied_count は登録数 (今回は 13) です。全 task が完了するまで X/Y (5/13) と applied/expected (13/13) は一致しません。task.md 側は total=expected の照合と解釈して運用しています。再現: 今回の fx で receipt の applied_count=13 と HTML の 5/13 を比べると、文言どおりの判定は不一致になります。",
+    "render-graph-html.py が registration receipt を一切読みません: applied_count/expected_count/source_digest との照合経路が script に無く、OUT1 の照合は agent の手作業に頼っています。再現: scripts/render-graph-html.py L27-115 に receipt の入力引数も読込みもありません。",
+    "feature 間 edge と task 内 edge を区別して描画していません (SKILL.md L94、R2-plan.md の責務境界に反します): render-graph-html.py L79-82 は、すべての depends_on を同じ style の <path> として単一の <g class=\"edges\"> に入れ、kind や parent_feature で分けていません。parent_feature による包含関係も edge として描きません。今回の fixture は feature 間 edge が 0 本なので表に出ませんが、feature 間の depends_on を持つ graph を render すると区別がつかなくなります。",
+    "renderer receipt に環境固有の絶対 path が入ります: render-graph-html.py L106-108 が resolve 済みの絶対 path を \"out\" として出力しており、R1/R2/R3 の Layer 3「環境固有の絶対 path を成果物へ保存しない」に反します。再現: 任意の repo で render-graph-html.py --graph … --out … を実行すると、stdout JSON の out が絶対 path になります (fx/eval-log/run-dev-graph-render-receipt-1.json)。",
+    "必須の browser live trial に代替経路も環境要件の宣言もありません: SKILL.md は unix socket bind などブラウザの起動要件を書いておらず、ブラウザを起動できない環境 (CI や sandbox) では完了チェックリストが構造的に PARTIAL で終わります。Purpose の「CI 生成可能な成果物」とも緊張関係にあります。再現: unix socket の bind が EPERM になる sandbox で実行すると、毎回 OUT1 が BLOCKED になります。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render/ws/plugins/dev-graph/skills/run-dev-graph-render",
+  "closure_sha_tested_copy": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:05+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+      "transcript_sha256": "6bb6c1e57dc8e23b337d5d93850bda87ff9e7bca6f40d18f449dbca26c2043f6"
+    },
+    "after": {
+      "skill_dir_tree_sha": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+      "transcript_sha256": "c35adf931de602a993d9f9a6dd6708caf0e7199c3a4517af05ee456064ddb448"
+    },
+    "backup": "audit/reverdict/run-dev-graph-render/20261012T0640-pr85"
+  }
+}

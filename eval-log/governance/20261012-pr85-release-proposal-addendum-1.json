@@ -1,0 +1,73 @@
+{
+  "proposal_id": "PROP-2026-10-12-PR85-RELEASE",
+  "addendum": 1,
+  "date": "2026-10-12",
+  "amends_proposal_sha256": "c33d37c47bae0c2ce055046af447c260b1af7f746462b0dbf5d11dc85a6b0c64",
+  "amends_note": "元の提案（eval-log/governance/20261012-pr85-release-proposal.json）は2回の審査で引かれているので書き換えない。G1 の変更だけをこの追補に書く。G2（27章）と G3（run-ubm-challenge の SKILL.md）は変えていない。",
+  "trigger": {
+    "review": "2回目の独立した承認レビュー（reviewed_head 32c92c84、target_manifest_sha256 85fdf06a…）は、G2 と G3 を approve、G1 を changes_requested とした。",
+    "blocking_finding": "G1 の already_bumped_in_worktree の12 plugin は、利用者の手元の local marketplace に同じ版番号で中身の違うもの（PR の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられない。",
+    "ledger_evidence": "利用者の checkout の作業ツリーにある marketplaces/local/plugin-fingerprints.json（--install の記録。sha256 6eff82c8af3dea2ed9a17eb232e21df10f8ff01506d3b0ff9affbad57f7304e5）は、この12件を今の版番号で、今と違う fingerprint で記録している。"
+  },
+  "decision": {
+    "chosen": "(a) 12件の版を上げる",
+    "decided_by": "利用者（solo_operator）が 2026-10-12 に選んだ（「12件の版を上げる」）。",
+    "how": "利用者の --install の記録（上の台帳）を基準に置いて build-plugin-release.py（--install なし）を回した。12件は changed（同じ版で fingerprint が違う）と判定され、script が patch を上げた。plugin.json・CHANGELOG・marketplace・config-version-lock・plugin-composition・完全解剖の版の記述は script が書いた。手で書いた版番号は無い。CHANGELOG の自動の仮の文（変更内容の記述は未記入）だけは、版を上げた理由の文に書き換えた。",
+    "bumped": {
+      "extract-system-blueprint": "0.2.16 → 0.2.17",
+      "harness-creator": "1.4.47 → 1.4.48",
+      "prompt-creator": "2.1.12 → 2.1.13",
+      "skill-governance-adapters": "0.1.14 → 0.1.15",
+      "skill-governance-lint": "0.1.19 → 0.1.20",
+      "skill-governance-migration": "0.1.15 → 0.1.16",
+      "skill-governance-secrets": "0.1.15 → 0.1.16",
+      "skill-intake": "0.1.22 → 0.1.23",
+      "system-dev-planner": "0.1.16 → 0.1.17",
+      "system-spec-harness": "0.1.21 → 0.1.22",
+      "ubm-goal-setting": "0.8.1 → 0.8.2",
+      "x-longpost-creator": "1.3.6 → 1.3.7"
+    },
+    "content_unchanged": "12件とも、plugin.json・CHANGELOG・plugin-composition.yaml を除くと、HEAD（32c92c84 の親の 5ae35116 と同じ中身）から差分が無い。版だけを上げた。",
+    "record_only": "ほかの10件（contract-generator・dev-graph・guide-doc-generator・plugin-dev-planner・skill-governance-automation・skill-governance-config・skill-governance-hooks・slide-report-generator・spec-drift-guardian・system-briefing-book）は版を変えず、台帳に記録するだけ（released）。"
+  },
+  "rejected_alternatives": {
+    "(b) 版を上げず、利用者が手元で入れ直す": "手元の記録と repository の記録が食い違ったまま残り、ほかの環境では見分けられない。",
+    "(c) G1 を PR から外す": "PR #85 の中身を正しい版で配るという提案の目的を満たさない。"
+  },
+  "target_after_addendum": {
+    "target_paths_count": 46,
+    "target_manifest_sha256": "9fb4b45758a2a07bbb3bc9277ddd618557d769eb0f490ca4bedd8ceaeacb5bb1",
+    "target_manifest_format": "対象パスの昇順で '<path> <sha256>' を改行区切りにし末尾改行を付けた UTF-8 バイト列の sha256（2回目の審査と同じ形）",
+    "changed_since_review2": [
+      "plugins/extract-system-blueprint/.claude-plugin/plugin.json",
+      "plugins/extract-system-blueprint/.codex-plugin/plugin.json",
+      "plugins/harness-creator/.claude-plugin/plugin.json",
+      "plugins/harness-creator/.codex-plugin/plugin.json",
+      "plugins/prompt-creator/.claude-plugin/plugin.json",
+      "plugins/prompt-creator/.codex-plugin/plugin.json",
+      "plugins/skill-governance-adapters/.claude-plugin/plugin.json",
+      "plugins/skill-governance-adapters/.codex-plugin/plugin.json",
+      "plugins/skill-governance-lint/.claude-plugin/plugin.json",
+      "plugins/skill-governance-lint/.codex-plugin/plugin.json",
+      "plugins/skill-governance-migration/.claude-plugin/plugin.json",
+      "plugins/skill-governance-migration/.codex-plugin/plugin.json",
+      "plugins/skill-governance-secrets/.claude-plugin/plugin.json",
+      "plugins/skill-governance-secrets/.codex-plugin/plugin.json",
+      "plugins/skill-intake/.claude-plugin/plugin.json",
+      "plugins/skill-intake/.codex-plugin/plugin.json",
+      "plugins/system-dev-planner/.claude-plugin/plugin.json",
+      "plugins/system-dev-planner/.codex-plugin/plugin.json",
+      "plugins/system-spec-harness/.claude-plugin/plugin.json",
+      "plugins/system-spec-harness/.codex-plugin/plugin.json",
+      "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+      "plugins/ubm-goal-setting/.codex-plugin/plugin.json",
+      "plugins/x-longpost-creator/.claude-plugin/plugin.json",
+      "plugins/x-longpost-creator/.codex-plugin/plugin.json"
+    ],
+    "unchanged_since_review2_count": 22,
+    "diff_shape": "変わった24件は、どれも version の行の1行の削除と1行の追加だけ。"
+  },
+  "review_needed": "3回目の独立した承認レビュー。範囲は、変わった24件が版の1行だけであること、残りの22件の sha が2回目の審査と同じであること、12件の中身が版のほかに変わっていないこと、版上げが build-plugin-release.py の規則（patch）に合うこと。",
+  "cooldown": "元の提案の cooldown の節のまま（2026-10-13T00:06:16Z までは CI の change-category-guard が落ちる）。",
+  "governance_log": "承認の entry は、3回目の審査が approve のときだけ、利用者（solo_operator）を approver として、この追補のあとの最終の sha で1回だけ追記する。"
+}

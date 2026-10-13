@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-goal-output
-# version: 0.2.4
+# version: 0.3.3
 # purpose: 目標設定・振り返り対話の出力 Markdown を保存前に検証する決定論ゲート。
 #          未展開プレースホルダ/ファイル名日付パターン/全角数字/差分+-表記/種別別必須見出し/
 #          見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針 等を検査。
 #          旧 validate-goal-output.sh 474 行の契約移植 (逐語移植ではない)。
 #          --peer 指定時のみ、他層ファイルとの期アンカー3値の層間整合を WARN で報告する。
 # inputs:
-#   - argv: --file PATH --type weekly|monthly|quarterly (bimonthly は後方互換の別名)
+#   - fs: plugin references/action-language-policy.json（欠落・不正は終了コード2。--help は読まずに出す）
+#   - argv: --file PATH --type weekly|monthly|quarterly|yearly (bimonthly は後方互換の別名)
 #           [--peer PATH ...] (任意・複数可。層間整合の比較相手)
 # outputs:
 #   - stdout: PASS 詳細 / 結果サマリ
-#   - stderr: (未使用・失敗理由も stdout の FAIL 行に出す)
-#   - exit: 0=PASS / 1=FAIL / 2=usage
+#   - stderr: 引数の誤り・入力を読めないときの ERROR 行（検査の FAIL 理由は stdout の FAIL 行に出す）
+#   - exit: 0=PASS / 1=FAIL / 2=引数の誤り・--file や --peer が無い/ファイルでない/UTF-8 で読めない・語彙契約を読めない
 # contexts: [E, C]
 # network: false
 # write-scope: none
@@ -22,9 +23,11 @@
 # ///
 """目標設定出力 Markdown の保存前バリデーション。
 
-旧 validate-goal-output.sh の契約移植。種別 (週報/月報/期報) 別の必須見出し・NG表現・
+旧 validate-goal-output.sh の契約移植。種別 (週報/月報/期報/1年) 別の必須見出し・NG表現・
 やらないこと3項目以上・売上系フォーマット等を保存前に検査し違反を FAIL させる。
-種別はファイル名推論でなく明示引数 --type (weekly/monthly/quarterly) を正本とする。
+種別はファイル名推論でなく明示引数 --type (weekly/monthly/quarterly/yearly) を正本とする。
+`yearly` は 4層 (1年 → 3ヶ月 → 1ヶ月 → 1週間) の最上位層で、期間語は「今年/前年」。
+挑戦宣言 (05_Project/UBM/挑戦宣言/) を正本に、到達点をここへ置いて下位層へ割っていく。
 `bimonthly` は quarterly の後方互換の別名として受理し続ける (期報=3ヶ月へ改定済み)。
 ただし --type と本文のタイトル見出しラベルの不一致は error とする (種別の取り違え検出)。
 
@@ -36,9 +39,33 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
+
+
+# 行動の精神論の語の唯一正本。プロフィールで既存の判定範囲を保つ。
+ACTION_POLICY_PATH = Path(__file__).resolve().parents[3] / "references/action-language-policy.json"
+
+
+def _load_goal_spirit_re() -> re.Pattern:
+    policy = json.loads(ACTION_POLICY_PATH.read_text(encoding="utf-8"))
+    terms = policy["goal_exact_phrases"]
+    # 空白だけの語を許すと、空白を含むすべての行が精神論として FAIL になる。
+    if not isinstance(terms, list) or not terms or any(not isinstance(term, str) or not term.strip() for term in terms):
+        raise ValueError("goal_exact_phrases は空白だけでない文字列の配列である必要があります")
+    return re.compile("|".join(re.escape(term) for term in terms))
+
+
+# import の時点では止めない。語彙契約が壊れていても --help は出せるようにし、
+# 検査を始める前に main が終了コード2で止める。
+try:
+    GOAL_SPIRIT_RE = _load_goal_spirit_re()
+    ACTION_POLICY_ERROR = None
+except (OSError, ValueError, KeyError, TypeError, RecursionError) as exc:
+    GOAL_SPIRIT_RE = None
+    ACTION_POLICY_ERROR = f"{type(exc).__name__}: {exc}"
 
 # --type -> kind (分岐キー)。期報=quarterly=3-月報（３ヶ月）。
 # "bimonthly" は期報が2ヶ月だった頃の旧キー。新規は quarterly を正とし、旧キーも受理し続ける。
@@ -46,6 +73,7 @@ TYPE_MAP = {
     "weekly": "week",
     "monthly": "month",
     "quarterly": "period",
+    "yearly": "year",       # 1年目標（挑戦宣言を正本とする最上位層）
     "bimonthly": "period",  # 後方互換の別名（旧2ヶ月期報の呼び出し・過去スクリプト用）
 }
 
@@ -57,6 +85,7 @@ TYPE_TITLE_LABEL = {
     "weekly": "1週間の目標",
     "monthly": "1ヶ月の目標",
     "quarterly": "3ヶ月の目標",
+    "yearly": "1年の目標",
     "bimonthly": "2ヶ月の目標",
 }
 
@@ -116,7 +145,7 @@ def judge_sales_coverage(total: int, target: int) -> tuple[str, str]:
 PEER_ANCHORS = [
     ("今期の売上目標", r"^## 【今期の売上目標】", "number"),
     ("今期の累計売上実績", r"^## 【今期の累計売上実績】", "number"),
-    ("最重要数字", r"^## 【今(週|月|期)の最重要数字】", "text"),
+    ("最重要数字", r"^## 【今(週|月|期|年)の最重要数字】", "text"),
 ]
 
 # 週報レベルが絡むときは一致検査から外すアンカー。
@@ -346,7 +375,7 @@ class Validator:
     def check_goal_section(self, pattern: str, label: str, mode: str) -> None:
         for start, body in self.sections_by_regex(pattern):
             if mode == "numeric":
-                table_hit = [l for l in body if re.match(r"^\|", l)]
+                table_hit = has_markdown_table(body)
                 subhead_hit = [l for l in body if re.match(r"^### ", l)]
                 if table_hit or subhead_hit:
                     self.fail(
@@ -364,7 +393,7 @@ class Validator:
                 if len(non_empty) > 1:
                     self.warn(f"売上系セクション「{label}」が複数行になっています（数値1つのみ推奨）")
             elif mode == "bullet":
-                table_hit = [l for l in body if re.match(r"^\|", l)]
+                table_hit = has_markdown_table(body)
                 if table_hit:
                     self.fail(f"「{label}」セクションに Markdown 表が含まれています（箇条書きのみ許可）")
 
@@ -440,7 +469,7 @@ class Validator:
     # kind -> 今期間を指す語。週報では【今期の売上目標】は期アンカー（3ヶ月分）であって
     # 今週の売上目標ではない。ここを `今(週|月|期)` で緩く拾うと、週報で期アンカーの側を
     # 掴んで突合が壊れるので、種別ごとに1語へ固定する。
-    KIND_PERIOD_WORD = {"week": "今週", "month": "今月", "period": "今期"}
+    KIND_PERIOD_WORD = {"week": "今週", "month": "今月", "period": "今期", "year": "今年"}
 
     def _period_word(self) -> str:
         return self.KIND_PERIOD_WORD.get(self.kind, "今週")
@@ -896,10 +925,10 @@ class Validator:
             self.fail("未展開テンプレート変数 {{...}} が残っています")
 
         # 1. ファイル名チェック
-        if re.search(r"^UBM - [1-3]-", self.basename):
+        if re.search(r"^UBM - [1-4]-", self.basename):
             self.ok("ファイル名プレフィックス")
         else:
-            self.fail("ファイル名が 'UBM - {1,2,3}-' で始まっていません")
+            self.fail("ファイル名が 'UBM - {1,2,3,4}-' で始まっていません")
         if re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}[〜~][0-9]{4}-[0-9]{2}-[0-9]{2}", self.basename):
             self.ok("日付パターン")
         else:
@@ -913,6 +942,7 @@ class Validator:
             and "１ヶ月" not in l
             and "２ヶ月" not in l
             and "３ヶ月" not in l
+            and "１年" not in l
         ]
         if not zenkaku:
             self.ok("全角数字なし")
@@ -965,6 +995,20 @@ class Validator:
                         "今期の行動目標（行動管理・優先順位付き）", "現在事業パートナー数", "現在のグリッドパートナー数",
                         "今期やらないこと（明確に排除するもの）", "今期末の振り返りチェックリスト", "事業の柱"]:
                 self.check_require_exact(lbl)
+        elif self.kind == "year":
+            # 1年層。期報（period）と同じ骨格で、期間語を「今年/前年」に置き換えたもの。
+            # 最重要数字を必須にしているのは、この層の数字（到達点）が3ヶ月→1ヶ月→1週間へ
+            # 割られていく起点で、ここが空だと下位層の分母が決まらないため。
+            for lbl in ["確認された情報", "今年の最重要数字", "今年の累計売上実績",
+                        "前年の売上目標", "前年の売上実績",
+                        "前年の売上目標と実績の差分", "前年の売上に対して未達を挽回するための行動",
+                        "前年の売上以外の成果目標", "前年の売上以外の成果実績",
+                        "前年の売上以外の成果に対して未達を挽回するための行動", "前年の売上以外の成果目標と実績の差分",
+                        "前年の行動目標（行動管理）", "前年の行動実績（行動管理）", "前年の行動目標と実績の差分",
+                        "前年の行動に対して未達を挽回するための行動", "今年の売上目標", "今年の売上以外の成果目標",
+                        "今年の行動目標（行動管理・優先順位付き）", "現在事業パートナー数", "現在のグリッドパートナー数",
+                        "今年やらないこと（明確に排除するもの）", "今年末の振り返りチェックリスト", "事業の柱"]:
+                self.check_require_exact(lbl)
 
         # 5. 空セクション
         # 見出しの直後に空行を1行置くのは通常の Markdown。直後の1行だけを見ると
@@ -1003,7 +1047,7 @@ class Validator:
         self.check_goal_section(r"【前.*の売上目標】", "前期間の売上目標", "numeric")
         self.check_goal_section(r"【前.*の売上実績】", "前期間の売上実績", "numeric")
         self.check_goal_section(r"【前.*の売上目標と実績の差分】", "前期間の売上差分", "numeric")
-        self.check_goal_section(r"【今(週|月|期)の売上目標】", "今期間の売上目標", "numeric")
+        self.check_goal_section(r"【今(週|月|期|年)の売上目標】", "今期間の売上目標", "numeric")
         self.check_goal_section(r"【前.*の売上以外の成果目標】", "前期間の売上以外の成果目標", "bullet")
         self.check_goal_section(r"【前.*の売上以外の成果実績】", "前期間の売上以外の成果実績", "bullet")
         self.check_goal_section(r"【前.*の売上以外の成果目標と実績の差分】", "前期間の売上以外の成果差分", "bullet")
@@ -1021,10 +1065,21 @@ class Validator:
             return ("行動目標" in line and self._period_word() in line
                     and not re.search(r"差分|実績", line))
 
+        # 提出用セクション（`（提出）`）は1行1行動の箇条書きで、期日と内訳は管理用の側に
+        # 置く規定。数値・期日はそちらで検査するので、提出用を同じ検査に通すと規定どおりの
+        # ファイルが毎回 WARN 2件を出し、本当に期日の無い管理用の行が埋もれる。
+        # グループ見出しの抽出（C4/C5/S3）が `（提出）` を外しているのと同じ範囲に揃える。
+        # 精神論（NG表現）は提出用でも許さないので、そちらは両方を対象に残す。
+        def action_managed_pred(line: str) -> bool:
+            return action_pred(line) and "（提出）" not in line
+
         action_section = self.capture_awk(action_pred)
-        action_items = [l for l in action_section if re.match(r"^([*-] |・)", l)]
+        action_items = [
+            l for l in self.capture_awk(action_managed_pred)
+            if re.match(r"^([*-] |・)", l)
+        ]
         if action_section:
-            ng = [l for l in action_section if re.search(r"頑張る|意識する|気をつける|心がける|努力する", l)]
+            ng = [l for l in action_section if GOAL_SPIRIT_RE.search(l)]
             if not ng:
                 self.ok("NG表現なし（行動目標セクション）")
             else:
@@ -1046,15 +1101,14 @@ class Validator:
 
         # 9. やらないこと 3項目以上
         def notdoing_pred(line: str) -> bool:
-            return ("やらないこと" in line and re.search(r"今(週|月|期)", line)
+            return ("やらないこと" in line and re.search(r"今(週|月|期|年)", line)
                     and "守れたか" not in line)
 
         not_doing = self.capture_awk(notdoing_pred)
         if not_doing:
             bullet_count = sum(1 for l in not_doing if re.match(r"^([*-] |・)", l))
-            table_count = sum(1 for l in not_doing if re.match(r"^\|", l))
+            table_count = count_table_data_rows(not_doing)
             heading_count = sum(1 for l in not_doing if re.match(r"^### ", l))
-            table_count = table_count - 2 if table_count > 2 else 0
             total = bullet_count + table_count + heading_count
             if total >= 3:
                 self.ok(f"「やらないこと」{total}項目")
@@ -1073,9 +1127,11 @@ class Validator:
         has_project = any("【プロジェクト別タスク】" in l for l in self.lines)
         if self.kind == "period" and has_project:
             self.fail("期報にプロジェクト別タスクが含まれています（期報では出力禁止）")
+        if self.kind == "year" and has_project:
+            self.fail("1年目標にプロジェクト別タスクが含まれています（1年層では出力禁止）")
         if self.kind == "month" and not has_project:
             self.fail("月報にプロジェクト別タスクがありません（月報では必須）")
-        if has_project and self.kind != "period":
+        if has_project and self.kind not in ("period", "year"):
             checkbox_count = sum(1 for l in project_section if re.match(r"^(- |・)\[[ x]\] ", l))
             if checkbox_count >= 1:
                 self.ok(f"プロジェクト別タスクにチェックボックスが {checkbox_count} 件あり")
@@ -1129,14 +1185,63 @@ class Validator:
         return 1
 
 
+# GFM の区切り行はハイフン1個以上（`|--|`・`|:-:|` も区切り行）。3個以上に絞ると短い区切り行を
+# データ行と数え、表の行数が1つ多くなる。GFM では行の両端の `|` も省ける（`|---|---`・`---|---|`・
+# `---|---` も区切り行）。両端を必須にすると、末尾の `|` が無い区切り行で見出し行と区切り行を
+# データ行と数え（偽 PASS）、先頭の `|` が無い表を0行と数える（偽 FAIL）。ただし `|` を1つも
+# 含まない `---` は区切り線（水平線）なので、先読みで `|` を1つ以上要求する。
+TABLE_SEPARATOR_RE = re.compile(r"^(?=[^|]*\|)\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*$")
+
+# 表の途中でも、ここに当たる行は別のブロック（箇条書き・見出し・引用）の始まりなので表を閉じる。
+# 見出しは `#`〜`######` の後に空白か行末が続く行だけ。`#1 交流会 | 時間` のように `#` で始まる
+# セルは見出しではないので、`#` 1文字で閉じると先頭の `|` を省いた表の行を数え落とす。
+_BLOCK_START_RE = re.compile(r"^\s*(?:[*+-]\s|・|#{1,6}(?:\s|$)|>)")
+
+
+def has_markdown_table(lines: list[str]) -> bool:
+    """`|` で始まる行か区切り行が1行でもあれば、節に表があるとみなす。
+
+    先頭の `|` を省いた表も区切り行は必ず持つので、区切り行の有無で拾える。
+    """
+    return any(line.startswith("|") or TABLE_SEPARATOR_RE.match(line) for line in lines)
+
+
+def count_table_data_rows(lines: list[str]) -> int:
+    """表の行のうち、見出し行（区切り行の直前の行）と区切り行を除いた行数を返す。
+
+    「表の行数 - 2」と決め打ちすると、区切り行の無い表や、表が2つある節で数がずれる。
+    区切り行の後に続く `|` を含む行は、先頭が `|` でなくても表の行として数える（GFM は
+    両端の `|` を省ける）。表は空行・`|` を含まない行・別のブロックの始まりで閉じる。
+    区切り行の無い `|` 始まりの行は、これまでどおり表の行として数える。
+    """
+    count = 0
+    in_table = False
+    for i, line in enumerate(lines):
+        if TABLE_SEPARATOR_RE.match(line):
+            in_table = True
+            continue
+        if i + 1 < len(lines) and TABLE_SEPARATOR_RE.match(lines[i + 1]):
+            continue  # 見出し行
+        if in_table and "|" in line and not _BLOCK_START_RE.match(line):
+            count += 1
+            continue
+        in_table = False
+        if line.startswith("|"):
+            count += 1
+    return count
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="UBM目標設定 出力バリデーション", add_help=True)
     ap.add_argument("--file", required=True, help="検証対象の Markdown ファイル")
     ap.add_argument("--type", required=True, choices=list(TYPE_MAP.keys()),
-                    help="目標種別 weekly|monthly|quarterly（bimonthly は quarterly の後方互換の別名）")
+                    help="目標種別 weekly|monthly|quarterly|yearly（bimonthly は quarterly の後方互換の別名）")
     ap.add_argument("--peer", action="append", default=None, metavar="PATH",
                     help="層間整合を突き合わせる他層のファイル（任意・複数指定可）。"
                          "期アンカー3値の不一致を WARN で報告する（FAIL にはしない）")
+    if ACTION_POLICY_ERROR is not None and not {"-h", "--help"} & set(argv):
+        print(f"ERROR: 行動の語彙契約を読めません: {ACTION_POLICY_PATH}: {ACTION_POLICY_ERROR}", file=sys.stderr)
+        return 2
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -1144,22 +1249,38 @@ def main(argv: list[str]) -> int:
         # 「usage は正常に出たのに異常終了」になり、rc で成否を見る側が誤判定する。
         return 0 if e.code == 0 else 2
 
+    # 入力を読めないのは検査の FAIL (1) ではない。2 にして「直すのは下書きではなく呼び出し」と区別する。
     path = Path(args.file)
-    if not path.is_file():
-        print(f"ERROR: ファイルが見つかりません: {path}", file=sys.stderr)
-        return 1
+    text = read_input(path, "--file")
+    if text is None:
+        return 2
 
     peers: list[tuple[str, str]] = []
     for peer in args.peer or []:
         ppath = Path(peer)
-        if not ppath.is_file():
-            print(f"ERROR: --peer のファイルが見つかりません: {ppath}", file=sys.stderr)
-            return 1
-        peers.append((ppath.name, ppath.read_text(encoding="utf-8")))
+        ptext = read_input(ppath, "--peer")
+        if ptext is None:
+            return 2
+        peers.append((ppath.name, ptext))
 
     kind = TYPE_MAP[args.type]
-    text = path.read_text(encoding="utf-8")
     return Validator(text, path.name, kind, args.type, peers).run()
+
+
+def read_input(path: Path, flag: str) -> str | None:
+    """入力ファイルを UTF-8 で読む。読めなければ stderr に理由を出して None を返す。
+
+    utf-8-sig で開いて先頭の BOM を外す。BOM が残ると1行目のタイトル見出しが `## ` で始まらず、
+    必須タイトル見出しが無いと誤って FAIL する（validate-cross-level.py は BOM 付きでも通る）。
+    """
+    if not path.is_file():
+        print(f"ERROR: {flag} のファイルが見つかりません（またはファイルでない）: {path}", file=sys.stderr)
+        return None
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"ERROR: {flag} のファイルを UTF-8 で読めません: {path}: {type(exc).__name__}", file=sys.stderr)
+        return None
 
 
 if __name__ == "__main__":

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-plugin-package-check/scripts/run-pkg-015.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 8409bc2e09b13589d086618057c5cf9945217f5784938a05818b110d504004a6 をレビュー。実行検証あり）。範囲: 全 163 行。今回の差分（resolver を plugin_resources.resolve_root に置き換え）と、run()（73-142 行）の exit コード正規化、main（145-159 行）の --out 書き込みを見た。確かめたこと: pytest tests/scripts-plugins/test_harness_creator__run_pkg_015.py ほか PKG 系 3 ファイルで 15 passed。fixture（scratchpad/covR/work-s1/f4/）で --help exit 0、記録 0 件の log-dir で not_applicable（0/20、source_exit_code 3）と exit 0、--plugin 無しで argparse exit 2、兄弟 plugin が無い配置で fail JSON と exit 1、linter が無い配置で「rubric linter output unavailable」の fail と exit 1、Python 3.9 でも exit 0。一時ファイル（81 行）は --out の親に作り 110 行で消すので、header の write-scope「--out parent only」と合う。lint-script-frontmatter.py は scripts ディレクトリで流して、この script の違反は 0。指摘: [低] --out がディレクトリだと 157 行の write_text が IsADirectoryError の traceback で exit 1、--out の親がファイルだと 74 行の mkdir が FileExistsError の traceback になり、決めた exit と JSON で止まらない。[低] 存在しない --log-dir や --plugin の綴り違いでも、記録 0 件の bootstrap として not_applicable と exit 0 になり、入力の誤りと見分けられない。[低] --bootstrap-threshold に負数（-5）を渡しても受け付け、記録 0 件のまま pass になる。[低] header の inputs に --bootstrap-threshold が無く、outputs に exit コード（0/1）が無い。102-107 行のデコード失敗時の結果だけ \"plugin\" key が無く、79・135 行の形と揃っていない。DEDUCTION: --out 書き込みの traceback -3、誤入力が not_applicable になる -3、負の閾値を受け付ける -2、header と結果の形のずれ -2 → 90。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

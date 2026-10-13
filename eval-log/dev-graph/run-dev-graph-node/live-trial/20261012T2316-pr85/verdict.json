@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-node",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/node3/fx --hook-source plugin",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "必須の独立 verifier が一度も起動されていない。SKILL.md の frontmatter には goal_seek.fork: subagent と activation_state: semantic_evaluator_started があり、本文はこれを「実行契約とする」と定めている。ゴールシーク配線も「prompts/<R-id>.md を読み、Agent で分離 context に fork する」と書いている。prompt-common-layers.md の 5.1 は「独立検証は Agent で分離 context に fork する」と定めている。task.md は「必須 Agent を実行する」「standard を記録して正規の後続検証へ進める」を求めている。それでも transcript.jsonl 全196行に Agent/Task の tool_use は0件ある。guard.jsonl の29件も Bash/Skill/Write だけで、Agent の呼出しは無い。collect/subagent-transcripts も存在しない。ws/.claude/settings.local.json の deny に Agent/Task は無く、guard の deny も0件なので、sandbox の遮断が原因ではない。",
+      "自己承認になっている。transcript 174行で、node の goal-spec を全作業の終了後に Write し、\"activation_state\": \"semantic_evaluator_started\" と \"artifact_delivery_choice\": \"standard\" を記録した。176行の progress.json では、writer 自身が全 checklist と feedback_criteria の OUT1 (verify_by は live-trial) を PASS と採点した。semantic evaluator は実在しない。goal-seek のループも回しておらず、記録は事後に作られている。148行の thinking にある「standard選択を保存しました」も、その時点ではどのファイルにも記録されていない。dev-graph-integrity-auditor は owner_skill=run-dev-graph-node で「writer と評価者の同一化による自己承認を防ぐ」役割を持つが、これも起動されていない。結果として、独立検証を経ずに status.json へ PASS を書いている (190行、194行の「DONE: PASS」)。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "85dbc6e0374cbf5c2af9e733d9453b075cdc90cae627ea07f562cd96114fb372",
+  "transcript_sha256": "f3a38c3498a94abe653daaad25fd8bbca9651fcdaf642d1812373cf407b5fdfb",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 385.0
+  },
+  "scenario_id": "C02-OUT1-positive-mixed-artifacts-fixture-standard-v2"
+}

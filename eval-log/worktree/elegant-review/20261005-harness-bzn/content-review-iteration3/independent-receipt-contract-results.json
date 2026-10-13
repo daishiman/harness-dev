@@ -1,0 +1,420 @@
+{
+  "result": "PASS",
+  "findings": [
+    "F-4003",
+    "F-4004"
+  ],
+  "schema_sha256": "cfcd7967f0de9aac4b3305a5e0f88e922b69e0e77775217efd9ae062a3beed4a",
+  "test_sha256": "eaaad26af2a67820e69f267eca54a794229a4eb142fe7c2387ebc5fe41abe7af",
+  "schema_cases": [
+    {
+      "case": "three-criteria-PASS-PASS-PASS-root-PASS",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-PASS-PASS-PASS-root-FAIL",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-PASS-PASS-FAIL-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT9",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-PASS-PASS-FAIL-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-PASS-FAIL-PASS-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-PASS-FAIL-PASS-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-PASS-FAIL-FAIL-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT9",
+          "status"
+        ],
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-PASS-FAIL-FAIL-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-FAIL-PASS-PASS-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-FAIL-PASS-PASS-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-FAIL-PASS-FAIL-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT9",
+          "status"
+        ],
+        [
+          "criteria_results",
+          "IN2",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-FAIL-PASS-FAIL-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-FAIL-FAIL-PASS-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2",
+          "status"
+        ],
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-FAIL-FAIL-PASS-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "three-criteria-FAIL-FAIL-FAIL-root-PASS",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT9",
+          "status"
+        ],
+        [
+          "criteria_results",
+          "IN2",
+          "status"
+        ],
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "three-criteria-FAIL-FAIL-FAIL-root-FAIL",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "unknown-root-'UNKNOWN'",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "verdict"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-criterion-'UNKNOWN'",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-root-'ERROR'",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "verdict"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-criterion-'ERROR'",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-root-None",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "verdict"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-criterion-None",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-root-1",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "verdict"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-criterion-1",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-root-True",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "verdict"
+        ]
+      ]
+    },
+    {
+      "case": "unknown-criterion-True",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "live-PASS-ref-False",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2"
+        ]
+      ]
+    },
+    {
+      "case": "live-PASS-ref-True",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "live-FAIL-ref-False",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "live-FAIL-ref-True",
+      "schema_valid": true,
+      "expected": true,
+      "error_paths": []
+    },
+    {
+      "case": "nonlive-forbids-live-ref",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2"
+        ]
+      ]
+    },
+    {
+      "case": "nonlive-forbids-scenario",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2"
+        ]
+      ]
+    },
+    {
+      "case": "live-cannot-relabel-evidence-kind",
+      "schema_valid": false,
+      "expected": false,
+      "error_paths": [
+        [
+          "criteria_results",
+          "IN2",
+          "evidence_kind"
+        ]
+      ]
+    }
+  ],
+  "case_count": 33,
+  "acceptance_function_AST_unchanged": true,
+  "actual_acceptance_rejects_schema_valid_FAIL": {
+    "rejected": true,
+    "source_line": 101,
+    "assertion": "assert receipt[\"verdict\"] == \"PASS\""
+  },
+  "current_node_limit": 3,
+  "historical_node_limit5_exact_bytes": [
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/historical-content-review-iteration2/dev-graph/run-dev-graph-node/elegance-verdict.json",
+      "sha256": "d81a2f584623ce27118f4ec88193e4a00ea8e98c2352d12e471325c3441d863f",
+      "historical_limit": 5
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/historical-content-review-iteration2/dev-graph/run-dev-graph-node/rubric-verdict.json",
+      "sha256": "28d09f77840b059eecf91a5784cb4f5dba205970e3e12a3f94c913a11fb3bdb1",
+      "historical_limit": 5
+    }
+  ],
+  "behavior_fingerprints": [
+    {
+      "skill": "run-dev-graph-init",
+      "behavior_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-node",
+      "behavior_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-sync",
+      "behavior_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-requirements",
+      "behavior_sha256": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-render",
+      "behavior_sha256": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-decompose",
+      "behavior_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-schedule",
+      "behavior_sha256": "9d9e1dd4b268bb8283f7ffd94af53101b774c80f1718906a6cf25ea9d2ef6e8d",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-status",
+      "behavior_sha256": "e81710850e2111bbc78d3ee9a5b0303a4d7dba097d9f9beba2d555ff5a199c84",
+      "unchanged": true
+    },
+    {
+      "skill": "run-dev-graph-system-spec",
+      "behavior_sha256": "9be478fa7e2221c7d7a7e9e69ac694f1b48b2d339fc6064f7ee757f4b9dcc0e9",
+      "unchanged": true
+    }
+  ],
+  "source_edits": false,
+  "execution_scope": "Synthetic tmp receipts and actual schema/acceptance function only; no live acceptance claimed."
+}

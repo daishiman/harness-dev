@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-init",
+  "args": "--repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T174417-bzn4-init-retry --hook-source plugin",
+  "requested_model": "",
+  "actual_model": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "No R1–R5 responsibility prompt was read and no mandatory independent Agent verifier was actually launched, contrary to the explicit clarified task execution contract.",
+      "L121 Write used 個人開發 instead of the actual 個人開発 workspace path. Its successful tool result created the PASS marker outside the allowed fixture/proof directory; the specified completion marker remained absent.",
+      "No user-edit preservation exercise or before/after digest proof was collected. Two empty-fixture writer calls and a no-op result prove basic idempotence, not preservation of edited templates."
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+  "transcript_sha256": "61df5998b49ddc23cb605ced3d3bebc3113f4ad05cd7127908155b56ed2cc84a",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.289",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "OPERATOR_ABORT_SCOPE_VIOLATION",
+    "wall_clock_s": null
+  },
+  "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2"
+}

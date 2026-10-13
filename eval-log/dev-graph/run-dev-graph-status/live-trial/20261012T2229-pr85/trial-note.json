@@ -1,0 +1,33 @@
+{
+  "label": "status4",
+  "retry_of": "20261012T1810-pr85",
+  "evaluator_agent_id": "a480d36887dbd1771",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/status4/ws/plugins/dev-graph/skills/run-dev-graph-status",
+  "closure_sha_at_launch": "244ed98ad1e234e76f93f2a112581bf70e5ec5c526b5476b478153cd3dc87a8a",
+  "closure_sha_tested_copy": "244ed98ad1e234e76f93f2a112581bf70e5ec5c526b5476b478153cd3dc87a8a",
+  "closure_sha_wtpy_at_verdict": "244ed98ad1e234e76f93f2a112581bf70e5ec5c526b5476b478153cd3dc87a8a",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "fixture: mkfx.sh でその場で git init した素の repo (最初の commit は 77754f09…、追跡は README.md だけ)。status3 と同じ手順で、seed は使っていない。",
+    "隔離ガード: status3・render5 と同じ (guard.py f23267a3…、mksettings.py 277ae072…。外へ送る tool と許可一覧に無い tool を拒否)。",
+    "task.md: status3 のものから run の dir の名前 (runs/status3 → runs/status4) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/status4/tmp。短い symlink /private/tmp/ltpr85/t/st4 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: bytecode の修正の後の wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 244ed98a… は team-lead の 12:26Z の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。準備の経路で使う run-dev-graph-init (6765b176…) と run-dev-graph-node (85dbc6e0…) も同じ写しで動く (prep_skill_closures)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "run-dev-graph-status/SKILL.md の L127 と L130 (ゴールシーク配線) は、goal-spec・progress・intermediate.jsonl を caller repo の $DEV_GRAPH_ROOT/eval-log/ に書かせる。description は「副作用なしで確認」をうたうが、extract-graph-status.py の read_only の検査は graph・config・content の 5 ファイルしか追わず、この書込みは検出されない。再現: 初期化済みの clean な repo で status を artifact_delivery=standard で走らせると、eval-log/run-dev-graph-status-{goal-spec.json,progress.json,intermediate.jsonl} が増え、git status に '?? eval-log/' が出る (この trial では fx/eval-log の 22:41 のファイル)。read-only の skill として、記録先を repo の外にするか、例外として明記する必要がある。",
+    "SKILL.md の L131 は、skill の完了に外ループの OUT1 (verify_by: live-trial)・OUT2 (verify_by: test) と content-review の PASS を求めるが、それを skill の中で実行する手順が無い。そのため実行者は自己申告で埋めがちになる。再現: この trial の fx/eval-log/run-dev-graph-status-progress.json は、live-trial も content-review も走らせないまま OUT1/OUT2/content_review を PASS と書いている (L274)。"
+  ]
+}

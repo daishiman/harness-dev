@@ -1,0 +1,39 @@
+{
+  "label": "node4",
+  "retry_of": "20261012T2316-pr85",
+  "evaluator_agent_id": "a635ac75384164329",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/node4/ws/plugins/dev-graph/skills/run-dev-graph-node",
+  "closure_sha_at_launch": "aa526da0e8dcabc85fd5b8033c0fd6023230f5ec1d309e03d6d04e319d5a7538",
+  "closure_sha_tested_copy": "aa526da0e8dcabc85fd5b8033c0fd6023230f5ec1d309e03d6d04e319d5a7538",
+  "closure_sha_wtpy_at_verdict": "aa526da0e8dcabc85fd5b8033c0fd6023230f5ec1d309e03d6d04e319d5a7538",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "fixture: mkfx.sh でその場で git init した素の repo (最初の commit は de9d2a64…、追跡は README.md だけ)。node3 と同じ手順で、seed は使っていない。起動の前に、追跡が README.md の 1 つだけで commit が 1 つだけであることを読取りで確かめた (fixture-provenance.json の seed_check)。",
+    "隔離ガード: node3 と同じ (guard.py f23267a3…、mksettings.py 277ae072…。外へ送る tool と許可一覧に無い tool を拒否。§17 から render5・status4 と同じ)。",
+    "task.md: node3 のものから run の dir の名前 (runs/node3 → runs/node4、4 か所) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/node4/tmp。短い symlink /private/tmp/ltpr85/t/nd4 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 aa526da0… は team-lead の連絡「node4 の開始の合図」の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。準備の経路で使う run-dev-graph-init (6765b176…) も同じ写しで動く (prep_skill_closures)。trial の間は 30 秒ごとに wtpy の閉包を測り、18 回とも aa526da0 で、起動から終わりまで動かなかった (workdir/closure-watch.log)。",
+    "期待の閉包の更新: 起動の前に、retake.py の EXPECTED の node を team-lead の連絡の値 aa526da0… に直した (直す前は smoke/retake.py.before-node4。fixture-provenance.json の expected_closure_change)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。被験の session の root は node3 と同じ ws (fixture-provenance.json の session_root)。plugins/dev-graph は変えていない。",
+    "取り直しの経緯: node3 (20261012T2316-pr85) の後に被験 skill の閉包が 85dbc6e0 から aa526da0 に変わった (team-lead の連絡「node4 の開始の合図」) ので、今の閉包で取り直した。retry_of は node3。",
+    "system-dev-planner の hook の bytecode (trial の間の事実): 写しの ws/plugins/system-dev-planner/scripts/__pycache__/ (dir) と、その中の manage-system-plan-lock.cpython-311.pyc・resolve-project-context.cpython-311.pyc の 2 本ができた (dir 1 と pyc 2 の 3 件。どれも 05:28:32 JST、起動の 6 秒後)。system-dev-planner の hooks.json の PreToolUse が guard-implementation-readiness.py を -B なしの python3 で起こし、この hook が 2 本を importlib で読む。写しの hooks.json (8b091c0b…) と guard-implementation-readiness.py (0d6373d8…) は decompose4 の写しと diff 0 (fixture-provenance.json の system_dev_planner_hook_copy)。trial の transcript にこの 2 本を直接呼んだ記録は 0 件。dev-graph の写しと wtpy の bytecode の差は 0 件。team-lead の説明: 「plugin 本体の側の既知の課題で、dev-graph の閉包のうち system-dev-planner の hook に由来する。被験の skill の手順の欠陥ではない」。plugin 本体は直していない。評価者の prompt にも事実として書いた。",
+    "評価者の操作 (trial の後の事実): 評価者は fx で --no-optional-locks なしの git status を 1 回回し、fx/.git/index が 05:43:43 JST に書き直された。entry は README.md の 1 つ (blob 0d309b3f…) のままで、diff-index --cached HEAD は 0 件、HEAD は de9d2a6 のまま。また評価者の cat > /dev/null が stdin を待って時間切れになり background の task になったので、評価者は TaskStop で止めた。その出力の file (10 byte) が orchestrator の session の tasks dir に残る。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 4 か所 (2 ファイル) 伏せた。アカウント名は 0 か所 (redact.py)。",
+    "伏せ字と、trial の間と後の事実 (system-dev-planner の hook の bytecode、評価者の操作) のほかは、どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "責務を fork する条件が SKILL.md と共通層で食い違っている。SKILL.md 181 行は「未達 responsibility を担当する prompts/<R-id>.md を読み、Agent で分離 context に fork する」と言う。一方 references/prompt-common-layers.md の 5.1 は「重い判断または独立検証は Agent で分離 context に fork する」と言う。再現の手順: 今回の run のように R0-R4 を main の context で実行しても、ゴールシーク検証と goal-spec の check は通る。どちらが規範なのかが決まらない。",
+    "pre-choice の「usable artifact の path・digest・開き方を提示してから、選択を記録する」順序に問題がある。事前に回答済みの非対話の run で、何を提示とみなすかが曖昧で、検証の script もこの提示を確かめない。再現の手順: 今回の run では、目に見える出力は L148 の「Preview OK…」だけだった。path・digest・開き方の提示と standard の選択は、L154 の thinking と L164 の goal-spec の記録にしか無い。それでも goal-seek は OK になった。",
+    "verifier の read-only 指示が守られなかった。dev-graph-integrity-auditor の定義は read-only だが、渡された prompt の「書込み一切禁止」を破って、subagent は $TMPDIR/o.json へ redirect した (subagent transcript の L18)。agent の定義にも検証にも、validator の出力を一時ファイルに書かない手段や、書いたことを検出する仕組みが無い。"
+  ]
+}

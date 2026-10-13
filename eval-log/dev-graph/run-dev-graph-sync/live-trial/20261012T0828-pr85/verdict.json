@@ -1,0 +1,47 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-sync",
+  "args": "sync --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync2/fx --binding github --adapter-fixture /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync2/fx/github-adapter.json --repeat 2",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion",
+    "frontmatter.external_mutation_guard"
+  ],
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "OUT1 の合格条件を満たしていない。1 回目の export (Issue #102 の title を remote に反映する操作) は適用されていない。fx/github-adapter.json は変わっておらず、fx/github-adapter-calls.jsonl は mutation:false の読取り 5 行 (issue-view が 101 と 102、project-resolve、project-item-fields が 2 件) だけで、mutation:true の呼出しは 0 件だった。",
+      "2 回目の sync を実行していない。そのため、changes=0 と、Issue 計画と Projects 計画の両方で converged=true になることを確かめていない。task.md は「1 回目の export が実際に apply され、かつ 2 回目が 0 件のときだけ PASS」と定めている。collect/out/status.json は FAIL (scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2) だった。",
+      "gate の確認が成立しなかったのは trial の配置が原因で、被験 skill の欠陥ではない。session は ws を cwd として起動した (transcript L7、L213、L236 の cwd)。Bash で fx に cd しても、毎回 ws に戻されていた (L118、L158、L182、L197 ほか)。task.md は `--project-root` を fx に固定するよう指示しており (L222)、preview は fx/.artifact-delivery/external-mutation/preview-e598b71886c143f4be1590cf7b38555a.json に作られた。一方、UserPromptSubmit hook (ws/plugins/skill-governance-adapters/hooks/build-external-mutation-guard.py の hook_confirm、L395-412) は payload の cwd、つまり ws を project root とみなす。`_confirm_challenge` (L419-447) はその state_dir の preview-*.json を challenge_sha256 で照合するため、ws 側には一致する preview がない。その結果、gatewatch が 08:33:28 に送った `CONFIRM EXTERNAL MUTATION 989E2D69BDC6A942AC605A23` (collect/gate-sent.log) は L238 で confirmation-unmatched になった。",
+      "orchestrator 側の gate-response.json も存在しなかった (L242-243)。authorize と execute へ進む正規の経路がほかに無いため、export は実行できなかった。session は gate を迂回せず、fail-closed で FAIL を記録した (L250、L260)。これは正しい振る舞いで、blocker の原因は配置 (session の cwd が ws、fixture が fx) にある。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "1ee65e4fa848f23c9bdfbd56e08362361dc60968660131743b310ee894df7215",
+  "transcript_sha256": "7a49db4be2db2f8e278b86e2ca9afd5fb3f758d6369310948432b6a0ac0e067c",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 3.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 357.0
+  },
+  "scenario_id": "C03-OUT1-positive-second-sync-zero-fixture-standard-v2"
+}

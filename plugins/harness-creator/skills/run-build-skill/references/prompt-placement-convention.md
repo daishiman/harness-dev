@@ -9,17 +9,7 @@ version: 1.0.0
 
 ## 適用範囲
 
-本規約は brief.kind に応じて適用度合いを切り替える。Phase 3 で確定 (2026-05-21)。
-
-| brief.kind | 責務単位 7 層 prompt | brief.responsibilities[] |
-|---|---|---|
-| `run` | **必須** | 1 件以上 (空配列禁止) |
-| `assign` | **必須** | 1 件以上 (空配列禁止) |
-| `ref` | 既定 skip (`prompt_creator_policy: skip`) | 空配列許容 |
-| `wrap` | 既定 skip (`prompt_creator_policy: skip`) | 空配列許容 |
-| `delegate` | 既定 skip (`prompt_creator_policy: skip`) | 空配列許容 |
-
-`ref/wrap/delegate` で明示的に prompt 生成したい場合は brief に `prompt_creator_policy: required` を立てて override する。
+適用kind・required/optional/skipの既定値は `../../run-skill-create/schemas/skill-brief.schema.json` と `validate-build-trace.py` の resolved policy 判定を正本とする。別のkind表で上書きしない。agent/prompt の本文生成・更新時の必須経由と provenance は SKILL.md Step 0 / Step 7.5 に従う。delegate の禁止された required 指定や、生成物があるのに optional/skip とする降格は行わない。
 
 ### 単一責務デフォルト補完
 
@@ -35,7 +25,7 @@ responsibilities:
 `kind ∈ {run, assign}` で `prompt_required: false` のままだと PG-001 で fail する。run/assign は必ず 1 件以上の `prompt_required: true` を持つこと。
 
 
-prompt-creator が brief.responsibilities[] ごとに生成する 7 層 YAML を、**各 skill のサブディレクトリ** に格納する規約。再現性 (同 brief → 同パス → 同 sha256) を機械検証できる形に固定する。
+prompt-creator が brief.responsibilities[] ごとに生成する 7 層 Markdown を、**各 skill のサブディレクトリ** に格納する規約。再現性 (同 brief → 同パス → 同 sha256) を機械検証できる形に固定する。
 
 ## 配置パス
 
@@ -81,12 +71,12 @@ plugins/example/skills/run-example/prompts/R2b-readiness.md
 
 ## 正本の向き (canonical direction) と禁止アンチパターン
 
-責務単位 7 層プロンプトの **SSOT 正本は常に `prompts/<R-id>.md` 側**に置く。`agents/*.md` は 9 セクション骨格 + `<!-- responsibility: <id> -->` anchor を持つ **実行アダプタ**であり、本文は prompts/ の anchor 配下に充填/参照する(`agent-template.md#prompt-creator-連携` の双方向責務契約)。向きを一意に固定する:
+責務単位 7 層プロンプトの **SSOT 正本は常に `prompts/<R-id>.md` 側**に置く。`agents/*.md` は 7層本文と発話・自己採点の2節 + `<!-- responsibility: <id> -->` anchor を持つ **実行アダプタ**であり、本文は prompts/ の anchor 配下に充填/参照する(`agent-template.md#prompt-creator-連携` の双方向責務契約)。向きを一意に固定する:
 
 | 役割 | 置くもの | 置かないもの |
 |---|---|---|
 | `prompts/<R-id>.md` | 7 層本文の SSOT 正本(生成出力) | リダイレクトのみの空殻 |
-| `agents/<role>.md` | frontmatter / 9 セクション骨格 / anchor / 起動指示 | 7 層本文の正本(prompts の重複コピー) |
+| `agents/<role>.md` | frontmatter / 7層本文と発話・自己採点の2節 / anchor / 起動指示 | 7 層本文の正本(prompts の重複コピー) |
 
 ### 禁止アンチパターン: PROMPT-REDIRECT-INVERSION
 
@@ -136,17 +126,17 @@ kind ごとに必須資産カテゴリが定まる (run→prompts / ref→refere
 | 検証項目 | 検証主体 | 失敗時の挙動 |
 |---|---|---|
 | パスが正規表現にマッチ | `validate-build-trace.py` | exit 1 (trace.prompt_generation_model.per_responsibility[].layer_yaml_path) |
-| responsibility.id 集合 == prompts/*.yaml ファイル名集合 | `validate-build-trace.py` | exit 1 (anchor_coverage 相当) |
+| responsibility.id 集合 == prompts/*.md ファイル名集合 | `validate-build-trace.py` | exit 1 (anchor_coverage 相当) |
 | 同 brief で 2 回生成して sha256 一致 | `validate-build-trace.py` + dogfooding test | escalation 非 none 必須 |
-| SubAgent.md anchor 集合 == prompts/*.yaml ファイル名集合 | `lint-agent-prompt-section.py --strict-coverage --brief <brief>` | exit 1 |
+| SubAgent.md anchor 集合 == 対象promptのresponsibility.id集合 | `lint-agent-prompt-section.py --strict-coverage --brief <brief>` | exit 1 |
 
 ## 既存実装との橋渡し
 
-`run-prompt-creator-7layer` SKILL.md は出力先を `plugins/<plugin>/agents/prompts/<role>.yaml` と既定しているが、本規約導入以降は次のように切替:
+`run-prompt-creator-7layer` の新規既定は `skill-local-v1` / Markdown。責務IDが無い既存の agents-legacy パスだけ読み取り互換として保持する:
 
 | brief.responsibilities[] の有無 | 出力先 |
 |---|---|
-| 1 件以上あり | `plugins/<plugin>/skills/<skill>/prompts/<R-id>.yaml` (本規約) |
+| 1 件以上あり | `plugins/<plugin>/skills/<skill>/prompts/<R-id>.md` (本規約) |
 | 空配列 (ref/wrap で legacy) | `plugins/<plugin>/agents/prompts/<role>.yaml` (旧来パス、後方互換) |
 
 切替は `--responsibility-id <R-id>` 引数で明示する。旧来パスは deprecated とし、`prompt-creator-trace.json` に `path_convention: "skill-local-v1" | "agents-legacy"` を必須記録する。
@@ -158,7 +148,7 @@ kind ごとに必須資産カテゴリが定まる (run→prompts / ref→refere
 ls plugins/skill-intake/skills/run-intake-interview/prompts/
 
 # 再現性ハッシュ確認
-sha256sum plugins/*/skills/*/prompts/*.yaml
+sha256sum plugins/*/skills/*/prompts/*.md
 
 # trace との突合
 python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py \
@@ -170,4 +160,4 @@ python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-tr
 - `../../run-skill-create/schemas/skill-brief.schema.json#responsibilities` — brief 側 id / prompt_required 仕様 (正本)
 - `reproducibility-trace-schema.md#prompt_generation_model` — per_responsibility[].layer_yaml_path
 - `agent-template.md#prompt-creator-連携` — SubAgent.md 側 anchor 規約
-- `plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md` — 出力フォーマット (7 層 YAML)
+- `plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md` — 出力フォーマット (7 層 Markdown)

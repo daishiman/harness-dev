@@ -105,6 +105,14 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 `missing_effect=block` の item が全て接地していることを検証する。qa entry に item_id を書いた
 だけで、どの確定セルからも参照されていない回答は接地の証拠として数えない。
 
+初回の確定前に入力 state 自身をこの検証へ渡すと、まだ確定セルが無いため循環する。
+`confirm` を含む `apply` / `chunk` は `--required-info <required-info-catalog.json>` を付ける。
+writer がメモリ上に作った候補 state に既存 `validate_required_info` を適用し、通過後だけ
+`--state` (または `--out`) へ書く。失敗時は入力ファイルも出力ファイルも変更しない。
+未確定の回答を蓄積するだけの turn / `reopen` はこの引数なしで行い、集めた回答を
+セルへ結び付ける最初の `confirm` から候補検証を行う。`--out` で候補を別pathへ出す場合も
+同じ検証を通し、正本へ直接 JSON をコピーしない。
+
 `question` / `answer` の事後書換は writer が拒否する (記録の改竄防止)。訂正が要る場合は新しい
 `id` を発行する。`provenance` / `answered_at` は**未設定のときに限り**後から追記でき、既に値が
 ある項目の上書きは拒否される (追記は冪等)。C03 compile はこれらを章の「確定内容 (質疑録)」節へ
@@ -129,7 +137,7 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 `recommendation.latest_checked_at` / `user_decision.confirmed_at` / `answered_at` は RFC3339 の
 **書式**に加えて「未来でないこと」を writer が課す (時計ずれ許容 300 秒)。書式だけを見る検査は
 「書式の正しい嘘」— まだ行っていない照合や採択を済んだものとして書いた値 — を素通りさせるため。
-値は `date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を使う。
+値は `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'` の実測値を使う。
 
 ## category_aggregate 真理値表 (4値・導出のみ)
 
@@ -287,7 +295,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scr
 
 - **確定巻き戻し拒否**: `確定` セルへの `confirm` / `exclude` は `TransitionError`。Bash/script 経由でも拒否。
 - **R4-reopen 経由のみ確定変更**: `確定` を動かせるのは `reopen` (要 `reason` と `reopened_at`) だけ。`未収集` へ戻し `reopen_log` に根拠を残す。
-  `reopened_at` は他の時刻と同じく**呼び出し側の実測値** (`date -u +%Y-%m-%dT%H:%M:%SZ`) を要求し、未来値は拒否する
+  `reopened_at` は他の時刻と同じく**呼び出し側の実測値** (`python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'`) を要求し、未来値は拒否する
   (writer が `now()` で埋めると書込時刻が実施時刻を騙るため)。reopen は確定を巻き戻せる唯一の経路であり、
   時刻が無いと「差し替え後の主根拠がこの reopen より後に取り直された回答か」を検査できず、
   先に確定を壊してから既存の回答を主根拠に流用した場合と、正当に取り直した場合が同じ見た目になる。

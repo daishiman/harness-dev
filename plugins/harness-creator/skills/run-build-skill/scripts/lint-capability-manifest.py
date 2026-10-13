@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# name: lint-capability-manifest
+# purpose: SKILL.md・commands/agents の *.md・plugin-composition.yaml を CapabilityManifest schema で検証する非ブロックの PostToolUse hook（jsonschema・pyyaml が無いときは、必須キーと最上位の値だけの最小検査に縮退する）
+# inputs:
+#   - stdin: {"tool_input": {"file_path": "..."}} 形式の hook JSON
+# outputs:
+#   - stderr: lint の結果（hook 内部の不具合も internal error として出す）
+#   - exit: 常に 0（hook を止めない）
+# requires-python: ">=3.9"
+# dependencies: []
+# contexts: [C]
+# network: false
+# write-scope: none
+# ///
 # 発火: PostToolUse:Edit|Write hook (Claude Code)
 # 副作用境界: stderr に lint 結果のみ。ファイル変更なし。常に exit 0(非ブロック)。
 # 想定 input: {"tool_input": {"file_path": "..."}} 形式 JSON。
@@ -230,8 +244,20 @@ def main() -> int:
                     ensure_ascii=False,
                 )
             )
-    except Exception:
-        pass
+    except Exception as exc:
+        # hook は止めない (exit 0) が、内部の不具合を黙って握り潰すと lint が効いていないことに誰も気づけない
+        try:
+            sys.stderr.write(
+                json.dumps(
+                    {
+                        "hook": "lint-capability-manifest",
+                        "error": f"internal error: {type(exc).__name__}: {exc}",
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        except OSError:
+            pass  # stderr 自体が閉じているときは出す先が無い
     return 0
 
 

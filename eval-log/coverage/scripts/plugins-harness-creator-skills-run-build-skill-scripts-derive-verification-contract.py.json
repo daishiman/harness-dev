@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/derive-verification-contract.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 7486821f1a0d08d3e4655fa50efa1c8b2e8b698e7abae7c2466647ec3c277bb8 をレビュー。実行検証あり）。範囲: 215行の全体を通読し、`git diff HEAD` で前回の指摘への手当てを確認。確かめたこと: 前回の [中]（checker.argv の固定パス）は直っている。`_checker_script`（59-67行）が同じ scripts/ の validate-build-plan.py を、repo の中なら repo 相対、外なら絶対パスで返し、無ければ ValueError で exit 2。fixture で、外部の repo では実物の絶対パス、repo 内の写しでは repo 相対の argv になり、cwd=repo で validate-build-plan が実際に起動した。install した写し（inst/scripts）では写しの絶対パスになる。引数（brief・skill_dir）も repo 相対で、cwd=repo root で実行する前提と矛盾しない。前回の [低]（subject が object）は 190-191行で直り、subject が object なら rc2。pytest 4 ファイル（test_verification_obligation_planner・test_verification_evidence_input_guards・test_capability_build_runtime_contract・tests/test_iter_improve_contract）で 128 passed。--help は rc0。units が null・units が str・重複する id（a/b と a-b）・tier が list・深い入れ子の JSON・--out の親がファイル・repo 外のパスは、すべて rc2 の [ERROR] で traceback なし。lint-script-frontmatter はファイルで OK、ディレクトリで checked=30。SKILL.md の Key Rule 6（197行）と照合し、一致した。指摘: [低] 93行 `str(raw_unit.get(\"id\") or _unit_id(skill_dir))` は、id が object や list でも rc0 で通し、unit id が `-a-:-1-` や `-x-` のような値になる。ヘッダの「manifest の形の不正は exit 2」と合わない。id が str かを確かめる。DEDUCTION: id の型 -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

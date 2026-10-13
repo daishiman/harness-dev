@@ -27,8 +27,9 @@ script_refs:
   - scripts/render-pkg-findings.py
 reference_refs:
   - references/evaluator-contract.md
-rubric_refs:
   - ref-pkg-contract
+completeness_exempt:
+  - "rubric: 判定は ref-pkg-contract の pkg-id-catalog.yaml (reference_refs) にある PKG ID ごとの pass/fail で、点数を合成する rubric.json を持たない。rubric_refs は compose-rubrics と lint-rubric-refs-exist が rubric.json として読むため、catalog を指さない (harness-aor)。"
 ---
 
 # assign-plugin-package-evaluator
@@ -42,8 +43,7 @@ rubric_refs:
 target_plugin: "harness-creator"             # 必須。plugins/<name>/ の name
 pkg_ids: ["PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008", "PKG-014"]
 options:
-  fail_fast: false                          # true なら最初の FAIL で停止
-  output_path: "eval-log/<plugin>/pkg-<id>/<date>-<run>.json"
+  output_path: "eval-log/<plugin>/pkg-batch/<date>-<run>.json"  # 任意。複数 PKG ID の一括実行の保存先（呼出元 workflow-manifest.json の pkg-002-008 の output）。1 件だけなら pkg-<id>/
   render: markdown                          # 任意。指定時のみ render-pkg-findings.py で markdown サマリも出力
 ```
 
@@ -55,9 +55,9 @@ options:
 1. **PKG ID 定義は ref-pkg-contract 経由**: 本 skill 内で PKG ID 表を再定義しない（DRY、33章準拠）
 2. **findings の thought_method フィールドは不要**: 本 skill は規範的静的検査であり、思考法多視点レビュー（run-elegant-review）とは責務直交
 3. **package_mode による適用判定**: `skill-only` plugin に対しては PKG-003/005/006/007/008/014 を `not_applicable` として返す（PKG-002/004 のみ実行）
-4. **fail_fast=false 既定**: 全 PKG ID を走らせて findings を網羅収集
+4. **途中で止めない**: fail が出ても指定された全 PKG ID を走らせて findings を網羅収集する（script に途中停止の option は無い）
 5. **eval-log パスは 27章 §3.1**: 本 skill で再定義しない
-6. **schema 違反は exit 2**: validator スクリプト自体の入力 schema 違反は P0 として即停止
+6. **入力エラーは exit 2**: plugin ディレクトリが無い・`--check` が不正・読み書きできないとき、script は findings を出さずに止まる。出力が `schemas/findings.schema.json` に合うかは script ではなく評価者が最後に確かめる
 7. **context: fork 必須**: 親 context の sycophancy 排除（assign-skill-design-evaluator と同じポリシー）
 
 ## ゴールシーク実行
@@ -78,27 +78,41 @@ evaluator は一度の採点で完結する read-only 工程。ループは回�
 - [ ] `package_mode=skill-only` の場合 PKG-003/005/006/007/008/014 を `not_applicable` 判定にした
 - [ ] 各 finding に `location` と `evidence`（観測根拠）と `severity` が付与されている
 - [ ] 全 PKG ID で `status` が確定し、verdict カウント（total/pass/fail/skip/not_applicable）が算出済み
-- [ ] 出力が `schemas/findings.schema.json` に準拠する（schema 違反は exit 2）
-- [ ] `exit_code != 0` でも findings JSON は stdout へ必ず出力した
+- [ ] 出力が `schemas/findings.schema.json` に準拠する（schema は出力の契約で、script は schema 検証をしない）
+- [ ] exit 0 と exit 1（fail あり）では findings JSON を stdout（または `--output`）へ出力した。exit 2（入力エラー）は findings を出さず stderr に理由を出す
 
 ### 採点フロー
 
-`Step N:` の固定連番は使わない。チェックリストの未充足項目に応じ、`scripts/validate-plugin-package.py --check pkg-<id> --plugin <name>` を必要な PKG ID 分だけ実行し findings を集約、最後に verdict を算出して schema 検証で締める。
+`Step N:` の固定連番は使わない。チェックリストの未充足項目に応じ、`scripts/validate-plugin-package.py --check pkg-<id> --plugin <name>`（一括なら `--check all`）を必要な PKG ID 分だけ実行して findings を集約する。次に下の「評価者が読んで判定する条件」を読み、違反があればその PKG ID の `findings` に足して `status` を `fail` にする。最後に verdict を数え直し、評価者が `schemas/findings.schema.json` で検証して締める。
 
 ## PKG-002〜008 / PKG-014 sub-check 詳細
 
-| PKG ID | 検査関数 | fail 条件例 |
+catalog（`ref-pkg-contract` の `pkg-id-catalog.yaml`）が各 PKG ID に約束する条件のうち、script が機械判定するのは「script が機械判定する条件」の表の分だけ。「評価者が読んで判定する条件」の表は script では判定しないので、評価者が読んで判定する。後者を読まずに script の pass だけで PKG ID を pass にしない。
+
+### script が機械判定する条件
+
+| PKG ID | 検査関数（`validate-plugin-package.py`） | fail 条件 |
 |---|---|---|
-| PKG-002 | `validate_plugin_json_frontmatter` + `validate_package_contract` | 公式 `plugin.json` の `name`/`version`/`description`、または `references/package-contract.json` の `package_mode`/`entry_points` のいずれか欠落 |
-| PKG-003 | `validate_namespace_conflict` | 同一 marketplace 内で skill/agent/hook/permission 名が重複 |
-| PKG-004 | `validate_skill_frontmatter` | 03章必須キー欠落、`responsibility_refs`/`schema_refs`/`manifest` 不在 |
-| PKG-005 | `validate_agent_definition` | `agents/*.md` の name と `subagent_refs` 不一致 |
-| PKG-006 | `validate_hook_registration` | hook ファイル未登録、または登録だけあって実ファイル不在 |
-| PKG-007 | `validate_script_present_executable` | 参照 script が存在しない、shebang 欠落、`+x` ビットなし |
-| PKG-008 | `validate_settings_fragment` | 34a 章 INV-1〜12 違反、Layer3 衝突 |
-| PKG-014 | `validate_runtime_contract` | `kind` / combinator 宣言と goal-seek / feedback runtime 設定・本文配線が不一致 |
+| PKG-002 | `check_pkg_002` | 公式 `plugin.json` の `name`/`version`/`description`、または `references/package-contract.json` の `package_mode`/`entry_points` のいずれか欠落。`package_mode` が `bundle`/`skill-only` 以外（このときは check を飛ばさず `bundle` として全 check を流す）。`skill_dependencies` のキーが `entry_points.skills` に無い・値が plugin slug の配列でない・重複がある・`depends_on` に無い plugin を指す |
+| PKG-003 | `check_pkg_003` | 同じ plugins root の別 plugin と skill 名・agent 名が重なる。symlink で配った skill・agent は数えない。`run-skill-feedback` の配布コピーは中身が一致すれば衝突にしない（一致の判定では `__pycache__`・`.pyc`/`.pyo`・`.DS_Store` を除く） |
+| PKG-004 | `check_pkg_004` | 自前 skill（symlink でない）の frontmatter が読めない、または `name`/`description`/`kind` が欠落か空値。`responsibility_refs`/`schema_refs`/`manifest` の欠落か空値は P1（`manifest` は理由付きの `completeness_exempt` で代えられる） |
+| PKG-005 | `check_pkg_005` | `agents/*.md` の frontmatter `name` が無いか、ファイル名（拡張子を除く）と違う。自前 skill の `subagent_refs`（block 形式でも flow 形式 `[a, b]` でもよい。`agents/x.md` と書けば `x`）が指す `agents/<name>.md` が無い |
+| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
+| PKG-007 | `check_pkg_007` | plugin root 直下の `scripts/` にある `*.py`/`*.sh` に shebang が無い、または shebang があるのに `+x` が無い |
+| PKG-008 | `check_pkg_008` | `settings/*.json` が JSON として読めない、最上位が object でない、`$schema` が無い（P1） |
+| PKG-014 | `check_pkg_014` | `kind` / combinator 宣言と goal-seek / feedback runtime 設定・本文配線が不一致 |
 
 各検査は `scripts/validate-plugin-package.py --check pkg-<id> --plugin <name>` 単独実行可能。B からは sub-process でまとめて呼ばれる。
+
+### 評価者が読んで判定する条件
+
+| PKG ID | 判定すること | script で判定しない理由 |
+|---|---|---|
+| PKG-003 | hook 名・permission 名が同じ marketplace の別 plugin と衝突しない | 何を同じ名前とみなすか（event と matcher の組・permission の pattern の包含）を機械的に決められない |
+| PKG-007 | SKILL.md の `script_refs` が指す script が plugin の中に実在し、shebang と `+x` がある。`skills/*/scripts/` の script も同じ | `script_refs` には repo root 起点の vendored 参照や注釈付きの値が混じり、機械判定すると正しい参照まで fail にする |
+| PKG-008 | 34a 章 INV-1〜12 を満たし、Layer3（user・project 設定）とのマージで衝突しない | 不変条件の多くは他の設定層との組み合わせで決まり、settings 断片だけでは判定できない |
+
+この表の条件で違反を見つけたら、その PKG ID の `findings` に `location`・`evidence`・`severity` を付けて足し、`status` を `fail` にする。
 
 ## findings 出力フォーマット
 
@@ -120,8 +134,8 @@ evaluator は一度の採点で完結する read-only 工程。ループは回�
           "id": "F-PKG006-001",
           "pkg_id": "PKG-006",
           "severity": "P0",
-          "location": "plugins/harness-creator/hooks/pre-commit.sh",
-          "evidence": "hook ファイル実体は存在するが settings 断片の hooks 配列に未登録",
+          "location": "/abs/path/to/repo/plugins/harness-creator/hooks/pre-commit.sh",
+          "evidence": "hook ファイル実体は存在するが plugin hook 契約に未登録",
           "suggested_fix": "plugins/harness-creator/settings/hooks.json の hooks 配列に追加"
         }
       ],
@@ -141,10 +155,10 @@ evaluator は一度の採点で完結する read-only 工程。ループは回�
 ## Gotchas
 
 1. **`scripts/validate-plugin-completeness.py` との関係**: 既存スクリプトは plugin 完全性の総合検査。本 skill の `validate-plugin-package.py` は **PKG ID 別 sub-command** で findings 形式を返す点が異なる。既存をラップせず別実装にする（責務分離）
-2. **PKG-001/009 は本 skill 対象外**: B 側で直接実装。本 skill に投げられたら `unsupported_pkg_id` エラーを返す
+2. **PKG-001/009 は本 skill 対象外**: B 側で直接実装。本 skill に投げられたら stderr に `unsupported --check value` を出して exit 2 で止まる（`prompts/R1-run-pkg-check.md` の `unsupported_pkg_id` エラー。findings JSON は出さない）
 3. **PKG-010〜013 / PKG-015 は対象外**: smoke/permission/rubric 検査は別 skill（B が直接 or 専用 assign）
 4. **`skill-only` plugin への PKG-003 適用は禁止**: 名前空間検査は bundle のみ。skill-only に投げられたら `not_applicable` を返す
-5. **`exit_code != 0` でも findings は必ず JSON 出力**: stderr に進捗ログ、stdout に findings JSON 厳守
+5. **fail（exit 1）でも findings は必ず JSON 出力**: findings JSON は stdout（`--output` を渡したときはそのファイル）に出す。stderr に出るのは exit 2 の理由だけで、進捗ログは出さない。入力エラー（exit 2）だけは findings を出さず、stderr の理由で止まる
 
 ## Additional Resources
 

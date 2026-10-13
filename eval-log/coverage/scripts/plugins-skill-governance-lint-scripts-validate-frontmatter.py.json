@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/validate-frontmatter.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":91,"notes":"self-test ok (schema==fallback) and runs cleanly. SSOT schema loader walks up for capability-manifest.schema.json with documented fallback + scoped except (JSONDecodeError,KeyError,OSError) + --self-test drift gate. Robust parser, warn-vs-hard exit separation, clear enums. Minor: file is long with many inline rules but single-responsibility holds."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 f17b518a509f60170bd3e871202a689f27105b2aa4492e67fafb7906551dc3a5 をレビュー。実行検証あり）。範囲: 全618行と、前回の記録（sha cb4225f0…）からの差分。変更は3つ。1つ目に、SCALAR_FIELDS と _scalar_type_errors（126行）を足し、スカラーであるべき項目が配列のときに違反にした。2つ目に、余分な位置引数を exit 2 にした。3つ目に、_inside（134行）と OUTSIDE_REPO_REF（306行）を足し、symlink をたどった参照先が repo の外にあるときに違反にした。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。tests/scripts-plugins/ の validate_frontmatter の test は 124 passed。validate-frontmatter を呼ぶ test 7本（test_iter_improve_contract・test_plugin_lint_coverage・render_frontmatter の2本・hook_validate_skill_md・skill_fixture_runner・artifact_delivery）は 278 passed。lint-script-frontmatter は OK（checked=22）。--self-test は ok。--help は rc 0。引数なし、知らない引数、対象が0件のディレクトリ、パス2つは rc 2。旧版と新版を repo の SKILL.md に当てて比べ（scratchpad の work-covc/vf/cmp.sh）、差は0件だった。root の scripts/ にあるのは symlink で、実体は1つ。前回の指摘の扱い: 前回の4件のうち、3件（スカラーの型、余分な引数、repo の外への参照）は直った。残る1件は、下の YAML の読める範囲。判断の妥当性: 新しい検査は、今の repo の SKILL.md で誤検出を出さない。repo の外への参照を止めるのは、hook の検査として正しい向き。指摘: [低] YAML の読める範囲が狭い（`>-` の折り返し、引用符の中のカンマ）（-2）。[低] .git の無い写しで流すと、正当な `../` の参照も OUTSIDE_REPO_REF になる（harness-creator を写して流すと19件）。旧版も同じ写しで誤った MISSING_REF を出していた。hook は warn だけなので、止まりはしない（-1）。DEDUCTION: -2 -1 → 97。[高] と [中] は無いので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

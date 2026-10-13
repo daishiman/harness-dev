@@ -1,0 +1,34 @@
+{
+  "label": "requirements4",
+  "retry_of": "20261012T1358-pr85",
+  "evaluator_agent_id": "ae922d744b68886c9",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements4/ws/plugins/dev-graph/skills/run-dev-graph-requirements",
+  "closure_sha_at_launch": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_sha_tested_copy": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_sha_wtpy_at_verdict": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-requirements) を、その場で git init した repo に写した (最初の commit は d8f4d85b)。元の fixture は変えていない。requirements3 と同じ手順。",
+    "rekey: 写した repo に合わせて repository_id と worktree_id を 17 ファイルで付け替えた (一覧は fixture-provenance.json の rekeyed_files)。",
+    "feature の pin: promote は package の source_feature_digest が feature context の bytes の sha256 と一致することを求める。seed にはこの JSON が無かったため、features/LT-FEATURE-001.json と architecture/graph.json を seed の .dev-graph/state/graph.json の node から写して作り、feature-package.json と package.json の source_feature_digest を付け直した (fixture-provenance.json の feature_pin)。",
+    "合成した入力: system-spec/completeness-findings.json と promote に渡した findings は、repo の test helper (system-dev-planner/tests/test_runtime.py の write_readiness_sources と valid_findings) で作った合成のもの。system-spec-harness の completeness 評価者と system-dev-plan-evaluator は起動していない。",
+    "reseal: system-build-handoff.json を写さず、system-dev-planner の build-system-handoff.py に作り直させた (exit 0、validate pass、canonical_digest は sha256:3c958e5f…)。JSON は手で書いていない。",
+    "promote と C02 登録: requirements3 (20261012T1358-pr85) で欠けていた 3 つ (package dir の dev-graph-registration.json、その中の promotion_receipt、C02 の register-package の receipt) を、正規の script で作った。manage-system-plan-lock.py acquire → validate-system-plan.py → check-implementation-readiness.py → promote-system-plan.py → manage-system-plan-lock.py release → register-package.py register の順で、どれも exit 0。register は receipt の dir を作らないので、先に dir を作った。13 member は graph に登録された。各段の引数・exit・出力の sha256 は fixture-provenance.json の promotion.steps。",
+    "task artifact: 13 member の task artifact (tasks/LT-FEATURE-001/*.md) は、package member の task artifact を書く正規の writer が無いため、dev-graph の受入 test の helper (tests/test_acceptance_gaps_a1.py の PlanRepo.materialize_task_artifacts) で graph の node から作った。",
+    "起動前の確認: validate-readiness-binding.py (exit 0、pass) と guard-requirements-handoff.py (exit 0、handoff 13 件) を write-scope none で回した。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。task.md (合格条件と経路の制約) は requirements3 と同じ。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 2,
+    "occurrences": 4,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "C04 の成果物 (requirements document、readiness matrix、handoff package) には、出力の schema も既定の出力先も atomic emit の writer script も無い。場所は ws/plugins/dev-graph/skills/run-dev-graph-requirements/SKILL.md の argument-hint (--handoff-target に既定値が無い) と prompts/R3 の Layer 3。再現の手順: plugin 内で handoff.json の schema や writer を探すと、参照しているのは guard script と SKILL・R3 だけである。今回の trial でも、staging dir の作成、Write による手書き、mv を LLM が自分で組み立てた (L120-149)。run ごとに path と形式が揺れ、下流の capability-build や task-graph は機械的に受け取れない。",
+    "requirement (FR/NFR/AC) から task への対応付けを機械的に検証する手段が無い。R2 の受入条件は対応付けを求めるが、package の task-spec (tasks/LT-FEATURE-001/*.md) にも handoff.json にも FR/NFR/AC の ID の参照欄が無く、guard-requirements-handoff.py もそこを見ない。再現の手順: handoff.json の対応表を任意に書き換えても guard は exit 0 のまま通る。verifier の指摘 O1 (L172) は、この対応付けが C04 自身の導出だという点。",
+    "dev-graph-requirements-verifier の read-only が強制されていない。agent の定義は read-only を名乗るが、tools に Bash を含むため、リダイレクトで書き込める。再現の手順: sandbox で TMPDIR に書けない環境で verifier を起動すると、python3 -I の実行と _common の import が失敗し、そのあと validator の出力を run の workdir/out/{b,g,s}.json に書く (subagent transcript agent-a8596af123ad46baa.jsonl)。直し方の候補は 2 つ。validator を標準出力だけで呼ぶように agent の prompt で固定するか、書込み先を持たない読取り専用の起動 wrapper を用意する。"
+  ]
+}

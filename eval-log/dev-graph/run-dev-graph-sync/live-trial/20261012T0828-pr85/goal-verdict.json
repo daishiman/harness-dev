@@ -1,0 +1,30 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "OUT1 の合格条件を満たしていない。1 回目の export (Issue #102 の title を remote に反映する操作) は適用されていない。fx/github-adapter.json は変わっておらず、fx/github-adapter-calls.jsonl は mutation:false の読取り 5 行 (issue-view が 101 と 102、project-resolve、project-item-fields が 2 件) だけで、mutation:true の呼出しは 0 件だった。",
+    "2 回目の sync を実行していない。そのため、changes=0 と、Issue 計画と Projects 計画の両方で converged=true になることを確かめていない。task.md は「1 回目の export が実際に apply され、かつ 2 回目が 0 件のときだけ PASS」と定めている。collect/out/status.json は FAIL (scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2) だった。",
+    "gate の確認が成立しなかったのは trial の配置が原因で、被験 skill の欠陥ではない。session は ws を cwd として起動した (transcript L7、L213、L236 の cwd)。Bash で fx に cd しても、毎回 ws に戻されていた (L118、L158、L182、L197 ほか)。task.md は `--project-root` を fx に固定するよう指示しており (L222)、preview は fx/.artifact-delivery/external-mutation/preview-e598b71886c143f4be1590cf7b38555a.json に作られた。一方、UserPromptSubmit hook (ws/plugins/skill-governance-adapters/hooks/build-external-mutation-guard.py の hook_confirm、L395-412) は payload の cwd、つまり ws を project root とみなす。`_confirm_challenge` (L419-447) はその state_dir の preview-*.json を challenge_sha256 で照合するため、ws 側には一致する preview がない。その結果、gatewatch が 08:33:28 に送った `CONFIRM EXTERNAL MUTATION 989E2D69BDC6A942AC605A23` (collect/gate-sent.log) は L238 で confirmation-unmatched になった。",
+    "orchestrator 側の gate-response.json も存在しなかった (L242-243)。authorize と execute へ進む正規の経路がほかに無いため、export は実行できなかった。session は gate を迂回せず、fail-closed で FAIL を記録した (L250、L260)。これは正しい振る舞いで、blocker の原因は配置 (session の cwd が ws、fixture が fx) にある。"
+  ],
+  "evidence": [
+    "正規の Skill を起動している。dev-graph:run-dev-graph-sync を Skill tool で起動した (L35-36)。collect/guard.jsonl にも Skill の呼出しが 1 件ある。",
+    "責務 prompt R1、R2、R3、R5 は、出力の前に全文を Read している (L52)。",
+    "R4、R6、R7、R8 は Layer 2 しか読んでいない (L168)。L196-201 の R7 の確認も、R7 の全文を読まずに行っている。これは軽微な逸脱。",
+    "dry-run の計画を作っている (L101 付近)。fx/eval-log/run-dev-graph-sync-pass1-issue-plan.json と pass1-project-plan-pre.json を提示し、fx/eval-log/run-dev-graph-sync-goal-spec.json に user_choice=standard と state=semantic_evaluator_started を記録した。",
+    "diff-github-issues.py の計画をそのまま build-graph-node.py update に渡すと、\"update input needs updates[] objects\" で拒否された (L110-111)。L181 では python -c の glue で update_input を取り出しているが、graph への書込み自体は C02 単一 writer を通している (L217-218)。",
+    "graph の import は C02 経由で適用されている。fx/receipts/node-r000004-update.json がある。graph.json の revision は 3 から 4 に上がり、T-SYNC-001 の title は \"Sync import target task (remote revision 2)\" になった。fx/tasks/T-SYNC-001.md も変更されている。",
+    "Agent verifier を実際に起動している (L179)。subagent agent-aa0bdd6cb13751890 (general-purpose) は R2-plan を独立に検証し、読取りの Bash だけを使って PASS を返した。",
+    "Explore subagent (agent-ab43d41d2bb923d8c) は L138 で起動しており、choice の記録 (goal-spec、L155) より前になる。artifact_delivery の pre_choice_forbidden は subagent を含むので、これに反する。ただし、この subagent は L165 で「hook-confirm は payload cwd 基準なので、project-root は session cwd と一致する必要がある」と警告していた。",
+    "書込みは境界の内側に収まっている。collect/guard.jsonl は 39 件すべて allow (Bash 27、Write 5、Read 4、Agent 2、Skill 1) で、deny は 0 件。gh、bd、実 GitHub への接続や、stub を迂回する試みも無い。",
+    "fx の git status を見ると、変更は graph.json と tasks/T-SYNC-001.md。新規は .artifact-delivery/external-mutation/{.guard-key, preview-e598…json}、receipts/node-r000004-update.json、eval-log の 7 ファイル、github-adapter-calls.jsonl。github-adapter.json と github-sync-snapshot.json は変わっていない。",
+    "guard が preview を作ったときは `--project-root fx` だった (L222-223)。challenge の提示 (L230) から L234 を経て、hook の応答 (L236 の cwd は ws、L238 は confirmation-unmatched) まで確認した。collect/gate-request.json の project_root も fx を指している。",
+    "L213 で subagent の task-notification が届き、その本文の 'issue-update' に UserPromptSubmit hook が反応した。INTENT_PATTERNS の issue 系 regex `(?:issue|イシュー|課題|チケット)[^\\n]{0,40}?(?:…update…)` に一致したためで、L214 で intent receipt ws/.artifact-delivery/external-mutation/intent-1a15fda589514ec2b445654261c07dba.json が作られた。granted_classes は beads-issue-write と github-issue-write、prompt_excerpt は \"<task-notification> <task-id>aa0bdd6cb13751890…\" だった。",
+    "L214 は、人間の発話ではない subagent の通知から intent grant が出たことを示す。欠陥は skill-governance-adapters の hook 側にあり、被験 skill の欠陥ではない。session はこの grant を使っていない (L216)。preview の action_class は null (argv が env で始まる) なので、もともと auto-grant の対象外だった。",
+    "fx/eval-log/run-dev-graph-sync-intermediate.jsonl の merged_directive_for_next は \"blocked: UserPromptSubmit hook-confirm returned confirmation-unmatched (hook looks up previews under session cwd ws, preview lives under fx project-root)\" で、transcript の内容と一致する。"
+  ],
+  "skill_defects": [
+    "潜在的な欠陥で、この trial の直接原因ではない。場所は ws/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md。argument-hint で `--repo-root PATH` を受け付け、ゴールシーク配線では「DEV_GRAPH_ROOT=<receipt.repo_root> に固定し、cwd から再解決しない」としている。ところが guard ブロックは `preview --project-root \"$PWD\"` と `authorize --project-root \"$PWD\"` を使う。そのうえ、hook-confirm が session cwd を基準に preview を探すという前提も、repo-root と session cwd が違うときの事前検知も書かれていない。再現手順は、session を A で起動し、`--repo-root B` (B≠A) で export を伴う sync を実行し、preview を B に作ること。CONFIRM を送ると hook は A を探すので confirmation-unmatched になり、export は適用できない。逆に \"$PWD\" に従うと、guard の receipt が repo の外の A に置かれる。",
+    "軽微な欠陥。diff-github-issues.py の計画にある update_input を、build-graph-node.py update (C02) に渡す正規の CLI 経路が SKILL.md と scripts に無い。計画をそのまま渡すと \"update input needs updates[] objects\" で拒否される (transcript L110-111)。そのため、ad-hoc な抽出 (L181 の python -c) が必要になる。再現手順は、github binding で import がある fixture に対して diff-github-issues.py の出力 plan を build-graph-node.py update にそのまま入力すること。"
+  ],
+  "evaluator_agent_id": "a86e3e559393e785e"
+}

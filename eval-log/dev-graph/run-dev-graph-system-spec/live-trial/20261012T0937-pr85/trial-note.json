@@ -1,0 +1,35 @@
+{
+  "label": "sysspec2",
+  "retry_of": "sysspec",
+  "evaluator_agent_id": "ae268943cc8b5b0bc",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec2/ws/plugins/dev-graph/skills/run-dev-graph-system-spec",
+  "closure_sha_tested_copy": "ff9ffe87973b606bbd99d492680e68498a74e2699a5235d66291de66aec05a77",
+  "closure_sha_wtpy_at_verdict": "a7f09e36b20de08e385d9f506adc2e49a222fcb76507cb769120c74d8f1d2624",
+  "closure_matches_wtpy": false,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "弱い指摘で、改善の余地として書く。場所は plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md と SKILL.md の R2 の記述。「必要時 doc-fetch」とあるが、doc-fetch を呼ぶ条件 (latest_checked_at の古さの閾値、targets と evidence_refs の照合など) が書かれていない。一方で citation の形式 gate (C13) は、host・全件・必須フィールドしか見ない (doc-fetch の R4-audit-doc-freshness.md L20 では、鮮度は C08 の担当)。このため、出典が古くても R2 では doc-fetch が飛ばされ、evaluator の C08 で初めて FAIL になる。再現の手順: latest_checked_at が 90 日以上前の fetched-references.json と confirmed の spec-state を置いて --resume で起動すると、transcript L201-205 と同じく citation gate が exit 0 になり、doc-fetch が skip され、compile と evaluator のあとで doc_freshness が FAIL か INDETERMINATE になる。ただし今回の trial は network を拒否していたので、この条件があっても PASS にはならなかった。今回の FAIL の原因ではない。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 6,
+    "occurrences": 12,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:13+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "ff9ffe87973b606bbd99d492680e68498a74e2699a5235d66291de66aec05a77",
+      "transcript_sha256": "fa61fdd9cdecf51b924001b7be5df6053ddf834420d16bffa3d8483b117dac92"
+    },
+    "after": {
+      "skill_dir_tree_sha": "ff9ffe87973b606bbd99d492680e68498a74e2699a5235d66291de66aec05a77",
+      "transcript_sha256": "03dac8caef63b11012e6b0e7d9324bdd56747d881553056394185b91ed5aaad0"
+    },
+    "backup": "audit/reverdict/run-dev-graph-system-spec/20261012T0937-pr85"
+  }
+}

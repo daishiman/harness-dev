@@ -152,6 +152,22 @@ class BuildClaudeSymlinksTest(unittest.TestCase):
         self.assertTrue(dst.is_symlink())
         self.assertEqual(os.readlink(dst), os.path.relpath(canonical, dst.parent))
 
+    def test_build_cache_in_one_vendored_copy_is_not_drift(self):
+        # .gitignore 対象の __pycache__ / .DS_Store は CI に無い。片方の copy にだけ
+        # 在っても同一性判定を変えない (作業ツリーでだけ conflict になるのを防ぐ)。
+        canonical = self.skill("harness-creator", "run-skill-feedback")
+        consumer = self.skill("consumer", "run-skill-feedback")
+        cache = consumer / "scripts" / "__pycache__"
+        cache.mkdir(parents=True)
+        (cache / "x.cpython-311.pyc").write_bytes(b"\x00compiled")
+        (consumer / ".DS_Store").write_bytes(b"junk")
+
+        result = self.run_cli("--kinds", "skills")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        dst = self.target / "skills" / "run-skill-feedback"
+        self.assertEqual(os.readlink(dst), os.path.relpath(canonical, dst.parent))
+
     def test_drifted_vendored_feedback_skill_is_a_conflict(self):
         self.skill("harness-creator", "run-skill-feedback")
         drifted = self.skill("consumer", "run-skill-feedback")

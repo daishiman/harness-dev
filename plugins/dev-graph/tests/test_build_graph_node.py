@@ -326,6 +326,45 @@ class BuildGraphNodeTest(unittest.TestCase):
             self.assertIn(line, text)
         self.assertEqual(self.validate().returncode, 0, self.validate().stdout)
 
+    def test_macro_add_preview_feeds_the_beads_promotion_gate_without_a_write(self) -> None:
+        # decompose --dry-run (live trial 20261012T2336-pr85): C02 writes nothing, so C28 create --dry-run read
+        # the planned feature as "not in graph". The preview's planned_nodes let the gate judge the planned state.
+        self.add_five()
+        before = self.graph.read_bytes()
+        code, preview = self.run_cli("add", {"artifacts": [self.feature_entry("checkout")]}, "--dry-run")
+        self.assertEqual((code, preview["status"], preview["write_count"]), (0, "preview", 0), preview)
+        planned = preview["planned_nodes"]
+        self.assertEqual([(row["graph_node_id"], row["confirmation_status"], row["evaluation_status"],
+                           row["implementation_readiness"]) for row in planned],
+                         [("feature-checkout", "draft", "pending", {"status": "complete"})])
+        saved = self.root / ".dev-graph" / "cache" / "inputs" / "c02-preview.json"
+        saved.write_text(json.dumps(preview), encoding="utf-8")
+        bridge = PLUGIN / "scripts" / "bd-bridge.py"
+        # A bd that cannot start proves the blocked gate runs before any bd process.
+        env = {**self.env, "DEV_GRAPH_BD": str(self.root / "no-such-bd")}
+
+        def gate(*extra: str) -> tuple[int, dict]:
+            cp = subprocess.run([sys.executable, str(bridge), "--op", "create", "--repo-root", str(self.root),
+                                 "--graph-node-id", "feature-checkout", "--artifact-kind", "feature", "--dry-run", *extra],
+                                text=True, capture_output=True, env=env, cwd=self.root, check=False)
+            return cp.returncode, json.loads(cp.stdout) if cp.stdout else {"stderr": cp.stderr}
+
+        code, report = gate()
+        self.assertEqual((code, report["blocked"][0]["reason"]), (1, "not in graph"))
+        code, report = gate("--planned-preview", str(saved))
+        self.assertEqual(code, 1, report)
+        self.assertEqual(report["blocked"], [{"graph_node_id": "feature-checkout", "reason": "not confirmed/pass/readiness complete",
+                                              "state": {"confirmation_status": "draft", "evaluation_status": "pending",
+                                                        "implementation_readiness": "complete"}, "planned": True}])
+        self.assertEqual((report["gate"]["graph_revision"], report["gate"]["planned_graph_digest"]),
+                         (1, preview["graph_digest_after"]))
+        self.assertEqual(self.graph.read_bytes(), before)
+        # Once C02 commits another revision, the old preview no longer describes what C02 would register.
+        self.assertEqual(self.run_cli("add", {"artifacts": [self.feature_entry("cart")]})[0], 0)
+        code, report = gate("--planned-preview", str(saved))
+        self.assertEqual(code, 1)
+        self.assertIn("planned preview is stale", report["stderr"])
+
     def test_feature_contract_violations_are_rejected_without_writes(self) -> None:
         self.add_five()
         before = self.graph.read_bytes()

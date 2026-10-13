@@ -1,0 +1,43 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec2/fx --resume",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "goal に届いていない。仕様を specification/architecture node として C02 へ lineage 付きで登録する、という目標が満たされていない。fx/.dev-graph/state/graph.json は {\"graph_revision\":0,\"nodes\":[]} で、node は 0 件。fx/.dev-graph/receipts/ には init-20261012T003900228426Z.json しかなく、C02 の receipt は無い。fx/.dev-graph の specs/ と architecture/ も空。task.md の「新しい取込成果がなく fail-closed になっただけなら FAIL」に当たる。",
+      "lineage・version・evaluated_digest・C11/C19 gate・C02 receipt の検証は、どれもできていない。取込が起きていないため。progress.json では gates が FAIL、c02_import が NOT RUN、state が blocked になっている (transcript L290)。",
+      "主因は (c) 隔離の条件。completeness evaluator の 6 観点のうち、doc_freshness だけが INDETERMINATE になった (fx/eval-log/system-spec-completeness-report.json)。C08 の doc-freshness auditor は、network の全遮断で公式サイトに照らし直せないことを理由に INDETERMINATE を返した。WebFetch/WebSearch は試していない (subagent-transcripts/agent-acf34d231548fadd2.jsonl L20)。aspect-criteria.md L107・L121-123 と scoring-rubric.json L82 の決まりでは、INDETERMINATE は fail-closed で総合 FAIL になる (transcript L276、L284-285 で verdict=FAIL)。report の gaps も「network のある環境で doc-fetch をやり直し、C08 を再実行する」ことを求めている。task は外部取得を禁じているので、正規の flow ではこの観点を PASS にできない。",
+      "従因は (b) fixture の中身。fx/system-spec/fetched-references.json は作り直されていない (sha 48395c… のまま)。postgres 16.1 と react 19.0 の latest_checked_at はどちらも 2026-07-11 で、trial の日から約 93 日前。auditor は 2 件を stale_suspected とした (版の世代落ちの疑い)。また、D1/D2 の evidence_refs (docs/15・versioning・FastAPI・TypeScript) が targets に入っていない (completeness-report の gaps)。collect/fixture-provenance.json の remaining_risks にも、doc_freshness が deniedDomains * では PASS にならない見込みであることが前もって書かれていた。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ff9ffe87973b606bbd99d492680e68498a74e2699a5235d66291de66aec05a77",
+  "transcript_sha256": "03dac8caef63b11012e6b0e7d9324bdd56747d881553056394185b91ed5aaad0",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 790.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage"
+}

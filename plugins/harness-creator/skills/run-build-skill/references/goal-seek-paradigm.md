@@ -77,7 +77,8 @@ source-tier: internal
 
 ゴールシークは「散文で書く」だけでなく、生成スキルに**実行可能な機構として配線**される。これにより、配布先のどの環境でも「ユーザーの悩み（要望）をゴールに変換し、達成まで自律ループを回す」挙動が同じ仕組みで再現される。
 
-- **default-ON の対象**: loop 実行系 kind（`run` / `wrap` / `delegate`）は `render-combinators.py` が `with-goal-seek.patch` を**既定で自動適用**する（`--no-goal-seek` で opt-out）。`assign-*`（一発採点でループしない評価系）と `ref-*`（read-only）は対象外。
+- **default-ON の対象**: loop 実行系 kind（`run` / `wrap` / `delegate`）は `render-combinators.py` が `with-goal-seek.patch` を**既定で自動適用**する。`assign-*`（一発採点でループしない評価系）と `ref-*`（read-only）は対象外。
+  - **`--no-goal-seek` が外すのは render 時の配線だけ**で、lint の合否は変えない。repo 外の生成物（`$OUT_BASE`）では配線の不足は warning（exit 0）のままだが、repo 内に入った配線の無い loop 系スキルは、plugin を問わず、単体の SKILL.md を渡して lint しても `lint-goal-seek.py` の ratchet が exit 1 で落とす（ratchet は repo 相対 path を持つすべての SKILL.md に掛かる）。harness-creator のスキルは CI scope（`--skills-dir plugins/harness-creator/skills`）で落ち、通すには `GRANDFATHERED_WARNINGS` へ根拠付きで登録するか、配線を戻す。ほかの plugin のスキルは全 plugin 走査（`--skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json`）で落ち、その baseline は追記禁止なので配線を戻す。
 - **frontmatter `goal_seek:`**: `engine` と `fork` の 2 軸はどちらも既定 `inline`。Goal・Checklist・周回上限は維持し、task-graph / run-goal-seek / subagent / agent-team は brief で必要性が明示された場合だけ選ぶ。`needs_independent_context: true` の無指定 fork は `subagent` へ決定論導出する。加えて `spec` / `progress` / `max_loops`（既定5）を持つ。
 - **`### ゴールシーク配線` サブセクション**: goal-spec のロード、周回 progress JSON 記録、コンテキスト分離、打ち切り規約を本文に明記する。
 - **周回状態の契約**: 各周回の状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json`（`iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` / `status`）に記録する。観測可能性をこの JSON で担保する。

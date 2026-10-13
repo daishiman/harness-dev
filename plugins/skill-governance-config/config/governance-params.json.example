@@ -8,8 +8,8 @@
     "violation_rate_ceiling": 0.05
   },
   "grace_period": {
-    "min_releases": 1,
-    "min_days": 30
+    "min_days": 14,
+    "note": "min_days は major（厳格化）の最低日数。minor と patch の日数と、猶予期間を 0 日にできる条件は run-skill-rubric-governance の Key Rule 3（references/version-rules.md）に従う。"
   },
   "limits": {
     "manual_proposals_per_quarter": 1,
@@ -19,7 +19,7 @@
     "enabled": false,
     "self_approval_conditions": [
       "安定版凍結済み: freeze.consecutive_runs 連続で violation_rate <= freeze.violation_rate_ceiling",
-      "newly_failing_count == 0 (plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py 出力)",
+      "would_flip == 0 (plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py --logs eval-log の出力。合格から不合格に変わるレコードが無い。緩和の宣言では定義上 0 なので、緩和の定義を満たす根拠も evidence に書く)",
       "LLM-reviewer pass: run-skill-rubric-governance の Step2 影響評価で problem=none"
     ],
     "note": "デフォルトは false（Proposer/Approver 兼任禁止＝Goodhart 罠回避）。1人運用で兼任が構造上不可避な場合に限り true に切替え、self_approval_conditions の3条件すべての evidence を governance log に必ず記録すること。true 中は major bump 禁止。組織メンバー追加時は false に戻す。"

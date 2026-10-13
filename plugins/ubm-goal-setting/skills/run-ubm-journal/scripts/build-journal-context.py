@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-journal-context
-# version: 0.5.0
+# version: 0.6.0
 # purpose: 日次ジャーナル作成の決定論的な前提 (通し番号・出力パス・目標4階層の期間と残日数・
 #          最新週報から引き継ぐ習慣目標/判断基準/当日タスク・前回ジャーナルの継承値) を
 #          1 回の実行で JSON 化する。番号採番と日数計算を LLM に推測させないための決定論ゲート。
@@ -10,7 +10,7 @@
 #   - files: {vault}/02_Configs/Daily/*.md, {vault}/05_Project/UBM/目標設定/*.md
 #   - files: {skill}/references/daily-habits.json (欠落・破損は fail-closed で exit 2)
 # outputs:
-#   - stdout: context JSON (下記 SCHEMA 節)
+#   - stdout: コンテキストの JSON (下記 SCHEMA 節)
 #   - exit: 0=解決成功 / 2=引数不正・vault 解決不能・Daily ディレクトリ不在・
 #           daily-habits.json 欠落/破損 (すべて fail-closed。1 は使わない)
 # contexts: [E]
@@ -49,13 +49,15 @@ stdout は以下の形の JSON オブジェクト 1 個。キーは常に全て�
         "path": str, "file_date": "YYYY-MM-DD", "number": int,
         "heading_date": "YYYY-MM-DD"|null,
         "ultimate_purpose": [str], "prohibitions": [str], "phase_checklist": str,
+        "principle_checklist": str,          # 前回にブロックが無いとき空文字。前回自体が無ければ previous_journal=null
         "goals": { <key>: {"period_start":…, "period_end":…, "goal": str} }
       },
       "goals": {                            # key = yearly|quarterly|monthly|weekly (4 件固定)
         <key>: {
           "period_start": "YYYY-MM-DD"|null, "period_end": "YYYY-MM-DD"|null,
           "goal": str,
-          "source": "report" | "previous_journal" | "unresolved",
+          "source": "previous_journal" | "unresolved",  # 目標本文の出所 (本文を供給するのは前回ジャーナルだけ)
+          "period_source": "report" | "previous_journal" | null,  # 期間の出所
           "days_remaining": int|null,       # 期間終了日までの日数。終了済みは 0
           "days_overdue":   int|null,       # 超過日数。未終了は 0 (キーは常に存在する)
           "expired": bool|null              # 期間不明のときだけ null
@@ -483,22 +485,30 @@ _TAIL = rf"\s*{_EMPH}\s*(?:[：:]\s*(?P<rest>.*))?$"
 # 小数・時刻と衝突する。`- 2.0：リリースする` が 2/0 の見出しに、`- 9.30：朝会` が
 # 9/30 の見出しに化け、以降のタスクが collecting=False のまま warning ゼロで消えた
 # (実測)。`.` 区切りの日付は実データでは必ず曜日注記を伴うので、`.` のときだけ
-# 曜日を必須にして小数・時刻と切り分ける。
-_MD_SLASH = r"(?P<month>\d{1,2})[/-](?P<day>\d{1,2})"
+# 曜日を必須にして小数・時刻と切り分ける。`-` も同じで、`- 10-12：定例MTG` のような
+# 時刻の範囲が 10/12 の見出しに化け、以降のタスクが対象日から消えた (実測)。`-` 区切りは
+# 曜日注記か4桁の年 (`2026-08-19：`) があるときだけ見出しにする。
+_MD_SLASH = r"(?P<month>\d{1,2})/(?P<day>\d{1,2})"
+_MD_HYPHEN = r"(?P<month>\d{1,2})-(?P<day>\d{1,2})"
 _MD_DOT = r"(?P<month>\d{1,2})\.(?P<day>\d{1,2})"
 # 和文表記 `8月19日（水）：` は最も自然な書き方なのに、記号区切りだけを見ていた頃は
 # 見出しと認識されず、その行自体がタスクとして混入したうえ以降が別日のまま残った。
 _MD_JP = r"(?P<month>\d{1,2})\s*月\s*(?P<day>\d{1,2})\s*日"
 
+_HEAD_WITH_YEAR = rf"^{_BULLET}{_CHECK}{_EMPH}(?P<year>\d{{4}})-"
+
 DAY_HEAD_RES = (
     re.compile(rf"{_HEAD}{_MD_SLASH}{_WD}{_TAIL}"),
     re.compile(rf"{_HEAD}{_MD_DOT}{_WD_CORE}{_TAIL}"),
+    re.compile(rf"{_HEAD}{_MD_HYPHEN}{_WD_CORE}{_TAIL}"),
+    re.compile(rf"{_HEAD_WITH_YEAR}{_MD_HYPHEN}{_WD}{_TAIL}"),
     re.compile(rf"{_HEAD}{_MD_JP}{_WD}{_TAIL}"),
 )
 # 見出しか子タスクか決めきれない行 (例: 「- 8/18 の資料を作る」)。下の判定では子タスク側に
 # 倒すが、倒した事実を黙らせない。誤帰属していれば人が気づけるよう warnings へ出す。
 DAY_LIKE_RES = (
     re.compile(rf"{_HEAD}{_MD_SLASH}\b"),
+    re.compile(rf"{_HEAD}{_MD_HYPHEN}\b"),
     re.compile(rf"{_HEAD}{_MD_JP}"),
 )
 
@@ -513,7 +523,7 @@ def _valid_md(m: re.Match[str]) -> bool:
 
 
 def match_day_heading(s: str) -> re.Match[str] | None:
-    """日付見出し行なら Match を返す。表記ゆれ 3 系統を順に試す。"""
+    """日付見出し行なら Match を返す。区切り記号ごとの表記ゆれを順に試す。"""
     for rx in DAY_HEAD_RES:
         m = rx.match(s)
         if m and _valid_md(m):
@@ -575,10 +585,15 @@ def load_daily_habits() -> list[dict[str, Any]]:
             file=sys.stderr,
         )
         sys.exit(2)
+    # ディレクトリ・非 UTF-8・深すぎる入れ子も「破損」として exit 2 にする。
+    # JSONDecodeError だけを捕まえていた頃は traceback 付き exit 1 になり、header と食い違った。
     try:
         data = json.loads(DAILY_HABITS_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        print(f"[build-journal-context] daily-habits.json の解析失敗: {exc}", file=sys.stderr)
+    except (OSError, ValueError, RecursionError) as exc:
+        print(
+            f"[build-journal-context] daily-habits.json を読めない ({type(exc).__name__}: {exc})",
+            file=sys.stderr,
+        )
         sys.exit(2)
     # top-level が dict でない (例: JSON 配列) と .get が AttributeError になり、
     # frontmatter が宣言した exit 0/2 ではなく traceback 付き exit 1 で落ちる。
@@ -605,10 +620,10 @@ def load_daily_habits() -> list[dict[str, Any]]:
 
 def habit_schema_problems(h: object, i: int) -> list[str]:
     """habit 1件の形の不備を列挙する。validate-journal-output.py と同じ検査を、
-    `id` (context JSON へ載り LLM が習慣を名指しするキー) の分だけ厳しくしたもの。
+    `id` (コンテキストの JSON へ載り LLM が習慣を名指しするキー) の分だけ厳しくしたもの。
     厳しい側が先に立つ配置なので、Phase0 を通った JSON は Phase5 でも必ず通る。
 
-    SKILL.md Gotchas は「Phase0 の exit 2 は daily-habits.json 破損を含む」と宣言している。
+    SKILL.md の「つまずきやすい点」は「Phase0 の終了コード 2 は daily-habits.json 破損を含む」と宣言している。
     ここで id/label しか見ないと、target_section 欠落・keywords が文字列・
     search_scopes[].heading 欠落は Phase0 を通過し、利用者が 5〜10 分の対話を終えた
     Phase5 で初めて壊れが判明する。検知は最初のゲートで済ませる。
@@ -740,8 +755,8 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             )
     else:
         warnings.append(
-            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェック・"
-            "原理原則チェックシート (references/principle-checklist.md のテンプレート) は対話で確定し、"
+            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
+            "原理原則チェックシートは references/principle-checklist.md の未チェックテンプレートを使い、"
             "あわせてジャーナル習慣が途切れていないかも確認してください。"
         )
 
@@ -787,13 +802,16 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
         # 供給するのは前回ジャーナルだけで、レポートが与えるのは期間である。よって
         # レポートがあるだけで source="report" にすると、goal="" のまま「解決済み」と
         # 名乗り、消費側が未解決を未解決として扱えなくなる (実測で再現)。
-        # source は「目標本文が取れたか」で決め、期間の出所はそこに混ぜない。
+        # source は「目標本文が取れたか」で決め、期間の出所はそこに混ぜない。本文を前回
+        # ジャーナルから引き継いだのに source="report" と名乗るのも同じ混同なので、期間の
+        # 出所は period_source として別のキーで返す。
         resolved = has_value(inherited)
         entry = {
             "period_start": start.isoformat() if start else None,
             "period_end": end.isoformat() if end else None,
             "goal": inherited.get("goal", ""),
-            "source": ("report" if report else "previous_journal") if resolved else "unresolved",
+            "source": "previous_journal" if resolved else "unresolved",
+            "period_source": "report" if report else ("previous_journal" if start or end else None),
         }
         entry.update(days_remaining(target, end))
         if not resolved:
@@ -811,6 +829,7 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
         "period_end": yearly.get("period_end"),
         "goal": yearly.get("goal", ""),
         "source": "previous_journal" if has_value(yearly) else "unresolved",
+        "period_source": "previous_journal" if yearly.get("period_start") or yearly.get("period_end") else None,
     }
     yearly_entry.update(days_remaining(target, yearly_end))
     if yearly_entry.get("expired"):
@@ -836,6 +855,11 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             warnings.append(
                 f"週報の到達ラインに {target.month}/{target.day} の行が無く、当日タスクを引き継げませんでした。"
             )
+        # 見出しはあるのに本文が空の節も黙らせない。見出し自体が無いときは
+        # section_body の notes が既に 1 行出しているので、ここでは重ねない。
+        for key, heading in (("judgment_criteria", "今週の判断基準"), ("weekly_revenue_goal", "今週の売上目標")):
+            if not weekly_payload[key] and not any(f"「{heading}」" in n for n in wk_notes):
+                warnings.append(f"週報の「{heading}」が空でした。対話で確認してください。")
         if ambiguous_days:
             warnings.append(
                 "週報の到達ラインに日付見出しか子タスクか判別できない行があります"

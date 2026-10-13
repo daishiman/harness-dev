@@ -1,0 +1,34 @@
+{
+  "label": "render5",
+  "retry_of": "20261012T1759-pr85",
+  "evaluator_agent_id": "a8fe33f376fc432ee",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render5/ws/plugins/dev-graph/skills/run-dev-graph-render",
+  "closure_sha_at_launch": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+  "closure_sha_tested_copy": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+  "closure_sha_wtpy_at_verdict": "25ac17afb87319803885f580bc114bf7f05f97cea61c08efdc04fd2964318c0d",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-render) を、その場で git init した repo に写した (最初の commit は 671e6512)。前回の render の出力 .dev-graph/render は写していない。元の fixture は変えていない。render4 と同じ手順。",
+    "rekey: 写した repo に合わせて repository_id と worktree_id を 3 ファイルで付け替えた (一覧は fixture-provenance.json の rekeyed_files)。graph.json と registration receipt は変えていない。",
+    "環境: AF_UNIX の socket を /private/tmp/ltpr85/cr5 の下だけ許し、chrome-headless-shell (render4 から cp -R、sha256 a0bfe7b4…) を run の dir に置いた。render4 と同じ条件で、dir の名前だけ違う (fixture-provenance.json の environment_change)。",
+    "隔離ガード: render4 と同じ (guard.py f23267a3…、mksettings.py 277ae072…。外へ送る tool と許可一覧に無い tool を拒否)。",
+    "task.md: render4 のものから run の dir の名前 (runs/render4 → runs/render5) と socket の dir の名前 (cr4 → cr5) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/render5/tmp。短い symlink /private/tmp/ltpr85/t/re5 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: bytecode の修正の後の wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 25ac17af… は team-lead の 12:26Z の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "SKILL.md の手順 5 と R2-plan の責務境界は「feature 間 edge と task 内 edge を混同せず表示する」と約束しているが、plugins/dev-graph/scripts/render-graph-html.py は区別を実装していない。すべての depends_on を同じ <g class=\"edges\"> の中に、class も属性も持たない同じ <path> として描く (lines.append(f'<path d=…/>') の箇所)。再現の手順: feature node を 2 つ (A と B) 置き、B.depends_on=[A] とし、各 feature の配下に task 間の depends_on を持たせた graph を render する。feature 間の edge と task 内の edge が、見た目でも DOM でも区別できない形で出力される。今回の fixture は 12 本の edge がすべて LT-FEATURE-001 の中にあり feature 間の edge が無いため、この欠陥は発現せず、今回の判定には影響しない。R1/R2 subagent も同じ点を NO と報告していた (transcript 95 行目、agent-a5f2c2f70c2a5ac26.jsonl)。"
+  ]
+}

@@ -50,7 +50,7 @@ harness-creator 自身 (生成器メタプラグイン) への除外/非除外�
 ## 禁止
 
 - plugin 境界を越える symlink (**distributable な量産先が run-skill-feedback を marketplace bundle に同梱する場合のみ**): `plugins/<plugin>/skills/run-skill-feedback -> ../../harness-creator/...` 等は、install 時に symlink 先が bundle 外なら dangling するため禁止 (この経路の配備は実体コピー `apply_feedback_loop()` に一本化する)。
-  - **例外 (repo 内メタ plugin)**: `distributable:false` または `package.exclude` で run-skill-feedback を bundle から除外し marketplace install の対象にしない repo 内メタ plugin は、harness-creator SSOT への symlink を許容する (bundle に同梱されず dangling しない・DRY で正本一本化)。実例: `plugin-dev-planner` (distributable:false) / `skill-intake` (`package.exclude: skills/run-skill-feedback/**`) は `skills/run-skill-feedback -> ../../harness-creator/skills/run-skill-feedback` の symlink 実体を保持する。本禁止規約が対象とするのは「distributable な量産先の bundle 同梱」であって、これら除外済みメタ plugin ではない。
+  - **例外 (repo 内メタ plugin)**: `distributable:false` または `package.exclude` で run-skill-feedback を bundle から除外し marketplace install の対象にしない repo 内メタ plugin は、harness-creator SSOT への symlink を**許容する** (bundle に同梱されず dangling しない)。ただしこれは許容であって現状の配備形態ではない — 2026-10-10 21:36 実測で `plugins/*/skills/run-skill-feedback` は 22 プラグイン全件が実体ディレクトリ、symlink は 0 件 (分母 22)。`plugin-dev-planner` (distributable:false) / `skill-intake` (`package.exclude: skills/run-skill-feedback/**`) も実体コピーで、symlink は保持していない。したがって現在の repo 全体が `apply_feedback_loop()` の実体コピー一本である。本禁止規約が対象とするのは「distributable な量産先の bundle 同梱」であって、これら除外済みメタ plugin ではない。
 - 手動コピー: `cp -r ...` 等。配備は `apply_feedback_loop()` に一本化し、drift は lint/CI で検出する。
 - 量産先 SKILL.md での `feedback_protocol` 文言再定義: SSOT を持たない drift の温床。
 - 発火条件追加を SKILL.md / triggers 先行編集で行うこと: 必ず schema → lint → 派生物同期の順。

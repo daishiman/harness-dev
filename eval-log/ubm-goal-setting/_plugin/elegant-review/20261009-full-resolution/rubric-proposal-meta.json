@@ -1,0 +1,37 @@
+{
+  "proposer": "/root/meta_analyst",
+  "approver_required": "/root (independent review)",
+  "criteria_weakened": false,
+  "changes": [
+    {
+      "rule": "BD-001",
+      "field": "rationale",
+      "proposed_value": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提。英語の ## Purpose & Output Contract は従来の部分一致、日本語の ## 目的と出力契約 は行全体の一致で照合する。BD-001は契約節の存在を検査し、PD-002は冒頭30行への目的・契約・禁則の集約を独立して検査する。BD-001が合格でも契約節が31行目以降、または冒頭の禁則が無ければPD-002は不合格になる。"
+    },
+    {
+      "rule": "PD-002",
+      "field": "check",
+      "proposed_value": "body lines 1-30 (excluding frontmatter) contain heading '## Purpose' or '## Output Contract' or exact heading line '## 目的と出力契約' AND at least one Key Rule / 禁則 (e.g. 'MUST', 'NEVER', '禁止', '禁則', '必ず', 'Key Rule', or exact heading line '## 守ること')"
+    },
+    {
+      "rule": "PD-002",
+      "field": "rationale",
+      "proposed_value": "02章 §設計判断4の冒頭30行に目的・出力契約・禁則を集約する規則を機械検査する。目的節の存在を調べるBD-001とは直交する。英語の目的見出しは従来の部分一致、日本語の目的見出しと禁則の別名 ## 守ること は行全体の一致で照合する。冒頭30行と禁則の両条件を維持し、本文の単語「守ること」だけでは合格させない。"
+    }
+  ],
+  "implementation": "render-findings-score.py has_rule keeps existing terms and accepts only exact heading ## 守ること",
+  "verification": [
+    "exact ## 守ること within first30 + purpose PASS",
+    "守ること in prose FAIL",
+    "## 守ること suffix FAIL",
+    "rule heading after first30 FAIL",
+    "BD001 purpose after first30 PASS while PD002 FAIL"
+  ],
+  "root_followthrough": [
+    "Approve proposed fields independently",
+    "Apply rubric version/hash updates via governance machinery after approval"
+  ],
+  "approved_by": "/root",
+  "approved_meaning": "exact heading alias and explanation corrections independently reviewed",
+  "version": "1.5.0 (minor accepted set expands; follows version-rules.md)"
+}

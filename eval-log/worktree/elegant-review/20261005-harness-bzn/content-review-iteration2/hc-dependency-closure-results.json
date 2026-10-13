@@ -1,0 +1,72 @@
+{
+  "finding_id": "F-4002",
+  "category": "dependency_break",
+  "result": "PASS_REPRODUCED_SOURCE_C4_FAILURE",
+  "skills": {
+    "run-build-skill": {
+      "actual_helper_callers": [
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+          "sha256": "323cd256edfa46986fa9d162a54cae39ee40772b6f0d09b98f575fabadd9d31e",
+          "imports": [
+            "forward_external_intelligence"
+          ]
+        },
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+          "sha256": "6c4cd93728c2cbcef684dcd452585687b3cad0064dae804d9e8073b8d3cebff5",
+          "imports": [
+            "forward_external_intelligence"
+          ]
+        },
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py",
+          "sha256": "4093ef67d8f836d11dd1b6bc2328714ea21edc8f34fca5b68366fc9171bdf4dc",
+          "imports": [
+            "ResolverUnavailable",
+            "resolve_root"
+          ]
+        }
+      ],
+      "current_behavior_sha256": "d134dd4945994205d17b74259a6ebf8d4af7a5ead6744a89ce3d609ffa632265",
+      "original_helper_mutation_missed": true,
+      "original_resolver_mutation_missed": true,
+      "proposed_two_refs_detect_both_mutations": true
+    },
+    "run-plugin-package-check": {
+      "actual_helper_callers": [
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-plugin-package-check/scripts/lint-pkg-009.py",
+          "sha256": "7e45cee728d45f98086671d112c39d1d8e2bbd43f4c751ff49f761b8c0616423",
+          "imports": [
+            "ResolverUnavailable",
+            "resolve_root"
+          ]
+        },
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-plugin-package-check/scripts/run-pkg-015.py",
+          "sha256": "8409bc2e09b13589d086618057c5cf9945217f5784938a05818b110d504004a6",
+          "imports": [
+            "ResolverUnavailable",
+            "resolve_root"
+          ]
+        },
+        {
+          "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-plugin-package-check/scripts/sandbox-plugin-lifecycle.py",
+          "sha256": "86b131e3587be526864fe334068161e4c209a5470b121daac8d4c760914f7682",
+          "imports": [
+            "ResolverUnavailable",
+            "resolve_root"
+          ]
+        }
+      ],
+      "current_behavior_sha256": "1d9ae4f070aefb6056ffa538ae6449afb6a050824c765f0dfe434d60eb39b239",
+      "original_helper_mutation_missed": true,
+      "original_resolver_mutation_missed": true,
+      "proposed_two_refs_detect_both_mutations": true
+    }
+  },
+  "minimal_fix": "Add ../../scripts/plugin_resources.py and ../../scripts/extract-plugin-root.py to script_refs for run-build-skill and run-plugin-package-check.",
+  "proof_scope": "Copy-only digest proof against actual target local callers and dynamic bundled resolver dependency; not a live host execution.",
+  "source_edits": false
+}

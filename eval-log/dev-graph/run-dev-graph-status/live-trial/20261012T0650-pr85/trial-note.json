@@ -1,0 +1,35 @@
+{
+  "label": "status",
+  "retry_of": null,
+  "evaluator_agent_id": "af96151d6e51ee84c",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "読取り専用であるはずの status skill が、呼出し元 repo にファイルを書き残す。run-dev-graph-status/SKILL.md は「副作用なし」をうたい、allowed-tools に Write が無く、R3 の責務境界は「Write/Edit/external mutationを呼ばず」としている。一方で同じ SKILL.md の ## ゴールシーク配線は、$DEV_GRAPH_ROOT/eval-log/run-dev-graph-status-{goal-spec.json,progress.json,intermediate.jsonl} の作成と追記を要求している。再現手順: 初期化済みの fx で status を standard 選択で 1 回実行する → git status に eval-log/run-dev-graph-status-* の未追跡ファイルが 3 件増える (今回は Bash の heredoc で書かれた)。intermediate.jsonl は append-only なので、実行のたびに伸び続ける。OUT2 の digest 範囲 (graph/config/content) に eval-log が入っていないため検査は通るが、repo への副作用は 0 ではない。",
+    "status には検索と report 生成の正規 script も report の schema も無い。R2・R3 の使用資産は Read と validate-graph-schema だけで、AND filter、tag match mode、dependents の逆引き、該当なしの空 result、schema 不正時の診断は、すべて LLM がその場で組み立てる。そのため Layer 4 の「同一入力では同じ output shape」も checklist の「該当なしが空 result の成功」も機械的には保証できない。再現手順: 同じ `--id` で 2 回実行すると report の形式が自由記述になる。存在しない id で実行して空 result を確かめる決定論的な手段が無く、今回も evaluator の推論で PASS とされた (transcript 268 行目)。",
+    "SKILL.md の ## Pre-choice usable artifact execution は「現物path・digest・開き方を提示してから」選択を記録すると定めている。しかし effect: conversation-output の status には file path が無く、提示すべきものが曖昧になっている。今回はこれが原因で、report の提示 (276 行目) が standard の記録 (253 行目) と evaluator の起動 (256 行目) より後になった。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/status/ws/plugins/dev-graph/skills/run-dev-graph-status",
+  "closure_sha_tested_copy": "7a1b8197a019e1a3d410fafcf9899a407ac0f9d3eebd13e6c4a57389ef48f708",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:09+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "7a1b8197a019e1a3d410fafcf9899a407ac0f9d3eebd13e6c4a57389ef48f708",
+      "transcript_sha256": "38e813837e36f0455f817dde259bd6ad4d3165b1497e17fb157058787d4518c9"
+    },
+    "after": {
+      "skill_dir_tree_sha": "7a1b8197a019e1a3d410fafcf9899a407ac0f9d3eebd13e6c4a57389ef48f708",
+      "transcript_sha256": "fdcc27f11ddd27edbde1068595e62dd2108e3bebe52f1190da8408ffdfcc699d"
+    },
+    "backup": "audit/reverdict/run-dev-graph-status/20261012T0650-pr85"
+  }
+}

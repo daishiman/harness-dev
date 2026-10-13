@@ -1,1 +1,20 @@
-{"artifact":"plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md","type":"skills","kind":"ref","mechanical":true,"llm_eval":{"verdict":"FAIL","score":76,"notes":"source(doc/ClaudeCodeスキルの設計書/)実在・引用章(07/08/09/21/24/27/28/29)題名一致, 下流upstream/governance/knowledge-loop参照も実在しread-only境界明確だが, prompts/R1-search-summarize.md がrubric.jsonに存在しないaxes[]/axes[].aliases/keywords/weight合計1.0モデルを記述しrules[]+severity_weights実体と矛盾(内部schema不整合)"},"reviewed_by":"workflow-ref-review","checked":["source-traceability","reference-accuracy","self-containment","boundary"]}
+{
+  "artifact": "plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md",
+  "type": "skills",
+  "kind": "ref",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 6a60ba693315d616b8e5c090de0377155f8af57062410df9471ee549bb1a56ce をレビュー。実行検証あり）。範囲: SKILL.md 全75行（kind: ref）と git diff origin/main（+15/-12。うち未コミットは41行の「rubric 1.5.0」を「1.6.0」にして「1.6.0 で HK-001 の event PostToolUseFailure を追加」を足した1行だけ）。前回版は sha256 78908c80…（blob b1c87720、commit 6257499e）。確かめたこと: (1) references/rubric.json は rubric_version 1.6.0、41 rule、supported_kinds 7種（skill/agent/hook/command/plugin-composition/prompt/workflow）、threshold 80、severity_weights high -20 / medium -10 / low -3 で、34・41行と合う。HK-001 の event に PostToolUseFailure があり、references/CHANGELOG.md の 1.6.0 の項とも合う。(2) 評価軸サマリの applies_to_kinds（BD-003・PD-001・RG-001・KL-* が `*`、BD-001・BD-002・BD-004・PD-002・NM-* が skill）、BD-001・BD-002 の日本語の見出し、NM-002 の第1〜5,7条、PD-002 の冒頭30行の条件は rubric.json の check と一致する。(3) 64行の P2_content（auto_apply + post_review）は skill-governance-config/config/governance-policy.json と一致する。73行の prompts/R1-search-summarize.md は実在し、入力 query・target_layer・scope と出力 rubric_version・summary・matches も本文どおり。(4) validate-frontmatter rc0、lint-skill-description（VIOLATION 0）、lint-skill-name rc0、lint-skill-tree rc0。render-findings-score.py --target SKILL.md --rubric-refs（L0 と L2）--kind skill で 1.6.0・97 点・passed（findings は FM-005 の low 1件、BD-004 は pending_human）。前回の指摘で残っているもの: [低] Gotchas（62〜66行）は FM-003 と機械ゲートの食い違いは書くが、43行の「動詞ベース」（FM-005, low）の扱いを書いていない。FM-005 の日本語の判定語は rubric.json の check と rubric-rationale.md が11語、render-findings-score.py 206〜208行が16語（監査・集約・委譲・観察・検出を足している）で、今も一致しない。直し方: Gotchas に「FM-005 の判定語の正本は rubric.json。採点器の語が多いときは governance で rubric に足すか採点器を戻す」と1行足す。観察（減点しない）: この SKILL.md 自身の FM-005 の減点は、採点器が description を最初の「.」で切るため「SKILL.md」の点で「SKILL」だけが残る誤判定だった（「評価する」が文中にあるので rubric の意図では合格）。直すのは render-findings-score.py の側で、句点「。」か、空白か行末が続く「.」だけで切るとよい。DEDUCTION: [低] -2 → 98。今回の1行の更新は正しい。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "source-traceability",
+    "ref-review"
+  ]
+}

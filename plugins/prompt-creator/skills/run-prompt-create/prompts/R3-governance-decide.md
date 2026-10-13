@@ -74,7 +74,7 @@ preconditions 不成立、または品質条件のいずれか不充足なら ru
 
 ## Layer 5: エージェント層 (実行主体定義)
 
-### 5.1 担当 agent
+### 5.1 担当エージェント
 - run-prompt-create 配下の R3 SubAgent
 
 ### 5.2 ゴール定義

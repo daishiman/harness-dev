@@ -1,0 +1,542 @@
+{
+  "version": 1,
+  "review_mode": "combined-focused-content-review",
+  "claim_type": "design",
+  "slice": "Issue/Projects terminal-state contract, unresolved blockers, cross-project import join and semantic timestamp authority; C03 inventory criterion alignment.",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "reviewed_at": "2026-10-05T08:17:56.854339Z",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "skill_md_sha256": "9382c1e76889b5ee3bd2a4845bd260874fc07889622c7ae969f736d21c434005"
+  },
+  "norms": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md",
+      "sha256": "35715164bcab2c7a855b85b7043b0008fddd5182a316bd4f716e9ffb907f70af"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json",
+      "sha256": "9edce23b1a0c8c32c5fc53df3394ab493c3a3c0a4a0d9d5b238f99015b4c7cd1"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+      "sha256": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json",
+      "sha256": "3c114e702f600edd895c55c98c78a3eacca002dc06c61da043f8aaec3bf817fd"
+    }
+  ],
+  "current_sources": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+      "sha256": "9382c1e76889b5ee3bd2a4845bd260874fc07889622c7ae969f736d21c434005",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+      "sha256": "0afa29fcf8ee82e53490fbcf67302c618539f1d5289f9d7e6a170abc39c72519",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+      "sha256": "684a20d9bb08ddf20ebde02df5385be4be25123955d3e9b94380ac485df65ccd",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+      "sha256": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+      "sha256": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+      "sha256": "42b7df84369b6e33f8eb02d2d15324ef187c97e727f87f0b95052ba823adb79f",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+      "sha256": "ef94e1b477a6e4d56e383c1932a78a076bcbce7e7d00c253dc391b3d9420fd87",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json",
+      "sha256": "704b962939430ce93906fb452e45e0d861f011520c930c1e933785a1f0b75d2f",
+      "read_mode": "fresh declaration/CLI/reference or relevant implementation slice; not all-route audit"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "changes=0 is no longer reported as convergence with outstanding blockers."
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "Both planner blocker sets are accounted, and every cross-project import origin is joined."
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "SKILL OUT1/Purpose/Protocol, R3 acceptance/checklist and C03 inventory criterion match current planner fields."
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "Coordination timestamps do not win content authority; disagreeing Project values cannot reach C02 or snapshot writes."
+    }
+  },
+  "criterion_evaluations": [
+    {
+      "id": "IN1",
+      "loop_scope": "inner",
+      "text": "validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/反映の必須キー欠落が 0 件",
+      "verify_by": "script",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Planners preserve revision-bound bridge_args/update_input and CLI issue-plan mismatch refusal. Cross-project candidates are joined before authoritative C02 patches, and conflicting values cannot leak a losing patch. SKILL retains C24/C11 validation and one binding-specific mutation authority. This is isolated planning/design proof, not an external mutation execution.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "three_project_order_invariance",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT1",
+      "loop_scope": "outer",
+      "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件で、両GitHub計画の converged が true になることを受入テストが確認する",
+      "verify_by": "live-trial",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Frontmatter, Purpose, Protocol1, criteria acceptance and R3 acceptance/checklist now require both planner converged=true. Both planners compute it from zero changes AND zero unresolved. Missing/conflict/flag/held/skipped cases with changes=0 stay nonterminal; clean control converges. C03 upstream inventory portable criterion exactly matches current frontmatter. No GitHub live sync was conducted by this reviewer.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "unresolved_is_never_converged",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT2",
+      "loop_scope": "outer",
+      "text": "id+updated_at が同時競合するケースを注入した際、規定のタイブレーク規則 (更新が新しい方を採用・同時刻はGitHub優先+ローカル手動確認フラグ) どおりに競合解決されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Current Issue timestamp branches retain newer-side precedence, same-time remote display plus a snapshot-bound flag. Execution-context heartbeat now preserves node.updated_at and cannot invert content authority. Independent later-heartbeat and equal-time flag cases pass.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "heartbeat_is_coordination_not_content",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT3",
+      "loop_scope": "outer",
+      "text": "GitHub Issue が close/delete された場合、次回同期でローカルノードが物理削除されず tombstone/status 遷移 (open→closed 等) として双方向伝播されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Protocol4/Purpose/criteria keep close/delete as tombstone/status without physical deletion. A missing Issue now cannot count as convergence and directs reacquisition instead of an invented tombstone. Existing R4/C02 lifecycle ownership is retained; deletion acceptance was not rerun in this focused review.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": null,
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT4",
+      "loop_scope": "outer",
+      "text": "--dry-run 指定時に GitHub 側への書込みが 0 件のまま反映予定差分のみがプレビューされることを受入テストが確認する (暴発防止)",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Current external preview/authorize/execute and --dry-run write0 contracts remain. Both changed planners are pure planning functions and add no external write path. Full guarded external dry-run acceptance remains a separate obligation.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": null,
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT5",
+      "loop_scope": "outer",
+      "text": "手動確認フラグが立ったノードについて、確認結果を反映した後の再同期でフラグが解消されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "R6 still binds decisions to observed local/remote/timestamp/base values; stale decisions remain unusable and confirmations count as unresolved. The same-time planning case proves flags cannot silently converge. Live application/reapplication was not executed here.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "unresolved_is_never_converged",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT6",
+      "loop_scope": "outer",
+      "text": "同一Issue contentを同一Projectへ二回同期してもProject itemが重複せずitem_idが安定し、複数Project targetにはaliasごとに1 itemだけがlinkされる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "C14 alias/item linkage ownership remains. Equal Project imports join one semantic C02 update and retain all source_projects; no item-add path or replacement item authority is introduced. Item-add idempotence acceptance is retained and not inferred from this static verdict.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "three_equal_project_origins",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT7",
+      "loop_scope": "outer",
+      "text": "Projects fieldのlocal/remote双方変更を3-way fixtureで検出して自動上書き0件・manual conflict 1件となり、片側変更だけはmappingどおり同期されsnapshotが更新される",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "L/R/B logic is preserved. Three conflicting Project candidates are all reported before local patch/snapshot construction; six order permutations produce identical conflicts and no writes. Equal candidates deduplicate. The change closes multi-Project loss without replacing snapshot authority.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "three_project_order_invariance",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT8",
+      "loop_scope": "outer",
+      "text": "permission/rate-limit/field削除/option rename/pagination/途中失敗fixtureでローカルtask promotionを維持し、未完了Project writeだけpending_retryとして再実行できる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Protocol retains local promotion independently of partial remote failure and alias pending_retry. Missing/skipped/pending_retry linkages now remain unresolved instead of false convergence. Permissions/rate-limit/pagination/option rename execution acceptance was not rerun here.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "unresolved_is_never_converged",
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT9",
+      "loop_scope": "outer",
+      "text": "PR closed未mergeではdone 0件、default branchへmergedかつpolicy充足時だけdoneとなり、feature worktreeではpending event、clean default worktreeでのみdurable task spec/graphが更新される",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_CHANGED_SLICE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Purpose/Protocol5/R7 summary/criteria retain merge evidence, default-branch and clean-worktree requirements. Execution-context projection updates coordination contexts/revision while preserving semantic content time, adding no new done authority. Full lifecycle acceptance remains a separate obligation.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugin-plans/dev-graph/component-inventory.json"
+      ],
+      "independent_case": "heartbeat_is_coordination_not_content",
+      "behavioral_claim_accepted": false
+    }
+  ],
+  "rubric": {
+    "rubric_hash": "sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+    "composition_hash": "sha256:4dba747802c3f2123e481d72c1257e50174df941abe31ea5653a54bfc781b0ac",
+    "score": 84,
+    "threshold": 80,
+    "high_severity": 0,
+    "machine_report": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review/dev-graph/run-dev-graph-sync/current-rubric-machine-report.json",
+    "findings": [
+      {
+        "id": "FM-005",
+        "severity": "low",
+        "area": "frontmatter",
+        "message": "description first phrase 'tracker_binding' is not a verb",
+        "loc": "frontmatter.description"
+      },
+      {
+        "id": "PD-001",
+        "severity": "low",
+        "area": "progressive-disclosure",
+        "message": "body>100 lines but references/ empty",
+        "loc": "progressive-disclosure"
+      },
+      {
+        "id": "PD-002",
+        "severity": "medium",
+        "area": "progressive-disclosure",
+        "message": "body head 30 lines lack '## Purpose' / '## Output Contract'",
+        "loc": "progressive-disclosure"
+      }
+    ],
+    "semantic_adjudication": {
+      "BD-004": {
+        "verdict": "PASS",
+        "trigger_to_body_mapping": [
+          "dev-graph/Beads sync -> binding authority/Protocol2/R3.",
+          "GitHub Issues/Projects/PR convergence -> Protocol1/3/5 and R3/R6/R7; planner convergence is the stop gate."
+        ]
+      }
+    },
+    "unscored": [],
+    "all_rules_accounted": true,
+    "not_applicable": [
+      {
+        "id": "AG-001",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-002",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-003",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-004",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-001",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-002",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-003",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-004",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-001",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-002",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-003",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-001",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-002",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-003",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-004",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-001",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-002",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-003",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-001",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-002",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-003",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      }
+    ]
+  },
+  "independent_cases": [
+    {
+      "case": "heartbeat_is_coordination_not_content",
+      "finding_ids": [
+        "F-0002"
+      ],
+      "result": "PASS",
+      "detail": "A later context heartbeat advances graph revision but cannot win content timestamp comparison."
+    },
+    {
+      "case": "three_equal_project_origins",
+      "finding_ids": [
+        "F-0001"
+      ],
+      "result": "PASS",
+      "detail": "Three equal imports collapse to one semantic update and retain all origins."
+    },
+    {
+      "case": "three_project_order_invariance",
+      "finding_ids": [
+        "F-0001"
+      ],
+      "result": "PASS",
+      "detail": "All six permutations: 3 conflicting origins, no C02 patch or snapshot write."
+    },
+    {
+      "case": "unresolved_is_never_converged",
+      "finding_ids": [
+        "F-0004"
+      ],
+      "result": "PASS",
+      "detail": "Missing Issue, bad timestamp, same-time flag, missing/skip/held Projects are nonterminal; empty control converges."
+    }
+  ],
+  "proof_boundary": {
+    "static_design_adequacy": "PASS for stated slice and its impact on every enumerated criterion contract.",
+    "behavioral_live_trial": "NOT_CLAIMED. Isolated CLI/plan/fixture proof is only the exact observation named here; it does not replace Gate D, real dialogue, external mutations or release acceptance.",
+    "unchanged_obligations": "Evaluated for ownership/contract preservation and absence of propagation; not rerun or relabeled as current behavioral proof.",
+    "prior_verdicts": "Not reused as PASS evidence; no historical verdict/hash was updated.",
+    "method_coverage": "One focused independent context projected to legacy elegance/rubric files. No per-skill30-method rerun is claimed; branch audit coverage belongs to analysis-findings.json."
+  },
+  "warnings_policy": "Inherited medium/low machine observations are disclosed and scored; no high-severity or changed-slice semantic finding remains. Authorized source scope is not expanded to unrelated layout changes."
+}

@@ -2,13 +2,20 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
-    "skill_md_sha256": "047b6d1df9e565c5795d3bdb933682ce88c908275d052c110ee894beee9c0778"
+    "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "pr83-followups focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-05T01:01:53Z",
-  "iterations": 1,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-12T13:09:21Z",
+  "iterations": 3,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -21,35 +28,17 @@
       "OUT5"
     ],
     "positive_feedback": [
-      "OUT5 (verify_by: test) が決定論 script と test で裏づけられた。build-project-hook-fallback.py は preview/apply/rollback を持ち、test_build_project_hook_fallback.py の 4 本 (4 passed) が、追記 merge、既存 key/hash の不変、二重登録 0、再実行の noop、byte 単位の rollback、drift の拒否、8 種の拒否診断で書込み 0 になることを確かめている。",
-      "frontmatter の script_refs に追加した `../../scripts/build-project-hook-fallback.py` は実在し、実行ビットがあり、`# /// script` の header を持つ。*_refs はすべて実在し、responsibilities と responsibility_refs は 1 対 1 に対応したままである。SKILL.md:136 と R5 の Layer 3/6 は同じ script と同じ引数を指している。",
-      "receipt の書き手が分かれている。init receipt は build-init-scaffold.py が書き、hook_source だけを記録する。hook の変更は build-project-hook-fallback.py の manifest に残る。この分担が SKILL.md:138、R3・R5 の Layer 6、2 本の script の実装でそろっている。",
-      "lint-prompt-contract-drift.py --strict-tools は fatal 0 / warn 0 だった。lint-prompt-placement.py・lint-sibling-plugin-paths.py・lint-script-naming.py・validate-frontmatter.py も OK だった。",
-      "既存 verdict の low 4 件は、今回の差分では解消していない。R2・R3・R4 の prompt と build-init-scaffold.py は前回の verdict の後に変わっていない。R2 の plan digest の件は、R5 にも広がった。"
+      "PD-002 を満たす。本文の13行目 (L112) に `## Purpose & Output Contract`、19行目 (L118) に「…絶対 path の永続化は禁止で、検出したら fail-closed で止める」があり、同じ段落で `$CLAUDE_PLUGIN_ROOT` を bytecode cache も含めて read-only とする。",
+      "FM-001..004・BD-001..003・NM-001..003 を満たす (lint-skill-name / lint-skill-tree は ok)。BD-004 (pending_human) は自分で判定して PASS: description の2つの trigger のうち「呼出し元 repository/worktree 内へ冪等初期化したい」は手順0-3・5 (L130-135、build-init-scaffold.py への委譲と二回目の noop) に、「6 content root と repo-local config/state/templates/hook fallback を安全に用意したい」は手順2-4 (L132-134) と手順4の委譲 (L143) に対応する。render-findings-score の機械採点は 94 (rubric 1.6.0、threshold 80、high 0、scored 19/20、pending_human は BD-004 だけ)。2回目と同じで、今回の直しで増えた rubric の指摘は無い。"
     ],
     "negative_feedback": [
-      "[low / smell] 前回から残る。build-init-scaffold.py の rollback は、_create_file が親として作る `.dev-graph/state/` と `.dev-graph/state/receipts/` を記録しない。書込み途中の失敗で空の directory が残る。",
-      "[low / 不整合] 前回から残る。R4 の出力契約は同 digest の保持を `preserved` と対応させるが、script の `preserved` には利用者が編集した template も入る。",
-      "[low / 漏れ] 前回から残る。R4 の Layer 6 は R3 の script の結果を検証の入力にするが、Layer 2 の入力契約にその結果が無い。",
-      "[low / 不整合] 前回から残り、R5 にも広がった。R2 の Layer 6 は R3/R4/R5 が同じ plan digest を消費すると書くが、build-init-scaffold.py も build-project-hook-fallback.py も R2 の plan を入力に取らない。R5 の preview と apply も digest で結ばれていない。",
-      "[low / 漏れ] rollback_drift の後に戻る手段が無い。settings.json と config.json の一方でも apply 後に書き換わると、全体の rollback が拒否される。そのうえ skill は settings を直接書けないので、hooks contract 9 行目の「source=plugin では project 側 dev-graph hook を除去」を満たす道が無い。",
-      "[low / 漏れ] plugin 既定のとき、R5 の出力契約にある plugin-managed 判定を誰が出すかが定まっていない。Layer 3 の「settings に触れない」が Read での診断まで禁じるのかも曖昧である。",
-      "[low / 漏れ] managed 診断は既定の 1 file (macOS/Linux の path) だけを読み、Windows の path、MDM/OS policy、server-managed の設定を見ない。",
-      "[low / smell] rollback manifest が settings.json の全文 (`before_text`) を receipt へ写し、preview が settings 全体を stdout に出す。settings の `env` に認証情報があれば、共通層 Layer 4 の secret 規約と緊張関係になる。",
-      "[low / 不整合] SKILL.md:136 は「`(event, matcher, command)` 単位で追記 merge」と書くが、実装は group 単位で追記し、一部だけ登録済みの group は拒否する。また手順 4 の usage には `--config` が無い (init 側の usage にはある)。",
-      "[low / smell] apply が書込み途中で失敗すると、manifest は `status=applied` のまま disk に残るのに、stdout は `status=error`・`write_count=0` を返す。"
+      "PD-001 (low、前から残る。Beads 行き): 本文が115行 (L100-214) で100行を超えるが、skill 直下に references/ が無い (prompts/ のみ)。3回目の直しは L131・L143 の文の中だけで、行数は2回目と同じ。直し方: L137-145 の script 委譲の詳説を references/ へ移すか、本文を100行以内にする。",
+      "FM-005 (low、前から残る。Beads 行き): description (L3) が動詞句でなく「dev-graph を…」で始まる。直し方: 「初期化する」等の動詞句で始める (trigger 2個は保つ)。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr83-followups",
+    "hook_trigger": "manual: team-lead request for iteration 3/3 of the init content-review after fixing the three low findings of iteration 2 (N1: R1-elicit Layer 3 uses ../../scripts/resolve-repo-context.py and step 1 names both standalone C24 starts; N2: step 4 names status=rejected / code=merge_not_additive for old+new wiring together and how to recover; N3: the static bytecode test also checks argv lists starting with \"python3\", and the a1 harness drops PYTHONDONTWRITEBYTECODE for Harness.run and both reruns); new loop by user decision, 3rd pass of the new loop; incremental focused combined review",
     "next_action": "none"
   },
-  "notes": "elegance verdict と同じ context で行った focused combined review (PR #83 follow-up の変更集合に対する iteration 1) を、rubric の面へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。ref-skill-design-rubric の rule を機械的にすべて実行したわけではない。機械的に確かめたのは構造の規範に限る。具体的には、frontmatter の必須キー (validate-frontmatter.py が OK)、*_refs の実在 (追加した script を含む)、responsibilities と responsibility_refs の対応、script の出力キーと拒否コードが SKILL.md:136 と R5 本文に一致すること、lint-prompt-contract-drift.py・lint-prompt-placement.py・lint-sibling-plugin-paths.py・lint-script-naming.py が OK であること、test_build_project_hook_fallback.py が 4 passed であること、の 6 点である。数値の score は算出しておらず、verdict は combined review の単一の判断に従う。high/medium は 0 件である。low は 10 件で、前回から残る 4 件と今回の 6 件である。low は記録したが判定を変えない。判定の射程は design claim (静的設計 adequacy) に限る。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 4,
-    "inconsistency": 3,
-    "dependency_break": 0,
-    "smell": 3
-  }
+  "notes": "rubric=94/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。回数の数え方: 前のループ (7c9b95b8 の版) は3回目に PASS した。その続きとして OUT3 (共有 harness の bytecode cache) を直した版 (cd74c3d4) の review で medium D・E を挙げ、利用者の判断で、回数を新しいループ (iteration_limit 3) に切り替えた。新しいループの1回目 (43960b48 の版) は medium F (0.1.17 の配線で手順4の再実行が duplicate_registration で止まる) を挙げ、verdict を書かずに team-lead へ報告した。2回目 (34cd5265 の版) は F の解消を確かめて PASS (rubric 94) とし、新しい low N1-N3 を Beads 行きとして返した。N1-N3 は、作者とは別の修正役 (team-lead) がこの PR で直した。今回はその3回目で、iteration=3 と記録する。対象は SKILL.md の全文 (2回目からの変更は L131 と L143)、prompts/R1-elicit.md の全文、resolve-repo-context.py の write-scope と引数、build-project-hook-fallback.py の _verify と拒否の出力 (L287・L381-384)、test_no_bytecode_in_harness.py の全文、test_acceptance_gaps_a1.py の without_bytecode_env と Harness・repair・alt config の起動である。read-only で回したもの (03c93563 の版): test_build_project_hook_fallback・test_init_preflight_gate・test_acceptance_gaps_a1・test_no_bytecode_in_harness・test_build_init_scaffold・test_c25_lifecycle_hook_contract・test_semantic_contract_boundaries_c10_c11_c24・test_semantic_c25_c28・test_runtime_coverage・test_skill_criteria_contracts・test_skill_mass_production_contracts (11本で 146 passed)、lint-skill-name / lint-skill-tree (ok)、render-findings-score (94、scored 19/20、pending_human は BD-004 だけ)。init の behavior closure を live-trial-verdict.py の skill_dir_tree_sha で計算し直して 6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6 を得た (修正役の申告と一致。closure は44 file で、test は入らない)。写しでの実験 (cr-dg4 の scratch の下。rm も git の書込みも使っていない): exp13 は validate-harness-link.py の L126 (remediation の fallback argv) から `-B` だけを外した写しで、test_every_python_child_is_started_with_minus_b が `scripts/validate-harness-link.py:126` を名指しして落ちる (今の版では通る)。script の側 (build-project-hook-fallback.py・validate-harness-link.py・hooks.json・hooks contract) は2回目から sha が変わっていないので、2回目の exp9 (外側の -B と PYTHONDONTWRITEBYTECODE を外して全 script と hook を起こしても .pyc 0件) と exp10 (HEAD の fallback で F が再現) の結果はそのまま使える。この review の操作は、2つの verdict のほかに作業ツリーを変えていない。verify_by=live-trial の OUT1 は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話はこの verdict の対象外である。low は team-lead の決定で直さずに Beads に回す。"
 }

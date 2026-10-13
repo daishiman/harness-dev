@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/plugin_resources.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 1ce7ecefb7a437cbe45b2010d869d2fb892de2ab857963752787ecc1f2cdc0e0 をレビュー。実行検証あり）。範囲: 88 行の全文（origin/main には無い新規ファイルなので git diff origin/main で全体が差分）。sibling plugin の root/resource 解決と、run-build-skill の旧 path 2 本（build-external-intelligence*.py）から転送先への転送をまとめる import 用 module。前回レビュー版（sha256 b6c58e01…、commit 6257499e）からの違いは、forward_external_intelligence が転送先の plugin 名を keyword 引数 provider で受けるようにしたこと（62 行。前は関数の中で skill-governance-adapters に固定）と、エラー文に provider を入れたこと。呼び手 2 本はどちらも provider=\"skill-governance-adapters\" を渡し、tests/scripts-plugins/test_harness_creator__external_intelligence_hook.py 423 行もこの呼び方を確かめる。確かめたこと: resolver は解決後の path ごとに _RESOLVERS に持ち、sys.modules に登録しない（31〜50 行）。resolver が無ければ ResolverUnavailable（39 行）、forward_external_intelligence はそれを sentinel path にし、is_file でなければ RuntimeError（71〜81 行）。import のときは run_name=None で転送先の __main__ 節を走らせず、dunder を除いて namespace に写す（82〜88 行）。header の write-scope（自身は書かず、転送先の書き込みが起きる）は実装どおり。pytest（tests/scripts-plugins の test_harness_creator__plugin_resources・__external_intelligence・__external_intelligence_hook・__external_intelligence_runtime・__lint_knowledge_loop_r4・__lint_pkg_009・__run_pkg_015・__sandbox_plugin_lifecycle と plugins/harness-creator/tests/test_sync_task_state.py）で 219 passed（3.11）。lint-script-frontmatter（plugins/harness-creator/scripts）OK checked=33。scratch の probe で、resolver 不在は ResolverUnavailable になることを確かめた。指摘（前回から残る）: [低] 直接実行は --help も --bogus も何もせず exit 0。shebang と 100755 を持つが、header にも docstring にも『import 専用。CLI なし』と書いていない（feedback_contract_ssot.py は header 5 行目に書いている）。header に書くか、__main__ で usage を出して 2 を返す。[低] 72 行の caller.parents[3] は呼び手が <plugin>/skills/<s>/scripts/ にある前提で、浅い path の呼び手では IndexError: 3 になる（probe で再現。今の呼び手 2 本は前提を満たす）。len(caller.parents) を見て RuntimeError にする。[低] 48 行の exec_module は resolver の SyntaxError などをそのまま投げる（壊れた extract-plugin-root.py で SyntaxError の素通りを再現）。ResolverUnavailable だけを捕まえて sentinel に倒す呼び手（sync-task-state.py・lint-knowledge-loop.py）は、壊れた bundle では traceback で止まる。Exception を ResolverUnavailable に包む。DEDUCTION: 直接実行の no-op -2、parents[3] の前提 -2、壊れた resolver の例外の素通り -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-node",
+    "skill_md_sha256": "a3a66bb349cf09ce8d561a51bb54cb73ed1b327ca5af648580ed835887aa296f"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "projects-field-3way focused combined content review, iteration 3 (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-05T03:20:54Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 1,
+    "omission": 5,
+    "inconsistency": 8,
+    "dependency_break": 1,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "(d) 依存関係整合、前回の medium の解消: C14 の linkage_proposal と C03 の field_snapshot を exact-13 package member に記録する writer が、実際の member で動くようになった。register-package の CLI (github mode) で登録した REGISTRATION_NODE_KEYS だけの member に CLI の link-github を当てると、applied・graph_revision 5→6・receipt の graph_only true と sha256_before/after null になり、member の artifact file は作らず、issue_linkage と item_id だけが加わり、updated_at・evaluation_status と他の field は変わらず、2 回目は noop になる。sync の SKILL.md 手順 3 と R3-sync.md が前提にする member の snapshot 記録と、reconcile-github-lifecycle の issue_number 依存がつながった。",
+      "(a) 矛盾なし、所有境界: member の本文 file は system-dev-planner の持ち物なので C02 は読み書きしない、という線引きが、_plan_link_github の graph だけの entry (1175〜1177 行目)、docstring 1111 行目、SKILL.md 125 行目で一致する。update と bind-github は package_member_requires_register_package を保ち、link-github の入力の package key も同じ code で拒否されるので、exact-13 の境界は崩れていない。",
+      "(d) 依存関係整合、単一 writer の検査: staged_ids (1251 行目) は path を持つ entry から作られ、add (821 行目)・update (1023 行目)・bind-github (1094 行目) は必ず path を持つので、これらの検査は前と同じである。graph だけの member も、新しい finding (sync_state=bogus の schema_violation、last_synced_at の欠落) では pre_write_validation_failed で止まる。receipt の衝突では immutable_receipt_exists で止まり、graph は元に戻る。",
+      "(c) 記述規約整合と決定論: lint-prompt-contract-drift.py --strict-tools は node の prompts 5 本で fatal 0 / warn 0、lint-sibling-plugin-paths.py は OK、lint-script-naming.py は VIOLATION 0。focused pytest (test_build_graph_node.py の link_github・project_field・package_member・bind_github・unchanged_update・rollback・pre_write) は 10 passed、test_register_package.py は 34 passed。"
+    ],
+    "negative_feedback": [
+      "[low / 矛盾、OUT1、今回の差分] _findings (1192〜1203 行目) は、graph だけの node を新しい finding でしか止めないので、artifact_missing だけでなく、member が元から持つ schema_violation や binding_collision も見逃す。scratchpad (node-r3-carried-findings.py) で、owners を list 以外にし beads_linkage を持たせた member に link-github を当てると applied になり、receipt の pre_write_validation は findings 0 と書き、書込み後の validate-graph-schema.py は task-P04 に artifact_missing・binding_collision・schema_violation を返した。SKILL.md 118 行目の「変更した node は finding 0 を要求し」と食い違う。C02 は新しい finding を足さず、壊れた member は手で編集しないと生じないので low とした。見逃す finding を artifact 系 code に限るか、118 行目に graph だけの member の例外を書くと揃う。",
+      "[low / 不整合、OUT1、今回の差分] apply の write_count = len(plan) + 2 (1315 行目) は graph だけの entry も数え、member 1 件で 3、2 件で 4 を返す。実際に書く file は graph と receipt の 2 つだけである。",
+      "[low / 漏れ (test)、OUT1・OUT3、今回の差分] 新しい test は task_node 形の member を graph に直接置き、register-package の CLI を通していない。_findings の緩めに対する負の test (graph だけの member に新しい finding を持ち込むと止まること、artifact 以外の既存 finding の扱い) と、write_count・sha null の確認が無い。",
+      "[low / 漏れ、OUT1、今回の差分] R2-preview.md と R3-write.md に、member への link-github が graph だけの記録になる (content diff が無く、receipt の artifacts 行は graph_only true で sha が null) という記述が無い。",
+      "[low / 依存、OUT3、前回の low が再現、差分外] link-github で linkage を記録した後、register-package の冪等再実行が exit 2 (duplicate node ids exist with different content、register-package.py 406〜408 行目) になることを再現した。fail-closed で二重登録は起きないが、C14 decompose 手順 5 の冪等な二重登録防止とは形が違う。execution-context の投影でも起きる既存の問題である。",
+      "[low / 不整合、OUT1、前回から一部未解消] R3-write.md 16 行目「classification decision (bind-github では不要)」・33 行目「bind-github も ... expected_graph_revision に渡す」と R2-preview.md 25 行目は bind-github だけを挙げ、分類を伴わない link-github を含めていない。",
+      "[low / 漏れ、OUT1、前回から未解消] SKILL.md 125 行目に、別の repo の issue_linkage も issue_linkage_conflict になること、入力の中の alias 重複も unknown_project_alias になること、削除・detach された item の回復経路が無く project_item_conflict で止まり続けること、が書かれていない。",
+      "[low / 不整合、OUT1、前回から未解消] build-graph-node.py の metadata の purpose (4 行目) が link-github を含んでいない。",
+      "[low / 不整合、IN1、前回から未解消] ラベル自体が placeholder token の行 (`TBD: <reason>`、`- <label>: <TBD>`、`TODO: TBD`) が充足扱いになり (fail-open)、SKILL.md 116 行目とずれる。",
+      "[low / 漏れ、OUT1、前回から未解消] R3-write.md 20・51 行目の noop の記述に、変更の無い update の noop が抜けている。",
+      "[low / 不整合、OUT1、前回から未解消] R2-preview.md の受け渡しの書き方が 16・20・25 行目で揃っていない。",
+      "[low / 不整合、OUT2、前回から未解消、差分外] SKILL.md 152 行目の完了チェックリストに、decision source を持たない bind-github・link-github と c14_macro_contract の例外が無い。",
+      "[low / 漏れ、OUT3、前回から未解消] publication authority の不正な組み合わせと auto intent の整合が、SKILL.md の Exact-13 package gate 節に無い。",
+      "[low / 不整合、OUT1、前回から未解消] SKILL.md 124 行目の「C12 (`run-dev-graph-sync`)」は component id と名前の組が食い違い、125 行目の「C03 の同期結果」とも揃っていない。",
+      "[low / 不整合、OUT3、前回から未解消、差分外] Criteria acceptance の OUT3 (193 行目) に「mixed parent」が抜けている。",
+      "[前回の指摘の解消状況] medium (register-package が実際に登録する package member に link-github を使えない): 解消。node_missing_required_keys と FileNotFoundError の 2 つの関門はどちらも通り、register-package の CLI で登録した member に linkage を記録できることを scratchpad (node-r3-pkg-link-repro.py) で確かめた。前回の low 11 件は low のまま再掲した。今回の差分で生じた low は 4 件で、high と medium は 0 件。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 5,
+    "hook_trigger": "manual:projects-field-3way",
+    "next_action": "none"
+  },
+  "notes": "builder とは別 context の独立 evaluator が、content-review-protocol の incremental (focused combined review) で再評価した。これは iteration 3 で、iteration 2 の medium (register-package が実際に登録する package member に link-github を使えない) への修正が対象である。(a) 矛盾なし (b) 漏れなし (c) 記述規約整合 (d) 依存関係整合 (e) rubric high severity 0 を 1 回で判定した。30 思考法は実施しておらず、実施したとも申告しない。iteration_limit は plugins/dev-graph/tests/test_skill_criteria_evidence.py の CONTENT_REVIEW_ITERATION_LIMIT に合わせて 5 を維持した。確かめたこと: (1) `git diff HEAD -- plugins/dev-graph` で、node の SKILL.md・prompts/R2-preview.md・R3-write.md・build-graph-node.py・test_build_graph_node.py の差分を読んだ。(2) build-graph-node.py の _plan_link_github・_transact・_findings と、add・update・bind-github の plan entry が path を持つことを読んだ。(3) scratchpad の再現 script (node-r3-pkg-link-repro.py、node-r3-carried-findings.py) で、register-package の CLI で登録した member に CLI の link-github を当て、適用・noop・新しい finding での拒否・既存 finding の持ち越し・receipt 衝突時の rollback・register-package の replay を確かめた。(4) lint 3 種と focused pytest を実行した。high と medium は 0 件なので PASS とした。low は 15 件 (矛盾 1・漏れ 5・不整合 8・依存 1。今回の差分 4 件、前回からの持ち越し 11 件) で、修正はしていない。PASS の射程は design claim (静的設計 adequacy) に限り、live trial や runtime の振る舞いを保証しない。criteria-test/scenario-verdict.json は本 review の担当外で、触れていない。"
+}

@@ -167,22 +167,51 @@ ENGINE_SKILLS = frozenset(
 # SSOT とし、名前だけでは除外せず「正本とツリーが完全一致」の場合のみ除外する。
 VENDORED_FEEDBACK_SKILL = "run-skill-feedback"
 
+# byte-compile の生成物は配布物ではない。.pyc には元ファイルの絶対パスと mtime が
+# 埋まるため、CI の py_compile や pytest の import で正本とコピーに別々に生成されると、
+# 中身が同じでもツリーが不一致になり配布コピーが独立 skill として重複計上される。
+# スクリプトを実行しただけで隣に __pycache__ ができるので、パスで除外して digest を
+# 「実行したかどうか」ではなく配布する中身だけで決まる値にする。
+_BYTECODE_CACHE_DIR = "__pycache__"
+_BYTECODE_SUFFIXES = (".pyc", ".pyo")
+# macOS の Finder がディレクトリを開くと置く .DS_Store も配布物ではない。正本とコピーの片方だけに
+# できると、中身が同じでも digest が食い違い、配布コピーが独立 skill として重複計上される。
+_FINDER_METADATA = ".DS_Store"
+
+
+def _is_bytecode_cache(relative: Path) -> bool:
+    return _BYTECODE_CACHE_DIR in relative.parts or relative.suffix in _BYTECODE_SUFFIXES
+
+
+def _is_local_artifact(relative: Path) -> bool:
+    """digest に含めない、手元で生成されるファイル (bytecode cache と .DS_Store)。"""
+    return _is_bytecode_cache(relative) or relative.name == _FINDER_METADATA
+
 
 def directory_content_sha256(root: Path) -> str | None:
     """Return a deterministic digest of a directory tree, or None if absent.
 
     Relative paths, entry kinds, file bytes, and symlink targets all participate
-    in the digest.  This intentionally does not follow symlinks.
+    in the digest.  This intentionally does not follow symlinks.  Python
+    bytecode caches (``__pycache__`` / ``*.pyc`` / ``*.pyo``) are excluded
+    because they are generated locally and embed the source path, and so is
+    macOS Finder metadata (``.DS_Store``).  An entry that cannot be read
+    (file bytes or symlink target) yields None instead of raising.
     """
     root = Path(root)
     if not root.is_dir():
         return None
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+        if _is_local_artifact(path.relative_to(root)):
+            continue
         relative = path.relative_to(root).as_posix().encode("utf-8")
         if path.is_symlink():
             kind = b"L"
-            payload = os.readlink(path).encode("utf-8")
+            try:
+                payload = os.readlink(path).encode("utf-8")
+            except OSError:
+                return None
         elif path.is_file():
             kind = b"F"
             try:

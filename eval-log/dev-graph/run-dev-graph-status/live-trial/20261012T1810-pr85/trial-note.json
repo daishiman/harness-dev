@@ -1,0 +1,29 @@
+{
+  "label": "status3",
+  "retry_of": "20261012T1358-pr85",
+  "evaluator_agent_id": "abff3f66d08bbaa19",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/status3/ws/plugins/dev-graph/skills/run-dev-graph-status",
+  "closure_sha_at_launch": "753316cebe9817ce295db61d0faaabac1b33ed430ab9767301888be471815484",
+  "closure_sha_tested_copy": "753316cebe9817ce295db61d0faaabac1b33ed430ab9767301888be471815484",
+  "closure_sha_wtpy_at_verdict": "753316cebe9817ce295db61d0faaabac1b33ed430ab9767301888be471815484",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "fixture: mkfx.sh でその場で git init した素の repo (最初の commit は README.md だけ)。status2 と同じ手順で、seed は使っていない。",
+    "隔離ガード: status2 の後に、guard.py を許可一覧の形にし (一覧に無い tool を拒否)、SendFeedback・ScheduleWakeup・mcp__*・Agent の isolation を拒否するようにした。permissions.deny にも 12 件を足した。締める向きの変更だけ (fixture-provenance.json の isolation_change)。",
+    "task.md: runs/status2 を runs/status3 に置き換えただけ (fixture-provenance.json の task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。準備で使う run-dev-graph-init の closure は status2 から変わっている (fixture-provenance.json の plugins_copy)。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 2,
+    "occurrences": 4,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "run-dev-graph-status/SKILL.md で、allowed-tools とゴールシーク配線が食い違っている。frontmatter の allowed-tools は [Read, Bash, AskUserQuestion, Skill, Agent] で Write も Edit も含まない。一方で「## ゴールシーク配線」は、$DEV_GRAPH_ROOT/eval-log/ に goal-spec.json・progress.json・intermediate.jsonl を書くよう求めている。そのため read-only (effect: conversation-output) の skill なのに、Bash の heredoc で caller の repo に 3 ファイルを書くことになる。また、評価役が実行後の digest を測るのを eval-log への書込みの前にするのか後にするのかが書かれていない。この run では、main が書込みを評価の後まで保留した (193 行目) ので全ファイルの diff が 0 件になった。再現手順: standard を選んで実行した後に git -C <repo> status --short を見ると、eval-log/run-dev-graph-status-* の 3 ファイルが増えている。",
+    "run-dev-graph-status/SKILL.md の「## Pre-choice usable artifact execution」は「現物path・digest・開き方を提示してから」選択を記録するよう求めているが、effect: conversation-output の場合 (file path が無い) に何を提示すればよいかが決まっていない。この run では、選択の前に report の本文がユーザーに示されたのは、折り畳まれた Bash 出力 (181 行目) と narration (184 行目) だけだった。本文の全体を示したのは評価役の後 (206 行目) である。",
+    "run-dev-graph-status/SKILL.md の「## ゴールシーク配線」は、skill の完了に外ループの OUT1 (verify_by: live-trial)・OUT2 (verify_by: test) と content-review の PASS を求めている。しかし、session の中でそれを誰がどう実行し、どこへ記録するかが書かれていない。そのため被験は progress.json に criteria の OUT1・OUT2 を PASS と自分で書き込んだ (199 行目)。"
+  ]
+}

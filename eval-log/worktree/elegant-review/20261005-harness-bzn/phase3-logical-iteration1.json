@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "phase": "phase3",
+  "iteration": 1,
+  "status": "implemented-awaiting-independent-review",
+  "agent": "elegant-logical-structural-analyst",
+  "beads_issue": "harness-bzn.1",
+  "workspace": "/Users/dm/dev/dev/個人開発/harness",
+  "completed_at": "2026-10-05T07:57:36.830837Z",
+  "ownership": "plugins/dev-graph/scripts and tests; extract-plugin-root.py synchronization owned by meta worker and excluded",
+  "source_changes": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+      "new_file": false,
+      "added_lines": 25,
+      "removed_lines": 6,
+      "before_sha256": "d010d1851452b8910d35f6f04aa2d229c9a851aa31c8a73a6d2fbde9405f2b1c",
+      "after_sha256": "ef94e1b477a6e4d56e383c1932a78a076bcbce7e7d00c253dc391b3d9420fd87"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+      "new_file": false,
+      "added_lines": 28,
+      "removed_lines": 31,
+      "before_sha256": "be75410690a3bdb401b1e08631b8820fb830cc3ea2332267ace0ffb9839314df",
+      "after_sha256": "e7c952b01adbf241e17a9c1c389122c28327cbb61056cf34c7eee5f22b4e8cd5"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py",
+      "new_file": false,
+      "added_lines": 9,
+      "removed_lines": 25,
+      "before_sha256": "1fe7191ba1645823badfbd51d6d9f5af404435a36a268e52d93c1b10be4fa547",
+      "after_sha256": "eb2271e36a3e4e6457e0de42150b8479c1bdbca146ca9b382e9baa42f4d625e8"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+      "new_file": false,
+      "added_lines": 5,
+      "removed_lines": 12,
+      "before_sha256": "98e7ef472b81cab06f2d94c3af4a194c2a05f36af7bfb1e56c4c19901d1cc40f",
+      "after_sha256": "42b7df84369b6e33f8eb02d2d15324ef187c97e727f87f0b95052ba823adb79f"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+      "new_file": false,
+      "added_lines": 8,
+      "removed_lines": 5,
+      "before_sha256": "43e2aee49468396fa86e22efcfb5394a410f86c625fecaa3e21c5148803f5055",
+      "after_sha256": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+      "new_file": false,
+      "added_lines": 29,
+      "removed_lines": 5,
+      "before_sha256": "6ab72cb797c2083c5f449742b1d91f05494f77d659bf09b48b0efa7310aa648e",
+      "after_sha256": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_shared_writer_sync_regressions.py",
+      "new_file": true,
+      "added_lines": 260,
+      "removed_lines": 0,
+      "before_sha256": null,
+      "after_sha256": "0bafedb871e1bc979da8692ce416998e6ad2526d4aea76ef61625143bb036b03"
+    }
+  ],
+  "fixed_ids": [
+    {
+      "id": "F-0001",
+      "change": "Group imports by node/field. Different candidate values become cross-project-import conflicts for every candidate; no patch or linkage/snapshot write for those candidates. Equal values deduplicate to one patch with source_projects provenance.",
+      "regression": "schema-valid 2 Project high/low import plus reversed linkage order, and equal-value dedup"
+    },
+    {
+      "id": "F-0002",
+      "change": "execution-context projection preserves semantic node.updated_at while updating execution_contexts.last_seen_at and graph_revision.",
+      "regression": "remote-newer Issue title remains an import after a newer lease heartbeat"
+    },
+    {
+      "id": "F-0003",
+      "change": "Track creation of all planned file/receipt parents, create directories individually, roll them back in reverse order. Rollback failures retain path findings and write_count=null.",
+      "regression": "receipt link failure fully restores path/byte snapshot, with/without existing state; injected cleanup failure reports remaining path instead of zero writes"
+    },
+    {
+      "id": "F-0004",
+      "change": "Both planners expose converged and unresolved_count; unresolved conflicts/flags/held/missing/skipped never return next=converged.",
+      "regression": "missing, no-timestamp conflict, confirmation, skipped, persistent Project conflicts, plus clean convergence controls"
+    },
+    {
+      "id": "F-0005",
+      "change": "json_bytes and atomic_bytes in existing _common; atomic_json delegates with create_only option. Three writer wrappers preserve domain errors. Shared PACKAGE_KEYS/is_package_member replace three constant/predicate copies.",
+      "regression": "create-only target immutability/temp cleanup, replace update, injected link failure, each domain wrapper error code, existing writer consumers"
+    }
+  ],
+  "validation": {
+    "unique_tests_passed": 101,
+    "existing_tests_passed": 92,
+    "new_regression_tests_passed": 9,
+    "test_files": [
+      {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_shared_writer_sync_regressions.py",
+        "collected_count": 9
+      },
+      {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_graph_node.py",
+        "collected_count": 54
+      },
+      {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_register_package.py",
+        "collected_count": 34
+      },
+      {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_init_scaffold.py",
+        "collected_count": 4
+      }
+    ],
+    "runs": [
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 /Users/dm/miniconda3/bin/python3 -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_shared_writer_sync_regressions.py plugins/dev-graph/tests/test_build_graph_node.py plugins/dev-graph/tests/test_build_init_scaffold.py plugins/dev-graph/tests/test_register_package.py",
+        "exit_code": 1,
+        "passed": 100,
+        "failed": 1,
+        "elapsed_seconds": 350.03,
+        "source_sha256": {
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py": "0eb3e3c0d2409278ad9400b0d36b09beee35adc8841587bd7fb40686038107f8",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py": "e7c952b01adbf241e17a9c1c389122c28327cbb61056cf34c7eee5f22b4e8cd5",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py": "eb2271e36a3e4e6457e0de42150b8479c1bdbca146ca9b382e9baa42f4d625e8",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py": "42b7df84369b6e33f8eb02d2d15324ef187c97e727f87f0b95052ba823adb79f",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_shared_writer_sync_regressions.py": "4a5614fe0736e90b9da9641a8187b9a440064f4a65f80debbfbeb28c3e3a1843",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_graph_node.py": "aaaea328336c84628e346ce480e869f392620810468815a9aabdbaef61627189",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_init_scaffold.py": "09ebef0fd0279455b8550ea362b57cd413fec63da984c50c772383e887c7864c",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_register_package.py": "05d95e9cc6f56529950b85ea58c1a623afa1c250a287cf2289c873b0809c9055"
+        },
+        "failure": "New incomplete-rollback test compared /var temp spelling to init resolved /private/var and did not activate fault injection. Existing 92 tests all passed. Test fixture normalized to realpath."
+      },
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 /Users/dm/miniconda3/bin/python3 -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_shared_writer_sync_regressions.py plugins/dev-graph/tests/test_register_package.py -k 'SharedAtomicWriteTest or InitRollbackTest or ProjectImportJoinTest or SyncProgressTest or atomic_create or atomic_receipt_failure or execution_context_preview_apply_replace'",
+        "exit_code": 0,
+        "passed": 12,
+        "deselected": 31,
+        "elapsed_seconds": 0.58,
+        "source_sha256": {
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py": "ef94e1b477a6e4d56e383c1932a78a076bcbce7e7d00c253dc391b3d9420fd87",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py": "e7c952b01adbf241e17a9c1c389122c28327cbb61056cf34c7eee5f22b4e8cd5",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py": "eb2271e36a3e4e6457e0de42150b8479c1bdbca146ca9b382e9baa42f4d625e8",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py": "42b7df84369b6e33f8eb02d2d15324ef187c97e727f87f0b95052ba823adb79f",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_shared_writer_sync_regressions.py": "0bafedb871e1bc979da8692ce416998e6ad2526d4aea76ef61625143bb036b03",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_graph_node.py": "aaaea328336c84628e346ce480e869f392620810468815a9aabdbaef61627189",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_build_init_scaffold.py": "09ebef0fd0279455b8550ea362b57cd413fec63da984c50c772383e887c7864c",
+          "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/test_register_package.py": "05d95e9cc6f56529950b85ea58c1a623afa1c250a287cf2289c873b0809c9055"
+        },
+        "coverage_note": "All 9 new regressions plus 3 existing atomic/receipt/context regression tests."
+      }
+    ],
+    "source_revision_reconciliation": "After the first run, only four new-test root paths were normalized and the _common write-scope metadata line was updated to mention bytes. Runtime bodies stayed unchanged; reconstructed old hashes match the first-run SHA for both amended files and every other tested file remains byte-identical.",
+    "syntax": "all seven changed Python files AST-parse PASS",
+    "work_repository_git_operations": false,
+    "isolated_test_fixture_git": "Existing node/init tests internally git init/empty commit in temporary repositories, expressly permitted by parent. No direct Git command was run on the work repository.",
+    "external_writes": false
+  },
+  "minimal_change_policy": {
+    "runtime_added_lines": 104,
+    "runtime_removed_lines": 84,
+    "new_test_lines": 260,
+    "retained": [
+      "writer-owned single-writer locks, CAS, rollback transactions and domain errors",
+      "create-only os.link vs replace os.replace contract",
+      "draft-node github binding refusal vs confirmed package publication policy",
+      "register-package custom schema validation and C19 lineage gate responsibility"
+    ],
+    "not_modified": [
+      "SKILL.md, plugin versions, release files, historical evaluation/hash evidence",
+      "dev-graph extract-plugin-root.py (other worker ownership)"
+    ]
+  },
+  "parent_integration": {
+    "files": [
+      "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+      "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md"
+    ],
+    "source": "parent message",
+    "change": "Parent owns and patched completion criteria to require both planner.converged=true and follow next when unresolved_count>0. This worker did not edit those files."
+  },
+  "remaining_work": [
+    "Independent approver must verify the five fixes and parent-owned consumer contract changes; proposer is not final approver.",
+    "Parent integrates remaining plugin test suites and exact source/evidence drift checks; no historical evidence was refreshed by this worker."
+  ],
+  "final_approver": false
+}

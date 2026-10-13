@@ -1,0 +1,1 @@
+既存taskの隔離境界を明確化します。Artifact tool/Claude.ai publish/外部artifact作成を禁止します。成果物はtaskで指定したfixture内のlocal fileだけを生成し、検証に必要なら既存local browserのみを使用してください。外部account操作をしないでください。Skillとcanonical writerの実行契約は元のtaskどおりです。これは追加承認ではありません。

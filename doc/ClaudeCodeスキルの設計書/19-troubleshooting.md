@@ -101,7 +101,7 @@ Skill factory / generator / evaluator などの量産フローを回す際に起
 | `{{category_resolver}}` | brief から category への写像 script | `scripts/resolve-brief-to-category.py` |
 | `{{trace_validator}}` | trace 検証 script | `validate-build-trace.py` |
 | `{{runtime_skills_dir}}` | runtime 側 Skill directory | `.claude/skills/` |
-| `{{source_skills_dir}}` | source / canonical 側 Skill directory | `creator-kit/skills/` |
+| `{{source_skills_dir}}` | source / canonical 側 Skill directory | `plugins/harness-creator/skills/` |
 | `{{migration_phase}}` | 移行フェーズ名 | `Phase 0` |
 
 Sample expansion: `{{factory_skill_name}}=harness-creator`, `{{create_skill}}=run-skill-create`, `{{build_skill}}=run-build-skill`, `{{elicit_skill}}=run-skill-elicit`。

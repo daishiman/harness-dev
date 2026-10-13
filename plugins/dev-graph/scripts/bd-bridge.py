@@ -2,7 +2,7 @@
 # /// script
 # name: bd-bridge
 # purpose: Be the single deterministic CLI choke point for allowed Beads task, edge, mirror and gate operations.
-# inputs: ["argv: --op OP and operation fields"]
+# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)"]
 # outputs: ["stdout: normalized JSON receipt"]
 # requires-python = ">=3.10"
 # dependencies: []
@@ -21,10 +21,29 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, dump, run
 
 MUTATIONS = {"create", "update", "dep-add", "close", "claim", "github-push", "gate-add", "reconcile-duplicates"}
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
+# C14 OUT1: only a node evaluated into confirmed/pass/readiness complete becomes a tracker issue. Both the
+# Beads create below and build-github-projection.plan() call is_promoted(). It lives here rather than in a
+# new module because every skill whose script_refs name build-github-projection.py also names bd-bridge.py,
+# so each declared behavior closure still contains the gate.
+PROMOTED = ("confirmed", "pass", "complete")
+NOT_PROMOTED = "not confirmed/pass/readiness complete"
+
+
+def promotion_state(node: dict[str, Any]) -> tuple[Any, Any, Any]:
+    return (node.get("confirmation_status"), node.get("evaluation_status"),
+            (node.get("implementation_readiness") or {}).get("status"))
+
+
+def is_promoted(node: dict[str, Any]) -> bool:
+    return promotion_state(node) == PROMOTED
 
 
 def bd(args: list[str], *, cwd: Path, check: bool = True) -> Any:
@@ -526,13 +545,101 @@ def _verify_feature_rollup(manifest: dict[str, Any], issue_id: str) -> dict[str,
     return {"eligible": True, "phase_refs": phases, "closed_count": 13}
 
 
+def _graph_nodes(root: Path, graph: str | None, config: str, planned_preview: str | None = None) -> tuple[list[Any], dict[str, Any]]:
+    """Read the nodes the create gate judges from graph.json, never from the caller's flags or manifest.
+
+    A dry-run may overlay the planned nodes of a C02 ``--dry-run`` preview, so a macro add that is not written
+    yet is judged by the state C02 would register instead of stopping as "not in graph".
+    """
+    if not graph:
+        local_state = (_load_manifest(config, root, label="config") or {}).get("local_state")
+        graph = local_state.get("graph") if isinstance(local_state, dict) else None
+        if not graph:
+            raise ContractError("create requires --graph or local_state.graph in --config")
+    document = _load_manifest(graph, root, label="graph") or {}
+    nodes = document.get("nodes")
+    if not isinstance(nodes, list):
+        raise ContractError("graph nodes must be an array")
+    graph_path = (Path(graph) if Path(graph).is_absolute() else root / graph).resolve().relative_to(root).as_posix()
+    gate: dict[str, Any] = {"graph": graph_path, "graph_revision": document.get("graph_revision", 0)}
+    preview = _load_manifest(planned_preview, root, label="planned preview")
+    if preview is None:
+        return nodes, gate
+    planned = preview.get("planned_nodes")
+    if preview.get("status") != "preview" or preview.get("dry_run") is not True or not isinstance(planned, list) \
+            or not all(isinstance(row, dict) and isinstance(row.get("graph_node_id"), str) for row in planned):
+        raise ContractError("planned preview must be a build-graph-node.py --dry-run preview with planned_nodes")
+    # A preview staged on another graph or revision would judge nodes C02 can no longer register as previewed.
+    if preview.get("graph_path") != graph_path or preview.get("graph_revision_before") != gate["graph_revision"]:
+        raise ContractError(f"planned preview is stale: it was staged on {preview.get('graph_path')} r{preview.get('graph_revision_before')}, "
+                            f"the gate reads {graph_path} r{gate['graph_revision']}")
+    replacements = {row["graph_node_id"]: row for row in planned}
+    overlaid = [replacements.pop(node.get("graph_node_id"), node) if isinstance(node, dict) else node for node in nodes]
+    overlaid += list(replacements.values())
+    gate.update(planned_preview=planned_preview, planned_node_ids=[row["graph_node_id"] for row in planned],
+                planned_graph_digest=preview.get("graph_digest_after"))
+    return overlaid, gate
+
+
+def _promotion_blockers(nodes: list[Any], targets: list[str]) -> list[dict[str, Any]]:
+    """Every target that may not become a Beads issue yet, in target order; empty means all are promoted."""
+    blockers: list[dict[str, Any]] = []
+    for graph_node_id in targets:
+        found = [node for node in nodes if isinstance(node, dict) and node.get("graph_node_id") == graph_node_id]
+        if len(found) != 1:
+            blockers.append({"graph_node_id": graph_node_id,
+                             "reason": "not in graph" if not found else "duplicate graph_node_id in graph"})
+        elif not is_promoted(found[0]):
+            state = dict(zip(("confirmation_status", "evaluation_status", "implementation_readiness"),
+                             promotion_state(found[0])))
+            blockers.append({"graph_node_id": graph_node_id, "reason": NOT_PROMOTED, "state": state})
+    return blockers
+
+
+def _require(a: argparse.Namespace) -> None:
+    """The argument checks an apply makes, run before the dry-run branch so a preview never accepts what the apply rejects."""
+    if a.op in {"update", "close", "claim", "show"} and not a.bd_issue_id:
+        raise ContractError(f"{a.op} requires --bd-issue-id")
+    if a.op == "dep-add" and not (a.bd_issue_id and a.depends_on):
+        raise ContractError("dep-add requires issue and depends-on")
+    if a.op in {"gate-add", "gate-check"} and not (a.bd_issue_id and a.pr):
+        raise ContractError("gate operation requires issue and --pr")
+    if a.planned_preview and not (a.op == "create" and a.dry_run):
+        # Planned nodes are not in graph.json yet; an apply must be judged on the graph C02 actually committed.
+        raise ContractError("--planned-preview is only for create --dry-run")
+
+
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates"))
     p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
     p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--duplicate-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
+    p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config"); p.add_argument("--config", default=".dev-graph/config.json")
+    p.add_argument("--planned-preview", help="create --dry-run only: a build-graph-node.py --dry-run preview whose planned_nodes the gate overlays on graph.json")
     a = p.parse_args(); root = Path(a.repo_root).resolve(strict=True)
+    _require(a)
+    projection: dict[str, Any] | None = None
+    gate: dict[str, Any] | None = None
+    if a.op == "create":
+        # The gate runs before preflight so an unpromoted target starts no bd process at all, and a
+        # manifest is judged as a whole so a package is never projected halfway.
+        projection = _load_manifest(a.projection_manifest, root, label="projection")
+        if projection:
+            feature, children = _validate_projection(projection)
+            targets = [feature["graph_node_id"], *[row["graph_node_id"] for row in children]]
+        else:
+            if not a.graph_node_id or not (a.title or a.dry_run): raise ContractError("create requires --graph-node-id and --title")
+            targets = [a.graph_node_id]
+        nodes, gate = _graph_nodes(root, a.graph, a.config, a.planned_preview)
+        blockers = _promotion_blockers(nodes, targets)
+        for row in blockers:
+            if row["graph_node_id"] in gate.get("planned_node_ids", ()): row["planned"] = True
+        if blockers:
+            dump({"op": a.op, "status": "blocked", "reason": "promotion_gate", "blocked": blockers,
+                  "dry_run": a.dry_run, "gate": gate, "write_count": 0}); return 1
+        gate.update(status="pass", targets=targets)
     pf = preflight(root, a.expected_workspace_id) if a.expected_workspace_id else preflight(root)
-    if a.dry_run and a.op in MUTATIONS:
+    preview: dict[str, Any] = {k: v for k, v in vars(a).items() if v is not None and k != "dry_run"}
+    if a.dry_run and a.op in {"create", "reconcile-duplicates"}:
         if a.op == "reconcile-duplicates":
             projection = _load_manifest(a.projection_manifest, root, label="projection")
             duplicates = _load_manifest(a.duplicate_manifest, root, label="duplicate")
@@ -540,9 +647,9 @@ def main() -> int:
                 raise ContractError("reconcile-duplicates requires projection and duplicate manifests")
             result = _reconcile_duplicates(root, projection, duplicates, dry_run=True)
             dump({"op": a.op, "dry_run_preview": result, **pf}); return 0
-        preview: dict[str, Any] = {k: v for k, v in vars(a).items() if v is not None and k != "dry_run"}
-        if a.op == "create" and a.projection_manifest:
-            feature, children = _validate_projection(_load_manifest(a.projection_manifest, root, label="projection") or {})
+        preview["promotion_gate"] = gate
+        if projection:
+            feature, children = _validate_projection(projection)
             preview["projection"] = {
                 "feature": feature["graph_node_id"],
                 "issue_type": "epic",
@@ -550,18 +657,22 @@ def main() -> int:
                 "dependency_type": "blocks",
                 "write_count": 0,
             }
-        if a.op == "close" and a.artifact_kind == "feature":
-            manifest = _load_manifest(a.feature_rollup_manifest, root, label="feature rollup")
-            if not a.bd_issue_id or manifest is None: raise ContractError("feature close dry-run requires issue and rollup manifest")
-            preview["feature_rollup"] = _verify_feature_rollup(manifest, a.bd_issue_id)
+        else:
+            preview["issue_type"] = "epic" if a.artifact_kind == "feature" else "task"
+            preview["write_count"] = 0
         dump({"op": a.op, "dry_run_preview": preview, **pf}); return 0
+
+    def write(argv: list[str]) -> Any:
+        # The one place an update/close/claim/dep-add/gate-add/github-push reaches bd. A dry-run gets here only
+        # after the same reads and checks as the apply, and stops with the bd arguments it would run.
+        if a.dry_run: return {"planned_bd_args": argv, "write_count": 0}
+        return bd(argv, cwd=root)
+
     issue = a.bd_issue_id
     if a.op == "create":
-        projection = _load_manifest(a.projection_manifest, root, label="projection")
         if projection:
             result = _package_projection(root, projection)
         else:
-            if not a.graph_node_id or not a.title: raise ContractError("create requires --graph-node-id and --title")
             result = _create_one(root, graph_node_id=a.graph_node_id, title=a.title, description=a.description or "", issue_type="epic" if a.artifact_kind == "feature" else "task")
     elif a.op == "reconcile-duplicates":
         projection = _load_manifest(a.projection_manifest, root, label="projection")
@@ -570,7 +681,6 @@ def main() -> int:
             raise ContractError("reconcile-duplicates requires projection and duplicate manifests")
         result = _reconcile_duplicates(root, projection, duplicates, dry_run=False)
     elif a.op in {"update", "close", "claim", "show"}:
-        if not issue: raise ContractError(f"{a.op} requires --bd-issue-id")
         shown = bd(["show", issue, "--json"], cwd=root)
         current = _issue(shown, issue)
         edge_parity = verify_parity(current, a.expected_status, a.expected_depends_on) if a.verify_parity else None
@@ -578,7 +688,7 @@ def main() -> int:
             argv = ["update", issue];
             if a.status: argv += ["--status", a.status]
             if a.title: argv += ["--title", a.title]
-            argv += ["--json"]; result = bd(argv, cwd=root)
+            argv += ["--json"]; result = write(argv)
         elif a.op == "close":
             rollup = None
             current_type = current.get("issue_type") or current.get("type")
@@ -586,33 +696,34 @@ def main() -> int:
                 manifest = _load_manifest(a.feature_rollup_manifest, root, label="feature rollup")
                 if manifest is None: raise ContractError("feature close requires --feature-rollup-manifest")
                 rollup = _verify_feature_rollup(manifest, issue)
-            result = {"id": issue, "idempotent": True, "status": "closed"} if current.get("status") == "closed" else bd(["close", issue, "--reason", a.reason or "dev-graph completion", "--json"], cwd=root)
+            result = {"id": issue, "idempotent": True, "status": "closed"} if current.get("status") == "closed" else write(["close", issue, "--reason", a.reason or "dev-graph completion", "--json"])
             if rollup is not None: result = {"epic": result, "feature_rollup": rollup}
         elif a.op == "claim":
-            result = {"id": issue, "idempotent": True, "status": "in_progress"} if current.get("status") == "in_progress" else bd(["update", issue, "--claim", "--json"], cwd=root)
+            result = {"id": issue, "idempotent": True, "status": "in_progress"} if current.get("status") == "in_progress" else write(["update", issue, "--claim", "--json"])
         else: result = current
         if edge_parity is not None: result = {"issue": result, "edge_parity": edge_parity}
     elif a.op == "dep-add":
-        if not issue or not a.depends_on: raise ContractError("dep-add requires issue and depends-on")
         existing = _issue(bd(["show", issue, "--json"], cwd=root), issue)
+        _issue(bd(["show", a.depends_on, "--json"], cwd=root), a.depends_on)  # a missing blocker is rejected before bd dep add
         deps = existing.get("dependencies", [])
         if any((x.get("id") if isinstance(x, dict) else x) == a.depends_on for x in deps): result = {"idempotent": True}
-        else: result = bd(["dep", "add", issue, a.depends_on, "--json"], cwd=root)
+        else: result = write(["dep", "add", issue, a.depends_on, "--json"])
     elif a.op == "ready":
         manifest = _load_manifest(a.parity_manifest, root, label="parity")
         result = _ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest)
-    elif a.op == "github-push": result = bd(["github", "sync", "--push-only", "--json"], cwd=root)
+    elif a.op == "github-push": result = write(["github", "sync", "--push-only", "--json"])
     elif a.op in {"gate-add", "gate-check"}:
-        if not issue or not a.pr: raise ContractError("gate operation requires issue and --pr")
         gates = _rows(bd(["gate", "list", "--all", "--json"], cwd=root, check=False))
         matching = [gate for gate in gates if str(gate.get("await_id") or gate.get("awaitId")) == str(a.pr) and (gate.get("blocks") == issue or gate.get("blocked_issue_id") == issue) and (gate.get("gate_type") or gate.get("type")) == "gh:pr"]
         if len(matching) > 1: raise ContractError("duplicate gh:pr gates for issue and PR")
         if a.op == "gate-add":
-            result = {"gate": matching[0], "idempotent": True} if matching else bd(["gate", "create", "--type", "gh:pr", "--blocks", issue, "--await-id", str(a.pr), "--reason", a.reason or f"PR #{a.pr} merge", "--json"], cwd=root)
+            result = {"gate": matching[0], "idempotent": True} if matching else write(["gate", "create", "--type", "gh:pr", "--blocks", issue, "--await-id", str(a.pr), "--reason", a.reason or f"PR #{a.pr} merge", "--json"])
         else:
             if not matching: raise ContractError("gh:pr gate does not exist")
             checked = bd(["gate", "check", "--type", "gh:pr", "--json"], cwd=root)
             result = {"gate": matching[0], "checked": checked}
+    if a.dry_run and a.op in MUTATIONS:
+        dump({"op": a.op, "dry_run_preview": {**preview, "result": result}, **pf}); return 0
     payload = {"op": a.op, "result": result, "workspace_identity": pf["workspace_identity"], "bd_version": pf["version"]}
     if a.op == "ready" and isinstance(result, dict):
         payload.update({key: result[key] for key in ("ready_set", "unmapped", "conflicts", "candidate_count")})

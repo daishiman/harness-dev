@@ -1,0 +1,35 @@
+{
+  "label": "sysspec",
+  "retry_of": null,
+  "evaluator_agent_id": "a8f938c1d0ac5e21e",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "system-spec-harness の validate-coverage-matrix.py --require-foundation は、foundation を一括承認（appr-foundation）だけで通してしまう。C06 の R6 軸 5 は、U ごとに qa_log のユーザー発言への接地を求めていて、gate と auditor の基準がずれている。再現手順：fx/system-spec/spec-state.json に --require-foundation をかけると exit 0 で OK になる。同じ入力に aggregate-completeness.py --hearing をかけると verdict=FAIL、blocking=6 になる（completeness-report.json の G-foundation と G-hearing）。決定論 gate だけを見る fixture 作成者や elicit 周回は、このずれに誤導される。",
+    "system-spec-harness の system-spec-doc-freshness-auditor は、agent 定義に WebFetch/WebSearch があるのに、Bash の curl で公式サイトに照合しようとし、拒否された後は WebFetch を試さないまま「確認できなかった」と報告した。再現箇所は subagent-transcripts/agent-acfd5f442117ade31.jsonl の 16〜24 行目。この trial は Web 系ツールも拒否される隔離環境なので、判定への影響はない。それでも、通常の環境では正規の取得経路を使っていない不具合になる。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec/ws/plugins/dev-graph/skills/run-dev-graph-system-spec",
+  "closure_sha_tested_copy": "7423682475d3a366710933a5815af4eb11002e0d988cec7fa13e99efc9b6339f",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 7,
+    "occurrences": 14,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:12+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "skill_dir_tree_sha",
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "e00ac4b5032c370a07927a5417e91a2a4daea6a580ad5c888db8f40ff9be0f80",
+      "transcript_sha256": "c2d531091c000df75114deee11faa69726bc4c12bddce38c6b282e694107d7c2"
+    },
+    "after": {
+      "skill_dir_tree_sha": "7423682475d3a366710933a5815af4eb11002e0d988cec7fa13e99efc9b6339f",
+      "transcript_sha256": "27662a0a31038e1d09838c158fa1ea6187a62306666bfd32862b4ba8b6ee5baf"
+    },
+    "backup": "audit/reverdict/run-dev-graph-system-spec/20261012T0708-pr85"
+  }
+}

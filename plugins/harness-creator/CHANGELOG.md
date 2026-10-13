@@ -4,6 +4,28 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-09 rubric 1.5.0 と、cooldown・承認の照合の修正, ubm-goal-setting の elegant-review 継続 run)
+
+下の 1.4.0 の後に、30思考法のレビューで出た24件を直した。対応表は `eval-log/ubm-goal-setting/_plugin/elegant-review/20261010-context-resolution/proposal-resolution.json`。
+
+- **rubric 1.5.0（PROP-2026-10-09-ELEGANT-PD002、minor、incident_fix）**: PD-002 が冒頭30行の禁則として `## 守ること` の行全体の一致も認める。本文の単語「守ること」だけでは通さず、冒頭30行と禁則の両方の条件は変えていない。あわせて、BD-001 と PD-002 を「包含関係（BD-001 ⊂ PD-002）」と書いていた誤った説明を、「直交する2つの検査」に直した。既存の127件で would_regress 0。L2 の pin と hash、2つの governance-log を同期した。
+- **検査とガードの修理（ELEGANT-2026-10-09-CHECKER-GUARD-REPAIR、P2）**: `render-findings-score.py` が knowledge カードの分母から派生物（graph・index）を外す。`guard-change-category.py`（repo と skill-governance-automation の2つ）は、P0 を無条件に分類していた誤りを直し、承認は `target_sha256` が現物と一致するものだけを有効にした。`target_path` は文字列でも配列でも同じ規則で照合し、以前の変更の cooldown は残す（例外は承認済みで `incident_fix=true` の記録だけ）。CI の `--bypass-cooldown` は外した。
+- **生成側の日本語と2つの型**: `build-subagent.py` が `--language auto|ja|en` と `--role auto|advisor|writer` を取り、助言役と書き込み役の2つの型で7層のエージェントを生成する。`render-combinators.py`・静的テンプレート・Codex の locale 指定も同じ選択に従う。英語の既存の出力は変えていない。言語の選び方と訳さないもの（schema のキー・Layer・responsibility ID・frontmatter のキー）の正本は `skills/run-build-skill/references/ja-contract-policy.md`。
+- **入口の配線の検査**: skill-governance-lint の `lint-skill-dep-step7.py` が、command から `Skill` で呼ぶ先がモデルから起動できること（`disable-model-invocation: false`）と、危険な run-* に外部変更ガードの受領書と正規の workflow があることを検査する。
+- **parity 監査**: `audit-capability-parity.py` が、英語と日本語の本文それぞれで実行時のルートの必須トークンと、日本語の正本への参照を検査する。
+
+### Added (2026-10-09 日本語の正規形を2つ目の正規形として足す, ubm-goal-setting の日本語化)
+
+照合される見出しと定型ブロックは、これまで英語の1組しかなかった。そのため、SKILL.md やエージェントを日本語で書くと、中身が同じでも lint・採点・生成で落ちていた。英語の正規形は1文字も変えずに、日本語の正規形を2つ目として足した。日本語の文字列は scratchpad の仕様ではなく、照合する各モジュールに置いてある。
+
+- **rubric 1.4.0（PROP-2026-10-09-001）**: BD-001・BD-002・PD-002 が、`## 目的と出力契約`・`## つまずきやすい点` を英語の見出しの別名として認める。日本語の見出しは行全体の一致だけを通し、英語の判定は部分一致のまま変えていない。緩和の superset なので minor・猶予0日（`diff-rubric-impact.py` で would_flip 0）。採点は `render-findings-score.py` の `*_HEADING_JA`、説明は `rubric-rationale.md` と `ref-skill-design-rubric` の評価軸の要約に反映した。L2 の `rubric_hash` は `check-rubric-sync.py` で同期した。
+- **外部変更ガードと実行時のルート（repo の `scripts/build-artifact-delivery.py`）**: 日本語のガードブロック `<!-- external-mutation-guard-cli-ja:v1 -->` と、節 `## 実行時のルートの決め方` を足した。どちらの言語を使うかは、SKILL.md の Post-choice の見出しで決まる（`_skill_language`）。日本語のブロックは散文だけを訳し、コマンド行は英語版とバイト単位で同じにしたので、必須コマンドの検査は両方の言語に効く。`--migrate-external-guard` は両方の言語のブロックを取り除き、ファイルの言語の正規形だけを入れ直す。
+- **入口の lint（`scripts/lint-entrypoint-artifact-first.py`）**: `## 選ぶ前の実成果物の作成` → `## 選んだ深さでの改善の実行` の組を受け入れる。組の中で言語を混ぜると落とす。
+- **parity 監査（`audit-capability-parity.py`）**: 実行時のルートの契約を、日本語のトークンの組（`RUNTIME_ROOT_CONTRACT_TOKENS_JA`）でも照合する。どちらかの組が全部揃えば合格。
+- **エージェントの見出し（skill-governance-lint の `lint-agent-prompt-section.py`）**: `## プロンプトの型`・`## 自己採点` を受け入れる。`## 自己採点` は rubric PR-002 がすでに認めていた別名に合わせた。
+- **食い違いの防止**: 日本語の正規形は5つのスクリプトと rubric に分かれて置かれている。値がずれると、あるゲートは通るのに別のゲートで落ちる。そのため `tests/scripts-root/test_root__ja_contract_parity.py` で、等しいことと含まれていることを固定した（見出しの一致、節がトークンをすべて含むこと、ガードブロックが ssot lint の生成ブロックとして除外されること、PR-002・BD-001・BD-002・PD-002 の check が採点の定数を含むこと）。
+- 日本語の正規形へ移したのは ubm-goal-setting だけ。他の13プラグインは英語のままで、移すかどうかは別に扱う。
+
 ### Fixed (2026-10-05 install 先での兄弟 plugin の解決, PR #83)
 
 install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin root>/..` や `Path(__file__).parents[N] / "<sibling>"` では隣の plugin に届かない。repo の `plugins/` でだけ動いていた参照を、install 配置に依存しない形へ直した。
@@ -130,6 +152,153 @@ install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin 
 ### Status
 
 実装済み・版確定待ち。次回リリース時に版番号を確定して本セクションを正式リリースへ昇格する。
+
+## [1.4.48] - 2026-10-12
+
+- 版番号だけを上げた。中身は 1.4.47 と同じ。利用者の手元の local marketplace には、1.4.47 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
+## [1.4.47] - 2026-10-11
+
+1.4.46 の後の変更をまとめる。git に版上げの記録が無いので、1.4.46 との境界は commit の日付で近似した（2026-10-11 の commit と、その後のまだ commit していない変更を本版に入れる）。下の 2026-10-12 の3節は `[Unreleased]` から移した（文面は変えていない）。
+
+### Changed (2026-10-11 package 検査・検証の義務・生成器の入力検査, 独立レビュー i・j 回目の指摘)
+
+- **digest から生成物を外す**: `scripts/feedback_contract_ssot.py` と PKG-003 は、`__pycache__`・`*.pyc`・`*.pyo`・`.DS_Store` を digest に含めない。正本と写しで別々に生成されると、中身が同じでも fingerprint がずれ、PKG-003 の偽陽性になっていた。
+- **`validate-plugin-package.py`**: PKG-005 は、agent の frontmatter の name がファイル名と一致すること、SKILL.md の `subagent_refs` が指す agent が実在することを検査する。PKG-006 は `hooks/hooks.json` を読み、hook の実体と照合する。`package_mode` が範囲外なら bundle として全 check を流し、PKG-002 で fail にする。
+- **package 検査の集約と表示**: `aggregate-pkg-findings.py` は `--run` と `--phase` を必須にし、ログの無い必須 ID を fail にする。`lint-pkg-009.py` は常に result JSON を出す。`sandbox-plugin-lifecycle.py` は名前空間のディレクトリも消し、終了コードを 0 / 1 / 2 にした。`render-pkg-findings.py`（0.2.0）に終了コード 2 を足した。
+- **package 検査の SKILL.md・R1・評価者の契約**: 条件の表を、script が判定するものと評価者が判定するものに分けた。`fail_fast` をやめ、location を絶対パスにした。`pkg-batch/` を足し、`rubric_refs` を `reference_refs` に移した。
+- **`audit-capability-parity.py`**: 型の崩れた manifest を ERROR にする。終了コードは 0 / 1 / 2。
+- **`sync-plugin-platforms.py`**: write-scope を宣言し、lock を取る。不正な repo-root は終了コード 3。
+- **検証の義務と証跡**: `derive-verification-contract.py` は checker のパスを実物から解決する。`plan-verification-obligations.py` に終了コード 2 を足した。`derive-route-build-obligations.py` は repo の外のパスを拒み、id の衝突を終了コード 2 にする。`record-verification-evidence.py` は fingerprint の形を確かめ、evidence-dir の外へ書かず、NaN と inf を拒む。
+- **生成器**: `build-subagent.py` は `--skill-name` を検証し、frontmatter の値の引用符を `_unquote_scalar` で外す。助言役（advisor）が書き込みの tool を持つと終了コード 2 で止める。`render-combinators.py` は `--language auto` に `--target-skill` を求め、日本語の Key Rules の anchor を `## 守ること` にした。節の置き換え（`_replace_section`）はコードフェンスの中を見出しとみなさない。`templates/` の見出し `## 注意点` を `## つまずきやすい点`（BD-002 の日本語の正規形）にし、`ja-contract-policy.md` に gotchas の行を足した。
+- **`render-findings-score.py`**: header と終了コードを足した。日本語の Key Rules の見出し（`KEY_RULES_HEADING_JA`）を照合し、コードフェンスの中の見出しは数えない。
+- **lint**: `lint-goal-seek.py` は終了コード 2 を足し、AST で検査し、root の外を指す symlink を拒む。`lint-knowledge-loop.py` と `sync-task-state.py` に終了コード 2 を足した。`sync-task-state.py` は `plugin_resources.py` が無い配置でも import で落ちない。`lint-capability-manifest.py` に header を足した。`lint-skill-runtime-profiles.py` は終了コード 2 を足し、写しの陳腐化を検査する。
+- **`run-build-skill/scripts` の8本**: PEP 723 の header を足した。
+- **`plugin_resources.py`**: resolver を、読み込んだ file の path ごとに持つ。共有の名前で `sys.modules` に登録すると、別の plugin root から読んだ resolver どうしが上書きし合い、呼び手の root を取り違えていた。
+- **`scripts/extract-plugin-root.py`（0.2.0）**: 他プロジェクト専用の登録しか無い `<plugin>@<marketplace>` は、cache の `<marketplace>/<plugin>/` の下を version を問わず除く。同じ marketplace に有効な登録があれば、除くのはその installPath だけにする。同じ X.Y.Z なら正式版を prerelease より先に選ぶ。
+- **写しの追従**: `validate-inline-goal-seek-anchor.py`（`run-skill-feedback` の正本と `templates/goal-seek-runtime/` の写し）と `vendor/prompt-creator/verify-completeness.py` を更新した。
+- **rubric の文書**: `ref-skill-design-rubric` の SKILL.md（0.2.0）・R1・`rubric-rationale.md` を直し、`references/CHANGELOG.md` に 1.2.0〜1.5.0 の節を足した。`run-skill-rubric-governance` の SKILL.md と `governance-board.md` に、発効の順序と巻き戻しの節を足した。`lint-matrix.json` の文言を直した。
+- **外部変更ガード**: repo 側の guard runtime が、正規のコマンドかどうかを語の形と実パスで判定するように作り直されたので、`artifact-delivery.json` の guard runtime 固定値（`runner_sha256`）を合わせた。
+
+### Changed (2026-10-11〜12 rubric 1.6.0 と、rubric の再評価・lint の ratchet)
+
+- **rubric 1.6.0（PROP-2026-10-11-HK001-POSTTOOLUSEFAILURE、minor、`sunset_days` 0）**: HK-001 が認める hook の event に `PostToolUseFailure` を足した（10値）。hooks.json が配線しているのに high で落ちる誤検出を直した。check だけが書き換わって `RUBRIC_DRIFT` になっていた状態を、rubric の変更の手順に乗せ直した。L2 の pin を 1.6.0 にし、hash を合わせた。提案は `status: pending`（承認待ち）。`capability-manifest.schema.json` の `kindHook` の enum に `SessionStart` を足し、`tests/test_hook_event_vocabulary_parity.py` で hook の event の語彙の一致を固定した。
+- **`diff-rubric-impact.py` の読み方と向き**: score ログ（`*-score.jsonl`）だけを再帰で読み、score の無いレコードは数えない（`skipped_no_score`・`skipped_invalid`・`unreadable_logs` で報告する）。数えられるレコードが0件なら終了コード 2。変更の向きは、add を厳格化、remove を緩和とし、modify は `change.direction` で決める（無ければ厳格化とみなし、`direction_source: assumed` を付ける）。`impact_model` は厳格化で `worst_case_tightening`、緩和で `relaxation_no_new_failures`。flip_rate が 0.30 を超えると `exceeds_flip_rate_limit` を立てる（猶予と board の招集の根拠で、bump は決めない）。緩和の bump の下限は下の 2026-10-12 の節、severity が不明なときの重みと、bump を2か所に書いたときの扱いは下の第三者レビューの節（0.5.1）。
+- **`lint-rubric-violation.py`（0.2.0）**: score ログだけを読み、rule ごとに数える。終了コードは 0 / 2。
+- **`lint-goal-seek.py`**: 配線の warning を ratchet にした（2026-10-10 の実測の37件で固定）。`--baseline` は (path, 規則) の組で、載せられる規則は6種だけ。`fixtures/` は走査しない。`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは、plugin を問わずこの ratchet が exit 1 で落とす。harness-creator のスキルは `GRANDFATHERED_WARNINGS` に根拠付きで登録するか配線を戻し、ほかの plugin のスキルは baseline に追記できないので配線を戻す。このことを、SKILL.md・`goal-seek-paradigm.md`・`build-flags.schema.json`・`doc/harness-creator-完全解剖.md` にそろえて書いた。
+- **`render-findings-score.py`**: 壊れた rubric の扱いは下の第三者レビューの節。検索の段の script を、名前に search を含むものに加えて、frontmatter の `script_refs` で宣言し重みの表（`*WEIGHTS = {...}`）を持つものも認める。動詞の命名規約に合わせて改名した script が、中身を変えずに FAIL に落ちていた。
+- **`lint-matrix.json`**: 各 lint に `owner_plugin` と `script_path` を足した。`tests/test_lint_matrix_script_locations.py` が、`script_path` の実在、basename と `script` の一致、`owner_plugin` と配置の整合を照合する。
+- **`lint-skill-runtime-profiles.py`**: `FORK_TOOLS_BASELINE` を両方向の ratchet にした（テストを足した）。
+- **`plugin_resources.py`**: `forward_external_intelligence(namespace, *, provider=...)` の provider を呼ぶ側が渡す。`build-external-intelligence*.py` の2本は `provider="skill-governance-adapters"` を渡す。
+- **文書**: `pipeline-boundary-contract.md` の PB-C を、実在の10件（01・02・04〜11）の列挙にした。03 は欠番で、採番し直さない。`build-steps.md` の script の type に、状態を書き換える動詞の sync・install・record・manage・migrate を足した（28章 §4.1 の13の動詞に追従）。grace_period は major は14日以上、minor は7日以上、patch は0日にした（would_flip が0の緩和の minor は、理由を記録すれば0日でよい）。`wrap-git-commit-safe` の `resource-map.yaml` を第13条の形にした。
+- **script の header**: 設計書28章の実行コンテキスト（§2・§3）に合わせて、`# contexts:` を直した。`install-local-plugins.py`・`manage-build-lease.py` は hook から呼ばれないので、`[C, E]` から `[A, E]` にした。`sync-native-surfaces.py` は SessionStart の hook から1セッションに1回だけ回るので C を残し、`[A, C, E]` にした。
+- **自動ドラフトの追跡**: plugin のツリーに commit されていた rubric 提案の自動ドラフト24件（2026-07-11〜2026-10-10）を追跡から外した（書き先は下の 2026-10-12 の節）。
+- **外部変更ガード**: `artifact-delivery.json` の `runner_sha256` を、いまの guard runtime に合わせた。
+
+### Fixed (2026-10-12 緩和の required_bump を最低 minor にする, run-skill-rubric-governance のレビュー指摘)
+
+`diff-rubric-impact.py` は、緩和の提案に提案の bump をそのまま `required_bump` として返していた。閾値や severity を下げる緩和を patch で出すと `required_bump` も patch になり、semver 規約の「内容を変えるなら最低 minor」と食い違っていた。bump の値も確かめていなかった。
+
+- **緩和の下限**: `required_bump` は、厳格化なら major、緩和なら提案の bump と minor の大きい方にした（`diff-rubric-impact.py` 0.5.0）。提案の bump が届かないときは stderr に警告を出す。下回ってよいのは文言だけの patch と緊急パッチ（`emergency: true`）だけで、承認者が rubric.json の差分で確かめる。
+- **bump の検証**: bump が無いときや major・minor・patch 以外のときは、`required_bump` と比べられないので exit 2 で止める。
+- SKILL.md、`references/version-rules.md`・`governance-board.md`、`prompts/R1-govern.md`、`templates/proposal.json` の notes、27章 §6 を同じ規則にそろえた。
+
+### Fixed (2026-10-12 rubric 提案の自動ドラフトを plugin の外へ書く, SessionEnd hook の書き先の根本策)
+
+SessionEnd hook（`aggregate-evals.py`）は、セッションを終えるたびに `skills/run-skill-rubric-governance/proposals/<date>-rubric-update.md` を plugin の tracked ツリーへ書いていた。そのため、作業ツリーが常に dirty になり、install copy にも混ざっていた。
+
+- **書き先**: `HARNESS_CREATOR_PROPOSALS_DIR` があればそこだけに書く。無ければ `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` に書き、書けなければ `$XDG_STATE_HOME` か `~/.claude/state` の `harness-creator/proposals/` へ退避する。`$CLAUDE_PROJECT_DIR` が plugin 自身を指すとき（plugin を cwd にしたセッション）も、plugin の中の候補は外すので、plugin のツリーには書かない。
+- **読む側**: `aggregate-evals.py --list-proposals` が、新しい置き場と従来の `$SKILL_DIR/proposals/` の両方を JSON で一覧し、`generated` で自動ドラフトかどうかを示す。SKILL.md の局面カタログ、`prompts/R1-govern.md`、`references/version-rules.md` に置き場を書いた。手書きの提案は従来どおり `$SKILL_DIR/proposals/` に置く。Bash から手で流すと `CLAUDE_PROJECT_DIR` が無く、hook が project の state に書いた自動ドラフトを見落としていた。そこで `CLAUDE_PROJECT_DIR` が無いときは、cwd と git の作業ツリーの root（`.git` のあるディレクトリ）を project とみなし、その state も読む（`aggregate-evals.py` 0.2.0）。推し量った置き場は読む側だけで使い、書き先には足さない。
+- **追跡しないもの**: repo の `.gitignore` に `.claude/state/` と `plugins/harness-creator/skills/run-skill-rubric-governance/proposals/*-rubric-update.md` を足した。手書きの提案はこのパターンに一致しない。`build-plugin-release.py` の marker による除外は、手元に残った旧生成物への防御として残し、marker が生成器の文言と一致することをテストで照合する。
+- `plugin-composition.yaml` の outputs の `proposals/*.md` を概念名 `rubric-update-proposals` にした（plugin の中のパスではないため）。
+
+### Fixed (2026-10-12 run-skill-update-notifier の通知の表示経路と作者向けの文言, content-review iteration 2)
+
+content-review の iteration 2 で出た3件（medium 2件・low 1件）を直した。指摘の全文は `eval-log/harness-creator/run-skill-update-notifier/content-review/rubric-verdict.json` の `feedback_loop.negative_feedback`。
+
+- **通知が利用者に届くようにした**: PostToolUse の hook の素の stdout は debug log に行くだけで、利用者にも Claude にも見えていなかった。`hook-notify-skill-end.py` は通知を `{"systemMessage": "<plugin>: <1行>"}` の JSON 1個として stdout に出す。Claude への文脈（`additionalContext`）は付けない。通知が無いときは何も出さない。文書の「表示先は hook の扱いに従う」は、実際の表示経路（`references/output-format.md`「表示経路」が正本）に書き換えた。hook のテストは stdout を JSON として読み、`systemMessage` を照合する。
+- **文言を作者向けにした**: 比べているのは同じツリーの plugin.json の version と CHANGELOG 先頭の版なので、食い違いは作者の書き忘れになる。通知は向きごとに「plugin.json の version が CHANGELOG より古い。version の上げ忘れの可能性」「CHANGELOG が plugin.json の version より古い。CHANGELOG の節の足し忘れの可能性」と出し、ラベルも `plugin.json:` / `CHANGELOG:` にした。semver として読めない値は「版を比べられない」とだけ出し、値は書かれたまま表示する。利用者に更新を促す `/skill-update` の案内は消した。status は `update-available` を `manifest-behind`、`up-to-date` を `in-sync` に改め、`changelog-behind`・`not-comparable` を足した。ネットワークに出ないので到達しない `offline` は外した。Stage 2 の記載は SKILL.md の範囲の1か所だけにし、Purpose に通知の相手（作者）を1文足した。`output-format.md` の例の表は、テストが読んで実装の出力と照合する。
+- **書き込み検査の抜け道を塞いだ（IN3）**: AST 検査が、書き込みの flag を付けた `os.open`、`os`・`shutil` からの from-import と別名 import、keyword で渡した書き込み先、`subprocess`・`os.system`・`os.exec*` などの別プロセスの起動、`from os import *`・`getattr(os, ...)`・`__import__`・importlib を拾う。hook の2本は、`subprocess.run` の argv が `python3` と `str(NOTIFIER)` で始まり、NOTIFIER が同じディレクトリの `notifier-check.py` を指すことを確かめる。書き込みと起動の呼び出しの件数は、scripts の3本すべてで固定した。
+
+### Fixed (2026-10-11〜12 run-skill-update-notifier の snapshot の key と、session ごとの重複抑止)
+
+`notifier-check.py` の refresh と notify を直した。この PR の前の回で直したが、CHANGELOG に書き漏れていた。
+
+- **snapshot の key**: snapshot の key を、ディレクトリ名から plugin.json の `name` にした（読めなければディレクトリ名）。hook は skill 名の `<name>:` から plugin を引く。key がディレクトリ名だと、install 先（`~/.claude/plugins/cache/<marketplace>/<name>/<version>/`）の親を走査したときに key が版名になり、notify が常に何も出していなかった。
+- **同じ name が複数あるとき**: install 先には版ディレクトリが並ぶので、同じ name のディレクトリが複数出る。`_candidate_rank` が次の順で比べて1つに決める。
+  1. `--plugin-root` で直接渡したもの（hook が渡す、いま動いている plugin）
+  2. plugin.json の version が semver として読めるもの
+  3. その version が semver で大きいもの（文字列の順だと 1.4.9 が 1.4.43 より後になる）
+  4. パスが辞書順で後ろのもの
+- **session ごとの重複抑止**: 以前の文書は1セッション内で通知が重複しないと書いていたが、script には重複抑止が無かった。hook が payload の `session_id` を `--session-id=<id>` で渡し、notify は同じ session で同じ plugin を2度通知しない。記録は cache の `notified.<plugin>` に `session_id` と `last_notified_at` を残す。記録するのは表示の後である。`session_id` の無い payload では抑止しない。
+- **refresh で記録を消さない**: refresh は cache を書き直すときに `notified` を引き継ぐ。消すと、session の途中で 24h の TTL を跨いだときに同じ通知がもう一度出る。
+
+### Fixed (2026-10-12 run-skill-update-notifier の SKILL.md を、実際の分岐と配線に合わせる)
+
+SKILL.md の記述のうち、`notifier-check.py` の実際の分岐や hook の配線と食い違っていたところを直した。
+
+- **Runtime root contract**: frontmatter に `runtime_root_policy: host-skill-path` を足し、本文に `## Runtime root contract` 節（`<!-- runtime-root-contract:v1 -->`）を足した。Claude Code では `CLAUDE_PLUGIN_ROOT` を plugin root として使う。Codex では、SKILL.md の absolute path から plugin manifest を持つ祖先を探して `PLUGIN_ROOT` を決める。cwd からは推測しない。`prompts/` もこの契約を継承する。局面カタログのコマンドは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から始まる絶対パスで書いた。Checklist の refresh には、cwd 基準の `plugins/` ではなく、plugins/ と自 plugin の root を絶対パスで渡すと書いた。
+- **cache を読めないときと、読めるが書けないときを分けた**: 以前の Key Rules 2 と criteria の IN1 は、オフラインや権限不足を含むどの分岐でも no-op になると書いていた。実際の `notifier-check.py notify` の動きは次のとおり。
+  - cache を読めなければ何もしない。
+  - 読めるが書けなければ、通知を表示し、通知済みの記録だけを飛ばす。記録するのは表示の後なので、書けなくても通知は失わない。
+
+  Key Rules 2・IN1・Checklist の最終項をこの分岐に合わせた。ネットワークに出ないので起きない「オフライン」は、Key Rules 2 と IN1 から外した。Key Rules 3 の stdlib の一覧は、scripts が実際に import するもの（argparse・datetime・json・os・pathlib・re・subprocess・sys）に合わせ、使っていない `urllib.request` を外した。
+- **Gotchas**: 実際の動きから出る制限を足した。
+  - cache に書けないと、通知済みの記録（`notified.<plugin>`）が残らない。そのため重複抑止が働かず、同じ session でも Skill を使うたびに同じ通知がもう一度出る。
+  - 重複抑止の記録は、plugin ごとに最新の session の1件だけである。2つの session が同じ plugin を交互に使うと、通知がもう一度出る。
+  - install 先では、snapshot に入るのは自 plugin（harness-creator）だけで、他の plugin の Skill には通知が出ない。
+  - **Codex では通知が自動で出ない**。Codex に配線されるのは UserPromptSubmit の cache-refresh だけで、PostToolUse（matcher=`Skill`）の notify-skill-end は Claude Code 専用である（`.codex/hooks/registry.json` の products が `claude` だけ）。Codex で通知を見るには、`notifier-check.py notify` を明示して起動する。
+
+### Fixed (2026-10-12 第三者レビューの指摘を直す)
+
+- **`aggregate-evals.py`（0.2.1）**: 引数があるときは `--list-proposals` だけを受ける。`--help` は usage を出して exit 0、知らない引数や綴りの誤りは exit 2 で、何も書かない。以前は知らない引数でも hook の経路に進み、提案を書いていた。hook は引数を渡さないので、hook の挙動は変わらない。
+- **`diff-rubric-impact.py`（0.5.1）**:
+  - 最上位と `change.bump` の両方に bump があり、どちらかが不正か値が違うときは exit 2 で止める。以前は `change.bump` だけを使っていた。
+  - 厳格化で `change.severity` が無いか、high・medium・low 以外のときは、一番重い重み（high の -20）で見積もり、stderr に warning を出す。以前は黙って medium で見積もっていた。
+  - 厳格化の見積もりに使った severity の重みを、出力の `severity_weight` に出す。その出どころを `severity_source` に出す。`severity_source` は、`change.severity` どおりなら `declared`、分からず一番重い重みにしたなら `assumed` で、`direction_source` と同じ流儀にした。緩和は重みを使わないので、どちらも null。以前は、推し量った重みが stderr にしか残らなかった。`prompts/R1-govern.md` は、`severity_source: assumed` のときも `uncertain` を付け、`change.severity` を書いて流し直す。
+- **`lint-skill-runtime-profiles.py`**: workflow manifest の top-level が object でないとき（配列など）も、traceback で落ちない。`manifest の top-level が object でない (<型>)` という finding を出して、exit 1 で止める。
+- **`build-subagent.py`**: allowed-tools の項目に付いた引用符（`- "Write"`・`["Write"]`・`Read "Write"`）を外してから、書き込みの道具かどうかを判定する。以前は引用符が付いたままの名前で比べていたので、advisor に書き込みの道具が付いていても検出をすり抜けていた。
+- **`notifier-check.py` の cache の保存**:
+  - 固定名の `version-snapshot.tmp` をやめ、呼び出しごとの名前で排他的に作った一時ファイルを、replace で置き換える。固定名だと、同時に動いた2つが同じ一時ファイルを書き合い、片方の replace が一時ファイルを持ち去ったあとで、もう片方の replace が失敗して保存が飛んでいた。失敗したら自分の一時ファイルだけを消し、通知は出したまま exit 0 で終わる。
+  - 防ぐのは、この保存の失敗だけである。cache を読んでから保存するまでに lock が無いので、並行に呼んだときの lost update は残る。後から保存したプロセスが先の記録を上書きするので、重複抑止の記録が消え、同じ通知がもう一度出る。lock は入れていない。
+  - docstring にこの限界を書いた。引数の誤り（mode が無い・知らない mode・notify の `--plugin` が無い）は argparse が usage を出して exit 2 にする（`--help` は exit 0）ことも書いた。
+- **`render-findings-score.py`**: 壊れた rubric（JSON でない、必須キーが無い、型が違う）を、合成の前の各ファイルと合成の後の rubric の両方で検証する。理由を stderr に出して exit 2 で止まる。以前は、合成の途中で Traceback を出して落ちることがあった。
+- **`manage-build-lease.py`**:
+  - owner-token 形式の lock は、pid の生死を見ず、TTL を過ぎたときだけ回収する。lock の pid は、呼ぶたびにすぐ終わる CLI のものなので、生きた build でも死んでいる。以前は、同じ host の2回目の acquire が、生きた build の lock を奪っていた。legacy lock（owner_token の無い形式）は今までどおり、TTL を過ぎたときか、同じ host で pid が死んでいるときに回収し、owner-token 形式へ移す。owner-token 形式の lock に止められたときの remediation（release か TTL の失効を待つ）を足した。
+  - `--lease-seconds`・`--lock-ttl-seconds` が 0 以下のときは exit 2 で止める。0 以下だと、経過0秒の生きた lock まで孤児とみなして奪えてしまう。
+  - 配列や非 UTF-8 の discovered-task form は、traceback で落ちずに、認可に数えない。stderr に warning を出し、graph_hash の mismatch の出力では `invalid_forms` に名前を出す。
+  - renew の docstring を、owner_token の一致だけで判定する実装に合わせた。
+  - `references/pipeline-boundary-contract.md` の表の2か所（`.build.lock` の行と、build 開始ゲートの行）を、「pid 生存判定は legacy lock だけ」に直した。
+- **`sync-native-surfaces.py`**:
+  - codex_project_settings の child の `--json` report が object でない（stdout が空・JSON でない・配列など）ときは、理由付きの invalid（exit 3）を返す。以前は AttributeError の traceback で exit 1 になり、drift（exit 1）と区別できなかった。
+  - 読めない check のあとに apply へ進まない。以前は、check の child が exit 1 で終わると、report が読めなくても drift とみなして apply に進み、synced を返していた。apply の child の report が object でないときも invalid にする。
+  - `--lock-ttl` が正の有限値でないときは exit 2 にする。
+- **`ref-cross-platform-runtime`**:
+  - Runtime 判定の雛形を、`python_cmd` に名前（`python3` | `python` | `unknown`。path ではない）を返す形にした。探す順は、Windows が python → python3、ほかが python3 → python で、`references/os-matrix.md` と設計書22章に合わせた。雛形の見出しを「script に貼る雛形」にした。
+  - `.sh` を配布しない範囲を、生成・検証・adapter・hook の処理（設計書28章 §3.2 の L2）に限った。install などの lifecycle の `.sh`（L1）は対象の外と、Key Rules・Gotchas・`os-matrix.md`・`forbidden-clis.md` に書いた。
+  - OS の判定は、Skill 本文では `uname -s` の注入（設計書22章）、script の中では `platform` と `shutil.which` で行う、と Key Rules に書いた。
+  - `forbidden-clis.md` が正本としていた、存在しない `plugin.json` の `requirements.external_clis` を、設計書22章の「許可 CLI ホワイトリスト」に直した。`lint-forbidden-deps.py` は、いまは読む先の `plugins/skill-governance-lint/manifest.json` が無いので、検査せずに SKIP で exit 0 を返すと書いた。
+- **run-build-skill の Step 12 の番号と合流先**:
+  - SKILL.md の本文に「### Step 12.7: ユーザー選択範囲だけの有界改善」を足し、`workflow-manifest.json` の `bounded-improvement` と対応させた。Step 12.6 の見出しから改善を外し、「選択時のsemantic診断」にした。
+  - Step 12.45 の段を差し込んだときに残った、Step 番号のずれを直した。共通の合流先を「`usable-draft-proof` (Step 12.4) → `artifact-present-handoff` (Step 12.45) → `diagnostic-choice` (Step 12.5)」とし、`workflow-manifest.json` の Step 0 の note も同じ合流先にした。usable-draft proof を再検証する主体は、実装どおり `build-improvement-gate.py` とした。毎回の判定で、提示の receipt と診断の選択を検査するより前に、artifact の sha、validator の sha、validator の再実行を確かめる。proof を作れない kind は Step 12.45 へ進まない。
+  - plugin の `references/capability-build-runtime-contract.md` で、承認 receipt の正本を Step 12.6 にし、usable-draft handoff の再検証の主体を `build-improvement-gate.py` にした。`doc/harness-creator-完全解剖.md` の Step の表は、12.6 を semantic 診断（`build-improvement-gate.py` → `build-review-launch.py` → `elegant-initial-draft-evaluator`）、12.7 を有界改善（phase は `bounded-improvement`）と書き分けた。
+  - `lint-goal-seek.py` が `### ゴールシーク配線` の不在を warning で検査する、という記述に「repo 内では、未登録のものを ratchet が exit 1 にする」を補った。
+- `--no-goal-seek` の文書と、`# contexts:` の直しは、上の 2026-10-11〜12 の節に書いた。
+
+## [1.4.46] - 2026-10-10
+
+1.4.44 からの変更をまとめる（1.4.45 は節を持たない）。git に版上げの記録が無いので、1.4.47 との境界は commit の日付で近似した（2026-10-10 の commit の分を本版に入れる）。
+
+### Changed
+
+- **`scripts/extract-plugin-root.py`**: 他プロジェクト専用（`scope` が `project` / `local`）の install 先を、sibling と cache fallback の候補からも除く。同じ path に有効な登録があれば、共有 install として許可する。
+- **`scripts/plugin_resources.py` を新設**: 兄弟 plugin の root を `resolve_root` で解決し、同梱の resolver が無いときは `ResolverUnavailable` を投げる。`sync-task-state.py`・`build-external-intelligence*.py`・`lint-knowledge-loop.py`・`lint-pkg-009.py`・`run-pkg-015.py`・`sandbox-plugin-lifecycle.py` が個別に持っていた importlib の読み込みを、これに置き換えた。shebang と実行ビットを付けた（PKG-007）。
+- **`run-skill-create` の workflow-manifest**: 兄弟の root を `SIBLING_PLUGIN_ROOT=… && python3 …` の形で渡し、lint の段の `fatal_exit_codes` を `[1, 2]` にした。
+- **`run-plugin-package-check` の SKILL.md**: `script_refs` を足した。
+- **`run-build-skill` の SKILL.md**: frontmatter から `../../scripts/plugin_resources.py` を外した。
+- **`wrap-git-commit-safe`**: `references/resource-map.yaml` を新設した。
+- **`lint-skill-runtime-profiles.py`**: anchor の写しとして skill に同梱した写しも認め、正本との byte 一致を求める。テストを足した。
+- **rubric 提案の自動ドラフト**: SessionEnd hook が plugin のツリーに書いた 2026-10-06〜2026-10-10 の自動ドラフトが commit に入った（1.4.47 で追跡から外した）。
 
 ## [1.2.0] - 2026-07-02
 

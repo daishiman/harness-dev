@@ -4,7 +4,7 @@ description: ヒアリング結果に図解を配置したいとき、Mermaid 12
 allowed-tools:
   - Read
   - Write
-  - Bash
+  - Bash(python3 *)
 kind: run
 goal_seek:
   engine: inline

@@ -1,0 +1,41 @@
+{
+  "proposal_id": "PROP-2026-10-09-ELEGANT-PD002",
+  "timestamp": "2026-10-09T12:58:33.973571+00:00",
+  "category": "P1_structural",
+  "status": "approved",
+  "proposer": "/root/meta_analyst",
+  "approver": "/root (independent technical review under explicit user remediation authorization)",
+  "authorization_basis": "ユーザー: 今回すべて対策を実行して。起票は不要です。すべて解決して。列挙された日本語禁則別名・説明誤りの解消を含む。新しいAskUserQuestionの回答は記録していない。",
+  "target_path": [
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+    "plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json",
+    "plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py",
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric-rationale.md",
+    "plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md"
+  ],
+  "target_sha256": {
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json": "9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452",
+    "plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json": "112b7efbe522971c4e3a43e4fb2782a421440a1ee2bf81bc5144e3807ab96830",
+    "plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py": "8f55425a7f4a7c666f0e73f67467d9f6c96c77681ff92fb73bc88fb6235e9b37",
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric-rationale.md": "9813df0d6f9f40ae73c79bdcfa5daf1bf9d740832733c6684ddee1ee88546e38",
+    "plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md": "ff8732e60fb8df0f9b3137e4a4062cbee90c0db90d8bfed41e1876a6565c2010"
+  },
+  "incident_fix": true,
+  "incident_scope": "日本語禁則の正規見出しが既存規則と意味同等でも不成立になる偽陰性と、BD-001⇒PD-002/厳格一致という誤説明の修正。以前の変更のcooldownを一般に無効化しない。",
+  "rubric_version_from": "1.4.0",
+  "rubric_version_to": "1.5.0",
+  "bump": "minor",
+  "rubric_hash": "9bd1769fadf425abfbf1283930c2e890767d972dc18772d5667f7da4bee1b452",
+  "template_hash": "n/a (rubric proposal; generation templates governed in review report)",
+  "impact_report": {
+    "scope": "all existing physical plugin SKILL sources; changed criteria before/after checker on same final source",
+    "total": 127,
+    "would_regress": 0,
+    "would_improve": 0,
+    "limitations": "This compares affected deterministic criteria only; independent negative fixtures cover Japanese alias and first30 boundaries. It does not replace fresh semantic review or live-trial."
+  },
+  "grace_period": "0日: 既存英語照合と冒頭30行/禁則条件を維持するsuperset",
+  "rationale": "提案者と独立した/rootが正規行一致・冒頭30行維持・本文単語/末尾語/31行以降の負例を確認して承認。rubric accepted set拡張に合わせminor 1.5.0、L2 pin/hash同期。旧ログのBD-001⇒PD-002と厳格一致の説明は本修正で訂正する。",
+  "rollback_plan": "baseline.jsonが指す開始時スナップショットから上記5ファイルを一組として復元する。途中の内容と受領書/評価を混ぜない。git操作はこの実行では行わない。",
+  "review_evidence": "eval-log/ubm-goal-setting/_plugin/elegant-review/20261009-full-resolution/rubric-proposal-meta.json"
+}

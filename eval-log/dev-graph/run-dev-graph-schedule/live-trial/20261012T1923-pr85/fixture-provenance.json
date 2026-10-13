@@ -1,0 +1,56 @@
+{
+ "label": "schedule3",
+ "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-schedule",
+ "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-schedule/.git",
+ "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule3/fx",
+ "head": "473290d5ad18bc22049f3591e30567767e55821a",
+ "tracked_files_committed": 1,
+ "rekey": {
+  "repository_id": [
+   "local:sha256:a2e37dcb43ab749d8da53024444eec36327c72fb433998a25a92d546e710800f",
+   "local:sha256:88fbddeed93ce6c3a19d795668a1674275901ab14230c1cb72d2774be0f0935b"
+  ],
+  "worktree_id": [
+   "wt_fbf90453721d70c0",
+   "wt_2fb0a89b751fe4de"
+  ]
+ },
+ "rekeyed_files": [
+  ".dev-graph/config.json",
+  ".dev-graph/state/init-receipt.json"
+ ],
+ "unmatched_worktree_ids": [],
+ "excluded": [],
+ "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+ "retry_of": "schedule2 (20261012T0701-pr85)",
+ "fixture_check": {
+  "why": "schedule2 と同じ seed (live-trial-fixtures/20261005T171515-bzn4-schedule) から作り直した。graph と content は変えていない。",
+  "result": "graph.json の sha256 は b2f40bab…。C11 (validate-graph-schema.py) は valid・violation 0、C24 (resolve-repo-context.py --mode write) は rc=0。どちらも wtpy の script を被験の外で回し、回す前と後で fx のファイルの sha256 が変わらないことを確かめた。",
+  "resource_scope_note": "ready になりうる task の resource_scope は、完全に同じパスが重なる組 (src/api/users/ と src/cache/) と重ならない組だけで、祖先と子孫のパスが重なる組 (例 src/db/ と src/db/migrations/) は ready の task の間には無い (src/db/migrations/ は unconfirmed の task)。fixture は schedule2 と同じままにした。"
+ },
+ "plugins_copy": {
+  "copied_at": "2026-10-12T10:21:07Z",
+  "from": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)",
+  "plugins": [
+   "dev-graph",
+   "harness-creator",
+   "skill-governance-adapters",
+   "system-dev-planner",
+   "system-spec-harness"
+  ],
+  "method": "cp -R。写した直後に diff -rq -x __pycache__ で 5 つとも wtpy と一致を確かめた",
+  "run_dev_graph_schedule_closure_sha": "0f0037ee17470b153ef2fe8be9df15b9c1c1cc601a8a4e0c125e3ee82eaf5488 (写しと wtpy で同じ。closure の 38 ファイルに plugins/dev-graph/scripts/schedule-graph.py 75489c56… が入る)",
+  "skill_md_sha256": "b05089c39f640328…",
+  "changed_since_schedule2": "schedule2 の closure は 36ff1e48。その後に schedule-graph.py (resource_scope の重なりを、同じパスと祖先のパスで判定するようにした。75489c56…) などが変わった。"
+ },
+ "isolation": {
+  "same_as": "render4・status3・decompose3 と同じ。guard.py f23267a3…、mksettings.py 277ae072…。許可一覧に無い tool と外部へ届く tool (ScheduleWakeup・SendFeedback・SendMessage・mcp__* など) は拒否。sandbox の network は deniedDomains ['*']、書込みは runs/schedule3・wttrial/tmp・workdir/out だけ。",
+  "session_root": "ws (schedule2 と同じ)。fx は別の dir。"
+ },
+ "task_md_changes": {
+  "base": "runs/schedule2/workdir/task.md",
+  "changes": [
+   "runs/schedule2 を runs/schedule3 に置き換えた (4 か所)。ほかは変えていない。scenario の id も schedule-positive-ready-set-fixture-standard-v2 のまま。"
+  ]
+ }
+}

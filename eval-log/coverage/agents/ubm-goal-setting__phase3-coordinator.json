@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/phase3-coordinator.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":93,"notes":"placement-invariant(模範): 本ファイルは Layer5 責務プロンプト表で prompts/R{1..5}-*.md を SSOT 正本と宣言し『実行アダプタであり 7 層本文を重複保持しない』と明記=agents 薄アダプタ/prompts SSOT 規約に忠実。reference-existence: R1-step1-current-review.md〜R5-step5-final-check.md の 5 本と thinking-guide.md/interview-quick-templates.md/action-goals-best-practices.md/execution-prompts.md/data-contract.md/kitahara-principles-db.md を実測で全実在確認。Layer5 の markdown 相対リンク `../skills/run-ubm-goal-setting/prompts/R1-...` は agents/ 起点で正しく解決。owner-flow(二重定義 drift 回避を実証): interview_data 全35フィールドの正本を data-contract.md §3(167行『## 3. InterviewData』・171行『全35フィールド一覧』・#35 prev_action_change まで確認)へ委譲し本ファイルに複製せず宣言=drift 防止設計が genuine。schema-conformance: frontmatter tools=Read/kind=agent/isolation=fork 妥当。mechanical=true: lint exit0(Tier1)・Prompt Templates に R1-R5 の '<!-- responsibility: R# -->' anchor+'>' quote・Self-Evaluation(完全性/一貫性/検証可能性)具備。single-responsibility: Phase3 対話制御(Step1-5遷移・共通ルール)に限定・情報収集(Phase1-2)/フォーマット出力(Phase4)を Layer1 で明示除外。留意(FAIL 非該当): prompt_ssot を frontmatter に持たず Layer5 表+相対リンクで SSOT を指すが lint 非要求ゆえ欠陥ではない。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 735165fa71795078ed611090712efe94afad57927f8a0ab880a32d2f2d4b0937 をレビュー。実行検証あり）。範囲: 全308行（採点器と同じ数え方で本文300行）。前回 FAIL（82）。前回の記録（sha256 c370a522…）からの差分を全部読み、prompts/R2-step2-gap-analysis.md の 2.2・6.2、data-contract.md §3.4 の Step 遷移条件と Phase 3 のエラー処理表、R1〜R5 と突き合わせた。確かめたこと: 前回の指摘はすべて直っている。[中] の Step 2 の1年初回の例外は、L217（Step 2 の行）と L231（遷移表の Step 2 → Step 3）に「yearly で前年の1年目標が無い初回はスキップしない」が入り、矛盾したときの優先規則（L224）に R2 と data-contract が足された。同じ漏れのあった data-contract.md L618-620 と R3 L145 も直っている。[低] L16 の参照元の説明は R1〜R5 に広がった。[低] Round 1 の型は期間語を差し込む形になった。[低] ## Context Boundary（L294）と ## Handoff（L300）が立った。参照先はすべて実在し、消した節の名前を外から指している箇所も無い（R1〜R5、run-ubm-challenge、run-ubm-consult、challenge-advisor を grep）。採点器 render-findings-score.py --kind agent は 97 で PD-001 だけ（減点しない）。validate-frontmatter は rc=0。plugins/ubm-goal-setting/tests 全体 1025 passed。指摘: [低] 本文がちょうど300行で、BD-003（本文が300行を超えると high）に余裕が無い。1行足すと採点器が 77 になり閾値80を割る（work-cova/p3-plus1.py で再現）。次の直しで必ず割るので、Layer 6 と Layer 7 で重なる実行方法・参照先の記述を詰めて余裕を作る。DEDUCTION: BD-003 の余裕なし -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

@@ -22,7 +22,7 @@ jobs:
       - name: install python dependencies
         run: python3 -m pip install --quiet -r requirements-dev.txt
       - name: guard change category (P0/P1 proposal gate)
-        run: python3 scripts/guard-change-category.py --base origin/main --bypass-cooldown
+        run: python3 scripts/guard-change-category.py --base origin/main
       - name: lint script naming (28章 §4)
         run: python3 scripts/lint-script-naming.py
       - name: lint skill description (03章 R1-R5)
@@ -197,6 +197,29 @@ jobs:
         # 自身の scripts にも CI で強制し「他人には課すが自分は免除」の dogfooding 破れを封鎖する。
         run: python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/harness-creator/scripts
         continue-on-error: false
+      - name: lint-script-frontmatter (skill の scripts のうち frontmatter が揃ったディレクトリ)
+        # 対象は、frontmatter の欠けたファイルが1つも無い skill の scripts ディレクトリに限る。
+        # plugins/*/skills/*/scripts 全体には、まだ frontmatter の無いファイルが残っている
+        # (harness-creator・skill-intake の 23 本。lint-matrix.json の ci_scope に書いた棚卸しの残り)。
+        # run-plugin-package-check は、frontmatter の無いファイルがあるので入れていない。
+        # lint は存在しないパスを exit 2 で止めるが、.py ファイルは単体で検査して通す。
+        # 名前の変更で対象がディレクトリから外れても気付けるよう、先にディレクトリであることを確かめる。
+        run: |
+          dirs=(
+            plugins/*/skills/run-skill-feedback/scripts
+            plugins/ubm-goal-setting/skills/run-ubm-*/scripts
+            plugins/harness-creator/skills/run-build-skill/scripts
+            plugins/harness-creator/skills/assign-skill-design-evaluator/scripts
+            plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts
+            plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts
+            plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts
+            plugins/system-spec-harness/skills/run-system-spec-elicit/scripts
+          )
+          for d in "${dirs[@]}"; do
+            test -d "$d" || { echo "not a directory: $d" >&2; exit 1; }
+          done
+          python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py "${dirs[@]}"
+        continue-on-error: false
       - name: harness-coverage ratchet self-test (回帰ガードの floor 比較分岐検査)
         run: python3 scripts/validate-harness-coverage.py --self-test
         continue-on-error: false
@@ -208,6 +231,9 @@ jobs:
         continue-on-error: false
       - name: lint goal-seek conformance (実行系の固定手順禁止)
         run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json
         continue-on-error: false
       - name: lint runtime profiles and workflow dependencies (all plugins)
         run: python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --repo-root .

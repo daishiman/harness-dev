@@ -46,6 +46,10 @@ tenants/*/**/*.secret.*
 output/
 dist/
 .claude/handoff/
+# run-ubm-challenge の実行記録（挑戦宣言の本文＝個人の目標を含む。正本は vault で、公開 repo に入れない）
+eval-log/ubm-goal-setting/run-ubm-challenge/handoff-run-ubm-challenge.json
+eval-log/ubm-goal-setting/run-ubm-challenge/run-ubm-challenge-intermediate.jsonl
+eval-log/**/.claude/handoff/
 .worktrees/
 # run-* スキルの transient 作業ディレクトリ (skill-tree 第13条 nested dir 禁止)
 .run/
@@ -137,3 +141,10 @@ plugins/**/.claude/handoff/
 plugin-plans/*/task-graph-status.json
 plugin-plans/*/task-progress.md
 plugin-plans/*/task-execution-report.html
+
+# harness-creator の SessionEnd hook (aggregate-evals.py) が書く rubric 提案の自動ドラフト。
+# 書き先は $CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/ (plugin の外) へ移した。
+# 旧書き先に残った <date>-rubric-update.md も追跡しない。同じディレクトリの手書き提案
+# (2026-08-14-pg001-... などの別名) はこのパターンに一致しないので tracked のまま残る。
+.claude/state/
+plugins/harness-creator/skills/run-skill-rubric-governance/proposals/*-rubric-update.md

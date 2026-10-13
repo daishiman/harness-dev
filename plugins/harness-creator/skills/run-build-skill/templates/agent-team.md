@@ -27,15 +27,16 @@ runtime_root_policy: host-skill-path
 
 # {{name}}
 
-## Runtime root contract
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
 
 - `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
-## Purpose & Output Contract
+## 目的と出力契約
 {{output_contract}}
 
 ## Team Composition
@@ -47,12 +48,12 @@ runtime_root_policy: host-skill-path
 | {{role3_name}} | {{role3_subagent}} | {{role3_files}} | 並列可 |
 | evaluator | {{evaluator_subagent}} | (read-only) | 直列・最後 |
 
-### Boundary
+### 境界
 - 各 teammate は **自身の file_ownership 内のみ** 編集可
 - 共有 file への書き込みは evaluator 経由でのみ許可
 - 並列 task は same-message で起動（context efficiency）
 
-## Key Rules
+## 守ること
 - task frontmatter に必ず `file_ownership: [path1, path2]` を宣言する
 - `Task` tool 呼び出し時は file_ownership を JSON で渡す（TaskCreated hook が検査）
 - 別 teammate の領域に踏み込む変更は手前で **task を分割** する
@@ -60,10 +61,10 @@ runtime_root_policy: host-skill-path
 ## ゴールシーク実行
 > 固定手順は書かない。Gate を完了チェックリストとし、局面の選択と手順は AI が都度判断する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
 
-### ゴール (Goal)
+### ゴール
 全 teammate の artifact が揃い、evaluator の score >= threshold を満たした状態。
 
-### 完了チェックリスト (Checklist)
+### 完了チェックリスト
 - [ ] TaskCreated hook が exit 0（file ownership 衝突なし）
 - [ ] 各 teammate の output_file が生成され、TaskCompleted hook の artifact 契約を通過
 - [ ] evaluator JSON が SubagentStop hook の JSON 契約を通過

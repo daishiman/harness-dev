@@ -13,6 +13,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = PLUGIN_ROOT / "scripts/validate-knowledge-graph.py"
 
@@ -479,3 +481,98 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 750 -> 937: アカデミー勉強会 (2026-09-09) から 187 件を追加、削除 0 件。
     # 937 -> 982: PR #74 (2026-07 の YouTube/合宿 増分) から 45 件を採番し直して追加、削除 0 件。
     assert graph["node_count"] == 982
+
+
+# ---- 読めない入力・形の違い・重複・巨大な値・長い鎖 ----------------------
+
+
+@pytest.mark.parametrize("target", ["entry", "relations", "candidate"])
+def test_non_utf8_inputs_are_violations_without_traceback(tmp_path: Path, target: str):
+    kdir = base_knowledge(tmp_path)
+    args = ["--knowledge-dir", str(kdir)]
+    if target == "entry":
+        (kdir / "broken.json").write_bytes(b"\xff\xfe{")
+    elif target == "relations":
+        (kdir / "knowledge-relations.json").write_bytes(b"\xff\xfe{")
+    else:
+        cand = tmp_path / "cand.json"
+        cand.write_bytes(b"\xff\xfe{")
+        args += ["--merge-relations", str(cand)]
+    r = run(*args)
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr
+    assert not (kdir / "knowledge-graph.json").exists()
+
+
+@pytest.mark.parametrize("store", [
+    {"edgs": [valid_edge("PR-002", "PR-001")]},   # キーの書き間違い
+    {"schema_version": "1.0.0"},
+    {"edges": [valid_edge("PR-002", "PR-001")], "relations": []},
+])
+def test_relations_object_without_one_edges_key_is_malformed(tmp_path: Path, store):
+    # 空の辺として受けると、辺 0 本の graph で上書きしてしまう。
+    kdir = base_knowledge(tmp_path)
+    write_json(kdir / "knowledge-relations.json", store)
+    r = run("--knowledge-dir", str(kdir))
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "shape invalid" in r.stderr
+    assert not (kdir / "knowledge-graph.json").exists()
+
+
+def test_candidate_object_without_edges_key_is_rejected(tmp_path: Path):
+    kdir = base_knowledge(tmp_path)
+    cand = tmp_path / "cand.json"
+    write_json(cand, {"edgs": [valid_edge("PR-002", "PR-001")]})
+    r = run("--knowledge-dir", str(kdir), "--merge-relations", str(cand))
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert not (kdir / "knowledge-relations.json").exists()
+
+
+def test_duplicate_edges_in_store_appear_once_without_merge(tmp_path: Path):
+    kdir = base_knowledge(tmp_path)
+    first = valid_edge("PR-002", "PR-001")
+    second = dict(first, review_status="approved")
+    write_relations(kdir, [first, second])
+    r = run("--knowledge-dir", str(kdir))
+    assert r.returncode == 0, r.stderr
+    graph = json.loads((kdir / "knowledge-graph.json").read_text(encoding="utf-8"))
+    assert graph["edge_count"] == 1
+    assert graph["edges"][0]["review_status"] == "pending_review"  # merge と同じ first-write-wins
+
+
+def test_huge_integer_confidence_is_violation_not_overflow(tmp_path: Path):
+    kdir = base_knowledge(tmp_path)
+    write_relations(kdir, [dict(valid_edge("PR-002", "PR-001"), confidence=10 ** 400)])
+    r = run("--knowledge-dir", str(kdir))
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr
+    assert "confidence" in r.stderr
+
+
+def test_long_depends_on_chain_does_not_hit_recursion_limit(tmp_path: Path):
+    kdir = tmp_path / "knowledge"
+    kdir.mkdir()
+    n = 1500
+    make_entry_file(kdir, "chain.json", "principles", [{"id": f"N-{i:04d}", "title": "x"} for i in range(n)])
+    edges = [valid_edge(f"N-{i:04d}", f"N-{i + 1:04d}") for i in range(n - 1)]
+    write_relations(kdir, edges)
+    r = run("--knowledge-dir", str(kdir))
+    assert r.returncode == 0, r.stderr[-2000:]
+    write_relations(kdir, edges + [valid_edge(f"N-{n - 1:04d}", "N-0000")])
+    r = run("--knowledge-dir", str(kdir))
+    assert r.returncode == 1
+    assert "Traceback" not in r.stderr
+    assert "循環検出: N-0000 -> N-0001" in r.stderr
+
+
+def test_detect_cycle_returns_the_same_path_as_before():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("vkg_cycle", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    edges = [
+        {"source_id": a, "target_id": b, "relation_type": "depends_on"}
+        for a, b in [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("A", "E")]
+    ]
+    assert module.detect_cycle(edges) == ["B", "C", "D", "B"]
+    assert module.detect_cycle(edges[:3]) is None

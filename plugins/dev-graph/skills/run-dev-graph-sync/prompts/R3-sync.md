@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0になる。
+- beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0かつ両GitHub計画のconverged=trueになる。完了判定の正本はSKILL.mdのProtocol 1に従う。
 
 ## Layer 3: インフラ層
 
@@ -51,7 +51,7 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0になる
+- [ ] beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0かつ両GitHub計画のconverged=trueになる
 
 ## Layer 6: オーケストレーション層
 
@@ -65,4 +65,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

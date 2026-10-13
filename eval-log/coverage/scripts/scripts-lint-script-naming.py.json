@@ -1,1 +1,18 @@
-{"artifact":"scripts/lint-script-naming.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"py_compile OK; classify()の分類ロジック明快・exit code(0/1/2)文書化・report mode有・read-only。stdlib only宣言有。唯一の弱点は巨大ハードコードPENDING_RENAME_PATHS抑止リスト(PR毎に肥大する保守性smell)だが各行に理由コメント有で正当化・correctness欠陥ではない"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "scripts/lint-script-naming.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 96,
+    "notes": "genuine review（sha256 12b69feb4b0ab8e9fbb1066d33269c96b9d05239f4885ddc07fb0195c53d6795 をレビュー。実行検証あり）。範囲: 未コミットの変更を含む今のファイル（763 行）。前回レビューした版（sha256 5b808b77…）は残っていないので、前回の notes と git diff origin/main を突き合わせた。今回の差分は _imported_stems（L602〜）、_stale_registrations（L637〜）が (repaid, absent, unreferenced) を返すようにした変更、main の先頭の -h/--help、--report の ledger_stale_unreferenced、L75 の誤記の修正。PEP 723 の header（-h|--help、exit 0/1/2、requires-python >=3.9）も読んだ。確かめたこと: plugins/skill-governance-lint の lint-script-frontmatter を scratch にコピーして当てると OK。pytest（tests/scripts-root/test_root__lint_script_naming.py）は 72 passed。unreferenced と help のテストが新しく入っている。実 repo では OK=292 EXCEPTION=19 PERMANENT=27 PENDING=205 (P=7 G=0 H=15 UNDECIDED=183) VIOLATION=0 stale=0、exit 0、約 1 秒。-h と --help は exit 0。--bogus と存在しない path は exit 2。fixture（../work-b-r2/c/nfx/。drive.py で REPO_ROOT と台帳を差し替えた）で、新しい判定を 1 件ずつ試した。前回の指摘の扱い: [中] 恒久例外の stale の検出がコメントの約束どおりでない点は解消した。誰も import しない orphan_mod を恒久例外に登録した fixture A は stale=1、exit 1 になった。tests の中の import は参照に数え（妥当）、path を明示した narrow の実行では数えない（文書どおり）。L75 の「<stream>」は「<stem>」に直った。[低] --help が無い点は解消した。[低] repo の外の判定が cwd 次第になる点は残っている。worktree から ../work-b-r2/c/nfx/ext/scripts/proj を走査すると、lib/x_y.py が VIOLATION になり exit 1。proj を cwd にして「.」や「lib」を走査すると「no scripts scanned」で exit 2。L508 のコメント「repo の外にある祖先 dir の名前に引きずられない」は今も成り立たない。[低] 28章との食い違いも残っている。恒久例外 27 件の理由は「§4.3」を挙げるが、§4.3 は禁止される命名の一覧だけで、恒久例外の規定が無い。§4.7 は「実行ステータスは3種」のままで、PERMANENT_EXCEPTION と台帳の stale（exit 1）が載っていない（28章は作業ツリーで修正中）。指摘（新しいもの）: [低] 参照の数え方が行の正規表現なので、両方の向きに外れる。fixture B では、docstring の行頭に「import orphan_mod」の文字列があるだけで参照に数え、stale にならず exit 0 になった（見逃し）。fixture C では、`import os, orphan_mod` を参照 0 件とみなし、stale として exit 1 になった（誤検出。メッセージも「参照が無い」と誤る）。直し方: ast で Import と ImportFrom を数えるか、少なくとも「import a, b」の並びを分けて照らす。観察（減点なし）: stem 単位で照らすので、_common のように一般的な stem は、同じ名前の別の module と区別しない（コメントに書いてある）。DEDUCTION: 100 -1（行の正規表現による参照の数え違い。docstring で見逃し、並べた import で誤検出）-2（repo の外の判定が cwd 次第）-1（28章との食い違い）→ 96。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

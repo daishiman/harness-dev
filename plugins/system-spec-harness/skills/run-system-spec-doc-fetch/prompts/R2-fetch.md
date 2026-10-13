@@ -22,12 +22,12 @@
 ## Layer 2: ドメイン層
 - **公式 host の判定**: 対象プロジェクトの正規ドメイン (例 `react.dev` / `postgresql.org` / `nginx.org` / `kubernetes.io`)、または公式が管理する docs サブドメイン。ホスティング (GitHub/Read the Docs 等) 上でも **その project の公式アカウント/リポジトリ** なら公式扱い、第三者の解説は非公式。
 - **version / last_updated**: 現行版を一意に指す情報。安定版のバージョン番号 (`19.0`)、または版が数値化されない場合はページの最終更新日 (`last_updated`)。いずれか一方を必ず得る。
-- **取得時刻**: `retrieved_at` は実際に WebFetch した時刻、`latest_checked_at` は公式現行版を確認した時刻 (同一実行なら同値でよい)。ISO8601 (UTC `Z`) で表す。
+- **取得時刻**: `retrieved_at` は実際に WebFetch した時刻、`latest_checked_at` は公式現行版を確認した時刻 (同一実行なら同値でよい)。ISO8601 (UTC `Z`) で表す。時刻は WebFetch の直後に `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'` で測った値を控える (推測や固定値を書かない)。
 - **境界**: 恒久キャッシュ/ミラーリングはしない (都度取得)。MCP 連携は対象外。
 - **candidate qualification**: 入力がseed外knowledge candidateの場合は、公式標準・仕様・原著者・標準化団体・公式vendor資料を一次資料として確認し、`source_refs[]`用の`url` / `official_or_primary:true` / 実`checked_at`を返す。二次ブログだけではqualifiedにしない。
 
 ## Layer 3: インフラ層
-- **ツール**: `WebSearch` (公式サイト特定)、`WebFetch` (本文取得)、`Read` (R1 の取得対象一覧参照)。
+- **ツール**: `WebSearch` (公式サイト特定)、`WebFetch` (本文取得)、`Read` (R1 の取得対象一覧参照)、`Bash(python3 *)` (取得時刻の実測のみ)。
 - **探索手順の骨子**: `WebSearch` で「<技術名> official documentation」等から公式 host を特定 → `WebFetch` で該当ページを取得し version/更新日/要点を抽出。
 - **素材の受け渡し形状 (R3 へ)**: `target_id` / `source_url` / `official_publisher` / `official_host` (省略時 source_url から導出可) / `version` または `last_updated` / `retrieved_at` / `latest_checked_at` / `summary`。
 

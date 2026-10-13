@@ -20,6 +20,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, atomic_json, dump, git, load_json, run, utc_now
 
 ACTIVE = {"reserving", "claimed", "in_progress", "pending_review", "pending_merge", "claim_pending_local_repair"}
@@ -31,7 +35,7 @@ def context(root: Path, resolver: Path | None = None) -> dict[str, str]:
     if not boundary.is_file():
         raise ContractError(f"missing C24 context resolver: {boundary}")
     cp = run(
-        [sys.executable, str(boundary), "--repo-root", str(root), "--mode", "read"],
+        [sys.executable, "-B", str(boundary), "--repo-root", str(root), "--mode", "read"],
         cwd=root,
         check=False,
     )
@@ -63,7 +67,7 @@ def context(root: Path, resolver: Path | None = None) -> dict[str, str]:
 
 def invoke_bd_bridge(root: Path, bridge: Path, argv: list[str]) -> dict[str, Any]:
     if not bridge.is_file(): raise ContractError(f"missing C28 bridge: {bridge}")
-    cp = run([sys.executable, str(bridge), "--repo-root", str(root), *argv], cwd=root, check=False)
+    cp = run([sys.executable, "-B", str(bridge), "--repo-root", str(root), *argv], cwd=root, check=False)
     if cp.returncode:
         raise ContractError(f"C28 bridge failed ({cp.returncode}): {(cp.stderr or cp.stdout).strip()}")
     try:
@@ -137,7 +141,7 @@ def invoke_execution_context_consumer(
         "released_at": None,
     }
     cp = run([
-        sys.executable, str(consumer), "execution-context", "--repo-root", str(root),
+        sys.executable, "-B", str(consumer), "execution-context", "--repo-root", str(root),
         "--graph", str(graph), "--graph-node-id", lease["graph_node_id"],
         "--context-json", json.dumps(context_value, ensure_ascii=False, sort_keys=True),
     ], cwd=root, check=False)

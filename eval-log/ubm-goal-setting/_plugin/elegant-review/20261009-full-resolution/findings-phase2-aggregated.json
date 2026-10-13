@@ -1,0 +1,2229 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-09T12:12:56.941984+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65 は保存前検証を約束するが同:214-224と plugins/ubm-goal-setting/agents/journal-composer.md:72-80 はDailyへWriteしてから検証する。主張を実行順で反証した。",
+        "plugins/ubm-goal-setting/agents/journal-composer.md:101-108 は機械PASSと内容品質を明確に区別しており、この区別は保持する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "IN1・関連資料L286・composer description L3が保存前検証とする一方、手順は保存後検証。再生成では既存ファイル置換後に不合格になり得る。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "IN1・関連資料L286・composer description L3が保存前検証とする一方、手順は保存後検証。再生成では既存ファイル置換後に不合格になり得る。",
+          "recommended_intervention": "検証時点を一つに決める。推奨は一時下書きを最大3回修復してPASS後にDailyへ保存し再検証する。保存後方式なら説明と失敗ファイル残存、既存正常ファイルの保全方針を定義する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 65
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "批判的思考"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/references/session-record-format.md:41-44 の一般契約user_solution={text,source_turn_ids}をR4に当てはめると plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:51 のstringは不適合。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R3-frame-consult.md:38とworkflow-manifest.json:58はreflect-onlyを1件以上とするがSKILL.md:163は複数を要求する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "R4のuser_solution型が記録正本と不一致。session_recordもL53では同意時のみだがL46・64・88は同意なしでも組み立て検証する。",
+            "複数選択肢要求がreflect-onlyの1件以上というR3例外と合わない。"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "R4のuser_solution型が記録正本と不一致。session_recordもL53では同意時のみだがL46・64・88は同意なしでも組み立て検証する。",
+          "recommended_intervention": "user_solutionをobject {text,source_turn_ids}へ合わせる。検証用recordは常に組み立て、保存なしの公開出力はnull/破棄というライフサイクルを区別する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md",
+            "line": 51
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "複数選択肢要求がreflect-onlyの1件以上というR3例外と合わない。",
+          "recommended_intervention": "数量定義はR3の正本参照へ寄せ、通常2件以上・reflect-only1件以上を消費する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md",
+            "line": 163
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "演繹思考"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/references/output-format.md:3-6,77-79 / principle-checklist.md:4-6 / resource-map.yaml:13 / SKILL.md:292-293の更新対象が2、3、4ファイル＋テストに分かれる。複数事例から変更契約分散を一般化した。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:259-263,280-281 / agents/journal-composer.md:33-38 / output-format.md:95 / principle-checklist.md:10-15が同じ継承規則を繰り返す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "設問変更時の更新対象が資料ごとに異なり、「このファイルだけ編集」と「同時に他も直す」も同じ文で競合する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "全設問を出す・対話では読み上げない・水平線禁止の規則が5面に分散し、習慣の問いと落とし先もdaily-habits.jsonとinterview-map表で重複する。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "設問変更時の更新対象が資料ごとに異なり、「このファイルだけ編集」と「同時に他も直す」も同じ文で競合する。",
+          "recommended_intervention": "output-format冒頭に変更契約を一本化し、他の資料はそこを参照する。実際の一致検査対象も列挙する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md",
+            "line": 4
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "description": "全設問を出す・対話では読み上げない・水平線禁止の規則が5面に分散し、習慣の問いと落とし先もdaily-habits.jsonとinterview-map表で重複する。",
+          "recommended_intervention": "原理原則はprinciple-checklist出力規則を正本化し、親とcomposerは必要時にReadする。習慣はdaily-habits.jsonが正本、interview-mapは運用差分のみか生成・一致検査を付ける。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 259
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "帰納的思考"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:234は仮タイトル＋宣言日をoriginal_goalとするが引数なしの代替値がない。question-map.md:35はhandoffへ未確定欄を残すが形・絶対起点がない。",
+        "最尤原因は通常の完成経路を先に記述し、C1到達前の入力不足と早期終了へ同じ状態契約を拡張していないこと。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "仮タイトルなしのoriginal_goalが未定義。後から補うと固定ハッシュの変更を誘発する。",
+            "保留で終了するhandoffはopen_issues以外の形とcaller project起点がない。完成時だけのアンカー検証では早期終了からの再開情報が不明。"
+          ],
+          "violation_count": 2
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "仮タイトルなしのoriginal_goalが未定義。後から補うと固定ハッシュの変更を誘発する。",
+          "recommended_intervention": "最初から非空の安定目標文字列（宣言日と挑戦宣言作成の目的、題名は任意）を固定し、後の題名はsnapshotにする。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 234
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "保留で終了するhandoffはopen_issues以外の形とcaller project起点がない。完成時だけのアンカー検証では早期終了からの再開情報が不明。",
+          "recommended_intervention": "handoffに宣言日・状態・確定欄・未確定欄・再開条件を定義しcaller project rootから絶対解決する。中断時は未検証vault成果物を作らない。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/question-map.md",
+            "line": 35
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "アブダクション"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:91は続行時だけ同意確認、L92は誘導でも同意時保存を許す。session-record-format.md:11は保存時trueを必須とする。条件→同意値→質問→分岐→途中終了と5段で遡ると入力源が途切れる。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:36,50,55は目標設定・安全・続行しか知らずchallengeへ誘導できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "誘導分岐で保存を許すが保存同意を尋ねる経路がない。既定falseでは機能が実質到達不能。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "挑戦宣言を作りたい相談の責務境界が分類・outcome/handoff_to・validator enumにない。案内だけ追加すると検証不能になる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "誘導分岐で保存を許すが保存同意を尋ねる経路がない。既定falseでは機能が実質到達不能。",
+          "recommended_intervention": "誘導は既定非永続とし、利用者が記録を希望したときだけ保存同意を確認する経路をR1・manifest・記録正本で統一する。一般相談と同じ協働モード質問は要求しない。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md",
+            "line": 91
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "挑戦宣言を作りたい相談の責務境界が分類・outcome/handoff_to・validator enumにない。案内だけ追加すると検証不能になる。",
+          "recommended_intervention": "redirected_challenge/handoff_to=run-ubm-challengeをR1、SKILL、manifest、記録正本、validator、テストへ同時追加。誘導系の同意と検証を共通化する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md",
+            "line": 36
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "垂直思考"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:43-46をfieldごとに分解するとcollaboration_mode・consult_evidence・role付きtranscriptがないが記録正本:9,52,69とvalidatorが必要とする。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/workflow-manifest.json:36のR1出力にはconsult_typeがないのにL46のR2入力が要求する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "R4入力契約とmanifest L78に、R1由来collaboration_mode、R3由来consult_evidence、出典検証用role付き発話記録がない。",
+            "R1出力がR2必須consult_typeと誘導分岐handoff_to等を供給すると表明していない。"
+          ],
+          "violation_count": 2
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "R4入力契約とmanifest L78に、R1由来collaboration_mode、R3由来consult_evidence、出典検証用role付き発話記録がない。",
+          "recommended_intervention": "R4入力表とmanifestへ3入力と供給元を追加する。transcriptは同意なしでは非永続、同意時の復元源は記録正本のintermediateと明記する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md",
+            "line": 43
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "R1出力がR2必須consult_typeと誘導分岐handoff_to等を供給すると表明していない。",
+          "recommended_intervention": "manifestをR1入出力正本の参照へ寄せるか完全な集合へ同期し、必須入力が先行出力にあることを検査する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/workflow-manifest.json",
+            "line": 36
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "要素分解"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/agents/journal-composer.md:80と plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:217は不合格を修正するがrc2読込不能の枝がない。正常/内容違反/入力障害へMECE分割すると一枝が欠落する。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65とresource-map.yaml:6は15、validator:160-177は16要素。項目集合の照合で原理原則追加後の数が古い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "journalとchallengeの読込不能rc2が内容違反rc1と区別されず、壊れた環境で内容修正を反復し得る。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "15ブロックというIN1・resource-map・validatorコメントがREQUIRED_OUTLINEの16要素と不一致。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "journalとchallengeの読込不能rc2が内容違反rc1と区別されず、壊れた環境で内容修正を反復し得る。",
+          "recommended_intervention": "0=完了、1=違反コード修復、2=修正反復せず停止しstderrと対象パスを報告する分岐を双方へ明記する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/journal-composer.md",
+            "line": 80
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "15ブロックというIN1・resource-map・validatorコメントがREQUIRED_OUTLINEの16要素と不一致。",
+          "recommended_intervention": "固定数を削除してREQUIRED_OUTLINEを機械契約として参照し、人向け正本との一致テストを維持する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 65
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "MECE"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:62,221-223とcomposition:26を範囲の厳密性×変更頻度で配置すると、hook定数は機械正本、skill固有境界は安定契約、多重列挙は低価値な更新箇所になる。",
+        "plugins/ubm-goal-setting/agents/challenge-advisor.md:28はphase3の2節を読むがcomposition:145は1節しか表明しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "許可範囲正本をexemptionではcompositionと定数、本文では定数とし広狭説明も複数面にある。",
+            "advisorのreads注記はナレッジ活用原則だけだが実行手順は品質基準も読む。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "description": "許可範囲正本をexemptionではcompositionと定数、本文では定数とし広狭説明も複数面にある。",
+          "recommended_intervention": "hook定数を唯一の許可範囲正本とする。compositionとexemptionは参照のみ、skill本文は自身の書込境界と一時下書きの扱いだけを持つ。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 62
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "advisorのreads注記はナレッジ活用原則だけだが実行手順は品質基準も読む。",
+          "recommended_intervention": "注記を2節へ同期するかquestion-map返し方の正本参照へ一本化する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/plugin-composition.yaml",
+            "line": 145
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "2 軸思考"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:210→214を辿るとWrite未展開文字列からBash展開済みパスへ接続され同一ファイルを検査する保証がない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:223-224とcomposer:72-80は上限後を不完了とするがDailyには直前に書いた不合格ファイルが残る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "保存後の最大修復回数到達時、Daily失敗ファイルの残存と再生成前既存ファイルの保全が未定義。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write先の${TMPDIR:-/tmp}文字列はシェル展開されず、Bash validatorだけが展開する。下書きと検証対象が一致しない恐れ。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "Write先の${TMPDIR:-/tmp}文字列はシェル展開されず、Bash validatorだけが展開する。下書きと検証対象が一致しない恐れ。",
+          "recommended_intervention": "Bashで専用一時ディレクトリと下書き絶対パスを一度解決・作成し、その観測値をWriteと--fileへ同じ値で渡す。並行実行も実行別ディレクトリで分離する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 210
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "保存後の最大修復回数到達時、Daily失敗ファイルの残存と再生成前既存ファイルの保全が未定義。",
+          "recommended_intervention": "検証時点の決定に合わせる。下書き先行なら失敗時Dailyを変更しない。保存後方式なら失敗ファイルが残ると明示し既存正常ファイルを保全する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 223
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "プロセス思考"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "レビュー対象の表示文を訳す作業と、機械が読む識別子の契約変更を分ける必要がある。run-build-skill の render-frontmatter.py:243 は既に output_language=ja を持つが、build-subagent.py:117 は英語の目的節だけを読む。",
+        "prompt-creator の inject-sections は Python 関数ではなく SKILL/prompts/reference に宣言された LLM 入力契約。単一スクリプトを直しただけでは注入名の不変契約が残る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "表示名と構造識別子の区別は可能。現状は注入名を呼出元非依存の不変と宣言している。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "build-subagent purpose は English only。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "lint-agent-prompt-section は ja 見出しを受理するが生成契約は英語固定。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "生成者から agent lint までの接続を調べた。対象外の翻訳まで必要とは導けない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "日本語の目的と出力契約から生成すると目的節が見つからず description に退化する。",
+          "recommended_intervention": "build-subagent に --language ja|en|auto を加え、日本語と英語の正規目的節を解決する。欠落時は契約欠落として説明し、desc fallback を意図的 legacy と区別する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+            "line": 117
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "日本語 agent へ注入すると Prompt Templates/Self-Evaluation の不変契約が翻訳済み agent と一致しない。",
+          "recommended_intervention": "section ID を内部識別子として保ち、表示名は対象 agent の言語から解決する。SKILL・R1・usage-prompt・brief schema default を同じ契約にそろえる。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md",
+            "line": 201
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正規 section ID → locale の表示名を生成者と消費者が同じ表で解決する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "ja purpose のみ",
+        "双方の purpose 見出しが同時存在",
+        "未対応 locale"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "メタ思考"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Runtime root は手書き定型を6箇所に複製している。生成元 _ensure_runtime_root_contract は既存のどちらの見出しも処理済みと見なし、locale が違っても残す。",
+        "lint-ssot-duplication は generated marker を除外する既存設計を持つ。Runtime root をマーカー生成物にすると翻訳移行と重複警告を同じ仕組みで解決できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "言語選択は Post-choice を正規の行一致で検出する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "has_prompts という条件を現行 renderer は持たない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "_ensure は ja-keeps-en-heading を現行テストで正とする。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "marker は既存 duplication lint が扱える surface。追加抽象は renderer に限定できる。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "variable-abstraction",
+          "description": "prompts を持たない skill にも prompts 継承行を生成し、言語の異なる既存節は移行できない。",
+          "recommended_intervention": "runtime-root-contract の BEGIN/END を設け、render(language, has_prompts) で本文を生成する。旧節をマーカーへ移行し、既存 markers は置換して idempotent にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "scripts/build-artifact-delivery.py",
+            "line": 835
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "生成した外部変更ガードはコマンド断片の順序だけを照合し、説明の削除や改竄を検出しない。",
+          "recommended_intervention": "marker 内の全本文を canonical renderer の結果と比較する。runtime block と guard block は生成元の byte/parity を同じ負例テストで固定する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "scripts/build-artifact-delivery.py",
+            "line": 974
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "生成ブロック=render(locale, actual resources)。手書きは業務固有差分だけ。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "マーカー片方だけ",
+        "ja post-choice + en runtime",
+        "prompts 無し",
+        "二回 migration の差分ゼロ"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "抽象化思考"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "日本語化を全13 pluginへ広げることを目的化すると、機械識別子と表示言語を混同して余計な変更を増やす。既存 en/ja 双方を正規として受理する設計を維持する判断が最小である。",
+        "rubric rationale は BD-001 PASS ⇒ PD-002 PASS とするが、PD-002 は冒頭30行と禁則の条件を持つ。英語の部分一致も厳格一致と説明しており規則説明が実装に追従していない。",
+        "親方針も確認済み:13pluginは既存言語を維持、新規生成はja/en明示指定またはtarget見出しから継承、同一ファイル内の定型節混在はgenerator/lintで整合。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "BD-001 の30行制約は無く、PD-002には有る。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "locale の選択規則を定義すれば翻訳の未処理13件は followup として残す必要が無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "日本語見出しと機械キーの責務を分ける。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "rubric 自己承認は禁止。許可範囲で独立承認者が必要。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "BD-001 と PD-002 は独立した存在/冒頭配置検査なのに包含関係と説明される。",
+          "recommended_intervention": "rubric の proposer≠approver を通して rationale を存在と冒頭配置の直交評価に訂正する。PD-002 の 守ること の見出し alias を足す際は単なる語の出現で合格させず heading を照合する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+            "line": 78
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "全 plugin 翻訳の選択基準と生成言語の既定が未整理。",
+          "recommended_intervention": "方針を文章で確定する:既存 plugin の正規言語は維持、ubm と新規 ja 本文生成は ja、schema key/Layer番号/responsibility ID は安定識別子。bulk 翻訳は行わず全生成元の locale 支援を完了条件にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/render-frontmatter.py",
+            "line": 243
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "目的は一貫した生成と正確な検査。全翻訳は手段の一候補。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "目的節が31行目",
+        "英語の似た見出し",
+        "守ること が本文だけに出現"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "ダブルループ思考"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "候補1:全13 pluginの全文翻訳。大量差分と検査修正が必要で現在の目的に過大。",
+        "候補2:英語固定を維持し ubm も戻す。既存 ja 正規形の成果を失う。",
+        "候補3:ja/en の既存契約を維持し明示 locale の生成支援を足す。最小で頑健、推奨。",
+        "候補4:全MarkdownをASTと完全言語非依存IDへ移行。表現は柔軟になるが新しい基盤が必要。",
+        "候補5:marker 付きの定型だけ locale 対応し、schema/metadata/Layerは固定識別子に保つ。候補3と組み合わせる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "候補ごとの目的と費用を比較し全翻訳を義務としない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "新規生成の消費者lint合格が未保証。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行 Agent Skeleton の Purpose/Triggers/Goal は7層契約の古い骨格。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "上位 schema key を変えない候補は consumers への波及が小さい。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "現行 agent-skeleton と build-subagent は現行7層 lint を満たす生成物を出す保証が無い。",
+          "recommended_intervention": "候補3+5を採用する。読み取り専用助言役/書き込みと検査役の2型を7層の共通骨格上に定義し、生成物を lint に通す smoke test を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/templates/agent-skeleton.md",
+            "line": 46
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "全文翻訳と生成契約のlocale対応を別の選択肢として評価する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "ja agent生成直後のcontent lint",
+        "英語legacy skill生成",
+        "read-only 型にWrite が入る"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "ブレインストーミング"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "lint は既定の plugins_dir=harness-creator のみを検査する。CIを通しても ubm のagent品質は保証されない。",
+        "実行した lint-agent-prompt-content.py --mode agent --plugins-dir plugins/ubm-goal-setting は scanned=9 violations=7。名称を訳すだけではLayer5の不足と固定手順禁止違反が解決しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "安全手順を無くす必要は無い。思考の固定列挙と決定論制約を分ける。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "7/9が現行 lint に失敗。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "ubm 7 agents は Layer5 の目的と達成ゴールなどが欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "CI scope 明示なら既存の harness-creator 成果物への影響を抑えられる。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "ubm の7本のagentが7層検査の対象に入っていない。",
+          "recommended_intervention": "7本の骨格を補ってから同じ変更でCIに --plugins-dir plugins/ubm-goal-setting を明示追加する。既定を全pluginsへ変えて未知の違反を大規模修正する必要は無い。",
+          "condition_signal": "omission",
+          "location": {
+            "file": ".github/workflows/harness-creator-kit-ci.yml",
+            "line": 203
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "output-formatter の Layer5 は固定思考手順で7層契約に違反する。",
+          "recommended_intervention": "必須決定論のコマンド/保存安全手順はLayer3かvalidation-gates正本に移し、Layer5は目的・背景・達成ゴール・観測可能な完了チェックリストを持つ。実行順そのものは必要な安全契約として残す。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/output-formatter.md",
+            "line": 165
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "対象集合も検査契約。Lintの名前や成功ログから被検査範囲を推測しない。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "scanned=0",
+        "ubmだけの契約破損をCIで検出",
+        "固定決定論コマンドを移した後の参照切れ"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "ラテラル思考"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "固定手順を禁止する agent が、必須の保存前検証コマンドや安全順序を失うと手順を自由に生成するほど危険になる。禁止対象は自由な思考プロセスで、決定論の安全契約は残す必要がある。",
+        "自己採点を短く統一するだけでは Layer5 の停止条件が無く、同じことを別の自己採点節へ足すと重複が再発する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "動的思考と静的安全制約は両立する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "composer/challenge-advisorには7層自体が無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "writer型は保存前検査とrc=2停止が構造を変えても必要。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "独立したagent contextが読む検証正本を明示する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "共通agent骨格へ置換すると検証安全手順まで削除する危険がある。",
+          "recommended_intervention": "Layer5のチェックリストを成果状態、Layer3のツール契約を検証手段、Layer6を必須依存順と役割境界に分離する。自己採点はこの停止条件を参照して一箇所にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/journal-composer.md",
+            "line": 80
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "成果状態・決定論操作・依存順を別Layerへ置く。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "validator rc=2",
+        "未検証の保存",
+        "目的欄に固定の思考手順が残る"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "パラドックス思考"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "多言語の生成契約はコンパイラに似る:表示文はlocalization、schema/metadata/Layer/responsibility ID は内部表現。識別子を翻訳するのはIRを変えてすべての消費者を壊すことに近い。",
+        "現行 prompt-rubric C1-003 は name/skill/responsibility などをメタ表として要求する。これらを日本語にしたい場合でも行名aliasでなく安定した機械IDを別途持てる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "スキーマ key と表示見出しは異なる役割。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行のmeta rowがあるため機械入力の不足は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R1-main の言語規則はパラメータ/schema key/Layer識別子を英語と定める。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "機械キーを保持することでhidden consumer driftを減らす。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "見た目の翻訳がmetaキーとLayer/Anchor検査に波及し、文字列テストで隠れた依存がある。",
+          "recommended_intervention": "machine keysを契約IDとして英語のまま明記し本文を日本語化する。aliasを加える範囲は表示見出し（守ること、担当エージェントなど）へ絞る。メタ表英語は仕様として採用し全翻訳不足と扱わない。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/prompt-creator/skills/assign-prompt-design-evaluator/references/prompt-rubric.json",
+            "line": 11
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "locale非依存IRとlocale依存presentation。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "responsibility IDの翻訳",
+        "Layer N識別子の翻訳",
+        "表示見出しだけを日本語にした生成物"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "アナロジー思考"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "もしPost-choiceがjaでRuntime rootがenなら現行 migration はen節を保持する。それを許すテストが ja-keeps-en-heading/en-keeps-ja-heading として既に存在する。",
+        "もしRuntime rootの1行目を削除してもfrontmatterは正常なら監査token集合に該当行が無いため節の欠落を検出できない。正本参照方式は日本語headingだとfallbackに入れない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行fixturesは実装の挙動と一致するが意図されたlocale整合と反する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "tokensはfirst policy行なし。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "日本語参照fallbackが未対応。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "frontmatter検証だけでは本文の宣言の整合を保証しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "runtime_root_policy 行がRuntime節のaudit tokensから漏れる。",
+          "recommended_intervention": "en/ja両token集合に runtime_root_policy: host-skill-path を含め、policy行を削る負例を追加する。canonical reference 分岐の見出しは両言語を受理する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/scripts/audit-capability-parity.py",
+            "line": 48
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "mixed locale runtime を仕様として固定するテストがある。",
+          "recommended_intervention": "managed block移行後はmixed localeをFAILにする負例へ変更し、legacy本文はmigrationによって修復する。見出し順序はubmの先頭6節を限定的検査し、全pluginへ過剰な順序制約を加えない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "tests/scripts-root/test_root__artifact_delivery.py",
+            "line": 589
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "成功例だけでなく一要素削除・locale入替・参照先欠落で監査契約を検証する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "policy行削除",
+        "日本語正本参照",
+        "guard説明削除",
+        "wrong locale markers"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "if思考"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "新しいagentを作った直後にCIで合格するのか、という利用者の単純な問いに現行build-subagentは答えられない。bodyは役割/思考プロセス/出力の3節のみで、7層やPrompt Templates/Self-Evaluationを持たない。",
+        "担当 agent が唯一の正本にも残り、新規prompt生成で古い表記が戻る。正本と生成先を一緒に直すだけで十分で、全英文を翻訳する必要はない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "生成元と検査が別の世代のagent形式を前提としている。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "3節生成物に7層の必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "L5正本に表記ゆれが残る。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "新規生成→consumerで実際に読めることを確認する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "build-subagentの生成物は現在要求される構造を持たない。",
+          "recommended_intervention": "agent-skeletonとbuild-subagentを同じ7層の2型骨格へそろえる。用途に応じたtoolsとwriter検査義務を変え、抽出されなかった元SKILLの目的/出力契約を失わない。generated→lint smoke を合格基準にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+            "line": 134
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "L5正本の5.1表示が担当 agent のまま。",
+          "recommended_intervention": "正本、markdown/yaml scaffold、説明とconsumerで5.1 担当エージェントへそろえる。Layerと機械keyは維持。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-format.md",
+            "line": 75
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "生成物を次のconsumerへ渡せることを最小完了契約にする。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "生成の成功だけで完了にしない",
+        "ja目的内容が生成物に含まれる",
+        "agent toolsに存在しない書込み義務を要求しない"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査",
+      "paradigm_label": "素人思考"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "ストックは vault のユーザー記録、plugin knowledge の北原ナレッジ、project eval-log の相談証跡。フローは ingest→分類→graph→相談/目標→journal。README:43 の全体ループにはすでに挑戦宣言がある。",
+        "composition components に journal/composer/command はあるが dependencies に journal の辺が1本もなく、goal validator の linkage/cross-level も主要 DAG に表現されていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "実行する journal のコマンド→スキル→composer/検査と、goal の linkage/cross-level の辺が composition に欠け、宣言グラフから実行関係を再現できない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "実行する journal のコマンド→スキル→composer/検査と、goal の linkage/cross-level の辺が composition に欠け、宣言グラフから実行関係を再現できない。",
+          "recommended_intervention": "journal の実際の calls/reads と各 script_ref の辺を補い、YouTube→knowledge-extractor の実際の呼出しも追加。graph 抽出と script_refs 対応を検査する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/plugin-composition.yaml",
+            "line": 97
+          },
+          "root_cause": "新しい capability の components 追加と dependencies 更新が独立していた。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "システム思考"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "--since 文書は「指定した日以降」。実装:detect-knowledge-updates.py:157-169 は NEW/ハッシュ変更を先に拾い、ハッシュ一致時のみ mod_date > args.since で MODIFIED に加える。したがって期間フィルタではなく追加再処理条件。",
+        "この差は日付以上/より後とフィルタ/追加という2種類の原因で、古い未登録/変更ファイルも引き続き対象になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "--since の説明と実際の対象選択が異なる。指定日当日の同一ハッシュは対象外、指定日以前の未登録/ハッシュ変更は対象内。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "--since の説明と実際の対象選択が異なる。指定日当日の同一ハッシュは対象外、指定日以前の未登録/ハッシュ変更は対象内。",
+          "recommended_intervention": "互換性を保つ既存の追加再処理挙動を正とし、SKILL・help・docstring・command を「日付より後の同一ハッシュも再処理、差分は日付に関係なく対象」と明示。日付境界と古い差分の回帰テストを追加。日付入力も検証する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+            "line": 167
+          },
+          "root_cause": "自然語のフィルタ説明を検知の分岐順序と照合していない。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "因果関係分析"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "正のループ:学習→良い目標→振り返り→次の学習。危険な自己強化:ユーザー目標/挑戦→北原知識へ抽出→再びユーザーへ権威付き引用。",
+        "detect EXCLUDED_SUBDIRS=(目標設定,挑戦宣言) とそのテストは既に危険ループを検知入口で切っている。挑戦を目標へつなぐ場合も知識抽出へ戻すべきではない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "検知の除外は常時適用され --all でも維持される。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "info-collector の収集には過去目標/合宿/知識/journal/consult があるが、挑戦宣言を読む経路がないため、README の行動ループを支える具体的文脈が途中で失われる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "info-collector の収集には過去目標/合宿/知識/journal/consult があるが、挑戦宣言を読む経路がないため、README の行動ループを支える具体的文脈が途中で失われる。",
+          "recommended_intervention": "Phase1-2 から最新の挑戦宣言を読み取り専用で収集。目的/確定目標/行動/報告周期を出所付き候補として渡し、今回のユーザー確認なしに目標へ昇格させない。検知除外を維持し、北原ナレッジに混ぜない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/info-collector.md",
+            "line": 270
+          },
+          "root_cause": "新しいユーザー記録の writer はあるが、次回目標で読む consumer が設計されていない。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "因果ループ"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "速度と品質の両立にはゲートの文言を各 context にコピーせず Read できる中立正本を置く。現状の正本は output-formatter:191 で、SKILL:215 がエージェント内部を参照する。",
+        "data-contract:482-499 に同じ回す条件/コマンド/rc の第二契約が残る。正本移動だけでなく保存前の実際の入力解決を明示すれば参照量を減らし精度を上げられる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "スキルのゲート契約が子エージェントの手順の中にあり、data-contract の再説明も残っている。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "スキルのゲート契約が子エージェントの手順の中にあり、data-contract の再説明も残っている。",
+          "recommended_intervention": "references/validation-gates.md に適用条件・引数・rc・入力パスの由来・実行順を集約。SKILL/output-formatter/data-contract は節参照と各自の固有責務だけを持つ。独立 agent は着手前に必ず正本を Read。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/output-formatter.md",
+            "line": 191
+          },
+          "root_cause": "共有契約と実行役の手順が同じ場所に混在している。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "トレードオン思考"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "親側のゴールSKILL:188 は plugin_root を渡し両 env alias を設定させるが、info-collector:303-307 の入力は goal_type/target_period だけ。YouTube normalizer/extractor は既に plugin_root を必須にしている。",
+        "利用者の host 互換性と作者の保守性を共に良くするには、既存 alias を文書各所で追うより親で絶対パスを解決し境界で一致を検証する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "旧 info-collector/output-formatter/goal-reviewer/phase3-coordinator の入力例と参照は $CLAUDE_PLUGIN_ROOT に依存し、親の plugin_root 入力契約が全境界で明記されていない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "variable-abstraction",
+          "description": "旧 info-collector/output-formatter/goal-reviewer/phase3-coordinator の入力例と参照は $CLAUDE_PLUGIN_ROOT に依存し、親の plugin_root 入力契約が全境界で明記されていない。",
+          "recommended_intervention": "共通 agent-root 契約で plugin_root/project_root/vault_root の出所と絶対パス検証を固定。各 agent の必須入力と呼び出しテンプレートをそろえ、ツールには展開済みパスを渡す。PLUGIN_ROOT を正とし互換 alias は移行時のみ同値で設定する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/info-collector.md",
+            "line": 303
+          },
+          "root_cause": "caller のルート方針更新が callee の入力と実行テンプレートへ届かなかった。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "プラスサム思考"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "利用者が欲しい成功状態は「新しく作った今期/月/週の目標が一本筋で保存される」。output-formatter:189 は下書き作成の直後にゲートを回すが:197 は保存先に期/月があることを条件とする。",
+        "quarterly_path/monthly_path/weekly_path は入力:226-231 に定義がなく、作成中の層に下書きを当てる規約もない。初めて月報を作る場面でゲートを適用できない、または既存月報だけを検証しうる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "週報省略の説明「照合対象の件数は変わらない（週報の抽出元を持つアンカーが週報分だけ減る）」が分母と比較層を混ぜている。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "保存前 cross-level の3つのパスの出所と作成中の下書きへの置換が未定義。保存先の存在判定では今回生成したファイルを検査できない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "variable-abstraction",
+          "description": "保存前 cross-level の3つのパスの出所と作成中の下書きへの置換が未定義。保存先の存在判定では今回生成したファイルを検査できない。",
+          "recommended_intervention": "gate_inputs を親が期間と層で解決し、作成中層は必ず同じ絶対 draft_path を使い、残る層は info-collector が選んだ同じ期のファイルを使う。draft を含め期/月が揃えば cross-level を回す。パス未解決時は停止か not_applicable の根拠を記録。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/output-formatter.md",
+            "line": 197
+          },
+          "root_cause": "ゲート仕様はスクリプトとrcだけで、検査対象のライフサイクルをモデル化していない。"
+        },
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "週報省略の説明「照合対象の件数は変わらない（週報の抽出元を持つアンカーが週報分だけ減る）」が分母と比較層を混ぜている。",
+          "recommended_intervention": "アンカー種類/分母は固定、比較できる層だけ週報分が減る、と中立正本で説明し再説明を削除する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 498
+          },
+          "root_cause": "件数という語でアンカー種類と層ごとの比較回数を区別していない。"
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "価値提案思考"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "実際の配布状態は marketplace.json:135 の掲載と package-contract:38 distributable=true、README:3 の公開導入。composition:29/:163 は false/非掲載を宣言し EVALS は false と説明する。",
+        "plugin manifests/composition=0.7.0、EVALS.version=0.2.0。評価仕様の版かプラグイン版かの意図が文書上定まっていない。ユーザーは今セッションで release を禁じており、修正は配布実行を伴う必要がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "composition/EVALS/スモークskip は distributable:false だが既存 package-contract と marketplace は公開対象。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "EVALS.version は0.2.0、両 plugin manifest は0.7.0。EVALS の値が評価スキーマ版ならその意味を分離して説明する必要がある。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "composition/EVALS/スモークskip は distributable:false だが既存 package-contract と marketplace は公開対象。",
+          "recommended_intervention": "現在の掲載済み true を正として composition と EVALS の説明を整合。公開を実行せずメタデータだけ直す。false を理由にした smoke skip は実際の未試行理由に置換し、実施済みを偽装しない。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/plugin-composition.yaml",
+            "line": 163
+          },
+          "root_cause": "公開導入への移行が composition と旧スモーク説明へ反映されていない。"
+        },
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "eval-log",
+          "description": "EVALS.version は0.2.0、両 plugin manifest は0.7.0。EVALS の値が評価スキーマ版ならその意味を分離して説明する必要がある。",
+          "recommended_intervention": "version の意味を既存フレームワークと照合し、plugin 版の欄なら0.7.0へ合わせる。script/skill の独立 version まで同じ値へ強制しない。journal llm_eval の保存順序も実動作に合わせる。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 3
+          },
+          "root_cause": "plugin版・評価スキーマ版・component版の異なるライフサイクルが無注記で混ざっている。"
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "戦略的思考"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:65はmax_iterations3、L229は再提示最大3周、L242は初回1＋周回nをn+1とする。上限4の原因を辿ると初回と改善でiterationの単位が未定義。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py:51にprinciple_checklistがないがL735で出力。interview-map:85の前日不在警告は実装L741-746では前回ゼロ件のときだけ。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "初回iteration1＋最大3周が4となりfeedback_contract.max_iterations3と競合する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "公開SCHEMAにprevious_journal.principle_checklistがなく実出力とcomposer利用の契約を辿れない。",
+            "前日分がないと警告という説明は、前回自体がゼロ件だけ警告する実装と異なる。"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "初回iteration1＋最大3周が4となりfeedback_contract.max_iterations3と競合する。",
+          "recommended_intervention": "初回含む総試行3回にするか初回と改善を別カウンタにする。推奨は総試行3回、max_loopsと同じ単位へ文章と契約を揃える。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 242
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "公開SCHEMAにprevious_journal.principle_checklistがなく実出力とcomposer利用の契約を辿れない。",
+          "recommended_intervention": "SCHEMAへ追加し、前回なし=nullと前回ブロックなし=空文字の意味を明示する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py",
+            "line": 51
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "前日分がないと警告という説明は、前回自体がゼロ件だけ警告する実装と異なる。",
+          "recommended_intervention": "前回ジャーナルがない場合へ合わせる。前日未作成は警告と同一視せず必要なら対話で対象日を確かめる。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/references/interview-map.md",
+            "line": 85
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。",
+      "paradigm_label": "why 思考"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "小さく検証できる境界は detector の空結果と --since の回帰。未接続時 print_empty_result:83-95 に通常時の除外:件数の行がない。",
+        "EVALS:llm_eval は journal を保存前検査と宣言するが、現行 journal-composer と journal SKILL は保存→修復→検査である。形式の均一化と事実に合う説明は小さな変更で検証可能。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "EVALS の journal 受入宣言は保存前検査だが、現在の手順は先に保存して機械違反を最大3回修復する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "未接続時の結果に除外:0件が無く、通常の出力列と一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "EVALS の journal 受入宣言は保存前検査だが、現在の手順は先に保存して機械違反を最大3回修復する。",
+          "recommended_intervention": "journal の書き手を下書き検証→正式保存→再検証へそろえるのか、現在の保存後方式を維持して説明を直すのかを一つに決め、EVALS/SKILL/composer 同時に整合。失敗ファイルの扱いも明記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 27
+          },
+          "root_cause": "受入宣言と保存手順の更新順が独立している。"
+        },
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "未接続時の結果に除外:0件が無く、通常の出力列と一致しない。",
+          "recommended_intervention": "空結果にも除外:0件を出し、通常経路と未接続経路でサマリキーが同じであることを既存テストに追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+            "line": 92
+          },
+          "root_cause": "縮退出力を別関数で保守し通常経路の新しい行を追従していない。"
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "改善思考"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "仮説「各独立 agent の必須入力は caller の出力/次の入力へ連鎖する」を低コストに表と呼出し1行で照合して反証。R1:49-52 と R2:43-44 に source_out がないが normalizer:79 は dest_root を求める。",
+        "R3:41-43 は normalized_paths/dry_run だけ、呼出し:116 は plugin_root だけ。extractor:640-642 は target_files/mode、relation-extractor:70 は knowledge_dir を求める。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "YouTube の R1→R2→normalizer で source_out→dest_root と metadata/raw_transcript の対応が明示されず、R3→extractor/relation-extractor で target_files/mode/knowledge_dir の受け渡しが欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "oneshot:102 と normalizer:84 は出力ルートの下へ YouTube/ を追加するが RUNBOOK のcronは --source-out .../UBM/YouTube を渡す。結果が .../YouTube/YouTube/ になる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "variable-abstraction",
+          "description": "YouTube の R1→R2→normalizer で source_out→dest_root と metadata/raw_transcript の対応が明示されず、R3→extractor/relation-extractor で target_files/mode/knowledge_dir の受け渡しが欠ける。",
+          "recommended_intervention": "R1 に --source-out と絶対 source_out 出力を加え、R2 へ伝播して dest_root/raw_transcript/metadata を明示。R3 は normalized_paths を extractor の既存登録/ハッシュと照合した target_files に変換し new/update を定め、full は明示全件時だけにする。relation に絶対 knowledge_dir を渡す。dry-run は書き手を起動しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md",
+            "line": 116
+          },
+          "root_cause": "機能名の呼出しを入力マッピング済みと扱っている。"
+        },
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "oneshot:102 と normalizer:84 は出力ルートの下へ YouTube/ を追加するが RUNBOOK のcronは --source-out .../UBM/YouTube を渡す。結果が .../YouTube/YouTube/ になる。",
+          "recommended_intervention": "dest_root/source_out を YouTube/ を含まないソース親ルートと定義し、RUNBOOK の例を .../05_Project/UBM に合わせる。既定の registry.parent と明示 source-out を同じ相対パス規約でテストする。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/ubm-goal-setting/RUNBOOK.md",
+            "line": 77
+          },
+          "root_cause": "出力ルートとカテゴリディレクトリの境界が曖昧。"
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "仮説思考"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "解くべき問いは「各 workflow が同じ anchor 保存/検証を確実に実行し、専用検査と責務が混同されないか」。全文コピーの追加は中心論点を解かない。",
+        "goal:206、journal:240、challenge:239、knowledge:202 が REQUIRED_KEYS/hash を再説明し、consult/youtube は goal を参照するだけ。共通 validator は6 keys/不変goal/hashだけを検査し本文・受領書・iteration上限は見ない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "共通 anchor 契約が4 SKILLに分散し、consult/youtube の完了ゲートとして明示的な validator 実行がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "共通 anchor 契約が4 SKILLに分散し、consult/youtube の完了ゲートとして明示的な validator 実行がない。",
+          "recommended_intervention": "plugin references/goal-seek-anchor-contract.md に初回 original_goal の固定、UTF-8 SHA256、必須キー、共通 validator の検査範囲/rc、実行タイミングを集約。6 SKILL は同参照と解決済み progress/intermediate の実行命令を持ち、fork/専用 task-graph/本文検査だけ差分として残す。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/SKILL.md",
+            "line": 196
+          },
+          "root_cause": "一般契約の SSOT と workflow 固有の進捗設定を同一視している。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "論点思考"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "観察カードを4群へ整理:入力の出所（root/agent mapping/gate path）、正本の重複（gate/anchor）、実動作と宣言の差（since/保存順/配布版/JSON数）、ユーザーループの欠落（challenge reader/journal edges）。群ごとに一つの正本と意味のある境界テストを設計する。",
+        "read-only inventory:knowledge はトップ134JSON、そのうち entries[] を持つ129JSON。router.categories に分割済みファイルが多数列挙され total_entries=982。README:125/:278/:284、EVALS:sufaces、composition:25 の28JSONは現物と一致しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "知識の配置を28JSONと固定する各説明が、129 entries[] ファイルへ分割された実際のルーターに追従していない。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "本思考法の限定範囲では直接違反の証拠を得ていない。全プラグインの合格は断定しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "知識の配置を28JSONと固定する各説明が、129 entries[] ファイルへ分割された実際のルーターに追従していない。",
+          "recommended_intervention": "個数を全箇所で129へ置換するのではなく「router.categories.files が列挙する6カテゴリの分割 JSON」が正本だと説明。評価は router の参照実在/全 entries[] ファイルの到達性/件数整合を検査し、追加時に手作業で数を直さない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/README.md",
+            "line": 284
+          },
+          "root_cause": "成長時に分割する設計と固定シード個数の説明が混在している。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "親が解決した入力と正本参照を境界で明示し、派生値と保存順序を契約で固定する",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "環境変数や未解決プレースホルダーをツールにそのまま渡す",
+        "既存ファイルだけを検査して作成中の下書きを照合しない"
+      ],
+      "re_audit_trigger": "該当する入力契約・正本・配布契約・保存順序を変更したとき",
+      "paradigm_label": "KJ法"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "Phase2 independent analyses, actual source locations in paradigm_findings"
+      ]
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "Phase2 independent analyses, actual source locations in paradigm_findings"
+      ]
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "Phase2 independent analyses, actual source locations in paradigm_findings"
+      ]
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "Phase2 independent analyses, actual source locations in paradigm_findings"
+      ]
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  }
+}

@@ -1,1 +1,18 @@
-{"artifact": "scripts/build-claude-settings.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "PASS", "score": 85, "notes": "deep-verify FAIL を genuine 修正: HOOK_EVENTS allowlist を実 manifest 配線イベント(SessionEnd/Stop/UserPromptSubmit/UserPromptExpansion 等)へ是正。--check が exit3 LayoutError から exit0 へ機能回復。"}, "reviewed_by": "objective-recheck-after-fix", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "scripts/build-claude-settings.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine review（sha256 604a8b7a210426fd2acc02bdffc4f24c47a4c6f238540b879ce2bb98ae5964c4 をレビュー。実行検証あり）。範囲: 全 829 行と git diff HEAD（_BUILD_CACHE_DIRS・_BUILD_CACHE_SUFFIXES・_OS_JUNK_NAMES・is_build_artifact を足し、content_sha256 の rglob から除く）。確かめたこと: tests/test_build_claude_settings.py と tests/scripts-root/test_root__build_claude_settings.py で 120 passed、harness-creator の test_native_surface_repo_integration と test_sync_native_surfaces で 155 passed。実 repo で --check は exit 0（add=0 keep=0 dedupe=0 conflict=0）、--dry-run --json は exit 0、conflicts 空、skills 127（共有は run-skill-feedback の 21 件）、agents 68、commands 31。work-j-s3/bcrepo の一時 repo（harness-creator と consumer に同じ run-skill-feedback）で、consumer にだけ __pycache__/a.cpython-311.pyc を置いても exit 0（今回の修正は効いている）。未知の引数は exit 2。.claude/settings.json の sha と .claude の git status は作業の前後で同じ。指摘: [低] 除外は .gitignore の一部（2-5・11-12 行）を手で写しただけで、.pytest_cache/（8 行）・.coverage・*.swp が漏れる（194-204 行）。同じ一時 repo で consumer にだけ .pytest_cache/v/cache/nodeids を置くと、--dry-run が run-skill-feedback の conflict で exit 2 になった（git check-ignore で ignore 対象と確認）。repo には skill の直下の .pytest_cache が 9 件ある（system-spec-harness・plugin-dev-planner・extract-system-blueprint）。直し方: .pytest_cache を足す、または git ls-files か git check-ignore で決める。同じ定義が build-claude-symlinks.py 114-124 行に重複している。[低] HOOK_EVENTS（15-32 行）に SubagentStart と PermissionRequest が無い。一時 repo の plugin の hooks/hooks.json に置くと、--check が unknown hook event で exit 3 になった。hook は settings に投影しない（768-770 行で generated_hooks は空）のに、検証だけで全体が止まる。harness-creator の build-hook-registry.py と sync-plugin-platforms.py は両方を受け付け、13-14 行のコメント自身も網羅を求めている。[低] --plugins-dir が存在しないと discover_plugins が []（325-326 行）を返し、--check は conflict=0 で exit 0 になる。打ち間違いで名前空間の衝突検査が空振りする（build-claude-symlinks は同じ入力で exit 3）。[低] merge_hooks（556-590 行）は本番の経路から呼ばれず（build は generated_hooks・hook_conflicts・hook_dedupe_count を定数にしている）、tests/scripts-root の 2 件だけが呼ぶ死んだコード。34a-settings-merge-spec.md 332 行の「同一 hook は exit 2」は今は効かない。[低] PEP 723 ヘッダが無い（lint-script-frontmatter で missing block、exit 1）。参考（減点なし）: invariants_checked は INV-1〜12 の定数だが、34a 仕様 193 行（INV-12）がこの列挙を求めている。DEDUCTION: 生成物の除外の漏れ -3、HOOK_EVENTS の欠け -3、plugins dir の空振り -2、死んだ merge_hooks -2、PEP 723 なし -2 → 88。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

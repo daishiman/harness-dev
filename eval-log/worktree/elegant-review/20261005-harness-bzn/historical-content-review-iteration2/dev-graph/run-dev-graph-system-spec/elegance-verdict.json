@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "skill_md_sha256": "065d88182af5c2bae07b361d682bca175353d9344b22bd0ae5f932cc4ba7ed21"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:38:05Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "新設の `## Resume と lineage gate` は、R0 (resume) と R3 (import の後) の 2 か所で同じ決定論 gate を使い、C02 の add も同じ関数 (validate-source-lineage.py の lineage_findings を build-graph-node.py が importlib で読む) で登録前に検査する。取込元の消失や編集を、登録時・再開時・取込後の 3 点で同じ基準で止められる。",
+      "gate の結果と分岐が一意に書かれている: checked=0 は新規作成、checked>=1 かつ exit 0 は再開、exit 1/2 は fail-closed。fail-closed のときに artifact_delivery が artifact_created に留まり、minimum_guard_pass を発火せず、evaluator や Agent fork を起動しないことまで明記しており、state machine と矛盾しない。",
+      "validate-source-lineage.py の引数 (--repo-root 必須、--graph 任意、--node-id 複数可)、検査対象 (origin_kind=system-spec-harness の node だけ)、finding の code 5 種、exit (0=pass、1=violation、2=error) は SKILL.md・R0・R3 の記述と一致した。test_validate_source_lineage.py と build-graph-node の test_system_spec_lineage_must_resolve_before_add も通っている。",
+      "R0/R3 の prompt は gate の出力契約・責務境界・受入条件・5.3 の checklist を責務に固有の行として追加し、Layer 4-7 の定型は共通層へ集約した。削除された行がすべて共通層に含まれることを機械照合で確かめた。"
+    ],
+    "negative_feedback": [
+      "[low / 依存関係] validate-source-lineage.py の `--graph` の既定は固定の `.dev-graph/state/graph.json` で (validate-source-lineage.py:74)、C24 が repo-config の local_state.graph から解決する graph とは連動しない。SKILL.md:107 と R0/R3 は `--graph` に C24 の local_state_paths.graph を渡すよう書いていないので、local_state.graph を既定から変えた repo では、gate が C02 と別の graph を読むか exit 2 になる。C02 側の登録前検査は C24 の graph を使うので安全網は残っており、low に留める。",
+      "[low / 漏れ] graph が無い repo (dev-graph が未 init) では gate は exit 2 で、出力は status=error と checked=0 を同時に持つ (validate-source-lineage.py:102)。SKILL.md:109 の「checked=0 は新規作成」を exit を見ずに読むと誤る余地がある。また exit 2 の診断は violations[] ではなく error に入るが、SKILL.md:110 は「violations[] の node/code/detail をそのまま提示」と書いている。停止時に run-dev-graph-init を案内する記述も無い。fail-closed の向きは正しいので low に留める。",
+      "[low / smell] SKILL.md:107 の出力形 `{status, checked, checked_node_ids, violations[]}` には、実装が出す `graph` キー (検査した graph の repo 相対 path) が無い。読み手が困る差ではない。",
+      "[low / 差分外] 手順 2 (SKILL.md:99) は兄弟 plugin の manifest を repo 相対の `plugins/system-spec-harness/.claude-plugin/plugin.json` で読む。install 先ではこの path が呼出し元 repo に無いので、手順 2 の「不在は停止」に当たる。lint-sibling-plugin-paths.py は repo root 起点の形を repo-bundled 前提として許容するので検出しない。手順 4 (SKILL.md:102) の lineage の略記 `{origin_kind,plugin,path,version,digest,imported_at}` も、schema と新設節が使う source_plugin/source_path/source_version/source_digest と表記が違う。どちらも今回の差分の外にある既存の記述なので判定の対象外とした。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "builder とは別 context の独立 evaluator が、content-review-protocol の incremental (focused combined review) を 1 回だけ行い、(a) 矛盾なし (b) 漏れなし (c) 記述規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。30 思考法は実施しておらず、実施したとも申告しない。対象は HEAD (f30813a) 以後の未コミット差分である。SKILL.md の差分は script_refs への validate-source-lineage.py の追加、reference_refs への prompt-common-layers.md の追加、`## Resume と lineage gate` 節の新設で、prompts は R0/R3 に gate の行を足し、R0-R3 の Layer 4-7 を共通層へ集約した。確かめたこと: (1) SKILL.md と prompts 4 本の差分を全行読んだ。(2) 未追跡の scripts/validate-source-lineage.py (112 行) を全行読み、引数・検査対象・finding code・出力・exit を SKILL.md と R0/R3 に照合した。(3) build-graph-node.py が同じ script を importlib で読み、add の登録前に lineage_findings を呼んで source_lineage_unverified で拒否することを差分で確かめた。(4) graph-node.schema.json の source_lineage (source_path・source_digest ほか) と script の key 名が一致することを確かめた。(5) graph の無い一時 directory で gate を実走し、exit 2 と出力の形を確かめた。(6) lint-sibling-plugin-paths.py は OK、prompt の 7 層 lint は dev-graph の 41 本すべて OK だった。(7) `python3 -m pytest plugins/dev-graph/tests -q -p no:cacheprovider` は 217 passed / 18 failed で、失敗はすべて test_skill_criteria_evidence.py の content-review と criteria-test の sha 乖離によるもので、script の振る舞いの失敗は無かった。この skill の criteria-test/scenario-verdict.json は本 review の範囲外で、まだ古い sha のままである。medium 以上の finding は 0 件で、差分に由来する low 3 件はいずれも fail-closed の向きを変えないため PASS とした。差分外の low 1 件 (手順 2 の兄弟 plugin の repo 相対 path) は install 先で手順 2 を必ず止める可能性があり、判定の対象外だが別途の確認を勧める。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1 の実行時の受け入れには live-trial や test の実走証拠が別に要る。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 1,
+    "smell": 2
+  }
+}

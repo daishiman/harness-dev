@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash
+  - Bash(python3 *)
   - AskUserQuestion
 kind: run
 goal_seek:

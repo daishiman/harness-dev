@@ -114,7 +114,7 @@
           {
             "id": "OUT3",
             "loop_scope": "outer",
-            "text": "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はhost launcher preflightが起動前検出する",
+            "text": "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はbuild-init-scaffold.pyがどのwriteよりも前に自ら実行するvalidate-harness-link.pyの検査が検出して書込み0件で止まり修復の選択肢を返す",
             "verify_by": "test"
           },
           {
@@ -444,7 +444,7 @@
           {
             "id": "OUT1",
             "loop_scope": "outer",
-            "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件になることを受入テストが確認する",
+            "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件で、両GitHub計画の converged が true になることを受入テストが確認する",
             "verify_by": "live-trial"
           },
           {
@@ -772,7 +772,7 @@
           {
             "id": "OUT1",
             "loop_scope": "outer",
-            "text": "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する",
+            "text": "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Y（X=doneの子task数、Y=子task数）のYがregistration receiptのexpected_countと一致し、子taskの集合がreceiptのnode_idsと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する",
             "verify_by": "live-trial"
           }
         ]
@@ -1688,7 +1688,7 @@
         },
         {
           "id": "R3-status",
-          "summary": "validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)",
+          "summary": "extract-graph-status.py の rows だけから該当ノードの status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)",
           "prompt_required": true
         }
       ],
@@ -1717,7 +1717,7 @@
           {
             "id": "IN1",
             "loop_scope": "inner",
-            "text": "validate-graph-schema.py で読み取ったグラフストアの検索結果に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する",
+            "text": "extract-graph-status.py の rows に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する",
             "verify_by": "script"
           },
           {

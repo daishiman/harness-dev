@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 44da9a38c3745403dea74217fa96264cdeb0f476b88ec1dc9c7c3f2c884ff453 をレビュー。実行検証あり）。範囲: 全 446 行。origin/main との差分（+36 行。_install_clause で legacy の title を両方の projection で共用し、_component_install_obligations で保存済み task-graph の P13 leaf が component に帰属していないかも検査する）は特に丁寧に読んだ。確かめたこと: pytest plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py ほか本 script を呼ぶ test で 79 passed（差分は test_check_spec_gates.py L551-569 が保存 graph の誤帰属と title だけの旧形の両方で検査している）。fixture で --help は exit 0、引数なしは 2、存在しない --specs-dir は 2、存在しない --inventory は 2、inventory が [1,2] は 2（fatal）、値域外の component は 1。lint-script-frontmatter.py（ディレクトリ指定）は OK checked=34。write-scope: none のとおり、本 script 自身に書き込みの経路は無い。指摘: [低] UTF-8 でない md（L387 の read_text）や UTF-8 でない inventory（L236 は json.JSONDecodeError しか捕まえない）で UnicodeDecodeError の traceback を出し exit 1 になる。usage error（exit 2）の約束から外れる。直し方は read_text を UnicodeDecodeError ごと捕まえて exit 2 にする。[低] 空の --specs-dir、plugin_meta の無い md だけ、または inventory の無い dir でも『OK』と exit 0 を返す（L396 は inventory が無いと黙って飛ばし、L421 で空の検査を合格にする）。空で合格しないよう、--specs-dir 指定時は検査対象が 0 件なら失敗にする。DEDUCTION: 100 -3（UnicodeDecodeError の traceback）-2（空で合格）→ 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s2",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

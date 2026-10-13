@@ -1,0 +1,53 @@
+{
+  "label": "sysspec6",
+  "retry_of": "20261012T1646-pr85",
+  "evaluator_agent_id": "a31fc3e8347da4d41",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec6/fx/plugins/dev-graph/skills/run-dev-graph-system-spec",
+  "closure_sha_at_launch": "562b1bae99a26dd269bbf05d29b27ddcfc872145b3438fc43ad2cafb53548c93",
+  "closure_sha_tested_copy": "562b1bae99a26dd269bbf05d29b27ddcfc872145b3438fc43ad2cafb53548c93",
+  "closure_sha_wtpy_at_verdict": "562b1bae99a26dd269bbf05d29b27ddcfc872145b3438fc43ad2cafb53548c93",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワークは WebFetch による www.postgresql.org・react.dev・fastapi.tiangolo.com・www.typescriptlang.org・kubernetes.io への https の GET だけ許可し、ほかは遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "allowed_fetch_hosts": [
+    "www.postgresql.org",
+    "react.dev",
+    "fastapi.tiangolo.com",
+    "www.typescriptlang.org",
+    "kubernetes.io"
+  ],
+  "fixture_changes": [
+    "spec-state.json: sysspec4 の trial の前に作った版 (65ae4241…。sysspec4 の trial 中には変わっていない) を置き、被験に渡す写しの正規の writer (apply-spec-transition.py) を 12 段で呼んだ (どれも exit 0。JSON は手で書いていない)。後の sha256 は 48bbaa46…。段 1〜7 は sysspec5 の trial の前の 7 段を同じ入力で流し直したもので、後の sha は sysspec5 の trial の前と同じ (5ff66436…)。段 8〜12 が sysspec6 で足した分。",
+    "既定値の追加 (sysspec5 の評価者が主な原因とした fixture の欠けへの対処。D3 の前提の CSRF 対策とセッションの保存先が決まっておらず、auth の設計の欄も D3 の確定に合わせて書き直されていなかった): qa-037 で CSRF 対策 (回答: cookie には HttpOnly・Secure・SameSite=Lax を付ける。状態を変える要求 (POST・PUT・PATCH・DELETE) には、サーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にし、無いか合わない要求は拒否する。)、qa-038 でセッションの保存先と有効期限 (回答: 情報システム部が提供している PostgreSQL 16 (D1) の表に保存する。Pod のメモリには置かず、Pod の再起動や複数の replica でもログインが切れないようにする。Redis などの新しい保存基盤は足さない。有効期限は qa-002 のとおり 8 時間で、期限切れは使えなくして定期的に消す。ログアウトではすぐに無効にする。) を、writer の chunk で足した。どちらも basis は agent-inference。question は R2 のセル補充で利用者に聞くはずの問で、利用者には聞いていない (各 qa の provenance に書いた)。",
+    "既定値の性質: qa-037・qa-038 の回答と、下の書換えは、どれも orchestrator が置いた既定値で、利用者の確認を経ていない。team-lead の 2026-10-12 の指示による。CSRF の値は team-lead の指定のまま。保存先は、指示が「サーバ側の、既存の構成に合う保存先に置き、有効期限を付ける」だけだったので、orchestrator が選んだ: 既存の構成で、サーバ側にあって複数の Pod から共有できる保存先は、qa-018 で決まっている情報システム部の PostgreSQL (D1 で 16 を選択) だけである。Pod のメモリは、D3 の bff-session の risks が挙げる失敗 (Pod の再起動や複数の replica でログインが切れる) に当たる。Redis などは qa_log にも targets にも無く、足すと新しい基盤の決定になる。有効期限は qa-002 の「セッションは 8h」に合わせた。",
+    "既定値の追加に伴う書換え: D3 の recommendation.caveats の 2 項目め (cookie の属性を確かめていない) に、付ける属性はその後 qa-037 に既定値として記録した (orchestrator の既定値で、利用者の確認は経ていない)、と書き足した (D3 のほかの欄は変えていない)。auth の design_applications の文の末尾に、CSRF 対策とセッションの保存先と期限を当てた文を足した。doctrine_applications の auth.authentication をセッションの保存先と期限を含めて書き直し、auth.security の先頭の文の後に CSRF 対策の文を入れた。この 3 項目の basis は agent-inference。matrix の qa_refs に qa-037・qa-038 (auth.web) と qa-037 (security.web) を足した。auth.web と security.web の確定は、ほかに前からある user-decision の根拠にも支えられている (validate-coverage-matrix --require-basis は exit 0)。qa_log は 37 件から 39 件になり、hearing_progress は変わっていない。前後の全文は fixture-provenance.json の decisions_added_sysspec6。",
+    "作り直しの経緯: 最初の組み立て (2026-10-12T12:10〜12:22Z、後の sha f0f0f89c…) では qa-037・qa-038 の basis を user-decision、D3 の caveat を「qa-037 で利用者が決めた」としていた。precheck の評価者の指摘 (medium) を受けた team-lead の指示で agent-inference に直すため、同じ置き場所から 12 段を正規の writer で流し直した (writer に既にある qa の basis を書き換える op は無い)。最初の版は smoke/sysspec6/before-fix/ に残した。",
+    "sysspec5 と sysspec4 の準備で足したもの (D3 と qa-034〜036、D2 の caveat、infrastructure の design_applications と doctrine_applications、D1/D2 の証拠の更新、orchestrator が書いた seed カード k8s-workload-observability、sysspec5 の準備の orchestrator の WebFetch (fastapi.tiangolo.com の 3 頁)) は、段 1〜7 と置いた spec-state にそのまま入っている (fixture-provenance.json の inherited_from_sysspec5)。D3 と qa-034〜036 は sysspec5 のまま、orchestrator がシナリオ上の利用者の発言として書いた既定値で basis は user-decision (変えていない)。",
+    "fetched-references.json: seed の版 (48395c3a…、postgres 16.1・react 19.0) を、D1・D2 の caveats が言う 2026-10-12T02:28:51Z の取り直しの版にそろえた (a9dfd7f2…、postgres 16.15・react 19.3)。sysspec3 の trial で被験が doc-fetch の正規の writer で書いた版から postgres と react の record を取り、被験に渡す写しの doc-fetch の正規の assembler (build-fetched-references.py assemble) で組んだ (JSON は手で書いていない)。fastapi と typescript の record は足していない (team-lead の指示で開示だけ)。そのため validate-source-citation.py は exit 1 (参照欠落: fastapi・typescript)。",
+    "session の配置: sysspec5 は session の cwd が ws だったが、sysspec6 は fx (fixture の root) にした。C19 が evaluator を起こす前に cwd と DEV_GRAPH_ROOT の一致を確かめるため。5 plugin の写しを fx/plugins/ に置き、fx/.git/info/exclude に /plugins/ と /.claude/ を足し (fixture の git status は seed と同じ)、偽 HOME の .claude.json に fx の trust の項目を足した。",
+    "隔離の設定: sync5 と同じ guard と deny (外部へ届く tool と許可一覧に無い tool は拒否)。WebFetch は sysspec4・sysspec5 と同じ 5 host だけ許可した。加えて、被験が前の trial と評価の結論を読めないように、session の設定の permissions.deny に Read の rule (runs/sysspec5 と smoke の下) を、sandbox.filesystem.denyRead に同じ 2 つの dir を足した (smoke/sysspec6/readdeny6.py。settings の sha 6f997530… → b4813a9a…)。trial の後に、被験がこの 2 つの dir を読んでいないことを transcript で確かめる。",
+    "plugin の写し直し (team-lead の 2026-10-12 12:26Z の指示と、その後の【5】): 準備の最初 (12:09Z) に cp -R で置いた fx/plugins/ は bytecode を含み、その後の dev-graph の修正の前の版だった。13:38Z と 15:09Z に bytecode を除いて写し直したが、そのたびに後で wtpy の dev-graph が変わった (node の 3 ファイル、次に decompose の 2 ファイルと tests) ので、起動の直前に もう一度写し直した (2026-10-12T15:26:15Z。写しの bytecode は 0 件)。前の 3 つの写しは run の dir の外へ mv で退避した (消していない)。C19 の閉包は 562b1bae… で、team-lead の値と wtpy と一致する。completeness evaluator の閉包は 72aa381f… のまま。system-spec-harness は 4 つの写しで同じ (bytecode を除く)。",
+    "一時領域: 被験の session の TMPDIR を run の dir の中 (/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec6/tmp) に向けた (短い symlink /private/tmp/ltpr85/t/ss6 を CLAUDE_CODE_TMPDIR にした)。PYTHONDONTWRITEBYTECODE は渡していない。",
+    "precheck (team-lead の指示): 起動の前に、被験の外で、fixture の spec-state と fetched-references から compile-spec-doc.py で章を組み立て、completeness evaluator を別の context で 1 回回した (sub-agent とネットワークは使わない範囲。そのため matrix_coverage と doc_freshness は INDETERMINATE)。入力は手直しの前の版 (spec-state f0f0f89c…、fetched-references 48395c3a…) で、手直しの後は回し直していない (system-spec-harness の閉包が変わっていないため)。結果: 総合 FAIL。観点は foundation_trace PASS、decision_guidance PASS、matrix_coverage INDETERMINATE、design_knowledge_reflection PASS、doc_freshness INDETERMINATE、prompt_quality PASS。design_knowledge_reflection は PASS で、起動を止める条件 (FAIL) に当たらない。指摘と扱い: high 1 件 (doc_freshness: fetched-references に fastapi と typescript の記録が無く、形式層の validate-source-citation.py が exit 1) は直さず開示だけ。medium 3 件のうち、fetched-references の版の食い違い (postgres 16.1・react 19.0 と caveats の取り直し) は上でそろえた。qa-037・qa-038 の basis (provenance が既定値と書くのに user-decision) は agent-inference に直した。compile-spec-doc.py が basis=user-decision を一律に「利用者が代替案を見たうえで明示選択」と表示する件は、直さず起票もしていない (team-lead の指示)。low (infrastructure の curated カードが 0 件、maintenance-ops は clean-code の類推) は手を入れていない。report は smoke/sysspec6/precheck/completeness-report.json (9c8b8ca5…)。起動の前に runs/sysspec6/precheck/ から run の dir の外へ mv で移した (16 ファイル、tree の digest は前後とも d2ab3874…。report の中の spec_dir は元のパスのまま)。評価の前後で入力と plugin の .pyc の一覧は変わっていない。precheck は trial の成果でも evaluator の PASS の証拠でもない。",
+    "task.md: sysspec5 の文の runs/sysspec5 を runs/sysspec6 に置き換え (6 か所。ws/plugins/dev-graph は fx/plugins/dev-graph)、入力の説明に、上の既定値の追加と書換えを伝える 1 文を足した (orchestrator が置いた既定値で、利用者の確認を経ていない、qa-037・qa-038 の basis は agent-inference、と書いた)。fetched-references の説明を、取り直しの版 (postgres 16.15・react 19.3) にそろえたもの、に直した。合格条件・経路の制約・5 host の文は変えていない。答えや進め方は書いていない。sha256 は 4fb098d2…。",
+    "fetched-references.json は a9dfd7f2… (postgres 16.15・react 19.3 の 2 件) の版で渡した。trial 中に被験が build-fetched-references.py assemble で 1 回書き直した (transcript の L221、ba8f1b9b…、4 件。fastapi と typescript の record が加わった)。書き直しの後の validate-source-citation.py は exit 0 (L225)。",
+    "spec-state.json は trial の前後で同じ (48bbaa46…)。",
+    "WebFetch の許可: sysspec4・sysspec5 と同じ 5 host。trial 中の WebFetch は 9 件で、すべて許可した host 宛ての allow (kubernetes.io は 0 件)。",
+    "前の trial の記録の読取り: trial の後に、被験本体と subagent 4 本の transcript で、tool の入力が runs/sysspec5・smoke・precheck を含む呼出しを数えた。0 件だった。3 語が出たのは、被験が cwd の .claude/settings*.json を cat した結果 (L77) に Read の deny の規則が出た 1 件だけ (smoke/sysspec6/readcheck6.py。fixture-provenance.json の session_layout.read_deny.checked_after_trial)。",
+    "plugin の差 (trial の後に記録): sysspec5 と sysspec6 の被験に渡した写しは、どちらも wtpy の plugins/ をその時点で写したもので、C19 の閉包は a7f09e36… → 562b1bae…。閉包の中で中身が違うファイルは 14 件 (C19 の SKILL.md と prompts の R2・R3、completeness evaluator の 5 ファイル、dev-graph の hooks 3 本と entry script 3 本)。orchestrator は plugin を手で変えていない。一覧は runs/sysspec6/plugin-diff-vs-sysspec5.json。評価者の prompt にも書いた。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 12 か所伏せた (redact.py。アカウント名は 0 か所)。trial の後の provenance を写した後に回し直したときは 0 か所。fixture と被験の成果物は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない (trial 中の fetched-references の書き直しと、trial の後の記録 (読取りの確認・plugin の差・伏せ字) を除く)。詳細は fixture-provenance.json の spec_state・decisions_added_sysspec6・inherited_from_sysspec5・session_layout・fetched_references・web_fetch_allowance・settings_changes・plugins_copy・retake・precheck・task_md_changes。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "dev-graph:run-dev-graph-system-spec (C19) の R2-delegate 5.3 と SKILL.md の Gotcha 175: evaluator を起動する前の cwd と DEV_GRAPH_ROOT の一致の確認が prose の checklist だけで定められている。起動の前に決定論で強制する gate (起動手順の中の事前の検査や、確認しないと先へ進めない仕組み) がない。そのため被験は L281 で起動し、L286 で事後に確認する順序になった。違反は事後の自己申告でしか表に出なかった。",
+    "system-spec-harness の completeness evaluator (委譲先の skill で、C19 そのものではない): prompt_quality の検査に使う validate-prompt.py の場所を解決する手順 (plugin root からの相対パスや環境変数) を示していない。そのため fork が find / で探し、境界の外まで走査した (fork の L72)。"
+  ]
+}

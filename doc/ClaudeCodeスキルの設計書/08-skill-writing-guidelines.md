@@ -17,8 +17,8 @@ Skill 本文に最も多い失敗は、書きすぎである。Claude が一般�
 
 `description` は人間向け要約ではなく、Claude が「いつこの Skill を呼ぶか」を判断するための trigger 条件である。本文の動作詳細を description に書くと、Claude は本文を読まず description の短縮版だけで動く（原典 L496-500、obra/superpowers の writing-skills 事例）。
 
-- **発動条件は 2〜3 個に収める**（1 個は不足、4 個以上は冗長・重複・処理混入を招く。原典 L504「上限は 2 個前後」を本群では 2〜3 個と定義）。
-- **動詞や手順で「いつ呼ぶか」を書く**（名詞羅列ではなく動作主導。`Use when the user asks to …` の形）。
+- **発動条件は 2 個ちょうどで書く**（1 個は不足、3 個以上は冗長・重複・処理混入を招く。原典 L504 は「上限は 2 個前後」）。rubric FM-003 は 2〜3 個を許すが、`validate-frontmatter.py` が 2 個ちょうどを、lint-skill-description の R1 が 3 個以上を違反として強制するので、通るのは 2 個だけである（詳細と食い違いの扱いは 03章）。
+- **動詞や手順で「いつ呼ぶか」を書く**（名詞羅列ではなく動作主導。「〜したいとき」の形）。description は日本語で書き、末尾を「使う。」「読む。」「起動する。」のどれかにする（lint R5。英語の description はここで落ちる）。
 - **動作詳細（採点する／JSON で返す／4 枚並列実行する 等）を混ぜない**（原典 L500, L522）。動詞は「呼ぶ条件」のための動詞であり、「呼ばれた後の処理」のための動詞ではない。
 - description が膨らむと `description` + `when_to_use` 合算 1,536 文字 cap を圧迫し、Skill listing 全体のコンテキスト予算も削る。
 
@@ -33,7 +33,7 @@ description: スキルレビュー機能。スキル設計を採点しJSONで返
 良い例（発動条件 2 個・動詞ベース）:
 
 ```yaml
-description: Skill design evaluator. Use when the user asks to "review a Skill" or score a SKILL.md against the rubric.
+description: SKILL.md の設計をレビューしたいとき、rubric に沿っているかを確かめたいときに使う。
 ```
 
 悪い例（発動ワード 4 個並列・重複）:
@@ -42,10 +42,10 @@ description: Skill design evaluator. Use when the user asks to "review a Skill" 
 description: スキル評価。「skillレビュー」「SKILL.md採点」「スキル設計の評価」「Skill品質チェック」で発動。
 ```
 
-良い例（発動条件 3 個・重複なし）:
+良い例（発動条件 2 個・重複なし）:
 
 ```yaml
-description: Release check workflow. Use when the user asks to prepare a release, verify release readiness, or run a pre-release gate.
+description: リリース前に出荷できる状態かを確かめたいとき、タグを打つ前の最終確認をしたいときに使う。
 ```
 
 | 書くべき | 書かなくてよい |
@@ -109,6 +109,22 @@ Gotchas（落とし穴）は、実運用で LLM が踏んだ落とし穴を書�
 - 1〜2 行で why と回避を書く。
 - 具体的・検証可能。
 - 古くなったら削る。
+
+### 日本語で書くスキルの正規見出し（rubric 1.5.0）
+
+本文を日本語で書くスキルは、次の日本語の見出しを正規形として使える。rubric は日本語を行全体の一致で照合する。
+
+| 英語の見出し | 日本語の正規形 | 照合する rubric |
+|---|---|---|
+| `## Purpose & Output Contract` | `## 目的と出力契約` | BD-001・PD-002 |
+| `## Gotchas` | `## つまずきやすい点` | BD-002 |
+| `## Key Rules` | `## 守ること` | PD-002（冒頭30行の禁則） |
+
+- 1つのファイルで英語と日本語の定型見出しを混ぜない。
+- schema のキー、Layer 番号、responsibility ID、frontmatter のキーは訳さない。
+- 既存プラグインを一括で翻訳しない。新しく生成するときは `--language ja|en` で選ぶ。`--language auto` は更新のときだけ使い、`--target-skill` で指定した既存のスキルの見出しから言語を引き継ぐ。
+
+対応表の正本は `plugins/harness-creator/skills/run-build-skill/references/ja-contract-policy.md`。`render-combinators.py --language ja` が `_base.md` から合成する骨格（`--kind run|ref|assign|wrap|delegate`）は、この表の名前（`## つまずきやすい点` など）で見出しを出す。ただし複合テンプレート（`orchestrator.md`・`agent-team.md`・`hook-integrated.md`）は `render-combinators.py` の合成と見出しの置き換えを通らず、今も `## Gotchas`・`## Additional Resources` など一部の見出しを英語のまま持つ。これらを使うときは、上の表に合わせて見出しを直す。
 
 ## Gotchas（落とし穴）から決定論へ
 

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/dev-graph/scripts/diff-github-project-fields.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine review（sha256 ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530 をレビュー。実行検証あり）。範囲: 全 386 行と git diff origin/main（is_package_member 191、cross-project-import の grouping 280–297、blocked_links 309–310、counts・unresolved_count・converged・next 320–334）。gh-bridge.py の graphql と project-resolve の呼び方も読んだ。確かめたこと: dev-graph の全 test（python 3.11.4、pytest -p no:cacheprovider -q plugins/dev-graph/tests）は 273 passed / 9 failed（9 件は test_skill_criteria_evidence の既知の失敗で対象と無関係）。test_build_graph_node・test_shared_writer_sync_regressions・test_register_package の 3 ファイルは 103 passed。pyflakes は clean。lint-script-frontmatter plugins/dev-graph/scripts は OK (checked=18 pending=0)。requires-python は >=3.10 なので 3.9 での確認は対象外。fixture で p1/p2 の 2 Project が同じ status を mirror: 両方 Done → import 1 件（source_projects [p1, p2]）・conflict 0。p1 Done / p2 Blocked → cross-project-import の conflict 2 件（cause remote-only）・imports 0・link_input None・unresolved_count 2・converged false。issue_linkage のある node は --issue-plan なしでも、Issue 側に行が残る --issue-plan ありでも held 2 件（issue-unsettled）。--issue-plan を root の外にすると rc 2。偽の gh で --remote なしに流すと project-resolve（gh-bridge 経由の `api graphql` 読み取り 1 回）が失敗し rc 2 の ContractError で止まる。--help は rc 0。regressions の cross-project と not converged の test が pass。指摘: [中] 以上なし。[低] 例外の扱いが diff-github-issues と同じで、存在しない --repo-root・config は FileNotFoundError、object でない config・graph・--remote・--decisions は AttributeError の traceback（rc 1）になる（再現済み。382–386 は ContractError だけを rc 2 にする）。読み取りだけなので副作用は無い。[低] module docstring（13–41 行）は conflict の種類と解き方を並べているが、この差分で足した cross-project-import（280–297）が無い。この conflict は remote-only の import から出るので --decisions では解けず（manual でないので decision は unused_decisions に回る）、Project 側の値をそろえるしかないが、その手順は docstring にも run-dev-graph-sync の R6-confirm.md にも無い。[低] 7 行目 `# requires-python = \">=3.10\"` は repo の正規形 `key: value` でなく、lint-script-frontmatter が読まない。DEDUCTION: [低] 壊れた入力で traceback -4、[低] cross-project-import の説明が無い -2、[低] requires-python の表記 -2 → 92。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

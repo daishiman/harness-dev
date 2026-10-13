@@ -1,0 +1,23 @@
+{
+  "label": "init2",
+  "retry_of": "20261012T0630-pr85",
+  "evaluator_agent_id": "a66557246ed2304d2",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/init2/ws/plugins/dev-graph/skills/run-dev-graph-init",
+  "closure_sha_at_launch": "694a09ca8bf7dd9eca040e46748cfbcdae727456e9d48c0a953642724f2874cc",
+  "closure_sha_tested_copy": "694a09ca8bf7dd9eca040e46748cfbcdae727456e9d48c0a953642724f2874cc",
+  "closure_sha_wtpy_at_verdict": "694a09ca8bf7dd9eca040e46748cfbcdae727456e9d48c0a953642724f2874cc",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "SKILL.md の Purpose 節 (目的) は「初期化レポートにはgh CLI認証状態も含める」と約束しているが、receipt の契約 (repository_id、roots、created、preserved、migration_preview、hook_source、schema_result) にも scripts/build-init-scaffold.py の出力にも gh 認証状態の項目が無い。再現手順: 任意の repo で build-init-scaffold.py を実行し、出力 JSON と .dev-graph/state/receipts/init-*.json に gh 関連のキーが無いことを確かめる。",
+    "plugin の scripts は import のたびに plugin dir の __pycache__ を書き換える。read-only の code authority と、OUT3 の「harness 側の変更 0 件」に反する。今回の trial でも ws/plugins/dev-graph/scripts/__pycache__/_common.cpython-311.pyc が 13:59:03 に、validate-graph-schema.cpython-311.pyc が 13:59:14 に更新されている。再現手順: pyc が古いか無い plugin copy で、PYTHONDONTWRITEBYTECODE を付けずに validate-harness-link.py か build-init-scaffold.py を実行し、scripts/__pycache__ の mtime が変わることを確かめる。",
+    "SKILL.md の frontmatter は R1-R5 すべてを prompt_required: true にしている (19-43 行)。一方、Pre-choice 節 (101-103 行) は prompt を読まずに main context で init を実行させるため、主成果物 (6 root、config、graph) が責務 prompt を読む前に確定する。再現手順: SKILL.md の指示どおりに pre-choice を実行すると、transcript で build-init-scaffold.py の applied (今回は L75) が prompt の読込 (今回は L94) より先に来る。",
+    "軽微な点として、build-init-scaffold.py の 33 行目のコメントは system_spec を C19 の担当として作らないとしている。しかし生成される config.json の content_roots には system_spec が宣言されており、init 直後は宣言した root のディレクトリが無い。再現手順: init 後に config.json の content_roots.system_spec のパスに対して ls を実行すると、存在しない。"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "label": "node2",
+  "retry_of": "node (20261012T0635-pr85)",
+  "evaluator_agent_id": "ad9f88075823b9620",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/node2/ws/plugins/dev-graph/skills/run-dev-graph-node",
+  "closure_sha_at_launch": "929c34ba560554300f47c674c3e9086dc6c9ea130c7630af59e465eff425bc4b",
+  "closure_sha_tested_copy": "929c34ba560554300f47c674c3e9086dc6c9ea130c7630af59e465eff425bc4b",
+  "closure_sha_wtpy_at_verdict": "929c34ba560554300f47c674c3e9086dc6c9ea130c7630af59e465eff425bc4b",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 1,
+    "occurrences": 2,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "artifact_delivery の standard の意味が実装されていない（plugins/dev-graph/skills/run-dev-graph-node/SKILL.md）: frontmatter の L84 では standard の選択で semantic_evaluator_started へ遷移し、本文 L98 では post-choice で評価 section を実行するとしている。しかし起動すべき semantic evaluator（Agent）がどこにも定義されていない。goal-seek 配線（L165）も、未達 responsibility があるときの fork しか規定していない。再現手順: standard を記録し、main context で全 checklist を PASS させて node skill を完走させる。すると Agent 起動は 0 回のまま、eval-log/run-dev-graph-node-goal-spec.json に state=semantic_evaluator_started だけが記録され、accept-as-is と比べて独立した評価が何も増えない（本 trial の L180 と fx/eval-log が実例）。",
+    "goal-seek の記録に正規の writer が無い（SKILL.md の『ゴールシーク配線』）: $DEV_GRAPH_ROOT/eval-log/ に goal-spec・progress・intermediate を書くよう求めているが、そのための script が用意されていない。そのため実行者は python heredoc で手書きすることになり（L89・L180）、caller repo に未追跡の eval-log/ が残る（git -C fx status で確認できる）。再現手順: 任意の repo で node skill を standard で完走させ、git status を見る。"
+  ]
+}

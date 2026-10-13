@@ -2,19 +2,19 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
+    "skill_md_sha256": "93a6437ceb4ef091a251fc92911b4d90d371d66bafef8c13e30d4bad6c259610"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 3,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T13:56:54Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,18 +24,19 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "構造規範 (frontmatter 完備) を満たす: name/description/kind/prefix/effect/owner/version/allowed-tools/responsibilities/combinators/feedback_contract/artifact_delivery が揃い、responsibilities 3 件と responsibility_refs 3 件が id 単位で 1:1 対応する。",
-      "IN1 (verify_by: script) は `validate-source-citation.py` という実在する決定論 script に接地しており、その実行行が今回 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行されたことで、宣言 (runtime_root_policy) と検証手段の起動形が両立している。",
-      "Key Rules 4 (決定論組み立て) と 6 (鮮度判定は C08 へ分離) が、本 skill の責務境界を形式検証 (形式・全件・host 一致) までに限定しており、OUT1 を別 component (C08) の受入テストへ委譲する構造が criteria と本文で一致している。"
+      "rubric 1.6.0 の機械採点: score 80 / threshold 80 (下限ちょうど)、high 0 件。FM-001・NM-001・BD-001 (L99)・BD-002 (L181)・BD-003 (196行) を満たす。",
+      "落ちた rule は FM-003 (medium、description の trigger が7個で2〜3個の範囲外) と PD-002 (medium) で、どちらも差分前からある。今回の差分で増えた違反は無い。"
     ],
     "negative_feedback": [
-      "[low / smell] 局面カタログ R3 行のコマンド表記が path 無しで、`## 検証コマンド` block の PLUGIN_ROOT 形と粒度が揃っていない。",
-      "[low / smell] prompts/R4-audit-doc-freshness.md が responsibility_refs にも Additional Resources にも現れず、C08 側 SSOT であることは SKILL.md 本文の consumer 行から間接的にしか読めない。"
+      "[low / inconsistency] prompts/R3-record.md:41 はツールを『`Bash` (ヘルパ/検証 script 実行)』と書き、frontmatter の Bash(python3 *) と表記がそろっていない (中身は python3 の script)。直し方の案: `Bash(python3 *)` と書く。",
+      "[low / omission] allowed-tools に Write が無いが、R3 の組み立て (SKILL.md:174-175) は `--records records.json --targets targets.json` という通常のファイルを要求する。records.json と targets.json の作り方が書かれておらず、Bash を python3 に絞った今は python3 -c で書く以外の手段が許可なしでは使えない。prompts/R2-fetch.md:25 の retrieved_at の時刻の取り方も書かれていない。直し方の案: allowed-tools に Write を足すか、build-fetched-references.py に spec-state から targets を導く機能と stdin から records を受ける機能を足す。時刻は python3 の datetime で取ると書く。",
+      "[medium / inconsistency・差分前から] rubric FM-003: description の trigger 句が7個で、2〜3個 (hard rule) を超える。直し方の案: 発動条件を2〜3個に絞り、残りは本文へ移す。",
+      "[medium / inconsistency・差分前から] rubric PD-002: 本文の先頭30行に Key Rule や禁則が無い。直し方の案: Key Rule 7 (取得は WebSearch/WebFetch だけ) を本文の先頭近くへ出す。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはおらず、数値 score は算出していない。機械的に確認したのは構造規範に相当する項目に限る — frontmatter 必須キーの充足、responsibilities と responsibility_refs の 1:1 対応、宣言 path (responsibility_refs 3 / schema_refs 1 / Additional Resources 記載の script・reference) 23 件の実在 (test -e で全件 OK)、effect: local-artifact に対して external_mutation_guard を持たないことの正しい対応、artifact_delivery の 6 state / 6 transition 完備、runtime_root_policy 宣言と `## Runtime root contract` 節の対存在、shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形であること (bare `$CLAUDE_PLUGIN_ROOT` の実行行は grep で 0 件)。加えて `python3 scripts/lint-runtime-portability.py` を実行し exit 0 を確認した。 30 思考法は実施しておらず、実施も申告しない。verdict は focused combined review の単一判断に従い、high severity 相当の未解決 finding 0 件・medium 以上 0 件であるため PASS。残る 2 件は low の表記 smell。PASS の射程は静的設計 adequacy に限り、OUT1 (verify_by: test) の実走証拠は本 review では取得していない。"
+  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (196行) と git diff 03050251、prompts/R2-fetch.md・R3-record.md、references/official-source-catalog.md・doctrine-anchor-registry.json、scripts/build-fetched-references.py の CLI、../../scripts/validate-source-citation.py、../../schemas/fetched-references.schema.json、tests/fixture-* の実在。 確かめたこと (依頼の重点): 取得のために curl・wget・gh などを Bash で呼ぶ指示は無い。取得は WebSearch と WebFetch だけ (SKILL.md:132 の Key Rule 7、SKILL.md:166、prompts/R2-fetch.md:18・30・31)。Bash のコマンド (SKILL.md:174-178) は組み立てと IN1 検証で、どちらも python3 で始まる。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:94 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: allowed-tools に Write が無いが、R3 の組み立ては records.json と targets.json という通常のファイルを要求する (build-fetched-references.py の --records は path.is_file() で確かめる)。作り方は書かれておらず、python3 -c で書けば Bash(python3 *) の範囲に収まるので FAIL にせず、low の omission とした。prompts/R2-fetch.md:25 の retrieved_at の『実際に WebFetch した時刻』の取り方も書かれていない。"
 }

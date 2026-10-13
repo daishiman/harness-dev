@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/knowledge-extractor.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"reference-existence: 参照する knowledge/{router.json,schema.json,registry.json,sync-log.jsonl}・run-ubm-knowledge-sync/scripts/{detect-knowledge-updates.py,check-knowledge-split.py}・assets/kitahara-principles-db.md 全て実測で実在。owner-flow: Rule A が読む router.json categories[*].files(21)と実 knowledge/*.json(21)が完全一致(declared-but-missing=none / on-disk-but-not-declared=none)で SSOT 整合を実証・growth_rules.entry_threshold=25 が Rule E『25エントリ超過』と一致。schema-conformance: frontmatter tools=Read,Write,Edit,Bash/kind=agent 妥当。mechanical=true: lint exit0(Tier1)・marker と Self-Evaluation(完全性/一貫性/検証可能性)具備。placement-invariant: 自動実行 agent・run-ubm-knowledge-sync から起動・本体が運用正本=skip-rule 整合。single-responsibility: ナレッジ抽出→6カテゴリ分類→JSON格納→router/registry更新→原則DB同期の抽出パイプラインに限定・目標設定ロジック/対話/解釈評価は除外。留意(FAIL 非該当): Layer2 のファイル一覧(principles-business.json 等)は現行 disk の分割後名(principles-business-execution/growth/product/strategy)と異なるが、本文85行目で『現在のファイル一覧は router.json の categories[*].files が正・唯一の真のインデックス』と明示的に免責しており drift 欠陥ではない。43KB と大型だが Rule A-F の決定論仕様は責務内。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/knowledge-extractor.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 99,
+    "notes": "genuine review（sha256 afbd7b517adbf8af8e890f9f4fe776a29af276125ba0289a47c157ef53655526 をレビュー。実行検証あり）。範囲: 全269行（本文260行）と、手順の正本の references/agent-knowledge-extractor-steps.md（sha256 dcf7d65d…ce8c）、呼び出し元の run-ubm-knowledge-sync の SKILL.md（L188-195）と run-ubm-youtube-ingest の SKILL.md（L188・L191）。前回の記録（sha256 5964d45b…、PASS 99）からの差分: 呼び出し元の記述を L20・L239・L241 で直した。L20 は run-ubm-knowledge-sync の Phase2・Phase3 と run-ubm-youtube-ingest の R3-extract-graph の両方を書く。L239 は R3 に `--sync` で新着があったときの再実行を含めると書き、L241 は両方のコマンドを並べ、入力（target_files・mode・source_root・plugin_root・一時 knowledge_dir）の契約が同じだと書く。確かめたこと: Phase2・Phase3 は knowledge-sync の SKILL.md の表（L188・L189）と合う。R3 と `--sync` の再実行は youtube-ingest の SKILL.md L188・L196 と合う。入力の契約は youtube-ingest の SKILL.md L191（knowledge-extractor は target_files/mode/source_root/plugin_root/一時knowledge_dir）と合う。L268 の「呼び出し元の後続」とも食い違わない。前回の指摘 [低]（呼び出し元を run-ubm-knowledge-sync だけと書く）は解消した。採点器 render-findings-score.py --kind agent は 97・passed=false（AG-001/AG-002 の判定の実装が無く、unscored_high で固定される。PD-001 の low は段階的開示なので減点しない）。verdict は中身を読んだ評価で決めた。lint-agent-prompt-content（--mode agent --plugins-dir plugins/ubm-goal-setting、7層準拠）と lint-agent-prompt-section（Tier 1）は rc=0。plugins/ubm-goal-setting/tests 全体 1053 passed。指摘: [低] validator 0.1.1 で終了コード 2（KNOWLEDGE_DIR の未設定や相対パス）ができ、steps L130 は「エントリを直さずに止まり、stderr を親へ返す」を足した。一方、agent 本文の3か所（L135「終了コード 1 を直せなければ…止まる」、L165 の検査受領書、L269 の「止まるとき」）は終了コード 1 しか書いていない。L215 の完了条件（終了コード 0）と steps の正本で挙動は決まるので誤動作ではないが、本文の要約だけを読むと 2 のときの扱いが分からない。直し方: 3か所の「終了コード 1」を「終了コード 0 以外（1 は直して再実行、2 は直さずに止まる）」にするか、L269 に 2 の行を足す。DEDUCTION: 終了コード 2 の扱いが本文の要約に無い -1 → 99。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

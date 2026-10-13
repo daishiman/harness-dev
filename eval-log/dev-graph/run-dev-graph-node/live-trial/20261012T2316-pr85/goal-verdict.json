@@ -1,0 +1,25 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "必須の独立 verifier が一度も起動されていない。SKILL.md の frontmatter には goal_seek.fork: subagent と activation_state: semantic_evaluator_started があり、本文はこれを「実行契約とする」と定めている。ゴールシーク配線も「prompts/<R-id>.md を読み、Agent で分離 context に fork する」と書いている。prompt-common-layers.md の 5.1 は「独立検証は Agent で分離 context に fork する」と定めている。task.md は「必須 Agent を実行する」「standard を記録して正規の後続検証へ進める」を求めている。それでも transcript.jsonl 全196行に Agent/Task の tool_use は0件ある。guard.jsonl の29件も Bash/Skill/Write だけで、Agent の呼出しは無い。collect/subagent-transcripts も存在しない。ws/.claude/settings.local.json の deny に Agent/Task は無く、guard の deny も0件なので、sandbox の遮断が原因ではない。",
+    "自己承認になっている。transcript 174行で、node の goal-spec を全作業の終了後に Write し、\"activation_state\": \"semantic_evaluator_started\" と \"artifact_delivery_choice\": \"standard\" を記録した。176行の progress.json では、writer 自身が全 checklist と feedback_criteria の OUT1 (verify_by は live-trial) を PASS と採点した。semantic evaluator は実在しない。goal-seek のループも回しておらず、記録は事後に作られている。148行の thinking にある「standard選択を保存しました」も、その時点ではどのファイルにも記録されていない。dev-graph-integrity-auditor は owner_skill=run-dev-graph-node で「writer と評価者の同一化による自己承認を防ぐ」役割を持つが、これも起動されていない。結果として、独立検証を経ずに status.json へ PASS を書いている (190行、194行の「DONE: PASS」)。"
+  ],
+  "evidence": [
+    "正規 Skill の起動を確認した。transcript 35行で Skill dev-graph:run-dev-graph-init を起動し、37行でロードされた。97行で Skill dev-graph:run-dev-graph-node を起動し、99行でロードされた。",
+    "責務 prompt は出力の前に読まれている。init の prompts R1-R5 は41-42行で全文を読み、初めての書込み (51行の build-init-scaffold.py) より前だった。node の prompts R0-R4 は107-108行で全部読み、初めての writer 呼出し (134行) より前だった。",
+    "準備は正規の経路で済んでいる。51-52行で build-init-scaffold.py --hook-source plugin が status=applied、write_count=36 を返し、receipt は init-20261012T141652371405Z.json。71-72行で validate-graph-schema.py が pass (graph_revision 0)。",
+    "5 kind の add を確認した。134-135行の dry-run preview は rev 0→1、5 node、findings 0。143-145行の apply は EXIT=0、applied_count=5、receipt は node-r000001-add.json。5 node の tracker_binding はすべて none。",
+    "本題1の issue 追記を確認した。149-150行で expected_graph_revision=1 の update-issue-append.json を dry-run した。152-153行の apply は EXIT=0、applied_count=1、rev 1→2、receipt は node-r000002-update.json。差分は updated_at、readiness の checked_at、追記された「## 調査メモ」だけで、id と file_path は変わっていない。他4 node は changed: []。160-161行の sha 比較でも、変わったのは issues/login-timeout.md だけだった。",
+    "本題2の feature 直接投入を確認した。164-165行で拒否の出力 {\"applied_count\":0,\"code\":\"feature_requires_c14_macro_contract\",\"status\":\"rejected\",\"valid\":false,\"write_count\":0} と EXIT=1 が残っている。features/ は0件、graph は変化なし、receipt も増えておらず、schema は VEXIT=0。",
+    "本題3を確認した。187-188行で FINAL_SCHEMA_EXIT=0。評価者が読取り専用で validate-graph-schema.py --graph fx/.dev-graph/state/graph.json --repo-root fx を再実行し、graph_validation.status=pass、violation_count=0 を得た。fx/features の件数も0件だった。",
+    "fixture の実ファイルを確認した。git -C fx status では commit が bf8927e (fixture: initial) だけだった。未追跡は次のとおり。\n- .dev-graph/cache/inputs/ の3本: add-5kinds.json、update-issue-append.json、add-feature-direct.json\n- state/graph.json\n- receipts の3本 (init、node-r000001-add、node-r000002-update)\n- content 5本 (issues、tasks、specs、architecture、docs)\n- templates 21本\n- eval-log 6本\n書込みは run の dir の内側に限られ、graph と content は build-graph-node.py と build-init-scaffold.py の単一 writer 経由で作られている。自作の driver で成果を作った形跡は無い。",
+    "153行の「diff: -: Operation not permitted」は、sandbox で stdin を diff に渡せなかったもの。被験は160行でファイル経由の diff に取り直しており、遮断の回避には当たらない。",
+    "status.json の PASS (190行) と progress.json の自己採点 (176行) は被験の自己申告であり、合格の根拠には採らなかった。",
+    "fixture-provenance.json では、被験 skill の閉包 sha 85dbc6e0… が一致している。dev-graph の写しに __pycache__ や *.pyc は無い。system-dev-planner の pyc 2本は別 plugin の hook が由来で、この判定には影響しない。"
+  ],
+  "skill_defects": [
+    "場所: ws/plugins/dev-graph/skills/run-dev-graph-node/SKILL.md (ゴールシーク配線、Post-choice、artifact_delivery の節)。\n内容: この SKILL.md は、owner_skill=run-dev-graph-node の agents/dev-graph-integrity-auditor.md を必須の独立 verifier として名前で配線していない。standard などを選んだ後の「semantic evaluator」が何を起動することなのかも定義していない。run-dev-graph-sync/SKILL.md:237 は「必須の独立 verifier は dev-graph-sync-conflict-verifier」と明記しており、node だけが Agent を必須とするかどうか曖昧になっている。\n影響: Agent を0回しか起動しない run でも、goal-spec に semantic_evaluator_started と書けば、goal-seek 検証 (transcript 187行の EXIT=0) を含むどの決定論検査も止めない。writer の自己採点による PASS がそのまま通る。\n再現手順:\n1. task.md のとおり standard を事前に指定する。\n2. run-dev-graph-node で add と update を実走する。\n3. Agent を起動しないまま、goal-spec に activation_state=semantic_evaluator_started を記録し、progress.json を自己採点で PASS にする。\n4. skill 付属の goal-seek 検証と validate-graph-schema.py がどちらも exit 0 で通ることを確かめる。",
+    "場所: run-dev-graph-node の goal-seek 検証 (transcript 187-188行で EXIT=0 を返した検証)。\n内容: progress.json の feedback_criteria のうち、verify_by=live-trial の OUT1 を writer 自身が PASS と書いても、この検証は拒否しない。\n影響: 外部でしか判定できない基準を、writer が自分で満たしたことにできる。\n再現手順:\n1. progress.json の OUT1 を status=PASS にする (この run では176行)。\n2. goal-seek 検証を走らせると exit 0 になることを確かめる。"
+  ],
+  "evaluator_agent_id": "a5b9fb0d57bda7c8e"
+}

@@ -150,7 +150,7 @@ scripts/ 配下のファイル名は配置階層によって命名形式を切�
 
 | 配置 | 命名形式 | 理由 | 例 |
 |---|---|---|---|
-| `creator-kit/scripts/*.py`（直下） | **kebab-case** `<動詞>-<対象>-<スコープ>.py` | 28章§4.1 既定規約。動詞 8 種（lint/validate/format/render/extract/diff/guard/build）のいずれかで始める | `lint-script-frontmatter.py`, `compute-rubric-hash.py`, `doc-to-skill-adapter.py` |
+| `creator-kit/scripts/*.py`（直下） | **kebab-case** `<動詞>-<対象>-<スコープ>.py` | 28章§4.1 既定規約。動詞 13 種（lint/validate/format/render/extract/diff/guard/build と、状態を書き換える sync/install/record/manage/migrate。後ろの5つの意味は28章§4.1.1）のいずれかで始める | `lint-script-frontmatter.py`, `compute-rubric-hash.py`, `doc-to-skill-adapter.py` |
 | `creator-kit/scripts/adapters/*.py` | **snake_case** 許容 | 28章§4.6 Hexagonal Architecture の adapter dispatch entry point は機能名で命名 | `sink_local.py`, `dispatch.py`, `resolve_route.py` |
 | `creator-kit/scripts/secrets/*.py` | **snake_case** 許容 | 28章§4.4 secret helper の機能分類接頭辞慣習 | `keychain_helper.py`, `audit_secret_leak.py` |
 | `creator-kit/scripts/migrate/*.py` | **kebab-case** | 通常規約。`migrate/` は配置スコープのみで命名例外なし。単語名のみ（`audit.py`）は PENDING_RENAME 対象として動詞接頭辞付き名（例: `audit-skill-set.py`）へ移行予定 | `to-brief.py`, `backfill-source-tier.py`（PENDING: `audit.py`） |

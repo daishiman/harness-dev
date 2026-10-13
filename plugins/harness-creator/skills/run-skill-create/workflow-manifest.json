@@ -76,8 +76,8 @@
         "prompts/R2-gate-review.md"
       ],
       "delegateSkill": null,
-      "command": "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-automation)/scripts/build-manifest-registration-plan.py",
-      "fatal_exit_codes": [1],
+      "command": "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/build-manifest-registration-plan.py\"",
+      "fatal_exit_codes": [1, 2],
       "transition": {"gate": "登録plan検証PASSかつGate 2.5の明示decisionがPASS", "on_pass": "bundle-register", "on_fail": "abort"}
     },
     {
@@ -175,19 +175,19 @@
       ],
       "delegateSkill": null,
       "commands": [
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-skill-name.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-skill-description.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-skill-tree.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/validate-frontmatter.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-skill-dep-step7.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-forbidden-deps.py --skills-dir ${SKILLS_DIR}",
-        "python3 $(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py skill-governance-lint)/scripts/lint-manifest-contents.py",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-name.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-description.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-tree.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/validate-frontmatter.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-dependency-direction.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-dep-step7.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-forbidden-deps.py\" --skills-dir \"${SKILLS_DIR}\"",
+        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-manifest-contents.py\"",
         "python3 ${PLUGIN_ROOT}/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json",
         "python3 ${PLUGIN_ROOT}/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
       ],
       "max_retry": 3,
-      "fatal_exit_codes": [1],
+      "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_lint.json",
       "transition": {"gate": "全P0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "build"}
     },

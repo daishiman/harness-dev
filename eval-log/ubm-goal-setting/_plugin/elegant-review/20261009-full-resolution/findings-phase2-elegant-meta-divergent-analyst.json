@@ -1,0 +1,663 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "レビュー対象の表示文を訳す作業と、機械が読む識別子の契約変更を分ける必要がある。run-build-skill の render-frontmatter.py:243 は既に output_language=ja を持つが、build-subagent.py:117 は英語の目的節だけを読む。",
+        "prompt-creator の inject-sections は Python 関数ではなく SKILL/prompts/reference に宣言された LLM 入力契約。単一スクリプトを直しただけでは注入名の不変契約が残る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "表示名と構造識別子の区別は可能。現状は注入名を呼出元非依存の不変と宣言している。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "build-subagent purpose は English only。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "lint-agent-prompt-section は ja 見出しを受理するが生成契約は英語固定。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "生成者から agent lint までの接続を調べた。対象外の翻訳まで必要とは導けない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "日本語の目的と出力契約から生成すると目的節が見つからず description に退化する。",
+          "recommended_intervention": "build-subagent に --language ja|en|auto を加え、日本語と英語の正規目的節を解決する。欠落時は契約欠落として説明し、desc fallback を意図的 legacy と区別する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+            "line": 117
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "日本語 agent へ注入すると Prompt Templates/Self-Evaluation の不変契約が翻訳済み agent と一致しない。",
+          "recommended_intervention": "section ID を内部識別子として保ち、表示名は対象 agent の言語から解決する。SKILL・R1・usage-prompt・brief schema default を同じ契約にそろえる。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md",
+            "line": 201
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正規 section ID → locale の表示名を生成者と消費者が同じ表で解決する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "ja purpose のみ",
+        "双方の purpose 見出しが同時存在",
+        "未対応 locale"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Runtime root は手書き定型を6箇所に複製している。生成元 _ensure_runtime_root_contract は既存のどちらの見出しも処理済みと見なし、locale が違っても残す。",
+        "lint-ssot-duplication は generated marker を除外する既存設計を持つ。Runtime root をマーカー生成物にすると翻訳移行と重複警告を同じ仕組みで解決できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "言語選択は Post-choice を正規の行一致で検出する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "has_prompts という条件を現行 renderer は持たない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "_ensure は ja-keeps-en-heading を現行テストで正とする。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "marker は既存 duplication lint が扱える surface。追加抽象は renderer に限定できる。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "variable-abstraction",
+          "description": "prompts を持たない skill にも prompts 継承行を生成し、言語の異なる既存節は移行できない。",
+          "recommended_intervention": "runtime-root-contract の BEGIN/END を設け、render(language, has_prompts) で本文を生成する。旧節をマーカーへ移行し、既存 markers は置換して idempotent にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "scripts/build-artifact-delivery.py",
+            "line": 835
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "生成した外部変更ガードはコマンド断片の順序だけを照合し、説明の削除や改竄を検出しない。",
+          "recommended_intervention": "marker 内の全本文を canonical renderer の結果と比較する。runtime block と guard block は生成元の byte/parity を同じ負例テストで固定する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "scripts/build-artifact-delivery.py",
+            "line": 974
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "生成ブロック=render(locale, actual resources)。手書きは業務固有差分だけ。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "マーカー片方だけ",
+        "ja post-choice + en runtime",
+        "prompts 無し",
+        "二回 migration の差分ゼロ"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブルループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "日本語化を全13 pluginへ広げることを目的化すると、機械識別子と表示言語を混同して余計な変更を増やす。既存 en/ja 双方を正規として受理する設計を維持する判断が最小である。",
+        "rubric rationale は BD-001 PASS ⇒ PD-002 PASS とするが、PD-002 は冒頭30行と禁則の条件を持つ。英語の部分一致も厳格一致と説明しており規則説明が実装に追従していない。",
+        "親方針も確認済み:13pluginは既存言語を維持、新規生成はja/en明示指定またはtarget見出しから継承、同一ファイル内の定型節混在はgenerator/lintで整合。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "BD-001 の30行制約は無く、PD-002には有る。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "locale の選択規則を定義すれば翻訳の未処理13件は followup として残す必要が無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "日本語見出しと機械キーの責務を分ける。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "rubric 自己承認は禁止。許可範囲で独立承認者が必要。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "BD-001 と PD-002 は独立した存在/冒頭配置検査なのに包含関係と説明される。",
+          "recommended_intervention": "rubric の proposer≠approver を通して rationale を存在と冒頭配置の直交評価に訂正する。PD-002 の 守ること の見出し alias を足す際は単なる語の出現で合格させず heading を照合する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+            "line": 78
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "全 plugin 翻訳の選択基準と生成言語の既定が未整理。",
+          "recommended_intervention": "方針を文章で確定する:既存 plugin の正規言語は維持、ubm と新規 ja 本文生成は ja、schema key/Layer番号/responsibility ID は安定識別子。bulk 翻訳は行わず全生成元の locale 支援を完了条件にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/render-frontmatter.py",
+            "line": 243
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "目的は一貫した生成と正確な検査。全翻訳は手段の一候補。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "目的節が31行目",
+        "英語の似た見出し",
+        "守ること が本文だけに出現"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "候補1:全13 pluginの全文翻訳。大量差分と検査修正が必要で現在の目的に過大。",
+        "候補2:英語固定を維持し ubm も戻す。既存 ja 正規形の成果を失う。",
+        "候補3:ja/en の既存契約を維持し明示 locale の生成支援を足す。最小で頑健、推奨。",
+        "候補4:全MarkdownをASTと完全言語非依存IDへ移行。表現は柔軟になるが新しい基盤が必要。",
+        "候補5:marker 付きの定型だけ locale 対応し、schema/metadata/Layerは固定識別子に保つ。候補3と組み合わせる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "候補ごとの目的と費用を比較し全翻訳を義務としない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "新規生成の消費者lint合格が未保証。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行 Agent Skeleton の Purpose/Triggers/Goal は7層契約の古い骨格。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "上位 schema key を変えない候補は consumers への波及が小さい。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "現行 agent-skeleton と build-subagent は現行7層 lint を満たす生成物を出す保証が無い。",
+          "recommended_intervention": "候補3+5を採用する。読み取り専用助言役/書き込みと検査役の2型を7層の共通骨格上に定義し、生成物を lint に通す smoke test を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/templates/agent-skeleton.md",
+            "line": 46
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "全文翻訳と生成契約のlocale対応を別の選択肢として評価する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "ja agent生成直後のcontent lint",
+        "英語legacy skill生成",
+        "read-only 型にWrite が入る"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "ラテラル思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "lint は既定の plugins_dir=harness-creator のみを検査する。CIを通しても ubm のagent品質は保証されない。",
+        "実行した lint-agent-prompt-content.py --mode agent --plugins-dir plugins/ubm-goal-setting は scanned=9 violations=7。名称を訳すだけではLayer5の不足と固定手順禁止違反が解決しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "安全手順を無くす必要は無い。思考の固定列挙と決定論制約を分ける。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "7/9が現行 lint に失敗。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "ubm 7 agents は Layer5 の目的と達成ゴールなどが欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "CI scope 明示なら既存の harness-creator 成果物への影響を抑えられる。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "ubm の7本のagentが7層検査の対象に入っていない。",
+          "recommended_intervention": "7本の骨格を補ってから同じ変更でCIに --plugins-dir plugins/ubm-goal-setting を明示追加する。既定を全pluginsへ変えて未知の違反を大規模修正する必要は無い。",
+          "condition_signal": "omission",
+          "location": {
+            "file": ".github/workflows/harness-creator-kit-ci.yml",
+            "line": 203
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "output-formatter の Layer5 は固定思考手順で7層契約に違反する。",
+          "recommended_intervention": "必須決定論のコマンド/保存安全手順はLayer3かvalidation-gates正本に移し、Layer5は目的・背景・達成ゴール・観測可能な完了チェックリストを持つ。実行順そのものは必要な安全契約として残す。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/output-formatter.md",
+            "line": 165
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "対象集合も検査契約。Lintの名前や成功ログから被検査範囲を推測しない。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "scanned=0",
+        "ubmだけの契約破損をCIで検出",
+        "固定決定論コマンドを移した後の参照切れ"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "パラドックス思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "固定手順を禁止する agent が、必須の保存前検証コマンドや安全順序を失うと手順を自由に生成するほど危険になる。禁止対象は自由な思考プロセスで、決定論の安全契約は残す必要がある。",
+        "自己採点を短く統一するだけでは Layer5 の停止条件が無く、同じことを別の自己採点節へ足すと重複が再発する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "動的思考と静的安全制約は両立する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "composer/challenge-advisorには7層自体が無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "writer型は保存前検査とrc=2停止が構造を変えても必要。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "独立したagent contextが読む検証正本を明示する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "共通agent骨格へ置換すると検証安全手順まで削除する危険がある。",
+          "recommended_intervention": "Layer5のチェックリストを成果状態、Layer3のツール契約を検証手段、Layer6を必須依存順と役割境界に分離する。自己採点はこの停止条件を参照して一箇所にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/journal-composer.md",
+            "line": 80
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "成果状態・決定論操作・依存順を別Layerへ置く。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "validator rc=2",
+        "未検証の保存",
+        "目的欄に固定の思考手順が残る"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "アナロジー思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "多言語の生成契約はコンパイラに似る:表示文はlocalization、schema/metadata/Layer/responsibility ID は内部表現。識別子を翻訳するのはIRを変えてすべての消費者を壊すことに近い。",
+        "現行 prompt-rubric C1-003 は name/skill/responsibility などをメタ表として要求する。これらを日本語にしたい場合でも行名aliasでなく安定した機械IDを別途持てる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "スキーマ key と表示見出しは異なる役割。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行のmeta rowがあるため機械入力の不足は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R1-main の言語規則はパラメータ/schema key/Layer識別子を英語と定める。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "機械キーを保持することでhidden consumer driftを減らす。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "見た目の翻訳がmetaキーとLayer/Anchor検査に波及し、文字列テストで隠れた依存がある。",
+          "recommended_intervention": "machine keysを契約IDとして英語のまま明記し本文を日本語化する。aliasを加える範囲は表示見出し（守ること、担当エージェントなど）へ絞る。メタ表英語は仕様として採用し全翻訳不足と扱わない。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/prompt-creator/skills/assign-prompt-design-evaluator/references/prompt-rubric.json",
+            "line": 11
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "locale非依存IRとlocale依存presentation。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "responsibility IDの翻訳",
+        "Layer N識別子の翻訳",
+        "表示見出しだけを日本語にした生成物"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "もしPost-choiceがjaでRuntime rootがenなら現行 migration はen節を保持する。それを許すテストが ja-keeps-en-heading/en-keeps-ja-heading として既に存在する。",
+        "もしRuntime rootの1行目を削除してもfrontmatterは正常なら監査token集合に該当行が無いため節の欠落を検出できない。正本参照方式は日本語headingだとfallbackに入れない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "現行fixturesは実装の挙動と一致するが意図されたlocale整合と反する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "tokensはfirst policy行なし。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "日本語参照fallbackが未対応。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "frontmatter検証だけでは本文の宣言の整合を保証しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "runtime_root_policy 行がRuntime節のaudit tokensから漏れる。",
+          "recommended_intervention": "en/ja両token集合に runtime_root_policy: host-skill-path を含め、policy行を削る負例を追加する。canonical reference 分岐の見出しは両言語を受理する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/scripts/audit-capability-parity.py",
+            "line": 48
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "mixed locale runtime を仕様として固定するテストがある。",
+          "recommended_intervention": "managed block移行後はmixed localeをFAILにする負例へ変更し、legacy本文はmigrationによって修復する。見出し順序はubmの先頭6節を限定的検査し、全pluginへ過剰な順序制約を加えない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "tests/scripts-root/test_root__artifact_delivery.py",
+            "line": 589
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "成功例だけでなく一要素削除・locale入替・参照先欠落で監査契約を検証する。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "policy行削除",
+        "日本語正本参照",
+        "guard説明削除",
+        "wrong locale markers"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "新しいagentを作った直後にCIで合格するのか、という利用者の単純な問いに現行build-subagentは答えられない。bodyは役割/思考プロセス/出力の3節のみで、7層やPrompt Templates/Self-Evaluationを持たない。",
+        "担当 agent が唯一の正本にも残り、新規prompt生成で古い表記が戻る。正本と生成先を一緒に直すだけで十分で、全英文を翻訳する必要はない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "生成元と検査が別の世代のagent形式を前提としている。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "3節生成物に7層の必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "L5正本に表記ゆれが残る。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "新規生成→consumerで実際に読めることを確認する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "build-subagentの生成物は現在要求される構造を持たない。",
+          "recommended_intervention": "agent-skeletonとbuild-subagentを同じ7層の2型骨格へそろえる。用途に応じたtoolsとwriter検査義務を変え、抽出されなかった元SKILLの目的/出力契約を失わない。generated→lint smoke を合格基準にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+            "line": 134
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "L5正本の5.1表示が担当 agent のまま。",
+          "recommended_intervention": "正本、markdown/yaml scaffold、説明とconsumerで5.1 担当エージェントへそろえる。Layerと機械keyは維持。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-format.md",
+            "line": 75
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "生成物を次のconsumerへ渡せることを最小完了契約にする。",
+      "reuse_surface": "template",
+      "negative_cases": [
+        "生成の成功だけで完了にしない",
+        "ja目的内容が生成物に含まれる",
+        "agent toolsに存在しない書込み義務を要求しない"
+      ],
+      "re_audit_trigger": "修正後に生成→注入→content lint→delivery→parity の消費者契約と負例を再監査"
+    }
+  ],
+  "recommended_language_policy": "13pluginは既存言語を維持する。新規生成はja/en明示指定またはtargetの正規見出しから継承し、同一ファイル内の日本語正規形と定型節の言語混在をgenerator/lintで検出・修復する。schema/meta key/Layer/responsibility ID は安定識別子として維持する。",
+  "read_only_evidence": {
+    "ubm_agent_lint": "scanned=9 violations=7; exit=1",
+    "targets_modified": false
+  },
+  "independent_governance_check": {
+    "location": "plugins/skill-governance-automation/scripts/guard-change-category.py:88",
+    "confirmed": "plugins/ prefixをP0とする先頭分岐により後続skill/rubric/manifestのP1/P2は到達不能。新規plugin manifest AをP0、既存name変更P0、新skill P1、既存skill P2、rubric/manifest P1という修正方針は妥当。",
+    "cautions": [
+      "新規SKILLの追加name行まで_name_field_changedに入れるとP0に誤分類するためA/D/Rのstructural判定を先に行うかname判定を既存変更へ限定する。",
+      "_name_field_changedはgit diff HEADを使いmainのbase...HEADと比較範囲が異なる。base引数を受け取って同じ変更範囲で判定すべき。",
+      "plugin manifestは.claude-pluginと.codex-plugin双方を対象にする。既存pluginへ2番目のmanifestを追加する場合を新pluginと同義にしない。"
+    ]
+  }
+}

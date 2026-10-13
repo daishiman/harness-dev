@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/agents/knowledge-relation-extractor.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 62d2123082515a3378df675310febdb0e4c722d4ffc97f54b99f4b9ae33f7bbe をレビュー。実行検証あり）。範囲: 全274行（本文260行）。前回の記録（sha256 7c760736…、PASS 99）からの差分は、走査サマリの例（L108-122）だけ。L108 に「`<…>` はプレースホルダで、件数は整数、一覧は配列（無ければ空配列）で書く」と足し、例の値をすべてプレースホルダにした（scanned_entries・edge_count・by_relation_type の4つ・self_loops_excluded・skipped_without_evidence・unreadable_files・used_ids）。確かめたこと: 例に実数は残っていない。キーの並びと意味は前の版と同じで、L124-125 の knowledge_used_ids・search_requests の説明とも合う。used_ids を matched_ids の部分集合に限る説明は、build-knowledge-usage-log.py L107 の検査と合う。scanned_entries を読む script は repo に無く、例の値の型を変えても壊れる読み手は無い。前回の指摘 [低]（L112 の例に 982 という実数が混ざる）は解消した。採点器 render-findings-score.py --kind agent は 97・passed=false（AG-001/AG-002 の判定の実装が無く、unscored_high で固定される。PD-001 の low は段階的開示なので減点しない）。verdict は中身を読んだ評価で決めた。lint-agent-prompt-content（--mode agent、7層準拠）と lint-agent-prompt-section（Tier 1）は rc=0。plugins/ubm-goal-setting/tests 全体 1053 passed。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

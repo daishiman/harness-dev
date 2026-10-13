@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-status",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/status2/fx --hook-source plugin",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "standard を選んだ後に必須の Agent verifier (semantic evaluator / goal-seek の fork:subagent) が一度も起動されていない。transcript の tool 呼出しは Bash 23・Skill 3・Write 1 で、Agent は 0 件。guard.jsonl (27 行) にも Agent の呼出しは 1 件も無い。init・node・status のどの段でも、評価は main context の自己照合 (186〜187 行目) と自分で書いた eval-log の progress (88・155・194 行目) で代わりに済ませている。evaluator context が 0 の状態は accept-as-is と同じで、task の経路制約『必須の Agent verifier を実際に起動する』と、SKILL.md の goal-seek の配線『prompts/<R-id>.md を読み Agent で分離 context に fork する』を満たしていない。",
+      "SKILL.md の完了条件は『全 checklist と feedback_contract.criteria が PASS のときだけ完了する』だが、checklist『該当なしが空 result の成功として返る』を NOT_EXERCISED のまま loops:1 で完了扱いにした (194 行目)。そのうえで out/status.json に PASS を書いた (203 行目)。未達の項目があるのに fork せずに閉じており、最後の報告 (208 行目) では『すべて PASS または対象外』と言い換えている。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "b1a7990feff8f6da88276eb4851c67008fbc23ca9366a492251e4704d355efa3",
+  "transcript_sha256": "2242d6e09fb96ef8cc2950f98cc36c06a674362956172ecfde45c1b3416a2f8d",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 374.0
+  },
+  "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2"
+}

@@ -1,1 +1,18 @@
-{"artifact":"plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":82,"notes":"7層分割+Layer5ゴールシーク必須要素+固定手順検出のregex検証が非空虚(scaffold出力でOK・構造欠落でFAILを実走確認)。全角/半角コロン許容。read-only。frontmatter完備。軽微欠陥: open前に存在チェックもtry無くinput不在時に裸FileNotFoundError traceback+exit1が不備ありexit1と衝突(引数欠如のexit2のみ整備)"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 639cb8c6b8e812c53d3ba48ce3e0af2dd3e267e1b7b4f296b101f9896e127dd2 をレビュー。実行検証あり）。範囲: 全 266 行。origin/main との差分（+74 行。英語の Goal definition・Completion checklist・Achievement goal と英語の固定手順見出しの検出、大文字と小文字を区別しない照合、読めない --input の exit 2）は特に丁寧に読んだ。plugins/harness-creator/vendor/prompt-creator/verify-completeness.py と cmp で byte 一致し、lint-vendored-ssot は 56 件 OK。確かめたこと: pytest tests/test_prompt_creator_7layer_l5_contract.py plugins/harness-creator/tests/test_lint_agent_prompt_content.py で 61 passed。fixture で不在・ディレクトリ・UTF-8 でない --input は exit 2（traceback なし）、--layers L0 と --layers , は exit 2、build-subagent.py が出す英語の prompt は exit 0、その出力の Layer 5 に英語の『### Steps』見出しと連番 2 行を足すと exit 1（固定手順として検出）。lint-script-frontmatter.py は OK checked=8。前回の記録で挙がっていた traceback・英語の固定手順・大文字と小文字・文言の不一致はどれも直っていた。指摘: [低] ゴールシーク要素の照合は部分一致（L228-230 の key.casefold() in layer5_folded）なので、『ゴール定義は書かない』のような否定文に要素名があるだけで在ると数える。header L19-21 に限界として書いてあるので文書との不一致ではないが、検証としては弱い。見出し行か list 項目の先頭に限って照合すれば防げる。DEDUCTION: 100 -2（部分一致の照合）→ 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s2",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

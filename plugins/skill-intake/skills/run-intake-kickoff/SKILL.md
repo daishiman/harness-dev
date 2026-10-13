@@ -4,7 +4,7 @@ description: intake セッション起動直後にパターン・深度・痛点
 allowed-tools:
   - Read
   - Write
-  - Bash
+  - Bash(python3 *)
   - AskUserQuestion
 kind: run
 goal_seek:

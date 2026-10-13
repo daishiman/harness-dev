@@ -242,6 +242,42 @@ def test_bd002_fail_missing_gotchas():
     assert "Gotchas" in f["message"]
 
 
+def test_bd001_bd002_pass_with_japanese_headings():
+    body = "\n## 目的と出力契約\nx\n\n## つまずきやすい点\ny\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "### 目的と出力契約\nx\n### つまずきやすい点\ny\n",
+        "## 目的と出力契約（補足）\nx\n## つまずきやすい点の例\ny\n",
+        "本文の途中で ## 目的と出力契約 と ## つまずきやすい点 に触れるだけ。\n",
+    ],
+)
+def test_bd001_bd002_japanese_heading_requires_whole_line(body):
+    # 日本語の見出しは行全体の一致だけを受け入れる。失敗の文言は英語の見出しで始め
+    # (既存の grep を壊さない)、日本語の正規形でも直せることを併記する。
+    f1 = RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path("."))
+    f2 = RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path("."))
+    assert f1 is not None and f1["message"] == (
+        "missing '## Purpose & Output Contract' (or '## 目的と出力契約')")
+    assert f2 is not None and f2["message"] == "missing '## Gotchas' (or '## つまずきやすい点')"
+
+
+def test_rubric_bd_checks_name_both_heading_forms():
+    rubric = RFS.load_rubric(
+        ROOT / "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    )
+    checks = {rule["id"]: rule["check"] for rule in rubric["rules"]}
+    assert RFS.PURPOSE_HEADING in checks["BD-001"]
+    assert RFS.PURPOSE_HEADING_JA in checks["BD-001"]
+    assert RFS.GOTCHAS_HEADING in checks["BD-002"]
+    assert RFS.GOTCHAS_HEADING_JA in checks["BD-002"]
+    assert RFS.PURPOSE_HEADING_JA in checks["PD-002"]
+
+
 def test_bd003_pass_under_300():
     body = "\n".join(["line"] * 10)
     assert RFS.check_rule(_rule("BD-003"), {}, body, Path(".")) is None
@@ -709,6 +745,26 @@ def test_pd002_ignores_content_past_line_30():
     assert f is not None  # 30 行より後の禁則では救済しない
 
 
+def test_pd002_pass_with_japanese_heading():
+    # BD-001 が認める日本語の見出しは PD-002 も認める (BD-001 ⊂ PD-002)。
+    body = "\n# t\n\n## 目的と出力契約\nx\n\n## Key Rules\n1. 必ず a\n"
+    assert RFS.check_rule(_rule("PD-002"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "\n# t\n\n### 目的と出力契約\n必ず x\n",
+        "\n# t\n\n## 目的と出力契約（補足）\n必ず x\n",
+        "\n## 概要\n" + "\n".join(f"line {i}" for i in range(40)) + "\n## 目的と出力契約\n必ず x\n",
+    ],
+)
+def test_pd002_japanese_heading_requires_whole_line_in_head(body):
+    f = RFS.check_rule(_rule("PD-002"), {}, body, Path("."))
+    assert f is not None and "## Purpose" in f["message"]
+
+
 def _knowledge_skill(tmp_path, entries, *, plugin_scope=False, declare=True):
     """knowledge loop を持つ skill を組み立てる。"""
     plugin = tmp_path / "plugins" / "kb-plugin"
@@ -778,6 +834,44 @@ def test_kl003_pass_with_weighted_search_script(tmp_path):
     (d / "scripts" / "search_knowledge.py").write_text(
         "FIELD_WEIGHTS = {'title': 3}\n", encoding="utf-8")
     assert RFS.check_rule(_rule("KL-003"), {}, "", d) is None
+
+
+def _declare_script_refs(d, refs):
+    md = d / "SKILL.md"
+    text = md.read_text(encoding="utf-8")
+    block = "script_refs:\n" + "".join(f"  - {r}\n" for r in refs)
+    md.write_text(text.replace("---\n", "---\n" + block, 1), encoding="utf-8")
+
+
+def test_kl003_pass_with_declared_script_defining_weight_table(tmp_path):
+    """名前に search を含まなくても、script_refs で宣言し重みの表を持てば通す。"""
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "extract-knowledge-matches.py").write_text(
+        "FIELD_WEIGHTS = {'title': 3}\n", encoding="utf-8")
+    _declare_script_refs(d, ["scripts/extract-knowledge-matches.py"])
+    assert RFS.check_rule(_rule("KL-003"), {}, "", d) is None
+
+
+def test_kl003_declared_script_needs_weight_table_not_just_word(tmp_path):
+    """検索結果を記録するだけの script は field_weights の語を持つが、重みの表は無い。"""
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "build-usage-log.py").write_text(
+        'KEYS = ("terms", "field_weights")\n', encoding="utf-8")
+    _declare_script_refs(d, ["scripts/build-usage-log.py"])
+    f = RFS.check_rule(_rule("KL-003"), {}, "", d)
+    assert f is not None and "build-usage-log.py" in f["message"]
+
+
+def test_kl003_undeclared_script_is_not_searched(tmp_path):
+    """宣言も search の名前も無い script は探さない (従来どおり stage 不在で FAIL)。"""
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "extract-knowledge-matches.py").write_text(
+        "FIELD_WEIGHTS = {'title': 3}\n", encoding="utf-8")
+    f = RFS.check_rule(_rule("KL-003"), {}, "", d)
+    assert f is not None and "AI 意味検索のみは FAIL" in f["message"]
 
 
 def test_kl003_fail_when_search_script_has_no_weighting(tmp_path):
@@ -1105,3 +1199,164 @@ def test_reg001_existing_invalid_trace_is_high_finding(monkeypatch, tmp_path):
     assert finding is not None
     assert finding["severity"] == "high"
     assert "canonical validate-build-trace.py exit=1" in finding["message"]
+
+@pytest.mark.parametrize('rule_text,expected', [('## 守ること', True), ('守ることを確認する。', False), ('## 守ること（補足）', False)])
+def test_pd002_japanese_key_rule_alias_is_an_exact_heading(rule_text, expected):
+    body = '## 目的と出力契約\n\n成果物を返す。\n\n' + rule_text + '\n制約に従う。\n'
+    assert (RFS.check_rule(_rule('PD-002'), {}, body, Path('.')) is None) is expected
+
+
+def test_bd001_does_not_imply_pd002_after_first30_lines():
+    body = '\n'.join('説明' for _ in range(31)) + '\n## 目的と出力契約\n\n出力を作る。\n必ず条件を守る。\n'
+    assert RFS.check_rule(_rule('BD-001'), {}, body, Path('.')) is None
+    assert RFS.check_rule(_rule('PD-002'), {}, body, Path('.')) is not None
+
+
+def test_knowledge_denominator_excludes_graph_and_relation_indexes(tmp_path):
+    card = {"id": "C1", "title": "Actual knowledge", "intent": "Use it", "background": "Context", "tags": ["topic"], "source": {"file": "source.md"}}
+    (tmp_path / "category.json").write_text(json.dumps({"entries": [card], "sources": [{"id": "SOURCE"}]}))
+    (tmp_path / "knowledge-graph.json").write_text(json.dumps({"nodes": [{"id": "NODE"}], "edges": [{"from": "NODE", "to": "NODE"}], "associations": [{"source": "NODE", "target": "NODE"}]}))
+    (tmp_path / "knowledge-relations.json").write_text(json.dumps({"relations": [{"id": "RELATION"}]}))
+    assert RFS._knowledge_entries(tmp_path) == [card]
+    assert RFS._check_knowledge_loop("KL-002", tmp_path, tmp_path, lambda msg, loc: msg) is None
+    card.pop("source")
+    (tmp_path / "category.json").write_text(json.dumps({"entries": [card]}))
+    assert "source" in RFS._check_knowledge_loop("KL-002", tmp_path, tmp_path, lambda msg, loc: msg)
+
+
+# --- review B の [低] の回帰 ----------------------------------------------------
+
+@pytest.mark.parametrize("fence", ["```", "~~~", "````markdown"])
+def test_japanese_heading_inside_code_fence_is_not_a_heading(fence):
+    """フェンスの中の「## 目的と出力契約」は見出しではないので BD-001・BD-002・PD-002 を通さない。"""
+    close = fence.rstrip("markdown")
+    body = f"{fence}\n## 目的と出力契約\n## つまずきやすい点\n## 守ること\n{close}\n本文\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is not None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is not None
+    assert RFS.check_rule(_rule("PD-002", "medium", "body"), {}, body, Path(".")) is not None
+
+
+def test_japanese_heading_after_closed_fence_is_accepted():
+    body = "```\n# example\n```\n## 目的と出力契約\nx\n## 守ること\ny\n## つまずきやすい点\nz\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("PD-002", "medium", "body"), {}, body, Path(".")) is None
+
+
+def test_pd002_fail_message_names_japanese_forms():
+    f = RFS.check_rule(_rule("PD-002", "medium", "body"), {}, "## 目的と出力契約\nx\n", Path("."))
+    assert f is not None and "## 守ること" in f["message"]
+
+
+def _cli(*args):
+    return subprocess.run([sys.executable, str(SCRIPT), *args],
+                          capture_output=True, text=True, timeout=60)
+
+
+def test_cli_broken_rubric_json_is_input_error(tmp_path):
+    bad = tmp_path / "bad.json"
+    bad.write_text("not json", encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    proc = _cli("--rubric-refs", str(bad), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_cli_array_rubric_is_input_error(tmp_path):
+    bad = tmp_path / "arr.json"
+    bad.write_text("[1, 2]", encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    proc = _cli("--rubric-refs", str(bad), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_cli_non_utf8_skill_md_is_input_error(tmp_path):
+    l0 = ROOT / "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    d, md = _write_skill_dir(tmp_path)
+    md.write_bytes(b"\xff\xfe" + md.read_bytes())
+    proc = _cli("--rubric-refs", str(l0), "--target", str(d))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+def test_header_has_frontmatter_keys_and_exit_codes():
+    text = SCRIPT.read_text(encoding="utf-8")
+    head = text.split('"""', 1)[0]
+    for key in ("name", "purpose", "inputs", "outputs", "contexts", "network",
+                "write-scope", "dependencies"):
+        assert f"# {key}:" in head, key
+    assert "complex checks are TODO" not in text
+    assert "exit codes:" in text
+
+
+# ---------- 壊れた rubric は理由付きの exit 2 (traceback で落とさない) ----------
+
+L0_PATH = ROOT / "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+
+
+def _broken_l0(tmp_path, mutate):
+    data = json.loads(L0_PATH.read_text(encoding="utf-8"))
+    mutate(data)
+    p = tmp_path / "broken.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    return p
+
+
+def _set_rule0(key, value):
+    return lambda d: d["rules"][0].__setitem__(key, value)
+
+
+@pytest.mark.parametrize("mutate,reason", [
+    # 必要なキーが無い
+    (lambda d: d.pop("rules"), "rules"),
+    (lambda d: d["rules"][0].pop("id"), "rules[0].id"),
+    # 型が違う
+    (lambda d: d.__setitem__("rules", {}), "rules"),
+    (lambda d: d["rules"].append("FM-999"), "が object でない"),
+    (_set_rule0("id", ["FM-001"]), "rules[0].id"),
+    (_set_rule0("id", 5), "rules[0].id"),
+    (_set_rule0("check", 5), "rules[0].check"),
+    (_set_rule0("check", None), "rules[0].check"),
+    (_set_rule0("severity", ["high"]), "rules[0].severity"),
+    (_set_rule0("area", 1), "rules[0].area"),
+    (_set_rule0("applies_to_kinds", 5), "rules[0].applies_to_kinds"),
+    (_set_rule0("applies_to_kinds", "skill"), "rules[0].applies_to_kinds"),
+    (lambda d: d.__setitem__("threshold", None), "threshold"),
+    (lambda d: d.__setitem__("threshold", [80]), "threshold"),
+    (lambda d: d.__setitem__("threshold", True), "threshold"),
+    (lambda d: d.__setitem__("threshold", 80.5), "threshold"),
+    (lambda d: d.__setitem__("threshold", "eighty"), "threshold"),
+    (lambda d: d.__setitem__("layer", 0), "layer"),
+])
+@pytest.mark.parametrize("mode", ["--rubric-refs", "--rubric"])
+def test_cli_malformed_rubric_is_input_error_with_reason(tmp_path, mutate, reason, mode):
+    bad = _broken_l0(tmp_path, mutate)
+    d, _ = _write_skill_dir(tmp_path)
+    proc = _cli(mode, str(bad), "--target", str(d))
+    assert proc.returncode == 2, proc.stderr
+    assert "Traceback" not in proc.stderr
+    assert reason in proc.stderr
+    assert proc.stdout == ""
+
+
+def test_main_malformed_composed_rubric_is_input_error(monkeypatch, tmp_path, capsys):
+    """各ファイルが正しくても、合成した結果の型が違えば exit 2 で止める。"""
+    rp = tmp_path / "rubric.json"
+    rp.write_text(json.dumps(_rubric([])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([_rule("FM-001", check=None)]))
+    rc = _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "合成した rubric: rules[0].check" in captured.err
+    assert captured.out == ""
+
+
+def test_validate_rubric_accepts_partial_overlay_and_repo_rubrics():
+    """L1/L2 は一部の rule だけを上書きする差分。id と rules 以外は無くてよい。"""
+    overlay = {"layer": "L1", "rules": [{"id": "KL-002", "check": "x"}]}
+    assert RFS.validate_rubric(overlay, "overlay") is overlay
+    assert RFS.validate_rubric({"rules": [], "threshold": "80"}, "s")["threshold"] == "80"
+    for path in sorted(ROOT.glob("plugins/*/skills/*/references/rubric.json")):
+        RFS.load_rubric(path)  # 例外を出さない

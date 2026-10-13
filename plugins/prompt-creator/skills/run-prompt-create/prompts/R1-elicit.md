@@ -86,7 +86,7 @@
 
 ## Layer 5: エージェント層 (実行主体定義)
 
-### 5.1 担当 agent
+### 5.1 担当エージェント
 - run-prompt-create orchestrator が run-prompt-elicit に委譲
 - 内部で prompt-creator-interview-user agent を context:fork で起動
 

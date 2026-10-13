@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-challenge.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 10c4e603b5362ba4aa59538ff608f0db540e85fdf87a8f74c964f1bfd93978c2 をレビュー。実行検証あり）。範囲: 27行（origin/main からは新規 +27、HEAD から +8/-2）。allowed-tools は「Read, Bash, Skill」、argument-hint は「[挑戦の仮タイトル]」。確かめたこと: 共通の実行検証: `validate-frontmatter.py` → rc=0。`lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills` → 「Step 7 全5条件 PASS・command の Skill 経路 PASS (7 skills)」rc=0（Skill を許可した command が名指しする run-* の実在と disable-model-invocation を検査する）。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（command→skill の calls 辺6本がある）。`pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。CM-001（argument-hint）・CM-003（実在する入口 skill の名指し）を満たし、skill 側の argument-hint と一致する。skill 側は disable-model-invocation: false で、Skill ツールから呼べる。個別: run-ubm-challenge/SKILL.md は実在し、argument-hint「[挑戦の仮タイトル]」・arguments [title]・disable-model-invocation: false が本文と一致する。14行の「現状で試すは vault に書かない」は SKILL 133・147行、22〜23行の深さ（軽微=助言役とレンズなし、標準=field キーごと1件、詳細=2件）は SKILL 133〜134行、「リスク回避の理由5つを別々に数える」は question-map.md 7〜20行（field キー10種のうち risk.* が5つ）と一致する。21行の UBM_VAULT_ROOT の要件と「現状で試す」では不要なことは SKILL 209・284行（C0 は深さを選んだ後に走る）と合う。27行の「欄の中身にはしない・省略すると未指定」は SKILL 132・211行と一致する。前回の指摘（14行の言い過ぎ、## 実行・## 引数の節が無い）は直っている。指摘: [低] CM-002 の最小権限: allowed-tools に Bash があるが、本文は Skill で skill を起動するだけで Bash を使わない（Bash が要る手順は skill 側の allowed-tools が持つ。同じ plugin の ubm-consult は Read, Skill で足りている）。-2。DEDUCTION: -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

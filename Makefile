@@ -2,7 +2,7 @@
 # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
 # CI では --check gate (harness-creator-kit-ci.yml) が走るため二重防護となる。
 
-.PHONY: sync sync-check hook-registry hook-registry-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready artifact-delivery entrypoint-artifact-first lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
+.PHONY: sync sync-check hook-registry hook-registry-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready artifact-delivery entrypoint-artifact-first lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet goal-seek-baseline test help
 
 # LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
 # coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
@@ -51,7 +51,7 @@ native-surfaces-pr-ready:
 	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
 ## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + ローカル marketplace drift 検証を実行する
-lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift local-marketplace install-docs distributable-ssot
+lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift local-marketplace install-docs distributable-ssot goal-seek-baseline
 	python3 scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
@@ -133,7 +133,7 @@ artifact-delivery:
 entrypoint-artifact-first:
 	python3 scripts/lint-entrypoint-artifact-first.py --repo-root .
 
-## vendored-ssot: plugin 同梱 SSOT (notion_config.py / feedback_contract_ssot.py) が正本と byte 一致か検証
+## vendored-ssot: plugin 同梱 SSOT (runtime module・build-time validator・配布先で localize しない doc/schema) が正本と byte 一致か検証
 vendored-ssot:
 	python3 scripts/lint-vendored-ssot.py
 
@@ -182,6 +182,12 @@ local-marketplace:
 ##   「PR をマージしても marketplace に反映されない」と見える事故の恒久再発防止器。
 install-docs:
 	python3 scripts/lint-marketplace-install-docs.py
+
+## goal-seek-baseline: 全 plugin の goal-seek 準拠を検査し、既知の違反 (scripts/goal-seek-lint-baseline.json) だけを猶予する
+##   台帳の外の違反と、返済したのに台帳に残った組を fail-closed で落とす。台帳は削る方向だけに変える。
+##   CI (governance-check.yml) と同じ呼び出し。
+goal-seek-baseline:
+	python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json
 
 ## distributable-ssot: distributable の真偽が sidecar (references/package-contract.json) と
 ##   manifest (.claude-plugin/plugin.json) で食い違っていないか fail-closed 検査。

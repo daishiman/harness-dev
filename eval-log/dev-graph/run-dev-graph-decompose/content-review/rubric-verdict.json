@@ -2,13 +2,20 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-decompose",
-    "skill_md_sha256": "5306e85ec1b988fca1bbb2c57bf7521c810d1a73579897f7baf7c2c454b2928d"
+    "skill_md_sha256": "ee8aa00f2dffc9f674d910b2a36d16cf230804129b5978885d3ac4a931a76bcb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "pr83-followups focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-05T00:56:24Z",
-  "iterations": 1,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-12T17:28:13Z",
+  "iterations": 3,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 3
+  },
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -23,35 +30,19 @@
       "OUT7"
     ],
     "positive_feedback": [
-      "OUT2 と OUT5 (二重起票 0 と Project item の冪等性): Issue の同一性を本文 marker `<!-- dev-graph:<graph_node_id> -->` で決め、同じ marker の Issue が 2 件以上ある場合、ISSUE_LIST_LIMIT=5000 に達した場合、graph の linkage と marker の Issue が食い違う場合はどれも止まる。test_out2_out5_failed_item_add_retries_alone_and_reruns_keep_one_issue_and_item が、retry の後の通常実行で mutation 0 件、marker ごとの Issue と item が各 1 つのままであることを確かめ、test_out4_conflicts_and_duplicate_markers_fail_closed_before_any_gh_write が marker の重複で mutation 0 件のまま止まることを確かめる。",
-      "OUT3 (dry-run の write 0): build-github-projection.py の dry-run は report を書かず mutation も 0 件で、投影する operation・node・alias を planned_mutations に出す。test_out3_dry_run_previews_every_projection_without_a_write が、13 node 分の issue-create・project-item-add・project-item-edit の予定、mutation 0 件、graph byte 不変、report 不在を確かめる。",
-      "OUT4 (authority の衝突は書込み前に拒否): build-github-projection.py の plan() と register-package.py の _resolved_nodes が同じ規則 (github+local_only、beads/none+Issue publication) で拒否し、登録段と投影段のどちらにも test がある (投影段は gh の呼び出し 0 件まで確かめる)。plan() は gate が confirmed/pass/complete でない node も拒否する。auto intent だけは解決した binding へ揃う (test_auto_intent_aligns_publication_to_the_resolved_binding)。SKILL.md 145 行目と OUT4 の記述に一致する。",
-      "OUT1 (C02 を迂回しない単一 writer): script は graph を書かず (report の graph_written=false)、Issue と item の値を linkage_proposal に出すだけである。test は graph の byte が実行の前後で変わらないことを確かめる。gh 操作はすべて C12 gh-bridge.py を経由し、script が gh を直接起動する経路は無い。",
-      "失敗 operation だけの pending_retry: Issue の作成が失敗した node は node 全体、Project の add/edit だけの失敗は node と alias の単位で pending_retry に入り、`--retry-from <report>` はそれだけを再実行する。pending が残れば exit 3 で返す。test では retry が add 1 回と edit 1 回だけを実行し、retry 後の再実行の mutation は 0 件だった。R3 の受入条件「失敗operationだけpending_retryになる」を決定論で満たす。",
-      "記述規約と依存関係: frontmatter の script_refs に足した build-github-projection.py は実在し、R3-decompose.md と R4-project.md の Layer 3 は「build-github-projection (gh-bridge 経由)」に更新された。lint-prompt-contract-drift.py --strict-tools は prompts 6 本で fatal 0 / warn 0、lint-sibling-plugin-paths.py は OK。",
-      "決定論の確認: `python3 -m pytest -q -p no:cacheprovider` で test_build_github_projection.py・test_register_package.py・test_build_graph_node.py は 81 passed。dev-graph の tests 全体は 235 passed / 7 failed で、失敗は test_skill_criteria_evidence.py の content-review の sha 期限切れ (本 verdict で更新する) と criteria-test の scenario receipt (担当外) だけである。"
+      "render-findings-score の機械採点は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20)。指摘は2回目と同じ PD-002・FM-005・PD-001 の3件だけで、今回の直しで増えた rubric の指摘は無い。frontmatter は2回目から変わっておらず、lint-skill-tree・validate-frontmatter・lint-goal-seek は rc 0。",
+      "BD-004 (pending_human) は自分で判定して PASS とした。description の1つめの trigger「大きな自然文構想を feature・architecture・機能間依存へマクロ分解したい」は Hard boundary (L134-136) と Macro flow の 1〜3 (L140-142) に、2つめの「ready feature の system-dev-planner package を atomic 登録・binding 別投影したい」は Macro flow の 4〜6 (L143-145) と L147 の binding をまたぐ依存の規則に、それぞれ対応する。",
+      "採点した19件のうち、PD-002・FM-005・PD-001 のほかは満たす。lint-prompt-contract-drift は prompt 6本で fatal 0・warn 0 で、今回変わった R6 の L62 は、SKILL.md の preview の 3 の L183・L184 と同じ内容を書いている。"
     ],
     "negative_feedback": [
-      "[low / 漏れ] linkage_proposal を graph へ取り込む消費者が書かれていない。C02 の PATCH_KEYS は issue_linkage と github_project_linkages を書けないので、投影後も graph の linkage は null のまま残る。SKILL.md 165 行目の「単一 projection authority と linkage を持つ」と R3 の「既存linkageは再起票しない」とは噛み合わない。C14 自身の冪等性は marker で保たれるが、reconcile-github-lifecycle.py (296 行目) と C03 は issue_linkage を読む。根の一部 (C02 の PATCH_KEYS) は差分外にある。",
-      "[low / 不整合] 再実行の経路が揃っていない。SKILL.md 147 行目と R4 Layer 3 は `--retry-from <report>` と書き、R5-retry の summary (SKILL.md 48 行目)、R3 Layer 6、R4 Layer 6 は C03 へ渡すと書く。C03 の SKILL.md は build-github-projection に触れていない。",
-      "[low / 漏れ] project-item-add の曖昧な失敗 (item は作られたが exit が非 0) の後の retry では、item-find で existing として扱われ、force_edit が立たないので Status の初期化 edit が走らない。issue-create には marker による再探索の対策があるが、item-add には無い。OUT5 の「local_to_project 初期値一致」がこの経路では保証されない。",
-      "[low / smell] docstring の「All reads run before the first mutation」は、mutation の後に node ごとに走る project-item-find と合わない。186 行目の ContractError で途中終了すると report が書かれず、実行済みの mutation の記録が残らない。再実行は冪等なので重複は生じない。",
-      "[low / 漏れ] R6-dryrun は Issue body、Project targets、field values の preview と「全target/operation/digest表示」を約束するが、script の dry-run は operation・node・alias だけを出し、linkage_proposal も出さない。OUT3 の write 0 は満たす。",
-      "[low / smell、前回から未解消] 各 prompt に `### 5.4 実行方式` の節見出しが無く、prompt 単体では l5-contract v2.0.0 の 5.1〜5.4 がそろわない。",
-      "[low / smell、前回から未解消] 「(skill root 起点)」の注記が Layer 4 の参照行にだけあり、Layer 5〜7 の参照行には無い。",
-      "[low / 不整合、前回から未解消、差分外] references/execution-tracker-contract.md の 164 行目が repo-level の feature-execution-package-contract.md のパスを名指ししたままで、install 先では解決しない。"
+      "PD-002 (medium、前から残る。Beads 行き): 本文の頭30行 (frontmatter の後の L116-145) に、採点器が数える禁則の語 (MUST・NEVER・禁止・必ず・『## 守ること』) が無い。L136 の「本 skill が phase task を独自生成してはならない」は禁則の意味だが、その語を含まない。rubric 1.6.0 の threshold 80 に対して 84 なので verdict は止めない。直し方: L136 を「phase task の独自生成は禁止」と書くか、Purpose (L128) の下に `## 守ること` を置き、Hard boundary と L147 の保留の規則を1行ずつ入れる。",
+      "FM-005 (low、前から残る。Beads 行き): description (L3) の最初の句が「大きな自然文構想を」で、採点器は動詞とみなさない。直し方: 2つの trigger を保ったまま最初の句を動詞で始めるか、lint-skill-description が求める「〜したいときに使う」の形と FM-005 の判定のずれを rubric の側で揃える。",
+      "PD-001 (low、前から残る。Beads 行き): 本文 (L116-241) が126行あり、100行を超えるのに skill 直下に references/ が無い (あるのは prompts/ だけ)。今回の直しで preview の 3 に1行増えた。直し方: dry-run の preview (L176-190) と L147 の cross_binding の規則の詳説を references/ に移し、本文には入口と委譲先だけを残す。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr83-followups",
+    "hook_trigger": "新しいループの2回目 (9f5663f4、elegance PASS・rubric PASS 84) が出した low のうち、2回目の直しから生じた2件 (E1・E2) の直し。E1 は、preview の 3 の枝が、保留にした beads の node から保留でない beads の node への edge を扱わなかったこと、E2 は、登録済みの package の段落が binding=none の task の operation を書いていなかったこと。team-lead の指示で、この版を3回目 (iteration=3、iteration_limit 3、ループの上限) として数え、判定の範囲を2か所の直しの正しさと、それで生じる新しい矛盾や漏れに絞った",
     "next_action": "none"
   },
-  "notes": "builder とは別 context の独立 evaluator が行った focused combined content review の rubric 投影である。対象は PR #83 の follow-up (build-github-projection.py と test の新規追加、register-package.py の publication authority の拒否、SKILL.md と R3/R4 の更新)。新しい変更集合に対する最初の review なので iteration は 1 から数える。ref-skill-design-rubric の 41 rule は機械実行しておらず、数値 score も算出していない。frontmatter の criteria (IN1、OUT1〜OUT7) ごとに、SKILL.md と prompts の記述、実装 (build-github-projection.py、register-package.py)、test の三つが揃っているかを読んで判定し、high severity が 0 件であることを確かめた。30 思考法は実施しておらず、実施したとも申告しない。iteration_limit は plugins/dev-graph/tests/test_skill_criteria_evidence.py の CONTENT_REVIEW_ITERATION_LIMIT に合わせて 3 とした。前回 verdict の low 3 件 (5.4 の見出し、skill root 起点の注記、execution-tracker-contract.md の 164 行目) は今回の差分で触られておらず、未解消として再記録した。high と medium は 0 件で、low 8 件を記録したため PASS とした。linkage_proposal の消費者の欠落と retry 経路の食い違いは follow-up を推奨する。PASS の射程は design claim (静的設計 adequacy) に限り、live trial や実 GitHub に対する runtime の振る舞いを保証しない。criteria-test/scenario-verdict.json は本 review の担当外で、target sha は更新していない。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 2,
-    "dependency_break": 0,
-    "smell": 3
-  }
+  "notes": "rubric=84/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた (PD-002 の −10、FM-005・PD-001 の −3 ずつ)。KL-* は knowledge-loop を持たないので対象外。判定方法: 1つの context で incremental の focused combined review を行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high 0 を同時に判定した (30思考法は使っていない)。範囲は team-lead の指示で、E1・E2 の直しの正しさと、それで生じる新しい矛盾や漏れに絞った。前の回の記録 (schema に history の field が無いので notes に書く): 1回目は 9d6bccca の版で、elegance は FAIL (medium は M3 の1件、low は La・Lb・Lc・Ld の4件)、rubric は PASS 84 (medium は前から残る PD-002、low は FM-005・PD-001) だった。M3 は、cross_binding_dependency の規則が github か none の node に直接依存する edge だけを対象にし、保留にした beads の node に別の beads の node が依存する場合が抜けていた指摘で、La は登録済みの package に register-package --dry-run を当てても今の graph の上の preview にならないこと、Lb は apply の起動での「--dry-run の write count」の項目の扱いが無いこと、Lc は親 feature と package の task の binding が違うときの規則が無いこと、Ld は検証 snippet が progress.json を読まないことだった。1回目の verdict の file は書いていない。2回目は 9f5663f4 の版で、M3・La・Lb が直り、elegance は PASS (low 4件: E1 と E2 の omission 2件、Lc を広げた inconsistency 1件、Ld の omission 1件)、rubric は PASS 84 (PD-002・FM-005・PD-001) だった。2回目の verdict の file は、この3回目の file で置き換わる。このループのもとは live trial 20261012T2336-pr85 (decompose4) の DEGRADED (goal_fit FAIL) で、ループの前の 399ce8e9 の版の review で報告した M1・M2・L1〜L6 は 9d6bccca で直っていた。前の verdict の文は写さず、今の本文を読み直して判定した。読んだもの: SKILL.md の全文 (241行)、R6-dryrun.md の L14-70 (Layer 6 を含む)、R3-decompose.md の L60 (Layer 6 の保留の規則)、bd-bridge.py の projection の linkage の検査と package の投影 (L250-270)・create の分岐 (L670-682)、team-lead の直しの script。ee8aa00f の版に対して read-only で回したもの: render-findings-score は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20、pending_human は BD-004 だけ)。lint-goal-seek・lint-skill-tree・lint-skill-name・lint-skill-description・validate-frontmatter (SKILL.md の path か skill dir を渡した)・lint-prompt-contract-drift (prompt 6本、fatal 0・warn 0)・lint-feedback-contract --all (80 skill)・lint-plugin-composition (dev-graph、警告0) はどれも rc 0。test_runtime_coverage・test_skill_mass_production_contracts・test_skill_criteria_contracts は 81 passed。live-trial-verdict.py の behavior_closure_files と skill_dir_tree_sha で数えた decompose の behavior closure は 84 file・666d9e0c09ab0cb20f8501a6b75302f99906afe1fbcf4f8208fd967f44c5fbb2 で、依頼の値と一致した。2回目からの差: team-lead の直しの script (scratch の edit-decompose-r18.py の3つの置換) を、今の本文からメモリの上で逆向きに当てると、SKILL.md は 9f5663f4、R6 は 1a534aac にちょうど戻った (file には書いていない)。R3 は 7c13aa14 のままで変わっていない。差は SKILL.md の L184 (preview の 3 に足した枝)、L188 (登録済みの package の段落の一句)、R6 の L62 (一文) だけで、行は L184 の1行だけ増え、frontmatter は変わっていない。実験 exp29: 2〜9 node の乱数の DAG 20000 個に、L147・L182 の不動点で保留の集合を決め、L183〜L186 の4つの枝の条件を文のとおりに当てて、各 edge が当たる枝の数を数えた。結果は findings と positive_feedback に書いた。python は -B で回し、__pycache__ は作っていない (worktree の .pyc の数は前後とも 1351)。2つの verdict のほかに作業ツリーは変えていない (cr-dg4 の scratch を除く)。verify_by=script の IN1、live-trial の OUT1、test の OUT2〜OUT7 は、受入条件と本文・script の対応を静的に見ただけで、実機の run と受入テストの結果はこの verdict の対象外である。low は直さず Beads に回す。"
 }

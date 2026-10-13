@@ -441,6 +441,25 @@ class BuildClaudeSettingsTest(unittest.TestCase):
         plan = json.loads(result.stdout)
         self.assertEqual([c for c in plan["conflicts"] if c["type"] == "skill"], [])
 
+    def test_build_cache_in_one_physical_copy_is_still_shared(self):
+        # .gitignore 対象の __pycache__ / .DS_Store は CI に無い。片方の copy にだけ
+        # 在っても shared 判定を conflict に変えない。
+        for name in ("alpha", "beta"):
+            root = self.plugin(name)
+            skill = root / "skills" / "run-shared"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+        cache = self.plugins / "beta" / "skills" / "run-shared" / "scripts" / "__pycache__"
+        cache.mkdir(parents=True)
+        (cache / "x.cpython-311.pyc").write_bytes(b"\x00compiled")
+        (self.plugins / "beta" / "skills" / "run-shared" / ".DS_Store").write_bytes(b"junk")
+
+        result = self.run_cli("--dry-run", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual([c for c in plan["conflicts"] if c["type"] == "skill"], [])
+
     def test_distinct_content_same_name_still_conflicts(self):
         for name, text in (("alpha", "# Alpha\n"), ("beta", "# Beta\n")):
             root = self.plugin(name)

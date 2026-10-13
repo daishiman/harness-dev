@@ -1,3 +1,16 @@
+# /// script
+# name: validate_build_trace_shim
+# purpose: import 用の shim。ハイフン入りの validate-build-trace.py を読み込み、正規表現の SSOT（LAYER_YAML_PATH_PATTERNS）を再エクスポートする
+# inputs:
+#   - import のみ（CLI ではない）
+# outputs:
+#   - module 属性: LAYER_YAML_PATH_PATTERNS, SKILL_LOCAL_V1_RE
+# requires-python: ">=3.10"
+# dependencies: [validate-build-trace.py]
+# contexts: [C]
+# network: false
+# write-scope: none
+# ///
 """SSOT 共有用 shim.
 
 Python の import はハイフンを許さないため、ハイフン入りファイル名

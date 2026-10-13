@@ -204,10 +204,10 @@ Skill 配下の構造も第1〜7条に準ずる法律的規範とする。
 ├── examples/               ← 任意・完成例
 │   ├── <case-name>.md
 │   └── <case-name>/        ← 複数ファイルなら 1 ケース 1 ディレクトリ
-├── scripts/                ← 任意・実行可能スクリプト
-│   ├── lint-<target>.{sh,py,ps1}
-│   ├── validate-<target>.{sh,py,ps1}
-│   └── <verb>-<target>.{sh,py,ps1}
+├── scripts/                ← 任意・実行可能スクリプト（.py と .sh だけ。第10条）
+│   ├── lint-<target>.py
+│   ├── validate-<target>.py
+│   └── <verb>-<target>[-<scope>].py
 ├── templates/              ← 任意・雛形ファイル
 │   └── <target>.template.{md,yaml,json}
 ├── prompts/                ← 任意・サブ prompt（外部 LLM 委譲用）
@@ -216,20 +216,21 @@ Skill 配下の構造も第1〜7条に準ずる法律的規範とする。
 ```
 
 ### 第8条 (固定ディレクトリ名)
-**Skill 配下のディレクトリ名は以下の語彙集合から選ぶ**: `references` / `examples` / `scripts` / `templates` / `prompts` / `eval-log` / `_drafts`。
-- 但書: ドメイン固有のディレクトリを足す場合は `xl-<domain>` 形式で prefix を付け、第8条の予約語と衝突を避ける。
-- 違反検出: ディレクトリ走査で許可リスト外のディレクトリを lint 失格。
+**Skill 配下のディレクトリ名は以下の語彙集合から選ぶ**: `references` / `examples` / `scripts` / `templates` / `prompts` / `schemas` / `hooks` / `log`（`scripts/lint-skill-tree.py` の `ALLOWED_DIRS` と同じ）。
+- 但書: 一覧の外のディレクトリ（今の repo では `tests` / `assets` / `fixtures` / `proposals`、第14条の `_drafts`）は、足すときに一覧の語と衝突しない名前にする。
+- 違反検出: `lint-skill-tree.py` がディレクトリを走査し、一覧の外の直下ディレクトリに warning（LS-203）を出す。失格（exit 1）にはしない。
 
 ### 第9条 (ファイル名 kebab-case)
 **Skill 配下のファイル名（拡張子前）は kebab-case 限定**。`_` / camelCase / 空白 / 全角文字を禁ずる。
 - 但書: `SKILL.md` / `README.md` / `CHANGELOG.md` の3つは慣習に従い大文字許可。
-- 但書: scripts/ 配下の `.ps1` ファイル名で PowerShell 慣習の PascalCase を選ぶ場合は frontmatter `name-policy: pwsh-pascal` で明示宣言する。
+- 但書: `.ps1` を PowerShell 慣習の PascalCase で名付けるときに frontmatter `name-policy: pwsh-pascal` で宣言する、という定めは未実装。lint はこの宣言を読まず、`.ps1` は今は Skill 配下の scripts/ に置けない（第10条）。
 - 違反検出: 配下ファイルの basename を `^[a-z0-9][a-z0-9.-]*\.[a-z0-9]+$` で検証。
 
 ### 第10条 (scripts/ 命名は動詞先頭)
-**`scripts/` 配下のファイル名は `<verb>-<target>[.<sub-target>].<ext>` 形式**。`verb` は `lint` / `validate` / `build` / `format` / `check` / `score` / `extract` / `convert` のいずれか。
-- 但書: 未定義 verb を導入する場合、SKILL.md 冒頭で「scripts naming」セクションを設けて宣言する。
-- 違反検出: 先頭 segment が動詞リストに含まれるかを lint。
+**`scripts/` 配下の `.py` のファイル名は `<verb>-<target>[-<scope>].py` 形式**。形式の正本は 28章 §4.1（例外節は §4.4・§4.6）。`.` で区切った sub-target は使わない。`verb` は 28章 §4.1 の動詞リストのいずれか（正本は28章。写しは `scripts/lint-script-naming.py` の `ALLOWED_VERBS` と `installers/harness-creator-kit/CONVENTIONS.md`。本章には列挙を置かない）。
+- 拡張子: lint は現状、Skill 配下の scripts/ に `.py` と `.sh`（28章 §3.2 の L1）だけを通す。`.ps1` は置けない。
+- 但書: 動詞の追加は 28章 §4.7 のとおり 33章の P1 Structural change で行う。SKILL.md で宣言しても lint は SKILL.md を読まないので通らない。改名を待つ既存の script は `scripts/lint-script-naming.py` の台帳（`PENDING_RENAME_PATHS`。28章 §4.7 の `PENDING_RENAME`）で扱う。
+- 違反検出: `scripts/lint-script-naming.py` が `.py` の名前の形式と先頭 segment の動詞を照合する（`.sh` は見ない）。拡張子は `scripts/lint-skill-tree.py` が見る。
 
 ### 第11条 (references/ 命名は名詞先頭)
 **`references/` 配下のファイル名は `<topic>[-<aspect>].<ext>` 形式の名詞句**。動詞先頭を禁ずる（scripts/ と区別するため）。
@@ -288,18 +289,22 @@ Skill 配下の構造も第1〜7条に準ずる法律的規範とする。
 
 ## 違反検出と改正手続き
 
-第1〜14条は **lint script で機械検出可能** にすることを設計目標とする。実装の対応は次の通り。
+第1〜14条は **lint script で機械検出可能** にすることを設計目標とする。実装の対応は次の通り（「未実装」の条は目標のまま）。`lint-skill-name.py` と `lint-skill-tree.py` の写しは `plugins/skill-governance-lint/scripts/` にあり、CI はこの写しを回す。
 
-| 条 | 検出手段 | 配置例 |
+| 条 | 検出手段 | 実物 |
 |---|---|---|
-| 1, 3, 4, 5 | regex / yaml parse | `scripts/lint-skill-name.{sh,py}` |
-| 2, 11 | segment count / 動詞辞書照合 | 同上 |
-| 6 | git diff + CHANGELOG 突合 | CI workflow |
-| 7 | 全 Skill `name:` 集約スキャン | `scripts/lint-name-uniqueness.sh` |
-| 8, 9, 12 | directory walk + regex | `scripts/lint-skill-tree.sh` |
-| 10 | scripts/ 配下の verb 先頭判定 | 同上 |
-| 13 | references/ ファイル数 + resource-map.yaml 存在 | 同上 |
-| 14 | path filter | CI workflow |
+| 1, 3, 4, 5 | regex / frontmatter parse | `scripts/lint-skill-name.py`（CI: governance-check.yml） |
+| 2 | segment count | 未実装 |
+| 6 | frontmatter `name` の前後比較 | `scripts/guard-change-category.py`（CI: governance-check.yml）が改名を P0 と判定し、governance-log の承認を求める。CHANGELOG.md と旧名 alias の確認は未実装 |
+| 7 | 全 Skill `name:` 集約スキャン | 未実装 |
+| 8 | directory walk | `scripts/lint-skill-tree.py`（一覧の外は warning。CI: harness-creator-kit-ci.yml、harness-creator の Skill だけ） |
+| 9 | regex | 未実装（scripts/ の `.py` は第10条の lint が見る） |
+| 10 | 動詞と形式 / 拡張子 | 動詞と形式は `scripts/lint-script-naming.py`（`.py` だけ。CI: governance-check.yml）、拡張子は `scripts/lint-skill-tree.py` |
+| 11, 12 | 動詞辞書照合 / case-id 判定 | 未実装（`lint-skill-tree.py` が見るのは拡張子だけ） |
+| 13 | references/ ファイル数 + resource-map.yaml 存在 | `scripts/lint-skill-tree.py` |
+| 14 | path filter | 未実装 |
+
+lint の出力にある条番号は、本章の番号と一部ずれる。`lint-skill-name.py` の「第1条」は本章の第3条、「第2条」は第1条に当たり、「第7条」が見るのはディレクトリ名と `name:` の一致で、本章の第7条（重複）ではない。`lint-skill-tree.py` の「第13条」の nested dir 検査は、本章の第13条（resource-map）とは別の検査である。
 
 ### 改正手続き（第15条）
 **本条文の改正は次の3段階を経る**:

@@ -1,1 +1,18 @@
-{"artifact": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "PASS", "score": 84, "notes": "12 detection を増減させない宣言と OUT_OF_SCOPE の明示が誠実で、静的検査で見えない面 (実版面の収まり・改ページ実位置・JS 実行後 DOM・カスケードの実効性) を PASS と偽装しない。粗トークナイザが解けなかった CSS 断片を unparsed として結果に載せ、それ自体で FAIL にする設計 (parser の限界を素通しにしない) は fail-closed の正しい適用。A11Y-07 の script 共起検査が近似であることを detection の note と report の双方へ載せる。read-only で書込は --json-report のみ、exit は 0/1/2 を全経路で守る。減点: (a) 冒頭で『部品 id の literal は持たない』と宣言しながら SCREEN_ONLY_PARTS が lightbox/memo/memo-global/toolbar を直接列挙しており、PRINT-03 だけがカタログ改名で静かに腐る。(b) PRINT-02 の被覆判定が `sel in ps` の部分文字列一致で、無関係な長いセレクタを被覆と誤認しうる。(c) Node.descendants() が pop(0) + list 連結で O(n^2)"}, "reviewed_by": "claude-code-review", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 b49216aedb3538f5dec86496484847fe216cf061c29ad3665a88653671f43005 をレビュー。実行検証あり）。範囲: 全1405行と、origin/main からの差分（86行）。版は 0.1.0 から 0.1.1 になった。変更は4つ。1つ目に、_print_selector_covers を足し、print の selector が画面専用の class を被うかを、識別子の境界で照合するようにした。2つ目に、load_screen_only_markers を足し、カタログの non_part_structure_markers から section を除いた値を読むようにした。カタログが壊れていれば exit 2 で止まる。3つ目に、descendants を O(n) にした。4つ目に、re.split に maxsplit を渡した。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。plugins/guide-doc-generator/tests/verify-handout-a11y-print.py の test は 197 passed。lint-script-frontmatter は OK（checked=14）。--help は rc 0。知らない引数と、存在しない --html は rc 2。カタログの値は C11 の html_attribute_contract と合う。probe（scratchpad の work-covc/a11y/probe.py）で selector を当てた。被覆の無いものと、識別子の途中で切れる一致（ident_cut）は FAIL、複合の selector と祖先つきの selector は PASS で、どれも正しい。一方、`.pop-header .inner`・`:not(.pop-header)`・`.pop-header::before`・`.pop-header + .x` の4つは、その class の要素そのものを被っていないのに PASS になる。前回の指摘の扱い: 前回の3件（PRINT-02 の部分文字列の一致による偽 PASS、SCREEN_ONLY_PARTS がカタログの写しであること、O(n^2) の descendants）は、どれも直った。判断の妥当性: 識別子の境界での照合は、前回の誤検出を防ぐのに足りる。カタログを正本として読むので、写しとの食い違いも起きない。偽の PASS は、print の CSS に上の形の selector を書いたときだけ起きる。指摘: [低] 主語でない位置（子孫の祖先側、:not() の中、疑似要素、隣接の左側）での一致も被覆とみなす（-2）。[低] frontmatter の write-scope が、実在しない --out と --config-out を挙げる。origin/main からある（-1）。DEDUCTION: -2 -1 → 97。[高] と [中] は無いので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

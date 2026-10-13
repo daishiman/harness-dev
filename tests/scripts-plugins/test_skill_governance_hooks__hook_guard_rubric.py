@@ -46,12 +46,14 @@ MOD = _load_module()
 def _clean_env(monkeypatch):
     monkeypatch.delenv("ALLOW_RUBRIC_EDIT", raising=False)
     monkeypatch.delenv("PROJECT_ROOT", raising=False)
+    monkeypatch.setattr(MOD, "REPO_ROOT", Path("__unused_registry_root__"))
 
 
 def _isolate_cwd(monkeypatch, tmp_path):
     """registry を引かない空の cwd / PROJECT_ROOT に固定 (default suffix のみ残る)。"""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setattr(MOD, "REPO_ROOT", tmp_path)
 
 
 # --------------------------------------------------------------------------
@@ -123,6 +125,35 @@ def test_is_guarded_default_suffix(tmp_path, monkeypatch):
     _clean_env(monkeypatch)
     _isolate_cwd(monkeypatch, tmp_path)
     assert MOD.is_guarded("/repo/x/ref-skill-design-rubric/rubric.json") is True
+
+
+def test_real_l0_path_and_dot_segments_are_guarded(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    target = "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    assert MOD.is_guarded(target)
+    assert MOD.is_guarded("/repo/" + target.replace("/references/", "/references/../references/"))
+    assert not MOD.is_guarded("/repo/skills/not-ref-skill-design-rubric/references/rubric.json")
+
+
+def test_current_registry_path_from_project_root(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    registry = tmp_path / "plugins/skill-governance-config/config/rubric-registry.json"
+    registry.parent.mkdir(parents=True)
+    registry.write_text(json.dumps({"rubrics": [{"rubric": "custom/reference/rubric.json"}]}))
+    assert MOD.is_guarded("/repo/custom/reference/rubric.json")
+
+
+def test_canonical_rubric_through_parent_symlink_is_guarded(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    references = tmp_path / "ref-skill-design-rubric/references"
+    references.mkdir(parents=True)
+    (references / "rubric.json").write_text("{}")
+    alias = tmp_path / "documents"
+    alias.symlink_to(references, target_is_directory=True)
+    assert MOD.is_guarded(str(alias / "rubric.json"))
 
 
 def test_is_guarded_assign_glob(tmp_path, monkeypatch):
@@ -340,3 +371,51 @@ def test_subprocess_bypass_env(tmp_path):
 def test_subprocess_empty_stdin_fail_open(tmp_path):
     res = _run_subprocess("", cwd=tmp_path)
     assert res.returncode == 0
+
+
+# --------------------------------------------------------------------------
+# C1 レビューの再発防止: object でない入力、出力の形、大文字小文字、無駄な再帰
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize("stdin_text", [
+    json.dumps([{"tool_name": "Edit"}]),                       # object でない stdin
+    json.dumps({"tool_name": "Edit", "tool_input": "p/skills/assign-x/rubric.json"}),
+    json.dumps({"tool_name": "Edit", "tool_input": {"file_path": "p/assign-x/\u0000/rubric.json"}}),
+])
+def test_main_non_object_or_nul_input_fails_open(monkeypatch, tmp_path, capsys, stdin_text):
+    # 以前は .get の AttributeError や resolve() の ValueError で traceback になり rc=1 だった。
+    # NUL を含むパスは OS が開けないので allow。3.11 と 3.9 で判定を揃える (3.11 の normpath は NUL で切る)
+    assert _run_main(monkeypatch, tmp_path, stdin_text) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_deny_json_names_the_hook_event(monkeypatch, tmp_path, capsys):
+    rc = _run_main(
+        monkeypatch,
+        tmp_path,
+        json.dumps({"tool_name": "Edit", "tool_input": {"file_path": "p/skills/assign-foo/rubric.json"}}),
+    )
+    assert rc == 2  # 主系は exit 2 と stderr
+    assert json.loads(capsys.readouterr().out)["hookSpecificOutput"]["hookEventName"] == "PreToolUse"
+
+
+@pytest.mark.parametrize("path", [
+    "x/ref-skill-design-rubric/references/Rubric.json",
+    "x/REF-SKILL-DESIGN-RUBRIC/rubric.json",
+    "p/skills/assign-foo/RUBRIC.JSON",
+])
+def test_is_guarded_ignores_case(tmp_path, monkeypatch, path):
+    # macOS の既定の FS では大文字小文字だけが違う名前も同じ rubric を指す
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    assert MOD.is_guarded(path) is True
+
+
+def test_is_guarded_backslash_posix_path_reads_registry_once(tmp_path, monkeypatch):
+    # 以前は resolve() 後のパスで自分を呼び直し、約1000段再帰して毎段 registry を読んでいた
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    calls = []
+    original = MOD.registry_guarded_suffixes
+    monkeypatch.setattr(MOD, "registry_guarded_suffixes", lambda: calls.append(1) or original())
+    assert MOD.is_guarded(str(tmp_path / "a\\b.txt")) is False
+    assert len(calls) == 1

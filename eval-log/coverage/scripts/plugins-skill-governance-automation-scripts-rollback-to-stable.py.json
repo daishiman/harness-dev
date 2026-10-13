@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-automation/scripts/rollback-to-stable.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"ast/pyflakes clean; planning-only (never mutates rubric, only prints plan JSON) so inherently safe; required args validated by argparse; frontmatter complete; minor: params json.loads unguarded (config error raises loudly) and --dry-run is effectively a no-op since script never writes"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-automation/scripts/rollback-to-stable.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 99,
+    "notes": "genuine review（sha256 fc3b13f11f4c8ed4a3fbb3c0f43425307ed39a30dddc799c269819bd00a500d4 をレビュー。実行検証あり）。範囲: 全450行（版 0.4.3）と、前回の記録（sha 74f6693b…、0.4.2、PASS 98）からの差分。_VERSION_TOKEN・_version_identity・_drop_version を足した。### 以下の小見出しは、今の節と同じ版の番号（1.3 と 1.3.0 は同じ。v が付いてもよい）を除いても版らしい文字が残るときだけ、節を閉じる。小見出しで閉じたときの警告に「<版> の節の小見出しなら、<版> のほかに版の番号や小数を入れない」を足した。docstring も直した。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。tests/scripts-plugins/test_skill_governance_automation__rollback_to_stable.py（sha 1ad1a164…）は 113 passed（前回は 105）。plugins/skill-governance-automation には test が無い（pytest は no tests ran で rc 5）。lint-script-frontmatter は OK（checked=13）。--help は rc 0、引数なしは rc 2。HEAD の版（0.4.0）を scratchpad の work-covc/rb/rollback-old.py に、origin/main の版（0.1.0）を work-covc/rb2/rollback-main.py に取り出し、work-covc/rb2 の入力で比べた。`## 1.3.0` の下に次の見出しを置き、その下に違反率を書いたとき、新版は 1.3.0 を選び、警告を出さない:「### 1.3.0の計測」「### v1.3.0 の補足」「### 1.3 と 1.3.0」「#### v1.3 の補足」「### 計測（1.3.0）」「### 1.3.0.0 の計測」「### V1.3.0 の補足」「### 2026-04-01 の計測」。次の見出しでは節を閉じて 1.0.0 を選び、警告を出す:「### 閾値 0.05 の根拠」「### 1.3.0-rc.1 (2026-03-20)」「### 1.3.0 と 1.2.0 の比較」「### 1.3.0.1」「### 1.30 の計測」「### 11.3.0」。警告の後半は「1.3.0 の節の小見出しなら、1.3.0 のほかに版の番号や小数を入れない」で、直し方として正しい。前回の (a)（`### 1.2.0 (2026-03-01)` の値を 1.3.0 に数える）は直ったまま（新版は 1.0.0、HEAD は 1.3.0）。(b)（`### 1.3.0 の計測` の下の値）は、新版で 1.3.0 を選び、警告も出ない。(c)（rubric_id の無い rubric で、`### 1.3.0 の補足` の下に `- rubric_id: other-rubric`）は、新版で 1.0.0 を選ぶ（HEAD も 1.0.0）。一方、(c) と同じ形で見出しを「### 閾値 0.05 の根拠」か「### 1.3.0 と 1.2.0 の比較」にすると、新版は節を閉じて rubric_id の行を捨て、別の rubric の版 1.3.0 を選ぶ（HEAD は 1.0.0。origin/main は rubric_id を照合しないので、a〜e の5つの入力すべてで 1.3.0）。警告は出る。repo の md 3530本（版の節 922）を、新版と HEAD の parse_versions_md で読み比べた（scratchpad の work-covc/rb2/cmp/cmp_repo.py）。版の節の値に差は無かった。前回の指摘の扱い: 前回の [低]（同じ版の小見出しでも節を閉じ、その下の値・hash・rubric_id を捨てる。(b) と (c)）は、同じ版の番号のときは直った。判断の妥当性: 今の節と同じ版を除いてから版らしさを見るのは、(a) を守ったまま (b) と (c) を直す小さな変更で、version_key と同じ同一性を使うので、1.3 と 1.3.0 の扱いも一貫する。残るのは、違う版や版でない小数を含む小見出しの下に rubric_id を書いた場合だけである。当てはまるのは、rubric_id を持たない rubric（repo では skill-intake の1つ）で、複数の rubric が混ざった md のときに限られる。警告は出し、直し方も正しく案内する。観察: 版の節の外にある「### 4.1 思考プロセス」のような小見出しにも警告を出すようになった。repo の md 全体での警告は、HEAD の 204件から 5311件に増えた。どれも rubric-versions.md ではない md なので、実害は無い。指摘: [低] 版の節の中の、違う版の番号か版でない小数（「閾値 0.05」など）を含む小見出しで節を閉じ、その下の値と rubric_id を捨てる。rubric_id の無い現行の rubric では、別の rubric の版を選ぶ側に倒れる。この挙動を固定する test も無い。作者も残る危険として挙げ、Beads に回している（-1）。DEDUCTION: -1 → 99。[高] と [中] は無いので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

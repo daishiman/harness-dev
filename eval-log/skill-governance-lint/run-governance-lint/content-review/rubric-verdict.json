@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-governance-lint",
     "skill": "run-governance-lint",
-    "skill_md_sha256": "e8752d156ea5b05f1fb128f6691b38744088160cdbb46c8f73abbd63bf866698"
+    "skill_md_sha256": "a01dfa842bf1f1f81376c991ce5cc9d028abaf7658ddac859801ed4a927da36d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -14,7 +14,7 @@
     "smell": 0
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
+  "reviewed_at": "2026-10-11T13:50:36Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,7 +24,9 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "rubric観点でも確認: artifact kindごとの lint 選択・各 exit code の独立保持という軽量な直列処理に inline/inline が適合し、非0を自動修正へ畳まない既存境界も変えていない。scripts/lint-* と validate-* の参照は実在する。"
+      "FM-001: name `run-governance-lint` は run- 接頭辞で60字以内。NM-001: ディレクトリ名と一致。BD-001: `## Purpose & Output Contract` がある。BD-003: 本文は300行以下。",
+      "allowed-tools は `Bash(python3 *)` に絞った明示的な最小集合になり、本文の実行指示と一致する。",
+      "feedback_contract.criteria の IN1/OUT1 を全件評価した。"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -32,5 +34,5 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "current bytes/diff/criteria/manifest/script refsを再読。runtime-profile/frontmatter/tree lintはexit 0。legacy lint-goal-seekの3 warningはfull wiring推奨で、今回の最小profile contractを破らない。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。lint script の argparse 欠如（SKILL.md:72 の `--help`）は既存・差分外として記録のみ。incremental の focused review で、exhaustive の30思考法は実施していない。"
 }

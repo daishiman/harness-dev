@@ -90,9 +90,9 @@ def test_sync_recovery_and_external_io_boundary_are_explicit() -> None:
     assert "registry の `(file_path,file_hash,status=processed)` を唯一の commit point" in skill
     assert "1トランザクション扱い" not in skill
     assert "idempotency_key = sha256" in extractor
-    assert "source の最終 commit point として最後に" in extractor
-    assert "vault source は常に read-only" in extractor
-    assert "write target が symlink" in extractor
+    assert "ソースの最終確定点として最後に" in extractor
+    assert "vault のソースは常に読み取り専用" in extractor
+    assert "書き込み先がシンボリックリンク" in extractor
 
 
 def _item(item_id: str, *, depends_on: list[str] | None = None, status: str = "done") -> dict:

@@ -1,0 +1,51 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "run-system-spec-elicit",
+    "skill_md_sha256": "344e68e2a9187949f06c978329804bcdfa0e2f380af36c5daac384ba6eeb7573"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 3,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T22:41:33Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "前回の low / inconsistency (開いた問が N4 に当たらないという解釈が bank にしか無い) は解消した。正本の neutral-question-criteria.md に『N4 と開いた問』(L34-39) が置かれ、bank の手順 1 (L21)、R6-audit-hearing の軸 2 (L28)、C06 の起動アダプタ (agents/system-spec-hearing-auditor.md L54) がそこを参照する。作る側と監査側が同じ 1 箇所を見るので、監査側が開いた問を束ねと読んで medium を付ける経路が閉じた。",
+      "前回の low / omission (『論点が揃った turn』が未定義) は解消した。bank の手順 4 (L24) が『表の論点のうちそのセルで決めるものすべてに回答が得られた turn』と定義し、補いが要らなければ開いた問の turn、補ったなら最後に補った論点の turn と場合を分けている。それより前の turn は qa だけを記録し、揃った turn で confirm に続けて add-qa-ref で開いた問の qa も含めて結ぶ、と書かれ、R2 2.2・2.3・5.3 と spec-state-contract.md も同じ手順にそろった。",
+      "前回の low / inconsistency のうち、--require-basis の説明は SKILL.md 側で解消した。frontmatter IN1 (L84)・完了条件 (L147)・本文 IN1 (L186) がそろって『確定セルごとに根拠 (qa_ref と qa_refs) の少なくとも 1 件が basis を宣言し、宣言がすべて agent-inference ではないこと』と書き、validate-coverage-matrix.py の `_inference_only_findings` の挙動と一致した。残りの 1 箇所は negative_feedback に記した。",
+      "前回の low / omission (reopen 後に qa_refs を結び直す手順が無い) は大筋で解消した。R4-reopen 2.2 (L39) が reopen 前に qa_ref・qa_refs・serves_goals を控え、再確定の turn で (a) 有効な旧参照を add-qa-ref で結び直し (b) serves_goals を付け直すと定め、L40 が裏付け側だけの置き換え (reopen 不要、supersede-qa の後に新しい qa を add-qa-ref) を書く。invocation をまたぐ再確定は bank の手順 4 へ委ね、R3 2.2 も同じ向きである。writer の reopen がセルを {state, reopened_from, reopen_reason} で丸ごと置き換える実装 (apply-spec-transition.py) と食い違わない。",
+      "前回の low / omission (SSOT 節が writer の強制を挙げない) は解消した。SKILL.md の SSOT 節に項目 5 (L162) が加わり、add-qa-ref の確定セル限定と qa_log 実在、supersede-qa の write-once と主根拠中の拒否、置き換え済み entry を qa_ref にした confirm の拒否を挙げる。writer の実装 (apply-spec-transition.py の add-qa-ref・_supersede_qa・confirm) と 1 対 1 で対応する。",
+      "前回の low / inconsistency (fixture の形と確定後の回復手順の欠落) のうち、回復手順は解消した。bank の手順 5 (L25) と R2 1.1 (L21)・2.2 (L38) が『確定の後に収集ゲートが未接地を返したら、確定を戻さずに 1 item ずつ補い、add-qa-ref で結ぶ。回答が確定と食い違うときだけ R4-reopen』と定め、1.1 の『聞き直さない』との関係も書いている。fixture の残りは negative_feedback に記した。",
+      "決定論と依存を確かめた。plugin の tests は 591 件すべて通った (-p no:cacheprovider)。期待最終状態の fixture は `validate-coverage-matrix.py --require-complete --require-basis --require-foundation` で rc=0、required-info ゲートは status ok で ungrounded は空だった。SKILL.md・prompts・references・agents が名指す参照はすべて同じ plugin 内に実在し、plugin を越える兄弟参照は無い。同じ PR で書き換わった C11 hook は script を指定した python 起動を書込み先なしと判定するので、`apply-spec-transition.py` の起動は遮断されない。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency] F1: 収集ゲートの文言と、確定後に補う手順が食い違う。SKILL.md の frontmatter IN1 (L84) は『未接地が残る間は当該 domain の確定セルを confirmed にしない』、収集ゲート (L188) は『確定に接地するまで当該 domain の確定セルの confirmed を許さない』と書く。一方 bank の手順 5 と R2 2.2 (L38) は『確定の後に未接地が残ったら確定を戻さずに補う』と、確定を先に置く。実装でも writer の confirm は接地を検査せず、接地は決着済みセルからの参照を要するので確定より前には成り立たない。compile の確定マーカーもセル状態の真理値表だけで導く。完了条件 (未接地が空) は両者で同じなので low。直し方: L84・L188 を『未接地が残る間は収集を完了と見なさない (手順 5 で補う)』に改める。",
+      "[low / omission] F2: 手順 5 の結び先が無い場合の扱いが無い。bank の手順 5 は補いの qa を『その item の domain が指すカテゴリの確定セル』へ add-qa-ref で結ぶとするが、そのカテゴリが全 platform で対象外なら確定セルが無く、add-qa-ref は確定セル限定なので結べない。接地判定 (validate-knowledge-graph.py の required-info) はどの決着済みセルからの参照でも数えるので、他のカテゴリの確定セルへ結べば足りるが、その旨が書かれていない。",
+      "[low / inconsistency] F3: fixture の hearing-turns.json の最後の turn (qa-009) が、文書の手順と違う形のまま残っている。問は product-goal と context-of-use の 2 item を 1 問で聞いており、手順 5 の『1 item ずつ別の問で聞く』と、正本の N4 (独立に決められる論点を 1 問に束ねない) に反する。同じ turn の ops は qa-000 (target-platforms。対象外セルの exclude ですでに接地済み) を infrastructure/web へ結んでおり、item の domain (ui-ux) とも違う。最終状態 (expected-final-spec-state.json) は変わらないので low。直し方: qa-009 を item ごとの 2 turn に分け、qa-000 の add-qa-ref を外すか ui-ux の確定セルへ結ぶ。",
+      "[low / omission] F4: R4-reopen 5.3 の新しいチェック項目 (L91『控えて、再確定する R2/R3 へ渡している』) を運ぶ欄が無い。R4 2.4 の出力契約 (L50) は更新後 spec-state だけで、R2 2.3・R3 2.3 の入力契約にも控えた参照を受ける欄が無い。writer の reopen_log も旧 qa_ref・qa_refs・serves_goals を記録しない。同じ agent の context 内で続けるなら控えは残るが、invocation をまたぐと失われる。直し方: R4 2.4 に控えの出力を、R2/R3 2.3 に任意の入力欄を足すか、writer の reopen で reopen_log に旧参照を残す。",
+      "[low / smell] F5: 手順 4 で再開時に未結の qa を拾う方法が、問の文面からの推測に頼っている。qa entry にはどのセルのために聞いたかを示す欄が無く、どのセルの qa_ref / qa_refs にも現れない entry には foundation (R0) や decision (R5) の qa も混ざる。誤って別のセルへ結ぶと接地や章の根拠がずれる。直し方: turn に任意の対象セル (category / platform) を記録する欄を設け、再開側はそれで拾う。",
+      "[low / inconsistency] F6: R2-interview 5.3 (L105) の完了チェックが『確定へ紐づく qa_log entry に basis が付いている (`--require-basis` が exit0)』と書き、作り手側の規則 (紐づく qa すべてに basis) を、validator の判定 (セルごとに 1 件以上) と同一視している。SKILL.md と contract は今回 validator の挙動に直されたので、ここだけが残っている。今回の差分外の行。直し方: 括弧書きを『`--require-basis` が exit0 (validator はセルごとに 1 件以上を課す。作り手は紐づく qa すべてに basis を付ける)』に改める。",
+      "[low / smell] F7: 前回から未解消・本 skill の契約外。plugins/system-spec-harness/scripts/validate-spec-doc-sync.py は test を持つが、system-spec-harness 配下から起動している箇所は今も test 以外に無い。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "rubric 投影: 同じ review (elegance-verdict.json) を、rubric の観点 (a 矛盾 / b 漏れ / c 記述規約整合 / d 依存関係整合 / e high severity) に当てはめ直したもの。別の採点は行っておらず、点数も出さない。rubric の high severity に当たる指摘は 0 件、medium も 0 件。a 矛盾は 0 件 (F1 の収集ゲートの文言は完了条件を変えないので inconsistency に数えた)。b 漏れは 2 件 (F2 結び先の無いカテゴリ、F4 控えた参照の受け渡し欄)。c 記述規約整合は 3 件 (F1 収集ゲートの文言、F3 fixture の束ねた問と結び先、F6 R2 5.3 の括弧書き) と smell 2 件 (F5 未結の qa の拾い方、F7 validate-spec-doc-sync.py の起動元・契約外)。d 依存関係整合は参照先の実在と C11 hook との両立を確かめて 0 件。以下は elegance 側の notes と同じ。install-portability の focused combined content review (incremental profile、builder とは別 context の独立 evaluator、1 回のみ)。30 思考法は実施していない。読んだもの: 前回の elegance / rubric verdict (sha 1e90618f…、PASS、low 7 件)、SKILL.md 全文 (sha256 344e68e2…)、`git diff HEAD` の当該 skill 全体 (SKILL.md、prompts/R2-interview.md・R3-reask.md・R4-reopen.md・R6-audit-hearing.md、references/elicit-question-bank.md・neutral-question-criteria.md・spec-state-contract.md)、plugin の agents/system-spec-hearing-auditor.md の差分、依存先として apply-spec-transition.py、validate-coverage-matrix.py の `_inference_only_findings`、validate-knowledge-graph.py の required-info 接地、required-info-catalog.json、fixtures/hearing-turns.json と expected-final-spec-state.json、assign 側の aspect-criteria.md 1a、plugin の C11 hook の Bash 判定部。前回 low の解消状況: (1) 開いた問の N4 解釈は解消。(2) 『論点が揃った turn』は解消。(3) fixture と回復手順は一部解消 (回復手順は入った、fixture は F3 として残る)。(4) --require-basis の説明は SKILL.md と contract で解消、R2 5.3 だけが残る (F6)。(5) reopen 後の結び直しは解消、受け渡しの欄が残る (F4)。(6) SSOT 節は解消。(7) validate-spec-doc-sync.py の起動元は未解消 (F7)。確かめたこと: plugin の tests 591 passed、期待最終状態の fixture のゲート rc=0、required-info の ungrounded は空、参照先はすべて実在。判定理由: high・medium は 0 件で low 7 件だけなので verdict=PASS、next_action=none。PASS の射程は design claim (文書・prompt・writer / validator の契約の静的な設計 adequacy) に限る。実際のヒアリングで監査側が開いた問を N4 違反と判定しないことや、利用者との往復が想定どおり進むことまでは保証しない。"
+}

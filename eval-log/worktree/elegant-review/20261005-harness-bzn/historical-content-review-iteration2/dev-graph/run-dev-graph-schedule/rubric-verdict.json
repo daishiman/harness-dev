@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-schedule",
+    "skill_md_sha256": "427c1050aaa503de56552ddb660ba3ae4d8fd906d6571b3800baf4d6a3f73811"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T22:31:13Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "prompts 3 本 (R1-elicit, R2-plan, R3-schedule) の共有化で skill 固有行の欠落は 0 件。削除行はすべて prompt-common-layers.md に逐語で存在するか、5.1 行から fork 方針の接尾辞を外しただけで、Layer 1-3 の入力契約・出力契約・責務境界・受入条件、5.2 の目的と達成ゴール、5.3 の固有 checklist は全本に残っている (機械照合で不一致 0)。",
+      "共通層と固有記述の合成規則が prompt 側に明示されている (5.3 は共通項目と固有項目がすべて YES のときに到達)。共通 reference の 5.4 にある最大 5 周は SKILL.md の goal_seek.max_loops=5 と一致し、共通層と skill 固有記述の矛盾は 0 件。",
+      "reference_refs に prompt-common-layers.md を追加したことで、prompts が依存する共通層が SKILL.md 上で宣言され、live-trial-verdict.py の behavior closure (_BEHAVIOR_REF_KEYS が reference_refs を含む) に入る。共通層の書き換えが本 skill の live trial verdict を stale にするという reference の「読み方」節の主張は実装と一致している。",
+      "frontmatter の *_refs はすべて実在し、prompt-common-layers.md を宣言する SKILL.md 9 件と prompts から参照する skill 9 件が双方向に一致する。本 skill の script_refs (resolve-repo-context.py、schedule-graph.py、manage-worktree-lease.py、bd-bridge.py) は今回の差分で変更されておらず、依存関係の変化は reference_refs の追加だけである。"
+    ],
+    "negative_feedback": [
+      "[low / smell] 各 prompt から `### 5.4 実行方式` の節見出しと本文が消え、Layer 5 の参照行へ委譲された。seven-layer-format.md の l5-contract v2.0.0 は従属者一覧で全 prompts を Layer 5 節構成 (5.1-5.4) の従属者としているため、prompt 単体で読むと 5.4 が欠ける。prompt-common-layers.md の Layer 5 節と合成すれば 4 節がそろい、lint-agent-prompt-content.py --mode prompt も通るため実行不能にはならず low に留める。prompt 側に 5.4 の見出しと参照行だけを残すと、単体で読んでも節構成が閉じる。",
+      "[low / smell] 「(skill root 起点)」の注記が Layer 4 の参照行にだけあり、Layer 5〜7 の参照行には無い。prompt ファイルのある prompts/ を起点に `../../references/` を解くと skills/references/ を指し、実在しない。SKILL.md の reference_refs と Layer 3 の「skill-relative reference から解決」で補えるため low に留める。4 本の参照行で起点の注記をそろえると読み違いの余地が消える。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は dev-graph prompts の共通層共有化 (未コミット差分) を受けた再束縛であり、content-review-protocol §incremental の focused combined review を独立 evaluator の 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: SKILL.md の差分 (frontmatter に reference_refs を 1 行追加) と prompts 3 本の差分を全行読み、削除行が prompt-common-layers.md に逐語で存在するか、5.1 行の fork 接尾辞を外しただけかを機械照合した (不一致 0)。新規 reference prompt-common-layers.md は全文を読み、frontmatter *_refs の実在と、宣言 skill と参照 skill の双方向一致を検査した。lint-agent-prompt-content.py --mode prompt (dev-graph 41 files)、lint-vendored-ssot.py、lint-sibling-plugin-paths.py はいずれも OK。採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは構造規範 (frontmatter *_refs の実在、prompts の Layer 4-7 参照行と 5.3 固有項目の存在) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。high severity は 0 件、未解決の medium 以上 finding も 0 件であるため PASS とする。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。live trial 系の証跡 (criteria-test/scenario-verdict.json など) の target sha は本 review では更新されない。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  }
+}

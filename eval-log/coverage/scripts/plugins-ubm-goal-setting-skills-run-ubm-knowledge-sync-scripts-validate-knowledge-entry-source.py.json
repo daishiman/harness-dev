@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 2b41e7eb4e63f109ed25d5632777b3de9383a1e1f5b220e4d3d61fff41bbd7c9 をレビュー。実行検証あり）。範囲: 全151行（0.1.1）と tests/test_validate_knowledge_entry_source.py（sha256 1b8814ce…5682、18本）、呼び出す側の references/agent-knowledge-extractor-steps.md L124-130（sha256 dcf7d65d…ce8c）。前回の記録（0.1.0、sha256 6ee8da44…c692、PASS 99）からの差分: --knowledge-dir の空文字・空白だけを exit 2 にし（L97-99）、相対パスも exit 2 にした（L100-104）。読めないファイルを unreadable に分け、「NG: 読めないファイルが N 件ある（中のエントリは検査していない）」という別の見出しで出す（L131-135）。source キーが無いエントリは `<file>#entries[id=...]: source が無い` と出す（L69-71）。前回の記録は、0.1.0 で `--knowledge-dir \"\"` が Path('.') になり cwd を検査して 0 を返しうる欠陥を見落としていた（空文字を probe に入れていなかった）。今回はそこを重点に試した。確かめたこと（scratchpad の fixture、cwd を変えて実行）: 空文字は、cwd が不正なデータの dir でも正しいデータの dir でも rc=2 で、cwd を検査しない。空白だけ・タブと改行・`--knowledge-dir=`（= 形式の空）も rc=2（空文字のメッセージ）。`.`・`good`・`./good`・`~/x`・先頭に空白のある絶対パスは rc=2（絶対パスを求めるメッセージ）。存在しない絶対パスとファイルの絶対パスは rc=2、値の欠け・引数なし・未知の option は argparse の usage で rc=2、--help は rc=0。`..` を含む絶対パスは解決されて rc=0（読むだけなので害は無い）。見出しの分け方: 読めないファイルと契約の外れが両方あると、2つの見出しが別々に出て rc=1。読めないファイルだけなら外れの見出しは出ず rc=1。読めないファイルと正しいファイルが並ぶときも rc=1 で、通らない。UTF-8 でないファイルも読めないファイルの見出しに入る。壊れた schema.json は ERROR で rc=1。source の欠けは「source が無い」、source が配列は「単一の object でない (list)」、type が enum の外（monthly-fb・academy-x）は「enum に無い値」で、どれも場所付き。前回の probe（29通り）を流し直すと結果は前回と同じで、回帰は無い。traceback はどの入力でも出ない。実物の plugins/ubm-goal-setting/knowledge（絶対パス）は「OK: カテゴリ 129 ファイル・982 エントリ…」で rc=0、knowledge/ は書き換わらない（git status で確認）。tests 18 passed（空文字・空白・相対・`.` の parametrize と、見出しを分ける test を含む）。plugins/ubm-goal-setting/tests 全体 1053 passed。lint-script-frontmatter（rc=0）と lint-script-naming（VIOLATION=0）は OK。header の inputs・outputs も、絶対パスだけを受けることと exit 2 の理由に合わせて直っている。前回の指摘 [低]（読めないファイルを契約の外れとまとめて数える、source の欠けを NoneType と出す）は解消した。付記（減点しない）: `\"source\": null` のようにキーがあって値が null のときは「単一の object でない (NoneType)」と出る。キーはあるので、これは正しい言い方。観察（減点しない。この script の外の話）: 親（run-ubm-knowledge-sync の Phase3、workflow-manifest の phase2 の gate）は、正式保存の前にこの validator を決定論で実行し直しておらず、knowledge-extractor の検査受領書に頼っている。案: Phase3 で check-knowledge-split と並べて実行する。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

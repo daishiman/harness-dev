@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# name: derive-route-build-obligations
+# purpose: handoff の route を、route ごとの inventory・task-graph の切片に基づく生成 obligation の contract へ変換する
+# inputs:
+#   - argv: --handoff <json>（必須） [--repo-root <dir>] [--out <json>]
+# outputs:
+#   - stdout: contract JSON（--out を付けたときは同じ内容をそのファイルにも書く）
+#   - exit: 0=OK / 2=入力を読めない・handoff や task graph の形が不正 (型違い・repo の外の参照・id の衝突を含む)
+# requires-python: ">=3.10"
+# dependencies: []
+# contexts: [A, C]
+# network: false
+# write-scope: --out の指定先のみ
+# ///
 """Compile handoff routes into incremental generative obligations.
 
 The compiler extracts route-local slices from inventory and task-graph files, so
@@ -42,6 +56,59 @@ def _safe_id(raw: str) -> str:
     return re.sub(r"[^A-Za-z0-9:._-]+", "-", raw)
 
 
+def _inside_repo(path: Path, repo_root: Path, label: str) -> str:
+    """path (resolve 済み) が repo の中にあれば repo 相対の posix パスを返す。外なら ValueError。"""
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError as exc:
+        raise ValueError(f"{label} is outside repo: {path}") from exc
+
+
+def _graph_list(task_graph: object, *keys: str) -> list:
+    """task graph の配列の欄 (nodes/tasks/edges) を読む。配列でなければ ValueError にする。
+
+    最初の空でない欄を使う (`nodes or tasks` と同じ)。整数や object を黙って反復して
+    traceback を出さないため、型はここで確かめる。
+    """
+    if not isinstance(task_graph, dict):
+        return []
+    for key in keys:
+        value = task_graph.get(key)
+        if value:
+            if not isinstance(value, list):
+                raise ValueError(f"task graph の {key} が配列でない: {type(value).__name__}")
+            return value
+    return []
+
+
+def _route_id(route: object) -> str:
+    """route の id を文字列で返す。object でない route、id の無い・空・型違いの route は ValueError。"""
+    raw = route.get("id") if isinstance(route, dict) else None
+    if isinstance(raw, bool) or not isinstance(raw, (str, int)) or not str(raw).strip():
+        raise ValueError(f"route は空でない id (文字列か整数) を持つ object でなければならない: {str(route)[:120]}")
+    return str(raw)
+
+
+def _route_dependencies(route: dict, route_id: str) -> list[str]:
+    deps = route.get("depends_on")
+    if deps is None:
+        return []
+    if not isinstance(deps, list) or any(isinstance(d, bool) or not isinstance(d, (str, int)) for d in deps):
+        raise ValueError(f"route {route_id} の depends_on は id の配列でなければならない: {deps!r}"[:200])
+    return [str(d) for d in deps]
+
+
+def _reject_duplicate_obligation_ids(contract: dict) -> dict:
+    """_safe_id で別の id が同じ obligation id に潰れたら ValueError (例: 'a/b' と 'a-b')。"""
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for obligation in contract["obligations"]:
+        (duplicates if obligation["id"] in seen else seen).add(obligation["id"])
+    if duplicates:
+        raise ValueError(f"obligation id が衝突する (id の記号は '-' に置き換わる): {sorted(duplicates)}")
+    return contract
+
+
 def _node_stage(node: dict) -> str:
     """direct-task node を第1稿と本番のどちらへ割り当てるか決める。
 
@@ -82,7 +149,7 @@ def _inventory_component(inventory: object, route_id: str) -> object:
 def _task_nodes(task_graph: object, route_id: str) -> list[dict]:
     if not isinstance(task_graph, dict):
         return []
-    nodes = task_graph.get("nodes") or task_graph.get("tasks") or []
+    nodes = _graph_list(task_graph, "nodes", "tasks")
     return [
         item for item in nodes
         if isinstance(item, dict)
@@ -93,14 +160,14 @@ def _task_nodes(task_graph: object, route_id: str) -> list[dict]:
 def _graph_nodes(task_graph: object) -> list[dict]:
     if not isinstance(task_graph, dict):
         return []
-    nodes = task_graph.get("nodes") or task_graph.get("tasks") or []
+    nodes = _graph_list(task_graph, "nodes", "tasks")
     return [item for item in nodes if isinstance(item, dict)]
 
 
 def _graph_edges(task_graph: object, edge_type: str) -> list[dict]:
     if not isinstance(task_graph, dict):
         return []
-    edges = task_graph.get("edges") or []
+    edges = _graph_list(task_graph, "edges")
     return [item for item in edges if isinstance(item, dict) and item.get("type") == edge_type]
 
 
@@ -411,6 +478,8 @@ def compile_execution_units(
 
 
 def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
+    if not isinstance(handoff, dict):
+        raise ValueError(f"handoff が object でない: {type(handoff).__name__}")
     routes = handoff.get("routes")
     if not isinstance(routes, list) or not routes:
         raise ValueError("handoff.routes must be a non-empty array")
@@ -419,10 +488,7 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
     if not plan_dir.is_absolute():
         plan_dir = repo_root / plan_dir
     plan_dir = plan_dir.resolve()
-    try:
-        plan_dir_rel = plan_dir.relative_to(repo_root).as_posix()
-    except ValueError as exc:
-        raise ValueError(f"plan_dir is outside repo: {plan_dir}") from exc
+    plan_dir_rel = _inside_repo(plan_dir, repo_root, "plan_dir")
 
     inventory = _load_optional(plan_dir / "component-inventory.json")
     task_graph_ref = handoff.get("task_graph_ref")
@@ -431,22 +497,26 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
         task_graph_path = plan_dir / str(task_graph_ref["path"])
     elif isinstance(task_graph_ref, str):
         task_graph_path = plan_dir / task_graph_ref
+    if task_graph_path is not None:
+        # plan_dir と同じく repo の境界で止める (絶対パスや .. で repo の外の graph を読まない)
+        task_graph_path = task_graph_path.resolve()
+        _inside_repo(task_graph_path, repo_root, "task_graph_ref")
     task_graph = _load_optional(task_graph_path) if task_graph_path else None
     task_graph = normalize_fixed_execution_types(task_graph)
 
     graph_nodes = _graph_nodes(task_graph)
     if any(node.get("execution_kind") == "verification-claim" for node in graph_nodes):
-        return compile_execution_units(
+        return _reject_duplicate_obligation_ids(compile_execution_units(
             handoff,
             task_graph,
             inventory,
             plan_dir=plan_dir,
             plan_dir_rel=plan_dir_rel,
             repo_root=repo_root,
-        )
+        ))
 
-    route_ids = {str(route.get("id")) for route in routes if isinstance(route, dict)}
-    if "" in route_ids or len(route_ids) != len(routes):
+    route_ids = {_route_id(route) for route in routes}
+    if len(route_ids) != len(routes):
         raise ValueError("route ids must be non-empty and unique")
     slug = str(handoff.get("target_plugin_slug") or "plugin")
     build_dir = Path("eval-log") / slug / "build"
@@ -454,11 +524,12 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
         build_dir /= str(handoff["cycle_id"])
     obligations = []
     for route in routes:
-        route_id = str(route["id"])
+        route_id = _route_id(route)
+        route_deps = _route_dependencies(route, route_id)
         target = str(route.get("build_target") or "")
         if not target:
             raise ValueError(f"route {route_id} has no build_target")
-        unknown = set(route.get("depends_on") or []) - route_ids
+        unknown = set(route_deps) - route_ids
         if unknown:
             raise ValueError(f"route {route_id} has unknown dependencies: {sorted(unknown)}")
         inputs: list[dict] = []
@@ -467,10 +538,7 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
         selected_spec = task_spec or spec
         if selected_spec:
             candidate = (plan_dir / str(selected_spec)).resolve()
-            try:
-                rel = candidate.relative_to(repo_root).as_posix()
-            except ValueError as exc:
-                raise ValueError(f"route spec is outside repo: {candidate}") from exc
+            rel = _inside_repo(candidate, repo_root, "route spec")
             if candidate.is_file():
                 inputs.append({"path": rel, "required": True, "context": True})
         parameters = {
@@ -500,7 +568,7 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
             "activation": "changed",
             # route build は成果物そのもの。第1稿から外すと「使える実体」が存在しない。
             "stage": DRAFT_STAGE,
-            "depends_on": [f"build:{_safe_id(dep)}" for dep in route.get("depends_on") or []],
+            "depends_on": [f"build:{_safe_id(dep)}" for dep in route_deps],
             "inputs": inputs,
             "parameters": parameters,
             "expected_evidence_paths": [
@@ -573,11 +641,11 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
             "minimum_confidence": 0.9,
             "reuse": True,
         })
-    return {
+    return _reject_duplicate_obligation_ids({
         "schema_version": 1,
         "subject": f"{slug}:route-build",
         "obligations": obligations,
-    }
+    })
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -591,14 +659,19 @@ def main(argv: list[str] | None = None) -> int:
         handoff_path = Path(args.handoff).resolve()
         handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
         contract = derive_contract(handoff, repo_root, handoff_path)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
-        print(f"[ERROR] {exc}", file=sys.stderr)
+        rendered = json.dumps(contract, ensure_ascii=False, indent=2) + "\n"
+        if args.out:
+            out = Path(args.out)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(rendered, encoding="utf-8")
+    except (OSError, ValueError, RecursionError) as exc:
+        # ValueError は JSONDecodeError・UnicodeDecodeError と形の不正を含む。RecursionError は深い入れ子の JSON
+        print(f"[ERROR] {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
-    rendered = json.dumps(contract, ensure_ascii=False, indent=2) + "\n"
-    if args.out:
-        out = Path(args.out)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(rendered, encoding="utf-8")
+    except (TypeError, AttributeError, KeyError) as exc:
+        # 上で確かめていない欄の型違い。traceback を出さず、入力の不正として返す
+        print(f"[ERROR] 入力の形が不正: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
     print(rendered, end="")
     return 0
 

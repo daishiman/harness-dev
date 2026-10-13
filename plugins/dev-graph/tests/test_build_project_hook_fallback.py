@@ -111,6 +111,34 @@ class ProjectHookFallbackTest(unittest.TestCase):
         self.assertEqual(len(again["already_present"]), len(wanted()))
         self.assertEqual(self.manifests(), [Path(applied["manifest_path"]).name])
 
+    def test_wiring_from_before_minus_b_is_the_same_wiring_and_rerun_stays_noop(self) -> None:
+        # 0.1.17 までの apply は `python3 "…"` を書いた。plugin を上げて hooks.json が `python3 -B "…"` になっても、
+        # 再実行は stray と誤らず、書き換えもしない (冪等)。
+        code, applied = self.run_cli("--mode", "apply")
+        self.assertEqual(code, 0, applied)
+        legacy = self.settings.read_text(encoding="utf-8").replace('"python3 -B \\"', '"python3 \\"')
+        self.assertEqual(legacy.count('"python3 \\"'), len(wanted()))
+        self.settings.write_text(legacy, encoding="utf-8")
+        before = self.settings.read_bytes()
+
+        code, again = self.run_cli("--mode", "apply")
+        self.assertEqual((code, again["status"], again["write_count"]), (0, "noop", 0), again)
+        self.assertEqual(len(again["already_present"]), len(wanted()))
+        self.assertTrue(all(row.get("legacy_wiring") is True for row in again["already_present"]), again)
+        self.assertEqual(self.settings.read_bytes(), before)
+        self.assertEqual(self.manifests(), [Path(applied["manifest_path"]).name])
+
+        # 古い形と今の形が両方あれば、同じ script が2回走る二重登録なので書かずに止める。
+        both = json.loads(legacy)
+        both["hooks"]["SessionStart"].append(json.loads(json.dumps(both["hooks"]["SessionStart"][-1])))
+        both["hooks"]["SessionStart"][-1]["hooks"][0]["command"] = \
+            both["hooks"]["SessionStart"][-1]["hooks"][0]["command"].replace("python3 ", "python3 -B ", 1)
+        self.write(self.settings, both)
+        doubled = self.settings.read_bytes()
+        code, refused = self.run_cli("--mode", "apply")
+        self.assertEqual((code, refused["code"], refused["write_count"]), (1, "merge_not_additive", 0), refused)
+        self.assertEqual(self.settings.read_bytes(), doubled)
+
     def test_rollback_restores_exact_bytes_is_idempotent_and_refuses_drift(self) -> None:
         config_before = self.config.read_bytes()
         code, applied = self.run_cli("--mode", "apply")

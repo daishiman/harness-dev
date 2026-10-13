@@ -1,0 +1,337 @@
+F..F........FF.FF.F....F....F.                                           [100%]
+=================================== FAILURES ===================================
+_ test_independent_scenario_receipt_covers_exact_criteria[C02-run-dev-graph-node-skill_path1-criteria_ids1] _
+
+component_id = 'C02', skill_name = 'run-dev-graph-node'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C18-run-dev-graph-status-skill_path7-criteria_ids7] _
+
+component_id = 'C18', skill_name = 'run-dev-graph-status'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-status/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C03-run-dev-graph-sync-skill_path2-criteria_ids2] _
+
+component_id = 'C03', skill_name = 'run-dev-graph-sync'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5', ...}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C14-run-dev-graph-decompose-skill_path5-criteria_ids5] _
+
+component_id = 'C14', skill_name = 'run-dev-graph-decompose'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5', ...}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C05-run-dev-graph-render-skill_path4-criteria_ids4] _
+
+component_id = 'C05', skill_name = 'run-dev-graph-render'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-render/SKILL.md')
+criteria_ids = {'IN1', 'OUT1'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C01-run-dev-graph-init-skill_path0-criteria_ids0] _
+
+component_id = 'C01', skill_name = 'run-dev-graph-init'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-init/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C15-run-dev-graph-schedule-skill_path6-criteria_ids6] _
+
+component_id = 'C15', skill_name = 'run-dev-graph-schedule'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-schedule/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C19-run-dev-graph-system-spec-skill_path8-criteria_ids8] _
+
+component_id = 'C19', skill_name = 'run-dev-graph-system-spec'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md')
+criteria_ids = {'IN1', 'OUT1'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C04-run-dev-graph-requirements-skill_path3-criteria_ids3] _
+
+component_id = 'C04', skill_name = 'run-dev-graph-requirements'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-requirements/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+>       assert receipt["verdict"] == "PASS"
+E       AssertionError: assert 'FAIL' == 'PASS'
+E         - PASS
+E         + FAIL
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:101: AssertionError
+=========================== short test summary info ============================
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C02-run-dev-graph-node-skill_path1-criteria_ids1]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C18-run-dev-graph-status-skill_path7-criteria_ids7]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C03-run-dev-graph-sync-skill_path2-criteria_ids2]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C14-run-dev-graph-decompose-skill_path5-criteria_ids5]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C05-run-dev-graph-render-skill_path4-criteria_ids4]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C01-run-dev-graph-init-skill_path0-criteria_ids0]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C15-run-dev-graph-schedule-skill_path6-criteria_ids6]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C19-run-dev-graph-system-spec-skill_path8-criteria_ids8]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C04-run-dev-graph-requirements-skill_path3-criteria_ids3]
+9 failed, 21 passed in 0.84s

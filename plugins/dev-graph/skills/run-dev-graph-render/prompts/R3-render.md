@@ -13,23 +13,27 @@
 
 ### 入力契約
 
-- input digest付きmodel、repo内output。
+- input digest付きmodel、repo内output、任意でfeatureごとのC02 registration receipt。
 
 ### 出力契約
 
-- 単一自己完結HTMLとcounts/output digest receipt。
+- 単一自己完結HTMLとcounts/output digest receipt。registration receiptを渡したときは`receipt_checks`も返す。
+- receiptと合わないときはHTMLを出さず、stderrのJSON (`receipt_mismatches[]`) を理由として返す。
 
 ### 責務境界
 
 - 外部runtime参照を生成せずgraph/contentを書かない。
+- receiptとの不一致を、receiptを外して描き直すことで回避しない。
 
 ### 受入条件
 
 - external script/link 0、SVG/inline JSとfeature X/Y progressがbrowser live trialで表示され、receiptのnode/edge/progress countsとinput/output digestが実体に一致する。
+- registration receiptを渡したfeatureは、Y (子task数) が`expected_count`と、子taskの集合が`node_ids`と、子taskの`source_lineage.source_digest`がreceiptの`source_digest`と一致する。X (doneの子task数) は`applied_count`と照合しない。
 
 ## Layer 3: インフラ層
 
 - 使用資産: render-graph-htmlとbrowser live trial。
+- feature の registration receipt があれば --receipt で渡す。不一致の exit 1 のときは成果物を出さずに止め、理由を返す。`--receipt PATH` は feature ごとに繰り返して渡せる。exit 1 の stderr は `{"ok": false, "error": "receipt_mismatch", "receipt_mismatches": [...]}` で、各要素の `feature`/`problems`/`missing_ids`/`extra_ids`/`expected_count`/`actual_count`/`digest_mismatch_ids` がどの feature の何が合わないかを示す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -52,11 +56,13 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] external script/link 0、SVG/inline JSとfeature X/Y progressがbrowser live trialで表示され、receiptのnode/edge/progress countsとinput/output digestが実体に一致する
+- [ ] registration receiptを渡したときは`receipt_checks[].problems`がすべて空である。不一致のexit 1ではHTMLを出していない
 
 ## Layer 6: オーケストレーション層
 
 - 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - HTML/receiptを呼出元へ返す。
+- `--receipt` の不一致で exit 1 のときは、成果物を出さずに止め、stderr の `receipt_mismatches` を理由として呼出元へ返す。
 
 ## Layer 7: UserInput
 

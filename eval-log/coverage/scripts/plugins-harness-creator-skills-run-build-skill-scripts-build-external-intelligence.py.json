@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 b1ef328b09ff3ab6f69e58280d50574d0eef415a0e43af286a9734e109e25933 をレビュー。実行検証あり）。範囲: 24 行の転送 script 全体と git diff origin/main（+16/-47: PEP 723 header の追加、旧来の inline の resolver と _forward を plugin_resources.forward_external_intelligence(globals(), provider=\"skill-governance-adapters\") に置き換え、mode 100644→100755）、転送先 plugins/skill-governance-adapters/scripts/build-external-intelligence.py の header、plugins/harness-creator/scripts/plugin_resources.py 62〜88 行。前回レビュー版（sha256 6af4fb3a…、commit 6257499e）からの違いは、24 行で provider を keyword で渡すようにしたことだけ。build-external-intelligence-runtime.py とは name・purpose・docstring だけが違う（diff で確認）。確かめたこと: 実 repo で --help rc0、引数なし rc2、未知の subcommand rc2、--state-dir <scratch> init rc0（scratch の下に entries/・events.jsonl・index.json だけを作る）、search --query x rc0。python3 -I で import すると CANONICAL_PATH は skill-governance-adapters の正本を指し、main など転送先の名前が namespace に写る。provider を置かない隔離配置（iso1: extract-plugin-root.py あり、iso2: なし。HOME・CLAUDE_CONFIG_DIR・CODEX_HOME を scratch に向ける）では --help でも RuntimeError の traceback で rc1。header の contexts [A, C, E]・network false・requires-python >=3.10 は転送先と合い、write-scope「転送先に従う」は runpy で同じ process に実行する実装どおり。lint-script-frontmatter（run-build-skill/scripts を指定）OK checked=30。pytest: plugins/harness-creator/tests/test_verification_evidence_input_guards.py と tests/scripts-plugins の test_harness_creator__external_intelligence・__external_intelligence_hook・__external_intelligence_runtime・__auto_record_lesson・__validate_build_plan で 139 passed、__plugin_resources・__lint_knowledge_loop_r4 を含む別の組で 219 passed（3.11）。指摘（前回から残る）: [低] provider を解決できない環境では plugin_resources.py 78 行の RuntimeError が traceback のまま rc1 で出る。header は RuntimeError を宣言しているが、転送先の exit 1（blocked・invalid・corrupt）と区別できず、--help も同じになる（iso1・iso2 で再現）。直し方: 転送の前に RuntimeError を捕まえ、1 行の [ERROR] と転送先と重ならない exit で返す。DEDUCTION: provider が無いときの traceback -3 → 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

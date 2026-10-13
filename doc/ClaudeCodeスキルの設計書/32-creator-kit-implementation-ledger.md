@@ -1,10 +1,12 @@
 # 32. Creator Kit Implementation Ledger
 
-最終更新: 2026-05-18
+最終更新: 2026-10-10（パス表記を 2026-07-12 の plugins/ 再編後の実物へ更新）
+
+> **置き場所の注記**: 本章は 2026-07-12 のコミット `4cd8faf8`（件名「skills/ 単一構成から plugins/ マルチプラグイン構成へ全面再編」）で repo に入り、その時点の本文（最終更新 2026-05-18）は kit の置き場所を `creator-kit/` と書いていた。しかし `creator-kit/` はこの repo の git 履歴に一度も現れない（`git log --all -- creator-kit` は 0 件）。kit が `creator-kit/` から移されたかどうかは git では確かめられない（[34章](./34-plugin-governance-roadmap.md) 冒頭も同じ扱い）。kit の今の置き場所は次のとおり: 配布の入口（manifest・install/uninstall/migrate）は `installers/`、kit 同梱の規約と README は `installers/harness-creator-kit/`、Skill 本体は `plugins/<plugin>/skills/`、lint は `plugins/skill-governance-lint/scripts/`、機械処理設定は `plugins/skill-governance-config/config/`。repo 直下の `scripts/`・`.claude/skills/`・`.claude/config/` には plugins への symlink と通常ファイルが混ざっている（2026-10-10 時点。`scripts/` 直下は symlink 13・通常ファイル 71、`.claude/skills/` は symlink 94・aidd-agent-kit 由来の通常ディレクトリ 21、`.claude/config/` は symlink 2・通常ファイル 1）。以下の表とマップはこの置き場所で書く。
 
 ## 目的
 
-本章は、`creator-kit/` と関連メタSkill基盤の実装状態を、設計書側から追跡するための台帳である。
+本章は、harness-creator-kit（旧 `creator-kit/`。現在は `installers/` と `plugins/`）と関連メタSkill基盤の実装状態を、設計書側から追跡するための台帳である。
 
 23〜31章は「どう設計するか」を定義する。本章は「その設計が現在どこまで実装・評価・運用化されたか」を記録する。重複した仕様を増やさないため、詳細仕様は各章と実ファイルを正本とし、本章は時系列、判断、検証結果、残課題だけを扱う。
 
@@ -14,10 +16,10 @@
 |---|---|---|
 | メタSkill構造 | `23-meta-skill-architecture.md` | 実装済みSkill群とkit境界の状態 |
 | 運用Runbook | `25-meta-skill-runbook.md` | E2E入口と移行状態 |
-| script規約 | `28-script-execution-model.md` / `creator-kit/CONVENTIONS.md` | Bash/Python 2層規約の採用状態 |
+| script規約 | `28-script-execution-model.md` / `installers/harness-creator-kit/CONVENTIONS.md` | Bash/Python 2層規約の採用状態 |
 | 出力routing / secret | `31-output-routing-adapter-architecture.md` | adapter / Keychain / audit の実装状態 |
-| kit構成 | `creator-kit/manifest.json` | 配布対象、禁止依存、version |
-| 実装現物 | `.claude/skills/`, `scripts/`, `creator-kit/` | ファイル実在と未移行項目 |
+| kit構成 | `installers/manifest.json` | 配布対象、禁止依存、version |
+| 実装現物 | `plugins/<plugin>/`（skills・scripts・config の実体）、`installers/`、`scripts/`・`.claude/skills/`・`.claude/config/`（plugins への symlink と通常ファイルの混在。内訳は冒頭の注記） | ファイル実在と未移行項目 |
 
 ## 全体テーマ
 
@@ -26,8 +28,8 @@
 | 軸 | 意味 | 機械強制 |
 |---|---|---|
 | 安全 | APIキーを LLM context に渡さない | Keychain + `scripts/secrets/audit_secret_leak.py` |
-| 可搬 | 別repoでメタSkill群を再利用できる | `creator-kit/manifest.json` + install/migrate/uninstall |
-| 規律 | Bash/Pythonと依存関係を統一ルールで管理する | `creator-kit/CONVENTIONS.md` + `creator-kit/scripts/lint-forbidden-deps.py` |
+| 可搬 | 別repoでメタSkill群を再利用できる | `installers/manifest.json` + `installers/{install,migrate-from-project,uninstall}.sh` |
+| 規律 | Bash/Pythonと依存関係を統一ルールで管理する | `installers/harness-creator-kit/CONVENTIONS.md` + `plugins/skill-governance-lint/scripts/lint-forbidden-deps.py` |
 | 横展開 | 新しい共通Skill/script/configを manifest に反映する | `scripts/build-manifest-registration-plan.py` + `lint-manifest-contents.py` |
 
 通底する設計原則は「文書から仕組みへ」である。ルールをMarkdownだけに閉じず、可能な限り script、manifest、gate、lint、audit に落とす。
@@ -41,47 +43,41 @@
 | C | 出力先routing基盤を Port/Adapter で設計 | `ref-output-routing`, `scripts/adapters/sink_*.py`, `resolve_route.py`, `dispatch.py` | `31` |
 | D | APIキー保護機構を実装 | `keychain_helper.py`, `audit_secret_leak.py`, `scripts/secrets/README.md`, `sanitize_error()` 方針 | `31` / `28` |
 | E | 出力routing/adapter章を追加 | `31-output-routing-adapter-architecture.md` | `README` / `31` |
-| F | 別repo再利用用 kit を新設・本移行 | `creator-kit/manifest.json`, `install.sh`, `uninstall.sh`, `migrate-from-project.sh`, `README.md`, kit実体 + symlink | `23` / `25` |
-| G | Bash/Python統一ルールを正典化 | `creator-kit/CONVENTIONS.md` | `28` |
+| F | 別repo再利用用 kit を新設・本移行 | manifest・install/uninstall/migrate・README・kit実体 + symlink（本章の当初の記述では `creator-kit/` に新設。今は `installers/` と `plugins/` にあり、この構成は 2026-07-12 の `4cd8faf8` から。`creator-kit/` からの移行かは git で確かめられない） | `23` / `25` |
+| G | Bash/Python統一ルールを正典化 | 当時の kit 内 `CONVENTIONS.md`（現在は `installers/harness-creator-kit/CONVENTIONS.md`。repo 直下の `CONVENTIONS.md` は別文書の用語規約） | `28` |
 | H | 機械処理設定を JSON に統一し YAML依存を除去 | `manifest.json`, `adapter-registry.json`, `output-routing.json.example`, stdlib `json` 実装 | `28` / `31` |
 | I | creator-kit と規約を再度 elegant-review | YAML残骸、現状違反リスト、`sys.exit(main())` 欠落を是正。`lint-forbidden-deps.py` 追加 | `28` / `25` / 本章 |
-| J | 旧YAML実ファイルを削除 | `creator-kit/manifest.yaml`、governance params、rubric/proposal/4条件の内部YAMLをJSON化。GitHub Actions `.yml` と Claude frontmatter YAML は仕様例外 | `28` / `31` |
+| J | 旧YAML実ファイルを削除 | 旧 `manifest.yaml`、governance params、rubric/proposal/4条件の内部YAMLをJSON化。GitHub Actions `.yml` と Claude frontmatter YAML は仕様例外 | `28` / `31` |
 
 ## 現在の成果物マップ
 
 ```text
-xl-skills/
-├── creator-kit/
-│   ├── CONVENTIONS.md
-│   ├── manifest.json
-│   ├── README.md
-│   ├── install.sh
+<repo root>/
+├── installers/
+│   ├── manifest.json                     ← kit 構成の正本
+│   ├── install.sh / install.ps1
 │   ├── uninstall.sh
 │   ├── migrate-from-project.sh
-│   ├── config/
-│   │   ├── adapter-registry.json
-│   │   └── output-routing.json.example
-│   └── scripts/
-│       └── lint-forbidden-deps.py
-├── .claude/skills/                       ← creator-kit/skills/* への symlink
-│   ├── run-skill-create -> ../../creator-kit/skills/run-skill-create
-│   ├── ref-output-routing -> ../../creator-kit/skills/ref-output-routing
-│   └── other meta-skills -> ../../creator-kit/skills/*
-├── scripts/
-│   ├── adapters/
-│   │   ├── resolve_route.py
-│   │   ├── dispatch.py
-│   │   └── sink_{local,http,notion,sheets,slack}.py
-│   └── secrets/
-│       ├── keychain_helper.py
-│       ├── audit_secret_leak.py
-│       └── README.md
+│   └── harness-creator-kit/
+│       ├── CONVENTIONS.md
+│       ├── README.md
+│       └── migrate-log/                  ← 本実行ログの置き場（現状 .gitkeep のみ）
+├── plugins/
+│   ├── harness-creator/skills/           ← run-skill-create・ref-output-routing ほかメタSkill実体
+│   ├── skill-governance-lint/scripts/    ← lint-forbidden-deps.py・lint-manifest-contents.py
+│   ├── skill-governance-config/config/   ← adapter-registry.json・output-routing.json.example・governance-policy.json
+│   ├── skill-governance-adapters/scripts/adapters/  ← resolve_route.py・dispatch.py・sink_{local,http,notion,sheets,slack}.py
+│   └── skill-governance-secrets/scripts/secrets/    ← keychain_helper.py・audit_secret_leak.py・README.md
+├── .claude/skills/                       ← 94件は plugins/*/skills/* への symlink、21件は aidd-agent-kit 由来の通常ディレクトリ
+├── .claude/config/                       ← adapter-registry.json・output-routing.json.example は plugins/skill-governance-config/config/ への symlink、
+│                                           meta-harness-observables.json は通常ファイル（plugins 側と同じ内容の複製）
+├── scripts/                              ← adapters/・secrets/ の中身と、直下の13本（lint・hook 等）は plugins への symlink。直下の残り71本は通常ファイル
 └── doc/ClaudeCodeスキルの設計書/
     ├── 31-output-routing-adapter-architecture.md
     └── 32-creator-kit-implementation-ledger.md
 ```
 
-`creator-kit/manifest.json` が kit 構成の正本である。上記マップは人間向けの俯瞰であり、実際の install/migrate 対象は manifest を優先する。
+`installers/manifest.json` が kit 構成の正本である。上記マップは人間向けの俯瞰であり、実際の install/migrate 対象は manifest を優先する。
 
 ## 重要な設計判断
 
@@ -91,10 +87,10 @@ xl-skills/
 | E2E入口 | `run-skill-create` 新設 | 要望から完成までのゲート付き自動連鎖が不足していたため | `25` |
 | 出力先拡張 | Port/Adapter | Skill数の M x N 爆発を避けるため | `31` |
 | APIキー保護 | macOS Keychain | LLM context、repo、履歴に平文secretを載せないため | `31` |
-| 別repo再利用 | `creator-kit/` | 文書ではなく仕組みとして配布するため | `23` / `25` |
+| 別repo再利用 | kit 化（旧 `creator-kit/`、現 `installers/` + `plugins/`） | 文書ではなく仕組みとして配布するため | `23` / `25` |
 | 言語規約 | Bash lifecycle + Python stdlib logic の2層 | 既存scriptを全面再実装せず、責務で混在を制御するため | `28` |
 | 機械処理設定 | JSON正本 | PyYAML / yq 依存を避け、stdlib only を守るため | `28` / `31` |
-| 禁止依存 | `manifest.json` に宣言し lint で検査 | 禁止リストを文書だけでなくデータにするため | `creator-kit/manifest.json` |
+| 禁止依存 | `manifest.json` に宣言し lint で検査 | 禁止リストを文書だけでなくデータにするため | `installers/manifest.json` |
 | manifest登録 | 登録案生成 + ユーザー承認 + apply | 自然言語依頼でも横展開対象を漏らさず、勝手な広域反映を防ぐため | `23` / `25` |
 
 ## レビュー履歴
@@ -120,7 +116,7 @@ xl-skills/
 | C1 矛盾なし | PASS | YAML機械処理設定は JSON に統一。APIキー保護は Keychain 参照に統一 |
 | C2 漏れなし | PASS | Phase A-J、3軸、レビュー2周、残課題を本章に集約 |
 | C3 整合性あり | PASS | Bash/Python 2層、Sink Contract、manifest正本の用語を README と接続 |
-| C4 依存関係整合 | 暫定PASS | manifest一致lint、禁止依存lint、secret audit は `.github/workflows/harness-creator-kit-ci.yml` でCI接続済み。ただし `migrate-from-project.sh` の本実行ログ未取得、`audit_secret_leak.py` docstring 未更新のため 25章L174「暫定PASS」制度を継承する |
+| C4 依存関係整合 | 暫定PASS | manifest一致lint、禁止依存lint、secret audit は `.github/workflows/harness-creator-kit-ci.yml` でCI接続済み。ただし `migrate-from-project.sh` の本実行ログ未取得、`audit_secret_leak.py` docstring 未更新のため 25章の「暫定PASS」制度（L22・L189）を継承する |
 
 GitHub Actions の workflow ファイル (`.yml`) と Claude Code の `SKILL.md` frontmatter YAML は外部仕様に従う例外である。kit内部の機械処理設定、rubric、proposal、4条件定義は JSON を正本とする。
 
@@ -128,21 +124,21 @@ GitHub Actions の workflow ファイル (`.yml`) と Claude Code の `SKILL.md`
 
 | 優先 | 課題 | 完了条件 | 関連 | 検証方法 |
 |---|---|---|---|---|
-| P0 | `migrate-from-project.sh` 本実行 | dry-run ではなく本実行し、実行ログを `creator-kit/migrate-log/` に保存する | `25` / `creator-kit/migrate-from-project.sh` | ログファイルの存在確認 |
-| P0 | `lint-forbidden-deps.py` / `audit_secret_leak.py` の CI接続確認と正式実行 | `harness-creator-kit-ci.yml` で exit 0 を確認し、CIグリーンのスクリーンショットまたはActionsログURLを記録 | `.github/workflows/harness-creator-kit-ci.yml` | `gh run list` で直近CI成功を確認 |
-| P1 | `audit_secret_leak.py` docstring 微更新 | docstring の purpose・inputs・outputs を最新挙動に合わせて更新する | `creator-kit/scripts/secrets/audit_secret_leak.py` | `python3 -m py_compile` 後 docstring の内容目視確認 |
+| P0 | `migrate-from-project.sh` 本実行 | dry-run ではなく本実行し、実行ログを `installers/harness-creator-kit/migrate-log/` に保存する（2026-10-10 時点で `.gitkeep` のみ。未完） | `25` / `installers/migrate-from-project.sh` | ログファイルの存在確認 |
+| P0 | `lint-forbidden-deps.py` / `audit_secret_leak.py` の CI接続確認と正式実行 | `harness-creator-kit-ci.yml` で exit 0 を確認し、CIグリーンのActionsログURLを記録（CI 接続は済み: 同 workflow が `plugins/skill-governance-lint/scripts/lint-forbidden-deps.py` と `plugins/skill-governance-secrets/scripts/secrets/audit_secret_leak.py` を実行する。グリーンのログ URL は未記録） | `.github/workflows/harness-creator-kit-ci.yml` | `gh run list` で直近CI成功を確認 |
+| P1 | `audit_secret_leak.py` docstring 微更新 | docstring の purpose・inputs・outputs を最新挙動に合わせて更新する | `plugins/skill-governance-secrets/scripts/secrets/audit_secret_leak.py` | `python3 -m py_compile` 後 docstring の内容目視確認 |
 | P2 | `output-routing.json` のプロジェクト固有実設定作成 | `.claude/config/output-routing.json.example` を元に、secret本体を含まない実設定を作る | `31` | ファイル存在 + JSON parse 確認 |
-| P2 | `update-yaml-spec.yml` の取得実装 | 公式frontmatter仕様の取得スクリプトを実装し、cacheを自動更新する | `ref-yaml-spec-fetcher` | スクリプト実行 + cache ファイル更新確認 |
-| P2 | manifest登録案のrole自動補完改善 | `build-manifest-registration-plan.py` が新規Skillの role を TODO ではなく要約できる | `creator-kit/scripts/build-manifest-registration-plan.py` | `build-manifest-registration-plan.py` 出力の role フィールド確認 |
-| P1 | script命名規約違反の段階リネーム (13件 VIOLATION + 10件 PENDING_RENAME) | `python3 scripts/lint-script-naming.py --report` の VIOLATION リスト全件を 28章 §4.1 動詞に統一。33章 P1 ワークフローに従う | `28` / `33` / `scripts/lint-script-naming.py` | lint exit 0 |
-| P1 | governance-policy.json の pre-commit / CI接続 | `guard-change-category.py` 実装、`.github/workflows/governance-check.yml` 新設、blast radius lint 自動実行 | `33` / `creator-kit/config/governance-policy.json` | CIで lint-script-naming + lint-forbidden-deps が green |
+| 完了 | `update-yaml-spec.yml` の取得実装 | 公式frontmatter仕様の取得スクリプトを実装し、cacheを自動更新する（`.github/workflows/update-yaml-spec.yml` が取得 script を実行済み） | `ref-yaml-spec-fetcher` | スクリプト実行 + cache ファイル更新確認 |
+| P2 | manifest登録案のrole自動補完改善 | `build-manifest-registration-plan.py` が新規Skillの role を TODO ではなく要約できる | `plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py` | `build-manifest-registration-plan.py` 出力の role フィールド確認 |
+| P1 | script命名規約違反の段階リネーム | VIOLATION 全件の解消は達成済み（2026-10-10 の `python3 scripts/lint-script-naming.py` は VIOLATION 0・exit 0）。残りは PENDING_RENAME（例外登録済みの旧名）を 28章 §4.1 動詞へ段階リネームすること。33章 P1 ワークフローに従う。件数は lint の出力を正とする | `28` / `33` / `scripts/lint-script-naming.py` | lint exit 0 かつ PENDING の減少 |
+| 完了 | governance-policy.json の pre-commit / CI接続 | `guard-change-category.py` 実装、`.github/workflows/governance-check.yml` 新設、blast radius lint 自動実行（同 workflow が `guard-change-category.py --base origin/main` と `lint-script-naming.py` を実行する） | `33` / `plugins/skill-governance-config/config/governance-policy.json` | CIで lint-script-naming + lint-forbidden-deps が green |
 
 ## 更新ルール
 
-1. `creator-kit/manifest.json` の skill/script/config が変わったら、本章の成果物マップと設計判断を確認する。
+1. `installers/manifest.json` の skill/script/config が変わったら、本章の成果物マップと設計判断を確認する。
 2. `31` の Sink Contract、Keychain方式、adapter registry が変わったら、本章の3軸と残課題を確認する。
-3. `28` または `creator-kit/CONVENTIONS.md` の禁止依存が変わったら、`manifest.json` と `lint-forbidden-deps.py` を同時に更新する。
-4. 新しい Skill / hook / lint / adapter / config を `creator-kit` に追加したら、`build-manifest-registration-plan.py` で登録案を出し、ユーザー承認後に `--apply` する。
+3. `28` または `installers/harness-creator-kit/CONVENTIONS.md` の禁止依存が変わったら、`manifest.json` と `lint-forbidden-deps.py` を同時に更新する。
+4. 新しい Skill / hook / lint / adapter / config を kit（`plugins/` 配下で `installers/manifest.json` に載せるもの）に追加したら、`build-manifest-registration-plan.py` で登録案を出し、ユーザー承認後に `--apply` する。
 5. elegant-review を再実行したら、レビュー履歴と現在の判定を更新する。
 6. 本章に詳細仕様を重複記述しない。詳細が必要なら該当章または実ファイルへ委譲する。
 7. 本章の C1-C4 判定は CI接続未完の項目があれば自動的に「暫定PASS」に降格する。実装者が単独で「PASS」を書き換えてはならない (自己採点回避)。

@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-plugin-package-check",
+    "skill_md_sha256": "f15eea5b9c23eb9d70eac9b15732cbf4efe5763389654c7da5a39598f9ce2f0f"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 2,
+    "dependency_break": 1,
+    "smell": 2
+  },
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context, iteration 4)",
+  "reviewed_at": "2026-10-04T23:38:21Z",
+  "iterations": 4,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "記述規約 (28章 §4 の script 命名): wrapper は scripts/lint-pkg-009.py になり、lint-script-naming.py は VIOLATION=0 で exit 0。manifest・SKILL.md・R1・resource-map・test の参照がそろって追随し、旧名への参照は残っていない。iteration 3 の high は解消した。",
+      "fail-closed と IN1/IN2: 兄弟 plugin が無い配置で、PKG-009 と PKG-015 は推測 path で lint を呼ばずに status: fail のログを残し、aggregate-pkg-findings.py がそれを fail と数えて exit 1、pkg_check_failed を 1 行だけ emit した (scratchpad の配置実験)。集約結果は run-report schema を通過した。",
+      "runtime root policy: run-pkg-015.py・sandbox-plugin-lifecycle.py・aggregate-pkg-findings.py の REPO_ROOT は validate-plugin-permissions.py と同じ _resolve_repo_root() になり、install 先 (parents[5] が marketplace のディレクトリ) では cwd に落ちることを配置実験で確かめた。兄弟 lint の解決は同梱 resolver に任せている。",
+      "Progressive Disclosure と依存関係整合: resource-map の human_readable は実在する prompt を指し、scripts 節は skill 内 wrapper 3 本を含む。external_scripts は `plugin:skill-governance-lint/...` の論理 ID。iteration 3 の low 6 件はすべて解消した。"
+    ],
+    "negative_feedback": [
+      "low (inconsistency, 今回の修正で残した): sandbox-plugin-lifecycle.py の external_lint_path() は SystemExit で止まり、main() にある RuntimeError → PKG-010 fail JSON の変換を素通りする。fail-closed なので安全上は許容できるが、PKG-010 のログに停止理由が残らず、PKG-009/015 と扱いがそろっていない。",
+      "low (smell, 今回の修正で追加): lint-pkg-009.py の停止時の exit 2 は、R1 §4.1 の「exit 2 = PKG-001 CLI 不在 → skip」や lint-external-refs.py の usage error (exit 2) と同じ値で、run-pkg-015.py (exit 1) ともそろっていない。集約は JSON の status を見るので偽の PASS にはならないが、意味が文書化されていない。",
+      "low (dependency_break, 今回の差分外): lint-external-refs.py の通常の --json 出力には pkg_id と status が無く、aggregate-pkg-findings.py は PKG-009 を常に skip と数える (配置実験で確認)。R2 は skip を PASS にしないので偽の PASS にはならない。HEAD からの既存の問題。",
+      "low (inconsistency, 今回の差分外, 別 skill): ref-pkg-contract の pkg-id-catalog.yaml と SKILL.md 表の PKG-009 の script は repo 直下の `scripts/lint-external-refs.py` で、本 skill が起動する lint-pkg-009.py と一致しない (PKG-015 は wrapper を指している)。",
+      "low (smell, 今回の差分外): SKILL.md 187 行目の「開each」は文字化け (breach と読める)。"
+    ],
+    "iteration": 4,
+    "iteration_limit": 5,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "iteration 4 (再評価)。elegance verdict と同じ context で行った focused combined review を rubric 観点 (fail-closed、記述規約整合、runtime root policy、依存関係整合、L0 rubric の high severity) へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。ref-skill-design-rubric の rule を機械的にすべて実行したわけではない。iteration 3 は iteration_limit 3 に達して INCOMPLETE で止まり、依頼文によれば 2026-10-05 に人間の利用者が「指摘を直し、上限を 5 に引き上げて再評価する」ことを選んだ。承認の主体は利用者で、builder の独断ではない。これに基づき iteration_limit を 5、iteration と iterations を 4 とした。lint-content-review.py は iteration_limit に整数であることだけを求め、上限値や iteration との大小、frontmatter の feedback_contract.max_iterations (3 のまま) との一致は検査しない。5 は今回のループに限った人間承認の例外である。iteration 3 の high 1 件と low 6 件はすべて解消し、今回の修正が持ち込んだ high と medium は無い。sandbox-plugin-lifecycle.py に SystemExit を残したことは、fail-closed なので安全上は許容できるが、扱いをそろえる余地がある (low)。差分外の low 3 件は記録だけで判定の対象外。high と medium が 0 件なので PASS とした。決定論の確認: 指定 3 test ファイル 15 passed、test_root__lint_script_naming.py 31 passed、lint-script-naming.py VIOLATION=0、audit-capability-parity.py --all exit 0、lint-prompt-contract-drift.py --all fatal=0、lint-sibling-plugin-paths.py exit 0、scratchpad の cache 形配置での兄弟あり・兄弟なしの実行と集約 (run-report schema 通過)。PASS の射程は design claim (静的設計 adequacy) と、実行した決定論チェックの結果に限る。"
+}

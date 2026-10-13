@@ -5,7 +5,8 @@
 挙動の要約:
   upstream rubric_version (ref-skill-design-rubric/rubric.json) と eval-log/ 配下の
   過去評価ログの rubric_version を比較し、**major bump** (upstream major > past major)
-  が起きているレコードを再評価対象として列挙する。実行はせず常に exit 0。
+  が起きているレコードを再評価対象として列挙する。実行はせず、走査できれば exit 0、
+  upstream rubric が無い・版を解釈できないときは exit 2。
 
 検証方針:
   - 純関数 (parse_semver / iter_records / extract_version / extract_skill_identity) は
@@ -15,7 +16,8 @@
     に差し替え、全分岐 (rubric 不在 / version 解析不能 / eval-dir 不在 / eval-dir 空 /
     major bump 無 / major bump 有 / .json array / .jsonl 混在 / minor bump 非対象) を
     in-process で網羅し stdout/stderr/戻り値 (int) を assert。
-  - CLI 経路 (__main__ guard 経由 sys.exit) は subprocess(sys.executable) で exit 0 を実測。
+  - CLI 経路 (__main__ guard 経由 sys.exit) は subprocess(sys.executable) で、兄弟 rubric を
+    解決して exit 0 になることを実測。
 
 network: false / keychain: なし / 実 repo 書換: なし (tmp_path + monkeypatch のみ)。
 """
@@ -192,15 +194,15 @@ def _patch(monkeypatch, tmp_path, *, upstream=None, write_upstream=True):
     return rubric, eval_dir
 
 
-def test_main_returns_zero_when_upstream_missing(monkeypatch, tmp_path, capsys):
+def test_main_returns_two_when_upstream_missing(monkeypatch, tmp_path, capsys):
     _patch(monkeypatch, tmp_path, write_upstream=False)
-    assert MOD.main() == 0
+    assert MOD.main() == 2
     assert "upstream rubric not found" in capsys.readouterr().err
 
 
-def test_main_returns_zero_when_upstream_version_unparseable(monkeypatch, tmp_path, capsys):
+def test_main_returns_two_when_upstream_version_unparseable(monkeypatch, tmp_path, capsys):
     _patch(monkeypatch, tmp_path, upstream=None)  # rubric_version キー無し
-    assert MOD.main() == 0
+    assert MOD.main() == 2
     assert "could not parse upstream rubric_version" in capsys.readouterr().err
 
 
@@ -282,7 +284,119 @@ def test_main_files_sorted_and_count_includes_jsonl(monkeypatch, tmp_path, capsy
 
 
 # ── CLI subprocess (exit code 実測 / __main__ guard) ─────────────────────────
-def test_cli_always_exits_zero_and_emits_output():
-    res = subprocess.run([sys.executable, str(SCRIPT)], text=True, capture_output=True)
+def test_cli_exits_zero_with_resolved_rubric():
+    res = subprocess.run([sys.executable, str(SCRIPT)], text=True, capture_output=True, cwd=ROOT)
+    assert res.returncode == 0, res.stderr
+    assert "# upstream rubric_version:" in res.stdout
+
+
+# ── 独立レビュー (FAIL 78) の指摘の再発防止 ──────────────────────────────────
+def test_non_utf8_upstream_rubric_exits_2_without_traceback(monkeypatch, tmp_path, capsys):
+    rubric, _ = _patch(monkeypatch, tmp_path, write_upstream=False)
+    rubric.write_bytes(b"\xff\xfe{}")
+    assert MOD.main() == 2
+    assert "could not read upstream rubric" in capsys.readouterr().err
+
+
+def test_iter_records_skips_non_utf8_and_deeply_nested_logs(tmp_path):
+    bad = tmp_path / "bad.json"
+    bad.write_bytes(b"\xff\xfe[]")
+    deep = _w(tmp_path / "deep.jsonl", "[" * 100000 + "\n" + json.dumps({"rubric_version": "1.0.0"}) + "\n")
+    assert list(MOD.iter_records(bad)) == []
+    assert list(MOD.iter_records(deep)) == [{"rubric_version": "1.0.0"}]
+
+
+def test_eval_log_path_that_is_a_file_exits_2(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _patch(monkeypatch, tmp_path, upstream="2.0.0")
+    _w(eval_dir, "not a directory")
+    assert MOD.main() == 2
+    assert "not a directory" in capsys.readouterr().err
+
+
+def test_hook_mode_never_fails_on_undecodable_stdin(tmp_path):
+    res = subprocess.run(
+        [sys.executable, str(SCRIPT), "--post-tool-use", "--rubric", str(tmp_path / "none.json")],
+        input=b"\xff\xfe" + b"[" * 100000, capture_output=True,
+    )
     assert res.returncode == 0
-    assert (res.stdout + res.stderr).strip() != ""
+    assert b"Traceback" not in res.stderr
+
+
+# ── 0.2.0: 最新の記録で判定・rubric_id・score ログの契約・汎用 version・読み飛ばしの報告 ──
+def _patch_id(monkeypatch, tmp_path, upstream="2.0.0", rubric_id="skill-design"):
+    rubric, eval_dir = _patch(monkeypatch, tmp_path, write_upstream=False)
+    _wj(rubric, {"rubric_id": rubric_id, "rubric_version": upstream})
+    return eval_dir
+
+
+def test_skill_reevaluated_at_current_major_is_not_a_target(monkeypatch, tmp_path, capsys):
+    # 同じスキルの古い記録が残っていても、最新の記録が現行の major なら対象にしない
+    eval_dir = _patch_id(monkeypatch, tmp_path)
+    _w(eval_dir / "log.jsonl",
+       json.dumps({"skill_name": "run-a", "rubric_version": "1.4.0"}) + "\n"
+       + json.dumps({"skill_name": "run-a", "rubric_version": "2.0.0"}) + "\n"
+       + json.dumps({"skill_name": "run-b", "rubric_version": "1.0.0"}) + "\n"
+       + json.dumps({"skill_name": "run-b", "rubric_version": "1.2.0"}) + "\n")
+    assert MOD.main() == 0
+    out = capsys.readouterr().out
+    assert "run-a" not in out
+    # 対象のスキルは1行だけ、最新の過去版で出す
+    assert out.count("run-b") == 1
+    assert "run-b (from log.jsonl)\tpast=1.2.0\tcurrent=2.0.0" in out
+
+
+def test_records_of_another_rubric_id_are_not_compared(monkeypatch, tmp_path, capsys):
+    eval_dir = _patch_id(monkeypatch, tmp_path)
+    _wj(eval_dir / "gate2.json", {"rubric_id": "skill-intake-gate2", "rubric_version": "1.0.0", "skill": "g"})
+    _w(eval_dir / "harness-creator" / "run-x-score.jsonl",
+       json.dumps({"skill_name": "run-x", "rubric": {"rubric_id": "other", "rubric_version": "1.0.0"}}) + "\n"
+       + json.dumps({"skill_name": "run-y", "rubric": {"rubric_id": "skill-design", "rubric_version": "1.0.0"}}) + "\n")
+    assert MOD.main() == 0
+    out = capsys.readouterr().out
+    targets = [line for line in out.splitlines() if "\tpast=" in line]
+    assert len(targets) == 1 and "run-y (from harness-creator/run-x-score.jsonl)\tpast=1.0.0" in targets[0]
+    assert "# records of another rubric_id (not compared with skill-design): 2" in out
+
+
+def test_score_log_requires_nested_rubric_version(monkeypatch, tmp_path, capsys):
+    # score ログの契約は入れ子の rubric.rubric_version。最上位のキーで補わず、読めない行として数える
+    eval_dir = _patch_id(monkeypatch, tmp_path)
+    _w(eval_dir / "harness-creator" / "run-x-score.jsonl",
+       json.dumps({"skill_name": "run-x", "rubric_version": "1.0.0"}) + "\n")
+    assert MOD.main() == 2
+    captured = capsys.readouterr()
+    assert "run-x (from" not in captured.out
+    assert "unreadable score records" in captured.err
+
+
+def test_generic_version_key_is_ignored_in_eval_log_root(monkeypatch, tmp_path, capsys):
+    # handoff.json などの version は rubric の版ではない
+    eval_dir = _patch_id(monkeypatch, tmp_path)
+    _wj(eval_dir / "handoff.json", {"skill_name": "run-h", "version": "1.0.0"})
+    assert MOD.main() == 0
+    assert "run-h" not in capsys.readouterr().out
+    assert MOD.extract_version({"version": "1.0.0"}, generic=False) is None
+
+
+def test_skipped_log_files_and_lines_are_reported(monkeypatch, tmp_path, capsys):
+    eval_dir = _patch_id(monkeypatch, tmp_path)
+    (eval_dir).mkdir(parents=True, exist_ok=True)
+    (eval_dir / "bad.json").write_bytes(b"\xff\xfe[]")
+    (eval_dir / "mixed.jsonl").write_bytes(
+        b'{"skill_name": "run-m", "rubric_version": "1.0.0"}\n\xff\xfe\n{broken\n')
+    assert MOD.main() == 0
+    captured = capsys.readouterr()
+    # 壊れた行の前の有効な行は拾う
+    assert "run-m (from mixed.jsonl)" in captured.out
+    assert "skipped 3 unreadable log file(s)/line(s): bad.json, mixed.jsonl:2, mixed.jsonl:3" in captured.err
+
+
+def test_unencodable_output_does_not_crash(tmp_path):
+    rubric = _wj(tmp_path / "rubric.json", {"rubric_version": "2.0.0"})
+    _w(tmp_path / "eval-log" / "log.jsonl", json.dumps({"skill_name": "run-ü", "rubric_version": "1.0.0"}) + "\n")
+    res = subprocess.run(
+        [sys.executable, str(SCRIPT), "--rubric", str(rubric), "--eval-log-dir", str(tmp_path / "eval-log")],
+        capture_output=True, text=True, env={"PYTHONIOENCODING": "ascii", "PATH": "/usr/bin:/bin"},
+    )
+    assert res.returncode == 0, res.stderr
+    assert "run-\\xfc (from log.jsonl)" in res.stdout

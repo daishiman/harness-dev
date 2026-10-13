@@ -2,6 +2,30 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`skill-intake` plugin の変更履歴を記録する。skill-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.1.23] - 2026-10-12
+
+- 版番号だけを上げた。中身は 0.1.22 と同じ。利用者の手元の local marketplace には、0.1.22 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
+## [0.1.22] - 2026-10-10
+
+0.1.20（節なし）からの変更をまとめる（0.1.21 も節を持たない）。P5（真の目的の深掘り）を SKIP した経路でも後段が止まらないようにし、phase の失敗から再開する手順を契約にした。script は `python3` で明示して起動する形にそろえた。
+
+### Added
+
+- **`run-skill-intake/scripts/build-skipped-purpose.py`**: P5 を SKIP するとき、interview.json の回答を写した最小の purpose.json を作る（深掘りはせず、`techniques_used` に `skip:needs_excavation=false` の印を置く）。P6・P7・P11 が purpose.json を読み、無いと P11 の `decide-mode.py` が exit 3 で止まるため、SKIP しても作る。終了コードは 0 / 1 / 2 で、「真の課題」が空のときや abstract_answers が残るときは 1 を返し、そのときは `skill-intake-purpose-excavator` を起動する。workflow-manifest の resource `script-build-skipped-purpose`、agent の起動条件、`workflow-sequence.md` の表（P11 の入力を summary・purpose・options・kickoff と Notion 公開の記録にした）も追従した。
+- **SKIP した経路の検査**: `intake.schema.json` の enum に SKIP の印を足し、allOf で印と技法が混ざった記録を拒む。cross-field の検査 `excavation_skip_matches_interview`（`sibling_equals`）を足し、`validate_intake_schema.py` に `sibling_equals` を fail-closed で実装した。`handoff-contract.md` §3 に SKIP した経路の写し方の表を足し、`section_canonical_map.json` と `intake-final-source-map.yaml` も追従した。
+- **失敗からの再開**: phase が失敗したら、その attempt を FAIL 行（`status=FAIL`・`error`・`exit_code`、handoff なし）として trace に追記し、`workflow_status=failed` で止める。再開できるのは同じ phase の attempt+1 だけで、SKIP への切り替えはできない。`output.schema.json` は failed のとき minItems と artifacts を求めない。`validate-task-graph-progress.py` は FAIL の直後の SKIP を拒み、型の違いと UnicodeDecodeError を exit 1 にする。
+- **tests**: `test_runtime_scripts.py`・`test_skip_path_intake_schema.py`・`test_skipped_purpose.py` を足した。
+
+### Changed
+
+- **`run-skill-intake` の SKILL.md**: description を「manifest 駆動で要件書（intake）と Notion ページを生成したいとき」に改めた。Key Rule 3 を、違反時は停止し、自動で戻すのは retryOn / retryTo の P8→P4 だけ、と明確にした。intent 完了ゲートを P4 の完了条件にした。reference_refs（`ref-workflow-sequence` と `ref-handoff-contract`）を、実在するパス `references/workflow-sequence.md` と `references/handoff-contract.md` にした。
+- **script の起動の形**: 5つの SKILL.md（`run-skill-intake`・`run-intake-kickoff`・`run-intake-revise`・`run-intake-visualize`・`assign-notion-fidelity-evaluator`）の allowed-tools を `Bash` から `Bash(python3 *)` にし、script を `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/…"` で呼ぶ形にした。`run-skill-intake` の R1 は、trace・progress・intermediate の退避を mv ではなく `python3 -c 'import os,sys; os.replace(...)'` で行う。
+- **`run-intake-revise` の R1**: Notion PATCH は外部変更なので直接は実行せず、argv を SKILL.md の receipt flow（`preview` → 利用者の確認 → `authorize` → `execute`）に渡す。
+- **`run-intake-visualize` の R1**: `render_to_image.py` の位置引数（入力の `.mmd` か `.svg` と、出力の `.png`）と終了コード（0 / 2 / 3）を書き、SVG と Mermaid の呼び出し例を足した。`--allow-placeholder` は CI とテスト専用で、通常の運用では付けない。
+- **`assign-notion-fidelity-evaluator`**: `rubric_refs: [ref-output-routing]` を外し、completeness_exempt を足した（採点は `granularity-rubric.md`・`fidelity-check-rules.md`・`validate-notion-fidelity.py` で行う）。
+- **他 plugin の正本の追従**: `scripts/extract-plugin-root.py`（0.2.0。他プロジェクト専用の install を sibling と cache の候補からも除く）と `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を正本に合わせた。`artifact-delivery.json` の guard runtime 固定値（`runner_sha256`）を、いまの guard runtime に合わせた。
+
 ## [0.1.2] - 2026-07-02
 
 統治レイヤ (composition/ROADMAP/EVALS) の追加と、elegant-review (30 思考法 × 4 条件) の指摘一括反映を含む品質リリース。

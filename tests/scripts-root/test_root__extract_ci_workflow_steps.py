@@ -8,8 +8,12 @@ validate-plugin-packages.py (PKG-007) をローカルが持たず、push 後の 
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import pathlib
+import re
+import shlex
+import subprocess
 import sys
 import textwrap
 
@@ -143,6 +147,59 @@ def test_render_step_header_and_cd(workflows):
     ]
 
 
+def test_literal_env_is_merged_and_shell_quoted_when_executed(tmp_path):
+    wf = tmp_path / "workflows"
+    literal = "it's $HOME $(printf injected) with spaces"
+    body = "import json, os; print(json.dumps({k: os.environ[k] for k in ['VALUE', 'LITERAL', 'NUMBER', 'BOOL']}))"
+    _write(wf / "pr.yml", json.dumps({
+        "on": "pull_request", "env": {"VALUE": "workflow", "LITERAL": literal},
+        "jobs": {"lint": {
+            "env": {"VALUE": "job", "NUMBER": 42, "BOOL": True},
+            "steps": [{"env": {"VALUE": "step"},
+                       "run": f"{shlex.quote(sys.executable)} -c {shlex.quote(body)}"}],
+        }},
+    }))
+    steps, skipped = MOD.build_steps(wf)
+    assert skipped == []
+    env = dict(os.environ, VALUE="local")
+    done = subprocess.run(["bash", "-c", MOD.render_step(steps[0])],
+                          env=env, capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout) == {"VALUE": "step", "LITERAL": literal, "NUMBER": "42", "BOOL": "true"}
+
+
+@pytest.mark.parametrize("name", ["BAD-NAME", "1VALUE", "VALUE; touch injected", ""])
+def test_invalid_env_name_is_an_input_error(tmp_path, name, capsys):
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", json.dumps({
+        "on": "pull_request", "jobs": {"lint": {"steps": [{"env": {name: "value"}, "run": "echo hi"}]}},
+    }))
+    assert MOD.main(["--out-dir", str(tmp_path / "out"), "--workflows-dir", str(wf)]) == 2
+    assert "invalid env name" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("scope", ["workflow", "job", "step"])
+def test_effective_working_directory_expression_is_skipped(tmp_path, scope):
+    wf = tmp_path / "workflows"
+    step = {"run": "echo hi"}
+    job = {"steps": [step]}
+    data = {"on": "pull_request", "jobs": {"lint": job}}
+    target = {"workflow": data, "job": job, "step": step}[scope]
+    if scope == "step":
+        target["working-directory"] = "${{ github.workspace }}"
+    else:
+        target["defaults"] = {"run": {"working-directory": "${{ github.workspace }}"}}
+    _write(wf / "pr.yml", json.dumps(data))
+    steps, skipped = MOD.build_steps(wf)
+    assert steps == []
+    assert len(skipped) == 1 and "working-directory" in skipped[0][1] and "GitHub" in skipped[0][1]
+    step["working-directory"] = "."
+    _write(wf / "pr.yml", json.dumps(data))
+    steps, skipped = MOD.build_steps(wf)
+    assert skipped == [] and steps[0].working_directory == "."
+
+
 def test_main_writes_files_and_skipped_tsv(workflows, tmp_path, capsys):
     out = tmp_path / "out"
     assert MOD.main(["--out-dir", str(out), "--workflows-dir", str(workflows)]) == 0
@@ -172,12 +229,104 @@ def test_main_fails_closed_when_no_pr_workflow(tmp_path):
     assert MOD.main(["--out-dir", str(tmp_path / "out"), "--workflows-dir", str(wf)]) == 1
 
 
+@pytest.mark.parametrize("text", [
+    "on: pull_request\njobs: {lint: {steps: [{run: echo hi}]\n",  # 閉じ括弧の欠落
+    "on: pull_request\njobs:\n  lint:\n    steps:\n      - run: 'unterminated\n",
+    "- on: pull_request\n- jobs: {}\n",  # root が list
+    "just a string\n",  # root が scalar
+])
+def test_unreadable_or_non_mapping_workflow_is_an_input_error(tmp_path, text, capsys):
+    """YAML の構文エラーや root の型違いは traceback (rc 1) ではなく入力エラー rc 2 で止める。"""
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", text)
+    assert MOD.main(["--out-dir", str(tmp_path / "out"), "--workflows-dir", str(wf)]) == 2
+    err = capsys.readouterr().err
+    assert "invalid workflow input" in err and "pr.yml" in err
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("jobs", [
+    ["lint"],  # jobs が list
+    {"lint": "echo hi"},  # job が scalar
+    {"lint": {"steps": {"run": "echo hi"}}},  # steps が mapping
+    {"lint": {"steps": ["echo hi"]}},  # 段が scalar
+    {"lint": {"defaults": ["run"], "steps": [{"run": "echo hi"}]}},  # defaults が list
+])
+def test_wrongly_typed_jobs_or_steps_are_an_input_error(tmp_path, jobs, capsys):
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", json.dumps({"on": "pull_request", "jobs": jobs}))
+    assert MOD.main(["--out-dir", str(tmp_path / "out"), "--workflows-dir", str(wf)]) == 2
+    assert "invalid workflow input" in capsys.readouterr().err
+
+
+def test_reusable_workflow_job_is_recorded_in_skipped(tmp_path):
+    """job 単位の uses: は段を持たないが、黙って消さず理由付きで skipped に残す。"""
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", json.dumps({
+        "on": "pull_request",
+        "jobs": {
+            "shared": {"uses": "./.github/workflows/shared.yml"},
+            "lint": {"steps": [{"run": "echo hi"}]},
+        },
+    }))
+    steps, skipped = MOD.build_steps(wf)
+    assert [s.label for s in steps] == ["pr.yml:lint: step 1"]
+    assert len(skipped) == 1
+    label, reason = skipped[0]
+    assert label.startswith("pr.yml:shared:")
+    assert "./.github/workflows/shared.yml" in reason and "GitHub" in reason
+
+
+def test_every_pip_install_form_and_its_continuation_lines_are_stripped():
+    body = "\n".join([
+        "python3 -m pip install --quiet \\",
+        "    -r requirements-dev.txt \\",
+        "    pytest",
+        "pip install foo",
+        "  pip3 install bar",
+        "python -m pip install baz",
+        "python3.11 -m pip install qux",
+        "pytest -q",
+        "echo 'pip install is only text here'",
+        "pipx run thing",
+    ])
+    assert MOD._strip_local_only(body) == "\n".join([
+        "pytest -q",
+        "echo 'pip install is only text here'",
+        "pipx run thing",
+    ])
+
+
+def test_yaml_1_1_only_booleans_stay_strings_like_on_github(tmp_path):
+    """GitHub は YAML 1.2 で読むので yes / on は文字列。1.1 の真偽値に化けて "true" にしない。"""
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", """\
+        on:
+          pull_request:
+        env:
+          FLAG: yes
+          MODE: on
+          OFF_VALUE: off
+          REAL: true
+        jobs:
+          lint:
+            steps:
+              - run: echo hi
+        """)
+    steps, skipped = MOD.build_steps(wf)
+    assert skipped == []
+    assert steps[0].env == {"FLAG": "yes", "MODE": "on", "OFF_VALUE": "off", "REAL": "true"}
+
+
 def test_real_workflows_every_run_step_is_written_or_skipped_with_reason():
     """workflow に段を足せば、ローカルの一括検査にも自動で入る (手写しの一覧を持たない)。"""
     steps, skipped = MOD.build_steps(WORKFLOWS)
     total = 0
     for _, data in MOD.iter_pr_workflows(WORKFLOWS):
         for job in data["jobs"].values():
+            if "uses" in job:  # reusable workflow の job は job ごと 1 件 skipped に入る
+                total += 1
+                continue
             total += sum(1 for step in job.get("steps") or [] if "run" in step)
     assert len(steps) + len(skipped) == total
     # 除外は GitHub 上でしか評価できない段だけ。
@@ -206,10 +355,63 @@ def test_real_workflow_steps_run_on_macos_default_bash():
 def test_run_ci_checks_executes_extracted_steps():
     text = (ROOT / "scripts" / "run-ci-checks.sh").read_text(encoding="utf-8")
     assert "python3 scripts/extract-ci-workflow-steps.py --out-dir" in text
-    assert 'run "$label" bash "$step"' in text
-    assert 'run_soft "$label" bash "$step"' in text
+    assert 'run "$label" run_step "$job_env" "$step"' in text
+    assert 'run_soft "$label" run_step "$job_env" "$step"' in text
     # 除外した段はサマリに出す (黙って捨てない)。
     assert 'skipped.tsv' in text and "Skipped CI steps" in text
+
+
+def _run_step_function() -> str:
+    text = (ROOT / "scripts" / "run-ci-checks.sh").read_text(encoding="utf-8")
+    match = re.search(r"^run_step\(\) \{\n.*?^\}\n", text, re.MULTILINE | re.DOTALL)
+    assert match, "run-ci-checks.sh に run_step() が無い"
+    return match.group(0)
+
+
+def test_run_step_passes_github_env_to_later_steps_of_the_same_job(tmp_path):
+    """GITHUB_ENV に書いた KEY=VALUE が、同じ job の後ろの段に効く (PR #85)。
+
+    手元に GITHUB_ENV が無いと、PYTHONPYCACHEPREFIX を $RUNNER_TEMP へ向ける段が落ち、
+    後ろの段は __pycache__ をツリーへ書いて偽の失敗を出していた。
+    """
+    env_file = tmp_path / "job.env"
+    env_file.write_text("", encoding="utf-8")
+    writer = tmp_path / "001.sh"
+    writer.write_text(
+        'set -eo pipefail\necho "PYTHONPYCACHEPREFIX=$RUNNER_TEMP/pycache" >> "$GITHUB_ENV"\n'
+        'echo "1BAD=x" >> "$GITHUB_ENV"\necho "no-equal-sign" >> "$GITHUB_ENV"\n',
+        encoding="utf-8",
+    )
+    reader = tmp_path / "002.sh"
+    reader.write_text('set -eo pipefail\nprintf "%s" "$PYTHONPYCACHEPREFIX"\n', encoding="utf-8")
+    script = (
+        _run_step_function()
+        + f'export RUNNER_TEMP={tmp_path}/runner-temp\n'
+        + f'run_step {env_file} {writer}\n'
+        + f'run_step {env_file} {reader}\n'
+    )
+    proc = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={"PATH": os.environ["PATH"]},
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout == f"{tmp_path}/runner-temp/pycache"
+
+
+def test_run_step_does_not_leak_env_into_other_jobs(tmp_path):
+    job_a = tmp_path / "a.env"
+    job_a.write_text("ONLY_IN_A=1\n", encoding="utf-8")
+    job_b = tmp_path / "b.env"
+    job_b.write_text("", encoding="utf-8")
+    reader = tmp_path / "reader.sh"
+    reader.write_text('printf "[%s]" "${ONLY_IN_A:-}"\n', encoding="utf-8")
+    script = _run_step_function() + f"run_step {job_a} {reader}\nrun_step {job_b} {reader}\n"
+    proc = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False,
+        env={"PATH": os.environ["PATH"]},
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout == "[1][]"
 
 
 def test_pkg_007_blocks_shebang_script_without_exec_bit(tmp_path):

@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":86,"notes":"PostToolUse hook is sound; subprocess has timeout=5, capture_output; broad except is acceptable for a hook that must always exit 0 and logs to stderr; graceful no-op when plugin unresolved. Minor: no script frontmatter block."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 a510009462fa471915e28a5ba5af37b7c57fa09e9b75da691c8d28c8a0423c77 をレビュー。実行検証あり）。範囲: 全 66 行と origin/main からの差分（+19/-8。通知の 1 行を systemMessage の JSON 1 個に包んで出す形への変更と、payload の session_id を `--session-id=` で渡す変更）。呼び出し元の hooks.json（PostToolUse、matcher \"Skill\"）、公開 entry の hooks/notify-skill-end.py（execv で委譲する。header あり）、references/output-format.md と hook-wiring.md の表示経路の説明とも照合した。確かめたこと: tests/scripts-plugins/test_harness_creator__hook_notify_skill_end.py で 20 passed。HOME・XDG_CACHE_HOME・CLAUDE_CONFIG_DIR を scratch に向けて動かし、実際の ~/.cache には触れていない。版がずれた plugin では `{\"systemMessage\": \"alpha: (plugin.json: v1.0.0 / CHANGELOG: v1.2.0 — …)\"}` の JSON 1 個を出して exit 0。同じ session の 2 回目は何も出さない。session_id が無いと毎回出る。`-S1` のように `-` で始まる session_id もそのまま記録される。tool_name が Skill 以外、plugin の prefix 無し、skill 名が int、payload が配列・null・壊れた JSON、HARNESS_SKILLS_NOTIFY=off は、どれも exit 0 だった（例外は stderr に「[notifier-hook] skipped: …」の 1 行だけで、stdout は空）。--help や未知の引数は読まずに exit 0 で、stdin の JSON だけを受ける hook として docstring の「常に exit 0」と一致する。notifier は timeout=5 と capture_output 付きで呼ぶ。前回の指摘（frontmatter の block が無い）は残っている。指摘: [低] PEP 723 の `# /// script` header が無い。lint-script-frontmatter で missing block の違反になる（同じ dir の 3 本とも同じ）。CI（governance-check.yml の frontmatter 検査）の対象 dir に run-skill-update-notifier/scripts が入っていないので、CI では止まらない。直し方: 公開 entry と同じ形の header（contexts、network: false、write-scope: none、requires-python）を付け、この dir を CI の一覧に足す。[低] docstring 9〜10 行の「同じ session で同じ plugin の通知を 2 度出さない」は、notifier の cache が並行書き込みで記録を失うと守られない（notifier-check.py のレコードで再現した。20 本を並行に動かすと記録は 11 件しか残らない）。SKILL.md の Gotchas は A→B→A の制限しか書いていない。直し方: notifier 側の保存を直すか、docstring に「並行に動くと重複しうる」と書く。DEDUCTION: header なし -3、重複抑止の保証の書きすぎ -2 → 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -2,41 +2,38 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-youtube-ingest",
-    "skill_md_sha256": "a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59"
+    "skill_md_sha256": "4cea8a98f609a6a94ee6e16f7bf881f2ffeac331b9d1e4732474dc19f1fdf967"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T14:18:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 5
+    "smell": 0
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:26Z",
-  "iterations": 1,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
-      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
-      "『確認待ちの間は他の Bash が遮断されるので再解決しない』という注意は guard の実装 (完了も取消もされていない preview がある間、canonical でない Bash を deny する) と一致し、authorize や execute の直前に resolver を呼び直して遮断される事故を手順の側で先に塞いでいる。",
-      "<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則と、Runtime root contract の『literal placeholder を shell へ渡さない』規則の両方に収まり、置換規則を新しく増やしていない。allowed-tools は Bash で、resolver の呼び出しを妨げない。"
+      "前回の low 2件が直った。(1) L230-233 の anchor は `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py\" \"{resolved_progress_path}\" \"{resolved_intermediate_path}\"` になり、`$PLUGIN_ROOT` や `$progress_path` のシェル変数に頼らない。goal-seek-anchor-contract.md L19・L22 と一致する。(2) references/resource-map.yaml に normalized-source-schema.md の項目（topic と read_when）が足され、実在する4本の reference がすべて索引に載った。",
+      "Bash(python3 *) の下で、SKILL.md の実行指示（L230-233 の anchor、L237 の IN1 の check-youtube-backfill-completeness.py）はすべて python3 で始まる。prompts/R1-R4・references/*.md・workflow-manifest.json（L95・L123・L147 はすべて python3 始まり）・commands/ubm-youtube-ingest.md にも、python3 以外の実行ファイルを Bash で呼ぶ指示は無い。",
+      "取得（R2）・抽出とグラフ（R3）・同期と照合（R4）の分け方と、--sync の新着をスキル経由なら同じセッションで R3 まで反映し、スケジューラ直のときは次のスキル実行に持ち越すという線引きが、SKILL.md・commands/ubm-youtube-ingest.md・workflow-manifest.json の sync_mode_note で一致している。L178 で knowledge_candidates を担当役へ渡す記述も knowledge-retrieval-contract.md と一致する。",
+      "(a)〜(e) を1つの context でまとめて判定し、矛盾・漏れ・規約との不整合・依存の切れは見つからなかった。rubric の high は0件。"
     ],
-    "negative_feedback": [
-      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
-      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
-      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
-      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 43 行目)、今回の guard block への 12 行追記で本文 55 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。",
-      "[low / 差分外の既存・継続] combinators に with-goal-seek を宣言しているが、本文に『### ゴールシーク配線』見出しが無く、lint-goal-seek.py が WARN を出す (rc=0)。姉妹 skill の run-ubm-knowledge-sync とは書式が割れている。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+15/-3) のみ。guard block の差し替えで、親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う形へ変えた。 【読んだもの】SKILL.md 全文と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、ubm-goal-setting の .claude-plugin/plugin.json。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59 を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。goal_seek の fork が subagent である点と利用者確認の関係は既存設計のままで、本差分は触れていない (判定外)。(b) 漏れ 0 (medium 以上): PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: frontmatter の external_mutation_guard.runtime_ref は既に plugin: 記法。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で、継続分を含めて smell に計上した。criteria IN1 の検証経路は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
+  "notes": "incremental の focused review（content-review-protocol の「incremental: unresolved semantic batch」に従い、1つの context で (a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high severity が0件 をまとめて判定）で、exhaustive の30思考法は実施していない。比較の基準は commit 03050251（PR #85 の head）で、作業ツリーにある未 commit の修正を評価した。 必須確認: (1) allowed-tools は Bash(python3 *)。SKILL.md・references・prompts・関係する agents・command で、python3 以外の実行ファイルを Bash で呼ぶ指示や、`VAR=... python3` / `export` のように先頭が python3 でない形の指示が無いことを確かめた。(2) frontmatter の参照と本文の相対パスはすべて実在し（実行時に生成される knowledge/*.json の glob・knowledge-relations.json・knowledge-capability-graph.json だけ例外）、旧名（evaluate-design-rubric・search-knowledge.py・record-knowledge-usage・publish-staged-files）は eval-log と .beads の外に残っていない。(3) feedback_contract.criteria の全 id を criteria_evaluated に入れた。 テスト: plugins/ubm-goal-setting/tests を PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider で実行し 1025 passed。 criteria の評価: IN1（script）は test_check_youtube_backfill_completeness.py・test_youtube_provider.py、OUT1（test）は test_youtube_sync_oneshot.py・test_validate_knowledge_graph.py・test_e2e_graph_chain.py の通過と、sync-report-format.md の不変則との照合で評価した。 findings は0件なので PASS・next_action none とした。 採点コマンド: PYTHONDONTWRITEBYTECODE=1 python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --kind skill --target <SKILL.md>（L0 単独）と、同じ script に assign-skill-design-evaluator/references/rubric.json を足して --target <skill dir> --emit-hash（L0+L2）、python3 plugins/ubm-goal-setting/scripts/validate-design-rubric.py --repo-root . --target <SKILL.md>（L0+L1+L2）。 迷った例（FAIL にしていない・数えていない）: (i) 共有の references/knowledge-retrieval-contract.md L10・L45 の `$PLUGIN_ROOT` / `$KNOWLEDGE_DIR` / `$PROJECT_ROOT` はシェル変数で、今回 goal-seek-anchor-contract.md L22 に足された「シェル変数は Bash の呼び出しをまたいで残らないので、変数に頼らない」と書き方がずれる。コマンドの先頭は python3 のままなので事前許可は壊れていないことと、anchor 契約の文はアンカーのコマンドに限った文であることから、スキル固有の finding にしていない。揃えるなら `{resolved_plugin_root}` / `{resolved_knowledge_dir}` / `{resolved_project_root}` の形に書き換える（plugin 共有の修正）。 (ii) runtime-root-contract:v1 ブロック（リポジトリ全体の生成ブロック）の「シェルを呼ぶたびに、その中で解決済みの絶対パスを PLUGIN_ROOT に入れる」は、`PLUGIN_ROOT=... python3` や `export` の形で読まれると Bash(python3 *) に当たらない。本文のコマンドは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の形で python3 始まりのまま実行できるので FAIL にしない。直すなら生成元の scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION_JA を「解決済みの絶対パスをコマンドへ書き込み、先頭は python3 のままにする」へ。 (iii) 外部変更 guard の生成ブロックの `--project-root \"$PWD\"` は、guarded-publication-contract.md L10 が「$PWD を使う場合は cwd を project_root へ固定する」と定めており、PWD はシェルが毎回設定するので数えていない。 (iv) workflow-manifest.json L95・L123・L147 の command は `python3 scripts/...` / `python3 ../../scripts/...` のようにスキルのディレクトリからの相対パスで、runtime-root 契約の「cwd からルートを推測しない」と書き方がずれる。先頭は python3 で事前許可は壊れておらず、実際に実行する指示は SKILL.md L237 の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の形にあり、manifest は基準 commit から変わっていないので数えていない。揃えるなら manifest の command も `{resolved_plugin_root}/skills/run-ubm-youtube-ingest/scripts/...` の形にする。 BD-004（LLM judge）は description の3つのモード（URL 単発・全量・差分）が R1-source-mode の分岐に対応するので PASS と判定した。KL-002 は pending_human だが、今回の差分は knowledge/ を変えていないので判定していない。"
 }

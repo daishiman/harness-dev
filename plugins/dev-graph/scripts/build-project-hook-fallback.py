@@ -13,7 +13,8 @@
 """run-dev-graph-init の R5 project fallback。dev-graph を Claude plugin として有効化していない導入先だけで使う。
 
 hook の同一性は (event, matcher, command) とする。command は `${CLAUDE_PROJECT_DIR}/<link>/hooks/<script>` を
-引用符付きで固定するので、同じ組があれば登録済みとして足さない。settings に独自の識別 key は足さない。"""
+引用符付きで固定するので、同じ組があれば登録済みとして足さない。interpreter の `-B` の有無だけの違いは
+同じ組とみなす (`_wiring`)。settings に独自の識別 key は足さない。"""
 from __future__ import annotations
 
 import argparse
@@ -27,6 +28,10 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
+
+# 共有 harness は読取り専用 (C01 OUT3)。_common などの import より前に止め、子の起動にも -B を渡して
+# bytecode cache (__pycache__) を harness に書かない。
+sys.dont_write_bytecode = True
 
 from _common import ContractError, contained, dump, load_json, utc_now
 
@@ -63,7 +68,7 @@ class FallbackError(ContractError):
 
 
 def _context(repo_root: str, config: str, mode: str) -> dict[str, Any]:
-    argv = [sys.executable, str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root, "--config", config,
+    argv = [sys.executable, "-B", str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root, "--config", config,
             "--mode", mode]
     cp = subprocess.run(argv, text=True, capture_output=True, check=False)
     if cp.returncode:
@@ -113,6 +118,14 @@ def _identities(settings: dict[str, Any] | None) -> list[tuple[str, str | None, 
     return [(event, group.get("matcher"), hook["command"])
             for event, groups in (settings or {}).get("hooks", {}).items() for group in groups
             for hook in group["hooks"] if isinstance(hook, dict) and isinstance(hook.get("command"), str)]
+
+
+def _wiring(ident: tuple[str, str | None, str]) -> tuple[str, str | None, str]:
+    """同一性を比べる形。0.1.17 までの fallback は `python3 "…"` を書き、今は `python3 -B "…"` を書く。
+    hook script は自分で bytecode を止めるので、interpreter の `-B` の有無は同じ配線とみなす
+    (古い配線を stray と誤って再実行を止めず、書き換えもしない)。"""
+    event, matcher, command = ident
+    return event, matcher, re.sub(r"^python3 -B(?= )", "python3", command)
 
 
 def _desired(plugin_source: Path, link_rel: str) -> tuple[dict[str, list[dict[str, Any]]], set[str]]:
@@ -175,12 +188,13 @@ def _diagnose(scopes: dict[str, dict[str, Any] | None], scripts: set[str]) -> tu
 
 
 def _merge(project: dict[str, Any], desired: dict[str, list[dict[str, Any]]], scripts: set[str]) -> tuple[dict[str, Any], list, list]:
-    wanted = set(_identities({"hooks": desired}))
-    stray = [ident for ident in _identities(project) if _is_dev_graph(ident[2], scripts) and ident not in wanted]
+    wanted = {_wiring(ident) for ident in _identities({"hooks": desired})}
+    stray = [ident for ident in _identities(project) if _is_dev_graph(ident[2], scripts) and _wiring(ident) not in wanted]
     if stray:
         raise FallbackError("duplicate_registration", "project settings has a dev-graph hook other than the fallback wiring",
                             [{"code": "duplicate_registration", "scope": "project", "event": e, "matcher": m} for e, m, _ in stray])
-    present = set(_identities(project))
+    exact = set(_identities(project))
+    present = {_wiring(ident) for ident in exact}
     merged = json.loads(json.dumps(project))
     added: list[dict[str, Any]] = []
     kept: list[dict[str, Any]] = []
@@ -188,9 +202,9 @@ def _merge(project: dict[str, Any], desired: dict[str, list[dict[str, Any]]], sc
         for group in groups:
             ids = [(event, group.get("matcher"), hook["command"]) for hook in group["hooks"]]
             row = {"event": event, "matcher": group.get("matcher"), "commands": [command for _, _, command in ids]}
-            hits = sum(ident in present for ident in ids)
+            hits = sum(_wiring(ident) in present for ident in ids)
             if hits == len(ids):
-                kept.append(row)
+                kept.append(row if all(ident in exact for ident in ids) else {**row, "legacy_wiring": True})
             elif hits:
                 raise FallbackError("duplicate_registration", f"{event} has only part of a dev-graph hook group")
             else:
@@ -208,8 +222,8 @@ def _verify(before: dict[str, Any], after: dict[str, Any], desired: dict[str, li
         groups += len(previous)
         changed += [f"hooks.{event}[{i}]" for i, group in enumerate(previous)
                     if i >= len(current) or _canon(current[i]) != _canon(group)]
-    identities = _identities(after)
-    duplicates = sum(max(0, identities.count(ident) - 1) for ident in set(_identities({"hooks": desired})))
+    identities = [_wiring(ident) for ident in _identities(after)]
+    duplicates = sum(max(0, identities.count(ident) - 1) for ident in {_wiring(i) for i in _identities({"hooks": desired})})
     if changed or duplicates:
         raise FallbackError("merge_not_additive", f"changed={changed} duplicates={duplicates}")
     return {"top_level_keys": sum(key != "hooks" for key in before), "hook_groups": groups, "changed": 0,

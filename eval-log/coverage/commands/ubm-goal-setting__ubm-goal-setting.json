@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/commands/ubm-goal-setting.md","type":"commands","mechanical":true,"llm_eval":{"verdict":"PASS","score":90,"notes":"genuine評価(PASS前提なし)。SCHEMA: frontmatter は commonCore.required(name/description/kind/version/owner) + kindCommand.required(argument-hint/allowed-tools) を全充足。lint-capability-manifest.py(PostToolUse hook)へ stdin JSON で実走→ 出力なし(=適合)、負コントロール(argument-hint/allowed-tools 欠落の壊れた command)は errors + schema_used:true を返すことで検証が生存していることを実証。jsonschema/yaml も import 可でスキップ縮退なし。ENTRYPOINT: 起動対象 run-ubm-goal-setting/SKILL.md 実在(ls実測)。ARG-CONTRACT: 引数 [weekly|monthly|bimonthly] が下流 validate-goal-output.py の --type choices(TYPE_MAP=weekly/monthly/bimonthly) と厳密一致。REF: Phase0(AskUserQuestion) は skill 本文フロー参照でありパス dangling ではない。PLACEMENT: Skill 委譲の薄ラッパ維持(allowed-tools=Read/Bash/Skill)。欠陥なし。"},"reviewed_by":"harness-ratchet-recovery-code-review","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant"]}
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 fcb9a87da348260425509dbc0374d4de599b0aadadde1e9ea61c22bed63affed をレビュー。実行検証あり）。範囲: commands/ubm-goal-setting.md 全37行。run-ubm-goal-setting の SKILL.md（description、Phase0-init L203、対象種別（4層）L237-250、守ること L278-298）、assets/execution-prompts.md（Phase 0 の選択肢 L65-79、目標レビューフロー L125・L143）、assets/interview-quick-templates.md L13、references/data-contract.md L43・L50・L56、workflow-manifest.json の phase0（L35-37）、兄弟の command 5本の allowed-tools と突き合わせた。確かめたこと: render-findings-score --kind command で score 100（rubric 1.5.0、findings 0件）。CM-001〜003 は採点器に判定の実装が無く unscored なので、手で判定した。CM-001 は argument-hint \"[yearly|weekly|monthly|quarterly]\" があり PASS。CM-002 は allowed-tools が Read, Bash, Skill の明示の列挙で、ワイルドカードではないので PASS（Bash に範囲の指定は無いが、起動する skill が検証 script を Bash で回すためで、兄弟の command 4本も同じ形）。CM-003 は本文 L18 が同じ plugin に実在する run-ubm-goal-setting を名前で指しており PASS。validate-frontmatter は rc=0。j 回目の指摘（引数なしのときの選択肢の数と見直しモード）は直っている。L31 は 1=週報・2=月報・3=期報・4=1年目標・5=既存目標の見直し（引数では選べない）で、execution-prompts L65-79 と SKILL.md L203 に一致する。bimonthly を quarterly の別名とする記述（L21・L30）は、data-contract L43・L56 と workflow-manifest の phase0 の gate に一致する。L26 の挑戦宣言の置き場は SKILL.md L249 と一致する。L37 が指す「守ること」の精神論 NG（L292）と原則の引用1〜2回（L298）、interview-quick-templates L13 の1ターン1〜3問は実在する。env -u UBM_VAULT_ROOT で plugins/ubm-goal-setting/tests 1021 passed。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-ubm",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

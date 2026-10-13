@@ -22,6 +22,10 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, contained, dump, load_json
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/build-knowledge-usage-log.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 0c8cd479cbc20290c55e3f63d8d6ffa3dce5e06f719c164c8e2cd8c6178f3890 をレビュー。実行検証あり）。範囲: 全184行。record-knowledge-usage.py からの改名（git diff -M で対応を確認）で、差分は header の name 行と、L6・L34 の参照名（search-knowledge.py → extract-knowledge-matches.py）だけ。version は 0.2.0。確かめたこと: --help は rc=0、未知の option は rc=2。scratchpad の project（work-cova/ubm4/proj）で、repo の knowledge に対する extract-knowledge-matches.py の実出力を候補にして smoke した。--ephemeral は rc=0 で path が null になり、ファイルを作らない。書き込みありの1回目は recorded、同じ usage_id の2回目は already_recorded で usage-log.jsonl は1行のまま。同じ usage_id で used_ids が違うと rc=2『usage_id already records a different observation』、matched_ids に無い used_ids は rc=2、相対パスの --project-root は rc=2。どれも traceback は出ない。書き込みは --project-root の eval-log/ubm-goal-setting/knowledge/usage-log.jsonl だけで header の write-scope と一致する。plugins/ubm-goal-setting/tests 全体 1025 passed。指摘（前回から残る）: [低] search_id の照合（FINGERPRINT_KEYS は L35、照合は L94）は検索条件とコーパスにしか結びつかず、matches と matched_ids の先頭を存在しない FAKE-1 に書き換えた候補（work-cova/ubm4/forged.json）でも rc=0 で、FAKE-1 を used_ids に持つ行ができる（--ephemeral で確認）。L34 のコメント『search_id を候補の中身へ結びつける』と食い違い、記録が検索結果と一致する保証にならない。直し方: fingerprint に matches の id 列を含めるか、記録時に matches を再計算して照合する。DEDUCTION: matches を偽造しても記録できる -3 → 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

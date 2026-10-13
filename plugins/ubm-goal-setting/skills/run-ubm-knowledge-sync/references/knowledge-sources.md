@@ -13,7 +13,7 @@ UBM目標設定で参照するナレッジファイルの取得方法と優先�
 [情報の流れ]
 
 05_Project/UBM/（情報ソース: 日々追加・更新）
-  ↓ detect-knowledge-updates.py で差分検知（MD5ハッシュ）
+  ↓ detect-knowledge-updates.py で差分検知（MD5ハッシュ。目標設定/・挑戦宣言/ はここで除く）
   ↓ /ubm-knowledge-sync コマンドで抽出・分類
 knowledge/*.json（内容別JSON: 原則/相談/フェーズ/行動/転換/事例）
   ↓ knowledge/router.json でルーティング
@@ -24,10 +24,10 @@ Phase 3 ヒアリング（ユーザー状況に最適な情報+北原さんの�
 **ナレッジ管理コマンド（Claude Codeから実行）:**
 ```bash
 # 更新検知（差分のみ）
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM
+! python3 $PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM
 
 # 全件再構築
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --all
+! python3 $PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --all
 
 # ナレッジ同期（検知→抽出→JSON格納を一括実行）
 /ubm-knowledge-sync
@@ -41,7 +41,8 @@ Phase 3 ヒアリング（ユーザー状況に最適な情報+北原さんの�
 
 ```
 05_Project/UBM/
-├── 目標設定/              ← 過去の目標ファイル（Phase 1で使用）
+├── 目標設定/              ← 過去の目標ファイル（Phase 1で使用。利用者の記録なのでナレッジ同期の検知から除く）
+├── 挑戦宣言/              ← run-ubm-challenge が保存する挑戦宣言（利用者の記録なのでナレッジ同期の検知から除く）
 ├── 動画教材/              ← UBM公式教材（Tier 1: 最重要）
 ├── YouTube/               ← 北原さんのYouTube議事録（Tier 1.5: 事業相談パターンが豊富）
 ├── 合宿/                  ← 合宿での個別フィードバック（Tier 1: 方向性決定の最重要ソース）
@@ -120,6 +121,8 @@ Phase 3 ヒアリング（ユーザー状況に最適な情報+北原さんの�
 
 `05_Project/UBM/目標設定/`
 
+利用者自身の記録で北原ナレッジには当たらないので、`/ubm-knowledge-sync` の検知の対象にはしない（`挑戦宣言/` も同じ。除外の正本は `detect-knowledge-updates.py` の `EXCLUDED_SUBDIRS`）。
+
 ### ファイル名パターン
 
 | 種別 | パターン |
@@ -149,7 +152,7 @@ Phase 3 ヒアリング（ユーザー状況に最適な情報+北原さんの�
 ### 0. ナレッジルーター参照（最優先）
 
 ```
-Read: $CLAUDE_PLUGIN_ROOT/knowledge/router.json
+Read: $PLUGIN_ROOT/knowledge/router.json
 → quick_lookup.by_phase / by_issue でマッチング
 → 該当カテゴリの knowledge/*.json を Read
 ```

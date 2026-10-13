@@ -4,7 +4,7 @@
 # purpose: durable gate planの配送leaseをatomic取得し、stale後は同一idempotency requestを再認可する。
 # inputs: --gate-plan <json> --runtime <claude-code|codex>
 # outputs: stdout / --out <json>
-# contexts: [C]
+# contexts: [A, C]
 # network: false
 # write-scope: <gate state_ref>.launch.json + --out指定先
 # dependencies: []

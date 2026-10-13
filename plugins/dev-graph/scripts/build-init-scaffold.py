@@ -1,32 +1,36 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-init-scaffold
-# purpose: C01 init の決定論本体。C24 で解決した呼出し元 repo 内に 6 content root と .dev-graph の config/state/graph/cache/locks/templates を欠落時だけ作り、planned changes 0 の再実行は noop を返し、変更したときだけ immutable init receipt を残す。
+# purpose: C01 init の決定論本体。どの write よりも前に validate-harness-link.py の preflight を自分で実行して harness link の切断を止め、C24 で解決した呼出し元 repo 内に 6 content root と .dev-graph の config (routing policy を含む)/state/graph/cache/locks/templates を欠落時だけ作り、planned changes 0 の再実行は noop を返し、変更したときだけ immutable init receipt を残す。
 # inputs: ["argv: --repo-root PATH [--config PATH] [--hook-source plugin|project-fallback] [--dry-run]"]
-# outputs: ["stdout: JSON preview/noop/receipt or rejection report"]
-# requires-python = ">=3.10"
-# dependencies: [_common.py, validate-graph-schema.py, resolve-repo-context.py]
+# outputs: ["stdout: JSON preview/noop/receipt or rejection report (preflight rejection carries findings, remediation and the preflight diagnostic)", "exit: 0=preview/noop/applied, 1=rejected (InitError: harness link preflight, unsafe path, failed pre-write gate, rollback_incomplete), 2=other contract/IO/JSON error"]
+# requires-python: ">=3.10"
+# dependencies: [_common.py, validate-harness-link.py, validate-graph-schema.py, resolve-repo-context.py]
 # contexts: [A, B, C, E]
 # network: false
 # write-scope: caller repository content roots and .dev-graph/ (config, state, graph, cache, locks, templates, init receipts)
 # ///
 """run-dev-graph-init の R3 (config/content/state) と R4 (templates) の scaffold。
-hook の配線 (R5) は扱わず、選ばれた hook source を receipt に記録するだけにする。"""
+hook の配線 (R5) は扱わず、選ばれた hook source を receipt に記録するだけにする。
+手順 0 の harness link preflight は skill の手順に任せず、この script が最初に実行する。"""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import importlib.util
 import json
-import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
-from _common import ContractError, contained, dump, load_json, utc_now
+# 共有 harness は読取り専用 (C01 OUT3)。_common などの import より前に止め、子の起動にも -B を渡して
+# bytecode cache (__pycache__) を harness に書かない。
+sys.dont_write_bytecode = True
+
+from _common import (ContractError, ParentNotDirectoryError, atomic_bytes, contained, dump,
+                     json_bytes as _json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -51,13 +55,39 @@ VGS = _load_validator()
 
 
 class InitError(ContractError):
-    def __init__(self, code: str, detail: str, findings: list[dict[str, str]] | None = None) -> None:
+    def __init__(self, code: str, detail: str, findings: list[dict[str, str]] | None = None,
+                 extra: dict[str, Any] | None = None) -> None:
         super().__init__(f"{code}: {detail}")
-        self.code, self.detail, self.findings = code, detail, findings or []
+        self.code, self.detail, self.findings, self.extra = code, detail, findings or [], extra or {}
+
+
+def _preflight(repo_root: str, config: str, hook_source: str) -> dict[str, Any]:
+    """手順 0。harness link の検査を、どの write よりも前にこの script 自身が実行する。
+
+    呼出し側が持ち込む preflight receipt は受け取らない (古い receipt や別 repo の receipt と見分けられない)。
+    拒否は検査の code と findings・修復の選択肢 (remediation)・診断をそのまま返す。診断の絶対 path は stdout
+    にだけ出し、receipt には status と link_state だけを残す。"""
+    argv = [sys.executable, "-B", str(HERE / "validate-harness-link.py"), "--repo-root", repo_root,
+            "--config", config, "--hook-source", hook_source]
+    cp = subprocess.run(argv, text=True, capture_output=True, check=False)
+    try:
+        report = json.loads(cp.stdout)
+    except json.JSONDecodeError:
+        report = None
+    if cp.returncode not in (0, 1) or not isinstance(report, dict):
+        raise InitError("harness_link_preflight_error", (cp.stderr or cp.stdout).strip() or f"exit {cp.returncode}")
+    if cp.returncode or report.get("status") != "pass":
+        findings = report.get("findings") or []
+        detail = findings[0].get("detail", "") if findings else f"preflight status {report.get('status')!r}"
+        raise InitError(report.get("code") or "harness_link_rejected", detail, findings,
+                        {"remediation": report.get("remediation", []),
+                         "preflight": {key: value for key, value in report.items() if key != "remediation"}})
+    return {"validator": "validate-harness-link.py", "status": "pass", "link_state": report["link_state"],
+            "in_use": report["in_use"]}
 
 
 def _context(repo_root: str, config: str) -> dict[str, Any]:
-    argv = [sys.executable, str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
+    argv = [sys.executable, "-B", str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
             "--config", config, "--mode", "write"]
     cp = subprocess.run(argv, text=True, capture_output=True, check=False)
     if cp.returncode:
@@ -71,11 +101,6 @@ def _context(repo_root: str, config: str) -> dict[str, Any]:
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
-
-
-def _json_bytes(value: Any) -> bytes:
-    # atomic_json と同じ直列化にして、init が作った file と writer が書き直した file の差を出さない。
-    return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
 def _issue_prefix(name: str) -> str:
@@ -107,10 +132,25 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
     preserved: list[Path] = []
     migration: list[dict[str, str]] = []
 
-    def directory(path: Path) -> None:
+    def missing_parents(path: Path) -> None:
+        """Plan every missing ancestor below root; an ancestor that is not a directory fails here, not at apply."""
+        ancestors = [parent for parent in path.parents if parent != root and parent.is_relative_to(root)]
+        for parent in reversed(ancestors):
+            if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+                raise InitError("path_not_directory",
+                                f"{parent.relative_to(root).as_posix()} exists but is not a plain directory")
+            if not parent.exists() and parent not in dirs:
+                dirs.append(parent)
+
+    def directory(path: Path, *, report_preserved: bool = True) -> None:
+        missing_parents(path)
         if path.is_symlink() or (path.exists() and not path.is_dir()):
             raise InitError("path_not_directory", f"{path.relative_to(root).as_posix()} exists but is not a plain directory")
-        (preserved if path.is_dir() else dirs).append(path)
+        if path.is_dir():
+            if report_preserved:
+                preserved.append(path)
+        elif path not in dirs:
+            dirs.append(path)
 
     content = {key: contained(Path(ctx["content_roots"][key]), root, must_exist=False) for key in CONTENT_KEYS}
     local = {key: contained(Path(ctx["local_state_paths"][key]), root, must_exist=False)
@@ -121,6 +161,7 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
 
     for source in sorted(item for item in (PLUGIN_ROOT / "templates").iterdir() if item.is_file()):
         target = local["templates"] / source.name
+        missing_parents(target)
         data = source.read_bytes()
         if not (target.exists() or target.is_symlink()):
             files.append((target, data))
@@ -136,11 +177,17 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
 
     config_path, graph_path = local["config"], local["graph"]
     for path in (config_path, graph_path):
+        missing_parents(path)
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise InitError("path_not_file", f"{path.relative_to(root).as_posix()} exists but is not a plain file")
+    routing_policy = load_json(EXAMPLE_CONFIG)["routing_policy"]
     if config_path.exists():
         config = load_json(config_path)
         preserved.append(config_path)
+        if isinstance(config, dict) and "routing_policy" not in config:
+            # 既存 config は上書きしない。無い routing_policy は唯一の値と同じに読み、足す値だけを示す。
+            migration.append({"path": config_path.relative_to(root).as_posix(), "key": "routing_policy",
+                              "plugin_value": routing_policy})
     else:
         config = _new_config(ctx, root)
         files.append((config_path, _json_bytes(config)))
@@ -159,34 +206,27 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
         # 既存の config/graph が gate を通らないまま scaffold を進めると、部分成功を成功に見せてしまう。
         raise InitError("pre_write_validation_failed", f"{len(findings)} config/graph finding(s)", findings)
     receipts = graph_path.parent / "receipts"
+    directory(receipts, report_preserved=False)
     existing = sorted(receipts.glob("init-*.json")) if receipts.is_dir() else []
     return {"content": content, "local": local, "dirs": dirs, "files": files, "preserved": preserved,
             "migration": migration, "receipts": receipts, "existing": existing,
+            "routing_policy": config.get("routing_policy", routing_policy),
             "schema_result": {"validator": "validate-graph-schema.py + repo-config.schema.json", "valid": True,
                               "violation_count": 0}}
 
 
 def _create_file(path: Path, data: bytes) -> None:
     """create-only: 既にある file は決して上書きしない (receipt の不変性もこれで守る)。"""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        try:
-            os.link(temp, path)
-        except FileExistsError as exc:
-            raise InitError("path_appeared_during_init", str(path)) from exc
-    finally:
-        try:
-            os.unlink(temp)
-        except FileNotFoundError:
-            pass
+        atomic_bytes(path, data, create_only=True)
+    except FileExistsError as exc:
+        raise InitError("path_appeared_during_init", str(path)) from exc
+    except ParentNotDirectoryError as exc:
+        raise InitError("parent_not_directory", str(exc)) from exc
 
 
 def scaffold(args: argparse.Namespace) -> dict[str, Any]:
+    preflight = _preflight(args.repo_root, args.config, args.hook_source)
     ctx = _context(args.repo_root, args.config)
     root = Path(ctx["repo_root"]).resolve(strict=True)
     plan = _plan(ctx, root)
@@ -199,6 +239,7 @@ def scaffold(args: argparse.Namespace) -> dict[str, Any]:
         "owner": OWNER, "repository_id": ctx["repository_id"],
         "content_roots": {key: rel(path) for key, path in plan["content"].items()},
         "local_state": {key: rel(path) for key, path in plan["local"].items()},
+        "routing_policy": plan["routing_policy"], "preflight": preflight,
         "preserved": sorted(rel(path) for path in plan["preserved"]),
         "migration_preview": plan["migration"], "schema_result": plan["schema_result"],
     }
@@ -216,23 +257,37 @@ def scaffold(args: argparse.Namespace) -> dict[str, Any]:
     made_dirs: list[Path] = []
     made_files: list[Path] = []
     try:
-        for path in plan["dirs"]:
-            missing = [parent for parent in [path, *path.parents] if not parent.exists()]
-            path.mkdir(parents=True, exist_ok=True)
-            made_dirs += reversed(missing)
+        # plan["dirs"] already lists every missing ancestor (parents first), including the ones that
+        # file/receipt creation would otherwise create implicitly, so the receipt's created[] is complete.
+        for directory in plan["dirs"]:
+            try:
+                directory.mkdir()
+            except FileExistsError:
+                if not directory.is_dir():
+                    raise
+            else:
+                made_dirs.append(directory)
         for path, data in plan["files"]:
             _create_file(path, data)
             made_files.append(path)
         _create_file(receipt_path, _json_bytes(receipt))
-    except BaseException:
+    except BaseException as exc:
         # init は作るだけなので、作ったものを逆順に消せば元の状態に戻る。
+        failures = []
         for path in reversed(made_files):
-            path.unlink(missing_ok=True)
+            try:
+                path.unlink(missing_ok=True)
+            except OSError as error:
+                failures.append({"node": rel(path), "code": "rollback_failed", "detail": str(error)})
         for path in reversed(made_dirs):
             try:
                 path.rmdir()
-            except OSError:
+            except FileNotFoundError:
                 pass
+            except OSError as error:
+                failures.append({"node": rel(path), "code": "rollback_failed", "detail": str(error)})
+        if failures:
+            raise InitError("rollback_incomplete", f"{type(exc).__name__}: {exc}", failures) from exc
         raise
     return {**receipt, "valid": True, "dry_run": False, "write_count": len(changes) + 1}
 
@@ -250,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except InitError as exc:
         dump({"valid": False, "status": "rejected", "code": exc.code, "error": exc.detail, "findings": exc.findings,
-              "planned_changes": None, "write_count": 0})
+              "planned_changes": None, "write_count": None if exc.code == "rollback_incomplete" else 0, **exc.extra})
         return 1
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         dump({"valid": False, "status": "error", "code": type(exc).__name__, "error": str(exc), "write_count": 0})

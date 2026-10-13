@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "skill_md_sha256": "065d88182af5c2bae07b361d682bca175353d9344b22bd0ae5f932cc4ba7ed21"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T22:38:05Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "frontmatter の *_refs はすべて実在する。script_refs 3 件 (今回追加した validate-source-lineage.py を含む)、reference_refs 1 件 (prompt-common-layers.md)、responsibility_refs 4 件で、responsibilities の id と responsibility_refs は 1 対 1 に対応している。",
+      "新設の gate は SKILL.md 本文、R0/R3 の Layer 2・Layer 3・5.3 の checklist の 3 層で同じ内容 (checked による分岐、exit の意味、fail-closed 時の artifact_delivery の状態) を述べており、宣言と本文が双方向に対応している。",
+      "artifact_delivery の state machine と feedback_contract.criteria (IN1、OUT1) は差分で変わっていない。fail-closed の停止を artifact_created に留めると書いたことで、state machine の初期状態との関係も明示された。",
+      "prompts の Layer 4-7 を共通層へ集約しても、7 層構造の lint は dev-graph の 41 本すべてで OK だった。"
+    ],
+    "negative_feedback": [
+      "[low / 依存関係] gate の `--graph` 既定は固定の `.dev-graph/state/graph.json` で、C24 が local_state.graph から解決する graph と連動しない。SKILL.md:107 と R0/R3 は `--graph` に C24 の graph を渡すよう書いていない。C02 側の登録前検査が C24 の graph を使うので low に留める。",
+      "[low / 漏れ] dev-graph が未 init の repo では gate は exit 2 で status=error と checked=0 を同時に出す。SKILL.md:109 の「checked=0 は新規作成」を exit を見ずに読むと誤る余地があり、exit 2 の診断が violations[] ではなく error に入ること、停止時に run-dev-graph-init を案内することも書かれていない。",
+      "[low / smell] SKILL.md:107 の出力形に、実装が出す `graph` キーが無い。",
+      "[low / 差分外] 手順 2 (SKILL.md:99) の `plugins/system-spec-harness/.claude-plugin/plugin.json` は repo 相対の兄弟 plugin path で、install 先では解決しない。手順 4 (SKILL.md:102) の lineage の略記も schema の key 名と違う。どちらも差分の外にある既存の記述なので判定の対象外とした。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "elegance verdict と同じ context で行った focused combined review を rubric の面へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。ref-skill-design-rubric の rule を機械的にすべて実行したわけではない。機械的に確かめたのは構造の規範に限る: frontmatter の必須キー、*_refs の実在、responsibilities と responsibility_refs の対応、新規 script の引数・出力・exit と本文の一致 (実走を含む)、lint-sibling-plugin-paths.py と prompt の 7 層 lint の OK、dev-graph の pytest で script の振る舞いの失敗が 0 件であること。数値の score は算出しておらず、verdict は combined review の単一の判断に従う。high severity は 0 件、medium 以上も 0 件のため PASS とした。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1 の実行時の受け入れには live-trial や test の実走証拠が別に要る。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 1,
+    "smell": 2
+  }
+}

@@ -1,1 +1,18 @@
-{"artifact":"plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"genuine code-review(PASS前提なし)。compile OK; 完全な # /// script frontmatter(write-scope:none で read-only, exit 0/1/2, requires-python>=3.9)。CLI契約=呼出側 SKILL.md/workflow-manifest の validate-goal-output.py --file <保存先> --type <weekly|monthly|bimonthly> と一致(argparse choices=TYPE_MAP)。TESTS: test_validate_goal_output.py 11件が golden-sample-weekly.md で PASS + 9変異で FAIL(未展開プレースホルダ/全角数字/欠落必須見出し/NG精神論/不正ファイル名/type明示強制=週報内容を monthly 検証で欠落FAIL/欠落file→1/不正type→2/重複見出し)+usage を実挙動検証。pytest 実走で全緑(3ファイル合計25 passed)。fail-closed(errors>0→exit1, 欠落file→stderr+exit1, argparse usage→2)。設計良: 種別はファイル名推論でなく --type 正本。minor(非ブロック): L322 の table_count-2 は複数表があっても総数から2のみ減算する単一表前提ヒューリスティック、check_goal_section の numeric/bullet 判定も発見的だが契約移植の範囲で機能上妥当。"},"reviewed_by":"harness-ratchet-recovery-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 f1435b035b53f61673600a0c51955b924ac495d1f3e9ae8137fe7cd292f9846f をレビュー。実行検証あり）。範囲: 全1287行のうち、前回の記録（sha256 4d345d6b…、PASS 99）からの差分と、その呼び出し元の表の数え方。version 0.3.3。差分: 表を閉じる _BLOCK_START_RE を `^\\s*(?:[*+-]\\s|・|#{1,6}(?:\\s|$)|>)` にし、ATX 見出しは # の後に空白か行末が要るという説明のコメントを足した。確かめたこと: 前回の probe（10件）をこの版で流し直すと10件すべて OK で、前回に偽 FAIL だった cell-starts-with-hash（先頭の | が無い表の `#1 | foo`）は期待2・結果2になった。本物の見出し（`## 次の節`、`#` だけの行）では従来どおり表を閉じる。--help は rc=0、引数なしは rc=2、--type annual だけは rc=2。test_validate_goal_output.py に L839 test_not_doing_table_cells_starting_with_hash_are_counted を含む2本が足され、plugins/ubm-goal-setting/tests 全体 1047 passed。前回の指摘 [低]（行頭が # のセルで表を閉じる）は解消した。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

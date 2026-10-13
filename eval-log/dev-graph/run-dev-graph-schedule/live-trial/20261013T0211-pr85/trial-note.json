@@ -1,0 +1,40 @@
+{
+  "label": "schedule6",
+  "retry_of": "20261012T2045-pr85",
+  "evaluator_agent_id": "a9af1b9ea09724a50",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/schedule6/ws/plugins/dev-graph/skills/run-dev-graph-schedule",
+  "closure_sha_at_launch": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+  "closure_sha_tested_copy": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+  "closure_sha_wtpy_at_verdict": "dcdfd54b32f1cb7741cc9c60e5bd21a7f4c1d49ee45972122a8f28a73a458453",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-schedule) を、その場で git init した repo に写した (最初の commit は c25c5b0、README.md だけを追跡)。元の fixture は変えていない。schedule4 と同じ seed から作り直した。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json と .dev-graph/state/init-receipt.json の repository_id と worktree_id を付け替えた (fixture-provenance.json の rekey と rekeyed_files)。",
+    "lease の準備: 起動の前 (2026-10-12T17:10:51Z) に、manage-worktree-lease.py --op claim --graph-node-id task-api-users --branch devgraph/task-api-users --session-id orchestrator-prep-schedule6 を --resource なしで回し、active な lease を 1 件作った (schedule4 と同じ手順)。claim は worktree が clean でないと branch を作れないため、先に git switch -c devgraph/task-api-users をし、claim の後に git switch main で戻した。claim は fx の .git/dev-graph/ に leases.json・events.json・leases.lock を作り、C02 の execution-context consumer を通して graph の task-api-users の execution_contexts に 1 行を足した (graph_revision 1→2、graph.json b2f40bab…→b1dfaf58…)。branch devgraph/task-api-users は fx に残る (fixture-provenance.json の lease_prep)。",
+    "node の選び方: schedule4 と同じ。同じパス src/api/users/ で task-api-users-cache と重なる task-api-users を選んだ (fixture-provenance.json の lease_prep.why_this_node)。",
+    "事前の確認: lease の準備の後に、被験の外で fx の graph を C11 (validate-graph-schema.py) と C24 (resolve-repo-context.py --mode write) にかけた。C11 は valid・violation 0、C24 は rc=0 で、前後で fx のファイルの sha256 は変わらなかった (fixture-provenance.json の fixture_check)。",
+    "task.md: schedule4 の task.md から、run の dir の名前 (runs/schedule4 → runs/schedule6、4 か所) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。隔離の条件は schedule4 と同じ (§17 の guard: 外へ送る tool と許可一覧に無い tool を拒否。guard.py f23267a3…、mksettings.py 277ae072…)。plugins/dev-graph は変えていない。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/schedule6/tmp。短い symlink /private/tmp/ltpr85/t/sc6 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 dcdfd54b… は team-lead の連絡「sync7・schedule6 は開始可」の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。trial の間は 30 秒ごとに wtpy の閉包を測り、起動から終わりまで動かなかった (workdir/closure-watch.log)。",
+    "取り直しの経緯: schedule4 の後の 1 回目の取り直し (schedule5) は、fixture と plugin の写しまでを準備した後、起動の前に wtpy の dev-graph (bd-bridge.py など) が変わったので起動せずに止め、参考扱いにした (lease の claim・verdict は無い。fixture-provenance.json の superseded_attempt)。retry_of は verdict のある schedule4 にした。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 6 か所、アカウント名を 21 か所伏せた (redact.py)。",
+    "伏せ字のほかは、どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "scripts/schedule-graph.py は --max-parallel も --scope も受け取らない (argparse は 100-102 行目)。batches() (135-143 行目) も batch の件数を上限で切らない。SKILL.md の argument-hint と R1 は max_parallel と scope を確定させるが、それを適用する決定論の手順が無く、LLM が手で確かめるしかない (R1-R3 の subagent も transcript 135 行目で 'max_parallel is not enforced by the script' と報告した)。再現手順: 依存が無く、status・確認・評価・readiness の条件を満たし、resource_scope が互いに重ならない task を 5 件持つ graph で schedule-graph.py を回すと、上限 4 を指定していても 5 件が 1 batch で返る。",
+    "SKILL.md の Gotchas は「直接依存だけでなく全 depends_on の done を確認する」と言うが、schedule-graph.py の 118・124 行目は直接の depends_on が done かどうかしか見ない。再現手順: A(active・全条件を満たす) が B(done) に依存し、B が C(active) に依存する整合の取れていない graph を作ると、A が ready に入る。",
+    "schedule-graph.py の 128-129 行目は、state が released/expired 以外の lease を expires_at と無関係にすべて active として扱う。期限切れなのに claimed のまま残った lease が、その node と scope の重なる候補を推薦から外し続ける。安全側に倒れる動きだが、SKILL の言う「active lease なし」の意味とずれる。再現手順: leases.json の claimed lease の expires_at を過去にして回すと、その node が conflicts に残る。",
+    "SKILL.md の 95 行目は入力を「C24/C11 検証済み subgraph」とするが、script_refs (14 行目) に validate-graph-schema.py が無く、C11 を回す手順も書かれていない。この trial でも被験の session は C24 (54 行目) しか回しておらず、C11 は orchestrator が被験の外で事前に回したもの (fixture-provenance の fixture_check) に頼っている。"
+  ]
+}

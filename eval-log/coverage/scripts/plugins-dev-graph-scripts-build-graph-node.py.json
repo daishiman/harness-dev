@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/dev-graph/scripts/build-graph-node.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 fda5a0ab313bd804811955cc83d5be8231819cc7db75580515a7ee99ffc89be5 をレビュー。実行検証あり）。範囲: 全 1353 行と git diff origin/main（_write_atomic を atomic_bytes に委ねる 146–152、PACKAGE_KEYS を is_package_member に共通化 866/1048/1118、_create_receipt 1309–1316 の json_bytes と artifact_path_exists 以外の再送出）。_transact（1192–1306）の rollback と main（1335–1349）の exit も読んだ。確かめたこと: dev-graph の全 test（python 3.11.4、pytest -p no:cacheprovider -q plugins/dev-graph/tests）は 273 passed / 9 failed（9 件は test_skill_criteria_evidence の既知の失敗で対象と無関係）。test_build_graph_node・test_shared_writer_sync_regressions・test_register_package の 3 ファイルは 103 passed。pyflakes は clean。lint-script-frontmatter plugins/dev-graph/scripts は OK (checked=18 pending=0)。requires-python は >=3.10 なので 3.9 での確認は対象外。--help と add --help は rc 0。git repo でない一時 dir で add/update/bind-github を流すと rc 1 の JSON 拒否 c24_context_failed（traceback なし）。in-process probe: _write_atomic は親が file なら WriterError parent_not_directory（isinstance OSError は False）、create_only で既存なら artifact_path_exists、新規 file は 0o644。json_bytes は旧実装と同じ直列化（ensure_ascii=False, sort_keys, indent=2, 末尾改行）なので receipt の byte は変わらない。test_build_graph_node（54 件、subprocess で呼ぶ）が pass。指摘: [中] 以上なし。[低] 1284–1300 の rollback の loop は OSError だけを捕まえる。この差分で _write_atomic（146–152）が ParentNotDirectoryError を WriterError（ContractError で OSError ではない）に変えたので、復元先の親 dir が途中で file に置き換わると、その WriterError が loop を抜けて残りの復元を飛ばし、main（1340–1345）は status=rejected・write_count=0 と報告する（実際は書いたまま）。前の実装では mkdir の FileExistsError（OSError）で rollback_incomplete になっていた。起きるのは並行して親 dir を file に替えたときだけ。直し方: loop で (OSError, ContractError) を捕まえる。[低] 11 行目の write-scope に、134–143 で graph の隣に作って残す lock file `.<graph>.register.lock` が無い。register-package の header（11 行目）はこの PR で同じ lock を書き足している。[低] 7 行目 `# requires-python = \">=3.10\"` は repo の正規形 `key: value`（repo 全体で ':' 368 件、'=' 34 件）でなく、lint-script-frontmatter は読まずに通す。同じ PR で _common・build-init-scaffold・register-package は ':' に直した。DEDUCTION: [低] rollback の例外の型 -2、[低] write-scope に lock が無い -2、[低] requires-python の表記 -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

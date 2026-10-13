@@ -13,12 +13,14 @@ elegant-review finding (2026-06-30, 3 analyst 収束 LS-F1 / SS-02 / SS-05):
   - group_plugin_tests: 機構B の per-plugin グルーピング (tests/ 配下/colocate 双方)
   - lint check_orphans: orphan で fail / clean で ok / allowlist 空理由・stale で fail
   - lint check_ci_runs_roots: 実行証跡欠落で fail / 揃えば ok / CI yml 不在で skip
-  - 実 repo 統合: 現状 orphan=0 で lint exit 0
+  - 実 repo 統合: ALLOWLIST 以外の orphan=0 で lint exit 0
 """
 import importlib.util
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,6 +185,61 @@ class TestLintCiRunsRoots:
         assert errors == []
         assert any("skip" in line for line in report)
 
+    # 証跡の文字列が YAML のコメント・step 名・shell のコメント・行末コメントにしか無い workflow。
+    # どれも実行されないので、tests/ を実行する証跡にはならない。
+    COMMENT_ONLY_CI = """jobs:
+  verify:
+    steps:
+      # 機構A `pytest tests/` を回す step (いまは無い)
+      - name: python3 -m pytest tests/ (disabled)
+        run: |
+          # python3 -m pytest tests/ -q
+          echo skipped  # pytest tests/
+      - run: python3 scripts/validate-plugin-test-roots.py --workers 4
+"""
+
+    def test_comment_only_evidence_is_not_counted(self, tmp_path):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=self.COMMENT_ONLY_CI)
+        errors, report = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        assert any("CI runs 'plugins/'" in line for line in report)
+
+    def test_comment_only_evidence_is_not_counted_without_yaml(self, tmp_path, monkeypatch):
+        # PyYAML が無い環境の fallback でも、コメントを除いた本文で照合する。
+        monkeypatch.setitem(sys.modules, "yaml", None)
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=self.COMMENT_ONLY_CI)
+        errors, report = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        assert any("fallback" in line for line in report)
+        good = make_repo(tmp_path / "good", ["tests/test_a.py"], ci_yml=GOOD_CI)
+        assert LINTMOD.check_ci_runs_roots(good)[0] == []
+
+    @pytest.mark.parametrize("removal", ["command-line", "whole-step"])
+    def test_real_workflow_without_pytest_tests_step_fails(self, tmp_path, removal):
+        # 実 workflow から tests/ を実行する step を消すと NG (後ろの YAML コメントの
+        # `pytest tests/` で満たされてはいけない)。消さなければ OK のまま。
+        lines = (ROOT / LINTMOD.CI_WORKFLOW_REL).read_text(encoding="utf-8").splitlines(keepends=True)
+        command = next(i for i, line in enumerate(lines) if line.strip().startswith("python3 -m pytest tests/"))
+        start = command
+        if removal == "whole-step":
+            start = max(i for i in range(command) if line_is_step_start(lines[i]))
+        workflow = "".join(lines[:start] + lines[command + 1:])
+        assert "pytest tests/" in workflow  # コメントには残っている
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=workflow)
+        errors, _ = LINTMOD.check_ci_runs_roots(root)
+        assert len(errors) == 1 and "'tests/'" in errors[0]
+        intact = make_repo(tmp_path / "intact", ["tests/test_a.py"], ci_yml="".join(lines))
+        assert LINTMOD.check_ci_runs_roots(intact)[0] == []
+
+    def test_unparsable_workflow_fails_closed(self, tmp_path):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=GOOD_CI + "  bad: [unclosed\n")
+        errors, _ = LINTMOD.check_ci_runs_roots(root)
+        assert any("YAML" in e for e in errors)
+
+
+def line_is_step_start(line: str) -> bool:
+    return line.lstrip().startswith("- name:") or line.lstrip().startswith("- uses:")
+
 
 class TestEvidenceParity:
     def test_real_config_parity_holds(self):
@@ -201,6 +258,11 @@ class TestEvidenceParity:
 
 
 class TestLintMain:
+    @pytest.fixture(autouse=True)
+    def _synthetic_repo_has_no_allowlist(self, monkeypatch):
+        # 実 repo の ALLOWLIST は架空の repo に存在しないので、stale と判定させない。
+        monkeypatch.setattr(LINTMOD, "ALLOWLIST", {})
+
     def test_main_exit0_on_clean(self, tmp_path):
         root = make_repo(tmp_path, ["tests/test_a.py", "plugins/foo/tests/test_b.py"], ci_yml=GOOD_CI)
         assert LINTMOD.main(["--repo-root", str(root)]) == 0
@@ -211,6 +273,23 @@ class TestLintMain:
 
     def test_main_usage_error(self):
         assert LINTMOD.main(["--repo-root"]) == 2
+
+    def test_main_unknown_argument_is_usage_error(self, tmp_path, capsys):
+        root = make_repo(tmp_path, ["tests/test_a.py"], ci_yml=GOOD_CI)
+        assert LINTMOD.main(["--repo-root", str(root), "--bogus"]) == 2
+        assert "unrecognized arguments" in capsys.readouterr().err
+
+    def test_main_missing_or_file_repo_root_is_usage_error(self, tmp_path, capsys):
+        assert LINTMOD.main(["--repo-root", str(tmp_path / "no-such-dir")]) == 2
+        not_dir = tmp_path / "file.txt"
+        not_dir.write_text("x", encoding="utf-8")
+        assert LINTMOD.main(["--repo-root", str(not_dir)]) == 2
+        assert "usage:" in capsys.readouterr().err
+
+    def test_cli_unknown_argument_exits_2(self):
+        proc = subprocess.run([sys.executable, str(LINT), "--bogus"], capture_output=True, text=True)
+        assert proc.returncode == 2
+        assert "usage:" in proc.stderr
 
 
 class TestRealAllowlistHygiene:
@@ -230,7 +309,9 @@ class TestRealRepoIntegration:
         assert proc.returncode == 0, f"stderr:\n{proc.stderr}\nstdout:\n{proc.stdout}"
 
     def test_real_repo_module_orphans_empty(self):
-        assert DRT.orphan_test_files(ROOT) == []
+        """ALLOWLIST に理由付きで宣言した証跡以外に orphan が無いこと。"""
+        orphans = {str(rel) for rel in DRT.orphan_test_files(ROOT)}
+        assert orphans - set(LINTMOD.ALLOWLIST) == set()
 
     def test_real_workflow_uses_extracted_bounded_runner(self):
         workflow = (

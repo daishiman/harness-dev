@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/build-artifact-delivery.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 d6853bbe2b56e1bbce3158bc3475e078aad14088c80f94302d4c3ed7083dba00 をレビュー。実行検証あり）。範囲: 未コミットの変更を含む今のファイル（1459 行）。前回レビューした版（sha256 c218c815…）は git にも scratch にも残っていないので、前回の notes と git diff origin/main を突き合わせて今回の差分を決めた。今回の差分は _FENCE_OPEN・_FENCE_CLOSE・_PURPOSE_HEADING、_section_headings（L913-937）、_section_end（L940）と、それを使うように書き直した _ensure_runtime_root_contract（L945-997）。あわせて _validate_runtime_root_wiring（L1000-1015）、_runtime_root_extra_text（L892-905）、_skill_language（L727-735）、直接実行の検査（L1100-1133）、_parser と main を読み直した。書き込む経路は scratch の一時ファイルでだけ動かし、実 repo では --check だけを動かした。確かめたこと: --help は exit 0 で、書き込み範囲の epilog が出た。--write と --check の同時指定、--bogus はどちらも exit 2。実 repo の --check は「ARTIFACT_DELIVERY_OK: 22 plugins」で exit 0。実行の前後で、git status、plugins/*/artifact-delivery.json と plugins/*/skills/*/SKILL.md の sha256、~/.claude の一覧は変わらなかった。pytest は tests/scripts-root の test_root__artifact_delivery・test_root__entrypoint_artifact_first・test_root__ja_contract_parity で 163 passed、tests/scripts-plugins の test_harness_creator__render_combinators で 87 passed（別々に回した）。fence の判定のテスト（test_section_headings_skip_code_fences、fence の中へ差し込まないテスト、旧節の fence を丸ごと移すテスト、fence の中の旧節の例を消さないテスト）が新しく入っている。前回の fixture を作り直した（../work-b-r2/c/adfx/probe_ad3〜8）。目的の節に ```markdown で囲んだ「## 結果」がある入力では、ブロックが fence の閉じの後ろ、「## Steps」の直前に入った。外部変更の skill 36 件で、ブロックが fence の中にあるものは 0 件。旧節が目的の節の直後に無く、旧節の fence に「## comment」がある入力では、fence が丸ごとブロックの直後へ移り、「## Steps」と「## Gotchas」は見出しのまま残った。もう一度かけても結果は変わらなかった（冪等）。前回の指摘の扱い: [中] fence の中の「## 」で差し込み位置がずれる点は解消した。ブロックの後ろの範囲、旧節の切り出し、目的の節の終わりの 3 か所が、どれも _section_headings で fence の外の見出しだけを見るようになった。ただし検査の側（_validate_runtime_root_wiring）は今も fence を見ず、L905 の空行の畳み込みも残っている（下の [低]）。[低] 直接実行の検査の穴は残っている。L1125 は setup-send-log-db.py を含む行を、すべての検査から外す。この skill（run-notion-gmail-sendlog-setup）は plugins/ に無いので、この除外と L851-860 付近の移行規則は、対象の無いコードのまま。ガードの行は、L1113-1115 で tokens[1] の basename だけを見て canonical と判定している。特定の skill の文を書き換える規則が汎用の builder に混ざっている点も同じ。この項はコードで確かめた（試験の文字列を hook が止めたので、純関数の実行は省いた）。[低] --skill と --plugin の扱いは残っている。--check --skill no-such-skill は exit 0 で、黙って無視された。移行で一致が 0 件でも exit 0 になるコードも変わっていない。指摘: [低] 検査が fence を見ないので、移行と検査の判断が食い違う。(1) 目的の節の ```markdown の中へ手でブロックを移した SKILL.md を、_validate_runtime_root_wiring が通した（--check も見逃す）。(2) ブロックが既に fence の中にある SKILL.md を移行にかけると、fence の閉じの行がブロックの後ろへ移った。その結果「## Steps」とブロックが fence の中に入った文書になったが、検査を通り、冪等とも判定された。(3) ja の skill の目的の節に、旧形の例として「## Runtime root contract」を fence で書いた入力では、移行の結果は正しかった。それなのに検査は「runtime root contract language mismatch」で落ちた。移行の出力が自分の検査に通らない（_skill_language も fence を見ない）。(4) 旧節から移す文の fence の中の連続した空行が、L905 の \\n{3,} の畳み込みで 1 行に変わった（echo a と echo b の間の空行 2 行が 1 行になった）。実 repo では (1)〜(3) の形は 0 件なので、今は起きていない。直し方: 検査でも _section_headings と同じ fence の判定を使い、BEGIN マーカーが fence の外で目的の節の後ろにあることを見る。言語の判定と食い違いの検査も fence の外の行だけで行う。空行の畳み込みは fence の外に限る。DEDUCTION: 100 -2（検査が fence を見ないので、手で移したブロックを通し、正しい移行の結果を落とす。fence の中の既存ブロックの移行で文書が壊れる。fence の中の空行が畳まれる。実 repo に該当は無い）-3（直接実行の検査の穴、対象の無い除外、skill 固有の規則の混在）-1（--skill と --plugin の黙った無視、0 件で成功）→ 94。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

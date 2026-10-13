@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 261dae4dbd70887dee3d50c42ae74733f32051f2bd96d6c1ee1d1d8462cc4c92 をレビュー。実行検証あり）。範囲: 全 355 行（記録は新規）。git diff HEAD の差分は、docstring（L101）と NO_TARGET の案内（L263）に『年』を足しただけ。1 年層の判定は、validate-goal-output.py の KIND_PERIOD_WORD（year を追加）を _detect_kind（L100-110）が読むことで効く。照合規則を validator から読み込んで二重に実装しない作りと、上乗せの 5 点を、全体で読んだ。確かめたこと: plugins/ubm-goal-setting/tests/test_validate_goal_linkage.py（module を読み込んで verify と main を呼ぶ）で 45 passed（mechanical=true）。lint-script-frontmatter.py は OK checked=1、--help は exit 0（python3.9 でも 0）。work-j-s4/vgl/probe.py で、1 年目標の両方向がそろっていれば rc=0。参照名が 1 字違うと forward と backward の両方で rc=1。（土台）だけだと backward で rc=1。許容外の括弧名（仕込み）は rc=1。空ファイルは NO_TARGET で rc=3。存在しない --file、ディレクトリの --file、引数なし、未知のオプションは rc=2 で、MEASURED_AT と ARGS を印字する。指摘: [低] UTF-8 でない --file で UnicodeDecodeError の traceback を出し、rc=1 になる（L313 の read_text に try が無い）。rc=1 は header L12 の『未解決あり』と同じ値なので区別できず、docstring L49-50 の『rc=2 で早期終了する場合も MEASURED_AT / ARGS を印字する』も守られない。--file が複数のときは、前のファイルの STATUS: PASS を出したあとで落ちる。直し方は UnicodeDecodeError を捕まえ、rc=2 と trailer を出す。[低] 1 年層の判定を確かめる test が無い（L287 の parametrize は『週』『期』だけで、月は既定の fixture。『年』の見出しで kind=year になり照合されることは test されていない）。補足（減点なし）: header の inputs は argv だけだが、実際には同じディレクトリの validate-goal-output.py を読み込む（purpose には書いてある）。DEDUCTION: 100 -3（UTF-8 でない入力で traceback と rc の衝突）-2（1 年層の test が無い）→ 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s4",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

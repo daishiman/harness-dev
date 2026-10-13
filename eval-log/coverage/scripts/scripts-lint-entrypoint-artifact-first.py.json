@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-entrypoint-artifact-first.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine review（sha256 692529856c9a436fabed8e4fff7ef8492eec589723b360417796b124e5d44910 をレビュー。実行検証あり）。範囲: 全 437 行。origin/main からの差分（ja の pre/post-choice 見出しの組と言語の混在の拒否、runtime root 見出しの言語の不一致、lint_guarded_external_entrypoint、ubm の冒頭見出しの順序）を重点に読んだ。確かめたこと: tests/scripts-root/test_root__entrypoint_artifact_first.py（import でこの script を読み込む。mechanical=true）と tests/scripts-plugins/test_skill_governance_lint__lint_skill_dep_step7.py で 75 passed（3.11）。実 repo で OK: 127 inventory, 101 enforced, 26 exempt。lint_guarded_external_entrypoint を effect: external-mutation の SKILL.md 36 件に当てて 36 件とも []、external でない run-ubm-consult はエラーを返す（lint-skill-dep-step7 の例外判定は fail-closed）。存在しない --repo-root は「no plugin entrypoints」で exit 1、--help は 0。指摘: [低] 395〜399 行の ubm の見出し順の検査は、repo 全体の lint に 1 plugin 固有の規則を直書きしており、`^#{1,2} ` で行を拾うので code fence の中の `# コメント` も見出しとして数える。一時 repo で run-ubm-consult の「## 目的と出力契約」の下に ```bash の `# 例のコメント` を足すと「ubm opening heading order must be …」で exit 1（誤検出）。[低] workflow-manifest.json の phases の id が list だと、338 行の set(phase_ids) が TypeError の traceback になる（lint_entrypoint は LintError しか捕まえない。exit 1）。[低] PEP 723 の `# /// script` header が無い（lint-script-frontmatter で missing block の違反）。第三者依存の yaml が宣言されていない。DEDUCTION: 見出し順の固有規則と誤検出 -3、traceback -2、header なし -3 → 92。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

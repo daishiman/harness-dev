@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md","type":"commands","mechanical":true,"llm_eval":{"verdict":"PASS","score":89,"notes":"genuine評価(PASS前提なし)。SCHEMA: frontmatter は commonCore + kindCommand.required(argument-hint/allowed-tools) 全充足。lint-capability-manifest.py へ stdin JSON 実走で沈黙(=適合)、負コントロールで検証生存を確認済。ENTRYPOINT: 起動対象 run-ubm-knowledge-sync/SKILL.md 実在。ARG-CONTRACT: 引数 [--all][--since YYYY-MM-DD][--dry-run] が detect-knowledge-updates.py の argparse フラグ(--all/--since/--dry-run)と完全一致。REF: 参照 knowledge/registry.json は plugins/ubm-goal-setting/knowledge/registry.json に実在(正本は references/knowledge-sources.md の $CLAUDE_PLUGIN_ROOT/knowledge/registry.json)。除外 05_Project/UBM/目標設定/ は consumer 側(SKILL Phase1)で担う旨と整合。PLACEMENT: 薄ラッパ維持。minor(非ブロック): --dry-run は detect script が互換フラグとして受理し常時非書込(frontmatter に明記=honest)。"},"reviewed_by":"harness-ratchet-recovery-code-review","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant"]}
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "genuine review（sha256 5217c72e2db134e4db30a91d00bb76a816d532be23900a0e12918f5e800155bf をレビュー。実行検証あり）。範囲: 34行（origin/main から +7/-5、HEAD から +3/-1）。allowed-tools は「Read, Bash, Skill」、argument-hint は「[--all] [--since YYYY-MM-DD] [--dry-run]」。確かめたこと: 共通の実行検証: `validate-frontmatter.py` → rc=0。`lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills` → 「Step 7 全5条件 PASS・command の Skill 経路 PASS (7 skills)」rc=0（Skill を許可した command が名指しする run-* の実在と disable-model-invocation を検査する）。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（command→skill の calls 辺6本がある）。`pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。CM-001（argument-hint）・CM-003（実在する入口 skill の名指し）を満たし、skill 側の argument-hint と一致する。skill 側は disable-model-invocation: false で、Skill ツールから呼べる。個別: 22行の EXCLUDED_SUBDIRS（目標設定・挑戦宣言）、29行の --since の意味（指定日より後の同一ハッシュも再処理。比較は `mod_date > since`、211行）は detect-knowledge-updates.py と一致する。28行の --all → mode:full は SKILL 194・241行、30行の --dry-run は SKILL 124・214・241行と一致する。14・34行のソース種別は SOURCE_TYPE_RULES（youtube・camp・teaching-material・monthly-feedback・seminar・event）と合う。16行の /ubm-youtube-ingest との使い分けは run-ubm-youtube-ingest の R3（抽出とグラフの検証）と合う。前回の指摘（YouTube の経路の使い分け）は直っている。指摘: [低] CM-002 の最小権限: allowed-tools に Bash があるが、本文は Skill で skill を起動するだけで Bash を使わない（Bash が要る手順は skill 側の allowed-tools が持つ。同じ plugin の ubm-consult は Read, Skill で足りている）。-2。DEDUCTION: -2 → 98。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

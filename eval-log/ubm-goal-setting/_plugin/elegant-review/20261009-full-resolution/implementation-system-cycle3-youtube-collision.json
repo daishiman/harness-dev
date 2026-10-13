@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "cycle": 3,
+  "status": "source_frozen_for_independent_review",
+  "self_verdict": null,
+  "author": "system_analyst",
+  "recorded_at": "2026-10-09T14:31:23.567231+00:00",
+  "finding": "Same-day same-title normalized sources overwrote earlier video while registry marked both ingested",
+  "changes": [
+    "C01 and oneshot share normalized_source_path.py: date plus byte-bounded sanitized title plus injective lower-hex UTF-8 videoID suffix",
+    "VideoID text<=32UTF8bytes, ISO-date validation, title text/NFC/safechars<=96UTF8bytes; raw original ID/title remain in YAML",
+    "Before writes check canonical root and existing regular file unique frontmatter ID; foreign/missing/ambiguous ID or symlink rejected as temporary_failure/source_conflict, preserving existing bytes",
+    "6mode/title fixtures exercise sync/backfill/url with vA/vB same date and identical or sanitized-colliding titles:2bodies/2paths, rerun ingest0/skip2",
+    "C01 executes same readonly CLI against stage and parent formal root before guarded publication; formal-save guard authorization unchanged",
+    "Existing ingested legacy normalized_source ledger values and files remain unchanged/readable; no automatic rename/refetch/migration"
+  ],
+  "validation": [
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests/test_youtube_sync_oneshot.py plugins/ubm-goal-setting/tests/test_runtime_simplification_contracts.py plugins/ubm-goal-setting/tests/test_heading_references.py -q",
+      "result": "43 passed in13.29s; includes36YTtests and concurrency/lease/provenance/YAML regression fixtures"
+    },
+    {
+      "command": "lint-skill-dep-step7 --skills-dir plugins/ubm-goal-setting/skills",
+      "result": "PASS7skills"
+    },
+    {
+      "command": "lint-plugin-composition plugins/ubm-goal-setting/plugin-composition.yaml",
+      "result": "PASS,5existing ungenerated-output warnings"
+    }
+  ],
+  "limits": [
+    "No actual provider/network/vault/KB/live ingest executed; production provider remains unchanged",
+    "No bd/Git/release run",
+    "Past overwritten sources cannot be reconstructed by filename fix; no claim of recovered past data",
+    "Existing ingested legacy ledger entries continue to skip and are not auto-verified/migrated",
+    "Full final content PASS belongs to independent evaluator; this is author implementation evidence"
+  ],
+  "preserved": [
+    "Registry flock lease and TTL behavior",
+    "Quoted YAML provenance/source notice",
+    "Guard command-bound formal publication",
+    "Root source changes and frozen KB content"
+  ],
+  "source_sha256": {
+    "plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md": "7977f847c7b2457301ff860fb47972e40a4e11e579d65619a6490a8526cdb6ef",
+    "plugins/ubm-goal-setting/plugin-composition.yaml": "3c8b10442b905e1c5eec98b2a3cb44afe6d11d5080cd651f8f4a3f6be1507fc7",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/SKILL.md": "5ef0b64da4910ca0ecd581dc728e76ef86306f873fd41bf656c994feb89a4527",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R2-fetch-normalize.md": "3dc250b3224df49350bfa137dd9a591cf2be5588c18970512ad54fca6827b427",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/normalized-source-schema.md": "e9900f30b8466cd1059571803a6c75148133c83a838b7f822a7720a28009963e",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md": "3ca65a706c6a2cb4172018c4df8ee8f58cafae49e9b570787a878298c9ac4b3e",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py": "443fd0472c1b1bbf6a2403b8e445a3258647ef3fdd41561ad3f7171c9bf36927",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py": "85e67a55f0ba7e9aa8b843f0bdce935e3efcb15f12de73a2f208a3ba56485dba",
+    "plugins/ubm-goal-setting/tests/test_youtube_sync_oneshot.py": "a72a73baa5af4099f07a2ac41b07e879cf3d73069250cbfe1318198643cd98ad"
+  },
+  "source_snapshot_sha256": "7c7151b3cc74797f5f986a49af310ae9601eaa875edfef75f0823b8cb69e85ae",
+  "source_count": 9,
+  "helper_executable": true
+}

@@ -1,0 +1,60 @@
+{
+  "issue": "harness-bzn.4",
+  "trial": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-init/live-trial/20261005T174417-bzn4-init-retry",
+  "session_id": "8313c4d2-a718-45b4-bacc-b10faacdb442",
+  "actual_out_of_scope_mutations": [
+    {
+      "transcript_line": 121,
+      "tool_use_id": "toolu_01LGkX79udpnHSfomRhmncwd",
+      "tool": "Write",
+      "input": {
+        "file_path": "/Users/dm/dev/dev/個人開發/harness/eval-log/dev-graph/run-dev-graph-init/live-trial/20261005T174417-bzn4-init-retry/out/status.json",
+        "content": "{\"status\":\"PASS\",\"scenario\":\"C01-OUT1-positive-idempotence-fixture-standard-v2\"}"
+      }
+    }
+  ],
+  "wrong_root_bash_operations": [
+    {
+      "transcript_line": 79,
+      "tool_use_id": "toolu_01Db6ADtis3PTTKQYyeotpVa",
+      "tool": "Bash",
+      "input": {
+        "command": "cat /Users/dm/dev/dev/個人開發/harness/eval-log/dev-graph/live-trial-fixtures/20261005T174417-bzn4-init-retry/.dev-graph/config.json 2>&1",
+        "description": "Read config.json file"
+      }
+    },
+    {
+      "transcript_line": 84,
+      "tool_use_id": "toolu_01QCk2A9DQd6nt77oEsRhe4L",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /Users/dm/dev/dev/個人開發/harness/eval-log/dev-graph/live-trial-fixtures/20261005T174417-bzn4-init-retry/.dev-graph/",
+        "description": "List .dev-graph directory contents"
+      }
+    },
+    {
+      "transcript_line": 88,
+      "tool_use_id": "toolu_01JnS2kqLXE7djHEGHMQZAsf",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la \"/Users/dm/dev/dev/個人開發/harness/eval-log/dev-graph/live-trial-fixtures/\" 2>&1 | head -20",
+        "description": "List live-trial-fixtures directory"
+      }
+    },
+    {
+      "transcript_line": 92,
+      "tool_use_id": "toolu_014SwtdkRaWbzushPEM7nuE3",
+      "tool": "Bash",
+      "input": {
+        "command": "cd /Users/dm/dev/dev/個人開發/harness && cat .gitignore 2>&1 | grep -i fixture",
+        "description": "Check if fixtures are gitignored"
+      }
+    }
+  ],
+  "wrong_root_bash_mutations": [],
+  "wrong_root_bash_evidence": "Every typo-root Bash command is find/ls/cat/cd read attempt; mkdir-p command uses correct relative root. The only transcript-backed typo-root mutation is direct Write, including tool-created parent dirs.",
+  "expected_marker_existed_at_collection": false,
+  "before_wrong_directory_absence": "No pre-trial snapshot of sibling typo tree exists; cannot claim the whole root absent before. Root later verified cleanup and empty created parent removal independently.",
+  "cleanup_owner": "root; exact typo marker bytes backed up before removal, no marker relocation",
+  "source_defect": "Not established: canonical current init writer first33/second0, internal C11 valid0 both; mandatory prompt/Agent omitted and model direct Write mistyped path."
+}

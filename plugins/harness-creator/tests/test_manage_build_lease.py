@@ -1,10 +1,11 @@
 """manage-build-lease.py (TG-C07) の機能テスト — build 開始前安全性ゲート。
 
 conftest 非依存で module-level に importlib ロードする (自己完結)。
-lock 取得/二重起動 already-held/孤児 steal (ttl 超過・pid 非生存)/破損 lock/別ホスト非 steal/
-force-release/release/renew (renewed・lost・foreign)/lock-ttl 既定=2×lease/producer scripts
-preflight/find_expired_leases 純関数/graph_hash pin 一致・不一致 (subprocess 委譲は
-monkeypatch)/repin 時 task-graph 転送/reap 委譲 を網羅する。
+lock 取得/二重起動 already-held/孤児 steal (ttl 超過・legacy の pid 非生存)/owner-token lock は
+pid が死んでも ttl 内なら非 steal (同一ホストの CLI 2 回目 acquire を subprocess で検証)/破損 lock/
+別ホスト非 steal/force-release/release/renew (renewed・lost・foreign)/lock-ttl 既定=2×lease/
+lease・ttl 0 以下の usage error/producer scripts preflight/find_expired_leases 純関数/graph_hash pin
+一致・不一致 (subprocess 委譲は monkeypatch)/読めない inbox form/repin 時 task-graph 転送/reap 委譲 を網羅する。
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import importlib.util
 import json
 import os
 import socket
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -116,12 +118,14 @@ def test_acquire_lock_steals_when_ttl_exceeded(tmp_path):
     assert content["started_at"] == "2026-07-06T12:00:00Z"  # 自分の中身で上書き
 
 
-def test_acquire_lock_steals_when_pid_dead(tmp_path):
+def test_acquire_lock_keeps_owner_token_lock_when_pid_dead_within_ttl(tmp_path):
     lock = tmp_path / ".build.lock"
-    # ttl 内だが同一ホストで pid 非生存 → 孤児 steal。
-    _write_lock(lock, started_at=mbl._iso(T0), pid=_dead_pid(), host=HOST)
-    assert mbl.acquire_lock(lock, T0, 900) == "stolen"
-    assert json.loads(lock.read_text(encoding="utf-8"))["pid"] == os.getpid()
+    # owner-token lock の pid は終了済みの CLI プロセス。ttl 内なら pid が死んでいても生きた build の lock。
+    dead = _dead_pid()
+    _write_lock(lock, started_at=mbl._iso(T0), pid=dead, host=HOST)
+    assert mbl.acquire_lock(lock, T0, 900) == "already-held"
+    content = json.loads(lock.read_text(encoding="utf-8"))
+    assert content["pid"] == dead and content["owner_token"] == "owner-a"
 
 
 def test_acquire_stale_legacy_lock_migrates_to_owner_token(tmp_path):
@@ -599,6 +603,93 @@ def test_main_acquire_default_path_from_resolve_build_dir(tmp_path, monkeypatch,
 def test_main_missing_slug_and_state_exit2(tmp_path):
     rc = mbl.main(["--lock-action", "release"])
     assert rc == 2
+
+
+def _cli_acquire(build: Path, graph: Path, planner: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(SCRIPTS / "manage-build-lease.py"), "--lock-action", "acquire",
+         "--task-state", str(build / "task-state.json"), "--task-graph", str(graph),
+         "--planner-scripts-dir", str(planner)],
+        capture_output=True, text=True, cwd=str(build.parent),
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+
+
+def test_cli_second_acquire_on_same_host_is_already_held(tmp_path):
+    """文書どおり CLI を都度呼ぶと 1 回目の CLI は終了済み (pid 非生存)。2 回目は奪わず exit1。"""
+    build = tmp_path / "build"
+    build.mkdir()
+    planner = tmp_path / "planner"
+    planner.mkdir()
+    (planner / "derive-task-graph.py").write_text('print("sha256:" + "a" * 64)\n', encoding="utf-8")
+    (planner / "check-task-state-schema.py").write_text("raise SystemExit(0)\n", encoding="utf-8")
+    graph = tmp_path / "task-graph.json"
+    graph.write_text(json.dumps({"nodes": [{"id": "T1"}], "edges": []}), encoding="utf-8")
+
+    first = _cli_acquire(build, graph, planner)
+    assert first.returncode == 0, first.stderr
+    token = json.loads(first.stdout)["owner_token"]
+    second = _cli_acquire(build, graph, planner)
+    assert second.returncode == 1, second.stdout
+    out = json.loads(second.stdout)
+    assert out["lock"] == "already-held" and out["lock_format"] == "owner-token"
+    assert "force-release --admin" in out["remediation"]
+    assert json.loads((build / ".build.lock").read_text(encoding="utf-8"))["owner_token"] == token
+    # 持ち主の token で release すれば次の acquire は取れる。
+    assert mbl.main(["--lock-action", "release", "--lock-path", str(build / ".build.lock"),
+                     "--owner-token", token]) == 0
+    assert _cli_acquire(build, graph, planner).returncode == 0
+
+
+@pytest.mark.parametrize("flags", [
+    ["--lease-seconds", "0"], ["--lease-seconds", "-5"],
+    ["--lock-ttl-seconds", "0"], ["--lock-ttl-seconds", "-5"],
+])
+def test_main_acquire_rejects_non_positive_lease_or_ttl(tmp_path, monkeypatch, capsys, flags):
+    """0 以下の lease/ttl は生きた lock を孤児扱いにして奪えてしまうため exit2 で止める。"""
+    build = tmp_path / "build"
+    build.mkdir()
+    _write_lock(build / ".build.lock", started_at=mbl._iso(mbl._utc_now() - timedelta(seconds=1)),
+                pid=os.getpid(), host=HOST)
+    before = (build / ".build.lock").read_text(encoding="utf-8")
+    _stub_ok(monkeypatch)
+    rc = mbl.main([
+        "--lock-action", "acquire", "--task-state", str(build / "task-state.json"),
+        "--task-graph", str(tmp_path / "task-graph.json"), *flags,
+    ])
+    assert rc == 2
+    assert flags[0] in capsys.readouterr().err
+    assert (build / ".build.lock").read_text(encoding="utf-8") == before
+
+
+def test_main_acquire_unreadable_inbox_forms_mismatch_with_reason(tmp_path, monkeypatch, capsys):
+    """配列や非 UTF-8 の form は認可に数えず、traceback ではなく理由付き mismatch で lock を解放して exit1。"""
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _state(_node("T1", "pending"))
+    state["graph_hash"] = "sha256:" + "0" * 64
+    (build / "task-state.json").write_text(json.dumps(state), encoding="utf-8")
+    inbox = build / "discovered-tasks"
+    inbox.mkdir()
+    (inbox / "a-array.json").write_text("[1, 2]", encoding="utf-8")
+    (inbox / "b-binary.json").write_bytes(b"\xff\xfe\x00")
+    _stub_ok(monkeypatch, derive_hash="sha256:" + "f" * 64, verify=False)
+    rc = mbl.main([
+        "--lock-action", "acquire", "--task-state", str(build / "task-state.json"),
+        "--task-graph", str(tmp_path / "task-graph.json"),
+    ])
+    captured = capsys.readouterr()
+    assert rc == 1
+    out = json.loads(captured.out.strip())
+    assert out == {"graph_hash_pin": "mismatch", "invalid_forms": ["a-array.json", "b-binary.json"]}
+    assert "a-array.json" in captured.err and "b-binary.json" in captured.err
+    assert not (build / ".build.lock").exists()
+
+
+def test_read_state_non_utf8_falls_back_to_empty_state(tmp_path):
+    state_path = tmp_path / "task-state.json"
+    state_path.write_bytes(b"\xff\xfe\x00")
+    assert mbl._read_state(state_path) == {"schema_version": "1.0", "graph_hash": None, "nodes": []}
 
 
 # ─────────────────────────── lock-ttl 既定 = 2×lease ───────────────────────────

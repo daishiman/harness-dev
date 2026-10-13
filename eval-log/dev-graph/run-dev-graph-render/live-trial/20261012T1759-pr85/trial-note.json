@@ -1,0 +1,29 @@
+{
+  "label": "render4",
+  "retry_of": "20261012T0944-pr85",
+  "evaluator_agent_id": "a4897a1bb1cfd4023",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render4/ws/plugins/dev-graph/skills/run-dev-graph-render",
+  "closure_sha_at_launch": "cde8d6a38ecda878e334d5c985474309a3272b66baed44345824d40489c97a02",
+  "closure_sha_tested_copy": "cde8d6a38ecda878e334d5c985474309a3272b66baed44345824d40489c97a02",
+  "closure_sha_wtpy_at_verdict": "cde8d6a38ecda878e334d5c985474309a3272b66baed44345824d40489c97a02",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-render) を、その場で git init した repo に写した (最初の commit は f31f62a7)。前回の render の出力 .dev-graph/render は写していない。元の fixture は変えていない。render3 と同じ手順。",
+    "rekey: 写した repo に合わせて repository_id と worktree_id を 3 ファイルで付け替えた (一覧は fixture-provenance.json の rekeyed_files)。graph.json と registration receipt は変えていない。",
+    "環境: AF_UNIX の socket を /private/tmp/ltpr85/cr4 の下だけ許し、chrome-headless-shell を run の dir に置いた。render3 と同じ条件で、dir の名前だけ違う (fixture-provenance.json の environment_change)。",
+    "隔離ガード: render3 の後に、guard.py を許可一覧の形にし (一覧に無い tool を拒否)、ScheduleWakeup・SendFeedback・mcp__*・Agent の isolation を拒否するようにした。permissions.deny にも 12 件を足した。締める向きの変更だけ (fixture-provenance.json の isolation_change)。",
+    "task.md: registration receipt の path を書き、--receipt で渡すことを求め、検証の receipt の項を今の SKILL.md の OUT1 の文に合わせた。scenario の id を v3 にした (fixture-provenance.json の task_md_changes)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "潜在的な不一致 (この fixture では試されていない): SKILL.md の手順 5 と prompts/R2-plan.md は『feature 間 edge と task 内 edge を混同せず表示する』と要求している。一方 plugins/dev-graph/scripts/render-graph-html.py の L135-138 は、すべての depends_on を class も style も同じ <path> として 1 つの <g class=\"edges\"> に描く。renderer receipt の edges も合計数だけ (L166) で、edge の種類を区別する手段が無い。再現手順: feature 2 つの間に depends_on を 1 本持ち、task 間にも depends_on を持つ graph を render-graph-html.py で描く。両方の edge が見た目でも DOM でも区別できない。今回の fixture は feature 間 edge が 0 本 (R2 の分類) なので、判定には影響していない。"
+  ]
+}

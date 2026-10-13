@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 4b75a13c69038b2c9606df0938add1c19b256cc726fc8370f8392a83603078b5 をレビュー。実行検証あり）。範囲: 283行（origin/main から +124/-94、HEAD から +45/-37）。tools は「Read, Bash」で、カンマ区切りの明示 allowlist（AG-001 の FAIL 条件には当たらない）。確かめたこと: 共通の実行検証: `pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。`lint-agent-prompt-section.py`（ubm の agents 9本）→ OK: 9 agent file(s) passed (Tier 1)、rc=0。`lint-agent-prompt-content.py` → 9本とも7層に準拠、rc=0。`validate-frontmatter.py` → rc=0。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（WARN 5件は生成前の出力パスで正当）。fixture（repo の外の work-a1/ytfx/）で normalized_source_path.py --metadata --source-out を動かし、`YouTube/2025-11-05 - 人が集まってくる思考を叩き込む [id-…].md` を rc=0 で返した。そのファイルに detect-knowledge-updates.py --dry-run をかけ、rc=0 で `NEW|youtube|…` を返した。前回の [低] は直っている: 引き継ぎの節を SHA と正式パスの方針にそろえた（193〜202行・281〜283行）。263行の例はインジェクションの行と URL を原文のまま残す。metadata は agent 自身が JSON に保存する（88行）。節番号の重複を 5.5/5.6 に分けた。指摘: [低] 下流の抽出役の説明が knowledge-extractor の本文と合わない: 34・108・131行の「Grep `^#`」は、抽出役が Grep ツールを持たず Bash の `grep -n '^#'` を使う（同 311行）ことと食い違う。179行の「published_at から date を得る」規則は抽出役の本文に無い。-3。[低] 57行は SOURCE_TYPE_RULES を「先頭一致」と書くが、実装（detect-knowledge-updates.py 50〜62行）は `needle in path_str` の部分一致で、先頭の規則から順に見る。-2。[低] AG-002（`## Isolation` か `## Context Boundary`）と AG-004（`## Handoff` か `## Output Contract`）の見出しが無い。中身は7層の Layer の節にあるので -2 にとどめる（ubm の agents 9本に共通）。DEDUCTION: -3 -2 -2 = -7 → 93。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

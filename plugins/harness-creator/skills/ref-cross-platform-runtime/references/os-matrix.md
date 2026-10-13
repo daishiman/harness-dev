@@ -10,4 +10,6 @@ doc/22 設計書からの転載＋運用追記。
 | WSL     | `platform.system() == "Linux"`      | `python3`, `python` | 禁止      | 禁止              | Linux 経路で統一           |
 | 未判定  | `platform.system()` が空/未知       | `unknown`         | 禁止      | 禁止              | env HARNESS_SECRET_<SLUG>_* のみ |
 
+「shell script 配布」の列で禁じるのは、生成・検証・adapter・hook の処理を `.sh` で配ること (SKILL.md の Gotchas)。install などの lifecycle の `.sh` (設計書 28 章 §3.2 の L1) は対象の外。python_cmd は path でなく名前で返す (SKILL.md の雛形)。
+
 判定エントリポイント: `plugins/skill-governance-automation/scripts/cross_platform_secret.py --probe`

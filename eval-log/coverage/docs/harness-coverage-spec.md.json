@@ -1,1 +1,18 @@
-{"artifact":"doc/harness-coverage-spec.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":68,"notes":"裏取り: validate-llm-coverage.py / validate-harness-coverage.py / test_scripts_smoke.py / sitecustomize.py / make harness-coverage|coverage-gate|llm-coverage 全て実在し impl整合は良好。仕様(80%二軸×6種別)・kind別パス・enforcement節は明確。FAIL理由は内部整合の数値ドリフト多数: (1)冒頭バナー『達成は1/12軸』vs §6『達成9』で矛盾(バナーが stale), (2)scripts mechanical が §6で56.5%・行95見出しで46%・§8 follow-upで32.7%の三値併存, (3)skills mechanical §6=91.5%✅ なのに §8 follow-upでは『22.9%→80%』が未チェックタスクとして残置=直接矛盾, (4)skills llm_eval §6=81.2%✅ vs §8=72.9%。§8 follow-up と冒頭バナーが §6 ダッシュボード更新時に同期されず、読み手が現状値を一意に確定できない。"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/harness-coverage-spec.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 66ca7cbc7dd9afdc622a305047c53d290015c1771d27013c931011bda479984b をレビュー。実行検証あり）。範囲: 全 140 行（定義、二軸、判定、強制、自動化、§6 ダッシュボード、§7 計測機構、§8 follow-up）を通して読み、前回（20261010i-d2）の [中]×2・[低]×2 を現物で確かめ直した。確かめたこと: (1) `PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate-harness-coverage.py --json work-j-d1/hc.json` → exit 0、計測済 12・達成 8、spec_met=false。scripts 85.6/72.0（486 本）、skills 100/84.9（106。物理 127、owned-vendored コピー 21 を除外）、agents 82.4/67.6（68）、commands 100/67.7（31）、hooks 100/100（1）、docs 86.2/65.5（58）。repo の eval-log/harness-coverage.json の sha256 は実行の前後で同じ（上書きしていない）。(2) --self-test → OK（6 checks）。--gate（work 宛）→ exit 1。--ratchet（work 宛）→ exit 1（docs/llm_eval 65.5% < floor 69.8%。今回の再レビュー中の FAIL 記録によるもので、文書の欠陥ではない）。(3) Makefile L9・L226-250（coverage-gate = validate-llm-coverage.py --all --gate-new --since $(LLM_COV_SINCE)、LLM_COV_SINCE ?= 2026-06-24、harness-coverage、harness-ratchet = --ratchet）、harness-creator-kit-ci.yml L101-107（coverage-gate と harness-coverage は `|| echo [WARN]`、harness-ratchet は blocking）が L4・§4・§7 と一致。validator の RATCHET_TOLERANCE=0.1（371 行）、compare_to_floor（389 行）、merge_floor_up（409 行。--update-floor でも floor を下げない）が §4-4 と一致。(4) validator L281-347: hooks は measure_md_type(\"hooks\",\"hooks\") で plugins/*/hooks/*.md（実体は plugins/skill-intake/hooks/README.md の 1 件）。hooks.json の 37 コマンドはすべて plugins/*/hooks/ 直下の .py（30 本の .py・.sh の一部）を指し、scripts 軸の rglob(\"scripts/*.py\") にも入らない（L28・L97・L135 と一致）。L309 の DOC_EXTERNAL_REFERENCE（参考Skill・Agent Skill大全）が L29 と一致。scripts/lint-content-review.py 35 行の EXEMPT_KINDS={\"ref\"} が L111 と一致。(5) §6 の内部整合: 達成 11（scripts mechanical 以外が ✅）、skills llm_eval (35+4)/48=81.25%、docs llm_eval 37/44=84.1% は表と一致。数値は §6（2026-06-24 と明示）にだけあり、L5・L84・§8 の方針と一致。前回指摘の確認: [中] hooks 軸の定義と実装の食い違い → §1 L28 が実際の数え方（*.md、README 1 件）を書き、hook スクリプトが集計対象外であることを §6 の注と §8 の残課題に置いた（解消）。[中] 数値と方針の矛盾 → §8 と旧 L104-106 から数値を外し、数値を §6 の日付つきスナップショットに限定（解消）。[低] ratchet の未記載 → L4・§4-4・§7 に記載（解消）。[低] docs の除外の未記載 → L29 に記載（解消）。指摘: [低] L134「sha256 不一致の記録は無効」は機械では効いていない。validate-harness-coverage.py の _llm_eval_ok（160-170 行）は verdict と score しか見ず、tests/test_coverage_records_integrity.py も artifact の実在・verdict・score だけを検査し、§7 L127 の記録規約にも sha の項目が無い（sha は notes の自由文にあるだけ）。本文を直した後も古い PASS 記録はそのまま緑に数えられる。直し方: 手作業の規則で validator は照合しないと書くか、validator で照合することを §8 の残課題に加える。[低] §1 の scripts・skills 行（L24・L25）が validator の実際の数え方と違う。hooks・docs 行は数え方まで書いたのに、scripts は 3 つの glob と書くが validator L179 は plugins/<p> 配下の任意の深さの scripts/*.py を数え（templates/ の下の 9 本: task-graph-engine 4・knowledge-skeleton 4・goal-seek-runtime 1 が入る）、tests/**/fixtures を除く。skills は owned-vendored の byte 一致コピー 21 件を除いて 106 件で数える（_logical_skills、117 行・252 行）。直し方: L28・L29 と同じく除外と範囲を書き足す。DEDUCTION: [低] L134 -3、[低] L24-25 -3 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-d1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "previous-findings-recheck"
+  ]
+}

@@ -2,43 +2,45 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565"
+    "skill_md_sha256": "d847fbe62976b50455cb1f2c8b0f68d6f4d4bc070f0be7db6f06934ee51b95e8"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T20:35:43Z",
+  "iterations": 4,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 2,
+    "omission": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
-  "reviewed_at": "2026-10-04T22:30:24Z",
-  "iterations": 1,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "external-mutation-guard ブロックの規範を満たしている。<!-- external-mutation-guard-cli:v1 --> の範囲は Post-choice selected improvement execution の中にある。文面は生成器（scripts/build-artifact-delivery.py）の canonical block と一致し、`--check` は rc=0（ARTIFACT_DELIVERY_OK: 22 plugins）。_validate_external_guard_wiring が必須とする resolver の行・preview・authorize・execute の 4 行がすべてそろっている。frontmatter の effect: external-mutation と external_mutation_guard（runtime_ref は plugin: 記法、flow は preview-confirm-authorize-execute-v1）は前回のまま、本文と一致する。",
-      "依存関係が整合している（dependency_break 0 件）。本文が呼ぶ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py` は plugin 直下に実在し、repo 正本と byte 単位で一致する（lint-vendored-ssot は 33 件 OK）。実行すると rc=0 で skill-governance-adapters の絶対パスを返し、そこに guard script が実在する。plugin.json の dependencies は skill-governance-adapters を宣言している。resolver が非 0 のときは外部変更をせずに止まって install を案内し、依存が欠けたときは fail-closed になる。lint-sibling-plugin-paths は OK。",
-      "runtime root contract と矛盾しない。resolver の呼び出しは dual-root 形（`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`）で、Codex 側で空文字に展開されない。guard の 3 呼び出しは `<GUARD_PLUGIN_ROOT>` という山括弧プレースホルダを使うので、『山括弧のプレースホルダはすべて今回の実行で確かめた値に置き換える』という既存の指示の対象に入る。guard script の canonical 判定（コマンド全体が単一の呼び出しで、shell 演算子を含まない）と pending 中の Bash 遮断にも合っている。",
-      "前回の PASS で確認した規範は、変わらずに維持されている。対象は description の形式（lint-skill-description OK=6 / VIOLATION=0）、本文の行数（263 行で上限内）、必須節、Purpose & Output Contract の IN1〜IN3 と not_applicable、workflow-manifest.json の phase5-validate（commands 3 本、fatal_exit_codes [1,2,3]）、criteria 5 件の verify_by（script / script / script / test / live-trial、lint-feedback-contract --all rc=0）、artifact_delivery の state machine。skill 配下の references・scripts・manifest は前回の評価以後に更新されていない。",
-      "実測: pytest（plugins/ubm-goal-setting/tests）484 passed、root テスト（extract_plugin_root・artifact_delivery）59 passed、lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-plugin-composition OK、lint-ssot-duplication --plugin-dir OK。"
+      "render-findings-score.py で SKILL.md を `--kind skill` で採点して 100 点（threshold 80）、findings 0 件、high 0 件。pending_human は BD-004 と KL-002 の2件（意味判断が要るもの）。",
+      "agent 3本（info-collector・output-formatter・phase3-coordinator）を `--kind agent` で採点して、いずれも 97 点。findings は PD-001（low。agents に references/ が無い）だけで、phase3-coordinator にも BD-003 は出ない（前回は301行と数えられて BD-003 high・77点）。passed=false は AG-001/AG-002 の checker が未実装なため（blocking_reason）で、指摘ではない。手で確かめると、3本とも frontmatter の tools が明示の一覧で、`## Context Boundary (AG-002)` と `## Handoff`（AG-004）の見出しを持つ。",
+      "F1 は解消した。rc の取り方の正本 references/validation-gates.md が、cross-level の例（L35-39）を python3 だけの1つのコマンドにし、L46-50 で「表の順に1行ずつ、python3 で始まる1つのコマンドとして起動する」、L52 で「rc は Bash ツールが返す終了コードをそのまま記録する」と決めた。写しの data-contract.md:368-374、output-formats.md:467-468・480-483、workflow-manifest.json の commands_note（L123）、agents/output-formatter.md:252 も同じ形で正本を指す。`rc=$?`・`$gate_log`・`; echo`・`> out.txt` は、スキル・agents・plugin の references・commands のどこにも、L52 の禁止の文の中以外に残っていない。",
+      "F2 は解消した。SKILL.md:269-270 のゴールシーク検証が `\"{resolved_progress_path}\" \"{resolved_intermediate_path}\"` のプレースホルダーになり、正本の goal-seek-anchor-contract.md:17-22 と同じく、呼び出しをまたいで残らないシェル変数に頼らない。",
+      "feedback_contract の criteria IN1〜OUT2 はどれも verify_by を持ち（script×3・test・live-trial）、plugin のテスト1025件が rc=0 で通る（130.82秒）。"
     ],
     "negative_feedback": [
-      "[low / omission・新規] CHANGELOG.md 0.6.3 の『install 先での兄弟 plugin の解決』の項目が run-skill-feedback だけを挙げている。同じ guard block の差し替えは run-ubm-goal-setting・run-ubm-journal・run-ubm-knowledge-sync・run-ubm-youtube-ingest にも入っている。resolver を同梱したことも追加として読み取れず、skill の version-history.md 26.0.3 にもこの差し替えの記録が無い。直し方: CHANGELOG の主語を『外部変更を行う 5 skill の guard 手順』に広げ、resolver の同梱を書き、version-history.md 26.0.3 に 1 項目足す。",
-      "[low / omission・diff 外（新しい文言で顕在化）] archive への移動を guard に通すときの実行主体と時点が書かれていない。Phase5 の実行体は output-formatter（Task）で、その Step 4 項目 4 は guard に触れずに『archive/ へ分離する』とだけ書く。Task は hook-confirm（ユーザーの返答）を完結できず、mv は guard の直接変更パターンに当たらないので、直接 mv すると preview を経ない。逆に親が Phase5 の前に preview を出すと、pending のあいだ検査 3 本の Bash が遮断される。直し方: 『formatter が保存を終えて親へ戻った後、親が preview→confirm→authorize→execute で移動する』と Phase5 の行と output-formatter Step 4 に書く。",
-      "[low / inconsistency・前回から継続] version-history.md 26.0.3 と CHANGELOG の版は 0.6.3 だが、plugin.json（claude / codex）と marketplace.json は 0.6.2 のまま。直し方: release 時に 3 つの manifest を 0.6.3 に上げる。上げないなら、記録の版を 0.6.2 側へ合わせる。",
-      "[low / inconsistency・前回から継続] manifest の phase5-validate の commands 3 本が同じ `<log>` へ `>` で書くので、同じパスに置くと前の rc が上書きされる。3 本目の条件は commands_note の自由文にしか無い。直し方: ログのプレースホルダを 3 つに分け、3 本目の条件を command 側でも示す。",
-      "[low / omission・前回から継続・diff 外] agents/output-formatter.md の L92・L237・L259 が、IN3 と not_applicable に追随していない。直し方: 3 箇所に『期報と月報が揃っている場合は validate-cross-level.py の rc と引数、揃っていなければ not_applicable』を足す。",
-      "[smell / low・前回から継続] data-contract.md の Version 表（最新 2.6.0）に、§4.4 の契約変更（IN3 の適用範囲の拡大と not_applicable）が載っていない。直し方: 2.6.1 等を足すか、以後は version-history.md へ一本化すると明記する。"
+      "[N1 / low / inconsistency / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md:269] 何が起きるか: F2 の直し方の案のうち、プレースホルダーは取り込まれたが、ルートの展開は `\"$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py\"` のまま（変更前と同じ）。正本の plugins/ubm-goal-setting/references/goal-seek-anchor-contract.md:18 と、同じ plugin の5スキル（run-ubm-challenge/SKILL.md:274・run-ubm-consult/SKILL.md:198・run-ubm-journal/SKILL.md:263・run-ubm-knowledge-sync/SKILL.md:227・run-ubm-youtube-ingest/SKILL.md:231）は `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/...\"` で、このスキルだけ形が違う。PLUGIN_ROOT が未設定のまま展開せずに起動すると `/scripts/validate-inline-goal-seek-anchor.py` を開けず、python3 は rc=2 で止まる（止まる側に倒れるので low）。このスキルの Phase5 の例（SKILL.md:218-232）も `$PLUGIN_ROOT` の形で、validation-gates.md:46 が「すべてのパスとプレースホルダーを確定値へ展開してから起動する」と書いているので、スキルの中では筋が通っている。直し方の案: L269 を契約と同じ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` にそろえる。スキル全体で `$PLUGIN_ROOT` に統一するなら、goal-seek-anchor-contract.md 側にも「解決済みの絶対パスへ展開してから起動する」と書き、正本と写しのどちらに寄せるかを決める。",
+      "[N2 / low / smell / plugins/ubm-goal-setting/CHANGELOG.md:3-5] 何が起きるか: merge で入った最新の見出し `## 0.8.1 - 2026-10-10` は「build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。」だけで、iteration 3 の後の修正（F1: ゲートの rc の取り方を Bash ツールの終了コードへ一本化、F2: ゴールシーク検証のプレースホルダー化、F3: phase3-coordinator の本文の削減）が、CHANGELOG にも skills/run-ubm-goal-setting/references/version-history.md（最新は 27.0.0）にも記録されていない。F1 は output-formatter と親が守る実行の契約を変えたので、記録が無いと後から rc の取り方が変わった時点を追えない。build-plugin-release.py の fingerprint は CHANGELOG.md を含むので、bump の後に書くと版の番号が1つずれる。直し方の案: 次の版の見出し（0.8.2）を先に CHANGELOG へ書いて F1〜F3 を記録し、そのあと build-plugin-release.py を1回回して bump する。version-history.md にも同じ版の行を足す。対象スキルの内容の正しさには影響しないので low。"
     ],
-    "iteration": 1,
+    "iteration": 4,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / install-portability の focused combined review・1 回】前回の PASS（sha ec1703442576…）の後に、外部変更の guard block の差し替えが入り、SKILL.md の sha が 1e1a31ee4b9c… に変わった。builder とは別の context の独立 evaluator として再評価した。30 思考法は行っておらず、行ったとも申告しない。1 回のレビューで (a)〜(e) を同時に判定し、その結果を elegance と rubric の 2 verdict に分けて書いている。このファイルは rubric 側（規範に照らした採点）で、elegance 側は同じディレクトリの elegance-verdict.json にある。どちらも同じ観測に基づく。 【読んだもの・確認したこと】SKILL.md 全文（criteria の id は IN1/IN2/IN3/OUT1/OUT2）、git diff HEAD の全文。guard block を旧形へ戻した sha が前回値と一致し、前回以後の変化は guard block だけと確定した。同梱 resolver の全文と実行結果、repo 正本との byte 一致、guard script（Read ツールで読んだ）の canonical 判定と pending 判定、build-artifact-delivery.py の diff と --check、plugin.json の dependencies、hooks.json の matcher、output-formatter.md の該当箇所、CHANGELOG.md 0.6.3、version-history.md の diff、manifest 3 つの版数。書き込み直前に shasum で計算した実測値は 1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565。実測: pytest 484 passed、root テスト 59 passed、lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-feedback-contract --all rc=0、lint-skill-description OK=6 / VIOLATION=0、lint-sibling-plugin-paths OK、lint-vendored-ssot OK、artifact-delivery --check rc=0、不可視文字なし。 【rubric 採点の要点】high severity に当たる違反は 0 件である。description の形式・行数・必須節・frontmatter の必須キー・artifact-delivery・external-mutation-guard（生成器と一致し、post-choice の中にある）・goal_seek / feedback_contract の構造は、いずれも満たしている。medium も 0 件。新規の low は 2 件（CHANGELOG の記載範囲、archive 移動の guard の実行主体と時点）で、前回から継続の low は 4 件ある（skill 配下は前回以後に更新が無く、未処置）。verdict=PASS、next_action=none。guard block の文言は、境界の archive 移動の宣言とも Gotchas の書き込み保護とも矛盾しない。 【PASS の射程】この PASS の射程は design claim（静的な設計の adequacy）に限る。install 先で resolver が実際に解決できることは、repo 配置での実行と root テストで確認しただけで、実 install 環境での実走ではない。IN1〜IN3（verify_by: script）は、実際の生成物に検査器を当てた rc で確認する。OUT1（verify_by: test）と OUT2（verify_by: live-trial）の behavioral acceptance には、受け入れテストと run-skill-live-trial の実走証拠が別に要る。この verdict をそれらの証拠として流用しない。"
+  "notes": "[rubric] rubric 1.6.0 の rule との照合の観点。iteration_limit 3 に達した後、利用者が 2026-10-12 に1回の追加レビューを承認した（human decision）。これが4回目で最後の評価。force_pass ではなく、通常の再レビューとして採点し直した。評価の範囲: content-review-protocol.md の「incremental: unresolved semantic batch」に沿った incremental の focused review で、(a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high が0件、を1つの context でまとめて判定した。exhaustive の30思考法は実施していない。live trial（OUT2 の verify_by: live-trial）はしていない。この verdict は設計の妥当さ（design claim）についてのもので、実走での受け入れは Gate D（run-skill-live-trial）の役目として残る。SKILL.md の sha256 は d847fbe62976b50455cb1f2c8b0f68d6f4d4bc070f0be7db6f06934ee51b95e8（python3 の hashlib で計算）。 読んだもの: `git diff HEAD -- plugins/ubm-goal-setting`（作業ツリーの HEAD は 03050251。45ファイル）、SKILL.md の該当箇所（L140-150・L214-234・L264-274）、スキルの references/validation-gates.md・data-contract.md・output-formats.md・version-history.md、workflow-manifest.json、plugin 直下の references/goal-seek-anchor-contract.md、agents/phase3-coordinator.md・output-formatter.md・info-collector.md、CHANGELOG.md、merge で変わった assets/execution-prompts.md と scripts/validate-cross-level.py の docstring。 確かめたこと: plugin のテスト1025件が通る（rc=0）。render-findings-score.py の結果は positive_feedback のとおり。F1 の残骸は grep で探し、validation-gates.md:52 の禁止の文の中にしか無い。L52 が挙げる失敗の形（パイプでは末尾のコマンドの終了コード、未定義の変数へのリダイレクトでは python3 が起動しないまま rc=1、別の呼び出しの `rc=$?` は新しいシェルの0）は、前回シェルで再現した挙動と合う。 前回の指摘ごとに直ったか: (F1) 直った。positive_feedback の3つ目のとおり。(F2) 直った。プレースホルダーの部分は契約と一致する。ルートの展開の形の違いは別の低い指摘（N1）として残した。(F3) 直った。phase3-coordinator.md は全体308行で frontmatter が L1-9、本文が299行（lint の数え方）。render-findings-score.py の `--kind agent` でも BD-003 は出ない。上限までの余裕は1行で、本文を1行でも足すとまた上限に当たる（観察として記録し、指摘には数えない）。削った記述（出力の節・Step 5 完了後・責務プロンプト一覧の説明）の中身は `## Context Boundary (AG-002)`（L294）と `## Handoff`（L300）にあり、抜けは無い。L16 の参照元の説明は、R1/R2/R4 のプロセス制約、R4 の出力評価基準、R5 の最大改善回数（L158）と自己採点（L279）への実際の参照と一致する。 merge の影響: CHANGELOG の 0.8.1 の追加（N2）、version-history 27.0.0 の末尾の括弧書きを plugin.json の版の説明に直したこと、execution-prompts.md の ls を Glob で探す形への変更、validate-cross-level.py の docstring の 来年・前年 は、どれもこのスキルの契約と矛盾しない。plugin.json は .claude-plugin・.codex-plugin とも 0.8.1。 criteria の評価: IN1 は validate-goal-output.py の --type 4層と rc の記録の手順が validation-gates.md の1か所にまとまり、前回 F1 で成り立たなかった rc の記録が成り立つ。IN2 は validate-goal-linkage.py の rc=3 を PASS にしない扱いが SKILL.md と output-formats.md でそろう。IN3 は --yearly と [未照合] の件数の記録が SKILL.md・validation-gates.md:41-44・data-contract.md・workflow-manifest.json でそろう。OUT1 はテスト1025件で生成物の検査が通ることを確かめた。OUT2 は受け入れの手順と Phase0〜6 の契約が合うかを静的に見ただけで、実走はしていない。 迷った例（FAIL にしていない）: SKILL.md:146 の「シェルを呼ぶたびに…PLUGIN_ROOT に入れる」は、validation-gates.md:46 の「確定値へ展開してから起動する」と合わせて、`VAR=...` を単独で実行させる指示ではなく値の解決の説明と読んだ（前回と同じ判断）。agents/info-collector.md:116 の Bash の shasum は info-collector 自身の Bash 権限で動くので対象外。範囲外の観察: plugins/ubm-goal-setting/skills/run-skill-feedback/SKILL.md:227 にシェル変数の `\"$progress_path\" \"$intermediate_path\"` が残っている（別スキル。F2 と同じ性質）。RUNBOOK.md:49 の pytest 用の `cmd > out.txt 2>&1; rc=$?` は開発者向けの手順で、今回の差分にも無い。"
 }

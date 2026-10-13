@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":92,"notes":"ast/pyflakes clean; single responsibility (Stop Hook passthrough always exit 0); narrow JSONDecodeError catch; missing/invalid trigger.json handled as no-op; read-only stdout only; complete # /// script frontmatter"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 1d5e787687a17fb28da17804dc2067a9889fd0f903b22ec67e1e9e481accdcea をレビュー。実行検証あり）。範囲: notify-if-governance-trigger.py 全 86 行と git diff origin/main（warn() を stderr に足し、OSError・ValueError・RecursionError と dict・bootstrap・breached の型を検査する差分）、呼び出し元（どの hooks.json にも登録なし。run-governance-automation SKILL.md 86 行、run-skill-rubric-governance SKILL.md 171 行、27章 176-182 行の Stop hook の例）。確かめたこと: pytest tests/scripts-plugins/test_skill_governance_automation__notify_if_governance_trigger.py 23 passed（3.11）/ 23 passed（3.9。requires-python >=3.9）。pyflakes 0 件。lint-script-frontmatter（plugins/skill-governance-automation）OK checked=14。一時 fixture（work-s3/auto/notify）で: breached あり → 招集メッセージ exit 0、bootstrap true → 無言、bootstrap \"true\"（文字列）→ 警告とメッセージ、breached が \"X1\"・false → 警告 exit 0、[] → 無言、root が list・壊れた JSON・深い入れ子（RecursionError）・非 UTF-8 → どれも警告で exit 0（traceback なし）、--trigger 不在 → 無言 0、未知の引数 → 2、--help → 0、rubric_item_id が null → 文中に None と出る。書き込みなし（write-scope none と一致）。指摘: [低] --trigger がディレクトリなど「あるがファイルでない」と、50 行の is_file() 判定で黙って exit 0 になり、docstring の「あるのに読めないときは警告」とずれる（壊れた配置を「トリガーなし」に畳む）。直し方: exists() と is_file() を分け、ファイルでなければ warning を出す。[低] header の purpose（5 行）は「Stop Hook 経由で招集メッセージを stdout 出力」とするが、docstring 31 行はどの hooks.json にも登録されず手で呼ぶとし、実際に未登録。Stop hook の stdout は transcript にしか出ないので、purpose を実際の使い方に合わせる。DEDUCTION: 50 行のディレクトリ -3、purpose の食い違い -2 → 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 cd6692cdace028ab390643b9bee9d9b95c7861e5e14554b251072e0b2050c2a7 をレビュー。実行検証あり）。範囲: 764行の全体を通読し、`git diff HEAD` で前回の指摘への手当てを確認。確かめたこと: 前回の指摘はすべて直っている。ヘッダの inputs（6-7行）と write-scope（14-18行）が実装と合う。language の型を検査する（109行）。`_require_repo`（535-539行）を run（608行）・run_all（657行）から呼び、綴り違いの repo でディレクトリを作らない。pytest 6 ファイルで 236 passed。実 repo の `--all --check` は ok。fixture（work-j-s1/spp。TMPDIR を spp/repos/tmpdir に向けた）: w1 の check は drift を rc1 で報告し、ファイルは変わらない。w1 の apply は rc0 で、宣言どおりのファイルだけが変わり、再 check も ok。w2（綴り違いの repo）は rc3 で、ディレクトリを作らない。w3（language の型違い）・w7・w8 は rc3。lint-script-frontmatter は OK。指摘: [低] `_load_json`（67-70行）は `(OSError, json.JSONDecodeError)` しか受けない。非 UTF-8 の JSON（w5）と深い入れ子（w6）で traceback・rc1 になり、入力エラーの exit 3 にならない。UnicodeDecodeError と RecursionError も PlatformSyncError にする。[低] 207行 `item.get(\"name\") in managed_names` は、managed_names が set（196行）なので、marketplace の name が list だと --all で TypeError の traceback・rc1 になる（w4）。name が str かを先に確かめる。DEDUCTION: `_load_json` の受け漏れ -3、207行の型 -2 → 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

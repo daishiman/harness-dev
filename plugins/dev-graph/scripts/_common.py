@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: dev-graph-common
-# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write and identity primitives.
+# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write, identity and package-membership (is_package_member) primitives.
 # inputs: ["Python imports only"]
 # outputs: ["Reusable helper functions"]
-# requires-python = ">=3.10"
+# requires-python: ">=3.10"
 # dependencies: []
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: caller-defined atomic JSON target only
+# write-scope: caller-defined atomic bytes/JSON target only
 # ///
 """Shared stdlib-only safety primitives for dev-graph scripts."""
 from __future__ import annotations
@@ -24,6 +24,14 @@ from typing import Any, Sequence
 
 class ContractError(RuntimeError):
     """A fail-closed contract violation (exit 1)."""
+
+
+class ParentNotDirectoryError(ContractError):
+    """The parent of a write target (or one of its ancestors) exists but is not a directory.
+
+    Kept distinct from FileExistsError so that create-only callers can tell "the target
+    already exists" apart from "the target's parent path is occupied by a file".
+    """
 
 
 def run(argv: Sequence[str], *, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -52,21 +60,71 @@ def dump(value: Any) -> None:
     print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
 
 
-def atomic_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+def json_bytes(value: Any) -> bytes:
+    """Canonical readable JSON used by graph files and immutable receipts."""
+    return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+
+
+def _ensure_parent_directory(parent: Path) -> None:
+    """Create ``parent`` (and missing ancestors) or raise ParentNotDirectoryError.
+
+    ``Path.mkdir(parents=True, exist_ok=True)`` raises FileExistsError when the parent is a
+    regular file and NotADirectoryError when a deeper ancestor is; both are reported as
+    ParentNotDirectoryError so they never read as the create-only "target exists" signal.
+    """
+    for ancestor in (parent, *parent.parents):
+        if ancestor.exists() or ancestor.is_symlink():
+            if not ancestor.is_dir():
+                raise ParentNotDirectoryError(f"parent path is not a directory: {ancestor}")
+            break
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except (FileExistsError, NotADirectoryError) as exc:
+        raise ParentNotDirectoryError(f"parent path is not a directory: {parent}") from exc
+
+
+def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:
+    """Write complete bytes; create-only preserves an existing target and raises FileExistsError.
+
+    FileExistsError means only that the target itself already exists. A parent path that is
+    occupied by a non-directory raises ParentNotDirectoryError (a ContractError) instead.
+    The file is created with the umask-derived mode, like an ordinary ``open(..., "w")``.
+    """
+    _ensure_parent_directory(path.parent)
     fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n")
+        # mkstemp creates 0o600; give the target the same mode an ordinary create would get.
+        os.fchmod(fd, 0o666 & ~_current_umask())
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temp, path)
+        if create_only:
+            os.link(temp, path)
+        else:
+            os.replace(temp, path)
     finally:
         try:
             os.unlink(temp)
         except FileNotFoundError:
             pass
+
+
+def _current_umask() -> int:
+    mask = os.umask(0)
+    os.umask(mask)
+    return mask
+
+
+def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:
+    atomic_bytes(path, json_bytes(value), create_only=create_only)
+
+
+PACKAGE_KEYS = frozenset({"parent_feature", "feature_package_id", "phase_ref"})
+
+
+def is_package_member(node: dict[str, Any]) -> bool:
+    return any(node.get(key) is not None for key in PACKAGE_KEYS)
 
 
 def contained(path: Path, root: Path, *, must_exist: bool = True) -> Path:

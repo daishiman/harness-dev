@@ -56,7 +56,9 @@
 | viz-mandatory | references/visualization-mandatory-pointer.md | 必須ルール確認 |
 
 ### 3.2 外部ツール / API
-- `plugins/skill-intake/scripts/render_to_image.py` (Mermaid→PNG + SVG 同梱 PNG 配置、aggregator 共有正本)
+- `plugins/skill-intake/scripts/render_to_image.py` (Mermaid→PNG + SVG 同梱 PNG 配置、aggregator 共有正本)。位置引数は入力 (`.mmd` か `.svg`) と出力 `.png` の2つ。`.svg` は入力と同じ dir の `<stem>.png` (同梱 PNG) を出力先へコピーし、`.mmd` は `mmdc` で PNG 化する。exit 0=成功 / 2=入力が無い / 3=依存不足 (`mmdc` 不在、または同梱 PNG と cairosvg が両方無い)。`--allow-placeholder` は CI/テスト専用で、通常運用では付けない。
+  - SVG の例: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/render_to_image.py" "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/assets/cvis-comparison-table.svg" output/<hint>/visuals/<section>-<figure_id>.png`
+  - Mermaid の例: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/render_to_image.py" <Mermaid 原稿の .mmd> output/<hint>/visuals/<section>-<figure_id>.png`
 - `scripts/verify-visuals.py <visuals.json> <out_dir>` (網羅性検証。引数必須: `output/<hint>/visuals.json output/<hint>/visuals/`。両方必須で欠くと IndexError)
 
 ## Layer 4: 共通ポリシー層
@@ -135,4 +137,4 @@ visuals.json 生成後に以下を自己確認する。未達があれば対応 
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`{{sheet_path}}` と `{{purpose_path}}` を読み、`section-figure-mapping.md` に従いカタログから各セクション 1-3 図を選択せよ。SVG は `render_to_image.py` で PNG 化し、結果を `visuals.json` (schemas/output.schema.json 準拠) として書き出せ。最後に `verify-visuals.py output/<hint>/visuals.json output/<hint>/visuals/` を実行し PASS を確認すること。出力は JSON のみ、前置き禁止。
+`{{sheet_path}}` と `{{purpose_path}}` を読み、`section-figure-mapping.md` に従いカタログから各セクション 1-3 図を選択せよ。SVG は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/render_to_image.py" <入力 .svg> output/<hint>/visuals/<section>-<figure_id>.png` で PNG 化し、結果を `visuals.json` (schemas/output.schema.json 準拠) として書き出せ。最後に `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-intake-visualize/scripts/verify-visuals.py" output/<hint>/visuals.json output/<hint>/visuals/` を実行し PASS を確認すること。出力は JSON のみ、前置き禁止。

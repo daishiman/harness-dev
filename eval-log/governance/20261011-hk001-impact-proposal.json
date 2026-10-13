@@ -1,0 +1,44 @@
+{
+  "proposal_id": "PROP-2026-10-11-HK001-POSTTOOLUSEFAILURE",
+  "proposer": "Claude セッション 077ff83f（PR #85 の作成者）",
+  "date": "2026-10-11",
+  "rubric_id": "skill-design",
+  "current_version": "1.5.0",
+  "change": {
+    "type": "modify",
+    "direction": "relax",
+    "rule_id": "HK-001",
+    "area": "hook",
+    "severity": "high",
+    "check": "event が {PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, Stop, SubagentStop, Notification, SessionStart, SessionEnd, PreCompact} のどれか",
+    "rationale": "実際の配線と capability-manifest schema の enum にある PostToolUseFailure を許す（緩和の superset）"
+  },
+  "bump": "minor",
+  "sunset_days": 0,
+  "impact_assessment": {
+    "past_eval_logs": "eval-log",
+    "expected_fail_rate_delta": "0（superset の緩和）",
+    "relaxation_basis": "HK-001 の判定集合に PostToolUseFailure を足すだけの superset。今まで合格した hook はすべて合格のまま（repo 内の hook の event 宣言 30 件（hooks.json だけなら27件）の旧新再判定で would_regress 0。件数は承認レビューで数え直した）。"
+  },
+  "reviewers": {
+    "proposer": "Claude セッション 077ff83f",
+    "third_party": "未指名。議決ルールの Reviewer 1名を独立の承認レビューで満たすとみなすかは人の判断（承認レビューの non_blocking_followups）。",
+    "approver": "solo_operator（利用者 daishiman）",
+    "tooling": "check-rubric-sync.py / diff-rubric-impact.py",
+    "independent_reviewer": "independent-approval-reviewer（提案者と別 context の Claude サブエージェント、read-only）"
+  },
+  "notes": "plugins/harness-creator/skills/run-skill-rubric-governance/proposals/2026-10-11-hk001-posttoolusefailure.md の入力。",
+  "status": "applied",
+  "approval": {
+    "review_evidence": "eval-log/governance/20261011-hk001-rubric-1.6.0-approval-review.json",
+    "review_evidence_sha256": "933031202faf5cec7991e5e6f21cdb65c89be9456729dfbd481b6edeb6474b18",
+    "overall_verdict": "approve",
+    "recorded_in": [
+      ".claude/changelog/governance-log.jsonl",
+      "plugins/harness-creator/skills/run-skill-rubric-governance/log/governance-log.jsonl"
+    ],
+    "approved_by": "solo_operator（利用者 daishiman）",
+    "approved_at": "2026-10-12T02:29:20.579221+00:00",
+    "authorization_basis": "利用者の承認（2026-10-12、AskUserQuestion）: 問い「【P1 の人の承認①】rubric 1.6.0（HK001）を承認しますか？」に「承認する (Recommended)」と答えた。33章の policy の P1_structural は human_approval（approver: solo_operator）を求める。提案者と別 context の独立した承認レビュー（approve・blocking 0）は、判断の根拠で、承認の代わりではない。"
+  }
+}

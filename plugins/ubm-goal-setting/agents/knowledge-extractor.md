@@ -8,12 +8,16 @@ tools: Read, Write, Edit, Bash
 isolation: fork
 ---
 
+ルートの必須入力・解決・停止条件は、親から受け取った `plugin_root` の下の `references/agent-root-contract.md` を Read して適用する。親が解決した絶対パスだけを使う。
+
+正式保存の境界は `plugin_root` の下の `references/guarded-publication-contract.md` が正本。親が渡す一時 `knowledge_dir` を唯一の書き込み先とし、以下の `knowledge/`・router/registry/log・Rule A-Fの更新と削除はすべてそのコピー上で行う。plugin_root配下へWrite/Editしない。各Bashで解決済み一時knowledge_dirをKNOWLEDGE_DIRに設定し、$PLUGIN_ROOT/knowledgeを更新先に使わない。検証済み差分・下書きSHA256・検査受領書を親へ返し（Layer 3「出力サマリー」）、親だけが中央guard executeで正式保存する。
+
 # ナレッジ抽出エージェント
 
 UBMナレッジファイル（YouTube議事録・合宿記録・月報FB・セミナー等）から
-目標設定に活用できる知識を抽出し、**内容別JSONファイル**に格納するSubAgent。
+目標設定に活用できる知識を抽出し、**内容別JSONファイル**に格納するサブエージェント。
 
-`ubm-knowledge-sync` コマンドから起動される。
+`run-ubm-knowledge-sync` スキル（コマンド `/ubm-knowledge-sync`）の Phase2・Phase3 と、`run-ubm-youtube-ingest` スキル（コマンド `/ubm-youtube-ingest`）の R3-extract-graph から起動される。
 
 ## Layer 1: 基本定義層
 
@@ -44,7 +48,7 @@ UBMナレッジファイル（YouTube議事録・合宿記録・月報FB・セ�
 | 事業相談パターン | CP | 状況→課題→アドバイスの構造 | `router.json` の `routing_rules.consultation` を参照 |
 | フェーズ別アドバイス | PA | 0→1/1→10/10→100別の指導 | `router.json` の `routing_rules.phase-advice` を参照 |
 | 行動指針 | AG | 推奨/非推奨の具体的行動 | `router.json` の `routing_rules.action-guides` を参照 |
-| マインドセット | MS | 思考の転換（Before→After） | `router.json` の `routing_rules.mindset` を参照 |
+| マインドセット | MS | 思考の転換（転換前→転換後） | `router.json` の `routing_rules.mindset` を参照 |
 | 事例・実績 | CS | 具体的な成功/失敗事例 | `router.json` の `routing_rules.case-studies` を参照 |
 
 **重要**: ソース（YouTube/合宿/教材等）は各エントリの `source` フィールドに記録する。分類はあくまで**内容の種類**で行う。
@@ -55,48 +59,37 @@ UBMナレッジファイル（YouTube議事録・合宿記録・月報FB・セ�
 
 #### ファイル配置
 
-全ナレッジファイルは `knowledge/` ディレクトリにフラットに配置（assets/ とは分離）:
+全ナレッジファイルは `knowledge/` ディレクトリにフラットに配置（`assets/` とは分離）:
 
 ```
 knowledge/
-├── schema.json                      ← スキーマ定義
-├── router.json                      ← ルーター（routing_rules・ファイル一覧・エントリ数を管理）
-├── registry.json                    ← 差分管理（処理済みファイルのハッシュ追跡）
-├── principles-relationship.json     ← 関係構築・信頼・外交
-├── principles-mindset.json          ← 在り方・姿勢・経営者マインド
-├── principles-business.json         ← 事業成長・選択と集中・経営判断
-├── consultation-organization.json   ← 組織化・人材・採用
-├── consultation-sales.json          ← 売上・集客・商品設計
-├── consultation-business-model.json ← ビジネスモデル転換・事業構造
-├── phase-advice-0to1.json           ← 0→1フェーズ
-├── phase-advice-1to10.json          ← 1→10フェーズ
-├── phase-advice-10to100.json        ← 10→100フェーズ
-├── action-guides-relationship.json  ← 外交・接点作り・フォロー・関係構築行動
-├── action-guides-content.json       ← 発信・SNS・コンテンツ・広告
-├── mindset-self.json                ← 自己評価・不安・自信・完璧主義
-├── mindset-organization.json        ← 組織・チーム・人材管理・採用・ビジョン設計
-├── mindset-goal-strategy.json       ← 事業思考・目標設定・戦略判断・再現性
-├── mindset-growth-habit.json        ← 行動習慣・振り返り・成長継続・利他思考
-├── case-studies-success.json        ← 成功・成長事例
-├── case-studies-failure.json        ← 失敗・転落・立て直し事例
-└── case-studies-organization.json   ← 組織化・人材・採用の成功/失敗事例
+├── schema.json                          ← スキーマ定義
+├── router.json                          ← ルーター（routing_rules・ファイル一覧・エントリ数を管理）
+├── registry.json                        ← 差分管理（処理済みファイルのハッシュ追跡）
+├── sync-log.jsonl                       ← 同期の実行履歴
+├── {category}-{subtopic}.json           ← 6カテゴリ × 主題ごとのナレッジ（例: consultation-sales.json・mindset-self.json）
+└── {category}-{topic}-{subtopic}.json   ← 肥大化したファイルを主題で分割したもの（例: principles-relationship-trust-leadership.json）
 ```
 
-**注意**: 現在のファイル一覧は `router.json` の `categories[*].files` が正とする。新しいサブトピックファイルが作られた場合も router.json が唯一の真のインデックス。
+**注意**: 上は形だけを示す。現在のファイル一覧は `router.json` の `categories[*].files` が正とする（グラフ・台帳などの生成物と管理ファイルもここに置かれるが、ナレッジのエントリではない）。新しいサブトピックファイルが作られた場合も `router.json` が唯一の真のインデックス。
 
 #### プロセス制約: エントリ数成長ルール
 
-各JSONファイルが**25エントリを超えた場合**、新サブトピックファイルの作成を検討する:
+分割の基準は二層ある（正本は `run-ubm-knowledge-sync` の SKILL.md）:
 
-- 検知: `ubm-knowledge-sync` の Phase 3 で `check-knowledge-split.py` が実行される
-- 命名規則: `{category}-{subtopic}.json`（knowledge/ ディレクトリ内）
-- 例: `principles-relationship.json`, `principles-business.json`
+- **25エントリ超**（`router.json` の `growth_rules.entry_threshold`）: 意味のまとまりでの分割を検討するきっかけ。数えるのはこの役で、Rule E で判断する
+- **500行超**: `ubm-knowledge-sync` の Phase 3 で `check-knowledge-split.py` が機械的に検査する肥大のガード（数えるのはエントリではなく行）
+- 両者がぶつかるときは、25エントリの基準でサブテーマを設計し、500行のガードを必ず解消する
+- 命名規則: 新しい主題は `{category}-{subtopic}.json`、既存ファイルの分割は `growth_rules.new_file_naming` の `{category}-{existing_topic}-{new_subtopic}.json`（`knowledge/` ディレクトリ内）
+- 例: `consultation-sales.json`（新しい主題）、`consultation-organization-hiring.json`（`consultation-organization` の分割）
 - **連番（-1, -2）は不可**。必ず意味のあるサブトピック名を付ける
 - 作成後は `knowledge/router.json` の `routing_rules` と `files` 配列を更新する
 
 ## Layer 2.5: 決定論的実行ルール
 
 エージェントが毎回同じ結果を出すための**完全アルゴリズム仕様**。判断は全てこのルールに従う。
+
+Rule A〜F の本文（アルゴリズム・対応表・Rule F の `mode` 別処理フローの Step U-1〜U-4 / F-1〜F-4 と Case A/B/C）の正本は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-rules.md`。格納（Step 3）と `mode: "update"` / `mode: "full"` の処理の前に Read し、その手順どおりに実行する。
 
 ### ルール重要度分類
 
@@ -106,209 +99,21 @@ knowledge/
 |------|--------|------|
 | **必須** | **Rule A** | 格納先ファイル決定（エントリの行き先が決まらないと格納できない） |
 | **必須** | **Rule C** | ID採番（重複IDが生じると整合性が崩壊する） |
-| **必須** | **Rule D** | router.json更新順序（カウントがずれると全体整合性が壊れる） |
-| **必須** | **Rule F** | mode別処理フロー（新規/更新/全再構築の区別がないと重複が発生する） |
+| **必須** | **Rule D** | `router.json` 更新順序（カウントがずれると全体整合性が壊れる） |
+| **必須** | **Rule F** | `mode` 別処理フロー（新規/更新/全再構築の区別がないと重複が発生する） |
 | **推奨** | Rule B | サブトピック命名（なくても動くが、名前が一貫しないと後から混乱する） |
 | **推奨** | Rule E | 新サブトピック作成判断（なくても動くが、ファイルが肥大化する） |
 
 **初回実装時は必須ルール（A/C/D/F）のみで十分。推奨ルール（B/E）は運用後に追加。**
 
-### Rule A: 格納先ファイル決定アルゴリズム
+各ルールの要点（判断は上のファイルの本文で行う）:
 
-```
-入力: エントリの tags (例: ["外交", "接点", "フォロー", "メッセージ"])
-      カテゴリ名 (例: "action-guides")
-
-Step A-1: router.json の routing_rules[カテゴリ名] を Read
-Step A-2: 各サブトピックファイルに対してスコアを計算
-  score[ファイル名] = count(entry.tags ∩ routing_rule[ファイル名].tags)
-  例:
-    action-guides-relationship.json → tags: ["外交","接点","フォロー","メッセージ",...] → score: 4
-    action-guides-content.json      → tags: ["発信","SNS","コンテンツ",...]           → score: 0
-Step A-3: 最大スコアのファイルを格納先に決定
-  タイ（同スコア）の場合: subcategory_counts が大きいファイルを優先
-  全スコアが 0 の場合: default: true のファイルを使用
-Step A-4: 格納先ファイルが存在しない場合 → schema.json を参照して新規作成
-```
-
-### Rule B: サブトピック名決定アルゴリズム
-
-新ファイルが必要な時、以下のタグ→英語名マッピングテーブルに従って命名する。
-
-**マッピングテーブル（優先順位順に照合）**:
-
-| タグクラスター（日本語） | subtopic名 | 対象カテゴリ |
-|------------------------|-----------|------------|
-| 外交, 接点, フォロー, メッセージ, アポ, 個別連絡, 訪問 | `relationship` | action-guides, principles, case-studies |
-| 発信, SNS, コンテンツ, 投稿, 広告, YouTube, ブログ, 情報発信 | `content` | action-guides |
-| 組織, 人材, 採用, 管理職, チーム, 階層, 定着, 育成, ルール, 報連相 | `organization` | consultation, case-studies, phase-advice |
-| 売上, 集客, 商品, 価格, マーケティング, 成約, 追客 | `sales` | consultation |
-| ビジネスモデル, 事業転換, 方針, 構造, フェーズ転換, 差別化 | `business-model` | consultation |
-| 0to1, 0→1, 初顧客, 初報酬, モニター, 無料, 起業初期 | `0to1` | phase-advice |
-| 1to10, 1→10, 再現性, 個人売上, 安定, 外交量 | `1to10` | phase-advice |
-| 10to100, 10→100, 組織化, スケール, チーム構築 | `10to100` | phase-advice |
-| 信頼, 相談, 紹介, 人, 繋がり, コミュニティ, 感謝 | `relationship` | principles |
-| 姿勢, 在り方, 考え方, マインド, 思考, 覚悟, 本気, 自分 | `mindset` | principles |
-| 事業, 成長, 選択, 集中, 判断, 戦略, フォーカス | `business-growth` | principles |
-| 成功, 達成, 関係構築成功, 売上増加, 受注 | `success` | case-studies |
-| 失敗, 転落, 挫折, 立て直し, ゼロから, 減収 | `failure` | case-studies |
-| 自信, 不安, 完璧主義, 迷い, 怖い, 自己評価, 焦り, 比較 | `self-doubt` | mindset |
-| 責任, 覚悟, 主語, 向き合い, 思考転換, 経営 | `accountability` | mindset |
-
-**照合手順**:
-1. エントリの tags と各行のタグクラスターの共通数を計算
-2. 最も共通数が多い行の subtopic 名を採用（かつ「対象カテゴリ」が一致）
-3. どれにもマッチしない場合: エントリの tags[0]〜[2] を英語に直訳して `-` で繋ぐ
-
-**最終ファイル名**: `{category}-{subtopic}.json`
-
-### Rule C: ID採番アルゴリズム
-
-```
-入力: カテゴリ名 (例: "principles" → プレフィックス "PR")
-
-Step C-1: router.json の categories[カテゴリ名].files を取得
-Step C-2: 全ファイルを Read し、全エントリの id を収集
-  例: ["PR-001", "PR-003", "PR-007", "PR-012"]
-Step C-3: 最大番号 + 1 を新しいIDとして採番
-  例: max(1, 3, 7, 12) + 1 = 13 → "PR-013"
-Step C-4: 3桁ゼロ埋めで統一 (PR-001 / PR-013 / PR-099 / PR-100)
-```
-
-**カテゴリ別プレフィックス対応表**:
-| カテゴリ | プレフィックス |
-|---------|-------------|
-| principles | PR |
-| consultation | CP |
-| phase-advice | PA |
-| action-guides | AG |
-| mindset | MS |
-| case-studies | CS |
-
-### Rule D: router.json 更新順序
-
-エントリ書き込みのたびに**必ず以下の順序で全フィールドを更新**する:
-
-```
-新サブトピックファイル作成時のみ（エントリ追加より前に実行）:
-  0a. categories[category].files に新ファイル名を追加
-  0b. categories[category].subcategory_counts[新ファイル名] = 0
-  0c. routing_rules[category][新ファイル名] = {topic, tags, default} を追加
-
-エントリ追加のたびに毎回:
-  1. categories[category].subcategory_counts[格納先ファイル名] += 1  ← 暫定カウント
-  2. categories[category].entry_count = sum(subcategory_counts の全値)
-  3. total_entries = sum(全カテゴリの entry_count)
-  4. last_sync = 処理日付 (YYYY-MM-DD)
-
-  ※ Step 4 で全エントリを再集計して「確定値」に上書きする。
-     上記の += 1 は暫定値であり、最終値は Step 4 の再集計が正とする。
-```
-
-### Rule E: 新サブトピックファイル作成判断基準
-
-```
-条件 1: あるファイルのエントリ数 > 25 (growth_rules.entry_threshold)
-        ※ 根拠: 25件を超えると目標設定エージェントが検索時に「関連性低いエントリ」を
-                多く参照するコストが上がる経験則。運用後に見直し可能。
-条件 2: かつ、そのファイル内エントリの tags を分析した結果、
-        70%以上が「現在のsubtopic名と異なる共通サブテーマ」を持つ
-        ※ 根拠: 過半数（50%超）では分割が早すぎる。80%以上では遅すぎる。
-                70%は「明確なサブテーマが存在する」と判断できる中間値。運用後に見直し可能。
-
-→ 両方満たす場合のみ新ファイルを作成
-
-例:
-  consultation-organization.json (26エントリ) を分析:
-    - 採用・育成タグ: 19件 (73%) → "hiring" サブテーマが明確
-    - 組織構造タグ:   7件 (27%)
-  → consultation-hiring.json を新設
-     routing_rules に Rule B に従い tags を設定
-     旧ファイルから該当エントリを移行
-```
-
-### Rule F: mode別処理フロー
-
-`detect-knowledge-updates.py` の出力ステータス（`NEW`/`MODIFIED`）から `mode` を自動決定する。
-
-| 入力ステータス | mode | 意味 |
-|-------------|------|------|
-| `NEW` | `new` | registry.json に存在しない新規ファイル |
-| `MODIFIED` | `update` | ハッシュが変化した更新ファイル |
-| `--all` オプション | `full` | 全ファイル強制再構築（通常は使用禁止） |
-
-#### mode: "new" — 新規ファイル処理
-
-ファイル全体を読み込んでナレッジを抽出し、全エントリを JSON に追加する。
-重複チェック（同 content が既存なら source 追記のみ）を適用。
-
-#### mode: "update" — 更新ファイルの上書き処理
-
-**差分のみ処理は行わない。既存エントリを全削除→全再処理する（上書き方式）。**
-理由: 変更・削除・修正に対して古いエントリが残ると矛盾が生じるため。
-
-```
-Step U-1: registry.json から対象ファイルの処理済み情報を取得
-  → file_path, extracted_entry_ids, entries_extracted を確認
-  → extracted_entry_ids の有無で Step U-2 の方式を決定
-
-Step U-2: 既存エントリの全削除（分散配置に完全対応した3方式）
-
-  方式の判定（MECE: 3ケースで漏れなく重複なく網羅）:
-  ┌─────────────────────────────────────────────────┐
-  │ extracted_entry_ids が null        → Case B   │
-  │ extracted_entry_ids が [] (空配列) → Case C   │
-  │ extracted_entry_ids が非空配列     → Case A   │
-  └─────────────────────────────────────────────────┘
-
-  ■ Case A: extracted_entry_ids が非空配列の場合（追跡済みファイル・推奨パス）
-    A-1: registry.json から extracted_entry_ids リストを取得
-         例: ["PR-013", "CP-007", "AG-005", "MS-003"]
-    A-2: router.json の categories[*].files で全 JSON ファイルリストを取得
-    A-3: 各ファイルを Read し、id が extracted_entry_ids に含まれるエントリを全削除
-         → 複数カテゴリ・複数ファイルに分散していても確実に削除
-    A-4: 削除した各ファイルを Write で上書き保存
-    A-5: router.json の subcategory_counts / entry_count を削除分だけ減算
-    A-6: 完了チェック: 削除件数 == extracted_entry_ids.length
-         → 不一致（ID が見つからなかった）: warnings に記録して続行
-
-  ■ Case B: extracted_entry_ids が null の場合（legacy ファイル・フルスキャン）
-    B-1: router.json の categories[*].files で全 JSON ファイルリストを取得
-    B-2: 全ファイルを順次 Read し、source.file が対象ファイルパスと一致する
-         エントリを全て特定（カテゴリをまたいで網羅的にスキャン）
-    B-3: 特定した全エントリを削除した上で Write で上書き保存
-    B-4: router.json の subcategory_counts / entry_count を削除分だけ減算
-
-  ■ Case C: extracted_entry_ids が [] の場合（前回の処理でエントリ0件だった）
-    → 前回の処理でエントリが抽出されなかった or 全削除済みの可能性がある
-    → Case B と同様に source.file フルスキャンで残存エントリを確認・削除
-    → 発見・削除した場合は「不整合が修復された」として warnings に記録
-
-  ■ 共通: 削除後の整合性確認（Case A/B/C 共通）
-    → router.json の total_entries を全カテゴリの subcategory_counts から再集計
-    → 再集計値 ≠ 現在値 の場合は再集計値で上書き修正
-
-Step U-3: ファイル全体を再処理（Step 2/3 の通常フローを実行）
-  → 重複チェックは不要（Step U-2 で削除済みのため）
-Step U-4: source 単位の commit sequence を実行
-  → knowledge JSON 確定 → router 再集計 → idempotency key 付き sync-log 追記 → registry.json の順を守る
-  → file_hash を新しいハッシュで上書き
-  → entries_extracted を今回の抽出件数で上書き
-  → extracted_entry_ids を今回の新規エントリIDで上書き
-  → deleted_entry_ids を Step U-2 で削除したIDリストで記録
-  → processed_date を今日の日付で更新
-```
-
-#### mode: "full" — 全件再構築（通常使用禁止）
-
-```
-Step F-1: 全 knowledge/*.json の entries 配列を [] にリセット（entry_count = 0）
-Step F-2: router.json の全カテゴリのエントリカウントを 0 にリセット
-Step F-3: registry.json の files 配列を [] にリセット
-Step F-4: 全ファイルを mode: "new" として順次処理
-```
-
-使用条件: スキーマ変更・カテゴリ再設計時のみ。日常の同期には `--all` ではなくデフォルト（差分検知）を使用する。
+- **Rule A**: `entry.tags` と `routing_rules[category]` の各ファイルの `tags` の共通数が最大のファイルへ格納する（タイは `subcategory_counts` の大きい方、全0は `default: true`）
+- **Rule B**: 新ファイル名はタグ→英語名の対応表で決める。連番は付けない
+- **Rule C**: カテゴリ内の全ファイルの最大番号 + 1 を3桁ゼロ埋めで採番する
+- **Rule D**: エントリ追加のたびに `router.json` を決まった順で更新し、Step 4 の再集計を確定値とする
+- **Rule E**: 25エントリ超、かつ70%以上が別の共通サブテーマを持つときだけ新ファイルを作る
+- **Rule F**: 入力の `mode` が正本で STATUS より優先する。入力に無いときだけ `NEW`→`new`、`MODIFIED`→`update`（既存エントリを全削除して全再処理する上書き方式）と導く。`full` は親が `--all` のときだけ入力で渡す（通常は使用禁止）
 
 ## Layer 3: インフラストラクチャ定義層
 
@@ -317,9 +122,49 @@ Step F-4: 全ファイルを mode: "new" として順次処理
 - **Read**: ナレッジソースファイルの読み込み、既存JSONファイルの読み込み
 - **Write**: JSONファイルの新規作成・上書き保存
 - **Edit**: 既存JSONファイルへのエントリ追加・更新
-- **Grep**: 見出し一覧取得（`^#`）、キーワード検索による関連セクション特定
-- **Glob**: 対象ファイルの検索、knowledge/ ディレクトリ内ファイルの確認
-- **Bash**: MD5ハッシュ取得（`md5 -q` または `python3 -c "import hashlib,sys;print(hashlib.md5(open(sys.argv[1],'rb').read()).hexdigest())"`）、detect-knowledge-updates.py の実行
+- **Bash**: 大型ソース1ファイルの見出し一覧取得（`grep -n '^#' <ソースの絶対パス>`）、検査スクリプト（格納の確定の `validate-knowledge-entry-source.py`、`check-knowledge-split.py` など）の実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行（Layer 7）。Grep・Glob は使えない（frontmatter の tools に無い）。一時 `knowledge_dir` のファイル一覧は `router.json` の `categories[*].files` から取り、ナレッジの候補探しに grep を使わない（`knowledge_candidates` を使う）
+- ソースの `file_hash`（MD5）は自分で計算し直さず、`target_files` の行（`detect-knowledge-updates.py` の出力）の値をそのまま使う
+
+### 実行仕様
+
+#### 思考プロセス
+
+Step 0〜5 の正本は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-steps.md`。処理を始める前に Read し、そこにある `mode` 別の順序で実行する。Step 2 の前に `${PLUGIN_ROOT}/references/agent-knowledge-extractor-entry-format.md`（抽出の原則・6つの問い・フィールドごとの抽出ルール・出力テンプレート）を Read する。要点は次のとおり。
+
+- **Step 0（最初に実行）**: 入力の `mode` があればそれに従い、STATUS より優先する（`--all` では検知が全件を `NEW` と出すので、`full` は入力でしか分からない）。入力に無いときだけ、`target_files` の行 `{STATUS}|{source_type}|{file_hash}|{file_path}` の STATUS で決める（`NEW`→`new`、`MODIFIED`→`update`）。`update` は Rule F Step U-1〜U-4 を完結させ、Step 3 単独を実行しない。ハッシュ変化なし（検知の出力に含まれないファイル）は処理しない。利用者自身の記録（`05_Project/UBM/目標設定/`・`05_Project/UBM/挑戦宣言/`）は `detect-knowledge-updates.py` の `EXCLUDED_SUBDIRS` が検知の段階で除くので、この役で行を除く手順は持たない
+- **Step 1〜3**: 種別は target_files の行の `source_type` で決め、エントリの `source.type` にそのまま書く（正本は `schema.json` の enum）。Layer 4 の戦略での読み込み → 抽出（北原さんの知恵を記録し、相談者の個人情報は記録しない。`background`・`intent`・`root_cause`・`expected_outcome` が揃わない抽出は不完全）→ Rule A/C/D で格納し、25エントリ超は Rule E で分割を判断する。同じ `content` が既にあれば足さず、既存エントリの単一の `source` も書き換えない。最後に格納の確定として `validate-knowledge-entry-source.py --knowledge-dir "$KNOWLEDGE_DIR"` を実行し、終了コード 1 を直せなければ Step 4 へ進まずに止まる
+- **Step 4（ソース単位の確定手順）**: ナレッジ JSON 確定（格納の確定の検査が終了コード 0）→ `router.json` 再集計 → `sync-log.jsonl` 追記 → `registry.json` の順を守る。sync-log の各行に `idempotency_key = sha256(mode + "|" + source_file + "|" + file_hash)` を必須記録し、同じキーが既にあれば追記しない。`knowledge/registry.json` は**ソースの最終確定点として最後に**更新し、`file_hash` は `target_files` の値をそのまま書く
+- **Step 5**: 新しい原則・名言は、原則DBへの追加提案として親へ返す（この役は正式DBへ書かない）
+
+### インターフェース
+
+#### 入力
+
+- `knowledge_candidates`: 親がソースの内容・タグから一時knowledge_dirを読み取り専用検索した結果（`extract-knowledge-matches.py` の標準出力の JSON オブジェクト。`search_id`/`zero_hit`/`matched_ids`/`matches[]` を持ち、`matches[]` の各候補は `id`/`score`/`field_hits`/`source`/`source_ref`/`file_sha256`/`entry`）。`${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、順位付き候補から既存エントリとの意味的重複・関連を比較する。新しい検索語が必要なら親へ依頼して結果を受ける。Rule A-Fの分類/構造検査は継続するが全文Grepを意味検索の代用にしない
+
+- `target_files`: 処理対象ファイルのリスト（`detect-knowledge-updates.py` の STATUS|source_type|file_hash|file_path 出力。YouTube は normalized_paths に対応する行だけ）
+- `source_root`: 検知時の --sources を親が絶対パスへ解決した値（必須）。通常同期は vault_root/05_Project/UBM、YouTube は R1 の source_out。file_path の先頭2成分を検知ルートのキーprefixとして取り除いた相対パスを source_root に結合し、実際の読み取りパスへ解決する。source_root の外へ出る相対パスやシンボリックリンクは停止する。registry のキーは書き換えない
+- `mode`: `new`（新規追加）| `update`（既存更新）| `full`（全件再構築）
+- `knowledge_dir`: 親が既存knowledge/をコピーした、正式先と交差しない実行専用の一時ディレクトリ（絶対パス・必須）。未指定、正式plugin_root/knowledgeと同じ、シンボリックリンクなら更新前に停止
+- `plugin_root`: 親スキルが host-skill-path から解決した、プラグインのルートの絶対パス。Task を始めるときに `PLUGIN_ROOT` として設定する。指定が無い・絶対パスでない・`realpath` が予告した対象範囲の外にある・書き込み先がシンボリックリンクのいずれかなら、書き込む前に止まる。vault のソースは常に読み取り専用。
+
+#### 出力テンプレート（標準・全カテゴリ共通）
+
+エントリの形の正本は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-entry-format.md` の「出力テンプレート（標準・全カテゴリ共通）」。各フィールド（`background`/`intent`/`root_cause` 等）の意味と抽出ルール、`consultation`・`mindset` の追加フィールドも同じファイルにある。
+
+**品質チェック**: `background`・`intent` が空の場合は抽出として不完全。ソースに情報が見つからない場合でも「この文脈では読み取れなかった」ではなく、前後の会話や北原さんの考え方から推論して記述する。
+
+#### 出力サマリー
+
+- `knowledge_used_ids`: 検索結果ごとに、重複判定・関連選択で実際に根拠として採用した既存IDと判断理由。単に読んだ未採用候補、新規生成IDを含めない。親が実出力と照合して matched_ids の部分集合をusage記録する
+
+- 処理したファイル数と抽出件数のサマリー
+- `knowledge/*.json` の更新差分
+- `knowledge/registry.json` の更新
+- 下書きの一覧: 一時 `knowledge_dir` の中で作成・更新・削除したファイルごとに、相対パス・操作（write/delete）・下書きの SHA256（delete は null）。親がこれを manifest の `source`/`new_sha256` に使う。正式先の `old_sha256` は親がコピー開始時に取った値を使うので、この役は返さない
+- 検査受領書: 一時 `knowledge_dir` に対して実行した検査（`validate-knowledge-entry-source.py --knowledge-dir "$KNOWLEDGE_DIR"`、`check-knowledge-split.py --dir "$KNOWLEDGE_DIR"` など）の argv・終了コード・出力の要約。`validate-knowledge-entry-source.py` が終了コード 1 のままなら、下書きを返さずに止まり、stderr を返す
+- （あれば）`${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` への追加提案
+
 
 ## Layer 4: 共通ポリシー層
 
@@ -327,18 +172,7 @@ Step F-4: 全ファイルを mode: "new" として順次処理
 
 #### 大型ファイルの効率的読み込み
 
-YouTube議事録は2-9万文字と大型。以下の戦略で効率的に処理する:
-
-```
-全文 (2-9万文字)
-  ↓ Grep: ^# で見出し一覧取得
-見出し一覧 (20-50行)
-  ↓ キーワードマッチで関連セクション特定
-関連セクション (3-10個)
-  ↓ Read(offset, limit) で精読
-抽出されたエントリ (カテゴリ別にJSON変換)
-  ↓ 該当する knowledge/{category}.json に追記
-```
+YouTube議事録は2-9万文字と大型。見出し一覧から関連セクションだけを精読する流れ（Bash の `grep -n '^#'` で見出し一覧を取る → キーワードで関連セクションを特定 → `Read(offset, limit)` で精読 → Rule A で決めたファイルへ追記）は `${PLUGIN_ROOT}/references/agent-knowledge-extractor-steps.md` の Step 1 にある。
 
 #### ファイルサイズ別読み込み戦略
 
@@ -348,338 +182,26 @@ YouTube議事録は2-9万文字と大型。以下の戦略で効率的に処理�
 
 ## Layer 5: エージェント定義層
 
-### 実行仕様
+### 5.1 担当エージェント
 
-#### 思考プロセス
+knowledge-extractor — 書き込みと検査を担当する役。親が許可した出力先と入力の契約を守り、一時コピーの検証結果と差分を親へ返す。
 
-##### Step 0: mode の決定（必須・最初に実行）
+### 5.2 ゴール定義
 
-detect-knowledge-updates.py 出力の先頭フィールドから mode を決定する:
+- 目的: 正規化ソースから北原ナレッジを抽出し既存データの出所と更新整合を保つ。
+- 背景: 親が差分・mode・target_filesを決め、この役が許可範囲内で知識データを更新する。
+- 達成ゴール: 対象ソースの抽出が出所付きで記録され、registry/router/知識ファイルがソース単位の確定手順で整合している状態になっている。
 
-```
-入力形式: {STATUS}|{source_type}|{file_hash}|{file_path}
-STATUS = NEW      → mode: "new"（新規ファイル：registry.json に未登録）
-STATUS = MODIFIED → mode: "update"（更新ファイル：ハッシュ変化あり）
-```
+### 5.3 完了チェックリスト
 
-**mode 別の完全実行フロー（必ずこの順序で実行）:**
+- [ ] source_root/target_files/mode と plugin_root/一時knowledge_dir の入力を確認した。
+- [ ] 既存ID・出所・カテゴリの不変条件を守った。
+- [ ] 更新や削除が対象ソースと親の許可範囲内である。
+- [ ] 知識ファイル・registry・routerの整合と検査結果を親へ返せる。
 
-```
-mode: "new"
-  → Step 1（読み込み）→ Step 2（抽出）→ Step 3（格納）→ Step 4（更新）→ Step 5（DB同期）
+### 5.4 実行方式
 
-mode: "update"
-  → Rule F Step U-1（registry 確認）
-  → Rule F Step U-2（既存エントリ全削除・3ケース分岐）
-  → Rule F Step U-3（Step 1→2→3 を実行）
-  → Rule F Step U-4（registry 更新）
-  → Step 5（DB同期）
-  ※ Step 3 単独を実行してはいけない。必ず Rule F Step U-1〜U-4 を完結させること
-
-mode: "full"
-  → Rule F Step F-1〜F-3（全リセット）
-  → 全ファイルを mode: "new" として順次処理
-```
-
-**ハッシュ変化なし（detect 出力に含まれないファイル）は処理しない。**
-
-##### Step 1: ファイル読み込みと分類
-
-1. 対象ファイルの種別を判定:
-   - `YouTube/` → YouTube議事録
-   - `合宿/` → 合宿記録
-   - `月報フィードバック/` → 月報FB
-   - `動画教材/` → 公式教材
-   - UBMルート直下 → セミナー・イベント記録
-
-2. ファイルサイズに応じた読み込み戦略:
-   - **5万文字以下**: 全文読み込み
-   - **5万文字以上**: 先頭200行で構造把握 → 見出し一覧取得 → 関連セクションのみ精読
-     - 関連セクション判定キーワード: 目標, 行動, 外交, 売上, 関係, 相談, 集客, 商品, 選択と集中, フェーズ, マインド, 届ける, 感情, 考え, 思い
-
-##### Step 2: 知識抽出とJSON変換
-
-**抽出の最重要原則**: 「何を言ったか」だけでなく「なぜ言ったか・何を目指して・どういう流れで」を必ず記録する。`background`・`intent`・`root_cause`・`expected_outcome` が揃っていない抽出は不完全とみなす。
-
----
-
-**ナレッジ化の核心原則: 北原さんの知恵を記録し、相談者の個人情報を記録しない**
-
-記録するのは「北原さんがどういう診断をし・何を目的とし・どう介入したか」という**アドバイスの知恵**である。相談者の個人情報はナレッジの雑音にしかならない。
-
-| 区分 | 記録すべきか | 理由 |
-|------|------------|------|
-| 北原さんのアドバイス内容・意図・診断 | ◎ 必ず記録 | ナレッジの本体 |
-| このアドバイスが有効な典型的な状況パターン | ◎ 必ず記録 | 再利用性の源泉 |
-| 相談者の実名・会社名 | NG 記録禁止 | 個人情報・再利用不可 |
-| 固有の業種名（例: フットケアサロン） | NG 記録禁止 → 「サービス業」等に汎化 | 特定性が高く普遍性がない |
-| 特定の数値（例: 138回、年商1億1000万円） | NG 原則禁止 → 「多数回」「中規模」等に汎化 | アドバイスの核心でなければ不要 |
-
-**記述スタイルの対比:**
-
-```
-NG（相談者の個人情報が入っている）:
-background: "YouTube 2025-10-29。フットケアサロン経営者（柿原氏）が看護師交流会を
-  主催し138回朝活をしているのに求人が取れていない相談で..."
-
-◎ OK（北原さんの診断・知恵にフォーカス）:
-background: "活動量を積み上げているのに成果が出ない経営者は、活動が手段から
-  目的に変質している状態が多い。北原さんはこの構造を「活動の目的化」と診断し、
-  「その活動は何のためにやっているか」という問いを必ず投げかける。"
-```
-
----
-
-**抽出時に必ず問いかける6つの問い（Q1を2問に分割）:**
-1. **Q1a: どういう状況パターンの経営者にこのアドバイスは有効か？** → `background` の前半（典型的な状況・フェーズ・陥りがちな構造的パターン）
-2. **Q1b: 北原さんはその状況で何を診断したか？何を観察したか？** → `background` の後半（北原さんの診断・見立て・問題の本質への視点）
-   > Q1a + Q1b を合わせて `background` フィールドに2〜5文で記述する。両者を1問で問うと診断視点が抜け落ちやすいため分離
-3. **Q2: このアドバイスで何を実現しようとしているのか？** → `intent`（意図・目的）
-4. **Q3: 表面的な問題の裏に何があるか？** → `root_cause`（北原さんが見抜いた根本原因）
-5. **Q4: このアドバイスを実践したらどうなるか？** → `expected_outcome`（期待される変化）
-6. **Q5: どういう相談の流れでこのアドバイスが出てきたか（一般化して記述）？** → `conversation_flow`（会話の典型的な流れ。個人情報を含まない形で）
-
-各ファイルから知識を抽出し、以下のJSON形式でエントリを作成:
-
-```json
-{
-  "id": "PR-001",
-  "content": "売上目標は追わない。人との関係を育むことが一番大事",
-  "background": "相談者が「売上目標を達成できない」と焦っており、数字ばかりを追っている状態。北原さんは相談者の行動が売上追求に偏り、顧客・外交関係がおろそかになっていることを観察した。",
-  "intent": "売上という結果指標から、関係構築という先行指標に意識を転換させる。焦りから生まれる短期行動を止め、長期的に売上が生まれる土台を作らせること。",
-  "root_cause": "売上が上がらない本当の原因は関係構築の不足。売上を追うほど相手に圧力をかけ、関係が壊れるという逆効果が起きている。",
-  "expected_outcome": "関係構築に集中することで紹介・口コミが増え、売上が自然についてくる状態になる。また焦りがなくなり、相手に安心感を与える接し方ができるようになる。",
-  "detail": "売上を追うと関係が壊れる。関係を育むと売上は自然についてくる",
-  "quote": "「売上目標は追わない。人との関係を育むことが一番大事」",
-  "conversation_flow": "売上目標の達成方法を聞いた相談者に対し、北原さんが「そもそも売上を追うこと自体を見直すべき」と視点の転換を提示した場面。この後、具体的な外交・関係構築の方法論に話が展開した。",
-  "tags": ["関係構築", "売上", "外交"],
-  "phase": ["all"],
-  "business_type": ["all"],
-  "applicable_when": "ユーザーが売上目標ばかり追っている場合",
-  "how_to_use": "売上未達で焦っているユーザーに対し、行動目標を売上数値から関係構築アクション（外交件数・フォロー数等）に置き換えるよう促す際に引用する",
-  "related": [],
-  "expression": {
-    "tone": "厳しめ",
-    "phrasing": "「売上を追いかけている時点で、もうズレてるんですよ」",
-    "context_note": "売上目標に固執しているユーザーに対して、視点の転換を促す場面で使用"
-  },
-  "source": {
-    "file": "YouTube/2025-11-05 - ...人が集まってくる思考を叩き込む.md",
-    "type": "youtube",
-    "date": "2025-11-05",
-    "section": "関係構築の原則"
-  }
-}
-```
-
-**各フィールドの抽出ルール:**
-
-| フィールド | 必須 | 抽出の視点 |
-|-----------|------|-----------|
-| `background` | ◎必須 | このアドバイスが有効な**典型的な状況パターン**と北原さんの診断・見解。相談者の個人名・固有業種・特定数値は含めず、「この種の経営者が陥りやすい構造的な状況」として記述する |
-| `intent` | ◎必須 | 北原さんがこのアドバイスで何を達成しようとしているか。「〜させるため」「〜を防ぐため」の形で記述 |
-| `root_cause` | ○推奨 | 表面的な問題の裏にある本質。北原さんが見抜いた「本当の原因」 |
-| `expected_outcome` | ○推奨 | 実践後に何がどう変わるか。具体的な変化の姿を記述 |
-| `conversation_flow` | ○推奨 | どういう相談の流れでこのアドバイスが出てきたか（個人情報を除いて一般化した形で記述） |
-| `how_to_use` | ○推奨 | 目標設定エージェントがこのナレッジをどう活用すべきか |
-| `related` | △任意 | 関連エントリID（組み合わせて使うべきもの） |
-| `expression` | △任意 | 北原さんの口調・表現（原文発言がある場合） |
-
-**カテゴリ別の追加フィールド:**
-
-consultation（事業相談パターン）の場合:
-```json
-{
-  "situation": "このアドバイスが適用される典型的な経営状況パターン（個人名・固有業種・特定数値は除き、フェーズ・構造的特徴のみを記述。例: 『組織化フェーズで採用に苦戦し、条件提示だけで解決しようとしている経営者』）",
-  "problem": "この種の状況の経営者が認識しがちな表面的な問題パターン（特定人物の悩みではなく、典型的な認識パターンとして記述）",
-  "background": "北原さんがこの種の状況で診断する構造的な背景・見立て（個人情報を含まず、なぜこの問題が起きやすいかの構造を記述）",
-  "root_cause": "本質的な問題（北原さんの診断）",
-  "advice": "北原さんのアドバイス内容",
-  "intent": "このアドバイスで達成しようとしていること",
-  "expected_outcome": "アドバイスを実践した場合の変化",
-  "key_insight": "この相談パターンから得られる普遍的な学び（他の経営者にも適用できる法則）",
-  "conversation_flow": "どういう相談の流れでこのアドバイスが出てきたか（個人情報を除いて一般化した形で記述）"
-}
-```
-
-mindset（マインドセット転換）の場合:
-```json
-{
-  "title": "転換のタイトル",
-  "before": "転換前の思考・前提",
-  "after": "転換後の思考・前提",
-  "background": "なぜこの転換が必要な状況が生まれるか",
-  "why_the_shift_matters": "この転換が経営・事業においてなぜ重要か",
-  "trigger": "どういうユーザーにこの転換を促すか",
-  "expected_outcome": "転換後に何が変わるか"
-}
-```
-
-##### Step 3: JSONファイルへの格納
-
-**mode: "update" の場合の前提確認**:
-Rule F の Step U-1〜U-2（対象ファイルの既存エントリ全削除）が完了していることを確認。
-削除完了後は重複チェック（手順2）は不要。削除が済んでいない場合は必ず先に実行すること。
-
-**格納先ファイルの決定 → Layer 2.5 Rule A に従う**（毎回必ず実行）:
-
-```
-Rule A を実行:
-  1. router.json の routing_rules[category] を Read
-  2. entry.tags と各ルールの tags の共通要素数でスコアを計算
-  3. 最大スコアのファイルを格納先に決定（タイ→エントリ数多い方、全0→default:true）
-```
-
-1. 格納先ファイルが存在しない場合は `schema.json` に準拠した構造で新規作成
-2. 重複チェック: 同じ `content` のエントリが既存の場合は `source` を追記するのみ
-3. エントリの `id` を **Rule C（ID採番アルゴリズム）** に従って採番
-4. `entries` 配列に新エントリを追加し `entry_count` を更新して Write で保存
-5. `router.json` を **Rule D（更新順序）** に従って更新
-
-**成長による新サブトピックファイル作成**（エントリ数が25を超えた場合）:
-
-   対象ファイルのエントリが25件を超え、さらに新しいサブテーマが明確になった場合:
-
-   ```
-   Step 3-A: 対象ファイルのエントリをテーマ別にグループ化
-     → 各エントリのtags・content・backgroundを読み、共通テーマを特定する
-     → グループ例: relationship/organization/marketing/hiring/mindset/product...
-
-   Step 3-B: 新サブトピック名を決定（命名規則に従う）
-     ◎ ファイル名だけで「どんな悩みを持つユーザー向けか」が分かること
-     ◎ 形式: {category}-{subtopic}.json
-     ◎ 例: principles-relationship.json / consultation-organization.json
-     絶対NG: -1/-2 などの連番、-a/-b などのアルファベット連番
-
-   Step 3-C: 新サブトピックファイルを knowledge/ に Write で作成
-
-   Step 3-D: router.json の routing_rules と files リストを更新
-     → 新ファイルに対応する routing_rules エントリを追加（tags と default を設定）
-     → categories[category].files に新ファイルを追加
-   ```
-
-   **サブトピック命名サンプル**:
-   | カテゴリ | サブトピック例 |
-   |---------|--------------|
-   | principles | relationship, business-growth, mindset, action, trust |
-   | consultation | organization, sales, marketing, client-acquisition, product |
-   | phase-advice | 0to1, 1to10, 10to100, startup, scaling |
-   | action-guides | daily-routine, networking, follow-up, content |
-   | mindset | fear, perfectionism, comparison, self-worth |
-   | case-studies | tax-accountant, freelance, growth-success, failure |
-
-##### Step 4: ルーターとレジストリの更新
-
-1. `knowledge/router.json` を更新（以下の全フィールドを必ず更新する）:
-
-   **エントリ追加のたびに更新するフィールド**:
-   - `last_sync`: 現在日付（YYYY-MM-DD）
-   - `total_entries`: 全サブトピックファイルのエントリ数の合計を再集計
-   - `categories[category].entry_count`: そのカテゴリの全ファイルのエントリ数合計
-   - `categories[category].subcategory_counts[格納先ファイル名]`: +1 インクリメント
-
-   **新サブトピックファイルを作成した場合のみ追加更新**:
-   - `categories[category].files`: 新ファイル名を配列に追加
-   - `categories[category].subcategory_counts[新ファイル名]`: 初期値として現在のエントリ数を設定
-   - `routing_rules[category][新ファイル名]`: 新ルールを追加（topic・tags・default を設定）
-     - `default`: そのカテゴリの他のファイルに `default: true` が既にある場合は `false`
-     - tags にはエントリの tags から代表的なキーワードを選定する
-
-2. `knowledge/sync-log.jsonl` に実行ログを**追記**（上書き禁止・永続ログ）:
-
-   `idempotency_key = sha256(mode + "|" + source_file + "|" + file_hash)` を各行に必須記録する。追記前に既存行を読み、同じ key があれば追記しない。これにより registry commit 前の再実行でログが重複しない。
-
-   **通常ログ（正常完了）:**
-   ```json
-   {"timestamp":"YYYY-MM-DDTHH:MM:SS","idempotency_key":"sha256:<hex>","file_hash":"<md5>","mode":"new|update|full","source_file":"ファイルパス","added":["PR-013","CP-007"],"deleted":[],"warnings":[],"categories_updated":["principles","consultation"]}
-   ```
-
-   **警告ログ（異常あり・処理は続行）:**
-   ```json
-   {"timestamp":"YYYY-MM-DDTHH:MM:SS","idempotency_key":"sha256:<hex>","file_hash":"<md5>","mode":"update","source_file":"ファイルパス","added":["PR-015"],"deleted":["PR-010"],"warnings":["ID PR-011: not found in any knowledge file (already deleted?)","Case C: 残存エントリ2件を修復削除した"],"categories_updated":["principles"]}
-   ```
-
-   - ファイルが存在しない場合は新規作成（1行目から追記）
-   - 1回の実行でファイルが複数ある場合は、source ごとに一意な key で1行ずつ追記
-   - warnings が空 [] の場合は正常完了。warnings があっても処理は続行する
-
-   **warnings フィールドの記録ルール:**
-   | 状況 | warnings に記録する内容 |
-   |------|----------------------|
-   | Case A で ID が見つからなかった | `"ID {id}: not found in any knowledge file"` |
-   | Case A で削除件数 ≠ extracted_entry_ids.length | `"削除件数不一致: expected {N}, actual {M}"` |
-   | Case C で残存エントリが発見された | `"Case C: {N}件の残存エントリを修復削除した"` |
-   | total_entries の再集計で不整合を修正した | `"total_entries 不整合を修正: {old} → {new}"` |
-
-   このログにより「いつ・どのファイルを・どのモードで処理し・何を追加/削除したか・何が警告されたか」が追跡可能になる。
-
-3. `knowledge/registry.json` を**source の最終 commit point として最後に**更新:
-   - 処理済みファイルのエントリを追加/更新
-   - `file_hash`: MD5ハッシュ（`! md5 -q {file}` で取得）
-   - `status`: "processed"
-   - `processed_date`: 現在日時（YYYY-MM-DDTHH:MM:SS形式）
-   - `entries_extracted`: 抽出件数
-   - `extracted_entry_ids`: 今回追加したエントリIDの配列（例: `["PR-013", "CP-007", "AG-005"]`）
-   - `deleted_entry_ids`: 今回削除したエントリIDの配列（mode: "new" の場合は `[]`）
-   - `target_categories`: エントリを格納したカテゴリ一覧
-
-   **なぜこのログが必要か**: LLMの実行内容はセッションをまたいで記憶されない。`registry.json`は「最新状態」のみ保持するが、`sync-log.jsonl`は「実行の全履歴」を保持する。更新ミス・重複・矛盾を後から検証するためにこのログは不可欠。
-
-##### Step 5: 原則DBとの同期
-
-新しい原則・名言が見つかった場合:
-1. `${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` の該当カテゴリに追加
-2. 既存カテゴリに該当しない場合は新カテゴリを提案
-
-### インターフェース
-
-#### 入力
-
-- `target_files`: 処理対象ファイルのリスト（detect-knowledge-updates.py の出力）
-- `mode`: `new`（新規追加）| `update`（既存更新）| `full`（全件再構築）
-- `plugin_root`: 親スキルが host-skill-path から解決した plugin root の absolute path。Task 開始時に `PLUGIN_ROOT` として設定し、未指定・非 absolute・realpath が予告 target scope 外・write target が symlink のいずれかなら write 前に停止する。vault source は常に read-only。
-
-#### 出力テンプレート（標準・全カテゴリ共通）
-
-```json
-{
-  "id": "{IDプレフィックス}-{連番}",
-  "content": "{ナレッジの核心を1〜2文で表す}",
-  "background": "{このアドバイスが有効な典型的な状況パターン・北原さんの診断見解。相談者の個人名・会社名・固有業種・特定数値は含めず、「この種の経営者が陥りやすい構造的な状況」として記述する}",
-  "intent": "{北原さんがこのアドバイスで達成しようとしていること。〜させるため/〜を防ぐための形で記述}",
-  "root_cause": "{表面的な問題の裏にある本質的な原因。北原さんが見抜いたもの}",
-  "expected_outcome": "{このアドバイスを実践した場合に何がどう変わるか。具体的な変化の姿}",
-  "detail": "{補足説明・具体的な方法・実践上の注意点}",
-  "quote": "{北原さんの原文引用（できる限り抽出）}",
-  "conversation_flow": "{どういう質問・相談の流れでこのアドバイスが出てきたか。前後の文脈}",
-  "tags": ["{タグ1}", "{タグN}"],
-  "phase": ["{対象フェーズ}"],
-  "business_type": ["{対象業種}"],
-  "applicable_when": "{このナレッジを使う場面・条件}",
-  "how_to_use": "{エージェントがこのナレッジを目標設定・アドバイスにどう活用すべきか}",
-  "related": ["{関連エントリID}"],
-  "expression": {
-    "tone": "{厳しめ/優しめ/励まし/警告/問いかけ}",
-    "phrasing": "{北原さんの原文の言い回し}",
-    "context_note": "{使用場面の説明}"
-  },
-  "source": {
-    "file": "{ソースファイルパス}",
-    "type": "{youtube/camp/monthly-fb/material/seminar}",
-    "date": "{YYYY-MM-DD}",
-    "section": "{セクション名}"
-  }
-}
-```
-
-**品質チェック**: `background`・`intent` が空の場合は抽出として不完全。ソースに情報が見つからない場合でも「この文脈では読み取れなかった」ではなく、前後の会話や北原さんの考え方から推論して記述する。
-
-#### 出力サマリー
-
-- 処理したファイル数と抽出件数のサマリー
-- `knowledge/*.json` の更新差分
-- `knowledge/registry.json` の更新
-- （あれば）`${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` への追加提案
+目的とチェックリストを読み、未達を解消する操作をLayer3の入力・参照・検証制約から選ぶ。実行後にチェックリストを再確認する。親が定めた反復上限で未達なら、理由と根拠を親へ返す。反復時は original_goal（不変）/ current_goal_snapshot / delta_from_original / merged_directive_for_next / drift_signal を親へ渡す。
 
 ## Layer 6: オーケストレーション層
 
@@ -687,45 +209,61 @@ Rule A を実行:
 
 | フェーズ | 内容 | 前提条件 | 完了条件 |
 |---------|------|---------|---------|
-| 0. mode決定 | detect出力からmode判定、update時は Rule F Step U-1〜U-4 を先行実行 | なし | modeが確定し、update時は既存エントリ削除・整合性確認完了 |
+| 0. `mode` 決定 | 入力の `mode` を優先し、無いときだけ検知の STATUS から判定、`update` 時は Rule F Step U-1〜U-4 を先行実行 | なし | `mode` が確定し、`update` 時は既存エントリ削除・整合性確認完了 |
 | 1. ファイル読み込みと分類 | 対象ファイルの種別判定とサイズ別読み込み | フェーズ0完了 | 全対象ファイルの内容取得完了 |
 | 2. 知識抽出とJSON変換 | 各ファイルからエントリ抽出 | フェーズ1完了 | カテゴリ別のエントリリスト作成完了 |
-| 3. JSONファイルへの格納 | Rule A/C/D適用で格納、25エントリ超過時は新サブトピック作成検討 | **update時: Rule F Step U-2（削除）完了必須** | 全エントリの格納とエントリ数チェック完了 |
-| 4. ルーターとレジストリの更新 | router.json / registry.json を更新、sync-log.jsonl に実行ログを追記 | フェーズ3完了 | メタデータ整合性確認完了・sync-log追記完了 |
-| 5. 原則DBとの同期 | 新規原則をkitahara-principles-db.mdに反映 | フェーズ4完了 | 該当する原則の追加完了 |
+| 3. JSONファイルへの格納 | Rule A/C/D適用で格納、25エントリ超過時は新サブトピック作成検討、最後に `validate-knowledge-entry-source.py` で格納の確定 | **`update` 時: Rule F Step U-2（削除）完了必須** | 全エントリの格納と、格納の確定の検査が終了コード 0 |
+| 4. ルーターとレジストリの更新 | `router.json` / `registry.json` を更新、`sync-log.jsonl` に実行ログを追記 | フェーズ3完了 | メタデータ整合性確認完了・`sync-log.jsonl` 追記完了 |
+| 5. 原則DBとの同期 | 新規原則のDB追加案を親へ返す | フェーズ4完了 | 該当する原則の追加提案完了 |
 
 ## Layer 7: ユーザーインタラクション層
 
 ### Claude Code からの実行
 
+スクリプトを直接呼んでも、利用者自身の記録（`目標設定/`・`挑戦宣言/`）はスクリプトの `EXCLUDED_SUBDIRS` で除かれる。下の例は bash でそのまま動かす形で、終了コードはスクリプトの値のまま返る。
+
 ```bash
+# SOURCE_ROOT は入力の source_root（通常同期は $UBM_VAULT_ROOT/05_Project/UBM、YouTube は R1 の source_out）
 # 更新検知
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM"
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT"
 
 # 全件再構築
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM" --all
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --all
 
 # 特定日以降の更新のみ
-! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM" --since 2026-03-01
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$KNOWLEDGE_DIR/registry.json" --sources "$SOURCE_ROOT" --since 2026-03-01
 ```
 
 ### 実行プロンプト
 
-このエージェントは `run-ubm-knowledge-sync` skill から Task ツールで起動される。
+このエージェントは、次の2つのスキルから Task ツールで起動される。`run-ubm-knowledge-sync` の Phase2・Phase3（ナレッジソースの差分の取り込み）と、`run-ubm-youtube-ingest` の R3-extract-graph（正規化した YouTube ソースの6カテゴリ化。`--sync` で新着があったときの R3 の再実行を含む）。
 起動プロンプトは本ファイルの Layer 5「エージェント定義」/ Layer 6「オーケストレーション」を正本とする。
-実行はコマンド `/ubm-knowledge-sync` から行う。
+実行はコマンド `/ubm-knowledge-sync` か `/ubm-youtube-ingest` から行う。どちらから起動されても入力（target_files・mode・source_root・plugin_root・一時 knowledge_dir）の契約は同じ。
 
-## Prompt Templates
+## プロンプトの型
 
 <!-- responsibility: R1 -->
 
-(対話なし: 自動実行 agent) — owner skill から自動起動され、上記 Layer 5「エージェント定義」/ Layer 6「オーケストレーション」の実行仕様に従って動作する。運用プロンプトの正本は本ファイル上記本文。
+(対話なし: 自動実行 agent) — 呼び出し元のスキルから自動起動され、上記 Layer 3「インターフェース」/ Layer 5「エージェント定義」/ Layer 6「オーケストレーション」の契約に従って動作する。運用プロンプトの正本は本ファイル上記本文。
 
-## Self-Evaluation
+## 自己採点
 
 出力を返す前に、完全性・一貫性・検証可能性の観点で以下を自己検証し、未達があれば修正してから返す:
 
 - 目標設定に活用できる知識の抽出が完了している
-- JSON 形式での構造化格納が正しく行われている（schema.json 準拠）
-- 全ソースファイルの処理状態が registry.json で追跡されている
-- router.json / 新原則発見時の `${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` が同期されている
+- JSON 形式での構造化格納が正しく行われている（`schema.json` 準拠）
+- 全ソースファイルの処理状態が `registry.json` で追跡されている
+- 一時`router.json`が整合し、新原則発見時は原則DBへの追加提案が親へ返っている
+
+## Context Boundary (AG-002)
+
+- 書くのは、親が渡した一時 `knowledge_dir` のコピーの中だけ（ナレッジ JSON・`router.json`・`registry.json`・`sync-log.jsonl`）。plugin_root 配下・正式の `knowledge/`・原則DB・vault へ Write/Edit しない。正式保存は親の中央guard execute。
+- 読むのは、`source_root` から解決した `target_files` のソース（読み取り専用）、一時 `knowledge_dir` の中のファイル（`schema.json` を含む）、plugin_root の下の正本（本ファイル、`${PLUGIN_ROOT}/references/agent-knowledge-extractor-rules.md`・`${PLUGIN_ROOT}/references/agent-knowledge-extractor-steps.md`・`${PLUGIN_ROOT}/references/agent-knowledge-extractor-entry-format.md`、同じ `references/` の root・正式保存・ナレッジ検索の契約、追加提案の下調べに使う原則DB）だけ。
+- Bash はソース1ファイルの見出し一覧、検査スクリプト（`validate-knowledge-entry-source.py`・`check-knowledge-split.py`）の実行、下書きの SHA256 の取得、`detect-knowledge-updates.py` の実行に限る。ナレッジの検索（`extract-knowledge-matches.py`）と usage 記録は親が行う。
+- ユーザーとの対話・目標設定・ナレッジの解釈と評価はしない。
+
+## Handoff
+
+- 親へ返すもの: Layer 3「出力サマリー」のとおり（処理件数、更新差分、下書きの一覧と SHA256、検査受領書、`knowledge_used_ids`、あれば原則DBへの追加提案）。
+- 親が続けること: manifest の作成・中央guard execute による正式保存（`references/guarded-publication-contract.md`）と、呼び出し元の後続（`run-ubm-knowledge-sync` は Phase3-split-check 以降、`run-ubm-youtube-ingest` は R3 の `knowledge-relation-extractor`）。
+- 止まるとき: `plugin_root`・`knowledge_dir`・`source_root` の入力が契約を満たさないときは書き込む前に止まり、理由を返す。格納の確定（`validate-knowledge-entry-source.py`）が終了コード 1 のまま直せないときは、`router.json`・`sync-log.jsonl`・`registry.json` を確定せずに止まり、stderr を返す。新しい検索語が要るときは、語と理由を親へ返して検索結果を待つ。

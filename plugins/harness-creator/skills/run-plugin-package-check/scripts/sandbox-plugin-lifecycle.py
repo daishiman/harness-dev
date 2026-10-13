@@ -8,11 +8,13 @@
 #   - --plugins-root: source plugins directory
 #   - --sandbox-root: optional persistent test sandbox
 # outputs:
-#   - stdout: PKG-010/011/012 JSON result
+#   - stdout: PKG-010/011/012 JSON result（壊れた plugin.json・兄弟 plugin 不在も status=fail の JSON にする）
+#   - stderr: exit 2 の理由
+#   - exit: 0=pass / 1=fail / 2=--plugins-root に plugin が無い
 # contexts: [C, E]
 # network: false
 # write-scope: temporary sandbox or explicit --sandbox-root only
-# dependencies: [../../../scripts/extract-plugin-root.py]
+# dependencies: [../../../scripts/plugin_resources.py]
 # ///
 """Side-effect-free plugin lifecycle smoke harness.
 
@@ -23,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import shutil
@@ -33,6 +34,9 @@ import tempfile
 from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+from plugin_resources import ResolverUnavailable, resolve_root
 
 
 def _resolve_repo_root() -> Path:
@@ -81,6 +85,8 @@ def tree_digest(root: Path) -> str:
 def plugin_version(plugin_dir: Path) -> str:
     manifest = plugin_dir / ".claude-plugin" / "plugin.json"
     data = json.loads(manifest.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"plugin manifest is not a JSON object: {manifest}")
     version = data.get("version")
     if not isinstance(version, str) or not version:
         raise ValueError(f"plugin manifest version is missing: {manifest}")
@@ -92,6 +98,14 @@ def bump_version(version: str) -> str:
     if len(parts) == 3 and all(part.isdigit() for part in parts):
         return f"{parts[0]}.{parts[1]}.{int(parts[2]) + 1}"
     return version + ".sandbox-upgrade"
+
+
+def _remove(path: Path) -> None:
+    """symlink とファイルは unlink、実ディレクトリは中身ごと消す。無ければ何もしない。"""
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path)
 
 
 def _replace_symlink(link: Path, target: Path) -> None:
@@ -162,16 +176,13 @@ def uninstall(name: str, sandbox: Path) -> dict:
     registration_path = state_dir / "registration.json"
     registration = json.loads(registration_path.read_text(encoding="utf-8")) if registration_path.is_file() else {}
     for relative in registration.get("surfaces", []):
-        target = sandbox / relative
-        if target.is_symlink() or target.is_file():
-            target.unlink()
-        elif target.is_dir():
-            shutil.rmtree(target)
+        _remove(sandbox / relative)
+    # settings 断片は plugin 名の名前空間ディレクトリへ置いたので、断片の link を消した後に
+    # ディレクトリごと消す (空ディレクトリが残ると下の残留検査で必ず fail になる)
+    _remove(sandbox / ".claude" / "settings" / name)
     installed = sandbox / "installed-plugins" / name
-    if installed.exists():
-        shutil.rmtree(installed)
-    if state_dir.exists():
-        shutil.rmtree(state_dir)
+    _remove(installed)
+    _remove(state_dir)
 
     residues: list[str] = []
     for path in sorted(sandbox.rglob("*"), key=lambda p: p.as_posix()):
@@ -195,19 +206,18 @@ def external_lint_path() -> Path:
 
     repo の plugins/ を前提にした固定パスは、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
     では兄弟 plugin に届かない。harness-creator に同梱した resolver に任せる。
+    兄弟 plugin や lint に届かないときは RuntimeError にし、main が PKG-010 の fail JSON にする。
     """
-    resolver = PLUGIN_ROOT / "scripts" / "extract-plugin-root.py"
-    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
-    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
-    if spec is None or spec.loader is None:
-        raise SystemExit("extract-plugin-root.py is missing from harness-creator/scripts")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    found = module.resolve("skill-governance-lint", PLUGIN_ROOT, Path.cwd())
+    try:
+        found = resolve_root("skill-governance-lint", PLUGIN_ROOT)
+    except ResolverUnavailable as exc:
+        raise RuntimeError(str(exc)) from exc
     if found is None:
-        raise SystemExit("skill-governance-lint plugin not found; install it to run PKG-009/010")
-    return found / "scripts" / "lint-external-refs.py"
+        raise RuntimeError("skill-governance-lint plugin not found; install it to run PKG-009/010")
+    linter = found / "scripts" / "lint-external-refs.py"
+    if not linter.is_file():
+        raise RuntimeError(f"lint-external-refs.py is missing in skill-governance-lint: {linter}")
+    return linter
 
 
 def external_ref_result(source: Path) -> dict:
@@ -295,6 +305,8 @@ def run_upgrade(source: Path, sandbox: Path) -> dict:
     after_same = tree_digest(installed_dir)
 
     upgrade_source = sandbox / "upgrade-source" / source.name
+    # --sandbox-root を使い回すと前回の写しが残っている。写しはこの関数が作るものなので作り直す
+    _remove(upgrade_source)
     upgrade_source.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, upgrade_source, symlinks=True)
     manifest = upgrade_source / ".claude-plugin" / "plugin.json"

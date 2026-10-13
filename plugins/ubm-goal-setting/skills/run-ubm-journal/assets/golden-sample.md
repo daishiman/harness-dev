@@ -2,6 +2,8 @@
 tags:
   - review
 ---
+<!-- few-shot provenance: 原理原則の設問の正本は references/principle-checklist.md。完成例は設問を実際に出力するため同文を保持し、test_principle_checklist_template_and_golden_have_same_questions が一致を検証する。 -->
+
 # 人生の究極の目標
 
 ![[人生の究極の目的#🎯 究極の人生の目的]]

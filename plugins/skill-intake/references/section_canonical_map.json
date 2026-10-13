@@ -104,7 +104,7 @@
         "prevents_what": "stated と excavated が同義反復になる『とりあえず』型"
       },
       "required_fields": [
-        {"key": "techniques_used", "type": "array", "constraint": "8技法から使用したもの", "absence_behavior": "block"},
+        {"key": "techniques_used", "type": "array", "constraint": "8技法から使用したもの。例外: P5 を SKIP した経路 (interview.json.needs_excavation=false) だけは印 skip:needs_excavation=false の1要素 (技法との混在不可。intake.schema の excavation_skip_matches_interview で interview.json と照合)", "absence_behavior": "block"},
         {"key": "rounds", "type": "integer", "constraint": ">=1", "absence_behavior": "block"},
         {"key": "agreement_loop_detected", "type": "boolean", "absence_behavior": "warn-fallback", "default": false},
         {"key": "true_purpose", "type": "string", "constraint": "verb + object 1文", "absence_behavior": "block"},

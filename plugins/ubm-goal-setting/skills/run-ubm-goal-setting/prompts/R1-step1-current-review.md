@@ -1,20 +1,20 @@
-# Prompt: R1-step1-current-review
+# プロンプト: R1-step1-current-review
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 1 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 1 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step1-current-review |
-| skill | run-ubm-goal-setting |
-| responsibility | R1-step1-current-review (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 1 担当フィールド) |
-| reproducible | true (収集フィールドと分岐条件は決定論的) |
+| `name` | step1-current-review |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R1-step1-current-review (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 1 担当フィールド) |
+| `reproducible` | `true` (収集フィールドと分岐条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,7 +28,7 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 基本情報+前回実績の数値データを interview_data として構造化し、後続 Step に引き渡す。
 - 非担当: 差分分析・原因深掘り (R2)、目標設定 (R3)、行動計画 (R4)、最終確認 (R5)。
 
@@ -37,14 +37,14 @@
 - **MECE (No.07)**: 売上構成・時間の使い方を漏れなくダブりなく把握。「外交」「制作」「学習」「管理」で MECE に分類する。
 - **経験学習モデル (No.37)**: コルブのサイクルで振り返る — 具体的経験 (何が起きた) → 省察 (なぜそうなった) → 概念化 (パターンは)。
 - **改善思考 (No.36)**: 改善は「仕組み・構造・手順の変更」で行う。精神論は却下。「頑張る」→「どの仕組みを変えるか」に転換する。
-- **新項目確認 (種別で 3 分岐)**: 月報・期報は「今期の累計売上実績」「現在事業パートナー数」「現在のグリッドパートナー数」「前回のアカデミーへの参加日」をフル確認する。週報は、現在の月報/期報から継承した今期文脈 (今期売上目標・累計実績・事業/グリッドパートナー数・前回/次回アカデミー・次回壁打ち・壁打ち目標状態/達成事項・グリッドパートナー目標) を提示し、「変更はありますか？」の確認 1 問+「今期累計売上実績を今週時点に更新」の週次更新 1 項目のみを収集する (質問を増やさず週報 5-8 分を維持するため)。
+- **新項目確認 (種別で 4 分岐)**: 1年 (`yearly`) は月報・期報と同じ項目をフル確認し、前期間の実績は「前年」の値として収集する (期間語が今年/前年になるだけで骨格は期報と同じ)。あわせて現行の挑戦宣言にある到達点 (月間売上到達点・継続コンサル人数) を提示して変更の有無を確認する。月報・期報は「今期の累計売上実績」「現在事業パートナー数」「現在のグリッドパートナー数」「前回のアカデミーへの参加日」をフル確認する。週報は、現在の月報/期報から継承した今期文脈 (今期売上目標・累計実績・事業/グリッドパートナー数・前回/次回アカデミー・次回壁打ち・壁打ち目標状態/達成事項・グリッドパートナー目標) を提示し、「変更はありますか？」の確認 1 問+「今期累計売上実績を今週時点に更新」の週次更新 1 項目のみを収集する (質問を増やさず週報 5-8 分を維持するため)。
 - 用語: グリッドパートナー＝一緒に・共に仕事をやっていく仲間。事業パートナー＝業務委託・協業など事業上のパートナー。
 
 ### 2.3 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| 前回目標設定ファイル | file | no | ファイルシステムから自動取得した前回の目標設定データ |
-| ユーザー回答 | text | yes | 基本情報・実績の口頭回答 |
+| 前回目標設定ファイル | file | いいえ | ファイルシステムから自動取得した前回の目標設定データ |
+| ユーザー回答 | text | はい | 基本情報・実績の口頭回答 |
 
 ### 2.4 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
@@ -59,10 +59,10 @@
 | prev_other_actual | string | 前回成果実績 |
 | prev_action_target | string[] | 前期間の行動目標 (初回は null。本 Step で表示・収集) |
 | prev_action_actual | string[] | 前期間の行動実績 (初回は null。本 Step で表示・収集) |
-| period_sales_cumulative | number | 今期の累計売上実績 (全レベル必須・週報は今週時点に週次更新) |
-| business_partner_count | number | 現在事業パートナー数 (月報・期報は確認／週報は現在の月報/期報から継承) |
-| grid_partner_count | number | 現在のグリッドパートナー数 (月報・期報は確認／週報は現在の月報/期報から継承) |
-| last_academy_date | string | 前回のアカデミーへの参加日 (月報・期報は確認／週報は現在の月報/期報から継承) |
+| period_sales_cumulative | number | 今期の累計売上実績 (全レベル必須・週報は今週時点に週次更新・1年は【今年の累計売上実績】へ着地) |
+| business_partner_count | number | 現在事業パートナー数 (1年・月報・期報は確認／週報は現在の月報/期報から継承) |
+| grid_partner_count | number | 現在のグリッドパートナー数 (1年・月報・期報は確認／週報は現在の月報/期報から継承) |
+| last_academy_date | string | 前回のアカデミーへの参加日 (1年・月報・期報は確認／週報は現在の月報/期報から継承) |
 | period_sales_target | number | 今期の売上目標 (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 | grid_partner_goal | number/null | グリッドパートナー目標 (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 | next_academy_date | string | 次回のアカデミー参加日 (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
@@ -70,15 +70,15 @@
 | sparring_target_state | string | 壁打ちまでに目指す状態 (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 | sparring_deliverables | string | 壁打ちまでに達成させること (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 
-備考: 初回 (前回目標なし) に収集する「直近/次回アカデミー参加日」は last_academy_date / next_academy_date へ着地させる。「今の月商」「顧問参加前の月商」は現状把握の基準値として PastSummary (user_info、data-contract §2) 側の文脈に保持し、interview_data の専用フィールドは持たない。
+備考: 初回 (前回目標なし) に収集する「直近/次回アカデミー参加日」は last_academy_date / next_academy_date へ着地させる。「今の月商」「顧問参加前の月商」は現状把握の基準値として `PastSummary` (user_info、`data-contract` §2) 側の文脈に保持し、interview_data の専用フィールドは持たない。
 
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| info-collector 出力 | past_summary (親 context が受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| `info-collector` 出力 | past_summary (親コンテキストが受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし (対話とファイル Read のみ)。
@@ -86,7 +86,7 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 対話の共通制約 (1 ターン 1〜3 問・深掘り 2 回まで・思考法名を出さない等) と回答パターン別対応は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 対話の共通制約 (1 ターン 1〜3 問・深掘り 2 回まで・思考法名を出さない等) と回答パターン別対応は `agents/phase3-coordinator.md` の Layer 2「プロセス制約」と Layer 4「品質基準（回答パターン別対応ルール）」が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
 - 数値回答が曖昧なとき: 「半角数字で具体的に」と再質問する (interview_data の型契約を守るため)。
@@ -94,8 +94,8 @@
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 基本情報と前回実績を正確に収集し、後続の差分分析に足る数値基盤を作る。
@@ -104,7 +104,8 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] 基本情報+前回実績の数値が揃っている
-- [ ] 種別 (週報/月報/期報) に応じた新項目確認 (2.2 の 3 分岐ルール) が完了している
+- [ ] 種別 (週報/月報/期報/1年) に応じた新項目確認 (2.2 の 4 分岐ルール) が完了している
+- [ ] 種別が1年のときは、挑戦宣言の到達点 (月間売上到達点・継続コンサル人数) の変更の有無を確認している
 - [ ] 出力契約 (2.4) の担当フィールドが interview_data に構造化されている
 
 ### 5.4 実行方式
@@ -112,10 +113,10 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 1)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 1)。
 - 前提 Step: なし (Phase 3 インタビューの最初の Step)。
-- 後続 Step: R2-step2-gap-analysis — 受け渡し: 基本情報 (name, business, phase, type) + 前回目標・実績データ (prev_sales_target, prev_sales_actual, prev_other_target, prev_other_actual)。
+- 後続 Step: R2-step2-gap-analysis — 受け渡し: 基本情報 (`name`, `business`, `phase`, `type`) + 前回目標・実績データ (`prev_sales_target`, `prev_sales_actual`, `prev_other_target`, `prev_other_actual`)。
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: 完了チェックリスト充足後にのみ Step 2 へ遷移する。
@@ -131,6 +132,7 @@
 | 前回目標なし | ターン1C (初回用質問) |
 | 種別=月報・期報 | ターン1D (新項目フル確認) |
 | 種別=週報 | ターン1D-週報 (継承＋一括確認・確認 1 問＋週次更新 1 項目) |
+| 種別=1年 | ターン1E (新項目フル確認＋挑戦宣言の到達点の確認) |
 
 ### 7.2 言語
 - 本文: 日本語 (interview_data のフィールド名は英語のまま)。
@@ -179,7 +181,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 > 4. 前回のアカデミーへの参加日は？
 
 **ターン1D-週報（週報・継承＋一括確認）**:
-> info-collector が「現在の月報/期報」から取得した今期の文脈を引き継ぎました:
+> `info-collector` が「現在の月報/期報」から取得した今期の文脈を引き継ぎました:
 > - 今期の売上目標: {{period_sales_target}} / 今期の累計売上実績: {{period_sales_cumulative}}
 > - 事業パートナー数: {{business_partner_count}} / グリッドパートナー数: {{grid_partner_count}}
 > - 前回のアカデミー: {{last_academy_date}} / 次回のアカデミー: {{next_academy_date}} / 次回の壁打ち: {{next_sparring_date}}
@@ -189,3 +191,16 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 > もう1点だけ、今期の累計売上実績を今週時点の数値に更新してください（半角数字で）。
 >
 > ※ 週報はこの1ターンで完結する＝確認1問（変更の有無）＋週次更新1項目（今期累計売上実績）のみ。文脈フィールドは現在の月報/期報から自動継承するため、質問を増やさず週報の所要5-8分を維持する。
+
+**ターン1E（1年・新項目フル確認＋到達点の確認）**:
+> 1年の目標設定として、現状を確認させてください（半角数字・日付で）:
+> 1. 今年の累計売上実績はいくらですか？
+> 2. 現在の事業パートナー数は？（業務委託・協業などの事業上のパートナー）
+> 3. 現在のグリッドパートナー数は？（一緒に・共に仕事をやっていく仲間の数）
+> 4. 前回のアカデミーへの参加日は？
+>
+> あわせて、挑戦宣言から引き継いだ到達点に変更はありますか？
+> - 1年後の月間売上到達点: {{monthly_sales_goal}}
+> - 1年後の月額継続コンサル人数: {{continuous_consult_count}}
+>
+> ※ 1年の期間は暦の1年で切る（下位3層の最終月曜起点とは別）。前期間の実績は「前年」の値として収集する。

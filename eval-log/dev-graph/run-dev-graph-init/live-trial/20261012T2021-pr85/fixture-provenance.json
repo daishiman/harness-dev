@@ -1,0 +1,50 @@
+{
+  "label": "init3",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/init3/fx",
+  "head": "265ae8d7d5819e58c22037ee40abf1387f96f28e",
+  "tracked_files_committed": 1,
+  "git_init": {
+    "method": "その場で git init。README.md を runs/init2/fx から写して 1 commit (\"fixture: initial\")。作者は live-trial@example.invalid。.dev-graph/・.claude/ は無い素の repo (init2 と同じ形)。",
+    "status_before_launch": "clean"
+  },
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "retry_of": "init2 (20261012T1358-pr85)",
+  "retry_reason": "init2 の closure は 694a09ca。その後 build-init-scaffold.py が、どの write よりも前に validate-harness-link.py を回すようになり (1a0fc661…)、closure が 9129820a に変わった。",
+  "harness_link_check": {
+    "when": "起動の前。被験の外で orchestrator が回した",
+    "argv": "lt-env.sh PYTHONDONTWRITEBYTECODE=1 python3 -B ws/plugins/dev-graph/scripts/validate-harness-link.py --repo-root runs/init3/fx --hook-source plugin",
+    "exit": 0,
+    "status": "pass",
+    "link_state": "absent",
+    "in_use": false,
+    "findings": [],
+    "write_count": 0,
+    "report": "runs/init3/workdir/harness-link.json",
+    "fx_unchanged": "前後で fx の全ファイル (.git を含む) の sha256 の一覧が一致 (workdir/fx-before-link.sha と fx-after-link.sha)。git status も clean。"
+  },
+  "plugins_copy": {
+    "copied_at": "2026-10-12T11:18:42Z",
+    "from": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)",
+    "plugins": [
+      "dev-graph",
+      "harness-creator",
+      "skill-governance-adapters",
+      "system-dev-planner",
+      "system-spec-harness"
+    ],
+    "method": "cp -R。写した直後に diff -rq -x __pycache__ で 5 つとも wtpy と一致を確かめた",
+    "run_dev_graph_init_closure_sha": "9129820ac36e1d848f83d9b700ac317ac90cf91fe7d670a8019c718097c27b16 (写しと wtpy で同じ。44 ファイル。build-init-scaffold.py 1a0fc661…・validate-harness-link.py b6f648a1…・resolve-repo-context.py 7ef9117a…)",
+    "skill_md_sha256": "7c9b95b8…",
+    "changed_since_init2": "init2 の closure は 694a09ca。build-init-scaffold.py が write の前に validate-harness-link.py を回すようになった。"
+  },
+  "isolation": {
+    "same_as": "render4・status3・decompose3・schedule3・sync5 と同じ。guard.py f23267a3…、mksettings.py 277ae072…。許可一覧に無い tool と外部へ届く tool (ScheduleWakeup・SendFeedback・SendMessage・mcp__* など) は拒否。sandbox の network は deniedDomains ['*']、書込みは runs/init3・wttrial/tmp・workdir/out だけ。",
+    "session_root": "ws (init2 と同じ)。fx は別の dir。"
+  },
+  "task_md_changes": {
+    "base": "runs/init2/workdir/task.md",
+    "changes": [
+      "runs/init2 を runs/init3 に置き換えた (3 か所)。ほかは変えていない。scenario の id も C01-OUT1-positive-idempotence-fixture-standard-v2 のまま。"
+    ]
+  }
+}

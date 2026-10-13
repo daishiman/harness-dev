@@ -1,1 +1,18 @@
-{"artifact":"plugins/system-dev-planner/agents/system-dev-plan-evaluator.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"実read。frontmatter健全: owner_skill:assign-system-dev-plan-evaluator(実在, prompts/R4-evaluate.md+workflow-manifest.jsonが本agentを参照), source #C05実在, tools=Read,Glob,Grep,Write,Bash(python3 *)。責務が独立評価(proposerと分離したfork context)に明確化され, Write対象をplan-findings.jsonのみに限定し評価対象を非改変(Layer3+checklist最終項)。infra参照が実在: scripts/validate-system-plan.py・schemas/plan-findings.schema.json共に存在。error-handling優秀: Layer4で'gate exit0だけで意味評価を代替しない'とGoodhart化を明示回避, 1条件FAIL/high finding/digest・repo identity不一致で総合FAIL, 別digestのverdict破棄。副作用安全: Bashはpython3限定, mutation無。停止条件6項が検証可能。CI lint群で機械被覆済のためmechanical:true。目立つ欠陥なし。"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/system-dev-planner/agents/system-dev-plan-evaluator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 99,
+    "notes": "genuine review（sha256 b11c8cb407a62ffad1b1272b21aef5910f65a7c338691f24640a106a69c46610 をレビュー。実行検証あり）。範囲: 全89行と、前回の記録（sha 5275f644…、FAIL 94）からの差分。5.3（完了チェックリスト）の53行を「findings が severity、bucket、observation、evidence を持つ (path と直し方は observation と evidence に書く。schema は追加のキーを許さない)」にし、Handoff（87行）の findings の項目も同じ4つにした。version は 0.1.0 のまま。確かめたこと: HOME・CLAUDE_PROJECT_DIR・XDG_STATE_HOME を scratchpad の一時ディレクトリに差し替えて実行した。plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py --agents-dir plugins/system-dev-planner/agents は「OK: 3 agent file(s) passed (Tier 1)」で rc 0。plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode agent --plugins-dir plugins/system-dev-planner は scanned=3 で rc 0。plugins/system-dev-planner の pytest は 58 passed。tests/ の側でこの agent に触れる tests/scripts-root/test_root__artifact_delivery.py は 135 passed。probe（scratchpad の work-covc/sdp2/probe_findings2.py）で、本物の validate-system-plan.py と promote-system-plan.py の _validate_findings に findings を通した。gate は deterministic-validation の形にそろえ、findings だけを変えた。本文どおりの4項目（severity は medium）と、evidence を省いたものは通る。本文どおりで severity が high のものは「unresolved high-severity」で止まり、54行（high finding があれば総合 PASS でない）と合う。直す前の形（severity・path・evidence・recommended fix）は、bucket と observation の欠けと、path と recommended_fix の追加で schema violation になり、「追加のキーを許さない」の記述が正しいことを確かめた。evidence を文字列で書くと「type must be 'array'」、severity が critical だと「outside enum」で止まる。本文のほかの箇所との照合: assign-system-dev-plan-evaluator の prompts/R4-evaluate.md の E7（106行）と142行の findings(severity/bucket/observation/evidence)、57行の必須キー、92行の「runtime goal-seek loop は回さない」は、どれも本文と合う。schema は evidence を任意にしているが、本文は E7 と同じく「持つ」と書き、schema より厳しい側で合っている。plugins/system-dev-planner の中に recommended fix の記述は残っていない（grep で確かめた）。採点器 render-findings-score.py --kind agent の passed は、AG-001〜AG-004 の判定を持たないので合否の根拠にしない。前回の指摘の扱い: 前回の [中]（53行と87行が findings を severity・path・evidence・recommended fix と書き、schema と E7 に反する）は直った。判断の妥当性: 2か所が schema と E7 の項目にそろい、path と直し方の置き場も示したので、本文どおりに書いても promotion は schema の違反で止まらない。一方、Layer 7（67行）は要約を「条件別 verdict、evidence path、violation code、修正対象」と書き、Handoff（87行）もそれを写す。R4-evaluate.md の 4.2（84行）と 7.1（129行）の verdict サマリは「verdict / evaluated_digest / 条件別 PASS-FAIL / finding 数」で、142行は「出力は verdict サマリのみ」と書く。Layer 7 の文は origin/main からあり、要約を機械で読む consumer は見つからない（結果は plan-findings.json で渡る）ので、実害は小さい。指摘: [低] Layer 7 と Handoff の要約の項目が、R4-evaluate の verdict サマリと違う（evaluated_digest と finding 数が無く、修正対象を足している）。直し方は、2か所を R4 の「verdict / evaluated_digest / 条件別 PASS-FAIL / finding 数」にそろえること（-1）。付記: 本文を直したが、version は 0.1.0 のまま（Beads に回し済み）。DEDUCTION: -1 → 99。[高] と [中] は無いので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-c",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

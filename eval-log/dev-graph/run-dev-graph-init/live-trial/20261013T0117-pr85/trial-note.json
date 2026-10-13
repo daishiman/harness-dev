@@ -1,0 +1,33 @@
+{
+  "label": "init4",
+  "retry_of": "20261012T2021-pr85",
+  "evaluator_agent_id": "a8dd59c7639b86117",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/init4/ws/plugins/dev-graph/skills/run-dev-graph-init",
+  "closure_sha_at_launch": "6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6",
+  "closure_sha_tested_copy": "6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6",
+  "closure_sha_wtpy_at_verdict": "6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "素の repo: mkfx.sh でその場で git init し、README.md を 1 つ書いて 1 commit (28e2e4ff…、作者は live-trial@example.invalid) にした。追跡は README.md だけで、起動の前は .dev-graph/ も .claude/ も無かった。README.md の中身は init2・init3 と同じ。",
+    "harness link の事前確認: 起動の前に、被験の外で validate-harness-link.py --repo-root fx --hook-source plugin を回した (script が動いたのは 1 回) (exit 0、status=pass、link_state=absent、in_use=false、write_count=0)。前後で fx の全ファイルの sha256 の一覧が一致した。init3 と違い PYTHONDONTWRITEBYTECODE は渡さず python3 -B だけで回した (fixture-provenance.json の harness_link_check)。その前の 1 回目 (2026-10-13 01:15 JST) は、orchestrator の prep4.py が script のパスを誤って書き、python3 が script を開けずに止まった (script は動いていない。前後の fx の一覧は一致)。道具の誤りとしてパスを直して回し直した (harness_link_check.first_attempt_failed。出力は workdir/attempt1.* に残した)。",
+    "plugin の写し: bytecode の修正の後の wtpy の plugins/ から、__pycache__ と *.pyc を除いて ws/plugins/ に写した (2026-10-12T16:15:28Z。写しの bytecode は 0 件)。run-dev-graph-init の閉包 6765b176… は team-lead の値・wtpy と一致 (fixture-provenance.json の retake)。",
+    "隔離ガード: init3 と同じ (guard.py f23267a3…、mksettings.py 277ae072…。外へ送る tool と許可一覧に無い tool を拒否)。session root は ws。",
+    "task.md: init3 のものから runs/init3 を runs/init4 に置き換えただけ (fixture-provenance.json の retake.task_md_changes)。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/init4/tmp。短い symlink /private/tmp/ltpr85/t/in4 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない (下の trial の後の記録を除く)。評価者の prompt にも同じことを書いた。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 10 か所、アカウント名を 0 か所伏せた (redact.py)。fixture と被験の成果物は変えていない。",
+    "評価 prompt の補足 (trial の後): 評価者を起こす前に、事実の行を 1 行足した (写しと wtpy の bytecode が増えていないこと、道具が run の dir の外に作ったパスの記録の場所、guard の deny 1 件、harness link の事前確認の 1 回目)。足す前の版は smoke/init4/eval-prompt.before-fact.md。",
+    "評価の間の fx: 評価者が fx で git status を 2 回 (--no-optional-locks なし) 回し、fx/.git の dir の mtime が 01:31:50 JST に変わった。.git/index と fx のほかのファイルの mtime は変わらず、check-post.json (01:26:45) より新しいファイルは無い。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": []
+}

@@ -282,6 +282,21 @@ def resolve_install_slug(plan_dir: Path) -> tuple[str | None, dict, list[str]]:
     return slug, handoff, []
 
 
+def _install_clause(node: dict) -> str | None:
+    """既存の legacy title fallback を両 projection で共用する。"""
+    clause = node.get("title") if node.get("execution_kind") is None else node.get("acceptance_criterion")
+    return clause if isinstance(clause, str) else None
+
+
+def _component_install_obligations(leaves: list[dict], obligations: dict[str, str]) -> list[str]:
+    """install clause の plugin 単位帰属を再導出/保存 graph ともに検査する。"""
+    return sorted({
+        key for key, clause in obligations.items()
+        for node in leaves
+        if _install_clause(node) == clause and node.get("entity_ref") is not None
+    })
+
+
 def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
     """Require canonical P13 install claims in the existing producer's execution leaves."""
     phase = plan_dir / "phase-13-release.md"
@@ -317,11 +332,7 @@ def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
     ]
     # install 義務は plugin 単位。fixed-13-phase は P13 の entities_covered ごとに条項を複製するため、
     # component に帰属した leaf は N 重の実行と route_ref の誤帰属になる。集合包含では見逃すので拒否する。
-    attributed = sorted({
-        key for key, clause in obligations.items()
-        for node in leaves
-        if node.get("acceptance_criterion") == clause and node.get("entity_ref") is not None
-    })
+    attributed = _component_install_obligations(leaves, obligations)
     errors.extend(
         f"P13 install obligation {key} が component に帰属している (plugin 単位の義務。"
         "P13 の entities_covered は [] にし、task-spec には entity_ref を付けない)"
@@ -339,22 +350,27 @@ def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
             stored = json.loads(graph_path.read_text(encoding="utf-8"))
             if not isinstance(stored, dict) or not isinstance(stored.get("nodes"), list):
                 raise ValueError("task graph must contain nodes[]")
-            stored_clauses = set()
+            stored_leaves = []
             for node in stored["nodes"]:
                 if not isinstance(node, dict) or node.get("phase_ref") != "P13":
                     continue
                 kind = node.get("execution_kind")
                 if kind not in (None, "verification-claim", "direct-task"):
                     continue
-                clause = node.get("acceptance_criterion")
-                # Legacy fixed graphs carry the claim in title until migration.
-                if kind is None:
-                    clause = node.get("title")
+                stored_leaves.append(node)
+            stored_clauses = set()
+            for node in stored_leaves:
+                clause = _install_clause(node)
                 if isinstance(clause, str):
                     stored_clauses.add(clause)
             errors.extend(
                 f"task-graph install obligation {key} が欠落または古い (derive-task-graph.py で再生成): {graph_path}"
                 for key, clause in obligations.items() if clause not in stored_clauses
+            )
+            errors.extend(
+                f"task-graph install obligation {key} が component に帰属している "
+                f"(plugin 単位の義務。保存 graph の entity_ref を外して再生成): {graph_path}"
+                for key in _component_install_obligations(stored_leaves, obligations)
             )
         except (OSError, ValueError) as exc:
             errors.append(f"install 義務の task graph を読めない: {exc}")

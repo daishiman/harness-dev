@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/info-collector.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":90,"notes":"reference-existence: 参照する knowledge/router.json 実在。デュアルパス検索が依存する router キーを python で実測: abstraction_layers.concept_mapping / abstraction_layers.meta_themes / quick_lookup.by_issue / quick_lookup.by_phase / routing_rules / categories 全て存在。total_entries=154 ゆえ主経路(router 経由)が live で fallback(動画教材 Tier1)は真の縮退路。schema-conformance: frontmatter tools=Read,Grep,Glob,Bash/isolation=fork/kind=agent 妥当・description が Phase1-2 収集を的確に要約。mechanical=true: lint-agent-prompt-section.py exit0(Tier1 5/5)・marker '(対話なし: 自動実行 agent)' と Self-Evaluation(完全性/一貫性/検証可能性)具備。placement-invariant: 自動実行 agent で Layer5/6 に手順正本を保持・prompts/ 逆転なし=skip-rule 整合。single-responsibility: 過去目標/合宿/ナレッジ/journal の並列収集と [自動取得]/[要ヒアリング] マーク付き構造化サマリー生成に限定・対話/目標設定/ファイル保存は Layer1 で明示除外。owner-flow: goal_type 別取得スコープ表→Step1-3.7 並列→Step4 統合が矛盾なく、出力テンプレートの継承文脈10種が Step1-6 の抽出項目と一致。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/info-collector.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 5114eb42e9ce40c477d100d875514ddc56c8fcc51f096d680af6b9bac4a1a0e9 をレビュー。実行検証あり）。範囲: 全294行（本文278行）。前回の記録（sha256 a0116f0c…、PASS 95）からの差分は3か所。L91: 1年層の到達点を、1年目標の【今年の最重要数字】と挑戦宣言の `●目標ーその目的に近づくための数値的な目標` から取り、null は両方とも無いときだけにした。L160 と L260: 日付を読めないファイルは更新日時で並べ直さず Glob の名前順で扱い、最新を決められないときは [要ヒアリング] にする。確かめたこと: `●目標` の見出しは skills/run-ubm-challenge/references/challenge-format.md L22 と一字一句同じ。steps の Step 3.9（L144）、summary-template L18-20、data-contract L87、output-formatter-steps L10（挑戦宣言が正本）とも食い違わない。前回の指摘 [低] 2件（到達点が1年目標だけを見ていたこと、日付を読めないファイルを更新日時で並べ直していたこと）は、どちらも解消した。採点器 render-findings-score.py --kind agent は 97・passed=false（AG-001/AG-002 の判定の実装が無く、unscored_high で固定される。PD-001 の low は段階的開示なので減点しない）。verdict は中身を読んだ評価で決めた。lint-agent-prompt-content（--mode agent）と section の lint は rc=0。plugins/ubm-goal-setting/tests 全体 1047 passed。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

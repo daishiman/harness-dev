@@ -1,1 +1,17 @@
-{"artifact":"plugins/ubm-goal-setting/agents/output-formatter.md","type":"agents","mechanical":true,"llm_eval":{"verdict":"PASS","score":91,"notes":"reference-existence: 参照する run-ubm-goal-setting/references/output-formats.md と scripts/validate-goal-output.py 実在。owner-flow(契約一致を実測): Step3 の Bash `validate-goal-output.py --file {file} --type {goal_type}` に対しスクリプト側 argparse が --file(required)・--type(required, choices=weekly/monthly/bimonthly)を宣言=引数契約が完全一致。schema-conformance: frontmatter tools=Read,Write,Bash/kind=agent/isolation=fork 妥当・description が Phase4 整形+15項目品質+validate を要約。mechanical=true: lint exit0(Tier1)・marker '(対話なし: 自動実行 agent)'・Self-Evaluation(完全性/一貫性/検証可能性)具備。placement-invariant: 自動実行 agent・Layer5/6 本体が運用正本=skip-rule 整合。single-responsibility: フォーマット整形/数値ルール/品質チェック/バリデーション/ファイル保存に限定・対話/情報収集/目標設定は Layer1 で明示除外。品質チェックリスト15項目が output-formats.md(統一ハイブリッド)を正本参照し、種別別方針(週報=任意/月報=必須/期報=禁止)の単一SSoT が data-contract と整合。"},"reviewed_by":"harness-ratchet-recovery-agent-eval","checked":["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]}
+{
+  "artifact": "plugins/ubm-goal-setting/agents/output-formatter.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 7f95ccbf008a87f23af923b7fc164ef8028cdfc952d3fa37facf6593902c286a をレビュー。実行検証あり）。範囲: 全295行・本文287行。前回の記録（sha256 f94ecc60…）からの差分は L186 の1行の追加で、`quarterly` / `monthly` のとき peer_paths の `yearly` があれば読み込む（到達点2件を注記行へ写すため。output-formats.md と並列）としたもの。確かめたこと: 追加の記述は references/agent-output-formatter-steps.md の項目5、output-formats.md の月報（L1380）・期報（L1470）の到達点の注記行、skills/run-ubm-goal-setting/references/data-contract.md L346 の「4層ロールアップ契約」、info-collector の L127・L260 と合う。採点器 render-findings-score.py --kind agent は 97 で PD-001 だけ（段階的開示なので減点しない）。lint-agent-prompt-section・content は rc=0。本文287行で BD-003 の上限300以内。plugins/ubm-goal-setting/tests 全体 1025 passed。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

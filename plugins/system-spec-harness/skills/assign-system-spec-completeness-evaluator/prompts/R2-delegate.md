@@ -44,7 +44,17 @@
 
 ### 2.4 出力契約
 - matrix/doc-freshnessの独立監査とC06 sub-inputを渡す。foundation/decision/design-knowledge/prompt-qualityは機械evidenceと入力をR1へ透過し、R1がrubric全aspectsを組み立てる。
-- C06 の Task 結果 JSON は、無改変のまま評価出力先 (R1 の `output` の置き場。省略時 `eval-log/` 配下・仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ Bash で保存し、そのパスを R1 へ渡す (`aggregate-completeness.py --hearing` はファイルパスを取り、C06 は Read のみで自分では書けないため)。
+- C06 の Task 結果 JSON は、無改変のまま評価出力先 (R1 の `output` の置き場。省略時 `eval-log/` 配下・仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ保存し、そのパスを R1 へ渡す (`aggregate-completeness.py --hearing` はファイルパスを取り、C06 は Read のみで自分では書けないため)。この skill の allowed-tools に Write は無く、`aggregate-completeness.py` にも保存のオプションは無いので、`Bash(python3 *)` の範囲で python3 に書かせる。`<評価出力先>` は解決済みの absolute path に置き換える。
+
+  ```bash
+  python3 -c 'import pathlib, sys; pathlib.Path("<評価出力先>/hearing-audit.json").parent.mkdir(parents=True, exist_ok=True); pathlib.Path("<評価出力先>/hearing-audit.json").write_text(sys.stdin.read(), encoding="utf-8")' <<'HEARING_JSON'
+  <C06 の Task 結果 JSON をそのまま>
+  HEARING_JSON
+  ```
+
+  - 保存先は python のコードの中に literal で書く。`sys.argv` や変数で渡すと、plugin の hook (`guard-confirmed-chapter-overwrite.py`) が書込み先を特定できず、JSON の本文に `system-spec/` が出てくるだけで遮断する。
+  - heredoc の区切りは引用符付き (`'HEARING_JSON'`) にし、本文の `$` や `` ` `` を shell に展開させない。
+  - `cat >` や shell の `>` では書かない。python3 以外のコマンドになり、`Bash(python3 *)` の外に出る。
 
 ## Layer 3: インフラ層
 
@@ -57,7 +67,7 @@
 | rubric | references/scoring-rubric.json |
 
 ### 3.2 ツール
-- Task (3 監査 sub-agent の独立 context fork) / Read / Bash (決定論ゲート回収)。
+- Task (3 監査 sub-agent の独立 context fork) / Read / Bash(python3 *) (決定論ゲート回収と、2.4 の `hearing-audit.json` の保存)。Write はこの skill の allowed-tools に無い。
 
 ## Layer 4: 共通ポリシー
 

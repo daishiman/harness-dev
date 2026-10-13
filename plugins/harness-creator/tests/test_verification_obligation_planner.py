@@ -922,3 +922,312 @@ def test_release_phase_nodes_do_not_fold_into_the_route_obligation(tmp_path: Pat
     assert "P04-A-01" not in folded
     assert "P02-A-01" in folded  # draft 段の設計ブリーフは route build と一体で扱う
     assert "B-A" in folded       # component-build は phase_ref を問わず route 本体
+
+
+# --- 独立レビュー (FAIL 72) の指摘の再発防止: 入力の壊れは exit 2、壊れた receipt は読み飛ばす ---
+
+
+def test_undecodable_receipt_is_skipped_instead_of_crashing_the_plan(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    (evidence_dir / "broken.json").write_bytes(b"\xff\xfe{}")
+    (evidence_dir / "deep.json").write_text("[" * 100000, encoding="utf-8")
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    assert _actions(plan)["machine:a"] == "check"
+
+
+def _broken_contracts() -> list:
+    def mutate(**changes):
+        contract = _contract()
+        contract["obligations"][0].update(changes)
+        return contract
+
+    no_risk = _contract()
+    del no_risk["obligations"][0]["risk"]
+    return [
+        [],
+        no_risk,
+        mutate(activation="sometimes"),
+        mutate(stage="final"),
+        mutate(depends_on=1),
+        mutate(minimum_confidence="0.9"),
+        mutate(minimum_confidence=True),
+        mutate(inputs=[{"required": True, "context": False}]),
+    ]
+
+
+def test_contract_shape_errors_are_contract_errors_not_tracebacks(tmp_path: Path) -> None:
+    for contract in _broken_contracts():
+        try:
+            PLANNER.build_plan(contract, tmp_path, tmp_path / "evidence", stage="release")
+        except PLANNER.ContractError:
+            continue
+        raise AssertionError(f"accepted a broken contract: {contract!r:.120}")
+
+
+def test_cli_exits_2_on_undecodable_contract_and_unwritable_out(tmp_path: Path, capsys) -> None:
+    contract = tmp_path / "contract.json"
+    contract.write_bytes(b"\xff\xfe{}")
+    assert PLANNER.main(["--contract", str(contract), "--evidence-dir", str(tmp_path / "e"),
+                         "--repo-root", str(tmp_path)]) == 2
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    contract.write_text(json.dumps(_contract()), encoding="utf-8")
+    blocker = tmp_path / "blocker"
+    blocker.write_text("file, not a directory", encoding="utf-8")
+    assert PLANNER.main(["--contract", str(contract), "--evidence-dir", str(tmp_path / "e"),
+                         "--repo-root", str(tmp_path), "--out", str(blocker / "plan.json")]) == 2
+    assert "[ERROR]" in capsys.readouterr().err
+
+
+# --- 独立レビュー (PASS 90) の残りの指摘: 型の違う receipt・contract でも traceback にしない ---
+
+
+def test_wrongly_typed_receipts_are_skipped_instead_of_crashing_the_plan(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    evidence_dir = tmp_path / "evidence"
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    _write_receipt(evidence_dir, tmp_path, plan, "semantic:a", status="FAIL", finding_codes=["x"], suffix="ok")
+    for suffix, patch in [
+        ("status", {"status": ["PASS"]}),
+        ("codes", {"finding_codes": [{"code": "x"}]}),
+        ("kind", {"verifier": {"kind": ["llm"], "id": "fixture"}, "run_id": "r1"}),
+        ("bool", {"confidence": True}),
+    ]:
+        _write_receipt(evidence_dir, tmp_path, plan, "semantic:a", status="FAIL", finding_codes=["x"], suffix=suffix)
+        path = evidence_dir / f"semantic-a-{suffix}.json"
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+        receipt.update(patch)
+        path.write_text(json.dumps(receipt), encoding="utf-8")
+    replanned = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release", run_id="r1",
+                                   max_model_actions=100)
+    # 壊れた4件は数えない。正しい1件だけでは自動化候補 (2回以上) にならない
+    assert replanned["automation_candidates"] == []
+
+
+def test_more_contract_shape_errors_are_contract_errors(tmp_path: Path) -> None:
+    def mutate(index=0, **changes):
+        contract = _contract()
+        contract["obligations"][index].update(changes)
+        return contract
+
+    broken = [
+        mutate(kind=["semantic"]),
+        mutate(risk={"high": 1}),
+        mutate(activation=["changed"]),
+        mutate(stage=["release"]),
+        mutate(expected_evidence_paths=1),
+        mutate(expected_evidence_paths="abc"),
+        mutate(id=1),
+        {"schema_version": 1, "subject": ["fixture"], "obligations": _contract()["obligations"]},
+    ]
+    observational = _contract()
+    observational["obligations"][0].update(kind="observational", observation_tier=["fork"])
+    broken.append(observational)
+    for contract in broken:
+        try:
+            PLANNER.build_plan(contract, tmp_path, tmp_path / "evidence", stage="release")
+        except PLANNER.ContractError:
+            continue
+        raise AssertionError(f"accepted a broken contract: {contract!r:.160}")
+
+
+def test_deep_dependency_chain_does_not_hit_the_recursion_limit(tmp_path: Path) -> None:
+    # id の昇順に辿ると最初の根 m:00000 が m:00001 に、m:00001 が m:00002 に…と依存するので、
+    # 深さ優先は1500段まで潜る。順方向に名付けると1段ずつしか潜らず、再帰版でも落ちない
+    obligations = [
+        {
+            "id": f"m:{i:05d}",
+            "claim": f"step {i}",
+            "kind": "deterministic",
+            "risk": "low",
+            "activation": "changed",
+            "depends_on": [f"m:{i + 1:05d}"] if i < 1499 else [],
+            "inputs": [],
+            "parameters": {"i": i},
+            "checker": {"id": "fixture", "argv": ["true"]},
+        }
+        for i in range(1500)
+    ]
+    plan = PLANNER.build_plan({"schema_version": 1, "subject": "deep", "obligations": obligations},
+                              tmp_path, tmp_path / "evidence", stage="release")
+    assert len(plan["obligations"]) == 1500
+    assert plan["obligations"][0]["id"] == "m:01499"
+
+
+def test_topological_order_and_cycle_message_are_unchanged() -> None:
+    items = [
+        {"id": "c", "depends_on": ["a", "b"]},
+        {"id": "b", "depends_on": ["a"]},
+        {"id": "a", "depends_on": []},
+    ]
+    assert [item["id"] for item in PLANNER._topological(items)] == ["a", "b", "c"]
+    try:
+        PLANNER._topological([{"id": "x", "depends_on": ["y"]}, {"id": "y", "depends_on": ["x"]}])
+    except PLANNER.ContractError as exc:
+        assert "dependency cycle contains: x" in str(exc)
+    else:
+        raise AssertionError("cycle was not detected")
+
+
+def _one_obligation(**overrides) -> dict:
+    item = {
+        "id": "machine:a",
+        "claim": "a passes",
+        "kind": "deterministic",
+        "risk": "low",
+        "activation": "changed",
+        "depends_on": [],
+        "inputs": [],
+        "parameters": {"x": 1},
+        "checker": {"id": "fixture", "argv": ["true"]},
+    }
+    item.update(overrides)
+    return {"schema_version": 1, "subject": "types", "obligations": [item]}
+
+
+def test_claim_reuse_and_depends_on_types_are_checked(tmp_path: Path) -> None:
+    broken = [_one_obligation(claim=value) for value in (None, [], {}, False, 0, "  ")]
+    broken += [_one_obligation(reuse=value) for value in ("false", "true", 0, None)]
+    dup = _one_obligation()
+    dup["obligations"].insert(0, dict(dup["obligations"][0], id="machine:b", depends_on=[]))
+    dup["obligations"][1]["depends_on"] = ["machine:b", "machine:b"]
+    broken.append(dup)
+    for contract in broken:
+        try:
+            PLANNER.build_plan(contract, tmp_path, tmp_path / "evidence", stage="release")
+        except PLANNER.ContractError:
+            continue
+        raise AssertionError(f"accepted a broken contract: {contract!r:.160}")
+
+
+def test_nan_in_contract_is_rejected_and_output_stays_strict_json(tmp_path: Path, capsys) -> None:
+    contract = tmp_path / "contract.json"
+    contract.write_text(json.dumps(_one_obligation(parameters={"x": float("nan")})), encoding="utf-8")
+    assert "NaN" in contract.read_text(encoding="utf-8")
+    rc = PLANNER.main(["--contract", str(contract), "--evidence-dir", str(tmp_path / "e"),
+                       "--repo-root", str(tmp_path), "--stage", "release"])
+    assert rc == 2 and "NaN" in capsys.readouterr().err
+
+
+def _mangle(evidence_dir: Path, obligation_id: str, suffix: str, **changes) -> None:
+    path = evidence_dir / f"{obligation_id.replace(':', '-')}-{suffix}.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc.update(changes)
+    path.write_text(json.dumps(doc), encoding="utf-8")
+
+
+def test_unreadable_fail_receipt_blocks_reuse_of_pass(tmp_path: Path) -> None:
+    # finding_codes が整数の FAIL は構造が壊れているので読み飛ばすが、同じ fingerprint の PASS を
+    # 再利用する根拠にはしない (以前の版は status の矛盾として escalate していた)
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    evidence_dir = tmp_path / "evidence"
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    _write_receipt(evidence_dir, tmp_path, first, "machine:a", suffix="pass")
+    _write_receipt(evidence_dir, tmp_path, first, "machine:a", status="FAIL", suffix="fail")
+    _mangle(evidence_dir, "machine:a", "fail", finding_codes=[1])
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    assert _actions(plan)["machine:a"] == "escalate"
+    assert _reasons(plan)["machine:a"] == "contradictory-current-evidence"
+
+
+def test_unreadable_pass_receipt_does_not_block_reuse(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    evidence_dir = tmp_path / "evidence"
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    _write_receipt(evidence_dir, tmp_path, first, "machine:a", suffix="pass")
+    _write_receipt(evidence_dir, tmp_path, first, "machine:a", suffix="broken")
+    _mangle(evidence_dir, "machine:a", "broken", finding_codes=[1])
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    assert _actions(plan)["machine:a"] == "reuse"
+
+
+def test_symlink_input_fingerprint_follows_target_content(tmp_path: Path) -> None:
+    # リンク先の文字列だけを hash すると、リンク先を書き換えても fingerprint が変わらず古い PASS を再利用する
+    target = tmp_path / "real.txt"
+    target.write_text("v1", encoding="utf-8")
+    (tmp_path / "link.txt").symlink_to("real.txt")
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "inner.txt").symlink_to("../real.txt")
+    (tree / "up").symlink_to("..")  # 祖先を指すリンクでも止まる
+    before = (PLANNER.snapshot_path(tmp_path, "link.txt")["sha256"],
+              PLANNER.snapshot_path(tmp_path, "tree")["sha256"])
+    target.write_text("v2", encoding="utf-8")
+    after = (PLANNER.snapshot_path(tmp_path, "link.txt")["sha256"],
+             PLANNER.snapshot_path(tmp_path, "tree")["sha256"])
+    assert before[0] != after[0] and before[1] != after[1]
+    (tmp_path / "dangling").symlink_to("nowhere")
+    assert PLANNER.snapshot_path(tmp_path, "dangling")["missing"] is False
+
+
+# --- 再レビュー B の [低] 指摘: 読めないディレクトリ・範囲外の数・--out の書き込み ---
+
+
+def _locked_dir(path: Path) -> Path:
+    locked = path / "locked"
+    locked.mkdir(parents=True)
+    (locked / "secret.txt").write_text("v1", encoding="utf-8")
+    locked.chmod(0)
+    return locked
+
+
+def test_unreadable_subdirectory_fails_closed_instead_of_being_skipped(tmp_path: Path) -> None:
+    import os
+
+    import pytest
+
+    if os.geteuid() == 0:
+        pytest.skip("root は chmod 000 のディレクトリも読める")
+    (tmp_path / "tree").mkdir()
+    external = tmp_path / "external"
+    external.mkdir()
+    (tmp_path / "link").symlink_to(external)
+    locks = [_locked_dir(tmp_path / "tree"), _locked_dir(external)]
+    try:
+        for raw in ("tree", "link"):
+            with pytest.raises(PLANNER.ContractError, match="cannot read a directory"):
+                PLANNER.snapshot_path(tmp_path, raw)
+    finally:
+        for locked in locks:
+            locked.chmod(0o755)
+
+
+def test_out_of_range_float_is_rejected_where_it_is_read(tmp_path: Path, capsys) -> None:
+    contract = tmp_path / "contract.json"
+    for raw in (json.dumps(_one_obligation(parameters={"x": "SLOT"})).replace('"SLOT"', "1e999"),
+                json.dumps(_one_obligation(checker={"id": "fixture", "argv": ["true"], "t": "SLOT"}))
+                .replace('"SLOT"', "-1e999")):
+        contract.write_text(raw, encoding="utf-8")
+        rc = PLANNER.main(["--contract", str(contract), "--evidence-dir", str(tmp_path / "e"),
+                           "--repo-root", str(tmp_path), "--stage", "release"])
+        err = capsys.readouterr().err
+        assert rc == 2 and "non-finite number" in err and "1e999" in err
+
+
+def test_out_is_replaced_atomically_without_leftovers(tmp_path: Path, capsys, monkeypatch) -> None:
+    contract = tmp_path / "contract.json"
+    contract.write_text(json.dumps(_one_obligation()), encoding="utf-8")
+    out = tmp_path / "out" / "plan.json"
+    out.parent.mkdir()
+    out.write_text("previous", encoding="utf-8")
+    argv = ["--contract", str(contract), "--evidence-dir", str(tmp_path / "e"),
+            "--repo-root", str(tmp_path), "--stage", "release", "--out", str(out)]
+
+    def fail_replace(src, dst):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(PLANNER.os, "replace", fail_replace)
+    assert PLANNER.main(argv) == 2
+    assert out.read_text(encoding="utf-8") == "previous"
+    assert sorted(p.name for p in out.parent.iterdir()) == ["plan.json"]
+    monkeypatch.undo()
+    assert PLANNER.main(argv) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["subject"] == "types"
+    assert sorted(p.name for p in out.parent.iterdir()) == ["plan.json"]
+    capsys.readouterr()

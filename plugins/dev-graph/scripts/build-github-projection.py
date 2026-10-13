@@ -5,7 +5,7 @@
 # inputs: ["argv: --repo-root PATH [--config PATH] [--graph PATH] [--report PATH] [--retry-from REPORT] [--dry-run]"]
 # outputs: ["stdout: JSON publication report with linkage proposals and pending_retry", "file: optional --report copy"]
 # requires-python = ">=3.10"
-# dependencies: [_common.py, gh-bridge.py]
+# dependencies: [_common.py, gh-bridge.py, bd-bridge.py]
 # contexts: [A, B, C, E]
 # network: true
 # write-scope: gh mutations through gh-bridge and the explicitly selected report; never the dev graph
@@ -29,6 +29,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, atomic_json, contained, dump, load_json, run, utc_now
 
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
@@ -36,6 +40,11 @@ _SPEC = importlib.util.spec_from_file_location("dev_graph_gh_bridge", BRIDGE)
 assert _SPEC and _SPEC.loader
 GH = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(GH)
+# The promotion gate is bd-bridge's, so the GitHub and Beads publications cannot disagree on a node.
+_BD_SPEC = importlib.util.spec_from_file_location("dev_graph_bd_bridge", BRIDGE.parent / "bd-bridge.py")
+assert _BD_SPEC and _BD_SPEC.loader
+BD = importlib.util.module_from_spec(_BD_SPEC)
+_BD_SPEC.loader.exec_module(BD)
 
 MARKER = re.compile(r"<!-- dev-graph:(\S+) -->")
 PUBLISHING = {"issue", "issue_and_projects"}
@@ -51,7 +60,7 @@ class BridgeFailure(Exception):
 
 
 def bridge(op: str, **fields: Any) -> Any:
-    argv = [sys.executable, str(BRIDGE), "--op", op]
+    argv = [sys.executable, "-B", str(BRIDGE), "--op", op]
     for key, value in fields.items():
         if value is not None:
             argv += [f"--{key.replace('_', '-')}", str(value)]
@@ -80,10 +89,8 @@ def plan(nodes: list[dict[str, Any]], github: dict[str, Any]) -> tuple[list[dict
                                 "is a publication authority conflict")
         if binding != "github":
             continue
-        gate = (node.get("confirmation_status"), node.get("evaluation_status"),
-                (node.get("implementation_readiness") or {}).get("status"))
-        if gate != ("confirmed", "pass", "complete"):
-            skipped.append({"graph_node_id": node_id, "reason": "not confirmed/pass/readiness complete"})
+        if not BD.is_promoted(node):
+            skipped.append({"graph_node_id": node_id, "reason": BD.NOT_PROMOTED})
             continue
         aliases: list[str] = []
         if mode == "issue_and_projects":

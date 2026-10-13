@@ -1,0 +1,325 @@
+{
+  "version": 1,
+  "phase": "implementation-iteration-1",
+  "owner": "system_analyst",
+  "status": "implementation_ready_for_independent_review",
+  "findings_resolution": [
+    {
+      "paradigm_id": 19,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "plugin-composition.yaml"
+      ]
+    },
+    {
+      "paradigm_id": 20,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "skills/run-ubm-knowledge-sync/SKILL.md",
+        "skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+        "tests/test_detect_knowledge_updates.py"
+      ]
+    },
+    {
+      "paradigm_id": 21,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "agents/info-collector.md",
+        "skills/run-ubm-goal-setting/SKILL.md",
+        "README.md"
+      ]
+    },
+    {
+      "paradigm_id": 22,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "skills/run-ubm-goal-setting/references/validation-gates.md",
+        "agents/output-formatter.md",
+        "skills/run-ubm-goal-setting/references/data-contract.md"
+      ]
+    },
+    {
+      "paradigm_id": 23,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "references/agent-root-contract.md",
+        "agents/info-collector.md",
+        "agents/output-formatter.md"
+      ]
+    },
+    {
+      "paradigm_id": 24,
+      "issue_count": 2,
+      "status": "implemented",
+      "files": [
+        "skills/run-ubm-goal-setting/references/validation-gates.md",
+        "agents/info-collector.md",
+        "agents/output-formatter.md"
+      ]
+    },
+    {
+      "paradigm_id": 25,
+      "issue_count": 2,
+      "status": "implemented",
+      "files": [
+        "EVALS.json",
+        "references/package-contract.json",
+        "README.md",
+        "plugin-composition.yaml"
+      ]
+    },
+    {
+      "paradigm_id": 27,
+      "issue_count": 2,
+      "status": "implemented",
+      "files": [
+        "EVALS.json",
+        "skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py"
+      ]
+    },
+    {
+      "paradigm_id": 28,
+      "issue_count": 2,
+      "status": "implemented",
+      "files": [
+        "skills/run-ubm-youtube-ingest/prompts/R1-source-mode.md",
+        "skills/run-ubm-youtube-ingest/prompts/R2-fetch-normalize.md",
+        "skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md",
+        "skills/run-ubm-youtube-ingest/prompts/R4-sync-reconcile.md",
+        "agents/youtube-transcript-normalizer.md",
+        "agents/knowledge-extractor.md",
+        "agents/knowledge-relation-extractor.md",
+        "RUNBOOK.md"
+      ]
+    },
+    {
+      "paradigm_id": 29,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "references/goal-seek-anchor-contract.md",
+        "skills/run-ubm-goal-setting/SKILL.md",
+        "skills/run-ubm-knowledge-sync/SKILL.md",
+        "skills/run-ubm-youtube-ingest/SKILL.md"
+      ]
+    },
+    {
+      "paradigm_id": 30,
+      "issue_count": 1,
+      "status": "implemented",
+      "files": [
+        "README.md",
+        "EVALS.json",
+        "plugin-composition.yaml"
+      ]
+    }
+  ],
+  "proposal_mapping": [
+    {
+      "proposal": 10,
+      "status": "implemented_with_logical_agent",
+      "changes": "共通anchor正本、goal/knowledge/youtubeの実行配線、logical担当journal/challenge/consultの正本引用。共有lintもlocal正本をroot境界・内容・validatorと両引数で検査し空参照逃げを塞いだ。"
+    },
+    {
+      "proposal": 11,
+      "status": "implemented",
+      "changes": "EVALS.plugin version0.7.0。journal llm_eval保存前下書き＋保存後。journal→composer/検査/command辺追加。composition/EVALS/package/READMEはprivate falseへ整合。カテゴリファイル数をrouter正本化。"
+    },
+    {
+      "proposal": 12,
+      "status": "implemented_shared",
+      "changes": "logicalが見出し参照検査を拡張。systemはREADMEとgoal R4の引用名を実見出しへ修正。output-formatterの絶対基点参照はmetaへ引継ぎ。"
+    },
+    {
+      "proposal": 13,
+      "status": "implemented_and_historical_item_resolved",
+      "items": [
+        {
+          "item": "旧env/input roots",
+          "status": "implemented",
+          "evidence": "agent-root-contract.mdと必須入力、担当agentsの旧env排除、goal refs/assets/knowledge-sources正規化。goal-reviewer/coordinatorはmetaへ同じ正本で整合依頼。"
+        },
+        {
+          "item": "vault未設定時の全許可",
+          "status": "implemented",
+          "evidence": "goal skillとagent-root契約で空値を外部パスへ連結せず、vault Task/保存停止・同梱knowledge対話のみへ縮退。"
+        },
+        {
+          "item": "MD-12 / --confirmed",
+          "status": "not_applicable_historical_proposal",
+          "evidence": "現行plugin/tests/plans全rgで該当契約もflagも不在、prior-proposals内のみ。存在しないflagを足して形式検査に出所保証を仮装しない。goal出力の形式はvalidator、発話由来の確定は親のPhase3確認とlive-trialが責務。rootも現物不在を独立確認しdecisionを了承。"
+        },
+        {
+          "item": "精神論語共通化の回帰",
+          "status": "implemented",
+          "evidence": "references/action-language-policy.json。goalは旧5完全句、challengeは既存語幹と追加2語。なるべく/できるだけがgoalへ新規FAILとして混ざらない回帰テスト。破損/欠落/非配列のJSONはexit2を負例で保証。"
+        },
+        {
+          "item": "EXCLUDED_SUBDIRS追加漏れ",
+          "status": "implemented",
+          "evidence": "保存契約からユーザー記録rootを拾い、detector除外へ到達するチェック追加。Dailyは検知sources外。"
+        },
+        {
+          "item": "YouTubeコメント/notice",
+          "status": "implemented",
+          "evidence": "provider/oneshotのcomment・docstringを日本語化（API/metadataキー保持）。noticeはnormalizer/schema/oneshot同文へ同期。"
+        }
+      ]
+    },
+    {
+      "proposal": 14,
+      "status": "implemented_shared",
+      "changes": "logicalがconsult enum/handoff/R1を更新、systemはREADME/RUNBOOKへの案内を整合。"
+    },
+    {
+      "proposal": 15,
+      "status": "implemented",
+      "changes": "neutral validation-gates.mdへ正本移動、agent/SKILL/data-contract重複を参照化。作成中draftとpeerの由来/対象期間/保存前後置換/rc別停止条件を固定。"
+    },
+    {
+      "proposal": 16,
+      "status": "implemented",
+      "changes": "goal Phase1-2/info-collector Step3.9に挑戦宣言の最新1件を読み取り専用・出所付き文脈として収集。未確認の目標化や北原knowledge再混入を禁止。READMEの既存全体ループ説明を具体経路へ接続。"
+    },
+    {
+      "proposal": 17,
+      "status": "semantic_edits_finished_meta_skeleton_owner",
+      "changes": "5agentsの意味契約補修後metaへ引継ぎ。全9agent骨格/CI対象化はmetaの所有。"
+    },
+    {
+      "proposal": 18,
+      "status": "implemented_shared",
+      "changes": "systemの英日混在Taskinput文章を日本語化。logicalがruntime simplification文章照合を正本パスと構造に変更。"
+    },
+    {
+      "proposal": 19,
+      "status": "implemented_shared",
+      "changes": "logicalが誘導非永続既定/希望時同意、systemがREADME/RUNBOOKへその振る舞いを同期。"
+    },
+    {
+      "proposal": 20,
+      "status": "implemented",
+      "changes": "R1source_out→R2dest_root、metadata/transcript対応、R3target_files/mode/source_root/plugin_root、relationknowledge_dir/plugin_root、R4source_outを明示。dryrun書き手非起動。"
+    },
+    {
+      "proposal": 22,
+      "status": "implemented_shared",
+      "changes": "sinceのstrict＞追加再処理をtruthful doc/test化、EVALS/composition/challenge2節/許可scopeSSOT整合、固定JSON数除去。journal/consult/challenge個別内容はlogicalが担当。"
+    },
+    {
+      "proposal": 23,
+      "status": "implemented_shared",
+      "changes": "goalゲートの3peerパス/draft由来を解決。未接続detectorに除外0件追加。YouTube output parent rootを明示。journal/consult/challengeのinputプロヴェナンスはlogicalが担当。"
+    },
+    {
+      "proposal": 24,
+      "status": "implemented_shared",
+      "changes": "goal data-contract重複ゲートをneutral正本へ統合、anchor/root/語彙の共通正本化。journal/consult/challenge固有重複はlogicalが担当。"
+    }
+  ],
+  "additional_fixes": [
+    "RUNBOOKのsource_outでYouTubeディレクトリ二重付加を解消",
+    "source_out未指定のregistry.parent既定を実動作テスト",
+    "detector --since実在日付の入力検証",
+    "共有anchor正本の内容欠損・範囲外参照・実行なしをlintでFAIL"
+  ],
+  "validation": [
+    {
+      "command": "pytest detector/goal-output/challenge-output/oneshot",
+      "result": "218 passed (その後comment/docstringだけの日本語化)"
+    },
+    {
+      "command": "pytest common lint-goal-seek and task-graph + bad action-policy inputs",
+      "result": "90 passed"
+    },
+    {
+      "command": "pytest heading/runtime-simplification/consult-contract",
+      "result": "42 passed"
+    },
+    {
+      "command": "pytest goal-linkage/cross-level/detector/oneshot/knowledge-count",
+      "result": "107 passed before final additional tests"
+    },
+    {
+      "command": "lint-plugin-composition",
+      "result": "PASS (pre-generation output WARN5)"
+    },
+    {
+      "command": "lint-script-frontmatter ubm skills",
+      "result": "PASS checked16 pending0"
+    },
+    {
+      "command": "lint-goal-seek ubm skills",
+      "result": "PASS;6 run-ubm canonical token不足は解消、共有feedback2WARNとconsultheading1WARNをroot/logicalへ報告"
+    }
+  ],
+  "decisions": {
+    "distribution": "private distributable:false をcomposition/intentの正本とする。Claude公開catalogの削除はroot。Codexローカルrepoカタログのdistributable:trueは既存privatepluginのplatform contractとしてroot判断で維持。",
+    "since": "互換性を保ち追加再処理の既存挙動を文書の正本とする。日付範囲フィルタへ変更しない。",
+    "component_version": "EVALSはplugin版、skill/script版は独立。",
+    "MD12": "現行契約/flag不在の旧提案。形式検査とユーザー発話確認の責務を混同しない。"
+  },
+  "residual_implementation_items": [],
+  "prohibited_actions_executed": {
+    "issues": false,
+    "git": false,
+    "release": false,
+    "external_data_ingest": false
+  },
+  "owned_target_sha256": {
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md": "184350afa2c39daa36ef53cbb719350eeda13f923c8937fc148ac546566cac0f",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/workflow-manifest.json": "b03dd612fbfff0fc59d0bd7a10f3b5d543ae3673ede2d4c7c4c1d70d42feb1d7",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md": "20a5847dac18cba3b56c2a393b904a5f168ae9faefbb5cc193a3cae66b6ccfb5",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-methods-toolkit.md": "4a5dc1304a4d0915af0f5ca5e041729df9a0817baee537193084121626e025ff",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md": "f611c672d11ef833d89195b07f33d35598513e54e5fd4a25f68e99c7236cfbec",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md": "2fa975c5862f4edaf216957bbc29b42b9add3e7e4853d261a670ab39aa28a3b7",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md": "66bd2064fd6fba7985358eaade0c9cc5cb1b7d3a2c6c46131ec58695600ba557",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml": "979f8366b823d232d6df4fa6046d2aecbd3434babab5b9630cfbc2a20c385fc3",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md": "4d390c039ca967d2000cd0ca72b5289b267bcb7994ba701a970e73efe4e04100",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md": "ac3c456f4a6f0d4c1c86d657758739318cafbe16ed691997f3ee4f953fb52db7",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-process.md": "66e1be88c7b4439e7ab6a9b01cd8cb8691c1ca6d3b7d1e9666d333141eb68735",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py": "653b8d82f9c38278d4fab9c467f212c0f50b2f26081d94cd6355a3ed781149d2",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py": "4d7956a1b2bb642698e3428f2f7fdbd73fe54c940fcd869b4621ecb8d9de5020",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py": "7a877ca3dd5acf5c9f9b1101c1c31e40faf5fcc6afe78dd661e6626de96f112d",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md": "303e53a749b6b97d71216bc3404930bd93ef82bfe4fe9b7b6381b5fd178f5ba0",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md": "14ff84f7806bedb9653a174ad6cb833ac107542d58ee4703ac323f6fa93b887b",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md": "fa527b505c0420a451a3959de39286dee545812d91969d3ebf56fa175c59ec44",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md": "d0ed2e4524e927ffaaa15acca491293b17a36563c93a1a693715dd69564734ae",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md": "6314f8abd47fba8b3575f0ba18a902595b7cf4fd0f66e07bf9e021e3dd753d17",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md": "7438ea359037fe41c9e669eb16d50c7c476ecefda332f539595ed14ecec14e6a",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md": "b76d900180aac3f5a9a1d11557a97751e5ca73e73a2dc8d6d6a31ad939d60b3e",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md": "00a5d55e8e743e090ef6b375fe239fcfa6b8df2f9f4f7baf6bf4d2527a40507e",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/execution-prompts.md": "ea2141e2bedc2757fa0d997ac753c696f2090fe93e5f4553cc04a489ed7fe555",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md": "a3bfc42d421dc0a4d6a1b0c1698dc082b61bb28419051a0f633424ea359988e2",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/workflow-manifest.json": "687ab856b7ec1573573d44170084c7f7379d576bc269127aa6f775d0e9a86112",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-sources.md": "02b082d696b65df1cdee53d2af2ebe144f84a23725cd02fbfdb969cbccf07014",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-design-principles.md": "f894942c993472ae18009f09468bb5696d32169ebbeecde744f6ebcff522d3bc",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py": "56385ddb2089629596eb60ba3bbc2e9c9440fd77633ed7982b5cfba2faf0ba7d",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/validate-knowledge-sync-task-graph.py": "77c3fe63190b312d0ffd9871743aac9722e448bb97d4fb0f06e3cf82f6712891",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/build-capability-graph-knowledge-entry.py": "228c054b8b12c3b9168608a0a3e4e5aee16516068796d8000eecfa72d1600ba6",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/extract-capability-dependency-graph.py": "c6e9bfb50f2bb6ab561e83578738343a029e92f843040e6fc55c688b007ff4b0",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py": "618fe7709d97dbdbc55e2d2aceb148407bec7de13f5a6b82e145c109b3c3a1f1",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/build-self-reflection-entry.py": "67a0f62664173d338b0d24189d0f488aa37ead0801d88b35a87e17901ef096a4",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py": "a6401eaac5c6d849227755881309437d0cb73a9dfea5006b00ea33bb8548174e",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md": "d874cf915ca550a16cff1a33cdcce59ac2a503eb178c115c3d13420c3bf750e9",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/SKILL.md": "9e6f436a8e8d31cd3b79d543a817c8ee6441d3174ebae709ff4b39ce67322747",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/workflow-manifest.json": "0eafe3269f073100c431f36fed0a5e904aba29637c629a677f9fc34059f737a2",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/sync-report-format.md": "a2890fdfc3e6de67676130dec7ed7e0ded480089360fbf9c0c877d19af639757",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/normalized-source-schema.md": "4534f3d20d43fc52d8253de31eb5726ebca8dbb3cf53e96a7949ae65cd3acd99",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md": "0c24e222a1b7105a0601f603f39c49276631ee716f84704120103fe29afc4545",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/resource-map.yaml": "952ea6e079ef716850d9c03b2e48ab1673b710aff8108b489f44a5ad7055756d",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/provider-adapter-contract.md": "794e90f3c5ec6d2dc157af3330e75dd2287a2eae60b29ed36663229cca304ba2",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py": "00cdd34bbac95b38d9089cd71e4ad380e4c396885189d2d351e5b93626f0d39b",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py": "96db4c574c3d44969544b8302f3ca8cbff8dc5ea7c749f8a5789a891618afe30",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/youtube_provider.py": "034f9d28ba305c2162dd9eb93f24a9cac787446473d39d97cbaf0b55d584248c",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R1-source-mode.md": "b08d363e71bdb202f1c88ad921d774d47161a36daf8805acfe8b1caf7124c604",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md": "db6e583c9647d5b9e7d89ea4241dacb392c9cadf1db234a3f753656305caf64e",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R2-fetch-normalize.md": "d89aeb65db2828b0148172e7edb07446c4bfb269a2bc6a70dcf5e8ee4106eb8d",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R4-sync-reconcile.md": "609c7f1350c7dc00bd15289d2659a6ab6188e2ad8a3555eac4f51ad701138c1b"
+  }
+}

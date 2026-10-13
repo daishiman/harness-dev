@@ -11,7 +11,7 @@
 - 対象: `plugins/*/agents/<name>.md`（Task tool / orchestrator が起動する自律実行 SubAgent）。
 - 非対象: `plugins/*/skills/*/prompts/*.md`（frontmatter を持たない**純粋7層** Markdown。正本は `seven-layer-format.md`）。
 - 先行実装: `plugins/plugin-dev-planner/agents/*.md`（同ディレクトリの全 agent が既に本形式）。本契約はその形式を明文化した正本。
-- 強制状況: 対象宣言は全 plugin の agents/*.md だが、機械強制（`lint-agent-prompt-content.py` の CI 走査）は当面 harness-creator のみ（他 plugin は opt-in 展開予定）。
+- 強制状況: 対象宣言は全 plugin の agents/*.md だが、機械強制（`lint-agent-prompt-content.py` の CI 走査）は harness-creator と ubm-goal-setting の agents/*.md を対象とする。ubm-goal-setting は `--plugins-dir plugins/ubm-goal-setting --mode agent` で9本を明示走査する。他 plugin は opt-in 展開予定。
 
 ## 純粋7層形式との相違（差分の正本）
 
@@ -19,7 +19,7 @@
 |---|---|---|
 | frontmatter | 持たない（`# Layer N:` から本文開始） | **必須**。plugin agent YAML（下記「frontmatter 契約」） |
 | 本文の Layer 構造 | `## Layer 1:`〜`## Layer 7:` 全7層 | 同一（frontmatter 直後から `## Layer 1:`〜`## Layer 7:`） |
-| Layer 5 サブ構造 | `### 5.1 担当 agent`〜`### 5.4 実行方式`（l5-contract v2.0.0） | **同一**（差異なし。SubAgent 固有の別構造は設けない） |
+| Layer 5 サブ構造 | `### 5.1 担当エージェント`〜`### 5.4 実行方式`（l5-contract v2.0.0） | **同一**（差異なし。SubAgent 固有の別構造は設けない） |
 | 責務数 | 1 prompt = 1 責務 = 1 agent | 同一（1 agent = 1 責務） |
 | 機械検証 | `verify-completeness.py` を本文へ直接適用 | **同一**。`verify-completeness.py` は frontmatter を無視し `# Layer N:` マーカーで本文を分割するため、frontmatter 付きでもそのまま適用可 |
 | authoring 正本 | prompts/*.md 自身が SSOT | 本文の authoring 元は owner skill の `prompts/<R-id>.md`。frontmatter `source:` にその相対パスを記録し provenance を残す |
@@ -63,7 +63,7 @@ frontmatter 終端（`---`）の直後から、以下の 7 層を Markdown 見�
 
 ### Layer 5 サブ構造（`seven-layer-format.md`「Layer 5 契約」に従属）
 
-- `### 5.1 担当 agent` — 担当 agent 名・context-fork 要否の宣言。
+- `### 5.1 担当エージェント` — 担当エージェント 名・context-fork 要否の宣言。
 - `### 5.2 ゴール定義` — `目的` / `背景` / `達成ゴール`（到達すべき**状態**の完了形。手順ではない）。
 - `### 5.3 完了チェックリスト (ゴール到達の停止条件)` — 第三者が YES/NO 判定可能な項目のみ。
 - `### 5.4 実行方式` — 固定手順を持たないゴールシークループの宣言（上限は Layer 4 の最大反復回数を参照）。

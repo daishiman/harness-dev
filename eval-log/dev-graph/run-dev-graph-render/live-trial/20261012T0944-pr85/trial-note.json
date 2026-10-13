@@ -1,0 +1,38 @@
+{
+  "label": "render3",
+  "retry_of": "render",
+  "evaluator_agent_id": "a51767b3d62e258a6",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render3/ws/plugins/dev-graph/skills/run-dev-graph-render",
+  "closure_sha_tested_copy": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+  "closure_sha_wtpy_at_verdict": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "SKILL.md (ws/plugins/dev-graph/skills/run-dev-graph-render/SKILL.md) の artifact_delivery の state machine には semantic_evaluator_started という状態があるが、どの agent や prompt を semantic evaluator として起動するのかが本文に書かれていない。再現手順: SKILL.md を通読しても evaluator の名前や起動手順が見つからない。今回の被験は R3 の自己確認と main の Read で済ませており、生成と評価を別の context に分ける保証が skill 側にない。",
+    "render-graph-html.py (ws/plugins/dev-graph/scripts/render-graph-html.py L106–108 付近) は stdout の receipt に \"out\": str(out) として絶対 path を出す。これは R3-render.md Layer 3 の「環境固有の絶対 path を成果物へ保存しない」と食い違う。再現手順: render-graph-html.py を実行すると、receipt の out に /private/tmp/... の絶対 path が入る。R3 が保存した evidence/render-receipt-1.json にもこの path が残っている。",
+    "render-graph-html.py は edge をすべて同じ path (M 360 … C … 640) で描き、feature 間の edge と feature 内の edge を区別しない。parent_feature ごとの group 枠もなく、node は id 順に 1 列に並ぶ。SKILL.md 手順 4 の「混同せず表示」を renderer が実装していない (R2 の finding、agent-a385cd55bd5c9d024.jsonl)。再現手順: feature 間に depends_on を持つ graph を render すると、feature 内の edge と同じ見た目になる。今回の fixture は feature 間の edge が 0 件なので、合否には影響していない。",
+    "plugin の scripts (C24 resolve-repo-context.py、C11 validate-graph-schema.py など) は python3 -I で起動すると _common を import できず、ModuleNotFoundError になる。-I なしでしか動かない (R1 の transcript、agent-a36f294233d2d684c.jsonl)。再現手順: PYTHONDONTWRITEBYTECODE=1 python3 -I ws/plugins/dev-graph/scripts/resolve-repo-context.py --help を実行する。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 4,
+    "occurrences": 8,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:06+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+      "transcript_sha256": "e0f04189c78e6f490967271b8b4a5c6781f2915910269c00e80f12e80ebc02d9"
+    },
+    "after": {
+      "skill_dir_tree_sha": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+      "transcript_sha256": "8d68a2cb727e1ae23b224da93be77caf95e145883d7f4699b7a7f6f4ab86d397"
+    },
+    "backup": "audit/reverdict/run-dev-graph-render/20261012T0944-pr85"
+  }
+}

@@ -22,6 +22,10 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, atomic_json, dump, load_json, run, utc_now
 
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
@@ -76,7 +80,7 @@ def c12_lifecycle_facts(root: Path, bridge: Path, repo: str, number: int) -> dic
             raise ContractError("DEV_GRAPH_GH_FIXTURE must be an object")
         return value
     receipt = _invoke_json(
-        [sys.executable, str(bridge), "--op", "lifecycle-facts", "--repo", repo, "--number", str(number)],
+        [sys.executable, "-B", str(bridge), "--op", "lifecycle-facts", "--repo", repo, "--number", str(number)],
         root,
         "C12 lifecycle-facts",
     )
@@ -88,7 +92,7 @@ def c12_lifecycle_facts(root: Path, bridge: Path, repo: str, number: int) -> dic
 def c24_context(root: Path, resolver: Path) -> dict[str, Any]:
     """Resolve repository/worktree identity through the declared C24 boundary."""
     receipt = _invoke_json(
-        [sys.executable, str(resolver), "--repo-root", str(root), "--mode", "read"],
+        [sys.executable, "-B", str(resolver), "--repo-root", str(root), "--mode", "read"],
         root,
         "C24 repository context",
     )
@@ -425,7 +429,7 @@ def _writer_applied(path: str | Path | None, request: dict[str, Any], graph_path
 def _consume_writer(root: Path, consumer: Path, request_path: Path, receipt_path: Path) -> None:
     if not consumer.is_file():
         raise ContractError(f"C02 writer consumer is missing: {consumer}")
-    argv = ([sys.executable, str(consumer)] if consumer.suffix == ".py" else [str(consumer)]) + [
+    argv = ([sys.executable, "-B", str(consumer)] if consumer.suffix == ".py" else [str(consumer)]) + [
         "--operation", "apply-lifecycle-request", "--request", str(request_path), "--receipt", str(receipt_path)
     ]
     _invoke_json(argv, root, "C02 writer consumer")
@@ -434,7 +438,7 @@ def _consume_writer(root: Path, consumer: Path, request_path: Path, receipt_path
 
 
 def _invoke_bd_close(root: Path, bridge: Path, issue_id: str, workspace_id: str | None, event_key: str) -> dict[str, Any]:
-    argv = [sys.executable, str(bridge), "--repo-root", str(root), "--op", "close", "--bd-issue-id", issue_id, "--reason", f"dev-graph completion {event_key}"]
+    argv = [sys.executable, "-B", str(bridge), "--repo-root", str(root), "--op", "close", "--bd-issue-id", issue_id, "--reason", f"dev-graph completion {event_key}"]
     if workspace_id:
         argv += ["--expected-workspace-id", workspace_id]
     return _invoke_json(argv, root, "C28 close")
@@ -442,7 +446,7 @@ def _invoke_bd_close(root: Path, bridge: Path, issue_id: str, workspace_id: str 
 
 def _invoke_system_release(root: Path, manager: Path, node_id: str, event_key: str) -> dict[str, Any]:
     receipt = _invoke_json(
-        [sys.executable, str(manager), "--repo-root", str(root), "--op", "system-release", "--graph-node-id", node_id, "--completion-event-key", event_key],
+        [sys.executable, "-B", str(manager), "--repo-root", str(root), "--op", "system-release", "--graph-node-id", node_id, "--completion-event-key", event_key],
         root,
         "C27 system-release",
     )

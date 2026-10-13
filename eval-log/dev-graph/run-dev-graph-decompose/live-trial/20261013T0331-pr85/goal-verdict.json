@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill を起動した。transcript L39 で Skill dev-graph:run-dev-graph-decompose を起動し、L94 で C02 を使うために Skill dev-graph:run-dev-graph-node を起動した。自作の driver で成果物を作った形跡は無い。",
+    "責務 prompt を出力の前に読んだ。L54 で decompose の prompts (R1・R2・R2b・R3・R4・R6) を読み、L105 で node skill の R0 と R2-preview を読んだ。最初の成果物である c02-input.json を作ったのは L123 で、どちらもそれより前にある。",
+    "C24 と C11 を確かめた。L63/L64 で resolve-repo-context.py は rc=0 だった。L68/L69 では validate-graph-schema.py に --graph を付け忘れて rc=2 になったが、L76/L77 で --graph を付けて回し、valid・15 node になった。L77 の自作の python -c は KeyError で落ちたが、L81 で graph_node_id に直して確かめ直した。",
+    "C02 は単一 writer を通した。L123 で build-graph-node.py add --dry-run を通して呼び、L129 の preview は write 0 で、planned_nodes の 2 件 (feature-render-diff と feature-render-diff-summary) は draft/pending だった。feature を通常の add として直に登録してはいない。結果は fx/.dev-graph/cache/decompose-input/c02-preview.json にある。",
+    "macro の DAG は正しい。fx/.dev-graph/cache/decompose-input/decompose-dry-run-report.json では、既存の ARCH-LT-001 を再利用し、新しい feature は feature-render-diff (LT-FEATURE-001 に依存) と feature-render-diff-summary (feature-render-diff に依存) の 2 件で、cycles は 0。task 粒度 (P01..P13) の node は混ざっていない。",
+    "C28 の昇格 gate を通した。L133/L134 で、bd-bridge.py --op create --dry-run --planned-preview --artifact-kind feature を DEV_GRAPH_BD=fx/tools/fake-bd.py を付けて呼び、2 node とも promotion_gate で blocked (rc=1、write 0) になった。draft の node の起票の対象は 0 件。結果は c28-create-feature-render-diff.json と c28-create-feature-render-diff-summary.json にある。",
+    "cross_binding_dependency の規則を SKILL.md の 3 のとおりに当てた。L148 で書いた report の publication_preview には、2 node とも blocked の理由に promotion_gate と cross_binding_dependency が書かれ、origin_edge は feature-render-diff[beads] → LT-FEATURE-001[none] で、鎖の先の feature-render-diff-summary にも当てている。dep_add は not called、after_create_edge は false、issue_creation_targets は []。",
+    "write は 0 件で、原 graph の digest は不変。L138/L139 と L204/L205 で graph.json の sha256 は 2ed57eab… のまま、revision は 3 だった。評価の時点でも fx/.dev-graph/state/graph.json の sha256 は 2ed57eab5df2… で、fixture-provenance.json の node_state_check と一致する。.dev-graph/state/receipts は作られていない。features/ にあるのは LT-FEATURE-001.md だけ。",
+    "Beads への書込みは 0 件。fx/fake-bd-calls.jsonl が無いので、fake-bd の呼出しは 0 回で、create や dep add も 0 回 (gate の手前で止まったので preflight にも届いていない)。fake-bd.py と README.md の sha256 は fixture-provenance.json の post_seed_commit と同じ (888f763b… と 07918d75…)。fixture の git status では、追跡しているファイルに変更は無く、増えたのは追跡外の .dev-graph/、architecture/、eval-log/、features/、tasks/ だけ。",
+    "必須の auditor を Agent で実際に起動した。L162 で Agent (subagent_type dev-graph:dev-graph-integrity-auditor) を起動し、collect/subagent-transcripts/agent-ae2b19929a3be36e0.jsonl に読取りだけの検査 (digest の再計算と validate-graph-schema) が残っている。L184 で PASS を受け取った。finding は low の binding の混在 1 件だけ。",
+    "artifact_delivery の流れを守った。L153 で成果物を検査し、L159/L161 で提示した。user_choice は task.md の事前指定 (standard) に従い、その後に L162 で semantic evaluator (auditor) を起動した。",
+    "goal-seek の記録がそろっている (L166・L171・L188・L190・L200)。fx/eval-log/run-dev-graph-decompose-progress.json は、macro_dag・no_draft_publication・dry_run_write_zero が achieved で、package_exact13・c02_commit・projection_authority が not_applicable。not_applicable の 3 件は SKILL.md の dry-run の規則に合う。PARTIAL は無く、IN1 は PASS、OUT1-7 は external_pending。intermediate.jsonl は 1 行で、必須の 6 キーがそろっている。",
+    "書込みの境界を守った。collect/guard.jsonl の判定はすべて allow で deny は 0 件 (auditor の Bash 5 件を含む)。書込みは fx と workdir/out の中だけで (L123・L148・L166-L190・L208)、sandbox の解除要求や stub の迂回は無い。",
+    "status.json の PASS (L208、collect/out/status.json) は自己申告なので根拠にしていない。上の tool の結果と fixture の実ファイルで、task.md の合格条件と経路の制約を 1 つずつ確かめた。"
+  ],
+  "skill_defects": [],
+  "evaluator_agent_id": "a080141bfc30338e9"
+}

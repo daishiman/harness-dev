@@ -144,17 +144,16 @@ def test_load_brief_responsibilities_ok(tmp_path):
 
 
 def test_load_brief_responsibilities_missing_file(tmp_path):
-    resp, err_or_kind = MOD.load_brief_responsibilities(tmp_path / "nope.json")
-    assert resp == []
-    assert "brief read error" in err_or_kind
+    # 読めない brief を空の責務として返すと、strict の Tier 2 が黙って PASS になる。
+    with pytest.raises(MOD.BriefError, match="brief read error"):
+        MOD.load_brief_responsibilities(tmp_path / "nope.json")
 
 
 def test_load_brief_responsibilities_invalid_json(tmp_path):
     bp = tmp_path / "bad.json"
     bp.write_text("{ not json", encoding="utf-8")
-    resp, err = MOD.load_brief_responsibilities(bp)
-    assert resp == []
-    assert "brief read error" in err
+    with pytest.raises(MOD.BriefError, match="brief read error"):
+        MOD.load_brief_responsibilities(bp)
 
 
 def test_load_brief_responsibilities_null_list(tmp_path):
@@ -220,6 +219,108 @@ def test_lint_file_read_error(tmp_path):
     findings = MOD.lint_file(missing)
     assert len(findings) == 1
     assert "read error" in findings[0]
+
+
+# --------------------------------------------------------------------------
+# lint_file Tier 1 — 日本語の見出し (2つ目の正規形)
+# --------------------------------------------------------------------------
+
+JA_AGENT = """---
+name: sample-agent
+---
+# Sample Agent
+
+## プロンプトの型
+
+### Round 1
+
+> 「あなたは何を達成したいですか？」
+
+## 自己採点
+
+完全性: 全責務を被覆したか自己採点する。
+"""
+
+JA_AUTO_AGENT = """# Auto Agent
+
+## プロンプトの型
+
+(対話なし: 自動実行 agent) なので発話例は不要。
+
+## 自己採点
+
+一貫性 を確認する。
+"""
+
+
+def test_japanese_headings_match_required_headings_pairwise():
+    assert MOD.REQUIRED_HEADINGS == ("## Prompt Templates", "## Self-Evaluation")
+    assert MOD.REQUIRED_HEADINGS_JA == ("## プロンプトの型", "## 自己採点")
+
+
+def test_lint_file_japanese_headings_pass(tmp_path):
+    p = _write(tmp_path, "ja.md", JA_AGENT)
+    assert MOD.lint_file(p) == []
+
+
+def test_lint_file_japanese_auto_agent_marker_pass(tmp_path):
+    p = _write(tmp_path, "ja-auto.md", JA_AUTO_AGENT)
+    assert MOD.lint_file(p) == []
+
+
+def test_lint_file_mixed_language_headings_fail(tmp_path):
+    body = (
+        "## Prompt Templates\n\n> 「q」\n\n"
+        "## 自己採点\n\n簡潔性 を確認\n"
+    )
+    p = _write(tmp_path, "mixed.md", body)
+    assert any("mixed/duplicated languages" in issue for issue in MOD.lint_file(p))
+
+
+def test_lint_file_japanese_subheadings_do_not_count(tmp_path):
+    # 下位見出しや語の付いた見出しは、日本語の必須見出しとして数えない。
+    body = (
+        "## 5. 本文\n\n### プロンプトの型\n\n> 「q」\n\n"
+        "### 5.5 自己採点\n\n完全性\n\n## 自己採点（補足）\n\n深度\n"
+    )
+    p = _write(tmp_path, "sub.md", body)
+    findings = MOD.lint_file(p)
+    assert findings == [
+        f"{p}: missing required heading '## Prompt Templates'",
+        f"{p}: missing required heading '## Self-Evaluation'",
+    ]
+
+
+def test_lint_file_japanese_sections_are_checked_with_japanese_label(tmp_path):
+    body = (
+        "## プロンプトの型\n\n説明だけで発話例が無い\n\n"
+        "## 自己採点\n\n次元の語が無い\n"
+    )
+    p = _write(tmp_path, "ja-bad.md", body)
+    findings = MOD.lint_file(p)
+    assert findings == [
+        f"{p}: プロンプトの型 section needs either a '> ' quote "
+        "or '### Round' subheading, or marker '(対話なし: 自動実行 agent)'",
+        f"{p}: 自己採点 must reference at least one of 完全性/一貫性/深度/検証可能性/簡潔性",
+    ]
+
+
+def test_lint_file_japanese_prompt_section_feeds_tier2(tmp_path):
+    body = (
+        "## プロンプトの型\n\n<!-- responsibility: R1 -->\n> 「具体」\n\n"
+        "## 自己採点\n\n完全性 を確認\n"
+    )
+    p = _write(tmp_path, "ja-agent.md", body)
+    bp = _brief(tmp_path, [{"id": "R1"}, {"id": "R2"}])
+    findings = MOD.lint_file(p, strict_coverage=True, brief_path=bp)
+    assert any("missing responsibility anchors" in f and "R2" in f for f in findings)
+
+
+def test_cli_japanese_agent_ok_exit0(tmp_path):
+    p = _write(tmp_path, "ja.md", JA_AGENT)
+    proc = _run([str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 0, proc.stderr
+    assert "1 agent file(s) passed" in proc.stdout
 
 
 # --------------------------------------------------------------------------
@@ -489,3 +590,95 @@ def test_cli_agents_dir(tmp_path):
     proc = _run(["--agents-dir", str(d)], cwd=str(tmp_path))
     assert proc.returncode == 0, proc.stderr
     assert "1 agent file(s) passed" in proc.stdout
+
+
+# --------------------------------------------------------------------------
+# 再発防止 (C1 レビュー): brief の誤り・見出しの照合・CLI
+# --------------------------------------------------------------------------
+
+def test_cli_strict_missing_brief_exit2_not_silent_tier1(tmp_path):
+    p = _write(tmp_path, "ok.md", VALID_AGENT)
+    proc = _run(["--strict-coverage", "--brief", str(tmp_path / "nope.json"), str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 2
+    assert "brief read error" in proc.stderr and "OK:" not in proc.stdout
+
+
+@pytest.mark.parametrize("payload", ["[1, 2]", '{"responsibilities": {"R1": {}}}', "{not json"])
+def test_cli_strict_malformed_brief_exit2_without_traceback(tmp_path, payload):
+    p = _write(tmp_path, "ok.md", VALID_AGENT)
+    bp = _write(tmp_path, "brief.json", payload)
+    proc = _run(["--strict-coverage", "--brief", str(bp), str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 2, proc.stdout
+    assert "Traceback" not in proc.stderr
+
+
+def test_load_brief_responsibilities_list_json_raises(tmp_path):
+    bp = _write(tmp_path, "brief.json", "[1, 2]")
+    with pytest.raises(MOD.BriefError):
+        MOD.load_brief_responsibilities(bp)
+
+
+def test_tier2_loads_brief_once(tmp_path, monkeypatch):
+    bp = _brief(tmp_path, [{"id": "R1", "prompt_required": False}])
+    calls = []
+    original = MOD.load_brief_responsibilities
+
+    def counting(path):
+        calls.append(path)
+        return original(path)
+
+    monkeypatch.setattr(MOD, "load_brief_responsibilities", counting)
+    MOD._lint_responsibility_coverage(tmp_path / "a.md", "<!-- responsibility: R1 -->\n", bp)
+    assert len(calls) == 1
+
+
+def test_heading_at_eof_without_newline_is_found():
+    # 最後の行にあって改行で終わらない見出しも見出しとして数える
+    text = "intro\n## Self-Evaluation"
+    assert MOD.has_heading_line(text, "## Self-Evaluation")
+    assert MOD.find_section(text, "## Self-Evaluation") is not None
+
+
+@pytest.mark.parametrize("suffix", [" (R1)", "（R1）", "s"])
+def test_lint_file_heading_must_match_whole_line(tmp_path, suffix):
+    body = VALID_AGENT.replace("## Prompt Templates", "## Prompt Templates" + suffix)
+    p = _write(tmp_path, "suffix.md", body)
+    assert any("missing required heading '## Prompt Templates'" in f for f in MOD.lint_file(p))
+
+
+def test_lint_file_heading_inside_code_fence_does_not_count(tmp_path):
+    body = (
+        "# Agent\n\n```markdown\n## Prompt Templates\n\n> 「例」\n\n## Self-Evaluation\n\n完全性\n```\n"
+    )
+    p = _write(tmp_path, "fence.md", body)
+    findings = MOD.lint_file(p)
+    assert sum("missing required heading" in f for f in findings) == 2
+
+
+def test_cli_help_exit0(tmp_path):
+    proc = _run(["--help"], cwd=str(tmp_path))
+    assert proc.returncode == 0
+    assert "usage:" in proc.stdout
+
+
+def test_cli_unknown_option_exit2(tmp_path):
+    p = _write(tmp_path, "ok.md", VALID_AGENT)
+    proc = _run(["--bogus", str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 2
+
+
+def test_cli_non_utf8_agent_is_violation_not_traceback(tmp_path):
+    p = tmp_path / "bin.md"
+    p.write_bytes(b"## Prompt Templates\n\xff\xfe\n")
+    proc = _run([str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 1
+    assert "read error" in proc.stderr and "Traceback" not in proc.stderr
+
+
+def test_lint_file_japanese_agent_gets_japanese_missing_heading(tmp_path):
+    # 日本語の見出しだけを使う agent には、欠けた見出しも日本語の正規形の名前で報告する
+    p = tmp_path / "ja.md"
+    p.write_text("---\nname: ja\n---\n## プロンプトの型\n> 問い\n### Round 1\n本文\n", encoding="utf-8")
+    findings = MOD.lint_file(p)
+    assert any("missing required heading '## 自己採点'" in f for f in findings), findings
+    assert not any("'## Self-Evaluation'" in f for f in findings)

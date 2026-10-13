@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":80,"notes":"Compiles/runs (48 skills PASS) but two real defects: (1) dead leftover loop lines 107-108 'for tok in findall: pass'; (2) stale path 'creator-kit/skills' in skill_exists and _collect_inbound_refs vs actual 'plugins/harness-creator/skills' (drifts from docstring/error msgs); only works because .claude/skills is deployed in sync, would false-positive Step7-3/7-5 on fresh checkout. except OSError is appropriately scoped, not bare. Non-fatal but genuine quality debt."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 e6396696953196ac3c1fc171dd0a55d0d111b5f35612f3d59009896246a2c3ca をレビュー。実行検証あり）。範囲: 全 431 行と git diff HEAD。確かめたこと: 前回の [中]（frontmatter の値の行末コメントで判定が外れる）は直った。_strip_comment（91-114 行）、_fm_block（77-88 行。--- だけの行で区切り、BOM を読み飛ばす）、_TRUTHY={true, yes, on} が入った。work-j-s3/s7repo の一時 repo で、run-intake-revise の写しの disable-model-invocation を false にすると (4) を指摘して exit 1。`danger: yes # x`、BOM 付きの `effect: \"external-mutation\" # q`、description に `---` を含む frontmatter も指摘した。`disable-model-invocation: true # c` の ref-x は到達不能と指摘した。test は 3.11 と 3.9 で 73 passed。全 plugin に当てると 4 plugin が exit 1（extract-blueprint.md と intake-revise.md の DMI、system-dev-planner と system-spec-harness の pair 欠如）で、どれも artifact 側の不備。python3.9（PyYAML なし）では ubm-goal-setting と dev-graph が CheckerUnavailable で exit 2（文書どおり）、harness-creator は OK 32 skills。外部操作の checker は例外をすべて errors に変える fail-closed。--skills-dir にファイル、引数なし、未知の引数は exit 2、存在しない SKILL.md は exit 1。指摘: [低] (6) は allowed-tools に Skill がある command だけを見る（249-250 行）。plugins/skill-intake/commands/intake-publish.md（Skill(run-notion-intake-publish) を呼び、相手は DMI true）と intake.md（Skill(run-skill-intake)、DMI true）は allowed-tools を持たないので見逃す。repo で同じ不備のうち intake-revise.md だけが検出される。直し方: _SKILL_CALL_RE を allowed-tools によらず当てる。[低] バッククォートで囲んだ run-* はすべて呼び出し扱いになる（224 行）。fixture の「`run-b` は直接呼ばない」で rejects model invocation と誤検出した。DEDUCTION: allowed-tools の無い command の見逃し -4、否定文の誤検出 -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

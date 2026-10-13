@@ -1,0 +1,36 @@
+{
+  "label": "sync7",
+  "retry_of": "20261012T1947-pr85",
+  "evaluator_agent_id": "a2513417a50e09ddf",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sync7/fx/plugins/dev-graph/skills/run-dev-graph-sync",
+  "closure_sha_at_launch": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+  "closure_sha_tested_copy": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+  "closure_sha_wtpy_at_verdict": "edaa2b9116709e90316b3efc147f74fb95d175974285b606301ee3ff97152e8a",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-sync) を、その場で git init した repo に写した (最初の commit は 0790fc5、追跡は 38 ファイル)。元の fixture は変えていない。sync5 と同じ seed から作り直した。",
+    "rekey: 写した repo に合わせて .dev-graph/config.json などの repository_id と worktree_id を付け替え、2 つ目の commit (1832f09) にした (fixture-provenance.json の rekey・rekeyed_files・post_rekey_commit)。graph.json と content は変えていない。",
+    "fake-gh の修正: tools/fake-gh.py を sync5 の 898aa8a と同じ中身にして、3 つ目の commit (fc099fb) にした。Projects の item の field の値の読取りと clearProjectV2ItemFieldValue に答えるようにしたもの (sha256 6f63037f… → 025f9bdd…。fixture-provenance.json の fake_gh_patch)。",
+    "事前の確認: 起動の前に、被験の外で fx を C11 (validate-graph-schema.py) と C24 (resolve-repo-context.py --mode write) にかけ、.dev-graph/config.json を repo-config の schema で検査した。C11 は pass・違反 0、C24 は rc=0、schema の error は 0。前後で fx のファイルの sha256 は変わらなかった (fixture-provenance.json の fixture_check)。",
+    "task.md: sync5 の task.md から、run の dir の名前 (runs/sync5 → runs/sync7、10 か所) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "配置: plugin の写し (fx/plugins/) と隔離の設定 (fx/.claude/settings.local.json) は orchestrator が置き、fx/.git/info/exclude で git から外した。偽 HOME の .claude.json に fx の trust の項目を足した (backup は audit/home-claude-json/before-sync7-trust.json)。隔離の条件は sync5 と同じ (§17 の guard: 外へ送る tool と許可一覧に無い tool を拒否。guard.py f23267a3…、mksettings.py 277ae072…)。plugins/dev-graph は変えていない。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/sync7/tmp。短い symlink /private/tmp/ltpr85/t/sy7 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 edaa2b91… は team-lead の連絡「sync7・schedule6 は開始可」の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。trial の間は 30 秒ごとに wtpy の閉包を測り、起動から終わりまで動かなかった (workdir/closure-watch.log)。",
+    "gate の応答: orchestrator の gatewatch が、被験の出した challenge に対して CONFIRM EXTERNAL MUTATION の 1 行を tmux の send-line で 1 回だけ送った (collect/gate-sent.log、collect/gate-request.json。この 2 つは collect の後に orchestrator が workdir から写した)。",
+    "記録の伏せ字: collect の記録で利用者のメールアドレスを 4 か所、アカウント名を 0 か所伏せた (redact.py)。",
+    "gate の応答と伏せ字のほかは、どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "SKILL.md と、ファイル名の last-synced snapshot（.dev-graph/state/github-sync-snapshot.json）を担う実装が合っていない。SKILL.md の 137〜138 行、194 行、269 行（criteria:OUT7）と prompts/R2-plan.md は、last-synced snapshot を削除や rename を含む canonical な 3-way の base とし、出力を「更新済み snapshot receipt」としている。ところが plugin の script でこのファイルを読み書きするものは 1 本もない。また diff-github-issues.py は、node.updated_at と Issue の updatedAt を比べて新しい側を採る 2-way の判定で、base を持たない。Projects 側の base は graph 内の field_snapshot である。再現の手順: (1) grep -rln sync-snapshot fx/plugins の結果が 0 件になる。(2) この run の 1 回目の sync の後、git -C fx diff HEAD -- .dev-graph/state/github-sync-snapshot.json に差分がない。issues.*.title は Sync import target task と Sync export target task のまま前進しておらず、graph と remote はすでに revision 2 の title に変わっている。今回の OUT1 は収束したので blocker ではない。ただし、Issue の削除や rename を base で判定するという約束と「snapshot を更新する」という約束を果たす経路が実装にない"
+  ]
+}

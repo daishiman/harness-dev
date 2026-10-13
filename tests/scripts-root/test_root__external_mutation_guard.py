@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import shlex
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +34,8 @@ CONTRACT = (
     / "references"
     / "external-mutation-guard-contract.md"
 )
+# pretool が早期許可するのは実在の guard を指す呼び出しだけなので、test も実物のパスで呼ぶ。
+GUARD_CALL = f"python3 {shlex.quote(str(RUNNER))}"
 
 
 def _run(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -281,7 +285,7 @@ def test_pretool_blocks_direct_remote_mutation_outside_central_consumer():
     wrapped = {
         **direct,
         "tool_input": {
-            "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py execute "
+            "command": f"{GUARD_CALL} execute "
             "--project-root /tmp --authorization-receipt receipt.json "
             "--command-json '[\"curl\",\"-X\",\"POST\"]'"
         },
@@ -305,7 +309,7 @@ def test_pretool_blocks_direct_remote_mutation_outside_central_consumer():
     trailing = {
         **direct,
         "tool_input": {
-            "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py execute "
+            "command": f"{GUARD_CALL} execute "
             "--project-root /tmp --authorization-receipt receipt.json "
             "--command-json '[\"true\"]' ; curl -X POST https://example.invalid/items"
         },
@@ -361,6 +365,7 @@ def test_pending_guard_context_blocks_unknown_binary(tmp_path):
 
 def test_pretool_blocks_known_entrypoint_mutation_clis_without_central_execute():
     commands = (
+        'python3 "/installed/ubm/scripts/guard-staged-publication.py" --manifest staged.json --manifest-sha256 abc',
         'python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py" '
         "--auto-approve",
         'python3 "$CLAUDE_PLUGIN_ROOT/scripts/gh-bridge.py" apply --plan sync.json',
@@ -559,9 +564,9 @@ def test_cancel_releases_pending_guard_context(tmp_path):
 
 def test_pretool_allows_the_new_canonical_actions():
     commands = (
-        "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py authorize-intent "
+        f"{GUARD_CALL} authorize-intent "
         "--project-root /tmp --preview-receipt p.json --intent-receipt i.json",
-        "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py cancel "
+        f"{GUARD_CALL} cancel "
         "--project-root /tmp --preview-receipt p.json",
     )
     for command in commands:
@@ -623,4 +628,227 @@ def test_all_projections_pin_the_executable_guard_runtime():
                     "runtime_ref": "#/external_mutation_runtime",
                     "flow": "preview-confirm-authorize-execute-v1",
                 }
-    assert external == 35
+    assert external == 36
+
+
+
+
+def _guard_module(path: pathlib.Path = RUNNER, name: str = "guard_shell_syntax"):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# 形だけを見る test は実在しないパスで書き、_canonical_guard_tokens で判定する。
+# runner の実体の照合は test_canonical_action_resolves_* で固定する。
+CANONICAL_PREFIX = "python3 /guard/build-external-mutation-guard.py"
+CANCEL_TAIL = " cancel --project-root /tmp --preview-receipt r"
+
+
+def _shape(module, command: str) -> str | None:
+    parsed = module._canonical_guard_tokens(command)
+    return parsed[0] if parsed else None
+
+
+def _plugin_copy(root: pathlib.Path, *, hooks_symlink: bool) -> pathlib.Path:
+    """root に guard の plugin の scripts/ と hooks/ を作り、scripts/ の実体を返す。"""
+    (root / "scripts").mkdir(parents=True)
+    (root / "hooks").mkdir()
+    runner = root / "scripts" / RUNNER.name
+    shutil.copy2(RUNNER, runner)
+    if hooks_symlink:
+        (root / "hooks" / RUNNER.name).symlink_to(pathlib.Path("..") / "scripts" / RUNNER.name)
+    else:
+        shutil.copy2(RUNNER, root / "hooks" / RUNNER.name)
+    return runner
+
+
+def test_canonical_action_rejects_substitution_but_keeps_json_literals():
+    module = _guard_module(name="guard_syntax_negative")
+    for expression in ['$(python3 guard-staged-publication.py --manifest plan.json)', '`python3 guard-staged-publication.py --manifest plan.json`', '<(python3 guard-staged-publication.py --manifest plan.json)']:
+        command = f"""{CANONICAL_PREFIX} execute --project-root "{expression}" --authorization-receipt receipt --command-json '["python3","worker.py"]'"""
+        assert _shape(module, command) is None
+    command = f"""{CANONICAL_PREFIX} execute --project-root "$PWD" --authorization-receipt receipt --command-json '["python3","worker.py","literal $(value) and `data`"]'"""
+    assert _shape(module, command) == "execute"
+
+
+def test_canonical_action_rejects_shell_syntax_that_shlex_does_not_model():
+    # shlex は改行を空白として扱い、`|&` `&>` `>|` `;;` などを 1 token にまとめる。
+    # flag/value の数が合えば canonical と誤認され、後続コマンドが早期許可されていた。
+    module = _guard_module()
+    smuggled = (
+        # 改行の後ろの value 枠が別コマンドとして実行される
+        f"{CANONICAL_PREFIX} cancel --project-root\n/tmp/payload.sh --preview-receipt r",
+        f"{CANONICAL_PREFIX} execute --project-root /tmp --authorization-receipt a "
+        "--command-json\n./payload.sh",
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp\r--preview-receipt r",
+        # L74 の一覧に無い演算子・リダイレクト
+        f"{CANONICAL_PREFIX} cancel --project-root |& --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root &> --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root >| --preview-receipt victim",
+        f"{CANONICAL_PREFIX} cancel --project-root ;; --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root <& --preview-receipt r",
+        # glob・ブレース展開・コメント・未クォートのエスケープ・名前以外の展開
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp/* --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp/{{a,b}} --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp --preview-receipt #r",
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp\\\n --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root $1 --preview-receipt r",
+        f'{CANONICAL_PREFIX} cancel --project-root "${{x:-/tmp}}" --preview-receipt r',
+        f"{CANONICAL_PREFIX} cancel --project-root $'/tmp' --preview-receipt r",
+        f'{CANONICAL_PREFIX} cancel --project-root "\\$PWD" --preview-receipt r',
+        f'{CANONICAL_PREFIX} cancel --project-root "/tmp --preview-receipt r',
+        # 未クォートの $NAME は bash では語分割と glob、zsh では空のとき語ごと消え、
+        # flag と value の位置がずれる
+        f"{CANONICAL_PREFIX} cancel --project-root $PWD --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root ${{PWD}} --preview-receipt r",
+        f"{CANONICAL_PREFIX} cancel --project-root /tmp --preview-receipt $RECEIPT",
+    )
+    for command in smuggled:
+        assert _shape(module, command) is None, repr(command)
+
+
+def test_canonical_action_keeps_documented_quoting_forms():
+    module = _guard_module()
+    accepted = (
+        f'{CANONICAL_PREFIX} cancel --project-root "$CLAUDE_PLUGIN_ROOT" --preview-receipt p.json',
+        f'{CANONICAL_PREFIX} cancel --project-root "${{PWD}}" --preview-receipt "p.json"',
+        f'python3 "/guard dir/build-external-mutation-guard.py" cancel --project-root "$PWD" '
+        f'--preview-receipt "p.json"',
+        f"python3.11 /guard/build-external-mutation-guard.py{CANCEL_TAIL}",
+        # quote の中の改行・演算子・\" はリテラル
+        f"{CANONICAL_PREFIX} preview --project-root /tmp --entrypoint-ref "
+        "plugin:x/skills/run-x/SKILL.md --target-scope 'remote:x' "
+        "--diff-summary 'line one\nline two; a && b | c > d' "
+        '--side-effect-summary "one record\nonly (fixture) & nothing else" '
+        '--command-json "[\\"bd\\",\\"create\\"]"',
+    )
+    for command in accepted:
+        assert _shape(module, command) is not None, repr(command)
+
+
+def test_canonical_action_requires_bare_python_and_a_literal_runner_word():
+    # j 回目の再現: 2語目の basename だけを見ていたので、python の option の値や
+    # PATH の外の python も canonical と判定されていた。
+    module = _guard_module()
+    rejected = (
+        "python3 '-cimport os;os.system(\"true\");1/build-external-mutation-guard.py'",
+        "python3 -Xdev/build-external-mutation-guard.py",
+        "/usr/bin/python3 /guard/build-external-mutation-guard.py",
+        "/tmp/attacker/python3 /guard/build-external-mutation-guard.py",
+        "env python3 /guard/build-external-mutation-guard.py",
+        # shell が展開するので、hook が見るパスと実際に動くパスが一致しない
+        "python3 ~/guard/build-external-mutation-guard.py",
+        "python3 =guard/build-external-mutation-guard.py",
+        'python3 "$GUARD/build-external-mutation-guard.py"',
+        'python3 "${GUARD}/build-external-mutation-guard.py"',
+    )
+    for prefix in rejected:
+        assert _shape(module, prefix + CANCEL_TAIL) is None, repr(prefix)
+
+
+def test_canonical_action_resolves_the_runner_to_a_trusted_guard_copy(tmp_path):
+    module = _guard_module(name="guard_trusted_runner")
+    project = tmp_path / "proj dir"
+    project_runner = _plugin_copy(project / "plugins" / "skill-governance-adapters", hooks_symlink=True)
+    attacker = tmp_path / "attacker"
+    attacker.mkdir()
+    # 中身が同じでも置き場所が違えば拒否する。python は script の dir を sys.path[0] に
+    # 入れるので、隣に置いた json.py などが guard の import を乗っ取れる。
+    shutil.copy2(RUNNER, attacker / RUNNER.name)
+    rel = "plugins/skill-governance-adapters"
+    accepted = (
+        # 動いている guard 自身と、同じ plugin の hooks/ の symlink（cwd が無くても）
+        (f"python3 {shlex.quote(str(RUNNER))}", None),
+        (f"python3 {shlex.quote(str(RUNNER.parents[1] / 'hooks' / RUNNER.name))}", None),
+        # cwd の project の正本（絶対パス・相対パス・hooks/ 経由）
+        (f"python3 {shlex.quote(str(project_runner))}", project),
+        (f"python3 {rel}/scripts/{RUNNER.name}", project),
+        (f"python3 {rel}/hooks/{RUNNER.name}", project),
+    )
+    for prefix, cwd in accepted:
+        command = prefix + CANCEL_TAIL
+        assert module._canonical_guard_action(command, str(cwd) if cwd else None) == "cancel", prefix
+    rejected = (
+        (f"python3 {shlex.quote(str(attacker / RUNNER.name))}", project),
+        (f"python3 ./{RUNNER.name}", attacker),
+        (f"python3 {rel}/scripts/{RUNNER.name}", None),
+        (f"python3 {rel}/missing/{RUNNER.name}", project),
+        # project の正本でも、cwd がその project でなければ信頼しない
+        (f"python3 {shlex.quote(str(project_runner))}", tmp_path),
+    )
+    for prefix, cwd in rejected:
+        command = prefix + CANCEL_TAIL
+        assert module._canonical_guard_action(command, str(cwd) if cwd else None) is None, prefix
+
+
+def test_canonical_action_trusts_both_copies_of_an_installed_guard(tmp_path):
+    # 配布先では hooks/ が symlink でなく実ファイルのこともある。hook は hooks/ から動き、
+    # skill は extract-plugin-root が返す root の scripts/ を呼ぶので、同じ install の2つを信頼する。
+    install = tmp_path / "cache" / "skill-governance-adapters" / "1.0.0"
+    scripts_copy = _plugin_copy(install, hooks_symlink=False)
+    hooks_copy = install / "hooks" / RUNNER.name
+    module = _guard_module(hooks_copy, "guard_installed_copy")
+    for runner in (scripts_copy, hooks_copy):
+        command = f"python3 {shlex.quote(str(runner))}{CANCEL_TAIL}"
+        assert module._canonical_guard_action(command, str(tmp_path)) == "cancel", runner
+    other = _plugin_copy(tmp_path / "cache" / "skill-governance-adapters" / "0.9.0", hooks_symlink=False)
+    for runner in (other, RUNNER):
+        command = f"python3 {shlex.quote(str(runner))}{CANCEL_TAIL}"
+        assert module._canonical_guard_action(command, str(tmp_path)) is None, runner
+
+
+def test_pretool_denies_spoofed_runner_names_during_pending_context(tmp_path):
+    # j 回目の再現: pending の間も、名前だけ合わせた任意のコードが早期許可されていた。
+    _preview(tmp_path, [sys.executable, "-c", "print('pending')"])
+    shutil.copy2(RUNNER, tmp_path / RUNNER.name)
+    attacker = tmp_path / "attacker"
+    attacker.mkdir()
+    shutil.copy2(RUNNER, attacker / RUNNER.name)
+    project_runner = _plugin_copy(tmp_path / "plugins" / "skill-governance-adapters", hooks_symlink=True)
+
+    def decide(command: str) -> dict | None:
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "cwd": str(tmp_path),
+            "tool_input": {"command": command},
+        }
+        result = _run("pretool", input_text=json.dumps(payload))
+        assert result.returncode == 0, result.stderr
+        return json.loads(result.stdout)["hookSpecificOutput"] if result.stdout else None
+
+    spoofs = (
+        f"python3 '-cimport os;os.system(\"true\");1/{RUNNER.name}'",
+        f"python3 -Xdev/{RUNNER.name}",
+        f"python3 {shlex.quote(str(attacker / RUNNER.name))}",
+        f"python3 ./{RUNNER.name}",
+    )
+    for prefix in spoofs:
+        output = decide(prefix + CANCEL_TAIL)
+        assert output is not None and output["permissionDecision"] == "deny", prefix
+        assert "(authorize, authorize-intent, cancel, execute, preview)" in output["permissionDecisionReason"]
+    # 正規の呼び出しは pending の間も通る（cancel や authorize で流れを閉じられるように）
+    for runner in (RUNNER, project_runner, project_runner.parents[1] / "hooks" / RUNNER.name):
+        command = f"python3 {shlex.quote(str(runner))} cancel --project-root {shlex.quote(str(tmp_path))} --preview-receipt p.json"
+        assert decide(command) is None, runner
+    assert decide("git status --short")["permissionDecision"] == "deny"
+
+
+def test_pretool_denies_newline_smuggled_after_a_guard_call():
+    command = (
+        f"{GUARD_CALL} execute --project-root /tmp --authorization-receipt a "
+        "--command-json\n./payload.sh"
+    )
+    result = _run(
+        "pretool",
+        input_text=json.dumps(
+            {"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": command}}
+        ),
+    )
+    assert result.returncode == 0
+    output = json.loads(result.stdout)
+    assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "full Bash command" in output["hookSpecificOutput"]["permissionDecisionReason"]

@@ -657,3 +657,98 @@ def test_module_guard_runs_main_via_runpy(capsys):
         runpy.run_path(str(SCRIPT), run_name="__main__")
     assert ei.value.code == 0
     assert "## 参照内容" in capsys.readouterr().out
+
+@pytest.mark.parametrize('language', ['ja', 'en'])
+@pytest.mark.parametrize('has_prompts', [True, False])
+def test_localized_runtime_blocks_are_idempotent_and_match_delivery(language, has_prompts):
+    spec = importlib.util.spec_from_file_location('runtime_delivery_template_consumer', ROOT / 'scripts/build-artifact-delivery.py')
+    delivery = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(delivery)
+    template = MOD.normalize_base((TEMPLATES / '_base.md').read_text())
+    localized = MOD.localize_template(template, language, has_prompts=has_prompts)
+    expected = delivery._canonical_runtime_root_block(language, has_prompts=has_prompts)
+    assert localized.count(expected) == 1
+    assert localized.count(delivery.RUNTIME_ROOT_BLOCK_BEGIN) == 1
+    assert MOD.localize_template(localized, language, has_prompts=has_prompts) == localized
+
+
+# --------------------------------------------------------------------------
+# --language の CLI 経路と localize の境界 (独立レビュー B の low 指摘の回帰)
+# --------------------------------------------------------------------------
+def test_cli_language_en_uses_gotchas_heading(tmp_path):
+    # ja-contract-policy.md の表示名の表は gotchas の en を「Gotchas」と定める。
+    proc = _run(["--kind", "run", "--language", "en"], cwd=str(tmp_path))
+    assert proc.returncode == 0, proc.stderr
+    assert "\n## Gotchas\n" in proc.stdout
+    assert "つまずきやすい点" not in proc.stdout
+    ja = _run(["--kind", "run"], cwd=str(tmp_path))
+    assert "\n## つまずきやすい点\n" in ja.stdout
+    assert "## Gotchas" not in ja.stdout
+
+
+@pytest.mark.parametrize("language", ["ja", "en"])
+def test_cli_language_auto_inherits_target_skill_language(tmp_path, language):
+    target = tmp_path / "SKILL.md"
+    target.write_text(_run(["--kind", "run", "--language", language], cwd=str(tmp_path)).stdout, encoding="utf-8")
+    proc = _run(["--kind", "run", "--language", "auto", "--target-skill", str(target)], cwd=str(tmp_path))
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout == target.read_text(encoding="utf-8")
+
+
+def test_cli_language_auto_without_target_skill_is_usage_error(tmp_path):
+    deploy = tmp_path / "plugin"
+    proc = _run(["--kind", "run", "--language", "auto", "--deploy-feedback-loop", str(deploy)], cwd=str(tmp_path))
+    assert proc.returncode == 2
+    assert "--target-skill" in proc.stderr
+    # 使い方の誤りは副作用 (配備) の前に止める。
+    assert not deploy.exists()
+
+
+@pytest.mark.parametrize("kind", ["non_utf8", "missing", "directory"])
+def test_cli_unreadable_target_skill_exits_2_without_traceback(tmp_path, kind):
+    target = tmp_path / "SKILL.md"
+    if kind == "non_utf8":
+        target.write_bytes(b"\xff## \xe7\x9b\xae\n")
+    elif kind == "directory":
+        target.mkdir()
+    proc = _run(["--kind", "run", "--language", "auto", "--target-skill", str(target)], cwd=str(tmp_path))
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+    assert "--target-skill" in proc.stderr
+
+
+def test_localize_keeps_fenced_hash_lines_inside_runtime_section():
+    text = (
+        "## 実行時のルートの決め方\n\n"
+        "```bash\n## not a heading\n```\n\n"
+        "## 次の節\nbody\n"
+    )
+    out = MOD.localize_template(text, "ja")
+    assert out.count("```") == 0  # 旧節はフェンスごと置き換わり、壊れたフェンスが残らない
+    assert out.endswith("<!-- /runtime-root-contract:v1 -->\n\n## 次の節\nbody\n")
+
+
+def test_localize_does_not_rename_headings_inside_code_fences():
+    text = "## Gotchas\n\n```md\n## Gotchas\n```\n"
+    out = MOD.localize_template(text, "ja")
+    assert out.startswith("## つまずきやすい点\n")
+    assert "```md\n## Gotchas\n```" in out
+
+
+@pytest.mark.parametrize("text", ["intro\n## Runtime root contract", "intro\r\n## Runtime root contract\r\nSTALE-BODY\r\n"])
+def test_localize_replaces_runtime_section_at_eof_and_with_crlf(text):
+    out = MOD.localize_template(text, "en")
+    assert out.count("<!-- runtime-root-contract:v1 -->") == 1
+    assert "STALE-BODY" not in out and "\r" not in out
+    assert out.endswith("<!-- /runtime-root-contract:v1 -->\n")
+    assert MOD.localize_template(out, "en") == out
+
+
+def test_semantic_anchor_follows_canonical_key_rules_heading():
+    assert MOD.KEY_RULES_ANCHOR == "## 守ること\n{{key_constraints}}"
+    base = MOD.normalize_base((TEMPLATES / "_base.md").read_text(encoding="utf-8"))
+    assert MOD.KEY_RULES_ANCHOR in base
+    # 旧見出しの _base.md (--templates-dir の旧版) も別名で受ける。
+    legacy = "## 主要ルール\n{{key_constraints}}\n"
+    out = MOD.add_section_after(legacy, MOD.KEY_RULES_ANCHOR, "## New\nbody")
+    assert out.startswith("## 主要ルール\n{{key_constraints}}\n\n## New\nbody")

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 a099d4b00e231562014c439770a7ff74de5a6208998ee1999d9222841abe96d0 をレビュー。実行検証あり）。範囲: 全477行。前回の記録（sha256 0687fb4d…）からの差分は docstring L46-47 の除外節の列挙に、来年と前年の変種を足しただけ。確かめたこと: 足した列挙は実装の _EXCLUDE_SECTION（L64-71。来(週|月|期|年)・前(週|月|期|年)の）と合い、前回の [低] は直った。--help は rc=0、未知の option は rc=2。test_validate_cross_level.py と test_validate_goal_output.py で 105 passed。1月と11月を取り違えないこと、Shift_JIS が rc=2、--yearly の照合は、差分の外なので前回の記録から引き継ぐ。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

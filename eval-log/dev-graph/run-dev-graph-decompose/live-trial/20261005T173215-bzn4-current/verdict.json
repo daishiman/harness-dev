@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "認証付きTODO APIをarchitecture、認証feature、TODO featureへマクロ分解する。TODOは認証に依存。全nodeはtracker_binding=none。 --repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-decompose --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "L120 writes graph-before.sha/tree-before.sha and L136 redirects preview.json into the native scratchpad outside the explicit fixture/proof-dir-only write boundary. Authentic macro preview does not excuse an invalid full trial.",
+      "Initialization preparation executed writer at L54 without reading init responsibility prompts before those outputs, contrary to the task's responsibility-prompt-before-output execution rule."
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+  "transcript_sha256": "e760881e108c9774e39ca7f4d72d05ee4cc54c6b9c6517d854b5401e030207d8",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.289",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": null
+  },
+  "scenario_id": "decompose-macro-positive-fixture-standard-v2"
+}

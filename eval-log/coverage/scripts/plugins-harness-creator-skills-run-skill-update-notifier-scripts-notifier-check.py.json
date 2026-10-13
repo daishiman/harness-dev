@@ -1,1 +1,18 @@
-{"artifact": "plugins/harness-creator/skills/run-skill-update-notifier/scripts/notifier-check.py", "type": "scripts", "mechanical": true, "llm_eval": {"verdict": "PASS", "score": 85, "notes": "deep-verify FAIL を genuine 修正: TODO(human) の _format_line を仕様どおり実装(installed!=latest時のみ通知/二重v化なし/一致・欠落は空)。常時 no-op を解消。"}, "reviewed_by": "objective-recheck-after-fix", "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/run-skill-update-notifier/scripts/notifier-check.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 e2540d6381e53def10e29e8b645ffac7abcf32875865ed01db0f02dc19bcd02f をレビュー。実行検証あり）。範囲: 全 338 行。前回レビューした版（sha256 275d0175…、PASS 91）は scratch に写しが残っていたので、diff で比べた。違いは module の docstring（11〜16 行）と _save_cache の docstring（52〜57 行）だけで、コードの行は1行も変わっていない。test（tests/scripts-plugins/test_harness_creator__notifier_check.py、sha256 8a933707…）は 142 passed。HOME を scratch に向けて動かした（~/.cache には触れていない）。確かめたこと: (1) docstring の exit の説明: 引数なし・未知の mode（bogus）・notify の --plugin 欠落はどれも argparse の usage で rc 2。--help と notify --help は rc 0。--mode cache-status の互換は rc 0（absent・fresh を出す）。notify --plugin x（cache に無い plugin）・存在しない --plugins-root の refresh は rc 0。11〜13 行の「引数を解釈したあとの例外は握りつぶして exit 0、引数の誤りは argparse が exit 2、--help は 0」は実際の rc と合う。(2) 並行の説明: plugin 20 本の fixture で refresh し、notified を消してから、同じ session の id で 20 本の notify を並行に流すのを 3 回くり返した。どの回も通知は 20 行出て、stderr は 0 行、一時ファイルも残らなかった。一方で notified の記録は 11・13・9 件しか残らず、そのあと同じ session で順に notify すると 9・7・11 本が同じ通知をもう一度出した。52〜57 行の「名前を分けて防ぐのは保存の失敗だけで、lost update は防がない。後から保存したプロセスが先の記録を上書きし、同じ通知がもう一度出ることがある」と、16 行の要約はこの挙動のとおりである。前回の指摘の扱い: [中] 並行時の記録の消失と、docstring が直ったように読める点は、一部だけ解消。docstring は挙動どおりに直った。ただし lost update そのものは残り（lock は入れていない）、制限は script の docstring にしか書かれていない。SKILL.md の Gotchas（179〜180 行）は、2 つの session の交互使用と cache に書けない場合だけを挙げ、並行に呼んだときの記録の消失を書いていない。使う人が読むのは SKILL.md なので、そちらにも1行あるとよい。[低] docstring の「exit は常に 0」は解消（(1) のとおり）。[低] _VERSION_RE（88 行）が版の後ろの記号まで拾う件は残る。「## 1.2.3, 2026-10-01」「## 1.2.3: notes」「## 1.2.3.」の CHANGELOG と plugin.json 1.2.3 の組で、「(plugin.json: v1.2.3 / CHANGELOG: 1.2.3, — 版を比べられない)」のように誤って通知した（再現した）。「## 1.2.3 — 2026-10-01」と「## [1.2.3] - x」は正しく読む。[低] PEP 723 の header が無い件は残る（lint-script-frontmatter で missing block、violations=1）。細かい点（減点しない）: 11〜13 行の括弧の中の3つは例であり、全部ではない。知らない option（cache-status --bogus）や値の欠けた option（refresh --plugins-root）も argparse の rc 2 になる。「--mode=cache-status」の形は互換の対象外で rc 2（319 行のコメントは `--mode <name>` とだけ書くので、矛盾はしない）。DEDUCTION: lost update の制限が SKILL.md の Gotchas に無い -1、版の後ろの記号による誤通知 -2、header なし -3 → 94。今回の差分（docstring だけ）に誤りは無く、書かれた exit と並行時の挙動は実行と合った。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

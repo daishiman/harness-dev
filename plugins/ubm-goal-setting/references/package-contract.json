@@ -4,6 +4,7 @@
   "entry_points": {
     "skills": [
       "run-skill-feedback",
+      "run-ubm-challenge",
       "run-ubm-consult",
       "run-ubm-goal-setting",
       "run-ubm-journal",
@@ -11,6 +12,7 @@
       "run-ubm-youtube-ingest"
     ],
     "agents": [
+      "challenge-advisor",
       "goal-reviewer",
       "info-collector",
       "journal-composer",
@@ -21,6 +23,7 @@
       "youtube-transcript-normalizer"
     ],
     "commands": [
+      "ubm-challenge",
       "ubm-consult",
       "ubm-goal-setting",
       "ubm-journal",
@@ -32,7 +35,7 @@
     ]
   },
   "distribution": {
-    "distributable": true,
+    "distributable": false,
     "bundle_targets": [
       "skills-full"
     ],
@@ -46,8 +49,32 @@
     "vault_root_env": "UBM_VAULT_ROOT"
   },
   "depends_on": [
-    "harness-creator"
+    "harness-creator",
+    "skill-governance-config"
   ],
+  "skill_dependencies": {
+    "run-skill-feedback": [
+      "harness-creator"
+    ],
+    "run-ubm-challenge": [
+      "harness-creator"
+    ],
+    "run-ubm-consult": [
+      "harness-creator"
+    ],
+    "run-ubm-goal-setting": [
+      "harness-creator"
+    ],
+    "run-ubm-journal": [
+      "harness-creator"
+    ],
+    "run-ubm-knowledge-sync": [
+      "harness-creator"
+    ],
+    "run-ubm-youtube-ingest": [
+      "harness-creator"
+    ]
+  },
   "pkg_checks": {
     "PKG-001": {
       "status": "skip",
@@ -159,9 +186,33 @@
   ],
   "codex_alternatives": {
     "commands": {
+      "ubm-challenge": {
+        "relation": "semantic-equivalent",
+        "purpose": "Claude のコマンド ubm-challenge を、所有する Codex スキルの経路から使えるようにする。",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-challenge"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-challenge"
+          ]
+        }
+      },
       "ubm-consult": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude command ubm-consult through the owning Codex skill route.",
+        "purpose": "Claude のコマンド ubm-consult を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -185,7 +236,7 @@
       },
       "ubm-goal-setting": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude command ubm-goal-setting through the owning Codex skill route.",
+        "purpose": "Claude のコマンド ubm-goal-setting を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -209,7 +260,7 @@
       },
       "ubm-journal": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude command ubm-journal through the owning Codex skill route.",
+        "purpose": "Claude のコマンド ubm-journal を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -233,7 +284,7 @@
       },
       "ubm-knowledge-sync": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude command ubm-knowledge-sync through the owning Codex skill route.",
+        "purpose": "Claude のコマンド ubm-knowledge-sync を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -257,7 +308,7 @@
       },
       "ubm-youtube-ingest": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude command ubm-youtube-ingest through the owning Codex skill route.",
+        "purpose": "Claude のコマンド ubm-youtube-ingest を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -281,9 +332,33 @@
       }
     },
     "agents": {
+      "challenge-advisor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Claude のエージェント challenge-advisor を、所有する Codex スキルの経路から使えるようにする。",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-challenge"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-challenge"
+          ]
+        }
+      },
       "goal-reviewer": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent goal-reviewer through the owning Codex skill route.",
+        "purpose": "Claude のエージェント goal-reviewer を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -307,7 +382,7 @@
       },
       "info-collector": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent info-collector through the owning Codex skill route.",
+        "purpose": "Claude のエージェント info-collector を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -331,7 +406,7 @@
       },
       "journal-composer": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent journal-composer through the owning Codex skill route.",
+        "purpose": "Claude のエージェント journal-composer を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -355,7 +430,7 @@
       },
       "knowledge-extractor": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent knowledge-extractor through the owning Codex skill route.",
+        "purpose": "Claude のエージェント knowledge-extractor を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -379,7 +454,7 @@
       },
       "knowledge-relation-extractor": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent knowledge-relation-extractor through the owning Codex skill route.",
+        "purpose": "Claude のエージェント knowledge-relation-extractor を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -403,7 +478,7 @@
       },
       "output-formatter": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent output-formatter through the owning Codex skill route.",
+        "purpose": "Claude のエージェント output-formatter を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -427,7 +502,7 @@
       },
       "phase3-coordinator": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent phase3-coordinator through the owning Codex skill route.",
+        "purpose": "Claude のエージェント phase3-coordinator を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."
@@ -451,7 +526,7 @@
       },
       "youtube-transcript-normalizer": {
         "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent youtube-transcript-normalizer through the owning Codex skill route.",
+        "purpose": "Claude のエージェント youtube-transcript-normalizer を、所有する Codex スキルの経路から使えるようにする。",
         "arguments": {
           "policy": "preserve",
           "notes": "Preserve the user request and translate only host-specific invocation syntax."

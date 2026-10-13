@@ -77,7 +77,7 @@
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
 
-### 5.1 担当 agent
+### 5.1 担当エージェント
 - run-prompt-elicit 配下の R1 agent (prompt-creator-interview-user を context:fork)
 
 ### 5.2 ゴール定義

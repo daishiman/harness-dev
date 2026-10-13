@@ -1,0 +1,34 @@
+{
+  "label": "requirements",
+  "retry_of": null,
+  "evaluator_agent_id": "a73436decc6a2a42c",
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "skill_defects_reported_by_evaluator": [
+    "(軽微。task の『1 行だけ報告』の指示と交絡しているため確度は低い。FAIL の原因ではない) SKILL.md 104-105 行と R2b-readiness の出力契約 (21 行) は、停止時に missing_sections と remediation owner を返すよう求めている。しかし、その出力先と形式、validate-system-plan の違反コード (file-digest や canonical-digest など) を missing_sections と remediation owner (例: system-dev-planner での再 promote) に対応づける規則が書かれていない。再現手順: digest 違反のある package を渡して handoff を実行すると、blocked の判定や remediation owner を機械で読める形で残す手順がなく、session は FAIL と書くだけで終わる (transcript 109-115)。"
+  ],
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements/ws/plugins/dev-graph/skills/run-dev-graph-requirements",
+  "closure_sha_tested_copy": "d9eb6a322ec9e2e74ad482e8bf01654c1fbe23cc32679c7d3ef996fe1564cf60",
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 1,
+    "occurrences": 2,
+    "other_emails_found": {}
+  },
+  "reverdict": {
+    "at": "2026-10-12T10:21:07+0900",
+    "why": "公開 repo に入る記録から利用者のメールを伏せた。transcript_sha256 を伏せた後のファイルに合わせるため、前の verdict の引数で live-trial-verdict.py を回し直した (hash は手で書いていない)。--skill-dir には被験が読んだ写しを渡した。",
+    "changed_fields": [
+      "skill_dir_tree_sha",
+      "transcript_sha256"
+    ],
+    "before": {
+      "skill_dir_tree_sha": "23731b4cfaa5a0e92663f0fefc8698a40f9abdefcae7fa3994ff0260245294ae",
+      "transcript_sha256": "fe430dc41f9f75044279ed3bb0f394f9a5c13d576c0c2feebd0436ee3693bb6a"
+    },
+    "after": {
+      "skill_dir_tree_sha": "d9eb6a322ec9e2e74ad482e8bf01654c1fbe23cc32679c7d3ef996fe1564cf60",
+      "transcript_sha256": "2206a43c795db9b3519544fc85df4d6c197f9ba27f9049115dd7e2c72cf07099"
+    },
+    "backup": "audit/reverdict/run-dev-graph-requirements/20261012T0643-pr85"
+  }
+}

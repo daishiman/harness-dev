@@ -19,7 +19,6 @@ import fcntl
 import hashlib
 import importlib.util
 import json
-import os
 import re
 import subprocess
 import sys
@@ -28,7 +27,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-from _common import ContractError, atomic_json, contained, dump, load_json, utc_now
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
+from _common import (PACKAGE_KEYS, ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained,
+                     dump, is_package_member, json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -84,7 +88,6 @@ PATCH_KEYS = {
 TRACKER_MIRRORED_KEYS = {"title", "priority", "start_date", "target_date", "iteration"}
 UPDATE_KEYS = {"graph_node_id", "node_patch", "set_sections", "append_sections", "add_subtypes",
                "subtype_sections", "add_api_contracts", "macro_patch"}
-PACKAGE_KEYS = {"parent_feature", "feature_package_id", "phase_ref"}
 
 
 def _load_script(file_name: str, module_name: str) -> Any:
@@ -110,7 +113,7 @@ class WriterError(ContractError):
 # ---------------------------------------------------------------- C24 / lock / io
 
 def _context(repo_root: str, config: str) -> dict[str, Any]:
-    argv = [sys.executable, str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
+    argv = [sys.executable, "-B", str(HERE / "resolve-repo-context.py"), "--repo-root", repo_root,
             "--config", config, "--mode", "write"]
     cp = subprocess.run(argv, text=True, capture_output=True, check=False)
     if cp.returncode:
@@ -145,25 +148,12 @@ def _single_writer(graph: Path) -> Iterator[None]:
 
 
 def _write_atomic(path: Path, data: bytes, *, create_only: bool) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        if create_only:
-            try:
-                os.link(temp, path)
-            except FileExistsError as exc:
-                raise WriterError("artifact_path_exists", str(path)) from exc
-        else:
-            os.replace(temp, path)
-    finally:
-        try:
-            os.unlink(temp)
-        except FileNotFoundError:
-            pass
+        atomic_bytes(path, data, create_only=create_only)
+    except FileExistsError as exc:
+        raise WriterError("artifact_path_exists", str(path)) from exc
+    except ParentNotDirectoryError as exc:
+        raise WriterError("parent_not_directory", str(exc)) from exc
 
 
 def _canonical_digest(value: Any) -> str:
@@ -877,7 +867,7 @@ def _plan_update(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Pat
         kind = before_node.get("artifact_kind")
         if kind not in KIND_PREFIX:
             raise WriterError("invalid_kind", f"{label}: {graph_node_id} has unsupported artifact_kind {kind!r}")
-        if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
+        if is_package_member(before_node):
             raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
         _require_keys(before_node, keys, label)
         node = copy.deepcopy(before_node)
@@ -1059,7 +1049,7 @@ def _plan_bind_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
             raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
         seen.add(graph_node_id)
         before_node = by_id[graph_node_id]
-        if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
+        if is_package_member(before_node):
             raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
         _require_keys(before_node, keys, label)
         if before_node["artifact_kind"] not in {"issue", "task"}:
@@ -1129,7 +1119,7 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
         seen.add(graph_node_id)
         before_node = by_id[graph_node_id]
         # register-package registers a member to the graph only, without the content keys or an artifact file.
-        member = any(before_node.get(key) is not None for key in PACKAGE_KEYS)
+        member = is_package_member(before_node)
         _require_keys(before_node, [] if member else keys, label)
         if before_node["tracker_binding"] != "github":
             raise WriterError("link_github_requires_github_binding",
@@ -1188,6 +1178,10 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
 
 
 # ---------------------------------------------------------------- transaction
+
+PLANNED_KEYS = ("graph_node_id", "artifact_kind", "status", "confirmation_status", "evaluation_status",
+                "depends_on", "parent_feature", "tracker_binding")
+
 
 def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], staged_ids: set[str],
               staging: Path, root: Path, schema: dict[str, Any], contract: dict[str, Any]) -> list[dict[str, str]]:
@@ -1280,8 +1274,13 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
             "receipt_path": receipt_path.relative_to(root).as_posix(),
         }
         if args.dry_run:
+            # planned_nodes carries the state each node would be registered with, so a downstream dry-run (C28
+            # create --dry-run --planned-preview) judges the promotion gate without this graph write.
+            planned_nodes = [{**{key: item["node"][key] for key in PLANNED_KEYS if key in item["node"]},
+                              "implementation_readiness": {"status": (item["node"].get("implementation_readiness") or {}).get("status")}}
+                             for item in plan]
             return {**receipt, "status": "preview", "valid": True, "dry_run": True, "planned_count": len(plan),
-                    "applied_count": 0, "write_count": 0}
+                    "planned_nodes": planned_nodes, "applied_count": 0, "write_count": 0}
         written: list[tuple[Path, bytes | None]] = []
         graph_written = False
         try:
@@ -1321,10 +1320,12 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
 
 
 def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
-    data = (json.dumps(receipt, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    data = json_bytes(receipt)
     try:
         _write_atomic(path, data, create_only=True)
     except WriterError as exc:
+        if exc.code != "artifact_path_exists":
+            raise
         raise WriterError("immutable_receipt_exists", str(path)) from exc
 
 

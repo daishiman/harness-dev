@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "経路(正規Skillの起動): transcript L35 で Skill(dev-graph:run-dev-graph-requirements) が起動している。pane.txt にも『Successfully loaded skill』とある",
+    "経路(責務promptを出力の前に読む): L49 で SKILL.md と prompts/R1-elicit.md・R2-plan.md・R2b-readiness.md・R3-handoff.md を cat で読み、L57 で references/prompt-common-layers.md を読んでいる。最初の成果物の Write は L132 で、これより後である",
+    "三gateの前段: L73-74 で C24 resolve-repo-context.py --mode read が exit 0。L77/L83 で validate-readiness-binding.py が exit 0 で、violations 0、c11=c02 readiness digest sha256:e8f471d5…61da、system_plan exit 0。L86-87 で guard-requirements-handoff.py --expect-graph-digest が exit 0 で、status handoff、handoff_count 14、blocked 0、digest_match true。SKILL.md 手順の『binding exit 0 かつ guard exit 0 で digest が一致したときだけ emit』の順序を守っている",
+    "atomic emit: L132 と L145 で staging (.dev-graph/handoff/.staging-LT-FEATURE-001/) へ Write し、L155-156 で mv により rename した。最小の guard (JSON の parse、secret 0、code file 0) も通っている",
+    "成果物の実在と内容(合格条件): fx/.dev-graph/handoff/LT-FEATURE-001/handoff.json がある。consumer は capability-build、mode は task-graph。task_graph_ref と sha を持ち、snapshot の graph_digest は sha256:9105c0c3…babc (rev 2) で binding・guard の digest と一致する。P01..P13 の 13 task について phase_ref・depends_on・task_spec_sha256 を持つ。lineage (system-spec・feature・architecture・package・C02 receipt)、gates の結果、implementation_code_generated: 0 も持つ。記録された sha はすべて実ファイルの shasum と一致した",
+    "requirements.md (fx/.dev-graph/handoff/LT-FEATURE-001/requirements.md、sha b96723dc… は handoff.json の記録と一致) は FR/NFR/AC、13 task の表、readiness matrix、lineage を持つ。binding-report.json と guard-report.json も同じ dir にあり、sha は handoff.json の gates の記録と一致する",
+    "実装code 0: fixture に .py/.js/.ts/.sh などの code file は無い。dev-graph-requirements-verifier も subagent-transcripts/agent-afa1c0691b59b25d4.jsonl L28 で同じ結論を出している",
+    "合格条件(validator exit 0): L197 で validate-system-plan.py が exit 0 (validated_digest sha256:bc69b615…b6d4、violations [])。L198 で C11 validate-graph-schema.py が exit 0 (15 node が complete、incomplete 0)",
+    "経路(必須Agent verifierの実起動): L183 で Agent dev-graph:dev-graph-requirements-verifier を、L185 で Agent general-purpose (R2 trace の検証) を実際に起動した。agent-afa1c0691b59b25d4.jsonl は binding・guard・validate-system-plan・C11 を独立に再実行し、全 sha を照合して PASS とした (L28)。agent-a75176034731c7482.jsonl は要件の引用元と task の対応を照合し、PASS と非 blocking の指摘 5 件を返した (L46)。本 session への返却は L205/L211 と L215/L217",
+    "経路(自作driverで成果を作らない): handoff の成果物は Write tool で直接書いた。gate はすべて plugin の正規 script である。L168 の python heredoc は SKILL のゴールシーク配線どおりの eval-log/run-dev-graph-requirements-goal-spec.json を作るもので、成果物を代わりに作ったものではない",
+    "経路(graphは単一writer経由): fx/.dev-graph/state/graph.json の mtime は 22:17 で、session の開始 (22:52:50) より前のまま。session は graph に書いていない。L243-244 の再検証でも graph digest は不変",
+    "経路(書込み境界): collect/guard.jsonl の deny は 0 件。session が書いた先は fx/.dev-graph/handoff/、fx/eval-log/ の 3 file、workdir/out/status.json、run 内の TMPDIR に限られ、すべて policy.json が許可する root の内側である。遮断を回避しようとした形跡は無い",
+    "emit 後の修正: L222/L224/L236 で、R2 verifier の非 blocking の指摘 (FR-01 の引用、NFR-02 の task 対応) に応えて requirements.md と handoff.json を Edit で in-place に直した。この修正は atomic でない。L243-244 で binding=0・guard=0 を再確認し、L246/L252 で goalseek_check=0。最終状態の sha は整合している",
+    "完了マーカー: L254 で workdir/out/status.json に PASS を書き、L258 で『DONE: PASS』と出した。上の各項目は実ファイルと tool の結果で独立に確かめており、マーカーだけを根拠にはしていない",
+    "品質上の誤り (非blocker): requirements.md L89-90 の lineage の省略表示が 2 件違う。feature は『989527ee…728e18f』と書かれているが、実際の shasum は 989527ee…ad4c997f。architecture は『14c532c2…f40fc32』と書かれているが、実際は 14c532c2…64728e18f。機械可読の handoff.json の値は正しいので、合格条件は満たしている。verifier 2 体はこの誤りを見逃した",
+    "範囲外: ws/plugins/system-dev-planner/scripts/__pycache__/ の pyc 2 本 (22:52:56) は L26 の最初の Bash と同時刻である。system-dev-planner の hooks.json が PreToolUse の hook を python3 (-B なし) で起こしたことによるもので、被験 skill (dev-graph) の bytecode は増えていない。L178-179 の pytest (6 passed) は PYTHONDONTWRITEBYTECODE と -p no:cacheprovider を付けて実行している"
+  ],
+  "skill_defects": [
+    "場所: ws/plugins/dev-graph/skills/run-dev-graph-requirements/SKILL.md の手順5 と prompts/R3-handoff.md。不具合: 『requirements document・snapshot digest・package ref・capability-build handoff ref を atomic emit する』と定めているのに、emit を担う正規の writer script・出力 path・handoff.json の schema・その validator が無い。そのため LLM が digest を手で転記して成果物を組み立てることになる。この run では requirements.md §9 (L89-90) の feature と architecture の sha 省略表示が取り違えられ、別の値になっていた。また emit の後で Edit による in-place 修正 (atomic でない) ができてしまい、それを止める仕組みも無い。再現: fixture で C04 の positive handoff を実行し、出力された requirements.md の lineage の省略値と handoff.json を、それぞれ実ファイルの shasum -a 256 と照合する。手書きの省略値は検査されないので、誤っていても gate とすべての verifier を通過する",
+    "場所: plugins/dev-graph/artifact-delivery.json と prompt-common-layers.md の artifact_delivery の state machine (軽微)。不具合: 成果物の提示と standard の選択を記録する経路が無い。この run では L154 の短い text と L159 の thinking の中の宣言だけで、semantic_evaluator_started へ遷移した。再現: 本 skill を実行し、transcript に提示や選択の記録を書く tool 呼出しも file も無いまま、verifier Agent が起動することを確かめる"
+  ],
+  "evaluator_agent_id": "ad92368a52ce88680"
+}

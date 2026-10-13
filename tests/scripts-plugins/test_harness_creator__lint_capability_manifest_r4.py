@@ -345,15 +345,18 @@ def test_main_fallback_schema_none_passes_when_keys_present(monkeypatch, capsys,
     assert _stderr(capsys) == ""
 
 
-# ── main: トップレベル例外握り潰し ──────────────────────────────────────────
-def test_main_top_level_exception_swallowed(monkeypatch, capsys, tmp_path):
+# ── main: トップレベル例外は exit 0 のまま stderr に出す ─────────────────────
+def test_main_top_level_exception_reported_not_swallowed(monkeypatch, capsys, tmp_path):
+    # 内部の不具合を黙って握り潰すと lint が効いていないことに気づけない (再発防止)
     def _boom(_):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(MOD, "_extract_frontmatter", _boom)
     p = _write(tmp_path, VALID_SKILL_FM)
     assert _run_main(monkeypatch, {"tool_input": {"file_path": str(p)}}) == 0
-    assert _stderr(capsys) == ""
+    err = json.loads(_stderr(capsys))
+    assert err["hook"] == "lint-capability-manifest"
+    assert err["error"] == "internal error: RuntimeError: boom"
 
 
 # ── subprocess end-to-end(__main__ ガードを踏む)────────────────────────────

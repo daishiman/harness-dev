@@ -1,0 +1,115 @@
+{
+  "reviewer": "/root/meta_analyst",
+  "independence": "reviewer authored none of root governance changes or system publisher; only review artifact written",
+  "status": "current_snapshot_review_complete_repair_required",
+  "reviewed_at": "2026-10-09T13:17:39.431625+00:00",
+  "verdict": "FAIL",
+  "source_sha256": {
+    "plugins/skill-governance-hooks/scripts/hook-guard-rubric.py": "c08966731f66f4c0a1ae556d465c3cafbe506a5aaffcfb835bdd7a066030062d",
+    "scripts/guard-change-category.py": "df935d7e7d337d8cb3dbe48705ddc6e04663d30b1d6b2b762810e5a7ce8d5015",
+    "plugins/skill-governance-automation/scripts/guard-change-category.py": "df935d7e7d337d8cb3dbe48705ddc6e04663d30b1d6b2b762810e5a7ce8d5015",
+    "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py": "07892c2819524ebeb80395b6956a2045f2cf80f41664d2607d12813763b0cf4d",
+    "scripts/lint-entrypoint-artifact-first.py": "692529856c9a436fabed8e4fff7ef8492eec589723b360417796b124e5d44910",
+    "scripts/build-artifact-delivery.py": "5f2ec147fb73e8d3adcad5e77a17400ff771d75c019fa51ceb3c40d08c29a11e",
+    "plugins/ubm-goal-setting/scripts/publish-staged-files.py": "d904181c1bb233a12ad233cbf2189e5866614d91678ab70cb293f6e4f8b54a34",
+    "plugins/ubm-goal-setting/references/guarded-publication-contract.md": "b54aa369f2cf10d77ed5846a3ce2121051408e5923bd65fbf2daaed2d1b5b0b2",
+    "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py": "41ceffc72b31a77335c17fcaccbfd46721a82fa3bfaecd590a92806988af45ba",
+    "plugins/skill-governance-config/config/governance-policy.json": "b5a96e96aa14266b5c915308360dce1771afee97d7fcfbcb4eae0b5ed206c9f5"
+  },
+  "condition_matrix": {
+    "C1": "FAIL pending root repair: current SHA authorization and Step7 canonical contracts are sound, but compound guard invocation plus direct publish bypasses static direct-mutation detection",
+    "C2": "PASS: draft/manifest/official old hashes are checked before batch writes; path traversal, roots intersection, existing symlinks, foreign sources and duplicate targets fail; partial failure now returns saved paths and failed target",
+    "C3": "PASS: current operation alone is excluded from historical cooldown; all earlier matched file operations checked under current duration; approved current incident exception required, manual flag cannot bypass",
+    "C4": "PASS: explicit installed policy path added; root/distributed guard byte synchronization entered vendored registry, final-source parity/hash recheck pending"
+  },
+  "resolved_findings": [
+    {
+      "id": "GOV-BYPASS-001",
+      "condition": "C3",
+      "description": "unconditional --bypass-cooldown admitted nonincident change",
+      "resolution": "root restricted flag and automatic incident exception to approved current record and matching declared hash; independent temp probe returnsfalse for nonincident and SHA tamper test is present"
+    },
+    {
+      "id": "PUB-PARTIAL-001",
+      "condition": "C2",
+      "description": "partial IO failure lost prior saved paths",
+      "resolution": "system PublicationError carries saved paths and failed target; independent injected second os.replace failure leaves first path saved and reports it accurately; CLI test14PASS"
+    },
+    {
+      "id": "GOV-PARITY-001",
+      "condition": "C4",
+      "description": "distributed automation guard retained original bugs",
+      "resolution": "root notified and source byte synchronization plus vendored SSOT pair is in progress; final parity recheck required"
+    },
+    {
+      "id": "GOV-CROSS-CATEGORY-001",
+      "condition": "C3",
+      "severity": "medium",
+      "location": "scripts/guard-change-category.py:check_cooldown historical category filter",
+      "description": "same file previous P0 and current P1 skips past cooldown entirely; policy describes same-file consecutive changes and provides no category-equality exemption",
+      "intervention": "apply current category duration to all matched prior file operations; keep only current operation exclusion and approved incident exception",
+      "resolution": "root removed category-equality filter; historical same-file operation now applies current category duration independently of its old category; focused test PASS"
+    },
+    {
+      "id": "GOV-INSTALLED-POLICY-001",
+      "condition": "C4",
+      "severity": "medium",
+      "location": "scripts/guard-change-category.py:load_policy and automation copy",
+      "description": "only policy candidate is cwd/plugins/skill-governance-config/config/governance-policy.json, unavailable from normal installed consumer cwd",
+      "intervention": "accept explicit resolved absolute --policy path to config plugin and document caller root resolution; preserve repo default and failclosed errors",
+      "resolution": "root added absolute --policy and validated configured category/cooldown JSON; installed consumer-cwd explicit-policy test PASS"
+    },
+    {
+      "id": "RUNTIME-COMPOUND-DIRECT-001",
+      "condition": "C1",
+      "severity": "medium",
+      "location": "scripts/build-artifact-delivery.py:_direct_external_mutation_instruction",
+      "description": "line containing guard filename is skipped wholesale; canonical guard invocation followed by && python3 publish-staged-files.py escapes direct mutation deny",
+      "intervention": "skip only single canonical guard invocation, or inspect remaining command segment and reject compound/pipeline direct publisher",
+      "evidence": "independent actual function probe: standalone publish => direct mutation finding; guard execute && same standalone publish => None",
+      "resolution": "root parses guard invocation and rejects compound shell operators; independent 4 separator negative cases plus quoted data positive case PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "GUARD-COMMAND-SUBSTITUTION-001",
+      "condition": "C1",
+      "severity": "high",
+      "location": "scripts/build-artifact-delivery.py canonical-line skip; plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py:_canonical_guard_action",
+      "description": "Double-quoted command substitution is treated as data by shlex; a guard execute command can first run direct publication via --project-root \"$(python3 publish-staged-files.py ...)\" before the guard process exists. Static canonical skip and pending-hook canonical action both accept it. Generator comment claiming substitution rejection is inconsistent.",
+      "intervention": "reject executable shell substitutions/backticks outside literal single-quoted data before canonical classification in generator and central pending-hook checker; preserve literal data strings and safe variables",
+      "evidence": "independent function probe: central _canonical_guard_action returns execute for a command containing project-root double-quoted direct-publisher substitution"
+    }
+  ],
+  "verification": [
+    {
+      "kind": "independent current temp-filesystem probe",
+      "result": "current approval SHA PASS, postreview tamper blocks approval PASS, prior samecategory change retained PASS, nonincident bypass rejected PASS, hook symlink alias denied and noncanonical neighbor allowed PASS, publisher injected second replacement failure reports first savedpath and failed second target PASS"
+    },
+    {
+      "kind": "publisher functional tests independently executed",
+      "command": "python3 -m pytest -q plugins/ubm-goal-setting/tests/test_guarded_publication.py",
+      "result": "14PASS/0.67s; includes central argv digest mismatch block and consumed authorization reuse rejection"
+    },
+    {
+      "kind": "parent-reported tests",
+      "result": "root32+119PASS (reported; no duplicate execution)"
+    },
+    {
+      "kind": "independent repaired-boundary tests",
+      "command": "pytest root guard selected approval/hash/crosscategory/installed-policy tests + artifact delivery compound command selected tests",
+      "result": "12PASS/0.26s; no actual repository git operations performed by these selected tests"
+    }
+  ],
+  "scope_limits": [
+    "No actual user or live external publication was performed. Central guard receipt tests are temporary local fixtures.",
+    "Publisher does not itself verify authorization receipts; exact argv execution is routed by parent contract through central guard and static direct-mutation lint.",
+    "Publisher preflights all entries and atomically replaces each file; whole batch transaction/rollback is explicitly not promised.",
+    "Symlink and path checks reject observed components and recheck before use; no race-free hostile filesystem claim is made.",
+    "Hook covers Write/Edit/MultiEdit canonical rubric paths; explicit ALLOW_RUBRIC_EDIT=1 and malformed-input legacy failopen are existing described behaviors, not permission receipt functionality."
+  ],
+  "approval_legacy_boundary": "Legacy hashless approval is accepted only when the caller explicitly identifies its current proposal_id; default automatic lookup requires SHA binding. Old legacy records still contribute past cooldown.",
+  "reviewed_source_bundle_sha256": "4460b84a6cff731fe7a4cae1a2e8a689c7c85285b5912ef4011ce498e5b2c686",
+  "distributed_guard_byte_parity": true,
+  "final_freeze_recheck": "Publisher current bytes were independently re-read after PublicationError change; final PASS requires command-substitution repair and a new dependency/source hash snapshot. This FAIL applies to recorded current source hashes."
+}

@@ -1,0 +1,17 @@
+{
+  "artifact": "plugins/ubm-goal-setting/commands/ubm-consult.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 203ccc0dc1a16a7f654b80431e15af65782346d8886d8fd34f842e99b712adfe をレビュー。実行検証あり）。範囲: 40行（origin/main から +6/-6、HEAD から +2/-2）。allowed-tools は「Read, Skill」で最小、argument-hint は「[相談内容]」。確かめたこと: 共通の実行検証: `validate-frontmatter.py` → rc=0。`lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills` → 「Step 7 全5条件 PASS・command の Skill 経路 PASS (7 skills)」rc=0（Skill を許可した command が名指しする run-* の実在と disable-model-invocation を検査する）。`lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml` → OK（command→skill の calls 辺6本がある）。`pytest -p no:cacheprovider -q plugins/ubm-goal-setting/tests` → 961 passed（rc=0）。CM-001（argument-hint）・CM-003（実在する入口 skill の名指し）を満たし、skill 側の argument-hint と一致する。skill 側は disable-model-invocation: false で、Skill ツールから呼べる。個別: 18行の「スキルは disable-model-invocation: false」は run-ubm-consult/SKILL.md 3行と一致する。24行の topic は SKILL の arguments [topic]、25行の user_topic は prompts/R1-intake-issue.md 45行（引数または最初の発話）と一致する。14行の4つの支援モードは SKILL 205行、35行の相談記録の置き場（eval-log、vault の外）とガードの許可範囲のほうが広いことは SKILL 119・215行と一致する。前回の指摘（引数が空のときに command が自分で質問する矛盾、lint の内部事情の記述）は直っている。指摘: [低] 3行の description と 34行の責務境界は、目標設定への誘導だけを書き、挑戦宣言の作成を run-ubm-challenge（/ubm-challenge）へ誘導することを書いていない。skill 側は SKILL 119行・R1-intake-issue.md 36・112行で challenge を誘導分岐として持つ。-3。DEDUCTION: -3 → 97。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-a1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

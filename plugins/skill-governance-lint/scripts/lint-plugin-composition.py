@@ -41,7 +41,11 @@ Usage:
   lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml
   lint-plugin-composition.py --self-test
 
-Exit 0 = ok (WARN は許容), 1 = violation, 2 = usage/parse error.
+Exit 0 = ok (WARN は許容), 1 = violation (入力の parse/IO 不能を含む), 2 = usage error。
+
+parse/IO 不能は 1 側に置く。2 を usage error と共有すると「引数を間違えただけ」と
+読み分けられ、構造検査が 1 件も走っていないことが「違反 0 件」と同じ姿になる。
+その状態では _unmeasured_finding() が未実施 N 件を明示する。
 """
 from __future__ import annotations
 
@@ -1048,12 +1052,41 @@ def check_outputs(outputs: list[str], plugin_dir: Path) -> list[str]:
     return warnings
 
 
+STRUCTURAL_CHECK_NAMES = (
+    "semver",
+    "duplicate-refs",
+    "ref-exists",
+    "public-surface-parity",
+    "hook-wiring",
+    "dependency-graph",
+    "external-dependency-graph",
+    "skill-script-dependencies",
+    "command-dispatch-dependencies",
+    "cross-plugin-dependencies",
+    "external-dependencies",
+)
+
+
+def _unmeasured_finding(path: Path) -> str:
+    """parse/IO 不能で構造検査が 1 件も走らなかったことを finding として明示する。
+
+    parse が壊れている間は caps/dependencies が揃わないため構造検査は走らせられない。
+    黙って打ち切ると「違反 0 件」と「検査 0 件」が出力上は同じ姿になり、実際に
+    semver 違反と ref 重複を同時に仕込んだ入力が parse error だけを出して
+    違反 2 件を落とした (実測)。分母を添えて未実施であることを残す。
+    """
+    return (
+        f"{path}: parse/IO error のため構造検査 {len(STRUCTURAL_CHECK_NAMES)} 件は"
+        f"未実施 (violation 0 件ではない): {', '.join(STRUCTURAL_CHECK_NAMES)}"
+    )
+
+
 def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
     """Returns (findings, warnings, error_exit). error_exit は parse/IO 不能時のみ非 None。"""
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as e:
-        return [f"{path}: read error: {e}"], [], 2
+        return [f"{path}: read error: {e}", _unmeasured_finding(path)], [], 2
     plugin_dir = path.parent
     caps, outputs, parse_errors = parse_composition(text)
     dependencies, dependency_parse_errors = parse_dependencies(text)
@@ -1061,9 +1094,20 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
     parse_errors.extend(dependency_parse_errors)
     parse_errors.extend(external_parse_errors)
     if parse_errors:
-        return [f"{path}: {e}" for e in parse_errors], [], 2
+        return (
+            [f"{path}: {e}" for e in parse_errors] + [_unmeasured_finding(path)],
+            [],
+            2,
+        )
     if not caps:
-        return [f"{path}: no capabilities entries parsed (capabilities: section missing or empty)"], [], 2
+        return (
+            [
+                f"{path}: no capabilities entries parsed (capabilities: section missing or empty)",
+                _unmeasured_finding(path),
+            ],
+            [],
+            2,
+        )
 
     plugin_json: dict | None = None
     pj_path = plugin_dir / ".claude-plugin" / "plugin.json"
@@ -1072,20 +1116,48 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
             plugin_json = json.loads(pj_path.read_text(encoding="utf-8"))
             plugin_json = _resolve_hook_manifest(plugin_json, plugin_dir)
         except (OSError, json.JSONDecodeError, ValueError) as e:
-            return [f"{pj_path}: read/parse error: {e}"], [], 2
+            return [f"{pj_path}: read/parse error: {e}", _unmeasured_finding(path)], [], 2
 
+    # 名前付きテーブルで回す。_unmeasured_finding が「未実施 N 件」の分母として同じ
+    # roster を参照するので、検査を足すときは STRUCTURAL_CHECK_NAMES も同時に動く。
+    checks = {
+        "semver": lambda: check_semver(text),
+        "duplicate-refs": lambda: check_duplicate_refs(caps),
+        "ref-exists": lambda: check_ref_exists(caps, plugin_dir),
+        "public-surface-parity": lambda: check_public_surface_parity(caps, plugin_dir),
+        "hook-wiring": lambda: check_hook_wiring(caps, plugin_json),
+        "dependency-graph": lambda: check_dependency_graph(
+            caps, dependencies, plugin_dir
+        ),
+        "external-dependency-graph": lambda: check_external_dependency_graph(
+            caps, external_dependencies, plugin_dir
+        ),
+        "skill-script-dependencies": lambda: check_skill_script_dependencies(
+            caps, dependencies, plugin_dir
+        ),
+        "command-dispatch-dependencies": lambda: check_command_dispatch_dependencies(
+            caps, dependencies, plugin_dir
+        ),
+        "cross-plugin-dependencies": lambda: check_cross_plugin_dependencies(
+            dependencies, plugin_dir
+        ),
+        "external-dependencies": lambda: check_external_dependencies(
+            external_dependencies, plugin_dir
+        ),
+    }
+    if set(checks) != set(STRUCTURAL_CHECK_NAMES):
+        # roster が実装から外れたら「未実施 N 件」の分母が嘘になるので先に落とす。
+        return (
+            [
+                f"{path}: internal: structural check roster drift: "
+                f"{sorted(set(checks) ^ set(STRUCTURAL_CHECK_NAMES))}"
+            ],
+            [],
+            2,
+        )
     findings: list[str] = []
-    findings += check_semver(text)
-    findings += check_duplicate_refs(caps)
-    findings += check_ref_exists(caps, plugin_dir)
-    findings += check_public_surface_parity(caps, plugin_dir)
-    findings += check_hook_wiring(caps, plugin_json)
-    findings += check_dependency_graph(caps, dependencies, plugin_dir)
-    findings += check_external_dependency_graph(caps, external_dependencies, plugin_dir)
-    findings += check_skill_script_dependencies(caps, dependencies, plugin_dir)
-    findings += check_command_dispatch_dependencies(caps, dependencies, plugin_dir)
-    findings += check_cross_plugin_dependencies(dependencies, plugin_dir)
-    findings += check_external_dependencies(external_dependencies, plugin_dir)
+    for name in STRUCTURAL_CHECK_NAMES:
+        findings += checks[name]()
     warnings = check_outputs(outputs, plugin_dir)
     return (
         [f"{path}: {f}" for f in findings],
@@ -1211,22 +1283,19 @@ def main(argv: list[str]) -> int:
         return 2
     all_findings: list[str] = []
     all_warnings: list[str] = []
-    parse_error_seen = False
     for path in targets:
-        findings, warnings, err = lint_composition(path)
-        if err is not None:
-            parse_error_seen = True
-            all_findings.extend(findings)
-            all_warnings.extend(warnings)
-            continue
+        findings, warnings, _err = lint_composition(path)
         all_findings.extend(findings)
         all_warnings.extend(warnings)
     for w in all_warnings:
         sys.stderr.write(w + "\n")
     if all_findings:
+        # 入力の parse/IO 不能も violation として 1 を返す。usage error と同じ 2 に
+        # 丸めると「引数を間違えただけ」と読み分けられ、同じ run に混ざっていた
+        # 他ファイルの本物の violation まで「検査 FAIL ではない」側へ落ちる (実測)。
         for f in all_findings:
             sys.stderr.write(f + "\n")
-        return 2 if parse_error_seen else 1
+        return 1
     sys.stdout.write(
         f"OK: {len(targets)} composition file(s) passed"
         f" ({len(all_warnings)} warning(s))\n"

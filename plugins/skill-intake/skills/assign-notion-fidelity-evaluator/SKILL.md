@@ -3,7 +3,7 @@ name: assign-notion-fidelity-evaluator
 description: Notion ページを描画する直前に粒度を検証したいとき、info-collector-agent ページと同等の section 充足度を section_canonical_map 基準で機械検証したいときに使う。
 allowed-tools:
   - Read
-  - Bash
+  - Bash(python3 *)
   - Grep
   - Glob
 kind: assign
@@ -16,7 +16,10 @@ source-tier: internal
 last-audited: 2026-05-24
 audit-trigger: template-change
 hierarchy_level: L1
-rubric_refs: [ref-output-routing]
+# 以前の rubric_refs: [ref-output-routing] は外した。ref-output-routing は出力先 adapter を選ぶ契約で
+# rubric.json を持たず、出力先が固定のローカルファイルのこの skill とは関係が無い (harness-aor)
+completeness_exempt:
+  - "rubric: 採点は rubric.json の観点別採点ではなく、重みを references/granularity-rubric.md、閾値を references/fidelity-check-rules.md に置き、scripts/validate-notion-fidelity.py が決定論で算出する (harness-aor)"
 role_suffix: evaluator
 owner: team-platform
 since: 2026-05-22

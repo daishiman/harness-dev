@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-requirements",
+  "args": "handoff --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements3/fx --feature-id LT-FEATURE-001 --package /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements3/fx/system-plan/LT-FEATURE-001/package.json",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "requirements handoff が作られていない。task.md の合格条件「handoff が実在し、capability-build / task-graph 向けの要件・13 task・lineage / digest を持つこと」を満たさない。fixture の system-plan/LT-FEATURE-001/ に handoff の出力は無く、.dev-graph/handoff も無い。trial の開始 (workdir/start.epoch) より後に fx の中で更新されたものは .git の dir の mtime だけ。",
+      "三 gate の照合 validate-readiness-binding.py が exit 2 で止まった。report は出ず、stderr は `[Errno 2] No such file or directory: .../fx/system-plan/LT-FEATURE-001/dev-graph-registration.json` (transcript L95 の呼出しと L101 の結果)。このため guard-requirements-handoff.py まで進めず、handoff は 0 件。",
+      "FAIL の原因は fixture にある。被験 skill でも隔離環境でもない。今の版の binding script は、package dir の dev-graph-registration.json (system-dev-planner の promote-system-plan.py が作る)、その中の promotion_receipt、C02 の register-package receipt を必須の入力として読む (ws/plugins/dev-graph/scripts/validate-readiness-binding.py 119-125 行)。fixture にはこの 3 つがどれも無い。graph.json の node は LT-ARCH-001 と LT-FEATURE-001 の 2 つだけで、package の 13 member は登録されていない。fixture-provenance.json を見ると build-system-handoff.py だけが走っていて (receipt_artifacts_created: false)、promote と C02 登録は走っていない。guard.jsonl は 15 件すべて allow で deny は 0 件なので、隔離の遮断は原因ではない。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "transcript_sha256": "a83694936a3c8b3306bd370b560527af0eb347bba11e0770440d150abae2d260",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 204.0
+  },
+  "scenario_id": "C04-OUT1-positive-ready-handoff-fixture-standard-v2"
+}

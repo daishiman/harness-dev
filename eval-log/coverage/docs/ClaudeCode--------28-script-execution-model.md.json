@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/28-script-execution-model.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":90,"notes":"裏取り: lint-script-naming.py(./scripts/)/lint-script-frontmatter.py/scripts/adapters/ 配下 sink_*.py 一式 実在、OK/EXCEPTION/PENDING_RENAME/VIOLATION ステータス enum が lint実装と整合、参照章22/31 存在。dangling参照は検出されず。実行コンテキストA-E分類・責務マトリクス・PEP723風frontmatter規格・命名規約・付録チェックリストまで一貫し内部矛盾なし。4本中最も実装整合・構造が高い"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 0a110cfe116abc304e0166bd8d15b291e864db89be107afac92db70ff74614a0 をレビュー。実行検証あり）。範囲: 全474行と git diff origin/main（+32/-6、すべて未コミット）。前回レビューした版（sha256 d7bdfbb4…）からの変化は、§2（58行）の SessionStart を C に数える注、§3.1（102行）の SessionStart で sync を許す条件、§4.1 の拡張子の記述（142行）、469行の write-scope の括弧の追記。確かめたこと: (1) §3 の代表5本の `# contexts:` を読んだ。sync-native-surfaces は [A, C, E]、install-local-plugins・manage-build-lease・migrate-plan-layout は [A, E] で、§3 の表（sync の C は「-」、install・manage・migrate の C は x）と合う。(2) sync-native-surfaces の C は SessionStart だけ。hooks.json と .codex/hooks/registry.json の SessionStart から auto-sync-on-session-start.py が `--apply --json` で呼ぶ。同じ session での再発火は900秒の debounce で抑え、lock の TTL は300秒。§3.1 の「1セッションに1回」「lock と再入防止」と合う。PreToolUse・PostToolUse からの呼び出しは無い。(3) 142行の拡張子の記述（.py と .sh を通し、.ps1 は置けない。名前の lint は .py だけを見て、`.` 区切りの sub-target を通さない）は、lint-skill-tree の SCRIPT_EXTS と、lint-script-naming の VALID_NAME・502行に合う。fixture で .ps1 は exit 1 になった。(4) 動詞13語は ALLOWED_VERBS と CONVENTIONS.md 153行と一致する。実 repo の lint-script-naming は VIOLATION=0・stale=0・exit 0。前回の指摘の扱い: [中] 代表 script の contexts が表と食い違う点は解消（script の宣言を直し、SessionStart の扱いを §2・§3.1 に書いた）。[低] §4.7（190行）の「実行ステータスは3種」は残る。表は4行で、PERMANENT_EXCEPTION と台帳の stale（ledger_stale_unreferenced、exit 1）が無い。[低] §7.1 の雛形（298行）の write-scope の候補「none | output-dir | workspace」は残る。469行の括弧で、状態を書き換える動詞の固定の書き込み先には触れたが、雛形の候補と469行のチェックの集合はそろっていない。[低] §4.1.1（146行）の「前の8つは既にある状態を書き換えない」と、format（§3.1 で Hook・CI の自動修正）の食い違いは残る。[低] 183行の creator-kit/scripts/adapters/ と466行の creator-kit/manifest.json は残る。実物は scripts/adapters/ と installers/manifest.json。指摘（新規）: [低] record の代表の plugins/harness-creator/skills/run-build-skill/scripts/record-verification-evidence.py は `# contexts: [A, C]`（13行）と宣言する。しかし §3.1（104行）は、C で許す record を「追記だけで、失敗しても tool 呼び出しを止めない (exit 0)」ものに限る。この script は失敗すると exit 2 を返す（67・101・128・144行）。今は hook から呼ばれていないので実害は無いが、本章のチェックリスト「contexts が3節のマトリクスと矛盾しない」を、代表の例が満たさない。直し方: contexts を [A, B] にするか、§3.1 の条件を満たす script を代表にする。DEDUCTION: §4.7 のステータスの数 -2、write-scope の候補 -2、format の境界 -2、creator-kit のパス -2、record の代表の contexts -2 → 90。前回の [中] は直り、SessionStart の扱いは実物の配線と合う。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "internal-consistency",
+    "impl-alignment",
+    "completeness",
+    "structure"
+  ]
+}

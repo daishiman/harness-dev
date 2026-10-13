@@ -2,20 +2,20 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "672e799effb3efca66ba08e2e2e4949836f5ad6dab2119835f6c940010c5be8d"
+    "skill_md_sha256": "61c26207f905da89da54ef4041971237cfcda91f15a6f725c3174e00577b6996"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-12T10:25:46Z",
+  "iterations": 2,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
+    "omission": 1,
     "inconsistency": 0,
-    "dependency_break": 0,
+    "dependency_break": 1,
     "smell": 1
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:38:06Z",
-  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -28,19 +28,18 @@
       "prompt_quality"
     ],
     "positive_feedback": [
-      "前回の low / omission (C06 出力を誰がどこへ保存するかが未規定) は解消した。R2-delegate 2.4 (L47) が『C06 の Task 結果 JSON を無改変のまま評価出力先 (仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ Bash で保存し、そのパスを R1 へ渡す』と定め、理由 (`--hearing` はファイルパスを取り、C06 は Read のみで書けない) も添えている。受け手の R1-score 4.3 (L77) も Bash の用途を『検証スクリプトの実行と、評価出力先への `hearing-audit.json` と `--report` 用レポートの書き出し』に広げ、渡す側と受ける側の記述が一致した。",
-      "前回の low / inconsistency 2 件は解消した。aspect-criteria.md 1a の有効な置き換え (c) (L65) に『旧 entry より後の `answered_at`』が入り、正本の neutral-question-criteria.md と R6-audit-hearing の順序条件にそろった。INDETERMINATE 行 (L60) は『誘導の検出 (軸 2) の qa_id が qa_log に無い』に絞られ、`derive_hearing_verdict` が qa_id の実在を軸 2 でしか見ない実装と一致した。",
-      "前回の low / inconsistency (SKILL.md の root 解決なしの起動指示) は解消した。Step 2 (L146) の `--matrix` 回収と Step 4 (L154) の `--report` 検証が、Step 1 (L140)・Step 2 後段 (L148) と同じ `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py\" ...` の形になった。SKILL.md 内の実行形はすべて root 解決付きで、install 先の cwd に依存しない。",
-      "前回の smell 2 件は解消した。L81 は『run-system-spec-elicit の R6-audit-hearing の監査 5 軸』と別 skill を名指しし、SKILL.md 単独で参照先が読める。L75 の見出しは『評価主体の割当に注意が要る 3 観点』になり、L77 の説明文も『監査 sub-agent が担う 2 観点と、独立 auditor を立てない設計知識反映』と表の 3 行の内訳を述べて、見出しと行の主張がそろった。",
-      "兄弟参照と依存先を確かめた。prompts の `../../../agents/*.md` 3 件、`../../run-system-spec-elicit/prompts/R6-audit-hearing.md`、references の `../../run-system-spec-elicit/references/neutral-question-criteria.md`、plugin root の `scripts/validate-coverage-matrix.py`・`validate-knowledge-graph.py` はすべて実在する。いずれも同じ plugin 内の参照で、install 先で `<plugin root>/..` を越える兄弟 plugin 参照は無い。plugin の tests は 591 件すべて通った (-p no:cacheprovider、バイトコードは書いていない)。"
+      "依頼7の1回目に挙げた low 1・3・4 が直った。low 1: 完了条件 L71 と R1 5.3 に `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` の exit 0 が入り、R1 2.4・Step 4 L159 と一致する。low 3: R1 4.3 の保存先が `<absolute path>` から `<保存先>` (引数 output の値。相対なら cwd から解決) になり、C19 が渡す repo 相対の `--output` と矛盾しない。low 4 (C の evaluator の側): Step 4 L156 と R1 2.3 に、相対の spec_dir と output を cwd から解決し、入力の読み込み・書き出し・`--report --spec-dir` の検証が同じ cwd を基準にすると書かれ、aggregate-completeness.py の docstring (L202「相対パスは cwd から解決し」) と一致する。",
+      "spec_dir の契約が、report の例 (L105)・Step 4 (L157-159)・Gotcha 6・R1 2.4 と、決定論の照合 (spec_dir_violations: report に spec_dir が無い・同じ dir に解決しないときは spec_dir_mismatch で exit 1、存在しない --spec-dir は exit 2、--report なしの --spec-dir は usage エラー) でそろい、test 4件を含む 162 件が通る。--spec-dir を付けないときの aggregate の出力は前と同じで、後方互換を保つ。guard に止められたときに spec_dir の値を変えて回避することを Gotcha 6 と R1 2.4 が禁じ、保存先を system-spec/ の外の literal にして書き直す道を示す。guard の Bash の判定 (書込み先が静的に読め、.md でも spec-state.json でもなければ曖昧と扱わない) は Step 4 L158 の説明と合う。"
     ],
     "negative_feedback": [
-      "[low / smell] 3.2 ツール欄が、今回 4.3 / 2.4 で加わった Bash の用途に追随していない。R1-score 3.2 (L62-64) は python3 と Read / Task だけを挙げ、Bash を挙げていないが、同じ prompt の 4.3 (L77) は Bash による `hearing-audit.json` と評価レポートの書き出しを認めている。R2-delegate 3.2 (L60) は Bash の用途を『決定論ゲート回収』とだけ書き、2.4 (L47) で定めた `hearing-audit.json` の保存を含めていない。本文の規則 (2.4・4.3) は正しく、実行者はそちらを読めば迷わないので smell に留める。直し方: R2-delegate 3.2 を『Bash (決定論ゲート回収と `hearing-audit.json` の無改変保存)』に、R1-score 3.2 に『Bash (4.3 の範囲の実行と書き出し)』を足す。"
+      "omission (low、前から残る。完了条件に aggregate の exit 0 が入ったので目立つようになった。Beads 行き): spec_dir は任意の引数 (argument-hint L7、R1 2.3 で required=no) だが、省いたときにレポートの `spec_dir` に何を書くか、完了条件 (L71・R1 5.3) と Step 4 の `--spec-dir <spec_dir>` に何を渡すかが書かれていない。直し方: 既定値 (例: cwd の `system-spec`) を R1 2.3 に書き、省いたときもその値をレポートと照合に使うと書く。",
+      "dependency_break (low、今回 cwd の基準を明記したことで表に出た): Step 4 L156 と R1 2.3 は相対の output を cwd から解決するとし、L158 は guard が「書き先を判定できて保護領域の外ならば」通すとする。guard は相対の書き先を CLAUDE_PROJECT_DIR (設定されていて dir のとき。無ければ cwd) から解決する (project_root() L168-175、_resolve_target_path L365-372) ので、CLAUDE_PROJECT_DIR と cwd が違うと、guard が判定する書き先と実際の書き先がずれる。C19 は C24 の照合と起動前の cwd の確認でこの2つを一致させるが、ほかの呼び出し側への条件は書かれていない。保護対象は確定章の .md と正本の spec-state.json で、レポートは .json なので、実害の筋は狭い。直し方: Step 4 に「output は絶対パスで渡すか、cwd が CLAUDE_PROJECT_DIR と同じときだけ相対で渡す」と書く。",
+      "smell (low、前から残る。Beads 行き): lint-skill-tree が LS-203 (規約外の top-level dir `tests/`。許可は examples・hooks・log・prompts・references・schemas・scripts・templates) を警告する。tests/ は HEAD からある。直し方: test を plugin の tests/ に移すか、許可する dir の規約に tests を足す。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual: team-lead request to re-take content-review of the completeness evaluator after the spec_dir contract was added (report example, Step 4, Gotcha 6, R1-score, schema description, aggregate-completeness.py --spec-dir) and the follow-up fix (cwd as the base of relative spec_dir/output, aggregate exit 0 in the completion condition, R1 4.3 save path); incremental focused combined review, 7th request, 2nd pass on this skill",
     "next_action": "none"
   },
-  "notes": "install-portability の focused combined content review (incremental profile、builder とは別 context の独立 evaluator、1 回のみ)。30 思考法は実施していない。読んだもの: 前回の elegance / rubric verdict (sha 4bb8fe5d…、PASS、low 4 件・smell 2 件)、SKILL.md 全文 (sha256 672e799e…)、`git diff HEAD` の当該 skill 全体 (SKILL.md・prompts/R1-score.md・prompts/R2-delegate.md・references/aspect-criteria.md)、R1-score と R2-delegate の全文、aspect-criteria.md 1a、依存先として aggregate-completeness.py の `derive_hearing_verdict` / `_supersession_gap`、run-system-spec-elicit の R6-audit-hearing.md と neutral-question-criteria.md の置き換え条件、agents/system-spec-hearing-auditor.md の差分。前回 low の解消状況: 6 件すべて解消した。(1) omission (C06 出力の保存先未規定) は R2-delegate 2.4 L47 と R1-score 4.3 L77 で解消。(2) inconsistency (1a (c) の順序条件の欠落) は L65 で解消。(3) inconsistency (INDETERMINATE 行が広すぎる) は L60 で軸 2 に絞られ解消。(4) inconsistency (L146 / L154 の root 解決なしの起動指示) は両行が root 解決付きの形になり解消。(5) smell (L81 の『R6』が別 skill と読めない) と (6) smell (L75 の見出しと行の不一致) は文言の修正で解消。確かめたこと: (a) 矛盾なし。SKILL.md・R1・R2・1a・スクリプトの記述は、`--hearing` がファイルパスを取ること、C06 の verdict を再導出すること、置き換えの順序条件、INDETERMINATE の範囲で一致する。(b) 漏れなし。C06 出力の受け渡しは渡す側 (R2 2.4) と受ける側 (R1 4.3) の両方に書かれた。(c) 記述規約は、3.2 ツール欄が新しい Bash の用途を挙げない smell 1 件だけ。(d) 依存関係整合: 兄弟参照 (別 skill の prompts / references と plugin の agents / scripts) はすべて実在し、plugin を越える参照は無い。plugin の tests は 591 passed。(e) rubric の high severity は 0 件。判定理由: high・medium は 0 件で smell 1 件だけなので verdict=PASS、next_action=none とし、smell は negative_feedback に残した。点数は付けていない。frontmatter は assign kind として `feedback_contract.skip_reason` だけを持ち criteria を携帯しないので、criteria_evaluated は既存 verdict と同じ 6 観点 id (scoring-rubric.json の aspects) を引き継いだ。PASS の射程は design claim (SKILL.md と参照先の静的な設計 adequacy) に限る。実際の spec-set に対する完成度評価の実行結果、C06 / C07 / C08 の実際の fork の挙動、`hearing-audit.json` の保存が実運用で成立するかは検証していない。"
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。rubric 側の PD-002 (medium、前から) は rubric-verdict.json に記録した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。この skill を見たのは2回目で、1回目 (依頼7の1回目) は C19 の medium C の evaluator の側と low 1・3・4 を挙げ、verdict を書かずに team-lead へ報告した。どれも作者とは別の修正役が直した。前の verdict (sha 4ee7c32e…、iterations 1) は allowed-tools の1行の差分に対するもので、今回の対象は spec_dir の契約の追加とその後の修正である。SKILL.md と R1-score の全文、aggregate-completeness.py (spec_dir_violations と CLI)、schema の description、test_aggregate_completeness.py、guard-confirmed-chapter-overwrite.py の project_root() (L168-175)・_resolve_target_path (L365-372)・Bash の書き先判定、呼び出し側の C19 の R2・R3 と C02 の _spec_confirmation で確かめた。aggregate-completeness.py・schema・tests・R2-delegate は、C の修正の前に取った控えから変わっていない。criteria_evaluated は、kind=assign で feedback_contract.criteria を持たない (skip_reason) ので、前の verdict と同じく6観点を置いた。PD-002 は team-lead の判断で、前からある medium として PASS の中に載せた。low は team-lead の判断で直さずに Beads に回す。read-only で回したもの (C の修正の後): system-spec-harness の evaluator の tests・test_guard_hook・test_hearing_audit_contract (162 passed)、dev-graph の test_acceptance_gaps_a1・test_semantic_contract_boundaries_c10_c11_c24・test_skill_criteria_contracts・test_skill_mass_production_contracts・test_skill_criteria_evidence (118 passed、8 failed。7件は live trial の取り直しを待つ C01・C03・C05・C14・C15・C18・C19 の behavior closure digest の古さで、この verdict の対象外。1件はこの verdict が解消する C19 の content-review の stale-sha)、test_build_graph_node (54 passed。C の修正の前に回した。build-graph-node.py は不変)、lint-plugin-composition (dev-graph と system-spec-harness で OK。WARN 4件は生成前の output path) と test_skill_governance_lint__lint_plugin_composition (58 passed)、lint-skill-name / lint-skill-tree (2つの skill で exit 0。evaluator に LS-203 の警告)、lint-skill-description (OK=189)、lint-entrypoint-artifact-first (OK)、build-artifact-delivery --check (OK、22 plugins)。build-plugin-release --check は dev-graph 0.1.19 と system-spec-harness 0.1.22 の [changed] で rc 1 だが、版と台帳は別の作業の範囲で、この verdict は触れていない。この review の操作は、4つの verdict のほかに作業ツリーを変えていない。"
 }

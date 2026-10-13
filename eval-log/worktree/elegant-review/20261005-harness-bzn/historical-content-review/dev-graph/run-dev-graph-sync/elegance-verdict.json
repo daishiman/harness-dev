@@ -1,0 +1,81 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "skill_md_sha256": "74d973db032de657f3fe42bef302181033426c133e8dd3c3d973001c9f2b969a"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "issue-tiebreak-and-typed-field-export focused combined content review, iteration 2 (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-05T05:19:45Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3",
+      "OUT4",
+      "OUT5",
+      "OUT6",
+      "OUT7",
+      "OUT8",
+      "OUT9"
+    ],
+    "positive_feedback": [
+      "iteration 1 の medium は解消した。diff-github-project-fields.py は、Issue linkage を持つ node への import を、同じ graph_revision の Issue 計画にその node の行 (exports / imports / confirmations / conflicts / missing_issues) が 1 つも無いときだけ通す。通る node は title と state が両側で一致しているので、import が updated_at を進めても Issue 計画に行は生じない。このため反映の順序を取り違えても壊れない。Projects の update_input を先に当てても動くのは片付いた node だけで、古い revision で作った Issue の update_input は C02 が graph_revision_conflict で拒否する。scratchpad の probe (test_build_graph_node.BuildGraphNodeTest を継承し、CLI の update / link-github を実際に当てた) で、iteration 1 の 2 つの再現を確かめた。(A) GitHub が 1 秒後に title を変え、Project の priority が remote だけで変わる場合、import は reason=issue-unsettled で held になる。Issue を反映して計画し直した後に import が通り、最後の title は GitHub 側の値で、Issue 計画は changes=0 / converged だった。(B) 同時刻の確認フラグは、decision が無いあいだ消えない。",
+      "既定の向きが fail-closed である。--issue-plan が無ければ Issue linkage を持つ node への import はすべて held (issue-plan-missing) になる。別の graph_revision で作った Issue 計画は ContractError (exit 2) で拒否される。export は node に触れないので保留しない。held の import を持つ link は link_input に入らず、import を反映した後の周で記録される。probe で、解除後の周に link_input が 1 件出て、sync_state=synced、snapshot が priority=P3 に進み、その次の周は Projects も Issue も changes=0 / converged になることを確かめた。",
+      "文書と実装は一致している。SKILL.md 手順 3 の「順序は Issue が先」の項目、R2 と R3 の Layer 3、2 つの script の docstring、header の inputs / outputs、plan の next の案内が、保留の条件 (行の種類、--issue-plan が無い場合、別 revision の拒否) を同じ内容で書いている。新しい test_project_field_import_waits_while_the_linked_issue_is_unsettled は、issue-plan-missing と issue-unsettled の保留、保留中に link_input と update_input が出ないこと、確認フラグが残ること、別 revision での exit 2、decision を反映した後の解除、解除後に Issue 側が反転しないことを固定している。",
+      "`pytest plugins/dev-graph/tests/test_build_graph_node.py -k \"project_field or issue or gh_bridge or link_github\" -p no:cacheprovider` は新しい test を含めて 10 passed、test_runtime_coverage.py の gh_bridge は 1 passed だった。lint-script-naming.py は VIOLATION=0、lint-prompt-contract-drift.py は fatal=0、lint-skill-tree.py は run-dev-graph-sync について ok だった。"
+    ],
+    "negative_feedback": [
+      "[解消済み] iteration 1 の medium「Issue の LWW は node の updated_at を比べるが、sync 自身の Projects field import (C02 update) も同じ updated_at を進める。Issue と Projects の反映順序の規則が無い」は解消した。Issue 側が片付くまで Projects import を held に回す仕組みと、SKILL.md 手順 3 / R2 / R3 の順序の規則と、それを固定する test が入った。iteration 1 の 2 つの再現 ((A) title の向きが反転する、(B) 同時刻の確認フラグが decision 無しに消える) は、どちらも起きなくなった (positive_feedback 参照)。",
+      "[low / inconsistency] 新規。今回の修正で重くなったもの。保留の条件は Issue 計画の行がどれか 1 つでも残ること (conflicts と missing_issues を含む) である。一方で diff-github-issues.py の next は、exports / imports / confirmations が無ければ、conflicts や missing_issues が残っていても converged を返し、changes=0 になる。probe では、Issue が読めない状態が続くと、Issue 計画は毎周 converged なのに、Projects 計画は毎周 held=1 で「settle the linked Issues (apply the Issue plan or confirm its flags)」と案内した。反映する行も確認するフラグも無いので、この案内には従いようがない。remote-reopen、no-updated-at、unsupported-export (reopen)、missing_issues を誰がどう片付けるかは、iteration 1 から low のまま文書に無い。それが今回から、その node の Projects import と link の記録も止めるようになった。link-github は issue_linkage を外さず、R4 は tombstone でも linkage を残すので、Issue が削除や移管で読めなくなり Project item が残った場合は、保留を解く経路が無い。held の行は reason=issue-unsettled だけを持ち、どの Issue 行が止めているかを示さない。書込みは 0 のままで安全側なので low とする。Issue の next を行の残りと揃えるか、held に止めている Issue 行の kind を載せ、conflict と missing の片付け方を R6 / R4 に書くことを勧める。",
+      "[low / smell] 新規。--issue-plan の照合は graph_revision だけで、渡された計画が Issue の計画かどうかを確かめない。2 つの planner はどちらも schema_version 1.0.0 と graph_revision を出し、exports / imports / conflicts のキーも共通である。probe で、行の無い Projects 計画を --issue-plan に渡すと保留が外れ、import を当てた後の Issue 計画は、同時刻の確認フラグ 1 件が 0 件になり、title は local-newer の export に変わった (iteration 1 の再現 (B) と同じ結果)。運用の取り違えが要る経路だが、fail-closed にするなら confirmations / missing_issues キーの存在か planner の識別子を確かめることを勧める。",
+      "[low / omission] 新規。held が、R5 (dry-run の反映予定差分は exports・imports・confirmations・conflicts をそのまま提示する)、R6、SKILL.md の出力契約 (188 行) と report の列挙 (204 行) に無い。dry-run の提示では、remote 側の Project の変更が Issue 側の確認待ちで止まっていることが利用者に見えない。R6 にも、Issue の確認フラグを片付けると保留中の Projects import が通ることが書かれていない。",
+      "[low / omission] 新規。新しい test が固定しているのは、confirmations の行による保留だけである。imports の行による保留 (iteration 1 の再現 (A))、conflicts の行と missing_issues の行による保留、1 node が複数の alias を持つときに held の link だけが記録されないことは、test が無い。(A) と missing_issues の保留は probe で確かめた。",
+      "[low / inconsistency] iteration 1 から持ち越し。Issue の計画は base の無い 2-way の LWW なのに、手順 1 とチェックリストは 3-way plan と書いている。updatedAt はコメントでも進む。run-dev-graph-node で title 以外を直すと node が新しくなり、GitHub の新しい title が export で上書きされ得る。今回の保留は sync 自身の import だけを扱い、利用者の編集はこの性質のまま残る。",
+      "[low / omission] iteration 1 から持ち越し。同時刻の判定はマイクロ秒と秒の厳密な等値で行う。運用ではほとんど成立せず、時計のずれも扱わない。比較の精度が文書に無い。",
+      "[low / omission] iteration 1 から持ち越し (上の新規 low でも参照)。Issue 計画の unsupported-export (reopen)、remote-reopen、no-updated-at の解消手順が R6 に無い。R2 の「どちらも option/iteration に無い値は unsupported-export」は Issue 側では不正確である。",
+      "[low / omission] iteration 1 から持ち越し (上の新規 low でも参照)。missing_issues には読み取り失敗も入る。R4 は、削除と読み取り失敗を分けること、読み取り失敗では tombstone にしないことを書いていない。",
+      "[low / smell] iteration 1 から持ち越し。option id と iteration id を -F で渡すので、数字だけの id は整数に変換される。",
+      "[low / smell] iteration 1 から持ち越し。text の空文字は --text= として export され、GitHub が値なしとして返すと収束しない可能性がある (live では未確認)。",
+      "[low / omission] iteration 1 から持ち越し。value_type と Project field の dataType を照合していない。",
+      "[low / inconsistency] iteration 1 から持ち越し。planner の値の検証 (date の fromisoformat、number の float) が gh-bridge の検証より緩い。",
+      "[low / smell] iteration 1 から持ち越し。_decisions は束縛キーの存在を強制せず、重複は後勝ち、stale は unused にも重ねて載る。decision の置き換え手順が文書に無い。",
+      "[low / inconsistency] iteration 1 から持ち越し。手順 3、R6、docstring が cause の値に no-base / both-changed を挙げるが、planner が cause に入れるのは local-only / local-authority / decided-no-base / decided-both-changed だけである。",
+      "[low / inconsistency] iteration 1 から持ち越し。local-authority の解消手順に「local を戻す」が残り、package member と Status では使えない場合がある。",
+      "[low / inconsistency] iteration 1 から持ち越し。single_select の decided-* は、remote の option が option_map に無いと unmapped_remote_value の conflict に変わる。この edge が文書に無い。",
+      "[low / omission] iteration 1 から持ち越し。decided-* が choose=remote で import に変わること、local-only で decision が unused になることに test が無い。",
+      "[low / omission] iteration 1 から持ち越し。github-lifecycle-contract.md:36 は、package member の一方向化、型ごとの export と --clear、unsupported-export と cause、Issue の LWW と confirmations を反映していない。今回の held と Issue が先という順序も反映されていない。",
+      "[low / omission] iteration 1 から持ち越し。package member を受け入れる link-github の CLI end-to-end の証拠が無い。",
+      "[low / inconsistency] iteration 1 から持ち越し。OUT8 と手順 4 の pending_retry と、planner の conflict 分類 (remote-field-missing、unsupported-export) が一致していない。",
+      "[low / smell] iteration 1 から持ち越しで、今回少し重くなった。手順 3 は副箇条がさらに 1 つ増えて長くなり、他の手順の粒度と揃っていない。詳細は reference に移し、手順には要約と参照を置く方が読みやすい。",
+      "[low / inconsistency] iteration 1 から持ち越し。Project field value の updatedAt を conflict hint にすると書くが、ITEM_QUERY は updatedAt を取得しない。",
+      "[low / smell] iteration 1 から持ち越し。Status の一方向は repo-config schema の allOf にしか担保が無い。",
+      "[low / inconsistency] iteration 1 から持ち越し。「双方変更は自動上書きせず manual conflict」は、適用範囲を bidirectional の非 package member に絞っていない。",
+      "[low / omission] iteration 1 から持ち越し。計画から実行までの TOCTOU の再照合が文書に無い。今回の修正で窓は狭まったが残る。--issue-plan は local の graph_revision だけを照合し、Issue 計画の remote 観測の時点は照合しない。probe で、片付いた Issue 計画を作った後、Projects import を当てる前に GitHub が title を変えると、import が node の updated_at をその変更より後へ進め、次の Issue 計画は古い local の title を local-newer として export した。この窓には R5 と guard の確認待ちの時間も入る。import を当てる直前に Issue を計画し直して照合する手順を書くことを勧める。",
+      "[low / smell] iteration 1 から持ち越し。Projects planner の fetch_remote は gh の非 0 終了で計画全体が止まり得る。Issue planner の check=False の扱いと揃っていない (live では未確認)。",
+      "[low / omission] iteration 1 から持ち越し。snapshot digest と plan digest に対応する出力が planner に無い。",
+      "[low / omission] iteration 1 から持ち越し。手で揃える経路の完了証拠、--resolve-conflicts と --decisions の対応、decisions file の形式が文書に無い。",
+      "[low / smell] iteration 1 から持ち越し。C14 は local_to_project の single_select しか初期化しないので、bidirectional の非 single_select field は初回同期で no-base の conflict を出す。初回の挙動が文書に無い。",
+      "[low / omission] iteration 1 から持ち越し。export が 1 件でも残ると link_input が止まり、export の失敗時に pending_retry を記録する主体が文書に無い。",
+      "[low / smell] iteration 1 から持ち越し。`## Runtime root contract` は Codex で PLUGIN_ROOT を解決する手順が散文だけで、今回の差分の外にある。",
+      "[low / smell] iteration 1 から持ち越し。scripts/extract-plugin-root.py が script_refs に入っていない。guard block を持つ skill で一貫した扱いで、今回の差分の外にある。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:issue-tiebreak-and-typed-field-export",
+    "next_action": "none"
+  },
+  "notes": "builder とも iteration 1 の evaluator とも別 context の独立 evaluator が、content-review-protocol の incremental (focused combined review) を新しいループの iteration 2 (再評価は 1 回まで) として 1 回行い、(a) 矛盾なし (b) 漏れなし (c) 記述規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。30 思考法は実施しておらず、実施したとも申告しない。対象は HEAD (b45ebaf) 以後の未コミット差分のうち iteration 1 の medium への修正である。具体的には、untracked の diff-github-project-fields.py と diff-github-issues.py (どちらも Read で全文読んだ)、SKILL.md (全文) の Protocol 手順 3、R2-plan と R3-sync の Layer 3 (R4 から R6 の差分も見た)、test_build_graph_node.py の新しい test と reconcile() の引数を見た。依存先として、build-graph-node.py の update が updated_at を now に進める条件 (本文か node が変わったときだけ)、link-github が updated_at を動かさず issue_linkage を外さないこと、apply ごとに graph_revision が 1 つ進むこと、repo-config schema の local_field の列挙 (title は mapping できない) を照合した。確かめたこと: (1) scratchpad の probe (test_build_graph_node.BuildGraphNodeTest を継承し、CLI の update と link-github を実際に当てた) で、iteration 1 の再現 (A) が held になり、解除後に GitHub の title が残って Issue と Projects がどちらも converged になることを確かめた。解除後の link 記録、Issue が読めないときの保留の継続、Projects 計画を取り違えて渡した場合、片付いた Issue 計画の後に GitHub が変わる場合も確かめた。(2) `pytest plugins/dev-graph/tests/test_build_graph_node.py -k \"project_field or issue or gh_bridge or link_github\" -p no:cacheprovider` は 10 passed、test_runtime_coverage.py の gh_bridge は 1 passed。(3) lint-script-naming.py は VIOLATION=0、lint-prompt-contract-drift.py は fatal=0、lint-skill-tree.py は run-dev-graph-sync について ok。live-trial の fixture は読んでおらず、再実行もしていない。iteration 1 の medium は解消した。今回の修正が持ち込んだ high と medium は 0 件である。新規の low は 4 件で、うち 1 件 (保留の条件と Issue 計画の converged の食い違い) は既存の low を重くしたものとして記録した。iteration 1 の low 28 件は直さず持ち越した (うち 2 件は今回の修正で記述を更新した)。high 0 件、medium 0 件なので PASS とした。low の 32 件は MVP の方針どおり follow-up に回す。findings_summary は low 32 件の内訳で、先頭の解消済みの記録は数えていない。評価対象のファイルは編集していない。この PASS の射程は design claim (静的設計 adequacy) に限る。OUT1 から OUT9 の実行時の受け入れには、live-trial や test の実走証拠が別に要り、この verdict を流用しない。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 13,
+    "inconsistency": 9,
+    "dependency_break": 0,
+    "smell": 10
+  }
+}

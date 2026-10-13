@@ -16,6 +16,7 @@
     現リポジトリ状態で drift なし=0 を期待する (SSOT 整合の回帰検出も兼ねる)。
 """
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -736,3 +737,390 @@ def test_subprocess_clean_exits_0(tmp_path):
     proc = _run([str(p)])
     assert proc.returncode == 0
     assert "passed goal-seek lint" in proc.stdout
+
+
+# A canonical local reference supplies shared tokens, but cannot replace execution.
+# validator は検査契約をコードとして持つ最小形 (コメントの語だけでは通らない)。
+VALIDATOR_CODE = (
+    "import hashlib\n"
+    "REQUIRED_KEYS = {'iteration'}\n"
+    "def check(progress, encoded):\n"
+    "    return progress.get('original_goal_hash') == hashlib.sha256(encoded).hexdigest()\n"
+)
+
+
+def _canonical_plugin(tmp_path, *, reference_text=None, command=None):
+    plugin = tmp_path / "plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin/plugin.json").write_text('{}')
+    (plugin / "references").mkdir()
+    (plugin / "scripts").mkdir()
+    skill = plugin / "skills/run-test"
+    skill.mkdir(parents=True)
+    contract = plugin / "references/goal-seek-anchor-contract.md"
+    contract.write_text(reference_text if reference_text is not None else
+                        "intermediate.jsonl original_goal merged_directive_for_next required_keys original_goal_hash hashlib.sha256 "
+                        "iteration current_goal_snapshot delta_from_original drift_signal UTF-8 validate-inline-goal-seek-anchor.py")
+    (plugin / "scripts/validate-inline-goal-seek-anchor.py").write_text(VALIDATOR_CODE)
+    body = CLEAN_RUN.split("### ゴールシーク配線")[0] + "### ゴールシーク配線\n"
+    body += "`../../references/goal-seek-anchor-contract.md` が正本。\n```bash\n"
+    body += command if command is not None else 'python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"'
+    body += "\n```\n"
+    path = skill / "SKILL.md"
+    path.write_text(body)
+    return path, contract
+
+
+def test_canonical_local_anchor_reference_is_resolved_and_executed(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    assert MOD.lint_file(path) == ([], [])
+
+
+@pytest.mark.parametrize("reference_text", ["", "required_keys original_goal_hash"])
+def test_empty_or_incomplete_canonical_reference_is_not_an_escape(MOD, tmp_path, reference_text):
+    path, _ = _canonical_plugin(tmp_path, reference_text=reference_text)
+    findings, warnings = MOD.lint_file(path)
+    assert any("必須契約が不足" in finding for finding in findings)
+    assert warnings
+
+
+@pytest.mark.parametrize("command", ["# python3 $PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py progress intermediate",
+                                     'python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path"'])
+def test_reference_needs_real_command_and_both_arguments(MOD, tmp_path, command):
+    path, _ = _canonical_plugin(tmp_path, command=command)
+    findings, _ = MOD.lint_file(path)
+    assert any("両引数が無い" in finding for finding in findings)
+
+
+def test_missing_reference_is_a_violation(MOD, tmp_path):
+    path, contract = _canonical_plugin(tmp_path)
+    contract.unlink()
+    findings, _ = MOD.lint_file(path)
+    assert any("不在" in finding for finding in findings)
+
+
+def test_symlink_reference_outside_plugin_is_rejected(MOD, tmp_path):
+    path, contract = _canonical_plugin(tmp_path)
+    outside = tmp_path / "foreign-contract.md"
+    outside.write_text(contract.read_text())
+    contract.unlink()
+    contract.symlink_to(outside)
+    findings, _ = MOD.lint_file(path)
+    assert any("root 外" in finding for finding in findings)
+
+
+def test_absolute_foreign_contract_reference_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    path.write_text(path.read_text().replace("../../references/goal-seek-anchor-contract.md",
+                                           "/foreign/goal-seek-anchor-contract.md"))
+    findings, _ = MOD.lint_file(path)
+    assert any("正規パス" in finding for finding in findings)
+
+
+def test_missing_validator_is_a_violation(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    (path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py").unlink()
+    findings, _ = MOD.lint_file(path)
+    assert any("validator が不在" in finding for finding in findings)
+
+
+# ---- 配線 warning の ratchet (grace 未登録は violation / 返済済み登録も violation) ----
+# 検出はされるが rc に出ない warning は誰も見ない。登録 (path, kind) 以外を rc へ出す。
+UNWIRED_RUN = """---
+prefix: run
+---
+
+## ゴールシーク実行
+
+### 完了チェックリスト
+
+- [ ] 出力ファイルが存在する
+"""
+
+
+def _unwired_skill(tmp_path, name="run-newcomer"):
+    """配線 3 warning (wiring-section / intermediate / verification) を出す loop skill。"""
+    skill = tmp_path / "plugins/demo/skills" / name
+    skill.mkdir(parents=True)
+    path = skill / "SKILL.md"
+    path.write_text(UNWIRED_RUN, encoding="utf-8")
+    return path
+
+
+def test_unregistered_wiring_warning_fails(MOD, tmp_path, monkeypatch, capsys):
+    """grace 未登録の配線 warning は rc=1 になる (以前は 37 件が rc=0 のまま残っていた)。"""
+    path = _unwired_skill(tmp_path)
+    monkeypatch.setattr(MOD, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(MOD, "GRANDFATHERED_WARNINGS", frozenset())
+
+    rc = MOD.main(["--skills-dir", str(tmp_path / "plugins/demo/skills")])
+
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert captured.err.count("grace 未登録") == 3
+    for kind in MOD.WARNING_KINDS:
+        assert f"kind={kind}" in captured.err
+    assert "OK:" not in captured.out
+
+    # 対照: 同じ 3 件を登録すると warning のまま rc=0 に戻る。
+    rel = str(path.resolve().relative_to(tmp_path))
+    monkeypatch.setattr(
+        MOD,
+        "GRANDFATHERED_WARNINGS",
+        frozenset({(rel, kind) for kind in MOD.WARNING_KINDS}),
+    )
+    assert MOD.main(["--skills-dir", str(tmp_path / "plugins/demo/skills")]) == 0
+
+
+def test_repaid_and_vanished_grace_registrations_fail(MOD, tmp_path, monkeypatch, capsys):
+    """返済済み (走査したが warning を出さない) / 消滅済みの登録も rc=1 で削除を強制する。"""
+    path = _unwired_skill(tmp_path)
+    rel = str(path.resolve().relative_to(tmp_path))
+    monkeypatch.setattr(MOD, "_REPO_ROOT", tmp_path)
+    # wiring-section だけ返済したとみなす登録 (実際には 3 件出るので unlisted 側で落ちないよう全件登録)
+    # + 実在しない path の登録を混ぜる。
+    monkeypatch.setattr(
+        MOD,
+        "GRANDFATHERED_WARNINGS",
+        frozenset(
+            {(rel, kind) for kind in MOD.WARNING_KINDS}
+            | {("plugins/demo/skills/run-gone/SKILL.md", "wiring-section")}
+        ),
+    )
+
+    rc = MOD.main(["--skills-dir", str(tmp_path / "plugins/demo/skills")])
+
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "run-gone/SKILL.md [登録 path が走査範囲内に実在しない]" in captured.err
+
+
+def test_warning_ratchet_skips_paths_outside_repo(MOD, tmp_path, monkeypatch):
+    """repo 外 ($OUT_BASE 生成物・tmp fixture) は登録できる同一性が無いので対象外。"""
+    path = _unwired_skill(tmp_path)
+    monkeypatch.setattr(MOD, "GRANDFATHERED_WARNINGS", frozenset())
+    # _REPO_ROOT は実 repo のまま = path は repo 外。
+    assert MOD.repo_relative(path) is None
+    assert MOD.check_warning_ratchet([(path, "'### ゴールシーク配線' が無い")], set(), None) == []
+
+
+# ---- 全 plugin の既知違反 baseline (載った違反は猶予 / 新規と stale は violation) ----
+# 構造違反は kind を持たず GRANDFATHERED_WARNINGS で猶予できない。CI scope 外の plugin に
+# 残る違反を (path, 規則) で固定し、固定外だけを rc=1 にする。
+NO_HEADING_ASSIGN = """---
+prefix: assign
+---
+
+## 採点
+"""
+
+
+def _demo_repo(MOD, tmp_path, monkeypatch, skills):
+    """tmp_path を repo root とみなし、plugins/demo/skills/<name>/SKILL.md を並べる。"""
+    monkeypatch.setattr(MOD, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(MOD, "GRANDFATHERED_WARNINGS", frozenset())
+    for name, body in skills.items():
+        skill = tmp_path / "plugins/demo/skills" / name
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(body, encoding="utf-8")
+    return tmp_path / "plugins/demo/skills"
+
+
+def _baseline(tmp_path, debt):
+    path = tmp_path / "baseline.json"
+    path.write_text(json.dumps({"debt": debt}, ensure_ascii=False), encoding="utf-8")
+    return str(path)
+
+
+_OLD_DEBT = {
+    "plugins/demo/skills/run-old/SKILL.md": [
+        "wiring-section", "intermediate-tokens", "verification-tokens"],
+    "plugins/demo/skills/assign-old/SKILL.md": ["goal-seek-heading"],
+}
+
+
+def test_baseline_suppresses_listed_violations(MOD, tmp_path, monkeypatch, capsys):
+    skills_dir = _demo_repo(MOD, tmp_path, monkeypatch,
+                            {"run-old": UNWIRED_RUN, "assign-old": NO_HEADING_ASSIGN})
+    # 対照: baseline 無しでは構造違反 1 件と grace 未登録 3 件で rc=1。
+    assert MOD.main(["--skills-dir", str(skills_dir)]) == 1
+    capsys.readouterr()
+
+    rc = MOD.main(["--skills-dir", str(skills_dir), "--baseline", _baseline(tmp_path, _OLD_DEBT)])
+
+    captured = capsys.readouterr()
+    assert rc == 0, captured.err
+    assert "baseline で猶予した既知違反 4 件" in captured.out
+
+
+def test_baseline_new_violation_fails(MOD, tmp_path, monkeypatch, capsys):
+    skills_dir = _demo_repo(MOD, tmp_path, monkeypatch, {
+        "run-old": UNWIRED_RUN, "assign-old": NO_HEADING_ASSIGN, "assign-new": NO_HEADING_ASSIGN})
+
+    rc = MOD.main(["--skills-dir", str(skills_dir), "--baseline", _baseline(tmp_path, _OLD_DEBT)])
+
+    err = [line for line in capsys.readouterr().err.splitlines() if not line.startswith("WARN:")]
+    assert rc == 1
+    assert len(err) == 1 and "assign-new/SKILL.md" in err[0] and "見出しがない" in err[0]
+
+
+def test_baseline_same_path_new_rule_fails(MOD, tmp_path, monkeypatch, capsys):
+    """path が載っていても、載っていない規則の違反は猶予しない (組で照合する)。"""
+    skills_dir = _demo_repo(MOD, tmp_path, monkeypatch,
+                            {"run-old": UNWIRED_RUN, "assign-old": NO_HEADING_ASSIGN})
+    debt = dict(_OLD_DEBT)
+    debt["plugins/demo/skills/run-old/SKILL.md"] = ["wiring-section", "intermediate-tokens"]
+
+    rc = MOD.main(["--skills-dir", str(skills_dir), "--baseline", _baseline(tmp_path, debt)])
+
+    assert rc == 1
+    assert "kind=verification-tokens" in capsys.readouterr().err
+
+
+def test_baseline_repaid_and_vanished_entries_fail(MOD, tmp_path, monkeypatch, capsys):
+    skills_dir = _demo_repo(MOD, tmp_path, monkeypatch,
+                            {"run-old": UNWIRED_RUN, "assign-old": CLEAN_RUN})
+    debt = dict(_OLD_DEBT)  # assign-old は返済済み (CLEAN_RUN は違反を出さない)
+    debt["plugins/demo/skills/run-gone/SKILL.md"] = ["fixed-procedure"]
+
+    rc = MOD.main(["--skills-dir", str(skills_dir), "--baseline", _baseline(tmp_path, debt)])
+
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "baseline の登録が返済済み/消滅済み" in err
+    assert "assign-old/SKILL.md [goal-seek-heading]" in err
+    assert "run-gone/SKILL.md [登録 path が走査範囲内に実在しない]" in err
+
+
+def test_baseline_entries_outside_narrowed_scope_are_not_stale(MOD, tmp_path, monkeypatch, capsys):
+    """全 plugin 用の台帳を 1 plugin に絞った実行で使っても、範囲外の登録は stale にしない。"""
+    skills_dir = _demo_repo(MOD, tmp_path, monkeypatch,
+                            {"run-old": UNWIRED_RUN, "assign-old": NO_HEADING_ASSIGN})
+    debt = dict(_OLD_DEBT)
+    debt["plugins/other/skills/run-x/SKILL.md"] = ["goal-seek-heading"]
+
+    rc = MOD.main(["--skills-dir", str(skills_dir), "--baseline", _baseline(tmp_path, debt)])
+
+    assert rc == 0, capsys.readouterr().err
+
+
+def test_baseline_does_not_cover_rules_outside_baseline_rules(MOD, tmp_path, monkeypatch):
+    """BASELINE_RULES の外の違反 (今ある負債でない規則) は baseline_rule が None で常に落ちる。"""
+    assert MOD.baseline_rule("x/SKILL.md: 共通アンカー参照が正規パスでない・root 外・不在: y") is None
+    assert MOD.baseline_rule("x/SKILL.md: チェックリスト項目に曖昧語 ['適切に'] があり") is None
+
+
+@pytest.mark.parametrize("payload, needle", [
+    ({"debt": {"plugins/a/skills/run-a/SKILL.md": ["anchor-reference"]}}, "載せられない規則"),
+    ({"debt": {"plugins/a/skills/run-a/SKILL.md": []}}, "空でない配列"),
+    ({"debt": {"plugins/a/skills/run-a/SKILL.md": ["goal-seek-heading", "goal-seek-heading"]}},
+     "重複"),
+    ({"debt": {"/abs/skills/run-a/SKILL.md": ["goal-seek-heading"]}}, "repo 相対"),
+    ({"debt": {"plugins/../x/SKILL.md": ["goal-seek-heading"]}}, "repo 相対"),
+    ({"entries": []}, "debt オブジェクトが無い"),
+])
+def test_malformed_baseline_exits_2(MOD, tmp_path, capsys, payload, needle):
+    p = tmp_path / "baseline.json"
+    p.write_text(json.dumps(payload), encoding="utf-8")
+    assert MOD.main(["--skills-dir", str(tmp_path), "--baseline", str(p)]) == 2
+    assert needle in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("args", [["--baseline"], ["--baseline", "--skills-dir", "."]])
+def test_subprocess_baseline_without_value_exits_2(tmp_path, args):
+    proc = _run(["--skills-dir", str(tmp_path), *args])
+    assert proc.returncode == 2
+    assert "--baseline には JSON の path が要る" in proc.stderr
+
+
+def test_subprocess_missing_baseline_file_exits_2(tmp_path):
+    proc = _run(["--skills-dir", str(tmp_path), "--baseline", str(tmp_path / "none.json")])
+    assert proc.returncode == 2
+    assert "baseline を読めない" in proc.stderr
+
+
+def test_collect_targets_skips_fixtures_under_scanned_dir(MOD, tmp_path):
+    """tests/**/fixtures の SKILL.md は他テストの見本で、配布スキルではないので拾わない。"""
+    real = tmp_path / "plugins/demo/skills/run-a/SKILL.md"
+    fixture = tmp_path / "plugins/demo/tests/run-a/fixtures/accept/skills/run-a/SKILL.md"
+    for p in (real, fixture):
+        p.parent.mkdir(parents=True)
+        p.write_text(CLEAN_RUN, encoding="utf-8")
+
+    assert MOD.collect_targets(["--skills-dir", str(tmp_path / "plugins")]) == [real]
+    # fixtures ディレクトリ自体を指せば、見本を検査できる。
+    fixtures_dir = tmp_path / "plugins/demo/tests/run-a/fixtures"
+    assert MOD.collect_targets(["--skills-dir", str(fixtures_dir)]) == [fixture]
+
+
+def test_repo_scan_excludes_real_fixture_skill_files(MOD):
+    targets = MOD.collect_targets(["--skills-dir", str(ROOT / "plugins")])
+    assert targets
+    assert not [p for p in targets if "fixtures" in p.relative_to(ROOT).parts]
+
+
+def test_repo_all_plugins_pass_with_checked_in_baseline():
+    """CI と同じ呼び出し。新しい違反と、返済したのに台帳に残った組の両方で落ちる。"""
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--skills-dir", "plugins",
+         "--baseline", "scripts/goal-seek-lint-baseline.json"],
+        capture_output=True, text=True, cwd=ROOT,
+    )
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    assert "baseline で猶予した既知違反" in proc.stdout
+
+
+# --- 再レビュー B の [低] 指摘の再発防止 ---
+
+
+def test_validator_with_contract_words_only_in_comment_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    (path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py").write_text(
+        "# REQUIRED_KEYS original_goal_hash sha256\n")
+    findings, _ = MOD.lint_file(path)
+    assert any("validator の検査契約が不足" in finding for finding in findings)
+
+
+def test_validator_symlink_outside_plugin_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    validator = path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py"
+    outside = tmp_path / "foreign-validator.py"
+    outside.write_text(validator.read_text())
+    validator.unlink()
+    validator.symlink_to(outside)
+    findings, _ = MOD.lint_file(path)
+    assert any("validator が不在・root 外" in finding for finding in findings)
+
+
+def test_bare_filename_mention_in_wiring_is_not_a_declaration(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    path.write_text(path.read_text().replace(
+        "が正本。\n", "が正本。`goal-seek-anchor-contract.md` は別の plugin の話。\n"))
+    assert MOD.lint_file(path) == ([], [])
+
+
+def test_lint_file_non_utf8_is_read_error_finding(MOD, tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_bytes(b"---\nprefix: run\n---\n\xff\xfe\n")
+    findings, _ = MOD.lint_file(p)
+    assert findings and "read error" in findings[0]
+
+
+@pytest.mark.parametrize("kind", ["non_utf8", "directory", "missing"])
+def test_subprocess_unreadable_input_exits_2_without_traceback(tmp_path, kind):
+    p = tmp_path / "SKILL.md"
+    if kind == "non_utf8":
+        p.write_bytes(b"---\nprefix: run\n---\n\xff\xfe\n")
+    elif kind == "directory":
+        p.mkdir()
+    proc = _run([str(p)])
+    assert proc.returncode == 2
+    assert "入力を読めない" in proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+@pytest.mark.parametrize("flag", ["-h", "--help"])
+def test_subprocess_help_exits_0(flag):
+    proc = _run([flag])
+    assert proc.returncode == 0
+    assert "usage:" in proc.stdout

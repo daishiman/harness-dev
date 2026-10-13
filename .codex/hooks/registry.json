@@ -31,7 +31,7 @@
         "codex": "shell_command|exec_command"
       },
       "scope": {},
-      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\"",
       "timeout": 10,
       "async": true,
       "products": [
@@ -49,7 +49,7 @@
         "codex": "shell_command|exec_command"
       },
       "scope": {},
-      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
       "timeout": 10,
       "async": false,
       "products": [
@@ -67,7 +67,7 @@
         "codex": "startup|resume"
       },
       "scope": {},
-      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\"",
       "timeout": 10,
       "async": false,
       "products": [
@@ -85,7 +85,7 @@
         "codex": ".*"
       },
       "scope": {},
-      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\"",
       "timeout": 20,
       "async": false,
       "products": [

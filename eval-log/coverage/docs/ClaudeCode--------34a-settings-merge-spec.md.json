@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/34a-settings-merge-spec.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":82,"notes":"INV-1〜12 + 衝突検出疑似コード + BNF + 例で完全性高く内部整合も強い。実装裏取り: §12 CLI契約(--plugins-dir/--target/--dry-run/--check/--print-user-section-hash/--json + exit 0/1/2/3)が scripts/build-claude-settings.py の実引数と完全一致=正本性を実証。capability-manifest.schema.json も実在。減点: 正本と明記する doc/migration/phase0/{04,07,03} が doc/migration/ ごと不在(dangling 正本参照3件)、スクリプトの INV 検証カバレッジは literal INV-3件のみ確認可。設計仕様としては再現可能で genuine PASS。"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/34a-settings-merge-spec.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 a6816fbcd1e11f3aacd958bfaf7b96f78eae8df377c156db148a3ddbb82ce47e をレビュー。実行検証あり）。範囲: 全403行（§1-§13）。旧記録（reviewed_by workflow-doc-review、checked 語が別）は今回の4観点で取り直した。34章が三層モデルを取り除いたので、34a からの参照の整合を特に確かめた。確かめたこと: (1) scripts/build-claude-settings.py を読んだ。本文が引く行番号と test 名をすべて実物で確かめた（hook を投影しない、台帳 _build_claude_settings の managed_hooks/managed_permissions、INV-1 は台帳の値を除いた sha256 を比べる、終了コードは 0 / 1 drift / 2 衝突・INV-1 / 3 LayoutError・OSError）。(2) pytest -p no:cacheprovider -q: tests/test_build_claude_settings.py・tests/scripts-root/test_root__build_claude_settings.py・tests/test_build_claude_symlinks.py → 136 passed、plugins/harness-creator/tests/test_native_surface_repo_integration.py・test_sync_native_surfaces.py → 155 passed。(3) --help の出力が §12 の CLI 契約と合う。--check --json は exit 0 で、§10 例1 と合う。(4) work-docs2/fx34a.py で一時 repo を作り、--plugins-dir と --target を一時 repo に向けて確かめた。例2（ask を持つ plugin、target 無し）→ exit 0。permissions.ask と managed_permissions に記録され、直後の --check も exit 0。例3（古い台帳の hook）→ managed_hooks=[] になる。台帳の hook だけが消え、利用者の hook は残る。例4（deny と ask の衝突）→ exit 2。conflicts=[{type: permission, rule: R, decisions: [ask, deny]}]、target は変わらない。例5（project の手書き rule と plugin の rule が同じ）→ exit 2。INV-1『user values changed』で、target は変わらない。番兵キー: hooks._generated_section_start が文字列 → exit 3『must be an array』。array なら exit 0 でそのまま残る。allow は無視される（conflicts=[]）。plugin.json の hooks が hooks/ の外を指す場合、未知 event（FileChanged）の場合、plugins が project root の外の場合は、どれも exit 3。すべて本文の記述と一致する。指摘: [低] L26 の §2 見出し『三層モデル参照と正本境界』と、L28『34章の三層モデルは、Layer1 plugin.json、Layer2 hooks/ と settings/、Layer3 .claude/settings.json の3つである』は、34章にもう無いモデルを参照している。34章 HEAD L237-243 にあった三層モデルは、今回 L240-247『hook と設定の置き場所』の表に置き換わり、34章には『三層』も『Layer』も 0 件。34章の修正に追随しなかった回帰。直し方: 参照先を『34章 hook と設定の置き場所』にするか、三層を §2 の中で自前で定義する。[低] 403 行で、26章 L49・L57 の目標 300 行を超える。この PR で HEAD の 347 行から 56 行増えた。DEDUCTION: [低] -3（L26・L28 の古い三層モデル参照）、[低] -3（300 行目標の超過、この PR で増加）→ 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010k-docs",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

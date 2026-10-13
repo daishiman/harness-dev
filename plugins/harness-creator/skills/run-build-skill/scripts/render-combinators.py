@@ -4,16 +4,19 @@
 # purpose: Compose an atomic SKILL.md template from _base.md and combinator patch selections.
 # inputs:
 #   - argv: --kind, optional flags, --templates-dir, --output
+#   - argv: --language ja|en|auto (default ja), --target-skill <SKILL.md> (required with auto), --has-prompts
 #   - argv: --brief <skill-brief.json> --materialize-task-graph-engine <skill-dir>
+#   - argv: --deploy-feedback-loop <plugin-dir> (disabled by --no-feedback-loop)
 # outputs:
 #   - stdout: composed SKILL.md when --output is omitted
 #   - file: composed SKILL.md when --output is provided
 #   - files: task-graph template copies + machine-readable SKILL.md profile (materialize mode)
+#   - dir: <plugin-dir>/skills/run-skill-feedback real copy (deploy mode)
 #   - stderr: validation errors
-#   - exit: 0=OK / 1=composition error / 2=usage error
+#   - exit: 0=OK / 1=composition error / 2=usage error (incl. --language auto without --target-skill, unreadable --target-skill)
 # contexts: [A, B, C]
 # network: false
-# write-scope: output-arg-only / materialize mode の <skill-dir>/{SKILL.md,scripts/*}
+# write-scope: output-arg-only / materialize mode の <skill-dir>/{SKILL.md,scripts/*} / deploy mode の <plugin-dir>/skills/run-skill-feedback
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -22,6 +25,21 @@
 The repository keeps combinators as unified diff files for reviewability. This
 tool makes that route executable for mass production by applying the selected
 kind combinator plus optional flag combinators in the documented order.
+
+The composed text is then localized: the fixed headings follow the display-name
+table in references/ja-contract-policy.md for --language ja|en (default ja), and
+the runtime root section is rebuilt as the managed runtime-root-contract block
+(--has-prompts adds the prompts/ line). --language auto inherits the language
+from the canonical headings of --target-skill, so it requires that option.
+Headings inside code fences are left as they are.
+
+--deploy-feedback-loop copies skills/run-skill-feedback into the target plugin
+before composing, and --materialize-task-graph-engine byte-copies the
+task-graph engine into a generated skill.
+
+Exit codes: 0 OK; 1 composition error (template, combinator, materialize,
+deploy or --output I/O); 2 usage error (argparse, --language auto without
+--target-skill, a --target-skill that cannot be read as UTF-8 text).
 """
 from __future__ import annotations
 
@@ -505,6 +523,9 @@ class ComposeError(RuntimeError):
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--language", choices=("ja", "en", "auto"), default="ja")
+    parser.add_argument("--target-skill", type=Path, help="inherit locale from an existing SKILL.md with --language auto")
+    parser.add_argument("--has-prompts", action="store_true", help="generated skill owns prompts resources")
     parser.add_argument("--kind", choices=["run", "ref", "assign", "wrap", "delegate"])
     parser.add_argument("--role-suffix", choices=["generator", "evaluator", "workflow"], default="")
     parser.add_argument("--with-evaluator", action="store_true")
@@ -556,6 +577,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         parser.error("--kind または --materialize-task-graph-engine が必要")
     if args.materialize_task_graph_engine is not None and args.brief is None:
         parser.error("--materialize-task-graph-engine には --brief が必要")
+    if args.language == "auto" and args.target_skill is None:
+        parser.error("--language auto requires --target-skill")
     return args
 
 
@@ -837,8 +860,16 @@ def add_section_after(text: str, anchor: str, section: str) -> str:
     if section.splitlines()[0] in text:
         return text
     if anchor not in text:
-        raise ComposeError(f"anchor not found for semantic combinator: {anchor}")
+        # --templates-dir が旧版の _base.md を指すときの別名 (旧見出し「主要ルール」)。
+        alias = anchor.replace("## 守ること", "## 主要ルール")
+        if alias not in text:
+            raise ComposeError(f"anchor not found for semantic combinator: {anchor}")
+        anchor = alias
     return text.replace(anchor, anchor + "\n\n" + section, 1)
+
+
+# with-knowledge / with-feedback-contract の節を差し込む位置。_base.md の正規見出し。
+KEY_RULES_ANCHOR = "## 守ること\n{{key_constraints}}"
 
 
 def apply_semantic_patch(text: str, patch_name: str) -> str:
@@ -949,13 +980,13 @@ def apply_semantic_patch(text: str, patch_name: str) -> str:
         )
     if patch_name == "with-knowledge.patch":
         text = ensure_frontmatter_line(text, KNOWLEDGE_FM_BLOCK, "rubric_refs")
-        return add_section_after(text, "## 主要ルール\n{{key_constraints}}", KNOWLEDGE_SECTION)
+        return add_section_after(text, KEY_RULES_ANCHOR, KNOWLEDGE_SECTION)
     if patch_name == "with-goal-seek.patch":
         text = ensure_frontmatter_line(text, GOAL_SEEK_FM_BLOCK, "rubric_refs")
         return add_section_after(text, GOAL_SEEK_LOOP_ANCHOR, GOAL_SEEK_WIRING_SECTION)
     if patch_name == "with-feedback-contract.patch":
         text = ensure_frontmatter_line(text, FEEDBACK_CONTRACT_FM_BLOCK, "rubric_refs")
-        return add_section_after(text, "## 主要ルール\n{{key_constraints}}", FEEDBACK_CONTRACT_SECTION)
+        return add_section_after(text, KEY_RULES_ANCHOR, FEEDBACK_CONTRACT_SECTION)
     raise ComposeError(f"unknown combinator: {patch_name}")
 
 
@@ -1011,6 +1042,86 @@ def apply_feedback_loop(target_plugin_dir: Path) -> Path:
     return dest
 
 
+_FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+
+
+def _mark_fenced(lines: list[str]) -> list[bool]:
+    """各行がコードフェンスの内側 (開閉の行を含む) かどうか。見出しの照合から外すために使う。"""
+    marks: list[bool] = []
+    fence: str | None = None
+    for line in lines:
+        m = _FENCE_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+            marks.append(fence is not None)
+        else:
+            marks.append(True)
+            if (m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence)
+                    and not line.strip()[len(m.group(1)):].strip()):
+                fence = None
+    return marks
+
+
+def _replace_section(content: str, heading: str, block: str) -> str:
+    """フェンスの外にある ``heading`` の節を、次の ``## `` 見出しかファイル末尾まで block に置き換える。
+
+    フェンスの中の ``## `` 行で節を切らない。末尾の改行が無い見出しも置き換える。
+    """
+    lines = content.split("\n")
+    out: list[str] = []
+    skipping = False
+    for line, in_fence in zip(lines, _mark_fenced(lines)):
+        if not in_fence and line.startswith("## "):
+            skipping = line.rstrip(" \t") == heading
+            if skipping:
+                # 行の区切りは join が足すので、block の最後の改行を1つ外す。
+                out.append(block[:-1] if block.endswith("\n") else block)
+                continue
+        if not skipping:
+            out.append(line)
+    return "\n".join(out)
+
+
+def localize_template(content: str, language: str, *, has_prompts: bool = False) -> str:
+    # 生成物は LF に揃える。CRLF のままだと見出しの行一致が効かない。
+    content = content.replace("\r\n", "\n")
+    # A template may already contain a managed block. Re-render its content once.
+    content = content.replace("<!-- runtime-root-contract:v1 -->\n", "").replace("<!-- /runtime-root-contract:v1 -->\n", "")
+    # 表示名の正本は references/ja-contract-policy.md の表。
+    pairs = {
+        "## Purpose & Output Contract": "## 目的と出力契約",
+        "## Boundary": "## 境界",
+        "## Key Rules": "## 守ること",
+        "## 主要ルール": "## 守ること",
+        "## Gotchas": "## つまずきやすい点",
+        "## Runtime root contract": "## 実行時のルートの決め方",
+        "## Prompt Templates": "## プロンプトの型",
+        "## Self-Evaluation": "## 自己採点",
+        "## Pre-choice usable artifact execution": "## 選ぶ前の実成果物の作成",
+        "## Post-choice selected improvement execution": "## 選んだ深さでの改善の実行",
+        "### ゴール (Goal)": "### ゴール",
+        "### 目的・背景 (Why)": "### 目的・背景",
+        "### 完了チェックリスト (Checklist)": "### 完了チェックリスト",
+    }
+    renames = {}
+    for en, ja in pairs.items():
+        source, target = (en, ja) if language == "ja" else (ja, en)
+        renames.setdefault(source, target)
+    lines = content.split("\n")
+    for i, in_fence in enumerate(_mark_fenced(lines)):
+        if not in_fence:
+            lines[i] = renames.get(lines[i].rstrip(" \t"), lines[i])
+    content = "\n".join(lines)
+    heading = "## 実行時のルートの決め方" if language == "ja" else "## Runtime root contract"
+    policy = "- `runtime_root_policy: host-skill-path` を適用する。\n"
+    runtime = (policy + "- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。\n- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。\n- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。\n") if language == "ja" else (policy + "- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。\n- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。\n- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。\n")
+    if has_prompts:
+        runtime += "- `prompts/` の下のファイルも、このスキルの決まりに従う。\n" if language == "ja" else "- `prompts/` 配下はこのowner Skill契約を継承する。\n"
+    block = "<!-- runtime-root-contract:v1 -->\n" + heading + "\n\n" + runtime + "<!-- /runtime-root-contract:v1 -->\n\n"
+    return _replace_section(content, heading, block)
+
+
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
     if args.materialize_task_graph_engine is not None:
@@ -1033,6 +1144,15 @@ def main(argv: list[str]) -> int:
             return 1
         if args.kind is None:
             return 0
+    # 言語は副作用 (配備) の前に決める。--target-skill を読めないのは使い方の誤りなので 2。
+    language = args.language
+    if language == "auto":
+        try:
+            target = args.target_skill.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            print(f"error: cannot read --target-skill {args.target_skill}: {exc}", file=sys.stderr)
+            return 2
+        language = "ja" if re.search(r"^## (?:目的と出力契約|選んだ深さでの改善の実行)[ \t]*$", target, re.M) else "en"
     # 副作用アクション: feedback-loop 配備のみのモード (SKILL.md 合成は skip 可能)。
     if args.deploy_feedback_loop and not args.no_feedback_loop:
         try:
@@ -1052,6 +1172,7 @@ def main(argv: list[str]) -> int:
             if not patch_path.exists():
                 raise ComposeError(f"missing combinator: {patch_path}")
             content = apply_patch_file(content, patch_path)
+        content = localize_template(content, language, has_prompts=args.has_prompts)
         if args.trace:
             print("applied: " + ", ".join(patch_names), file=sys.stderr)
         if args.output:

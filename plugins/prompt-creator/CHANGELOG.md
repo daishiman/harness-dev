@@ -26,6 +26,24 @@
 - `R1-interview.md` の裸 TODO 残存 (validate-prompt FAIL) と、open_questions 処遇の矛盾 (TODO(human) 保持 vs auto-resolve) を「AI 最尤補完+仮定記録、TODO(human) 生成禁止」へ統一。
 - `parse_known_args` による未知引数黙殺を 5 scripts で failfast 化。
 
+## [2.1.13] - 2026-10-12
+
+- 版番号だけを上げた。中身は 2.1.12 と同じ。利用者の手元の local marketplace には、2.1.12 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
+## [2.1.12] - 2026-10-10
+
+2.1.11（節なし）からの変更をまとめる。固定手順の検出を英語の見出しにも広げ、検査が読めない入力で止まったときに lint の段を通さないようにした。ほかは他 plugin が所有する正本の追従である。
+
+### Changed
+- **`verify-completeness.py`（`run-prompt-creator-7layer`。harness-creator の `vendor/prompt-creator/` はこの写し）**: Layer 5 の要素（Goal definition / Completion checklist / Achievement goal）を大文字と小文字を区別せず（casefold）照合する。固定手順とみなす見出し（`BANNED_HEADING_TOKENS`）に英語の Procedure / Reasoning steps / Thinking process を足し、英語の見出しは大文字と小文字を区別しない（Steps も同じ）。連番の列挙に「Step N」を足した。旧形式の検出（思考プロセスとステップ N の共起）に英語の Thinking process と Step N の組を足し、言語をまたいだ組は数えない（`LEGACY_FIXED_PROCEDURE_PAIRS`）。メッセージに英語のラベルを併記した。
+- **`run-prompt-create/workflow-manifest.json`**: lint の段（handoff は `after_prompt_lint`）の `fatal_exit_codes` を `[1]` から `[1, 2]` にした。検査が入力不正（終了コード 2）で止まったときに、段を通さない。
+- **`scripts/extract-plugin-root.py` を正本の 0.2.0 へ追随（投影の追従）**: 他プロジェクト専用（`scope` が `project` / `local`）の install 先を、sibling と cache fallback の候補からも除く。そうした登録しか無い `<plugin>@<marketplace>` は cache の下を version を問わず除き、同じ marketplace に有効な登録があれば、除くのはその installPath だけにする。同じ X.Y.Z なら正式版を prerelease より先に選ぶ。
+- **`skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を正本へ追随（投影の追従）**: iteration の連番と、progress の iteration との一致を検査する。非 UTF-8・深すぎる入れ子・OSError は終了コード 2 で止まる。
+- **guard runtime 固定値**: `artifact-delivery.json` の `runner_sha256` を、いまの guard runtime に合わせた。
+
+### Fixed
+- **`verify-completeness.py`**: 読めない `--input`（存在しない・ディレクトリ・非 UTF-8）を終了コード 2 で止める。
+
 ## [Unreleased] - 2026-05-24
 
 ### Added

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "F-4004",
+  "status": "OPEN_AT_OBSERVATION",
+  "reviewed_at": "2026-10-05T09:18:19.387385+00:00",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "type": "failure_reporting_contract_omission",
+  "severity": "high",
+  "conditions": {
+    "C2": "FAIL",
+    "C3": "FAIL"
+  },
+  "source": "plugins/dev-graph/schemas/criteria-scenario-verdict.schema.json",
+  "source_sha256": "7509081f11755072dc68b9f2bef8fb9cbbbc2efb013853479da353d71a0d3b8a",
+  "independent_case": {
+    "PASS_control_schema_valid": true,
+    "genuine_FAIL_payload": {
+      "schema_version": "1.1.0",
+      "target": {
+        "plugin": "dev-graph",
+        "skill": "run-dev-graph-init",
+        "component_id": "C01",
+        "skill_md_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "verdict": "FAIL",
+      "reviewer": "independent-current-failure-report-case",
+      "loop_scope": "both",
+      "iteration_limit": 3,
+      "criteria_results": {
+        "OUT1": {
+          "status": "FAIL",
+          "verify_by": "live-trial",
+          "evidence_kind": "live-trial",
+          "test_refs": [
+            "actual-current-failed-verdict.json"
+          ],
+          "observed": "A schema representation probe; real current init retry terminalFAIL remains independently recorded.",
+          "scenario_id": "current-probe",
+          "live_trial_verdict_ref": "actual-current-failed-verdict.json"
+        }
+      }
+    },
+    "FAIL_payload_schema_valid": false,
+    "actual_jsonschema_errors": [
+      {
+        "path": [
+          "verdict"
+        ],
+        "message": "'PASS' was expected"
+      },
+      {
+        "path": [
+          "criteria_results",
+          "OUT1",
+          "status"
+        ],
+        "message": "'PASS' was expected"
+      }
+    ]
+  },
+  "execution_command": "/Users/dm/miniconda3/bin/python3 (jsonschema Draft202012Validator; independent minimal positive and genuine negative representation probes)",
+  "actual_negative_basis": "Current init first trial and bounded retry goal verdicts are FAIL with no source drift; existing schema constPASS cannot represent those authentic current results.",
+  "minimal_fix": "Allow PASS/FAIL root and criterion states, enforce root PASS iff all criteria PASS and root FAIL iff at least one criterion FAIL, reject unknown statuses; preserve existing pytest acceptance assertion verdict/status PASS so failures remain acceptance failures.",
+  "not_evaluator_weakening": "This adds faithful failure representation only, leaves criteria texts/verify_by/runtime/SKILL/evaluator thresholds unchanged and must preserve acceptance rejection of FAIL.",
+  "source_boundary": "Cycle3 schema + existing evidence-test file only; parent/meta own changes. Reviewer does not edit source. All9 behavior fingerprints must remain unchanged.",
+  "old_evidence_policy": "Archive old9 exact receipt bytes before current projection. No prior PASS bytes/hash refresh substitutes for actual current failed trial judgment."
+}

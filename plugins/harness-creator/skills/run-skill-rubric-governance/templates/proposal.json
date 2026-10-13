@@ -5,8 +5,9 @@
   "rubric_id": "skill-design",
   "current_version": "1.0.0",
   "change": {
-    "type": "add",
-    "rule_id": "BD-005",
+    "type": "modify",
+    "direction": "relax",
+    "rule_id": "BD-004",
     "area": "body",
     "severity": "medium",
     "check": "...",
@@ -15,7 +16,7 @@
   "bump": "minor",
   "sunset_days": 7,
   "impact_assessment": {
-    "past_eval_logs": ".claude/skills/run-skill-rubric-governance/log",
+    "past_eval_logs": "eval-log",
     "expected_fail_rate_delta": "TBD"
   },
   "reviewers": {
@@ -24,5 +25,5 @@
     "approver": "",
     "tooling": ""
   },
-  "notes": "TODO: 動機、ユースケース、代替案検討。\n"
+  "notes": "TODO: 動機、ユースケース、代替案検討。緩和と宣言するなら、今まで合格したものがすべて合格のままである根拠。\nchange.type: add=厳格化（bump major・sunset_days 14 以上）/ remove=緩和（minor・7）/ modify は change.direction に relax（緩和）か tighten（厳格化）を書く。緩和の bump は最低 minor（patch は文言だけ）。direction の無い modify は diff-rubric-impact.py が厳格化とみなす。\n緩和の minor で diff-rubric-impact.py の would_flip が 0 であり、承認者が緩和の根拠を確かめたものは sunset_days を 0 にでき、その理由を governance log に残す（version-rules.md の minor）。\n"
 }

@@ -2,19 +2,19 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
+    "skill_md_sha256": "93a6437ceb4ef091a251fc92911b4d90d371d66bafef8c13e30d4bad6c259610"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 3,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-10-11T13:56:54Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,19 +24,20 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "runtime_root_policy: host-skill-path の宣言と本文 `## Runtime root contract` 節の追加が対で入っており、片側だけの宣言になっていない。契約本文は build-steps.md:40 の正本文言 (Claude Code=CLAUDE_PLUGIN_ROOT / Codex=SKILL.md absolute path から manifest 祖先を上方探索 / cwd 推測禁止 / prompts 継承) と一致する。",
-      "`## 検証コマンド` block の 2 行が `PLUGIN_ROOT=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"` という script 相対の cwd 推測から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` 形へ置換されており、契約が禁じた cwd 起点解決が本文の実行行から実際に消えている。宣言と実装が同じ差分内で閉じている。",
-      "prompts 側も同時移行されている: R3-record.md の IN1 実行行は `<plugin-root>` literal から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py\"` へ、R4-audit-doc-freshness.md の C13 実行形は bare `$CLAUDE_PLUGIN_ROOT` から同形へ移行済みで、本 skill 配下に bare `$CLAUDE_PLUGIN_ROOT` の実行行は残っていない (grep で確認)。",
-      "frontmatter が宣言した参照は全件実在を確認した: responsibility_refs 3 件 (prompts/R1-identify.md, R2-fetch.md, R3-record.md)、schema_refs 1 件 (../../schemas/fetched-references.schema.json)、Additional Resources が挙げる scripts/build-fetched-references.py・references/official-source-catalog.md・references/resource-map.yaml・../../scripts/validate-source-citation.py。欠損 0 件。"
+      "依頼の重点 (取得のために curl などを呼ぶか) を確かめた。SKILL.md・prompts・references に curl・wget・gh などで取得する指示は無い。取得は WebSearch と WebFetch だけで行う (SKILL.md:132 の Key Rule 7『取得は WebSearch/WebFetch のみで完結する』、SKILL.md:166、prompts/R2-fetch.md:18・30・31)。Bash のコマンド (SKILL.md:174-178) は組み立てと IN1 検証で、どちらも python3 で始まる。",
+      "設計の筋: 取得 (R2) は Web ツール、記録と検証 (R3) は決定論 script と、層を分けている。Bash が担うのは script の起動だけで、今回の絞り込みと合っている。参照先 (build-fetched-references.py・validate-source-citation.py・fetched-references.schema.json・official-source-catalog.md・doctrine-anchor-registry.json・tests/fixture-*) はすべて実在する。",
+      "criteria: IN1 は `python3 .../validate-source-citation.py --targets ... --references ...` の exit0 で確かめられる。OUT1 (C08 による公式サイトでの再確認) は監査 agent 側の責務で、差分の影響を受けない。2件とも評価した。"
     ],
     "negative_feedback": [
-      "[low / smell] 局面カタログの記録・検証 (R3) 行は `build-fetched-references.py assemble --records <素材> ...` と path 無しのコマンド名で書かれており、`## 検証コマンド` block だけが PLUGIN_ROOT 形に移行された。実行の正本は検証コマンド block 側であり詳細 pointer も付いているため実行不能にはならないが、同一 skill 内でコマンド表記の粒度が 2 種混在する。",
-      "[low / smell] prompts/ には responsibility_refs に載らない R4-audit-doc-freshness.md が同居する (C08 system-spec-doc-freshness-auditor 側の SSOT)。Additional Resources も R1-R3 のみを挙げるため、prompts ディレクトリの全体像は SKILL.md からは読み取れない。plugin 全体で audit prompt を agent 所有とする既存慣行に沿っており、今回の差分が持ち込んだものではない。"
+      "[low / inconsistency] prompts/R3-record.md:41 はツールを『`Bash` (ヘルパ/検証 script 実行)』と書き、frontmatter の Bash(python3 *) と表記がそろっていない (中身は python3 の script)。直し方の案: `Bash(python3 *)` と書く。",
+      "[low / omission] allowed-tools に Write が無いが、R3 の組み立て (SKILL.md:174-175) は `--records records.json --targets targets.json` という通常のファイルを要求する。records.json と targets.json の作り方が書かれておらず、Bash を python3 に絞った今は python3 -c で書く以外の手段が許可なしでは使えない。prompts/R2-fetch.md:25 の retrieved_at の時刻の取り方も書かれていない。直し方の案: allowed-tools に Write を足すか、build-fetched-references.py に spec-state から targets を導く機能と stdin から records を受ける機能を足す。時刻は python3 の datetime で取ると書く。",
+      "[medium / inconsistency・差分前から] rubric FM-003: description の trigger 句が7個で、2〜3個 (hard rule) を超える。直し方の案: 発動条件を2〜3個に絞り、残りは本文へ移す。",
+      "[medium / inconsistency・差分前から] rubric PD-002: 本文の先頭30行に Key Rule や禁則が無い。直し方の案: Key Rule 7 (取得は WebSearch/WebFetch だけ) を本文の先頭近くへ出す。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "main マージ + external-mutation guard block の機械 migration により旧 verdict の skill_md_sha256 (3c406370...) が stale になったための再束縛。content-review-protocol §incremental の focused combined review を 1 context で実行した。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md` (+14/-6 行) の全差分、SKILL.md 全文 197 行、同 skill の prompts/ 差分 (R3-record.md, R4-audit-doc-freshness.md)、正本文言として plugins/harness-creator/skills/run-build-skill/references/build-steps.md:40。 実行したコマンド: sha256 算出 (python3 hashlib)、frontmatter 参照 23 path の実在検査 (test -e)、`grep -rn 'CLAUDE_PLUGIN_ROOT' <skill>/ | grep -v 'PLUGIN_ROOT:-'` による bare 参照検出 (本 skill 配下は契約 prose の 1 行のみ = 変数名への言及であり実行行ではない)、`python3 scripts/lint-runtime-portability.py` (exit 0)。 判定: (a) 矛盾なし — 新設 Runtime root contract が禁じる cwd 推測は同差分で本文から除去済み。(b) 漏れなし — Purpose & Output Contract・Key Rules 9 項・ゴールシーク・完了チェックリスト・Gotchas は差分前と同一で、削られた記述は cwd 推測行だけ。(c) 規約整合 — runtime_root_policy 宣言と Runtime root contract 節が対で存在し、shell 起動行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。effect: local-artifact のため external_mutation_guard は不要側で、宣言も guard block も持たないのが正しい。(d) 依存関係整合 — 宣言参照は全件実在、consumer (C10/C01/C08) との受け渡し形状 fetched-references.json は不変。(e) 未解決 medium 以上 0 件。残る 2 件は表記の smell (low) で実行不能にならないため PASS。 PASS の射程は静的設計 adequacy に限り、OUT1 (受入テスト) の実走証拠は本 review では取得していない。"
+  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (196行) と git diff 03050251、prompts/R2-fetch.md・R3-record.md、references/official-source-catalog.md・doctrine-anchor-registry.json、scripts/build-fetched-references.py の CLI、../../scripts/validate-source-citation.py、../../schemas/fetched-references.schema.json、tests/fixture-* の実在。 確かめたこと (依頼の重点): 取得のために curl・wget・gh などを Bash で呼ぶ指示は無い。取得は WebSearch と WebFetch だけ (SKILL.md:132 の Key Rule 7、SKILL.md:166、prompts/R2-fetch.md:18・30・31)。Bash のコマンド (SKILL.md:174-178) は組み立てと IN1 検証で、どちらも python3 で始まる。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:94 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。 迷った例: allowed-tools に Write が無いが、R3 の組み立ては records.json と targets.json という通常のファイルを要求する (build-fetched-references.py の --records は path.is_file() で確かめる)。作り方は書かれておらず、python3 -c で書けば Bash(python3 *) の範囲に収まるので FAIL にせず、low の omission とした。prompts/R2-fetch.md:25 の retrieved_at の『実際に WebFetch した時刻』の取り方も書かれていない。"
 }

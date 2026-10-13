@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill を起動している。transcript.jsonl 35 行で Skill(dev-graph:run-dev-graph-schedule, --repo-root fx --max-parallel 4) を呼び、36-37 行で読み込まれた。guard.jsonl の 2 番目でも allow になっている。",
+    "責務 prompt を出力の前に読んでいる。44-45 行で prompts/R1-elicit.md・R2-plan.md・R3-schedule.md を cat しており、schedule の出力 (83 行) より前にあたる。58-59 行では resolve-repo-context.py --mode read を実行し、repo_root が content_roots.repository と一致することを確かめたうえで、graph・config・receipt の基準 digest (b2f40bab…, f5c6f996…, ceb40165…) を取っている。",
+    "成果は自作の driver ではなく plugin の正規 script で作っている。83-84 行で plugin の schedule-graph.py --ready-source self を実行し、rc=0 だった。結果は ready_set.tasks=[task-api-orders, task-api-users, task-api-users-cache, task-cache-warmup, task-docs-runbook]、batches.tasks=[[api-orders, api-users, cache-warmup, docs-runbook], [api-users-cache]]、conflicts=[]。ready source に self を選んだ根拠は 67-68 行で、全 13 node が tracker_binding=none だった。schema の tracker_binding の定義でも、binding は node ごとに決まる。",
+    "評価者が graph.json から独立に再計算した結果と一致した。全依存が done の eligible task は上の 5 件と完全に同じだった。ready-set に入った不適格 node は 0 件で、次の 6 件はいずれも外れている: task-api-users-e2e (依存先 task-api-users が active)、task-release-gate (blocked)、task-draft-idea・task-unconfirmed-migration (draft/unconfirmed)、task-eval-failed-report (eval=fail)、task-readiness-incomplete-ui (readiness=incomplete)。batch 内の resource_scope の重複は、完全一致でもパスの前方一致でも 0 件。batch の大きさは 4 と 1 で、max_parallel=4 以内に収まる。suggested_branch=devgraph/<id> と claim command はそれぞれ 5 件とも一意。",
+    "必須の C17 verifier が実際に起動され、判定を返している。102 行で subagent_type=dev-graph:dev-graph-parallel-safety-verifier として起動された。subagent-transcripts/agent-a00aebbb8151c3a43.meta.json の agentType もこの値で、guard.jsonl の 17 番目は allow、19・22・25・27 番目がこの agent_id の Bash 呼出しにあたる。同じ transcript の 14-15 行で graph.json から ready-set を再計算し、23 行で Verdict: PASS (no mismatches) を返した。再計算した ready-set 5 件と batch 構成は schedule の出力と一致し、親 transcript の 115 行でも PASS として受け取られている。",
+    "R1/R2 と R3 の責務 fork も実際に起動されている (98・100 行、agent-a506523c5ea1462fa と agent-a1fceabe706a7a4db)。R3 は schedule-graph.py を再実行し、出力が eval-log の成果物とバイト単位で同一であることを確かめた (R3 の transcript 22-23 行)。R3 の一時出力先は $TMPDIR で、fx の外にある。",
+    "read-only であることを fx の実ファイルで確かめた。現在の graph.json・config.json・init-receipt.json の sha256 は 59 行の基準値と一致する。graph.json は由来の fixture (20261005T171515-bzn4-schedule) とバイト単位で同一で、config.json は orchestrator が書き換えた repository_id を除けば由来と同一。config の mtime 06:55 は session 開始 (07:01:58) より前。lease ledger の fx/.git/dev-graph は存在しない。manage-worktree-lease.py の claim/list と bd/gh は一度も呼ばれていない。132-133 行の自己検査でも digest_same True になっている。",
+    "書込みは境界の内側に収まっている。fx に増えたのは skill の goal-seek 配線が定める eval-log/run-dev-graph-schedule-{goal-spec,output,progress}.json と intermediate.jsonl の 4 本だけで、git status で確かめた。ほかには workdir/out/status.json があるだけ。guard.jsonl は 34 件すべて allow で、deny は 0 件。sandbox を回避しようとした呼出しも無い。",
+    "artifact_delivery の手順にも沿っている。87 行の画面表示で成果物 eval-log/run-dev-graph-schedule-output.json を示し、88 行の goal-spec に choice=standard (事前に指定された契約) を記録した。subagent を起動したのはその後 (98 行以降) で、pre_choice_forbidden には違反していない。133 行で goal-seek の検証スクリプトが OK を返し、status.json は PASS (135 行)、最後の報告は 139 行の DONE: PASS。"
+  ],
+  "skill_defects": [
+    "plugin/scripts/schedule-graph.py (51-53 行) には max_parallel の引数が無く、batch の大きさに上限がかからない。SKILL.md の argument-hint は --max-parallel N をうたっているのに、正規の経路では効いていない。今回は scope の分かれ方が偶然 4 と 1 だったため問題が出なかった。再現: resource_scope が互いに重ならない eligible な active task を 5 件持つ graph に --max-parallel 4 で schedule をかけると、5 件が 1 つの batch に入る。",
+    "schedule-graph.py (91-92 行) は resource_scope の衝突を文字列の集合の積だけで判定し、パスの前方一致を見ない。再現: resource_scope が ['src/db/'] と ['src/db/migrations/'] の task を両方 eligible にすると、同じ batch に入る。",
+    "SKILL.md の script_refs にある C27 manage-worktree-lease.py は、--op list でも 171 行で .git/dev-graph を mkdir し、174 行で leases.lock を a+ で開いてから 187 行で一覧を返す。つまり lease snapshot を取るだけで書込みが起き、skill の『read-only で lease を変更しない』と矛盾する。今回の session は ledger を直接読んで回避した。再現: .git/dev-graph が無い repo で --op list を実行すると、leases.lock が作られる。",
+    "schedule-graph.py の出力に入力 graph の digest が含まれない。そのため C17 agent 定義のチェックリスト『suggested branch と input digest が一致する』と『同一 snapshot digest に対して判定』を verifier が実行できない。本 trial でも verifier は input digest を未検証と明記したうえで PASS を返した (agent-a00aebbb8151c3a43.jsonl 23 行)。",
+    "軽微な点: SKILL.md は effect=conversation-output かつ read-only と宣言しているが、goal-seek 配線は呼出し元 repo の $DEV_GRAPH_ROOT/eval-log/ に goal-spec・progress・intermediate を書く。このため read-only の実行後も追跡外のファイルが残る (今回の fx の git status で 4 本)。"
+  ],
+  "evaluator_agent_id": "a9332950fd83e3fbc"
+}

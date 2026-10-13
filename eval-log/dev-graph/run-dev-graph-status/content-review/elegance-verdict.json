@@ -2,13 +2,20 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
-    "skill_md_sha256": "aa1f39b1879552eb917918abce0fdd2b88f3fd7fe4091cbbaf09335b16e633ab"
+    "skill_md_sha256": "2313bb65186704752171dc8324b6e31585f8b4a696f07e8d8f6effcc213be40f"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:31:13Z",
-  "iterations": 1,
+  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-render-status)",
+  "reviewed_at": "2026-10-12T07:58:49Z",
+  "iterations": 3,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 1
+  },
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -18,26 +25,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "prompts 3 本 (R1-elicit, R2-plan, R3-status) の共有化で skill 固有行の欠落は 0 件。削除行はすべて prompt-common-layers.md に逐語で存在するか、5.1 行から fork 方針の接尾辞を外しただけで、Layer 1-3 の入力契約・出力契約・責務境界・受入条件、5.2 の目的と達成ゴール、5.3 の固有 checklist は全本に残っている (機械照合で不一致 0)。",
-      "共通層と固有記述の合成規則が prompt 側に明示されている (5.3 は共通項目と固有項目がすべて YES のときに到達)。共通 reference の 5.4 にある最大 5 周は SKILL.md の goal_seek.max_loops=5 と一致し、共通層と skill 固有記述の矛盾は 0 件。",
-      "reference_refs に prompt-common-layers.md を追加したことで、prompts が依存する共通層が SKILL.md 上で宣言され、live-trial-verdict.py の behavior closure (_BEHAVIOR_REF_KEYS が reference_refs を含む) に入る。共通層の書き換えが本 skill の live trial verdict を stale にするという reference の「読み方」節の主張は実装と一致している。",
-      "frontmatter の *_refs はすべて実在し、prompt-common-layers.md を宣言する SKILL.md 9 件と prompts から参照する skill 9 件が双方向に一致する。依存 script のうち validate-graph-schema.py の出力変更は互換キー (最上位の implementation_readiness/missing_sections) を残す加法的変更で exit code の意味も変わらないため、完了チェックリストの「validate-graph-schema.py が exit0」や IN1 の記述と衝突しない。resolve-repo-context.py は今回の差分で変更されていない。"
+      "前回の low (R3 summary と IN1 が validate-graph-schema.py のまま) は、inventory C18 から直す正規の流れで解消した。frontmatter L33・L50 が inventory と完全一致し (test_run_skill_frontmatter_is_inventory_exact が pass)、R3-status.md L3・L9-10・Layer 3 と本文 L95・Criteria acceptance L154 が「extract-graph-status.py の rows だけ」でそろった。",
+      "内外ループの書き分けで、完了条件の循環が解けた。L122 が内ループ (checklist と IN1) と外ループ (OUT1 の live-trial・OUT2 の受入テスト・content-review、最大3周) を分け、L131 が内ループの完了と skill の完了を別の文で書く。L129 は semantic_evaluator_started で `Agent` の評価役を少なくとも1回起こし、report と graph の一致と digest の不変を read-only で独立に照合させ、main context の自己照合で代えないと書き、checklist L116 がその PASS を要件にする。"
     ],
     "negative_feedback": [
-      "[low / smell] 各 prompt から `### 5.4 実行方式` の節見出しと本文が消え、Layer 5 の参照行へ委譲された。seven-layer-format.md の l5-contract v2.0.0 は従属者一覧で全 prompts を Layer 5 節構成 (5.1-5.4) の従属者としているため、prompt 単体で読むと 5.4 が欠ける。prompt-common-layers.md の Layer 5 節と合成すれば 4 節がそろい、lint-agent-prompt-content.py --mode prompt も通るため実行不能にはならず low に留める。prompt 側に 5.4 の見出しと参照行だけを残すと、単体で読んでも節構成が閉じる。",
-      "[low / smell] 「(skill root 起点)」の注記が Layer 4 の参照行にだけあり、Layer 5〜7 の参照行には無い。prompt ファイルのある prompts/ を起点に `../../references/` を解くと skills/references/ を指し、実在しない。SKILL.md の reference_refs と Layer 3 の「skill-relative reference から解決」で補えるため low に留める。4 本の参照行で起点の注記をそろえると読み違いの余地が消える。"
+      "omission (low、前回から残る。Beads 行き): description (L3) は「completion 状態」の確認を約束するが、rows (L95) は status/closed_at だけで、graph-node schema の completion_evidence (status・completed_at) を持たない。status=done で代わりに表せるのは completion_evidence.status=done の場合だけ。直し方: description を「close/tombstone 状態」にするか、rows に completion_evidence.status/completed_at を足す。",
+      "omission (low、今回の追加分): L118 の not_applicable の扱いは「例:」で1項目を挙げるだけで、どの checklist 項目を外してよいかが閉じていない。今の checklist (L111-116) で経路に依存するのは「該当なしが空 result」だけで、評価役 (L129) も not_applicable の理由を照合しない。直し方: 外してよい項目を限定列挙にするか、評価役に not_applicable の理由も照合させる。",
+      "inconsistency (low、plan 側。Beads 行き): EVALS.json の C18 IN1 の marker は `validate-graph-schema.py` のままで、IN1 の主語になった `extract-graph-status.py` と `rows` を含まない (今は Criteria acceptance L154 の付記で marker を満たす)。inventory C18 の deterministic_checks も validate-graph-schema.py だけで、R3 が使う extract-graph-status.py が無い。直し方: plugin-dev-planner の update の流れで、C18 の deterministic_checks と EVALS.json の IN1 marker を extract-graph-status.py にそろえる。",
+      "smell (low、前回から残る): allowed-tools (L13) に Write が無く、inventory の boundary は「書込みは一切行わない」だが、配線 L127・L130 は `$DEV_GRAPH_ROOT/eval-log/` に goal-spec・progress・intermediate を書く。Purpose の digest 不変 (graph/config/content) とは両立するが、本文に書かれていない。直し方: eval-log の goal-seek 記録は digest の対象外の自己記録だと本文に明記するか、配線を read-only にする。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual: team-lead request to re-take content-review of render/status after dg-render-status rewrote SKILL.md, responsibility prompt and render-graph-html.py (--receipt for render; R3 summary/IN1 and goal-seek wiring for status); incremental focused combined review, 4th request",
     "next_action": "none"
   },
-  "notes": "本 verdict は dev-graph prompts の共通層共有化 (未コミット差分) を受けた再束縛であり、content-review-protocol §incremental の focused combined review を独立 evaluator の 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: SKILL.md の差分 (frontmatter に reference_refs を 1 行追加) と prompts 3 本の差分を全行読み、削除行が prompt-common-layers.md に逐語で存在するか、5.1 行の fork 接尾辞を外しただけかを機械照合した (不一致 0)。新規 reference prompt-common-layers.md は全文を読み、frontmatter *_refs の実在と、prompt-common-layers.md の宣言 skill と参照 skill の双方向一致を検査した。依存 script の差分 (validate-graph-schema.py) も読んだ。lint-agent-prompt-content.py --mode prompt (dev-graph 41 files)、lint-vendored-ssot.py、lint-sibling-plugin-paths.py はいずれも OK。未解決の medium 以上は 0 件、low 2 件は記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。prompt-common-layers.md が reference_refs に入ったため、live trial 系の証跡 (criteria-test/scenario-verdict.json など) の target sha は本 review では更新されず、別途再束縛を要する。前回 verdict の low (pre-choice の accept-as-is 読み分け) は本差分と無関係のため再記録していない。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 2
-  }
+  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。dg-render-status の書き換え (render の --receipt と OUT1、status の R3 summary・IN1・評価役・not_applicable・内外ループ) を、SKILL.md・responsibility prompt・script_refs の script・inventory C05/C18・EVALS.json で確かめた。read-only で回したもの: test_render_receipt・test_skill_criteria_contracts・test_skill_mass_production_contracts (合わせて 75 passed。inventory と frontmatter の完全一致を含む)、test_acceptance_gaps_a2・test_runtime_coverage (22 passed)、lint-skill-name.py / lint-skill-tree.py (2 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。render-graph-html.py は scratchpad の graph で、壊れた receipt と描かない feature の receipt の2経路も手で試した (どちらも exit 1・HTML なし)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機のブラウザ表示と host 対話はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文、plan 側 (inventory・EVALS.json) の文、PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
 }

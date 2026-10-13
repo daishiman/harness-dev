@@ -2,11 +2,12 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://harness/run-skill-update-notifier/output.schema.json",
   "title": "run-skill-update-notifier output",
+  "description": "判定結果の内部モデル (R1-notify が保持する status / installed / latest)。notifier-check.py notify が stdout へ出すのは references/output-format.md の 1 行か無出力だけで、hook はその 1 行を systemMessage の JSON に包んで利用者に表示させる (この schema の形では出さない)。status と出力の対応: manifest-behind = CHANGELOG の版が新しく '— plugin.json の version が CHANGELOG より古い。version の上げ忘れの可能性)' の 1 行、changelog-behind = plugin.json の版が新しく '— CHANGELOG が plugin.json の version より古い。CHANGELOG の節の足し忘れの可能性)' の 1 行、not-comparable = どちらかが semver として読めず '— 版を比べられない)' の 1 行、in-sync / unknown / skipped = 無出力。ネットワークには出ないので、オフラインでも status は変わらない。",
   "type": "object",
   "required": ["status", "installed", "latest"],
   "additionalProperties": false,
   "properties": {
-    "status": {"type": "string", "enum": ["update-available", "up-to-date", "unknown", "offline", "skipped"]},
+    "status": {"type": "string", "enum": ["manifest-behind", "changelog-behind", "not-comparable", "in-sync", "unknown", "skipped"]},
     "installed": {"type": ["string", "null"]},
     "latest": {"type": ["string", "null"]},
     "notice_emitted": {"type": "boolean"},

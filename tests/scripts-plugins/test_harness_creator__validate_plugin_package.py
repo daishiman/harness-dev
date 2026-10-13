@@ -7,6 +7,8 @@ PKG-002〜008 / PKG-014 の各 sub-check を実ファイルパスから importli
 
 実 repo の plugins は一切書き換えず、全 fixture は tmp_path 配下に構築する。
 """
+from __future__ import annotations
+
 import importlib.util
 import json
 import os
@@ -52,7 +54,7 @@ def _write_package_contract(plugin_dir: Path, data: dict | None = None) -> None:
     refs = plugin_dir / "references"
     refs.mkdir(parents=True, exist_ok=True)
     if data is None:
-        data = {"package_mode": "plugin", "entry_points": {}}
+        data = {"package_mode": "bundle", "entry_points": {}}
     (refs / "package-contract.json").write_text(json.dumps(data), encoding="utf-8")
 
 
@@ -143,7 +145,7 @@ def test_parse_frontmatter_dangling_list_item_ignored():
 
 def test_load_plugin_json_ok(tmp_path):
     p = _plugin(tmp_path)
-    _write_plugin_json(p, {"name": "x", "package_mode": "plugin"})
+    _write_plugin_json(p, {"name": "x", "package_mode": "bundle"})
     data = MOD.load_plugin_json(p)
     assert data["name"] == "x"
 
@@ -166,8 +168,27 @@ def test_get_package_mode_default_skill_only(tmp_path):
 
 def test_get_package_mode_from_json(tmp_path):
     p = _plugin(tmp_path)
-    _write_plugin_json(p, {"name": "x", "package_mode": "plugin"})
-    assert MOD.get_package_mode(p) == "plugin"
+    _write_plugin_json(p, {"name": "x", "package_mode": "bundle"})
+    assert MOD.get_package_mode(p) == "bundle"
+
+
+@pytest.mark.parametrize("value", ["plugin", "", 3, None])
+def test_get_package_mode_out_of_range_runs_as_bundle(tmp_path, value):
+    """enum の外の値は skill-only として check を飛ばさず、bundle として全 check を流す。"""
+    p = _plugin(tmp_path)
+    _write_package_contract(p, {"package_mode": value, "entry_points": {}})
+    assert MOD.get_package_mode(p) == "bundle"
+
+
+def test_package_modes_match_schema_enums():
+    """PACKAGE_MODES は package-contract.schema と findings.schema の enum と同じ。"""
+    skills = SCRIPT.parents[2]
+    for schema_path in (
+        skills / "ref-pkg-contract" / "schemas" / "package-contract.schema.json",
+        skills / "assign-plugin-package-evaluator" / "schemas" / "findings.schema.json",
+    ):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        assert list(MOD.PACKAGE_MODES) == schema["properties"]["package_mode"]["enum"], schema_path
 
 
 # ============================================================================
@@ -184,8 +205,18 @@ def test_pkg_002_missing_plugin_json(tmp_path):
 def test_pkg_002_all_keys_present_no_findings(tmp_path):
     p = _plugin(tmp_path)
     _write_plugin_json(p, {k: "v" for k in MOD.PLUGIN_JSON_REQUIRED})
-    _write_package_contract(p, {k: "v" for k in MOD.PACKAGE_CONTRACT_REQUIRED})
+    _write_package_contract(p, {"package_mode": "bundle", "entry_points": {}})
     assert MOD.check_pkg_002(p) == []
+
+
+def test_pkg_002_out_of_range_package_mode_is_finding(tmp_path):
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {k: "v" for k in MOD.PLUGIN_JSON_REQUIRED})
+    _write_package_contract(p, {"package_mode": "plugin", "entry_points": {}})
+    fs = MOD.check_pkg_002(p)
+    assert len(fs) == 1
+    assert fs[0]["location"].endswith("package-contract.json#package_mode")
+    assert "'plugin'" in fs[0]["evidence"]
 
 
 def test_pkg_002_missing_some_keys(tmp_path):
@@ -239,6 +270,22 @@ def test_pkg_002_rejects_invalid_scoped_dependency_projection(tmp_path):
     assert any("depends_on 外" in item for item in evidence)
 
 
+@pytest.mark.parametrize("skills_value, depends_value", [(3, ["dependency-a"]), (["run-a"], 3)])
+def test_pkg_002_non_list_entry_points_with_skill_dependencies_does_not_crash(
+        tmp_path, skills_value, depends_value):
+    # entry_points.skills / depends_on が配列でなくても TypeError にせず、宣言なしとして finding にする
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {k: "v" for k in MOD.PLUGIN_JSON_REQUIRED})
+    _write_package_contract(p, {
+        "package_mode": "bundle",
+        "entry_points": {"skills": skills_value},
+        "depends_on": depends_value,
+        "skill_dependencies": {"run-a": ["dependency-a"]},
+    })
+    evidence = [item["evidence"] for item in MOD.check_pkg_002(p)]
+    assert any("entry_points.skills 未宣言" in e or "depends_on 外" in e for e in evidence), evidence
+
+
 # ============================================================================
 # check_pkg_003 : skill/agent 名前衝突 (実体 vs symlink)
 # ============================================================================
@@ -288,6 +335,126 @@ def test_pkg_003_byte_identical_vendored_feedback_skill_is_shared(tmp_path):
         )
 
     assert MOD.check_pkg_003(a) == []
+
+
+def test_pkg_003_bytecode_cache_does_not_break_shared_feedback_copy(tmp_path):
+    # py_compile や import で片方の写しにだけ __pycache__ ができても、配布物の一致は崩れない
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        _write_skill(plug, "run-skill-feedback", _full_required_fm())
+        (plug / "skills" / "run-skill-feedback" / "scripts").mkdir()
+        (plug / "skills" / "run-skill-feedback" / "scripts" / "x.py").write_text("x = 0\n", encoding="utf-8")
+    cache = a / "skills" / "run-skill-feedback" / "scripts" / "__pycache__"
+    cache.mkdir()
+    (cache / "x.cpython-312.pyc").write_bytes(b"\x00compiled")
+    (a / "skills" / "run-skill-feedback" / "stray.pyo").write_bytes(b"\x00")
+
+    assert MOD.check_pkg_003(a) == []
+
+    # ソースの違いは引き続き衝突として検出する
+    (a / "skills" / "run-skill-feedback" / "scripts" / "x.py").write_text("x = 1\n", encoding="utf-8")
+    assert len(MOD.check_pkg_003(a)) == 1
+
+
+def test_pkg_003_ds_store_does_not_break_shared_feedback_copy(tmp_path):
+    # Finder で開いた写しにだけ .DS_Store ができても、配布物の一致は崩れない (.gitignore 対象で CI には無い)
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        _write_skill(plug, "run-skill-feedback", _full_required_fm())
+    (a / "skills" / "run-skill-feedback" / ".DS_Store").write_bytes(b"\x00finder")
+
+    assert MOD.check_pkg_003(a) == []
+
+
+def _load_ssot():
+    path = Path(__file__).resolve().parents[2] / "plugins" / "harness-creator" / "scripts" / "feedback_contract_ssot.py"
+    spec = importlib.util.spec_from_file_location("feedback_contract_ssot_for_parity", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store"])
+def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
+    # PKG-003 の一致判定と feedback_contract_ssot.is_vendored_feedback_skill を食い違わせない。
+    # 除外の定数と算出を写しているので、同じツリーで同じ digest になることを固定する
+    ssot = _load_ssot()
+    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._FINDER_METADATA) == (
+        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._FINDER_METADATA)
+    root = tmp_path / "skill"
+    (root / "scripts").mkdir(parents=True)
+    (root / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+    (root / "scripts" / "x.py").write_text("x = 0\n", encoding="utf-8")
+    if shape == "empty_dir":
+        (root / "references").mkdir()
+    elif shape == "symlink":
+        (root / "link.md").symlink_to("SKILL.md")
+    elif shape == "bytecode":
+        (root / "scripts" / "__pycache__").mkdir()
+        (root / "scripts" / "__pycache__" / "x.cpython-312.pyc").write_bytes(b"\x00")
+        (root / "stray.pyo").write_bytes(b"\x00")
+    elif shape == "nested_pycache_md":
+        (root / "scripts" / "__pycache__").mkdir()
+        (root / "scripts" / "__pycache__" / "note.md").write_text("x", encoding="utf-8")
+    elif shape == "ds_store":
+        (root / ".DS_Store").write_bytes(b"\x00finder")
+        (root / "scripts" / ".DS_Store").write_bytes(b"\x00finder")
+    assert MOD._tree_fingerprint(root) == ssot.directory_content_sha256(root)
+
+
+def test_pkg_003_empty_dir_or_symlink_difference_is_a_collision(tmp_path):
+    # SSOT と同じく、空のディレクトリや symlink の違いも配布コピーの不一致として扱う
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        _write_skill(plug, "run-skill-feedback", _full_required_fm())
+    assert MOD.check_pkg_003(a) == []
+    (a / "skills" / "run-skill-feedback" / "references").mkdir()
+    assert len(MOD.check_pkg_003(a)) == 1
+
+
+def test_unreadable_input_exits_2_not_1(tmp_path, monkeypatch, capsys):
+    a = _plugin(tmp_path, "demo")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_skill(a, "run-x", _full_required_fm())
+
+    def boom(*_args, **_kwargs):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(MOD, "run_checks", boom)
+    monkeypatch.setattr(sys, "argv", ["validate-plugin-package.py", "--plugin-dir", str(a)])
+    assert MOD.main() == 2
+    assert "入力を読めない" in capsys.readouterr().err
+
+
+def test_non_utf8_skill_md_exits_2(tmp_path):
+    a = _plugin(tmp_path, "demo")
+    _write_plugin_json(a, {"name": "demo"})
+    d = a / "skills" / "run-x"
+    d.mkdir(parents=True)
+    (d / "SKILL.md").write_bytes(b"---\nname: \xff\n---\n")
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--check", "pkg-004", "--plugin-dir", str(a)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+
+
+@pytest.mark.parametrize("value", ["pkg-004", "PKG-004", "004"])
+def test_check_value_spellings(tmp_path, value):
+    a = _plugin(tmp_path, "demo")
+    _write_plugin_json(a, {"name": "demo"})
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--check", value, "--plugin-dir", str(a)],
+                          capture_output=True, text=True)
+    assert proc.returncode in (0, 1)
+    assert list(json.loads(proc.stdout)["pkg_checks"]) == ["PKG-004"]
 
 
 def test_pkg_003_drifted_vendored_feedback_skill_still_collides(tmp_path):
@@ -424,10 +591,18 @@ def test_pkg_005_no_agents_dir(tmp_path):
     assert MOD.check_pkg_005(p) == []
 
 
+def _write_agent(plugin_dir: Path, stem: str, name: str | None = None) -> Path:
+    """agents/<stem>.md を書く。name を省くと stem を frontmatter name にする。"""
+    agents = plugin_dir / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    md = agents / f"{stem}.md"
+    md.write_text(f"---\nname: {stem if name is None else name}\ndescription: d\n---\n本文\n", encoding="utf-8")
+    return md
+
+
 def test_pkg_005_declared_agent_missing(tmp_path):
     p = _plugin(tmp_path)
-    (p / "agents").mkdir(parents=True)
-    (p / "agents" / "present.md").write_text("a", encoding="utf-8")
+    _write_agent(p, "present")
     fm = _full_required_fm() + "\nsubagent_refs:\n  - present\n  - ghost"
     _write_skill(p, "sk", fm)
     fs = MOD.check_pkg_005(p)
@@ -437,10 +612,52 @@ def test_pkg_005_declared_agent_missing(tmp_path):
 
 def test_pkg_005_all_declared_present(tmp_path):
     p = _plugin(tmp_path)
-    (p / "agents").mkdir(parents=True)
-    (p / "agents" / "judge.md").write_text("a", encoding="utf-8")
+    _write_agent(p, "judge")
     fm = _full_required_fm() + "\nsubagent_refs:\n  - judge"
     _write_skill(p, "sk", fm)
+    assert MOD.check_pkg_005(p) == []
+
+
+def test_pkg_005_flow_list_refs_are_checked(tmp_path):
+    # `subagent_refs: [a, b]` の flow 形式も block list と同じに読む (以前は素通りしていた)
+    p = _plugin(tmp_path)
+    _write_agent(p, "judge")
+    _write_skill(p, "sk", _full_required_fm() + "\nsubagent_refs: [judge, \"ghost\"]")
+    fs = MOD.check_pkg_005(p)
+    assert [f["location"] for f in fs] == [f"{p}/agents/ghost.md"]
+
+
+def test_pkg_005_path_style_ref_resolves_to_agent_stem(tmp_path):
+    p = _plugin(tmp_path)
+    _write_agent(p, "judge")
+    _write_skill(p, "sk", _full_required_fm() + "\nsubagent_refs:\n  - agents/judge.md")
+    assert MOD.check_pkg_005(p) == []
+
+
+def test_pkg_005_refs_without_agents_dir_are_missing(tmp_path):
+    # agents/ が無くても、宣言した agent が無いことは見逃さない
+    p = _plugin(tmp_path)
+    _write_skill(p, "sk", _full_required_fm() + "\nsubagent_refs:\n  - judge")
+    fs = MOD.check_pkg_005(p)
+    assert len(fs) == 1
+    assert "judge" in fs[0]["evidence"]
+
+
+@pytest.mark.parametrize("name", ["other", None])
+def test_pkg_005_agent_name_must_match_file_stem(tmp_path, name):
+    p = _plugin(tmp_path)
+    md = _write_agent(p, "judge", name="other")
+    if name is None:
+        md.write_text("---\ndescription: d\n---\n本文\n", encoding="utf-8")
+    fs = MOD.check_pkg_005(p)
+    assert len(fs) == 1
+    assert fs[0]["location"] == str(md)
+    assert "judge" in fs[0]["evidence"]
+
+
+def test_pkg_005_quoted_agent_name_matches(tmp_path):
+    p = _plugin(tmp_path)
+    _write_agent(p, "judge", name='"judge"')
     assert MOD.check_pkg_005(p) == []
 
 
@@ -514,8 +731,12 @@ def test_pkg_006_hook_file_reference_cannot_escape_plugin_root(tmp_path):
     })
 
     fs = MOD.check_pkg_006(p)
-    assert len(fs) == 1
-    assert fs[0]["pkg_id"] == "PKG-006"
+    assert {f["pkg_id"] for f in fs} == {"PKG-006"}
+    evidence = [f["evidence"] for f in fs]
+    # plugin の外の hooks file は読まない。指す先が無いことと、guard.py が未登録のままであることの 2 件
+    assert any("plugin の中に無い: ../outside-hooks.json" in e for e in evidence), evidence
+    assert any("未登録" in e for e in evidence), evidence
+    assert len(fs) == 2
 
 
 def test_pkg_006_registered_via_entry_points(tmp_path):
@@ -540,7 +761,7 @@ def test_pkg_006_registered_via_package_contract_sidecar(tmp_path):
     })
     _write_package_contract(p, {
         "package_mode": "bundle",
-        "entry_points": {"hooks": ["guard"]},
+        "entry_points": {"hooks": ["guard.py"]},
         "distribution": {"distributable": False},
         "pkg_checks": {},
     })
@@ -593,6 +814,158 @@ def test_pkg_006_invalid_shlex_command_falls_back_to_split(tmp_path):
         },
     })
     assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_registered_command_without_file_is_finding(tmp_path):
+    # 登録だけあって実体が無い方向。hooks/ ディレクトリ自体が無くても見る
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {
+        "name": "demo",
+        "hooks": {
+            "PreToolUse": [
+                {"hooks": [{"command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/gone.py"}]}
+            ]
+        },
+    })
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert fs[0]["location"] == str(p / "hooks" / "gone.py")
+    assert "gone.py" in fs[0]["evidence"]
+
+
+@pytest.mark.parametrize("entry", ["gone", "hooks/gone.py"])
+def test_pkg_006_package_contract_entry_without_file_is_finding(tmp_path, entry):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    _write_package_contract(p, {"package_mode": "bundle", "entry_points": {"hooks": ["guard.py", entry]}})
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "package-contract entry_points.hooks" in fs[0]["evidence"]
+    assert entry in fs[0]["evidence"]
+
+
+def test_pkg_006_hook_outside_plugin_command_is_not_resolved(tmp_path):
+    # ~/.claude/hooks/ や .git/hooks/ は plugin の外。実体の有無はこの plugin の検査対象にしない
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {
+        "name": "demo",
+        "hooks": {
+            "Stop": [
+                {"hooks": [{"command": "bash ~/.claude/hooks/x.sh && bash .git/hooks/pre-commit"}]}
+            ]
+        },
+    })
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_entry_point_escaping_plugin_root_is_finding(tmp_path):
+    p = _plugin(tmp_path)
+    (tmp_path / "outside.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    _write_package_contract(p, {"package_mode": "bundle", "entry_points": {"hooks": ["../outside.py"]}})
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "../outside.py" in fs[0]["evidence"]
+
+
+@pytest.mark.parametrize("hooks_value", [3, "guard", {"guard": 1}])
+def test_pkg_006_non_list_entry_point_hooks_does_not_crash(tmp_path, hooks_value):
+    # entry_points.hooks が配列でないときは登録なしとして扱い、TypeError で落とさない
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    _write_package_contract(p, {"package_mode": "bundle", "entry_points": {"hooks": hooks_value}})
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "未登録" in fs[0]["evidence"]
+
+
+def _hooks_json(command: str) -> str:
+    return json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"command": command}]}]}})
+
+
+def test_pkg_006_default_hooks_json_is_read_without_plugin_json_key(tmp_path):
+    """plugin.json に hooks キーが無くても hooks/hooks.json の登録を読む (j 回目 p006d の再現)。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "a.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    (p / "hooks" / "hooks.json").write_text(
+        _hooks_json("bash ${CLAUDE_PLUGIN_ROOT}/hooks/a.sh"), encoding="utf-8")
+    _write_plugin_json(p, {"name": "demo"})
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_default_hooks_json_typo_is_finding(tmp_path):
+    """hooks/hooks.json の登録先の綴り違いは、実体の無い登録として落とす (j 回目 p006h の再現)。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "hooks.json").write_text(
+        _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/gaurd-typo.py"), encoding="utf-8")
+    _write_plugin_json(p, {"name": "demo"})
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "hooks/hooks.json" in fs[0]["evidence"]
+    assert "gaurd-typo.py" in fs[0]["evidence"]
+
+
+@pytest.mark.parametrize("content", ["{broken", "[1, 2]"])
+def test_pkg_006_unreadable_default_hooks_json_is_finding(tmp_path, content):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "hooks.json").write_text(content, encoding="utf-8")
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "JSON の object として読めない" in fs[0]["evidence"]
+
+
+def test_pkg_006_plugin_json_hooks_array_of_files(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "a.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    (p / "extra").mkdir()
+    (p / "extra" / "more.json").write_text(
+        _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/a.py"), encoding="utf-8")
+    _write_plugin_json(p, {"name": "demo", "hooks": ["./extra/more.json"]})
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_default_hooks_json_named_in_plugin_json_is_read_once(tmp_path):
+    """plugin.json が既定の hooks/hooks.json を指しても 2 回読まず、finding を重ねない。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "hooks.json").write_text(
+        _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/gone.py"), encoding="utf-8")
+    _write_plugin_json(p, {"name": "demo", "hooks": "./hooks/hooks.json"})
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "gone.py" in fs[0]["evidence"]
+
+
+def test_pkg_006_registered_name_must_match_extension(tmp_path):
+    """a.py の登録は a.sh の実体を満たさない。拡張子まで含めて完全一致で比べる。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "a.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    (p / "hooks" / "hooks.json").write_text(
+        _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/a.py"), encoding="utf-8")
+    fs = MOD.check_pkg_006(p)
+    evidence = [f["evidence"] for f in fs]
+    assert len(fs) == 2, evidence
+    assert any("未登録" in e for e in evidence)
+    assert any("実体が plugin の中に無い" in e and "a.py" in e for e in evidence)
+
+
+def test_pkg_006_extensionless_entry_point_does_not_match(tmp_path):
+    """entry_points.hooks の "guard" は guard.py の登録にならない (stem 一致をやめた)。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    _write_package_contract(p, {"package_mode": "bundle", "entry_points": {"hooks": ["guard"]}})
+    fs = MOD.check_pkg_006(p)
+    evidence = [f["evidence"] for f in fs]
+    assert len(fs) == 2, evidence
+    assert any("未登録" in e for e in evidence)
+    assert any("package-contract entry_points.hooks" in e and "guard" in e for e in evidence)
 
 
 # ============================================================================
@@ -792,7 +1165,7 @@ def test_run_checks_skill_only_na(tmp_path):
 def test_run_checks_plugin_mode_runs_all(tmp_path):
     p = _plugin(tmp_path, "demo")
     _write_plugin_json(p, {
-        "name": "demo", "version": "1", "package_mode": "plugin",
+        "name": "demo", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _write_skill(p, "sk", _full_required_fm())
@@ -800,7 +1173,7 @@ def test_run_checks_plugin_mode_runs_all(tmp_path):
     # plugin mode では全 check が pass/fail (not_applicable は出ない)
     for pid in MOD.PKG_IDS:
         assert result["pkg_checks"][pid]["status"] in ("pass", "fail")
-    assert result["package_mode"] == "plugin"
+    assert result["package_mode"] == "bundle"
     assert result["target_plugin"] == "demo"
     assert "run_id" in result
 
@@ -818,14 +1191,14 @@ def test_run_checks_single_id(tmp_path):
 # main : subprocess で exit code / 出力 / 引数エラー
 # ============================================================================
 
-def _make_plugins_root(tmp_path, name="demo", mode="plugin") -> Path:
+def _make_plugins_root(tmp_path, name="demo", mode="bundle") -> Path:
     root = tmp_path / "plugins"
     p = _plugin(root, name)
     pj = {"name": name, "version": "1", "description": "d", "entry_points": {}}
     if mode:
         pj["package_mode"] = mode
     _write_plugin_json(p, pj)
-    _write_package_contract(p, {"package_mode": mode or "plugin", "entry_points": {}})
+    _write_package_contract(p, {"package_mode": mode or "bundle", "entry_points": {}})
     return root
 
 
@@ -857,7 +1230,7 @@ def test_main_clean_plugin_exit0(tmp_path):
     root = tmp_path / "plugins"
     p = _plugin(root, "demo")
     _write_plugin_json(p, {
-        "name": "demo", "version": "1", "package_mode": "plugin",
+        "name": "demo", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _write_package_contract(p)
@@ -873,7 +1246,7 @@ def test_main_plugin_dir_exit0_without_plugins_root(tmp_path):
     """marketplace 単独 install では --plugin-dir だけで検査対象を解決する。"""
     p = _plugin(tmp_path / "anywhere" / "harness-creator", "demo")
     _write_plugin_json(p, {
-        "name": "demo", "version": "1", "package_mode": "plugin",
+        "name": "demo", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _write_package_contract(p)
@@ -887,7 +1260,7 @@ def test_main_plugin_dir_exit0_without_plugins_root(tmp_path):
 def test_main_uses_claude_plugin_root_when_no_plugin_arg(tmp_path):
     p = _plugin(tmp_path / "marketplace-cache", "harness-creator")
     _write_plugin_json(p, {
-        "name": "harness-creator", "version": "1", "package_mode": "plugin",
+        "name": "harness-creator", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _write_package_contract(p)
@@ -907,8 +1280,8 @@ def test_main_failing_plugin_exit1(tmp_path):
     """PKG-002 必須キー欠落 -> fail -> exit 1。"""
     root = tmp_path / "plugins"
     p = _plugin(root, "demo")
-    # package_mode は plugin にして全 check 走らせるが必須キー欠落で fail
-    _write_plugin_json(p, {"name": "demo", "package_mode": "plugin"})
+    # package_mode は bundle にして全 check 走らせるが必須キー欠落で fail
+    _write_plugin_json(p, {"name": "demo", "package_mode": "bundle"})
     proc = _run_cli(["--plugin", "demo", "--plugins-root", str(root)])
     assert proc.returncode == 1
     out = json.loads(proc.stdout)
@@ -968,7 +1341,7 @@ def test_main_inproc_all_clean_exit0(tmp_path, monkeypatch, capsys):
     root = tmp_path / "plugins"
     p = _plugin(root, "demo")
     _write_plugin_json(p, {
-        "name": "demo", "version": "1", "package_mode": "plugin",
+        "name": "demo", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _write_package_contract(p)
@@ -984,7 +1357,7 @@ def test_main_inproc_all_clean_exit0(tmp_path, monkeypatch, capsys):
 def test_main_inproc_failing_exit1(tmp_path, monkeypatch, capsys):
     root = tmp_path / "plugins"
     p = _plugin(root, "demo")
-    _write_plugin_json(p, {"name": "demo", "package_mode": "plugin"})
+    _write_plugin_json(p, {"name": "demo", "package_mode": "bundle"})
     _argv(monkeypatch, ["--plugin", "demo", "--plugins-root", str(root)])
     rc = MOD.main()
     assert rc == 1
@@ -1020,7 +1393,7 @@ def test_main_inproc_prefixed_check_passthrough(tmp_path, monkeypatch, capsys):
     root = tmp_path / "plugins"
     p = _plugin(root, "demo")
     _write_plugin_json(p, {
-        "name": "demo", "version": "1", "package_mode": "plugin",
+        "name": "demo", "version": "1", "package_mode": "bundle",
         "description": "d", "entry_points": {},
     })
     _argv(monkeypatch, ["--plugin", "demo", "--plugins-root", str(root),
@@ -1041,3 +1414,62 @@ def test_main_inproc_output_to_file(tmp_path, monkeypatch, capsys):
     assert rc == 0
     assert out_path.exists()
     assert capsys.readouterr().out.strip() == ""
+
+
+# --- 入力の形の境界（review B の [低] の回帰） ---------------------------------
+
+@pytest.mark.parametrize("target", ["plugin.json", "package-contract.json"])
+def test_main_array_json_is_finding_not_traceback(tmp_path, target):
+    """plugin.json・package-contract.json が配列でも traceback (rc1) にせず、PKG-002 の fail にする。"""
+    p = _plugin(tmp_path, "demo")
+    _write_plugin_json(p, {"name": "demo", "version": "1", "description": "d"})
+    _write_package_contract(p)
+    path = (p / ".claude-plugin" / "plugin.json") if target == "plugin.json" \
+        else (p / "references" / "package-contract.json")
+    path.write_text("[1, 2]", encoding="utf-8")
+    proc = _run_cli(["--plugin-dir", str(p), "--check", "pkg-002"])
+    assert "Traceback" not in proc.stderr
+    assert proc.returncode == 1
+    data = json.loads(proc.stdout)
+    evidence = [f["evidence"] for f in data["pkg_checks"]["PKG-002"]["findings"]]
+    assert any("object として読めない" in e for e in evidence), evidence
+
+
+def test_main_array_plugin_json_does_not_crash_pkg006(tmp_path):
+    """hooks/ がある plugin の plugin.json が配列でも PKG-006 は落ちない。"""
+    p = _plugin(tmp_path, "demo")
+    _write_plugin_json(p, {"name": "demo", "version": "1", "description": "d"})
+    (p / ".claude-plugin" / "plugin.json").write_text("[1]", encoding="utf-8")
+    _write_package_contract(p)  # package_mode=bundle で PKG-006 を適用対象にする
+    (p / "hooks").mkdir()
+    (p / "hooks" / "h.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    proc = _run_cli(["--plugin-dir", str(p), "--check", "pkg-006"])
+    assert "Traceback" not in proc.stderr
+    assert proc.returncode == 1
+    assert json.loads(proc.stdout)["pkg_checks"]["PKG-006"]["status"] == "fail"
+
+
+def test_check_pkg_008_non_object_settings_is_finding(tmp_path):
+    p = _plugin(tmp_path, "demo")
+    (p / "settings").mkdir()
+    (p / "settings" / "s.json").write_text("[]", encoding="utf-8")
+    fs = MOD.check_pkg_008(p)
+    assert len(fs) == 1
+    assert "object でない" in fs[0]["evidence"]
+
+
+def test_main_plugin_dir_is_regular_file_exit2(tmp_path):
+    """--plugin-dir に通常ファイルを渡すと入力エラー (2)。fail (1) と混ぜない。"""
+    f = tmp_path / "not-a-dir"
+    f.write_text("x", encoding="utf-8")
+    proc = _run_cli(["--plugin-dir", str(f)])
+    assert proc.returncode == 2
+    assert "plugin not found" in proc.stderr
+
+
+def test_script_has_pep723_header():
+    head = SCRIPT.read_text(encoding="utf-8").split('"""', 1)[0]
+    assert "# /// script" in head
+    for key in ("name", "purpose", "inputs", "outputs", "contexts", "network",
+                "write-scope", "dependencies"):
+        assert f"# {key}:" in head, key

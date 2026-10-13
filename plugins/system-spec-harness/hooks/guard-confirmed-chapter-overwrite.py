@@ -68,10 +68,9 @@ confirmed 章 Write/Edit のみ安全側で拒否する (計画 C11 exit_semanti
 C01/C03 の単一 writer/transition gate が担う。本 hook は補助 (二重化)。
 
 block ゲートとの相補関係 (C16/C14): required-info-catalog.json の missing_effect=block item が未充足の
-間は、そもそも当該セルの confirmed 遷移自体が上流の C01 R5 収集ゲート (elicit 時の prose ゲート) で
-禁止される (validate-knowledge-graph.py --profile required-info は coverage certificate に blocking_items を
-列挙するのみで runtime 施行はせず、C01 R5 がその certificate を消費して施行する。決定論 writer 施行 =
-apply-spec-transition への block 検査組込は required-info 回答スキーマ拡張を要する follow-up)。すなわち
+間は、上流 C01 R2/R5 が confirm を含む writer apply/chunk に --required-info を付け、
+候補 state を既存 validate_required_info で検査してからだけ公開する。確定前の元 state に
+確定接地を要求せず、候補の qa_ref/qa_refs -> qa_log.required_info_items で接地を確認する。すなわち
 「未収集の必須情報を残したまま確定させない」のは上流の収集ゲート側の責務。本 hook はその結果 confirmed になった章の
 事後的な上書き/巻き戻しを防ぐ層であり、block ゲートとは前段 (確定させない) / 後段 (確定を保護) の
 相補的な二層をなす。本 hook 側で block 未充足を再判定・遮断することはしない (責務境界の明確化)。
@@ -256,7 +255,7 @@ def _extract_cell_refs(fm: dict) -> list[tuple[str, str]]:
 
 def canonical_spec_state_path(root: Path) -> Path:
     """正本 spec-state.json の絶対想定パス (<root>/system-spec/spec-state.json)。"""
-    return root / SPEC_DIR / SPEC_STATE_NAME
+    return root.absolute() / SPEC_DIR / SPEC_STATE_NAME
 
 
 def load_spec_state(root: Path) -> dict | None:
@@ -363,23 +362,23 @@ def chapter_protected(p: Path, root: Path) -> bool:
 
 
 # ── 正本 spec-state.json 直接書換ガード ─────────────────────────────────────
+def _resolve_target_path(p: Path, root: Path) -> Path:
+    """全 tool 共通: 相対 target は project root 起点、authority は symlink 解決後。"""
+    p = p.expanduser()
+    absolute = p if p.is_absolute() else root / p
+    try:
+        return absolute.resolve()
+    except (OSError, RuntimeError):
+        return absolute
+
+
 def _is_canonical_spec_state(p: Path, root: Path) -> bool:
     """対象が正本 spec-state.json (<root>/system-spec/spec-state.json) 自身か。
 
     実パス一致でのみ True。別位置の同名 spec-state.json (テスト fixture 等) は正本でないため
     False (交差汚染回避)。判定対象と判定ソースが常に同一ファイルになる。
     """
-    canon = canonical_spec_state_path(root)
-    try:
-        return p.resolve() == canon.resolve()
-    except OSError:
-        return False
-
-
-def _token_is_canonical_spec_state(token: str) -> bool:
-    """Bash トークンが正本 spec-state.json (system-spec/spec-state.json) を末尾構造で指すか。"""
-    p = Path(token)
-    return p.name == SPEC_STATE_NAME and len(p.parts) >= 2 and p.parts[-2] == SPEC_DIR
+    return _resolve_target_path(p, root) == _resolve_target_path(canonical_spec_state_path(root), root)
 
 
 def spec_state_has_confirmed_cell(root: Path) -> bool:
@@ -718,18 +717,20 @@ def _protected_target_reason(token: str, root: Path) -> str:
 
     相対パスは root 起点で解決し、symlink を辿った実パスでも確定章 / 正本 spec-state を判定する。
     """
-    if _token_is_canonical_spec_state(token):
-        return f"正本 spec-state.json への書込み ('{token}') を遮断"
-    p = Path(token).expanduser()
-    real = p if p.is_absolute() else root / p
-    try:
-        real = real.resolve()
-    except (OSError, RuntimeError):
-        pass
+    real = _resolve_target_path(Path(token), root)
     if _is_canonical_spec_state(real, root):
         return f"正本 spec-state.json への書込み ('{token}' の実パス) を遮断"
-    if chapter_protected(p, root) or chapter_protected(real, root):
+    if chapter_protected(real, root):
         return f"確定章への書込み ('{token}') を遮断"
+    # rm/mv/shutil.rmtree 等は directory 自体でなく配下の実体も変更する。
+    # cp/install の directory 宛先は抽出側で実ファイルへ展開済みである。
+    if real.is_dir():
+        canon = _resolve_target_path(canonical_spec_state_path(root), root)
+        if canon.is_file() and canon.is_relative_to(real):
+            return f"正本 spec-state.json を含むディレクトリ ('{token}') の変更を遮断"
+        for chapter in real.rglob("*.md"):
+            if chapter_protected(chapter, root):
+                return f"確定章を含むディレクトリ ('{token}') の変更を遮断"
     return ""
 
 
@@ -791,7 +792,7 @@ def decide(payload: dict, root: Path) -> tuple[int, str]:
         fp = ti.get("file_path") or ti.get("path") or ""
         if not fp:
             return 0, ""
-        path = Path(fp)
+        path = _resolve_target_path(Path(fp), root)
         # (a) 正本 spec-state.json 自身への直接書換 (確定セルあり) は Bash 経路と同格に遮断。
         #     別位置の同名 spec-state.json (fixture 等) は正本でなく通す (交差汚染回避)。
         if _is_canonical_spec_state(path, root) and spec_state_has_confirmed_cell(root):

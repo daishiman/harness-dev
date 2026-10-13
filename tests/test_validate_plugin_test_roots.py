@@ -114,6 +114,29 @@ def test_each_test_root_gets_an_isolated_log_and_its_own_cwd(tmp_path):
     assert "1 passed" in result.log_path.read_text(encoding="utf-8")
 
 
+def test_child_pytest_runs_git_without_auto_maintenance_and_keeps_inherited_config(tmp_path, monkeypatch):
+    # commit の後に裏で起きる自動の手入れが .git/objects/maintenance.lock を一時的に作り、.git を写す test を揺らす。
+    runner = _load_runner()
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "user.name")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "inherited")
+    tests_dir = tmp_path / "plugins" / "sample" / "tests"
+    tests_dir.mkdir(parents=True)
+    (tests_dir / "test_git_env.py").write_text(
+        "import subprocess\n"
+        "def get(key):\n"
+        "    return subprocess.run(['git', 'config', '--get', key], capture_output=True, text=True).stdout.strip()\n"
+        "def test_git_env():\n"
+        "    assert (get('maintenance.auto'), get('gc.auto'), get('user.name')) == ('false', '0', 'inherited')\n",
+        encoding="utf-8",
+    )
+    plan = runner.prioritize_groups({"plugins/sample": ["tests/test_git_env.py"]}, set())
+
+    result = runner.run_test_root(plan[0], repo_root=tmp_path, log_dir=tmp_path / "logs")
+
+    assert result.returncode == 0, result.log_path.read_text(encoding="utf-8")
+
+
 def test_workflow_runs_governance_and_plugin_tests_in_parallel_then_aggregates():
     workflow_path = ROOT / ".github" / "workflows" / "harness-creator-kit-ci.yml"
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))

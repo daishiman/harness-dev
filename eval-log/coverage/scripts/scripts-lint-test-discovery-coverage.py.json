@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-test-discovery-coverage.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine review（sha256 37dd664d042bee0ac21096af65c2a9462967e01801fc2a4bf31352bc738c5482 をレビュー。実行検証あり）。範囲: 全 279 行と git diff HEAD（_strip_comments と _workflow_run_bodies を足し、check_ci_runs_roots を run: の本文だけで照合するよう変え、引数を argparse に替えた）。確かめたこと: 前回の [中]（CI の証跡がコメントで満たされる）は直った。work-j-s3/tdc の一時 root に、実 workflow から 72 行（python3 -m pytest tests/ ...）だけを消した写しを置くと、PyYAML ありでも無し（sys.modules['yaml']=None）でも tests/ が NG になった。元の workflow はどちらも OK。前回の [低]（引数を黙って捨てる）も直った。--repo-roots の打ち間違い、存在しない --repo-root、ファイルを渡す、値の欠落は exit 2、--help は exit 0。tests/test_lint_test_discovery_coverage.py で 31 passed（fallback とコメントの test を含む）。実 repo で test files 631（CI 到達 629 / orphan 2 / allowlist 2）、parity OK、CI runs tests/・plugins/ OK、exit 0。PyYAML 無しの fallback でも exit 0。lint-script-frontmatter は OK。書き込みは無い。指摘: [低] 証跡の照合は run: の本文の部分文字列なので、実行しない step でも満たされる（220-221 行）。`if: false` の step の `run: python3 -m pytest tests/ -q` と `run: echo 'pytest tests/ is gone'` は PyYAML ありでも OK になった。PyYAML 無しの fallback では、env の値や block scalar の name（`name: >-` の次の行）でも OK になった。[低] workflow ファイルが無いと二次ガードを skip して ok のままになる（203-205 行）。実 repo で CI_WORKFLOW_REL を改名後の名前に差し替えて main を呼ぶと、skip を出して exit 0 になった。workflow を改名しても、この lint は改名後の workflow の step から走り続けるが、tests/ の step を消しても検出しない。直し方: 既定の repo root のときは不在を NG にする。[低] repo でない dir（例: --repo-root plugins）を渡すと、orphan 390 件に加えて「ALLOWLIST から削除すること」という誤った直し方を出して exit 1 になる（150-155 行）。止まる向きは正しいが、指示が誤っている。DEDUCTION: 部分文字列での照合 -3、workflow 不在での skip -3、repo でない root での誤った指示 -2 → 92。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

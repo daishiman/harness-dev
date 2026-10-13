@@ -1,0 +1,47 @@
+[
+  {
+    "name": "package",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+      "--check",
+      "all",
+      "--plugin",
+      "ubm-goal-setting",
+      "--plugins-root",
+      "plugins"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"run_id\": \"pkg-validate-ubm-goal-setting-20261010-001\",\n  \"target_plugin\": \"ubm-goal-setting\",\n  \"package_mode\": \"bundle\",\n  \"pkg_checks\": {\n    \"PKG-002\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-003\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-004\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-005\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-006\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-007\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-008\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    },\n    \"PKG-014\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T16:35:22Z\"\n    }\n  },\n  \"verdict\": {\n    \"total\": 8,\n    \"pass\": 8,\n    \"fail\": 0,\n    \"skip\": 0,\n    \"not_applicable\": 0\n  }\n}\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T16:35:22.648415+00:00"
+  },
+  {
+    "name": "codex_sync",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+      "--repo-root",
+      ".",
+      "--plugin",
+      "plugins/ubm-goal-setting",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"status\": \"noop\",\n  \"operation\": \"upsert\",\n  \"intent\": \"auto\",\n  \"paths\": []\n}\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T16:35:22.225887+00:00"
+  },
+  {
+    "name": "local_marketplace",
+    "argv": [
+      "python3",
+      "scripts/build-local-marketplace.py",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "[build-local-marketplace] OK: 22 plugin(s), no drift\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T16:35:22.202218+00:00"
+  }
+]

@@ -2,7 +2,6 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "UBMナレッジスキーマ",
   "description": "北原孝彦さんの教え・アドバイスを構造化管理するスキーマ。ユーザーの悩みに的確なアドバイスを提供するための文脈付きナレッジ。",
-
   "design_principle": {
     "core_goal": "ユーザーが抱える経営課題・悩みに対して、北原さんのアドバイスを『なぜ言ったか・何を目的として・どういう流れで』まで含めて的確に届けること",
     "information_quality": {
@@ -26,7 +25,6 @@
       "Q6: エージェントとしてどう使うか？（how_to_use）"
     ]
   },
-
   "file_naming_convention": {
     "description": "ファイル名だけで中身が分かること。連番（-1, -2）は絶対禁止。内容を表すサブトピック名を使う",
     "base_files": {
@@ -90,137 +88,618 @@
       ]
     }
   },
-
   "knowledge_entry_schema": {
     "type": "object",
-    "required": ["category", "description", "entry_count", "entries"],
+    "required": [
+      "category",
+      "description",
+      "entry_count",
+      "entries"
+    ],
     "properties": {
       "category": {
         "type": "string",
-        "enum": ["principles", "consultation", "phase-advice", "action-guides", "mindset", "case-studies"]
+        "enum": [
+          "principles",
+          "consultation",
+          "phase-advice",
+          "action-guides",
+          "mindset",
+          "case-studies"
+        ]
       },
       "subcategory": {
         "type": "string",
         "description": "分割後のサブトピック名（ファイル名のsuffix部分）"
       },
-      "description": { "type": "string" },
-      "entry_count": { "type": "integer" },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "entry_count": {
+        "type": "integer",
+        "minimum": 0
+      },
       "entries": {
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["id", "content", "background", "intent", "tags", "phase", "source"],
-
+          "required": [
+            "id",
+            "background",
+            "phase",
+            "source"
+          ],
           "properties": {
             "id": {
               "type": "string",
               "pattern": "^[A-Z]{2,4}-\\d{3}$",
-              "description": "PR(原則) / CP(相談) / PA(フェーズ) / AG(行動) / MS(転換) / CS(事例)"
+              "description": "PR(原則) / CP(相談) / PA(フェーズ) / AG(行動) / MS(転換) / CS(事例)",
+              "minLength": 1
             },
-
             "content": {
               "type": "string",
-              "description": "ナレッジの核心（1〜2文）。このアドバイスが一言でいうと何か"
+              "description": "ナレッジの核心。原文の意味と条件を保ち、主語・述語・対象が明確な一文で記述する。原文引用と詳しい補足はquote・detail・出典に保全する",
+              "minLength": 1,
+              "pattern": "\\S"
             },
-
             "background": {
               "type": "string",
-              "description": "【必須・詳しく書く】このアドバイスが必要になる典型的な状況パターンと北原さんの診断見解。相談者の個人名・会社名・固有業種・特定数値は含めず、『この種の経営者が陥りやすい構造的な状況』として記述する。北原さんが何を観察・診断したかに焦点を当て、2〜5文で具体的に記述する"
+              "description": "【必須・詳しく書く】このアドバイスが必要になる典型的な状況パターンと北原さんの診断見解。相談者の個人名・会社名・固有業種・特定数値は含めず、『この種の経営者が陥りやすい構造的な状況』として記述する。北原さんが何を観察・診断したかに焦点を当て、2〜5文で具体的に記述する",
+              "minLength": 1,
+              "pattern": "\\S"
             },
-
             "intent": {
               "type": "string",
-              "description": "【必須】北原さんがこのアドバイスで達成しようとしている目的・意図。『〜させること』『〜を防ぐこと』の形で1〜2文"
+              "description": "【必須】北原さんがこのアドバイスで達成しようとしている目的・意図。『〜させること』『〜を防ぐこと』の形で1〜2文",
+              "minLength": 1,
+              "pattern": "\\S"
             },
-
             "root_cause": {
               "type": "string",
               "description": "【推奨・重要】表面的な問題の裏にある本質的な原因。北原さんが見抜いた構造的・心理的な根本。これが分かると的確なアドバイスができる"
             },
-
             "expected_outcome": {
               "type": "string",
               "description": "【推奨】このアドバイスを実践した場合に何がどう変わるか。短期・長期の変化を具体的に2〜4文で記述"
             },
-
             "detail": {
               "type": "string",
               "description": "補足説明・具体的な方法・実践上の注意点。本文では語りきれない詳細"
             },
-
             "quote": {
               "type": "string",
               "description": "北原さんの原文引用（ソースに発言がある場合は必ず抽出）"
             },
-
             "conversation_flow": {
               "type": "string",
               "description": "どういう質問・相談の流れでこのアドバイスが出てきたか。前後の文脈・展開を2〜3文で"
             },
-
             "tags": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
               "minItems": 1,
               "description": "検索タグ。ユーザーの悩みワードを含める（例: 関係構築, 外交, 売上, 組織, 集客, 採用）"
             },
-
             "phase": {
-              "type": "array",
-              "items": { "enum": ["0to1", "1to10", "10to100", "all"] }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "0to1",
+                      "1to10",
+                      "10to100",
+                      "all",
+                      "初期",
+                      "成熟期",
+                      "拡大期"
+                    ]
+                  }
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "0to1",
+                    "1to10",
+                    "10to100",
+                    "all"
+                  ]
+                }
+              ],
+              "description": "既存の明示的な分類を有限列挙で保持。未知の自由文字列は許可しない。scalarはphase-adviceに限定する"
             },
-
             "business_type": {
-              "type": "array",
-              "items": { "enum": ["store", "intangible", "all"] }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "store",
+                      "intangible",
+                      "all",
+                      "AIコンサルティング",
+                      "AI事業",
+                      "BtoC",
+                      "FC",
+                      "IT・AI",
+                      "インテリア・デザイン",
+                      "コミュニティ",
+                      "コンサル",
+                      "コンサルティング",
+                      "コンサルティング・コミュニティ運営",
+                      "コンサルティング・サービス業",
+                      "コンサルティング・工務店営業支援",
+                      "コンサルティング・教育",
+                      "コンサルティング・経営",
+                      "コンサルティング系（推定）",
+                      "コーチング",
+                      "サービス業",
+                      "スクール",
+                      "フランチャイズ",
+                      "ヘルス・ウェルネスコンサルティング",
+                      "ホームページ制作・受注代行",
+                      "メディア・サブスクリプション（保育業界）",
+                      "企業向けコンサルティング・映像制作",
+                      "健康・ダイエット（無形商品）",
+                      "写真撮影・映像制作",
+                      "医療・介護",
+                      "士業",
+                      "士業（税理士）",
+                      "婚活・相談所",
+                      "対人サービス",
+                      "小売",
+                      "店舗ビジネス",
+                      "店舗型サービス",
+                      "教育",
+                      "教育・スクール・物販",
+                      "教育・学習塾",
+                      "整体・健康サービス",
+                      "物販",
+                      "福祉・介護",
+                      "美容・サービス業",
+                      "美容業",
+                      "製造",
+                      "製造業",
+                      "製造業・食品",
+                      "講座",
+                      "食品",
+                      "飲食",
+                      "高単価商品"
+                    ]
+                  }
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "store",
+                    "intangible",
+                    "all",
+                    "AIコンサルティング",
+                    "AI事業",
+                    "BtoC",
+                    "FC",
+                    "IT・AI",
+                    "インテリア・デザイン",
+                    "コミュニティ",
+                    "コンサル",
+                    "コンサルティング",
+                    "コンサルティング・コミュニティ運営",
+                    "コンサルティング・サービス業",
+                    "コンサルティング・工務店営業支援",
+                    "コンサルティング・教育",
+                    "コンサルティング・経営",
+                    "コンサルティング系（推定）",
+                    "コーチング",
+                    "サービス業",
+                    "スクール",
+                    "フランチャイズ",
+                    "ヘルス・ウェルネスコンサルティング",
+                    "ホームページ制作・受注代行",
+                    "メディア・サブスクリプション（保育業界）",
+                    "企業向けコンサルティング・映像制作",
+                    "健康・ダイエット（無形商品）",
+                    "写真撮影・映像制作",
+                    "医療・介護",
+                    "士業",
+                    "士業（税理士）",
+                    "婚活・相談所",
+                    "対人サービス",
+                    "小売",
+                    "店舗ビジネス",
+                    "店舗型サービス",
+                    "教育",
+                    "教育・スクール・物販",
+                    "教育・学習塾",
+                    "整体・健康サービス",
+                    "物販",
+                    "福祉・介護",
+                    "美容・サービス業",
+                    "美容業",
+                    "製造",
+                    "製造業",
+                    "製造業・食品",
+                    "講座",
+                    "食品",
+                    "飲食",
+                    "高単価商品"
+                  ]
+                }
+              ],
+              "description": "既存の明示的な分類を有限列挙で保持。未知の自由文字列は許可しない"
             },
-
             "applicable_when": {
               "type": "string",
               "description": "このナレッジを使うべきユーザーの状態・状況。どんな悩みを持つユーザーに対して使うか"
             },
-
             "how_to_use": {
               "type": "string",
               "description": "【推奨・重要】エージェントがこのナレッジを目標設定・アドバイスの会話にどう活用するか。具体的な使い方（引用タイミング・投げかける問い・次のアクション）を記述"
             },
-
             "related": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "関連する他エントリのID。組み合わせて使うと効果的なもの・前後のつながりがあるもの"
             },
-
             "expression": {
               "type": "object",
               "description": "北原さんの表現スタイル。アドバイス時の口調・言い回しを再現するために使う",
               "properties": {
-                "tone": { "type": "string", "enum": ["厳しめ", "優しめ", "励まし", "警告", "問いかけ", "共感"] },
-                "phrasing": { "type": "string", "description": "北原さんらしい言い回し・フレーズ" },
-                "context_note": { "type": "string", "description": "どういう場面でこの口調・表現を使うか" }
+                "tone": {
+                  "type": "string",
+                  "enum": [
+                    "厳しめ",
+                    "優しめ",
+                    "励まし",
+                    "警告",
+                    "問いかけ",
+                    "共感",
+                    "丁寧",
+                    "体験談",
+                    "力強い",
+                    "啓発的",
+                    "実践の指針",
+                    "実践的",
+                    "戒め",
+                    "戦略的",
+                    "断定",
+                    "断定的",
+                    "明快",
+                    "本質的",
+                    "構造の指摘",
+                    "構造指摘",
+                    "構造的",
+                    "深い",
+                    "率直",
+                    "発破",
+                    "確信的",
+                    "示唆的",
+                    "自己開示・事実提示",
+                    "自己開示・基準提示",
+                    "落ち着いた",
+                    "覚悟を示す",
+                    "設計的",
+                    "設計論・慎重",
+                    "論理的",
+                    "諭すような",
+                    "静か"
+                  ]
+                },
+                "phrasing": {
+                  "type": "string",
+                  "description": "北原さんらしい言い回し・フレーズ"
+                },
+                "context_note": {
+                  "type": "string",
+                  "description": "どういう場面でこの口調・表現を使うか"
+                }
               }
             },
-
             "source": {
               "type": "object",
-              "required": ["file", "type"],
+              "required": [
+                "file",
+                "type"
+              ],
               "properties": {
-                "file": { "type": "string" },
-                "type": { "enum": ["youtube", "camp", "teaching-material", "monthly-feedback", "seminar", "event", "other"] },
-                "date": { "type": "string", "format": "date" },
-                "section": { "type": "string" }
+                "file": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "type": {
+                  "enum": [
+                    "youtube",
+                    "camp",
+                    "teaching-material",
+                    "monthly-feedback",
+                    "seminar",
+                    "event",
+                    "other",
+                    "academy-meeting",
+                    "academy-message",
+                    "branch-meeting",
+                    "monthly-report",
+                    "teaching"
+                  ]
+                },
+                "date": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9]{4}(-(?:0[1-9]|1[0-2]))?$"
+                    },
+                    {
+                      "const": "unknown"
+                    }
+                  ],
+                  "description": "日付・原文が年/月精度のみの日付・既存の不明sentinelを区別。未記載の年月日を推測しない"
+                },
+                "section": {
+                  "type": "string"
+                }
+              }
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "カードを特定する検索用の核心。contentを持たないdomain cardでは必須。既存の本文・出典を根拠に、主語・述語・対象が明確な一文で意味を変えずに記述する。元の記述は出典と移行監査に保全する"
+            },
+            "purpose": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "intentと同じ必須群に属する目的。原文にある目的のみ記録する"
+            },
+            "keywords": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "minItems": 1,
+              "description": "tagsと同じ必須群に属する検索語"
+            }
+          },
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "title"
+                  ]
+                },
+                {
+                  "required": [
+                    "content"
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "intent"
+                  ]
+                },
+                {
+                  "required": [
+                    "purpose"
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "keywords"
+                  ]
+                },
+                {
+                  "required": [
+                    "tags"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "principles"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^PR-\\d{3}$"
+                  },
+                  "phase": {
+                    "type": "array"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "consultation"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^CP-\\d{3}$"
+                  },
+                  "phase": {
+                    "type": "array"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "phase-advice"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^PA-\\d{3}$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "action-guides"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^AG-\\d{3}$"
+                  },
+                  "phase": {
+                    "type": "array"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "mindset"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^MS-\\d{3}$"
+                  },
+                  "phase": {
+                    "type": "array"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": {
+              "const": "case-studies"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "then": {
+          "properties": {
+            "entries": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "pattern": "^CS-\\d{3}$"
+                  },
+                  "phase": {
+                    "type": "array"
+                  }
+                }
               }
             }
           }
         }
       }
-    }
+    ]
   },
-
   "category_specific_fields": {
     "consultation": {
-      "description": "事業相談パターン。典型的な経営課題パターン→北原さんの診断→アドバイス→期待される変化の流れを記録する。特定の相談者個人の情報は記録せず、『この種の状況の経営者』として普遍化する",
-      "additional_required": ["situation", "problem", "advice", "key_insight"],
+      "description": "事業相談パターン。典型的な経営課題パターン→北原さんの診断→アドバイス→期待される変化の流れを記録する。backgroundには特定の相談者個人の情報を含めず、『この種の状況の経営者』として普遍化する。元資料の事実・引用・出典は原文フィールドと移行監査に保全する",
+      "additional_required": [
+        "situation",
+        "problem",
+        "advice",
+        "key_insight"
+      ],
       "fields": {
         "situation": "このアドバイスが適用される典型的な経営状況パターン（個人名・固有業種・特定数値は除き、フェーズ・構造的特徴のみ。例: 『1→10フェーズで売上は立っているが組織化に苦戦し、採用を条件訴求だけで解決しようとしている経営者』）",
         "problem": "この種の状況の経営者が認識しがちな表面的な問題パターン（特定人物の悩みではなく、典型的な認識パターンとして記述）",
@@ -235,7 +714,12 @@
     },
     "mindset": {
       "description": "マインドセット転換。なぜその転換が必要かの背景が最も重要",
-      "additional_required": ["before", "after", "why_the_shift_matters", "trigger"],
+      "additional_required": [
+        "before",
+        "after",
+        "why_the_shift_matters",
+        "trigger"
+      ],
       "fields": {
         "before": "転換前の思考・前提（多くの経営者が陥りがちな考え方）",
         "after": "転換後の思考・前提（北原さんが推奨する考え方）",
@@ -247,7 +731,13 @@
     },
     "phase-advice": {
       "description": "フェーズ別アドバイス。そのフェーズ特有の課題背景を必ず記録",
-      "additional_required": ["phase", "focus", "do", "dont", "key_question"],
+      "additional_required": [
+        "phase",
+        "focus",
+        "do",
+        "dont",
+        "key_question"
+      ],
       "fields": {
         "phase": "対象フェーズ（0to1/1to10/10to100）",
         "background": "このフェーズで多くの経営者が直面する典型的な状況・課題",
@@ -260,7 +750,11 @@
     },
     "action-guides": {
       "description": "行動指針。なぜその行動が必要かの背景と、実践しない場合のリスクを含める",
-      "additional_required": ["recommended", "not_recommended", "rationale"],
+      "additional_required": [
+        "recommended",
+        "not_recommended",
+        "rationale"
+      ],
       "fields": {
         "background": "この行動指針が必要になる状況・典型的な失敗パターン",
         "intent": "この行動指針で達成しようとしていること",
@@ -271,8 +765,12 @@
       }
     },
     "case-studies": {
-      "description": "事例・実績。単なる記録ではなく、他のユーザーが学べる再現可能な法則を抽出する。特定の相談者の情報ではなく、この種の経営者として普遍化する",
-      "additional_required": ["outcome", "lesson", "key_factor"],
+      "description": "事例・実績。単なる記録ではなく、他のユーザーが学べる再現可能な法則を抽出する。backgroundは特定の相談者の情報ではなく、この種の経営者として普遍化する。元資料の事実・引用・出典は原文フィールドと移行監査に保全する",
+      "additional_required": [
+        "outcome",
+        "lesson",
+        "key_factor"
+      ],
       "fields": {
         "background": "この事例が示す典型的な経営状況パターン（相談者の個人名・会社名・固有業種・特定数値は除き、『この種の経営者が陥りがちな状況』として一般化して記述する）",
         "outcome": "実際に起きた結果（成功/失敗・具体的な数字や変化）",
@@ -284,7 +782,6 @@
       }
     }
   },
-
   "file_management_rules": {
     "split_threshold": 25,
     "split_unit": "エントリ数（entries配列の要素数。router.jsonのgrowth_rules.entry_thresholdと統一）",
@@ -322,13 +819,12 @@
       ]
     }
   },
-
   "quality_checklist": {
     "minimum_required": [
-      "content が1〜2文でアドバイスの核心を表している",
+      "title または content が、主語・述語・対象が明確な一文でアドバイスの核心を表している",
       "background がある（なぜこのアドバイスが必要な状況か）",
       "background が個人名・会社名・固有業種・特定数値を含まず、一般化された状況パターンとして記述されている",
-      "intent がある（北原さんが何を達成しようとしているか）",
+      "intent または purpose が「〜すること」「〜させること」「〜を防ぐこと」の形で目的と対象の変化を表している",
       "tags にユーザーが使うであろう悩みワードが含まれている",
       "source.file が正確に記録されている"
     ],
@@ -341,19 +837,56 @@
     ],
     "quality_signal": "このエントリを読んだエージェントが、ユーザーの相談を受けた時に『どういう状況でどう使うか』がイメージできるか"
   },
-
   "registry_entry_schema": {
     "type": "object",
-    "required": ["path", "source_type", "status"],
+    "required": [
+      "path",
+      "source_type",
+      "status"
+    ],
     "properties": {
-      "path": { "type": "string" },
-      "source_type": { "enum": ["youtube", "camp", "teaching-material", "monthly-feedback", "seminar", "event", "other"] },
-      "status": { "enum": ["pending", "processed", "needs-update", "skipped"] },
-      "file_hash": { "type": "string" },
-      "file_modified": { "type": "string", "format": "date" },
-      "processed_date": { "type": "string", "format": "date-time" },
-      "entries_extracted": { "type": "integer" },
-      "target_categories": { "type": "array", "items": { "type": "string" } }
+      "path": {
+        "type": "string"
+      },
+      "source_type": {
+        "enum": [
+          "youtube",
+          "camp",
+          "teaching-material",
+          "monthly-feedback",
+          "seminar",
+          "event",
+          "other"
+        ]
+      },
+      "status": {
+        "enum": [
+          "pending",
+          "processed",
+          "needs-update",
+          "skipped"
+        ]
+      },
+      "file_hash": {
+        "type": "string"
+      },
+      "file_modified": {
+        "type": "string",
+        "format": "date"
+      },
+      "processed_date": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "entries_extracted": {
+        "type": "integer"
+      },
+      "target_categories": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     }
   }
 }

@@ -1,1 +1,18 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"PASS","score":86,"notes":"Less is More/Why-driven/Gotchas昇格/description規律が具体例(Before/After)付きで再現可能。裏取り: 300行 hard cap は lint-skill-tree.py で MAX_SKILL_LINES=300 として実装一致、繰り返し違反の昇格先テーブルが 06章15条改正手続き/templates と整合。用語一貫・章間参照(13/16/24/26)も健全。減点: description 1536文字 cap は公式値の引用で本群スクリプトでの直接裏取りまでは本章内に閉じない(16章へ委譲)。"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 99cb77523e9aab33ef362b0b79e4b93e1571242129f5ef07a1e999b6b36df58c をレビュー。実行検証あり）。範囲: 08章 全 151 行を通して読み直し、前回（20261010i-d1）の [中] L20・[低] L36/L48・[低] L127 を現物で確かめ直した。確かめたこと: (1) L20 の「発動条件は 2 個ちょうど。FM-003 は 2〜3 を許すが validate-frontmatter が 2 ちょうど、lint R1 が 3 個以上を違反」→ rubric.json 1.5.0 FM-003（2..3）、validate-frontmatter.py 368-378 行（n != 2 でエラー）、lint-skill-description.py 138-139 行と一致。(2) L21 の lint R5（末尾「使う。」「読む。」「起動する。」）、L23 の description + when_to_use 1,536 文字 cap、L10 の公式「500 行未満を目安」を 16章 §10 と照合し一致。(3) work-j-d1/fx08 に 4 例を SKILL.md として置き実行: 良い例 L36・L48 は validate-frontmatter exit 0・lint OK、悪い例 L30・L42 は validate-frontmatter が trigger count 0 で exit 1、lint が R1/R5（L30 は R2 も）で VIOLATION。(4) L117-121 の対応表（目的と出力契約 = BD-001・PD-002、つまずきやすい点 = BD-002、守ること = PD-002）を rubric.json 1.5.0 の BD-001・BD-002・PD-002（日本語は行全体の一致）と ja-contract-policy.md の表示名表と照合し一致。(5) L125・L127: render-combinators.py --help で --language {ja,en,auto}（auto は --target-skill 無しで exit 2）と --kind {run,ref,assign,wrap,delegate} を確認。--language ja で 5 kind を描画し、目的と出力契約・守ること・つまずきやすい点の見出しを確認。複合テンプレート orchestrator.md・agent-team.md・hook-integrated.md は `## Gotchas`・`## Additional Resources` を持ち、render-combinators.py にこれらのファイル名の参照が無い（grep）ことを確認し、L127 の例外記述と一致。前回指摘の確認: [中] L20 の 2〜3 個 → 2 個ちょうどと各ゲートの分担を書き分け（解消）。[低] L36・L48 の英語の良い例 → 日本語 2 トリガー・末尾「使う。」になり fixture で通過（解消）。[低] L127 の composite の例外 → 明記（解消）。指摘: なし（L27・L39 の「発動条件 1 個・4 個」のラベルは機械の出現数ではなく概念上の語数として読め、悪い例として機械ゲートでも落ちるので減点しない）。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-d1",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability",
+    "previous-findings-recheck"
+  ]
+}

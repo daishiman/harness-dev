@@ -5,8 +5,14 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 90,
-    "notes": "genuine code-review (30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。task-state.json の単一 writer。ALLOWED_TRANSITIONS 状態機械 (done 終端・不正遷移 ValueError)、done は route_report 実在+covered_task_ids 照合 (F6)、blocked は第一級 field blocked_reason 必須 (origin-failure|propagated・F9)。reap_expired_lease/renew_lease (F1) は running 限定の別経路で ALLOWED_TRANSITIONS を緩めない。pin_graph_hash は異値再pin一律拒否 (F10 安全)、repin_graph_hash は authorized (accepted form の resulting_graph_hash) 一致時のみ再pin (provenance-gated・外ループ再入の crux・安全と活性の止揚)。propagate_blocked/reactivate_cascade は BFS 下流閉包。canonical serialization は producer 規約踏襲 (独自シリアライザ非発明)。append_event で現在値と履歴を二層分離。TESTS: test_sync_task_state.py 40 PASS。exit 0/1(violation)/2(IO)。"
+    "notes": "genuine review（sha256 03175136c9c35b3181023a6b20cfe141b40903eaf4da71366c3557ffc44422b4 をレビュー。実行検証あり）。範囲: 全 932 行。origin/main からの差分（L43-60 の plugin_resources の import と fallback、finally の sys.path.remove、L76 の _JSON_READ_ERRORS、L667-681 の resolve_planner_root）と、既存の遷移・lease・pin と repin・blocked の伝播・events への追記・os.replace による書き込みを読んだ。確かめたこと: pytest で plugins/harness-creator/tests/ の test_sync_task_state.py・test_inject_task_inputs.py・test_manage_build_lease.py・test_capability_build_runtime_contract.py・test_dispatch_ready_set.py と tests/test_lint_harness_plan_writeguard.py を流して 215 passed。tests/scripts-plugins/test_harness_creator__plugin_resources.py は 4 passed。lint-script-frontmatter.py にディレクトリ plugins/harness-creator/scripts を渡すと OK（checked=33）。scratchpad の fixture で次を確かめた。--initialize-from-graph、--pin-graph-hash、running と lease、route-report つきの done、不正な遷移の拒否、graph にない task-id の拒否、認可の無い repin の拒否、events の追記。どれも期待どおり。plugin_resources.py を置かない配置でも --help は rc0 で、import すると resolve_planner_root は sentinel の plugin:plugin-dev-planner を返し、sys.path は変わらない。読めない入力・非 UTF-8・壊れた JSON は rc2 になる。指摘: [低] JSON の形が違う入力で traceback が出て rc1 になり、header L13 の exit 2 の約束に届いていない。例: state が list、nodes の要素が int（L102-110）。lease_expires_at が int（L94）。route-report の最上位が list（L137）。task-graph の最上位が list（L156）。--lease-seconds が過大で OverflowError（L235）。state が str のときの pin は state violation に誤って分類される。[低] covered_task_ids の型を確かめない（L144 の task_id not in covered）。schema は array of string なのに、文字列 \"T-10\" だと部分一致で T-1 の done が通り、dict {\"T-1\":0} でもキー一致で通る（fixture で rc0 を再現。fail-open）。--lease-seconds が負でも受け、started_at より前に期限が切れる（L720・L235）。list であることと、lease_seconds が 1 以上であることを確かめるとよい。[低] state と events の書き込みが不可分でない（L913-917）。--events がディレクトリなどで書けないと rc2 になるが、そのときには task-state はもう置き換わっていて、state と events が食い違う。[低] 操作を同時に指定すると、elif の連鎖（L756-851）で後ろの操作が黙って無視される。例えば --initialize-from-graph と --to-state を一緒に渡すと to-state が無視されて rc0。header の inputs（L6-9）は --initialize-from-graph と --project-phase-gates を書いておらず、L895 の message も --project-phase-gates と --reactivate-cascade を挙げていない。DEDUCTION: -3（形の違う入力で traceback）-3（covered の型を確かめない fail-open と負の lease）-2（state と events が不可分でない）-2（同時指定の黙殺と header の欠落）→ 90。"
   },
-  "reviewed_by": "harness-ratchet-recovery-code-review",
-  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s1",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
 }

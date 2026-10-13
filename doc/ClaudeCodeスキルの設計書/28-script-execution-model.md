@@ -55,7 +55,7 @@
 
 ## 2. 実行コンテキスト分類
 
-scripts/ の実行経路は次の 5 つに分類する。これ以外は禁止する。
+scripts/ の実行経路は次の 5 つに分類する。これ以外は禁止する。SessionStart の hook から回す経路は表に行を設けず、runtime が起動する Hook として C に数え、script の `# contexts:` にも C を書く (sync で許す条件は §3.1)。
 
 | コード | コンテキスト | 起動主体 | 起動タイミング | 権限粒度 | 失敗時の扱い |
 |---|---|---|---|---|---|
@@ -85,6 +85,11 @@ script 種別ごとに「**どのコンテキストで実行してよいか**」
 | diff (差分検査) | `diff-rubric.py` | x | - | - | o | o |
 | guard (禁止語) | `guard-banned-words.py` | x | x | o | o | o |
 | index (索引生成) | `build-keyword-index.py` | - | o | x | o | o |
+| sync (正本の反映) | `sync-native-surfaces.py` | o | - | - | x | o |
+| install (環境への導入) | `install-local-plugins.py` | - | x | x | x | - |
+| record (記録の追記) | `record-verification-evidence.py` | o | o | - | x | - |
+| manage (lock・lease) | `manage-build-lease.py` | o | - | x | x | - |
+| migrate (配置・schema の移行) | `migrate-plan-layout.py` | o | - | x | x | - |
 | adapter (出力先連携) | `sink_notion.py`, `sink_http.py` | - | x | x | x | o |
 
 ### 3.1 読み方
@@ -93,6 +98,12 @@ script 種別ごとに「**どのコンテキストで実行してよいか**」
 - **render / extract** は LLM が出力を加工するので A/B で OK。
 - **format** は Hook か CI で自動修正するのが基本。A は対話的修正を許す例外。
 - **adapter** は 31 章の Sink Contract v1.0 に従う例外分類である。外部API呼出し、Keychain参照、fallback は許可するが、stdout は最終JSONのみ、secret は context に出さない。
+- **sync / install / record / manage / migrate** は既にある状態を書き換える動詞である (意味と境界は §4.1.1)。D (Stop Hook) は §6.2 で write 全面禁止なので5つとも x。書き込み先は frontmatter の `write-scope` に固定の path で宣言し (7 節)、その外へは書かない。§6.1 の「出力ディレクトリ」は、この5つでは宣言した書き込み先と読む。名前が規約を満たしても、§6.1 のネットワーク禁止は外れない (外部サービスへ書くなら 31 章の adapter に従う)。
+- **sync** は正本を直したあとに明示的に回す (A)。PreToolUse / PostToolUse から回すと tool 呼び出しのたびに書き込みが連鎖するので禁止。Hook (C) で許すのは SessionStart から1セッションに1回だけ回すもので、lock と再入防止を持ち、中身が同じなら書かないものに限る (`auto-sync-on-session-start.py` が `--apply` で呼ぶ)。SessionStart は §2 の表に行が無いが、呼び出す hook 側の宣言に合わせて C に数える。CI (E) では `--check` (書かずに乖離だけ返す) で回す。
+- **install** は利用者の環境を変えるので、利用者が明示的に頼んだとき (A) と、使い捨ての環境での導入試験 (E) に限る。Subagent と Hook からは入れない。
+- **record** は既にある記録を書き換えず1件ずつ足すだけなので A/B で推奨。Hook (C) は、追記だけで、失敗しても tool 呼び出しを止めない (exit 0) ものに限って許す。
+- **manage** は作業の始めと終わりに明示的に lock・lease を取り、放す (A)。Subagent (B) は自分が取った lease の延長と解放に限る。Hook (C) から取ると、取った主体と放す主体がずれるので禁止。
+- **migrate** は版を切り替えるときに一度だけ明示的に回す (A)。Hook (C) から自動では回さない。
 
 ## 3.2 Bash / Python 2層規約
 
@@ -125,10 +136,24 @@ Bash はファイルシステムとプロセス起動に限定する。構造化
 <動詞>-<対象>-<スコープ>.py
 ```
 
-- 動詞: `lint` / `validate` / `format` / `render` / `extract` / `diff` / `guard` / `build` のいずれか (3.0 の種別と一致)
+- 動詞: `lint` / `validate` / `format` / `render` / `extract` / `diff` / `guard` / `build` / `sync` / `install` / `record` / `manage` / `migrate` のいずれか (3 節の種別と一致。後ろの5つは状態を書き換える動詞で、意味と境界は §4.1.1)
 - 対象: 何を処理するか (frontmatter, rubric, anchors, toc, など)
 - スコープ: 任意。対象が広い場合に限定する (例: `skill`, `subagent`)
-- 拡張子: `.py` を既定。Windows 必須の場合のみ `.ps1` 併設可
+- 拡張子: `.py`。lint は現状、Skill 配下の scripts/ に `.py` と `.sh`（§3.2 の L1）だけを通す（`scripts/lint-skill-tree.py`）。`.ps1` は置けない。名前を照合する `scripts/lint-script-naming.py` は `.py` だけを見て、`.` で区切った sub-target（`lint-foo.bar.py`）も通さない
+
+### 4.1.1 状態を書き換える動詞
+
+前の8つは、入力を読んで判定するか、出力先に新しく作るだけで、既にある状態を書き換えない。次の5つは既にある状態を書き換える。同じ意味の別名は動詞に足さず、「寄せた別名」の列の語は左端の動詞で名付ける。
+
+| 動詞 | 意味 | 既存の動詞との境界 | 寄せた別名 | 代表 |
+|---|---|---|---|---|
+| `sync` | 正本から派生先へ片方向に反映する。何度回しても同じ結果になり、`--check` で書かずに乖離だけ返せる | `diff` は差分を返すだけで書かない。`build` は入力から成果物を新しく作り、`sync` は既にある派生先を正本に合わせて書き換える (管理外の部分は残す) | `apply`, `reconcile` | `sync-native-surfaces.py` |
+| `install` | 配布物 (plugin・runtime・bundle) を利用者の環境 (`~/.claude`、`~/.codex`、plugin-local の vendor など) へ導入する | `build` は配布物を作るところまで。`sync` の書き込み先はリポジトリの中の派生物で、`install` はリポジトリの外か vendor | `setup` | `install-local-plugins.py` |
+| `record` | ログ・証跡・知識の記録先へ1件ずつ追記する。既にある記録は書き換えない | `render` / `build` は出力を毎回作り直す。`extract` は読むだけ | `write`, `log`, `append` | `record-verification-evidence.py` |
+| `manage` | lock・lease を取得・延長・解放する | `guard` は判定して止めるだけで、lock を持たない | (なし) | `manage-build-lease.py` |
+| `migrate` | 既にある成果物を新しい配置・schema へ移す。版を切り替えるときに一度だけ回す | `format` は意味を変えない整形。`sync` は何度でも回す反映 | `backfill` | `migrate-plan-layout.py` |
+
+`manage` は意味の広い語なので、対象を lock と lease に限る。設定や状態一般の書き換えには使わない。
 
 ### 4.2 例
 
@@ -171,7 +196,7 @@ Bash はファイルシステムとプロセス起動に限定する。構造化
 | `PENDING_RENAME` | 既存違反のうちリネーム計画済み (例: `hook-*.py`)。33章 Change Governance下で段階移行 |
 | `VIOLATION` | 規約違反。CI/pre-commit でブロック |
 
-新規scriptを追加する場合は、`§4.1` の動詞8種 (lint/validate/format/render/extract/diff/guard/build) のいずれかを使う。動詞リスト変更は **P1 Structural change** として33章ワークフローに従う。
+新規scriptを追加する場合は、`§4.1` の動詞13種のいずれかを使う (一覧は §4.1 が正本)。§4.1.1 の寄せた別名 (`apply` / `reconcile` / `setup` / `write` / `log` / `append` / `backfill`) は使わない。動詞リスト変更は **P1 Structural change** として33章ワークフローに従う。
 
 ---
 
@@ -214,7 +239,7 @@ lint-frontmatter.py SKILL.md
 
 - Python は **stdlib のみ** (22 章準拠)。`pip install` 禁止
 - **ネットワークアクセス禁止**。`urllib.request` / `socket` の使用を grep で検出する CI を設けてよい
-- **ファイル書込は出力ディレクトリ限定**。引数 `--output-dir` で受け取り、その配下以外への write を禁止
+- **ファイル書込は出力ディレクトリ限定**。引数 `--output-dir` で受け取り、その配下以外への write を禁止。§4.1.1 の状態を書き換える動詞は、frontmatter の `write-scope` で宣言した固定の書き込み先に限る (§3.1)
 - 環境変数の読取は **allowlist 方式**。読んでよいのは `CI` / `GITHUB_*` / `HOME` / `PATH` / `OS` のみ
 
 ### 6.2 コンテキスト別の追加制約
@@ -391,6 +416,7 @@ lint  →  validate  →  guard  →  format  →  render  →  extract  →  bu
 - 左ほど **早期 fail で安価な検査** (構文)
 - 右ほど **生成・派生処理** (出力)
 - guard までで fail したら format 以降は実行しない (fail-fast)
+- §4.1.1 の状態を書き換える動詞はこの列に入れない。同じイベントで連鎖させず、明示的に回す
 
 ### 9.2 fail-fast / continue-on-error の選択基準
 
@@ -440,7 +466,7 @@ lint  →  validate  →  guard  →  format  →  render  →  extract  →  bu
 - [ ] `creator-kit/manifest.json` の `requirements.forbidden_dependencies` に触れる import / CLI 依存がない
 - [ ] `contexts` フィールドが 3 節のマトリクスと矛盾しない
 - [ ] `network: false` である。31 章 adapter の場合のみ `network: true` と Sink Contract 準拠理由を記載する
-- [ ] `write-scope` が `none` か `output-dir` のいずれか
+- [ ] `write-scope` が `none` か `output-dir` のいずれか (§4.1.1 の状態を書き換える動詞は、固定の書き込み先を宣言している)
 - [ ] Hook / CI から呼ぶ場合はフルパス指定である (5.2)
 - [ ] LLM 経路 (A/B) で呼ぶ場合、本文で「中身を読まない」旨が明示されている
 - [ ] 同一イベントで他 script と競合する場合、9 節の順序に従う

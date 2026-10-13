@@ -1,5 +1,109 @@
 # Changelog
 
+## 0.8.2 - 2026-10-12
+
+- 版番号だけを上げた。中身は 0.8.1 と同じ。利用者の手元の local marketplace には、0.8.1 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。
+
+## 0.8.1 - 2026-10-10
+
+0.8.0 の節に書いていない変更をまとめる（0.7.1 は節を持たない）。4層の目標設定の引数の契約は変えていない。挑戦宣言の検査を強め、script 4本を改名し、0.8.0 で1年層を通し漏れていた箇所を埋めた。
+
+- **挑戦宣言の検査（`validate-challenge-output`、M01）**: 費用ゼロと書いていても、金額付きでかかる費用があれば費用ゼロの根拠に数えない（「講師料が30万円かかる」、動詞の無い「講師料は30万円」、払う人を書かない支払いを含む）。参加者から入る収入、「本来なら」「去年は」の仮の額、「かかるはずだった」も数えない。ラベルの問いの文言と、お金の語を含む問いの形の節は答えに数えない。否定形・条件形・可能形の「回収」と、「回収済みではない」「回収済みになる予定」は回収済みに数えない。「確定」は同じ文にお金の語があるときだけ数える。金額の桁に上限を置いて OverflowError を防ぎ、後読みで二乗の探索を避けた。F02 と R01 で重複を検出する。`challenge-format.md` の表もそろえた。
+- **挑戦宣言の対話**: `challenge-advisor` は Read・Grep・Glob だけを使い、選んだ候補の `source_ref` の実ファイルを Read して原文を確かめる。`agent-root-contract.md` は親の plugin_root の下を読む。`commands/ubm-challenge.md` に `## 実行` と `## 引数` を足し、「現状で試す」は空の下書きを見せるだけで vault に書かないこと、軽微・標準・詳細は承認を得てから保存することを書いた。`run-ubm-challenge` は `UBM_VAULT_ROOT` を python3 で確かめる。
+- **ほかの入口のコマンド**: 対話の進め方をコマンドに写さず、skill を正本として指すようにした（`ubm-goal-setting`・`ubm-journal`）。`/ubm-consult` は引数が空でも自分で質問せず、そのまま skill を起動する。`/ubm-journal` は、同じ日のジャーナルがあれば作り直しになり番号を保つことを書いた。`/ubm-knowledge-sync` と `/ubm-youtube-ingest` に使い分けと、`--sync` はスキル経由で親の承認を得てから1回きりの実行を呼ぶこと（無人のスケジューラの設定はしない）を書いた。
+- **script 4本の改名**: `evaluate-design-rubric.py` → `validate-design-rubric.py`、`publish-staged-files.py` → `guard-staged-publication.py`、`record-knowledge-usage.py` → `build-knowledge-usage-log.py`、`search-knowledge.py` → `extract-knowledge-matches.py`。参照と tests も追従した。
+- **script の修正**（名前は改名後のもの）:
+  - `validate-design-rubric` 0.2.0: exit を 0 / 1 / 2 に絞り、stderr の印で区別する。
+  - `guard-staged-publication`: macOS の大文字・小文字と NFC/NFD を同じ名前とみなす。打ち間違えた root を mkdir しない。置き換え先の permission を保ち、新しいファイルは umask に従う mode にする。test 4本。
+  - `build-knowledge-usage-log` 0.2.0: search_id を fingerprint と照合する。O_NOFOLLOW で開き、symlink などは exit 2。
+  - `extract-knowledge-matches` 0.2.1: 検索語は NFKC 正規化後 2〜120 文字。型の違う entry 1件で止めない。エラーに `file#entries[id=...].field` の場所を出す。読めない JSON のエラーにファイル名を出す（0.2.1、test 4本）。
+  - `validate-consult-session` 0.4.0: ISO 8601 を検査する。id の無い user turn を参照先にしない。真偽は型で判定する。`--gc` の失敗は exit 2。
+  - `validate-knowledge-graph` 0.2.0: 辺ストアの形を検査する。重複は最初の1本を残す。明示スタックでたどる。一時ファイルから rename する。
+  - `build-journal-context` 0.6.0: 日付見出しの表記ゆれに対応し、時刻の範囲を日付見出しと取り違えない。破損は exit 2。
+  - `validate-journal-output` 0.5.1: `daily-habits.json` の欠落・破損は exit 2。字下げしたフェンスも検査する。
+  - `detect-knowledge-updates` 0.2.1: registry の破損は traceback ではなく exit 1。`--help` は 0。
+  - `run-youtube-sync-oneshot` 0.2.0: 登録簿の形を検査する（RegistryError は exit 1）。取得元のエラーで止めたときは理由を `stopped_reason` に残して exit 0。fixture は lease を取る前に用意する。`--url` は `--mode url` のときだけ受け、そのときは必須。
+  - `youtube_provider` 0.2.0: fixture の不備を ProviderError にする。
+  - `normalized_source_path`: YAML の行末コメントを衝突と読まない。
+  - `validate-goal-output` 0.3.3: 両端の `|` を省いた GFM の表と、BOM（utf-8-sig）を受ける（0.3.2、test 3本）。`#` で始まる表のセルを見出しと取り違えない（0.3.3、test 2本）。
+  - `validate-cross-level`: docstring の除外節に「来年」「前年」を足した（説明文だけで、判定は変えていない）。
+- **source.type の値を schema の enum にそろえた**: エントリのテンプレートの source.type を検知のラベル（youtube / camp / teaching-material / monthly-feedback / seminar / event / other）にし、enum に無い `material`・`monthly-fb` を消した。新しい `validate-knowledge-entry-source` 0.1.1 が、格納したエントリの source が file と type を持つ単一の object で、type が schema.json の enum に入るかを検査する。外れたら knowledge-extractor は router・sync-log・registry を書かずに止まる。読めないファイルは契約の外れと別の見出しで数え、source が無いエントリは『source が無い』と出す。`--knowledge-dir` は絶対パスだけを受け、空文字と相対パスは exit 2（KNOWLEDGE_DIR の未設定で正式先を検査しないため）。test を18本足した（検知のラベルとテンプレートの値が enum に入ることも固定）。run-ubm-knowledge-sync の SKILL.md の script_refs に足した。
+- **knowledge-extractor の手順**: 入力の mode を STATUS より優先する（`--all` の full は STATUS から導けない）。重複のとき source を配列にせず、件数をサマリーに書く。Rule A・E の例を実在するファイル名と growth_rules の命名にした。Layer 7 のコマンドから `!` を外した。呼び出し元に `run-ubm-youtube-ingest` の R3-extract-graph を書き足した。格納の確定の終了コード 2（引数の誤り）は直さずに親へ返す。
+- **info-collector**: 1年層の到達点を挑戦宣言の `●目標` からも取り、`null` は1年目標も挑戦宣言も無いときだけにした。日付を読めないファイルを更新日時で並べ直さない。
+- **knowledge-relation-extractor**: `reproducible` を `false` にした。走査サマリの形（`knowledge_used_ids`・`search_requests` を含む。例はプレースホルダ）を出力の契約に書いた。router の categories.files が列挙するファイルだけを読む。`## Context Boundary (AG-002)` と `## Handoff` を足した。
+- **実行の権限と終了コードの記録**: 6つの SKILL.md の allowed-tools を `Bash(python3 *)` にした。rc は Bash ツールの終了コードをそのまま記録し、リダイレクト・`; rc=$?`・echo・パイプを付けない（`validation-gates.md`・workflow-manifest・SKILL.md・`output-formats.md`）。`/usr/bin/python3` を `python3` にした。
+- **1年層の漏れ**: 1年層の初回は Step 2 を飛ばさない規則を、0.8.0 で入れ漏れていた `phase3-coordinator` の遷移表、R2 の分岐表、R3 の root_cause / bottleneck の契約、`data-contract.md` のエラー処理表に入れた。`phase3-coordinator` に `## Context Boundary (AG-002)` と `## Handoff` を足し（前提が欠けたら止まる）、代表ターンの期間語を `{今週/今月/今期/今年}` にした。`info-collector` は yearly の継承文脈も現在の期報から取る。`assets/execution-prompts.md` は対象ファイルを vault_root の `05_Project/UBM/目標設定/` から Glob で探す（`archive/` は除く）。
+- **月報と期報の書式**: `output-formats.md` の月報に【今月の最重要数字】（管理用）を足し、月報と期報に「1年目標がある期の到達点の注記」の書き方を足した。`output-formatter` の手順5に、注記行は `（` で始めることを書いた。
+- **保存の経路**: normalizer と composer は一時下書きを親へ返す。journal は old_sha256 を対話の前に一度だけ取り、正式な保存は guard の execute だけで行う。consult の一時ディレクトリは `shutil.rmtree` で消す（rm は使わない）。knowledge-sync の file_hash は detect の出力の MD5 をそのまま使う。`goal-seek-anchor-contract` は `{resolved_progress_path}` を使う。RUNBOOK に `stopped_reason` の `provider_error`（要人間確認）と、`validate-knowledge-graph.py` に読めない入力を渡したときの扱いを足した。
+- **宣言**: `plugin-composition.yaml` に `evaluate-design-rubric.py`（いまの `validate-design-rubric.py`）への calls 辺を skill 6本ぶん足し、`skill-governance-config` の外部依存に `required_entry_points: [run-governance-config]` を足した。`package-contract.json` の depends_on に `skill-governance-config` を足し、skill ごとの依存を `skill_dependencies` に書いた。`run-ubm-challenge` と `run-ubm-knowledge-sync` に resource-map を新設し、youtube-ingest のものと合わせて設計書06 第13条の形（`resources:` の下に file・topic・read_when）にした。youtube-ingest には `normalized-source-schema.md` を足した。
+- **共通部品の追従**: `scripts/extract-plugin-root.py` と `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を正本に合わせた。`artifact-delivery.json` の guard runtime 固定値（`runner_sha256`）を、いまの guard runtime に合わせた。
+
+## 0.8.0 - 2026-10-10
+
+目標設定を三層（期報・月報・週報）から4層（1年 → 3ヶ月 → 1ヶ月 → 1週間）へ広げ、1年層（`yearly`）を入口・手順・エージェントに通した。検査スクリプトは先に `yearly` を受ける形になっていたので、今回は**入口と手順の側をその契約に合わせた**（引数の契約は変えていない。独立レビューで見つかった検査の誤りだけを直し、`validate-goal-output.py` を 0.3.1、`validate-cross-level.py` を 0.2.0 にした。節の末尾の「独立レビュー（j 回目）の指摘の修正」を参照）。
+
+- **入口の引数**: `commands/ubm-goal-setting.md` の `argument-hint` を `[yearly|weekly|monthly|quarterly]` にし、`## 実行` と `## 引数` に `yearly`（1年目標）を足した。既存の `weekly` / `monthly` / `quarterly` の意味は変えていない。`bimonthly` は `quarterly` の後方互換の別名のまま。4層の降ろし方と検証の引数は `run-ubm-goal-setting` の SKILL.md を正本とする、と書き添えた。
+- **SKILL.md に `## 対象種別（4層）`**: 層・`--type` の値・期間語・サマリー見出し・ファイル名の対応を1つの表に置いた。1年層のファイル名は `UBM - 4-年報（１年） - {期間}.md`、サマリー見出しは `## 【1年の目標】{期間}`、接頭辞の許容は `UBM - [1-4]-`。**1年層の期間だけ暦の1年で切る**（下位3層は月の最終月曜日起点。実物のファイルは 2026-10-01〜2027-09-30）。**1年層の正本は挑戦宣言**（`05_Project/UBM/挑戦宣言/`）で、月報・期報のロールアップで作らず到達点から組み立てる（下位層が1年層から割る側）。運用規則「常に2027年10月まで反映させる」を明記した。
+- **検査の引数契約**: `validate-goal-output.py`（script version 0.3.0）は `--type weekly|monthly|quarterly|yearly` を受け、`yearly` では期間語を「今年 / 前年」に置き換えた期報と同じ骨格を検査する（`【今年の最重要数字】` は期報と違い必須）。`validate-goal-linkage.py` は種別の引数を持たない。`validate-cross-level.py` は `LEVELS = ("yearly", "quarterly", "monthly", "weekly")` の4層で `--yearly PATH` を受ける。**1年層のアンカー（`月間売上到達点` / `継続コンサル人数`。`requires_level="yearly"`）は `--yearly` を渡したときだけ照合し、渡さない呼び出しでは `[未照合]` として件数つきで列挙されたまま rc=0 になりうる。** 1年目標が存在する期では `--yearly` を必ず渡し、省いた場合は `[未照合]` の件数をそのまま報告に載せる契約を SKILL.md・`output-formatter`・`goal-reviewer` に書いた。SKILL.md の Phase5 の検証コマンドは `--type yearly` を含む種別別の形にし、パスは `$PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/` で書いた。
+- **対話の手順**: `assets/execution-prompts.md` の Phase 0 の選択肢に「1年目標（4層の最上位・正本は挑戦宣言）」を足し、既存の「既存目標の見直し・改善」を最後の項目へ繰り下げた（`goal-reviewer` の起動条件の参照も番号なしの表現に直した）。Phase 4 の並列 Read に1年時の対象（挑戦宣言・既存の1年目標）を足し、1年層の対話では【今年の最重要数字】に到達点を置いて下位へ割る、直す向きは上から下、と書き添えた。
+- **責務プロンプト R1-R5**: R1 は新項目確認を3分岐から4分岐にし、1年用の**ターン1E**（今年の累計売上実績・事業パートナー数・グリッドパートナー数・前回アカデミー＋挑戦宣言の到達点の変更確認）を足した。R2 は論点思考の対象期間を「今週 / 今月 / 今期 / 今年」に広げた。R3 は目標文脈確認を4分岐にし、**ターン3E-1年**と出力契約2件（`yearly_monthly_sales_goal` / `yearly_continuous_consult_count`）を足した。R4 はプロジェクト別タスクを1年でも出力しない方針を明記した。R5 に「層の整合チェック（4層・1年目標が存在する期だけ適用）」を足した（到達点からの割り算・アンカーの同値・直す向き・1年でタスクを置いていないか）。
+- **エージェント3本**（いずれも version 0.2.0）: `output-formatter` にファイル命名表の `yearly` 行・「`yearly`（1年・4層の最上位）の扱い」・`goal_type` の列挙・品質チェックリストの「1年（`yearly`）の不変条件」（以降の項目番号を繰り下げ）・`peer_paths` の yearly・Step 1 の並列 Read を足した。`info-collector` に取得スコープ表の `yearly` 行・**種別を問わず1年層の到達点を収集する**規則・出力テンプレートの「1年層の到達点」節・`peer_paths` の yearly を足した。`goal-reviewer` に4層の種別判定（サマリー見出しとファイル名の接頭辞）・1年の確認観点・下位層が到達点から割られているかの確認・「検証引数」の節を足した。
+- **種別ごとの方針に1年を追加**: プロジェクト別タスクは 週報=任意（既定省略）／月報=必須／期報=禁止／**1年=禁止**（方向を決める層なのでタスクを置かない）。やらないことの独立セクションは月報・期報に加えて**1年も必須**（`## 【今年やらないこと（明確に排除するもの）】`）。
+- **Daily.md の扱い**: Phase6 の Daily.md 更新は、1年層の埋め込み行が無い場合に見出しを新設せず「更新対象なし」として記録する（Daily.md の見出しをこのスキルの都合で増やさない）。
+- **本文での全角ファイル名の引用**: `（１ヶ月）`・`（３ヶ月）` に `（１年）` を加えて、本文でこれらを含むファイル名を引用しないことを SKILL.md と `output-formatter` に書いた（引用しても rc=1 にはならない。検査はこれらを含む行を丸ごと外すので、同じ行に書いたほかの全角数字も検査されずに通る。それを避けるため）。
+- **対話の進行役（`agents/phase3-coordinator.md`）**: ここだけ4層化から漏れており、`1年` も `yearly` も1件も無い状態だった（分母300行で0件）。成功基準と自己採点のターン目安に `1年15-18ターン`、用語集に `4層` と `到達点アンカー2件`、`goal_type` の列挙を4層へ、`target_period` に「1年だけ暦の1年で切る」、やらないことの出力先に `1年＝【今年やらないこと（明確に排除するもの）】`、Step 3 の引き渡しに到達点アンカー2件、Step 4 の完了条件と Step4→Step5 の遷移に `projects`（期報と1年=対象外）と `habit_check`（`weekly` のみ）を足した。`bimonthly` の1件は後方互換の別名であることが同一行で読めるため残置した。
+- **ギャップ分析（`prompts/R2-step2-gap-analysis.md`）**: 同じく漏れており、期間語の `今年` 1件以外は1年層の分岐を持っていなかった（分母163行）。差分の対象期間を4分岐（1年=前年／期報=前期／月報=前月／週報=前週）にし、**1年層の初回は前年の1年目標が存在しないため、本 Step をスキップせず比較対象を①直近の期報・月報の積み上げ②挑戦宣言の到達点アンカー2件へ差し替えて実施する**規則と、`ターン2E-1年` / `ターン2F-1年初回` を足した。1年層のギャップは到達点アンカー2件に対する差で見る（人数の差を主、金額の差を結果指標として扱う＝売上を追わない原則）。入力契約に `yearly_monthly_sales_goal` / `yearly_continuous_consult_count` / `period_sales_cumulative` を追加。
+- **`data-contract.md` のバリデーション節を4層へ**: §1.0 と到達点アンカーの節は4層化されていたのに、**バリデーションと Step 遷移条件の節が三層のまま残っていた**。(1) Step2→Step3 の「初回は Step 2 スキップ可」に例外を足した（`yearly` で前年の1年目標が無い初回はスキップしない。1年層は新設層なので初回が必ず「前年なし」になり、スキップを許すと到達点との差を一度も見ないまま目標を立てることになる）。(2) `prev_sales_diff`（#7）のバリデーションが `+`/`-` 必須だけを書いており、#7 本体の「初回は `null`」と食い違っていたので **`null` を許す**ことを明記した（理由文を入れるフィールドではない旨も併記）。(3) 必須フィールドと Step4→Step5 の `projects` の種別依存に `1年=非対象`、`habit_check` に「1年・月報・期報は `null` のまま遷移」を足した。
+- **SKILL.md の所要時間目安に1年**: 下位3層だけに分が与えられ1年が空いていたので `1年 20〜25分` を入れた。**この値は実測ではなく**、`phase3-coordinator` の 1年15-18ターン（期報12-15ターンの上）に対応させた導出値である旨と、実測が取れたら coordinator のターン数と同時に直すことを本文に書いた。
+- **独立レビュー（j 回目）の指摘の修正**:
+  - **選択肢の番号**: SKILL.md の Phase0-init の行と `assets/execution-prompts.md` の目標レビューフロー（見出しと起動条件）が、見直しモードを「オプション4」と書いたままだった。4=1年目標（`yearly`）、5=既存目標の見直し（`goal-reviewer`）に直した。
+  - **command の「引数なし」**: 選択肢5つと、5が新しい目標を作らない見直しモードで引数では選べないことを書いた。
+  - **SKILL.md の description**: 「1年目標・期報・月報・週報の」が発動条件4つと数えられていた（FM-003）。「1年目標から週報までの4層の」にまとめ、発動条件を2つにした。
+  - **SKILL.md の照合一覧の名前**: 「三層横断照合」を、`data-contract.md` の実際の見出しどおり「四層横断照合」に直した。
+  - **全角ファイル名の引用の理由**: SKILL.md と本節の「検査が rc=1 を返すため」は誤りだった（検査はその行を丸ごと外す）。同じ行のほかの全角数字も素通りする、という本当の理由に直した。
+  - **`validate-cross-level.py` 0.2.0**: 月の数字の直前を見ていなかったため、1月の照合で「11月700,000」から値を拾っていた。直前が数字なら当てないようにした。
+  - **`validate-cross-level.py` 0.2.0**: UTF-8 で読めないファイルを渡すと traceback で止まっていた。rc=2（入力不正）にした。ヘッダと docstring を4層・10アンカー・`--yearly` に直した。
+  - **`validate-goal-output.py` 0.3.1**: 表の区切り行をハイフン3個以上でしか認めず、`|--|` の表では見出し行と区切り行を項目に数えていた（2項目の「やらないこと」が4項目で通る）。GFM どおり1個以上にした。
+  - **`data-contract.md` 2.7.1**: §2.1 の表と §3.1 に、1年層の到達点フィールド2つ（`yearly_monthly_sales_goal`・`yearly_continuous_consult_count`）を足した。
+  - **`data-contract.md` 2.7.1**: 4層ロールアップ契約が `>` を注記の書き出しに数えていた。`validate-cross-level.py` だけが注記と読み、`validate-goal-output.py` は成果・行動の件数に数える、と直した。下位層の成果の行で到達点のラベルを使い回さない規則も足した。
+  - **`phase3-coordinator` の参照元一覧**: 2節を名前で指している `run-ubm-consult` の SKILL.md と、goal-setting の prompts R1〜R3 が抜けていたので足した。
+  - **test**: `validate-goal-output.py` に、1年目標が rc=0 で通る形・最重要数字が無い形・プロジェクト別タスクを置いた形・`|--|` の表の test を足した。`validate-cross-level.py` に、`--yearly` の一致・不一致・注記なし・未指定、1月の照合、UTF-8 で読めない入力の test を足した。
+  - agents 4本の本文を300行以内にし、長い節を plugin の references/ へ移した（BD-003）。
+
+## 0.7.0 - 2026-10-09
+
+「挑戦宣言と企画」をユーザーへのヒアリングで組み立てる `/ubm-challenge` を足した。AI は欄の値（数字・日付・人・会場）を決めず、切り口・型・北原さんの考え方からの方向だけを示す。
+
+- **新スキル `run-ubm-challenge`**: 聞き手（親コンテキスト）が欄ごとに問いを1つ出す。ユーザーが答えるたびに助言役（`challenge-advisor`）が答えに紐づく北原ナレッジを探し、深掘りの問い（2回まで）か方向の助言を1つ返す。方向の助言は、深掘りを2回しても足りないときに出す（答えが「わからない」・質問返し・「AI が決めて」のときは深掘りより先に出す）。足りたら要約を確かめ、了承で確定する。回数とレンズの件数は助言役の `field` キー（10種）ごとに数える。深さは現状で試す（accept-as-is。下書きのみ）／軽微（light。助言役と北原レンズなし。聞き手が合格条件で判定して深掘りする）／標準（standard）／詳細（detailed）から選ぶ。保存先は `$UBM_VAULT_ROOT/05_Project/UBM/挑戦宣言/`、提出用テキストは同じファイルの `【挑戦宣言と企画】` 以降。
+- **決まらない欄の扱い**: 健康・信頼・家族・社内拠点・行うこと・定期報告は保留して先へ進み、組み立ての前に聞き直す。目的・目標・挑戦・お金は保留せず、判断軸を2つ示して1回だけ聞き直し、決まらなければ下書きを保存せずに引き継ぎファイル（handoff）の `open_issues` に残す（保留した欄も、聞き直して決まらなければ同じ）。
+- **正本の分担**: 出力（骨格・各欄の合格条件・違反コード）は `references/challenge-format.md`、対話（原則・返し方・欄ごとの問い・戻りゲート・ナレッジ未収録）は `references/question-map.md`、手順は `SKILL.md` の C1-C5。回答パターンは `agents/phase3-coordinator.md` の「品質基準」「ナレッジ活用原則」に従い、question-map は差分だけを持つ。
+- **新しい助言役 `challenge-advisor`**（`Read`・`Grep`・`Glob`。書き込まない）: 入力は `field` / `answers`（古い順・生のまま）/ `confirmed` / `depth`（その欄で深掘りした回数。方向は数えない）/ `lens_limit` / `plugin_root`、出力は `missing` / `lens` / `next`（deepen・direction・confirm）/ `gate`（`null` か戻り先）。
+- **`validate-challenge-output.py` 0.1.0**: 骨格・日付（フロントマターとの一致）・規模・目標の数値（全角数字も可）・5理由・お金・行うこと5項目・精神論の語・定期報告の頻度・プレースホルダ・ファイル名を検査する。お金は見込み・予定・未確定の額と「回収できれば」「確定次第」などの条件形を回収済みに数えず、「確定」は完了形（確定済み・確定した・確定している等）だけを回収済みと読む。「無料ではない」「無料でない」「かからないわけではなく」のような否定は費用ゼロと読まず、自分で払う費用（自分で払う・私が負担・自腹・自分持ち等）は M01 にする。否定として外すのは「払わず」「自己負担はゼロ」のように直後に付く形だけで（「払わないといけない」のような義務は外さない）、立替えは同じ文の後ろで回収済みなら数えない。精神論の語は「意識する」「努力する」のような終止形も拾う。この検査は語彙に頼る補助で、言い換えの取りこぼしは対話の確認（question-map 4-1・C7）が受け持つ。定期報告は「12月15日に1回」のような日付や「面談の結果を報告」を頻度と読まない。受け入れテスト `tests/test_validate_challenge_output.py` と、question-map・助言役・SKILL・format の契約を突き合わせる `tests/test_challenge_contract.py` を足した。
+- **登録**: 新コマンド `/ubm-challenge`。`plugin-composition.yaml`（助言役が phase3-coordinator を読む辺を含む）・`README.md`・`RUNBOOK.md`・`artifact-delivery.json`・`references/package-contract.json`（Codex 側の `codex_alternatives` を含む）・判定基準の一覧（criteria roster）に登録した。あわせて `.claude-plugin/plugin.json` の説明（Codex 側とローカルのカタログにも同期）・`plugin-composition.yaml` の説明と入出力（助言役が challenge-format を読む辺を含む）・`EVALS.json` の `llm_eval`（`run-ubm-journal` も）・`README.md` の冒頭の関係と用途表に挑戦宣言を足し、Codex 側の表示名と既定の依頼文を `.codex-plugin-overrides.json` で日本語にした。
+- **ゴールシーク検証**: `run-ubm-challenge` に `### ゴールシーク検証` を足した。初回に `original_goal` の SHA-256 を固定し、C6 の初回提示を `iteration: 1` として記録し、C7 の再検証の後に anchor の検査が終了コード 0 を返すことを完了の条件にする。1回目で了承されても中間ファイルが空にならず、検査が閉じる。
+- **knowledge-sync の検知範囲**: `detect-knowledge-updates.py` 0.2.0 が `05_Project/UBM/` の下の `目標設定/` と `挑戦宣言/` を検知の段階で除く（除外の正本はスクリプトの `EXCLUDED_SUBDIRS`。SKILL.md・`references/knowledge-sources.md`・command・`knowledge-extractor` はそれを指す）。これまでは `挑戦宣言/` が除かれず、ユーザー自身の挑戦宣言が北原ナレッジの抽出候補（`NEW|event|…`）として検知されていた。テスト `test_user_records_are_excluded_at_detection` で固定した。
+- **見出しの参照切れ**: 下の日本語化で `## Key Rules` を `## 守ること` に改めたことに合わせて、旧い見出し名で指していた参照（consult の R1-R4、youtube-ingest の R1・R2・R4、references 2つ）を直した。あわせて、goal-setting の prompts R1-R4 が対話の共通制約の正本を Layer 4 とだけ書いていた誤り（CONST とプロセス制約は Layer 2、回答パターンは Layer 4 の「品質基準（回答パターン別対応ルール）」）、goal-setting の assets が存在しない見出しを指していた2か所を直した。``SKILL.md `## X` `` の形の参照が実在する見出しを指すかを `tests/test_heading_references.py` で検査する。`agents/phase3-coordinator.md` には、2節が他のスキルから名前で参照されることと、見出しを変えるときに直す場所を書き添えた。
+- **同じ事実の書き分けと、参照・入力の抜け**: 同じ事実が何か所にも書かれて食い違っていたものを1か所に寄せ、ほかはそこを指す形にした（数や中身は書き写さない）。
+  - goal-setting: 3つの検査スクリプト（`validate-goal-output.py`・`validate-goal-linkage.py`・`validate-cross-level.py`）の回す条件・引数・rc の意味を、`output-formatter` の Step 3 の「決定論ゲート」の表1つにまとめた。`validate-goal-output.py` の rc の意味は、これまでどこにも書かれていなかった。SKILL.md の IN1〜IN3 は引数と rc の意味を書き写さずに表を指し、照合する期アンカーの一覧は `references/data-contract.md` §3.1.3 を指す形にした。Phase5-validate と「つまずきやすい点」は IN1〜IN3 を指す形にし、IN1〜IN3 に無いこと（期報から直す向き・`--peer` の範囲・月報は各1回）だけを残した。`assets/execution-prompts.md` の並列実行の表と図には Step 3.8（相談からの引き継ぎ）が抜けていたので足し、件数は書かずに `info-collector` の Layer 6「実行原則」を指す形にした。`phase3-coordinator` と `knowledge-relation-extractor` で二重だった自己採点（`### 自己評価`・`### 5.5 自己採点`）は `## 自己採点` にまとめ、goal-setting の R5 が旧い「自己評価」を指していた参照も「自己採点」と Layer 4「最大改善回数」に直した。
+  - consult: prompts R1-R3 の `output_schema` が存在しない節を指していたので、「分岐別の `outcome`」と「`consult_completed` のスキーマ」の節に直した。グラフを引けないときの扱いは R3 の 4.2 だけに置いた（書き写しの1つは、正本の状態の1つが抜けていた）。R1 の出力契約に、記録の形式と検査スクリプトが目標設定への誘導で必須にしている `referral_confirmed` を足した。`consult_type` は記録せず、R2 への引き継ぎにだけ使うと直した。SKILL.md の出力契約に残っていた相談種別も外し、`references/session-record-format.md` の説明を「セッション記録の形式と置き場の契約」に直した（索引の `references/resource-map.yaml` と R4 の参照表も同じ。OUT1 の4要素は対話の文字起こしから検出するもので、記録の形式ではない）。R1〜R3 の「受け渡し:」は入出力契約の表の古い写しで、R3・R4 が必須にする `relevant_context` と名前がずれ、R4 が必須にする入力も抜けていたので、表を指す形にした。提示するフレームの件数は R3 の「提示形式」1か所に置き（`reflect-only` は1件以上）、R3 のほかの箇所と `consult-frames.md` はそこを指す。
+  - youtube-ingest: `youtube-transcript-normalizer` と `knowledge-extractor` に `plugin_root` が渡っていなかった（どちらも、無ければ書き込む前に止まる）。SKILL.md の起動箇所、R2・R3 の出力指示（ループ本体を回すサブエージェントが読む）、normalizer の入力に足した。ゴールシークの配線は goal-setting の「ゴールシーク配線」を名前で指し、ファイル名などの固有の差分と、`fork: subagent` での違い（ループ本体はサブエージェントが回し、ユーザーの返答は親が受ける）だけを書いた。
+  - パス: prompts から `../../` で指していたスクリプトとナレッジ（consult の R3、youtube-ingest の R3）は、prompts/ の位置からは解けないので `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/…` にした。goal-setting の `assets/execution-prompts.md` が存在しない「並列実行ポリシー」を指していた2か所も、実在する節に直した。youtube-ingest の IN1 のコマンドが作業ディレクトリから解いていたスクリプトと登録簿も同じ形にし、`knowledge-relation-extractor` がリポジトリからのパスで指していた `knowledge-extractor` の契約は、同じ表のほかの行と同じくプラグインのルートからのパスにした。
+- **日本語化**: 利用者の依頼で、プラグインの地の文を日本語にした。意味は変えていない。`run-skill-feedback` は harness-creator の複製なので対象外。
+  - **照合される見出しと定型ブロック**: harness に足した日本語の正規形（2つ目の正規形。英語の正規形は変えていない）へ移した。6スキルは `## 選ぶ前の実成果物の作成`・`## 選んだ深さでの改善の実行`・`## 実行時のルートの決め方`・`## 目的と出力契約`・`## つまずきやすい点`、9エージェントは `## プロンプトの型`・`## 自己採点`。外部変更ガードのブロックは `<!-- external-mutation-guard-cli-ja:v1 -->` を `build-artifact-delivery.py --migrate-external-guard` で入れ直した（コマンド行は英語版と同じ）。採点は rubric 1.4.0 で、日本語の見出しを別名として認める（harness-creator の CHANGELOG を参照）。照合されない見出し（`## Key Rules` → `## 守ること` など）も同じ訳語表で訳した。6つの SKILL.md の冒頭の節は、H1 → 導入文 → `## 目的と出力契約` → `## 実行時のルートの決め方` → `## 選ぶ前の実成果物の作成` → `## 選んだ深さでの改善の実行` → `## 全体の流れ` の並びにそろえた（行の中身は変えていない）。
+  - **地の文の英語の技術用語**: stdout・drift・lease・fallback などを、訳語表に沿って日本語にした。youtube-ingest の登録簿の `cursor` は「最終実行の記録（`cursor`）」と訳す（増分取得の再開位置ではないため。正本は SKILL.md の「つまずきやすい点」と `references/registry-ledger-schema.md`）。command・RUNBOOK・README で一度「続きの位置」と誤訳していたのを、内容の review で見つけて直した。対象は SKILL.md・prompts・references・assets・agents・RUNBOOK・README・command。RUNBOOK の節名を変えたので、それを指すスクリプトの WARN の文と共通の参照も直した。
+  - **英語のまま残したもの**: lint やテストが照合する語（`(対話なし: 自動実行 agent)`・Layer N・`<!-- responsibility: Rn -->`・`dependency graph knowledge`・Anchor Step・メタ表の行名・入出力表のフィールド名）、JSON のキー・CLI の引数・コード上の名前、履歴（version-history と、この CHANGELOG の旧版）。`run-ubm-consult` の `lane` は、SKILL.md・prompts・references・検査スクリプトの説明で「締め方」にそろえた（テストの関数名は残した）。
+  - **そろえたもの**: 6つの SKILL.md の訳語（最小の実成果物・外部変更のプレビュー・全体の流れ・内側ループ（IN1）など）と関連資料のラベル、prompts のメタ表の見出し（`| 項目 | 値 |`）。4つの `workflow-manifest.json` の説明文も日本語にした（照合される英語の句は括弧で残した）。訳語の揺れ（検証スクリプト・検査器 → 検査スクリプト、読取専用 → 読み取り専用）を、過去の記録（version-history と、この CHANGELOG の旧版）を除いてそろえた。`.claude-plugin/plugin.json` の説明も日本語にし、Codex 側とローカルのカタログにも同期した。`journal-composer` の地の文の PASS／FAIL を「合格（PASS）」「不合格（FAIL）」にそろえ、`youtube-transcript-normalizer` と `knowledge-relation-extractor` の説明文を日本語にした。
+- **elegant-review の継続 run での改善（24件と、ナレッジの品質）**: 30思考法のレビューで出た24件の提案をすべて実装し、その後ナレッジの品質を作り直した。対応表は `eval-log/ubm-goal-setting/_plugin/elegant-review/20261010-context-resolution/proposal-resolution.json`、報告は同じ場所の `REPORT.md`。
+  - **配布**: 個人利用のプラグインなので、公開の Claude カタログ（`.claude-plugin/marketplace.json`）と公開 bundle から外し、ローカル clone 用のカタログ（`clone_local_plugins`）だけに載せた。
+  - **入口と書き込みの守り**: 6スキルをモデルから呼べるようにし、そのかわりに危険な操作は外部変更ガードの受領書と正規の workflow を必須にした（`lint-skill-dep-step7.py` が command → Skill の配線も検査する）。RUNBOOK・README・`commands/ubm-consult.md` に残っていた「`disable-model-invocation: true` なのでコマンドが唯一の入口」という古い説明も、今の設定に合わせて直した。
+  - **9エージェントの形**: 助言役（advisor）と書き込み役（writer）の2つの型で7層にそろえ、本文の手順は残した。CI に9エージェントのプロンプト検査を足した。
+  - **契約の単一化**: goal の検証ゲートを `skills/run-ubm-goal-setting/references/validation-gates.md` に、ゴールシークの anchor を `references/goal-seek-anchor-contract.md` に、エージェントのルートの解き方を `references/agent-root-contract.md` に移し、ほかはそこを指す形にした。journal の設問と習慣、consult の締め方、challenge の書き込み許可、knowledge の除外も同じく1か所に寄せた。
+  - **consult**: 挑戦宣言への誘導（`redirected_challenge`）を outcome・handoff・schema・prompts・検査スクリプトへ同時に足した。どの分岐でも保存は既定で行わず、記録を望んだときだけ説明して同意を取る。安全の分岐では論点の確認を待たずに支援先を案内する。
+  - **挑戦宣言と目標設定のつながり**: goal の情報収集（`info-collector`）が、最新の挑戦宣言を読み取り専用で参照する。ユーザーの記録はナレッジに混ぜない。
+  - **YouTube 取り込み**: エージェントの必須入力（`source_out`・`dest_root`・`knowledge_dir`・`target_files`・`mode`・`plugin_root`）を明示し、dry run では書き込み役を起動しない。保存先を動画 ID ごとに分け、他所への symlink の上書きを拒む。
+  - **ナレッジ982件**: 全件の背景を、原文に基づく「どんな状況で・なぜ・どんな制約で」に整理した（業種・人数・金額などの事実は作らない）。27件のタグを、カードの中の具体的な悩みの語で補い、核心919件と目的193件を、原意と条件を保ったまま文型にそろえた。短い配列は1行にし、全129ファイルで JSON の値を変えずに最大492行に収めた。UBM 限定の L1 rubric を登録して6つの入口に注入し、KL-002（背景の確認）だけを特化した。
+  - **見出しの参照検査**: `tests/test_heading_references.py` が、実在する文書全体・すべての見出しレベル・コメント・ページ内アンカーを検査するようにした。
+
 ## 0.6.4 - 2026-10-05
 
 PR #83 の content-review で残った low (相談 5 件、目標設定 13 件) を直した (harness-9pg)。判定の rc 体系と書込みの許可範囲 (hook) は変えていない。

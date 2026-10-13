@@ -1,0 +1,2098 @@
+{
+  "schema_version": 1,
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-10",
+  "branch": "devgraph/ubm-ja-challenge-elegant-review",
+  "base_branch": "main",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/85",
+  "beads": [
+    "harness-kt9",
+    "harness-y7n",
+    "harness-ead",
+    "harness-bzn.4"
+  ],
+  "beads_db": "repo の .beads。harness-kt9・harness-y7n・harness-ead は run-ubm-challenge の残りの判断と live-trial (OPEN のまま)。この PR で見つかった follow-up は PR 作成後に外部変更ガードを通して起票する",
+  "dev_graph_node_id": null,
+  "dev_graph_note": ".dev-graph は render の HTML だけで graph.json を持たず、対応する node が無い。ブランチ名は、作業の中身 (UBM の日本語化・挑戦宣言・elegant-review の継続 run) を表す ubm-ja-challenge-elegant-review にした。",
+  "scope": [
+    "plugins/ubm-goal-setting 0.6.4 → 0.7.0 (新スキル run-ubm-challenge・助言役 challenge-advisor・コマンド /ubm-challenge、6スキル・9エージェントの日本語化、elegant-review の24件、ナレッジ982件の作り直し、UBM 限定の L1 rubric、新設の共通契約 references と scripts)",
+    "plugins/harness-creator 1.4.44 (rubric 1.4.0 → 1.5.0、build-subagent の --language と --role、テンプレートと render-combinators、render-findings-score、日本語の正規見出しの parity)",
+    "plugins/prompt-creator 2.1.11 (日本語の正規見出しへの追従)",
+    "plugins/skill-governance-* (guard-change-category の承認・cooldown の照合、外部変更ガードの runtime、lint-skill-dep-step7、agent prompt の見出し検査、run-governance-automation の Runtime root contract 節)",
+    "全22プラグインの run-skill-feedback (ゴールシーク配線と同梱 validator)・artifact-delivery.json (guard runtime の固定値)・版上げ",
+    "scripts/ (guard-change-category.py、build-artifact-delivery.py、lint-entrypoint-artifact-first.py、lint-script-naming.py、lint-vendored-ssot.py)",
+    ".github/workflows (governance-check.yml、harness-creator-kit-ci.yml)",
+    "tests/ (test_root__ja_contract_parity.py を新設。guard・build-subagent・render-combinators・lint 群のテストを更新。criteria_roster に run-ubm-challenge を登録)",
+    "doc/ClaudeCodeスキルの設計書 (08章・27章・33章) と doc/harness-creator-完全解剖.md (版表記)",
+    ".claude/ (挑戦宣言の skill・agent・command の symlink、governance-log の承認記録)",
+    "marketplaces/local、.claude-plugin/marketplace.json・bundles.json、config-version-lock.json (正規ツールでの再生成)",
+    "eval-log (ubm-goal-setting の elegant-review 2 run の証跡、各スキルの content-review verdict、この受領書)",
+    "eval-log/coverage/scripts (この PR で足した script と、この PR で中身が変わった validate-inline-goal-seek-anchor.py の独立コードレビューの記録)",
+    "作業ツリーの残りの差分すべて (fdc93c12、533件 = 変更102件・新規431件): epic harness-bzn の修正 (22プラグイン共通の extract-plugin-root.py、dev-graph の同期の収束判定と原子的書き込みの共通化、harness-creator の plugin_resources.py、plugin-dev-planner の spec gate、system-spec-harness の確定章ガード hook と apply-spec-transition、root の scripts と tests) と、その証跡 (eval-log/dev-graph の live-trial・criteria-test・content-review、eval-log/worktree/elegant-review/20261005-harness-bzn ほか)、ubm-goal-setting の goal-seek-progress.json、.beads/interactions.jsonl、plugin-plans/dev-graph、外部変更ガードの受領書",
+    "残課題の改善 (6257499e): Beads の follow-up 7件 (harness-9vu・2ix・5ww・aor・20h・6rh・6qz) の中身と、受領書の remaining_work のうち cooldown を待たずに直せるもの。CI の re-evaluate の段と root・plugin の二重実装、run-governance-automation の low、run-build-skill の PEP 723 header と plan-verification-obligations の入力検査、run-skill-intake の low、feedback_contract_ssot の __pycache__ 除外と run-ci-checks.sh の GITHUB_ENV、validate-inline-goal-seek-anchor の26本、ubm-goal-setting の新設 script 4本、lint-rubric-refs-exist と既存14件、assign-notion-fidelity-evaluator の rubric_refs、それぞれの test と独立レビューの記録",
+    "独立レビュー (i 回目) の指摘の修正と、ubm-goal-setting 0.8.0 の4層の取り込み (6257499e): 残課題の改善で直したものを作者とは別の独立評価者でもう一度レビューし、[中] 以上を全件直した。あわせて、本体の作業ツリーで進んでいた 0.8.0 の4層化 (21ファイル) を取り込み、挑戦宣言の対話が作る個人の引き継ぎファイルを .gitignore に足した。直した後に、同じ対象を別の独立評価者で再レビューした (j 回目)。",
+    "独立レビュー (j 回目) の指摘の修正と、k 回目の再レビュー (6257499e): j 回目の [中] 以上を全件直し、直した部分だけを別の独立評価者がもう一度レビューした (k 回目)。k 回目がこの PR の最後のレビューで、そこで出た指摘は直さずに残課題に回した。"
+  ],
+  "canonical_spec_locations_probe": {
+    "docs/": "absent",
+    "features/": "absent",
+    "system-spec/": "absent",
+    "specs/": "absent",
+    "architecture/": "absent",
+    "tasks/": "absent"
+  },
+  "design_notes_dir": "doc/",
+  "decision": "reflected-in-plugin-canonical-sources",
+  "rationale": "このリポジトリは plugin の集まりで、docs/・features/・system-spec/・specs/・architecture/・tasks/ のどれも持たない (上の probe)。仕様の正本は、各 plugin の SKILL.md・agents・commands・references・schemas・rubric.json・scripts の先頭の説明と定数、そして repo 共通の設計書 doc/ClaudeCodeスキルの設計書/ にある。この PR は振る舞いと契約の変更を、すべて同じブランチの中でその正本まで直した (下の changes[].reflected_in)。新しい置き場所は作らなかった。正本が2か所になると片方だけが古くなるためである。repo 共通の規約が変わったもの (日本語の正規見出し、rubric 1.5.0、cooldown と承認の照合) は doc/ の08章・27章・33章へ反映した。plugin 固有の変更は各 CHANGELOG と README・RUNBOOK に記した。",
+  "changes": [
+    {
+      "id": "ubm/run-ubm-challenge",
+      "summary": "挑戦宣言を対話で作るスキル run-ubm-challenge と、北原ナレッジから深掘りの問いか助言を1つ返す読み取り専用の challenge-advisor、入口の /ubm-challenge を足した。出力は validate-challenge-output.py で検査し、保存先は $UBM_VAULT_ROOT/05_Project/UBM/挑戦宣言/。ユーザーの記録がナレッジ候補にならないよう、detect-knowledge-updates.py の除外に加えた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md と references/ (challenge-format・handoff-format・question-map)・examples/golden-sample.md・scripts/validate-challenge-output.py",
+        "plugins/ubm-goal-setting/agents/challenge-advisor.md、commands/ubm-challenge.md",
+        "plugins/ubm-goal-setting/README.md・RUNBOOK.md・CHANGELOG.md (0.7.0)",
+        "tests/criteria/criteria_roster.py"
+      ]
+    },
+    {
+      "id": "ubm/japanese-canonical-headings",
+      "summary": "6スキル・9エージェントの地の文を日本語にし、照合される見出しと定型ブロックを日本語の正規形 (## 目的と出力契約・## つまずきやすい点・## 守ること・## 実行時のルートの決め方 など) へ移した。schema のキー・Layer 番号・responsibility ID・frontmatter のキーは訳していない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/run-build-skill/references/ja-contract-policy.md (対応表の正本)",
+        "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md (日本語で書くスキルの正規見出し)",
+        "plugins/ubm-goal-setting の各 SKILL.md・agents・commands",
+        "tests/scripts-root/test_root__ja_contract_parity.py"
+      ]
+    },
+    {
+      "id": "harness-creator/rubric-1.5.0",
+      "summary": "rubric 1.4.0 で BD-001・BD-002・PD-002 が日本語の正規見出しを英語の見出しの別名として行全体の一致で認めるようにし、1.5.0 (PROP-2026-10-09-ELEGANT-PD002) で PD-002 が冒頭30行の禁則として ## 守ること を認めるようにした。BD-001 と PD-002 の『包含関係』という誤った説明も直した。英語の照合は変えていない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json・rubric-rationale.md・SKILL.md",
+        "plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json・scripts/render-findings-score.py",
+        "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md (1.4.0／1.5.0 の実例)",
+        ".claude/changelog/governance-log.jsonl (PROP-2026-10-09-001・PROP-2026-10-09-ELEGANT-PD002)",
+        "plugins/harness-creator/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "harness-creator/generator-language-role",
+      "summary": "build-subagent.py に --language auto|ja|en と --role auto|advisor|writer を足した。テンプレートと render-combinators も同じ選択に従い、9エージェントを2型 (advisor・writer) の7層で生成し直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/run-build-skill/ の build-subagent.py・templates・render-combinators",
+        "plugins/harness-creator/skills/run-build-skill/references/ja-contract-policy.md",
+        "tests/scripts-plugins/test_harness_creator__build_subagent*.py・test_harness_creator__render_combinators.py"
+      ]
+    },
+    {
+      "id": "governance/guard-approval-and-cooldown",
+      "summary": "guard-change-category は、target_sha256 が現物と一致する承認済みの記録 (または --proposal-id で明示した提案) だけを有効にし、旧来の『先頭のディレクトリ名を含む記録があれば通す』という部分文字列の照合をやめた。以前の変更の cooldown は残し、例外は承認済みの incident_fix だけにした。CI の --bypass-cooldown を外した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/guard-change-category.py と plugins/skill-governance-automation/scripts/guard-change-category.py (先頭の説明)",
+        "plugins/skill-governance-automation/skills/run-governance-automation/SKILL.md (Key Rules・Gotchas・Runtime root contract)",
+        "doc/ClaudeCodeスキルの設計書/33-change-governance.md (cooldown と承認の照合)",
+        ".github/workflows/governance-check.yml",
+        "tests/scripts-root/test_scripts__guard_change_category.py・tests/scripts-plugins/test_skill_governance_automation__guard_change_category.py",
+        ".claude/changelog/governance-log.jsonl (ELEGANT-2026-10-09-CHECKER-GUARD-REPAIR と、この PR の P1 変更の承認記録)"
+      ]
+    },
+    {
+      "id": "governance/lint-skill-dep-step7-and-entrypoints",
+      "summary": "command から Skill ツールで呼ぶ先はモデルから起動できる必要があるので、lint-skill-dep-step7 がその配線と、危険な run-* に正規の外部変更 workflow があることを検査する。ubm の6スキルは disable-model-invocation: false にし、『true なので唯一の入口』という古い説明を README・RUNBOOK・commands/ubm-consult.md で直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
+        "plugins/ubm-goal-setting/README.md・RUNBOOK.md・commands/ubm-consult.md",
+        "tests/scripts-plugins/test_skill_governance_lint__lint_skill_dep_step7.py"
+      ]
+    },
+    {
+      "id": "ubm/elegant-review-24",
+      "summary": "elegant-review の24件を実装した。入口の呼び出し可否、書き込みガード、goal の検証ゲートとゴールシーク anchor の正本化、consult の挑戦誘導 (redirected_challenge) と保存同意、挑戦宣言と目標設定の接続、YouTube の必須入力と保存先の衝突、見出し参照の検査、9エージェントの2型7層化。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/references/ (goal-seek-anchor-contract・agent-root-contract・guarded-publication-contract・knowledge-retrieval-contract・action-language-policy・content-review-rubric・package-contract)",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md",
+        "plugins/ubm-goal-setting/scripts/ (search-knowledge・record-knowledge-usage・evaluate-design-rubric・publish-staged-files・validate-*)",
+        "plugins/ubm-goal-setting/CHANGELOG.md (0.7.0 の『elegant-review の継続 run での改善』)",
+        "eval-log/ubm-goal-setting/_plugin/elegant-review/20261009-full-resolution/proposal-resolution.json"
+      ]
+    },
+    {
+      "id": "ubm/knowledge-982",
+      "summary": "ナレッジ982件の背景を原文に基づいて整理し、27件のタグを補強し、核心919件・目的193件の文型を整え、全129ファイルを JSON の値を変えずに500行以内へ整形した。UBM 限定の L1 rubric (KL-002 の check だけを特化。L0・weight・threshold・severity は不変) を登録し、6入口へ注入した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/rubric.json (L1)",
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync の抽出テンプレート・スキーマの説明・設計方針",
+        "plugins/ubm-goal-setting/knowledge/ (129ファイル)",
+        "eval-log/ubm-goal-setting/_plugin/elegant-review/20261010-context-resolution/REPORT.md"
+      ]
+    },
+    {
+      "id": "ubm/distribution",
+      "summary": "ubm-goal-setting を公開の Claude カタログと bundle から外し、ローカル clone 用カタログ (clone_local_plugins) だけに載せた。Codex の表示名は .codex-plugin-overrides.json で日本語にした。",
+      "spec_impact": true,
+      "reflected_in": [
+        ".claude-plugin/marketplace.json・bundles.json、marketplaces/local (build-local-marketplace.py で再生成)",
+        "plugins/ubm-goal-setting/.codex-plugin-overrides.json",
+        "plugins/ubm-goal-setting/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "fleet/run-skill-feedback-goal-seek",
+      "summary": "全22プラグインの run-skill-feedback のゴールシーク配線を、同梱の validate-inline-goal-seek-anchor.py で確かめられる形にした (original_goal と SHA-256 の固定、中間成果物の必須6キー、max_loops: 5 で停止)。validator は run-build-skill/templates/goal-seek-runtime/ と byte 一致で、lint-vendored-ssot.py が検査する。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/*/skills/run-skill-feedback/SKILL.md と scripts/validate-inline-goal-seek-anchor.py",
+        "scripts/lint-vendored-ssot.py",
+        "plugins/x-longpost-creator/CHANGELOG.md (1.3.4)"
+      ]
+    },
+    {
+      "id": "release/version-bumps",
+      "summary": "内容が変わった22プラグインの版を build-plugin-release.py で上げた (ubm-goal-setting は 0.7.0、ほかは patch)。CHANGELOG を持つ x-longpost-creator には 1.3.4 の節を足した。",
+      "spec_impact": false,
+      "reflected_in": [
+        "plugins/*/.claude-plugin/plugin.json・.codex-plugin/plugin.json・plugin-composition.yaml",
+        "marketplaces/local/plugin-fingerprints.json",
+        "doc/harness-creator-完全解剖.md (版表記)"
+      ]
+    },
+    {
+      "id": "ci/naming-pending-rename",
+      "summary": "ubm の新設スクリプト5本は lint-script-naming の動詞規則に合わないが、content-review verdict の依存 SHA から名前で参照されている。改名すると独立評価の verdict がすべて無効になるため、改名は verdict の取り直しと一組で別 PR に回し、PENDING_RENAME_PATHS に理由付きで登録した。規則そのものは緩めていない。",
+      "spec_impact": false,
+      "reflected_in": [
+        "scripts/lint-script-naming.py (PENDING_RENAME_PATHS とその理由のコメント)"
+      ]
+    },
+    {
+      "id": "governance/fail-closed-followups",
+      "summary": "最終レビューで見つかった fail-open と参照切れを直した。guard-change-category は git diff が失敗したとき、『変更なし』として通さずに GitDiffError を exit 2 で返す (P0 の判定に使う _name_field_changed も同じ)。re-evaluate-on-rubric-bump は、兄弟 plugin の rubric を解決し、欠落や読み込み不能を exit 2 にする (83d96c67)。さらに score ログ (*/*-score.jsonl の rubric.rubric_version) も走査し、版の読めない記録があれば対象を出したうえで exit 2 にする。wrap-git-commit-safe・run-ubm-challenge・run-ubm-knowledge-sync に resource-map を足し、run-skill-intake の reference_refs と run-build-skill の script_refs を、実在するファイルに揃えた。ubm-goal-setting は、evaluate-design-rubric の calls 辺6件と、skill-governance-config への外部依存を宣言した。 skill-governance-automation も、guard の --policy を供給する skill-governance-config を依存として宣言していなかったので、depends_on と external_dependencies に足した (44b8bbbe)。これで installer の install closure に入る。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/guard-change-category.py と plugins/skill-governance-automation/scripts/guard-change-category.py (先頭の説明: exit 2 = 設定エラーまたは git diff の失敗)",
+        "plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py (先頭の説明: score ログと exit 2 の条件)",
+        "plugins/harness-creator/skills/wrap-git-commit-safe/references/resource-map.yaml、plugins/ubm-goal-setting/skills/run-ubm-challenge/references/resource-map.yaml、plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/resource-map.yaml",
+        "plugins/skill-intake/skills/run-skill-intake/SKILL.md (reference_refs)、plugins/harness-creator/skills/run-build-skill/SKILL.md (script_refs)",
+        "plugins/ubm-goal-setting/plugin-composition.yaml (external_dependencies と calls 辺) と references/package-contract.json (depends_on と skill_dependencies)",
+        "tests/scripts-root/test_scripts__guard_change_category.py、tests/scripts-plugins/test_skill_governance_automation__guard_change_category.py、tests/scripts-plugins/test_skill_governance_automation__re_evaluate_on_rubric_bump.py",
+        "plugins/skill-governance-automation/references/package-contract.json (depends_on) と plugin-composition.yaml (external_dependencies: skill-governance-config、relation: governance-policy-provider)"
+      ],
+      "design_decision": "ubm-goal-setting の skill_dependencies は、7スキルとも harness-creator だけにした。evaluate-design-rubric.py は設計レビュー専用で、対話の実行時の振る舞いには関わらない。そのため、skill-governance-config を live-trial の behavior closure に入れず、既存の live-trial verdict を無効にしないようにした。依存そのものは depends_on と external_dependencies で宣言している。 skill-governance-automation では、.claude-plugin/plugin.json の dependencies を変えなかった。このファイルは P1 承認済みの48件に含まれ、承認後に中身を変えると承認の target_sha256 と合わなくなる。installer は package-contract の depends_on から closure を解くので、宣言はそれで足りる。"
+    },
+    {
+      "id": "ci/bytecode-outside-checkout",
+      "summary": "PR を出した後の CI (run 38012009284) で、governance job の pytest が209件落ちた。run-skill-feedback に初めて .py (scripts/validate-inline-goal-seek-anchor.py) が入り、CI の py_compile が正本と21の配布コピーに別々の .pyc (元ファイルのパス入り) を作った。feedback_contract_ssot.is_vendored_feedback_skill はツリーの内容 hash でコピーを見分けるため、中身が同じコピーが独立したスキルとして数えられ、lint-feedback-contract の21件の違反と、criteria roster・llm-coverage のずれになった。手元は PYTHONDONTWRITEBYTECODE=1 で実行していたので再現しなかった。governance と plugin-tests の2つの job で PYTHONPYCACHEPREFIX を $RUNNER_TEMP に向け、検査するツリーを変えないようにした (eb7b1bc1)。",
+      "spec_impact": false,
+      "no_impact_reason": "CI の実行環境 (bytecode の置き場所) だけの変更で、スキルの振る舞い・契約・lint の規則は変えていない。配布コピーの判定の SSOT (scripts/feedback_contract_ssot.py) とその説明もそのまま。この前提 (検査するツリーに生成物を書かない) は、workflow の step のコメントに記した。",
+      "reflected_in": [
+        ".github/workflows/harness-creator-kit-ci.yml (Keep bytecode caches outside the checkout の step とコメント)"
+      ]
+    },
+    {
+      "id": "ci/coverage-records-for-new-scripts",
+      "summary": "bytecode の修正後の CI (run 38013812634) で governance の pytest は通ったが、次の Harness coverage ratchet-floor が scripts/llm_eval 63.7% < floor 64.3% で落ちた。この PR で足した script 28本 (run-skill-feedback の validate-inline-goal-seek-anchor.py の正本と配布コピー22本、ubm-goal-setting の6本) に、独立コードレビューの記録 (eval-log/coverage/scripts/<slug>.json) が無かったため。floor は回帰を焼かない作り (--update-floor は下げない) なので、内容が異なる7本を独立レビュアーにレビューしてもらい、その判定どおりに 34 件の記録を書いた。ubm-goal-setting の6本は PASS (85〜94)。validate-inline-goal-seek-anchor.py は FAIL (82): UTF-8 でない入力で UnicodeDecodeError の traceback を出し、宣言の『2=IO/JSON error』と合わない (実測)。この PR で2行 (progress が object でない場合の exit 1) を足しており、既存の4件の PASS 記録は変更前の内容 (sha256 87b5dddb…) のレビューだったので、26本すべてを今の内容のレビュー (FAIL) で書いた。直すには26本 (22プラグイン) の版上げが要り、plugin.json は P1 で cooldown 3日のため follow-up に回した。A が FAIL のままでは 311/485 (64.1%) で floor に届かないので、記録の無い 配布コピーのうち、今の内容のままレビュー済みの正本と byte 一致し、同じ内容の全コピーの記録が PASS で揃うもの2本 (extract-system-blueprint の extract-ready-set-from-checklist.py と build-self-reflection-entry.py) に、PR #83 の前例どおり正本のレビューを当てた。build-capability-graph-knowledge-entry.py のコピー5本は、正本テンプレートの記録 (PASS 83) とコピーの独立レビュー (FAIL 74) が割れているので、PASS で上書きしなかった。",
+      "spec_impact": false,
+      "no_impact_reason": "評価の記録 (eval-log) を足しただけで、script・スキル・契約・lint の規則・ratchet の floor は変えていない。記録の書き方は PR #83 の前例 (byte 一致コピーには代表のレビューを当て、sha256 で一致を確かめる) に合わせた。",
+      "reflected_in": [
+        "eval-log/coverage/scripts/ の記録",
+        "eval-log/harness-coverage.json (再生成)"
+      ]
+    },
+    {
+      "id": "worktree/full-import-harness-bzn",
+      "summary": "ユーザーの指示「このワークツリー上にある全ての内容を PR に上げる」に従い、本体の作業ツリーに残っていた未 commit の差分 526件と、このセッションの外部変更ガードの受領書 7件を fdc93c12 に入れた。取り込みは git diff --binary を 3-way で当て、未追跡は tar で写した。写した後に cmp で全件を照合し、違いは2件だけだった: marketplaces/local/plugin-fingerprints.json (この PR の正規ツールの出力を採った) と scripts/lint-script-naming.py (この PR の PENDING_RENAME_PATHS と本体側の1件の登録の両方を残した)。変更区分は guard-change-category の classify_change で全件 P2_content (auto_apply + post_review) で、P0・P1 は0件、SKILL.md の name の変更も0件。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md と prompts/R3-sync.md (同期の完了は両計画の converged=true で判定する。changes=0 は書き込み予定が無いことだけを示す)",
+        "plugins/dev-graph/skills/run-dev-graph-*/SKILL.md の script_refs (_common.py を明示)",
+        "plugins/dev-graph/schemas/criteria-scenario-verdict.schema.json",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md・prompts (R2・R3・R5)・references/spec-state-contract.md・elicit-question-bank.md (--required-info による候補 state の検査)",
+        "plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の先頭の説明 (相対パスと symlink を project root 起点で解決する)",
+        "plugins/harness-creator/skills/run-plugin-package-check/SKILL.md、run-skill-create/workflow-manifest.json",
+        "plugins/harness-creator/scripts/plugin_resources.py の先頭の宣言と、scripts/lint-script-naming.py の PENDING_RENAME_PATHS (理由付き)"
+      ],
+      "commit": "fdc93c12"
+    },
+    {
+      "id": "ci/align-tests-with-imported-harness-bzn",
+      "summary": "fdc93c12 の取り込みで GitHub の governance の pytest が新しく落ちた3件を直した。(1) test_harness_creator__external_intelligence_hook: harness-creator の互換入口が plugin_resources.forward_external_intelligence を呼ぶ形に変わり、転送先 skill-governance-adapters は plugin_resources.py が持つ。test を新しい形の確認に改めた。(2)(3) lint-test-discovery-coverage: 取り込んだ証跡 test_skill_criteria_evidence.*before-iteration3.py の2件は改善前の test のバイト単位の写しで、JSON の before_bytes_path がこのパスで参照する。名前を変えずに ALLOWLIST に理由付きで宣言し、実 repo の orphan の test を ALLOWLIST と整合させた。",
+      "spec_impact": false,
+      "spec_impact_reason": "root の test と lint の例外の宣言だけで、プラグインの中身・schema・SKILL.md・公開 API は変えていない。lint の判定規則 (CI 到達集合) も変えておらず、例外の宣言の仕組みは lint の docstring に元から書かれている",
+      "commit": "e896c729"
+    },
+    {
+      "id": "ci/fix-checks-hidden-by-skipped-steps",
+      "summary": "GitHub Actions では手前の段が落ちると後ろの段が skip されるので、GitHub の結果に出ていなかった2件を、手元で全段を流して見つけて直した。main ではどちらも通っていた。(1) PKG-007: 取り込んだ plugins/harness-creator/scripts/plugin_resources.py に shebang と実行ビットが無かった。plugin の scripts/ の他の import 用 module (_common.py、feedback_contract_ssot.py、tenant_runtime.py) と同じく #!/usr/bin/env python3 を付けて chmod +x した。(2) lint-skill-runtime-profiles: この PR の run-skill-feedback は goal-seek の anchor を skill の中 ($SKILL_ROOT/scripts) に同梱しているが、lint は plugin の scripts/ の写ししか見ておらず『不在』と判定していた。skill 同梱と plugin scripts/ のどちらの写しも認め、見つかった写しはすべて Harness Creator の正本とバイト単位で一致することを求めるように直し、test を1本足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "lint の検査対象を、SKILL.md が既に宣言している呼び出し経路 ($SKILL_ROOT/scripts) に合わせただけで、正本との一致を求める規則は弱めていない。plugin_resources.py は実行ビットと shebang だけの変更で、公開 API・schema・SKILL.md は変えていない",
+      "commit": "790e320b"
+    },
+    {
+      "id": "eval-log/regenerate-harness-coverage-after-import",
+      "summary": "eval-log/harness-coverage.json は 3d24214e のときの数 (scripts 485本) のままで、fdc93c12 で取り込んだ plugins/harness-creator/scripts/plugin_resources.py の分が入っていなかった。make harness-coverage で作り直した (scripts 486本、llm_eval 64.5% → 64.4%。floor 64.3% は上回り、ratchet は RATCHET OK)。",
+      "spec_impact": false,
+      "spec_impact_reason": "正規のツールが出力する集計の記録で、floor・閾値・判定の規則は変えていない",
+      "commit": "この受領書と同じ commit"
+    },
+    {
+      "id": "governance/re-evaluate-ci-step-and-single-implementation",
+      "summary": "harness-9vu。CI の『Re-evaluate on rubric bump』は script が受け付けない --skills-dir を渡し、argparse の失敗を `|| true` で握りつぶしていた (何も検査していなかった)。--eval-log-dir eval-log で呼び、exit 2 (upstream rubric や score ログの版を読めない) で落とす。再評価の対象の一覧は通知だけで exit 0 のまま。root の scripts/re-evaluate-on-rubric-bump.py は plugin 版への symlink にして実装を1本にし、root 版だけにあった PostToolUse hook の動き (--post-tool-use。rubric.json の 編集のときだけ走査し、hook は常に exit 0) を plugin 版へ移した。eval-log の置き場は --eval-log-dir → EVAL_LOG_DIR → $PROJECT_ROOT/eval-log → ./eval-log の順で、score ログを書く write-eval-log.py と同じにした。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py の PEP 723 header (inputs・exit・置き場の解決順)",
+        "plugins/skill-governance-automation/skills/run-governance-automation/SKILL.md の『目的と entrypoint の対応』",
+        ".github/workflows/harness-creator-kit-ci.yml の段のコメント (通知と fail の境界)"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "governance/run-governance-automation-low",
+      "summary": "harness-2ix。run-governance-automation の SKILL.md に『目的と entrypoint の対応』の表 (8行) を足し、compute-rubric-hash.py と write-eval-log.py は既定で書き込むので preflight では --dry-run を付けることを明記した。receipt を『command・exit code・stdout の要点・変わった path』の4つと定義した。prompts と manifest を持たない理由を completeness_exempt に書いた (entrypoint を選んで receipt を返すだけで、委譲する責務も固定 phase も無い)。notify-if-governance-trigger.py は trigger.json が読めない・形が違うときに stderr へ警告する (Stop hook なので exit 0 のまま)。rollback-to-stable.py は params が無いときに警告して params_source: default を出し、壊れている・ceiling が 0〜1 の有限数でない・ディレクトリを渡された・versions-md を読めないときは exit 2。書き込まないので write-scope を none に直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-governance-automation/skills/run-governance-automation/SKILL.md",
+        "plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py と rollback-to-stable.py の PEP 723 header"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/run-build-skill-script-headers-and-planner-input",
+      "summary": "harness-5ww の一部。run-build-skill/scripts の8本に PEP 723 の script header を足した。plan-verification-obligations.py は contract の risk・activation・stage・depends_on・minimum_confidence・inputs[].path を先に検査し、後段の添字アクセスの KeyError/TypeError (traceback で exit 1) にしない。非 UTF-8 の contract と --out に書けない場合も exit 2。壊れた receipt は 読み飛ばす。run-build-skill の content-review を取り込み後の中身 (plugin_resources の import と header) で取り直した。",
+      "spec_impact": false,
+      "spec_impact_reason": "header は既存の入出力を宣言しただけ。planner の検査は、後段がすでに前提にしていた key と値の範囲を入口で確かめるだけで、contract の schema・plan の形・exit の意味は変えていない (壊れた入力が traceback ではなく exit 2 になる)",
+      "commit": "6257499e"
+    },
+    {
+      "id": "skill-intake/run-skill-intake-low",
+      "summary": "harness-5ww の一部。Key Rule 3 に schemas/ を持たない phase (P6・P10) の検証方法を足し、Key Rule 9 の hook の配線先を hooks/hooks.json に直した。handoff-contract.md の正本の場所と節名、workflow-sequence.md の『失敗時の戻り先』(自動では巻き戻さない) と P11 の入力を直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-intake/skills/run-skill-intake/SKILL.md",
+        "plugins/skill-intake/skills/run-skill-intake/references/handoff-contract.md",
+        "plugins/skill-intake/skills/run-skill-intake/references/workflow-sequence.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/feedback-contract-ignores-bytecode",
+      "summary": "harness-20h。feedback_contract_ssot.directory_content_sha256 は __pycache__・*.pyc・*.pyo を hash に入れない (plugins/harness-creator/scripts と root の scripts の2つの写しは byte 一致)。validate-plugin-package.py の _tree_fingerprint (PKG-003 で run-skill-feedback の配布コピーの一致を見る) にも同じ除外を入れた。作業ツリーに __pycache__ が161か所ある状態で validate-plugin-packages.py は PKG-003 の7件の偽の失敗から rc=0 になった。scripts/run-ci-checks.sh は GitHub の runner と同じ約束で RUNNER_TEMP と job ごとの GITHUB_ENV を用意し、PYTHONPYCACHEPREFIX を後ろの段へ渡す段が手元でも効く。",
+      "spec_impact": false,
+      "spec_impact_reason": "配布コピーの一致判定から、実行のたびに生成されるキャッシュだけを外した。ソースの1バイトの違いも検出する規則は変えていない。run-ci-checks.sh は手元で CI と同じ環境を作るためのもので、検査の内容は変えていない",
+      "commit": "6257499e"
+    },
+    {
+      "id": "fleet/goal-seek-anchor-non-utf8-exit-2",
+      "summary": "harness-6rh。validate-inline-goal-seek-anchor.py (26本、22プラグイン) が UTF-8 でない入力で UnicodeDecodeError の traceback を出して exit 1 になっていた。except を (OSError, ValueError, RecursionError) に広げて exit 2 にし、26本を Harness Creator の正本と byte 一致のまま直した。test を足し、26件の独立コードレビューの記録を取り直した。",
+      "spec_impact": false,
+      "spec_impact_reason": "壊れた入力の exit code を header の宣言 (2=入力不正) に合わせただけで、anchor の判定規則は変えていない",
+      "commit": "6257499e"
+    },
+    {
+      "id": "ubm/new-scripts-review-findings",
+      "summary": "harness-6qz。独立レビューを2回まわして直した。publish-staged-files.py: 宣言した root が実在しなければ書き込む前に exit 2。重複と置き場の重なりを NFC + casefold のキーで判定する (macOS の大文字小文字・濁点の合成形と分解形)。validate-challenge-output.py: M01 で、費用ゼロと書きながら金額付きでかかる費用を節の単位で拾う (収入と仮の額は数えない)。5理由のラベルの重複を R01、● 見出しの重複を F02、15桁を超える数を M01 にする。BOM を外す。長い数字の並びで探索が二乗にならないよう後読みを付けた。--help は exit 0。evaluate-design-rubric.py: object でない JSON を fail-closed にし、L0・L2・render-findings-score.py の実在を子の起動前に確かめ、exit 2 の出どころを stderr の印 (UBM_REVIEW_ROUTING_INVALID:・UBM_REVIEW_EVALUATOR_EXIT=<code>) で区別する。印は行で出る (引数不正では argparse の usage の後)。normalized_source_path.py: RecursionError を捕まえ、video_id の行末 YAML コメントを読む。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/challenge-format.md (M01・R01・F02 の判定)",
+        "plugins/ubm-goal-setting/references/content-review-rubric.md の13行目 (exit 2 の理由と stderr の印の探し方)",
+        "各 script の PEP 723 header"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "governance/lint-rubric-refs-exist-fail-closed",
+      "summary": "harness-aor。lint-rubric-refs-exist.py が YAML の引用符を外さずに読み、実在する rubric.json を NOT FOUND と誤報していた。あわせて flow 形式 ([a, b]) を文字列として読み飛ばしていた、block の項目をインデント2の場合しか読まなかった、スカラの rubric_refs を黙って通していた、存在しない引数を『0件検査して PASS』にしていた、読めない SKILL.md や registry で traceback を出していた、の5点を直した (スカラは FAIL、残りの入力不正は exit 2)。rubric.json を持たない ref を rubric_refs に書いていた3スキル (harness-creator の assign-plugin-package-evaluator・run-plugin-package-check、skill-intake の assign-notion-fidelity-evaluator) は reference_refs へ移し、rubric を持たない理由を completeness_exempt に書いた。既存14件を0件にしてから、CI の governance job に fail-closed の段として足した。既定の走査範囲は harness-creator と .claude/skills (他 plugin の skill の symlink を含む) のまま。",
+      "spec_impact": true,
+      "reflected_in": [
+        "3スキルの SKILL.md の frontmatter (reference_refs・completeness_exempt)",
+        "plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py の header と docstring (走査範囲を広げない理由)",
+        ".github/workflows/harness-creator-kit-ci.yml の段のコメント"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "eval-log/independent-reviews-after-improvement",
+      "summary": "直した script の独立コードレビューの記録 (eval-log/coverage/scripts。新規8件・更新38件) と、SKILL.md の SHA が変わったスキルの content-review (run-governance-automation・run-skill-intake・run-build-skill・assign-plugin-package-evaluator・run-plugin-package-check・assign-notion-fidelity-evaluator) を、作者とは別の独立した評価者で取り直した。記録は、レビューした sha256 と現物が一致することを確かめてから書いた。eval-log/harness-coverage.json は make harness-coverage で作り直した。",
+      "spec_impact": false,
+      "spec_impact_reason": "正規のツールと独立評価者が出力する記録だけで、rubric・閾値・判定の規則は変えていない",
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/review-fixes-round13",
+      "summary": "derive-verification-contract.py: 検証契約の checker のパスを、同じ scripts/ にある validate-build-plan.py の実物から解決する (repo の中は従来と同じ repo 相対、外は絶対パス、無ければ exit 2。文字列でない subject は exit 2)。audit-capability-parity.py: 型の崩れた manifest を ERROR の verdict にし、exit 0/1/2 を PASS/FAIL/ERROR に分けた。sync-plugin-platforms.py: write-scope を header に宣言し、不正な repo-root は何も作らずに exit 3。PKG: validate-plugin-package.py の PKG-005 (agent の name)・PKG-006 (逆方向の参照)・.DS_Store の除外、aggregate-pkg-findings.py の pkg-batch の読み込みと読めないログの fail 扱い、lint-pkg-009.py の常時 JSON 出力、sandbox-plugin-lifecycle.py の名前空間の削除。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md の PKG 表 (script が判定する条件と評価者が判定する条件に分割)",
+        "plugins/harness-creator/skills/run-plugin-package-check/SKILL.md (引数と出力先)",
+        "各 script の PEP 723 header (exit code・write-scope)"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/rubric-governance-stable-version-selection",
+      "summary": "run-skill-rubric-governance: 巻き戻し先の安定版を選ぶ違反率の分母を rubric の rule 数 (41) から各レコードの coverage.applicable_rules に直し、rule ごとの違反率の最大が ceiling を超える版は候補にしない手順を足した (L0 1.3.0 は平均 0.0774、PD-002 が最大 1.0 で候補外)。L0 の版とレコードの対応づけ、--dry-run での hash の確認、governance-params.json の置き場所、RELEASE_VERSION の決まり方も書いた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/run-skill-rubric-governance/SKILL.md",
+        "plugins/harness-creator/skills/run-skill-rubric-governance/references/governance-board.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "governance/lint-and-guard-review-fixes-round13",
+      "summary": "lint-rubric-violation.py 0.3.0 (番号の無い release を一番古い扱いに)・lint-script-frontmatter.py 0.3.0 (.py ファイルの引数を検査し、存在しないパスは exit 2)・lint-skill-dep-step7.py (行末コメント・frontmatter の終わり・BOM・danger の yes/on)。guard-change-category.py 0.3.0 (root と plugin の2つは byte 一致): policy を merge-base から読み、governance-log は追記だけを認め、governance-policy.json を P1 にし、--bypass-cooldown は cooldown のある区分にだけ効かせ、git diff を --no-color --no-ext-diff --no-textconv で取る。外部変更ガード: 正規のコマンドと認めるのを1つの単純なコマンドだけにし、shell の構文は fail-closed (22プラグインの artifact-delivery.json の runner_sha256 を build-artifact-delivery.py --write で作り直した)。build-artifact-delivery.py: 旧 runtime root 節の skill 固有の文を END の印の後ろへ移して残す。lint-test-discovery-coverage.py: step の run の値だけを照合する。build-claude-symlinks.py・build-claude-settings.py: hash から __pycache__ を外す。",
+      "spec_impact": true,
+      "reflected_in": [
+        "doc/ClaudeCodeスキルの設計書/33-change-governance.md は P1 の凍結対象なので、guard の新しい挙動は script の header と test に書いた (章の改訂は残課題)",
+        "plugins/skill-governance-adapters の外部変更ガードの契約の文書",
+        ".github/workflows/governance-check.yml のコメント",
+        "各 script の PEP 723 header"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "skill-intake/resume-after-fail-and-skipped-purpose",
+      "summary": "validate-task-graph-progress.py: trace の状態に FAIL (error と exit_code が必須) を足し、FAIL の後は同じ phase を attempt+1 でやり直す行だけを認める。新しい build-skipped-purpose.py: P5 を飛ばすときに interview.json の値だけから最小の purpose.json を作る (推測で埋めず、深掘りが要るときは exit 1)。これで P11 の decide-mode.py が exit 3 で止まらない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-intake/skills/run-skill-intake/SKILL.md (失敗からの再開・P5 を飛ばす手順)",
+        "plugins/skill-intake/skills/run-skill-intake/references/workflow-sequence.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "ubm-goal-setting/challenge-validator-negated-collected",
+      "summary": "validate-challenge-output.py: 『済み』『確定』の直後に否定や予定の語が付いた書き方 (回収済みではない・確定する予定) を回収済みと数えない。『できる』の形も外す。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts/validate-challenge-output.py の header"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "ubm-goal-setting/four-layer-yearly-import",
+      "summary": "ubm-goal-setting 0.8.0 の4層 (1年・3ヶ月・1ヶ月・1週間) を取り込んだ (21ファイル。ファイルごとに git merge-file で3方向に合わせ、この PR で先に直していた agents・command・validation-gates.md・validate-goal-output.py とその test は両方の変更を残した)。取り込みの後に、workflow-manifest.json の phase0 の種別に yearly を、phase5 の検証に --yearly を足した。plugin.json は P1 の cooldown の対象なので 0.7.0 のまま (CHANGELOG は 0.8.0)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md (## 対象種別（4層）)",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/workflow-manifest.json",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/ (data-contract・output-formats・validation-gates・version-history)",
+        "plugins/ubm-goal-setting/agents/ (goal-reviewer・info-collector・output-formatter・phase3-coordinator)",
+        "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+        "plugins/ubm-goal-setting/CHANGELOG.md の 0.8.0"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "doc/design-docs-match-implementation",
+      "summary": "設計書を実物に合わせた。03章・08章: frontmatter の例を validate-frontmatter と description の lint を通る形にし、発動条件は2個で書く (rubric の 2〜3個と機械ゲートの 2個ちょうどの食い違いは明記)。完全解剖: §3.5 の見出し構成を render-combinators.py の実際の描画順に、§3.7 のナレッジループを『指定したときだけ』に。24章: 正本は実物とし、抜粋を実物と一致させた。26章: 実際の coverage の流れに直し、evaluator のループは未実装と明記。32章: creator-kit は移行済み (4cd8faf8)。34章: 冒頭に現状 (2026-10-10) を足した。harness-coverage-spec.md: hooks の定義を validator の数え方に合わせ、数値を1か所に置いた。ref-skill-design-rubric の SKILL.md: trigger の数の注記。",
+      "spec_impact": true,
+      "reflected_in": [
+        "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+        "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+        "doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md",
+        "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+        "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+        "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+        "doc/harness-creator-完全解剖.md",
+        "doc/harness-coverage-spec.md",
+        "plugins/harness-creator/skills/ref-skill-design-rubric/SKILL.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "repo/gitignore-challenge-handoff",
+      "summary": "挑戦宣言の対話が作る引き継ぎファイル (handoff-run-ubm-challenge.json・run-ubm-challenge-intermediate.jsonl・eval-log/**/.claude/handoff/) を .gitignore に足した (ユーザーの判断)。個人の挑戦宣言の中身が公開リポジトリに入らないようにするため。",
+      "spec_impact": false,
+      "spec_impact_reason": "git の管理外にする範囲の変更だけで、plugin の契約や振る舞いは変えていない",
+      "commit": "6257499e"
+    },
+    {
+      "id": "eval-log/independent-rereview-round-j",
+      "summary": "i 回目の指摘を直したものと4層を取り込んだものを、作者とは別の独立評価者でもう一度レビューした (j 回目。script・設計書・agent と command の coverage の記録、SKILL.md の content-review)。記録は、レビューした sha256 と現物が一致することを確かめてから書いた。",
+      "spec_impact": false,
+      "spec_impact_reason": "独立評価者と正規のツールが出力する記録だけで、rubric・閾値・判定の規則は変えていない",
+      "commit": "記録の commit (この受領書の直前)"
+    },
+    {
+      "id": "skill-governance-adapters/guard-canonical-runner-path",
+      "summary": "外部変更ガード: 正規のコマンドの判定を runner の basename から、語の形と実パスに変えた。1語目は素の python3 / python3.X、2語目は先頭が - ~ = でなく $ を含まない文字どおりのパスで、payload の cwd から実パスに解決して、動いている guard 自身の plugin の scripts/・hooks/ か <cwd>/plugins/skill-governance-adapters/{scripts,hooks}/ と一致するときだけ許可する。引用符なしの $NAME は拒否する。拒否文に5つの action を並べる。22プラグインの runner_sha256 を作り直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-governance-adapters の外部変更ガードの契約の文書と script の header",
+        "22プラグインの artifact-delivery.json (runner_sha256)"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/pkg-006-hooks-json-and-run-scoped-aggregation",
+      "summary": "validate-plugin-package.py: PKG-006 が plugin.json に hooks キーが無くても hooks/hooks.json を読む (object・文字列・配列のどれでも、同じファイルは1回)。hook の実体の照合は拡張子まで含めた完全一致。package_mode の範囲 (bundle・skill-only) を足し、範囲外は PKG-002 で fail。aggregate-pkg-findings.py: --run と --phase を必須にし、pkg-*/<run>.json だけを読む。その run にログが無い required ID は fail、ログが1件も無いときも fail。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md",
+        "plugins/harness-creator/skills/run-plugin-package-check/SKILL.md (Step 9・R1)",
+        "plugins/harness-creator/skills/run-plugin-package-check/workflow-manifest.json",
+        "PKG の schema 2つ (package_mode の enum)"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "skill-intake/skipped-purpose-schema-and-interview-crosscheck",
+      "summary": "P5 を飛ばした経路の §3 が schema 違反になる問題を直した。飛ばした印はただ1つの要素としてだけ認め、同じ場所の interview.json の needs_excavation が false かを照合する (excavation_skip_matches_interview)。validate-task-graph-progress.py は P5 の FAIL の直後に同じ P5 を SKIP にした trace を拒否し、bool を int として数えない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/skill-intake/skills/run-skill-intake/SKILL.md",
+        "plugins/skill-intake/skills/run-skill-intake/references/handoff-contract.md (§3 の SKIP の経路)",
+        "plugins/skill-intake/agents/skill-intake-purpose-excavator.md",
+        "plugins/skill-intake/skills/run-skill-intake/workflow-manifest.json (P5 の resource)",
+        "output.schema.json"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "ubm-goal-setting/review-mode-numbering-and-validators",
+      "summary": "見直しモードの番号を5に直し、description の発動条件を2つにまとめ、--yearly で rc=0 になる test を足した。validate-cross-level.py 0.2.0 (数字の後読みで「11月」を「1月」と取り違えない・UTF-8 でない入力は rc=2)、validate-goal-output.py 0.3.1 (表の区切り行でハイフン1個以上を受け付ける)。data-contract に1年層のアンカーを足した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/execution-prompts.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md",
+        "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+        "plugins/ubm-goal-setting/agents/phase3-coordinator.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "ubm-goal-setting/agent-body-line-limit",
+      "summary": "goal-reviewer・info-collector・output-formatter・knowledge-extractor の本文が300行の上限 (BD-003) を超えていた (origin/main の時点から)。手順・テンプレート・規則を references へ移し、本文から参照するようにして上限の内側に収めた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/agents/ (4本)",
+        "plugins/ubm-goal-setting/references/agent-*.md (移した先。8ファイル)",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md (27.0.0 の (12))"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "doc/design-docs-24-32-34-34a-match-implementation",
+      "summary": "24章: run-build-skill の抜粋を実物と同じ usable-first の7段に書き直した。34章・34a: settings.json の作られ方を build-claude-settings.py の今の挙動に合わせた (plugin の hook は settings へ投影せず hooks/hooks.json から配る。マージするのは permissions の deny と ask だけ)。32章: creator-kit の記述と symlink の範囲を実数に直した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md",
+        "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+        "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+        "doc/ClaudeCodeスキルの設計書/34a-settings-merge-spec.md"
+      ],
+      "commit": "6257499e"
+    },
+    {
+      "id": "plugin-dev-planner/upstream-pin-coverage-spec",
+      "summary": "この PR で doc/harness-coverage-spec.md を直したため、plugin-dev-planner の upstream pin の sha256 がずれて test が落ちた。pin が指す行 (C1・G6) を読み直して意味が変わっていないことを確かめ、sha256 と verified_at を更新した。",
+      "spec_impact": false,
+      "spec_impact_reason": "上流の文書の hash の追従だけで、pin が指す規則の意味は変わっていない",
+      "commit": "6257499e"
+    },
+    {
+      "id": "harness-creator/rubric-governance-human-decision",
+      "summary": "run-skill-rubric-governance の content-review は反復の上限 (3回) に達して人のレビュー待ちだった。残った [中] (巻き戻し先の安定版を選ぶ違反率の分母) を利用者が判断した (2026-10-10T13:26Z。分母は coverage.applicable_rules、rule ごとの違反率の最大が ceiling 0.05 を超える版は候補にしない)。判定は書き換えず、k 回目の独立評価者が改めて評価した。",
+      "spec_impact": false,
+      "spec_impact_reason": "文書はすでにこの決め方で書かれていた。利用者の判断で設計の選択を確定しただけで、文書の変更は無い",
+      "commit": "記録の commit (この受領書の直前)"
+    },
+    {
+      "id": "eval-log/independent-rereview-round-k",
+      "summary": "j 回目の指摘を直したものを、作者とは別の独立評価者がもう一度レビューした (k 回目。script・設計書・agent と command の coverage の記録、SKILL.md の content-review)。k 回目がこの PR の最後のレビューで、出た指摘は残課題に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "独立評価者と正規のツールが出力する記録だけで、rubric・閾値・判定の規則は変えていない",
+      "commit": "記録の commit (この受領書の直前)"
+    },
+    {
+      "id": "tests/test_feedback_contract_ssot.py#ci-pycache-prefix",
+      "summary": "12 (harness-20h) で足した test_vendored_feedback_skill_ignores_bytecode_caches が、CI (d0a9a552 の run 38089716882) だけで FileNotFoundError になった。CI は PYTHONPYCACHEPREFIX で .pyc をツリーの外へ逃がすので、py_compile がツリーの中に __pycache__ を作らず、test の前提の確認が落ちていた。py_compile に cfile を明示して、ツリーの中に .pyc を作るようにした。",
+      "spec_impact": false,
+      "spec_impact_reason": "test の前提の作り方だけを直した。feedback_contract_ssot の判定 (.pyc と __pycache__ を内容 hash から外す) と、test が確かめる意図は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "root/marketplace-and-version-lock-r15",
+      "summary": "2026-10-11〜12 の回。.claude-plugin/marketplace.json の 8 plugin と marketplaces/local の marketplace.json の 12 plugin の版を、build-plugin-release.py の出力に合わせた。config-version-lock.json の skill-intake を 0.1.20 → 0.1.22 にした。",
+      "spec_impact": false,
+      "spec_impact_reason": "版の派生面を正本 (各 plugin.json) に追従させただけで、仕様・設計の決定は変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "ci/goal-seek-lint-baseline",
+      "summary": "governance-check.yml に、lint-goal-seek を全 plugin に --baseline scripts/goal-seek-lint-baseline.json で回す step を足した。Makefile に goal-seek-baseline ターゲットを足して lint の依存に入れた。台帳 scripts/goal-seek-lint-baseline.json は既存の負債 (SKILL.md 45本・140組) を固定する ratchet で、新しい負債が増えると落ちる。",
+      "spec_impact": true,
+      "spec_impact_reason": "CI のゲートを1つ足した。harness-creator の run-build-skill の文書 (lint-goal-seek の --baseline と BASELINE_RULES) と plugin-dev-planner の harness-creator-spec-reflection.md の D5 行に反映した。負債の返済は Beads (下書き 07) に回す",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "gitignore/claude-state-and-rubric-drafts",
+      "summary": ".gitignore に .claude/state/ と rubric の自動ドラフト (proposals/*-rubric-update.md) を足し、追跡していた自動ドラフト1件 (.claude/state/harness-creator/proposals/2026-08-12-rubric-update.md) と、run-skill-rubric-governance/proposals/ の自動ドラフト24件を追跡から外した。",
+      "spec_impact": true,
+      "spec_impact_reason": "自動ドラフトの書き先を plugin の外 ($CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/) に移した。harness-creator の plugin-composition.yaml の outputs (rubric-update-proposals) と run-skill-rubric-governance の SKILL.md に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "references/governance-params-grace-period",
+      "summary": "references/governance-params.json.example と skill-governance-config の写しで、grace_period から読まれない min_releases を外し、min_days を 30 → 14 にした。self_approval の条件を would_flip == 0 (diff-rubric-impact.py --logs eval-log) にした。",
+      "spec_impact": true,
+      "spec_impact_reason": "rubric の猶予と自己承認の規則を実装に合わせた。27章 (grace_period: {min_days: 14}・diff-rubric-impact 0.5.1) に反映した。27章は P1 のため PROP-2026-10-12-PR85-RELEASE で独立承認を通した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "installers/docs-current-layout",
+      "summary": "installers/bootstrap/MANUAL.md の旧 creator-kit/ の path を今の置き場に直し、「28章 §22」を「22章 No-deps 原則」に直した。--regenerate-cmd を省くと差分が常に 0 になると注記した。installers/harness-creator-kit/CONVENTIONS.md の script 名の動詞を 8 種から 13 種にした。",
+      "spec_impact": false,
+      "spec_impact_reason": "手順書を今の配置と命名規則 (06章・28章の動詞13種) に合わせただけ。規則の正本は06章と28章で、そちらは別の entry で扱う",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "scripts/build-plugin-release-r15",
+      "summary": "build-plugin-release.py: 版が空や文字列でないときは exit 2 で止め、何も書かない。CHANGELOG.md と自動生成の提案を fingerprint から外した。版を上げるときに CHANGELOG の節と完全解剖の版を書き直す。test 14件。",
+      "spec_impact": false,
+      "spec_impact_reason": "release の道具の入力検査と派生面の同期を直した。fingerprint の対象から CHANGELOG を外したことは script の docstring と test に書いた。仕様・設計の文書の変更は要らない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "scripts/build-artifact-delivery-fence",
+      "summary": "build-artifact-delivery.py: 節の境界を、code fence の外の '## ' 見出しだけで決める。drift の理由すべてに作り直しの案内を付けた。test 5件。",
+      "spec_impact": false,
+      "spec_impact_reason": "見出しの取り違えという不具合の修正で、配信の契約は変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "scripts/lint-script-naming-verbs",
+      "summary": "lint-script-naming.py: 動詞 sync・install・record・manage・migrate を足して13種にした。§4.3 の恒久例外を一時例外と分けた。参照が0件の登録を stale として exit 1 にする。削除済みの3 plugin の登録を外した。--help は exit 0。test 21件。",
+      "spec_impact": true,
+      "spec_impact_reason": "script の命名規則 (動詞の集合) を広げた。06章 (第8〜10条と違反検出の表) と28章 §4.1 に反映した。06章と28章は P1 のため PROP-2026-10-12-SCRIPT-VERBS を利用者が承認した (独立レビューの approve は根拠)。33章への反映は cooldown のあと (Beads 下書き 22)",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "scripts/lint-vendored-ssot-symlink",
+      "summary": "lint-vendored-ssot.py: 経路上の symlink と、link 先の消えた symlink を回帰として扱う。run-skill-feedback の3ファイルを byte 一致の対象に足した。検査先が dir でも落ちない。argparse を入れた。test 8件。lint-prompt-contract-drift.py 0.1.1 (re.split の maxsplit をキーワード引数に)。feedback_contract_ssot.py と harness-creator の写しに __pycache__ を除く理由のコメントを足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "lint の検出漏れと Python の非推奨の書き方の修正で、SSOT の規則そのものは変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "tests/root-r15",
+      "summary": "repo 直下の tests: 既存20ファイルに test を足した (notifier_check 30・lint_script_naming 21・aggregate_evals 16・lint_goal_seek 15・build_plugin_release 14 ほか)。改名と引数の変更に追従した (external_mutation_guard・external_intelligence_hook・x_longpost の contract_parity・skill_intake_notion_contract)。新規: test_plugins__version_surface_parity.py (4)、diff_rubric_impact (31)、hook_notify_skill_end (13)、lint_rubric_violation (4)、validate_frontmatter_fail_closed (14)。",
+      "spec_impact": false,
+      "spec_impact_reason": "回帰の test を足しただけ",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "harness-creator/rubric-1.6.0-hk001",
+      "summary": "skill-design rubric 1.5.0 → 1.6.0。L0 の HK-001 (hook の event の語彙) に PostToolUseFailure を足した。L2 の pin と hash を合わせ、ref-skill-design-rubric の文書も追従した。",
+      "spec_impact": true,
+      "spec_impact_reason": "canonical rubric の変更。PROP-2026-10-11-HK001 (緩和の minor・would_flip 0・猶予 0日) を利用者が承認し (独立レビューの approve は根拠)、.claude/changelog/governance-log.jsonl と run-skill-rubric-governance/log/governance-log.jsonl の両方に記録した。24章の rubric の版を 1.6.0 にした",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "harness-creator/rubric-governance-direction",
+      "summary": "run-skill-rubric-governance: 提案に向きを持たせた (add は厳格化、remove は緩和、modify は change.direction)。厳格化は常に major。would_flip 0 の緩和の minor は猶予 0日にできる。score ログは --logs eval-log で読む。diff-rubric-impact 0.5.1・lint-rubric-violation 0.2.0・aggregate-evals 0.2.1。",
+      "spec_impact": true,
+      "spec_impact_reason": "rubric 変更の bump と猶予の決め方を実装に合わせて明文化した。27章 (§6・§8.1 と素案と proposal.json の対応) に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "harness-creator/lint-goal-seek-ratchet",
+      "summary": "run-build-skill/scripts/lint-goal-seek.py: 配線の warning を ratchet にした。--baseline と BASELINE_RULES 6種を足した。fixtures/ は走査しない。test 15件。",
+      "spec_impact": true,
+      "spec_impact_reason": "lint の判定の仕方を変えた。run-build-skill の文書 (Step 12.6 と 12.7、--no-goal-seek) に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "harness-creator/skill-update-notifier",
+      "summary": "run-skill-update-notifier: status を6値にした。notifier-check.py の snapshot の key と重複抑止を直した。hook-notify-skill-end.py は systemMessage の JSON を出す。文書も合わせた。test 30+13件。",
+      "spec_impact": false,
+      "spec_impact_reason": "notifier の不具合の修正と、それに合わせた skill の文書の更新。設計書の変更は要らない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "harness-creator/scripts-and-references-r15",
+      "summary": "manage-build-lease.py (owner-token の lock は TTL 超過だけで回収)、sync-native-surfaces.py (object でない report は exit 3)、render-findings-score.py (壊れた rubric は exit 2)、lint-skill-runtime-profiles.py (FORK_TOOLS_BASELINE を両方向の ratchet に)、install-local-plugins.py の contexts、provider のキーワード引数。references: lint-matrix.json に owner_plugin と script_path、pipeline-boundary-contract.md と capability-build-runtime-contract.md を実装に合わせ、ref-cross-platform-runtime に python_cmd の雛形、wrap-git-commit-safe の resource-map.yaml を第13条の形に (YAML として読めることも確かめた)。run-build-skill の文書 (kindHook に SessionStart、feedback-loop-deployment.md)。",
+      "spec_impact": true,
+      "spec_impact_reason": "plugin の中の正本の references を実装に合わせた。repo の設計書側は28章 (SessionStart の hook の経路・# contexts:) と22章 (python_cmd) に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "ubm-goal-setting/script-renames",
+      "summary": "ubm-goal-setting 0.7.0 → 0.8.1。新設 script 4本を動詞規則に合わせて改名した (evaluate-design-rubric → validate-design-rubric、publish-staged-files → guard-staged-publication、record-knowledge-usage → build-knowledge-usage-log、search-knowledge → extract-knowledge-matches)。guard-staged-publication は置き換え先の permission を保ち、extract-knowledge-matches は読めない JSON のエラーにファイル名を出す。SKILL.md・composition・package-contract・tests・coverage の記録を追従した。",
+      "spec_impact": true,
+      "spec_impact_reason": "script の公開名が変わった。plugin-composition.yaml と package-contract.json と各 SKILL.md に反映し、skill-governance-adapters の external-mutation guard の照合も新しい名前にした (0.1.14)",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "ubm-goal-setting/validate-knowledge-entry-source",
+      "summary": "run-ubm-knowledge-sync に validate-knowledge-entry-source.py を足した。source.type が knowledge/schema.json の enum に入るかを格納の確定のときに検査し、外れたら router・sync-log・registry を書かずに止める。test 15件。",
+      "spec_impact": true,
+      "spec_impact_reason": "格納の前のゲートが1つ増えた。run-ubm-knowledge-sync の SKILL.md の手順と references (source.type の enum) に反映した。registry.json の source_type の食い違いは Beads (下書き 17)",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "ubm-goal-setting/agents-and-skill-md-r15",
+      "summary": "agents 5つ (knowledge-extractor の mode の優先と重複、info-collector の1年層の到達点、knowledge-relation-extractor と phase3-coordinator の Context Boundary と Handoff)。6つの SKILL.md の allowed-tools を Bash(python3 *) にし、UBM_VAULT_ROOT の確認を python3 で行う。validate-goal-output 0.3.3。output-formats.md・validation-gates.md・workflow-manifest。references 10本と resource-map 3本 (run-ubm-knowledge-sync の resource-map.yaml は YAML として読めることを確かめた)。",
+      "spec_impact": false,
+      "spec_impact_reason": "agent と skill の手順の明確化と、出力形式の検査の不具合の修正。目標設定の仕様 (出力の形) は output-formats.md で正本を直した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "skill-intake/python3-launch-and-r1",
+      "summary": "skill-intake 0.1.20 → 0.1.22。5つの SKILL.md の allowed-tools を Bash(python3 *) にし、script を python3 \"${PLUGIN_ROOT:-…}/…\" で起動する形にそろえた。run-intake-revise の Notion PATCH を receipt flow の execute に渡す。run-intake-visualize に render_to_image.py の引数と例。run-skill-intake の退避を os.replace に。",
+      "spec_impact": false,
+      "spec_impact_reason": "起動の形と外部変更の経路を既存の規則 (22章・external-mutation receipt flow) に合わせただけ",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "system-spec-harness/apply-spec-transition-0.2.1",
+      "summary": "system-spec-harness 0.1.20 → 0.1.21。apply-spec-transition.py 0.2.1: confirm を含む apply・chunk は --required-info が無いと exit 2。state・turns の形を遷移の前に確かめる。出力先の親 dir を作る。test 10件。SKILL.md 3本と prompts 9本の allowed-tools と python3 化。run-system-spec-elicit の Purpose & Output Contract の節と spec-state-contract.md。",
+      "spec_impact": true,
+      "spec_impact_reason": "遷移の入力の必須条件が厳しくなった。spec-state-contract.md (plugin の中の正本) に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "system-dev-planner/agents-findings-schema",
+      "summary": "system-dev-planner 0.1.15 → 0.1.16。agents 3つに Context Boundary と Handoff。evaluator の findings の形を plan-findings.schema.json (severity・bucket・observation・evidence) に合わせた (以前は promote が schema violation で止まっていた)。evaluator は1回の起動で評価を終え、周回は呼び出し側 (max_loops=5)。R4-evaluate.md と schema の TODO(human) を「未決」の記録に置き換えた。",
+      "spec_impact": true,
+      "spec_impact_reason": "evaluator の出力の契約を schema に一致させた。plan-findings.schema.json と R4-evaluate.md (plugin の中の正本) に反映した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "skill-governance/lint-automation-adapters-r15",
+      "summary": "lint 0.1.19: lint-plugin-composition.py は読めない入力を violation (exit 1) にし、走らなかった検査の数を出す。validate-frontmatter.py は list の値で落ちずに型の指摘にし、余分な引数は exit 2。automation 0.1.16: rollback-to-stable.py 0.4.3 (同じ版を含む小見出しで節を閉じない)、SKILL.md に既定で書き込む entrypoint 4本。adapters 0.1.14: external-mutation guard の照合を guard-staged-publication.py に。migration・secrets 0.1.15 と config 0.1.15 は SKILL.md の allowed-tools と example だけ。",
+      "spec_impact": false,
+      "spec_impact_reason": "lint と道具の fail-closed 化と、改名への追従。governance の規則は変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "plugin-dev-planner/migrate-plan-layout",
+      "summary": "plugin-dev-planner 0.1.23。migrate-plan-layout.py: 壊れた台帳・同じ cycle_id・名前の衝突などを動かす前に確かめ、動かした後の失敗は元に戻す。finish/ を指す dir は exit 2。contexts を [A, E]。test 13件。harness-creator-spec-reflection.md の D5 行を lint-goal-seek の重大度に合わせた。upstream-pins.json の sha256 2件を取り直した。",
+      "spec_impact": false,
+      "spec_impact_reason": "移行の道具の安全性の修正と、上流の文書の pin の追従",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "dev-graph/register-package-and-acceptance-tests",
+      "summary": "dev-graph 0.1.19。register-package.py: 1つの feature に既存の task があれば拒む。receipt の作成と復元がどちらも失敗したら RollbackIncompleteError。test 3件。受入条件を script の実起動で確かめる test_acceptance_gaps_a1.py (12) と a2 (8)。",
+      "spec_impact": false,
+      "spec_impact_reason": "package の登録の重複を拒む不具合の修正と、受入条件の test の追加。graph の schema と skill の契約は変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "dev-graph/acceptance-gaps-scripts-r15",
+      "summary": "受入条件の独立レビューで、手順だけで約束していた5件を、決定論的に動く script で保証する形にした。init: 新しい validate-harness-link.py を手順0として、どの write よりも前に走らせる（link の切断・loop・不一致を検出し、修復の選択肢を返す。write は0件）。requirements: 新しい validate-readiness-binding.py が、3つの gate（validate-system-plan の validated_digest、C02 の source_digest と readiness view、C11 を通した graph の readiness digest）が同じ digest を指すかを照合する。新しい guard-requirements-handoff.py は、参照の closure に ready でない node が1件でもあれば handoff を0件にし、closure 全件の missing_sections と remediation owner を返す。R3 は exit 0 のときだけ handoff する。status: 新しい extract-graph-status.py の rows だけを R3-status が使う（read-only）。sync: diff-github-issues.py が、削除は tombstone の計画（package member なら conflict）、一時的な失敗は retry、権限エラーや repository の解決の失敗は investigate に分け、削除と扱わない。sync の SKILL.md に engine（周回を誰が駆動するか）と fork（どこで実行するか）が別の軸であることと、必須の verifier（dev-graph-sync-conflict-verifier）の行を足した。test は test_acceptance_gaps_a1.py・a2.py の新しい件で、どれも修正前の版で落ちることを確かめた（a1・a2 で 26 passed）。content-review の取り直しの指摘（medium 2件・low 4件）も直した。requirements: guard-requirements-handoff.py の report に、binding と同じ計算の graph.digest・graph_revision・digest_match を入れ、--expect-graph-digest が一致しなければ exit 2（snapshot_mismatch）で handoff を0件にする。2つの script の間で graph が変わったときに、guard の見た closure と記録する digest がずれるのを閉じた。guard が使う register-package.py（中身は変えていない）を requirements の script_refs に足し、behavior closure に入れた。init: validate-harness-link.py の rerun と hook の fallback の argv に --config を入れた。直す前は、既定でない config で修復しても、rerun が既定の config の別の link を見て偽の pass を返していた。4つの skill の本文の冒頭に禁則の文を置いた（PD-002。sync は Purpose の節を Runtime root contract の前へ移した。external-mutation-guard の marker block は変えていない）。status の R3-status.md と sync の R4-tombstone.md の本文を今の手順に合わせた。requirements の argument-hint に --system-planner-root を足した。test は a1・a2 で 28 passed（新しい test は直す前の版で落ちる）。2回目の取り直しの low も直した。init の手順0（validate-harness-link.py）と hook の fallback の起動行に、手順1-3と同じ [--config] を足した（既定でない config で、preflight だけが別の link を検査するのを防ぐ）。requirements の手順4と R3-handoff に、report の無い exit 2（usage・C24・IO の例外）も handoff 0件で止めると書き、手順2の起動行に [--system-planner-root] を足した。",
+      "spec_impact": true,
+      "spec_impact_reason": "4つの skill（init・requirements・status・sync）の手順と保証の仕方が変わった。正本は各 SKILL.md と responsibility の prompt（init: R1-elicit・R5-hooks、requirements: R2b-readiness・R3-handoff、status: R2-plan・R3-status、sync: R2-plan・R4-tombstone・R6-confirm）で、同じ branch で直した。init OUT3 の条件の文（正本は plugin-plans/dev-graph/component-inventory.json#C01 で、frontmatter と完全一致を test が検査する）は、plugin-plans/ が書き込みのガードの下にあるため変えていない。plugin-dev-planner の正規の更新の流れで直す（Beads 下書き 19）。content-review と live-trial は、直した後の sha で取り直した",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "guide-doc-generator/verify-handout-a11y-print",
+      "summary": "guide-doc-generator 0.1.25。verify-handout-a11y-print.py 0.1.1: PRINT-02 を識別子の境界で照合し、PRINT-03 のマーカーをカタログから引く。test 10件。",
+      "spec_impact": false,
+      "spec_impact_reason": "検査の誤検出の修正",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "plugins/version-only-r15",
+      "summary": "版の追従だけ: extract-system-blueprint 0.2.16、x-longpost-creator 1.3.6、prompt-creator 2.1.12 (run-prompt-create の workflow-manifest で lint の段の fatal_exit_codes を [1, 2])。artifact-delivery.json の runner_sha256 の取り直しだけ: contract-generator・slide-report-generator・spec-drift-guardian・system-briefing-book・skill-governance-hooks (全体で22件)。",
+      "spec_impact": false,
+      "spec_impact_reason": "派生の hash と版の追従だけ",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "doc/design-docs-r15",
+      "summary": "doc/ の14ファイル。22章 (Windows で Python が無いときはユーザーに尋ねる経路、PowerShell の経路は計画、Output contract を python_cmd に)。06章 (第8〜10条と違反検出の表を lint の実物に)。27章 (grace_period を {min_days: 14}、diff-rubric-impact 0.5.1)。28章 (SessionStart の hook の経路と # contexts:)。24章 (rubric 1.6.0)。11・13・14・19・23・25・31章と README (旧 creator-kit/ の path と存在しない .ps1)。完全解剖 (1.4.47、Step 0〜12.8)。",
+      "spec_impact": true,
+      "spec_impact_reason": "この repo の設計の正本は doc/ と各 plugin の references で、system-spec/・specs/・architecture/ は存在しない (canonical_spec_locations_probe)。06・27・28章は P1 のため利用者の承認を通した (PROP-2026-10-12-SCRIPT-VERBS と PR85-RELEASE。独立レビューの approve は根拠)",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "eval-log/coverage-rereview-r15",
+      "summary": "coverage の verdict を独立評価者が取り直した: agents 8・docs 10・scripts 29・skills 2 の49件。差分の verdict はすべて PASS。改名4件は ubm の script の改名に追従し、新規1件は validate-knowledge-entry-source.py の分。集計 harness-coverage.json の axes_met を 8 → 9、llm-coverage.json の checklist_items を 10 → 12。",
+      "spec_impact": false,
+      "spec_impact_reason": "独立評価者と正規のツールが出力する記録だけで、floor・閾値・判定の規則は変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "eval-log/content-review-rereview-r15",
+      "summary": "content-review の verdict (rubric と elegance の組) を独立評価者が取り直した: 24 skill × 2 = 48件 (harness-creator 3・skill-governance 5・skill-intake 5・system-dev-planner 2・system-spec-harness 3・ubm-goal-setting 6)。",
+      "spec_impact": false,
+      "spec_impact_reason": "SKILL.md の sha が変わった skill の記録を取り直しただけ",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "governance/p1-human-approval",
+      "summary": "P1_structural の承認者を、policy (governance-policy.json の workflow: proposal_required + human_approval + cooldown_3d、approver: solo_operator) に合わせた。2026-10-12 に利用者が AskUserQuestion で、HK001 (rubric 1.6.0)・SCRIPT-VERBS (06章・28章)・PR85-RELEASE (再審査が通れば) を承認し、commit d7c14bb1 の PROP-2026-10-10-UBM-JA-RELEASE で独立レビューだけが承認していた2件 (33章・run-ubm-knowledge-sync の rubric.json) を追認した。governance-log の entry は approver を solo_operator (利用者) とし、独立レビューは independent_review (根拠) に分けた。各 proposal の entry は1行だけ。commit 済みの d7c14bb1 の行は書き換えず、追認の行 (PROP-2026-10-12-UBM-JA-RELEASE-RATIFY) を足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "33章の手続き (P1 は人の承認) を守るための記録の追加で、規則そのものは変えていない",
+      "commit": "5ae35116"
+    },
+    {
+      "id": "plugins/*/plugin.json#pr85-release-bump-12",
+      "summary": "PR85-RELEASE の再審査で、12 plugin が利用者の環境に同じ版で中身の違うまま入っていると指摘された。利用者の判断（12件の版を上げる）で patch を上げた：extract-system-blueprint 0.2.17、harness-creator 1.4.48、prompt-creator 2.1.13、skill-governance-adapters 0.1.15、skill-governance-lint 0.1.20、skill-governance-migration 0.1.16、skill-governance-secrets 0.1.16、skill-intake 0.1.23、system-dev-planner 0.1.17、system-spec-harness 0.1.22、ubm-goal-setting 0.8.2、x-longpost-creator 1.3.7。.claude-plugin と .codex-plugin の plugin.json、plugin-composition.yaml の version、CHANGELOG、marketplace の2ファイル、config-version-lock.json を合わせた。",
+      "spec_impact": false,
+      "spec_impact_reason": "「版が中身を一意に表す」という repo の規則に合わせただけで、どの plugin の振る舞いも変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "marketplaces/local/plugin-fingerprints.json#r16",
+      "summary": "台帳を main の版から取り直し、build-plugin-release.py で記録し直した（記録だけ）。--check が通ることを確かめた。dev-graph は main の 0.1.17 に対して branch の 0.1.19 で記録した。dev-graph の plugin.json は live trial の behavior closure に入るので、この回は版を動かしていない。",
+      "spec_impact": false,
+      "spec_impact_reason": "台帳の派生値の記録で、手で書き換えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/bd-bridge.py#promotion-gate",
+      "summary": "decompose OUT1 の受入条件の FAIL（Beads への投影の経路に昇格の gate が無い）を直した。bd-bridge.py に判定の本体（promotion_state・is_promoted、昇格とみなす状態は confirmed・pass・complete）を置き、build-github-projection.py はそれを module として読み込む。node の状態は graph.json から読み、gate は bd の preflight より前に通す。止まるときは bd を1回も呼ばず、{status: blocked, reason: promotion_gate, blocked: [...], write_count: 0} を返して exit 1。manifest では feature と子 task 13件の全件を先に検査する。dry-run にも掛け、単発の dry-run では --graph-node-id を必須にした。test は test_bd_bridge_promotion_gate.py（新規）、test_projection_readiness_gate.py（9件）、test_c27_c28_projection_contract.py と test_runtime_coverage.py の追従。わざと壊した写し5通りで test が落ちることを確かめた。",
+      "spec_impact": true,
+      "spec_impact_reason": "C27/C28 の契約（確定していない node を外部 tracker に投影しない）を、文書だけでなく script で強制するようにした。正本の SKILL.md の文は変えておらず、実装を契約に合わせた",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/build-init-scaffold.py#preflight-and-routing-policy",
+      "summary": "init の受入条件 OUT1（routing policy の置き場所が無い）と OUT3（harness link の検査がどの write よりも前に走ることを保証していない）を直した。scaffold() の最初に validate-harness-link.py の preflight を自分で回し、失敗なら exit 1・write 0 で code・findings・remediation を返す。飛ばす option は無い。repo-config.schema.json と templates/repo-config.example.json に routing_policy（placement=artifact_kind、layout=hybrid、leaf_threshold=200、partition_order=[domain, project_id, YYYY/MM]。どれも const、schema では任意）を足した。前からある config には書き足さず、migration_preview で知らせる。test は test_init_preflight_gate.py（新規3件）、test_build_init_scaffold.py（2件追加）、test_shared_writer_sync_regressions.py（setUp で _preflight を mock）。",
+      "spec_impact": true,
+      "spec_impact_reason": "init の出力の契約（routing policy を持つ config、preflight の順序）を実装に入れた",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugin-plans/dev-graph#C01-update-flow",
+      "summary": "init の OUT3 の文の正本（component-inventory.json#C01）を、plugin-dev-planner の正規の update の流れで直した。improvement-handoff-pr85-init.json を作り、intake-consumption と provenance-chain の gate を通し、改善レビューは PASS。新しい文は「harness link 切断は build-init-scaffold.py がどの write よりも前に自ら実行する validate-harness-link.py の検査が検出して書込み0件で止まり修復の選択肢を返す」。SKILL.md の frontmatter と R1〜R3 の prompt を同時に直した。goal-spec.json と plan-findings.json も更新された。plan の evaluator は FAIL だが、原因は前からある check-spec-gates の exit 1（index.md の plugin_meta.install）で、この変更によるものではない。",
+      "spec_impact": true,
+      "spec_impact_reason": "仕様（受入条件の文）を、正規の流れで実装に合わせて改めた",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#spec-dir-and-full-read",
+      "summary": "system-spec の live trial の5回目（20261012T1646-pr85、DEGRADED）の評価者が挙げた skill の穴2つを、本文と R2・R3 の prompt で直した。(1) evaluator の report の spec_dir に --spec-dir に渡したパスそのものを書かせる（ラベルだと C02 が invalid_confirmation_evidence で拒む）。C02 の dry-run にも confirmation_evidence を含む同じ payload を渡す（外すと evidence の照合が飛ぶ）。(2) 委譲先の SKILL.md と責務 prompt は、出力を作る前に全文を読む（gate だけの呼出しは除く）。frontmatter は inventory と完全一致の契約なので変えていない。",
+      "spec_impact": false,
+      "spec_impact_reason": "手順の書き方を、C02 の既存の照合と system-spec-harness の既存の契約に合わせただけで、契約そのものは変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator#spec-dir-contract",
+      "summary": "system-spec の content-review の取り直しが、medium を2件挙げた。(A) report を書く evaluator（context: fork）の側に spec_dir の契約が無く、C19 の Gotcha と R2 が届かない。5回目の trial では、evaluator が guard に止められた後、spec_dir をラベルに変えていた。(B) C19 の R2 が spec_dir を C24 の絶対の root にするとし、同じ R2 の Layer 3（絶対 path を成果物に残さない）と矛盾する。両側を直した。evaluator の側：aggregate-completeness.py の --report に任意の --spec-dir を足し、report の spec_dir が無いか、同じ dir に解決しないときは spec_dir_mismatch で exit 1 にした（--spec-dir を付けないときの出力は前と同じ）。SKILL.md の report の例・Step 4・Gotcha 6、R1-score、schema の description に、「spec_dir は引数の値そのまま、注記を混ぜない、output は system-spec/ の外のリテラルのパス、guard に止められても値を変えて回避しない」を書いた。test を4件足し、わざと壊した写し4通りで落ちることを確かめた。C19 の側：R2 の spec_dir を repo 相対にし、evaluator を起動する引数（--spec-dir と、repo の中の --output）を明記した。照合を「同じ dir に解決する」にそろえた。R3 と Gotcha に、C02 に拒まれたら1回だけ回し直し、それでも違えば FAIL で止めることを書いた。frontmatter は両方とも変えていない。",
+      "spec_impact": true,
+      "spec_impact_reason": "system-spec-harness の evaluator と dev-graph の C02 の間の契約（report の spec_dir が取込元の dir を指す）を、出力を作る側の手順と決定論の照合に入れた。schema の型は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#cwd-before-evaluator",
+      "summary": "content-review の取り直しの2回目が、新しい medium を挙げた。相対の spec_dir を、evaluator は cwd から、C02（build-graph-node.py）は --repo-root から解決する。C19 には evaluator の cwd を DEV_GRAPH_ROOT にそろえる記述が無く、cwd が repo の外にあってそこにも system-spec/ があると、別の dir を評価した report を C02 が受け入れうる。C19 の側：evaluator を起こす前に `[ -n \"$DEV_GRAPH_ROOT\" ] && [ \"$(pwd -P)\" = \"$(cd \"$DEV_GRAPH_ROOT\" && pwd -P)\" ]` で確かめ、違えば起動せずに cwd_not_repo_root の FAIL で止める（cd で回避しない。回し直しの対象にしない）。-n を先に置くのは、DEV_GRAPH_ROOT が空のときに cd \"\" がその場に留まって確認が素通りするため（bash・zsh・sh で確かめた）。evaluator の側：Step 4 と R1 の 2.3 に「相対の spec_dir と output は cwd から解決する」を書き、完了条件に aggregate --report --spec-dir の exit 0 を足した。dev-graph の plugin-composition の external_dependencies で、system-spec-harness の下限を >=0.1.22 にした。script と frontmatter は変えていない。",
+      "spec_impact": true,
+      "spec_impact_reason": "evaluator と C02 の間の契約に、相対パスを解決する基準（cwd が repo root と同じこと）を足した",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#evaluator-launch-order",
+      "summary": "system-spec の live trial の6回目（20261013T0027-pr85、DEGRADED）の評価者が、C19 の穴を1つと、被験の経路の逸脱を挙げた。FAIL の直接の原因は fixture（追加した qa-037・qa-038 の basis が agent-inference の既定値だった）で、被験が FAIL で止まって取込に進まなかったのは正しい振る舞いだった。(1) evaluator を起動する前の cwd の確認が文だけで定められていて、被験は起動した後に確かめた。evaluator の args を、cwd の確認と同じ1つの Bash の呼出しで、確認が exit 0 のときだけ出力して作る形に直した（SKILL.md の Gotcha、R2 の出力契約と 5.3）。確認を飛ばすと args が手元に無いので、順番が逆になりにくい。(2) 被験は evaluator の PASS が出る前に、取込の入力を書き、C02 の Skill を起動した（dry-run も add も呼んでいない）。R3 の責務境界と 5.3、SKILL.md の Gotcha に「evaluator の report が PASS になるまで、取込の入力を書かず、C02 も起こさない」を足した。(3) 完了の文を、node と同じ形（全 checklist と inner criterion の IN1 が PASS のときだけ完了し、outer criterion の OUT1 は run の中では external_pending と書く）に直した。fixture は、qa-037・qa-038 をシナリオの利用者の turns（代替案を示して選ぶ形、basis は user-decision）に直した。frontmatter と script は変えていない。根本の策（evaluator が評価した dir の中身の digest を report に書き、C02 が照合する）と、評価者が挙げた system-spec-harness の evaluator の穴（validate-prompt.py の場所を手順が示さない）は、Beads に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "起動と取込の順番を、手順の書き方で固めただけで、C02 と evaluator の契約は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#root-and-version-source",
+      "summary": "C19 の content-review の新しいループの1回目（PASS、rubric 84）が low を9件挙げた。PR #85 の変更から出た6件を直し、同じループの2回目で判定を取る。(1) 後の Bash の呼出しでは、DEV_GRAPH_ROOT に開始時の C24 receipt の repo_root の値をそのまま代入する（shell 変数は呼出しをまたいで残らない。pwd や C24 の再実行から作らない）。(2) 最初の委譲（elicit）の前に、cwd が DEV_GRAPH_ROOT と同じ dir か、CLAUDE_PROJECT_DIR が空でなければそれも同じ dir かを1つの Bash の呼出しで確かめ、違えば cwd_not_repo_root で止める。elicit は CLAUDE_PROJECT_DIR があればその下に、未設定か空なら cwd の下に state を書くので、違うと caller repo の外に書く。同じループの2回目の判定が high を挙げた：最初の形は CLAUDE_PROJECT_DIR の未設定を不一致と同じに扱い、Claude Code は Bash の呼出しにこの変数を渡さないので、毎回 elicit の前で止まった。未設定か空なら cwd の確認だけで足りる形に直し（C24 も未設定を一致と扱う）、R2 の例を文のまま zsh・bash・sh で8通り回して確かめた。(3) 完了の文に、progress.json の checklist の status（achieved・not_achieved）と、OUT1 を external_pending と書く場所（feedback_criteria）を足した。(4) 版の範囲の正本を plugin-composition.yaml の external_dependencies にした（手順2・checklist・R1 の入力契約と受入条件と 5.3・README）。inventory と完全一致の frontmatter の summary と R1 の不変目的の `>=0.1.0` は変えず、本文に計画時の値と書いた。(5) Gotcha と R3 から、C02 の内部の分岐の説明を外した。残りの3件（起動の順番が LLM 頼み、allowed-tools に Write が無い、全文を読むのは自己申告）と、snippet が progress.json を見ない件、inventory の版の値は Beads に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "C19 の版の範囲の正本を composition にし、委譲の前の cwd と CLAUDE_PROJECT_DIR の確認と、progress.json の書き先を契約に足した。inventory・C02・system-spec-harness の契約は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#delegate-project-dir-binding",
+      "summary": "C19 の content-review の同じループの2回目の残りの確認が、medium を1件と low を2件挙げた（3件とも今回の変更から出たもの）。3回目の前に直した。(M1) 「elicit は CLAUDE_PROJECT_DIR が未設定なら cwd の下に書く」は委譲先の契約と合わない。cwd に倒すのは slash command だけで、elicit の SKILL.md は state の正本を $CLAUDE_PROJECT_DIR/system-spec/spec-state.json に置くので、Bash の呼出しでは --out が /system-spec/spec-state.json になって止まる。委譲先の手順の Bash の呼出しでは、毎回その呼出しの先頭で CLAUDE_PROJECT_DIR に開始時の receipt の repo_root を export する、と SKILL.md と R2 に書いた（R2 の 5.3 にも足した）。(L-b) cwd の確認を、最初の委譲の前だけから、elicit・doc-fetch・compile の各委譲の前に広げた（doc-fetch と compile は相対の書き先を cwd から解決する）。(L-a) 検証の snippet の先頭で DEV_GRAPH_ROOT を代入した。確認の式は変えていない。例は文のまま取り出して3つの shell で回し、export を外した形は rc 1 で止まることも確かめた。R1 の冒頭・不変目的・目的の行に残る >=0.1.0（L-c）は、inventory と完全一致の契約なので Beads に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "委譲先の手順の Bash の呼出しで CLAUDE_PROJECT_DIR を repo root に束ねることと、各委譲の前の cwd の確認を、C19 の契約に足した。system-spec-harness と C24 と C02 の契約は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-system-spec#export-scope-wording",
+      "summary": "C19 の content-review の3回目（PASS、rubric 84、ループの上限）が、前の直しの文から出た low を挙げた。CLAUDE_PROJECT_DIR を export する範囲を、SKILL.md と R2 の 5.3 は「委譲先の手順」と書き、context: fork で動く evaluator も含むように読めた。R2 の項目と同じ「elicit・doc-fetch・compile の手順」にそろえた。新しいループの1回目（SKILL.md 4d2b72af）は rubric PASS 84・elegance PASS で、新しい指摘は無かった（low と PD-002 は前のループから残るもので、Beads に回した）。content_roots の root が system-spec でない repo の扱い（前からある）と、snippet が progress.json を見ない件などは Beads に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "前の直しで足した規則の範囲の書き方をそろえただけで、規則・確認の式・委譲先の契約は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/plugin-composition.yaml#decompose-script-calls",
+      "summary": "decompose の frontmatter の script_refs に、PR #85 で build-graph-node.py と register-package.py を足したが、composition に calls の辺が無く、lint-plugin-composition が違反にした。2つの辺を足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "構成の辺を、すでにある script_refs に合わせただけで、契約は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#independent-verifier",
+      "summary": "node の live trial の取り直し（20261012T2316-pr85）が DEGRADED（goal_fit FAIL）だった。被験は Agent を一度も起こさず、goal-spec に semantic_evaluator_started を事後に書き、progress.json の OUT1（verify_by は live-trial）を自分で PASS と書いた。SKILL.md が必須の verifier を名指しせず、外ループの自己採点も止めていなかったことが原因。「ゴールシーク実行」の節を直した：(1) 必須の独立 verifier を dev-graph-integrity-auditor（owner_skill は run-dev-graph-node）と名指しし、渡すもの（writer receipt・commit 後の graph snapshot・validate-graph-schema の report）と渡さないもの（writer の推論・期待 verdict）、verdict を写す場所（progress.json の independent_verifier）を決めた。(2) outer criterion は skill の外（live trial・受入テスト・content review）が評価し、run の中では external_pending と書く。feedback_criteria には frontmatter の4つを1回ずつ書く。完了の条件を「全 checklist・inner criterion・独立 verifier の verdict が PASS」に直した。(3) ゴールシーク検証の snippet に progress.json を足し、verifier の記録が無いことと outer criterion の自己採点を拒否する（node3 の実物は rc=1）。最初の版は値がちょうど 'PASS' のものだけを拒んでいて、node の content-review の取り直しが「注記つきの 'PASS (…)' や小文字の pass が通る」と medium で指摘した（node3 の OUT2 の実際の形）。許す値の一覧に変え、feedback_criteria の id がちょうど IN1・OUT1-OUT3 で重複が無く、OUT1-OUT3 がすべて external_pending であることを求めるようにした（16例で確かめた）。(4) 取り直しの2回目は PASS（rubric 94）で、今回の変更から出た low を2件、前からある low を1件挙げた。3件ともこの PR で直した。graph_digest を「verifier に渡した graph の canonical digest（writer receipt の graph_digest_after と同じ計算）」と定めた。snippet は、今の graph（C24 receipt の local_state_paths.graph）から計算した値と、同じ revision の receipt の graph_digest_after の両方に照合する。偽の値、古い digest、receipt の後の手での書き換えを止める。progress.json の overall を in_progress・blocked・PASS のどれかに決め、PASS のときだけ verifier の verdict=PASS、IN1=PASS、checklist に not_achieved が無いことを求める。auditor の md を reference_refs に足して behavior closure に入れた（responsibility_refs は、test が prompts だけに固定している）。checklist の語彙（achieved・not_achieved・not_applicable）と、分類・package・receipt の項目を not_applicable にしてよい場合（verb と --dry-run）を書いた（status と decompose の書き方に合わせた）。snippet は26例と node3 の実物で確かめた。2回目の評価者が見た版では、そのうち10例が通ってしまうことも確かめた。frontmatter のうち、inventory と完全一致の契約の key は変えていない（reference_refs は inventory に無い）。sync の SKILL.md にすでにある書き方に合わせた。ほかの skill に残る同じ穴（sync の verifier の md も refs に無い）と、前から残る low の FM-005（description の最初の文の動詞語尾）・PD-001（本文が100行を超えるのに references/ が無い）は、Beads の下書き 19 に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "node の完了の条件に「独立 verifier の verdict」を足し、progress.json の形（independent_verifier の graph_digest が今の graph と receipt に一致、outer criterion は external_pending、overall と checklist の語彙）を決定論の検査で強制するようにした。verifier そのもの（C06 の agent。owner_skill は run-dev-graph-node）と goal_seek の fork: subagent は前からあり、inventory は変えていない。frontmatter は reference_refs に verifier の md を足しただけ",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/bd-bridge.py#dry-run-parity-and-planned-preview",
+      "summary": "decompose の live trial の取り直し（20261012T2336-pr85）が DEGRADED だった。原因は3つ。(1) C02（build-graph-node.py add --dry-run）の予定の node を、C28 の昇格 gate に当てる道が無かった。graph にまだ無い node は「not in graph」で止まり、予定の draft が blocked になることを preview で示せなかった。(2) bd-bridge.py の --dry-run が、本番の引数の検査と bd show の読み取りより前に preview を返していた。issue の無い dep-add や、bd が知らない blocker でも rc 0 だった。(3) SKILL.md に、dry-run と ready feature 0件のときの not_applicable の定義が無かった。直したこと：(1) build-graph-node.py の dry-run が planned_nodes（各 node を登録するときの status・confirmation_status・evaluation_status・implementation_readiness・depends_on・tracker_binding）を返す。bd-bridge.py に --planned-preview を足し、create の dry-run でだけ、その preview を graph に重ねて昇格 gate を判定する。preview の graph のパスか graph_revision_before が今の graph と違えば「planned preview is stale」で止まる。予定の node の blocker には planned: true が付く。(2) 引数の検査を _require() にまとめて parse の直後に置いた。update・close・claim・dep-add・gate-add・github-push では、dry-run も本番と同じ bd show などの読み取りを通し、違いは書き込みの1か所（write()）だけにした。dry-run はちょうど本番が書く argv を planned_bd_args として返す。create の dry-run は前と同じく、既存 issue の検索をせずに昇格 gate と preflight までを示す（下書き 19 に記録）。dep-add は本番でも depends_on の bd show を足した。(3) decompose の SKILL.md に not_applicable の定義と「dry-run の preview」の手順を書き、R6-dryrun の Layer 6 に1行足した。test は test_bd_bridge_dry_run_parity.py（新規、18件）と test_build_graph_node.py の1件。直す前の2つの script に戻した写しで、この19件がすべて落ちることを確かめた。decompose の SKILL.md のその後の直し（content-review の M1・M2）は別の項に書いた。github の preview に予定の node を出す件は、Beads の下書き 19 に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "C28 の dry-run の契約を「本番と同じ検査と読み取りを通し、書く直前で止まる」に強めた。C02 の dry-run の出力に planned_nodes を足し、C28 がそれを昇格 gate の判定に使えるようにした（create の dry-run だけ。本番の判定は graph.json だけを見る）。decompose の完了の判定に not_applicable の定義を足した",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-decompose#cross-binding-and-package-dry-run",
+      "summary": "decompose の content-review の取り直しで、評価者が medium 2件と low 6件を挙げた。verdict を書く前に直し、新しいループの1回目として判定を取り直した。(M1) beads の node が github か none の node に依存するときの規則が無かった。C28 の parity の照合（bd-bridge.py の「parity manifest dependency lacks a Beads linkage」）は、Beads に linkage の無い依存先を持つ node を conflict にして ready 推薦から外すので、投影しても使えない。そこで Macro flow に、その node は graph に登録するが Beads には投影せず、publication report に理由 cross_binding_dependency と edge の両端の id・binding を書いて人に確かめる、と書いた。依存する側が github か none の edge は local graph だけに持つ。dry-run の preview でも、依存する側の target を blocked と書く。(M2) --package の13 task は graph にまだ無いので、C28 の create --dry-run は not in graph で止まる。register-package.py は13 task すべてに active・confirmed・pass・complete を求め、後ろの3つは昇格 gate（bd-bridge.py の PROMOTED）と同じなので、--dry-run の rc 0 の receipt を判定の根拠にする。receipt の node_ids ごとに binding・operation・判定を書き、package の中の edge にも binding をまたぐ規則を当てる。(low) script_refs に build-graph-node.py と register-package.py、reference_refs に auditor の md を足した。feature の create --dry-run には --artifact-kind feature を渡す（渡さないと issue_type が task になる）。既存の edge の dep-add は idempotent を返す。新しい macro node が0件なら C02 add を呼ばず、今の graph の canonical digest を書く。dry-run では system-dev-planner を起動しない（Macro flow 4 と R2b）。完了の条件を「全 checklist が achieved か規則どおりの not_applicable で IN1 が PASS」にし、outer criterion（OUT1-OUT7）は run の中で external_pending と書く。N/A の規則で checklist の項目を語句で指す。Gotchas と R3・R6 の Layer 6 にも1行ずつ足した。frontmatter は refs を足しただけ。binding をまたぐ edge の規則を C14・C28 の契約に入れる件は、Beads の下書き 19 に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "decompose の契約に、binding をまたぐ依存 edge を投影しない（fail-closed で人に確かめる）規則と、package の dry-run を register-package の receipt で判定する規則を足した。C14・C28 の正本の契約（execution-tracker-contract.md と bd-bridge.py）は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#goal-seek-checklist-and-receipts",
+      "summary": "node の content-review の取り直しの3回目（PASS、rubric 94）が、今回の直しから出た low を4件挙げた。node の live trial の前に4件とも直した。(1) checklist の5項目に固定の id（containment・classification・schema・package・receipt）を決め、containment と schema は not_applicable にできず、not_applicable には evidence を必須にした。全項目を not_applicable にした完了の宣言が snippet を通っていた。(2) not_applicable にしてよい場合に、graph だけに書く起動（register-package と member への link-github）と noop の schema の判定、architecture の c14_macro_contract、noop と register-package の再実行の receipt を足した。(3) receipts/ の走査をやめ、progress.json の graph_baseline（run の開始時の revision と canonical digest）と writer_receipts（この run で書いた receipt の DEV_GRAPH_ROOT からの相対 path）で、今の graph が最後の receipt か baseline と一致することを確かめる。graph を手で書き換えて revision も上げた写しや、receipts/ の外の register-package の receipt を見逃していた。run の外で graph が進んだら blocked で handoff する。snippet の引数に DEV_GRAPH_ROOT を足した。(4) auditor の md（C06）に、出力の graph_digest を canonical digest で計算すると書き、SKILL.md は verifier の返した値をそのまま写すと書いた。snippet は38例と node3 の実物で確かめた。frontmatter は変えていない。",
+      "spec_impact": true,
+      "spec_impact_reason": "node の goal-seek の progress.json の形（checklist の固定 id、graph_baseline と writer_receipts）と、C06 の verifier の出力（graph_digest の計算方法）を決めた。inventory は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-decompose#transitive-cross-binding-and-registered-package",
+      "summary": "decompose の content-review の新しいループの1回目が、medium 1件と low 2件を挙げた。verdict を書く前に直し、同じループの2回目として判定を取る。(M3) cross_binding_dependency の規則が、github か none の node に直接依存する beads の node にしか当たらなかった。保留にした beads の node B に別の beads の node A が依存するとき、手順は A→B を「create の後に張る edge」と書かせたが、B の issue は人が決めるまでできない。A を投影すると A は同じ parity の照合で conflict になる（判定役が偽の bd で再現した）。live trial の fixture そのものの形（feature-render-diff-summary → feature-render-diff → LT-FEATURE-001）だった。Macro flow の規則を、依存の鎖をたどって当てる形に直した（Beads に投影されない node は、github か none の node と、この規則で保留にした beads の node）。dry-run の preview の 3 では、先に保留の node を決め、保留の node への edge は blocked と書き、「create の後に張る edge」とは書かない。Gotcha と R3・R6 も同じ規則にした。(La) 手順4は package がまだ graph に無い前提だった。登録済みの package に register-package --dry-run を当てると、中身が同じなら登録時の receipt（write_count が無く、graph_revision_before は昔の値）が返り、task が進んでいれば duplicate node ids exist with different content で止まる（どちらも判定役が再現した）。登録済みの package には register-package を当てず、task ごとに beads_linkage を見る（あれば起票済み、beads で無ければ C28 の create --dry-run）。digest は手順6の「今の graph の値」を使う。(Lb) apply の起動では「--dry-run の write count」の項目を not_applicable にし、evidence に、この起動が --dry-run でないことと preview の path を書く。frontmatter と script は変えていない。親 feature と task の binding が違うときの規則、decompose の snippet が progress.json を見ない件、rubric の PD-002・FM-005・PD-001 は、Beads の下書き 19 に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "decompose の契約で、Beads に投影しない node の範囲を依存の鎖に広げ、登録済みの package の preview の取り方と、apply の起動での checklist の扱いを決めた。C02・C14・C28 の正本の契約と script は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-decompose#pending-beads-edge-and-none-task",
+      "summary": "decompose の content-review の新しいループの2回目（PASS、rubric 84）が、今回の直しから出た low を2件挙げた。同じループの3回目の前に直した。(E1) dry-run の preview の 3 の枝が、保留にした beads の node から保留でない beads の node への edge を扱わなかった（書き手が「create の後に張る edge」と書きやすく、それは M3 の直しが避けた記述である）。依存する側が保留の beads の node で、依存先が保留でない beads の node の枝を足し、dep-add を呼ばず、依存する側の保留の理由とともに書くことにした。R6 の Layer 6 にも同じ一文を足した。(E2) 登録済みの package の段落が、binding=none の task の operation を書いていなかった。「外部 write なし」と書くことを足した。親 feature を Beads に投影しないときの task の扱いが preview と apply でずれる件（1回目の Lc を広げたもの）は、設計の判断が要るので Beads の下書き 19 に回した。同じループの3回目（SKILL.md ee8aa00f、ループの上限）は rubric PASS 84・elegance PASS で、新しい指摘は無かった。",
+      "spec_impact": false,
+      "spec_impact_reason": "dry-run の preview の枝を、すでに決めた cross_binding_dependency の規則に合わせて埋めただけで、apply の規則・C02・C14・C28 の契約と script は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#na-and-receipt-chain",
+      "summary": "node の content-review の新しいループの1回目（PASS の見込み、rubric 94）が、今回の直しから出た low を2件挙げた。verdict を書く前に直し、同じループの2回目として判定を取る。(N1) 本文は「checklist の規則に合わない not_applicable」を fail-closed と書くが、snippet が止めるのは containment・schema と evidence の無いものだけだった。writer_receipts があるのに receipt を N/A、register-package の receipt があるのに package を N/A、普通の add で classification を N/A の3通りが rc 0 で通った。snippet が writer receipt と食い違う not_applicable を止めるようにした（分類した add とは、decision が c14_macro_contract でない artifact を持つ add）。receipt に残らない起動（--dry-run・noop・register-package の再実行）の not_applicable は、evidence を読んで判断すると本文に書いた。(N2) baseline と最初の receipt の graph_revision_before、receipt どうしの鎖を照合していなかった。手で書き換えた後に作った baseline と、receipt の間の飛びが rc 0 で通った。鎖を照合するようにし、baseline は run の開始時の graph をそのまま起点にするので、それより前の graph の変化はこの照合の範囲の外だと本文に書いた。snippet を写して14通りで回した（契約どおりの6通りは rc 0、N1・N2 と既存の禁止の8通りは rc 1）。frontmatter は変えていない。",
+      "spec_impact": true,
+      "spec_impact_reason": "node の goal-seek の検証で、writer receipt と食い違う not_applicable と、receipt の鎖の切れ目を決定論の検査で止めるようにした。inventory と C02 の receipt の形は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#baseline-timing-and-chain-limit",
+      "summary": "node の content-review の新しいループの2回目（PASS、rubric 94）が、receipt の鎖の照合から出た low を2件挙げた。同じループの3回目の前に、本文と Gotchas を直した。(1) 鎖の照合は revision だけを見る（receipt は書く前の digest を持たない）ので、revision を進めない書き換えは receipt と receipt の間では止まらない。この限界を graph_baseline の段落に書いた。(2) graph_baseline を書く時点（C24 の receipt を得た直後、最初の writer の前に1回だけ）を書き、Gotchas に「後から書き直さない」を足した。根本の策（C02 の receipt に graph_digest_before を足し、baseline を writer の外で取る）は、script の変更なので Beads に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "限界と書く時点を本文に書いただけで、検証の snippet・checklist の規則・C02 の receipt の形は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#baseline-after-pre-choice",
+      "summary": "node の content-review の同じループの3回目（PASS、rubric 94）が、2回目の直しの文から出た low を2件挙げた。新しいループの1回目の前に本文を直した。(1) 限界の文に、baseline と最初の receipt の間を足した（revision を進めない書き換えは、この区間でも止まらない）。(2) baseline を書く時点を post-choice の開始時（C24 の receipt を得た直後、post-choice の最初の writer の前）とし、pre-choice の commit は writer_receipts に足さないと決めた（baseline の graph に含まれる）。前の形は「最初の writer の前」と書き、pre-choice の writer と噛み合わず、読み方によっては契約どおりの run が検証で FAIL になった。",
+      "spec_impact": false,
+      "spec_impact_reason": "baseline を書く時点と、鎖に入れない commit を本文で決めただけで、検証の snippet・checklist の規則・C02 の receipt の形は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/skills/run-dev-graph-node#checklist-includes-pre-choice",
+      "summary": "node の content-review の新しいループの1回目（PASS、rubric 94）が、前の直しの文から出た low を2件挙げた。同じループの2回目の前に本文を直した。(1) pre-choice だけが commit した run で checklist の判定が決まっていなかった。checklist は pre-choice の commit も含めて判定し、その receipt で判定する項目（receipt・package・classification）は not_applicable にせず、evidence に receipt の path と baseline との一致を書く、と決めた。機械が止めない範囲（writer_receipts に残らない起動）に pre-choice の commit を足した。(2) baseline の起点の呼び方を「post-choice の開始時」にそろえた（snippet の assert の文も直した）。(3) 同じループの2回目（PASS、rubric 94）が挙げた low（pre-choice の receipt が baseline と一致しないときの status と、pre-choice の commit が2回以上のときの照合先が無い）を直した。照合には最後の receipt を使い、一致しなければ receipt を not_achieved・overall を blocked にして handoff する（run の外で graph が進んだときの規則と同じ）。(4) 3回目（PASS、rubric 94、ループの上限）が挙げた low（pre-choice の commit が2回以上のとき、commit どうしの間を照合しない）を直した。pre-choice の receipt どうしの鎖を evidence に求め、切れたら同じく not_achieved・blocked にし、最初の pre-choice の commit より前は見ないと明記した。(5) その新しいループの1回目（PASS、rubric 94）が挙げた low（鎖は revision だけを見るので、commit どうしの間で revision を進めない書き換えを見ないことが書かれていない）を直し、照合しない区間に明記した。原因の文を「鎖が切れる＝revision が進んだ」「baseline と一致しない＝graph が変わった」に分け、段落を箇条に組み直した。同じループの2回目（SKILL.md 1ee429d9）は rubric PASS 94・elegance PASS で、新しい指摘は無かった（low は前から残るもので、Beads に回した）。根本の策（pre-choice の receipt を progress.json に書き、snippet が照合する）は Beads に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "checklist の判定の範囲と呼び方を本文で決めただけで、snippet の判定・C02 の receipt の形・progress.json の field は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/schedule-graph.py#resource-scope-paths",
+      "summary": "schedule の受入条件 OUT2 の FAIL（scope の衝突を集合の積だけで見ていて、src/db/ と src/db/migrations/ が同じ batch に入る）を直した。scope_paths() が各パスを posixpath.normpath で正規化して構成要素の tuple にし、overlaps() が同じパスと祖先のパスを衝突とみなす。絶対パスと、repo の外を指す .. のパスは止める。batches・候補の選別・conflicts・lease の4か所で同じ判定を使う。test は test_schedule_resource_scope_paths.py（10件）。",
+      "spec_impact": true,
+      "spec_impact_reason": "並列実行の安全性の契約（resource_scope が重なる task を同じ batch に入れない）を、実装で正しく守るようにした",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/schedule-graph.py#lease-scope-from-graph",
+      "summary": "schedule の受入条件 OUT2 の2回目の FAIL（active lease と衝突する候補を推薦した）を直した。公開の claim の経路（/dev-graph worktree claim <id> --branch … --session-id …）は --resource を渡さないので、C27 は lease に resource_scope: [] を記録する。schedule-graph.py はその空の scope しか見ていなかった。新しい lease_touches() が、lease の scope を「lease に記録された resource_scope」と「graph でのその node の resource_scope」の和として求める。どちらからも分からない lease は ContractError（exit 2）で止める。test を3件足した（test_schedule_resource_scope_paths.py は計13件。前の形に戻した写しで3件が落ちることを確かめた）。manage-worktree-lease.py の claim の検査（C27）は変えていない（この回は schedule の判定に範囲を絞った。bytecode の修正で入れた flag だけが入っている）。claim の検査・--leases の欠落・大文字小文字と glob・max-parallel は、Beads の下書き 18 に回した。",
+      "spec_impact": true,
+      "spec_impact_reason": "並列実行の安全性の契約（active lease と resource_scope が重なる task を推薦しない）を、lease に scope が記録されていない経路でも守るようにした",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/schedule-graph.py#transitive-dependencies",
+      "summary": "schedule の受入条件 OUT1 の FAIL（依存の done を直接の依存だけで見ていた）を直した。done や closed の node が open の node に依存していると（C02 は status と depends_on の patch を受け、C11 もこの組を拒まない）、その先の node が ready set に入った。SKILL.md の完了条件と Gotchas は「全 depends_on が done」を求める。新しい dependencies_done() が depends_on をたどって届くすべての node を確かめ、self と bd-bridge の両方の経路で使う。graph に無い依存は done とみなさない。同じ id の node が2つあると by_id が後の1つだけを残し、止まるはずの node を隠したので、ContractError（exit 2）で止める。test は test_schedule_transitive_dependencies.py（7件。直す前の版の写しで5件が落ちる）。受入条件の判定の iteration 2（PASS）が「循環を固定する test が無い」と挙げたので、候補を含む循環・done どうしの循環・done の自己ループで、歩みが終わり、候補が外れ、done の先の node は ready になる test を足した。SKILL.md は変えていない（content-review の判定は有効のまま）。schedule の閉包が変わったので、schedule の live trial を取り直し（20261013T0456-pr85、PASS）、受入条件を再判定した（iteration 2、4基準とも PASS）。test のファイルは閉包に入らないので、循環の test を足しても証拠は変わらない。",
+      "spec_impact": true,
+      "spec_impact_reason": "SKILL.md が約束する ready の契約（すべての依存が done）を、実装で守るようにした。SKILL.md の文は変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph#no-bytecode-in-harness",
+      "summary": "init の受入条件 OUT3 の FAIL（init が共有の harness の scripts/__pycache__ に _common と validate-graph-schema の .pyc を書いた。基準と SKILL.md の「harness は read-only」に反する）を、利用者の判断（この PR で根本から直す）で plugin 全体で直した。Python は import された module の dir に .pyc を書くので、init だけでなく、sibling の module を import するすべての入口で止める必要があった。(1) sibling を import する入口の script と hook の20本が、最初の sibling の import より前に sys.dont_write_bytecode = True を置く。(2) sys.executable で起こす子の24か所すべてに -B を渡す。(3) hooks/hooks.json の4本のコマンド、codex/hooks.json の3本、templates/claude-settings.example.json の4本を python3 -B で起動する形にし、.codex/hooks/registry.json を生成器（build-hook-registry.py --apply）で作り直した。(4) references/claude-code-hooks-contract.md の security の節と、init の SKILL.md（L118 ほかと Gotchas）に「plugin root は bytecode cache も書かない。呼出し側の PYTHONDONTWRITEBYTECODE には頼らない」を書いた（frontmatter は変えていない）。test は test_no_bytecode_in_harness.py（新規4件。静的に、flag が sibling の import より前にあること・子の起動の -B・hooks.json の形を見る。動的に、PYTHONDONTWRITEBYTECODE を外した環境で、写した plugin の全 script を --help で、全 hook を所有の marker だけを持つ repo に向けて起動し、__pycache__ が0件であることを見る）。直す前の版の写しで4件とも落ち、直した版で4件とも通ることを確かめた。A/B の test（test_acceptance_gaps_a1.py）と preflight の test は、PYTHONDONTWRITEBYTECODE を外から渡さず、harness の __pycache__ も変更に数える。(5) hooks.json のコマンドを変えたことで、0.1.17 の project fallback を入れた repo では init の手順4の再実行が duplicate_registration で止まる（冪等の約束に反する）退行を、独立のレビューが見つけた。build-project-hook-fallback.py の同一性の比較を、interpreter の -B の有無に左右されない形（_wiring）にし、古い配線は同じ配線とみなして書き換えない（already_present に legacy_wiring: true）。既存の hook group を変えない約束はそのまま。古い形と今の形が両方あれば、同じ script が2回走る二重登録なので status=rejected・code=merge_not_additive（write 0・exit 1）で止まり、SKILL.md に利用者の直し方（どちらかの group を消して再実行）を書いた。test は test_build_project_hook_fallback.py に1件足し、直す前の版で落ちることを確かめた。validate-harness-link.py が示す修復手順の argv にも -B を足し、init の SKILL.md の手順1（scaffold が C24 を自分で起動すること。単独で起動するのはゴールシーク配線と、fork した R1 が context receipt を渡すときだけ）と、R1 のパスの表記（skill root からの相対）を直した。静的な test は、先頭が文字列 \"python3\" の argv も -B の有無を見るように広げ（-B を外した写しで validate-harness-link.py:126 を名指しして落ちることを確かめた）、A/B の test の rerun も PYTHONDONTWRITEBYTECODE を外した環境で起こすようにそろえた。全 skill の behavior closure が変わったので、dev-graph の live trial を全9本取り直した。",
+      "spec_impact": true,
+      "spec_impact_reason": "init と hook の境界の契約（共有 harness を書き換えない）を、bytecode cache まで、plugin のすべての入口と hook で実装として守るようにした。hooks contract に規則を書き足した",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/scripts/render-graph-html.py#receipt",
+      "summary": "render の受入条件 OUT1 の FAIL（描いた進み具合 5/13 と receipt の applied_count 13 の食い違いを見逃した）を直した。任意で繰り返せる --receipt PATH を足し、HTML を書く前に feature ごとに、Y（子 task 数）＝expected_count、子 task の id の集合＝node_ids、子 task の source_digest＝receipt の source_digest を照合する。合わなければ HTML を書かずに exit 1、stderr に receipt_mismatch の JSON を出す。receipt を渡さないときの出力は前と1バイトも変わらない。test は test_render_receipt.py（5件）。",
+      "spec_impact": true,
+      "spec_impact_reason": "render の出力の契約（進み具合を登録の receipt と照合する）を実装に入れた",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugin-plans/dev-graph#C05-C18-update-flow",
+      "summary": "利用者の判断（正規の流れで文を直す）で、plugin-dev-planner の update の流れ（improvement-handoff-pr85-criteria.json → intake-consumption と provenance-chain の gate → 改善レビュー PASS）を通した。C05（render）の OUT1 を「Y が expected_count と一致し、子 task の集合が node_ids と一致する」に、C18（status）の R3 の summary と IN1 を「extract-graph-status.py の rows だけから」に直し、component-inventory.json・briefs/skill-brief-C18.json・render と status の SKILL.md の frontmatter と R3 の prompt を同時に合わせた。X（done の数）を applied_count と比べていた前の文が、食い違いの原因だった。status の本文では、評価役を Agent で起こすこと、not_applicable の扱い、outer criterion の扱いも直した。",
+      "spec_impact": true,
+      "spec_impact_reason": "受入条件の文（仕様）を、正規の流れで実装と矛盾しない形に改めた",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "eval-log/dev-graph#content-review-render-status-init-system-spec",
+      "summary": "SKILL.md を変えた render・status・init・system-spec の content-review を、作者でない独立評価者が取り直した（rubric と elegance の2つ）。render と status はどちらも rubric PASS 97・elegance PASS。init は、OUT3 の修正で本文を変えたので取り直した。利用者の判断で新しいループ（上限3回）にし、1回目は 0.1.17 の配線の二重登録の退行（medium）で直しを求められ、2回目は PASS（rubric 94）で今回の変更から出た low 3件、3回目（SKILL.md 03c93563）は rubric PASS 94・elegance PASS で low 1件だった。init の low のうち今回の変更から出たものは、3回目の1件（test の env が PYTHONPYCACHEPREFIX を外さない）も含めてこの PR で直した（その1件は test のファイルだけで、SKILL.md と closure は変わらない）。前から残る init の low は Beads に回した。system-spec と、spec_dir の契約を直した system-spec-harness の evaluator も取り直し、system-spec は、ループの上限の3回目（rubric PASS 84）の後に本文を直したので新しいループの1回目で取り直し、rubric PASS 84・elegance PASS（SKILL.md 4d2b72af）だった。evaluator は2回目で rubric PASS 90・elegance PASS だった。どちらも今の SKILL.md に束ねてある。decompose と node の結果は、それぞれの項目に書いた。low の指摘は直さずに Beads に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "評価の証跡",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "eval-log/dev-graph#live-trial-r16",
+      "summary": "dev-graph の live trial を、隔離した環境で取り直した。requirements の取り直し（20261012T1619-pr85）は PASS だった（bytecode の修正の前）。system-spec は5回目（20261012T1646-pr85）が DEGRADED で、利用者の判断（直して6回目、通らなければそれ以降も可）で skill と fixture を直して 6回目（20261013T0027-pr85）を取った。6回目は DEGRADED で、FAIL の直接の原因は fixture（足した質問2つの basis が既定値のままだった）だった。被験が FAIL で止まって取込に進まなかったのは正しい振る舞いだった。evaluator の起動の順番を手順の形で固め、fixture を直して7回目（20261013T0349-pr85）を取り、PASS（tier は live、閉包 21df2f9d）になった。7回目の評価者が挙げた2件（system-spec-harness の compile-spec-doc.py が bytecode を止めない、C19 と compile の SKILL.md に python3 -B の指示が無い）は origin/main からあるので、Beads に回した。bytecode の修正で全 skill の closure が変わったので、render・status・requirements・node・decompose・sync・schedule・init も取り直した：init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する。途中の run（behavior closure が変わる前の版で取ったもの）も記録として残した：decompose 20261012T1848-pr85 PASS・20261012T2336-pr85 DEGRADED、init 20261012T1358-pr85・20261012T2021-pr85 PASS、render 20261012T1759-pr85 PASS、requirements 20261012T1358-pr85 DEGRADED、status 20261012T1358-pr85 DEGRADED・20261012T1810-pr85 PASS、schedule 20261012T1923-pr85・20261012T2045-pr85・20261013T0211-pr85 PASS、sync 20261012T1358-pr85・20261012T1947-pr85 PASS、node 20261012T2316-pr85 DEGRADED、system-spec 20261012T1301-pr85・20261012T1646-pr85・20261013T0027-pr85 DEGRADED。判定に使うのは、今の閉包と一致する最後の run だけ。node の取り直し（20261012T2316-pr85）は DEGRADED（被験が独立 verifier を起こさず、outer criterion を自己採点した）で、SKILL.md を直してからもう一度取った。trial harness の guard は、外へ送る tool（SendFeedback・RemoteTrigger・Artifact・PushNotification・CronCreate・ScheduleWakeup・mcp__*・WebSearch・別の session への SendMessage）を拒む形に締めた。メールを含み伏せ字にしていない3つの run（decompose 20261012T0630-pr85、node 20261012T0635-pr85、requirements 20261012T0654-pr85）は commit していない。",
+      "spec_impact": false,
+      "spec_impact_reason": "評価の証跡",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "eval-log/dev-graph#criteria-test-r16",
+      "summary": "受入条件の独立判定（scenario-verdict.json）を、今の SKILL.md と live trial の verdict で取り直した：init（C01）6基準 PASS（SKILL.md 03c93563、OUT1 は 20261013T0117-pr85）、node（C02）4基準 PASS（SKILL.md 1ee429d9、OUT1 は 20261013T0528-pr85）、sync（C03）10基準 PASS（SKILL.md 227715b0、OUT1 は 20261013T0145-pr85）、decompose（C14）8基準 PASS（SKILL.md ee8aa00f、OUT1 は 20261013T0331-pr85）、schedule（C15）4基準 PASS（SKILL.md b05089c3、OUT1 は 20261013T0456-pr85）、system-spec（C19）2基準 PASS（SKILL.md 4d2b72af、OUT1 は 20261013T0349-pr85）、render（C05）2基準 PASS（SKILL.md 25b0d1af、OUT1 は 20261012T2212-pr85）、requirements（C04）3基準 PASS（SKILL.md ed21e07f、OUT1 は 20261012T2252-pr85）、status（C18）3基準 PASS（SKILL.md 2313bb65、OUT1 は 20261012T2229-pr85）。9スキルとも PASS で、判定の対象の SKILL.md は今の本文と一致する。",
+      "spec_impact": false,
+      "spec_impact_reason": "評価の証跡",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "plugins/dev-graph/plugin-composition.yaml#register-package-edge",
+      "summary": "lint-plugin-composition が、requirements の SKILL.md が呼ぶ register-package.py の calls の宣言が無いと指摘した（2件の test が落ちた）。{from: skills/run-dev-graph-requirements, to: scripts/register-package.py, type: calls} を足した。",
+      "spec_impact": false,
+      "spec_impact_reason": "実装にすでにある呼出しを、構成の宣言に追記しただけ",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "eval-log/dev-graph#live-trial-email-redaction",
+      "summary": "この PR で入る live trial の記録にある利用者のメールアドレスと、その @ の前の部分を、行数を変えずに <redacted-email>・<redacted-user> に置き換えた。対象は、fdc93c12 で入れた 2026-10-05 の9ファイル（18か所）と、2026-10-12 の schedule の3つの run の subagent の transcript（0650・0701・1923。39か所）。これらの verdict の transcript_sha256 は伏せる前の bytes の値のまま（照合する lint と test は値があるかだけを見る）。main と比べて、この PR が新しく持ち込む出現は 0 件。main にすでにある46ファイルと、保存の手順に伏せ字の段が無いという根本の問題は、Beads の下書き 31 に回した。",
+      "spec_impact": false,
+      "spec_impact_reason": "公開 repo に入る評価の記録から個人情報を除いただけで、評価の結論も skill の振る舞いも変えていない",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "eval-log/llm-coverage.json#r16",
+      "summary": "validate-llm-coverage.py --all で作り直した（checklist_items が 5 → 6 の3か所など）。",
+      "spec_impact": false,
+      "spec_impact_reason": "派生の記録",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "id": "aidd-agent-kit/skills/report-design-system#url-not-marked",
+      "summary": "本体の checkout にあった aidd-agent-kit の report-design-system の直しを取り込んだ（9ファイル）。本文に書いた URL の中（note.com の /n/、?p=0.40&amp;n=3 の p=0.40 や n）に用語の印が付き、リンクが壊れていた。glossary.mjs の markTerms が本文を URL とそれ以外に分け、URL の部分は照合せず、まとまりごとの印の回数も使わない。content-selftest.mjs に確かめる2件を足し、CHANGELOG の未リリースに1行を足した。.claude と .agents の写しと、.claude・.codex の aidd-agent-kit.manifest の sha256 も合わせた（manifest の値は新しいファイルの sha256 と一致する）。3か所の selftest.mjs は合格。",
+      "spec_impact": false,
+      "spec_impact_reason": "report-design-system の用語の印の付け方の不具合を直しただけで、dev-graph と harness の仕様・設計には関わらない。aidd-agent-kit は plugin の台帳と marketplace の外にある",
+      "commit": "この受領書の更新と同じ commit"
+    }
+  ],
+  "excluded_from_commit": [],
+  "remaining_work": [
+    "run-ubm-challenge の live-trial (harness-ead) と、残りの判断 (harness-kt9・harness-y7n)",
+    "eval-log/ubm-goal-setting/run-ubm-challenge/goal-seek-progress.json は、ユーザーの挑戦宣言の内容 (イベントの会場の確保の計画) と /var/folders のパスを含む。リポジトリは PUBLIC なので、ユーザーの指示で公開された。不要なら別 commit で消す。",
+    "取り込んだ live-trial の transcript にあったユーザーのメールアドレスは、round16 で行数を変えずに伏せ字 (<redacted-email>・<redacted-user>) にした (fdc93c12 で入れた9ファイルの18か所と、schedule の3つの run の39か所)。origin/main と比べて、この PR が新しく持ち込む出現は 0 件。ただし、この branch の前の commit (fdc93c12 ほか) の履歴には残る (squash merge なら main の履歴には入らない。GitHub の PR の ref には残る)。main にすでにある46ファイルと、保存の手順に伏せ字の段が無いことは、Beads の下書き 31 (live trial の記録: 保存の手順に個人情報を伏せる段が無く…) に回した。認証情報の写しは 10-05 の後始末 (auth-copy-cleanup.json) で削除済みで、トークンや鍵は0件だった。",
+    "guide-doc-generator の assign-handout-readability-evaluator は rubric.json を持たない ref-handout-design-system を rubric_refs に書いている。plan (component-inventory.json・skill-brief-C03.json。r4-evaluation.json で hash 固定) と契約 test (AC-C03-17) がこれを決めているので、この PR では変えない。plan を改訂してから SKILL.md を直し、lint-rubric-refs-exist の既定の走査範囲を全 plugin に広げる。",
+    ".artifact-delivery/external-mutation/.guard-key: 外部変更ガードの HMAC の鍵が、公開リポジトリで git の管理下にある (main から来たもの。この PR で足したものではない)。鍵の作り直し、管理外への移動、承認の検証のやり方を governance で決める。",
+    "rubric の trigger 規則は発動条件を 2〜3 個許すが、validate-frontmatter と lint R1 は 2 個ちょうどを求める。どちらに寄せるかを rubric の改正の手続きで決める (03章・08章・24章は現状をそのまま書いた)。",
+    "run-skill-rubric-governance: solo_operator_mode をトップレベルの値で書くか .enabled で書くか (本文と2つの .example が食い違い、既定値も root と config で違う)。",
+    "guard-change-category の low: rubric-registry.json と installers/manifest.json が P2 のまま、cooldown の単位 (数字だけを日数と読む)、ゲート自身 (script と workflow) が P1 で守られていない、--policy を明示すると渡したファイルをそのまま信じる。33章の改訂が要る。",
+    "設計書の low: 11章・README・design-docs-index.md が今も『24章が正本』と書く。複合テンプレート3種は英語の見出しを出す。--language en でも日本語のまま出る見出しがある。kind の値が validate-frontmatter と capability-manifest の schema で一致しない。",
+    "PKG の low: --sandbox-root に任意のディレクトリを渡せる。run-report の schema が PKG-BATCH のキーを受け付けない。PKG-003 の hook と permission の衝突、PKG-007 の script_refs、PKG-008 は評価者が判定する (script では判定しない)。",
+    "j 回目の [低] (03章): L137・L139 の『R1 は上限だけ』と lint R1 が 0 個も違反にする実装が合わない。L111 の日本語の良い例が役割の紹介で始まる。",
+    "j 回目の [低] (26章): dogfooding の『completeness check: not applicable』の1行の形式が、36章の PKG ID ごとの status: not_applicable と食い違う。",
+    "j 回目の [低] (coverage-spec): L134『sha256 不一致の記録は無効』は validator も integrity test も照合していない (notes の自由文だけ)。§1 の scripts・skills 行が validator の数え方 (templates/ の下を含む・owned-vendored を除く) と違う。",
+    "j 回目の [低] (完全解剖): L383 が wrap・delegate の配線の小節を落としている。L385『混ぜないのが原則』が en と wrap・delegate の英語の見出しと食い違う。L296 と L581 の『9 種』が別の集合 (schema と HK-001)。",
+    "j 回目の [低] (audit-capability-parity.py・sync-plugin-platforms.py): 深い入れ子と UTF-8 でない JSON で traceback (RecursionError・UnicodeDecodeError を受けない)。sync は marketplace の name が list だと TypeError。言語不一致の分岐と has_prompts=False の経路に test が無い。",
+    "j 回目の [低] (derive-verification-contract.py): unit の id が object や list でも str() で通す。",
+    "j 回目の [低] (lint-pkg-009.py): 自前の --help が無く、--help が rc2 になる。external_ref_count が 0 かを確かめず、reports が空なら pass になる。",
+    "j 回目の [低] (sandbox-plugin-lifecycle.py): --sandbox-root に任意のディレクトリを渡すと、既存の実ディレクトリを rmtree し、plugin が置いていないファイルまで消す。既定の一時ディレクトリ以外は、空か sandbox の印があることを確かめてから壊す。",
+    "j 回目の [低] (lint-rubric-violation.py): usage error の exit 2 が『招集必要』の exit 2 と重なる。--log-dir が無いとき stderr に何も出さず exit 3。SKILL.md 168行の版が 0.2.0 のまま。",
+    "j 回目の [低] (lint-script-frontmatter.py): .py の無い dir が OK (checked=0)。PENDING_FILES が basename で repo 全体に当たる (根拠の doc/migration/phase3/pending-frontmatter.md は存在しない)。空の値のキーと先頭でない # /// script を通す。",
+    "j 回目の [低] (lint-skill-dep-step7.py): allowed-tools を持たない command (intake-publish.md・intake.md) の Skill 呼び出しを見逃す。バッククォートで囲んだ run-* をすべて呼び出し扱いにする。",
+    "j 回目の [低] (validate-challenge-output.py): 推量・疑問・目標の言い方 (『回収済みだと思います』など9文) を回収済みに数える (否定の denylist のため)。『振込済み』が COLLECTED_RE に無い。『見込みではなく確定額』が M01 になる。立替えの走査が二乗の時間。",
+    "j 回目の [低] (validate-goal-linkage.py): UTF-8 でない --file で traceback・rc=1 (未解決ありと区別できない)。1年層の判定の test が無い。",
+    "j 回目の [低] (build-artifact-delivery.py): 旧節の切り出しがコードフェンスの中の『## 』でも節の終わりとみなす (実 repo の31件には該当なし)。L1083 が setup-send-log-db.py を含む行をすべての検査から外す。",
+    "j 回目の [低] (build-claude-settings.py・build-claude-symlinks.py): 除外が .gitignore の一部の手写しで .pytest_cache などが漏れ、consumer にだけあると exit 2。HOOK_EVENTS に SubagentStart と PermissionRequest が無い。PEP 723 の header が無い。symlinks の281行の三項演算子は両方の枝が同じ。",
+    "j 回目の [低] (lint-test-discovery-coverage.py): 証跡の照合が run: の部分文字列なので、if: false の step でも満たされる。workflow ファイルが無いと二次ガードを skip して ok。repo でない dir で誤った直し方を出す。",
+    "j 回目の [低] (ref-skill-design-rubric): FM-005 (動詞ベース) の日本語の判定語が rubric.json (11語) と採点器 (16語) で一致せず、repo の『〜とき…使う』の書き方とぶつかる (採点器を全127 SKILL.md に当てると39件が fail)。",
+    "build-claude-settings.py: 配列の番兵キーを見逃す (文字列だけ exit 3)。手で書いた rule と plugin の rule が同じで exit 2 になる場合の test が無い。merge_hooks が使われないまま残る。management_format の値が古い名前のまま。",
+    "設計書 35章 L233・23章 L466・36章 PKG-003 の hook-name が、hook の settings 投影や Capability での登録を前提にしたまま (34章・34a は直した)。",
+    "PKG: run-report.schema に run と phase を足していない (top-level の追加キーは許されるので今は違反にならない)。",
+    "skill-intake: FAIL 行で exit_code=0 を拒否しない。x-cross-field-rules の知らない演算子を無視する。validate_intake_schema.py に PEP 723 の header が無い (plugins/skill-intake/scripts の約50本が同じ)。run-skill-intake/scripts の残り4本が manifest に未登録。",
+    "ubm-goal-setting: 四層横断照合でラベルが衝突すると本文が注記より先に抽出される (文書で「ラベルを使い回さない」と書いただけ)。data-contract の35項目の番号を振り直していない。",
+    "外部変更ガード: project のコピーは Write・Edit で書き換えられる (hook の範囲外。契約に記載)。python3 の alias・PATH の乗っ取りは防げない。インストール済みの hook は plugin を入れ直すまで古い判定のまま。",
+    "run-skill-rubric-governance の low: composition_hash に絶対パスが入り再計算がほぼできない (SKILL.md 147行)。rollback-to-stable.py 340行の計画の compute に --dry-run が無い。governance-board.md 38行の newly_failing_count は diff-rubric-impact.py の出力に無い。SKILL.md 168行の lint-rubric-violation.py の版が 0.2.0 (実物 0.3.0)。148行の「rule ごとの平均と同じ値」は applicable_rules が全レコードで等しいときだけ成り立つ。",
+    "knowledge-extractor の low: rules.md 114行の consultation-hiring.json が命名規則に反する。15行の action-guides-relationship.json は実在しない。「source を追記するのみ」だが schema の source は単一 object。Layer 7 の例の行頭 ! を実行手順として参照している (rc が反転)。Step 0 で --all から mode=full を導けない。",
+    "ubm-goal-setting の low: validate-goal-output.py の区切り行の正規表現が両端の | を必須にし、BOM 付き UTF-8 で誤 FAIL。validate-cross-level.py の docstring の除外節に「年」が無い。phase3-coordinator の参照元に R4・R5 が無く、Round 1 の質問が「今週の実績」に固定され、AG-002・AG-004 にあたる見出しが無い。info-collector の手順の1年目標の取り出し元が古く、期報・月報に1年目標の到達点を書き写す手順が無い。info-collector 本文の ls -lt と Bash の用途の限定、【今年の最重要数字】の見出しが challenge-format.md に無いこと、「1年目標が無い期だけ null」が data-contract と反すること。",
+    "外部変更ガード (k 回目 PASS 94) の low: zsh では \"$path[@]\" が27語に展開され「二重引用の形は必ず1語」が成り立たない (guard が自分で引数を検査するので安全性は崩れない)。runner の語に NUL を含むと traceback で exit 1。pending の拒否文に cancel の案内が無い。",
+    "PKG (k 回目 PASS) の low: validate-plugin-package.py の hook の command が plugin の中を指すかの判定が緩い。読めない hooks/hooks.json の扱いがそろわない。--plugin ../… を拒まない。aggregate-pkg-findings.py は単発形式の {\"status\":\"pass\"} があると PKG-002〜008 をまとめて pass にする。evaluator が自分で見つけた違反を findings に足す手段が無い。R1-orchestrate.md の additionalProperties: false の範囲、frontmatter の combinators の宣言、NM-003 の .sh。",
+    "skill-intake (k 回目 PASS) の low: validate_intake_schema.py の interview.json との照合が片方向 (飛ばした経路で行っていない技法を書いても通る)。IO エラーで traceback・rc 1、stdin の形を確かめない、schema エラーがあると cross-field のエラーが出ない。intake-final-prompts.yaml 111〜112行が飛ばした経路と食い違う。workflow-sequence.md 13行が SKILL.md 218行と合わない。技法名が excavator・elicitation-techniques.md・schema の enum で食い違う (以前から)。",
+    "設計書 33章 (coverage FAIL 54): 27章は 5ae35116 で P1 の提案と承認（PROP-2026-10-12-PR85-RELEASE）を通して直し、coverage は PASS 85 になった（harness-prvc に記録）。33章は target_sha256 の無い承認の読み方、存在しない creator-kit/ のパス、pre-commit での guard の配線 (実際は CI だけ)、存在しない lint-composition.py --classify が残る。直前の P1 の entry からの cooldown が明けた後に、正規の提案と承認を経て直す。27章に残った low は Beads の下書き 22（設計書 06・27・28章の low）へ移した。",
+    "[中] 外部変更ガード (最終レビューで見つけた。origin/main の時点から): hook_confirm() (skill-governance-adapters の hooks の外部変更ガード 395〜412行) は UserPromptSubmit の prompt をすべて利用者の発言として扱う。Claude Code は裏の作業の完了通知 (<task-notification>) も prompt として渡すので、通知の文に意図の語があると、利用者の操作なしに confirm-by-intent の intent (15分) が作られる。この PR の作業ツリーの intent 3件のうち2件 (github-pr-write、beads-issue-write と github-issue-write) と、origin/main の intent 31件のうち12件が通知から作られていた。CONFIRM の文字列は fullmatch なので影響は intent の経路だけ。 2026-10-12 の dev-graph の live-trial の取り直しで再発した（sync の trial で、subagent の task-notification の本文の issue-update が INTENT_PATTERNS に当たった）。被験はその receipt を使っていない。人の確認なしに承認の経路に乗りうるので、harness-r226 を P1 に上げる（Beads の更新の予定）。",
+    "run-ubm-journal の low (12 で content-review を取り直したとき。verdict は PASS): SKILL.md L182・L230 の knowledge_candidates の受け渡しを journal-composer がしていない (KNOWLEDGE_DIR の絶対パスの解決も無い)。regenerate の old_sha256 を取る時点が無く、対話中の Obsidian の編集を競合として検出できない。write-path-guard の Daily の許可を保存の前提のように書いている (正式な保存は guard の execute で、L118・L180 の禁則は規則だけが守る)。",
+    "content-review が PASS の skill の low (12・i・j の取り直しで出たもの): run-build-skill (header の contexts と実際の呼び出し経路、lint-capability-manifest.py の purpose、CI の lint-script-frontmatter が skills/*/scripts を見ない、dependencies の兄弟ファイルと28章、lint-goal-seek と lint-feedback-contract の warn)。run-governance-automation (書き込む entrypoint の preflight、extract-session-events.py の --help と書き込み先、rollback 後の compute-rubric-hash に --dry-run が無い、rollback-to-stable.py の exit の書き方、build-manifest-registration-plan.py の対象)。assign-notion-fidelity-evaluator (重みと閾値の重複を照合する検査が無い)。",
+    "設計書 (k 回目、24章 95・32章 100・34章 98・34a 94 すべて PASS) の low: 24章の抜粋が lint-goal-seek.py で exit 1、抜粋と実物の SKILL.md のずれ2か所 (L60 の rubric を編集しない規則・L54 の release の完了条件)、34a L26・L28 が34章の三層モデルを参照したまま、34章 317行・34a 403行が目標の300行を超える。",
+    "Beads に起票した (harness-o1fh。round15・round16 の範囲の外): guide-doc-generator ref-handout-design-system: content-review が2本とも FAIL のまま (面5の問い合わせが届かない)",
+    "Beads に起票した (harness-1rpx。round15・round16 の範囲の外): validate-inline-goal-seek-anchor.py の26本の写しを生成元から同期する手順を道具にする",
+    "Beads に起票した (harness-5bxm。round15・round16 の範囲の外): run-ubm-goal-setting: PLUGIN_ROOT の展開形を正本と同じ形にそろえる",
+    "Beads に起票した (harness-gn7e。round15・round16 の範囲の外): lint-goal-seek の baseline に載せた負債 (SKILL.md 45本・140組) を返す",
+    "Beads に起票した (harness-6nvp。round15・round16 の範囲の外): render-findings-score --kind agent: AG-001〜AG-004 の判定が無く、どの agent も passed=false になる",
+    "Beads に起票した (harness-ejzm。round15・round16 の範囲の外): SKILL.md の小さな low (起動行の python3・Step 参照) と content-review の取り直し",
+    "Beads に起票した (harness-bjj0。round15・round16 の範囲の外): extract-session-events.py: UTF-8 でない stdin で exit 1 になり、exit 0 の約束を破る",
+    "Beads に起票した (harness-0xwv。round15・round16 の範囲の外): build-knowledge-usage-log.py: 偽造した matches を利用記録として受け入れる",
+    "Beads に起票した (harness-xtsx。round15・round16 の範囲の外): repo 直下の script の low (build-artifact-delivery の fence・build-plugin-release の version・lint-script-naming の参照の数え方)",
+    "Beads に起票した (harness-aqu2。round15・round16 の範囲の外): harness-creator の script の low (notifier の lock・lint-goal-seek の登録範囲・build-subagent の list の読み方ほか)",
+    "Beads に起票した (harness-u0od。round15・round16 の範囲の外): run-skill-rubric-governance SKILL.md: 影響評価の手順に severity と bump の不一致の扱いが無い",
+    "Beads に起票した (harness-g6mu。round15・round16 の範囲の外): 命名の lint: 出力の条番号を06章に合わせ、.sh の動詞規則を決める",
+    "Beads に起票した (harness-78it。round15・round16 の範囲の外): dev-graph reconcile-task-lifecycle.py: hook からの呼ばれ方が28章 §3.1 と # contexts: [E] に合わない",
+    "Beads に起票した (harness-filu。round15・round16 の範囲の外): ubm-goal-setting: registry.json の source_type に enum に無い値 (branch-meeting など) がある",
+    "Beads に起票した (harness-0ulg。round15・round16 の範囲の外): dev-graph の script の欠陥 (live trial の取り直しで発見。read-only の宣言・上限・判定)",
+    "Beads に起票した (harness-bty7。round15・round16 の範囲の外): dev-graph の SKILL.md と契約の穴 (live trial の取り直しで発見)",
+    "Beads に起票した (harness-ul5l。round15・round16 の範囲の外): system-spec-harness: gate の基準のずれ・doc-fetch の時点・設計知識のカードの描き方・評価の揺れ (dev-graph の live trial で発見)",
+    "Beads に起票した (harness-pr9g。round15・round16 の範囲の外): run-ubm-knowledge-sync SKILL.md: PROJECT_ROOT の扱いと preview 前の親の再検査",
+    "Beads に起票した (harness-jfbm。round15・round16 の範囲の外): 設計書 06・27・28章の low (P1。cooldown のため PR #85 では未修正) と22章の Windows の実機での確認",
+    "Beads に起票した (harness-v391。round15・round16 の範囲の外): coverage の取り直しで出た low (verify-handout の偽 PASS・validate-frontmatter・spec-state の必須キー・system-dev-planner の agent・build-graph-node・migrate-plan-layout・rollback-to-stable・SDP と compile-spec-doc の bytecode)",
+    "Beads に起票した (harness-5m9v。round15・round16 の範囲の外): installers/ の旧 creator-kit 配置の記述と migrate-from-project.sh・test-self-regenerate・lint-forbidden-deps の欠陥",
+    "Beads に起票した (harness-oo88。round15・round16 の範囲の外): 設計書 11・14・22・23・25章と README・ref-cross-platform-runtime の low (coverage の取り直しで出た。23章の登録手順は [中])",
+    "Beads に起票した (harness-vndb。round15・round16 の範囲の外): run-skill-live-trial: 被験の session が外部へ送る tool (SendFeedback・mcp__* ほか) を既定で拒否しない",
+    "Beads に起票した (harness-f97r。round15・round16 の範囲の外): dev-graph: source_lineage の imported_at を確かめず、system-spec の「Skill 経由のみ」を機械で確かめない",
+    "Beads に起票した (harness-sqij。round15・round16 の範囲の外): validate-readiness-binding.py: 未登録の package で生の Errno だけが返り、--receipt の既定の場所が書かれていない",
+    "Beads に起票した (harness-mah4。round15・round16 の範囲の外): validate-frontmatter ほか19か所: frontmatter を split(\"---\", 2) で切り、値の中の --- で途中から読まなくなる",
+    "Beads に起票した (harness-gzet。round15・round16 の範囲の外): live trial の記録: 保存の手順に個人情報を伏せる段が無く、公開 repo の eval-log に利用者のメールアドレスが残っている",
+    "Beads に起票した (harness-huu9。round15・round16 の範囲の外): lint-tenant-isolation: allowlist の項目 (contract-generator の XL_PARTY_A_JSON_PATH) の期限が切れ、lint 全体が止まる",
+    "validate_frontmatter_fail_closed の test は、TMPDIR のパスに『---』を含むときだけ落ちる (parse_fm の split(\"---\", 2) が、パスの中の --- で切れる)。main の時点からの不具合で、CI (/tmp) では通る。Beads harness-mah4 (下書き 30) に起票した。",
+    "Beads に起票した (harness-huhh): 外部変更ガード execute: 子の出力が UTF-8 でないと落ち、完了の受領書も出力も残らない。skill-governance-adapters の build-external-mutation-guard.py の execute は subprocess.run を text=True・errors の指定なしで呼ぶので、子の出力が UTF-8 でないと、子が外部を変えた後に UnicodeDecodeError で落ちる。完了の受領書が書かれず、preview の期限まで Bash が止まり、子が止まった理由も失われる。2026-10-13 の Beads の反映の1回目で起きた。PR #85 の前からある不具合",
+    "Beads に起票した (harness-0brx): dev-graph の test の fixture が、commit の後の git の自動の手入れのロック (.git/objects/maintenance.lock) を .git の写しに拾って揺れる。CI は runner の手当て (5090b865) で揺れないが、pytest を直接回すとまれに起こりうる。fixture の側の手当ては plugin.json (P1) を変える版上げが要るので、次の dev-graph の版上げに回す"
+  ],
+  "verification": {
+    "verified_at_commit": "この受領書の更新と同じ commit",
+    "worktree": "クリーンな作業ツリー（未追跡・ignored は .claude/handoff/ と scripts/__pycache__ だけ）",
+    "quality_gates": {
+      "total": 42,
+      "ok": 41,
+      "failed": [
+        {
+          "gate": "python3 scripts/lint-live-trial-verdict.py --all",
+          "reason": "dev-graph の9スキルの live-trial verdict が stale-sha。共通の外部変更ガードの runtime と dev-graph の版が behavior closure に入っているため。再 trial が必要で、hash の手書きは不可。harness-bzn.4 が扱う。",
+          "skills": [
+            "dev-graph/run-dev-graph-decompose",
+            "dev-graph/run-dev-graph-init",
+            "dev-graph/run-dev-graph-node",
+            "dev-graph/run-dev-graph-render",
+            "dev-graph/run-dev-graph-requirements",
+            "dev-graph/run-dev-graph-schedule",
+            "dev-graph/run-dev-graph-status",
+            "dev-graph/run-dev-graph-sync",
+            "dev-graph/run-dev-graph-system-spec"
+          ],
+          "known": true
+        }
+      ],
+      "notes": "guard-change-category --base origin/main は rc=0（blocked=0）。audit-capability-parity --all、lint-content-review --all、build-plugin-release --check、build-local-marketplace --check、build-artifact-delivery --check もすべて rc=0。"
+    },
+    "pytest": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests",
+      "summary": "8046 passed, 4 skipped in 519.24s (rc=0)",
+      "failed_count": 0,
+      "failed": []
+    },
+    "content_review": [
+      {
+        "skill": "skill-governance-automation/run-governance-automation",
+        "skill_md_sha256_prefix": "e19eb266",
+        "verdict": "PASS",
+        "iterations": 2
+      },
+      {
+        "skill": "skill-intake/run-skill-intake",
+        "skill_md_sha256_prefix": "364dd503",
+        "verdict": "PASS"
+      },
+      {
+        "skill": "harness-creator/run-build-skill",
+        "skill_md_sha256_prefix": "ef730bb0",
+        "verdict": "PASS"
+      }
+    ],
+    "llm_coverage": "eval-log/llm-coverage.json は 80 skills（79 から run-ubm-challenge の1件が増えた）",
+    "rubric_refs_full_scan": "plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py の全体実行で、他プラグインの既存14件が残る（rc=0）。ubm-goal-setting の対象検査は PASS。",
+    "not_run": [
+      "live-trial（run-ubm-challenge は harness-ead、dev-graph の9件は harness-bzn.4）",
+      "人による実利用の確認",
+      "外部 provider・vault・Notion への書き込み"
+    ],
+    "ci": {
+      "run_before_fix": {
+        "run_id": 38012009284,
+        "head": "863d740f",
+        "governance": "failure: 209 failed, 7945 passed, 7 skipped (lint-feedback-contract 205件・criteria roster・llm-coverage・lint-feedback-contract の test 各1件)",
+        "plugin-tests": "failure: plugins/dev-graph の9件 (test_skill_criteria_evidence の stale behavior closure digest。dev-graph の live-trial の stale と同じ原因で harness-bzn.4 が扱う)",
+        "verify": "failure (上の2つの job の結果をまとめる job)"
+      },
+      "fix_commit": "eb7b1bc1",
+      "local_reproduction": {
+        "method": "eb7b1bc1 の fresh な worktree 2つで、CI と同じく scripts と plugins の全 .py を py_compile してから lint-feedback-contract --all を実行した",
+        "without_prefix": "rc=1、[FAIL] 21 violation(s) (CI と同じ)",
+        "with_prefix": "rc=0、ツリーの中の .pyc は0件"
+      },
+      "governance_pytest_with_prefix": {
+        "command": "PYTHONPYCACHEPREFIX=<scratch> python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q (py_compile の後、PYTHONDONTWRITEBYTECODE なし)",
+        "summary": "8052 passed, 4 skipped in 506.15s (rc=0)"
+      },
+      "gates_after_fix": "42件中41件が rc=0 (FAIL は既知の lint-live-trial-verdict の1件だけ)",
+      "deferred": "SSOT 側で __pycache__ と .pyc を内容 hash から外す強化は、harness-creator の版上げ (plugin.json は P1、cooldown 3日) が要るので follow-up に回した (planned_beads の6)",
+      "run_after_bytecode_fix": {
+        "run_id": 38013812634,
+        "head": "253dc978",
+        "governance": "pytest は 8049 passed, 7 skipped で通った (bytecode の修正が効いた)。その次の Harness coverage ratchet-floor が scripts/llm_eval 63.7% < floor 64.3% で failure、後続の25 step は skip",
+        "plugin-tests": "failure: plugins/dev-graph の9件だけ (既知。harness-bzn.4)",
+        "verify": "failure (上の2つの job の結果をまとめる job)",
+        "governance-check": "failure: lint-live-trial-verdict の dev-graph 9件の stale-sha だけ (既知。harness-bzn.4)"
+      },
+      "coverage_fix": {
+        "independent_review": [
+          {
+            "artifact": "plugins/harness-creator/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py",
+            "sha256": "be89aacb88f1db33a29700e93128e51a5d2c76c59163564c444c1cd8dde0e521",
+            "verdict": "FAIL",
+            "score": 82,
+            "mechanical": true,
+            "tests": [
+              "plugins/harness-creator/tests/test_validate_goal_seek_anchor.py",
+              "tests/scripts-root/test_root__lint_vendored_ssot.py"
+            ],
+            "test_result": "4 passed in 0.04s (test_validate_goal_seek_anchor.py) / 9 passed in 0.24s (test_root__lint_vendored_ssot.py)"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
+            "sha256": "a322e8a155f440d3f225a0323fb5f774ecfb681619984053febb500ed31f9fba",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_content_review_rubric_routing.py"
+            ],
+            "test_result": "16 passed in 0.17s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+            "sha256": "d904181c1bb233a12ad233cbf2189e5866614d91678ab70cb293f6e4f8b54a34",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_guarded_publication.py"
+            ],
+            "test_result": "14 passed in 0.53s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
+            "sha256": "25f843694b8301ca94bd4032e0e0ad22287cfdccf51330dd1b3954c98eaec975",
+            "verdict": "PASS",
+            "score": 92,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py"
+            ],
+            "test_result": "30 passed in 1.07s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/scripts/search-knowledge.py",
+            "sha256": "b78ab3f50d1b9757a16b38d1a5f5efca1ddd6a81f3dc0ef73f9ae51ff2cff633",
+            "verdict": "PASS",
+            "score": 94,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py"
+            ],
+            "test_result": "30 passed in 1.07s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts/validate-challenge-output.py",
+            "sha256": "68df12efed2850f4d3983276a65adb0a612b3640739189f4f49d5fc479db5803",
+            "verdict": "PASS",
+            "score": 85,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_validate_challenge_output.py"
+            ],
+            "test_result": "134 passed in 1.11s"
+          },
+          {
+            "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
+            "sha256": "443fd0472c1b1bbf6a2403b8e445a3258647ef3fdd41561ad3f7171c9bf36927",
+            "verdict": "PASS",
+            "score": 92,
+            "mechanical": true,
+            "tests": [
+              "plugins/ubm-goal-setting/tests/test_youtube_sync_oneshot.py"
+            ],
+            "test_result": "36 passed in 11.51s"
+          }
+        ],
+        "reviewed_by": "coverage-reviewer-pr85-20261010 (作者とは別の subagent)",
+        "records_written": 34,
+        "ratchet_after": "rc=0、scripts/llm_eval 64.5%（313/485、floor 64.3%）",
+        "coverage_records_integrity_test": "tests/test_coverage_records_integrity.py 502 passed",
+        "remaining_governance_steps_local": "ratchet-floor の後で skip された governance の25 step を、workflow の run をそのまま抜き出して手元で実行し、25 step すべて rc=0"
+      }
+    },
+    "full_worktree_import": {
+      "commit": "fdc93c12",
+      "files": {
+        "total": 533,
+        "modified": 102,
+        "added": 431
+      },
+      "integrity": "本体の作業ツリーと cmp で全件照合。違いは plugin-fingerprints.json と lint-script-naming.py の2件だけで、どちらも意図した合わせ方",
+      "secrets_audit": "AWS・GitHub・OpenAI・Anthropic・Slack・Google のキーの形、秘密鍵、JSON の password/secret/token の値、accessToken/refreshToken/oauthAccount を全件で検索して0件。認証ファイル (.credentials.json・.claude.json) の写しは含まれない",
+      "change_category": "classify_change で 533件すべて P2_content。P0・P1 は0件",
+      "local_ci": {
+        "summary": "790e320b のクリーンな worktree (PYTHONPYCACHEPREFIX をツリーの外に向けた) で scripts/run-ci-checks.sh を全段実行した: PASS 159 / WARN 14 / SKIP 3 / FAIL 6。FAIL 6件は、既知の4件 (live-trial の lint、版上げ忘れ、plugin-tests の dev-graph の9件、governance の pytest の drift の1件) と、手元では $GITHUB_ENV が無いために落ちる『Keep bytecode caches outside the checkout』の2段だけ。GitHub Actions (790e320b) も同じ: Plugin Governance CI run 38025214077 は governance の pytest が 1 failed, 8102 passed, 7 skipped (drift の1件)、plugin-tests は 9 failed, 267 passed (dev-graph の9件)。governance-check run 38025214025 は lint-live-trial-verdict で止まった (後ろの70段は skip。その70段は手元の全段の実行で確かめた)。contract-generator は success。",
+        "failed": [
+          "governance-check.yml:change-category-guard: lint live-trial verdict 突合 (既知。dev-graph の9スキル、22件の違反。harness-bzn.4)",
+          "governance-check.yml:change-category-guard: validate plugin release (既知。version 上げ忘れ 22 件。cooldown のため 2026-10-13T00:06Z 以降に版上げ)",
+          "harness-creator-kit-ci.yml:plugin-tests: Run plugin behavior tests (既知。plugins/dev-graph の test_independent_scenario_receipt_covers_exact_criteria の9件。9 failed, 267 passed)",
+          "harness-creator-kit-ci.yml:governance: Run behavior tests (既知。test_checked_in_state_has_no_drift の1件。1 failed, 8105 passed, 4 skipped。版上げで解消)",
+          "harness-creator-kit-ci.yml:plugin-tests と governance: Keep bytecode caches outside the checkout (手元だけ。$GITHUB_ENV に書く段なので GitHub では通る)"
+        ],
+        "notes": [
+          "e896c729 の時点で wtpy (__pycache__ が159か所ある) で流した一括検査は FAIL 10 で、governance の pytest は 210 failed だった。同じ commit のクリーンな worktree では lint-feedback-contract が rc=0、手元だけで落ちた test 289件はすべて passed だった。差は __pycache__ による偽の失敗 (残課題の harness-20h)。",
+          "GitHub では手前の段で skip されて見えていなかった PKG-007 と lint-skill-runtime-profiles の2件は、790e320b で直した。クリーンな worktree の全段の実行で、どちらも通った。native-surfaces --check、ratchet-floor (RATCHET OK) も通った。",
+          "eval-log/harness-coverage.json は 3d24214e のときの数 (scripts 485本) のままで、fdc93c12 で取り込んだ plugins/harness-creator/scripts/plugin_resources.py の分が入っていなかった。make harness-coverage で作り直し (scripts 486本、llm_eval 64.5% → 64.4%。floor 64.3% は上回る)、クリーンな worktree の出力とバイト単位で同じことを確かめて、この受領書と同じ commit に入れた。plugin_resources.py の独立コードレビューの記録はまだ無い。"
+        ]
+      }
+    },
+    "improve_remaining_work": {
+      "note": "残課題の改善 (PR 本文の 12) を実装した時点 (2026-10-10、b802732a の上の作業ツリー) の検証。数字は実行した結果だけを書いた。この後の i 回目・j 回目・k 回目の修正で同じ範囲の test は増えている (review_fix_round13・review_fix_roundk を参照)。",
+      "tests": [
+        {
+          "target": "scripts/run-ci-checks.sh の RUNNER_TEMP と GITHUB_ENV (harness-20h)",
+          "result": "21 passed (bash 3.2 の /bin/bash)"
+        },
+        {
+          "target": "notify-if-governance-trigger.py・rollback-to-stable.py (harness-2ix)",
+          "result": "新しい test 18件が passed"
+        },
+        {
+          "target": "re-evaluate-on-rubric-bump.py の test 3ファイル (harness-9vu)",
+          "result": "41・39・27 passed。実リポジトリでも rc=0"
+        },
+        {
+          "target": "lint-rubric-refs-exist.py (harness-aor)",
+          "result": "94 passed。実リポジトリの SKILL.md 147件がすべて解決 (既存14件を0件にした)"
+        },
+        {
+          "target": "validate-plugin-package.py (harness-20h の _tree_fingerprint)",
+          "result": "126 passed。validate-plugin-packages.py は __pycache__ が161か所ある作業ツリーで PKG-003 の偽の失敗7件から rc=0 になった"
+        },
+        {
+          "target": "validate-challenge-output.py (harness-6qz)",
+          "result": "185 passed"
+        },
+        {
+          "target": "plugins/ubm-goal-setting の test 全体 (harness-6qz)",
+          "result": "799 passed"
+        },
+        {
+          "target": "plan-verification-obligations.py ほか run-build-skill の script (harness-5ww)",
+          "result": "71 passed。新しい test が修正前の版で落ちることを、レビュー時点の版に一時的に差し替えて確かめた"
+        }
+      ],
+      "ci_steps_added": "CI に足した2つの段 (rubric_refs の fail-closed の検査と、|| true を外した re-evaluate) は手元で rc=0。rubric_refs は 147 SKILL.md すべて解決、re-evaluate は 37件を走査して再評価の対象 0",
+      "independent_review": "ubm-goal-setting の新設 script 4本の独立コードレビューは PASS (94・97・90・95)。M01 の素通り2種類 (1文で書くと費用ゼロの判定をすり抜ける、ラベルの重複で判定がずれる) を実測で見つけて直し、変えた script だけを取り直した。直した部分は i 回目の独立レビュー (26本中20本 PASS・6本 FAIL。[中] 19件) に回した",
+      "full_tests": {
+        "summary": "tests/ 全体: 8570 passed, 5 failed",
+        "failed": [
+          "版上げ漏れの検出 1件 (22プラグインの版上げ。2026-10-13T00:06Z 以降)",
+          "tests/criteria 4件 (run-skill-intake・run-skill-rubric-governance・run-plugin-package-check の content-review が FAIL。i 回目の修正と再レビューに回した)"
+        ]
+      }
+    },
+    "review_fix_round13": {
+      "note": "独立レビュー (i 回目) の指摘の修正と ubm-goal-setting 0.8.0 の4層の取り込みの検証。数字は修正担当の報告と手元の再実行の結果。",
+      "tests": [
+        {
+          "target": "derive-verification-contract.py (checker のパスの解決)",
+          "result": "128 passed"
+        },
+        {
+          "target": "governance-automation の manifest 2本・aggregate_evals 2本・detect_repeated_rubric_violations・ja_contract_parity",
+          "result": "183 passed"
+        },
+        {
+          "target": "skill-governance-lint の3本 (lint-rubric-violation・lint-script-frontmatter・lint-skill-dep-step7)",
+          "result": "118 passed (Python 3.11・3.9)"
+        },
+        {
+          "target": "plugins/skill-intake/tests と tests/test_skill_intake_guard_skillgen.py",
+          "result": "53 passed (plugin root から流しても 53) と 14 passed"
+        },
+        {
+          "target": "test_harness_creator_dissection_doc.py・test_root__ja_contract_parity.py と test_harness_creator__render_findings_score.py",
+          "result": "12 passed と 123 passed"
+        },
+        {
+          "target": "audit-capability-parity.py の組",
+          "result": "77 passed (新しい test を足す前は 55)"
+        },
+        {
+          "target": "sync-plugin-platforms.py の組",
+          "result": "246 passed"
+        },
+        {
+          "target": "plugins/harness-creator/tests 全体",
+          "result": "1333 passed"
+        },
+        {
+          "target": "build-artifact-delivery.py・lint-test-discovery-coverage.py の関係 test 6本",
+          "result": "283 passed (3.11)、artifact-delivery 系4本 165 passed (3.9)"
+        },
+        {
+          "target": "外部変更ガード (正規のコマンドの判定を shell の構文を読んで fail-closed に)",
+          "result": "3.11: ガードと artifact_delivery 151 passed・関連5ファイル 243 passed・test_guarded_publication.py 20 passed。3.9: 23 passed・159 passed"
+        },
+        {
+          "target": "validate-challenge-output.py (直後の否定・予定の語)",
+          "result": "233・1009 passed (3.11・3.9)"
+        },
+        {
+          "target": "build-claude-symlinks.py・build-claude-settings.py (__pycache__ の除外)",
+          "result": "201 passed"
+        }
+      ],
+      "rereview_round_j": "直したものを別の独立評価者が対象ごとにもう一度読んだ (coverage の記録37件と content-review 4 skill)。[中] 以上は、外部変更ガードの正規のコマンドの判定 (basename だけを見ていた)、24章・34章のずれ、run-skill-intake の P5 を飛ばす経路、PKG-006 と集計の run の区別、run-ubm-goal-setting の見直しモードの番号ほか、ubm の agent 4本の BD-003 (300行の上限。origin/main の時点から)。すべて review_fix_roundk の範囲で直した",
+      "j_low_findings": "j 回目の [低] は remaining_work に足した (この受領書の new_residuals)"
+    },
+    "review_fix_roundk": {
+      "note": "j 回目の指摘の修正 (k の修正) と、k 回目の再レビュー (この PR の最後のレビュー) の後に流した検証。数字は修正担当の報告と、手元のクリーンな worktree での再実行の結果。",
+      "tests": [
+        {
+          "target": "外部変更ガード (正規のコマンドの判定を語の形と実パスに)",
+          "result": "3.11: 1349 passed、3.9: 1273 passed (落ちた3件は runner hash の作り直し前のずれと version の凍結。作り直した後、ガードと配布の test 182 passed)。ubm の guarded publication 20 passed (3.11・3.9)"
+        },
+        {
+          "target": "build-claude-settings.py と設計書 34章・34a",
+          "result": "test 30 passed、test_build_claude_settings.py ほか 120 passed、--help・--check --json は rc 0"
+        },
+        {
+          "target": "run-ubm-goal-setting (見直しモードの番号・validate-cross-level 0.2.0・validate-goal-output 0.3.1)",
+          "result": "1019 passed (3.11・3.9)"
+        },
+        {
+          "target": "PKG-006 と aggregate-pkg-findings.py (run ごとの集約)",
+          "result": "関係 test 353 passed (3.11・3.9)。validate-plugin-packages.py (22 plugin) rc 0"
+        },
+        {
+          "target": "run-skill-intake (P5 を飛ばした経路)",
+          "result": "plugin 76 passed・repo 直下 1113 passed (3.11・3.9)。P10 hook: 飛ばした fixture は rc 0、深掘りした interview に印がある fixture は rc 2"
+        },
+        {
+          "target": "ubm-goal-setting の agent 4本 (BD-003)",
+          "result": "pytest 1021 passed (3.11・3.9)、render-findings-score --kind agent は4本とも97"
+        }
+      ],
+      "final_checks": [
+        {
+          "target": "repo の検査 42本 (gates.sh)",
+          "result": "39本 rc 0。rc 1 は lint-content-review.py --all (rg と ubm の FAIL の記録、残課題 18・20)、lint-live-trial-verdict.py --all (dev-graph、harness-bzn.4)、build-plugin-release.py --check (22プラグインの版上げ待ち、残課題 4)"
+        },
+        {
+          "target": "CI の残りの段 (ci-rest.sh)",
+          "result": "FAILED_STEPS=0"
+        },
+        {
+          "target": "validate-harness-coverage.py --ratchet",
+          "result": "rc 0 (全軸が floor 以上)"
+        },
+        {
+          "target": "tests/criteria",
+          "result": "4 failed、293 passed。落ちたのは run-skill-rubric-governance と run-ubm-goal-setting の OUT1・OUT2 (content-review の FAIL の記録)"
+        },
+        {
+          "target": "coverage の記録の整合と parity の test 5本",
+          "result": "582 passed"
+        },
+        {
+          "target": "変えた artifact の coverage の記録 (check_cov_all)",
+          "result": "153件 OK、FAIL 4件 (knowledge-extractor 81・phase3-coordinator 82・設計書 27章 41・33章 54。どれも sha256 は一致。残課題 19・20・21)、記録の無い script 0件"
+        },
+        {
+          "target": "audit_secret_leak.py",
+          "result": "rc 0 (平文の secret 無し)"
+        },
+        {
+          "target": "validate-plugin-test-roots (k の修正の後)",
+          "result": "21 root のうち 20 が pass。dev-graph は 9 failed・273 passed (harness-bzn.4)"
+        }
+      ],
+      "rereview_round_k": "j 回目の指摘を直したものだけを、j 回目とも作者とも別の独立評価者がもう一度読んだ。設計書 24・32・34・34a は PASS (95・100・98・94)、外部変更ガード PASS 94、PKG PASS、skill-intake PASS、ubm の agent は PASS 3・FAIL 1 (knowledge-extractor 81)、ubm の script と command は PASS で phase3-coordinator は FAIL 82、content-review は run-skill-rubric-governance と run-ubm-goal-setting が FAIL。k 回目で出た指摘は直さずに remaining_work に足した (k_residuals)",
+      "not_run": "dev-graph の9スキルの live-trial のやり直し (tmux が要る。harness-bzn.4)"
+    },
+    "latest_verified_code_commit": "この受領書の更新と同じ commit",
+    "ci_fix_after_review": {
+      "note": "d0a9a552 の CI で、手元では出ていなかった失敗が1件あった。原因を手元で再現してから直した。",
+      "ci_run": "https://github.com/daishiman/harness-dev/actions/runs/38089716882",
+      "ci_result_at_d0a9a552": {
+        "governance_pytest": "6 failed, 8787 passed, 7 skipped。既知の5件 (test_checked_in_state_has_no_drift と tests/criteria の4件) と、この修正の1件",
+        "plugin_tests": "dev-graph の9件だけ (既知)",
+        "change_category_guard_job": "lint-content-review --all で rc 1 (rg と ubm の FAIL の記録4件。既知)"
+      },
+      "tests": [
+        {
+          "target": "修正前の test を PYTHONPYCACHEPREFIX ありで実行",
+          "result": "1 failed (CI と同じ FileNotFoundError を再現)"
+        },
+        {
+          "target": "tests/test_feedback_contract_ssot.py (PYTHONPYCACHEPREFIX あり・なし、3.11)",
+          "result": "17 passed・17 passed"
+        },
+        {
+          "target": "tests/test_feedback_contract_ssot.py (PYTHONPYCACHEPREFIX あり、3.9)",
+          "result": "17 passed"
+        },
+        {
+          "target": "tests 全体 (手元、d0a9a552)",
+          "result": "5 failed, 8785 passed, 4 skipped。落ちたのは既知の5件だけ"
+        },
+        {
+          "target": "guard-change-category --base origin/main",
+          "result": "total=1538 blocked=0"
+        }
+      ]
+    },
+    "full_worktree_import_round15": {
+      "note": "5ae35116（作業ツリーの2回目の取り込み、2026-10-12 13:37 JST）の時点で確かめたこと。repo 全体の gate（全 test root、CI の lint の一式）はこの commit の直前には回しておらず、次の commit（round16）でまとめて回した。結果は round16_live_trial_and_fixes に書いた。",
+      "commit": "5ae35116",
+      "scale": "728 files（追加 289・削除 29・変更 406・rename 4）、+25,780・−3,774",
+      "tests": [
+        {
+          "target": "dev-graph の受入条件の穴を埋めた script（test_acceptance_gaps_a1・a2、test_skill_mass_production_contracts）",
+          "result": "55 passed"
+        },
+        {
+          "target": "validate-harness-coverage.py --ratchet",
+          "result": "RATCHET OK（全軸が floor 以上）"
+        }
+      ],
+      "final_checks": [
+        {
+          "target": "利用者のメールアドレスの走査（commit する 752 files）",
+          "result": "commit する側に 0 件。含む3つの run は commit から外した"
+        },
+        {
+          "target": "平文の secret の走査（GitHub・Anthropic などの token の形、752 files）",
+          "result": "0 件"
+        },
+        {
+          "target": "content-review の照合（lint-content-review.py --all）",
+          "result": "stale が 8 件残っていた（SKILL.md を変えた後の取り直し待ち）。round16 で取り直し、今は90 skill すべて OK"
+        },
+        {
+          "target": "受入条件の独立判定（scenario-verdict.json）",
+          "result": "このときは dev-graph の9スキルとも FAIL（iteration 1）か、SKILL.md と合わない stale だった。round16 で直して取り直し、9スキルとも PASS"
+        }
+      ]
+    },
+    "round16_live_trial_and_fixes": {
+      "note": "round16（この受領書の更新と同じ commit、2026-10-13）の時点で確かめたこと。dev-graph の9スキルの live trial と受入条件の判定を、隔離した環境で取り直した。repo 全体の gate（CI の lint の一式、CI の残りの段、全 test root、tests/ と governance-lint の test、ratchet）は、この commit に入れる作業ツリーで回した。どれも PYTHONDONTWRITEBYTECODE=1 で回し、.pyc の数は回す前と同じ 1351 のまま。",
+      "scale": "この commit の差分は 656 files（追加 495・変更 161）、+33,607・−924（この受領書の更新を除く）",
+      "tests": [
+        {
+          "target": "scripts/validate-plugin-test-roots.py --workers 4（CI の plugin-tests job と同じ、全 plugin の test root）",
+          "result": "roots=21 pass=21 fail=0（plugins/dev-graph の root を含む）"
+        },
+        {
+          "target": "python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q（CI の test の段）",
+          "result": "9162 passed、4 skipped（0 failed）"
+        },
+        {
+          "target": "CI の lint の一式（42本。guard-change-category から build-artifact-delivery --check まで）",
+          "result": "guard-change-category.py --base origin/main だけが rc 1（P1_structural の cooldown 違反 46件。直前の P1 の entry から cooldown が明ける 2026-10-13T00:06:16Z まで）。残りの41本は rc 0"
+        },
+        {
+          "target": "CI の残りの段（skill-intake の契約、capability と composition、portability、manifest、projection ほか）",
+          "result": "FAILED_STEPS=0"
+        },
+        {
+          "target": "validate-harness-coverage.py --ratchet（make harness-ratchet）",
+          "result": "RATCHET OK（全軸が floor 以上）"
+        },
+        {
+          "target": "aidd-agent-kit の report-design-system の selftest（.agents・.claude・aidd-agent-kit の3か所）",
+          "result": "3か所とも合格（違反検出 76 件 + 入力エラー 18 件 + ヒアリングと資料 111 件）"
+        }
+      ],
+      "final_checks": [
+        {
+          "target": "dev-graph の9スキルの live trial（隔離した環境、tier は live）",
+          "result": "init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する"
+        },
+        {
+          "target": "dev-graph の9スキルの受入条件の独立判定（scenario-verdict.json）",
+          "result": "init（C01）6基準 PASS（SKILL.md 03c93563、OUT1 は 20261013T0117-pr85）、node（C02）4基準 PASS（SKILL.md 1ee429d9、OUT1 は 20261013T0528-pr85）、sync（C03）10基準 PASS（SKILL.md 227715b0、OUT1 は 20261013T0145-pr85）、decompose（C14）8基準 PASS（SKILL.md ee8aa00f、OUT1 は 20261013T0331-pr85）、schedule（C15）4基準 PASS（SKILL.md b05089c3、OUT1 は 20261013T0456-pr85）、system-spec（C19）2基準 PASS（SKILL.md 4d2b72af、OUT1 は 20261013T0349-pr85）、render（C05）2基準 PASS（SKILL.md 25b0d1af、OUT1 は 20261012T2212-pr85）、requirements（C04）3基準 PASS（SKILL.md ed21e07f、OUT1 は 20261012T2252-pr85）、status（C18）3基準 PASS（SKILL.md 2313bb65、OUT1 は 20261012T2229-pr85）。9スキルとも PASS で、判定の対象の SKILL.md は今の本文と一致する"
+        },
+        {
+          "target": "content-review の照合（lint-content-review.py --all）と live trial の照合（lint-live-trial-verdict.py --all）",
+          "result": "どちらも rc 0。content-review は 90 skill、live trial は dev-graph の 9 verdict を照合した（ほかの 21 skill は record-only で verdict が無い）。sync の run（20261013T0145-pr85）は、契約上の gate（frontmatter の AskUserQuestion と external_mutation_guard）への1回の応答が、自走未達の降格から免除された。lint はこれを NOTE に出し、被験の skill が契約上その gate を求めることを人が確かめるよう求める"
+        },
+        {
+          "target": "利用者のメールアドレスの走査（作業ツリーの追跡と未追跡のファイル）",
+          "result": "origin/main と違うファイル（commit するもの、2,589 件）を走査し、メールアドレスとその @ の前の部分の新しい出現は 0 件。伏せ字にしていない3つの run と期限の切れた intent は commit から外した"
+        },
+        {
+          "target": "平文の secret の走査（audit_secret_leak.py）",
+          "result": "audit_secret_leak.py は rc 0。stage した 656 files の token と秘密鍵の形（GitHub・Anthropic・OpenAI・AWS・Slack・Google・PRIVATE KEY）の走査も 0 件"
+        },
+        {
+          "target": "Python の bytecode（.pyc）が作業ツリーに増えていないこと",
+          "result": "回す前も回した後も 1351（どれも gitignore されていて、commit に入らない）"
+        }
+      ]
+    },
+    "beads_followup_and_ci_after_cooldown": {
+      "note": "2026-10-13 の Beads の反映と、cooldown の明けた後の CI の回し直し。仕様への影響は無い (課題管理の記録とガードの受領書だけ)",
+      "ci": {
+        "rerun": "governance-check run 38314280044 の change-category-guard (00:06:45Z に回し直し、00:07:49Z に success)",
+        "pr_checks": "change-category-guard・governance・lint・plugin-tests・test・verify の6つとも pass (head 3fb72347)"
+      },
+      "release_checks": {
+        "build-plugin-release.py --check": "rc 0",
+        "build-local-marketplace.py --check": "rc 0",
+        "test_checked_in_state_has_no_drift": "1 passed"
+      },
+      "beads": {
+        "closed": [
+          "harness-frcy",
+          "harness-eef",
+          "harness-8cvr",
+          "harness-yx2o",
+          "harness-3mw",
+          "harness-bzn.4"
+        ],
+        "notes_appended": [
+          "harness-prvc",
+          "harness-zq9",
+          "harness-3mw",
+          "harness-r226"
+        ],
+        "priority_changed": {
+          "harness-r226": "P2 → P1"
+        },
+        "created_count": 29,
+        "dry_run": "2回目の script は、偽の bd を PATH の先頭に置いて全行を試してから preview を作った (1件をわざと失敗させても残りが進み、非 0 で終わることも確かめた)"
+      }
+    },
+    "ci_flake_fix_round18": {
+      "note": "2026-10-13 の CI の揺れの手当て。仕様への影響は無い (CI の runner が子の pytest に渡す環境だけを変えた。runner の環境の扱いを書いた仕様・設計の文書は無い)",
+      "failure": {
+        "head": "70de991e",
+        "job": "plugin-tests (macOS の runner)",
+        "symptom": "plugins/dev-graph の test_init_preflight_gate が1件だけ落ちた。fixture の repo を作った直後に .git も含めて写しを取るとき、写しに .git/objects/maintenance.lock が入ったり入らなかったりする",
+        "cause": "git 2.47 以降は commit の後に `git maintenance run --auto --quiet --detach` を裏で起こし、その間だけ maintenance.lock を置く。写しの時点しだいで、比べる2つの写しの中身が食い違う"
+      },
+      "fix_commit": "5090b865",
+      "fix": "scripts/validate-plugin-test-roots.py の child_env が、子の pytest の環境へ GIT_CONFIG_COUNT・GIT_CONFIG_KEY_n・GIT_CONFIG_VALUE_n で maintenance.auto=false と gc.auto=0 を足す (親から受け継いだ GIT_CONFIG_* の組は残し、その後ろへ足す)。tests/test_validate_plugin_test_roots.py に、子の git から設定が見えることと、受け継いだ設定が残ることを確かめる test を足した",
+      "why_not_fixture": "dev-graph の fixture (test_init_preflight_gate.py の git_repo・test_acceptance_gaps_a1.py の git_init と Harness._repo) を直すと plugin の指紋が変わり、版上げで plugin.json (P1・承認済みの sha256) が変わる。この PR では版上げをせず、harness-0brx に回した",
+      "local_checks": {
+        "tests/test_validate_plugin_test_roots.py": "5 passed",
+        "plugins/plugin-dev-planner/tests/test_ci_integration.py": "5 passed (runner の呼び出しの契約の文字列を保った)",
+        "guard-change-category.py": "rc 0 (blocked=0。runner と test は P2_content)",
+        "lint-script-naming.py": "VIOLATION 0",
+        "lint-test-discovery-coverage.py": "ok",
+        "build-plugin-release.py --check": "OK (22 plugins)",
+        "build-local-marketplace.py --check": "rc 0"
+      },
+      "ci_after_fix": "change-category-guard・governance・lint・plugin-tests・test・verify の6つとも pass (head 5090b865。plugin-tests は 7m10s)",
+      "beads": {
+        "created": [
+          "harness-0brx"
+        ],
+        "guard": "外部変更ガードを通した。1回目の preview (08b36ce8…) は承認が届く前に期限が切れ、2回目の preview (3d319193…) で承認・実行した"
+      }
+    },
+    "main_checkout_reconciliation_round19": {
+      "note": "2026-10-13。利用者の本体の checkout の git status (732件) が PR に入っているかを、読むだけで1件ずつ照らした。本体の local branch は 3fdf00cf のままで、PR は worktree から remote の branch へ直接 push してきたので、本体では PR の中身が「未 commit の差分」に見える。仕様への影響は無い",
+      "method": "本体の各 path の blob を PR の head (103512e7) と比べ、違うものは 3fdf00cf..103512e7 の過去の版と比べ、それでも違うものは git merge-file で PR の版に本体の変更を重ね、さらに本体が足した行が PR の歴史のどこかに現れるかを数えた",
+      "result": {
+        "same_as_pr_head": 451,
+        "same_as_past_pr_version": 164,
+        "contained_by_3way_merge": 30,
+        "older_than_pr": 70,
+        "older_than_pr_note": "本体の更新時刻はどれも 2026-10-11 06:22 以前で、PR の取り込み (6257499e、06:56) より古い。本体にだけ見えた行は、PR では後の版へ書き直されている (例: notifier の逆向きの文言、rubric の提案の test の名前、validate-frontmatter の兄弟 skill の変数名)",
+        "intentionally_excluded": 12,
+        "intentionally_excluded_note": "rubric の自動の提案9件 (5ae35116 で gitignore に入れた) と、eval-log/ubm-goal-setting/run-ubm-challenge/ の個人の記録3件",
+        "renamed_in_both": 4,
+        "imported_now": [
+          ".beads/interactions.jsonl"
+        ],
+        "imported_now_note": "PR の版の後ろに7行が足された形 (この PR で閉じた harness-frcy・harness-eef・harness-8cvr・harness-yx2o・harness-3mw・harness-bzn.4 と、harness-r226 の優先度の変更)。メールアドレスは含まない"
+      }
+    }
+  },
+  "planned_beads": {
+    "status": "起票済み (2026-10-10、外部変更ガードを通した)。PR のコメント https://github.com/daishiman/harness-dev/pull/85#issuecomment-6093429440 に記録",
+    "ids": [
+      "harness-eef",
+      "harness-9vu",
+      "harness-2ix",
+      "harness-5ww",
+      "harness-aor",
+      "harness-20h",
+      "harness-6rh",
+      "harness-6qz"
+    ],
+    "titles": [
+      "ubm-goal-setting: 新設スクリプト5本を動詞規則に合わせて改名し verdict を取り直す",
+      "re-evaluate-on-rubric-bump: CI の step の引数の誤りと root 版・plugin 版の二重実装を直す",
+      "run-governance-automation: content-review の残り low 6件",
+      "run-build-skill・run-skill-intake: content-review の残り low",
+      "lint-rubric-refs-exist: 他プラグインの既存14件の rubric_refs 未解決",
+      "feedback_contract_ssot: 配布コピーの内容 hash から __pycache__ と .pyc を外す",
+      "validate-inline-goal-seek-anchor: UTF-8 でない入力で traceback を出す (26本・22プラグイン)",
+      "ubm-goal-setting: 新設 script の独立レビューの減点 (publish-staged-files ほか)"
+    ],
+    "notes_appended": [
+      "harness-bzn.4"
+    ],
+    "followup_after_review_rounds": {
+      "code_commit": "6257499e",
+      "close": [
+        "harness-9vu",
+        "harness-2ix",
+        "harness-5ww",
+        "harness-aor",
+        "harness-20h",
+        "harness-6rh",
+        "harness-6qz"
+      ],
+      "close_reason": "PR #85 の commit 6257499e で直した (PR 本文の「12. 残課題の改善」)",
+      "create_titles": [
+        "22プラグインの版上げと ubm-goal-setting 0.8.0 (2026-10-13T00:06Z 以降。PR #85 の merge の前提)",
+        "外部変更ガードの署名の鍵 .guard-key が公開リポジトリの git 管理下にある",
+        "description の規則の食い違い: 発動条件の個数と FM-005 の判定語を rubric の改正で決める",
+        "guide-doc-generator C03: rubric を持たない ref を reference_refs へ移す plan の改訂",
+        "run-skill-rubric-governance と guard-change-category の low",
+        "設計書 (doc/) の low: 24章の正本の扱い・見出し・kind・hook-name ほか",
+        "PKG (plugin package の検査) の low",
+        "harness-creator と repo 直下の script の low",
+        "skill-governance-lint の3本の low",
+        "ubm-goal-setting の script の low",
+        "skill-intake の low",
+        "外部変更ガードの正規コマンドの判定の限界と low",
+        "run-skill-rubric-governance: 影響評価が score の無い governance log を読み flip_rate が常に 0 になる",
+        "ubm-goal-setting knowledge-extractor: source.type の値が schema の enum と検出 script と合わない",
+        "ubm-goal-setting: 1年目標の初回は Step 2 を飛ばさない例外が3か所に無い",
+        "設計書 27章・33章の coverage FAIL (P1 凍結のため PR #85 では未修正)",
+        "外部変更ガード: 裏の作業の完了通知 (task-notification) を利用者の発言として扱い intent を発行する"
+      ],
+      "status": "起票済み・7件を閉じた (外部変更ガードの preview と利用者の CONFIRM を経た)",
+      "created": [
+        {
+          "id": "harness-3mw",
+          "title": "22プラグインの版上げと ubm-goal-setting 0.8.0 (2026-10-13T00:06Z 以降。PR #85 の merge の前提)"
+        },
+        {
+          "id": "harness-olh",
+          "title": "外部変更ガードの署名の鍵 .guard-key が公開リポジトリの git 管理下にある"
+        },
+        {
+          "id": "harness-d2r",
+          "title": "description の規則の食い違い: 発動条件の個数と FM-005 の判定語を rubric の改正で決める"
+        },
+        {
+          "id": "harness-dw8",
+          "title": "guide-doc-generator C03: rubric を持たない ref を reference_refs へ移す plan の改訂"
+        },
+        {
+          "id": "harness-zq9",
+          "title": "run-skill-rubric-governance と guard-change-category の low"
+        },
+        {
+          "id": "harness-9cuf",
+          "title": "設計書 (doc/) の low: 24章の正本の扱い・見出し・kind・hook-name ほか"
+        },
+        {
+          "id": "harness-5ist",
+          "title": "PKG (plugin package の検査) の low"
+        },
+        {
+          "id": "harness-f6hp",
+          "title": "harness-creator と repo 直下の script の low"
+        },
+        {
+          "id": "harness-d3b3",
+          "title": "skill-governance-lint の3本の low"
+        },
+        {
+          "id": "harness-6vf8",
+          "title": "ubm-goal-setting の script の low"
+        },
+        {
+          "id": "harness-xdvk",
+          "title": "skill-intake の low"
+        },
+        {
+          "id": "harness-quco",
+          "title": "外部変更ガードの正規コマンドの判定の限界と low"
+        },
+        {
+          "id": "harness-8cvr",
+          "title": "run-skill-rubric-governance: 影響評価が score の無い governance log を読み flip_rate が常に 0 になる"
+        },
+        {
+          "id": "harness-frcy",
+          "title": "ubm-goal-setting knowledge-extractor: source.type の値が schema の enum と検出 script と合わない"
+        },
+        {
+          "id": "harness-yx2o",
+          "title": "ubm-goal-setting: 1年目標の初回は Step 2 を飛ばさない例外が3か所に無い"
+        },
+        {
+          "id": "harness-prvc",
+          "title": "設計書 27章・33章の coverage FAIL (P1 凍結のため PR #85 では未修正)"
+        },
+        {
+          "id": "harness-r226",
+          "title": "外部変更ガード: 裏の作業の完了通知 (task-notification) を利用者の発言として扱い intent を発行する"
+        }
+      ]
+    },
+    "followup_round15_16": {
+      "status": "実行済み (2026-10-13。外部変更ガードの preview と利用者の CONFIRM を2回通した)。1回目 (preview 8e029aec) は harness-frcy・harness-eef・harness-8cvr・harness-yx2o を閉じた後、script の不具合 (macOS の bash 3.2 が、変数 F の直後の全角の「）」の1バイト目を変数名に含め、set -u で止まった) で harness-prvc の行で止まり、ガードはその stderr を UTF-8 として読めずに落ちた (完了の受領書は無い)。2回目 (preview 0a447e09) で残りだけを実行し、35件とも OK (完了の受領書あり)。結果は PR のコメントに記録",
+      "close": [
+        "harness-frcy",
+        "harness-eef",
+        "harness-8cvr",
+        "harness-yx2o",
+        "harness-bzn.4",
+        "harness-3mw"
+      ],
+      "append_notes": [
+        "harness-prvc",
+        "harness-zq9",
+        "harness-3mw",
+        "harness-r226"
+      ],
+      "priority_change": {
+        "harness-r226": "P2 → P1"
+      },
+      "create_titles": [
+        "guide-doc-generator ref-handout-design-system: content-review が2本とも FAIL のまま (面5の問い合わせが届かない)",
+        "validate-inline-goal-seek-anchor.py の26本の写しを生成元から同期する手順を道具にする",
+        "run-ubm-goal-setting: PLUGIN_ROOT の展開形を正本と同じ形にそろえる",
+        "lint-goal-seek の baseline に載せた負債 (SKILL.md 45本・140組) を返す",
+        "render-findings-score --kind agent: AG-001〜AG-004 の判定が無く、どの agent も passed=false になる",
+        "SKILL.md の小さな low (起動行の python3・Step 参照) と content-review の取り直し",
+        "extract-session-events.py: UTF-8 でない stdin で exit 1 になり、exit 0 の約束を破る",
+        "build-knowledge-usage-log.py: 偽造した matches を利用記録として受け入れる",
+        "repo 直下の script の low (build-artifact-delivery の fence・build-plugin-release の version・lint-script-naming の参照の数え方)",
+        "harness-creator の script の low (notifier の lock・lint-goal-seek の登録範囲・build-subagent の list の読み方ほか)",
+        "run-skill-rubric-governance SKILL.md: 影響評価の手順に severity と bump の不一致の扱いが無い",
+        "命名の lint: 出力の条番号を06章に合わせ、.sh の動詞規則を決める",
+        "dev-graph reconcile-task-lifecycle.py: hook からの呼ばれ方が28章 §3.1 と # contexts: [E] に合わない",
+        "ubm-goal-setting: registry.json の source_type に enum に無い値 (branch-meeting など) がある",
+        "dev-graph の script の欠陥 (live trial の取り直しで発見。read-only の宣言・上限・判定)",
+        "dev-graph の SKILL.md と契約の穴 (live trial の取り直しで発見)",
+        "system-spec-harness: gate の基準のずれ・doc-fetch の時点・設計知識のカードの描き方・評価の揺れ (dev-graph の live trial で発見)",
+        "run-ubm-knowledge-sync SKILL.md: PROJECT_ROOT の扱いと preview 前の親の再検査",
+        "設計書 06・27・28章の low (P1。cooldown のため PR #85 では未修正) と22章の Windows の実機での確認",
+        "coverage の取り直しで出た low (verify-handout の偽 PASS・validate-frontmatter・spec-state の必須キー・system-dev-planner の agent・build-graph-node・migrate-plan-layout・rollback-to-stable・SDP と compile-spec-doc の bytecode)",
+        "installers/ の旧 creator-kit 配置の記述と migrate-from-project.sh・test-self-regenerate・lint-forbidden-deps の欠陥",
+        "設計書 11・14・22・23・25章と README・ref-cross-platform-runtime の low (coverage の取り直しで出た。23章の登録手順は [中])",
+        "run-skill-live-trial: 被験の session が外部へ送る tool (SendFeedback・mcp__* ほか) を既定で拒否しない",
+        "dev-graph: source_lineage の imported_at を確かめず、system-spec の「Skill 経由のみ」を機械で確かめない",
+        "validate-readiness-binding.py: 未登録の package で生の Errno だけが返り、--receipt の既定の場所が書かれていない",
+        "validate-frontmatter ほか19か所: frontmatter を split(\"---\", 2) で切り、値の中の --- で途中から読まなくなる",
+        "live trial の記録: 保存の手順に個人情報を伏せる段が無く、公開 repo の eval-log に利用者のメールアドレスが残っている",
+        "lint-tenant-isolation: allowlist の項目 (contract-generator の XL_PARTY_A_JSON_PATH) の期限が切れ、lint 全体が止まる",
+        "外部変更ガード execute: 子の出力が UTF-8 でないと落ち、完了の受領書も出力も残らない"
+      ],
+      "script": "PR #85 の作業の scratchpad の beads3/create-followups.sh と create-followups-rest.sh (リポジトリの外)",
+      "close_note": "harness-3mw は、cooldown の明けた後の CI の緑と完了の条件の2つを確かめたので、経過を書き足した後に閉じた",
+      "created": [
+        {
+          "id": "harness-o1fh",
+          "title": "guide-doc-generator ref-handout-design-system: content-review が2本とも FAIL のまま (面5の問い合わせが届かない)"
+        },
+        {
+          "id": "harness-1rpx",
+          "title": "validate-inline-goal-seek-anchor.py の26本の写しを生成元から同期する手順を道具にする"
+        },
+        {
+          "id": "harness-5bxm",
+          "title": "run-ubm-goal-setting: PLUGIN_ROOT の展開形を正本と同じ形にそろえる"
+        },
+        {
+          "id": "harness-gn7e",
+          "title": "lint-goal-seek の baseline に載せた負債 (SKILL.md 45本・140組) を返す"
+        },
+        {
+          "id": "harness-6nvp",
+          "title": "render-findings-score --kind agent: AG-001〜AG-004 の判定が無く、どの agent も passed=false になる"
+        },
+        {
+          "id": "harness-ejzm",
+          "title": "SKILL.md の小さな low (起動行の python3・Step 参照) と content-review の取り直し"
+        },
+        {
+          "id": "harness-bjj0",
+          "title": "extract-session-events.py: UTF-8 でない stdin で exit 1 になり、exit 0 の約束を破る"
+        },
+        {
+          "id": "harness-0xwv",
+          "title": "build-knowledge-usage-log.py: 偽造した matches を利用記録として受け入れる"
+        },
+        {
+          "id": "harness-xtsx",
+          "title": "repo 直下の script の low (build-artifact-delivery の fence・build-plugin-release の version・lint-script-naming の参照の数え方)"
+        },
+        {
+          "id": "harness-aqu2",
+          "title": "harness-creator の script の low (notifier の lock・lint-goal-seek の登録範囲・build-subagent の list の読み方ほか)"
+        },
+        {
+          "id": "harness-u0od",
+          "title": "run-skill-rubric-governance SKILL.md: 影響評価の手順に severity と bump の不一致の扱いが無い"
+        },
+        {
+          "id": "harness-g6mu",
+          "title": "命名の lint: 出力の条番号を06章に合わせ、.sh の動詞規則を決める"
+        },
+        {
+          "id": "harness-78it",
+          "title": "dev-graph reconcile-task-lifecycle.py: hook からの呼ばれ方が28章 §3.1 と # contexts: [E] に合わない"
+        },
+        {
+          "id": "harness-filu",
+          "title": "ubm-goal-setting: registry.json の source_type に enum に無い値 (branch-meeting など) がある"
+        },
+        {
+          "id": "harness-0ulg",
+          "title": "dev-graph の script の欠陥 (live trial の取り直しで発見。read-only の宣言・上限・判定)"
+        },
+        {
+          "id": "harness-bty7",
+          "title": "dev-graph の SKILL.md と契約の穴 (live trial の取り直しで発見)"
+        },
+        {
+          "id": "harness-ul5l",
+          "title": "system-spec-harness: gate の基準のずれ・doc-fetch の時点・設計知識のカードの描き方・評価の揺れ (dev-graph の live trial で発見)"
+        },
+        {
+          "id": "harness-pr9g",
+          "title": "run-ubm-knowledge-sync SKILL.md: PROJECT_ROOT の扱いと preview 前の親の再検査"
+        },
+        {
+          "id": "harness-jfbm",
+          "title": "設計書 06・27・28章の low (P1。cooldown のため PR #85 では未修正) と22章の Windows の実機での確認"
+        },
+        {
+          "id": "harness-v391",
+          "title": "coverage の取り直しで出た low (verify-handout の偽 PASS・validate-frontmatter・spec-state の必須キー・system-dev-planner の agent・build-graph-node・migrate-plan-layout・rollback-to-stable・SDP と compile-spec-doc の bytecode)"
+        },
+        {
+          "id": "harness-5m9v",
+          "title": "installers/ の旧 creator-kit 配置の記述と migrate-from-project.sh・test-self-regenerate・lint-forbidden-deps の欠陥"
+        },
+        {
+          "id": "harness-oo88",
+          "title": "設計書 11・14・22・23・25章と README・ref-cross-platform-runtime の low (coverage の取り直しで出た。23章の登録手順は [中])"
+        },
+        {
+          "id": "harness-vndb",
+          "title": "run-skill-live-trial: 被験の session が外部へ送る tool (SendFeedback・mcp__* ほか) を既定で拒否しない"
+        },
+        {
+          "id": "harness-f97r",
+          "title": "dev-graph: source_lineage の imported_at を確かめず、system-spec の「Skill 経由のみ」を機械で確かめない"
+        },
+        {
+          "id": "harness-sqij",
+          "title": "validate-readiness-binding.py: 未登録の package で生の Errno だけが返り、--receipt の既定の場所が書かれていない"
+        },
+        {
+          "id": "harness-mah4",
+          "title": "validate-frontmatter ほか19か所: frontmatter を split(\"---\", 2) で切り、値の中の --- で途中から読まなくなる"
+        },
+        {
+          "id": "harness-gzet",
+          "title": "live trial の記録: 保存の手順に個人情報を伏せる段が無く、公開 repo の eval-log に利用者のメールアドレスが残っている"
+        },
+        {
+          "id": "harness-huu9",
+          "title": "lint-tenant-isolation: allowlist の項目 (contract-generator の XL_PARTY_A_JSON_PATH) の期限が切れ、lint 全体が止まる"
+        },
+        {
+          "id": "harness-huhh",
+          "title": "外部変更ガード execute: 子の出力が UTF-8 でないと落ち、完了の受領書も出力も残らない"
+        }
+      ],
+      "executions": [
+        {
+          "preview": "preview-8e029aec5c51411b978bce803359e4d3.json",
+          "authorization": "authorization-77b84ddaf9524b7da59bb79cb9a885d2.json",
+          "command": "bash create-followups.sh 3fb72347",
+          "result": "harness-frcy・harness-eef・harness-8cvr・harness-yx2o を閉じた (2026-10-12T23:47Z)。harness-prvc の行で止まり、その先は実行されていない。ガードは子の stderr を読めずに UnicodeDecodeError で落ち、完了の受領書は書かれていない",
+          "completion_receipt": null
+        },
+        {
+          "preview": "preview-0a447e099f92440b96f4dc5844959a9e.json",
+          "authorization": "authorization-a62e4b27bbdb4106a5ec61dd6c57555a.json",
+          "command": "bash create-followups-rest.sh 3fb72347",
+          "result": "harness-bzn.4・harness-3mw を閉じ、harness-prvc・harness-zq9・harness-3mw・harness-r226 に経過を書き足し (r226 は P1)、29件を起票した。35件とも OK、failed=0",
+          "completion_receipt": "completion-preview-0a447e099f92440b96f4dc5844959a9e.json"
+        }
+      ],
+      "expired_previews": [
+        "preview-14a7f2dbe8614476a95e3321a7a6ce90.json (1回目の script の preview。利用者の CONFIRM が届く前に期限が切れ、作り直した)",
+        "preview-6ee44d2d305c48f4948a4f680f54118a.json (同上。作り直したのが 8e029aec)",
+        "preview-5744d469f7d943f1ab72ebe2726c1adf.json (2回目の script の preview。利用者の CONFIRM が届く前に期限が切れた。同じ内容で 0a447e09 を作り直した)"
+      ]
+    }
+  },
+  "excluded_from_commit_note": "fdc93c12 で、前回まで外していた差分 (epic harness-bzn の変更一式、goal-seek-progress.json、rubric-governance の提案の下書き、.beads/interactions.jsonl、plugin-plans/dev-graph、.artifact-delivery の受領書) をすべて取り込んだ。scripts/.claude/ と scripts/.artifact-delivery/ はユーザーが削除済みで、存在しない。.gitignore の対象 (.claude/settings.local.json、.notion-config.json、.beads/embeddeddolt/、キャッシュなど) は、ローカルの設定と秘密情報を含みうるので git の管理外のままにした。 round16 では、dev-graph の live-trial の run のうち、利用者のメールアドレスを伏せ字にせずに含む3件 (run-dev-graph-decompose の 20261012T0630-pr85、run-dev-graph-node の 20261012T0635-pr85、run-dev-graph-requirements の 20261012T0654-pr85) を commit していない。どれも同じ skill の後の run で取り直した。この PR で入る live-trial の記録（fdc93c12 の 2026-10-05 の9ファイルと、2026-10-12 の schedule の3つの run）は、利用者のメールアドレスとその @ の前の部分を、行数を変えずに伏せ字にした。伏せた記録の verdict の transcript_sha256 は、伏せる前の bytes の値のまま。main にすでにある46ファイルは変えていない（Beads の下書き 31）。eval-log/ubm-goal-setting/run-ubm-challenge/ の個人の記録も、content-review の verdict のほかは含めていない。",
+  "resolved_remaining_work": [
+    {
+      "item": "リポジトリ全体の rubric_refs 検査で残る、他プラグインの既存14件の指摘",
+      "resolved_by": "harness-aor",
+      "commit": "6257499e"
+    },
+    {
+      "item": "epic harness-bzn の未 commit の変更を別 PR で取り込むか判断すること",
+      "resolved_by": "fdc93c12 (ユーザーの指示で取り込み)",
+      "commit": "fdc93c12"
+    },
+    {
+      "item": "scripts/.claude/ と scripts/.artifact-delivery/ の掃除 (利用者が rm で消す)",
+      "resolved_by": "ユーザーが削除",
+      "commit": "（git の外）"
+    },
+    {
+      "item": "skill-governance-automation の独立レビューで low として残した点 (8件): SKILL.md に目的と entrypoint の対応表が無い。compute-rubric-hash.py は --dry-run を付けないと rubric.json をその場で書き換えるのに、SKILL.md がこの違いを区別していない。CI (harness-creator-kit-ci.yml) の re-evaluate の step が、受け付けない引数 --skills-dir を渡したうえで `|| true` で握りつぶしている。root の scripts/re-evaluate-on-rubric-bump.py が plugin 版と分かれていて、旧い挙動 (欠落を exit 0) のまま。notify-if-governance-trigger.py が入力の欠落を黙って exit 0 で返す。re-evaluate が EVAL_LOG_DIR を読まない。rollback-to-stable.py の --params の既定値が cwd 基準で、実在しないため ceiling 0.05 に黙って fallback する。Key Rules と IN1 の『receipt』が、この skill の entrypoint 群に対して何を指すか定義されていない。詳細は eval-log/skill-governance-automation/run-governance-automation/content-review/elegance-verdict.json の negative_feedback",
+      "resolved_by": "harness-9vu・harness-2ix",
+      "commit": "6257499e"
+    },
+    {
+      "item": "run-build-skill の独立レビューで low として残した点: skills/run-build-skill/scripts の4本に PEP 723 の script ブロックが無い。本文が299行で上限300行に近い。ゴールシーク配線の見出しとアンカーが無い (engine=inline なので違反ではない)",
+      "resolved_by": "harness-5ww",
+      "commit": "6257499e"
+    },
+    {
+      "item": "run-skill-intake の独立レビューで low として残した点: schemas/ を持たない phase (P6・P10) の検証方法が Key Rule 3 に書かれていない。references/handoff-contract.md が参照する正本の節名が古い。workflow-sequence.md の「失敗時の戻り先」が自動の巻き戻しと読める。Key Rule 9 の hook の配線先が実際 (hooks/hooks.json) と違う。詳細は eval-log/skill-intake/run-skill-intake/content-review/elegance-verdict.json の negative_feedback",
+      "resolved_by": "harness-5ww",
+      "commit": "6257499e"
+    },
+    {
+      "item": "feedback_contract_ssot.directory_content_sha256 は __pycache__ と .pyc も hash に入れる。CI は eb7b1bc1 で止めたが、手元で PYTHONDONTWRITEBYTECODE を付けずにコピーのスクリプトを import すると同じずれが起こりうる。harness-creator の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で直す",
+      "resolved_by": "harness-20h",
+      "commit": "6257499e"
+    },
+    {
+      "item": "validate-inline-goal-seek-anchor.py (26本・22プラグインの byte 一致コピー) の FAIL を直すこと。47行目の except が (OSError, json.JSONDecodeError) だけで、UTF-8 でない入力で UnicodeDecodeError の traceback を出して exit 1 になる。(OSError, ValueError, RecursionError) にして26本を byte 一致のまま直し、test を足し、記録を取り直す。plugin.json の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で行う",
+      "resolved_by": "harness-6rh",
+      "commit": "6257499e"
+    },
+    {
+      "item": "ubm-goal-setting の新設 script の独立レビューで減点された点: publish-staged-files.py が存在しない root を作って exit 0 で返すこと、大文字小文字を区別しない APFS で重複の検査をすり抜けること。validate-challenge-output.py の M01 が「会場費はかからない。講師料が30万円かかる。」を通すこと。evaluate-design-rubric.py が object でない JSON で AttributeError の traceback を出すこと、normalized_source_path.py の main が RecursionError を捕まえないこと。いずれも PASS (85〜92) の範囲の減点。詳細は eval-log/coverage/scripts/ の各記録の notes",
+      "resolved_by": "harness-6qz",
+      "commit": "6257499e"
+    },
+    {
+      "item": "harness-creator/run-build-skill の content-review の verdict (b802732a) は『plugin_resources の import は無い』と記録しているが、fdc93c12 の取り込み後は run-build-skill/scripts の build-external-intelligence*.py と lint-knowledge-loop.py が plugin_resources を import する。SKILL.md の SHA は変わらないので lint は通るが、verdict の記述は古い。次の content-review で取り込み後の内容を見直す。verdict は書き換えていない。",
+      "resolved_by": "run-build-skill の content-review の取り直し",
+      "commit": "6257499e"
+    },
+    {
+      "item": "手元で run-ci-checks.sh を流すと、『Keep bytecode caches outside the checkout』の段が $GITHUB_ENV の無い環境では効かず、py_compile がツリーに __pycache__ を作る。feedback_contract_ssot と validate-plugin-package の _tree_fingerprint は __pycache__ も hash するので、PKG-003、native-surfaces の conflict、llm-coverage の数え違い、lint-feedback-contract の FAIL (criteria の test 約200件) が偽の失敗として出る。harness-20h で扱う。",
+      "resolved_by": "harness-20h",
+      "commit": "6257499e"
+    },
+    {
+      "item": "plugins/harness-creator/scripts/plugin_resources.py (fdc93c12 で取り込み) に、独立コードレビューの記録 (eval-log/coverage/scripts) が無い。harness-coverage の分母にだけ入っている (llm_eval 64.4%、floor 64.3%)。次に scripts を足すと floor を割りうるので、先にレビューの記録を足す。",
+      "resolved_by": "plugin_resources.py の独立コードレビューの記録",
+      "commit": "6257499e"
+    },
+    {
+      "item": "外部変更ガードの正規コマンドの判定は runner の basename しか見ない。同じ名前の別ファイルを起動しても早期に許可される (中寄り)。未クォートの $NAME の単語分割 (低) も残る。",
+      "resolved_by": "外部変更ガードの判定を語の形と実パスに変えた (k の修正)",
+      "commit": "6257499e"
+    },
+    {
+      "item": "run-skill-rubric-governance の content-review は iterations 3 で人のレビュー待ち。",
+      "resolved_by": "利用者の判断 (2026-10-10T13:26Z) を受けて k 回目の独立評価者が評価した",
+      "commit": "記録の commit (この受領書の直前)"
+    },
+    {
+      "item": "dev-graph の9スキルの live-trial のやり直し。共通の外部変更ガードの runtime と dev-graph の版が behavior closure に入っているため、既存の verdict (20261005 p83m・p83o・p83x) が stale-sha になった。CI の lint-live-trial-verdict はこの PR では FAIL のまま。やり直しは既存の harness-bzn.4 (進行中) が扱う",
+      "resolved_by": "harness-bzn.4 ほか。dev-graph の9スキルとも、隔離した環境で取り直した最後の live trial が PASS で、受入条件の独立判定も9スキルとも PASS。init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する。plugin-tests job の dev-graph の test root も通る（round16 の verification を参照）",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "item": "ubm の新設スクリプト5本の改名 (verdict の取り直しと一組)",
+      "resolved_by": "harness-eef。4本を動詞規則に合う名前にし、import される module 1本は lint-script-naming の恒久例外（§4.3）に載せた。content-review は独立評価者が取り直した",
+      "commit": "5ae35116"
+    },
+    {
+      "item": "Plugin Governance CI の plugin-tests job で plugins/dev-graph の9件が落ち、verify job も failure になる。dev-graph の live-trial の stale と同じ原因で、harness-bzn.4 が扱う",
+      "resolved_by": "harness-bzn.4 ほか。dev-graph の9スキルとも、隔離した環境で取り直した最後の live trial が PASS で、受入条件の独立判定も9スキルとも PASS。init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する。plugin-tests job の dev-graph の test root も通る（round16 の verification を参照）",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "item": "22プラグインの版上げが未了 (fdc93c12 で取り込んだ extract-plugin-root.py ほかの変更のため)。build-plugin-release --check は 『version 上げ忘れ 22 件』で FAIL。版上げは plugin.json (P1_structural、cooldown 3日) を変え、この PR の P1 承認 48件 (PROP-2026-10-10-UBM-JA-RELEASE、2026-10-10T00:06Z) の対象を書き換えるので、2026-10-13T00:06Z 以降に正規の提案と承認を経て build-plugin-release で行う。fingerprint の台帳は手で書き換えていない。incident_fix も使っていない。",
+      "resolved_by": "harness-3mw。5ae35116 で中身の変わった10 plugin の patch を上げ、先に上がっていた12 plugin の fingerprint を記録した。承認レビューの指摘を受け、round16 でその12 plugin の patch も上げた（ubm-goal-setting 0.8.2 ほか）。台帳は main から記録し直し、build-plugin-release --check は rc 0。P1 の承認は PROP-2026-10-12-PR85-RELEASE",
+      "commit": "5ae35116・この受領書の更新と同じ commit"
+    },
+    {
+      "item": "dev-graph の9スキルの live-trial: fdc93c12 で取り込んだ 10-05 の再 trial (bzn4-current・bzn4-init-retry) の verdict が FAIL (5件) と BLOCKED (4件、tmux 不在などの fail-closed で降格) で、lint-live-trial-verdict は 9件から22件の違反になった。やり直しは harness-bzn.4 が扱う。",
+      "resolved_by": "harness-bzn.4 ほか。dev-graph の9スキルとも、隔離した環境で取り直した最後の live trial が PASS で、受入条件の独立判定も9スキルとも PASS。init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する。plugin-tests job の dev-graph の test root も通る（round16 の verification を参照）",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "item": "dev-graph の9スキルの criteria-test: 取り込んだ再評価の scenario-verdict.json が9件とも FAIL で、plugins/dev-graph の test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria が9件落ちる。取り込み前 (3d24214e) も同じ9件が『stale behavior closure digest』で落ちていた。verdict は書き換えていない。やり直しは harness-bzn.4 が扱う。",
+      "resolved_by": "harness-bzn.4 ほか。dev-graph の9スキルとも、隔離した環境で取り直した最後の live trial が PASS で、受入条件の独立判定も9スキルとも PASS。init 20261013T0117-pr85 PASS（閉包 6765b176）、node 20261013T0528-pr85 PASS（閉包 aa526da0）、sync 20261013T0145-pr85 PASS（閉包 edaa2b91）、decompose 20261013T0331-pr85 PASS（閉包 666d9e0c）、schedule 20261013T0456-pr85 PASS（閉包 d90fa4d1）、system-spec 20261013T0349-pr85 PASS（閉包 21df2f9d）、render 20261012T2212-pr85 PASS（閉包 25ac17af）、requirements 20261012T2252-pr85 PASS（閉包 b0eb19e4）、status 20261012T2229-pr85 PASS（閉包 244ed98a）。どれも tier は live で、閉包は今の閉包と一致する。plugin-tests job の dev-graph の test root も通る（round16 の verification を参照）",
+      "commit": "この受領書の更新と同じ commit"
+    },
+    {
+      "item": "6257499e で直した script と SKILL.md も、22プラグインの版上げ (上の版上げの項目) に含まれる。版を上げるまで、install 済みのコピーには届かない。",
+      "resolved_by": "harness-3mw。5ae35116 で中身の変わった10 plugin の patch を上げ、先に上がっていた12 plugin の fingerprint を記録した。承認レビューの指摘を受け、round16 でその12 plugin の patch も上げた（ubm-goal-setting 0.8.2 ほか）。台帳は main から記録し直し、build-plugin-release --check は rc 0。P1 の承認は PROP-2026-10-12-PR85-RELEASE",
+      "commit": "5ae35116・この受領書の更新と同じ commit"
+    },
+    {
+      "item": "ubm-goal-setting 0.8.0 (4層) の版上げ: CHANGELOG は 0.8.0 だが plugin.json は 0.7.0。2026-10-13T00:06Z 以降の 22プラグインの版上げと一緒に、正規の提案と承認を経て build-plugin-release で上げる。",
+      "resolved_by": "harness-3mw。5ae35116 で中身の変わった10 plugin の patch を上げ、先に上がっていた12 plugin の fingerprint を記録した。承認レビューの指摘を受け、round16 でその12 plugin の patch も上げた（ubm-goal-setting 0.8.2 ほか）。台帳は main から記録し直し、build-plugin-release --check は rc 0。P1 の承認は PROP-2026-10-12-PR85-RELEASE",
+      "commit": "5ae35116・この受領書の更新と同じ commit"
+    },
+    {
+      "item": "6257499e で直した script と文書も、22プラグインの版上げに含まれる。版を上げるまで、install 済みのコピーには届かない。",
+      "resolved_by": "harness-3mw。5ae35116 で中身の変わった10 plugin の patch を上げ、先に上がっていた12 plugin の fingerprint を記録した。承認レビューの指摘を受け、round16 でその12 plugin の patch も上げた（ubm-goal-setting 0.8.2 ほか）。台帳は main から記録し直し、build-plugin-release --check は rc 0。P1 の承認は PROP-2026-10-12-PR85-RELEASE",
+      "commit": "5ae35116・この受領書の更新と同じ commit"
+    },
+    {
+      "item": "[中] run-skill-rubric-governance (k 回目で content-review が FAIL・iterations 4・人の確認待ち): SKILL.md 133〜134行・166行と templates/proposal.json 18行の影響評価は --logs \"$SKILL_DIR/log\" を渡すが、そこにあるのは score の無い governance log。diff-rubric-impact.py は score の無いレコードを100点と数える (67行) ので flip_rate が常に 0 になり、IN2 (30%超で major) がはたらかない。lint-rubric-violation.py も PD-002 が空になる。直すまで tests/criteria の OUT1・OUT2 と lint-content-review が落ちる。",
+      "resolved_by": "harness-8cvr。影響評価に --logs eval-log を渡し、score の無いレコードは数えずに skipped_no_score に出す。score を持つレコードが無ければ exit 2。content-review は iteration 3 で PASS",
+      "commit": "5ae35116"
+    },
+    {
+      "item": "[中] ubm-goal-setting knowledge-extractor (coverage FAIL 81): references/agent-knowledge-extractor-entry-format.md 148行の source.type の候補が schema.json の enum (419〜432行) とも detect-knowledge-updates.py の SOURCE_TYPE_RULES (50〜57行) とも合わない。enum の検査が無いので、schema に合わないエントリが黙って保存されうる (origin/main の時点から)。",
+      "resolved_by": "harness-frcy。テンプレートの source.type を schema の enum にそろえ、validate-knowledge-entry-source が格納の確定のときに検査する。coverage は PASS 99",
+      "commit": "5ae35116"
+    },
+    {
+      "item": "[中] ubm-goal-setting (content-review FAIL・iterations 2): 1年目標の初回は Step 2 をスキップしない例外が phase3-coordinator.md 246行 (232行も)・data-contract.md 618行・prompts/R3-step3-goal-setting.md 145行に無い (data-contract.md 442行と R2 には書かれている)。phase3-coordinator の coverage も FAIL 82。直すまで tests/criteria の ubm OUT1・OUT2 と lint-content-review が落ちる。",
+      "resolved_by": "harness-yx2o。phase3-coordinator・data-contract・R3 に例外を書いた。content-review は利用者が承認した4回目で PASS、phase3-coordinator の coverage は PASS 98",
+      "commit": "5ae35116"
+    },
+    {
+      "item": "change-category-guard (CI) は、直前の P1 の entry (2026-10-10T00:06:16Z) からの cooldown のため 2026-10-13T00:06:16Z まで落ちる。その後に CI を回し直し、緑を確かめてから harness-3mw を閉じる。",
+      "resolved_by": "harness-3mw を閉じた。cooldown の明けた 2026-10-13T00:06Z の後に governance-check (run 38314280044) の change-category-guard を回し直して緑になり、PR #85 の check は6つとも pass。完了の条件の2つ (build-plugin-release.py --check が rc 0、test_checked_in_state_has_no_drift が pass) と build-local-marketplace.py --check の rc 0 も、00:08Z に 3fb72347 の作業ツリーで確かめた",
+      "commit": "3fb72347"
+    }
+  ]
+}

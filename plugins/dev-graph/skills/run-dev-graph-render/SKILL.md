@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--scope ID] [--output PATH]"
 allowed-tools: [Read, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/render-graph-html.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/render-graph-html.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -51,7 +51,7 @@ feedback_contract:
       verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する"
+      text: "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Y（X=doneの子task数、Y=子task数）のYがregistration receiptのexpected_countと一致し、子taskの集合がreceiptのnode_idsと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する"
       verify_by: live-trial
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -84,15 +84,16 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Purpose & Output Contract
 
-- 入力: C24/C11 検証済み graph/scope、repo 内 output path。
-- 出力: SVG/CSS/JS を inline 化した単一 HTML と node/edge/feature-progress counts、input/output digest を持つ renderer receipt。
-- 完了条件: 外部 runtime 参照0、ブラウザ上で SVG と feature X/Y が表示され、receipt の counts/digests が実体に一致する。
+- 入力: C24/C11 検証済み graph/scope、repo 内 output path、任意で feature ごとの C02 registration receipt。
+- 出力: SVG/CSS/JS を inline 化した単一 HTML と node/edge/feature-progress counts、input/output digest を持つ renderer receipt。registration receipt を渡したときは feature ごとの照合結果 `receipt_checks` も持つ。
+- 完了条件: 外部 runtime 参照0、ブラウザ上で SVG と feature X/Y が表示され、receipt の counts/digests が実体に一致する。registration receipt を渡した feature は、Y が `expected_count`、子 task の集合が `node_ids`、子 task の `source_lineage.source_digest` が receipt の `source_digest` と一致する。
 
 1. C24/C11 で caller graph と scope を検証する。
 2. 出力は repo 内の指定 path（既定 `.dev-graph/render/index.html`）に限定する。
 3. `render-graph-html.py` を呼び、SVG、CSS、JS を単一 HTML に inline 化する。外部 `script/link`, CDN, npm dependency は禁止。
-4. feature node は `parent_feature` の task を X/Y で集約し、feature 間 edge と task 内 edge を混同せず表示する。
-5. renderer receipt の node/edge/progress counts と input digest を照合して返す。
+4. feature の registration receipt があれば --receipt で渡す。不一致の exit 1 のときは成果物を出さずに止め、理由を返す。`--receipt` は feature ごとに繰り返して渡せる。script は Y と `expected_count`、子 task の集合と `node_ids`、子 task の lineage と `source_digest` を照合し、1つでも合わなければ HTML を書かずに exit 1 で止まり、stderr の JSON (`receipt_mismatches[]` の `feature`/`problems`/`missing_ids`/`extra_ids`/`expected_count`/`actual_count`/`digest_mismatch_ids`) に理由を出す。その JSON をそのまま理由として返す。X (done の子 task 数) は `applied_count` と照合しない。
+5. feature node は `parent_feature` の task を X/Y で集約し、feature 間 edge と task 内 edge を混同せず表示する。
+6. renderer receipt の node/edge/progress counts と input digest を照合して返す。
 
 graph は read-only。HTML 以外の graph/content を変更しない。
 
@@ -112,6 +113,7 @@ graph は read-only。HTML 以外の graph/content を変更しない。
 - [ ] render model の node/edge/feature progress counts が input graph と一致する
 - [ ] 生成 HTML の外部 script/link/CDN/npm reference が0件で SVG と inline JS が実在する
 - [ ] renderer receipt の input/output digest と実ファイル digest が一致する
+- [ ] `--receipt` で渡した registration receipt ごとに `receipt_checks[].problems` が空である (receipt を1つも渡さない描画では、出力に `receipt_checks` が無い)
 - [ ] ブラウザ live trial で追加 runtime なしに SVG と feature X/Y progress が表示される
 
 ### ゴールシークループ
@@ -148,11 +150,13 @@ PY
 ## Criteria acceptance
 
 - `criteria:IN1`: output HTMLの外部script/link参照が0件でゼロ依存である。
-- `criteria:OUT1`: 生成HTML/CSSをブラウザで開き、追加ランタイム依存なくSVGグラフとfeatureごとの子task進捗X/Yが表示され、registration receiptの`applied_count/expected_count`と`source_digest`が表示内容に一致する。
+- `criteria:OUT1`: 生成HTML/CSSをブラウザで開き、追加ランタイム依存なくSVGグラフとfeatureごとの子task進捗X/Y (X=doneの子task数、Y=子task数) が表示され、Yがregistration receiptの`expected_count`と、子taskの集合が`node_ids`と一致し、表示対象が`source_digest`に対応する。
 
 ## Gotchas
 
 - CDN、npm bundle、外部 `script/link` を単一 HTML に混入させない。
 - feature progress は `parent_feature` の task 実数から導出し、手入力値を表示しない。
 - browser 表示だけで PASS にせず、receipt count と input/output digest も照合する。
+- registration receipt の `applied_count` は登録した子 task の数で、done の数ではない。X/Y の X を `applied_count` と比べると、正しく描いても一致しない。照合するのは Y と `expected_count`、子 task の集合と `node_ids` だけにする。
+- `--receipt` の不一致 (exit 1) を、receipt を外して描き直すことで回避しない。HTML を出さずに止め、stderr の JSON を理由として返す。
 - render は read-only graph から生成し、graph/content 本体を変更しない。

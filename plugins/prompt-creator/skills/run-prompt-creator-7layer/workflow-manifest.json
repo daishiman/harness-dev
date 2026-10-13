@@ -3,17 +3,57 @@
     "contract": "artifact-delivery-v1",
     "state_machine": {
       "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
       ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
     },
     "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
     "release": "explicit-only",
@@ -33,83 +73,184 @@
       "dependsOn": [],
       "entryHook": "load-resource-map",
       "exitHook": null,
-      "resourceIds": ["ref-resource-map", "ref-prompt-sheet-template", "schema-hearing"],
-      "fatal_exit_codes": [2]
+      "resourceIds": [
+        "ref-resource-map",
+        "ref-prompt-sheet-template",
+        "schema-hearing"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2
+      ]
     },
     {
       "id": "phase-sheet",
       "step": 2,
       "title": "scaffold-prompt.py で Layer 別内部正規形 YAML 雛形を生成",
       "gate": "C2",
-      "dependsOn": ["phase-interview"],
+      "dependsOn": [
+        "phase-interview"
+      ],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["ref-seven-layer", "ref-writing-style"],
-      "fatal_exit_codes": [2, 3]
+      "resourceIds": [
+        "ref-seven-layer",
+        "ref-writing-style"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
     },
     {
       "id": "phase-layer-gen",
       "step": 3,
       "title": "Layer 単位 (1 Layer = 1 出力) で内容を充填",
       "gate": "C3",
-      "dependsOn": ["phase-sheet"],
+      "dependsOn": [
+        "phase-sheet"
+      ],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["ref-seven-layer", "ref-quality-criteria"],
-      "fatal_exit_codes": [2, 3]
+      "resourceIds": [
+        "ref-seven-layer",
+        "ref-quality-criteria"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
     },
     {
       "id": "phase-convert",
       "step": 4,
       "title": "merge-layers.py で 7 Layer を内部正規形 YAML に統合し、指定 format へ変換",
       "gate": "C4",
-      "dependsOn": ["phase-layer-gen"],
+      "dependsOn": [
+        "phase-layer-gen"
+      ],
       "entryHook": null,
       "exitHook": "merge-layers",
       "resourceIds": [],
-      "fatal_exit_codes": [2, 3]
-    },
-    {
-      "id": "phase-return-verify",
-      "step": 5,
-      "title": "validate-prompt.py + verify-completeness.py + lint-agent-prompt-section.py 実行",
-      "gate": "C5",
-      "dependsOn": ["phase-convert"],
-      "entryHook": null,
-      "exitHook": "validate-prompt",
-      "resourceIds": ["schema-trace"],
-      "fatal_exit_codes": [2, 3]
-    },
-    {
-      "id": "phase-design-gate",
-      "step": 6,
-      "title": "C1-C4 設計評価 (assign-prompt-design-evaluator を fork・findings 出力のみ)。worker 内蔵ゲート = 呼出元非依存の品質保証。呼出元が同等ゲートを機械証跡 (design-findings JSON パス) で保証する場合のみ skip",
-      "gate": "C6",
-      "dependsOn": ["phase-return-verify"],
-      "entryHook": null,
-      "exitHook": null,
-      "resourceIds": [],
-      "fatal_exit_codes": [2, 3]
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
     },
     {
       "id": "phase-inject",
-      "step": 7,
-      "title": "SubAgent .md の Prompt Templates / Self-Evaluation (注入セクション名は呼出元非依存の不変契約) を Edit で注入 (owner_agent ありの場合のみ)",
+      "step": 5,
+      "title": "SubAgent .md の Prompt Templates / Self-Evaluation (構造ID不変、表示見出しは対象agentの言語を継承) を Edit で注入 (owner_agent ありの場合のみ)",
       "gate": "C7",
-      "dependsOn": ["phase-design-gate"],
+      "dependsOn": [
+        "phase-convert"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "phase-return-verify",
+      "step": 6,
+      "title": "validate-prompt.py + verify-completeness.py 常時実行、owner_agent 指定時だけ lint-agent-prompt-section.py 実行（未指定は理由付きN/A）。phase-injectがowner_agent未指定でN/Aでも純prompt検証は実行する",
+      "gate": "C5",
+      "dependsOn": [
+        "phase-inject"
+      ],
+      "entryHook": null,
+      "exitHook": "validate-prompt",
+      "resourceIds": [
+        "schema-trace"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "phase-design-gate",
+      "step": 7,
+      "title": "C1-C4 設計評価 (assign-prompt-design-evaluator を fork・findings 出力のみ)。worker 内蔵ゲート = 呼出元非依存の品質保証。呼出元が同等ゲートを機械証跡 (design-findings JSON パス) で保証する場合のみ skip",
+      "gate": "C6",
+      "dependsOn": [
+        "phase-return-verify"
+      ],
       "entryHook": null,
       "exitHook": "log-usage",
       "resourceIds": [],
-      "fatal_exit_codes": [2, 3]
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
     }
   ],
   "resources": [
-    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["phase-interview"]},
-    {"id": "ref-prompt-sheet-template", "kind": "reference", "path": "./references/prompt-sheet-template.md", "phaseIds": ["phase-interview"]},
-    {"id": "ref-seven-layer", "kind": "reference", "path": "./references/seven-layer-format.md", "phaseIds": ["phase-sheet", "phase-layer-gen"]},
-    {"id": "ref-writing-style", "kind": "reference", "path": "./references/writing-style-principles.md", "phaseIds": ["phase-sheet"]},
-    {"id": "ref-quality-criteria", "kind": "reference", "path": "./references/quality-criteria.md", "phaseIds": ["phase-layer-gen"]},
-    {"id": "schema-hearing", "kind": "schema", "path": "./schemas/hearing-result.schema.json", "phaseIds": ["phase-interview"]},
-    {"id": "schema-trace", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["phase-return-verify"]}
+    {
+      "id": "ref-resource-map",
+      "kind": "reference",
+      "path": "./references/resource-map.yaml",
+      "phaseIds": [
+        "phase-interview"
+      ]
+    },
+    {
+      "id": "ref-prompt-sheet-template",
+      "kind": "reference",
+      "path": "./references/prompt-sheet-template.md",
+      "phaseIds": [
+        "phase-interview"
+      ]
+    },
+    {
+      "id": "ref-seven-layer",
+      "kind": "reference",
+      "path": "./references/seven-layer-format.md",
+      "phaseIds": [
+        "phase-sheet",
+        "phase-layer-gen"
+      ]
+    },
+    {
+      "id": "ref-writing-style",
+      "kind": "reference",
+      "path": "./references/writing-style-principles.md",
+      "phaseIds": [
+        "phase-sheet"
+      ]
+    },
+    {
+      "id": "ref-quality-criteria",
+      "kind": "reference",
+      "path": "./references/quality-criteria.md",
+      "phaseIds": [
+        "phase-layer-gen"
+      ]
+    },
+    {
+      "id": "schema-hearing",
+      "kind": "schema",
+      "path": "./schemas/hearing-result.schema.json",
+      "phaseIds": [
+        "phase-interview"
+      ]
+    },
+    {
+      "id": "schema-trace",
+      "kind": "schema",
+      "path": "./schemas/output.schema.json",
+      "phaseIds": [
+        "phase-return-verify"
+      ]
+    }
   ]
 }

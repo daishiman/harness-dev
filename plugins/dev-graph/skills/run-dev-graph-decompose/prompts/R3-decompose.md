@@ -57,6 +57,7 @@
 
 - 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - Project対象をR4、retryをC03へ渡す。
+- binding=beads の node が github か none の node、またはこの規則で保留にした beads の node に依存するときは (依存の鎖をたどって当てる)、node は C02 に登録するが C28 へ投影せず、理由 `cross_binding_dependency` と鎖の元の edge の両端の id・binding を publication report に書く (SKILL.md の Macro flow の規則)。
 
 ## Layer 7: UserInput
 

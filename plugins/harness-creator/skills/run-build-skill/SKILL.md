@@ -81,6 +81,7 @@ schema_refs:
   - schemas/usable-draft-proof.schema.json
 prompt_format: markdown # 既定: Markdown (.md)。YAML (.yaml) は legacy 許容、新規禁止
 script_refs:
+  - ../../scripts/extract-plugin-root.py
   - scripts/build-external-intelligence.py
   - scripts/auto-record-lesson.py
   - scripts/render-combinators.py
@@ -159,7 +160,6 @@ artifact_delivery:
   exhaustive: explicit-only
 runtime_root_policy: host-skill-path
 ---
-
 ## Pre-choice usable artifact execution
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
@@ -197,7 +197,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 6. **marketplace install 配置非依存**: plugin 資産の読込は `runtime_root_policy: host-skill-path` に従う。Claude Codeでは `CLAUDE_PLUGIN_ROOT`、Codexではホストが提示したabsolute `SKILL.md` pathからmanifestを持つ祖先を解決し、各shell invocation内の論理 `PLUGIN_ROOT` とする。plugin rootをcwd・repo相対位置から推測せず、literal placeholderをshellへ渡さない。生成物の出力先だけを `$CLAUDE_PROJECT_DIR` / cwd / `$CLAUDE_SKILL_OUT_BASE` で解決する。
 
 ### 責務系 (responsibility)
-7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` 9 セクション固定構造。
+7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` の7層本文と発話・自己採点の2節。
 8. 評価分離: 生成本体は採点しない。machine proof後に未解決のsemantic obligationがある場合だけ、別contextの `assign-skill-design-evaluator` へ最小sliceを渡す (09章 Goodhart)。
 9. 実行レイヤー (Skill/Subagent/Hook/MCP/CLI/script) の配置理由を trace に記録 (01a/05章)。
 10. 横展開候補 (Harness Creator 基盤/hook/lint/adapter/rubric/reference) は plugin 登録判定へ戻す。
@@ -212,9 +212,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 16. 26/27/28 章 / 29-35 章ゲートは N/A 理由つきで省略可、未記入は不可。
 17. **prompt 形式**: 新規 prompt は **Markdown (`.md`) を既定**とし、`prompts/<R-id>-<slug>.md` で生成する。骨格は `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` を写経。YAML (`.yaml`) は既存資産のみ許容し、新規作成は禁止 (warn を発する)。
 18. **Capability 7 kind 統一**: skill / agent / hook / command / plugin-composition / prompt / workflow の全 kind で `CapabilityManifest commonCore` を必須とする。**必須項目集合の正本は `references/capability-manifest.schema.json#/definitions/commonCore.required` 唯一**（本文に再掲しない＝SSOT。現行は `name` / `description` / `kind` / `version` / `owner` の5項目。`since` / `source-tier` 等は任意）。kind 別追加フィールドは同 schema の `definitions/<kind>` を参照。`commonCore` 欠落は `validate-frontmatter.py` が exit 1（同 lint は必須集合を schema から動的ロードし、`--self-test` で正本との drift を検出）。
-
 19. **ゴールシーク必須 (固定手順禁止)**: ループ実行系 kind (run / wrap / delegate / orchestrator / agent / agent-team / hook-integrated) は達成手順を固定列挙せず、`## ゴールシーク実行` (**Goal + 目的/背景 + 完了チェックリスト + ゴールシークループ**) で構成する。手順は実行時に AI がチェックリストの未達項目から都度生成する。`assign-*` は評価系のため Goal/Checklist 形は使うが runtime loop は配線しない。`ref-*` (read-only) は対象外で `## 手順` は「参照用。手順なし。」のまま。正本定義は `references/goal-seek-paradigm.md`。lint は `lint-goal-seek.py` (固定 `### Step N:` の連番羅列を実行系本文で検出したら violation)。
-    - **実行可能機構の配線 (with-goal-seek combinator)**: loop 実行系 (run / wrap / delegate) は `render-combinators.py` が `with-goal-seek.patch` を**default-ON で自動適用**し (`--no-goal-seek` で opt-out)、frontmatter `goal_seek:` と `### ゴールシーク配線` を注入する。周回状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json` に記録し、重い周回は `Skill(run-goal-seek)` に fork 委譲する。`assign-*` は checklist のみ (ループ非配線)。`lint-goal-seek.py` は loop 実行系に対し二値チェックリスト項目の存在・曖昧語不在を violation、`### ゴールシーク配線` 不在を warning で検査する。フラグ仕様は `schemas/build-flags.schema.json#/properties/with_goal_seek`。
+    - **実行可能機構の配線 (with-goal-seek combinator)**: loop 実行系 (run / wrap / delegate) は `render-combinators.py` が `with-goal-seek.patch` を**default-ON で自動適用**し、frontmatter `goal_seek:` と `### ゴールシーク配線` を注入する (`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず `lint-goal-seek.py` の ratchet が exit 1 で落とす。harness-creator のスキルは `GRANDFATHERED_WARNINGS` へ根拠付きで登録するか配線を戻し、ほかの plugin のスキルは baseline が追記禁止なので配線を戻す。正本は `references/goal-seek-paradigm.md`)。周回状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json` に記録し、重い周回は `Skill(run-goal-seek)` に fork 委譲する。`assign-*` は checklist のみ (ループ非配線)。`lint-goal-seek.py` は loop 実行系に対し二値チェックリスト項目の存在・曖昧語不在を violation、`### ゴールシーク配線` 不在を warning で検査する (repo 内では、未登録のものを上の ratchet が exit 1 にする)。フラグ仕様は `schemas/build-flags.schema.json#/properties/with_goal_seek`。
     - **engine 変種 (inline / run-goal-seek / task-graph)**: loop kind の既定は最小構成の `inline`。Goal・Checklist・検証契約は維持し、追加 engine 資産は同梱しない。実在する依存グラフの順序制御が必要な場合だけ `goal_seek.engine: task-graph` を brief で明示し、checklist の `depends_on` 依存順消費・self-reflect・4 つの engine script を有効化する。重い周回を外部オーケストレータへ分離する場合だけ `run-goal-seek` を明示する。`task-graph` 指定時の profile は従来どおり `checklist-graph` / `full_task_spec_graph=false` とし、materializer と `--check` の fail-closed 検査を保つ。
 
 `kind → templates/_base + combinator` 対応表は **`schemas/template-selection.schema.json#/selection_rules`** を正本とする (本文に再掲しない)。
@@ -272,7 +271,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. **Manifest 検証**: 全 kind で `CapabilityManifest commonCore` を `references/capability-manifest.schema.json` で検証。kind 別追加フィールド (`definitions/kindSkill`, `definitions/kindAgent` …) も同 schema で検証する。
 4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py` + **`lint-agent-prompt-content.py --mode agent`** (route C02 内容 lint)、hook→`lint-script-frontmatter.py`、plugin-composition→`lint-plugin-composition.py` (整備済・CI 配線済)、prompt→**`lint-agent-prompt-content.py --mode prompt`** (route C02))。command / prompt (構造面) / workflow の kind 専用 lint (`lint-command-md.py` / `lint-prompt-md.py` / `lint-workflow-md.py`) は**未実装 (script 実体なし・整備予定) のため起動しない** — それまで当該 3 kind は共通 lint (`validate-frontmatter.py` 等) のみで検査する。**agent/prompt 生成は本文7層 (l5-contract v2.0.0) を prompt-creator 経由で生成し route C02 を fail-closed ゲートとして通す** (契約: prompt-creator plugin の `skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。出典表記)。単独生成の抜け道は Step 3.5 の `prompt_provenance` で塞ぐ。
 
-> 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。`kind_filter` はskill内部のサブ種別、`capability_kind_filter` はCapability 7 kindを指す。skillはskill専用phase、非skillは `non-skill-build-lint` のkind別生成/lintを経由し、どちらも共通 `usable-draft-proof` (Step 12.4) → `initial-draft-review` (Step 12.5) へ合流する。Step 12.6/12.7は利用者の選択とその結果に応じてだけ進む。phase依存とkind別upstream対応の正本は `workflow-manifest.json`。
+> 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。`kind_filter` はskill内部のサブ種別、`capability_kind_filter` はCapability 7 kindを指す。skillはskill専用phase、非skillは `non-skill-build-lint` のkind別生成/lintを経由し、どちらも共通 `usable-draft-proof` (Step 12.4) → `artifact-present-handoff` (Step 12.45) → `diagnostic-choice` (Step 12.5) へ合流する。Step 12.6/12.7は利用者の選択とその結果に応じてだけ進む。phase依存とkind別upstream対応の正本は `workflow-manifest.json`。
 
 ### Step 1: 要求ヒアリング (phase: init)
 
@@ -327,7 +326,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 > lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
 
 ```bash
-GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$OUT_BASE/$SKILL_NAME"
@@ -356,7 +355,7 @@ draft は決定論ゲートが通ったら Step 12.4 で `usable-draft` proofを
 
 ### Step 7: subagent 派生 (phase: prompts-emit, `--with-subagent`)
 
-`build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。9 セクション固定構造に準拠。
+`build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。7層本文と発話・自己採点の2節に準拠。
 
 ### Step 7.5: prompt-creator ループ (phase: prompts-emit, `--with-prompts` or `brief.use_prompt_creator`)
 
@@ -412,7 +411,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 ### Step 12.4: 全7 Capability共通 usable-draft proof
 
-`workflow-manifest.json` の `usable-draft-proof` が、current kindに適用されるupstreamを1つだけDAG provenanceとして検査する。skillは `content-review`、他の6 kindは `non-skill-build-lint` の生成/lint receiptを入力に、`stage_gate.status=usable-draft AND handoff_ready=true` を共通proofとして生成する。ただしreceiptのPASS自己申告はtruth sourceにしない。親は `build-usable-draft-proof.py --verification-plan <plan> --capability-kind <kind> --capability-artifact <repo-relative-artifact> --upstream-receipt <receipt> [--upstream-receipt <receipt>] --repo-root <root> --out <proof>` を実行する。producerは正本 `validate-build-trace.py` をplugin-compositionだけ `--bundle`、他は `--manifest` で実行し、exit 0・`valid=true`・reported kind一致を要求する。skillの `run/ref/assign/wrap/delegate` subtypeはreported kind `skill` へ正規化する。proofはartifact path/sha256とvalidator id/path/sha256/mode/exit/stdout digestを束縛する。Step 12.5のgateはartifactがauthoritative target manifestの同じsha256であることを確認し、同じpublic validatorを再実行する。不一致はすべてfail-closedとし、proofを作れないkindはStep 12.5へ進まない。JSON shapeは `schemas/usable-draft-proof.schema.json`、kind集合・upstream対応・依存関係はmanifestを正本とする。
+`workflow-manifest.json` の `usable-draft-proof` が、current kindに適用されるupstreamを1つだけDAG provenanceとして検査する。skillは `content-review`、他の6 kindは `non-skill-build-lint` の生成/lint receiptを入力に、`stage_gate.status=usable-draft AND handoff_ready=true` を共通proofとして生成する。ただしreceiptのPASS自己申告はtruth sourceにしない。親は `build-usable-draft-proof.py --verification-plan <plan> --capability-kind <kind> --capability-artifact <repo-relative-artifact> --upstream-receipt <receipt> [--upstream-receipt <receipt>] --repo-root <root> --out <proof>` を実行する。producerは正本 `validate-build-trace.py` をplugin-compositionだけ `--bundle`、他は `--manifest` で実行し、exit 0・`valid=true`・reported kind一致を要求する。skillの `run/ref/assign/wrap/delegate` subtypeはreported kind `skill` へ正規化する。proofはartifact path/sha256とvalidator id/path/sha256/mode/exit/stdout digestを束縛する。`build-improvement-gate.py` は毎回の判定で (提示receipt・診断選択の検査より前に) artifactがauthoritative target manifestの同じsha256であることを確認し、同じpublic validatorを再実行する。不一致はすべてfail-closedとし、proofを作れないkindはStep 12.45へ進まない。JSON shapeは `schemas/usable-draft-proof.schema.json`、kind集合・upstream対応・依存関係はmanifestを正本とする。
 
 ### Step 12.45: actual artifactの最小guardと提示
 
@@ -422,7 +421,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 `artifact_presented` の後にだけ `accept-as-is / light / standard / detailed` を聞く。`accept-as-is` は evaluator 0 / improver 0 でdraft handoff完了。`release` / `exhaustive` はこの質問に混ぜず、別の明示eventでだけ受け付ける。今回のように30思考法監査が依頼本文で明示済みなら、現物提示後に現在turn限定の診断選択receiptとして消費できる。そのreceiptを「将来も毎draft自動診断」と解釈しない。
 
-### Step 12.6: 選択時のsemantic診断とuser-bounded improvement
+### Step 12.6: 選択時のsemantic診断
 
 skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/workflowを含む全7 Capabilityを共通gateへ渡す。複数component harnessでは対象全体を1つのtarget manifestへ束ねる。`build-improvement-gate.py` がdurable claim付き `status=initial-review-required` を返した場合だけ `build-review-launch.py --gate-plan <gate-plan.json> --runtime <claude-code|codex>` を実行する。launcherは `state_ref` と同じlockで `<state_ref>.launch.json` の単一active delivery leaseをatomicに取得し、`authorized=true / launch_count=1`のschema準拠requestを返す。active lease中の重複配送は `authorized=false / launch_count=0` で拒否し、leaseがstaleになった場合は同一 `request_id / idempotency_key` で再配送する。同artifact+contractの完了receiptは別runでも再利用する。この配送leaseはexactly-once resultを保証せず、古いruntime実行が生存したまま再配送される可能性を受け入れる。unsupported runtime、durable state/identity不一致はfail-closedにする。
 
@@ -430,6 +429,7 @@ skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/work
 
 **承認receiptの正本**: host/runtimeが現物提示後の質問に対して実際に受け取ったuser responseだけを直列化する。評価Agent・改善Agentによる捏造、代理選択、自己発行を禁止する。`exhaustive` 確認は同じ回答から推定せず別turn eventを必須とし、本診断はrelease/audit proofに流用しない。
 
+### Step 12.7: ユーザー選択範囲だけの有界改善
 validated `improvement-decision.json` の `improvement_authorized=true` かつ `selected_finding_ids` 非空の場合だけ `elegant-bounded-improvement-executor` を1 worker起動する。`R6-bounded-improve.md` に従い、selected ID、manifest内path、`max_rounds`だけを変更範囲とする。`accept-draft`または選択対象0件はexecutor 0 contextで停止する。新しいfindingを発見しても範囲を拡大せずresidualへ残す。
 
 ### Step 12.8: post-improvement verification
@@ -455,3 +455,7 @@ validated `improvement-decision.json` の `improvement_authorized=true` かつ `
 
 - frontmatter (`manifest` / `responsibility_refs` / `template_refs` / `schema_refs` / `script_refs` / `reference_refs`) は**起動契約上の主要資産のみ**を列挙する (全資産の網羅索引ではない)。全資産の索引正本はディレクトリ実体 (`scripts/` / `schemas/` / `templates/` / `prompts/` / `references/`) そのもの。`references/resource-map.yaml` は task category → 設計書章選択の progressive disclosure 索引 (+`local_artifacts` に manifest/schemas/prompts の一部) であり、これも全資産列挙ではない。`examples/` = 完成例 (minimal-ref / workflow-with-evaluator)。
 - references/ 主要補助: `design-docs-index.md` (設計書索引) / `build-steps.md` (詳細手順) / `capability-manifest.schema.json` (Capability 7 kind 統一 Manifest 正本)。他の references/ は本文各 Step から個別参照。
+
+### 生成する正規形の言語
+
+生成・更新の言語方針と2型agentの骨格は `references/ja-contract-policy.md` を正本とする。`output_language` と対象の正規見出しから生成言語を決め、schema key・メタ表のkey・Layer/responsibility識別子は維持する。

@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-lint/scripts/lint-script-frontmatter.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":88,"notes":"py_compile OK and runs (checked=17). Single purpose meta-lint, valid PEP723 frontmatter, read-only no network. extract_frontmatter correctly returns None on unclosed block; PENDING escape hatch documented. read_text without try/except is acceptable fail-loud for CI lint; no bare except."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 91,
+    "notes": "genuine review（sha256 7adc6a49f92d636b31f784a2000c8d20c24ae5bf834b328e6415ada74938bf8c をレビュー。実行検証あり）。範囲: 全 136 行（0.3.0）と git diff HEAD。確かめたこと: 前回の [中]（存在しないパスや .py でないファイルを渡すと検査 0 件で OK になる）は直った。存在しないパスと .py でないファイルは exit 2、.py のファイルは単体で検査する。test は 3.11 と 3.9 で 27 passed。plugins/skill-governance-lint/scripts で OK checked=22、plugins/harness-creator/scripts で OK checked=33。既定（plugins 全体）は checked=962、violations=529、pending=4 で exit 1。scripts/build-claude-settings.py と build-claude-symlinks.py は missing block で exit 1。この script 自身は OK。指摘: [低] 存在するが .py の無い dir（空 dir、README だけの dir）は「OK (checked=0)」で exit 0 になる（62 行の _iter_scripts と main）。[低] PENDING_FILES（26-33 行）は basename で repo 全体に当たる。fixture の other/guard-change-category.py が PENDING に下がって exit 0 になった。既定の実行では harness-creator の run-skill-rubric-governance/scripts の lint-rubric-violation.py と diff-rubric-impact.py も下がる。24 行が根拠とする doc/migration/phase3/pending-frontmatter.md は存在しない。直し方: repo 相対パスで持つ。[低] 値が空のキー（`# network:`）と、ファイルの先頭でない位置（import の後）の `# /// script` を通す（36-59 行の extract_frontmatter）。[低] docstring（17 行）は「scripts/*.py」と言うが、実装は渡された dir の下の全 *.py を見る。--help はこの docstring を出す。DEDUCTION: 空 dir の OK -2、PENDING の basename 一致と存在しない根拠文書 -3、空値と先頭外の block -2、docstring の食い違い -2 → 91。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010j-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

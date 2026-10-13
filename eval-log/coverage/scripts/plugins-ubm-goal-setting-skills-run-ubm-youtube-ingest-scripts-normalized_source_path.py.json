@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 b84f57afed6cd95bcf2febc9f411ac224dd93d19c024d5349a6bb0c19d07f3ae をレビュー。実行検証あり）。範囲: 全 119 行（origin/main には無く全行が新規の差分として読んだ）。確かめたこと（work-s2/yt/probe_nsp.py、scratchpad のみ・ネットワークなし）: --help は 0、引数なしは 2。相対の source-out、ファイルの source-out、存在しない metadata、[]、UTF-8 でない、深い入れ子は 2。video_id が int・33 bytes・空白、published_at が 2026-02-30・2026-1-2・欠落、title が null のときは 2。title 欠落は untitled、区切り文字・制御文字は _ に置き換え、100 文字の title は 96 bytes に切る。title の『..』や video_id の『../../etc』も hex 化されて外へ出ず、ファイル名は最大 182 bytes。既存ファイルとの照合は、同じ video_id（引用符あり・コメントつき・単引用符・CRLF）なら 0、別の ID・frontmatter なし・video_id が 2 つ・BOM・YAML 固有のエスケープ・UTF-8 でない・ディレクトリは 2。YouTube/ が symlink、対象ファイルが symlink なら 2、root が symlink なら 0。run-ubm-youtube-ingest の pytest（test_youtube_sync_oneshot.py ほか）で 90 passed。lint-script-frontmatter.py は run-ubm-youtube-ingest/scripts で OK checked=4。指摘: なし。補足（減点なし）: header に version が無いが、lint は OK で必須ではない。DEDUCTION: 減点なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s2",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

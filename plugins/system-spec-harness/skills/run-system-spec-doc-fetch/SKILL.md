@@ -17,7 +17,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   - Read
-  - Bash
+  - Bash(python3 *)
 responsibility_refs:
   - prompts/R1-identify.md
   - prompts/R2-fetch.md

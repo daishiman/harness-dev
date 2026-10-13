@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-governance-automation",
     "skill": "run-governance-automation",
-    "skill_md_sha256": "3329d6fc08578d29d0a8f2c9ee5d74edb6c0769374951479c3cacfd7d4a9ebd0"
+    "skill_md_sha256": "6947515c26ccf2a39e6f3d92e37c0e86c5f62fa7b8153c7297cc284ed54c076b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -14,8 +14,8 @@
     "smell": 0
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
-  "iterations": 1,
+  "reviewed_at": "2026-10-11T21:46:59Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,13 +24,21 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "rubric観点でも確認: inline/inline の最小 profile は help→read-only preflight→承認後 apply/rollback という直列責務に合い、不要な context fork を増やさない。scripts entrypoint と plugin-composition の公開 ref は解決する。"
+      "差分の範囲: iteration 2 の版からの変更は 80・84・88・89 行目だけ（git diff HEAD -U0 の hunk は節の移動と 76・80・84・88〜89 行目で、76 行目は iteration 2 から変わっていない）。見出しの並びと Runtime root contract の位置（67〜72 行目）は同じで、lint-entrypoint-artifact-first.py は rc 0（127 inventory、101 enforced、26 mechanically exempt）。",
+      "iteration 2 の low-1（76 行目と表のラベル、解消）: 表で **既定で書き込む** のラベルが付く行は 82・87・88・89 行目の 4 行になり、76 行目の「4本」と数・顔ぶれがそろった。88 行目に足した「`--out` は必須」は実物と合う（scratchpad で、--out を省くと argparse の exit 2、--doc のファイルが無いと exit 1 で --out は作られない、正常に呼ぶと exit 0 で --out に brief JSON を書く）。",
+      "iteration 2 の low-2（89 行目の log root、解消）: 書き込み欄の順序は実物どおり。scratchpad の偽の plugin に複製した script（repo の 2 本の写しと同じ sha256 8d53156d…）で、CLAUDE_LOG_ROOT はその直下に <日付>.jsonl を書き（.claude/logs は付かない）、無ければ $PROJECT_ROOT/.claude/logs、どちらも無ければ <偽の plugin>/.claude/logs に書くことを確かめた。ファイル名の日付は UTC（ローカルの日付 2026-10-12 に対して 2026-10-11.jsonl）。",
+      "iteration 2 の low-3（80 行目、解消）: この plugin での実際の動き（proposals 空の exit 0、何も登録しない）が先に書かれ、legacy の分岐は「legacy の manifest.json 形式の plugin に置いたときだけ」に限られた。scratchpad の legacy 形式の偽の plugin（manifest.json と未登録の skills/foo/SKILL.md）で、--apply なしは needs_confirmation の exit 1、--apply ありは applied の exit 0 で manifest.json が変わることを確かめ、この限定が正しいことを確認した。plugin.json 形式の偽の plugin では --apply を付けてもどのファイルも変わらない。書き込み欄の「しない（この plugin では --apply を付けても変えない）」と、登録の担い手として示した repo の scripts/validate-plugin-completeness.py --fix（docstring の 33 行目: 未登録 plugin を marketplace.json・bundles.json へ追記する）も実物と合う。",
+      "iteration 2 の info-1（84 行目、解消）: 「`--versions-md` に渡したファイルが無いと exit 1（option そのものを省くと argparse の exit 2）」は、iteration 2 の fixture（nope.md で exit 1、--versions-md を省くと exit 2。required=True は 354 行目）と合う。rollback-to-stable.py は iteration 2 から変わっていない。",
+      "iteration 2 の info-2（89 行目、解消）: 「hook の入力では exit 0（UTF-8 として読めない stdin だけは exit 1）」は、通常の環境での実物と合う（壊れた JSON・JSON の配列・空の stdin は exit 0、0xff の stdin は exit 1）。script の側の修正は後続の Beads に回すという判断で、SKILL.md は今の動きを正しく書いている。",
+      "rubric の機械採点は 100/100（threshold 80、findings 0、passed）。指定のコマンド（--rubric-refs に L0 だけ）で rubric 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash sha256:2713eeaf2ead46a2760bc5f1e4195f429883a8cd14cecdf0e7f7a8323655ec98、applicable 20・scored 19・pending_human 1（BD-004）・unscored 0。L0+L2（assign-skill-design-evaluator）の合成でも 100/100（applicable 24・scored 23、composition_hash sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c）。check-rubric-sync.py は OK（1.6.0、exit 0）。BD-004 は PASS: description の「登録」は 80 行目へ対応し、80 行目はこの plugin では何もしないことと登録の担い手を示すので、発動条件から本文の手順へたどれる。rubric の high は 0 件。",
+      "OUT1: 今回の変更は外部作用の境界を変えていない。rollback・manifest登録の書き込み欄は「しない」で、apply・rollback・通知は明示承認なしに実行しない（100・107 行目）。",
+      "関係するテスト（grep で見つかった tests/scripts-plugins/test_skill_governance_automation__rollback_to_stable.py と tests/criteria/criteria_roster.py）は 99 passed、pytest の rc 0。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual:stale-sha-review",
     "next_action": "none"
   },
-  "notes": "現行 SKILL.md 全文、diff、composition、scripts 配置、criteria を fresh review。runtime-profile/frontmatter/tree lint は exit 0。legacy goal-seek の wiring/anchor 推奨 warning 3件は exit 0で非ブロッキング。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "節の移動だけの差分に対する新しいサイクルの iteration 3（最終）。iteration 1 は SKILL.md sha256 e9c871dd74e8263826ed68ecb98c1c7b009604d176ad8edf976b23fb21402977 を PASS（low 5 件）、iteration 2 は b38c004f1f108f40b575ea1ed1baf1bd8ef35a4f2422a511148967c2e375f0a2 を PASS（low 3 件・info 2 件）と判定した。その前のサイクルの最終 verdict は PASS（iteration 3/3、2026-10-10T09:42:34Z、skill_md_sha256 3ab3e6f7c1eee83d6bf597e66fc07ab9bf3f77dc8fb56f6558c047f6f2524aea）。今回は team-lead が iteration 2 の low 3 件と info 2 件を 80・84・88・89 行目で直した版（sha256 6947515c26ccf2a39e6f3d92e37c0e86c5f62fa7b8153c7297cc284ed54c076b）を評価した。elegance 側と同じ focused combined review（独立レビュアーの 1 context、incremental profile）を rubric 側に写したもの。rubric は指定のコマンド（render-findings-score.py --rubric-refs <L0 ref-skill-design-rubric> --kind skill）で機械採点し（rubric 1.6.0、score 100、applicable 20・scored 19・pending_human 1・unscored 0）、L0+L2 の合成でも 100 を確かめた。pending_human の BD-004 は本レビュアーが PASS と判定した。iteration 2 の low 3 件と info 2 件はすべて解消し、新しい指摘は無い。high・medium・low とも 0 件なので PASS、human_review_required は false、next_action は none。確かめた内容・コマンド・info は elegance-verdict.json の notes に書いた。PASS の範囲は設計の記述と script の実物の照合に限り、本物の rollback や apply は実行していない。30 種の思考法は使っておらず、使ったとも申告しない。"
 }

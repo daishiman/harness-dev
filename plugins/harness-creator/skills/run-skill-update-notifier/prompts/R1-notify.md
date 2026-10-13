@@ -1,6 +1,6 @@
 # Prompt: R1-notify
 
-> 7 層プロンプトの Markdown 表現。Skill 実行末尾に installed と latest を比較し差分があれば stdout に 1 行のみ通知する (会話末尾付記)。
+> 7 層プロンプトの Markdown 表現。Skill 実行末尾に installed と latest を比較し、食い違いがあれば 1 行だけ通知する (hook が systemMessage として利用者に表示する)。
 
 ## メタ
 
@@ -11,14 +11,14 @@
 | responsibility | R1+R2+R3 (単一 prompt が cache-check / formatting / graceful-guard を統括) |
 | layers_covered | [L2, L4, L5, L6] |
 | inputs | mode (subcommand: cache-status\|refresh\|notify, required。`--mode <name>` 前置も互換受理) |
-| outputs | stdout 1 行 or 空 (schemas/output.schema.json) |
+| outputs | notify の stdout 1 行 or 空 (hook が systemMessage の JSON に包む。判定の内部モデルは schemas/output.schema.json) |
 
 ## Layer 1: 基本定義層
 
-- 最上位目的: installed と latest を比較し差分があれば stdout に 1 行のみ通知 (会話末尾付記)。
+- 最上位目的: 同じツリー内の installed と latest を比較し、食い違いがあれば作者に向けて 1 行だけ通知。配布元とは比べない。
 - 背景: 頻繁な通知は UX を損なう。差分時のみ静かに 1 行で知らせる契約。
-- 期待成果: 差分時のみ stdout 1 行 + cache 更新 (必要時)。
-- 成功基準: `up-to-date / offline / unknown` は無出力、差分時のみ 1 行で再現可能。
+- 期待成果: 食い違い時のみ 1 行 + cache 更新 (必要時)。
+- 成功基準: `in-sync / unknown / skipped` は無出力、`manifest-behind / changelog-behind / not-comparable` のときだけ 1 行で再現可能。
 - スコープ
   - 含む: cache 読込 / version 比較 / 1 行通知 / cache refresh
   - 含まない: `plugin.json / marketplace.json / bundles.json` の書換 / 二重通知
@@ -28,16 +28,16 @@
 ### 2.1 用語
 | 用語 | 定義 |
 |---|---|
-| installed | 現在インストール済み Skill バージョン |
-| latest | marketplace 等から取得した最新版 |
+| installed | plugin.json の `version`。通知では `plugin.json:` と表示する |
+| latest | installed と同じツリー (install 先またはチェックアウト) の CHANGELOG.md 先頭の版。配布元の最新版ではない。通知では `CHANGELOG:` と表示する |
 | cache | `~/.cache/harness/version-snapshot.json` |
 | mode | cache-status / refresh / notify の subcommand (位置引数・required) |
 
 ### 2.2 ビジネスルール
 - CONST_001: `plugin.json / marketplace.json / bundles.json` は読取専用。
 - CONST_002: 通知は 1 行のみ。二重出力禁止。
-- CONST_003: `up-to-date / offline / unknown` は無出力。
-- OUTPUT_CONST: stderr ではなく stdout に 1 行のみ (会話末尾付記 = effect: conversation-output)。`schemas/output.schema.json` 準拠。
+- CONST_003: `in-sync / unknown / skipped` は無出力。
+- OUTPUT_CONST: stderr ではなく stdout に 1 行のみ (effect: conversation-output)。hook がこの 1 行に `<plugin>: ` を前置し、`systemMessage` を持つ JSON 1 個として stdout に出す。Claude Code はそれを利用者に表示する (PostToolUse の素の stdout は debug log に行くだけで見えない)。`additionalContext` は付けない。status は `schemas/output.schema.json` 準拠。
 
 ## Layer 3: インフラ層
 
@@ -49,11 +49,11 @@
 ## Layer 4: 共通ポリシー層
 
 - 信頼度閾値: 0.7 / 最大リトライ: 1 / 最大改善回数: 2
-- 許可: Read (cache, plugin.json) / stdout 出力 (通知 1 行) / stderr 出力 (診断ログのみ)
-- 禁止: `plugin.json / marketplace.json / bundles.json` 書換 / 二重通知
+- 許可: Read (cache, plugin.json) / Write (`version-snapshot.json` のみ: refresh と通知済みの記録 `notified.<plugin>`) / stdout 出力 (通知 1 行) / stderr 出力 (診断ログのみ)
+- 禁止: `plugin.json / marketplace.json / bundles.json` 書換 / 二重通知 (同じ session・同じ plugin は `--session-id` で 1 回に抑える)
 - 入力検証拒否: 不正 mode 値
 - 事実確認: installed/latest の差分根拠を内部保持。unknown 時は通知しない。semver パースで検証。
-- エスカレーション: cache 破損 / 二重通知検出 → log に reason を残し通知抑制。
+- エスカレーション: cache 破損 → cache 不在と同じく無出力 (次の refresh で作り直す)。整形失敗・想定外の例外 → stderr に短文を残し無出力・exit 0。同じ session・同じ plugin の 2 回目は正常動作で、何も出さずに終える。
 
 ## Layer 5: エージェント層
 
@@ -68,11 +68,11 @@
 ### 5.3 ゴール定義
 - 目的: 差分時のみ 1 行で通知し UX ノイズを抑える。
 - 背景: 頻繁通知は alert fatigue を招く。silent-on-success を徹底。
-- 達成ゴール: status 確定 + 差分時のみ stdout 1 行 (会話末尾付記) + 必要時のみ cache 更新済み。
+- 達成ゴール: status 確定 + 差分時のみ stdout 1 行 + 必要時のみ cache 更新済み。
 
 ### 5.4 完了チェックリスト
 - [ ] 出力は 0 行 or 1 行
-- [ ] `up-to-date / offline / unknown` で無出力
+- [ ] `in-sync / unknown / skipped` で無出力
 - [ ] `status / installed / latest` を内部保持
 - [ ] cache の `last_refreshed_at` が TTL(24h) と整合 (欠落時は stale 扱いで refresh)
 - [ ] 推測を事実として述べていない (unknown 時は unknown 明記)
@@ -91,7 +91,7 @@
 
 ### 5.7 インターフェース
 - 入力: `mode` (cache-status|refresh|notify の subcommand。required・欠損/範囲外は SystemExit(2)。`--mode <name>` 前置も互換受理)
-- 出力: `stdout_line` → 会話末尾付記。形式: `"(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"` (references/output-format.md 正本)。差分時のみ 1 行、silent モードは無出力。
+- 出力: `stdout_line` → hook が `<plugin>: ` を前置した `systemMessage` として利用者に表示する。形式と文言は references/output-format.md が正本で、食い違いの向きで 3 種に分ける: CHANGELOG の版が新しい (status=manifest-behind) は version の上げ忘れ、plugin.json の版が新しい (status=changelog-behind) は CHANGELOG の節の足し忘れ、どちらかが semver として読めない (status=not-comparable) は向きを決めず「版を比べられない」とだけ言う。版として等しい (status=in-sync) / 片方が無い・cache が無い (status=unknown) / silent モード・同じ session で同じ plugin を通知済み (status=skipped) のときは無出力。
 
 ### 5.8 依存関係
 - 前提: なし (hook として呼ばれる末尾実行)
@@ -115,4 +115,4 @@
 
 ## 出力指示
 
-Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。出力は stdout 1 行 (差分時・会話末尾付記) または無出力 (それ以外)。前置き・後書き禁止。
+Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。出力は stdout 1 行 (差分時) または無出力 (それ以外)。前置き・後書き禁止。

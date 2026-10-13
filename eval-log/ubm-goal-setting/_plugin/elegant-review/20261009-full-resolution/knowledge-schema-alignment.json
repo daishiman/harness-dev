@@ -1,0 +1,1163 @@
+{
+  "reviewed_at": "2026-10-09T13:45:10.627226+00:00",
+  "actual_records": 982,
+  "category_files": 129,
+  "schema_before_sha256": "a663ed1bec9d4629370bf0cac8171ae715e81f436656f94be34f0b8b5e26d585",
+  "schema_after_sha256": "e660e41475782e1d3dbc99518714a693d28dba9efcac80363de3fbbd5b691d99",
+  "unrelated_schema_sections_preserved": true,
+  "category_domains_preserved": [
+    "principles",
+    "consultation",
+    "phase-advice",
+    "action-guides",
+    "mindset",
+    "case-studies"
+  ],
+  "enum_alignment": {
+    "phase": {
+      "canonical": [
+        "0to1",
+        "1to10",
+        "10to100",
+        "all"
+      ],
+      "finite_existing_legacy_values": [
+        "初期",
+        "成熟期",
+        "拡大期"
+      ]
+    },
+    "business_type": {
+      "canonical": [
+        "store",
+        "intangible",
+        "all"
+      ],
+      "finite_existing_legacy_values": [
+        "AIコンサルティング",
+        "AI事業",
+        "BtoC",
+        "FC",
+        "IT・AI",
+        "インテリア・デザイン",
+        "コミュニティ",
+        "コンサル",
+        "コンサルティング",
+        "コンサルティング・コミュニティ運営",
+        "コンサルティング・サービス業",
+        "コンサルティング・工務店営業支援",
+        "コンサルティング・教育",
+        "コンサルティング・経営",
+        "コンサルティング系（推定）",
+        "コーチング",
+        "サービス業",
+        "スクール",
+        "フランチャイズ",
+        "ヘルス・ウェルネスコンサルティング",
+        "ホームページ制作・受注代行",
+        "メディア・サブスクリプション（保育業界）",
+        "企業向けコンサルティング・映像制作",
+        "健康・ダイエット（無形商品）",
+        "写真撮影・映像制作",
+        "医療・介護",
+        "士業",
+        "士業（税理士）",
+        "婚活・相談所",
+        "対人サービス",
+        "小売",
+        "店舗ビジネス",
+        "店舗型サービス",
+        "教育",
+        "教育・スクール・物販",
+        "教育・学習塾",
+        "整体・健康サービス",
+        "物販",
+        "福祉・介護",
+        "美容・サービス業",
+        "美容業",
+        "製造",
+        "製造業",
+        "製造業・食品",
+        "講座",
+        "食品",
+        "飲食",
+        "高単価商品"
+      ]
+    },
+    "expression.tone": {
+      "canonical": [
+        "厳しめ",
+        "優しめ",
+        "励まし",
+        "警告",
+        "問いかけ",
+        "共感"
+      ],
+      "finite_existing_legacy_values": [
+        "丁寧",
+        "体験談",
+        "力強い",
+        "啓発的",
+        "実践の指針",
+        "実践的",
+        "戒め",
+        "戦略的",
+        "断定",
+        "断定的",
+        "明快",
+        "本質的",
+        "構造の指摘",
+        "構造指摘",
+        "構造的",
+        "深い",
+        "率直",
+        "発破",
+        "確信的",
+        "示唆的",
+        "自己開示・事実提示",
+        "自己開示・基準提示",
+        "落ち着いた",
+        "覚悟を示す",
+        "設計的",
+        "設計論・慎重",
+        "論理的",
+        "諭すような",
+        "静か"
+      ]
+    },
+    "source.type": {
+      "canonical": [
+        "youtube",
+        "camp",
+        "teaching-material",
+        "monthly-feedback",
+        "seminar",
+        "event",
+        "other"
+      ],
+      "finite_existing_legacy_values": [
+        "academy-meeting",
+        "academy-message",
+        "branch-meeting",
+        "monthly-report",
+        "teaching"
+      ]
+    }
+  },
+  "source_date_precision": "ISO full date, original year/month precision, or explicit unknown; never invent missing date components",
+  "constraints": "six nonempty metadata groups; id-prefix/category consistency; phase finite domain and scalar allowed only phase-advice; source.file/type required; business/tone/source finite enums; domain-specific additional fields retained",
+  "full_nested_schema_validation": {
+    "validator": "jsonschema.Draft202012Validator with FormatChecker",
+    "errors": []
+  },
+  "negative_fixtures": {
+    "count": 23,
+    "all_rejected": true,
+    "fixtures": [
+      {
+        "name": "missing_id",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'id' is a required property"
+          }
+        ]
+      },
+      {
+        "name": "missing_title|content",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{'id': 'CP-019', 'situation': 'インテリアコーデ会社（売上1億達成見込み・利益率38%）。組織化を進めたいが、社長が全部動いている状態。「自分の手が空いたら何をやるべきか」というテーマで相談。', 'problem': '社長の稼働領域で上がる売上限界突破という戦い方になっている。今のままでは組織が数字を自走して回せる状態にならない。「でっかくはできない」。', 'advice': '①組織図を描き、部署と役割を定義する。②各ポジションが追うべき数字と報告基準を決める。③ミーティングは感覚論ではなく数字を追う場にする。④ミッションステートメントを再定義する（この会社は何を実現する会社か・どんなスタンスでやるか）。⑤ミッションに共感する人材を管理職に上げる。⑥既存スタッフへは意識改革を試み、適合しなければ入れ替える方針を決める。ミッションを打ち出した採用に変えると鼻息の荒い人材が来やすくなる。', 'key_insight': '「ミッションステートメントに対して忠実であること」が管理職に上がれる基準。組織図と数字設計だけでなく、ミッションへの共感が組織の階層を動かす。', 'tags': ['組織図', 'ミッションステートメント', '売上1億', '役割定義', '数字管理', '採用'], 'phase': ['1to10', '10to100'], 'business_type': ['all'], 'background': 'YouTube 2025-06-15「年商1億達成後に待ち受ける壁」。壁打ち6回目のインテリアコーデ会社経営者への組織化助言。北原さんが「概念だけ伝えたので、じゃあ何をやるかを描いて持ってきてほしい」と締めた。', 'intent': '1億到達後の経営者に「社長が動いて売上を作る」フェーズから「組織が数字を追う」フェーズへの転換を促すこと。ミッションステートメントという具体的な起点を設定させること。', 'root_cause': '組織図がなく誰が何を追うか不明確なため、全部社長に集中する。ミッションがないと採用基準もブレ、管理職の昇格基準も曖昧になる。', 'expected_outcome': '組織図とミッションを描くことで、誰が何をどの数字で追うかが可視化される。ミッション共感型の採用に変えると意欲の高い人材が来やすくなり、管理職層が徐々に機能し始める。', 'conversation_flow': '現状報告（9,600万・利益率38%・ホテル案件4,000万）から始まり、「手が空いたら何をやるべきか」という問いに対して「まず組織図を描くこと」という答えが出た。数字設計→ミーティング設計→ミッション再定義→人材配置の順で展開。', 'how_to_use': '「売上は上がったが組織が作れない」という相談に対し、「まず組織図と各ポジションが追う数字を決めましょう。それより先にミッションステートメントは決まっていますか？」と問いかける。', 'related': ['CP-017', 'CS-020', 'PA-005'], 'source': {'file': 'YouTube/2025-06-15 - 【人材】年商1億達成後に待ち受ける壁｜北原孝彦が語るミッションステートメントの重要性.md', 'type': 'youtube', 'date': '2025-06-15', 'section': '6-9: 組織化の具体的助言・ミッションステートメント・人材配置'}} is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "missing_intent|purpose",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{'id': 'CP-019', 'title': '「ミッションステートメントに対して忠実であること」が管理職に上がれる基準', 'situation': 'インテリアコーデ会社（売上1億達成見込み・利益率38%）。組織化を進めたいが、社長が全部動いている状態。「自分の手が空いたら何をやるべきか」というテーマで相談。', 'problem': '社長の稼働領域で上がる売上限界突破という戦い方になっている。今のままでは組織が数字を自走して回せる状態にならない。「でっかくはできない」。', 'advice': '①組織図を描き、部署と役割を定義する。②各ポジションが追うべき数字と報告基準を決める。③ミーティングは感覚論ではなく数字を追う場にする。④ミッションステートメントを再定義する（この会社は何を実現する会社か・どんなスタンスでやるか）。⑤ミッションに共感する人材を管理職に上げる。⑥既存スタッフへは意識改革を試み、適合しなければ入れ替える方針を決める。ミッションを打ち出した採用に変えると鼻息の荒い人材が来やすくなる。', 'key_insight': '「ミッションステートメントに対して忠実であること」が管理職に上がれる基準。組織図と数字設計だけでなく、ミッションへの共感が組織の階層を動かす。', 'tags': ['組織図', 'ミッションステートメント', '売上1億', '役割定義', '数字管理', '採用'], 'phase': ['1to10', '10to100'], 'business_type': ['all'], 'background': 'YouTube 2025-06-15「年商1億達成後に待ち受ける壁」。壁打ち6回目のインテリアコーデ会社経営者への組織化助言。北原さんが「概念だけ伝えたので、じゃあ何をやるかを描いて持ってきてほしい」と締めた。', 'root_cause': '組織図がなく誰が何を追うか不明確なため、全部社長に集中する。ミッションがないと採用基準もブレ、管理職の昇格基準も曖昧になる。', 'expected_outcome': '組織図とミッションを描くことで、誰が何をどの数字で追うかが可視化される。ミッション共感型の採用に変えると意欲の高い人材が来やすくなり、管理職層が徐々に機能し始める。', 'conversation_flow': '現状報告（9,600万・利益率38%・ホテル案件4,000万）から始まり、「手が空いたら何をやるべきか」という問いに対して「まず組織図を描くこと」という答えが出た。数字設計→ミーティング設計→ミッション再定義→人材配置の順で展開。', 'how_to_use': '「売上は上がったが組織が作れない」という相談に対し、「まず組織図と各ポジションが追う数字を決めましょう。それより先にミッションステートメントは決まっていますか？」と問いかける。', 'related': ['CP-017', 'CS-020', 'PA-005'], 'source': {'file': 'YouTube/2025-06-15 - 【人材】年商1億達成後に待ち受ける壁｜北原孝彦が語るミッションステートメントの重要性.md', 'type': 'youtube', 'date': '2025-06-15', 'section': '6-9: 組織化の具体的助言・ミッションステートメント・人材配置'}} is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "missing_background",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'background' is a required property"
+          }
+        ]
+      },
+      {
+        "name": "missing_keywords|tags",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{'id': 'CP-019', 'title': '「ミッションステートメントに対して忠実であること」が管理職に上がれる基準', 'situation': 'インテリアコーデ会社（売上1億達成見込み・利益率38%）。組織化を進めたいが、社長が全部動いている状態。「自分の手が空いたら何をやるべきか」というテーマで相談。', 'problem': '社長の稼働領域で上がる売上限界突破という戦い方になっている。今のままでは組織が数字を自走して回せる状態にならない。「でっかくはできない」。', 'advice': '①組織図を描き、部署と役割を定義する。②各ポジションが追うべき数字と報告基準を決める。③ミーティングは感覚論ではなく数字を追う場にする。④ミッションステートメントを再定義する（この会社は何を実現する会社か・どんなスタンスでやるか）。⑤ミッションに共感する人材を管理職に上げる。⑥既存スタッフへは意識改革を試み、適合しなければ入れ替える方針を決める。ミッションを打ち出した採用に変えると鼻息の荒い人材が来やすくなる。', 'key_insight': '「ミッションステートメントに対して忠実であること」が管理職に上がれる基準。組織図と数字設計だけでなく、ミッションへの共感が組織の階層を動かす。', 'phase': ['1to10', '10to100'], 'business_type': ['all'], 'background': 'YouTube 2025-06-15「年商1億達成後に待ち受ける壁」。壁打ち6回目のインテリアコーデ会社経営者への組織化助言。北原さんが「概念だけ伝えたので、じゃあ何をやるかを描いて持ってきてほしい」と締めた。', 'intent': '1億到達後の経営者に「社長が動いて売上を作る」フェーズから「組織が数字を追う」フェーズへの転換を促すこと。ミッションステートメントという具体的な起点を設定させること。', 'root_cause': '組織図がなく誰が何を追うか不明確なため、全部社長に集中する。ミッションがないと採用基準もブレ、管理職の昇格基準も曖昧になる。', 'expected_outcome': '組織図とミッションを描くことで、誰が何をどの数字で追うかが可視化される。ミッション共感型の採用に変えると意欲の高い人材が来やすくなり、管理職層が徐々に機能し始める。', 'conversation_flow': '現状報告（9,600万・利益率38%・ホテル案件4,000万）から始まり、「手が空いたら何をやるべきか」という問いに対して「まず組織図を描くこと」という答えが出た。数字設計→ミーティング設計→ミッション再定義→人材配置の順で展開。', 'how_to_use': '「売上は上がったが組織が作れない」という相談に対し、「まず組織図と各ポジションが追う数字を決めましょう。それより先にミッションステートメントは決まっていますか？」と問いかける。', 'related': ['CP-017', 'CS-020', 'PA-005'], 'source': {'file': 'YouTube/2025-06-15 - 【人材】年商1億達成後に待ち受ける壁｜北原孝彦が語るミッションステートメントの重要性.md', 'type': 'youtube', 'date': '2025-06-15', 'section': '6-9: 組織化の具体的助言・ミッションステートメント・人材配置'}} is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "missing_source",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'source' is a required property"
+          }
+        ]
+      },
+      {
+        "name": "blank_title",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "title"
+            ],
+            "validator": "pattern",
+            "message": "'   ' does not match '\\\\S'"
+          }
+        ]
+      },
+      {
+        "name": "blank_background",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "background"
+            ],
+            "validator": "pattern",
+            "message": "'   ' does not match '\\\\S'"
+          }
+        ]
+      },
+      {
+        "name": "blank_intent",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "intent"
+            ],
+            "validator": "pattern",
+            "message": "'   ' does not match '\\\\S'"
+          }
+        ]
+      },
+      {
+        "name": "empty_tags",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "tags"
+            ],
+            "validator": "minItems",
+            "message": "[] should be non-empty"
+          }
+        ]
+      },
+      {
+        "name": "empty_phase",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "phase"
+            ],
+            "validator": "oneOf",
+            "message": "[] is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "unknown_phase",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "phase"
+            ],
+            "validator": "oneOf",
+            "message": "['not-a-phase'] is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "scalar_phase_outside_phase_advice",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "phase"
+            ],
+            "validator": "type",
+            "message": "'1to10' is not of type 'array'"
+          }
+        ]
+      },
+      {
+        "name": "unknown_category",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "category"
+            ],
+            "validator": "enum",
+            "message": "'arbitrary' is not one of ['principles', 'consultation', 'phase-advice', 'action-guides', 'mindset', 'case-studies']"
+          }
+        ]
+      },
+      {
+        "name": "mismatched_id_category",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "id"
+            ],
+            "validator": "pattern",
+            "message": "'PR-001' does not match '^CP-\\\\d{3}$'"
+          }
+        ]
+      },
+      {
+        "name": "unknown_source_type",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "source",
+              "type"
+            ],
+            "validator": "enum",
+            "message": "'made-up-source' is not one of ['youtube', 'camp', 'teaching-material', 'monthly-feedback', 'seminar', 'event', 'other', 'academy-meeting', 'academy-message', 'branch-meeting', 'monthly-report', 'teaching']"
+          }
+        ]
+      },
+      {
+        "name": "missing_source_file",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "source"
+            ],
+            "validator": "required",
+            "message": "'file' is a required property"
+          }
+        ]
+      },
+      {
+        "name": "blank_source_file",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "source",
+              "file"
+            ],
+            "validator": "minLength",
+            "message": "'' should be non-empty"
+          },
+          {
+            "path": [
+              "entries",
+              0,
+              "source",
+              "file"
+            ],
+            "validator": "pattern",
+            "message": "'' does not match '\\\\S'"
+          }
+        ]
+      },
+      {
+        "name": "unknown_business_type",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "business_type"
+            ],
+            "validator": "oneOf",
+            "message": "['made-up-industry'] is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "unknown_tone",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "expression",
+              "tone"
+            ],
+            "validator": "enum",
+            "message": "'made-up-tone' is not one of ['厳しめ', '優しめ', '励まし', '警告', '問いかけ', '共感', '丁寧', '体験談', '力強い', '啓発的', '実践の指針', '実践的', '戒め', '戦略的', '断定', '断定的', '明快', '本質的', '構造の指摘', '構造指摘', '構造的', '深い', '率直', '発破', '確信的', '示唆的', '自己開示・事実提示', '自己開示・基準提示', '落ち着いた', '覚悟を示す', '設計的', '設計論・慎重', '論理的', '諭すような', '静か']"
+          }
+        ]
+      },
+      {
+        "name": "invalid_calendar_date",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "source",
+              "date"
+            ],
+            "validator": "oneOf",
+            "message": "'2026-02-31' is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "invalid_partial_month",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0,
+              "source",
+              "date"
+            ],
+            "validator": "oneOf",
+            "message": "'2026-13' is not valid under any of the given schemas"
+          }
+        ]
+      },
+      {
+        "name": "arbitrary_empty_entry",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'id' is a required property"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'background' is a required property"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'phase' is a required property"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "required",
+            "message": "'source' is a required property"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{} is not valid under any of the given schemas"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{} is not valid under any of the given schemas"
+          },
+          {
+            "path": [
+              "entries",
+              0
+            ],
+            "validator": "anyOf",
+            "message": "{} is not valid under any of the given schemas"
+          }
+        ]
+      }
+    ]
+  },
+  "canonical_graph_sync": {
+    "validator_returncode": 0,
+    "stdout": "note: knowledge-relations.json が無いため空辺として扱った (edges=0)\nOK: knowledge-graph validated (nodes=982 edges=0 associations=2028) -> /Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/knowledge/knowledge-graph.json",
+    "stderr": "WARN: knowledge graph の edges=0 (辺が1本も無い退化グラフ)。既存のコーパスへの初回適用は RUNBOOK の「辺の過去分の初回埋め戻し」の手順を参照",
+    "before_sha256": "bc1aad67bdad375a1469178c556f44823c78b04ffdb9e228fec933e480bbc6c4",
+    "after_sha256": "1acc325a08d6ea00137cbc57cd279e7e6f8b576e2a844de7e79bab9ce664cb48",
+    "modified_nodes": 116,
+    "node_count": 982,
+    "edges_preserved_exactly": true,
+    "associations_preserved_exactly": true,
+    "all_other_graph_fields_preserved_exactly": true,
+    "source_of_changes": "knowledge-metadata-migration.json verbatim title records",
+    "changes": [
+      {
+        "id": "CP-001",
+        "old_title": "",
+        "new_title": "階層飛ばしが起きるときは情報が足りないことが多い"
+      },
+      {
+        "id": "CP-002",
+        "old_title": "",
+        "new_title": "紹介と口コミで来ているということは「なぜ紹介されたか」が答え"
+      },
+      {
+        "id": "CP-003",
+        "old_title": "",
+        "new_title": "独立志向の人材ほど「この人の本気」を見ている"
+      },
+      {
+        "id": "CP-004",
+        "old_title": "",
+        "new_title": "0→1突破直後に複数の方向性で迷うのは典型的な失敗パターン"
+      },
+      {
+        "id": "CP-005",
+        "old_title": "",
+        "new_title": "「教えると相手が自立する」のは教えすぎの問題ではなく、相手の課題が深くないことのサインである"
+      },
+      {
+        "id": "CP-006",
+        "old_title": "",
+        "new_title": "信じてくれた人を踏み台にしているから活動が散らばる"
+      },
+      {
+        "id": "CP-007",
+        "old_title": "",
+        "new_title": "施策のポートフォリオ管理"
+      },
+      {
+        "id": "CP-008",
+        "old_title": "",
+        "new_title": "「3ヶ月の試行任用として伝える」という言い方一つで、相手が期待されていると感じ前向きになる"
+      },
+      {
+        "id": "CP-009",
+        "old_title": "",
+        "new_title": "レベニューシェアは個人の動機付けにはなるが、組織の階層と指揮命令系統を崩す"
+      },
+      {
+        "id": "CP-010",
+        "old_title": "",
+        "new_title": "交流会は参加するだけでは意味がない"
+      },
+      {
+        "id": "CP-011",
+        "old_title": "",
+        "new_title": "「商品を欲しくないのではなく、そのターゲットと商品の相性が悪い」という診断が重要"
+      },
+      {
+        "id": "CP-012",
+        "old_title": "",
+        "new_title": "「できるようにしてあげる」と完成した時点で役割が終わる"
+      },
+      {
+        "id": "CP-013",
+        "old_title": "",
+        "new_title": "業界の変化が速い領域では、商品名と訴求軸の継続的な見直しが必要"
+      },
+      {
+        "id": "CP-014",
+        "old_title": "",
+        "new_title": "値上げは実績と事例が生まれた瞬間が適切なタイミング"
+      },
+      {
+        "id": "CP-015",
+        "old_title": "",
+        "new_title": "「月報は事実を書くのではなく脳みそを使って書くもの」という定義の転換が育成の鍵"
+      },
+      {
+        "id": "CP-016",
+        "old_title": "",
+        "new_title": "補助金×Eラーニングハイブリッドモデル"
+      },
+      {
+        "id": "CP-017",
+        "old_title": "",
+        "new_title": "組織構築のコンサルは「その会社専用のオリジナルを作る」ではなく「自分たちの基準値の場に連れてくる」だけでよい"
+      },
+      {
+        "id": "CP-019",
+        "old_title": "",
+        "new_title": "「ミッションステートメントに対して忠実であること」が管理職に上がれる基準"
+      },
+      {
+        "id": "CP-020",
+        "old_title": "",
+        "new_title": "「目的と手段の混同」は事業の最大の罠"
+      },
+      {
+        "id": "CP-021",
+        "old_title": "",
+        "new_title": "論点がぶれている経営者の多くは「やること」を増やしすぎている"
+      },
+      {
+        "id": "CP-022",
+        "old_title": "",
+        "new_title": "補佐役（ナンバー2）と責任者（ナンバー1）は根本的に違う"
+      },
+      {
+        "id": "CP-023",
+        "old_title": "",
+        "new_title": "採用の前に「この役割に何を求めるか（定義）」を決めることが最優先"
+      },
+      {
+        "id": "CP-024",
+        "old_title": "",
+        "new_title": "「時間をください」ではなく「無料でやらせてください」という利他的な初手で相手の心を開く"
+      },
+      {
+        "id": "CP-025",
+        "old_title": "",
+        "new_title": "集客力が強いなら、施設を持たなくても事業を広げられる"
+      },
+      {
+        "id": "CP-026",
+        "old_title": "",
+        "new_title": "「願望ファースト」でセールスを設計する"
+      },
+      {
+        "id": "CP-027",
+        "old_title": "",
+        "new_title": "広告に頼る前に自分が持っている資産（人脈・既存顧客・紹介導線）を棚卸しすること"
+      },
+      {
+        "id": "CP-028",
+        "old_title": "",
+        "new_title": "採用の本質は経験値の多寡ではなく、「逃げずに当事者として立てるか・利益責任を負えるか・ビジョンを共有できるか」の3軸"
+      },
+      {
+        "id": "CP-029",
+        "old_title": "",
+        "new_title": "新規事業・新店舗展開は「最優秀人材を抜擢する」ことで、本人の成長とともに既存組織にもキャリアアップの連鎖反応が生まれる"
+      },
+      {
+        "id": "CP-030",
+        "old_title": "",
+        "new_title": "技術・スキル・稼ぎ方で集まる人は条件が変わると去る"
+      },
+      {
+        "id": "CP-031",
+        "old_title": "",
+        "new_title": "利益相反は避けられないが、それを単なるリスクではなく「同業者を顧客化する市場設計の出発点」として捉えることで新しい収益構造が生まれる"
+      },
+      {
+        "id": "CP-032",
+        "old_title": "",
+        "new_title": "商品設計は「下から上へ」ではなく「上から下へ」"
+      },
+      {
+        "id": "CP-033",
+        "old_title": "",
+        "new_title": "施策の迷子になっているとき、問題は施策ではなく「目的の定義」が欠けていること"
+      },
+      {
+        "id": "CP-034",
+        "old_title": "",
+        "new_title": "組織化の土台は「従業員に語れる大義・思想・ビジョンがあるか」"
+      },
+      {
+        "id": "CP-035",
+        "old_title": "",
+        "new_title": "10年単位で見れば、事業を自分でやるより「やりたい人を支援する側に立つ方が圧倒的に強い」"
+      },
+      {
+        "id": "CP-036",
+        "old_title": "",
+        "new_title": "フィードバックの量や頻度を調整するだけでは根本解決にならない"
+      },
+      {
+        "id": "CP-037",
+        "old_title": "",
+        "new_title": "有償化への抵抗は「金額の大小」ではなく「対価を受け取る経験の有無」から生まれる"
+      },
+      {
+        "id": "CP-038",
+        "old_title": "",
+        "new_title": "「現場が見えない不安」は、組織化そのものの問題ではなく、報告の設計（誰が・どこに・どう報告するか）が整っていないことから生まれる"
+      },
+      {
+        "id": "CP-039",
+        "old_title": "",
+        "new_title": "利益率が伸び悩む根本原因は採用対象の質そのものではなく「富の循環を生む関わり方をしているか」にある"
+      },
+      {
+        "id": "CP-040",
+        "old_title": "",
+        "new_title": "管理ルールの厳格化が進むほど利益が消えていく会社は、ルールそのものが問題なのではなく、管理を担う人間への教育と目的共有が欠けていることが多い"
+      },
+      {
+        "id": "CP-041",
+        "old_title": "",
+        "new_title": "組織が崩れる根本原因は、能力の総量不足ではなく、代表が無自覚に自分と似たタイプばかりを登用してしまう「配置の偏り」にあることが多い"
+      },
+      {
+        "id": "CP-042",
+        "old_title": "",
+        "new_title": "顧客基盤の引き継ぎで失敗するのは、引き継ぐべきものを『名簿』だと捉え、その裏にある『信頼』を再構築するプロセスを設計していないことが原因であることが多い"
+      },
+      {
+        "id": "CP-043",
+        "old_title": "",
+        "new_title": "管理体制は重い仕組みでなく軽いグループラインから"
+      },
+      {
+        "id": "CP-044",
+        "old_title": "",
+        "new_title": "新サービスの立ち上げで足踏みする経営者の多くは、実力不足ではなく「完成させてから出す」という順序の思い込みに縛られていることが多い"
+      },
+      {
+        "id": "CP-045",
+        "old_title": "",
+        "new_title": "「考え方は正しいが、それを機能させる仕組み（組み上げ方）が別途必要」という切り分けが有効"
+      },
+      {
+        "id": "CP-046",
+        "old_title": "",
+        "new_title": "失敗や挫折の経験を避けさせるのではなく、早期に経験させ「一周回らせる」ことで、原理原則の理解が深い人材を育成・採用できるという逆説的な採用哲学"
+      },
+      {
+        "id": "CP-047",
+        "old_title": "",
+        "new_title": "チェックする対象を成果物から離脱率・失客率へ"
+      },
+      {
+        "id": "CP-048",
+        "old_title": "",
+        "new_title": "「自分の夢を語るか、相手に合わせるか」という二択そのものが誤った前提であり、正解は「相手の想いに乗り、それを一緒に叶えていく」という第三の道にある"
+      },
+      {
+        "id": "CP-049",
+        "old_title": "",
+        "new_title": "体調不良やパフォーマンス低下は、しばしば「ありがとうの減少」という環境変化のサインである"
+      },
+      {
+        "id": "CP-050",
+        "old_title": "",
+        "new_title": "『会う理由』を都度作るのではなく、先に年間スケジュールとして押さえてしまうことで、関係構築のための行動そのものを仕組み化できる"
+      },
+      {
+        "id": "CP-051",
+        "old_title": "",
+        "new_title": "目標がないスタッフに必要なのは目標設定の技術ではなく、上司自身が約束を守る姿を見せ続けること"
+      },
+      {
+        "id": "CP-052",
+        "old_title": "",
+        "new_title": "権限移譲は一気に役割を渡すことではなく、自分の仕事を少しずつ『剥がして』誰かに託し、辻褄を合わせる作業の積み重ね"
+      },
+      {
+        "id": "CP-053",
+        "old_title": "",
+        "new_title": "採用・解雇をタスクの都合で判断すると『富が紡がれない』関係になる"
+      },
+      {
+        "id": "CP-054",
+        "old_title": "",
+        "new_title": "ナンバー2の役割は、自分の意見を主張し昇進を求めることではなく、代表の成長を疑わず代表の形に自分を合わせて信じ切ることにある"
+      },
+      {
+        "id": "CP-055",
+        "old_title": "",
+        "new_title": "地方でのイベント・出張の目標数は経営者一人で埋めるものではなく、『各土地の強いメンバーを運営に組成する』ことで埋まる"
+      },
+      {
+        "id": "CP-056",
+        "old_title": "",
+        "new_title": "マネジメントのブレの多くは能力や意欲の問題ではなく、『頑張る』『大丈夫』といった言葉の定義がお互いに食い違っていることから生まれる"
+      },
+      {
+        "id": "CP-057",
+        "old_title": "",
+        "new_title": "強い組織は同質の強者を揃えることではなく、旗振り・サポート・数字という異なる特性を組み合わせて弱点を埋め合うことで生まれる"
+      },
+      {
+        "id": "CP-058",
+        "old_title": "",
+        "new_title": "承継が成立するのは「連結が既にある会社」の連結部をバトンタッチできた時である"
+      },
+      {
+        "id": "CP-059",
+        "old_title": "",
+        "new_title": "規模の壁は面談の量ではなく会議体の種類で解く"
+      },
+      {
+        "id": "CP-060",
+        "old_title": "",
+        "new_title": "後任は探すものでも本人に探させるものでもなく、本人に指名させるもの"
+      },
+      {
+        "id": "CP-061",
+        "old_title": "",
+        "new_title": "採用は探索の問題ではなく場の設計の問題である"
+      },
+      {
+        "id": "CP-062",
+        "old_title": "",
+        "new_title": "会社は器であり、人は会社ではなく人に付く"
+      },
+      {
+        "id": "CP-063",
+        "old_title": "",
+        "new_title": "資金ショートが見えている局面では、相談内容が何であれ未来の話を止める"
+      },
+      {
+        "id": "CP-064",
+        "old_title": "",
+        "new_title": "部下の失敗に一人で向き合うと、自分の基準値でしか測れなくなる"
+      },
+      {
+        "id": "CP-065",
+        "old_title": "",
+        "new_title": "クライアントに好かれるには、まず部下に好かれる必要がある"
+      },
+      {
+        "id": "CP-066",
+        "old_title": "",
+        "new_title": "依存は取引条件の問題ではなく、川上か川下かという位置の問題である"
+      },
+      {
+        "id": "CP-067",
+        "old_title": "",
+        "new_title": "投下リソースと回収経路は必ずセットで設計する"
+      },
+      {
+        "id": "CP-068",
+        "old_title": "",
+        "new_title": "選択と集中とは、集中先を選ぶことではなく、閉じることから始めることである"
+      },
+      {
+        "id": "CP-069",
+        "old_title": "",
+        "new_title": "利益率は努力ではなく階層で決まる"
+      },
+      {
+        "id": "CP-070",
+        "old_title": "",
+        "new_title": "恐怖は感情ではなく情報の欠如である"
+      },
+      {
+        "id": "CP-071",
+        "old_title": "",
+        "new_title": "発信に共感して来る人は戦い抜く覚悟で来るが、求人ページの条件で来る人はいい環境を享受しに来る"
+      },
+      {
+        "id": "CP-072",
+        "old_title": "",
+        "new_title": "顧客だけを見てきた会社は、仲間の勝たせ方という視点が抜け落ちる"
+      },
+      {
+        "id": "CP-073",
+        "old_title": "",
+        "new_title": "やり方を作る者がボスであり、やり方を渡した瞬間に相手はマリオネット（ワーカー）になる"
+      },
+      {
+        "id": "CP-074",
+        "old_title": "",
+        "new_title": "崩れやすい人材の引き上げは、本人のやる気ではなく引き上げる側の設計で決まる"
+      },
+      {
+        "id": "CP-075",
+        "old_title": "",
+        "new_title": "外注値上げは交渉テクニックで解く問題ではなく、1つの外注に握られている構造の問題である"
+      },
+      {
+        "id": "CP-076",
+        "old_title": "",
+        "new_title": "外部パートナーへの報酬は、固定費で買うと相手は成果に無関心になり、成果連動にすると相手が自分ごととして伸ばそうとする"
+      },
+      {
+        "id": "CP-077",
+        "old_title": "",
+        "new_title": "昇給要求は金額の問題ではなく整合の問題である"
+      },
+      {
+        "id": "CP-078",
+        "old_title": "",
+        "new_title": "拡大は社内リソースの増強ではなく、外部リソースの活用と再編で作れる"
+      },
+      {
+        "id": "CP-079",
+        "old_title": "",
+        "new_title": "紹介はアポからの成約打率が最も高い新規獲得の王道であり、紹介依存は弱みでなく伸ばすべき強み"
+      },
+      {
+        "id": "CP-080",
+        "old_title": "",
+        "new_title": "「場を作っても既存客しか来ない」は施策の失敗ではなく、追う対象が間違っていることを教えるシグナルである"
+      },
+      {
+        "id": "CP-081",
+        "old_title": "",
+        "new_title": "コミュニティを離れた理由と、離れた先でやろうとしていることが一致しているかを必ず確認する"
+      },
+      {
+        "id": "CP-082",
+        "old_title": "",
+        "new_title": "リズムが合わないのは相性やペースの問題ではなく、考え方が共有されていないことの症状である"
+      },
+      {
+        "id": "CP-083",
+        "old_title": "",
+        "new_title": "リソースが枯渇している経営者の課題は、たいてい「誰に任せるか」ではなく「何を持たないか」である"
+      },
+      {
+        "id": "CP-090",
+        "old_title": "",
+        "new_title": "複数をやると必ず遅くなり、崩れやすくなり、利益率が落ちる"
+      },
+      {
+        "id": "CP-091",
+        "old_title": "",
+        "new_title": "出店してから求人をするのは順序が逆である"
+      },
+      {
+        "id": "CP-092",
+        "old_title": "",
+        "new_title": "抜ける時期を計画で決めるのではなく、後継の出現を条件にする"
+      },
+      {
+        "id": "CP-093",
+        "old_title": "",
+        "new_title": "距離感は感情ではなく、条件設計と定期接触の枠で作る"
+      },
+      {
+        "id": "CP-094",
+        "old_title": "",
+        "new_title": "相手の本気度は、こちらの在り方の反映である"
+      },
+      {
+        "id": "CP-095",
+        "old_title": "",
+        "new_title": "初動の対象は市場ではなく、信頼してくれる特定の個人である"
+      },
+      {
+        "id": "CP-096",
+        "old_title": "",
+        "new_title": "拠点は場所ではなく、そこに蓄積された物語である"
+      },
+      {
+        "id": "CP-097",
+        "old_title": "",
+        "new_title": "発表の質は当日の気合いではなく、反復回数で決まる"
+      },
+      {
+        "id": "CP-098",
+        "old_title": "",
+        "new_title": "環境より先に人である。人がいない仕組みは反応が取れないため改善もできない"
+      },
+      {
+        "id": "CP-099",
+        "old_title": "",
+        "new_title": "場の成果は開催回数ではなく、誰からの評価を得たかで測る"
+      },
+      {
+        "id": "CP-100",
+        "old_title": "",
+        "new_title": "方向性に部下の意見を通すと、その人が事実上のボスになる"
+      },
+      {
+        "id": "CP-101",
+        "old_title": "",
+        "new_title": "値付けの相談は、金額の妥当性ではなく「なぜその金額でなければならないのか」を本人に言語化させる場である"
+      },
+      {
+        "id": "CP-102",
+        "old_title": "",
+        "new_title": "投稿本数を2倍・4倍にするという答えが出てくること自体が、対局（構造）が動いていないサインである"
+      },
+      {
+        "id": "CP-103",
+        "old_title": "",
+        "new_title": "継続率は施策で上げるものではなく、どういう動機の顧客を入れたかで決まる"
+      },
+      {
+        "id": "CP-104",
+        "old_title": "",
+        "new_title": "「商材を売るために」という文脈で語られている限り、現場は変更を引き受けない"
+      },
+      {
+        "id": "CS-029",
+        "old_title": "",
+        "new_title": "外部からの攻撃に対して、削除申請や演出強化といった「技術的な対処」で解こうとしても戻らない"
+      },
+      {
+        "id": "CS-030",
+        "old_title": "",
+        "new_title": "転職回数は定着リスクの指標ではない"
+      },
+      {
+        "id": "CS-031",
+        "old_title": "",
+        "new_title": "売上が伸びても潰れるのは、人を見極めずに箱を増やすから"
+      },
+      {
+        "id": "CS-032",
+        "old_title": "",
+        "new_title": "事業承継が成立するのは「連結が既にある会社」の連結部をバトンタッチできた時である"
+      },
+      {
+        "id": "CS-033",
+        "old_title": "",
+        "new_title": "崩れない人材は、お金の使い方・人間関係の複雑さ・富の循環という『崩れにくさの兆候』で入り口から見分けられる"
+      },
+      {
+        "id": "CS-052",
+        "old_title": "",
+        "new_title": "困っている相手には、条件やサービスの提案ではなく、退路を含めた覚悟を先に出す"
+      },
+      {
+        "id": "MS-046",
+        "old_title": "",
+        "new_title": "掲げているものは全て「約束」である"
+      },
+      {
+        "id": "MS-047",
+        "old_title": "",
+        "new_title": "成長するかどうかを測るのではなく「成長する」と決めてしまう"
+      },
+      {
+        "id": "MS-048",
+        "old_title": "",
+        "new_title": "求められることとは、人間関係の相関の中でご縁があった人に「あなたのためにこれをやりたいのですが、どうしたら受け取っていただけますか」と向かうこと"
+      },
+      {
+        "id": "MS-049",
+        "old_title": "",
+        "new_title": "辞めてきたのは思いを連結する相手がいなかったから"
+      },
+      {
+        "id": "MS-050",
+        "old_title": "",
+        "new_title": "スキルで人を見る人の元では人は育たない"
+      },
+      {
+        "id": "MS-051",
+        "old_title": "",
+        "new_title": "「やりたい」の他にもう1つ条件が要る"
+      },
+      {
+        "id": "MS-052",
+        "old_title": "",
+        "new_title": "自分が決めたメンバーを中間に置くと、その子は自分に付いているため中間層とぶつかる"
+      },
+      {
+        "id": "MS-053",
+        "old_title": "",
+        "new_title": "期日を自分が決めると、その期日を理由に指導しなければならなくなる"
+      },
+      {
+        "id": "MS-054",
+        "old_title": "",
+        "new_title": "失敗すると分かっていても失敗させる"
+      },
+      {
+        "id": "MS-055",
+        "old_title": "",
+        "new_title": "答えを聞かせない。「まずどう考えているの」を先に述べさせる"
+      },
+      {
+        "id": "MS-056",
+        "old_title": "",
+        "new_title": "今まで規定なしでやってきた組織にいきなり規定を作ると、店長すら崩壊する（「じゃあ辞めます」となる）"
+      },
+      {
+        "id": "MS-057",
+        "old_title": "",
+        "new_title": "探すべきはギラつきではない"
+      },
+      {
+        "id": "MS-058",
+        "old_title": "",
+        "new_title": "最もパフォーマンスが高いのは、一緒に生きる覚悟がある人へのコンサルティング"
+      }
+    ]
+  },
+  "source_cards_mutated_by_schema_alignment_or_graph_sync": false,
+  "tests": {
+    "targets": [
+      "test_knowledge_counts.py",
+      "test_validate_knowledge_graph.py"
+    ],
+    "passed": 43,
+    "final_nested_record_validation": 982,
+    "final_hash_recheck": "PASS"
+  }
+}

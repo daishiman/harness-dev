@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+# /// script
+# name: lint-sibling-plugin-paths
+# purpose: plugin の中に、親ディレクトリ起点で兄弟 plugin を指すパス (install 先で壊れる) が無いことを静的検査する。
+# inputs:
+#   - argv: [--root <repo root>] [--json]
+#   - files: <root>/plugins/*/.claude-plugin/plugin.json と各 plugin 配下の走査対象ファイル
+# outputs:
+#   - stdout: OK 行、--json なら findings の JSON
+#   - stderr: 検出した参照の一覧と直し方、読めないファイルの一覧
+#   - exit: 0=該当なし / 1=該当あり / 2=usage・plugins/ が無い・読めないファイルがある
+# contexts: [E, C]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.9"
+# ///
 """plugin の中に、親ディレクトリ起点で兄弟 plugin を指すパスが無いことを静的検査する (fail-closed)。
 
 なぜ:
@@ -10,30 +26,37 @@
 検出する形 (兄弟 plugin 名 = plugins/*/.claude-plugin/plugin.json を持つディレクトリ名):
   dotdot    `../` を 1 つ以上重ねた直後に兄弟 plugin 名 (`../../../harness-creator/...`)
   dirname   shell の `$(dirname "$PLUGIN_ROOT")/<name>` (親ディレクトリ起点)
-  pyparent  Python の `.parent / "<name>"` と `.parents[N] / "<name>"` (改行をまたいでも検出)
-  osjoin    `os.path.join(..., "..", "<name>")`
+  pyparent  Python の `.parent / "<name>"`・`.parents[N] / "<name>"`・`.parent.joinpath("<name>")`
+            (改行をまたいでも検出)
+  osjoin    `os.path.join(..., "..", "<name>")` と `.joinpath("..", "<name>")`
 
 検出しない (許容):
   - 自 plugin の名前 (repo root の検出や自己説明で、兄弟参照ではない)
-  - `$schema` を含む行と、plugin-composition.yaml の `# 正本スキーマ:` 注記行
-    (editor 向けの注記で、runtime は解決しない)
+  - `$schema` の metadata 値 (除くのは値の範囲だけで、同じ行の runtime 参照は検出する)。
+    JSON・YAML の `"$schema": …`、YAML コメントの `# $schema: …`、modeline の
+    `# yaml-language-server: $schema=…`、TOML の `"$schema" = …`、markdown の inline code
+    `` `"$schema": …` `` の形を認める。plugin-composition.yaml の `# 正本スキーマ:` 注記行も除く
+    (どれも editor 向けの注記で、runtime は解決しない)
   - `rubric_refs:` 直下のリスト項目 (lint-rubric-refs-exist.py が skill 起点で解決する別契約)
   - README.md / CHANGELOG.md / EVALS.json と、tests/・eval-log/ 配下 (repo での開発・評価用)
   - repo root 起点の `"plugins" / "<name>"` (対象 repo を検査する governance ツールでは正当なため。
     install 先で使う script がこの形を使っていないかは、この lint では見ない)
 
 直し方 (どれを選ぶかは参照の種類で決まる):
-  - 実行するコマンド: `$(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py <name>)/scripts/...`
+  - 実行するコマンド: `SIBLING_ROOT="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" <name>)" && python3 "$SIBLING_ROOT/scripts/..."`
     Python からは同梱の scripts/extract-plugin-root.py を importlib で読み、resolve() を呼ぶ
   - resource-map などのメタデータ: `plugin:<name>/<path>` 記法
   - 本文の引用: 「<name> plugin の `<path>` (出典表記)」
   - repo-bundled 前提の plugin と frontmatter の *_refs: `plugins/<name>/...` (repo root 起点)
   - 小さい runtime 資産: 自 plugin へ同梱し、scripts/lint-vendored-ssot.py で byte 一致を強制する
 
+UTF-8 でないファイルも、読めない byte を置換して走査する (兄弟名は ASCII なので検出は変わらない)。
+読めないファイル (権限・壊れた symlink など) は検査が終わらないので exit 2 で止める。
+
 Usage:
   python3 scripts/lint-sibling-plugin-paths.py [--root <repo root>] [--json]
 
-Exit 0 = 該当なし, 1 = 該当あり, 2 = usage error.
+Exit 0 = 該当なし, 1 = 該当あり, 2 = usage error・plugins/ が無い・読めないファイルがある.
 """
 from __future__ import annotations
 
@@ -52,8 +75,15 @@ SCANNED_SUFFIXES = {
 }
 SKIPPED_DIRS = {"tests", "eval-log", "node_modules", "__pycache__", ".git"}
 SKIPPED_FILES = {"README.md", "CHANGELOG.md", "EVALS.json"}
-# runtime が解決しない注記行。行にこの文字列があれば検出しない。
-ANNOTATION_MARKERS = ("$schema", "# 正本スキーマ:")
+# 値の範囲だけを除外し、同じ JSON 行の runtime command まで免除しない。
+# key の前は行頭・`,`・`{`・YAML コメントの `#`・inline code の backtick・yaml-language-server の
+# modeline。区切りは `:` (JSON・YAML) か `=` (TOML・modeline)。
+SCHEMA_VALUE_RE = re.compile(
+    r'''(?:^|[,{`#]|yaml-language-server:)\s*["']?\$schema["']?\s*[:=]\s*'''
+    r'''(?:"(?P<double>(?:\\.|[^"\\])*)"|'(?P<single>[^']*)'|(?P<plain>[^\s,}`\n]+))''',
+    re.MULTILINE,
+)
+SCHEMA_COMMENT_RE = re.compile(r"^\s*# 正本スキーマ:")
 RUBRIC_REFS_KEY_RE = re.compile(r"^\s*rubric_refs:\s*(?:#.*)?$")
 LIST_ITEM_RE = re.compile(r"^\s*-\s")
 
@@ -81,7 +111,9 @@ def compile_patterns(names: list[str]) -> dict[str, re.Pattern[str]]:
     return {
         "dotdot": re.compile(rf"(?:\.\./)+(?P<name>{alt})(?![\w-])"),
         "dirname": re.compile(rf"dirname[^\n]*?ROOT[^\n]*?\)\"?/(?P<name>{alt})(?![\w-])"),
-        "pyparent": re.compile(rf"\.parent(?:s\[\d+\])?\s*/\s*[\"'](?P<name>{alt})[\"']"),
+        "pyparent": re.compile(
+            rf"\.parent(?:s\[\d+\])?\s*(?:/|\.joinpath\()\s*[\"'](?P<name>{alt})[\"']"
+        ),
         "osjoin": re.compile(rf"[\"']\.\.[\"']\s*,\s*[\"'](?P<name>{alt})[\"']"),
     }
 
@@ -104,6 +136,12 @@ def scan_text(
 ) -> list[Finding]:
     """1 ファイル分の本文を走査する。改行をまたぐ書き方を拾うため、行ではなく全文に照合する。"""
     lines = text.splitlines()
+    schema_values = [
+        match.span(group)
+        for match in SCHEMA_VALUE_RE.finditer(text)
+        for group in ("double", "single", "plain")
+        if match.group(group) is not None
+    ]
     findings: list[Finding] = []
     for kind, pattern in patterns.items():
         for match in pattern.finditer(text):
@@ -113,7 +151,9 @@ def scan_text(
             # 一致の末尾 (兄弟名) がある行を報告する。pyparent は `.parents[N]` の行から始まりうる。
             index = text.count("\n", 0, match.end())
             line = lines[index] if index < len(lines) else ""
-            if any(marker in line for marker in ANNOTATION_MARKERS):
+            if any(start <= match.start() and match.end() <= end for start, end in schema_values):
+                continue
+            if SCHEMA_COMMENT_RE.match(line):
                 continue
             if _in_rubric_refs(lines, index):
                 continue
@@ -131,7 +171,8 @@ def iter_plugin_files(plugin_dir: Path):
             yield path
 
 
-def scan(root: Path) -> list[Finding]:
+def scan(root: Path, unreadable: list[str] | None = None) -> list[Finding]:
+    """兄弟参照を返す。読めないファイルは unreadable へ積む (渡されなければ OSError を上げる)。"""
     names = plugin_names(root)
     if not names:
         return []
@@ -139,11 +180,16 @@ def scan(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     for name in names:
         for path in iter_plugin_files(root / "plugins" / name):
-            try:
-                text = path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                continue
             rel = path.relative_to(root).as_posix()
+            try:
+                data = path.read_bytes()
+            except OSError as exc:
+                if unreadable is None:
+                    raise
+                unreadable.append(f"{rel}: {exc.strerror or exc}")
+                continue
+            # 兄弟名は ASCII なので、UTF-8 でない byte は置換して走査する (黙って飛ばさない)。
+            text = data.decode("utf-8", errors="replace")
             findings.extend(scan_text(text, name, patterns, rel))
     return findings
 
@@ -156,9 +202,14 @@ def main(argv: list[str] | None = None) -> int:
     if not (args.root / "plugins").is_dir():
         print(f"[lint-sibling-plugin-paths] plugins/ が見つからない: {args.root}", file=sys.stderr)
         return 2
-    findings = scan(args.root)
+    unreadable: list[str] = []
+    findings = scan(args.root, unreadable)
     if args.json:
         print(json.dumps([asdict(f) for f in findings], ensure_ascii=False, indent=2))
+    if unreadable:
+        print("[lint-sibling-plugin-paths] ERROR: 読めないファイルがあり、検査を終えられない", file=sys.stderr)
+        for item in unreadable:
+            print(f"  - {item}", file=sys.stderr)
     if findings:
         print("[lint-sibling-plugin-paths] FAIL: 親ディレクトリ起点で兄弟 plugin を指すパス", file=sys.stderr)
         for f in findings:
@@ -168,6 +219,9 @@ def main(argv: list[str] | None = None) -> int:
             " 直し方は scripts/lint-sibling-plugin-paths.py の docstring を参照。",
             file=sys.stderr,
         )
+    if unreadable:
+        return 2
+    if findings:
         return 1
     if not args.json:
         print("[lint-sibling-plugin-paths] OK: 親ディレクトリ起点の兄弟 plugin 参照なし")

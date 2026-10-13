@@ -1,0 +1,33 @@
+{
+  "label": "node3",
+  "retry_of": "20261012T1048-pr85",
+  "evaluator_agent_id": "a5b9fb0d57bda7c8e",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/node3/ws/plugins/dev-graph/skills/run-dev-graph-node",
+  "closure_sha_at_launch": "85dbc6e0374cbf5c2af9e733d9453b075cdc90cae627ea07f562cd96114fb372",
+  "closure_sha_tested_copy": "85dbc6e0374cbf5c2af9e733d9453b075cdc90cae627ea07f562cd96114fb372",
+  "closure_sha_wtpy_at_verdict": "85dbc6e0374cbf5c2af9e733d9453b075cdc90cae627ea07f562cd96114fb372",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "fixture: mkfx.sh でその場で git init した素の repo (最初の commit は bf8927ed…、追跡は README.md だけ)。node2 と同じ手順で、seed は使っていない。",
+    "隔離ガード: node2 の後に締めた形 (guard.py f23267a3…、mksettings.py 277ae072…。外へ送る tool と許可一覧に無い tool を拒否。§17 から render5・status4 と同じ)。",
+    "task.md: node2 のものから run の dir の名前 (runs/node2 → runs/node3、4 か所) だけを変えた (fixture-provenance.json の retake.task_md_changes)。",
+    "TMPDIR: 被験の session の一時領域を run の dir の中 (runs/node3/tmp。短い symlink /private/tmp/ltpr85/t/nd3 を経由) に向けた。PYTHONDONTWRITEBYTECODE は渡していない (fixture-provenance.json の retake.tmpdir)。",
+    "plugin の写し: bytecode の修正の後の wtpy の plugins/ から、__pycache__ と *.pyc を除いて写した (写しの bytecode は 0 件。被験の閉包 85dbc6e0… は team-lead の 12:26Z の値・wtpy と一致。fixture-provenance.json の retake.plugins_copy と closure_sha)。準備の経路で使う run-dev-graph-init (6765b176…) も同じ写しで動く (prep_skill_closures)。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。評価者の prompt にも同じことを書いた。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 0,
+    "occurrences": 0,
+    "other_emails_found": {},
+    "user_mask": "<redacted-user>",
+    "user_files": 0,
+    "user_occurrences": 0
+  },
+  "skill_defects_reported_by_evaluator": [
+    "場所: ws/plugins/dev-graph/skills/run-dev-graph-node/SKILL.md (ゴールシーク配線、Post-choice、artifact_delivery の節)。\n内容: この SKILL.md は、owner_skill=run-dev-graph-node の agents/dev-graph-integrity-auditor.md を必須の独立 verifier として名前で配線していない。standard などを選んだ後の「semantic evaluator」が何を起動することなのかも定義していない。run-dev-graph-sync/SKILL.md:237 は「必須の独立 verifier は dev-graph-sync-conflict-verifier」と明記しており、node だけが Agent を必須とするかどうか曖昧になっている。\n影響: Agent を0回しか起動しない run でも、goal-spec に semantic_evaluator_started と書けば、goal-seek 検証 (transcript 187行の EXIT=0) を含むどの決定論検査も止めない。writer の自己採点による PASS がそのまま通る。\n再現手順:\n1. task.md のとおり standard を事前に指定する。\n2. run-dev-graph-node で add と update を実走する。\n3. Agent を起動しないまま、goal-spec に activation_state=semantic_evaluator_started を記録し、progress.json を自己採点で PASS にする。\n4. skill 付属の goal-seek 検証と validate-graph-schema.py がどちらも exit 0 で通ることを確かめる。",
+    "場所: run-dev-graph-node の goal-seek 検証 (transcript 187-188行で EXIT=0 を返した検証)。\n内容: progress.json の feedback_criteria のうち、verify_by=live-trial の OUT1 を writer 自身が PASS と書いても、この検証は拒否しない。\n影響: 外部でしか判定できない基準を、writer が自分で満たしたことにできる。\n再現手順:\n1. progress.json の OUT1 を status=PASS にする (この run では176行)。\n2. goal-seek 検証を走らせると exit 0 になることを確かめる。"
+  ]
+}

@@ -1,0 +1,755 @@
+{
+  "label": "sysspec5",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec5/fx",
+  "head": null,
+  "tracked_files_committed": 0,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3895f1a0b3afd722abe3e6a1b2b66b4c020c10fb94b01a99ea76ae2bd8473d53",
+      "local:sha256:e7077c0400e30c6522444225e6b8093fcb84cf4aae14b122e671bca89ef63d6f"
+    ],
+    "worktree_id": [
+      "wt_c94a9fc0e159b391",
+      "wt_e04bbc27eb66e1e5"
+    ]
+  },
+  "rekeyed_files": [],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "post_seed_commit": {
+    "sha": "abac737c4152ce61a6ccf2a72829814a89898374",
+    "subject": "isolated current-source input",
+    "note": "mkseed の直後に orchestrator が作った空の commit (sysspec3・sysspec4 と同じ手順)。system-spec/ は元の fixture と同じく未追跡のまま。"
+  },
+  "retry_of": "sysspec4 (20261012T1301-pr85)",
+  "spec_state": {
+    "path": "system-spec/spec-state.json",
+    "seed_sha256": "87b95a77a6f117aba37dee3a8cb09079beadfe71249e4014657eaa051005b697",
+    "placed_sha256": "65ae4241641e9029c57bad3dc879db6c5b3fbba8d1c505bba32b5cfd3dcb3dad",
+    "placed_from": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec4/fx/system-spec/spec-state.json",
+    "placed_at": "2026-10-12T07:25:24Z",
+    "placed_note": "sysspec4 の trial の前に作った spec-state (sysspec4 の trial 中には変わっていない。sysspec4 の provenance の changed_during_trial=false) を、絶対パスのリテラルの cp で置いた (transcript L11038)。その直前の、変数でパスを書いた cp は orchestrator の session の system-spec-harness の hook (guard-confirmed-chapter-overwrite.py) に止められ、何も書かれていない (L11020)。",
+    "writer": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec5/ws/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+    "writer_invocation": "lt-env.sh python3 -B <writer> ... (被験に渡した写しの正規の writer。パスは絶対パスのリテラルで書き、1 段ずつ別の Bash で呼んだ。入力は直前に mk5.py で作った)",
+    "rebuild": [
+      {
+        "op": "set-decision --state <fx>/system-spec/spec-state.json --decision smoke/sysspec5/d3-pending.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "3630bacfa68f2b5a585b8731da6ec227551646b4688fa5d314c85f95dc971fbf",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w1-d3-pending.out (0 byte)",
+        "sha256_before": "65ae4241641e9029c57bad3dc879db6c5b3fbba8d1c505bba32b5cfd3dcb3dad",
+        "sha256_after": "8f106b6162f0475e8f8a98ac1a3a660588b16640f5095158badc7cf6109c9385",
+        "called_at": "2026-10-12T07:38:37Z",
+        "transcript_line": 11296,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py d3-pending"
+      },
+      {
+        "op": "chunk --state <fx>/system-spec/spec-state.json --turns smoke/sysspec5/turns-034.json --required-info <plugin>/skills/run-system-spec-elicit/references/required-info-catalog.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "5134b5950e00fd2af0c4f75a13cc39e4c2a0189c155a9f7549b6534bf07bdc2d",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w2-q034.out (0 byte)",
+        "sha256_before": "8f106b6162f0475e8f8a98ac1a3a660588b16640f5095158badc7cf6109c9385",
+        "sha256_after": "7dedf6405a4013f41743dc44d82b11cffdcab053aefff109b74268d32f47148e",
+        "called_at": "2026-10-12T07:38:47Z",
+        "transcript_line": 11302,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py t034"
+      },
+      {
+        "op": "set-decision --state <fx>/system-spec/spec-state.json --decision smoke/sysspec5/d3.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "03a3908e0221dfa5c99179764c7b45a019c2f90f67a4cf7ac08753d74a81dc7f",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w3-d3.out (0 byte)",
+        "sha256_before": "7dedf6405a4013f41743dc44d82b11cffdcab053aefff109b74268d32f47148e",
+        "sha256_after": "08095a358b2f5832f14d4a9bf3ffb5f02498f2cd7d36aba6b8257e1ab47f9cc5",
+        "called_at": "2026-10-12T07:38:57Z",
+        "transcript_line": 11308,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py d3-confirm"
+      },
+      {
+        "op": "set-decision --state <fx>/system-spec/spec-state.json --decision smoke/sysspec5/d2.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "b98b349d0095e5357faf9b083a715d52b09a930139dc02eaf7fde0fb0e9831fa",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w4-d2.out (0 byte)",
+        "sha256_before": "08095a358b2f5832f14d4a9bf3ffb5f02498f2cd7d36aba6b8257e1ab47f9cc5",
+        "sha256_after": "101a061d2179e330e0ad763272296d3535bf97e279ef685cd8f3788ae8dfc0ab",
+        "called_at": "2026-10-12T07:39:07Z",
+        "transcript_line": 11314,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py d2"
+      },
+      {
+        "op": "chunk --state <fx>/system-spec/spec-state.json --turns smoke/sysspec5/turns-035-036.json --required-info <plugin>/skills/run-system-spec-elicit/references/required-info-catalog.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "e4c4eab214643b4fa7eb07a6bc28c56a2292990c38b514d4ce802f3f741a414a",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w5-q035-036.out (0 byte)",
+        "sha256_before": "101a061d2179e330e0ad763272296d3535bf97e279ef685cd8f3788ae8dfc0ab",
+        "sha256_after": "47f4f0907ed96da80b033d732a7ca1f25dfc74d0fa4dab0d80839a36c1801e2c",
+        "called_at": "2026-10-12T07:39:18Z",
+        "transcript_line": 11320,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py t035036"
+      },
+      {
+        "op": "apply --state <fx>/system-spec/spec-state.json --op \"$(cat smoke/sysspec5/op-design.json)\" --required-info <plugin>/skills/run-system-spec-elicit/references/required-info-catalog.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "a9d4265677c8fae1ada176fcc90b0aba29d24b38429b02d3bacbe032cd896f3c",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w6-design.out (0 byte)",
+        "sha256_before": "47f4f0907ed96da80b033d732a7ca1f25dfc74d0fa4dab0d80839a36c1801e2c",
+        "sha256_after": "86f4f2441112efb001e3ed5f4fe5524fe7da51e5556c9ad58e9df8452e0adabb",
+        "called_at": "2026-10-12T07:39:33Z",
+        "transcript_line": 11327,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py op-design"
+      },
+      {
+        "op": "apply --state <fx>/system-spec/spec-state.json --op \"$(cat smoke/sysspec5/op-doctrine.json)\" --required-info <plugin>/skills/run-system-spec-elicit/references/required-info-catalog.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "6f7c37fa46bd15ae7acf1528c9b99a86781d7e84c2454865da02f564536bf677",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec5/w7-doctrine.out (0 byte)",
+        "sha256_before": "86f4f2441112efb001e3ed5f4fe5524fe7da51e5556c9ad58e9df8452e0adabb",
+        "sha256_after": "5ff66436eba726aa8596de621f875ac6dae9eb8a28a231666ec94b939ceb6001",
+        "called_at": "2026-10-12T07:39:44Z",
+        "transcript_line": 11333,
+        "input_generator": "python3 -B smoke/sysspec5/mk5.py op-doctrine"
+      }
+    ],
+    "sha256_before_trial": "5ff66436eba726aa8596de621f875ac6dae9eb8a28a231666ec94b939ceb6001",
+    "changed_top_level_keys": [
+      "decisions",
+      "design_applications",
+      "doctrine_applications",
+      "hearing_progress",
+      "matrix",
+      "qa_log"
+    ],
+    "read_only_checks_before_trial": [
+      {
+        "cmd": "validate-coverage-matrix.py --matrix <fx>/system-spec/spec-state.json --require-complete --require-basis --require-foundation",
+        "exit": 0,
+        "output": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす"
+      },
+      {
+        "cmd": "validate-knowledge-graph.py --profile required-info --input <plugin>/skills/run-system-spec-elicit/references/required-info-catalog.json --state <fx>/system-spec/spec-state.json",
+        "exit": 0,
+        "output": "coverage_certificate.ungrounded_blocking_items = [] (出力の写しは smoke/sysspec5/kg-check.json)"
+      }
+    ],
+    "sha256_after_trial": "226da763040096ccf37c356685d7d5cf8f4e349a306b3f4ce90d66b512c13aaa",
+    "changed_during_trial": true,
+    "changes_during_trial": {
+      "mtime_after": "2026-10-12 16:54:02 JST",
+      "writer": "被験に渡した写しの run-system-spec-elicit/scripts/apply-spec-transition.py set-targets (--state system-spec/spec-state.json、cwd は fx)",
+      "call": {
+        "transcript_line": 292,
+        "result_line": 298,
+        "called_at": "2026-10-12T07:53:55Z",
+        "result": "rc=0"
+      },
+      "change": "targets[] の末尾に {target_id: kubernetes, category: infrastructure} を足した。ほかの 4 件 (postgres・react・fastapi・typescript) は前と同じ",
+      "verified_by": "trial の後の spec-state から kubernetes の target を外し、writer と同じ形 (ensure_ascii=False、indent=2、末尾改行) で直列化すると sha256 が sha256_before_trial と一致した。targets のほかに変わった key は無い",
+      "recorded_by": "orchestrator (dg-live)。trial の後に fixture の実ファイルと collect/ の transcript を読んで記録した。fixture は変えていない"
+    },
+    "note": "spec-state の JSON は手で書いていない。plugin は変えていない。sha256_after_trial・changed_during_trial・changes_during_trial は trial の後に fixture の実ファイルを読んで足した。"
+  },
+  "decisions_added": {
+    "why": "sysspec4 の評価者が DEGRADED の主な原因とした fixture の欠け 2 件 (D2 が auth 章へ送った OIDC のトークンの扱いと、infrastructure 章の応答時間の目安と通知の送り方) に、利用者の決定が無かった。team-lead の指示 (2026-10-12) で、fixture の利用者の決定として足した。",
+    "authorized_by": "team-lead (2026-10-12 のメッセージ。「決定の中身は fixture の既存の決定と矛盾しない、もっともらしい既定値で構わない。足したことと中身は fixture-provenance に書き、評価者にも開示する」)",
+    "nature": "シナリオ上の利用者の発言として orchestrator が書いた既定値。実利用者との対話ではない。各 qa_log の entry の provenance にも同じことを書いた。",
+    "generator": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/smoke/sysspec5/mk5.py",
+    "generator_sha256": "24d5954347447522f27007ea42fa55d5c0798a0bbe653ddebb33faf158206b0a",
+    "inputs": {
+      "d2.json": "b98b349d0095e5357faf9b083a715d52b09a930139dc02eaf7fde0fb0e9831fa",
+      "d3-pending.json": "3630bacfa68f2b5a585b8731da6ec227551646b4688fa5d314c85f95dc971fbf",
+      "d3.json": "03a3908e0221dfa5c99179764c7b45a019c2f90f67a4cf7ac08753d74a81dc7f",
+      "fixture-provenance.mkseed.json": "6b94f02611644b6179c152b64b3fdc9765c82c6bb73184f5a66a4a97ee06ec6e",
+      "op-design.json": "a9d4265677c8fae1ada176fcc90b0aba29d24b38429b02d3bacbe032cd896f3c",
+      "op-doctrine.json": "6f7c37fa46bd15ae7acf1528c9b99a86781d7e84c2454865da02f564536bf677",
+      "turns-034.json": "5134b5950e00fd2af0c4f75a13cc39e4c2a0189c155a9f7549b6534bf07bdc2d",
+      "turns-035-036.json": "e4c4eab214643b4fa7eb07a6bc28c56a2292990c38b514d4ce802f3f741a414a"
+    },
+    "qa_added": [
+      {
+        "id": "qa-034",
+        "question": "社内 IdP の OIDC で得たトークンを、どこで持ち、API へどう送るかを選んでください。(1) バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式 (2) SPA が PKCE 付きの認可コードフローでトークンを取り、ブラウザのメモリだけに置いて Authorization: Bearer で API へ送る方式。どちらも採らない、別の方式と比べる、決めずに保留する、も選べます。",
+        "answer": "(1) バックエンドがトークンを持つ方式にする。8 時間のセッション (qa-002) と、IdP でアカウントが無効になったときの締め出し (qa-026) をサーバ側の一か所で扱いたいし、トークンをブラウザに置きたくない。CSRF 対策とセッションの保存先は、この方式の前提として設計に入れてほしい。",
+        "basis": "user-decision",
+        "required_info_items": [
+          "auth-model"
+        ],
+        "answered_at": "2026-10-12T07:38:46Z",
+        "provenance": "live-trial fixture 再構築 (orchestrator 補助, 2026-10-12, sysspec5): シナリオ上の利用者発言として記録した。実利用者との対話ログではない。R5: 問の外で比較表 (decisions D3 の options bff-session / spa-pkce-memory を同じ比較軸で並べたもの) と AI の推奨 (参考: bff-session。理由・注意点・信頼度・確認日時つき) を示した後、推奨の印を付けない問で選択を依頼した、というシナリオ。sysspec4 の評価で、D2 が auth 章へ送った OIDC のトークンの扱いに利用者の決定が無いことが指摘されたため、team-lead の指示 (2026-10-12) で足した。answered_at は本記録の作成時刻"
+      },
+      {
+        "id": "qa-035",
+        "question": "月末 3 営業日に「画面の応答が遅くなった」とみなす目安を教えてください。いま決めない場合は、いつまでに決めるかを教えてください。",
+        "answer": "画面から呼ぶ API の応答時間の 95 パーセンタイルが 2 秒を超えた状態が 5 分続いたら、遅くなったとみなす。あわせて、5xx のエラー率が 5 分間で 1% を超えたら異常とみなす。どちらも暫定の値で、稼働後の最初の月次締めで実測し、2 回目の月次締めの前に見直す。",
+        "basis": "user-decision",
+        "required_info_items": [
+          "infra-topology"
+        ],
+        "answered_at": "2026-10-12T07:39:16Z",
+        "provenance": "live-trial fixture 再構築 (orchestrator 補助, 2026-10-12, sysspec5): シナリオ上の利用者発言として記録した。実利用者との対話ログではない。R2 のセル補充の開いた問 (選択肢なし、代替案の提示なし)。sysspec4 の評価で、infrastructure 章の応答時間の目安と通知の送り方に利用者の決定が無いことが指摘されたため、team-lead の指示 (2026-10-12) で足した。answered_at は本記録の作成時刻"
+      },
+      {
+        "id": "qa-036",
+        "question": "当番への通知を、どこからどのような手段で届けたいかを教えてください。",
+        "answer": "情報システム部の社内監視基盤のアラートから、オンコール輪番 (qa-008) のその週の担当者へ、社内チャットの当番チャンネルとメールの両方で送る。通知には、該当する runbook の手順へのリンクを付ける。",
+        "basis": "user-decision",
+        "required_info_items": [
+          "infra-topology",
+          "ops-runbook"
+        ],
+        "answered_at": "2026-10-12T07:39:16Z",
+        "provenance": "live-trial fixture 再構築 (orchestrator 補助, 2026-10-12, sysspec5): シナリオ上の利用者発言として記録した。実利用者との対話ログではない。R2 のセル補充の開いた問 (選択肢なし、代替案の提示なし)。sysspec4 の評価で、infrastructure 章の応答時間の目安と通知の送り方に利用者の決定が無いことが指摘されたため、team-lead の指示 (2026-10-12) で足した。answered_at は本記録の作成時刻"
+      }
+    ],
+    "D3": {
+      "added": true,
+      "status_path": [
+        "recommended_pending_confirmation",
+        "confirmed"
+      ],
+      "decision": {
+        "id": "D3",
+        "category": "auth",
+        "question": "社内 IdP の OIDC で得たトークンを、どこで持ち、API へどう送るか",
+        "status": "confirmed",
+        "serves_goals": [
+          "G1"
+        ],
+        "options": [
+          {
+            "id": "bff-session",
+            "label": "バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式",
+            "cost_model": {
+              "category": "free",
+              "amount": 0,
+              "currency": "JPY",
+              "billing_period": "なし (OSS)",
+              "tco": "ライセンス費 0。FastAPI の中に、ログインの往復 (認可コードの受取りとトークンの交換) とセッションの保存を作る手間が加わる"
+            },
+            "free_tier_limits": "OSS のため利用上限なし",
+            "goal_fit": "G1 (請求・監査データの単一の情報源) の信頼を、トークンをブラウザに出さないことで支える。8 時間のセッション (qa-002) と、IdP でのアカウントの無効化 (qa-026) をサーバ側で扱える",
+            "security_fit": "トークンはサーバ側に留まり、ブラウザへは cookie のセッションだけを渡す。公式の cookie の頁は応答に cookie を付ける方法を説明しているが、HttpOnly などの属性の細部は取得した頁では確かめていない。cookie で認証するため、状態を変える要求には CSRF 対策が要る",
+            "pros": [
+              "OIDC のトークンがブラウザに出ない",
+              "セッションの 8 時間の期限 (qa-002) とログアウトを、サーバ側の一か所で管理できる",
+              "D2 で選んだ SPA (qa-032) からは、API を cookie 付きで呼ぶだけで済み、画面側にトークンの処理を足さない"
+            ],
+            "cons": [
+              "FastAPI 側にログインの往復とセッションの保存を作る分、バックエンドの実装が増える",
+              "SPA と API を、cookie が送られる構成 (同じ origin など) で配信する必要がある"
+            ],
+            "risks": [
+              "cookie で認証するため、CSRF 対策 (SameSite の指定や CSRF トークン) を怠ると、利用者になりすました変更の要求を受け付けてしまう",
+              "セッションの保存先を Pod のメモリにすると、Pod の再起動や複数の replica でログインが切れる"
+            ],
+            "lock_in": "低い。OIDC は標準の仕様で、セッションの扱いはサーバ側に閉じる",
+            "ops_burden": "中程度。セッションの保存先と、期限切れのセッションの掃除を運用する",
+            "evidence_refs": [
+              "https://fastapi.tiangolo.com/tutorial/security/",
+              "https://fastapi.tiangolo.com/advanced/response-cookies/"
+            ]
+          },
+          {
+            "id": "spa-pkce-memory",
+            "label": "SPA が PKCE 付きの認可コードフローでトークンを取り、ブラウザのメモリだけに置いて Authorization: Bearer で API へ送る方式",
+            "cost_model": {
+              "category": "free",
+              "amount": 0,
+              "currency": "JPY",
+              "billing_period": "なし (OSS)",
+              "tco": "ライセンス費 0。SPA 側に OIDC のクライアントの処理 (ライブラリの導入と更新) が加わり、API 側はトークンの検証だけを作る"
+            },
+            "free_tier_limits": "OSS のため利用上限なし",
+            "goal_fit": "G1 は満たせる。API はトークンを検証するだけで状態を持たないので、サーバ側は単純になる",
+            "security_fit": "トークンがブラウザのメモリに置かれるため、画面のスクリプトに脆弱性 (XSS) があると盗まれうる。cookie を使わないので CSRF の影響は受けにくい。公式の OAuth2 と JWT の頁は、Authorization の Bearer トークンを検証し、だめなら 401 を返す作りを説明している",
+            "pros": [
+              "API はトークンの検証だけで済み、サーバ側にセッションを持たない",
+              "cookie を使わないので、CSRF の影響を受けにくい",
+              "SPA と API を別の origin で配信できる"
+            ],
+            "cons": [
+              "再読込みでメモリのトークンが消えるため、8 時間のセッション (qa-002) を保つには、トークンを取り直す仕組みが別に要る",
+              "ブラウザ側にトークンを扱う処理とライブラリが増え、D2 で最小限に抑えるとした SPA の保守 (qa-007, qa-032) が重くなる"
+            ],
+            "risks": [
+              "画面のスクリプトに XSS があると、トークンが盗まれて有効期限まで使われる",
+              "ブラウザで OIDC を使うときの推奨は改訂されることがあり、ライブラリと設定の追随が要る"
+            ],
+            "lock_in": "低い。OIDC は標準の仕様だが、SPA 側のクライアントのライブラリに依存する",
+            "ops_burden": "低い。サーバ側にセッションの保存先を持たない",
+            "evidence_refs": [
+              "https://fastapi.tiangolo.com/tutorial/security/",
+              "https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/"
+            ]
+          }
+        ],
+        "recommendation": {
+          "option_id": "bff-session",
+          "rationale": "qa-002 の 8 時間のセッションと qa-026 のアカウントの無効化は、サーバ側の一か所で扱うほうが確実で、トークンをブラウザに出さずに済む。D2 で選んだ SPA (qa-032) の保守を増やさない点でも合う。代わりに CSRF 対策とセッションの保存先の設計が要る。",
+          "caveats": [
+            "比較の根拠は 2026-10-12T07:24:36Z までに取得した FastAPI の公式文書 3 頁 (tutorial/security、advanced/response-cookies、tutorial/security/oauth2-jwt)。security の頁は OAuth2 と OpenID Connect の位置づけを、cookie の頁は応答に cookie を付ける方法を、JWT の頁は Bearer トークンの検証と期限 (例は 30 分) を説明している",
+            "cookie の HttpOnly・Secure・SameSite の属性は、取得した cookie の頁では説明されておらず (細部は Starlette の文書へ送られている)、本比較では確かめていない",
+            "ブラウザで OIDC を使うときの推奨を述べる IETF などの文書は、許可された host の外にあり、確かめていない",
+            "推奨は参考であり、採否は利用者が qa-034 で選んだ"
+          ],
+          "confidence": "medium",
+          "latest_checked_at": "2026-10-12T07:24:36Z",
+          "comparison_basis": {
+            "goal_fit": "どちらも G1 を満たす。8 時間のセッション (qa-002) とアカウントの無効化 (qa-026) は、サーバ側でセッションを持つ方式のほうが一か所で扱える",
+            "tco": "どちらもライセンス費 0。cookie のセッションはバックエンドの実装が、メモリのトークンは SPA 側の処理とライブラリの保守が増える",
+            "security": "cookie のセッションはトークンをブラウザに出さないが CSRF 対策が要る。メモリのトークンは CSRF を受けにくいが、XSS で盗まれうる",
+            "operations": "cookie のセッションはセッションの保存先の運用が加わる。メモリのトークンはサーバ側の運用が増えない",
+            "lock_in": "どちらも OIDC の標準に沿い低い。メモリのトークンは SPA 側のライブラリに依存する"
+          }
+        },
+        "qa_ref": "qa-034",
+        "user_decision": {
+          "option_id": "bff-session",
+          "confirmed_at": "2026-10-12T07:38:46Z"
+        }
+      }
+    },
+    "D2": {
+      "changed_fields": [
+        "recommendation.caveats"
+      ],
+      "caveats_before": [
+        "比較の根拠は 2026-10-12T02:28:51Z に取り直した公式文書: React 19.3 (react.dev/versions、2026-09-09 公開)、TypeScript 7.0 (公式 download ページ)、FastAPI の templates の頁 (Jinja2Templates と TemplateResponse によるサーバ側描画)",
+        "画面操作の向き不向き (頁を読み直すか) の比較は qa-021 / qa-028 の利用文脈からの推定で、公式文書が直接述べるものではない",
+        "OIDC のトークンをブラウザ側でどう扱うかは auth 章で決める必要があり、本比較では未決のリスクとして残した",
+        "利用者の選択 (qa-032) は取り直しの前に行われた。取り直した証拠でも推奨は react-spa のまま変わらず、選択を覆す事実は無かった。推奨は参考であり、採否は利用者が qa-032 で選んだ"
+      ],
+      "caveats_after": [
+        "比較の根拠は 2026-10-12T02:28:51Z に取り直した公式文書: React 19.3 (react.dev/versions、2026-09-09 公開)、TypeScript 7.0 (公式 download ページ)、FastAPI の templates の頁 (Jinja2Templates と TemplateResponse によるサーバ側描画)",
+        "画面操作の向き不向き (頁を読み直すか) の比較は qa-021 / qa-028 の利用文脈からの推定で、公式文書が直接述べるものではない",
+        "OIDC のトークンをブラウザ側でどう扱うかは、本比較では決めず auth 章へ送った。その後 D3 (qa-034) で、バックエンドがトークンを持ち、ブラウザには cookie のセッションだけを渡す方式に決まった",
+        "利用者の選択 (qa-032) は取り直しの前に行われた。取り直した証拠でも推奨は react-spa のまま変わらず、選択を覆す事実は無かった。推奨は参考であり、採否は利用者が qa-032 で選んだ"
+      ],
+      "unchanged": "recommendation.caveats 以外のすべての項目 (id・question・status・options・user_decision・qa_ref・recommendation の残り)"
+    },
+    "matrix_qa_refs": {
+      "auth.web": {
+        "before": {
+          "state": "確定",
+          "qa_ref": "qa-002",
+          "qa_refs": [
+            "qa-018",
+            "qa-026"
+          ]
+        },
+        "after": {
+          "state": "確定",
+          "qa_ref": "qa-002",
+          "qa_refs": [
+            "qa-018",
+            "qa-026",
+            "qa-034"
+          ]
+        }
+      },
+      "infrastructure.web": {
+        "before": {
+          "state": "確定",
+          "qa_ref": "qa-005",
+          "qa_refs": [
+            "qa-000",
+            "qa-018",
+            "qa-029"
+          ]
+        },
+        "after": {
+          "state": "確定",
+          "qa_ref": "qa-005",
+          "qa_refs": [
+            "qa-000",
+            "qa-018",
+            "qa-029",
+            "qa-035",
+            "qa-036"
+          ]
+        }
+      },
+      "maintenance-ops.web": {
+        "before": {
+          "state": "確定",
+          "qa_ref": "qa-008",
+          "qa_refs": null
+        },
+        "after": {
+          "state": "確定",
+          "qa_ref": "qa-008",
+          "qa_refs": [
+            "qa-036"
+          ]
+        }
+      }
+    },
+    "design_applications_infrastructure": {
+      "before": {
+        "text": "resource-map には、インフラ章の read_when に合う curated の設計知識カードが無い (0 件)。本章には、project candidate の k8s-workload-observability (deepened) のカードを当てた。このカードは、trial の準備役 (orchestrator) が kubernetes.io の公式文書 4 頁と qa-029・qa-005 から書いた seed である。当て方: コンテナを社内 k8s で動かし、CI/CD は GitHub Actions を使う (qa-005) という前提で、情報システム部が社内の監視基盤でコンテナの死活とエラー率を見る (qa-029) ために、死活の検出と再起動は liveness probe、要求を受けられない間は readiness probe、起動の遅いアプリは startup probe、ログは cluster-level logging (標準出力と標準エラーへ書く)、metrics は metrics pipeline と Kubernetes の部品の Prometheus 形式の metrics に当てた。月末 3 営業日に画面の応答が遅くなったら当番に通知する (qa-029) ための、応答時間とエラー率の測り方と通知の送り方は、このカードの頁からは決まらず、未決である。上流の正本 (Google SRE の reliability と operations) の当て方は、本章の doctrine の適用記述にある。",
+        "basis": "agent-inference",
+        "recorded_at": "2026-10-12T03:54:03Z"
+      },
+      "after": {
+        "text": "resource-map には、インフラ章の read_when に合う curated の設計知識カードが無い (0 件)。本章には、project candidate の k8s-workload-observability (deepened) のカードを当てた。このカードは、trial の準備役 (orchestrator) が kubernetes.io の公式文書 4 頁と qa-029・qa-005 から書いた seed である。当て方: コンテナを社内 k8s で動かし、CI/CD は GitHub Actions を使う (qa-005) という前提で、情報システム部が社内の監視基盤でコンテナの死活とエラー率を見る (qa-029) ために、死活の検出と再起動は liveness probe、要求を受けられない間は readiness probe、起動の遅いアプリは startup probe、ログは cluster-level logging (標準出力と標準エラーへ書く)、metrics は metrics pipeline と Kubernetes の部品の Prometheus 形式の metrics に当てた。月末 3 営業日に画面の応答が遅くなったら当番に通知する (qa-029) ための目安と送り方は、このカードの頁からは決まらないため、利用者に聞いて決めた: 画面から呼ぶ API の応答時間の 95 パーセンタイルが 2 秒を超えて 5 分続くか、5xx のエラー率が 5 分間で 1% を超えたら異常とみなす (qa-035。暫定の値で、稼働後の最初の月次締めで実測し、2 回目の締めの前に見直す)。通知は社内監視基盤のアラートから、その週の当番へ社内チャットの当番チャンネルとメールで送り、runbook の該当手順へのリンクを付ける (qa-036)。上流の正本 (Google SRE の reliability と operations) の当て方は、本章の doctrine の適用記述にある。",
+        "basis": "agent-inference",
+        "recorded_at": "2026-10-12T07:39:32Z"
+      }
+    },
+    "doctrine_applications_infrastructure": {
+      "changed_concerns": [
+        "reliability"
+      ],
+      "before": {
+        "reliability": {
+          "text": "月末 3 営業日の画面応答の遅延を当番へ通知すること (qa-029) を、この期間の応答時間の目標として扱う。目標値そのものは未確定で、稼働後に計測して決める。",
+          "recorded_at": "2026-10-12T00:17:26Z",
+          "basis": "agent-inference"
+        }
+      },
+      "after": {
+        "reliability": {
+          "text": "月末 3 営業日の画面応答の遅延を当番へ通知すること (qa-029) を、この期間の応答時間の目標として扱う。目標は暫定で、画面から呼ぶ API の応答時間の 95 パーセンタイルを 2 秒以内、5xx のエラー率を 1% 以内とし、どちらかを 5 分続けて外れたら当番へ通知する (qa-035, qa-036)。稼働後の最初の月次締めで実測し、2 回目の締めの前に見直す (qa-035)。",
+          "recorded_at": "2026-10-12T07:39:43Z",
+          "basis": "agent-inference"
+        }
+      }
+    },
+    "side_effects": [
+      "hearing_progress.loop_count が 1 から 2 になった。writer の chunk が処理した turn の数で上書きする仕様による (最後の chunk は qa-035・qa-036 の 2 turn)。手で直していない。",
+      "qa_log は 34 件から 37 件になった。"
+    ],
+    "evidence_for_D3": {
+      "latest_checked_at": "2026-10-12T07:24:36Z",
+      "pages": "下の orchestrator_web_fetch の 3 頁"
+    }
+  },
+  "inherited_from_sysspec4": {
+    "note": "sysspec4 の trial の前に足したものは、置いた spec-state にそのまま入っている。sysspec4 の provenance の該当の節を写す。",
+    "decisions_update": {
+      "why": "sysspec3 の completeness-report の decision_guidance (FAIL) の gaps「D1/D2 の推奨証拠・risks・caveats・latest_checked_at を 2026-10-12 取得の fetched-references.json (PG 16.15/EOL 日付、React 19.3、FastAPI templates、TS 7.0) で更新し、00-requirements-definition.md を再生成する」への対処。",
+      "generator": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/smoke/sysspec4/mkdecisions.py",
+      "generator_sha256": "01434b4dd831d590b7beedb46284feee060d2fbde9d8d71b13a31f8c481ca350",
+      "evidence_source": {
+        "path": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec3/fx/system-spec/fetched-references.json",
+        "sha256": "da2bce5dcb130fb149955ebcf70cbddfb7d7e549f5ecccdb198ee340d30feef0",
+        "latest_checked_at": "2026-10-12T02:28:51Z",
+        "note": "sysspec3 の trial で被験が doc-fetch の正規の writer で書き直した fetched-references。"
+      },
+      "inputs": {
+        "d1.json": "03895fa0df912d71b5801751dcbfaa79d43b7b7b71171cde2a60ce125318fae5",
+        "d2.json": "0e71fc95515783ad1c89e997d532a53e8ef72574a8246ba9549fcf08ddc36769"
+      },
+      "changed_fields": {
+        "D1": [
+          "options[pg15].cons",
+          "options[pg15].risks",
+          "options[pg16].pros",
+          "options[pg16].risks",
+          "recommendation.caveats",
+          "recommendation.comparison_basis.security",
+          "recommendation.comparison_basis.tco",
+          "recommendation.confidence",
+          "recommendation.latest_checked_at",
+          "recommendation.rationale"
+        ],
+        "D2": [
+          "options[react-spa].evidence_refs",
+          "options[server-templates].security_fit",
+          "recommendation.caveats",
+          "recommendation.latest_checked_at"
+        ]
+      },
+      "unchanged": "id・question・status・options の id・cost_model・user_decision・qa_ref"
+    },
+    "knowledge_seed": {
+      "author": "orchestrator（trial の準備役）が書いた seed カード",
+      "authorized_by": "team-lead (2026-10-12 のメッセージ。sysspec4 の準備 b1〜b4 の承認)",
+      "candidate_id": "k8s-workload-observability",
+      "status_path": [
+        "discovered",
+        "qualified",
+        "deepened"
+      ],
+      "categories": [
+        "infrastructure"
+      ],
+      "provenance_field": "orchestrator（trial の準備役）が書いた seed カード。sysspec4 の trial の前に、orchestrator (dg-live) が kubernetes.io の公式文書 4 頁を WebFetch で取得し (2026-10-12T03:48:57Z〜03:49:47Z)、その頁と fixture の qa-029・qa-005 から言えることだけで書いた。被験の skill (C02 doc-fetch や run の中の Deepen) が作ったものではない。discovered → qualified → deepened の前進は、正規の writer (apply-spec-transition.py set-knowledge-candidate) で 1 段ずつ行った。",
+      "fetch": {
+        "tool": "WebFetch (orchestrator dg-live の session)",
+        "allowed_by": "team-lead の承認 (b1。host は kubernetes.io の完全一致、https の GET、4 頁まで)",
+        "calls": [
+          {
+            "n": 1,
+            "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+            "at": "2026-10-12T03:48:57Z",
+            "offset": null,
+            "title": "Configure Liveness, Readiness and Startup Probes",
+            "last_modified": null
+          },
+          {
+            "n": 2,
+            "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+            "at": "2026-10-12T03:49:12Z",
+            "offset": 20000,
+            "title": "Configure Liveness, Readiness and Startup Probes",
+            "last_modified": null,
+            "note": "1 と同じ頁の再読 (offset 20000)。1 の要約が readiness と startup の節に届かなかったため。頁の数には数えない"
+          },
+          {
+            "n": 3,
+            "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-usage-monitoring/",
+            "at": "2026-10-12T03:49:21Z",
+            "offset": null,
+            "title": "Tools for Monitoring Resources",
+            "last_modified": "Last modified April 02, 2026 at 11:42 AM PST"
+          },
+          {
+            "n": 4,
+            "url": "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+            "at": "2026-10-12T03:49:33Z",
+            "offset": null,
+            "title": "Logging Architecture",
+            "last_modified": null
+          },
+          {
+            "n": 5,
+            "url": "https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/",
+            "at": "2026-10-12T03:49:47Z",
+            "offset": null,
+            "title": "Metrics For Kubernetes System Components",
+            "last_modified": null
+          }
+        ],
+        "pages": 4,
+        "calls_total": 5,
+        "other_network": "WebSearch・ほかの host・Bash からの通信は 0 件"
+      },
+      "basis": "取得した 4 頁と、fixture の qa-029・qa-005 から言えることだけを書いた。頁で確かめていない表現は外した。",
+      "card_schema_check": "system-spec-harness の knowledge-card.schema.json に通した",
+      "inputs": {
+        "mkcandidate.py": "e80f2b4caca46e8bd3f03ab1b1603216ebc57d3791da1f7a220dac9ae635225f",
+        "k8s-fetch.json": "00d8cc78721ed8613c5e2721166f01af8fcb86167738d05dfdf01fc105e44226",
+        "cand-q.json": "978210ef82ad9781147f90acc8bf5c41f7825840f30dc3ccca90454173416e25",
+        "cand-d.json": "cfa36145be135166ab35f16955772d380026ee638e3f65347a7d5f55ffef9a5e",
+        "op-b4.json": "a291894d99f7c66e1d055ab45eecaa5a930b3a65ac6ea3846d22108f344120c7"
+      },
+      "design_application_infrastructure": {
+        "before": {
+          "text": "resource-map にはインフラ章の read_when に合う設計知識カードが無く、本章へ引くカードは 0 件である。代わりに上流の正本 Google SRE (reliability と operations) を本章へ当てた: 月末 3 営業日の画面応答の遅延を当番へ通知し (qa-029)、コンテナの死活とエラー率の監視は情報システム部の社内監視基盤に載せ (qa-029)、デプロイは GitHub Actions から社内 k8s へ行う (qa-005)。応答時間の目標値は未確定で、稼働後に計測して決める。不足しているカード (社内 k8s 上のワークロードの監視) は knowledge_candidates の k8s-workload-observability として発見済み (discovered) に記録した。",
+          "recorded_at": "2026-10-12T00:17:23Z",
+          "basis": "agent-inference"
+        },
+        "after": {
+          "text": "resource-map には、インフラ章の read_when に合う curated の設計知識カードが無い (0 件)。本章には、project candidate の k8s-workload-observability (deepened) のカードを当てた。このカードは、trial の準備役 (orchestrator) が kubernetes.io の公式文書 4 頁と qa-029・qa-005 から書いた seed である。当て方: コンテナを社内 k8s で動かし、CI/CD は GitHub Actions を使う (qa-005) という前提で、情報システム部が社内の監視基盤でコンテナの死活とエラー率を見る (qa-029) ために、死活の検出と再起動は liveness probe、要求を受けられない間は readiness probe、起動の遅いアプリは startup probe、ログは cluster-level logging (標準出力と標準エラーへ書く)、metrics は metrics pipeline と Kubernetes の部品の Prometheus 形式の metrics に当てた。月末 3 営業日に画面の応答が遅くなったら当番に通知する (qa-029) ための、応答時間とエラー率の測り方と通知の送り方は、このカードの頁からは決まらず、未決である。上流の正本 (Google SRE の reliability と operations) の当て方は、本章の doctrine の適用記述にある。",
+          "basis": "agent-inference",
+          "recorded_at": "2026-10-12T03:54:03Z"
+        },
+        "facts_written": "curated card は 0 件、project candidate のカードを qa-029・qa-005 に当てた"
+      }
+    },
+    "sysspec4_spec_state_rebuild": [
+      {
+        "op": "set-decision --state <fx>/system-spec/spec-state.json --decision smoke/sysspec4/d1.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "03895fa0df912d71b5801751dcbfaa79d43b7b7b71171cde2a60ce125318fae5",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec4/w1-d1.out (0 byte)",
+        "sha256_before": "ff9271540b55daaa771e726342e8636ec6b2dfb749bb495250b844613c27407f",
+        "sha256_after": "dde06701ee20a232aedb833293ddc8ec1811f86624b55b7ed104434119357468",
+        "called_at": "2026-10-12T03:48:15Z"
+      },
+      {
+        "op": "set-decision --state <fx>/system-spec/spec-state.json --decision smoke/sysspec4/d2.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "0e71fc95515783ad1c89e997d532a53e8ef72574a8246ba9549fcf08ddc36769",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec4/w2-d2.out (0 byte)",
+        "sha256_before": "dde06701ee20a232aedb833293ddc8ec1811f86624b55b7ed104434119357468",
+        "sha256_after": "c7e38b27daebcfc33eb605614397b30b8557d610cecb3fa0d12ecc02167598e1",
+        "called_at": "2026-10-12T03:48:24Z"
+      },
+      {
+        "op": "set-knowledge-candidate --state <fx>/system-spec/spec-state.json --candidate smoke/sysspec4/cand-q.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "978210ef82ad9781147f90acc8bf5c41f7825840f30dc3ccca90454173416e25",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec4/w3-q.out (0 byte)",
+        "sha256_before": "c7e38b27daebcfc33eb605614397b30b8557d610cecb3fa0d12ecc02167598e1",
+        "sha256_after": "2f7f14ee27aaf71819085266589c570b70e15c5056f2eaae2b6df062423bb530",
+        "called_at": "2026-10-12T03:54:12Z"
+      },
+      {
+        "op": "set-knowledge-candidate --state <fx>/system-spec/spec-state.json --candidate smoke/sysspec4/cand-d.json --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "cfa36145be135166ab35f16955772d380026ee638e3f65347a7d5f55ffef9a5e",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec4/w4-d.out (0 byte)",
+        "sha256_before": "2f7f14ee27aaf71819085266589c570b70e15c5056f2eaae2b6df062423bb530",
+        "sha256_after": "7a64f2795a08d4f5e1ad35a04104d2b76ee2e22d81f97356e034f79cf40a1e18",
+        "called_at": "2026-10-12T03:54:20Z"
+      },
+      {
+        "op": "apply --state <fx>/system-spec/spec-state.json --op \"$(cat smoke/sysspec4/op-b4.json)\" --out <fx>/system-spec/spec-state.json",
+        "input_sha256": "a291894d99f7c66e1d055ab45eecaa5a930b3a65ac6ea3846d22108f344120c7",
+        "exit": 0,
+        "stdout_stderr": "smoke/sysspec4/w5-b4.out (0 byte)",
+        "sha256_before": "7a64f2795a08d4f5e1ad35a04104d2b76ee2e22d81f97356e034f79cf40a1e18",
+        "sha256_after": "65ae4241641e9029c57bad3dc879db6c5b3fbba8d1c505bba32b5cfd3dcb3dad",
+        "called_at": "2026-10-12T03:54:30Z"
+      }
+    ]
+  },
+  "orchestrator_web_fetch": {
+    "purpose": "D3 の options の evidence_refs と risks・caveats を、公式文書の記述に合わせるため",
+    "tool": "WebFetch (orchestrator の session。https の GET の読み取りだけ)",
+    "allowed_by": "team-lead の sysspec5 の指示 (公式文書の host への読み取りの WebFetch だけ可)",
+    "calls": [
+      {
+        "n": 1,
+        "url": "https://fastapi.tiangolo.com/tutorial/security/",
+        "called_at": "2026-10-12T07:24:23Z",
+        "returned_at": "2026-10-12T07:24:29Z",
+        "title": "Security - FastAPI",
+        "transcript_line": 10968
+      },
+      {
+        "n": 2,
+        "url": "https://fastapi.tiangolo.com/advanced/response-cookies/",
+        "called_at": "2026-10-12T07:24:24Z",
+        "returned_at": "2026-10-12T07:24:31Z",
+        "title": "Response Cookies",
+        "note": "頁の本文に httponly・secure・samesite の具体的な引数の記述は無かった (Starlette の文書を参照するとだけ書かれていた)。そのため D3 では cookie の属性を確かめていないと caveat に書いた",
+        "transcript_line": 10969
+      },
+      {
+        "n": 3,
+        "url": "https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/",
+        "called_at": "2026-10-12T07:24:26Z",
+        "returned_at": "2026-10-12T07:24:32Z",
+        "title": "OAuth2 with Password (and hashing), Bearer with JWT tokens",
+        "transcript_line": 10970
+      }
+    ],
+    "latest_checked_at": "2026-10-12T07:24:36Z (3 件の結果を受け取った直後に date -u で記録した時刻。transcript L10982)",
+    "other_network": "WebSearch・ほかの host・Bash からの通信は 0 件",
+    "recorded_in_fetched_references": false
+  },
+  "fetched_references": {
+    "path": "system-spec/fetched-references.json",
+    "seed_sha256": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539",
+    "records": "postgres 16.1 と react 19.0。latest_checked_at はどちらも 2026-07-11。fastapi と typescript の record は無い。",
+    "note": "seed のまま渡した (sysspec4 と同じ)。sysspec4 の trial で被験が書き直した版 (f5c9dcb8…) は置いていない。上の orchestrator の WebFetch の結果もここには入れていない。trial の後に、被験が書き直したかどうかと前後の sha を rewritten_during_trial に記録する。",
+    "rewritten_during_trial": {
+      "rewritten": true,
+      "sha256_before": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539",
+      "sha256_after": "7432ce2d44c33776800cec942fe4b4412f3cf86242e52ce0da9756b8160b0215",
+      "bytes_after": 2571,
+      "mtime_after": "2026-10-12 16:54:26 JST",
+      "writer": "被験に渡した写しの run-system-spec-doc-fetch/scripts/build-fetched-references.py assemble (--records <workdir>/docfetch/records.json --targets <workdir>/docfetch/targets.json --out <fx>/system-spec/fetched-references.json)",
+      "writes": [
+        {
+          "transcript_line": 221,
+          "result_line": 227,
+          "called_at": "2026-10-12T07:51:54Z",
+          "result": "OK: 4 件 (exit 0)。同じ Bash で validate-source-citation を呼んだ (exit 0)"
+        },
+        {
+          "transcript_line": 306,
+          "result_line": 307,
+          "called_at": "2026-10-12T07:54:19Z",
+          "result": "OK: 5 件 (exit 0)。最後の書込み (mtime と一致)。kubernetes の record を足した"
+        }
+      ],
+      "records_input": "<workdir>/docfetch/records.json と targets.json は被験本体が Bash の heredoc で書いた (L221 と L306 の同じ Bash の中)",
+      "fetched_by": "被験本体の WebFetch 6 件 (07:51:25〜07:51:27Z の 4 件と 07:54:04〜07:54:05Z の 2 件。guard.jsonl の agent_id なし)",
+      "records_after": [
+        {
+          "target_id": "postgres",
+          "version": "16.15",
+          "source_url": "https://www.postgresql.org/docs/16/",
+          "latest_checked_at": "2026-10-12T07:54:25Z"
+        },
+        {
+          "target_id": "react",
+          "version": "19.3",
+          "source_url": "https://react.dev/versions",
+          "latest_checked_at": "2026-10-12T07:51:41Z"
+        },
+        {
+          "target_id": "fastapi",
+          "version": "0.143.0",
+          "source_url": "https://fastapi.tiangolo.com/release-notes/",
+          "latest_checked_at": "2026-10-12T07:51:41Z"
+        },
+        {
+          "target_id": "typescript",
+          "version": "7.0",
+          "source_url": "https://www.typescriptlang.org/download/",
+          "latest_checked_at": "2026-10-12T07:51:41Z"
+        },
+        {
+          "target_id": "kubernetes",
+          "version": "1.37.1",
+          "source_url": "https://kubernetes.io/releases/",
+          "latest_checked_at": "2026-10-12T07:54:25Z"
+        }
+      ],
+      "recorded_by": "orchestrator (dg-live)。trial の後に fixture の実ファイルと collect/ の transcript を読んで記録した。fixture は変えていない"
+    }
+  },
+  "web_fetch_allowance": {
+    "allowed_hosts": [
+      "www.postgresql.org",
+      "react.dev",
+      "fastapi.tiangolo.com",
+      "www.typescriptlang.org",
+      "kubernetes.io"
+    ],
+    "reason": "sysspec4 と同じ 5 host。",
+    "authorized_by": "team-lead (sysspec3 の 4 host は sysspec3 の許可、kubernetes.io は 2026-10-12 の sysspec4 の承認。sysspec5 は 4 回目と同じ条件で回す指示)",
+    "host_basis": "ワイルドカードは使わず完全一致で並べた。",
+    "scope": "sysspec5 の session の設定 (runs/sysspec5/ws/.claude/settings.local.json と runs/sysspec5/policy.json) だけ。mksettings で作った。実 HOME と repo の .claude/ は変えていない。",
+    "layers": {
+      "guard": "hook/guard.py: policy の allowed_fetch_hosts と URL の host を完全一致で照合する。https だけ、userinfo は拒否、port は 443 だけ。WebSearch は常に拒否。",
+      "permissions": "allow に WebFetch(domain:<host>) を 5 件。WebSearch の deny は残した。",
+      "sandbox": "Bash の network は deniedDomains [\"*\"] のまま。"
+    },
+    "not_allowed": [
+      "WebSearch",
+      "上の 5 つ以外の host (www の付け外しを含む)",
+      "http と 443 以外の port",
+      "認証が要る先",
+      "書込みのある外部サービス",
+      "Bash のネットワーク CLI"
+    ]
+  },
+  "settings_changes": {
+    "vs_sysspec4": "permissions.deny に SendFeedback を足し、hook/guard.py の BLOCK_TOOLS にも SendFeedback を足した。それ以外は sysspec4 と同じ作り方。Write・Edit の deny に並ぶ兄弟のパス (run の dir の外の scratchpad の項目) は、mksettings が作った時点のファイルの一覧から作るので、sysspec4 の後に増えたファイルと dir (requirements3・requirements4・sysspec4 など) の分だけ増えた。",
+    "why": "被験の session から外部へのフィードバックの送信が起きないようにするため (requirements の取り直しの準備で orchestrator が見つけて足した。leak-audit に記録)。",
+    "files": {
+      "mksettings.py": "a5d511ea7099112f07b25ff30837bb367860c6893b32643daa9b559ecc2145e8",
+      "hook/guard.py": "664f77b5132a0e3ee3ee06959fad51bc10b305d54ddb4f98b3b0db6125c30914"
+    }
+  },
+  "plugins_copy": {
+    "copied_at": "2026-10-12T07:24:48Z",
+    "from": "wtpy の plugins/ (HEAD 32c92c84 と、team-lead の未 commit の変更を含む作業ツリー)",
+    "plugins": [
+      "dev-graph",
+      "harness-creator",
+      "skill-governance-adapters",
+      "system-dev-planner",
+      "system-spec-harness"
+    ],
+    "method": "cp -R (transcript L10999)。写した直後に diff -rq -x __pycache__ で 5 つとも一致を確かめた",
+    "check_before_launch": "起動の直前に、4 つの plugin は wtpy と一致。dev-graph は system-spec の挙動閉包の外の 6 ファイル (render-graph-html.py・run-dev-graph-render の SKILL.md と R3-render.md・run-dev-graph-status の SKILL.md と R3-status.md・tests/test_render_receipt.py) が違う。どれも写した後 (16:27〜16:30 JST) に wtpy で更新されたもので、team-lead が status・render の skill を直している途中の変更とみられる。run-dev-graph-system-spec の挙動閉包の sha は、写しと wtpy で同じ (a7f09e36…)。写しは取り直していない。"
+  },
+  "task_md_changes": {
+    "base": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/sysspec4/workdir/task.md",
+    "changes": [
+      "runs/sysspec4 を runs/sysspec5 に置き換えた (6 か所。fx・ws/plugins/dev-graph・workdir・workdir/out・隔離環境の注記の run の dir)。",
+      "入力の説明の、design_applications の文の直後に 1 文を足した: D3 (OIDC のトークンの扱い、qa-034) と、infrastructure の応答時間の暫定の目安と通知の送り方 (qa-035・qa-036) を正規 writer で足したこと、D2 の caveat をそれに合わせて直したこと、どれも orchestrator がシナリオ上の利用者の発言として書いた既定値であること。"
+    ],
+    "unchanged": "合格条件・経路の制約・5 host の文",
+    "task_md_sha256": "33770400397d8543568874323a8c4407eb3cce8f1e5460b426a0b38df9e4b551"
+  }
+}

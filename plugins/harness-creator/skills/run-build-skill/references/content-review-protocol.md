@@ -12,7 +12,7 @@
 | 層 | 検査対象 | 実行場所 | 実装 |
 |----|---------|---------|------|
 | 機械層 | ファイル構造 / frontmatter / 命名 / 行数 / symlink drift / **verdict json の存在と PASS** | CI + pre-push | lint 群 + `lint-content-review.py` |
-| LLM 層 | machine proof後にも未解決の **semantic obligation** (意図反映 / 4条件 / rubric 規範) | **ローカル Claude Code のみ** | incremental=`llm_batches[]` ごとに1 context、exhaustiveのみadversarial audit |
+| LLM 層 | machine proof後にも未解決の **semantic obligation** (意図反映 / 4条件 / rubric 規範) | **ローカル Claude Code / Codex** | incremental=`llm_batches[]` ごとに1 context、exhaustiveのみadversarial audit |
 
 リモート CI で LLM を起動しない (API 課金・所要時間回避)。ローカルで評価して json を commit し、CI は存在のみ機械検査する。
 

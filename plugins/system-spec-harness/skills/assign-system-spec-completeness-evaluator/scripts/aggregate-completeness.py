@@ -4,7 +4,7 @@
 # version: 0.1.0
 # purpose: C05 完成度評価レポートの形状検証と全 6 観点スコア→総合 PASS/FAIL の決定論集約 (Goodhart 防止の fail-closed 集約器)
 # inputs:
-#   - argv: --report FILE / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
+#   - argv: --report FILE [--spec-dir DIR] / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
 # outputs:
 #   - stdout: OK/violation 一覧 or gate 結果 JSON
 #   - exit: 0=OK / 1=violation or gate fail / 2=usage error
@@ -192,6 +192,21 @@ def validate_report(report: dict) -> list[str]:
     if verdict == "FAIL" and not gaps:
         v.append("verdict=FAIL だが gaps (不足事項一覧) が空 (差し戻し材料が無い)")
     return v
+
+
+def spec_dir_violations(report, spec_dir: str) -> list[str]:
+    """report の spec_dir が、評価を頼まれた spec_dir と同じ dir に解決するかを照合する (空=OK)。
+
+    呼び出し側 (dev-graph の C02) は report の spec_dir を取込元のディレクトリと照合し、
+    一致しなければ確定の取込を拒む。ラベルや注記を混ぜた spec_dir をここで先に落とす。
+    相対パスは cwd から解決し、両方を resolve して比べる。
+    """
+    declared = report.get("spec_dir") if isinstance(report, dict) else None
+    if not isinstance(declared, str) or not declared:
+        return [f"spec_dir_mismatch: report に spec_dir (文字列) が無い (--spec-dir={spec_dir!r})"]
+    if Path(declared).expanduser().resolve() != Path(spec_dir).expanduser().resolve():
+        return [f"spec_dir_mismatch: report の spec_dir={declared!r} が --spec-dir={spec_dir!r} と同じ dir に解決しない"]
+    return []
 
 
 # --------------------------------------------------------------------------- #
@@ -416,6 +431,7 @@ def main(argv: list | None = None) -> int:
         description="C05 完成度評価レポートの形状検証 / マトリクス網羅性 + 知識グラフ機械ゲート実行"
     )
     ap.add_argument("--report", help="評価レポート JSON のパス (形状 + 総合判定整合を検証)")
+    ap.add_argument("--spec-dir", help="--report と併用。report の spec_dir がこの dir に解決するかも検証する")
     ap.add_argument("--matrix", help="spec-state.json のパス (マトリクス網羅性ゲートを実行)")
     ap.add_argument("--require-complete", action="store_true", help="ゲートを未収集 0 必須モードで実行")
     ap.add_argument("--knowledge-graph", action="store_true",
@@ -428,6 +444,8 @@ def main(argv: list | None = None) -> int:
         ap.error("--report / --matrix / --knowledge-graph / --hearing のいずれかが必要")
     if bool(args.hearing) != bool(args.state):
         ap.error("--hearing と --state は併用する")
+    if args.spec_dir is not None and not args.report:
+        ap.error("--spec-dir は --report と併用する")
 
     rc = 0
     if args.matrix:
@@ -467,6 +485,11 @@ def main(argv: list | None = None) -> int:
             print(f"report の JSON parse 失敗: {exc}", file=sys.stderr)
             return 2
         violations = validate_report(report)
+        if args.spec_dir is not None:
+            if not Path(args.spec_dir).expanduser().is_dir():
+                print(f"spec-dir ディレクトリが存在しない: {args.spec_dir}", file=sys.stderr)
+                return 2
+            violations += spec_dir_violations(report, args.spec_dir)
         if violations:
             for msg in violations:
                 print(f"VIOLATION: {msg}", file=sys.stderr)

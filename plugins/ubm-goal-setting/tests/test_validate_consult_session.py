@@ -107,7 +107,7 @@ def test_redirect_branch_does_not_require_consult_fields():
     # redirect record の永続にも persistence_consent=true が必須 (新契約) のため fixture へ付与
     r = {
         "outcome": "redirected_goal_setting", "handoff_to": "run-ubm-goal-setting",
-        "referral_confirmed": True, "persistence_consent": True,
+        "referral_confirmed": True, "persistence_consent": True, "issue_statement": "月報を作りたい",
     }
     assert MOD.validate(r, None) == []
 
@@ -115,6 +115,32 @@ def test_redirect_branch_does_not_require_consult_fields():
 def test_redirect_record_without_consent_is_invalid():
     r = {"outcome": "redirected_goal_setting", "handoff_to": "run-ubm-goal-setting", "referral_confirmed": True}
     assert any("consent" in e for e in MOD.validate(r, None))
+
+
+def test_challenge_redirect_uses_own_target_and_can_be_ephemeral():
+    r = {"outcome": "redirected_challenge", "handoff_to": "run-ubm-challenge",
+         "referral_confirmed": True, "persistence_consent": False,
+         "issue_statement": "挑戦宣言を作りたい"}
+    assert MOD.validate(r, None, ephemeral=True) == []
+    assert any("consent" in e for e in MOD.validate(r, None))
+    r["handoff_to"] = "run-ubm-goal-setting"
+    assert any("redirect" in e for e in MOD.validate(r, None, ephemeral=True))
+
+
+def test_redirect_requires_confirmed_referral_and_issue():
+    r = {"outcome": "redirected_challenge", "handoff_to": "run-ubm-challenge",
+         "referral_confirmed": False, "persistence_consent": True,
+         "issue_statement": "挑戦宣言を作りたい"}
+    assert MOD.validate(r, None)
+    r["referral_confirmed"] = True
+    r.pop("issue_statement")
+    assert MOD.validate(r, None)
+
+
+def test_empty_solution_text_does_not_pass_provenance_alone():
+    r = base_record()
+    r["user_solution"]["text"] = " "
+    assert any("user_solution.text" in e for e in MOD.validate(r, [{"id": "u1", "role": "user"}]))
 
 
 def test_safety_branch_is_fail_closed():
@@ -185,3 +211,100 @@ def test_gc_cli_dry_run_exit0(tmp_path, capsys):
 
 def test_cli_requires_record_or_gc(capsys):
     assert MOD.main([]) == 2
+
+
+# --------------------------------------------------------------------------- #
+# 型の違う record・日時の形・CLI の引数 (レビュー D の再発防止)
+# --------------------------------------------------------------------------- #
+def test_type_mismatched_record_reports_errors_without_traceback(tmp_path, capsys):
+    cases = [
+        ({"outcome": []}, [{"id": "u1", "role": "user"}]),
+        ({**base_record(), "collaboration_mode": ["framework-led"]}, [{"id": "u1", "role": "user"}]),
+        ({**base_record(), "user_solution": {"text": "自分で選ぶ", "source_turn_ids": [{"id": "u1"}]}},
+         [{"id": "u1", "role": "user"}]),
+        (base_record(), ["u1", {"id": "u1", "role": "user"}]),
+    ]
+    for record, transcript in cases:
+        assert MOD.validate(record, transcript), record
+        rec = tmp_path / "record.json"
+        rec.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+        tr = tmp_path / "transcript.json"
+        tr.write_text(json.dumps(transcript, ensure_ascii=False), encoding="utf-8")
+        assert MOD.main(["--record", str(rec), "--transcript", str(tr)]) == 1
+        assert json.loads(capsys.readouterr().out)["valid"] is False
+
+
+def test_created_at_and_retention_until_must_be_iso8601():
+    r = base_record()
+    r["created_at"], r["retention_until"] = "x", "forever"
+    errors = MOD.validate(r, [{"id": "u1", "role": "user", "content": "自分で選ぶ"}])
+    assert any("created_at が ISO 8601" in e for e in errors)
+    assert any("retention_until が ISO 8601" in e for e in errors)
+    r = base_record()
+    r["retention_until"] = "2026-07-01T00:00:00Z"
+    assert any("created_at より後でない" in e for e in MOD.validate(r, [{"id": "u1", "role": "user"}]))
+
+
+def test_null_turn_id_does_not_satisfy_provenance():
+    r = base_record()
+    r["user_solution"]["source_turn_ids"] = [None]
+    errors = MOD.validate(r, [{"role": "user", "content": "自分で選ぶ"}])
+    assert any("source_turn_ids" in e for e in errors)
+
+
+def test_stance_self_check_requires_bool():
+    r = base_record()
+    r["stance_self_check"] = {"no_prescription": "false"}
+    errors = MOD.validate(r, [{"id": "u1", "role": "user", "content": "自分で選ぶ"}])
+    assert any("stance_self_check.no_prescription が真偽値でない" in e for e in errors)
+
+
+def test_cli_rejects_conflicting_or_stray_flags(tmp_path, capsys):
+    rec = tmp_path / "record.json"
+    rec.write_text(json.dumps(base_record(), ensure_ascii=False), encoding="utf-8")
+    assert MOD.main(["--record", str(rec), "--apply"]) == 2
+    assert MOD.main(["--gc", str(tmp_path), "--record", str(rec)]) == 2
+    assert MOD.main(["--gc", str(tmp_path / "missing")]) == 2
+    capsys.readouterr()
+
+
+def test_cli_non_utf8_record_is_usage_error(tmp_path, capsys):
+    rec = tmp_path / "record.json"
+    rec.write_bytes(b"\xff\xfe{}")
+    assert MOD.main(["--record", str(rec)]) == 2
+    assert json.loads(capsys.readouterr().out)["valid"] is False
+
+
+def test_gc_plans_before_deleting_and_keeps_malformed_handoffs(tmp_path, capsys):
+    (tmp_path / "s_dir_handoff" / "handoff.json").mkdir(parents=True)
+    expired = _write_session(tmp_path, "s_expired", "2026-02-01T00:00:00Z")
+    listed = tmp_path / "s_list"
+    listed.mkdir()
+    (listed / "handoff.json").write_text("[]", encoding="utf-8")
+    bad_retention = _write_session(tmp_path, "s_forever", "forever")
+    assert MOD.main(["--gc", str(tmp_path)]) == 0
+    dry = json.loads(capsys.readouterr().out)
+    assert [d["session_id"] for d in dry["deleted"]] == ["s_expired"] and expired.is_dir()
+    assert MOD.main(["--gc", str(tmp_path), "--apply"]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert [d["session_id"] for d in report["deleted"]] == ["s_expired"] and not expired.exists()
+    reasons = {r["session_id"]: r["reason"] for r in report["needs_review"]}
+    assert set(reasons) == {"s_dir_handoff", "s_list", "s_forever"}
+    assert reasons["s_forever"] == "不正な retention_until"
+    assert (tmp_path / "s_dir_handoff").is_dir() and listed.is_dir() and bad_retention.is_dir()
+
+
+def test_gc_uses_default_retention_when_retention_until_is_absent(tmp_path):
+    d = tmp_path / "s-redirect"
+    d.mkdir()
+    (d / "handoff.json").write_text(
+        json.dumps({"outcome": "redirected_goal_setting", "created_at": "2026-01-01T00:00:00Z"}), encoding="utf-8")
+    report = MOD.gc_sessions(tmp_path, apply=False)
+    assert [(x["session_id"], x["reason"]) for x in report["deleted"]] == [("s-redirect", "retention_default_expired")]
+
+
+def test_gc_does_not_delete_when_index_cannot_be_opened(tmp_path):
+    expired = _write_session(tmp_path, "s-old", "2026-02-01T00:00:00Z")
+    (tmp_path / "index.jsonl").mkdir()
+    report = MOD.gc_sessions(tmp_path, apply=True)
+    assert report["errors"] and report["deleted"] == [] and expired.is_dir()

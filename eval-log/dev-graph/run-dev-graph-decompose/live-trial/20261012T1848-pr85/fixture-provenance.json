@@ -1,0 +1,89 @@
+{
+  "label": "decompose3",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/decompose3/fx",
+  "head": "bd555e30684c7ad77ac864ded74e43a6d04dcc03",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:5146632cc83cb1e4d5a0bf367ea9d3eb67b0790ebe2b74f1c70cc5b424e21a7a"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_c1d81154fa270789"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "retry_of": "decompose2 (20261012T1048-pr85)",
+  "post_seed_commit": {
+    "commit": "3889144 (fixture の 2 つ目の commit)",
+    "files": {
+      "tools/fake-bd.py": "f83338b398b4344df7789502645bb838e7933290788d8191077be2e8a4639e65",
+      "README.md": "07918d754ab3054ed6edd05916a14e5576f063a4046c2a18520d9001924e1077"
+    },
+    "why": "decompose の受入条件 OUT1 (評価前の draft は起票 0 件、confirmed/pass/readiness complete への昇格後だけ起票対象) を Beads の経路で確かめるため。bd-bridge.py は dry-run でも、昇格の gate を通った後の preflight で `bd version` と `bd where --json` を呼ぶ。この環境の既定の bd (wttrial/bin/bd) は呼ばれると exit 4 で落ちる stub なので、gate を通った node の preview に届かない。",
+    "fake_bd": "tools/fake-bd.py は `version` に 'bd version 1.4.2 (...)'、`where --json` に {database_path: 'fixture-readonly://decompose3/.beads/beads.db', prefix: 'gm4b', schema_version: '1'} を返す。それ以外の argv はすべて stdout なし・exit 4 で拒否する。DB もネットワークも持たない。呼出しはすべて fixture の root の fake-bd-calls.jsonl に 1 行ずつ残す (argv・cwd・answered・exit)。書込みの経路 (create・dep add・update・close など) は持たない。",
+    "readme": "README.md (元は '# gm4b-render' の 1 行) に「Beads の代わり (読取り専用)」の節を足した。fake-bd.py の答える範囲・拒否・記録先・DEV_GRAPH_BD の付け方の 4 点だけを書いた。",
+    "how_passed_to_subject": "task.md と README.md に、bd-bridge.py を呼ぶときは DEV_GRAPH_BD=<FX>/tools/fake-bd.py を付けると書いた (sync の trial の fake-gh.py と同じ渡し方)。session の環境変数 DEV_GRAPH_BD は lt-env.sh の既定 (stub) のまま変えていない。",
+    "smoke_offline": {
+      "where": "fx の別の写し (wttrial/smoke/decompose3-fx)。この run の fx では試していない (fake-bd-calls.jsonl を作らないため)。",
+      "results": [
+        "bd-bridge.py --op create --graph-node-id LT-FEATURE-001-P06 --dry-run (DEV_GRAPH_BD=写しの fake-bd.py): rc=0、dry_run_preview と workspace_identity を返し、bd の呼出しは version と where の 2 回",
+        "同じく --graph-node-id LT-FEATURE-002 (graph に無い node): rc=1、status=blocked・reason=promotion_gate・blocked=[{LT-FEATURE-002, not in graph}]・write_count=0。bd の呼出しは 0 回",
+        "DEV_GRAPH_BD を付けない (既定の stub): rc=1、preflight の `bd version` で command failed (4)",
+        "dry-run を付けない create (LT-FEATURE-001-P06、--title あり): rc=1、fake-bd が `search ...` を exit 4 で拒否し、書込みの呼出しには届かない",
+        "orchestrator が smoke の写しの graph から組んだ projection manifest (feature LT-FEATURE-001 と P01..P13) で --projection-manifest --dry-run: rc=0、projection の preview (epic 1 件と task 13 件、write_count 0)。この manifest は被験には渡していない"
+      ]
+    }
+  },
+  "node_state_check": {
+    "why": "team-lead の指示 (2026-10-12): bd-bridge.py の gate は feature と子 task がすべて confirmed・pass・complete でなければ bd を呼ばずに blocked で止まる。fixture の node の状態がこれを満たすようにする。",
+    "result": "変更不要。写した graph の 15 node (ARCH-LT-001、LT-FEATURE-001、LT-FEATURE-001-P01..P13) はすべて confirmation_status=confirmed・evaluation_status=pass・implementation_readiness.status=complete。tracker_binding は ARCH-LT-001 と LT-FEATURE-001 が none、P01..P13 が beads (原本のまま)。beads_linkage と issue_linkage はすべて null。P01..P05 は status=done、P06..P13 は active。graph.json の sha256 は 2ed57eab… で、C11 (validate-graph-schema.py) は pass・violation 0、C24 (resolve-repo-context.py --mode write) は rc=0 (どちらも読取りで確かめた)。"
+  },
+  "plugins_copy": {
+    "copied_at": "2026-10-12T09:46:39Z",
+    "from": "wtpy の plugins/ (HEAD 32c92c84 と、未 commit の変更を含む作業ツリー)",
+    "plugins": [
+      "dev-graph",
+      "harness-creator",
+      "skill-governance-adapters",
+      "system-dev-planner",
+      "system-spec-harness"
+    ],
+    "method": "cp -R。写した直後に diff -rq -x __pycache__ で 5 つとも wtpy と一致を確かめた",
+    "run_dev_graph_decompose_closure_sha": "f2d80eb5fe6c3e7602e343250bbb1d3824e823e9109160f5666a7f8f10877125 (写しと wtpy で同じ)",
+    "skill_md_sha256": "4769780d0abecaa0cafb139ce121869a854dd7e7d736a12d6138f79b97363e25",
+    "bd_bridge_py_sha256": "9be29f3482cd6312eadbaa4a550c100287052163ddb54769a199d4bb05d701c9",
+    "build_github_projection_py_sha256": "f513a9ad3ce45d9460243c1e22cde6b025954bcad49082c68d851a977c57d169",
+    "changed_since_decompose2": "decompose2 の closure は e80984f7。その後に bd-bridge.py (昇格の gate を足した。9be29f34…) と build-github-projection.py (gate の判定を bd-bridge.py から読む。f513a9ad…) が変わった。SKILL.md は変わっていない。"
+  },
+  "isolation": {
+    "same_as": "render4 (20261012T1759-pr85) と status3 (20261012T1810-pr85) と同じ。guard.py f23267a3…、mksettings.py 277ae072…。許可一覧に無い tool と外部へ届く tool (ScheduleWakeup・SendFeedback・SendMessage・mcp__* など) は拒否。sandbox の network は deniedDomains ['*']、書込みは runs/decompose3・wttrial/tmp・workdir/out だけ。",
+    "session_root": "ws (decompose2 と同じ)。fx は別の dir。"
+  },
+  "task_md_changes": {
+    "base": "runs/decompose2/workdir/task.md",
+    "changes": [
+      "runs/decompose2 を runs/decompose3 に置き換えた。",
+      "準備の節を、素の repo を init する手順から、seed を写した初期化済みの fixture の説明 (render4 の task.md の準備の節と同じ書き方) に変えた。init の Skill 呼出しを外した。fake-bd.py の在りかと DEV_GRAPH_BD の付け方、入力を書き換えないことを足した。",
+      "本題の want を変えた (新しい feature 2 件。LT-FEATURE-001 に依存し、既存の ARCH-LT-001 を使い、tracker_binding は beads)。--dry-run は同じ。",
+      "検証の節を、OUT1 の文 (DAG の循環・task 粒度、draft の preview、昇格済みだけが起票対象、draft は起票 0 件) と OUT3 の文 (write 0) に合わせた。checklist が PARTIAL なら PASS にしない、を足した。",
+      "経路の絶対制約に、Beads への投影は C28 (bd-bridge.py) を通し、bd や fake-bd.py を直接呼んで投影の結果に代えない、を 1 項足した。",
+      "scenario の id を decompose-macro-positive-fixture-standard-v2 から decompose-macro-promotion-gate-beads-fixture-standard-v3 に変えた。",
+      "sync4 の task.md と同じ「実行の意味」と「外部公開は禁止」の段落を足した (ブラウザの文は外した)。隔離環境の注記の bd を「既定の bd は stub」に変えた。"
+    ]
+  }
+}

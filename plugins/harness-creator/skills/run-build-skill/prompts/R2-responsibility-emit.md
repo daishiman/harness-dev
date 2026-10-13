@@ -37,8 +37,7 @@
 
 ### 2.2 ドメインルール
 - 出力先パス: `plugins/<plugin>/skills/<skill>/prompts/<R-id>.md`
-- SubAgent 本文に Prompt Templates / Self-Evaluation の 9 セクションを揃える
-  - 内訳: (1) 役割 (2) ゴール (3) 完了チェックリスト (4) 出力 (5) Prompt Templates 概要 (6) Layer マッピング (7) Round 1 起動 (8) Round 2 引き渡し (9) Self-Evaluation
+- SubAgent 本文は7層と、その後の発話・自己採点の2節を揃える。構造は `references/agent-template.md` の参照先正本に従い、Layer 5 は5.1〜5.4のゴール駆動契約を満たす。
 - lint FAIL 時は最大 3 回まで再起動
 
 ### 2.3 入力契約
@@ -95,7 +94,7 @@
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] 全 R-id 分の Markdown が `plugins/<plugin>/skills/<skill>/prompts/<R-id>.md` に存在
 - [ ] 各生成 prompt が L7→L1 単方向参照のみ (逆参照 0)
-- [ ] SubAgent 本文に Prompt Templates / Self-Evaluation の 9 セクションが揃う
+- [ ] SubAgent 本文に7層と発話・自己採点の2節が揃う
 - [ ] `lint-agent-prompt-section.py --strict-coverage` exit 0
 - [ ] 同 brief 再実行で sha256 一致 (validate-build-trace.py)
 - [ ] 既存 prompts/ を差分確認なしで上書きしていない

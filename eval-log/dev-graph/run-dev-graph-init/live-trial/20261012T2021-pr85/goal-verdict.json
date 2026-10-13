@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill を起動している。transcript L35 で Skill(dev-graph:run-dev-graph-init) を task.md と同じ引数で呼び、L36-37 で読み込まれた。guard.jsonl は 21 件すべて allow で、deny は 0 件。",
+    "成果物を作る前に責務 prompt を読んでいる。L50-51 で SKILL.md の後半と prompts/*.md の先頭 300 行 (R1-R4 の全文と R5 の 1-23 行) を、L59-60 で R5 の 20-60 行と references/prompt-common-layers.md の全文 (48 行) を読んだ。最初の init は L76 で、その後に行われている。読んでいないのは R5 の 61-70 行だけで、内容は Layer6 の fallback 診断の返し方、Layer7、出力指示。今回は plugin hook のため使わない部分だった。",
+    "L62-63 の最初の試行では $TMPDIR へのリダイレクトが Operation not permitted になり、script は実行されなかった。このとき別 run の古い /tmp/claude-501/run1.json を読んだが、L75 で本人が気づいて破棄した。L67 で fx が未変更であることも確認しており、成果物には影響していない。",
+    "1 回目の init は正規の writer が行った。L76-77 で plugin 実体の scripts/build-init-scaffold.py --repo-root fx --hook-source plugin が exit 0 で終わり、結果は status=applied・preflight.status=pass (link_state=absent)・planned_changes=36・write_count=36・schema_result.valid=true・violation_count=0。scaffold も graph も Write/Edit や heredoc では書いていない。graph.json を書いたのはこの script だけで、単一 writer になっている。",
+    "最小 guard と成果物の提示を行った。L80-81 で config.json の表示、絶対 path と secret の grep (該当なし)、JSON の parse、config/graph の sha256 を実行した。L84・L90 では C11 (validate-graph-schema.py) が exit 0・valid=true・violations=[] だった。L93 で提示したうえで、指定済みの standard を記録した。記録先は L99 の eval-log/run-dev-graph-init-goal-spec.json の artifact_delivery_choice=standard。それまでに subagent は起動していない。",
+    "C24 の解決が caller repo と一致している。L94-95 で resolve-repo-context.py --mode write の repo_root と content_roots.repository が fx に一致し、root_trust_evidence はすべて true。",
+    "R5 の指示どおり hook には手を付けていない。L107 で hook_source=plugin のため build-project-hook-fallback.py を起動しなかった。fx に .claude/ は存在せず、config の claude_hooks.source は plugin。",
+    "冪等性と利用者編集の保持を確認した。L108-109 で .dev-graph/templates/task.md への追記と docs/NOTE.md の作成によって利用者編集を模し、同じ引数で正規の init を再実行した。結果は status=noop・planned_changes=0・write_count=0・exit 0。前後の全ファイルの sha256 が一致 (NO_FILE_CHANGES) し、編集した task.md は migration_preview に plugin_sha256 との差として記録された。",
+    "必須の Agent verifier を別 context で起動した。L113-114 で general-purpose agent を起動し、記録は subagent-transcripts/agent-a4fdf66ab47000299.jsonl にある。中身は読取り専用の Bash 3 回 (C24・harness link・C11・schema・template の cmp・secret の grep) で、L131 の結果は OVERALL: PASS。",
+    "ゴールシークの記録と検証を行った。L133-134 で progress と intermediate.jsonl を記録し、SKILL のゴールシーク検証スクリプトは exit 0。eval-log に絶対 path は含まれていない。最後に L141 で workdir/out/status.json に PASS を書いた。workdir/out にあるのは status.json だけ。",
+    "fixture は私が直接確かめた。git -C fx status で増えているのは .dev-graph/ 配下 (config・graph・receipt 1 件・templates 21 件)、eval-log/ の 3 件、docs/NOTE.md だけ。issues/tasks/specs/architecture/features/docs の 6 root、.dev-graph/cache・locks は実在する directory。.claude/ と .git/dev-graph は存在しない。",
+    "C11 と config schema も私が通した。validate-graph-schema.py --graph fx/.dev-graph/state/graph.json は exit 0・valid=true で、graph は graph_revision=0・nodes=[]。jsonschema による repo-config.schema.json の検査では config の error が 0 件で、routing_policy は artifact_kind/hybrid/200/[domain, project_id, YYYY/MM]。",
+    "fx/.dev-graph と fx/eval-log を grep した結果、絶対 path (/private・/Users・/tmp・/home・/var) も、token (ghp_・gho_・github_pat_) も、node ID (PVT_ 系・I_kw) も 0 件。github.enabled=false で、保存されているのは owner_login・project_number・field 名だけ。receipt の path はすべて repo 相対。",
+    "templates の 21 件中 20 件は plugin と byte 一致した。差は task.md だけで、追記した <!-- user edit --> の行がそのまま残っており、上書きされていない。",
+    "被験 session の自己申告に過大な点が 1 つある。eval-log/run-dev-graph-init-progress.json は criteria の OUT3・OUT5 も PASS と記録しているが、同じファイルの notes には repo B と fallback apply は未実行とある。OUT3・OUT5 は verify_by=test で、今回の task の合格条件には含まれない。そのため判定には使わず、goal の判定は上の実測だけで行った。"
+  ],
+  "skill_defects": [
+    "SKILL.md のゴールシーク配線は、全 checklist と feedback_contract.criteria が PASS のときだけ完了とする。しかし OUT3 (repo A/B の比較、project-root の不一致、broken link) と OUT5 (project-fallback の merge と rollback) は verify_by=test で、1 repo に --hook-source plugin で init を 1 回走らせただけでは検証できない。そうした criteria を deferred や not_applicable として扱う規則が SKILL にも R1-R5 にも無い。そのため実行者は、未検証の criteria を PASS と記録しないと完了できない。再現手順: 素の repo で run-dev-graph-init を --hook-source plugin で実行し、ゴールシークの完了条件に従って progress.json を書く。今回の trial では fx/eval-log/run-dev-graph-init-progress.json に OUT3・OUT5=PASS と書かれ、notes には未実行とある。",
+    "scripts/build-init-scaffold.py は importlib.util.spec_from_file_location で validate-graph-schema.py を、通常の import で _common を読み込むが、sys.dont_write_bytecode を設定していない。このため PYTHONDONTWRITEBYTECODE を付けずに実行すると、plugin 側 (共有 harness) の scripts/__pycache__ に .pyc が書かれる。OUT3 の『harness 側の変更0件』と食い違う。今回の trial でも _common.cpython-311.pyc と validate-graph-schema.cpython-311.pyc が 20:22:44 に書き直された (L124 で本人も検出している)。再現手順: plugin の写しから scripts/__pycache__ を消し、素の repo に対して python3 scripts/build-init-scaffold.py --repo-root <repo> --hook-source plugin を実行すると、__pycache__ ができる。",
+    "SKILL.md の『目的・背景』には『初期化レポートにはgh CLI認証状態も含める』とある。しかし Execution contract の Receipt の項目にも、build-init-scaffold.py にも、R1-R5 にも、gh の認証状態を集めたり記録したりする箇所が無い (scripts/build-init-scaffold.py と prompts を grep して 0 件)。再現手順: init を実行して .dev-graph/state/receipts/init-*.json を見ると、gh の認証状態の field が無い。"
+  ],
+  "evaluator_agent_id": "a0276c447334d2662"
+}

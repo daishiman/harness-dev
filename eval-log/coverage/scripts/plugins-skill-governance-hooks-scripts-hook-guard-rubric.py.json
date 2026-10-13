@@ -1,1 +1,18 @@
-{"artifact":"plugins/skill-governance-hooks/scripts/hook-guard-rubric.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":85,"notes":"py_compile OK; deny emits correct permissionDecision JSON + exit2 (documented backward-compat), ALLOW_RUBRIC_EDIT bypass and non-Write tools pass through; registry parse uses scoped (OSError,JSONDecodeError); minor smells: redundant 'import json as _json' (json already top-level) and top-level fail-open except but it is commented intentional"},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/skill-governance-hooks/scripts/hook-guard-rubric.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 4fa5e095eeb769badc252e7e6d8414f1154b95c353648f6731eb9e71e46bf8ee をレビュー。実行検証あり）。範囲: hook-guard-rubric.py 全 146 行と git diff origin/main、登録（.claude/settings.json の PreToolUse、matcher Write|Edit → ${CLAUDE_PROJECT_DIR}/scripts/hook-guard-rubric.py。これは本体への symlink）、rubric-registry.json の探し方（cwd・PROJECT_ROOT・REPO_ROOT=parents[3]）。確かめたこと: pytest tests/scripts-plugins/test_skill_governance_hooks__hook_guard_rubric.py 38 passed（3.11）/ 38 passed（3.9）。pyflakes 0 件。lint-script-frontmatter（plugins/skill-governance-hooks）OK checked=8。stdin を与えて: L0 rubric・大文字小文字違いの Rubric.JSON・../ や // を含むパス・registry にある ref-domain-task-spec・assign-*・ubm の L1 → exit 2（deny の JSON）、skill-intake/references/rubric.json と rubric.normalized.json → 0、NotebookEdit → 0、壊れた stdin・tool_input 無し → 0（fail open は docstring に明記の設計）、ALLOW_RUBRIC_EDIT=1 → 0、/tmp から呼んでも registry の rubric を止める。書き込みなし。指摘: [低] registry の読み込み（71 行）が OSError と JSONDecodeError しか拾わないため、cwd などにある rubric-registry.json が非 UTF-8（UnicodeDecodeError）や深い入れ子（RecursionError）だと traceback で exit 1 になる。PreToolUse の exit 1 は止めない扱いなので hook 全体が fail open になり、ふだんは exit 2 で止まる L0 rubric の Edit まで通る（再現: work-s3/auto/hook を cwd にして L0 の Edit → RecursionError で exit 1。別の cwd では exit 2）。直し方: except に ValueError と RecursionError を足す。[低] purpose（4 行）は「Block edits to canonical rubric files」とするが、止めるのは Write・Edit・MultiEdit（122-123 行。登録の matcher は Write|Edit）だけで、Bash の sed -i やリダイレクトでの書き換えは止めない。止める範囲を purpose か docstring に書く。DEDUCTION: 壊れた registry で fail open -3、purpose の範囲 -2 → 95。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -14,6 +14,7 @@
 ### 入力契約
 
 - system-spec-harness manifest、version、exports。
+- 版の範囲は `plugin-composition.yaml` の `external_dependencies.system-spec-harness.version` を正本にする。不変目的にある `>=0.1.0` は計画時の値で、範囲の判定には使わない。
 
 ### 出力契約
 
@@ -25,7 +26,7 @@
 
 ### 受入条件
 
-- >=0.1.0 <1.0.0かつelicit/doc-fetch/compile/evaluator実在になる。
+- version が `plugin-composition.yaml` の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる。
 
 ## Layer 3: インフラ層
 
@@ -51,7 +52,7 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] >=0.1.0 <1.0.0かつelicit/doc-fetch/compile/evaluator実在になる
+- [ ] version が `plugin-composition.yaml` の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる
 
 ## Layer 6: オーケストレーション層
 

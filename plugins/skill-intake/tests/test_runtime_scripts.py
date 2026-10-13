@@ -424,6 +424,177 @@ def test_task_graph_verifier_rejects_phase_and_exit_hook_drift(tmp_path: Path, v
     assert "contract violation" in result.stderr
 
 
+def _insert_failed_attempt(trace: dict, phase_id: str, **overrides) -> dict:
+    """phase_id の attempt 1 を FAIL として残し、同じ phase を attempt 2 で再開した trace にする。"""
+    records = trace["phases"]
+    index = next(i for i, record in enumerate(records) if record["id"] == phase_id)
+    failed = {key: value for key, value in records[index].items() if key != "exit_hook"}
+    failed.update(status="FAIL", exit_code=2, handoff_path=None, handoff_sha256=None, error="delegate exit 2")
+    failed.update(overrides)
+    records[index]["attempt"] = 2
+    records.insert(index, failed)
+    return failed
+
+
+def test_task_graph_verifier_accepts_resume_after_failed_attempt(tmp_path: Path) -> None:
+    schema = json.loads(TRACE_SCHEMA.read_text(encoding="utf-8"))
+    for name in ("delegate-fail", "exit-hook-fail"):
+        case = tmp_path / name
+        case.mkdir()
+        progress, rows = graph_payload()
+        captured: dict = {}
+
+        def mutate(trace: dict) -> None:
+            if name == "delegate-fail":
+                _insert_failed_attempt(trace, "P6-options")
+            else:
+                evidence = [_write_artifact(case / "measure-stderr.txt", "measure failed\n")]
+                _insert_failed_attempt(
+                    trace,
+                    "P9-finalize",
+                    exit_code=1,
+                    error="measure_value_realized.py exit 1",
+                    exit_hook={"name": "measure-and-preview-self-update-inline", "status": "FAIL", "evidence": evidence},
+                )
+            captured["trace"] = trace
+
+        result = run_graph_verifier(case, progress, rows, trace_mutator=mutate)
+        assert result.returncode == 0, result.stderr
+        Draft7Validator(schema, format_checker=Draft7Validator.FORMAT_CHECKER).validate(captured["trace"])
+
+
+@pytest.mark.parametrize(
+    "violation",
+    ["no-error", "handoff-recorded", "skip-ahead", "ends-in-fail", "hook-not-failed", "hook-undeclared"],
+)
+def test_task_graph_verifier_rejects_invalid_failed_attempt(tmp_path: Path, violation: str) -> None:
+    progress, rows = graph_payload()
+
+    def mutate(trace: dict) -> None:
+        if violation == "no-error":
+            _insert_failed_attempt(trace, "P6-options").pop("error")
+        elif violation == "handoff-recorded":
+            handoff = _write_artifact(tmp_path / "failed-handoff.json", "{}\n")
+            _insert_failed_attempt(trace, "P6-options", handoff_path=handoff["path"], handoff_sha256=handoff["sha256"])
+        elif violation == "skip-ahead":
+            # FAIL の後に別 phase へ進む (失敗 phase を飛ばす) 再開は拒否する。
+            _insert_failed_attempt(trace, "P6-options")
+            trace["phases"] = [record for record in trace["phases"] if not (record["id"] == "P6-options" and record["attempt"] == 2)]
+        elif violation == "ends-in-fail":
+            records = trace["phases"]
+            records[-1] = {key: value for key, value in records[-1].items() if key != "exit_hook"}
+            records[-1].update(status="FAIL", exit_code=1, handoff_path=None, handoff_sha256=None, error="decide-mode exit 1")
+        elif violation == "hook-not-failed":
+            _insert_failed_attempt(
+                trace,
+                "P9-finalize",
+                exit_hook={"name": "measure-and-preview-self-update-inline", "status": "PASS", "evidence": []},
+            )
+        else:
+            _insert_failed_attempt(trace, "P6-options", exit_hook={"name": "invented-hook", "status": "FAIL", "evidence": []})
+
+    result = run_graph_verifier(tmp_path, progress, rows, trace_mutator=mutate)
+    assert result.returncode == 1
+    assert "contract violation" in result.stderr
+
+
+def test_task_graph_verifier_rejects_skip_after_failed_attempt(tmp_path: Path) -> None:
+    # P5 を FAIL にした後、同じ P5 を SKIP に切り替えて深掘りを逃れる再開は認めない。
+    progress, rows = graph_payload()
+
+    def mutate(trace: dict) -> None:
+        _insert_failed_attempt(trace, "P5-excavation").pop("skip_reason")
+
+    result = run_graph_verifier(tmp_path, progress, rows, skip_p5=True, trace_mutator=mutate)
+    assert result.returncode == 1
+    assert "FAIL の直後に同じ phase を SKIP" in result.stderr
+
+
+@pytest.mark.parametrize("field", ["attempt", "exit_code", "row-iteration"])
+def test_task_graph_verifier_rejects_bool_as_int(tmp_path: Path, field: str) -> None:
+    # True == 1 / False == 0 なので、bool を int として数えると値の比較を素通りする。
+    progress, rows = graph_payload()
+    if field == "row-iteration":
+        rows[0]["iteration"] = False
+
+    def mutate(trace: dict) -> None:
+        if field == "attempt":
+            trace["phases"][0]["attempt"] = True
+        elif field == "exit_code":
+            trace["phases"][0]["exit_code"] = False
+
+    result = run_graph_verifier(tmp_path, progress, rows, trace_mutator=mutate)
+    assert result.returncode == 1
+    assert "contract violation" in result.stderr
+
+
+@pytest.mark.parametrize("shape", ["status-list", "record-not-object", "final-hook-not-object", "non-utf8-trace"])
+def test_task_graph_verifier_rejects_malformed_trace_without_traceback(tmp_path: Path, shape: str) -> None:
+    progress, rows = graph_payload()
+
+    def mutate(trace: dict) -> None:
+        if shape == "status-list":
+            trace["phases"][0]["status"] = ["PASS"]
+        elif shape == "record-not-object":
+            trace["phases"][0] = "P1-profile"
+        else:
+            trace["phases"][-1]["exit_hook"] = "RUNNING"
+
+    if shape == "non-utf8-trace":
+        (tmp_path / "intake-trace.json").write_bytes(b'{"phases": "\xff\xfe"}')
+        result = run_graph_verifier(tmp_path, progress, rows, write_trace=False)
+    else:
+        result = run_graph_verifier(tmp_path, progress, rows, trace_mutator=mutate)
+    assert result.returncode == 1
+    assert "contract violation" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def _trace_schema_validator() -> Draft7Validator:
+    schema = json.loads(TRACE_SCHEMA.read_text(encoding="utf-8"))
+    Draft7Validator.check_schema(schema)
+    return Draft7Validator(schema, format_checker=Draft7Validator.FORMAT_CHECKER)
+
+
+def _built_trace(tmp_path: Path) -> dict:
+    progress, rows = graph_payload()
+    progress_path = tmp_path / "progress.json"
+    intermediate_path = tmp_path / "intermediate.jsonl"
+    progress_path.write_text(json.dumps(progress), encoding="utf-8")
+    intermediate_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    return build_trace(tmp_path, progress_path, intermediate_path)
+
+
+def test_failed_trace_stopping_at_fail_row_is_schema_valid(tmp_path: Path) -> None:
+    # SKILL.md「失敗からの再開」: FAIL 行で止めた trace は workflow_status=failed で、11 件も artifacts も持たない。
+    trace = _built_trace(tmp_path)
+    failed = _insert_failed_attempt(trace, "P6-options")
+    trace["phases"] = trace["phases"][: trace["phases"].index(failed) + 1]
+    trace["workflow_status"] = "failed"
+    del trace["artifacts"]
+    validator = _trace_schema_validator()
+    validator.validate(trace)
+
+    # in_progress / completed は今までどおり 11 件と artifacts を要求する。
+    for status in ("in_progress", "completed"):
+        assert list(validator.iter_errors({**trace, "workflow_status": status}))
+
+
+def test_exit_hook_evidence_is_required_only_while_running_or_passed(tmp_path: Path) -> None:
+    trace = _built_trace(tmp_path)
+    validator = _trace_schema_validator()
+    p9 = next(record for record in trace["phases"] if record["id"] == "P9-finalize")
+
+    p9["exit_hook"] = {"name": "measure-and-preview-self-update-inline", "status": "FAIL", "evidence": []}
+    validator.validate(trace)
+    del p9["exit_hook"]["evidence"]
+    validator.validate(trace)
+
+    for status in ("RUNNING", "PASS"):
+        p9["exit_hook"] = {"name": "measure-and-preview-self-update-inline", "status": status, "evidence": []}
+        assert list(validator.iter_errors(trace)), status
+
+
 def test_generated_trace_is_schema_valid_after_exit_hook_pass(tmp_path: Path) -> None:
     progress, rows = graph_payload()
     progress_path = tmp_path / "progress.json"

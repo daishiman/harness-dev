@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規 Skill の起動: transcript L35 で dev-graph:run-dev-graph-init、L132 で dev-graph:run-dev-graph-node、L226 で被験の dev-graph:run-dev-graph-status (--repo-root fx --id task-lt-task-001) を Skill tool で起動した。3 本とも 'Launching skill' が返った (L36, L133, L227)。",
+    "責務 prompt を出力の前に読んだか: 被験は L237-238 で R1-elicit・R2-plan・R3-status を読み、その後の L243 で extract-graph-status.py を起動した。読まなかったのは Layer 4 の本文だけで、その中身は prompt-common-layers.md を指す 1 行。その 48 行の reference は L69 で全部読んでいる。init は L51/L60 で R1-R5 を全文読み、出力 (L74) の前だった。node は L151-152 で R0-R4 の Layer 2-3 と Layer 6 を読み、writer の実行 (L174) の前だった。飛ばした Layer 1 と 5.3 の中身は、読んだ Layer 2 の受入条件とほぼ同じ。",
+    "単一 writer: graph は L174/L185 の build-graph-node.py add --dry-run、L189 の add (rev 0→1、3 node、receipt node-r000001-add.json)、L193/L201 の update node_patch status=closed (rev 1→2、receipt node-r000002-update.json) だけで作られた。closed_at は writer が付けた。手書きの JSON は writer の --input (fx/.dev-graph/cache/node-input/*.json) に限られ、graph.json を直接書いた呼出しは無い。",
+    "自作 driver を使っていない: report の行を作ったのは plugin の extract-graph-status.py だけ (L243)。L282 で応答に出した report は L249 の script stdout と JSON として一致し、テキストとしても一致した (比べて確かめた)。要約せずにそのまま出力している。",
+    "graph の実値との一致: fx/.dev-graph/state/graph.json (graph_revision=2) の task-lt-task-001 は status=closed、closed_at=2026-10-12T13:36:16.173108Z、depends_on=[task-lt-task-dep-a, task-lt-task-dep-b]。report の行と同じ。dependents=[] も graph 全体の逆引きと合う。私が extract-graph-status.py を read-only で再実行した結果も同じ値で、validation.status=pass、missing_required_keys=[]、read_only.changed=[] だった。",
+    "C11: 被験は L274-275 で validate-graph-schema.py を実行し C11=0。私の再実行も exit 0 (violation_count=0)。",
+    "digest の不変: 起動前 L223 の graph.json sha256 は 57f1cf37…bf6774。L249 で script の前後とも graph と config.json 56f4d320…f516 が同じ。L257 で eval-log を除く fx の 33 ファイルが TREE_UNCHANGED。L275 と現在の fx も 57f1cf37…bf6774 のまま。",
+    "必須の Agent verifier: L260 で Agent (general-purpose, 'Status report independent eval') を起動した。subagent-transcripts/agent-a4c40d9184f069c38.jsonl の L12-L24 で、評価役は SKILL と R1-R3 を読み、graph.json との項目ごとの照合、script の再実行、pre2.sha の再測定 (33 件)、dangling と root 外の確認、該当なし query の確認 (result=empty、exit 0) を実際に行い、overall PASS を返した (L272)。",
+    "GitHub と Beads への write は 0 件: main と subagent 3 本の tool 呼出しに gh・bd の実行は無い。guard.jsonl は allow 53 件、deny 1 件で、deny は L113-114 の background agent の出力ファイルを until/tail で待つ Bash。被験はこれを回避しようとせず、完了通知を待った (L122, L126)。",
+    "書込みの境界: 書込み先は fx の中 (.dev-graph、tasks、eval-log) と run dir の中の TMPDIR、それに workdir/out/status.json だけ (L278)。ws/plugins と fx に __pycache__ と *.pyc は 0 件で、bytecode の修正は効いている。",
+    "手順の順序 (blocker ではない): status skill の artifact_delivery_choice=standard と goal-spec が eval-log に書かれたのは L274 で、評価役を起動した L260 より後だった。選ぶ前に path・digest・開き方を利用者向けの文で示してもいない (L252 の thinking で触れただけ)。choice は task で事前に決まっていたので、goal は損なわれていない。"
+  ],
+  "skill_defects": [
+    "run-dev-graph-status/SKILL.md の L127 と L130 (ゴールシーク配線) は、goal-spec・progress・intermediate.jsonl を caller repo の $DEV_GRAPH_ROOT/eval-log/ に書かせる。description は「副作用なしで確認」をうたうが、extract-graph-status.py の read_only の検査は graph・config・content の 5 ファイルしか追わず、この書込みは検出されない。再現: 初期化済みの clean な repo で status を artifact_delivery=standard で走らせると、eval-log/run-dev-graph-status-{goal-spec.json,progress.json,intermediate.jsonl} が増え、git status に '?? eval-log/' が出る (この trial では fx/eval-log の 22:41 のファイル)。read-only の skill として、記録先を repo の外にするか、例外として明記する必要がある。",
+    "SKILL.md の L131 は、skill の完了に外ループの OUT1 (verify_by: live-trial)・OUT2 (verify_by: test) と content-review の PASS を求めるが、それを skill の中で実行する手順が無い。そのため実行者は自己申告で埋めがちになる。再現: この trial の fx/eval-log/run-dev-graph-status-progress.json は、live-trial も content-review も走らせないまま OUT1/OUT2/content_review を PASS と書いている (L274)。"
+  ],
+  "evaluator_agent_id": "a480d36887dbd1771"
+}

@@ -1,1 +1,17 @@
-{"artifact":"doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md","type":"docs","mechanical":true,"llm_eval":{"verdict":"FAIL","score":68,"notes":"内部矛盾あり: frontmatterテンプレが kind:workflow(L43)/kind:evaluator(L112)/kind:reference(L198) を採るが、実SKILL.md(kind:run/assign/ref)・22章のenum(ref|run|wrap|assign|delegate)・23a§2・本章自身のL306『kind:runのまま』と全て不一致。テンプレを写経するgeneratorが誤kindを吐く再現性リスク。さらにcreator-kit/manifest.json正本前提が当repo非存在(plugins/移行済)で古い。rubric.json例が本文の『JSON正本』方針に反しYAML(L246-)で記述。補助ファイル/combinator(with-run.patch等は実在)/構成は妥当だが上記欠陥でPASS基準未達"},"reviewed_by":"workflow-doc-review","checked":["internal-consistency","impl-alignment","completeness","structure"]}
+{
+  "artifact": "doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 95,
+    "notes": "genuine review（sha256 942a41da0ece8adc2c09e45063cc4cea5e8cc87a6e9417952d578d1322701939 をレビュー。実行検証あり）。範囲: 全247行と git diff origin/main（+113/-198。この branch で入れた雛形の作り直しを含む）。前回版（sha256 55b806e2…、blob 82c2ba42、commit 6257499e）からの差分は 208行の「rubric 1.5.0 時点」を「1.6.0 時点」にした1行だけ。確かめたこと: (1) rubric.json は rubric_version 1.6.0、41 rule、threshold 80、severity_weights high -20 / medium -10 / low -3 で、208行と合う。最上位キー max_skill_md_lines 300・trigger_count_min/max 2/3・description_no_action_detail true と、BD-003（high）・FM-003（medium）・FM-004（medium）の対応も表どおり。1.6.0 の変更は HK-001 の event を足しただけで、skill 用の rule と本章の表には影響しない。(2) run-build-skill と assign-skill-design-evaluator の抜粋（23〜76行と 107〜145行）を SKILL.md として取り出し、render-findings-score.py --target <SKILL.md> --rubric-refs ref-skill-design-rubric/references/rubric.json --kind skill で今の 1.6.0 で採点した。両方とも score 100・passed true・findings 0（scored 19/20、BD-004 は pending_human）。(3) lint-goal-seek.py は抜粋2つとも exit 1（「## ゴールシーク実行」の見出しが無い）。(4) 補助ファイルの木3つ、ref-skill-design-rubric の見出し、例に出す Skill は実物と合う。前回の指摘で残っているもの: [低] 20行は抜粋を「render-findings-score.py と rubric.json（--kind skill）で採点して合格する形にしてある」と書くが、合格するのは rubric 採点だけで、build-preflight と CI の lint-goal-seek.py では2つとも落ちる。直し方: 20行に「rubric 採点では合格する。lint-goal-seek を通すには ## ゴールシーク実行 が要る」と範囲を書き足す。[低] 抜粋と実物のずれが2か所。60行の「rubric を編集しない。変更は rubric governance を通す（27章）」は実物の SKILL.md にも templates/ にも無い。54行の release の完了条件は、実物 183行の「obligation DAG が current PASS proof で閉じる」を落としている。直し方: 60行を消すか「本章の補足」と明記し、54行に DAG の条件を足す。観察（減点しない）: 11章 73行が本章を「正本仕様」と呼び、本章 5行（実装の正本ではない）と食い違う。直すなら 11章の側。DEDUCTION: 20行の合格の範囲 -3、60行と54行の抜粋のずれ -2 → 95。今回の1行の更新は正しい。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "accuracy",
+    "completeness",
+    "consistency",
+    "actionability"
+  ]
+}

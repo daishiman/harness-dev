@@ -1,8 +1,8 @@
 # ハーネス・カバレッジ仕様 (Harness Coverage Spec)
 
-> ステータス (2026-06-30 更新, `make harness-coverage` が唯一の現状値正本): 全12軸 (6種別×2軸) 計測済。
-> coverage gate は CI に **WARN (非ブロック) で配線済** (harness-creator-kit-ci.yml; 既存債務 backfill 後に blocking 化する ratchet)。
-> **総合 `spec_met=false` (未達軸あり)**。達成軸数・未達内訳は drift するため本 doc に数値を焼かず、
+> ステータス (2026-10-10 更新, `make harness-coverage` が唯一の現状値正本): 全12軸 (6種別×2軸) 計測済。
+> CI (harness-creator-kit-ci.yml) では `make coverage-gate` と `make harness-coverage` が **WARN (非ブロック)**、`make harness-ratchet` (floor 回帰ガード, §4-4) が **blocking** で配線済。
+> **総合 `spec_met=false` (未達軸あり)**。達成軸数・未達内訳は drift するため本 doc に現状の数値を焼かず (数値は §6 の日付つきスナップショットにだけ置く)、
 > 確定値は常に `python3 scripts/validate-harness-coverage.py` (= `make harness-coverage`) の出力を唯一の正とする。
 > 数値は一切水増ししない (未計測=未計測、低カバレッジ=低カバレッジで報告 / Goodhart 回避)。全て genuine な実テスト/実レビューで到達。
 >
@@ -25,8 +25,8 @@
 | skills | `plugins/*/skills/*/SKILL.md`(本文/prompts/ゴールシーク) |
 | agents | `plugins/*/agents/*.md`(サブエージェント) |
 | commands | `plugins/*/commands/*.md`(スラッシュコマンド) |
-| hooks | `settings.json`/`plugin.json` で配線される hook スクリプト |
-| docs | `doc/**/*.md`(設計書・参照) |
+| hooks | `plugins/*/hooks/*.md` (hooks ディレクトリ直下の Markdown。validator `measure_md_type("hooks", "hooks")` の実際の数え方。2026-10-10 時点の実体は `plugins/skill-intake/hooks/README.md` の 1 件)。`hooks.json` で配線される hook スクリプト (`plugins/*/hooks/*.py`・`*.sh`) はこの軸にも scripts 軸にも入らない集計対象外 (§8 残課題) |
+| docs | `doc/**/*.md`(設計書・参照)。ただしパスに「参考Skill」「Agent Skill大全」を含む外部参考資料は除外 (validator の `DOC_EXTERNAL_REFERENCE`) |
 
 ## 2. 二軸 (Two Axes) — **両方** で 80% 以上
 
@@ -66,6 +66,7 @@ ref は behavioral criteria を持たないため criteria/content-review から
 2. **新規 gate(fail-closed)**: `make coverage-gate`(= `validate-llm-coverage.py --gate-new --since LLM_COV_SINCE`)が
    `LLM_COV_SINCE` 以降に since された新規 loop-kind skill を <80% で exit1。新規生成物から必達。
 3. **既存 ratchet**: 既存 artifact は backfill で段階的に 80% へ底上げ。`spec_met=true` で完了。
+4. **回帰ガード (blocking)**: `make harness-ratchet` (= `validate-harness-coverage.py --ratchet`) が各軸の現値を `eval-log/harness-coverage-floor.json` の floor と比べ、下回る軸があれば exit 1 (CI で blocking)。floor は改善時に `--update-floor` で引き上げ、下げない。
 
 ## 5. 自動化 (量産先への伝播)
 
@@ -78,7 +79,9 @@ harness-creator (run-build-skill) はビルド時に **全 kind で本仕様を�
 新規スキルは `coverage-gate` で 80% 必達 (ratchet)。「ref は除外」ではなく「ref に適した別検証へ振替」
 を徹底し、辞書型スキルが品質ゲートから抜け落ちないようにする。
 
-## 6. 現状ダッシュボード (2026-06-24, 全12軸 計測済 / 多エージェント backfill 一部実施後)
+## 6. 現状ダッシュボード (2026-06-24 時点のスナップショット。現値は `make harness-coverage`)
+
+本節 (下位の小節を含む) の数値はすべて 2026-06-24 時点の記録であり、本 doc で数値を置くのは本節だけである。
 
 | 種別 | mechanical | llm_eval |
 |---|---|---|
@@ -89,7 +92,9 @@ harness-creator (run-build-skill) はビルド時に **全 kind で本仕様を�
 | hooks | **100.0% ✅** | **100.0% ✅** (README に検証ゲート script 追記) |
 | docs | **100.0% ✅** (44本 doc-review 記録) | **84.1% ✅** (44本中 37 PASS, 実欠陥7検出) |
 
-**総合: FAIL (ハーネス仕様 未達)**。12軸中 **計測済 12 / 達成 11**。残 **1 軸 = scripts mechanical (56.5%, network系HTTPモック要)**。
+**総合 (2026-06-24): FAIL (ハーネス仕様 未達)**。12軸中 **計測済 12 / 達成 11**。残 **1 軸 = scripts mechanical (56.5%, network系HTTPモック要)**。
+
+注: hooks 軸は当時も今も `plugins/*/hooks/*.md` (README 1 件) だけの値で、hook スクリプトの品質は表さない (§1・§8)。
 
 ### ref(辞書型)スキルの genuine 計測化 (2026-06-24)
 ref を「除外」から「ref-review verdict(source-traceability)で計測」へ昇格。13 ref skill をレビューし
@@ -101,9 +106,9 @@ ref-review を必須化 (§kind 別パス)。skills llm_eval = (非ref 35 PASS +
 ### 多エージェント backfill で発見・修正した実バグ (genuine LLM 評価の価値)
 deep-verify / code-review は機械 lint を通る実バグを多数検出。修正済: agents/commands 12件 (dangling/schema虚偽/enum drift/placement) + run-intake-revise effect enum + re-evaluate-on-rubric-bump のパス2重バグ (parents[2]→[1] + references/ 欠落でコア機能が常に no-op だった)。未修正で FAIL 記録に正直に残置 (follow-up, 移行絡みで複雑): check-rubric-sync / lint-template-variables (creator-kit 移行でデータファイル取り残し) / build-claude-settings (hook event allowlist stale) / notifier-check (TODO(human) 未実装) / check-five-axes-coverage (argv ガード皆無)。
 
-### scripts mechanical が 46% で頭打ちの理由 (honest)
-network/Notion/keychain 系 ~40 本は実 API を叩かないと残行に到達しない (副作用回避方針で意図的に未到達)。80% には HTTP モック層の大規模導入が必要 = 別プロジェクト規模。import smoke + 純関数 + エラー経路は genuine に網羅済。
-(skills llm_eval は ref-kind が content-review 対象外 [lint-content-review EXEMPT_KINDS={ref}] のため測定を整合させ、非ref 35件は全 PASS で 100%。捏造でなく SSOT 整合の測定修正。)
+### scripts mechanical が 80% に届かない理由 (honest)
+network/Notion/keychain 系のスクリプトは実 API を叩かないと残行に到達しない (副作用回避方針で意図的に未到達)。80% には HTTP モック層の大規模導入が必要 = 別プロジェクト規模。import smoke + 純関数 + エラー経路は genuine に網羅済。
+(skills llm_eval の ref-kind は content-review 対象外 [lint-content-review EXEMPT_KINDS={ref}] のため、ref は ref-review verdict で計測する (§2 kind 別パス)。)
 
 ### 多エージェント deep-verify の決定的発見 (llm_eval 軸)
 strict 二段検証(owner skill / schema / 参照実在 / placement invariant 照合)で、初回の甘い LLM レビュー
@@ -118,17 +123,18 @@ genuine 80% 到達 = これら実欠陥の修正 (テスト追加では届かな
 
 - `pytest-cov` + `.coveragerc`(parallel) + `sitecustomize.py`(`coverage.process_startup`): subprocess 起動スクリプトの行カバレッジ回収。`make coverage` が `COVERAGE_PROCESS_START` 込みで実行。
 - `tests/test_scripts_smoke.py`: 全スクリプトの import smoke (module-body を genuine に実行。import 不可=設計 smell として理由付き skip)。
-- `scripts/validate-llm-coverage.py` / `scripts/validate-harness-coverage.py` (自身 90%/97% dogfood)。
+- `scripts/validate-llm-coverage.py` / `scripts/validate-harness-coverage.py` (自身も行カバレッジで dogfood)。
 - coverage レコード規約: 非コード artifact は `eval-log/coverage/<type>/<key>.json`(`mechanical:bool` / `llm_eval:{verdict,score}`)。実テスト/実レビューの産物のみ登録 (空宣言禁止)。
-- gate: `make coverage-gate`(新規 skill fail-closed) / `validate-harness-coverage --gate`(spec 全体)。生成契約 R1 に coverage 携帯を必須化。
+- gate: `make coverage-gate`(新規 skill fail-closed) / `validate-harness-coverage --gate`(spec 全体) / `make harness-ratchet`(floor 回帰ガード, CI blocking)。生成契約 R1 に coverage 携帯を必須化。
 
-## 8. 達成への follow-up (残課題。確定値は `make harness-coverage`)
+## 8. 達成への follow-up (残課題。未達軸と現値は `make harness-coverage` の出力を正とする)
 
-**残 2 軸 (未達)**:
-- [ ] **scripts mechanical** (~56%→80%): network/Notion/keychain 系 ~23 本の HTTP モック層導入が必要 (別プロジェクト規模)。それ以外の lint/builder/hook は機能テストで網羅済。
-- [ ] **docs mechanical** (~7%→80%): 設計書 44 本の coverage 記録 (mechanical=true) は doc-review で生成済だが、validator の docs mechanical は「tests 参照 or 記録 mechanical=true」で計上。記録反映後に再計測。
+**未達軸** (どの軸が未達かは `make harness-coverage` の `spec_met` と各軸の `met` で確かめる。本節には数値を置かない):
+- [ ] **scripts mechanical**: network/Notion/keychain 系スクリプトの HTTP モック層導入が必要 (別プロジェクト規模)。それ以外の lint/builder/hook は機能テストで網羅済。
+- [ ] **docs**: 設計書の doc-review 記録 (`eval-log/coverage/docs/`) を本文の更新に追従させる。本文を直したら記録は独立レビューで取り直す (sha256 不一致の記録は無効)。
+- [ ] **hooks の集計対象**: validator は hooks を `plugins/*/hooks/*.md` だけで数え、`hooks.json` で配線された hook スクリプト (`plugins/*/hooks/*.py`・`*.sh`) は scripts 軸にも hooks 軸にも入らない。hooks 軸の値は hook スクリプトの品質を表さない。validator の対象を hook スクリプトへ広げるかは別途判断する (本 spec の §1 は現行の数え方を正として記述)。
 
-**達成済 10 軸の内容 follow-up (verdict は PASS 率で達成だが個別欠陥は残置)**:
-- [ ] ref 9 件の実欠陥 (upstream rubric pointer の references/ 欠落 = rubric governance 横断 / rubric version 1.2.0 vs 1.3.0 drift / 条番号ずれ)。
-- [ ] docs 7 件の実欠陥: **creator-kit→plugins 移行が設計書 24/26/32/33/34 章に未追従** (dangling path 多数)。
-- [ ] rubric governance pathing (15 参照の references/ 欠落) と rubric version drift の同期 (run-skill-rubric-governance 手順)。
+**内容 follow-up (verdict の PASS 率で達成した軸でも、個別の欠陥は残置)**:
+- [ ] ref の実欠陥 (upstream rubric pointer の references/ 欠落 = rubric governance 横断 / rubric version drift / 条番号ずれ)。
+- [ ] docs の実欠陥: creator-kit→plugins 移行への設計書の追従 (32・34 章は 2026-10-10 に追従。他の章の状況は各章の coverage 記録を参照)。
+- [ ] rubric governance pathing (references/ 欠落) と rubric version drift の同期 (run-skill-rubric-governance 手順)。

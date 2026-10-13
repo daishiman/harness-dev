@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render/fx --output /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/render/fx/.dev-graph/render/index.html",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "ブラウザでの live trial を実行できていません。この確認は goal に必須です。SKILL.md の完了条件 (L89「ブラウザ上で SVG と feature X/Y が表示され」)、完了チェックリスト (L115「ブラウザ live trial で追加 runtime なしに SVG と feature X/Y progress が表示される」)、feedback_contract の OUT1 (L52-55、verify_by: live-trial)、Criteria acceptance (L151) のすべてが要求しています。R3-render.md も受入条件 (L28) と 5.3 checklist (L54) に browser live trial での表示を入れ、Layer 3 (L32) で使用資産に指定しています。task.md は「checklist が PARTIAL なら PASS にしない」と定めており、progress.json は overall=PARTIAL、OUT1=BLOCKED です。",
+      "原因は隔離環境です。R3 subagent (agent-a9e21e50ad4ed4db7.jsonl) では、Chrome headless=new が rc=21 で終わりました (L49-50、process_singleton_posix「Failed to create socket directory」)。Chrome headless=old と Brave も rc=21 です (L65-66)。L61-62 では $TMPDIR への書込みと mkdir は通り、AF_UNIX の bind だけが PermissionError [Errno 1] になることを確かめています。python playwright は driver/node が無く起動前に失敗しました (L57-58)。sandbox の外へ出ないかぎり、この session では実行できない手順です。",
+      "軽微な境界接触があります。R3 subagent の L53 が、Chrome 用の短い TMPDIR として許可された書込み領域の外にある /tmp/claude/r3c を mkdir しようとし、OS sandbox に拒否されました (Operation not permitted。何も書かれず、結果にも影響していません)。L39-40 では ~/Library/Caches/ms-playwright への言及が guard に deny され (guard.jsonl 31 行目、全 41 件のうち唯一の deny)、L43 でその部分を外して再実行しています。sandbox の解除要求 (dangerouslyDisableSandbox) は、どの transcript の tool 呼出しにもありません。"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "703dc9f3a30bd3f560d5b573f7d43896eb240cda293dd51d3c554ca33f0118c1",
+  "transcript_sha256": "c35adf931de602a993d9f9a6dd6708caf0e7199c3a4517af05ee456064ddb448",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 357.0
+  },
+  "scenario_id": "render-feature-progress-positive-fixture-standard-v2"
+}

@@ -4,9 +4,15 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 92,
-    "notes": "genuine code-review + py_compile OK / # /// script frontmatter 完備 (network:false, dependencies:[])。dev-graph script 群共通の stdlib-only fail-closed 基盤。ContractError=exit1 の単一例外型。run() は OSError を ContractError へ写像し check 時は stderr||stdout を添えて raise (握り潰さない)。atomic_json は mkstemp→fsync→os.replace で耐障害原子書込、temp は finally で unlink (FileNotFoundError 吸収)。contained() が本モジュールの security workhorse: resolve(strict)+relative_to(authority) で path escape を拒否し、must_exist で存在要否を切替。dump() は sort_keys+ensure_ascii=False で決定的出力。stable_id は sha256 前置。utc_now は +00:00→Z 正規化。責務が狭く純粋、副作用は caller 指定 atomic JSON target のみ。設計良好で smell ほぼ無し。TESTS: test_runtime_coverage.py::test_common_primitives が run/OSError/atomic/contained を exercise。"
+    "score": 96,
+    "notes": "genuine review（sha256 86009182835dd17f4e03d6d87268bf64bbcc8acd56ed605e4d0f39391370edd3 をレビュー。実行検証あり）。範囲: 全 147 行と git diff origin/main（ParentNotDirectoryError 29–34、_ensure_parent_directory 68–83、atomic_bytes 86–110 の fchmod、_current_umask 113–116、PACKAGE_KEYS/is_package_member 123–127、header）。確かめたこと: dev-graph の全 test（python 3.11.4、pytest -p no:cacheprovider -q plugins/dev-graph/tests）は 273 passed / 9 failed（9 件は test_skill_criteria_evidence の既知の失敗で対象と無関係）。test_build_graph_node・test_shared_writer_sync_regressions・test_register_package の 3 ファイルは 103 passed。pyflakes は clean。lint-script-frontmatter plugins/dev-graph/scripts は OK (checked=18 pending=0)。requires-python は >=3.10 なので 3.9 での確認は対象外。build-graph-node を読み込んだ in-process probe で、親 path が file のとき _write_atomic → ParentNotDirectoryError → WriterError parent_not_directory、create_only で既存 → FileExistsError → artifact_path_exists、新規 file の mode は 0o644（umask 022）を確認。build-init-scaffold の apply（_context を mock）でも config.json は 0o644。test_shared_writer_sync_regressions の ParentNotDirectory 系 3 件が pass。指摘: [中] 以上なし。[低] 113–116 の _current_umask は os.umask(0) でプロセス全体の umask を一瞬 0 にするので、thread を使う呼び出し元ではその間に作られる file が 0o666 になる（今の CLI は単一 thread なので実害は小さい）。97 行の fchmod が失敗すると os.fdopen の前なので fd が閉じられない。直し方: umask は読み込み時に 1 回だけ読む、fchmod は with os.fdopen の中で行う。[低] 25–26 の ContractError の docstring「(exit 1)」が呼び出し側と合わない。diff-github-*・register-package は ContractError を rc 2、build-graph-node と build-init-scaffold も専用の WriterError/InitError 以外の ContractError は rc 2 にする。DEDUCTION: [低] umask の一時変更と fd の扱い -2、[低] ContractError の exit の記述 -2 → 96。"
   },
-  "reviewed_by": "workflow-code-review",
-  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
 }

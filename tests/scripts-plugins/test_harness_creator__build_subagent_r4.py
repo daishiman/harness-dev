@@ -17,6 +17,8 @@ in-process (monkeypatch sys.argv + capsys) と subprocess(sys.executable) の
 import importlib.util
 import subprocess
 import sys
+
+import yaml
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -216,7 +218,7 @@ def test_main_full_goal_seek_generation(tmp_path, monkeypatch, capsys):
     assert str(out_path) in stdout
     content = out_path.read_text(encoding="utf-8")
     assert "name: run-build-skill-subagent" in content
-    assert "description: Build a skill from a brief" in content
+    assert yaml.safe_load(content.split("---", 2)[1])["description"] == "Build a skill from a brief"
     assert "tools: Bash, Read, Write" in content
     assert "model: opus" in content
     # role 節は Purpose 節を反映
@@ -266,7 +268,9 @@ def test_main_no_steps_section_placeholder(tmp_path, monkeypatch, capsys):
         skill_name="nosteps", skill_md=str(skill), output_dir=str(out_dir))
     assert rc == 0
     content = (out_dir / "nosteps-subagent.md").read_text(encoding="utf-8")
-    assert "(Steps section not found in SKILL.md)" in content
+    assert "Refer to the source skill purpose and output contract." in content
+    assert "### 5.3 Completion checklist" in content
+    assert "## Layer 7:" in content
 
 
 def test_main_no_purpose_uses_description_and_placeholder(tmp_path, monkeypatch, capsys):
@@ -278,10 +282,10 @@ def test_main_no_purpose_uses_description_and_placeholder(tmp_path, monkeypatch,
         skill_name="np", skill_md=str(skill), output_dir=str(out_dir))
     assert rc == 0
     content = (out_dir / "np-subagent.md").read_text(encoding="utf-8")
-    # purpose 不在 -> role 節は description を採用
-    assert "# 役割\n\njust a desc" in content
-    # 出力節も purpose 不在の placeholder
-    assert "(Output contract not specified)" in content
+    # Purpose不在でも親の出力契約を検証する7層を生成し、descriptionを目的として保持する。
+    assert "## Layer 1: Basic definition\n\njust a desc" in content
+    assert "The output satisfies the purpose and output contract above." in content
+    assert "Output contract not specified" not in content
 
 
 def test_main_no_description_fallback(tmp_path, monkeypatch, capsys):
@@ -293,10 +297,10 @@ def test_main_no_description_fallback(tmp_path, monkeypatch, capsys):
         skill_name="nodesc", skill_md=str(skill), output_dir=str(out_dir))
     assert rc == 0
     content = (out_dir / "nodesc-subagent.md").read_text(encoding="utf-8")
-    assert "description: Subagent derived from nodesc" in content
+    assert yaml.safe_load(content.split("---", 2)[1])["description"] == "Subagent derived from nodesc"
 
 
-def test_main_empty_tools_omits_tools_line(tmp_path, monkeypatch, capsys):
+def test_main_empty_tools_defaults_to_read_only(tmp_path, monkeypatch, capsys):
     skill = tmp_path / "SKILL.md"
     _write(skill, "---\nname: notools\ndescription: d\n---\n## Steps\n### A: x\n")
     out_dir = tmp_path / "agents"
@@ -305,7 +309,8 @@ def test_main_empty_tools_omits_tools_line(tmp_path, monkeypatch, capsys):
         skill_name="notools", skill_md=str(skill), output_dir=str(out_dir))
     assert rc == 0
     content = (out_dir / "notools-subagent.md").read_text(encoding="utf-8")
-    assert "tools:" not in content
+    assert yaml.safe_load(content.split("---", 2)[1])["tools"] == "Read"
+    assert "Read only: return evidence and advice" in content
     assert "model: opus" in content  # model 行は常にある
 
 

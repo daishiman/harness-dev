@@ -1,1 +1,18 @@
-{"artifact":"plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":86,"notes":"py_compile OK. Valid PEP723 frontmatter. Rubric scoring with per-rule check_rule dispatch, readable. subprocess.run to compose-rubrics has returncode check + stderr surfacing + SystemExit(2). TODO(human) rules explicitly skipped (never deduct) per repo policy, no bare except, read-only stdout emit. Minor: dual fallback path for compose-rubrics script could silently use a relative path; acceptable."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine review（sha256 c26e8c100f9fa47070edaf5f4f8414202a4854274abec464643d1d922f92833c をレビュー。実行検証あり）。範囲: 全 1056 行と、HEAD（commit 6257499e、blob 5c0f0f7b）からの差分（+101/-22）。前回レビューした版（sha256 822a6c7b…）は git に残っていないので、前回の notes と突き合わせた。前回からの違いは、validate_rubric（146〜177 行）と _is_threshold を足し、load_rubric がそれを通すようにしたこと。各層のファイルを合成の前に検証し（918 行）、合成した rubric も検証する（931 行）。header と docstring の exit 2 の説明に「必須キーが無い・型が違う」を足した。validate_rubric は、rules が配列であること、各 rule が object で id が空でない文字列であることを求める。layer・rubric_id・rubric_version・threshold・check・severity・area・applies_to_kinds は、あれば型を見る。確かめたこと: pytest は tests/scripts-plugins/test_harness_creator__render_findings_score.py と tests/scripts-root/test_root__ja_contract_parity.py で 174 passed、plugins/ubm-goal-setting/tests/test_content_review_rubric_routing.py で 43 passed。--help は rc0、--bogus と引数なしは rc2。実物の L0 と assign-skill-design-evaluator の L2 で run-build-skill を採点すると rc0（score 100・passed true）。書き込みは無く、write-scope none と合う。採点に使う rubric（registry の 3 本と L2）は、どれも新しい検証を通る。compose-rubrics.py も rules を必須にしているので、検証の条件は合成器と矛盾しない。前回の指摘の扱い（fixture で 1 件ずつ確かめた）: (1) 型の崩れた rubric の traceback と rc1 は直った。threshold が {}・\"abc\"・80.5・true のとき、applies_to_kinds が 5 のとき、layer が 0 のとき、rules が {} のとき、severity が 3 のとき、check が配列のとき、id が無いとき、L1 の threshold が {} のとき、--rubric（legacy）のときの、11 通りすべてで rc2 になり、どのファイルのどのキーかを stderr に出す。正しい L1 を重ねると rc0。(2) header の不足は残る。7 行の inputs に、BND-001 が読む .claude-plugin/bundles.json と plugin.json が無い。15 行の dependencies に、REG-001 が subprocess で動かす validate-plugin-completeness.py と validate-build-trace.py が無い。(3) BND-001 の部分文字列の一致は残る（842 行）。bundles.json に p10 だけを持つ fixture で、plugin p1 の skill に BND-001 の finding が出なかった。対照として p2 だけにすると finding が出る。(4) KL-005 の部分文字列の一致は残る（544 行）。SKILL.md に「2025-10-01 に 1500 件」とだけ書いた fixture で、分割閾値の検査を通った（KL-005 の finding は lifecycle の理由だけ）。(5) KL-003 の誤った合格は残る。宣言した script が、検索と関係の無い SEVERITY_WEIGHTS = {...} だけを持つ fixture で、KL-003 の finding が出なかった（421 行の _WEIGHT_TABLE_RE が、名前が WEIGHTS で終わるどの表にも当たる）。(6) flow 形式の script_refs は残る。script_refs: [scripts/score-rubric.py] と書き、FIELD_WEIGHTS の表を持つ fixture で、KL-003 が「決定論的な検索 stage の script が無い」と事実と違う理由で fail した（650 行の _frontmatter_list はブロック列しか読まない）。新しい差分そのものに欠陥は見つからなかった。指摘: [低] header の inputs と dependencies の不足（前回の (2)）。[低] BND-001 の部分文字列の一致（前回の (3)）。bundle の plugin 一覧と完全一致で比べる。[低] KL-005 の部分文字列の一致（前回の (4)）。数を語の境界つきで探す。[低] KL-003 が検索と関係の無い重みの表で通る（前回の (5)）。SEARCH_ や FIELD_ などの名前に絞る。[低] flow 形式の script_refs を読まない（前回の (6)）。flow 形式も読むか、読めない形であることを理由に出す。観察（減点しない）: --kind agent では AG-001〜AG-004 の判定が無く、high の AG-001・AG-002 が unscored_high に入るので、どの agent も passed=false になる。判定の無い high rule を合格にしない fail-closed の設計どおりの動きで、別に課題として扱われている。DEDUCTION: -3（header の不足）、-2（BND-001）、-2（KL-005）、-2（KL-003 の誤った合格）、-1（flow 形式の script_refs）→ 90。[中] は無く、前回の traceback の件は直ったので PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

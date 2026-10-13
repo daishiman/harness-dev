@@ -357,7 +357,6 @@ def test_numbered_list_counts_as_content(tmp_path: Path, golden: str):
     """正当な番号付きリストを空扱いにして誤 FAIL させない。"""
     start = golden.index("## 感謝")
     end = golden.index("## 【禁止事項】")
-    body = golden[start:end]
     replaced = "## 感謝\n\n1. 北原さん: 打ち合わせの時間をいただきありがとうございました。\n\n"
     proc = run(write(tmp_path, golden[:start] + replaced + golden[end:]))
     assert "C02" not in proc.stdout, proc.stdout
@@ -849,3 +848,58 @@ def test_principle_checklist_nested_checkbox_counts(tmp_path: Path, golden: str)
                GOLDEN_NUMBER, GOLDEN_DATE)
     assert proc.returncode == 0, proc.stdout
 
+
+
+# --- 引数・daily-habits.json の不正は exit 2 (ジャーナルの違反 exit 1 と取り違えない) ---
+
+@pytest.mark.parametrize("flag, value", [
+    ("--expected-date", "abc"),
+    ("--expected-date", "2026-8-18"),
+    ("--expected-date", "2026-02-30"),
+    ("--expected-number", "-5"),
+    ("--expected-number", "0"),
+    ("--expected-number", "x"),
+])
+def test_invalid_expected_args_exit_2(tmp_path: Path, golden: str, flag: str, value: str):
+    proc = subprocess.run(
+        [sys.executable, str(VALIDATE), "--file", str(write(tmp_path, golden)), flag, value],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr
+    assert "F04" not in proc.stdout and "F05" not in proc.stdout
+
+
+@pytest.mark.parametrize("breakage", ["directory", "non_utf8"])
+def test_unreadable_daily_habits_is_exit_2(tmp_path: Path, golden: str, breakage: str):
+    import shutil
+
+    sandbox = tmp_path / "skill"
+    shutil.copytree(VALIDATE.parent.parent, sandbox)
+    path = sandbox / "references" / "daily-habits.json"
+    path.unlink()
+    if breakage == "directory":
+        path.mkdir()
+    else:
+        path.write_bytes(b"\xff\xfe{")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / VALIDATE.name), "--file", str(write(tmp_path, golden))],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+# --- 字下げしたコードフェンス ---
+
+def test_y02_is_not_satisfied_by_an_indented_fence(tmp_path: Path, golden: str):
+    """箇条書きの中で字下げしたフェンスも Obsidian は埋め込まない。行頭のフェンスと同じに扱う。"""
+    mod = _load_validator()
+    indented = "- メモ\n  ```\n  ![[人生の究極の目的]]\n  ```\n"
+    assert not mod.TRANSCLUSION_RE.search(mod.visible_text(indented))
+    line = "![[人生の究極の目的#🎯 究極の人生の目的]]"
+    assert line in golden
+    text = golden.replace(line, "- 究極目的\n  ```\n  " + line + "\n  ```", 1)
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1, proc.stdout
+    assert "Y02" in proc.stdout, proc.stdout

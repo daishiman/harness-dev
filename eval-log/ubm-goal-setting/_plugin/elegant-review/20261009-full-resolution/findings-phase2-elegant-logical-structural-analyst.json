@@ -1,0 +1,895 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/ubm-goal-setting/skills/run-ubm-{journal,challenge,consult}",
+    "reviewed_at": "2026-10-09T12:12:12.290004+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65 は保存前検証を約束するが同:214-224と plugins/ubm-goal-setting/agents/journal-composer.md:72-80 はDailyへWriteしてから検証する。主張を実行順で反証した。",
+        "plugins/ubm-goal-setting/agents/journal-composer.md:101-108 は機械PASSと内容品質を明確に区別しており、この区別は保持する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "IN1・関連資料L286・composer description L3が保存前検証とする一方、手順は保存後検証。再生成では既存ファイル置換後に不合格になり得る。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "IN1・関連資料L286・composer description L3が保存前検証とする一方、手順は保存後検証。再生成では既存ファイル置換後に不合格になり得る。",
+          "recommended_intervention": "検証時点を一つに決める。推奨は一時下書きを最大3回修復してPASS後にDailyへ保存し再検証する。保存後方式なら説明と失敗ファイル残存、既存正常ファイルの保全方針を定義する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 65
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/references/session-record-format.md:41-44 の一般契約user_solution={text,source_turn_ids}をR4に当てはめると plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:51 のstringは不適合。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R3-frame-consult.md:38とworkflow-manifest.json:58はreflect-onlyを1件以上とするがSKILL.md:163は複数を要求する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "R4のuser_solution型が記録正本と不一致。session_recordもL53では同意時のみだがL46・64・88は同意なしでも組み立て検証する。",
+            "複数選択肢要求がreflect-onlyの1件以上というR3例外と合わない。"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "R4のuser_solution型が記録正本と不一致。session_recordもL53では同意時のみだがL46・64・88は同意なしでも組み立て検証する。",
+          "recommended_intervention": "user_solutionをobject {text,source_turn_ids}へ合わせる。検証用recordは常に組み立て、保存なしの公開出力はnull/破棄というライフサイクルを区別する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md",
+            "line": 51
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "複数選択肢要求がreflect-onlyの1件以上というR3例外と合わない。",
+          "recommended_intervention": "数量定義はR3の正本参照へ寄せ、通常2件以上・reflect-only1件以上を消費する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md",
+            "line": 163
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/references/output-format.md:3-6,77-79 / principle-checklist.md:4-6 / resource-map.yaml:13 / SKILL.md:292-293の更新対象が2、3、4ファイル＋テストに分かれる。複数事例から変更契約分散を一般化した。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:259-263,280-281 / agents/journal-composer.md:33-38 / output-format.md:95 / principle-checklist.md:10-15が同じ継承規則を繰り返す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "設問変更時の更新対象が資料ごとに異なり、「このファイルだけ編集」と「同時に他も直す」も同じ文で競合する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "全設問を出す・対話では読み上げない・水平線禁止の規則が5面に分散し、習慣の問いと落とし先もdaily-habits.jsonとinterview-map表で重複する。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "設問変更時の更新対象が資料ごとに異なり、「このファイルだけ編集」と「同時に他も直す」も同じ文で競合する。",
+          "recommended_intervention": "output-format冒頭に変更契約を一本化し、他の資料はそこを参照する。実際の一致検査対象も列挙する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md",
+            "line": 4
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "description": "全設問を出す・対話では読み上げない・水平線禁止の規則が5面に分散し、習慣の問いと落とし先もdaily-habits.jsonとinterview-map表で重複する。",
+          "recommended_intervention": "原理原則はprinciple-checklist出力規則を正本化し、親とcomposerは必要時にReadする。習慣はdaily-habits.jsonが正本、interview-mapは運用差分のみか生成・一致検査を付ける。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 259
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:234は仮タイトル＋宣言日をoriginal_goalとするが引数なしの代替値がない。question-map.md:35はhandoffへ未確定欄を残すが形・絶対起点がない。",
+        "最尤原因は通常の完成経路を先に記述し、C1到達前の入力不足と早期終了へ同じ状態契約を拡張していないこと。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "仮タイトルなしのoriginal_goalが未定義。後から補うと固定ハッシュの変更を誘発する。",
+            "保留で終了するhandoffはopen_issues以外の形とcaller project起点がない。完成時だけのアンカー検証では早期終了からの再開情報が不明。"
+          ],
+          "violation_count": 2
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "仮タイトルなしのoriginal_goalが未定義。後から補うと固定ハッシュの変更を誘発する。",
+          "recommended_intervention": "最初から非空の安定目標文字列（宣言日と挑戦宣言作成の目的、題名は任意）を固定し、後の題名はsnapshotにする。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 234
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "保留で終了するhandoffはopen_issues以外の形とcaller project起点がない。完成時だけのアンカー検証では早期終了からの再開情報が不明。",
+          "recommended_intervention": "handoffに宣言日・状態・確定欄・未確定欄・再開条件を定義しcaller project rootから絶対解決する。中断時は未検証vault成果物を作らない。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/question-map.md",
+            "line": 35
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:91は続行時だけ同意確認、L92は誘導でも同意時保存を許す。session-record-format.md:11は保存時trueを必須とする。条件→同意値→質問→分岐→途中終了と5段で遡ると入力源が途切れる。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:36,50,55は目標設定・安全・続行しか知らずchallengeへ誘導できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "誘導分岐で保存を許すが保存同意を尋ねる経路がない。既定falseでは機能が実質到達不能。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "挑戦宣言を作りたい相談の責務境界が分類・outcome/handoff_to・validator enumにない。案内だけ追加すると検証不能になる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "誘導分岐で保存を許すが保存同意を尋ねる経路がない。既定falseでは機能が実質到達不能。",
+          "recommended_intervention": "誘導は既定非永続とし、利用者が記録を希望したときだけ保存同意を確認する経路をR1・manifest・記録正本で統一する。一般相談と同じ協働モード質問は要求しない。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md",
+            "line": 91
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "挑戦宣言を作りたい相談の責務境界が分類・outcome/handoff_to・validator enumにない。案内だけ追加すると検証不能になる。",
+          "recommended_intervention": "redirected_challenge/handoff_to=run-ubm-challengeをR1、SKILL、manifest、記録正本、validator、テストへ同時追加。誘導系の同意と検証を共通化する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md",
+            "line": 36
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:43-46をfieldごとに分解するとcollaboration_mode・consult_evidence・role付きtranscriptがないが記録正本:9,52,69とvalidatorが必要とする。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/workflow-manifest.json:36のR1出力にはconsult_typeがないのにL46のR2入力が要求する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "R4入力契約とmanifest L78に、R1由来collaboration_mode、R3由来consult_evidence、出典検証用role付き発話記録がない。",
+            "R1出力がR2必須consult_typeと誘導分岐handoff_to等を供給すると表明していない。"
+          ],
+          "violation_count": 2
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "R4入力契約とmanifest L78に、R1由来collaboration_mode、R3由来consult_evidence、出典検証用role付き発話記録がない。",
+          "recommended_intervention": "R4入力表とmanifestへ3入力と供給元を追加する。transcriptは同意なしでは非永続、同意時の復元源は記録正本のintermediateと明記する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md",
+            "line": 43
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "R1出力がR2必須consult_typeと誘導分岐handoff_to等を供給すると表明していない。",
+          "recommended_intervention": "manifestをR1入出力正本の参照へ寄せるか完全な集合へ同期し、必須入力が先行出力にあることを検査する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/workflow-manifest.json",
+            "line": 36
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/agents/journal-composer.md:80と plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:217は不合格を修正するがrc2読込不能の枝がない。正常/内容違反/入力障害へMECE分割すると一枝が欠落する。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65とresource-map.yaml:6は15、validator:160-177は16要素。項目集合の照合で原理原則追加後の数が古い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "journalとchallengeの読込不能rc2が内容違反rc1と区別されず、壊れた環境で内容修正を反復し得る。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "15ブロックというIN1・resource-map・validatorコメントがREQUIRED_OUTLINEの16要素と不一致。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "journalとchallengeの読込不能rc2が内容違反rc1と区別されず、壊れた環境で内容修正を反復し得る。",
+          "recommended_intervention": "0=完了、1=違反コード修復、2=修正反復せず停止しstderrと対象パスを報告する分岐を双方へ明記する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/journal-composer.md",
+            "line": 80
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "15ブロックというIN1・resource-map・validatorコメントがREQUIRED_OUTLINEの16要素と不一致。",
+          "recommended_intervention": "固定数を削除してREQUIRED_OUTLINEを機械契約として参照し、人向け正本との一致テストを維持する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 65
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2 軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:62,221-223とcomposition:26を範囲の厳密性×変更頻度で配置すると、hook定数は機械正本、skill固有境界は安定契約、多重列挙は低価値な更新箇所になる。",
+        "plugins/ubm-goal-setting/agents/challenge-advisor.md:28はphase3の2節を読むがcomposition:145は1節しか表明しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "許可範囲正本をexemptionではcompositionと定数、本文では定数とし広狭説明も複数面にある。",
+            "advisorのreads注記はナレッジ活用原則だけだが実行手順は品質基準も読む。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "description": "許可範囲正本をexemptionではcompositionと定数、本文では定数とし広狭説明も複数面にある。",
+          "recommended_intervention": "hook定数を唯一の許可範囲正本とする。compositionとexemptionは参照のみ、skill本文は自身の書込境界と一時下書きの扱いだけを持つ。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 62
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "advisorのreads注記はナレッジ活用原則だけだが実行手順は品質基準も読む。",
+          "recommended_intervention": "注記を2節へ同期するかquestion-map返し方の正本参照へ一本化する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/plugin-composition.yaml",
+            "line": 145
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:210→214を辿るとWrite未展開文字列からBash展開済みパスへ接続され同一ファイルを検査する保証がない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:223-224とcomposer:72-80は上限後を不完了とするがDailyには直前に書いた不合格ファイルが残る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "保存後の最大修復回数到達時、Daily失敗ファイルの残存と再生成前既存ファイルの保全が未定義。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write先の${TMPDIR:-/tmp}文字列はシェル展開されず、Bash validatorだけが展開する。下書きと検証対象が一致しない恐れ。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "description": "Write先の${TMPDIR:-/tmp}文字列はシェル展開されず、Bash validatorだけが展開する。下書きと検証対象が一致しない恐れ。",
+          "recommended_intervention": "Bashで専用一時ディレクトリと下書き絶対パスを一度解決・作成し、その観測値をWriteと--fileへ同じ値で渡す。並行実行も実行別ディレクトリで分離する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 210
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "description": "保存後の最大修復回数到達時、Daily失敗ファイルの残存と再生成前既存ファイルの保全が未定義。",
+          "recommended_intervention": "検証時点の決定に合わせる。下書き先行なら失敗時Dailyを変更しない。保存後方式なら失敗ファイルが残ると明示し既存正常ファイルを保全する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+            "line": 223
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why 思考",
+      "category": "G-problem",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:65はmax_iterations3、L229は再提示最大3周、L242は初回1＋周回nをn+1とする。上限4の原因を辿ると初回と改善でiterationの単位が未定義。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py:51にprinciple_checklistがないがL735で出力。interview-map:85の前日不在警告は実装L741-746では前回ゼロ件のときだけ。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "初回iteration1＋最大3周が4となりfeedback_contract.max_iterations3と競合する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "公開SCHEMAにprevious_journal.principle_checklistがなく実出力とcomposer利用の契約を辿れない。",
+            "前日分がないと警告という説明は、前回自体がゼロ件だけ警告する実装と異なる。"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "今回の限定読込では新規違反根拠なし。全体PASSを主張しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "description": "初回iteration1＋最大3周が4となりfeedback_contract.max_iterations3と競合する。",
+          "recommended_intervention": "初回含む総試行3回にするか初回と改善を別カウンタにする。推奨は総試行3回、max_loopsと同じ単位へ文章と契約を揃える。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+            "line": 242
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "公開SCHEMAにprevious_journal.principle_checklistがなく実出力とcomposer利用の契約を辿れない。",
+          "recommended_intervention": "SCHEMAへ追加し、前回なし=nullと前回ブロックなし=空文字の意味を明示する。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py",
+            "line": 51
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "description": "前日分がないと警告という説明は、前回自体がゼロ件だけ警告する実装と異なる。",
+          "recommended_intervention": "前回ジャーナルがない場合へ合わせる。前日未作成は警告と同一視せず必要なら対話で対象日を確かめる。",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-journal/references/interview-map.md",
+            "line": 85
+          }
+        }
+      ],
+      "score": 0.5,
+      "reusable_abstraction": "正本・入力の由来・担当・停止条件を定義して消費側は参照する。",
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "同意なし、読込不能、入力欠落、反復上限到達。"
+      ],
+      "re_audit_trigger": "引用した契約・消費側・検査スクリプトの変更時。"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65 IN1・関連資料L286・composer description L3が保存前検証とする一方、手順は保存後検証。再生成では既存ファイル置換後に不合格になり得る。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md:4 設問変更時の更新対象が資料ごとに異なり、「このファイルだけ編集」と「同時に他も直す」も同じ文で競合する。",
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:242 初回iteration1＋最大3周が4となりfeedback_contract.max_iterations3と競合する。"
+      ],
+      "violation_count": 3
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:234 仮タイトルなしのoriginal_goalが未定義。後から補うと固定ハッシュの変更を誘発する。",
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/question-map.md:35 保留で終了するhandoffはopen_issues以外の形とcaller project起点がない。完成時だけのアンカー検証では早期終了からの再開情報が不明。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:91 誘導分岐で保存を許すが保存同意を尋ねる経路がない。既定falseでは機能が実質到達不能。",
+        "plugins/ubm-goal-setting/agents/journal-composer.md:80 journalとchallengeの読込不能rc2が内容違反rc1と区別されず、壊れた環境で内容修正を反復し得る。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:223 保存後の最大修復回数到達時、Daily失敗ファイルの残存と再生成前既存ファイルの保全が未定義。"
+      ],
+      "violation_count": 5
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:51 R4のuser_solution型が記録正本と不一致。session_recordもL53では同意時のみだがL46・64・88は同意なしでも組み立て検証する。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md:163 複数選択肢要求がreflect-onlyの1件以上というR3例外と合わない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md:36 挑戦宣言を作りたい相談の責務境界が分類・outcome/handoff_to・validator enumにない。案内だけ追加すると検証不能になる。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md:65 15ブロックというIN1・resource-map・validatorコメントがREQUIRED_OUTLINEの16要素と不一致。",
+        "plugins/ubm-goal-setting/plugin-composition.yaml:145 advisorのreads注記はナレッジ活用原則だけだが実行手順は品質基準も読む。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py:51 公開SCHEMAにprevious_journal.principle_checklistがなく実出力とcomposer利用の契約を辿れない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/references/interview-map.md:85 前日分がないと警告という説明は、前回自体がゼロ件だけ警告する実装と異なる。"
+      ],
+      "violation_count": 7
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md:43 R4入力契約とmanifest L78に、R1由来collaboration_mode、R3由来consult_evidence、出典検証用role付き発話記録がない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/workflow-manifest.json:36 R1出力がR2必須consult_typeと誘導分岐handoff_to等を供給すると表明していない。",
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:210 Write先の${TMPDIR:-/tmp}文字列はシェル展開されず、Bash validatorだけが展開する。下書きと検証対象が一致しない恐れ。"
+      ],
+      "violation_count": 3
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "${TMPDIR:-/tmp}/ubm-challenge/UBM - 挑戦宣言 - {declared_on}.md",
+      "variable_name": "{{challenge_draft_path}}",
+      "source_trace": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md:210-214 Bashで解決した絶対パス観測値"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "1:critical:批判的思考",
+      "2:deduction:演繹思考",
+      "3:induction:帰納的思考",
+      "4:abduction:アブダクション",
+      "5:vertical:垂直思考",
+      "6:decomposition:要素分解",
+      "7:mece:MECE",
+      "8:two-axis:2 軸思考",
+      "9:process:プロセス思考",
+      "26:why:why 思考"
+    ],
+    "skipped_with_reason": [
+      {
+        "method": "meta",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "abstraction",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "double-loop",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "brainstorming",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "lateral",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "paradox",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "analogy",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "if",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "naive",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "systems",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "causal",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "causal-loop",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "trade-on",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "plus-sum",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "value-proposition",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "strategic",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "kaizen",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "hypothesis",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "issue",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      },
+      {
+        "method": "kj",
+        "reason": "他のPhase2分析担当の割当。親が30手法へ集約する。"
+      }
+    ],
+    "total": 30
+  },
+  "total_score": 0.5
+}

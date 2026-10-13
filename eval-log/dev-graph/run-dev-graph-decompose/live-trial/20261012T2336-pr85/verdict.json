@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/decompose4/fx --dry-run",
+  "requested_model": "claude-opus-5-5",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "skill 自身の完了 checklist が PARTIAL で終わった。task は『checklist が PARTIAL なら PASS にしない』と定めている。transcript L258 で書かれた fx/eval-log/run-dev-graph-decompose-progress.json は overall=PARTIAL。6 項目のうち 3 項目が not_achieved で、内訳は ready feature package の P01..P13 exact 13、C02 local commit の all-or-none、各 task の単一 projection authority と linkage。OUT1 も partial。description が約束する後半 (ready feature の system-dev-planner package を atomic 登録し、binding 別に投影する) は一度も実行されていない。ready feature は 0 件だった (L203-207: LT-FEATURE-001 は 13 件中 5 件 done で未完了)",
+      "task の C28 検証『起票の対象が confirmed/pass/readiness complete の node だけであること』が C28 の preview で示されていない。L183-184 で bd-bridge.py --op create --dry-run を新しい 2 node に当てたが、blocked の理由は reason=\"not in graph\" だった。昇格 gate の NOT_PROMOTED (draft/pending の判定) で止まったのではない。C02 の dry-run は graph に書かず、preview graph も出さないため、こうなる。さらに昇格済みの node (例: P06..P13) に C28 create --dry-run を一度も当てていないので、『起票の対象は昇格済みの node だけ』という側を C28 で実測していない。auditor (L236) は graph を読んで推論しただけである。R6-dryrun の受入条件『全target/operation/digest表示』のうち、Beads 投影の target と operation の preview も出ていない"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "c8c2002d78b9c3a7ca3fb90ace72ab7d6bc80d2d0f6a3e68549afcb59a18420c",
+  "transcript_sha256": "7f0769140b246e0378d8d649cd43f11b6c110f0f3db25bf490db2c85ef768e27",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.296",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": 2.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 610.0
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3"
+}

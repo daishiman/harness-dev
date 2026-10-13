@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/extract-knowledge-matches.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 af29600c8f872325647bbd8c34b9ce193035eea8e191f84dd954abd24b56c657 をレビュー。実行検証あり）。範囲: 全179行。version 0.2.1。前回の記録（sha256 fa5bb5d1…、PASS 98）からの差分: load_json（L68-78）がサイズ超えの error に path.name を付ける。json.loads を try で囲み、JSONDecodeError・UnicodeDecodeError・RecursionError を `invalid JSON in {path.name}: …` にして上げ直す（from None）。確かめたこと: --help は rc=0、未知の option は rc=2。scratchpad の fixture で、壊れた JSON・UTF-8 でないファイル・深い入れ子・壊れた router.json を与えると、どれも stderr の error にファイル名が出て rc=2、traceback は出ない。実物の plugins/ubm-goal-setting/knowledge を絶対パスで渡すと rc=0 で、982件を走査し「外交」で14件ヒット。write-scope: none のとおり書き込みは無い。test_knowledge_retrieval.py に L137 test_unreadable_json_error_names_the_file を含む4本が足され、plugins/ubm-goal-setting/tests 全体 1047 passed。前回の指摘 [低]（壊れた JSON の error にファイル名が無く、header L7 の約束と食い違う）は解消した。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

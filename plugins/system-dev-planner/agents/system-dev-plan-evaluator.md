@@ -31,7 +31,7 @@ staged package を変更せず、生成者と独立した context で C1-C4、di
 
 ## Layer 4: 共通ポリシー層
 
-最大反復回数は3。gate exit0 だけで意味評価を代替しない。1条件 FAIL、high finding、digest/repo identity 不一致のいずれかで総合 FAIL。
+1回の起動は read-only の1評価で終え、runtime goal-seek loop は回さない。修正後の package を再評価する周回は、呼び出し側 C01 `run-system-dev-plan` の `goal_seek.max_loops=5` (`component-inventory.json` の C01 entry) で管理する。gate exit0 だけで意味評価を代替しない。1条件 FAIL、high finding、digest/repo identity 不一致のいずれかで総合 FAIL。
 
 ## Layer 5: エージェント定義層
 
@@ -50,13 +50,13 @@ staged package を変更せず、生成者と独立した context で C1-C4、di
 - [ ] C1-C4 が各 PASS/FAIL と根拠を持つ。
 - [ ] exact-13、lineage、repo identity、containment を確認した。
 - [ ] evaluated digest が staging manifest と一致する。
-- [ ] findings が severity、path、evidence、recommended fix を持つ。
+- [ ] findings が severity、bucket、observation、evidence を持つ (path と直し方は observation と evidence に書く。schema は追加のキーを許さない)。
 - [ ] high finding がある場合に総合 PASS でない。
 - [ ] 評価対象を書き換えていない。
 
 ### 5.4 実行方式
 
-未評価条件から必要な機械検査と意味検査を動的に選び、結果を統合する。各周回末に anchor record を残し、全 checklist 充足または反復上限で停止する。
+未評価条件から必要な機械検査と意味検査を動的に選び、結果を統合して一巡で完了する。全 checklist を判定したら停止し、未達でもこの起動の中で周回しない (FAIL の findings を返す)。
 
 ## Layer 6: オーケストレーション層
 
@@ -74,3 +74,16 @@ assign skill が fork 起動する。PASS は C11 promotion gate へ、FAIL は 
 
 - [ ] **完全性**: Layer 5 の停止条件を全件判定した。
 - [ ] **検証可能性**: high finding と digest mismatch を PASS にしていない。
+
+## Context Boundary
+
+- 評価対象の staged package (exact-13 artifacts・staging manifest・C12 report・goal-spec) は読むだけで、書き換えない (Layer 1・3)。
+- Write は `plan-findings.json` 1件だけ。置き場所は staging 外の repo-local state で、staging の中へは書かない (Layer 3)。
+- proposer と分離した fork context で評価し、生成時の推論や期待 verdict を判断に持ち込まない (Layer 5.1)。
+- promotion と architect 側の修正はしない。修正後の package を評価し直す周回も回さない (呼び出し側 C01 `run-system-dev-plan` が管理する。Layer 4)。
+
+## Handoff
+
+- 返すもの: `schemas/plan-findings.schema.json` に従う digest-bound `plan-findings.json` (C1-C4 の各 PASS/FAIL と根拠、総合 verdict、evaluated digest、severity・bucket・observation・evidence を持つ findings。path と直し方は observation と evidence に書く) と、条件別 verdict・evidence path・violation code・修正対象の短い日本語の要約 (Layer 2・7)。
+- PASS は assign skill を通じて C11 promotion gate へ、FAIL は findings だけを architect へ返す (Layer 6)。
+- evaluated digest が staging manifest と一致しない verdict は破棄する (Layer 6)。

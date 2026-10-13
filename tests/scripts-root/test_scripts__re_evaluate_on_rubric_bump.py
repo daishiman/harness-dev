@@ -1,5 +1,11 @@
 """re-evaluate-on-rubric-bump.py の genuine 機能テスト。
 
+root の scripts/re-evaluate-on-rubric-bump.py は、plugin 版
+(plugins/skill-governance-automation/scripts/) への symlink で、実装は1つだけ
+(harness-9vu。以前は root 版が rubric の欠落を exit 0 で済ませる古い実装のまま分かれていた)。
+この test は root の path から読み込み、.claude/settings.json の PostToolUse hook が
+使う呼び出し方 (--post-tool-use) も確かめる。
+
 純関数 (parse_semver / iter_records / extract_version / extract_skill_identity) を
 実入力で呼び実出力を assert する。main() は (1) subprocess で実引数なし実行し
 returncode/出力を検証、(2) module 定数 (UPSTREAM_RUBRIC / EVAL_LOG_DIR) を tmp_path へ
@@ -133,17 +139,26 @@ def _run_main_capture(monkeypatch, upstream, eval_dir):
     return rc, out.getvalue(), err.getvalue()
 
 
-def test_main_missing_upstream_returns_0(monkeypatch, tmp_path):
+def test_root_script_is_a_symlink_to_the_plugin_implementation():
+    plugin_script = (
+        ROOT / "plugins" / "skill-governance-automation" / "scripts" / "re-evaluate-on-rubric-bump.py"
+    )
+    assert SCRIPT.is_symlink()
+    assert SCRIPT.resolve() == plugin_script.resolve()
+
+
+def test_main_missing_upstream_returns_2(monkeypatch, tmp_path):
+    # 入力の欠落を成功に畳まない (以前の root 版は exit 0 だった)。
     rc, out, err = _run_main_capture(monkeypatch, tmp_path / "none.json", tmp_path / "eval-log")
-    assert rc == 0
+    assert rc == 2
     assert "upstream rubric not found" in err
 
 
-def test_main_unparseable_upstream_version_returns_0(monkeypatch, tmp_path):
+def test_main_unparseable_upstream_version_returns_2(monkeypatch, tmp_path):
     up = tmp_path / "rubric.json"
     up.write_text(json.dumps({"rubric_version": "garbage"}), encoding="utf-8")
     rc, out, err = _run_main_capture(monkeypatch, up, tmp_path / "eval-log")
-    assert rc == 0
+    assert rc == 2
     assert "could not parse upstream rubric_version" in err
 
 
@@ -229,14 +244,43 @@ def test_main_detects_major_bump_lists_targets(monkeypatch, tmp_path):
 
 # --- main(): subprocess 実行 (実引数なし, repo の実 path math) ---
 
-def test_subprocess_runs_clean_exit_0():
-    # parents[2] が repo-root にならない環境でも常に exit 0 で終わる契約
+def test_subprocess_resolves_repo_rubric_through_root_path():
+    # symlink の root path から起動しても、兄弟 harness-creator の rubric を解決できる。
     proc = subprocess.run(
-        [sys.executable, str(SCRIPT)],
+        [sys.executable, str(SCRIPT), "--eval-log-dir", str(ROOT / "eval-log")],
         capture_output=True,
         text=True,
         cwd=str(ROOT),
     )
-    assert proc.returncode == 0
-    # 出力が空でない (stderr の rubric not found か stdout のサマリのいずれか)
-    assert (proc.stdout + proc.stderr).strip() != ""
+    assert proc.returncode == 0, proc.stderr
+    assert "# upstream rubric_version: " in proc.stdout
+
+
+@pytest.mark.parametrize(
+    ("file_path", "expect_scan"),
+    [
+        ("plugins/x/skills/run-x/SKILL.md", False),
+        ("plugins/x/references/rubric.json", False),
+        ("plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json", True),
+    ],
+)
+def test_settings_post_tool_use_hook_invocation(file_path, expect_scan):
+    # .claude/settings.json の hook と同じ呼び出し方。比べる相手の L0 rubric.json の編集の
+    # ときだけ走査し、それ以外の編集 (別の rubric.json を含む) では何も出さない。どちらも
+    # exit 0 (hook は編集を止めない)。結果は additionalContext で Claude の文脈に届ける。
+    settings = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    assert "scripts/re-evaluate-on-rubric-bump.py --post-tool-use" in json.dumps(settings)
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--post-tool-use"],
+        input=json.dumps({"tool_name": "Edit", "tool_input": {"file_path": file_path}}),
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+    )
+    assert proc.returncode == 0, proc.stderr
+    if expect_scan:
+        ctx = json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
+        assert "# rubric edited: " in ctx
+        assert "# upstream rubric_version: " in ctx
+    else:
+        assert proc.stdout == "" and proc.stderr == ""

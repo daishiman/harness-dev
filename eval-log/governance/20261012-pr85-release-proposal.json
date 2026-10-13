@@ -1,0 +1,123 @@
+{
+  "proposal_id": "PROP-2026-10-12-PR85-RELEASE",
+  "proposer": "Claude セッション 077ff83f（PR #85 の作成者）",
+  "date": "2026-10-12",
+  "category": "P1_structural",
+  "category_basis": "guard-change-category.py は plugin.json（版）・設計書27章（_P1_DOC_PATHS）・SKILL.md の allowed-tools の変更を P1_structural に分類する。33章の手続き（提案 → 人間の承認 → cooldown の確認 → 反映 → changelog の記録）に従う。",
+  "purpose": "PR #85 の 2026-10-11〜12 の回で直した中身（script・agent・SKILL.md・設計書）を、正しい版で配れるようにする。あわせて、coverage が FAIL 35 だった27章を実装に合わせて直し（取り直しで PASS 85）、run-ubm-challenge の SKILL.md の Bash を python3 だけに絞り、改名した script（harness-eef）の参照を新しい名前にそろえる。",
+  "groups": {
+    "G1_plugin_versions": {
+      "what": "22 plugin の plugin.json（.claude-plugin と .codex-plugin の2つずつ、計44件）の version。",
+      "already_bumped_in_worktree": {
+        "extract-system-blueprint": "0.2.15 → 0.2.16",
+        "harness-creator": "1.4.44 → 1.4.47",
+        "prompt-creator": "2.1.11 → 2.1.12",
+        "skill-governance-adapters": "0.1.13 → 0.1.14",
+        "skill-governance-lint": "0.1.18 → 0.1.19",
+        "skill-governance-migration": "0.1.14 → 0.1.15",
+        "skill-governance-secrets": "0.1.14 → 0.1.15",
+        "skill-intake": "0.1.20 → 0.1.22",
+        "system-dev-planner": "0.1.15 → 0.1.16",
+        "system-spec-harness": "0.1.20 → 0.1.21",
+        "ubm-goal-setting": "0.7.0 → 0.8.1",
+        "x-longpost-creator": "1.3.4 → 1.3.6"
+      },
+      "already_bumped_note": "この12件は、PR の作業ツリー（利用者の作業ツリーから引き継いだもの）で既に版が上がっている。build-plugin-release.py は fingerprint を台帳に記録する（released）だけで、版は変えない。ubm-goal-setting 0.7.0 → 0.8.1 は、0.8.0（run-ubm-challenge の日本語化と挑戦宣言の拡張による minor）と 0.8.1（validate-knowledge-entry-source 0.1.1 ほかの修正）の2つの節を CHANGELOG に持つ。",
+      "to_bump_by_build_plugin_release": {
+        "contract-generator": "0.1.15 → 0.1.16（build-plugin-release.py の patch）",
+        "dev-graph": "0.1.18 → 0.1.19（build-plugin-release.py の patch）",
+        "guide-doc-generator": "0.1.24 → 0.1.25（build-plugin-release.py の patch）",
+        "plugin-dev-planner": "0.1.22 → 0.1.23（build-plugin-release.py の patch）",
+        "skill-governance-automation": "0.1.15 → 0.1.16（build-plugin-release.py の patch）",
+        "skill-governance-config": "0.1.14 → 0.1.15（build-plugin-release.py の patch）",
+        "skill-governance-hooks": "0.1.15 → 0.1.16（build-plugin-release.py の patch）",
+        "slide-report-generator": "0.1.32 → 0.1.33（build-plugin-release.py の patch）",
+        "spec-drift-guardian": "0.1.13 → 0.1.14（build-plugin-release.py の patch）",
+        "system-briefing-book": "0.2.9 → 0.2.10（build-plugin-release.py の patch）"
+      },
+      "to_bump_note": "この10件は、HEAD のあとで中身が変わったのに版がそのまま。build-plugin-release.py（--install なし）が patch を上げ、台帳・marketplace・config-version-lock・plugin-composition・完全解剖の版の記述を同時に書き直す。手では書かない。",
+      "check": "python3 scripts/build-plugin-release.py --check が rc 0。tests/ の test_checked_in_state_has_no_drift が通る。"
+    },
+    "G2_doc_27": {
+      "path": "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+      "what": "rubric の変更の手順書を、今の実装（diff-rubric-impact 0.5.1・templates/proposal.json・version-rules の0日の3条件・lint-rubric-violation・notify-if-governance-trigger・rollback-to-stable ほか）に合わせて書き直した（+95/-73）。",
+      "evidence": "eval-log/coverage/docs/ClaudeCode--------27-rubric-governance-runbook.md.json（独立評価者。sha256 40d963cd… をレビューして PASS 85。前回 687e0f7d… は FAIL 35）。",
+      "residual": "low と観察（TODO(human) 3つ・§8.3 のひな形の violation_rate_avg の行・L337 の書き戻しの結果・rubric-versions.md・§13 の条件3）は Beads の下書き 22 に移した。cooldown のため、この PR ではこれ以上変えない。"
+    },
+    "G3_run_ubm_challenge_skill_md": {
+      "path": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+      "what": "allowed-tools の Bash を Bash(python3 *) に絞った。UBM_VAULT_ROOT の確認を python3 -c の1行に替えた（終了コード0が設定済み）。script_refs を改名後の名前（validate-design-rubric・extract-knowledge-matches・build-knowledge-usage-log・guard-staged-publication）にした（harness-eef）。",
+      "evidence": "eval-log/ubm-goal-setting/run-ubm-challenge/content-review/ の verdict（独立評価者の取り直し）と plugins/ubm-goal-setting/tests。"
+    }
+  },
+  "backward_compatibility": "版は上がるだけで下がらない。plugin の利用者に見える挙動の変化は CHANGELOG（harness-creator・ubm-goal-setting ほか）と PR #85 の本文に書いた。run-ubm-challenge は Bash を python3 に絞ったので、python3 以外のコマンドは許可の確認が出るようになる（SKILL.md の手順は python3 しか使わない）。",
+  "rollback_plan": "PR を merge しない、または merge 後なら merge commit を git revert する。46件は一組として扱い、plugin.json の版だけ・27章だけの部分的な巻き戻しはしない。台帳（marketplaces/local/plugin-fingerprints.json）は build-plugin-release.py で作り直す。",
+  "cooldown": {
+    "policy": "P1_structural は3日（governance-policy.json の cooldown_rules）。",
+    "previous_entry": "44件の plugin.json・27章・run-ubm-challenge の SKILL.md は、どれも PROP-2026-10-10-UBM-JA-RELEASE（2026-10-10T00:06:16Z）が直前の entry。",
+    "consequence": "guard-change-category.py は check の時点の now で cooldown を数える。承認の entry を足しても、2026-10-13T00:06:16Z（JST 09:06）までは CI の change-category-guard が cooldown で落ちる。その時刻のあとに CI を回し直せば通る。",
+    "no_bypass": "incident_fix も --bypass-cooldown も使わない。緊急の修正ではないので、cooldown を待つ。"
+  },
+  "changelog_draft": {
+    "timestamp": "<承認時に記入>",
+    "category": "P1_structural",
+    "proposal_id": "PROP-2026-10-12-PR85-RELEASE",
+    "target_path": [
+      "plugins/contract-generator/.claude-plugin/plugin.json",
+      "plugins/contract-generator/.codex-plugin/plugin.json",
+      "plugins/dev-graph/.claude-plugin/plugin.json",
+      "plugins/dev-graph/.codex-plugin/plugin.json",
+      "plugins/extract-system-blueprint/.claude-plugin/plugin.json",
+      "plugins/extract-system-blueprint/.codex-plugin/plugin.json",
+      "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+      "plugins/guide-doc-generator/.codex-plugin/plugin.json",
+      "plugins/harness-creator/.claude-plugin/plugin.json",
+      "plugins/harness-creator/.codex-plugin/plugin.json",
+      "plugins/plugin-dev-planner/.claude-plugin/plugin.json",
+      "plugins/plugin-dev-planner/.codex-plugin/plugin.json",
+      "plugins/prompt-creator/.claude-plugin/plugin.json",
+      "plugins/prompt-creator/.codex-plugin/plugin.json",
+      "plugins/skill-governance-adapters/.claude-plugin/plugin.json",
+      "plugins/skill-governance-adapters/.codex-plugin/plugin.json",
+      "plugins/skill-governance-automation/.claude-plugin/plugin.json",
+      "plugins/skill-governance-automation/.codex-plugin/plugin.json",
+      "plugins/skill-governance-config/.claude-plugin/plugin.json",
+      "plugins/skill-governance-config/.codex-plugin/plugin.json",
+      "plugins/skill-governance-hooks/.claude-plugin/plugin.json",
+      "plugins/skill-governance-hooks/.codex-plugin/plugin.json",
+      "plugins/skill-governance-lint/.claude-plugin/plugin.json",
+      "plugins/skill-governance-lint/.codex-plugin/plugin.json",
+      "plugins/skill-governance-migration/.claude-plugin/plugin.json",
+      "plugins/skill-governance-migration/.codex-plugin/plugin.json",
+      "plugins/skill-governance-secrets/.claude-plugin/plugin.json",
+      "plugins/skill-governance-secrets/.codex-plugin/plugin.json",
+      "plugins/skill-intake/.claude-plugin/plugin.json",
+      "plugins/skill-intake/.codex-plugin/plugin.json",
+      "plugins/slide-report-generator/.claude-plugin/plugin.json",
+      "plugins/slide-report-generator/.codex-plugin/plugin.json",
+      "plugins/spec-drift-guardian/.claude-plugin/plugin.json",
+      "plugins/spec-drift-guardian/.codex-plugin/plugin.json",
+      "plugins/system-briefing-book/.claude-plugin/plugin.json",
+      "plugins/system-briefing-book/.codex-plugin/plugin.json",
+      "plugins/system-dev-planner/.claude-plugin/plugin.json",
+      "plugins/system-dev-planner/.codex-plugin/plugin.json",
+      "plugins/system-spec-harness/.claude-plugin/plugin.json",
+      "plugins/system-spec-harness/.codex-plugin/plugin.json",
+      "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+      "plugins/ubm-goal-setting/.codex-plugin/plugin.json",
+      "plugins/x-longpost-creator/.claude-plugin/plugin.json",
+      "plugins/x-longpost-creator/.codex-plugin/plugin.json",
+      "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+      "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md"
+    ],
+    "target_sha256_note": "build-plugin-release.py を回したあとの現物で、承認する時点に計算する。",
+    "approver": "pending",
+    "status": "pending"
+  },
+  "reviewers": {
+    "proposer": "Claude セッション 077ff83f",
+    "approver": "pending（提案者と別 context の独立した承認レビュアー）",
+    "tooling": "build-plugin-release.py --check / guard-change-category.py / validate-harness-coverage.py"
+  },
+  "notes": "利用者が 2026-10-12 に「今 P1 の提案を作る」「根本策をこの PR で」「解決まで完了すること」と決めた。この提案は governance-log・台帳・verdict を変えない。承認の entry は独立した承認レビュアーの結果を受けて追記だけで足す。"
+}

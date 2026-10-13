@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evidence": [
+    "正規の Skill 経路で 3 つの skill を起動している。transcript.jsonl の 35 行目が dev-graph:run-dev-graph-init、92 行目が dev-graph:run-dev-graph-node、165 行目が dev-graph:run-dev-graph-status (--id task-lt-task-001)。guard.jsonl の 2・11・23 行目はいずれも allow。",
+    "責務 prompt は、それぞれの出力を作る前に読んでいる。init は 49 行目で R1〜R5 の全文を cat し、57・58 行目で Read した (5 本とも Layer 1 から出力指示まで含む)。scaffold の実行はその後の 71・74 行目。node は 105 行目で R0〜R4 の Layer 2〜3 と 5.3〜Layer 6 を読み、writer の実行は 132・136・145 行目。status は 170 行目で R1〜R3 の Layer 2〜3 と 5.3〜Layer 6 を読み、179 行目で R1 の query と R2 の plan を示し、180 行目で R3 の extractor を実行した。node と status の prompt は部分読みだが、入出力契約・責務境界・受入条件・使用資産・完了チェックリストはすべて読んでいる。",
+    "report の行は skill 正規の extract-graph-status.py だけが作っている (180・181 行目)。exit 0、result=matched、count=1、validation.status=pass (violation 0)、missing_required_keys=[]、read_only.changed=[]。行の値は status=closed、closed_at=2026-10-12T09:14:32.496218Z、depends_on=[task-lt-task-002, task-lt-task-003]、dependents=[]、tracker_binding=none。",
+    "206 行目で report の JSON 全体を要約せずに出力しており、181 行目の script 出力と一致する。",
+    "graph の実値と一致することを独立に確かめた。fx/.dev-graph/state/graph.json の graph_revision は 2。task-lt-task-001 は closed で、closed_at は 2026-10-12T09:14:32.496218Z、depends_on は [task-lt-task-002, task-lt-task-003]。002 と 003 は draft で depends_on は空なので、001 の dependents は空になる。評価側で extract-graph-status.py を読取りだけで再実行し、rows が同一であることも確かめた。",
+    "C11 は exit 0。被験は 199・200 行目で C11 exit=0 を得ている。評価側で validate-graph-schema.py を再実行しても exit 0 だった。",
+    "status skill の前後で graph digest は変わっていない。graph.json の sha256 は、実行前 (155 行目) も実行後 (200 行目) も、評価時点の現物も 40b2aca0bd2bbac5d474a7013e6cc450f880d71bc377be6011f67fa113609410。分離 context の評価役も、repo 内 39 ファイルの前後 diff が 0 件であることを確かめている (subagent-transcripts/agent-a9300a27a8798778f.jsonl の 22・23 行目)。",
+    "SKILL.md が必須とする分離 context の評価役を、Agent で実際に起動している (185 行目、general-purpose、guard.jsonl の 26 行目)。subagent transcript を見ると、評価役は graph.json の直読 (12・13 行目)、extractor の再実行 (rows_equal True)、C11 の再実行 (exit 0)、digest の再計測を自分で行い、PASS を返した (197 行目)。その verdict は 199 行目で eval-log/run-dev-graph-status-progress.json に記録されている。",
+    "graph への書込みは C02 の単一 writer である build-graph-node.py だけを通っている。add は 136 行目、closed への update は 145 行目。receipt の node-r000001-add.json と node-r000002-update.json はどちらも owner が C02/run-dev-graph-node。update の graph_digest_after (7079016f…) は、現在の graph の compact canonical digest と一致する。closed_at は呼出し側が渡しておらず (close.json は status=closed だけ)、writer が付けた値である。",
+    "GitHub と Beads への書込みは 0 件。guard.jsonl の 32 件にも transcript にも gh・bd・sync・render の呼出しは無い。",
+    "隔離の境界も守られている。155 行目で /tmp/claude-501/pre.sha への書込みが Operation not permitted になったが、162 行目では policy.json の allowed_write_roots に入っている wttrial/tmp 配下の scratchpad を使っており、sandbox の解除や stub の迂回は無い。guard.jsonl の 27 行目の deny (ListAgents) は agent a8ca5de… によるもので、被験の評価役 (a9300a27…) の呼出しではない。",
+    "status.json の PASS は根拠に使っていない。上の各項目は、transcript の tool 呼出しとその結果、fixture の現物、評価側での読取りだけの再実行で確かめた。"
+  ],
+  "skill_defects": [
+    "run-dev-graph-status/SKILL.md で、allowed-tools とゴールシーク配線が食い違っている。frontmatter の allowed-tools は [Read, Bash, AskUserQuestion, Skill, Agent] で Write も Edit も含まない。一方で「## ゴールシーク配線」は、$DEV_GRAPH_ROOT/eval-log/ に goal-spec.json・progress.json・intermediate.jsonl を書くよう求めている。そのため read-only (effect: conversation-output) の skill なのに、Bash の heredoc で caller の repo に 3 ファイルを書くことになる。また、評価役が実行後の digest を測るのを eval-log への書込みの前にするのか後にするのかが書かれていない。この run では、main が書込みを評価の後まで保留した (193 行目) ので全ファイルの diff が 0 件になった。再現手順: standard を選んで実行した後に git -C <repo> status --short を見ると、eval-log/run-dev-graph-status-* の 3 ファイルが増えている。",
+    "run-dev-graph-status/SKILL.md の「## Pre-choice usable artifact execution」は「現物path・digest・開き方を提示してから」選択を記録するよう求めているが、effect: conversation-output の場合 (file path が無い) に何を提示すればよいかが決まっていない。この run では、選択の前に report の本文がユーザーに示されたのは、折り畳まれた Bash 出力 (181 行目) と narration (184 行目) だけだった。本文の全体を示したのは評価役の後 (206 行目) である。",
+    "run-dev-graph-status/SKILL.md の「## ゴールシーク配線」は、skill の完了に外ループの OUT1 (verify_by: live-trial)・OUT2 (verify_by: test) と content-review の PASS を求めている。しかし、session の中でそれを誰がどう実行し、どこへ記録するかが書かれていない。そのため被験は progress.json に criteria の OUT1・OUT2 を PASS と自分で書き込んだ (199 行目)。"
+  ],
+  "evaluator_agent_id": "abff3f66d08bbaa19"
+}

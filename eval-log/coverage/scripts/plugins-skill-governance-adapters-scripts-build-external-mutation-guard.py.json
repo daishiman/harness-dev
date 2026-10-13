@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine review（sha256 e50fdb18bcb4bf80adb314006cab1de1cc499bef88a6a3448e211a7fea30f4e5 をレビュー。実行検証あり）。範囲: 全1025行（hook に止められる名前なので Read ツールで読んだ）。前回の記録（sha256 5eaa10b2…）からの差分は L106 の直接実行を見つける regex 1行で、ubm の staged publication の script の改名に合わせたもの。確かめたこと: work-cova/guard_probe.py でモジュールを読み、DIRECT_MUTATION_PATTERNS が新しい名前の直接実行だけに当たり、旧名と extract-knowledge-matches.py には当たらないことを確かめた。--help は rc=0、未知の option は rc=2。この script を写す 22 個の artifact-delivery.json の runner_sha256 は現物と一致し、build-artifact-delivery.py --check と lint-artifact-delivery は rc=0。test_root__external_mutation_guard・test_root__artifact_delivery と ubm の test_guarded_publication で 165 passed。前回の抜け道 4 種が DENY になり文書の形が ALLOW になることは、差分の外なので前回の記録から引き継ぐ。指摘（前回から残る）: [低] L747-754 は二重引用の中の $NAME[ を許すが、zsh では \"$path[@]\" が複数語に展開され、契約 L9 の『二重引用の形だけが必ず1語』が成り立たない（動くのは信頼した guard だけなので安全性は崩れない）。直し方: ${NAME} の形だけを許す。[低] L851-854 は Path.resolve の ValueError（NUL を含む語）を捕まえず、pretool が traceback で exit 1 になる（判定は fail-open だが、NUL を含む command は shell で実行できない）。直し方: except に ValueError を足す。[低] L938-942 の pending の拒否文が、契約 L25 の抜け方である cancel を挙げない。直し方: 拒否文に cancel --project-root … --preview-receipt … を書く。DEDUCTION: zsh の添字展開 -2、NUL の traceback -2、拒否文に cancel が無い -2 → 94。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

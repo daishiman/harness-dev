@@ -1,0 +1,29 @@
+{
+  "label": "requirements3",
+  "retry_of": "20261012T0654-pr85",
+  "evaluator_agent_id": "a9cdf9146eb9e7be6",
+  "skill_dir_tested": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial/runs/requirements3/ws/plugins/dev-graph/skills/run-dev-graph-requirements",
+  "closure_sha_at_launch": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_sha_tested_copy": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_sha_wtpy_at_verdict": "366b07c8ff7d09a4fa33cec26c091a97e600613cbba93480808e428fdbcf9a3a",
+  "closure_matches_wtpy": true,
+  "isolation": "隔離環境 (fake HOME・stub gh/bd・ネットワーク全遮断・--plugin-dir の隔離 copy・PreToolUse 隔離ガード) で実行。詳細は scratchpad/wttrial/isolation-check.md と leak-audit.md。",
+  "fixture_changes": [
+    "seed の写し: 元の fixture (live-trial-fixtures/20261005T171515-bzn4-requirements) を、その場で git init した repo に写した。最初の commit (0107989) は README.md だけで、ほかは元の seed と同じく追跡しないファイルとして置いた。元の fixture は変えていない。requirements2 と同じ手順。",
+    "rekey: 写した repo に合わせて repository_id と worktree_id を 17 ファイルで付け替えた (.dev-graph/config.json・init-receipt.json・staging-manifest.json・task-specs など。一覧は fixture-provenance.json の rekeyed_files)。",
+    "reseal: rekey で file digest が変わるため、system-plan/LT-FEATURE-001/system-build-handoff.json を写さず、handoff 前の staging-manifest.json に戻して、system-dev-planner の build-system-handoff.py に作り直させた (exit 0、validate pass、canonical_digest は sha256:0a7b1d0d… から sha256:a1843700… になった)。JSON は手で書いていない。",
+    "用意していないもの: promote-system-plan.py による promotion receipt、register-package.py による dev-graph-registration.json、C02 の receipt は、元の seed にも無く、この run の準備でも作っていない。",
+    "配置: plugin の写し (ws/plugins/) と隔離の設定 (ws/.claude/settings.local.json) は orchestrator が置いた。plugins/dev-graph は変えていない。",
+    "どれも trial の session を起動する前に orchestrator が行ったもので、被験 skill の挙動ではない。"
+  ],
+  "redaction": {
+    "mask": "<redacted-email>",
+    "files": 1,
+    "occurrences": 2,
+    "other_emails_found": {}
+  },
+  "skill_defects_reported_by_evaluator": [
+    "(軽微) package が promote も C02 登録もされていないと、ws/plugins/dev-graph/scripts/validate-readiness-binding.py の bind() (119-125 行) が load_json の IO 例外として exit 2 で終わる。stdout は空で、stderr には生の Errno だけが出る。どの上流の手順が欠けているか (system-dev-planner の promote-system-plan.py → run-dev-graph-node の register-package) と、その remediation owner が構造化して返らない。再現手順: dev-graph-registration.json の無い package dir、たとえば本 fixture の system-plan/LT-FEATURE-001 を対象に `python3 validate-readiness-binding.py --repo-root <fx> --package-dir system-plan/LT-FEATURE-001 --receipt <任意>` を実行する。SKILL.md の手順 4 にこの挙動は書かれているので契約違反ではないが、R2b/R3 が返せる情報が生の例外文だけになる。",
+    "(軽微) SKILL.md の argument-hint は `--receipt REL` を受けるが、C02 receipt の既定の場所も探し方も手順 1 に書かれていない。このため被験 session は `.dev-graph/state/package-registration-receipt.json` を推測で渡した (L95)。今回の結果は registration manifest が無いことで先に決まっており、この点は影響していない。"
+  ]
+}

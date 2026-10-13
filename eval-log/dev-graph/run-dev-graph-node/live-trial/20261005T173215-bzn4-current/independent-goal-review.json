@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "target_skill": "dev-graph:run-dev-graph-node",
+  "run_id": "20261005T173215-bzn4-current",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "reviewed_at": "2026-10-05T09:04:42.219662+00:00",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "Mandatory responsibility prompts were omitted: init R2/R4/R5 and node R2-preview/R3-write/R4-apply-template were never read before their outputs; only init R1/R3 and node R0/R1 were read.",
+      "L92/L101/L107/L112/L117 Write five inputs to a scratchpad outside the explicit fixture/proof-directory boundary; L413 tee writes /tmp/feature-error.json outside it.",
+      "The model never collected the requested before/after content preservation and unchanged other-four-node evidence. It made a second distinct section append after a duplicate append rejection, leaving two new sections rather than the task's one-section-only update."
+    ]
+  },
+  "task_sha256": "ebcd15b2a7a31d802fc97f0ed4109e792f605e01b2fa07b5c69a33a052831e91",
+  "transcript_sha256": "4ab34bb4a396492effcf3c184a14a5264060e526d394e0ff049846d94557c728",
+  "source_behavior_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+  "source_drift": [],
+  "actual_model": "claude-haiku-4-5-20251001",
+  "evidence": [
+    "L39 real init Skill; L50/L59 only init R1/R3 reads; L70 executes canonical initializer without R2/R4/R5.",
+    "L122 real node Skill; L135 R1 read after initial input creation; no R2/R3/R4 reads in complete tool sequence.",
+    "L346/L352 canonical add applied_count5 graph_revision_after1; L363/L364 canonical update applied_count1 revision1→2.",
+    "L374/L380 duplicate section rejected with write_count0; L390/L391 different section append applied1 revision2→3.",
+    "L413/L414 ordinary feature input rejected feature_requires_c14_macro_contract with write_count0; L419/L420 graph_validation pass (output piped through head).",
+    "L426 self PASS marker and L430 DONE:PASS cannot override omitted execution route/boundary/preservation obligations.",
+    "L437 scope directive user turn after L430 completion; L442/L447 subsequent reads only, no writer rerun."
+  ],
+  "functional_observation": "Canonical mixed-kind add, issue append, duplicate rejection, normal feature rejection and graph validator pass are authentic partial positive observations. They do not prove the full task.",
+  "operator_intervention": {
+    "operator_send_count": 1,
+    "occurred_after_first_done": true,
+    "writer_reruns_after_directive": 0,
+    "classification": "Post-completion scope reinforcement; preserve the actual extra send, not an in-task rescue."
+  },
+  "source_bug_conclusion": "No current implementation defect demonstrated: observed failures are prompt-route omission, write-scope violation and incomplete/extra model verification actions. Current source bytes match the start snapshot. Source design C1–C4 may PASS independently; behavioral GateD remains FAIL.",
+  "required_next_action": "Preserve this authentic FAIL. Any new trial must be separately authorized/bounded and cannot reinterpret this self PASS as acceptance."
+}

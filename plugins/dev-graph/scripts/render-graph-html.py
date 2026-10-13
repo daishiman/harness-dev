@@ -2,8 +2,8 @@
 # /// script
 # name: render-graph-html
 # purpose: Deterministically render a task graph as dependency-free static HTML/SVG.
-# inputs: ["argv: --graph FILE --out FILE"]
-# outputs: ["file: static HTML", "stdout: JSON result"]
+# inputs: ["argv: --graph FILE --out FILE [--receipt FILE]..."]
+# outputs: ["file: static HTML", "stdout: JSON result", "stderr: JSON receipt mismatches (exit 1, no HTML)"]
 # requires-python = ">=3.10"
 # dependencies: []
 # contexts: [A, B, C, E]
@@ -17,15 +17,65 @@ import hashlib
 import html
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
 
+# 共有 harness は読取り専用。plugin の module を import する前に止め、bytecode cache (__pycache__) を
+# harness に書かない (子の起動にも -B を渡す)。
+sys.dont_write_bytecode = True
+
 from _common import ContractError, dump
+
+
+def load_receipt(path: str) -> dict[str, object]:
+    """Read the C02 registration receipt fields the render check relies on."""
+    try:
+        receipt = json.loads(Path(path).read_bytes().decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ContractError(f"invalid receipt JSON {path}: {exc}") from exc
+    if not isinstance(receipt, dict): raise ContractError(f"receipt must be an object: {path}")
+    feature, node_ids, expected, digest = (receipt.get(key) for key in ("parent_feature", "node_ids", "expected_count", "source_digest"))
+    if not isinstance(feature, str) or not feature: raise ContractError(f"receipt parent_feature must be a non-empty string: {path}")
+    if not isinstance(node_ids, list) or not all(isinstance(item, str) for item in node_ids) or len(set(node_ids)) != len(node_ids):
+        raise ContractError(f"receipt node_ids must be unique strings: {path}")
+    if not isinstance(expected, int) or isinstance(expected, bool): raise ContractError(f"receipt expected_count must be an integer: {path}")
+    if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        raise ContractError(f"receipt source_digest must be sha256:<64 hex>: {path}")
+    return receipt
+
+
+def check_receipt(path: str, progress_by_feature: dict[str, dict[str, int]],
+                  children_by_feature: dict[str, list[dict[str, object]]], lineage_digests: dict[str, object]) -> dict[str, object]:
+    """Compare the rendered children of one feature with its registration receipt.
+
+    Y (the child count) must equal expected_count, the child ids must equal node_ids, and every rendered
+    child must carry the receipt's source_digest in source_lineage (bare hex, as C11 stores it).
+    X (done children) is not compared: applied_count counts registered children, not finished ones.
+    """
+    receipt = load_receipt(path)
+    feature = str(receipt["parent_feature"]); expected_hex = str(receipt["source_digest"]).removeprefix("sha256:")
+    child_ids = {str(child["id"]) for child in children_by_feature.get(feature, [])}; registered = set(receipt["node_ids"])
+    actual_count = progress_by_feature[feature]["total"] if feature in progress_by_feature else None
+    result: dict[str, object] = {
+        "receipt": path, "feature": feature, "expected_count": receipt["expected_count"], "actual_count": actual_count,
+        "missing_ids": sorted(registered - child_ids), "extra_ids": sorted(child_ids - registered),
+        "source_digest": receipt["source_digest"],
+        "digest_mismatch_ids": sorted(node_id for node_id in child_ids if lineage_digests.get(node_id) != expected_hex),
+    }
+    problems = []
+    if actual_count != receipt["expected_count"]: problems.append("expected_count")
+    if feature not in progress_by_feature: problems.append("feature_not_rendered")
+    if result["missing_ids"] or result["extra_ids"]: problems.append("node_ids")
+    if result["digest_mismatch_ids"]: problems.append("source_digest")
+    result["problems"] = problems
+    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--graph", required=True); parser.add_argument("--out", required=True)
+    parser.add_argument("--receipt", action="append", default=None, help="C02 registration receipt to check feature X/Y against (repeatable)")
     args = parser.parse_args(); source = Path(args.graph).resolve(strict=True); out = Path(args.out).resolve(strict=False)
     if source == out: raise ContractError("output must not overwrite graph input")
     try:
@@ -37,6 +87,8 @@ def main() -> int:
     nodes = data.get("nodes", []) if isinstance(data, dict) else data
     if not isinstance(nodes, list): raise ContractError("graph nodes must be an array")
     normalized = []
+    # source_lineage は receipt 照合にだけ使う。normalized に入れると埋め込み JSON が変わるため別に持つ。
+    lineage_digests: dict[str, object] = {}
     for raw in nodes:
         if not isinstance(raw, dict): raise ContractError("each node must be an object")
         node_id = raw.get("graph_node_id") or raw.get("id")
@@ -47,6 +99,8 @@ def main() -> int:
         normalized.append({"id": node_id, "title": str(raw.get("title", node_id)),
                            "status": str(raw.get("status", "draft")), "kind": str(raw.get("artifact_kind", raw.get("kind", "task"))),
                            "depends_on": sorted(raw.get("depends_on", [])), "parent_feature": parent_feature})
+        lineage = raw.get("source_lineage")
+        lineage_digests[node_id] = lineage.get("source_digest") if isinstance(lineage, dict) else None
     normalized.sort(key=lambda x: x["id"]); ids = {x["id"] for x in normalized}
     dangling = sorted({d for n in normalized for d in n["depends_on"] if d not in ids})
     if dangling: raise ContractError(f"dangling dependencies: {dangling}")
@@ -74,6 +128,12 @@ def main() -> int:
         },
         "by_feature": progress_by_feature,
     }
+    receipt_checks = [check_receipt(path, progress_by_feature, children_by_feature, lineage_digests) for path in args.receipt or []]
+    receipt_mismatches = [check for check in receipt_checks if check["problems"]]
+    if receipt_mismatches:
+        print(json.dumps({"ok": False, "error": "receipt_mismatch", "receipt_mismatches": receipt_mismatches},
+                         ensure_ascii=False, sort_keys=True, indent=2), file=sys.stderr)
+        return 1
     width, row_h = 1000, 72; height = max(160, 80 + len(normalized) * row_h)
     y = {node["id"]: 60 + i * row_h for i, node in enumerate(normalized)}
     lines = []
@@ -103,7 +163,7 @@ def main() -> int:
         try: os.unlink(temp)
         except FileNotFoundError: pass
     output_sha256 = hashlib.sha256(out.read_bytes()).hexdigest()
-    dump({
+    result = {
         "ok": True,
         "out": str(out),
         "nodes": len(normalized),
@@ -111,7 +171,9 @@ def main() -> int:
         "input_sha256": input_sha256,
         "output_sha256": output_sha256,
         "feature_progress": feature_progress,
-    })
+    }
+    if args.receipt: result["receipt_checks"] = receipt_checks
+    dump(result)
     return 0
 
 

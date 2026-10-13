@@ -95,6 +95,39 @@ def test_find_frontmatter_whole_line_comment_skipped(MOD, tmp_path):
     assert fm == {"name": "a"}
 
 
+def test_find_frontmatter_unquotes_yaml_strings(MOD, tmp_path):
+    # YAML として正しい引用符付きの値は中身を読む (harness-aor: contract-generator の10件の誤報)。
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        "---\n"
+        "name: 'run-x'\n"
+        "rubric_refs:\n"
+        '  - "../../lib/a.py"\n'
+        "  - 'references/b.md'  # 引用符の外のコメントは外す\n"
+        '  - "c # not a comment"\n'
+        "---\n",
+        encoding="utf-8",
+    )
+    fm = MOD.find_frontmatter(p)
+    assert fm["name"] == "run-x"
+    assert fm["rubric_refs"] == ["../../lib/a.py", "references/b.md", "c # not a comment"]
+
+
+def test_check_skill_md_resolves_quoted_relative_refs(MOD, tmp_path, monkeypatch):
+    # 参照先は PROJECT_ROOT の中で探す (repo 外は v0.3.0 から FAIL)
+    monkeypatch.setattr(MOD, "PROJECT_ROOT", tmp_path.resolve())
+    plugin = tmp_path / "plugins" / "p"
+    p = _mk_skill(plugin / "skills", "run-x", 'name: run-x\nrubric_refs:\n  - "../../lib/a.py"\n  - "references/b.md"')
+    (plugin / "lib").mkdir(parents=True)
+    (plugin / "lib" / "a.py").write_text("", encoding="utf-8")
+    (p.parent / "references").mkdir()
+    (p.parent / "references" / "b.md").write_text("", encoding="utf-8")
+    assert MOD.check_skill_md(p) == []
+    (plugin / "lib" / "a.py").unlink()
+    failures = MOD.check_skill_md(p)
+    assert len(failures) == 1 and "'../../lib/a.py'" in failures[0]
+
+
 # ---------------------------------------------------------------------------
 # resolve_rubric_ref
 # ---------------------------------------------------------------------------
@@ -135,14 +168,18 @@ def test_resolve_ref_prefix_missing_returns_first_candidate(MOD, tmp_path, monke
 # ---------------------------------------------------------------------------
 # check_skill_md
 # ---------------------------------------------------------------------------
-def test_check_skill_md_all_resolved(MOD, tmp_path):
+def test_check_skill_md_all_resolved(MOD, tmp_path, monkeypatch):
+    # 参照先は PROJECT_ROOT の中で探す (repo 外は v0.3.0 から FAIL)
+    monkeypatch.setattr(MOD, "PROJECT_ROOT", tmp_path.resolve())
     p = _mk_skill(tmp_path, "ref-foo", "name: ref-foo\nrubric_refs:\n  - references/rubric.json")
     (tmp_path / "ref-foo" / "references").mkdir()
     (tmp_path / "ref-foo" / "references" / "rubric.json").write_text("{}", encoding="utf-8")
     assert MOD.check_skill_md(p) == []
 
 
-def test_check_skill_md_missing_local(MOD, tmp_path):
+def test_check_skill_md_missing_local(MOD, tmp_path, monkeypatch):
+    # 参照先は PROJECT_ROOT の中で探す (repo 外は v0.3.0 から FAIL)
+    monkeypatch.setattr(MOD, "PROJECT_ROOT", tmp_path.resolve())
     p = _mk_skill(tmp_path, "ref-foo", "name: ref-foo\nrubric_refs:\n  - references/rubric.json")
     failures = MOD.check_skill_md(p)
     assert len(failures) == 1
@@ -156,9 +193,10 @@ def test_check_skill_md_no_rubric_refs(MOD, tmp_path):
 
 
 def test_check_skill_md_rubric_refs_not_list(MOD, tmp_path):
-    # rubric_refs がスカラー (list でない) のときは検査スキップ
+    # rubric_refs がスカラー (list でない) なら、参照を黙って読み飛ばさず FAIL にする
     p = _mk_skill(tmp_path, "ref-foo", "name: ref-foo\nrubric_refs: just-a-string")
-    assert MOD.check_skill_md(p) == []
+    failures = MOD.check_skill_md(p)
+    assert len(failures) == 1 and "list でない" in failures[0]
 
 
 def test_check_skill_md_mixed_resolved_and_missing(MOD, tmp_path, monkeypatch):
@@ -250,12 +288,12 @@ def test_main_inproc_explicit_targets_fail(MOD, tmp_path, monkeypatch, capsys):
     assert "missing.json" in err
 
 
-def test_main_inproc_nonexistent_target_skipped(MOD, tmp_path, monkeypatch, capsys):
-    # 存在しない target は t.exists() で弾かれる → registry も無いので PASS
+def test_main_inproc_nonexistent_target_is_input_error(MOD, tmp_path, monkeypatch, capsys):
+    # 存在しない target を『0 件検査して PASS』にしない。入力不正として exit 2
     monkeypatch.setattr(MOD, "PROJECT_ROOT", tmp_path)
     _argv(monkeypatch, str(tmp_path / "ghost" / "SKILL.md"))
-    assert MOD.main() == 0
-    assert "PASS" in capsys.readouterr().out
+    assert MOD.main() == 2
+    assert "指定した SKILL.md が無い" in capsys.readouterr().err
 
 
 def test_main_inproc_default_glob_creator_kit_and_claude(MOD, tmp_path, monkeypatch, capsys):
@@ -281,6 +319,8 @@ def test_main_inproc_registry_failure_propagates(MOD, tmp_path, monkeypatch, cap
         json.dumps({"rubrics": [{"domain": "d2", "rubric": "missing.json"}]}),
         encoding="utf-8",
     )
+    # 走査対象が0件だと exit 2 になるので、rubric_refs の無い skill を1つ置く
+    _mk_skill(tmp_path / "plugins" / "harness-creator" / "skills", "run-x", "name: run-x")
     _argv(monkeypatch)
     assert MOD.main() == 1
     assert "missing.json" in capsys.readouterr().err

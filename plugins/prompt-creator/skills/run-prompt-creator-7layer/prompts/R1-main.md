@@ -47,7 +47,7 @@
 | responsibility-id | string | conditional | `skill-local-v1` 既定で必須、`brief.responsibilities[].id` と 1:1 |
 | target-agent | path | no | owner_agent がある場合のみ注入対象として指定 |
 | format | enum(yaml/md/json/xml) | no | 既定 md (本テンプレ準拠)、ループ呼出時は呼出側既定値を尊重 |
-| inject-sections | csv | no | 既定 "Prompt Templates,Self-Evaluation" |
+| inject-sections | csv | no | 既定は対象agentの正規見出しから継承。未指定対象は output_language に従う。構造IDは prompt_templates/self_evaluation |
 
 ### 2.4 出力契約
 - worker-local schema: `schemas/output.schema.json` (additionalProperties:false)
@@ -100,7 +100,7 @@
 
 > L5 サブ構造は `references/seven-layer-format.md`「Layer 5 契約」(l5-contract v2.0.0) に従属する。
 
-### 5.1 担当 agent
+### 5.1 担当エージェント
 - `prompt-creator-generate-prompt` / `prompt-creator-review-prompt`（ヒアリングは `run-prompt-elicit` へ委譲し、hearing-result / brief 供給時は Phase 1 を skip する）
 - context-fork: Phase 4-A の Layer 別生成と Phase 4-C の改善反復は分離 context で行う。
 
@@ -111,7 +111,7 @@
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] 生成物が 1 Layer = 1 出力で構成され、一括生成でない (trace の layer_artifact_path で判定できる)
-- [ ] `validate-prompt.py` / `verify-completeness.py` / `lint-agent-prompt-section.py` が全 PASS (exit 0) している
+- [ ] `validate-prompt.py` / `verify-completeness.py` が常時 PASS (exit 0)、owner_agent 指定時だけ `lint-agent-prompt-section.py` が PASS（未指定は理由付きN/A）している
 - [ ] C1-C4 設計評価 (assign-prompt-design-evaluator を fork・findings 出力のみ) が PASS、または呼出元の同等ゲートの機械証跡が trace に記録済み
 - [ ] 全ルール / 制約に目的 + 背景が併記されている (`writing-style-principles.md`)
 - [ ] prompt-build-trace.json と worker-local trace の sha256 が layer .md の実体と一致している
@@ -160,3 +160,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 出力しない。論理構造は `references/seven-layer-format.md` を正本とし、Markdown 生成物は
 `references/seven-layer-markdown-template.md` を提示形式の補助として参照しつつ、
 本文を responsibility 固有の domain で置換する。Layer 5 は固定手順を書かない (ゴールシーク)。
+
+### 注入時の言語契約
+
+`inject-sections` の旧名は構造ID `prompt_templates` / `self_evaluation` の別名として解決する。明示 `ja` / `en` があれば優先し、無ければ対象agentの正規見出しから継承する。日本語の2見出しは `## プロンプトの型` / `## 自己採点`、英語は `## Prompt Templates` / `## Self-Evaluation`。同じ節を別言語で追加せず、対象の既存節の本文だけを更新する。混在・重複・未知の節指定は止めて親へ返す。schema key・メタ表のkey・Layer識別子は英語の構造IDを維持する。

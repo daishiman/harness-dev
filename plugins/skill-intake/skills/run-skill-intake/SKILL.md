@@ -1,10 +1,10 @@
 ---
 name: run-skill-intake
-description: 非エンジニアからスキル要件を引き出したいとき、intake.md と Notion ページを manifest 駆動で生成したいときに使う。
+description: 非エンジニアからスキル要件を引き出したいとき、manifest 駆動で要件書（intake）と Notion ページを生成したいときに使う。
 allowed-tools:
   - Read
   - Write
-  - Bash
+  - Bash(python3 *)
   - AskUserQuestion
   - Skill
   - Task
@@ -46,8 +46,8 @@ schema_refs:
   - schemas/phase5-purpose.schema.json
   - schemas/phase8-summary.schema.json
 reference_refs:
-  - ref-workflow-sequence
-  - ref-handoff-contract
+  - references/workflow-sequence.md
+  - references/handoff-contract.md
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -155,7 +155,7 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 | assumption.json | `output/<hint>/assumption.json` | P2 |
 | profile.json | `output/<hint>/profile.json` | P3 |
 | sheet.md + interview.json | `output/<hint>/` | P4 |
-| purpose.json | `output/<hint>/purpose.json` | P5 |
+| purpose.json | `output/<hint>/purpose.json` | P5（SKIP 時は `scripts/build-skipped-purpose.py` が interview.json から作る） |
 | options.json | `output/<hint>/options.json` | P6 |
 | visuals.json + PNG 群 | `output/<hint>/visuals/` | P7 |
 | summary.{md,json} | `output/<hint>/` | P8 |
@@ -171,15 +171,15 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 
 1. **manifest を SSOT とする**: 固定 Steps を本文に書かず `workflow-manifest.json` の `phases[]` (id / dependsOn / delegateType / delegateName / fatal_exit_codes) を読み実行順を決める。
 2. **業務ロジックを持たない**: 質問雛形 / 技法選択 / 採点基準 / Notion blocks 生成は子 Skill / SubAgent / references に閉じる。本スキルは起動順序と handoff JSON の受け渡しのみ。
-3. **handoff JSON 必須**: 各 phase 完了時に対応 JSON ファイルが存在し、`workflow-manifest.json` と各 skill / SubAgent の `schemas/` 契約に通ること。違反時はその phase に戻す。
+3. **handoff JSON 必須**: 各 phase 完了時に対応 JSON ファイルが存在し、`workflow-manifest.json` と各 skill / SubAgent の `schemas/` 契約に通ること。違反時は Key Rule 5 のとおり停止する（自動で戻すのは manifest の `retryOn` / `retryTo` に書かれた P8→P4 だけ）。`schemas/` を持たない phase は、委譲先 SKILL.md の完了条件で確かめる（P6 `run-intake-option-catalog` は「tier=required の連携がすべて選択または reason 付きの除外で確定し、ユーザーが選択肢の確認に答えていること」。`options.json` が `selected_integrations` と `rejected` を持つことは形の確認にとどまり、専用の lint は未実装。P10 `run-notion-intake-publish` は pipeline の exit 0 と `notion-url.txt` の有効 URL）。
 4. **SubAgent fresh context (context:fork)**: light/standard/detailed選択後のみ、Phase 2 / 3 / 5 / 8をTask toolでSubAgent起動する。accept-as-isと提示前は起動しない。
 5. **失敗で停止**: phase が exit != 0 / handoff JSON 検証 fail / fatal_exit_codes hit なら停止し `intake-trace.json` に再開ポイントを記録、ユーザーへ提示。
 6. **Secret-Out-of-Repo**: Notion トークンは Keychain から都度取得 (`scripts/keychain_get_secret.py`)。リポジトリへ書き込まない。
 7. **Gate A (Phase 8) で停止可能**: summary 否認時は Phase 4 へ戻り再ヒアリング (最大 2 周)。
 8. **lint 自動修正禁止**: P0 lint fail は根本原因をユーザー提示し AI 判断で勝手に修正しない。
 9. **スキル生成を絶対に実行しない (hard stop / 機械強制)**: 本スキルは **ヒアリング〜Notion 公開〜Phase 11 next-action 推奨**までで完結し、`run-skill-create` / `run-build-skill` / `capability-build` 等のスキル生成スキルを **Skill / Task / Bash いずれでも起動しない**。Phase 11 の `next-action.json` の `mode` は**推奨情報**に過ぎず、本スキルがそれを実行に移すことはない。Phase 11 完了 = ワークフロー終了であり、完了レポート提示後は必ず停止する。現行 handoff は recommendation-only-v1 で、スキル生成はユーザーが別途明示的に開始する独立アクションである。
-   - **この禁止は自然言語の指示だけに依存しない (100% 機械保証)**: `hooks/hook-guard-skillgen.py` (PreToolUse: Skill|Task|Bash) が、`run-skill-intake` 実行中フラグ (lock) を hook 駆動で立て、intake 実行中に生成スキルが起動されると **exit 2 でツール呼び出し自体をハーネスがブロック**する。lock の作成・遮断・解除は全て hook が行いモデル挙動に依存しない。本 Key Rule (プロンプト層) は「なぜ止まるか」の意図説明であり、保証の主体は hook 層である。配線は `.claude-plugin/plugin.json`、実証は `tests/test_skill_intake_guard_skillgen.py`。
-10. **Phase 9 exitHook の inline 自己更新**: `run-intake-finalize` が `intake.json` を生成した後にだけ、`run-skill-intake` が `measure_value_realized.py` を起動して計測結果を `self-update.json` へ保存する。次に同じ `update_question_bank.py --derive-from-intake` で `sections.10_self_updater.question_bank_additions` を `qb-candidates.json` へ決定論的に導出し、`--apply` なしで preview する。別ターンの明示承認後だけ `--apply`し、`declining=true` なら適用しない。採点・候補導出・重複排除ロジックは各 script を正本とし、orchestrator に再実装しない。
+   - **この禁止は自然言語の指示だけに依存しない (100% 機械保証)**: `hooks/hook-guard-skillgen.py` (PreToolUse: Skill|Task|Bash) が、`run-skill-intake` 実行中フラグ (lock) を hook 駆動で立て、intake 実行中に生成スキルが起動されると **exit 2 でツール呼び出し自体をハーネスがブロック**する。lock の作成・遮断・解除は全て hook が行いモデル挙動に依存しない。本 Key Rule (プロンプト層) は「なぜ止まるか」の意図説明であり、保証の主体は hook 層である。配線は plugin root の `hooks/hooks.json`（plugin.json は hooks キーを持たない）、実証は repo root の `tests/test_skill_intake_guard_skillgen.py`。
+10. **Phase 9 exitHook の inline 自己更新**: `run-intake-finalize` が `intake.json` を生成した後にだけ、`run-skill-intake` が `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/measure_value_realized.py"` を起動して計測結果を `self-update.json` へ保存する。次に同じ `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update_question_bank.py" --derive-from-intake` で `sections.10_self_updater.question_bank_additions` を `qb-candidates.json` へ決定論的に導出し、`--apply` なしで preview する。別ターンの明示承認後だけ `--apply`し、`declining=true` なら適用しない。採点・候補導出・重複排除ロジックは各 script を正本とし、orchestrator に再実装しない。
 
 ## ゴールシーク実行
 
@@ -193,7 +193,7 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 
 ### 完了チェックリスト (Checklist)
 
-- [ ] `Step 0` 前提検証 PASS (`validate-notion-ready.py --check-api` exit 0)。PASS 済みなら API キー / Notion トークンをユーザーに再質問しない。exit 44 のときだけ `references/keychain-setup.md` を案内し停止
+- [ ] `Step 0` 前提検証 PASS (`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-notion-ready.py" --check-api` exit 0)。PASS 済みなら API キー / Notion トークンをユーザーに再質問しない。exit 44 のときだけ `references/keychain-setup.md` を案内し停止
 - [ ] `output/<hint>/` と `eval-log/intake-trace.json` 初期化済み (hint は topic から仮決定)
 - [ ] `workflow-manifest.json` の全 phase を manifest 順・dependsOn 充足後に処理し、delegate/schema/handoff digest を attempt ごとに `intake-trace.json` へ記録済み。実行 phase 一覧や依存辺は本文へ複製していない
 - [ ] manifest の `skipWhen` / `skipReason` と `retryOn` / `retryTo` / `maxRetries` に一致する場合だけ SKIP/RETRY とし、それ以外を成功へ畳んでいない
@@ -212,33 +212,34 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 - **未達評価の単位は phase**: `intake-trace.json` の最新 disposition を読み、未完了 phase を次のターゲットにする。`dependsOn` は PASS または manifest の条件に一致する SKIP が前提。違反 (依存未満) なら依存元へ戻す。
 - **委譲先**: `workflow-manifest.json` の `delegateType` / `delegateName` を唯一の起動契約とする。`delegateType=skill` は Skill tool、`delegateType=agent` は Task tool (SubAgent / context:fork) で起動する。本スキルは制御のみで業務ロジックを持たない。
 - **context:fork 必須箇所**: Phase 2 / 3 / 5 / 8。主スレッド context を渡さず Task tool で fresh agent 起動 (バイアス回避・同意ループ防止)。
-- **handoff 検証**: 各 phase 完了直後に `workflow-manifest.json` と各 delegate の `schemas/` 契約を確認する。fail / fatal exit は trace に記録して停止し、自動再試行しない。再開はユーザーが原因を解消した後の別実行とする。
-- **intent 完了ゲート**: Phase 4 後、`interview.json.intent_contract.slot_status` に `filled=false` がある、または `pending_probes[]` が空でない場合は Phase 5 以降へ進まない。`pending_probes[]` の順に Phase 4 へ戻し、ユーザーへ固定 probe を 1 問ずつ聞く。
+- **handoff 検証**: 各 phase 完了直後に `workflow-manifest.json` と各 delegate の `schemas/` 契約を確認する。fail / fatal exit は trace に記録して停止し、自動再試行しない。再開は下の「失敗からの再開」に従う。
+- **intent 完了ゲート**: P4 の完了条件として扱う。`interview.json.intent_contract.slot_status` に `filled=false` がある、または `pending_probes[]` が空でない間は、`run-intake-interview` が同じ attempt の中で `pending_probes[]` の順に固定 probe を 1 問ずつ聞き、P4 を PASS として trace に書かない（`validate-interview-json.py` が未充足を拒否する）。P4 の attempt を足して戻すことはしない。
 - **条件付き retry/skip**: 分岐条件・戻り先・上限・skip 理由は manifest の `retry*` / `skip*` が SSOT。attempt は trace へ追記し、上書きしない。
+- **P5 skip 時の purpose.json**: P5 を SKIP するときは、SKIP 行を trace に書く前に `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/build-skipped-purpose.py" output/<hint>/interview.json --out output/<hint>/purpose.json` を実行する。interview.json の回答を写すだけで深掘りはせず、`techniques_used` に `skip:needs_excavation=false` を残す。exit 1（needs_excavation が false でない、「真の課題」が空など）なら SKIP せず P5 の excavator を起動する（excavator の起動条件にも同じ条件を書いてある）。SKIP 行には handoff を書かない。P9 はこの印を intake.json の §3 `techniques_used` へそのまま写し、`rounds` は件数にする（写し方は `references/handoff-contract.md` の「P5 を SKIP した経路の §3」。P10 の公開前 hook が interview.json と照合する）。P6・P7・P11 は skip の有無に関係なく purpose.json を読み、`decide-mode.py` に skip 用の分岐は持たせない。
 - **Phase 9 exitHook**: P8 success 後はまず `run-intake-finalize` で `intake.json` を生成する。その成功後にのみ2つの script resource を inline 起動し、計測と `qb-candidates.json` 導出→dry-run を行う。`--apply` は別ターンの明示承認後のみ。exitHook 失敗は P9 success にしない。
 - **lint / quality_gate 自動修正禁止**: `quality_gate.py` / `cross_check.py` fail は根本原因をユーザー提示し AI 判断で勝手に直さない。
 - **Notion target 保持**: `--page-url` / `--page-id` / `--database-id` は Phase 1 から `notion_target` として trace / intake.json に残し、Phase 10 へ同じ値を渡す。指定 page がある場合、create fallback は禁止する。
-- **再開ポイント記録**: 各 phase 開始前 / 完了後に `eval-log/intake-trace.json` を append-only 更新。停止時は次回再開する phase id を末尾に明記。
+- **失敗からの再開**: phase が失敗したら、その attempt を `status=FAIL`・`error`（原因の要約）・`exit_code` 付き、handoff なしで `eval-log/intake-trace.json` に追記し、`workflow_status=failed` にして停止する。末尾の FAIL 行の id が次回再開する phase になる。progress の item は pending のまま、intermediate には行を足さない。ユーザーが原因を解消したら、同じ trace で同じ phase を attempt+1 として再実行し（`workflow_status=in_progress` に戻す）、前の phase はやり直さない。`validate-task-graph-progress.py` は FAIL の次に同じ phase が来ることだけを認め、FAIL で終わる trace は完了にしない。前段の成果物を作り直す必要があるときは同じ trace では続けず、trace・progress・intermediate をそれぞれ `python3 -c 'import os,sys; os.replace(sys.argv[1], sys.argv[2])' <元のパス> <退避先のパス>` で別名に退避して P1 から新しく実行する。
 - 各 phase の entryHook / exitHook / dependsOn / fatal_exit_codes / resourceIds は `workflow-manifest.json` を参照。プロンプトは `prompts/R1-main.md`。
 
 ### ゴールシーク配線（task-graph 変種）
 
 `workflow-manifest.json` の `phases[]` を `eval-log/run-skill-intake-progress.json` の先頭 checklist へ `C<n>.text="[<phase-id>] <title>"`、`dependsOn`→`depends_on` として決定論射影する。別の task-graph 状態は作らず、progress.json を唯一の実行状態とする。Gate A の再試行は選択済み item を再消費せず、その item の実行中に manifest の retry 契約で処理し、attempt trace へ追記してから item を done にする。条件付き skip は phase disposition を trace に残したうえで対応 item を done (処理済み) とする。
 
-- 各周回の冒頭で `scripts/extract-ready-set-from-checklist.py eval-log/run-skill-intake-progress.json` を実行し、返った ready 集合の最小 id だけを実行する。完了時は対象 item を `done` にしてから ready 集合を再計算し、依存順消費を拘束する。
-- 実行中に必要な未網羅項目を発見した場合だけ、`scripts/build-self-reflection-entry.py` で新しい sink item を checklist 末尾へ追記する。未知の `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
+- 各周回の冒頭で `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/extract-ready-set-from-checklist.py" eval-log/run-skill-intake-progress.json` を実行し、返った ready 集合の最小 id だけを実行する。完了時は対象 item を `done` にしてから ready 集合を再計算し、依存順消費を拘束する。
+- 実行中に必要な未網羅項目を発見した場合だけ、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/build-self-reflection-entry.py"` で新しい sink item を checklist 末尾へ追記する。未知の `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
 - 11 phase を 1 周回 1 item で消費できるよう `max_loops: 17` とし、self-reflect 追記分の余裕を保つ。17 周で未完了が残れば自動成功にせず `open_issues` へ差し戻す。
 - 各周回の `eval-log/run-skill-intake-intermediate.jsonl` に `ready_set` と `selected_item` を追記する。完了検査はその申告値を信用せず、checklist の `depends_on` と過去の `selected_item` 列から各周回の ready 全集合を安定ソートで再計算する。申告 `ready_set` の欠落・余分・順序違反は exit 1、`selected_item` は再計算集合の最小 id と一致しなければならない。トレース不在は成功に畳まない。
 - ドリフト圧縮用に `original_goal` を不変とし、次周回は `merged_directive_for_next` を必須入力にする。完了検査は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で anchor 一致を検証する。
-- final phase の delegate 完了後、`intake-trace.json` の当該 exitHook を RUNNING、trace/progress を in_progress として `scripts/validate-task-graph-progress.py eval-log/run-skill-intake-progress.json eval-log/run-skill-intake-intermediate.jsonl eval-log/intake-trace.json` を実行する。validator は manifest 全 phase の完全射影、dependsOn、skip/retry attempt、delegate、handoff/exitHook evidence digest、ready 消費、goal anchor を再計算する。pre-commit exit 0 後に exitHook=PASS・trace/progress=completed へ更新すると progress digest も変わるため、P11 evidence の progress SHA-256 を更新して同じ verifier を再実行する。2回目 exit 0 のときだけ完了レポートを出す。未生成・不一致は absence-as-violation で exit 1 とし、完了にしない。
-- 着手前に `scripts/extract-capability-dependency-graph.py` で Skill / SubAgent / script の参照を確認し、未解決参照は停止する。実行時に再利用価値のある依存判断が増えた場合だけ `scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
+- final phase の delegate 完了後、`intake-trace.json` の当該 exitHook を RUNNING、trace/progress を in_progress として `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/validate-task-graph-progress.py" eval-log/run-skill-intake-progress.json eval-log/run-skill-intake-intermediate.jsonl eval-log/intake-trace.json` を実行する。validator は manifest 全 phase の完全射影、dependsOn、skip/retry attempt、delegate、handoff/exitHook evidence digest、ready 消費、goal anchor を再計算する。pre-commit exit 0 後に exitHook=PASS・trace/progress=completed へ更新すると progress digest も変わるため、P11 evidence の progress SHA-256 を更新して同じ verifier を再実行する。2回目 exit 0 のときだけ完了レポートを出す。未生成・不一致は absence-as-violation で exit 1 とし、完了にしない。
+- 着手前に `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/extract-capability-dependency-graph.py"` で Skill / SubAgent / script の参照を確認し、未解決参照は停止する。実行時に再利用価値のある依存判断が増えた場合だけ `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-skill-intake/scripts/build-capability-graph-knowledge-entry.py"` で dependency graph knowledge へ記録する。
 
 ## Gotchas
 
 1. **業務ロジック混入禁止**: 質問雛形・採点基準・Notion blocks 生成を本 SKILL.md に書かない (SRP 違反 → lint 警告)。子 Skill / SubAgent / references に閉じる。
 2. **固定 Steps の本文記述禁止**: 実行順は `workflow-manifest.json phases[]` から都度読む。SKILL.md に Step 1 / 2 / ... を列挙しない (manifest との二重管理になり drift 源)。
 3. **SubAgent context 漏洩**: Phase 2 / 3 / 5 / 8 で Task tool を使わず Skill tool で呼ぶと主スレッド context が混入し Sycophancy/バイアスが発生する。
-4. **Phase 4→5 skip 条件**: `needs_excavation=false` のときのみ skip 可。理由を `intake-trace.json` に書かない skip は禁止。
+4. **Phase 4→5 skip 条件**: `needs_excavation=false` のときのみ skip 可。理由を `intake-trace.json` に書かない skip は禁止。skip しても purpose.json は `scripts/build-skipped-purpose.py` で作る（P6・P7・P11 が読むため、無いと P11 の `decide-mode.py` が exit 3 で止まる）。
 5. **Gate A 周回上限**: Phase 8 否認 → Phase 4 戻しは最大 2 周。3 周目は停止。
 6. **Notion トークン**: 環境変数 / リポジトリへ置かず Keychain から都度取得 (`scripts/keychain_get_secret.py`)。
 7. **manifest 二重管理禁止**: phases[] を本 SKILL.md にコピペしない。`lint-manifest-contents.py` を必ず通す。
@@ -257,6 +258,7 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 - `../../scripts/measure_value_realized.py` — Phase 9 exitHook の post-finalize 計測実装 (書込みなし)
 - `../../scripts/update_question_bank.py` — Phase 9 exitHook の `qb-candidates.json` 導出・重複排除・dry-run・承認後適用実装
 - `scripts/validate-task-graph-progress.py` — Phase 11 exitHook の task-graph 消費・anchor 機械検査
+- `scripts/build-skipped-purpose.py` — P5 SKIP 時に interview.json から最小の purpose.json を作る
 - 子 Skill: `run-intake-kickoff` / `run-intake-interview` / `run-intake-option-catalog` / `run-intake-visualize` / `run-intake-next-action` / `run-intake-finalize` / `run-notion-intake-publish`
 - SubAgent: `skill-intake-assumption-challenger` / `skill-intake-user-profiler` / `skill-intake-purpose-excavator` / `skill-intake-summarizer`
 - **単一発火点 (公開 SSOT)**: Notion 公開は `intake_publish_pipeline.py` のみを発火点とし、SubAgent / sibling `run-notion-intake-publish` から二重に render/publish を直叩きしない。指定 page がある場合 `--page-id` / `--page-url` を最優先で渡し、page_id 解決不能時は exit 51 で停止する。All-or-Nothing: PNG 1 枚でも欠けたら `verify_notion_assets.py` で停止し途中公開しない。quality_gate / completeness FAIL は LLM 判断で勝手に直さずユーザーへ提示する (推測補完禁止)。

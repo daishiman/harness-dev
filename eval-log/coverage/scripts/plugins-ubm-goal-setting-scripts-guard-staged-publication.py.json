@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/guard-staged-publication.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 100,
+    "notes": "genuine review（sha256 d8fc08503a07598a8233f93387e05507820ae876416232bad2ab9b5790a467a7 をレビュー。実行検証あり）。範囲: 全188行。前回の記録（sha256 31cf0c0c…、PASS 98）からの差分: `import stat` と saved_mode（L74-85）を足した。置き換え先があればその stat.S_IMODE を、無ければ 0o666 & ~umask（os.umask(0) で読んで、すぐ戻す）を返す。L154 で mode を取り、L161 で os.replace の前に os.chmod(temporary, mode) する。確かめたこと: saved_mode の呼び出しは L146-166 の try の中なので、stat の OSError も PublicationError（saved と failed_target 付き）になり、黙って落ちない。置き換えは chmod の後なので、正式のファイルが 0600 で見える瞬間は無い。--help は rc=0、未知の option は rc=2。実物の置き換えは、迂回にならないよう直接は動かさず tests で代えた。test_guarded_publication.py の L265 test_replaced_file_keeps_its_permission_bits と、L280-293 の parametrize test_new_file_gets_the_umask_mode_not_mkstemp_0600（umask 0o022・0o027・0o077）が通る。plugins/ubm-goal-setting/tests 全体 1047 passed。前回の指摘 [低]（保存したファイルが mkstemp の 0600 のまま、持ち主しか読めなくなる）は解消した。付記（減点しない）: header に version 行が無い。lint-script-frontmatter（REQUIRED_KEYS に version は無い）は rc=0。指摘: なし。DEDUCTION: なし → 100。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-a",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -4,7 +4,9 @@
 # purpose: repo 全域の全 test_*.py / *_test.py が CI のテスト実行で 1 回以上到達することを fail-closed 検証するメタ lint。境界外 (tests/・plugins/ 以外) に置かれた test の無言未実行を封鎖する。
 # inputs:
 #   - repo 全域の test_*.py / *_test.py (discover_repo_tests 経由)
-#   - .github/workflows/harness-creator-kit-ci.yml (到達 root の実行 step 検証; 不在なら skip)
+#   - .github/workflows/harness-creator-kit-ci.yml (到達 root の実行 step 検証; 不在なら skip)。
+#     照合するのは各 step の run: の値からコメントを除いた本文だけ (PyYAML が無ければファイル全体からコメントと step 名を除いた本文)
+#   - argv: --repo-root (既定 = repo root。存在しない・未知の引数は usage error)
 # outputs:
 #   - stdout: 探索サマリ + OK
 #   - stderr: orphan test と修正方法
@@ -37,6 +39,10 @@
 ALLOWLIST に repo-relative パスと非空の理由を宣言する。orphan でなくなった/存在しない
 stale エントリはエラー (掃除を強制)。
 
+CI 実行の証跡は workflow の各 step の `run:` の値から、shell のコメント行と行末コメントを除いた
+本文だけで照合する。YAML のコメントや step 名・shell のコメントに証跡の文字列があっても
+実行されないので数えない (PyYAML が無い環境ではファイル全体からコメントと step 名を除いた本文で照合する)。
+
 Usage:
   lint-test-discovery-coverage.py [--repo-root /path/to/repo]
 
@@ -44,6 +50,7 @@ Exit 0 = ok, 1 = violation, 2 = usage error。
 """
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -53,8 +60,20 @@ import discover_repo_tests as drt  # noqa: E402
 
 # 例外宣言: {repo-relative posix パス: 理由 (非空必須)}。
 # 「なぜ CI で実行しない/到達集合の外に置くのか」と検出日を残し後日是正を追跡する。
-# 現状は空 (orphan=0)。将来 tests/・plugins/ 外に test を置く正当な理由が生じたときのみ追加。
-ALLOWLIST: dict[str, str] = {}
+# tests/・plugins/ 外に test を置く正当な理由が生じたときのみ追加する。
+_BZN_RUN = "eval-log/worktree/elegant-review/20261005-harness-bzn"
+ALLOWLIST: dict[str, str] = {
+    f"{_BZN_RUN}/test_skill_criteria_evidence.before-iteration3.py": (
+        "2026-10-10 検出。elegant-review iteration3 の改善前の test をバイト単位で写した証跡で、"
+        "実行対象ではない。phase3-test-contract-iteration3*.json の before_bytes_path と "
+        "content-review-iteration3/independent-receipt-contract-case.py がこのパスで参照する"
+    ),
+    f"{_BZN_RUN}/test_skill_criteria_evidence.failure-contract-before-iteration3.py": (
+        "2026-10-10 検出。elegant-review iteration3 の失敗受領書契約の改善前の test を写した証跡で、"
+        "実行対象ではない。phase3-failure-receipt-contract-iteration3*.json の before_bytes_path が"
+        "このパスで参照する"
+    ),
+}
 
 # 各到達 top-level が CI で実際に実行されている証跡 (harness-creator-kit-ci.yml 内の耐久的部分文字列)。
 # 二次ガード: orphan=0 (test が root 配下にある) を満たしても、その root を CI が実行
@@ -72,6 +91,45 @@ CI_WORKFLOW_REL = ".github/workflows/harness-creator-kit-ci.yml"
 def _join_continuations(text: str) -> str:
     """shell backslash 行継続を 1 行に連結する (run-ci-checks 等の折返し対策)。"""
     return re.sub(r"\\\s*\n", " ", text)
+
+
+def _strip_comments(text: str) -> str:
+    """コメント行と行末コメント (空白の後の #) を除き、行継続を連結した本文を返す。
+
+    引用符の中の # も行末コメントとして落とすが、証跡が見つからない側 (NG) に倒れるだけ。
+    コメントの中の行末 \\ は次の行を継がないので、行継続の連結はコメントを除いた後に行う。
+    """
+    lines = []
+    for line in text.splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        lines.append(re.sub(r"\s#.*$", "", line))
+    return _join_continuations("\n".join(lines))
+
+
+def _workflow_run_bodies(text: str) -> list[str] | None:
+    """workflow の jobs.*.steps[*].run の値を返す。PyYAML が無ければ None (呼び出し側で fallback)。
+
+    YAML として読めなければ ValueError (fail-closed)。
+    """
+    try:
+        import yaml
+    except ImportError:
+        return None
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ValueError(str(exc)) from exc
+    jobs = data.get("jobs") if isinstance(data, dict) else None
+    bodies: list[str] = []
+    if not isinstance(jobs, dict):
+        return bodies
+    for job in jobs.values():
+        steps = job.get("steps") if isinstance(job, dict) else None
+        for step in steps if isinstance(steps, list) else ():
+            if isinstance(step, dict) and isinstance(step.get("run"), str):
+                bodies.append(step["run"])
+    return bodies
 
 
 def check_orphans(
@@ -145,7 +203,20 @@ def check_ci_runs_roots(root: Path) -> tuple[list[str], list[str]]:
     if not ci_path.is_file():
         report.append(f"skip: {CI_WORKFLOW_REL} 不在 (repo 外文脈) — CI 実行 step 検証は省略")
         return errors, report
-    ci = _join_continuations(ci_path.read_text(encoding="utf-8"))
+    try:
+        text = ci_path.read_text(encoding="utf-8")
+        bodies = _workflow_run_bodies(text)
+    except (OSError, UnicodeDecodeError) as exc:
+        errors.append(f"{CI_WORKFLOW_REL} を読めない: {exc}")
+        return errors, report
+    except ValueError as exc:
+        errors.append(f"{CI_WORKFLOW_REL} を YAML として読めない (fail-closed): {exc}")
+        return errors, report
+    if bodies is None:
+        report.append("PyYAML 不在: step の run: を取り出せないため、コメントと step 名を除いた本文全体で照合 (fallback)")
+        ci = _strip_comments(re.sub(r"^[ \t]*(?:-[ \t]+)?name:.*$", "", text, flags=re.M))
+    else:
+        ci = "\n".join(_strip_comments(body) for body in bodies)
     for top, evidences in CI_RUN_EVIDENCE.items():
         missing = [ev for ev in evidences if ev not in ci]
         if missing:
@@ -160,15 +231,29 @@ def check_ci_runs_roots(root: Path) -> tuple[list[str], list[str]]:
     return errors, report
 
 
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="lint-test-discovery-coverage.py",
+        description="全 test が CI の実行で到達することを検査する (書き込みはしない)。",
+    )
+    parser.add_argument("--repo-root", type=Path, default=None, help="検査する repo (既定 = この script の repo)")
+    return parser
+
+
 def main(argv: list[str]) -> int:
-    root = drt.repo_root_default()
-    args = list(argv)
-    if "--repo-root" in args:
-        idx = args.index("--repo-root")
-        if idx + 1 >= len(args):
-            print("usage: lint-test-discovery-coverage.py [--repo-root /path]", file=sys.stderr)
+    parser = _parser()
+    try:
+        args = parser.parse_args(list(argv))
+    except SystemExit as exc:  # 未知の引数・値の欠落は argparse が usage を出して 2 で抜ける
+        return exc.code if isinstance(exc.code, int) else 2
+    if args.repo_root is None:
+        root = drt.repo_root_default()
+    else:
+        root = args.repo_root.resolve()
+        if not root.is_dir():
+            parser.print_usage(sys.stderr)
+            print(f"{parser.prog}: error: --repo-root がディレクトリではない: {args.repo_root}", file=sys.stderr)
             return 2
-        root = Path(args[idx + 1]).resolve()
 
     errors: list[str] = []
     report: list[str] = []

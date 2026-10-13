@@ -18,13 +18,13 @@
 | `git` | バージョン管理 | OS 標準 / brew |
 | `/bin/bash` 3.2+ | install.sh 実行 | OS 標準 |
 
-**禁則**: PyYAML / requests / jq / yq には依存しない（28章 §22 no-deps 原則）。
+**禁則**: PyYAML / requests / jq / yq には依存しない（22章「No-deps 原則」）。
 
 ## 最小 Skill の手書き手順
 
 ### Step 1: 最小 SKILL.md を書く
 
-`creator-kit/skills/<my-first-skill>/SKILL.md` に次を書く。
+`plugins/<plugin>/skills/<my-first-skill>/SKILL.md` に次を書く（kit の今の置き場所は `installers/` と `plugins/`。設計書32章冒頭の注記）。
 
 ```markdown
 ---
@@ -58,7 +58,7 @@ audit-trigger: quarterly
 
 ### Step 2: 最小 rubric.json を書く
 
-`creator-kit/skills/ref-skill-design-rubric/rubric.json` が壊れている場合、次の最小骨格で再構築する。
+`plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json` が壊れている場合、次の最小骨格で再構築する。
 
 ```json
 {
@@ -78,14 +78,14 @@ threshold を意図的に低く（60）設定して bootstrap 中の通過を許
 ### Step 3: 手動で rubric_hash を計算
 
 ```bash
-python3 creator-kit/scripts/compute-rubric-hash.py \
-  --rubric creator-kit/skills/ref-skill-design-rubric/rubric.json
+python3 plugins/skill-governance-automation/scripts/compute-rubric-hash.py \
+  --rubric plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json
 ```
 
 このスクリプト自体が壊れている場合は、次の 3 行 Python で代替:
 
 ```bash
-python3 -c "import hashlib,json,sys; d=json.load(open(sys.argv[1])); d.pop('rubric_hash',None); print('sha256:'+hashlib.sha256(json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()).hexdigest())" creator-kit/skills/ref-skill-design-rubric/rubric.json
+python3 -c "import hashlib,json,sys; d=json.load(open(sys.argv[1])); d.pop('rubric_hash',None); print('sha256:'+hashlib.sha256(json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()).hexdigest())" plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json
 ```
 
 ### Step 4: eval-log を 1 件手書きで作る
@@ -100,19 +100,19 @@ python3 -c "import hashlib,json,sys; d=json.load(open(sys.argv[1])); d.pop('rubr
 
 ### Step 5: 通常フローへ復帰
 
-最小 Skill と最小 rubric が揃ったら、`/run-skill-create` を起動して通常フローで `run-build-skill` 自身を再生成する。bootstrap 完了の判定は `creator-kit/scripts/lint-rubric-violation.py` の `bootstrap` フィールドが `false` になること（既定 20 件到達）。
+最小 Skill と最小 rubric が揃ったら、`/run-skill-create` を起動して通常フローで `run-build-skill` 自身を再生成する。bootstrap 完了の判定は `plugins/skill-governance-lint/scripts/lint-rubric-violation.py` の `bootstrap` フィールドが `false` になること（既定 20 件到達）。
 
 ## 自己再生成テスト（ドリフト検知）
 
 通常運用に復帰したあと、定期的に `run-build-skill` 自身を再生成して差分が閾値以内であることを確認する。これは creator-kit が自己ホスティング可能であることの継続的な保証になる。
 
 ```bash
-python3 creator-kit/_bootstrap/test-self-regenerate.py \
-  --target creator-kit/skills/run-build-skill \
+python3 installers/bootstrap/test-self-regenerate.py \
+  --target plugins/harness-creator/skills/run-build-skill \
   --max-diff-lines 50
 ```
 
-差分が `--max-diff-lines` を超えた場合は kit のドリフトとして調査対象になる。
+差分が `--max-diff-lines` を超えた場合は kit のドリフトとして調査対象になる。`--regenerate-cmd` を渡さないと、同じ写しと比べるだけなので差分は常に 0 になる（上の例はその形）。
 
 ## 哲学
 

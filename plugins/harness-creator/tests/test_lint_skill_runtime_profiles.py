@@ -139,11 +139,12 @@ def test_inline_rejects_unused_task_graph_assets(tmp_path: Path) -> None:
 def test_goal_seek_anchor_validator_must_match_canonical(tmp_path: Path) -> None:
     root, skill = _skill(tmp_path)
     skill.write_text(
-        skill.read_text(encoding="utf-8") + "\nvalidate-inline-goal-seek-anchor.py\n",
+        skill.read_text(encoding="utf-8")
+        + '\npython3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-inline-goal-seek-anchor.py"\n',
         encoding="utf-8",
     )
     profile = MODULE.inspect_skill(skill, root / "plugins")
-    assert any("plugin scripts/ に不在" in finding for finding in profile.findings)
+    assert any("plugin の scripts/ に写しが不在" in finding for finding in profile.findings)
 
     canonical = (
         root
@@ -159,6 +160,72 @@ def test_goal_seek_anchor_validator_must_match_canonical(tmp_path: Path) -> None
     assert any("正本と不一致" in finding for finding in profile.findings)
     deployed.write_bytes(canonical.read_bytes())
     assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_goal_seek_anchor_validator_may_be_bundled_in_skill(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8")
+        + '\npython3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py"\n',
+        encoding="utf-8",
+    )
+    canonical = (
+        root
+        / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py"
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    bundled = skill.parent / "scripts/validate-inline-goal-seek-anchor.py"
+    bundled.parent.mkdir(parents=True)
+    bundled.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
+    bundled.write_bytes(canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+    # plugin scripts/ にも写しがあるなら、どちらも正本と一致していなければならない。
+    plugin_copy = root / "plugins/demo/scripts/validate-inline-goal-seek-anchor.py"
+    plugin_copy.parent.mkdir(parents=True)
+    plugin_copy.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
+
+
+def test_goal_seek_anchor_accepts_run_skill_feedback_vendor_path(tmp_path: Path) -> None:
+    # 配布コピーの run-skill-feedback は plugin 直下に写しを持たず、自分の skills/…/scripts/ に
+    # 同梱して $SKILL_ROOT から呼ぶ。この置き場所を認め、正本との drift は検出する。
+    root, demo = _skill(tmp_path)
+    skill = demo.parent.parent / "run-skill-feedback" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        demo.read_text(encoding="utf-8").replace("name: run-demo", "name: run-skill-feedback")
+        + '\npython3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py"\n',
+        encoding="utf-8",
+    )
+    canonical = (
+        root
+        / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py"
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    vendored = (
+        root
+        / "plugins/demo/skills/run-skill-feedback/scripts"
+        / "validate-inline-goal-seek-anchor.py"
+    )
+    vendored.parent.mkdir(parents=True)
+    vendored.write_bytes(canonical.read_bytes())
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert not any(
+        "validate-inline-goal-seek-anchor.py" in finding
+        for finding in profile.findings
+    )
+
+    vendored.write_text("# drift\n", encoding="utf-8")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    assert any("正本と不一致" in finding for finding in profile.findings)
 
 
 def test_agent_team_requires_fan_out_fan_in_and_ownership(tmp_path: Path) -> None:
@@ -265,6 +332,8 @@ def test_report_exit_uses_legacy_ratchet(tmp_path: Path, monkeypatch, capsys) ->
     monkeypatch.setattr(
         MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset({DEMO_SKILL_PATH})
     )
+    # 実 repo の FORK_TOOLS_BASELINE は一時 repo に無いので、全体実行では陳腐化になる。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
     assert MODULE.main(["--repo-root", str(root)]) == 0
     captured = capsys.readouterr()
     assert "legacy=1 registered=1 unlisted=0 stale=0" in captured.out
@@ -333,7 +402,9 @@ def test_stale_check_is_skipped_when_scope_is_filtered(
     assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 0
     captured = capsys.readouterr()
     assert "免除が陳腐化" not in captured.err
-    assert "stale=0" in captured.out
+    # 検査していないことを 0 件と区別して出す。
+    assert "stale=skipped" in captured.out
+    assert "stale=0" not in captured.out
 
 
 def test_replica_skill_name_is_allowed_without_path_registration(
@@ -343,8 +414,34 @@ def test_replica_skill_name_is_allowed_without_path_registration(
     root, _skill_path = _skill(tmp_path, goal_seek="")
     monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
     monkeypatch.setattr(MODULE, "LEGACY_LOOP_REPLICA_SKILLS", frozenset({"run-demo"}))
+    # 実 repo の FORK_TOOLS_BASELINE は一時 repo に無いので、全体実行では陳腐化になる。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
     assert MODULE.main(["--repo-root", str(root)]) == 0
     assert "[legacy]" in capsys.readouterr().err
+
+
+def test_stale_fork_tools_registration_fails(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """FORK_TOOLS_BASELINE も両方向 ratchet であること (返済済み/消滅済みの登録で落ちる)。
+
+    legacy loop 側にだけ陳腐化検査があり、fork/tools 側は片方向だった。解消しても登録が
+    残り、同じ path が将来再び不整合になった時に黙って再免除される。
+    """
+    root, _skill_path = _skill(tmp_path, goal_seek="  engine: inline\n  fork: inline\n")
+    # fork=inline なので allowed-tools 不整合 finding は出ない = 登録は返済済み。
+    # legacy 側の実登録は tmp root に実在せず陳腐化で先に落ちるので空へ差し替える。
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset({DEMO_SKILL_PATH}))
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "fork/allowed-tools ratchet の免除が陳腐化" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+
+    # 対照: 登録を外せば通る。
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 0
+    assert "fork_tools_stale=0" in capsys.readouterr().out
 
 
 def test_unlisted_legacy_paths_matches_skill_segment_not_substring(monkeypatch) -> None:
@@ -377,3 +474,167 @@ def test_manifest_agent_ref_must_exist(tmp_path: Path) -> None:
     )
     profile = MODULE.inspect_skill(skill, root / "plugins")
     assert any("delegate agent が不在" in finding for finding in profile.findings)
+
+
+def test_manifest_non_object_top_level_is_finding(tmp_path: Path) -> None:
+    """top-level が配列などの manifest は traceback ではなく finding で fail-closed にする。"""
+    root, skill = _skill(tmp_path)
+    text = skill.read_text(encoding="utf-8").replace(
+        "prefix: run\n", "prefix: run\nmanifest: workflow-manifest.json\n"
+    )
+    skill.write_text(text, encoding="utf-8")
+    manifest = skill.parent / "workflow-manifest.json"
+    for body, kind in (
+        ('[{"id": "P1", "dependsOn": []}]', "list"),
+        ('"phases"', "str"),
+        ("null", "NoneType"),
+        ("1", "int"),
+    ):
+        manifest.write_text(body, encoding="utf-8")
+        profile = MODULE.inspect_skill(skill, root / "plugins")
+        assert any(
+            f"manifest の top-level が object でない ({kind})" in finding
+            and "workflow-manifest.json" in finding
+            for finding in profile.findings
+        ), (body, profile.findings)
+
+
+def test_manifest_non_object_top_level_exits_1(tmp_path: Path, monkeypatch, capsys) -> None:
+    root, skill = _skill(tmp_path)
+    text = skill.read_text(encoding="utf-8").replace(
+        "prefix: run\n", "prefix: run\nmanifest: workflow-manifest.json\n"
+    )
+    skill.write_text(text, encoding="utf-8")
+    (skill.parent / "workflow-manifest.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    assert "manifest の top-level が object でない (list)" in capsys.readouterr().err
+
+
+ANCHOR = "validate-inline-goal-seek-anchor.py"
+
+
+def _anchor_skill(tmp_path: Path, call: str) -> tuple[Path, Path, Path]:
+    root, skill = _skill(tmp_path)
+    skill.write_text(skill.read_text(encoding="utf-8") + f"\n{call}\n", encoding="utf-8")
+    canonical = (
+        root / "plugins/harness-creator/skills/run-build-skill/templates"
+        / "goal-seek-runtime/scripts" / ANCHOR
+    )
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical\n", encoding="utf-8")
+    return root, skill, canonical
+
+
+def _place(path: Path, data: bytes) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return path
+
+
+def test_skill_root_call_needs_the_skill_copy_not_only_the_plugin_copy(tmp_path: Path) -> None:
+    # 実行時は $SKILL_ROOT/scripts を呼ぶので、plugin 側にだけ写しがあっても動かない。
+    root, skill, canonical = _anchor_skill(
+        tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}" p i'
+    )
+    _place(root / "plugins/demo/scripts" / ANCHOR, canonical.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("skill の scripts/ に写しが不在" in f for f in findings), findings
+    _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_plugin_root_call_needs_the_plugin_copy_not_only_the_skill_copy(tmp_path: Path) -> None:
+    root, skill, canonical = _anchor_skill(
+        tmp_path, f'python3 "${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT}}}}/scripts/{ANCHOR}" p i'
+    )
+    _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("plugin の scripts/ に写しが不在" in f for f in findings), findings
+    _place(root / "plugins/demo/scripts" / ANCHOR, canonical.read_bytes())
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_prose_mention_of_the_anchor_is_not_a_call(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8")
+        + f"\nこの skill は {ANCHOR} を使わない。正本は "
+        f"`run-build-skill/templates/goal-seek-runtime/scripts/{ANCHOR}`。\n",
+        encoding="utf-8",
+    )
+    assert MODULE.inspect_skill(skill, root / "plugins").findings == ()
+
+
+def test_missing_canonical_is_reported_as_missing_not_as_drift(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_text(
+        skill.read_text(encoding="utf-8") + f'\npython3 "$SKILL_ROOT/scripts/{ANCHOR}"\n',
+        encoding="utf-8",
+    )
+    _place(skill.parent / "scripts" / ANCHOR, b"# copy\n")
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("正本が見つからない" in f for f in findings), findings
+    assert not any("正本と不一致" in f for f in findings)
+
+
+def test_anchor_copy_symlinked_outside_the_plugin_is_rejected(tmp_path: Path) -> None:
+    root, skill, canonical = _anchor_skill(tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}"')
+    outside = _place(tmp_path / "elsewhere" / ANCHOR, canonical.read_bytes())
+    (skill.parent / "scripts").mkdir()
+    (skill.parent / "scripts" / ANCHOR).symlink_to(outside)
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert any("plugin の外を指す symlink" in f for f in findings), findings
+
+
+def test_unreadable_anchor_copy_exits_2_without_traceback(tmp_path: Path, monkeypatch, capsys) -> None:
+    import os
+    import pytest
+
+    if os.geteuid() == 0:
+        pytest.skip("root は chmod 000 でも読める")
+    root, skill, canonical = _anchor_skill(tmp_path, f'python3 "$SKILL_ROOT/scripts/{ANCHOR}"')
+    copy = _place(skill.parent / "scripts" / ANCHOR, canonical.read_bytes())
+    copy.chmod(0)
+    try:
+        assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 2
+    finally:
+        copy.chmod(0o644)
+    err = capsys.readouterr().err
+    assert "入力を読めない" in err and ANCHOR in err
+
+
+def test_non_utf8_skill_md_is_a_read_error_finding(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path)
+    skill.write_bytes(b"\xff" + skill.read_bytes())
+    findings = MODULE.inspect_skill(skill, root / "plugins").findings
+    assert len(findings) == 1 and findings[0].startswith("read error:")
+
+
+def test_stale_fork_tools_baseline_entry_fails_only_in_full_scope(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    root, _skill_path = _skill(tmp_path)  # fork=inline: Agent/Task 不足の finding は無い
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset({DEMO_SKILL_PATH}))
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "fork/allowed-tools ratchet の免除が陳腐化" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+    assert "fork_tools_stale=1" in captured.out
+
+    assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 0
+    assert "fork_tools_stale=skipped" in capsys.readouterr().out
+
+
+def test_json_report_marks_whether_stale_was_checked(tmp_path: Path, monkeypatch, capsys) -> None:
+    import json
+
+    root, _skill_path = _skill(tmp_path)
+    monkeypatch.setattr(MODULE, "FORK_TOOLS_BASELINE", frozenset())
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    assert MODULE.main(["--repo-root", str(root), "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["summary"]["stale_checked"] is True
+    assert MODULE.main(["--repo-root", str(root), "--plugin", "demo", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["summary"]["stale_checked"] is False

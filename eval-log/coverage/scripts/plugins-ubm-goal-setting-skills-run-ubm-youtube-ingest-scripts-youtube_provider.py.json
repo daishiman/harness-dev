@@ -4,11 +4,10 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 85,
-    "notes": "provider 中立アダプタ契約 + fixture provider (library module)。soundness: 契約を list_channel_videos/fetch_transcript の2メソッド+typed error 4分類(QuotaExceeded=run打切/AuthRequired=要人間/TemporaryFailure=retry/TerminalUnavailable=確定)に最小固定し、one-shot が状態へ決定論写像できる。FixtureProvider の cursor 解決 (_page_index_after) は未知 cursor を len(pages)=空ページへ落とし停止保証、未同定 channel は空ページで required-primary を止めない(意図がコメントで明示)。frozen dataclass の値オブジェクト、caption→asr fallback の判断は provider 側で origin として運ぶ境界が正しい。responsibility: 実 provider は late-bind で get_provider が未実装を契約ドキュメント参照付き NotImplementedError で明示。error-handling: fixture の未知 error 名は ProviderError 基底へフォールバック。減点: get_provider('fixture') で fixture opt 欠落/None が KeyError/TypeError として素通り(呼び出し側 one-shot で traceback 化・clean な usage error にならない)、FixtureProvider.__init__ の JSON 破損も unwrapped。side-effect-safety: read-only/network:false(fixture のみ同梱)。frontmatter: PEP723 様式完備、`from __future__ import annotations` を使わない理由(importlib smoke ロードと dataclass の相互作用)まで文書化。mechanical: 専用テストファイルは無いが tests/test_youtube_sync_oneshot.py が subprocess 経由で fixture provider の全経路(複数ページ pagination/quota list_errors/typed error 写像/transcript 取得)を機械実行しており実質被覆(library module の既存慣行に整合)・全緑。",
-    "score_scale": "0-100"
+    "score": 97,
+    "notes": "genuine review（sha256 af724f4bef92dc379a792a4f9dd9e8588bfaad26242c03d091a2c924e2226654 をレビュー。実行検証あり）。範囲: 全 201 行（v0.2.0）。origin/main との差分（+79/-36。fixture の形の検証を _require で ProviderError にする、next_cursor の型と重複の検査、coverage・transcript の型検査）は特に丁寧に読んだ。確かめたこと: pytest test_youtube_provider.py と test_youtube_sync_oneshot.py で 90 passed（mock・fixture のみでネットワークなし）。scratchpad の fixture で、トップ・channels・pages・videos の要素・next_cursor の型と重複の形の違いはどれも ProviderError から oneshot が exit 1（traceback なし）。coverage が 'abc' や transcript が object でないときは provider_error で止まる。未知の取得元は NotImplementedError から exit 2。lint-script-frontmatter.py は run-ubm-youtube-ingest/scripts で OK checked=4。指摘: [低] fetch_transcript（L174-175）は spans が配列であることしか確かめず、要素が object であることも origin が caption か asr であることも確かめない。そのため spans:[\"x\"] や [5] の fixture で、oneshot の render（run-youtube-sync-oneshot.py L181 の sp.get）が AttributeError の traceback を出して exit 1 になり、lease が残って次の実行が lease_held になる。--dry-run は同じ fixture で ingested=1 と報告する。docstring L111『読めない・形が違う fixture は ProviderError にする (traceback にしない)』と header L14 に食い違う。直し方は spans の各要素が dict であることと origin の列挙値を _require に足す。DEDUCTION: 100 -3（spans の要素を検査しない）→ 97。"
   },
-  "reviewed_by": "workflow-code-review",
+  "reviewed_by": "coverage-reviewer-pr85-20261010i-s2",
   "checked": [
     "soundness",
     "responsibility",

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "rubric_id": "domain-ubm-goal-setting",
+  "rubric_version": "1.0.0",
+  "layer": "L1",
+  "domain": "ubm-goal-setting",
+  "upstream": [
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "_doc": "User-authorized initial local L1. Intentional same-ID, check-only KL-002 delta; ID merge means one criterion, not duplicate scoring. Global L0, weights, threshold, severity and other rules remain unchanged. Background privacy/generalization is preserved; concrete source-based application and causal constraints are mandatory. No machine-only semantic PASS. Source-grounded enrichment uses existing evidence-bearing card fields; this does not claim a fresh verification of raw source documents that have not been read.",
+  "rules": [
+    {
+      "id": "KL-002",
+      "check": "For ubm-goal-setting targets with knowledge/: retain KL-002 six required field groups and quality level >=2. For id, title|content, intent|purpose, keywords|tags and source use unchanged L0 knowledge-construction.md section 4.3. For background only, apply this registered L1 domain standard: level 1 fails if the applicable situation or reason/constraint/failure condition is vague, or any fact is fabricated; level 2 requires 2-5 sentences with an explicit source-grounded applicable structural situation plus the concrete reason, constraint, contrast or failure condition that makes the advice relevant; an abstract single sentence, redundant restatement or mere added length is insufficient; level 3 additionally traces source-grounded conditions, actions, results or limits when available. Keep background free of personal names, company names, specific industries and specific numeric facts as required by UBM schema; retain existing original evidence, source and industry/scale facts in their original provenance fields, without fabricating or injecting them into background. All current entries, not a sample or a fixed count, require semantic evaluation of these six groups; missing source evidence remains FAIL. This L1 is injected only for verified ubm-goal-setting targets; other domains continue using unchanged L0. When knowledge/ is absent, use the inherited not-applicable behavior."
+    }
+  ]
+}
