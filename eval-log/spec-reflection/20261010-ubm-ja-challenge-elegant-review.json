@@ -1067,7 +1067,8 @@
     "Beads に起票した (harness-gzet。round15・round16 の範囲の外): live trial の記録: 保存の手順に個人情報を伏せる段が無く、公開 repo の eval-log に利用者のメールアドレスが残っている",
     "Beads に起票した (harness-huu9。round15・round16 の範囲の外): lint-tenant-isolation: allowlist の項目 (contract-generator の XL_PARTY_A_JSON_PATH) の期限が切れ、lint 全体が止まる",
     "validate_frontmatter_fail_closed の test は、TMPDIR のパスに『---』を含むときだけ落ちる (parse_fm の split(\"---\", 2) が、パスの中の --- で切れる)。main の時点からの不具合で、CI (/tmp) では通る。Beads harness-mah4 (下書き 30) に起票した。",
-    "Beads に起票した (harness-huhh): 外部変更ガード execute: 子の出力が UTF-8 でないと落ち、完了の受領書も出力も残らない。skill-governance-adapters の build-external-mutation-guard.py の execute は subprocess.run を text=True・errors の指定なしで呼ぶので、子の出力が UTF-8 でないと、子が外部を変えた後に UnicodeDecodeError で落ちる。完了の受領書が書かれず、preview の期限まで Bash が止まり、子が止まった理由も失われる。2026-10-13 の Beads の反映の1回目で起きた。PR #85 の前からある不具合"
+    "Beads に起票した (harness-huhh): 外部変更ガード execute: 子の出力が UTF-8 でないと落ち、完了の受領書も出力も残らない。skill-governance-adapters の build-external-mutation-guard.py の execute は subprocess.run を text=True・errors の指定なしで呼ぶので、子の出力が UTF-8 でないと、子が外部を変えた後に UnicodeDecodeError で落ちる。完了の受領書が書かれず、preview の期限まで Bash が止まり、子が止まった理由も失われる。2026-10-13 の Beads の反映の1回目で起きた。PR #85 の前からある不具合",
+    "Beads に起票した (harness-0brx): dev-graph の test の fixture が、commit の後の git の自動の手入れのロック (.git/objects/maintenance.lock) を .git の写しに拾って揺れる。CI は runner の手当て (5090b865) で揺れないが、pytest を直接回すとまれに起こりうる。fixture の側の手当ては plugin.json (P1) を変える版上げが要るので、次の dev-graph の版上げに回す"
   ],
   "verification": {
     "verified_at_commit": "この受領書の更新と同じ commit",
@@ -1586,6 +1587,34 @@
         },
         "created_count": 29,
         "dry_run": "2回目の script は、偽の bd を PATH の先頭に置いて全行を試してから preview を作った (1件をわざと失敗させても残りが進み、非 0 で終わることも確かめた)"
+      }
+    },
+    "ci_flake_fix_round18": {
+      "note": "2026-10-13 の CI の揺れの手当て。仕様への影響は無い (CI の runner が子の pytest に渡す環境だけを変えた。runner の環境の扱いを書いた仕様・設計の文書は無い)",
+      "failure": {
+        "head": "70de991e",
+        "job": "plugin-tests (macOS の runner)",
+        "symptom": "plugins/dev-graph の test_init_preflight_gate が1件だけ落ちた。fixture の repo を作った直後に .git も含めて写しを取るとき、写しに .git/objects/maintenance.lock が入ったり入らなかったりする",
+        "cause": "git 2.47 以降は commit の後に `git maintenance run --auto --quiet --detach` を裏で起こし、その間だけ maintenance.lock を置く。写しの時点しだいで、比べる2つの写しの中身が食い違う"
+      },
+      "fix_commit": "5090b865",
+      "fix": "scripts/validate-plugin-test-roots.py の child_env が、子の pytest の環境へ GIT_CONFIG_COUNT・GIT_CONFIG_KEY_n・GIT_CONFIG_VALUE_n で maintenance.auto=false と gc.auto=0 を足す (親から受け継いだ GIT_CONFIG_* の組は残し、その後ろへ足す)。tests/test_validate_plugin_test_roots.py に、子の git から設定が見えることと、受け継いだ設定が残ることを確かめる test を足した",
+      "why_not_fixture": "dev-graph の fixture (test_init_preflight_gate.py の git_repo・test_acceptance_gaps_a1.py の git_init と Harness._repo) を直すと plugin の指紋が変わり、版上げで plugin.json (P1・承認済みの sha256) が変わる。この PR では版上げをせず、harness-0brx に回した",
+      "local_checks": {
+        "tests/test_validate_plugin_test_roots.py": "5 passed",
+        "plugins/plugin-dev-planner/tests/test_ci_integration.py": "5 passed (runner の呼び出しの契約の文字列を保った)",
+        "guard-change-category.py": "rc 0 (blocked=0。runner と test は P2_content)",
+        "lint-script-naming.py": "VIOLATION 0",
+        "lint-test-discovery-coverage.py": "ok",
+        "build-plugin-release.py --check": "OK (22 plugins)",
+        "build-local-marketplace.py --check": "rc 0"
+      },
+      "ci_after_fix": "change-category-guard・governance・lint・plugin-tests・test・verify の6つとも pass (head 5090b865。plugin-tests は 7m10s)",
+      "beads": {
+        "created": [
+          "harness-0brx"
+        ],
+        "guard": "外部変更ガードを通した。1回目の preview (08b36ce8…) は承認が届く前に期限が切れ、2回目の preview (3d319193…) で承認・実行した"
       }
     }
   },
