@@ -32,7 +32,7 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
-from typing import Callable, NamedTuple, Sequence
+from typing import Callable, Mapping, NamedTuple, Sequence
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -41,6 +41,12 @@ import discover_repo_tests as discovery  # noqa: E402
 
 
 MAX_WORKERS = 4
+
+# 子の pytest が起こす git では、自動の手入れ (maintenance.auto・gc.auto) を止める。git は commit の後に
+# `git maintenance run --auto --detach` を裏で起こし、その間だけ .git/objects/maintenance.lock がある。
+# fixture の repo を作った直後に .git も含めて写しを取る test が、写しの時点しだいで落ちる
+# (PR #85 の CI の macOS の runner で、dev-graph の test_init_preflight_gate が1件落ちた)。
+GIT_NO_AUTO_MAINTENANCE = (("maintenance.auto", "false"), ("gc.auto", "0"))
 
 
 class TestGroup(NamedTuple):
@@ -118,6 +124,17 @@ def _log_path(log_dir: Path, item: TestGroup) -> Path:
     return log_dir / f"{item.index:03d}-{slug}.log"
 
 
+def child_env(base: Mapping[str, str]) -> dict[str, str]:
+    """子の pytest の環境。base にある GIT_CONFIG_COUNT の組は残し、その後ろへ GIT_NO_AUTO_MAINTENANCE を足す。"""
+    env = dict(base)
+    count = int(env.get("GIT_CONFIG_COUNT") or 0)
+    for offset, (key, value) in enumerate(GIT_NO_AUTO_MAINTENANCE):
+        env[f"GIT_CONFIG_KEY_{count + offset}"] = key
+        env[f"GIT_CONFIG_VALUE_{count + offset}"] = value
+    env["GIT_CONFIG_COUNT"] = str(count + len(GIT_NO_AUTO_MAINTENANCE))
+    return env
+
+
 def run_test_root(item: TestGroup, *, repo_root: Path, log_dir: Path) -> TestResult:
     """1 test_root を従来と同じ cwd / pytest args で実行する。"""
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -127,6 +144,7 @@ def run_test_root(item: TestGroup, *, repo_root: Path, log_dir: Path) -> TestRes
         result = subprocess.run(
             [sys.executable, "-m", "pytest", *item.args, "-q"],
             cwd=repo_root / item.test_root,
+            env=child_env(os.environ),
             stdout=log,
             stderr=subprocess.STDOUT,
             text=True,
