@@ -1616,6 +1616,24 @@
         ],
         "guard": "外部変更ガードを通した。1回目の preview (08b36ce8…) は承認が届く前に期限が切れ、2回目の preview (3d319193…) で承認・実行した"
       }
+    },
+    "main_checkout_reconciliation_round19": {
+      "note": "2026-10-13。利用者の本体の checkout の git status (732件) が PR に入っているかを、読むだけで1件ずつ照らした。本体の local branch は 3fdf00cf のままで、PR は worktree から remote の branch へ直接 push してきたので、本体では PR の中身が「未 commit の差分」に見える。仕様への影響は無い",
+      "method": "本体の各 path の blob を PR の head (103512e7) と比べ、違うものは 3fdf00cf..103512e7 の過去の版と比べ、それでも違うものは git merge-file で PR の版に本体の変更を重ね、さらに本体が足した行が PR の歴史のどこかに現れるかを数えた",
+      "result": {
+        "same_as_pr_head": 451,
+        "same_as_past_pr_version": 164,
+        "contained_by_3way_merge": 30,
+        "older_than_pr": 70,
+        "older_than_pr_note": "本体の更新時刻はどれも 2026-10-11 06:22 以前で、PR の取り込み (6257499e、06:56) より古い。本体にだけ見えた行は、PR では後の版へ書き直されている (例: notifier の逆向きの文言、rubric の提案の test の名前、validate-frontmatter の兄弟 skill の変数名)",
+        "intentionally_excluded": 12,
+        "intentionally_excluded_note": "rubric の自動の提案9件 (5ae35116 で gitignore に入れた) と、eval-log/ubm-goal-setting/run-ubm-challenge/ の個人の記録3件",
+        "renamed_in_both": 4,
+        "imported_now": [
+          ".beads/interactions.jsonl"
+        ],
+        "imported_now_note": "PR の版の後ろに7行が足された形 (この PR で閉じた harness-frcy・harness-eef・harness-8cvr・harness-yx2o・harness-3mw・harness-bzn.4 と、harness-r226 の優先度の変更)。メールアドレスは含まない"
+      }
     }
   },
   "planned_beads": {
