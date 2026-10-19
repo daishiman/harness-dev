@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-10-19T03:11:54Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -82,15 +82,13 @@
+ /doctor
+ setup checkup stays typable when
+ disableBundledSkills
+-is on, in Claude Code v2.1.205 and later. To hide it, set the
++is on. To hide it, set the
+ DISABLE_DOCTOR_COMMAND
+ environment variable or a
+ skillOverrides
+ entry of
+ "doctor": "off"
+-. Before v2.1.205,
+-/doctor
+-was a built-in command rather than a bundled skill.
++.
+ Bundled skills are listed alongside built-in commands in the
+ commands reference
+ , marked
+@@ -177,7 +175,7 @@
+ at the repo root, or in the touched package directory in a monorepo, so later runs and other agents follow the same steps. At the repo root, the recorded skill replaces the bundled
+ /verify
+ .
+-Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs. Before v2.1.205, the bundled skill told Claude to fold in anything a run learned, which caused frequent merge conflicts.
++Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs.
+ ​
+ Run your checks before each commit
+ When a session starts with a skill named
+@@ -387,6 +385,12 @@
+ anthropic-skills:
+ doesn’t load. See
+ Names reserved for synced skills
++.
++Characters in the name
++: outside a plugin, a skill folder doesn’t load when its name has a character such as a zero-width space or
++<
++. See
++Characters a skill name can’t hold
+ .
+ Command files
+ : a Markdown file in
+@@ -1368,6 +1372,53 @@
+ name
+ field, Claude Code falls back to the plugin’s directory name.
+ ​
++Characters a skill name can’t hold
++If a skill or custom command is missing from the
++/
++menu, or the menu doesn’t show a skill’s frontmatter
++name
++, check the name. Claude Code refuses a command name or a frontmatter
++name
++that contains characters such as these:
++A zero-width space or a control character
++A private-use or unassigned character, such as a glyph from an icon font
++A character that changes the direction of the text around it
++A blank other than one plain space between words, such as a no-break space, two spaces in a row, or a space at the start or end
++<
++or
++>
++A custom command or skill doesn’t load when Claude Code refuses its directory or file name. Rename that folder or file to remove the characters. A skill still loads when these characters are only in a plugin skill folder’s name or in its frontmatter
++name
++:
++Folder in a plugin’s
++skills/
++directory or its manifest’s
++skills
++paths
++: you don’t need to rename the folder. These characters become hyphens in the skill’s command name, so type the command with the hyphens.
++Frontmatter
++name
++: the
++/
++menu doesn’t show the
++name
++value and typing it doesn’t invoke the skill. Edit the
++name:
++line to remove the characters.
++To find out which name Claude Code refused, start it with
+... (1440 more lines)
+```
+
 ## 2026-10-12T04:16:04Z
 
 実仕様ページに変更を検知。
