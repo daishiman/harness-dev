@@ -153,6 +153,10 @@ install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin 
 
 実装済み・版確定待ち。次回リリース時に版番号を確定して本セクションを正式リリースへ昇格する。
 
+## [1.4.50] - 2026-10-26
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [1.4.49] - 2026-10-19
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
