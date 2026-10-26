@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-10-26T03:08:57Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -124,6 +124,16 @@
+ your default permission mode and to
+ pre-approve
+ read-only commands that you frequently deny
++Usage
++: on a Pro, Max, Team, or Enterprise plan, the
++changes
++/usage
++recommends
++to lower your plan usage, measured over the last 7 days. Claude proposes the changes it can make itself and reports the rest as advice, such as a command for you to run. The usage check requires Claude Code v2.1.305 or later, and
++/doctor
++leaves it out while
++Remote Control
++is connected.
+ For read-only installation diagnostics without starting a session, run
+ claude doctor
+ in your terminal instead.
+@@ -236,6 +246,11 @@
+ anthropic
+ package from 0.x to 1.x
+ v2.1.236 or later
++api-version
++Update your Claude API code for a newer
++API version
++, then switch your requests to that version
++v2.1.307 or later
+ managed-agents-onboard
+ Walk through creating a new Managed Agent
+ Earlier than v2.1.221
+@@ -248,6 +263,13 @@
+ deep-researcher
+ . If you give one word that isn’t a template name, Claude lists the valid names
+ v2.1.290 or later
++managed-agents-secure [<agent-id>]
++Read the settings of one Managed Agent and report where they match the
++Secure your Managed Agents deployment
++guide or differ from it. Requires the
++ant
++CLI
++v2.1.304 or later
+ prompt-audit
+ Flag instructions written for older models in your prompts, skills, and tool descriptions and propose fixes as a diff
+ v2.1.221 or later
+@@ -336,12 +358,14 @@
+ Cowork or cloud sessions
+ Project
+ .claude/skills/<skill-name>/SKILL.md
+-Sessions in this repository. Commit it so your team gets it too
++Sessions in this repository, but not
++cloud threads in a project
++. Commit it so your team gets it too
+ Nested
+ <subdir>/.claude/skills/<skill-name>/SKILL.md
+ Sessions started in or below
+ <subdir>
+-. A session started above it loads the skill once Claude works on files there. See
++, but not cloud threads in a project. Outside those threads, a session started above it loads the skill once Claude works on files there. See
+ monorepos and subdirectories
+ Additional directory
+ .claude/skills/<skill-name>/SKILL.md
+@@ -409,13 +433,15 @@
+ Skill folder as a plugin
+ : add a
+ .claude-plugin/plugin.json
+-to a skill folder and it loads as a
++to a personal or project skill folder and Claude Code can load it as a
+ plugin
+ named
+ <name>@skills-dir
+-, so it can bundle agents, hooks, and MCP servers. In a project’s
++with its own agents, hooks, and MCP servers. In a project’s
+ .claude/skills/
+-, this requires accepting the workspace trust dialog first.
++, this requires accepting the workspace trust dialog first, and in either location it requires that your administrator hasn’t
++blocked skills-directory plugins
++.
+ ​
+ Load skills in monorepos and subdirectories
+... (2103 more lines)
+```
+
 ## 2026-10-19T03:11:54Z
 
 実仕様ページに変更を検知。
