@@ -35,7 +35,9 @@ const REF_RE = new RegExp([
   "(ボード\\s*[:：]\\s*)(\\d{2}(?:\\s*[,、，]\\s*\\d{2})*)",
 ].join("|"), "gu");
 // 文の中の番号の行き先 (id の頭)。頭は build-briefing-book.mjs の DOCS と同じ
-const CODE_TARGET = { F: "req-f", Q: "req-q", S: "spec-s", D: "spec-d", R: "spec-r", H: "hear-h" };
+export const CODE_TARGET = { F: "req-f", Q: "req-q", S: "spec-s", D: "spec-d", R: "spec-r", H: "hear-h" };
+/** 番号 (S01 など) の文書の中の行き先の id。 */
+export const codeTarget = (code) => `${CODE_TARGET[code[0]]}${code.slice(1)}`;
 const NO_WORDS = /やらない|入れない|しない/;
 const DEVICE_TONE = { スマホ: "t-phone", PC: "t-pc" };
 
@@ -48,10 +50,16 @@ function mapText(html, fn) {
   return html.split(/(<[^>]*>)/).map((part, i) => (i % 2 ? part : fn(part))).join("");
 }
 
-/** 文の中の番号・「NN のボード」・「ボード: NN, NN」をリンクにする。 */
-function linkCodes(html) {
+/**
+ * 文の中の番号・「NN のボード」・「ボード: NN, NN」をリンクにする。
+ * target は番号 (S01 など) の行き先の id を返す (null なら文字のまま)。ボードの注記では S を画面のボードへ向ける。
+ */
+export function linkCodes(html, target = codeTarget) {
   return mapText(html, (text) => text.replace(REF_RE, (all, letter, num, no, head, nos) => {
-    if (letter) return `<a class="ref" href="#${CODE_TARGET[letter]}${num}">${all}</a>`;
+    if (letter) {
+      const id = target(letter + num);
+      return id ? `<a class="ref" href="#${id}">${all}</a>` : all;
+    }
     if (no) return no.replace(/(\d{2})(\s*のボード)?/g, (m, n) => `<a class="ref" href="#b${n}">${m}</a>`);
     return head + nos.replace(/\d{2}/g, (n) => `<a class="ref" href="#b${n}">${n}</a>`);
   }));

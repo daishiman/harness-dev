@@ -11,6 +11,10 @@
  * receipt のない画像と文書画像は IMAGE-UNVERIFIED 警告を残す。内部デコードはブラウザでの表示確認が必要。
  * render の品質警告は BOARD-CHECK-WARN と status=warn に引き継ぐ (既存の exit 0 / 書出し許容は維持)。
  * 画像の下にはボード HTML の注記 (できること / しくみ / 決めること) を文字で並べる。
+ * 画像の中の番号 (S01 などと「ボード 04」) は、render が boards.json の links に残した枠の上に透明のリンクを重ねて
+ * 押せるようにする (枠は画像に対する % で置くので、拡大しても位置が合う)。S は、その画面を描いたボードのうち
+ * screens のいちばん少ないもの (同じなら見出しがその番号で始まるもの) へ (無ければ仕様書の節へ)、ほかの番号は文書の節へ向ける。注記と message の文の
+ * 番号も同じ行き先のリンクにする。そのボード自身を指す番号と、ボード HTML が検査のあとで変わったときの枠は使わない。
  * 文書のページは lib/doc-report.mjs で、カードや区切りを使ったレポートの形に描く (Markdown は正本のまま。
  * 見分け方と部品はそのファイルの先頭の説明)。文の中の F01・S01・「02 のボード」などはリンクになり、
  * 行き先がまとめに無いものは文字に戻す。
@@ -59,7 +63,7 @@ import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, 
 import { classesOf, iterNodes, parseHtmlTree, textOf } from "./lib/html-tokens.mjs";
 import { imageSize, imageSizeOfFile } from "./lib/image-size.mjs";
 import { dependencyReceipt, htmlRefs, localRef, externalRef } from "./lib/resource-refs.mjs";
-import { convertDoc, resolveRefs } from "./lib/doc-report.mjs";
+import { codeTarget, convertDoc, linkCodes, resolveRefs } from "./lib/doc-report.mjs";
 import { validateDesignTokens } from "./lib/design-tokens.mjs";
 
 const USAGE = `
@@ -201,16 +205,63 @@ function pageNav(pages, i) {
   return `<nav class="pg-nav" aria-label="ページ送り">${prev}${next}</nav>`;
 }
 
-function renderNotes(notes) {
+/**
+ * ボードの中の番号の行き先 (id) を返す関数を作る。ref は S01 などの番号か「b04」(ボードの番号)。
+ * S は、その画面を描いたボードのうち screens のいちばん少ないもの (同じなら見出しがその番号で始まるもの、
+ * それも同じなら先のもの) へ。無ければ仕様書の節へ。見出しで比べるのは、共通の枠のように画面の写真を借りただけの
+ * ボードより、「S11 管理者のホーム」のようなその画面のボードへ移すため。
+ * そのボード自身を指すものと、行き先がまとめに無いものは null (リンクにしない)。
+ */
+function boardTargets(boardPages, knownIds) {
+  const rank = (page, code) => page.screens.length * 2 + (page.title.match(/^[A-Z]\d+/)?.[0] === code ? 0 : 1);
+  const screenBoard = new Map();
+  for (const page of boardPages) {
+    for (const code of page.screens) {
+      const best = screenBoard.get(code);
+      if (!best || rank(page, code) < rank(best, code)) screenBoard.set(code, page);
+    }
+  }
+  return (page, ref) => {
+    let id = null;
+    if (/^b\d{2}$/.test(ref)) id = ref;
+    else if (/^[FQSDRH]\d{2,}$/.test(ref)) id = screenBoard.get(ref)?.id ?? codeTarget(ref);
+    return id && id !== page.id && knownIds.has(id) ? id : null;
+  };
+}
+
+const DOC_OF_TARGET = [["req-", "要件定義"], ["spec-", "仕様書"], ["hear-", "ヒアリング記録"]];
+
+/** 画像に重ねる押せる枠。座標はボードの大きさに対する % にする。同じ行き先で同じ枠は 1 つにまとめる。 */
+function hotspots(page, goTo, pages, [width, height]) {
+  const titles = new Map(pages.map((p) => [p.id, p.kind === "board" ? `ボード ${p.no}「${p.title}」` : p.nav]));
+  const pct = (n, of) => `${Math.round((n / of) * 10000) / 100}%`;
+  const seen = new Set();
+  const hot = [];
+  for (const link of page.links) {
+    const box = Array.isArray(link?.box) ? link.box.map(Number) : [];
+    if (box.length !== 4 || !box.every(Number.isFinite) || box[2] <= 0 || box[3] <= 0) continue;
+    const ref = String(link.ref ?? "");
+    const id = goTo(page, ref);
+    if (!id || seen.has(`${id}|${box}`)) continue;
+    seen.add(`${id}|${box}`);
+    const doc = DOC_OF_TARGET.find(([head]) => id.startsWith(head))?.[1];
+    const label = titles.has(id) ? `${ref.startsWith("b") ? "" : `${ref}: `}${titles.get(id)} へ移る` : `${doc}の ${ref} へ移る`;
+    const [x, y, w, h] = box;
+    hot.push(`<a class="go" href="#${id}" style="left:${pct(x, width)};top:${pct(y, height)};width:${pct(w, width)};height:${pct(h, height)}" title="${esc(label)}" aria-label="${esc(label)}"></a>`);
+  }
+  return hot;
+}
+
+function renderNotes(notes, link) {
   if (!notes.length) return "";
   const parts = ['<div class="board-notes">', "<h3>ボードの注記</h3><ol>"];
   for (const note of notes) {
     const kind = Object.hasOwn(KIND_LABEL, note.kind) ? note.kind : "";
     const mark = note.mark ? `<span class="mark">${esc(note.mark)}</span>` : '<span class="mark none"></span>';
     const label = `<span class="kind ${kind}">${KIND_LABEL[kind] ?? "注記"}</span>`;
-    const qs = note.q.map((q) => `<span class="q">${esc(q)}</span>`).join("");
-    const sub = note.sub ? `<span class="sub">${esc(note.sub)}</span>` : "";
-    parts.push(`<li>${mark}${label}<span class="txt"><b>${esc(note.title)}</b>${qs}${sub}</span></li>`);
+    const qs = note.q.map((q) => `<span class="q">${link(q)}</span>`).join("");
+    const sub = note.sub ? `<span class="sub">${link(note.sub)}</span>` : "";
+    parts.push(`<li>${mark}${label}<span class="txt"><b>${link(note.title)}</b>${qs}${sub}</span></li>`);
   }
   parts.push("</ol></div>");
   return parts.join("");
@@ -255,16 +306,20 @@ ${nav}
 function renderBoard(page, nav, [w, h]) {
   const no = page.no;
   const reader = page.reader ? `<span class="reader">主に読む人: ${esc(page.reader)}</span>` : "";
-  const message = page.message ? `<p class="message">${esc(page.message)}</p>` : "";
+  const message = page.message ? `<p class="message">${page.link(page.message)}</p>` : "";
+  const hot = page.hot.length ? `<div class="hot">${page.hot.join("")}</div>` : "";
+  const caption = page.hot.length
+    ? "画像を押すと大きく表示します。画像の中の番号 (S01・ボード 04 など) を押すと、その画面や説明へ移ります"
+    : "画像を押すと大きく表示します";
   return `<section class="page board-page" id="b${no}">
 <div class="page-head"><span class="kind">ボード ${esc(no)} ・ ${esc(TYPE_LABEL[page.type] ?? page.type)}</span><h2>${esc(page.title)}</h2>${reader}</div>
 ${message}
 <figure class="shot" id="z${no}">
-<a class="zoom" href="#z${no}"><img src="${page.dataUri}" alt="${esc(page.title)} のボード" width="${w}" height="${h}" decoding="async"></a>
-<figcaption>画像を押すと大きく表示します</figcaption>
+<div class="frame"><a class="zoom" href="#z${no}"><img src="${page.dataUri}" alt="${esc(page.title)} のボード" width="${w}" height="${h}" decoding="async"></a>${hot}</div>
+<figcaption>${caption}</figcaption>
 <a class="close" href="#b${no}">閉じる ×</a>
 </figure>
-${renderNotes(page.notes)}
+${renderNotes(page.notes, page.link)}
 ${nav}
 </section>`;
 }
@@ -526,6 +581,9 @@ export function build(base, { out = null, allowStale = false } = {}) {
       reader: show(cfg.reader), message: show(cfg.message),
       dataUri: `data:${image.mime};base64,${image.data.toString("base64")}`,
       notes: extracted.notes,
+      screens: (Array.isArray(cfg.screens) ? cfg.screens : []).map(show),
+      // 枠は、検査したときと同じボード HTML のときだけ使う (違えば位置がずれている)
+      links: entry?.html_sha256 === sha256(htmlBytes) && Array.isArray(entry.links) ? entry.links : [],
     });
   }
 
@@ -579,6 +637,15 @@ export function build(base, { out = null, allowStale = false } = {}) {
   const pages = [{ id: "p-cover", kind: "cover", nav: "表紙と読み方", no: "" }];
   if (changesPage) pages.push(changesPage);
   pages.push(...boardPages, ...docPages);
+  const knownIds = new Set([
+    ...pages.map((p) => p.id),
+    ...[changesPage, ...docPages].filter(Boolean).flatMap((p) => [...p.body.matchAll(ID_ATTR_RE)].map((m) => m[1])),
+  ]);
+  const goTo = boardTargets(boardPages, knownIds);
+  for (const page of boardPages) {
+    page.link = (text) => linkCodes(esc(text), (code) => goTo(page, code));
+    page.hot = hotspots(page, goTo, pages, viewSize);
+  }
 
   const ctx = { title, version, updated, readers, dataPolicy, questions: ((texts[REQ_MD] ?? "").match(QUESTION_ROW_RE) ?? []).filter((row) => !DECIDED_ROW_RE.test(row)).length };
   const drafts = pages.map((page, i) => {

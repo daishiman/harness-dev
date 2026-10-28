@@ -146,6 +146,7 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-briefing-scaffold.mjs"
 
 [page-patterns.md](../../references/page-patterns.md) の「1 枚のボードの決まり」「注記 (notes)」「端末の画像を他のボードで使う (data-export)」と型ごとの中身に沿って、雛形の印の所を埋める。言葉は board-copy.md の型で書く。
 
+- ボードの中の番号 (S01・ボード 04 など) は、まとめ HTML で押すとその画面や説明へ移る。番号の無いカードや縮小写真は `data-go` で押せるようにし、名前と番号を文字で添える (page-patterns.md の「押せる番号」)。
 - 要件定義 9 章で 決定 になった Q の ask は外し、決まった中身を画面に描く (既にあるボードも同じ)。
 - 9 章に無い 決めること がボードに要るときは、書かずにその話を呼び出し元へ返す (9 章に足すのは run-briefing-docs)。
 
