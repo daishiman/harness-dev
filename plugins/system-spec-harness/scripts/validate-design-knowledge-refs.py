@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-design-knowledge-refs
-# version: 0.1.0
+# version: 0.3.0
 # purpose: spec-state の design_applications[].knowledge_ref が実在の知識カードを指すことを検証する決定論ゲート。validate-coverage-matrix.py は形状しか見ないため、存在しない card や見出しを引用したまま緑になる穴を塞ぐ。
 # inputs:
 #   - argv: --matrix SPEC_STATE_JSON [--repo-root PATH] [--json]
 # outputs:
 #   - stdout: VIOLATION 行と OK/FAIL summary (--json 時は {checked, findings})
 #   - exit: 0=OK / 1=violation / 2=input error
+#   - Python API: resolve_knowledge_path / headings (writer の fix-qa-knowledge-ref が同じ解決規則で実在を判定する)
 # contexts: [E, C]
 # network: false
 # write-scope: none
@@ -27,6 +28,12 @@
   2. path が repo root の外を指さないこと (絶対 path / ``..`` を拒否)
   3. anchor 部 (``#`` の後ろ) がある場合、その見出しが参照先 Markdown に実在すること
 
+解決規則: path はまず repo root 起点で解決する。C04 deep card は harness repo の配置
+``plugins/<本 plugin 名>/...`` で書き、repo root に無い場合 (plugin を別の場所へ install した
+利用側 repo) に限り、本 script が属する plugin root 起点で解決し直す。他 plugin の prefix は
+読み替えない。spec-state の writer (``apply-spec-transition.py fix-qa-knowledge-ref``) も
+``resolve_knowledge_path`` / ``headings`` で実在を判定し、validator と writer の判定をずらさない。
+
 使い方:
   python3 validate-design-knowledge-refs.py --matrix <spec-state.json> [--repo-root PATH] [--json]
 
@@ -41,6 +48,18 @@ import sys
 from pathlib import Path, PurePosixPath
 
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$", re.MULTILINE)
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _plugin_prefix() -> PurePosixPath | None:
+    try:
+        name = json.loads((PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["name"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return PurePosixPath("plugins", name) if isinstance(name, str) and name else None
+
+
+PLUGIN_PREFIX = _plugin_prefix()
 
 
 def _is_safe_relative(value: str) -> bool:
@@ -48,8 +67,20 @@ def _is_safe_relative(value: str) -> bool:
     return not path.is_absolute() and ".." not in path.parts and str(path) not in {"", "."}
 
 
-def _headings(text: str) -> set[str]:
+def headings(text: str) -> set[str]:
     return {m.group(1).strip() for m in HEADING_RE.finditer(text)}
+
+
+def resolve_knowledge_path(raw_path: str, repo_root: Path) -> Path | None:
+    target = repo_root / raw_path
+    if target.is_file():
+        return target
+    path = PurePosixPath(raw_path)
+    if PLUGIN_PREFIX is not None and path.parts[: len(PLUGIN_PREFIX.parts)] == PLUGIN_PREFIX.parts:
+        fallback = PLUGIN_ROOT.joinpath(*path.parts[len(PLUGIN_PREFIX.parts):])
+        if fallback.is_file():
+            return fallback
+    return None
 
 
 def collect_findings(state: dict, repo_root: Path) -> list[str]:
@@ -73,8 +104,8 @@ def collect_findings(state: dict, repo_root: Path) -> list[str]:
                 findings.append(f"{where}: repo root 配下の安全な相対パス必須: {raw_path!r}")
                 continue
 
-            target = repo_root / raw_path
-            if not target.is_file():
+            target = resolve_knowledge_path(raw_path, repo_root)
+            if target is None:
                 findings.append(f"{where}: 参照先が実在しない: {raw_path}")
                 continue
 
@@ -83,7 +114,7 @@ def collect_findings(state: dict, repo_root: Path) -> list[str]:
                 continue
             if target not in heading_cache:
                 try:
-                    heading_cache[target] = _headings(target.read_text(encoding="utf-8"))
+                    heading_cache[target] = headings(target.read_text(encoding="utf-8"))
                 except (OSError, UnicodeDecodeError) as exc:
                     findings.append(f"{where}: 参照先を読めない: {raw_path}: {exc}")
                     heading_cache[target] = set()
@@ -96,7 +127,7 @@ def collect_findings(state: dict, repo_root: Path) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--matrix", required=True, help="spec-state.json")
-    parser.add_argument("--repo-root", default=".", help="knowledge_ref を解決する基準 (既定: cwd)")
+    parser.add_argument("--repo-root", default=".", help="knowledge_ref を解決する基準 (既定: cwd)。plugins/<本 plugin 名>/ で始まる path は、ここに無ければ本 plugin root で解決する")
     parser.add_argument("--json", action="store_true", help="findings を JSON で出力")
     args = parser.parse_args(argv)
 

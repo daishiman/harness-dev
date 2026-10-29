@@ -17,6 +17,11 @@
       }
     },
     "loop_count": {"type": "integer", "minimum": 0, "maximum": 3},
+    "run_status": {
+      "type": "string",
+      "enum": ["complete", "incomplete", "human_escalate"],
+      "description": "run の終了状態。orchestrator が verdict 導出前に references/convergence-policy.json の halt_conditions で発火した条件の status を写す (converged→complete / converged_with_failures→incomplete / diverged→human_escalate / max_iterations_reached→incomplete。executor の convergence_status からは complete→complete、diverging・human_escalate→human_escalate、in_progress・incomplete→incomplete)。build-verdict.py が verdict.status へ転記し、4 条件に FAIL が残る complete は exit 2 で拒否する。省略時は incomplete"
+    },
     "paradigm_findings": {
       "type": "array",
       "minItems": 30,

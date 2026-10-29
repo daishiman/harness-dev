@@ -153,6 +153,18 @@ install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin 
 
 実装済み・版確定待ち。次回リリース時に版番号を確定して本セクションを正式リリースへ昇格する。
 
+## [1.4.51] - 2026-10-30
+
+HarnessHub にだけ残っていた plugin の写しの変更を、正本 (harness-dev) へ移した版。
+
+- `run-elegant-review`: verdict を作る `build-verdict.py`、人が読むレポートを作る `build-review-report.py`、Phase 1→2→3 の順序を検査する `validate_phase_order.py` を足した。`validate-paradigm-coverage.py` は、finding の `condition` (4 条件) と `condition_signal` (機械観測 signal) の対応を、1 つの対応表 (`SIGNAL_TO_CONDITION`) で検査する。古い run への免除には期限を設け、`--strict-signal` で免除なしの検査もできる。findings・verdict の schema と template、5 つの分析 agent の記述をこれに合わせた。
+- `run-skill-live-trial`: verdict を作る経路を `build-live-trial-verdict.py` の 1 本にまとめた。scenario の契約 (`validate-live-trial-scenario-contract.py`)、時間とトークンの予算 (`validate-live-trial-resource-budget.py`)、goal_seek の履行の証跡 (`validate-goal-seek-evidence.py`) を検査する script を足した。verdict の schema に、独立した評価者 (`fresh-independent-context`) による goal の評価と、scenario が求める観測と実際の観測の突合を記録する欄を足した。`plan-live-trials.py` は、scenario の正本にある現行の `scenario_id` と照合し、消えた scenario や変わった scenario の PASS を再利用しない。
+- `emit-improvement-handoff.py`: schema 1.1.0 にした。各 finding に処置 (`applied`・`deferred`・`rejected`) と、その根拠の参照を必須にした。旧形式での新規の出力は拒否する。
+- `validate-plugin-package.py`: 500 行の分割規約で生まれる import 専用の補助モジュールを、PKG-006/007 が実行の入口と誤認しないようにした。
+- `validate-route-build-reports.py`: route の ID の重複を拒否する。
+- `delegate-codex-skill-review`: 外部 CLI agent の使い分けガイド (`external-cli-agents-guide.md`) を足した。
+- `run-skill-feedback` と使い方の例 (`command-usage-prompts`): 要望の必須項目を「要望タイトル・要望種別・やってほしいこと」の 3 つに絞った。使い方の例は、対話と同定の手順を正本 (`doc/notion-schema/skill-list.schema.json` の `feedback_protocol`) への参照に置き換え、重複を減らした。
+
 ## [1.4.50] - 2026-10-26
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

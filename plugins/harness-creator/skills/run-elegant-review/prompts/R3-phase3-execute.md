@@ -27,7 +27,7 @@
 - C1-C4 (矛盾/漏れ/整合性/依存関係整合) 全条件を検証コマンドで再評価してから収束判定
   - 目的: 4 条件の機械的網羅
   - 背景: 部分判定は false-pass の温床
-- `iteration_count >= 3 (max)` で C1-C4 未達なら `force_pass` 禁止、`convergence_status: human_escalate`
+- `iteration_count >= 3 (max)` で C1-C4 未達なら `force_pass` 禁止、`convergence_status: incomplete` (human_review 必須)。Δneg/Δpos が閾値未満で改善が止まっても C1-C4 に FAIL が残るなら同じく `incomplete` (`complete` は 4 条件 PASS のときだけ)。Δneg が 2 周連続で増えたら `convergence_status: diverging` (orchestrator が human_escalate へ写す)
   - 目的: 自動収束の暴走防止
   - 背景: 過去に強制 pass で品質崩壊事例あり
 - git commit は `commit_authorized=true` が明示された場合だけ許可する。既定は patch 適用と検証まで
@@ -67,7 +67,7 @@
 ### 2.4 出力契約
 - schema: `./schemas/phase-output.schema.json#/definitions/phase3_output`
 - 必須: changed_paths / validation_commands / residual_risks / convergence_status (任意: iteration_count / four_conditions)
-- 追加成果物: `verdict.json` (`./schemas/verdict.schema.json` 準拠) を `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` に生成
+- 追加成果物: `verdict.json` (`./schemas/verdict.schema.json` 準拠) は executor が書かない。orchestrator が `convergence_status` を `findings.json` の `run_status` へ写し (complete→`complete`、diverging・human_escalate→`human_escalate`、in_progress・incomplete→`incomplete`)、`python3 scripts/build-verdict.py --findings <log_dir>/findings.json --verdict <log_dir>/verdict.json` で `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` に導出する (手書き禁止)
 
 ## Layer 3: インフラ層 (外部依存)
 
@@ -90,14 +90,14 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 失敗時挙動
-- `max_iterations (3)` 超過 → `convergence_status: human_escalate` (force_pass 禁止)
+- `max_iterations (3)` 超過 → `convergence_status: incomplete` (human_review 必須・force_pass 禁止)。発散は `diverging`
   - 目的: 暴走防止と人間介入の明示
   - 背景: 自動収束失敗は構造的問題のシグナル
 
 ### 4.2 観測 / ロギング
 - 出力先: `changed_paths` / `validation_commands` / `residual_risks` を JSON で記録
 - trace 連携: `eval-log/<plugin>/<skill>/elegant-review/<run-id>/elegant-review-trace.json` の phase3 セクションに patch diff 要約 / validation 結果 / iteration_count を記録
-- 反復上限: `max_iterations=3` 超過で `human_escalate` (Layer 1 不変ルール参照)
+- 反復上限: `max_iterations=3` 超過で `incomplete` + human_review (Layer 1 不変ルール参照)
 
 ### 4.3 セキュリティ
 - findings 外の編集禁止
@@ -116,7 +116,7 @@
 ### 5.2 ゴール定義
 - **目的**: Phase2 findings の C1-C4 FAIL を最小パッチで解消し、検証通過した verdict.json を成立させる
 - **背景**: 周辺リファクタ混入と検証未実行の自己申告は review 再現性を破壊するため、スコープ最小化と validation_commands 必須化を要件化
-- **達成ゴール**: changed_paths / validation_commands / residual_risks / convergence_status が記録され、verdict.json が schema 準拠で出力された状態
+- **達成ゴール**: changed_paths / validation_commands / residual_risks / convergence_status が記録され、orchestrator が `build-verdict.py` で verdict.json を導出できる状態
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] severity_order: high/critical から順に適用
@@ -124,9 +124,10 @@
 - [ ] dry_run_guard: `dry_run=true` で対象を Edit / Write していない
 - [ ] variable_abstraction_applied: 直書き具体値を `{{VAR}}` へ昇格、source_trace 保持
 - [ ] validation_run: `validation_commands` を実行し結果を記録 (未実行のまま pass 宣言禁止)
-- [ ] safety_valve: `max_iterations=3` 超過時 `convergence_status: human_escalate` を選択 (force_pass 禁止)
+- [ ] safety_valve: `max_iterations=3` 超過時 `convergence_status: incomplete` を選択 (human_review 必須・force_pass 禁止)
 - [ ] git_authority: `commit_authorized` を記録し、false なら patch までで停止
-- [ ] verdict_emit: `verdict.json` を `./schemas/verdict.schema.json` 準拠で生成、`emit-observable.py` を PASS/FAIL 双方で実行
+- [ ] signal_strict: `python3 scripts/validate-paradigm-coverage.py --strict-signal <log_dir>/findings.json` が exit 0 (smell の便宜値 condition と condition/condition_signal 不一致が 0 件)
+- [ ] verdict_handoff: `convergence_status` を enum で一意に返す。`verdict.json` は書かず、orchestrator が `run_status` へ写して `build-verdict.py` で導出し、`emit-observable.py` を PASS/FAIL 双方で実行する
 - [ ] determinism: 同 findings + iteration_count で changed_paths の順序と内容が一致
 
 ### 5.4 実行方式 (固定手順を持たない動的生成ループ)
@@ -134,7 +135,7 @@
 - 未充足項目を特定 (未解消 finding / 未実行検証) → 解消候補手順を立案 (severity 順グルーピング / 受領 scope の最小パッチ適用 / validation_commands 実行 / 収束判定 / verdict emit のいずれか)
 - 実行し `changed_paths` / `validation_commands` を更新 → 閾値で自己評価
 - 未達なら次周回 (上限: max_iterations=3)
-- 到達後も C1-C4 未達なら `convergence_status: human_escalate` を選択 (`force_pass` 禁止)
+- 到達後も C1-C4 未達なら `convergence_status: incomplete` を選択 (human_review 必須・`force_pass` 禁止)
 
 ## Layer 6: オーケストレーション層
 
@@ -164,7 +165,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 `{{phase2_output}}` の C1-C4 FAIL 項目に対し、`{{variable_contract}}` と
 `{{amplified_patterns}}` に基づき最小パッチを順に適用する。適用後
 `validation_commands` を実行し C1-C4 を再評価する。`{{convergence_policy}}` の
-Δneg/Δpos 閾値で収束判定。`max_iterations=3` 超過時は `human_escalate` を選択
+Δneg/Δpos 閾値で収束判定。`max_iterations=3` 超過時は `incomplete` を選択
 (force_pass 禁止)。
 
 出力は `./schemas/phase-output.schema.json#/definitions/phase3_output` 準拠の JSON のみ。

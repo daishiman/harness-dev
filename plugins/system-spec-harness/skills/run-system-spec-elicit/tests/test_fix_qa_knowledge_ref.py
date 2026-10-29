@@ -7,9 +7,10 @@
 (対話で得た解釈内容を後から書き換えない) を壊さない範囲だけを開ける。
 
 したがって固定すべき不変則は 2 方向ある。
-- 通すべきもの: 旧 ref が実在せず、新 ref (と anchor) が実在する差し替え。
+- 通すべきもの: 旧 ref が実在せず、新 ref (と anchor) が実在する差し替え。旧 ref の path は
+  実在するが見出しだけが無い場合の、同じ文書内の見出しへの訂正。
 - 拒むべきもの: 実在する参照の付け替え (=解釈の変更)、実在しない先への差し替え、
-  見出しの無い anchor、対象 application の不在。
+  見出しの無い anchor、対象 application の不在、見出しだけ壊れた参照の別文書への付け替え。
 あわせて解釈本文 (principle/rationale/tradeoffs/applicability) が不変であることと、
 訂正痕跡が append-only で残ることを検査する。
 """
@@ -113,6 +114,32 @@ def test_repointing_an_existing_ref_is_rejected(repo):
         fix_qa_knowledge_ref(state, "qa-240", FIXED, "refs/clean-code.md#中核概念", repo)
 
 
+def test_broken_anchor_in_an_existing_document_is_corrected_in_place(repo):
+    # path は実在し見出しだけが無い参照は validator が赤にするが、どの文書で判断したかは生きている。
+    broken = "refs/test-strategy.md#中核の概念"
+    state = _state(broken)
+    fix_qa_knowledge_ref(state, "qa-240", broken, FIXED, repo)
+    assert _apps(state)[0]["knowledge_ref"] == FIXED
+    record = state["qa_log"][0]["knowledge_ref_corrections"][0]
+    assert record["reason"].startswith("見出しが実在しない引用を")
+
+
+def test_broken_anchor_cannot_be_repointed_to_another_document(repo):
+    other = repo / "refs" / "clean-code.md"
+    other.write_text("# Clean Code\n\n## 中核概念\n\n本文\n", encoding="utf-8")
+    broken = "refs/test-strategy.md#中核の概念"
+    state = _state(broken)
+    with pytest.raises(TransitionError, match="同じ文書内に限る"):
+        fix_qa_knowledge_ref(state, "qa-240", broken, "refs/clean-code.md#中核概念", repo)
+
+
+def test_valid_ref_without_anchor_is_still_protected(repo):
+    # anchor の無い参照は path の実在だけで有効。見出しを足す変更も付け替えとして拒否する。
+    state = _state("refs/test-strategy.md")
+    with pytest.raises(TransitionError, match="実在する参照の付け替え"):
+        fix_qa_knowledge_ref(state, "qa-240", "refs/test-strategy.md", FIXED, repo)
+
+
 def test_new_ref_must_exist(repo):
     state = _state(BROKEN)
     with pytest.raises(TransitionError, match="new_ref の参照先が実在しない"):
@@ -154,3 +181,25 @@ def test_unknown_qa_id_is_rejected(repo):
     state = _state(BROKEN)
     with pytest.raises(TransitionError):
         fix_qa_knowledge_ref(state, "qa-999", BROKEN, FIXED, repo)
+
+
+# plugin を別の場所へ install した利用側 repo では、C04 card は repo root に無く、validator は
+# 自 plugin root で解決し直す。writer の実在判定が repo root だけだと、validator が有効と認める
+# 参照の付け替えを許し、推奨形への訂正を拒んでしまう。
+CARD_DIR = "plugins/system-spec-harness/skills/ref-system-design-knowledge/references"
+
+
+def test_plugin_layout_ref_that_resolves_via_plugin_root_is_not_repointed(tmp_path):
+    assert not (tmp_path / "plugins").exists()
+    state = _state(f"{CARD_DIR}/ddd.md#中核概念")
+    with pytest.raises(TransitionError, match="実在する参照の付け替え"):
+        fix_qa_knowledge_ref(state, "qa-240", f"{CARD_DIR}/ddd.md#中核概念", f"{CARD_DIR}/clean-architecture.md#中核概念", tmp_path)
+
+
+def test_typo_ref_is_regrounded_to_the_plugin_layout_in_a_consumer_repo(tmp_path):
+    assert not (tmp_path / "plugins").exists()
+    broken = f"{CARD_DIR}/domain-driven-design.md#中核概念"
+    fixed = f"{CARD_DIR}/ddd.md#中核概念"
+    state = _state(broken)
+    fix_qa_knowledge_ref(state, "qa-240", broken, fixed, tmp_path)
+    assert [app["knowledge_ref"] for app in _apps(state)] == [fixed]

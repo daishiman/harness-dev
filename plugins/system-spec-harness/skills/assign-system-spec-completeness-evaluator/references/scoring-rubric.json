@@ -90,7 +90,7 @@
     "policy": "fail-closed",
     "why": "aspects[].auditor は評価者自身が書く文字列であり、独立監査を 1 件も fork しない実行でも『独立 auditor が PASS を出した』と名乗れた。監査 agent は Write を持たず自力で痕跡を残せないため、証跡はモデルが書けない層 (PostToolUse hook) が書く append-only 台帳に置く",
     "ledger": "eval-log/system-spec-harness/audit-fork-ledger.jsonl (env SYSTEM_SPEC_AUDIT_FORK_LEDGER で上書き可)",
-    "ledger_writer": "plugins/system-spec-harness/hooks/record-audit-fork.py (PostToolUse: Task|Agent)",
+    "ledger_writer": "plugins/system-spec-harness/hooks/record-audit-fork.py (PostToolUse: Task|Agent = dispatch 行 / SubagentStop = completion 行 schema 1.3)",
     "required_receipts": [
       {"aspect": "matrix_coverage", "role": "primary", "auditor": "system-spec-matrix-auditor", "component": "C07"},
       {"aspect": "matrix_coverage", "role": "sub_input", "auditor": "system-spec-hearing-auditor", "component": "C06"},
@@ -99,7 +99,7 @@
     "rules": [
       "C05 自前評価の観点 (foundation_trace/decision_guidance/design_knowledge_reflection/prompt_quality) に primary receipt を付けるのは虚偽の独立性主張として violation",
       "receipt の auditor は agents/<auditor>.md に実在すること (架空の agent 名を名乗らせない)",
-      "role=primary の receipt.verdict は aspects[aspect].verdict と一致し、dispatch.{session_id,tool,subagent_type,response_sha256} と receipt.verdict は hook 台帳の同一 response 記録と一致すること (監査判定の忠実転記)",
+      "role=primary の receipt.verdict は aspects[aspect].verdict と一致し、dispatch.{session_id,tool,subagent_type,tool_use_id,response_sha256} と receipt.verdict は hook 台帳の同一 response 記録と一致し、verdict_state=resolved の行だけを受理すること (監査判定の忠実転記。非同期 fork は SubagentStop の completion 行で昇格した digest を使う)",
       "台帳が存在しない/空の実行は裏取り 0 件として fail-closed (緑にしない)"
     ],
     "machine_layer_limits": "台帳は hook が観測した auditor verdict の書換えを拒否する。監査 prompt の意味的十分性・根拠妥当性、および改ざん可能な台帳環境への対策は content-review/human と運用上の書込み権限分離の責務"

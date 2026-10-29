@@ -50,7 +50,7 @@
 ### 2.4 出力契約
 - matrix/doc-freshnessの独立監査とC06 sub-inputを渡す。foundation/decision/design-knowledge/prompt-qualityは機械evidenceと入力をR1へ透過し、R1がrubric全aspectsを組み立てる。
 - あわせて実 fork の receipt 3 件 (`matrix_coverage/primary`=C07 / `matrix_coverage/sub_input`=C06 / `doc_freshness/primary`=C08) を `audit_delegations[]` として R1 へ渡す。schema 1.2 台帳由来の receipt は hook 観測の `tool_use_id` を必須とする。C05 自前評価の 4 観点に `primary` receipt を付けてはならない (虚偽の独立性主張として機械層が拒否する)。
-- C06 の Agent 結果 JSON は、無改変のまま評価出力先 (R1 の `output` の置き場。省略時 `eval-log/` 配下・仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ保存し、そのパスを R1 へ渡す (`aggregate-completeness.py --hearing` はファイルパスを取り、C06 は Read のみで自分では書けないため)。この skill の allowed-tools に Write は無く、`aggregate-completeness.py` にも保存のオプションは無いので、`Bash(python3 *)` の範囲で python3 に書かせる。`<評価出力先>` は解決済みの absolute path に置き換える。
+- C06 の Agent 結果 JSON は、無改変のまま評価出力先 (R1 の `output` の置き場。省略時 `eval-log/` 配下・仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ保存し (R1 の `output` が canonical の `system-spec/completeness-report.json` のときは、その隣ではなく `eval-log/` 配下に置く)、そのパスを R1 へ渡す (`aggregate-completeness.py --hearing` はファイルパスを取り、C06 は Read のみで自分では書けないため)。この skill の allowed-tools に Write は無く、`aggregate-completeness.py` にも保存のオプションは無いので、`Bash(python3 *)` の範囲で python3 に書かせる。`<評価出力先>` は解決済みの absolute path に置き換える。
 
   ```bash
   python3 -c 'import pathlib, sys; pathlib.Path("<評価出力先>/hearing-audit.json").parent.mkdir(parents=True, exist_ok=True); pathlib.Path("<評価出力先>/hearing-audit.json").write_text(sys.stdin.read(), encoding="utf-8")' <<'HEARING_JSON'

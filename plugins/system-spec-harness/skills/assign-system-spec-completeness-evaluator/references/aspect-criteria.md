@@ -127,8 +127,10 @@ R1-score・R2-delegate・`scoring-rubric.json`・C06 の起動アダプタはこ
 - C05 自前評価の観点 (foundation_trace / decision_guidance / design_knowledge_reflection /
   prompt_quality) に `primary` receipt を付けるのは **虚偽の独立性主張** として violation。
 - 台帳が無い/空の実行は裏取り 0 件 = fail-closed で violation (緑にしない)。
-- **機械層が保証する範囲**: receipt の `dispatch.{session_id,tool,subagent_type,response_sha256}` と
-  `verdict` を hook 台帳の同一 response 行へ一致させる。したがって、実 fork 後に FAIL を PASS へ
+- **機械層が保証する範囲**: receipt の `dispatch.{session_id,tool,subagent_type,tool_use_id,response_sha256}` と
+  `verdict` を hook 台帳の同一 response 行へ一致させ、`verdict_state=resolved` の行だけを受理する
+  (`tool_use_id` は schema 1.2 の現行 `Agent` 行で必須。非同期 fork は PostToolUse の dispatch 行を
+  `SubagentStop` の completion 行 (schema 1.3、`AUDIT_DISPATCH` token で join) で昇格させた digest を使う)。したがって、実 fork 後に FAIL を PASS へ
   書き換えること、または別 fork の response を流用することは violation になる。
 - **run/session・response 束縛**: receipt の `dispatch.session_id` (宣言) と台帳行の
   `session_id` (harness 観測)、さらに `tool` / `response_sha256` / `audit_verdict` の **全て** を要求する。

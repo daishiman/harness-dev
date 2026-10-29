@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # /// script
 # name: aggregate-completeness
-# version: 0.2.0
-# purpose: C05 完成度評価レポートを fail-closed で集約し、matrix/知識グラフの決定論ゲートを実行する
+# version: 0.3.0
+# purpose: C05 完成度評価レポートを fail-closed で集約し、matrix/出典記録/知識グラフの決定論ゲートを実行する
 # inputs:
-#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--spec-dir DIR] / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
+#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--spec-dir DIR] / --matrix FILE [--require-complete] / --source-citation FILE --state FILE [--repo-root DIR] / --knowledge-graph / --hearing FILE --state FILE
 # outputs:
 #   - stdout: OK/violation 一覧または gate 結果 JSON
 #   - exit: 0=OK / 1=violation or gate fail / 2=usage error
@@ -429,6 +429,28 @@ def run_coverage_gate(matrix_path, require_complete: bool = False) -> dict:
     }
 
 
+def run_source_citation_gate(state_path, references_path, repo_root) -> dict:
+    """PASS report の G-source-citation を、receipt writer と同じ引数で実行する。"""
+    gate = _plugin_root() / "scripts" / "validate-source-citation.py"
+    command = [
+        sys.executable or "python3", str(gate),
+        "--targets", str(state_path),
+        "--references", str(references_path),
+        "--state", str(state_path),
+        "--repo-root", str(repo_root),
+    ]
+    process = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    return {
+        "id": "G-source-citation",
+        "name": "validate-source-citation",
+        "conditions": ["doc_freshness"],
+        "command": [str(item) for item in command],
+        "exit_code": int(process.returncode),
+        "stdout": process.stdout.strip(),
+        "stderr": process.stderr.strip(),
+    }
+
+
 def run_knowledge_graph_gate() -> dict:
     """C13-C16 の knowledge/doctrine/required-info/cross gate を独立再実行する。"""
     root = _plugin_root()
@@ -473,21 +495,32 @@ def main(argv: list | None = None) -> int:
     parser.add_argument("--session", help="現在の評価 run の session_id (receipt と照合)")
     parser.add_argument("--matrix", help="spec-state.json のパス (matrix gate を実行)")
     parser.add_argument("--require-complete", action="store_true", help="matrix gate を未収集 0 必須で実行")
+    parser.add_argument(
+        "--source-citation",
+        metavar="FETCHED_REFERENCES",
+        help="fetched-references.json のパス。--state と併用し出典記録 gate (G-source-citation) を実行",
+    )
+    parser.add_argument("--repo-root", default=".", help="--source-citation の証跡 path を解決する repo root (既定 cwd)")
     parser.add_argument("--knowledge-graph", action="store_true", help="C13-C16 の 4 profile gate を実行")
     parser.add_argument("--spec-dir", help="--report と併用。report の spec_dir がこの dir に解決するかも検証する")
     parser.add_argument("--hearing", help="C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input 判定を導く")
-    parser.add_argument("--state", help="--hearing の判定に使う spec-state.json (確定セルの qa_ref と置き換えを読む)")
+    parser.add_argument("--state", help="--hearing / --source-citation が読む spec-state.json")
     args = parser.parse_args(argv)
-    if not args.report and not args.matrix and not args.knowledge_graph and not args.hearing:
-        parser.error("--report / --matrix / --knowledge-graph / --hearing のいずれかが必要")
-    if bool(args.hearing) != bool(args.state):
-        parser.error("--hearing と --state は併用する")
+    if not any((args.report, args.matrix, args.source_citation, args.knowledge_graph, args.hearing)):
+        parser.error("--report / --matrix / --source-citation / --knowledge-graph / --hearing のいずれかが必要")
+    if bool(args.hearing or args.source_citation) != bool(args.state):
+        parser.error("--hearing と --source-citation は --state と併用する (--state 単独は不可)")
     if args.spec_dir is not None and not args.report:
         parser.error("--spec-dir は --report と併用する")
 
     return_code = 0
     if args.matrix:
         result = run_coverage_gate(args.matrix, require_complete=args.require_complete)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result["exit_code"] != 0:
+            return_code = 1
+    if args.source_citation:
+        result = run_source_citation_gate(args.state, args.source_citation, args.repo_root)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["exit_code"] != 0:
             return_code = 1

@@ -46,6 +46,7 @@ script_refs:
   - scripts/audit_fork_attribution.py
   - scripts/build-resume-receipt.py
   - ../../scripts/validate-coverage-matrix.py
+  - ../../scripts/validate-source-citation.py
 schema_refs:
   - schemas/completeness-findings.schema.json
   - schemas/resume-receipt.schema.json
@@ -77,6 +78,8 @@ runtime_root_policy: host-skill-path
 **完了条件**: 全観点 verdict 付与 + findings[] (info 以上を最低 1 件) + 総合判定が観点スコアからの fail-closed 再導出値と一致 + 総合 FAIL 時は不足事項一覧が非空 + `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` が exit 0 (Step 4)。評価開始前に production writer の `--print-artifact-snapshot` で入力を固定し、その JSON を評価レポートの `artifact_snapshot` へ改変せず格納する。PASS の再利用は `build-resume-receipt.py` が作った resume-receipt schema 1.2 に限る (fork 台帳 schema 1.1 / 1.2 とは別の version 軸)。writer はレポートのスナップショットと現在値の完全一致を要求し、固定ゲート入力と `system-spec/` 配下の全 Markdown を個別 digest へ束縛する。
 
 各 skill 単独では見えない全体網羅性の欠落を、生成物から独立した context で評価し客観的合否を返す。
+
+**禁則の要約** (詳細は Key Rules): 仕様書を書き換えない / `spec_dir` に説明や注記を混ぜない / high finding が 1 件でもあれば総合 FAIL / fork していない監査の receipt を書かない。
 
 ## 監査 sub-agent 対応 (全 6 観点中、評価主体の割当に注意が要る 3 観点)
 
@@ -130,7 +133,8 @@ runtime_root_policy: host-skill-path
   "gate_results": [
     {"id": "G-matrix", "name": "validate-coverage-matrix", "exit_code": 0, ...},
     {"id": "G-source-citation", "name": "validate-source-citation", "exit_code": 0, ...},
-    {"id": "G-knowledge-graph", "name": "validate-knowledge-graph", "exit_code": 0, "subgates": ["knowledge/doctrine/required-info/cross の正規結果"]}
+    {"id": "G-knowledge-graph", "name": "validate-knowledge-graph", "exit_code": 0,
+     "subgates": [{"profile": "knowledge", "command": [...], "exit_code": 0, "stderr": ""}, ...]}
   ],
   "findings": [ {"severity": "high|medium|low|info", "bucket": "...", "observation": "...", "suggested_fix": "..."} ],
   "gaps": [ "不足事項1", ... ]
@@ -149,14 +153,14 @@ runtime_root_policy: host-skill-path
 | `matrix_coverage` | `sub_input` | `system-spec-hearing-auditor` | C06 |
 | `doc_freshness` | `primary` | `system-spec-doc-freshness-auditor` | C08 |
 
-- 証跡台帳: `eval-log/system-spec-harness/audit-fork-ledger.jsonl` (writer = `hooks/record-audit-fork.py` / PostToolUse: `Task|Agent`)。`--fork-ledger` または env `SYSTEM_SPEC_AUDIT_FORK_LEDGER` で上書き可。
+- 証跡台帳: `eval-log/system-spec-harness/audit-fork-ledger.jsonl` (writer = `hooks/record-audit-fork.py`。PostToolUse: `Task|Agent` が dispatch 行、`SubagentStop` が completion 行 (schema 1.3) を書く)。`--fork-ledger` または env `SYSTEM_SPEC_AUDIT_FORK_LEDGER` で上書き可。
 - C05 自前評価の 4 観点に `primary` receipt を付けるのは **虚偽の独立性主張** として violation。
 - 台帳が無い/空 = 裏取り 0 件 → fail-closed で violation (緑にしない)。
 - **PostToolUse の per-call 契約**: 現行 PostToolUse は matching tool call ごとに 1 回、top-level `tool_use_id` と当該 call の `tool_response` を渡す。parallel dispatch 時も call ごとの hook が並行発火し、batch 全体の lifecycle は PostToolBatch が担う。writer は schema 1.2 で top-level `tool_use_id` / `verdict_state` と、**当該 per-call `tool_response` 全体**の canonical digest を記録する。nested ID block を探索して response の一部だけを digest 化しない。
 - **run/session・response・ID 束縛**: schema 1.2 の receipt `dispatch.{session_id,tool,subagent_type,tool_use_id,response_sha256}` と receipt `verdict` を、台帳が hook 観測した同一 call の値へ全一致で束縛し、`verdict_state=resolved` だけを受理する。schema 1.1 台帳は `tool_use_id` を持たない旧 `Task` 専用の legacy 互換として従来の `session_id` / tool / subagent / digest / verdict で照合する。現行 `Agent` は必ず schema 1.2 + `tool_use_id` へ接地し、ID 欠落・不一致を 1.1 へ downgrade して通してはならない。必須 receipt の session は単一 run に収束させ、`--session <id>` で現在 session との一致まで検査する。
 - **正式 evaluator 運用の直列化 gate**: per-call hook 仕様と parallel 対応コードの存在だけでは正式運用を parallel へ昇格しない。current runtime の fresh live-trial で 3 fork 全ての schema 1.2 行、ID / digest / verdict 照合、最終 receipt 生成が成立するまで、1 回の assistant message では 1 件だけを foreground 起動する。完全 response の最終行 `AUDIT_VERDICT` と PostToolUse 台帳行を確定してから次へ進む。parallel support は defensive hardening / canary であり正式許可ではない。
 - **background は最終 verdict ではない**: background/非同期 launch の「起動済み」応答は監査の最終 response ではない。writer は現行 `Agent` の `tool_response.status=completed` だけを verdict 確定対象とし、それ以外を marker の有無にかかわらず `verdict_state=pending` / `audit_verdict=null` にする。旧 `Task` は status 欠落を互換受理するが、status が明示された場合は `completed` 以外を未完了として扱う。現行 `Agent` の top-level `tool_use_id` 欠落も schema 1.1 へ downgrade しない。`verdict_state=pending|absent|ambiguous`、または `audit_verdict=null` の台帳行は receipt に使えない。
-- **2 行 join (schema 1.3 / 非同期 fork)**: 台帳は 1 fork につき最大 2 行を持つ。PostToolUse が書く **dispatch 行 (schema 1.2)** と、`SubagentStop` が書く **completion 行 (schema 1.3)** である。両者を繋ぐ join key は R2 が起動 prompt 先頭へ置く `AUDIT_DISPATCH: <token>` の 1 行 (`[A-Za-z0-9._-]{8,64}`・session 内で一意・使い回さない) で、auditor は同じ 1 行を応答本文へ 1 回だけ echo する。ハーネスは親の `tool_use_id` と子の `agent_id` を繋ぐ field を提供しないため、token を発行しない並列起動は帰属が一意に決まらず `verdict_state=pending` のまま fail-closed になる (単発の 1 対 1 起動に限り読取側が fallback 昇格する)。token は R2 が発行するだけで、台帳へは書かない。
+- **2 行 join (schema 1.3 / 非同期 fork)**: 非同期・background 起動は、上の直列化 gate が解除されるまで canary 専用である。本項と次項の token・completion digest の規則は、その canary と gate 解除後の運用に適用する。台帳は 1 fork につき最大 2 行を持つ。PostToolUse が書く **dispatch 行 (schema 1.2)** と、`SubagentStop` が書く **completion 行 (schema 1.3)** である。両者を繋ぐ join key は R2 が起動 prompt 先頭へ置く `AUDIT_DISPATCH: <token>` の 1 行 (`[A-Za-z0-9._-]{8,64}`・session 内で一意・使い回さない) で、auditor は同じ 1 行を応答本文へ 1 回だけ echo する。ハーネスは親の `tool_use_id` と子の `agent_id` を繋ぐ field を提供しないため、token を発行しない並列起動は帰属が一意に決まらず `verdict_state=pending` のまま fail-closed になる (単発の 1 対 1 起動に限り読取側が fallback 昇格する)。token は R2 が発行するだけで、台帳へは書かない。
 - **非同期 fork の `response_sha256` は completion 行の digest**: 非同期起動の per-call `tool_response` は起動受理 payload であって監査結果を含まない。これを receipt の束縛先にすると「起動しただけ」が verdict の根拠になる。読取側は dispatch 行を completion 行で `resolved` へ昇格させ、昇格後の digest を照合対象にする。同期 fork では従来どおり per-call `tool_response` 全体の digest を使う。
 - **監査 fork に `name` を付けない**: `name` 付き Agent は `taskKind=in_process_teammate` になり、最終応答を返した後も session 終端まで生存するため `SubagentStop` が発火しない。completion 行が永久に書かれず dispatch 行が `pending` のまま残る。加えて payload の `agent_type` が `name` の値になり (`customAgentType` が本来の auditor 名を持つ) `subagent_type` 照合も外れる。監査 fork は `subagent_type` だけを指定して起動する。
 - **台帳の書込み権限**: `audit-fork-ledger.jsonl` は PostToolUse / SubagentStop hook の append-only 出力であり、評価者が手書き・補正してはならない。`prompt_sha256` / `response_sha256` が空・`manual`・64桁16進数以外、または response 最終行の `AUDIT_VERDICT` marker が無効な行は集約対象から除外される。
@@ -194,11 +198,20 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-complet
 
 ### Step 2: マトリクス網羅性の決定論ゲート
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> --require-complete
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --matrix <spec-state.json> --require-complete
 ```
-exit0 をマトリクス網羅性観点の一次根拠にする (`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --matrix <spec-state.json> --require-complete` でも回収可)。
+exit0 をマトリクス網羅性観点の一次根拠にする (内部で `validate-coverage-matrix.py --require-complete` を実行し、結果を `G-matrix` の gate_result として出す)。
+
+続けて出典記録の決定論ゲート (`G-source-citation`。receipt writer と同じ `validate-source-citation.py --targets <spec-state.json> --references <fetched-references.json> --state <spec-state.json> --repo-root <repo-root>` を実行する) を回収する。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" \
+  --source-citation <fetched-references.json> --state <spec-state.json> --repo-root "$CLAUDE_PROJECT_DIR"
+```
 
 続けて C13-C16 の機械層ゲートを `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --knowledge-graph` (出荷 3 カタログを `validate-knowledge-graph.py` の knowledge/doctrine/required-info/cross 4 profile で独立再実行) の全 exit0 で確認する。C13/C14/C15 は design_knowledge_reflection (Step 3)、C16 は matrix_coverage の追加評価次元として意味層採点に併せる。
+
+`--matrix ... --require-complete`・`--source-citation ...`・`--knowledge-graph` の 3 つの stdout JSON (`G-matrix` / `G-source-citation` / `G-knowledge-graph`) を、無改変でレポートの `gate_results` に入れる。総合 PASS のレポートは 3 gate すべての exit 0 (`G-knowledge-graph` は 4 profile すべての exit 0) が無いと `--report` の検査で落ちるため、exit code を自己申告で埋めない。
 
 ### Step 3: 設計知識反映の自前評価 (独立 auditor なし)
 C05 R1-score が `system-spec/` 配下の全 Markdown (`Path.rglob("*.md")`) を直接読み、`ref-system-design-knowledge/references/resource-map.yaml` 由来の設計知識ポインタの (1) 存在 (機械層) と (2) その原則が確定セル要件へ具体適用されているか (意味層) を評価する。**存在確認だけで PASS にしない** (compile が機械注入するポインタを自己循環で肯定しない = Goodhart 防止)。汎用ポインタ (resource-map 索引) のみで具体適用が無い章は medium 以上で拾う。C06 のヒアリング品質監査は本観点でなく matrix_coverage の sub-input として使う。
@@ -210,7 +223,7 @@ C05 R1-score が `system-spec/` 配下の全 Markdown (`Path.rglob("*.md")`) を
 - レポートは引数 `output` のパスに書く。そのパスは `system-spec/` の外に置き、書き出しのコマンドの中に文字列のリテラルで書く (変数・`sys.argv`・`$` を使わない。書き方は `prompts/R1-score.md` の 4.3)。`guard-confirmed-chapter-overwrite.py` は、書き先を判定できて保護領域の外ならば、本文に `system-spec` が出てきても通す。
 - `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --report <output> --spec-dir <spec_dir>` で、形状 + 総合判定整合 (fail-closed 再導出との一致) + 帰属の fork 証跡接地と、`spec_dir` が引数と同じ dir に解決することを検証する。評価 run 直後の検証では `--session <現在の session_id>` を併用する。`spec_dir_mismatch` の report は、呼び出し側 (dev-graph の C02 など) が確定の取込を拒む。
 
-総合 PASS で、呼び出し側が再利用 receipt を求めた場合だけ、同じ report・fork ledger・具体的 session を production writer へ渡す。writer が受け付ける report は canonical の `system-spec/completeness-report.json` だけ (`schemas/resume-receipt.schema.json` の `evaluator.report_path`) なので、この場合に限りレポートをそのパスへ書く (`output` を `system-spec/` の外に置く規則の唯一の例外。`.json` を文字列のリテラルで書けば guard は通す)。writer は `G-matrix` / `G-source-citation` / `G-knowledge-graph` 4 profile の exit 0、report digest、ledger の response/session 帰属を再検査してから atomic に receipt を生成する。手書き receipt や test fixture の producer を実行時に使わない。
+総合 PASS で、呼び出し側が再利用 receipt を求めた場合だけ、同じ report・fork ledger・具体的 session を production writer へ渡す。writer が受け付ける report は canonical の `system-spec/completeness-report.json` だけ (`schemas/resume-receipt.schema.json` の `evaluator.report_path`) なので、この場合に限り、呼び出し側は `output` にそのパスを渡し、レポートをそこへ書く (`output` を `system-spec/` の外に置く規則の唯一の例外。別のパスのまま receipt を求められたら、書かずに差し戻す。`.json` を文字列のリテラルで書けば guard は通す)。writer は `G-matrix` / `G-source-citation` / `G-knowledge-graph` (4 profile) を自分で再実行し、report の `gate_results` の exit 0 と ledger の response/session 帰属を検査してから、report digest を束縛した receipt を atomic に生成する。手書き receipt や test fixture の producer を実行時に使わない。
 
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py" --repo-root "$CLAUDE_PROJECT_DIR" \

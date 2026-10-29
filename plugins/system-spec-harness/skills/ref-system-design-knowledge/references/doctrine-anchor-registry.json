@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "description": "システム構築カテゴリを設計 concern に分解し、各 concern に doctrine anchor (上流指針の正本) を 1 concern 1 authority で固定する registry (goal-spec C15)。authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる (authority 一意ではない)。C03 (run-system-spec-compile) が各章生成時に category→concern→authority を上流判断として反映する。具体技術は直書きせず上流工程を導く。形状・concern_id 一意性・カテゴリ写像全射・orphan concern は validate-knowledge-graph.py --profile doctrine が、意味反映は content-review/human が検証する。",
   "validated_by": "validate-knowledge-graph.py --profile doctrine",
-  "mapping_rule": "正本単位は system category でなく design concern。1 category は複数 concern を持てるが、各 concern の authority は 1 つだけ (authority 種類は 4・concern 間で共有されうる)。未帰属 category は owner/reason/approval_state 付き pending 例外として compile を保留する。",
+  "mapping_rule": "正本単位は system category でなく design concern。1 category は複数 concern を持てるが、各 concern の authority は 1 つだけ (authority 種類は 4・concern 間で共有されうる)。未帰属 category は owner/reason/approval_state 付き pending 例外として登録し、compile は未承認なら暫定扱いで描き、approved で concerns を解決済みの例外だけ authority を描く。pending 例外にも無いカテゴリは compile を止める。",
   "freshness_policy": {
     "note": "doctrine authority (OWASP ASVS 版改訂・Apple HIG 改称・SRE 書籍更新等) は経年変化するため、knowledge-catalog と同様に鮮度監査対象とする。open-world-knowledge-lifecycle.md の freshness audit に doctrine registry も含める。",
     "audit_trigger": "official-update",

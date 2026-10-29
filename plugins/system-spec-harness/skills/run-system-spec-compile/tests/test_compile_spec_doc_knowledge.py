@@ -162,6 +162,30 @@ def test_cli_repo_root_resolves_knowledge_ref_and_recompile_drops_stale_rational
     assert chapter.count("### 確定判断ごとの原則採否") == 1
 
 
+def test_cli_consumer_repo_resolves_harness_layout_card_via_installed_plugin(tmp_path):
+    # 利用側 repo には plugins/system-spec-harness が無い。harness repo の配置で書いた
+    # C04 card 参照が、--repo-root に利用側 repo を渡しても compile を止めないことを固定する。
+    spec = _spec()
+    _qa(spec, "qa-database")["design_applications"] = [{
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/ddd.md#中核概念",
+        "principle": "Bounded Context",
+        "applicability": "applied",
+        "rationale": "利用側 repo での根拠",
+        "tradeoffs": ["境界の維持コスト"],
+    }]
+    consumer = tmp_path / "consumer"
+    consumer.mkdir()
+    spec_path = consumer / "state.json"
+    spec_path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
+    out_dir = consumer / "docs"
+    argv = [
+        "compile", "--spec", str(spec_path), "--references", str(REFS),
+        "--out-dir", str(out_dir), "--repo-root", str(consumer),
+    ]
+    assert mod.main(argv) == 0
+    assert "利用側 repo での根拠" in (out_dir / "database.md").read_text(encoding="utf-8")
+
+
 # --------------------------------------------------------------------------- #
 # カテゴリ → card の写像と知識グラフ順 (C14)                                    #
 # --------------------------------------------------------------------------- #

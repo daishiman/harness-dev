@@ -23,3 +23,6 @@ resources:
   - file: ../../../scripts/validate-coverage-matrix.py
     topic: 網羅性の決定論ゲート (IN1 loop / OUT1 --require-complete)
     read_when: 各周回と最終で spec-state.json を検証するとき
+  - file: ../../../scripts/validate-design-knowledge-refs.py
+    topic: design_applications[].knowledge_ref の参照先と見出しの実在ゲート (repo root → 自 plugin root の解決規則の正本)
+    read_when: qa の設計解釈を記録した後と fix-qa-knowledge-ref で参照を接地し直すとき

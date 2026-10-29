@@ -2,6 +2,11 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`skill-intake` plugin の変更履歴を記録する。skill-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.1.24] - 2026-10-30
+
+- `post-keychain-add.sh` を `hooks/` から `scripts/` へ移した。これは自動では動かない手動の確認用 script で、hook ではないため。README・hooks/README・keychain-setup (2 か所)・package-contract の参照先と hook の本数 (5 本 → 4 本) を合わせた。
+- `run-skill-feedback`: 必須項目を「要望タイトル・要望種別・やってほしいこと」の 3 つに絞った。背景・優先度・重要度・関連 URL は任意で、利用者が示した値だけを保持する (優先度と重要度は未指定なら中)。対象スキル名は同定の確定値から自動で設定し、対象プラグインを確定できないときは「不明」で投入せず、ヒアリングへ戻る。
+
 ## [0.1.23] - 2026-10-12
 
 - 版番号だけを上げた。中身は 0.1.22 と同じ。利用者の手元の local marketplace には、0.1.22 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。

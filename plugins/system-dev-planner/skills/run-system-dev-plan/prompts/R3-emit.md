@@ -73,7 +73,7 @@
 | handoff schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-build-handoff.schema.json` | source digest・entry gate・registration ownership の正本 |
 
 ### 3.2 外部ツール / API
-- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail / 1=usage)。`--staging` は **本 run が promotion 前の staging generation を検証する入口専用**であり、task spec 本文へ書き写す再実行コマンドではない (§2.2 rerun command)。task spec には promotion 後も解決できる `--feature-package <feature_package_id>` を書く。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail-closed (argparse の引数欠落も 2) / 1=C09 が repo context を解決できない usage error)。`--staging` は **本 run が promotion 前の staging generation を検証する入口専用**であり、task spec 本文へ書き写す再実行コマンドではない (§2.2 rerun command)。task spec には promotion 後も解決できる `--feature-package <feature_package_id>` を書く。
 - `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-system-handoff.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C14。base manifest を受け、handoff 生成 + 最終 manifest 更新を atomic に行う)。
 - `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-implementation-readiness.py" ...` (C08。入力 system-spec-harness 確定成果物の readiness ゲート)。
 - path 解決は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` (C09) に一元化。network なし・write は staging のみ。

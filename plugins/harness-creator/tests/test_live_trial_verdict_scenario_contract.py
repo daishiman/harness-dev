@@ -28,7 +28,6 @@ SCRIPT = (
 DEV_GRAPH_SCENARIOS = (
     REPO / "plugins" / "dev-graph" / "tests" / "fixtures" / "live-trial-positive-scenarios.json"
 )
-C14_SCENARIO_ID = "C14-OUT1-positive-macro-decomposition-r15"
 
 
 def _load_verdict_module():
@@ -524,15 +523,18 @@ def test_total_args_divergence_is_a_contract_breach(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # 実 scenario 正本との接続
 # --------------------------------------------------------------------------- #
-def test_the_real_c14_scenario_resolves_and_declares_observations() -> None:
-    scenario = VERDICT.load_scenario(DEV_GRAPH_SCENARIOS, C14_SCENARIO_ID)
-    assert scenario["skill"] == "run-dev-graph-decompose"
-    assert scenario["criterion_id"] == "OUT1"
-    assert len(scenario["required_observations"]) >= 4
-    assert scenario["task_contract"]["required_fragments"]
-    assert "--operation apply-lifecycle-request" in (
-        scenario["task_contract"]["forbidden_fragments"]
-    )
+def test_every_real_scenario_resolves_through_load_scenario() -> None:
+    """実 scenario 正本の全件が、verdict の読込口 (一意解決・観測・予算) を通ることを要求する。
+
+    特定の 1 本に固定すると、その scenario が正本から外れたときにテストごと意味を失う。
+    task_contract の判定は SCENARIO_FIXTURE 側の合成入力で検査している。
+    """
+    suite = json.loads(DEV_GRAPH_SCENARIOS.read_text(encoding="utf-8"))
+    assert suite["scenarios"]
+    for item in suite["scenarios"]:
+        scenario = VERDICT.load_scenario(DEV_GRAPH_SCENARIOS, item["scenario_id"])
+        assert scenario["criterion_id"] == "OUT1"
+        assert scenario["required_observations"]
 
 
 def test_scenario_templates_only_name_flags_the_target_skill_declares() -> None:

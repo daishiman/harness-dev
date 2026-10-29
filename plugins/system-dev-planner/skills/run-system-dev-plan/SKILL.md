@@ -49,7 +49,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
   criteria:
     - id: IN1
       loop_scope: inner
-      text: "1 feature の分解が exact 13 task specs と 13-entry inventory・13-node の intra-feature DAG を生成し validate-system-plan.py が DAG 非循環/orphan 0/inventory 矛盾 0/13 件厳密一致で exit0 通過する。promotion 後は対象 feature の generation lineage と task projection rerun を書込なしモードで再検査し exit0 になる"
+      text: "1 feature の分解が exact 13 task specs と 13-entry inventory・13-node の intra-feature DAG を生成し validate-system-plan.py が DAG 非循環/orphan 0/inventory 矛盾 0/13 件厳密一致で exit0 通過する。promotion 後は対象 feature の generation lineage を書込なしモードで再検査し exit0 になる"
       verify_by: script
     - id: IN2
       loop_scope: inner
@@ -65,7 +65,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       verify_by: evaluator
     - id: OUT3
       loop_scope: outer
-      text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion される。その後に対象 feature の lineage marker と 13 task projection の世代非依存 rerun をゲートし、二回目実行で構造が変化しないことを受入テストが確認する"
+      text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion される。その後に対象 feature の generation lineage (現行世代の digest 再計算と supersede 済み世代の marker) をゲートし、二回目実行で構造が変化しないことを受入テストが確認する"
       verify_by: live-trial
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -104,7 +104,7 @@ dev-graph の1 feature を、確定 system-spec を起点に P01..P13 各1件の
 - **入力**: `--feature-id <graph-node-id>` と `--feature-context <repo-relative-json>` (必須)、任意の `--repo-root` と `--config`。`init` は caller repository の layout だけを用意する。
 - **出力 (pre-choice)**: staging の exact-13 package (`feature-package.json`・`task-specs/phase-01..13.md`・`workstream-inventory.json`・`task-graph.json`・`system-build-handoff.json`・`staging-manifest.json`)。C12 deterministic validation を通した path・digest・開き方を示す。
 - **出力 (light/standard/detailed 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・feature 別 current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
-- **完了条件 (light/standard/detailed 選択後)**: C12 deterministic validation と fork evaluator C1..C4 が同一 canonical digest で PASS し、C11 の atomic promotion receipt が発行され、二回目実行で構造が変化しない。加えて対象 feature だけに scope した `validate-generation-lineage.py --package <current-package-slug>` (書込なし) と `build-task-projection-rerun.py --feature-package <feature_package_id> --check` がともに exit 0 であること、すなわち supersede 済み世代が byte-for-byte 不変で現行世代を指す marker を持ち、その feature の exact 13 task projection が世代非依存の再実行コマンドを持つことまでを完了条件に含める。未配線は同じ feature scope の書込モード (`--package <current-package-slug> --write-markers` / `--feature-package <feature_package_id>` 実行) で是正し、書込なしで再確認して完了とする。repository 全件の移行・監査は引数を省略した別運用とし、1 feature run の完了スコープに混ぜない。
+- **完了条件 (light/standard/detailed 選択後)**: C12 deterministic validation と fork evaluator C1..C4 が同一 canonical digest で PASS し、C11 の atomic promotion receipt が発行され、二回目実行で構造が変化しない。加えて対象 feature だけに scope した `validate-generation-lineage.py --repo-root <repo-root> --package <package-slug>` (書込なし) が exit 0 であること、すなわち現行世代の実バイトが pointer/receipt の digest と一致し、supersede 済み世代があればそれが byte-for-byte 不変で現行世代を指す marker を持つことまでを完了条件に含める。`<package-slug>` は C11 が書いた feature 別 current pointer (`<state>/current/<package-slug>.json`) のファイル名で、`feature_package_id` の英数字・`.`・`_`・`-` 以外を `-` に置換した値。marker 欠落は同じ scope の `--write-markers` (欠落時だけ作る create-only) で是正し、書込なしで再確認して完了とする。task projection (`tasks/<parent_feature>/<id>.md`) は本 run が発行した registration request を dev-graph が適用した後に初めて生成されるため、`build-task-projection-rerun.py` は本 run の完了条件に含めない。これは契約 1.3.0 未満で登録済みの projection を移行する別運用であり (`references/feature-execution-package-contract.md` §2.3)、repository 全件の移行・監査と同様に 1 feature run の完了スコープに混ぜない。
 - **禁則**: 1 run で2つ以上の feature を扱わない。14件目の task と別の13 phase 文書を作らない。staging lock の JSON を C13 以外から作成・書換・削除しない。途中で失敗しても published/current の旧世代を壊さない。
 
 ## Runtime root contract

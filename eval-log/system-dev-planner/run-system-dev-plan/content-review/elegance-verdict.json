@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "run-system-dev-plan",
-    "skill_md_sha256": "066468115e86908edc90f9a1e627e7cbf28c96aff2f309a1f72880e40f25324d"
+    "skill_md_sha256": "9870d77941cadc2fbe41e18336f1bc93593f0e79afbae188b4be127ec0bcec5b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 3
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T20:45:16Z",
-  "iterations": 3,
+  "reviewer": "cr-run-system-dev-plan (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:51:55Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,14 +27,22 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "修正は script_refs の1行の追加だけで、Purpose & Output Contract・完了ステップ・Failure handling・Gotchas は前回から変わっていない。この script の coverage 記録 (eval-log/coverage/scripts/plugins-system-dev-planner-scripts-extract-plugin-root.py.json) もすでにあり、script_refs を読む validate-frontmatter.py は rc=0 で通る。",
-      "criteria: IN1・IN2 (exact-13 と handoff の構造) と OUT1-OUT3 の評価経路は、今回の1行の追加で変わっていない。5件とも評価した。"
+      "iteration 1 の high 2 件 (dependency_break と contradiction) が解消した。SKILL.md:107 の完了条件から build-task-projection-rerun.py が外れ、外す理由も書かれた。理由は、task projection が dev-graph による registration request の適用後に初めて作られることと、これが §2.3 の旧世代 (契約 1.3.0 未満) を移行する別運用であること。workflow-manifest.json:32 の R5 も title と resourceIds から projection rerun が外れ、resource `script-projection-rerun` も消えた。IN1 (L52) と OUT3 (L68) は lineage だけの文にそろい、references/feature-execution-package-contract.md:60 (§2.3) も『planner の 1 feature run の完了条件に含めない (未登録の新規 feature では対象 0 件)』と同じ範囲を書いている。4 か所の適用範囲が一致した。",
+      "残した lineage ゲートは、実際の promote-system-plan.py の出力に対して到達できることを再現で確かめた。新規 feature の初回 promotion 直後、`validate-generation-lineage.py --repo-root <root> --package <slug>` (書込なし) は exit 0 で、violations は [] だった。旧世代に registration receipt があれば、supersede 直後は marker 欠落で exit 2 になり、`--write-markers` で exit 0 (SUPERSEDED.json を作成)、書込なしの再確認も exit 0 だった。SKILL.md:107 が書く是正の手順 (create-only で marker を作り、書込なしで再確認) が実装どおりに動く。",
+      "SKILL.md:107 のコマンド例に必須の `--repo-root <repo-root>` が入った。`<package-slug>` も『C11 が書いた feature 別 current pointer のファイル名』と定義された。lineage script は pointer の stem (拡張子を除いたファイル名) で照合する (validate-generation-lineage.py:197)。promote は `<state_root>/current/<slug>.json` に書く (promote-system-plan.py:422)。定義の主軸がこの 2 つと一致する。",
+      "prompts/R3-emit.md:76 の exit code の説明が実装と一致した。validate-system-plan.py の main() (L467-492) は、pass で 0、fail と fail-closed な例外で 2、c09.UsageError で 1 を返す。`--staging` / `--feature-package` の相互排他 group の引数欠落は、argparse により 2 になる (tests/test_rerun_command_resolution.py:94-99)。",
+      "`--write-markers` の表現が create-only (欠落時だけ作り、既存は上書きしない) にそろった。references/feature-execution-package-contract.md の L48 と L51、validate-generation-lineage.py の docstring L36-38 が、既存 marker を束縛し直さない実装 (L293-295) と一致する。",
+      "1 feature run の完了スコープを対象 feature に絞り、全件の移行・監査と旧世代の projection 移行を別運用に分けた。この方針が SKILL.md:107 と reference §2.3 で同じ言葉で書かれ、並行 run を巻き込まない境界がはっきりした。"
     ],
-    "negative_feedback": [],
-    "iteration": 3,
+    "negative_feedback": [
+      "[medium / smell] (iteration 1 から持ち越し。今回再現で確認) 旧世代が dev-graph に未登録のまま再計画すると、SKILL.md:107 の完了条件に届かない。旧世代を promote したあと、dev-graph が registration request を適用する前に source drift で再計画すると、新世代の promote は成功する (再現で rc 0)。しかし lineage は旧世代 directory に registration receipt を要求し (validate-generation-lineage.py:262、:132-147)、無ければ `V6-superseded-digest` の violation で exit 2 になる。`--write-markers` も同じ理由で exit 2 のままで是正できない (再現: scratchpad/cr/run-system-dev-plan/repro_lineage_e2e.py のケース C2・C3)。SKILL.md:107 は『marker 欠落は --write-markers で是正』しか書いておらず、この経路の扱いが無い。violation の check id が V6 (digest 不一致の名前) なので、原因も読み取りにくい。fail-closed (誤って PASS にはならない) で、通常順序 (登録してから再計画) では到達できるため、medium とした。直し方は次のどちらか。(1) 『前世代の registration receipt が無い状態での再計画は R1 で拒否する』と禁則か R1 の preflight に書く。(2) 未登録の旧世代を marker が受けられるように script と §2.2 を変え、receipt 欠落は専用の check id で報告する。旧世代を後から dev-graph に登録できるかは未確認。",
+      "[low / smell] frontmatter の script_refs (SKILL.md:43) に build-task-projection-rerun.py が残っている。workflow-manifest からは消え、本文 (SKILL.md:107) では『本 run の完了条件に含めない』と明記されているので、script_refs だけを読むと本 run で実行する script に見える。この別運用 (旧世代 projection の移行) を誰がどの入口で実行するかは reference §2.3 にしか無く、実行の入口となる skill は無い。直し方: script_refs から外すか、残すなら本文に『参照のみ。本 run では実行しない』と対応づける。",
+      "[low / smell] SKILL.md:107 の slug の説明『feature_package_id の英数字・`.`・`_`・`-` 以外を `-` に置換した値』は、`_package_slug` (promote-system-plan.py:391-392 の `re.sub(r\"[^A-Za-z0-9._-]+\", \"-\", ...).strip(\"-\")`) の 2 点を落としている。連続する対象文字を 1 つの `-` にまとめることと、両端の `-` を除くこと。例えば 'a//b' は 'a-b' になり 'a--b' にはならない。主たる定義は『current pointer のファイル名』なので実害は小さい。直し方: 『連続は 1 つの `-` にまとめ、両端の `-` を除く』と添えるか、置換規則の文を削ってファイル名による定義だけにする。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review (iteration 3、上限3の最後の周回) で、exhaustive の30思考法は実施していない。builder とは別 context の独立レビュアーが、前回 (iteration 2) の negative_feedback の各項目の解消を行番号つきで現物で確かめ、修正と本体からの merge で生じた変更とその周辺について (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。作者の修正要約は使わず、git diff HEAD と現物だけで判断した。HEAD には前回のレビュー以降のコミットが無く、差分はすべて作業ツリーの未コミット分で、plugin 側の変化は版の更新と artifact-delivery.json の runner_sha256 だけだった。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (stdout だけで、ファイルは書いていない)。テストは pytest -q -p no:cacheprovider (plugins/skill-intake・plugins/system-spec-harness・plugins/system-dev-planner・tests/test_skill_intake_notion_contract.py) で 771 passed、rc=0。対象スキルの本体 (SKILL.md・prompts・references・scripts・agents) は編集していない。 読んだもの: git diff HEAD の SKILL.md (26行)、SKILL.md の frontmatter (L25-50) と 135-165 行、plugins/system-dev-planner/scripts/extract-plugin-root.py の実在と byte 比較、eval-log/coverage/scripts/ の一覧。迷った例: prompts/R3-emit.md の『最大反復回数: 3』と SKILL.md の max_loops=5 は、前回の notes のとおり別の loop (emit 中の validator の修正と、外側の goal-seek) と読める。今回どちらも変わっていないので、指摘にしなかった。"
+  "notes": "elegance 側。incremental の focused combined review、iteration 2 (再評価)。exhaustive な 30 思考法は使っていない。SKILL.md の作者とは別の、独立した reviewer として判定した。作者の修正要約は手がかりにとどめ、判断は現物だけで行った。SKILL.md の sha256 は審査開始時と書込直前の 2 回 `shasum -a 256` で測り、どちらも 9870d779…c5b で、coordinator が伝えた値と一致した (iteration 1 は 81c71db2…fbc4b)。iteration 1 の skill ディレクトリの差分 (scratchpad/cr/run-system-dev-plan.skilldir.diff) と、今回の `git -C INT diff d46ca8ad -- plugins/system-dev-planner/skills/run-system-dev-plan` を突き合わせた。変わったのは IN1 (L52)、OUT3 (L68)、SKILL.md:107、R3-emit.md:76、workflow-manifest の R5 と resource の削除だけで、coordinator の修正説明と一致した。そのほか references/feature-execution-package-contract.md の L48・L51・L60 と、validate-generation-lineage.py の docstring L28-38 を読んだ。検証のために読んだもの: validate-generation-lineage.py の L100-147 と L193-270 (V1-V7、registration receipt の要求)、promote-system-plan.py:391-394 と :422 (slug と pointer path)、validate-system-plan.py:467-492 (exit code)、dev-graph の register-package.py:382-470 (receipt は --receipt 引数の path に作成)、build-system-handoff.py:452 と promote-system-plan.py:479 (registration receipt の正準 path は package 直下の dev-graph-registration-receipt.json)、references/atomic-promotion-contract.md の L17-27 と §6、tests/test_generation_lineage.py (fixture は手で組んだ package)。実行したコマンドと結果: (1) `python3 -m pytest -q -p no:cacheprovider plugins/system-dev-planner/tests` で 197 passed、3 skipped (scratchpad から実行)。(2) `scripts/validate-frontmatter.py SKILL.md` は exit 0 (ok)、`scripts/lint-skill-tree.py <skill dir>` も exit 0 (ok)。(3) scratchpad/cr/run-system-dev-plan/repro_lineage_e2e.py で、tests の test_runtime.make_repo、make_fixture、PROMOTER.main を使い、一時 repo に実際の promotion を作った。C1 (初回 promotion 直後の lineage、書込なし) は exit 0。C2 (supersede 直後、書込なし) と C3 (--write-markers) は、旧世代に registration receipt が無いため V6 で exit 2。C4 (旧世代に receipt を置いて --write-markers) は exit 0 で marker を作成し、C5 (書込なしの再確認) も exit 0。INT への書込はこの 2 つの verdict ファイルだけで、plugin 配下に untracked ファイルが増えていないことは git status で確かめた。範囲外: plugins/system-dev-planner/skills/run-skill-feedback/workflow-manifest.json にも作業ツリーの変更 (collect の title だけ) があるが、別 skill の変更なので審査していない。判定: iteration 1 の high 2 件は解消した。新たな high も、(a) 矛盾・(b) 漏れ・(c) 規約・(d) 依存の違反も無い。残るのは medium 1 件と low 2 件の smell で、ブリーフの規則では PASS を妨げないので PASS とした。ただし medium の 1 件 (未登録の旧世代を supersede した後の lineage 未到達) は、作者側で次の周回に直すことを勧める。未確認: 旧世代を後から dev-graph に登録すれば是正できるか (register-package.py を superseded 世代に対して実行する経路) は試していない。"
 }

@@ -259,9 +259,10 @@ def validate_structured_json(path: Path, strict_signal: bool = False) -> tuple[b
             # smell のときだけ condition の省略を許す (findings.schema.json と同契約)。
             if signal == "smell":
                 if condition is not None:
-                    # schema が condition を required にしていた時代の findings は
-                    # smell にも便宜値を持つ。過去 run を遡って赤にしないため warning に留める。
-                    warnings.append(
+                    # schema が condition を required にしていた時代の findings は smell にも便宜値を持つ。
+                    # --phase-order (validate_phase_order.check_signal_consistency) と同じ tolerant 契約:
+                    # 既定は旧 run を遡及 fail させず warning、Phase 3 完了判定の --strict-signal では error。
+                    (errors if strict_signal else warnings).append(
                         f"paradigm {pid} issue {i}: condition_signal=smell に便宜値 condition={condition} が残っている "
                         f"(新規 run では省略すること。verdict には算入されない)"
                     )

@@ -198,6 +198,30 @@ def test_coverage_gate_passes_and_fails_on_fixture_matrix(tmp_path):
     assert MOD.run_coverage_gate(matrix, require_complete=True)["exit_code"] == 1
 
 
+def test_source_citation_gate_passes_and_fails_and_fits_the_report_schema(tmp_path, capsys):
+    state = tmp_path / "spec-state.json"
+    write_matrix(state)
+    references = tmp_path / "fetched-references.json"
+    references.write_text(json.dumps({"references": []}), encoding="utf-8")
+    result = MOD.run_source_citation_gate(state, references, tmp_path)
+    assert result["id"] == "G-source-citation"
+    assert result["exit_code"] == 0, result["stderr"]
+    # 収集した gate 結果をそのまま PASS report の gate_results へ入れても schema を通る
+    report = golden_report()
+    report["gate_results"] = [item for item in report["gate_results"] if item["id"] != "G-source-citation"]
+    report["gate_results"].append(result)
+    assert MOD.validate_schema(report) == []
+    assert MOD.main(["--source-citation", str(references), "--state", str(state), "--repo-root", str(tmp_path)]) == 0
+    assert json.loads(capsys.readouterr().out)["id"] == "G-source-citation"
+    # 取得対象に無い孤児 reference は violation になり、gate は exit 1 を返す
+    references.write_text(json.dumps({"references": [{"target_id": "orphan"}]}), encoding="utf-8")
+    assert MOD.run_source_citation_gate(state, references, tmp_path)["exit_code"] == 1
+    with pytest.raises(SystemExit):
+        MOD.main(["--source-citation", str(references)])
+    with pytest.raises(SystemExit):
+        MOD.main(["--matrix", str(state), "--state", str(state)])
+
+
 def test_knowledge_graph_gate_passes_on_shipped_assets_and_cli_outputs_json(capsys):
     result = MOD.run_knowledge_graph_gate()
     assert result["id"] == "G-knowledge-graph"

@@ -99,3 +99,34 @@ def test_cli_returns_0_when_clean(repo, tmp_path):
 
 def test_cli_returns_2_on_unreadable_state(tmp_path, repo):
     assert mod.main(["--matrix", str(tmp_path / "absent.json"), "--repo-root", str(repo)]) == 2
+
+
+# 利用側 repo には plugin の写しが無い。harness repo の配置で書いた C04 card 参照は、
+# validator 自身が属する plugin root で解決されなければ、install 先によらず必ず落ちる。
+CARD_IN_HARNESS_LAYOUT = "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/ddd.md"
+
+
+def test_harness_layout_card_resolves_via_plugin_root_in_consumer_repo(tmp_path):
+    assert not (tmp_path / "plugins").exists()
+    assert mod.collect_findings(_state(f"{CARD_IN_HARNESS_LAYOUT}#中核概念"), tmp_path) == []
+
+
+def test_plugin_root_fallback_still_checks_anchor(tmp_path):
+    findings = mod.collect_findings(_state(f"{CARD_IN_HARNESS_LAYOUT}#存在しない見出し"), tmp_path)
+    assert len(findings) == 1 and "見出しが参照先に存在しない" in findings[0]
+
+
+def test_repo_root_copy_wins_over_plugin_root(tmp_path):
+    # harness repo 自身では repo root の card を正とし、install 済み plugin に読み替えない。
+    card = tmp_path / CARD_IN_HARNESS_LAYOUT
+    card.parent.mkdir(parents=True)
+    card.write_text("# repo 側の写し\n\n## repo だけの見出し\n", encoding="utf-8")
+    assert mod.collect_findings(_state(f"{CARD_IN_HARNESS_LAYOUT}#repo だけの見出し"), tmp_path) == []
+    findings = mod.collect_findings(_state(f"{CARD_IN_HARNESS_LAYOUT}#中核概念"), tmp_path)
+    assert len(findings) == 1 and "見出しが参照先に存在しない" in findings[0]
+
+
+def test_other_plugin_prefix_is_not_rewritten(tmp_path):
+    ref = "plugins/other-plugin/skills/ref-system-design-knowledge/references/ddd.md#中核概念"
+    findings = mod.collect_findings(_state(ref), tmp_path)
+    assert len(findings) == 1 and "参照先が実在しない" in findings[0]

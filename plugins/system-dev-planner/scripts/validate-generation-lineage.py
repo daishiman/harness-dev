@@ -35,7 +35,7 @@ pointer/receipt を辿らない読み手 (人間・planner) は旧世代を正�
 
 marker は canonical digest の対象集合 (staging-manifest.json の files) に含まれない
 付帯 file であり、追加しても V6 の digest は変わらない。決定論的に導出できる値だけ
-を持たせ、`--write-markers` は冪等に再生成する。
+を持たせ、`--write-markers` は欠落した marker だけを作る (既存 marker は再束縛しない)。
 """
 from __future__ import annotations
 

@@ -68,6 +68,10 @@ script_refs:
   - scripts/build-self-reflection-entry.py
   - scripts/extract-capability-dependency-graph.py
   - scripts/build-capability-graph-knowledge-entry.py
+  - scripts/build-verdict.py
+  - scripts/build-review-report.py
+  - scripts/validate_phase_order.py
+  - scripts/check-review-trigger.py
 merge_strategy: deep-merge
 conflict_policy: most-specific-wins
 source: doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
@@ -135,7 +139,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-elegant-review (v2)
 
-> **Reading Order**: (1) ゴールシーク実行 → (2) Purpose & Output Contract → (3) 役割直交 → (4) 入出力契約 → (5) 30 思考法カタログ → (6) 検証 4 条件 → (7) 実行フロー (Phase 1→2→3) → (8) Gotchas。初見は (1)(2)(6) で全体像が掴める。
+> **Reading Order**: (1) Purpose & Output Contract → (2) ゴールシーク実行 → (3) 入出力契約 (役割直交・入力・出力・完了条件) → (4) 30 思考法カタログ → (5) 検証 4 条件 → (6) 実行フロー (Phase 1→2→3) → (7) Gotchas。初見は (1)(2)(5) で全体像が掴める。
+
+## Purpose & Output Contract
+
+新規/更新 Skill・rubric 改訂・アーキテクチャ提案・量産 plugin package を 30 思考法で検証し 4 条件を全 PASS まで改善する（詳細はゴールシーク実行節）。**v2 位置づけ**: 25 章 §runbook の **Step 5.5**（PKG check と assign-skill-design-evaluator の中間）= 「**設計 elegance lint**」。契約適合・規範採点と責務直交。
+
+**出力契約**: `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` に `findings.json`（`schemas/findings.schema.json`）・`verdict.json`（`scripts/build-verdict.py` で `findings.json` から導出）・`review-<scope_mode>.md` を残す（詳細は入出力契約節）。
+
+**禁則**: Phase 1/2 は read-only / 自己承認禁止（proposer ≠ approver）/ max_iter 到達時の force_pass 禁止 / `verdict.json` の手書き禁止 / `commit_authorized=true` の明示なしに commit しない。
 
 ## ゴールシーク実行
 
@@ -186,9 +198,7 @@ python3 scripts/validate-paradigm-coverage.py --task-graph-trace \
 
 ---
 
-## Purpose & Output Contract
-
-新規/更新 Skill・rubric 改訂・アーキテクチャ提案・量産 plugin package を 30 思考法で検証し 4 条件を全 PASS まで改善する（詳細はゴールシーク実行節）。**v2 位置づけ**: 25 章 §runbook の **Step 5.5**（PKG check と assign-skill-design-evaluator の中間）= 「**設計 elegance lint**」。契約適合・規範採点と責務直交。
+## 入出力契約
 
 ### 役割直交（Step 5 / 5.5 / 6）
 
@@ -229,9 +239,9 @@ options:
 
 ### 完了条件（4 条件 → 観測 signal）
 
-各条件の PASS signal は上記ゴールシーク Checklist（`fail_counts.<signal> == 0`）と下記「検証 4 条件」テーブルを正本とする。`issues[].severity` は low/medium/high/critical の優先度、`condition_signal` は contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal として分離する。`smell` は警告枠（PASS を妨げない）。`condition`（C1-C4 の 4 値）と `condition_signal`（smell を含む 5 値）は濃度が一致しないため、**`condition_signal=smell` の issue は `condition` を持たない**（schema 上も required から外してある）。smell 以外は `contradiction→C1 / omission→C2 / inconsistency→C3 / dependency_break→C4` の対応を守る。判定は `scripts/validate-paradigm-coverage.py` と `verdict.json` で機械実行する。`verdict.json` は手書きせず `scripts/build-verdict.py` で `findings.json` から導出する（CI では `--check` で drift を検出する）。
+各条件の PASS signal は上記ゴールシーク Checklist（`fail_counts.<signal> == 0`）と下記「検証 4 条件」テーブルを正本とする。`issues[].severity` は low/medium/high/critical の優先度、`condition_signal` は contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal として分離する。`smell` は警告枠（PASS を妨げない）。`condition`（C1-C4 の 4 値）と `condition_signal`（smell を含む 5 値）は濃度が一致しないため、**`condition_signal=smell` の issue は `condition` を持たない**（schema 上も required から外してある）。smell 以外は `contradiction→C1 / omission→C2 / inconsistency→C3 / dependency_break→C4` の対応を守る。判定は `scripts/validate-paradigm-coverage.py` と `verdict.json` で機械実行する。`verdict.json` は手書きせず `python3 scripts/build-verdict.py --findings <log_dir>/findings.json --verdict <log_dir>/verdict.json` で `findings.json` から導出する。`verdict.status` は `findings.run_status` の転記で、orchestrator が導出前に `references/convergence-policy.json` の `halt_conditions` で発火した条件の `status` (converged→`complete` / diverged→`human_escalate` / max_iterations_reached→`incomplete`) を写す（executor の `convergence_status` からは complete→`complete`、diverging・human_escalate→`human_escalate`、in_progress・incomplete→`incomplete`）。4 条件に FAIL が残るのに `run_status=complete` なら `build-verdict.py` は書かずに exit 2 で止まる。drift の検出は CI の `--phase-order eval-log` が `build-verdict.py` の `derive()` を再利用して行う（`build-verdict.py --check` は手元確認用）。
 
-対応検査の遡及免除には**終了条件がある**: run ディレクトリ名 `run-YYYYMMDD-*` の日付が `STRICT_SIGNAL_FROM`（現在 `20260809`）以降なら error、それより前および日付を読めない run は WARN 止まり。`--strict-signal` を明示すれば日付に関わらず全 run が error になる。CI（`--phase-order eval-log`）はこの日付境界で自動的に新規 run だけを縛るため旗を付けない。**終了条件のない免除は検査を恒久的に骨抜きにする**ため、tolerant 契約を足すときは必ず解除条件を同時に定めること。
+対応検査の遡及免除には**終了条件がある**: run ディレクトリ名 `run-YYYYMMDD-*` の日付が `STRICT_SIGNAL_FROM`（現在 `20260809`）以降なら error、それより前および日付を読めない run は WARN 止まり。`--strict-signal` を明示すれば、単一ファイル mode（Phase 3 完了判定の `--strict-signal <log_dir>/findings.json`）と `--phase-order` のどちらでも日付に関わらず error になる。CI（`--phase-order eval-log`）はこの日付境界で自動的に新規 run だけを縛るため旗を付けない。**終了条件のない免除は検査を恒久的に骨抜きにする**ため、tolerant 契約を足すときは必ず解除条件を同時に定めること。
 
 ---
 
@@ -305,7 +315,7 @@ CONST_002（30 種全使用）は緩和しない。全30種が finding を出し
 
 ### Codex 委譲判定基準（B5）
 
-次のいずれかで `delegate-codex-skill-review` SubAgent へ委譲（**Phase 3 限定**、Phase 1/2 中は禁止＝context 再汚染 C2）: 変更行数 > 50 / テスト変更含む（`tests/` `*_test.py` `*.spec.*`）/ 複数ファイル横断（`findings[].location` unique file 数 > 3）。
+次のいずれかで `delegate-codex-skill-review` SubAgent へ委譲（**Phase 3 限定**、Phase 1/2 中は禁止＝context 再汚染 C2）: 変更行数 > 50 / テスト変更含む（`tests/` `*_test.py` `*.spec.*`）/ 複数ファイル横断（`paradigm_findings[].issues[].location` の unique file 数 > 3）。
 
 ---
 
@@ -350,25 +360,26 @@ emit event の具体例 (4 条件 FAIL / safety_valve_fired=true 双方) は `re
 
 ### 停止条件
 
-1. **収束完了** (`Δneg < 0.10 AND Δpos < 0.10`): `status: complete`
-2. **発散** (`Δneg 2周連続増加`): `human_escalate`
-3. **安全弁発火** (`iteration_count >= max_iterations(=3)`): `status: incomplete`・force_pass 禁止・`human_review` 必須
+1. **収束完了** (`Δneg < 0.10 AND Δpos < 0.10` かつ 4 条件 PASS): `status: complete`
+2. **停滞** (`Δneg < 0.10 AND Δpos < 0.10` だが 4 条件に FAIL が残る): `status: incomplete`・force_pass 禁止・`human_review` 必須
+3. **発散** (`Δneg 2周連続増加`): `status: human_escalate`
+4. **安全弁発火** (`iteration_count >= max_iterations(=3)`): `status: incomplete`・force_pass 禁止・`human_review` 必須
 
 ---
 
 ## Gotchas
 
 1. **30 思考法すべて省略禁止**: `scripts/validate-paradigm-coverage.py` が `used` の30件一意・正本一致と `skipped_with_reason == []` を機械検証。欠落・重複・skip で exit 1
-1. **`condition` と `condition_signal` の二重帳簿を作らない**: smell に C1 等の便宜値を入れると `fail_counts` と `issues[].condition` の集計が恒常的にずれる。smell は `condition` を省略する。Phase 3 完了判定は `--strict-signal` 付きで実行する
-2. **Phase 1 必須経由（C3）**: スキップ不可。リセット未経由のレビューは C2/C3 が偽陽性 PASS する
-3. **Goodhart の罠**: score 最大化のために本質を歪めない
-4. **Phase 2 並列前提**: 3 SubAgent は互いの中間結果を参照しない（独立性確保、SubAgent context 分離で強制）
-5. **proposer ≠ approver（C4、23 章）**: 自己承認禁止
-6. **Codex 委譲は Phase 3 限定（C2）**: Phase 1/2 で委譲すると context 再汚染
-7. **`auto_fixable` 安易フラグ禁止**: 単純な path 修正・chmod 等のみ true。意味変更を伴う修正は必ず false
-8. **`shared_state.md` は 200 字制限**: Phase 1 → 2 ファンアウト時に context 肥大を防ぐ
-9. **PKG check 結果との衝突**: PKG-006（hook 整合）と本 skill の dependency_break が同一 finding を出す可能性。location が同じなら PKG check 側を優先（契約 > elegance）
-10. **safety_valve_fired を成功扱いにしない**: max_iter 到達は failure。35 章 observable が必ず emit される
+2. **`condition` と `condition_signal` の二重帳簿を作らない**: smell に C1 等の便宜値を入れると `fail_counts` と `issues[].condition` の集計が恒常的にずれる。smell は `condition` を省略する。Phase 3 完了判定は `python3 scripts/validate-paradigm-coverage.py --strict-signal <log_dir>/findings.json` で実行し、便宜値を error にする
+3. **Phase 1 必須経由（C3）**: スキップ不可。リセット未経由のレビューは C2/C3 が偽陽性 PASS する
+4. **Goodhart の罠**: score 最大化のために本質を歪めない
+5. **Phase 2 並列前提**: 3 SubAgent は互いの中間結果を参照しない（独立性確保、SubAgent context 分離で強制）
+6. **proposer ≠ approver（C4、23 章）**: 自己承認禁止
+7. **Codex 委譲は Phase 3 限定（C2）**: Phase 1/2 で委譲すると context 再汚染
+8. **`auto_fixable` 安易フラグ禁止**: 単純な path 修正・chmod 等のみ true。意味変更を伴う修正は必ず false
+9. **`shared_state.md` は 200 字制限**: Phase 1 → 2 ファンアウト時に context 肥大を防ぐ
+10. **PKG check 結果との衝突**: PKG-006（hook 整合）と本 skill の dependency_break が同一 finding を出す可能性。location が同じなら PKG check 側を優先（契約 > elegance）
+11. **safety_valve_fired を成功扱いにしない**: max_iter 到達は failure。35 章 observable が必ず emit される
 
 ---
 

@@ -27,8 +27,22 @@
 - **30思考法**: 論理分析系5 / 構造分解系4 / メタ抽象系3 / 発想拡張系6 / システム系3 / 戦略価値系4 / 問題解決系5
 - **4条件**: 矛盾なし / 漏れなし / 整合性あり / 依存関係整合
 - **オーケストレーション**: Phase1 思考リセット・俯瞰(必須ゲート) → Phase2 3エージェント並列分析 → Phase3 改善実行/提案。最大反復3回。
+- **担当配分**: Agent2=論理5+構造4=9、Agent3=メタ3+発想6=9、Agent4=system3+戦略4+problem5=12。why は G-problem / Agent4。
+- **全使用**: 30思考法の skip は理由付きでも禁止。`used` は正本30名称と一意一致し `skipped_with_reason=[]`。
 - 変わるのは各コマンド固有の **検証対象** と **4条件の読み替え**、そして Phase3 が「改善実行」か「提案のみ」か。
 - **例外**: `run-skill-feedback.md` はこの骨格を持たない。対話の正本は `doc/notion-schema/skill-list.schema.json#feedback_protocol` であり、発火条件と参照経路を `scripts/lint-feedback-protocol.py` が機械検証する。
+
+## 配布 capability 表
+
+正本は [`../native-surface-contract.md`](../native-surface-contract.md)。推測 surface は作らず、製品ごとの実在する入口だけを使う。
+
+| 配布先 | Skill | Agent / team orchestration | Command |
+|---|---|---|---|
+| Claude Code | plugin `skills/run-elegant-review` と `.claude/skills` projection | `.claude/agents/elegant-*.md` の native agent surface | `.claude/commands` |
+| Agents | `.agents/skills` または plugin skill | skill が実行時の team/sub-agent orchestration を担う。独立した agent/command projection は作らない | native command surface なし |
+| Codex | plugin `skills/run-elegant-review` | **plugin skill 内 team orchestration** 経路。Codex に **native agent surface なし** | native command surface なし |
+
+Codex/Agents で `.agents/agents` や `.agents/commands` を推測生成しない。Phase1/2 の payload materialize は orchestrator の single-writer、Phase3 の git commit は `commit_authorized=true` 明示時だけで、既定は patch まで。
 
 ## オプション表の保守 (SSOT 同期)
 

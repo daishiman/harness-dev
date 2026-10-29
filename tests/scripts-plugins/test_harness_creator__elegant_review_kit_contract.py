@@ -133,6 +133,30 @@ def test_findings_template_is_executable_under_the_latest_contract(tmp_path):
     assert valid, errors
 
 
+def test_single_file_strict_signal_rejects_a_smell_with_a_convenience_condition(tmp_path):
+    """Phase 3 完了判定 (--strict-signal <findings.json>) は smell の便宜値 condition を error にする。
+
+    --phase-order 経路だけが strict で、単一ファイル mode は便宜値を warning に留めていたため、
+    SKILL.md が完了判定に指定する経路で二重帳簿が素通りした。既定 (旧 run) は warning のまま。
+    """
+    validator = _load_script("validate-paradigm-coverage.py")
+    template = json.loads((KIT / "templates" / "findings.json").read_text())
+    first = template["paradigm_findings"][0]
+    first["condition_matrix"]["C1"] = {"verdict": "FAIL", "evidence": ["probe"], "violation_count": 1}
+    first["issues"] = [{
+        "condition": "C1", "condition_signal": "smell", "severity": "low",
+        "description": "x", "recommended_intervention": "y",
+    }]
+    candidate = tmp_path / "findings.json"
+    candidate.write_text(json.dumps(template), encoding="utf-8")
+
+    valid, errors = validator.validate_structured_json(candidate, strict_signal=False)
+    assert valid, errors
+    valid, errors = validator.validate_structured_json(candidate, strict_signal=True)
+    assert not valid
+    assert any("condition_signal=smell に便宜値" in error for error in errors), errors
+
+
 def test_scorecard_rejects_condition_matrix_issue_mismatch(tmp_path):
     validator = _load_script("validate-paradigm-coverage.py")
     scorecard = _load_script("build-paradigm-scorecard.py")

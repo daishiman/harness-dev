@@ -59,6 +59,19 @@ def make_run(tmp_path: Path, run_name: str, findings: dict) -> Path:
     return run_dir
 
 
+def build_verdict(run_dir: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable, str(SCRIPT.with_name("build-verdict.py")),
+            "--findings", str(run_dir / "findings.json"),
+            "--verdict", str(run_dir / "verdict.json"),
+            "--plugin", "probe", "--skill", "probe-skill", "--scope-mode", "repo",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+
 def run_gate(target: Path, *extra: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *extra, "--phase-order", str(target)],
@@ -140,20 +153,60 @@ def test_verdict_drift_fails_in_strict_run(tmp_path: Path) -> None:
 def test_verdict_matching_derivation_passes(tmp_path: Path) -> None:
     """build-verdict.py で生成した verdict は検査を通り、検査件数が 1 と報告される。"""
     run_dir = make_run(tmp_path, "run-20260810-strict", CLEAN_FINDINGS)
-    builder = SCRIPT.with_name("build-verdict.py")
-    built = subprocess.run(
-        [
-            sys.executable, str(builder),
-            "--findings", str(run_dir / "findings.json"),
-            "--verdict", str(run_dir / "verdict.json"),
-            "--plugin", "probe", "--skill", "probe-skill", "--scope-mode", "repo",
-        ],
-        capture_output=True, text=True,
-    )
+    built = build_verdict(run_dir)
     assert built.returncode == 0, built.stdout + built.stderr
     result = run_gate(run_dir)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "verdict derivation checked in 1 run(s)" in result.stdout
+
+
+def test_build_verdict_refuses_complete_while_a_condition_fails(tmp_path: Path) -> None:
+    """run_status=complete でも 4 条件に FAIL が残れば verdict.json を書かずに exit 2。
+
+    status は findings.run_status の転記なので、写し元が誤ると「矛盾なし=FAIL かつ complete」
+    という自己矛盾した verdict が CI を通ってしまう。
+    """
+    run_dir = make_run(tmp_path, "run-20260810-strict", {**CLEAN_FINDINGS, "run_status": "complete"})
+    built = build_verdict(run_dir)
+    assert built.returncode == 2, built.stdout + built.stderr
+    assert "run_status=complete だが 4 条件に FAIL が残る: 矛盾なし" in built.stderr
+    assert not (run_dir / "verdict.json").exists()
+
+
+def test_build_verdict_keeps_complete_when_only_smell_remains(tmp_path: Path) -> None:
+    """smell は PASS を妨げないので、smell だけが残る complete はそのまま転記される。"""
+    smell_only = {"run_status": "complete", "paradigm_findings": [{"paradigm_id": 1, "issues": [{"condition_signal": "smell"}]}]}
+    run_dir = make_run(tmp_path, "run-20260810-strict", smell_only)
+    built = build_verdict(run_dir)
+    assert built.returncode == 0, built.stdout + built.stderr
+    verdict = json.loads((run_dir / "verdict.json").read_text(encoding="utf-8"))
+    assert verdict["status"] == "complete"
+    assert set(verdict["verdict"].values()) == {"PASS"}
+    result = run_gate(run_dir)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_phase_order_rejects_a_complete_verdict_with_a_failing_condition(tmp_path: Path) -> None:
+    """CI 経路も build-verdict.py と同じ判定関数で、FAIL の残る complete を error にする。
+
+    verdict.json を導出値どおりに書けば drift 検査は通るため、自己矛盾の拒否を build-verdict.py の
+    main だけに置くと、手書きや旧版で作られた verdict を CI が見逃す。
+    """
+    run_dir = make_run(tmp_path, "run-20260810-strict", {**CLEAN_FINDINGS, "run_status": "complete"})
+    derived_but_contradictory = {
+        "plugin": "probe",
+        "skill": "probe-skill",
+        "scope_mode": "repo",
+        "verdict": {"矛盾なし": "FAIL", "漏れなし": "PASS", "整合性あり": "PASS", "依存関係整合": "PASS"},
+        "fail_counts": {"contradiction": 1, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
+        "iteration_count": 0,
+        "status": "complete",
+    }
+    (run_dir / "verdict.json").write_text(json.dumps(derived_but_contradictory, ensure_ascii=False), encoding="utf-8")
+    result = run_gate(run_dir)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "run_status=complete だが 4 条件に FAIL が残る: 矛盾なし" in result.stderr
+    assert "findings.json からの導出値と一致しない" not in result.stderr
 
 
 if __name__ == "__main__":

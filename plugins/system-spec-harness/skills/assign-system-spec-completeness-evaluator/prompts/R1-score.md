@@ -48,11 +48,14 @@
 | spec_dir | no | 評価する仕様書ディレクトリ (引数。レポートの `spec_dir` にそのまま書く) |
 | output | no | レポート出力先 (省略時 `eval-log/` 配下) |
 
+- `spec_dir` の省略時は `system-spec` (repo root 相対) とする。
+
 - 相対の `spec_dir` と `output` は、この skill を起動した cwd から解決する。評価の入力の読み込み、4.3 の書き出し、2.4 の `--report <output> --spec-dir <spec_dir>` の検証は、どれも同じ cwd を基準にする。
 
 ### 2.4 出力契約
 - schema: `schemas/completeness-findings.schema.json`
 - 必須: evaluator, verdict(PASS/FAIL), artifact_snapshot, aspects(rubric全観点), audit_delegations[], findings[], gaps[]
+- 総合 PASS のとき `gate_results` に `G-matrix`・`G-source-citation`・`G-knowledge-graph` (4 profile) の exit 0 を必須とする。3 つとも `aggregate-completeness.py` (`--matrix <spec-state> --require-complete` / `--source-citation <fetched-references> --state <spec-state> --repo-root <root>` / `--knowledge-graph`) の stdout JSON を無改変で入れ、exit code を自己申告で埋めない。
 - **帰属と判定の接地**: `aspects[].auditor` は自己申告の文字列にすぎないため、独立 auditor を名乗る観点は R2 が実 fork した receipt を `audit_delegations[]` に持つ (`matrix_coverage/primary`=C07 / `matrix_coverage/sub_input`=C06 / `doc_freshness/primary`=C08)。`role=primary` の receipt `verdict` は `aspects[aspect].verdict` と一致させ、`dispatch{session_id,tool,subagent_type,tool_use_id,response_sha256}` と receipt `verdict` は PostToolUse hook が観測した同一 response の値と完全一致させる (監査判定の忠実転記)。C05 自前評価の 4 観点に `primary` receipt を付けない。必須 receipt の session は単一 run へ収束させる。
 - `spec_dir`: 引数 `spec_dir` の値をそのまま書く (相対パスなら相対のまま)。説明や注記を混ぜない。書き出しが guard に止められても `spec_dir` の値を変えて回避せず、4.3 のとおり保存先を文字列のリテラルにして書き直す。
 - 書き先: 引数 `output` のパス (`system-spec/` の外)。例外は、総合 PASS で呼び出し側が再利用 receipt を求めた場合だけで、そのときは writer が受け付ける canonical の `system-spec/completeness-report.json` に書く (SKILL.md Step 4)。検証は `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` の exit 0 で、`spec_dir_mismatch` が出た report は呼び出し側 (dev-graph の C02 など) が確定の取込を拒む。
@@ -82,7 +85,7 @@
 - 評価レポートに全観点verdict / gate exit code / high数 / gaps数を含める。
 
 ### 4.3 セキュリティ
-- 仕様書ディレクトリを書き換えない (read-only)。Bash(python3 *) は検証スクリプトの実行と、評価出力先 (仕様書ディレクトリ外) への書き出しに限る。書き出すのは R2-delegate が渡す C06 出力 (`hearing-audit.json`。無改変) と、`--report` で検証する評価レポートだけ (再利用 receipt は production writer `build-resume-receipt.py` が書き、手書きしない)。
+- 仕様書ディレクトリを書き換えない (read-only)。Bash(python3 *) は検証スクリプトの実行と、評価出力先 (仕様書ディレクトリ外) への書き出しに限る。書き出すのは R2-delegate が渡す C06 出力 (`hearing-audit.json`。無改変) と、`--report` で検証する評価レポートだけ (再利用 receipt は production writer `build-resume-receipt.py` が書き、手書きしない)。例外: 総合 PASS で呼び出し側が再利用 receipt を求めた場合だけ、レポートを canonical の `system-spec/completeness-report.json` へ書く (2.4・SKILL.md Step 4)。このとき呼び出し側は `output` にそのパスを渡す。`output` が別のパスのまま receipt を求められたら、書かずに差し戻す。この場合も `hearing-audit.json` は仕様書ディレクトリの外 (`eval-log/` 配下) に置く。
 - 書き出しは R2-delegate 2.4 と同じ形で行う。python3 の `pathlib.Path("<保存先>").write_text(sys.stdin.read(), ...)` に保存先を literal で書き、本文は引用符付きの heredoc で stdin に渡す。レポートの保存先には引数 `output` の値を書く。相対パスなら cwd から解決する (2.3)。Write はこの skill の allowed-tools に無く、`cat >` やリダイレクトは `Bash(python3 *)` の外になる。
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
@@ -109,7 +112,8 @@
 - [ ] `audit_delegations[]` に実 fork した監査 3 件の receipt が揃い、`aggregate-completeness.py --report` の帰属検査 (fork 台帳との突合) を通る
 - [ ] 評価開始前の `--print-artifact-snapshot` 出力が `artifact_snapshot` に改変なく格納され、評価後に入力変更がない
 - [ ] 総合 FAIL のとき gaps (不足事項一覧) を非空にし差し戻し先を記した
-- [ ] 仕様書への書込件数が0件である
+- [ ] 総合 PASS のとき `gate_results` に 3 gate (`G-knowledge-graph` は 4 profile) の exit 0 が、`aggregate-completeness.py` の出力のまま揃っている
+- [ ] 仕様書 (章 Markdown・`spec-state.json`・`fetched-references.json`) への書込件数が 0 件である (canonical の `completeness-report.json` は 4.3 の例外として除く)
 
 ### 5.4 実行方式
 - 固定手順を持たない。状況に応じて必要な評価内容を都度設計し、5.3 の全停止条件が満たされるまで評価結果を改善する。評価は 1 spec-set = 1 パスで完結し、NG 差し戻しループは caller が管理する。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: apply-spec-transition
-# version: 0.2.1
+# version: 0.2.3
 # purpose: run-system-spec-elicit が所有する spec-state.json の単一 transition writer。カテゴリ×platform セルの 未収集/対象外/確定 遷移を規則付きで適用し、確定セルの直接巻き戻し (rollback) を Bash/script 経由でも拒否し、R4-reopen 経由のみ確定変更を許す。goal-seek chunk (per-invocation max_loops) の状態保存/resume も担う。
 # inputs:
 #   - argv: bootstrap|init|add-category|apply|chunk|aggregate|set-targets|set-foundation|set-decision|set-knowledge-candidate|set-qa-source|set-qa-design-applications|fix-qa-knowledge-ref サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops/--require-all/--schema-version (confirm を含む apply/chunk は --required-info CATALOG が必須で、候補stateを検証)
@@ -11,7 +11,7 @@
 # contexts: [E, C]
 # network: false
 # write-scope: spec-state.json (単一 writer)
-# dependencies: [scripts/validate-knowledge-graph.py, scripts/foundation_provenance.py]
+# dependencies: [scripts/validate-knowledge-graph.py, scripts/foundation_provenance.py, scripts/validate-design-knowledge-refs.py]
 # requires-python: ">=3.9"
 # ///
 """spec-state.json の単一 transition writer (run-system-spec-elicit 所有)。
@@ -1919,7 +1919,17 @@ def set_qa_design_applications(state: dict, qa_id: str, raw: object) -> None:
     entry.pop("legacy_exempt_reason", None)
 
 
-MD_HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$", re.MULTILINE)
+# knowledge_ref の実在は validator と同じ解決規則 (repo root → 自 plugin root) で判定する。writer だけが
+# repo root で判定すると、plugin を別の場所へ install した repo で、validator が有効と認める参照の付け替えを
+# 許し、推奨形 (plugins/<plugin>/...) への訂正を拒む。
+_KNOWLEDGE_REFS_PATH = Path(__file__).resolve().parents[3] / "scripts" / "validate-design-knowledge-refs.py"
+_KNOWLEDGE_REFS_SPEC = importlib.util.spec_from_file_location(
+    "system_spec_design_knowledge_refs", _KNOWLEDGE_REFS_PATH
+)
+if _KNOWLEDGE_REFS_SPEC is None or _KNOWLEDGE_REFS_SPEC.loader is None:
+    raise ImportError(f"cannot load knowledge_ref resolver: {_KNOWLEDGE_REFS_PATH}")
+_KNOWLEDGE_REFS = importlib.util.module_from_spec(_KNOWLEDGE_REFS_SPEC)
+_KNOWLEDGE_REFS_SPEC.loader.exec_module(_KNOWLEDGE_REFS)
 
 
 def _split_knowledge_ref(ref: str, label: str) -> tuple[str, str]:
@@ -1949,7 +1959,11 @@ def fix_qa_knowledge_ref(
     満たす場合に限って knowledge_ref だけの差し替えを許す。1 つでも欠ければ拒否する。
 
     - principle / applicability / rationale / tradeoffs は一切触らない (照合対象ですらない)。
-    - 旧 ref の path が repo 内に**実在しない** (実在する参照の付け替え=解釈の変更は許さない)。
+    - 旧 ref の path が**実在しない** (実在する参照の付け替え=解釈の変更は許さない)。実在は
+      ``validate-design-knowledge-refs.py`` と同じ解決規則 (repo root → 自 plugin root) で判定する。
+      例外として、path は実在するが anchor の見出しが実在しない参照は、**同じ文書内**の見出しへの
+      訂正に限って許す (どの文書で判断したかは変わらず、validator も赤にする壊れた引用なので)。
+      別文書への付け替えは解釈の変更として拒否する。
     - 新 ref の path が実在し、anchor 指定があればその見出しも実在する。
     - 該当する application が 1 件以上ある。
 
@@ -1958,7 +1972,7 @@ def fix_qa_knowledge_ref(
     """
     entry = _find_qa(state, qa_id, "fix-qa-knowledge-ref")
     root = Path(repo_root)
-    old_path, _ = _split_knowledge_ref(old_ref, "old_ref")
+    old_path, old_anchor = _split_knowledge_ref(old_ref, "old_ref")
     new_path, new_anchor = _split_knowledge_ref(new_ref, "new_ref")
     if old_ref == new_ref:
         raise TransitionError("fix-qa-knowledge-ref: old_ref と new_ref が同一")
@@ -1980,20 +1994,30 @@ def fix_qa_knowledge_ref(
             f"fix-qa-knowledge-ref: old_ref に一致する design_application が無い: {qa_id}"
         )
 
-    if (root / old_path).is_file():
+    old_target = _KNOWLEDGE_REFS.resolve_knowledge_path(old_path, root)
+    anchor_only_broken = (
+        old_target is not None
+        and bool(old_anchor)
+        and old_anchor not in _KNOWLEDGE_REFS.headings(old_target.read_text(encoding="utf-8"))
+    )
+    if old_target is not None and not anchor_only_broken:
         raise TransitionError(
             "fix-qa-knowledge-ref: 実在する参照の付け替えは解釈の変更にあたるため拒否: "
             f"{old_path}"
         )
-    target = root / new_path
-    if not target.is_file():
+    target = _KNOWLEDGE_REFS.resolve_knowledge_path(new_path, root)
+    if target is None:
         raise TransitionError(f"fix-qa-knowledge-ref: new_ref の参照先が実在しない: {new_path}")
     if new_anchor:
-        headings = set(MD_HEADING_RE.findall(target.read_text(encoding="utf-8")))
-        if new_anchor not in headings:
+        if new_anchor not in _KNOWLEDGE_REFS.headings(target.read_text(encoding="utf-8")):
             raise TransitionError(
                 f"fix-qa-knowledge-ref: new_ref の見出しが実在しない: {new_path}#{new_anchor}"
             )
+    if anchor_only_broken and target.resolve() != old_target.resolve():
+        raise TransitionError(
+            "fix-qa-knowledge-ref: 見出しだけが壊れた参照の訂正は同じ文書内に限る "
+            f"(別文書への付け替えは解釈の変更にあたるため拒否): {old_path} → {new_path}"
+        )
 
     changed = 0
     for item in applications:
@@ -2006,7 +2030,11 @@ def fix_qa_knowledge_ref(
             "new_ref": new_ref,
             "applied_to": changed,
             "writer": "fix-qa-knowledge-ref",
-            "reason": "参照先が実在しない引用を、解釈本文を変えずに実在する参照へ接地させる",
+            "reason": (
+                "見出しが実在しない引用を、解釈本文と参照文書を変えずに同じ文書内の実在する見出しへ接地させる"
+                if anchor_only_broken
+                else "参照先が実在しない引用を、解釈本文を変えずに実在する参照へ接地させる"
+            ),
         }
     )
 

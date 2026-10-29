@@ -57,7 +57,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 - `git diff` の全 hunk が `source_trace[]` に紐づく (findings 外編集 0)。
 
 ### 4.2 失敗時挙動
-- max_iterations=3 の安全弁を超過し収束不能なら Handoff せず `convergence_status=human_escalate / blocked_dimensions[]` で orchestrator へ差し戻す (`force_pass` 禁止)。
+- max_iterations=3 の安全弁を超過し収束不能なら Handoff せず `convergence_status=incomplete / blocked_dimensions[]` で orchestrator へ差し戻す (human_review 必須・`force_pass` 禁止)。Δneg が 2 周連続で増えたら `convergence_status=diverging` を返す。
 
 ## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
 

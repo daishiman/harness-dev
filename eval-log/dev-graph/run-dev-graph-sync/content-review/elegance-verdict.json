@@ -2,19 +2,19 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
-    "skill_md_sha256": "227715b085af8c09b4848ffd337ae2c0b3e5ed88c0761c82caa90e5603024ba6"
+    "skill_md_sha256": "9291fa42c54074121a1d8b027df171a5909ca4f93924eee3d1f865ed6b05c3f7"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-fix)",
-  "reviewed_at": "2026-10-12T04:20:41Z",
-  "iterations": 2,
+  "reviewer": "cr-run-dev-graph-sync (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:45:22Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 1,
+    "omission": 1,
+    "inconsistency": 2,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "human_review_required": false,
   "feedback_loop": {
@@ -32,16 +32,19 @@
       "OUT9"
     ],
     "positive_feedback": [
-      "節の移動で順序も参照も壊れていない。見出しは H1 (L133) → Purpose (L135) → Runtime root contract (L143) → Pre-choice (L151) → Post-choice (L155) → external-mutation-guard-cli:v1 の marker block (L159-190) → Protocol (L192) の順で、build-artifact-delivery.py の移行が runtime root 節を置く位置 (Purpose の直後) と一致する。marker block は HEAD と1バイトも違わない (32行、begin/end の marker は各1回)。L153 の「Purpose & Output Contractの最小の実成果物」は前方にある節を指すようになり、見出しへの markdown リンクは無い。lint-entrypoint-artifact-first.py (lint_guarded_external_entrypoint は errors 0)、build-artifact-delivery.py --check、test_skill_mass_production_contracts が通る。",
-      "前回の low (R4-tombstone.md の L3/L9 の「検知し」) は解消した。L3・L9・5.2 の目的 (L51) は「diff-github-issues.py の計画が示す close/delete (自分では判定しない) を受け取り」に変わり、inventory の summary は L10 に「ここでは書き換えない」と前置きした引用として残し、直後に「今の手順では close/delete の判定は diff-github-issues.py が行い、この責務はその計画を C02 に渡すだけ」と書く。Protocol 手順4 (L201) と checklist、OUT3 (L265) も同じ向きにそろった。"
+      "差分で足した段落 (L143) の主張の大半は実物と一致する。(1)「C16 が `--op ready` の直前に作り直す」は C16 SKILL.md L111-118 (build-parity-manifest.py の直後に bd-bridge.py --op ready) と execution-tracker-contract §10「manifest は C16 の手順が --op ready の直前に同 generator で作り直す」に一致する。(2)「手書きしない」は §10「生成 authority は build-parity-manifest.py の単一経路」に一致する。(3)「source_graph_digest だけの書換は stale 検出を恒久的に無効化する」は §10 の最終項に一致し、digest の式は build-parity-manifest.py L66-75 と schedule-graph.py L159 の `_canonical_digest` で同一 (test_build_parity_manifest が一致を固定し、今回 pass)。(4)「sync では作らず」は、bd-bridge.py で `--parity-manifest` を受けるのが `--op ready` だけ (L768-770) で、reconcile-github-lifecycle.py に manifest 生成の呼び出しが無いことと一致する。",
+      "frontmatter L16 の script_refs に足した `../../scripts/build-parity-manifest.py` は実在し (279行・実行権あり)、L143 で使う `--repo-root` 引数を持ち (L238)、書込先を repository の eval-log 配下に限る (L245-250)。L143 の `$DEV_GRAPH_ROOT` は L236 の C24 receipt で固定済み。script_refs・schema_refs・reference_refs・responsibility_refs の全 24 パスと必須 verifier agent の実在を確かめた。parity の詳細を本文へ複製せず、正本 §10 への参照で済ませている (progressive disclosure として良い)。"
     ],
     "negative_feedback": [
-      "inconsistency (low、前回から残る。Beads 行き): frontmatter の R4 summary (L44) は「close/delete を検知し」のまま。本文 L201 と R4 は、削除かどうかを diff-github-issues.py の計画から受け取り自分で判定しないと書く。inventory との完全一致を test が求めるので、inventory から直す。prompts/R4-tombstone.md の側は直った (下の positive)。"
+      "omission (medium、新規): L143 は `parity_manifest_missing` の対処を「再生成」だけにしている。しかし §10 の unmapped 分類表は対処として「build-parity-manifest.py で manifest を再生成 / linkage 修復」の 2 つを挙げる。C16 は `--op ready` の直前に毎回作り直す (C16 SKILL.md L117-118) ので、その流れで出た `parity_manifest_missing` は再生成だけでは消えないことがある。graph node が `tracker_binding=beads` でも `beads_linkage.bd_issue_id` を持たないと、generator はその node を `unlinked` (`beads_linkage_absent`) に落として `nodes[]` に載せないからだ (build-parity-manifest.py L153-159)。build-parity-manifest.py の docstring (L121-123) と lib/bd_bridge_contracts.py (L35-36) は、この理由コードを「C03 sync 案件 / sync 必要」としている。つまり本 skill (C03) が担う残り半分が書かれていない。直し方: L143 に「再生成しても残るときは生成 receipt の `unlinked[]` (`beads_linkage_absent`) を見て linkage を修復する (§10 の表)」を足す。",
+      "inconsistency (low、新規): L143 の「C28 が `parity_manifest_missing` や stale を報告したとき」は、stale の報告元を誤っている。stale を検出して停止するのは C16 の schedule-graph.py L304 (`beads parity snapshot is stale ... (regenerate the parity manifest)`) で、C28 は由来の形式検証 (lib/bd_bridge_graph.py L86-92) と `parity_provenance` の受け渡し (bd-bridge.py L562/L818) しかしない。§10 と C16 SKILL.md L113 も stale の停止を C16 側に置いている。加えて文に主語が無いため sync 自身が再生成するとも読め、同じ段落の「sync では作らず」と緊張する。直し方: 「C16 の schedule-graph.py が stale で停止したとき、または C28 が `parity_manifest_missing` を返したときは、C16 の手順で…作り直す」のように報告元と実行者を分けて書く。",
+      "smell (low、新規): L143 のコマンド `../../scripts/build-parity-manifest.py --repo-root \"$DEV_GRAPH_ROOT\"` は shell に渡すと cwd 相対で解決される。L147-150 の Runtime root contract は「cwd から plugin root を推測せず、解決済み absolute path を PLUGIN_ROOT に設定する」と定める。直し方: `python3 -B \"$PLUGIN_ROOT/scripts/build-parity-manifest.py\" --repo-root \"$DEV_GRAPH_ROOT\"` にする (C16 SKILL.md L117 も同じ書き方なので、そろえて直すのが良い)。",
+      "inconsistency (low、前回から残る。Beads 行き): frontmatter の R4 summary (L44) は「close/delete を検知し」のままで、本文 L203 と prompts/R4-tombstone.md は「diff-github-issues.py の計画から受け取り自分で判定しない」と書く。inventory との完全一致を test が求めるので、inventory から直す。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual: team-lead request to re-take content-review after dg-fix fixed the previous medium x2 / low x4 (incremental focused combined review, 2nd pass)",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "4条件 (矛盾なし・漏れなし・規約整合・依存関係整合) の判定。high と medium の矛盾・依存の切れは0件で、low の findings は negative_feedback に場所と直し方を残した。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。前回の verdict (同じ reviewer) の findings に対する dg-fix の修正を、SKILL.md・responsibility prompt・script_refs の script で確かめた。read-only で回したもの: 受入テスト test_acceptance_gaps_a1/a2 (28 passed)、test_skill_mass_production_contracts (27 passed。inventory と frontmatter の完全一致を含む)、lint-skill-name.py / lint-skill-tree.py (4 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話・外部 GitHub/Beads mutation・release 実行はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文 (summary・criteria) と PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
+  "notes": "incremental の focused combined review を 1 つの context で行い、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric high severity 0 を一度に判定した (30 思考法は使っていない)。high/critical と (a)〜(d) の実害ある違反は 0 件で、medium 1・low 3 は negative_feedback に場所と直し方を残した。審査開始時の SKILL.md sha256 は 9291fa42c54074121a1d8b027df171a5909ca4f93924eee3d1f865ed6b05c3f7 で、依頼の期待値と一致した (書込直前に再測しても同じ)。基準 d46ca8ad の版は sha256 227715b0... で、前回 verdict の対象と同じ。差分は L16 (script_refs に build-parity-manifest.py を追加) と L143 (parity manifest の段落を追加) の 2 か所だけ。読んだもの: 対象 SKILL.md 全文、skilldir.diff、prompts/R3-sync.md、scripts/build-parity-manifest.py 全文、bd-bridge.py の ready 経路、lib/bd_bridge_contracts.py・bd_bridge_graph.py・bd_bridge_audit.py の parity 関連部分、schedule-graph.py の stale 判定 (L250-310)、references/execution-tracker-contract.md (基準からの差分と §10 全文)、run-dev-graph-schedule/SKILL.md の parity 記述、tests/test_skill_criteria_evidence.py の content-review 検査。実行したもの: `python3 -B -m pytest -p no:cacheprovider` で test_skill_mass_production_contracts / test_acceptance_gaps_a1 / test_acceptance_gaps_a2 / test_build_parity_manifest / test_parity_manifest_provenance を回し 72 passed (917 秒)。scripts/validate-frontmatter.py は `ok: run-dev-graph-sync` (exit 0)。frontmatter の全参照パスの実在を python で確認 (全件 True)。component-inventory.json の C03 は script_refs を持たないので、script_refs の追加は inventory 一致テストに影響しない。実行前後で INT の git status が変わったが、増えたのは他 skill の verdict・run-skill-feedback の workflow-manifest・system-dev-planner など本 skill 外のパスで、並行エージェントの作業と判断した (実行したテストは tempfile/tmp_path にだけ書く)。criteria IN1・OUT1〜OUT9 は今回の差分で文が変わっておらず、受入条件と script/test の対応を静的に確かめた。verify_by=live-trial の OUT1 は実機の host 対話と外部 GitHub/Beads mutation を実行しておらず、この verdict の対象外。"
 }

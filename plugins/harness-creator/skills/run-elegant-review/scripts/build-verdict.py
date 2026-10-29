@@ -10,7 +10,7 @@
 # outputs:
 #   - verdict.json rewritten with derived values
 #   - stdout: what changed / already current
-#   - exit: 0=updated or already current / 1=--check found drift / 2=usage or input error
+#   - exit: 0=updated or already current / 1=--check found drift / 2=usage or input error, or run_status=complete with a FAIL condition
 # contexts: [C]
 # network: false
 # write-scope: verdict file passed via --verdict
@@ -26,7 +26,10 @@ status は、すべて findings.json から一意に導ける。にもかかわ�
 
 導出できないのは run の同定情報 (plugin / skill / scope_mode / run_id / aggregated_at) と
 副作用の記録 (safety_valve_fired / observable_emitted) だけなので、それらは既存 verdict.json
-から持ち越すか CLI で明示する。--check は CI 用で、書かずに drift だけを検出する。
+から持ち越すか CLI で明示する。status は findings.run_status (orchestrator が convergence-policy.json の
+halt_conditions から写す) の転記で、4 条件に FAIL が残るのに complete を名乗る findings は書かずに拒否する。
+--check は手元確認用で、書かずに drift だけを検出する (CI は validate-paradigm-coverage.py --phase-order が
+derive() を再利用して照合する)。
 """
 from __future__ import annotations
 
@@ -85,11 +88,18 @@ def derive(findings: dict, carried: dict) -> dict:
     return out
 
 
+def failing_conditions_under_complete(derived: dict) -> list[str]:
+    """status=complete を名乗るのに FAIL が残る条件。空なら矛盾なし (--phase-order も再利用する)。"""
+    if derived.get("status") != "complete":
+        return []
+    return sorted(cond for cond, value in derived["verdict"].items() if value == "FAIL")
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--findings", required=True, type=Path)
     ap.add_argument("--verdict", required=True, type=Path)
-    ap.add_argument("--check", action="store_true", help="書かずに drift のみ検出する (CI 用)")
+    ap.add_argument("--check", action="store_true", help="書かずに drift のみ検出する (手元確認用)")
     for flag in ("--plugin", "--skill", "--scope-mode", "--run-id", "--aggregated-at"):
         ap.add_argument(flag)
     args = ap.parse_args(argv[1:])
@@ -123,6 +133,14 @@ def main(argv: list[str]) -> int:
         return 2
 
     derived = derive(findings, carried)
+    failing = failing_conditions_under_complete(derived)
+    if failing:
+        print(
+            f"run_status=complete だが 4 条件に FAIL が残る: {', '.join(failing)} "
+            "(収束していても FAIL が残る run は incomplete。convergence-policy.json の halt_conditions.converged_with_failures)",
+            file=sys.stderr,
+        )
+        return 2
     text = json.dumps(derived, ensure_ascii=False, indent=2) + "\n"
 
     if existing == derived:

@@ -104,6 +104,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 出力は ready sets、parallel batches、conflict pairs、各 task の `devgraph/<graph_node_id>` branch と `dev-graph worktree claim <id>` command。read-only で graph/tracker/lease を変更しない。
 
+候補は `mvp_alignment.mvp_fit` の rank (direct → enabling → 未設定 → deferred、同 rank は node id 順) で並び、その理由を stdout の `selection_receipt` (`policy: mvp-first/v1`) に載せる。利用者へ着手順を示すときは、この receipt の `mvp_fit` と目的/背景/根拠をそのまま添え、順序を独自に並べ替えない。enum 外の `mvp_fit` は停止として扱い、未設定へ丸めない。
+
 ### ready-json の生成と消費
 
 beads binding を含むときは、`--ready-json` を消費する前に同じ周回で生成する。committed 済みの古い receipt を使い回さない。parity manifest は canonical graph だけから作り、`source_graph_digest` を持つ。ready payload に `parity_provenance` が付いていれば、`schedule-graph.py` はその `source_graph_digest` を現 graph の canonical digest と照合し、不一致なら stale として停止する。

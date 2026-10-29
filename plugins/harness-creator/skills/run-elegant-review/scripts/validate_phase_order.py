@@ -135,6 +135,12 @@ def check_verdict_derivation(
     derived = module.derive(findings, carried)
     errors: list[str] = []
     warnings: list[str] = []
+    failing = module.failing_conditions_under_complete(derived)
+    if failing:
+        (errors if strict else warnings).append(
+            f"{findings_path}: run_status=complete だが 4 条件に FAIL が残る: {', '.join(failing)} "
+            "(収束していても FAIL が残る run は incomplete。convergence-policy.json の halt_conditions.converged_with_failures)"
+        )
     for key in _DERIVED_KEYS:
         if key in derived and existing.get(key) != derived[key]:
             message = (

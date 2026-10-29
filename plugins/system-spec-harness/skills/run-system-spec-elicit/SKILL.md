@@ -42,6 +42,8 @@ reference_refs:
 script_refs:
   - scripts/apply-spec-transition.py
   - ../../scripts/validate-knowledge-graph.py
+  - ../../scripts/validate-coverage-matrix.py
+  - ../../scripts/validate-design-knowledge-refs.py
 schema_refs:
   - ../../schemas/spec-state.schema.json
 responsibilities:
@@ -75,13 +77,14 @@ completeness_exempt:
   - "manifest: inline goal-seek selects the next unmet interview/checklist responsibility dynamically; the SKILL body is the runtime SSOT."
 deterministic_checks:
   - ../../scripts/validate-coverage-matrix.py
+  - ../../scripts/validate-design-knowledge-refs.py
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 5
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-coverage-matrix.py が spec-state.json に対し 6 canonical platform 全存在・各セルが未収集/対象外/確定の3値・対象外に理由(または approval_ref)・確定に qa_ref・カテゴリ集約が真理値表一致・不正値0件を機械検証して exit0 になる。R0-foundation 完了後は --require-foundation も付け、requirements_foundation の U1-U9(値ありまたは明示 N/A・U1/U2/U3 は値必須)・decisions 契約・各確定セルの serves_goals トレースも exit0 で検証する(R0 完了前の foundation 未確定段階では --require-foundation を課さない段階条件)。加えて各確定セルの根拠 (qa_ref と qa_refs) のうち少なくとも 1 件が basis(user-decision/observed-fact/agent-inference) を宣言し、宣言がすべて agent-inference ではないことを --require-basis が exit0 で検証し、missing_effect=block の必須情報については confirm を含む writer apply/chunk を --required-info <catalog> 付きで実行し、既存 validate_required_info が候補 state の接地を確認してからだけ公開する(失敗時は元 state を変更しない。公開後は validate-knowledge-graph.py --profile required-info --state <spec-state> の coverage_certificate.ungrounded_blocking_items が空であることを再確認する)。schema_version 1.1 を opt-in した state では、確定セルが参照する全 qa の design_applications に knowledge_ref/principle/applicability/rationale/非空 tradeoffs を必須とし、あわせて validate-design-knowledge-refs.py --matrix <spec-state> --repo-root <project root> の exit0 で design_applications[].knowledge_ref の path と anchor 見出しの実在を検証する(coverage matrix 側は解釈の形状しか見ないため、参照先の無い引用はこのゲート無しでは緑のまま通る)。
+      text: validate-coverage-matrix.py が spec-state.json に対し 6 canonical platform 全存在・各セルが未収集/対象外/確定の3値・対象外に理由(または approval_ref)・確定に qa_ref・カテゴリ集約が真理値表一致・不正値0件を機械検証して exit0 になる。R0-foundation 完了後は --require-foundation も付け、requirements_foundation の U1-U9(値ありまたは明示 N/A・U1/U2/U3 は値必須)・decisions 契約・各確定セルの serves_goals トレースも exit0 で検証する(R0 完了前の foundation 未確定段階では --require-foundation を課さない段階条件)。加えて各確定セルの根拠 (qa_ref と qa_refs) のうち少なくとも 1 件が basis(user-decision/observed-fact/agent-inference) を宣言し、宣言がすべて agent-inference ではないことを --require-basis が exit0 で検証し、missing_effect=block の必須情報については confirm を含む writer apply/chunk を --required-info <catalog> 付きで実行し、既存 validate_required_info が候補 state の接地を確認してからだけ公開する(失敗時は元 state を変更しない。公開後は validate-knowledge-graph.py --profile required-info --state <spec-state> の coverage_certificate.ungrounded_blocking_items が空であることを再確認する)。schema_version 1.1 を opt-in した state では、確定セルの主根拠 qa_ref が指す qa entry (add-qa-ref で結んだ補足 qa_refs は対象外) の design_applications に knowledge_ref/principle/applicability/rationale/非空 tradeoffs を必須とし、あわせて validate-design-knowledge-refs.py --matrix <spec-state> --repo-root <project root> の exit0 で design_applications[].knowledge_ref の path と anchor 見出しの実在を検証する(coverage matrix 側は解釈の形状しか見ないため、参照先の無い引用はこのゲート無しでは緑のまま通る)。
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -164,7 +167,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. **確定/対象外の付帯必須**: `confirm` は `qa_ref` (qa_log entry 参照) 必須、`exclude` は `reason` か `approval_ref` (approval_log 参照) 必須。
 4. **集約は導出のみ**: `category_aggregate` は真理値表から再計算する。手書き代入を認めない。
 5. **根拠参照と置き換えの整合**: `add-qa-ref` は `確定` セルにだけ追記でき、`qa_log` に実在する id だけを受ける。`supersede-qa` は旧 entry への write-once の追記で、旧 entry が確定セルの主たる接地根拠 (`qa_ref`) の間は拒否する。置き換え済みの entry を `qa_ref` にした `confirm` も拒否する。
-6. **設計解釈の必須性と形状検証 (schema 1.1)**: `schema_version: "1.1"` を opt-in した state は `design_application_contract_version: "1.0"` を持つ。writer は turn の `design_applications` (具体原則・採否・章固有理由・非空 trade-off) を検証して回答原文とは別 field に保存し、`validate-coverage-matrix.py --require-complete` は確定セルが参照する全 qa entry で解釈と provenance の存在・形状を再検査する。`legacy_exempt: true` と非空理由を持つ既存 qa に限り、`set-qa-design-applications` が質問・回答を改変せず設計解釈だけを追記して `design_application_provenance.mode=legacy_backfill` を残す (provenance の無い既存解釈は対話経路として保護し、異なる解釈や provenance の上書きは拒否する)。C03 は `unrecorded|dialogue|legacy_backfill` を章へ描画し、C05 は `unrecorded` を未記録 finding とする。schema 1.0 (既定) の state にはこの契約を課さない。
+6. **設計解釈の必須性と形状検証 (schema 1.1)**: `schema_version: "1.1"` を opt-in した state は `design_application_contract_version: "1.0"` を持つ。writer は turn の `design_applications` (具体原則・採否・章固有理由・非空 trade-off) を検証して回答原文とは別 field に保存し、`validate-coverage-matrix.py --require-complete` は確定セルの主根拠 `qa_ref` が指す qa entry で解釈と provenance の存在・形状を再検査する (`add-qa-ref` で結んだ補足 `qa_refs` は対象外)。`legacy_exempt: true` と非空理由を持つ既存 qa に限り、`set-qa-design-applications` が質問・回答を改変せず設計解釈だけを追記して `design_application_provenance.mode=legacy_backfill` を残す (provenance の無い既存解釈は対話経路として保護し、異なる解釈や provenance の上書きは拒否する)。C03 は `unrecorded|dialogue|legacy_backfill` を章へ描画し、C05 は `unrecorded` を未記録 finding とする。schema 1.0 (既定) の state にはこの契約を課さない。
 
 > 本文・prompt・CLI いずれの経路でも、マトリクスの状態遷移は上記 writer を経由すること。直接 JSON 編集で `確定`→`未収集` を書くのは契約違反。
 
@@ -199,7 +202,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 > `spec-state.json` の正本位置は `$CLAUDE_PROJECT_DIR/system-spec/spec-state.json`。以下のパス例はこの正本を指す (別ディレクトリに二重生成しない)。
 
 1. **bootstrap**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" bootstrap --out $CLAUDE_PROJECT_DIR/system-spec/spec-state.json` で空foundation/decisions/targets/logsを持つstate envelopeを用意する (`init` は taxonomy から matrix を初期化する別subコマンドで、envelope 生成は `bootstrap`)。
-2. **R0-foundation**: 技術ヒアリングの手前で上位概念 U1-U9 を深掘りし、U1/U2/U3 は値必須・U4-U9 は値または明示N/A理由で埋め、U1-U9 要約をユーザーへ提示して承認 `approval_ref` を得て確定する。`set-foundation` で `confirmed: true` を渡す前に、根拠 QA (初回は canonical `qa-foundation-u1`〜`u9`) と承認を `chunk` の turn (`qa_id` / `approval_id`) で記録しておく (欠けると writer が確定を拒否する)。初回 canonical QA は履歴として残し、schema 1.1 では全 U の `effective_source_refs` と現行 `approval_ref` を `set-foundation` で確定する。QA の question は binding 先の `U<N>` を明示する。後続の確定値変更は新 QA/approval・対象 binding・トップレベル `approval_ref` を同時に更新する。
+2. **R0-foundation**: 技術ヒアリングの手前で上位概念 U1-U9 を深掘りし、U1/U2/U3 は値必須・U4-U9 は値または明示N/A理由で埋め、U1-U9 要約をユーザーへ提示して承認 `approval_ref` を得て確定する。`set-foundation` で `confirmed: true` を渡す前に、根拠 QA (初回は canonical `qa-foundation-u1`〜`u9`) を `chunk` の turn (`qa_id`) で記録しておく。承認は先に `chunk` の turn (`approval_id`) で記録するか、`set-foundation` の JSON に `approval_ref` と `approval_note` を添えて同時に登録する (根拠 QA か承認が欠けると writer が確定を拒否する)。初回 canonical QA は履歴として残し、schema 1.1 では全 U の `effective_source_refs` と現行 `approval_ref` を `set-foundation` で確定する。QA の question は binding 先の `U<N>` を明示する。後続の確定値変更は新 QA/approval・対象 binding・トップレベル `approval_ref` を同時に更新する。
 3. **R1-init**: taxonomy を Readしてmatrixをpopulateする。既存foundation/decisionsを保持する。
 4. **R2/R3/R5**: required-info の `collection_order` で未収集セルをヒアリングし、不明・未決定ならR5で根拠付き候補と推奨を提示する。問は `references/neutral-question-criteria.md` の N1-N4 に従い、推奨は問と別の段に置く。確定セル/decisionはgoalへトレースし、5 loop超でresume保存。
 5. **R4-reopen**: 確定セルの見直しが要るときのみ reopen。
@@ -224,7 +227,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `prompts/R6-audit-hearing.md` — 往復ヒアリング監査 (C06 `system-spec-hearing-auditor`) の判定観点の正本。C06 が読む監査 SSOT で、本 skill の実行責務ではない。
 - `prompts/R7-audit-matrix.md` — 収集マトリクス監査 (`system-spec-matrix-auditor`) の判定観点の正本。R6 と同じく本 skill の実行責務ではない。R6/R7 は本 skill の成果物を対象とする監査なので本文の正本は本 skill が持ち、起動アダプタ (`../../agents/system-spec-{hearing,matrix}-auditor.md`) は `assign-system-spec-completeness-evaluator` の `agent_refs` が所有する。監査対象と判定者を分けるため、本 skill のゴールシークが選ぶ責務の母集合は R0-R5 に限る。
 - `../../scripts/validate-design-knowledge-refs.py` — schema 1.1 の `design_applications[].knowledge_ref` の path と anchor 見出しの実在ゲート。
-- `scripts/apply-spec-transition.py` — 単一 transition writer (init/apply/chunk/aggregate)。
+- `scripts/apply-spec-transition.py` — 単一 transition writer。matrix 系 (bootstrap/init/add-category/apply/chunk/aggregate) と個別 writer (set-targets/set-foundation/set-decision/set-knowledge-candidate/set-qa-source/set-qa-design-applications/fix-qa-knowledge-ref) を持つ (一覧の正本は `--help`)。
 - `../../scripts/validate-coverage-matrix.py` — 網羅性の決定論ゲート (IN1/OUT1)。
 - `references/required-info-catalog.json` — C16 必須情報カタログ (domain 別 block/degrade/warn item・収集順序 depends_on・coverage certificate の正本)。
 - `../../scripts/validate-knowledge-graph.py` — 知識グラフ / required-info の決定論ゲート (`--profile required-info` が domain 被覆・item 形状・blocking_items を (`--state` 併用で block item の確定接地も)、`--profile knowledge --order` が topo_order を検証)。

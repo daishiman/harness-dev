@@ -227,11 +227,10 @@ C28 `bd-bridge.py --op ready --parity-manifest` が受け取る manifest は gra
 | `external_ref_absent` | `bd ready` 候補が dev-graph の `external_ref` を持たない = graph 管理外の bd 課題 | 対処不要 (可視化のみ)。graph 管理下へ移すなら C02 で node 化する |
 | `graph_node_missing` | `external_ref` が指す node が `graph_node_ids` に無い = graph から消えた node への宙に浮いた参照 (orphan) | C02 で node を復元するか、失効しているなら C28 `--op close` で bd 側を閉じる。**manifest の再生成では解消しない** |
 | `parity_manifest_missing` | `external_ref` が指す node は graph に実在するのに manifest の `nodes[]` に無い = 投影の取りこぼし | `build-parity-manifest.py` で manifest を再生成 / linkage 修復 |
-| `dependency_unsatisfied` | C16 schedule の対象かつ schedulable だが、未完了の `depends_on` があるため ready-set から除外された node | `source: "schedule-graph"` と `blocking_depends_on: string[]` を確認し、列挙された上流 node の完了を待つ |
 
 - C28 は理由別件数を `unmapped_summary` として receipt に載せる。件数だけで「管理外が何件・取りこぼしが何件」を判別できるようにするため。
 - C16 schedule-graph は C28 の `unmapped` / `conflicts` を自身の `unmapped` へ `source: "bd-bridge"` 付きで引き継ぐ。schedule の判定には使わないが、report から消すことは silent drop にあたるため禁止する。
-- C16 schedule-graph は選択範囲内かつ schedulable な node の依存だけを評価し、未充足時は `external_ref`、`reason: "dependency_unsatisfied"`、`blocking_depends_on`、`source: "schedule-graph"` を `unmapped[]` に載せる。選択範囲外・非 schedulable の除外と条件分岐を分離し、依存未充足として誤報告してはならない。
+- 依存未充足は C28 の unmapped 分類ではない (上表の exact-set は `lib/bd_bridge_contracts.py` の `UNMAPPED_REASONS` と一致する)。C16 schedule-graph は選択範囲内かつ schedulable な node の依存だけを評価し、未充足時は `graph_node_id`、`reason: "dependency_unsatisfied"`、`blocking_depends_on`、`source: "schedule-graph"` を自身の `excluded[]` に記録する。分類・判定順序・被覆の正本は `schedule-graph-contract.md` とし、`unmapped[]` は ready payload と graph の対応付けの失敗だけを持つ。
 
 **graph → tracker の片方向走査が作る盲点と、逆方向の全数検査**
 
