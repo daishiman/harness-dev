@@ -48,7 +48,7 @@ supersede 済み世代 directory は pointer/receipt を辿らないと旧世代
 - supersede 済み世代 directory は現行世代を指す `SUPERSEDED.json` を持つ。payload は current pointer、旧世代の再計算 digest、旧 promotion/registration receipt の実 bytes の SHA-256 から決まる決定論値とし、生成時刻や実行者を含めない。registration receipt の正準名は `dev-graph-registration-receipt.json`、規約導入前の旧世代だけは `registration-receipt.json` を互換入力とし、両方が併存する場合は authority の二重化として拒否する。marker が receipt digest を束縛することで、canonical files の外側にある旧 receipt の改竄も書込みなし検査が fail-closed で拒否する。`--write-markers` は marker 欠落時の create-only 操作であり、既存 marker が不一致なら上書きせず改竄として拒否する。
 - marker は canonical digest の対象集合 (`staging-manifest.json` の `files`) の外側にある付帯 file であり、追加しても旧世代の `published_digest` は変わらない。既存 file を書き換えないため byte-for-byte 不変性を損なわない。
 - 旧世代を現行世代の内容へ「追随」させる上書き是正は禁止する。旧世代の実バイトは `supersedes.published_digest` の正しさそのものであり、上書きは記録済み receipt を偽にする。乖離の解消は新世代の promotion で行う。
-- 機械検査: `scripts/validate-generation-lineage.py` が feature 別 current pointer を走査し、現行世代の canonical digest 再計算・receipt 3 digest 一致・旧世代の byte-for-byte 不変性・marker の内容一致を fail-closed で検証する。`--write-markers` は marker を冪等に再生成する。
+- 機械検査: `scripts/validate-generation-lineage.py` が feature 別 current pointer を走査し、現行世代の canonical digest 再計算・receipt 3 digest 一致・旧世代の byte-for-byte 不変性・marker の内容一致を fail-closed で検証する。`--write-markers` は欠落した marker だけを作る create-only 操作で、既存 marker は再束縛しない。
 
 ### 2.3 promotion 後も解決可能な再実行コマンド
 
@@ -57,7 +57,7 @@ task spec 本文の `Automated commands` は §2 のとおり `.dev-graph/stagin
 - validate-system-plan の再実行は世代非依存の `validate-system-plan.py --repo-root <root> --feature-package <feature_package_id>` を正本形式とする。この経路は feature 別 current pointer から現行世代の published package を解決する。`<feature_package_id>` は自 package の値とする。他 package の id を書くと再実行が別 package を検証して緑になり、証跡が対象を指さない fail-open になる。
 - 機械検査: 契約 `1.3.0` 以上に解決される package では、C12 が各 task spec 本文の実行コマンドを検査し、`--staging` の使用 (`task-spec-rerun-staging-path`)、`--feature-package` の欠落 (`task-spec-rerun-package-missing`)、他 package の id (`task-spec-rerun-package-mismatch`) を fail-closed で拒否する。検査対象は fenced block と inline code span が提示するコマンドに限り、散文中の script 名への言及 (「validate-system-plan.py 実行時に `--repo-root` を明示指定する運用」のような、promote 済み package が実際に持つ説明文) は対象外とする。生成側は R3-emit prompt の Layer 2.2 ドメインルールと Layer 5.3 完了チェックリストが同じ規則を持ち、検査を二重化する。
 - `--staging` の禁止対象は **task spec 本文が promotion 後の再実行として提示するコマンド**に限る。R3-emit 自身の staging 検証と、R4 findings の `deterministic-validation` gate command は promotion 前の staging generation を対象とするため `--staging` が正しく、promote-system-plan.py はむしろその形を要求する。
-- contract 1.3.0 より前に promote 済みで台帳登録された generation は本文に `--staging .` を残したまま不変保持する。executor が読む mutable な task projection (`tasks/<parent_feature>/<id>.md` の `## 実行契約`) 側へ `scripts/build-task-projection-rerun.py` が正本形式を冪等配線し、`--check` が未配線を fail-closed で報告する。planner の 1 feature run では `--feature-package <feature_package_id>` で対象の exact 13 だけに scope し、引数省略の全件モードは repository 移行・監査に限定する。どちらも対象 0 件は exit 2 とする。
+- contract 1.3.0 より前に promote 済みで台帳登録された generation は本文に `--staging .` を残したまま不変保持する。executor が読む mutable な task projection (`tasks/<parent_feature>/<id>.md` の `## 実行契約`) 側へ `scripts/build-task-projection-rerun.py` が正本形式を冪等配線し、`--check` が未配線を fail-closed で報告する。1 feature の projection だけを移行するときは `--feature-package <feature_package_id>` で対象の exact 13 だけに scope し、引数省略の全件モードは repository 移行・監査に限定する。projection は dev-graph が registration request を適用した後に初めて生成されるため、この配線は planner の 1 feature run の完了条件に含めない (未登録の新規 feature では対象 0 件になる)。どちらも対象 0 件は exit 2 とする。
 
 ### 2.4 契約 version と promote 済み package の再検証
 
