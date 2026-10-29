@@ -5,11 +5,23 @@ schemas:
   - id: completeness_findings
     path: schemas/completeness-findings.schema.json
     read_when: 評価レポート (観点別スコア + 総合判定 + 不足事項一覧) の構造を確認する時
+  - id: resume_receipt
+    path: schemas/resume-receipt.schema.json
+    read_when: PASS report を再利用可能な receipt へ変換する前に、digest-bound 出力形状と canonical path を確認する時
 
 scripts:
   - id: aggregate
     path: scripts/aggregate-completeness.py
     read_when: レポート形状検証と全 6 観点→総合 fail-closed 集約を機械実行する時
+  - id: json-schema-subset
+    path: scripts/validate-json-schema-subset.py
+    read_when: 外部 package 無しで公開 completeness schema の Draft 7 部分集合検証と未知 schema 語彙の fail-closed 拒否を確認する時
+  - id: audit_fork_attribution
+    path: scripts/audit_fork_attribution.py
+    read_when: 独立監査 receipt と PostToolUse fork 台帳の照合・run/session 束縛を確認する時
+  - id: build_resume_receipt
+    path: scripts/build-resume-receipt.py
+    read_when: aggregate 検証・全 production gate・artifact snapshot 現在値照合が全て PASS した後だけ、resume receipt を atomic 生成する時
   - id: coverage_gate
     path: ../../scripts/validate-coverage-matrix.py
     read_when: マトリクス網羅性観点 (C07) の一次根拠を独立に回収する時 (C05 deterministic_check)
@@ -41,10 +53,10 @@ evaluated_inputs:
     path: system-spec/
     read_when: 評価対象の章立て Markdown + index (C03 出力) を読む時
   - id: spec_state
-    path: spec-state.json
+    path: system-spec/spec-state.json
     read_when: 収集マトリクス (C01 出力) を読む時
   - id: fetched_refs
-    path: fetched-references.json
+    path: system-spec/fetched-references.json
     read_when: 取得済み公式ドキュメント出典 (C02 出力) を読む時
 
 design_knowledge:

@@ -1,197 +1,244 @@
 #!/usr/bin/env python3
 # /// script
 # name: aggregate-completeness
-# version: 0.1.0
-# purpose: C05 完成度評価レポートの形状検証と全 6 観点スコア→総合 PASS/FAIL の決定論集約 (Goodhart 防止の fail-closed 集約器)
+# version: 0.2.0
+# purpose: C05 完成度評価レポートを fail-closed で集約し、matrix/知識グラフの決定論ゲートを実行する
 # inputs:
-#   - argv: --report FILE [--spec-dir DIR] / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
+#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--spec-dir DIR] / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
 # outputs:
-#   - stdout: OK/violation 一覧 or gate 結果 JSON
+#   - stdout: OK/violation 一覧または gate 結果 JSON
 #   - exit: 0=OK / 1=violation or gate fail / 2=usage error
 # contexts: [E, C]
 # network: false
 # write-scope: none
-# dependencies: []
+# dependencies: [audit_fork_attribution.py, validate-json-schema-subset.py]
 # requires-python: ">=3.9"
 # ///
-"""assign-system-spec-completeness-evaluator の決定論ヘルパ。
+"""C05 完成度レポートを検証・集約する CLI。
 
-2 つの決定論部品を純関数として提供する (LLM の主観判定から機械層を切り出す)。
+report 形状、全 6 観点の fail-closed verdict、high finding、独立監査の実 fork
+証跡を一つの入口で検証する。台帳読取りと receipt 照合は
+`audit_fork_attribution.py` に分離し、ここでは集約と CLI を所有する。
 
-1. `validate_report(report)`  — 評価レポートの形状 (観点別スコア + 総合判定 + 不足事項一覧)
-   と、総合判定が全観点 verdict + high finding 数から fail-closed に再導出した値と一致するか
-   (Goodhart 防止の整合検査) を検証し、違反文字列のリストを返す。
-2. `aggregate_verdict(aspect_verdicts, high_count)` — 全 6 観点 (ASPECTS の全キー: foundation_trace /
-   decision_guidance / matrix_coverage / design_knowledge_reflection / doc_freshness / prompt_quality)
-   の verdict と high severity finding 数から総合 PASS/FAIL を導出する。
-   fail-closed: 全観点 PASS かつ high 0 のときだけ PASS。1 観点でも FAIL/INDETERMINATE、
-   または high finding が 1 件でもあれば FAIL。観点の取りこぼし (観点未充足) も FAIL。
-
-3. `derive_hearing_verdict(audit, spec_state)` — C06 (hearing-auditor) の重大度付き検出から、
-   matrix_coverage の sub-input 判定を `references/aspect-criteria.md` の対応表どおりに導く。
-   C06 自身の verdict は使わない (low 1 件で観点が FAIL になっていた不整合の是正)。
-
-`run_coverage_gate(...)` は plugin-root の `validate-coverage-matrix.py` (C05 の
-deterministic_check) を独立 context で実行し、マトリクス網羅性観点の一次根拠を回収する薄い wrapper。
+- `spec_dir_violations(report, spec_dir)` — report の spec_dir が評価を頼まれた dir に
+  解決するかを照合する (呼び出し側の C02 が取込元と照合する前に、ラベル混入を落とす)。
+- `derive_hearing_verdict(audit, spec_state)` — C06 (hearing-auditor) の重大度付き検出から、
+  matrix_coverage の sub-input 判定を `references/aspect-criteria.md` の対応表どおりに導く。
+  C06 自身の verdict は使わない (low 1 件で観点が FAIL になっていた不整合の是正)。
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
-EVALUATOR_NAME = "assign-system-spec-completeness-evaluator"
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
 
-# 評価観点の正本。上位概念・意思決定・deep knowledge・鮮度までをfail-closedで扱う。
-# matrix_coverage / doc_freshness は独立 context で fork する監査 sub-agent (component) に接地する。
-# design_knowledge_reflection は独立 auditor を持たず C05 (R1-score) が自前評価する:
-#   C06 (hearing-auditor) は設計知識 (system-spec/*.md) を読まずヒアリング品質のみを監査するため、
-#   design_knowledge を C06 へ束縛するのは虚偽対応だった。C06 は matrix_coverage の sub-input
-#   (聞き漏れ/誘導/早期停止/トレーサビリティ = 網羅性・トレース根拠) へ再配置する。
-ASPECTS: dict[str, dict[str, str]] = {
-    "foundation_trace": {
-        "label": "上位概念トレーサビリティ",
-        "auditor": "assign-system-spec-completeness-evaluator",
-        "component": "C05",
-    },
-    "decision_guidance": {
-        "label": "意思決定支援",
-        "auditor": "assign-system-spec-completeness-evaluator",
-        "component": "C05",
-    },
-    "matrix_coverage": {
-        "label": "マトリクス網羅性",
-        "auditor": "system-spec-matrix-auditor",
-        "component": "C07",
-    },
-    "design_knowledge_reflection": {
-        "label": "設計知識反映",
-        "auditor": "assign-system-spec-completeness-evaluator",
-        "component": "C05",
-    },
-    "doc_freshness": {
-        "label": "最新ドキュメント出典",
-        "auditor": "system-spec-doc-freshness-auditor",
-        "component": "C08",
-    },
-    "prompt_quality": {
-        "label": "prompt-creator準拠",
-        "auditor": "assign-system-spec-completeness-evaluator",
-        "component": "C05",
-    },
-}
-ASPECT_VERDICTS = {"PASS", "FAIL", "INDETERMINATE"}
-OVERALL_VERDICTS = {"PASS", "FAIL"}
-SEVERITIES = {"high", "medium", "low", "info"}
+# Keep the legacy names re-exported for callers while attribution lives in its local module.
+from audit_fork_attribution import (  # noqa: E402,F401
+    ASPECTS,
+    ASPECT_VERDICTS,
+    DELEGATION_ROLES,
+    EVALUATOR_NAME,
+    LEDGER_ENV,
+    LEDGER_RELPATH,
+    LEDGER_TOOL_NAMES,
+    OVERALL_VERDICTS,
+    SEVERITIES,
+    SUB_INPUT_AUDITORS,
+    agent_definition_exists,
+    default_ledger_path,
+    empty_ledger,
+    ledger_corroborates,
+    load_fork_ledger,
+    required_delegations,
+    validate_attribution,
+)
+_JSON_SCHEMA_SUBSET = Path(__file__).with_name("validate-json-schema-subset.py")
+_SPEC = importlib.util.spec_from_file_location("json_schema_subset", _JSON_SCHEMA_SUBSET)
+assert _SPEC and _SPEC.loader
+_MODULE = importlib.util.module_from_spec(_SPEC)
+sys.modules["json_schema_subset"] = _MODULE
+_SPEC.loader.exec_module(_MODULE)
+Draft7SubsetValidator = _MODULE.Draft7SubsetValidator
+SchemaDefinitionError = _MODULE.SchemaDefinitionError
+
+
+SNAPSHOT_SCHEMA_VERSION = "system-spec-artifact-snapshot/v1"
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+COMPLETENESS_SCHEMA = _SCRIPT_DIR.parent / "schemas" / "completeness-findings.schema.json"
+PASS_GATE_IDS = {"G-matrix", "G-source-citation", "G-knowledge-graph"}
+KNOWLEDGE_PROFILES = {"knowledge", "doctrine", "required-info", "cross"}
+
+
+def validate_schema(report: dict) -> list[str]:
+    """Validate the entire public report schema instead of duplicating its field rules."""
+    try:
+        schema = json.loads(COMPLETENESS_SCHEMA.read_text(encoding="utf-8"))
+        validator = Draft7SubsetValidator(schema)
+    except (OSError, json.JSONDecodeError, SchemaDefinitionError) as exc:
+        return [f"schema の読取/構築に失敗: {exc}"]
+    violations = []
+    for error in sorted(
+        validator.iter_errors(report),
+        key=lambda item: tuple(str(part) for part in item.absolute_path),
+    ):
+        location = "/".join(str(part) for part in error.absolute_path) or "(root)"
+        violations.append(f"schema {location}: {error.message}")
+    return violations
 
 
 def aggregate_verdict(aspect_verdicts: dict, high_count: int) -> str:
-    """全観点 verdict + high finding 数から総合 verdict を fail-closed に導出する。
-
-    - 全観点 (ASPECTS のキー) を過不足なく網羅していなければ FAIL (監査観点の取りこぼし防止)。
-    - high severity finding が 1 件でもあれば FAIL。
-    - 全観点が厳密に PASS のときだけ PASS。FAIL/INDETERMINATE が 1 つでもあれば FAIL。
-    副作用なし = 単体テスト可能。
-    """
+    """全観点と high finding から総合 verdict を fail-closed で再導出する。"""
     if set(aspect_verdicts) != set(ASPECTS):
         return "FAIL"
-    if any(v not in ASPECT_VERDICTS for v in aspect_verdicts.values()):
+    if any(value not in ASPECT_VERDICTS for value in aspect_verdicts.values()):
         return "FAIL"
     if high_count > 0:
         return "FAIL"
-    return "PASS" if all(v == "PASS" for v in aspect_verdicts.values()) else "FAIL"
+    return "PASS" if all(value == "PASS" for value in aspect_verdicts.values()) else "FAIL"
 
 
 def _high_count(findings: list) -> int:
-    return sum(1 for f in findings if isinstance(f, dict) and f.get("severity") == "high")
+    return sum(1 for finding in findings if isinstance(finding, dict) and finding.get("severity") == "high")
 
 
-def validate_report(report: dict) -> list[str]:
-    """評価レポートの形状 + 総合判定の整合を検証し違反文字列のリストを返す (空=OK)。"""
-    v: list[str] = []
+def validate_report(
+    report: dict, ledger: dict | None = None, expected_session: str | None = None
+) -> list[str]:
+    """レポート形状、総合判定、実 fork 帰属を検証し違反リストを返す。"""
+    violations: list[str] = []
     if not isinstance(report, dict):
         return ["report: オブジェクトでない"]
 
-    ev = report.get("evaluator")
-    if not isinstance(ev, dict):
-        v.append("evaluator: オブジェクトでない")
+    violations.extend(validate_schema(report))
+
+    evaluator = report.get("evaluator")
+    if not isinstance(evaluator, dict):
+        violations.append("evaluator: オブジェクトでない")
     else:
-        if ev.get("name") != EVALUATOR_NAME:
-            v.append(f"evaluator.name != {EVALUATOR_NAME!r}")
-        if ev.get("context") != "fork":
-            v.append("evaluator.context != 'fork' (独立 context 必須)")
-        if not ev.get("version"):
-            v.append("evaluator.version が空")
+        if evaluator.get("name") != EVALUATOR_NAME:
+            violations.append(f"evaluator.name != {EVALUATOR_NAME!r}")
+        if evaluator.get("context") != "fork":
+            violations.append("evaluator.context != 'fork' (独立 context 必須)")
+        if not evaluator.get("version"):
+            violations.append("evaluator.version が空")
 
     verdict = report.get("verdict")
     if verdict not in OVERALL_VERDICTS:
-        v.append(f"verdict={verdict!r} が {sorted(OVERALL_VERDICTS)} 外")
+        violations.append(f"verdict={verdict!r} が {sorted(OVERALL_VERDICTS)} 外")
 
-    # --- 観点別スコア (全観点を過不足なく) ---
+    snapshot = report.get("artifact_snapshot")
+    if not isinstance(snapshot, dict):
+        violations.append("artifact_snapshot: オブジェクトでない (評価入力への束縛必須)")
+    else:
+        if set(snapshot) != {"schema_version", "artifacts"}:
+            violations.append("artifact_snapshot: field set が不正")
+        if snapshot.get("schema_version") != SNAPSHOT_SCHEMA_VERSION:
+            violations.append(
+                f"artifact_snapshot.schema_version != {SNAPSHOT_SCHEMA_VERSION!r}"
+            )
+        snapshot_artifacts = snapshot.get("artifacts")
+        if not isinstance(snapshot_artifacts, dict) or not snapshot_artifacts:
+            violations.append("artifact_snapshot.artifacts: 非空オブジェクトでない")
+        else:
+            for relative, value in snapshot_artifacts.items():
+                if not isinstance(relative, str) or not relative:
+                    violations.append("artifact_snapshot.artifacts: 空または非文字列 path")
+                if not isinstance(value, str) or SHA256.fullmatch(value) is None:
+                    violations.append(
+                        f"artifact_snapshot.artifacts[{relative!r}]: sha256 が不正"
+                    )
+
     aspects = report.get("aspects")
     aspect_verdicts: dict[str, str] = {}
     if not isinstance(aspects, dict):
-        v.append("aspects: オブジェクトでない")
+        violations.append("aspects: オブジェクトでない")
     else:
         extra = set(aspects) - set(ASPECTS)
         missing = set(ASPECTS) - set(aspects)
         if extra:
-            v.append(f"aspects: 未知の観点 {sorted(extra)}")
+            violations.append(f"aspects: 未知の観点 {sorted(extra)}")
         if missing:
-            v.append(f"aspects: 観点欠落 {sorted(missing)} (全観点を過不足なく)")
-        for aid, spec in ASPECTS.items():
-            a = aspects.get(aid)
-            if not isinstance(a, dict):
+            violations.append(f"aspects: 観点欠落 {sorted(missing)} (全観点を過不足なく)")
+        for aspect_id, specification in ASPECTS.items():
+            aspect = aspects.get(aspect_id)
+            if not isinstance(aspect, dict):
                 continue
-            av = a.get("verdict")
-            if av not in ASPECT_VERDICTS:
-                v.append(f"aspects[{aid}].verdict={av!r} が {sorted(ASPECT_VERDICTS)} 外")
+            aspect_verdict = aspect.get("verdict")
+            if aspect_verdict not in ASPECT_VERDICTS:
+                violations.append(f"aspects[{aspect_id}].verdict={aspect_verdict!r} が {sorted(ASPECT_VERDICTS)} 外")
             else:
-                aspect_verdicts[aid] = av
-            if a.get("auditor") != spec["auditor"]:
-                v.append(f"aspects[{aid}].auditor != {spec['auditor']!r} (観点↔監査 agent 対応)")
-            if a.get("component") != spec["component"]:
-                v.append(f"aspects[{aid}].component != {spec['component']!r}")
-            if not a.get("summary"):
-                v.append(f"aspects[{aid}].summary が空")
+                aspect_verdicts[aspect_id] = aspect_verdict
+            if aspect.get("auditor") != specification["auditor"]:
+                violations.append(f"aspects[{aspect_id}].auditor != {specification['auditor']!r} (観点↔監査 agent 対応)")
+            if aspect.get("component") != specification["component"]:
+                violations.append(f"aspects[{aspect_id}].component != {specification['component']!r}")
+            if not aspect.get("summary"):
+                violations.append(f"aspects[{aspect_id}].summary が空")
 
-    # --- 不足事項一覧 ---
     gaps = report.get("gaps")
     if not isinstance(gaps, list):
-        v.append("gaps: 配列でない (不足事項一覧)")
+        violations.append("gaps: 配列でない (不足事項一覧)")
         gaps = []
 
-    # --- findings (PASS 時も info 1 件以上) ---
     findings = report.get("findings")
     if not isinstance(findings, list) or not findings:
-        v.append("findings: 非空配列でない (PASS 時も info を 1 件以上残す)")
+        violations.append("findings: 非空配列でない (PASS 時も info を 1 件以上残す)")
         findings = []
     else:
-        for i, f in enumerate(findings):
-            if not isinstance(f, dict):
-                v.append(f"findings[{i}]: オブジェクトでない")
+        for index, finding in enumerate(findings):
+            if not isinstance(finding, dict):
+                violations.append(f"findings[{index}]: オブジェクトでない")
                 continue
-            if f.get("severity") not in SEVERITIES:
-                v.append(f"findings[{i}].severity={f.get('severity')!r} が {sorted(SEVERITIES)} 外")
-            if not f.get("bucket"):
-                v.append(f"findings[{i}].bucket が空")
-            if not f.get("observation"):
-                v.append(f"findings[{i}].observation が空")
+            if finding.get("severity") not in SEVERITIES:
+                violations.append(f"findings[{index}].severity={finding.get('severity')!r} が {sorted(SEVERITIES)} 外")
+            if not finding.get("bucket"):
+                violations.append(f"findings[{index}].bucket が空")
+            if not finding.get("observation"):
+                violations.append(f"findings[{index}].observation が空")
 
-    # --- 整合検査: verdict = 再導出値 (Goodhart 防止) ---
+    gate_results = report.get("gate_results")
+    if verdict == "PASS":
+        by_id = {
+            item.get("id"): item
+            for item in gate_results
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        } if isinstance(gate_results, list) else {}
+        for gate_id in sorted(PASS_GATE_IDS):
+            result = by_id.get(gate_id)
+            if not isinstance(result, dict) or result.get("exit_code") != 0:
+                violations.append(f"PASS report lacks passing gate: {gate_id}")
+        knowledge = by_id.get("G-knowledge-graph")
+        subgates = knowledge.get("subgates") if isinstance(knowledge, dict) else None
+        profiles = {
+            item.get("profile")
+            for item in subgates
+            if isinstance(item, dict) and item.get("exit_code") == 0
+        } if isinstance(subgates, list) else set()
+        if profiles != KNOWLEDGE_PROFILES or len(subgates or []) != len(KNOWLEDGE_PROFILES):
+            violations.append(
+                "PASS report knowledge gate lacks four passing profiles: "
+                + ",".join(sorted(KNOWLEDGE_PROFILES))
+            )
+
     if isinstance(aspects, dict) and verdict in OVERALL_VERDICTS:
         derived = aggregate_verdict(aspect_verdicts, _high_count(findings))
         if derived != verdict:
-            v.append(
+            violations.append(
                 f"verdict={verdict!r} が 全観点 + high finding 数からの fail-closed 再導出 "
                 f"{derived!r} と不一致 (総合判定が観点スコアに接地していない)"
             )
-    # FAIL のとき不足事項が空なら差し戻し材料が欠落
     if verdict == "FAIL" and not gaps:
-        v.append("verdict=FAIL だが gaps (不足事項一覧) が空 (差し戻し材料が無い)")
-    return v
+        violations.append("verdict=FAIL だが gaps (不足事項一覧) が空 (差し戻し材料が無い)")
+    violations.extend(validate_attribution(report, ledger, expected_session))
+    return violations
 
 
 def spec_dir_violations(report, spec_dir: str) -> list[str]:
@@ -360,63 +407,56 @@ def derive_hearing_verdict(audit, spec_state) -> dict:
 
 
 def _plugin_root() -> Path:
-    """.../skills/<skill>/scripts/aggregate-completeness.py -> plugin root (parents[3])。"""
+    """.../skills/<skill>/scripts/aggregate-completeness.py から plugin root を返す。"""
     return Path(__file__).resolve().parents[3]
 
 
 def run_coverage_gate(matrix_path, require_complete: bool = False) -> dict:
-    """plugin-root の validate-coverage-matrix.py (C05 deterministic_check) を実行し結果を返す。"""
+    """C05 の matrix deterministic gate を実行する。"""
     gate = _plugin_root() / "scripts" / "validate-coverage-matrix.py"
-    cmd = [sys.executable or "python3", str(gate), "--matrix", str(matrix_path)]
+    command = [sys.executable or "python3", str(gate), "--matrix", str(matrix_path)]
     if require_complete:
-        cmd.append("--require-complete")
-    proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        command.append("--require-complete")
+    process = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return {
         "id": "G-matrix",
         "name": "validate-coverage-matrix",
         "conditions": ["matrix_coverage"],
-        "command": [str(x) for x in cmd],
-        "exit_code": int(proc.returncode),
-        "stdout": proc.stdout.strip(),
-        "stderr": proc.stderr.strip(),
+        "command": [str(item) for item in command],
+        "exit_code": int(process.returncode),
+        "stdout": process.stdout.strip(),
+        "stderr": process.stderr.strip(),
     }
 
 
 def run_knowledge_graph_gate() -> dict:
-    """plugin-root の validate-knowledge-graph.py を 4 profile 実行し C13-C16 の機械層根拠を集約する。
-
-    C05 (評価者) は生成時ゲート (C01/C03) の緑を LLM 裁量で信頼せず、出荷済み 3 カタログを
-    validator へ独立再実行する (proposer≠approver・保証要件は機械層)。knowledge/doctrine/
-    required-info の各 profile と語彙横断 cross の 4 本が全て exit0 で PASS。design_knowledge_reflection
-    (C13/C14/C15) と matrix_coverage (C16) の機械層根拠となる。
-    """
+    """C13-C16 の knowledge/doctrine/required-info/cross gate を独立再実行する。"""
     root = _plugin_root()
     gate = root / "scripts" / "validate-knowledge-graph.py"
-    ref = root / "skills" / "ref-system-design-knowledge" / "references"
-    elicit_ref = root / "skills" / "run-system-spec-elicit" / "references"
-    knowledge_catalog = ref / "knowledge-catalog.json"
-    doctrine = ref / "doctrine-anchor-registry.json"
-    taxonomy = ref / "system-category-taxonomy.json"
-    required_info = elicit_ref / "required-info-catalog.json"
-    py = sys.executable or "python3"
+    design_references = root / "skills" / "ref-system-design-knowledge" / "references"
+    elicit_references = root / "skills" / "run-system-spec-elicit" / "references"
+    doctrine = design_references / "doctrine-anchor-registry.json"
+    required_info = elicit_references / "required-info-catalog.json"
+    python = sys.executable or "python3"
     runs = (
-        ("knowledge", [py, str(gate), "--profile", "knowledge", "--input", str(knowledge_catalog)]),
-        ("doctrine", [py, str(gate), "--profile", "doctrine", "--input", str(doctrine)]),
-        ("required-info", [py, str(gate), "--profile", "required-info", "--input", str(required_info)]),
-        ("cross", [py, str(gate), "--profile", "cross", "--taxonomy", str(taxonomy),
-                   "--doctrine", str(doctrine), "--required-info", str(required_info)]),
+        ("knowledge", [python, str(gate), "--profile", "knowledge", "--input", str(design_references / "knowledge-catalog.json")]),
+        ("doctrine", [python, str(gate), "--profile", "doctrine", "--input", str(doctrine)]),
+        ("required-info", [python, str(gate), "--profile", "required-info", "--input", str(required_info)]),
+        ("cross", [python, str(gate), "--profile", "cross", "--taxonomy", str(design_references / "system-category-taxonomy.json"), "--doctrine", str(doctrine), "--required-info", str(required_info)]),
     )
     subgates = []
     worst = 0
-    for name, cmd in runs:
-        proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    for name, command in runs:
+        process = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         subgates.append({
             "profile": name,
-            "command": [str(x) for x in cmd],
-            "exit_code": int(proc.returncode),
-            "stderr": proc.stderr.strip(),
+            "command": [str(item) for item in command],
+            "exit_code": int(process.returncode),
+            "stderr": process.stderr.strip(),
         })
-        worst = max(worst, int(proc.returncode))
+        return_code = int(process.returncode)
+        normalized_failure = return_code if return_code > 0 else (1 if return_code < 0 else 0)
+        worst = max(worst, normalized_failure)
     return {
         "id": "G-knowledge-graph",
         "name": "validate-knowledge-graph",
@@ -427,37 +467,35 @@ def run_knowledge_graph_gate() -> dict:
 
 
 def main(argv: list | None = None) -> int:
-    ap = argparse.ArgumentParser(
-        description="C05 完成度評価レポートの形状検証 / マトリクス網羅性 + 知識グラフ機械ゲート実行"
-    )
-    ap.add_argument("--report", help="評価レポート JSON のパス (形状 + 総合判定整合を検証)")
-    ap.add_argument("--spec-dir", help="--report と併用。report の spec_dir がこの dir に解決するかも検証する")
-    ap.add_argument("--matrix", help="spec-state.json のパス (マトリクス網羅性ゲートを実行)")
-    ap.add_argument("--require-complete", action="store_true", help="ゲートを未収集 0 必須モードで実行")
-    ap.add_argument("--knowledge-graph", action="store_true",
-                    help="出荷 3 カタログを validate-knowledge-graph.py 4 profile で独立再実行 (C13-C16 機械層)")
-    ap.add_argument("--hearing", help="C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input 判定を導く")
-    ap.add_argument("--state", help="--hearing の判定に使う spec-state.json (確定セルの qa_ref と置き換えを読む)")
-    args = ap.parse_args(argv)
-
+    parser = argparse.ArgumentParser(description="C05 完成度評価レポートの形状検証 / 決定論ゲート実行")
+    parser.add_argument("--report", help="評価レポート JSON のパス")
+    parser.add_argument("--fork-ledger", help="監査 fork 台帳 JSONL のパス")
+    parser.add_argument("--session", help="現在の評価 run の session_id (receipt と照合)")
+    parser.add_argument("--matrix", help="spec-state.json のパス (matrix gate を実行)")
+    parser.add_argument("--require-complete", action="store_true", help="matrix gate を未収集 0 必須で実行")
+    parser.add_argument("--knowledge-graph", action="store_true", help="C13-C16 の 4 profile gate を実行")
+    parser.add_argument("--spec-dir", help="--report と併用。report の spec_dir がこの dir に解決するかも検証する")
+    parser.add_argument("--hearing", help="C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input 判定を導く")
+    parser.add_argument("--state", help="--hearing の判定に使う spec-state.json (確定セルの qa_ref と置き換えを読む)")
+    args = parser.parse_args(argv)
     if not args.report and not args.matrix and not args.knowledge_graph and not args.hearing:
-        ap.error("--report / --matrix / --knowledge-graph / --hearing のいずれかが必要")
+        parser.error("--report / --matrix / --knowledge-graph / --hearing のいずれかが必要")
     if bool(args.hearing) != bool(args.state):
-        ap.error("--hearing と --state は併用する")
+        parser.error("--hearing と --state は併用する")
     if args.spec_dir is not None and not args.report:
-        ap.error("--spec-dir は --report と併用する")
+        parser.error("--spec-dir は --report と併用する")
 
-    rc = 0
+    return_code = 0
     if args.matrix:
         result = run_coverage_gate(args.matrix, require_complete=args.require_complete)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["exit_code"] != 0:
-            rc = 1
+            return_code = 1
     if args.knowledge_graph:
-        kg_result = run_knowledge_graph_gate()
-        print(json.dumps(kg_result, ensure_ascii=False, indent=2))
-        if kg_result["exit_code"] != 0:
-            rc = 1
+        result = run_knowledge_graph_gate()
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result["exit_code"] != 0:
+            return_code = 1
     if args.hearing:
         loaded = []
         for label, raw in (("hearing", args.hearing), ("state", args.state)):
@@ -473,31 +511,36 @@ def main(argv: list | None = None) -> int:
         hearing = derive_hearing_verdict(loaded[0], loaded[1])
         print(json.dumps(hearing, ensure_ascii=False, indent=2))
         if hearing["verdict"] != "PASS":
-            rc = 1
+            return_code = 1
     if args.report:
-        path = Path(args.report)
-        if not path.is_file():
+        report_path = Path(args.report)
+        if not report_path.is_file():
             print(f"report ファイルが存在しない: {args.report}", file=sys.stderr)
             return 2
         try:
-            report = json.loads(path.read_text(encoding="utf-8"))
+            report = json.loads(report_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             print(f"report の JSON parse 失敗: {exc}", file=sys.stderr)
             return 2
-        violations = validate_report(report)
+        ledger = load_fork_ledger(args.fork_ledger or default_ledger_path())
+        violations = validate_report(report, ledger, expected_session=args.session)
         if args.spec_dir is not None:
             if not Path(args.spec_dir).expanduser().is_dir():
                 print(f"spec-dir ディレクトリが存在しない: {args.spec_dir}", file=sys.stderr)
                 return 2
             violations += spec_dir_violations(report, args.spec_dir)
         if violations:
-            for msg in violations:
-                print(f"VIOLATION: {msg}", file=sys.stderr)
-            print(f"FAIL: {len(violations)} 件のレポート整合違反", file=sys.stderr)
-            rc = 1
+            for message in violations:
+                print(f"VIOLATION: {message}", file=sys.stderr)
+            print(
+                f"FAIL: {len(violations)} 件のレポート整合違反 (fork 台帳: {ledger['path']} / "
+                f"exists={ledger['exists']} / 裏取り fork {sum(ledger['dispatched'].values())} 件)",
+                file=sys.stderr,
+            )
+            return_code = 1
         else:
-            print(f"OK: レポート形状と総合判定整合を満たす (verdict={report.get('verdict')})")
-    return rc
+            print(f"OK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict={report.get('verdict')})")
+    return return_code
 
 
 if __name__ == "__main__":

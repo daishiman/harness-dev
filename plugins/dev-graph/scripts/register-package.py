@@ -46,6 +46,8 @@ RECEIPT_STABLE_KEYS = {
     "expected_count", "applied_count", "phase_refs", "node_ids", "graph_revision_before",
     "graph_revision_after", "graph_digest_after", "output_path",
 }
+# PR の merge を done の条件にする policy。schema は done に merged な pull_request_linkages を要求する。
+PR_LINKED_COMPLETION_POLICIES = frozenset({"linked_pr_merged_all", "linked_pr_merged_any"})
 
 
 class RollbackIncompleteError(ContractError):
@@ -325,7 +327,12 @@ def _resolved_nodes(nodes: list[dict[str, Any]], intents: dict[str, str], mode: 
                 raise ContractError(f"{node_id}: binding {binding} with github_publication.mode {publication.get('mode')} "
                                     "is a publication authority conflict")
             publication["mode"] = "issue" if binding == "github" else "local_only"
-        if binding != "github": publication["project_aliases"] = []
+        if binding != "github":
+            publication["project_aliases"] = []
+            # local_only の task は PR を持たないので、PR merge 待ちの policy では done に届かず、tracker だけが
+            # closed になって open 残置が積み上がる。beads/none の close-loop は manual で閉じる (templates/task.md)。
+            completion = node["completion_evidence"]
+            if completion.get("policy") in PR_LINKED_COMPLETION_POLICIES: completion["policy"] = "manual"
         if binding in {"github", "none"}: node["beads_linkage"] = None
         _validate_schema(node, node_schema, node_schema, f"resolved_nodes[{index}]")
         if node["tracker_binding"] == "repo-config-default": raise ContractError("unresolved binding sentinel")

@@ -1,7 +1,7 @@
 ---
 name: elegant-improvement-executor
 description: elegant-reviewで分析結果が揃ったとき、範囲を絞って改善を実装したいときに使う。
-tools: Read, Glob, Grep, Edit, MultiEdit, Write, Bash(python3 *)
+tools: Read, Glob, Grep, Edit, MultiEdit, Write, Bash(python3 *), Bash(git diff *), Bash(git grep *)
 model: inherit
 isolation: fork
 owner_skill: run-elegant-review
@@ -24,6 +24,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 ### 1.2 不変ルール
 - 最小パッチ原則・スコープ逸脱禁止。`source_trace[]` 外編集をしない。
 - `TODO(human)` を残さず、選択は findings と先例から自動決定する (`force_pass` 禁止)。
+- git commit は `commit_authorized=true` の明示時だけ許可し、既定は patch 適用と検証まで。git push / PR は別途明示権限が必要。
 - **適用層境界**: 本 executor の全件消化規律 (severity high 放置 0・DAG 全件) は「1 レビューの findings 一括改善 (eval 非帰属)」に適用され、実走 eval 駆動の反復改善 (`run-skill-iter-improve`, 1 iter 1-2 件) とは編集エンジン・収束判定を共有しない。
 
 ## Layer 2: ドメイン定義層
@@ -38,7 +39,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 
 ### 2.3 出力要素
 - `convergence_status` enum は owner `schemas/phase-output.schema.json#/definitions/phase3_output` 正本 (`complete|in_progress|diverging|human_escalate|incomplete`)。
-- 具体値直書きは `variable_abstraction` に従い変数・テンプレート・config example へ昇格する。
+- 具体値直書きは `variable_abstraction[].name` と meaning/default/required/not_applicable_when/source_trace に従い変数・テンプレート・config example へ昇格する。
 
 ## Layer 3: インフラストラクチャ定義層
 
@@ -46,7 +47,8 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 - 起動文・パッチ契約の正本は `run-elegant-review/prompts/R3-phase3-execute.md`、収束閾値は `run-elegant-review/references/convergence-policy.json` (Δneg/Δpos) を参照する。
 
 ### 3.2 利用ツール
-- Read/Glob/Grep + Edit/MultiEdit/Write + Bash(python3 *) (検証スクリプト実行)。
+- Read/Glob/Grep + Edit/MultiEdit/Write + Bash(python3 *) (検証スクリプト実行) +
+  Bash(git diff *) / Bash(git grep *) (scope・残存 literal の read-only 監査)。
 
 ## Layer 4: 共通ポリシー層
 
@@ -72,6 +74,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 - [ ] `validation_commands[]` 全件 exit 0、うち 1 件以上が既存 lint / `validate-build-trace.py`。
 - [ ] `git grep` で `variable_abstraction[].literal` 残存 0 件。
 - [ ] `convergence_status` が enum のいずれかに一意決定。
+- [ ] `commit_authorized=false` なら commit せず patch までで停止した。
 
 ### 5.4 実行方式
 - 固定手順を持たない。未充足チェックリスト項目 (未消化 high・余分 hunk・検証失敗) を特定し、グルーピング・パッチ・revert・依存順再計算を都度立案して全項目充足まで反復する。反復上限は Layer 4 (max 3) に従う。

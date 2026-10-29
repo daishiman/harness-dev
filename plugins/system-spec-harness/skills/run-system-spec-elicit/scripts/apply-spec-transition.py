@@ -4,14 +4,14 @@
 # version: 0.2.1
 # purpose: run-system-spec-elicit が所有する spec-state.json の単一 transition writer。カテゴリ×platform セルの 未収集/対象外/確定 遷移を規則付きで適用し、確定セルの直接巻き戻し (rollback) を Bash/script 経由でも拒否し、R4-reopen 経由のみ確定変更を許す。goal-seek chunk (per-invocation max_loops) の状態保存/resume も担う。
 # inputs:
-#   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops (confirm を含む apply/chunk は --required-info CATALOG が必須で、候補stateを検証)
+#   - argv: bootstrap|init|add-category|apply|chunk|aggregate|set-targets|set-foundation|set-decision|set-knowledge-candidate|set-qa-source|set-qa-design-applications|fix-qa-knowledge-ref サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops/--require-all/--schema-version (confirm を含む apply/chunk は --required-info CATALOG が必須で、候補stateを検証)
 # outputs:
 #   - spec-state.json (stdout or --out。親ディレクトリが無ければ作り、同じディレクトリの一時ファイルから置き換える)
 #   - exit: 0=OK / 1=TransitionError (state・turns・taxonomy の形の崩れを含む) or IO / 2=usage error (confirm を含む apply/chunk に --required-info が無い)・required-info catalog の形が不正
 # contexts: [E, C]
 # network: false
 # write-scope: spec-state.json (単一 writer)
-# dependencies: [scripts/validate-knowledge-graph.py]
+# dependencies: [scripts/validate-knowledge-graph.py, scripts/foundation_provenance.py]
 # requires-python: ">=3.9"
 # ///
 """spec-state.json の単一 transition writer (run-system-spec-elicit 所有)。
@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import importlib.util
 import json
 import os
@@ -45,7 +46,7 @@ import re
 import sys
 import tempfile
 import unicodedata
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlsplit
 
 CANONICAL_PLATFORMS = (
@@ -81,8 +82,33 @@ FOUNDATION_U_KEYS = (
 )
 # U1-U3 (本質的目的/背景/ゴール) は N/A 不可 (値必須)。"目的が N/A のシステム" を弾く。
 FOUNDATION_NA_FORBIDDEN = ("essential_purpose", "background", "goals")
-# set-foundation が受理する全キー: U1-U9 + 確定フラグ + ユーザー合意の承認参照。未知キーは弾く。
-FOUNDATION_KEYS = FOUNDATION_U_KEYS + ("confirmed", "approval_ref")
+# set-foundation が受理する全キー: U1-U9 + 確定フラグ + ユーザー合意の承認参照 +
+# U ごとの根拠束縛 (effective_source_refs)。未知キーは弾く。
+FOUNDATION_KEYS = FOUNDATION_U_KEYS + ("confirmed", "approval_ref", "effective_source_refs")
+
+# U1-U9 の根拠 (qa_log の一次入力 + approval_log) を検査する helper。coverage 検証
+# (validate-coverage-matrix.py) と同じ実装を共有し、writer と validator で判定をずらさない。
+_FOUNDATION_PROVENANCE_PATH = (
+    Path(__file__).resolve().parents[3] / "scripts" / "foundation_provenance.py"
+)
+_FOUNDATION_PROVENANCE_SPEC = importlib.util.spec_from_file_location(
+    "system_spec_foundation_provenance", _FOUNDATION_PROVENANCE_PATH
+)
+if _FOUNDATION_PROVENANCE_SPEC is None or _FOUNDATION_PROVENANCE_SPEC.loader is None:
+    raise ImportError(f"cannot load foundation provenance helper: {_FOUNDATION_PROVENANCE_PATH}")
+_FOUNDATION_PROVENANCE = importlib.util.module_from_spec(_FOUNDATION_PROVENANCE_SPEC)
+_FOUNDATION_PROVENANCE_SPEC.loader.exec_module(_FOUNDATION_PROVENANCE)
+validate_foundation_source_indexes = _FOUNDATION_PROVENANCE.validate_foundation_source_indexes
+FOUNDATION_SOURCE_INDEXES = _FOUNDATION_PROVENANCE.FOUNDATION_SOURCE_INDEXES
+
+# state の版。既定は 1.0。1.1 は qa 単位の design_applications 契約
+# (design_application_contract_version=1.0) を opt-in で有効にした state で、confirm の根拠 qa に
+# 構造化した設計適用を必須にし、確定 foundation に effective_source_refs を必須にする。
+LEGACY_STATE_SCHEMA_VERSION = "1.0"
+CURRENT_STATE_SCHEMA_VERSION = "1.1"
+STATE_SCHEMA_VERSIONS = (LEGACY_STATE_SCHEMA_VERSION, CURRENT_STATE_SCHEMA_VERSION)
+DESIGN_APPLICATION_CONTRACT_VERSION = "1.0"
+CATEGORY_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DECISION_STATUSES = {
     "needs_guidance",
     "recommended_pending_confirmation",
@@ -165,13 +191,71 @@ def count_unresolved(state: dict) -> int:
     return total
 
 
+def _refresh_hearing_progress(state: dict) -> None:
+    """hearing_progress の complete / next_question を matrix から導き直す。
+
+    run_chunk の最後だけで更新すると、apply や add-category で matrix が変わった後も
+    古い complete=true が残り、未収集セルがあるのに完了扱いできてしまう。
+    """
+    progress = state.setdefault("hearing_progress", {})
+    unresolved = count_unresolved(state)
+    progress["complete"] = unresolved == 0
+    progress["next_question"] = None if unresolved == 0 else next_unresolved_question(state)
+
+
 # --------------------------------------------------------------------------- #
 # 初期化 (R1-init)                                                             #
 # --------------------------------------------------------------------------- #
-def bootstrap_state() -> dict:
-    """R0 を matrix 初期化より先に実行できる最小 state envelope を返す。"""
+def _require_schema_version(value) -> str:
+    if value not in STATE_SCHEMA_VERSIONS:
+        raise TransitionError(
+            f"schema_version は {' / '.join(STATE_SCHEMA_VERSIONS)} のいずれか必須 (got {value!r})"
+        )
+    return value
+
+
+def _existing_schema_version(existing: dict) -> str:
+    """既存 state の schema_version と design application 契約 marker の組を確かめる。
+
+    marker の欠落・不一致を init で黙って補うと、契約を満たさない qa entry を持つ state を
+    schema 1.1 適合と偽装できる。組が崩れた state は修復せずに拒否する。
+    """
+    schema_version = existing.get("schema_version")
+    contract_version = existing.get("design_application_contract_version")
+    if schema_version == LEGACY_STATE_SCHEMA_VERSION:
+        if contract_version is not None:
+            raise TransitionError(
+                "legacy schema 1.0 は design_application_contract_version 欠落時だけ明示 migration 可能"
+            )
+    elif schema_version == CURRENT_STATE_SCHEMA_VERSION:
+        if contract_version != DESIGN_APPLICATION_CONTRACT_VERSION:
+            raise TransitionError(
+                "schema 1.1 は design_application_contract_version=1.0 必須。"
+                "marker 欠落/不一致を init で修復してはならない"
+            )
+    else:
+        raise TransitionError(
+            "既存 state の schema_version は exact 1.0 legacy または exact 1.1 current 必須"
+        )
+    return schema_version
+
+
+def _schema_envelope(schema_version: str) -> dict:
+    """schema_version と、1.1 のときだけ付ける design application 契約 marker を返す。"""
+    envelope = {"schema_version": _require_schema_version(schema_version)}
+    if schema_version == CURRENT_STATE_SCHEMA_VERSION:
+        envelope["design_application_contract_version"] = DESIGN_APPLICATION_CONTRACT_VERSION
+    return envelope
+
+
+def bootstrap_state(schema_version: str = LEGACY_STATE_SCHEMA_VERSION) -> dict:
+    """R0 を matrix 初期化より先に実行できる最小 state envelope を返す。
+
+    既定は schema 1.0。schema 1.1 (confirm の根拠 qa に design_applications を課す契約) は
+    呼び出し側が明示したときだけ marker 付きで作る。
+    """
     return {
-        "schema_version": "1.0",
+        **_schema_envelope(schema_version),
         "categories": [],
         "platforms": [],
         "matrix": {},
@@ -188,13 +272,22 @@ def bootstrap_state() -> dict:
     }
 
 
-def init_state(taxonomy: dict, existing_state: dict | None = None) -> dict:
+def init_state(
+    taxonomy: dict,
+    existing_state: dict | None = None,
+    schema_version: str | None = None,
+) -> dict:
     """C04 taxonomy からカテゴリ×必須platform マトリクスを初期化する。
 
     必須 platform 行 (CANONICAL_PLATFORMS) の全存在を検証し、欠落があれば
     TransitionError を送出する (R1-init の必須行全存在検証)。taxonomy の形が崩れている
     (object でない・platforms/categories が id/label を持つ object の配列でない) ときも
     traceback ではなく TransitionError にする。
+
+    existing_state は matrix 未着手の bootstrap state に限る。確定セルを含む state を
+    init し直すと matrix が未収集へ戻り、R4-reopen を経ずに確定を巻き戻せてしまう。
+    schema_version は既存 state の版を引き継ぎ、``schema_version="1.1"`` を明示したときだけ
+    1.0 から 1.1 へ移す (1.1 から 1.0 へは戻さない)。
     """
     if not isinstance(taxonomy, dict):
         raise TransitionError(f"taxonomy は object 必須 (got {type(taxonomy).__name__})")
@@ -211,12 +304,39 @@ def init_state(taxonomy: dict, existing_state: dict | None = None) -> dict:
     if missing:
         raise TransitionError(f"taxonomy に必須 platform {missing} が欠落")
     cats = [{"id": c["id"], "label": c["label"]} for c in taxonomy["categories"]]
+    if not cats:
+        raise TransitionError("taxonomy.categories は非空配列必須")
+    cat_ids = [c["id"] for c in cats]
+    if len(set(cat_ids)) != len(cat_ids):
+        raise TransitionError(f"taxonomy.categories の id が重複: {cat_ids}")
     matrix = {
         c["id"]: {pf: {"state": "未収集"} for pf in CANONICAL_PLATFORMS} for c in cats
     }
-    prior = existing_state if isinstance(existing_state, dict) else {}
+    if existing_state is None:
+        prior: dict = {}
+        prior_version = LEGACY_STATE_SCHEMA_VERSION
+    else:
+        if not isinstance(existing_state, dict):
+            raise TransitionError("既存 state は object 必須")
+        prior = existing_state
+        if any(
+            isinstance(cell, dict) and cell.get("state") == "確定"
+            for row in (prior.get("matrix") or {}).values()
+            if isinstance(row, dict)
+            for cell in row.values()
+        ):
+            raise TransitionError(
+                "init --state は matrix 未着手の bootstrap state 専用。"
+                "確定セルを含む state の再初期化は R4-reopen を迂回するため拒否"
+            )
+        prior_version = _existing_schema_version(prior)
+    target_version = prior_version if schema_version is None else _require_schema_version(schema_version)
+    if prior_version == CURRENT_STATE_SCHEMA_VERSION and target_version != CURRENT_STATE_SCHEMA_VERSION:
+        raise TransitionError(
+            "schema 1.1 の state を 1.0 へ戻す init は拒否 (design application 契約は外せない)"
+        )
     state: dict = {
-        "schema_version": prior.get("schema_version", "1.0"),
+        **_schema_envelope(target_version),
         "categories": cats,
         "platforms": list(CANONICAL_PLATFORMS),
         "matrix": matrix,
@@ -234,8 +354,35 @@ def init_state(taxonomy: dict, existing_state: dict | None = None) -> dict:
         "hearing_progress": {"loop_count": 0, "next_question": None, "complete": False},
     }
     recompute_aggregates(state)
-    state["hearing_progress"]["next_question"] = next_unresolved_question(state)
+    _refresh_hearing_progress(state)
     return state
+
+
+def add_category(state: dict, category: dict) -> None:
+    """taxonomy に無いカテゴリ行を後から足す (既存行と確定セルには触れない)。
+
+    対象 system 固有の関心事 (例: 開発フロー) が taxonomy に無いとき、init し直すと
+    確定済みの行まで未収集へ戻る。新しい行を未収集で足すだけの経路を分ける。
+    既存 id の変更は R4-reopen 経由に限る。
+    """
+    if not isinstance(category, dict):
+        raise TransitionError("add-category: category は object 必須")
+    category_id, label = category.get("id"), category.get("label")
+    if not isinstance(category_id, str) or not category_id.strip():
+        raise TransitionError("add-category: id が空")
+    if not isinstance(label, str) or not label.strip():
+        raise TransitionError("add-category: label が空")
+    category_id, label = category_id.strip(), label.strip()
+    if not CATEGORY_ID_RE.fullmatch(category_id):
+        raise TransitionError(f"add-category: id は kebab-case 必須 ({category_id})")
+    if category_id in state["matrix"] or any(
+        item.get("id") == category_id for item in state["categories"]
+    ):
+        raise TransitionError(f"add-category: 既存カテゴリ ({category_id}) の変更は R4-reopen 経由")
+    state["categories"].append({"id": category_id, "label": label})
+    state["matrix"][category_id] = {pf: {"state": "未収集"} for pf in CANONICAL_PLATFORMS}
+    recompute_aggregates(state)
+    _refresh_hearing_progress(state)
 
 
 # --------------------------------------------------------------------------- #
@@ -277,6 +424,7 @@ def apply_cell_op(state: dict, op: dict) -> None:
       - reopen: 現在が確定のときだけ許可し、reason 必須。未収集へ戻す。
       - set-serves: 確定セルにのみ許可。serves_goals (上位概念トレース) を付与する
         (state は 確定 のまま変えないため rollback 防御には抵触しない = additive anchor)。
+      - set-approval: 確定セルにのみ許可。approval_log に実在する approval_ref を付与する。
       - confirm / exclude: 対象セルが確定なら TransitionError (rollback 拒否)。
         確定変更は必ず reopen を先に経由すること。
       - confirm は qa_ref 必須 (任意で serves_goals を同時付与可)、exclude は reason か approval_ref 必須。
@@ -329,15 +477,25 @@ def apply_cell_op(state: dict, op: dict) -> None:
         # 実施時刻を騙るため、他の時刻と同じく呼び出し側の実測値を要求する。
         reopened_at = op.get("reopened_at")
         _require_past_rfc3339(reopened_at, f"reopen[{cat}/{pf}].reopened_at")
-        state.setdefault("reopen_log", []).append(
-            {
-                "category": cat,
-                "platform": pf,
-                "reason": reason,
-                "from": "確定",
-                "reopened_at": reopened_at,
-            }
-        )
+        # reopen は確定を取り消す操作なので、qa_ref や approval_ref を次のセルへ引き継がない
+        # (別の回答に対して得た承認を、再確定したセルが継承してしまう)。ただし何も残さずに
+        # 落とすと「承認があったこと自体」が state から消え、reopen_log を読んでも再取得が
+        # 要ると分からない。捨てる判断は変えず、捨てた事実だけを discarded に残す。
+        discarded = {
+            key: list(cell[key]) if isinstance(cell[key], list) else cell[key]
+            for key in ("qa_ref", "qa_refs", "serves_goals", "serves_intents", "approval_ref")
+            if key in cell
+        }
+        log_entry = {
+            "category": cat,
+            "platform": pf,
+            "reason": reason,
+            "from": "確定",
+            "reopened_at": reopened_at,
+        }
+        if discarded:
+            log_entry["discarded"] = discarded
+        state.setdefault("reopen_log", []).append(log_entry)
         state["matrix"][cat][pf] = {
             "state": "未収集",
             "reopened_from": "確定",
@@ -385,6 +543,26 @@ def apply_cell_op(state: dict, op: dict) -> None:
             if ref not in refs:
                 refs.append(ref)
         cell["qa_refs"] = refs
+        return
+
+    if action == "set-approval":
+        # exclude は approval_ref を cell へ持てるのに confirm は持てない、という非対称が
+        # 「回答本文は承認を主張しているが、確定セルから承認記録へ機械追跡できない」
+        # 直接原因だった。confirm の確定条件には触れず、確定セル限定の後付け annotation
+        # である set-serves / add-qa-ref と同型の action で対称化する (確定巻き戻し拒否は不変)。
+        if cur != "確定":
+            raise TransitionError(
+                f"set-approval 不可: {cat}/{pf} は '{cur}' (確定セルのみ approval_ref を付与できる)"
+            )
+        approval_ref = op.get("approval_ref")
+        if not isinstance(approval_ref, str) or not approval_ref.strip():
+            raise TransitionError(f"set-approval には非空 approval_ref が必須: {cat}/{pf}")
+        approval_ref = approval_ref.strip()
+        if not _has_entry(state.get("approval_log") or [], approval_ref):
+            raise TransitionError(
+                f"set-approval: approval_log に存在しない approval_ref: {approval_ref} ({cat}/{pf})"
+            )
+        cell["approval_ref"] = approval_ref
         return
 
     # confirm / exclude は確定セルへの直接変更を拒否する (single-writer rollback 防御)
@@ -591,6 +769,64 @@ def _foundation_missing_fields(foundation: dict) -> list[str]:
     return missing
 
 
+def _require_fresh_bindings_for_confirmed_value_changes(previous: dict, merged: dict) -> None:
+    """確定済みの U の値を、古い根拠を付けたまま変えることを拒否する。
+
+    値だけ差し替えて effective_source_refs を据え置くと、新しい値が旧い対話と承認に
+    接地しているように見える。変えた U ごとに新しい qa_ref と approval_ref を求め、
+    requirements_foundation.approval_ref もその新しい承認へ付け替えさせる。
+    """
+    if not previous.get("confirmed") or not merged.get("confirmed"):
+        return
+    changed = [
+        (field, label)
+        for field, label, _canonical_qa in FOUNDATION_SOURCE_INDEXES
+        if previous.get(field) != merged.get(field)
+    ]
+    if not changed:
+        return
+
+    previous_refs = previous.get("effective_source_refs")
+    merged_refs = merged.get("effective_source_refs")
+    previous_refs = previous_refs if isinstance(previous_refs, dict) else {}
+    merged_refs = merged_refs if isinstance(merged_refs, dict) else {}
+    invalid_labels: list[str] = []
+    changed_approval_refs: set[str] = set()
+    for _field, label in changed:
+        old_binding = previous_refs.get(label)
+        new_binding = merged_refs.get(label)
+        old_binding = old_binding if isinstance(old_binding, dict) else {}
+        new_binding = new_binding if isinstance(new_binding, dict) else {}
+        qa_changed = (
+            isinstance(new_binding.get("qa_ref"), str)
+            and new_binding.get("qa_ref") != old_binding.get("qa_ref")
+        )
+        approval_changed = (
+            isinstance(new_binding.get("approval_ref"), str)
+            and new_binding.get("approval_ref") != old_binding.get("approval_ref")
+        )
+        if not qa_changed or not approval_changed:
+            invalid_labels.append(label)
+        if approval_changed:
+            changed_approval_refs.add(new_binding["approval_ref"])
+    if invalid_labels:
+        raise TransitionError(
+            "確定済み foundation の値変更には対象U "
+            + ", ".join(invalid_labels)
+            + " の新しい qa_ref / approval_ref が必須"
+        )
+
+    current_approval = merged.get("approval_ref")
+    if (
+        current_approval == previous.get("approval_ref")
+        or current_approval not in changed_approval_refs
+    ):
+        raise TransitionError(
+            "確定済み foundation の値変更には、変更対象Uの新しい approval_ref を"
+            " requirements_foundation.approval_ref に設定する必要がある"
+        )
+
+
 def set_foundation(state: dict, foundation: dict) -> None:
     """requirements_foundation (上位概念 U1-U9) を設定/確定する単一 writer 経路 (要件 C9)。
 
@@ -600,7 +836,11 @@ def set_foundation(state: dict, foundation: dict) -> None:
         1. U1-U9 が値あり (U1-U3 は N/A 不可)、U4-U9 は明示 N/A+理由でも可。
         2. ユーザー合意の機械証跡として approval_ref が非空で approval_log に実在する
            (cell exclude の approval_ref と対称。承認なき確定を弾く)。
+        3. U1-U9 の各値が利用者との対話 (qa_log の source) に接地している
+           (foundation_provenance.validate_foundation_source_indexes)。
+        4. 確定済みの値を変えるときは、変えた U に新しい qa_ref / approval_ref を付ける。
       approval_note を伴うときは approval_log へ idempotent 登録する (apply_turn と同じ機構)。
+      検査が通るまで state には書かない (途中で拒否したとき approval_log だけ増える事故を防ぐ)。
       approval_note はログ登録専用で requirements_foundation へは保存しない (本文は approval_log)。
 
     apply-spec-transition.py 以外は spec-state を書き換えない不変則を保つため、
@@ -612,12 +852,13 @@ def set_foundation(state: dict, foundation: dict) -> None:
     # ユーザー合意の承認を approval_log へ idempotent 登録 (apply_turn の approval_id と同じ機構)。
     approval_note = foundation.pop("approval_note", None)
     approval_ref = foundation.get("approval_ref")
+    approvals = list(state.get("approval_log") or [])
     if approval_ref and approval_note is not None:
-        appr_log = state.setdefault("approval_log", [])
-        if not _has_entry(appr_log, approval_ref):
-            appr_log.append({"id": approval_ref, "note": approval_note})
+        if not _has_entry(approvals, approval_ref):
+            approvals.append({"id": approval_ref, "note": approval_note})
 
-    merged = dict(state.get("requirements_foundation") or empty_foundation())
+    previous = dict(state.get("requirements_foundation") or empty_foundation())
+    merged = dict(previous)
     for k, v in foundation.items():
         if k not in FOUNDATION_KEYS:
             raise TransitionError(f"requirements_foundation の未知キー: {k!r}")
@@ -654,6 +895,7 @@ def set_foundation(state: dict, foundation: dict) -> None:
     # 確定条件: U1-U9 (U1-U3 は値必須) かつ ユーザー合意の approval_log 参照 (上位概念ブレ防止の要)
     confirmed = bool(merged.get("confirmed"))
     if confirmed:
+        _require_fresh_bindings_for_confirmed_value_changes(previous, merged)
         missing = _foundation_missing_fields(merged)
         if missing:
             raise TransitionError(
@@ -665,18 +907,26 @@ def set_foundation(state: dict, foundation: dict) -> None:
             raise TransitionError(
                 "確定条件不足: confirmed には approval_ref (ユーザー合意の approval_log 参照) が必須"
             )
-        if not _has_entry(state.get("approval_log") or [], appr):
+        if not _has_entry(approvals, appr):
             raise TransitionError(
                 f"確定条件不足: approval_ref={appr!r} が approval_log に不在 (承認証跡なし)"
             )
+        candidate = dict(state)
+        candidate["approval_log"] = approvals
+        candidate["requirements_foundation"] = merged
+        source_findings = validate_foundation_source_indexes(candidate)
+        if source_findings:
+            raise TransitionError("確定条件不足: " + "; ".join(source_findings))
     merged["confirmed"] = confirmed
+    if approvals or "approval_log" in state:
+        state["approval_log"] = approvals
     state["requirements_foundation"] = merged
 
 
 def _require_nonempty(value, label: str) -> None:
     if isinstance(value, str):
         ok = bool(value.strip())
-    elif isinstance(value, list):
+    elif isinstance(value, (list, dict)):
         ok = bool(value)
     else:
         ok = value is not None
@@ -975,12 +1225,33 @@ def _upsert_qa_entry(state: dict, qa_id: str, turn: dict) -> None:
         for key in QA_PROVENANCE_KEYS:
             if turn.get(key):
                 new_entry[key] = turn[key]
+        if "source" in turn:
+            # 後付けの set-qa-source が拒否する形 (例: path/section/sha256 を持たない
+            # written-requirements) を主経路が逐語コピーで素通しすると、後付けより主経路が
+            # 緩くなる。新規 entry の source も同じ正規化を通す。
+            new_entry["source"] = normalize_qa_source(turn["source"], new_entry["answer"])
+        if "design_applications" in turn:
+            new_entry["design_applications"] = normalize_design_applications(
+                turn["design_applications"]
+            )
         if items:
             new_entry["required_info_items"] = sorted(set(items))
         if corrections:
             new_entry["corrections"] = list(corrections)
         state["qa_log"].append(new_entry)
         return
+    for key, writer, normalize in (
+        ("source", "set-qa-source", lambda raw: normalize_qa_source(raw, entry.get("answer"))),
+        ("design_applications", "set-qa-design-applications", normalize_design_applications),
+    ):
+        # 既存 entry への source / design_applications は後付けの記録 (provenance) を伴う
+        # 専用経路で扱う。turn 経由で黙って捨てる・黙って足すのどちらも記録の由来を偽るため、
+        # 保存済みと同じ値の再適用だけを受け入れる。
+        if key in turn and normalize(turn[key]) != entry.get(key):
+            raise TransitionError(
+                f"qa_log {qa_id}: 既存 entry の {key} は turn では書けない "
+                f"(後付けは {writer} で、由来を記録したうえで行う)"
+            )
     for key in ("question", "answer"):
         incoming = turn.get(key)
         if incoming and incoming != entry.get(key):
@@ -1390,10 +1661,354 @@ def _supersede_qa(state: dict, op: dict) -> None:
             f"{label} {old_id}: 確定セル {primary} の主たる接地根拠 (qa_ref) のまま。"
             "先に R4-reopen し、新しい qa で再確定してから置き換えること"
         )
+    # 上位概念 (U1-U9) の接地根拠も同じ扱いにする。foundation_provenance は置き換え済みの
+    # qa への binding を拒否するため、付け替える前に置き換えると確定済み foundation が壊れる。
+    source_refs = (state.get("requirements_foundation") or {}).get("effective_source_refs")
+    if isinstance(source_refs, dict):
+        bound = sorted(
+            u_label
+            for u_label, binding in source_refs.items()
+            if isinstance(binding, dict) and binding.get("qa_ref") == old_id
+        )
+        if bound:
+            raise TransitionError(
+                f"{label} {old_id}: requirements_foundation.effective_source_refs {bound} の"
+                "接地根拠 (qa_ref) のまま。先に set-foundation で新しい qa へ付け替えてから置き換えること"
+            )
 
     old["superseded_by"] = new_id
     old["superseded_at"] = superseded_at
     old["superseded_note"] = note.strip()
+
+
+# --------------------------------------------------------------------------- #
+# qa entry の設計適用・出所の記録と後付け補修                                   #
+# --------------------------------------------------------------------------- #
+APPLICATION_STATES = {"applied", "not_applicable"}
+
+
+def normalize_design_applications(raw: object) -> list[dict]:
+    """qa entry の design_applications (どの設計知識をどう適用したか) を検査して整える。
+
+    カテゴリ単位の state.design_applications (章の設計原則) とは別に、個々の回答が
+    どの知識を根拠にどう解釈したかを qa entry へ残す。schema 1.1 では confirm の根拠 qa に必須。
+    """
+    if not isinstance(raw, list) or not raw:
+        raise TransitionError("design_applications は非空配列必須")
+    normalized: list[dict] = []
+    for index, item in enumerate(raw):
+        label = f"design_applications[{index}]"
+        if not isinstance(item, dict):
+            raise TransitionError(f"{label} は object 必須")
+        for key in ("knowledge_ref", "principle", "rationale"):
+            value = item.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise TransitionError(f"{label}.{key} は非空文字列必須")
+        applicability = item.get("applicability")
+        if applicability not in APPLICATION_STATES:
+            raise TransitionError(
+                f"{label}.applicability={applicability!r} は applied|not_applicable 必須"
+            )
+        tradeoffs = item.get("tradeoffs")
+        if (
+            not isinstance(tradeoffs, list)
+            or not tradeoffs
+            or any(not isinstance(value, str) or not value.strip() for value in tradeoffs)
+        ):
+            raise TransitionError(f"{label}.tradeoffs は非空文字列の配列必須")
+        normalized.append(
+            {
+                "knowledge_ref": item["knowledge_ref"].strip(),
+                "principle": item["principle"].strip(),
+                "applicability": applicability,
+                "rationale": item["rationale"].strip(),
+                "tradeoffs": [value.strip() for value in tradeoffs],
+            }
+        )
+    return normalized
+
+
+# 利用者の一次入力を出所とする kind。foundation trace と C06 中立性監査はここだけを根拠にできる。
+PRIMARY_QA_SOURCE_KINDS = {"user-dialogue", "written-requirements"}
+# 利用者の新規入力を伴わない kind。監査は「新しい主張が入ったか」を kind だけで判別できる。
+#   harness-remediation : レビュー/監査の指摘を反映した是正 (新規主張はあるが利用者発ではない)
+#   derived-consolidation: 既存 qa の統合・復旧 (新しい情報を増やさない、承認証跡が要る)
+NON_PRIMARY_QA_SOURCE_KINDS = {"harness-remediation", "derived-consolidation"}
+QA_SOURCE_KINDS = PRIMARY_QA_SOURCE_KINDS | NON_PRIMARY_QA_SOURCE_KINDS
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _find_qa(state: dict, qa_id: object, label: str) -> dict:
+    if not isinstance(qa_id, str) or not qa_id.strip():
+        raise TransitionError(f"{label}: qa_id は非空文字列必須")
+    qa_id = qa_id.strip()
+    entry = _qa_entry(state, qa_id)
+    if entry is None:
+        raise TransitionError(f"{label}: qa_log に存在しない qa_id: {qa_id}")
+    return entry
+
+
+def normalize_qa_source(raw: object, answer: object) -> dict:
+    """qa entry の source を契約形状へ正規化する。
+
+    対話は ``{"kind": "user-dialogue"}``、書面は path / section / sha256 を伴う。
+    書面の sha256 は ``answer`` 原文 (UTF-8 bytes) と一致しなければならない。digest が
+    合わない source を受け入れると「利用者原文を索引した」という主張が根拠を失う。
+
+    利用者の新規入力を伴わない entry (レビュー指摘の反映・既存 qa の統合復旧) を
+    ``user-dialogue`` と索引すると、C06 中立性監査と foundation trace が「利用者が答えた」
+    という前提のまま偽の一次根拠を数えてしまう。この 2 経路は専用 kind で明示し、
+    それぞれ何に由来するかを必須フィールドとして持たせる。
+    """
+    if not isinstance(raw, dict):
+        raise TransitionError("qa source: source は object 必須")
+    kind = raw.get("kind")
+    if kind not in QA_SOURCE_KINDS:
+        raise TransitionError(f"qa source: source.kind は {sorted(QA_SOURCE_KINDS)} のいずれか必須")
+    if kind == "user-dialogue":
+        if set(raw) - {"kind"}:
+            raise TransitionError("qa source: user-dialogue source に余分な key を持たせない")
+        return {"kind": kind}
+
+    if kind == "harness-remediation":
+        # どの指摘に由来するかを辿れなければ、是正は「AI が勝手に足した」と区別できない。
+        trigger = raw.get("trigger")
+        if set(raw) - {"kind", "trigger"}:
+            raise TransitionError("qa source: harness-remediation source に余分な key を持たせない")
+        if not isinstance(trigger, str) or not trigger.strip():
+            raise TransitionError("qa source: harness-remediation source.trigger は非空文字列必須")
+        return {"kind": kind, "trigger": trigger.strip()}
+
+    if kind == "derived-consolidation":
+        # 統合は新しい情報を増やさない操作なので、由来 qa と承認証跡の両方を要求する。
+        derived_from, approval_ref = raw.get("derived_from"), raw.get("approval_ref")
+        if set(raw) - {"kind", "derived_from", "approval_ref"}:
+            raise TransitionError("qa source: derived-consolidation source に余分な key を持たせない")
+        if not isinstance(derived_from, list) or not derived_from or not all(
+            isinstance(item, str) and item.strip() for item in derived_from
+        ):
+            raise TransitionError(
+                "qa source: derived-consolidation source.derived_from は非空の qa id 配列必須"
+            )
+        if not isinstance(approval_ref, str) or not approval_ref.strip():
+            raise TransitionError(
+                "qa source: derived-consolidation source.approval_ref は非空文字列必須"
+            )
+        return {
+            "kind": kind,
+            "derived_from": [item.strip() for item in derived_from],
+            "approval_ref": approval_ref.strip(),
+        }
+
+    path, section, digest = raw.get("path"), raw.get("section"), raw.get("sha256")
+    if not isinstance(path, str) or not path.strip() or path.startswith("/") or ".." in path.split("/"):
+        raise TransitionError("qa source: written source.path は安全な相対パス必須")
+    if not isinstance(section, str) or not section.strip():
+        raise TransitionError("qa source: written source.section が空")
+    if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+        raise TransitionError("qa source: written source.sha256 が不正")
+    if not isinstance(answer, str) or hashlib.sha256(answer.encode("utf-8")).hexdigest() != digest:
+        raise TransitionError("qa source: written source.sha256 が answer 原文と不一致")
+    return {"kind": kind, "path": path, "section": section, "sha256": digest}
+
+
+def set_qa_source(state: dict, qa_id: str, raw: object) -> None:
+    """既存 qa の質問・回答を保ったまま、欠落していた出所メタデータだけを追記する。
+
+    source を持たずに記録された qa は「対話で得たのか書面から索引したのか」を監査が
+    判別できない。既登録の逐語を改変せずに出所だけを補える経路が無いと、reopen → 再確認
+    という重い手順で回答そのものを作り直すことになり、かえって一次根拠を失う。
+
+    ただし後付けであること自体は隠さない。``source_provenance`` に
+    ``{"mode": "metadata_backfill", "writer": "set-qa-source"}`` を残し、対話時にその場で
+    記録された source と区別できるようにする。既存 source の上書きは常に拒否する
+    (同一 payload の再適用のみ冪等に受け入れる)。
+    """
+    entry = _find_qa(state, qa_id, "set-qa-source")
+    normalized = normalize_qa_source(raw, entry.get("answer"))
+    provenance = {"mode": "metadata_backfill", "writer": "set-qa-source"}
+    repair = {"mode": "type_repair", "writer": "set-qa-source"}
+
+    existing = entry.get("source")
+    if existing is not None and not isinstance(existing, dict):
+        # 契約は source を object と定めるが、素の文字列 (注記) が混入した state がある。
+        # 型不正は「対話経路で記録済みの source」ではなく壊れた値なので保護対象に含めず、
+        # 注記本文を source_note へ退避したうえで契約形状へ修復する。捨てると
+        # 「なぜこの qa が存在するか」の唯一の手掛かりを失うため、必ず保存する。
+        # 退避先は「読める注記」なので非空文字列に揃える (schema は minLength 1)。
+        entry["source_note"] = (
+            existing
+            if isinstance(existing, str) and existing.strip()
+            else f"(契約外の source を修復時に退避: {existing!r})"
+        )
+        entry["source"] = normalized
+        entry["source_provenance"] = repair
+        return
+
+    if existing is not None:
+        # 修復済み (type_repair) の再適用も、同一 payload なら冪等に受け入れる。
+        if entry.get("source_provenance") not in (provenance, repair):
+            raise TransitionError(
+                "set-qa-source: 対話経路で記録済みの source は保護し、"
+                f"後付けへの差し替えを拒否: {entry['id']}"
+            )
+        if existing != normalized:
+            raise TransitionError(
+                f"set-qa-source: 補完済み source と異なる値の再適用は拒否: {entry['id']}"
+            )
+        return
+
+    entry["source"] = normalized
+    entry["source_provenance"] = provenance
+
+
+def set_qa_design_applications(state: dict, qa_id: str, raw: object) -> None:
+    """既存 qa の問答本文を書き換えずに、design_applications だけを後付けする。
+
+    対象は legacy_exempt=true と理由を持つ旧 qa に限る。後付けであることは
+    design_application_provenance に残し、対話時に記録したものと区別できるようにする。
+    """
+    entry = _find_qa(state, qa_id, "set-qa-design-applications")
+    qa_id = entry["id"]
+
+    normalized = normalize_design_applications(raw)
+    provenance = {
+        "mode": "legacy_backfill",
+        "writer": "set-qa-design-applications",
+    }
+    existing = entry.get("design_applications")
+    existing_provenance = entry.get("design_application_provenance")
+    if existing_provenance is not None:
+        # schema が許す provenance はこの形だけだが、手書き JSON は schema / coverage の
+        # ゲートより先にここへ届くため、writer 側でも明示的に検査する。
+        if existing_provenance != provenance:
+            raise TransitionError(
+                f"set-qa-design-applications: 既存 provenance の上書きは拒否: {qa_id}"
+            )
+        if existing is None:
+            raise TransitionError(
+                "set-qa-design-applications: 完了済み provenance に対する "
+                f"design_applications 欠落を検出: {qa_id}"
+            )
+        if normalize_design_applications(existing) != normalized:
+            raise TransitionError(
+                "set-qa-design-applications: 完了済み backfill と異なる "
+                f"design_applications の再適用は拒否: {qa_id}"
+            )
+        # 完了済み backfill の同値再適用だけを冪等に受け入れる。
+        entry.pop("legacy_exempt", None)
+        entry.pop("legacy_exempt_reason", None)
+        return
+
+    if existing is not None:
+        raise TransitionError(
+            "set-qa-design-applications: provenance の無い既存 design_applications は"
+            f"対話経路として保護し、legacy_backfill への変更を拒否: {qa_id}"
+        )
+    reason = entry.get("legacy_exempt_reason")
+    if entry.get("legacy_exempt") is not True or not isinstance(reason, str) or not reason.strip():
+        raise TransitionError(
+            "set-qa-design-applications: legacy_exempt=true と非空の "
+            f"legacy_exempt_reason を持つ旧 qa のみ補完可能: {qa_id}"
+        )
+
+    entry["design_applications"] = normalized
+    entry["design_application_provenance"] = provenance
+    # 検査済みの backfill が済んだので、一時的な legacy 免除は外す。
+    entry.pop("legacy_exempt", None)
+    entry.pop("legacy_exempt_reason", None)
+
+
+MD_HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$", re.MULTILINE)
+
+
+def _split_knowledge_ref(ref: str, label: str) -> tuple[str, str]:
+    if not isinstance(ref, str) or not ref.strip():
+        raise TransitionError(f"fix-qa-knowledge-ref: {label} は非空文字列必須")
+    raw_path, _, anchor = ref.partition("#")
+    raw_path = raw_path.strip()
+    path = PurePosixPath(raw_path)
+    if path.is_absolute() or ".." in path.parts or str(path) in {"", "."}:
+        raise TransitionError(
+            f"fix-qa-knowledge-ref: {label} は repo root 配下の安全な相対パス必須: {raw_path!r}"
+        )
+    return raw_path, anchor.strip()
+
+
+def fix_qa_knowledge_ref(
+    state: dict, qa_id: str, old_ref: str, new_ref: str, repo_root: object
+) -> None:
+    """壊れた knowledge_ref だけを、解釈本文を一切変えずに実在する参照へ差し替える。
+
+    ``set_qa_design_applications`` は design_applications 配列を丸ごと一単位として保護するため、
+    対話経路 (provenance なし) の entry では綴り違いすら訂正できない。しかし参照先の実在しない
+    引用は「この知識に基づいて判断した」という主張の根拠を持たず、放置すると
+    ``validate-design-knowledge-refs.py`` が恒久的に赤になる。
+
+    契約の保護意図は「対話で得た解釈内容を後から AI が書き換えないこと」なので、次の全条件を
+    満たす場合に限って knowledge_ref だけの差し替えを許す。1 つでも欠ければ拒否する。
+
+    - principle / applicability / rationale / tradeoffs は一切触らない (照合対象ですらない)。
+    - 旧 ref の path が repo 内に**実在しない** (実在する参照の付け替え=解釈の変更は許さない)。
+    - 新 ref の path が実在し、anchor 指定があればその見出しも実在する。
+    - 該当する application が 1 件以上ある。
+
+    差し替えは ``knowledge_ref_corrections`` へ append-only で記録し、対話時の引用と
+    後からの訂正を監査が区別できるようにする。同一の訂正の再適用は冪等に no-op とする。
+    """
+    entry = _find_qa(state, qa_id, "fix-qa-knowledge-ref")
+    root = Path(repo_root)
+    old_path, _ = _split_knowledge_ref(old_ref, "old_ref")
+    new_path, new_anchor = _split_knowledge_ref(new_ref, "new_ref")
+    if old_ref == new_ref:
+        raise TransitionError("fix-qa-knowledge-ref: old_ref と new_ref が同一")
+
+    applications = entry.get("design_applications")
+    if not isinstance(applications, list) or not applications:
+        raise TransitionError(
+            f"fix-qa-knowledge-ref: design_applications を持たない qa: {qa_id}"
+        )
+
+    if not any(item.get("knowledge_ref") == old_ref for item in applications):
+        # 冪等な再適用: 訂正は既に入っていて、その記録も残っている。
+        if any(item.get("knowledge_ref") == new_ref for item in applications) and any(
+            record.get("old_ref") == old_ref and record.get("new_ref") == new_ref
+            for record in entry.get("knowledge_ref_corrections", [])
+        ):
+            return
+        raise TransitionError(
+            f"fix-qa-knowledge-ref: old_ref に一致する design_application が無い: {qa_id}"
+        )
+
+    if (root / old_path).is_file():
+        raise TransitionError(
+            "fix-qa-knowledge-ref: 実在する参照の付け替えは解釈の変更にあたるため拒否: "
+            f"{old_path}"
+        )
+    target = root / new_path
+    if not target.is_file():
+        raise TransitionError(f"fix-qa-knowledge-ref: new_ref の参照先が実在しない: {new_path}")
+    if new_anchor:
+        headings = set(MD_HEADING_RE.findall(target.read_text(encoding="utf-8")))
+        if new_anchor not in headings:
+            raise TransitionError(
+                f"fix-qa-knowledge-ref: new_ref の見出しが実在しない: {new_path}#{new_anchor}"
+            )
+
+    changed = 0
+    for item in applications:
+        if item.get("knowledge_ref") == old_ref:
+            item["knowledge_ref"] = new_ref
+            changed += 1
+    entry.setdefault("knowledge_ref_corrections", []).append(
+        {
+            "old_ref": old_ref,
+            "new_ref": new_ref,
+            "applied_to": changed,
+            "writer": "fix-qa-knowledge-ref",
+            "reason": "参照先が実在しない引用を、解釈本文を変えずに実在する参照へ接地させる",
+        }
+    )
 
 
 def _normalize_for_reuse(text: str) -> str:
@@ -1436,15 +2051,45 @@ def _doctrine_reuse_conflict(state: dict, cat: str, concern_id: str, text: str) 
     return None
 
 
+def _require_confirm_design_applications(state: dict, turn: dict) -> None:
+    """schema 1.1 の state では、confirm の根拠 qa が design_applications を持つことを課す。
+
+    1.1 は「確定した要件がどの設計知識をどう適用したか」を qa entry に残す契約である。
+    qa entry を書く前に検査し、契約を満たさない turn では qa_log にも何も残さない。
+    1.0 の state (marker なし) には課さない。
+    """
+    if state.get("design_application_contract_version") != DESIGN_APPLICATION_CONTRACT_VERSION:
+        return
+    qa_id = turn.get("qa_id")
+    confirmed_refs = {
+        op.get("qa_ref") or qa_id
+        for op in turn.get("ops", [])
+        if isinstance(op, dict) and op.get("action") == "confirm"
+    }
+    for qa_ref in confirmed_refs:
+        if not qa_ref:
+            continue
+        existing = _qa_entry(state, qa_ref)
+        if existing is None:
+            if qa_ref != qa_id:
+                raise TransitionError(
+                    f"schema 1.1 の confirm は qa_log entry を参照する必要がある: {qa_ref}"
+                )
+            normalize_design_applications(turn.get("design_applications"))
+            continue
+        normalize_design_applications(existing.get("design_applications"))
+
+
 def apply_turn(state: dict, turn: dict) -> None:
     """1 ターン (質問→回答→反映) をまとめて適用する。
 
     turn.qa_id があれば qa_log へ、turn.approval_id があれば approval_log へ
-    エントリを登録し、confirm op に qa_ref を、approval を伴う exclude op に
+    エントリを登録し、confirm op に qa_ref を、approval を伴う exclude / set-approval op に
     approval_ref を、supersede-qa op に superseded_by (= turn.qa_id) を補完してから
-    各セル op を適用する。適用後に集約を再計算する。
+    各セル op を適用する。適用後に集約と hearing_progress を導き直す。
     """
     qa_id = turn.get("qa_id")
+    _require_confirm_design_applications(state, turn)
     if qa_id:
         _upsert_qa_entry(state, qa_id, turn)
     appr_id = turn.get("approval_id")
@@ -1473,6 +2118,10 @@ def apply_turn(state: dict, turn: dict) -> None:
             op["approval_ref"] = appr_id
         if op.get("action") == "exclude" and not op.get("qa_ref") and qa_id:
             op["qa_ref"] = qa_id
+        # confirm と同 turn で承認を得た場合、その turn の approval_id を確定セルへ紐づける。
+        # turn 境界は state に永続化されないため、この場でしか対応を残せない。
+        if op.get("action") == "set-approval" and not op.get("approval_ref") and appr_id:
+            op["approval_ref"] = appr_id
         if (
             op.get("action") == "supersede-qa"
             and not op.get("superseded_by")
@@ -1484,6 +2133,7 @@ def apply_turn(state: dict, turn: dict) -> None:
         apply_cell_op(state, op)
 
     recompute_aggregates(state)
+    _refresh_hearing_progress(state)
 
 
 def next_unresolved_question(state: dict) -> str | None:
@@ -1503,12 +2153,22 @@ def next_unresolved_question(state: dict) -> str | None:
     return None
 
 
-def run_chunk(state: dict, turns: list[dict], max_loops: int = MAX_LOOPS_DEFAULT) -> int:
+def run_chunk(
+    state: dict,
+    turns: list[dict],
+    max_loops: int = MAX_LOOPS_DEFAULT,
+    require_all: bool = False,
+) -> int:
     """1 invocation ぶん (最大 max_loops ターン) を適用し、状態を保存可能にする。
 
     max_loops 到達で未収集が残れば hearing_progress.complete=false・next_question
     非 null を保存して resumable にする。未収集 0 のときだけ complete=true。
     未収集セルは完了扱いしない。処理ターン数を返す。
+
+    max_loops を超える turn は適用しない (per-invocation chunk limit)。complete は
+    「未収集セルが 0」を意味するだけで turn を消化した証跡にはならないため、未消化が
+    あれば必ず stderr へ出し、``require_all=True`` では TransitionError で止める。
+    実際の max_loops は hearing_progress.max_loops に残し、再開時に上限を確かめられるようにする。
     """
     processed = 0
     state["hearing_progress"]["loop_count"] = 0
@@ -1519,14 +2179,20 @@ def run_chunk(state: dict, turns: list[dict], max_loops: int = MAX_LOOPS_DEFAULT
         processed += 1
         state["hearing_progress"]["loop_count"] = processed
 
-    unresolved = count_unresolved(state)
-    if unresolved == 0:
-        state["hearing_progress"]["complete"] = True
-        state["hearing_progress"]["next_question"] = None
-    else:
-        state["hearing_progress"]["complete"] = False
-        state["hearing_progress"]["next_question"] = next_unresolved_question(state)
     recompute_aggregates(state)
+    _refresh_hearing_progress(state)
+    state["hearing_progress"]["max_loops"] = max_loops
+
+    unprocessed = len(turns) - processed
+    if unprocessed > 0:
+        message = (
+            f"chunk: 投入 {len(turns)} turn のうち {processed} turn を適用し、"
+            f"{unprocessed} turn が未消化のまま残った (max_loops={max_loops})。"
+            f"未消化分は次の chunk 呼出しへ切り出して再投入すること。"
+        )
+        if require_all:
+            raise TransitionError(message)
+        print(f"WARNING: {message}", file=sys.stderr)
     return processed
 
 
@@ -1835,13 +2501,24 @@ def main(argv: list[str]) -> int:
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
 
+    schema_help = (
+        "state の schema_version。1.1 は confirm の根拠 qa に design_applications を課す "
+        "(既定は bootstrap が 1.0、init が既存 state の版を引き継ぐ。1.1 から 1.0 へは戻せない)"
+    )
     p_boot = sub.add_parser("bootstrap", help="R0 用の空 state envelope を生成")
+    p_boot.add_argument("--schema-version", choices=STATE_SCHEMA_VERSIONS, help=schema_help)
     p_boot.add_argument("--out")
 
     p_init = sub.add_parser("init", help="taxonomy からマトリクスを初期化")
     p_init.add_argument("--taxonomy", required=True)
     p_init.add_argument("--state", help="bootstrap済みstate (foundation/decisionsを保持)")
+    p_init.add_argument("--schema-version", choices=STATE_SCHEMA_VERSIONS, help=schema_help)
     p_init.add_argument("--out")
+
+    p_cat = sub.add_parser("add-category", help="taxonomy に無いカテゴリ行を 1 件足す")
+    p_cat.add_argument("--state", required=True)
+    p_cat.add_argument("--category", required=True, help="category JSON文字列またはファイル ({id, label})")
+    p_cat.add_argument("--out")
 
     p_apply = sub.add_parser("apply", help="単一セル op を適用")
     p_apply.add_argument("--state", required=True)
@@ -1853,6 +2530,11 @@ def main(argv: list[str]) -> int:
     p_chunk.add_argument("--state", required=True)
     p_chunk.add_argument("--turns", required=True, help="ターン列 JSON ファイル")
     p_chunk.add_argument("--max-loops", type=int, default=MAX_LOOPS_DEFAULT)
+    p_chunk.add_argument(
+        "--require-all",
+        action="store_true",
+        help="投入 turn を全て消化できない場合に非 0 終了する (未消化の黙殺を防ぐ)",
+    )
     p_chunk.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog (confirm を含むときは必須)")
     p_chunk.add_argument("--out")
 
@@ -1895,15 +2577,52 @@ def main(argv: list[str]) -> int:
     )
     p_candidate.add_argument("--out")
 
+    p_qa_source = sub.add_parser(
+        "set-qa-source", help="既存 qa の質問・回答を保ったまま欠落した出所メタデータだけを追記"
+    )
+    p_qa_source.add_argument("--state", required=True)
+    p_qa_source.add_argument("--qa-id", required=True)
+    p_qa_source.add_argument(
+        "--source",
+        required=True,
+        help='source JSON または JSON ファイル (例: {"kind":"user-dialogue"})',
+    )
+    p_qa_source.add_argument("--out")
+
+    p_qa_design = sub.add_parser(
+        "set-qa-design-applications", help="既存 qa の質問・回答を保ったまま設計適用を追記"
+    )
+    p_qa_design.add_argument("--state", required=True)
+    p_qa_design.add_argument("--qa-id", required=True)
+    p_qa_design.add_argument(
+        "--applications", required=True, help="design_applications JSON配列または JSON ファイル"
+    )
+    p_qa_design.add_argument("--out")
+
+    p_qa_ref = sub.add_parser(
+        "fix-qa-knowledge-ref",
+        help="解釈本文を変えず、実在しない knowledge_ref だけを実在する参照へ差し替え",
+    )
+    p_qa_ref.add_argument("--state", required=True)
+    p_qa_ref.add_argument("--qa-id", required=True)
+    p_qa_ref.add_argument("--old-ref", required=True, help="実在しない現行 knowledge_ref")
+    p_qa_ref.add_argument("--new-ref", required=True, help="実在する差し替え先 knowledge_ref")
+    p_qa_ref.add_argument("--repo-root", required=True, help="参照先の実在を確認する repo root")
+    p_qa_ref.add_argument("--out")
+
     args = ap.parse_args(argv)
 
     try:
         if args.cmd == "bootstrap":
-            _emit(bootstrap_state(), args.out)
+            _emit(bootstrap_state(args.schema_version or LEGACY_STATE_SCHEMA_VERSION), args.out)
         elif args.cmd == "init":
             existing = load_state(args.state) if args.state else None
-            state = init_state(load_json(args.taxonomy), existing)
+            state = init_state(load_json(args.taxonomy), existing, args.schema_version)
             _emit(state, args.out)
+        elif args.cmd == "add-category":
+            state = load_state(args.state)
+            add_category(state, load_json_arg(args.category))
+            _emit(state, args.out or args.state)
         elif args.cmd == "apply":
             op = json.loads(args.op)
             if not isinstance(op, dict):
@@ -1920,7 +2639,7 @@ def main(argv: list[str]) -> int:
                 [op for turn in applied for op in turn.get("ops", [])], args.required_info
             )
             state = load_state(args.state)
-            run_chunk(state, turns, max_loops=args.max_loops)
+            run_chunk(state, turns, max_loops=args.max_loops, require_all=args.require_all)
             _validate_candidate_required_info(state, args.required_info)
             _emit(state, args.out or args.state)
         elif args.cmd == "aggregate":
@@ -1951,6 +2670,21 @@ def main(argv: list[str]) -> int:
             state = load_state(args.state)
             candidate = load_json_arg(args.candidate)
             set_knowledge_candidate(state, candidate)
+            _emit(state, args.out or args.state)
+        elif args.cmd == "set-qa-source":
+            state = load_state(args.state)
+            set_qa_source(state, args.qa_id, load_json_arg(args.source))
+            _emit(state, args.out or args.state)
+        elif args.cmd == "set-qa-design-applications":
+            state = load_state(args.state)
+            value = load_json_arg(args.applications)
+            if isinstance(value, dict) and "design_applications" in value:
+                value = value["design_applications"]
+            set_qa_design_applications(state, args.qa_id, value)
+            _emit(state, args.out or args.state)
+        elif args.cmd == "fix-qa-knowledge-ref":
+            state = load_state(args.state)
+            fix_qa_knowledge_ref(state, args.qa_id, args.old_ref, args.new_ref, args.repo_root)
             _emit(state, args.out or args.state)
     except TransitionError as exc:
         print(f"TransitionError: {exc}", file=sys.stderr)

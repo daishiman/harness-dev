@@ -5,7 +5,7 @@
 # inputs: ["argv: --op context|claim|heartbeat|park|release|system-release|list|reclaim"]
 # outputs: ["stdout: JSON lease/event/writer receipt"]
 # requires-python = ">=3.10"
-# dependencies: ["bd-bridge.py", "register-package.py"]
+# dependencies: ["bd-bridge.py", "register-package.py", "resolve-repo-context.py"]
 # contexts: [A, B, C, E]
 # network: true
 # write-scope: verified git-common-dir/dev-graph ephemeral coordination only
@@ -29,7 +29,7 @@ from _common import ContractError, atomic_json, dump, git, load_json, run, utc_n
 ACTIVE = {"reserving", "claimed", "in_progress", "pending_review", "pending_merge", "claim_pending_local_repair"}
 
 
-def context(root: Path, resolver: Path | None = None) -> dict[str, str]:
+def context(root: Path, resolver: Path | None = None) -> dict[str, Any]:
     """Consume C24's canonical repository/worktree identity instead of re-deriving it."""
     boundary = resolver or Path(__file__).with_name("resolve-repo-context.py")
     if not boundary.is_file():
@@ -45,9 +45,12 @@ def context(root: Path, resolver: Path | None = None) -> dict[str, str]:
         receipt = json.loads(cp.stdout)
     except json.JSONDecodeError as exc:
         raise ContractError("C24 context resolver returned invalid JSON") from exc
-    required = ("repo_root", "git_common_dir", "repository_id", "worktree_id", "branch", "default_branch", "head_sha")
+    required = ("repo_root", "git_common_dir", "repository_id", "worktree_id", "default_branch", "head_sha")
     if not isinstance(receipt, dict) or any(not receipt.get(key) for key in required):
         raise ContractError("C24 context resolver omitted required identity")
+    branch = receipt.get("branch")
+    if "branch" not in receipt or (branch is not None and (not isinstance(branch, str) or not branch)):
+        raise ContractError("C24 context resolver returned an invalid branch state")
     top = Path(str(receipt["repo_root"])).resolve()
     if top != root.resolve():
         raise ContractError("C24 context resolver root mismatch")
@@ -59,7 +62,7 @@ def context(root: Path, resolver: Path | None = None) -> dict[str, str]:
         "git_common_dir": str(Path(str(receipt["git_common_dir"])).resolve()),
         "repository_id": repository_id,
         "worktree_id": str(receipt["worktree_id"]),
-        "branch": str(receipt["branch"]),
+        "branch": branch,
         "base_branch": str(receipt["default_branch"]),
         "head_sha": str(receipt["head_sha"]),
     }
@@ -78,7 +81,7 @@ def invoke_bd_bridge(root: Path, bridge: Path, argv: list[str]) -> dict[str, Any
     return value
 
 
-def _ensure_claim_branch(root: Path, graph_node_id: str, requested: str | None, current: dict[str, str]) -> dict[str, str]:
+def _ensure_claim_branch(root: Path, graph_node_id: str, requested: str | None, current: dict[str, Any]) -> dict[str, Any]:
     canonical = f"devgraph/{graph_node_id}"
     if requested and requested != canonical:
         raise ContractError(f"claim branch must be canonical {canonical}")
@@ -125,7 +128,7 @@ def invoke_execution_context_consumer(
     consumer: Path,
     graph: Path,
     lease: dict[str, Any],
-    ctx: dict[str, str],
+    ctx: dict[str, Any],
 ) -> dict[str, Any]:
     if not consumer.is_file():
         raise ContractError(f"missing C02 execution-context consumer: {consumer}")
@@ -181,13 +184,18 @@ def main() -> int:
         events = load_json(events_path) if events_path.exists() else {"schema_version": "1.0", "events": []}
         leases: list[dict[str, Any]] = ledger["leases"]
         now = datetime.now(timezone.utc)
+        expiring_states = {"reserving", "claimed", "in_progress", "claim_pending_local_repair"}
         for lease in leases:
             expiry = lease.get("expires_at")
-            if lease.get("state") in {"claimed", "in_progress"} and expiry:
+            if lease.get("state") in expiring_states and expiry:
                 try:
                     if datetime.fromisoformat(expiry.replace("Z", "+00:00")) < now: lease["state"] = "expired"
                 except ValueError: raise ContractError("invalid lease expiry")
         current = next((x for x in leases if x.get("graph_node_id") == a.graph_node_id and x.get("state") in ACTIVE), None)
+        reclaimable = next((
+            x for x in reversed(leases)
+            if x.get("graph_node_id") == a.graph_node_id and x.get("state") == "expired"
+        ), None)
         if a.op == "list": dump({**ctx, "workspace_identity": ledger.get("workspace_identity"), "leases": leases, "events": events["events"]}); return 0
         if not a.graph_node_id: raise ContractError("operation requires --graph-node-id")
         if a.op == "claim":
@@ -250,6 +258,16 @@ def main() -> int:
                 result["updated_at"] = utc_now()
                 _persist(ledger_path, events_path, ledger, events)
                 raise
+        elif a.op == "reclaim":
+            target = reclaimable
+            if target is None:
+                raise ContractError("no expired lease for graph node")
+            target["state"] = "released"
+            target["released_at"] = utc_now()
+            target["updated_at"] = utc_now()
+            target["reclaim_reason"] = "explicit"
+            result = target
+            writer_receipt = None
         elif not current: raise ContractError("no active lease for graph node")
         elif a.op in {"heartbeat", "park", "release"}:
             if current.get("session_id") != a.session_id: raise ContractError("lease owner session mismatch")
@@ -268,9 +286,6 @@ def main() -> int:
             if not event or event.get("type") != "completion" or event.get("repository_id") != ctx["repository_id"] or not event.get("merge_commit_sha") or not event.get("policy_digest"):
                 raise ContractError("matching unconsumed C26 completion event required")
             event["consumed_at"] = utc_now(); current["state"] = "released"; current["released_at"] = utc_now(); current["completion_event_key"] = a.completion_event_key; result = current; writer_receipt = None
-        else:
-            if current.get("state") not in {"claimed", "in_progress", "expired"}: raise ContractError("pending review/merge cannot be reclaimed")
-            current["state"] = "released"; current["released_at"] = utc_now(); current["reclaim_reason"] = "explicit"; result = current; writer_receipt = None
         if a.op != "claim" or result is current: _persist(ledger_path, events_path, ledger, events)
     dump({**ctx, "workspace_identity": ledger.get("workspace_identity"), "lease": result, "writer_receipt": writer_receipt, "conflicts": []}); return 0
 

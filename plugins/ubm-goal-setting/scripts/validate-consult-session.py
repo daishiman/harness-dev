@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-consult-session
-# version: 0.4.0
-# purpose: run-ubm-consult の分岐別 record と role=user provenance、保存同意、closure、非処方スタンス、日時の形を決定論検証し (--ephemeral は非永続前提で consent 要求のみ免除)、--gc で retention 超過/orphan session を回収する。
+# version: 0.5.0
+# purpose: run-ubm-consult の分岐別 record と role=user provenance (transcript turn id の重複拒否を含む)、保存同意、closure、非処方スタンス、日時の形を決定論検証し (--ephemeral は非永続前提で consent 要求のみ免除)、--gc で retention 超過/orphan session を回収する。
 # inputs: ["--record JSON", "--transcript JSON (consult_completed のみ)", "--ephemeral", "--gc SESSIONS_ROOT [--apply]"]
 # outputs: ["stdout JSON verdict / gc report", "exit 0=valid (gc は完了) / 1=invalid / 2=usage・読込不能・gc の root 不在や削除失敗"]
 # contexts: [C, E]
@@ -62,6 +62,20 @@ def parse_iso8601(value: object) -> datetime | None:
 def _turns(transcript: list | None) -> list[dict]:
     """transcript の object の turn だけを返す (形の違う要素は validate() が別に報告する)。"""
     return [t for t in (transcript or []) if isinstance(t, dict)]
+
+
+def _duplicate_ids(entries: list[dict]) -> list[str]:
+    """provenance の集合化前に、同じ ID を持つ別 turn を検出する。"""
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for entry in entries:
+        value = entry.get("id")
+        if not isinstance(value, str):
+            continue
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return sorted(duplicates)
 
 
 def detect_prescription_stance(response: str) -> dict[str, bool]:
@@ -156,6 +170,9 @@ def validate(record: dict, transcript: list | None, *, ephemeral: bool = False) 
         turn_ids = []
     if transcript is not None and len(_turns(transcript)) != len(transcript):
         errors.append("transcript の要素が object でない")
+    duplicate_turn_ids = _duplicate_ids(_turns(transcript))
+    if duplicate_turn_ids:
+        errors.append(f"transcript turn id が重複: {', '.join(duplicate_turn_ids)}")
     # id の無い user turn は参照先にならない (null 同士の一致で provenance を通さない)。
     user_turn_ids = {t["id"] for t in _turns(transcript) if t.get("role") == "user" and _nonempty_text(t.get("id"))}
     if turn_ids and not set(turn_ids).issubset(user_turn_ids):

@@ -21,7 +21,7 @@
 
 ## Verification
 - 収集マトリクス網羅性 (C7): `python3 scripts/validate-coverage-matrix.py --matrix spec-state.json [--require-complete]`。
-- 出典記録 (C5): `python3 scripts/validate-source-citation.py --targets <targets.json> --references fetched-references.json`。
+- 出典記録 (C5): `python3 scripts/validate-source-citation.py --targets <targets.json> --references fetched-references.json --repo-root <project-root>`。各 record の `evidence_ref` を repo 内に解決し `evidence_sha256` まで突合する。
 - 知識グラフ / doctrine / 必須情報 (C13-C16): `python3 scripts/validate-knowledge-graph.py --profile knowledge|required-info|doctrine|cross`。各 profile は循環・dangling・写像・domain 被覆を fail-closed 検証する。
 - 独立監査: `system-spec-hearing-auditor` (聞き漏れ/誘導/早期停止) / `system-spec-matrix-auditor` (マトリクス状態) / `system-spec-doc-freshness-auditor` (公式サイト再照合)。
 - 完成度評価: `assign-system-spec-completeness-evaluator` が3観点 (網羅性/設計知識反映/出典) で PASS/FAIL 判定。

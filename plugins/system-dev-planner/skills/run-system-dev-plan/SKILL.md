@@ -39,6 +39,8 @@ script_refs:
   - ../../scripts/validate-system-plan.py
   - ../../scripts/promote-system-plan.py
   - ../../scripts/extract-plugin-root.py
+  - ../../scripts/validate-generation-lineage.py
+  - ../../scripts/build-task-projection-rerun.py
 combinators:
   - with-feedback-contract
 feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
@@ -47,7 +49,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
   criteria:
     - id: IN1
       loop_scope: inner
-      text: "1 feature の分解が exact 13 task specs と 13-entry inventory・13-node の intra-feature DAG を生成し validate-system-plan.py が DAG 非循環/orphan 0/inventory 矛盾 0/13 件厳密一致で exit0 通過する"
+      text: "1 feature の分解が exact 13 task specs と 13-entry inventory・13-node の intra-feature DAG を生成し validate-system-plan.py が DAG 非循環/orphan 0/inventory 矛盾 0/13 件厳密一致で exit0 通過する。promotion 後は対象 feature の generation lineage と task projection rerun を書込なしモードで再検査し exit0 になる"
       verify_by: script
     - id: IN2
       loop_scope: inner
@@ -63,7 +65,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       verify_by: evaluator
     - id: OUT3
       loop_scope: outer
-      text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion され二回目実行で構造が変化しないことを受入テストが確認する"
+      text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion される。その後に対象 feature の lineage marker と 13 task projection の世代非依存 rerun をゲートし、二回目実行で構造が変化しないことを受入テストが確認する"
       verify_by: live-trial
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -101,7 +103,8 @@ dev-graph の1 feature を、確定 system-spec を起点に P01..P13 各1件の
 
 - **入力**: `--feature-id <graph-node-id>` と `--feature-context <repo-relative-json>` (必須)、任意の `--repo-root` と `--config`。`init` は caller repository の layout だけを用意する。
 - **出力 (pre-choice)**: staging の exact-13 package (`feature-package.json`・`task-specs/phase-01..13.md`・`workstream-inventory.json`・`task-graph.json`・`system-build-handoff.json`・`staging-manifest.json`)。C12 deterministic validation を通した path・digest・開き方を示す。
-- **出力 (light/standard/detailed 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
+- **出力 (light/standard/detailed 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・feature 別 current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
+- **完了条件 (light/standard/detailed 選択後)**: C12 deterministic validation と fork evaluator C1..C4 が同一 canonical digest で PASS し、C11 の atomic promotion receipt が発行され、二回目実行で構造が変化しない。加えて対象 feature だけに scope した `validate-generation-lineage.py --package <current-package-slug>` (書込なし) と `build-task-projection-rerun.py --feature-package <feature_package_id> --check` がともに exit 0 であること、すなわち supersede 済み世代が byte-for-byte 不変で現行世代を指す marker を持ち、その feature の exact 13 task projection が世代非依存の再実行コマンドを持つことまでを完了条件に含める。未配線は同じ feature scope の書込モード (`--package <current-package-slug> --write-markers` / `--feature-package <feature_package_id>` 実行) で是正し、書込なしで再確認して完了とする。repository 全件の移行・監査は引数を省略した別運用とし、1 feature run の完了スコープに混ぜない。
 - **禁則**: 1 run で2つ以上の feature を扱わない。14件目の task と別の13 phase 文書を作らない。staging lock の JSON を C13 以外から作成・書換・削除しない。途中で失敗しても published/current の旧世代を壊さない。
 
 ## Runtime root contract
@@ -132,14 +135,16 @@ missing config keys/directories だけを作成し、既存値・docs/specs/task
 
 pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生成し、C12 deterministic validationを通してpath/digestを提示する。以下の動的計画・fork evaluator・反復・promotionは利用者がlight/standard/detailedを選んだ後だけ開始する。
 
+実装を始める前に、外側ループの `purpose`（なぜ行うか）/`background`（どの経緯・制約か）/`goal`（何をもって完了か）を goal-spec に固定する。各 P01..P13 は portable 契約 `system-task-goal-seek/v1` の内側ループとして、汎用実行 prompt・task goal・rubric・前周の feedback を入力に実行し、独立評価の `rubric verdict=PASS` まで修正と再評価を反復する。反復上限で PASS に届かなければ fail-closed で停止する。P13 は実行結果・判断・改善点を確定 system spec と architecture へ書き戻し、次回の外側ループへ引き継ぐ。
+
 - C09 repo context と feature identity/context digest が確定している。
 - C08 が system-spec index/requirements/architecture graph を `complete` と判定している。
 - C13 が repository_id/run_id/session_owner/expires_at と feature id/digest を束縛した staging lock を atomic acquire し、各反復で heartbeat renew している。
 - elicitor の goal-spec と architect の exact-13 package が同じ feature digestを参照する。
 - C14 が exact-13 source の個別 SHA-256 と registration request/receipt owner 境界を持つ `system-build-handoff.json` を生成し、その bytes が `staging-manifest.json` の canonical digest に含まれている。handoff は receipt を自己発行しない。
 - pre-choiceのC12 deterministic validationが提示対象digestをPASSしている。post-choiceではfork evaluator C1..C4がその同一digestを診断し、改善後はC12を再実行する。
-- C11 が same-filesystem atomic promotion、immutable receipt、registration manifest、current pointerを生成している。
-- C11 が promotion receipt/registration request を所有し、dev-graph の all-or-none apply が発行する registration receipt と境界が一意である。C13 lock が解放され、published path/digest/receipt が dev-graphへ返されている。
+- C11 が canonical digestごとのsame-filesystem atomic promotion、immutable receipt、registration manifest、feature別current pointerを生成している。source drift時は旧generation/receiptを保存し、新generationの`supersedes`から直前世代を追跡できる。
+- C11 が promotion receipt/registration request を所有し、dev-graph の all-or-none apply/supersede が発行するgeneration別registration receipt と境界が一意である。C13 lock が解放され、published path/digest/receipt が dev-graphへ返されている。
 - **計画構造レポート (plan-structure) が生成されている**: promotion 済み `task-graph.json` から「この feature で何をやるか + exact-13 タスク・ノード・依存の関係性」を 1 枚の自己完結 HTML (`plan-structure-report.html`) へ投影する。目的/本質的課題/できることの価値セクション (goal-spec / `value-narrative.json` 由来・非エンジニア/技術者の dual audience) と依存関係表を携帯し、build 前に計画の全体像を確認できるようにする。**plugin-dev-planner と共通の完了ステップ**として、両プランナーとも同一の共有 reporter を best-effort で呼ぶ (harness-creator 未配備環境では skip・非ゲート):
   共有 reporter は別 plugin (harness-creator) にあるので、`${PLUGIN_ROOT}/..` から推測せず、先に1回 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py" harness-creator` で root を解決し、表示された absolute path を `<HARNESS_CREATOR_ROOT>` に使う。非0 で終わったら未配備としてこのステップと次の仕様書ブラウザを skip する。
   `python3 "<HARNESS_CREATOR_ROOT>/scripts/project-task-status.py" --task-graph <PLAN_DIR>/task-graph.json --goal-spec <PLAN_DIR>/goal-spec.json --out-html <PLAN_DIR>/plan-structure-report.html --out-md <PLAN_DIR>/plan-structure.md --out-json <PLAN_DIR>/plan-structure-status.json`

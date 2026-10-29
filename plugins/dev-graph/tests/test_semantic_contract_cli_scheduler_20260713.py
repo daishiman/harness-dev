@@ -48,10 +48,12 @@ def ready_node(node_id: str, **overrides):
 def test_command_exposes_the_lease_parsers_canonical_list_operation():
     command = (PLUGIN / "commands" / "dev-graph.md").read_text(encoding="utf-8")
     lease = (SCRIPTS / "manage-worktree-lease.py").read_text(encoding="utf-8")
-    assert "`claim|heartbeat|park|release|list`" in command
+    assert "`claim|heartbeat|park|release|reclaim|list`" in command
     assert "manage-worktree-lease.py --op list" in command
     assert "--op claim --graph-node-id <id> --branch <name> --session-id <session>" in command
-    assert '"list"' in lease
+    assert "--op reclaim --graph-node-id <id>" in command
+    # dispatcher が公開する操作は、全て lease parser の choices に実在する。
+    assert all(f'"{op}"' in lease for op in ("claim", "heartbeat", "park", "release", "reclaim", "list"))
     assert "|status`" not in command
 
 
@@ -134,6 +136,36 @@ def test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready(tmp_path, 
     assert code == 0
     assert bd_plan["ready_set"]["tasks"] == ["eligible", "eligible-2"]
     assert "waiting" not in bd_plan["ready_set"]["tasks"]
+
+
+def test_scheduler_gates_p01_on_canonical_parent_feature_dependencies_for_self_and_bd(
+    tmp_path, monkeypatch, capsys,
+):
+    """P01 は feature の入口。親 feature の macro 依存を task へ写さず、入口ゲートとして評価する。"""
+    module = load("schedule-graph.py", "schedule_graph_p01_macro_gate")
+    upstream = ready_node("upstream", artifact_kind="feature", status="active")
+    parent = ready_node("parent", artifact_kind="feature", status="active", depends_on=["upstream"])
+    p01 = ready_node("p01", phase_ref="P01", parent_feature="parent", depends_on=[])
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": [upstream, parent, p01]}), encoding="utf-8")
+    ready = tmp_path / "ready.json"
+    ready.write_text(json.dumps({"ready_set": [{"external_ref": "p01"}]}), encoding="utf-8")
+    bd_args = ("--ready-source", "bd-bridge", "--ready-json", ready)
+
+    _, self_blocked = call_main(module, monkeypatch, capsys, "--graph", graph)
+    _, bd_blocked = call_main(module, monkeypatch, capsys, "--graph", graph, *bd_args)
+    assert "p01" not in self_blocked["ready_set"]["tasks"]
+    assert "p01" not in bd_blocked["ready_set"]["tasks"]
+    assert {"graph_node_id": "p01", "reason": "dependency_unsatisfied", "blocking_depends_on": ["upstream"],
+            "source": "schedule-graph"} in self_blocked["excluded"]
+
+    upstream["status"] = "done"
+    graph.write_text(json.dumps({"nodes": [upstream, parent, p01]}), encoding="utf-8")
+    _, self_ready = call_main(module, monkeypatch, capsys, "--graph", graph)
+    _, bd_ready = call_main(module, monkeypatch, capsys, "--graph", graph, *bd_args)
+    assert "p01" in self_ready["ready_set"]["tasks"]
+    assert "p01" in bd_ready["ready_set"]["tasks"]
+    assert p01["depends_on"] == []
 
 
 def test_scheduler_uses_canonical_resource_scope_list_and_rejects_legacy_object(

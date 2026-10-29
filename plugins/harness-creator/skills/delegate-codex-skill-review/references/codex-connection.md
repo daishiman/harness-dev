@@ -3,8 +3,8 @@
 ## 前提
 
 - `codex` CLI がローカルにインストール済み。`scripts/check-codex-installed.py` で確認する (`which codex && codex --version`)。
-- 認証は CLI 側に委ねる (OpenAI API Key を `OPENAI_API_KEY` 環境変数で渡す)。本 Skill は credential を扱わない。
-- 公式呼出契約は `doc/参考Skill/harness-creator/references/external-cli-agents-guide.md` の `codex` セクションを正本とする。
+- 認証は CLI 側へ委ねる。保存済みの ChatGPT / API key 認証を再利用し、単発の非対話実行で API key を使う場合だけ `CODEX_API_KEY` をその invocation に限定して渡す。本 Skill は credential を保持しない。
+- 公式呼出契約は同ディレクトリの `external-cli-agents-guide.md` の `codex` セクションを正本とする。
 
 ## 呼び出し形式
 

@@ -137,6 +137,19 @@ def contained(path: Path, root: Path, *, must_exist: bool = True) -> Path:
     return candidate
 
 
+def repository_eval_root(root: Path) -> Path:
+    """Return a real repository-owned eval-log directory, rejecting symlink roots."""
+    authority = root.resolve(strict=True)
+    logical = authority / "eval-log"
+    if logical.is_symlink():
+        raise ContractError("repository eval-log root must not be a symbolic link")
+    logical.mkdir(parents=True, exist_ok=True)
+    resolved = contained(logical, authority, must_exist=True)
+    if not resolved.is_dir():
+        raise ContractError("repository eval-log root is not a directory")
+    return resolved
+
+
 def stable_id(prefix: str, *parts: str, size: int = 16) -> str:
     digest = hashlib.sha256("\0".join(parts).encode()).hexdigest()[:size]
     return f"{prefix}{digest}"

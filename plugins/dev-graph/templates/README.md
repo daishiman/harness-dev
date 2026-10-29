@@ -22,6 +22,9 @@ repo-local runtime 契約の共通正本は system-dev-planner の `plugin-plans
 - `common-frontmatter.md` が全 Markdown 成果物の共通メタデータ正本である。
 - `validate-graph-schema.py` は frontmatter、見出し、placeholder、参照先、`file_path` parity を fail-closed で検証する。
 - `implementation_readiness` は必須セクションの `complete / incomplete / not_applicable` と不足一覧から算出する。単なる文字数では判定しない。
+- C11 は YAML frontmatter と fenced code block を本文量から除外する。必須節の見出しが無ければ `heading_missing` (architecture / specification / task。task と architecture・specification の system-spec 由来 node は `conditional_required_sections` の系統で判定する)、本文が空・canonical template の angle-bracket placeholder を残す・`TBD` / `TODO` / `未定` だけなら `placeholder_only_section` とする。両者は graph の妥当性とは別の本文 readiness として `artifact_readiness` に報告し、`--strict-artifact-readiness` を付けたときだけ violation へ格上げする。
+- 親節が構造 container の場合、実内容を持つ child section を含めば親節を空扱いしない。コード例だけ、見出しだけ、placeholder だけでは充足しない。
+- C02 (`build-graph-node.py`) は template 既定文のままの draft を拒否せず、`implementation_readiness=incomplete` として記録する。draft を active へ進める前に本文を埋め、`--strict-artifact-readiness` で 0 件を確かめる。
 - テンプレートの変更は `template_version` を更新し、既存文書は自動全書換せず migration preview を生成する。
 - システム開発task planはplugin固有のcomponent_kind/build_targetを流用せず、system workstreamと実装対象pathへ置換する。
 - system planは評価前にdraft stagingし、同一digestの決定論検証+独立4条件評価PASS後だけactive/confirmed/passへatomic promotionする。

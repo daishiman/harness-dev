@@ -19,7 +19,7 @@
     "loop_count": {"type": "integer", "minimum": 0, "maximum": 3},
     "paradigm_findings": {
       "type": "array",
-      "minItems": 0,
+      "minItems": 30,
       "maxItems": 30,
       "items": {"$ref": "#/definitions/paradigm_finding"}
     },
@@ -29,10 +29,14 @@
       "properties": {
         "used": {
           "type": "array",
+          "minItems": 30,
+          "maxItems": 30,
+          "uniqueItems": true,
           "items": {"type": "string"}
         },
         "skipped_with_reason": {
           "type": "array",
+          "maxItems": 0,
           "items": {
             "type": "object",
             "required": ["method", "reason"],
@@ -59,13 +63,17 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["concrete_value", "variable_name", "source_trace"],
+        "required": ["concrete_value", "name", "meaning", "default", "required", "not_applicable_when", "source_trace"],
         "properties": {
           "concrete_value": {"type": "string"},
-          "variable_name": {"type": "string", "pattern": "^\\{\\{[A-Za-z_][A-Za-z0-9_]*\\}\\}$"},
-          "default_value": {"type": "string"},
+          "name": {"type": "string", "pattern": "^\\{\\{[A-Za-z_][A-Za-z0-9_]*\\}\\}$"},
+          "meaning": {"type": "string", "minLength": 1},
+          "default": {"type": "string"},
+          "required": {"type": "boolean"},
+          "not_applicable_when": {"type": "string", "minLength": 1},
           "source_trace": {"type": "string"}
-        }
+        },
+        "additionalProperties": false
       }
     },
     "total_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
@@ -95,7 +103,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["condition", "severity", "bucket", "description", "recommended_intervention"],
+            "required": ["severity", "bucket", "description", "recommended_intervention", "condition_signal"],
+            "allOf": [
+              {
+                "comment": "condition は C1-C4 の 4 値、condition_signal は smell を含む 5 値で濃度が一致しない (F-0032)。smell の issue に C1 等の便宜値を持たせる二重帳簿を避けるため、condition_signal=smell のときだけ condition の省略を許す。それ以外 (signal 不在の旧データを含む) では従来どおり condition を必須にする。",
+                "if": {"not": {"properties": {"condition_signal": {"const": "smell"}}, "required": ["condition_signal"]}},
+                "then": {"required": ["condition"]}
+              }
+            ],
             "properties": {
               "condition": {"type": "string", "enum": ["C1", "C2", "C3", "C4"]},
               "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
@@ -109,7 +124,12 @@
                 "properties": {
                   "file": {"type": "string"},
                   "line": {"type": "integer", "minimum": 1},
-                  "section": {"type": "string"}
+                  "section": {"type": "string"},
+                  "clause": {
+                    "comment": "条文被覆を機械集計するための正規化 key (E-09)。section は自由記述で表記揺れするため集計に使えない。qa id は 3 桁まで伸びるので qa-1xx 固定にしない。",
+                    "type": "string",
+                    "pattern": "^qa-[0-9]{3}-[0-9]+$"
+                  }
                 }
               },
               "depends_on": {

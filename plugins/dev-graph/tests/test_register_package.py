@@ -573,6 +573,19 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         self.assertEqual(node["tracker_binding"], "beads")
         self.assertEqual((node["github_publication"]["mode"], node["github_publication"]["project_aliases"]), ("local_only", []))
 
+    def test_local_only_bindings_get_a_completion_policy_they_can_reach(self) -> None:
+        """PR を作らない beads/none の task に PR merge 待ちの policy を残すと done に届かない。github は PR 待ちのまま。"""
+        schema = json.loads((PLUGIN / "schemas" / "graph-node.schema.json").read_text(encoding="utf-8"))
+        for mode, intent, binding, expected in (("beads", "auto", "beads", "manual"), ("beads", "none", "none", "manual"),
+                                                ("github", "auto", "github", None)):
+            for policy in sorted(RP.PR_LINKED_COMPLETION_POLICIES):
+                with self.subTest(binding=binding, policy=policy):
+                    nodes = [task_node(index) for index in range(13)]
+                    for node in nodes: node["completion_evidence"]["policy"] = policy
+                    resolved = RP._resolved_nodes(nodes, {node["graph_node_id"]: intent for node in nodes}, mode, schema)
+                    self.assertEqual({node["tracker_binding"] for node in resolved}, {binding})
+                    self.assertEqual({node["completion_evidence"]["policy"] for node in resolved}, {expected or policy})
+
     def test_out2_none_and_github_bindings_register_one_local_set_and_rerun_as_noop(self) -> None:
         """OUT2 (register 段): none も github も 1 回目に 13 node を一組だけ登録し、2 回目は graph・receipt とも byte 不変の no-op。"""
         original = json.loads(self.registration.read_text())

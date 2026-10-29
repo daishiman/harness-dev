@@ -33,6 +33,7 @@ SPEC = FIXTURES / "spec-state.json"
 REFS = FIXTURES / "fetched-references.json"
 COV_VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-coverage-matrix.py"
 CITE_VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-source-citation.py"
+KNOWLEDGE_REF_VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-design-knowledge-refs.py"
 
 
 def _load_mod():
@@ -77,7 +78,44 @@ def test_IN1_coverage_matrix_exit0_require_complete():
 
 def test_IN1_source_citation_exit0():
     assert REFS.is_file()
-    assert _run(CITE_VALIDATOR, ["--targets", str(SPEC), "--references", str(REFS)]) == 0
+    # fixture の evidence_ref は skill 直下からの相対 path なので repo root を skill に置く。
+    assert _run(
+        CITE_VALIDATOR,
+        ["--targets", str(SPEC), "--references", str(REFS), "--repo-root", str(SKILL_DIR)],
+    ) == 0
+
+
+def test_IN1_compile_rejects_dangling_knowledge_ref_after_other_gates_pass(tmp_path):
+    """coverage/source-citation のみ緑でも、根拠の無い設計参照は compile しない。"""
+    spec = _spec()
+    spec["qa_log"][0]["design_applications"] = [
+        {
+            "knowledge_ref": "definitely-missing-knowledge-card.md#Missing principle",
+            "principle": "実在しない原則",
+            "applicability": "applied",
+            "rationale": "参照先実在ゲートの回帰テスト",
+            "tradeoffs": ["実在しない根拠は利用できない"],
+        }
+    ]
+    spec_path = tmp_path / "spec-state.json"
+    spec_path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
+
+    assert _run(COV_VALIDATOR, ["--matrix", str(spec_path), "--require-complete"]) == 0
+    assert _run(
+        CITE_VALIDATOR,
+        ["--targets", str(spec_path), "--references", str(REFS), "--repo-root", str(SKILL_DIR)],
+    ) == 0
+    assert _run(
+        KNOWLEDGE_REF_VALIDATOR,
+        ["--matrix", str(spec_path), "--repo-root", str(SKILL_DIR)],
+    ) == 1
+
+    out_dir = tmp_path / "system-spec"
+    assert mod.main(
+        ["compile", "--spec", str(spec_path), "--references", str(REFS), "--out-dir", str(out_dir)]
+    ) == 1
+    # 書き込みより前に止まり、既存章を半端な状態にしない。
+    assert not out_dir.exists()
 
 
 # --------------------------------------------------------------------------- #
@@ -129,6 +167,35 @@ def test_OUT1_matches_golden_fixtures():
         got = docset[src]
         got = got if got.endswith("\n") else got + "\n"
         assert got == expected, f"{src} が golden {gold} と不一致"
+
+
+def test_confirmed_qa_answers_rendered_into_chapter():
+    # 確定セルが参照する qa_log の質問・回答本文が章へ実体描画される (意味層の正本導出)。
+    # ポインタ (qa_ref) だけでは C05 意味層評価が成立しないため、本文描画を受入条件にする。
+    docset = mod.compile_docset(_spec(), _refs())
+    qa = {q["id"]: q for q in _spec()["qa_log"]}
+    chapter = docset["database.md"]
+    assert "## 確定内容 (質疑録)" in chapter
+    assert qa["qa-database"]["question"] in chapter
+    assert qa["qa-database"]["answer"] in chapter
+    # 全対象外カテゴリは確定質疑を持たず、空落ちせず明示する。
+    assert "確定セルなし" in docset["maintenance-ops.md"]
+
+
+def test_doctrine_anchor_section_rendered_per_category():
+    # 各カテゴリ章に doctrine anchor (concern authority) が上流指針として反映される (C15)。
+    docset = mod.compile_docset(_spec(), _refs())
+    expectations = {
+        "ui-ux.md": "Apple Human Interface Guidelines",
+        "database.md": "Google SRE",
+        "backend.md": "Clean Architecture",
+        "security.md": "OWASP ASVS",
+        "infrastructure.md": "Google SRE",
+        "maintenance-ops.md": "Google SRE",
+    }
+    for name, authority in expectations.items():
+        assert "## 上流指針 (doctrine anchors)" in docset[name], name
+        assert authority in docset[name], f"{name} に {authority} が未反映"
 
 
 # --------------------------------------------------------------------------- #
@@ -452,8 +519,9 @@ def test_render_deepened_project_candidate_into_goal_related_chapter():
 
 def test_category_design_refs_derived_from_resource_map():
     # SSOT = resource-map.yaml の read_when。ハードコード写像のドリフトが無いことを検証 (A-1)。
-    # database の read_when は ddd のみ (clean-architecture は backend/frontend 対応 → 混入しない)。
-    assert mod.category_design_refs("database") == ["ddd.md"]
+    # database の read_when は ddd と cloud-architecture-patterns (データ配置=blob offloading と
+    # 跨ぎ書込みの整合性境界)。clean-architecture は backend/frontend 対応 → 混入しない。
+    assert mod.category_design_refs("database") == ["ddd.md", "cloud-architecture-patterns.md"]
     assert "clean-architecture.md" not in mod.category_design_refs("database")
     # backend は read_when に "backend" を含む 3 ファイルを、知識グラフの topo_order
     # (C14: ddd → clean-architecture → api-design-patterns) で並べて導出する。
@@ -468,7 +536,12 @@ def test_category_design_refs_derived_from_resource_map():
     # ui-ux / frontend は information-design.md を引く。C01 SKILL.md feedback-contract
     # 「情報優先度の責務境界」が『C03 は原理カードの注入まで自動で効く』と主張する根拠が
     # ここなので、read_when 側が緩んで写像が落ちたら doc の主張が黙って嘘になる。
-    assert mod.category_design_refs("ui-ux") == ["information-design.md"]
+    # ui-ux は適合水準/回復導線 (usability-accessibility) を前提に置き、information-design が
+    # それに depends_on するので topo_order で後ろに来る。
+    assert mod.category_design_refs("ui-ux") == [
+        "usability-accessibility.md",
+        "information-design.md",
+    ]
     assert mod.category_design_refs("frontend") == [
         "clean-architecture.md",
         "information-design.md",

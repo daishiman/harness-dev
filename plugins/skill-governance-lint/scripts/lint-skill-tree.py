@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-skill-tree
-# purpose: Lint skill directory trees against structure and file naming rules.
+# purpose: Lint skill directory trees against structure, file naming, and prompt size rules.
 # inputs:
 #   - argv: skill directory or --skills-dir
 # outputs:
@@ -13,7 +13,7 @@
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
-"""Lint Skill directory tree against articles 第8〜13条.
+"""Lint Skill directory tree and prompt-size contracts against articles 第8〜13条.
 
 Usage:
   lint-skill-tree.py /path/to/skill-dir
@@ -30,6 +30,7 @@ ALLOWED_NESTED_DIRS = {
     ("templates", "combinators"),
 }
 SCRIPT_EXTS = {".py", ".sh"}
+PROMPT_EXTS = {".md", ".yaml"}
 # ツールが skill ツリー内に残す非出荷物。いずれも .gitignore 済みで clone 直後には
 # 存在せず、除外しないと「ローカルで何を実行したか」で判定が変わる (下の第13条ループの
 # コメント参照)。`.claude` は Claude Code の運用ディレクトリで、hook が handoff/logs を
@@ -42,6 +43,7 @@ EPHEMERAL_DIR_NAMES = frozenset({
 EPHEMERAL_SUFFIXES = frozenset({".pyc", ".pyo"})
 MAX_SKILL_LINES = 300  # P0-2: 300行 cap 機械強制
 WARN_SKILL_LINES = 280  # SS-203: 上限接近の事前警告 (warn のみ、exit 1 にしない)
+MAX_PROMPT_LINES = 500  # prompt context の肥大化だけを対象にする。一般コードは対象外。
 
 OS_PREAMBLE_PATTERN = re.compile(r"!`uname -s")
 # 本文先頭から探索する行数 (先頭付近の定義: 設計書13章)
@@ -128,7 +130,7 @@ def check_prompts_listed(root: "Path", skill_md: "Path") -> list[str]:
     for f in sorted(prompts_dir.iterdir()):
         if not f.is_file():
             continue
-        if f.suffix not in {".md", ".yaml"}:
+        if f.suffix not in PROMPT_EXTS:
             continue
         rel = f"prompts/{f.name}"
         if rel not in listed_paths:
@@ -136,6 +138,30 @@ def check_prompts_listed(root: "Path", skill_md: "Path") -> list[str]:
                 f"[Warn]MED-4: {rel} が SKILL.md frontmatter responsibility_refs に未列挙"
             )
     return warns
+
+
+def check_prompt_line_limits(root: Path) -> list[str]:
+    """skill の prompts/ にある実行プロンプトだけを 500 行上限で検査する。
+
+    ソースコード、テスト、references、templates はこの数値ゲートの対象外。コードの
+    分割は責務境界と変更容易性で判断し、ファイル行数を品質の代理指標にしない。
+    """
+    prompts_dir = root / "prompts"
+    if not prompts_dir.is_dir():
+        return []
+
+    errs: list[str] = []
+    for prompt in sorted(prompts_dir.iterdir()):
+        if not prompt.is_file() or prompt.suffix not in PROMPT_EXTS:
+            continue
+        line_count = len(prompt.read_text(encoding="utf-8").splitlines())
+        if line_count > MAX_PROMPT_LINES:
+            rel = prompt.relative_to(root)
+            errs.append(
+                f"P0-prompt-line-limit違反: {rel} が {line_count} 行"
+                f" (上限 {MAX_PROMPT_LINES} 行)。責務単位の prompt に分割すること"
+            )
+    return errs
 
 
 def check_os_preamble(skill_md: "Path") -> list[str]:
@@ -211,14 +237,20 @@ def lint_one(root: Path) -> list[str]:
             file=sys.stderr,
         )
 
+    # 実行時にそのまま context へ入る prompt だけを数値上限の対象にする。
+    # scripts/tests/references の行数は検査せず、コードへの一律 500 行制限を持ち込まない。
+    errs.extend(check_prompt_line_limits(root))
+
     # 第13条 フラットツリー (深さ <= 2)
     for p in root.rglob("*"):
+        rel = p.relative_to(root)
         # ツールが残す一時 cache を除外。出荷物ではなく .gitignore 済みなので
         # CI (clone 直後) には存在せず、除外しないと「ローカルで pytest を回したか」で
         # 判定が変わる。第13条は出荷ツリーの形を見る条項であり cache は対象外。
-        if EPHEMERAL_DIR_NAMES & set(p.parts) or p.suffix in EPHEMERAL_SUFFIXES:
+        # skill root より上の階層は見ない。~/.claude/plugins/ 配下へ install された
+        # skill や .claude/skills/ の skill が、祖先の `.claude` だけで丸ごと素通りしないため。
+        if EPHEMERAL_DIR_NAMES & set(rel.parts) or p.suffix in EPHEMERAL_SUFFIXES:
             continue
-        rel = p.relative_to(root)
         # templates/ 配下は雛形なので skill 規約検査を skip (生成後の skill 側で検査)
         if rel.parts and rel.parts[0] == "templates" and len(rel.parts) > 1:
             continue

@@ -13,7 +13,7 @@
 | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
 | output_schema | ./schemas/phase-output.schema.json#/definitions/phase3_output |
 | reproducible | true (validation 必須 / 同 findings + iter で同 patch 順) |
-| parallel | conditional (独立 finding は Agent Team 並列、依存ありは直列) |
+| parallel | conditional (orchestrator が非重複 scope を並列割当、各 executor は単独実行) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -30,6 +30,7 @@
 - `iteration_count >= 3 (max)` で C1-C4 未達なら `force_pass` 禁止、`convergence_status: human_escalate`
   - 目的: 自動収束の暴走防止
   - 背景: 過去に強制 pass で品質崩壊事例あり
+- git commit は `commit_authorized=true` が明示された場合だけ許可する。既定は patch 適用と検証まで
 
 ### 1.2 倫理ガード
 - 検証を実行せず pass を宣言しない
@@ -47,7 +48,7 @@
 
 ### 2.2 ドメインルール
 - 独立変更は分けて適用、依存変更は順序を守る
-- 具体値直書きは `variable_abstraction` に基づき `{{VAR}}` へ置換し source_trace を保持
+- 具体値直書きは `variable_abstraction[].name` に基づき `{{VAR}}` へ置換し、meaning/default/required/not_applicable_when/source_trace を保持
 - `dry_run=true` は対象を Edit / Write せず、適用予定の patch と検証結果のみを返す。`dry_run=false` でも commit / PR は後続の明示依頼がなければ行わない
 - パッチ適用後、`validation_commands` (validate-paradigm-coverage.py 等) を実行
 - 差分再評価と PASS 証拠の再利用は `../run-build-skill/references/verification-obligation-protocol.md` の exact obligation fingerprint + current PASS receipt DAG にだけ従う。`changed_paths[]` や自然文の自己申告で判定を省略しない
@@ -61,6 +62,7 @@
 | convergence_policy | path | yes | ./references/convergence-policy.json |
 | amplified_patterns | path | yes | ./references/amplified-patterns.json |
 | variable_contract | path | yes | ./references/variable-template-contract.md |
+| commit_authorized | boolean | yes | 既定 false。true の明示時だけ git commit 可 |
 
 ### 2.4 出力契約
 - schema: `./schemas/phase-output.schema.json#/definitions/phase3_output`
@@ -81,8 +83,9 @@
 ### 3.2 外部ツール / API
 - Edit / Write (`dry_run=false` の最小スコープだけ)
 - `scripts/validate-paradigm-coverage.py` 等 (validation_commands)
-- Agent Team: 独立 finding は SubAgent 並列起動、依存 finding は直列 (依存関係整合を保つ)
-- Codex 委譲 (任意): 大規模 patch / 専門領域は `delegate-codex-skill-review` 経由で外部委譲可能
+- `git diff` / `git grep` (scope と残存 literal の read-only 監査)
+- 並列化は orchestrator が所有する。独立 finding は非重複 write scope の executor へ並列割当し、依存 finding は直列化する。executor 自身は SubAgent を再帰起動しない
+- Codex 委譲判定も orchestrator が所有し、executor は割り当て済み scope だけを処理する
 
 ## Layer 4: 共通ポリシー層
 
@@ -100,6 +103,7 @@
 - findings 外の編集禁止
   - 目的: スコープ漏れの防止
   - 背景: 監査追跡可能性の維持
+- `commit_authorized=false` で `git commit` / `git push` / PR 作成を実行しない
 - PII / secret / 認証情報を patch / verdict / trace へ転記しない (検出時 `***` マスク)
   - 目的: 漏洩防止
   - 背景: trace と verdict.json は共有される
@@ -121,12 +125,13 @@
 - [ ] variable_abstraction_applied: 直書き具体値を `{{VAR}}` へ昇格、source_trace 保持
 - [ ] validation_run: `validation_commands` を実行し結果を記録 (未実行のまま pass 宣言禁止)
 - [ ] safety_valve: `max_iterations=3` 超過時 `convergence_status: human_escalate` を選択 (force_pass 禁止)
+- [ ] git_authority: `commit_authorized` を記録し、false なら patch までで停止
 - [ ] verdict_emit: `verdict.json` を `./schemas/verdict.schema.json` 準拠で生成、`emit-observable.py` を PASS/FAIL 双方で実行
 - [ ] determinism: 同 findings + iteration_count で changed_paths の順序と内容が一致
 
 ### 5.4 実行方式 (固定手順を持たない動的生成ループ)
 **固定手順禁止**。完了チェックリストと `convergence-policy.json` の Δneg/Δpos 閾値を唯一の停止条件とし、状況に応じて手順をその都度設計・実行・自己評価する。例示 (網羅でない):
-- 未充足項目を特定 (未解消 finding / 未実行検証) → 解消候補手順を立案 (severity 順グルーピング / 独立 finding の SubAgent 並列起動 / 最小パッチ適用 / validation_commands 実行 / 収束判定 / verdict emit のいずれか)
+- 未充足項目を特定 (未解消 finding / 未実行検証) → 解消候補手順を立案 (severity 順グルーピング / 受領 scope の最小パッチ適用 / validation_commands 実行 / 収束判定 / verdict emit のいずれか)
 - 実行し `changed_paths` / `validation_commands` を更新 → 閾値で自己評価
 - 未達なら次周回 (上限: max_iterations=3)
 - 到達後も C1-C4 未達なら `convergence_status: human_escalate` を選択 (`force_pass` 禁止)
@@ -140,7 +145,7 @@
 ### 6.2 ハンドオフ / 並列性
 - 前 phase 受領元: phase2-parallel の `findings.json`
 - 次 phase 提供先: run-elegant-review 完了レポート / `verdict.json`
-- 並列: 独立 finding は Agent Team で SubAgent 並列、依存ありは直列 (依存関係整合を保つ)、Codex 委譲は任意
+- 並列: orchestrator が独立 finding を非重複 scope の executor へ並列割当し、依存ありは直列化する。executor は再帰起動せず、Codex 委譲も orchestrator が判断する
 
 ## Layer 7: UI / 提示層
 

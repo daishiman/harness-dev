@@ -1,0 +1,53 @@
+name: Slide Report Generator Browser CI
+
+# plugin-local の Playwright Chromium を復元し、vendor の受け入れテストを実ブラウザで回す。
+# scripts/run-ci-checks.sh はこの段も手元で実行する (paths の絞り込みは手元では効かない)。
+# 初回は npm ci と Chromium の取得で network を使う。手元で飛ばすときは
+# CI_CHECKS_SKIP_JOBS="playwright-runtime" を渡す。
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "plugins/slide-report-generator/**"
+      - ".github/workflows/slide-report-generator-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/slide-report-generator/**"
+      - ".github/workflows/slide-report-generator-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  playwright-runtime:
+    name: Plugin-local Chromium acceptance
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plugins/slide-report-generator/vendor/package-lock.json
+
+      - name: Cache plugin-local Chromium
+        uses: actions/cache@v4
+        with:
+          path: plugins/slide-report-generator/vendor/playwright-browsers
+          key: slide-report-playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('plugins/slide-report-generator/vendor/package-lock.json') }}
+
+      - name: Restore and exercise the browser runtime
+        working-directory: plugins/slide-report-generator/vendor
+        run: |
+          python3 ../scripts/setup-playwright.py --install
+          npm test
+          python3 ../scripts/setup-playwright.py --check

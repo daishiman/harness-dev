@@ -3,11 +3,11 @@
 # name: live-trial-poll
 # purpose: trial の完了を「成果物 glob 出現 + busy 不在の安定」で検知し、DONE/HARD_CAP/STALL/GATE の終端 exit を返す。
 # inputs:
-#   - argv: [--state-file <path.json>] [--max-ticks N] <out_glob> <session>
+#   - argv: [--state-file <path.json>] [--max-ticks N] [--scenario-file PATH --scenario-id ID] <out_glob> <session>
 #   - env: INTERVAL(15) STABLE_TICKS(3) STALL_LIMIT(600) HARD_CAP(7200, 0=無制限) SESSION_ID CLAUDE_PROJECTS_DIR
 # outputs:
 #   - stdout: DONE/STALL/GATE/HARD_CAP/WARN 行
-#   - exit: 0=DONE / 1=HARD_CAP / 2=STALL / 4=GATE / 5=TICK_BUDGET (--max-ticks 到達, 同一 state-file で再呼び) / 3=BLOCKED
+#   - exit: 0=DONE / 1=HARD_CAP / 2=STALL / 4=GATE / 5=TICK_BUDGET / 6=TOKEN_CAP / 3=BLOCKED
 # contexts: [C, E]
 # network: false
 # write-scope: state-file のみ
@@ -63,13 +63,23 @@ from pathlib import Path
 # ステータスバー "(4h38m)" はマッチしない。
 BUSY_RE = re.compile(r"\([0-9]+m? ?[0-9]*s|[0-9.]+k? tokens")
 
-_STATE_KEYS = ("elapsed", "stall", "settle", "prev", "gate_ticks", "warned80")
+_STATE_KEYS = (
+    "elapsed", "stall", "settle", "prev", "gate_ticks", "warned80",
+    "started_at_unix",
+    "observed_at_unix",
+)
 
 EXIT_DONE = 0
 EXIT_HARD_CAP = 1
 EXIT_STALL = 2
 EXIT_GATE = 4
 EXIT_TICK_BUDGET = 5
+EXIT_TOKEN_CAP = 6
+EXIT_BLOCKED = 3
+
+
+class PollStateError(ValueError):
+    """Persisted timing state cannot be trusted, so the budget cannot continue."""
 
 
 def _load_sibling(stem: str):
@@ -81,21 +91,50 @@ def _load_sibling(stem: str):
 
 
 def load_state(path: str | None) -> dict:
-    state = {"elapsed": 0, "stall": 0, "settle": 0, "prev": "", "gate_ticks": 0, "warned80": 0}
+    state = {
+        "elapsed": 0, "stall": 0, "settle": 0, "prev": "", "gate_ticks": 0,
+        "warned80": 0, "started_at_unix": time.time(),
+        "observed_at_unix": time.time(),
+    }
     if path and Path(path).is_file():
         try:
             data = json.loads(Path(path).read_text(encoding="utf-8"))
-            for k in _STATE_KEYS:
-                if k in data:
-                    state[k] = data[k]
-        except (json.JSONDecodeError, OSError):
-            pass  # 壊れた state は defaults から再開 (安全側)
+        except (json.JSONDecodeError, OSError) as exc:
+            raise PollStateError(f"poll state を読めない: {exc}") from exc
+        if not isinstance(data, dict):
+            raise PollStateError("poll state は JSON object 必須")
+        numeric = ("elapsed", "stall", "settle", "gate_ticks", "warned80")
+        for key in numeric:
+            value = data.get(key, state[key])
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise PollStateError(f"poll state.{key} は非負整数必須")
+            state[key] = value
+        prev = data.get("prev", "")
+        if not isinstance(prev, str):
+            raise PollStateError("poll state.prev は文字列必須")
+        state["prev"] = prev
+        started = data.get("started_at_unix")
+        if started is None:
+            # 旧 state は既存 elapsed を維持した時点からの開始時刻へ安全に移行する。
+            started = time.time() - state["elapsed"]
+        if isinstance(started, bool) or not isinstance(started, (int, float)) or started <= 0:
+            raise PollStateError("poll state.started_at_unix は正数必須")
+        if started > time.time() + 5:
+            raise PollStateError("poll state.started_at_unix が未来時刻")
+        state["started_at_unix"] = float(started)
+        observed = data.get("observed_at_unix", time.time())
+        if isinstance(observed, bool) or not isinstance(observed, (int, float)) or observed <= 0:
+            raise PollStateError("poll state.observed_at_unix は正数必須")
+        if observed < state["started_at_unix"]:
+            raise PollStateError("poll state.observed_at_unix が開始時刻より前")
+        state["observed_at_unix"] = float(observed)
     return state
 
 
 def save_state(path: str | None, state: dict) -> None:
     if not path:
         return
+    state["observed_at_unix"] = time.time()
     Path(path).write_text(
         json.dumps({k: state[k] for k in _STATE_KEYS}, ensure_ascii=False), encoding="utf-8"
     )
@@ -114,6 +153,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="counters を JSON で呼び越し永続化 (長時間 trial は必須)")
     ap.add_argument("--max-ticks", type=int, default=0,
                     help="N tick で exit 5 (継続要)。0=無制限。前景 chunk 分割の決定論代替")
+    ap.add_argument("--scenario-file", default="",
+                    help="resource_budget を持つ scenario 正本 JSON")
+    ap.add_argument("--scenario-id", default="",
+                    help="scenario-file 内の stable scenario id")
     ap.add_argument("out_glob", help="完了マーカー限定の glob (ワイルドカード全開は DONE 偽陽性源)")
     ap.add_argument("session")
     ns = ap.parse_args(argv)
@@ -126,16 +169,39 @@ def main(argv: list[str] | None = None) -> int:
     # 既定 600/7200 の正本は convergence-policy.json loop_bounds.trial_acceptance
     stall_limit = int(os.environ.get("STALL_LIMIT", "600"))
     hard_cap = int(os.environ.get("HARD_CAP", "7200"))
+    token_cap = 0
+    if bool(ns.scenario_file) != bool(ns.scenario_id):
+        ap.error("--scenario-file and --scenario-id must be specified together")
+    if ns.scenario_file:
+        if not ns.state_file:
+            ap.error("scenario poll requires --state-file to preserve immutable wall time")
+        scenario_mod = _load_sibling("validate-live-trial-scenario-contract")
+        budget_mod = _load_sibling("validate-live-trial-resource-budget")
+        scenario = scenario_mod.load_scenario(Path(ns.scenario_file), ns.scenario_id)
+        budget = budget_mod.resource_budget(scenario)
+        scenario_wall_cap = budget["max_wall_clock_s"]
+        hard_cap = min(hard_cap, scenario_wall_cap) if hard_cap > 0 else scenario_wall_cap
+        token_cap = budget["max_total_tokens"]
     session_id = os.environ.get("SESSION_ID", "")
     projects_dir = os.environ.get(
         "CLAUDE_PROJECTS_DIR", str(Path.home() / ".claude" / "projects")
     )
 
-    st = load_state(ns.state_file)
+    try:
+        st = load_state(ns.state_file)
+    except PollStateError as exc:
+        print(f"BLOCKED: STATE_CORRUPT — {exc}。経過時間を0へ戻さず trial を停止")
+        return EXIT_BLOCKED
+    # Fresh started_at is persisted before the first observation so an external caller timeout
+    # cannot restart the scenario clock by killing poll before its first regular save.
+    save_state(ns.state_file, st)
     jsonl_path: Path | None = None
     ticks = 0
 
     while True:
+        st["elapsed"] = max(
+            st["elapsed"], int(time.time() - st["started_at_unix"])
+        )
         artifact = bool(globmod.glob(ns.out_glob))
 
         # 観測ソース決定: jsonl は初 prompt 後に生まれるため毎 tick 解決を試す
@@ -152,6 +218,23 @@ def main(argv: list[str] | None = None) -> int:
             any_busy = state_label != status_mod.STATE_IDLE
             bytes_total = status_mod.transcript_bytes(jsonl_path)
             progress = f"jsonl:{bytes_total}:{state_label}"
+            if token_cap:
+                budget_mod = _load_sibling("validate-live-trial-resource-budget")
+                usage = budget_mod.transcript_token_usage(jsonl_path)
+                if usage["assistant_message_ids"] and not usage["measured"]:
+                    save_state(ns.state_file, st)
+                    print(
+                        "BLOCKED: TOKEN_UNMEASURED — assistant usage が欠落/不正。"
+                        "0 token とみなさず trial を停止"
+                    )
+                    return EXIT_BLOCKED
+                if usage["total_tokens"] >= token_cap:
+                    save_state(ns.state_file, st)
+                    print(
+                        f"TOKEN_CAP ({usage['total_tokens']} >= {token_cap}) — scenario の"
+                        " token 予算到達。強制打ち切りし verdict=BLOCKED で記録"
+                    )
+                    return EXIT_TOKEN_CAP
             if state_label == status_mod.STATE_WAITING:
                 st["gate_ticks"] += 1
                 if st["gate_ticks"] >= 2:
@@ -204,13 +287,13 @@ def main(argv: list[str] | None = None) -> int:
         st["prev"] = progress
 
         if hard_cap > 0 and not st["warned80"] and st["elapsed"] >= hard_cap * 4 // 5:
-            print(f"WARN: HARD_CAP 80% 到達 ({st['elapsed']}s / {hard_cap}s) — 終端しない見込み"
-                  "なら今 HARD_CAP を上げる (到達 kill は run 全損)")
+            print(f"WARN: HARD_CAP 80% 到達 ({st['elapsed']}s / {hard_cap}s) — "
+                  "scenario 上限は変更せず終端に備える")
             st["warned80"] = 1
         if hard_cap > 0 and st["elapsed"] >= hard_cap:
             save_state(ns.state_file, st)
-            print(f"HARD_CAP ({st['elapsed']}s 到達) — 強制打ち切り。正常な超ロングランなら "
-                  "HARD_CAP を上げる (verdict=BLOCKED で fail-closed)")
+            print(f"HARD_CAP ({st['elapsed']}s 到達) — 強制打ち切り。上限を変更せず "
+                  "verdict=BLOCKED で fail-closed")
             return EXIT_HARD_CAP
 
         ticks += 1
@@ -221,7 +304,10 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_TICK_BUDGET
 
         time.sleep(interval)
-        st["elapsed"] += interval
+        st["elapsed"] = max(
+            st["elapsed"] + interval,
+            int(time.time() - st["started_at_unix"]),
+        )
         save_state(ns.state_file, st)
 
 

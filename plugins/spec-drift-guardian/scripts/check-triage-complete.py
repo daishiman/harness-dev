@@ -108,6 +108,11 @@ def _is_int(v: object) -> bool:
     return isinstance(v, int) and not isinstance(v, bool)
 
 
+def _is_tracker_key(v: object) -> bool:
+    """GitHub issue 番号または Beads issue id を受理する。"""
+    return _is_int(v) or (isinstance(v, str) and bool(v.strip()))
+
+
 def _require(d: object, keys: list[str], label: str, errors: list[str]) -> bool:
     """d が dict かつ全 required keys を持つか検査する。欠落は errors へ記録。"""
     if not isinstance(d, dict):
@@ -141,8 +146,8 @@ def validate_triage_report(d: object, errors: list[str]) -> None:
     label = "triage-report"
     if not _require(d, ["issue", "base_commit", "source_commit", "diff_sha256", "complete", "impacts"], label, errors):
         return
-    if not _is_int(d.get("issue")):
-        errors.append(f"{label}.issue が integer でない")
+    if not _is_tracker_key(d.get("issue")):
+        errors.append(f"{label}.issue が GitHub issue 番号または Beads issue id でない")
     if d.get("complete") is not True:
         errors.append(f"{label}.complete が true でない (完全 diff 証明が無い)")
     if not isinstance(d.get("diff_sha256"), str):
@@ -154,8 +159,8 @@ def validate_triage_verdict(d: object, errors: list[str]) -> None:
     label = "triage-verdict"
     if not _require(d, ["issue", "diff_sha256", "rederived_impacts", "agree", "findings", "verdict_sha256"], label, errors):
         return
-    if not _is_int(d.get("issue")):
-        errors.append(f"{label}.issue が integer でない")
+    if not _is_tracker_key(d.get("issue")):
+        errors.append(f"{label}.issue が GitHub issue 番号または Beads issue id でない")
     if not isinstance(d.get("diff_sha256"), str):
         errors.append(f"{label}.diff_sha256 が文字列でない")
     if not _is_bool(d.get("agree")):
@@ -184,8 +189,8 @@ def validate_sync_proposal(d: object, errors: list[str]) -> None:
     keys = ["issue", "proposal_sha256", "status", "approval", "proposals"]
     if not _require(d, keys, label, errors):
         return
-    if not _is_int(d.get("issue")):
-        errors.append(f"{label}.issue が integer でない")
+    if not _is_tracker_key(d.get("issue")):
+        errors.append(f"{label}.issue が GitHub issue 番号または Beads issue id でない")
     if not isinstance(d.get("proposal_sha256"), str):
         errors.append(f"{label}.proposal_sha256 が文字列でない")
     if d.get("status") not in PROPOSAL_STATUS:
@@ -237,8 +242,8 @@ def validate_sync_audit_verdict(d: object, errors: list[str]) -> None:
     keys = ["issue", "proposal_sha256", "audited_targets", "omissions", "excesses", "allowlist_violations", "verdict"]
     if not _require(d, keys, label, errors):
         return
-    if not _is_int(d.get("issue")):
-        errors.append(f"{label}.issue が integer でない")
+    if not _is_tracker_key(d.get("issue")):
+        errors.append(f"{label}.issue が GitHub issue 番号または Beads issue id でない")
     if not isinstance(d.get("proposal_sha256"), str):
         errors.append(f"{label}.proposal_sha256 が文字列でない")
     if d.get("verdict") not in AUDIT_VERDICTS:
@@ -262,7 +267,7 @@ def sha256_file(path: Path) -> str:
 
 
 def evaluate_pre_apply(
-    issue: int,
+    issue: int | str,
     proposal: dict,
     audit: dict,
     target_root: Path,
@@ -349,7 +354,7 @@ def evaluate_pre_apply(
 
 
 def evaluate(
-    issue: int,
+    issue: int | str,
     report: dict,
     verdict: dict,
     proposal: dict,
@@ -470,7 +475,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="C10 close 前共有ゲート: 4 artifact + 実 post-image を突合し applied_verified / independently_verified_no_change のみ close 可とする",
     )
-    ap.add_argument("--issue", type=int, required=True, help="対象 GitHub issue 番号")
+    ap.add_argument(
+        "--issue", required=True,
+        help="対象 tracker key (GitHub issue 番号または Beads issue id)",
+    )
     ap.add_argument(
         "--mode", choices=("close", "pre-apply"), default="close",
         help="close (既定): 4 artifact + 実 post-image で close 可否を判定 / "
@@ -508,9 +516,12 @@ def main(argv: list[str] | None = None) -> int:
         _emit(sys.stdout, "ERROR", "schema error", schema_errors)
         return 2
 
+    # 後方互換: 数字のみの key は従来通り JSON integer と照合する。
+    issue_key: int | str = int(args.issue) if args.issue.isdigit() else args.issue
+
     if args.mode == "pre-apply":
         result, status, reasons = evaluate_pre_apply(
-            args.issue, proposal, audit, Path(args.target_root), verdict, report
+            issue_key, proposal, audit, Path(args.target_root), verdict, report
         )
         _emit(sys.stdout, result, status, reasons)
         if result != "OK":
@@ -521,7 +532,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- close 判定 ---
     result, status, reasons = evaluate(
-        args.issue, report, verdict, proposal, audit, Path(args.target_root)
+        issue_key, report, verdict, proposal, audit, Path(args.target_root)
     )
     _emit(sys.stdout, result, status, reasons)
     if result != "OK":

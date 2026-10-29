@@ -38,14 +38,42 @@ def _script_files() -> list[Path]:
 _SCRIPTS = _script_files()
 
 
+def _import_roots(script: Path) -> list[Path]:
+    """本番 entrypoint が sys.path へ入れているのと同じディレクトリ集合を返す。
+
+    skills/<skill>/scripts/ 配下のモジュールは、同階層と owning plugin の scripts/
+    (plugin_resources・foundation_provenance 等) の両方から素の名前で import する。本番の
+    entrypoint は両方を sys.path へ入れて解決するので、ここが片方しか入れていないと smoke だけが落ちる。
+    """
+    roots = [script.parent, ROOT / "scripts"]
+    parts = script.relative_to(ROOT).parts
+    if parts[0] == "plugins" and len(parts) > 2:
+        roots.insert(1, ROOT / "plugins" / parts[1] / "scripts")
+    return [root for root in dict.fromkeys(roots) if root.is_dir()]
+
+
+def _is_repo_module(module: object) -> bool:
+    """repo 内のファイルから読まれたモジュールだけを捨てる対象にする。
+
+    site-packages 側 (jsonschema が引く rpds 等の PyO3 拡張) は 1 プロセスで 1 回しか
+    初期化できず、sys.modules から外すと次の import が ImportError になる。順序依存の
+    原因になるのは repo の素の名前の import だけなので、掃除はそこに限る。
+    """
+    file = getattr(module, "__file__", None)
+    return bool(file) and Path(file).resolve().is_relative_to(ROOT)
+
+
 @pytest.mark.parametrize("script", _SCRIPTS, ids=[str(f.relative_to(ROOT)) for f in _SCRIPTS])
 def test_script_imports_without_error(script):
     rel = str(script.relative_to(ROOT))
     if rel in SKIP_REASON:
         pytest.skip(SKIP_REASON[rel])
-    # repo-root scripts/ を sys.path に入れて feedback_contract_ssot 等の同階層 import を解決
-    sys.path.insert(0, str(ROOT / "scripts"))
-    sys.path.insert(0, str(script.parent))
+    roots = _import_roots(script)
+    for root in reversed(roots):
+        sys.path.insert(0, str(root))
+    # 対象が推移的に持ち込んだモジュールを毎回捨てる。残すと後続テストの import が
+    # 「先に誰かが読んでくれていたから通った」状態になり、単体実行と CI で結果が割れる。
+    modules_before = set(sys.modules)
     mod_name = "smoke_" + rel.replace("/", "_").replace("-", "_").removesuffix(".py")
     spec = importlib.util.spec_from_file_location(mod_name, script)
     assert spec and spec.loader, f"cannot load spec for {rel}"
@@ -57,14 +85,50 @@ def test_script_imports_without_error(script):
     try:
         spec.loader.exec_module(mod)  # __main__ ガードにより main() は走らない
     finally:
-        sys.modules.pop(mod_name, None)
-        sys.path.pop(0)
-        sys.path.pop(0)
+        for name in set(sys.modules) - modules_before:
+            if _is_repo_module(sys.modules.get(name)):
+                sys.modules.pop(name, None)
+        for _ in roots:
+            sys.path.pop(0)
 
 
 def test_smoke_covers_scripts():
     """少なくとも 30 本以上のスクリプトを smoke 対象にしている(計測の網羅性自体を固定)。"""
     assert len(_SCRIPTS) >= 30
+
+
+# owning plugin の scripts/ から素の名前で import する skill 配下 script。
+# plugin_resources (harness-creator) と foundation_provenance (system-spec-harness) の 2 系統を見張る。
+_SKILL_SCRIPTS_WITH_PLUGIN_IMPORT = {
+    "harness-creator": ROOT / "plugins/harness-creator/skills/run-plugin-package-check/scripts/lint-pkg-009.py",
+    "system-spec-harness": (
+        ROOT / "plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py"
+    ),
+}
+
+
+@pytest.mark.parametrize("plugin", sorted(_SKILL_SCRIPTS_WITH_PLUGIN_IMPORT))
+def test_skill_scripts_can_see_their_owning_plugin_scripts_dir(plugin):
+    """skills/<skill>/scripts/ の対象には owning plugin の scripts/ を必ず通す。
+
+    ここが欠けると plugin 共有 module の素の import が単体実行でだけ失敗し、
+    フルスイートでは先行テストの sys.modules 残留で通ってしまう。CI の赤が再現不能に
+    なって無関係な PR へ誤帰属するため、順序ではなく sys.path で保証する。
+    """
+    script = _SKILL_SCRIPTS_WITH_PLUGIN_IMPORT[plugin]
+    assert script.is_file(), "回帰の見張り対象が移動している。パスを更新すること"
+    roots = _import_roots(script)
+    assert script.parent in roots
+    assert ROOT / "plugins" / plugin / "scripts" in roots
+    assert ROOT / "scripts" in roots
+
+
+@pytest.mark.parametrize("plugin", sorted(_SKILL_SCRIPTS_WITH_PLUGIN_IMPORT))
+def test_import_roots_are_scoped_to_the_owning_plugin(plugin):
+    """他 plugin の scripts/ は混ぜない(素の import が偶然解決するのを防ぐ)。"""
+    roots = _import_roots(_SKILL_SCRIPTS_WITH_PLUGIN_IMPORT[plugin])
+    others = [root for root in roots if root.is_relative_to(ROOT / "plugins")]
+    assert all(root.is_relative_to(ROOT / "plugins" / plugin) for root in others)
 
 
 def test_visual_generation_validator_imports_without_optional_dependencies() -> None:

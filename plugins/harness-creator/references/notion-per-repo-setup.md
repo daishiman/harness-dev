@@ -40,7 +40,9 @@ security add-generic-password \
   -w "secret_xxxxxxxxxxxx" -U
 ```
 
-CI など Keychain が無い環境では env `NOTION_TOKEN` を fallback として利用可能。
+CI など Keychain が無い環境では env `NOTION_TOKEN` を利用できるが、
+**`INTAKE_ALLOW_ENV_TOKEN=1` を同時に渡した場合に限る** (§2)。
+この opt-in が無い状態の env `NOTION_TOKEN` は `get_token()` に無視される。
 
 ### 1.1' (代替: 手動セットアップ)
 
@@ -84,9 +86,12 @@ DB ID (`notion_config.get_db_id(key)` SSOT):
 
 token (`notion_config.get_token()` SSOT, `notion_http._resolve_token()` 経由):
 
-1. env `NOTION_TOKEN`
-2. Keychain (`.notion-config.json` の `keychain_service` / `keychain_account` を尊重)
-3. legacy fallback: `keychain_get_secret.get_secret()` (env `INTAKE_KEYCHAIN_SERVICE/ACCOUNT` 経由)
+1. CI / dry-run 限定: `INTAKE_ALLOW_ENV_TOKEN=1` のときだけ env `NOTION_TOKEN`
+2. Keychain (`.notion-config.json` の `keychain_service` / `keychain_account` を尊重。未設定なら `credential_ref("notion-api-key")`)
+
+> **opt-in 無しの env `NOTION_TOKEN` は無視される**点に注意。opt-in (`INTAKE_ALLOW_ENV_TOKEN=1`) を要求するのは、
+> 環境変数が意図せず継承されて **手元の Keychain より弱い経路が黙って勝つ** ことを防ぐため。
+> CI では opt-in を明示するので実質 env 経路になる。
 
 > repo-root 探索は `.git` AND harness marker (`.notion-config.json` / `.notion-config.example.json` / `marketplace.json`) を要求する。
 > submodule や別 repo の `.git` を上向きに辿って **誤って他 repo の config を盗み読む** ことを防止。
@@ -95,12 +100,14 @@ token (`notion_config.get_token()` SSOT, `notion_http._resolve_token()` 経由):
 
 ## 3. 設定が無い場合の挙動
 
-config 未設定 repo で Notion 系スクリプトを実行すると、
-**`[notion_config] WARN: ... not found ...` を stderr に出して exit 0** で終わる。
+publish / schema 検証など Notion に副作用を持つスクリプトは、DB ID / token が欠けると
+`notion_config.require_or_skip()` が **exit 2 で停止** する (fail-closed)。silent skip はしない。
 
-これにより、Notion 連携を使わない repo でも harness-creator/skill-intake を symlink して
-他機能だけ利用できる。明示的に失敗させたい場合は config に偽値を入れず、
-スクリプトに `--require-notion` を渡す（必要に応じて将来追加）。
+Notion 連携を使わない repo でも harness-creator / skill-intake を symlink して他機能だけ
+利用できるが、その場合は **Notion 系コマンドを起動しない** ことで両立させる。「設定が無いから
+成功扱い」にしないのは、検査系スクリプト (`sync-notion-schema.py --check` /
+`lint-notion-relations.py`) で **「検査した結果の緑」と「検査していない緑」が区別できなくなる**
+ため。起動するかどうかの判断は呼び出し側 (CI の step gate 等) が持つ。
 
 ---
 

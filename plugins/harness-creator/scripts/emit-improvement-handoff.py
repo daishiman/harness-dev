@@ -25,6 +25,7 @@ schema の制約を stdlib のみで軽量に self-validate する (jsonschema �
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import sys
@@ -35,6 +36,8 @@ SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SOURCE_KINDS = ("elegant-review", "content-review", "evaluator", "manual")
 ORIGIN_REQUEST_KINDS = ("notion-improvement-request", "slack", "verbal", "other")
 SEVERITIES = ("high", "medium", "low")
+DISPOSITIONS = ("applied", "deferred", "rejected")
+CURRENT_SCHEMA_VERSION = "1.1.0"
 
 
 def normalize_findings(raw: object) -> list[dict]:
@@ -55,6 +58,9 @@ def normalize_findings(raw: object) -> list[dict]:
             finding["recommendation"] = str(item["recommendation"]).strip()
         if item.get("target_ref"):
             finding["target_ref"] = str(item["target_ref"]).strip()
+        for key in ("disposition", "disposition_ref", "disposition_recorded_at"):
+            if item.get(key) is not None:
+                finding[key] = str(item[key]).strip()
         out.append(finding)
     return out
 
@@ -86,8 +92,11 @@ def build_handoff(args, findings: list[dict]) -> dict:
 def validate(handoff: dict) -> list[str]:
     """improvement-handoff.schema.json の fail-closed 制約を stdlib で検査する。"""
     errors: list[str] = []
-    if not SCHEMA_VERSION_RE.match(str(handoff.get("schema_version", ""))):
+    version = str(handoff.get("schema_version", ""))
+    if not SCHEMA_VERSION_RE.match(version):
         errors.append("schema_version は semver (X.Y.Z) であること")
+    elif version != CURRENT_SCHEMA_VERSION:
+        errors.append(f"schema_version は {CURRENT_SCHEMA_VERSION} であること (旧形式の新規 emit 禁止)")
     source = handoff.get("source")
     if not isinstance(source, dict):
         errors.append("source が object でない")
@@ -112,6 +121,15 @@ def validate(handoff: dict) -> list[str]:
                 errors.append(f"{prefix}.severity は {list(SEVERITIES)} のいずれか")
             if not str(f.get("summary", "")).strip():
                 errors.append(f"{prefix}.summary が空")
+            if f.get("disposition") not in DISPOSITIONS:
+                errors.append(f"{prefix}.disposition は {list(DISPOSITIONS)} のいずれか")
+            if not str(f.get("disposition_ref", "")).strip():
+                errors.append(f"{prefix}.disposition_ref が空")
+            recorded_at = str(f.get("disposition_recorded_at", "")).strip()
+            try:
+                dt.datetime.fromisoformat(recorded_at.replace("Z", "+00:00"))
+            except ValueError:
+                errors.append(f"{prefix}.disposition_recorded_at が ISO-8601 date-time でない")
     origin = (handoff.get("provenance") or {}).get("origin_request")
     if isinstance(source, dict) and source.get("kind") == "manual" and origin is None:
         errors.append("source.kind=manual では provenance.origin_request が必須")
@@ -133,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--target-plugin-slug", required=True)
     ap.add_argument("--plan-dir", required=True)
     ap.add_argument("--findings", required=True, help="findings JSON (bare array or {findings:[...]})")
-    ap.add_argument("--schema-version", default="1.0.0")
+    ap.add_argument("--schema-version", default=CURRENT_SCHEMA_VERSION)
     ap.add_argument("--generated-by", default=None)
     ap.add_argument("--source-intake", default=None, help="起点 intake.json 参照 (provenance)")
     ap.add_argument("--prev-goal-spec", default=None, help="改善前 goal-spec.json 参照 (provenance)")

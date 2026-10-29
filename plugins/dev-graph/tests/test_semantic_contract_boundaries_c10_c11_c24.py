@@ -120,7 +120,12 @@ def test_c11_uses_canonical_schema_and_frontmatter_path_contract(tmp_path, monke
     assert mod.validate([node], repo_root=tmp_path) == []
     graph = tmp_path / ".dev-graph" / "state" / "graph.json"
     graph.parent.mkdir(parents=True)
-    graph.write_text(json.dumps({"nodes": [node]}), encoding="utf-8")
+    # canonical store path へ置く以上、C11 は canonical envelope を要求する。
+    # 本テストの主題は schema と frontmatter path の契約なので、envelope は正しい形で与える。
+    graph.write_text(
+        json.dumps({"schema_version": "1.0.0", "graph_revision": 1, "nodes": [node]}),
+        encoding="utf-8",
+    )
     code, captured = call_main(mod, monkeypatch, capsys, "--graph", graph, "--repo-root", tmp_path)
     assert code == 0 and json.loads(captured.out)["schema"].endswith("schemas/graph-node.schema.json")
 
@@ -138,41 +143,50 @@ def test_c11_uses_canonical_schema_and_frontmatter_path_contract(tmp_path, monke
     assert {item["detail"] for item in findings if item["code"] == "frontmatter_missing"} == {"tags"}
 
 
-def test_c10_invokes_c11_then_still_rejects_direct_mutation(tmp_path, monkeypatch, capsys):
+def test_c10_rejects_direct_mutation_without_invoking_any_subprocess(tmp_path, monkeypatch, capsys):
+    """遮断は subprocess 非依存で確定する (fail-open 窓を作らない)。
+
+    PreToolUse hook が timeout すると Claude Code は tool を通す。以前は Bash の破壊操作枝
+    だけが `context_ok()` の後段にあり、さらに遮断/許可を左右しない `schema_ok()`
+    (= graph 全件の C11 検証) を理由文の出し分けのためだけに呼んでいた。実測で遮断まで
+    約 58 秒を要し、timeout 10 秒を超えるため遮断が素通りになっていた。
+
+    そのため本 test は「遮断経路が subprocess を起動しないこと」を契約として固定する。
+    C11 検証を遮断経路へ戻すと、遮断は既に確定しているのに理由文の精度しか上がらない一方、
+    その所要時間がそのまま fail-open の窓になる。C11 は run-dev-graph-init の
+    Execution contract が別途強制する。
+    """
     mod = load(HOOKS / "guard-graph-schema.py", "guard_contract_c10")
     (tmp_path / ".dev-graph").mkdir()
     (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
-    graph = tmp_path / ".dev-graph" / "state" / "graph.json"
-    graph.parent.mkdir(parents=True)
-    graph.write_text('{"nodes": []}\n', encoding="utf-8")
-    context = json.dumps({"local_state_paths": {"graph": str(graph)}})
-    monkeypatch.setattr(mod, "context_ok", lambda root: (True, context))
-    checked: list[Path] = []
-    monkeypatch.setattr(mod, "schema_ok", lambda root, output: (checked.append(root) is None, "valid"))
 
-    code, captured = call_main(
-        mod,
-        monkeypatch,
-        capsys,
-        "--repo-root",
-        tmp_path,
-        stdin={"tool_input": {"command": "rm -rf .dev-graph/state/graph.json # validate-graph-schema.py"}},
-    )
-    assert code == 2
-    assert checked == [tmp_path]
-    assert "C02 atomic writer" in captured.err
+    def forbidden(*args, **kwargs):  # pragma: no cover - 呼ばれた時点で契約違反
+        raise AssertionError("遮断経路が subprocess を起動している (fail-open 窓の再導入)")
 
-    monkeypatch.setattr(mod, "schema_ok", lambda root, output: (False, "schema invalid"))
-    code, captured = call_main(
-        mod,
-        monkeypatch,
-        capsys,
-        "--repo-root",
-        tmp_path,
-        stdin={"tool_input": {"command": "sed -i '' plugins/dev-graph/schemas/graph-node.schema.json"}},
-    )
-    assert code == 2
-    assert "C11 schema validation failed" in captured.err
+    monkeypatch.setattr(mod.subprocess, "run", forbidden)
+    for command in (
+        "rm -rf .dev-graph/state/graph.json # validate-graph-schema.py",
+        "sed -i '' plugins/dev-graph/schemas/graph-node.schema.json",
+        'cat > .dev-graph/config.json << "EOF"',
+        'tee "$ROOT/.dev-graph/state/graph.json"',
+    ):
+        code, captured = call_main(
+            mod, monkeypatch, capsys, "--repo-root", tmp_path,
+            stdin={"tool_input": {"command": command}},
+        )
+        assert code == 2, command
+        assert "C02 atomic writer" in captured.err, command
+
+    for tool, tool_input in (
+        ("Write", {"file_path": str(tmp_path / ".dev-graph" / "config.json"), "content": "{}"}),
+        ("Bash", {"command": "python3 -c \"open('.dev-graph/config.json','w')\""}),
+    ):
+        code, captured = call_main(
+            mod, monkeypatch, capsys, "--repo-root", tmp_path,
+            stdin={"tool_name": tool, "tool_input": tool_input},
+        )
+        assert code == 2, tool
+        assert "C02 atomic writer" in captured.err, tool
 
 
 def test_c10_redirect_detection_is_bound_to_the_redirect_destination(
@@ -182,7 +196,6 @@ def test_c10_redirect_detection_is_bound_to_the_redirect_destination(
     (tmp_path / ".dev-graph").mkdir()
     (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(mod, "context_ok", lambda _root: (True, "{}"))
-    monkeypatch.setattr(mod, "schema_ok", lambda _root, _detail: (True, "ok"))
 
     code, _ = call_main(
         mod,
@@ -212,7 +225,6 @@ def test_c10_destructive_detection_distinguishes_sources_from_destinations(
     (tmp_path / ".dev-graph").mkdir()
     (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(mod, "context_ok", lambda _root: (True, "{}"))
-    monkeypatch.setattr(mod, "schema_ok", lambda _root, _detail: (True, "ok"))
 
     allowed = [
         "cp -rf plugins/dev-graph/templates .dev-graph/templates",
@@ -256,7 +268,6 @@ def test_c10_unmanaged_repository_is_immediate_noop(
     if make_git_dir:
         (tmp_path / ".git").mkdir()
     monkeypatch.setattr(mod, "context_ok", lambda _root: pytest.fail("resolver must not run"))
-    monkeypatch.setattr(mod, "schema_ok", lambda *_a: pytest.fail("validator must not run"))
     code, captured = call_main(
         mod,
         monkeypatch,

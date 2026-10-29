@@ -21,6 +21,8 @@ Git repository の root、Python 3.10 以上 (stdlib のみ)、Claude Code。iss
 
 artifact は `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/` 配下に出ます (`triage-report.json` / `triage-verdict.json` / `sync-proposal.json` / `sync-audit-verdict.json`)。この dir は transient で、追跡しません。
 
+close 前 hook は GitHub の `gh issue close <number>` に加え、Beads の正規経路 `bd-bridge.py --op close --bd-issue-id <id>` と直接 CLI の `bd close <id>` / `bd update <id> --status closed` を捕捉します。Beads は `.spec-drift/<id>/` が存在する spec-drift 対象だけを C10 で検査し、通常 task は通過させます。proposal だけ、独立 verdict 不足、C10 不完全の状態ではどの close 経路も fail-closed で停止します。
+
 ## 設計の要点
 
 - **完全性を証明できない入力は判定しない (fail-closed)**: `spec-diff-history.md` の 80 行 preview は**イベント日時の索引**にのみ使い、実 diff は必ず commit pair から復元したものを使います。truncated preview / digest 不一致 / commit 欠落は triage せず理由付きで停止します。
@@ -37,7 +39,7 @@ artifact は `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/` 配下に出ます (`tri
 | skills | `run-spec-drift-triage` (C01) / `run-rubric-sync` (C02) | triage と同期。各 7 層 prompt (R1-R3) を正本に持つ |
 | agents | `spec-impact-verifier` (C03) / `rubric-sync-auditor` (C04) | 独立 context での再導出・監査 |
 | commands | `/spec-drift-triage` / `/rubric-sync` | 起動口 |
-| hooks | `guard-spec-drift-close` (C07) | verdict なし close を fail-closed で阻止 |
+| hooks | `guard-spec-drift-close` (C07) | GitHub/Beads の全ローカル close 経路を共通 verdict で fail-closed に阻止 |
 | scripts | `aggregate-issue-diffs` (C11) / `parse-spec-diff` (C08) / `map-field-impact` (C09) / `check-triage-complete` (C10) | 決定論段 |
 | references | `field-impact-map` / `apply-gate-policy` | 写像規則と apply-gate の逐語正本 |
 

@@ -38,6 +38,8 @@ capabilities:
   - { kind: command, ref: commands/spec-compile, tier: core }
   - { kind: command, ref: commands/spec-hearing-start, tier: core }
   - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-TaskAgent/record-audit-fork", tier: core }
+  - { kind: hook, ref: "hook:SubagentStop/record-audit-fork", tier: core }
 
   # === Skills (kind=skill) ===
 
@@ -64,6 +66,7 @@ dependencies:
   - {from: skills/run-system-spec-elicit, to: scripts/validate-knowledge-graph.py, type: calls}
   - {from: skills/run-system-spec-compile, to: scripts/validate-coverage-matrix.py, type: calls}
   - {from: skills/run-system-spec-compile, to: scripts/validate-source-citation.py, type: calls}
+  - {from: skills/run-system-spec-compile, to: scripts/validate-knowledge-graph.py, type: calls}
   - {from: skills/ref-system-design-knowledge, to: scripts/validate-knowledge-graph.py, type: calls}
   - {from: skills/ref-system-design-knowledge, to: scripts/validate-information-priority.py, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: scripts/validate-coverage-matrix.py, type: calls}
@@ -79,4 +82,4 @@ external_dependencies:
 
 eval_sinks: [EVALS.json]
 observability:
-  hooks: [PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite]
+  hooks: [PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite, PostToolUse-TaskAgent/record-audit-fork, SubagentStop/record-audit-fork]

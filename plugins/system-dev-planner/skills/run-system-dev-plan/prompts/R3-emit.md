@@ -39,8 +39,12 @@
 - 恒等: task id 13件が unique で graph node id と1対1、`feature-package.json.task_node_ids` が graph node 順に一致、`task_spec_paths` が canonical 13 path に一致する。
 - file_path namespace: `graph_node_registration.file_path` は `tasks/<parent_feature>/<task-id小文字>.md` とする (feature 単位 namespace。`tasks/` 直下フラット配置は fail。複数 feature の並列分解・並列実行で衝突しないため)。
 - DAG: `depends_on` は同一 feature 内・前方 edge (小 phase_ref → 大 phase_ref) のみ。後方 edge・循環・cross-feature/欠落参照は fail。
-- placeholder 禁止: 各 task spec に `TODO`/`TBD`/`__PLACEHOLDER__`/未解決 `<...>` を残さない。14 必須 section が非空で1件ずつ存在する。各 task の `implementation_readiness.status=="complete"`。
+- P01 entry gate: feature間edgeは task `depends_on`へ複製せず、inventory/handoff/P01 task specに`parent_feature.depends_on all done|closed`という派生selectorを保存する。schedulerがcanonical parent featureの現行edge全件を都度読むため、upstream IDをpackage内にコピーしない。
+- placeholder 禁止: 各 task spec に `TODO`/`TBD`/`__PLACEHOLDER__`/未解決 `<...>` を残さない。15 必須 section が非空で1件ずつ存在する。各 task の `implementation_readiness.status=="complete"`。
+- テスト戦略 (16 番目の section): 各 task spec の `スコープ外` と `Verification and evidence` の間に `## テスト戦略` を置き、`テストレベル選定` / `カバレッジ目標` / `層別方針` / `保守性制約` の4項目をこのラベル・この順序で非空に埋める。テストレベル選定は単体・結合・境界値・回帰の4語すべてに言及し (適用外は `N/A: reason`)、カバレッジ目標は既定 `80%` を数値で明示し、層別方針は `Workstream applicability` で applicable な層 (Frontend→`behavior` / Backend・API・Data→`API 契約`+`DB 結合` / Infrastructure→`IaC`+`smoke`) の必須語を含み、保守性制約は `pixel` 位置依存と `DOM` 構造依存の禁止を明記する。契約 version は package の canonical digest から `assets/validation-contract-baseline.json` を引いて解決され、新規 package は台帳未登録ゆえ `CONTRACT_VERSION_LATEST` (`1.3.0`) で検証される。package 側に版宣言フィールドは持たせない (申告値で免除を取れる経路を作らないため)。欠落は C12 が fail-closed で拒否する。
 - containment: 全 path は caller repository 相対で C09 containment 済み。absolute/drive-letter/`..`/root 外 symlink は禁止。
+- runtime reference: task spec 本文が実行時に参照する goal/manifest/validator/evidence は package-relative path または C11 が決定的に生成する canonical published path を使う。atomic rename 後に消滅する `.dev-graph/staging` を task spec 本文に保存しない。
+- rerun command: task spec 本文 (`Verification and evidence` の `Automated commands` を含む) が `validate-system-plan.py` を実行コマンドとして提示する場合、`--repo-root <root> --feature-package <当該 feature_package_id>` の世代非依存形だけを書く。`--staging` は promotion の atomic rename 後に指す先が無く記載どおり実行すると必ず失敗するため禁止し、generation id の直書きも再計画のたびに stale になるため使わない。他 package の id を書くと別 package を検証して緑になるため、必ず自 package の id を書く。C12 が契約 `1.3.0` で `task-spec-rerun-staging-path` / `task-spec-rerun-package-missing` / `task-spec-rerun-package-mismatch` として fail-closed 拒否する (正本: `references/feature-execution-package-contract.md` §2.3)。
 - 決定性: C14 実行後の `staging-manifest.json` が package/inventory/graph + 13 task specs + `system-build-handoff.json` を過不足なく覆い、各 file digest と `canonical_digest` が実体から再計算した値に一致する。handoff は source/base manifest digest を値として持ち、最終 manifest digest は locator で参照して自己参照循環を作らない。
 
 ### 2.3 入力契約
@@ -52,7 +56,7 @@
 
 ### 2.4 出力契約
 - staging 配下の exact-13 package: `feature-package.json` / `workstream-inventory.json` / `task-specs/phase-01..13.md` / `task-graph.json` / `system-build-handoff.json` / `staging-manifest.json`。
-- schema: `feature-execution-package.schema.json` と `workstream-inventory.schema.json` 準拠。task spec は `system-task-spec-template.md` の14 section を充足する。
+- schema: `feature-execution-package.schema.json` と `workstream-inventory.schema.json` 準拠。task spec は `system-task-spec-template.md` v1.2.0 の15 必須 section + `テスト戦略` を充足し、`system-task-goal-seek/v1` 内側ループを持つ。
 - 後続: R4-evaluate が C02→C05 を独立 context で起動し、staging digest に pin した4条件 plan-findings を発行する。
 
 ## Layer 3: インフラ層 (外部依存)
@@ -61,14 +65,15 @@
 | id | path | when_to_read |
 |---|---|---|
 | package 契約 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/feature-execution-package-contract.md` | 固定出力形状・13 写像・DAG 規則の正本 |
-| task template | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/system-task-spec-template.md` | 各 task spec の14 必須 section 正本 |
+| task template | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/system-task-spec-template.md` | 各 task spec の15 必須 section + `テスト戦略`・内側goal-seek・P13 writeback正本 |
+| テスト戦略 schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/task-spec-test-strategy.schema.json` | `テスト戦略` 4項目の必須語 (4レベル・`80%`・`pixel`/`DOM`) 正本 |
 | phase 名称 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/system-plan-phase-names.md` | P01..P13 呼称と applicability (P08/P13 は N/A 可) |
 | package schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/feature-execution-package.schema.json` | feature-package top-level shape |
 | inventory schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/workstream-inventory.schema.json` | 13 task entry shape |
 | handoff schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-build-handoff.schema.json` | source digest・entry gate・registration ownership の正本 |
 
 ### 3.2 外部ツール / API
-- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail / 1=usage)。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail / 1=usage)。`--staging` は **本 run が promotion 前の staging generation を検証する入口専用**であり、task spec 本文へ書き写す再実行コマンドではない (§2.2 rerun command)。task spec には promotion 後も解決できる `--feature-package <feature_package_id>` を書く。
 - `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-system-handoff.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C14。base manifest を受け、handoff 生成 + 最終 manifest 更新を atomic に行う)。
 - `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-implementation-readiness.py" ...` (C08。入力 system-spec-harness 確定成果物の readiness ゲート)。
 - path 解決は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` (C09) に一元化。network なし・write は staging のみ。
@@ -101,9 +106,14 @@
 - [ ] task id 13件が unique で graph node id と1対1、`task_node_ids` が graph node 順に一致する
 - [ ] 全 artifact の `feature_package_id`/`parent_feature`/source digest が一致し、`repo_identity` が C09 解決値である
 - [ ] `task-graph.json` の `depends_on` が同一 feature 内の前方 edge だけで循環がない (acyclic)
-- [ ] 各 task spec の14 必須 section が非空で存在し、placeholder (`TODO`/`TBD`/`<...>`) が0件である
+- [ ] inventory/handoff/P01 task specが`parent_feature.depends_on all done|closed`のentry gateで一致し、feature間edgeをtask DAGに複製していない
+- [ ] 各 task spec の15 必須 section が非空で存在し、placeholder (`TODO`/`TBD`/`<...>`) が0件である
+- [ ] 各 task spec の `## テスト戦略` が `スコープ外` と `Verification and evidence` の間に1件だけ存在し、4項目 (`テストレベル選定`/`カバレッジ目標`/`層別方針`/`保守性制約`) がこの順序で非空である (契約 version は台帳未登録ゆえ `1.3.0` に解決され、欠落は C12 が fail-closed で拒否する)
+- [ ] 全taskが`system-task-goal-seek/v1`、goal、汎用prompt、rubric、feedback、`rubric verdict=PASS`停止条件を持ち、P13がspec/architecture writebackをrequiredで宣言する
 - [ ] 各 task の `implementation_readiness.status=="complete"` である
 - [ ] 全 path が caller repository 相対で containment 済み (absolute/`..`/root 外 symlink なし)
+- [ ] task spec 本文の runtime reference に `.dev-graph/staging` が0件で、package-relative または canonical published path だけを使っている
+- [ ] task spec 本文が書く `validate-system-plan.py` 再実行コマンドが `--staging` を含まず、自 package の `--feature-package <feature_package_id>` で世代非依存に解決できる (C12 契約 `1.3.0`)
 - [ ] C14 が schema準拠 `system-build-handoff.json` を生成し、exact 13 source refs、feature/package/parent/repository identity、registration request owner、receipt owner/pathが一意である
 - [ ] `staging-manifest.json` が package/inventory/graph + 13 task specs + handoff を過不足なく覆い、file digest と `canonical_digest` が実体に一致する
 - [ ] 上記を C12 `validate-system-plan.py` が exit0 (pass) で確認した
@@ -136,4 +146,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-R2-decompose の workstream 分解と digest-bound goal-spec を入力に、C09 解決 staging 配下へ `feature-execution-package.schema.json`/`workstream-inventory.schema.json` 準拠の exact-13 base package (`feature-package.json` + `workstream-inventory.json` + `task-specs/phase-01..13.md` + `task-graph.json` + base `staging-manifest.json`) を emit する。各 task spec は `system-task-spec-template.md` の14 section を非空で充足し placeholder を残さない。次に C14 `build-system-handoff.py` で schema準拠 `system-build-handoff.json` を生成し、最終 manifest の files/canonical_digest に含める。`task_count==13`・phase_ref exact-set・共通 parent/package/digest・前方 DAG・id 恒等・containment・handoff/manifest 完全被覆を満たし、C12 `validate-system-plan.py --staging` を exit0 (pass) まで通す。別 phase 文書と14件目は生成しない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→C12 で自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は生成 artifact paths 一覧・canonical_digest・validation status・follow-up feature candidates のみ、前置き禁止。
+R2-decompose の workstream 分解と、実装前にpurpose/background/goalを固定したdigest-bound goal-specを入力に、C09 解決 staging 配下へ `feature-execution-package.schema.json`/`workstream-inventory.schema.json` 準拠の exact-13 base package (`feature-package.json` + `workstream-inventory.json` + `task-specs/phase-01..13.md` + `task-graph.json` + base `staging-manifest.json`) を emit する。各 task spec は `system-task-spec-template.md` v1.2.0 の15 必須 section と `テスト戦略` (4項目固定順) を非空で充足し、契約 version は canonical digest から `validation-contract-baseline.json` を引いて解決され (新規 package は未登録ゆえ `1.3.0`)、`system-task-goal-seek/v1`、task goal、汎用prompt、rubric、前周feedback、`rubric verdict=PASS`停止条件を持たせる。P13だけは`P13 spec/architecture writeback: required`として実行結果・判断・改善点の正本書戻しを要求する。placeholder を残さず、runtime reference は package-relative または canonical published path とし `.dev-graph/staging` を保存しない。task spec 本文が書く `validate-system-plan.py` 再実行コマンドは `--staging` を使わず、自 package の `--repo-root . --feature-package <feature_package_id>` の世代非依存形にする (`--staging` は本 run の staging 検証入口専用)。次に C14 `build-system-handoff.py` で schema準拠 `system-build-handoff.json` を生成し、最終 manifest の files/canonical_digest に含める。`task_count==13`・phase_ref exact-set・共通 parent/package/digest・前方 DAG・id 恒等・containment・handoff/manifest 完全被覆を満たし、C12 `validate-system-plan.py --staging` を exit0 (pass) まで通す。別 phase 文書と14件目は生成しない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→独立rubric評価→feedback反映→C12で自己評価し、全項目とrubric verdictがPASSになるまで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は生成 artifact paths 一覧・canonical_digest・validation status・follow-up feature candidates のみ、前置き禁止。

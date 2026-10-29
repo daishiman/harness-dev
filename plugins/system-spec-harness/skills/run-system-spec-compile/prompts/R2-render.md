@@ -31,7 +31,7 @@
 - 各章 frontmatter に確定マーカー (status/category/aggregate/spec_cells) と `serves_goals` (上位概念トレース) を付与する。
 - 本文に (a) カテゴリ別収集状態表、(b) 設計知識cardの目的・解決問題・適用/非適用条件・トレードオフ/失敗モード・goal寄与、(c) 最新ドキュメント出典表を並べる。参照pathだけでは完了しない。
 - 出典は target の category (主たる章) で該当章へ割り当て、target が `also_categories` で宣言した章にも同じ出典を載せる。未割当は index へ回す。宣言の無い章へは推測で重複させない (複数章に載せるのは spec-state が宣言したときだけ)。
-- card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。
+- card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。card本文は汎用原則の逐語転記のため、設計知識節の末尾「確定判断ごとの原則採否」には `qa_log[].design_applications` の具体原則・`applied|not_applicable`・章固有理由・trade-off を確定qa_ref・対応セル・serves_goalsへ束縛して描画する。compiler 自身が定型の「適用済み」文を捏造してはならず、旧 state で記録が無ければ記録経路 `unrecorded` を fail-visible にする。
 - 逐語の描き方と既存章の片付けは SKILL.md の Key Rules 6-8 に従う (逐語をフェンスに閉じ込める・置き換え済み qa の旧版の印・漏れた見出しの移行)。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
@@ -55,6 +55,7 @@
 - [ ] 設計知識が解決問題と目的達成寄与を説明している
 - [ ] 設計知識が知識グラフ topo_order (上位概念→下位概念) の順で反映されている (C14)
 - [ ] 各カテゴリ章に doctrine anchor (concern authority) が上流指針として反映されている (C15)
+- [ ] 設計知識節の末尾に「確定判断ごとの原則採否」があり、`qa_log[].design_applications` の具体原則・採否・章固有理由・trade-off を本章の確定 qa_ref・対応セル・serves_goals へ紐付けている (記録欠落は `unrecorded`、確定セルなしは適用先未確定を明示)
 - [ ] 割当済み出典が公式 URL と版情報を保持している
 
 ### 5.4 実行方式

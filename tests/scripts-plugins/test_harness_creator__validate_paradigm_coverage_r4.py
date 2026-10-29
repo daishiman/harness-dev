@@ -63,14 +63,7 @@ def _full_findings() -> dict:
                     "C3": {"verdict": "PASS", "evidence": [f"C3 checked {pid}"]},
                     "C4": {"verdict": "PASS", "evidence": [f"C4 checked {pid}"]},
                 },
-                "issues": [
-                    {
-                        "condition": "C1",
-                        "severity": "high",
-                        "description": f"desc {pid}",
-                        "recommended_intervention": f"fix {pid}",
-                    }
-                ],
+                "issues": [],
             }
         )
     return {
@@ -87,7 +80,11 @@ def _full_findings() -> dict:
         "variable_abstraction": [
             {
                 "concrete_value": "30",
-                "variable_name": "{{paradigm_count}}",
+                "name": "{{paradigm_count}}",
+                "meaning": "required thought method count",
+                "default": "30",
+                "required": True,
+                "not_applicable_when": "never",
                 "source_trace": "SKILL.md:1",
             }
         ],
@@ -126,7 +123,7 @@ def test_main_json_ok(tmp_path, capsys):
     rc = MOD.main(["prog", str(p)])
     cap = capsys.readouterr()
     assert rc == 0, cap.err
-    assert "all 30 paradigms covered with structured findings" in cap.out
+    assert "exactly 30 unique paradigms used" in cap.out
 
 
 def test_main_json_failure_emits_each_error_to_stderr(tmp_path, capsys):
@@ -374,7 +371,7 @@ def test_structured_json_variable_abstraction_item_not_object(tmp_path):
 
 def test_structured_json_variable_abstraction_missing_keys(tmp_path):
     data = _full_findings()
-    data["variable_abstraction"] = [{"variable_name": "{{x}}"}]  # concrete_value/source_trace 欠落
+    data["variable_abstraction"] = [{"name": "{{x}}"}]
     p = _write(tmp_path / "f.json", data)
     ok, errors = MOD.validate_structured_json(p)
     assert ok is False
@@ -387,7 +384,11 @@ def test_structured_json_variable_name_not_template(tmp_path):
     data["variable_abstraction"] = [
         {
             "concrete_value": "v",
-            "variable_name": "plain_name",  # {{ で始まらない
+            "name": "plain_name",
+            "meaning": "value",
+            "default": "v",
+            "required": False,
+            "not_applicable_when": "never",
             "source_trace": "t",
         }
     ]

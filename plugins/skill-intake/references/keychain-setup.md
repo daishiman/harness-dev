@@ -120,7 +120,7 @@ security add-generic-password \
 ### 5.1 段階 1 — Keychain 取得確認 (本体を表示せず)
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/hooks/post-keychain-add.sh
+bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/post-keychain-add.sh
 ```
 
 期待出力:
@@ -175,7 +175,7 @@ security find-generic-password \
 
 セットアップ完了を AI アシスタントに伝える際、**PAT 本体は絶対に貼らない**。代わりに以下を共有する:
 
-- [ ] `bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/hooks/post-keychain-add.sh` が `OK: トークン取得成功 (長さ=N, prefix=ntn_...)` を出力
+- [ ] `bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/post-keychain-add.sh` が `OK: トークン取得成功 (長さ=N, prefix=ntn_...)` を出力
 - [ ] `whoami` の HTTP ステータス (200 / 401 / 403)
 - [ ] DB access の HTTP ステータス (200 / 401 / 403 / 404)
 - [ ] (404 の場合) 提供 URL の DB ID を再確認、または別 DB を使うか
@@ -201,7 +201,7 @@ export INTAKE_NOTION_DATABASE_ID=ffffffffffffffffffffffffffffffff
 1. Notion 側で新トークン発行
 2. `security add-generic-password -U` で Keychain を上書き更新
 3. 旧トークンを Notion 側で `取り消す`
-4. `bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/hooks/post-keychain-add.sh` で取得確認
+4. `bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/post-keychain-add.sh` で取得確認
 5. `curl /v1/users/me` で動作確認
 
 ## 8. トラブル: 「インストール可能なワークスペースがありません」

@@ -26,14 +26,18 @@ mode: `beads` = 実行タスクは bd のみ / `github` = GitHub Issues のみ /
 
 registration payloadの`tracker_binding="repo-config-default"` sentinelと`binding_intents[graph_node_id]`の解決ownerはC02。intentがexplicit `beads|github|none`ならrepo-config許容範囲と照合し、`auto`はmode=beads|githubだけで同値に解決する。mode=bothのautoは人/AI主体を機械判定できず誤投影になるためfail-closedし、明示intentを要求する。確定enumへ変換してからC11へ渡し、sentinelは永続化しない。
 
-| repo プロファイル | execution_tracker.mode 既定 | GitHub ミラー (beads束縛タスク) |
+**判定軸は repository の公開範囲ではなく「実行タスクを誰が起票し誰が読むか」である** (2026-08-15 是正)。public/private は課題の authority を決めない。
+
+| repo プロファイル (判定軸 = 起票主体と読み手) | execution_tracker.mode 既定 | GitHub ミラー (beads束縛タスク) |
 |---|---|---|
-| ソロ + AI エージェント開発の private repo (**既定**) | beads | 不要 (local_only) |
-| 人間の協力者/レビュアーへ進捗共有する private repo | both | `bd github sync --push-only` で beads→GitHub 一方向ミラー |
-| 外部コントリビュータを受け入れる public OSS repo | github | — (GitHub Issues が最初から正本) |
+| ソロ + AI エージェント開発 (public/private を問わない) (**既定**) | beads | 不要 (local_only) |
+| 人間の協力者/レビュアーへ進捗共有する repo | both | `bd github sync --push-only` で beads→GitHub 一方向ミラー |
+| 外部コントリビュータが GitHub 上で起票する OSS repo | github | — (GitHub Issues が最初から正本) |
 | 使い捨て実験/プロトタイプ repo | beads | 不要 (完了後は bd compact で要約保持) |
 
 - 本表はソロ AI エージェント開発を主とする運用の既定 (ユーザー委任により確定)。迷った場合は beads を選ぶ (公式 FAQ: AI エージェント実行は bd 優位)。
+- **public repository は 3 行目の条件を満たさない** — 公開されていても起票が owner と AI エージェントだけなら 1 行目 (beads / local_only) を選ぶ。public だからという理由だけで `github` を選ぶと、正本が bd にあるまま GitHub 側へ大量の投影が残り、以後は乖離するだけの死蔵 issue になる (HarnessHub 実例: `github_mirror=bd_github_push_only` の放置で open 490 件中 444 件が完了済み/役目終了となり、`HarnessHub-mx65` で `none` へ退役)。public repo で外部からの報告窓口が必要な場合も、mode は beads のままで GitHub Issues を「外部受付と CI 通知の入口」として併用でき、受け付けた報告を bd へ起票し直せばよい。
+- **push-only ミラーは逆流路を持たない** — `github_mirror=bd_github_push_only` は bd→GitHub の一方向で、bd 側の close は GitHub へ伝わらない。採用するなら定期 reconcile を運用に組み込むこと。組み込めないなら `none` を選ぶ。乖離は運用の怠慢ではなく設定の構造的帰結として単調増加する。
 - mode=both はtask単位の`tracker_binding_intent=beads|github|none`を必須とし、`auto`を禁止する。mode=beads|githubでは`auto`を同じbindingへ決定論解決できる。
 - Beads mirrorをGitHub Projectsへ載せる場合、Projectsはviewer-onlyとしGitHub native auto-add/Doneだけを使う。custom fieldを双方向管理したいtaskは`tracker_binding=github`を選ぶ。
 - mode 変更 (migration): mode を変更しても既存ノードの `tracker_binding` は自動変更しない (新 mode は新規ノードにのみ適用する)。既存束縛の移行は dry-run manifest 付きの明示 migration として実行する。旧 tracker 側の issue は `close --reason=migrated` で収束させる。
@@ -52,7 +56,10 @@ registration payloadの`tracker_binding="repo-config-default"` sentinelと`bindi
 
 - tombstoned の bd 写像は `bd close --reason=tombstoned`。bd 側の tombstone status は実在するが delete 系操作でのみ遷移するため bridge は行わない (C28 は破壊操作を呼ばない)。
 - bd status 語彙の出典: bd v1.1.0 組込み status = open/in_progress/blocked/closed/deferred (+hooked/tombstone)。
-- parity突合対象はstatusと依存edge exact-set (`dev-graph depends_on` ↔ bd `blocks`)。priority/assignee/labelsはbd側自由領域とする。statusまたはedge差分はC03の手動確認フローへ回し、解消までready推薦から除外する。
+- parity突合対象はstatusと依存edge exact-set (`dev-graph depends_on` ↔ bd `blocks`)。priority/assignee/labelsはbd側自由領域 (= dev-graph側に対応する正本を持たず突合しない) とする。statusまたはedge差分はC03の手動確認フローへ回し、解消までready推薦から除外する。
+- **自由領域=突合対象外であって、bridge 迂回の許可ではない**。C10 guard は `bd` の mutation サブコマンドを field で選り分けず全面遮断するため、自由領域 3 field の書込経路も C28 `bd-bridge.py --op update` の `--priority` / `--assignee` / `--labels` に一本化する。guard を field 単位で緩める案は、フラグの並び・短縮形・後続コマンド連結で fail-closed が破れるため採らない (HarnessHub-dc7)。
+- `--labels` は `bd update --set-labels` への置換転送のみを受ける (add/remove の部分適用は、同一 run の適用順で最終状態が変わり receipt から再現できないため受けない)。空文字は拒否する: strings フラグの空値が全消去か空 label 1 件かは bd の公開 surface に規定が無く、§7 の「安定 surface のみに依存」に反するため。
+- guard の粒度はサブコマンド単位なので `bd update --help` のような read も遮断される。help は `bd help update` を使う (`bd show` / `bd list` / `bd ready` は遮断されない)。
 - 写像は冪等 projection として C28 bd-bridge / C12 gh-bridge が適用する。逆方向の書込み (bd 側の手動 close を dev-graph へ取り込む等) は C03 sync / C26 reconciliation の突合で検出し、自動上書きせず manual conflict へ回す。
 
 ## 3. system/dev-graph route の完了カスケード契約 (完了忘れ防止)
@@ -190,4 +197,50 @@ dev-graph=マクロ層 (機能単位の保持 + 実行オーケストレーシ�
 
 - PR close→task close→ローカル反映の自動化 (§3 カスケード / C25 hook) は bd CLI (C28 bridge) と PR fact を直接叩き、strandkanban を経由しない。看板は結果を表示するだけ。
 - したがって看板の起動有無・オフライン・停止は完了収束に影響しない (§7 の drift 耐性と同一設計)。CI/headless 環境で SvelteKit を起動できなくても、bd + C05 render で運用は成立する。
+
+## 10. parity manifest の由来必須化と unmapped 分類 (C28 ready / C16 schedule の停止条件) — 正本
+
+C28 `bd-bridge.py --op ready --parity-manifest` が受け取る manifest は graph の snapshot であり、tracker 側の事実ではない。snapshot に由来がないと、古い snapshot が `edge_parity.confirmed=true` を主張しても下流が stale を機械判定できず、消えた/増えた node を黙って無視した ready-set が出る。以下を必須契約とする。
+
+**manifest スキーマ (必須フィールド)**
+
+| フィールド | 型 | 意味 |
+|---|---|---|
+| `generated_at` | RFC3339 UTC (`YYYY-MM-DDThh:mm:ssZ`) | snapshot を作った時刻 |
+| `source_graph_digest` | `sha256:<64 lowercase hex>` | 素にした graph の canonical digest |
+| `nodes[]` | object[] | `graph_node_id` / `bd_issue_id` / `graph_status` / `depends_on` |
+| `graph_node_ids[]` | string[] | snapshot 時点で graph に実在した node id の全集合 (`nodes[]` の投影対象に限らない) |
+
+- `source_graph_digest` の算出式は C16 schedule-graph の canonical digest と同一 (`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(",", ":"))` の sha256)。整形差で stale 判定が揺れないよう、バイト列 digest ではなく canonical digest を使う。
+- 由来欠落・形式違反は C28 が fail-closed で拒否する。素性のない snapshot を流通させない。
+- manifest の生成 authority は `scripts/build-parity-manifest.py` の単一経路とする。手書き・部分編集・他 script からの直接書込は認めない。generator は canonical graph だけを読み tracker を読まない。tracker を読んで manifest を作ると、C28 は「自分で作った答え」を採点することになり parity 検査が空虚になる。
+- generator は `tracker_binding=beads` かつ `beads_linkage.bd_issue_id` を持つ node を **status で間引かず全件** 投影する。`done`/`closed` を省くと、それらを依存に持つ `active` node が `parity manifest dependency lacks a Beads linkage` で conflicts へ落ち、ready-set が再び空になる。作業候補の絞り込みは C16 `is_schedulable` が graph 側の事実として独立に行う。
+- 投影できなかった node は receipt の `unlinked` (起票前 = `beads_linkage` 不在) と `dependency_gaps` (依存先が manifest 外) に理由つきで残す。件数だけで「起票前」と「Beads 未束縛依存」を判別できるようにするため。`BRIDGE_STATUS_MAP` が写せない status は黙って除外せず fail-closed で停止する (除外すると下流で `parity_manifest_missing` という誤った owner の札が付く)。
+- manifest は C16 の手順 (`run-dev-graph-schedule`) が `--op ready` の直前に同 generator で作り直す。前回の manifest を使い回すと、その間の graph 変更が stale として停止するだけで ready-set は得られない。
+- C28 は検証した由来を receipt の `parity_provenance` に載せ、C16 schedule-graph が graph 実体の canonical digest と突合する。不一致は「stale snapshot」として schedule を停止する (node 単位の parity 再照合は manifest に載った node しか見ないため、snapshot 生成後に追加/削除された node は原理的に捕まらない)。
+- 停止時の回復手順は manifest の再生成であり、`source_graph_digest` の書き換えではない。digest だけを現在値へ合わせる修正は stale 検出を恒久的に無効化するため禁止する。
+
+**unmapped 分類 (reason exact-set)**
+
+| reason | 意味 | 対処 owner |
+|---|---|---|
+| `external_ref_absent` | `bd ready` 候補が dev-graph の `external_ref` を持たない = graph 管理外の bd 課題 | 対処不要 (可視化のみ)。graph 管理下へ移すなら C02 で node 化する |
+| `graph_node_missing` | `external_ref` が指す node が `graph_node_ids` に無い = graph から消えた node への宙に浮いた参照 (orphan) | C02 で node を復元するか、失効しているなら C28 `--op close` で bd 側を閉じる。**manifest の再生成では解消しない** |
+| `parity_manifest_missing` | `external_ref` が指す node は graph に実在するのに manifest の `nodes[]` に無い = 投影の取りこぼし | `build-parity-manifest.py` で manifest を再生成 / linkage 修復 |
+| `dependency_unsatisfied` | C16 schedule の対象かつ schedulable だが、未完了の `depends_on` があるため ready-set から除外された node | `source: "schedule-graph"` と `blocking_depends_on: string[]` を確認し、列挙された上流 node の完了を待つ |
+
+- C28 は理由別件数を `unmapped_summary` として receipt に載せる。件数だけで「管理外が何件・取りこぼしが何件」を判別できるようにするため。
+- C16 schedule-graph は C28 の `unmapped` / `conflicts` を自身の `unmapped` へ `source: "bd-bridge"` 付きで引き継ぐ。schedule の判定には使わないが、report から消すことは silent drop にあたるため禁止する。
+- C16 schedule-graph は選択範囲内かつ schedulable な node の依存だけを評価し、未充足時は `external_ref`、`reason: "dependency_unsatisfied"`、`blocking_depends_on`、`source: "schedule-graph"` を `unmapped[]` に載せる。選択範囲外・非 schedulable の除外と条件分岐を分離し、依存未充足として誤報告してはならない。
+
+**graph → tracker の片方向走査が作る盲点と、逆方向の全数検査**
+
+C03 sync (`reconcile-github-lifecycle.py`) も C28 manifest 生成 (`build-parity-manifest.py`) も `lint-open-residue.py` も、走査の起点は例外なく graph の node である。したがって **node が graph から消えた瞬間、その node を指していた bd issue は全ての検査の視界から同時に外れる**。issue は `external_ref: dev-graph:<消えた node>` を抱えたまま open で残り、GC/削除のたびに orphan が積み上がる。
+
+- C28 の `graph_node_missing` は、`bd ready` の候補になった orphan だけを可視化する。ready に上がらない orphan (closed 済み・依存で blocked 等) は原理的に捕まらないため、**分類の精緻化だけでは検査として完結しない**。
+- 運用時の棚卸しは C28 `--op orphan-audit` が担う。全 bd issue を canonical graph と突合し、参照先の無い issue に `restore_node` / `merge_pending` / `repoint_or_close` の処分 owner を付けて全件返す (read-only)。node を物理削除する前は `--op removal-preflight` で、人が選んだ処分 (`cancel_deletion` / `close_issue_first` / `detach_external_ref_first`) が Beads へ反映済みかを確認する。bridge はどちらでも自動 close / detach をしない。
+- 品質ゲートとしての全数突合は `scripts/lint-orphan-external-ref.py` が担う。bd export を起点に graph を引き、参照先が実在しない issue を `closed_residue` (履歴の残骸) / `merge_pending` (他 ref に node 実在) / `node_restorable` (md 実体あり = C02 復元) / `true_orphan` (実体なし = 処分要) へ仕分け、非クローズの残置を fail-closed で遮断する。
+- 既知の未処分 orphan は repository 側データの shrink-only baseline (既定は repo-root 相対の `scripts/dev-graph-orphan-baseline.json`、`--baseline` で別 path も指定できる) に凍結し、**新規発生のみ**を違反とする。baseline を増やす変更は「orphan を生み続ける経路を塞ぐ」という目的そのものを無効化するため認めない。処分が済んだ行は lint 出力の `resolved_baseline_entries[]` に現れ、削除を督促する (残すと同じ参照が再発しても違反にならない穴になる)。
+- baseline を plugins/ 側へ焼き込まないのは仕組み/ナレッジ境界による。`plugins/dev-graph/` は他 repo へ持ち出せる portable な仕組みであり、特定 repo の node id を抱えると持ち出した先で意味を失う。既知 orphan は repo 固有ナレッジなので repo 側データとして入力で受け渡す。
+- 本 lint は bd の live 状態 (Dolt DB) を要求するのでローカル品質ゲートで実行する。`.beads/issues.jsonl` は受動エクスポートであり状態判定の正本ではないため読まない。
 

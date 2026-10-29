@@ -72,6 +72,8 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
         if args[0] == "search":
             marker = args[args.index("--external-contains") + 1].removeprefix("dev-graph:")
             return [row for row in issues.values() if row.get("external_ref") == f"dev-graph:{marker}"]
+        if args[0] == "list":
+            return list(issues.values())
         if args[0] == "create":
             next_id += 1
             issue_id = f"B{next_id:02d}"
@@ -119,6 +121,9 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
     children = package_manifest()["children"]
     by_graph = {issues[f"B{i + 1:02d}"]["external_ref"].removeprefix("dev-graph:"): f"B{i + 1:02d}" for i in range(1, 14)}
     parity = {
+        "generated_at": "2026-07-21T00:00:00Z",
+        "source_graph_digest": "sha256:" + "c" * 64,
+        "graph_node_ids": sorted(row["graph_node_id"] for row in children),
         "nodes": [
             {
                 "graph_node_id": row["graph_node_id"],
@@ -133,6 +138,11 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
     _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--parity-manifest", parity_path)
     assert len(ready["result"]["ready_set"]) == 13
     assert not ready["result"]["conflicts"] and not ready["result"]["unmapped"]
+    # ready は判定に使った parity snapshot の出所を receipt に返す。古い snapshot での判定を呼び出し側が見分けられる。
+    assert ready["parity_provenance"] == {
+        "generated_at": "2026-07-21T00:00:00Z",
+        "source_graph_digest": "sha256:" + "c" * 64,
+    }
     issues["B02"]["dependencies"].append({"id": "unexpected"})
     _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--parity-manifest", parity_path)
     assert len(ready["result"]["ready_set"]) == 12 and ready["result"]["conflicts"]

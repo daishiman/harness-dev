@@ -54,7 +54,20 @@
           "severity": { "type": "string", "enum": ["high", "medium", "low"] },
           "summary": { "type": "string", "description": "指摘の要約。" },
           "recommendation": { "type": "string", "description": "推奨対応。任意。" },
-          "target_ref": { "type": "string", "description": "指摘対象の参照 (ファイル/component id)。任意。" }
+          "target_ref": { "type": "string", "description": "指摘対象の参照 (ファイル/component id)。任意。" },
+          "disposition": {
+            "type": "string",
+            "enum": ["applied", "deferred", "rejected"],
+            "description": "消化状態。schema_version 1.1.0 以降で必須 (qa-067 要件3)。applied=現行実装に反映済み / deferred=beads 課題で追跡 / rejected=設計判断で不採用。"
+          },
+          "disposition_ref": {
+            "type": "string",
+            "description": "disposition の根拠参照。<repo 相対 path> / <path>#<anchor> / bd:<issue-id> のいずれか。1.1.0 以降で必須。"
+          },
+          "disposition_recorded_at": {
+            "type": "string",
+            "description": "disposition を記録した ISO-8601 date-time。1.1.0 以降で必須。"
+          }
         }
       }
     },
@@ -108,6 +121,24 @@
         "properties": {
           "provenance": {
             "required": ["origin_request"]
+          }
+        }
+      }
+    },
+    {
+      "comment": "schema_version 1.1.0 以降は per-finding disposition を必須化する (qa-067 要件3)。1.0.0 の既存出力は後方互換で無変更。",
+      "if": {
+        "properties": {
+          "schema_version": { "const": "1.1.0" }
+        },
+        "required": ["schema_version"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "required": ["id", "severity", "summary", "disposition", "disposition_ref", "disposition_recorded_at"]
+            }
           }
         }
       }

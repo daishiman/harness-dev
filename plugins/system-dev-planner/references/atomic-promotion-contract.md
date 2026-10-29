@@ -18,7 +18,7 @@ C01/C04 はcaller repositoryの`.dev-graph/staging/<run_id>/`だけへ、1 featu
 
 ## Commit point
 
-同じ repo filesystem 内の staging generation に、`promoted_at` RFC3339 timestampを含む immutable receiptと registration/findings を書き、全ファイルと directory entry を fsync する。その後 published generation directory へ1回だけ atomic rename し、`current.json` pointerをatomic replaceする。rename 前の失敗では旧 current/published を維持し、rename 後の pointer 更新失敗は immutable receipt と promotion intent を照合して冪等回復する。partial generation は dev-graph へ渡さない。
+同じ repo filesystem 内の staging generation に、`promoted_at` RFC3339 timestamp、canonical digest由来`generation_id`、直前世代の`supersedes` locatorを含む immutable receiptと registration/findings を書き、全ファイルと directory entry を fsync する。その後`<published>/generations/<package-slug>/<generation_id>/`へ1回だけ atomic rename し、互換用`current.json`と正本のfeature別`current/<package-slug>.json` pointerをatomic replaceする。source drift時は旧generation/receiptを書き換えず新generationを追加する。rename 前の失敗では旧 current/published を維持し、rename 後の pointer 更新失敗は immutable receipt と promotion intent を照合して冪等回復する。partial generation は dev-graph へ渡さない。
 
 ## Registration
 

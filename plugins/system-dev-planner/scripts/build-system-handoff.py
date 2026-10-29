@@ -58,11 +58,15 @@ TASK_PATHS = [
 SOURCE_PATHS = ["feature-package.json", "workstream-inventory.json", "task-graph.json", *TASK_PATHS]
 PLACEHOLDER = re.compile(r"\b(?:TODO|TBD)\b|__PLACEHOLDER__|<[^>]+>", re.I)
 TASK_SPEC_HEADING = re.compile(r"^##[ \t]+(.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
+METHODOLOGY_MARKER = "system-task-goal-seek/v1"
+GOAL_SEEK_PASS_MARKER = "rubric verdict=PASS"
+P13_WRITEBACK_MARKER = "P13 spec/architecture writeback: required"
 REQUIRED_TASK_SPEC_SECTIONS = (
     "Machine-readable registration fields", "目的", "背景", "前提条件",
     "Workstream applicability", "Architecture and deploy unit", "成果物",
     "Tracker publication and completion", "Branch and worktree execution", "スコープ外",
-    "Verification and evidence", "Rollout and rollback", "Handoff", "参照情報",
+    "Verification and evidence", "Inner goal-seek execution loop",
+    "Rollout and rollback", "Handoff", "参照情報",
 )
 
 
@@ -353,6 +357,10 @@ def _validate_sources(
         section_errors = task_spec_violations(text)
         if section_errors:
             raise PolicyError(f"task spec section violation ({phase}): {section_errors}")
+        if METHODOLOGY_MARKER not in text or GOAL_SEEK_PASS_MARKER not in text:
+            raise PolicyError(f"task spec inner goal-seek contract missing ({phase})")
+        if phase == "P13" and P13_WRITEBACK_MARKER not in text:
+            raise PolicyError("P13 task spec must declare canonical spec/architecture writeback")
 
     files = _manifest_files(manifest)
     allowed_sets = {frozenset(SOURCE_PATHS), frozenset([*SOURCE_PATHS, HANDOFF_PATH])}
@@ -418,6 +426,7 @@ def _build_handoff(
             "final_manifest_digest_scope": "all manifest files including handoff; manifest itself excluded",
             "self_reference_policy": "handoff omits its own digest and final manifest digest",
         },
+        "p01_entry_gate": inventory["p01_entry_gate"],
         "execution_tasks": [
             {
                 "task_id": task["id"],

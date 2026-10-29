@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["issue", "proposal_sha256", "audited_targets", "omissions", "excesses", "allowlist_violations", "verdict"],
   "properties": {
-    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "issue": {"type": ["integer", "string"], "description": "対象 tracker key (GitHub issue 番号または Beads issue id)"},
     "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "監査対象 proposal の digest。sync-proposal.proposal_sha256 と一致必須 (別提案の監査を弾く)"},
     "audited_targets": {
       "type": "array",

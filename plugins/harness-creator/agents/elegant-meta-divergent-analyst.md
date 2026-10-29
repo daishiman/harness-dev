@@ -100,4 +100,4 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 
 ## Handoff
 
-`paradigm_findings[]` (9 件) と代替アプローチ集合を orchestrator へ返す。横展開抽象 (`reuse_surface != none`) は `amplified-patterns.json` へ蓄積される正フィードバック経路に回す。
+`paradigm_findings[]` (9 件) と代替アプローチ集合を JSON payload として orchestrator へ返す。ファイル materialize は orchestrator だけが行う。

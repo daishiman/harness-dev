@@ -52,6 +52,19 @@
 - Closed without merge: <keep_active|mark_blocked; never auto-done>
 - Local reconciliation: <manual sync + optional post-merge hook + scheduled repair>
 
+## status の意味論 (二重正本の禁止)
+
+frontmatter の `status` は **文書ライフサイクル**のみを表す。取り得る値と意味 (graph-node.schema.json の enum に一致):
+
+- `draft` 起案中 / `active` 有効 / `blocked` 依存で停止 / `done` 完了として確定 / `closed` 文書として役割終了 / `tombstoned` 論理削除 (物理削除しない)
+- 「後継文書へ置換された」状態は `closed` (旧文書) + 新文書側の `related_nodes`/`source_lineage` で表す。`superseded` という値は enum に無いため使用しない。
+
+**実行状態 (未着手・進行中・完了) の正本は md ではない。** 実行状態は graph node 側に一元化する:
+
+- `completion_evidence` (実行完了の根拠・policy・status) / `execution_contexts` (実行中の worktree/branch) / `beads_linkage` (課題トラッカー上の状態)
+
+md へ実行状態を書き写して二重正本を作らない。`status=closed` かつ `completion_evidence.status=in_progress` は矛盾ではなく「文書は役割終了・実行の reconcile は未了」を意味する。両者は `lint-open-residue.py` が別 rule で検査する。なお `completion_evidence.policy=linked_pr_merged_all` は `status=done` へ遷移する際 GitHub PR merge の証跡 (pull_request_linkages/source=github_pr_merge) を schema が強制するため、`github.enabled=false` の beads 運用で close-loop する場合は `policy=manual` + `source=manual` を用いる。
+
 ## 実行手順
 
 1. <single-responsibility-step>

@@ -344,7 +344,7 @@ def _registration_nodes(*, inventory: dict, package: dict, destination_rel: str,
             "depends_on": task["depends_on"], "related_nodes": task["related_nodes"],
             "resource_scope": task["write_scope"], "parent_feature": package["parent_feature"],
             "feature_package_id": package["feature_package_id"], "phase_ref": task["phase_ref"],
-            "file_path": file_path, "template_id": "task", "template_version": "1.0.0",
+            "file_path": file_path, "template_id": "task", "template_version": "1.1.0",
             "confirmation_status": "confirmed", "evaluation_status": "pass",
             "confirmation_evidence": {
                 "evaluator": "system-dev-plan-evaluator", "evidence_ref": findings_rel,
@@ -377,11 +377,70 @@ def _intent_path(root: Path, context: dict, staging_rel: str) -> Path:
 
 
 def _current_payload(intent: dict) -> dict:
-    return {
+    payload = {
         "schema_version": "1.0.0", "feature_package_id": intent["feature_package_id"],
+        "generation_id": intent["generation_id"],
         "published_path": intent["destination"], "published_digest": intent["digest"],
         "receipt": intent["receipt"],
     }
+    if intent.get("supersedes") is not None:
+        payload["supersedes"] = intent["supersedes"]
+    return payload
+
+
+def _package_slug(package_id: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", package_id).strip("-")
+    if not slug:
+        raise ValueError("feature_package_id does not produce a stable generation slug")
+    return slug
+
+
+def _pointer_from_generation(root: Path, destination_rel: str) -> dict | None:
+    destination = root / destination_rel
+    receipt_path = destination / "atomic-promotion-receipt.json"
+    package_path = destination / "feature-package.json"
+    if not receipt_path.is_file() or not package_path.is_file():
+        return None
+    receipt = _json(receipt_path)
+    package = _json(package_path)
+    digest = receipt.get("published_digest")
+    if not isinstance(digest, str):
+        return None
+    return {
+        "schema_version": "1.0.0",
+        "feature_package_id": package.get("feature_package_id"),
+        "generation_id": digest.removeprefix("sha256:"),
+        "published_path": destination_rel,
+        "published_digest": digest,
+        "receipt": f"{destination_rel}/atomic-promotion-receipt.json",
+    }
+
+
+def _previous_generation(root: Path, context: dict, package_id: str, slug: str) -> dict | None:
+    """Resolve the last generation without mutating legacy published bytes."""
+    state_root = context["plan_roots"]["state"]["relative"]
+    feature_current = root / state_root / "current" / f"{slug}.json"
+    if feature_current.is_file():
+        current = _json(feature_current)
+        if current.get("feature_package_id") != package_id:
+            raise ValueError("feature current pointer package identity mismatch")
+        return current
+    legacy_current = root / state_root / "current.json"
+    if legacy_current.is_file():
+        current = _json(legacy_current)
+        if current.get("feature_package_id") == package_id:
+            return current
+    published_root = context["plan_roots"]["published"]["relative"]
+    return _pointer_from_generation(root, f"{published_root}/{slug}")
+
+
+def _supersedes_locator(previous: dict | None) -> dict | None:
+    if previous is None:
+        return None
+    required = ("published_path", "published_digest", "receipt")
+    if any(not isinstance(previous.get(key), str) or not previous[key] for key in required):
+        raise ValueError("previous generation pointer is incomplete")
+    return {key: previous[key] for key in required}
 
 
 def _validate_feature_pin(package: dict, context: dict) -> None:
@@ -452,13 +511,22 @@ def _recover_published(root: Path, context: dict, intent_path: Path, intent: dic
     registration = _json(registration_path)
     findings = _json(findings_path)
     digest = intent["digest"]
-    deterministic = validator.validate(destination, context["repository_id"])
+    # baseline={} で契約 version 免除を無効化する。免除は既 promote package の再検証専用であり、
+    # promotion 経路へ効かせると台帳へ digest を先回り登録するだけで旧契約 package を新規昇格できる。
+    deterministic = validator.validate(
+        destination,
+        context["repository_id"],
+        baseline={},
+        repo_root=root,
+    )
     if deterministic.get("status") != "pass" or deterministic.get("validated_digest") != digest:
         raise ValueError("published generation bytes do not match promotion intent digest")
     if receipt.get("status") != "promoted" or any(
         receipt.get(key) != digest for key in ("staging_digest", "evaluated_digest", "published_digest")
     ):
         raise ValueError("published generation does not match promotion intent")
+    if receipt.get("generation_id") != intent.get("generation_id") or receipt.get("supersedes") != intent.get("supersedes"):
+        raise ValueError("published generation lineage does not match promotion intent")
     _validate_findings(findings, validator)
     _validate_evaluated_inputs(findings, destination)
     _validate_feature_pin(_json(destination / "feature-package.json"), context)
@@ -468,7 +536,13 @@ def _recover_published(root: Path, context: dict, intent_path: Path, intent: dic
         raise ValueError("published findings/registration digest does not match promotion intent")
     state_root = context["plan_roots"]["state"]["relative"]
     current = Path(c09.guard_relative_path(root, f"{state_root}/current.json"))
+    feature_current = Path(c09.guard_relative_path(
+        root, f"{state_root}/current/{intent['package_slug']}.json"
+    ))
+    # Keep the legacy last-promoted pointer for compatibility, while the
+    # feature-scoped pointer is the authoritative multi-feature index.
     _atomic_json(current, _current_payload(intent))
+    _atomic_json(feature_current, _current_payload(intent))
     completed = dict(intent, status="completed", completed_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
     _atomic_json(intent_path, completed)
     return receipt
@@ -481,7 +555,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--run-id", required=True); p.add_argument("--session-owner", required=True)
     p.add_argument("--staging", required=True); p.add_argument("--findings", required=True)
     p.add_argument("--readiness", required=True); p.add_argument("--validation", required=True)
-    p.add_argument("--destination", help="repo-relative destination; default configured published/<package-slug>")
+    p.add_argument("--destination", help="repo-relative destination; default configured published/generations/<package-slug>/<generation-id>")
     args = p.parse_args(argv)
     c09 = _load("sdp_context", HERE / "resolve-project-context.py")
     lock_manager = _load("sdp_lock_manager", HERE / "manage-system-plan-lock.py")
@@ -505,7 +579,12 @@ def main(argv: list[str] | None = None) -> int:
         findings = _json(Path(c09.guard_relative_path(root, args.findings)))
         readiness = _json(Path(c09.guard_relative_path(root, args.readiness)))
         validation = _json(Path(c09.guard_relative_path(root, args.validation)))
-        deterministic = validator.validate(staging, context["repository_id"])
+        deterministic = validator.validate(
+            staging,
+            context["repository_id"],
+            baseline={},
+            repo_root=root,
+        )
         _validate_findings(findings, validator)
         if findings.get("plan_dir") != args.staging:
             raise ValueError("plan findings plan_dir does not match promotion staging")
@@ -538,9 +617,10 @@ def main(argv: list[str] | None = None) -> int:
         _validate_handoff_boundary(_json(staging / "system-build-handoff.json"))
         inventory = _json(staging / "workstream-inventory.json")
         package_id = package["feature_package_id"]
-        slug = re.sub(r"[^A-Za-z0-9._-]+", "-", package_id).strip("-")
+        slug = _package_slug(package_id)
         published_root = context["plan_roots"]["published"]["relative"]
-        destination_rel = args.destination or f"{published_root}/{slug}"
+        generation_id = digest.removeprefix("sha256:")
+        destination_rel = args.destination or f"{published_root}/generations/{slug}/{generation_id}"
         destination = Path(c09.guard_relative_path(root, destination_rel))
         if not staging.is_dir(): raise ValueError("staging generation is not a directory")
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -562,9 +642,19 @@ def main(argv: list[str] | None = None) -> int:
             "feature_package_id": package_id, "parent_feature": package["parent_feature"],
             "expected_count": 13, "phase_refs": PHASES, "binding_intents": binding_intents, "nodes": nodes,
         }
+        previous = _previous_generation(root, context, package_id, slug)
+        supersedes = _supersedes_locator(previous)
+        if previous is not None and previous.get("published_digest") == digest:
+            if previous.get("published_path") != destination_rel:
+                raise ValueError("same digest is already current at a different published path")
+            # 同じ世代の再 promote は、その世代自身を supersede しない。記録済みの系譜をそのまま引き継ぐ。
+            supersedes = previous.get("supersedes")
+        if previous is not None and previous.get("published_path") == destination_rel and previous.get("published_digest") != digest:
+            raise ValueError("replan destination would overwrite an immutable generation")
         receipt = {
             "schema_version": "1.0.0", "status": "promoted",
             "promoted_at": promoted_at,
+            "generation_id": generation_id, "supersedes": supersedes,
             "repo_identity": context["repository_id"], "staging_digest": digest,
             "evaluated_digest": digest, "published_digest": digest,
             "implementation_readiness": "complete", "quality_conditions": quality,
@@ -574,6 +664,7 @@ def main(argv: list[str] | None = None) -> int:
         intent = {
             "schema_version": "1.0.0", "status": "prepared", "staging": args.staging,
             "destination": destination_rel, "digest": digest, "feature_package_id": package_id,
+            "package_slug": slug, "generation_id": generation_id, "supersedes": supersedes,
             "receipt": receipt_rel,
         }
         _atomic_json(intent_path, intent)

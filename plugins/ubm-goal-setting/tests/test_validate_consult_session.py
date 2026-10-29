@@ -36,6 +36,26 @@ def test_ai_text_cannot_impersonate_user_role():
     assert any("role=user" in e for e in errors)
 
 
+def test_duplicate_transcript_turn_id_makes_cli_exit1(tmp_path, capsys):
+    """同じ turn ID の別発話を provenance の 1 件へ畳み込まず拒否する。"""
+    transcript = [
+        {"id": "u1", "role": "user", "content": "自分で選ぶ"},
+        {"id": "u1", "role": "user", "content": "同じ ID の別発話"},
+    ]
+    errors = MOD.validate(base_record(), transcript)
+    assert any("turn id" in error and "重複" in error and "u1" in error for error in errors)
+
+    record_path = tmp_path / "record.json"
+    transcript_path = tmp_path / "transcript.json"
+    record_path.write_text(json.dumps(base_record(), ensure_ascii=False), encoding="utf-8")
+    transcript_path.write_text(json.dumps(transcript, ensure_ascii=False), encoding="utf-8")
+
+    assert MOD.main(["--record", str(record_path), "--transcript", str(transcript_path)]) == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output["valid"] is False
+    assert any("turn id" in error and "u1" in error for error in output["errors"])
+
+
 def test_record_requires_consent():
     r = base_record(); r["persistence_consent"] = False
     assert any("consent" in e for e in MOD.validate(r, [{"id": "u1", "role": "user"}]))

@@ -50,7 +50,7 @@ SPEC_DIR="${CLAUDE_PROJECT_DIR:-.}/system-spec"  # spec-state.json の正本位�
 # validate_decisions (options 2-3件・free/low-cost 1件以上・user_decision 契約・goalトレース) も走らせる
 python3 "$SSH/scripts/validate-coverage-matrix.py" --matrix "$SPEC_DIR/spec-state.json" --require-complete --require-foundation
 # 取得対象一覧 ↔ fetched-references.json の出典を全件突合 (形式・全件・host 一致)
-python3 "$SSH/scripts/validate-source-citation.py" --targets "$SPEC_DIR/spec-state.json" --references "$SPEC_DIR/fetched-references.json"
+python3 "$SSH/scripts/validate-source-citation.py" --targets "$SPEC_DIR/spec-state.json" --references "$SPEC_DIR/fetched-references.json" --repo-root "$CLAUDE_PROJECT_DIR"
 ```
 
 - 両者 exit0 = 章立てコンパイルに足る入力健全性 (網羅性 + 上位概念確定 + 意思決定契約 + 出典突合) を満たす。1 段目のコンパイル本体 (C03) へ進む。

@@ -50,6 +50,8 @@ source: plugin-plans/system-dev-planner/component-inventory.json#C04
 - [ ] parent_feature、feature_package_id、source digest が全 artifact で一致する。
 - [ ] DAG が同一 feature 内の前方 edge だけを持つ。
 - [ ] 各 task に acceptance、verification、rollback、write scope がある。
+- [ ] 各 task に `## テスト戦略` が1件あり、`テストレベル選定`/`カバレッジ目標`/`層別方針`/`保守性制約` の4項目をこの順序で非空に持つ。契約 version は package の canonical digest から `assets/validation-contract-baseline.json` を引いて解決され、新規 package は台帳未登録ゆえ `1.3.0` で必須検査される (package 側に版宣言フィールドは持たせない)。
+- [ ] task spec 本文が `validate-system-plan.py` を再実行コマンドとして提示する場合は、`--staging` ではなく自 package の `--feature-package <feature_package_id>` を使う。flag 欠落と他 package の id も C12 契約 `1.3.0` が fail-closed で拒否する。
 - [ ] placeholder、別 phase 文書、追加 canonical task がない。
 - [ ] staging manifest が全 file digest を保持する。
 

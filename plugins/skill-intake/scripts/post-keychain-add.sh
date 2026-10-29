@@ -5,7 +5,7 @@
 # 配線: SessionStart hook ではなく、Keychain 登録時にユーザーが手動実行することを想定。
 #
 # 使い方:
-#   bash plugins/skill-intake/hooks/post-keychain-add.sh
+#   bash plugins/skill-intake/scripts/post-keychain-add.sh
 #
 # 終了コード:
 #   0 = 取得成功 (空でない文字列が返る)

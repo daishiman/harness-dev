@@ -63,14 +63,7 @@ def _full_findings() -> dict:
                     "C3": {"verdict": "PASS", "evidence": [f"C3 checked {pid}"]},
                     "C4": {"verdict": "PASS", "evidence": [f"C4 checked {pid}"]},
                 },
-                "issues": [
-                    {
-                        "condition": "C1",
-                        "severity": "high",
-                        "description": f"issue desc {pid}",
-                        "recommended_intervention": f"fix {pid}",
-                    }
-                ],
+                "issues": [],
             }
         )
     return {
@@ -87,7 +80,11 @@ def _full_findings() -> dict:
         "variable_abstraction": [
             {
                 "concrete_value": "harness-creator",
-                "variable_name": "{{plugin_name}}",
+                "name": "{{plugin_name}}",
+                "meaning": "review target plugin",
+                "default": "harness-creator",
+                "required": True,
+                "not_applicable_when": "target is not a plugin",
                 "source_trace": "SKILL.md L1",
             }
         ],
@@ -123,6 +120,41 @@ def test_structured_json_full_passes(tmp_path):
     ok, errors = MOD.validate_structured_json(p)
     assert ok is True
     assert errors == []
+
+
+def test_structured_json_rejects_duplicate_paradigm_ids_even_when_all_ids_appear(tmp_path):
+    data = _full_findings()
+    duplicate = dict(data["paradigm_findings"][0])
+    data["paradigm_findings"].append(duplicate)
+    p = tmp_path / "f.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    ok, errors = MOD.validate_structured_json(p)
+    assert ok is False
+    assert any("duplicate paradigm_id" in error for error in errors)
+
+
+def test_structured_json_rejects_any_skipped_method(tmp_path):
+    data = _full_findings()
+    data["paradigm_findings"] = data["paradigm_findings"][1:]
+    data["thought_method_coverage"]["used"] = data["thought_method_coverage"]["used"][1:]
+    data["thought_method_coverage"]["skipped_with_reason"] = [
+        {"method": "critical", "reason": "temporarily unavailable"}
+    ]
+    p = tmp_path / "f.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    ok, errors = MOD.validate_structured_json(p)
+    assert ok is False
+    assert any("skipped_with_reason must be empty" in error for error in errors)
+
+
+def test_structured_json_requires_used_to_be_exact_unique_canonical_30(tmp_path):
+    data = _full_findings()
+    data["thought_method_coverage"]["used"][-1] = "critical"
+    p = tmp_path / "f.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    ok, errors = MOD.validate_structured_json(p)
+    assert ok is False
+    assert any("used must contain exactly 30 unique canonical methods" in error for error in errors)
 
 
 def test_structured_json_empty_variable_abstraction_list_ok(tmp_path):
@@ -365,7 +397,7 @@ def test_structured_json_variable_abstraction_item_not_object(tmp_path):
 
 def test_structured_json_variable_abstraction_missing_keys(tmp_path):
     data = _full_findings()
-    data["variable_abstraction"] = [{"variable_name": "{{x}}"}]  # concrete_value/source_trace 欠落
+    data["variable_abstraction"] = [{"name": "{{x}}"}]
     p = tmp_path / "f.json"
     p.write_text(json.dumps(data), encoding="utf-8")
     ok, errors = MOD.validate_structured_json(p)
@@ -379,7 +411,11 @@ def test_structured_json_variable_abstraction_not_template(tmp_path):
     data["variable_abstraction"] = [
         {
             "concrete_value": "v",
-            "variable_name": "plain_name",  # {{ で始まらない
+            "name": "plain_name",
+            "meaning": "value",
+            "default": "v",
+            "required": False,
+            "not_applicable_when": "never",
             "source_trace": "t",
         }
     ]
@@ -420,7 +456,7 @@ def test_main_json_ok(tmp_path):
     p.write_text(json.dumps(_full_findings(), ensure_ascii=False), encoding="utf-8")
     r = _run([str(p)], tmp_path)
     assert r.returncode == 0, r.stderr
-    assert "all 30 paradigms covered with structured findings" in r.stdout
+    assert "exactly 30 unique paradigms used" in r.stdout
 
 
 def test_main_json_failure_exit1_emits_errors(tmp_path):

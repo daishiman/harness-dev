@@ -11,11 +11,11 @@
 | `foundation_trace` | 上位概念trace | C05 R1-score | `requirements_foundation` / 00要件定義章 | `validate-coverage-matrix.py --require-foundation` |
 | `decision_guidance` | 意思決定支援 | C05 R1-score | `decisions[]` / 00要件定義章 | 同上 |
 | `matrix_coverage` | マトリクス網羅性 | `system-spec-matrix-auditor` (C07) + sub-input `system-spec-hearing-auditor` (C06) | `spec-state.json` | `validate-coverage-matrix.py` |
-| `design_knowledge_reflection` | 設計知識反映 | C05 R1-score が自前評価 (**独立 auditor なし**) | `system-spec/*.md` / `resource-map.yaml` | (機械層=ポインタ存在 / 意味層=原則の具体適用) |
+| `design_knowledge_reflection` | 設計知識反映 | C05 R1-score が自前評価 (**独立 auditor なし**) | `system-spec/` 配下の全 Markdown (`Path.rglob("*.md")`) / `resource-map.yaml` | (機械層=ポインタ存在 / 意味層=原則の具体適用) |
 | `doc_freshness` | 最新ドキュメント出典 | `system-spec-doc-freshness-auditor` (C08) | `fetched-references.json` | `validate-source-citation.py` (C08 内実行) |
 | `prompt_quality` | prompt-creator準拠 | C05 R1-score | 全`prompts/*.md` | `verify-completeness.py` + `validate-prompt.py` |
 
-> C06 (hearing-auditor) は `system-spec/*.md` を読まずヒアリング品質 (R6-audit-hearing の監査 5 軸) のみを監査するため、`design_knowledge_reflection` へ束縛するのは虚偽対応だった。C06 は `matrix_coverage` の sub-input (網羅性・トレースの補助根拠) へ再配置し、設計知識反映は C05 が `system-spec/*.md` と `resource-map.yaml` から自前評価する。
+> C06 (hearing-auditor) はヒアリング品質 (R6-audit-hearing の監査 5 軸。5 軸目の上位概念の遡及性 = foundation 利用者根拠を含む) を `spec-state.json` と利用者一次入力から監査するが、生成済み仕様書 Markdown の設計知識反映は読まない。そのため `design_knowledge_reflection` へ束縛するのは虚偽対応であり、C06 は `matrix_coverage` の sub-input (網羅性・トレースの補助根拠) に限定する。設計知識反映は C05 が `system-spec/` 配下の全 Markdown (`Path.rglob("*.md")`) と `resource-map.yaml` から自前評価する。
 
 ## 観点別の合否判定
 
@@ -31,8 +31,9 @@
   FAIL を出せば観点 FAIL。
 - **sub-input (C06 hearing-auditor)**: ヒアリング品質を網羅性・トレースの補助根拠として併せる。
   軸は C06 の SSOT `../../run-system-spec-elicit/prompts/R6-audit-hearing.md` の監査 5 軸
-  (聞き漏れ / 誘導質問 / 早期停止 / トレーサビリティ / 上位概念の遡及性) で、本ファイルでは軸を数え直さない。
-  C06 の検出が matrix_coverage をどう動かすかは、次節「ヒアリング監査 (C06) の重大度と判定の対応」
+  (聞き漏れ / 誘導質問 / 早期停止 / トレーサビリティ / 上位概念の遡及性 = foundation 利用者根拠) で、
+  本ファイルでは軸を数え直さない。確定セルと U1-U9 が誘導なく漏れなく引き出され、Q&A と利用者一次入力に
+  遡れることの裏付けとして使う。C06 の検出が matrix_coverage をどう動かすかは、次節「ヒアリング監査 (C06) の重大度と判定の対応」
   だけが決める。C06 自身の verdict を観点の判定にそのまま使わない。
 - **C16 必須情報カタログ被覆 (追加次元)**: `validate-knowledge-graph.py --profile required-info` の
   exit0 (全 in-scope domain 被覆・item 最低形状・収集順序・coverage certificate) を機械層根拠にする。
@@ -75,7 +76,7 @@ R1-score・R2-delegate・`scoring-rubric.json`・C06 の起動アダプタはこ
   確定の根拠に効く検出 (high と、主たる接地根拠の問への medium) は従来どおり FAIL のままである。
 
 ### 2. 設計知識反映 (design_knowledge_reflection / C05 自前評価・独立 auditor なし)
-- 本観点は独立 auditor を立てず C05 R1-score が `system-spec/*.md` と `resource-map.yaml` を直接読んで評価する
+- 本観点は独立 auditor を立てず C05 R1-score が `system-spec/` 配下の全 Markdown と `resource-map.yaml` を直接読んで評価する
   (C06 は設計知識を読まないため束縛しない = 虚偽対応の撤去)。
 - **機械層**: コンパイル済み各章が `ref-system-design-knowledge` 由来の設計知識ポインタ節
   (クリーンアーキテクチャ / デザインパターン / API デザイン / セキュアバイデザイン / DDD /
@@ -110,12 +111,50 @@ R1-score・R2-delegate・`scoring-rubric.json`・C06 の起動アダプタはこ
 - 全promptでprompt-creatorの機械validatorがPASSし、L5は成果状態・原子的停止条件・動的実行方式を持つ。
 - 独立C1-C4評価でLayer役割、L7→L1、再現性、Self-Evaluationを意味層でも確認する。
 
+## 帰属の接地 (attribution / fail-closed)
+
+`aspects[<id>].auditor` は **評価者自身が書く文字列** であり、それ単体では「その agent が実際に走った」
+ことを何も示さない。旧実装は ASPECTS 定数との文字列一致しか見ておらず、独立監査を 1 件も fork しない
+実行でも「独立 auditor が PASS を出した」と名乗るレポートが `--report` を exit 0 で通過できた。
+
+- 独立 auditor を持つ観点は `audit_delegations[]` に **fork receipt** を 1 件持つ。
+  - `matrix_coverage` / `primary` → `system-spec-matrix-auditor` (C07)
+  - `matrix_coverage` / `sub_input` → `system-spec-hearing-auditor` (C06)
+  - `doc_freshness` / `primary` → `system-spec-doc-freshness-auditor` (C08)
+- receipt は PostToolUse hook `hooks/record-audit-fork.py` が書く **fork 台帳**
+  (`eval-log/system-spec-harness/audit-fork-ledger.jsonl`) と突合される。監査 agent は `Write` を
+  持たず自力で痕跡を残せないため、証跡は「モデルが書けない層」に置く。
+- C05 自前評価の観点 (foundation_trace / decision_guidance / design_knowledge_reflection /
+  prompt_quality) に `primary` receipt を付けるのは **虚偽の独立性主張** として violation。
+- 台帳が無い/空の実行は裏取り 0 件 = fail-closed で violation (緑にしない)。
+- **機械層が保証する範囲**: receipt の `dispatch.{session_id,tool,subagent_type,response_sha256}` と
+  `verdict` を hook 台帳の同一 response 行へ一致させる。したがって、実 fork 後に FAIL を PASS へ
+  書き換えること、または別 fork の response を流用することは violation になる。
+- **run/session・response 束縛**: receipt の `dispatch.session_id` (宣言) と台帳行の
+  `session_id` (harness 観測)、さらに `tool` / `response_sha256` / `audit_verdict` の **全て** を要求する。
+  宣言単独では自己申告、台帳単独では過去 run と別 response を区別できないため、全値の突合で初めて
+  「この報告が名指しする run のこの監査 response がこの判定を返した」ことに接地する。
+  さらに必須 receipt 全件の宣言 session が **単一に収束** することを要求し (複数の過去 run からの
+  つまみ食い遮断)、`--session` で現在 session を明示されたときは宣言との一致まで検査する
+  (過去 run 一式の丸ごと再利用の遮断。CI/probe の事後再検証では省略可 = 宣言↔台帳整合のみ)。
+  宣言なし・`"unknown"` 宣言 (hook が session を観測できない環境の記録値) ・台帳に無い session の
+  名指しは、いずれも fail-closed で violation ("unknown" 受理は『任意の過去 "unknown" 行で裏取り
+  成立』の穴を戻すため拒否する。設計判断の根拠は `ledger_corroborates` の実装コメント参照)。
+- **C06 の判定との関係**: 帰属の receipt `verdict` は C06 応答の `AUDIT_VERDICT` をそのまま転記する。
+  matrix_coverage の sub-input 判定は 1a の対応表 (`--hearing`) で別に導き、receipt の `verdict` を
+  書き換えて合わせない。
+- **残余ギャップ (能動的改ざん)**: 監査 prompt の意味的十分性・根拠の妥当性は content-review / human の
+  責務である。また台帳を書き換えられる実行環境では hook 証跡だけで完全な敵対者耐性は得られないため、
+  運用では台帳への書込み権限を hook に分離する。
+
 ## 総合判定 (fail-closed)
 - 全観点PASSかつhigh severity finding 0件のときだけ総合PASS。
 - 1 観点でも FAIL/INDETERMINATE、または high finding が 1 件でもあれば総合 FAIL。
 - scoring-rubricの全観点を過不足なく評価していなければ総合FAIL。
 - 総合判定は `aggregate-completeness.aggregate_verdict` で再導出でき、レポートの `verdict` と
   一致すること (総合判定が観点スコアに接地しているかの整合検査)。
+- 帰属が fork 証跡へ接地していなければ `--report` は violation を返す (総合 verdict の再導出とは
+  独立した検査。verdict が整合していても帰属が未接地ならゲートは通さない)。
 
 ## INDETERMINATE の扱い
 - 監査 sub-agent は入力欠落・破損・公式サイト到達不能で `INDETERMINATE` を返しうる。

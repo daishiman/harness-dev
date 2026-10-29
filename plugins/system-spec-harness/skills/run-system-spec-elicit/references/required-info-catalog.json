@@ -53,14 +53,14 @@
       "item_id": "context-of-use",
       "domain": "ui-ux",
       "concern": "presentation",
-      "question": "人が読む主要な表現物 (画面・帳票・通知・エラーメッセージ・レポート等) ごとに、誰が・どの環境で・どの task を・どの頻度で行い、失敗すると何を失うか。",
+      "question": "人が読む主要な表現物 (画面・帳票・通知・エラーメッセージ・レポート等) ごとに、誰が・どの環境 (端末・入力手段・支援技術) で・どの task を・どの頻度で行い、失敗すると何を失うか。一覧・表など複数件を扱う表現物では、扱うデータ量 (件数・項目数・増加見込み) と比較・一括操作の要否も聞く。",
       "required_reason": "利用文脈が無いと情報の優先順位を決められず、形式 (表/リスト/カード/散文) の選定が根拠なき早期固定になる (ISO 9241-210 context of use)。",
       "evidence_required": false,
       "depends_on": [
         "product-goal"
       ],
       "required_when": "always",
-      "completion_rule": "主要表現物ごとに audience / primary_tasks (各 task の頻度・失敗コスト) / environment / expertise が非空で確定",
+      "completion_rule": "主要表現物ごとに audience / primary_tasks (各 task の頻度・失敗コスト) / environment (端末・入力手段) / expertise が非空で確定。複数件を扱う表現物は data_volume (件数・項目数) と比較・一括操作の要否も確定",
       "missing_effect": "block",
       "serves_goals": [
         "C9",
@@ -71,14 +71,14 @@
       "item_id": "information-priority",
       "domain": "ui-ux",
       "concern": "presentation",
-      "question": "各表現物で出せる情報要素のうち、何を残し・何を落とし・何を表示形へ加工するか。束ごとの順位とその根拠 (task 頻度 × 失敗コスト) は何か。",
+      "question": "各表現物で出せる情報要素のうち、何を残し・何を落とし・何を表示形へ加工するか。束ごとの順位とその根拠 (task 頻度 × 失敗コスト) と情報密度は何か。ラベル・区切り線・アイコン・画像・強調といった視覚装置を、識別・グルーピング・状態・重要度・操作可能性のどれを伝えるために使うか。",
       "required_reason": "順位付けを飛ばしたまま視覚表現へ進むと「見た目が読めない」成果物になり、レビューが主観の応酬になる。要件段階で確定させるのは方針までで、下流のどこが map 生成と機械検証を担うかの責務境界は SKILL.md feedback-contract の『情報優先度の責務境界』が正本 (ここには再掲しない)。",
       "evidence_required": false,
       "depends_on": [
         "context-of-use"
       ],
       "required_when": "人が読む表現物を本システムが生成・提示するとき (非適用なら理由を述べる)",
-      "completion_rule": "表現物ごとに『残す/落とす/加工する』方針と束の順位・順位根拠が spec-state の該当セルへ qa_ref 付きで記録される、または非適用 (機械消費のみ/監査・法定表示/熟練者向け高密度一覧) の理由が記録される",
+      "completion_rule": "表現物ごとに『残す/落とす/加工する』方針と束の順位・順位根拠・情報密度、視覚装置 (ラベル/区切り線/アイコン/画像/強調) の使い分け方針が spec-state の該当セルへ qa_ref 付きで記録される、または非適用 (機械消費のみ/監査・法定表示/熟練者向け高密度一覧) の理由が記録される",
       "missing_effect": "degrade",
       "serves_goals": [
         "C9",
@@ -144,11 +144,12 @@
       "domain": "frontend",
       "concern": "presentation",
       "question": "クライアント構成 (状態管理・レンダリング方式・ビルド) はどうするか。",
-      "required_reason": "UI-UX 要件と API contract の両方に従属し、遅れると画面実装が停滞する。",
+      "required_reason": "UI-UX 要件 (情報の取捨と順位を含む) と API contract の両方に従属し、遅れると画面実装が停滞する。情報の取捨と順位が決まる前にクライアント構成を固めると、保存項目をそのまま並べる画面構造が根拠なく確定する。",
       "evidence_required": true,
       "depends_on": [
         "target-platforms",
-        "api-contract"
+        "api-contract",
+        "information-priority"
       ],
       "required_when": "クライアント UI がある場合",
       "completion_rule": "状態管理とレンダリング方式が確定",

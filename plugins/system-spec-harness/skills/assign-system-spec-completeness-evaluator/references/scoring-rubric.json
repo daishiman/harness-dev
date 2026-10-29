@@ -31,7 +31,7 @@
         "対象外セルに具体的 reason、確定セルに qa_log/approval_log へ遡れる qa_ref がある",
         "category_aggregate が真理値表 (未着手/収集中/確定/対象外) と一致し宣言欠落が無い",
         "goal-spec 例示カテゴリを最低含むか excluded_categories の根拠がある",
-        "sub-input: C06 (hearing-auditor) の監査 (軸は R6-audit-hearing の監査 5 軸が正本) を aspect-criteria.md 1a の対応表で判定して FAIL/INDETERMINATE が無く、確定セルが誘導なく漏れなく Q&A に遡れる (C06 の verdict はそのまま使わず aggregate-completeness.py --hearing で導く。注記と閉じた検出は findings に残す)",
+        "sub-input: C06 (hearing-auditor) の監査 (軸は R6-audit-hearing の監査 5 軸 = 聞き漏れ/誘導質問/早期停止/トレーサビリティ/foundation 利用者根拠 が正本) を aspect-criteria.md 1a の対応表で判定して FAIL/INDETERMINATE が無く、確定セルが誘導なく漏れなく Q&A と利用者一次入力に遡れる (C06 の verdict はそのまま使わず aggregate-completeness.py --hearing で導く。注記と閉じた検出は findings に残す)",
         "C16 必須情報被覆 (機械層): validate-knowledge-graph.py --profile required-info が exit0 (全 in-scope domain 被覆・item 最低形状・収集順序・coverage certificate)。missing_effect=block の item が未回答のまま確定 (confirmed) に進んだ確定セルは C01 R5 収集ゲート素通り (C14 は blocking_items を列挙するのみで runtime 施行はせず、決定論 writer 施行 = apply-spec-transition への block 検査組込は follow-up) として FAIL に寄せる"
       ]
     },
@@ -39,8 +39,8 @@
       "label": "設計知識反映",
       "auditor": "assign-system-spec-completeness-evaluator",
       "component": "C05",
-      "self_evaluated": "C05 R1-score が自前評価する (独立 auditor なし)。C06 は設計知識 (system-spec/*.md) を読まないため design_knowledge に束縛しない (虚偽対応の撤去)",
-      "primary_input": "system-spec/*.md / ref-system-design-knowledge/references/resource-map.yaml",
+      "self_evaluated": "C05 R1-score が自前評価する (独立 auditor なし)。C06 は仕様書 Markdown を読まないため design_knowledge に束縛しない (虚偽対応の撤去)",
+      "primary_input": "system-spec/ 配下の全 Markdown (Path.rglob('*.md')) / ref-system-design-knowledge/references/resource-map.yaml",
       "deterministic_gate": null,
       "pass_criteria": [
         "機械層: コンパイル済み各章が resource-map.yaml 由来の設計知識ポインタ節を持つ (compile の render_design_refs が注入)",
@@ -82,8 +82,27 @@
       "1 観点でも FAIL/INDETERMINATE なら総合 FAIL",
       "例外: prompt_quality の外部 prompt-creator 機械ゲート (verify-completeness.py/validate-prompt.py) が依存 plugin 不在で解決不能な単独 install 環境では、当該機械ゲートのみ skip し INDETERMINATE を FAIL に倒さない (deterministic_gate_dependency 参照)。意味層 pass_criteria が FAIL なら従来どおり総合 FAIL",
       "全観点を過不足なく網羅していなければ総合FAIL (監査観点の取りこぼし防止)",
-      "総合判定は aggregate-completeness.aggregate_verdict で再導出でき、レポートの verdict と一致すること (Goodhart 防止)"
+      "総合判定は aggregate-completeness.aggregate_verdict で再導出でき、レポートの verdict と一致すること (Goodhart 防止)",
+      "独立 auditor を名乗る観点 (primary=C07/C08、sub_input=C06) は audit_delegations[] の fork receipt を持ち、PostToolUse hook (hooks/record-audit-fork.py) の書く fork 台帳で session・tool・response digest・auditor verdict まで裏取りできること。裏取りできない帰属または緑化は fail-closed で violation = 総合 FAIL"
     ]
+  },
+  "attribution": {
+    "policy": "fail-closed",
+    "why": "aspects[].auditor は評価者自身が書く文字列であり、独立監査を 1 件も fork しない実行でも『独立 auditor が PASS を出した』と名乗れた。監査 agent は Write を持たず自力で痕跡を残せないため、証跡はモデルが書けない層 (PostToolUse hook) が書く append-only 台帳に置く",
+    "ledger": "eval-log/system-spec-harness/audit-fork-ledger.jsonl (env SYSTEM_SPEC_AUDIT_FORK_LEDGER で上書き可)",
+    "ledger_writer": "plugins/system-spec-harness/hooks/record-audit-fork.py (PostToolUse: Task|Agent)",
+    "required_receipts": [
+      {"aspect": "matrix_coverage", "role": "primary", "auditor": "system-spec-matrix-auditor", "component": "C07"},
+      {"aspect": "matrix_coverage", "role": "sub_input", "auditor": "system-spec-hearing-auditor", "component": "C06"},
+      {"aspect": "doc_freshness", "role": "primary", "auditor": "system-spec-doc-freshness-auditor", "component": "C08"}
+    ],
+    "rules": [
+      "C05 自前評価の観点 (foundation_trace/decision_guidance/design_knowledge_reflection/prompt_quality) に primary receipt を付けるのは虚偽の独立性主張として violation",
+      "receipt の auditor は agents/<auditor>.md に実在すること (架空の agent 名を名乗らせない)",
+      "role=primary の receipt.verdict は aspects[aspect].verdict と一致し、dispatch.{session_id,tool,subagent_type,response_sha256} と receipt.verdict は hook 台帳の同一 response 記録と一致すること (監査判定の忠実転記)",
+      "台帳が存在しない/空の実行は裏取り 0 件として fail-closed (緑にしない)"
+    ],
+    "machine_layer_limits": "台帳は hook が観測した auditor verdict の書換えを拒否する。監査 prompt の意味的十分性・根拠妥当性、および改ざん可能な台帳環境への対策は content-review/human と運用上の書込み権限分離の責務"
   },
   "aspect_to_auditor": {
     "foundation_trace": "assign-system-spec-completeness-evaluator",

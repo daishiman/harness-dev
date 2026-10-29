@@ -1,13 +1,13 @@
 # thought-methods: 30 思考法カタログ × 適用テンプレ
-# v2 D2 新設。SKILL.md からの参照正本。配分は B1 反映後 (A2=10 / A3=9 / A4=11)。
+# v2 D2 新設。SKILL.md からの参照正本。配分は A2=9 / A3=9 / A4=12。
 version: "2.0"
 last_updated: "2026-05-23"
 total: 30
 
-# A2: elegant-logical-structural-analyst (10)
+# A2: elegant-logical-structural-analyst (論理5 + 構造4 = 9)
 logical_structural:
   agent: elegant-logical-structural-analyst
-  count: 10
+  count: 9
   methods:
     - id: critical
       name: 批判的思考
@@ -45,11 +45,6 @@ logical_structural:
       name: プロセス思考
       template: "工程 step を時系列分解し step 間 gap を検出"
       detects: [dependency_break]
-    - id: why
-      name: why 思考
-      template: "B1 で A4 から A2 へ移管。根本原因連鎖追跡"
-      detects: [omission, contradiction]
-
 # A3: elegant-meta-divergent-analyst (9)
 meta_divergent:
   agent: elegant-meta-divergent-analyst
@@ -92,10 +87,10 @@ meta_divergent:
       template: "初見ユーザーの目線。専門前提抜きで理解できるか"
       detects: [omission, smell]
 
-# A4: elegant-system-strategic-analyst (11)
+# A4: elegant-system-strategic-analyst (システム3 + 戦略4 + 問題解決5 = 12)
 system_strategic:
   agent: elegant-system-strategic-analyst
-  count: 11
+  count: 12
   methods:
     - id: systems
       name: システム思考
@@ -125,6 +120,10 @@ system_strategic:
       name: 戦略的思考
       template: "中長期視点。3 ヶ月後の codebase で陳腐化しないか"
       detects: [smell]
+    - id: why
+      name: why 思考
+      template: "問題解決系として根本原因連鎖を追跡し、表層原因で止めない"
+      detects: [omission, contradiction]
     - id: kaizen
       name: 改善思考
       template: "PDCA。前回 findings の re-occurrence を検出"

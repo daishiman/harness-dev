@@ -12,6 +12,7 @@
     "source_inputs",
     "source_manifest",
     "digest_contract",
+    "p01_entry_gate",
     "execution_tasks",
     "registration_request"
   ],
@@ -121,6 +122,23 @@
         "final_manifest_digest_scope": {"const": "all manifest files including handoff; manifest itself excluded"},
         "self_reference_policy": {"const": "handoff omits its own digest and final manifest digest"}
       }
+    },
+    "p01_entry_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "operator", "required_statuses"],
+      "properties": {
+        "selector": {"const": "parent_feature.depends_on"},
+        "operator": {"const": "all"},
+        "required_statuses": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [{"const": "done"}, {"const": "closed"}],
+          "items": false
+        }
+      },
+      "description": "P01実行直前にcanonical parent featureの現行depends_onを評価する。feature edgeはtask depends_onへ複製しない"
     },
     "execution_tasks": {
       "type": "array",
