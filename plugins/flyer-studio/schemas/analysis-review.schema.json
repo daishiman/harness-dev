@@ -1,0 +1,203 @@
+{
+  "type": "object",
+  "required": [
+    "version",
+    "analysisSha256",
+    "sourceFingerprint",
+    "policyFingerprint",
+    "reviewer",
+    "reviewedAt",
+    "checks",
+    "mandatoryFixes",
+    "decision",
+    "returnTo"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "analysisSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "reviewedAt": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "checks": {
+      "type": "object",
+      "required": [
+        "evidenceAlignment",
+        "completeness",
+        "changeDiscipline",
+        "feasibility"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "evidenceAlignment": {
+          "type": "object",
+          "required": [
+            "verdict",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "verdict": {
+              "enum": [
+                "pending",
+                "PASS",
+                "FIX"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          }
+        },
+        "completeness": {
+          "type": "object",
+          "required": [
+            "verdict",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "verdict": {
+              "enum": [
+                "pending",
+                "PASS",
+                "FIX"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          }
+        },
+        "changeDiscipline": {
+          "type": "object",
+          "required": [
+            "verdict",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "verdict": {
+              "enum": [
+                "pending",
+                "PASS",
+                "FIX"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          }
+        },
+        "feasibility": {
+          "type": "object",
+          "required": [
+            "verdict",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "verdict": {
+              "enum": [
+                "pending",
+                "PASS",
+                "FIX"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          }
+        }
+      }
+    },
+    "mandatoryFixes": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": [
+          "text",
+          "serves"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "serves": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^E[0-9]+$"
+            }
+          }
+        }
+      }
+    },
+    "decision": {
+      "enum": [
+        "pending",
+        "PASS",
+        "FIX"
+      ]
+    },
+    "returnTo": {
+      "enum": [
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ]
+    },
+    "preferenceNotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      },
+      "description": "本質条項に結びつかない好み。必須修正・FIX・cycle消費には使わない。"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

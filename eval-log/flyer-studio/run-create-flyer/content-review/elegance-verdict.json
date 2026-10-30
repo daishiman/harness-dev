@@ -1,0 +1,48 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "run-create-flyer",
+    "skill_md_sha256": "969a9b74b62083c19d6dab2cbbd7c497ad6b16df78e26bb427a749a2a5b7348f"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer (fresh context, focused combined review, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T14:52:05Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "positive_feedback": [
+      "IN3 の括弧書きの付け替え（SKILL.md:31）は、参照先の実体に合っている。nonFixReturns は plugins/flyer-studio/references/registry.json:250 の top-level にあり、from=run-create-flyer・to=run-intake-flyer・trigger=style-unresolved・consumesCycle=false・fixClass なしである。いまの plugin-composition.yaml は 1 行目で「生成物。正本は references/registry.json」と宣言し、capabilities と calls/reads/delegates の dependencies だけを持つ。nonFixReturns も revision 辺も持たない。旧表記のままだと、IN3 の検査対象が存在しないファイルの欄を指すことになっていた。付け替えはこの依存切れを直したものと判断した。",
+      "IN3 の検査手段が、登録簿の正本を直接読んでいることをコードで確かめた。tests/design.test.cjs:304-331 は references/registry.json を読み（:305）、次の 5 点を検査する。revision 辺が fixRouting の戻り先だけを持つこと。dependencies に consumesCycle と trigger が混ざらないこと。nonFixReturns が fixClass を持たず consumesCycle=false で、trigger が fixClass や preference と重ならないこと。step の局面（局面カタログの「回答の根拠から様式を提案する」）が実在すること。source（SKILL.md#ゴールシーク実行）の節が「局面 7」でその step へリンクしていること。SKILL.md:102 の [ヒアリングの局面 7](../run-intake-flyer/SKILL.md#局面カタログ) は、run-intake-flyer/SKILL.md:134 の 7 番「回答の根拠から様式を提案する」に一致する。scripts/build-local-package.py も REGISTRY 定数（:63）から check_non_fix_returns（:536）を流し、check_composition（:190）で plugin-composition.yaml が登録簿からの生成と一致することを見る。正本と写しの向きが、コードと文書で同じになっている。",
+      "様式未確定の差し戻しは、本文の 2 か所（:86 は選ぶ前、:102 はゴールシーク実行）、完了チェックリストの :120（IN3）、登録簿の nonFixReturns と revision 辺の condition（registry.json:247 の「評価 FIX ではない差し戻しはこの辺に載せず、nonFixReturns に置く」）で同じ向きである。workflow.md:46-51 の fixClass 表にも載っていない。cycle を消費しない理由（評価 FIX ではない）も :102 と registry の note で一致している。未確定のまま描くことは機械でも止まる。validate が stylePreferences の空（scripts/project.cjs:344 の style-preferences）と、希望に無い expression（:438。tests/contract.test.cjs:272 で検査）を拒否する。intake の局面 8 が様式未決定でも essence-baseline を止めない（run-intake-flyer/SKILL.md:138）ので、create 側にこの戻りがあることには意味がある。",
+      "4 条件で見た結果を書く。矛盾 0。所有（:78・:84 の brief.policy の maxChars・axisGroups・おまかせ時の center と feedback）は agents/flyer-producer.md:18 と production-contract.md:13 に同じ 3 項目が書かれている。intake の局面 9 の「文字量と中心軸の意味群はヒアリングで聞かず、制作の段で決める」（run-intake-flyer/SKILL.md:139）とも向きが揃う。漏れ 0。IN1〜IN3・OUT1 は、どれも完了チェックリスト（:114-:121）の項目に結ばれている。pilot の項目（:117）には止め手（render から呼ぶ checks.cjs:254 の assertPilotOrder）がある。依存 0。本文のリンクとアンカー（stage-common の #深さの選択と戻り・#共通の判断手順、review-rubric の #評価コストの原則、runtime の #案件と素材・#コマンド一覧、run-intake-flyer の #局面カタログ）は build-local-package.py --check の check_links で解決した。",
+      "OUT1 と独立性の境界は、本文とコードで一致している。finalize は validateReview を通す（checks.cjs:522・:563）。design.cjs:448 は、reviewer が制作担当と同じ場合と mode=self-review を拒否する。本質基準の欠落は render.cjs:233・:242 の essence.assertCurrent が止める。これは :86 の「render が描画を止める」と一致する。cycle の上限 max_loops: 3 は design-contract.json の cycleBudget=3 の写しで、tests/design.test.cjs の max_iterations と max_loops の一致テストが通っている。深さが変えるのは候補の数と比較の手間だけである（:94）。この規則は stage-common.md:53 の「独立性・停止条件・cycleBudget は変えない」と同じ境界を引いている。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency / plugins/flyer-studio/skills/run-create-flyer/workflow-manifest.json:132-134 ⇔ plugins/flyer-studio/references/registry.json:264, SKILL.md:164-171] 前回 verdict からの持ち越しで、まだ残っている。manifest の entrypoint は ../../scripts/cli.cjs である。一方、登録簿の implementation.entrypoint と本文の実行例は scripts/build-flyer.py である。前回の所見は plugin-composition.yaml:265 を対応先に挙げていた。いまの composition は implementation を持たない生成物なので、対応の正本は registry.json:264 に移っている。stage-common.md:23 のとおり build-flyer.py は同じ引数を cli.cjs へ渡す入口なので、実行は壊れない。直し方: manifest の entrypoint を ../../scripts/build-flyer.py に揃え、cli.cjs は実体として別の resource に挙げる。SKILL.md の変更は要らない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:stale-sha-re-review",
+    "next_action": "none"
+  },
+  "notes": "focused combined content review（content-review-protocol.md の incremental。30 思考法と run-elegant-review は使っていない）の elegance 投影である。stale-sha（41a65679… → 969a9b74…）による再評価で、この sha に対する iteration は 1。差分の範囲を確かめた。現在の SKILL.md の 'references/registry.json の nonFixReturns' を 'plugin-composition.yaml の nonFixReturns' に戻した文字列の sha256 は、旧 verdict の 41a65679fa1aa41f… と一致した。差分は frontmatter の IN3 の 1 か所だけである。ただし前回の結論は写していない。SKILL.md 全文、agents/flyer-producer.md、references/production-contract.md、references/stage-common.md、references/registry.json の nonFixReturns・revision 辺・implementation・note、plugin-composition.yaml 全文、tests/design.test.cjs:304-331、run-intake-flyer/SKILL.md の局面カタログ、workflow.md の改善と納品、runtime.md の案件と素材を読み直し、scripts（project.cjs・render.cjs・checks.cjs・design.cjs・build-local-package.py）の該当箇所をコードで確かめた。high は無いので PASS とした。参考として残すが、所見には数えない点が 2 つある。1 つ目。IN3 の 'references/registry.json' は、同じ括弧の tests/design.test.cjs と同じく PLUGIN_ROOT 基準のパスである（他 skill の criteria も tests/… を PLUGIN_ROOT 基準で書く）。一方、同じ frontmatter の reference_refs は 'references/production-contract.md' を skill 基準で書く。そのため 'references/' の基準が欄によって違う。registry.json は plugin 直下の references/ にしか無く、括弧内の tests/ が基準を決めているので、誤読の余地は小さい。2 つ目。IN3 の検査手段は差し戻しの登録と分離を見るもので、未確定のまま描くことを止める validate の style-preferences（project.cjs:344）は名指ししていない。この停止は IN1 の validate と完了チェックリスト :120 で担保されている。流した検査（すべて読み取りのみ。ログは reviewer の scratchpad）: node --test tests/*.test.cjs で rc 0（tests 233・pass 228・fail 0・skipped 5。skip は FLYER_ACCEPTANCE_PROJECT 未設定の実PDF受入と、実ブラウザ・実PDFが要る環境依存のもの）。IN3 の分離テストは単独でも ok。scripts/build-local-package.py --check は rc 0（errors []・fail 0。check_registry・check_composition・check_links を含む）。lint-goal-seek は OK。validate-frontmatter は rc 0（source 欄の推奨 warn のみ）。lint-skill-name は ok。lint-skill-description は OK=189・VIOLATION=0。lint-entrypoint-artifact-first は rc 0（134 inventory・106 enforced・28 exempt）。SKILL.md の sha256 は書く直前に shasum -a 256 で取り直した。"
+}

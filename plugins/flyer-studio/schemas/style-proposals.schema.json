@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "style-proposals.schema.json",
+  "title": "様式の提案 <project>/style-proposals.json",
+  "description": "様式を言葉にしきれない利用者へ、回答から読み取った根拠（basis）で 2〜3 案を示し、選ばれた案を記録する（様式が決まるまで提案する）。basis は intake-residual の styleProposalNeeded.basis をそのまま写す。提案文は skill 側の担当が references/style-profiles.md の「様式の記述軸」で書く。実在の作家名・作品名で模倣させない（E3）。chosen が空の間は提示中で、chosenBy と decidedAt は null。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "basis", "proposals", "chosen", "chosenBy", "decidedAt"],
+  "definitions": {
+    "texts": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "\\S" } },
+    "axis": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "id": { "type": "string", "pattern": "^S[1-9]$" }
+  },
+  "properties": {
+    "version": { "const": 1 },
+    "basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moodWords", "references", "avoid", "purposeRefs", "materials"],
+      "properties": {
+        "moodWords": { "$ref": "#/definitions/texts", "description": "雰囲気の言葉。様式名として具体的でなかった回答もここに入る。" },
+        "references": { "$ref": "#/definitions/texts", "description": "参考にしたい画像や物（案件フォルダ内の場所か説明）。雰囲気の読み取りにだけ使う。" },
+        "avoid": { "$ref": "#/definitions/texts", "description": "避けたい雰囲気。" },
+        "purposeRefs": { "type": "array", "items": { "type": "string", "pattern": "^/purpose/(audience|benefit|action)$" }, "description": "回答済みの目的（brief.purpose）の場所。" },
+        "materials": {
+          "type": "object",
+          "required": ["photosAvailable"],
+          "properties": {
+            "photosAvailable": { "type": ["boolean", "null"], "description": "公開できる写真があるか。null は未回答。" }
+          }
+        }
+      }
+    },
+    "proposals": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "axes", "basisUsed", "fit", "serves", "risks", "needs"],
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 40, "pattern": "\\S", "description": "短い自由ラベル。選ばれると brief.stylePreferences の値になる。" },
+          "axes": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["medium", "lineAndPlane", "texture", "colorTemperament", "density", "typeCharacter", "culturalRef", "people"],
+            "properties": {
+              "medium": { "$ref": "#/definitions/axis", "description": "媒体・技法" },
+              "lineAndPlane": { "$ref": "#/definitions/axis", "description": "線と面" },
+              "texture": { "$ref": "#/definitions/axis", "description": "質感" },
+              "colorTemperament": { "$ref": "#/definitions/axis", "description": "色の気質（配色の系統 tone とは別）" },
+              "density": { "$ref": "#/definitions/axis", "description": "密度と余白" },
+              "typeCharacter": { "$ref": "#/definitions/axis", "description": "文字の性格" },
+              "culturalRef": { "$ref": "#/definitions/axis", "description": "参照する時代・文化。実在の作家名・作品名は使わない" },
+              "people": { "$ref": "#/definitions/axis", "description": "人物・実在物の扱い" }
+            }
+          },
+          "basisUsed": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "pattern": "\\S" }, "description": "根拠にした basis の項目（例 moodWords:落ち着いた、/purpose/audience、materials.photosAvailable）。" },
+          "fit": { "type": "string", "minLength": 1, "pattern": "\\S", "description": "目的（読者・価値・行動）への効き方。" },
+          "serves": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["E1", "E2", "E3", "E4", "E5"] } },
+          "risks": { "$ref": "#/definitions/texts" },
+          "needs": { "$ref": "#/definitions/texts", "description": "その様式に必要な素材・許可・書体など。" }
+        }
+      }
+    },
+    "chosen": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/definitions/id" } },
+    "chosenBy": { "enum": ["user", "delegated", null], "description": "user=利用者が選んだ、delegated=おまかせ（上位提案を採るか案ごとに振り分け、pilot 確認で様式も見てもらう）。" },
+    "decidedAt": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$" }
+  },
+  "if": { "properties": { "chosen": { "minItems": 1 } } },
+  "then": { "properties": { "chosenBy": { "enum": ["user", "delegated"] }, "decidedAt": { "type": "string" } } },
+  "else": { "properties": { "chosenBy": { "const": null }, "decidedAt": { "const": null } } }
+}

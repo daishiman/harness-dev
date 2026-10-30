@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "assign-flyer-analysis-evaluator",
+    "skill_md_sha256": "19bd38110c43a66823cfffa073b70b8d2b02a5941726ff6a8ffd5db66659609c"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer B (fresh context, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T13:22:24Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "evidenceAlignment",
+      "completeness",
+      "changeDiscipline",
+      "feasibility"
+    ],
+    "positive_feedback": [
+      "evidenceAlignment PASS: plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/references/evaluation-contract.md:11 が「元画像の具体領域と所見の一致、説明だけでの捏造をしない」と定義し、plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/SKILL.md:36 が「最初に元画像を実見してから提案と照合する」と手順にしている。schema の checks で required、pending は analysis.cjs:73 が拒否する。",
+      "completeness PASS: evaluation-contract.md:12 が最新の必須要望・保持点・全案の適用範囲・未確定情報の追跡を定義する。分析の側の漏れ（元画像一覧・判断保留・必須の見送り）は analysis-validate が先に止め（plugins/flyer-studio/tests/analysis.test.cjs:15・16・21）、評価はその上で意味の網羅を見る分担になっている。",
+      "changeDiscipline PASS: evaluation-contract.md:13 と :22-24 が、必須と候補の区別、採否の理由、一律の処方で良い構図を崩さないこと、好みは preferenceNotes へ分けて cycle を消費しないことを定義する。mandatoryFixes の serves 欠落・空配列・未知の本質 ID は取込で拒否され（tests :60）、decision・4 条件・必須修正の矛盾も拒否される（tests :78）。",
+      "feasibility PASS: evaluation-contract.md:14 が書体・描画経路・素材の権限・顔/QR/中心軸に加え、executionPlan の pilot の代表性と propagation が保持点を壊さないことまで見ると定義し、plugins/flyer-studio/skills/run-analyze-flyer/references/analysis-contract.md の executionPlan と対応する。",
+      "L0 rubric: L0+L2 で score 100（threshold 80）、applicable 24・scored 23・pending_human 1・not_applicable 21、findings 0。pending の BD-004 はこのレビューで判定した。trigger「元画像と改善提案を独立評価」は 29・36・40 行に、trigger「修正された提案を制作前に再確認」は 40 行（同一の hash でだけ通る）・46 行（再発行は呼出元）・evaluation-contract.md:28（premise から作り直した分析も同じ 4 条件で評価）に対応する。",
+      "形式: description は lint OK。名前は assign-<対象>-evaluator で role_suffix: evaluator と一致し、lint-skill-name OK。50 行。validate-frontmatter rc 0（source 欠落は warn）。allowed-tools は宣言していないが、tools は agent（plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator.md: Read, Glob, Grep, Write, Bash(python3 *), Agent）で絞っている。Agent は stage=analysis-review で専門レンズを呼ぶためのもので、stage-common.md:62-64 と整合する。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:fresh-review",
+    "next_action": "none"
+  },
+  "notes": "rubric の観点（criteria の全件、L0 rubric、allowed-tools・description・行数・命名）で書いた verdict。elegance-verdict.json と同じ 1 回の focused combined review の結果を観点で分けた。exhaustive の 30 思考法は実施していない。この skill は feedback_contract を持たず、lint-content-review の期待 criteria は空集合になる。そのため assign-prompt-design-evaluator の前例（feedback_contract を持たないので自身の評価軸 C1-C4 を採用）にならい、この skill 自身の評価軸 evidenceAlignment・completeness・changeDiscipline・feasibility（analysis-review.schema.json の checks の 4 キー）を criteria_evaluated とした。各基準は「定義がある・schema で必須・機械の判定とテストがある」の 3 点で確かめた。評価者が実案件で下す判断の質は確かめていない。high・medium・low とも 0 件で PASS。機械検査: npm --prefix plugins/flyer-studio test は tests 232・pass 227・fail 0・skipped 5（実 PDF・実ブラウザの受入試験）で rc 0。build-local-package.py --check は errors []・fail 0・assets 42 で rc 0。lint-goal-seek --skills-dir plugins/flyer-studio/skills は「OK: 7 skill file(s) passed」で rc 0。lint-skill-name は ok（7 skills）、lint-skill-description は OK=7・VIOLATION=0、validate-frontmatter は rc 0（warn は source 欠落 6 件で、担当 2 skill を含む。作者報告の 3 件は数え違い）。lint-entrypoint-artifact-first --repo-root は「134 inventory, 106 enforced, 28 mechanically exempt」で rc 0。旧名 assign-flyer-analysis-review の grep（plugins/flyer-studio と marketplaces、node_modules と .git を除く）は CHANGELOG 以外 0 件。L0 rubric は render-findings-score.py に --rubric-refs ref-skill-design-rubric/references/rubric.json（L0）assign-skill-design-evaluator/references/rubric.json（L2）と --kind skill を渡して採点した（L2 だけを --rubric で渡す旧形式は layer 検査で止まるため使っていない）。L0 の結果は rubric_hash sha256:22667118… / composition_hash sha256:766fd74a…。"
+}

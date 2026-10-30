@@ -17,7 +17,7 @@
 
 ## Claude Code / Codexで全pluginをどのディレクトリからでも使う
 
-clone 内の全22 pluginを、Claude Codeのuser scopeとCodexのuser-global plugin registryへ一括導入する。
+clone 内の全23 pluginを、Claude Codeのuser scopeとCodexのuser-global plugin registryへ一括導入する。
 スクリプト自身の場所からrepository rootを決めるため、実行時のcwdには依存しない。
 
 ```bash
@@ -63,7 +63,7 @@ runtime path、artifact modeをreceiptで確認するが、hook trustは
 | 入口 | 入る plugin | clone | 手順 |
 |---|---|---|---|
 | **公開 marketplace** (`skills`) | 配布可の 18 個 | 不要 | Step 1〜3 |
-| **ローカル marketplace** (`harness-local`) | **全 22 個**（非配布を含む） | 必要 | Step 4 |
+| **ローカル marketplace** (`harness-local`) | **全 23 個**（非配布を含む） | 必要 | Step 4 |
 
 `harness-creator` / `plugin-dev-planner` / `prompt-creator` の
 **開発・個人利用向け plugin は公開 marketplace に載りません**。これは事故防止の意図的な設計で、
@@ -169,7 +169,7 @@ Claude Code セッション内で以下を打ち、補完候補に出ること�
 
 非配布 plugin (`harness-creator` `prompt-creator` `plugin-dev-planner` `system-dev-planner`
 `dev-graph` `slide-report-generator` `spec-drift-guardian` `ubm-goal-setting`
-`x-longpost-creator`) は
+`x-longpost-creator` `flyer-studio`) は
 公開 marketplace に載らないため、**手元の clone を 2 枚目の marketplace として登録**します。
 配布ではなく、自分の clone を Claude Code へ束ねて見せるだけです。
 
@@ -185,9 +185,9 @@ git clone <this-repo> harness && cd harness
 python3 scripts/build-local-marketplace.py
 ```
 
-`marketplaces/local/.claude-plugin/marketplace.json` に**全 22 plugin** が書き出されます。
+`marketplaces/local/.claude-plugin/marketplace.json` に**全 23 plugin** が書き出されます。
 
-### 4-2. 全22件をuser scopeへ登録・インストールする
+### 4-2. 全23件をuser scopeへ登録・インストールする
 
 リポジトリ内外のどのcwdからでも、スクリプトの**絶対パス**で実行します。Claude Codeには
 `<repo>/marketplaces/local`、Codexには`<repo>`を自動登録し、両方で全件を検証します。
@@ -374,6 +374,7 @@ export NOTION_CONFIG_PATH="/path/to/.notion-config.json"
 - **チームで使う・品質を保ちたい** → 上記 + `skill-governance-config` / `lint` / `hooks` の 3 つ
 - **非エンジニアからヒアリングしたい** → `skill-intake` を追加
 - **業務システムの打ち合わせ資料 (ヒアリング結果・要件定義書・仕様書・画面ボード・まとめ HTML) を作りたい** → `system-briefing-book`
+- **チラシ (印刷用 PDF・画像) を作りたい・既存のチラシを直したい** → `flyer-studio` (写真やロゴなど個人素材を含むため非配布。Step 4 のローカル marketplace で入れる)
 - **全部試したい** → bundle `skills-full` で一括
 
 ---
@@ -483,7 +484,7 @@ plugins/my-plugin/
 ## 4.3 marketplace にどう登録されているか
 
 Claude Codeの公開目録はリポジトリ直下の`.claude-plugin/marketplace.json`、Codexの目録は
-`.agents/plugins/marketplace.json`です。ローカル全22件用のClaude Code目録は
+`.agents/plugins/marketplace.json`です。ローカル全23件用のClaude Code目録は
 `marketplaces/local/.claude-plugin/marketplace.json`に生成します。
 
 ```json

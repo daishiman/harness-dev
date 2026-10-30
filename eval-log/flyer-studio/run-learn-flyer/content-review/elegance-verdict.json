@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "run-learn-flyer",
+    "skill_md_sha256": "4a7cd6d4f01ec41357097081c1e3b4fe1670a47257cf4e02aa8b9a33eb5c1cb2"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer A (fresh context, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T14:04:03Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "iteration 2 で出した low（ゴールの文 :97 の「2 つの下限」）が解けた。:97 は「件数・母数・反例と 2 つの下限（minCases と minRate。様式ラベルの傾向と参考候補は minCases だけ）に基づく形で返され」になり、例外の言い方が IN2（:25）・完了チェックリスト（:107）・learn-suggest の説明（:137）・references/runtime.md:124 と同じ範囲（様式ラベルの傾向と参考候補）を指すようになった。original_goal として hash で固定される文（:143）と、完了判定に使う物差しのずれが無くなった。goal-seek lint も rc 0 のまま通る。",
+      "iteration 2 で intake 側に出した low（前に記録した深さを読む場所が無い）は、最終の stage-common.md で受けきれている。(1) 置き場所: :53 の最後の文が、最初に選んだときも含めて、選んだ深さを返却文へ書くと決めた。:41「型に欄がない判断は返却文へ書き」と同じ規則で、schemas に深さの欄が無いことも確かめた。(2) 読めないとき: :56 の最後の文が「前に記録した深さが無い stage と、別の会話で入り直して前の返却文が読めない stage だけ、1 回選んでもらう」と決めた。記録が無いときと、あるが読めないときの両方を覆う。(3) 他の入り直しとの区別: :55 の現状で試すの後の入り直し（選び直す）と、:56 の FIX や premise の戻し（引き継ぐ）は、きっかけで分かれていて重ならない。現状で試すを選んだ stage は後続の成果物を作らないので、FIX が戻ってくることもない。置き場所を新しく作らない判断は、:41 の「新たな共通 JSON 状態を作らない」と合っており、文の手当てで足りる。learn には FIX や premise の戻り道が無いので :56 は掛からないが、:53 は learn にも掛かり、SKILL.md:71（記録する値）と補い合う。",
+      "追記の後の stage-common.md は、learn の文言とぶつからない。:53 の最後の文「選んだ深さは型に欄が無いので…返却文へ書く」は learn にも掛かり、learn の SKILL.md:71 が「どれにするかを記録する（記録する値は順に accept-as-is・light・standard・detailed）」と値を決め、置き場所は共通の規則に任せる形でそろう。learn の goal-seek の記録（:141-144 の <RUN>。選んだ後に作られ、鍵に深さは無い）と台帳（learn-record の許可リスト）にも深さの欄は無く、返却文へ書く規則と合う。:56（FIX や premise の戻しで入り直したときの深さ）については、workflow.md の FIX の表（:46-51）で、戻り先は run-create-flyer か run-intake-flyer（premise）で、preference は「記録のみ（知見台帳へ）」として stage への入り直しを伴わない。learn へ入り直す戻り道は無いので、:56 が learn に掛かる場面が無い。learn を別の場面（ヒアリングの前・見直し）で呼び直すのは新しい起動で、stage-common.md:53 のとおり選ぶ前の実成果物を見せて深さを選んでもらう。:81「深さが変えるのは、集計の解釈と改善仮説の組み立てにかける手間の量だけ」は stage-common.md:53 と一致し、:134 は改善仮説を返却文へ書くとしていて、:56 が深さの記録先に使う返却文（:41）と同じ置き場所を使う。",
+      "前回の medium（完了チェックリストと learn-suggest の説明の矛盾）が、文書・コード・テストの 3 層で解けた。完了チェックリスト :107 は「返した傾向はすべて minCases と minRate の両方を満たし（様式ラベルの傾向と参考候補は minCases だけで選び、割合条件は使わない）」と例外を明記する。これは IN2（:25）・learn-suggest の説明（:137）・references/runtime.md:124・scripts/learn.cjs:698（trends は `s.cases >= o.minCases` だけで選ぶ）と一致する。",
+      "例外を固定するテストが入った。tests/learn.test.cjs:367 は、切り絵 3 件と他の 4 ラベル 2 件ずつで g.cases 11、切り絵の rate 0.273（minRate 0.3 未満）の fixture を作り、report の trends と suggest の labels がどちらも [\"切り絵\"] になることを確かめる。前回の :341 の fixture（rate 0.75）では区別できなかった 2 つの読み方を、この fixture は区別する。npm test で ok 182 として通った。",
+      "suggest の文に件数と母数が付いた（scripts/learn.cjs:860・:866、「切り絵（3/11 件）」の形）。IN2 の「根拠と反例の件数付きで返し」に、様式ラベルの参考候補も合うようになった。labels はラベルのまま返す（learn.cjs:859 のコメント）ので、intake が回答の値に使う経路（scripts/intake.cjs:600 は labels を値に、:598 は text を参考表示に使う）は変わらない。既存のテスト :341 の正規表現（:361）も新しい文の形と両立する。",
+      "前回の low（:77 の Gotchas の範囲）は :79 で書き分けられた。台帳の規則のうち、plugin の外の追記専用ファイル・保存しないもの・保存前の許可リスト検査・冪等の 4 つが、選ぶ前の learn-record（:71）にも掛かると明記された。これは Gotchas の :85-88 の 4 項目と 1 対 1 に対応する。",
+      "stage-common と SKILL の言い方がそろっている。:81「深さが変えるのは、集計の解釈と改善仮説の組み立てにかける手間の量だけ」は、stage-common.md:53「深さが変えるのは、各 SKILL が書いた手間の量だけ」の型どおりで、緩めないもの（minCases・minRate・E3・因果を断定しない）も並べている。learn は最後の stage なので、stage-common.md:55 の「次の stage へは進めない」は当てはまらない。learn-record の 1 行は選ぶ前に書かれるので、現状で試すを選んでも台帳は残る。:79 がこの書き込みに台帳の規則を掛けているので、選ぶ前の書き込みが規則の外に出ることはない。"
+    ],
+    "negative_feedback": [],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:re-review-after-fix",
+    "next_action": "none"
+  },
+  "notes": "elegance の観点（4 条件と設計の筋）で書いた iteration 3（最終回）の verdict である。iteration 2 の指摘を作者が直した後、作者とは別の context で再確認した。rubric-verdict.json と同じ 1 回の focused の再レビューの結果で、exhaustive の 30 思考法は使っていない。\n評価した対象は作業ツリーの現物で、SKILL.md の sha256 は 4a7cd6d4f01ec41357097081c1e3b4fe1670a47257cf4e02aa8b9a33eb5c1cb2（164 行）。書く直前に shasum -a 256 で取った。plugins/flyer-studio は git では untracked なので diff は取れず、:97 を戻した sha の照合で変更の範囲を確かめた。\n【iteration 3 の経緯】iteration 2 の verdict は 2026-10-30T13:49:29Z（SKILL.md sha256 679196b2…）で、learn の low はゴールの文 :97 の 1 件だった。作者は :97 を「件数・母数・反例と 2 つの下限（minCases と minRate。様式ラベルの傾向と参考候補は minCases だけ）に基づく形で返され」に直した（13:51:00Z、sha256 4a7cd6d4…）。:97 を iteration 2 の文に戻すと 679196b2… に完全に一致するので、変わったのは :97 の 1 行だけで、行数は 164 のままである。stage-common.md は「選んだ深さは型に欄が無いので…返却文へ書く」を節の冒頭 :53 へ移した最終の形（sha256 7f22f035…、72 行）で評価した。14:00:43Z に同じ sha の現物で暫定の書き直しをしており、今回の判定はそれと変わらない。team-lead の依頼で最終回の iteration 3 として書き直した。\n判定: high 0、medium 0、low 0。iteration 2 の low（:97）は解けた。依頼の規則（high が 1 件でもあれば FAIL）により PASS、next_action は none とした。\n【前回の指摘の扱い】\n- low・inconsistency（iteration 2、ゴールの文 :97 の「2 つの下限」）: 解消。:97 の括弧書きが IN2（:25）・:107・:137・references/runtime.md:124 と同じ範囲（様式ラベルの傾向と参考候補）を指す。\n- low・omission（iteration 2 で intake 側に出した、前に記録した深さを読む場所）: 受けきれている。stage-common.md:53 の最後の文と :56 の最後の文。理由は positive_feedback の 2 件目。\n- medium・contradiction（iteration 1、:105 と :135 の食い違い。今の :107 と :137）: 解消済み。:107 の括弧書き、IN2（:25）、テスト tests/learn.test.cjs:367。\n- low・smell（iteration 1、:77 の Gotchas の範囲）: 解消済み。:79。\n【4 条件】(a) 矛盾なし: 見つからなかった。(b) 漏れなし: 見つからなかった。(c) 整合性: 見つからなかった（ゴールの文の「2 つの下限」は :97 の変更で解けた）。(d) 依存関係: 閾値の所在（learn.cjs の minRate 固定、--min-cases）、CLI の引数、suggest の labels と intake の受け取り方は、どれも現物と一致した。\n【数えなかったもの】(1) :126 の「提案にする傾向は…両方を満たすものだけ」は (g) にも当てはまる。しかし sectionStyleLabels は proposals: [] を返す（learn.cjs:699）ので (g) から提案は出ず、矛盾しない（前回と同じ判断）。(2) :81「件数と割合の下限（minCases・minRate）…を緩めない」は緩めないと言うだけで、様式ラベルに minRate を掛けるとは言っていないので、:107 の例外と矛盾しない。(3) :79 は Gotchas の 5 つ目（入力ファイルが無くても失敗にせず missingInputs に残す）を挙げない。これは learn-record の機械の振る舞いで、選ぶ前でも同じに働くので、漏れとは数えなかった。(4) :134「必要な改善仮説だけを返却文へ書く」の「だけ」は、どの改善仮説を書くかを絞る言葉で、返却文に改善仮説以外を書かないという意味ではない（返却文には集計の要約や件数不足の説明も入る）。stage-common.md:53 が選んだ深さを返却文へ書くとしても、ぶつからないと読んだ。\n【機械検査】iteration 3 の書き込みの前に流し直した。ログは scratchpad/flyer-review-A/ の *-iter3.log と rubric-run-learn-flyer-iter3.json にある。lint-entrypoint-artifact-first・lint-skill-name・validate-frontmatter は *-iter2b.log の結果を使い、その後 plugins/flyer-studio に変わったファイルが無いことを find -newer で確かめた。\n- npm --prefix plugins/flyer-studio test: tests 233、pass 228、fail 0、skipped 5、rc 0。様式ラベルの例外を固定するテスト（tests/learn.test.cjs:367）は ok 182 として通った。skip の 5 件は実 PDF と実ブラウザの受入試験で、この skill には関係しない。\n- build-local-package.py --check（python3 -I -B）: rc 0。\n- lint-goal-seek（plugins/harness-creator/skills/run-build-skill/scripts/）: --skills-dir plugins/flyer-studio/skills で rc 0（7 files passed）。:97 を変えた後もゴールの節の形は通る。\n- lint-skill-description: OK=7 VIOLATION=0。lint-entrypoint-artifact-first（arch -x86_64）: rc 0（134 inventory、106 enforced、28 exempt）。lint-skill-name: rc 0。validate-frontmatter: rc 0（warn は「source field missing（推奨のみ）」だけ）。\niteration 3 で書き込んだのは run-learn-flyer の verdict 2 ファイルと scratchpad だけで、対象ファイルは変えていない。intake の verdict は SKILL.md が変わっていないので、依頼どおり 14:00:43Z のままにした。"
+}

@@ -1,0 +1,305 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "learn-record.schema.json",
+  "title": "知見台帳の 1 行（1 案件・finalize 1 回分）",
+  "description": "${FLYER_STUDIO_HOME:-~/.flyer-studio}/ledger/cases.jsonl の 1 行。保存してよいのは field path・source・分類名・回数・様式ラベルだけ（E3）。回答の値・氏名・連絡先・URL・自由記述・参考画像のパスは持たない。additionalProperties=false の allowlist（許可リスト）で、ここに無いキーは scripts/learn.cjs が保存前に拒否する。null はその入力ファイルが無かったことを表し、理由は missingInputs に入る。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "recordedAt",
+    "caseKey",
+    "finalizeSha",
+    "preset",
+    "intake",
+    "cycles",
+    "essenceRevisions",
+    "preferences",
+    "style",
+    "paper",
+    "missingInputs"
+  ],
+  "definitions": {
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "briefPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^/?[A-Za-z0-9_-]+(?:[./][A-Za-z0-9_-]+)*$"
+    },
+    "pathList": {
+      "type": "array",
+      "maxItems": 200,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/briefPath"
+      }
+    }
+  },
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "recordedAt": {
+      "type": "string",
+      "maxLength": 30,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+    },
+    "caseKey": {
+      "description": "案件 dir 絶対パスの sha256 先頭 16 桁。パスそのものは保存しない。",
+      "type": "string",
+      "pattern": "^[a-f0-9]{16}$"
+    },
+    "finalizeSha": {
+      "description": "out/delivery.json の sha256 先頭 16 桁。同じ caseKey と同じ値なら再記録しない（冪等）。",
+      "type": "string",
+      "pattern": "^[a-f0-9]{16}$"
+    },
+    "preset": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "intake": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "rounds",
+        "askedPaths",
+        "unresolvedAfterRound1",
+        "sourcesByPath",
+        "droppedPaths"
+      ],
+      "properties": {
+        "rounds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "askedPaths": {
+          "$ref": "#/definitions/pathList"
+        },
+        "unresolvedAfterRound1": {
+          "$ref": "#/definitions/pathList"
+        },
+        "sourcesByPath": {
+          "type": "object",
+          "maxProperties": 200,
+          "propertyNames": {
+            "$ref": "#/definitions/briefPath"
+          },
+          "additionalProperties": {
+            "enum": [
+              "answer",
+              "document",
+              "preset-reconfirmed",
+              "placeholder",
+              "proposal",
+              "suggestion",
+              "skipped",
+              "unresolved",
+              "other"
+            ]
+          }
+        },
+        "droppedPaths": {
+          "description": "path の形でない、または個人情報らしいため保存しなかった項目の数。",
+          "$ref": "#/definitions/count"
+        }
+      }
+    },
+    "cycles": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "used",
+        "budget",
+        "byFixClass",
+        "premiseReturns",
+        "premiseServes"
+      ],
+      "properties": {
+        "used": {
+          "$ref": "#/definitions/count"
+        },
+        "budget": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "byFixClass": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deterministic",
+            "within-plan",
+            "premise",
+            "preference"
+          ],
+          "properties": {
+            "deterministic": {
+              "$ref": "#/definitions/count"
+            },
+            "within-plan": {
+              "$ref": "#/definitions/count"
+            },
+            "premise": {
+              "$ref": "#/definitions/count"
+            },
+            "preference": {
+              "$ref": "#/definitions/count"
+            }
+          }
+        },
+        "premiseReturns": {
+          "description": "premise を含んだ cycle 台帳 entry の数（run-analyze-flyer へ戻った回数）。",
+          "$ref": "#/definitions/count"
+        },
+        "premiseServes": {
+          "description": "premise の必須修正が結び付いた本質条項 ID ごとの件数。",
+          "type": "object",
+          "maxProperties": 9,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^E[1-9]$"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/count"
+          }
+        }
+      }
+    },
+    "essenceRevisions": {
+      "description": "利用者が承認した purpose・mustFacts の変更回数。",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "preferences": {
+      "description": "好み（preference）の分類だけ。文章は保存しない。category が無い所見は uncategorized、path 形式でない category は other。",
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "maxLength": 24,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        }
+      }
+    },
+    "style": {
+      "description": "様式の決まり方（様式が決まるまで提案する）。answer=利用者が様式名を指定、proposal=提案から利用者が選択、delegated=おまかせ。source=null は出典を判定できなかったことを表す。",
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "proposalsOffered",
+        "chosenRank",
+        "labels"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "answer",
+            "proposal",
+            "delegated",
+            null
+          ]
+        },
+        "proposalsOffered": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 20
+        },
+        "chosenRank": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 20
+        },
+        "labels": {
+          "description": "採択された様式の短いラベル。40 字を超えるものは切り詰めずに拒否する。参考画像のパスや雰囲気語の自由文は入れない。",
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "pattern": "^[^/\\\\@:\\r\\n\\t]+$"
+          }
+        }
+      }
+    },
+    "paper": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "white",
+        "color"
+      ],
+      "properties": {
+        "white": {
+          "$ref": "#/definitions/count"
+        },
+        "color": {
+          "$ref": "#/definitions/count"
+        }
+      }
+    },
+    "missingInputs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "intake",
+          "cycleLedger",
+          "visualReview",
+          "essenceBaseline",
+          "styleProposals",
+          "concepts"
+        ]
+      }
+    }
+  }
+}

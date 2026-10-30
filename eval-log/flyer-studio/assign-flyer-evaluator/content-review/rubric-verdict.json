@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "assign-flyer-evaluator",
+    "skill_md_sha256": "ce7438b46f9e3e4c090814074adec8c18dcf3423b7a936ffe863a2635d53af32"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer C (fresh context, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T13:22:40Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "L0-RUBRIC",
+      "NAMING-EVALUATOR"
+    ],
+    "positive_feedback": [
+      "L0 rubric（ref-skill-design-rubric/references/rubric.json v1.6.0、render-findings-score.py --kind skill）で score 100 / threshold 80・passed、applicable 20・scored 19・pending_human 1（BD-004）・required_fixes 0。BD-004 は手で判定した。description「最新の完成画像や修正後の画像を独立評価したいとき、pilot案から残りの案へ進めてよいか確認したいときに使う。」は本文の入口（全案の完成評価と pilot の先行評価）と 1:1 で対応し、run-analyze 側の assign-flyer-analysis-evaluator（元画像と改善提案）とは対象で分かれている。",
+      "allowed-tools は frontmatter に無く、context: fork、user-invocable: false。本文は「コマンドを実行しない」とし、stage agent の visual-review-coordinator は tools が Read・Glob・Grep・Write・Agent（Bash 無し）で、用途を :17 で 2 ファイルの記入とレンズの呼び出しに限っている。ツール宣言と本文が合う。",
+      "evaluator の命名は利用者の決定どおり。名前は assign-<対象>-evaluator、frontmatter に role_suffix: evaluator があり、lint-skill-name（7 skills ok）と lint-skill-description（OK=7・VIOLATION=0）を通る。行数は 46 行。",
+      "C1〜C4: 矛盾なし（合否・戻り先・finalize の所有が SKILL・review-contract・coordinator・workflow で同じ）、漏れなし（入力・出力・統合・返却・合否が review-contract.md にそろう）、整合性（レンズの観点と expertDimensions が一致）、依存関係（PASS→run-create-flyer、FIX→fixClass の戻り先、テンプレートは create が作る）を確かめた。"
+    ],
+    "negative_feedback": [
+      "[low / omission / plugins/flyer-studio/skills/assign-flyer-evaluator/SKILL.md:1-23 ⇔ scripts/lint-content-review.py:137-160] frontmatter に feedback_contract が無いため、lint-content-review の criteria 突合は期待集合が空になり、この verdict の criteria_evaluated が全件かを機械で確かめられない（global の eval-log/skill-build-trace.json は別 skill のもので fallback にならない）。repo の assign 系 13 件のうち 7 件も同じで、この plugin 固有の欠陥ではない。直し方: OUT 系の criterion（例: 全評価対象の案を実見し、5 観点・要求充足・mandatoryFixes の fixClass と returnTo を workflow の表どおりに返す。verify_by: test で design.test の validateReview 系）を feedback_contract に置く。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:fresh-review",
+    "next_action": "none"
+  },
+  "notes": "rubric 投影。frontmatter に feedback_contract が無いので、criteria_evaluated は先例（prompt-creator・system-dev-planner などの assign 系 verdict）に合わせて C1〜C4 と、L0 rubric（L0-RUBRIC）・evaluator 命名（NAMING-EVALUATOR）にした。lint-content-review の期待集合はこの skill では空集合で、突合は非空・一意だけになる。SKILL.md は shasum -a 256 で書く直前に取り直した。評価の実行時の妥当性（実画像を見た合否）はこのレビューの範囲外で、ここでは契約・agent・scripts の境界を確かめた。high は無いので PASS。流した検査（すべて読み取りのみ。ログは reviewer の scratchpad）: npm --prefix plugins/flyer-studio test は rc 0（tests 232・pass 227・fail 0・skipped 5。skip は FLYER_ACCEPTANCE_PROJECT 未設定の実PDF受入と実ブラウザ・実PDF結合の環境依存のもの）。build-local-package.py --check は rc 0（errors []・fail 0）。lint-goal-seek は flyer の 7 skill で OK、repo 全体 + baseline でも flyer の行は 0 件。lint-entrypoint-artifact-first は rc 0（134 inventory・106 enforced・28 exempt）。lint-skill-name は ok（7 skills）、lint-skill-description は OK=7・VIOLATION=0。validate-frontmatter は skills で rc 0（warn は source 欠落と run-skill-feedback の組み合わせだけ）、agents（flyer-producer・visual-review-coordinator・3 レンズ）は個別に流してすべて ok。旧名 assign-flyer-review / assign-flyer-analysis-review の残存は W 全体（node_modules・.git・.worktrees を除く）で CHANGELOG.md だけ。"
+}

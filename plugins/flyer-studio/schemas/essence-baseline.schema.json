@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "essence-baseline.schema.json",
+  "title": "案件の本質の基準 <project>/essence-baseline.json",
+  "description": "scripts/essence.cjs の baseline が案件の最初に 1 回だけ書く（上書き不可）。essence-check は現在の brief とこの基準を比べ、<project>/essence-revisions.json に利用者の承認記録 {at, field, from, to, approvedBy:\"user\", reason} が無い差分を fail にする（R2）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "createdAt", "originalRequest", "purpose", "mustFacts", "sha256"],
+  "properties": {
+    "version": { "const": 1 },
+    "createdAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$" },
+    "originalRequest": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "purpose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audience", "benefit", "action"],
+      "properties": {
+        "audience": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "benefit": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "action": { "type": "string", "minLength": 1, "pattern": "\\S" }
+      }
+    },
+    "mustFacts": {
+      "description": "intake-questions.json の mustFact 質問の briefPath ごとの値。該当なしで省いた事実は null。",
+      "type": "object",
+      "propertyNames": { "type": "string", "pattern": "^(/[A-Za-z0-9_-]+)+$" }
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "sha256 以外の項目を、キーを並べ替えた JSON にして計算した値。改ざんの検出に使う。" }
+  }
+}

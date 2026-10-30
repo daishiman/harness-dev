@@ -3,12 +3,12 @@
 # name: build-subagent
 # purpose: Emit a Claude Code subagent markdown (7-layer body, advisor/writer role) derived from a SKILL.md
 # inputs:
-#   - argv: --skill-name NAME --skill-md PATH [--output-dir DIR] [--language auto|ja|en] [--role auto|advisor|writer] [--model M]
+#   - argv: --skill-name NAME --skill-md PATH [--output-dir DIR] [--language auto|ja|en] [--role auto|advisor|writer] [--model M] [--isolation fork|worktree|inherit] [--tools-inherit]
 # outputs:
 #   - file: <output-dir>/<skill-name>-subagent.md
 #   - stdout: generated path
 #   - stderr: 入力エラーの説明
-#   - exit: 0=生成した / 2=入力エラー（SKILL.md が無い・読めない、--skill-name が不正、advisor に書き込みの道具、--output-dir に書けない）
+#   - exit: 0=生成した / 2=入力エラー（SKILL.md が無い・読めない、--skill-name が不正、advisor に書き込みの道具か --tools-inherit、--output-dir に書けない）
 # contexts: [C]
 # network: false
 # write-scope: output-dir
@@ -21,13 +21,18 @@ Usage:
   build-subagent.py --skill-name run-build-skill \\
       --skill-md /path/to/SKILL.md \\
       [--output-dir .claude/agents/] [--language auto|ja|en] [--role auto|advisor|writer]
+      [--isolation fork|worktree|inherit] [--tools-inherit]
 
-Output format (Anthropic Claude Code subagent spec):
+Output format (Claude Code subagent spec + CapabilityManifest kindAgent):
   ---
   name: <skill-name>-subagent
   description: <from SKILL.md description>
-  tools: <comma-joined from allowed-tools; 無ければ Read>
+  kind: agent
+  version: <from SKILL.md version; 無ければ省く (lint が欠落を報告する)>
+  owner: <from SKILL.md owner; 無ければ省く (lint が欠落を報告する)>
+  tools: <comma-joined from allowed-tools; 無ければ Read>   # --tools-inherit のときだけ `tools-inherit: true`
   model: opus  # default changed to opus (PF-F3-001)
+  isolation: <--isolation; 省略時は assign-* なら fork、それ以外は inherit>
   ---
   # <skill-name>-subagent
   ## Layer 1〜7 (7 層の骨格。Layer 5 にゴール定義・完了チェックリスト・達成ゴール)
@@ -35,6 +40,8 @@ Output format (Anthropic Claude Code subagent spec):
 
 --language auto は SKILL.md の正規見出しから ja/en を継ぐ。--role auto は書き込みの道具
 (WRITE_TOOLS) を持てば writer、持たなければ advisor。advisor に書き込みの道具があれば exit 2。
+--tools-inherit は tools を省いて全ツール (書き込みの道具を含む) を継承する opt-in で、
+allowed-tools より優先する。書き込みの道具を持つ扱いなので advisor とは組み合わせられない (exit 2)。
 exit codes: 0 = 生成した / 2 = 入力エラー。
 """
 from __future__ import annotations
@@ -63,6 +70,16 @@ def _unquote_scalar(val: str) -> str:
     return val
 
 
+def _strip_inline_comment(val: str) -> str:
+    """引用符で始まらない値から YAML の行内コメント (空白の後の #) を除く。
+
+    `version: 0.3.0 # 注記` を `0.3.0` として読む (注記ごと version に写さない)。
+    """
+    if val[:1] in ('"', "'"):
+        return val
+    return re.sub(r"(?:^|\s+)#.*$", "", val).strip()
+
+
 def parse_frontmatter(text: str) -> tuple[dict, str]:
     if not text.startswith("---"):
         return {}, text
@@ -81,7 +98,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
         m = re.match(r"^([a-zA-Z_-]+):\s*(.*)$", line)
         if not m:
             continue
-        key, val = m.group(1), m.group(2).strip()
+        key, val = m.group(1), _strip_inline_comment(m.group(2).strip())
         if val == "":
             fm[key] = []
             cur_list_key = key
@@ -231,6 +248,10 @@ def main() -> int:
     ap.add_argument("--language", choices=("auto", "ja", "en"), default="auto")
     ap.add_argument("--role", choices=("auto", "advisor", "writer"), default="auto")
     ap.add_argument("--model", default="opus")  # PF-F3-001: 全Opus既定 (ユーザー方針)
+    # 省略時は schema の規約どおり assign-* (評価器) を fork、それ以外を inherit にする
+    ap.add_argument("--isolation", choices=("fork", "worktree", "inherit"))
+    # 既定は最小権限 (allowed-tools 由来、無ければ Read)。全ツール継承は明示したときだけ
+    ap.add_argument("--tools-inherit", action="store_true")
     args = ap.parse_args()
 
     if not SKILL_NAME_RE.fullmatch(args.skill_name):
@@ -254,11 +275,16 @@ def main() -> int:
     steps = extract_section(body, "## ゴールシーク実行") or extract_section(body, "## Steps")
     purpose = extract_section(body, "## 目的と出力契約") or extract_section(body, "## Purpose & Output Contract")
     language = resolve_language(body, args.language)
-    write_tools = sorted(WRITE_TOOLS & set(tools.split(", ")))
+    # tools-inherit は書き込みの道具を含む全ツールを継承するので、書き込みの道具を持つ扱いにする
+    write_tools = sorted(WRITE_TOOLS) if args.tools_inherit else sorted(WRITE_TOOLS & set(tools.split(", ")))
     role = args.role if args.role != "auto" else ("writer" if write_tools else "advisor")
+    if role == "advisor" and args.tools_inherit:
+        print("advisor role cannot use --tools-inherit (inherits all tools including write tools)", file=sys.stderr)
+        return 2
     if role == "advisor" and write_tools:
         print(f"advisor role cannot declare write tools: {', '.join(write_tools)}", file=sys.stderr)
         return 2
+    isolation = args.isolation or ("fork" if args.skill_name.startswith("assign-") else "inherit")
 
     out_dir = Path(args.output_dir)
     out_path = out_dir / f"{args.skill_name}-subagent.md"
@@ -267,9 +293,16 @@ def main() -> int:
         "---",
         f"name: {args.skill_name}-subagent",
         f"description: {json.dumps(desc, ensure_ascii=False)}",
+        "kind: agent",
     ]
-    fm_lines.append(f"tools: {tools or 'Read'}")
+    # version と owner は推測で埋めない。SKILL.md に無ければ省き、lint に欠落を報告させる
+    for key in ("version", "owner"):
+        value = fm.get(key)
+        if isinstance(value, str) and value.strip():
+            fm_lines.append(f"{key}: {json.dumps(value.strip(), ensure_ascii=False)}")
+    fm_lines.append("tools-inherit: true" if args.tools_inherit else f"tools: {tools or 'Read'}")
     fm_lines.append(f"model: {args.model}")
+    fm_lines.append(f"isolation: {isolation}")
     fm_lines.append("---")
 
     # Preserve operational constraints in infrastructure, never as a fixed thinking process.

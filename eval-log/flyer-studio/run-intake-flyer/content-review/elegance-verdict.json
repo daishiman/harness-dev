@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "run-intake-flyer",
+    "skill_md_sha256": "800474e526c6765641a96bece2f6ee6e99fd0afe000ac2e0d6dbb0e8cd97f039"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer A (fresh context, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T14:00:43Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "追記で、iteration 2 で出した low（前に記録した深さの読み先が無い）が解けた。今の stage-common.md は、記録先を節の冒頭 :53 の最後の文「選んだ深さは型に欄が無いので、[記録の残し方](#記録の残し方)どおり返却文へ書く」に置き、戻りの項目 :56 に「前に記録した深さが無い stage と、別の会話で入り直して前の返却文が読めない stage だけ、1 回選んでもらう」を置く。:53 は最初に選んだときにも掛かるので、:56 の「前に記録した深さ」は、最初の選択の時点から置き場所が決まった値を指すことになる。返却文へ書く規則は :41「型に欄がない判断は返却文へ書き、新たな共通 JSON 状態…を作らない」と同じで、schemas に深さの欄が無いことも確かめた（light の enum は brief.schema.json:138・concepts.schema.json:34 の色調で、深さではない）。読めない場合の扱いは、前回の直し方の案（確かめられない stage だけ 1 回選ぶ）と同じ範囲を覆う。",
+      "追記の後の stage-common.md:53・:56 は、intake の文言とぶつからない。(1) SKILL.md:81 は「どれにするかを記録する（記録する値は順に accept-as-is・light・standard・detailed）」と値だけを決め、置き場所は :70「所有と記録は stage-common に必ず従う」で共通の規則に任せる。:53 が置き場所を返却文と決めたので、値（:81）と置き場所（:53）が補い合う。intake は深さを選ぶ時点で <DIR> が無いが（:81・:83）、返却文はファイルではないのでこの順序と食い違わない。(2) SKILL.md:83「前提の再確認（premise）で入り直したときは前に記録した深さを引き継ぎ、選び直しを求めない（共通の規則は[深さの選択と戻り](../../references/stage-common.md#深さの選択と戻り)）」は、前に記録した深さが読めることを前提にした要約で、読めないときの例外はリンク先に任せる。「前に記録した深さ」が無いか読めないときは :83 の前提が成り立たないので、:56 の例外と矛盾しない。run-analyze-flyer/SKILL.md:75 も同じ型、run-create-flyer/SKILL.md:86 は「深さの選択と戻りに従って」と明示し、workflow.md:54 も同じ節へリンクする。4 か所とも例外を本文に繰り返さず共通の規則へ寄せており、書き方の流儀はそろっている。",
+      "前回の medium（現状で試すを選ぶと制作へ進めないことの明示）が 2 か所で閉じた。SKILL.md:83 は「現状で試すを選んだときは brief.json と essence-baseline.json が作られないため、制作の段（既存紙面があれば分析の段）へは進めない」と書く。共通の規則 references/stage-common.md:55 も、同じ成果物名（brief.json・essence-baseline.json）と「次の stage へは進めない。進めるには、その stage に入り直して軽微・標準・詳細のどれかを選ぶ」を書く。SKILL と stage-common は、成果物名・帰結・戻り方の 3 点で言い方が一致する。",
+      "stage-common と SKILL の言い方がそろっている。深さが変えるもの: stage-common.md:53「深さが変えるのは、各 SKILL が書いた手間の量だけ…独立性・停止条件・cycleBudget は変えない」と SKILL.md:91「assertResolved と essence-check の停止条件を緩めない。深さが変えるのは、聞き取りの往復と様式提案にかける手間の量だけ」。戻りでの深さ: stage-common.md:56「その stage で前に記録した深さをそのまま記録する。選び直しは求めない」、SKILL.md:83「前に記録した深さを引き継ぎ、選び直しを求めない」、workflow.md:54「各 stage で前に選んだ深さを引き継ぐ」。アンカー `stage-common.md#深さの選択と戻り` は SKILL.md:83・workflow.md:54・run-analyze-flyer/SKILL.md:75・run-create-flyer/SKILL.md:86 の 4 か所から張られ、見出し stage-common.md:51 と一致する。",
+      "前回の low（:87 の範囲）は :89 で書き分けられた。「この担当が判断すること」のうち、資料の記述を確定事実と参考に分けること・食い違う値を合成しないこと・前回の傾向を参考値に限ることの 3 点は選ぶ前の下書きにも掛かる、と明記された。この 3 点は :95 の 3 つの規則と 1 対 1 に対応する。:87 の列挙は残るが、:89 が「ただし」で例外を切り出しているので読み違えない。",
+      "references/interview-guide.md:32 にアンカー `[SKILL の局面 7](../SKILL.md#局面カタログ)` が付き、:44 と同じ形でリンクするようになった。局面 7（SKILL.md:134）は様式提案の局面で、参照先が正しい。",
+      "変更は対象 skill の境界を守っている。frontmatter の state_machine（:50-65）、pre_choice_forbidden の revise-loop、goal_seek と feedback_contract の activation_state（semantic_evaluator_started）は前回から変わらない。ゴールシーク実行（:99-167）のゴール・チェックリスト・ループ・局面カタログ・配線・検証の構成も保たれている。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency / plugins/flyer-studio/skills/run-intake-flyer/SKILL.md:171（「既存紙面を直す案件（mode が revise）」は現物診断へ） ⇔ plugins/flyer-studio/plugin-composition.yaml:112（intake→analyze の condition「brief.analysisMode=source-artifact の案件」）・plugins/flyer-studio/schemas/brief.schema.json:347-352・plugins/flyer-studio/scripts/analysis.cjs:62] 前回から引き継ぐ（未修正）。intake が終わる時点の analysisMode は常に new-from-brief で（init の既定。source-artifact へは analysis-template が切り替える）、登録簿の分岐条件はこの時点では成り立たない。分岐の鍵は SKILL.md:171 の intake.mode=revise の方が正しい。今回の変更より前からある、対象 skill の外の食い違いである。直し方: plugin-composition.yaml:112 の condition を「intake.mode=revise（既存紙面を直す案件）。analysis-template が brief.analysisMode を source-artifact へ切り替える」に直す。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:re-review-after-fix",
+    "next_action": "none"
+  },
+  "notes": "elegance の観点（4 条件と設計の筋）で書いた iteration 2 の verdict である。前回（iteration 1、SKILL.md sha256 3fe66bbe…）の指摘を作者が直した後、作者とは別の context で再確認した。rubric-verdict.json と同じ 1 回の focused の再レビューの結果で、exhaustive の 30 思考法は使っていない。\n評価した対象は作業ツリーの現物で、SKILL.md の sha256 は 800474e526c6765641a96bece2f6ee6e99fd0afe000ac2e0d6dbb0e8cd97f039（171 行）。書く直前に shasum -a 256 で取った。plugins/flyer-studio は git では untracked なので diff は取れず、現物を読み直して前回の指摘と照らした。\n【追記の確認（同じ iteration 2 の中）】最初の iteration 2 の verdict（2026-10-30T13:49:29Z）の後、team-lead から stage-common.md:56 に 1 文を足したと連絡があった。読んだ時点の stage-common.md（sha256 f71144b2…）では「深さは型に欄が無いので…返却文へ書く」が :56 の戻りの項目の中にあった。その後 2026-10-30T13:54:24Z に stage-common.md がもう一度変わり（sha256 7f22f035…、72 行）、この文は「選んだ深さは…」として節の冒頭 :53 の最後へ移り、:56 には読めないときの例外が残った。評価は今の形（7f22f035…）に対して行った。SKILL.md は変わっておらず、sha256 は最初の iteration 2 と同じ。作者の新しい修正の周回ではなく、レビュー中の対象への追記の確認なので、iterations は 2 のままとし、reviewed_at だけを今の時刻にした。確かめたのは、(1) 追記で深さの記録先の low が解けたか、(2) 追記が intake の文言とぶつからないか、の 2 点。どちらも positive_feedback の先頭 2 件に書いた。\n判定: high 0、medium 0、low 1（既存の食い違いの引き継ぎ）。最初の iteration 2 で出した新しい low（深さの読み先）は追記で解けた。依頼の規則（high が 1 件でもあれば FAIL）により PASS、next_action は none とした。low 1 件は作者の follow-up として negative_feedback に残した。\n【前回の指摘の扱い】\n- low・omission（最初の iteration 2 で出した、前に記録した深さの読み先）: 解消。stage-common.md:53 の最後の文（選んだ深さは返却文へ書く）と :56 の最後の文（無いか、別の会話で読めないときは 1 回選ぶ）。\n- medium・omission（現状で試すで制作へ進めないことの明示）: 解消。SKILL.md:83 と stage-common.md:55。前回は選ぶ場面の :81 に足す案を出したが、:83 は同じ節の直後の段落で、選択肢を示す AI は同じ節を読んでから示すので、効果は同じとみなした。\n- low・inconsistency（interview-guide.md:32）: 解消。リンクと局面 7 が付いた。語は「手順は」のままで :44 の「実行は」と違うが、「SKILL の局面 7 に手順がある」という普通名詞として正しく読めるので数えない。\n- low・inconsistency（plugin-composition.yaml:112）: 未修正のため引き継ぎ。\n- low・smell（:87 の範囲）: 解消。:89。\n【4 条件】(a) 矛盾なし: 見つからなかった。(b) 漏れなし: 見つからなかった（深さの読み先は追記で解けた）。(c) 整合性: 登録簿の分岐条件（既存、low）。(d) 依存関係: 深さの選択と戻りへのアンカー 4 か所、局面カタログへのアンカー、CLI の引数は、どれも現物と一致した。\n【stage-common と SKILL の言い方の一致】確かめた組は、stage-common.md:53 と SKILL.md:91（深さが変えるもの・変えないもの）、stage-common.md:55 と SKILL.md:83（現状で試すの帰結。成果物名も一致）、stage-common.md:56 と SKILL.md:83 と workflow.md:54（戻りでの深さの引き継ぎ）の 3 組で、食い違いは無かった。SKILL.md:83 は「直す対象の現物（パスとハッシュ値）を示し」を本文に書かず、リンクで共通の規則に任せている。run-analyze-flyer/SKILL.md:75 も同じ書き方で、run-create-flyer/SKILL.md:86 だけが本文にも書く。リンク先に規則があるので、指摘にはしなかった。追記で増えた例外（前に記録した深さが無い・別の会話で前の返却文が読めないときは 1 回選ぶ）も、SKILL.md:83 は本文に書かずリンクに任せる。:83 の「前に記録した深さを引き継ぎ」は、その深さが読めることを前提にした文なので、例外と矛盾しない。\n【数えなかったもの】(0a) SKILL.md には「返却文」という語が無い。intake は local agent を持たず呼び出された AI が親 context で実行する stage（stage-common.md:18）で、返却文は利用者や host への返答にあたる。stage-common.md:41・:53 の記録の規則は共通で、SKILL.md:70 がそれに従うと書くので、漏れとは数えなかった。(0b) SKILL.md:77「シート・回答・記録はすべて案件フォルダに置き、plugin の中へ書かない（E3）」の「記録」は、個人情報を含むヒアリングのファイルを plugin へ書かないための規則で、ファイルではない返却文に深さを書く stage-common.md:53 とはぶつからないと読んだ。(1) SKILL.md:171「後の段で目的や事実が変わったときは…局面 9 を通し直す」は premise の戻しの一種として stage-common.md:56 に含まれると読めるので、別の戻り道とは数えなかった。(2) learn-suggest の様式の文に件数が付いた（scripts/learn.cjs:860・:866、「切り絵（3/11 件）」の形）。intake は labels をラベルのまま回答の値に使い（scripts/intake.cjs:600）、文は一括シートの参考表示にだけ使う（:598）ので、局面 7 の「label をそのまま intake-apply する」（SKILL.md:136）と矛盾しない。\n【機械検査】追記の連絡の後、stage-common.md が今の形（sha256 7f22f035…）になってから全部を流し直した（流す前と後で 3 ファイルの sha256 が変わらないことも確かめた）。ログは scratchpad/flyer-review-A/ の *-iter2b.log と rubric-*-iter2b.json にあり、結果は追記の前（*-iter2.log）と同じだった。\n- npm --prefix plugins/flyer-studio test: tests 233、pass 228、fail 0、skipped 5、rc 0（作者の主張どおり）。skip の 5 件は実 PDF と実ブラウザの受入試験で、この skill には関係しない。\n- build-local-package.py --check（python3 -I -B）: rc 0、errors []、assets 42。\n- lint-goal-seek（plugins/harness-creator/skills/run-build-skill/scripts/）: --skills-dir plugins/flyer-studio/skills で rc 0（7 files passed）。--skills-dir plugins に baseline を付けて rc 0、flyer-studio の行は 0 件。\n- lint-entrypoint-artifact-first（arch -x86_64）: rc 0（134 inventory、106 enforced、28 exempt）。\n- lint-skill-name: rc 0（7 skills）。lint-skill-description: OK=7 VIOLATION=0。validate-frontmatter: rc 0。warn は「source field missing（推奨のみ）」だけ。\n書き込みは verdict 4 ファイルと scratchpad だけで、対象ファイルは変えていない。"
+}

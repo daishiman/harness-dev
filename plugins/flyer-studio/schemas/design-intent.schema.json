@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "readingOrder",
+    "groups",
+    "palette",
+    "whitespace",
+    "balanceReason",
+    "imageRelationship",
+    "rejectedAlternatives"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "readingOrder": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "group",
+          "purpose",
+          "placementReason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "group": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          },
+          "placementReason": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "palette": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "color",
+          "role",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 2
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "whitespace": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "w",
+          "h",
+          "purpose"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "type": "number",
+            "minimum": 0
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0
+          },
+          "w": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "h": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "balanceReason": {
+      "type": "string",
+      "minLength": 12,
+      "pattern": "\\S"
+    },
+    "imageRelationship": {
+      "type": "string",
+      "minLength": 12,
+      "pattern": "\\S"
+    },
+    "rejectedAlternatives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "type": "string",
+            "minLength": 4,
+            "pattern": "\\S"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "run-create-flyer",
+    "skill_md_sha256": "969a9b74b62083c19d6dab2cbbd7c497ad6b16df78e26bb427a749a2a5b7348f"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-content-reviewer (fresh context, focused combined review, port-hh-flyer-rubric-20261030)",
+  "reviewed_at": "2026-10-30T14:52:05Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "L0-RUBRIC"
+    ],
+    "positive_feedback": [
+      "IN1: criteria が名指すテスト（tests/contract・runtime-gates・analysis-bridge）を単独で流し、rc 0 だった（tests 77・pass 76・fail 0・skipped 1。skip は実ブラウザが要る回転文字の 1 件）。完了チェックリストの validate・render と verify・要求の取りこぼしの 3 項目（SKILL.md:114-116）が IN1 に結ばれている。様式未確定の描画も validate で止まる。stylePreferences が空なら scripts/project.cjs:344 が、希望に無い expression なら :438 が止め、後者は tests/contract.test.cjs:272 が検査する。",
+      "IN2: tests/gates と design を単独で流し、rc 0 だった（46/46）。次の 3 点は本文・references・コードで一致している。fixClass の戻り先（workflow.md:46-51 と design-contract.json の fixRouting。design.test.cjs が表との一致を検査）。同じ所見の再提出と preference を cycle に数えない規則（workflow.md:60、production-contract.md:21）。予算超過の INCOMPLETE（SKILL.md:125、checks.cjs:478）。",
+      "IN3: 今回変わった括弧書き（SKILL.md:31 の references/registry.json の nonFixReturns）は、実在する正本を指している。registry.json:250 が nonFixReturns の唯一の置き場である。生成物の plugin-composition.yaml は nonFixReturns を持たず、build-local-package.py --check の check_composition が登録簿からの生成との一致を保証する。tests/design.test.cjs:304 の分離テストは registry.json を直接読み（:305）、tests/design を単独で流して rc 0（30/30）だった。検査手段の記述と、テストが実際に読むファイルが一致している。",
+      "OUT1: 独立評価を経ない納品は機械で止まる。finalize（scripts/checks.cjs:522・:563）は validateReview を通し、reviewer が制作担当と同じ場合と self-review を拒否する（scripts/design.cjs:448）。本文の :96・:133・:158 も同じ境界を書いている。pilot の項目（:117）には止め手の render の assertPilotOrder（checks.cjs:254）が明記されている。",
+      "L0 rubric（ref-skill-design-rubric/references/rubric.json v1.6.0、render-findings-score.py --kind skill）を現在の SKILL.md で流した。score 100・threshold 80 で passed。applicable 20・scored 19・pending_human 1（BD-004）・required_fixes 0・未合格の finding 0。",
+      "BD-004（description の trigger と本文の手順の対応）は手で判定した。description の 3 つの trigger は、本文と 1 対 1 で対応する。「確定した brief の用途・素材・公開条件からチラシを制作したいとき」は :77 の入力・:82・:177 に、「独立評価済みanalysisに基づく修正を実物へ反映し」は :77・:177 に、「新PDF/PNGと独立完成評価まで接続したいとき」は :158・:162-173 に対応する。description は今回の差分の外にあり、変わっていない。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:stale-sha-re-review",
+    "next_action": "none"
+  },
+  "notes": "rubric の投影である。focused combined review（content-review-protocol.md の incremental）の 1 context で評価し、assign-skill-design-evaluator による exhaustive の採点は実行していない。stale-sha（41a65679… → 969a9b74…）による再評価で、この sha に対する iteration は 1。差分は frontmatter の IN3 の括弧書き 1 か所だけである（現在の文字列を旧表記に戻すと旧 sha 41a65679… に一致することを確かめた）。それでも IN1〜IN3・OUT1 は全件、現在のファイルとテストで評価し直した。frontmatter の feedback_contract.criteria（IN1・IN2・IN3・OUT1）を全件評価し、L0 rubric の採点結果を L0-RUBRIC として加えた。OUT1 は verify_by が evaluator で、実画像の合否は案件の実行時に別 context の assign-flyer-evaluator が出す。このレビューには実案件が無い（tests/acceptance.test.cjs は FLYER_ACCEPTANCE_PROJECT 未設定で skip）。そのため確かめたのは、契約・本文・finalize の機械ゲートが独立 PASS を要求するところまでである。elegance 側の持ち越し low（workflow-manifest.json の entrypoint が cli.cjs で、registry.json の implementation.entrypoint と本文が build-flyer.py）は、rubric の規則と criteria の評価には当たらないので、ここでは数えない。high は無いので PASS とした。流した検査（すべて読み取りのみ。ログは reviewer の scratchpad）: node --test tests/*.test.cjs で rc 0（tests 233・pass 228・fail 0・skipped 5）。build-local-package.py --check は rc 0（errors []・fail 0）。lint-goal-seek は OK。validate-frontmatter は rc 0。lint-skill-name は ok。lint-skill-description は OK=189・VIOLATION=0。lint-entrypoint-artifact-first は rc 0。SKILL.md の sha256 は書く直前に shasum -a 256 で取り直した。"
+}

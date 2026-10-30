@@ -1,0 +1,226 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "schemaVersion": 1,
+  "workflowId": "run-create-flyer",
+  "skill": "run-create-flyer",
+  "version": "1.3.0",
+  "goalSeek": {
+    "engine": "inline",
+    "selection": "stage-common の共通判断手順。担当固有の判断・記録と独立した受渡しは stage contract に従う",
+    "fixedTemplate": false
+  },
+  "phases": [
+    {
+      "id": "P1-produce-render",
+      "step": 1,
+      "title": "採用案を目的と制約から実装し新画像へ描画する",
+      "dependsOn": [],
+      "resourceIds": [
+        "stage-agent",
+        "stage-contract",
+        "knowledge-index",
+        "runtime",
+        "entrypoint",
+        "artifact-schema",
+        "composition-reviewer",
+        "typography-reviewer",
+        "color-reviewer",
+        "stage-common",
+        "brief-schema",
+        "concepts-schema",
+        "design-intent-schema",
+        "design-prompt",
+        "background-prompt"
+      ],
+      "output": "render/check/scene",
+      "onUnmet": "fixClass ごとの戻り先（../../references/workflow.md#改善と納品）"
+    }
+  ],
+  "resources": [
+    {
+      "id": "stage-agent",
+      "kind": "agent",
+      "path": "agents/flyer-producer.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "stage-contract",
+      "kind": "reference",
+      "path": "references/production-contract.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "knowledge-index",
+      "kind": "reference",
+      "path": "../../references/design-knowledge-index.json",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "runtime",
+      "kind": "reference",
+      "path": "../../references/runtime.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "entrypoint",
+      "kind": "script",
+      "path": "../../scripts/build-flyer.py",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "artifact-schema",
+      "kind": "schema",
+      "path": "../../schemas/scene.schema.json",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "composition-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-composition-reviewer.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "typography-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-typography-reviewer.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "color-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-color-reviewer.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "stage-common",
+      "kind": "reference",
+      "path": "../../references/stage-common.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "brief-schema",
+      "kind": "schema",
+      "path": "../../schemas/brief.schema.json",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "concepts-schema",
+      "kind": "schema",
+      "path": "../../schemas/concepts.schema.json",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "design-intent-schema",
+      "kind": "schema",
+      "path": "../../schemas/design-intent.schema.json",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "design-prompt",
+      "kind": "prompt",
+      "path": "../../prompts/design.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    },
+    {
+      "id": "background-prompt",
+      "kind": "prompt",
+      "path": "../../prompts/background.md",
+      "phaseIds": [
+        "P1-produce-render"
+      ]
+    }
+  ],
+  "stageDependencies": [
+    "assign-flyer-analysis-evaluator:analysis-review.json PASS when brief.analysisMode=source-artifact"
+  ],
+  "completionRequiresIndependentReviewer": true,
+  "evaluationOnly": false,
+  "revisionBudgetRef": "../../references/workflow.md#改善と納品"
+}

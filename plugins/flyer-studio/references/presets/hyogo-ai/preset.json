@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "hyogo-ai",
+  "aliases": [
+    "hyogo"
+  ],
+  "notes": "HyogoAI 交流会の過去案件から作った初期値。init --preset hyogo-ai（別名 hyogo）を選んだ案件だけが使う。値は今回の回答と支給資料で確かめ直す（E2）。brief の値は briefExample と一致させる（tests/contract.test.cjs が検査）。assets/catalog.json で preset が hyogo-ai の素材（写真・HyogoAI ロゴ・支給参考・過去の完成例・背景）もこの preset の案件だけが一覧・import できる。中央軸の基準見本は F07・F11（catalog の recommendedAxisReference）で、過去の 13 案は固定テンプレートではない。",
+  "briefExample": "references/presets/hyogo-ai/brief.example.json",
+  "brief": {
+    "count": 13,
+    "whiteCount": 3,
+    "policy": {
+      "center": "whole-page",
+      "axisGroups": [
+        "speakers",
+        "questions",
+        "event",
+        "venue",
+        "price",
+        "notice"
+      ],
+      "requiredTones": [
+        "light",
+        "dark"
+      ],
+      "maxChars": 225,
+      "minFontPt": 8.5,
+      "axisToleranceMm": 1
+    }
+  },
+  "knowledgeFiles": [
+    "references/presets/hyogo-ai/case-notes.md",
+    "references/presets/hyogo-ai/v13-feedback.md"
+  ],
+  "intakePrefill": {
+    "logo": "file",
+    "logo-file": "LOGO_PRINT"
+  },
+  "sceneExample": "references/presets/hyogo-ai/scene.example.json"
+}

@@ -1,0 +1,59 @@
+# 生成物。正本は references/registry.json で、scripts/build-local-package.py --write-composition が書き直す。手で直さない。
+name: flyer-studio
+description: 一括ヒアリングで目的と確定事実を受け取り、既存紙面の診断と提案評価、制作、別担当による新画像の評価、納品、知見の還元までを証拠でつなぐ。
+kind: plugin-composition
+version: 1.3.0
+owner: harness maintainers
+
+contract:
+  intent: 利用者が誰に何をしてもらいたいかを少ない往復で受け取り、公開条件と印刷品質を守った紙面を、作った者とは別の目が最新の現物で確かめてから渡す（本質の正本は references/essence.json）。
+  interface:
+    inputs: [user-request, intake answers, "supplied materials (source images/PDF, photos, logos)"]
+    outputs: [out/<案ID>/print.pdf・print.png, out/all.pdf, out/white.pdf（白案がある場合）, out/index.html, out/delivery.json, knowledge ledger entry]
+  invariant:
+    - "判断と必須修正は essence.json の E1〜E5 に結び、結べない所見は好みとして記録だけにする。"
+    - "評価者は制作・分析を修正しない。提案者と提案評価者、制作者と画像評価者は別の担当にする。"
+    - "評価の物差しは評価前に固定し、新しい画像・入力・規範へ証拠を結ぶ。古い PASS を転用しない。"
+    - "依頼主・個人の情報と案件固有の値は案件フォルダと references/presets/ にだけ置き、汎用の規則・担当へ書かない。同梱する案件素材は assets/catalog.json の preset で当該案件に隔離し、由来（元の出所パス）を保持する。"
+    - "個人素材を含むため、公開 marketplace への登録と外部共有をしない。"
+
+capabilities:
+  - { kind: skill, ref: skills/assign-flyer-analysis-evaluator, tier: core }
+  - { kind: skill, ref: skills/assign-flyer-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-analyze-flyer, tier: core }
+  - { kind: skill, ref: skills/run-create-flyer, tier: core }
+  - { kind: skill, ref: skills/run-intake-flyer, tier: core }
+  - { kind: skill, ref: skills/run-learn-flyer, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/flyer-color-reviewer, tier: extension }
+  - { kind: agent, ref: agents/flyer-composition-reviewer, tier: extension }
+  - { kind: agent, ref: agents/flyer-typography-reviewer, tier: extension }
+
+dependencies:
+  - { from: skills/run-intake-flyer, to: skills/run-analyze-flyer, type: calls }
+  - { from: skills/run-intake-flyer, to: skills/run-create-flyer, type: calls }
+  - { from: skills/run-intake-flyer, to: skills/run-learn-flyer, type: reads }
+  - { from: skills/run-create-flyer, to: skills/run-analyze-flyer, type: calls }
+  - { from: skills/run-analyze-flyer, to: skills/assign-flyer-analysis-evaluator, type: calls }
+  - { from: skills/run-create-flyer, to: skills/assign-flyer-evaluator, type: calls }
+  - { from: skills/run-learn-flyer, to: skills/run-create-flyer, type: reads }
+  - { from: skills/run-analyze-flyer, to: agents/flyer-composition-reviewer, type: delegates }
+  - { from: skills/run-analyze-flyer, to: agents/flyer-typography-reviewer, type: delegates }
+  - { from: skills/run-analyze-flyer, to: agents/flyer-color-reviewer, type: delegates }
+  - { from: skills/assign-flyer-analysis-evaluator, to: agents/flyer-composition-reviewer, type: delegates }
+  - { from: skills/assign-flyer-analysis-evaluator, to: agents/flyer-typography-reviewer, type: delegates }
+  - { from: skills/assign-flyer-analysis-evaluator, to: agents/flyer-color-reviewer, type: delegates }
+  - { from: skills/run-create-flyer, to: agents/flyer-composition-reviewer, type: delegates }
+  - { from: skills/run-create-flyer, to: agents/flyer-typography-reviewer, type: delegates }
+  - { from: skills/run-create-flyer, to: agents/flyer-color-reviewer, type: delegates }
+  - { from: skills/assign-flyer-evaluator, to: agents/flyer-composition-reviewer, type: delegates }
+  - { from: skills/assign-flyer-evaluator, to: agents/flyer-typography-reviewer, type: delegates }
+  - { from: skills/assign-flyer-evaluator, to: agents/flyer-color-reviewer, type: delegates }
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
+
+eval_sinks: [EVALS.json]

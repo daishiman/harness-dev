@@ -80,7 +80,37 @@ def test_frontmatter_complete_has_no_missing(content_lint):
 
 def test_frontmatter_missing_tools_detected(content_lint):
     missing = content_lint.check_agent_frontmatter("name: x\ndescription: y")
-    assert "tools" in missing and "name" not in missing
+    assert content_lint.AGENT_TOOLS_MISSING in missing and "name" not in missing
+
+
+# tools 宣言は「tools か tools-inherit: true のどちらか一方」(capability-manifest.schema.json の kindAgent oneOf)
+def test_frontmatter_tools_inherit_satisfies_tools_declaration(content_lint):
+    fm = "name: x\ndescription: y\ntools-inherit: true"
+    assert content_lint.check_agent_frontmatter(fm) == []
+    assert content_lint.check_agent_tools_declaration(fm) is None
+
+
+@pytest.mark.parametrize("fm", [
+    "name: x\ndescription: y\ntools: Read, Glob",
+    "name: x\ndescription: y\ntools: [Read, Glob]",
+    "name: x\ndescription: y\ntools:\n  - Read\n  - Glob",
+    "name: x\ndescription: y\ntools-inherit: true  # 全ツール継承",
+])
+def test_tools_declaration_accepts_one_of(content_lint, fm):
+    assert content_lint.check_agent_tools_declaration(fm) is None
+
+
+@pytest.mark.parametrize("fm,needle", [
+    ("name: x\ndescription: y\ntools: Read\ntools-inherit: true", "併記"),
+    ("name: x\ndescription: y\ntools-inherit: false", "true でない"),
+    ("name: x\ndescription: y\ntools-inherit: yes please", "true でない"),
+    ("name: x\ndescription: y\ntools:", "空"),
+    ("name: x\ndescription: y\ntools: inherit", "inherit"),
+    ("name: x\ndescription: y\ntools: [Read, Inherit]", "inherit"),
+])
+def test_tools_declaration_rejects_violations(content_lint, fm, needle):
+    problem = content_lint.check_agent_tools_declaration(fm)
+    assert problem is not None and needle in problem
 
 
 # ─────────────────── lint_file --mode agent ───────────────────
@@ -103,6 +133,25 @@ def test_agent_missing_key_flagged(content_lint, tmp_path):
     f.write_text("---\nname: x\ndescription: y\n---\n\n" + _VALID_BODY, encoding="utf-8")
     viols = content_lint.lint_file(f, "agent")
     assert any("AGENT-FRONTMATTER-KEYS" in v and "tools" in v for v in viols)
+
+
+def test_agent_tools_inherit_passes(content_lint, tmp_path):
+    f = tmp_path / "agents" / "probe-agent.md"
+    f.parent.mkdir(parents=True)
+    f.write_text(_AGENT_FM.replace("tools: Read, Glob\n", "tools-inherit: true\n") + _VALID_BODY,
+                 encoding="utf-8")
+    assert content_lint.lint_file(f, "agent") == []
+
+
+@pytest.mark.parametrize("tools_lines,code", [
+    ("tools: Read\ntools-inherit: true\n", "AGENT-FRONTMATTER-TOOLS"),   # 両方あり
+    ("", "AGENT-FRONTMATTER-KEYS"),                                      # どちらも無し
+])
+def test_agent_tools_declaration_both_or_neither_flagged(content_lint, tmp_path, tools_lines, code):
+    f = tmp_path / "a.md"
+    f.write_text(_AGENT_FM.replace("tools: Read, Glob\n", tools_lines) + _VALID_BODY, encoding="utf-8")
+    viols = content_lint.lint_file(f, "agent")
+    assert any(code in v for v in viols), viols
 
 
 def test_agent_bad_body_flagged(content_lint, tmp_path):

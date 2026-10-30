@@ -1,0 +1,100 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "flyer-studio",
+  "entry_points": {
+    "skills": [
+      "assign-flyer-analysis-evaluator",
+      "assign-flyer-evaluator",
+      "run-analyze-flyer",
+      "run-create-flyer",
+      "run-intake-flyer",
+      "run-learn-flyer",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "flyer-color-reviewer",
+      "flyer-composition-reviewer",
+      "flyer-typography-reviewer"
+    ],
+    "commands": [],
+    "hooks": []
+  },
+  "user_invocable_skills": [
+    "run-intake-flyer",
+    "run-analyze-flyer",
+    "run-create-flyer",
+    "run-learn-flyer"
+  ],
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "Productivity",
+    "tags": [
+      "flyer",
+      "print",
+      "design",
+      "japanese",
+      "internal"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "skill-governance-adapters"
+  ],
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {},
+    "hook_omissions": {}
+  },
+  "pkg_checks": {},
+  "manifests": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json"
+  ],
+  "required_files": [
+    "references/kit-entry.md",
+    "README.md",
+    "INSTALL.md",
+    "CHANGELOG.md",
+    "EVALS.json",
+    "package.json",
+    "package-lock.json",
+    "plugin-composition.yaml",
+    "references/registry.json"
+  ],
+  "runtime": {
+    "orchestration": "Python standard library",
+    "render_backend": "Node 22+ / Chromium / Poppler",
+    "dependencies": "package-lock.json",
+    "image_generation": "host-tool-discovery-and-confirmation"
+  },
+  "install": {
+    "global_changes": "explicit-user-request-only",
+    "hook_trust_changes": false
+  },
+  "entry_point_policy": {
+    "skills": "harness の台帳として、plugin 内の全 skill を載せる。repo では登録簿の 6 skill と、repo 専用で実体を置く run-skill-feedback。単独ローカルキットでは narrow_kit() が run-skill-feedback を外し、6 skill になる。",
+    "user_invocable_skills": "利用者が直接呼べる入口。user-invocable が false でない登録簿の skill だけを載せる。",
+    "agents": "agents/ 直下の専門レンズのみ。skill 内 agents/ の4担当は委任専用で、直接の入口には含めない。"
+  },
+  "distribution_reason": "ユーザーの写真・ロゴ・参考チラシを含む個人用ローカルキット。公開登録しない。",
+  "notes": [
+    "distributable: false — ユーザーの写真・ロゴ・参考チラシを含む個人用ローカルキットのため、公開 marketplace と bundles.json へ載せない。Codex 向けには repo の .agents/plugins/marketplace.json（local 専用面）にだけ登録する。",
+    "skills/run-skill-feedback/ は harness-creator が所有する共通 skill の実体コピーである。plugin は marketplace 経由で単独 install され install 先には自分の plugin ディレクトリしか展開されないため、正本への symlink は install 先で切れる。よって repo では実体で持ち、runtime_dependencies へ owned-vendored として所有者を明記する（単独ローカルキットにはこの skill を写さず、narrow_kit() が runtime_dependencies の項目も外す）。",
+    "scripts/build-local-package.py --out が作る単独ローカルキットには、KIT_EXCLUDED_SKILLS（run-skill-feedback）を含めず、KIT_EXCLUDED_DEPENDENCIES（skill-governance-adapters）をキットの .claude-plugin/plugin.json の dependencies から外す。plugin 直下の repo 用台帳 artifact-delivery.json（KIT_EXCLUDED_ROOT_FILES。外す skill の入口も載る）もキットへ写さない。キットのこの台帳からも、entry_points.skills と runtime_dependencies の外した skill を、depends_on の KIT_EXCLUDED_DEPENDENCIES と外した skill だけが要る外部依存（harness-creator）を外し、plugin-composition.yaml も写した中身から作り直す（narrow_kit()）。除外の正本は build-local-package.py の 3 つの定数で（外した skill だけが要る外部依存は、定数ではなく needed_externals() が登録簿から導く）、README は skill と依存の 2 つを説明し、tests/package-contract.test.cjs は 3 つとも読む。",
+    "assets/ の画像素材（png・jpg・jpeg・webp・svg）は個人素材のため plugin 直下の .gitignore で git 管理から外す。素材台帳 assets/catalog.json と素材一覧 assets/index.html は追跡し、ローカルキットは手元の素材をそのまま写す。",
+    "入口の地図の正本は references/kit-entry.md で、repo の plugin 直下には SKILL.md を置かない（harness の skill 走査は plugins/*/SKILL.md を 0 件と定める）。scripts/build-local-package.py --out はリンクを plugin 直下からの相対に直して、キット直下の SKILL.md として書き出す（KIT_ENTRY・KIT_ENTRY_OUTPUT）。--check は書き出した本文の name とリンクを plugin 直下から照合し、直下に SKILL.md があれば書き出しとの一致を確かめる。"
+  ]
+}

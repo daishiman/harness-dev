@@ -1,0 +1,133 @@
+{
+  "version": "1.3.0",
+  "harness": {
+    "mechanical": [
+      "npm test",
+      "python3 scripts/build-flyer.py doctor",
+      "claude plugin validate .",
+      "python3 scripts/build-local-package.py --check（登録簿と実ファイルの両方向照合・stage参照・指針ID・版の一致）",
+      "intake-apply/intake-residual",
+      "essence-baseline/essence-check",
+      "analysis-seal/analysis-validate",
+      "analysis-review-validate",
+      "python3 scripts/build-flyer.py verify --project <project>",
+      "cycle-status",
+      "selected singleUseRefs occurrence validation independent of maxChars",
+      "approved analysis requirements -> scoped feedback bridge",
+      "finalize post-merge input/analysis/review/output freshness validation",
+      "precision-preserving PDF merge strict pixel regression",
+      "learn-record/learn-suggest"
+    ],
+    "llm_eval": [
+      "run-intake-flyerが全質問を1枚で出し、不足と矛盾だけを1ラウンドで追加確認する。資料に明示された回答は出典付きで引き継ぎ、preset由来の仮値を確認済みの事実として扱わない",
+      "run-analyze-flyerが元画像を実見し保持点/要求別候補/採否理由/nextActionsを具体化する",
+      "別contextのassign-flyer-analysis-evaluatorが観察一致/網羅/変更規律/実現性を検証し、FIXはrun-analyze-flyerへ返す",
+      "assign-flyer-evaluatorがreview-rubricの評価対象の最終PDF由来PNGを個別実見し、案件方針の軸・読み順・文字・自然な境界・公開範囲・構図差を具体的に評価する。同一入力/画像/規範のPASSはreusedFromで引き継ぎ、FIXをfixClassで分類して返す",
+      "run-learn-flyerが納品済み案件の集計・根拠件数・反例から適用限界付きの改善仮説を示す。好みを規範へ自動昇格せず、個人情報や事実値を横断知見へ保存しない",
+      "30法が求められた場合は俯瞰→9/9/12法の並列分析→統合改善→4条件確認を行う"
+    ],
+    "threshold_note": "総合点で相殺しない。全必須条件のPASSを実観察で判定する。presetが独自の採点を持つときはPRESET-SCOPEのとおりpresetを指定した案件にだけ追加する。未測定の印刷/来場効果を保証しない。"
+  },
+  "acceptance_cases": [
+    {
+      "id": "INTAKE-ONE-SHOT",
+      "criterion": "doctor/initで案件フォルダを作った後にprefillを保存し、全質問を1枚で受け、不足・矛盾・様式提案の要否だけを追加確認する。資料に明示された希望は出典を保って引き継ぎ、既出の回答を聞き直さず、must-factが未解決なら描画・finalizeしない"
+    },
+    {
+      "id": "ESSENCE-ANCHOR",
+      "criterion": "開始時のpurposeとmust-factを全案件でessence-baseline.jsonに固定し、描画前・描画中・finalize前に欠落と無承認変更を拒否する。提案/完成評価の必須修正はtextとservesでE1〜E5へ結び、好みだけではcycleを消費しない"
+    },
+    {
+      "id": "STYLE-PROPOSAL",
+      "criterion": "様式を固定の選択肢から選ばせず、雰囲気の言葉・参考・避けたいものから記述軸で受ける。言葉にならなければ2〜3案を提案して利用者の選択かおまかせを記録し、配色(tone)とは別に保持して案ごとの様式をDD11で設計・評価する"
+    },
+    {
+      "id": "AXIS",
+      "criterion": "center=whole-pageでは、QRを置く案でQRの左右位置を変えてもaxisGroupsの意味群の中心は紙面幅/2から変わらない。center=noneでは軸を強制せず均衡理由を要求する"
+    },
+    {
+      "id": "WHITE",
+      "criterion": "白案を含む場合は純白外縁と内側の自然な白gradientをPDF由来画像で確認する。白案なしの場合は納品案内に白案を要求せず、旧white.pdfを残さない"
+    },
+    {
+      "id": "PRIVACY",
+      "criterion": "未確認写真、参照人物の掲載、requiredCropPxを持つ素材の承認crop欠落は拒否する"
+    },
+    {
+      "id": "PRESET-SCOPE",
+      "criterion": "依頼主の情報・案件固有の値・preset専用素材・preset独自の採点は案件フォルダとreferences/presets/<名前>/にだけ置き、そのpresetを指定した案件にだけ適用する。例: presetを指定した案件は、そのpreset.jsonのknowledgeFilesにある案件採点の基準を各観点の実観察に当て、案件採点とPASS/FIX契約の両方の根拠を残す"
+    },
+    {
+      "id": "FRESH",
+      "criterion": "入力・画像・判断に使うDD本文・関連節・stage固有評価契約・工程正本の変更を該当規範の指紋へ反映し、旧PASSを失効させる。無関係なREADMEや履歴を対象へ広げない"
+    },
+    {
+      "id": "PRINT",
+      "criterion": "指定サイズPDFとフォント埋込を実測する。QR採用時は全案のPDF由来画像で読取を実測し、QRなしなら行動を示す申込案内（copy.apply）を全案へ掲載する"
+    },
+    {
+      "id": "INTENT",
+      "criterion": "配置・配色・余白の設計意図と実在group/色/領域の対応を要求する"
+    },
+    {
+      "id": "VISIBLE",
+      "criterion": "透明文字を拒否し、実背景との不可視/低contrastと実測群間を記録する"
+    },
+    {
+      "id": "INDEPENDENT",
+      "criterion": "制作者と別の担当が5観点と最新品質契約で実見し、専門レンズは昇格条件に当たるときだけ使う。自己承認・一言OK・同文コピーを拒否する"
+    },
+    {
+      "id": "COMBINED",
+      "criterion": "結合PDFの実ページ数/順/元PDF SHA/固定ラスタ条件での画素一致を確認する"
+    },
+    {
+      "id": "STAGE-ASSETS",
+      "criterion": "6skillから各担当・local reference・知識索引・schema・実コマンドへ接続できる。AIの判断と機械による準備/検査/退避の所有を分け、共通説明を一元管理し、固有の判断責務を残す"
+    },
+    {
+      "id": "ANALYSIS-GATE",
+      "criterion": "未承認/自己承認/古い元画像・analysis・規範・要求contextを制作へ流さない"
+    },
+    {
+      "id": "FEEDBACK-COVERAGE",
+      "criterion": "承認analysisの必須/候補と採否理由を要求IDと対象案付きで制作へ引き継ぎ、元案と新案の違いを明示mappingで保ち、最終画像で適用全件を照合する"
+    },
+    {
+      "id": "FIX-TRIAGE",
+      "criterion": "提案評価の必須修正はtext・servesで本質条項へ結び、run-analyze-flyerへ戻す。完成評価ではさらにfixClass・returnToを持ち、workflowの表に従う（deterministic/within-planは制作、premiseはいずれもintakeで前提を再確認し、元画像ありなら診断→提案評価→制作、元画像なしなら制作）。preferenceは別記録とし、好みだけではcycleを消費しない。評価者は修正しない"
+    },
+    {
+      "id": "CYCLE-LEDGER",
+      "criterion": "評価FIXを案件全体の台帳へ重複なく記録し、同画像の再提出・追記・好みだけは予算を増やさない。提案差戻しはanalysis-review triggerで区別し、前提崩れpremiseへ無条件に分類しない。予算超過はINCOMPLETE"
+    },
+    {
+      "id": "MIXED-WRITING",
+      "criterion": "縦導入と横回答の意味/字面/保護領域を実PDF由来PNGで確認する"
+    },
+    {
+      "id": "SINGLE_USE",
+      "criterion": "選択された一回掲載群の二重ref/直接再掲は字数上限を上げても拒否する。未対応の意味言い換えは独立実見で確認。"
+    },
+    {
+      "id": "FIRST-READ",
+      "criterion": "設計意図を読む前の縮小で最初/次に読めた語と意味群・誰向けの手掛かりを記録し、掲載文に無い語や意図と食い違う順序を自己申告で通さない"
+    },
+    {
+      "id": "PRESERVE",
+      "criterion": "分析で保持すると決めた良い点を新画像で1点ずつ確認し、改善で失った保持点を案のPASSにしない"
+    },
+    {
+      "id": "PILOT",
+      "criterion": "executionPlanのpilotは既存案の真部分集合だけを機械検査で許し、選んだ理由と展開方法を記録する。残りの案の描画は、pilot案の独立PASS（pilot-review.json）が現在の入力とpilot画像SHAに結び付くまで機械検査で拒否する"
+    },
+    {
+      "id": "REJECTED-ALT",
+      "criterion": "各案が比較して採らなかった候補と理由を持ち、他案の理由を流用した記録を拒否する"
+    },
+    {
+      "id": "KNOWLEDGE-RETURN",
+      "criterion": "納品済み案件だけを個人情報/事実値を除いて台帳へ記録し、件数と割合を満たす集計を根拠と反例付きの参考値にする。AIは限定的な改善仮説を返し、質問票/preset/規範を自動で書き換えない。分析差戻しを偽の前提崩れとして質問改善へ流さない"
+    }
+  ]
+}
