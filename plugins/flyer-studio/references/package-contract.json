@@ -55,7 +55,98 @@
   ],
   "codex_alternatives": {
     "commands": {},
-    "agents": {},
+    "agents": {
+      "flyer-color-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent flyer-color-reviewer (color lens) through the stage skills whose workflow-manifest declares it; in Codex the stage applies the same lens knowledge in its own context.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the image, materials and essence clauses handed to the lens and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Return the same read-only lens findings through the declared Codex entry point set; the lens never runs commands."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        }
+      },
+      "flyer-composition-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent flyer-composition-reviewer (composition lens) through the stage skills whose workflow-manifest declares it; in Codex the stage applies the same lens knowledge in its own context.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the image, materials and essence clauses handed to the lens and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Return the same read-only lens findings through the declared Codex entry point set; the lens never runs commands."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        }
+      },
+      "flyer-typography-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent flyer-typography-reviewer (typography lens) through the stage skills whose workflow-manifest declares it; in Codex the stage applies the same lens knowledge in its own context.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the image, materials and essence clauses handed to the lens and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Return the same read-only lens findings through the declared Codex entry point set; the lens never runs commands."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-analysis-evaluator",
+            "assign-flyer-evaluator",
+            "run-analyze-flyer",
+            "run-create-flyer"
+          ]
+        }
+      }
+    },
     "hook_omissions": {}
   },
   "pkg_checks": {},

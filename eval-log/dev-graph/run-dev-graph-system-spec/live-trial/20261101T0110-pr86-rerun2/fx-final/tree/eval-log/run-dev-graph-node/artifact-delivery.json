@@ -1,0 +1,27 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "artifact": {
+    "path": "eval-log/run-dev-graph-node/dry-run-preview.json",
+    "sha256": "9ca64824b6240fa56c6e37b4db4e4a833e2bef6527d34a844cd2925688cd5793",
+    "payload": "eval-log/run-dev-graph-node/import-payload.json",
+    "payload_sha256": "6391fdb9288cd901ade378ae0cdeb782655377bea53056137109eefc3e8e0bc4",
+    "open_with": "python3 -m json.tool eval-log/run-dev-graph-node/dry-run-preview.json",
+    "write_count": 0,
+    "graph_revision_before": 0,
+    "graph_revision_after_preview": 1
+  },
+  "minimum_guard": {
+    "parse": "ok",
+    "pre_write_validation_findings": 0,
+    "secret_or_irreversible": "none (dry-run)"
+  },
+  "transitions": [
+    "artifact_created->minimal_guard_passed",
+    "minimal_guard_passed->artifact_presented",
+    "artifact_presented->user_choice_recorded(standard)",
+    "user_choice_recorded->semantic_evaluator_started"
+  ],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)"
+}

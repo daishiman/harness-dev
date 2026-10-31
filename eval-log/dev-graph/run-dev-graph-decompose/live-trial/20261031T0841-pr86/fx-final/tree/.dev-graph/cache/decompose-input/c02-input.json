@@ -1,0 +1,46 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-diff",
+      "title": "render 結果の前回 render との差分比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "owners": ["harness maintainers"],
+      "tags": ["render", "diff"],
+      "priority": "medium",
+      "depends_on": ["LT-FEATURE-001"],
+      "resource_scope": ["features/"],
+      "macro": {
+        "purpose": "graph 実値 render の結果が前回からどう変わったかを根拠付きで把握できるようにするため",
+        "goal": "今回の render 結果と前回の render 結果の間の node・edge・進捗の差分が決定論的に一覧化されている状態",
+        "scope_in": ["前回 render 結果の特定と読取", "今回と前回の node・edge・進捗値の差分算出", "差分の機械可読な出力"],
+        "scope_out": ["差分の自然文要約", "render 本体の描画方式の変更", "外部 tracker への差分投影"],
+        "acceptance": ["同一 graph に対する二回の render の差分が 0 件である", "node を一件追加した graph の差分に追加 node が一件だけ現れる", "同一入力に対する差分出力の digest が一致する"],
+        "architecture_refs": ["ARCH-LT-001"]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-diff-summary",
+      "title": "render 差分の要約提示",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "owners": ["harness maintainers"],
+      "tags": ["render", "diff", "summary"],
+      "priority": "medium",
+      "depends_on": ["feature-lt-render-diff"],
+      "resource_scope": ["features/"],
+      "macro": {
+        "purpose": "render の差分を読み手が詳細を追わずに短時間で把握できるようにするため",
+        "goal": "差分 feature の出力から追加・削除・変更の件数と主要な変化を要約した提示が読み手に示されている状態",
+        "scope_in": ["差分出力の読取", "追加・削除・変更の件数集計と主要変化の抽出", "読み手向け要約の提示"],
+        "scope_out": ["差分そのものの算出", "render 本体の描画方式の変更", "要約の外部配信"],
+        "acceptance": ["要約の追加・削除・変更の件数が差分出力の件数と一致する", "差分 0 件の入力では変化なしと示される", "同一差分入力に対する要約出力の digest が一致する"],
+        "architecture_refs": ["ARCH-LT-001"]
+      }
+    }
+  ]
+}

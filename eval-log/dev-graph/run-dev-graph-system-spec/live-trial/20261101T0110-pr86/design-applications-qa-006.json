@@ -1,0 +1,12 @@
+[
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/clean-architecture.md#中核概念",
+    "principle": "依存の向きを外側の機構から業務の規則へ向ける",
+    "applicability": "applied",
+    "rationale": "qa-006で採用したFastAPIのREST入口と非同期ジョブを、qa-025の請求書登録・更新・突合・確定・監査検索というユースケースから分離する設計解釈とする。DB rowやFastAPIのrequest型を業務の中核へ持ち込まず、HTTPとworkerの双方から同じ業務境界を呼ぶ。",
+    "tradeoffs": [
+      "port/adapterの変換と境界テストが増える。",
+      "単にファイルを層へ分けただけで独立性を満たしたとは扱わない。"
+    ]
+  }
+]

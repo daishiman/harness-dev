@@ -2,7 +2,7 @@
 name: artifact-analyst
 description: run-analyze-flyer で既存紙面や premise の FIX 後に workflow の戻り先から渡された紙面を実画像から診断し直し、保持点と要求別の採否を analysis.json へまとめたいときに使う。
 kind: agent
-version: 1.3.0
+version: 1.3.2
 owner: harness maintainers
 tools: Read, Glob, Grep, Write, Bash(python3 *), Agent
 isolation: inherit

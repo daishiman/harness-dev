@@ -1,0 +1,219 @@
+{
+  "label": "sysspec86",
+  "replay_of": {
+    "hh_sysspec2": "HarnessHub の lt2 sysspec2 (run-id 20261030T1405-lt2)。1 回目は C05 medium (設計解釈 `unrecorded`) で FAIL、design-backfill 8 件を INT の未 commit の writer で当てた 2 回目が PASS",
+    "pr85_sysspec7": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261013T0349-pr85 (fx の git の形・exclude・read-deny の前例)"
+  },
+  "session_root": "fx",
+  "seed": {
+    "source": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T173215-bzn4-current-system-spec",
+    "seed_sha256": {
+      "spec-state.json": "87b95a77a6f117aba37dee3a8cb09079beadfe71249e4014657eaa051005b697",
+      "fetched-references.json": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539"
+    },
+    "spec_state_replaced_by": "/private/tmp/claude-501/-Users-dm-dev-dev------HarnessHub/b2f32051-9969-4540-b562-a9008a2506e7/scratchpad/lt2/recover/spec-state.json",
+    "recovered_sha256": "af129441b3f508be7259098349682ca4d5847ab9fe8c34b7f5c6be9a9316f0b8",
+    "after_foundation_index_sha256": "4c69671e312e1cdab38e94f96df07724b9869c61133a70680fb3762603f91426",
+    "same_as_hh_sysspec2_after_foundation": true,
+    "spec_state_sha256_now": "4c69671e312e1cdab38e94f96df07724b9869c61133a70680fb3762603f91426",
+    "fetched_references_sha256": "48395c3a012906d5083ac6df2d0341d2edbdc06d6d149de7a196224a15d83539",
+    "foundation_index": {
+      "writer": "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+      "turns_sha256": "7e45c8de1ec91c897984d449a8ee7c1dacaa113966550abb7008f020383952a0",
+      "turns_byte_identical_to_hh_sysspec2": true,
+      "mapping": {
+        "U1": [
+          "qa-010",
+          "qa-011"
+        ],
+        "U2": [
+          "qa-012"
+        ],
+        "U3": [
+          "qa-013"
+        ],
+        "U4": [
+          "qa-014"
+        ],
+        "U5": [
+          "qa-015"
+        ],
+        "U6": [
+          "qa-016",
+          "qa-019"
+        ],
+        "U7": [
+          "qa-017",
+          "qa-000"
+        ],
+        "U8": [
+          "qa-018",
+          "qa-031"
+        ],
+        "U9": [
+          "qa-001",
+          "qa-028",
+          "qa-024"
+        ]
+      },
+      "chunks": [
+        {
+          "rc": 0,
+          "before": "af129441b3f508be",
+          "after": "eac0e91d3dca410d"
+        },
+        {
+          "rc": 0,
+          "before": "eac0e91d3dca410d",
+          "after": "4c69671e312e1cda"
+        }
+      ]
+    },
+    "git": {
+      "head": "812c8ada922727647333a3de3ee28e234b603203",
+      "subject": "isolated current-source input",
+      "status": [
+        "?? system-spec/"
+      ],
+      "exclude_added": [
+        "/plugins/",
+        "/.claude/"
+      ]
+    },
+    "builder": "$T/smoke/sysspec86-mkseed.py",
+    "builder_sha256": "000458541ccd105f49eebb06663d9c8d3938a1228b96f24400c7b0f6254a0a0f"
+  },
+  "plugins": {
+    "source": "W (port-hh-flyer-rubric-20261030) の plugins/ をそのまま写した",
+    "versions": {
+      "dev-graph": "0.1.21",
+      "skill-governance-adapters": "0.1.16",
+      "system-dev-planner": "0.1.18",
+      "system-spec-harness": "0.1.24",
+      "harness-creator": "1.4.52"
+    },
+    "closure_sha256": "d57f66b154e72d9a81f20bd561843869f4192998050a38b492c274c71a9aa858",
+    "closure_match_w": true,
+    "diff_count": {
+      "dev-graph": 0,
+      "harness-creator": 0,
+      "skill-governance-adapters": 0,
+      "system-dev-planner": 0,
+      "system-spec-harness": 0
+    },
+    "stray_file": {
+      "path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/.claude/handoff/20261031T082027.md",
+      "sha256": "f731f3049a43c831b54d40b99150b2b80eb414e1c675176fe0a05930d47e18f6",
+      "what": "親 session (この準備の orchestrator) の compact hook が W の scripts dir へ書いた handoff snapshot。W では .gitignore (plugins/**/.claude/handoff/) で追跡外。写しにも入った",
+      "removal": "rm が権限で拒否された。迂回はしていない (decompose86・init86・status86 の写しにもある)",
+      "mitigation": "中の transcript_path が指す /Users/dm/.claude/projects を read-deny にした"
+    }
+  },
+  "design_backfill": {
+    "done": false,
+    "reason": "HH の 2 回目 (PASS) は design_applications の後付け 8 件 (qa-031・qa-002〜008) を INT の未 commit の writer で当てた。PR #86 (W) の writer は legacy_exempt の印が無い schema 1.0 の qa への後付けを拒否するため、この run では当てていない",
+    "evidence": "$T/smoke/sysspec86-checks/report.json",
+    "w_writer": {
+      "sha256": "ad2973cf88c18781ed2360748d6223ebf985e2ed33ca4021650333af2d941158",
+      "steps": 1,
+      "last_rc": 1,
+      "last_stderr": "TransitionError: set-qa-design-applications: legacy_exempt=true と非空の legacy_exempt_reason を持つ旧 qa のみ補完可能: qa-031"
+    },
+    "int_writer": {
+      "sha256": "169937ce0286869cddc70f72674c56691951f5eb06aca5caf9ca0890cac8dd6d",
+      "steps": 8,
+      "final_sha256": "c738353bb02383b5b1e7ba1cd7091fdcc5b6e42139af6ee983f01617ef5fa892",
+      "same_as_hh_after_backfill": true
+    }
+  },
+  "prelaunch_checks": {
+    "on": "fx の spec-state (写しで回した compile を除き、読むだけ)",
+    "state_sha256": "4c69671e312e1cdab38e94f96df07724b9869c61133a70680fb3762603f91426",
+    "validators": {
+      "vcm": {
+        "rc": 0,
+        "last": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす"
+      },
+      "vkg-required-info": {
+        "rc": 0,
+        "last": "}"
+      },
+      "source-citation": {
+        "rc": 2,
+        "last": ""
+      },
+      "design-knowledge-refs": {
+        "rc": 0,
+        "last": "OK: design knowledge_ref は全て実在する (検査 0 件)"
+      }
+    },
+    "source_citation_with_repo_root": "rc1・6 件の出典記録違反 (react の evidence_ref/evidence_sha256 欠落・fastapi/typescript の record 無し・retrieved_at が全部同じ)。seed の refs の版どおりで、被験の doc-fetch で取り直す前提",
+    "compile_rc": 0,
+    "chapters_with_unrecorded": [
+      "auth.md",
+      "backend.md",
+      "database.md",
+      "frontend.md",
+      "infrastructure.md",
+      "maintenance-ops.md",
+      "security.md",
+      "ui-ux.md"
+    ],
+    "expected_risk": "W の compile は design_applications の無い confirmed qa を `unrecorded` と書き、C05 はそれを finding にする。HH の 1 回目と同じ C05 medium の FAIL になる見込みが高い",
+    "llm_precheck": "回していない (決定論の compile で 8 章すべてに `unrecorded` が出ることを既に確かめたため)"
+  },
+  "pr86_vs_int_gap": "INT (port-hh-integrate-20261023) の未 commit の修正が PR #86 に無い: ssh の set-qa-design-applications の 1.0 後付け・SKILL.md と spec-state-contract.md・test・artifact-delivery の runner sha、dev-graph の decompose の apply-recipe.md ほか、sga の external-mutation-guard、harness-creator 19 file。この run は PR #86 の commit どおりを試す",
+  "isolation": {
+    "settings_sha256": "90b3985f3abefe315fa40d065fb4e86302bba0752fc7190a292e807126753234",
+    "settings_sha256_before_readdeny": "380e0d15b39003360cffae58b54b2f5655d7eddc337b899e3f1de9db9883dc10",
+    "policy_sha256": "0707c7bd64827a7e2b71c51a1a20c7d818a103eafd23094e340ac1760a5a111a",
+    "allowed_fetch_hosts": [
+      "www.postgresql.org",
+      "react.dev",
+      "fastapi.tiangolo.com",
+      "www.typescriptlang.org",
+      "kubernetes.io"
+    ],
+    "read_deny_targets": [
+      "$T/runs/decompose86",
+      "$T/runs/init86",
+      "$T/runs/node86",
+      "$T/runs/render86",
+      "$T/runs/requirements86",
+      "$T/runs/schedule86",
+      "$T/runs/smoke86",
+      "$T/runs/status86",
+      "$T/runs/sync86",
+      "$T/runs/sysspec86/ctl",
+      "$T/smoke",
+      "$T/prov",
+      "$T/bodies",
+      "/private/tmp/claude-501/-Users-dm-dev-dev------harness/077ff83f-2a4a-43b3-ac23-5a506e015759/scratchpad/wttrial",
+      "/private/tmp/claude-501/-Users-dm-dev-dev------HarnessHub",
+      "/private/tmp/claude-501/-Users-dm-dev-dev------HarnessHub-specs",
+      "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-system-spec",
+      "/Users/dm/dev/dev/個人開発/harness/eval-log/system-spec-harness",
+      "/Users/dm/orca/workspaces/harness/pr86-ci-fix/eval-log/dev-graph/run-dev-graph-system-spec",
+      "/Users/dm/orca/workspaces/harness/pr86-ci-fix/eval-log/system-spec-harness",
+      "/Users/dm/dev/dev/個人開発/harness/.worktrees/port-hh-integrate-20261023/eval-log/dev-graph/run-dev-graph-system-spec",
+      "/Users/dm/dev/dev/個人開発/harness/.worktrees/port-hh-integrate-20261023/eval-log/system-spec-harness",
+      "/Users/dm/dev/dev/個人開発/HarnessHub/eval-log/dev-graph/run-dev-graph-system-spec",
+      "/Users/dm/dev/dev/個人開発/HarnessHub/eval-log/system-spec-harness",
+      "/Users/dm/dev/dev/個人開発/HarnessHub/system-spec",
+      "/Users/dm/.claude/projects"
+    ],
+    "read_deny_rule_form": "Read(//<abs>/**) と sandbox.filesystem.denyRead (素の絶対 path)。/private/tmp と /tmp の両方",
+    "read_deny_builder": "$T/smoke/sysspec86-readdeny.py",
+    "trust_needed": "偽 HOME の .claude.json は lt/runs だけを trust している。git repo の cwd (fx) は親の trust を継がない (PR85 の sysspec7)。起動前に projects[<run>/fx].hasTrustDialogAccepted=true が要る (この準備の書込み範囲の外なので未実施)",
+    "poll_cap_s": 3600,
+    "scenario_max_wall_clock_s": 3300,
+    "tmpcode": "ss"
+  },
+  "task": {
+    "sha256": "d4dc48745e541863cc3ebf0b4bbf5309107a525842cf8d5a6fad1ec1ed7c8199",
+    "lines": 76,
+    "body": "$T/bodies/sysspec86.md",
+    "body_sha256": "f3726128047b0d21eaada4f5f196d7c49ff42b21601599f11649f3eeaaaac7d3",
+    "scenario": "C19-OUT1-positive-system-spec-lineage-r2"
+  }
+}

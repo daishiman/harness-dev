@@ -2,7 +2,7 @@
 name: flyer-composition-reviewer
 description: 構図・余白・光学均衡を、公演ポスターの可変グリッドから学んだ観点で、呼び出した担当とは別 context から実画像で確かめたいときに使う。
 kind: agent
-version: 1.3.0
+version: 1.3.2
 owner: harness maintainers
 tools: Read, Glob, Grep
 isolation: fork

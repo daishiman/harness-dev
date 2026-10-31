@@ -1,0 +1,39 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-schedule",
+  "transitions": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "evidence": "schedule.json parse ok; secret grep 0; read_only=true; graph/lease sha before==after"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "artifact": "eval-log/dev-graph/run-dev-graph-schedule/schedule.json",
+      "sha256": "0dea9138beab50848cca36551b0cf4e48533d039c50e5f8d74ded0119d53987a",
+      "open_with": "cat / jq"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract in task.md (pre-specified standard); not an approval of the repo or external accounts"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "from": "semantic_evaluator_started",
+      "event": "improvement_complete",
+      "to": "handoff_complete",
+      "evidence": "all checklist + IN1/OUT1/OUT2/OUT3 PASS; C17 MATCH"
+    }
+  ],
+  "current_state": "handoff_complete"
+}

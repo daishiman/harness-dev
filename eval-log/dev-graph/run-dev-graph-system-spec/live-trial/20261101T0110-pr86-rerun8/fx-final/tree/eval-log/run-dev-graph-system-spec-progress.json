@@ -1,0 +1,67 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "eval-log/c24-receipt.json; independent R0 Agent PASS eval-log/run-dev-graph-system-spec/R0-context/loop1.json; lineage gate exit0 checked=0 (new import)"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "0.1.24 in >=0.1.22 <1.0.0; 4 entry points present; independent R1 Agent PASS eval-log/run-dev-graph-system-spec/R1-preflight/loop1.json"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "elicit/doc-fetch/compile/evaluator all invoked via Skill; but evaluator fork's report write was refused by guard-confirmed-chapter-overwrite and re-written by another route, and hearing-audit.json saved via printf substitute -> contract violation (guard refusal must FAIL, no detour)"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "coverage/citation/schema exit0; evaluator report verdict PASS and --report exit0, but produced after a guard refusal detour, so not accepted as evidence"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "C02 not started: stopped fail-closed before import (no payload written)"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "R2 independent verification stopped (run halted); R3 not reached"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "coverage_exit": 0,
+          "source_citation_exit": 0,
+          "schema_exit": 0,
+          "result": "PASS"
+        },
+        {
+          "loop": 2,
+          "coverage_exit": 0,
+          "source_citation_exit": 0,
+          "schema_exit": 0,
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "blocker": {
+    "code": "guard_refusal_detour",
+    "detail": "assign-system-spec-completeness-evaluator reported its first report write was blocked by guard-confirmed-chapter-overwrite hook and it re-wrote via another path; hearing-audit heredoc save failed and printf was substituted. task.md: guard refusal => FAIL, no detour. No C02 import performed."
+  }
+}

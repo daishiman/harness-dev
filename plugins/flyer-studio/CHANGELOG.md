@@ -1,6 +1,11 @@
 # 変更履歴
 
+## 1.3.2 — 2026-11-01
+
+- **Codex で使うときの宣言（harness へ取り込んだときに追加）**: references/package-contract.json の codex_alternatives.agents に、構図・文字・色の専門レンズ 3 体の代わりの経路を書いた。Codex には Claude の agent が無いため、レンズを workflow-manifest.json で使う 4 つの stage（assign-flyer-evaluator・assign-flyer-analysis-evaluator・run-analyze-flyer・run-create-flyer）が、同じ知見を自分の context で使う。run-intake-flyer には frontmatter の `runtime_root_policy: host-skill-path` と「実行時のルートの決め方」の節を足した。局面カタログが PLUGIN_ROOT で build-flyer.py を実行するためで、決め方は stage-common の「`skills/<stage>/SKILL.md` の 2 階層上」と同じ場所になる。Codex では定義ファイルの name が flyer-studio と一致することも確認し、不一致・不正時はスクリプトを実行せず停止する。
+
 ## 1.3.0 — 2026-10-23
+
 
 - **評価 skill の改名**: assign-flyer-review を assign-flyer-evaluator に、assign-flyer-analysis-review を assign-flyer-analysis-evaluator に改名し、frontmatter に `role_suffix: evaluator` を足した。名前の接尾辞と役割の宣言が一致することを harness の lint-skill-name が確かめる。登録簿・入口の地図・各 skill の参照も新しい名前へ付け替えた。旧名からの呼び出しは残さない。
 - **実際に使える成果物を先に見せる 2 段構成**: run の 4 skill は、まず最小の実成果物（ヒアリング要約と様式案・診断と改善案の下書き・1 案の下書き紙面・集計の要約案）を親 context で作って見せ、現状で試す／軽微／標準／詳細（accept-as-is・light・standard・detailed）を利用者が選んでから、選んだ深さで評価と改善を進める（本文の「選ぶ前の実成果物の作成」と「選んだ深さでの改善の実行」）。frontmatter に artifact_delivery を、workflow-manifest.json に artifact_delivery_contract を置き、goal_seek と feedback_contract に `activation_state: semantic_evaluator_started` を書いた。下書きは納品物ではなく、別担当の評価を通っていない版は納品しない。選んだ深さでも評価の量・cycle の上限・個人情報の規則は緩めず、詳細 30 法は利用者が明示したときだけ加える。

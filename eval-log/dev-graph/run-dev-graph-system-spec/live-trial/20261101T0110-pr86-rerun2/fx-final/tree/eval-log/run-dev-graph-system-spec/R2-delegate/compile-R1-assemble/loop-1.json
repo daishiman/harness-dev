@@ -1,0 +1,109 @@
+{
+  "responsibility": "run-system-spec-compile/R1-assemble",
+  "loop": 1,
+  "mode": "post-compile verification (read-only; helpers imported via importlib from compile-spec-doc.py)",
+  "inputs": [
+    "system-spec/spec-state.json",
+    "system-spec/fetched-references.json",
+    "system-spec/*.md",
+    "system-spec/index.md"
+  ],
+  "checklist": [
+    {
+      "id": "1_requirements_first",
+      "item": "要件定義章が章構成の先頭に存在する",
+      "result": "YES",
+      "evidence": "compile_docset key0=00-requirements-definition.md; file exists; frontmatter status=confirmed vs foundation_status=confirmed; index links it before 章一覧"
+    },
+    {
+      "id": "2_all_categories_once",
+      "item": "全カテゴリが一度ずつ章構成に存在する",
+      "result": "YES",
+      "evidence": "spec categories=['database', 'auth', 'ui-ux', 'security', 'infrastructure', 'backend', 'frontend', 'maintenance-ops']; chapter files=['auth', 'backend', 'database', 'frontend', 'infrastructure', 'maintenance-ops', 'security', 'ui-ux']; index rows=['database', 'auth', 'ui-ux', 'security', 'infrastructure', 'backend', 'frontend', 'maintenance-ops']"
+    },
+    {
+      "id": "3_order_matches",
+      "item": "章順が spec-state の categories 順と一致する",
+      "result": "YES",
+      "evidence": "index row order==categories: True; compile_docset order==categories: True"
+    },
+    {
+      "id": "4_aggregate",
+      "item": "各章の集約状態が derive_aggregate の結果と一致する",
+      "result": "YES",
+      "evidence": [
+        "database: fm=確定 derive=確定 index=確定",
+        "auth: fm=確定 derive=確定 index=確定",
+        "ui-ux: fm=確定 derive=確定 index=確定",
+        "security: fm=確定 derive=確定 index=確定",
+        "infrastructure: fm=確定 derive=確定 index=確定",
+        "backend: fm=確定 derive=確定 index=確定",
+        "frontend: fm=確定 derive=確定 index=確定",
+        "maintenance-ops: fm=確定 derive=確定 index=確定"
+      ]
+    },
+    {
+      "id": "5_status",
+      "item": "各章の status が chapter_status の結果と一致する",
+      "result": "YES",
+      "evidence": [
+        "database: fm=confirmed chapter_status=confirmed index=confirmed",
+        "auth: fm=confirmed chapter_status=confirmed index=confirmed",
+        "ui-ux: fm=confirmed chapter_status=confirmed index=confirmed",
+        "security: fm=confirmed chapter_status=confirmed index=confirmed",
+        "infrastructure: fm=confirmed chapter_status=confirmed index=confirmed",
+        "backend: fm=confirmed chapter_status=confirmed index=confirmed",
+        "frontend: fm=confirmed chapter_status=confirmed index=confirmed",
+        "maintenance-ops: fm=confirmed chapter_status=confirmed index=confirmed"
+      ]
+    },
+    {
+      "id": "6_spec_cells_real",
+      "item": "各章の spec_cells が実在セルだけを参照する",
+      "result": "YES",
+      "evidence": [
+        "database: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "auth: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "ui-ux: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "security: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "infrastructure: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "backend: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "frontend: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True",
+        "maintenance-ops: fm==spec_cell_ids True, subset of matrix True, index match True, canonical True"
+      ]
+    },
+    {
+      "id": "7_unassigned_to_index",
+      "item": "未割当 target が全体出典へ分類されている",
+      "result": "YES",
+      "evidence": "references=4; unassigned=0 []; categories with refs={'database': 1, 'frontend': 3, 'backend': 1}; ref buckets to non-category=[]; chapter missing source_url=[]; index unassigned section consistent=True"
+    }
+  ],
+  "supplementary": [
+    {
+      "check": "frontmatter serves_goals == chapter_serves_goals",
+      "result": "YES",
+      "evidence": [
+        "database: fm=['G1'] helper=['G1']",
+        "auth: fm=['G1'] helper=['G1']",
+        "ui-ux: fm=['G2'] helper=['G2']",
+        "security: fm=['G1'] helper=['G1']",
+        "infrastructure: fm=['G1', 'G2'] helper=['G1', 'G2']",
+        "backend: fm=['G1', 'G2'] helper=['G1', 'G2']",
+        "frontend: fm=['G2'] helper=['G2']",
+        "maintenance-ops: fm=['G1'] helper=['G1']"
+      ]
+    },
+    {
+      "check": "on-disk docset reproducible from compiler",
+      "result": "YES",
+      "evidence": "write_docset(compile_docset(spec,refs)) into $TMPDIR copy seeded with current files -> 0 differing files (idempotent). Fresh empty out-dir differs only by one extra blank line before '## 上流指針' in 9 files (whitespace normalization by merge_preserving); non-structural, not a 5.3 item."
+    }
+  ],
+  "overall": "PASS",
+  "blockers": [],
+  "original_goal": "収集済み spec-state.json と取得済み fetched-references.json・設計知識参照が、上位概念へトレース可能な要件定義書 + 章別 Markdown + index.md の仕様書ドキュメントセットへ、決定論的に組み上がっている",
+  "delta_from_original": "R1-assemble scope satisfied: 00-requirements-definition.md first (status confirmed), 8 categories once each in spec-state order, aggregate/status/spec_cells/serves_goals all equal helper outputs and index rows, 4 references all assigned (database 1, frontend 3, backend 1 incl. also_categories), 0 unassigned and index states so. Remaining goal parts (render content/design-knowledge/crosslink quality) are outside R1 and not verified here.",
+  "merged_directive_for_next": "Proceed to R2-render / R3-crosslink verification. Optional: note that fresh-dir compile emits a double blank line before '## 上流指針' in chapters with approval section, normalized only when merging over existing files (cosmetic determinism nit).",
+  "drift_signal": "none"
+}

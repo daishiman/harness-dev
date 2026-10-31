@@ -2,7 +2,7 @@
   "target": {
     "plugin": "flyer-studio",
     "skill": "run-learn-flyer",
-    "skill_md_sha256": "4a7cd6d4f01ec41357097081c1e3b4fe1670a47257cf4e02aa8b9a33eb5c1cb2"
+    "skill_md_sha256": "5c85bfdd5a7b138b60c7950bb4dcd26ccfbe82110141d4d41ae91ea56e2f200d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,30 +13,31 @@
     "dependency_break": 0,
     "smell": 2
   },
-  "reviewer": "independent-content-reviewer A (fresh context, port-hh-flyer-rubric-20261030)",
-  "reviewed_at": "2026-10-30T14:04:03Z",
-  "iterations": 3,
+  "reviewer": "independent-metadata-diff-reviewer /root/review_flyer_ci",
+  "reviewed_at": "2026-10-31T16:24:47.341846+00:00",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
       "IN1",
       "IN2",
-      "OUT1"
+      "OUT1",
+      "VERSION-METADATA-ONLY"
     ],
     "positive_feedback": [
-      "前回の medium（IN2 の文言）が解けた。IN2（:25）に「（様式ラベルの傾向と参考候補は件数の下限だけで選び、割合条件は使わない）」が入り、仕様の正本 references/runtime.md:124 とコード scripts/learn.cjs:698 と一致した。前回求めた fixture（割合が minRate 未満で、件数が minCases 以上のラベル）は tests/learn.test.cjs:367 として入り、IN2 の例外がテストで固定された。",
-      "criteria 3 件を再評価した。IN1 と IN2 は verify_by test で、tests/learn.test.cjs の該当テストが実在し、233 件中 fail 0 で通った。IN2 は :341（両方の下限を満たすラベル）と :367（minRate 未満のラベル）が、例外の両側を押さえる。OUT1（verify_by human）は、局面 3（:134）・局面 4（:135）と完了チェックリストの :108-109 に規定がある。",
-      "L0 の score は 94（threshold 80）で、required_fixes は 0 件。BD-004（pending_human。description のトリガーと本文の 1:1 対応）を読んで確かめた。トリガー 1（記録・集計したい）は局面 1・2 に、トリガー 2（次回ヒアリングや質問改善の参考が欲しい）は learn-suggest の説明（:137）と局面 3・4 に対応する。Purpose の 3 つの場面（:63-65）を 2 つのトリガーで覆っている。"
+      "変更前snapshotと最終sourceを独立比較し、frontmatter.versionまたはroot.version（package-lockはpackages[\"\"].versionも）を除く全データが同値であることを確認した。Skill本文・責務・criteria・所有・実行条件・workflowの資源と依存辺は不変。",
+      "plugin固有check_versions（build-local-package.py:749-768）はmanifest/package/EVALS/workflow/Skill/agentの同版を要求する。1.3.2への同期はこの機械契約を満たし、意味上の能力や実行結果を追加しない。",
+      "従前の意味判断は変更前SHAに一致する既存content-reviewを根拠履歴として継承する。今回の独立検査はversionメタデータ差分と非version同値性に限定した。"
     ],
     "negative_feedback": [
-      "[low / smell / plugins/flyer-studio/skills/run-learn-flyer/（references/ が無い） ⇔ plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json PD-001（本文 100 行以下か、references/ に 1 ファイル以上）] 前回から引き継ぐ。L0 の機械判定は「body>100 lines but references/ empty」のまま（SKILL.md は 164 行）。skill 固有の細部は plugin 共通の references（runtime.md・stage-common.md）にあるので、実害は小さい。直し方（任意）: 局面 2 の 7 項目の説明（:126-133）か、learn-suggest の説明（:137）を skill の references/ へ移し、本文を 100 行以下にする。",
-      "[low / smell / plugins/flyer-studio/skills/run-learn-flyer/SKILL.md:3（description） ⇔ plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json FM-005（最初の句が動詞）] 前回から引き継ぐ。L0 の機械判定は「first phrase is not a verb」のまま。harness の日本語の型（「〜したいとき、〜ときに使う。」）では目的語が先に来るので、この判定は型と噛み合っていない。lint-skill-description は OK=7 で通っている。run-intake-flyer でも同じ判定が出ている。直し方: description は変えなくてよい。rubric 側で日本語の型を許すかどうかは team-lead の判断とする。"
+      "[履歴継承・今回未再評価] [low / smell / plugins/flyer-studio/skills/run-learn-flyer/（references/ が無い） ⇔ plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json PD-001（本文 100 行以下か、references/ に 1 ファイル以上）] 前回から引き継ぐ。L0 の機械判定は「body>100 lines but references/ empty」のまま（SKILL.md は 164 行）。skill 固有の細部は plugin 共通の references（runtime.md・stage-common.md）にあるので、実害は小さい。直し方（任意）: 局面 2 の 7 項目の説明（:126-133）か、learn-suggest の説明（:137）を skill の references/ へ移し、本文を 100 行以下にする。",
+      "[履歴継承・今回未再評価] [low / smell / plugins/flyer-studio/skills/run-learn-flyer/SKILL.md:3（description） ⇔ plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json FM-005（最初の句が動詞）] 前回から引き継ぐ。L0 の機械判定は「first phrase is not a verb」のまま。harness の日本語の型（「〜したいとき、〜ときに使う。」）では目的語が先に来るので、この判定は型と噛み合っていない。lint-skill-description は OK=7 で通っている。run-intake-flyer でも同じ判定が出ている。直し方: description は変えなくてよい。rubric 側で日本語の型を許すかどうかは team-lead の判断とする。"
     ],
-    "iteration": 3,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:re-review-after-fix",
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual:parent-delegated-independent-version-metadata-only-review",
     "next_action": "none"
   },
-  "notes": "rubric の観点（rule と criteria との照合）で書いた iteration 3（最終回）の verdict である。elegance-verdict.json と同じ 1 回の focused の再レビューの結果で、作者とは別の context で行った。exhaustive の 30 思考法は使っていない。\n評価した対象は作業ツリーの現物で、SKILL.md の sha256 は 4a7cd6d4f01ec41357097081c1e3b4fe1670a47257cf4e02aa8b9a33eb5c1cb2（164 行）。書く直前に shasum -a 256 で取った。plugins/flyer-studio は git では untracked なので diff は取れず、:97 を戻した sha の照合で変更の範囲を確かめた。\n【iteration 3 の経緯】iteration 2 の verdict は 2026-10-30T13:49:29Z（SKILL.md sha256 679196b2…）で、learn の low はゴールの文 :97 の 1 件だった。作者は :97 を「件数・母数・反例と 2 つの下限（minCases と minRate。様式ラベルの傾向と参考候補は minCases だけ）に基づく形で返され」に直した（13:51:00Z、sha256 4a7cd6d4…）。:97 を iteration 2 の文に戻すと 679196b2… に完全に一致するので、変わったのは :97 の 1 行だけで、行数は 164 のままである。stage-common.md は「選んだ深さは型に欄が無いので…返却文へ書く」を節の冒頭 :53 へ移した最終の形（sha256 7f22f035…、72 行）で評価した。14:00:43Z に同じ sha の現物で暫定の書き直しをしており、今回の判定はそれと変わらない。team-lead の依頼で最終回の iteration 3 として書き直した。\n判定: high 0、medium 0、low 2（どちらも iteration 1 からの引き継ぎ）。:97 の変更は description と criteria（IN1・IN2・OUT1）に触れず、IN2 と同じ範囲で例外を書くので、rubric の判定は変わらない。依頼の規則により PASS、next_action は none とした。\n【前回の指摘の扱い】\n- medium・contradiction（iteration 1、IN2 の文言と、例外を固定するテストの欠落）: 解消済み。IN2（:25）とテスト :367（npm test で ok 182）。\n- low・smell（PD-001）: 引き継ぎ。SKILL.md は 164 行のままで、references/ も無い。\n- low・smell（FM-005）: 引き継ぎ。description は変わっていない。\n【採点の方法】python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --target plugins/flyer-studio/skills/run-learn-flyer --kind skill。rc 0、score 94、threshold 80、passed true。rubric は skill-design 1.6.0（rubric_hash sha256:22667118…）、composition_hash は sha256:88316f04…。findings は FM-005 と PD-001、pending_human は BD-004 だけ。出力は scratchpad/flyer-review-A/rubric-run-learn-flyer-iter3.json にある。\n【criteria の評価で見たもの】verify_by test の 2 件は、テストの実在と pass を npm test のログで確かめた。IN2 の例外を固定するテストが :367 にあり、fixture が rate 0.273 < minRate 0.3 になっていることを、テストを読んで確かめた。OUT1 は verify_by human なので、文面に規定があるかで評価した。\n【機械検査】iteration 3 の書き込みの前に流し直した。ログは scratchpad/flyer-review-A/ の *-iter3.log と rubric-run-learn-flyer-iter3.json にある。lint-entrypoint-artifact-first・lint-skill-name・validate-frontmatter は *-iter2b.log の結果を使い、その後 plugins/flyer-studio に変わったファイルが無いことを find -newer で確かめた。\n- npm --prefix plugins/flyer-studio test: tests 233、pass 228、fail 0、skipped 5、rc 0。様式ラベルの例外を固定するテスト（tests/learn.test.cjs:367）は ok 182 として通った。skip の 5 件は実 PDF と実ブラウザの受入試験で、この skill には関係しない。\n- build-local-package.py --check（python3 -I -B）: rc 0。\n- lint-goal-seek（plugins/harness-creator/skills/run-build-skill/scripts/）: --skills-dir plugins/flyer-studio/skills で rc 0（7 files passed）。:97 を変えた後もゴールの節の形は通る。\n- lint-skill-description: OK=7 VIOLATION=0。lint-entrypoint-artifact-first（arch -x86_64）: rc 0（134 inventory、106 enforced、28 exempt）。lint-skill-name: rc 0。validate-frontmatter: rc 0（warn は「source field missing（推奨のみ）」だけ）。\niteration 3 で書き込んだのは run-learn-flyer の verdict 2 ファイルと scratchpad だけで、対象ファイルは変えていない。intake の verdict は SKILL.md が変わっていないので、依頼どおり 14:00:43Z のままにした。"
+  "notes": "既存判定を今回フル再評価したものではない。独立検査は22ファイルのversion限定差分、非versionデータ同値、両release manifestのname等の不変性。rubricの従前の意味判断を継承し、旧criteria IDの評価は根拠履歴に属する（今回新規評価はVERSION-METADATA-ONLY）。履歴: eval-log/flyer-studio/run-learn-flyer/content-review/rubric-verdict.json, SHA-256=5fb314ea006d2eac150be32cdb9ca14ee7253b7bce3f9cc2222426241653dc25, 対象旧SHA=4a7cd6d4f01ec41357097081c1e3b4fe1670a47257cf4e02aa8b9a33eb5c1cb2, 判定=PASS, reviewer=independent-content-reviewer A (fresh context, port-hh-flyer-rubric-20261030), reviewed_at=2026-10-30T14:04:03Z。現対象SHA=5c85bfdd5a7b138b60c7950bb4dcd26ccfbe82110141d4d41ae91ea56e2f200d。findings_summaryとnegative_feedbackは既存所見を隠さず保持した履歴であり、今回新規欠陥や現行での再確認を意味しない。近隣sourceのversionも同時に正規化比較した。30思考法フル実走、host trial、人間の新たな承認、実画像再評価はしていない。scorer再実行もこの5 skillではしていない。根拠はmetadata-version-review.jsonと各*-inherited-review.json。source/fixture/既存eval-logの編集なし。"
 }

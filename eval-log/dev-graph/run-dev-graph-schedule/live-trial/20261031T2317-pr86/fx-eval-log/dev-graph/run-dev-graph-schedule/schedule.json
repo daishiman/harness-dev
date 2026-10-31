@@ -1,0 +1,119 @@
+{
+  "assignment_hints": [
+    {
+      "claim_command": "/dev-graph worktree claim task-api-orders --branch devgraph/task-api-orders --session-id <session>",
+      "graph_node_id": "task-api-orders",
+      "suggested_branch": "devgraph/task-api-orders"
+    },
+    {
+      "claim_command": "/dev-graph worktree claim task-docs-runbook --branch devgraph/task-docs-runbook --session-id <session>",
+      "graph_node_id": "task-docs-runbook",
+      "suggested_branch": "devgraph/task-docs-runbook"
+    }
+  ],
+  "batches": {
+    "features": [],
+    "tasks": [
+      [
+        "task-api-orders",
+        "task-docs-runbook"
+      ]
+    ]
+  },
+  "conflict_pairs": [
+    {
+      "kind": "ready_pair",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "task-api-users-cache"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users-cache",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    }
+  ],
+  "conflicts": [
+    "task-api-users",
+    "task-api-users-cache"
+  ],
+  "excluded": [
+    {
+      "blocking_depends_on": [
+        "task-api-users"
+      ],
+      "graph_node_id": "task-api-users-e2e",
+      "reason": "dependency_unsatisfied",
+      "source": "schedule-graph"
+    },
+    {
+      "blocking_depends_on": [
+        "task-docs-runbook"
+      ],
+      "graph_node_id": "task-cache-warmup",
+      "reason": "dependency_unsatisfied",
+      "source": "schedule-graph"
+    }
+  ],
+  "graph_digest": "sha256:8f01f36be9f215e27f3f0f33f62a31b78882037230d0b0663572810abb9d8fd0",
+  "graph_sha256_after": "570b69bf2fbae02ad905931b43b53d02ecfc3ba0c5f15855f1f33ab69c6e0a5e",
+  "graph_sha256_before": "570b69bf2fbae02ad905931b43b53d02ecfc3ba0c5f15855f1f33ab69c6e0a5e",
+  "lease_sha256_after": "7b6bdc99ae8d0fe47af882d58a30ebd31a208c106075856c3748a7acfa13ac7a",
+  "lease_sha256_before": "7b6bdc99ae8d0fe47af882d58a30ebd31a208c106075856c3748a7acfa13ac7a",
+  "max_parallel": 4,
+  "parity_provenance": null,
+  "read_only": true,
+  "ready_set": {
+    "features": [],
+    "tasks": [
+      "task-api-orders",
+      "task-docs-runbook"
+    ]
+  },
+  "ready_source": "self",
+  "scope": null,
+  "selection_receipt": {
+    "entries": [
+      {
+        "artifact_kind": "task",
+        "background": null,
+        "deferral_reason": null,
+        "graph_node_id": "task-api-orders",
+        "mvp_fit": null,
+        "order_index": 0,
+        "purpose": null,
+        "rationale": null,
+        "sort_rank": 2
+      },
+      {
+        "artifact_kind": "task",
+        "background": null,
+        "deferral_reason": null,
+        "graph_node_id": "task-docs-runbook",
+        "mvp_fit": null,
+        "order_index": 1,
+        "purpose": null,
+        "rationale": null,
+        "sort_rank": 2
+      }
+    ],
+    "mvp_established": {},
+    "policy": "mvp-first/v1"
+  },
+  "tracker_sha256_after": null,
+  "tracker_sha256_before": null,
+  "unmapped": []
+}

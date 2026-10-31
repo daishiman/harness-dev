@@ -1,0 +1,45 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)の3論点を1問に束ねていた。qa-019(1論点の開いた問・N1-N4を満たす・同一論点のJTBD・basis=user-decision・answered_at 2026-10-12T00:16:45Z)で置き換え済み。(a)(b)(c)を満たし有効。active consumerは0件(ui-ux/web の qa_ref は qa-003、effective_source_refs なし)。ui-ux/web の qa_refs に qa-009 が残るが qa-019 も併記されている。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択と、セッション期間・ログアウト時の扱いという独立した2論点を1問に束ねている。選択肢・保留の道は示されている。auth/web の裏付け qa_refs のみで主たる根拠(qa_ref)ではない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約確認を1問で行っている。確定・指摘・保留の道があり、根拠qa idも併記されており、答えを左右したとは読めない軽微な束ね。どのセルの主たる根拠にもなっていない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "qa_refs に置き換え済みの qa-009 が残っている(qa_ref は qa-003、qa-019 も併記)。確定セルの dangling や qa_ref 欠落はない。8確定セルの qa_ref と qa_refs は全て qa_log に実在する。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U1",
+      "observation": "schema 1.0 で effective_source_refs なし。canonical qa-foundation-u1〜u9 (user-dialogue) へ fallback し、U1-U9 は qa-010〜019/024/028/031 等の利用者回答に遡及可能。approval_ref=appr-foundation-v2 は実在し U1/U2/U3 は値。canonical entry は fixture 再記録で basis/answered_at を持たず実利用者の対話ログではない旨が provenance に明記されている(注記のみ)。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U9",
+      "observation": "canonical qa-foundation-u9 は旧回答 'PostgreSQL 15'(qa-001)を逐語で含むが、初回確定の履歴であり U8 の現行値(16、qa-031/D1)と整合する訂正が qa-001 の corrections に記録されている。現在値との食い違いのみを理由とする検出はしない。"
+    }
+  ]
+}

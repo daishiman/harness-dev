@@ -1,0 +1,23 @@
+{
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "recorded_at": "2026-10-31T15:23:30Z",
+  "decision": "not_required",
+  "pre_choice_artifact": {
+    "path": "system-spec/fetched-references.json",
+    "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+    "open_with": "python3 -m json.tool system-spec/fetched-references.json",
+    "guards": {"validate-source-citation (IN1)": 0}
+  },
+  "artifact_delivery": {"choice": "standard", "choice_source": "isolated fixture pre-answer contract (task.md)", "state": "handoff_complete"},
+  "checklist": [
+    {"item": "R1 target_id set from spec-state, 0 fabricated", "status": "achieved", "evidence": "spec-state.targets = postgres, react, fastapi, typescript; references cover the same 4"},
+    {"item": "R2 official hosts only", "status": "achieved", "evidence": "www.postgresql.org, react.dev, fastapi.tiangolo.com, www.typescriptlang.org; source_url host == official_host"},
+    {"item": "required fields incl. version", "status": "achieved", "evidence": "IN1 exit 0; versions 16.15 / 19.3 / 0.162.0 / 7.0"},
+    {"item": "WebFetch evidence bound by evidence_ref + sha256", "status": "achieved", "evidence": "IN1 checks evidence digest against system-spec/retrieval-evidence/*.json"},
+    {"item": "full correspondence (0 missing, 0 duplicate)", "status": "achieved", "evidence": "IN1 exit 0"},
+    {"item": "IN1 validate-source-citation exit 0", "status": "achieved", "evidence": "OK: 全件対応・必須フィールド・公式 host・時刻・取得証跡の一致"},
+    {"item": "discovered knowledge candidates qualified", "status": "achieved", "evidence": "only candidate k8s-workload-observability has status=deepened; no discovered candidates"}
+  ],
+  "rationale": "All doc-fetch completion criteria hold for the resumed input (retrieved 2026-10-31T14:45-14:46Z by the prior canonical doc-fetch). Semantic freshness is C08's job inside the completeness evaluator, not a doc-fetch trigger. No WebFetch performed; fetched-references.json untouched.",
+  "prompts_read": ["R1-identify", "R2-fetch", "R3-record"]
+}

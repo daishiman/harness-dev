@@ -1,0 +1,51 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "loop": 3,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "eval-log/run-dev-graph-system-spec-c24-receipt.json; R0 verifier PASS eval-log/run-dev-graph-system-spec/R0-context/verification.json"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "preflight report R1_preflight (0.1.24 in >=0.1.22 <1.0.0); R1 verifier PASS eval-log/run-dev-graph-system-spec/R1-preflight/verification.json"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "R2-delegate/delegation-log.json; R2 verifier loop3 PASS eval-log/run-dev-graph-system-spec/R2-delegate/verification-loop3.json"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "coverage/source-citation exit0 (loop1,2,3), eval-log/system-spec-completeness-report.json verdict PASS, aggregate-completeness exit0"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "achieved",
+      "evidence": "C02 receipt .dev-graph/state/receipts/node-r000001-add.json; import report R3-import/import-report.json; validate-source-lineage exit0 checked=2; integrity auditor PASS; R3 verifier PASS R3-import/verification.json"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R1 verifier 複製0; R3 verifier grep で spec-state writer/chapter compiler 0件 (R3-import/verification.json)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "loops": [
+        {"loop": 1, "status": "PASS", "evidence": "coverage exit0, source-citation exit0, schema exit0 (0 nodes)"},
+        {"loop": 2, "status": "PASS", "evidence": "coverage exit0, source-citation exit0, schema exit0 (0 nodes)"},
+        {"loop": 3, "status": "PASS", "evidence": "coverage exit0, source-citation exit0, schema --strict-artifact-readiness exit0 (2 nodes, readiness complete)"}
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ]
+}

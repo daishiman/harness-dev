@@ -1,0 +1,86 @@
+{
+  "responsibility_id": "R3-write",
+  "skill": "run-dev-graph-node",
+  "loop": 1,
+  "verb": "add",
+  "input": {
+    "apply_input": "eval-log/run-dev-graph-node/import-payload-apply.json",
+    "dry_run_input": "eval-log/run-dev-graph-node/import-payload.json",
+    "dry_run_input_sha256": "1bafac23834660e64e3ce3505a44ce74823acb3007fd08bc8eaeedb19072e4b2",
+    "apply_input_sha256": "c5aae5f738ecf3a923752594966fd679c5cc8cd8565a48093d60b5d47eada956",
+    "expected_graph_revision": 0,
+    "artifacts_identical_to_dry_run": true,
+    "artifacts_canonical_sha256": "f80e59c69a828cb6381b77d245fd543dd9b6ef1c16ad65739c75ccef578bd8f2",
+    "only_added_key": "expected_graph_revision"
+  },
+  "writer": {
+    "command": "build-graph-node.py add --repo-root $DEV_GRAPH_ROOT --input eval-log/run-dev-graph-node/import-payload-apply.json",
+    "exit_code": 0,
+    "output": "eval-log/run-dev-graph-node/R3-write/apply-output.json",
+    "status": "applied",
+    "applied_count": 2,
+    "write_count": 4,
+    "pre_write_validation_findings": 0
+  },
+  "receipt": {
+    "path": ".dev-graph/state/receipts/node-r000001-add.json",
+    "graph_revision_before": 0,
+    "graph_revision_after": 1,
+    "graph_digest_after": "sha256:7d2a497c3b02dc45a7d34c63e787b24c38b593393fe89b4d66dc450438dee568",
+    "node_ids": ["spec-billing-audit-system-spec", "arch-billing-audit-system-architecture"]
+  },
+  "current_graph": {
+    "path": ".dev-graph/state/graph.json",
+    "graph_revision": 1,
+    "graph_digest": "sha256:7d2a497c3b02dc45a7d34c63e787b24c38b593393fe89b4d66dc450438dee568",
+    "matches_receipt": true
+  },
+  "nodes": [
+    {
+      "graph_node_id": "spec-billing-audit-system-spec",
+      "file_path": "specs/billing-audit-system-spec.md",
+      "file_sha256": "82cde8f3dcd84aaa92ff14e7f85ada84b3c6b654339c0ef7f95078ec33d938e2",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "evaluated_digest_eq_source_digest": true,
+      "source_digest_eq_current_source_file": true,
+      "imported_at": "2026-10-31T17:42:36Z",
+      "frontmatter": {"template_id": "specification", "template_version": "1.0.0", "artifact_subtypes": []}
+    },
+    {
+      "graph_node_id": "arch-billing-audit-system-architecture",
+      "file_path": "architecture/billing-audit-system-architecture.md",
+      "file_sha256": "a7b6d7ffbac995ef697a0152f694e7370a24e8d70211c2d5357486ef803af722",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "evaluated_digest_eq_source_digest": true,
+      "source_digest_eq_current_source_file": true,
+      "imported_at": "2026-10-31T17:42:36Z",
+      "frontmatter": {"template_id": "architecture", "template_version": "1.0.0", "artifact_subtypes": ["frontend", "backend", "infrastructure", "data", "security"]}
+    }
+  ],
+  "strict_validation": {
+    "command": "validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root $DEV_GRAPH_ROOT --strict-artifact-readiness",
+    "exit_code": 0,
+    "valid": true,
+    "violation_count": 0,
+    "artifact_readiness_findings": 0,
+    "node_readiness": {"complete": 2, "incomplete": 0}
+  },
+  "checklist_5_3": {
+    "common_inputs_verified": "YES",
+    "common_output_shape_and_authority": "YES",
+    "common_boundary_violations_zero": "YES",
+    "R3_normal_write_schema_pass": "YES",
+    "R4_required_headings_missing_zero_and_unmanaged_digest_unchanged": "YES"
+  },
+  "notes": [
+    "apply input_sha256 differs from preview input_sha256 only because expected_graph_revision was added; artifacts are byte-identical under jq -S.",
+    "package / bind-github / link-github criteria are not applicable to this add invocation.",
+    "R4: new add, readiness_fill empty, missing_sections empty; no existing document so unmanaged-section digest invariance is vacuous."
+  ],
+  "blockers": [],
+  "verdict": "PASS"
+}

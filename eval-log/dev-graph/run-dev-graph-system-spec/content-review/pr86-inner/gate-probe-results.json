@@ -1,0 +1,116 @@
+{
+  "scope": "read-only gate reruns, not host trial or past loop proof",
+  "fx90_inputs_unchanged": true,
+  "fx90_files_checked": 20,
+  "validator_fixture_bytes_equal_review_source": true,
+  "results": [
+    {
+      "case": "fx90-real-readonly",
+      "gate": 1,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "--matrix",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/system-spec/spec-state.json",
+        "--require-complete",
+        "--require-basis",
+        "--require-foundation"
+      ],
+      "exit_code": 0,
+      "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\n",
+      "stderr": ""
+    },
+    {
+      "case": "fx90-real-readonly",
+      "gate": 2,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/system-spec/fetched-references.json",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/system-spec/spec-state.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx"
+      ],
+      "exit_code": 0,
+      "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\n",
+      "stderr": ""
+    },
+    {
+      "case": "fx90-real-readonly",
+      "gate": 3,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/.dev-graph/state/graph.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx",
+        "--strict-artifact-readiness"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "tmp-negative",
+      "gate": 1,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "--matrix",
+        "/tmp/pr86-c19-inner-review/negative/system-spec/spec-state.json",
+        "--require-complete",
+        "--require-basis",
+        "--require-foundation"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "VIOLATION: categories: 非空配列でない\nVIOLATION: requirements_foundation: オブジェクトが存在しない (上位概念 U1-U9 が未抽出)\nFAIL: 2 件の網羅性違反\n"
+    },
+    {
+      "case": "tmp-negative",
+      "gate": 2,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "/tmp/pr86-c19-inner-review/negative/system-spec/spec-state.json",
+        "--references",
+        "/tmp/pr86-c19-inner-review/negative/system-spec/fetched-references.json",
+        "--state",
+        "/tmp/pr86-c19-inner-review/negative/system-spec/spec-state.json",
+        "--repo-root",
+        "/tmp/pr86-c19-inner-review/negative"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "VIOLATION: targets: 対象 target_id が空 (取得対象一覧が無い)\nVIOLATION: references[0]: target_id 欠落\nFAIL: 2 件の出典記録違反\n"
+    },
+    {
+      "case": "tmp-negative",
+      "gate": 3,
+      "argv": [
+        "python3",
+        "-B",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        "/tmp/pr86-c19-inner-review/negative/graph.json",
+        "--repo-root",
+        "/tmp/pr86-c19-inner-review/negative",
+        "--strict-artifact-readiness"
+      ],
+      "exit_code": 1,
+      "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"fail\",\n    \"violation_count\": 47\n  },\n  \"implementation_readiness\": \"incomplete\",\n  \"missing_sections\": [\n    \"$: missing required property acceptance\",\n    \"$: missing required property architecture_refs\",\n    \"$: missing required property artifact_kind\",\n    \"$: missing required property artifact_subtypes\",\n    \"$: missing required property beads_linkage\",\n    \"$: missing required property classification_candidates\",\n    \"$: missing required property classification_confidence\",\n    \"$: missing required property classification_reason\",\n    \"$: missing required property completion_evidence\",\n    \"$: missing required property confirmation_evidence\",\n    \"$: missing required property confirmation_status\",\n    \"$: missing required property created_at\",\n    \"$: missing required property depends_on\",\n    \"$: missing required property domain\",\n    \"$: missing required property evaluation_status\",\n    \"$: missing required property execution_contexts\",\n    \"$: missing required property feature_package_id\",\n    \"$: missing required property file_path\",\n    \"$: missing required property github_project_linkages\",\n    \"$: missing required property github_publication\",\n    \"$: missing required property goal\",\n    \"$: missing required property graph_node_id\",\n    \"$: missing required property implementation_readiness\",\n    \"$: missing required property issue_linkage\",\n    \"$: missing required property iteration\",\n    \"$: missing required property owners\",\n    \"$: missing required property parent_feature\",\n    \"$: missing required property phase_ref\",\n    \"$: missing required property priority\",\n    \"$: missing required property project_id\",\n    \"$: missing required property pull_request_linkages\",\n    \"$: missing required property purpose\",\n    \"$: missing required property related_nodes\",\n    \"$: missing required property resource_scope\",\n    \"$: missing required property scope_in\",\n    \"$: missing required property scope_out\",\n    \"$: missing required property source_lineage\",\n    \"$: missing required property start_date\",\n    \"$: missing required property status\",\n    \"$: missing required property tags\",\n    \"$: missing required property target_date\",\n    \"$: missing required property template_id\",\n    \"$: missing required property template_version\",\n    \"$: missing required property title\",\n    \"$: missing required property tracker_binding\",\n    \"$: missing required property updated_at\"\n  ],\n  \"node_readiness\": {\n    \"complete\": 0,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [\n      {\n        \"graph_node_id\": \"nodes[0]\",\n        \"missing_sections\": [],\n        \"status\": \"unknown\"\n      }\n    ],\n    \"not_applicable\": 0,\n    \"unknown\": 1\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec90/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": false,\n  \"violations\": [\n    {\n      \"code\": \"missing_id\",\n      \"detail\": \"graph_node_id required\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property acceptance\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property architecture_refs\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property artifact_kind\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property artifact_subtypes\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property beads_linkage\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property classification_candidates\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property classification_confidence\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property classification_reason\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property completion_evidence\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property confirmation_evidence\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property confirmation_status\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property created_at\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property depends_on\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property domain\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property evaluation_status\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property execution_contexts\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property feature_package_id\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property file_path\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property github_project_linkages\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property github_publication\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property goal\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property graph_node_id\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property implementation_readiness\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property issue_linkage\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property iteration\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property owners\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property parent_feature\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property phase_ref\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property priority\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property project_id\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property pull_request_linkages\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property purpose\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property related_nodes\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property resource_scope\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property scope_in\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property scope_out\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property source_lineage\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property start_date\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property status\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property tags\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property target_date\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property template_id\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property template_version\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property title\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property tracker_binding\",\n      \"node\": \"nodes[0]\"\n    },\n    {\n      \"code\": \"schema_violation\",\n      \"detail\": \"$: missing required property updated_at\",\n      \"node\": \"nodes[0]\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    }
+  ]
+}

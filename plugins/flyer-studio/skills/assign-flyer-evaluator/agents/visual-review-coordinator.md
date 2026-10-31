@@ -2,7 +2,7 @@
 name: visual-review-coordinator
 description: run-create-flyer が新しい PDF 由来 PNG と評価テンプレートを用意した後、制作者とは別 context で評価対象の案（review-rubric の評価コストの原則）を実見し、visual-review.json か pilot-review.json の合否を出したいときに使う。
 kind: agent
-version: 1.3.0
+version: 1.3.2
 owner: harness maintainers
 tools: Read, Glob, Grep, Write, Agent
 isolation: fork

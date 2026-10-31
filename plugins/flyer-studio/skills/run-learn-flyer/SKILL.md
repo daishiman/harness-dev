@@ -4,7 +4,7 @@ description: 納品済み案件の傾向を記録・集計したいとき、次�
 kind: run
 prefix: run
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 user-invocable: true
 combinators:

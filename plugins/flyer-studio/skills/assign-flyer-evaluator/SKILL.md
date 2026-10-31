@@ -4,7 +4,7 @@ description: 最新の完成画像や修正後の画像を独立評価したい�
 kind: assign
 prefix: assign
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 role_suffix: evaluator
 user-invocable: false

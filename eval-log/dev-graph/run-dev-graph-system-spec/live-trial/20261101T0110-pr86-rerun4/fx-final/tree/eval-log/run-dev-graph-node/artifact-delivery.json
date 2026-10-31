@@ -1,0 +1,46 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-node",
+  "transitions": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "guard": {
+        "parse_open": "pass",
+        "secret": "none",
+        "irreversible": "none (dry-run, write_count 0)",
+        "corrupt": "none"
+      }
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "artifact": {
+        "path": "eval-log/run-dev-graph-node/dry-run-preview.json",
+        "sha256": "8b380baeef0e824e65c06b6c11a00536c7405e03be04ffcd4fcb3100951415c0",
+        "open_with": "jq ."
+      }
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract in task.md (artifact_delivery=standard)"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "from": "semantic_evaluator_started",
+      "event": "improvement_complete",
+      "to": "handoff_complete"
+    }
+  ],
+  "current_state": "handoff_complete",
+  "pre_choice_commits": []
+}

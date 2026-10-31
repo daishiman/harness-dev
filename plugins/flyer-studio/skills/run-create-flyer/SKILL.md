@@ -4,7 +4,7 @@ description: 確定した brief の用途・素材・公開条件からチラシ
 kind: run
 prefix: run
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 user-invocable: true
 combinators:

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "flyer-studio",
     "skill": "assign-flyer-evaluator",
-    "skill_md_sha256": "ce7438b46f9e3e4c090814074adec8c18dcf3423b7a936ffe863a2635d53af32"
+    "skill_md_sha256": "f2182d016dfdc6726346918c7913d6fc0116cf2acfcb61cc76da61fdc91efada"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "independent-content-reviewer C (fresh context, port-hh-flyer-rubric-20261030)",
-  "reviewed_at": "2026-10-30T13:22:40Z",
+  "reviewer": "independent-metadata-diff-reviewer /root/review_flyer_ci",
+  "reviewed_at": "2026-10-31T16:24:47.341846+00:00",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,23 +24,22 @@
       "C2",
       "C3",
       "C4",
-      "NAMING-EVALUATOR"
+      "NAMING-EVALUATOR",
+      "VERSION-METADATA-ONLY"
     ],
     "positive_feedback": [
-      "改名が登録簿まで揃っている。ディレクトリ・frontmatter の name・role_suffix: evaluator・artifact-delivery.json の entrypoints・references/package-contract.json の entry_points・plugin-composition.yaml の capabilities・run-create-flyer からのリンク（:90・:156・:171）がすべて新しい名前で、旧名 assign-flyer-review は CHANGELOG.md の履歴だけに残る。lint-skill-name も通る。",
-      "評価責務と cycle 台帳の規則の境界が一貫している。SKILL.md:42・:46、review-contract.md:8（記入と返却だけ、テンプレートの生成元を変えない）・:37（cycle の数え方は stage-common、評価者は修正しない）、visual-review-coordinator.md:17（Write は 2 ファイルの記入だけ、コマンドは実行しない）、stage-common.md:33・:37（台帳は create のコマンドが更新し、評価者は再発行しない）が同じ向き。",
-      "coordinator が Bash を持たなくても review-contract.md:28 の返却を満たせる。reviewTemplate（design.cjs:504-526、freshItem :531）が案ごとの pngSha256 と variantFingerprint を事前に埋め、引き継げる item は reusedFrom として入るので、評価担当は記入だけで済む。",
-      "専門レンズの対応が正本と一致する。review-contract.md:24（構図→balance・spacing、文字→hierarchy、色→color・integration）と design-contract.json の expertDimensions が同じで、3 レンズの agent は tools が Read・Glob・Grep、isolation fork で記録先も担当観点に限られる。",
-      "SKILL.md は 46 行で、手順・量・統合・合否を stage contract（review-contract.md）へ委ね、本文は入口・入出力・戻り先だけに絞っている。PASS は呼出元の run-create-flyer へ、FIX は fixClass の戻り先へ、finalize は制作側、と戻り方が 1 か所（:42）にまとまっている。"
+      "変更前snapshotと最終sourceを独立比較し、frontmatter.versionまたはroot.version（package-lockはpackages[\"\"].versionも）を除く全データが同値であることを確認した。Skill本文・責務・criteria・所有・実行条件・workflowの資源と依存辺は不変。",
+      "plugin固有check_versions（build-local-package.py:749-768）はmanifest/package/EVALS/workflow/Skill/agentの同版を要求する。1.3.2への同期はこの機械契約を満たし、意味上の能力や実行結果を追加しない。",
+      "従前の意味判断は変更前SHAに一致する既存content-reviewを根拠履歴として継承する。今回の独立検査はversionメタデータ差分と非version同値性に限定した。"
     ],
     "negative_feedback": [
-      "[low / inconsistency / plugins/flyer-studio/skills/assign-flyer-evaluator/workflow-manifest.json:69-75 ⇔ plugins/flyer-studio/skills/assign-flyer-evaluator/SKILL.md:46, plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md:7,17] manifest の V1-evaluate-images は resources に entrypoint（kind script、../../scripts/cli.cjs）を持つが、本文は「この stage はコマンドを実行しない」とし、coordinator の tools に Bash が無い。runtime は kind reference なので読むだけで足りるが、script を V1 の資源に置く意味が本文から読めない。HarnessHub 版から引き継いだもの。直し方: V1 の resources から entrypoint を外すか、kind を reference にして「コマンドは制作側」と注記する。",
-      "[low / omission / plugins/flyer-studio/skills/assign-flyer-evaluator/references/review-contract.md:28 ⇔ plugins/flyer-studio/scripts/design.cjs:454-457, plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md:7] 台帳は reviewedAt が out/<案ID>/render.json の createdAt より後でないと通らない（SS-8）が、Bash を持たない coordinator が実見の時刻をどう得るかが書かれていない。fail-closed なので誤った PASS は起きない。直し方: review-contract.md:28 に「reviewedAt は render.json の createdAt より後の、実見を終えた時刻を書く」と 1 文足す。"
+      "[履歴継承・今回未再評価] [low / inconsistency / plugins/flyer-studio/skills/assign-flyer-evaluator/workflow-manifest.json:69-75 ⇔ plugins/flyer-studio/skills/assign-flyer-evaluator/SKILL.md:46, plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md:7,17] manifest の V1-evaluate-images は resources に entrypoint（kind script、../../scripts/cli.cjs）を持つが、本文は「この stage はコマンドを実行しない」とし、coordinator の tools に Bash が無い。runtime は kind reference なので読むだけで足りるが、script を V1 の資源に置く意味が本文から読めない。HarnessHub 版から引き継いだもの。直し方: V1 の resources から entrypoint を外すか、kind を reference にして「コマンドは制作側」と注記する。",
+      "[履歴継承・今回未再評価] [low / omission / plugins/flyer-studio/skills/assign-flyer-evaluator/references/review-contract.md:28 ⇔ plugins/flyer-studio/scripts/design.cjs:454-457, plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md:7] 台帳は reviewedAt が out/<案ID>/render.json の createdAt より後でないと通らない（SS-8）が、Bash を持たない coordinator が実見の時刻をどう得るかが書かれていない。fail-closed なので誤った PASS は起きない。直し方: review-contract.md:28 に「reviewedAt は render.json の createdAt より後の、実見を終えた時刻を書く」と 1 文足す。"
     ],
     "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "iteration_limit": 1,
+    "hook_trigger": "manual:parent-delegated-independent-version-metadata-only-review",
     "next_action": "none"
   },
-  "notes": "focused combined content review（incremental、fresh context）の elegance 投影。対象は改名（assign-flyer-review → assign-flyer-evaluator、role_suffix: evaluator）と、2 段構成に伴う評価責務の境界。利用者の決定は再審議せず沿っているかだけを見た。SKILL.md は shasum -a 256 で書く直前に取り直した。読んだもの: SKILL.md 全文・workflow-manifest.json・references/review-contract.md・agents/visual-review-coordinator.md・3 レンズの agent、共有の stage-common.md・review-rubric.md・workflow.md・runtime.md・design-contract.json、plugin-composition.yaml、artifact-delivery.json、references/package-contract.json、scripts の design.cjs（reviewTemplate・validateReview・assertSeenAfterRender）。4 条件: 矛盾 0、漏れ 1（reviewedAt の取り方、low）、整合性 1（manifest の script 資源、low）、依存関係 0（PASS と FIX の戻り先、レンズの観点、テンプレートの事前記入が正本と一致）。evaluator の命名（assign-*-evaluator と role_suffix）は利用者の決定どおり。high は無いので PASS。流した検査（すべて読み取りのみ。ログは reviewer の scratchpad）: npm --prefix plugins/flyer-studio test は rc 0（tests 232・pass 227・fail 0・skipped 5。skip は FLYER_ACCEPTANCE_PROJECT 未設定の実PDF受入と実ブラウザ・実PDF結合の環境依存のもの）。build-local-package.py --check は rc 0（errors []・fail 0）。lint-goal-seek は flyer の 7 skill で OK、repo 全体 + baseline でも flyer の行は 0 件。lint-entrypoint-artifact-first は rc 0（134 inventory・106 enforced・28 exempt）。lint-skill-name は ok（7 skills）、lint-skill-description は OK=7・VIOLATION=0。validate-frontmatter は skills で rc 0（warn は source 欠落と run-skill-feedback の組み合わせだけ）、agents（flyer-producer・visual-review-coordinator・3 レンズ）は個別に流してすべて ok。旧名 assign-flyer-review / assign-flyer-analysis-review の残存は W 全体（node_modules・.git・.worktrees を除く）で CHANGELOG.md だけ。"
+  "notes": "既存判定を今回フル再評価したものではない。独立検査は22ファイルのversion限定差分、非versionデータ同値、両release manifestのname等の不変性。eleganceの従前の意味判断を継承し、旧criteria IDの評価は根拠履歴に属する（今回新規評価はVERSION-METADATA-ONLY）。履歴: eval-log/flyer-studio/assign-flyer-evaluator/content-review/elegance-verdict.json, SHA-256=dc65c383cc455d3abb15469bae7b052d9d63c748d0b4ffe7ebaa90f843264c51, 対象旧SHA=ce7438b46f9e3e4c090814074adec8c18dcf3423b7a936ffe863a2635d53af32, 判定=PASS, reviewer=independent-content-reviewer C (fresh context, port-hh-flyer-rubric-20261030), reviewed_at=2026-10-30T13:22:40Z。現対象SHA=f2182d016dfdc6726346918c7913d6fc0116cf2acfcb61cc76da61fdc91efada。findings_summaryとnegative_feedbackは既存所見を隠さず保持した履歴であり、今回新規欠陥や現行での再確認を意味しない。近隣sourceのversionも同時に正規化比較した。30思考法フル実走、host trial、人間の新たな承認、実画像再評価はしていない。scorer再実行もこの5 skillではしていない。根拠はmetadata-version-review.jsonと各*-inherited-review.json。source/fixture/既存eval-logの編集なし。"
 }

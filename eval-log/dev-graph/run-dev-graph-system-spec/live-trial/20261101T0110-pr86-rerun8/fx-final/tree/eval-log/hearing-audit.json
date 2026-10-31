@@ -1,0 +1,27 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。qa-009 は JTBD・対象ユーザー・利用文脈の 3 論点を 1 問に束ねていた (N4)。superseded_by=qa-019 は 3 条件を満たす。(a) qa-019 は「どんな場面で、何を成し遂げるために」を問う開いた 1 論点の問で、N1-N4 に違反せず、qa-019 自身に medium 以上の検出もない。(b) JTBD は qa-019、対象ユーザーは qa-016、利用環境は qa-020、頻度は qa-021 に分けて問い直されており、superseded_note と両方の問が一致する。(c) qa-019 は answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z を持ち、qa-009 には answered_at が無い。qa-009 は ui-ux/web の qa_refs (裏付け) にだけ残る。主たる接地根拠 qa_ref は qa-003 で、置き換え済みの qa を参照する active consumer ではない。確定セルの qa_ref と effective_source_refs にも参照はない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先 (3 択) と、セッションの無効化期間 (有効期限とログアウト時の扱い) という独立に決められる 2 論点を 1 問に束ねている。選択肢と「どれも採らない・保留」の道は示され、推奨の印や前提の埋め込みも無いため、独立 2 論点の束ねとして medium とする。qa-038 は auth/web の qa_refs (裏付け) にだけ入り、主たる接地根拠 qa_ref は qa-002 なので、aspect-criteria.md の表では PASS に残す注記になる。C01 への指針: 保存先と無効化期間を別の問にして問い直し、supersede-qa で置き換える。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約全体を 1 回の確定確認で求めている。ただし「確定する・直すところを指摘する・保留する」が選べ、各項目に根拠 qa id が付き、推奨の印も前提の埋め込みも無い。項目ごとの指摘で答えられるため、答えを左右したとは読めない軽微な束ねとして low とする。"
+    }
+  ]
+}

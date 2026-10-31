@@ -1,0 +1,84 @@
+{
+  "label": "render86",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/pr86-ci-live/lt/runs/render86/fx",
+  "head": "e1bd115ce147f7b14467ff0fc5b5a95572ac4589",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:811cdfdedf4d17032011b216fd7d604bbb890f314fd27874ba9e8095efa689e2"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_72eaf54120454b3e"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "session_root": "ws (PR85 と同じ)。fx は別の dir。",
+  "replay_of": "PR85 の render5 (20261012T2212-pr85)。scenario_id (render-feature-progress-receipt-positive-fixture-standard-v3)・seed・fixture の作り方・task.md の文は同じで、変えたのは run のパスと AF_UNIX の socket の dir の名前だけ。",
+  "fixture_check": {
+    "graph_json_sha256": "2ed57eab5df249146b285318d5ac55027dcb4f67b4878e2199e2df684932fd0b (PR85 の render5・decompose86 の fixture と同じ)",
+    "registration_receipt_sha256": "cba8ce0d78fe35c9f232a97af7d2a51048011d20084c8fbd84961e5a3f928c75 (.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json。rekey の対象外で、seed から変えていない)",
+    "c11": "validate-graph-schema.py --graph (この run の ws の写しを python3 -B で起こし、stdout に出すだけ): rc=0、valid、violations 0",
+    "c24": "resolve-repo-context.py --mode write (fx を cwd にして stdout に出すだけ): rc=0",
+    "untouched": "検査の後も fx のファイル一覧は seed と同じ (.dev-graph/render を除く)。ws の写しに __pycache__ は 0。"
+  },
+  "environment_change": {
+    "same_as": "PR85 の render3〜render5 の environment_change と同じ 4 点 (allowUnixSockets・allowWrite・settings の env・ブラウザの写し)。AF_UNIX の socket の dir を /private/tmp/ltpr85/cr5 から /private/tmp/lt86/cr に変えた。",
+    "sandbox_network": {
+      "allowedDomains": [
+        "live-trial-no-egress.invalid"
+      ],
+      "strictAllowlist": true,
+      "deniedDomains": [
+        "*"
+      ],
+      "allowUnixSockets": [
+        "/private/tmp/lt86/cr"
+      ]
+    },
+    "filesystem_allowWrite_added": "/private/tmp/lt86/cr (policy.json の allowed_write_roots にも同じ dir を足した。PR85 の mksettings --unix-socket-dir と同じ)",
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "/private/tmp/lt86/cr"
+    },
+    "env_how": "ws/.claude/settings.local.json の env (PR85 と同じ経路) と、workdir/extra-env.txt (launch.sh が boot の env に足す) の 2 か所に同じ値を置いた。",
+    "socket_dir_note": "macOS の sun_path は 104 byte までなので、scratchpad の下ではなく短い /private/tmp/lt86/cr を使った。準備の時点で空、mode 700。",
+    "browser": {
+      "path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/render86/browser/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+      "source": "~/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64 から shutil.copytree(symlinks=True)。写した後に dir 全体を filecmp で比べ、差 0",
+      "sha256": "a0bfe7b4da4787b66058477d696cd1d09065d25f06a548947722b9af77ee8282 (PR85 の render3〜render5 と同じ)",
+      "smoke": "sandbox の外で --version だけを起こした: rc=0、Google Chrome for Testing 153.0.8010.12。描画とネットワークの確認はしていない。"
+    },
+    "unchanged": "deniedDomains [\"*\"] による外部ネットワークの全拒否、書込み境界 (run と T/tmp)、permissions.deny、PreToolUse の guard、gh/bd の stub は他の run と同じ。allowMachLookup は使っていない。"
+  },
+  "task_md_changes": {
+    "how": "prep-render86.py で、PR85 の render5 の task.md (sha256 8c876b13…) から 2 種類の置き換えだけをした。retask.py と同じ検査 (前回の痕跡 077ff83f・wttrial・ltpr85・render5 が残らないこと、完了マーカーの scenario) を通した。詳細は workdir/task-derivation.json。",
+    "replacements": [
+      {
+        "from": "runs/render5 (前回 session の run の絶対パス)",
+        "to": "runs/render86 (この run の絶対パス)",
+        "count": 8
+      },
+      {
+        "from": "/private/tmp/ltpr85/cr5",
+        "to": "/private/tmp/lt86/cr",
+        "count": 1
+      }
+    ],
+    "unchanged": "準備・本題・検証の文、経路の絶対制約、試行境界、事前回答契約、ブラウザの注記 (Playwright の chromium_headless_shell-1243 を写したもの、--single-process --headless=new) は PR85 と同じ。",
+    "task_md_sha256": "3528d5af619828bb6229bb739405f1e39d3be1b03ee133cb8317fb89edb1bef0"
+  }
+}

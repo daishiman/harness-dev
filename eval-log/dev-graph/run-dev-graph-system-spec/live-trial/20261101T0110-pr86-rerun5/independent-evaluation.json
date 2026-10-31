@@ -1,0 +1,56 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "選択前の実成果物提示が未完了。現行 plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md:81、plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md:94、および今回 task.md:95 は、現物path・digest・開き方を提示した後のstandard記録を要求する。今回 transcript.jsonl:432（pane.txt:317-333）の正規CLI結果には10章のpath/digestがあり、この可視tool出力を提示として認めても開き方はない。直後の可視説明 transcript.jsonl:436（pane.txt:335）にも開き方はない。less system-spec/index.md は transcript.jsonl:437 のcompile-standard.json生成コマンド内のopen_with、および生成後pane.txt:364に初登場し、提示後に選択を記録する独立した先行イベントになっていない。そのまま transcript.jsonl:446 で63件のOUT1 testsへ進んだ。実成果・評価・登録は成立しているが、今回必須とされたartifact_deliveryの順序契約は満たしていない。"
+  ],
+  "evaluator_id": "/root/review_sysspec92",
+  "transcript_sha256": "8834327b96cfd23b763e46606370d4630733df1c723d3c720668c2998eff43cc",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "pane.txt",
+    "fixture-provenance.json",
+    "plugins-copy.json",
+    "closure-at-launch.txt",
+    "guard.jsonl",
+    "poll-state.json",
+    "evidence-redaction.json",
+    "fx-eval-log/run-dev-graph-system-spec-c24-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/eval-log/choices/compile-standard.json",
+    "fx-final/tree/eval-log/run-dev-graph-node/import-input.json",
+    "fx-final/tree/eval-log/run-dev-graph-node/dry-run-preview.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "transcript/subagents/agent-a45823581fd2a364f.jsonl",
+    "transcript/subagents/agent-a45823581fd2a364f.forked-skill.marker.json",
+    "transcript/subagents/agent-a5e2056c4d5c54c1e.jsonl",
+    "transcript/subagents/agent-aa88981157d4ce6dd.jsonl",
+    "transcript/subagents/agent-a85a95422f9a37120.jsonl"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "criteria_observed": {
+    "IN1": "実測では達成。transcript.jsonl:139→145、590→591、845→846で各周回のcoverage(--require-complete --require-basis --require-foundation)/source-citation(--state/--repo-root)/schema(--strict-artifact-readiness)の3 CLIを実行し各exit0。loop1/2は空graph、loop3は2ノード。各周回のprogress更新→intermediate追記/hash検査は332→357、613、876→878（880は再構成API blob）で行われ、実体3行すべてに必須6キー、元goal、sha256 30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454が一致する。OUT1は親progressでexternal_pendingを維持。",
+    "OUT1": "実成果に関する3観測は達成。C19/elicit/compile/C05/C02の正規Skill呼出し、compile-spec-doc.pyの今回実行（10章）、C05の実forkとC07/C06/C08の独立監査、C02単一writerによるspecification/architecture 2件の登録を確認。両nodeはconfirmed/pass/readiness completeで、source_lineage全6field、source bytes sha256、confirmation_evidence.evaluated_digest、C05 artifact_snapshotが一致。dry-run/add/実payloadのinput_sha256はa4b9191eb0eb400fc11ca66d7e8108f7dc82ebe61437e525eaf0535f7714a139で同一。dev-graph内に別のelicitation/compile生成実装は認めない。ただし上記artifact_delivery必須順序の未履行のため総合FAIL。"
+  },
+  "notes": [
+    "今回のみの一次証拠から判定した。fixture-provenanceの旧試行言及はseedの由来確認に限り、旧評価の結論を根拠にしていない。graph_nodes_initial=0、evaluations_seeded=false。再compileのbytesがseedと同一であることを成功代用せず、今回CLIの生成ログと新規C05 forkを確認した。",
+    "起動閉包は現行sourceから公式skill_dir_tree_shaを再計算して6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b。closure-at-launch.txtおよびplugins-copy.jsonの写しと一致。依存system-spec-harness 0.1.24とrequired 4 entry pointsを確認。doc-fetchは既取得4targetとC08再照合に基づいて不要と判断し、新規writerを省略した条件付き正規分岐である。",
+    "C24 receiptのrepo_root/content_roots.repository/common-dir/repository_idを固定し、取込元を生成した本処理Bashはその固定rootのexport/cd/pwd-P照合を実行（transcript.jsonl:375,425,431）。read-only監査のcwd変更やscratchへの正規unit testは本処理と区別した。63件testはcompile-standard記録後であり、scratch結果をC05 snapshotやC02取込元へ流用した証拠はない。",
+    "C19集約goal/progress/intermediateの更新は親のみ。責務AgentはR0/R1/R2/R3の個別verificationへ出力し、親の6キー行を上書きしていない。R2 loop2の証跡欠落FAILは隠さずintermediateに残され、loop3で実際のtranscriptに整合するdelegation-log追加と独立再検証により解消している。",
+    "C05はtranscript/subagents/agent-a45823581fd2a364f.forked-skill.marker.jsonで正規Skillの真のforkと確認できる。C05自身がscratch/build_report.pyへ自分の6観点判断をJSON化したことは、親がad hoc evaluatorでC05を代替したこととは異なる。開始時snapshot12ファイル全件と現在bytesが一致し、正規aggregate-completenessの実行exit0も確認。",
+    "C05のAgent引数はbackground/nameを指定していないがruntimeは非同期起動した。C05はC07完了/台帳resolved確認後にC06、C06完了/台帳resolved後にC08を1件ずつ起動し、起動受理payloadを最終判定へ流用していない。3件のschema1.2 dispatchとschema1.3 completionをtokenで接合し、reportはcompletion response digestへ束縛している。runtimeのforeground表示との差を、独立監査欠如や虚偽PASSとは認定しない。",
+    "resource_budget正本は3300秒/23000000token。poll-stateは開始時刻補正を含めelapsed=2000秒、公式transcript_token_usage再計算はmain+全subagent11本、207message ID重複排除で14733971token、欠測0。上限超過はない。",
+    "guard.jsonlは220行（allow218/deny2）。denyは隔離外の設定領域の探索要求で、外部書込を認めた行は0。生成source/graphは正規writer、その他書込は当該runのログ・許可scratch・C02入力に限られる。遮断されたheredocとread探索、およびcompile後のdiff process-substitution失敗は残っているが、正規compile自体exit0と後続digest検査を確認し、本処理失敗を隠したものではない。",
+    "evidence-redaction.jsonに列挙された11ファイルすべてについてprivate frozen raw snapshotの実sha256=original_sha256、公開コピー実sha256=redacted_sha256、行数保存を照合した。今回transcript SHAは匿名化後8834327b96cfd23b763e46606370d4630733df1c723d3c720668c2998eff43cc。原本freeze/digest追跡が成立する。",
+    "FAILの理由は成果生成やIN1不合格ではなく、今回taskと現行sourceが明示する選択前提示契約の未履行である。CLI outputを可視提示に含めてもpath/digestしか選択前に示されていない点を区別した。",
+    "適用範囲の明確化: 開き方の先行提示欠落は限定的な提示UXの不足で、今回の仕様書品質・出典整合・C05評価独立性・C02登録・IN1の実測を阻害したとは認定していない。descriptionの約束する実体Goalは達成している。総合FAILは、今回task.md:95がこの先行提示を特に要求し、同:87が契約省略時にFAILと明示し、評価依頼も全必須契約の充足を求めるため。一般的なGoal不適合と、当該scenarioの明示された必須提示手順不適合を同一視していない。"
+  ]
+}

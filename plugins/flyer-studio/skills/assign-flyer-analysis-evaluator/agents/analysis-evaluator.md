@@ -2,7 +2,7 @@
 name: analysis-evaluator
 description: analysis.json が seal・validate を通った後、提案者とは別 context で元画像と照合し、制作へ渡してよい提案かを判定したいときに使う。
 kind: agent
-version: 1.3.0
+version: 1.3.2
 owner: harness maintainers
 tools: Read, Glob, Grep, Write, Bash(python3 *), Agent
 isolation: fork

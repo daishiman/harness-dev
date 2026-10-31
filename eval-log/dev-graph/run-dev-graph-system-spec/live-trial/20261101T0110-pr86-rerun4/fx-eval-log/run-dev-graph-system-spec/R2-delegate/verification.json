@@ -1,0 +1,72 @@
+{
+  "agent": "run-dev-graph-system-spec/R2-delegate",
+  "mode": "read-only independent verification",
+  "loop": 2,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {
+    "path": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "sha256": "10ba6d5e72d17f2869c1ad970d7b87513775474787ee8445031e873d61705f3c",
+    "sha256_match": true,
+    "repo_root_eq_content_roots_repository": true
+  },
+  "gates": {
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": 0,
+    "validate-source-citation --targets/--references/--state/--repo-root": 0,
+    "validate-design-knowledge-refs (10 refs)": 0
+  },
+  "prepare_evaluation_rerun": {
+    "exit": 0,
+    "skill_args_identical_to_parent": true,
+    "context_sha256": "10ba6d5e72d17f2869c1ad970d7b87513775474787ee8445031e873d61705f3c"
+  },
+  "report": {
+    "verdict": "PASS",
+    "spec_dir": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec91/fx/system-spec",
+    "spec_dir_eq_--spec-dir": true,
+    "artifact_snapshot_digest_match": "12/12",
+    "audit_delegations": "C07/C06/C08 response_sha256 == ledger completion rows (schema 1.3, audit_verdict PASS); tool_use_id == dispatch rows",
+    "gate_results_all_exit0": true,
+    "gaps": []
+  },
+  "seed_comparison": {
+    "files": 16,
+    "mismatch": 0,
+    "extra": 0,
+    "spec_state_and_fetched_references_unchanged": true
+  },
+  "doc_fetch_decision": {
+    "judgement": "valid",
+    "basis": [
+      "無い: 4 targets each have exactly 1 record on official host",
+      "不足: required fields and evidence digests bind, citation exit0; decision evidence_refs all on hosts of existing targets; knowledge_candidates has no discovered (only deepened)",
+      "古い: C02/IN1 define no mechanical age threshold; semantic currency is C08 scope and C08 re-checked official sites -> PASS (retrieved 2026-10-31T14:45Z, ~1 day)"
+    ]
+  },
+  "duplication_grep": {
+    "dev_graph_scripts_under_run-dev-graph-system-spec": ["prepare-evaluation.py"],
+    "compile/elicit/doc-fetch writer references in non-md files": 0,
+    "note": "R1-elicit.md hits are dev-graph's own skill prompts, not spec elicitation"
+  },
+  "stray_writes": "no files newer than receipt outside system-spec/, eval-log/, .dev-graph/tmp/; plugins/ unchanged",
+  "checklist": {
+    "common": {
+      "inputs_verified": "YES",
+      "output_shape_authority": "YES",
+      "boundary_violations_0": "YES"
+    },
+    "R2": {
+      "canonical_skills_only_all_gates_pass": "YES",
+      "fixed_root_per_bash_and_scratch_only_tests": "YES (indirect: outputs byte-identical in caller root, no stray writes; pytest temp-only)",
+      "CLAUDE_PROJECT_DIR_export_each_bash": "YES (indirect only; parent transcript not readable from this context, delivery record has no explicit prefix evidence)",
+      "evaluator_args_from_helper_skill_args": "YES",
+      "report_spec_dir_resolves_to_chapter_dir": "YES",
+      "delegate_skill_and_prompts_read_in_full": "YES (compile lists SKILL.md+R1-R3; elicit/doc-fetch wrote no output -> gate-only exempt)"
+    }
+  },
+  "blockers": [],
+  "observations": [
+    "audit-fork-ledger cwd = plugins/dev-graph/skills/run-dev-graph-node: parent shell cwd drifted during evaluator stage; harmless because evaluator used absolute args, but R3 Bash must re-export/cd fixed root",
+    "recommend recording explicit fixed-root prefix evidence in delivery records"
+  ],
+  "verdict": "PASS"
+}

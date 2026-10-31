@@ -1,0 +1,28 @@
+{
+  "responsibility_id": "R1-preflight",
+  "agent": "run-dev-graph-system-spec/R1-preflight",
+  "loop": 1,
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "10ba6d5e72d17f2869c1ad970d7b87513775474787ee8445031e873d61705f3c", "sha256_match": true},
+  "availability_receipt": {
+    "plugin_manifest": {"path": "plugins/system-spec-harness/.claude-plugin/plugin.json", "name": "system-spec-harness", "version": "0.1.24", "sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994", "keys": ["name", "version", "dependencies", "description", "author"], "harness_only_keys": []},
+    "composition_range": {"path": "plugins/dev-graph/plugin-composition.yaml", "key": "external_dependencies.system-spec-harness.version", "range": ">=0.1.22 <1.0.0", "sha256": "8b6055aaf836f0eee7868957461323481f3633c7f87062329d20e540313d2740", "in_range": true},
+    "required_entry_points": {
+      "run-system-spec-elicit": {"in_package_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md", "present": true},
+      "run-system-spec-doc-fetch": {"in_package_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md", "present": true},
+      "run-system-spec-compile": {"in_package_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md", "present": true},
+      "assign-system-spec-completeness-evaluator": {"in_package_contract": true, "skill_md": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md", "present": true}
+    },
+    "dev_graph_fallback_or_duplicate": {"found": false, "note": "plugins/dev-graph 配下に coverage matrix 生成・章 compile・elicitation 実装なし。skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py は C24 receipt 検証と evaluator 引数生成のみ (write-scope none)"}
+  },
+  "parent_report_crosscheck": {"name": "match", "version": "match", "manifest_sha256": "match", "range": "match", "composition_sha256": "match", "entry_points": "match", "dev_graph_version_0.1.25": "match", "mismatches": []},
+  "checklist": {
+    "common_inputs_verified": "YES",
+    "output_shape_and_authority": "YES",
+    "boundary_violations_zero": "YES",
+    "R1_version_in_range_and_4_entry_points_present": "YES"
+  },
+  "blockers": [],
+  "loop_trace": {"delta_from_original": "none", "merged_directive_for_next": "R1 PASS; R2 へ進む", "drift_signal": "none"},
+  "verdict": "PASS"
+}

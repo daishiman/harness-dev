@@ -1,0 +1,87 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evaluator_id": "/root/fresh_verify_status",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl#L40",
+    "transcript.jsonl#L59",
+    "transcript.jsonl#L155",
+    "transcript.jsonl#L173",
+    "transcript.jsonl#L262",
+    "transcript.jsonl#L283",
+    "transcript.jsonl#L294",
+    "transcript.jsonl#L307",
+    "transcript.jsonl#L316",
+    "transcript.jsonl#L335",
+    "transcript.jsonl#L352",
+    "transcript/subagents/agent-a43b987c46bccc369.jsonl#L28",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-eval-log/run-dev-graph-status-report.json",
+    "fx-eval-log/run-dev-graph-status-goal-spec.json",
+    "fx-eval-log/run-dev-graph-status-progress.json",
+    "fx-eval-log/run-dev-graph-status-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-status-artifact-delivery.json",
+    "stub-calls.log",
+    "evidence-redaction.json",
+    "plugins-copy.json"
+  ],
+  "observations": [
+    {
+      "index": 1,
+      "observation": "init・node・statusはSkill toolで正規起動され、Unknown skillによる代替実装はない。",
+      "primary": "transcript.jsonl#L283"
+    },
+    {
+      "index": 2,
+      "observation": "init R1-R5、node R0-R4、status R1-R3の全文は、それぞれ成果作成前にcat、補完的なsed、Readで読み込まれている。",
+      "primary": "transcript.jsonl#L294"
+    },
+    {
+      "index": 3,
+      "observation": "準備はcanonical scaffoldとC02 writerのadd/updateを使用。nodeの独立検証は指定型dev-graph:dev-graph-integrity-auditorを実際に起動し、監査後のgraph canonical digestも一致する。",
+      "primary": "transcript.jsonl#L262"
+    },
+    {
+      "index": 4,
+      "observation": "statusの分離評価Agentがgraph実値、再抽出rows、C11、前後digestを独立検証した。最初の照合コードのidキー誤りはgraph_node_idへ修正して再検証されている。",
+      "primary": "transcript/subagents/agent-a43b987c46bccc369.jsonl#L28"
+    },
+    {
+      "index": 5,
+      "observation": "reportの全非派生fieldとgraph node、および逆引きdependentsが一致。対象はstatus=closed、closed_at=2026-10-31T14:30:39.215152Z、depends_on=[task-lt-task-000]である。",
+      "primary": "fx-final/tree/.dev-graph/state/graph.json"
+    },
+    {
+      "index": 6,
+      "observation": "C11は照会graphに対してexit 0。報告はvalidation.status=pass、violations=0、missing_required_keys=[]で、最終応答に保存reportの全文が一致して出力されている。",
+      "primary": "transcript.jsonl#L352"
+    },
+    {
+      "index": 7,
+      "observation": "前後のcombined graph/config/content digestは776b25da241ccd642d9a543bd2a16a0b99e02a50495e4690e6c2e05dd1f9ceebで同一。保存treeから独立再計算した値も一致。graph SHA256は7fba1fad4d57d00aafa4d5e8c4ad10e2a870a941fab8116e1b0e834a4f2f5d28で一致する。",
+      "primary": "transcript.jsonl#L307"
+    },
+    {
+      "index": 8,
+      "observation": "外部writeは0件。stub logにはboot時のgh auth token照会1件だけがあり、GitHub/Beadsのwrite呼出しはない。",
+      "primary": "stub-calls.log"
+    },
+    {
+      "index": 9,
+      "observation": "3 Skillともstandard選択記録とgoal-spec/progress/intermediateが存在し、original_goal/hashと中間記録の必須6項目は整合する。statusの空結果経路は理由付きnot_applicableで、内部条件と外部評価責務も区別されている。",
+      "primary": "fx-eval-log/run-dev-graph-status-progress.json"
+    },
+    {
+      "index": 10,
+      "observation": "匿名化manifestの4公開SHAと固定済みraw snapshotの4原本SHAを独立計算し、すべて一致した。公開transcriptを評価対象として固定した。",
+      "primary": "evidence-redaction.json"
+    },
+    {
+      "index": 11,
+      "observation": "statusのdescriptionが約束するmetadata検索、依存・completion状態の副作用なし確認を、このC18 fixtureで満たしている。",
+      "primary": "fx-eval-log/run-dev-graph-status-report.json"
+    }
+  ],
+  "transcript_sha256": "4c58f02c618c5c68ac5ebe8ed03baaf594b38a4cfe87b4560a430e2a0dacf756"
+}

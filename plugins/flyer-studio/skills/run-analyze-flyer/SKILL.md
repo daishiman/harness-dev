@@ -4,7 +4,7 @@ description: 既存チラシを最新要望に沿って診断・比較したい�
 kind: run
 prefix: run
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 user-invocable: true
 combinators:

@@ -4,7 +4,7 @@ description: 作りたいチラシや画像を少ない往復で聞き取って 
 kind: run
 prefix: run
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 user-invocable: true
 combinators:
@@ -63,6 +63,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 # 作りたいものを少ない往復で聞き取り、制作の基準を固定する
@@ -75,6 +76,16 @@ artifact_delivery:
 
 - 入力: 依頼文・支給資料・選んだ preset（任意）・前回までの傾向（learn-suggest。参考値で、事実には使わない）。
 - 出力: 案件フォルダ（plugin の外）の brief.json・intake.json・style-proposals.json（様式提案をしたときだけ）・essence-baseline.json。回答には個人情報が入るため、シート・回答・記録はすべて案件フォルダに置き、plugin の中へ書かない（E3）。
+
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先で、定義の `name` が `flyer-studio` と一致することを確認し、その祖先を論理上の `PLUGIN_ROOT` とする（[stage-common](../../references/stage-common.md#起点と実行形式)の「`skills/<stage>/SKILL.md` の 2 階層上」と同じ場所になる）。
+- 定義ファイルが読めない・不正・`name` が一致しない場合は、スクリプトを実行せず診断を返す。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
 ## 選ぶ前の実成果物の作成
 

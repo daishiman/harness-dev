@@ -7,7 +7,7 @@
     "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-pr85",
+  "reviewer": "/root/fresh_verify_completed（実走を独立再評価。その他の既存試験記録は維持）",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -30,7 +30,7 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261031T0841-pr86/verdict.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/goal-verdict.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/task.md",
@@ -45,9 +45,9 @@
         "plugins/dev-graph/scripts/build-init-scaffold.py",
         "plugins/dev-graph/tests/test_build_init_scaffold.py"
       ],
-      "observed": "live trial 20261013T0117-pr85（scenario C01-OUT1-positive-idempotence-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict がすべて PASS）。verdict は live-trial-verdict.schema.json に通り、skill_dir_tree_sha は今の skill dir と一致し、transcript_sha256 も自分で計算して一致した。transcript を自分で読んだ。L35 で Skill を起動。L58-59 の dry-run は preview、planned_changes 36、write_count 0、preflight pass（link_state absent）。L62-63 の1回目は applied、write_count 36、schema valid。L89-90 は issue.md の template を編集し docs/user-note.md を足した後の2回目で、noop、planned_changes 0、write_count 0、migration_preview は issue.md だけ、fixture の file の sha の差は0、編集した4ファイルは sha のまま。L101-102 で validate-graph-schema.py は exit 0、保存された絶対パス0、token と node ID の印0、plugin の file の sha は不変。製品の側では、build-init-scaffold.py は欠けている dir と file だけを create_only で作り（L218-225）、変更が無く receipt があれば noop を返す（L246-248）。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro でも、6 root（issues・tasks・specs・architecture・features・docs）が symlink でない dir としてでき、config の routing_policy は example と同じ値、graph は初期値、2回目は noop で repo の tree は bytes ごと不変、receipt は1件のまま。留意：trial の progress.json は OUT3 を検証せずに PASS と書いていたが、OUT3 は test で判定するので、この criterion の判定には使っていない。",
+      "observed": "live trial 20261013T0117-pr85（scenario C01-OUT1-positive-idempotence-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict がすべて PASS）。verdict は live-trial-verdict.schema.json に通り、skill_dir_tree_sha は今の skill dir と一致し、transcript_sha256 も自分で計算して一致した。transcript を自分で読んだ。L35 で Skill を起動。L58-59 の dry-run は preview、planned_changes 36、write_count 0、preflight pass（link_state absent）。L62-63 の1回目は applied、write_count 36、schema valid。L89-90 は issue.md の template を編集し docs/user-note.md を足した後の2回目で、noop、planned_changes 0、write_count 0、migration_preview は issue.md だけ、fixture の file の sha の差は0、編集した4ファイルは sha のまま。L101-102 で validate-graph-schema.py は exit 0、保存された絶対パス0、token と node ID の印0、plugin の file の sha は不変。製品の側では、build-init-scaffold.py は欠けている dir と file だけを create_only で作り（L218-225）、変更が無く receipt があれば noop を返す（L246-248）。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro でも、6 root（issues・tasks・specs・architecture・features・docs）が symlink でない dir としてでき、config の routing_policy は example と同じ値、graph は初期値、2回目は noop で repo の tree は bytes ごと不変、receipt は1件のまま。留意：trial の progress.json は OUT3 を検証せずに PASS と書いていたが、OUT3 は test で判定するので、この criterion の判定には使っていない。\n2026-10-31再評価: eval-log/dev-graph/run-dev-graph-init/live-trial/20261031T0841-pr86/verdict.json の実走証跡と成果物を別コンテキストで確認しPASS。以前のrunについての観測文は過去の記録として維持した。\n2026-10-31再評価: eval-log/dev-graph/run-dev-graph-init/live-trial/20261031T0841-pr86/verdict.json の実走証跡と成果を別コンテキストで確認しPASS。以前のrunの観測は過去の記録として維持した。",
       "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261031T0841-pr86/verdict.json"
     },
     "OUT2": {
       "status": "PASS",

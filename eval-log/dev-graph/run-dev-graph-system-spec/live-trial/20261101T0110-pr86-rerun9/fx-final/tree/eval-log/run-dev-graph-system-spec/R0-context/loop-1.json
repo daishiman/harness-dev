@@ -1,0 +1,24 @@
+{
+  "responsibility": "R0-context",
+  "loop": 1,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "receipt_sha256": "e94ceb5c2198185b9444f08ee176f86eecc1e8d385fc7292e0238f24822659b5",
+  "checklist": [
+    {"item": "system_spec realpath inside caller repo with repository_id/common-dir match", "status": "achieved",
+     "evidence": "realpath(system-spec)=<repo_root>/system-spec; 17 entries walked, 0 symlinks, 0 broken, 0 outside repo; fresh resolve-repo-context --mode read exit 0 matches receipt repository_id local:sha256:5deca6a4..., git_common_dir <repo_root>/.git, worktree_id wt_7046288101d77d3a, head_sha 86627de; only diff mode read vs write"},
+    {"item": "validate-source-lineage.py exit 0 and checked decides new vs resume", "status": "achieved",
+     "evidence": "exit 0, status=pass, checked=0, violations=[] -> new-creation (no imported nodes to preserve)"},
+    {"item": "declared inputs all validated", "status": "achieved",
+     "evidence": "receipt sha256 matches e94ceb5c...; caller context, system-spec root, plugin_source (<repo_root>/plugins/dev-graph) all inside repo_root"},
+    {"item": "output satisfies declared shape and authority", "status": "achieved",
+     "evidence": "receipt separates repository identity (repository_id/git_common_dir/worktree_id), content_roots, plugin_source (code authority); root_trust_evidence all true; selected_by explicit --repo-root"},
+    {"item": "zero boundary-violating read/write/delegation", "status": "achieved",
+     "evidence": "verification used read mode only; reads confined to repo_root; only write is this loop record"}
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": ["receipt diagnostics: default_branch_fallback_main (non-blocking)"],
+  "delta_from_original": "none",
+  "merged_directive_for_next": "R0 PASS; proceed to R1 with receipt as-is, mode new-creation (checked=0)",
+  "drift_signal": false
+}

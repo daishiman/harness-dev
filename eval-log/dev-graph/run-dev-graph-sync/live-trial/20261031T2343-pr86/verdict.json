@@ -1,0 +1,165 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-sync",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sync86/fx",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion",
+    "frontmatter.external_mutation_guard"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "1f54a19914f1307fe14edaedff462b4a12091828dd0213afaaefb0c6ab34b0cd",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/fresh_verify_sync"
+    },
+    "transcript_sha256": "03eb0e92745b242481f1015d2cde48ee20ab13b761466c9744fd9a8f85f4a7a1",
+    "evidence_refs": [
+      "task.md#L28",
+      "transcript.jsonl#L70",
+      "transcript.jsonl#L220",
+      "transcript.jsonl#L287",
+      "transcript.jsonl#L291",
+      "transcript.jsonl#L295",
+      "transcript.jsonl#L360",
+      "transcript.jsonl#L402",
+      "transcript.jsonl#L441",
+      "transcript.jsonl#L395",
+      "transcript.jsonl#L478",
+      "gate-sent.log#L1",
+      "bootstrap-note.json#L2",
+      "evidence-redaction.json#L3",
+      "extra-env.txt#L1",
+      "stub-calls.log#L1",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000004-update.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000005-link-github.json",
+      "fx-final/tree/github-adapter-calls.jsonl#L10",
+      "fx-final/tree/.dev-graph/cache/sync-run2/project-plan-1.json",
+      "fx-eval-log/run-dev-graph-sync-artifact-delivery.json",
+      "fx-eval-log/run-dev-graph-sync-artifact-delivery-run2.json",
+      "fx-eval-log/run-dev-graph-sync-goal-spec.json",
+      "fx-eval-log/run-dev-graph-sync-intermediate.jsonl#L2",
+      "transcript/subagents/agent-a25fe5f7a26c8b82f.jsonl",
+      "transcript/subagents/agent-a98aa495af7192dcb.jsonl",
+      "fx-final/tree/.artifact-delivery/external-mutation/confirmation-12e7969c525a4521bef8e3ee87053598.json",
+      "fx-final/tree/.artifact-delivery/external-mutation/completion-preview-2e77824fd4fd4ee9b9715f0336a1c27c.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-sync"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "d2c872bf715c4d302e7e78c13f371a91dfecb8bb0c5bf49a57410a4bd7f6b0c2",
+  "transcript_sha256": "03eb0e92745b242481f1015d2cde48ee20ab13b761466c9744fd9a8f85f4a7a1",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 686.0
+  },
+  "scenario_id": "C03-OUT1-positive-second-sync-zero-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C03-OUT1-positive-second-sync-zero-r2",
+    "required_observations": [
+      "the first sync applies the expected import and export",
+      "the second sync reports imports changes=0 and exports changes=0",
+      "stable IDs and snapshots are unchanged on the second run"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the first sync applies the expected import and export",
+        "evidence_ref": "fx-eval-log/run-dev-graph-sync-progress-run1.json#L6"
+      },
+      {
+        "index": 2,
+        "observation": "the second sync reports imports changes=0 and exports changes=0",
+        "evidence_ref": "fx-final/tree/.dev-graph/cache/sync-run2/issue-plan-1.json"
+      },
+      {
+        "index": 3,
+        "observation": "stable IDs and snapshots are unchanged on the second run",
+        "evidence_ref": "transcript.jsonl#L478"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> を同じ入力で 2 回続けて実行する (remote は DEV_GRAPH_GH=<contained-fixture-repo>/tools/fake-gh.py が読む fixture 内 github-adapter.json だけ)",
+      "template_flags": [
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 7000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 686.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "6354cf62db25116c93f5d715f38c2c9dad904634ffc514b61460cef07f36d793",
+      "tokens": {
+        "input_tokens": 170,
+        "cache_creation_input_tokens": 230379,
+        "cache_read_input_tokens": 5029299,
+        "output_tokens": 45310,
+        "total_tokens": 5305158,
+        "assistant_messages": 80,
+        "assistant_message_ids": 80,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 6,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+ "skill": "run-dev-graph-node",
+ "overall": "PASS",
+ "graph_baseline": {
+  "graph_revision": 2,
+  "graph_digest": "sha256:4f58b7b5d667a21077c19240e7f099d69b0fa55fbe4076922efa2660e5d3350b"
+ },
+ "writer_receipts": [],
+ "checklist": [
+  {
+   "id": "containment",
+   "status": "achieved",
+   "evidence": "resolve-repo-context --mode write repo_root=fx; auditor path containment PASS; repository_id matches receipts"
+  },
+  {
+   "id": "classification",
+   "status": "achieved",
+   "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: decision=auto confidence=0.92 margin=0.87"
+  },
+  {
+   "id": "schema",
+   "status": "achieved",
+   "evidence": "validate-graph-schema exit0 violation 0 (eval-log/run-dev-graph-node-c11-report.json)"
+  },
+  {
+   "id": "package",
+   "status": "not_applicable",
+   "evidence": "verbs used: add, update (no register-package)"
+  },
+  {
+   "id": "receipt",
+   "status": "achieved",
+   "evidence": "pre-choice receipts .dev-graph/state/receipts/node-r000001-add.json (0->1), .dev-graph/state/receipts/node-r000002-update.json (1->2) chain; last graph_revision_after=2 graph_digest_after matches graph_baseline"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS",
+   "evidence": "pre_write_validation findings 0; C11 exit0"
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending",
+   "judged_by": "live trial"
+  },
+  {
+   "id": "OUT2",
+   "status": "external_pending",
+   "judged_by": "acceptance test"
+  },
+  {
+   "id": "OUT3",
+   "status": "external_pending",
+   "judged_by": "acceptance test"
+  }
+ ],
+ "independent_verifier": {
+  "agent": "dev-graph:dev-graph-integrity-auditor",
+  "verdict": "PASS",
+  "graph_digest": "sha256:4f58b7b5d667a21077c19240e7f099d69b0fa55fbe4076922efa2660e5d3350b"
+ }
+}

@@ -1,0 +1,23 @@
+{
+  "responsibility_id": "R0-context",
+  "loop": 1,
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {"path": "eval-log/c24-receipt.json", "sha256": "771143cb4aff2afb820e40f61f3af1325d52561e13045889d6c1b7b92938e74b", "sha256_verified_unchanged": true},
+  "checks": [
+    {"id": "R0.5.3.1", "item": "system_spec realpath inside caller repo with repository_id/common-dir match", "result": "YES",
+     "evidence": "resolve-repo-context.py --mode read exit 0; repo_root, repository_id (local:sha256:8be3326e...7557a), git_common_dir (.git), git_dir, worktree_id (wt_8fdb57ec810e04e9), head_sha (a5fad96), plugin_source and content_roots.system_spec all equal to pinned receipt; realpath(system-spec)=<repo_root>/system-spec; git rev-parse --git-common-dir=.git, --show-toplevel=<repo_root>; symlinks under system-spec=0, broken links=0"},
+    {"id": "R0.5.3.2", "item": "validate-source-lineage.py exit 0 and checked decides new-create vs resume", "result": "YES",
+     "evidence": "independent run exit 0, status=pass, checked=0, checked_node_ids=[], violations=[]; identical to eval-log/r0-lineage-gate.json; graph .dev-graph/state/graph.json has 0 nodes; checked=0 => new_import uniquely determined (matches preflight decision)"},
+    {"id": "common.5.3.1", "item": "declared inputs all verified", "result": "YES",
+     "evidence": "caller context (C24 receipt re-derived), repo-local system-spec root (16 files, all 16 preflight input_digests match sha256), plugin source (plugins/dev-graph inside repo, matches receipt)"},
+    {"id": "common.5.3.2", "item": "output satisfies declared shape and authority", "result": "YES",
+     "evidence": "receipt separates repository identity (repository_id/worktree_id/git_common_dir), content roots (content_roots.*), code authority (plugin_source); root_trust_evidence present (explicit --repo-root, toplevel/common-dir ownership verified). Note: pinned receipt stores absolute paths (eval-log run artifact); preflight report uses repo-relative paths - non-blocking observation."},
+    {"id": "common.5.3.3", "item": "zero read/write/delegation against responsibility boundary", "result": "YES",
+     "evidence": "no symlink-origin or other-repo content read; verifier used only read-only commands; git status unchanged (?? .dev-graph/, candidate-import.json, eval-log/, system-spec/); receipt sha256 unchanged; only write is this loop record"}
+  ],
+  "delta_from_original": "none; R0 containment and lineage gate confirmed for new-create path",
+  "merged_directive_for_next": "R0 PASS (checked=0 => new_import); proceed to R1 verification / R2 delegation with c24 receipt sha256 771143cb... as handoff digest",
+  "drift_signal": "none",
+  "verdict": "PASS",
+  "blockers": []
+}

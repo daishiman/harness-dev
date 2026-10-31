@@ -4,7 +4,7 @@ description: 元画像と改善提案を独立評価したいとき、修正さ�
 kind: assign
 prefix: assign
 owner: harness maintainers
-version: 1.3.0
+version: 1.3.2
 effect: local-artifact
 role_suffix: evaluator
 user-invocable: false

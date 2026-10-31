@@ -1,0 +1,15 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-sync",
+  "run": 1,
+  "transitions": [
+    {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "issue-plan-1.json / project-plan-1.json parse ok; gh-bridge --dry-run mutation_suppressed=true; no secrets; validate-graph-schema valid=true"},
+    {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented",
+     "artifacts": [
+       {"path": ".dev-graph/cache/sync-run1/issue-plan-1.json", "sha256": "d200d7da257e0beda4ba4f410e59c7456bc703503e53baec447c18f4c78e6891", "open_with": "json"},
+       {"path": ".dev-graph/cache/sync-run1/project-plan-1.json", "sha256": "66df8e201cf12c0a79a91e02d77bf2fd971f608c31200281d60735562b02a6f2", "open_with": "json"}
+     ]},
+    {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "isolated-fixture pre-specified answer contract (task.md); not an approval for the real repo or GitHub"},
+    {"from": "user_choice_recorded", "event": "standard", "to": "semantic_evaluator_started"}
+  ]
+}

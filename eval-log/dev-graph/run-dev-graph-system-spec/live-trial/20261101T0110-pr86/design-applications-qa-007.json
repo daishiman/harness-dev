@@ -1,0 +1,12 @@
+[
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/clean-architecture.md#中核概念",
+    "principle": "表示形式と業務の正本を境界で分離する",
+    "applicability": "applied",
+    "rationale": "qa-007のReact/TypeScriptと最小限のグローバルストア、qa-032のSPA選択を前提に、画面部品のローカルな状態と利用者/権限など共通の状態を分ける。qa-028の一覧の並べ替え・一致済み明細の折りたたみは表示の責務に置き、金額や突合結果の正本を画面側で再計算しない。",
+    "tradeoffs": [
+      "状態の所有者とAPI境界の型を明示する保守負担がある。",
+      "SSRを前提とする公開検索向けの最適化は、社内業務という前提を外れない範囲に留める。"
+    ]
+  }
+]

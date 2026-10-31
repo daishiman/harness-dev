@@ -1,0 +1,48 @@
+{
+  "artifact": "R1-preflight-verification",
+  "skill": "run-dev-graph-system-spec",
+  "responsibility_id": "R1-preflight",
+  "verifier": "independent-context",
+  "loop": 1,
+  "inputs": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec-c24-receipt.json",
+    "c24_receipt_sha256": "1571a5347455ca9b8173cf7f9e6bd43ed57fdbe1a3cfee6c810ddde52e9e0e1b",
+    "c24_receipt_sha256_match": true,
+    "goal_spec": "eval-log/run-dev-graph-system-spec-goal-spec.json",
+    "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+    "original_goal_sha256_match": true,
+    "original_goal_sha256_note": "sha256 of the original_goal string (file sha256 is a1205ed0...; not the goal hash)",
+    "preflight_report": "eval-log/run-dev-graph-system-spec-preflight-report.json"
+  },
+  "measured": {
+    "plugin_manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "plugin_manifest_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994",
+    "name": "system-spec-harness",
+    "version": "0.1.24",
+    "manifest_keys": ["author", "dependencies", "description", "name", "version"],
+    "version_range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "version_range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "package_contract": "plugins/system-spec-harness/references/package-contract.json",
+    "package_contract_sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486",
+    "required_entry_points": {
+      "run-system-spec-elicit": {"in_contract": true, "skill_md": "skills/run-system-spec-elicit/SKILL.md", "exists": true},
+      "run-system-spec-doc-fetch": {"in_contract": true, "skill_md": "skills/run-system-spec-doc-fetch/SKILL.md", "exists": true},
+      "run-system-spec-compile": {"in_contract": true, "skill_md": "skills/run-system-spec-compile/SKILL.md", "exists": true},
+      "assign-system-spec-completeness-evaluator": {"in_contract": true, "skill_md": "skills/assign-system-spec-completeness-evaluator/SKILL.md", "exists": true}
+    }
+  },
+  "checklist": [
+    {"item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる", "result": "YES", "evidence": "0.1.24 satisfies >=0.1.22 <1.0.0 (semver); 4/4 in entry_points.skills and SKILL.md present"},
+    {"item": "宣言した入力が全て検証済みである", "result": "YES", "evidence": "manifest, composition range, package-contract, C24 receipt sha256, goal hash all checked"},
+    {"item": "出力が宣言した shape と authority を満たす", "result": "YES", "evidence": "parent R1_preflight values (name/version/range/in_range/sha256 x2/4 entry points) match measured; range taken from composition yaml, not planning-time >=0.1.0"},
+    {"item": "責務境界に反する read/write/delegation が0件である", "result": "YES", "evidence": "manifest has only official keys; no harness plugin modified (plugins/ not in git status); no system-spec elicitation/compile duplicate in plugins/dev-graph (R1-elicit.md files in other skills are dev-graph-own responsibilities with no system-spec refs; build-graph-node.py only references the harness evaluator id)"}
+  ],
+  "parent_report_consistency": {"R1_preflight": "MATCH", "inputs_sha256_system_spec_files": "MATCH (4/4)"},
+  "verdict": "PASS",
+  "blockers": [],
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "delta_from_original": "none; R1 preflight satisfied",
+  "merged_directive_for_next": "R1 PASS -> R2-delegate に handoff 可 (package_contract_sha256 d4c3ca02..., manifest_sha256 322ddd15... を input digest として照合)",
+  "drift_signal": "none"
+}

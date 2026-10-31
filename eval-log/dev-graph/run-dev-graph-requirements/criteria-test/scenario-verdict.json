@@ -7,7 +7,7 @@
     "skill_md_sha256": "ed21e07f32957a676722e71cf817b24d6f82f041a7c45a910c3b58ea5cb0a190"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-pr85",
+  "reviewer": "/root/fresh_verify_requirements（実走を独立再評価。その他の既存試験記録は維持）",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -31,7 +31,7 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261012T2252-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261031T2305-pr86/verdict.json",
         "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261012T2252-pr85/transcript.jsonl",
         "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261012T2252-pr85/goal-verdict.json",
         "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261012T2252-pr85/task.md",
@@ -45,9 +45,9 @@
         "plugins/dev-graph/scripts/guard-requirements-handoff.py",
         "plugins/dev-graph/tests/test_acceptance_gaps_a1.py"
       ],
-      "observed": "live trial 20261012T2252-pr85（retry_of 20261012T1619-pr85）の verdict は PASS。tier live、downgrade なし、goal_verdict PASS・blockers 0、overall は4項目とも PASS。skill_dir_tree_sha b0eb19e4… は、今の behavior closure の digest と一致した。transcript（261行）の sha256 2a1e278c… は verdict の値と一致した。handoff の可否は、製品の script が決定論で決める。73-74行で C24 が exit 0。77-83行で binding が exit 0。86-87行で guard が exit 0（status handoff、handoff 14、closure 15、blocked 0、graph の digest_match true）。その後、被験は staging に requirements.md と handoff.json を書き（132・145行）、155行で mv して公開した。handoff.json は、consumer capability-build・mode task-graph、task_graph_ref と system_build_handoff_ref と、それぞれの sha256 を持つ。snapshot には、graph digest（binding と guard で同じ）・validated_digest・readiness digest を持つ。handoff.json に書かれた digest は、すべて実ファイルと一致することを自分で照合した。243-244行で binding と guard を回し直し、どちらも exit 0。197-198行で validate-system-plan と C11 も exit 0。実装コードは生成していない。session の後に書かれたファイルは、handoff の4件と eval-log の3件だけで、code は0件（自分で数えた）。guard.jsonl は49件すべて allow。独立の評価役（dev-graph-requirements-verifier の agent-afa1c0691b59b25d4 と、R2 の trace の agent-a75176034731c7482）を起こし、どちらも PASS を返した（183-215行）。pytest の a1 の requirements の6件も、trial の中で通っている（178-179行）。今回、test_acceptance_gaps_a1.py の requirements の6件（in1 2件・out2 3件・guard の snapshot 1件）、test_register_package.py と test_validate_graph_schema_c11_coverage.py の42件を自分で回し、すべて PASS。【目立つ残りの穴】(1) requirements document を書く writer・schema・validator が無い。これが今回、実害として出た。被験が digest を手で写したため、requirements.md の §9（L89-90）の省略表示が2つとも誤っている。feature は 989527ee…728e18f と書かれているが、実際の末尾は ad4c997f で、728e18f は architecture の末尾。architecture は 14c532c2…f40fc32 と書かれているが、実際の末尾は 4728e18f で、f40fc32 で終わるファイルは無い。文書自身が「完全な digest は handoff.json を正本とする」と書き、handoff.json の値は正しいので、PASS とした。ただし、手で書いた値は、どの gate も verifier も照合していない。(2) emit の後に、Edit でその場で書き直した（222・224・236行）。requirements.md を直してから、handoff.json の sha256 を書き換えている。atomic でない。(3) artifact_delivery の提示と、standard の選択を記録する経路が無い。被験は thinking の中で宣言しただけで、semantic_evaluator_started に進んだ（159行）。(4) capability-build の受け手との契約が repo に無い。確かめられるのは、dev-graph の中での emit まで。(5) 実装コードを生成しないことは、LLM と allowed-tools に頼っている。",
-      "scenario_id": "C04-OUT1-positive-ready-handoff-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261012T2252-pr85/verdict.json"
+      "observed": "live trial 20261012T2252-pr85（retry_of 20261012T1619-pr85）の verdict は PASS。tier live、downgrade なし、goal_verdict PASS・blockers 0、overall は4項目とも PASS。skill_dir_tree_sha b0eb19e4… は、今の behavior closure の digest と一致した。transcript（261行）の sha256 2a1e278c… は verdict の値と一致した。handoff の可否は、製品の script が決定論で決める。73-74行で C24 が exit 0。77-83行で binding が exit 0。86-87行で guard が exit 0（status handoff、handoff 14、closure 15、blocked 0、graph の digest_match true）。その後、被験は staging に requirements.md と handoff.json を書き（132・145行）、155行で mv して公開した。handoff.json は、consumer capability-build・mode task-graph、task_graph_ref と system_build_handoff_ref と、それぞれの sha256 を持つ。snapshot には、graph digest（binding と guard で同じ）・validated_digest・readiness digest を持つ。handoff.json に書かれた digest は、すべて実ファイルと一致することを自分で照合した。243-244行で binding と guard を回し直し、どちらも exit 0。197-198行で validate-system-plan と C11 も exit 0。実装コードは生成していない。session の後に書かれたファイルは、handoff の4件と eval-log の3件だけで、code は0件（自分で数えた）。guard.jsonl は49件すべて allow。独立の評価役（dev-graph-requirements-verifier の agent-afa1c0691b59b25d4 と、R2 の trace の agent-a75176034731c7482）を起こし、どちらも PASS を返した（183-215行）。pytest の a1 の requirements の6件も、trial の中で通っている（178-179行）。今回、test_acceptance_gaps_a1.py の requirements の6件（in1 2件・out2 3件・guard の snapshot 1件）、test_register_package.py と test_validate_graph_schema_c11_coverage.py の42件を自分で回し、すべて PASS。【目立つ残りの穴】(1) requirements document を書く writer・schema・validator が無い。これが今回、実害として出た。被験が digest を手で写したため、requirements.md の §9（L89-90）の省略表示が2つとも誤っている。feature は 989527ee…728e18f と書かれているが、実際の末尾は ad4c997f で、728e18f は architecture の末尾。architecture は 14c532c2…f40fc32 と書かれているが、実際の末尾は 4728e18f で、f40fc32 で終わるファイルは無い。文書自身が「完全な digest は handoff.json を正本とする」と書き、handoff.json の値は正しいので、PASS とした。ただし、手で書いた値は、どの gate も verifier も照合していない。(2) emit の後に、Edit でその場で書き直した（222・224・236行）。requirements.md を直してから、handoff.json の sha256 を書き換えている。atomic でない。(3) artifact_delivery の提示と、standard の選択を記録する経路が無い。被験は thinking の中で宣言しただけで、semantic_evaluator_started に進んだ（159行）。(4) capability-build の受け手との契約が repo に無い。確かめられるのは、dev-graph の中での emit まで。(5) 実装コードを生成しないことは、LLM と allowed-tools に頼っている。\n2026-10-31再評価: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261031T2305-pr86/verdict.json の実走証跡と成果を別コンテキストで確認しPASS。以前のrunの観測は過去の記録として維持した。\n2026-10-31再評価: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261031T2305-pr86/verdict.json の実走証跡と成果を別コンテキストで確認しPASS。以前のrunの観測は過去の記録として維持した。",
+      "scenario_id": "C04-OUT1-positive-ready-handoff-r2",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261031T2305-pr86/verdict.json"
     },
     "OUT2": {
       "status": "PASS",

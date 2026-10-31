@@ -2,7 +2,7 @@
   "target": {
     "plugin": "flyer-studio",
     "skill": "run-analyze-flyer",
-    "skill_md_sha256": "78d20b3b0a4543d3d2f68ed5607bb742f52d43b0844733426f343eee30d948bf"
+    "skill_md_sha256": "148c10076a077a02f4ed73a91bd4accd2816d59ee29504fd609d5f5ae2c4faaf"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,33 +13,32 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "independent-content-reviewer B (fresh context, port-hh-flyer-rubric-20261030)",
-  "reviewed_at": "2026-10-30T13:47:23Z",
-  "iterations": 2,
+  "reviewer": "independent-metadata-diff-reviewer /root/review_flyer_ci",
+  "reviewed_at": "2026-10-31T16:24:47.341846+00:00",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
       "IN1",
       "IN2",
-      "OUT1"
+      "OUT1",
+      "VERSION-METADATA-ONLY"
     ],
     "positive_feedback": [
-      "B1（深さの意味）は解けた: plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:83 が「深さが変えるのは、元画像を観察する領域の細かさと、要求ごとの改善候補の比較にかける手間の量だけである」と定義した。同じ行で独立性・4 条件・cycleBudget は緩めないとしており、plugins/flyer-studio/references/stage-common.md:53（深さが変えるのは各 SKILL が書いた手間の量だけ）と合う。intake・create・learn の SKILL も同じ形の 1 文を持つようになり、★ の 4 本で選択肢の意味が揃った。「細かさ」は観察の粒度で、範囲ではない。全元画像を開いて観察領域を埋める IN1（99 行）とはぶつからない。analysis-contract.md:15 の「比較対象を無制限に増やさない」とも矛盾しない。",
-      "B2（上流の選択の引き継ぎ）は解けた: plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:75 と stage-common.md:56 が、評価の FIX や premise の戻しで入り直したときは、直す対象の現物を示し、前に記録した深さをそのまま記録して選び直しを求めない、と決めた。前に記録が無い stage だけ 1 回選ぶ。workflow.md:54 の premise の項目からもこの節へつながる。これで 141 行（細切れの再確認へ戻さない）と evaluation-contract.md:26（許可を取り直さない）との衝突が消えた。premise の戻りで accept-as-is を選んで許可済みの制作が止まる道も、選び直しをしないので閉じた。",
-      "B3（manifest）は解けた: plugins/flyer-studio/skills/run-analyze-flyer/workflow-manifest.json:176 が completionRequiresIndependentReviewer: true になり、SKILL のゴール（91 行）・OUT1・run-create-flyer の manifest と揃った。CHANGELOG.md:11 にも書かれている。このフラグを読むコードもテストも無いので、挙動は変わらない。",
-      "B5（現状で試すと制作へ進めないこと）も解けた: plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:75 が「提案評価で PASS した分析が無いため、制作の段へは進めない」と書き、stage-common.md:55 が後続の stage の読む成果物（PASS した analysis-review）を挙げて、入り直して深さを選べば進めると道を示す。state machine（SKILL.md:51 の accept-as-is → handoff_complete）とも合う。",
-      "直しで設計の筋は崩れていない: 2 段構成（71-83 行）、pre_choice_forbidden、goal-seek の配線と検証（110-135 行）、評価責務の境界（116・147 行）は変わっていない。assign-flyer-analysis-evaluator の SKILL.md（sha 19bd3811…）も変わっていない。stage-common の新しい節は ★ の 4 本だけを対象にし、独立性・停止条件・cycleBudget を変えないと明記している（53 行）。そのため評価者の 4 条件・独立性・FIX の戻り先には影響しない。"
+      "変更前snapshotと最終sourceを独立比較し、frontmatter.versionまたはroot.version（package-lockはpackages[\"\"].versionも）を除く全データが同値であることを確認した。Skill本文・責務・criteria・所有・実行条件・workflowの資源と依存辺は不変。",
+      "plugin固有check_versions（build-local-package.py:749-768）はmanifest/package/EVALS/workflow/Skill/agentの同版を要求する。1.3.2への同期はこの機械契約を満たし、意味上の能力や実行結果を追加しない。",
+      "従前の意味判断は変更前SHAに一致する既存content-reviewを根拠履歴として継承する。今回の独立検査はversionメタデータ差分と非version同値性に限定した。"
     ],
     "negative_feedback": [
-      "[low / omission / plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:73, 75 ⇔ plugins/flyer-studio/references/stage-common.md:56] iteration 2 で新しく見えた点。引き継ぎの規則（前に記録した深さをそのまま記録する）は、深さがどこかに残っていることを前提にする。しかし 73 行は「記録する」と書くだけで、置き場所（ファイルと欄）が無い。scripts・schemas・references を grep しても、深さや user_choice を保存する欄は 0 件だった。premise の戻りは別の会話で起きることがあり、そのときは前の深さを読めない。56 行の「前に記録した深さが無い stage だけ、1 回選んでもらう」に落ちるので流れは壊れず、利用者に 1 回聞き直すだけで済む。そのため low にした。直し方の案: 73 行に置き場所を 1 つ書く（例: `<DIR>/goal-seek/run-analyze-flyer-progress.json` の depth 欄）。または「会話をまたいだら 1 回だけ選び直す」と、今の振る舞いをそのまま書く。",
-      "[low / smell / plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:16, 108 ⇔ plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:112, plugins/flyer-studio/references/stage-common.md:49, plugins/flyer-studio/references/workflow.md:58] B4 は iteration 1 から引き継いだ。作者は既存の設計として変えないと判断した。max_loops: 3 を「cycleBudget の写し」とする書き方はそのままで、goal-seek の周回数と、案件全体で共有する cycle の消費を同じ語が指している。104 行が上限の正本を stage-common の「戻り先と改善上限」へ向けたので、実際の上限が台帳の消費数であることは前より追いやすくなった。low のまま残す。",
-      "[low / inconsistency / plugins/flyer-studio/skills/run-analyze-flyer/references/analysis-contract.md:27, plugins/flyer-studio/references/stage-common.md:71 ⇔ plugins/flyer-studio/references/design-knowledge-index.json（usedBy の analyze）, plugins/flyer-studio/scripts/build-local-package.py:275] B6 は iteration 1 から引き継いだ。作者は起票に回すとしている。専門レンズへ渡す stage の値が analysis と analyze の 2 通りあるのは変わっていない。HarnessHub の移植元からそのままで、low のまま残す（stage-common の該当行は新しい節の追加で 64 行から 71 行へずれた）。"
+      "[履歴継承・今回未再評価] [low / omission / plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:73, 75 ⇔ plugins/flyer-studio/references/stage-common.md:56] iteration 2 で新しく見えた点。引き継ぎの規則（前に記録した深さをそのまま記録する）は、深さがどこかに残っていることを前提にする。しかし 73 行は「記録する」と書くだけで、置き場所（ファイルと欄）が無い。scripts・schemas・references を grep しても、深さや user_choice を保存する欄は 0 件だった。premise の戻りは別の会話で起きることがあり、そのときは前の深さを読めない。56 行の「前に記録した深さが無い stage だけ、1 回選んでもらう」に落ちるので流れは壊れず、利用者に 1 回聞き直すだけで済む。そのため low にした。直し方の案: 73 行に置き場所を 1 つ書く（例: `<DIR>/goal-seek/run-analyze-flyer-progress.json` の depth 欄）。または「会話をまたいだら 1 回だけ選び直す」と、今の振る舞いをそのまま書く。",
+      "[履歴継承・今回未再評価] [low / smell / plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:16, 108 ⇔ plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md:112, plugins/flyer-studio/references/stage-common.md:49, plugins/flyer-studio/references/workflow.md:58] B4 は iteration 1 から引き継いだ。作者は既存の設計として変えないと判断した。max_loops: 3 を「cycleBudget の写し」とする書き方はそのままで、goal-seek の周回数と、案件全体で共有する cycle の消費を同じ語が指している。104 行が上限の正本を stage-common の「戻り先と改善上限」へ向けたので、実際の上限が台帳の消費数であることは前より追いやすくなった。low のまま残す。",
+      "[履歴継承・今回未再評価] [low / inconsistency / plugins/flyer-studio/skills/run-analyze-flyer/references/analysis-contract.md:27, plugins/flyer-studio/references/stage-common.md:71 ⇔ plugins/flyer-studio/references/design-knowledge-index.json（usedBy の analyze）, plugins/flyer-studio/scripts/build-local-package.py:275] B6 は iteration 1 から引き継いだ。作者は起票に回すとしている。専門レンズへ渡す stage の値が analysis と analyze の 2 通りあるのは変わっていない。HarnessHub の移植元からそのままで、low のまま残す（stage-common の該当行は新しい節の追加で 64 行から 71 行へずれた）。"
     ],
-    "iteration": 2,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:re-review-after-fix",
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual:parent-delegated-independent-version-metadata-only-review",
     "next_action": "none"
   },
-  "notes": "elegance の観点（4 条件、2 段構成と評価責務の境界、改名の取りこぼし）で書いた verdict。rubric-verdict.json と同じ 1 回の再検証（focused combined review）の結果を観点で分けた。exhaustive の 30 思考法は実施していない。iteration 2 / 3。対象 SKILL.md の sha256 は書く直前に shasum -a 256 で取った 78d20b3b0a4543d3d2f68ed5607bb742f52d43b0844733426f343eee30d948bf。iteration 1（SKILL.md 437dd3e1…、2026-10-30T13:22:24Z）の指摘は elegance 6 件と rubric 1 件。利用者側の番号との対応: B1 深さの意味、B2 上流の選択の引き継ぎ、B3 manifest の completionRequiresIndependentReviewer、B4 max_loops の語、B5 現状で試すと制作へ進めないこと、B6 レンズの stage の値、B7 チェックリスト 104 行（rubric）。B1・B2・B3・B5 は解けた。B4・B6 は作者の判断どおり low のまま残す。直しから新しく 1 件（low / omission: 深さの置き場所）を見つけた。high・medium は 0 件で PASS。確かめた範囲: run-analyze-flyer の SKILL.md と workflow-manifest.json、stage-common.md:47-56、workflow.md:54、CHANGELOG.md:11、kit-entry.md:19。他の ★ の SKILL（intake・create・learn）は、深さの 1 文があることだけを確かめた。担当外なので、その中身は評価していない。iteration 2 で流した機械検査: npm --prefix plugins/flyer-studio test は tests 233・pass 228・fail 0・skipped 5（実 PDF・実ブラウザ）で rc 0。build-local-package.py --check は errors []・fail 0・assets 42 で rc 0（新しいアンカー #深さの選択と戻り を含む参照が解決する）。lint-goal-seek --skills-dir は OK（7 files）。lint-skill-name・lint-skill-description（OK=7・VIOLATION=0）・validate-frontmatter は --skills-dir で rc 0（warn は source 欠落のみ）。lint-entrypoint-artifact-first --repo-root は「134 inventory, 106 enforced, 28 mechanically exempt」で rc 0。L0 rubric（--rubric-refs で L0 ref-skill-design-rubric と L2 assign-skill-design-evaluator、--kind skill）は score 100・threshold 80・scored 23/24・pending_human 1（BD-004）・findings 0。"
+  "notes": "既存判定を今回フル再評価したものではない。独立検査は22ファイルのversion限定差分、非versionデータ同値、両release manifestのname等の不変性。eleganceの従前の意味判断を継承し、旧criteria IDの評価は根拠履歴に属する（今回新規評価はVERSION-METADATA-ONLY）。履歴: eval-log/flyer-studio/run-analyze-flyer/content-review/elegance-verdict.json, SHA-256=ecf9e3e780979b54daf2a42d509611fa550693d26383cff23edd841a1679d251, 対象旧SHA=78d20b3b0a4543d3d2f68ed5607bb742f52d43b0844733426f343eee30d948bf, 判定=PASS, reviewer=independent-content-reviewer B (fresh context, port-hh-flyer-rubric-20261030), reviewed_at=2026-10-30T13:47:23Z。現対象SHA=148c10076a077a02f4ed73a91bd4accd2816d59ee29504fd609d5f5ae2c4faaf。findings_summaryとnegative_feedbackは既存所見を隠さず保持した履歴であり、今回新規欠陥や現行での再確認を意味しない。近隣sourceのversionも同時に正規化比較した。30思考法フル実走、host trial、人間の新たな承認、実画像再評価はしていない。scorer再実行もこの5 skillではしていない。根拠はmetadata-version-review.jsonと各*-inherited-review.json。source/fixture/既存eval-logの編集なし。"
 }

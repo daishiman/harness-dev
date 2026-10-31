@@ -1,0 +1,10 @@
+{"expected_graph_revision": 0,
+ "artifacts": [
+  {"artifact_kind":"task","slug":"lt-task-000","title":"LT fixture base task","project_id":"lt","domain":"fixture","tracker_binding":"none",
+   "classification":{"reason":"実装作業単位 (実行手順・受入条件を持つ単一責務の作業) なので task","candidates":[{"artifact_kind":"task","confidence":0.92},{"artifact_kind":"issue","confidence":0.05}],"decision":"auto"},
+   "sections":{"目的":"status fixture の前提となる基盤 task が完了している。","背景":"task-lt-task-001 の依存先として用意する。"}},
+  {"artifact_kind":"task","slug":"lt-task-001","title":"LT fixture status target task","project_id":"lt","domain":"fixture","tracker_binding":"none",
+   "depends_on":["task-lt-task-000"],
+   "classification":{"reason":"実装作業単位 (依存と受入条件を持つ単一責務の作業) なので task","candidates":[{"artifact_kind":"task","confidence":0.92},{"artifact_kind":"issue","confidence":0.05}],"decision":"auto"},
+   "sections":{"目的":"run-dev-graph-status の照会対象となる task が close されている。","背景":"task-lt-task-000 に依存する。"}}
+ ]}

@@ -2,7 +2,7 @@
 name: flyer-producer
 description: 確定 brief と独立 PASS した提案、または完成評価の deterministic・within-plan の FIX を実際の紙面へ反映し、新しい PDF/PNG・機械検査・評価テンプレート・納品まで進めたいときに使う。
 kind: agent
-version: 1.3.0
+version: 1.3.2
 owner: harness maintainers
 # toolsは書かない: 制作開始時にホストの画像生成/編集ツール(MCP)を発見して使うため、全ツールを継承する。
 tools-inherit: true

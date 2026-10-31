@@ -1,0 +1,25 @@
+{
+  "responsibility": "run-dev-graph-system-spec/R1-preflight",
+  "loop": 1,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checks": [
+    {"name": "manifest_name", "result": "PASS", "evidence": "plugins/system-spec-harness/.claude-plugin/plugin.json name=system-spec-harness"},
+    {"name": "version_in_canonical_range", "result": "PASS", "evidence": "version 0.1.24; range '>=0.1.22 <1.0.0' from plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version; numeric tuple compare (0,1,22)<=(0,1,24)<(1,0,0) true; planning-time >=0.1.0 not used"},
+    {"name": "required_entry_points_declared", "result": "PASS", "evidence": "package-contract.json#entry_points.skills contains run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator (also matches composition required_entry_points)"},
+    {"name": "required_entry_points_exist", "result": "PASS", "evidence": "skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md all present"},
+    {"name": "manifest_no_harness_keys", "result": "PASS", "evidence": "plugin.json keys = [author, dependencies, description, name, version]; all standard Claude Code plugin manifest keys; harness metadata (entry_points, package_mode, pkg_checks, etc.) lives in references/package-contract.json, not the manifest"},
+    {"name": "matches_preflight_report_R1", "result": "PASS", "evidence": "preflight-report.json R1: status PASS, version 0.1.24, range '>=0.1.22 <1.0.0', same range_source, entry_points_missing [] — identical to independent result"}
+  ],
+  "checklist_5_3": [
+    {"item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる", "yes": true},
+    {"item": "宣言した入力が全て検証済みである", "yes": true},
+    {"item": "出力が宣言した shape と authority を満たす", "yes": true},
+    {"item": "責務境界に反する read/write/delegation が0件である", "yes": true}
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "delta_from_original": "none; R1 preflight satisfied",
+  "merged_directive_for_next": "R1 PASS; proceed to R2",
+  "drift_signal": false
+}
