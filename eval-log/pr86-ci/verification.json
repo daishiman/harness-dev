@@ -1,0 +1,395 @@
+{
+  "pr": "https://github.com/daishiman/harness-dev/pull/86",
+  "head_sha": "0655e21354ec2e8ac24efcf9a08689b7edeb13ed",
+  "work_branch": "fix/pr86-ci-20261031",
+  "status": "ローカル検証PASS。ユーザーの明示承認とGit可能なセッション規則を確認済み、PR #86へ反映する。",
+  "root_pytest": {
+    "command": "python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q",
+    "passed": 9470,
+    "skipped": 4,
+    "log": "/tmp/pr86-root-tests.log"
+  },
+  "plugin_roots_initial": {
+    "passed_roots": 21,
+    "remaining": "dev-graphの回帰914件とcriteria evidence30件を最終版で別途確認し、未解決失敗0。",
+    "log": "/tmp/pr86-plugin-tests.log"
+  },
+  "targeted_gates_after_C19_fix": [
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify test discovery coverage (every test reachable by CI)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/0.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Harness coverage ratchet-floor (blocking; 現状値からの回帰を止める)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/1.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify skill-intake contracts (enum SSOT / vendored SSOT / plugin packages)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/2.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify all Claude/Codex plugin capability and composition contracts",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/3.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify runtime hook portability (no import-time fail-closed cross-plugin dep)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/4.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify no parent-relative sibling plugin paths",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/5.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "guard change category (P0/P1 proposal gate)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/6.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint dependency direction",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/7.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint content-review verdict 成果物存在 (全skill: 存在/PASS/sha一致/criteria突合)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/8.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint feedback_contract 携帯化 (量産先 loop-kind が frontmatter に評価基準を持つ)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/9.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint prompt contract drift (7層プロンプトの参照パス/allowed-tools が実装と整合・Tier1 fail-closed)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/10.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "audit full Claude/Codex plugin fleet contracts",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/11.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "validate plugin release (version bump 忘れ)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/12.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "validate local marketplace (非配布 plugin の install 経路が最新か)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/13.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek SSOT drift (engine/fork/max_loops 既定の分散コピー一致)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/14.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek conformance (実行系の固定手順禁止)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/15.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/16.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint plugin composition self-test (fixture drift 検出)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/17.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint and validate every plugin composition (dynamic discovery)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/18.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint dependency direction (全プラグイン, prompt-creator cross-plugin 参照解決)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/19.log"
+    }
+  ],
+  "C19_focused_tests": {
+    "helper": 14,
+    "helper_report": "eval-log/dev-graph/run-dev-graph-system-spec/content-review/pr86-ci/pytest-final-output.txt",
+    "boundary_and_C02": {
+      "passed": 68,
+      "log": "/tmp/pr86-c19-boundary-tests2.log"
+    },
+    "latest": {
+      "passed": 57,
+      "log": "/tmp/pr86-c19-latest-tests.log"
+    }
+  },
+  "flyer_tests_with_ignored_local_assets": {
+    "passed": 228,
+    "skipped": 5,
+    "log": "/tmp/pr86-flyer-tests-final.log",
+    "clean_checkout_followup": "harness-xvgi"
+  },
+  "content_review": {
+    "skills_verified": 96,
+    "C19_fresh_independent": "PASS; rubric84/100; high0"
+  },
+  "followups": [
+    "harness-xvgi",
+    "harness-aeti",
+    "harness-r5n1",
+    "harness-tmf5"
+  ],
+  "commit_and_push": "明示承認済み。本検証記録の確定後、port/hh-flyer-rubric-20261030へ通常pushで反映する。",
+  "dev_graph_final_regression": {
+    "passed": 914,
+    "command": "python3 -B -m pytest plugins/dev-graph/tests --ignore=plugins/dev-graph/tests/test_skill_criteria_evidence.py -q",
+    "log": "/tmp/pr86-devgraph-final.log",
+    "duration_s": 783.59
+  },
+  "C19_attempts": [
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261031T2317-pr86",
+      "result": "FAIL",
+      "reason": "入力資料と履行不足"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86",
+      "result": "FAIL",
+      "reason": "旧sourceのcwd gate衝突とgoalログ形状"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun",
+      "result": "FAIL",
+      "reason": "実データと全gateはPASSだが、再compile4箇所のpwd-P照合省略とcompileのpre-choice順序違反"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun2",
+      "result": "FAIL",
+      "reason": "本処理/scratch境界と親子の責務/周回解釈が曖昧。契約の適用範囲を明示して再レビュー。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun3",
+      "result": "FAIL",
+      "reason": "loop1のIN1 PASS記録前にschema未実行。各周回3gateの実行順を明示。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun4",
+      "result": "FAIL",
+      "reason": "compile後63件テストがstandard選択の記録に先行。選択を記録してから検査するfixture契約を明示。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun5",
+      "result": "FAIL",
+      "reason": "正規生成/評価/登録と3観測は達成したが、開き方の可視提示がstandard記録に先行していない。独立評価のFAILを正式保存。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun6",
+      "result": "FAIL",
+      "reason": "C05 PASSでも監査JSONの自然言語openをBash guardが外部CLIと誤認。拒否後のWrite切替を検知し、task契約どおり登録前停止。graph0node。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun7",
+      "result": "FAIL",
+      "reason": "qa-008のassistant legacy backfillに未確認RTO/RPOへの言及。独立C05 FAIL、C02前停止。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun8",
+      "result": "FAIL",
+      "reason": "C05全PASSでも、保存先変数を章保護hookが拒否した後のliteral再保存をfixture追加条件が一律不受理としC02前停止。source R1-score4.3はliteral再試行を明示許可しているため次fixtureはsourceに整合。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9",
+      "result": "PASS",
+      "reason": "今回のraw証拠に基づくfresh独立評価とcanonical verifierで全必須契約を確認。"
+    }
+  ],
+  "versions": {
+    "harness-creator": "1.4.53",
+    "flyer-studio": "1.3.2",
+    "dev-graph": "0.1.25"
+  },
+  "current_C19_skill_sha256": "27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30",
+  "current_C19_closure_sha256": "6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b",
+  "fixture_environment_validation": {
+    "guard_boundary_cases": 18,
+    "macos_json_stdin_rule": "ASTで証明したeval-log内literal/stdin無改変保存の引用JSONだけをmacOSコマンド探索から除外。他規則不変。",
+    "shell": "/bin/zsh",
+    "heredoc_stdin_bytes": 65537,
+    "canonical_hooks_probe": [
+      {
+        "hook": "guard-json-data.py",
+        "exit": 0
+      },
+      {
+        "hook": "guard-confirmed-chapter-overwrite.py",
+        "exit": 0
+      }
+    ],
+    "product_source_changed": false,
+    "proof_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/guard-provenance.json"
+  },
+  "changed_tracked_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude/changelog/governance-log.jsonl",
+    "doc/harness-creator-完全解剖.md",
+    "eval-log/dev-graph/run-dev-graph-decompose/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-init/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-node/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-render/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-requirements/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-schedule/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-status/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-sync/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-system-spec/content-review/elegance-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-system-spec/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-analysis-evaluator/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-analysis-evaluator/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-evaluator/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-evaluator/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-analyze-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-analyze-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-create-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-create-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-intake-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-intake-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-learn-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-learn-flyer/content-review/rubric-verdict.json",
+    "eval-log/harness-coverage.json",
+    "marketplaces/local/.claude-plugin/marketplace.json",
+    "marketplaces/local/plugin-fingerprints.json",
+    "plugins/dev-graph/.claude-plugin/plugin.json",
+    "plugins/dev-graph/.codex-plugin/plugin.json",
+    "plugins/dev-graph/plugin-composition.yaml",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
+    "plugins/dev-graph/tests/test_build_graph_node.py",
+    "plugins/flyer-studio/.claude-plugin/plugin.json",
+    "plugins/flyer-studio/.codex-plugin/plugin.json",
+    "plugins/flyer-studio/CHANGELOG.md",
+    "plugins/flyer-studio/EVALS.json",
+    "plugins/flyer-studio/agents/flyer-color-reviewer.md",
+    "plugins/flyer-studio/agents/flyer-composition-reviewer.md",
+    "plugins/flyer-studio/agents/flyer-typography-reviewer.md",
+    "plugins/flyer-studio/package-lock.json",
+    "plugins/flyer-studio/package.json",
+    "plugins/flyer-studio/plugin-composition.yaml",
+    "plugins/flyer-studio/references/package-contract.json",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/SKILL.md",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator.md",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/workflow-manifest.json",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/SKILL.md",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+    "plugins/flyer-studio/skills/run-analyze-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-create-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+    "plugins/flyer-studio/skills/run-create-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-intake-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-intake-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-learn-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-learn-flyer/workflow-manifest.json",
+    "plugins/harness-creator/.claude-plugin/plugin.json",
+    "plugins/harness-creator/.codex-plugin/plugin.json",
+    "plugins/harness-creator/CHANGELOG.md",
+    "plugins/harness-creator/plugin-composition.yaml",
+    "plugins/harness-creator/tests/test_audit_capability_parity.py",
+    "plugins/harness-creator/tests/test_native_surface_repo_integration.py",
+    "plugins/harness-creator/tests/test_sync_plugin_platforms.py"
+  ],
+  "new_product_files": [
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py",
+    "plugins/dev-graph/tests/test_system_spec_evaluation_paths.py"
+  ],
+  "proposed_next_commands_after_explicit_request": [
+    "git add -u -- . ':(exclude).beads/config.yaml'",
+    "git add -- plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py plugins/dev-graph/tests/test_system_spec_evaluation_paths.py eval-log/dev-graph eval-log/flyer-studio/run-intake-flyer/content-review/pr86-ci eval-log/pr86-ci",
+    "git commit -m 'fix: PR #86のCI検査と実走証拠を修正'",
+    "git push origin HEAD:port/hh-flyer-rubric-20261030"
+  ],
+  "criteria_evidence_final": {
+    "passed": 30,
+    "command": "python3 -B -m pytest plugins/dev-graph/tests/test_skill_criteria_evidence.py -q",
+    "log": "/tmp/pr86-criteria-final.log",
+    "output_ref": "eval-log/pr86-ci/criteria-evidence-final.txt"
+  },
+  "live_trial_lint_final": {
+    "result": "PASS",
+    "command": "python3 -B scripts/lint-live-trial-verdict.py --all",
+    "log": "/tmp/pr86-live-lint-final.log",
+    "verified": 9,
+    "existing_missing_record_only": 21,
+    "missing_note": "既存のD13 pilot警告。今回の9件stale-shaは全件解消。",
+    "output_ref": "eval-log/pr86-ci/live-trial-lint-final.txt"
+  },
+  "live_trial_final": {
+    "result": "PASS",
+    "skills": 9,
+    "C19_verdict": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/verdict.json",
+    "C19_independent_evaluation": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/independent-evaluation.json",
+    "C19_closure": "6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b",
+    "transcript_sha256": "465bbdb1157b85acef7e19397d1ee70b18b1c7b7af9e558bb15f66c8afce6389"
+  },
+  "targeted_gates_final": {
+    "passed": 20,
+    "failed": 0,
+    "result_ref": "eval-log/pr86-ci/ci-targeted-gates-final.json",
+    "output_ref": "eval-log/pr86-ci/ci-targeted-gates-final.txt"
+  },
+  "completed_local_at_utc": "2026-10-31T20:27:11.407659+00:00",
+  "new_source_implementation_summary": [
+    "固定22件のテストassertを登録マニフェスト集合の照合へ変更。",
+    "flyer-studioのCodex lens代替/実行root/manifest identity契約を整合。",
+    "C19 evaluator argsを固定C24 receiptに結び付けた絶対pathへ生成し、責務ログ/毎周回gateを明確化。",
+    "現行閉包で9件の正の実走を再収集し、fresh独立評価と受入receiptへ接続。"
+  ],
+  "publication_authorization": {
+    "user_reply": "ok",
+    "scope": "修正のコミットとPR #86ブランチへのpush",
+    "authorization_received": true,
+    "session_restriction": "Git操作禁止 (bd prime / stealth mode)",
+    "restriction_source": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/hook_outputs/01a19234-a4b3-7df1-8b9b-9884fe0ec512/cfd98664-fd99-412d-b92d-302ce59893f0.txt",
+    "git_commands_executed_after_approval": true,
+    "recorded_at_utc": "2026-10-31T21:31:57.246932+00:00",
+    "local_beads_no_git_ops": false,
+    "configuration_fixed": true,
+    "current_session_restriction_still_active": false,
+    "local_setting_commit_note": ".beads/config.yamlのno-git-ops=falseはローカル運用設定として変更したもの。CI修正commitのstage対象から除外する。",
+    "session_reloaded": true
+  },
+  "record_scope": "コミット前のローカル検証記録。反映コミットとActions結果はPR #86の更新履歴を参照。",
+  "commit_preflight": {
+    "secret_scan": "2677 staged files, exit 0",
+    "diff_check_source_and_non_live_artifacts": "exit 0",
+    "immutable_live_artifact_whitespace": "原本の末尾空行450ファイルは保持。全てlive-trial配下で、受入のSHA/出典digestを変更しない。",
+    "hook_bypass": false,
+    "force_push": false
+  }
+}

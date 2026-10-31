@@ -26,6 +26,14 @@
 - `R1-interview.md` の裸 TODO 残存 (validate-prompt FAIL) と、open_questions 処遇の矛盾 (TODO(human) 保持 vs auto-resolve) を「AI 最尤補完+仮定記録、TODO(human) 生成禁止」へ統一。
 - `parse_known_args` による未知引数黙殺を 5 scripts で failfast 化。
 
+## [2.1.15] - 2026-10-30
+
+- `subagent-hybrid-format.md`: agent の frontmatter の tools の宣言を「`tools` か `tools-inherit: true` のどちらか一方が必須」に改めた。正本は harness-creator の `capability-manifest.schema.json` の kindAgent (oneOf) である。`tools: inherit` とは書かないこと、advisor では `tools-inherit` を使わないことを書き足した。
+
+## [2.1.14] - 2026-10-30
+
+- `run-skill-feedback`: 必須項目を「要望タイトル・要望種別・やってほしいこと」の 3 つに絞った。背景・優先度・重要度・関連 URL は任意で、利用者が示した値だけを保持する (優先度と重要度は未指定なら中)。対象スキル名は同定の確定値から自動で設定し、対象プラグインを確定できないときは「不明」で投入せず、ヒアリングへ戻る。
+
 ## [2.1.13] - 2026-10-12
 
 - 版番号だけを上げた。中身は 2.1.12 と同じ。利用者の手元の local marketplace には、2.1.12 の版番号のまま中身の違うもの（PR #85 の途中の作業ツリー）が入っていた。同じ版番号で中身が2通りあると、どちらが入っているかを版で見分けられないので、区別のために上げた。

@@ -1,0 +1,21 @@
+{
+  "skill": "run-dev-graph-node",
+  "original_goal": "通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ",
+  "original_goal_hash": "eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "max_loops": 5,
+  "recorded_at": "2026-10-31T15:38:17Z",
+  "invoked_by": "run-dev-graph-system-spec R3-import (C19 -> C02)",
+  "operation": "add (specification + architecture imported from system-spec-harness, confirmed via completeness evaluator PASS)",
+  "input": {"path": "eval-log/c02-import-payload.json", "sha256": "5948fe00ffff3916000b3ac8f3badfd7ccc333942e0fa3119debc98b2351d765"},
+  "c24_receipt": {"repo_root": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec88/fx", "content_roots.repository": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec88/fx", "graph": ".dev-graph/state/graph.json", "repository_id": "local:sha256:9adf026eb0975ecf330a2d3ac76207083f1d46edf264a3b8b2c08d680f3423fd", "match": true},
+  "artifact_delivery": {
+    "state_trace": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started"],
+    "pre_choice_artifact": {
+      "kind": "C02 --dry-run preview (write_count 0)",
+      "result": "status=preview, valid=true, planned node_ids [spec-billing-audit-system-spec, arch-billing-audit-system-architecture], graph_revision_before 0 -> after 1, pre_write_validation findings 0, readiness complete, confirmed/pass",
+      "open_with": "python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root <FX> --input eval-log/c02-import-payload.json --dry-run"
+    },
+    "choice": "standard",
+    "choice_source": "isolated fixture pre-answer contract (task.md); not a repo/external approval"
+  }
+}

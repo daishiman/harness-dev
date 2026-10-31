@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
-    "skill_md_sha256": "227715b085af8c09b4848ffd337ae2c0b3e5ed88c0761c82caa90e5603024ba6"
+    "skill_md_sha256": "9291fa42c54074121a1d8b027df171a5909ca4f93924eee3d1f865ed6b05c3f7"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author dg-fix)",
-  "reviewed_at": "2026-10-12T04:20:41Z",
-  "iterations": 2,
+  "reviewer": "cr-run-dev-graph-sync (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:45:22Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -32,17 +32,18 @@
       "OUT9"
     ],
     "positive_feedback": [
-      "前回の PD-002 (medium) は解消した。H1 (L133) と `## Purpose & Output Contract` (L135、本文4行目) を Runtime root contract (L143) の前へ移し、L141 (本文10行目) が「authority の混在は禁止で、検出したら拒否する」と書く。",
-      "BD-001/BD-002/BD-003/NM-001..003 を満たし、description の2つの trigger (binding に従う Beads 同期・GitHub Issues/Projects/PR lifecycle の冪等収束) が Protocol 手順2 と手順1・3-5 に対応する (BD-004 PASS)。"
+      "機械採点で high/critical は 0 件、required_fixes も空。今回の差分 (L16 の script_refs 追加と L143 の段落追加) は新しい rubric finding を生んでおらず、score は前回と同じ 94/100 を保った。",
+      "BD-004 (pending_human) は PASS と判定した。description (L3) の 2 つの trigger のうち「tracker_binding に従い dev-graph と Beads を同期したいとき」は L141 の binding 別 authority と Protocol 手順2 (L197、beads は bd-bridge.py だけ) に、「GitHub Issues/Projects/PR lifecycle を冪等収束したいとき」は Protocol 手順1・3・4・5 (L196・L198-203・L204) と L206 の「同一 state の二回目は changes=0」に 1:1 で対応する。L143 の追加段落は beads trigger の補足で、trigger と手順の対応を崩していない。"
     ],
     "negative_feedback": [
-      "PD-001 (low、前回から残る。Beads 行き): 本文148行で100行を超えるが、skill 直下に references/ が無い (prompts/ のみ)。直し方: Protocol 手順3の Issue/Projects 計画の詳説 (L196-199) を references/ へ移すか、本文を100行以内にする。",
-      "FM-005 (low、前回から残る。Beads 行き): description (L3) が動詞句でなく「tracker_binding に従い…」で始まる。直し方: 動詞句で始める (trigger 2個は保つ)。"
+      "PD-001 (low、前回から残る。Beads 行き): 本文は 150 行 (L132-L281。今回の段落追加で前回の 148 行から 2 行増えた) で 100 行を超えるが、skill 直下に references/ が無い (prompts/ のみ)。直し方: Protocol 手順3 の Issue/Projects 計画の詳説 (L199-202) を references/ へ移すか、本文を 100 行以内にする。",
+      "FM-005 (low、前回から残る。Beads 行き): description (L3) が動詞句でなく「tracker_binding に従い…」で始まる。直し方: 動詞句で始める (trigger 2 個は保つ)。inventory と完全一致を test が求めるので inventory から直す。",
+      "参考 (rubric 外。elegance-verdict に記録): L143 の `parity_manifest_missing` 対処から §10 の「linkage 修復」が抜けている (medium)、stale の報告元を C28 と書いている (low、実際は C16 schedule-graph.py L304)、コマンドが cwd 相対パス (low)。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual: team-lead request to re-take content-review after dg-fix fixed the previous medium x2 / low x4 (incremental focused combined review, 2nd pass)",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric=94/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。前回の verdict (同じ reviewer) の findings に対する dg-fix の修正を、SKILL.md・responsibility prompt・script_refs の script で確かめた。read-only で回したもの: 受入テスト test_acceptance_gaps_a1/a2 (28 passed)、test_skill_mass_production_contracts (27 passed。inventory と frontmatter の完全一致を含む)、lint-skill-name.py / lint-skill-tree.py (4 skill とも exit 0)、lint-entrypoint-artifact-first.py (OK、127 inventory)、build-artifact-delivery.py --check (OK、22 plugins)。どれも作業ツリーを変えていない (前後の git status が同一)。verify_by=live-trial の criterion は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話・外部 GitHub/Beads mutation・release 実行はこの verdict の対象外である。inventory と完全一致を test が求める frontmatter の文 (summary・criteria) と PD-001・FM-005 は、team-lead の決定で Beads に回すので low として残した。"
+  "notes": "機械採点: `python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --target plugins/dev-graph/skills/run-dev-graph-sync` (exit 0) の結果は score=94 threshold=80 passed=true、rubric skill-design 1.6.0、rubric_hash=sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、coverage は applicable 20・scored 19・pending_human 1 (BD-004)・not_applicable 21。findings は FM-005 (low) と PD-001 (low) の 2 件で high は 0。pending_human の BD-004 は本 reviewer が意味判断して PASS とした (positive_feedback の 2 件目)。incremental の focused combined review を 1 つの context で行い、(a)〜(e) を一度に判定した (30 思考法は使っていない)。審査開始時の SKILL.md sha256 は 9291fa42c54074121a1d8b027df171a5909ca4f93924eee3d1f865ed6b05c3f7 で、依頼の期待値と一致した。read-only で回したもの: pytest (test_skill_mass_production_contracts / test_acceptance_gaps_a1 / test_acceptance_gaps_a2 / test_build_parity_manifest / test_parity_manifest_provenance) が 72 passed、scripts/validate-frontmatter.py が ok (exit 0)、frontmatter の全参照パスが実在。詳しい読書範囲と差分の照合結果は elegance-verdict.json の notes に書いた。verify_by=live-trial の OUT1 は実機の外部 mutation を実行しておらず、この verdict の対象外。"
 }

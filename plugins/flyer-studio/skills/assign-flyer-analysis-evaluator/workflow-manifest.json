@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "assign-flyer-analysis-evaluator",
+  "skill": "assign-flyer-analysis-evaluator",
+  "version": "1.3.2",
+  "goalSeek": {
+    "engine": "inline",
+    "selection": "stage-common の共通判断手順。担当固有の判断・記録と独立した受渡しは stage contract に従う",
+    "fixedTemplate": false
+  },
+  "phases": [
+    {
+      "id": "A2-evaluate-analysis",
+      "step": 1,
+      "title": "元画像と提案を別担当が照合し採否を返す",
+      "dependsOn": [],
+      "resourceIds": [
+        "stage-agent",
+        "stage-contract",
+        "knowledge-index",
+        "runtime",
+        "entrypoint",
+        "artifact-schema",
+        "composition-reviewer",
+        "typography-reviewer",
+        "color-reviewer",
+        "stage-common"
+      ],
+      "output": "analysis-review.json",
+      "onUnmet": "run-analyze-flyer"
+    }
+  ],
+  "resources": [
+    {
+      "id": "stage-agent",
+      "kind": "agent",
+      "path": "agents/analysis-evaluator.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "stage-contract",
+      "kind": "reference",
+      "path": "references/evaluation-contract.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "knowledge-index",
+      "kind": "reference",
+      "path": "../../references/design-knowledge-index.json",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "runtime",
+      "kind": "reference",
+      "path": "../../references/runtime.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "entrypoint",
+      "kind": "script",
+      "path": "../../scripts/build-flyer.py",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "artifact-schema",
+      "kind": "schema",
+      "path": "../../schemas/analysis-review.schema.json",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "composition-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-composition-reviewer.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "typography-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-typography-reviewer.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "color-reviewer",
+      "kind": "agent",
+      "path": "../../agents/flyer-color-reviewer.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    },
+    {
+      "id": "stage-common",
+      "kind": "reference",
+      "path": "../../references/stage-common.md",
+      "phaseIds": [
+        "A2-evaluate-analysis"
+      ]
+    }
+  ],
+  "stageDependencies": [
+    "run-analyze-flyer:analysis.json + analysis-review.json（未判定テンプレート）"
+  ],
+  "completionRequiresIndependentReviewer": true,
+  "evaluationOnly": true,
+  "resultReturn": {
+    "PASS": "呼出元へ返す。制作への進行・分析だけでの終了・実行範囲未指定時の1回確認は workflow の正本に従う。評価者が制作を起動しない",
+    "FIX": "run-analyze-flyer"
+  },
+  "revisionBudgetRef": "../../references/workflow.md#改善と納品"
+}

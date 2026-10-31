@@ -1,0 +1,53 @@
+{
+  "skill": "run-dev-graph-requirements",
+  "updated_at": "2026-10-31T14:12:37.891825+00:00",
+  "loops_used": 2,
+  "max_loops": 5,
+  "feedback_iterations_used": 2,
+  "status": "complete",
+  "checklist": [
+    {
+      "id": "CL1",
+      "item": "lineage closure欠落0",
+      "status": "PASS",
+      "evidence": "R1 agent PASS (15 node 実在、lineage 欠落0)"
+    },
+    {
+      "id": "CL2",
+      "item": "binding exit0 violations0 readiness_digest一致",
+      "status": "PASS",
+      "evidence": "eval-log/run-dev-graph-requirements-evidence/binding.json (c11=c02=sha256:687f7b81…)"
+    },
+    {
+      "id": "CL3",
+      "item": "guard missing_sections/remediation 全件表示",
+      "status": "PASS",
+      "evidence": "eval-log/run-dev-graph-requirements-evidence/guard.json (exit0, blocked 0, missing_sections 0; exit1 経路は非該当)"
+    },
+    {
+      "id": "CL4",
+      "item": "同一snapshot digestでrequirements/handoff生成",
+      "status": "PASS",
+      "evidence": ".dev-graph/requirements/FEATURE-1/capability-build-handoff.json graph_snapshot_digest=sha256:a84101d9…db6, digest_match true"
+    },
+    {
+      "id": "CL5",
+      "item": "実装code生成0",
+      "status": "PASS",
+      "evidence": "start.epoch 以降の新規 file は requirements 3件と eval-log のみ"
+    }
+  ],
+  "criteria": {
+    "IN1": "PASS (script)",
+    "OUT1": "PASS (live-trial: capability-build/task-graph handoff emit、実装code 0)",
+    "OUT2": "PASS (guard の withheld 経路は本ケース非該当、missing_sections 0 を surface)"
+  },
+  "advisory": {
+    "artifact_readiness": "enforced=false incomplete 49 findings、owner system-dev-planner/architecture producer"
+  },
+  "required_observations": {
+    "1": "PASS exact-13 package の capability-build task-graph handoff emit",
+    "2": "PASS feature FEATURE-1 / source_digest sha256:5255c094… に bind",
+    "3": "PASS 実装source 0件"
+  }
+}

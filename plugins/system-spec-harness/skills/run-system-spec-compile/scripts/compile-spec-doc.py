@@ -4,7 +4,7 @@
 # version: 0.1.0
 # purpose: run-system-spec-compile の決定論コンパイラ。収集済み spec-state.json と取得済み fetched-references.json・設計知識参照から、章別 Markdown 複数ファイル + index.md を組み立てる。各章 frontmatter に確定マーカー (status: confirmed/draft + spec_cells + category) を付与し (C11 hook の判定ソース)、カテゴリ別収集状態 (未着手/収集中/確定/対象外+理由) と最新ドキュメント出典を反映する。ヒアリング継続やドキュメント再取得はしない (入力を組み立てるのみ)。
 # inputs:
-#   - argv: compile --spec spec-state.json --references fetched-references.json [--out-dir system-spec]
+#   - argv: compile --spec spec-state.json --references fetched-references.json [--out-dir system-spec] [--repo-root .]
 # outputs:
 #   - system-spec/<category>.md 章別 Markdown + system-spec/index.md
 #   - exit: 0=OK / 1=入力/IO エラー / 2=usage error
@@ -34,6 +34,9 @@ C11 hook (guard-confirmed-chapter-overwrite) はこのマーカー + spec-state.
   (未収集/対象外+理由/確定+qa_ref)・設計知識参照ポインタ・最新ドキュメント出典表を含める。
   index.md が全章と集約状態を相互参照する。
 
+入口ゲート: compile は書き込みの前に validate-design-knowledge-refs.py を呼び、
+qa_log[].design_applications[].knowledge_ref が実在の card / 見出しを指すことを確かめる。
+
 要件 C9 (上位概念 anchor): spec-state.json の requirements_foundation (U1-U9) を
 `00-requirements-definition.md` (要件定義書=憲法) として**最初の章**に生成し、各技術章 frontmatter
 の serves_goals (セル serves_goals の集約) で全章を上位概念へトレース (anchor) する。index.md は
@@ -44,6 +47,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -76,6 +80,10 @@ TERMINAL_AGGREGATES = {"確定", "対象外"}
 DESIGN_REF_BASE = "ref-system-design-knowledge/references"
 _DESIGN_KNOWLEDGE_DIR = (
     Path(__file__).resolve().parents[2] / "ref-system-design-knowledge" / "references"
+)
+# knowledge_ref の実在ゲート。判定規則は validator が SSOT で、compile はここへ複製しない。
+KNOWLEDGE_REF_VALIDATOR = (
+    Path(__file__).resolve().parents[3] / "scripts" / "validate-design-knowledge-refs.py"
 )
 _READ_WHEN_PAIRS: list[tuple[str, str]] | None = None
 _DOCTRINE_REGISTRY: dict | None = None
@@ -525,6 +533,112 @@ def _render_design_application(spec: dict | None, cat_id: str) -> list[str]:
     return body
 
 
+#: 抜粋の上限。超える回答は正本 (`## 確定内容 (質疑録)`) を読ませる。
+#: 「どの確定の話か」を見失わない程度の手掛かりだけを残す長さにする。
+_ANSWER_EXCERPT_LIMIT = 80
+
+
+def _qa_answer_pointer(qa: dict, ref: str) -> str:
+    """確定要件の「所在」を示す。本文の再掲はしない。
+
+    同じ章の `## 確定内容 (質疑録)` が回答を逐語で描いているので、ここで丸ごと再掲すると
+    1 章に同一文が 2 回出る。正本を 1 箇所に保ち、ここからは参照と手掛かりだけを出す。
+    qa 本文が無い場合は定型文で緑化せず、欠落をそのまま見せる (fail-visible)。
+    """
+    answer = qa.get("answer")
+    if not isinstance(answer, str) or not answer.strip():
+        return "(qa_log 本文欠落)"
+    # 抜粋は先頭 1 行だけ。複数行の回答を潰して 1 行に詰めると原文と紛らわしくなる。
+    head = answer.strip().splitlines()[0].strip()
+    truncated = len(head) > _ANSWER_EXCERPT_LIMIT or head != answer.strip()
+    if len(head) > _ANSWER_EXCERPT_LIMIT:
+        head = head[:_ANSWER_EXCERPT_LIMIT]
+    if truncated:
+        # 切り詰めた事実を隠さない。読み手が「これで全部」と誤読すると解釈がずれる。
+        return f"「{head}…」 (全文は本章「確定内容 (質疑録)」の `{ref}` を正本とする)"
+    return f"「{head}」 (正本: 本章「確定内容 (質疑録)」の `{ref}`)"
+
+
+def _confirmed_cells_by_qa_ref(spec: dict, cat_id: str) -> list[tuple[str, list[str]]]:
+    """確定セルの (主たる接地根拠 qa_ref, 対応セル) を canonical platform 順・初出順で返す。"""
+    row = _row(spec, cat_id)
+    cells_by_ref: dict[str, list[str]] = {}
+    for pf in CANONICAL_PLATFORMS:
+        cell = row.get(pf)
+        if not isinstance(cell, dict) or cell.get("state") != "確定":
+            continue
+        ref = cell.get("qa_ref")
+        if isinstance(ref, str) and ref:
+            cells_by_ref.setdefault(ref, []).append(pf)
+    return list(cells_by_ref.items())
+
+
+def _indent(lines: list[str], depth: int) -> list[str]:
+    pad = "  " * depth
+    return [f"{pad}{line}" if line else "" for line in lines]
+
+
+def _render_qa_design_applications(spec: dict, cat_id: str) -> list[str]:
+    """確定判断 (qa_ref) ごとに、記録された設計原則の採否を描く。
+
+    `### 本章での適用` は章単位の記述で、どの確定判断にどの原則を採ったかまでは示せない。
+    ここは spec-state の `qa_log[].design_applications` (原則・採否・章固有の根拠・
+    トレードオフ) を、その qa_ref と対応セルへ束縛して写す。記録の無い確定判断に
+    compile が定型の「適用済み」文を補うと、card を並べただけの章が適用の証拠に化ける。
+    だから未記録は `unrecorded` と書き、C05 が finding として拾えるようにする。
+    """
+    confirmed = _confirmed_cells_by_qa_ref(spec, cat_id)
+    qa = _qa_index(spec)
+    lines = ["### 確定判断ごとの原則採否", ""]
+    if not confirmed:
+        return lines + ["- (確定セルなし。本章は対象外または収集中のため、上記原則の適用先は未確定)"]
+    for ref, cells in confirmed:
+        entry = qa.get(ref) or {}
+        lines.extend(
+            [
+                f"- 確定内容 `{ref}` (対応セル: {', '.join(cells)})",
+                f"  - 確定要件: {_qa_answer_pointer(entry, ref)}",
+            ]
+        )
+        applications = [
+            a for a in entry.get("design_applications") or [] if isinstance(a, dict)
+        ]
+        if not applications:
+            lines.extend(
+                [
+                    "  - 設計解釈の記録経路: `unrecorded`",
+                    "  - 設計原則の採否根拠: (未記録 — qa_log[].design_applications を"
+                    " writer 経由で補完すること)",
+                ]
+            )
+            continue
+        # 対話で記録したものと、旧 state へ後から補った記録 (legacy_backfill) を区別して見せる。
+        # C05 は後者を回答との適合で再照合するので、ここで潰すと再照合の対象が見えなくなる。
+        provenance = entry.get("design_application_provenance")
+        if isinstance(provenance, dict):
+            lines.append(
+                f"  - 設計解釈の記録経路: `{provenance.get('mode', '-')}` "
+                f"(`{provenance.get('writer', '-')}`)"
+            )
+        else:
+            lines.append("  - 設計解釈の記録経路: `dialogue`")
+        for application in applications:
+            label = f"- 原則 (`{application.get('knowledge_ref') or '-'}`):"
+            lines.extend(_indent(_bullet_verbatim(label, application.get("principle") or "(未記入)"), 1))
+            lines.append(f"    - 採否: `{application.get('applicability') or '-'}`")
+            lines.extend(
+                _indent(_bullet_verbatim("- 章固有の根拠:", application.get("rationale") or "(未記入)"), 2)
+            )
+            lines.append("    - トレードオフ:")
+            tradeoffs = [t for t in application.get("tradeoffs") or [] if str(t).strip()]
+            for tradeoff in tradeoffs or ["(未記入)"]:
+                lines.extend(_indent(_bullet_verbatim("-", tradeoff), 3))
+    goals = chapter_serves_goals(spec, cat_id)
+    if goals:
+        lines.append(f"- 資するゴール: {', '.join(goals)}")
+    return lines
+
+
 def render_design_refs(cat_id: str, spec: dict | None = None) -> str:
     """設計知識をpathだけでなく、目的達成に使える意味項目まで章へ描画する。"""
     refs = category_design_refs(cat_id)
@@ -577,6 +691,8 @@ def render_design_refs(cat_id: str, spec: dict | None = None) -> str:
         for candidate in candidates:
             lines.extend(["", "---", ""])
             lines.extend(_render_candidate_card(candidate))
+        lines.extend(["", "---", ""])
+        lines.extend(_render_qa_design_applications(spec, cat_id))
     return "\n".join(lines)
 
 
@@ -649,17 +765,36 @@ def render_doctrine_anchors(cat_id: str, spec: dict | None = None) -> str:
                 "(category_concern_map に無く pending_exceptions にも無い。"
                 "registry を更新してから compile する)"
             )
-        lines.append(
-            "> 本カテゴリは doctrine anchor 未帰属の pending 例外である "
-            "(owner/reason/approval_state は registry を参照)。上流指針の確定まで"
-            "本章の設計判断は暫定として扱う。"
+        # approved な pending 例外が concerns を解決していれば、その authority を上流指針として
+        # 描く。プロジェクト固有カテゴリの確定を、全プロジェクト共通の category_concern_map へ
+        # 昇格させずに章へ通す経路。未承認・concerns 無しは従来どおり暫定扱いに留める。
+        resolved = next(
+            (
+                e
+                for e in pending
+                if e.get("approval_state") == "approved"
+                and isinstance(e.get("concerns"), list)
+                and e["concerns"]
+            ),
+            None,
         )
-        for entry in pending:
-            lines.append(
-                f"- owner: {entry.get('owner', '-')} / reason: {entry.get('reason', '-')} "
-                f"/ approval_state: {entry.get('approval_state', '-')}"
-            )
-        return "\n".join(lines)
+        if resolved is None:
+            lines.append(DOCTRINE_PENDING_NOTE)
+            for entry in pending:
+                lines.append(
+                    f"- owner: {entry.get('owner', '-')} / reason: {entry.get('reason', '-')} "
+                    f"/ approval_state: {entry.get('approval_state', '-')}"
+                )
+            return "\n".join(lines)
+        concern_ids = resolved["concerns"]
+        lines.extend(
+            [
+                DOCTRINE_APPROVED_EXCEPTION_NOTE,
+                f"- owner: {resolved.get('owner', '-')} / reason: {resolved.get('reason', '-')} "
+                "/ approval_state: approved",
+                "",
+            ]
+        )
     lines.extend(
         [
             "> 本章の設計判断が従う上流の正本 (1 concern 1 authority)。具体技術ではなく"
@@ -710,7 +845,20 @@ DOCTRINE_BLANK_LEGEND = (
     "> **未記入** の行は、上流の正本を掲げただけで本章の確定内容へ反映した箇所を"
     "示せていない。表への出現は反映の証拠ではない。"
 )
-GENERATED_PROSE_LINES = frozenset({DOCTRINE_BLANK_LEGEND})
+# pending 例外の注記 2 種も条件付きの生成文。承認や registry 更新で状態が進んだ後に
+# 旧状態の注記が引き継がれると、章が「暫定」と「確定」を同時に名乗ってしまう。
+DOCTRINE_PENDING_NOTE = (
+    "> 本カテゴリは doctrine anchor 未帰属の pending 例外である "
+    "(owner/reason/approval_state は registry を参照)。上流指針の確定まで"
+    "本章の設計判断は暫定として扱う。"
+)
+DOCTRINE_APPROVED_EXCEPTION_NOTE = (
+    "> 本カテゴリは共通シード (category_concern_map) 外のプロジェクト固有カテゴリで、"
+    "approved な pending 例外として上流指針を確定している。"
+)
+GENERATED_PROSE_LINES = frozenset(
+    {DOCTRINE_BLANK_LEGEND, DOCTRINE_PENDING_NOTE, DOCTRINE_APPROVED_EXCEPTION_NOTE}
+)
 
 
 def _qa_index(spec: dict) -> dict[str, dict]:
@@ -2183,6 +2331,35 @@ def load_json(path_str: str) -> dict:
     return json.loads(Path(path_str).read_text(encoding="utf-8"))
 
 
+def require_valid_knowledge_refs(matrix_path: str, repo_root: str) -> None:
+    """design_applications の knowledge_ref が実在の card / 見出しを指すことを確かめる。
+
+    validate-coverage-matrix.py は design_applications の形状しか見ないため、存在しない
+    card を引用した記録でも IN1 を通ってしまう。compile はその記録を章の「原則採否」へ
+    描くので、根拠の無い引用を章へ固定する前にここで止める。規則は validator が正本で、
+    compile 側には複製しない (二重実装はいずれ食い違う)。
+    """
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(KNOWLEDGE_REF_VALIDATOR),
+                "--matrix",
+                matrix_path,
+                "--repo-root",
+                repo_root,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise CompileError(f"design knowledge_ref validator を実行できない: {exc}") from exc
+    if result.returncode != 0:
+        details = result.stdout.strip() or result.stderr.strip() or f"exit {result.returncode}"
+        raise CompileError(f"design knowledge_ref 実在ゲート失敗:\n{details}")
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         description="spec-state.json + fetched-references.json → 章立て仕様書ドキュメントセット"
@@ -2192,11 +2369,18 @@ def main(argv: list[str]) -> int:
     p_compile.add_argument("--spec", required=True, help="spec-state.json のパス")
     p_compile.add_argument("--references", required=True, help="fetched-references.json のパス")
     p_compile.add_argument("--out-dir", default="system-spec", help="出力ディレクトリ (既定 system-spec)")
+    p_compile.add_argument(
+        "--repo-root",
+        default=".",
+        help="knowledge_ref を解決する repository root (既定: cwd)",
+    )
     args = ap.parse_args(argv)
 
     try:
         spec = load_json(args.spec)
         refs_data = load_json(args.references)
+        # 書き込みより前に止める。章を書いた後で落とすと、根拠の無い引用が残った章が出る。
+        require_valid_knowledge_refs(args.spec, args.repo_root)
         docset = compile_docset(spec, refs_data)
         written = write_docset(docset, Path(args.out_dir), spec=spec)
     except (OSError, json.JSONDecodeError) as exc:

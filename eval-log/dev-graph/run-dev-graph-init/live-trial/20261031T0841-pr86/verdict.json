@@ -1,0 +1,157 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-init",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/4c56fd8f-ccd6-4ef6-a546-d1f3c2d79696/scratchpad/lt/runs/init86/fx --hook-source plugin",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "07e9f6cd9b3c5a84fb7803962865fc4f4dac255d95376fd94c467eba9dd22e53",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/fresh_verify_completed"
+    },
+    "transcript_sha256": "b0eed20e3bceabef353f852ba35003ace6fd30ea82d24ed77389970c69a4827c",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl#L41",
+      "transcript.jsonl#L76",
+      "transcript.jsonl#L77",
+      "transcript.jsonl#L88",
+      "transcript.jsonl#L103",
+      "transcript.jsonl#L108",
+      "transcript.jsonl#L109",
+      "transcript.jsonl#L119",
+      "transcript.jsonl#L125",
+      "transcript.jsonl#L127",
+      "transcript.jsonl#L129",
+      "transcript.jsonl#L131",
+      "transcript/subagents/agent-ab0bf7c6375fa5353.jsonl#L39",
+      "fx-final/tree/.dev-graph/config.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/.dev-graph/state/receipts/init-20261030T234150104237Z.json",
+      "fx-final/tree/.dev-graph/templates/README.md",
+      "fx-eval-log/run-dev-graph-init-artifact-delivery.json",
+      "fx-eval-log/run-dev-graph-init-goal-spec.json",
+      "fx-eval-log/run-dev-graph-init-progress.json",
+      "fx-eval-log/run-dev-graph-init-intermediate.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-init"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "c45a920f28d4ad7cce3317db13562ea5a7f7cde1d3d24f09c178092c0473a453",
+  "transcript_sha256": "b0eed20e3bceabef353f852ba35003ace6fd30ea82d24ed77389970c69a4827c",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.314",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 225.3889410495758
+  },
+  "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
+    "required_observations": [
+      "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+      "a second init with the same arguments plans 0 changes and preserves user edits",
+      "the repo config stores no absolute path, token, or node ID and the plugin hook source is used"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+        "evidence_ref": "transcript.jsonl#L77"
+      },
+      {
+        "index": 2,
+        "observation": "a second init with the same arguments plans 0 changes and preserves user edits",
+        "evidence_ref": "transcript.jsonl#L108"
+      },
+      {
+        "index": 3,
+        "observation": "the repo config stores no absolute path, token, or node ID and the plugin hook source is used",
+        "evidence_ref": "transcript.jsonl#L88"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --hook-source plugin",
+      "template_flags": [
+        "--hook-source",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--hook-source",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 4000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": 225.3889410495758,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "915289d286cea5e86b2af70f6e0e0b24027c75905feea33ea23e7c6cb5b46e53",
+      "tokens": {
+        "input_tokens": 94,
+        "cache_creation_input_tokens": 172571,
+        "cache_read_input_tokens": 1641860,
+        "output_tokens": 26743,
+        "total_tokens": 1841268,
+        "assistant_messages": 42,
+        "assistant_message_ids": 42,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 5,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

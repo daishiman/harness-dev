@@ -1,0 +1,24 @@
+{
+  "responsibility": "R3-import",
+  "loop": 2,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "verdict": "PASS",
+  "checks": [
+    {"name": "c24_receipt_fixed", "result": "PASS", "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json sha256 7fe3323c...0071 matches fixed receipt; prepare-evaluation.json context_sha256 identical"},
+    {"name": "evaluator_pass_and_spec_dir", "result": "PASS", "evidence": "eval-log/system-spec-completeness-report.json verdict=PASS, gaps=[], spec_dir=<repo_root>/system-spec equals receipt content_roots.system_spec and prepare-evaluation spec_dir"},
+    {"name": "evaluator_snapshot_covers_source_digests", "result": "PASS", "evidence": "artifact_snapshot system-spec/index.md=f7f64767...45e2, system-spec/00-requirements-definition.md=1cc7fe6b...1402; current raw-bytes sha256 identical (sources mtime 01:45:57, unchanged since evaluation)"},
+    {"name": "audit_ledger_consistent", "result": "PASS", "evidence": "eval-log/system-spec-harness/audit-fork-ledger.jsonl: 3 dispatch+3 completion (C07/C06/C08); completion response_sha256 c29c3146/e0994124/d13a592d match report audit_delegations"},
+    {"name": "pass_before_import_inputs", "result": "PASS", "evidence": "report mtime 2026-11-01T01:54:36+09; c02-import-payload.json 01:59:03, dry-run 02:00:21, c02-import-apply.json 02:00:36, apply 02:00:38 — all after PASS"},
+    {"name": "dryrun_and_add_same_payload", "result": "PASS", "evidence": "c02-import-apply.json == c02-import-payload.json except added expected_graph_revision=0 (concurrency guard only); both contain confirmation_evidence; dry-run input_sha256 11ae8cd3 = payload sha, apply input_sha256 03e9dade = apply-file sha. Dry-run vs apply sha256_after differ only due to created_at/updated_at timestamps"},
+    {"name": "registration_via_C02_only", "result": "PASS", "evidence": ".dev-graph/state/receipts/node-r000001-add.json owner=C02/run-dev-graph-node, operation=add, status=applied, revision 0->1, node_ids [spec-billing-audit-system-spec, arch-billing-audit-system-architecture]; only other receipt is init; artifact sha256_after b3425db5/b5bb1215 equal current files"},
+    {"name": "canonical_kinds", "result": "PASS", "evidence": "graph.json has exactly 2 nodes: specification (specs/billing-audit-system-spec.md), architecture (architecture/billing-audit-system-architecture.md); no feature nodes, no content duplicated into features"},
+    {"name": "lineage_fields_complete_and_resolving", "result": "PASS", "evidence": "both nodes source_lineage has origin_kind=system-spec-harness, source_plugin=system-spec-harness, source_path, source_version=0.1.24 (= plugins/system-spec-harness/.claude-plugin/plugin.json version), source_digest = raw sha256 of source, imported_at=2026-10-31T16:59:03Z"},
+    {"name": "confirmation_evidence_and_readiness", "result": "PASS", "evidence": "both nodes confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete missing_sections=[]; confirmation_evidence.evaluator=system-spec-harness:assign-system-spec-completeness-evaluator, evidence_ref=eval-log/system-spec-completeness-report.json (repo-relative), evaluated_digest=source_digest"},
+    {"name": "lineage_gate_rerun", "result": "PASS", "evidence": "validate-source-lineage.py --node-id x2 re-run: exit 0, status=pass, checked=2, violations=[]; matches r3-lineage-gate.json"},
+    {"name": "schema_gate_rerun", "result": "PASS", "evidence": "validate-graph-schema.py --strict-artifact-readiness re-run: exit 0, valid=true, violations=[], node_readiness complete=2; matches r3-schema-gate.json"},
+    {"name": "c11_confirmed_chapter_guard", "result": "PASS", "evidence": "c11-gate.json: guard-confirmed-chapter-overwrite.py probe write to confirmed chapter exit 2 (blocked), non-mutating exit 0"},
+    {"name": "no_duplicated_elicit_compile_logic", "result": "PASS", "evidence": "grep of plugins/dev-graph for spec-state/matrix/fetched-references/elicit implementations: only docs/prompts reference names; only skill script is prepare-evaluation.py (receipt->args helper, 98 lines); no spec-state transition or compile code"},
+    {"name": "no_env_specific_abs_paths_in_lineage", "result": "PASS", "evidence": "source_path/evidence_ref repo-relative in nodes and payload"}
+  ],
+  "blockers": []
+}

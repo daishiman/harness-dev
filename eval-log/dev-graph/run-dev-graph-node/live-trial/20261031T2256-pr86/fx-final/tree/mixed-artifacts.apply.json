@@ -1,0 +1,138 @@
+{
+  "expected_graph_revision": 0,
+  "artifacts": [
+    {
+      "artifact_kind": "issue",
+      "slug": "lt-search-empty-result",
+      "title": "メモ検索で一致があるのに 0 件と表示される",
+      "project_id": "lt-notes",
+      "domain": "notes-search",
+      "tracker_binding": "none",
+      "classification": {
+        "reason": "利用者が観測した不具合 (期待と現在の挙動の差) の報告で、作業手順や仕様ではない",
+        "candidates": [
+          {
+            "artifact_kind": "issue",
+            "confidence": 0.93
+          },
+          {
+            "artifact_kind": "task",
+            "confidence": 0.05
+          }
+        ]
+      },
+      "sections": {
+        "概要": "タイトルに含まれる語で検索しても結果が 0 件と表示される。",
+        "現在の挙動": "「議事録」で検索すると、タイトルが「週次議事録」のメモがあっても 0 件と表示される。",
+        "期待する挙動": "タイトルまたは本文に検索語を含むメモがすべて結果に出る。"
+      }
+    },
+    {
+      "artifact_kind": "task",
+      "slug": "lt-add-search-index",
+      "title": "メモ検索の部分一致 index を追加する",
+      "project_id": "lt-notes",
+      "domain": "notes-search",
+      "tracker_binding": "none",
+      "classification": {
+        "reason": "実装対象と成果物が決まった 1 単位の作業で、不具合報告や仕様ではない",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 0.9
+          },
+          {
+            "artifact_kind": "issue",
+            "confidence": 0.06
+          }
+        ]
+      },
+      "sections": {
+        "目的": "タイトルと本文の部分一致で検索できるようにする。",
+        "出力と成果物": "検索 index の作成処理と、その単体テスト。",
+        "受入条件": "「議事録」で検索すると「週次議事録」のメモが 1 件以上返る。"
+      }
+    },
+    {
+      "artifact_kind": "specification",
+      "slug": "lt-note-search",
+      "title": "メモ検索の仕様",
+      "project_id": "lt-notes",
+      "domain": "notes-search",
+      "tracker_binding": "none",
+      "classification": {
+        "reason": "検索機能の成功状態・範囲・要件を定める仕様で、個別の作業や設計構造ではない",
+        "candidates": [
+          {
+            "artifact_kind": "specification",
+            "confidence": 0.91
+          },
+          {
+            "artifact_kind": "architecture",
+            "confidence": 0.07
+          }
+        ]
+      },
+      "sections": {
+        "目的と成功状態": "利用者が語の一部でメモを探し、目的のメモを 1 回の検索で見つけられる。",
+        "スコープ": "対象はメモのタイトルと本文。添付ファイルの中身は対象外。",
+        "機能要件": "検索語は大文字と小文字を区別せず、部分一致で照合する。"
+      }
+    },
+    {
+      "artifact_kind": "architecture",
+      "slug": "lt-search-service",
+      "title": "メモ検索サービスの構成",
+      "project_id": "lt-notes",
+      "domain": "notes-search",
+      "tracker_binding": "none",
+      "artifact_subtypes": [
+        "backend",
+        "data"
+      ],
+      "classification": {
+        "reason": "検索サービスの境界・構成要素・データ配置を決める設計で、要件の仕様ではない",
+        "candidates": [
+          {
+            "artifact_kind": "architecture",
+            "confidence": 0.89
+          },
+          {
+            "artifact_kind": "specification",
+            "confidence": 0.08
+          }
+        ]
+      },
+      "sections": {
+        "Architecture overview": "検索 API と index 更新ジョブの 2 つの構成要素で、メモ保存時に index を更新する。",
+        "Goals and non-goals": "目標は部分一致検索の応答を 300 ms 以内にすること。全文の意味検索は目標にしない。"
+      }
+    },
+    {
+      "artifact_kind": "document",
+      "slug": "lt-search-runbook",
+      "title": "メモ検索 index の運用手順",
+      "project_id": "lt-notes",
+      "domain": "notes-search",
+      "tracker_binding": "none",
+      "classification": {
+        "reason": "運用者が読む手順と決定事項の記録で、作業単位や仕様ではない",
+        "candidates": [
+          {
+            "artifact_kind": "document",
+            "confidence": 0.92
+          },
+          {
+            "artifact_kind": "task",
+            "confidence": 0.04
+          }
+        ]
+      },
+      "sections": {
+        "目的": "検索 index が古くなったときに、運用者が作り直せるようにする。",
+        "対象読者": "メモ検索サービスの運用担当者。",
+        "要約": "index の作り直しは夜間に 1 回、手動の再実行は運用担当者が行う。"
+      }
+    }
+  ]
+}

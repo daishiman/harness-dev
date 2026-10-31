@@ -4,8 +4,12 @@
   "title": "Elegant Review Findings (per-agent partial)",
   "description": "Phase2 per-agent 部分出力 (findings-phase2-*.json) 用。paradigm_findings の minItems/maxItems=30 制約を外し、required を per-agent 本体 (paradigm_findings) のみに縮約 (SS-005)。four_conditions/variable_abstraction は集約後に判定・統合するため partial では任意。集約後 findings.json には 30 固定・全 required の findings.schema.json を適用する。",
   "type": "object",
-  "required": ["paradigm_findings"],
+  "required": ["agent_id", "paradigm_findings"],
   "properties": {
+    "agent_id": {
+      "type": "string",
+      "enum": ["elegant-logical-structural-analyst", "elegant-meta-divergent-analyst", "elegant-system-strategic-analyst"]
+    },
     "version": {"type": "integer", "const": 1},
     "target": {
       "type": "object",
@@ -35,15 +39,33 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["concrete_value", "variable_name", "source_trace"],
+        "required": ["concrete_value", "name", "meaning", "default", "required", "not_applicable_when", "source_trace"],
         "properties": {
           "concrete_value": {"type": "string"},
-          "variable_name": {"type": "string", "pattern": "^\\{\\{[A-Za-z_][A-Za-z0-9_]*\\}\\}$"},
-          "default_value": {"type": "string"},
+          "name": {"type": "string", "pattern": "^\\{\\{[A-Za-z_][A-Za-z0-9_]*\\}\\}$"},
+          "meaning": {"type": "string", "minLength": 1},
+          "default": {"type": "string"},
+          "required": {"type": "boolean"},
+          "not_applicable_when": {"type": "string", "minLength": 1},
           "source_trace": {"type": "string"}
-        }
+        },
+        "additionalProperties": false
       }
     },
     "total_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"agent_id": {"const": "elegant-logical-structural-analyst"}}},
+      "then": {"properties": {"paradigm_findings": {"minItems": 9, "maxItems": 9}}}
+    },
+    {
+      "if": {"properties": {"agent_id": {"const": "elegant-meta-divergent-analyst"}}},
+      "then": {"properties": {"paradigm_findings": {"minItems": 9, "maxItems": 9}}}
+    },
+    {
+      "if": {"properties": {"agent_id": {"const": "elegant-system-strategic-analyst"}}},
+      "then": {"properties": {"paradigm_findings": {"minItems": 12, "maxItems": 12}}}
+    }
+  ]
 }

@@ -1,0 +1,18 @@
+{
+  "skill": "run-dev-graph-init",
+  "original_goal_hash": "4e3fee6288f589997e759a2d929f4a7a7489caf16ec31a95abd9c4ca1b80e1ec",
+  "artifact_delivery": {"choice": "standard", "state": "handoff_complete"},
+  "loops": 1,
+  "checklist": [
+    {"item": "build-init-scaffold.py が自ら実行した validate-harness-link.py が status=pass", "status": "achieved", "evidence": "receipt preflight.status=pass link_state=absent; R1/R5 agent standalone preflight pass write 0"},
+    {"item": "resolve-repo-context.py receipt の repository_id/common-dir/content root が caller repo と一致", "status": "achieved", "evidence": "R1 agent: repo_root==content_roots.repository, git_dir==git_common_dir, repository_id local:sha256:9adf026e...3423fd"},
+    {"item": "6 root と .dev-graph/{config.json,state/graph.json,cache,locks} 実在、routing_policy が schema を通る", "status": "achieved", "evidence": "R2/R3 agent: all present; jsonschema valid; routing_policy const"},
+    {"item": "template-contract 列挙資産欠落0、利用者編集済み template digest 不変", "status": "achieved", "evidence": "R4 agent: 17/17 present, 0 digest mismatch, migration_preview empty; second run noop (planned_changes 0) by parent and R3"},
+    {"item": "effective hook は一経路だけ、既存 settings key/hash 変更0", "status": "achieved", "evidence": "R5 agent: hook_source=plugin, no dev-graph registration in project settings, fallback not run"},
+    {"item": "validate-graph-schema.py exit0、二回目 init planned changes 0", "status": "achieved", "evidence": "R3 agent: validate-graph-schema exit 0 valid; rerun status=noop planned_changes=0 write_count=0"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "validate-graph-schema violation_count 0"}
+  ],
+  "blockers": []
+}

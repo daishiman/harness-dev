@@ -23,6 +23,7 @@ plugin-root の共有 script を read-only で呼び出す (本 skill 配下は�
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 
@@ -56,6 +57,8 @@ def _react_rec() -> dict:
         "official_host": "react.dev",
         "version": "19.0",
         "latest_checked_at": "2026-07-11T00:00:00Z",
+        "evidence_ref": "evidence/react.txt",
+        "evidence_sha256": "a" * 64,
         "summary": "React reference",
     }
 
@@ -63,11 +66,13 @@ def _react_rec() -> dict:
 def _postgres_rec() -> dict:
     return {
         "target_id": "postgres",
-        "retrieved_at": "2026-07-11T00:00:00Z",
+        "retrieved_at": "2026-07-11T00:05:00Z",
         "source_url": "https://www.postgresql.org/docs/",
         "official_publisher": "PGDG",
         "last_updated": "2026-05-01",
-        "latest_checked_at": "2026-07-11T00:00:00Z",
+        "latest_checked_at": "2026-07-11T00:05:00Z",
+        "evidence_ref": "evidence/postgres.txt",
+        "evidence_sha256": "b" * 64,
         "summary": "PostgreSQL docs",
     }
 
@@ -107,7 +112,7 @@ def test_build_record_missing_target_id():
 
 
 @pytest.mark.parametrize(
-    "field", ["source_url", "official_publisher", "retrieved_at", "latest_checked_at", "summary"]
+    "field", ["source_url", "official_publisher", "retrieved_at", "latest_checked_at", "evidence_ref", "evidence_sha256", "summary"]
 )
 def test_build_record_missing_required_field(field):
     rec = _react_rec()
@@ -121,6 +126,13 @@ def test_build_record_no_version_no_last_updated():
     rec.pop("version", None)
     rec.pop("last_updated", None)
     with pytest.raises(bfr.RecordError, match="last_updated"):
+        bfr.build_record(rec)
+
+
+def test_build_record_rejects_non_sha256_evidence_digest():
+    rec = _react_rec()
+    rec["evidence_sha256"] = "not-a-digest"
+    with pytest.raises(bfr.RecordError, match="evidence_sha256"):
         bfr.build_record(rec)
 
 
@@ -142,6 +154,78 @@ def test_host_helpers():
     assert bfr.host_of("https://www.React.dev/x") == "react.dev"
     assert bfr.host_of("") == ""
     assert bfr.norm_host("") == ""
+
+
+# --------------------------------------------------------------------------- #
+# prose_version_drift: 散文の版表記が version から取り残されるのを塞ぐ           #
+# --------------------------------------------------------------------------- #
+def _pnpm_rec(summary: str) -> dict:
+    return {
+        "target_id": "pnpm",
+        "retrieved_at": "2026-08-16T00:00:00Z",
+        "source_url": "https://pnpm.io/",
+        "official_publisher": "pnpm",
+        "version": "11.22.0",
+        "latest_checked_at": "2026-08-16T00:00:00Z",
+        "evidence_ref": "evidence/pnpm.json",
+        "evidence_sha256": "c" * 64,
+        "summary": summary,
+    }
+
+
+def test_prose_version_drift_detects_stale_head():
+    # 実際に起きた欠陥: version は更新されたが summary 先頭が旧版を現在形で主張し続けた。
+    rec = _pnpm_rec("現行安定版は 11.16.0。\n\n鮮度再照合 (2026-08-16): latest=11.22.0")
+    assert "11.16.0" in bfr.prose_version_drift(rec)
+    with pytest.raises(bfr.RecordError, match="食い違う"):
+        bfr.build_record(rec)
+
+
+def test_prose_version_drift_detects_stale_head_across_major_upgrade():
+    rec = _pnpm_rec("現行安定版は 11.22.0。")
+    rec["version"] = "12.0.0"
+    assert "11.22.0" in bfr.prose_version_drift(rec)
+
+
+def test_prose_version_drift_allows_current_head():
+    rec = _pnpm_rec("現行安定版は 11.22.0。\n\n[以下は履歴] 2026-07 の照合では 11.16.0 だった")
+    assert bfr.prose_version_drift(rec) is None
+    assert bfr.build_record(rec)["version"] == "11.22.0"
+
+
+def test_prose_version_drift_ignores_history_region():
+    # 履歴・訂正・再照合の段落に旧版が残るのは正しい記録なので違反にしない。
+    rec = _pnpm_rec("現行安定版は 11.22.0。\n[訂正] 旧 summary は 11.16.0 と書いていた")
+    assert bfr.prose_version_drift(rec) is None
+
+
+def test_prose_version_drift_allows_series_notation():
+    # version=7.0.2 に対する散文の「現行メジャーは 7.0」は取り残しではない。
+    rec = _pnpm_rec("現行メジャーは 11.22 系")
+    assert bfr.prose_version_drift(rec) is None
+
+
+def test_prose_version_drift_accepts_v_prefix():
+    rec = _pnpm_rec("最新パッチは v11.22.0")
+    assert bfr.prose_version_drift(rec) is None
+
+
+def test_prose_version_drift_ignores_other_products_versions():
+    # 依存要件や対応ブラウザの版 (別 major) を自製品の版と取り違えない。
+    rec = _pnpm_rec("Node.js 20 以上と TypeScript 5.5 以降、Safari 16.4 以降を要求する")
+    assert bfr.prose_version_drift(rec) is None
+
+
+def test_prose_version_drift_skips_non_semver_version():
+    # 日付運用の record (version 無し / last_updated のみ) は対象外。
+    rec = _postgres_rec()
+    assert bfr.prose_version_drift(rec) is None
+
+
+def test_version_compatible_prefix_rule():
+    assert bfr._version_compatible("7.0.2", "7.0")
+    assert bfr._version_compatible("7.0", "7.0.2")
+    assert not bfr._version_compatible("7.0.2", "7.1")
 
 
 # --------------------------------------------------------------------------- #
@@ -178,6 +262,22 @@ def _write(tmp_path: Path, name: str, obj) -> str:
     p = tmp_path / name
     p.write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
     return str(p)
+
+
+def _attach_evidence(tmp_path: Path, records: list[dict]) -> None:
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir(exist_ok=True)
+    for record in records:
+        path = evidence_dir / f"{record['target_id']}.txt"
+        # 版番号を証跡本文へ含める。実取得の証跡なら記録した version が本文に現れるのが
+        # 正常形で、含まない fixture は「値がどこから来たか不明な記録」を正例として
+        # 固定してしまう (C13 F7)。
+        version = record.get("version")
+        suffix = f" version {version}" if version else ""
+        content = f"WebFetch evidence for {record['target_id']}{suffix}\n".encode()
+        path.write_bytes(content)
+        record["evidence_ref"] = str(path.relative_to(tmp_path))
+        record["evidence_sha256"] = hashlib.sha256(content).hexdigest()
 
 
 def test_main_assemble_stdout_ok(tmp_path, capsys):
@@ -228,10 +328,12 @@ def test_main_bad_json_returns_2(tmp_path):
 # IN1 受入: 組み立て結果が validate-source-citation.py を通る (end-to-end)      #
 # --------------------------------------------------------------------------- #
 def test_in1_assembled_output_passes_source_citation(tmp_path):
-    result = bfr.assemble([_react_rec(), _postgres_rec()])
+    records = [_react_rec(), _postgres_rec()]
+    _attach_evidence(tmp_path, records)
+    result = bfr.assemble(records)
     refs = _write(tmp_path, "fetched-references.json", result)
     tgt = _write(tmp_path, "t.json", {"targets": [{"target_id": "react"}, {"target_id": "postgres"}]})
-    assert vsc.main(["--targets", tgt, "--references", refs]) == 0
+    assert vsc.main(["--targets", tgt, "--references", refs, "--repo-root", str(tmp_path)]) == 0
 
 
 # --------------------------------------------------------------------------- #
@@ -240,20 +342,20 @@ def test_in1_assembled_output_passes_source_citation(tmp_path):
 def test_in1_fixture_valid_exit0():
     targets = str(FIXTURES / "fixture-targets.json")
     refs = str(FIXTURES / "fixture-references-valid.json")
-    assert vsc.main(["--targets", targets, "--references", refs]) == 0
+    assert vsc.main(["--targets", targets, "--references", refs, "--repo-root", str(SKILL_DIR)]) == 0
 
 
 def test_in1_fixture_missing_target_exit1(capsys):
     targets = str(FIXTURES / "fixture-targets.json")
     refs = str(FIXTURES / "fixture-references-missing.json")
-    assert vsc.main(["--targets", targets, "--references", refs]) == 1
+    assert vsc.main(["--targets", targets, "--references", refs, "--repo-root", str(SKILL_DIR)]) == 1
     assert "postgres" in capsys.readouterr().err
 
 
 def test_in1_fixture_host_mismatch_exit1(capsys):
     targets = str(FIXTURES / "fixture-targets.json")
     refs = str(FIXTURES / "fixture-references-host-mismatch.json")
-    assert vsc.main(["--targets", targets, "--references", refs]) == 1
+    assert vsc.main(["--targets", targets, "--references", refs, "--repo-root", str(SKILL_DIR)]) == 1
     assert "official_host" in capsys.readouterr().err
 
 
@@ -267,3 +369,4 @@ def test_c02_contract_owns_seed_outside_candidate_qualification():
     assert "official_or_primary:true" in fetch
     assert "set-knowledge-candidate" in record
     assert "二次ブログだけではqualifiedにしない" in fetch
+

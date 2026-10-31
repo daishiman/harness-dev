@@ -153,6 +153,37 @@ install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin 
 
 実装済み・版確定待ち。次回リリース時に版番号を確定して本セクションを正式リリースへ昇格する。
 
+## [1.4.53] - 2026-10-31
+
+- プラグイン全体の契約テストで件数の固定値をやめ、Claude/Codex の定義ファイル・監査結果・配布登録の集合を照合する。flyer-studio の追加後も全プラグインを検査し、契約や登録の欠落を検出する。
+
+## [1.4.52] - 2026-10-30
+
+HarnessHub の作業ツリーにだけあった 2 つの作業 (rubric 改正の自動ドラフトの改良と、agent の `tools-inherit`) を、正本の規約に合わせて取り込んだ版。
+
+- `run-skill-rubric-governance`: SessionEnd hook の `aggregate-evals.py` を 0.3.0 にした。4 つの入力源 (`EVALS.json` の旧 `evaluations`・score ログ・content-review の verdict・live-trial の verdict) から出した異常を、前の日までの最新の自動ドラフトに埋めた観測と比べ、new・changed・retired があるときだけ `<date>-rubric-update.md` (`kind: rubric-anomaly-delta`) を書く。変化が無ければ書かない。同じ日の 2 回目以降は、観測が変わったときだけ今日のドラフトを上書きする (今日のドラフトを前回の観測にすると、上書きで 1 回目の New の根拠が消える)。前回の観測は書込先とそれより優先する置き場からだけ読み、全 project が共有する退避先の履歴は読まない。
+  - 入力源のどれかが読めない・壊れているときは、前回の観測を変えずに exit 0 で終え、理由を stderr に出す。欠けた入力で「異常が消えた」と誤って記録しないため。
+  - 書込先ごとに待たない lock を取り、使用中なら書かずに終える。書き込みは一時ファイルからの置き換えにした。marker 行の無い同名のファイル (手書き) は上書きしない。
+  - score は percent と ratio の宣言に従って 0..1 にそろえる。content-review の 2 ファイルは `skill_md_sha256` で 1 回のレビューとして数え、digest の無い記録は捨てずに件数をドラフトに出す。live-trial の run_id は先頭 8 桁の日付だけを必須にした。
+  - 書込先 (plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/`)、`--list-proposals`、未知の引数での exit 2 は変えていない。SKILL.md・`R1-govern.md`・`version-rules.md`・`EVALS.json` の説明を新しい挙動に合わせた。
+- `run-build-skill`: agent の tools の宣言を「`tools` か `tools-inherit: true` のどちらか一方」にした。`tools-inherit` は明示したときだけ使う。既定は従来どおり `tools: Read` である。
+  - `capability-manifest.schema.json` の kindAgent を、`tools` (文字列か配列) と `tools-inherit: true` の oneOf にし、`isolation` を必須にした。
+  - `build-subagent.py` に `--isolation` (assign-* は既定 fork、ほかは inherit) と `--tools-inherit` を足し、`kind: agent` を出す。`version` と `owner` は SKILL.md から同じ規則で引き継ぎ、無ければ書かない (推測で補わない)。advisor と `--tools-inherit` の組み合わせは exit 2 で止める。引用符の無い値に付いた行内コメントが frontmatter の値に混ざる誤りを直した。
+  - `lint-agent-prompt-content.py` (`AGENT-FRONTMATTER-TOOLS`) と `validate-build-trace.py` を同じ規則に揃えた。両方の併記・`true` 以外の値・空・`tools: inherit` を拒否する。
+  - `agent-template.md` に tools の宣言の判定表を、`build-steps.md` に新しい引数と生成される frontmatter の例を足した。
+
+## [1.4.51] - 2026-10-30
+
+HarnessHub にだけ残っていた plugin の写しの変更を、正本 (harness-dev) へ移した版。
+
+- `run-elegant-review`: verdict を作る `build-verdict.py`、人が読むレポートを作る `build-review-report.py`、Phase 1→2→3 の順序を検査する `validate_phase_order.py` を足した。`validate-paradigm-coverage.py` は、finding の `condition` (4 条件) と `condition_signal` (機械観測 signal) の対応を、1 つの対応表 (`SIGNAL_TO_CONDITION`) で検査する。古い run への免除には期限を設け、`--strict-signal` で免除なしの検査もできる。findings・verdict の schema と template、5 つの分析 agent の記述をこれに合わせた。
+- `run-skill-live-trial`: verdict を作る経路を `build-live-trial-verdict.py` の 1 本にまとめた。scenario の契約 (`validate-live-trial-scenario-contract.py`)、時間とトークンの予算 (`validate-live-trial-resource-budget.py`)、goal_seek の履行の証跡 (`validate-goal-seek-evidence.py`) を検査する script を足した。verdict の schema に、独立した評価者 (`fresh-independent-context`) による goal の評価と、scenario が求める観測と実際の観測の突合を記録する欄を足した。`plan-live-trials.py` は、scenario の正本にある現行の `scenario_id` と照合し、消えた scenario や変わった scenario の PASS を再利用しない。
+- `emit-improvement-handoff.py`: schema 1.1.0 にした。各 finding に処置 (`applied`・`deferred`・`rejected`) と、その根拠の参照を必須にした。旧形式での新規の出力は拒否する。
+- `validate-plugin-package.py`: 500 行の分割規約で生まれる import 専用の補助モジュールを、PKG-006/007 が実行の入口と誤認しないようにした。
+- `validate-route-build-reports.py`: route の ID の重複を拒否する。
+- `delegate-codex-skill-review`: 外部 CLI agent の使い分けガイド (`external-cli-agents-guide.md`) を足した。
+- `run-skill-feedback` と使い方の例 (`command-usage-prompts`): 要望の必須項目を「要望タイトル・要望種別・やってほしいこと」の 3 つに絞った。使い方の例は、対話と同定の手順を正本 (`doc/notion-schema/skill-list.schema.json` の `feedback_protocol`) への参照に置き換え、重複を減らした。
+
 ## [1.4.50] - 2026-10-26
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

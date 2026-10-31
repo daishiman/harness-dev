@@ -39,7 +39,11 @@ def test_all_plugins_have_one_product_native_hook_delivery_surface():
         path for path in (ROOT / "plugins").iterdir()
         if (path / ".claude-plugin" / "plugin.json").is_file()
     )
-    assert len(plugins) == 22
+    assert plugins
+    assert {plugin.name for plugin in plugins} == {
+        path.parents[1].name
+        for path in (ROOT / "plugins").glob("*/.codex-plugin/plugin.json")
+    }
     for plugin in plugins:
         claude = _json(plugin / ".claude-plugin" / "plugin.json")
         codex = _json(plugin / ".codex-plugin" / "plugin.json")

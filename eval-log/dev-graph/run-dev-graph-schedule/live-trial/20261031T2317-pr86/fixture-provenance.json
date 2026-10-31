@@ -1,0 +1,142 @@
+{
+  "label": "schedule86",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-schedule",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-schedule/.git",
+  "fixture": "/private/tmp/claude-501/pr86-ci-live/lt/runs/schedule86/fx",
+  "head": "8078b137c22bebf452839826c9b50a764e516e44",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a2e37dcb43ab749d8da53024444eec36327c72fb433998a25a92d546e710800f",
+      "local:sha256:4c3cb08e469192fbc52a08d2eec147ab18eed8b71abe06fb6c8ffda085191dd7"
+    ],
+    "worktree_id": [
+      "wt_fbf90453721d70c0",
+      "wt_d81fa8d1f9b9f3f6"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "graph_edge_prep": {
+    "note": "orchestrator による fixture 準備。trial の session を起動する前に行い、被験 skill の挙動ではない。PR85 の schedule7 (20261013T0456-pr85) の graph_edge_prep と同じ手順・同じ入力。",
+    "result": "done (status は done のまま) の task-base-auth の depends_on を [] から [\"task-docs-runbook\"] にした。task-docs-runbook は active のまま変えていない。",
+    "tool": "この run の ws の写しの plugins/dev-graph/scripts/build-graph-node.py update (C02 の単一 writer)。lt-env.sh の隔離 env と python3 -B で被験の外で回した。手順は lt/smoke/schedule86-prep/c02prep.sh (PR85 の c02prep.sh を前回 session の記録から復元し、パスだけを変えた)。入力 JSON は fx の root に置いて渡し、回した後に smoke/schedule86-prep/ へ mv した。",
+    "steps": [
+      {
+        "step": 1,
+        "what": "C02 update --dry-run",
+        "at": "2026-10-30T23:46:46Z",
+        "result": "rejected: node_missing_required_keys (updates[0]: task-base-auth lacks required keys ['architecture_refs']; repair the graph node before changing it)。PR85 と同じ拒否",
+        "record": "workdir/c02-dry-try1.json",
+        "fx_changed": false
+      },
+      {
+        "step": 2,
+        "what": "graph.json の task-base-auth の node に architecture_refs: [] を足した (orchestrator の script。正規の経路ではない)",
+        "at": "2026-10-30T23:47:14Z",
+        "script": "smoke/schedule86-prep/repair86.py (PR85 の repair7.py (sha256 b42fff05…) を前回 session の記録から復元し、run と smoke のパスと _common の読込み元だけを変えた)",
+        "record": "smoke/schedule86-prep/repair86.json",
+        "why": "seed (bzn4-schedule) は template-contract の common_frontmatter で architecture_refs が必須になる前のもので、13 node のどれにもこのキーが無い。C02 は必須キーの欠けた node の更新を拒み、このキーを足す正規の経路 (node_patch の PATCH_KEYS・macro_patch) も無い。",
+        "graph_sha256": [
+          "b2f40bab553aba9ef096255024ea19bbafb008aed4d74cc3efcea96d1886b8b8",
+          "22d96dd52603fefe6865a6ce26a4856b45cdd9989394b14aa4e04a8ed7f59235"
+        ],
+        "same_as_pr85": "前後の graph の sha256 は PR85 の schedule7 の step 2 と同じ",
+        "graph_revision": "1 のまま",
+        "md": "変えていない (次の C02 update が frontmatter を書き直した)",
+        "other_nodes": "ほかの 12 node には architecture_refs を足していない"
+      },
+      {
+        "step": 3,
+        "what": "C02 update --dry-run (同じ入力)",
+        "at": "2026-10-30T23:47:19Z",
+        "result": "preview (planned_count 1、write_count 0)",
+        "record": "workdir/c02-dry.json",
+        "fx_changed": false
+      },
+      {
+        "step": 4,
+        "what": "C02 update (apply)",
+        "at": "2026-10-30T23:47:34Z",
+        "input": {
+          "expected_graph_revision": 1,
+          "updates": [
+            {
+              "graph_node_id": "task-base-auth",
+              "node_patch": {
+                "depends_on": [
+                  "task-docs-runbook"
+                ]
+              }
+            }
+          ]
+        },
+        "record": "workdir/c02-apply.json",
+        "receipt": ".dev-graph/state/receipts/node-r000002-update.json",
+        "graph_revision": [
+          1,
+          2
+        ],
+        "graph_sha256": [
+          "22d96dd52603fefe6865a6ce26a4856b45cdd9989394b14aa4e04a8ed7f59235",
+          "b37d5d892c9d21b4cc64910202f8b36d5a7d980a133bb80b99e00c5f430631ee"
+        ],
+        "md": {
+          "file": "tasks/base-auth.md",
+          "sha256": [
+            "3d146f72fef5527697d4a0ed013c910f36d791d555ce45cac6d3a0167cad5a32",
+            "24bfa75ff73592aaac27b8633da6b49a8f6b3055705ced7d29e076e98b8fda19"
+          ],
+          "frontmatter": "C02 が書き直した (depends_on・updated_at・evaluation_status と、足した architecture_refs)。本文は変わっていない"
+        },
+        "graph_diff_from_seed": "graph_revision 1→2、task-base-auth の architecture_refs (追加)・depends_on・evaluation_status (pass→stale)・implementation_readiness.checked_at・updated_at だけ。PR85 と sha256 が違うのは、C02 が書く時刻 (updated_at・checked_at) が違うため",
+        "evaluation_status": "task-base-auth の evaluation_status は pass から stale になった (C02 の規則: pass の node の内容の欄が変わると stale にする)。status (done)・confirmation_status (confirmed)・implementation_readiness (complete) は変わっていない",
+        "fx_files": {
+          "changed": [
+            "./.dev-graph/state/graph.json",
+            "./tasks/base-auth.md"
+          ],
+          "added": [
+            "./.dev-graph/state/receipts/node-r000002-update.json"
+          ],
+          "removed": []
+        }
+      },
+      {
+        "step": 5,
+        "what": "C11 (validate-graph-schema.py)",
+        "result": "valid、graph_validation pass、violation 0",
+        "record": "workdir/c11-after-c02-apply.json",
+        "fx_changed": false
+      }
+    ]
+  },
+  "fixture_check_prelease": {
+    "what": "graph_edge_prep の後、lease の準備の前に、この run の ws の写しの script を lt-env.sh と python3 -B で被験の外で回した (読取りだけ。手順は smoke/schedule86-prep/check-prelease.sh)",
+    "at": "2026-10-30T23:48:19Z",
+    "c11": "validate-graph-schema.py: valid・graph_validation pass・violation 0 (workdir/c11-prelease.json)",
+    "c24": "resolve-repo-context.py --mode write: rc=0、repository_id は mkseed の rekey の値と同じ (workdir/c24-prelease.json。stdout に出すだけ)",
+    "fx_unchanged": "workdir/fx-prelease-check-pre.sha と fx-prelease-check-post.sha が同じ",
+    "lease_after": "lease の準備の後の C11・C24 は fixture_check に、PR85 と同じ順で記録する (lt/leaseprep-schedule86.sh)"
+  },
+  "isolation_layout": {
+    "same_as": "PR85 の schedule7 と同じ配置 (session_root は ws、fx は別の dir)。",
+    "read_deny": {
+      "what": "mksettings.py の設定に、Read の deny だけを足した (形は PR85 の schedule7 と同じ。smoke/schedule86-prep/readdeny86.py)",
+      "record": "smoke/schedule86-prep/readdeny86.json",
+      "targets": "lt/smoke・lt/prov (この run の fixture の準備の記録)、前回 session の wttrial/runs/schedule*・wttrial/smoke、W の eval-log/dev-graph/run-dev-graph-schedule/live-trial (前の schedule の trial の記録)。それぞれ /private/tmp と /tmp の両方",
+      "settings_sha256": [
+        "85a968e4357a3e5b14829ecc0ae2c410e4d1e2f694df09c46ee59920b8cacc0d",
+        "b865c1edc48a7fa27aae3c08a742f7695d3e799ba6a108ebbef0de7616f6dafc"
+      ],
+      "why": "被験が前の schedule の trial の記録と、この run の fixture の準備の記録を読めないようにする。PR85 の schedule7 の read_deny と同じ趣旨。W の live-trial の記録は PR85 では deny していなかった (今回は PR85 の記録が W にあるので足した)。mksettings.py の --read-deny は Read の規則を 1 本の / で書くので使わず、// の絶対パスで足した"
+    }
+  },
+  "session_root": "ws (PR85 と同じ)。fx は別の dir。",
+  "replay_of": "PR85 の schedule7 (20261013T0456-pr85)。scenario_id・seed・graph_edge_prep・lease_prep の手順・task.md の文は同じで、変えたのは run のパスと session-id (orchestrator-prep-schedule86) だけ。"
+}

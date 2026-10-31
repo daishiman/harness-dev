@@ -1,0 +1,41 @@
+{
+  "artifact": "preflight-report",
+  "skill": "run-dev-graph-system-spec",
+  "R0_context": {
+    "status": "PASS",
+    "c24_receipt": "eval-log/run-dev-graph-system-spec-c24-receipt.json",
+    "c24_receipt_sha256": "1571a5347455ca9b8173cf7f9e6bd43ed57fdbe1a3cfee6c810ddde52e9e0e1b",
+    "repo_root_matches_content_roots_repository": true,
+    "repository_id": "local:sha256:1cc4c3354417853ad79ce59117bdfb4f292488d0fb11a6f5f511174af862f60a",
+    "git_common_dir": ".git",
+    "system_spec_root": "system-spec",
+    "lineage_gate": {"command": "validate-source-lineage.py --repo-root <root>", "exit": 0, "status": "pass", "checked": 0, "violations": []},
+    "resume_decision": "checked=0 -> new creation (no system-spec-derived nodes yet)"
+  },
+  "R1_preflight": {
+    "status": "PASS",
+    "plugin_manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "plugin_manifest_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994",
+    "name": "system-spec-harness",
+    "version": "0.1.24",
+    "version_range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "version_range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "package_contract": "plugins/system-spec-harness/references/package-contract.json",
+    "package_contract_sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486",
+    "required_entry_points": {
+      "run-system-spec-elicit": "present (skills/run-system-spec-elicit/SKILL.md)",
+      "run-system-spec-doc-fetch": "present (skills/run-system-spec-doc-fetch/SKILL.md)",
+      "run-system-spec-compile": "present (skills/run-system-spec-compile/SKILL.md)",
+      "assign-system-spec-completeness-evaluator": "present (skills/assign-system-spec-completeness-evaluator/SKILL.md)"
+    }
+  },
+  "inputs_sha256": {
+    "system-spec/spec-state.json": "3e8000f400da9b84820b7ae40538fb2d84adf3c335bc34e2ea1bca48ac22a377",
+    "system-spec/fetched-references.json": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+    "system-spec/index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+    "system-spec/00-requirements-definition.md": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402"
+  },
+  "inputs_match_fixture_provenance": true,
+  "minimum_guard": {"parse_open": "pass", "secret": "none", "irreversible": "none", "corrupt": "none"}
+}

@@ -1,13 +1,15 @@
 # コマンド用途プロンプト集（30思考法エレガント検証つき）
 
 各パイプラインコマンドを「**① スラッシュコマンド入力 → ② その用途に合わせた構造化プロンプト**」の形でまとめた、そのまま貼って使えるプロンプト集。
-② は参考雛形「思考リセット後に30種の思考法で多角的にエレガントさを検証・改善するプロンプト」(7層構造)を各コマンドの**検証対象**に合わせて構築したもの。**30思考法は全ファイルで全30種を使用**(機械検証済み)。
+② は参考雛形「思考リセット後に30種の思考法で多角的にエレガントさを検証・改善するプロンプト」(7層構造)を各コマンドの**検証対象**に合わせて構築したもの。
+
+**適用範囲**: 7層構造 + 30思考法 (全30種) は、コマンドが**既に生成した成果物を事後検証する**分析系5ファイル (`intake` / `plugin-dev-plan` / `capability-build` / `capability-review` / `skill-improve`) の骨格である。利用者の要望を**収集するだけ**で生成物を持たない `run-skill-feedback.md` は対象外で、最小対話を既定とする (収集コストを検証コストで上回らせないため)。
 
 ## 使い方
 
 1. 対象コマンドのファイルを開く
 2. **①** のスラッシュコマンドを打つ
-3. コマンドの出力(生成物)に対し、**②** の7層プロンプトを Claude に渡し、思考リセット→30思考法並列分析→4条件検証→(改善) を回す
+3. コマンドの出力(生成物)に対し、**②** の7層プロンプトを Claude に渡し、思考リセット→30思考法並列分析→4条件検証→(改善) を回す (分析系5ファイルのみ。`run-skill-feedback.md` は②を持たず、最小対話のまま収集する)
 
 ## 一覧
 
@@ -18,14 +20,29 @@
 | `capability-build.md` | `/capability-build` | 構築実体 ↔ 仕様書 route の整合 | 改善あり |
 | `capability-review.md` | `/capability-review` | 既存 capability | **提案のみ (analyse-only)** |
 | `skill-improve.md` | `/skill-improve` | 既存 capability (in-place改善) | 改善あり (plan非再生成) |
-| `run-skill-feedback.md` | `/run-skill-feedback` | 収集する改善要望 (schema準拠・対象同定) | **収集前セルフ検証のみ** |
+| `run-skill-feedback.md` | `/run-skill-feedback` | 収集する改善要望 (schema準拠・対象同定) | **改善なし (収集のみ・7層/30思考法は非適用)** |
 
-## 共通骨格 (全ファイル共通)
+## 共通骨格 (分析系5ファイル共通)
 
 - **30思考法**: 論理分析系5 / 構造分解系4 / メタ抽象系3 / 発想拡張系6 / システム系3 / 戦略価値系4 / 問題解決系5
 - **4条件**: 矛盾なし / 漏れなし / 整合性あり / 依存関係整合
 - **オーケストレーション**: Phase1 思考リセット・俯瞰(必須ゲート) → Phase2 3エージェント並列分析 → Phase3 改善実行/提案。最大反復3回。
+- **担当配分**: Agent2=論理5+構造4=9、Agent3=メタ3+発想6=9、Agent4=system3+戦略4+problem5=12。why は G-problem / Agent4。
+- **全使用**: 30思考法の skip は理由付きでも禁止。`used` は正本30名称と一意一致し `skipped_with_reason=[]`。
 - 変わるのは各コマンド固有の **検証対象** と **4条件の読み替え**、そして Phase3 が「改善実行」か「提案のみ」か。
+- **例外**: `run-skill-feedback.md` はこの骨格を持たない。対話の正本は `doc/notion-schema/skill-list.schema.json#feedback_protocol` であり、発火条件と参照経路を `scripts/lint-feedback-protocol.py` が機械検証する。
+
+## 配布 capability 表
+
+正本は [`../native-surface-contract.md`](../native-surface-contract.md)。推測 surface は作らず、製品ごとの実在する入口だけを使う。
+
+| 配布先 | Skill | Agent / team orchestration | Command |
+|---|---|---|---|
+| Claude Code | plugin `skills/run-elegant-review` と `.claude/skills` projection | `.claude/agents/elegant-*.md` の native agent surface | `.claude/commands` |
+| Agents | `.agents/skills` または plugin skill | skill が実行時の team/sub-agent orchestration を担う。独立した agent/command projection は作らない | native command surface なし |
+| Codex | plugin `skills/run-elegant-review` | **plugin skill 内 team orchestration** 経路。Codex に **native agent surface なし** | native command surface なし |
+
+Codex/Agents で `.agents/agents` や `.agents/commands` を推測生成しない。Phase1/2 の payload materialize は orchestrator の single-writer、Phase3 の git commit は `commit_authorized=true` 明示時だけで、既定は patch まで。
 
 ## オプション表の保守 (SSOT 同期)
 

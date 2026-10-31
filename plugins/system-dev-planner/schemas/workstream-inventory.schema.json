@@ -4,11 +4,28 @@
   "title": "system-dev-planner workstream-inventory (draft)",
   "description": "C01が1 featureから生成するfeature execution packageの13 phase task inventory。runtime outputは可変N taskではなくP01..P13 exact-set。詳細はreferences/feature-execution-package-contract.mdとworkstream-inventory-schema-design.md。",
   "type": "object",
-  "required": ["schema_version", "feature_package_id", "parent_feature", "repo_context", "source_lineage", "tasks"],
+  "required": ["schema_version", "feature_package_id", "parent_feature", "p01_entry_gate", "repo_context", "source_lineage", "tasks"],
   "properties": {
     "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
     "parent_feature": {"type": "string", "minLength": 1, "description": "起動元dev-graph feature graph_node_id。全13 taskと一致必須"},
+    "p01_entry_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "operator", "required_statuses"],
+      "properties": {
+        "selector": {"const": "parent_feature.depends_on"},
+        "operator": {"const": "all"},
+        "required_statuses": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [{"const": "done"}, {"const": "closed"}],
+          "items": false
+        }
+      },
+      "description": "P01 claim時にcanonical dev-graphのparent featureが持つdepends_on全件を都度読み、done|closedのときだけ通す派生gate。upstream IDをtask DAGへ複製しない"
+    },
     "repo_context": {
       "type": "object",
       "required": ["config_path", "repo_identity", "root_resolution_source"],

@@ -613,7 +613,7 @@ def test_all_projections_pin_the_executable_guard_runtime():
     runner_sha = hashlib.sha256(RUNNER.read_bytes()).hexdigest()
     schema_sha = hashlib.sha256(SCHEMA.read_bytes()).hexdigest()
     projections = sorted(ROOT.glob("plugins/*/artifact-delivery.json"))
-    assert len(projections) == 22
+    assert len(projections) == 23
     external = 0
     for path in projections:
         projection = json.loads(path.read_text())
@@ -628,7 +628,7 @@ def test_all_projections_pin_the_executable_guard_runtime():
                     "runtime_ref": "#/external_mutation_runtime",
                     "flow": "preview-confirm-authorize-execute-v1",
                 }
-    assert external == 36
+    assert external == 37
 
 
 

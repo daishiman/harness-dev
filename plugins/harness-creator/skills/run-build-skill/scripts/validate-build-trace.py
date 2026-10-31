@@ -1006,9 +1006,16 @@ def _check_kind_skill(data: dict) -> list[str]:
 
 def _check_kind_agent(data: dict) -> list[str]:
     f: list[str] = []
+    # tools 宣言は tools (空でない文字列か配列) か tools-inherit: true のどちらか一方だけ
+    # (capability-manifest.schema.json#/definitions/kindAgent の oneOf)。
     tools = data.get("tools")
-    if not isinstance(tools, list) or not tools:
-        f.append("agent.tools must be non-empty array")
+    if "tools" in data and "tools-inherit" in data:
+        f.append("agent.tools and agent.tools-inherit are exclusive (declare only one)")
+    elif "tools-inherit" in data:
+        if data.get("tools-inherit") is not True:
+            f.append(f"agent.tools-inherit must be true: {data.get('tools-inherit')!r}")
+    elif not (isinstance(tools, str) and tools.strip()) and not (isinstance(tools, list) and tools):
+        f.append("agent.tools must be non-empty string or array (or declare tools-inherit: true)")
     if not data.get("isolation"):
         f.append("agent.isolation missing (fork|worktree|inherit)")
     elif data.get("isolation") not in {"fork", "worktree", "inherit"}:

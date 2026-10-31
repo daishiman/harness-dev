@@ -1,0 +1,33 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "qa-009 bundled the JTBD, target users and usage context in one question (N4). It is replaced by qa-019, which is an open single-topic question that meets N1-N4. It covers the same core topic, and qa-016, qa-020 and qa-021 re-ask the remaining topics. qa-019 has an answer, basis user-decision and answered_at 2026-10-12T00:16:45Z. qa-009 is not the primary qa_ref of any cell and is not among the qa-foundation-u* entries. This is a closed finding."
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "The question bundles two independent topics: the session storage location (options 1-3) and the validity period (expiry and logout handling). A hold path is present. qa-038 is only a supporting qa_refs entry of auth/web (primary qa_ref is qa-002), so under the table this is a PASS note."
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "The approval question asks for confirmation of the whole U1-U9 summary in one question. Fix and hold options are offered, and it is not the source of any U value, which is traced through qa-foundation-u1 to u9. This is a minor note."
+    },
+    {
+      "axis": "traceability",
+      "severity": "low",
+      "cell": "ui-ux/web",
+      "observation": "The supporting qa_refs of ui-ux/web include qa-009, which has superseded_by qa-019. The primary qa_ref qa-003 is not retired, so this is not an active consumer. Adding qa-019 as the supporting reference is recommended."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "repository_id": "local:sha256:3b67cef8a39e9e616b090caa21507829d15ae86f82907729d6de2740ba2833a5",
+  "content_roots": {
+    "issues": "issues",
+    "tasks": "tasks",
+    "specifications": "specs",
+    "architecture": "architecture",
+    "documents": "docs",
+    "system_spec": "system-spec"
+  },
+  "local_state": {
+    "graph": ".dev-graph/state/graph.json",
+    "cache": ".dev-graph/cache",
+    "locks": ".dev-graph/locks"
+  },
+  "execution_tracker": {
+    "mode": "beads",
+    "beads": {
+      "issue_prefix": "system",
+      "server_mode": false,
+      "github_mirror": "bd_github_push_only"
+    }
+  },
+  "path_policy": {
+    "authority": "caller-repository",
+    "stored_paths": "repository-relative",
+    "allow_outside_repository": false,
+    "follow_content_symlinks_outside_repository": false
+  },
+  "plan_roots": {
+    "staging": ".dev-graph/staging",
+    "published": ".dev-graph/plans",
+    "state": ".dev-graph/state"
+  }
+}

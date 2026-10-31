@@ -1,0 +1,91 @@
+{
+  "scope": "synthetic scratch only; not canonical production execution or evaluator evidence",
+  "results": [
+    {
+      "name": "foreign-cwd-and-space-quote-path",
+      "exit_code": 0,
+      "stdout": "{\n  \"skill_args\": \"--spec-dir '/private/tmp/pr86-c19-scope-review/probe/caller 空白'\\\"'\\\"'s/system-spec' --output '/private/tmp/pr86-c19-scope-review/probe/caller 空白'\\\"'\\\"'s/eval-log/report.json'\",\n  \"spec_dir\": \"/private/tmp/pr86-c19-scope-review/probe/caller 空白's/system-spec\",\n  \"output\": \"/private/tmp/pr86-c19-scope-review/probe/caller 空白's/eval-log/report.json\",\n  \"evidence_ref\": \"eval-log/report.json\",\n  \"context_sha256\": \"0477f296b0db7250808844aa4f733789f91373badc031b0ac96debd82579fe54\"\n}\n",
+      "stderr": "",
+      "expected_success": true
+    },
+    {
+      "name": "reject-mode",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: a write-mode C24 receipt is required\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-repository_id",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: C24 identity changed: repository_id\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-worktree_id",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: C24 identity changed: worktree_id\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-git_common_dir",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: C24 identity changed: git_common_dir\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-git_dir",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: C24 identity changed: git_dir\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-report-/tmp/report.json",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: report must be a repository-relative eval-log/*.json path\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-report-../report.json",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: report must be a repository-relative eval-log/*.json path\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-report-other/report.json",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: report must be a repository-relative eval-log/*.json path\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-report-eval-log/../../report.json",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: report must be a repository-relative eval-log/*.json path\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-report-symlink",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: report path must not traverse symlinks\n",
+      "expected_success": false
+    },
+    {
+      "name": "reject-changed-content-root",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "evaluation_context_invalid: C24 content root changed: system_spec\n",
+      "expected_success": false
+    }
+  ],
+  "scratch_inputs_unchanged": true,
+  "valid_args_roundtrip": true
+}

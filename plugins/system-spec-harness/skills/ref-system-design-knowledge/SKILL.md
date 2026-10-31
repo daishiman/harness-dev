@@ -53,7 +53,7 @@ runtime_root_policy: host-skill-path
 `references/knowledge-catalog.json` は各 entry が typed 辺 (`depends_on` / `refines` / `conflicts_with`) を持つ**知識依存グラフ**である。`A depends_on B` は「B が前提で B を A より先に出す」precedence DAG で、循環/dangling/root到達性/孤立 node と辺型則 (`refines`=有向精緻化・非循環、`conflicts_with`=対称非順序) を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile knowledge` が検証する。C01 (R5) / C03 (R2) はこの validator の位相順 (`--order`・上位概念→下位概念、同順位 knowledge_id 昇順) を**同一 JSON として消費**し、設計知識を上流から下流の順で章へ反映する。この validator が保証するのは well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上正しいか) は content-review/human の未閉塞責務である。
 
 ### doctrine anchor 写像 (goal-spec C15)
-`references/doctrine-anchor-registry.json` は正本単位を system category でなく**design concern** とし、7 concern を 4 authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / security・authentication=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) へ **1 concern 1 authority** で固定する (authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる)。全 in-scope category は必要 concern へ全件写像され、C03 が各章生成時に category→concern→authority を**上流指針として反映**する (具体技術は直書きせず上流工程を導く)。registry 形状・concern_id 一意性 (authority 一意性ではない)・カテゴリ写像全射は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile doctrine` が、意味反映は content-review/human が検証する。未帰属 category は owner/reason/approval_state を持つ pending 例外として compile を保留する。
+`references/doctrine-anchor-registry.json` は正本単位を system category でなく**design concern** とし、7 concern を 4 authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / security・authentication=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) へ **1 concern 1 authority** で固定する (authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる)。全 in-scope category は必要 concern へ全件写像され、C03 が各章生成時に category→concern→authority を**上流指針として反映**する (具体技術は直書きせず上流工程を導く)。registry 形状・concern_id 一意性 (authority 一意性ではない)・カテゴリ写像全射は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile doctrine` が、意味反映は content-review/human が検証する。未帰属 category は owner/reason/approval_state を持つ pending 例外として登録し、C03 は未承認の例外を暫定扱いと明示して描き、`approved` で `concerns` を解決済みの例外だけ authority を上流指針として描く (pending 例外にも無いカテゴリは C03 が compile を止める)。
 
 ## 参照知識領域 (references/)
 
@@ -65,7 +65,12 @@ runtime_root_policy: host-skill-path
 | Secure by Design | `references/secure-by-design.md` | 攻撃者前提で被害を封じ込める設計 (最小権限/多層防御/fail-closed/脅威モデル) |
 | DDD (ドメイン駆動設計) | `references/ddd.md` | ドメインの複雑さに境界と共通言語で対処 (境界づけられたコンテキスト/集約/コアドメイン) |
 | Clean Code | `references/clean-code.md` | 変更し続けられる可読性を保つ (意図の命名/単一責務/副作用局所化/テスト容易性) |
+| Usability & Accessibility | `references/usability-accessibility.md` | 対象利用者が目的を完了できる操作契約 (状態可視性/回復導線/POUR/適合水準の受入基準化) |
 | Information Design (情報設計) | `references/information-design.md` | 表現物の情報を「文脈→棚卸し→グループ化→優先順位→削減→加工→形式選定→強弱→装飾」の順で設計する (装飾は最後で意味を運ぶ役) |
+| Test Strategy | `references/test-strategy.md` | どの失敗をどの層で検出するかを配分する (テストサイズ/契約テスト/カバレッジのGoodhart化回避) |
+| Continuous Delivery | `references/continuous-delivery.md` | 変更が安全・短時間・追跡可能に本番へ届く経路 (パイプライン/成果物昇格/稼働ビルドの素性) |
+| Site Reliability Engineering | `references/site-reliability-engineering.md` | 目標信頼性から基盤構成を導く (SLI/SLO/エラーバジェット/観測可能性/環境再現性) |
+| Cloud Architecture Patterns | `references/cloud-architecture-patterns.md` | 基盤制約の下でデータ配置と整合性境界を決める (blob offloading/原子性境界と補償/冪等キー/劣化順序) |
 | システム構成 taxonomy | `references/system-category-taxonomy.json` | カテゴリ×canonical platform id (C01 初期集合の正本) |
 | Open-world lifecycle | `references/open-world-knowledge-lifecycle.md` | discover→qualify→deepen→goal map→candidate→promotion→freshness audit |
 | Knowledge catalog | `references/knowledge-catalog.json` | seed/card metadata と深度・鮮度 + typed 辺 (depends_on/refines/conflicts_with) の知識依存グラフ (goal-spec C13) |

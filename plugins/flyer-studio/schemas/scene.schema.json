@@ -1,0 +1,271 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "version",
+    "variants"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "paper",
+          "background",
+          "texts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "paper": {
+            "enum": [
+              "white",
+              "color"
+            ]
+          },
+          "background": {
+            "type": "object",
+            "required": [
+              "asset"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string"
+              }
+            }
+          },
+          "qr": {
+            "type": "object",
+            "required": [
+              "x",
+              "y",
+              "size"
+            ],
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "size": {
+                "type": "number"
+              }
+            },
+            "description": "brief.qrUrl があるときだけ必須。URL がない案件では指定しない。"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "asset",
+                "x",
+                "y",
+                "w",
+                "h"
+              ],
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "w": {
+                  "type": "number"
+                },
+                "h": {
+                  "type": "number"
+                },
+                "fadeMm": {
+                  "type": "number"
+                },
+                "asset": {
+                  "type": "string"
+                },
+                "cropPx": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "logo": {
+            "type": "object",
+            "required": [
+              "asset",
+              "x",
+              "y",
+              "w",
+              "h"
+            ],
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "w": {
+                "type": "number"
+              },
+              "h": {
+                "type": "number"
+              },
+              "fadeMm": {
+                "type": "number"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "cropPx": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "x",
+                "y",
+                "w",
+                "size",
+                "font",
+                "align",
+                "group"
+              ],
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "w": {
+                  "type": "number"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "lineHeight": {
+                  "type": "number"
+                },
+                "tracking": {
+                  "type": "number"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string"
+                },
+                "text": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                "font": {
+                  "enum": [
+                    "sans",
+                    "serif",
+                    "display"
+                  ]
+                },
+                "align": {
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "layout": {
+                  "enum": [
+                    "row",
+                    "lines"
+                  ]
+                },
+                "lineWeights": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "h": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "writingMode": {
+                  "enum": [
+                    "horizontal-tb",
+                    "vertical-rl"
+                  ]
+                },
+                "textOrientation": {
+                  "enum": [
+                    "mixed",
+                    "upright"
+                  ]
+                },
+                "rotation": {
+                  "type": "number"
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "required": [
+                      "writingMode"
+                    ],
+                    "properties": {
+                      "writingMode": {
+                        "const": "vertical-rl"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "h"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

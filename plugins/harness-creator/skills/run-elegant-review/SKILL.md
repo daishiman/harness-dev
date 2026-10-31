@@ -68,6 +68,10 @@ script_refs:
   - scripts/build-self-reflection-entry.py
   - scripts/extract-capability-dependency-graph.py
   - scripts/build-capability-graph-knowledge-entry.py
+  - scripts/build-verdict.py
+  - scripts/build-review-report.py
+  - scripts/validate_phase_order.py
+  - scripts/check-review-trigger.py
 merge_strategy: deep-merge
 conflict_policy: most-specific-wins
 source: doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
@@ -88,7 +92,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
   criteria:
     - id: IN1
       loop_scope: inner
-      text: 1周回内で30思考法が全種 finding を出すか skip_reason を残し used 足す skipped_with_reason が30に到達する
+      text: 1周回内で30思考法が全種 finding を出し used が正本30名称と一意一致、skipped_with_reason が空である
       verify_by: script
       derived_from: [CL-2]
     - id: IN2
@@ -135,7 +139,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-elegant-review (v2)
 
-> **Reading Order**: (1) ゴールシーク実行 → (2) Purpose & Output Contract → (3) 役割直交 → (4) 入出力契約 → (5) 30 思考法カタログ → (6) 検証 4 条件 → (7) 実行フロー (Phase 1→2→3) → (8) Gotchas。初見は (1)(2)(6) で全体像が掴める。
+> **Reading Order**: (1) Purpose & Output Contract → (2) ゴールシーク実行 → (3) 入出力契約 (役割直交・入力・出力・完了条件) → (4) 30 思考法カタログ → (5) 検証 4 条件 → (6) 実行フロー (Phase 1→2→3) → (7) Gotchas。初見は (1)(2)(5) で全体像が掴める。
+
+## Purpose & Output Contract
+
+新規/更新 Skill・rubric 改訂・アーキテクチャ提案・量産 plugin package を 30 思考法で検証し 4 条件を全 PASS まで改善する（詳細はゴールシーク実行節）。**v2 位置づけ**: 25 章 §runbook の **Step 5.5**（PKG check と assign-skill-design-evaluator の中間）= 「**設計 elegance lint**」。契約適合・規範採点と責務直交。
+
+**出力契約**: `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` に `findings.json`（`schemas/findings.schema.json`）・`verdict.json`（`scripts/build-verdict.py` で `findings.json` から導出）・`review-<scope_mode>.md` を残す（詳細は入出力契約節）。
+
+**禁則**: Phase 1/2 は read-only / 自己承認禁止（proposer ≠ approver）/ max_iter 到達時の force_pass 禁止 / `verdict.json` の手書き禁止 / `commit_authorized=true` の明示なしに commit しない。
 
 ## ゴールシーク実行
 
@@ -152,7 +164,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ### 完了チェックリスト (Checklist)
 
 - [ ] Phase 1 思考リセットを経由し `shared_state.md`（200字以内）を生成した <!-- CL-1 exempt: 工程順序項目。validate-paradigm-coverage.py --phase-order が機械検査 -->
-- [ ] `thought_method_coverage.used + skipped_with_reason == 30`（30 思考法全て使用 or skip_reason 付き） <!-- CL-2 -->
+- [ ] `thought_method_coverage.used` が正本30名称と一意一致し、`skipped_with_reason == []`（省略禁止） <!-- CL-2 -->
 - [ ] `fail_counts.contradiction == 0`（矛盾なし） <!-- CL-3 -->
 - [ ] `fail_counts.omission == 0`（漏れなし） <!-- CL-4 -->
 - [ ] `fail_counts.inconsistency == 0`（整合性あり） <!-- CL-5 -->
@@ -186,9 +198,7 @@ python3 scripts/validate-paradigm-coverage.py --task-graph-trace \
 
 ---
 
-## Purpose & Output Contract
-
-新規/更新 Skill・rubric 改訂・アーキテクチャ提案・量産 plugin package を 30 思考法で検証し 4 条件を全 PASS まで改善する（詳細はゴールシーク実行節）。**v2 位置づけ**: 25 章 §runbook の **Step 5.5**（PKG check と assign-skill-design-evaluator の中間）= 「**設計 elegance lint**」。契約適合・規範採点と責務直交。
+## 入出力契約
 
 ### 役割直交（Step 5 / 5.5 / 6）
 
@@ -213,7 +223,7 @@ context:
 options:
   dry_run: false                          # true なら write を禁止
   max_iterations: 3                       # 改善ループ上限
-  skip_thought_methods: []                # 緊急時のみ。skip_reason 必須
+  commit_authorized: false                # true を明示した時だけ git commit 可。既定は patch まで
 ```
 
 `target.plugin` / `target.skill` / `target.scope_mode` は全て必須。`target_path` だけの後方互換呼出も `argument-hint` 経由で受理するが、内部で `target` 構造体に正規化する。
@@ -224,12 +234,14 @@ options:
 - `thought_method_coverage` — `{used: [], skipped_with_reason: [], total: 30}`
 - `verdict` — `{矛盾なし: PASS|FAIL, 漏れなし: PASS|FAIL, 整合性あり: PASS|FAIL, 依存関係整合: PASS|FAIL}`
 - `review-<scope_mode>.md` — 人間可読レポート
-- `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` — 27 章 §3.1 規約準拠の保存先
-- 改善結果 — `auto_fixable=true` は選択済み改善として最小パッチを適用し、`auto_fixable=false` は提案に留める。commit / PR はユーザーが明示依頼した場合だけ後続工程で行う
+- `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` — 27 章 §3.1 規約準拠の保存先。`<plugin>` / `<skill>` は**実行主体ではなくレビュー対象**を指す。`scope_mode=repo` は対象が単一 skill に定まらないため **`<skill>` セグメントを省略**し `eval-log/<plugin>/elegant-review/<run-id>/` とする（`verdict.json` の `skill` には代表 skill を記録する）。`<plugin>` は finding 数が最多の plugin を代表として選ぶ
+- 改善結果 — `auto_fixable=true` は選択済み改善として最小パッチを適用し、`auto_fixable=false` は提案に留める。git commit は `commit_authorized=true` の明示時だけ、PR はユーザーが明示依頼した場合だけ後続工程で行う
 
 ### 完了条件（4 条件 → 観測 signal）
 
-各条件の PASS signal は上記ゴールシーク Checklist（`fail_counts.<signal> == 0`）と下記「検証 4 条件」テーブルを正本とする。`issues[].severity` は low/medium/high/critical の優先度、`condition_signal` は contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal として分離する。`smell` は警告枠（PASS を妨げない）。判定は `scripts/validate-paradigm-coverage.py` と `verdict.json` で機械実行。
+各条件の PASS signal は上記ゴールシーク Checklist（`fail_counts.<signal> == 0`）と下記「検証 4 条件」テーブルを正本とする。`issues[].severity` は low/medium/high/critical の優先度、`condition_signal` は contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal として分離する。`smell` は警告枠（PASS を妨げない）。`condition`（C1-C4 の 4 値）と `condition_signal`（smell を含む 5 値）は濃度が一致しないため、**`condition_signal=smell` の issue は `condition` を持たない**（schema 上も required から外してある）。smell 以外は `contradiction→C1 / omission→C2 / inconsistency→C3 / dependency_break→C4` の対応を守る。判定は `scripts/validate-paradigm-coverage.py` と `verdict.json` で機械実行する。`verdict.json` は手書きせず `python3 scripts/build-verdict.py --findings <log_dir>/findings.json --verdict <log_dir>/verdict.json` で `findings.json` から導出する。`verdict.status` は `findings.run_status` の転記で、orchestrator が導出前に `references/convergence-policy.json` の `halt_conditions` で発火した条件の `status` (converged→`complete` / diverged→`human_escalate` / max_iterations_reached→`incomplete`) を写す（executor の `convergence_status` からは complete→`complete`、diverging・human_escalate→`human_escalate`、in_progress・incomplete→`incomplete`）。4 条件に FAIL が残るのに `run_status=complete` なら `build-verdict.py` は書かずに exit 2 で止まる。drift の検出は CI の `--phase-order eval-log` が `build-verdict.py` の `derive()` を再利用して行う（`build-verdict.py --check` は手元確認用）。
+
+対応検査の遡及免除には**終了条件がある**: run ディレクトリ名 `run-YYYYMMDD-*` の日付が `STRICT_SIGNAL_FROM`（現在 `20260809`）以降なら error、それより前および日付を読めない run は WARN 止まり。`--strict-signal` を明示すれば、単一ファイル mode（Phase 3 完了判定の `--strict-signal <log_dir>/findings.json`）と `--phase-order` のどちらでも日付に関わらず error になる。CI（`--phase-order eval-log`）はこの日付境界で自動的に新規 run だけを縛るため旗を付けない。**終了条件のない免除は検査を恒久的に骨抜きにする**ため、tolerant 契約を足すときは必ず解除条件を同時に定めること。
 
 ---
 
@@ -241,16 +253,15 @@ options:
 |---|---|---|---|
 | 論理分析系 (5) | A2 | 批判的 / 演繹 / 帰納 / アブダクション / 垂直 | `elegant-logical-structural-analyst` |
 | 構造分解系 (4) | A2 | 要素分解 / MECE / 2 軸 / プロセス | 同上 |
-| 問題解決系 A2 移管 (1) | A2 | why 思考 (B1 で A4 → A2 へ移管) | 同上 |
 | メタ抽象系 (3) | A3 | メタ / 抽象化 / ダブル・ループ | `elegant-meta-divergent-analyst` |
 | 発想拡張系 (6) | A3 | ブレインストーミング / 水平 / 逆説 / 類推 / if / 素人 | 同上 |
 | システム系 (3) | A4 | システム / 因果関係 / 因果ループ | `elegant-system-strategic-analyst` |
 | 戦略価値系 (4) | A4 | トレードオン / プラスサム / 価値提案 / 戦略的 | 同上 |
-| 問題解決系 A4 残置 (4) | A4 | 改善 / 仮説 / 論点 / KJ 法 | 同上 |
+| 問題解決系 (5) | A4 | why / 改善 / 仮説 / 論点 / KJ 法 | 同上 |
 
-**配分後**: A2=10 / A3=9 / A4=11（B1 反映：why 思考を A4 → A2 に移管し均衡化）
+**配分**: A2=論理5+構造4=9 / A3=メタ3+発想6=9 / A4=system3+戦略4+problem5=12。why 思考は `G-problem` として A4 が担当する。
 
-CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reason` を残す」** に緩和（C1 解消、B4 早期終了との両立）。
+CONST_002（30 種全使用）は緩和しない。全30種が finding を出し、`used` は30件一意、`skipped_with_reason` は空でなければならない。
 
 ---
 
@@ -279,7 +290,7 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
   1. 先行 context 要約 → `shared_state.md` に 200 字以内で保存
   2. 明示破棄宣言 → SubAgent 内で「親 context を以降参照しない」宣言を発話
   3. 対象再読込 → `target.plugin` / `target.skill` の全関連ファイルを fresh で Read
-- **出力**: `shared_state.md`（フェーズ 2 へのファンアウト中継、B6）
+- **出力**: SubAgent は `raw_observations` JSON payload と `shared_state` 本文を返す。orchestrator が run directory の `raw_observations.json` / `shared_state.md` へ atomic materialize する（single-writer）
 - **完了判定 signal**: `shared_state.md` 存在 + 全関連ファイル列挙完了
 - **失敗時アクション**: abort（リセット失敗は致命的）
 
@@ -287,15 +298,15 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
 
 - **担当**: `elegant-logical-structural-analyst` + `elegant-meta-divergent-analyst` + `elegant-system-strategic-analyst`（並列）
 - **入力**: `shared_state.md` + 担当思考法サブセット
-- **出力**: 各 SubAgent が `findings-phase2-<agent>.json` を独立出力
-- **完了判定 signal**: 3 SubAgent 完了 + `thought_method_coverage.used + skipped_with_reason == 30`（B2、CONST_002 機械検証）
-- **失敗時アクション**: 1 SubAgent 失敗時は他 2 つの結果を保持して continue、欠落分は次反復で補完
+- **出力**: 各 SubAgent は 9 / 9 / 12 件の JSON payload を返す。orchestrator が同一 run directory の `findings-phase2-{logical,meta,system}.json` へ atomic materialize し、`findings.json` を集約する（single-writer）
+- **完了判定 signal**: 3 SubAgent 完了 + `thought_method_coverage.used` が30件一意で正本と一致 + `skipped_with_reason == []`
+- **失敗時アクション**: 1 SubAgent でも失敗・欠落なら Phase 3 へ進まず、最大3反復内で該当 lane を再実行
 
 ### Phase 3: 改善実行（ファンイン）
 
 - **担当**: `elegant-improvement-executor`（必要時 `delegate-codex-skill-review` へ委譲、B5）
 - **入力**: Phase 2 全 SubAgent の findings 集約
-- **操作**: 依存 DAG 生成（B3, `findings[].location` または `paradigm_findings[].issues[].location` から自動構築）→ 優先順位決定（`issues[].severity`: critical > high > medium > low）→ 独立対象は並列・依存ありは直列で改善 → `dry_run=false` かつ `auto_fixable=true` のみ最小パッチ適用 / それ以外は提案のみ → 4 条件再検証（max_iter=3）
+- **操作**: 依存 DAG 生成（B3, `paradigm_findings[].issues[].location + depends_on` から自動構築）→ 優先順位決定（`issues[].severity`: critical > high > medium > low）→ orchestrator が独立対象を非重複 write scope の executor へ並列割当し、依存ありは直列化（各 executor は再帰起動しない）→ `dry_run=false` かつ `auto_fixable=true` のみ最小パッチ適用 / それ以外は提案のみ → 4 条件再検証（max_iter=3）。run成果物の materialize は orchestrator だけが行い、git commit は `commit_authorized=true` の明示時だけ行う
 - **出力**: `schemas/findings.schema.json` 準拠の `findings.json` 最終版 + `review-<scope_mode>.md`
 - **完了判定 signal**: 4 条件 PASS（contradiction/omission/inconsistency/dependency_break 全て 0 件）
 - **失敗時アクション**:
@@ -304,7 +315,7 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
 
 ### Codex 委譲判定基準（B5）
 
-次のいずれかで `delegate-codex-skill-review` SubAgent へ委譲（**Phase 3 限定**、Phase 1/2 中は禁止＝context 再汚染 C2）: 変更行数 > 50 / テスト変更含む（`tests/` `*_test.py` `*.spec.*`）/ 複数ファイル横断（`findings[].location` unique file 数 > 3）。
+次のいずれかで `delegate-codex-skill-review` SubAgent へ委譲（**Phase 3 限定**、Phase 1/2 中は禁止＝context 再汚染 C2）: 変更行数 > 50 / テスト変更含む（`tests/` `*_test.py` `*.spec.*`）/ 複数ファイル横断（`paradigm_findings[].issues[].location` の unique file 数 > 3）。
 
 ---
 
@@ -312,7 +323,7 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
 
 - **Phase 1 / Phase 2 は read-only**: 対象を編集しない
 - **Phase 3 のみ対象 write 可**: `dry_run=false` の場合に限り、集約済み findings に紐づく最小パッチを適用する。改善前に `git diff --binary` の出力を `eval-log/<plugin>/<skill>/elegant-review/<run-id>/pre-phase3.patch` として記録する
-- **改善後に 4 条件悪化を検出**: 当該反復の changed hunk だけを戻す。git revert / stash / reset は使わず、既存ユーザー dirty state を不変に保つ
+- **改善後に 4 条件悪化を検出**: `pre-phase3.patch` を根拠に当該反復の changed hunk だけを逆適用する。git revert / stash / reset は使わず、既存ユーザー dirty state を不変に保つ。commit 済みの場合も自動 `git revert` はせず orchestrator へ rollback 案を返す
 - **`dry_run=true`**: 対象ファイルの Edit / Write と commit / PR を禁止し、評価成果の eval-log への保存だけを許可する
 
 ## proposer ≠ approver（C4、23 章準拠）
@@ -349,24 +360,26 @@ emit event の具体例 (4 条件 FAIL / safety_valve_fired=true 双方) は `re
 
 ### 停止条件
 
-1. **収束完了** (`Δneg < 0.10 AND Δpos < 0.10`): `status: complete`
-2. **発散** (`Δneg 2周連続増加`): `human_escalate`
-3. **安全弁発火** (`iteration_count >= max_iterations(=3)`): `status: incomplete`・force_pass 禁止・`human_review` 必須
+1. **収束完了** (`Δneg < 0.10 AND Δpos < 0.10` かつ 4 条件 PASS): `status: complete`
+2. **停滞** (`Δneg < 0.10 AND Δpos < 0.10` だが 4 条件に FAIL が残る): `status: incomplete`・force_pass 禁止・`human_review` 必須
+3. **発散** (`Δneg 2周連続増加`): `status: human_escalate`
+4. **安全弁発火** (`iteration_count >= max_iterations(=3)`): `status: incomplete`・force_pass 禁止・`human_review` 必須
 
 ---
 
 ## Gotchas
 
-1. **30 思考法すべて省略禁止**: `scripts/validate-paradigm-coverage.py` が `thought_method_coverage.used + skipped_with_reason == 30` を機械検証。欠落で exit 1
-2. **Phase 1 必須経由（C3）**: スキップ不可。リセット未経由のレビューは C2/C3 が偽陽性 PASS する
-3. **Goodhart の罠**: score 最大化のために本質を歪めない
-4. **Phase 2 並列前提**: 3 SubAgent は互いの中間結果を参照しない（独立性確保、SubAgent context 分離で強制）
-5. **proposer ≠ approver（C4、23 章）**: 自己承認禁止
-6. **Codex 委譲は Phase 3 限定（C2）**: Phase 1/2 で委譲すると context 再汚染
-7. **`auto_fixable` 安易フラグ禁止**: 単純な path 修正・chmod 等のみ true。意味変更を伴う修正は必ず false
-8. **`shared_state.md` は 200 字制限**: Phase 1 → 2 ファンアウト時に context 肥大を防ぐ
-9. **PKG check 結果との衝突**: PKG-006（hook 整合）と本 skill の dependency_break が同一 finding を出す可能性。location が同じなら PKG check 側を優先（契約 > elegance）
-10. **safety_valve_fired を成功扱いにしない**: max_iter 到達は failure。35 章 observable が必ず emit される
+1. **30 思考法すべて省略禁止**: `scripts/validate-paradigm-coverage.py` が `used` の30件一意・正本一致と `skipped_with_reason == []` を機械検証。欠落・重複・skip で exit 1
+2. **`condition` と `condition_signal` の二重帳簿を作らない**: smell に C1 等の便宜値を入れると `fail_counts` と `issues[].condition` の集計が恒常的にずれる。smell は `condition` を省略する。Phase 3 完了判定は `python3 scripts/validate-paradigm-coverage.py --strict-signal <log_dir>/findings.json` で実行し、便宜値を error にする
+3. **Phase 1 必須経由（C3）**: スキップ不可。リセット未経由のレビューは C2/C3 が偽陽性 PASS する
+4. **Goodhart の罠**: score 最大化のために本質を歪めない
+5. **Phase 2 並列前提**: 3 SubAgent は互いの中間結果を参照しない（独立性確保、SubAgent context 分離で強制）
+6. **proposer ≠ approver（C4、23 章）**: 自己承認禁止
+7. **Codex 委譲は Phase 3 限定（C2）**: Phase 1/2 で委譲すると context 再汚染
+8. **`auto_fixable` 安易フラグ禁止**: 単純な path 修正・chmod 等のみ true。意味変更を伴う修正は必ず false
+9. **`shared_state.md` は 200 字制限**: Phase 1 → 2 ファンアウト時に context 肥大を防ぐ
+10. **PKG check 結果との衝突**: PKG-006（hook 整合）と本 skill の dependency_break が同一 finding を出す可能性。location が同じなら PKG check 側を優先（契約 > elegance）
+11. **safety_valve_fired を成功扱いにしない**: max_iter 到達は failure。35 章 observable が必ず emit される
 
 ---
 

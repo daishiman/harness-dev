@@ -1,0 +1,20 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "invoked_by": "run-dev-graph-system-spec R2-delegate (loop 1)",
+  "args": "--resume --spec-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec96/fx/system-spec",
+  "artifact": "system-spec/spec-state.json",
+  "artifact_sha256": "9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2",
+  "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec96/fx/system-spec/spec-state.json",
+  "minimum_guards": {
+    "json_parse": "ok",
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": "exit 0",
+    "validate-knowledge-graph --profile required-info --state": "exit 0, ungrounded_blocking_items=[]"
+  },
+  "resume_outcome": "hearing_progress.complete=true, next_question=null; no 未収集 cells; no writer turn applied (no new user input exists and no approval may be fabricated)",
+  "prompts_read_in_full": ["R0-foundation.md", "R1-init.md", "R2-interview.md", "R3-reask.md", "R4-reopen.md", "R5-decision-guide.md"],
+  "transitions": ["artifact_created->minimal_guard_passed", "minimal_guard_passed->artifact_presented", "artifact_presented->user_choice_recorded", "user_choice_recorded--standard-->semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)",
+  "post_choice": "goal-seek: all R0-R5 stop conditions already satisfied by existing writer-built state; spec-state unchanged"
+}

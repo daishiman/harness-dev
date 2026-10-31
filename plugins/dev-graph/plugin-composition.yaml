@@ -1,7 +1,7 @@
 name: dev-graph
 description: macro feature graph、tracker projection、worktree lifecycleを構成するときに使うlocal-first plugin bundle。
 kind: plugin-composition
-version: 0.1.19
+version: 0.1.25
 owner: harness maintainers
 
 contract:
@@ -32,9 +32,10 @@ capabilities:
   - { kind: agent, ref: agents/dev-graph-requirements-verifier, tier: core }
   - { kind: agent, ref: agents/dev-graph-sync-conflict-verifier, tier: core }
   - { kind: command, ref: commands/dev-graph, tier: core }
-  - { kind: hook, ref: "hook:PreToolUse-Bash/guard-graph-schema", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-BashWriteEditMultiEditNotebookEdit/guard-graph-schema", tier: core }
   - { kind: hook, ref: "hook:SessionStart-startupresume/reconcile-task-lifecycle", tier: core }
   - { kind: hook, ref: "hook:PostToolUse-Bash/reconcile-task-lifecycle", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-Bash/audit-graph-authority-drift", tier: core }
   - { kind: hook, ref: "hook:TaskCompleted/reconcile-task-lifecycle", tier: core }
 
   - {kind: script, ref: scripts/resolve-repo-context.py, tier: core}
@@ -47,11 +48,48 @@ capabilities:
   - {kind: script, ref: scripts/schedule-graph.py, tier: core}
   - {kind: script, ref: scripts/register-package.py, tier: core}
   - {kind: script, ref: scripts/build-graph-node.py, tier: core}
+  - {kind: script, ref: scripts/build-parity-manifest.py, tier: core}
+  - {kind: script, ref: scripts/build-merged-graph.py, tier: core}
+  - {kind: script, ref: scripts/lint-open-residue.py, tier: core}
+  - {kind: script, ref: scripts/lint-orphan-external-ref.py, tier: core}
 
 internal_support:
   - ref: scripts/_common.py
     owners: [C11, C12, C13, C16, C24, C26, C27, C28, C29]
     purpose: top-level capability ではなく、plugin-root scripts が共有する内部 runtime helper
+  - ref: lib/graph_artifact_readiness.py
+    owners: [C11]
+    purpose: validate-graph-schema が artifact 本文の必須見出しと placeholder を判定する純関数
+  - ref: lib/schedule_graph_nodes.py
+    owners: [C16]
+    purpose: schedule-graph が共有する node 述語 (resource_scope・schedulable・推移依存・P01 入口ゲート)
+  - ref: lib/graph_envelope.py
+    owners: [C02, C10, C11]
+    purpose: graph.json envelope の形検査。validator・guard・事後検出・merge driver が同じ判定を使う
+  - ref: lib/guard_graph_commands.py
+    owners: [C10]
+    purpose: guard が Bash コマンドから graph authority への書込みを判定する解析
+  - ref: lib/guard_python_writes.py
+    owners: [C10]
+    purpose: guard がその場で実行される Python の書込み先を判定する解析
+  - ref: lib/guard_python_path_eval.py
+    owners: [C10]
+    purpose: guard_python_writes が書込み先 path 式を静的に評価する補助
+  - ref: lib/bd_bridge_contracts.py
+    owners: [C16, C28]
+    purpose: bd-bridge の受理語彙と純粋判定。MVP_FIT_RANK は schedule-graph も候補の選定順に使う
+  - ref: lib/bd_bridge_graph.py
+    owners: [C28]
+    purpose: bd-bridge が graph 側の正本 (graph・parity manifest・spec) を read-only で解決する
+  - ref: lib/bd_bridge_audit.py
+    owners: [C28]
+    purpose: bd-bridge の書かない監査 (orphan 棚卸し・node 削除 preflight)
+  - ref: lib/orphan_external_ref.py
+    owners: [C28]
+    purpose: lint-orphan-external-ref が Beads の external_ref と graph node の対応を突合する判定
+  - ref: lib/live_trial_evidence_selection.py
+    owners: []
+    purpose: criteria receipt が採用した PASS live-trial 証跡を選ぶ read-only helper。repository root の live-trial verdict lint が import する
 
 dependencies:
   - {from: commands/dev-graph.md, to: skills/run-dev-graph-init, type: calls}
@@ -92,13 +130,17 @@ dependencies:
   - {from: skills/run-dev-graph-sync, to: scripts/manage-worktree-lease.py, type: calls}
   - {from: skills/run-dev-graph-render, to: scripts/render-graph-html.py, type: calls}
   - {from: skills/run-dev-graph-schedule, to: scripts/schedule-graph.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: scripts/build-parity-manifest.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/build-parity-manifest.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: references/schedule-graph-contract.md, type: reads}
+  - {from: scripts/schedule-graph.py, to: references/schedule-graph-contract.md, type: reads}
   - {from: skills/run-dev-graph-init, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/validate-graph-schema.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/register-package.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/build-graph-node.py, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/validate-graph-schema.py, type: calls}
-  - {from: "hook:PreToolUse-Bash/guard-graph-schema", to: scripts/validate-graph-schema.py, type: calls}
+  - {from: "hook:PreToolUse-BashWriteEditMultiEditNotebookEdit/guard-graph-schema", to: scripts/resolve-repo-context.py, type: calls}
   - {from: "hook:SessionStart-startupresume/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
   - {from: "hook:PostToolUse-Bash/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
   - {from: "hook:TaskCompleted/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
@@ -120,5 +162,5 @@ governance:
   merge_strategy: deep-merge
   conflict_policy: most-specific-wins
 observability:
-  hooks: [PreToolUse/guard-graph-schema, SessionStart/reconcile-task-lifecycle, PostToolUse/reconcile-task-lifecycle, TaskCompleted/reconcile-task-lifecycle]
+  hooks: [PreToolUse/guard-graph-schema, SessionStart/reconcile-task-lifecycle, PostToolUse/reconcile-task-lifecycle, PostToolUse/audit-graph-authority-drift, TaskCompleted/reconcile-task-lifecycle]
   metrics: [graph_validation_failures, tracker_pending_retries, active_worktree_leases]

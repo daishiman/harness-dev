@@ -1,0 +1,20 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "invoked_by": "run-dev-graph-system-spec R3-import (loop 2)",
+  "verb": "add",
+  "artifact": "eval-log/run-dev-graph-system-spec/R3-import/c02-add-payload.json",
+  "artifact_sha256": "583cd778685a0a8f05aa3d602aaa829d810f3e683fc14355efb1f666b83f2f6b",
+  "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec96/fx/eval-log/run-dev-graph-system-spec/R3-import/c02-add-payload.json",
+  "minimum_guards": {
+    "json_parse": "ok",
+    "dry_run": "build-graph-node.py add --dry-run rc=0 valid=true write_count=0 pre_write_validation.findings=0",
+    "preview": {"graph_revision_before": 0, "graph_revision_after": 1, "node_ids": ["spec-billing-audit-system-spec", "arch-billing-audit-system-architecture"], "graph_digest_after": "sha256:2df64f35dc745babf58a996fee1c041e2a4cf3bc1ccc9e3f999e1f204a523043"},
+    "graph_digest_unchanged_by_dry_run": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+    "secret": "none",
+    "irreversible": "none (dry-run)"
+  },
+  "transitions": ["artifact_created->minimal_guard_passed", "minimal_guard_passed->artifact_presented", "artifact_presented->user_choice_recorded", "user_choice_recorded--standard-->semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)"
+}

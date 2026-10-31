@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["issue", "diff_sha256", "rederived_impacts", "agree", "findings", "verdict_sha256"],
   "properties": {
-    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "issue": {"type": ["integer", "string"], "description": "対象 tracker key (GitHub issue 番号または Beads issue id)"},
     "diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "検証対象 diff の digest。triage-report.diff_sha256 と一致必須 (別 diff の検証を弾く)"},
     "rederived_impacts": {
       "type": "array",

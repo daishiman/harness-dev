@@ -91,6 +91,12 @@ codeを、次の変更者が意図・制約・failureを短時間で理解し、
 - maintenance objectiveには変更lead time、review指摘、escaped defect、rollback率などのoutcomeを使う。
 - 無料toolの導入自体を成功とせず、teamが継続運用でき、重要riskを減らすかで判断する。
 
+---
+
+### 確定判断ごとの原則採否
+
+- (確定セルなし。本章は対象外または収集中のため、上記原則の適用先は未確定)
+
 ## 最新ドキュメント出典
 
 - (このカテゴリに割り当てた取得済みドキュメントなし。全体出典は index.md 参照)

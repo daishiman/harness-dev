@@ -52,7 +52,7 @@ governance log に `emergency: true`、48時間内に事後レビュー。
 
 | status | 意味 |
 |---|---|
-| `draft` | `aggregate-evals.py` が自動で生成した段階で、まだ審査していない |
+| `draft` | `aggregate-evals.py` が自動で生成した段階で、まだ審査していない。自動ドラフトは異常の観測差分（`kind: rubric-anomaly-delta`）で改正案ではないので、改正するときは `templates/proposal.json` で別に起票する |
 | `pending` | rubric に反映したが、承認の記録（承認レビューと、`.claude/changelog/governance-log.jsonl` とこのスキルの `log/governance-log.jsonl` の行）がまだそろっていない |
 | `applied` | 承認の記録がそろった |
 | `rejected` | 承認されなかった。rubric に反映していたら、提案の「戻し方」で元に戻す |

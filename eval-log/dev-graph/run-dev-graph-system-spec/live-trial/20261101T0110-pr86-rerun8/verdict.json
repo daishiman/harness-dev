@@ -1,0 +1,155 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec95/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "必須のspecification・architectureがともに未登録。回収graphはgraph_revision=0、nodes=[]であり、正規C02呼出し・取込receipt・登録node上のsource_lineage/confirmation_evidence/readinessが存在しない。正のシナリオの観測2および3を満たさない。",
+      "canonical flow未完了。C05のreportはPASSだが、一次subagent transcript:171で保護hookによるreport書込拒否、同:216で別の書込形による再保存を確認。task.mdの拒否時FAIL・迂回禁止契約に反し、親はC05証拠を未受理としてC02前で停止。progressは4項目not_achieved、最終statusはFAIL。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "4ae234cc738f9469ea3fcfef1994075e8457d504e989951ce39282b2a7c187ef",
+    "result": "FAIL",
+    "blockers": [
+      "必須のspecification・architectureがともに未登録。回収graphはgraph_revision=0、nodes=[]であり、正規C02呼出し・取込receipt・登録node上のsource_lineage/confirmation_evidence/readinessが存在しない。正のシナリオの観測2および3を満たさない。",
+      "canonical flow未完了。C05のreportはPASSだが、一次subagent transcript:171で保護hookによるreport書込拒否、同:216で別の書込形による再保存を確認。task.mdの拒否時FAIL・迂回禁止契約に反し、親はC05証拠を未受理としてC02前で停止。progressは4項目not_achieved、最終statusはFAIL。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec95"
+    },
+    "transcript_sha256": "937eba7945411bfb6a9239b862e18ac3e06a319f50730b492f5caee2988b3bf9",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/agent-a41861d1c86772f6b.jsonl",
+      "out/status.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/manifest.tsv",
+      "fx-eval-log/system-spec-completeness-report.json",
+      "fx-eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-eval-log/r0-lineage-gate.json",
+      "fx-eval-log/run-dev-graph-system-spec-preflight-report.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b",
+  "transcript_sha256": "937eba7945411bfb6a9239b862e18ac3e06a319f50730b492f5caee2988b3bf9",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1148.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "fx-eval-log/run-dev-graph-system-spec-progress.json"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "transcript.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1148.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "070945064cd8e2ef87d02776bc27a5dc34e7de301b3bf65475d34dc6979288db",
+      "tokens": {
+        "input_tokens": 256,
+        "cache_creation_input_tokens": 643041,
+        "cache_read_input_tokens": 9353927,
+        "output_tokens": 87059,
+        "total_tokens": 10084283,
+        "assistant_messages": 122,
+        "assistant_message_ids": 122,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 8,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

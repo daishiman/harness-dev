@@ -1,0 +1,38 @@
+{
+  "skill": "system-spec-harness:run-system-spec-compile",
+  "recorded_at": "2026-10-31T15:40:00Z",
+  "pre_choice_artifact": {
+    "path": "system-spec/index.md (+ 00-requirements-definition.md and 8 category chapters)",
+    "writer": "plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py compile --repo-root <FX>",
+    "open_with": "less system-spec/index.md",
+    "sha256": {
+      "00-requirements-definition.md": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402",
+      "auth.md": "21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897",
+      "backend.md": "8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466",
+      "database.md": "3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de",
+      "frontend.md": "10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5",
+      "index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+      "infrastructure.md": "d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd",
+      "maintenance-ops.md": "d244629b650c8183ec165deada6f8dcd6da23117e51249542552364b5c471f28",
+      "security.md": "c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1",
+      "ui-ux.md": "420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410"
+    },
+    "inputs_unchanged": {"spec-state.json": "3e8000f400da9b84820b7ae40538fb2d84adf3c335bc34e2ea1bca48ac22a377", "fetched-references.json": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729"}
+  },
+  "artifact_delivery": {"choice": "standard", "choice_source": "isolated fixture pre-answer contract (task.md)", "state_trace": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"]},
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "validate-coverage-matrix --require-complete exit0; validate-source-citation exit0; validate-design-knowledge-refs exit0 (10 refs)"},
+    {"id": "OUT1", "status": "PASS", "evidence": "pytest test_compile_spec_doc.py + test_compile_spec_doc_knowledge.py: 63 passed"},
+    {"id": "sync", "status": "PASS", "evidence": "validate-spec-doc-sync.py exit0"}
+  ],
+  "goal_seek": {
+    "loops": 1,
+    "forked_verifiers": {"R1-assemble": "ALL_YES (7/7)", "R2-render": "ALL_YES (12 items, 31 qa verbatim)", "R3-crosslink": "ALL_YES (7/7)"},
+    "prompts_read": ["R1-assemble", "R2-render", "R3-crosslink"],
+    "blockers": []
+  },
+  "findings": [
+    {"severity": "minor", "summary": "compile is not byte-idempotent across fresh vs re-run: a fresh compile keeps a double blank line after the approval section; merge_preserving on re-run collapses it. Run2 == Run3 (fixpoint) and content identical ignoring blank lines. Recorded artifact is the fixpoint output."}
+  ],
+  "state": "handoff_complete"
+}

@@ -1,0 +1,5 @@
+{"contract":"artifact-delivery-v1","skill":"run-dev-graph-init","transitions":[
+{"from":"artifact_created","event":"minimum_guard_pass","to":"minimal_guard_passed","evidence":"build-init-scaffold.py status=applied valid=true schema_result.violation_count=0; validate-graph-schema.py exit0"},
+{"from":"minimal_guard_passed","event":"present_actual_artifact","to":"artifact_presented","evidence":{"receipt":".dev-graph/state/receipts/init-20261031T140751419145Z.json","config_sha256":"0e30ff80e328616c0a308efe13ebef45f01560176f922a6e2c1a26daad71097b","graph_sha256":"27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177","open_with":"cat .dev-graph/config.json"}},
+{"from":"artifact_presented","event":"record_user_choice","to":"user_choice_recorded","choice":"standard","choice_source":"task.md 隔離fixtureの事前回答契約 (artifact_delivery=standard, 予め指定済み)"},
+{"from":"user_choice_recorded","event":"standard","to":"semantic_evaluator_started"}]}

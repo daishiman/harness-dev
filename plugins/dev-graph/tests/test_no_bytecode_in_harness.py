@@ -96,7 +96,7 @@ def hook_commands(root: Path) -> list[str]:
 
 def test_every_hook_command_starts_python_with_minus_b() -> None:
     commands = hook_commands(PLUGIN)
-    assert len(commands) == 4
+    assert len(commands) == 5
     assert [command for command in commands if not command.startswith("python3 -B ")] == []
 
 
@@ -119,12 +119,15 @@ def test_running_every_script_and_hook_leaves_no_bytecode_in_the_harness(tmp_pat
         started += 1
     assert started >= 20, started
 
-    # 所有の marker だけを持つ、git でない dir。hook は resolver を子として起こし、resolver は `_common` を
-    # import してから git の検査で止まる (外部への送信や lease の操作には進まない)。
+    # 所有の marker だけを持つ、git でない dir。reconcile hook は resolver を子として起こし、resolver は
+    # `_common` を import してから git の検査で止まる (外部への送信や lease の操作には進まない)。
+    # guard は lib/ の判定 module を import し、subprocess を起こさずに `bd close` を止める。
+    # audit は lib/graph_envelope を import し、初回の基準化だけをして通す (保護外の tmp/ に台帳を書く)。
     repo = tmp_path / "repo"
     (repo / ".dev-graph").mkdir(parents=True)
     (repo / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
-    payload = json.dumps({"tool_input": {"command": "bd close dg-1"}})
+    payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": "bd close dg-1"}})
+    expected = {"audit-graph-authority-drift.py": 0}
     for command in hook_commands(harness):
         argv = shlex.split(command.replace("${CLAUDE_PLUGIN_ROOT}", str(harness)).replace("${CLAUDE_PROJECT_DIR}", str(repo)))
         # 外側の -B にも頼らない (hooks.json の形は上の静的な test が見る): hook が子に渡す -B と、
@@ -132,6 +135,6 @@ def test_running_every_script_and_hook_leaves_no_bytecode_in_the_harness(tmp_pat
         script_argv = [arg for arg in argv[1:] if arg != "-B"]
         proc = subprocess.run([sys.executable, *script_argv], cwd=tmp_path, env=env, input=payload,
                               capture_output=True, text=True, timeout=60, check=False)
-        assert proc.returncode == 2, (argv, proc.stdout, proc.stderr)  # resolver まで進んで止まった
+        assert proc.returncode == expected.get(Path(script_argv[0]).name, 2), (argv, proc.stdout, proc.stderr)
 
     assert bytecode_entries(harness) == []

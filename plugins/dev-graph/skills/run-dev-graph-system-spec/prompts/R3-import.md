@@ -14,7 +14,7 @@
 ### 入力契約
 
 - confirmed chapters、evaluator PASS、origin lineage、readiness。
-- evaluator の report の `spec_dir` が、取込元の章があるディレクトリに解決すること。解決しないとき (C02 が `invalid_confirmation_evidence` で拒んだときを含む) は、report を手で書き換えず、R2 に戻して evaluator を正しい `--spec-dir` で1回だけ回し直す。それでも解決しなければ FAIL で止め、report の `spec_dir` と渡した `--spec-dir` を添えて、system-spec-harness の契約の課題として報告する。回し直しでも R2 の起動前の cwd の確認を通す。cwd が `DEV_GRAPH_ROOT` と違うこと (`cwd_not_repo_root`) は回し直しの対象にせず、evaluator を起動せずに FAIL で止める。
+- evaluator の report の絶対パス `spec_dir` が、取込元の章の実ディレクトリと一致すること。C02 が `invalid_confirmation_evidence` で拒んだ場合も report を手で書き換えず、R2 の helper を同じ開始時 receipt で通したうえで evaluator を1回だけ回し直す。それでも一致しなければ FAIL とし、report と実引数を添えて契約の課題を報告する。helper の `evaluation_context_invalid` は再評価で回避せず、evaluator を起動しない。
 
 ### 出力契約
 

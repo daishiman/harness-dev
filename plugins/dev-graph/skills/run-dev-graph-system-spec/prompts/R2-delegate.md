@@ -14,15 +14,17 @@
 ### 入力契約
 
 - PASS preflight、spec state、user answers、doc-fetch必要性。
-- elicit・doc-fetch・compile の各委譲の前に、cwd が `DEV_GRAPH_ROOT` と同じ dir か、`CLAUDE_PROJECT_DIR` が空でなければそれも同じ dir かを、1つの Bash の呼出しで確かめる (例: `DEV_GRAPH_ROOT='<開始時の receipt の repo_root>' && [ -n "$DEV_GRAPH_ROOT" ] && [ "$(pwd -P)" = "$(cd "$DEV_GRAPH_ROOT" && pwd -P)" ] && { [ -z "$CLAUDE_PROJECT_DIR" ] || [ "$(cd "$CLAUDE_PROJECT_DIR" && pwd -P)" = "$(cd "$DEV_GRAPH_ROOT" && pwd -P)" ]; }`)。doc-fetch と compile は相対の書き先 (`fetched-references.json`、`--out-dir` の既定の `system-spec`) を cwd から解決するので、cwd が違うと caller repo の外に書く。Bash の呼出しには `CLAUDE_PROJECT_DIR` が渡らないのが普通なので、未設定を不一致として扱わない (扱うと毎回止まる。値は下の項目のとおり、委譲先の呼出しの中で代入する)。exit 0 でなければ委譲せず、`cwd_not_repo_root` で FAIL として止める。
-- elicit・doc-fetch・compile の手順にある Bash の呼出しでは、毎回その呼出しの先頭で `CLAUDE_PROJECT_DIR` に開始時の C24 receipt の `repo_root` の値を書いて export する (例: `export CLAUDE_PROJECT_DIR='<開始時の receipt の repo_root>' && python3 "<elicit の scripts>/apply-spec-transition.py" bootstrap --out "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"`)。elicit の SKILL.md は state の正本を `$CLAUDE_PROJECT_DIR/system-spec/spec-state.json` に置き、cwd に倒すのは slash command だけなので、代入しないと `--out` が `/system-spec/spec-state.json` になる。shell 変数は呼出しをまたいで残らないので、毎回書く (`pwd` や C24 の再実行から作らない)。
+- 開始時の C24 receipt を JSON ファイルとして保存し、`repo_root` と `content_roots.repository` の realpath の一致を確認して固定する。委譲先の読込・fork による cwd の変更を、新しい caller root の根拠にしない。
+- 取込元のstate・出典・章を生成する elicit・doc-fetch・compile の本処理Bashは、毎回先頭で `export CLAUDE_PROJECT_DIR='<開始時の receipt の repo_root>' && cd -- "$CLAUDE_PROJECT_DIR" && [ "$(pwd -P)" = "$CLAUDE_PROJECT_DIR" ] && ...` とし、固定 root への移動・照合が exit 0 の場合だけ実処理へ進む。doc-fetch・compile の相対出力もこれで caller repo 内に置く。移動・照合に失敗したら `cwd_not_repo_root` で停止する。root の値は開始時 receipt から取り、`pwd` や別 cwd での C24 再探索から作らない。shell 変数は呼出しをまたいで残らないため毎回 export する。
+
+- 独立検証用の既存pytestや、canonical moduleを直接呼ぶunit検証は本処理の代替ではない。callerのstate/章/出典をread-onlyにし、書込みを事前に許可された絶対パスのscratch配下だけへ隔離した場合は、そのtest fixture固有のcwdを使える。scratch成果をC05の評価対象・C02の取込元・本処理の実行証拠に流用しない。隔離と非変更を確認できなければ実行しない。本処理を自作driver・compilerへ置換することは禁止する。
 
 ### 出力契約
 
 - elicit/条件付きdoc-fetch/compile/evaluator receiptsとconfirmed artifacts。
-- evaluator は `--spec-dir <repo 相対の system_spec root> --output <repo の中の eval-log/ 配下の report のパス>` で起動する。`--spec-dir` は C24 receipt の system_spec root (resolve 済みの絶対パス) を repo root からの相対パスに直した値にする。report を repo の外に置くと、C02 の `evidence_ref` (repo 相対のパス) で指せない。
-- evaluator の Skill に渡す args は、cwd が `DEV_GRAPH_ROOT` と同じ dir かの確認と同じ1つの Bash の呼出しで、確認が exit 0 のときだけ出力して作る (例: `DEV_GRAPH_ROOT='<開始時の receipt の repo_root>' && [ -n "$DEV_GRAPH_ROOT" ] && [ "$(pwd -P)" = "$(cd "$DEV_GRAPH_ROOT" && pwd -P)" ] && printf -- '--spec-dir %s --output %s\n' "<repo 相対の system_spec root>" "eval-log/<report>.json"`)。その出力をそのまま args にして evaluator を起動し、確認と起動の間に cwd を変える呼出しを挟まない。args を手で書いて起動したり、起動の後に確認したりしない。出力が無いとき (確認が exit 0 でないとき) は evaluator を起動せず、`cwd_not_repo_root` で FAIL として止める。evaluator は相対の `--spec-dir` と `--output` を cwd から解決し、C02 は repo root から解決するので、cwd が違うと別の dir を評価した report を C02 が受け入れうる。`cd` で cwd を移して起動し直さず、R3 の「1回だけ回し直す」の対象にもしない。`DEV_GRAPH_ROOT` が空だと `cd ""` が cwd に留まって一致してしまうので、`-n` の確認を外さない。shell 変数は Bash の呼出しをまたいで残らないので、`DEV_GRAPH_ROOT` には毎回、開始時の C24 receipt の `repo_root` の値をそのまま書く (`pwd` や C24 の再実行から作らない)。
-- evaluator の report の `spec_dir` は、repo root からの相対パス (例: `system-spec`) で、`--spec-dir` に渡した値と同じにする。`(read-only で評価)` のような説明の語やラベルを書き足さない。C02 は相対の `spec_dir` を repo root から解決し、取込元のディレクトリに解決しない report を `invalid_confirmation_evidence` で拒む。
+- evaluator の直前に `python3 -B "<skill root>/scripts/prepare-evaluation.py" --context-receipt "<開始時の C24 receipt の絶対パス>" --output eval-log/system-spec-completeness-report.json` を実行する。helper は receipt の write mode・repo/worktree/common-dir identity・content root を現在の C24 と照合し、repo 外の spec と、`eval-log/` 外・symlink 経由の report を拒否する。検査は読取専用で、exit 0 のときだけ args を含む JSON を返す。
+- evaluator の Skill に渡す args は helper 出力の `skill_args` をそのまま使う。`--spec-dir` と `--output` は検証済み絶対パスなので、起動先の cwd が変わっても別の資料へ解決されない。helper が失敗したら `evaluation_context_invalid` で停止し、手書き args・receipt の書換え・cwd からの root 付替えで回避しない。再評価時も同じ開始時 receipt に対して helper を通す。
+- evaluator の report の `spec_dir` は `--spec-dir` の絶対パスをそのまま格納し、ラベルや説明を混ぜない。C02 はこの絶対パスと取込元の実ディレクトリを照合できる。`evidence_ref` は helper 出力の repo 相対パス、source lineage も repo 相対にする。評価用の絶対パスは当該実走のローカル証跡に限り、別 repo や別 worktree に移して再利用しない。
 
 ### 責務境界
 
@@ -36,7 +38,7 @@
 ## Layer 3: インフラ層
 
 - 使用資産: 4 system-spec-harness Skills。
-- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+- source lineage と node の path は caller repository context からの相対パス。evaluator の起動 args と report の `spec_dir` は、上の境界検証済み絶対パスを当該実走のローカル証跡として保持する。
 
 ## Layer 4: 共通ポリシー層
 
@@ -58,9 +60,9 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 正規Skill呼出しだけでcoverage/source/evaluator gate全PASSになる
-- [ ] elicit・doc-fetch・compile の各委譲の前に、cwd が `DEV_GRAPH_ROOT` と同じ dir か (`CLAUDE_PROJECT_DIR` が空でなければそれも) を確かめている
+- [ ] 取込元を生成する本処理のBashごとに固定rootへの移動・照合をし、独立testの書込みは検証済みscratchだけである
 - [ ] elicit・doc-fetch・compile の手順にある Bash の呼出しで、毎回 `CLAUDE_PROJECT_DIR` に開始時の receipt の `repo_root` を export している
-- [ ] evaluator の args を、cwd の確認と同じ呼出しが exit 0 で出力した行から作り、その後に起動している (出力が無ければ起動せず `cwd_not_repo_root` で止めている)
+- [ ] evaluator の args は helper の成功出力の `skill_args` で、失敗時には起動していない
 - [ ] evaluator の report の `spec_dir` が、`--spec-dir` に渡したディレクトリ (取込元の章があるディレクトリ) に解決する
 - [ ] 出力を作った委譲先ごとに、その SKILL.md と責務 prompt を全文読んでいる
 

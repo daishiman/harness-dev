@@ -21,7 +21,7 @@ owner: team-platform
 | 条件 | PASS の必要十分 | FAIL シグナル | 主な機械根拠 |
 |---|---|---|---|
 | **C1 矛盾なし** | task 群・inventory・graph・handoff が相互に矛盾せず、feature-context の goal/scope と齟齬しない。単一 `parent_feature`/`feature_package` に束縛。 | phase 間で相反する acceptance / scope 逸脱 / parent_feature 不一致 | validate: single-parent/package 検査, 意味: 章跨り整合 |
-| **C2 漏れなし** | P01..P13 の exact-set (各 1 件・14 件目なし) が揃い、`task_count==13`、placeholder (TODO 等) 0、必須フィールド充足。 | phase 欠落 / 重複 / task_count≠13 / placeholder 残置 / required field 欠落 | validate: exact-set/count/placeholder/inventory-schema |
+| **C2 漏れなし** | P01..P13 の exact-set (各 1 件・14 件目なし) が揃い、`task_count==13`、placeholder (TODO 等) 0、必須フィールド充足。加えて feature が宣言する上流 `qa-NNN` が `spec-state.json` に登録され、goal-spec と P01..P13 全件へ確認済み回答の各要件見出しまで意味として反映される。 | phase 欠落 / 重複 / task_count≠13 / placeholder 残置 / required field 欠落 / QA 未登録 / tag・lineage だけで goal または task の意味被覆がない | validate: exact-set/count/placeholder/inventory-schema/qa-ref-unregistered/qa-semantic-coverage/qa-task-trace、意味: 確認済み QA 要件の全 phase 被覆 |
 | **C3 整合性あり** | 命名・phase_ref・task_spec_paths が正本 (`system-plan-phase-names.md`) と一致し、workstream 語彙が schema enum 内。 | phase 名 drift / task path 不一致 / 語彙 enum 外 | validate: PHASES/TASK_PATHS 照合, 意味: 命名規約 |
 | **C4 依存関係整合** | intra-feature DAG が前方・非循環で、node/edge が実在 task を指し、source_lineage が接地。 | 循環 / dangling 参照 / 逆向き辺 / lineage 不在 | validate: DAG acyclic/node 実在 |
 

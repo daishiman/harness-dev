@@ -1,0 +1,23 @@
+{
+  "skill": "run-dev-graph-schedule",
+  "original_goal": "グラフの依存関係・完了状態・active worktree leaseから次に着手すべきready-setと、リソーススコープ/lease重複のない複数worktree向け並列バッチを算出・提示した状態になっている",
+  "original_goal_hash": "d0041ddebcc8144ed4c7a8f0f69d0ab279eed66f40807119d91a716b54e32ca6",
+  "inputs": {
+    "repo_root": ".",
+    "max_parallel": 4,
+    "scope": null
+  },
+  "checklist": [
+    "C1 candidate eligible (confirmed/pass/readiness complete, all depends_on done, no active lease)",
+    "C2 feature ready and task ready separate",
+    "C3 batch resource_scope.touches overlap 0",
+    "C4 suggested_branch devgraph/<id> and public claim command",
+    "C5 graph/tracker/lease digest unchanged"
+  ],
+  "criteria": [
+    "IN1",
+    "OUT1",
+    "OUT2",
+    "OUT3"
+  ]
+}

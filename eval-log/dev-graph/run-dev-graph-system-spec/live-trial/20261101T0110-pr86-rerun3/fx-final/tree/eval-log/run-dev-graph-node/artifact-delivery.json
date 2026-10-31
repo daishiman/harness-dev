@@ -1,0 +1,37 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "invoked_by": "dev-graph:run-dev-graph-system-spec R3-import",
+  "transitions": [
+    {
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "guards": {
+        "parse_open": "receipt/graph JSON parse ok, markdown open ok",
+        "secret": "writer secret check passed (status applied)",
+        "irreversible": "local fixture only, no external write",
+        "corrupt": "validate-graph-schema.py --strict-artifact-readiness exit0 (0 violations); validate-source-lineage.py exit0 checked=2"
+      }
+    },
+    {
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "artifacts": [
+        {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "c0d012f515dee087e7369c2c28ca1c85fb8275ea0a88c086a2972727d7a0b8c3", "open_with": "Read (JSON)"},
+        {"path": "specs/billing-audit-system-spec.md", "sha256": "b3425db5d1363483d94d98c98a691c7df7979abde5df9b58ca03cba803c34304", "open_with": "Read (Markdown)"},
+        {"path": "architecture/billing-audit-system-architecture.md", "sha256": "b5bb1215037a03fc9c605e6ba22715ccc61095a701c7565d6357d866a517d7c8", "open_with": "Read (Markdown)"},
+        {"path": ".dev-graph/state/graph.json", "sha256": "bb32b0d462b01fe9a096555d4e96da9fb52b6a6fdc4dfc68a58177fd37a62ff7", "open_with": "Read (JSON)"}
+      ]
+    },
+    {
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "source": "isolated fixture pre-answer contract (task.md: artifact_delivery=standard)"
+    },
+    {"event": "standard", "to": "semantic_evaluator_started"},
+    {"event": "improvement_complete", "to": "handoff_complete", "evidence": "dev-graph-integrity-auditor PASS (graph_digest sha256:ea3dd5c6...); goal-seek check exit0; progress overall PASS"}
+  ],
+  "state": "handoff_complete",
+  "recorded_at": "2026-10-31T17:01:42Z"
+}

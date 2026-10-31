@@ -1,0 +1,21 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "invoked_by": "run-dev-graph-system-spec R2-delegate (loop 1, conditional doc-fetch judgement)",
+  "artifact": "system-spec/fetched-references.json",
+  "artifact_sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+  "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec96/fx/system-spec/fetched-references.json",
+  "prompts_read_in_full": ["R1-identify.md", "R2-fetch.md", "R3-record.md", "R4-audit-doc-freshness.md"],
+  "R1_identify": {"targets": ["postgres", "react", "fastapi", "typescript"], "source": "spec-state.targets[]", "duplicates": 0, "discovered_knowledge_candidates": 0, "note": "k8s-workload-observability is status=deepened (already qualified with official kubernetes.io source_refs); no qualification target"},
+  "minimum_guards": {
+    "json_parse": "ok",
+    "validate-source-citation (IN1)": "exit 0",
+    "evidence_sha256 vs retrieval-evidence bytes": "4/4 match"
+  },
+  "fetch_required": false,
+  "fetch_decision_reason": "Every target has exactly one record with official host, version, real retrieved_at/latest_checked_at (2026-10-31) and digest-bound evidence; IN1 passes; no missing/invalid record and no discovered candidate. Per Key Rule 6 semantic freshness is C08 (OUT1) responsibility, run under the completeness evaluator.",
+  "writer_invoked": false,
+  "transitions": ["artifact_created->minimal_guard_passed", "minimal_guard_passed->artifact_presented", "artifact_presented->user_choice_recorded", "user_choice_recorded--standard-->semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)"
+}

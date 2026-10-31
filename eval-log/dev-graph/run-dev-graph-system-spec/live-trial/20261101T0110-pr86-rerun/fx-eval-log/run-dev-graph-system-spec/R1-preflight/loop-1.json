@@ -1,0 +1,49 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "decision": "PASS",
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {
+    "path": "eval-log/system-spec-c24-receipt.json",
+    "sha256": "f64cd743daac1217d324c09cfc8b0a57f63d580a38cdfb3edfe463bb46c2ac62",
+    "head_sha": "abfd84085a4e381bffff8608141bcbb7ffbd7fcf"
+  },
+  "plugin": {
+    "name": "system-spec-harness",
+    "version": "0.1.24",
+    "manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "manifest_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994",
+    "manifest_keys": ["name", "version", "dependencies", "description", "author"],
+    "harness_specific_keys_in_manifest": []
+  },
+  "version_range": {
+    "source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "source_sha256": "101ad568b33b37d4e27b9617a02819069797bfee2154cc0e518aecb2a5f74540",
+    "range": ">=0.1.22 <1.0.0",
+    "planning_value_not_used": ">=0.1.0 <1.0.0",
+    "satisfied": true
+  },
+  "entry_points": {
+    "contract": "plugins/system-spec-harness/references/package-contract.json#entry_points.skills",
+    "contract_sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486",
+    "required": [
+      {"name": "run-system-spec-elicit", "in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md", "exists": true, "frontmatter_name_match": true},
+      {"name": "run-system-spec-doc-fetch", "in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md", "exists": true, "frontmatter_name_match": true},
+      {"name": "run-system-spec-compile", "in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md", "exists": true, "frontmatter_name_match": true},
+      {"name": "assign-system-spec-completeness-evaluator", "in_contract": true, "skill_md": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md", "exists": true, "frontmatter_name_match": true}
+    ],
+    "all_available": true
+  },
+  "checklist": {
+    "common_inputs_verified": true,
+    "common_output_shape_and_authority": true,
+    "common_zero_boundary_violations": true,
+    "r1_version_in_range_and_4_entry_points_exist": true
+  },
+  "blockers": [],
+  "original_goal": "system-spec-harness version is in the plugin-composition.yaml range and has the 4 required entry points; fail-closed without fallback otherwise",
+  "delta_from_original": "none",
+  "merged_directive_for_next": "hand off PASS to R2 with this receipt digest",
+  "drift_signal": false
+}

@@ -88,7 +88,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/scripts/promote-system-plan.py" \
   --findings .dev-graph/state/<plan-findings>.json
 ```
 
-C11 は全条件 PASS、same digest、C14 handoff の owner 宣言に加え、C13 active lock の repository/run/session/feature/digest/TTL を書込み前に再検証し、同じ filesystem 内でのみ atomic rename します。lock 不在・owner 不一致・期限切れでは promotion/recovery とも exit 2 で停止します。成功すると published generation に C11 所有の immutable promotion receipt と dev-graph registration request を置き、repo-local `current.json` を atomic replace します。all-or-none registration receipt のdev-graph C02が所有し、C14/C11はそれを自己発行しません。通常の `plan` 実行では C01 が finally 相当の終了処理を所有し、成否にかかわらず C13 `release` を呼びます。個別診断で C11 を直接呼び出した場合は、呼出元が同じ owner 引数で `release` を必ず実行します。
+C11 は全条件 PASS、same digest、C14 handoff の owner 宣言に加え、C13 active lock の repository/run/session/feature/digest/TTL を書込み前に再検証し、同じ filesystem 内でのみ atomic rename します。lock 不在・owner 不一致・期限切れでは promotion/recovery とも exit 2 で停止します。成功するとdigest由来published generationに C11 所有の immutable promotion receipt と dev-graph registration request を置き、repo-localのfeature別`current/<package>.json`と互換用`current.json` を atomic replace します。source drift時は旧generation/receiptを保存し、新receiptの`supersedes`が直前世代を指します。all-or-none registration receipt はdev-graph C02が所有し、C14/C11はそれを自己発行しません。通常の `plan` 実行では C01 が finally 相当の終了処理を所有し、成否にかかわらず C13 `release` を呼びます。個別診断で C11 を直接呼び出した場合は、呼出元が同じ owner 引数で `release` を必ず実行します。
 
 ## Resume and rollback
 

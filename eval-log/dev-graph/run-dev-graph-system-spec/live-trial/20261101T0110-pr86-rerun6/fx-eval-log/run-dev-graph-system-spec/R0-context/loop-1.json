@@ -1,0 +1,31 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent (separate context)",
+  "loop": 1,
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "directive_for_this_loop": "verify R0 containment and lineage gate; decide new vs resume from checked",
+  "checks": [
+    {"command": "shasum -a 256 eval-log/c24-receipt.json", "exit": 0, "observation": "0278bae1639cf6a4c8102d02fc0ad34bc6a23a9d3ceca0e7e607a4660cd195bb (matches fixed receipt hash; unchanged after verification)"},
+    {"command": "python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root <repo_root> --mode read", "exit": 0, "observation": "repository_id, git_common_dir, repo_root, worktree_id, head_sha, content_roots.system_spec all equal to fixed receipt; only differing key is mode (read vs write). Output captured to $TMPDIR, receipt not overwritten."},
+    {"command": "git rev-parse --git-common-dir --show-toplevel", "exit": 0, "observation": ".git / repo_root, consistent with receipt"},
+    {"command": "realpath/islink system-spec; find system-spec -type l; realpath of every file under system-spec", "exit": 0, "observation": "system-spec is a real directory (not symlink) at <repo_root>/system-spec; 0 symlinks; 16 files, all realpaths inside <repo_root>/system-spec/"},
+    {"command": "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <repo_root>", "exit": 0, "observation": "status=pass, checked=0, checked_node_ids=[], violations=[]; graph .dev-graph/state/graph.json has graph_revision 0 and nodes []"},
+    {"command": "compare with eval-log/run-dev-graph-system-spec-preflight-report.json", "exit": 0, "observation": "parent preflight R0 (containment=true, lineage checked=0, mode=new_import) consistent with independent results"}
+  ],
+  "decision": {"mode": "new_import", "basis": "lineage gate exit 0 with checked=0"},
+  "checklist": [
+    {"item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる", "result": "YES"},
+    {"item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた", "result": "YES", "evidence": "exit 0, checked=0 -> new_import"},
+    {"item": "宣言した入力が全て検証済みである", "result": "YES", "evidence": "caller context (C24 receipt hash + read-mode re-resolution), repo-local system-spec root (containment), plugin source (plugin_source inside repo)"},
+    {"item": "出力が宣言した shape と authority を満たす", "result": "YES", "evidence": "receipt separates repository identity (repository_id/git_common_dir/worktree_id), content_roots, plugin_source/local_state_paths"},
+    {"item": "責務境界に反する read/write/delegation が0件である", "result": "YES", "evidence": "no reads outside repo; only write is this loop record; no delegation"}
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": ["receipt diagnostics include default_branch_fallback_main (non-blocking)"],
+  "delta_from_original": "none; R0 precondition for goal satisfied",
+  "merged_directive_for_next": "proceed to R1 with C24 receipt (sha256 0278bae1...) as new_import",
+  "drift_signal": "none"
+}

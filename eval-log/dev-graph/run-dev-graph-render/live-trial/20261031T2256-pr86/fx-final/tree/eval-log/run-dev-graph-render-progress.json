@@ -1,0 +1,36 @@
+{
+  "skill": "run-dev-graph-render",
+  "loop": 1,
+  "checklist": {
+    "input_schema_pass_output_in_repo": {
+      "status": "PASS",
+      "evidence": "C24 rc0 repo_root==content_roots.repository; C11 valid violations=0; output realpath fx/.dev-graph/render/index.html (R1)"
+    },
+    "render_model_counts_match": {
+      "status": "PASS",
+      "evidence": "nodes15 edges12 LT-FEATURE-001 5/13 == graph parent_feature/done counts (R2)"
+    },
+    "zero_external_refs_svg_inline_js": {
+      "status": "PASS",
+      "evidence": "external refs 0; inline svg 1, script 2 (R2,R3)"
+    },
+    "receipt_digests_match": {
+      "status": "PASS",
+      "evidence": "input_sha256 2ed57eab..fd0b, output_sha256 c4bf5ed6..b838 == files (R3)"
+    },
+    "receipt_checks_problems_empty": {
+      "status": "PASS",
+      "evidence": "LT-FEATURE-001 problems/missing/extra/digest_mismatch empty, expected=actual=13, source_digest d85dfa3d..7e84"
+    },
+    "browser_live_trial": {
+      "status": "PASS",
+      "evidence": "chrome-headless-shell --single-process --headless=new screenshot browser-trial/shot.png shows SVG + 'feature · 5/13'; dump-dom svg1 path12; net-log 0 requests"
+    }
+  },
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS"
+  },
+  "determinism": "PASS: 3 renders sha256 c4bf5ed6a687d824cfd30f3ffb5c87f530d05ac645370b836c78bc180d7eb838",
+  "graph_unchanged": "graph.json sha256 2ed57eab... before/after"
+}

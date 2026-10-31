@@ -1,0 +1,74 @@
+{
+  "skill": "run-dev-graph-node",
+  "dry_run": true,
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 3,
+    "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0"
+  },
+  "writer_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "C24 --mode write: repo_root == content_roots.repository; input .dev-graph/cache/decompose-input/c02-input.json は repo 内; repository_id 一致"
+    },
+    {
+      "id": "classification",
+      "status": "not_applicable",
+      "evidence": "verb=add, decision=c14_macro_contract (C14 macro feature のみ)"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "pre_write_validation findings 0; auditor が予定 graph violation 0、現 graph violation 0"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add (register-package 起動なし)"
+    },
+    {
+      "id": "receipt",
+      "status": "not_applicable",
+      "evidence": "--dry-run: preview graph_revision_after=4, node_ids=[feature-lt-render-diff, feature-lt-render-diff-summary], write_count 0; graph canonical digest sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0 が preview 前後で不変"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live trial"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+    "loops": [
+      {
+        "loop": 1,
+        "verdict": "FAIL",
+        "reason": "planned_nodes 骨格を重ねたため予定 graph を判定不能"
+      },
+      {
+        "loop": 2,
+        "verdict": "PASS"
+      }
+    ]
+  }
+}

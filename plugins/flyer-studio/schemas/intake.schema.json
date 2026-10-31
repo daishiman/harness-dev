@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "intake.schema.json",
+  "title": "ヒアリング記録 <project>/intake.json",
+  "description": "scripts/intake.cjs の apply が書く。キーは質問の briefPath（brief 内の場所を表す JSON pointer。例 /purpose/audience）か、brief に書かない質問の 'intake.<質問 id>'。案件フォルダにだけ置き、plugin の中へ保存しない（E3）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "originalRequest", "preset", "rounds", "answers", "unresolved", "skipped"],
+  "definitions": {
+    "key": { "type": "string", "pattern": "^(/[A-Za-z0-9_-]+)+$|^intake\\.[a-z][a-z0-9-]*$" }
+  },
+  "properties": {
+    "version": { "const": 1 },
+    "originalRequest": { "type": "string", "description": "最初の依頼文。2 回目以降の回答で変えない。" },
+    "preset": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "rounds": { "type": "integer", "minimum": 1, "description": "intake-apply を実行した回数（一括回答 1 回 = 1 ラウンド）。" },
+    "answers": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/key" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "source", "round"],
+        "properties": {
+          "value": {},
+          "source": {
+            "enum": ["answer", "document", "preset-reconfirmed", "placeholder", "proposal"],
+            "description": "answer=今回の回答、document=今回の資料、preset-reconfirmed=preset の前回値を今回の値として書き直したもの、placeholder=仮置き（brief へ書かない）、proposal=様式提案（style-proposals.json）から選んだもの。"
+          },
+          "round": { "type": "integer", "minimum": 1, "description": "その回答を最後に受け取ったラウンド。" },
+          "note": { "type": "string", "description": "変更理由などの補足。" }
+        }
+      }
+    },
+    "unresolved": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/definitions/key" } },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "reason"],
+        "properties": {
+          "path": { "$ref": "#/definitions/key" },
+          "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
+        }
+      }
+    }
+  }
+}

@@ -19,7 +19,7 @@ staged package を変更せず、生成者と独立した context で C1-C4、di
 ## Layer 2: ドメイン定義層
 
 - C1: 矛盾なし。
-- C2: 漏れなし。
+- C2: 漏れなし。feature が宣言する上流 qa 要件 (features/<parent>.md tags の qa-NNN) は tag/lineage の一致だけで充足と見なさず、spec-state qa_log への登録・goal-spec の purpose/goal/scope/acceptance への意味反映・P01〜P13 全 task spec への trace (C12 の qa-ref-unregistered / qa-semantic-coverage / qa-task-trace) を semantic coverage として判定する。さらに、確認済み回答の各要件見出し（例: マクロ構造、外側ループ、内側ループ、スコープ分離、情報配置、書き戻し、既存保全）が goal と P01〜P13 全件の実行内容・受け入れ条件へ意味として反映されていることを確認する。
 - C3: 整合性あり。
 - C4: 依存関係整合。
 - 入力: staging manifest、C12 report、goal-spec、exact-13 artifacts。

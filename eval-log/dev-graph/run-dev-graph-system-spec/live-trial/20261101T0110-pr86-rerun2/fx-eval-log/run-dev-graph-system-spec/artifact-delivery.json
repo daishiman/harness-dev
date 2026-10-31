@@ -1,0 +1,11 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "transitions": [
+    {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "C24 receipt parse ok, repo_root==realpath(content_roots.repository), system_spec under repo_root, secret hits 0, R0 lineage gate exit 0 checked=0"},
+    {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented", "artifact": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "614249d9c0b2d1c53fb993adcf20cd38ef180e636b2bc25b5304dd41db32d524", "open_with": "cat eval-log/run-dev-graph-system-spec/c24-receipt.json"}},
+    {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "isolated fixture pre-answer contract (task.md: artifact_deliveryの選択はstandard); not an approval of this repo or external accounts"},
+    {"from": "user_choice_recorded", "event": "standard", "to": "semantic_evaluator_started"}
+  ],
+  "current_state": "semantic_evaluator_started"
+}

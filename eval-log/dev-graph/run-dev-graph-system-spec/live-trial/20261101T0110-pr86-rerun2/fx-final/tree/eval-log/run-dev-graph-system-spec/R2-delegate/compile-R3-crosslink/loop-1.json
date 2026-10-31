@@ -1,0 +1,21 @@
+{
+  "agent": "run-system-spec-compile/R3-crosslink",
+  "loop": 1,
+  "checked_at": "2026-11-01",
+  "target": "system-spec/index.md",
+  "checklist": [
+    {"item": "index の先頭リンクが要件定義書を指す", "result": "YES", "evidence": "index.md の最初の Markdown link は ./00-requirements-definition.md (要件定義書 (上位概念・憲法) 節、確定マーカー confirmed)"},
+    {"item": "全カテゴリ章が index に一度ずつ存在する", "result": "YES", "evidence": "spec-state.json categories 8 件 (database, auth, ui-ux, security, infrastructure, backend, frontend, maintenance-ops) が章一覧表に各 1 行ずつ (出現回数すべて 1)"},
+    {"item": "全章リンクが実在ファイルを指す", "result": "YES", "evidence": "index 内 9 リンク (00-requirements-definition.md + 8 章) は system-spec/ 配下に全て存在 (os.path.exists すべて True)"},
+    {"item": "index の集約状態が章 frontmatter と一致する", "result": "YES", "evidence": "8 章すべて index の集約状態 = frontmatter aggregate = 確定; spec-state.json category_aggregate とも一致 (maintenance-ops 含め全て 確定)"},
+    {"item": "index の serves_goals が章 frontmatter と一致する", "result": "YES", "evidence": "database G1, auth G1, ui-ux G2, security G1, infrastructure G1 G2, backend G1 G2, frontend G2, maintenance-ops G1 — 全て frontmatter serves_goals と一致"},
+    {"item": "4種類の集約状態サマリが存在する", "result": "YES", "evidence": "集約状態サマリ節に 未着手(—) / 収集中(—) / 確定(8 カテゴリ) / 対象外(—) の 4 行"},
+    {"item": "未割当出典が全体出典節に存在する", "result": "YES", "evidence": "fetched-references.json 4 件の target は spec-state.json targets で全て割当済み: postgres→database, react→frontend, typescript→frontend, fastapi→backend(+also_categories frontend)。各章の出典表 (database.md:264, frontend.md:238-240, backend.md:289) に表示済み。未割当 0 件で、index の全体ドキュメント出典節は『全ての取得済みドキュメントは各章へ割り当て済み』と明記 — 真である"}
+  ],
+  "overall": "PASS",
+  "blockers": [],
+  "original_goal": "収集済み spec-state.json と取得済み fetched-references.json・設計知識参照が、上位概念へトレース可能な要件定義書 + 章別 Markdown + index.md の仕様書ドキュメントセットへ、決定論的に組み上がっている",
+  "delta_from_original": "R3-crosslink 範囲での差分なし。index は要件定義書を先頭に全 8 章・集約状態・serves_goals・出典割当を章 frontmatter / spec-state.json と一貫して示す。fixture (expected-index.md) との差分は入力データ由来のみ (U1 文言、infrastructure の serves_goals G1 G2、maintenance-ops が 対象外→確定/G1) で構造は同形。",
+  "merged_directive_for_next": "R3-crosslink は完了。再コンパイル時は同一入力から同一 index が出ること (決定論) を確認し、章 frontmatter・category_aggregate・targets 割当の変更時に本チェックリストを再実行すること。",
+  "drift_signal": "none"
+}

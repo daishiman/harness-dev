@@ -34,6 +34,11 @@
             "command": "python3 -B \"${PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"$(git -C \"${PWD}\" rev-parse --show-toplevel 2>/dev/null || printf '%s' \"${PWD}\")\"",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/audit-graph-authority-drift.py\" --repo-root \"$(git -C \"${PWD}\" rev-parse --show-toplevel 2>/dev/null || printf '%s' \"${PWD}\")\"",
+            "timeout": 10
           }
         ]
       }

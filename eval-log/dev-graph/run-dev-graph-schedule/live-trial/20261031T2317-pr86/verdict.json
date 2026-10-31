@@ -1,0 +1,163 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-schedule",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/schedule86/fx --max-parallel 4",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "d489a3e3682801c6404bc3e754d877cc42117cf25f1eb698bf09d24e08b73a1a",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/fresh_verify_schedule_sys"
+    },
+    "transcript_sha256": "e38ef44cf896421025fd944291f9cf4fe24d247fc8dcbe9c4e28270d90b34a6f",
+    "evidence_refs": [
+      "task.md",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-eval-log/dev-graph/run-dev-graph-schedule/schedule.json",
+      "fx-eval-log/dev-graph/run-dev-graph-schedule/leases.json",
+      "transcript.jsonl#L59",
+      "transcript.jsonl#L123",
+      "transcript.jsonl#L148",
+      "transcript.jsonl#L163",
+      "transcript.jsonl#L182",
+      "transcript.jsonl#L184",
+      "transcript/subagents/agent-a3be3d6884a9fcee0.jsonl#L42",
+      "transcript/subagents/agent-a58fe01f50d2daeb9.jsonl#L25",
+      "fx-eval-log/run-dev-graph-schedule-artifact-delivery.json",
+      "fx-eval-log/run-dev-graph-schedule-goal-spec.json",
+      "fx-eval-log/run-dev-graph-schedule-progress.json",
+      "fx-eval-log/run-dev-graph-schedule-intermediate.jsonl",
+      "transcript.jsonl#L222",
+      "transcript.jsonl#L238",
+      "transcript.jsonl#L249",
+      "transcript.jsonl#L264",
+      "out/status.json",
+      "evidence-redaction.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-schedule"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "a5d815bab2c9ed7562bdae06b0690ae4fd25e4ce6de0d410e9fe3c567ff3068d",
+  "transcript_sha256": "e38ef44cf896421025fd944291f9cf4fe24d247fc8dcbe9c4e28270d90b34a6f",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 418.0
+  },
+  "scenario_id": "schedule-positive-ready-set-fixture-standard-v2",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "schedule-positive-ready-set-fixture-standard-v2",
+    "required_observations": [
+      "every recommended task has all depends_on satisfied (ready)",
+      "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+      "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+      "suggested_branch and the worktree claim command are unique per recommended task"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "every recommended task has all depends_on satisfied (ready)",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 2,
+        "observation": "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+        "evidence_ref": "fx-eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      },
+      {
+        "index": 4,
+        "observation": "suggested_branch and the worktree claim command are unique per recommended task",
+        "evidence_ref": "fx-eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "template_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 418.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "4c34a0e2ee4645f90118894f92144827273950135d5e8f73325d169f629fb6d0",
+      "tokens": {
+        "input_tokens": 124,
+        "cache_creation_input_tokens": 162198,
+        "cache_read_input_tokens": 2541284,
+        "output_tokens": 33600,
+        "total_tokens": 2737206,
+        "assistant_messages": 57,
+        "assistant_message_ids": 57,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 5,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

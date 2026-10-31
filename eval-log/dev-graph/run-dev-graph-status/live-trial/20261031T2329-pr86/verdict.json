@@ -1,0 +1,159 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-status",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/status86/fx --id task-lt-task-001",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "4ef865db001f52f5a9c6c4d6f8429b54a6e05de1e3f94ef5ec512c0079a19737",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/fresh_verify_status"
+    },
+    "transcript_sha256": "4c58f02c618c5c68ac5ebe8ed03baaf594b38a4cfe87b4560a430e2a0dacf756",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl#L40",
+      "transcript.jsonl#L59",
+      "transcript.jsonl#L155",
+      "transcript.jsonl#L173",
+      "transcript.jsonl#L262",
+      "transcript.jsonl#L283",
+      "transcript.jsonl#L294",
+      "transcript.jsonl#L307",
+      "transcript.jsonl#L316",
+      "transcript.jsonl#L335",
+      "transcript.jsonl#L352",
+      "transcript/subagents/agent-a43b987c46bccc369.jsonl#L28",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-eval-log/run-dev-graph-status-report.json",
+      "fx-eval-log/run-dev-graph-status-goal-spec.json",
+      "fx-eval-log/run-dev-graph-status-progress.json",
+      "fx-eval-log/run-dev-graph-status-intermediate.jsonl",
+      "fx-eval-log/run-dev-graph-status-artifact-delivery.json",
+      "stub-calls.log",
+      "evidence-redaction.json",
+      "plugins-copy.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-init",
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-status"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "24c06deb13e43c0581439c3df09eec097ae821afaa2a1a5d82307ee9b8943b00",
+  "transcript_sha256": "4c58f02c618c5c68ac5ebe8ed03baaf594b38a4cfe87b4560a430e2a0dacf756",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 412.0
+  },
+  "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2",
+    "required_observations": [
+      "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+      "C11 validate-graph-schema exits 0 on the queried graph",
+      "the graph digest is unchanged across the status run and GitHub/Beads writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 2,
+        "observation": "C11 validate-graph-schema exits 0 on the queried graph",
+        "evidence_ref": "transcript.jsonl#L352"
+      },
+      {
+        "index": 3,
+        "observation": "the graph digest is unchanged across the status run and GitHub/Beads writes are 0",
+        "evidence_ref": "transcript.jsonl#L307"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --id task-lt-task-001",
+      "template_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 8000000,
+      "max_wall_clock_s": 1800
+    },
+    "resource_usage": {
+      "wall_clock_s": 412.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "fad8060be101c0d608475804bd6bece39df0e4bd18eba0b9a5f18ecc2fc0dfd5",
+      "tokens": {
+        "input_tokens": 124,
+        "cache_creation_input_tokens": 174092,
+        "cache_read_input_tokens": 3446739,
+        "output_tokens": 29693,
+        "total_tokens": 3650648,
+        "assistant_messages": 56,
+        "assistant_message_ids": 56,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 4,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

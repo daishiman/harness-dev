@@ -1,0 +1,138 @@
+{
+  "root_resolution": {
+    "host_skill_path": "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/flyer-studio/skills/run-intake-flyer/SKILL.md",
+    "initial_cwd": "/tmp/pr86-flyer-content-review",
+    "resolved_root": "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/flyer-studio",
+    "equals_stage_common": true,
+    "manifest_names": {
+      ".codex-plugin/plugin.json": "flyer-studio",
+      ".claude-plugin/plugin.json": "flyer-studio"
+    },
+    "name_checked_by_review": true,
+    "name_check_required_by_skill_text": true,
+    "invalid_or_mismatch_stops_script_required_by_skill_text": true
+  },
+  "agent_alternative_mapping": [
+    {
+      "agent": "flyer-color-reviewer",
+      "declared": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "actual_manifest_users": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "matches": true,
+      "lens_criteria": [
+        "color",
+        "integration"
+      ]
+    },
+    {
+      "agent": "flyer-composition-reviewer",
+      "declared": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "actual_manifest_users": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "matches": true,
+      "lens_criteria": [
+        "balance",
+        "spacing"
+      ]
+    },
+    {
+      "agent": "flyer-typography-reviewer",
+      "declared": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "actual_manifest_users": [
+        "assign-flyer-analysis-evaluator",
+        "assign-flyer-evaluator",
+        "run-analyze-flyer",
+        "run-create-flyer"
+      ],
+      "matches": true,
+      "lens_criteria": [
+        "hierarchy"
+      ]
+    }
+  ],
+  "manifests": [
+    {
+      "skill": "run-analyze-flyer",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "run-learn-flyer",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "run-intake-flyer",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "assign-flyer-analysis-evaluator",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "assign-flyer-evaluator",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "run-create-flyer",
+      "missing_resource_paths": [],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    },
+    {
+      "skill": "run-skill-feedback",
+      "missing_resource_paths": [
+        "scripts/notion-submit-improvement.py",
+        "plugins/harness-creator/scripts/notion_config.py",
+        "scripts/lint-feedback-protocol.py",
+        "doc/notion-schema/improvement-request.schema.json",
+        "doc/notion-schema/skill-list.schema.json",
+        "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+        "plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md"
+      ],
+      "unknown_phase_dependencies": [],
+      "acyclic": true
+    }
+  ],
+  "runtime_help": {
+    "command": [
+      "python3",
+      "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/flyer-studio/scripts/build-flyer.py",
+      "help"
+    ],
+    "cwd": "/tmp/pr86-flyer-content-review",
+    "exit_code": 1,
+    "claim": "自己相対backendには到達したがajv未導入で停止。実行成功・host trialの証拠ではない。ルート追加ではなく既存環境の依存不足。"
+  }
+}

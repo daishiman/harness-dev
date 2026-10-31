@@ -1,0 +1,348 @@
+{
+  "evaluator": {
+    "name": "assign-system-spec-completeness-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "spec_dir": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/system-spec",
+  "verdict": "PASS",
+  "artifact_snapshot": {
+    "schema_version": "system-spec-artifact-snapshot/v1",
+    "artifacts": {
+      "system-spec/00-requirements-definition.md": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402",
+      "system-spec/auth.md": "21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897",
+      "system-spec/backend.md": "8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466",
+      "system-spec/database.md": "3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de",
+      "system-spec/fetched-references.json": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+      "system-spec/frontend.md": "10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5",
+      "system-spec/index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+      "system-spec/infrastructure.md": "d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd",
+      "system-spec/maintenance-ops.md": "d244629b650c8183ec165deada6f8dcd6da23117e51249542552364b5c471f28",
+      "system-spec/security.md": "c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1",
+      "system-spec/spec-state.json": "3e8000f400da9b84820b7ae40538fb2d84adf3c335bc34e2ea1bca48ac22a377",
+      "system-spec/ui-ux.md": "420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410"
+    }
+  },
+  "audit_delegations": [
+    {
+      "aspect": "matrix_coverage",
+      "role": "primary",
+      "auditor": "system-spec-matrix-auditor",
+      "component": "C07",
+      "dispatch": {
+        "tool": "Agent",
+        "subagent_type": "system-spec-matrix-auditor",
+        "session_id": "c66e80ab-3e57-4f9a-9d5f-dddfa25b0259",
+        "tool_use_id": "toolu_01HkpGa75oirYN7zDunDtqCx",
+        "response_sha256": "8aaf9f59a7c40e287a1419b6273b8d3b0b16a5695108deb2f8ce7339d35dd190"
+      },
+      "verdict": "PASS",
+      "evidence": [
+        "validate-coverage-matrix.py loop / --require-complete 両 exit 0 (auditor 自身が実行)",
+        "48 セル: 未収集 0 / 対象外 40 (appr-001 + qa-000) / 確定 8 (全 web 列、qa_ref は qa_log に実在)",
+        "category_aggregate 不一致 0・宣言欠落 0、platform 欠落 0、final_ready=PASS"
+      ]
+    },
+    {
+      "aspect": "matrix_coverage",
+      "role": "sub_input",
+      "auditor": "system-spec-hearing-auditor",
+      "component": "C06",
+      "dispatch": {
+        "tool": "Agent",
+        "subagent_type": "system-spec-hearing-auditor",
+        "session_id": "c66e80ab-3e57-4f9a-9d5f-dddfa25b0259",
+        "tool_use_id": "toolu_01CGfVLqPcxYj7Xpjta88gex",
+        "response_sha256": "5856cdd192e78ba18af0689dea645aacc63cd6d57fd272c0f7cc0b6db51d8ea5"
+      },
+      "verdict": "PASS",
+      "evidence": [
+        "R6 監査 5 軸: 軸1=0 / 軸2=3 / 軸3=0 / 軸4=1 / 軸5=1、high=0",
+        "aggregate-completeness.py --hearing eval-log/hearing-audit.json --state system-spec/spec-state.json => verdict PASS, blocking []",
+        "閉じた検出 1 件 (qa-009 → qa-019)"
+      ]
+    },
+    {
+      "aspect": "doc_freshness",
+      "role": "primary",
+      "auditor": "system-spec-doc-freshness-auditor",
+      "component": "C08",
+      "dispatch": {
+        "tool": "Agent",
+        "subagent_type": "system-spec-doc-freshness-auditor",
+        "session_id": "c66e80ab-3e57-4f9a-9d5f-dddfa25b0259",
+        "tool_use_id": "toolu_01ACTD7R4rtWSJgngTm1eJqG",
+        "response_sha256": "ebcdd289a219e19e876bd386d39187508c22b2857f2681c1889509d42afae569"
+      },
+      "verdict": "PASS",
+      "evidence": [
+        "形式層 validate-source-citation.py exit 0 (auditor 自身が実行)、4 target 全件対応",
+        "内容鮮度層: postgres 16.15 / react 19.3 / fastapi 0.162.0 / typescript 7.0 を公式サイトで再照合し一致、非公式 host 0、鮮度未確認 0",
+        "latest_checked_at は全件 2026-10-31 (評価日 2026-11-01)"
+      ]
+    }
+  ],
+  "aspects": {
+    "foundation_trace": {
+      "verdict": "PASS",
+      "score": 92,
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "U1-U9 は全て値で確定 (confirmed=true, approval_ref=appr-foundation-v2 が approval_log に実在)。G1/G2→O1/O2→I1-I3 の serves と各章の資するゴールに dangling なし。",
+      "evidence": [
+        "validate-coverage-matrix.py --require-foundation exit 0",
+        "index.md 章一覧の資するゴール (G1/G2) と requirements_foundation.goals が一致",
+        "appr-foundation-v2 note が U1-U9 ごとの根拠 qa を列挙"
+      ]
+    },
+    "decision_guidance": {
+      "verdict": "PASS",
+      "score": 85,
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "D1-D3 は各 2 案・全案 free (OSS)、goal_fit/TCO/security/operations/lock-in の comparison_basis、公式 evidence_refs、推奨理由・caveats を持ち、user_decision (qa-031/032/034) で確定。AI 推奨だけで confirmed にしたものは無い。章への描画に raw dict の露出あり (low)。",
+      "evidence": [
+        "D1 pg16 (qa-031, latest_checked_at 2026-10-31T14:45:20Z)",
+        "D2 react-spa (qa-032, 2026-10-12T02:28:51Z)",
+        "D3 bff-session (qa-034, 2026-10-12T07:24:36Z)"
+      ]
+    },
+    "matrix_coverage": {
+      "verdict": "PASS",
+      "score": 95,
+      "auditor": "system-spec-matrix-auditor",
+      "component": "C07",
+      "summary": "C07 独立監査 PASS (final_ready=PASS)、G-matrix exit 0、C06 sub-input は derive_hearing_verdict で PASS (blocking 0)、C16 required-info profile exit 0。",
+      "evidence": [
+        "G-matrix exit 0 (final(未収集0))",
+        "C07 AUDIT_VERDICT: PASS",
+        "C06 sub-input derived PASS (notes 4 / closed 1)",
+        "G-knowledge-graph required-info exit 0"
+      ]
+    },
+    "design_knowledge_reflection": {
+      "verdict": "PASS",
+      "score": 85,
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "8 章全てが設計知識ポインタ節と deep knowledge card を持ち (機械層)、各章の『本章での適用』『確定判断ごとの原則採否』が qa の具体回答 (qa-024/025/026/028/030/035-038 等) へ原則を当てている (意味層)。doctrine anchor (OWASP/Clean Architecture/Google SRE/Apple HIG) も確定セル要件へ具体反映。全章 legacy_backfill のため qa 回答との適合を再照合し不整合なし。card 順は knowledge topo_order と整合。",
+      "evidence": [
+        "G-knowledge-graph knowledge/doctrine/cross profile exit 0",
+        "topo_order: clean-code, ddd, design-patterns, clean-architecture, api-design-patterns, secure-by-design, ... (backend: ddd→clean-architecture→api-design-patterns の順で消費)",
+        "auth.md の cookie 属性/CSRF/セッション保存は qa-037/qa-038 の回答と一致",
+        "ui-ux.md の並び順は qa-028 と一致、Apple HIG の非適用理由を明記"
+      ]
+    },
+    "doc_freshness": {
+      "verdict": "PASS",
+      "score": 95,
+      "auditor": "system-spec-doc-freshness-auditor",
+      "component": "C08",
+      "summary": "C08 独立監査 PASS。形式層 (validate-source-citation exit 0) と内容鮮度層 (4 target 公式サイト再照合で全件現行版一致) の両方を反映。",
+      "evidence": [
+        "G-source-citation exit 0",
+        "C08 AUDIT_VERDICT: PASS"
+      ]
+    },
+    "prompt_quality": {
+      "verdict": "PASS",
+      "score": 80,
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "plugins/system-spec-harness 配下 18 prompt 全てが vendored prompt-creator verify-completeness.py で exit 0 (L1-L7 + l5-contract v2.0.0)。validate-prompt.py は repo 内で解決できず rubric の deterministic_gate_dependency に従い当該機械ゲートのみ skip。意味層で R1/R2 の L7→L1・停止条件を確認、high なし。書込手順の可搬性に low。",
+      "evidence": [
+        "verify-completeness.py: 18/18 OK",
+        "validate-prompt.py: 未解決 (skip, FAIL に倒さない)"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G-matrix",
+      "name": "validate-coverage-matrix",
+      "conditions": [
+        "matrix_coverage"
+      ],
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "--matrix",
+        "system-spec/spec-state.json",
+        "--require-complete"
+      ],
+      "exit_code": 0,
+      "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G-source-citation",
+      "name": "validate-source-citation",
+      "conditions": [
+        "doc_freshness"
+      ],
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "system-spec/spec-state.json",
+        "--references",
+        "system-spec/fetched-references.json",
+        "--state",
+        "system-spec/spec-state.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx"
+      ],
+      "exit_code": 0,
+      "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G-knowledge-graph",
+      "name": "validate-knowledge-graph",
+      "conditions": [
+        "design_knowledge_reflection",
+        "matrix_coverage"
+      ],
+      "exit_code": 0,
+      "subgates": [
+        {
+          "profile": "knowledge",
+          "command": [
+            "/Users/dm/miniconda3/bin/python3",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+            "--profile",
+            "knowledge",
+            "--input",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json"
+          ],
+          "exit_code": 0,
+          "stderr": ""
+        },
+        {
+          "profile": "doctrine",
+          "command": [
+            "/Users/dm/miniconda3/bin/python3",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+            "--profile",
+            "doctrine",
+            "--input",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json"
+          ],
+          "exit_code": 0,
+          "stderr": ""
+        },
+        {
+          "profile": "required-info",
+          "command": [
+            "/Users/dm/miniconda3/bin/python3",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+            "--profile",
+            "required-info",
+            "--input",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"
+          ],
+          "exit_code": 0,
+          "stderr": ""
+        },
+        {
+          "profile": "cross",
+          "command": [
+            "/Users/dm/miniconda3/bin/python3",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+            "--profile",
+            "cross",
+            "--taxonomy",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json",
+            "--doctrine",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json",
+            "--required-info",
+            "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"
+          ],
+          "exit_code": 0,
+          "stderr": ""
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "gates",
+      "observation": "G-matrix / G-source-citation / G-knowledge-graph (knowledge・doctrine・required-info・cross) は全て exit 0。--require-foundation も exit 0。"
+    },
+    {
+      "severity": "info",
+      "bucket": "matrix_coverage",
+      "observation": "閉じた検出 (置き換え先: qa-019)。qa-009 は JTBD・対象ユーザー・利用文脈の 3 論点を束ねた問 (N4) だったが、qa-019 で有効に置き換え済み。"
+    },
+    {
+      "severity": "medium",
+      "bucket": "matrix_coverage",
+      "observation": "C06 注記: qa-038 はセッション保存先と有効期限・ログアウトの 2 論点を 1 問に束ねている (N4)。auth/web の裏付け qa_refs のみで主たる接地根拠ではないため PASS に残す注記。",
+      "suggested_fix": "今後の再ヒアリングでは 1 問 1 論点に分ける (run-system-spec-elicit)。"
+    },
+    {
+      "severity": "low",
+      "bucket": "matrix_coverage",
+      "observation": "C06 注記: qa-033 は U1-U9 の要約を 1 問で承認させる形 (N4 の疑い)。各 U は qa-foundation-u1〜u9 で個別に根拠づけられ、答えを左右したとは読めない。"
+    },
+    {
+      "severity": "info",
+      "bucket": "matrix_coverage",
+      "observation": "C06 注記: ui-ux/web の裏付け qa_refs に置き換え済みの qa-009 が残る (qa_ref=qa-003 は実在)。",
+      "suggested_fix": "C01 で ui-ux/web の qa_refs から qa-009 を外す。"
+    },
+    {
+      "severity": "info",
+      "bucket": "matrix_coverage",
+      "observation": "C06 注記: qa-foundation-u9 の canonical answer に qa-001 の旧値『PostgreSQL 15』が残る。qa-001 corrections と U8 (D1 で 16) で是正済みで I1 には影響なし。"
+    },
+    {
+      "severity": "info",
+      "bucket": "matrix_coverage",
+      "observation": "C07: 対象外 40 セルは全て appr-001 (非 Web 一括承認) + qa-000 で根拠が読める。確定 8 セルの qa_ref は全て user-decision。"
+    },
+    {
+      "severity": "info",
+      "bucket": "foundation_trace",
+      "observation": "appr-foundation-v2 と qa-000 / qa-037 / qa-038 の provenance は live-trial fixture のシナリオ上の承認・回答であり実利用者の承認ではないと開示されている。開示済みのため判定は動かさないが、本番利用前には実利用者の承認で置き換える必要がある。"
+    },
+    {
+      "severity": "low",
+      "bucket": "decision_guidance",
+      "observation": "00-requirements-definition.md の意思決定支援表で cost_model が Python dict の repr ({'category': 'free', ...}) のまま描画されている (3 箇所)。内容は揃っているが読み手向けの表現になっていない。",
+      "suggested_fix": "run-system-spec-compile の decisions 描画で cost_model を『区分/金額/課金周期/TCO』の文章に整形する。",
+      "evidence": [
+        "system-spec/00-requirements-definition.md の『意思決定支援 (decisions)』表"
+      ]
+    },
+    {
+      "severity": "low",
+      "bucket": "design_knowledge_reflection",
+      "observation": "全 8 章の設計解釈の記録経路が legacy_backfill。qa 回答との適合を再照合し不整合は無かったが、doctrine anchor 表と『本章での適用』は全て『アシスタントの推定』と表示され、auth の cookie 属性・CSRF・セッション保存 (qa-037/qa-038 の user-decision) のように利用者決定で裏付く箇所も推定扱いになっている。",
+      "suggested_fix": "run-system-spec-compile / elicit で、利用者決定に接地する設計解釈は basis を区別して記録し直す (対話時記録へ移行)。"
+    },
+    {
+      "severity": "info",
+      "bucket": "design_knowledge_reflection",
+      "observation": "ポインタ存在だけでなく具体適用を確認: backend (ETag/If-Match・冪等キー・カーソル分割 ← qa-025)、database (請求書+明細の集約と赤黒訂正 ← qa-024)、security (qa-030 の 4 脅威への多層防御対応)、infrastructure (p95 2 秒・5xx 1%・5 分 ← qa-035/036)、ui-ux (頻度×失敗コスト ← qa-021/022/028)。"
+    },
+    {
+      "severity": "info",
+      "bucket": "doc_freshness",
+      "observation": "C08: 4 target とも公式 host (www.postgresql.org / react.dev / fastapi.tiangolo.com / www.typescriptlang.org) で現行版と一致。fastapi release-notes は先頭 10 万文字のみ読めたが最新節を含むため判定に影響なし。"
+    },
+    {
+      "severity": "low",
+      "bucket": "prompt_quality",
+      "observation": "R1-score 4.3 / R2-delegate 2.4 が指定する『python3 + 引用符付き heredoc』での書出しは、この sandbox では heredoc の一時ファイル作成が拒否され失敗した (TMPDIR 変更でも同様)。hearing-audit.json は同一 JSON を printf の pipe で python3 の stdin へ渡して保存した。",
+      "suggested_fix": "R1/R2 の書出し手順に、heredoc が使えない環境向けの代替 (pipe や python 内 literal) を正式に追記する。"
+    },
+    {
+      "severity": "info",
+      "bucket": "prompt_quality",
+      "observation": "R2 は 1 message = 1 foreground fork を要求するが、runtime は 3 件とも非同期起動した。各 fork は単独で順に起動し、AUDIT_DISPATCH token で dispatch 行 (1.2) と completion 行 (1.3) が接合され verdict_state=resolved を確認してから次を起動した。receipt の response_sha256 は completion 行の digest。"
+    }
+  ],
+  "gaps": []
+}

@@ -1,0 +1,299 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "schemaVersion": 1,
+  "workflowId": "run-intake-flyer",
+  "skill": "run-intake-flyer",
+  "version": "1.3.2",
+  "goalSeek": {
+    "engine": "inline",
+    "selection": "stage-common の共通判断手順。AI が資料の出典・矛盾・様式候補を判断し、機械コマンドが質問票生成・回答検査・基準固定を行う",
+    "fixedTemplate": false
+  },
+  "phases": [
+    {
+      "id": "I1-prepare",
+      "step": 1,
+      "title": "依頼文・資料を読み、doctor/init 後に prefill と参考値を案件へ保存する",
+      "dependsOn": [],
+      "resourceIds": [
+        "entrypoint",
+        "intake-script",
+        "learn-script",
+        "questions",
+        "interview-guide",
+        "stage-common"
+      ],
+      "output": "<project>/prefill.json・<project>/suggestions.json・brief.json（init）",
+      "onUnmet": "run-intake-flyer"
+    },
+    {
+      "id": "I2-batch",
+      "step": 2,
+      "title": "全質問を 1 枚のシートで出し、一括回答を検証して brief と intake.json へ反映する",
+      "dependsOn": [
+        "I1-prepare"
+      ],
+      "resourceIds": [
+        "entrypoint",
+        "intake-script",
+        "questions",
+        "intake-schema",
+        "interview-guide",
+        "essence",
+        "knowledge-index",
+        "brief-schema"
+      ],
+      "output": "<project>/intake-sheet.md・<project>/intake.json・brief.json",
+      "onUnmet": "run-intake-flyer"
+    },
+    {
+      "id": "I3-residual",
+      "step": 3,
+      "title": "未回答・矛盾・確定事実の読み上げ確認だけを聞き、count=0 まで反映して styleProposalNeeded を I4 へ渡す",
+      "dependsOn": [
+        "I2-batch"
+      ],
+      "resourceIds": [
+        "entrypoint",
+        "intake-script",
+        "intake-schema",
+        "interview-guide",
+        "essence",
+        "brief-schema"
+      ],
+      "output": "intake-residual の count=0 と styleProposalNeeded（I4 へ渡す。done=true はこの段階の完了条件にしない）",
+      "onUnmet": "run-intake-flyer"
+    },
+    {
+      "id": "I4-style",
+      "step": 4,
+      "title": "styleProposalNeeded があるときだけ、basis を根拠に記述軸で 2〜3 案を示し、選ばれた案を反映する",
+      "dependsOn": [
+        "I2-batch"
+      ],
+      "resourceIds": [
+        "entrypoint",
+        "intake-script",
+        "style-profiles",
+        "proposals-schema",
+        "interview-guide",
+        "essence",
+        "knowledge-index"
+      ],
+      "output": "<project>/style-proposals.json・brief.stylePreferences（様式提案時）。I3・I4 の完了後、I5 の前に intake-residual を再実行して全体の done=true を確認する",
+      "onUnmet": "run-intake-flyer"
+    },
+    {
+      "id": "I5-anchor",
+      "step": 5,
+      "title": "依頼文・purpose・確定事実を本質の基準として固定し、以後のずれを承認記録と照合する",
+      "dependsOn": [
+        "I3-residual",
+        "I4-style"
+      ],
+      "resourceIds": [
+        "entrypoint",
+        "essence-script",
+        "baseline-schema",
+        "stage-common",
+        "essence"
+      ],
+      "output": "<project>/essence-baseline.json（上書き不可）・essence-check の fail=0",
+      "onUnmet": "run-intake-flyer"
+    }
+  ],
+  "resources": [
+    {
+      "id": "entrypoint",
+      "kind": "script",
+      "path": "../../scripts/build-flyer.py",
+      "phaseIds": [
+        "I1-prepare",
+        "I2-batch",
+        "I3-residual",
+        "I4-style",
+        "I5-anchor"
+      ]
+    },
+    {
+      "id": "intake-script",
+      "kind": "script",
+      "path": "../../scripts/intake.cjs",
+      "phaseIds": [
+        "I1-prepare",
+        "I2-batch",
+        "I3-residual",
+        "I4-style"
+      ]
+    },
+    {
+      "id": "essence-script",
+      "kind": "script",
+      "path": "../../scripts/essence.cjs",
+      "phaseIds": [
+        "I5-anchor"
+      ]
+    },
+    {
+      "id": "learn-script",
+      "kind": "script",
+      "path": "../../scripts/learn.cjs",
+      "phaseIds": [
+        "I1-prepare"
+      ]
+    },
+    {
+      "id": "questions",
+      "kind": "reference",
+      "path": "../../references/intake-questions.json",
+      "phaseIds": [
+        "I1-prepare",
+        "I2-batch"
+      ]
+    },
+    {
+      "id": "interview-guide",
+      "kind": "reference",
+      "path": "references/interview-guide.md",
+      "phaseIds": [
+        "I1-prepare",
+        "I2-batch",
+        "I3-residual",
+        "I4-style"
+      ]
+    },
+    {
+      "id": "stage-common",
+      "kind": "reference",
+      "path": "../../references/stage-common.md",
+      "phaseIds": [
+        "I1-prepare",
+        "I5-anchor"
+      ]
+    },
+    {
+      "id": "essence",
+      "kind": "reference",
+      "path": "../../references/essence.json",
+      "phaseIds": [
+        "I2-batch",
+        "I3-residual",
+        "I4-style",
+        "I5-anchor"
+      ]
+    },
+    {
+      "id": "knowledge-index",
+      "kind": "reference",
+      "path": "../../references/design-knowledge-index.json",
+      "phaseIds": [
+        "I2-batch",
+        "I4-style"
+      ]
+    },
+    {
+      "id": "style-profiles",
+      "kind": "reference",
+      "path": "../../references/style-profiles.md",
+      "phaseIds": [
+        "I4-style"
+      ]
+    },
+    {
+      "id": "intake-schema",
+      "kind": "schema",
+      "path": "../../schemas/intake.schema.json",
+      "phaseIds": [
+        "I2-batch",
+        "I3-residual"
+      ]
+    },
+    {
+      "id": "proposals-schema",
+      "kind": "schema",
+      "path": "../../schemas/style-proposals.schema.json",
+      "phaseIds": [
+        "I4-style"
+      ]
+    },
+    {
+      "id": "baseline-schema",
+      "kind": "schema",
+      "path": "../../schemas/essence-baseline.schema.json",
+      "phaseIds": [
+        "I5-anchor"
+      ]
+    },
+    {
+      "id": "brief-schema",
+      "kind": "schema",
+      "path": "../../schemas/brief.schema.json",
+      "phaseIds": [
+        "I2-batch",
+        "I3-residual"
+      ]
+    }
+  ],
+  "stageDependencies": [],
+  "completionRequiresIndependentReviewer": false,
+  "evaluationOnly": false
+}

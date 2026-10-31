@@ -1,0 +1,41 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "観測0未達。宣言されたsystem-spec-harnessの4 Skill呼出しと実Agentは確認できるが、R2 forkのtranscript行186はcdでrepoへ移動してargsを出力しただけで、固定SKILL/R2が必須とするDEV_GRAPH_ROOT代入・起動前cwd確認を同一Bashで満たしていない。行188でそのままevaluatorを起動している。行211–212の迂回なし確認はcwdがplugins/dev-graph/skills/run-dev-graph-nodeでcheck=1。契約はcdによる回避を禁じ、cwd_not_repo_rootなら起動前停止を要求するため、報告されたevaluator PASSを正規フロー完了の証拠にはできない。",
+    "観測1未達。fx-final/tree/.dev-graph/state/graph.jsonはgraph_revision=0、nodes=[]。confirmed specification/architecture、各nodeのsource_lineage、confirmation evidenceのevaluated_digest、readiness、C02 import receiptが存在しない。上流の仕様章と評価reportがあるだけでは取込完了にならない。",
+    "観測2の正の登録経路を実証できない。main/subagent transcriptの全Skill呼出しにdev-graph:run-dev-graph-nodeがなく、C02登録は実行されていない。未登録のまま停止したことを「C02だけによる登録」の達成とみなせない。同等生成ロジック複製0の検査もprogressでnot_achievedとして残る。",
+    "被験SKILLのgoal_seek契約も未達。intermediate.jsonlの先頭8行には必須6キーがなく、main transcript行324–325で固定SKILL記載の検証を実行してAssertionError、rc=1。最後に正しい形の1行を追記しても全行を検査する契約には合格しない。progressはchecklist 4件をnot_achieved、IN1=fail、phase=stopped_failとして残している。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec87"
+  },
+  "transcript_sha256": "a08a3af53771eb1dd4c865a74a207f89004ebaa5e1d79033b16605e371a70fdd",
+  "evidence_refs": [
+    "session-root.txt",
+    "closure-at-launch.txt",
+    "plugins-copy.json",
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-a599302a06765a012.jsonl",
+    "transcript/subagents/agent-aea54fff968bb131f.jsonl",
+    "transcript/subagents/agent-a2e7e91ab4548a23c.jsonl",
+    "transcript/subagents/agent-abbe1eeba57da70e5.jsonl",
+    "transcript/subagents/agent-ad93a60b07cb06b26.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-preflight-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec-artifact-delivery.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/manifest.tsv",
+    "out/status.json",
+    "poll.log",
+    "poll-state.json",
+    "poll-exit.txt",
+    "guard.jsonl",
+    "evidence-redaction.json",
+    "collection-note.json"
+  ]
+}

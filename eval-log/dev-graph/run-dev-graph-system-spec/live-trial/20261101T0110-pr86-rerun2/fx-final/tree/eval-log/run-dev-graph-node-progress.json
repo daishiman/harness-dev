@@ -1,0 +1,64 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 0,
+    "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:46a774ed3330af419b791f1404264d9f6e2fa591ae6af104625460605625939d"
+  },
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "eval-log/run-dev-graph-node/c24-receipt.json repo_root==content_roots.repository; writer C24 + contained(); auditor: file paths under specs/ and architecture/ roots, no symlink escape"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "decision=auto: spec 0.95 margin 0.65, arch 0.92 margin 0.57 (>=0.80/>=0.15); receipt .dev-graph/state/receipts/node-r000001-add.json; grounding checks R1-classify loop-1 FAIL -> payload corrected -> loop-2 PASS"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "pre_write_validation findings 0; eval-log/run-dev-graph-node/schema-report.json valid=true violations 0, strict readiness complete 2/2"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add (normal artifacts only); register-package not invoked; auditor confirms no feature_package_id/phase_ref"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json graph_revision_before 0 == baseline, graph_revision_after 1 and graph_digest_after == current graph; node_ids match graph"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "loop1: validate-graph-schema pre-write findings 0, post-commit valid; required keys missing 0"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "where": "live trial / acceptance tests"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "where": "live trial / acceptance tests"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "where": "live trial / acceptance tests (exact-13 package not exercised)"
+    }
+  ]
+}

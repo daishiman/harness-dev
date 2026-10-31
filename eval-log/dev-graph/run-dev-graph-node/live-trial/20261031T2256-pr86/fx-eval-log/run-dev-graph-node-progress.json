@@ -1,0 +1,65 @@
+{
+  "skill": "run-dev-graph-node",
+  "run": "add feature-direct-add (run 3; run 1/2 progress archived under eval-log/runs/)",
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 2,
+    "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94"
+  },
+  "writer_receipts": [],
+  "pre_choice_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "resolve-repo-context.py --mode write re-run for this invocation: repo_root == content_roots.repository, repository_id local:sha256:040142ef... matches config; input feature-direct-add(.apply).json inside repo"
+    },
+    {
+      "id": "classification",
+      "status": "not_applicable",
+      "evidence": "verb=add with artifact_kind=feature: writer rejected with code feature_requires_c14_macro_contract before classification (preview and apply both applied_count 0, write_count 0); feature is only registrable via C14 macro contract (decision c14_macro_contract), never via R1/R2 routing; no node classified or committed"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py after rejection: graph_validation pass, violation_count 0 (eval-log/validate-graph-schema-final.json); graph file sha256 baa4a103... identical before/after; 0 feature nodes, features/ empty"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add; register-package not invoked"
+    },
+    {
+      "id": "receipt",
+      "status": "not_applicable",
+      "evidence": "rejected add wrote no receipt (receipts dir still init + node-r000001-add + node-r000002-update); output eval-log/feature-apply-output.json: status rejected, applied_count 0, write_count 0; graph_revision stays 2 and canonical digest equals graph_baseline"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "rejected before write; validate-graph-schema.py violation_count 0 on unchanged rev2 graph"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live-trial"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent (separate context)",
+  "loop": 1,
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {"ref": "eval-log/c24-receipt.json", "sha256": "0278bae1639cf6a4c8102d02fc0ad34bc6a23a9d3ceca0e7e607a4660cd195bb", "sha256_rechecked": true},
+  "checks": [
+    {"id": "manifest_name", "source": "plugins/system-spec-harness/.claude-plugin/plugin.json", "observed": "system-spec-harness", "result": "PASS"},
+    {"id": "version_in_range", "observed_version": "0.1.24", "range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version", "range": ">=0.1.22 <1.0.0", "result": "PASS", "note": "prompt summary '>=0.1.0' is planning-time value, not used per Layer 2"},
+    {"id": "composition_required_entry_points", "observed": ["run-system-spec-elicit", "run-system-spec-doc-fetch", "run-system-spec-compile", "assign-system-spec-completeness-evaluator"], "result": "PASS"},
+    {"id": "package_contract_entry_points", "source": "plugins/system-spec-harness/references/package-contract.json#entry_points.skills", "observed": ["assign-system-spec-completeness-evaluator", "ref-system-design-knowledge", "run-skill-feedback", "run-system-spec-compile", "run-system-spec-doc-fetch", "run-system-spec-elicit"], "plugin_name": "system-spec-harness", "contains_required_4": true, "result": "PASS"},
+    {"id": "skill_md_exists", "observed": {"run-system-spec-elicit": "skills/run-system-spec-elicit/SKILL.md (name matches)", "run-system-spec-doc-fetch": "skills/run-system-spec-doc-fetch/SKILL.md (name matches)", "run-system-spec-compile": "skills/run-system-spec-compile/SKILL.md (name matches)", "assign-system-spec-completeness-evaluator": "skills/assign-system-spec-completeness-evaluator/SKILL.md (name matches)"}, "result": "PASS"},
+    {"id": "manifest_no_harness_keys", "observed_keys": ["name", "version", "dependencies", "description", "author"], "result": "PASS", "note": "only official plugin manifest keys; .claude-plugin/ contains only plugin.json"},
+    {"id": "no_fallback_or_duplicate_impl_in_dev_graph", "observed": "no chapter rendering / matrix coverage / elicit / compile function defs in plugins/dev-graph python; run-system-spec-* mentioned only as references/invocations in plugin-composition.yaml, README.md, run-dev-graph-system-spec/SKILL.md, prompts/R2-delegate.md; skill script prepare-evaluation.py only validates C24 receipt and emits evaluator args; scripts/build-project-hook-fallback.py is unrelated (C01 hook install fallback)", "result": "PASS"},
+    {"id": "external_plugin_unmodified", "observed": "git status --short plugins/ empty", "result": "PASS"},
+    {"id": "parent_report_R1_consistency", "source": "eval-log/run-dev-graph-system-spec-preflight-report.json#R1", "observed": "version 0.1.24, range >=0.1.22 <1.0.0, in_range true, 4 entry points true — matches independent observation", "result": "PASS"}
+  ],
+  "checklist": {
+    "5.3_specific_version_in_composition_range_and_elicit_docfetch_compile_evaluator_exist": "YES",
+    "5.3_common_declared_inputs_all_verified": "YES",
+    "5.3_common_output_meets_declared_shape_and_authority": "YES",
+    "5.3_common_zero_boundary_violating_read_write_delegation": "YES"
+  },
+  "advisories": [
+    "Parent preflight report (non-R1 top-level fields caller_root/system_spec_root/git_common_dir) stores environment-specific absolute paths, contrary to Layer 3 guidance; R1 section itself contains none. Not an R1 blocker."
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "delta_from_original": "none; R1 is a precondition of the original goal and is satisfied",
+  "merged_directive_for_next": "R1 PASS; hand off to R2-delegate using the same C24 receipt digest",
+  "drift_signal": false
+}

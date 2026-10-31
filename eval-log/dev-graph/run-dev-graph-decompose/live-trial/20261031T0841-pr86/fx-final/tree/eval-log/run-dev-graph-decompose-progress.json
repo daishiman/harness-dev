@@ -1,0 +1,97 @@
+{
+  "skill": "run-dev-graph-decompose",
+  "dry_run": true,
+  "artifact_delivery_choice": "standard",
+  "overall": "PASS",
+  "checklist": [
+    {
+      "id": "macro_dag",
+      "status": "achieved",
+      "evidence": "macro DAG = ARCH-LT-001, LT-FEATURE-001, feature-lt-render-diff(->LT-FEATURE-001), feature-lt-render-diff-summary(->feature-lt-render-diff)。循環0・phase-task混入0 (auditor loop2 PASS)"
+    },
+    {
+      "id": "no_draft_publication",
+      "status": "achieved",
+      "evidence": "C28 create --dry-run --planned-preview: 2件とも blocked (promotion_gate, planned draft)。加えて cross_binding_dependency。起票対象0件、fake-bd-calls.jsonl 無し (呼出0)"
+    },
+    {
+      "id": "exact13_package",
+      "status": "not_applicable",
+      "evidence": "--package 指定なし・dry-run で system-dev-planner を起動しない (Macro flow 4)。新 feature は draft で ready feature 0 件。既存 LT-FEATURE-001 package は auditor が P01..P13 exact-set を確認"
+    },
+    {
+      "id": "c02_local_commit",
+      "status": "not_applicable",
+      "evidence": "--dry-run。.dev-graph/cache/decompose-input/c02-preview.json (write_count 0, pre_write_validation findings 0, rev 3->4 予定, graph_digest_after sha256:6f453d40...) と dry-run-preview-report.json が全 target の operation・判定・digest を示す"
+    },
+    {
+      "id": "single_projection_authority",
+      "status": "not_applicable",
+      "evidence": "--dry-run。preview で beads target 2件は C28 のみ (github/Projects target 0、none は外部 write なし)"
+    },
+    {
+      "id": "dry_run_write_zero",
+      "status": "achieved",
+      "evidence": "graph.json sha256 2ed57eab... 前後不変 (canonical sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0)、features/ に新規 file 無し、receipt 無し、Beads 呼出0、GitHub/Projects 0"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "C02 pre_write_validation findings 0; auditor が予定 graph 17 node を validate-graph-schema.py --graph - で violation 0"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT4",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT5",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT6",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    },
+    {
+      "id": "OUT7",
+      "status": "external_pending",
+      "judged_by": "live trial / content review"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+    "loops": [
+      {
+        "loop": 1,
+        "verdict": "FAIL",
+        "reason": "planned_nodes 骨格を重ねたため予定 graph を判定不能"
+      },
+      {
+        "loop": 2,
+        "verdict": "PASS"
+      }
+    ]
+  },
+  "publication_report": ".dev-graph/cache/decompose-input/dry-run-preview-report.json"
+}

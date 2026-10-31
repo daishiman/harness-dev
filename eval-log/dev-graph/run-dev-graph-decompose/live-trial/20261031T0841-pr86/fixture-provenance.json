@@ -1,0 +1,54 @@
+{
+  "label": "decompose86",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-render",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.git",
+  "fixture": "/private/tmp/claude-501/-Users-dm-dev-dev------harness/4c56fd8f-ccd6-4ef6-a546-d1f3c2d79696/scratchpad/lt/runs/decompose86/fx",
+  "head": "d00517c8d7e69791fc7214f45a6a250aaea3177f",
+  "tracked_files_committed": 1,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:a39167ca16c36a2fd938bf7dd79d87918e45d59a9bc811bcf55f23af21db6c2f",
+      "local:sha256:30f35dd4b6bdd36ce1c3a1573048782a737264e755af120e9d23ba255d2a2fae"
+    ],
+    "worktree_id": [
+      "wt_0a9efe2a7e21dcc3",
+      "wt_df91d2ff683c7af5"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/cache/system-dev-planner-handoff/atomic-promotion-receipt.json",
+    ".dev-graph/config.json",
+    ".dev-graph/state/init-receipt.json"
+  ],
+  "unmatched_worktree_ids": [
+    "wt_a4a4806610d87b82"
+  ],
+  "excluded": [
+    ".dev-graph/render"
+  ],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "post_seed_commit": {
+    "commit": "da0b085 (fixture の 2 つ目の commit)",
+    "files": {
+      "tools/fake-bd.py": "b6b31c3d8b761a585cdef0102ecdf63f0373fac22b0cd53a00e39853310ec559",
+      "README.md": "07918d754ab3054ed6edd05916a14e5576f063a4046c2a18520d9001924e1077"
+    },
+    "why": "PR85 の decompose5 (20261013T0331-pr85) と同じ。decompose の OUT1 (評価前の draft は起票 0 件、confirmed/pass/readiness complete への昇格後だけ起票対象) を Beads の経路で確かめるため。bd-bridge.py は dry-run でも昇格 gate の後の preflight で `bd version` と `bd where --json` を呼び、この環境の既定の bd (lt/bin/bd) は exit 4 の stub なので、gate を通った node の preview に届かない。",
+    "fake_bd": "tools/fake-bd.py は PR85 の decompose5 の版 (sha256 888f763b…) と、docstring と WHERE の database_path の 2 行 (pr85 decompose5 → pr86 decompose86) だけが違う。前回 session の記録 (decompose3 の Write) から復元し、run 名を decompose5 に戻すと sha256 が 888f763b… と一致することを確かめた後に、run 名だけを置き換えた。version と where --json にだけ答え、ほかの argv は stdout なし・exit 4 で拒否し、呼出しを fixture の root の fake-bd-calls.jsonl に残す。書込みの経路は持たない。mode は 755。",
+    "readme": "README.md は PR85 の decompose5 のものと同じ (sha256 07918d75…)。元の '# gm4b-render' の 1 行に「Beads の代わり (読取り専用)」の節を足したもの。",
+    "how_passed_to_subject": "task.md と README.md に、bd-bridge.py を呼ぶときは DEV_GRAPH_BD=<FX>/tools/fake-bd.py を付けると書いた (PR85 と同じ)。session の環境変数 DEV_GRAPH_BD は lt-env.sh の既定 (stub) のまま変えていない。",
+    "smoke_offline": {
+      "where": "fx の別の写し (lt/smoke/decompose86-fx)。この run の fx では bd-bridge.py を試していない (fake-bd-calls.jsonl を作らないため)。scripts はこの run の ws の写しを python3 -B で起こした。",
+      "results": [
+        "bd-bridge.py --op create --graph-node-id LT-FEATURE-001-P06 --dry-run (DEV_GRAPH_BD=写しの fake-bd.py): rc=0、dry_run_preview (promotion_gate pass、write_count 0) と workspace_identity (database_path fixture-readonly://decompose86/.beads/beads.db) を返し、bd の呼出しは version と where --json の 2 回",
+        "同じく --graph-node-id LT-FEATURE-002 (graph に無い node): status=blocked・reason not in graph・dry_run。bd の呼出しは 0 回",
+        "C11 (validate-graph-schema.py --graph): violations 0、node_readiness complete 15"
+      ]
+    }
+  },
+  "node_state_check": {
+    "result": "変更不要。.dev-graph/state/graph.json の sha256 は 2ed57eab… で、PR85 の decompose5 の fixture と同じ。C24 (resolve-repo-context.py --mode write。stdout に出すだけ) はこの run の fx で rc=0。"
+  },
+  "session_root": "ws (PR85 と同じ)。fx は別の dir。",
+  "replay_of": "PR85 の decompose5 (20261013T0331-pr85)。scenario_id・seed・fixture の作り方・task.md の文は同じで、変えたのは run のパスと fake-bd.py の 2 行だけ。"
+}

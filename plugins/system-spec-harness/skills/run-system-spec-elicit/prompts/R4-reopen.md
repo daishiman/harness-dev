@@ -36,8 +36,12 @@
 - reopen 後のセルは `未収集`。以後 R2/R3 の対象に戻る。
 - 再オープンは影響カテゴリ集約を writer が真理値表で再計算 (`確定`→`収集中` 等)。
 - **誘導の疑いがある問が主根拠のとき**: 確定セルの `qa_ref` の問が N1-N4 (`references/neutral-question-criteria.md`) に違反していたら、reopen → 同じ論点を中立に問い直して回答を取り直す → 新しい qa で再確定 → `supersede-qa` op (`{"action":"supersede-qa","qa_id":"<旧>","superseded_by":"<新>","superseded_at":"<実測値>","note":"<旧い問のどの基準の違反を、どう問い直したか>"}`) で旧 entry に置き換えを記録する。旧 entry が主根拠のままでは writer が `supersede-qa` を拒否し、置き換え済みの entry を主根拠に戻す `confirm` も拒否する。
-- **再確定で参照を結び直す**: reopen はセルを `{state, reopened_from, reopen_reason}` で置き換えるので、`qa_ref`・`qa_refs`・`serves_goals` が落ち、reopen 後の state からは読めない。reopen の前に対象セルのこれらの値を控える。再確定の turn では、(a) 前提が崩れた後も裏付けとして有効な旧参照 (旧 `qa_ref` と `qa_refs`。置き換えた entry は除く) を `confirm` に続く `add-qa-ref` で結び直し、(b) `serves_goals` を `confirm` に同時付与するか `set-serves` で付け直す。再確定が invocation をまたいでも同じである (未結の qa の拾い方は `references/elicit-question-bank.md` の手順 4)。結び直さない qa は required-info の接地にも章の根拠にも数えられず、`serves_goals` の無い確定セルは `--require-foundation` で落ちる。
+- **再確定で参照を結び直す**: reopen はセルを `{state, reopened_from, reopen_reason}` で置き換えるので、`qa_ref`・`qa_refs`・`serves_goals`・`serves_intents`・`approval_ref` がセルから外れる (writer は外した値を `reopen_log[].discarded` へ退避するが、セルへは戻さない)。reopen の前に対象セルのこれらの値を控える。再確定の turn では、(a) 前提が崩れた後も裏付けとして有効な旧参照 (旧 `qa_ref` と `qa_refs`。置き換えた entry は除く) を `confirm` に続く `add-qa-ref` で結び直し、(b) `serves_goals` を `confirm` に同時付与するか `set-serves` で付け直す。再確定が invocation をまたいでも同じである (未結の qa の拾い方は `references/elicit-question-bank.md` の手順 4)。結び直さない qa は required-info の接地にも章の根拠にも数えられず、`serves_goals` の無い確定セルは `--require-foundation` で落ちる。
 - **裏付けの問を置き換えるとき**: 誘導の疑いがある問が `qa_refs` 側だけにあるなら reopen は要らない (writer は主根拠でない entry の `supersede-qa` を通す)。同じ論点を中立に問い直して回答を取り直し、`supersede-qa` で置き換えを記録し、新しい qa を `add-qa-ref` で同じセルへ結ぶ。旧 entry は `qa_refs` に残してよい (compile が旧版の印付きで描く)。
+- **reopen を使わずに済む変更を reopen しない**: `serves_goals` だけ、または `approval_ref` だけを直したい場合は、確定セル限定の追記専用 op である `set-serves` / `set-approval` を使う。どちらも `state=確定` を変えないため確定巻き戻し防御に抵触しない (`set-approval` は `approval_log` に実在する id だけを受け付ける)。reopen は確定内容そのものを問い直す操作であり、トレース属性の修正のために reopen すると `qa_ref`・`qa_refs`・`serves_goals`・`approval_ref` を結び直す手間が生じ、結び忘れると根拠や承認への機械追跡が切れる。
+- **reopen 後の approval_ref 復元**: reopen 前のセルの `approval_ref` を控えておき、再確定が「承認済みの内容へ追記しただけで、承認の対象そのものは変えていない」場合に限り、再確定後の別 turn で `set-approval` により元の値を戻す。承認の対象が変わった場合は元の値を戻さず、新しい承認を取り直す。
+- **再確定の answer は元の回答本文を逐語で保つ**: 再確定 turn の `answer` に「本 turn は回答本文を変更していない」といった変更メタ情報を書かない。`answer` は compile 後の仕様書へ本文としてそのまま印字されるため、メタ注記は仕様書の本文を汚し、reopen を繰り返すと巡回のたびに層が積み上がる。変更の理由と経緯は `reopen_log[].reason` と `qa_log[].question` / `ops` が既に保持している。追記してよいのは仕様内容そのもの (新しい節・新しい決定) だけで、その追記も「何を変えたか」ではなく「仕様がどうであるか」で書く。
+- **再確認の独立性**: reopen に伴う問い直しは N1-N4 に従う。reopen は構造上つねに「前回結論あり」の再確認になるため、加えて前回の確定内容を先頭の選択肢に置かず、既定として提示せず、「前回はこう確定した」という誘導を問いより前に置かない。「現状維持 (reopen 前の確定内容をそのまま再確定する)」が成立する論点では対称な選択肢として含める。生の質問文・全選択肢・提示順序を逐語で残し (`qa_log[].question`。承認を伴う問は `approval_log` にも)、結論が維持された場合も誘導なしで維持を選んだことが後から検証できるようにする。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |
@@ -61,6 +65,9 @@
 ### 3.2 外部ツール
 - `Bash`: 時刻の実測値 `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'`
 - `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>","reopened_at":"<上で取った実測値>"}'`
+- reopen を要さない追記専用 op (確定セル限定):
+  - `--op '{"action":"set-serves","category":"<c>","platform":"<p>","serves_goals":["G1"]}'`
+  - `--op '{"action":"set-approval","category":"<c>","platform":"<p>","approval_ref":"<approval_log の実在 id>"}'`
 
 ## Layer 4: 共通ポリシー
 
@@ -89,7 +96,9 @@
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] reopen対象の直前状態が`確定`である
-- [ ] reopen 前の対象セルの `qa_ref`・`qa_refs`・`serves_goals` を控え、再確定する R2/R3 へ渡している
+- [ ] 目的が `serves_goals` / `approval_ref` の修正だけでないこと (それだけなら reopen せず `set-serves` / `set-approval` を使う)
+- [ ] reopen 前の対象セルの `qa_ref`・`qa_refs`・`serves_goals`・`approval_ref` を控え、再確定する R2/R3 へ渡している
+- [ ] reopen 前に `approval_ref` があったセルは、承認対象が不変なら別 turn の `set-approval` で復元され、変わったなら承認が取り直されている
 - [ ] reopen後の対象状態がreason付きの`未収集`である
 - [ ] `reopen_log` に根拠 entry が残っている (`reason` と実測 `reopened_at` を伴う)
 - [ ] 影響カテゴリの `category_aggregate` が真理値表と一致する
@@ -118,4 +127,4 @@
 
 ## 出力指示
 
-再検討の根拠を確認し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen",...,"reason":"...","reopened_at":"<実測 RFC3339>"}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。余計な前置き・思考過程出力は禁止。
+再検討の根拠を確認し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen",...,"reason":"...","reopened_at":"<実測 RFC3339>"}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。reopen に伴って利用者へ問い直す場合は N1-N4 に従い、前回の確定内容を先頭に固定せず既定としても提示しない。「現状維持」が成立する論点では対称な選択肢として含め、生の質問文・全選択肢・提示順序を逐語で残す (`qa_log[].question`。承認を伴う問は `approval_log` にも)。余計な前置き・思考過程出力は禁止。

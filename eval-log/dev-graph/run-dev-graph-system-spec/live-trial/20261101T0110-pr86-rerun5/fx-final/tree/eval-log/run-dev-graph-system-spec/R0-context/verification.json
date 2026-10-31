@@ -1,0 +1,47 @@
+{
+  "artifact": "R0-context-verification",
+  "skill": "run-dev-graph-system-spec",
+  "responsibility_id": "R0-context",
+  "verifier": "independent-agent (separate context, read-only)",
+  "loop": 1,
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "original_goal_hash_match": true,
+  "c24_receipt": "eval-log/run-dev-graph-system-spec-c24-receipt.json",
+  "c24_receipt_sha256": "1571a5347455ca9b8173cf7f9e6bd43ed57fdbe1a3cfee6c810ddde52e9e0e1b",
+  "c24_receipt_sha256_match": true,
+  "verdict": "PASS",
+  "checklist": {
+    "system_spec_realpath_in_caller_repo_with_repository_id_common_dir_match": {
+      "result": "YES",
+      "evidence": [
+        "realpath(repo_root) == realpath(content_roots.repository) == receipt.repo_root; no symlink on repo_root/system-spec/.git/.dev-graph",
+        "realpath(content_roots.system_spec) == <repo_root>/system-spec, islink=false, find -type l under system-spec/ and .dev-graph/ = 0 results",
+        "git rev-parse --show-toplevel == repo_root; --path-format=absolute --git-common-dir == receipt.git_common_dir (<repo_root>/.git); HEAD == receipt.head_sha",
+        "repository_id recomputed as local:sha256(sha256(realpath(git_common_dir))) == receipt.repository_id (no remote configured)",
+        "resolve-repo-context.py --mode read re-run (write-scope none): all keys identical to receipt except mode (read vs write, expected); git status unchanged"
+      ]
+    },
+    "lineage_gate_exit0_and_resume_decision_from_checked": {
+      "result": "YES",
+      "evidence": [
+        "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <root>: exit=0, status=pass, checked=0, checked_node_ids=[], violations=[]",
+        ".dev-graph/state/graph.json nodes=0",
+        "decision: checked=0 -> new creation (unique); matches preflight-report R0_context.resume_decision"
+      ]
+    },
+    "common_inputs_verified": {"result": "YES", "evidence": ["receipt sha256, goal hash, preflight inputs_sha256 for 4 system-spec files all recomputed and match"]},
+    "common_output_shape_and_authority": {"result": "YES", "evidence": ["receipt separates repository identity (repository_id/git_common_dir/worktree_id), content_roots (repo-local), code authority (plugin_source) as distinct keys"]},
+    "common_boundary_zero_violations": {
+      "result": "YES",
+      "evidence": [
+        "only one system-spec directory exists in repo (./system-spec); no plugin-internal or external-repo system-spec referenced as content",
+        "plugin path appears only as plugin_source (code authority), not in content_roots",
+        "preflight reads plugins/system-spec-harness manifest/contract only as R1 code authority, not as content",
+        "verifier wrote only this file"
+      ]
+    }
+  },
+  "blockers": [],
+  "drift_signal": "none",
+  "merged_directive_for_next": "R0/R1 PASS -> proceed to R2 (elicit resume)"
+}

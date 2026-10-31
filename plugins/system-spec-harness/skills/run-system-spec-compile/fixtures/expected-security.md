@@ -143,6 +143,16 @@ OWASP Top 10 準拠、Web/モバイル/タブレットのみ
 - security controlは「導入済み」ではなく、阻止/検知/復旧時間、権限範囲、data exposureで効果を測る。
 - 予算0制約でも、secure default、最小data、短命credential、標準機能、open-source検査を優先し、残余riskを隠さない。
 
+---
+
+### 確定判断ごとの原則採否
+
+- 確定内容 `qa-security` (対応セル: web, mobile, tablet)
+  - 確定要件: 「OWASP Top 10 準拠、Web/モバイル/タブレットのみ」 (正本: 本章「確定内容 (質疑録)」の `qa-security`)
+  - 設計解釈の記録経路: `unrecorded`
+  - 設計原則の採否根拠: (未記録 — qa_log[].design_applications を writer 経由で補完すること)
+- 資するゴール: G1
+
 ## 最新ドキュメント出典
 
 - (このカテゴリに割り当てた取得済みドキュメントなし。全体出典は index.md 参照)

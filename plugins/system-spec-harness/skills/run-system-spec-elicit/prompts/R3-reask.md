@@ -17,9 +17,13 @@
 
 ### 1.1 不変ルール
 - 未収集セルを完了扱いしない (`complete=true` は未収集0のときだけ)。
+- 上限超過で適用されなかった turn は writer が stderr へ件数を出すので、取りこぼさず次回 `chunk` へ回す (`--require-all` 指定時は書き戻さず止まる)。
 - 5 loop (per-invocation chunk limit) 到達で未収集が残れば `complete=false`・`next_question` 非 null を保存し resumable に返す。
 - 状態書込は writer の一経路のみ。
 - 再質問の回答を `confirm` する `apply` / `chunk` は `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を付け、候補 state の接地検証後だけ公開する。回答のみの蓄積や `reopen` はこの引数なしで行う。
+- 再質問で新しい利用者入力を得ていない場合、AI 生成の回答・要約・判断を `user-dialogue` / `written-requirements` や新規 approval にすり替えない。書面根拠を再利用するときは、指定 path/section 内に実在する逐語 `answer` とその UTF-8 SHA-256 を維持する。
+- schema 1.1 の state では、再回答で `confirm` する turn も R2 と同じ `design_applications[]` (具体原則の採否・理由・trade-off) を回答原文と分離して持つ。
+- **required-info 順序ゲート**: resume ごとに `references/required-info-catalog.json` を Read し直し、required-info validator の実出力 `collection_order` を再質問順の正本にする。保存済み `next_question` が指すセルが未完了の依存を飛び越える場合は、先行 item の質問を優先する。
 
 ### 1.2 倫理ガード
 - 未回答を勝手に確定/対象外へ埋めない。
@@ -55,6 +59,7 @@
 | contract | references/spec-state-contract.md | hearing_progress 形状の確認時 |
 
 ### 3.2 外部ツール
+- `Bash`: 再質問順取得 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` (exit0 の JSON `collection_order` を使用)
 - `Bash`: 再質問の回答を `confirm` する turn 列 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5 --required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"`
 - `Bash`: 回答だけを蓄積する turn 列 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5`
 
@@ -103,7 +108,7 @@
 ## Layer 7: UI / 提示
 
 ### 7.1 提示形式
-- 再開時は保存済み `next_question` が指すセルから継続する。`next_question` の文面は提示せず、question bank の論点と N1-N4 から作った問を `AskUserQuestion` (4 件以内) で投げる。
+- 再開時は保存済み `next_question` が指すセルを required-info の `collection_order` と照合し、依存順が正しければそのセルから継続する (依存を飛び越えるなら先行 item を優先する)。`next_question` の文面は提示せず、question bank の論点と N1-N4 から作った問を `AskUserQuestion` (4 件以内) で投げる。
 
 ### 7.2 言語
 - 日本語 (JSON キー/platform id は英語)。
@@ -112,4 +117,4 @@
 
 ## 出力指示
 
-未確定セルへ再質問し (問は references/elicit-question-bank.md の論点と references/neutral-question-criteria.md の N1-N4 から作る。この基準が question bank と `next_question` の文面より上位で、`next_question` は再開位置の目印として使う)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する (回答を `confirm` する turn 列は `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を付ける)。5 loop 到達で未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null が保存されていることを確認し、resumable に返す。未収集0なら `complete=true` を確認する。余計な前置き・思考過程出力は禁止。
+未確定セルへ再質問し (問は references/elicit-question-bank.md の論点と references/neutral-question-criteria.md の N1-N4 から作る。この基準が question bank と `next_question` の文面より上位で、`next_question` は再開位置の目印として使う)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する (回答を `confirm` する turn 列は `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を付ける)。5 loop 到達で未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null が保存されていることを確認し、resumable に返す。未収集0なら `complete=true` を確認する。resume の最初に `references/required-info-catalog.json` を Read し、`collection_order` と保存済み `next_question` を照合する。新しい利用者入力が無いのに AI 生成回答・AI 要約・新規 approval を追加しない。書面入力を根拠にするなら、指定 path/section に実在する逐語 `answer` とその UTF-8 `source.sha256` だけを使い、直接支持できなければ未収集のまま残す。schema 1.1 の state では `confirm` する回答に `design_applications[]` を回答原文と分離して付ける。余計な前置き・思考過程出力は禁止。

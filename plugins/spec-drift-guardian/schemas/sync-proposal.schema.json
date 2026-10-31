@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["issue", "proposal_sha256", "status", "approval", "proposals"],
   "properties": {
-    "issue": {"type": "integer", "description": "対象 GitHub issue 番号 (issue 単位のゲート)"},
+    "issue": {"type": ["integer", "string"], "description": "対象 tracker key (GitHub issue 番号または Beads issue id、task 単位のゲート)"},
     "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "全 proposals[] の不変核から算出した正規化 digest。C04 audit-verdict.proposal_sha256 と一致必須 (issue 単位のゲート)"},
     "status": {"type": "string", "enum": ["proposed", "applied_verified"], "description": "proposed=提案のみ (read-only) / applied_verified=承認済み限定適用+各 proposal post-image 検証済み。この2値以外 close 不可 (issue 単位のゲート)"},
     "approval": {

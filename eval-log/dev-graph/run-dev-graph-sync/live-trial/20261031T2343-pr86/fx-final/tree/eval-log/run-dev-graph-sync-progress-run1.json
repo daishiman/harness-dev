@@ -1,0 +1,32 @@
+{
+  "skill": "run-dev-graph-sync",
+  "run": 1,
+  "overall": "PASS",
+  "graph_baseline": {"graph_revision": 3, "graph_digest": "sha256:4dffec623c79badbd3243ac3aef2081e68a471124d3edb67fdd03a068bb35605"},
+  "writer_receipts": [".dev-graph/state/receipts/node-r000004-update.json", ".dev-graph/state/receipts/node-r000005-link-github.json"],
+  "external_mutations": [
+    {"op": "issue-update #102 title", "preview": ".artifact-delivery/external-mutation/preview-2e77824fd4fd4ee9b9715f0336a1c27c.json", "confirmation": ".artifact-delivery/external-mutation/confirmation-12e7969c525a4521bef8e3ee87053598.json", "authorization": ".artifact-delivery/external-mutation/authorization-06b5f5d9b74044d58a5000f4fcf71c12.json", "result": "updated"}
+  ],
+  "checklist": [
+    {"id": "C1-plan-classification", "status": "achieved", "evidence": "issue-plan-1: 1 remote-newer import (T-SYNC-001), 1 local-newer export (T-SYNC-002); project-plan-1: links only; all rows classified, graph_revision bound"},
+    {"id": "C2-single-authority", "status": "achieved", "evidence": "both nodes tracker_binding=github, beads_linkage=null; only gh-bridge (C12) + C02 writer used"},
+    {"id": "C3-dry-run-zero-write", "status": "achieved", "evidence": "gh-bridge --dry-run mutation_suppressed=true; planners read-only; writer --dry-run write_count=0"},
+    {"id": "C4-manual-conflict-and-receipts", "status": "achieved", "evidence": "no both-changed rows (conflicts 0); one-sided changes applied with receipts r4 (update), r5 (link-github), guard receipts for export"},
+    {"id": "C5-tombstone", "status": "not_applicable", "evidence": "no close/delete in plans: tombstones=0, deleted_issues=0, missing_issues=0"},
+    {"id": "C6-lifecycle-done-authority", "status": "not_applicable", "evidence": "pull_request_linkages empty; reconcile-github-lifecycle drain-pending --dry-run: no pending events/transactions; completion_evidence stays in_progress"},
+    {"id": "C7-second-sync-zero", "status": "achieved", "evidence": "re-plan at rev5: issue-plan-4 changes=0 converged=true unresolved=0; project-plan-3 changes=0 converged=true unresolved=0 (outer OUT1 judged by second Skill run)"}
+  ],
+  "feedback_criteria": {
+    "IN1": {"status": "PASS", "evidence": "validate-graph-schema valid=true violations=0; C02 pre_write_validation findings=0 (r4,r5); gh-bridge accepted payload"},
+    "OUT1": {"status": "external_pending", "judged_by": "live-trial"},
+    "OUT2": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT3": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT4": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT5": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT6": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT7": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT8": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT9": {"status": "external_pending", "judged_by": "acceptance-test"}
+  },
+  "independent_verifier": {"agent": "dev-graph:dev-graph-sync-conflict-verifier", "verdict": "PASS", "graph_digest": "sha256:80d3acdca08651e5734be17b4ff566b70f46c413a547bd43d1224d72e39c67ab"}
+}

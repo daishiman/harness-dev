@@ -1,0 +1,54 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "固定C19ソースの「各周回で inner criterion を検証」「IN1 には各周回の検証結果を status に書く」に対し、第1周回のIN1を全ゲート確認前にPASSとしている。transcript.jsonl:423（2026-10-31T16:58:45.706Z）でloop1/status=PASSを記録する一方、evidenceは dev-graph schema gate pending R3 と明記。schema CLIの初実行は第2周回の同:539/543で、loop1末にはcoverage/source citation/schema全exit0というIN1が成立した証拠がない。最終周回での全ゲート成功は確認したが、第1周回の検証・記録契約の欠落を遡って埋めるものではない。"
+  ],
+  "evaluator_id": "/root/review_sysspec90",
+  "transcript_sha256": "e5eaa94594b5af25c272f3d8481d8aae55e4f3d64a86118255a6c956ab6b1f6d",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-a9a140a5b3c9c04a0.jsonl",
+    "guard.jsonl",
+    "fixture-provenance.json",
+    "fixture-preparation.py",
+    "fixture-init-receipt.json",
+    "evidence-redaction.json",
+    "closure-at-launch.txt",
+    "plugins-copy.json",
+    "poll-state.json",
+    "collection-note.json",
+    "fx-final/manifest.tsv",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec/R0-context/verification.json",
+    "fx-eval-log/run-dev-graph-system-spec/R1-preflight/verification.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/verification.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "criteria_observed": {
+    "IN1": "今回のcanonical compile前coverage/source citation/design refsはexit0。最終graph schema/lineageもexit0。評価者が固定fixtureでcoverage(--require-complete --require-basis --require-foundation)、source-citation、strict-artifact-readiness schema、lineageを読取専用再実行し全exit0を確認。ただし第1周回IN1/PASSはschema gateをpendingとしたまま記録され、周回ごとの契約を満たす証拠が欠ける。",
+    "OUT1": "正規Skillでelicit --resume、compile、helper成功argsによるfork evaluatorを今回実行。doc-fetchは既取得4対象と新規候補なしを根拠にnot_required。C05の今回3監査dispatch/completionと12件snapshotを確認。C02のみでconfirmed specification/architecture 2 nodeを登録し、source digest・evaluator evidence・readinessを保持。dev-graphにelicitation/compile本体の複製は認めなかった。3観測の成果物面は成立。"
+  },
+  "notes": [
+    "開始/固定/現行の挙動閉包を独立計算し、すべて442a5f3b38e7fc50abca7406d4f0d335cc79f09c972ae4b21f0662637a650527で一致。既存レビュー/receipt結論は判定根拠にしていない。",
+    "私用原本と公開コピーのmanifest対象10ファイルはoriginal/public SHAと指定置換の完全対応・行数維持を確認。固定raw 150ファイル全体で公開差分はpoll-state.jsonのみ追加確認され、elapsed 1457→1458の補正はcollection-noteに明示。開始1793464912、最終観測1793466369.749449からの切上げと整合。原本本文/秘密は出力していない。",
+    "fx-final/manifest.tsv全件のdigest/bytesを実体照合し不一致0。C05 snapshot12/12、登録2nodeのsource_digest/evaluated_digest/元章生bytes SHAとspec_dir固定rootが一致。",
+    "fixture preparationは初期graph nodes=[]、前canonicalのstate/出典/章を再開入力として複製し、候補payloadからconfirmation_evidence/imported_atを除去。今回C05 report/監査/C02登録が新規実行されたことをrawで確認し、seedを今回flowの証拠へ代用していない。",
+    "C19 preflightは16:43:21に生成、standard記録16:43:34、R0/R1 Agentは16:44:06/14。compile最小成果物とstandard記録後に63件の指定unit検証、C02登録成果物とstandard記録後に独立integrity/R3 Agentを開始。gate-onlyのelicit resumeは出力writerなし。",
+    "取込元を生成するcompile本処理Bashは開始receipt固定CLAUDE_PROJECT_DIR export→cd→pwd -P照合付き。C05の評価用Bashやread-only監査はelicit/doc-fetch/compile本処理の規則と混同していない。unitは事前許可scratch/basetempへ隔離し、caller入力の前後SHA不変を確認、そのscratch成果を取込元に使用していない。",
+    "親がC19集約3ログを所有し、R0/R1/R2/R3 Agent各ログを責務別dirへ分離。2周回のintermediate各6キーと元goal/hashが一致。周回2操作前に直前merged_directive_for_nextを読み入力。責務切替を余分な周回と数えていない。",
+    "R0-R3 Agentにはreceipt/元goal/hash/周回の指示/担当promptの所在が渡り、各Agentは担当promptを全文読取。R2のprocess-level検証はAgent自身がINDIRECTと開示しているため、評価者がmain rawのprefix/読込を直接確認した。",
+    "C05 forkはtask末尾の探索指示に反し16:48:25Zにホスト全体findを実行し16:50:28Zに停止した。guardもallow、結果は別repo等のvalidatorファイル名列挙。後続でその列挙先の読込・validator起動は確認されず、固定plugins内promptのC05自前評価とcanonical aggregatorへ戻っている。運用上の指示逸脱として明記するが、この探索だけを3観測/root/evaluator/C02証拠を否定するblockerにはしていない。",
+    "poll実測約1458秒でC19上限3300秒以内。tokenはmain/subagentの重複assistant idを除いて約13.37Mで23M以内。requested main modelはclaude-opus-5-5、subagentにsonnet混在。proof指定ではないためproof単一model gateと混同していない。"
+  ]
+}
