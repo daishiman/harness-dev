@@ -167,7 +167,7 @@
     },
     {
       "path": "docs/guide-doc-generator-review/quality-gates.json",
-      "sha256": "a9d97948d052e77ade8e474d3e08b0ae36567f07d48de2d4f87edb866a64a327"
+      "sha256": "ea49f3585adcb54d1cf227a14424c986af0ea0524e11e1ad7b85ce36f46d1d03"
     },
     {
       "path": "docs/guide-doc-generator-review/release-proposal.json",
@@ -180,6 +180,10 @@
     {
       "path": "docs/guide-doc-generator-review/script-frontmatter.log",
       "sha256": "21873d25c33114b161556517f687149f04c7f0766e672277597bb7c840d4b418"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/ci-executable-fix.json",
+      "sha256": "ba5acf82e5b8c8a9f5d2c7b1f085144a6226120c1176baaf0dbe066f8de92487"
     }
   ],
   "remaining": [
@@ -194,5 +198,10 @@
       "reason": "SKILL.md本文冒頭30行に規定キーワードによる禁則がない。HEADにも存在する非変更sliceの指摘で、今回差分による退行ではない。"
     }
   ],
-  "full_system_spec_compilation": false
+  "full_system_spec_compilation": false,
+  "ci_followup": {
+    "evidence": "docs/guide-doc-generator-review/ci-executable-fix.json",
+    "impact": "なし",
+    "reason": "ファイルの実行権限のみ。本文SHA・入力/出力・描画・スキル契約・依存・保存構造は同一。既存のPKG-007契約へ適合させる修正。C02文書を再生成する変更はない。"
+  }
 }

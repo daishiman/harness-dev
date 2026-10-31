@@ -461,7 +461,8 @@
     "whitespace": "実装差分は通常のgit diff --check成功。C02生成5文書はwriterの末尾空行を受領書SHA保持のため維持し、当該文書のみ-blank-at-eofで検査する。",
     "change_category": "change-category-guard: blocked=[]。manifestのversion更新2件に今回の明示許可を現物SHAへ束縛した承認台帳を追記。policy/cooldown/bypass変更なし。",
     "draft_pr": "https://github.com/daishiman/harness-dev/pull/87 (base main, draft=true)",
-    "release": "guide-doc-generator 0.1.26; --check --only guide-doc-generator と local marketplace --check成功"
+    "release": "guide-doc-generator 0.1.26; --check --only guide-doc-generator と local marketplace --check成功",
+    "plugin_packages": "CIでPKG-007の実行権限欠落を検出。対象2本を100755へ修正後、全22pluginのblocking failureなし。"
   },
   "not_run": [
     "新しいbuilder trace作成（既存MVPの差分レビューのため過去のbuild工程を再現したと主張しない）",
@@ -479,5 +480,6 @@
       "status": "既存medium smellを保持",
       "reason": "SKILL.md本文冒頭30行に規定キーワードによる禁則がない。HEADにも存在する非変更sliceの指摘で、今回差分による退行ではない。"
     }
-  ]
+  ],
+  "ci_followup": "ci-executable-fix.json"
 }
