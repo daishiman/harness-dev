@@ -275,3 +275,31 @@ python3 "$HB/scripts/verify-handout-narrative.py"     --html ./handout.html --co
 HB="${HB_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/guide-doc-generator}}"
 for d in "$HB"/tests/*/; do (cd "$d" && python3 -m unittest discover -q); done
 ```
+
+## 文章から図解を選ぶ
+
+初稿から文章の主体・条件・順序・数量などの関係を解析し、読み手の判断に合う図・表・
+カードを選びます。挿絵があるだけでは、以降の説明を図解済みと扱いません。
+採用した図が代替する文章を省き、本文は結論・例外・根拠を補います。
+
+- 候補と入力例: [`config/handout-diagrams.json`](config/handout-diagrams.json)。掲載例へ限定せず、分図・組合せ・専用作図も選べます。
+- 見た目の実例: [`examples/diagram-gallery.html`](examples/diagram-gallery.html)。図内スクロール・拡大・詳細の開閉を試せます。
+- 選定と実配置の検査: [`visual-selection-contract.md`](skills/run-handout-build/references/visual-selection-contract.md)。新規設計の検討漏れと参照切れを防ぎます。
+- 参考HTMLの分析: [`reference-handout-analysis.md`](skills/ref-handout-design-system/references/reference-handout-analysis.md)。採用した特徴と改善した点を記録しています。
+
+```bash
+python3 "$HB/scripts/render-diagram-svg.py" --list
+python3 "$HB/scripts/build-diagram-gallery.py" --out "$HB/examples/diagram-gallery.html"
+```
+
+Mermaid・PlantUMLなどが必要な場合はSVG/PNGへ事前描画し、ソースとともに素材として扱います。
+描画済み素材を既存のIMG経路で埋め込むため、配布HTMLに外部スクリプトやCDNを要求しません。
+
+図の名前と描画方法は別に選びます。出力は既定で単一HTMLなので、利用時に「HTML」と
+毎回指定する必要はありません。HTML/CSSのステップ・カード・表、接続を読むSVG、
+専用作図した図表素材を、内容と表示条件に合わせて使い分けます。専用図表素材は
+`asset.role: "figure"` とし、作図ソースと描画済み素材を一緒に保存します。
+
+見やすさは文字サイズや構文だけでは確定しません。生成した資料そのものの画面と画像を
+独立レビューへ渡し、表示を確認できなかった面は未確認として開示します。取得・委譲・
+完了判定の契約は [`visual-evidence-contract.md`](skills/ref-handout-design-system/references/visual-evidence-contract.md) にあります。

@@ -33,60 +33,8 @@
     ]
   },
   "diagram_patterns_by_intent": {
-    "note": "『何を伝えたいか』から図解パターンを引くための対応表。C14 render-diagram-svg.py が受け付ける 9 パターンが値域であり、ここは意図から値への写像だけを持つ。前半 6 種は要素どうしの関係、後半 3 種は前提知識が無い読み手へ未知を既知へ橋渡しする",
-    "map": [
-      {
-        "intent": "順番に進む手順・処理の流れ",
-        "pattern": "flow",
-        "shape": "steps 2-6 件。各件 {label, note?}"
-      },
-      {
-        "intent": "同じ観点で複数の対象を並べる",
-        "pattern": "compare",
-        "shape": "axes 1-6 件・items 2-4 件・cells は items×axes の全マス"
-      },
-      {
-        "intent": "全体と内訳・分類の親子関係",
-        "pattern": "hierarchy",
-        "shape": "root {label} と children 1-5 件。深さは root を第1層として 3 まで"
-      },
-      {
-        "intent": "回り続ける繰り返し・改善の輪",
-        "pattern": "cycle",
-        "shape": "steps 3-6 件。各件 {label}"
-      },
-      {
-        "intent": "2 軸で位置づけを配置する",
-        "pattern": "matrix",
-        "shape": "x_axis/y_axis の {low, high} と items 1-8 件。各件 {label, x, y} は 0.0-1.0"
-      },
-      {
-        "intent": "2 つの選択肢を突き合わせる",
-        "pattern": "versus",
-        "shape": "left/right の {label, bullets 1-5 件}"
-      },
-      {
-        "intent": "変わる前と変わった後を見せる",
-        "pattern": "before_after",
-        "shape": "before/after の {label, bullets 0-4 件} と arrow_label?",
-        "beginner": "yes",
-        "why": "versus は対等な 2 択の突き合わせで、左右が入れ替わっても意味が変わらない。『今こうなっている → こうなる』は非対称で、入れ替えると逆の主張になる"
-      },
-      {
-        "intent": "知っている物にたとえて未知を説明する",
-        "pattern": "analogy",
-        "shape": "known/target の {label, note?} と pairs 1-4 件 {from, to}",
-        "beginner": "yes",
-        "why": "前提知識が無い読み手には、新しい語をいくら並べても手がかりが無い。既に知っている物と 1 対 1 で並べると、既知の側の理解がそのまま移る"
-      },
-      {
-        "intent": "数字 1 つを言い切る",
-        "pattern": "bignumber",
-        "shape": "{value, unit?, caption, sub?}",
-        "beginner": "yes",
-        "why": "文中の数字は読み飛ばされる。1 画面に 1 つだけ大きく置くと、文を読まない読み手にも要点が残る"
-      }
-    ]
+    "catalog": "config/handout-diagrams.json",
+    "note": "本文の関係を解析して候補を選ぶ。選定手順と採用しない理由の記録は diagram_selection。パターンと形の例をここへ重複定義しない"
   },
   "micro_copy": {
     "note": "図解・カード・表の中に置く『1 要素あたりの文字数』の上限。参考資料 (analysis/guide-doc-generator/reference-analysis.md §12) の実測が根拠であり、当てる範囲は sections[].parts[].data と diagrams[].data の中の文字列に限る。文書・セクション直下のフィールドには当てない (そちらは別の検査が既に持っている)",
@@ -408,11 +356,10 @@
       "code": "W-DIAGRAM-FEW",
       "level": "warning",
       "unit": "main セクション 1 個あたりの DIAGRAM 部品の最低件数",
-      "why": "利用者指定 2026-08-19: 『図解の方はこの画像があるので SVG じゃなくて画像だけで重複しているようなところが多々見受けられる。挿絵の方で網羅されているので不要』。 C21 の生成挿絵が構造 (手順の並び・循環・対比) まで描き切るようになった結果、同じ節に置かれた DIAGRAM と IMG が同じ内容を二重に示す状態が常態化した。読み手は同じ図を 2 回見せられ、縦に長い資料になる。 2026-08-18 追補の『図解と画像は毎回セクションごとに必ず追加する』はこの追補で上書きされる — 当時は挿絵が 1 枚も出ておらず、図解が唯一の視覚部品だった。 value=0 にして下限そのものを外す (level を warning へ落とすだけでは --strict で再び全節が止まるため、重大度でなく下限を動かす)。 図解が必要な節は資料が出来た後に利用者が個別指定する運用へ移す。IMG の下限 (E-IMAGE-ABSENT=1) は据え置き — 節の顔は挿絵が持つ。",
-      "decision_source": "利用者指定 2026-08-19 (会話)。 plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json の REQ-2(b) を上書きする",
+      "why": "枚数の一律強制はしない。図解を既定で省く旧運用を廃止し、diagram_selectionの関係抽出で初稿から必要な情報単位を図へ置換する。先頭の挿絵と役割を分け、二重説明を削る。",
+      "decision_source": "利用者指定 2026-10-31: 文章から最適な図を選び、列挙例へ限定せず、長文・小さい文字・未接続・配色のずれを防ぐ",
       "superseded": "plugin-plans/guide-doc-generator/improvement/diagram-gate-decision.json#decision (総量比 value=0.4 / floor=2 の下限式)。参照しないこと",
-      "supersedes": "improvement/visual-per-section-decision.json#REQ-2(b) (per-section 1 件必須)",
-      "reinstate_condition": "挿絵が構造を描かない画風へ戻した場合、または挿絵の生成を止めた場合は 1 へ戻す"
+      "on_illustration_change": "挿絵の画風や有無が変わったときも枚数の下限を自動で戻さず、diagram_selectionで各情報単位の関係と媒体を再選定する"
     },
     "min_images_per_main_section": {
       "value": 1,
@@ -540,5 +487,48 @@
       "unit": "1 セクションあたりの fold_section 実行回数の上限",
       "why": "折り畳みは『構造上どうしても長い本文』の救済であって、要約を省く手段ではない。回数 0 にすると、超過は必ず書き手が短くして解決することになる"
     }
+  },
+  "diagram_selection": {
+    "principle": "図で理解が速くなる情報単位は初稿から図へ置き換える。挿絵があることを図解を省く理由にしない。全節1枚の強制ではなく、必要な関係を文章だけで残さない",
+    "procedure": [
+      "文章を結論・主体・対象・関係・条件・数量/単位・時点/期間・根拠へ分解する。根拠のない関係を補わない",
+      "読み手が判断する問いを1つ決め、順序/因果/分岐/包含/比較/数量/時間/相互作用/列挙等の関係を抽出する。キーワード一致だけで図種を決めない",
+      "カタログ内外から候補を比較し、意味の忠実さ→読める大きさ→読む手間の順で選ぶ。表や短い箇条書きが速ければそれを選ぶ",
+      "挿絵・図・表・本文の各情報の担当を割り当て、同じ説明の重複を除く。図は文章の代替として配置し、本文は結論/例外/出典だけを補う",
+      "実装可能性を確認する。順序・比較・列挙・数値の強調は既存のHTML/CSS部品、接続線や座標が意味を持つ図は内蔵SVG、専用記法は事前描画してasset.role=figureのIMGへ接続する。選択をこの順へ固定せず、意味と可読性を優先する",
+      "decision_logの項目名と検査はskills/run-handout-build/references/visual-selection-contract.mdを正本とする。非採用理由はcandidates[].reason、配置はsection_id/target_part_ids、媒体はmodeへ記録し、別名フィールドを増やさない",
+      "全節を見直し、図が有利な関係が文章だけに残っていないか確認する。残す場合は具体的な理由と代替表現を記録する。単に画像がある/利用者未指定/未対応は省略理由にしない"
+    ],
+    "placement": "節の先頭画像の後で、対応する説明位置へ図を置く。全図を冒頭に集めない。トグルを閉じても主張と判断材料が通るようにする",
+    "not_a_quota": "枚数の下限で意味判断を代替しない。図に適さない節へ飾りの図を追加しない",
+    "record_unit": "記録は読者の問いを共有する情報単位でまとめ、結論・補足の短文や導線も同じ記録のtarget_part_idsへ含めてよい。自明な1部品ごとに形式的な2候補を増やさない。図へ置き換えるときは既存の文章との重複を除く"
+  },
+  "diagram_presentation": {
+    "min_text_px": 14,
+    "min_width_px": 640,
+    "review_widths_px": [
+      1440,
+      768,
+      375
+    ],
+    "rules": [
+      "本文と同じテーマ変数で主題・補助・文字・罫線を指定する。種類ごとに無関係なパレットを増やさない",
+      "色だけで区別せずラベル・形・線種を併用する。淡色の上にも読める濃い文字を置く",
+      "小さく縮めて収めない。長いラベルは短い意味単位に分け、図を概要と詳細へ分割する",
+      "接続先・矢印方向・条件・凡例を検査する。線の途切れ、箱の貫通、文字との衝突、見かけだけの関係を許さない",
+      "複雑な接続図は図領域のスクロールとキーボード拡大で読める大きさを保つ。単一KPIや短いカードはHTML/CSS等の折返し可能な表示を選び、初期表示から主役を隠さない。紙面で読めない図は分図または横向きの専用素材へ変更する",
+      "文字の実表示サイズと重なりはブラウザで確認する。構文検査の合格だけを視覚確認の代わりにしない",
+      "IMGへ埋め込むSVGは文書のCSS変数を継承しない。専用描画時に選択テーマのトークンを素材内へ適用し、埋め込み後の色を確認する"
+    ],
+    "visual_evidence_contract": "skills/ref-handout-design-system/references/visual-evidence-contract.md"
+  },
+  "disclosure": {
+    "component": "B10",
+    "rules": [
+      "全員に必要な結論・判断軸・次の操作は常時表示する",
+      "補足の理由・例外・詳細手順だけを既定で閉じる。トグルは1段に留め、summaryだけで開く価値が分かる具体名にする",
+      "閉じた本文とsummaryに同じ説明を書かない。本文は改行で意味単位を分ける",
+      "ネイティブdetails/summaryのキーボード操作・開閉の視覚状態・フォーカス表示を保つ。印刷時は本文を開き、終了後に状態を復元する"
+    ]
   }
 }

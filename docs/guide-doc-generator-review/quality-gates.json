@@ -1,0 +1,481 @@
+{
+  "review_date": "2026-10-31",
+  "scope": "既存MVPの対象差分の最終レビュー。全リポジトリを再監査しない。",
+  "beads_ids": [
+    "harness-lw6u",
+    "harness-ubcg",
+    "harness-lp5j",
+    "harness-86kh"
+  ],
+  "graph_node_id": "task-gdg-review",
+  "published_log_transform": "ローカル絶対パスの置換と行末空白の除去のみ。原ログはローカル.buildへ保持。",
+  "test_runs": [
+    {
+      "command": "HANDOUT_BROWSER=<local Chrome> python3 -m pytest <以下の対象13ディレクトリ> -q",
+      "root": "plugins/guide-doc-generator/tests",
+      "directories": [
+        "render-diagram-svg.py",
+        "render-handout.py",
+        "verify-handout-selfcontained.py",
+        "route-handout-output.py",
+        "extract-handout-config.py",
+        "srg-image-bridge.py",
+        "visual-expressions",
+        "run-handout-build",
+        "handout-verify",
+        "handout-content-architect",
+        "handout-readability-reviewer",
+        "ref-handout-design-system",
+        "assign-handout-readability-evaluator"
+      ],
+      "result": "2 failed, 1837 passed, 1824 subtests passed",
+      "log": "pytest.log"
+    },
+    {
+      "command": "HANDOUT_BROWSER=<local Chrome> python3 -m pytest plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog.py plugins/guide-doc-generator/tests/visual-expressions/test_browser.py -q",
+      "result": "39 passed",
+      "log": "retest-fixes.log",
+      "resolves": [
+        "部品IDの重複列挙をカタログ参照へ統一",
+        "375px表内部スクロールの旧テスト前提を修正しキーボード実操作で検証"
+      ]
+    },
+    {
+      "command": "python3 -m pytest plugins/guide-doc-generator/tests/handout-verify -q",
+      "result": "71 passed, 1059 subtests passed",
+      "log": "command-retest.log"
+    }
+  ],
+  "real_handout": {
+    "input_reference": "${HANDOUT_DIR}: 利用者指定の2026-10-30勉強会資料。資料本体・原画像は本リポジトリへ公開しない。",
+    "html_sha256": "d45af110540d761f026345ea226927aad4640da1392816169794404735c26004",
+    "config_sha256": "138979a05c8d2a937562a8da5b0eeb4045968507e01f600b8aad80ed20971341",
+    "selection_sha256": "811694b738c6fe4385e4ea9a7bb6d836f3930f14583d68552953e999896d30e6",
+    "sections": 13,
+    "parts": 64,
+    "assets": 16,
+    "normalization_marker": {
+      "field": "provenance.normalized_by",
+      "actual": "validate-handout-config.py",
+      "schema_const": "validate-handout-config.py",
+      "match": true
+    },
+    "executions": [
+      {
+        "gate": "embed",
+        "argv": [
+          "python3",
+          "embed-assets.py",
+          "--config",
+          "${HANDOUT_DIR}/handout-config.json",
+          "--assets-dir",
+          "${HANDOUT_DIR}",
+          "--out",
+          "${REPO_ROOT}/.build/guide-final-review/embedded-config.json"
+        ],
+        "exit_code": 0
+      },
+      {
+        "gate": "render",
+        "argv": [
+          "python3",
+          "render-handout.py",
+          "--config",
+          "${REPO_ROOT}/.build/guide-final-review/embedded-config.json",
+          "--out",
+          "${REPO_ROOT}/.build/guide-final-review/regenerated-handout.html"
+        ],
+        "exit_code": 0
+      },
+      {
+        "gate": "byte-reproduction",
+        "pass": true,
+        "sha256": "d45af110540d761f026345ea226927aad4640da1392816169794404735c26004"
+      },
+      {
+        "gate": "selfcontained",
+        "argv": [
+          "python3",
+          "verify-handout-selfcontained.py",
+          "--html",
+          "${HANDOUT_DIR}/handout.html",
+          "--json-report",
+          "${REPO_ROOT}/.build/guide-final-review/selfcontained.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.97
+      },
+      {
+        "gate": "a11y-print",
+        "argv": [
+          "python3",
+          "verify-handout-a11y-print.py",
+          "--html",
+          "${HANDOUT_DIR}/handout.html",
+          "--json-report",
+          "${REPO_ROOT}/.build/guide-final-review/a11y-print.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.2
+      },
+      {
+        "gate": "language",
+        "argv": [
+          "python3",
+          "verify-handout-language.py",
+          "--html",
+          "${HANDOUT_DIR}/handout.html",
+          "--config",
+          "${HANDOUT_DIR}/handout-config.json",
+          "--out-dir",
+          "${HANDOUT_DIR}",
+          "--json-report",
+          "${REPO_ROOT}/.build/guide-final-review/language.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.19
+      },
+      {
+        "gate": "narrative",
+        "argv": [
+          "python3",
+          "verify-handout-narrative.py",
+          "--html",
+          "${HANDOUT_DIR}/handout.html",
+          "--config",
+          "${HANDOUT_DIR}/handout-config.json",
+          "--json-report",
+          "${REPO_ROOT}/.build/guide-final-review/narrative.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.2
+      },
+      {
+        "gate": "normalize-check",
+        "argv": [
+          "python3",
+          "validate-handout-config.py",
+          "--config",
+          "${HANDOUT_DIR}/handout-config.json"
+        ],
+        "exit_code": 0
+      },
+      {
+        "gate": "selection",
+        "argv": [
+          "python3",
+          "validate-visual-selection.py",
+          "--config",
+          "${HANDOUT_DIR}/handout-config.json",
+          "--decisions",
+          "${HANDOUT_DIR}/handout-config.json.visual-selection.json"
+        ],
+        "exit_code": 0
+      }
+    ],
+    "four_gate_summary": {
+      "selfcontained": {
+        "result": "PASS",
+        "detections": [
+          {
+            "id": "SC-01",
+            "status": "PASS",
+            "checked": 31
+          },
+          {
+            "id": "SC-02",
+            "status": "PASS",
+            "checked": 2
+          },
+          {
+            "id": "SC-03",
+            "status": "PASS",
+            "checked": 30
+          },
+          {
+            "id": "SC-04",
+            "status": "PASS",
+            "checked": 2
+          },
+          {
+            "id": "SC-05",
+            "status": "PASS",
+            "checked": 3153
+          },
+          {
+            "id": "SC-06",
+            "status": "PASS",
+            "checked": 1
+          },
+          {
+            "id": "SC-07",
+            "status": "PASS",
+            "checked": 0
+          },
+          {
+            "id": "SC-08",
+            "status": "PASS",
+            "checked": 26
+          },
+          {
+            "id": "SC-09",
+            "status": "PASS",
+            "checked": 17
+          },
+          {
+            "id": "SC-10",
+            "status": "PASS",
+            "checked": 18
+          }
+        ]
+      },
+      "a11y-print": {
+        "result": "PASS",
+        "detections": [
+          {
+            "id": "A11Y-01",
+            "status": "PASS",
+            "checked": 0
+          },
+          {
+            "id": "A11Y-02",
+            "status": "PASS",
+            "checked": 0
+          },
+          {
+            "id": "A11Y-03",
+            "status": "PASS",
+            "checked": 71
+          },
+          {
+            "id": "A11Y-04",
+            "status": "PASS",
+            "checked": 46
+          },
+          {
+            "id": "A11Y-05",
+            "status": "PASS",
+            "checked": 1
+          },
+          {
+            "id": "A11Y-06",
+            "status": "PASS",
+            "checked": 4
+          },
+          {
+            "id": "A11Y-07",
+            "status": "PASS",
+            "checked": 2
+          },
+          {
+            "id": "PRINT-01",
+            "status": "PASS",
+            "checked": 1
+          },
+          {
+            "id": "PRINT-02",
+            "status": "PASS",
+            "checked": 4
+          },
+          {
+            "id": "PRINT-03",
+            "status": "PASS",
+            "checked": 16
+          },
+          {
+            "id": "PRINT-04",
+            "status": "PASS",
+            "checked": 1
+          },
+          {
+            "id": "STICKY-01",
+            "status": "PASS",
+            "checked": 2
+          }
+        ]
+      },
+      "language": {
+        "result": "PASS",
+        "detections": [
+          {
+            "id": "LANG-01",
+            "status": "PASS",
+            "checked": 8,
+            "violation_count": 0
+          },
+          {
+            "id": "LANG-04",
+            "status": "PASS",
+            "checked": 13,
+            "violation_count": 0
+          },
+          {
+            "id": "LANG-05",
+            "status": "PASS",
+            "checked": 13,
+            "violation_count": 0
+          },
+          {
+            "id": "LANG-06",
+            "status": "PASS",
+            "checked": 13,
+            "violation_count": 0
+          },
+          {
+            "id": "LANG-07",
+            "status": "PASS",
+            "checked": 0,
+            "violation_count": 0
+          },
+          {
+            "id": "DATE-01",
+            "status": "PASS",
+            "checked": 1,
+            "violation_count": 0
+          },
+          {
+            "id": "DATE-02",
+            "status": "PASS",
+            "checked": 1,
+            "violation_count": 0
+          },
+          {
+            "id": "DATE-03",
+            "status": "PASS",
+            "checked": 1,
+            "violation_count": 0
+          },
+          {
+            "id": "DATE-04",
+            "status": "PASS",
+            "checked": 0,
+            "violation_count": 0
+          }
+        ]
+      },
+      "narrative": {
+        "result": "PASS",
+        "detections": [
+          {
+            "id": "NAR-01",
+            "status": "PASS",
+            "checked": 3
+          },
+          {
+            "id": "NAR-02",
+            "status": "PASS",
+            "checked": 3
+          },
+          {
+            "id": "NAR-03",
+            "status": "PASS",
+            "checked": 13
+          },
+          {
+            "id": "NAR-04",
+            "status": "PASS",
+            "checked": 13
+          },
+          {
+            "id": "NAR-05",
+            "status": "PASS",
+            "checked": 13
+          },
+          {
+            "id": "NAR-06",
+            "status": "PASS",
+            "checked": 13
+          },
+          {
+            "id": "NAR-07",
+            "status": "SKIP",
+            "checked": 0
+          },
+          {
+            "id": "NAR-08",
+            "status": "PASS",
+            "checked": 1
+          },
+          {
+            "id": "NAR-09",
+            "status": "PASS",
+            "checked": 12
+          },
+          {
+            "id": "NAR-10",
+            "status": "PASS",
+            "checked": 0
+          }
+        ]
+      }
+    },
+    "aggregation": {
+      "source": "plugins/guide-doc-generator/commands/handout-verify.md#CR-GATE-AGG",
+      "result": "pass"
+    },
+    "warnings": [
+      "W-SECTIONS-MANY: 13節。助言であり未正規化や品質エラーと混同しない。",
+      "C11の素材サイズ警告を報告として保持。"
+    ],
+    "failed_attempt": "最初のembed呼出しはassets-dirへassets/を渡して二重解決したため素材なしで停止。基準ディレクトリをHANDOUT_DIRへ訂正して成功。実装の変更や失敗の握り潰しは行っていない。"
+  },
+  "p0": [
+    {
+      "name": "agent-prompt",
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py",
+        "--agents-dir",
+        "plugins/guide-doc-generator/agents"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "description",
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-skill-description.py",
+        "--skills-dir",
+        "plugins/guide-doc-generator/skills"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "frontmatter-final",
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+        "--skills-dir",
+        "plugins/guide-doc-generator/skills"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "other_gates": {
+    "script_frontmatter": "OK checked=16 pending=0",
+    "content_review": "OK 90 skills verified; 今回変更した2skillsは独立差分評価で各score90, threshold80, high0",
+    "goal_seek": "run-handout-build: PASS。単発assignの既存inline-loop指摘は対象外として保持。",
+    "plugin_completeness": "OK 22 plugins complete",
+    "graph_schema": "valid=true, violations=0, readiness complete=5",
+    "gallery": "正規builderによる再生成とcmp一致",
+    "whitespace": "実装差分は通常のgit diff --check成功。C02生成5文書はwriterの末尾空行を受領書SHA保持のため維持し、当該文書のみ-blank-at-eofで検査する。",
+    "release": "guide-doc-generator 0.1.26; --check --only guide-doc-generator と local marketplace --check成功"
+  },
+  "not_run": [
+    "新しいbuilder trace作成（既存MVPの差分レビューのため過去のbuild工程を再現したと主張しない）",
+    "全repositoryテスト・新規30思考法レビュー・skill live-trial・exact13実装packageへの昇格",
+    "今回の実資料全画面キャプチャ再実施。前段の3幅確認を保持し、今回はgalleryの3幅browserスモークを対象回帰内で再実行。"
+  ],
+  "remaining": [
+    {
+      "id": "harness-ws7j",
+      "status": "open",
+      "reason": "HTMLだけの逆抽出では画像計画・asset順・null等のメタ比較差分が残る。同梱JSON+assetsからのバイト一致再生成は成功。"
+    },
+    {
+      "id": "PD-002",
+      "status": "既存medium smellを保持",
+      "reason": "SKILL.md本文冒頭30行に規定キーワードによる禁則がない。HEADにも存在する非変更sliceの指摘で、今回差分による退行ではない。"
+    }
+  ]
+}

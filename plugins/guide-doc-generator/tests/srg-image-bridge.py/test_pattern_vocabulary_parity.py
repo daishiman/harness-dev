@@ -51,7 +51,7 @@ class PatternVocabularyParityTest(unittest.TestCase):
         schema = _schema()
         image_plan = schema["$defs"]["image_plan"]["properties"]["diagram_pattern"]["enum"]
         diagram = schema["$defs"]["diagram"]["properties"]["pattern"]["enum"]
-        policy = _visual_policy()["diagram_patterns_by_intent"]["map"]
+        policy = json.loads((H.PLUGIN_ROOT / "config/handout-diagrams.json").read_text(encoding="utf-8"))["patterns"]
         return {
             "C14 render-diagram-svg.py#PATTERNS": frozenset(c14.PATTERNS),
             "C21 srg-image-bridge.py#PATTERN_TO_FAMILY": frozenset(c21.PATTERN_TO_FAMILY),
@@ -60,8 +60,8 @@ class PatternVocabularyParityTest(unittest.TestCase):
             ),
             "schema#$defs.diagram.properties.pattern": frozenset(diagram),
             "schema#$defs.image_plan.properties.diagram_pattern": frozenset(image_plan),
-            "config/handout-visual-policy.json#diagram_patterns_by_intent": frozenset(
-                entry["pattern"] for entry in policy
+            "config/handout-diagrams.json#patterns": frozenset(
+                policy
             ),
         }
 

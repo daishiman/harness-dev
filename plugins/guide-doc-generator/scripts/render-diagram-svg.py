@@ -2,9 +2,9 @@
 # /// script
 # name: render-diagram-svg
 # version: 0.1.0
-# purpose: C14 図解 1 個分の宣言データから flow / compare / hierarchy / cycle / matrix / versus / before_after / analogy / bignumber の 9 パターンを inline SVG 断片として決定論生成する
+# purpose: C14 図解 1 個分の宣言データから BUILDERS に登録したパターンを inline SVG 断片として決定論生成する
 # inputs:
-#   - argv: --diagram <path> [--pattern <name>] [--width <px>]
+#   - argv: --list | --diagram <path> --pattern <name> [--width <px>]
 # outputs:
 #   - stdout: inline SVG 断片
 #   - exit: 0=成功 / 1=入力データ側の規約違反 (差し戻し先は構成データまたは HTML) / 2=実行不能 (argv 不正・入出力の不在や読取不可・契約違反)
@@ -16,7 +16,7 @@
 # ///
 """C14 render-diagram-svg.py
 
-構造データ (図解 1 個分の宣言 JSON) から 9 パターンの概念図解を
+構造データ (図解 1 個分の宣言 JSON) から登録済みの概念図解を
 inline SVG 断片として決定論生成する。
 
 パターンは狙いで 2 群に分かれる。
@@ -36,6 +36,7 @@ inline SVG 断片として決定論生成する。
 """
 
 import argparse
+import datetime
 import html
 import json
 import math
@@ -43,6 +44,7 @@ import re
 import sys
 import unicodedata
 from collections import OrderedDict
+from pathlib import Path
 
 # --------------------------------------------------------------------------
 # 定数 (brief argv / algorithm 手順 5-9)
@@ -51,8 +53,7 @@ from collections import OrderedDict
 # 前半 6 語は「関係を示す」図解 (何かと何かがどう繋がるか)。後半 3 語は
 # 「未知を既知へ橋渡しする」図解であり、前提知識が無い読み手を対象にする。
 # 語の追加はこのタプルと BUILDERS の 2 か所で閉じる (id の第 2 の名簿を作らない)。
-PATTERNS = ("flow", "compare", "hierarchy", "cycle", "matrix", "versus",
-            "before_after", "analogy", "bignumber")
+# 公開パターン名簿は末尾の BUILDERS から導出する。
 
 DEFAULT_WIDTH = 860
 
@@ -60,10 +61,10 @@ MARGIN = 16
 GAP = 24
 PAD = 12
 
-FS_TITLE = 15
-FS_LABEL = 15
-FS_NOTE = 12.5
-FS_AXIS = 12.5
+FS_TITLE = 16
+FS_LABEL = 16
+FS_NOTE = 14
+FS_AXIS = 14
 # 初心者向け 3 パターン専用の字送り。既存 6 パターンの FS_LABEL より大きいのは、
 # これらの図が「節の中の 1 情報単位を絵として置き換える」用途だからである。
 # 既存 6 パターンは節の中の 1 部品であり、隣の本文と釣り合う大きさで正しい。
@@ -85,15 +86,15 @@ MAX_LINES_CELL = 3
 LINE_RATIO = 1.45
 
 # 手順 9: 色は var(--token, #fallback) の形でだけ書く
-INK = "var(--ink, #16191d)"
-MUTED = "var(--ink-muted, #5b6470)"
-PRIMARY = "var(--pop-primary, #43a4f5)"
+INK = "var(--ink, #1b2733)"
+MUTED = "var(--ink-muted, #5b6b7a)"
+PRIMARY = "var(--pop-primary-deep, #2273b8)"
 PRIMARY_SOFT = "var(--pop-primary-soft, #d9edfe)"
 PRIMARY_DEEP = "var(--pop-primary-deep, #2273b8)"
-ACCENT = "var(--pop-accent, #f2994a)"
-ACCENT_SOFT = "var(--pop-accent-soft, #fdeadb)"
+ACCENT = "var(--pop-primary-deep, #2273b8)"
+ACCENT_SOFT = "var(--subtle, #f4f8fc)"
 SURFACE = "var(--surface, #ffffff)"
-RULE = "var(--rule, #d5dae1)"
+RULE = "var(--line, #dbe6ef)"
 
 ID_SAFE = re.compile(r"[^A-Za-z0-9_-]")
 
@@ -200,7 +201,11 @@ def wrap_text(text, font_size, max_width):
 
 
 def fit(text, font_size, max_width, max_lines, where):
+    if max_width <= 0:
+        raise DiagramError("%s: 表示幅が不足しています。図を分割してください" % where)
     lines = wrap_text(text, font_size, max_width)
+    if any(text_width(content, font_size) > max_width + .1 for content in lines):
+        raise DiagramError("%s: 文字が枠の幅を超えます。図の幅か情報の分割を見直してください" % where)
     if len(lines) > max_lines:
         raise DiagramError(
             "%s: テキストが枠に収まりません "
@@ -572,7 +577,7 @@ def build_hierarchy(spec, width, body_y, out):
             mid = (parent_y + child_y) // 2
             path(out, 1, "M %d %d L %d %d L %d %d L %d %d"
                  % (parent_x, parent_y, parent_x, mid, child_x, mid, child_x, child_y),
-                 fill="none", stroke=RULE)
+                 fill="none", stroke=PRIMARY_DEEP)
 
     for depth, row in enumerate(boxes):
         fill = PRIMARY_SOFT if depth == 0 else SURFACE
@@ -1031,6 +1036,305 @@ def build_bignumber(spec, width, body_y, out):
     return body_y + box_h + MARGIN
 
 
+def finite_number(value, where, minimum=None):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise DiagramError("%s: 有限の数値が要ります" % where)
+    if minimum is not None and value < minimum:
+        raise DiagramError("%s: %s 以上が要ります" % (where, minimum))
+    return float(value)
+
+
+def grid_index(value, where, maximum):
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
+        raise DiagramError("%s: 0-%d の整数が要ります" % (where, maximum))
+    return value
+
+
+def segment_hits_rect(a, b, box):
+    """線分が矩形の内側を通るか。境界に触れるだけの接続は許す。"""
+    left, top, right, bottom = box
+    low, high = 0.0, 1.0
+    for start, delta, minimum, maximum in ((a[0], b[0]-a[0], left, right),
+                                           (a[1], b[1]-a[1], top, bottom)):
+        if abs(delta) < 1e-9:
+            if not minimum < start < maximum:
+                return False
+        else:
+            first, last = sorted(((minimum-start)/delta, (maximum-start)/delta))
+            low, high = max(low, first), min(high, last)
+    return low < high - 1e-9
+
+
+def segments_cross(a, b, c, d):
+    dx, dy = b[0]-a[0], b[1]-a[1]
+    ex, ey = d[0]-c[0], d[1]-c[1]
+    divisor = dx*ey-dy*ex
+    if abs(divisor) < 1e-9:
+        return False
+    t = ((c[0]-a[0])*ey-(c[1]-a[1])*ex)/divisor
+    u = ((c[0]-a[0])*dy-(c[1]-a[1])*dx)/divisor
+    return 0 < t < 1 and 0 < u < 1
+
+
+def build_relationship(spec, width, body_y, out):
+    """配置を宣言する有向関係図。分岐・合流・因果・依存・簡易 UML を表す。"""
+    nodes = need_list(spec, "nodes", 1, 12)
+    edges = need_list(spec, "edges", 0, 20)
+    positions, occupied = {}, set()
+    for node in nodes:
+        key = need_text(node, "id", "nodes[].id")
+        if key in positions:
+            raise DiagramError("nodes[].id: 重複しています: " + key)
+        col = grid_index(node.get("col"), "nodes[].col", 2)
+        row = grid_index(node.get("row"), "nodes[].row", 7)
+        if (row, col) in occupied:
+            raise DiagramError("nodes: 同じマスに箱を重ねられません。row/col を分けてください")
+        occupied.add((row, col))
+        positions[key] = (node, row, col)
+    cols = max(p[2] for p in positions.values()) + 1
+    box_w = (width - 2 * MARGIN - (cols - 1) * 96) / cols
+    if box_w < 120:
+        raise DiagramError("nodes: 幅が不足しています。図を分割してください")
+    box_h, row_h = 94, 180
+    boxes = {}
+    for key, (node, row, col) in positions.items():
+        boxes[key] = (MARGIN + col * (box_w + 96), body_y + row * row_h)
+        need_text(node, "label", "nodes[].label")
+    seen = set()
+    linked = set()
+    decision_exits = {}
+    connections = []
+    edge_labels = []
+    # 線を先に描き、箱の内側へ線がはみ出さないよう端点を箱の辺に置く。
+    for edge in edges:
+        a = need_text(edge, "from", "edges[].from")
+        b = need_text(edge, "to", "edges[].to")
+        if a not in boxes or b not in boxes or a == b:
+            raise DiagramError("edges: 接続先の欠落または自己接続です。自己作用は sequence を使ってください")
+        if (a, b) in seen:
+            raise DiagramError("edges: 同じ向きの接続が重複しています")
+        if (b, a) in seen:
+            raise DiagramError("edges: 往復線が重なります。受け渡しは sequence か分図で表してください")
+        seen.add((a, b))
+        linked.update((a, b))
+        if positions[a][0].get("shape") == "decision":
+            condition = need_text(edge, "label", "判断ノードから出る edges[].label")
+            conditions = decision_exits.setdefault(a, [])
+            if condition in conditions:
+                raise DiagramError("edges: 判断の出口条件が重複しています")
+            conditions.append(condition)
+        na, ra, ca = positions[a]
+        nb, rb, cb = positions[b]
+        # 中間の箱を貫通する直線は許可しない。中継点を増やすか分図する。
+        for key, (_, row, col) in positions.items():
+            if key not in (a, b) and ((ca == cb == col and min(ra, rb) < row < max(ra, rb)) or
+                                      (ra == rb == row and min(ca, cb) < col < max(ca, cb))):
+                raise DiagramError("edges: 線が別の箱を貫通します。中継・分図で接続を整理してください")
+        ax, ay = boxes[a]; bx, by = boxes[b]
+        if ca == cb:
+            sign = 1 if rb > ra else -1
+            x1 = ax + box_w / 2; y1 = ay + (box_h if sign > 0 else 0)
+            x2 = bx + box_w / 2; y2 = by + (0 if sign > 0 else box_h)
+        else:
+            sign = 1 if cb > ca else -1
+            x1 = ax + (box_w if sign > 0 else 0); y1 = ay + box_h / 2
+            x2 = bx + (0 if sign > 0 else box_w); y2 = by + box_h / 2
+        p, q = (x1,y1), (x2,y2)
+        for key, (nx, ny) in boxes.items():
+            if key not in (a,b) and segment_hits_rect(p,q,(nx,ny,nx+box_w,ny+box_h)):
+                raise DiagramError("edges: 線が別の箱を貫通します。配置変更または分図が必要です")
+        for before_a, before_b, start, end in connections:
+            if not {a,b} & {before_a,before_b} and segments_cross(p,q,start,end):
+                raise DiagramError("edges: 線が交差して接続が曖昧です。配置変更または分図が必要です")
+        connections.append((a,b,p,q))
+        line(out, 1, x1, y1, x2, y2, PRIMARY_DEEP, "2")
+        arrow_head(out, 1, x2, y2, x2-x1, y2-y1, PRIMARY_DEEP)
+        if edge.get("label"):
+            label = need_text(edge, "label", "edges[].label")
+            labels = fit(label, 14, 150, 2, "edges[].label")
+            tx, ty = (x1+x2)/2, (y1+y2)/2
+            label_box=(tx-78,ty-22,tx+78,ty-22+len(labels)*21+8)
+            edge_labels.append((a,b,label_box))
+            rect(out, 1, tx-78, ty-22, 156, len(labels)*21+8, SURFACE, radius=4)
+            text_block(out, 1, labels, tx, ty-5, 14, INK)
+    if len(nodes) > 1 and linked != set(positions):
+        raise DiagramError("nodes: 未接続の箱があります。関係を結ぶか、独立項目ならカードへ移してください")
+    reachable = {next(iter(positions))}
+    for _ in nodes:
+        for a,b in seen:
+            if a in reachable or b in reachable: reachable.update((a,b))
+    if len(reachable) != len(nodes):
+        raise DiagramError("nodes: 関係が別々の集団に分断されています。分図またはカードで表してください")
+    for a,b,box in edge_labels:
+        for ca,cb,start,end in connections:
+            if (a,b)!=(ca,cb) and segment_hits_rect(start,end,box):
+                raise DiagramError("edges[].label: 他の接続線と重なります。配置変更または分図が必要です")
+        for nx,ny in boxes.values():
+            if box[0]<nx+box_w and nx<box[2] and box[1]<ny+box_h and ny<box[3]:
+                raise DiagramError("edges[].label: 箱と重なります。配置変更または分図が必要です")
+    for i,(_,_,a) in enumerate(edge_labels):
+        for _,_,b in edge_labels[i+1:]:
+            if a[0]<b[2] and b[0]<a[2] and a[1]<b[3] and b[1]<a[3]:
+                raise DiagramError("edges[].label: 条件同士が重なります。配置変更または分図が必要です")
+    for key, (node, _, _) in positions.items():
+        if node.get("shape") == "decision" and len(decision_exits.get(key, [])) < 2:
+            raise DiagramError("nodes: 判断ノードには条件の異なる2つ以上の出口が要ります")
+    for key, (node, row, col) in positions.items():
+        x, y = boxes[key]
+        shape = node.get("shape", "box")
+        if shape not in ("box", "decision"):
+            raise DiagramError("nodes[].shape: box / decision を選んでください")
+        if shape == "decision":
+            path(out, 1, "M %d %d L %d %d L %d %d L %d %d Z" %
+                 (x+box_w/2,y,x+box_w,y+box_h/2,x+box_w/2,y+box_h,x,y+box_h/2), PRIMARY_SOFT, PRIMARY_DEEP)
+            inner = box_w * .5
+        else:
+            rect(out, 1, x, y, box_w, box_h, PRIMARY_SOFT, PRIMARY_DEEP)
+            inner = box_w-24
+        labels = fit(node["label"], 16, inner, 3, "nodes[].label")
+        text_block(out, 1, labels, x+box_w/2, y+box_h/2-(len(labels)-1)*12+5, 16, INK, weight="600")
+    return body_y + max(p[1] for p in positions.values())*row_h + box_h + MARGIN
+
+
+def build_sequence(spec, width, body_y, out):
+    actors = need_list(spec, "actors", 2, 4)
+    if any(not isinstance(a, str) or not a.strip() for a in actors) or len(set(actors)) != len(actors):
+        raise DiagramError("actors: 重複のない空でない担当名が要ります")
+    messages = need_list(spec, "messages", 1, 10)
+    span = (width-2*MARGIN)/len(actors)
+    xs = {a: MARGIN+span*(i+.5) for i,a in enumerate(actors)}
+    bottom = body_y+80+len(messages)*84
+    for actor in actors:
+        x = xs[actor]
+        rect(out, 1, x-span/2+8, body_y, span-16, 52, PRIMARY_SOFT, RULE)
+        text_block(out, 1, fit(actor,16,span-32,2,"actors[]"),x,body_y+24,16,INK)
+        line(out,1,x,body_y+52,x,bottom,RULE,"2")
+    for i, msg in enumerate(messages):
+        a = need_text(msg,"from","messages[].from"); b = need_text(msg,"to","messages[].to")
+        label = need_text(msg,"label","messages[].label")
+        if a not in xs or b not in xs:
+            raise DiagramError("messages: actors に無い担当への接続です")
+        y = body_y+100+i*84; x1=xs[a]; x2=xs[b]
+        if a == b:
+            path(out,1,"M %d %d h 40 v 32 h -40"%(x1,y),stroke=PRIMARY_DEEP)
+            arrow_head(out,1,x1,y+32,-1,0,PRIMARY_DEEP)
+            tx=x1+48; anchor="start"; available=span/2-56
+        else:
+            line(out,1,x1,y,x2,y,PRIMARY_DEEP,"2")
+            arrow_head(out,1,x2,y,x2-x1,0,PRIMARY_DEEP)
+            tx=(x1+x2)/2; anchor="middle"; available=abs(x2-x1)-24
+        text_block(out,1,fit(label,15,available,2,"messages[].label"),tx,y-35,15,INK,anchor)
+    return bottom+MARGIN
+
+
+def build_timeline(spec, width, body_y, out):
+    events = need_list(spec,"events",2,10)
+    x=MARGIN+24
+    line(out,1,x,body_y+12,x,body_y+(len(events)-1)*100+12,PRIMARY_DEEP,"2")
+    for i,event in enumerate(events):
+        y=body_y+i*100
+        date=need_text(event,"date","events[].date"); label=need_text(event,"label","events[].label")
+        circle(out,1,x,y+12,6,PRIMARY_DEEP,decorative=True)
+        text_block(out,1,fit(date,14,180,2,"events[].date"),x+24,y+16,14,MUTED,"start")
+        text_block(out,1,fit(label,16,width-x-240,3,"events[].label"),x+220,y+16,16,INK,"start")
+    return body_y+len(events)*100
+
+
+def build_gantt(spec, width, body_y, out):
+    tasks=need_list(spec,"tasks",1,10)
+    dates=[]
+    for task in tasks:
+        need_text(task,"label","tasks[].label")
+        try:
+            raw_start=need_text(task,"start","tasks[].start")
+            raw_end=need_text(task,"end","tasks[].end")
+            if not all(re.fullmatch(r"\d{4}-\d{2}-\d{2}", date) for date in (raw_start,raw_end)):
+                raise ValueError("ISO日付の書式が違います")
+            start=datetime.date.fromisoformat(raw_start)
+            end=datetime.date.fromisoformat(raw_end)
+        except ValueError:
+            raise DiagramError("tasks: 実在する ISO 日付 YYYY-MM-DD が要ります") from None
+        if end<start:
+            raise DiagramError("tasks: 終了日が開始日より前です")
+        dates.append((start,end))
+    start=min(d[0] for d in dates); end=max(d[1] for d in dates)
+    span=(end-start).days+1; x=MARGIN+220; avail=width-x-20
+    if avail<180: raise DiagramError("gantt: 幅が不足しています。図を分割してください")
+    text_block(out,1,[start.isoformat()],x,body_y+16,14,MUTED,"start")
+    text_block(out,1,[end.isoformat()],width-MARGIN,body_y+16,14,MUTED,"end")
+    for i,(task,(a,b)) in enumerate(zip(tasks,dates)):
+        y=body_y+48+i*84
+        text_block(out,1,fit(task["label"],16,196,2,"tasks[].label"),MARGIN,y+20,16,INK,"start")
+        line(out,1,x,y+12,width-MARGIN,y+12,RULE)
+        sx=x+avail*(a-start).days/span; w=avail*((b-a).days+1)/span
+        if w < 2:
+            raise DiagramError("gantt: 短い期間が見えなくなります。期間で分図してください")
+        rect(out,1,sx,y,w,24,PRIMARY_DEEP,radius=3)
+        text_block(out,1,[a.isoformat()+" → "+b.isoformat()],x,y+53,14,MUTED,"start")
+    return body_y+48+len(tasks)*84
+
+
+def chart_items(spec, minimum=1):
+    unit=need_text(spec,"unit","unit")
+    items=need_list(spec,"items",minimum,10)
+    values=[]
+    for item in items:
+        need_text(item,"label","items[].label")
+        values.append(finite_number(item.get("value"),"items[].value",0))
+    return unit,items,values
+
+
+def build_bar(spec,width,body_y,out):
+    unit,items,values=chart_items(spec)
+    maximum=max(values) or 1
+    x=MARGIN+190; avail=width-x-120
+    if avail<100: raise DiagramError("bar: 幅が不足しています")
+    line(out,1,x,body_y,x,body_y+len(items)*70,RULE,"2")
+    text_block(out,1,["0"],x,body_y+len(items)*70+18,14,MUTED)
+    for i,(item,value) in enumerate(zip(items,values)):
+        y=body_y+i*70
+        labels=fit(item["label"],16,170,2,"items[].label")
+        text_block(out,1,labels,MARGIN,y+22,16,INK,"start")
+        w=avail*value/maximum
+        rect(out,1,x,y+4,w,28,PRIMARY_DEEP,radius=2)
+        text_block(out,1,fit("%g%s"%(value,unit),15,width-x-w-16,2,"items[].value/unit"),x+w+8,y+25,15,INK,"start")
+    return body_y+len(items)*70+40
+
+
+def build_line(spec,width,body_y,out):
+    unit,items,values=chart_items(spec,2)
+    maximum=max(values) or 1; x=MARGIN+70; avail=width-x-70; top=body_y+32; h=220
+    line(out,1,x,top,x,top+h,RULE,"2"); line(out,1,x,top+h,x+avail,top+h,RULE,"2")
+    text_block(out,1,["0"],x-12,top+h+5,14,MUTED,"end")
+    prev=None
+    for i,(item,value) in enumerate(zip(items,values)):
+        px=x+avail*i/(len(items)-1); py=top+h*(1-value/maximum)
+        if prev: line(out,1,*prev,px,py,PRIMARY_DEEP,"2")
+        circle(out,1,px,py,4,PRIMARY_DEEP,decorative=True)
+        text_block(out,1,fit("%g%s"%(value,unit),14,avail/len(items),2,"items[].value/unit"),px,py-30,14,INK)
+        text_block(out,1,fit(item["label"],14,avail/len(items),3,"items[].label"),px,top+h+30,14,MUTED)
+        prev=(px,py)
+    return top+h+94
+
+
+def build_stages(spec,width,body_y,out):
+    levels=need_list(spec,"levels",2,6)
+    direction=spec.get("direction","narrowing")
+    if direction not in ("narrowing","widening","equal"):
+        raise DiagramError("direction: narrowing / widening / equal が要ります")
+    for i,level in enumerate(levels):
+        ratio=(1-i*.55/max(1,len(levels)-1)) if direction=="narrowing" else (.45+i*.55/max(1,len(levels)-1))
+        if direction=="equal": ratio=1
+        w=(width-2*MARGIN)*ratio; x=(width-w)/2; y=body_y+i*82
+        rect(out,1,x,y,w,62,PRIMARY_SOFT,PRIMARY_DEEP)
+        labels=fit(need_text(level,"label","levels[].label"),16,w-32,2,"levels[].label")
+        text_block(out,1,labels,width/2,y+27,16,INK,weight="600")
+        if i<len(levels)-1:
+            line(out,1,width/2,y+62,width/2,y+80,PRIMARY_DEEP,"2")
+            arrow_head(out,1,width/2,y+80,0,1,PRIMARY_DEEP,size=6,half=4)
+    return body_y+len(levels)*82
+
+
 BUILDERS = OrderedDict((
     ("flow", build_flow),
     ("compare", build_compare),
@@ -1041,7 +1345,15 @@ BUILDERS = OrderedDict((
     ("before_after", build_before_after),
     ("analogy", build_analogy),
     ("bignumber", build_bignumber),
+    ("relationship", build_relationship),
+    ("sequence", build_sequence),
+    ("timeline", build_timeline),
+    ("gantt", build_gantt),
+    ("bar", build_bar),
+    ("line", build_line),
+    ("stages", build_stages),
 ))
+PATTERNS = tuple(BUILDERS)
 
 
 # --------------------------------------------------------------------------
@@ -1057,7 +1369,7 @@ def render_diagram(spec, pattern, width=DEFAULT_WIDTH):
 
     if pattern not in PATTERNS:
         raise DiagramError(
-            "--pattern が未知の語です: %r / 受理する 9 語: %s"
+            "--pattern が未知の語です: %r / 受理する語: %s"
             % (pattern, " ".join(PATTERNS)))
 
     declared = spec.get("pattern")
@@ -1107,9 +1419,10 @@ def build_parser():
         prog="render-diagram-svg.py",
         description="構造データから概念図解の inline SVG 断片を決定論生成する",
     )
-    parser.add_argument("--diagram", required=True,
+    parser.add_argument("--list", action="store_true", help="図解候補・入力例のカタログを JSON で表示する")
+    parser.add_argument("--diagram",
                         help="図解 1 個分の宣言 JSON のパス")
-    parser.add_argument("--pattern", required=True,
+    parser.add_argument("--pattern",
                         help=" | ".join(PATTERNS))
     parser.add_argument("--width", default=str(DEFAULT_WIDTH),
                         help="SVG の viewBox 幅 (正整数・既定 %d)" % DEFAULT_WIDTH)
@@ -1119,6 +1432,13 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.list:
+        catalog = Path(__file__).resolve().parent.parent / "config/handout-diagrams.json"
+        sys.stdout.write(catalog.read_text(encoding="utf-8"))
+        return 0
+    if not args.diagram or not args.pattern:
+        parser.error("--diagram と --pattern は必須です (--list を除く)")
 
     raw_width = str(args.width)
     if not re.match(r"^[0-9]+$", raw_width) or int(raw_width) <= 0:

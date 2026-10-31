@@ -808,6 +808,22 @@ class Extractor(object):
             html_node.attr(ATTR_HERO_HIDDEN_DATA))
 
         config = {}
+        thumbnails = []
+
+        def collect_thumbnail(node):
+            for child in node.elements():
+                if child.tag == SECTION_ELEMENT:
+                    continue
+                value = child.attr("data-hb-thumbnail")
+                if value:
+                    thumbnails.append(nfc(value))
+                collect_thumbnail(child)
+
+        collect_thumbnail(html_node)
+        if len(thumbnails) == 1:
+            config["thumbnail_asset_id"] = thumbnails[0]
+        elif thumbnails:
+            self.gap("/thumbnail_asset_id", "冒頭サムネイルのマーカーが複数あり、選択を確定できない", True)
         for field, attr, required in DOC_META_ATTRS:
             value = self.marked_value(html_node, attr, "/" + field, field, required)
             if value is None and not required:
