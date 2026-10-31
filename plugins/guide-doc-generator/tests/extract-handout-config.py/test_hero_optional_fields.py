@@ -76,6 +76,15 @@ class HeroOptionalFieldsRoundTrip(H.C20TestCase):
             self.assertNotIn("/" + field, res.stderr,
                              "任意項目の不在が欠落として報告されている")
 
+    def test_thumbnail_id_is_restored_without_guessing_from_first_image(self):
+        markup = '<figure data-hb-thumbnail="chosen-cover"></figure>'
+        anchor = '<p data-hb-field="purpose">'
+        config = self.extracted(H.full_html().replace(anchor, markup + anchor, 1))
+        self.assertEqual("chosen-cover", config.get("thumbnail_asset_id"))
+
+    def test_absent_thumbnail_does_not_select_an_image_automatically(self):
+        self.assertNotIn("thumbnail_asset_id", self.extracted(H.full_html()))
+
 
 class TheAdjudicationIsDeclared(H.C20TestCase):
     """裁定表に載せる。載せずに読めるようにすると、契約の外で挙動だけが増える。"""

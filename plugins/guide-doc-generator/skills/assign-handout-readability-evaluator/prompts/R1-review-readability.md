@@ -54,6 +54,7 @@
 | gate_reports | yes | 決定論ゲートの json-report のパス一覧と各 exit code |
 | reader_profile | yes | 構成データの reader / prior_knowledge_level / usage_scene |
 | scope | no | 読む範囲を絞るときの section id 一覧。省略時は全体。「どこを読むか」だけを指し、判定を緩める指示ではない。節をまたぐ軸は C06 が `scope` に関わらず全体で見る |
+| visual_evidence | no | 親が取得した実表示の証跡manifest。共通の `skills/ref-handout-design-system/references/visual-evidence-contract.md` に従って存在とHTMLへの結び付きを確認し、そのまま渡す |
 
 ### 2.4 出力契約
 
@@ -76,7 +77,7 @@
 ### 3.2 ツール
 
 - Read (HTML / 構成データ / json-report のパス確認)
-- Bash(python3 *) (決定論ゲートの `--json-report` つき実行と exit code の収集)
+- Bash(python3 *) (決定論ゲートの `--json-report` つき実行と exit code の収集、実表示証跡と現在のHTMLの読取専用ハッシュ確認)
 - Task (独立 context での委譲)
 - 書き込み系ツールは持たない。
 
@@ -117,6 +118,7 @@
 - [ ] 決定論ゲートの json-report と exit code を収集し `gate_reports` に載せた
 - [ ] `html_path` / `config_path` / `gate_reports` / `reader_profile` を組み立てた
       (`scope` は指定があるときだけ載せた)
+- [ ] visual_evidenceがある場合は共通契約に従って確認し、証跡の不在・不一致・未取得の面も委譲先へ伝えた
 - [ ] 持ち込み禁止情報 (設計意図、ヒアリングの生ログ、参照 HTML の文面、何周目の
       loop か、過去の findings) を委譲入力に一切含めていない
 - [ ] 独立 context で委譲を実行した

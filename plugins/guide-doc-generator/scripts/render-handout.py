@@ -36,10 +36,13 @@ exit code: 0 = 出力した / 1 = 入力データの規約違反 / 2 = 実行不
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import importlib.util
 import json
+import math
 import os
+import re
 import sys
 import urllib.parse
 from collections import OrderedDict
@@ -796,6 +799,8 @@ def _project_handson(data, ctx):
                ("stuck_hint", step.get("stuck_hint")))
         for step in data.get("steps") or []
     ]}
+    if _nonempty(data.get("title")):
+        out["title"] = data["title"]
     if _nonempty(data.get("asset_id")):
         out["asset_id"] = data["asset_id"]
     if data.get("live_demo") is True:
@@ -1295,7 +1300,14 @@ class Renderer:
             body.append(tag("tr", row_pairs, "".join(cells)))
         table_html = "<table><thead><tr>{}</tr></thead><tbody>{}</tbody></table>".format(
             head, "".join(body))
-        return tag("div", pairs + [("class", "table-wrap")] + self.entries_pairs(block),
+        hint = ('<p class="table-scroll-hint" data-hb-part-role="aux">'
+                '表の中を横にスクロールできます。</p>')
+        table_html += hint
+        return tag("div", pairs + [("class", "table-wrap"), ("tabindex", "0"),
+                   ("role", "region"),
+                   ("aria-label", self.ctx.get("section_heading", "") + "の比較表（横スクロール対応）"),
+                   ("style", "--table-min-width: {}px".format(max(1, len(columns)) * 160))]
+                   + self.entries_pairs(block),
                    table_html)
 
     def _side(self, block, name, slot):
@@ -1374,8 +1386,11 @@ class Renderer:
     def accordion(self, block, pairs):
         items = []
         for index, item in enumerate(block.get("items") or []):
-            inner = "<summary>{}</summary><div class=\"fold-body\">{}</div>".format(
-                esc(item.get("summary")), esc(item.get("body")))
+            body = "".join('<p class="fold-line">{}</p>'.format(esc(text))
+                           for text in str(item.get("body") or "").splitlines() if text.strip())
+            inner = ('<summary><span class="fold-mark" aria-hidden="true"></span>'
+                     '<span class="fold-title">{}</span></summary>'
+                     '<div class="fold-body">{}</div>').format(esc(item.get("summary")), body)
             items.append(tag("details", [
                 ("class", "fold"),
                 ("data-hb-key", entry_key(item, index)),
@@ -1536,13 +1551,17 @@ class Renderer:
     def handson(self, block, pairs):
         rows = []
         for index, step in enumerate(block.get("steps") or []):
-            inner = (
-                '<span class="hs-operation">{}</span>'
-                '<span class="hs-expected">{}</span>'
-                '<span class="hs-hint">{}</span>'.format(
-                    esc(step.get("operation")), esc(step.get("expected")),
-                    esc(step.get("stuck_hint")))
-            )
+            cells = []
+            for css_name, field, label in (
+                    ("hs-operation", "operation", "操作 {}".format(index + 1)),
+                    ("hs-expected", "expected", "成功の目安"),
+                    ("hs-hint", "stuck_hint", "つまずいたら")):
+                cells.append(
+                    '<div class="hs-cell"><span class="hs-field-label" '
+                    'data-hb-part-role="aux">{}</span>'
+                    '<span class="{}">{}</span></div>'.format(
+                        esc(label), css_name, esc(step.get(field))))
+            inner = "".join(cells)
             rows.append(tag("li", [
                 ("class", "hs-row"),
                 ("data-hb-key", entry_key(step, index)),
@@ -1551,7 +1570,10 @@ class Renderer:
         if block.get("live_demo") is True and not source_data_of(block):
             # schema 方言なら live_demo は block() のスカラ刻みで既に出ている。
             extra.append(("data-hb-live-demo", "true"))
-        return tag("ol", pairs + extra, "".join(rows))
+        listing = tag("ol", extra, "".join(rows))
+        heading = ('<h3 class="handson-title">{}</h3>'.format(esc(block["title"]))
+                   if _nonempty(block.get("title")) else "")
+        return tag("div", pairs + [("class", "handson-group")], heading + listing)
 
     def image(self, block, pairs):
         asset = self.ctx["assets"].get(block.get("asset_id")) or {}
@@ -1561,18 +1583,41 @@ class Renderer:
         alt = block.get("alt") or asset.get("alt") or ""
         caption = block.get("caption") or asset.get("caption") or ""
         self.ctx["embedded_bytes"] += data_uri_bytes(data_uri)
+        is_figure = asset.get("role") == "figure"
+        image_attrs = []
+        if is_figure and data_uri.lower().startswith("data:image/svg+xml"):
+            # SVG画像はHTML側のCSS変数やviewBox幅を引き継がない。元の図の座標幅を保つ。
+            try:
+                meta, payload = data_uri.split(",", 1)
+                raw = (base64.b64decode(payload).decode("utf-8") if ";base64" in meta.lower()
+                       else urllib.parse.unquote(payload))
+                root_tag = re.search(r"<svg\b[^>]*>", raw, re.I)
+                view_box = re.search(r'\bviewBox\s*=\s*[\"\']([^\"\']+)', root_tag.group(0) if root_tag else "")
+                values = re.split(r"[\s,]+", view_box.group(1).strip()) if view_box else []
+                width_attr = re.search(r'\swidth\s*=\s*[\"\']([\d.]+)(?:px)?[\"\']', root_tag.group(0) if root_tag else "")
+                width = (float(width_attr.group(1)) if width_attr
+                         else float(values[2]) if len(values) == 4 else 0)
+                if math.isfinite(width) and 0 < width <= 1000000:
+                    image_attrs.append(("style", "width: {}px".format(format(width, "g"))))
+            except (ValueError, UnicodeError):
+                pass  # 実体の妥当性はC13/C16。幅を推測して正常扱いにしない。
         img = tag("img", [
-            ("class", "asset-img"),
+            ("class", "asset-img diagram-image" if is_figure else "asset-img"),
             ("src", data_uri),
             ("alt", alt),
-        ], void=True)
+        ] + image_attrs, void=True)
+        if is_figure:
+            img = tag("div", [("class", "diagram-viewport"), ("tabindex", "0"),
+                              ("role", "region"), ("aria-label", (caption or alt) + "（横スクロール対応）")], img)
         inner = img + '<figcaption class="asset-caption">{}</figcaption>'.format(esc(caption))
+        if is_figure and block.get("lightbox") is not False:
+            inner += self.diagram_tools("元の図の大きさを保っています。図の中をスクロールできます")
         extra = []
         if not source_data_of(block):
             # schema 方言なら asset_id は block() のスカラ刻みで既に出ている。
             extra.append(("data-hb-asset-id", block.get("asset_id", "")))
         return tag("figure", pairs + extra + [
-            ("class", "asset"),
+            ("class", "asset asset--figure" if is_figure else "asset"),
             # assets[] の実体を持つのはこの部品。参照だけする部品 (B17 の
             # asset_id など) と区別が付かないと、逆抽出が付随情報を持たない
             # 側を素材の出所に選んでしまう。
@@ -1583,6 +1628,12 @@ class Renderer:
             ("data-hb-asset-role", asset.get("role", "")),
             ("data-hb-src", asset.get("src", "")),
         ], inner)
+
+    @staticmethod
+    def diagram_tools(hint):
+        return ('<div class="diagram-tools" data-hb-part-role="aux">'
+                '<span class="diagram-hint">{}</span>'
+                '<button type="button" class="diagram-expand" hidden>図を拡大</button></div>').format(esc(hint))
 
     def diagram(self, block, pairs, default_pattern=None):
         module = self.ctx["diagram_module"]
@@ -1629,11 +1680,38 @@ class Renderer:
             extra.append(("data-hb-diagram-record-data",
                           json.dumps(registry.get("data"), ensure_ascii=False,
                                      sort_keys=True)))
+        title = spec["title"]
+        if pattern == "bignumber":
+            # C14でデータを検証したうえで、単一値は狭い画面でも一目で読めるHTMLにする。
+            amount = '<span class="diagram-metric-value">{}</span>'.format(esc(spec["value"]))
+            if spec.get("unit"):
+                amount += '<span class="diagram-metric-unit">{}</span>'.format(esc(spec["unit"]))
+            inner = ('<dl><dt class="diagram-metric-caption">{}</dt>'
+                     '<dd class="diagram-metric-amount">{}</dd></dl>').format(esc(spec["caption"]), amount)
+            if spec.get("sub"):
+                inner += '<p class="diagram-metric-sub">{}</p>'.format(esc(spec["sub"]))
+            viewport = '<figcaption class="diagram-title">{}</figcaption><div class="diagram-metric">{}</div>'.format(esc(title), inner)
+            controls = ""
+            extra.append(("data-hb-diagram-renderer", "html"))
+            description = spec.get("description")
+            if isinstance(description, str) and description.strip():
+                extra.append(("aria-description", description))
+        else:
+            presentation = load_visual_policy()["diagram_presentation"]
+            # 全体の縮小で注釈が極小になるのを防ぎ、必要な図だけをスクロールで読む。
+            sizes = [float(size) for size in re.findall(r'font-size="([\d.]+)"', svg)]
+            view_width = int(re.search(r'viewBox="0 0 (\d+)', svg).group(1))
+            min_width = max(presentation["min_width_px"],
+                            math.ceil(view_width * presentation["min_text_px"] / min(sizes or [14])))
+            viewport = tag("div", [("class", "diagram-viewport"), ("tabindex", "0"),
+                                   ("role", "region"), ("aria-label", title + "（横スクロール対応）"),
+                                   ("style", "--diagram-width: {}px".format(min_width))], svg)
+            controls = self.diagram_tools("図がはみ出す場合は、図の中を横にスクロールできます")
         return tag("figure", pairs + [
             ("class", "diagram"),
             ("data-hb-diagram-pattern", pattern or ""),
             ("data-hb-diagram-data", payload),
-        ] + extra, svg)
+        ] + extra, viewport + controls)
 
     def text(self, block, pairs):
         return tag("div", pairs + [("class", "prose")],
@@ -2149,6 +2227,32 @@ body {
   color: var(--pop-primary-deep);
   font-weight: 700;
 }
+.step-row { display: grid; grid-template-columns: 2em minmax(140px, 1fr) minmax(0, 2fr); gap: 12px; }
+.step-label, .step-detail { min-width: 0; overflow-wrap: anywhere; }
+.handson-title { margin: 24px 0 12px; font-size: 1.1rem; }
+.hs-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--pop-bg);
+}
+.hs-cell { min-width: 0; overflow-wrap: anywhere; }
+.hs-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--pop-primary-deep);
+}
+@media (max-width: 640px) {
+  .hs-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .step-row { grid-template-columns: 2em minmax(0, 1fr); gap: 4px 8px; }
+  .step-detail { grid-column: 2; }
+}
 .trio, .features { display: flex; gap: 12px; flex-wrap: wrap; }
 .trio-card, .feature-card, .versus-side {
   flex: 1 1 220px;
@@ -2180,7 +2284,17 @@ body {
 }
 .versus { display: flex; gap: 12px; flex-wrap: wrap; }
 .table-wrap { overflow-x: auto; }
-.table-wrap table { border-collapse: collapse; width: 100%; }
+.table-wrap table { border-collapse: collapse; width: 100%; min-width: var(--table-min-width, 480px); }
+.table-wrap th[scope="row"] { min-width: 7em; }
+.table-scroll-hint { display: none; }
+@media (max-width: 640px) {
+  .table-scroll-hint { display: block; font-size: 0.875rem; color: var(--ink-muted); }
+}
+@media print {
+  .table-wrap table { min-width: 0; }
+  .table-wrap th[scope="row"] { min-width: 0; }
+  .table-scroll-hint { display: none; }
+}
 .table-wrap th, .table-wrap td {
   border: 1px solid var(--line);
   padding: 6px 10px;
@@ -2217,11 +2331,41 @@ body {
    辿る手段が無いため、印刷時にだけ出す (@media print で display を戻す)。 */
 .nav-link-url { display: none; }
 .tab-strip { display: flex; gap: 8px; margin-bottom: 8px; }
-.fold { border-bottom: 1px solid var(--line); }
+.accordion { display: grid; gap: 10px; margin: 14px 0; }
+.fold { border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); overflow: hidden; }
+.fold > summary { display: flex; align-items: center; gap: 10px; padding: 14px; cursor: pointer; font-weight: 700; line-height: 1.6; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: var(--pop-primary-soft); }
+.fold-mark { flex: none; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--pop-primary-soft); position: relative; }
+.fold-mark::before { content: ""; position: absolute; left: 50%; top: 50%; width: .42em; height: .42em; border-right: 2px solid var(--pop-primary-deep); border-bottom: 2px solid var(--pop-primary-deep); transform: translate(-65%, -50%) rotate(-45deg); }
+.fold[open] > summary .fold-mark::before { transform: translate(-50%, -70%) rotate(45deg); }
+.fold[open] > summary { border-bottom: 1px dashed var(--line); }
+.fold-title { min-width: 0; overflow-wrap: anywhere; }
+.fold-body { display: grid; gap: 8px; padding: 14px 18px; overflow-wrap: anywhere; }
+.fold-line { margin: 0; white-space: pre-wrap; }
+.fold > summary:focus-visible { outline-offset: -3px; }
 .asset { margin: 12px 0; }
 .asset-img { max-width: 100%; height: auto; cursor: zoom-in; }
 .asset-caption { color: var(--ink-muted); font-size: 88%; }
-.diagram svg { max-width: 100%; height: auto; }
+.diagram { margin: 18px 0; min-width: 0; }
+.diagram-viewport { overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); }
+.diagram-viewport svg { display: block; width: max(100%, var(--diagram-width)); max-width: none; height: auto; }
+.diagram-viewport .diagram-image { display: block; width: auto; max-width: none; max-height: none; height: auto; cursor: default; }
+.diagram-title { margin: 0 0 10px; font-size: 1rem; font-weight: 700; }
+.diagram-metric { border: 1px solid var(--line); border-radius: 16px; padding: 24px 16px; background: var(--pop-primary-soft); text-align: center; overflow-wrap: anywhere; }
+.diagram-metric dl { display: flex; flex-direction: column; margin: 0; gap: 10px; }
+.diagram-metric-caption { order: 2; font-size: 1rem; font-weight: 700; }
+.diagram-metric-amount { order: 1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 8px; margin: 0; }
+.diagram-metric-value { min-width: 0; font-size: clamp(2rem, 10vw, 4rem); font-weight: 800; color: var(--pop-primary-deep); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.diagram-metric-unit { font-size: 1.25rem; color: var(--ink-muted); }
+.diagram-metric-sub { margin: 14px 0 0; font-size: .875rem; color: var(--ink-muted); }
+.diagram-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.diagram-hint { color: var(--ink-muted); font-size: .875rem; }
+.diagram-expand, .diagram-close { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; background: var(--pop-primary-soft); color: var(--ink); cursor: pointer; font: inherit; }
+.diagram-expand[hidden] { display: none; }
+.diagram-dialog { width: 96vw; max-width: 1400px; max-height: 94dvh; padding: 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); background: var(--surface, #fff); }
+.diagram-dialog::backdrop { background: rgba(15, 23, 42, .6); }
+.diagram-dialog .diagram-viewport { margin-top: 12px; max-height: 78dvh; overflow: auto; }
 .ic { width: 1.1em; height: 1.1em; vertical-align: -0.15em; color: var(--pop-primary-deep); }
 .memo, .memo-global {
   border: 1px dashed var(--line);
@@ -2303,6 +2447,12 @@ textarea:focus-visible {
   .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
   .toolbar { position: static; }
   .lightbox { display: none; }
+  .diagram-tools, .diagram-dialog { display: none; }
+  .diagram-viewport { overflow: visible; border: none; }
+  .diagram-viewport svg { width: 100%; max-width: 100%; min-width: 0; }
+  .diagram-viewport .diagram-image { width: auto !important; max-width: 100%; height: auto; }
+  .fold { break-inside: avoid; }
+  .fold-mark { display: none; }
   [data-hb-part="{LIGHTBOX}"] { display: none; }
   [data-hb-part="{TOOLBAR}"] { display: none; }
   [data-hb-part="{MEMO}"] { display: none; }
@@ -2498,7 +2648,9 @@ SCRIPT_BODY = """'use strict';
     );
     var root = document.documentElement;
     root.setAttribute('data-hb-memo-embedded', 'true');
-    return '<!doctype html>\\n' + root.outerHTML;
+    var saved = root.cloneNode(true);
+    Array.prototype.forEach.call(saved.querySelectorAll('.diagram-dialog'), function (node) { node.remove(); });
+    return '<!doctype html>\\n' + saved.outerHTML;
   }
 
   function wireMemoActions() {
@@ -2559,6 +2711,45 @@ SCRIPT_BODY = """'use strict';
     }
   }
 
+  function wireDiagramViews() {
+    Array.prototype.forEach.call(document.querySelectorAll('.diagram-dialog'), function (node) { node.remove(); });
+    var dialog = document.createElement('dialog');
+    if (typeof dialog.showModal !== 'function') { return; }
+    dialog.className = 'diagram-dialog';
+    dialog.setAttribute('aria-label', '図の拡大表示');
+    dialog.setAttribute('data-hb-part-role', 'aux');
+    var close = document.createElement('button');
+    close.type = 'button'; close.className = 'diagram-close'; close.textContent = '閉じる';
+    var stage = document.createElement('div');
+    dialog.appendChild(close); dialog.appendChild(stage); document.body.appendChild(dialog);
+    close.addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('close', function () { stage.innerHTML = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('.diagram, .asset--figure'), function (figure) {
+      var button = figure.querySelector('.diagram-expand');
+      var viewport = figure.querySelector('.diagram-viewport');
+      if (!button || !viewport) { return; }
+      button.hidden = false;
+      button.addEventListener('click', function () {
+        var clone = viewport.cloneNode(true);
+        Array.prototype.forEach.call(clone.querySelectorAll('[id]'), function (node) { node.removeAttribute('id'); });
+        stage.innerHTML = ''; stage.appendChild(clone);
+        dialog.showModal(); close.focus();
+      });
+    });
+  }
+
+  function wireFoldPrint() {
+    var opened = [];
+    window.addEventListener('beforeprint', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('details.fold:not([open])'), function (node) {
+        node.open = true; opened.push(node);
+      });
+    });
+    window.addEventListener('afterprint', function () {
+      opened.forEach(function (node) { node.open = false; }); opened = [];
+    });
+  }
+
   function wireLightbox() {
     var box = document.querySelector('[data-hb-part="__LIGHTBOX__"]');
     if (!box) { return; }
@@ -2575,7 +2766,7 @@ SCRIPT_BODY = """'use strict';
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') { close(); }
     });
-    var images = document.querySelectorAll('.asset-img');
+    var images = document.querySelectorAll('.asset:not(.asset--figure) .asset-img');
     Array.prototype.forEach.call(images, function (image) {
       image.addEventListener('click', function () {
         if (!stage) { return; }
@@ -2610,6 +2801,8 @@ SCRIPT_BODY = """'use strict';
     wireMemo();
     wireMemoActions();
     wireLightbox();
+    wireDiagramViews();
+    wireFoldPrint();
     wireToolbar();
     if (window.location.hash.length > 1) {
       jumpTo(window.location.hash.slice(1));
@@ -2994,13 +3187,13 @@ def build_nav(config, nav_part) -> str:
             ("title", goals.get(sid, "")),
             ("aria-describedby", "goal-{}".format(sid)),
         ], num + label))
-    nav = tag("nav", [("class", "navbar"), ("aria-label", "目次")], "".join(links))
+    nav = tag("nav", [("class", "navbar"), ("aria-label", "目次（全{}節）".format(len(links)))], "".join(links))
     # 資料の題を帯の一番上へ置く (利用者指定 2026-08-19)。どこまでスクロールしても
     # 「何の資料を読んでいるか」が見えている状態にする。header 全体が
     # data-hb-generated="true" の chrome なので、抽出器はこの写しを読み戻さない
     # — 題の素値は冒頭の h1 (data-hb-field="title") 1 箇所だけが持つ。
     title_bar = tag("p", [("class", "doc-title-bar"), ("aria-hidden", "true")],
-                    esc(config.get("title")))
+               esc(config.get("title")) + '<small class="nav-count"> · 全{}節</small>'.format(len(links)))
     # 置き場所 (柱 / 帯) は class 1 個の差だけで表し、DOM の形は変えない。
     # `pop-header` は残す — C20 の chrome 判定・C17 の PRINT-02・C16 の nav 認識が
     # この名前に接地しているため、見た目の変更で読み戻しと検査を道連れにしない。

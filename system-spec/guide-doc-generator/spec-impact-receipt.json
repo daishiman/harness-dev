@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0",
+  "received_at": "2026-10-31T10:20:08.722354+00:00",
+  "beads_ids": [
+    "harness-lw6u",
+    "harness-ubcg",
+    "harness-lp5j",
+    "harness-86kh"
+  ],
+  "graph_node_id": "task-gdg-review",
+  "branch": "devgraph/task-gdg-review",
+  "base_branch": "main",
+  "impact": "あり",
+  "applied_changes": [
+    "内容の関係から表現候補を選ぶ。カタログ外は専用図素材へ接続",
+    "標準図種の拡張と孤立・接続・線と箱の検証",
+    "HTML/CSSとSVGの投影責務、単一KPIの実体照合とaria説明",
+    "文字の最小サイズ・配色・拡大・表内スクロール・キーボード・印刷復元",
+    "B17.data.titleの任意追加と実習の操作/成功/救済の対応",
+    "選定証跡の構成SHAと部品ID、素材幅とthumbnail逆抽出",
+    "C09正規化マーカーと警告判定、集約規則の単一参照",
+    "旧6パターン記述と設計設定の不整合をカタログ正本参照へ修正"
+  ],
+  "no_impact": [
+    {
+      "area": "HTTP API/認証/DB/インフラ",
+      "reason": "ローカルの構成→静的HTML生成経路だけを変更。新たなエンドポイント・権限・永続化サービスなし。"
+    },
+    {
+      "area": "他プラグイン",
+      "reason": "対象ファイルallowlistへ隔離し、採番writerも--only guide-doc-generatorで実行。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02",
+    "operation": "add",
+    "graph_revision": 1,
+    "receipt": "docs/guide-doc-generator-review/node-r000001-add.json",
+    "snapshot": "docs/guide-doc-generator-review/graph-snapshot.json",
+    "independent_review": "docs/guide-doc-generator-review/graph-review.json",
+    "status": "C02 preview/apply・graph検証・独立監査成功。文書状態はdraftのまま保持し、未実施の承認・昇格を捏造しない。"
+  },
+  "merge_provenance": {
+    "remote_base": "origin/main",
+    "remote_dev_exists": false,
+    "local_base_merge": "ローカルmainを専用worktreeでorigin/mainへfast-forward",
+    "feature_merge": "元作業のmerge-baseから対象差分だけを隔離し、ローカルmainをfeatureへfast-forward merge",
+    "base_sha": "d46ca8ad7479cd88dd80f45ed6cd01e1a342a2b4",
+    "excluded_source_head": "8c1eb6c84c44d6afcfa8bdb6c499c2436898ac71（無関係の先行コミットを除外）"
+  },
+  "evidence": [
+    {
+      "path": "specs/guide-doc-visual.md",
+      "sha256": "c5443df7dc9e7776fa22aeca23a70c58e4d1ec916a98122a2add749a35c935a3"
+    },
+    {
+      "path": "architecture/guide-doc-visual.md",
+      "sha256": "a729c35ffe949b9f285444c475d7d330c713e8c270fe5650c8f61e36bf8ef95b"
+    },
+    {
+      "path": "features/guide-doc-visual.md",
+      "sha256": "f607cf4813e148e53ec6ddbd8eebaf375b876a3c225817a7a9293673fa16626c"
+    },
+    {
+      "path": "docs/guide-doc-visual.md",
+      "sha256": "24f60084354337034369c24de00ef49e82105cb069e6e54a703e440f325aa730"
+    },
+    {
+      "path": "tasks/gdg-review.md",
+      "sha256": "df210e1546a87db886d9a317584e17fa8783e6d601d7ecb8848d2e110f3879d7"
+    },
+    {
+      "path": "system-spec/guide-doc-generator/README.md",
+      "sha256": "d63a58df5dc8abb929a8c51fa3759b682d27d2d710546483315f9809900526cc"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+      "sha256": "178902887a673dd3615778f231008e69c83a411ccbf6b44df2b9984dd5a8c307"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "sha256": "f2c2a8d2b500d5459e06d544326a96a0a26fc925b95fed6994698d34306d957a"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "sha256": "528e63b06384e778781615d396af70c146949cadde6927bc4a8f9a98121c6949"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+      "sha256": "1363418d6b56bbe9b6b848a9de8ba99d771744f797a11a0f6bdc9714491fe7ac"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "sha256": "5b2f5a93318990d8a490bef37be06eeaa9869c424c9ea77600c43e4f15fe0d9b"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "sha256": "d38b8b5696b0814fd49dc7bbdf848e580d26575b47f64f90ddb9402195ceb13e"
+    },
+    {
+      "path": ".claude/changelog/governance-log.jsonl",
+      "sha256": "00f31b4f496cf9f5d49f89cf437d10ad46dd9abc2b56ac48f63d9005d529f06c"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "sha256": "620b105526f91cfd92907cfe10bbc0d94c9aed7e1bd2a0cb1c75e4bf0be40135"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/briefs/config/handout-visual-policy.json",
+      "sha256": "1df2c5e287e22dcc61f510c82c5f287d38a250c16b0fa0720b873c9fbf7120dd"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/task-specs/P02-C14-01.md",
+      "sha256": "0daa73e545adb90b4f2f87561da7260bfd9e8bb1813bcebf15ad94b6800e31fa"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/task-specs/P04-C14-01.md",
+      "sha256": "93febadc447cb4728438eceffb347e27acad68f354dfc252945395807c34ea00"
+    },
+    {
+      "path": "plugin-plans/guide-doc-generator/task-specs/P05-C14-01.md",
+      "sha256": "c34eaa6f6df70d8639341df4d171ad0b2eac6282a65a11a9860c61a6ec36288b"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/agent-prompt.log",
+      "sha256": "2fa9dd5bbb889d317ac0e4b4b929a1ef4c6b8351a708108acd238acf3efac5c3"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/command-retest.log",
+      "sha256": "f2216de805e104ea0b2ef2a6f4fd9750d290fad5413b7d63790cd1408e1d586d"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/completeness.log",
+      "sha256": "64faa6d5614bbae0a85d0d79c43531b5703aef793f2cd08dd0009c7979c644e8"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/content-review-final.log",
+      "sha256": "0c12468f17804c61fc0bc408c39ec2d5dcb90e9e0e7b40b1550c4d4fe6c58471"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/description.log",
+      "sha256": "b99f79218983913a95b5d5472d126eb22ea5759f066695815737d2b57e2cb5b0"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/final-review.json",
+      "sha256": "4a9a868c090994ee0fcdc5b62af39ba5008006dac72b767893067bab0930eb9d"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/frontmatter-final.log",
+      "sha256": "6fc4fe230928486d3e7accb4aa54967bc94afdbc3e7a5e8048e7302bfd546574"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/graph-review.json",
+      "sha256": "6fc972bada76cc84f4a1a7745566f066a7db491d171cd0dd01a87d93b8165c66"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/graph-snapshot.json",
+      "sha256": "d3bf0815c11e4d8cee063701e9c0be41c754f6d0afeda81695ce18ed9744c2ad"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/node-r000001-add.json",
+      "sha256": "b6411e469737958a952f71ef920bf1792c1f44e4b0fd3678302167ef3021f5d7"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/pytest.log",
+      "sha256": "eeae967a082d382af860d367b1afbcad4afe90d25c919db068918ecc6d29cfdc"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/quality-gates.json",
+      "sha256": "ea49f3585adcb54d1cf227a14424c986af0ea0524e11e1ad7b85ce36f46d1d03"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/release-proposal.json",
+      "sha256": "d1958bb73f3e3d07365f83240d26520b464beb1195b82083557e0e29a1b01b15"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/retest-fixes.log",
+      "sha256": "982faa8ae3faabd7cd2c994f516a6fa02dadcd8b308801578d1af731aeaf74c2"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/script-frontmatter.log",
+      "sha256": "21873d25c33114b161556517f687149f04c7f0766e672277597bb7c840d4b418"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/ci-executable-fix.json",
+      "sha256": "ba5acf82e5b8c8a9f5d2c7b1f085144a6226120c1176baaf0dbe066f8de92487"
+    }
+  ],
+  "remaining": [
+    {
+      "id": "harness-ws7j",
+      "status": "open",
+      "reason": "HTMLだけの逆抽出では画像計画・asset順・null等のメタ比較差分が残る。同梱JSON+assetsからのバイト一致再生成は成功。"
+    },
+    {
+      "id": "PD-002",
+      "status": "既存medium smellを保持",
+      "reason": "SKILL.md本文冒頭30行に規定キーワードによる禁則がない。HEADにも存在する非変更sliceの指摘で、今回差分による退行ではない。"
+    }
+  ],
+  "full_system_spec_compilation": false,
+  "ci_followup": {
+    "evidence": "docs/guide-doc-generator-review/ci-executable-fix.json",
+    "impact": "なし",
+    "reason": "ファイルの実行権限のみ。本文SHA・入力/出力・描画・スキル契約・依存・保存構造は同一。既存のPKG-007契約へ適合させる修正。C02文書を再生成する変更はない。"
+  }
+}
