@@ -70,7 +70,7 @@
       "name": "--config",
       "required": false,
       "default": "なし (未指定時は language / narrative の 2 ゲートが not-run になる)",
-      "override_rule": "正規化済み構成データ (通常は /handout-build が出力ディレクトリへ同梱したもの) を指す。language / narrative の 2 ゲートは構成データとの照合が本体であるため、これが無いと実行できない。この command は正規化を行わない (書き込みを伴うため責務外)。未正規化の疑いがある構成データを渡された場合は validate-handout-config.py --strict (書き込みなし) で検出し、当該 2 ゲートを not-run として扱い、同梱構成データを使うよう案内する",
+      "override_rule": "正規化済み構成データ (通常は /handout-build が出力ディレクトリへ同梱したもの) を指す。language / narrative の 2 ゲートは構成データとの照合が本体であるため、これが無いと実行できない。この command は正規化を行わない (書き込みを伴うため責務外)。未正規化の疑いがある構成データを渡された場合は validate-handout-config.py --config <path> (書き込みなし) のexit0と provenance.normalized_by のスキーマ定義値を照合する。満たさない場合のみ当該 2 ゲートを not-run として扱い、同梱構成データを使うよう案内する",
       "rationale": "C18 は『比較の基準は常に正規化済み構成データ 1 点』を契約としており、正規化されていない構成データを基準にすると日付照合が別ソース比較になって意味を失う。正規化 (書き込み) を検証 command に持たせないことで、検証が対象を変えないという性質を保つ"
     },
     {
@@ -100,7 +100,7 @@
     "2. 実行するゲート集合を決める。--only 未指定なら 4 ゲート全部、指定ありなら該当ゲートのみ。--config が無い場合、language と narrative は『required な入力が無い』ため実行対象から外し、not-run (理由: config-missing) として記録する。--config が正規化済みでないと検出された場合も同様に not-run (理由: config-not-normalized) とする",
     "3. 実行対象の各ゲートを Bash で順に起動する。あるゲートが exit≠0 でも後続ゲートを止めずに全部走らせ、落ちた箇所を一度に把握できるようにする (fail-fast にしない)",
     "4. 各ゲートの結果を pass (exit 0) / fail (exit 1) / error (exit 2 = 検査器自体の異常、例: HTML が読めない) / not-run (実行しなかった・できなかった) の 4 状態で記録する。not-run には必ず理由 (config-missing / config-not-normalized / excluded-by-only / script-absent) を添える",
-    "5. 集約規則 (この順に評価し、最初に成立した 1 つを全体 verdict とする。複数状態が同時に成立し得る入力でも名乗りが一意に決まるよう、優先順位を規則の一部として固定する): (a) 1 本でも fail または error があれば全体は fail。--only 指定の有無に依らず fail が partial や incomplete へ弱まることはない。(b) 実行できたゲートが 0 本なら全体は incomplete (pass でも partial でもない)。(c) fail も error も無く 4 ゲート全部が pass なら全体は pass。(d) fail も error も無く not-run がある場合、not-run の理由が excluded-by-only だけなら partial、config-missing / config-not-normalized / script-absent が 1 件でも混ざれば incomplete。両方混在するとき (例: --only language を指定しつつ --config 未指定) は incomplete を採る — excluded-by-only は利用者が意図して外したものだが、それ以外は意図せず走らなかったものであり、後者の方が重い事実だからである。not-run を pass 側へ畳む経路は存在させない",
+    "5. 全体verdictはcommands/handout-verify.mdのCR-GATE-AGG.verdict_tableを先頭一致で評価する。このbriefへ別の優先順位を複製しない。未実行を成功へ畳み込まない。",
     "6. 報告は必ず 4 ゲート全部を行として出す。実行しなかったゲートを表から省かない (省くと読み手が『全部通った』と誤読する)。各行に gate_id / 状態 / 理由または違反件数 / 該当箇所 (行番号・section id・キーパス) を出す",
     "7. --json-report 指定時は各ゲートの JSON と、全体 verdict・4 ゲートの状態一覧を含む集約サマリを同ディレクトリへ出す",
     "8. 全体が pass でない場合、次の一手を案内する。fail は該当箇所の修正、config-missing による not-run は /handout-build が出力ディレクトリへ同梱した構成データを --config に渡す、を示す。あわせて、全体が pass のときでも報告の末尾へ『本 command は完成 HTML に対する 4 面の検査であり、構成データ側のゲート (節ごとの図解・画像の必須要件を含む) は対象外である』ことを 1 行で明示する (scope_boundary_vs_config_gates 参照)。検証 command 自身は生成も修正もしない"
@@ -119,7 +119,7 @@
     },
     {
       "case": "--config が正規化済みでない",
-      "behavior": "validate-handout-config.py --strict で検出し、language / narrative を not-run (config-not-normalized) とする。command 側で正規化して通すことはしない",
+      "behavior": "validate-handout-config.py --config <path> のexit0とschemaの正規化マーカーを照合して検出し、language / narrative を not-run (config-not-normalized) とする。command 側で正規化して通すことはしない",
       "rationale": "検証の基準を検証器側が作り出すと、日付照合が自己参照になって検査の意味が消える。正規化は生成側 (C12 --normalize) の単一 writer 責務"
     },
     {
@@ -245,7 +245,7 @@
   "canonical_aggregation": {
     "id": "CR-GATE-AGG",
     "owner": "C09 /handout-verify",
-    "statement": "検証ゲートの結果を 4 状態 (pass / fail / error / not-run) へ分類し、全体 verdict (pass / fail / incomplete / partial) を出す規則の単一正本は本 command の behavior 4-6 である。not-run を pass 側へ畳む経路は存在させない",
+    "statement": "検証ゲートの結果を 4 状態 (pass / fail / error / not-run) へ分類し、全体 verdict (pass / fail / incomplete / partial) を出す規則の単一正本はcommands/handout-verify.md の CR-GATE-AGG.verdict_table である。not-run を pass 側へ畳む経路は存在させない",
     "gate_faces": [
       "C16 selfcontained",
       "C17 a11y-print",

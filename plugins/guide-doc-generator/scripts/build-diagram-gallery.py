@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+# /// script
+# name: build-diagram-gallery
+# version: 0.1.0
+# purpose: 図解とHTML表現の実例を既存レンダラで再生成する
+# inputs: argv --out <html> [--theme <name>]
+# outputs: 明示した出力先または検査結果の標準出力
+# requires-python: ">=3.10"
+# dependencies: []
+# contexts: [C]
+# network: false
+# write-scope: --out の明示パスのみ
+# ///
 """登録済みの図解例を、実際の資料レンダラとテーマで単一HTMLへ再生成する。
 
 入力: config/handout-diagrams.json / --out <HTML path>

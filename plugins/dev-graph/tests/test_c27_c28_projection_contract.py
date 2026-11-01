@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import io
 import json
 import subprocess
@@ -182,8 +183,14 @@ def test_c28_ready_builds_the_parity_manifest_from_graph_linkages(tmp_path, monk
     graph = tmp_path / "graph.json"
     graph.write_text(json.dumps({"graph_revision": 7, "nodes": nodes}))
 
+    graph_before = graph.read_bytes()
     code, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph)
     assert code == 0
+    expected_digest = "sha256:" + hashlib.sha256(json.dumps(json.loads(graph_before), ensure_ascii=False,
+                                                          sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert ready["parity_provenance"]["source_graph_digest"] == expected_digest
+    assert ready["parity_provenance"]["generated_at"]
+    assert graph.read_bytes() == graph_before
     assert ready["parity_source"] == {"graph": "graph.json", "graph_revision": 7, "linked_count": 14}
     assert sorted(row["external_ref"] for row in ready["ready_set"]) == sorted(issue_of)
     assert not ready["conflicts"] and not ready["unmapped"] and ready["candidate_count"] == 14
@@ -207,6 +214,14 @@ def test_c28_ready_builds_the_parity_manifest_from_graph_linkages(tmp_path, monk
     parity = tmp_path / "parity.json"; parity.write_text(json.dumps({"nodes": []}))
     with pytest.raises(module.ContractError, match="not both"):
         call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph, "--parity-manifest", parity)
+    # The convenience entrypoint must not weaken the existing provenance requirement for explicit snapshots.
+    with pytest.raises(module.ContractError, match="generated_at"):
+        call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--parity-manifest", parity)
+    parity.write_text(json.dumps({"nodes": [], "generated_at": "2026-10-20T00:00:00Z",
+                                 "source_graph_digest": "sha256:" + hashlib.sha256(json.dumps(
+                                     json.loads(graph.read_text()), ensure_ascii=False, sort_keys=True,
+                                     separators=(",", ":")).encode()).hexdigest(),
+                                 "graph_node_ids": [node["graph_node_id"] for node in nodes]}))
     _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--parity-manifest", parity)
     assert ready["parity_source"] == {"parity_manifest": str(parity)} and len(ready["unmapped"]) == 14
 

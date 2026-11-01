@@ -1,0 +1,82 @@
+........................................................................ [  3%]
+.......................................... [  6%]
+..................................................................... [  9%]
+.........F...................................................................................................... [ 16%]
+.............................................................. [ 19%]
+...................................................... [ 22%]
+........................................................... [ 25%]
+.............................................................................................. [ 30%]
+........................................................................ [ 34%]
+........................................................................ [ 38%]
+............................................................................................................................ [ 45%]
+........................................................... [ 48%]
+............................................................... [ 51%]
+.................................................. [ 54%]
+...................................F.................................... [ 58%]
+.................................................................... [ 62%]
+.................................................................... [ 65%]
+................................................. [ 68%]
+................................................................................................................................... [ 75%]
+........................................................ [ 78%]
+............................................................... [ 82%]
+........................................................................ [ 86%]
+...................................................................... [ 89%]
+............................................. [ 92%]
+................................. [ 94%]
+............................................................................................................          [100%]
+=================================== FAILURES ===================================
+__ SingleVocabularyTest.test_part_ids_are_not_enumerated_outside_the_catalog ___
+
+self = <tests.render-handout_py.test_parts_catalog.SingleVocabularyTest testMethod=test_part_ids_are_not_enumerated_outside_the_catalog>
+
+    def test_part_ids_are_not_enumerated_outside_the_catalog(self):
+        """AC-C11-19 / Y-05: catalog 以外に part id のリテラル列挙が 0 件。
+
+        走査対象は H.scannable_sources() が決める (実行されるコードと、指示として
+        読み込まれるテキスト)。散文の注釈は語彙になり得ないので対象外。
+
+        走査範囲そのものが正しいか (scripts/*.json が抜け道になっていないか) は
+        test_scan_scope.py が反例注入で別途固定する。
+        """
+        H.require_script()
+        offenders = H.enumerated_part_id_offenders()
+>       self.assertEqual([], offenders, "部品 id のリテラル列挙:\n%s" % "\n".join(offenders))
+E       AssertionError: Lists differ: [] != ['plugins/guide-doc-generator/agents/hando[122 chars]する。']
+E
+E       Second list contains 1 additional elements.
+E       First extra element 0:
+E       'plugins/guide-doc-generator/agents/handout-content-architect.md:33: - 実習を複数のまとまりに分ける場合は、各 B17 の `data.title` に「準備」「呼び出し」などの短い区切り名を付ける。操作番号が再開しても、どの実習かを見出しで判断できる形にする。'
+E
+E       - []
+E       + ['plugins/guide-doc-generator/agents/handout-content-architect.md:33: - '
+E       +  '実習を複数のまとまりに分ける場合は、各 B17 の `data.title` '
+E       +  'に「準備」「呼び出し」などの短い区切り名を付ける。操作番号が再開しても、どの実習かを見出しで判断できる形にする。'] : 部品 id のリテラル列挙:
+E       plugins/guide-doc-generator/agents/handout-content-architect.md:33: - 実習を複数のまとまりに分ける場合は、各 B17 の `data.title` に「準備」「呼び出し」などの短い区切り名を付ける。操作番号が再開しても、どの実習かを見出しで判断できる形にする。
+
+plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog.py:157: AssertionError
+________________ test_html_examples_wrap_without_clipping[375] _________________
+
+page = <Page url='file:///private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-2937/diagrams0/gallery.html'>
+width = 375
+
+    @pytest.mark.parametrize("width", [1440, 768, 375])
+    def test_html_examples_wrap_without_clipping(page, width):
+        page.set_viewport_size({"width": width, "height": 1000})
+        result = page.evaluate("""() => [...document.querySelectorAll('.gallery-html-example')].map(box => {
+          const bounds=box.getBoundingClientRect();
+          return {id:box.closest('section').id, clipped:[...box.querySelectorAll('*')].filter(el=>{
+            const b=el.getBoundingClientRect();
+            return b.width && (b.left < bounds.left-.5 || b.right > bounds.right+.5);
+          }).map(el=>el.textContent)};
+        })""")
+        assert len(result) >= 3
+>       assert all(not item["clipped"] for item in result), result
+E       AssertionError: [{'id': 'html-steps', 'clipped': []}, {'id': 'html-features', 'clipped': []}, {'id': 'html-table', 'clipped': ['会議共有メモ向く場面その場で相談後から確認残すもの話した結論説明の記録', '会議共有メモ', '会議共有メモ', '会議', '共有メモ', '向く場面その場で相談後から確認残すもの話した結論説明の記録', ...]}]
+E       assert False
+E        +  where False = all(<generator object test_html_examples_wrap_without_clipping.<locals>.<genexpr> at 0x1172ccc70>)
+
+plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:67: AssertionError
+=========================== short test summary info ============================
+FAILED plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog.py::SingleVocabularyTest::test_part_ids_are_not_enumerated_outside_the_catalog
+FAILED plugins/guide-doc-generator/tests/visual-expressions/test_browser.py::test_html_examples_wrap_without_clipping[375]
+2 failed, 1837 passed, 1824 subtests passed in 194.67s (0:03:14)

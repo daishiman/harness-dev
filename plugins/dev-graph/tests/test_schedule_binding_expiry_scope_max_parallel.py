@@ -135,8 +135,11 @@ def test_scope_selects_the_feature_subtree_and_max_parallel_must_be_positive(tmp
     ])
 
     _, scoped = call_main(schedule, monkeypatch, capsys, "--graph", graph, "--scope", "feature-a")
-    assert scoped["ready_set"] == {"features": ["feature-a"], "tasks": ["a-task"]}
-    # feature と配下 task は同じ path を触るので、並列に出せない組として報告する。
+    # 配下 task がある feature は計画済みとして分離し、planner を再起動する候補にはしない。
+    assert scoped["ready_set"] == {"features": [], "tasks": ["a-task"]}
+    assert scoped["planned_features"] == ["feature-a"]
+    assert scoped["batches"] == {"features": [], "tasks": [["a-task"]]}
+    # scope 内の ready node が共有する path の診断は、計画済み feature についても残す。
     assert scoped["conflict_pairs"] == [
         {"left": "a-task", "right": "feature-a", "kind": "ready_pair", "resources": ["a/task"]},
     ]

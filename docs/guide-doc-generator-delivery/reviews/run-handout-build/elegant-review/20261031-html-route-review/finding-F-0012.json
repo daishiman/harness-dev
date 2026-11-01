@@ -1,0 +1,20 @@
+{
+  "id": "F-0012",
+  "condition": "C3",
+  "signal": "inconsistency",
+  "severity": "medium",
+  "description": "bignumberのHTML化でspec.descriptionが支援技術へ提供されず、元のSVG descの説明が失われる",
+  "reproduction": {
+    "pattern": "bignumber",
+    "title": "回答までの時間",
+    "value": "3",
+    "unit": "営業日",
+    "caption": "回答まで",
+    "description": "土日祝を除く受付日の翌日から数える。"
+  },
+  "evidence": [
+    "独立reviewerがC14のSVG imageとC11のHTML figureのChromeアクセシビリティツリーを比較し、HTML側の説明欠落を確認"
+  ],
+  "source": "elegant_verifierによる追加確認",
+  "minimal_fix": "HTMLのARIA説明へ接続し、C16の一致検査と説明あり/なしの回帰を追加する"
+}

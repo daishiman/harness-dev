@@ -1,0 +1,54 @@
+{
+  "status": "BLOCKED",
+  "stage": "boot setup before subject task",
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+  "task_sent": false,
+  "goal_result": "NOT_EVALUATED",
+  "blocker": "With fixture-only empty ZDOTDIR, command-resolution/version probe selects /Users/dm/.local/bin/claude 2.1.316. The actual boot then stops at an unnumbered bypass-permissions confirmation; canonical boot expects numbered 1./2. markers and never reaches READY. Parent instructed not to accept this confirmation.",
+  "owner_pid": null,
+  "owner_pid_note": "READY未到達。TIMEOUT前のowner PID保存漏れのため推測せず、最後の試行にfinalizerを実行したとは主張しない。",
+  "cleanup": "canonical live-trial-boot.py TIMEOUT branch killed its own session; all owned names absent by backend has-session",
+  "session_checks": [
+    {
+      "run_id": "20261101T214808-remaining2",
+      "session": "lt-20261101T214808-remaining2-decompose",
+      "has_session_exit": 1,
+      "session_remaining": false,
+      "output": ""
+    },
+    {
+      "run_id": "20261101T215922-native-cli",
+      "session": "lt-20261101T215922-native-cli-decompose",
+      "has_session_exit": 1,
+      "session_remaining": false,
+      "output": ""
+    },
+    {
+      "run_id": "20261101T220227-zdotdir-cli",
+      "session": "lt-20261101T220227-zdotdir-cli-decompose",
+      "has_session_exit": 1,
+      "session_remaining": false,
+      "output": ""
+    },
+    {
+      "session": "lt-20261101T215922-native-cli-decompose-setup",
+      "has_session_exit": 1,
+      "session_remaining": false
+    }
+  ],
+  "remaining_session_count": 0,
+  "prior_setup_runs": [
+    "20261101T214808-remaining2",
+    "20261101T215922-native-cli"
+  ],
+  "prior_setup_canonical_verdicts": "BLOCKED; no valid current PASS created",
+  "wall_budget_clock_preserved": true,
+  "original_started_at_unix": 1793570004.215329,
+  "observed_total_wall_s": 800.147970199585,
+  "task_budget_not_extended": true,
+  "source_SKILL_Git_Beads_edited": false,
+  "additional_trials_started": false,
+  "ended_at": "2026-11-01T22:06:44.363356+00:00",
+  "actual_subject_cli_version": "NOT_CONFIRMED: no READY or subject task/transcript in this attempt"
+}

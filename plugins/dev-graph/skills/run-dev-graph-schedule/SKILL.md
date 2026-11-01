@@ -97,7 +97,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 完了条件: 全推薦が confirmed/pass/readiness complete、全 dependency done、lease/resource conflict 0 を同時に満たす。
 
 1. 対象 subgraph と max parallel を確定する。
-2. beads binding は C28 の `ready` と status/depends_on exact-set parity=confirmed の積集合だけを採用する。github/none は local graph から算出する。parity の期待値は `bd-bridge.py --op ready --graph <graph>` が graph の `beads_linkage` (sync の起票結果を C02 `link-beads` が記録したもの) から組み立て、その出力を `schedule-graph.py --ready-source bd-bridge --ready-json <path>` に渡す。linkage の無い beads の node は ready に出ず、linkage の無い依存先を持つ node は conflict になる。
+2. beads binding は C28 の `ready` と status/depends_on exact-set parity=confirmed の積集合だけを採用する。github/none は local graph から算出する。parity の期待値は `bd-bridge.py --op ready --graph <graph>` が正準の `build-parity-manifest.py` にメモリ内で委譲し、graph の `beads_linkage` (sync の起票結果を C02 `link-beads` が記録したもの) からprovenance付きで組み立て、その出力を `schedule-graph.py --ready-source bd-bridge --ready-json <path>` に渡す。linkage の無い beads の node は ready に出ず、linkage の無い依存先を持つ node は conflict になる。
 3. confirmed/pass/readiness complete、全依存 done、active lease なしだけを候補にする。
 4. feature ready は system-dev-planner 起動候補、task ready は実行候補として別 batch にする。両者を同じ batch に混ぜない。登録済みの package の member が `parent_feature` に名指す feature は計画済みなので planner の候補に出さず、`schedule-graph.py` の `planned_features` に分けて返す (同じ feature を2回計画しない)。その feature の実行候補は member の task である。
 5. `schedule-graph.py` の resource_scope conflict と C27 lease snapshot を重ね、同じ resource を触る組を分離する。C17 独立 verifier が不一致を出したら推薦しない。
@@ -109,6 +109,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ### ready-json の生成と消費
 
 beads binding を含むときは、`--ready-json` を消費する前に同じ周回で生成する。committed 済みの古い receipt を使い回さない。parity manifest は canonical graph だけから作り、`source_graph_digest` を持つ。ready payload に `parity_provenance` が付いていれば、`schedule-graph.py` はその `source_graph_digest` を現 graph の canonical digest と照合し、不一致なら stale として停止する。
+
+`bd-bridge.py --op ready --graph` は同じbuilderの `build()` をメモリ内で使う読取専用の入口であり、別の生成規則やmanifestファイルを持たない。
 
 parity manifest を手書きしない。`../../scripts/build-parity-manifest.py` が唯一の生成経路で、既定の出力先は `eval-log/dev-graph/run-dev-graph-schedule/parity-manifest.json` (下の `$OUT/parity-manifest.json`) である。stale で止まったときも manifest を作り直す。`source_graph_digest` だけを現在値へ書き換える修正は stale 検出を恒久的に無効化する (execution-tracker-contract §10)。
 

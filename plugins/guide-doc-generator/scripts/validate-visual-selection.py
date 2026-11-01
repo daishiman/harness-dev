@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+# /// script
+# name: validate-visual-selection
+# version: 0.1.0
+# purpose: 表現選定の被覆・参照・構成ハッシュを読み取り専用で検査する
+# inputs: argv --config <json> [--decisions <json>] [--digest]
+# outputs: 明示した出力先または検査結果の標準出力
+# requires-python: ">=3.10"
+# dependencies: []
+# contexts: [C]
+# network: false
+# write-scope: none
+# ///
 """図解選定の検討漏れ・参照切れ・古い構成への証跡を検出する。
 
 --config <normalized.json> --decisions <visual-selection.json>

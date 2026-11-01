@@ -60,11 +60,29 @@ def test_html_examples_wrap_without_clipping(page, width):
       const bounds=box.getBoundingClientRect();
       return {id:box.closest('section').id, clipped:[...box.querySelectorAll('*')].filter(el=>{
         const b=el.getBoundingClientRect();
-        return b.width && (b.left < bounds.left-.5 || b.right > bounds.right+.5);
-      }).map(el=>el.textContent)};
+        if (!b.width || (b.left >= bounds.left-.5 && b.right <= bounds.right+.5)) return false;
+        const region=el.closest('.table-wrap');
+        if (!region || !box.contains(region)) return true;
+        const r=region.getBoundingClientRect();
+        return !(getComputedStyle(region).overflowX==='auto' && region.scrollWidth>region.clientWidth
+          && r.left>=bounds.left-.5 && r.right<=bounds.right+.5);
+      }).map(el=>el.textContent), scrollable:[...box.querySelectorAll('.table-wrap')]
+        .filter(el=>el.scrollWidth>el.clientWidth).map(el=>({role:el.getAttribute('role'),
+          tabIndex:el.tabIndex,name:el.getAttribute('aria-label'),
+          rowHeader:el.querySelector('tbody th').getBoundingClientRect().width}))};
     })""")
     assert len(result) >= 3
     assert all(not item["clipped"] for item in result), result
+    for item in result:
+        for region in item["scrollable"]:
+            assert region["role"] == "region" and region["tabIndex"] == 0
+            assert region["name"] and region["rowHeader"] >= 100
+    if width == 375:
+        region = page.locator('#html-table .table-wrap')
+        region.evaluate('(el)=>el.scrollLeft=0')
+        region.focus()
+        page.keyboard.press('ArrowRight')
+        page.wait_for_function("document.querySelector('#html-table .table-wrap').scrollLeft>0")
 
 
 def test_candidate_table_keeps_readable_columns_and_examples_on_narrow_screen(page):

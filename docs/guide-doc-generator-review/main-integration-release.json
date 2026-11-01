@@ -1,0 +1,25 @@
+{
+  "proposal_id": "PROP-2026-11-02-GUIDE-DOC-BASE-VERSION-FIX",
+  "timestamp": "2026-11-01T21:21:51.373055+00:00",
+  "category": "P1_structural",
+  "status": "approved",
+  "proposer": "Codex（今回の全件反映担当）",
+  "approver": "solo_operator（今回の依頼者）",
+  "authorization_basis": "利用者の継続指示「全ての内容をプルリクに上げておいてください。漏れなく全て」と、既存の最終レビュー後commit/push/PR作成・main取り込み・CI修正の実施許可に基づく。新たな承認回答を得たという主張はしない。",
+  "target_path": [
+    "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+    "plugins/guide-doc-generator/.codex-plugin/plugin.json"
+  ],
+  "target_sha256": {
+    "plugins/guide-doc-generator/.claude-plugin/plugin.json": "bff6bdd3d8fa041c38ac734b302cb124099330d619cace60ae69a28cb4af6ca2",
+    "plugins/guide-doc-generator/.codex-plugin/plugin.json": "22efc9acaf34ea46a4cad7d88032a7821f6f83f4e004afd6b3f329e930a7faa8"
+  },
+  "incident_fix": true,
+  "rationale": "今回のpush前にmainへPR #86が入り、main側もguide-doc-generator 0.1.26を公開したため、本PRの同版番号と異なる内容が衝突した。コピー配布が旧版を維持する問題を避け、正規release writerで本PR分だけ0.1.27へ修復する。依存・権限・公開名の変更はない。incident_fixはこの採番衝突の修復に限定し、policyや分類器を変更しない。",
+  "rollback_plan": "本PRのguide-doc-generator変更をrevertし、main由来の0.1.26とfingerprintへ揃える。mainの他機能変更と承認履歴は保持する。",
+  "rubric_hash": null,
+  "template_hash": null,
+  "impact_report": "docs/guide-doc-generator-review/completeness-receipt.json",
+  "grace_period": "なし（同版番号衝突の修復）",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/87"
+}

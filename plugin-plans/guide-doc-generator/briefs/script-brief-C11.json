@@ -340,6 +340,11 @@
         "name": "data-hb-action",
         "on": "操作を担う要素",
         "value": "クライアント側 JS が拾う操作種別。生成 chrome 側の語彙であり著者データではない"
+      },
+      {
+        "name": "data-hb-diagram-renderer",
+        "on": "HTMLとして描画したfigure.diagram",
+        "value": "html。SVG以外の描画経路であり、C16はこの値だけでは合格にせず元データと実体の一致を検査する。"
       }
     ],
     "consumers": "C16 (data-hb-kind / R21 で data-hb-part=IMG・DIAGRAM を SC-09 の対象特定に使う)、C17 (data-hb-part / data-hb-part-role / data-hb-kind / data-hb-single — A11Y-01 が『data-hb-single を持つチップ群では aria-pressed=\"true\" が高々 1 個』を検査し、data-hb-part-role=\"aux\" を除外口に使うため、この 2 属性は C17 の検査が成立する前提そのもの。P03-x-02 で data-hb-single の欠落を追加)、C18 (data-hb-field / data-hb-part / R21 で data-hb-section-kind と data-hb-slot)、C20 (全属性)、C22 (data-hb-field / data-hb-part / R21 で data-hb-presentation-order・data-hb-asset-role・data-hb-section-role)。5 本の検査アンカーはすべて本節の出力に依存するため、本節を変えるときは 5 本を同時に更新する",
@@ -435,7 +440,7 @@
     {
       "data": "block.type=\"diagram\" {pattern, ...}",
       "component": "概念図解 (新規・G1)",
-      "notes": "C14 の 6 パターンへ委譲し inline SVG を figure 内へ埋め込む"
+      "notes": "config/handout-diagrams.json の patterns に基づき C14 へ委譲し inline SVG を figure 内へ埋め込む。単一KPIのHTML/CSS投影は本briefのvisual_projection_contractを参照"
     },
     {
       "data": "block.type=\"image\" {alt, data_uri, caption?}",
@@ -458,7 +463,7 @@
     "7. 各セクションを検査する: id / heading / goal (非空) / lead_line (非空) / judgment_axis (非空) / blocks[]。セクションレベルのフィールド名も C12 の config_schema.section_fields が正本 (heading = 見出し、judgment_axis = 判断軸の一文)。goal 欠落は 1 件でも exit 1 (checklist C38)。lead_line と judgment_axis は R11 側の必須で、goal とは別軸として両方を独立に課す (checklist C40)。",
     "8. ナビを sections から導出する。構成データは nav[] を持たない (持たせると section 集合と nav 集合という同じ情報の二重管理になる = PAT-1)。導出した nav 項目の href の fragment 集合と section id 集合が 1:1 で一致することを事後に確認し、崩れていれば exit 1 (checklist C3 を生成側でも閉じる)。section id は構成データが持つ id をそのまま使い、無ければ s{index+1} を採番する。",
     "9. アイコン sprite を作る。C15 の build_sprite を呼ぶ。exit 1 相当なら診断を転記して exit 1、exit 2 相当なら exit 2。返った symbols_svg は <body> 直後へ 1 度だけ置き、参照は <use href=\"#hbic-{name}\"> のみを使う (未使用 symbol は定義上 0 件)。",
-    "10. 図解を作る。block.type が flow/diagram/(versus かつ render=svg) のものについて C14 の render_diagram を呼び、返った SVG 断片を figure 内へ埋め込む。座標計算をレンダラ側に持たない。",
+    "10. 図解はまずC14のrender_diagramで入力を検証する。単一KPIは検証済みの構造をHTML/CSSへ投影し、元の図解データを機械可読属性に保持する。それ以外のflow/diagram/(versusかつrender=svg)は返されたSVGをfigure内へ埋め込む。座標計算をC11へ持ち込まない。",
     "10b. 画像を出す。block.type=\"image\" は assets レジストリから asset_id で実体を引き、<img> の src へ data URI を、**alt 属性へ assets[].alt の値を無変換で出す** (要約・切り詰め・既定文の合成をしない。alt は著者が書いた代替テキストであり、レンダラが言い換えた時点で著者記述でなくなる)。alt が空文字になる経路は無い — assets[].alt は C12 の構成データ検査で非空必須であり (script-brief-C12.json の assets 要素制約『alt: 非空 string』)、空や未指定の構成データはレンダラへ到達する前に exit 1 で落ちる。したがって本 script は alt 欠落時の既定文を持たない。万一 asset_id が assets レジストリで解決できない構成データが到達した場合は、alt を空にして描画を続けず exit 1 とする — 空 alt の <img> は C17 の a11y ゲート (A11Y 系) を通ってしまう形 (装飾画像の宣言) であり、解決失敗を装飾の宣言として出力するのは黙った免除にあたる。**alt の運搬体は alt 属性 1 つである**: 同じ値を出す data-hb-asset-alt は C20 の逆抽出用マーカーであって支援技術が読む機構ではない。マーカーが付いていることを理由に alt 属性を省く経路を作らない (スクリーンリーダーは data-* を読まない)。caption も同様に <figcaption> が本体で、data-hb-asset-caption は marker 側である。",
     "11. デザイントークンを CSS 変数として <style> 冒頭の :root へ展開する。--pop-primary / --pop-primary-pastel / --pop-primary-soft / --pop-primary-deep / --pop-bg / --ink / --ink-muted / --line / --subtle / --card-radius / --font-num をテーマ定義 JSON から出す。アクセント色の実値が現れるのはこの :root ブロックだけで、以降の全 CSS 規則と SVG は var() 参照にする (checklist C14)。",
     "12. 全体タイポグラフィを焼く。body に font-feature-settings:\"palt\"、.num クラスに font-variant-numeric: tabular-nums と letter-spacing:-0.015em を出す。",
@@ -790,5 +795,12 @@
       "no_runtime_measurement": "何項目まで 1 行に置くかを JS の実測で決めない。レイアウトの分岐は CSS の宣言だけで閉じ、外部フォント・計測・メディアクエリ以外の環境判定に依存しない"
     },
     "current_implementation_gap": "実装 (render-handout.py) は .navbar { display:flex; gap:12px; flex-wrap: wrap; } であり NAV-OVF-2 に反する。--nav-h は NAV_OFFSET_PX の固定値 (render-handout.py:1550) で焼かれるため、上記の経路依存な潜り込みが現に起こりうる。また .nav-chip クラス自体が実装に存在せず (R25/REQ-8 の chip 化が未実装)、NAV-OVF-1 の max-width も掛かる先が無い。是正は P05-x-141-nav-overflow-impl が持つ"
+  },
+  "visual_projection_contract": {
+    "ssot": "schemas/handout-config.schema.json / config/handout-visual-policy.json / config/handout-diagrams.json",
+    "handson": "任意のdata.titleを実習グループ見出しとして表示し、操作・成功の目安・つまずいたらを区別する。狭幅では縦に並べる。",
+    "tables": "見出しの読める列幅を保ち、必要時は名前付き・キーボード操作可能な表内スクロールを使う。",
+    "figures": "SVG画像の明示widthを優先し、無ければviewBoxを補助にする。図は文字を縮めず、拡大・閉じる・焦点復帰へ接続する。",
+    "kpi": "値・単位・説明はHTMLで配置し、非空descriptionはfigureのaria-descriptionへ接続する。表示の正しさはC16と実表示レビューで別に確認する。"
   }
 }

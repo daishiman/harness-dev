@@ -22,6 +22,12 @@ LIVE_TRIAL_ROOT = (
 LIVE_TRIAL_SCHEMA = LIVE_TRIAL_ROOT / "schemas" / "live-trial-verdict.schema.json"
 LIVE_TRIAL_VERDICT = LIVE_TRIAL_ROOT / "scripts" / "live-trial-verdict.py"
 POSITIVE_SCENARIOS = PLUGIN / "tests" / "fixtures" / "live-trial-positive-scenarios.json"
+CONTENT_REVIEW_SCHEMA = (
+    REPO / "plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json"
+)
+CONTENT_REVIEW_POLICY = (
+    REPO / "plugins/harness-creator/skills/run-elegant-review/references/convergence-policy.json"
+)
 
 
 def _load_content_lint():
@@ -42,13 +48,37 @@ def _load_live_trial_verdict():
     return module
 
 
-def _skill_criteria(skill_path: Path) -> dict[str, dict]:
+def _skill_metadata(skill_path: Path) -> dict:
     text = skill_path.read_text(encoding="utf-8")
     assert text.startswith("---\n")
     _opening, frontmatter, _body = text.split("---", 2)
-    metadata = yaml.safe_load(frontmatter)
+    return yaml.safe_load(frontmatter)
+
+
+def _skill_criteria(skill_path: Path) -> dict[str, dict]:
+    metadata = _skill_metadata(skill_path)
     criteria = metadata["feedback_contract"]["criteria"]
     return {criterion["id"]: criterion for criterion in criteria}
+
+
+def _assert_content_review_loop(verdict: dict, feedback_contract: dict) -> None:
+    schema = json.loads(CONTENT_REVIEW_SCHEMA.read_text(encoding="utf-8"))
+    loop = verdict["feedback_loop"]
+    jsonschema.Draft7Validator(schema["properties"]["feedback_loop"]).validate(loop)
+    jsonschema.Draft7Validator(schema["properties"]["iterations"]).validate(verdict["iterations"])
+    policy = json.loads(CONTENT_REVIEW_POLICY.read_text(encoding="utf-8"))
+    scopes = ("inner", "outer") if loop["loop_scope"] == "both" else (loop["loop_scope"],)
+    ceilings = [policy["loop_bounds"][f"content_review_{scope}_reeval"]["value"] for scope in scopes]
+    ceilings.append(feedback_contract["max_iterations"])
+    for scope in scopes:
+        scoped_limit = feedback_contract.get(f"{scope}_loop", {}).get("max_iterations")
+        if scoped_limit is not None:
+            ceilings.append(scoped_limit)
+    assert all(type(limit) is int and limit >= 1 for limit in ceilings)
+    # policy/frontmatter は上限であり、実際のincremental reviewが全予算を使う義務ではない。
+    assert loop["iteration_limit"] <= min(ceilings), "review limit exceeds policy/frontmatter ceiling"
+    assert verdict["iterations"] == loop["iteration"], "review iteration counts disagree"
+    assert loop["iteration"] <= loop["iteration_limit"], "review exceeded its declared limit"
 
 
 def _contained_repo_ref(value: str) -> Path:
@@ -296,9 +326,40 @@ def test_canonical_content_reviews_are_current_and_complete(
         )
         assert error is None, f"{component_id}/{filename}: {error}"
         verdict = json.loads((review_dir / filename).read_text(encoding="utf-8"))
+        schema = json.loads(CONTENT_REVIEW_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft7Validator(schema).validate(verdict)
         loop = verdict["feedback_loop"]
         assert set(loop["criteria_evaluated"]) == criteria_ids
         assert loop["loop_scope"] == "both"
-        assert loop["iteration_limit"] == 3
-        assert loop["iteration"] <= loop["iteration_limit"]
+        _assert_content_review_loop(verdict, _skill_metadata(skill_path)["feedback_contract"])
         assert loop["next_action"] == "none"
+
+
+@pytest.mark.parametrize(("limit", "iteration", "iterations", "frontmatter_limit", "valid"), [
+    (1, 1, 1, 3, True),   # incremental の単回評価
+    (3, 3, 3, 3, True),   # 既存の最大3周の評価
+    (2, 1, 1, 2, True),   # 上限を使い切る必要はない
+    (0, 1, 1, 3, False),  # schema の正の整数制約
+    (4, 1, 1, 4, False),  # frontmatter が大きくても正規policyを超えない
+    (3, 1, 1, 2, False),  # 対象skillの上限も超えない
+    (1, 0, 0, 3, False),
+    (1, 2, 2, 3, False),  # 申告した予算内に実反復が収まる
+    (3, 1, 2, 3, False),  # top-level とloopの実反復回数が一致する
+    (True, 1, 1, 3, False),
+])
+def test_content_review_loop_keeps_schema_and_policy_bounds(
+    limit, iteration, iterations, frontmatter_limit, valid,
+) -> None:
+    verdict = {
+        "iterations": iterations,
+        "feedback_loop": {
+            "loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1"],
+            "positive_feedback": ["synthetic design strength"], "negative_feedback": [],
+            "iteration": iteration, "iteration_limit": limit, "hook_trigger": "manual", "next_action": "none",
+        },
+    }
+    if valid:
+        _assert_content_review_loop(verdict, {"max_iterations": frontmatter_limit})
+    else:
+        with pytest.raises((AssertionError, jsonschema.ValidationError)):
+            _assert_content_review_loop(verdict, {"max_iterations": frontmatter_limit})

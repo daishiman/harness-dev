@@ -165,11 +165,11 @@
     {
       "id": "SC-09",
       "since": "R21 (goal-spec C55)",
-      "rule": "図表・グラフの枠が中身を持つこと。対象は data-hb-part が IMG / DIAGRAM のいずれかである要素、および <figure> 要素。各対象について (a) IMG: 配下の <img> が存在し、その src が data: スキームで、base64 部を除いた実体長が 64 バイト以上であること (空 data URI / `data:,` / 1x1 相当のプレースホルダ長は違反) (b) DIAGRAM: 配下の <svg> が描画要素 (path / rect / circle / ellipse / line / polyline / polygon / text / image / use) を 1 つ以上持つこと。<svg> が <title>/<desc>/<defs>/<g> だけで構成され描画要素 0 個なら違反 (c) 共通: 対象要素の可視テキストが未解決プレースホルダ (`{{`…`}}` / `TODO` / `図はここに入ります` / `グラフを挿入` / `chart placeholder`) に完全一致または前方一致するなら違反 (d) 共通: 対象要素が配下に <img> も <svg> も持たないなら『枠だけが残った図表』として違反",
+      "rule": "図表・グラフの枠が中身を持つこと。対象は data-hb-part が IMG / DIAGRAM のいずれかである要素、および <figure> 要素。各対象について (a) IMG: 配下の <img> が存在し、その src が data: スキームで、base64 部を除いた実体長が 64 バイト以上であること (空 data URI / `data:,` / 1x1 相当のプレースホルダ長は違反) (b) DIAGRAM: 通常は配下の <svg> が描画要素 (path / rect / circle / ellipse / line / polyline / polygon / text / image / use) を 1 つ以上持つこと。<svg> が <title>/<desc>/<defs>/<g> だけで構成され描画要素 0 個なら違反 (c) 共通: 対象要素の可視テキストが未解決プレースホルダ (`{{`…`}}` / `TODO` / `図はここに入ります` / `グラフを挿入` / `chart placeholder`) に完全一致または前方一致するなら違反 (d) 共通: 後述の単一KPIのHTML投影条件を満たさず、対象要素が配下に <img> も <svg> も持たないなら『枠だけが残った図表』として違反 ただし単一KPIのHTML投影は、data-hb-diagram-renderer=htmlとpattern=bignumberを持ち、保存した元データとtitle/value/caption/unit/subおよび非空descriptionのaria-descriptionが一致し、各実体が正しい要素として存在する場合に限りSVGを要求しない。枠や説明文だけ、値の欠落・改変、説明の消失は違反のままである。",
       "why_independent_from_sc01": "R01 の外部参照ゼロ検査 (SC-01..SC-04) は『参照が外を向いていないこと』しか見ない。生成に失敗して src が空になった img や、描画要素が 1 つも無い svg は、外部参照を 1 件も持たないので SC-01..SC-04 を全て通過してしまう。『参照が無い』と『中身がある』は別の述語であり、後者には独立した検出が要る",
       "violation_example": "<figure data-hb-part=\"DIAGRAM\"><svg viewBox=\"0 0 400 240\"><title>収支の流れ</title></svg><figcaption>収支の流れ</figcaption></figure> (title だけで描画要素 0) / <div data-hb-part=\"IMG\"><img src=\"data:,\" alt=\"管理画面\"></div> / <figure>図はここに入ります</figure>",
       "pass_example": "<figure data-hb-part=\"DIAGRAM\"><svg viewBox=\"0 0 400 240\"><rect …/><path …/><text …>収支</text></svg><figcaption>…</figcaption></figure>",
-      "false_positive_risk": "低。CSS 背景だけで図を描く経路は本 plugin に存在せず (C11 は inline SVG か data URI の img しか出さない)、装飾アイコンは data-hb-part を持たない <svg> なので対象外。64 バイト閾値は判定の数値であり、C11 が出す最小の実画像 (PNG ヘッダ + IDAT) でも 200 バイトを超えるため余裕がある",
+      "false_positive_risk": "単一KPIのHTML投影だけを元データとの一致で検証して受け入れる。任意のCSS背景や本文だけの図を受け入れない。SVG・画像の従来の実体条件と装飾アイコンの除外は維持する。",
       "delegated_to": "本 detection の判定はレンダラ側 (C11) へは委譲しない。C11 は図の中身を作る側であり、作った本人に空判定を任せると欠落が検出されない"
     },
     {

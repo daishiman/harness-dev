@@ -61,6 +61,21 @@ def test_allow_claude_dev_area(tmp_path: Path):
     assert run(w(f"{vault}/.claude/skills/run-x/SKILL.md"), vault) == 0
 
 
+def test_allow_codex_skills_dev_area(tmp_path: Path):
+    vault = str(tmp_path)
+    assert run(w(f"{vault}/.codex/skills/run-x/SKILL.md"), vault) == 0
+
+
+def test_block_other_codex_areas(tmp_path: Path):
+    vault = str(tmp_path)
+    for relative in (
+        ".codex/agents/reviewer.md",
+        ".codex/config.toml",
+        ".codex/skills-other/SKILL.md",
+    ):
+        assert run(w(f"{vault}/{relative}"), vault) == 2, relative
+
+
 def test_block_sources_dir(tmp_path: Path):
     vault = str(tmp_path)
     # 読み取り専用ソースとして保護すべき領域は 03_Sources/ 等に限る
