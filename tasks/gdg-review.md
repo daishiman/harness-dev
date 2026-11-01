@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-10-31T09:58:26.388836Z"
-updated_at: "2026-10-31T09:58:26.388836Z"
+updated_at: "2026-11-01T21:14:03.540713Z"
 depends_on: ["spec-guide-doc-visual", "arch-guide-doc-visual"]
 related_nodes: ["feature-guide-doc-visual"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-10-31T09:58:26.388836Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T21:14:03.540713Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -102,4 +102,8 @@ origin/mainをローカルmainへ取り込み、そのmainを作業ブランチ�
 ## Handoff
 
 draft PRを人が確認し、マージ後に通常の追跡同期へ渡す。featureは本変更の整理用draftであり、新しい13段の実装計画を捏造しない。残課題はharness-ws7j。
+
+## 全件反映の追加確認
+
+利用者の2026-11-02の全件反映指示により、元作業ツリー・PR・実資料フォルダを全件照合した。プラグインと設計の752ファイルは既存PRで反映済み。未収録の実資料・全証跡に加えて最終レビューで置換した元入力も、docs/guide-doc-generator-deliveryへ完全な内容と復元対応表として収録する。C02のconfig/graph/receipt/templatesも追跡対象へ含め、ロック・キャッシュ・他機能の既存差分を除外する。
 

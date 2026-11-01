@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-10-31T09:58:26.388836Z"
-updated_at: "2026-10-31T09:58:26.388836Z"
+updated_at: "2026-11-01T21:14:03.540713Z"
 depends_on: ["spec-guide-doc-visual"]
 related_nodes: []
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-10-31T09:58:26.388836Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T21:14:03.540713Z", "missing_sections": [], "status": "complete"}
 ---
 
 # Architecture overview
@@ -57,7 +57,7 @@ Python標準ライブラリの決定論生成と、構成設計・意味レビ�
 
 ## Goals and non-goals
 
-読者が関係を短時間で理解できることと再生成の一致が目標。万能な自動図種判定、外部描画CDN、資料固有データの公開は対象にしない。
+読者が関係を短時間で理解できることと再生成の一致が目標。万能な自動図種判定と外部描画CDNは対象にしない。資料固有データはプラグイン本体へ固定せず、今回の全件反映指示に基づきdocs/guide-doc-generator-deliveryへ実資料・素材・改善前・検証証跡を収録する。
 
 ## System context and boundaries
 

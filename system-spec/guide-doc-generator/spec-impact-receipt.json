@@ -33,12 +33,13 @@
   ],
   "flow": {
     "writer": "dev-graph C02",
-    "operation": "add",
-    "graph_revision": 1,
-    "receipt": "docs/guide-doc-generator-review/node-r000001-add.json",
-    "snapshot": "docs/guide-doc-generator-review/graph-snapshot.json",
+    "operation": "add後にupdate（資料同梱範囲と所在を追記）",
+    "graph_revision": 3,
+    "receipt": "docs/guide-doc-generator-review/node-r000003-update.json",
+    "snapshot": "docs/guide-doc-generator-review/graph-snapshot-r3.json",
     "independent_review": "docs/guide-doc-generator-review/graph-review.json",
-    "status": "C02 preview/apply・graph検証・独立監査成功。文書状態はdraftのまま保持し、未実施の承認・昇格を捏造しない。"
+    "status": "C02 preview/apply・graph検証・独立監査成功。文書状態はdraftのまま保持し、未実施の承認・昇格を捏造しない。",
+    "independent_review_scope": "graph-review.jsonはrevision1の独立監査。revision2/3の検証範囲はcompleteness-receipt.jsonへ記録。"
   },
   "merge_provenance": {
     "remote_base": "origin/main",
@@ -55,7 +56,7 @@
     },
     {
       "path": "architecture/guide-doc-visual.md",
-      "sha256": "a729c35ffe949b9f285444c475d7d330c713e8c270fe5650c8f61e36bf8ef95b"
+      "sha256": "10f7cb1f8972924f8306788111ea37d547864cf5ed35df5901dcae5dbda4b1a0"
     },
     {
       "path": "features/guide-doc-visual.md",
@@ -63,11 +64,11 @@
     },
     {
       "path": "docs/guide-doc-visual.md",
-      "sha256": "24f60084354337034369c24de00ef49e82105cb069e6e54a703e440f325aa730"
+      "sha256": "59cbc233e2c8a3834ded7bc2b5c884789159f145ea911f2fb66ce2118fa648c6"
     },
     {
       "path": "tasks/gdg-review.md",
-      "sha256": "df210e1546a87db886d9a317584e17fa8783e6d601d7ecb8848d2e110f3879d7"
+      "sha256": "238f8aec2b7614d212927beee22b88494959bcedd25e534749c872433ac3c980"
     },
     {
       "path": "system-spec/guide-doc-generator/README.md",
@@ -167,7 +168,7 @@
     },
     {
       "path": "docs/guide-doc-generator-review/quality-gates.json",
-      "sha256": "ea49f3585adcb54d1cf227a14424c986af0ea0524e11e1ad7b85ce36f46d1d03"
+      "sha256": "1ea2882f15b0c208ee3cea7105893ed678e961082122f7e6f4272e8de47103aa"
     },
     {
       "path": "docs/guide-doc-generator-review/release-proposal.json",
@@ -184,6 +185,34 @@
     {
       "path": "docs/guide-doc-generator-review/ci-executable-fix.json",
       "sha256": "ba5acf82e5b8c8a9f5d2c7b1f085144a6226120c1176baaf0dbe066f8de92487"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/completeness-receipt.json",
+      "sha256": "184a77ec3a1f0f3a634f5cfa500b5efd3e7ea2f0ecaeb947dfb3611953cde5ad"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/graph-snapshot-r3.json",
+      "sha256": "aa7e5bfbf5b3d08da2a328459bb2df2c603dda031eb886ac66f04ee1f41d698f"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/node-r000002-update.json",
+      "sha256": "1ab9ef59177f4184b77b79021f17950354398ed20bbebae2f5e61406d4e28548"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/node-r000003-update.json",
+      "sha256": "b0a427b7b775f49c0e3978941a9a405e3bb60dc1f0e97e57e955f3ed3916e01d"
+    },
+    {
+      "path": "docs/guide-doc-generator-delivery/manifest.json",
+      "sha256": "cfb662ed8d321a19751a8872f1466eaeca24e395866a58ce90da2899030b534a"
+    },
+    {
+      "path": "docs/guide-doc-generator-delivery/README.md",
+      "sha256": "da13d22ee76ea805962a1e95b6d08aa5766a136baabb673ee9076bc6d15dafab"
+    },
+    {
+      "path": "docs/guide-doc-generator-delivery/restore-evidence.py",
+      "sha256": "30ae399004aa9eb938a9bebe85e9c56a3e802af5f79033ba11e23c2bdff4d93a"
     }
   ],
   "remaining": [
@@ -203,5 +232,10 @@
     "evidence": "docs/guide-doc-generator-review/ci-executable-fix.json",
     "impact": "なし",
     "reason": "ファイルの実行権限のみ。本文SHA・入力/出力・描画・スキル契約・依存・保存構造は同一。既存のPKG-007契約へ適合させる修正。C02文書を再生成する変更はない。"
+  },
+  "complete_delivery": {
+    "impact": "資料の配布・証跡保存範囲に影響あり。描画・CLI・認証・DB・他プラグインには追加影響なし。",
+    "evidence": "docs/guide-doc-generator-review/completeness-receipt.json",
+    "manifest": "docs/guide-doc-generator-delivery/manifest.json"
   }
 }

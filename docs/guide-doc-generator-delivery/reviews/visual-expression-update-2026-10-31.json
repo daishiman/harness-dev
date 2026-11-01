@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-31",
+  "issue_ids": [
+    "harness-lw6u",
+    "harness-ubcg"
+  ],
+  "target": "plugins/guide-doc-generator",
+  "source_analysis": "plugins/guide-doc-generator/skills/ref-handout-design-system/references/reference-handout-analysis.md",
+  "design_choices": [
+    "関係の解析から図・表・カード・短文を選び、図が代替する文章を削る",
+    "選定記録を構成ハッシュと実際の配置部品へ結び付ける",
+    "候補集を表現の上限とせず、分図・組合せ・専用描画素材へ拡張する"
+  ],
+  "checks": {
+    "plugin_tests": {
+      "command": "HANDOUT_BROWSER=<実在するChromeのパス> python3 -m pytest -q plugins/guide-doc-generator/tests",
+      "exit_code": 0,
+      "passed": 3566,
+      "skipped": 13,
+      "subtests_passed": 3141
+    },
+    "pipeline": {
+      "native_patterns": 16,
+      "normalize_exit": 0,
+      "render_exit": 0,
+      "extract_compare_exit": 0,
+      "roundtrip": "EQUIVALENT",
+      "byte_identical": true,
+      "sha256": "8a977c92877cef3c9d34786a885f4f89ea95e150b8d98b5b8a67798e9fee6ed3",
+      "selfcontained_exit": 0,
+      "a11y_print_static_exit": 0
+    },
+    "browser": {
+      "widths_px": [
+        1440,
+        768,
+        375
+      ],
+      "min_font_px": 14,
+      "text_overlap_pairs_in_gallery": 0,
+      "keyboard_disclosure": "pass",
+      "print_state_restore": "pass",
+      "zoom_escape_focus_restore": "pass"
+    },
+    "frontmatter_exit": 0,
+    "goal_seek_lint_exit": 0,
+    "duplication_lint": {
+      "exit": 0,
+      "new_operational_duplicates": 0,
+      "existing_fixture_warnings": 2
+    },
+    "native_surface_apply_exit": 0,
+    "native_surface_check_exit": 0
+  },
+  "limits": [
+    "図の最適性と原文の意味の一致は機械検査だけでは保証しない。選定記録と独立可読性レビューで扱う",
+    "印刷の実版面や全ての任意入力の図形配置は、このサンプルと静的検査だけで保証しない",
+    "Mermaid・PlantUML等のカタログ外表現は、事前描画したSVG/PNGを既存IMG経路で取り込む"
+  ],
+  "artifacts": [
+    {
+      "path": "plugins/guide-doc-generator/config/handout-diagrams.json",
+      "sha256": "892543a693a34a792c186cfe7df65001c9a53b5f1e7b91479ed6f8b16177ad01"
+    },
+    {
+      "path": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+      "sha256": "9a240922b10bc6e78c72fb815ee5e058ddbb2dedf5d7766a8525e5987d38fe2a"
+    },
+    {
+      "path": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "sha256": "5af209e1458dea50f230489d4246cac692bbf3bc21c58d23ce2710d92915bb2b"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+      "sha256": "9da419fa7e5797875a906a35f94b65da7c9b62c0850b9443c31d5a321dd0088a"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "sha256": "47187d210dbed7387b3199e45bffd896e2f092504e0741d5efeb51717996e4bd"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/validate-visual-selection.py",
+      "sha256": "baf3a12a49468e366fe360dc0ec3c62e49c52e98694bcd74016cc05dd97e76bc"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/build-diagram-gallery.py",
+      "sha256": "e7a2d6767c7d4e45cee53b898683957a36665c7679157cd54fde1536a0c1fd54"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "sha256": "d0f824894568d3a0c5a45b96530354ed295a9bc61a973ec35afb062e845f955e"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+      "sha256": "b6f2bd25e990ab7ed07f66620f06cf994c1ea03512bdb73a1a0b8ec8194a9b2a"
+    },
+    {
+      "path": "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md",
+      "sha256": "02156c9bde661915098e1395fc9bda7322336b45e16960bb6f9896379032b58d"
+    },
+    {
+      "path": "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md",
+      "sha256": "32c46f7c1cad74ac5bb2c24569edc98f6f23cf131d0534024d6219e1b104dc01"
+    },
+    {
+      "path": "plugins/guide-doc-generator/skills/ref-handout-design-system/references/reference-handout-analysis.md",
+      "sha256": "f82eba4c8c9c3dc5edfba97b45b3587fbf28dfc9815ec7267d0e03355312d373"
+    },
+    {
+      "path": "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md",
+      "sha256": "77bf4acc5322189640a7c654e52300c5e986001bb7fdd1d5ba3bf165a61e70be"
+    },
+    {
+      "path": "plugins/guide-doc-generator/examples/diagram-gallery.html",
+      "sha256": "f432388b70633568478dcab4a0ad88d2c2b7552940bc88ac8c6a87c1d01d54fd"
+    }
+  ]
+}

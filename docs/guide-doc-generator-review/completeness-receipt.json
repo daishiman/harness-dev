@@ -1,0 +1,90 @@
+{
+  "recorded_at": "2026-11-01T21:17:09.121974+00:00",
+  "beads_id": "harness-86kh",
+  "pr": "https://github.com/daishiman/harness-dev/pull/87",
+  "request": "2026-11-02 今回の全内容を漏れなくPRへ反映",
+  "inventory": "docs/guide-doc-generator-delivery/manifest.json",
+  "manifest_sha256": "cfb662ed8d321a19751a8872f1466eaeca24e395866a58ce90da2899030b534a",
+  "scope": "今回のguide-doc-generator作業の実資料・改善前資料・全未収録証跡。無関係な他機能の既存差分は対象外。",
+  "counts": {
+    "files": 1106,
+    "unique_content": 768,
+    "logical_bytes": 747978495,
+    "code_files_checked": 752,
+    "code_final_review_differences": 16
+  },
+  "namespaces": {
+    "harness": 1037,
+    "handout": 49,
+    "review-input": 20
+  },
+  "missing_files": [],
+  "source_artifacts_compared": 1086,
+  "all_content_hashes_verified": true,
+  "all_files_restored_and_verified": true,
+  "restore_evidence": "restore-evidence.pyで1106件の内容を検証・復元。最終の格納位置変更後も全1106件を再検証。復元検査先はcheckout外へ移動し、過去テストを現行CI対象へ混在させない。",
+  "reproduction": {
+    "gates": [
+      {
+        "gate": "構成検査",
+        "exit_code": 0
+      },
+      {
+        "gate": "選定証跡",
+        "exit_code": 0
+      },
+      {
+        "gate": "素材埋込",
+        "exit_code": 0
+      },
+      {
+        "gate": "再生成",
+        "exit_code": 0
+      },
+      {
+        "gate": "自己完結",
+        "exit_code": 0
+      },
+      {
+        "gate": "a11y/印刷",
+        "exit_code": 0
+      },
+      {
+        "gate": "言語/日付",
+        "exit_code": 0
+      },
+      {
+        "gate": "語り",
+        "exit_code": 0
+      }
+    ],
+    "byte_reproduction": true,
+    "html_sha256": "d45af110540d761f026345ea226927aad4640da1392816169794404735c26004",
+    "source": "docs/guide-doc-generator-delivery/handout/2026-10-30_Claude-Codeサブエージェント-勉強会資料"
+  },
+  "graph": {
+    "revision": 3,
+    "valid": true,
+    "writer": "C02",
+    "receipts": [
+      ".dev-graph/state/receipts/node-r000002-update.json",
+      ".dev-graph/state/receipts/node-r000003-update.json"
+    ],
+    "snapshot": "docs/guide-doc-generator-review/graph-snapshot-r3.json",
+    "independent_review_scope": "既存のgraph-review.jsonはrevision1の監査。revision2/3は資料同梱の公開範囲と所在を文書化した差分で、C02 preview/applyとschema検証を実施。新規feature分解や30思考法の再実行はしていない。"
+  },
+  "quality_checks": {
+    "test_discovery": "orphan0（既存allowlist2は維持）",
+    "plugin_packages": "22 plugins, blocking failureなし",
+    "release": "guide-doc-generator 0.1.26, content fingerprint変更なし",
+    "secrets": "新規収録する元のテキスト全件にcredential形式一致なし。archive化前に検査。"
+  },
+  "publication_change": "前回は要約だけを公開し実資料と全証跡を未収録にしていたが、今回の全件反映指示に基づき資料・素材・改善前・全証跡を収録する。",
+  "exclusions": [
+    "自動生成キャッシュ（__pycache__/.pytest_cache/.build/node_modules）とOSメタデータ（.DS_Store）",
+    "無関係なdev-graph/UBM/flyer等の既存変更。今回のコード依存ではない。",
+    "一時ロックファイル。C02のconfig/graph/receipt/templatesは通常ファイルとして別途収録。"
+  ],
+  "artifact_storage": "同一内容は1回だけ保存。GitHub上で見る最終資料・レビュー本文・画面は通常ファイル、大きい中間成果物と過去コード全体はZIPと元パス対応表で全内容を保持。",
+  "source_byte_preservation": "歴史的なログ・Markdownの空白や終端改行は元のSHA一致のため変更しない。現行コードと新規文書の書式検査とは分ける。"
+}

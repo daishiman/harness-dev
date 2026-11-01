@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-10-31T09:58:26.388836Z"
-updated_at: "2026-10-31T09:58:26.388836Z"
+updated_at: "2026-11-01T21:15:58.121556Z"
 depends_on: []
 related_nodes: ["feature-guide-doc-visual", "spec-guide-doc-visual", "arch-guide-doc-visual"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-10-31T09:58:26.388836Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T21:15:58.121556Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -80,4 +80,8 @@ spec-guide-doc-visual / arch-guide-doc-visual / feature-guide-doc-visual / task-
 ## 変更履歴
 
 2026-10-31：4件のBeads変更をMVP最終レビューし、正規文書・仕様影響・検査結果を集約した。
+
+## 全成果物の収録と復元
+
+最終資料は docs/guide-doc-generator-delivery/handout/2026-10-30_Claude-Codeサブエージェント-勉強会資料/handout.html。構成JSON・素材・改善前バックアップ・30思考法の記録・全画面キャプチャ・中間成果物をmanifest.jsonへ列挙し、SHA256で照合する。同一内容は一度だけ保存し、restore-evidence.pyで全て元のパスへ復元できる。コードの最終レビュー修正版と、置換前の入力版は名前空間で分ける。
 
