@@ -1,0 +1,144 @@
+{
+  "clock": {
+    "issue_update_updated_at": "2026-08-11T12:00:00Z",
+    "sync_run_at": "2026-08-11T12:00:00Z"
+  },
+  "description": "Deterministic offline GitHub adapter fixture: one pending import, one pending export.",
+  "expected_scenario": {
+    "pass_1": {
+      "exports": 1,
+      "imports": 1,
+      "project_item_adds": 0
+    },
+    "pass_2": {
+      "exports": 0,
+      "imports": 0,
+      "project_item_adds": 0
+    },
+    "scenario_id": "C03-OUT1-positive-second-sync-zero"
+  },
+  "fixture_id": "r5-sync-github-adapter",
+  "issues": {
+    "101": {
+      "body": "dev-graph fixture task body. Managed by the offline r5-sync adapter fixture.",
+      "id": "I_kwDOFIXTURE00101",
+      "number": 101,
+      "state": "OPEN",
+      "title": "Sync import target task (remote revision 2)",
+      "updatedAt": "2026-08-10T09:00:00Z",
+      "url": "https://github.invalid/local-fixture/r5-sync/issues/101"
+    },
+    "102": {
+      "body": "dev-graph fixture task body. Managed by the offline r5-sync adapter fixture.",
+      "id": "I_kwDOFIXTURE00102",
+      "number": 102,
+      "state": "OPEN",
+      "title": "Sync export target task (local revision 2)",
+      "updatedAt": "2026-08-11T12:00:00Z",
+      "url": "https://github.invalid/local-fixture/r5-sync/issues/102"
+    }
+  },
+  "mutation_log": [
+    {
+      "changed": {
+        "title": {
+          "from": "Sync export target task",
+          "to": "Sync export target task (local revision 2)"
+        }
+      },
+      "number": 102,
+      "op": "issue-edit",
+      "updatedAt": "2026-08-11T12:00:00Z"
+    }
+  ],
+  "network": "disabled",
+  "projects": {
+    "delivery": {
+      "fields": [
+        {
+          "id": "PVTSSF_status",
+          "name": "Status",
+          "options": [
+            {
+              "id": "opt_status_todo",
+              "name": "Todo"
+            },
+            {
+              "id": "opt_status_in_progress",
+              "name": "In Progress"
+            },
+            {
+              "id": "opt_status_blocked",
+              "name": "Blocked"
+            },
+            {
+              "id": "opt_status_done",
+              "name": "Done"
+            }
+          ]
+        },
+        {
+          "id": "PVTSSF_priority",
+          "name": "Priority",
+          "options": [
+            {
+              "id": "opt_priority_high",
+              "name": "High"
+            },
+            {
+              "id": "opt_priority_medium",
+              "name": "Medium"
+            },
+            {
+              "id": "opt_priority_low",
+              "name": "Low"
+            }
+          ]
+        },
+        {
+          "id": "PVTF_target_date",
+          "name": "Target date"
+        }
+      ],
+      "id": "PVT_kwDOFIXTURE0001",
+      "items": [
+        {
+          "content_id": "I_kwDOFIXTURE00101",
+          "content_number": 101,
+          "field_updated_at": {
+            "Priority": "2026-08-01T00:00:00Z",
+            "Status": "2026-08-01T00:00:00Z",
+            "Target date": "2026-08-01T00:00:00Z"
+          },
+          "fields": {
+            "Priority": "High",
+            "Status": "In Progress",
+            "Target date": "2026-08-20"
+          },
+          "id": "PVTI_lADOFIXTURE0001zgA0101"
+        },
+        {
+          "content_id": "I_kwDOFIXTURE00102",
+          "content_number": 102,
+          "field_updated_at": {
+            "Priority": "2026-08-01T00:00:00Z",
+            "Status": "2026-08-01T00:00:00Z",
+            "Target date": "2026-08-01T00:00:00Z"
+          },
+          "fields": {
+            "Priority": "Medium",
+            "Status": "In Progress",
+            "Target date": "2026-08-25"
+          },
+          "id": "PVTI_lADOFIXTURE0001zgA0102"
+        }
+      ],
+      "owner_login": "fixture-owner",
+      "owner_type": "user",
+      "project_number": 1,
+      "title": "Delivery"
+    }
+  },
+  "repo": "local-fixture/r5-sync",
+  "schema_version": "1.0.0"
+}

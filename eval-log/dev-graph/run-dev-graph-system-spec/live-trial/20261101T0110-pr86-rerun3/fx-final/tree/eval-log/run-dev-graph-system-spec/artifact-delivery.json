@@ -1,0 +1,11 @@
+{
+ "contract": "artifact-delivery-v1",
+ "skill": "run-dev-graph-system-spec",
+ "transitions": [
+  {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "R0 C24 exit0 + lineage gate exit0 checked=0; R1 version/entry points PASS"},
+  {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented", "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json", "sha256": "f0c2ef1410e54a76138ef167150e0cdb85b21b83730a792b4bb12696ef7c9ca4"},
+  {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "isolated-fixture pre-answer contract in task.md (artifact_delivery=standard); not an approval of this repo or external accounts"},
+  {"from": "user_choice_recorded", "event": "standard", "to": "semantic_evaluator_started"}
+ ],
+ "current_state": "semantic_evaluator_started"
+}

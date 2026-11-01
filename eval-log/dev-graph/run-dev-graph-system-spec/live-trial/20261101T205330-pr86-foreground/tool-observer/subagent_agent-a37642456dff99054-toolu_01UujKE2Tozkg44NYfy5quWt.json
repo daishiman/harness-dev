@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a37642456dff99054",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a6927afe-ecd2-4526-aeac-414c73287b5a",
+      "line": 47,
+      "prefix_bytes": 377456,
+      "prefix_sha256": "283d5ac69bd9c22097a2f91d16b4020f140eae46204fb58caf1d65b2e1ca7b3b",
+      "timestamp": "2026-11-01T11:56:49.517Z"
+    },
+    "result": {
+      "uuid": "339dbe70-8bf2-4a2c-a8df-1756cb883217",
+      "line": 48,
+      "prefix_bytes": 379279,
+      "prefix_sha256": "102f55b196ba4b6b804fac582e613f58defebf75cddca8466f3ddb8fe2a9bb37",
+      "timestamp": "2026-11-01T11:56:53.109Z"
+    }
+  },
+  "tool_use_id": "toolu_01UujKE2Tozkg44NYfy5quWt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\"; echo \"exit=$?\"; ls -la .dev-graph/state/ ; python3 -B -c '\nimport json;g=json.load(open(\".dev-graph/state/graph.json\"));n=g.get(\"nodes\",g);print(type(n).__name__,len(n));\nprint([x.get(\"id\") for x in (n if isinstance(n,list) else n.values()) if isinstance(x,dict) and \"source_lineage\" in x])'; git status --short",
+    "description": "Run lineage gate and inspect graph state"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 20:43 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 20:54 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 20:43 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 20:43 receipts\nlist 0\n[]\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 20:43 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 20:54 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 20:43 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 20:43 receipts\nlist 0\n[]\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

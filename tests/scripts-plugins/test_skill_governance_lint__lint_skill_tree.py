@@ -1,7 +1,7 @@
 """Genuine functional tests for plugins/skill-governance-lint/scripts/lint-skill-tree.py.
 
 純関数 (_parse_fm_simple / _needs_os_preamble / _body_line_count /
-check_prompts_listed / check_os_preamble / lint_one) を実 fixture で呼び
+check_prompts_listed / check_prompt_line_limits / check_os_preamble / lint_one) を実 fixture で呼び
 実出力を assert する。main は subprocess で単一ディレクトリ / --skills-dir /
 不正引数 を与え returncode + stdout/stderr を assert する。
 
@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-skill-tree.py"
+ROOT_SCRIPT = ROOT / "scripts" / "lint-skill-tree.py"
 
 _SPEC = importlib.util.spec_from_file_location("lint_skill_tree", SCRIPT)
 LST = importlib.util.module_from_spec(_SPEC)
@@ -106,6 +107,35 @@ def test_check_prompts_listed_no_warn_when_listed(tmp_path):
     assert LST.check_prompts_listed(d, d / "SKILL.md") == []
 
 
+# ---------- check_prompt_line_limits (prompt-only 500 line gate) ----------
+
+def _write_lines(path, count):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(f"line {i}" for i in range(count)) + "\n", encoding="utf-8")
+
+
+def test_prompt_at_500_lines_passes(tmp_path):
+    d = _make_skill(tmp_path)
+    _write_lines(d / "prompts" / "R1-main.md", LST.MAX_PROMPT_LINES)
+    assert LST.check_prompt_line_limits(d) == []
+
+
+def test_prompt_over_500_lines_fails(tmp_path):
+    d = _make_skill(tmp_path)
+    _write_lines(d / "prompts" / "R1-main.yaml", LST.MAX_PROMPT_LINES + 1)
+    errs = LST.check_prompt_line_limits(d)
+    assert len(errs) == 1
+    assert "P0-prompt-line-limit違反" in errs[0]
+    assert "501 行" in errs[0]
+
+
+def test_non_prompt_code_and_reference_have_no_numeric_line_gate(tmp_path):
+    d = _make_skill(tmp_path)
+    _write_lines(d / "scripts" / "large.py", LST.MAX_PROMPT_LINES + 100)
+    _write_lines(d / "references" / "large.md", LST.MAX_PROMPT_LINES + 100)
+    assert LST.lint_one(d) == []
+
+
 # ---------- check_os_preamble ----------
 
 def test_check_os_preamble_missing_flagged(tmp_path):
@@ -156,6 +186,38 @@ def test_lint_one_nested_dir_violation(tmp_path):
     (d / "references" / "deep").mkdir(parents=True)
     errs = LST.lint_one(d)
     assert any("第13条違反" in e and "deep" in e for e in errs)
+
+
+def test_lint_one_ignores_generated_hidden_directories(tmp_path):
+    d = _make_skill(tmp_path)
+    for dirname in sorted(LST.EPHEMERAL_DIR_NAMES):
+        generated = d / dirname / "v" / "cache"
+        generated.mkdir(parents=True)
+        (generated / "state").write_text("generated", encoding="utf-8")
+
+    assert LST.lint_one(d) == []
+
+
+def test_lint_one_still_checks_unlisted_hidden_directories(tmp_path):
+    """除外は EPHEMERAL_DIR_NAMES の列挙だけ。dot directory を一律には外さない。"""
+    d = _make_skill(tmp_path)
+    (d / ".tool-cache" / "v").mkdir(parents=True)
+    errs = LST.lint_one(d)
+    assert any("第13条違反" in e and ".tool-cache" in e for e in errs)
+
+
+def test_lint_one_checks_skill_installed_under_dot_claude(tmp_path):
+    """祖先に .claude がある skill (~/.claude/plugins/ 配下など) も素通りさせない。"""
+    parent = tmp_path / ".claude" / "skills"
+    parent.mkdir(parents=True)
+    d = _make_skill(parent)
+    (d / "references" / "deep").mkdir(parents=True)
+    errs = LST.lint_one(d)
+    assert any("第13条違反" in e and "deep" in e for e in errs)
+
+
+def test_lint_skill_tree_distributed_copy_matches_root():
+    assert SCRIPT.read_bytes() == ROOT_SCRIPT.read_bytes()
 
 
 def test_lint_one_scripts_bad_extension(tmp_path):

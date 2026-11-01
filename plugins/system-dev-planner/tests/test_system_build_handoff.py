@@ -70,6 +70,11 @@ class SystemBuildHandoffTests(unittest.TestCase):
             })
             self.assertEqual(len(handoff["source_inputs"]), 16)
             self.assertEqual(len(handoff["execution_tasks"]), 13)
+            self.assertEqual(handoff["p01_entry_gate"], {
+                "selector": "parent_feature.depends_on",
+                "operator": "all",
+                "required_statuses": ["done", "closed"],
+            })
             self.assertEqual(handoff["source_manifest"]["sha256_before_handoff"],
                              hashlib.sha256(original_manifest).hexdigest())
             self.assertEqual(handoff["source_manifest"]["canonical_digest_before_handoff"], source_digest)

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ca675856-87e0-4735-9b3f-c5faa7789370",
+      "line": 43,
+      "prefix_bytes": 357447,
+      "prefix_sha256": "4099c1dffc49719f6721bb67f2d0155f23a92c3b3f5a8a5a292bc30e76a4af32",
+      "timestamp": "2026-11-01T03:10:24.970Z"
+    },
+    "result": {
+      "uuid": "6e7773f0-0343-4c98-97c5-0ad6e621253a",
+      "line": 44,
+      "prefix_bytes": 361762,
+      "prefix_sha256": "502118024628651df9f336635e34a4248fa08d6942e090945d3dae9419375d48",
+      "timestamp": "2026-11-01T03:10:29.236Z"
+    }
+  },
+  "tool_use_id": "toolu_01G66ZtyyCgKNkegrKjm47pQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport subprocess, hashlib, json, pathlib, os\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"\nP=R+\"/plugins/system-spec-harness\"\nS=R+\"/system-spec/spec-state.json\"; F=R+\"/system-spec/fetched-references.json\"\ndef sha(p): return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()\ndef run(argv):\n    r=subprocess.run(argv,capture_output=True,text=True,cwd=R)\n    return {\"argv\":argv,\"exit_code\":r.returncode,\"stdout\":r.stdout,\"stderr\":r.stderr}\nvcm=P+\"/scripts/validate-coverage-matrix.py\"; vsc=P+\"/scripts/validate-source-citation.py\"; vhs=P+\"/scripts/validate-hearing-sources.py\"\nfor p in [vcm,vsc,vhs]: print(p, os.path.exists(p), sha(p))\ns0=sha(S); f0=sha(F)\nres={}\nres[\"c12_loop\"]=run([\"python3\",vcm,S])\nres[\"c12_rc\"]=run([\"python3\",vcm,S,\"--require-complete\"])\nres[\"c13\"]=run([\"python3\",vsc,\"--targets\",S,\"--references\",F,\"--state\",S,\"--repo-root\",R])\nres[\"hs\"]=run([\"python3\",vhs,\"--matrix\",S,\"--repo-root\",R])\nprint(\"after\", sha(S)==s0, sha(F)==f0, s0, f0)\nprint(json.dumps(res,ensure_ascii=False))\nEOF",
+    "description": "Run C12, C13 and hearing-source validators"
+  },
+  "is_error": false,
+  "tool_result_content": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py True a3046de206e7f5c63921020e3232a4d07b7733fb4b2cf8aae959b6404df9abc0\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-source-citation.py True 700b289232048a0d48a5309b648346192fcb1d6ccf6a9800690aa29b7d094033\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-hearing-sources.py True 35093e6322e7b0670e08c6b5abd893482c0029dddc31658a958ed18530733ac8\nafter True True 9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2 aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\n{\"c12_loop\": {\"argv\": [\"python3\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\"], \"exit_code\": 2, \"stdout\": \"\", \"stderr\": \"usage: validate-coverage-matrix.py [-h] --matrix MATRIX [--require-complete]\\n                                   [--require-basis] [--require-foundation]\\nvalidate-coverage-matrix.py: error: the following arguments are required: --matrix\\n\"}, \"c12_rc\": {\"argv\": [\"python3\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\", \"--require-complete\"], \"exit_code\": 2, \"stdout\": \"\", \"stderr\": \"usage: validate-coverage-matrix.py [-h] --matrix MATRIX [--require-complete]\\n                                   [--require-basis] [--require-foundation]\\nvalidate-coverage-matrix.py: error: the following arguments are required: --matrix\\n\"}, \"c13\": {\"argv\": [\"python3\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\", \"--targets\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\", \"--references\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/fetched-references.json\", \"--state\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\", \"--repo-root\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"], \"exit_code\": 0, \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\\n\", \"stderr\": \"\"}, \"hs\": {\"argv\": [\"python3\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/scripts/validate-hearing-sources.py\", \"--matrix\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\", \"--repo-root\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"], \"exit_code\": 0, \"stdout\": \"{\\n  \\\"errors\\\": [],\\n  \\\"ok\\\": true,\\n  \\\"repo_root\\\": \\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\\\",\\n  \\\"schema_version\\\": \\\"1.0\\\",\\n  \\\"scope\\\": \\\"written-source-path-and-digest\\\",\\n  \\\"sources\\\": [],\\n  \\\"state_path\\\": \\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec/spec-state.json\\\",\\n  \\\"state_sha256\\\": \\\"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\\\"\\n}\\n\", \"stderr\": \"\"}}",
+  "tool_use_result": null
+}

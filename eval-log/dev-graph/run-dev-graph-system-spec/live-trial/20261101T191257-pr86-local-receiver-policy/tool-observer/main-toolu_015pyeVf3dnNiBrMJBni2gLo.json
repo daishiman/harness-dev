@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c44b9bf3-209b-4a75-b38c-36043f86477a",
+      "line": 331,
+      "prefix_bytes": 2031690,
+      "prefix_sha256": "d7b5135eeaa9b1fd741634d9604b80f88da4159f5b1f542c5a20fd0419e97d2d",
+      "timestamp": "2026-11-01T10:18:30.536Z"
+    },
+    "result": {
+      "uuid": "b49bbfb1-753e-4c0f-bdb3-51f5fece02be",
+      "line": 334,
+      "prefix_bytes": 2035754,
+      "prefix_sha256": "bbfc83aeeacb68b86780cf3ff87b4f36871b7e4e01005fe1b4bcafd9f8416166",
+      "timestamp": "2026-11-01T10:18:34.650Z"
+    }
+  },
+  "tool_use_id": "toolu_015pyeVf3dnNiBrMJBni2gLo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -m json.tool system-spec/spec-state.json >/dev/null && echo parse_ok && shasum -a 256 system-spec/spec-state.json && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix system-spec/spec-state.json --require-complete --require-basis --require-foundation; echo coverage_exit=$?; python3 -B \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" > \"$TMPDIR/ri.json\"; echo ri_exit=$?; python3 -c 'import json,os;d=json.load(open(os.environ[\"TMPDIR\"]+\"/ri.json\"));c=d.get(\"coverage_certificate\",{});print(\"ungrounded\",c.get(\"ungrounded_blocking_items\"),\"status\",d.get(\"status\"))'; git status --short system-spec; echo \"開き方: less $CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"",
+    "description": "Elicit resume gates and minimal artifact digest"
+  },
+  "is_error": false,
+  "tool_result_content": "parse_ok\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  system-spec/spec-state.json\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage_exit=0\nri_exit=0\nungrounded [] status ok\n?? system-spec/\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "parse_ok\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  system-spec/spec-state.json\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage_exit=0\nri_exit=0\nungrounded [] status ok\n?? system-spec/\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

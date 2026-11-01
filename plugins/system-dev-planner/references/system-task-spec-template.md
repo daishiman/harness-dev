@@ -1,6 +1,6 @@
 <!--
 正本: system-dev-planner (生成器) 側テンプレート。
-template_version: 1.0.0
+template_version: 1.2.0
 `plugin-plans/dev-graph/templates/system-task-spec.md` (draft) は現状独立ファイルであり、
 P08/P12 で本正本への pointer 化予定。それまでフィールド名・節構成は非後退とし
 draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (goal-spec C5)。
@@ -32,6 +32,7 @@ draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (g
 
 - Required spec/architecture/phase/task nodes: <graph_node_id>
 - Entry gate: <machine-verifiable condition>
+- P01 upstream entry gate: <P01は `parent_feature.depends_on all done|closed`。P02..P13は `N/A: intra-feature depends_on gate`>
 - Source pin: system-spec-harness v0.1.0 / run-system-spec-compile / assign-system-spec-completeness-evaluator
 - Repository context: <repo_identity + root_resolution_source + .dev-graph/config.json; absolute path禁止>
 
@@ -81,10 +82,42 @@ draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (g
 
 - <explicit non-goal>
 
+## テスト戦略
+
+> 4 項目はこの順序・このラベルで固定する。契約 version が `1.2.0` 以上に解決される package では
+> 本 section の欠落・順序入替・空本文を `validate-system-plan.py` (C12) が fail-closed で拒否する。
+> 契約 version は package の canonical digest から `assets/validation-contract-baseline.json` を
+> 引いて決まり、未登録 digest は最新契約へ倒れる。`1.1.0` 以前で登録された legacy 世代でも、
+> 本 section を書いた場合は同じ厳格さで検査される。
+
+- テストレベル選定: <単体・結合・境界値・回帰の4レベルすべてに言及し、当該taskでの適用可否を示す。適用外は `N/A: reason` で明示する>
+- カバレッジ目標: <既定80%を数値で明示。層別に上書きする場合は上書き値と理由を併記する>
+- 層別方針: <`Workstream applicability` で applicable な層の方針。フロント=behaviorベース / バックエンド=API 契約+ロジック単体+DB 結合 / インフラ=IaC 静的検証+smoke。該当層が無い場合は `N/A: reason`>
+- 保守性制約: <pixel位置依存とDOM構造依存を禁止する旨、および実装詳細へ密結合した過剰テストを作らない線引き>
+
 ## Verification and evidence
 
 - Automated commands: <commands>
 - Required evidence: <paths>
+
+`Automated commands` は promotion 後 (content-addressed generation へ atomic rename された後) も
+そのまま再実行できる形だけを書く。`--repo-root . --staging .` のように repository root 起点で
+解決できない形と、generation id の直書き (再計画で stale になる) は禁止する。plan validator の
+再実行は世代非依存の `validate-system-plan.py --repo-root <root> --feature-package <feature_package_id>`
+を使う (`references/feature-execution-package-contract.md` §2.3)。`<feature_package_id>` は自 package の
+値であること。契約 version が `1.3.0` 以上に解決される package では、`--staging` の使用・
+`--feature-package` の欠落・他 package の id を `validate-system-plan.py` (C12) が fail-closed で
+拒否する。検査対象は fenced block と inline code span が提示するコマンドだけで、散文中の
+script 名への言及は対象外。
+
+## Inner goal-seek execution loop
+
+- Methodology contract: `system-task-goal-seek/v1`
+- Goal: <このtask単体で達成する検証可能な状態>
+- Generic execution prompt: <実装手段を固定せず、目的・背景・制約・成果物を渡すprompt>
+- Rubric: <PASS条件を列挙。最低限、受け入れ条件・カバレッジ閾値 green・既存テストの回帰 0 件・証跡・scopeを含む>
+- Feedback loop: <実装→独立評価→findingをpromptへ反映→再実行し、rubric verdict=PASSまで反復。上限到達時はfail-closed>
+- P13 spec/architecture writeback: <P13はrequired: execution results, decisions, and improvement findingsをsystem specとarchitectureへ反映。P01..P12はN/A: P13 owns writeback>
 
 ## Rollout and rollback
 
@@ -108,7 +141,11 @@ draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (g
 
 - runtime outputは本テンプレートを使う実行task spec 13件だけで構成し、別の13 lifecycle文書や14件目のcanonical taskを生成しない。正本=`references/feature-execution-package-contract.md`。
 - 上記全 section が placeholder (`<...>`) のまま残っていないこと。
-- 標準14 section (最低限 `Machine-readable registration fields`/`前提条件`/`成果物`/`Tracker publication and completion`/`Branch and worktree execution`/`Verification and evidence`/`Handoff` の7 sectionを含む) は必須充足とし、空・重複・TODO・未解決 `<...>` を禁止する。1件でも残る場合、`validate-system-plan.py` (system-dev-planner C12) が promotion 前に fail-closed で拒否する。C08 は upstream の confirmed system-spec と completeness evaluation を検査し、task spec 本文の検査は C12 が所有する。
+- 標準15 section (最低限 `Machine-readable registration fields`/`前提条件`/`成果物`/`Tracker publication and completion`/`Branch and worktree execution`/`Verification and evidence`/`Inner goal-seek execution loop`/`Handoff` の8 sectionを含む) は必須充足とし、空・重複・TODO・未解決 `<...>` を禁止する。1件でも残る場合、`validate-system-plan.py` (system-dev-planner C12) が promotion 前に fail-closed で拒否する。C08 は upstream の confirmed system-spec と completeness evaluation を検査し、task spec 本文の検査は C12 が所有する。
+- `テスト戦略` は 16 番目の section であり、適用は package の canonical digest から解決される契約 version で段階化する (解決正本: `assets/validation-contract-baseline.json`)。`1.2.0` 以上に解決される package (= 台帳未登録の現行世代) では 13 件すべてに必須で、欠落・重複・空本文・4 項目の欠落/順序入替/空本文・必須語 (4レベル語・`80%`・`pixel`・`DOM`) の欠落・applicable な層の方針欠落を C12 が非0終了で拒否する。`1.1.0` 以前で台帳登録済みの legacy 世代では section の**不在だけ**を許し、書かれている場合は同じ厳格さで検査する (strict-if-present)。既存 promoted 世代の再検証結果は変わらない。
 - `Workstream applicability` は該当しない workstream を `N/A: reason` で明示し、空欄のまま省略しない (適用外の理由を機械可読に残す)。
 - 全pathはcaller repository相対でC09 containment済みであること。`/absolute`、drive-letter、`..`、root外symlinkはincomplete。
+- task spec本文かruntime時に読むgoal/manifest/validator/evidenceはpackage-relative pathまたはcanonical published pathで参照する。C11のatomic rename後に消滅する`.dev-graph/staging`参照は禁止し、C12がpromotion前にfail-closedで拒否する。
+- 同じ理由で、本文が提示する`validate-system-plan.py`再実行コマンドは`--staging`ではなく自packageの`--feature-package <feature_package_id>`を使う。契約`1.3.0`以上に解決されるpackageではC12が`task-spec-rerun-staging-path`/`task-spec-rerun-package-missing`/`task-spec-rerun-package-mismatch`で拒否する。
+- P01は`parent_feature.depends_on all done|closed`を機械判定可能なentry gateとして明記する。upstream feature IDはtask `depends_on`へ複製せず、schedulerがcanonical parent featureの現行edgeを都度評価する。
 - staging/evaluator/published digestが一致しC11 promotion receiptが存在するまでL4 handoffを出さない。

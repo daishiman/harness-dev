@@ -1,0 +1,10 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {"axis": "leading-question", "severity": "info", "qa_id": "qa-009", "criteria": ["N4"], "supersession_valid": true, "observation": "JTBD・対象ユーザー・利用文脈の3論点を名指しで束ねていた (N4)。置き換え先 qa-019 は1論点の開いた問で中立 (a)。superseded_note と両問の照合で同じ JTBD 論点 (b)、残る論点は qa-016/qa-020/qa-021 へ分離。qa-019 に answer・basis=user-decision・answered_at あり (c)。qa-009 は ui-ux/web の qa_refs (裏付け) にだけ残り、主たる qa_ref (qa-003) でも effective_source_refs でもないので active consumer なし。閉じた検出 (置き換え先: qa-019)"},
+    {"axis": "leading-question", "severity": "medium", "qa_id": "qa-038", "criteria": ["N4"], "observation": "セッションの保存先 (1)-(3) と、有効期限・ログアウト時の扱いという独立に決められる2論点を1問に束ねている。選択肢と『どれも採らない・別方式・保留』の道はあるため high にはしない。auth/web の裏付け qa_refs だけで主たる qa_ref ではない (PASS に残す注記)。修正指針: C01 が R3-reask で論点ごとに問い直し supersede-qa で閉じる"},
+    {"axis": "leading-question", "severity": "low", "qa_id": "qa-033", "criteria": ["N4"], "observation": "U1-U9 の要約を1問で確定させる確認の問。『確定する・直す・保留』の道があり、各 U の根拠は qa-foundation-u1〜u9 に1論点ずつ別に残っているため答えを左右したとは読めない"},
+    {"axis": "traceability", "severity": "low", "cell": "auth/web", "qa_id": "qa-037", "observation": "裏付け qa_refs の qa-037・qa-038 は、provenance 上 orchestrator の既定値 (当初 agent-inference) を team-lead 指示で user-decision に付け替えた entry。実利用者の発言ではない。主たる qa_ref qa-002 は実在し遡れるため影響は限定的。同じ qa-037 は security/web の裏付けにもある (security/web の主たる qa_ref は qa-004)"},
+    {"axis": "foundation-trace", "severity": "info", "u_item": "U9", "qa_id": "qa-foundation-u9", "observation": "canonical entry が qa-001 の『PostgreSQL 15』を逐語で含む。現行の版は U8 (qa-foundation-u8 の qa-031 部分、D1 で 16) に従い、qa-001 には corrections 注記があるため現行値に矛盾はない。canonical は初回確定の immutable な履歴 (schema 1.0 の fallback)"}
+  ]
+}

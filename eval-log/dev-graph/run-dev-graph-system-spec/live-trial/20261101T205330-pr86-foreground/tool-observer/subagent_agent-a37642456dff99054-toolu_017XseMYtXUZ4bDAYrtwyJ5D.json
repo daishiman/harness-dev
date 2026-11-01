@@ -1,0 +1,61 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a37642456dff99054",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1a126938-61e0-49a3-8921-629f205d8ca6",
+      "line": 78,
+      "prefix_bytes": 524570,
+      "prefix_sha256": "a33b294bea6e6e9b97190f3c79234a0e4812887dd2c0929fc4c3541e06fee922",
+      "timestamp": "2026-11-01T11:58:14.378Z"
+    },
+    "result": {
+      "uuid": "ec00df7e-b767-4532-96ea-2d0d933cf81c",
+      "line": 79,
+      "prefix_bytes": 526910,
+      "prefix_sha256": "c2284eb1fa93bcdec06e68faa65c0bb824ee9d981d1ca6ee6fd51836fe7e63fd",
+      "timestamp": "2026-11-01T11:58:21.598Z"
+    }
+  },
+  "tool_use_id": "toolu_017XseMYtXUZ4bDAYrtwyJ5D",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && mkdir -p eval-log/run-dev-graph-system-spec/R0-context && python3 -B -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/eval-log/run-dev-graph-system-spec/R0-context/verifier-loop-1.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\"responsibility_id\":\"R0-context\",\"loop\":1,\"original_goal_hash\":\"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\"merged_directive_input\":null,\"c24_rerun\":{\"exit\":0,\"diff_vs_receipt\":{},\"receipt_sha256\":\"6cbce34a2c83a54c82f2e067810f58b5519cf77eea0b7bf61ac972bd27dfd3e6\"},\"system_spec\":{\"path\":\"system-spec\",\"islink\":false,\"realpath_contained\":true,\"symlinks_inside\":0},\"git\":{\"toplevel_matches\":true,\"common_dir\":\".git\",\"repository_id_matches_receipt\":true},\"lineage_gate\":{\"exit\":0,\"status\":\"pass\",\"checked\":0,\"violations\":[],\"decision\":\"new_creation\"},\"observer\":{\"c24_event\":\"toolu_01B9YaibnPDox1yhP6aH8AyH exit=0\",\"lineage_event\":\"toolu_01SUjuSyfpGUuhEdxxVuXvmc lineage_exit=0 checked=0\",\"main_bash_prefix\":\"7/7\"},\"checklist\":{\"inputs_verified\":\"YES\",\"output_shape_authority\":\"YES\",\"boundary_violations_zero\":\"YES\",\"system_spec_containment\":\"YES\",\"lineage_gate_decision\":\"YES\"},\"blockers\":[],\"verdict\":\"PASS\"}\nJSON\necho saved",
+    "description": "Save verifier loop record in allowed directory"
+  },
+  "is_error": false,
+  "tool_result_content": "saved",
+  "tool_use_result": {
+    "stdout": "saved",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/eval-log/run-dev-graph-system-spec/R0-context/verifier-loop-1.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 1,
+              "lines": [
+                "+{\"responsibility_id\":\"R0-context\",\"loop\":1,\"original_goal_hash\":\"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\"merged_directive_input\":null,\"c24_rerun\":{\"exit\":0,\"diff_vs_receipt\":{},\"receipt_sha256\":\"6cbce34a2c83a54c82f2e067810f58b5519cf77eea0b7bf61ac972bd27dfd3e6\"},\"system_spec\":{\"path\":\"system-spec\",\"islink\":false,\"realpath_contained\":true,\"symlinks_inside\":0},\"git\":{\"toplevel_matches\":true,\"common_dir\":\".git\",\"repository_id_matches_receipt\":true},\"lineage_gate\":{\"exit\":0,\"status\":\"pass\",\"checked\":0,\"violations\":[],\"decision\":\"new_creation\"},\"observer\":{\"c24_event\":\"toolu_01B9YaibnPDox1yhP6aH8AyH exit=0\",\"lineage_event\":\"toolu_01SUjuSyfpGUuhEdxxVuXvmc lineage_exit=0 checked=0\",\"main_bash_prefix\":\"7/7\"},\"checklist\":{\"inputs_verified\":\"YES\",\"output_shape_authority\":\"YES\",\"boundary_violations_zero\":\"YES\",\"system_spec_containment\":\"YES\",\"lineage_gate_decision\":\"YES\"},\"blockers\":[],\"verdict\":\"PASS\"}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/eval-log/run-dev-graph-system-spec/R0-context/verifier-loop-1.json"
+      ]
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "decision": "PASS",
+  "c24_receipt": {
+    "path": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "sha256": "614249d9c0b2d1c53fb993adcf20cd38ef180e636b2bc25b5304dd41db32d524",
+    "sha256_verified": true
+  },
+  "availability_receipt": {
+    "plugin": "system-spec-harness",
+    "manifest_path": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "manifest_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994",
+    "name": "system-spec-harness",
+    "name_match": true,
+    "version": "0.1.24",
+    "range": ">=0.1.22 <1.0.0",
+    "range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "composition_sha256": "101ad568b33b37d4e27b9617a02819069797bfee2154cc0e518aecb2a5f74540",
+    "version_in_range": true,
+    "package_contract": {
+      "path": "plugins/system-spec-harness/references/package-contract.json",
+      "sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486"
+    },
+    "required_entry_points": {
+      "run-system-spec-elicit": {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md",
+        "sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b",
+        "frontmatter_name_match": true,
+        "listed_in_package_contract": true
+      },
+      "run-system-spec-doc-fetch": {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+        "sha256": "7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637",
+        "frontmatter_name_match": true,
+        "listed_in_package_contract": true
+      },
+      "run-system-spec-compile": {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md",
+        "sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82",
+        "frontmatter_name_match": true,
+        "listed_in_package_contract": true
+      },
+      "assign-system-spec-completeness-evaluator": {
+        "path": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+        "sha256": "b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6",
+        "frontmatter_name_match": true,
+        "listed_in_package_contract": true
+      }
+    },
+    "manifest_keys": [
+      "name",
+      "version",
+      "dependencies",
+      "description",
+      "author"
+    ],
+    "harness_only_keys_in_manifest": [],
+    "symlinks_in_plugin_tree": 0
+  },
+  "checklist": [
+    {
+      "id": "R1-5.3-1",
+      "text": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在",
+      "status": "YES",
+      "evidence": "0.1.24 ∈ >=0.1.22 <1.0.0; 4 entry points listed in package-contract entry_points.skills and SKILL.md present with matching frontmatter name"
+    },
+    {
+      "id": "common-5.3-1",
+      "text": "宣言した入力が全て検証済み",
+      "status": "YES",
+      "evidence": "manifest name/version/keys, composition range, package-contract entry_points, 4 SKILL.md files, C24 receipt sha256 all checked"
+    },
+    {
+      "id": "common-5.3-2",
+      "text": "出力が宣言した shape と authority を満たす",
+      "status": "YES",
+      "evidence": "availability_receipt with version range and 4 entry points; repo-relative paths only; range from canonical composition"
+    },
+    {
+      "id": "common-5.3-3",
+      "text": "責務境界に反する read/write/delegation が0件",
+      "status": "YES",
+      "evidence": "read-only on plugins; only write is this loop record; no fallback, no delegation"
+    }
+  ],
+  "duplication_check": {
+    "result": "0 duplicates",
+    "evidence": "grep in plugins/dev-graph for compile-system-spec/spec-state/elicit/hearing/matrix/compile/def compile|elicit: hits are dev-graph's own R1-elicit prompts (repo context/user-input elicitation for other skills), template placeholders '<matrix>', register-package.py agent-name list for system-dev-planner, lib/graph_artifact_readiness.py readiness check of imported nodes (reads, does not compile), regex re.compile calls. No spec-state writer, chapter compiler, or hearing/matrix implementation found."
+  },
+  "blockers": [],
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "delta_from_original": "none; R1 preflight satisfied the 'canonical flow availability' precondition of the goal without altering it",
+  "merged_directive_for_next": "R1 PASS: system-spec-harness 0.1.24 within >=0.1.22 <1.0.0, 4 entry points present. Proceed to R2-delegate with the pinned C24 receipt (sha256 614249d9...).",
+  "drift_signal": "none"
+}

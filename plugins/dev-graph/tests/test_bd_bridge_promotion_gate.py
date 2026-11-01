@@ -94,7 +94,7 @@ class FakeBd:
             out = "bd version 1.4.2"
         elif args == ["where", "--json"]:
             out = {"database_path": "/fake/.beads/beads.db", "prefix": "bd", "schema_version": "1"}
-        elif args[0] == "search":
+        elif args[0] in {"search", "list"}:
             out = []
         elif args[0] == "create":
             issue_id = f"B{len(self.issues) + 1:02d}"
@@ -233,7 +233,7 @@ def write_fake_bd(directory: Path) -> Path:
         "args = sys.argv[1:]\n"
         "if args == ['version']: print('bd version 1.4.2')\n"
         "elif args == ['where', '--json']: print(json.dumps({'database_path': '/fake/beads.db', 'prefix': 'bd', 'schema_version': '1'}))\n"
-        "elif args[0] == 'search': print('[]')\n"
+        "elif args[0] in ('search', 'list'): print('[]')\n"
         "elif args[0] == 'create': print(json.dumps({'id': 'B01'}))\n"
         "else: sys.exit(9)\n",
         encoding="utf-8",

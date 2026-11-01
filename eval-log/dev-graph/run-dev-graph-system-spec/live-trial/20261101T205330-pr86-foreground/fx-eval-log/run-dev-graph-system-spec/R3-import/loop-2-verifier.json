@@ -1,0 +1,21 @@
+{
+  "responsibility": "R3-import",
+  "loop": 2,
+  "agent": "general-purpose (model: sonnet)",
+  "agent_id": "a9356c32580abc2ba",
+  "prompt_ref": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
+  "verdict": "PASS",
+  "checks": {
+    "lineage_digest_matches_bytes": "validate-source-lineage.py rc0 checked 2 violations 0; index.md f7f64767…, 00-req 6a5f58b0…",
+    "evaluated_digest_matches_report_snapshot": "両 node 一致、report verdict PASS、3監査 PASS",
+    "source_version_current": "0.1.24 = plugin.json、composition >=0.1.22 <1.0.0",
+    "confirmed_pass_complete": "validate-graph-schema.py valid true、complete 2/2",
+    "c02_writer_only": "observer ev52(C02 Skill)→ev68(dry-run)→ev70(add+lineage)。直接書込み無し。receipt と graph 整合",
+    "same_payload_dry_run_and_apply": "input_sha256 4586037e…cf280 一致、confirmation_evidence 含む",
+    "logic_duplication": "plugins/dev-graph 内の elicitation/compile 複製 0 件"
+  },
+  "findings": [
+    "軽微: payload の Write は observer 対象外ツールのため、書込み主体は内容・mtime・sha256 の整合で間接確認",
+    "軽微: candidate-import.json は git 追跡外で、無改変の確認は mtime と C02 引数に含まれないことによる間接確認"
+  ]
+}

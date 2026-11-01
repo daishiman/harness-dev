@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a840a66f934c8d8d5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "10e58e6d-6d30-4f90-a322-327819e33b3d",
+      "line": 85,
+      "prefix_bytes": 672513,
+      "prefix_sha256": "ab4b82475a7fba444eb52e869faacce50bdb923a59c57692fe8d35cce6628ddc",
+      "timestamp": "2026-11-01T04:03:55.196Z"
+    },
+    "result": {
+      "uuid": "2f7b22c1-7992-4c5d-b60e-fc0fbe4f4dbb",
+      "line": 86,
+      "prefix_bytes": 675770,
+      "prefix_sha256": "1a836e8cea8372d11a5502a8c25b18efb0d72ec5beab35314680ed9bc3b727d2",
+      "timestamp": "2026-11-01T04:03:57.368Z"
+    }
+  },
+  "tool_use_id": "toolu_01DTQonyxjwyxsj7eTdXHPgA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && echo \"plugins newer than c24:\"; find plugins -newer eval-log/run-dev-graph-system-spec/c24-receipt.json -print | grep -v __pycache__ | head; echo \"pycache newer:\"; find plugins -newer eval-log/run-dev-graph-system-spec/c24-receipt.json -path '*__pycache__*' | head -3; echo \"fx newer (excluding eval-log,.git):\"; find . -path ./.git -prune -o -path ./eval-log -prune -o -newer eval-log/run-dev-graph-system-spec/c24-receipt.json -type f -print | head -30; ls ../workdir; "
+  },
+  "is_error": false,
+  "tool_result_content": "plugins newer than c24:\npycache newer:\nfx newer (excluding eval-log,.git):\n./system-spec/00-requirements-definition.md\n./system-spec/maintenance-ops.md\n./system-spec/backend.md\n./system-spec/index.md\n./system-spec/auth.md\n./system-spec/ui-ux.md\n./system-spec/frontend.md\n./system-spec/infrastructure.md\n./system-spec/security.md\n./system-spec/database.md\n./.dev-graph/tmp/authority-audit.json\nboot.log\nclosure-at-launch.txt\nextra-env.txt\nfixture-canonical-backfill.log\nfixture-canonical-compile.log\nfixture-init-receipt.json\nfixture-preparation.py\nfixture-provenance.json\nfixture-qa008-correction.json\nfixture-task-preparation.py\nguard-provenance.json\nisolation-guard-source.py\nobserver-provenance.json\nout\nplugins-copy.json\npoll-state.json\npoll.log\npr86-guard-json-tests.json\npr86-heredoc-probe.json\npr86-heredoc-shell-probe.json\npr86-observer-review-v3.md\npr86-observer-v3-independent-probe.json\nqa008-grounded-applications.json\nqa008-original-input.json\nqa008-prior-backfill.json\nsend.log\nsession-id.txt\nsession-root.txt\nstart.epoch\nstub-calls.log\ntask.md\ntmpdir.txt\ntmux-tmpdir.txt\ntool-observer\ntool-observer-source.py",
+  "tool_use_result": {
+    "stdout": "plugins newer than c24:\npycache newer:\nfx newer (excluding eval-log,.git):\n./system-spec/00-requirements-definition.md\n./system-spec/maintenance-ops.md\n./system-spec/backend.md\n./system-spec/index.md\n./system-spec/auth.md\n./system-spec/ui-ux.md\n./system-spec/frontend.md\n./system-spec/infrastructure.md\n./system-spec/security.md\n./system-spec/database.md\n./.dev-graph/tmp/authority-audit.json\nboot.log\nclosure-at-launch.txt\nextra-env.txt\nfixture-canonical-backfill.log\nfixture-canonical-compile.log\nfixture-init-receipt.json\nfixture-preparation.py\nfixture-provenance.json\nfixture-qa008-correction.json\nfixture-task-preparation.py\nguard-provenance.json\nisolation-guard-source.py\nobserver-provenance.json\nout\nplugins-copy.json\npoll-state.json\npoll.log\npr86-guard-json-tests.json\npr86-heredoc-probe.json\npr86-heredoc-shell-probe.json\npr86-observer-review-v3.md\npr86-observer-v3-independent-probe.json\nqa008-grounded-applications.json\nqa008-original-input.json\nqa008-prior-backfill.json\nsend.log\nsession-id.txt\nsession-root.txt\nstart.epoch\nstub-calls.log\ntask.md\ntmpdir.txt\ntmux-tmpdir.txt\ntool-observer\ntool-observer-source.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

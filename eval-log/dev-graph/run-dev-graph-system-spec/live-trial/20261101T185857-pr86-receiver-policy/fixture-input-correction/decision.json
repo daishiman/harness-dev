@@ -1,0 +1,99 @@
+{
+  "id": "D4",
+  "category": "backend",
+  "question": "非同期突合とO1自動検知のジョブ実行構成",
+  "status": "confirmed",
+  "serves_goals": [
+    "G1",
+    "G2"
+  ],
+  "options": [
+    {
+      "id": "pg-worker-cron",
+      "label": "既存PG outbox＋独立Python worker＋k8s CronJob",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "追加OSSライセンス費",
+        "tco": "合成fixtureの比較前提。既存PG/k8sを使い追加契約なし。実行資源と実装/監視工数は別に必要。"
+      },
+      "free_tier_limits": "既存OSS構成。実行資源/DB容量に制約があり、総費用0を意味しない。",
+      "goal_fit": "G1/O1の永続ジョブと自動走査、G2のWebからの非同期突合を支える。",
+      "security_fit": "既存の権限・追記監査と最小権限のDB接続を使う。内部HTTP案は追加の認証面を持つ。",
+      "pros": [
+        "APIライフサイクルと分離",
+        "永続queueと同じ業務規則を再利用"
+      ],
+      "cons": [
+        "workerのdeploy/監視が増える"
+      ],
+      "risks": [
+        "lease/fencingと冪等実装が必要",
+        "Cronの重複抑制だけではexactly-onceを保証しない"
+      ],
+      "lock_in": "PGのclaim SQLとk8sの運用へ依存するが既存の採用制約内。",
+      "ops_burden": "中: worker/CronJob・未処理齢・失敗件数を監視",
+      "evidence_refs": [
+        "https://www.postgresql.org/docs/16/sql-select.html",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+        "https://fastapi.tiangolo.com/tutorial/background-tasks/"
+      ]
+    },
+    {
+      "id": "api-background-http",
+      "label": "既存PG outbox＋API BackgroundTasks＋Cronの内部HTTP呼出し",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "追加OSSライセンス費",
+        "tco": "合成fixtureの比較前提。既存PG/k8sを使い追加契約なし。実行資源と実装/監視工数は別に必要。"
+      },
+      "free_tier_limits": "既存OSS構成。実行資源/DB容量に制約があり、総費用0を意味しない。",
+      "goal_fit": "G1/O1の永続ジョブと自動走査、G2のWebからの非同期突合を支える。",
+      "security_fit": "既存の権限・追記監査と最小権限のDB接続を使う。内部HTTP案は追加の認証面を持つ。",
+      "pros": [
+        "worker専用imageを減らせる"
+      ],
+      "cons": [
+        "APIの再起動と負荷へ結合",
+        "内部HTTP認証と再開処理が増える"
+      ],
+      "risks": [
+        "API停止時に処理が遅れる",
+        "複数replica/再試行時に排他が必要"
+      ],
+      "lock_in": "PGのclaim SQLとk8sの運用へ依存するが既存の採用制約内。",
+      "ops_burden": "中〜高: API運用とjob運用が結合",
+      "evidence_refs": [
+        "https://www.postgresql.org/docs/16/sql-select.html",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+        "https://fastapi.tiangolo.com/tutorial/background-tasks/"
+      ]
+    }
+  ],
+  "recommendation": {
+    "option_id": "pg-worker-cron",
+    "rationale": "既存PG/k8sの範囲で永続性とAPIからの分離を保ち、追加brokerを避ける。採否は合成QAで明示済み。",
+    "caveats": [
+      "CronJobだけでexactly-onceは保証しない。DB排他/lease/fencing/冪等性を別に設計する。",
+      "FastAPIのBackgroundTasksは応答後の処理であり、それ自体を定期schedulerや永続queueとは扱わない。",
+      "費用比較は明示した合成fixture前提で、実環境価格の見積ではない。"
+    ],
+    "confidence": "medium",
+    "latest_checked_at": "2026-11-01T08:35:54.756712Z",
+    "comparison_basis": {
+      "goal_fit": "どちらも実装可能だが独立workerはAPI停止と分離できる。",
+      "tco": "追加OSSライセンス費0というfixture前提。独立workerはdeploy/監視工数、API案は内部認証/復旧工数が増える。",
+      "security": "PG最小権限を共通に使う。API案は内部HTTP認証面が増える。",
+      "operations": "独立workerのpending/lease/失敗を可視化。API案はAPIの負荷/再起動と結合する。",
+      "lock_in": "両案とも既存PG/k8s制約内。PG固有claim SQLへの依存は残る。"
+    }
+  },
+  "qa_ref": "qa-job-choice-fixture-v3",
+  "user_decision": {
+    "option_id": "pg-worker-cron",
+    "confirmed_at": "2026-11-01T08:35:54.756712Z"
+  }
+}

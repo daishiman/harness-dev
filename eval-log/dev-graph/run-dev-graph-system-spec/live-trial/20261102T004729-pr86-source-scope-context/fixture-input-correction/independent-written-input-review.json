@@ -1,0 +1,149 @@
+{
+  "result": "PASS",
+  "scope": "v7という新しい合成入力の書面再接地・履歴保全・入力上C06五軸・正規CLI再現に限る。正式C06/C05の実fork監査、live受入、C19 goal達成を示さない。",
+  "evaluator_id": "/root/review_sysspec118_fresh",
+  "blockers": [],
+  "state_sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+  "document_sha256": "8cb2050c84cf0d7936162752eef55b4880da2cea536d6d8a9ced983a5e876ee4",
+  "source_version": "0.1.24",
+  "source_contracts": {
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md": "9521a9048ef144a307ee50508dc16895b86c105a1891a6d805669b3fa82f2e83",
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/references/spec-state-contract.md": "ab369d9b96d76dae8b10ec45832409eb51aadd8b5fcca58d06bc65bd3d4b5789",
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/references/neutral-question-criteria.md": "9e59dda83b91c71afe0035f66e417182d72c9f1ae76197eb2db3acd8b8dda182",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/aspect-criteria.md": "e01bb2d670a5d9e6e368fd0362edb6ecf94947c51d4dcc2d2b8a4fa2bda96235",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R1-score.md": "ef674d2766f992048676482ad8d671440966a21df20898014c4e19ad8e488c43",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R2-delegate.md": "030f8c2da816b0fd46a835e1f8d05c7d9e1d09c4624cd97f02c37a9b94b90309"
+  },
+  "recovery": {
+    "historical_integrity": "旧50QAはそのまま保持され、qa-037/038への差はsuperseded_by/superseded_at/superseded_noteの追記だけ。旧basis/provenanceの問題を削除・書換・正当化していない。",
+    "new_authority": "提供書面はfixture作者が実走前に定義する新しい合成givenと明記する。旧entryを後から本当の利用者発話に変えたのではなく、同じ要件値を新しい入力書面へ独立に明示した。これは実利用者の新対話/本番承認の証拠ではない。",
+    "source_index": "4QAはCSRF防御、セッション保存/ライフサイクル、認証モデル、セキュリティ基準をそれぞれ別の指定節へ結ぶ。質問は既に提供された一つの書面節の索引であり、AI推奨の選択や別々の設定の一括承認を求めていない。節内の複数の関連条項を含むことだけでN4違反としない。CSRFと保存の主要論点は分離され、原文の各設定は個別に遡れる。",
+    "supersession": "qa-037→qa-csrf-written-v7、qa-038→qa-session-written-v7は同じ設定の原文（選択番号の前置きだけを外した内容）に対応し、新回答のsource/hashと後続answered_atを確認。新source-indexは推奨印・未確定前提の追認・複数選択の一括強制を含まない。書面入力を利用者一次入力として扱うsource契約の範囲で有効と判定する。",
+    "current_consumers": "全matrixの主qa_ref/補助qa_refs、foundation effective refs、decision qa_ref、現在の設計根拠文字列を確認し、旧37/38を現行根拠とする参照はない。残る文字列はqa自身のid、reopen_log.discardedとreason、D3の旧根拠を否定する注意書きだけ。auth/securityのcompiled章にも旧37/38は現れない。"
+  },
+  "five_axes": {
+    "missed_collection": {
+      "blocking": false,
+      "evidence": "8カテゴリ×6platformの48セルは確定8/対象外40、未収集0。聞き漏れによりnext_questionが無い状態ではない。"
+    },
+    "leading_question": {
+      "blocking": false,
+      "evidence": "54QAのquestion/answer/provenanceを読み、旧qa-009とqa-038のN4検出は有効な置換として履歴へ残す。qa-o1-fixture-v3は定義/時点/表示先/測定を束ねるmediumだが現在の主qa_refでなく補助だけなのでaspect-criteria1aでは注記。新書面4QAは一次書面の節索引として評価した。"
+    },
+    "premature_stop": {
+      "blocking": false,
+      "evidence": "hearing_progress loop_count=4/max_loops=4/complete=true/next_question=nullと未収集0が整合する。上限到達だけで早期停止としない。"
+    },
+    "traceability": {
+      "blocking": false,
+      "evidence": "確定8セルの主qa_refは実在・非retired。全補助qa_refsは実在。auth/securityは正規reopen→書面索引→confirmで新根拠へ移り、旧37/38の主/補助consumerは0。旧不正basisの履歴はinfoとして残す。"
+    },
+    "foundation_trace": {
+      "blocking": false,
+      "evidence": "schema1.0でeffective_source_refs省略のためcanonical qa-foundation-u1〜u9へのsource既定fallbackを用いる。各U索引の逐語answerを元QAと照合し、U1/U2/U3は値あり、appr-foundation-v2はqa-033の合成given承認と根拠対応表へ遡る。現行foundation/approvalはv6から不変。実利用者の承認とは主張しない。"
+    }
+  },
+  "replay": {
+    "evidence": "/tmp/pr86-positive-input-v7-review-replay.json",
+    "commands": 12,
+    "all_exit0": true,
+    "all_18_files_byte_equal": true,
+    "protected": {
+      "all_50_QA_except_supersession_exact": true,
+      "foundation": true,
+      "approvals": true,
+      "targets": true,
+      "D1_D2_D4": true,
+      "D3_except_caveats": true
+    },
+    "matrix_changed_cells": [
+      "auth/web",
+      "security/web"
+    ],
+    "new_QA_ids": [
+      "qa-auth-written-v7",
+      "qa-csrf-written-v7",
+      "qa-security-written-v7",
+      "qa-session-written-v7"
+    ],
+    "new_source_checks": [
+      {
+        "qa_id": "qa-auth-written-v7",
+        "source_path": "system-spec/fixture-requirements-v7.txt",
+        "section": "認証モデル",
+        "contained_regular_file": true,
+        "section_exact_answer": true,
+        "hash_matches": true,
+        "answer_sha256": "b35c47ec38b145b8238a1930e7ebe1ff3a723c1213e49bb9d5ce4e11ef0aad41",
+        "recorded_after_old": null,
+        "no_symlink_components": true,
+        "path_no_parent_escape": true,
+        "question_includes_path_and_section": true
+      },
+      {
+        "qa_id": "qa-csrf-written-v7",
+        "source_path": "system-spec/fixture-requirements-v7.txt",
+        "section": "CSRF防御",
+        "contained_regular_file": true,
+        "section_exact_answer": true,
+        "hash_matches": true,
+        "answer_sha256": "a0cbb5178c51e3a4f01533ded8460cd7bc28d570b7995ad98c5ba60eb83c952b",
+        "recorded_after_old": true,
+        "no_symlink_components": true,
+        "path_no_parent_escape": true,
+        "question_includes_path_and_section": true
+      },
+      {
+        "qa_id": "qa-security-written-v7",
+        "source_path": "system-spec/fixture-requirements-v7.txt",
+        "section": "セキュリティ基準",
+        "contained_regular_file": true,
+        "section_exact_answer": true,
+        "hash_matches": true,
+        "answer_sha256": "ba77b130311e55a8e64121aeace22897f6ea67f7ed55a1dae2501b4787464003",
+        "recorded_after_old": null,
+        "no_symlink_components": true,
+        "path_no_parent_escape": true,
+        "question_includes_path_and_section": true
+      },
+      {
+        "qa_id": "qa-session-written-v7",
+        "source_path": "system-spec/fixture-requirements-v7.txt",
+        "section": "セッション保存",
+        "contained_regular_file": true,
+        "section_exact_answer": true,
+        "hash_matches": true,
+        "answer_sha256": "df299e589ab5884e5716252ac6d8924da436f6f55fe50be2d410be260656689a",
+        "recorded_after_old": true,
+        "no_symlink_components": true,
+        "path_no_parent_escape": true,
+        "question_includes_path_and_section": true
+      }
+    ],
+    "old37_38_active_consumers": [],
+    "producer_matches_supplied": true,
+    "public_private_match": true
+  },
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-correction-provenance.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-fixture-correction.py",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-v7-turns.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-v7-D3.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/v6-before-trace-state.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/fixture-requirements-v7.txt",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/auth.md",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/security.md",
+    "/tmp/pr86-positive-input-v7-review-replay.json"
+  ],
+  "notes": [
+    "新しい合成書面を入力givenとして受け付ける今回の条件に限った回復判定である。実案件でAIが自己作成した文書を利用者書面へ格上げして承認を得たと扱うことは認めていない。",
+    "旧qa-037/038のbasis変更の不正は、過去へ遡って治癒したとは判定しない。現行仕様の根拠が別の提供書面へ移り、旧履歴は検出/説明として保持される点を確認した。",
+    "ローカルinput-hearing-findings.jsonを自分の意味照合から作り、canonical aggregate-completeness.py --hearingへ渡すとblocking=[]/PASS。これはfresh C06 Agentの応答や監査台帳ではなく、対応表に沿うinput-review判定の整合確認だけである。",
+    "12CLIすべてexit0/空stderr、knowledge_ref21参照の実在とrequired-info接地も追加でexit0。機械gateだけで意味PASSを導いていない。",
+    "書面のsection/answer/hash/path/containmentと1論点性、同一論点のsupersession、時刻順序は別々に確認した。supplementの旧37/38も含め0であり、主参照だけを数えて回復を主張していない。",
+    "D3の方式選択・比較・時刻は不変で、変更は注意書き1件の根拠参照。authの章別設計解釈も根拠IDと回復注記の更新だけ。新しい業務値/採択/承認は作っていない。",
+    "source/criterion/予算、評価/PASS/台帳/graph seedの追加は行っていない。旧qa-009の補助参照はsourceのactive consumer定義（確定主qa_refとeffective_source_refs）に該当せず、閉じた検出の履歴と区別した。",
+    "v6は比較用の実データとしてのみ参照し、過去review結論や119証拠/進捗、他agent状態は参照していない。QA provenanceに残る歴史説明はデータとして読み、過去判定の権威として使用していない。source/fixtureは無編集。"
+  ]
+}

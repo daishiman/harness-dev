@@ -2,20 +2,20 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-schedule",
-    "skill_md_sha256": "b05089c39f6403283405c93e4ef092925c67fbf38eb60c31d27c86c71bc5b06a"
+    "skill_md_sha256": "1a58c3e0f3a2232a07fca53b1c6b074ee3178d7e44e7ce3d958e439456681c6b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "/root/independent_review (independent focused design)",
-  "reviewed_at": "2026-10-05T08:38:49.158703Z",
-  "iterations": 2,
+  "reviewer": "cr-run-dev-graph-schedule (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:35:22Z",
+  "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 4
   },
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,13 +26,21 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "One canonical imported helper is now explicitly tracked; all nine skills invalidate on semantic helper mutation and fail closed if it disappears."
+      "SKILL.md L109-120: ready-json の生成 (build-parity-manifest → bd-bridge --op ready --parity-manifest → lease list) を消費 (L122-126 の schedule-graph.py) より前に置き、全行 python3 -B で起動している。初回実行が古い receipt を掴む経路を手順の並びで塞いでおり、test_schedule_ready_json_generation_documented.py がこの順序を固定している (実行して pass)。",
+      "SKILL.md L111-113: manifest を『単一生成経路で毎周回作り直す揮発 snapshot』とし、stale 停止時の回復を digest の書換ではなく再生成に限定している。build-parity-manifest.py L205 の source_graph_digest と schedule-graph.py L289・L303 の照合が同一式 (_canonical_digest) で、記述と実装が一致する。由来必須化で『node 単位 parity が見ない追加/削除 node』を拾う設計判断は他の snapshot 消費 skill へ横展開できる。",
+      "SKILL.md L128: excluded[] の理由 3 種と unmapped[] を列挙しつつ、判定順序と理由の一覧の正本を schedule-graph-contract.md に一本化しており、理由表を SKILL 本文へ複製していない。列挙した 3 種は schedule-graph.py L248・L260・L313 と完全一致する。",
+      "SKILL.md L107: 並び順を利用者へ提示するとき receipt の mvp_fit と目的/背景/根拠を『そのまま添え、独自に並べ替えない』と明記し、順序決定を schedule-graph.py L336 の 1 箇所に閉じている。enum 外を未設定へ丸めない fail-closed も実装 (L100-101) と一致する。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "smell (medium, 修正先は SKILL.md 外): SKILL.md L113 が引く references/execution-tracker-contract.md §10 の unmapped 分類表の `dependency_unsatisfied` 行と末尾の箇条 (「C16 schedule-graph は…未充足時は external_ref、reason: \"dependency_unsatisfied\"…を unmapped[] に載せる」) が、実装 (schedule-graph.py L313 は excluded[] へ graph_node_id 付きで記録) と test_schedule_dependency_exclusion_reporting.py L84-90 (unmapped == []) と schedule-graph-contract.md L21-27 に反する。SKILL.md L128 は実装どおり excluded[] と書き schedule-graph-contract.md を正本に指定しているため本 skill の主張は正しいが、§10 を読んだ実行者が逆の分類を信じうる。§10 の表行と箇条を「C16 は dependency_unsatisfied を excluded[] に graph_node_id・blocking_depends_on・source=schedule-graph 付きで載せる (正本は schedule-graph-contract.md)」へ直すこと。",
+      "smell (low): SKILL.md L123 が schedule-graph.py へ `--graph \"$DEV_GRAPH_ROOT/.dev-graph/state/graph.json\"` を固定で渡す一方、L117 の build-parity-manifest.py は config の local_state.graph から graph を解決する (build-parity-manifest.py L224-233)。config が既定以外を指す repository では両者が別の graph を読み、L111 の digest 照合が『stale』と誤った理由で停止する (fail-closed なので危険ではない)。L154 で得る C24 receipt の `local_state_paths.graph` を使う書き方にすると一致する。",
+      "smell (low): SKILL.md L115-120 の bash ブロックに前段失敗時の停止 (set -e または終了コード確認) が無い。build-parity-manifest.py が非 0 で終わっても bd-bridge.py が前回の $OUT/parity-manifest.json を読んで ready.json を作りうる。L111 の digest 照合で最終的には止まるが、停止理由が『stale』になり真因 (manifest 生成失敗) が見えにくい。「各コマンドが非 0 なら以降を実行せず停止する」を 1 行添えるとよい。",
+      "smell (low): prompts/R2-plan.md L32 と prompts/R3-schedule.md L32 の『使用資産』に、今回 SKILL.md L117 で手順化された build-parity-manifest.py が無い。fork した子が manifest 生成を省く余地を残すので、R2 (または R3) の使用資産へ追記するとよい。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "user branch review iteration2 after independent F-4001 dependency omission",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Static DESIGN PASS for F-4001 one-ref change and current all-criteria contract preservation only. Actual current refs/imports, body diff, full criterion judgments, rubric and copied-closure mutation/missing-file proof are in /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dev-graph/run-dev-graph-schedule/focused-design-review.json. Live-trial/host dialogue, browser artifact, external GitHub/Beads mutation, package handoff and release execution are NOT accepted by this verdict. New independent focused context judgments projected to legacy elegance/rubric artifacts; old verdict PASS is not evidence and this is not a SHA-only update. Branch30-method coverage is separate."
+  "notes": "判定: PASS。(a) 矛盾なし: 差分 L107・L109-128 は既存の手順 2-5 (L100-103)・read-only 宣言 (L105)・二層 ready 分離 (L102・L138)・完了チェックリスト (L142-146) と食い違わない。manifest/ready/leases の書込先は eval-log であり graph/tracker/lease を変更しない (L105 と整合)。(b) 漏れなし: beads を含む場合と github/none のみの場合の両分岐、stale 停止時の回復、除外/対応失敗の出力先がそろっている。(c) 規約整合: schedule-graph-contract.md (C16 の分類・判定順序の正本) と一致。execution-tracker-contract §10 側の記述ずれはSKILL.md 外の欠陥として negative_feedback 1 件目に記録 (本 skill の主張は実装・test と一致するため PASS を妨げない)。(d) 依存関係整合: script_refs 6 件・schema_refs・reference_refs・本文リンク schedule-graph-contract.md・execution-tracker-contract.md は全て実在し、引数と出力の主張は実装と一致。(e) rubric high=0 (rubric-verdict.json 参照)。frontmatter feedback_contract.criteria (IN1/OUT1/OUT2/OUT3) は差分で変更なし。差分は IN1 (ready-set に未確認 parity を混ぜない) を provenance 照合で補強し、OUT1-OUT3 の主張とは衝突しない。前回 verdict (sha b05089c3…) の指摘 FM-005・PD-002 は未変更のまま継承。profile=incremental (unresolved semantic batch)。基準 d46ca8ad からの差分 (scratchpad/cr/run-dev-graph-schedule.skilldir.diff、`git -C $INT diff d46ca8ad -- plugins/dev-graph/skills/run-dev-graph-schedule/` と一致を diff で確認) は SKILL.md のみ: script_refs へ build-parity-manifest.py 追加 (L14)、mvp_fit 並び順と selection_receipt (L107)、「ready-json の生成と消費」節 (L109-128)。prompts/R1-R3 は差分なし。審査開始時 `shasum -a 256 SKILL.md` = 1a58c3e0f3a2232a07fca53b1c6b074ee3178d7e44e7ce3d958e439456681c6b (指示された期待値と一致)。読んだ実物: SKILL.md 全文、prompts/R1-elicit.md・R2-plan.md・R3-schedule.md、scripts/build-parity-manifest.py 全文、scripts/schedule-graph.py 全文、scripts/bd-bridge.py (_ready_with_parity・main の ready 経路・payload 投影)、lib/bd_bridge_graph.py (load_manifest・manifest_provenance・manifest_graph_node_ids)、lib/bd_bridge_contracts.py の MVP_FIT_RANK、scripts/manage-worktree-lease.py の --op list 出力、scripts/_common.py の repository_eval_root・atomic_bytes、scripts/resolve-repo-context.py の local_state_paths、references/schedule-graph-contract.md 全文、references/execution-tracker-contract.md §10、tests/test_schedule_ready_json_generation_documented.py、tests/test_schedule_dependency_exclusion_reporting.py、tests/test_skill_criteria_evidence.py の canonical content-review 検査。実物で確かめた主張: (1) L107 の rank 順 direct→enabling→未設定→deferred・同 rank は node id 順 = bd_bridge_contracts.py L60 MVP_FIT_RANK と schedule-graph.py L336 の sort key、enum 外は schedule-graph.py L100-101 / build-parity-manifest.py L101-102 が ContractError で停止 (丸めない)、selection_receipt の policy=mvp-first/v1 と purpose/background/rationale = schedule-graph.py L141-156。(2) L111 の parity_provenance 照合 = schedule-graph.py L298-305 (不一致で stale 停止)、bd-bridge は manifest があれば manifest_provenance を必須検証して receipt top-level に parity_provenance を載せる (bd-bridge.py L499・L562・L818)。(3) L113 の唯一生成経路・既定出力先 = build-parity-manifest.py L44 DEFAULT_OUT、他に parity-manifest.json を書く script は plugins/dev-graph 内に無い (grep)、digest 書換禁止と再生成 = execution-tracker-contract §10 に実在。(4) L115-126 の CLI 引数 (--repo-root / --op ready --parity-manifest / --op list / --graph --ready-source bd-bridge --ready-json --leases --scope --max-parallel) は全て各 script の argparse に実在。$OUT は build-parity-manifest が atomic_bytes で親 dir を作るため 後続の > リダイレクトが成立する。lease list の出力は leases[] を持ち schedule-graph.py L326 が読める形。(5) L128 の excluded[] 理由 3 種 = schedule-graph.py L248・L260・L313、unmapped[] = L220-226・L320、self モード = argparse 既定。実行したコマンドと結果: `python3 -B -m pytest -p no:cacheprovider -q` で test_schedule_ready_json_generation_documented / test_build_parity_manifest / test_parity_manifest_provenance / test_schedule_graph_mvp_first / test_schedule_dependency_exclusion_reporting / test_schedule_beads_ready_entry_absent_reporting / test_schedule_binding_expiry_scope_max_parallel / test_bd_bridge_mvp_ready_order = 50 passed。`scripts/validate-frontmatter.py SKILL.md` = ok、`scripts/lint-skill-tree.py <skill>` = ok、`scripts/lint-prompt-contract-drift.py prompts/*.md` = prompts_scanned=3 fatal=0 warn=0、`scripts/lint-skill-description.py SKILL.md` = VIOLATION=0、`scripts/lint-feedback-contract.py --all` に本 skill の行なし。未確認: live-trial (OUT1 の verify_by=live-trial) の実走、実 bd CLI に対する bd-bridge --op ready の挙動、利用者 repository で config local_state.graph が既定以外を指す場合の実挙動。本 verdict は静的 design claim のみを受け入れ、behavioral claim (Gate D) は受け入れない。30 思考法は incremental のため使っていない。"
 }

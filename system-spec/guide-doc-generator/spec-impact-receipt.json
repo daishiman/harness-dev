@@ -100,7 +100,7 @@
     },
     {
       "path": ".claude/changelog/governance-log.jsonl",
-      "sha256": "00f31b4f496cf9f5d49f89cf437d10ad46dd9abc2b56ac48f63d9005d529f06c"
+      "sha256": "d97a9f0e0e508dc352e1b50f341f64c33cd6caf0680e162c280a45fb4f729006"
     },
     {
       "path": "plugin-plans/guide-doc-generator/component-inventory.json",
@@ -188,7 +188,7 @@
     },
     {
       "path": "docs/guide-doc-generator-review/completeness-receipt.json",
-      "sha256": "184a77ec3a1f0f3a634f5cfa500b5efd3e7ea2f0ecaeb947dfb3611953cde5ad"
+      "sha256": "44867cdb77a60b943fec5a15996f895075f92dba6317c77910efa4c4c61b4a59"
     },
     {
       "path": "docs/guide-doc-generator-review/graph-snapshot-r3.json",
@@ -204,15 +204,19 @@
     },
     {
       "path": "docs/guide-doc-generator-delivery/manifest.json",
-      "sha256": "cfb662ed8d321a19751a8872f1466eaeca24e395866a58ce90da2899030b534a"
+      "sha256": "b76c892da22431c6d1652ddf80b4defd5afd99dff7a4ec0c6a199da36317359a"
     },
     {
       "path": "docs/guide-doc-generator-delivery/README.md",
-      "sha256": "da13d22ee76ea805962a1e95b6d08aa5766a136baabb673ee9076bc6d15dafab"
+      "sha256": "ca8b8e18594f3fd53993fb7452510d8775f72a53d0905768676db964b79c5ad6"
     },
     {
       "path": "docs/guide-doc-generator-delivery/restore-evidence.py",
       "sha256": "30ae399004aa9eb938a9bebe85e9c56a3e802af5f79033ba11e23c2bdff4d93a"
+    },
+    {
+      "path": "docs/guide-doc-generator-review/main-integration-release.json",
+      "sha256": "62c5c41e0992adf13d01bc7b420ee1033ce3e4a93ef62af92feec5a17a37bd21"
     }
   ],
   "remaining": [
@@ -236,6 +240,12 @@
   "complete_delivery": {
     "impact": "資料の配布・証跡保存範囲に影響あり。描画・CLI・認証・DB・他プラグインには追加影響なし。",
     "evidence": "docs/guide-doc-generator-review/completeness-receipt.json",
-    "manifest": "docs/guide-doc-generator-delivery/manifest.json"
+    "manifest": "docs/guide-doc-generator-delivery/manifest.json",
+    "manifest_sha256": "b76c892da22431c6d1652ddf80b4defd5afd99dff7a4ec0c6a199da36317359a"
+  },
+  "main_integration": {
+    "base_sha": "76abc53de88189e4afa5fc382b5fd9ad9bb974f0",
+    "release": "guide-doc-generator 0.1.27",
+    "reason": "main先行公開の同版衝突を修復し、mainの他機能を保持。"
   }
 }

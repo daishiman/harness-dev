@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "component_id": "C19",
+    "skill_md_sha256": "27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30"
+  },
+  "verdict": "PASS",
+  "reviewer": "/root/review_sysspec96",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/scripts/validate-source-lineage.py",
+        "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py",
+        "plugins/dev-graph/tests/test_system_spec_evaluation_paths.py",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/independent-evaluation.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/fx-eval-log/system-spec-completeness-report.json"
+      ],
+      "observed": "現行SKILL 27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30、実走閉包 6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b を対象とした今回の独立評価。今回transcript.jsonl:573-576でloop 1のcoverage(--require-complete --require-basis --require-foundation)・source-citation・strict schemaが各exit0、graph revision 0/nodes 0を実測。834-837の可視stdoutとtoolUseResultでもloop 2はcov=0/cit=0/sch=0（revision 1）。各結果を記録した後、600-603および865-867でintermediate全6キー・元goal/hashを実検査しexit0。最終progressは6項目achieved、IN1の両周回PASS、OUT1はexternal_pending。C05の3gate・4 knowledge profile、aggregate --report --spec-dir --sessionのexit0も実測。評価者自身も固定fixtureに対しcoverage/citation/strict schema/lineage/aggregateをread-only再実行し全exit0、2ノードcomplete/違反0を確認した。"
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/goal-evaluation.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/independent-evaluation.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/task.md",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/fixture-provenance.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/guard.jsonl",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/out/status.json",
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/fx-eval-log/run-dev-graph-system-spec-progress.json",
+        "plugins/dev-graph/scripts/build-graph-node.py"
+      ],
+      "observed": "現行SKILL 27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30、実走閉包 6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b を対象とした今回の独立評価。宣言plugin system-spec-harness 0.1.24と4 entry pointをpreflightし、Skill elicit resume→doc-fetch条件判定(既存4取得証拠が有効で追加取得不要)→canonical compile実実行(308-309:10章生成/exit0)→真fork C05(335-336とfork marker)を完了。現物path/digest/open提示後、別呼出し313でstandardを記録してから323-324のcompile受入63件PASSと評価へ進んだ。新C05の12入力snapshotは現行bytesと全一致。report PASS後だけC02 Skill(637)・payloadを用意し、同一payload sha256 583cd778685a0a8f05aa3d602aaa829d810f3e683fc14355efb1f666b83f2f6bでdry-run→add、receipt rev0→1/applied2を実証。specification/architectureともlineage6field、confirmed/pass/readiness complete、相対evidence_ref、evaluated_digest=source_digest=C05 snapshot=source bytes。登録writerはC02のみで、現行/起動時/写しclosureとplugin実体一致からdev-graphにelicitation/compile複製追加0。R0/R1/R2/R3の独立AgentとC02 integrity auditorも実在し、親集約ログと子責務ログの所有境界を確認。",
+      "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/verdict.json"
+    }
+  }
+}

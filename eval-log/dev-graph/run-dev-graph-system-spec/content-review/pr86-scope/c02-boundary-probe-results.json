@@ -1,0 +1,34 @@
+{
+  "scope": "C02 internal pure boundary only, synthetic /tmp files; not an evaluator run, C02 registration, or production evidence",
+  "confirmation": [
+    {
+      "name": "absolute-spec-dir",
+      "rejection_code": null,
+      "expected_code": null,
+      "result": {
+        "evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator",
+        "evidence_ref": "eval-log/synthetic-report.json",
+        "evaluated_digest": "cffadec6de0408dbb2c693f6828369bd64fd56f2b4a43aefae63a8be5acad777"
+      }
+    },
+    {
+      "name": "different-spec-dir",
+      "rejection_code": "invalid_confirmation_evidence",
+      "expected_code": "invalid_confirmation_evidence",
+      "result": "invalid_confirmation_evidence: synthetic: eval-log/synthetic-report.json evaluated \"/tmp/pr86-c19-scope-review/probe/caller 空白's/elsewhere\", not the import source directory"
+    },
+    {
+      "name": "failed-report",
+      "rejection_code": "confirmation_evidence_not_pass",
+      "expected_code": "confirmation_evidence_not_pass",
+      "result": "confirmation_evidence_not_pass: synthetic: eval-log/synthetic-report.json verdict is not PASS"
+    },
+    {
+      "name": "digest-mismatch",
+      "rejection_code": "invalid_confirmation_evidence",
+      "expected_code": "invalid_confirmation_evidence",
+      "result": "invalid_confirmation_evidence: synthetic: evaluated_digest must equal source_lineage.source_digest"
+    }
+  ],
+  "lineage_valid_and_mismatch_checked": true
+}

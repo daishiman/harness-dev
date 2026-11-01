@@ -1,0 +1,32 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent",
+  "verdict": "PASS",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt_sha256": "834cb86507b712df4a571edcc82988da644c1ef60fb31e70158e7c54e9fae80a",
+  "evidence": {
+    "plugin_manifest": {"path": "plugins/system-spec-harness/.claude-plugin/plugin.json", "name": "system-spec-harness", "version": "0.1.25", "sha256": "94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b"},
+    "version_range_source": "plugins/dev-graph/plugin-composition.yaml external_dependencies.system-spec-harness.version",
+    "version_range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "package_contract": {"path": "plugins/system-spec-harness/references/package-contract.json", "sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486", "required_4_in_entry_points_skills": true},
+    "entry_points": {
+      "run-system-spec-elicit": {"skill_md_exists": true, "sha256": "2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7", "pin_prefix": "2a64df26", "pin_match": true},
+      "run-system-spec-doc-fetch": {"skill_md_exists": true, "sha256": "b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5", "pin_prefix": "b4b4d907", "pin_match": true},
+      "run-system-spec-compile": {"skill_md_exists": true, "sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82", "pin_prefix": "d793d397", "pin_match": true},
+      "assign-system-spec-completeness-evaluator": {"skill_md_exists": true, "sha256": "6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431", "pin_prefix": "6e7458506d", "pin_match": true}
+    },
+    "preflight_report": {"path": "eval-log/run-dev-graph-system-spec/preflight-report.json", "claimed_sha256": "57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c", "actual_sha256": "57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c", "R1_section_consistent": true, "manifest_sha256_consistent": true, "c24_sha256_consistent": true},
+    "tool_observer": "index.json shows parent read plugin.json/plugin-composition.yaml, generated preflight.json via python and copied it to preflight-report.json before invoking C01/doc-fetch/compile/C05 Skills; all is_error=false",
+    "plugins_dir_git_status_clean": true
+  },
+  "checklist_5_3": {
+    "inputs_all_verified": "YES",
+    "output_shape_and_authority": "YES",
+    "no_boundary_violating_read_write_delegation": "YES",
+    "version_in_composition_range_and_elicit_docfetch_compile_evaluator_exist": "YES"
+  },
+  "blockers": [],
+  "observations": ["preflight-report.json contains absolute paths (caller_root, R0.spec_realpath) — outside R1 section; relevant to Layer 3 path-portability for R0, not an R1 blocker"]
+}

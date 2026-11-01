@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a890da400218aa644",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4833fbb9-0627-40e7-b824-2fe2d994a7b8",
+      "line": 41,
+      "prefix_bytes": 287503,
+      "prefix_sha256": "5da5a09f69cbbda9d7272938dbcd1bf612b618500f5a9661632f3fa5f0c868d4",
+      "timestamp": "2026-11-01T15:50:30.017Z"
+    },
+    "result": {
+      "uuid": "5de0d348-dbab-4fdf-bd85-b2f2f3d880f9",
+      "line": 42,
+      "prefix_bytes": 291338,
+      "prefix_sha256": "089a8624052dc2604bef08be844f426db981d44baa5fd808315317c05d39b023",
+      "timestamp": "2026-11-01T15:50:33.642Z"
+    }
+  },
+  "tool_use_id": "toolu_013yJYtbrKxgzRuxaPVWHdtz",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx; echo exit=$?; shasum -a 256 system-spec/spec-state.json system-spec/fetched-references.json .dev-graph/state/graph.json; python3 -I -B -c '\nimport json;g=json.load(open(\".dev-graph/state/graph.json\"));n=g.get(\"nodes\",[]);print(\"nodes\",len(n) if hasattr(n,\"__len__\") else n, [ (x.get(\"id\"),x.get(\"type\")) for x in (n if isinstance(n,list) else n.values())][:20])'; cat eval-log/run-dev-graph-system-spec/artifact-delivery-choice.json"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json\nnodes 0 []\n{\n  \"skill\": \"dev-graph:run-dev-graph-system-spec\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"transitions\": [\n    {\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\", \"evidence\": \"preflight-report.json JSON parse ok; R0 lineage exit 0 checked=0; R1 version 0.1.24 in >=0.1.22 <1.0.0; 4 entry points present\"},\n    {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\", \"artifact_path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\", \"artifact_sha256\": \"7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8\", \"open_with\": \"cat <repo_root>/eval-log/run-dev-graph-system-spec/preflight-report.json\"},\n    {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\", \"choice\": \"standard\", \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\", \"recorded_at\": \"2026-11-01T15:49:24Z\"},\n    {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}\n  ]\n}",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json\nnodes 0 []\n{\n  \"skill\": \"dev-graph:run-dev-graph-system-spec\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"transitions\": [\n    {\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\", \"evidence\": \"preflight-report.json JSON parse ok; R0 lineage exit 0 checked=0; R1 version 0.1.24 in >=0.1.22 <1.0.0; 4 entry points present\"},\n    {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\", \"artifact_path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\", \"artifact_sha256\": \"7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8\", \"open_with\": \"cat <repo_root>/eval-log/run-dev-graph-system-spec/preflight-report.json\"},\n    {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\", \"choice\": \"standard\", \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\", \"recorded_at\": \"2026-11-01T15:49:24Z\"},\n    {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}\n  ]\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

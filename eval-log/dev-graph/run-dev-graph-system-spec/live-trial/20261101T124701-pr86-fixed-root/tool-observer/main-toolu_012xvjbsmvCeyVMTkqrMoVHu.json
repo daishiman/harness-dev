@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "180c974f-95ac-4156-9faa-15cdbde6fefa",
+      "line": 119,
+      "prefix_bytes": 622312,
+      "prefix_sha256": "4c301d30f8ebc32ebe4081178f39d822250f2e3e5862a9b664eefc2161fe3fb1",
+      "timestamp": "2026-11-01T03:48:21.295Z"
+    },
+    "result": {
+      "uuid": "dd50302a-cd5a-4fde-930a-2e36dcc8f156",
+      "line": 127,
+      "prefix_bytes": 630927,
+      "prefix_sha256": "567f4f419ba5065333bd16e1906c59b88338afc847334f980674efae7f55caf2",
+      "timestamp": "2026-11-01T03:48:24.246Z"
+    }
+  },
+  "tool_use_id": "toolu_012xvjbsmvCeyVMTkqrMoVHu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B - <<'PY'\nimport json,hashlib,os\np=json.load(open('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/workdir/fixture-provenance.json'))\nbad=[k for k,v in p['seed_sha256'].items() if hashlib.sha256(open(k,'rb').read()).hexdigest()!=v]\nprint('seed mismatches',bad)\nfor s in ['run-system-spec-elicit','run-system-spec-doc-fetch','run-system-spec-compile','assign-system-spec-completeness-evaluator']:\n  f=f'plugins/system-spec-harness/skills/{s}/SKILL.md'; print(s, os.path.isfile(f), hashlib.sha256(open(f,'rb').read()).hexdigest())\nPY\nls system-spec/retrieval-evidence; wc -c plugins/system-spec-harness/skills/*/SKILL.md; ls plugins/system-spec-harness/skills/*/prompts"
+  },
+  "is_error": false,
+  "tool_result_content": "seed mismatches []\nrun-system-spec-elicit True 2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\nrun-system-spec-doc-fetch True b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\nrun-system-spec-compile True d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\nassign-system-spec-completeness-evaluator True 6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\nfastapi.json\npostgres.json\nreact.json\ntypescript.json\n   39836 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md\n   13602 plugins/system-spec-harness/skills/ref-system-design-knowledge/SKILL.md\n   29076 plugins/system-spec-harness/skills/run-skill-feedback/SKILL.md\n   23330 plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md\n   15950 plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md\n   32181 plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md\n  153975 total\nplugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts:\nR1-score.md\nR2-delegate.md\n\nplugins/system-spec-harness/skills/ref-system-design-knowledge/prompts:\nR1-system-design-knowledge.md\n\nplugins/system-spec-harness/skills/run-system-spec-compile/prompts:\nR1-assemble.md\nR2-render.md\nR3-crosslink.md\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts:\nR1-identify.md\nR2-fetch.md\nR3-record.md\nR4-audit-doc-freshness.md\n\nplugins/system-spec-harness/skills/run-system-spec-elicit/prompts:\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md",
+  "tool_use_result": {
+    "stdout": "seed mismatches []\nrun-system-spec-elicit True 2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\nrun-system-spec-doc-fetch True b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\nrun-system-spec-compile True d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\nassign-system-spec-completeness-evaluator True 6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\nfastapi.json\npostgres.json\nreact.json\ntypescript.json\n   39836 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md\n   13602 plugins/system-spec-harness/skills/ref-system-design-knowledge/SKILL.md\n   29076 plugins/system-spec-harness/skills/run-skill-feedback/SKILL.md\n   23330 plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md\n   15950 plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md\n   32181 plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md\n  153975 total\nplugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts:\nR1-score.md\nR2-delegate.md\n\nplugins/system-spec-harness/skills/ref-system-design-knowledge/prompts:\nR1-system-design-knowledge.md\n\nplugins/system-spec-harness/skills/run-system-spec-compile/prompts:\nR1-assemble.md\nR2-render.md\nR3-crosslink.md\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts:\nR1-identify.md\nR2-fetch.md\nR3-record.md\nR4-audit-doc-freshness.md\n\nplugins/system-spec-harness/skills/run-system-spec-elicit/prompts:\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

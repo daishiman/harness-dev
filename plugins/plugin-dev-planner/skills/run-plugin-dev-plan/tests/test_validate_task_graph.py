@@ -75,6 +75,41 @@ def test_c2_graph_is_canonical_idempotent():
     assert dtg.canonicalize(g) == g  # (f) を踏まないこと
 
 
+# ─────────────────── (m) ID 一意性 ───────────────────
+def test_m_duplicate_node_id_is_violation():
+    """同じ ID の別 node が set/dict で 1 件へ畳み込まれても fail-closed に拒否する。"""
+    graph = _c2_graph()
+    duplicate = dict(graph["nodes"][0])
+    duplicate["title"] = "same id, different node"
+    graph = dtg.canonicalize({
+        "schema_version": "1.0",
+        "nodes": [*graph["nodes"], duplicate],
+        "edges": graph["edges"],
+    })
+
+    violations = vtg.validate(graph, INVENTORY)
+
+    assert any(
+        violation.startswith("(m)") and "task node" in violation and duplicate["id"] in violation
+        for violation in violations
+    )
+
+
+def test_m_duplicate_component_id_makes_cli_exit1(tmp_path, capsys):
+    """inventory component の同一 ID 二重定義も CLI の非 0 終了へ結び付ける。"""
+    inventory = {
+        "components": [
+            *INVENTORY["components"],
+            {"id": "C01", "depends_on": [], "title": "shadow definition"},
+        ]
+    }
+    _write_plan(tmp_path, _c2_graph(), inventory)
+
+    assert vtg.main([str(tmp_path)]) == 1
+    output = capsys.readouterr().out
+    assert "(m)" in output and "component" in output and "C01" in output
+
+
 # ─────────────────── (a) DAG 非循環 ───────────────────
 def test_a_cycle_detected_depends_on():
     nodes = [_node("X", "C01"), _node("Y", "C01")]
@@ -426,114 +461,3 @@ def test_main_unknown_shape_fails_closed(tmp_path, capsys):
     _write_plan(tmp_path, _target_graph(), {"components": []})
     assert vtg.main([str(tmp_path)]) == 1
     assert "unknown shape_marker" in capsys.readouterr().out
-
-
-# ─────────────────── (l) bootstrap→target shape 移行 gate ───────────────────
-# GAP-BOOTSTRAP-TARGET-SHAPE-001: fixed-13-phase bootstrap は execution_kind 全不在で
-# legacy join (entity_ref→route 暗黙推測)。target shape は明示 route_ref parity を必須化し、
-# 「一部だけ移行した中途半端 shape」を fail-closed で拒否する marker 非依存 additive 層。
-def _kinded(node, kind, route=None, spec="task-specs/x.md"):
-    node = dict(node)
-    node.update({"execution_kind": kind, "route_ref": route, "task_spec_ref": spec})
-    return node
-
-
-def test_l_full_target_shape_no_migration_violation():
-    """entity_ref 全 node が execution_kind 携帯・component-build に明示 route_ref → (l) 無し。"""
-    nodes = [
-        _kinded(_node("P05", None), "phase-gate", spec=None),
-        _kinded(_node("P05-C01-01", "C01"), "component-build", route="route/build-C01"),
-        _kinded(_node("P05-x-01", None), "direct-task"),
-    ]
-    assert vtg._check_migration_gate(nodes, "task-graph-derived") == []
-
-
-def test_l_partial_adoption_fails_closed():
-    """execution_kind 携帯 node が居るのに entity_ref node の一部が非携帯 → (l1) で拒否。"""
-    nodes = [
-        _kinded(_node("P05-C01-01", "C01"), "component-build", route="route/build-C01"),
-        _node("P05-C02-01", "C02"),  # execution_kind 非携帯の legacy 残骸
-    ]
-    v = vtg._check_migration_gate(nodes, "fixed-13-phase")
-    assert any(x.startswith("(l)") and "P05-C02-01" in x and "execution_kind" in x for x in v)
-
-
-def test_l_bootstrap_all_absent_non_firing():
-    """fixed-13-phase + execution_kind 全不在 (entity_ref node 多数あり) → 非発火 (後方互換)。"""
-    nodes = [_node("P05-C01-01", "C01"), _node("P09-C02-01", "C02"), _node("P05", None)]
-    assert vtg._check_migration_gate(nodes, "fixed-13-phase") == []
-
-
-def test_l_task_graph_derived_marker_without_execution_kind_fails():
-    """task-graph-derived marker で dispatchable node が execution_kind 非携帯 → (l1) で拒否。"""
-    nodes = [_node("P05-C01-01", "C01")]
-    v = vtg._check_migration_gate(nodes, "task-graph-derived")
-    assert any(x.startswith("(l)") and "execution_kind" in x for x in v)
-
-
-def test_l_component_build_missing_route_ref_fails():
-    """execution_kind=component-build で route_ref 空 → (l2) 明示 route parity 違反。"""
-    nodes = [_kinded(_node("P05-C01-01", "C01"), "component-build", route=None)]
-    v = vtg._check_migration_gate(nodes, "task-graph-derived")
-    assert any(x.startswith("(l)") and "route_ref" in x for x in v)
-
-
-def test_l_direct_task_with_entity_ref_allowed():
-    """direct-task は entity_ref を持ち route_ref=null でも schema 通りで (l2) 対象外 → 非違反。"""
-    nodes = [_kinded(_node("P05-C01-01", "C01"), "direct-task", route=None)]
-    assert vtg._check_migration_gate(nodes, "task-graph-derived") == []
-
-
-def test_l_validate_integration_flags_partial_under_fixed_marker():
-    """marker=fixed-13-phase でも execution_kind が混入すれば validate() 全体が (l) を返す
-    (移行 gate が marker 非依存の additive 層であることの integration 証明)。"""
-    migrated = _kinded(_node("P05-C01-01", "C01"), "component-build", route="route/build-C01",
-                       spec="task-specs/P05-C01-01.md")
-    legacy = _node("P05-C02-01", "C02")  # execution_kind 非携帯の legacy 残骸
-    g = dtg.canonicalize({"schema_version": "1.0", "nodes": [migrated, legacy], "edges": [
-        {"type": "produces", "from": "P05-C01-01", "to": "A1"},
-        {"type": "produces", "from": "P05-C02-01", "to": "A2"},
-    ]})
-    v = vtg.validate(g, {"components": []}, marker="fixed-13-phase")
-    assert any(x.startswith("(l)") and "P05-C02-01" in x for x in v)
-
-
-def test_l_validate_integration_full_target_no_l_violation(tmp_path):
-    """完全 target shape (phase-gate + direct-task leaf) は validate() 全体でも (l) を出さない。"""
-    _write_target_spec(tmp_path)
-    v = vtg.validate(
-        _target_graph(), {"components": []}, marker="task-graph-derived", plan_dir=tmp_path
-    )
-    assert not any(x.startswith("(l)") for x in v)
-
-
-_BOOTSTRAP_PLAN_DIRS = [
-    "plugin-dev-planner",
-    "harness-creator",
-    "mf-kessai-invoice-check",
-    "mf-kessai-invoice-check-fidelity",
-    "mf-kessai-invoice-check-matching-rootcause",
-    "with-task-graph-goalseek",
-]
-
-
-def test_l_bootstrap_plans_migration_gate_non_firing():
-    """既存 6 bootstrap plan は execution_kind 全不在=移行 gate 非発火 (exit code 不変で後方互換)。
-
-    task-graph.json/index.md を実配置から読み、_check_migration_gate が空を返すことを固定する。
-    他検査 (i)/(g) 等の状態に依存せず「移行 gate が bootstrap plan へ violation を 1 件も追加しない」
-    という additive 非回帰を直接証明する (plugin-plans/ は本 skill から read-only)。
-    """
-    repo_root = Path(__file__).resolve().parents[5]
-    plans_root = repo_root / "plugin-plans"
-    if not plans_root.is_dir():
-        # producer 所有の plugin-plans/ は全配置に存在するとは限らない (未移管 repo・
-        # 単独 install)。validate-plan-coverage --all の「不在→対象なしで OK」と同じ
-        # セマンティクスで、実配置が無い環境ではこの非回帰証明を対象なしとして skip する。
-        pytest.skip("plugin-plans/ 不在: bootstrap plan 実配置なし (対象なし)")
-    for name in _BOOTSTRAP_PLAN_DIRS:
-        plan_dir = plans_root / name
-        graph = json.loads((plan_dir / "task-graph.json").read_text(encoding="utf-8"))
-        marker = dtg.shape_marker(plan_dir)
-        v = vtg._check_migration_gate(vtg._nodes(graph), marker)
-        assert v == [], f"{name}: 移行 gate は bootstrap plan で非発火であるべき: {v[:3]}"

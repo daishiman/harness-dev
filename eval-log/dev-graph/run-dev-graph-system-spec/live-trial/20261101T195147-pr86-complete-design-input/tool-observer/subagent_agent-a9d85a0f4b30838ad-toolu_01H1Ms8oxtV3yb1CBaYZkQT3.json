@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a9d85a0f4b30838ad",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4061a393-fea8-412b-be7a-870d068ec48f",
+      "line": 41,
+      "prefix_bytes": 608144,
+      "prefix_sha256": "0a3101561fa3b3bd0e1707a17fc180b2d7ba3496650759d16773a5d9cd8738ea",
+      "timestamp": "2026-11-01T11:02:49.453Z"
+    },
+    "result": {
+      "uuid": "1e889cb9-0a25-4784-9653-11b80ca98ef3",
+      "line": 47,
+      "prefix_bytes": 625355,
+      "prefix_sha256": "d8bae42e03edb6f74dcaa6c56fbf01acb88c87c8bcf8ff961a0816bbf27e0fae",
+      "timestamp": "2026-11-01T11:03:01.235Z"
+    }
+  },
+  "tool_use_id": "toolu_01H1Ms8oxtV3yb1CBaYZkQT3",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "Last modified date of the page."
+  },
+  "is_error": false,
+  "tool_result_content": "# CronJob (Kubernetes)\n\nA **CronJob** creates [Jobs](/docs/concepts/workloads/controllers/job/) on a repeating schedule, similar to one line of a Unix crontab file. It is stable since Kubernetes v1.21 and is meant for recurring tasks such as backups and report generation.\n\n## Example\n\nThis manifest prints the time and a hello message every minute:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            imagePullPolicy: IfNotPresent\n            command:\n            - /bin/sh\n            - -c\n            - date; echo Hello from the Kubernetes cluster\n          restartPolicy: OnFailure\n```\n\n## Key fields\n\n- **`.spec.schedule`** (required): Cron syntax with five fields: minute, hour, day of month, month, and day of week. For example, `0 3 * * 1` runs weekly on Monday at 3 AM. The `?` character means the same as `*`. Step values such as `*/2` are supported. Macros include `@yearly`, `@monthly`, `@weekly`, `@daily` (or `@midnight`), and `@hourly`.\n- **`.spec.jobTemplate`** (required): The Job spec, with the same schema as a Job but without `apiVersion` or `kind`.\n- **`.spec.startingDeadlineSeconds`** (optional): The number of seconds after the scheduled time within which a Job must start. For example, `200` allows a Job to start up to 200 seconds late. If the deadline is missed, that run is skipped and counted as failed, but future runs are still scheduled. With no value set, there is no deadline.\n- **`.spec.concurrencyPolicy`** (optional):\n  - `Allow` (default): Concurrent Jobs may run.\n  - `Forbid`: A new run is skipped if the previous one is still running.\n  - `Replace`: The running Job is replaced by a new one.\n  \n  This policy applies only to Jobs created by the same CronJob.\n- **`.spec.suspend`** (optional, default `false`): Set to `true` to pause new Job runs. This does not affect Jobs that have already started.\n\n## Naming\n\nThe CronJob name must be a valid DNS subdomain. For best compatibility with Pod hostnames, follow the stricter DNS label rules. The name must be at most 52 characters, because the controller appends 11 characters and Job names are limited to 63.\n\n## Limitations\n\nThe page notes that a single CronJob can sometimes create multiple concurrent Jobs. The page content I was given was cut off before the sections on history limits, time zones, unsupported time zone specifications, modifying a CronJob, and Job creation, so I can't summarize those.\n\n[WebFetch note: this page's text is 108711 characters long and the answer above covers only characters 0 to 100000; the final 8711 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 522574,
+    "code": 200,
+    "codeText": "OK",
+    "result": "# CronJob (Kubernetes)\n\nA **CronJob** creates [Jobs](/docs/concepts/workloads/controllers/job/) on a repeating schedule, similar to one line of a Unix crontab file. It is stable since Kubernetes v1.21 and is meant for recurring tasks such as backups and report generation.\n\n## Example\n\nThis manifest prints the time and a hello message every minute:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            imagePullPolicy: IfNotPresent\n            command:\n            - /bin/sh\n            - -c\n            - date; echo Hello from the Kubernetes cluster\n          restartPolicy: OnFailure\n```\n\n## Key fields\n\n- **`.spec.schedule`** (required): Cron syntax with five fields: minute, hour, day of month, month, and day of week. For example, `0 3 * * 1` runs weekly on Monday at 3 AM. The `?` character means the same as `*`. Step values such as `*/2` are supported. Macros include `@yearly`, `@monthly`, `@weekly`, `@daily` (or `@midnight`), and `@hourly`.\n- **`.spec.jobTemplate`** (required): The Job spec, with the same schema as a Job but without `apiVersion` or `kind`.\n- **`.spec.startingDeadlineSeconds`** (optional): The number of seconds after the scheduled time within which a Job must start. For example, `200` allows a Job to start up to 200 seconds late. If the deadline is missed, that run is skipped and counted as failed, but future runs are still scheduled. With no value set, there is no deadline.\n- **`.spec.concurrencyPolicy`** (optional):\n  - `Allow` (default): Concurrent Jobs may run.\n  - `Forbid`: A new run is skipped if the previous one is still running.\n  - `Replace`: The running Job is replaced by a new one.\n  \n  This policy applies only to Jobs created by the same CronJob.\n- **`.spec.suspend`** (optional, default `false`): Set to `true` to pause new Job runs. This does not affect Jobs that have already started.\n\n## Naming\n\nThe CronJob name must be a valid DNS subdomain. For best compatibility with Pod hostnames, follow the stricter DNS label rules. The name must be at most 52 characters, because the controller appends 11 characters and Job names are limited to 63.\n\n## Limitations\n\nThe page notes that a single CronJob can sometimes create multiple concurrent Jobs. The page content I was given was cut off before the sections on history limits, time zones, unsupported time zone specifications, modifying a CronJob, and Job creation, so I can't summarize those.\n\n[WebFetch note: this page's text is 108711 characters long and the answer above covers only characters 0 to 100000; the final 8711 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 8101,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

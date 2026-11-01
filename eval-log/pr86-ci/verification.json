@@ -1,0 +1,749 @@
+{
+  "pr": "https://github.com/daishiman/harness-dev/pull/86",
+  "head_sha": "fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
+  "work_branch": "fix/pr86-ci-20261031",
+  "status": "命名規約に沿って検証helperを改名し、現行sourceのローカル検証完了。通常commit/push後に同headのActionsを確認する。",
+  "root_pytest": {
+    "command": "PATH=.local/bin先頭 PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest tests plugins/skill-governance-lint/tests -q",
+    "passed": 9471,
+    "skipped": 4,
+    "output_ref": "eval-log/pr86-ci/naming/root-minimal-final.log"
+  },
+  "plugin_roots_initial": {
+    "passed_roots": 21,
+    "remaining": "dev-graphの回帰914件とcriteria evidence30件を最終版で別途確認し、未解決失敗0。",
+    "log": "/tmp/pr86-plugin-tests.log"
+  },
+  "targeted_gates_after_C19_fix": [
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify test discovery coverage (every test reachable by CI)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/0.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Harness coverage ratchet-floor (blocking; 現状値からの回帰を止める)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/1.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify skill-intake contracts (enum SSOT / vendored SSOT / plugin packages)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/2.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify all Claude/Codex plugin capability and composition contracts",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/3.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify runtime hook portability (no import-time fail-closed cross-plugin dep)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/4.log"
+    },
+    {
+      "workflow": "harness-creator-kit-ci.yml",
+      "name": "Verify no parent-relative sibling plugin paths",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/5.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "guard change category (P0/P1 proposal gate)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/6.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint dependency direction",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/7.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint content-review verdict 成果物存在 (全skill: 存在/PASS/sha一致/criteria突合)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/8.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint feedback_contract 携帯化 (量産先 loop-kind が frontmatter に評価基準を持つ)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/9.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint prompt contract drift (7層プロンプトの参照パス/allowed-tools が実装と整合・Tier1 fail-closed)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/10.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "audit full Claude/Codex plugin fleet contracts",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/11.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "validate plugin release (version bump 忘れ)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/12.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "validate local marketplace (非配布 plugin の install 経路が最新か)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/13.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek SSOT drift (engine/fork/max_loops 既定の分散コピー一致)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/14.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek conformance (実行系の固定手順禁止)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/15.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/16.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint plugin composition self-test (fixture drift 検出)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/17.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint and validate every plugin composition (dynamic discovery)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/18.log"
+    },
+    {
+      "workflow": "governance-check.yml",
+      "name": "lint dependency direction (全プラグイン, prompt-creator cross-plugin 参照解決)",
+      "exit": 0,
+      "log": "/tmp/pr86-final-gates/19.log"
+    }
+  ],
+  "C19_focused_tests": {
+    "helper": 14,
+    "helper_report": "eval-log/dev-graph/run-dev-graph-system-spec/content-review/pr86-ci/pytest-final-output.txt",
+    "boundary_and_C02": {
+      "passed": 68,
+      "log": "/tmp/pr86-c19-boundary-tests2.log"
+    },
+    "latest": {
+      "passed": 57,
+      "log": "/tmp/pr86-c19-latest-tests.log"
+    }
+  },
+  "flyer_tests_with_ignored_local_assets": {
+    "passed": 228,
+    "skipped": 5,
+    "log": "/tmp/pr86-flyer-tests-final.log",
+    "clean_checkout_followup": "harness-xvgi"
+  },
+  "content_review": {
+    "skills_verified": 96,
+    "C19_fresh_independent": "改名後の現行SMDでPASS84/high0。SS.24はHEADの既存content reviewとsourceをそのまま保持。"
+  },
+  "followups": [
+    "harness-xvgi",
+    "harness-aeti",
+    "harness-r5n1",
+    "harness-tmf5"
+  ],
+  "commit_and_push": "ユーザーが明示許可済み。通常commitとPRブランチへの通常pushを行い、同headの全CI成功を確認する。",
+  "dev_graph_final_regression": {
+    "passed": 914,
+    "command": "python3 -B -m pytest plugins/dev-graph/tests --ignore=plugins/dev-graph/tests/test_skill_criteria_evidence.py -q",
+    "log": "/tmp/pr86-devgraph-final.log",
+    "duration_s": 783.59
+  },
+  "C19_attempts": [
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261031T2317-pr86",
+      "result": "FAIL",
+      "reason": "入力資料と履行不足"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86",
+      "result": "FAIL",
+      "reason": "旧sourceのcwd gate衝突とgoalログ形状"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun",
+      "result": "FAIL",
+      "reason": "実データと全gateはPASSだが、再compile4箇所のpwd-P照合省略とcompileのpre-choice順序違反"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun2",
+      "result": "FAIL",
+      "reason": "本処理/scratch境界と親子の責務/周回解釈が曖昧。契約の適用範囲を明示して再レビュー。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun3",
+      "result": "FAIL",
+      "reason": "loop1のIN1 PASS記録前にschema未実行。各周回3gateの実行順を明示。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun4",
+      "result": "FAIL",
+      "reason": "compile後63件テストがstandard選択の記録に先行。選択を記録してから検査するfixture契約を明示。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun5",
+      "result": "FAIL",
+      "reason": "正規生成/評価/登録と3観測は達成したが、開き方の可視提示がstandard記録に先行していない。独立評価のFAILを正式保存。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun6",
+      "result": "FAIL",
+      "reason": "C05 PASSでも監査JSONの自然言語openをBash guardが外部CLIと誤認。拒否後のWrite切替を検知し、task契約どおり登録前停止。graph0node。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun7",
+      "result": "FAIL",
+      "reason": "qa-008のassistant legacy backfillに未確認RTO/RPOへの言及。独立C05 FAIL、C02前停止。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun8",
+      "result": "FAIL",
+      "reason": "C05全PASSでも、保存先変数を章保護hookが拒否した後のliteral再保存をfixture追加条件が一律不受理としC02前停止。source R1-score4.3はliteral再試行を明示許可しているため次fixtureはsourceに整合。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9",
+      "result": "PASS",
+      "reason": "今回のraw証拠に基づくfresh独立評価とcanonical verifierで全必須契約を確認。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0200-pr86-name",
+      "result": "FAIL",
+      "reason": "正規評価はPASSだが保存手段の契約違反を検知し登録前に停止。graphは空。今回の失敗を正式保存し、sourceの保存契約とfixtureの適用範囲を明示して新規実走。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0230-pr86-name2",
+      "result": "FAIL",
+      "reason": "C06が補助qa_refsの旧問履歴をactive consumerと誤認し、C05が追認してC02前に停止。sourceのactive consumer定義とwriter/compileの履歴許可に照らし独立評価が誤検出を確認。graph0/必須登録未達は真のFAILとして正式保存。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0300-pr86-name3",
+      "result": "FAIL",
+      "reason": "実成果2node/lineage/digest/全3周回gateは達成したが、C08必読SSOT未読、C06/C07の明示Bash範囲超過、C05道具範囲超過、C02親の責務prompt部分読込の4契約未達。独立評価FAILを正式保存し原本を保持。sourceや判定基準を緩めずtaskに既存契約を具体化して再走。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0330-pr86-name4",
+      "result": "FAIL",
+      "completion": "coordinator-aborted",
+      "reason": "C05許可外shell調査を観測し、親の契約追記がfork最初のuser promptへ含まれないことを確認。旧copyの途中証拠を固定、fresh独立FAIL、canonical completion FAIL/ABORTEDで保存しowned tmuxとpollを回収。完走PASSを主張しない。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T084215-pr86-receiver",
+      "result": "FAIL",
+      "completion": "coordinator-aborted",
+      "reason": "途中置換。C05真評価と3監査completion、2node登録/lineage/digestは達成したが最終C19集約/検証未閉鎖。またC06がR6のBash範囲を越えた本文解析/grep等を実行した事実を独立確認。sourceをRead限定+正規機械CLI分離へ改善し、原本を保持して別走行へ。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T094532-pr86-hearing",
+      "result": "FAIL",
+      "native_completion": "PASS",
+      "reason": "fresh独立評価がC07の二モード専用Bash契約違反を一次証拠で検出。正規登録と他監査は成立するがgoalはFAIL、canonical DEGRADEDで回収済み。",
+      "independent_evaluation_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T094532-pr86-hearing/independent-evaluation.json"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T101930-pr86-matrix",
+      "result": "FAIL",
+      "native_completion": "PASS",
+      "reason": "fresh独立評価がC08のls/grep探索だけを役割固有違反として検出。他の全gates/独立audits/C06C07Read/前後receipt/2node/3周回は一次照合で成立、goalFAIL/canonicalDEGRADEDで回収済み。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T105704-pr86-freshness",
+      "result": "FAIL",
+      "native_completion": "FAIL",
+      "reason": "R2独立verifierに実手順を示すprimarytool I/Oが届かずchecklist3未達。外側一次は実施を確認するがnative自己評価未達を保持。確定的役割違反は追加認定無し、canonicalDEGRADED保存/reap済。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T115001-pr86-observed",
+      "result": "FAIL",
+      "native_completion": "FAIL",
+      "reason": "v2 observer対象外のWebFetchを未実施と誤認して停止。原本は両C08の各4HTTP200/台帳を確認。ただしC02未実行/loop3旧gate流用など7blockerをfresh判定で保持、canonicalDEGRADEDとして保存。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T122414-pr86-observed-web",
+      "result": "FAIL",
+      "reason": "fresh独立評価3blocker: 全Bash固定root export不足、C05最終doc_verification縮約比較、C02未達責務fork欠落。正規flow/3auditor/2node系統は実施。cat stdin待ち誤認は除外。",
+      "blockers": [
+        "B1: C19 R2-delegate 5.3第3項の毎Bash固定root契約が未達。main transcript line191/237/282/290/304（toolu_01XRu1weQJVPAzrGAh3XWrZS / 01XNqENHLW17qvvaeJAz1kJ9 / 01VNue35HGRcFovNe6Z6rF3X / 01HZuDUJFkKge4UWX1km2Yjc / 01QyesRcPfTrTvKEFpANgNyg）はelicit・doc-fetch・compileの提示/記録/検査を行うBashだが、各呼出しで固定receipt由来のCLAUDE_PROJECT_DIR exportがない。実compile等の取込元生成は正しい前置きで行われたため、root外生成が起きたという判定ではない。",
+        "B2: C05最終PASS前のdoc_verification全JSON再取得・一致確認が未達。C05 transcript line145 / toolu_011MRa3FtqZ3oaoYYkBfcxGF は初回のrepo_root・inputs各path/sha256・validator_path/sha256・argv・exit/stdout/stderrを持つ完全形を再構築せず、{refs,state,val,exit_code,stdout,stderr}へ縮約したDOC_SAME=Trueで代替した。C05 SMD99、R1/R2、doc-fetch R4 Layer3とtask132に反する。入力不変や機械exit0はこの実行義務を代替しない。",
+        "B3: 正式C02のpost-choice未達responsibilityのAgent forkが欠落。run-dev-graph-node SMD176/182は各周回の責務実行をforkへ出すが、main line623でstandardを記録し、line632で全checklist pendingを作成して同じmain Bashでcanonical addを実行している。C02担当の責務Agentは実際には0件。post-addのdev-graph-integrity-auditorとC19 R3 verifierは実行されたが、C02責務実行forkの代替ではない。"
+      ]
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T124701-pr86-fixed-root",
+      "result": "FAIL",
+      "canonical_verdict": "BLOCKED",
+      "reason": "immutable3300s超過で中断。C05最終全JSON再取得/C02責務forkの欠落も独立確認。R3 API接続エラーと監督遅延、pane収集不能をabort-reasonで明記。",
+      "blockers": [
+        "B1 resource_budget_exceeded: scenarioの上限3300秒に対し、正規pollの最初のHARD_CAP検出が4275秒。公開poll-stateの補正4316秒でも上限超過は変わらない。late_supervision=trueで回収も遅延した。上限の延長・成功扱いは認めない。",
+        "B2 completion_not_reached: out/status.jsonが存在せず、C19 progressはloop1のR2/R3等がnot_achievedのまま。R3独立Verifierの初回はAPI ENOTFOUNDで終了し、再試行は収集時点で最終判定なし。C19の全checklist完了・最終周回Anchor・DONE報告を確認できない。",
+        "B3 C05_final_verification_incomplete: C05は03:54:15.893Zにstate/refs/validatorを含む初回機械証拠を取得したが、C08前03:58:01.280Zの再取得はrepo_root/inputs/validator_pathを持つ正規doc_verificationと異なるflat形状。C08完了03:58:43Z以降は03:59:06Zのaggregate --source-citationと章/state/refs snapshot照合のみで、C13 validator bytes hash・固定argv・全input digestを含むdoc_verificationを再構成し初回JSON全体と比較した実行がない。C07最終再実行03:59:16Zも二モードstdout/exit/stderrだけでvalidator digest再取得を欠く。C05の最終「全て一致」申告とaggregate --report exit0は、これら必須の全値再照合を代替しない。",
+        "B4 C02_responsibility_fork_missing: C02 goal-specは04:07:22.253Zにstandardを記録し、progressは04:07:27.351Zにbaseline rev0・全責務未達を記録。初commitは04:07:44.112612Z。その後04:09:01.347Zにoverall=PASSにするまでR0/R1/R2/R3/R4担当の責務Agent起動は0件で、唯一のAgentはdev-graph-integrity-auditor。sourceが区別する「未達responsibilityのfork」と「必須integrity verifier」の前者を後者で代用している。commitがstandardより後のためpre-choice完成済みの例外は適用できない。"
+      ]
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T164319-pr86-naming-only",
+      "result": "FAIL",
+      "reason": "文書一部切詰め/C05意味監査未履行/C19未完了をfresh独立確認。source公開.24対象。",
+      "blockers": [
+        "B1: C19 R2の委譲先責務全文読込を満たさない。main transcript 202行のBashはcompile R1-R3をgrep/cut -c1-400経由で読み、観測結果には公開source R2-render.md 22行(428文字)と23行(600文字)の全文が存在しない。補完の全文読込がないまま216行でcompileが10ファイルを生成した。公開C19 R2「責務境界」「5.3」の出力前全文読込条件への実違反である。",
+        "B2: C05独立意味監査の必須入力を全文評価していない。C05 stream(agent-ae92246b7328467de)のRead呼出しは0件。Markdown内容を得る操作は46行のcat index.md 00-requirements-definition.md | head -120と50行のgrep件数/serves_goals断片に限られ、8技術章の本文全体もresource-mapも直接読んでいない。公開SS0.1.24 C05 Step3/R1-scoreの全Markdown直接読込と具体適用照合を満たさず、PASS reportや監査台帳だけでその不足を代替できない。",
+        "B3: C19の責務検証と終端状態が未完了である。全native streamのAgent呼出しはC19 R0/R1/R2 verifierとC05配下3 auditorに限られ、C19 R3-import独立検証がない。最終progressの6 checklistはすべてnot_achieved/evidence=pendingのままで、intermediateも初期の1行だけ。C19配線が要求するR0-R3の独立検証と全checklist achieved/IN1 PASSによる完了条件を満たさない。"
+      ]
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T170410-pr86-naming-mixed",
+      "result": "FAIL",
+      "reason": "正規C05とfresh独立評価が合成fixture O1実現要件の欠落をhighと確認。failclosedでC02未登録。source基準を弱めず正の入力を正規writerで補完した。",
+      "blockers": [
+        "合成fixtureのU4/O1「請求漏れをシステムが自動で検知する」に、請求漏れの判定条件・検知時点・結果の扱いを定めた確定要件がない。qa-014/qa-foundation-u4は目標と観測指標だけで、qa-024/025およびbackend/databaseの確定内容は契約・請求書・突合の概略にとどまる。C05がfoundation_trace/highとしてFAILを返した一次根拠を独立に確認した。",
+        "C05のFAILにより正本どおりC02取込を停止したため、graphはrevision=0・nodes=0。source lineage・confirmation/evaluated_digest・readiness completeを備えたspecification/architectureの取込成果がなく、C19の元goalおよびpositive scenarioの必須観測1/2/3を充足していない。正しいfail-closed停止だけをpositive acceptanceのPASSにはできない。"
+      ]
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T174508-pr86-complete-input",
+      "result": "FAIL",
+      "canonical_verdict": "FAIL",
+      "blockers": [
+        "B1 goal未達・未登録: final graph は graph_revision=0、nodes=[]。全rawの実tool呼出しに dev-graph:run-dev-graph-node は無く、C02登録・import receipt・R3検証も無い。specification/architecture のsource_lineage・confirmation_evidence.evaluated_digest・readiness completeを保持する取込成果を実証できない。C02未起動なので、その選択前例外の違反とは判定しない。",
+        "B2 compile全文取得不足: main L403でcompile Skillを起動し、L407の正規注入はSKILL本文（source L91–228）のみ。R1/R2/R3 promptsは全文取得済みだが、mainの全Read/Bash/Skill応答をcompile実行L441より前で照合するとcompile SKILL.md frontmatter L1–90は取得されていない。C19 R2は出力を作る委譲先のSKILL.md全文を出力前に読むことを要求する。L441で正規compilerが10ファイルを生成したため、gate-only例外は使えない。R2独立Agentの同じFAILを一次証拠から確認した。",
+        "B3 doc-fetch必要性の見落とし: fetch_needed=falseは既存targets4件とdeepened candidateだけを根拠にしている。確定infrastructure/backend/maintenance-opsの根拠とD4はKubernetes CronJobへ依存し、D4 options.evidence_refsはCronJob/PG SQL/FastAPI BackgroundTasksの具体URLを持つが、取得記録・retrieval-evidenceへ未接地。公開SS.24 doc-fetchの入力契約とR1-identifyは確定セルの外部技術とdecision evidenceを対象導出に含める。既存targetsだけを検査したC13 exit0で未取得を免除できない。",
+        "B4 C05の全Markdown意味評価が未履行: 真のC05 fork a53b7dbcは存在するが、実Read/Bash応答で全文を得た仕様Markdownはindexだけ。残る9章は見出しgrep、特定節のawk/sed、cut出力等に限定される。全10ファイル・全非空行を応答と照合して9章に未取得本文を確認し、C04 resource-map.yaml本文も未取得だった。C05 SKILL Step3/R1-scoreが要求する全Markdown直接読込と具体適用評価を、このreportのPASS・shape gate・3監査の実在で代替できない。",
+        "B5 C05の保存経路違反: observerの対象外であるWriteを全rawから別途確認した。a53b7dbc raw L170（uuid 4d2507ac-cc5e-4c34-82eb-64f6d6506c7f、toolu_01B1HMVyqpzJgGxC8gcmjyAz）でscratch/build_report.pyをWriteし、L171で実作成成功、L174で自作builderを実行してreportを出力した。公開SS.24 C05 allowed-toolsにWriteはなく、R1-score 4.3は評価出力をpython3のliteral Path＋quoted heredocのstdin無改変保存へ限定する。単なるJSON組立のstdout利用や正規production receipt writerではない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T181807-pr86-complete-input-v4",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        "C08 は開始時必読の R4-audit-doc-freshness.md を読まずに監査を完了した。agent-a3eae3cd4a10fdfba の最終応答に「SSOT の R4 本文は読んでいません」とあり、全 native tool call（Read/Bash を含む）にも同本文の取得がない。公開0.1.24の C08 adapter Layer 5.3 と R4 Layer 3 の必読・完了条件を満たさず、その PASS を C05/doc_freshness の正規受入根拠にできない。",
+        "C05 は prompt_quality の意味評価を16/18 promptで省略したまま PASS にした。native Bash toolu_01SvKHtXn3Yo4qitkVQFq1PK は全18件の見出し・チェックリスト数を出す構造走査のみで、report findings は「他16 prompt の C1-C4 独立精読は行っていない」と明示する。公開0.1.24 rubric の単独install例外は外部機械validatorだけを省略でき、意味層 pass_criteria と独立design findings は必須のまま。従って全6観点を満たす正規 evaluator PASS が成立していない。",
+        "C05 の report生成で、native Bash toolu_012o3zX58AKFmdq49uB9vv67 が cat > $TMPDIR/build_report.py で自作の生成scriptを保存し、それを実行してJSONを供給した。report最終保存先は指定のliteral Pathだったが、公開0.1.24 R1-score 4.3 が許可する書込み（C06出力と評価reportのみ）と Bash(python3 *) の境界を超えている。同節は cat > / redirect を明示的に対象外としている。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T185857-pr86-receiver-policy",
+      "result": "FAIL",
+      "canonical_verdict": "FAIL",
+      "blockers": [
+        "設定伝達不成立のまま調整役が中断した部分実走である。out/status.json、C05最終評価レポート、C06完了、C08監査、R2/R3独立検証、C02取込がなく、元の3観測とOUT1を満たす新規specification/architecture nodeは0件。C05/C06/C08が確定FAILを返したという意味ではない。",
+        "C05は公開R1-score 4.3/R2-delegate 2.4の保存境界を越え、$TMPDIR/snapshot.jsonと3gate JSONをshell redirectで保存した。さらにfixture外を含むfind /探索を実行し、既定の隔離対象外のパスを返した。これらは中断前に実測された逸脱であり、未完了の最終評価を推測しているものではない。",
+        "C07は独立Agentとして実在しPASS completionを返したが、完了までにR7-audit-matrix.mdを全文取得した記録がない。起動promptは正本へのポインタだけで本文ではなく、親が読んだことでも代替できないため、契約履行済みの監査PASSとして採用できない。",
+        "C19周回1のintermediateは6キーと元goal/hashを保持する一方、drift_signalがnoneであり、参照先goal-seek正本の6値enum（initial/aligned/compressing/stagnant/widening/oscillating）を満たさない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T191257-pr86-local-receiver-policy",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        {
+          "id": "B1",
+          "description": "C19 の目的である確定仕様・architecture の取込を達成していない。独立 C05 report は FAIL、graph_revision=0/nodes=[]、C02 Skill/writer 登録なし。正規フローの完了と取込後 lineage/evaluator evidence の保持を観測できず、元観測1・2およびOUT1未達。",
+          "evidence_refs": [
+            "fx-eval-log/system-spec-completeness-report.json",
+            "fx-final/tree/.dev-graph/state/graph.json",
+            "transcript.jsonl"
+          ]
+        },
+        {
+          "id": "B2",
+          "description": "C05 の設計知識評価で未解決の不足が残る。O1/D4 の要件は質疑本文に残るが、database/backend/ui-ux/maintenance-ops 等の章固有の設計適用節は従前QA中心で、job_outbox・claim/lease/fencing・失敗job/30分超未処理の新しい要件に対する具体的な設計理由・運用判断への接続が不十分。二QAの同じ解釈やprovenance nullだけを違反とはせず、実章の具体適用不足と evaluator PASS 未取得を根拠とする。",
+          "evidence_refs": [
+            "fx-final/tree/system-spec/spec-state.json",
+            "fx-final/tree/system-spec/database.md",
+            "fx-final/tree/system-spec/backend.md",
+            "fx-final/tree/system-spec/maintenance-ops.md",
+            "fx-eval-log/system-spec-completeness-report.json"
+          ]
+        },
+        {
+          "id": "B3",
+          "description": "C05 は自身のSKILL/R1/R2/rubric/criteria/schema、全18prompt・全10Markdownを取得した一方、Step3/R1-scoreが設計知識反映の直接照合元に指定する C04 resource-map.yaml を自身のcontextで全文取得していない。全実Read/Bashを再構成しても当該索引の取得はなく、C04 map由来の反映を確認したという自己申告だけでは必須境界の充足を証明できない。",
+          "evidence_refs": [
+            "transcript/subagents/agent-adc371c3e200ef423.jsonl",
+            "tool-observer/index.json",
+            "fx-eval-log/system-spec-completeness-report.json"
+          ]
+        },
+        {
+          "id": "B4",
+          "description": "C05 の明示CLI境界（allowed-tools: Bash(python3 *)、R1-score 4.3の検証script実行と許可JSON保存への限定）を守っていない。実際にBashでcat/ls/find/grep/wc/tail/cut等を実行し、find / の全体探索や監査outputのtailも行っている。許可された2つのliteral JSON保存は正しく、禁止report builderや仕様改変は無いが、それで別のCLI境界差分は解消しない。",
+          "evidence_refs": [
+            "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01KS9KUpt9RzMqZj3w3f7snX.json",
+            "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01GqM8JaN7ifHwJ8VYi57qkT.json",
+            "tool-observer/subagent_agent-adc371c3e200ef423-toolu_019MbRePwrSr2oEkZbAfFC97.json"
+          ]
+        }
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T195147-pr86-complete-design-input",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        "C05 の C08 監査を明示 background で起動した。transcript/subagents/agent-a1df14947e05f7107.jsonl:236 の Agent toolu_01XiXiegUZqPvXDgrkVat993 に run_in_background:\"true\" がある。task.md は C05 の明示 background/name を禁止し、SS0.1.24 R2-delegate Layer 1.1/6.2 も正式 evaluator の foreground 実行を要求する。3監査の実 completion と digest 接地は成立しているが、この実行制約違反は解消しない。",
+        "C19 親の全 Bash に要求された固定 C24 root の前置きが1件欠ける。transcript.jsonl:152 の toolu_01EZYH9me3ecZqVyCY3EwwVE は observer の ls/head/python 診断を直接実行し、export CLAUDE_PROJECT_DIR / cd / pwd-P 照合がない。task.md の全Bash呼出し契約には observer 診断の例外はない。observer 自己I/O は projection 対象外なので、投影内の45件が適合するだけでは親の全46件の適合を証明できない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T205330-pr86-foreground",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        "B1: C02の正規実行契約が未達。toolu_015MoxNf6Xrf2Es3DDVejyDiのdry-run後、toolu_01CryZUNMy6diusiEeh2uYEQが最小実成果をdry-run preview/write_count=0としてstandard・semantic_evaluator_startedを記録し、revision0のbaselineを置いた後、親mainのtoolu_01UwW3yvxE6nL3t3dnY6AYrbがaddを直接実行した。選択後の未達R3-write等を実行する責務Agentは全10rawstreamに存在せず、後段のAgentは独立integrity auditorとC19 R3 verifierだけ。C02 SKILLのfork:subagent/未達responsibility実行契約と、task.mdの「dry-runだけでstandardを記録してmainで未達writerを直接実行しない」「standard後の未達responsibilityはAgentwriter」を満たさない。成果2nodeの整合とwriter-onlyは成立するが、今回要求された正規C02フローの受入証拠にはならない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T213622-pr86-c02-flow",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        "正の受入ゴール未達。正規C05の実fork応答と実在reportはいずれもverdict=FAIL（decision_guidance FAIL、high finding 1）。report検証CLIはverdict=FAILの整合性をexit0で確認している。最終graphはgraph_revision=0/nodes=[]で、source lineage/evaluator evidenceを持つspecification/architectureの取込成果が存在しない。観測1のcanonical flow完了と観測2の取込保持は満たされず、観測3のC02登録成功も実証されていない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T221528-pr86-complete-decision-input",
+      "result": "FAIL",
+      "canonical_verdict": "DEGRADED",
+      "blockers": [
+        "取込成果未達: 最終 graph は graph_revision=0、nodes=[]。confirmed specification/architecture と source lineage・evaluator evidence を持つ登録 node が存在せず、description の約束および観測1・2を満たさない。",
+        "評価 gate 未達: C06 の実応答と保存 hearing JSON は一致し、auth/web の qa-037・qa-038、security/web の qa-037 の medium traceability 3件を正規 --hearing が FAIL/EXIT=1、blocking=3 と再導出する。現物 provenance は既定値の basis を agent-inference から user-decision に変更した経緯を明記し、その変更を新しい利用者一次入力へ結ぶ記録が示されていない。C05 report は総合 FAIL のため正規 C02 取込へ進めない。",
+        "C05 report の整合 gate 未達: C07 の実判定と hook 台帳は PASS、C06 sub-input に従う matrix_coverage は FAIL。最終 report の C07 primary receipt=PASS は台帳に一致するが aspect=FAIL との一致規則に反し、--report は exit1。初版 receipt=FAIL も台帳不一致で exit1。正規評価の完了条件 --report exit0 を満たしていない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T225918-pr86-written-source-input",
+      "result": "FAIL",
+      "canonical_verdict": "BLOCKED",
+      "blockers": [
+        "B1: TOKEN_CAPで未完了停止。原本12ストリームのassistant message IDを重複排除して正規関数で再集計したtotal_tokens=23,015,011はscenario上限23,000,000以上。poll exit=6、raw elapsed=2740秒、BUSY_TOOL_RUNNINGのままowned reap。main transcript:816のR3-import独立Agentに対応する最終tool_resultがなく、C19のR3最終検証・集約・import report/完了markerが未成立。2node登録済みという部分成果を全ゴール完了に置換できない。",
+        "B2: C06の書面参照前containment検査が未達。agent-a054198d3d4d78a01.jsonl:38 (UUID 78970d9b-a63c-42be-878b-53df7642275b, 14:18:02.032Z) で書面Read、同:44 (UUID 780e7e36-cff1-4931-91a6-c4a4a8207d45, 14:18:09.259Z) で初めてsource.pathのresolve/relative_to/実在/SHA検査。R6 Layer3の「先に確認」とadapterの「containment確認済み書面」の契約を満たさない。trusted guardのReadは名前allowlistを通すだけでpath照合せず、guard.jsonl:177もreason空のallow。seed SHA一致と通常ファイルの現物確認はあるが、.txtのboot後不変保護はない。事後検査は参照前のroot外/symlink拒否を代替できず、正規フローの安全境界を裏付けられない。実際のroot外読取りや漏えいを主張するものではない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T151641-pr86-bounded-context",
+      "result": "FAIL",
+      "canonical_verdict": "FAIL",
+      "blockers": [
+        "B1: C19 R2-delegate:25-26の必須build-evaluation-context.pyを実行せず、transcript.jsonl:210でC05へ手書き相対args (--spec-dir system-spec --output system-spec/completeness-report.json) を渡した。全終了streamの実tool_useでhelper呼出し0件。固定C24 receiptに評価対象/出力先を束縛する正規境界を迂回した。",
+        "B2: C19 R2-delegate:32が要求する委譲責務prompt全文読込の前に、transcript.jsonl:186でcompileを実行し:192/:194で10ファイル生成成功。先行するcompile R1-assemble/R2-render/R3-crosslinkおよびown resource-mapの取得0件。責務出力前必読は後読みで回復しない。",
+        "B3: C19 SKILL.md:101の正規elicit→必要時doc-fetch→compile→C05順序に対し、elicit Skill 0件のままcompileとC05へ進行。stateの自作診断は必須elicit resumeの代替にならず、scenario観測1のcanonical flowを満たさない。条件付きdoc-fetch未起動自体は違反としない。",
+        "B4: C19/compileのartifact_deliveryが要求する現物path・digest・開き方提示とstandard記録がないまま、transcript.jsonl:210でC05、同C05子stream:60でC07を実起動。事前回答standardは現物提示後の記録を省略する許可ではなく、pre-choice semantic-evaluator/subagent禁止を越えた。",
+        "B5: C05 R1-score:88のBash(python3 *)境界に反し、transcript/subagents/agent-a61cb090a383592b5.jsonl:32-35でfind system-spec ... | head -20を本人が実行し一覧を取得した。source自身の明示ツール境界の逸脱であり、runnerの追加一般監査要件を拡張した判定ではない。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T152726-pr86-pinned-runtime",
+      "result": "FAIL",
+      "canonical_verdict": "FAIL",
+      "blockers": [
+        "orchestratorによる部分中断で正規フローが完了せず、C05 reportはFAILのまま、confirmed specification/architectureのC02取込は0件である。完了markerも存在せず、目的・正本3観測の完了条件が未達。"
+      ],
+      "scope": "公開SS.24。fresh独立評価のFAILを維持し、内部の自己申告PASSと区別する。"
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T151526-pr86-audit-bundle",
+      "result": "FAIL",
+      "canonical_verdict": "BLOCKED",
+      "scope": "別タスクへ分離した未公開SS.25の実験",
+      "blockers": [
+        "B1: scenarioの固定wall-clock上限3300秒を超過した。正規pollはHARD_CAP(exit 1)、raw elapsed=3510秒、公開elapsed=3512秒（収集時のceil補正）であり、いずれも予算外。tokenは正規集計15856376/23000000で予算内だが、wall-clock違反は解消しない。",
+        "B2: C19の自走完了が未達。R3 verifierはverifier-loop3.jsonを保存したが完了応答を返さず、親はloop3の3gate exit0後に待機したまま中断された。C19 progressはloop2のまま最終2項目not_achieved、loop3のintermediate/最終handoff/out/status.jsonが無い。R3の保存済みPASSだけを親の完了とみなせない。",
+        "B3: C05の明示された道具境界違反。C05 subagent raw180行のBashはschema調査に python3 -c ... | head -c 9000 を実行した。C05 SKILL「fork先で完結する実行契約」はhead等のshell調査を禁止している。observer event toolu_016jTNUTj3h6hqyYzoSTYHuSとnative rawで実行・結果を確認した。",
+        "B4: C07の必読入力欠落。R7 2.3.1はSSOT・state・正規C12本文・taxonomyをReadする契約だが、C07の全native tool callはRead4件（R7、taxonomy、state前半、state後半）だけで、validate-coverage-matrix.py本文を読んでいない。機械証拠受領と全セル意味監査のPASS/receiptは、この必読義務の代替にならない。"
+      ]
+    },
+    {
+      "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context",
+      "result": "PASS",
+      "reason": "公開SS.24と命名修正後の現行C19を正規scenarioで新規実走し、fresh独立評価で3観測・完了条件・IN1/OUT1を確認。補助的手順差分は独立レビューへ記録。"
+    }
+  ],
+  "versions": {
+    "harness-creator": "1.4.53",
+    "flyer-studio": "1.3.2",
+    "dev-graph": "0.1.26",
+    "system-spec-harness": "0.1.24"
+  },
+  "current_C19_skill_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049",
+  "current_C19_closure_sha256": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "fixture_environment_validation": {
+    "guard_boundary_cases": 18,
+    "macos_json_stdin_rule": "ASTで証明したeval-log内literal/stdin無改変保存の引用JSONだけをmacOSコマンド探索から除外。他規則不変。",
+    "shell": "/bin/zsh",
+    "heredoc_stdin_bytes": 65537,
+    "canonical_hooks_probe": [
+      {
+        "hook": "guard-json-data.py",
+        "exit": 0
+      },
+      {
+        "hook": "guard-confirmed-chapter-overwrite.py",
+        "exit": 0
+      }
+    ],
+    "product_source_changed": false,
+    "proof_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T0110-pr86-rerun9/guard-provenance.json"
+  },
+  "changed_tracked_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude/changelog/governance-log.jsonl",
+    "doc/harness-creator-完全解剖.md",
+    "eval-log/dev-graph/run-dev-graph-decompose/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-init/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-node/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-render/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-requirements/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-schedule/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-status/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-sync/criteria-test/scenario-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-system-spec/content-review/elegance-verdict.json",
+    "eval-log/dev-graph/run-dev-graph-system-spec/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-analysis-evaluator/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-analysis-evaluator/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-evaluator/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/assign-flyer-evaluator/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-analyze-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-analyze-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-create-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-create-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-intake-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-intake-flyer/content-review/rubric-verdict.json",
+    "eval-log/flyer-studio/run-learn-flyer/content-review/elegance-verdict.json",
+    "eval-log/flyer-studio/run-learn-flyer/content-review/rubric-verdict.json",
+    "eval-log/harness-coverage.json",
+    "marketplaces/local/.claude-plugin/marketplace.json",
+    "marketplaces/local/plugin-fingerprints.json",
+    "plugins/dev-graph/.claude-plugin/plugin.json",
+    "plugins/dev-graph/.codex-plugin/plugin.json",
+    "plugins/dev-graph/plugin-composition.yaml",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
+    "plugins/dev-graph/tests/test_build_graph_node.py",
+    "plugins/flyer-studio/.claude-plugin/plugin.json",
+    "plugins/flyer-studio/.codex-plugin/plugin.json",
+    "plugins/flyer-studio/CHANGELOG.md",
+    "plugins/flyer-studio/EVALS.json",
+    "plugins/flyer-studio/agents/flyer-color-reviewer.md",
+    "plugins/flyer-studio/agents/flyer-composition-reviewer.md",
+    "plugins/flyer-studio/agents/flyer-typography-reviewer.md",
+    "plugins/flyer-studio/package-lock.json",
+    "plugins/flyer-studio/package.json",
+    "plugins/flyer-studio/plugin-composition.yaml",
+    "plugins/flyer-studio/references/package-contract.json",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/SKILL.md",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator.md",
+    "plugins/flyer-studio/skills/assign-flyer-analysis-evaluator/workflow-manifest.json",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/SKILL.md",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/agents/visual-review-coordinator.md",
+    "plugins/flyer-studio/skills/assign-flyer-evaluator/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+    "plugins/flyer-studio/skills/run-analyze-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-create-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+    "plugins/flyer-studio/skills/run-create-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-intake-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-intake-flyer/workflow-manifest.json",
+    "plugins/flyer-studio/skills/run-learn-flyer/SKILL.md",
+    "plugins/flyer-studio/skills/run-learn-flyer/workflow-manifest.json",
+    "plugins/harness-creator/.claude-plugin/plugin.json",
+    "plugins/harness-creator/.codex-plugin/plugin.json",
+    "plugins/harness-creator/CHANGELOG.md",
+    "plugins/harness-creator/plugin-composition.yaml",
+    "plugins/harness-creator/tests/test_audit_capability_parity.py",
+    "plugins/harness-creator/tests/test_native_surface_repo_integration.py",
+    "plugins/harness-creator/tests/test_sync_plugin_platforms.py"
+  ],
+  "new_product_files": [
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py",
+    "plugins/dev-graph/tests/test_system_spec_evaluation_paths.py"
+  ],
+  "criteria_evidence_final": {
+    "passed": 30,
+    "command": "python3 -B -m pytest plugins/dev-graph/tests/test_skill_criteria_evidence.py -q",
+    "log": "/tmp/pr86-criteria-final.log",
+    "output_ref": "eval-log/pr86-ci/naming/criteria-final.log"
+  },
+  "live_trial_lint_final": {
+    "result": "PASS",
+    "command": "python3 -B scripts/lint-live-trial-verdict.py --all",
+    "log": "/tmp/pr86-live-lint-final.log",
+    "verified": 9,
+    "existing_missing_record_only": 21,
+    "missing_note": "既存のD13 pilot警告。今回の9件stale-shaは全件解消。",
+    "output_ref": "eval-log/pr86-ci/naming/live-lint-final.log"
+  },
+  "live_trial_final": {
+    "result": "PASS",
+    "skills": 9,
+    "C19_verdict": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/verdict.json",
+    "C19_independent_evaluation": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/independent-evaluation.json",
+    "C19_closure": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+    "transcript_sha256": "c2c113099514c19d97ebb69ece46b9d4bf71fd65bc2e81bb8ca73a04f7e346b0"
+  },
+  "targeted_gates_final": {
+    "passed": 20,
+    "failed": 0,
+    "result_ref": "eval-log/pr86-ci/ci-targeted-gates-final.json",
+    "output_ref": "eval-log/pr86-ci/ci-targeted-gates-final.txt"
+  },
+  "completed_local_at_utc": "2026-11-01T16:29:07.017132+00:00",
+  "new_source_implementation_summary": [
+    "固定22件のテストassertを登録マニフェスト集合の照合へ変更。",
+    "flyer-studioのCodex lens代替/実行root/manifest identity契約を整合。",
+    "C19 evaluator argsを固定C24 receiptに結び付けた絶対pathへ生成し、責務ログ/毎周回gateを明確化。",
+    "現行閉包で9件の正の実走を再収集し、fresh独立評価と受入receiptへ接続。",
+    "許可動詞に沿ってprepare-evaluation.pyをbuild-evaluation-context.pyへ改名。機能/CLI/境界は同じで、命名規則は緩和しない。"
+  ],
+  "publication_authorization": {
+    "user_reply": "ok",
+    "scope": "修正のコミットとPR #86ブランチへのpush",
+    "authorization_received": true,
+    "session_restriction": "現在Git明示許可済み。旧stealth/no-git-opsは解除済みの履歴。",
+    "restriction_source": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/hook_outputs/01a19234-a4b3-7df1-8b9b-9884fe0ec512/cfd98664-fd99-412d-b92d-302ce59893f0.txt",
+    "git_commands_executed_after_approval": true,
+    "recorded_at_utc": "2026-10-31T21:31:57.246932+00:00",
+    "local_beads_no_git_ops": false,
+    "configuration_fixed": true,
+    "current_session_restriction_still_active": false,
+    "local_setting_commit_note": ".beads/config.yamlのno-git-ops=falseはローカル運用設定として変更したもの。CI修正commitのstage対象から除外する。",
+    "session_reloaded": true
+  },
+  "record_scope": "追補commit前の記録。root/SS/context/criteria/content/live/offlineは今回の現行sourceで再検証。他のfirst publishの項目は変更のない既存実装の履歴。最終GitHub Actions結果はPR #86の同一headを参照。未公開SS.25の実験は失敗履歴/別タスクへ分離。",
+  "commit_preflight": {
+    "secret_scan": "2677 staged files, exit 0",
+    "diff_check_source_and_non_live_artifacts": "exit 0",
+    "immutable_live_artifact_whitespace": "原本の末尾空行450ファイルは保持。全てlive-trial配下で、受入のSHA/出典digestを変更しない。",
+    "hook_bypass": false,
+    "force_push": false,
+    "scope": "既存値はfirst publishの実測。追補でも通常scanner/hookを使い、回避flagを使わない。"
+  },
+  "initial_pr_head_sha": "0655e21354ec2e8ac24efcf9a08689b7edeb13ed",
+  "verification_base_head_sha": "fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
+  "first_published_commit": "fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
+  "naming_fix": {
+    "old_path": "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py",
+    "new_path": "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py",
+    "behavior_changed": false,
+    "naming_rule_relaxed": false,
+    "content_review": "C19 SMD現行SHAに対し独立rubric84/high0・elegancePASS、関数AST同一/CLI境界を確認。",
+    "context_tests_log": "eval-log/pr86-ci/naming/context-tests-final.log",
+    "offline_results": "eval-log/pr86-ci/naming/offline-results-before-commit.json",
+    "native_clean_step": "index40だけはcommit後のclean worktreeで同じcommandを実行する。"
+  },
+  "scope_adjustment": {
+    "followup_beads": "harness-dcjw",
+    "archive": "/Users/dm/orca/workspaces/harness/pr86-ss-boundary-followup-20261101",
+    "description": "未公開SS.25の監査実行境界/全JSON束の改修はコード・全試験・独立reviewを別タスクへ保全し、今回の追補から除外。SSsourceとactive reviewはHEAD公開版.24へ完全復元。今回の現行sourceへ.25の結果を転用しない。"
+  },
+  "fixture_input_repair": {
+    "ref": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v3/fixture-correction-provenance.json",
+    "independent_input_review": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v3/independent-input-review.json",
+    "scope": "欠けていたO1要件とD4を合成QA givenとして正規writerで補完。実ユーザー承認/本番仕様とは主張せず、既存QA/foundation/D1-D3/旧承認は保持。判定/3観測/予算/sourceは不変。PASS/report/graphのseed無し。",
+    "target_completion": {
+      "ref": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v4/target-correction-provenance.json",
+      "independent_input_review": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v4/independent-target-input-review.json",
+      "scope": "D4で既に採用したKubernetesを正規writerでtargetsへ追加し、公式HTTP200本文をcanonical assemblerで出典化。QA/承認/D4はv3から不変。新trialの受入判定は別。"
+    },
+    "design_completion": {
+      "ref": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v5/design-correction-provenance.json",
+      "independent_input_review": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v5/independent-design-input-review.json",
+      "scope": "旧fixture/確定QAを更新せず、48QA基礎から新しいgiven v5を正規writerで再定義。同一の質問/回答/承認/D4/targetsを保ち、作者agentの具体設計解釈だけを新fixtureの初回QA記録と章単位の正規opで補完。SUT source不変。"
+    },
+    "decision_completion": {
+      "ref": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v6/design-correction-provenance.json",
+      "independent_input_review": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v6/independent-decision-input-review.json",
+      "scope": "v5等の既存fixtureを上書きせず48QA基礎から新given v6を定義。同じ50問答/採択/承認/targets/具体設計適用を保持し、D4初回入力の案別比較とTCO構築/運用/移行/撤退、monthly追加license scope、実HTTP3資料、確認時刻の上限noteを補完。inputの妥当性reviewを現在C05/3監査/goal受入へ転用しない。"
+    },
+    "written_source_recovery": {
+      "ref": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v7/trace-correction-provenance.json",
+      "independent_input_review": "eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v7/independent-written-input-review.json",
+      "scope": "v6/過去trialを上書きせず新v7を定義。旧50QA coreと不適切なbasis変更履歴を残し、auth/securityを正規reopen/書面source-index4QA/confirm/supersedeで再接地。旧37/38の現行主/補助consumerを0にし、同じ機能値を原文/SHA/sectionへ接地した新しい合成givenを提供。D3注意書き/設計解釈の参照だけ同期。実利用者の新対話/本番承認ではなく、fixture作者が実行前に提供した書面。input reviewと単体probeを現在goal PASSへ転用しない。"
+    }
+  },
+  "receiver_instruction_transport": {
+    "ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/project-instructions-provenance.json",
+    "instructions": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/project-instructions.md",
+    "collection_copy": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/project-instructions-at-collection.md",
+    "scope": "親会話をfork Skillが継承しないため、公開.24の既存必読/18prompt意味評価/保存契約をrunnerが読む通常CLAUDE.local.mdでも受け側へ伝達。source/当該runの合成given/3観測/予算/ファイル権限は不変。期待判定は渡さずfresh評価へ接地。",
+    "context_consolidation": "通常project指示を集約し、必須でない一般docset再監査と全実装Readの追加を避けた。全source必読/18prompt意味評価/責務Verifier/正規63tests/3監査/3観測/3300秒23Mtokenを維持。",
+    "explicit_source_scope_context": "R6/1a/spec-state-contractの主qa_refと補助qa_refsの正本適用範囲を再掲し、元からの5host/WebFetch境界を全子contextへ伝達。入力のQA/採択/値/source/criteria/予算を変えず、過去findingや期待判定を渡していない。"
+  },
+  "remaining_followups": [
+    "harness-dcjw",
+    "harness-hgu5",
+    "harness-yvxs"
+  ],
+  "native_execution_mode": {
+    "env": {
+      "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS": "1"
+    },
+    "scope": "source正式foreground契約をnative schedulerでも保証しrun_in_background parameterを除去。ファイル/ネットワーク権限と時間/token予算は不変。親main全Bashの固定root前置きを常時指示へ再掲。",
+    "probe_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/foreground-runtime-probe",
+    "probe_scope": "実C08監査のforeg+canonical ledger束縛と、Skill contextfork→Agent nestedの互換性だけ。C19受入判定や3監査の代用ではない。",
+    "C02_source_contract_context": "既存sourceのpre-choice実nodeと選択前のpath/digest/開き方提示、post-choice baselineと未達のみAgentwriterの分岐を常設指示へ再掲。native adapter/C02 frontmatter原文も通常入力へ明示。",
+    "C02_preview_choice_guard_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/c02-choice-guard-provenance.json",
+    "C02_guard_scope": "WriteによるC02選択記録時、graph.nodes空のpreview-only記録だけを拒否するread-only補助guard。source全遵守の証明器ではなく、成果・監査・判定を生成せず、追加権限を与えない。",
+    "written_source_read_order_guard": {
+      "provenance_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/written-source-order-guard-provenance.json",
+      "invariants_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/execution-invariants-after.json",
+      "independent_review_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/written-source-order-independent-review.json",
+      "scope": "公開R6の書面Read前containment/実在/SHA検査を、同session/actorの実成功Bashと現在hashで強制する。sandbox外proof cache。意味評価/成果/goal判定は生成しない。source/入力/criteria/予算は不変。"
+    },
+    "model_pinning_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/native-model-pinning.json",
+    "model_pinning_scope": "既存default実測モデルを明示pinしdefault選択driftを排除。actual_modelはnative messageから確認。proofへ変更せずsource/3観測/予算を維持。"
+  },
+  "post_publish_guard_correction": {
+    "commit_before_correction": "3655815a769b96e29d4686720b9d4458857fb269",
+    "failure_job_url": "https://github.com/daishiman/harness-dev/actions/runs/41326697816/job/124908030466",
+    "proposal_id": "PROP-2026-11-02-PR86-PROBE-EVIDENCE-P1",
+    "scope": "既存の隔離probe manifest4件のP1記録を追記。source/closure/実走原本/合格条件/CI実装は不変。",
+    "target_sha256": {
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T191257-pr86-local-receiver-policy/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T195147-pr86-complete-design-input/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T205330-pr86-foreground/foreground-runtime-probe/nested-probe-plugin/.claude-plugin/plugin.json": "bc571966de0dcee7870b503292cae185a3498d19250791423bad8e81b423f32e",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T205330-pr86-foreground/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62"
+    },
+    "validation_command": "python3 -B scripts/guard-change-category.py --base origin/main",
+    "latest_head_ci_result": "追補push後にGitHub Actionsの同headで確認する。",
+    "local_validation": {
+      "exit": 0,
+      "summary": "total=11970 blocked=0",
+      "closure_sha256_unchanged": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef"
+    }
+  }
+}

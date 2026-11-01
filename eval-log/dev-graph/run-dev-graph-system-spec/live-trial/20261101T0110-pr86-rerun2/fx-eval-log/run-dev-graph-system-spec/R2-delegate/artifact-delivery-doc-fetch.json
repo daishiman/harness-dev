@@ -1,0 +1,19 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "invocation": "--resume --spec-dir <repo_root>/system-spec",
+  "necessity_decision": {
+    "result": "refetch_not_required",
+    "basis": [
+      "R1-identify: targets = spec-state.targets[] (postgres, react, fastapi, typescript); knowledge_candidates[k8s-workload-observability].status=deepened (not discovered) -> no qualification target",
+      "R3/IN1: validate-source-citation.py --targets eval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-targets.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root <repo_root> exit 0",
+      "evidence_sha256 of all 4 retrieval-evidence files matches the recorded value",
+      "semantic freshness (OUT1) delegated to independent C08 system-spec-doc-freshness-auditor after choice"
+    ]
+  },
+  "artifact": {"path": "system-spec/fetched-references.json", "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729", "open_with": "python3 -m json.tool system-spec/fetched-references.json"},
+  "minimum_guard": {"parse": "ok", "IN1": "exit 0", "secret_or_irreversible": "none"},
+  "transitions": ["artifact_created->minimal_guard_passed", "minimal_guard_passed->artifact_presented", "artifact_presented->user_choice_recorded(standard)", "user_choice_recorded->semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)"
+}

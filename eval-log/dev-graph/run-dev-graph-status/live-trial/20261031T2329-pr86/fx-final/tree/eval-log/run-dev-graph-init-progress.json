@@ -1,0 +1,32 @@
+{
+ "skill": "run-dev-graph-init",
+ "loop": 1,
+ "checklist": {
+  "preflight_pass": {
+   "status": "PASS",
+   "evidence": "validate-harness-link status=pass link_state=absent"
+  },
+  "c24_receipt_match": {
+   "status": "PASS",
+   "evidence": "repository_id matches config/receipt; roots inside repo"
+  },
+  "roots_and_routing_policy": {
+   "status": "PASS",
+   "evidence": "6 roots + .dev-graph present; routing_policy const"
+  },
+  "templates_complete": {
+   "status": "PASS",
+   "evidence": "17 contract assets missing=0"
+  },
+  "hook_single_path": {
+   "status": "PASS",
+   "evidence": "hook_source=plugin; .claude absent"
+  },
+  "schema_exit0_and_second_init_noop": {
+   "status": "PASS",
+   "evidence": "validate-graph-schema exit0; rerun status=noop planned_changes=0"
+  }
+ },
+ "verifier": "Agent general-purpose (independent fork)",
+ "complete": true
+}

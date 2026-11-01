@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "406872a9-6098-40ff-99cd-6dde091e31ac",
+      "line": 145,
+      "prefix_bytes": 1775866,
+      "prefix_sha256": "22473f4ff7b262d3ea7428e7297babd4f2b7bb8fe44a606eb1ea596313af8abf",
+      "timestamp": "2026-11-01T14:14:42.303Z"
+    },
+    "result": {
+      "uuid": "23d4d33a-3a23-4baf-84be-2851a8404be1",
+      "line": 146,
+      "prefix_bytes": 1781178,
+      "prefix_sha256": "ddb64767ff6b6f4e4935c1e9f8379d0989fb09f7871ca1a2c4378839588706e9",
+      "timestamp": "2026-11-01T14:14:42.602Z"
+    }
+  },
+  "tool_use_id": "toolu_01FWqphmSmofFPZynLTCs6gS",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-architecture.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Clean Architecture — deep knowledge card\n2\t\n3\t> knowledge_id: `clean-architecture` / status: `seed-example`。本カードは探索開始点であり、アーキテクチャ知識の網羅リストではない。\n4\t\n5\t## 目的\n6\t\n7\t変化しやすいUI、DB、framework、外部サービスから、長く保持したい業務ルールとuse caseを隔離し、技術交換やテストを目的達成の阻害要因にしない。\n8\t\n9\t## 背景\n10\t\n11\tdelivery初期はframework直結が速く見えるが、外部詳細がbusiness logicへ浸透すると、DB/UI変更、テスト、並行開発のたびに変更範囲が増える。Clean Architectureは層数を固定する方式ではなく、policyとmechanismを分け、source dependencyを高水準policy側へ向ける設計原則である。\n12\t\n13\t## 解決する問題\n14\t\n15\t- 業務ルールがcontroller/ORM/UI lifecycleへ埋まり、単体で検証できない。\n16\t- 外部技術変更が内側のuse caseまで波及し、置換費用を予測できない。\n17\t- 入出力形式やvendor型が境界を越え、責務と所有者が曖昧になる。\n18\t\n19\t## 中核概念\n20\t\n21\t- **Dependency Rule**: source dependencyは外側のmechanismから内側のpolicyへ向け、内側は外側の名前や型を知らない。\n22\t- **Entities / Use Cases**: enterprise規則とapplication固有の処理を、delivery/persistenceから独立して表す。\n23\t- **Ports and Adapters / DIP**: 内側が必要なportを定義し、外側adapterが実装する。実行時control flowとsource dependencyは逆向きになり得る。\n24\t- **Boundary data**: 境界を跨ぐ値は内側に都合のよい単純なrequest/response modelとし、DB rowやframework objectを持ち込まない。\n25\t- **Screaming architecture**: top-level構造がframework名でなくsystemのuse caseとdomainを語る。\n26\t\n27\t## 適用条件\n28\t\n29\t- business ruleが外部I/Oより長寿命で、UI/DB/providerの変更可能性がある。\n30\t- 複数delivery channelや外部integrationから同じuse caseを再利用する。\n31\t- 重要なpolicyを高速・決定論的にテストする価値が、境界導入費を上回る。\n32\t\n33\t## 非適用条件\n34\t\n35\t- 寿命の短い検証用prototypeで、交換可能性より学習速度が明確に優先される。\n36\t- domain ruleがほぼ無い単純変換scriptで、port/adapterが実質的な抽象を生まない。\n37\t- 外部製品そのものがsystemの目的で、抽象化すると必要機能が失われる。ただしsecurity/audit boundaryは別途必要。\n38\t\n39\t## トレードオフ・失敗モード\n40\t\n41\t- 境界、DTO、mapping、dependency injectionの量が増え、小規模systemでは認知負荷が先行する。\n42\t- 「4層を作ること」が目的化すると、変化軸のないinterfaceやpass-through use caseが増える。\n43\t- domain modelを万能化してdelivery固有の制約を隠すと、現実のlatency/transaction/error semanticsを見失う。\n44\t- portを外側が定義したりinner layerがORM型を返したりすると、名前だけcleanな依存逆転になる。\n45\t\n46\t## 目的達成への寄与\n47\t\n48\t- `essential_purpose`に直結するpolicyを外部詳細から守り、goal達成ロジックの検証を速くする。\n49\t- 制約に「vendor lock-in低減」「複数platform」「高い変更頻度」がある場合、変更範囲と移行riskを局所化する。\n50\t- 適用判断は「何層あるか」でなく、守るgoal、予想される変更、boundary testで観測する。\n51\t\n52\t## ヒアリング・判断観点\n53\t\n54\t- どの規則がsystemの本質で、どの技術詳細より長く残るか。\n55\t- 交換したい可能性がある外部要素は何か。交換不要なら抽象化費用は正当化されるか。\n56\t- use caseをUI/DBなしで受入基準まで検証できるか。\n57\t\n58\t## 一次資料\n59\t\n60\t- Robert C. Martin, “The Clean Architecture” (2012), https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html\n61\t- Robert C. Martin, *Clean Architecture* (2017), Pearson/Addison-Wesley。\n62\t\n63\t## 鮮度\n64\t\n65\t- class: `foundational-stable`\n66\t- last_checked: `2026-07-11`; review_by: `2027-07-11`\n67\t- trigger: 原著者の原則訂正、採用frameworkがdependency boundaryを強制/破壊する変更、projectでboundary費用が価値を上回る実測。\n68\t\n69\t",
+  "tool_use_result": null
+}

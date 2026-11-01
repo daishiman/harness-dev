@@ -1,0 +1,53 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈の3論点を名指しで束ねた問 (N4)。置き換え先 qa-019 は1論点の開いた問で中立 (a)。superseded_note の分割先 qa-016/qa-020/qa-021 と同じ論点を扱う (b)。qa-019 に answer・basis=user-decision・answered_at がある (c)。qa-009 は ui-ux/web の qa_refs (裏付け) に残るが、主たる qa_ref は qa-003 で active consumer ではない。置き換え先: qa-019"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択に、有効期間とログアウト時の扱いを足して1問にしている (独立した2論点の束ね)。選択肢・別案・保留の道は示されている。auth/web の qa_refs (裏付け) のみで主たる qa_ref ではないため、PASS に残す注記"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "請求漏れの定義・検知時期・提示先・計測データを名指しで4論点並べた開いた問 (束ねに該当)。決定を求める選択肢はなく自由回答で答えられる。database/ui-ux/backend/maintenance-ops の qa_refs (裏付け) のみで主たる qa_ref ではないため、PASS に残す注記。provenance は合成fixture入力と明記されている"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-job-choice-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "選択に加えて『理由と運用条件』の記述を一緒に求めている軽微な束ね。選択肢(1)(2)は中立で別案・保留も選べ、推奨の印はない。(1)が先頭なのは D4 options の登録順と同じ。答えを左右したとは読めない"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約を1回の確認で求めている。確定する・指摘する・保留の三択があり、各 U の値は個別の qa-foundation-uN で利用者発言に遡れる。主たる qa_ref ではない"
+    },
+    {
+      "axis": "premature-stop",
+      "severity": "info",
+      "field": "hearing_progress",
+      "observation": "loop_count=2 は max_loops=2 に達しているが、complete=true かつ next_question=null で未収集セルは0件。上限到達で未収集を完了扱いにしていないため (b) は該当なし"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "field": "requirements_foundation.effective_source_refs",
+      "observation": "schema_version 1.0 で effective binding がないため canonical qa-foundation-u1〜u9 へ fallback した。U1-U9 は user-dialogue の元発言の逐語連結に遡れ、approval_ref=appr-foundation-v2 は approval_log に実在し、U1/U2/U3 は値。利用者発言は全て合成fixtureのシナリオ上の発言と provenance に明記されている"
+    }
+  ]
+}

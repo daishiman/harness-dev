@@ -1,0 +1,21 @@
+[
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/site-reliability-engineering.md#中核概念",
+    "principle": "運用の実体の把握と段階的な更新・復旧",
+    "applicability": "applied",
+    "rationale": "採用するPostgreSQLはqa-031で利用者が選んだ16のままとする。qa-018で提供される15と16は同じ業務要件を満たすため、利用者が挙げた保守期間の長さと次の更新作業の時期を運用上の差として扱う。導入時のマイナー版と復旧手順は実体で確認し、docs/currentの別メジャー版を16の証拠と混同しない。",
+    "tradeoffs": [
+      "ライセンス費は両案0であり、差は更新作業の時期と検証負担。",
+      "既存の15前提の記述は16へ整合させる必要がある。"
+    ]
+  },
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/ddd.md#中核概念",
+    "principle": "集約の不変条件と境界づけられたコンテキスト",
+    "applicability": "applied",
+    "rationale": "qa-031の版選択はqa-001の既存DB要件のうち版だけを更新する。qa-024の請求書・明細を一つの整合性境界とし、確定後は直接改変せず赤黒訂正を記録する。監査ログは別スキーマへ追記し、G1の単一の信頼できる情報源を保つ。",
+    "tradeoffs": [
+      "強い整合性の境界は請求書単位に限定し、監査への連携とは分ける。"
+    ]
+  }
+]

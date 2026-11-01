@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-a7bcf779159ed0f0d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7be43f8b-c800-4e46-a72e-faebcf1a2ab5",
+      "line": 50,
+      "prefix_bytes": 273992,
+      "prefix_sha256": "1275021e1c16d877f355dd69f1f4801c73020e61179f57182471b37027257b49",
+      "timestamp": "2026-11-01T03:32:08.599Z"
+    },
+    "result": {
+      "uuid": "c587121e-4809-4de4-adda-f9240ca89c9f",
+      "line": 51,
+      "prefix_bytes": 274967,
+      "prefix_sha256": "58b39ac1eed5791d626a588687516f6d248215180ce7ba2c8b9fbbfd930cbfc5",
+      "timestamp": "2026-11-01T03:32:10.742Z"
+    }
+  },
+  "tool_use_id": "toolu_01PfxT7uoTx3FVNFJU7fWZS1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && mkdir -p eval-log/run-dev-graph-system-spec/R0-context && cat > eval-log/run-dev-graph-system-spec/R0-context/verdict.json <<'EOF'\n{\n  \"responsibility_id\": \"R0-context\",\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"verifier\": \"independent\",\n  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n  \"original_goal_hash_recomputed_match\": true,\n  \"verdict\": \"PASS\",\n  \"checklist\": {\n    \"common_inputs_verified\": {\"result\": \"YES\", \"evidence\": \"receipt read; goal hash recomputed equal; prompt-common-layers.md read (actual path plugins/dev-graph/references/, not skills/.../references/ as given in brief)\"},\n    \"output_shape_and_authority\": {\"result\": \"YES\", \"evidence\": \"receipt separates repository_id/worktree_id (identity), content_roots (content), plugin_source (code authority); mode=write; root_trust_evidence all true\"},\n    \"no_boundary_violating_read_write_delegation\": {\"result\": \"YES\", \"evidence\": \"system-spec is not a symlink, no symlinks inside it, realpath inside repo_root; verifier wrote only this verdict\"},\n    \"system_spec_realpath_in_caller_repo_with_id_commondir_match\": {\"result\": \"YES\", \"evidence\": \"realpath(system-spec)=<repo>/system-spec; repo_root==realpath(content_roots.repository)==git toplevel; independent resolve-repo-context --mode read matches repository_id, worktree_id, git_common_dir, git_dir, head_sha, content_roots\"},\n    \"lineage_exit0_and_checked_decides_mode\": {\"result\": \"YES\", \"evidence\": \"validate-source-lineage.py --repo-root <repo> exit 0, status=pass, checked=0, violations=[]; graph.json has 0 nodes => new creation\"}\n  },\n  \"decision\": \"new_creation (checked=0)\",\n  \"tool_observer_confirmation\": {\n    \"event\": \"main-toolu_01RpK1uqcbUuHgFhaRhcu2Nr.json (source_line 95, is_error=false)\",\n    \"observed\": \"resolve-repo-context.py --repo-root $R --mode write > c24-receipt.json (exit=0) then validate-source-lineage.py --repo-root $R (checked=0, lineage_exit=0); outputs match receipt on disk and verifier rerun\",\n    \"note\": \"parent used `export R=...; cd -- \\\"$R\\\" && [ \\\"$(pwd -P)\\\" = \\\"$R\\\" ]` rather than literally exporting CLAUDE_PROJECT_DIR; containment check is equivalent\"\n  },\n  \"blockers\": []\n}\nEOF\npython3 -I -m json.tool eval-log/run-dev-graph-system-spec/R0-context/verdict.json >/dev/null && echo ok"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

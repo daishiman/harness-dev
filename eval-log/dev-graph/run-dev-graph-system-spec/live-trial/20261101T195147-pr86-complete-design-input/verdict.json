@@ -1,0 +1,162 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "C05 の C08 監査を明示 background で起動した。transcript/subagents/agent-a1df14947e05f7107.jsonl:236 の Agent toolu_01XiXiegUZqPvXDgrkVat993 に run_in_background:\"true\" がある。task.md は C05 の明示 background/name を禁止し、SS0.1.24 R2-delegate Layer 1.1/6.2 も正式 evaluator の foreground 実行を要求する。3監査の実 completion と digest 接地は成立しているが、この実行制約違反は解消しない。",
+      "C19 親の全 Bash に要求された固定 C24 root の前置きが1件欠ける。transcript.jsonl:152 の toolu_01EZYH9me3ecZqVyCY3EwwVE は observer の ls/head/python 診断を直接実行し、export CLAUDE_PROJECT_DIR / cd / pwd-P 照合がない。task.md の全Bash呼出し契約には observer 診断の例外はない。observer 自己I/O は projection 対象外なので、投影内の45件が適合するだけでは親の全46件の適合を証明できない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "b1315977774334a98548e69a194fe127b54e9cec4a4aff582c3eb48e6947a3ad",
+    "result": "FAIL",
+    "blockers": [
+      "C05 の C08 監査を明示 background で起動した。transcript/subagents/agent-a1df14947e05f7107.jsonl:236 の Agent toolu_01XiXiegUZqPvXDgrkVat993 に run_in_background:\"true\" がある。task.md は C05 の明示 background/name を禁止し、SS0.1.24 R2-delegate Layer 1.1/6.2 も正式 evaluator の foreground 実行を要求する。3監査の実 completion と digest 接地は成立しているが、この実行制約違反は解消しない。",
+      "C19 親の全 Bash に要求された固定 C24 root の前置きが1件欠ける。transcript.jsonl:152 の toolu_01EZYH9me3ecZqVyCY3EwwVE は observer の ls/head/python 診断を直接実行し、export CLAUDE_PROJECT_DIR / cd / pwd-P 照合がない。task.md の全Bash呼出し契約には observer 診断の例外はない。observer 自己I/O は projection 対象外なので、投影内の45件が適合するだけでは親の全46件の適合を証明できない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec116"
+    },
+    "transcript_sha256": "766681e38d94d65b4b35066ce6a21e11be8346424d6f410dcdec7c0952cc844c",
+    "evidence_refs": [
+      "task.md",
+      "project-instructions.md",
+      "project-instructions-at-collection.md",
+      "project-instructions-provenance.json",
+      "transcript.jsonl",
+      "transcript/subagents/agent-a1df14947e05f7107.jsonl",
+      "tool-observer/index.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+      "fx-final/tree/eval-log/system-spec-completeness-report.json",
+      "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/eval-log/run-dev-graph-node-progress.json",
+      "evidence-redaction.json",
+      "poll-normalization.json",
+      "poll-state.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "766681e38d94d65b4b35066ce6a21e11be8346424d6f410dcdec7c0952cc844c",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1816.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript/subagents/agent-a1df14947e05f7107.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1816.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "9cd12e0484ae26a4fadc232aa30dba04aad2c047dbc53f77db81a44f66de0e67",
+      "tokens": {
+        "input_tokens": 448,
+        "cache_creation_input_tokens": 1752223,
+        "cache_read_input_tokens": 18540793,
+        "output_tokens": 164473,
+        "total_tokens": 20457937,
+        "assistant_messages": 216,
+        "assistant_message_ids": 216,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 11,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a550da12-9458-41be-a9d3-77ffa3ce233f",
+      "line": 63,
+      "prefix_bytes": 401613,
+      "prefix_sha256": "d69c285f15955ee78b94ae32e70b5dfc4546b1d8eb89a5bca00456c87215ce60",
+      "timestamp": "2026-11-01T09:25:54.401Z"
+    },
+    "result": {
+      "uuid": "a51da5a0-e4b2-4d26-aff1-d3813e25005c",
+      "line": 64,
+      "prefix_bytes": 403630,
+      "prefix_sha256": "14b4b26d0694a82cdd7189ea42a397b8ca10ab344f995ddeb5e081e3a25a3eb8",
+      "timestamp": "2026-11-01T09:25:56.616Z"
+    }
+  },
+  "tool_use_id": "toolu_01H78rfS7sSjP95Y8xv9DMYR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; L=eval-log/system-spec-harness/audit-fork-ledger.jsonl; ls -la $L; python3 -c \"\nimport json\nfor l in open('$L'):\n  d=json.loads(l); print({k:(v if not isinstance(v,str) or len(v)<80 else v[:80]) for k,v in d.items()})\"",
+    "description": "Inspect audit fork ledger"
+  },
+  "is_error": false,
+  "tool_result_content": "-rw-r--r--@ 1 dm  wheel  1113 11月  1 18:25 eval-log/system-spec-harness/audit-fork-ledger.jsonl\n{'audit_verdict': None, 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx', 'dispatch_token': 'c07-matrix-sysspec113-a1', 'prompt_sha256': '6d0fac7f47227b37e05401095c9eaefa0b9363c465c440ef12f8df87c5f707ac', 'record_kind': 'dispatch', 'response_sha256': '28306e18da000b08e95b4b6d9c78701a290f01c93116f40b7f464997cb41a1cf', 'schema_version': '1.2', 'session_id': '011ab2be-2195-436c-890d-13707ac48197', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_01TewrNeajiHhGtytURP5DkM', 'ts': '2026-11-01T09:25:23Z', 'verdict_state': 'pending'}\n{'agent_id': 'ac7c546412305978e', 'audit_verdict': 'PASS', 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx', 'dispatch_token': 'c07-matrix-sysspec113-a1', 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': '4b3617209981e67d752f3945c8b316c266dfa3b166df015543f6a0840dcfe941', 'schema_version': '1.3', 'session_id': '011ab2be-2195-436c-890d-13707ac48197', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T09:25:49Z', 'verdict_state': 'resolved'}",
+  "tool_use_result": null
+}

@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "92ed3e58-0d17-4e80-8823-e3eb482d04fb",
+      "line": 387,
+      "prefix_bytes": 2456003,
+      "prefix_sha256": "b94f06989b82b2e59c2129fbd5fd57b65959a39fcd6341a43d08468c5c7dd778",
+      "timestamp": "2026-11-01T10:57:23.115Z"
+    },
+    "result": {
+      "uuid": "632861c6-c128-40b2-af51-33955fc6eb64",
+      "line": 388,
+      "prefix_bytes": 2461683,
+      "prefix_sha256": "80dd4769dacf1aad7379f39db210db2467748d61193b266d9f788ce206ab7988",
+      "timestamp": "2026-11-01T10:57:23.364Z"
+    }
+  },
+  "tool_use_id": "toolu_01W9PuLpdbn4WvrTzn6pyPbV",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/system-spec-harness/skills/run-system-spec-compile/references/resource-map.yaml"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# resource-map.yaml — 設計書06 第13条スキーマ準拠\n2\t# run-system-spec-compile の Progressive Disclosure 索引。\n3\t# コンパイルの決定論本体は scripts/compile-spec-doc.py、章構造は chapter-template.md。\n4\tresources:\n5\t  - file: chapter-template.md\n6\t    topic: 章別 Markdown の構造テンプレート (frontmatter 確定マーカー + 収集状態表 + 設計知識参照 + 出典表)\n7\t    read_when: R2-render で章本文の構造を確認するとき\n8\t  - file: ../../../scripts/validate-coverage-matrix.py\n9\t    topic: 収集マトリクス網羅性の決定論ゲート (C12 / IN1)\n10\t    read_when: 生成直前に spec-state.json の網羅性を検証するとき\n11\t  - file: ../../../scripts/validate-source-citation.py\n12\t    topic: 出典記録の決定論ゲート (C13 / IN1)\n13\t    read_when: 生成直前に fetched-references.json の出典記録を検証するとき\n14\t  - file: ../scripts/compile-spec-doc.py\n15\t    topic: 章別 Markdown + index.md の決定論コンパイラ本体\n16\t    read_when: 章立て組み立て・frontmatter 生成・index 相互参照を実行するとき\n17\t  - file: ../../ref-system-design-knowledge/references/resource-map.yaml\n18\t    topic: 設計知識参照 (C04) の索引。カテゴリ→設計知識ポインタの read_when 対応\n19\t    read_when: R2-render で章へ設計知識ポインタを反映するとき\n20\t  - file: ../../ref-system-design-knowledge/references/knowledge-catalog.json\n21\t    topic: 設計知識の depends_on 依存宣言 (C14)。章内 deep card の位相順 (topo_order) の正本\n22\t    read_when: R2-render で複数 deep card を並べる順序を決めるとき (resource-map の記述順で並べない)\n23\t  - file: ../../ref-system-design-knowledge/references/doctrine-anchor-registry.json\n24\t    topic: concern→authority の上流指針 registry (C15)。章の「上流指針 (doctrine anchors)」節の正本\n25\t    read_when: R2-render で章へ doctrine anchor を反映するとき\n26\t  - file: ../../../scripts/validate-knowledge-graph.py\n27\t    topic: 知識グラフの決定論ゲート (--profile knowledge --order が topo_order、--profile doctrine が anchor 被覆を検証)\n28\t    read_when: R2-render が使う位相順と doctrine anchor を検証するとき\n29\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/system-spec-harness/skills/run-system-spec-compile/references/resource-map.yaml",
+      "content": "# resource-map.yaml — 設計書06 第13条スキーマ準拠\n# run-system-spec-compile の Progressive Disclosure 索引。\n# コンパイルの決定論本体は scripts/compile-spec-doc.py、章構造は chapter-template.md。\nresources:\n  - file: chapter-template.md\n    topic: 章別 Markdown の構造テンプレート (frontmatter 確定マーカー + 収集状態表 + 設計知識参照 + 出典表)\n    read_when: R2-render で章本文の構造を確認するとき\n  - file: ../../../scripts/validate-coverage-matrix.py\n    topic: 収集マトリクス網羅性の決定論ゲート (C12 / IN1)\n    read_when: 生成直前に spec-state.json の網羅性を検証するとき\n  - file: ../../../scripts/validate-source-citation.py\n    topic: 出典記録の決定論ゲート (C13 / IN1)\n    read_when: 生成直前に fetched-references.json の出典記録を検証するとき\n  - file: ../scripts/compile-spec-doc.py\n    topic: 章別 Markdown + index.md の決定論コンパイラ本体\n    read_when: 章立て組み立て・frontmatter 生成・index 相互参照を実行するとき\n  - file: ../../ref-system-design-knowledge/references/resource-map.yaml\n    topic: 設計知識参照 (C04) の索引。カテゴリ→設計知識ポインタの read_when 対応\n    read_when: R2-render で章へ設計知識ポインタを反映するとき\n  - file: ../../ref-system-design-knowledge/references/knowledge-catalog.json\n    topic: 設計知識の depends_on 依存宣言 (C14)。章内 deep card の位相順 (topo_order) の正本\n    read_when: R2-render で複数 deep card を並べる順序を決めるとき (resource-map の記述順で並べない)\n  - file: ../../ref-system-design-knowledge/references/doctrine-anchor-registry.json\n    topic: concern→authority の上流指針 registry (C15)。章の「上流指針 (doctrine anchors)」節の正本\n    read_when: R2-render で章へ doctrine anchor を反映するとき\n  - file: ../../../scripts/validate-knowledge-graph.py\n    topic: 知識グラフの決定論ゲート (--profile knowledge --order が topo_order、--profile doctrine が anchor 被覆を検証)\n    read_when: R2-render が使う位相順と doctrine anchor を検証するとき\n",
+      "numLines": 29,
+      "startLine": 1,
+      "totalLines": 29
+    }
+  }
+}

@@ -247,6 +247,25 @@ def test_route_unknown_id_fails(reports_dir):
                for f in MOD.validate_route(_handoff(), reports_dir, "C99"))
 
 
+def test_duplicate_handoff_route_id_makes_cli_exit1(tmp_path):
+    """同じ route ID の別定義が dict で last-write-wins にならず fail-closed になる。"""
+    handoff_path = _setup_repo(tmp_path)
+    handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
+    duplicate = dict(handoff["routes"][0])
+    duplicate["name"] = "shadow-route"
+    # 正規定義を後ろに残し、現行の dict 化では shadow が黙って上書きされる順序にする。
+    handoff["routes"].insert(0, duplicate)
+    handoff_path.write_text(json.dumps(handoff, ensure_ascii=False), encoding="utf-8")
+
+    for mode in (("--route", "C1"), ("--complete",)):
+        proc = _run("--handoff", str(handoff_path), *mode, cwd=tmp_path)
+        output = json.loads(proc.stdout)
+        assert proc.returncode == 1
+        assert output["valid"] is False
+        assert any("route id" in finding and "重複" in finding and "C1" in finding
+                   for finding in output["findings"])
+
+
 def test_route_id_filename_mismatch_fails(reports_dir):
     _write(reports_dir, "C1", _report("C2", _routes()[0]))
     assert any("route_id" in f for f in MOD.validate_route(_handoff(), reports_dir, "C1"))

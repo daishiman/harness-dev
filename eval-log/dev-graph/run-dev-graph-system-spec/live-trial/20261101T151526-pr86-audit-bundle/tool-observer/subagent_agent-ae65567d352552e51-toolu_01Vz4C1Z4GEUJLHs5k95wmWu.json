@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6b5e338f-b46c-4afc-b5ab-082dc59ced4d",
+      "line": 130,
+      "prefix_bytes": 659330,
+      "prefix_sha256": "65618fdd65056211bdd3e9989b04818997c4adf93c94b750b741cb88594b8274",
+      "timestamp": "2026-11-01T06:28:44.468Z"
+    },
+    "result": {
+      "uuid": "499d93cf-0f47-45d4-a175-722e3c54d9ee",
+      "line": 131,
+      "prefix_bytes": 660148,
+      "prefix_sha256": "5ed0337b52888e931af94a7ab9556e66728331275206f1d93edeefe9727bb629",
+      "timestamp": "2026-11-01T06:28:50.839Z"
+    }
+  },
+  "tool_use_id": "toolu_01Vz4C1Z4GEUJLHs5k95wmWu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport subprocess,sys,pathlib\nv='plugins/harness-creator/vendor/prompt-creator/verify-completeness.py'\nps=sorted(pathlib.Path('plugins/system-spec-harness').rglob('prompts/*.md'))\nfail=0\nfor p in ps:\n  r=subprocess.run([sys.executable,v,'--input',str(p)],capture_output=True,text=True)\n  if r.returncode!=0: fail+=1; print('FAIL',p,r.returncode,(r.stdout+r.stderr)[:600])\nprint('total',len(ps),'fail',fail)\n\"",
+    "description": "Run verify-completeness on all harness prompts"
+  },
+  "is_error": false,
+  "tool_result_content": "total 18 fail 0",
+  "tool_use_result": null
+}

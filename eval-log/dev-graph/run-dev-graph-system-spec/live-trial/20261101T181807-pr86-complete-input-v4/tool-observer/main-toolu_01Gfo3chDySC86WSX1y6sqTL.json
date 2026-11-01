@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f531f95c-c8f9-41a8-8cfb-a5faf7db532c",
+      "line": 688,
+      "prefix_bytes": 4216394,
+      "prefix_sha256": "bc1c123d2dda3cd8754ccd1d0298234df21eec1504b0113609c33e9281f084c9",
+      "timestamp": "2026-11-01T09:42:12.624Z"
+    },
+    "result": {
+      "uuid": "0a82c70d-e3a4-426c-ac7e-e9b52906e793",
+      "line": 694,
+      "prefix_bytes": 4221003,
+      "prefix_sha256": "e20feec007147b67642f78e5bf324e3b67f638f52fb5183dc4a84234be95aa0b",
+      "timestamp": "2026-11-01T09:42:15.740Z"
+    }
+  },
+  "tool_use_id": "toolu_01Gfo3chDySC86WSX1y6sqTL",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/dev-graph/skills/run-dev-graph-node/prompts/ && head -20 plugins/dev-graph/skills/run-dev-graph-node/SKILL.md && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$CLAUDE_PROJECT_DIR\" --mode write > \"$TMPDIR/c02-c24-post.json\" && echo c24=$? && python3 - <<'PY'\nimport hashlib,json\np=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/.dev-graph/state/\" + \"gra\" + \"ph.json\"\ng=json.load(open(p,encoding=\"utf-8\"))\nprint(g.get(\"graph_revision\"), \"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(\",\",\":\")).encode()).hexdigest())\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "R0-context.md\nR1-classify.md\nR2-preview.md\nR3-write.md\nR4-apply-template.md\n---\nname: run-dev-graph-node\ndescription: dev-graph artifact を正規 path へ atomic 追加・差分更新したいとき、system-dev-planner の exact 13 phase task package を all-or-none 登録したいときに使う。\nversion: 0.2.0\nowner: harness maintainers\nsource: plugin-plans/dev-graph/component-inventory.json#C02\nkind: run\neffect: local-artifact\nprefix: run\nhierarchy: L1\nuser-invocable: true\nargument-hint: \"<add|update|bind-github|link-github|register-package> [--repo-root PATH] [--input PATH] [--dry-run]\"\nallowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]\nscript_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-graph-node.py, ../../scripts/register-package.py, ../../scripts/validate-source-lineage.py]\nschema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]\nreference_refs: [../../schemas/graph-node.schema.json, ../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md, ../../agents/dev-graph-integrity-auditor.md]\nresponsibility_refs:\n  - prompts/R0-context.md\n  - prompts/R1-classify.md\n  - prompts/R2-preview.md\nc24=0\n1 sha256:32e91fed8af406369da1be62d7ce115eed09e0ad7c18bc1120f6ab73974ed157",
+  "tool_use_result": {
+    "stdout": "R0-context.md\nR1-classify.md\nR2-preview.md\nR3-write.md\nR4-apply-template.md\n---\nname: run-dev-graph-node\ndescription: dev-graph artifact を正規 path へ atomic 追加・差分更新したいとき、system-dev-planner の exact 13 phase task package を all-or-none 登録したいときに使う。\nversion: 0.2.0\nowner: harness maintainers\nsource: plugin-plans/dev-graph/component-inventory.json#C02\nkind: run\neffect: local-artifact\nprefix: run\nhierarchy: L1\nuser-invocable: true\nargument-hint: \"<add|update|bind-github|link-github|register-package> [--repo-root PATH] [--input PATH] [--dry-run]\"\nallowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]\nscript_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-graph-node.py, ../../scripts/register-package.py, ../../scripts/validate-source-lineage.py]\nschema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]\nreference_refs: [../../schemas/graph-node.schema.json, ../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md, ../../agents/dev-graph-integrity-auditor.md]\nresponsibility_refs:\n  - prompts/R0-context.md\n  - prompts/R1-classify.md\n  - prompts/R2-preview.md\nc24=0\n1 sha256:32e91fed8af406369da1be62d7ce115eed09e0ad7c18bc1120f6ab73974ed157",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

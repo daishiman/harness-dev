@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a251867e41d354524",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e361d85f-db0c-4d45-af41-394de2b9fe5a",
+      "line": 59,
+      "prefix_bytes": 551460,
+      "prefix_sha256": "3d7c2069a3ed293475ddd357baf9e0f04572b56470d03ca0b719e6699bc296b2",
+      "timestamp": "2026-11-01T14:03:28.428Z"
+    },
+    "result": {
+      "uuid": "1afb62cd-afd6-46f6-97a2-62b9df566090",
+      "line": 60,
+      "prefix_bytes": 558099,
+      "prefix_sha256": "6c16df7180f1d81a5b4e6996c60a5e0b8e63371937fe62b6a0a1b9ac3ac5b0b0",
+      "timestamp": "2026-11-01T14:03:33.191Z"
+    }
+  },
+  "tool_use_id": "toolu_01PGHmESFkTmdkzDq8oe1ne1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c \"\nimport json\nd=json.load(open('../workdir/tool-observer/index.json'))\nfrom collections import Counter\nprint(Counter((e['stream'].split('/')[0],e.get('tool_name')) for e in d['events']))\nfor e in d['events']:\n  if e['stream']=='main' and e.get('tool_name')=='Bash':\n    ks=[k for k in e if k.startswith('input')]\n    print({k:str(e[k])[:400] for k in ks})\n\"",
+    "description": "Show main-stream Bash event summaries"
+  },
+  "is_error": false,
+  "tool_result_content": "Counter({('subagent', 'Read'): 15, ('main', 'Read'): 13, ('main', 'Bash'): 9, ('subagent', 'Bash'): 4, ('main', 'Skill'): 1, ('main', None): 1})\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && ls -la plugins/dev-graph/skills/run-dev-graph-system-sp'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-conte'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-conte'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && mkdir -p eval-log/run-dev-graph-system-spec && python3 '}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && cat plugins/system-spec-harness/.claude-plugin/plugin.j'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B - <<\\'PY\\'\\\\nimport json, hashlib, pathlib, sub'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'import json;json.load(open(\\\\\"eval-log/ru'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'\\\\nimport json,hashlib,datetime,pathlib\\\\n'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'import json;print(json.load(open(\\\\\"eval-'}",
+  "tool_use_result": {
+    "stdout": "Counter({('subagent', 'Read'): 15, ('main', 'Read'): 13, ('main', 'Bash'): 9, ('subagent', 'Bash'): 4, ('main', 'Skill'): 1, ('main', None): 1})\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && ls -la plugins/dev-graph/skills/run-dev-graph-system-sp'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-conte'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-conte'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && mkdir -p eval-log/run-dev-graph-system-spec && python3 '}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && cat plugins/system-spec-harness/.claude-plugin/plugin.j'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B - <<\\'PY\\'\\\\nimport json, hashlib, pathlib, sub'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'import json;json.load(open(\\\\\"eval-log/ru'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'\\\\nimport json,hashlib,datetime,pathlib\\\\n'}\n{'input_summary': '{\"command\": \"export CLAUDE_PROJECT_DIR=\\\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\\\\\" && cd -- \\\\\"$CLAUDE_PROJECT_DIR\\\\\" && [ \\\\\"$(pwd -P)\\\\\" = \\\\\"$CLAUDE_PROJECT_DIR\\\\\" ] && python3 -B -c \\'import json;print(json.load(open(\\\\\"eval-'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

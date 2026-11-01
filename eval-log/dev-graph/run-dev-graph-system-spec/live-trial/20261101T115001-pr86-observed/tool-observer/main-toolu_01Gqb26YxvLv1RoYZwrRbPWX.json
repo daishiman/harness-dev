@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "066989b7-3716-431c-b05b-a6292bf704f7",
+      "line": 538,
+      "prefix_bytes": 2541781,
+      "prefix_sha256": "e9c0935c87cfef2dfa36b602d32df8d523cb082ddbca4a9771cb169659ee36e0",
+      "timestamp": "2026-11-01T03:04:11.921Z"
+    },
+    "result": {
+      "uuid": "04916e77-3727-46e6-8396-7c327c71b85e",
+      "line": 539,
+      "prefix_bytes": 2543116,
+      "prefix_sha256": "f9c0bb0de89198d73cd4cd87f93482389ef632745e554edaf10d3dbd9475813b",
+      "timestamp": "2026-11-01T03:04:14.568Z"
+    }
+  },
+  "tool_use_id": "toolu_01Gqb26YxvLv1RoYZwrRbPWX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && F=plugins/dev-graph/skills/run-dev-graph-node/scripts/build-graph-node.py; ls plugins/dev-graph/skills/run-dev-graph-node/scripts/; grep -n -E 'confirmation_evidence|invalid_confirmation_evidence|evaluator_verdict|evidence_ref|evidence_sha|imported_at|confirmation_status' $F | head -60",
+    "description": "Find confirmation_evidence contract in C02 writer"
+  },
+  "is_error": false,
+  "tool_result_content": "ls: plugins/dev-graph/skills/run-dev-graph-node/scripts/: No such file or directory\nugrep: warning: plugins/dev-graph/skills/run-dev-graph-node/scripts/build-graph-node.py: No such file or directory",
+  "tool_use_result": {
+    "stdout": "ls: plugins/dev-graph/skills/run-dev-graph-node/scripts/: No such file or directory\nugrep: warning: plugins/dev-graph/skills/run-dev-graph-node/scripts/build-graph-node.py: No such file or directory",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

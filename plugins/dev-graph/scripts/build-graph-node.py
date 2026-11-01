@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-graph-node
-# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, or switch confirmed issue/task nodes to the github binding with an immutable receipt.
-# inputs: ["argv: add|update|bind-github|link-github --repo-root PATH --input JSON [--config PATH] [--dry-run]"]
-# outputs: ["stdout: JSON preview/receipt or rejection report"]
+# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, or switch confirmed issue/task nodes to the github binding with an immutable receipt, and apply the C26 completion lifecycle request as its built-in consumer.
+# inputs: ["argv: add|update|bind-github|link-github --repo-root PATH --input JSON [--config PATH] [--dry-run]", "argv: --operation apply-lifecycle-request --request PATH --receipt PATH [--repo-root PATH] [--config PATH]"]
+# outputs: ["stdout: JSON preview/receipt or rejection report", "file: <git-common-dir>/dev-graph/completion-receipts/*.writer-receipt.json"]
 # requires-python = ">=3.10"
 # dependencies: [_common.py, validate-graph-schema.py, validate-source-lineage.py, resolve-repo-context.py]
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: caller repository content roots, the C24-resolved graph, and immutable receipts beside that graph
+# write-scope: caller repository content roots, the C24-resolved graph, immutable receipts beside that graph, and the lifecycle receipt C26 names under <git-common-dir>/dev-graph/completion-receipts
 # ///
-"""C02 artifact writer (add/update/bind-github/link-github) that shares the register-package writer lock."""
+"""C02 artifact writer (add/update/bind-github/link-github/apply-lifecycle-request) that shares the register-package writer lock."""
 from __future__ import annotations
 
 import argparse
@@ -452,16 +452,17 @@ class Composer:
 LINE_BREAKERS = {"\x85": "\\u0085", "\u2028": "\\u2028", "\u2029": "\\u2029"}
 
 
-def _frontmatter(node: dict[str, Any], keys: list[str], unmanaged: list[str] | None = None) -> str:
+def _front_line(key: str, value: Any) -> str:
     # One JSON value per line: escape the code points str.splitlines() treats as line ends.
-    rows = []
-    for key in keys:
-        # sort_keys matches graph.json, so an update re-serialising a node read back from the graph moves no keys.
-        value = json.dumps(node[key], ensure_ascii=False, sort_keys=True)
-        for raw, escaped in LINE_BREAKERS.items():
-            value = value.replace(raw, escaped)
-        rows.append(f"{key}: {value}\n")
-    return "---\n" + "".join(rows) + "".join(unmanaged or []) + "---\n"
+    # sort_keys matches graph.json, so an update re-serialising a node read back from the graph moves no keys.
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    for raw, escaped in LINE_BREAKERS.items():
+        text = text.replace(raw, escaped)
+    return f"{key}: {text}\n"
+
+
+def _frontmatter(node: dict[str, Any], keys: list[str], unmanaged: list[str] | None = None) -> str:
+    return "---\n" + "".join(_front_line(key, node[key]) for key in keys) + "".join(unmanaged or []) + "---\n"
 
 
 def _split_frontmatter(text: str, label: str) -> tuple[list[str], list[str]]:
@@ -484,6 +485,30 @@ def _unmanaged_frontmatter(front: list[str], keys: list[str]) -> list[str]:
             keep = match.group(1) not in keys
         if keep:
             kept.append(line if line.endswith(("\n", "\r")) else line + "\n")
+    return kept
+
+
+def _replace_frontmatter(front: list[str], values: dict[str, Any], label: str) -> list[str]:
+    """Rewrite only the given top-level keys (with their continuation lines) of a frontmatter C02 does not own.
+
+    Keys the file never declared stay absent; the status line a completion projects onto must already be there.
+    """
+    kept: list[str] = []
+    seen: set[str] = set()
+    skip = False
+    for line in front:
+        match = FRONT_KEY.match(line)
+        if match:
+            skip = match.group(1) in values
+            if skip:
+                if match.group(1) in seen:
+                    raise WriterError("frontmatter_invalid", f"{label} repeats {match.group(1)}")
+                seen.add(match.group(1))
+                kept.append(_front_line(match.group(1), values[match.group(1)]))
+        if not skip:
+            kept.append(line)
+    if "status" not in seen:
+        raise WriterError("frontmatter_status_missing", f"{label} has no top-level status line to complete")
     return kept
 
 
@@ -1177,6 +1202,40 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
     return plan
 
 
+def _plan_lifecycle(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                    composer: Composer, now: str) -> list[dict[str, Any]]:
+    """C26 の完了要求を task へ投影する: task_patch.set の key だけを graph と frontmatter に写し、本文は変えない。
+
+    完了は内容の変更ではないので evaluation_status と readiness は残す。before-image (graph と artifact の sha256) は
+    lock の中で照合し直し、C26 が request を書いた後に動いた graph/artifact へは書かない。exact-13 package member の
+    file は system-dev-planner の frontmatter なので、作り直さず set の key の行だけを置き換える。
+    """
+    patch = payload["task_patch"]
+    graph_node_id = patch["graph_node_id"]
+    label = f"task_patch {graph_node_id}"
+    before_node = next((node for node in nodes if node.get("graph_node_id") == graph_node_id), None)
+    if before_node is None or before_node.get("file_path") != patch.get("file_path"):
+        raise WriterError("unknown_node", f"{label}: node or file_path is not in the graph")
+    graph_path = contained(Path(ctx["local_state_paths"]["graph"]), root, must_exist=True)
+    target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+    before_bytes = target_path.read_bytes()
+    if (_sha256(graph_path.read_bytes()), _sha256(before_bytes)) != (payload["graph_sha256_before"], patch["artifact_sha256_before"]):
+        raise WriterError("lifecycle_before_image_mismatch", f"{label}: graph/artifact changed after C26 wrote the request")
+    node = {**copy.deepcopy(before_node), **copy.deepcopy(patch["set"])}
+    member = is_package_member(before_node)
+    front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+    if member:
+        text = "---\n" + "".join(_replace_frontmatter(front, patch["set"], label)) + "---\n" + "".join(lines)
+    else:
+        keys = list(composer.contract["common_frontmatter"]["required"])
+        _require_keys(before_node, keys, label)
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+    return [{"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+             "member": member, "detail": {"graph_node_id": graph_node_id, "file_path": node["file_path"],
+                                          "status": {"before": before_node.get("status"), "after": node["status"]},
+                                          "body_preserved": True, "package_member": member}}]
+
+
 # ---------------------------------------------------------------- transaction
 
 PLANNED_KEYS = ("graph_node_id", "artifact_kind", "status", "confirmation_status", "evaluation_status",
@@ -1197,13 +1256,18 @@ def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], st
             if item["node"] in staged_ids or json.dumps(item, sort_keys=True) not in known]
 
 
-def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, Any]]]) -> dict[str, Any]:
-    ctx = _context(args.repo_root, args.config)
+def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, Any]]],
+              source: tuple[dict[str, Any], bytes, dict[str, Any]] | None = None) -> dict[str, Any]:
+    ctx = source[0] if source else _context(args.repo_root, args.config)
     root = Path(ctx["repo_root"]).resolve(strict=True)
-    # A relative --input is repo-relative, like every other path the writer handles; cwd never matters.
-    input_path = contained(Path(args.input) if Path(args.input).is_absolute() else root / args.input, root)
-    input_bytes = input_path.read_bytes()
-    payload = json.loads(input_bytes)
+    if source:
+        # apply-lifecycle-request: the request C26 left under the git-common-dir (outside a linked worktree) is the input.
+        _, input_bytes, payload = source
+    else:
+        # A relative --input is repo-relative, like every other path the writer handles; cwd never matters.
+        input_path = contained(Path(args.input) if Path(args.input).is_absolute() else root / args.input, root)
+        input_bytes = input_path.read_bytes()
+        payload = json.loads(input_bytes)
     if not isinstance(payload, dict):
         raise WriterError("invalid_input", "input must be a JSON object")
     graph_path = contained(Path(ctx["local_state_paths"]["graph"]), root, must_exist=False)
@@ -1241,8 +1305,9 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
             return {**base, "status": "noop", "valid": True, "dry_run": bool(args.dry_run), "idempotent": True,
                     "applied_count": 0, "write_count": 0, "graph_revision_after": revision_before}
         # A graph-only entry (path None: a package member's linkage) stages no artifact, so only the findings it
-        # introduces block it; every staged node must come out clean.
-        staged_ids = {item["node"]["graph_node_id"] for item in plan if item["path"] is not None}
+        # introduces block it; every staged node must come out clean. A package member's own file keeps
+        # system-dev-planner's frontmatter rather than the C02 contract, so its lifecycle edit is judged the same way.
+        staged_ids = {item["node"]["graph_node_id"] for item in plan if item["path"] is not None and not item.get("member")}
         replacements = {item["node"]["graph_node_id"]: item["node"] for item in plan}
         proposed_nodes = [replacements.pop(node.get("graph_node_id"), node) for node in nodes]
         proposed_nodes += [item["node"] for item in plan if item["before_node"] is None]
@@ -1252,7 +1317,7 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         with tempfile.TemporaryDirectory(prefix="dev-graph-node-") as staging_dir:
             staging = Path(staging_dir).resolve()
             for item in plan:
-                if item["path"] is None:
+                if item["node"]["graph_node_id"] not in staged_ids:
                     continue
                 staged = staging / item["node"]["file_path"]
                 staged.parent.mkdir(parents=True, exist_ok=True)
@@ -1329,6 +1394,110 @@ def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
         raise WriterError("immutable_receipt_exists", str(path)) from exc
 
 
+# ---------------------------------------------------------------- C26 lifecycle request
+
+LIFECYCLE_OPERATION = "apply-lifecycle-request"
+LIFECYCLE_SET_KEYS = {"status", "updated_at", "completion_evidence", "pull_request_linkages"}
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _coordination_path(authority: Path, raw: str, *, must_exist: bool) -> Path:
+    candidate = Path(raw).expanduser().resolve(strict=must_exist)
+    if candidate.parent != authority:
+        raise WriterError("lifecycle_path_outside_authority", f"{raw} must be a direct child of {authority}")
+    return candidate
+
+
+def _check_lifecycle_request(request: Any, graph_relative: str) -> None:
+    """The request reconcile-github-lifecycle `_writer_request` writes; anything else is refused before the graph is read."""
+    def invalid(detail: str) -> WriterError:
+        return WriterError("lifecycle_request_invalid", detail)
+
+    if not isinstance(request, dict) or (request.get("schema_version"), request.get("owner"), request.get("operation"),
+                                         request.get("status")) != ("1.1", OWNER, LIFECYCLE_OPERATION, "pending"):
+        raise invalid("identity/status mismatch")
+    if request.get("request_digest") != _canonical_digest({key: value for key, value in request.items()
+                                                           if key != "request_digest"}).removeprefix("sha256:"):
+        raise invalid("request_digest mismatch")
+    if not isinstance(request.get("event_key"), str) or not request["event_key"]:
+        raise invalid("event_key is required")
+    if request.get("graph_path") != graph_relative:
+        raise invalid(f"graph_path must be the C24 graph {graph_relative}")
+    revision = request.get("graph_revision_before")
+    if isinstance(revision, bool) or not isinstance(revision, int) or revision < 0:
+        raise invalid("graph_revision_before must be a non-negative integer")
+    patch = request.get("task_patch")
+    if not isinstance(patch, dict) or not isinstance(patch.get("graph_node_id"), str) or not isinstance(patch.get("set"), dict):
+        raise invalid("task_patch is {graph_node_id, file_path, artifact_sha256_before, set}")
+    if not all(isinstance(value, str) and HEX64.match(value)
+               for value in (request.get("graph_sha256_before"), patch.get("artifact_sha256_before"))):
+        raise invalid("graph_sha256_before and artifact_sha256_before must be sha256 hex")
+    if set(patch["set"]) - LIFECYCLE_SET_KEYS:
+        raise invalid(f"task_patch.set accepts only {sorted(LIFECYCLE_SET_KEYS)}")
+    completion = patch["set"].get("completion_evidence")
+    if patch["set"].get("status") != "done" or not isinstance(completion, dict) or completion.get("status") != "done":
+        raise invalid("task_patch.set must project the durable done state")
+    if request.get("feature_patch") is not None:
+        raise WriterError("feature_rollup_not_supported", "apply-lifecycle-request does not take a feature rollup; complete "
+                          "the task without --registration-receipt, then run the feature rollup")
+
+
+def _front_status(path: Path) -> str | None:
+    front, _ = _split_frontmatter(path.read_text(encoding="utf-8"), path.name)
+    for line in front:
+        match = FRONT_KEY.match(line)
+        if match and match.group(1) == "status":
+            return line[match.end():].strip().strip("\"'")
+    return None
+
+
+def _apply_lifecycle(args: argparse.Namespace) -> dict[str, Any]:
+    """C26 の writer request を C02 として適用し、C26 が照合する receipt を completion-receipts へ書く。
+
+    request と receipt は `<git-common-dir>/dev-graph/completion-receipts` 直下だけを受ける。receipt を書く前に落ちた
+    retry は、graph が既に request の完了状態 (revision+1) を持つので書き直さず idempotent な receipt だけを返す。
+    """
+    ctx = _context(args.repo_root, args.config)
+    root = Path(ctx["repo_root"]).resolve(strict=True)
+    authority = (Path(ctx["git_common_dir"]) / "dev-graph" / "completion-receipts").resolve()
+    request_path = _coordination_path(authority, args.request, must_exist=True)
+    receipt_path = _coordination_path(authority, args.receipt, must_exist=False)
+    if request_path == receipt_path:
+        raise WriterError("lifecycle_request_invalid", "request and receipt paths must differ")
+    request_bytes = request_path.read_bytes()
+    request = json.loads(request_bytes)
+    graph_path = contained(Path(ctx["local_state_paths"]["graph"]), root, must_exist=True)
+    _check_lifecycle_request(request, graph_path.relative_to(root).as_posix())
+    patch, revision = request["task_patch"], request["graph_revision_before"]
+    graph_bytes = graph_path.read_bytes()
+    graph = json.loads(graph_bytes)
+    node = next((row for row in VGS.nodes_of(graph) if row.get("graph_node_id") == patch["graph_node_id"]), None)
+    if node is None or node.get("file_path") != patch.get("file_path"):
+        raise WriterError("unknown_node", f"task_patch {patch['graph_node_id']}: node or file_path is not in the graph")
+    artifact = contained(root / str(node["file_path"]), root, must_exist=True)
+    if graph.get("graph_revision") == revision + 1 and all(node.get(key) == value for key, value in patch["set"].items()):
+        if _front_status(artifact) != "done":
+            raise WriterError("artifact_parity_error", f"{node['file_path']}: graph is done but the Markdown status is not")
+        applied = {"graph_sha256_after": _sha256(graph_bytes), "graph_revision_after": revision + 1,
+                   "task_artifact_sha256_after": _sha256(artifact.read_bytes()), "idempotent": True,
+                   "node_receipt_path": None}
+    else:
+        payload = {"expected_graph_revision": revision, "graph_sha256_before": request["graph_sha256_before"], "task_patch": patch}
+        written = _transact(argparse.Namespace(command=LIFECYCLE_OPERATION, dry_run=False), _plan_lifecycle,
+                            (ctx, request_bytes, payload))
+        graph_after = graph_path.read_bytes()
+        if _canonical_digest(json.loads(graph_after)) != written["graph_digest_after"]:
+            raise WriterError("graph_changed_after_write", "another writer moved the graph before the lifecycle receipt was written")
+        applied = {"graph_sha256_after": _sha256(graph_after), "graph_revision_after": written["graph_revision_after"],
+                   "task_artifact_sha256_after": written["artifacts"][0]["sha256_after"], "idempotent": False,
+                   "node_receipt_path": written["receipt_path"]}
+    receipt = {"schema_version": "1.0", "owner": OWNER, "operation": LIFECYCLE_OPERATION, "status": "applied",
+               "event_key": request["event_key"], "graph_node_id": patch["graph_node_id"],
+               "request_digest": request["request_digest"], **applied, "applied_at": utc_now()}
+    atomic_json(receipt_path, receipt)
+    return receipt
+
+
 PLANNERS: dict[str, Callable[..., list[dict[str, Any]]]] = {
     "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github, "link-github": _plan_link_github}
 
@@ -1345,10 +1514,22 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _lifecycle_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="C02 consumer of the C26 completion lifecycle request")
+    parser.add_argument("--operation", required=True, choices=[LIFECYCLE_OPERATION])
+    parser.add_argument("--request", required=True, help="<git-common-dir>/dev-graph/completion-receipts/*.writer-request.json")
+    parser.add_argument("--receipt", required=True, help="sibling path the applied receipt is written to")
+    parser.add_argument("--repo-root", default=".", help="C26 starts the consumer with cwd = repo root")
+    parser.add_argument("--config", default=".dev-graph/config.json")
+    return parser
+
+
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    raw = sys.argv[1:] if argv is None else argv
+    lifecycle = any(arg == "--operation" or arg.startswith("--operation=") for arg in raw)
+    args = (_lifecycle_parser() if lifecycle else _parser()).parse_args(raw)
     try:
-        dump(_transact(args, PLANNERS[args.command]))
+        dump(_apply_lifecycle(args) if lifecycle else _transact(args, PLANNERS[args.command]))
         return 0
     except WriterError as exc:
         broken = exc.code == "rollback_incomplete"

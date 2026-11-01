@@ -1,0 +1,72 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    {
+      "id": "B1",
+      "description": "C19 の目的である確定仕様・architecture の取込を達成していない。独立 C05 report は FAIL、graph_revision=0/nodes=[]、C02 Skill/writer 登録なし。正規フローの完了と取込後 lineage/evaluator evidence の保持を観測できず、元観測1・2およびOUT1未達。",
+      "evidence_refs": [
+        "fx-eval-log/system-spec-completeness-report.json",
+        "fx-final/tree/.dev-graph/state/graph.json",
+        "transcript.jsonl"
+      ]
+    },
+    {
+      "id": "B2",
+      "description": "C05 の設計知識評価で未解決の不足が残る。O1/D4 の要件は質疑本文に残るが、database/backend/ui-ux/maintenance-ops 等の章固有の設計適用節は従前QA中心で、job_outbox・claim/lease/fencing・失敗job/30分超未処理の新しい要件に対する具体的な設計理由・運用判断への接続が不十分。二QAの同じ解釈やprovenance nullだけを違反とはせず、実章の具体適用不足と evaluator PASS 未取得を根拠とする。",
+      "evidence_refs": [
+        "fx-final/tree/system-spec/spec-state.json",
+        "fx-final/tree/system-spec/database.md",
+        "fx-final/tree/system-spec/backend.md",
+        "fx-final/tree/system-spec/maintenance-ops.md",
+        "fx-eval-log/system-spec-completeness-report.json"
+      ]
+    },
+    {
+      "id": "B3",
+      "description": "C05 は自身のSKILL/R1/R2/rubric/criteria/schema、全18prompt・全10Markdownを取得した一方、Step3/R1-scoreが設計知識反映の直接照合元に指定する C04 resource-map.yaml を自身のcontextで全文取得していない。全実Read/Bashを再構成しても当該索引の取得はなく、C04 map由来の反映を確認したという自己申告だけでは必須境界の充足を証明できない。",
+      "evidence_refs": [
+        "transcript/subagents/agent-adc371c3e200ef423.jsonl",
+        "tool-observer/index.json",
+        "fx-eval-log/system-spec-completeness-report.json"
+      ]
+    },
+    {
+      "id": "B4",
+      "description": "C05 の明示CLI境界（allowed-tools: Bash(python3 *)、R1-score 4.3の検証script実行と許可JSON保存への限定）を守っていない。実際にBashでcat/ls/find/grep/wc/tail/cut等を実行し、find / の全体探索や監査outputのtailも行っている。許可された2つのliteral JSON保存は正しく、禁止report builderや仕様改変は無いが、それで別のCLI境界差分は解消しない。",
+      "evidence_refs": [
+        "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01KS9KUpt9RzMqZj3w3f7snX.json",
+        "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01GqM8JaN7ifHwJ8VYi57qkT.json",
+        "tool-observer/subagent_agent-adc371c3e200ef423-toolu_019MbRePwrSr2oEkZbAfFC97.json"
+      ]
+    }
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec115"
+  },
+  "transcript_sha256": "3e6abfd67eb8223a9aac7f0f098505e98452abb5071b781ab4e909cbd351c0bd",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "tool-observer/index.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/system-spec/spec-state.json",
+    "fx-final/tree/system-spec/maintenance-ops.md",
+    "fx-final/tree/system-spec/database.md",
+    "fx-final/tree/system-spec/backend.md",
+    "evidence-redaction.json",
+    "poll-normalization.json",
+    "poll-state.json",
+    "project-instructions.md",
+    "project-instructions-at-collection.md",
+    "task.md",
+    "out/status.json",
+    "transcript/subagents/agent-adc371c3e200ef423.jsonl",
+    "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01KS9KUpt9RzMqZj3w3f7snX.json",
+    "tool-observer/subagent_agent-adc371c3e200ef423-toolu_01GqM8JaN7ifHwJ8VYi57qkT.json",
+    "tool-observer/subagent_agent-adc371c3e200ef423-toolu_019MbRePwrSr2oEkZbAfFC97.json"
+  ]
+}

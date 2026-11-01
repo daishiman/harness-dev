@@ -1,0 +1,47 @@
+{
+  "target": {
+    "plugin": "flyer-studio",
+    "skill": "run-create-flyer",
+    "skill_md_sha256": "01aa5e822776f96396935b9c7075fcfd9e4b7aafb7007cae46f152d4094be16a"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-metadata-diff-reviewer /root/review_flyer_ci",
+  "reviewed_at": "2026-10-31T16:24:47.341846+00:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "VERSION-METADATA-ONLY"
+    ],
+    "positive_feedback": [
+      "変更前snapshotと最終sourceを独立比較し、frontmatter.versionまたはroot.version（package-lockはpackages[\"\"].versionも）を除く全データが同値であることを確認した。Skill本文・責務・criteria・所有・実行条件・workflowの資源と依存辺は不変。",
+      "plugin固有check_versions（build-local-package.py:749-768）はmanifest/package/EVALS/workflow/Skill/agentの同版を要求する。1.3.2への同期はこの機械契約を満たし、意味上の能力や実行結果を追加しない。",
+      "従前の意味判断は変更前SHAに一致する既存content-reviewを根拠履歴として継承する。今回の独立検査はversionメタデータ差分と非version同値性に限定した。"
+    ],
+    "negative_feedback": [
+      "[履歴継承・今回未再評価] [low / inconsistency / plugins/flyer-studio/skills/run-create-flyer/workflow-manifest.json:132-134 ⇔ plugins/flyer-studio/references/registry.json:264, SKILL.md:164-171] 前回 verdict からの持ち越しで、まだ残っている。manifest の entrypoint は ../../scripts/cli.cjs である。一方、登録簿の implementation.entrypoint と本文の実行例は scripts/build-flyer.py である。前回の所見は plugin-composition.yaml:265 を対応先に挙げていた。いまの composition は implementation を持たない生成物なので、対応の正本は registry.json:264 に移っている。stage-common.md:23 のとおり build-flyer.py は同じ引数を cli.cjs へ渡す入口なので、実行は壊れない。直し方: manifest の entrypoint を ../../scripts/build-flyer.py に揃え、cli.cjs は実体として別の resource に挙げる。SKILL.md の変更は要らない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual:parent-delegated-independent-version-metadata-only-review",
+    "next_action": "none"
+  },
+  "notes": "既存判定を今回フル再評価したものではない。独立検査は22ファイルのversion限定差分、非versionデータ同値、両release manifestのname等の不変性。eleganceの従前の意味判断を継承し、旧criteria IDの評価は根拠履歴に属する（今回新規評価はVERSION-METADATA-ONLY）。履歴: eval-log/flyer-studio/run-create-flyer/content-review/elegance-verdict.json, SHA-256=1db9183616dd899c6d8ffba9175153c984a7d34bc3efb45c8b65b46a5ec97589, 対象旧SHA=969a9b74b62083c19d6dab2cbbd7c497ad6b16df78e26bb427a749a2a5b7348f, 判定=PASS, reviewer=independent-content-reviewer (fresh context, focused combined review, port-hh-flyer-rubric-20261030), reviewed_at=2026-10-30T14:52:05Z。現対象SHA=01aa5e822776f96396935b9c7075fcfd9e4b7aafb7007cae46f152d4094be16a。findings_summaryとnegative_feedbackは既存所見を隠さず保持した履歴であり、今回新規欠陥や現行での再確認を意味しない。近隣sourceのversionも同時に正規化比較した。30思考法フル実走、host trial、人間の新たな承認、実画像再評価はしていない。scorer再実行もこの5 skillではしていない。根拠はmetadata-version-review.jsonと各*-inherited-review.json。source/fixture/既存eval-logの編集なし。"
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e8ddbd82-196d-4541-af91-d4195ffb7aff",
+      "line": 168,
+      "prefix_bytes": 960940,
+      "prefix_sha256": "522456f2c899624729356542e7001b67133f0a3f15a5f2304ff9c85d279eb6c2",
+      "timestamp": "2026-11-01T15:21:38.678Z"
+    },
+    "result": {
+      "uuid": "2179ed2c-1af0-4a18-877f-f381182e6ea5",
+      "line": 171,
+      "prefix_bytes": 964057,
+      "prefix_sha256": "4844d5968f10e426fdbb7b767a9cb8f8f7b2bbc05d16a000a5e6b2a08aa58ef9",
+      "timestamp": "2026-11-01T15:21:40.746Z"
+    }
+  },
+  "tool_use_id": "toolu_01Y6gZvo735qCaG2t19qZ1g4",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && \\\npython3 -B \"${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/plugins/system-spec-harness}/scripts/validate-coverage-matrix.py\" --matrix \"system-spec/spec-state.json\" --require-complete --require-basis --require-foundation 2>&1 | head -50",
+    "description": "IN1 Gate 1: Validate coverage matrix completeness"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

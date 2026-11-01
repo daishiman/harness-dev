@@ -1,0 +1,181 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec99/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "C08の必読監査SSOTが未読。正規source: plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md:42（本SSOTとcatalogは開始時必読）、agents/system-spec-doc-freshness-auditor.md:120（監査SSOTを読み矛盾を照合する完了チェックリスト）。今回 transcript/subagents/agent-ade2df84d4949edb2.jsonl の実toolはRead 2件（toolu_016fNiyJx17DgXg3NqSyEYkd=catalog、toolu_01LSQPrD9pQJjqMBR2qj2qhM=fetched-references）、Bash 1件、WebFetch 4件のみで、R4全文を読む操作がない。prompt_snapshotは詳細なagent定義を含むがR4正本全文は含まず、SSOTとの照合を代替しない。是正: C08がR4正本を全文読んで照合した後に監査を完了する。",
+      "C07/C06のBash責務範囲に違反。正規source: run-system-spec-elicit/prompts/R7-audit-matrix.md:78,94 はC07のBashをvalidate-coverage-matrix.py実行だけに限定。今回 transcript/subagents/agent-aad7025b136ce453e.jsonl:22,26,31,36 の toolu_01FLHC1vkPEpxLyxRdvxTbAy / toolu_01CndyD9to21xwFbJzgZ8ut8 / toolu_01AWXqFt3Xwkys7xDuzF3gaG / toolu_01PNyGe5gWxEqMRTHVQHbtB1 は独自Pythonでstateを抽出・集計・参照照合している。これらはread-onlyのデータ読取/検査補助であり、正規validatorや実auditorの代替、偽PASS、state改変とは認定しない。しかし明示範囲の外で、C07自身も最終応答にSSOTとの差分と記録。C06もR6-audit-hearing.md:48がBashをPython標準ライブラリのpath containment/SHA検査だけに限定するところ、agent-a006d66afaebda59a.jsonl:31 toolu_01PtgxVXphopcoLkFNsrB73cでgrep|headによりcriteriaを読む。是正: データ/基準の読取はRead、Bashは各roleに許された正規CLI/検査だけにする。",
+      "C05がallowed-toolsの範囲外の操作を実行。正規source: assign-system-spec-completeness-evaluator/SKILL.md:20-25 はRead / Bash(python3 *) / Agent / Task。今回 agent-a30a81e1c6a74c56e.jsonl:25 toolu_01SH7Tc8j2e6diXFVdTS3Mat はBash cat/wc、:132 toolu_01XZcbd5j5pcCG3zDWnqme4M はBash find /（後にTaskStop）、:138 toolu_01Rgosh1ciCd2XbxQgXzZyyR は未宣言TaskStop。:34/:38ではtee/redirectでscratchのsnapshot/gate JSONも保存する。正規source R1-score.md:4.3は検証スクリプトとhearing-audit/report保存にBash(python3 *)を限定する。これは仕様/state/graphの改変やC05のWrite/Edit使用ではないが、roleの明示ツール/保存境界は満たさない。是正: source読取はRead、外部探索をせずpin内をRead/Pythonで確認、保存はroleで許可された手段/出力に限定して評価する。",
+      "C02の出力前に責務prompt全文を読んだ証拠が不足。正規source: run-dev-graph-node/SKILL.md:18-42はR0/R1/R2/R3/R4すべてprompt_required=true、:182は担当promptsを読む契約。今回 task.md「契約履行の確認」も各責務prompt全文を成果作成前にReadすることを必須とする。親 transcript.jsonl:481 toolu_01ShpzJz9mdzK1mqtjNLguTK はLayer2〜4直前と5.3〜Layer6だけのsed部分読取。:487 toolu_01Xo9k6qVfKqVKtQSeoxnkonはcat R0/R3 | head -150 | wc -lなので全文はcontextへ出ない。子agent-aad273de54203d394.jsonl:16はR3-write全文を読むがR0/R1/R2/R4全文の読取を補わない。C02のSkill読込はSKILL本文であり、参照prompt全文の読込にはならない。是正: 分類/preview/template/contextを出力する前に担当prompt全文を読み、現行契約でC02を実行する。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "de000b34594bc26921d6367ff95e2717bd4f55b36fc64a6805d5c595bb44d392",
+    "result": "FAIL",
+    "blockers": [
+      "C08の必読監査SSOTが未読。正規source: plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md:42（本SSOTとcatalogは開始時必読）、agents/system-spec-doc-freshness-auditor.md:120（監査SSOTを読み矛盾を照合する完了チェックリスト）。今回 transcript/subagents/agent-ade2df84d4949edb2.jsonl の実toolはRead 2件（toolu_016fNiyJx17DgXg3NqSyEYkd=catalog、toolu_01LSQPrD9pQJjqMBR2qj2qhM=fetched-references）、Bash 1件、WebFetch 4件のみで、R4全文を読む操作がない。prompt_snapshotは詳細なagent定義を含むがR4正本全文は含まず、SSOTとの照合を代替しない。是正: C08がR4正本を全文読んで照合した後に監査を完了する。",
+      "C07/C06のBash責務範囲に違反。正規source: run-system-spec-elicit/prompts/R7-audit-matrix.md:78,94 はC07のBashをvalidate-coverage-matrix.py実行だけに限定。今回 transcript/subagents/agent-aad7025b136ce453e.jsonl:22,26,31,36 の toolu_01FLHC1vkPEpxLyxRdvxTbAy / toolu_01CndyD9to21xwFbJzgZ8ut8 / toolu_01AWXqFt3Xwkys7xDuzF3gaG / toolu_01PNyGe5gWxEqMRTHVQHbtB1 は独自Pythonでstateを抽出・集計・参照照合している。これらはread-onlyのデータ読取/検査補助であり、正規validatorや実auditorの代替、偽PASS、state改変とは認定しない。しかし明示範囲の外で、C07自身も最終応答にSSOTとの差分と記録。C06もR6-audit-hearing.md:48がBashをPython標準ライブラリのpath containment/SHA検査だけに限定するところ、agent-a006d66afaebda59a.jsonl:31 toolu_01PtgxVXphopcoLkFNsrB73cでgrep|headによりcriteriaを読む。是正: データ/基準の読取はRead、Bashは各roleに許された正規CLI/検査だけにする。",
+      "C05がallowed-toolsの範囲外の操作を実行。正規source: assign-system-spec-completeness-evaluator/SKILL.md:20-25 はRead / Bash(python3 *) / Agent / Task。今回 agent-a30a81e1c6a74c56e.jsonl:25 toolu_01SH7Tc8j2e6diXFVdTS3Mat はBash cat/wc、:132 toolu_01XZcbd5j5pcCG3zDWnqme4M はBash find /（後にTaskStop）、:138 toolu_01Rgosh1ciCd2XbxQgXzZyyR は未宣言TaskStop。:34/:38ではtee/redirectでscratchのsnapshot/gate JSONも保存する。正規source R1-score.md:4.3は検証スクリプトとhearing-audit/report保存にBash(python3 *)を限定する。これは仕様/state/graphの改変やC05のWrite/Edit使用ではないが、roleの明示ツール/保存境界は満たさない。是正: source読取はRead、外部探索をせずpin内をRead/Pythonで確認、保存はroleで許可された手段/出力に限定して評価する。",
+      "C02の出力前に責務prompt全文を読んだ証拠が不足。正規source: run-dev-graph-node/SKILL.md:18-42はR0/R1/R2/R3/R4すべてprompt_required=true、:182は担当promptsを読む契約。今回 task.md「契約履行の確認」も各責務prompt全文を成果作成前にReadすることを必須とする。親 transcript.jsonl:481 toolu_01ShpzJz9mdzK1mqtjNLguTK はLayer2〜4直前と5.3〜Layer6だけのsed部分読取。:487 toolu_01Xo9k6qVfKqVKtQSeoxnkonはcat R0/R3 | head -150 | wc -lなので全文はcontextへ出ない。子agent-aad273de54203d394.jsonl:16はR3-write全文を読むがR0/R1/R2/R4全文の読取を補わない。C02のSkill読込はSKILL本文であり、参照prompt全文の読込にはならない。是正: 分類/preview/template/contextを出力する前に担当prompt全文を読み、現行契約でC02を実行する。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec99"
+    },
+    "transcript_sha256": "e5ef0d526afd3a7846bd7e76f2363af8bfd93384b24fae6bdf534231eb961fe3",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "task.md",
+      "evidence-redaction.json",
+      "guard.jsonl",
+      "transcript/subagents/agent-a30a81e1c6a74c56e.jsonl",
+      "transcript/subagents/agent-a30a81e1c6a74c56e.forked-skill.json",
+      "transcript/subagents/agent-aad7025b136ce453e.jsonl",
+      "transcript/subagents/agent-a006d66afaebda59a.jsonl",
+      "transcript/subagents/agent-ade2df84d4949edb2.jsonl",
+      "transcript/subagents/agent-aad273de54203d394.jsonl",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+      "fx-final/tree/eval-log/system-spec-completeness-report.json",
+      "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+      "fx-final/tree/eval-log/hearing-audit.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/loop1-gates.txt",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/loop2-gates.txt",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/loop3-gates.txt",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R0-context/verification.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R1-preflight/verification.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/verification.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/compile-standard.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/evaluation-context.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-input.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/dry-run.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/add-result.json",
+      "fx-final/tree/system-spec/index.md",
+      "fx-final/tree/system-spec/00-requirements-definition.md"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "e5ef0d526afd3a7846bd7e76f2363af8bfd93384b24fae6bdf534231eb961fe3",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1768.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1768.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "c68990930d5ad84adb7b0642a86ec577983197433afc7189123e65e7abbf7ddb",
+      "tokens": {
+        "input_tokens": 398,
+        "cache_creation_input_tokens": 877583,
+        "cache_read_input_tokens": 14589138,
+        "output_tokens": 134245,
+        "total_tokens": 15601364,
+        "assistant_messages": 189,
+        "assistant_message_ids": 189,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 11,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

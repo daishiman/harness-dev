@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "26ac24af-0e2d-471d-9d48-1452f948f862",
+      "line": 624,
+      "prefix_bytes": 3872567,
+      "prefix_sha256": "9e6c33bca2722e95aa5e1024683bd7ee2192bf3731cedcf318f1f9d588fa1897",
+      "timestamp": "2026-11-01T16:12:48.464Z"
+    },
+    "result": {
+      "uuid": "f05c9338-5681-4df1-a356-2da54454c6e9",
+      "line": 627,
+      "prefix_bytes": 3881965,
+      "prefix_sha256": "0825c3fe9ca34bb5d3b5f5a3de89b92f05f08e9c341c4740c709fc71e3a9bd5c",
+      "timestamp": "2026-11-01T16:12:54.463Z"
+    }
+  },
+  "tool_use_id": "toolu_0164a811p6efVrnrhvCDeCvs",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md .dev-graph/state/receipts/node-r000001-add.json .dev-graph/state/graph.json && python3 -c \"\nimport json,hashlib\ng=json.load(open('.dev-graph/state/graph.json'))\nprint('rev',g['graph_revision'],'canon','sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())\nfor n in g['nodes']: print(n['graph_node_id'],n.get('status'),n.get('confirmation_status'),n.get('evaluation_status'),n.get('implementation_readiness'),n.get('source_lineage'),n.get('confirmation_evidence'))\n\" && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo LINEAGE_EXIT=$?; echo \"open: less specs/billing-audit-system-spec.md / architecture/billing-audit-system-architecture.md\"",
+    "description": "Present committed nodes, digests and lineage gate"
+  },
+  "is_error": false,
+  "tool_result_content": "9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620  specs/billing-audit-system-spec.md\nae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166  architecture/billing-audit-system-architecture.md\n52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94  .dev-graph/state/receipts/node-r000001-add.json\n550033ce035e0ab1b1747b35c75a7169dfa97fc9d55d3916210d47111b1443a9  .dev-graph/state/graph.json\nrev 1 canon sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\nspec-billing-audit-system-spec done confirmed pass {'checked_at': '2026-11-01T16:12:36.502140Z', 'missing_sections': [], 'status': 'complete'} {'imported_at': '2026-11-01T16:11:16Z', 'origin_kind': 'system-spec-harness', 'source_digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'source_path': 'system-spec/index.md', 'source_plugin': 'system-spec-harness', 'source_version': '0.1.24'} {'evaluated_digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'evaluator': 'system-spec-harness:assign-system-spec-completeness-evaluator', 'evidence_ref': 'eval-log/system-spec-completeness-report.json'}\narch-billing-audit-system-architecture done confirmed pass {'checked_at': '2026-11-01T16:12:36.502140Z', 'missing_sections': [], 'status': 'complete'} {'imported_at': '2026-11-01T16:11:16Z', 'origin_kind': 'system-spec-harness', 'source_digest': '22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd', 'source_path': 'system-spec/00-requirements-definition.md', 'source_plugin': 'system-spec-harness', 'source_version': '0.1.24'} {'evaluated_digest': '22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd', 'evaluator': 'system-spec-harness:assign-system-spec-completeness-evaluator', 'evidence_ref': 'eval-log/system-spec-completeness-report.json'}\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nLINEAGE_EXIT=0\nopen: less specs/billing-audit-system-spec.md / architecture/billing-audit-system-architecture.md",
+  "tool_use_result": {
+    "stdout": "9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620  specs/billing-audit-system-spec.md\nae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166  architecture/billing-audit-system-architecture.md\n52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94  .dev-graph/state/receipts/node-r000001-add.json\n550033ce035e0ab1b1747b35c75a7169dfa97fc9d55d3916210d47111b1443a9  .dev-graph/state/graph.json\nrev 1 canon sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\nspec-billing-audit-system-spec done confirmed pass {'checked_at': '2026-11-01T16:12:36.502140Z', 'missing_sections': [], 'status': 'complete'} {'imported_at': '2026-11-01T16:11:16Z', 'origin_kind': 'system-spec-harness', 'source_digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'source_path': 'system-spec/index.md', 'source_plugin': 'system-spec-harness', 'source_version': '0.1.24'} {'evaluated_digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'evaluator': 'system-spec-harness:assign-system-spec-completeness-evaluator', 'evidence_ref': 'eval-log/system-spec-completeness-report.json'}\narch-billing-audit-system-architecture done confirmed pass {'checked_at': '2026-11-01T16:12:36.502140Z', 'missing_sections': [], 'status': 'complete'} {'imported_at': '2026-11-01T16:11:16Z', 'origin_kind': 'system-spec-harness', 'source_digest': '22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd', 'source_path': 'system-spec/00-requirements-definition.md', 'source_plugin': 'system-spec-harness', 'source_version': '0.1.24'} {'evaluated_digest': '22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd', 'evaluator': 'system-spec-harness:assign-system-spec-completeness-evaluator', 'evidence_ref': 'eval-log/system-spec-completeness-report.json'}\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nLINEAGE_EXIT=0\nopen: less specs/billing-audit-system-spec.md / architecture/billing-audit-system-architecture.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

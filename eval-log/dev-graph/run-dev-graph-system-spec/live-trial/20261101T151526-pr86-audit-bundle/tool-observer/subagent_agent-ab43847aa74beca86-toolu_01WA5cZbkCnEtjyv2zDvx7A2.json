@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ab43847aa74beca86",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5e02cc73-a2ac-4e6a-9441-1a341c7d3781",
+      "line": 30,
+      "prefix_bytes": 251441,
+      "prefix_sha256": "96c29ed3251bb7f5c2050e00c534322aec5f6bf0c549f24c881e47650688e5bc",
+      "timestamp": "2026-11-01T06:20:06.203Z"
+    },
+    "result": {
+      "uuid": "4b4bf8da-94e0-4d81-9474-f80ecaef1d9d",
+      "line": 31,
+      "prefix_bytes": 254380,
+      "prefix_sha256": "34248bd7ab5da73562718e1f43c566871fbdf5ef267e051e24c1efd6bc29464d",
+      "timestamp": "2026-11-01T06:20:10.993Z"
+    }
+  },
+  "tool_use_id": "toolu_01WA5cZbkCnEtjyv2zDvx7A2",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx; R=$PWD; test -L system-spec && echo SYMLINK || echo notsymlink; python3 -c \"import os;print(os.path.realpath('system-spec'))\"; find system-spec -type l -ls; echo \"--symlinks above\"; find system-spec/.claude -ls; echo ---; python3 -B $R/plugins/dev-graph/scripts/resolve-repo-context.py --repo-root $R --config $R/.dev-graph/config.json --mode read > $TMPDIR/r0read.json; echo exit=$?; python3 - $TMPDIR/r0read.json eval-log/c24-receipt.json <<'PY'\nimport json,sys\na=json.load(open(sys.argv[1]));b=json.load(open(sys.argv[2]))\nfor k in sorted(set(a)|set(b)):\n    if a.get(k)!=b.get(k): print(\"DIFF\",k,a.get(k),\"|\",b.get(k))\nprint(\"repository_id\",a.get(\"repository_id\"));print(\"common\",a.get(\"git_common_dir\"));print(\"ss\",a[\"content_roots\"][\"system_spec\"])\nPY\npython3 -B $R/plugins/dev-graph/scripts/validate-source-lineage.py --repo-root $R; echo lineage_exit=$?; ls -la .dev-graph/state 2>&1; git status --porcelain",
+    "description": "Re-run C24 read mode and lineage gate"
+  },
+  "is_error": false,
+  "tool_result_content": "notsymlink\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec\n--symlinks above\n1462156276      0 drwxr-xr-x   3 dm       wheel          96 11月  1 08:27 system-spec/.claude\n1462156277      0 drwx------   2 dm       wheel          64 11月  1 08:27 system-spec/.claude/.cc-writes\n---\nexit=0\nDIFF mode read | write\nrepository_id local:sha256:105c7fd10f832cb7b34171a8b9795738c00225eb295f6e49257912e668b46de1\ncommon /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/.git\nss /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 15:14 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 15:15 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 15:14 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 15:14 receipts\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "notsymlink\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec\n--symlinks above\n1462156276      0 drwxr-xr-x   3 dm       wheel          96 11月  1 08:27 system-spec/.claude\n1462156277      0 drwx------   2 dm       wheel          64 11月  1 08:27 system-spec/.claude/.cc-writes\n---\nexit=0\nDIFF mode read | write\nrepository_id local:sha256:105c7fd10f832cb7b34171a8b9795738c00225eb295f6e49257912e668b46de1\ncommon /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/.git\nss /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 15:14 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 15:15 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 15:14 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 15:14 receipts\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

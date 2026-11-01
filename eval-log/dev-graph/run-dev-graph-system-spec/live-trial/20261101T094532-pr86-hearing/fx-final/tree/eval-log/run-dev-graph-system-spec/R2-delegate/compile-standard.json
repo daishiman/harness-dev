@@ -1,0 +1,74 @@
+{
+  "skill": "system-spec-harness:run-system-spec-compile",
+  "invoked_via": "Skill tool",
+  "read_full": [
+    "SKILL.md",
+    "references/resource-map.yaml",
+    "prompts/R1-assemble.md",
+    "prompts/R2-render.md",
+    "prompts/R3-crosslink.md"
+  ],
+  "IN1_entry": {
+    "validate-coverage-matrix --require-complete": 0,
+    "validate-source-citation": 0,
+    "validate-design-knowledge-refs": 0
+  },
+  "compile_cmd": "compile-spec-doc.py compile --spec <repo>/system-spec/spec-state.json --references <repo>/system-spec/fetched-references.json --out-dir <repo>/system-spec --repo-root <repo>",
+  "compile_exit": 0,
+  "generated": 10,
+  "outputs": {
+    "system-spec/00-requirements-definition.md": {
+      "sha256": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402",
+      "identical_to_seed": true
+    },
+    "system-spec/auth.md": {
+      "sha256": "21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897",
+      "identical_to_seed": true
+    },
+    "system-spec/backend.md": {
+      "sha256": "8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466",
+      "identical_to_seed": true
+    },
+    "system-spec/database.md": {
+      "sha256": "3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de",
+      "identical_to_seed": true
+    },
+    "system-spec/frontend.md": {
+      "sha256": "10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5",
+      "identical_to_seed": true
+    },
+    "system-spec/index.md": {
+      "sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+      "identical_to_seed": true
+    },
+    "system-spec/infrastructure.md": {
+      "sha256": "d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd",
+      "identical_to_seed": true
+    },
+    "system-spec/maintenance-ops.md": {
+      "sha256": "1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0",
+      "identical_to_seed": true
+    },
+    "system-spec/security.md": {
+      "sha256": "c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1",
+      "identical_to_seed": true
+    },
+    "system-spec/ui-ux.md": {
+      "sha256": "420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410",
+      "identical_to_seed": true
+    }
+  },
+  "index": {
+    "path": "system-spec/index.md",
+    "sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+    "open": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec102/fx/system-spec/index.md"
+  },
+  "artifact_delivery": {
+    "presented_at": "2026-11-01T00:50:43.506208+00:00",
+    "choice": "standard",
+    "choice_source": "task.md 事前回答契約",
+    "state": "semantic_evaluator_started"
+  },
+  "note": "同一入力から seed と byte 同一の出力 (決定論)。今回の compile 実行で再生成した。",
+  "recorded_at": "2026-11-01T00:50:43.506208+00:00"
+}

@@ -1,0 +1,22 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "overall": "blocked",
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "c24-receipt.json; R0 Verifier PASS"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "preflight-report.json; R1 Verifier PASS"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "not_achieved", "evidence": "elicit --resume / compile / evaluator は正規Skillで実行 (doc-fetchは不要と判断: doc-fetch-decision.json)。ただし evaluator が FAIL のため R2 は未完了で、R2 Verifier も起動していない"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "not_achieved", "evidence": "coverage/source-citation は exit 0。evaluator report (eval-log/system-spec-completeness-report.json sha256 ec8a917f...) が overall FAIL: design_knowledge_reflection FAIL (medium 4件)"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "evaluator FAIL のため C02 は起動していない (graph nodes 0)"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "R1 Verifier は複製0を確認したが、R3 の最終確認は未実施"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loops": [{"loop": 1, "status": "PASS"}, {"loop": 2, "status": "PASS", "evidence": "3ゲート exit 0 (graphは未更新)"}]},
+    {"id": "OUT1", "status": "external_pending", "evidence": "run 後の live trial が判定する"}
+  ],
+  "blockers": [
+    "C05 evaluator FAIL: qa-o1-fixture-v3 と qa-job-choice-fixture-v3 の design_applications が同一文面で回答に対応していない。writer set-qa-design-applications は legacy_exempt の qa にしか後付けできず、既存の解釈の上書きを拒否する。直すには利用者との新しい問答 (reopen と新QA) が必要で、人への追加判断と fixture 入力の変更にあたるため実施しない",
+    "C05 prompt_quality の medium: run-system-spec-compile/prompts/R2-render.md に補足 qa_refs の設計解釈を章へ描く経路が無い。plugin source の問題で、本 run では編集禁止"
+  ]
+}

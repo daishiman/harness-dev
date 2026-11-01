@@ -52,7 +52,12 @@ def _emit_json(emit, tmp_path, findings, **over) -> dict:
     return json.loads(out.read_text(encoding="utf-8"))
 
 
-_GOOD = [{"id": "F1", "severity": "high", "summary": "断線 X", "recommendation": "配線する", "target_ref": "plugins/x/skills/run-y/SKILL.md"}]
+_GOOD = [{
+    "id": "F1", "severity": "high", "summary": "断線 X", "recommendation": "配線する",
+    "target_ref": "plugins/x/skills/run-y/SKILL.md", "disposition": "applied",
+    "disposition_ref": "plugins/x/skills/run-y/SKILL.md",
+    "disposition_recorded_at": "2026-07-22T00:00:00Z",
+}]
 
 
 def _validate_against_schema(instance: dict, schema: dict) -> list[str]:

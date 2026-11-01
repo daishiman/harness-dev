@@ -1,0 +1,32 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。qa-009 は JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)を名指しで 1 問に束ねており、N4 に違反する。superseded_by=qa-019 の置き換えは有効。(a) qa-019 は「どんな場面で、何を成し遂げるためにこのシステムを使いますか」という開いた単一論点の問で、N1-N4 に違反しない。(b) qa-019 は qa-009 の中心論点である JTBD を扱っており、superseded_note と両方の問が一致する。束ねられていた残りは qa-016(対象ユーザー)、qa-020(利用環境)、qa-021(頻度)に分けて問い直されている。(c) qa-019 には answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z があり、旧 entry に answered_at は無い。active consumer は 0 件。qa-009 を確定セルの qa_ref として参照するものは無く、qa-009 は ui-ux×web の qa_refs(裏付け)だけに残る。schema 1.0 で effective_source_refs も無い。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先(3 択)と、有効期限・ログアウト時の扱いの 2 論点を 1 問に束ねている。ただし(1)〜(3)の選択肢は推奨の印なしで並び、「どれも採らない/別方式と比べる/保留」の道も示されており、N1-N3 の違反は無い。qa-038 は auth×web の主たる qa_ref ではなく裏付けの qa_refs だけで参照されている(主たる qa_ref は qa-002)。このため aspect-criteria の対応表では「PASS に残す注記」になる。C01 への指針は、必要なら保存先と期限を 1 論点ずつ問い直し、supersede-qa で置き換えること。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "主たる qa_ref=qa-003 は qa_log に実在し遡れる。裏付けの qa_refs に置き換え済み(retired)の qa-009 が残っている。SSOT の active consumer は確定セルの qa_ref と effective_source_refs だけなので、qa-009 は active consumer 扱いにならず、上の閉じた検出は成立する。ただし裏付けから retired entry を外すかは C01 の判断になる。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U1",
+      "observation": "U1-U9 は schema 1.0 で effective_source_refs が無いため、canonical qa-foundation-u1〜u9 へ fallback して照合した。9 件とも qa_log に実在し、source.kind=user-dialogue で、各 answer は根拠 qa(U1←qa-010+011、U2←qa-012、U3←qa-013、U4←qa-014、U5←qa-015、U6←qa-016+019、U7←qa-017+000、U8←qa-018+031、U9←qa-001+028+024)の answer を空行区切りで逐語連結したものと一致する。U9 の連結元 qa-001 は『PostgreSQL 15』と書かれているが、qa-001 の corrections が qa-031 での 16 への選び直しを示しており、現在値との食い違いは検出にしない。approval_ref=appr-foundation-v2 は approval_log に実在し、qa-033(確定/指摘/保留から選ぶ問)の『確定する』を根拠にしている。U1/U2/U3 は N/A でなく値。書面要件 source(written-requirements)は無いので、digest と containment の照合は対象外。注記として、qa-foundation-u* は orchestrator による再記録で basis と answered_at を持たない。provenance に『実利用者との対話ログではない』と明記されたシナリオ fixture である。一次入力の qa-010〜019 は answered_at と basis=user-decision を持つ。"
+    }
+  ]
+}

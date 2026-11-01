@@ -1,0 +1,41 @@
+{
+  "responsibility_id": "R3-import",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (read-only, isolated live-trial fixture)",
+  "loop": 2,
+  "context": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "c24_receipt_sha256": "10ba6d5e72d17f2869c1ad970d7b87513775474787ee8445031e873d61705f3c",
+    "c24_receipt_sha256_match": true,
+    "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+    "original_goal_hash_match": true
+  },
+  "checks": {
+    "lineage_gate_rerun": {"result": "YES", "evidence": "validate-source-lineage.py --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture: exit 0, status=pass, checked=2, violations=[]; matches recorded lineage-gate.json"},
+    "lineage_six_fields": {"result": "YES", "evidence": "both nodes: origin_kind=system-spec-harness, source_plugin=system-spec-harness, source_version=0.1.24 (= plugins/system-spec-harness/.claude-plugin/plugin.json version), imported_at=2026-10-31T17:42:36Z; source_digest f7f64767...(system-spec/index.md) / 1cc7fe6b...(system-spec/00-requirements-definition.md) equal to sha256 of current bytes"},
+    "confirmation_evidence": {"result": "YES", "evidence": "evaluator=system-spec-harness:assign-system-spec-completeness-evaluator, evidence_ref=eval-log/system-spec-completeness-report.json (repo-relative), evaluated_digest equals report artifact_snapshot value and current bytes for both sources; report verdict=PASS, spec_dir realpath == <repo>/system-spec (C24 content_roots.system_spec, is dir); all 12 artifact_snapshot digests match current bytes"},
+    "status_kind_root": {"result": "YES", "evidence": "confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete for both; kinds specification/architecture at specs/billing-audit-system-spec.md and architecture/billing-audit-system-architecture.md"},
+    "same_payload_dry_run_and_apply": {"result": "YES", "evidence": "jq -S .artifacts identical (cmp rc=0); full payload differs only by expected_graph_revision: 0 (del(.expected_graph_revision) of apply == dry-run payload); confirmation_evidence present in both artifacts; dry-run input_sha256 1bafac23... = import-payload.json, apply input_sha256 c5aae5f7... = import-payload-apply.json"},
+    "chronology": {"result": "YES", "evidence": "mtime(UTC): report 17:38:17 < R2 verification 17:41 < import-payload 17:42:36 (= imported_at) < dry-run 17:42:52 (recorded_at 17:42:51.796Z) < artifact-delivery 17:43:14 < import-payload-apply 17:44:38 < content/graph/receipt/apply-output 17:45:00 (recorded_at 17:45:00.166Z) < lineage-gate 17:46:10 < import-report 17:46:55"},
+    "graph_schema_strict": {"result": "YES", "evidence": "validate-graph-schema.py --strict-artifact-readiness exit 0, valid=true, violations=0, node_readiness complete=2"},
+    "writer_only": {"result": "YES", "evidence": "receipts dir has only init + node-r000001-add.json; receipt owner=C02/run-dev-graph-node, node_ids match graph, graph_revision 0->1 = graph.graph_revision 1, graph_digest_after sha256:7d2a497c... equals recomputed canonical digest of current graph; content sha256 82cde8f3.../a7b6d7ff... equal apply-output and receipt sha256_after"},
+    "no_duplication": {"result": "YES", "evidence": "features/ empty; no system-spec-harness writer/compiler (compile-spec-doc, apply-spec-transition, aggregate-completeness, build-fetched-references, etc.) reimplemented or referenced in plugins/dev-graph *.py; only shared name validate-inline-goal-seek-anchor.py (governance validator in run-skill-feedback, not elicitation/compile); plugins/ has no working-tree changes"},
+    "candidate_unchanged": {"result": "YES", "evidence": "candidate-import.json mtime 17:19:55 (before evaluation); no confirmation_evidence / imported_at keys (grep count 0); lineage 5 fields only"}
+  },
+  "checklist_5_3": {
+    "common": {
+      "declared_inputs_verified": {"result": "YES", "evidence": "C24 receipt hash, goal hash, evaluator PASS report, confirmed sources, lineage all re-verified"},
+      "output_shape_and_authority": {"result": "YES", "evidence": "C02 receipt + import-report with lineage/confirmation/evidence/readiness; authority C02 owner"},
+      "zero_boundary_violations": {"result": "YES", "evidence": "writes only via C02 writer; no feature duplication; candidate untouched; no dev-graph duplication of harness logic"}
+    },
+    "r3_specific": {
+      "canonical_kind_and_zero_missing": {"result": "YES", "evidence": "specification/architecture in canonical roots; lineage 6 fields, evidence, readiness missing 0"},
+      "lineage_gate_exit0": {"result": "YES", "evidence": "rerun exit 0, checked=2"},
+      "same_payload_with_confirmation_evidence": {"result": "YES", "evidence": ".artifacts identical; only expected_graph_revision added"},
+      "inputs_after_evaluator_pass": {"result": "YES", "evidence": "report 17:38:17Z precedes payload 17:42:36Z and all C02 runs"}
+    }
+  },
+  "blockers": [],
+  "notes": ["dry-run graph_digest_after/content sha256_after differ from apply because created_at/checked_at timestamps are generated at commit time; payload artifacts are identical"],
+  "verdict": "PASS"
+}

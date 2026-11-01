@@ -1,0 +1,366 @@
+{
+  "name": "flyer-studio",
+  "note": "flyer の部品の登録簿（正本）。harness 書式の plugin-composition.yaml は、ここから scripts/build-local-package.py --write-composition が生成する。版は plugin manifest が正本で、ここには持たない。",
+  "description": "一括ヒアリングで目的と確定事実を受け取り、既存紙面の診断と提案評価、制作、別担当による新画像の評価、納品、知見の還元までを証拠でつなぐ。",
+  "owner": "harness maintainers",
+  "since": "2026-10-22",
+  "contract": {
+    "intent": "利用者が誰に何をしてもらいたいかを少ない往復で受け取り、公開条件と印刷品質を守った紙面を、作った者とは別の目が最新の現物で確かめてから渡す（本質の正本は references/essence.json）。",
+    "interface": {
+      "inputs": [
+        "user-request",
+        "intake answers",
+        "supplied materials (source images/PDF, photos, logos)"
+      ],
+      "outputs": [
+        "out/<案ID>/print.pdf・print.png",
+        "out/all.pdf",
+        "out/white.pdf（白案がある場合）",
+        "out/index.html",
+        "out/delivery.json",
+        "knowledge ledger entry"
+      ],
+      "stageArtifacts": "references/workflow.md#全体の流れ"
+    },
+    "invariant": [
+      "判断と必須修正は essence.json の E1〜E5 に結び、結べない所見は好みとして記録だけにする。",
+      "評価者は制作・分析を修正しない。提案者と提案評価者、制作者と画像評価者は別の担当にする。",
+      "評価の物差しは評価前に固定し、新しい画像・入力・規範へ証拠を結ぶ。古い PASS を転用しない。",
+      "依頼主・個人の情報と案件固有の値は案件フォルダと references/presets/ にだけ置き、汎用の規則・担当へ書かない。同梱する案件素材は assets/catalog.json の preset で当該案件に隔離し、由来（元の出所パス）を保持する。",
+      "個人素材を含むため、公開 marketplace への登録と外部共有をしない。"
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "skill",
+      "ref": "skills/run-intake-flyer",
+      "tier": "core",
+      "stage": "intake"
+    },
+    {
+      "kind": "skill",
+      "ref": "skills/run-analyze-flyer",
+      "tier": "core",
+      "stage": "analyze"
+    },
+    {
+      "kind": "skill",
+      "ref": "skills/assign-flyer-analysis-evaluator",
+      "tier": "core",
+      "stage": "analysis-review"
+    },
+    {
+      "kind": "skill",
+      "ref": "skills/run-create-flyer",
+      "tier": "core",
+      "stage": "create"
+    },
+    {
+      "kind": "skill",
+      "ref": "skills/assign-flyer-evaluator",
+      "tier": "core",
+      "stage": "review"
+    },
+    {
+      "kind": "skill",
+      "ref": "skills/run-learn-flyer",
+      "tier": "core",
+      "stage": "learn"
+    },
+    {
+      "kind": "agent",
+      "ref": "skills/run-analyze-flyer/agents/artifact-analyst",
+      "tier": "core"
+    },
+    {
+      "kind": "agent",
+      "ref": "skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator",
+      "tier": "core"
+    },
+    {
+      "kind": "agent",
+      "ref": "skills/run-create-flyer/agents/flyer-producer",
+      "tier": "core"
+    },
+    {
+      "kind": "agent",
+      "ref": "skills/assign-flyer-evaluator/agents/visual-review-coordinator",
+      "tier": "core"
+    },
+    {
+      "kind": "agent",
+      "ref": "agents/flyer-composition-reviewer",
+      "tier": "extension"
+    },
+    {
+      "kind": "agent",
+      "ref": "agents/flyer-typography-reviewer",
+      "tier": "extension"
+    },
+    {
+      "kind": "agent",
+      "ref": "agents/flyer-color-reviewer",
+      "tier": "extension"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "skills/run-intake-flyer",
+      "to": "skills/run-analyze-flyer",
+      "type": "calls",
+      "condition": "既存の元画像があり、brief.analysisMode=source-artifact の案件。前提の再確認後も分析・提案評価を通し、提案 PASS 後の制作は run-create-flyer が引き継ぐ。",
+      "analysisMode": "source-artifact"
+    },
+    {
+      "from": "skills/run-intake-flyer",
+      "to": "skills/run-create-flyer",
+      "type": "calls",
+      "condition": "既存の元画像が無く、brief.analysisMode=new-from-brief の新規案件。前提の再確認後もこの mode のまま制作へ戻す。",
+      "analysisMode": "new-from-brief"
+    },
+    {
+      "from": "skills/run-intake-flyer",
+      "to": "skills/run-learn-flyer",
+      "type": "reads",
+      "condition": "learn-suggest の傾向を再確認が必須の参考値として読む"
+    },
+    {
+      "from": "skills/run-create-flyer",
+      "to": "skills/run-analyze-flyer",
+      "type": "calls",
+      "condition": "既存の元画像があり brief.analysisMode=source-artifact の案件。premise の FIX は先に run-intake-flyer へ戻す。",
+      "analysisMode": "source-artifact"
+    },
+    {
+      "from": "skills/run-analyze-flyer",
+      "to": "skills/assign-flyer-analysis-evaluator",
+      "type": "calls"
+    },
+    {
+      "from": "skills/run-create-flyer",
+      "to": "skills/assign-flyer-evaluator",
+      "type": "calls"
+    },
+    {
+      "from": "skills/run-learn-flyer",
+      "to": "skills/run-create-flyer",
+      "type": "reads",
+      "condition": "finalize 済みの out/delivery.json"
+    },
+    {
+      "from": "skills/run-analyze-flyer",
+      "to": "skills/run-analyze-flyer/agents/artifact-analyst",
+      "type": "delegates"
+    },
+    {
+      "from": "skills/assign-flyer-analysis-evaluator",
+      "to": "skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator",
+      "type": "delegates"
+    },
+    {
+      "from": "skills/run-create-flyer",
+      "to": "skills/run-create-flyer/agents/flyer-producer",
+      "type": "delegates"
+    },
+    {
+      "from": "skills/assign-flyer-evaluator",
+      "to": "skills/assign-flyer-evaluator/agents/visual-review-coordinator",
+      "type": "delegates"
+    },
+    {
+      "from": "skills/run-analyze-flyer/agents/artifact-analyst",
+      "to": "agents/flyer-composition-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-analyze-flyer/agents/artifact-analyst",
+      "to": "agents/flyer-typography-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-analyze-flyer/agents/artifact-analyst",
+      "to": "agents/flyer-color-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator",
+      "to": "agents/flyer-composition-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator",
+      "to": "agents/flyer-typography-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-analysis-evaluator/agents/analysis-evaluator",
+      "to": "agents/flyer-color-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-create-flyer/agents/flyer-producer",
+      "to": "agents/flyer-composition-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-create-flyer/agents/flyer-producer",
+      "to": "agents/flyer-typography-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-create-flyer/agents/flyer-producer",
+      "to": "agents/flyer-color-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-evaluator/agents/visual-review-coordinator",
+      "to": "agents/flyer-composition-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-evaluator/agents/visual-review-coordinator",
+      "to": "agents/flyer-typography-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/assign-flyer-evaluator/agents/visual-review-coordinator",
+      "to": "agents/flyer-color-reviewer",
+      "type": "delegates",
+      "condition": "references/stage-common.md#専門レンズの共通規則"
+    },
+    {
+      "from": "skills/run-create-flyer",
+      "to": "skills/run-intake-flyer",
+      "type": "revision",
+      "fixClass": "premise",
+      "condition": "fixClass=premise の FIX。前提・確定事実・公開条件を再確認し、利用者の承認を必要に応じて essence-revise に記録する。戻り先と cycle の消費は references/design-contract.json の fixRouting と references/workflow.md の改善表に従う。評価 FIX ではない差し戻しはこの辺に載せず、nonFixReturns に置く。"
+    }
+  ],
+  "nonFixReturns": [
+    {
+      "from": "skills/run-create-flyer",
+      "to": "skills/run-intake-flyer",
+      "trigger": "style-unresolved",
+      "step": "skills/run-intake-flyer/SKILL.md#局面カタログ",
+      "stepTitle": "回答の根拠から様式を提案する",
+      "consumesCycle": false,
+      "source": "skills/run-create-flyer/SKILL.md#ゴールシーク実行",
+      "note": "様式が未確定のまま制作に入ったとき、制作で決めずにヒアリングの様式の提案と選択へ戻す。評価 FIX ではないので fixClass を持たず、cycle-ledger.json に記録しない。"
+    }
+  ],
+  "implementation": {
+    "owner": "skills/run-create-flyer",
+    "entrypoint": "scripts/build-flyer.py",
+    "workflow": "references/workflow.md",
+    "knowledgeIndex": "references/design-knowledge-index.json",
+    "attached_resources": {
+      "scripts": [
+        "scripts/build-flyer.py",
+        "scripts/cli.cjs",
+        "scripts/project.cjs",
+        "scripts/intake.cjs",
+        "scripts/essence.cjs",
+        "scripts/analysis.cjs",
+        "scripts/design.cjs",
+        "scripts/geometry.cjs",
+        "scripts/contrast.cjs",
+        "scripts/render.cjs",
+        "scripts/checks.cjs",
+        "scripts/merge-checks.cjs",
+        "scripts/merge-pdf.cjs",
+        "scripts/learn.cjs",
+        "scripts/build-asset-gallery.py",
+        "scripts/build-local-package.py",
+        "scripts/extract-plugin-root.py"
+      ],
+      "schemas": [
+        "schemas/intake.schema.json",
+        "schemas/brief.schema.json",
+        "schemas/essence-baseline.schema.json",
+        "schemas/style-proposals.schema.json",
+        "schemas/analysis.schema.json",
+        "schemas/analysis-review.schema.json",
+        "schemas/concepts.schema.json",
+        "schemas/scene.schema.json",
+        "schemas/design-intent.schema.json",
+        "schemas/visual-review.schema.json",
+        "schemas/cycle-ledger.schema.json",
+        "schemas/learn-record.schema.json"
+      ],
+      "prompts": [
+        "prompts/background.md",
+        "prompts/design.md",
+        "prompts/visual-review.md"
+      ],
+      "references": [
+        "references/essence.json",
+        "references/workflow.md",
+        "references/architecture.md",
+        "references/runtime.md",
+        "references/stage-common.md",
+        "references/design-contract.json",
+        "references/design-knowledge-index.json",
+        "references/design-rules.md",
+        "references/designer-knowledge.md",
+        "references/style-profiles.md",
+        "references/review-rubric.md",
+        "references/intake-questions.json",
+        "references/thirty-methods.md",
+        "references/package-contract.json",
+        "references/presets/"
+      ],
+      "examples": [
+        "examples/brief.example.json",
+        "examples/scene.example.json"
+      ],
+      "assets": [
+        "assets/catalog.json",
+        "assets/index.html"
+      ]
+    },
+    "shared_script_component": true
+  },
+  "retired": [
+    {
+      "path": "references/interview.md",
+      "replacedBy": "skills/run-intake-flyer/references/interview-guide.md"
+    },
+    {
+      "path": "agents/flyer-reviewer.md",
+      "replacedBy": "skills/assign-flyer-evaluator/references/review-contract.md"
+    }
+  ],
+  "eval_sinks": [
+    "EVALS.json"
+  ],
+  "revisionBudget": {
+    "maxCycles": 3,
+    "rules": "references/workflow.md#改善と納品",
+    "source": "references/design-contract.json#cycleBudget",
+    "note": "maxCycles は形式上の写し。正本は design-contract.json の cycleBudget。scripts/build-local-package.py --check が一致を検査する。"
+  },
+  "dependencyPolicy": {
+    "revision": "type=revision は FIX の戻り関係で、通常の依存のDAG（循環しない関係）には含めない。fixClass ごとの戻り先を scripts/build-local-package.py --check が design-contract.fixRouting・workflow改善表と照合する。",
+    "nonFixReturns": "nonFixReturns は評価 FIX ではない差し戻しで、consumesCycle は常に false。dependencies に入れず fixClass を持たないので、fixRouting との照合にも依存のDAGにも含めない。scripts/build-local-package.py --check が端の登録・step と source の参照・fixClass を持たないこと・consumesCycle=false・dependencies への非混入を、tests/design.test.cjs が trigger と fixClass の区別・step が戻り先の skill の局面カタログであること・stepTitle の局面と source が指す局面番号の一致を検査する。"
+  },
+  "external_dependencies": {
+    "harness-creator": {
+      "version": ">=1.4.0 <2.0.0",
+      "relation": "skill-feedback-ssot-provider",
+      "required_entry_points": [
+        "run-skill-feedback"
+      ]
+    }
+  }
+}

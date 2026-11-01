@@ -1,0 +1,65 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "overall": "achieved",
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "c24-receipt.json (sha256 614249d9...) repo_root == content_roots.repository; repository_id local:sha256:dbcf1a73...; R0-context PASS"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "system-spec-harness 0.1.24 within >=0.1.22 <1.0.0; 4 entry points present; R1-preflight PASS"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "elicit/doc-fetch/compile/evaluator invoked via Skill system-spec-harness:*; records eval-log/run-dev-graph-system-spec/R2-delegate/artifact-delivery-*.json; R3-import verifier PASS"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "coverage --require-complete exit0, source-citation exit0, design-knowledge-refs exit0; evaluator report PASS (0 high, 0 gaps), aggregate --report exit0; C08 PASS"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "achieved",
+      "evidence": "both nodes: source_lineage 6 fields, digest == file bytes, evaluated_digest == source_digest, evidence_ref PASS report, confirmed/pass/complete; validate-source-lineage exit0 (eval-log/run-dev-graph-node/lineage-gate.json)"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R1-preflight + R3-import verifier grep: no elicit/compile implementation in plugins/dev-graph; registration only via build-graph-node.py (C02)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": {
+        "1": "PASS (R0/R1 preflight, lineage gate checked=0)",
+        "2": "PASS (coverage/source-citation exit0, compile + evaluator PASS)",
+        "3": "PASS (graph schema valid, lineage gate exit0)"
+      }
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "where": "live trial after this run"
+    }
+  ],
+  "imported_node_ids": [
+    "spec-billing-audit-system-spec",
+    "arch-billing-audit-system-architecture"
+  ],
+  "c02_receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+  "deterministic_gates": {
+    "C11_guard_hook_tests": "207 passed",
+    "C19_dev_graph_tests": "72 passed (lineage/evaluation-paths/build-graph-node)",
+    "plugin_versions": {
+      "system-spec-harness": "0.1.24",
+      "dev-graph": "0.1.23"
+    }
+  }
+}

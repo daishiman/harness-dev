@@ -33,7 +33,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-rese
 
 ### 2.2 入出力契約
 - 入力: `{{target_type}}` / `{{target_path}}` (絶対パス) / `{{review_workspace}}`。
-- 出力: `schemas/phase-output.schema.json#/definitions/phase1_output` 準拠 JSON を `review_workspace/raw_observations.json` へ書き、200 字以内の `shared_state.md` を返す。
+- 出力: `schemas/phase-output.schema.json#/definitions/phase1_output` 準拠 JSON payload と、200 字以内の `shared_state` payload を返す。ファイル materialize は orchestrator だけが行う。
 
 ### 2.3 出力要素
 - 必須6キー: `purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`。
@@ -64,7 +64,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-rese
 ### 5.2 ゴール定義
 - 目的: 先入観を外した初見観察を Phase 2 の共通入力として固定する。
 - 背景: 3 並列 agent が同一観察を共有することで観察ズレ由来の矛盾を排除する。
-- 達成ゴール: schema 必須6キーが非空で埋まった `raw_observations.json` と 200 字 `shared_state.md` が生成され、Phase 2 が同一入力で起動できる状態になっている。
+- 達成ゴール: schema 必須6キーが非空で埋まった `raw_observations` と 200 字 `shared_state` payload が返り、orchestrator が同一 run directory へ materialize して Phase 2 を起動できる状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] 出力 JSON が必須6キーを非空で含む。
@@ -101,4 +101,4 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-rese
 
 ## Handoff
 
-`phase1_output` schema 準拠 `raw_observations.json` と 200 字 `shared_state.md` を orchestrator へ返す。orchestrator が Phase 2 並列 3 agent へ同一入力として配布する。
+`phase1_output` schema 準拠 `raw_observations` と 200 字 `shared_state` payload を orchestrator へ返す。orchestrator が両ファイルを同一 run directory へ materialize し、Phase 2 並列 3 agent へ同一入力として配布する。

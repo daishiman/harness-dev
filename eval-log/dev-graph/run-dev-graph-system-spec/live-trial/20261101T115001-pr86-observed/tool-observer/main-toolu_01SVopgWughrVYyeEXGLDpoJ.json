@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "11377b17-01eb-4cd2-9269-92fe2374e86b",
+      "line": 323,
+      "prefix_bytes": 1874230,
+      "prefix_sha256": "f0a52db8c8bae10de838d9900411f9d4663ff32395c53e2bb87ac0c86c197335",
+      "timestamp": "2026-11-01T02:54:29.694Z"
+    },
+    "result": {
+      "uuid": "2cc9f935-4b58-4727-8390-bd7742837917",
+      "line": 329,
+      "prefix_bytes": 1875930,
+      "prefix_sha256": "3d24c73906336216b433da9e52ce6df9d0220aa21d7e6f0fcdbe4abcc0ae1f4a",
+      "timestamp": "2026-11-01T02:54:32.033Z"
+    }
+  },
+  "tool_use_id": "toolu_01SVopgWughrVYyeEXGLDpoJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,hashlib\ng=json.load(open('eval-log/run-dev-graph-system-spec-goal-spec.json'))\ncl=g['checklist']\nprog={\"skill\":\"run-dev-graph-system-spec\",\"loop\":1,\"original_goal_hash\":g['original_goal_hash'],\n\"checklist\":[\n {\"item\":cl[0],\"status\":\"achieved\",\"evidence\":\"c24-receipt.json exit0; R0-context verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/verifier-result.json)\"},\n {\"item\":cl[1],\"status\":\"achieved\",\"evidence\":\"version 0.1.25 in >=0.1.22 <1.0.0; 4 entry points present; R1-preflight verifier PASS\"},\n {\"item\":cl[2],\"status\":\"not_achieved\",\"evidence\":\"R2 pending: elicit/doc-fetch/compile/evaluator not yet delegated\"},\n {\"item\":cl[3],\"status\":\"not_achieved\",\"evidence\":\"coverage/citation exit0 in loop1; evaluator gate pending\"},\n {\"item\":cl[4],\"status\":\"not_achieved\",\"evidence\":\"R3 C02 import pending\"},\n {\"item\":cl[5],\"status\":\"not_achieved\",\"evidence\":\"R3 duplicate-logic audit pending\"}],\n\"feedback_criteria\":[\n {\"id\":\"IN1\",\"status\":\"PASS\",\"loops\":[{\"loop\":1,\"status\":\"PASS\",\"evidence\":\"coverage exit0, source-citation exit0, validate-graph-schema --strict-artifact-readiness exit0\"}]},\n {\"id\":\"OUT1\",\"status\":\"external_pending\",\"evidence\":\"judged by post-run live trial\"}],\n\"blockers\":[]}\njson.dump(prog,open('eval-log/run-dev-graph-system-spec-progress.json','w'),ensure_ascii=False,indent=1)\nrow={\"original_goal\":g['original_goal'],\"original_goal_hash\":g['original_goal_hash'],\n\"current_goal_snapshot\":\"loop1: R0 context+R1 preflight PASS (independent verifiers), IN1 gates exit0, graph 0 nodes\",\n\"delta_from_original\":\"R2 (harness canonical flow + evaluator) and R3 (C02 import) remain\",\n\"merged_directive_for_next\":\"loop2: invoke system-spec-harness elicit --resume, decide doc-fetch, compile, build-evaluation-context then C05 evaluator; then R2 verifier\",\n\"drift_signal\":\"none\"}\nopen('eval-log/run-dev-graph-system-spec-intermediate.jsonl','a').write(json.dumps(row,ensure_ascii=False)+\"\\n\")\nPY\nDEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho hashcheck=$?",
+    "description": "Record loop-1 progress and verify hashes"
+  },
+  "is_error": false,
+  "tool_result_content": "hashcheck=0",
+  "tool_use_result": {
+    "stdout": "hashcheck=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

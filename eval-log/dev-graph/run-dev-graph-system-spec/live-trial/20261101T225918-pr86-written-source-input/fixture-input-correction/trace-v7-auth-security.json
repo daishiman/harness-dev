@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "auth",
+  "concern_id": "security",
+  "text": "認可は既定で拒否し、ロールごとに許す操作だけを列挙する (qa-026)。セッションの cookie には HttpOnly・Secure・SameSite=Lax を付け、状態を変える要求 (POST・PUT・PATCH・DELETE) にはサーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にして、無いか合わない要求は拒否する (qa-csrf-written-v7)。OIDC のクライアントシークレットはリポジトリに置かず、k8s の Secret で渡す (シークレット管理)。\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:47:30.270313Z"
+}

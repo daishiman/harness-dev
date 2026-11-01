@@ -1,0 +1,26 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loops": 1,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/system-spec-c24-receipt.json (sha f64cd743...): repo_root == content_roots.repository, system_spec root inside repo; R0-context loop-1 YES"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "R1-preflight loop-1: version 0.1.24 in >=0.1.22 <1.0.0; package-contract entry_points has elicit/doc-fetch/compile/completeness-evaluator"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "Skill run-system-spec-elicit --resume, run-system-spec-doc-fetch (not_required), run-system-spec-compile (compile-spec-doc.py), assign-system-spec-completeness-evaluator (args from prepare-evaluation.py); R2-delegate loop-1 ALL_YES"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "validate-coverage-matrix --require-complete --require-basis --require-foundation exit0; validate-source-citation exit0; validate-design-knowledge-refs exit0; completeness report verdict PASS (6 aspects PASS, gaps []), aggregate-completeness exit0; re-verified by R2-delegate"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "C02 receipt .dev-graph/state/receipts/node-r000001-add.json; spec-billing-audit-system-spec (system-spec/index.md f7f64767...) and arch-billing-audit-system-architecture (system-spec/00-requirements-definition.md 1cc7fe6b...): confirmed/pass/readiness complete, evaluated_digest == source_digest == report artifact_snapshot; validate-source-lineage checked=2 pass; R3-import loop-1 PASS; integrity auditor PASS"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R2-delegate grep of plugins/dev-graph non-test .py: no spec-state transition/hearing/compile-render logic; only read-only prepare-evaluation.py; graph/content written only via build-graph-node.py (C02)"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "loop 1: coverage/source-citation/design-knowledge-refs exit0; validate-graph-schema --strict-artifact-readiness exit0 (0 violations); validate-source-lineage exit0"},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial / content review after this run"}
+  ],
+  "responsibility_records": ["eval-log/run-dev-graph-system-spec/R0-context/loop-1.json", "eval-log/run-dev-graph-system-spec/R1-preflight/loop-1.json", "eval-log/run-dev-graph-system-spec/R2-delegate/loop-1.json", "eval-log/run-dev-graph-system-spec/R3-import/loop-1.json"],
+  "import_report": {
+    "index": "system-spec/index.md",
+    "imported_node_ids": ["spec-billing-audit-system-spec", "arch-billing-audit-system-architecture"],
+    "confirmation_status": "confirmed",
+    "readiness": "complete",
+    "c02_receipt": ".dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "overall": "PASS"
+}

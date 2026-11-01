@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "163de39a-857a-4955-b235-948a6136b59c",
+      "line": 189,
+      "prefix_bytes": 1094813,
+      "prefix_sha256": "04cdfbb412e789a6354c65db4babfd443c956648bc33e7920193ba1145e8a0a7",
+      "timestamp": "2026-11-01T03:57:49.306Z"
+    },
+    "result": {
+      "uuid": "3cd598f3-1a15-4e95-9ac1-e0dd3eaf264b",
+      "line": 190,
+      "prefix_bytes": 1095812,
+      "prefix_sha256": "2a7c4f6c23fba3c8856c2e795e594fd66cc6b3e201809c1f83ee538920fac5db",
+      "timestamp": "2026-11-01T03:57:51.377Z"
+    }
+  },
+  "tool_use_id": "toolu_0197xrrPHNcRN71xV5Ees17C",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport subprocess,hashlib,pathlib,json\nR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx'\nfor v in pathlib.Path(R+'/plugins/system-spec-harness').rglob('validate-source-citation.py'):\n    print(v, hashlib.sha256(v.read_bytes()).hexdigest())\nPY",
+    "description": "Locate source-citation validator"
+  },
+  "is_error": false,
+  "tool_result_content": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/plugins/system-spec-harness/scripts/validate-source-citation.py 700b289232048a0d48a5309b648346192fcb1d6ccf6a9800690aa29b7d094033",
+  "tool_use_result": null
+}

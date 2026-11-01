@@ -28,12 +28,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 ## Layer 2: ドメイン定義層
 
 ### 2.1 単一責務
-- 担当: `thought-methods.yaml` の `logical_structural.methods` 10 種を全て使い論理・構造の観点で対象を分析する。
+- 担当: `thought-methods.yaml` の `logical_structural.methods` 9 種（論理5+構造4）を全て使い論理・構造の観点で対象を分析する。
 - 非担当: メタ発想拡張 (meta-divergent 担当)・システム戦略 (system-strategic 担当)・改善適用。
 
 ### 2.2 入出力契約
 - 入力: `{{phase1_output}}` (Phase 1 JSON) / `{{target_path}}`。
-- 出力: `paradigm_findings[]` を 10 思考法ぶん (各1件) 返す。C1-C4 違反のみ `issues[]` に追加し、違反なしは `issues: []` を明示する。
+- 出力: `paradigm_findings[]` を 9 思考法ぶん (各1件) 返す。C1-C4 違反のみ `issues[]` に追加し、違反なしは `issues: []` を明示する。
 
 ### 2.3 出力要素
 - finding: `{paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。
@@ -54,7 +54,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 - 異なる paradigm 間で `issues[]` の文字列完全一致を 0 に保つ (重複指摘なし)。
 
 ### 4.2 失敗時挙動
-- distinct `paradigm_id` < 10 (完全性 FAIL) または line 参照ゼロ (検証可能性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で orchestrator へ差し戻す。
+- distinct `paradigm_id` != 9 (完全性 FAIL) または line 参照ゼロ (検証可能性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で orchestrator へ差し戻す。
 
 ## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
 
@@ -62,12 +62,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 - elegant-logical-structural-analyst / context_fork: true。並列他 agent の中間結果は参照しない (独立性確保)。
 
 ### 5.2 ゴール定義
-- 目的: A2 10 思考法の網羅実行で論理・構造上の C1-C4 違反を洗い出す。
+- 目的: A2 9 思考法の網羅実行で論理・構造上の C1-C4 違反を洗い出す。
 - 背景: 思考法を絞ると批判的視点や MECE 検証が欠落し後段 C2 漏れなしゲートが機能しない。
-- 達成ゴール: 10 思考法それぞれの `paradigm_findings[]` が観察付きで揃い、C1-C4 違反が `issues[]` に分離された状態になっている。
+- 達成ゴール: 9 思考法それぞれの `paradigm_findings[]` が観察付きで揃い、C1-C4 違反が `issues[]` に分離された状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
-- [ ] `paradigm_findings[]` の distinct `paradigm_id` が 10。
+- [ ] `paradigm_findings[]` の distinct `paradigm_id` が 9。
 - [ ] 各 finding が `observations` を 1 件以上持つ。
 - [ ] 違反なし finding が `issues: []` を明示している。
 - [ ] `observations` の line 参照が grep で再現できる。
@@ -93,12 +93,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 
 ## Prompt Templates
 
-対話なしの自動実行 agent (対話なし: 自動実行 agent)。A2 10 思考法の起動文・出力 schema の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` と `references/thought-methods.yaml` を参照する。
+対話なしの自動実行 agent (対話なし: 自動実行 agent)。A2 9 思考法の起動文・出力 schema の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` と `references/thought-methods.yaml` を参照する。
 
 ## Self-Evaluation
 
-`plugins/harness-creator/references/quality-rubric.md` の 5 次元 (完全性 = distinct paradigm_id==10 / 一貫性 / 深度 / 検証可能性 = line 参照再現 / 簡潔性 = issue 重複 0) で自己採点する。判定は grep / count / 構造一致で客観実施する。
+`plugins/harness-creator/references/quality-rubric.md` の 5 次元 (完全性 = distinct paradigm_id==9 / 一貫性 / 深度 / 検証可能性 = line 参照再現 / 簡潔性 = issue 重複 0) で自己採点する。判定は grep / count / 構造一致で客観実施する。
 
 ## Handoff
 
-`paradigm_findings[]` (A2 10 件) を orchestrator へ返す。C1-C4 違反は各 finding の `issues[]` に格納し、KJ 集約と severity ソートは orchestrator が行う。
+`paradigm_findings[]` (A2 9 件) payload を orchestrator へ返す。ファイル materialize と KJ 集約は orchestrator が行う。

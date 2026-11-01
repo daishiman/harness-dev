@@ -1,0 +1,52 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出です。qa-009 は JTBD・対象ユーザー・利用文脈 (場所/端末/頻度/制約) の独立した論点を 1 問に名指しで束ねていました (N4)。置き換えの有効性を次のとおり確認しました。(a) 置き換え先 qa-019 は「どんな場面で、何を成し遂げるためにこのシステムを使いますか」という 1 論点の開いた問で、N1-N4 に違反しません。(b) superseded_note と両問を照合すると、qa-019 は中心論点の JTBD を扱っています。残りの論点は qa-016 (対象ユーザー)、qa-020 (利用環境)、qa-021 (頻度) で 1 論点ずつ問い直されています。(c) qa-019 には answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z があります。qa-009 は answered_at を持たないため、時刻の前後関係は検査できません。qa-009 は matrix.ui-ux.web の主たる qa_ref (qa-003) ではありません。補助の qa_refs にだけ残っています。置き換え先の qa-019 に medium 以上の検出はありません。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先の選択 (Pod メモリ / PostgreSQL 16 / 新規基盤) と、有効期限・ログアウト時の扱いという独立に決められる 2 論点を、「あわせて」で 1 問に束ねています。保存先の選択肢には推奨の印がありません。「どれも採らない、別の方式と比べる、決めずに保留する」の道も示されているため、high ではなく medium としました。qa-038 は auth×web の主たる qa_ref (qa-002) ではなく、補助の qa_refs にだけ含まれます。問の欠陥として記録に残す注記です。置き換えはされていません。C01 向けの指針として、有効期限を別問に分けて問い直す余地があります。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "cell": "ui-ux/web",
+      "observation": "retired の qa-009 が ui-ux/web の補助 qa_refs に残っています。同じセルの qa_refs には置き換え先の qa-019 もあります。SSOT が active consumer と定めるのは確定セルの qa_ref と effective_source_refs だけです。主たる qa_ref は qa-003 で実在し、置き換え済みでもありません。そのため high にはせず、記録として残します。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U1",
+      "field": "requirements_foundation.effective_source_refs",
+      "observation": "schema_version は 1.0 で effective_source_refs はありません。SSOT の規定どおり、canonical qa-foundation-u1〜u9 へ fallback して判定しました。9 件はすべて source.kind=user-dialogue です。各 answer は、appr-foundation-v2 の対応表に挙がる元の利用者回答 (U1←qa-010/011、U2←qa-012、U3←qa-013、U4←qa-014、U5←qa-015、U6←qa-016/019、U7←qa-017/000、U8←qa-018/031、U9←qa-001/028/024) を、空行区切りで逐語連結したものと完全一致しました。AI による創作や要約は検出されません。なお、これらの回答の provenance は「シナリオ上の利用者発言・実利用者との対話ログではない」と明記されています。fixture 由来の事実を記録として残します。判定には影響しません。"
+    }
+  ],
+  "summary": {
+    "categories": 8,
+    "platforms": 6,
+    "total_cells": 48,
+    "uncollected_cells": 0,
+    "confirmed_cells": 8,
+    "excluded_cells": 40,
+    "axis_counts": {
+      "missed-collection": 0,
+      "leading-question": 2,
+      "premature-stop": 0,
+      "traceability": 1,
+      "foundation-trace": 1
+    },
+    "severity_counts": {"high": 0, "medium": 2, "low": 0, "info": 2},
+    "closed_findings": 1,
+    "hearing_progress": {"loop_count": 4, "max_loops": 5, "complete": true, "next_question": null}
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "responsibility": "R2-delegate",
+  "verdict": "FAIL",
+  "verdict_basis": "Gate/成果物系の3項目は独立再実行で achieved。残る3項目 (Bashごとの固定root移動・照合、CLAUDE_PROJECT_DIR export、委譲先SKILL.md全文読込) は工程上の要件で、receipt に記録が無い。検証者からの transcript 参照も live-trial 隔離ガードで拒否されたため、親の自己申告以外に根拠が無く achieved と判定できない。違反を検出したわけではなく、証跡が無いことによる未達。",
+  "checklist": [
+    {
+      "item": "正規Skill呼出しだけでcoverage/source/evaluator gate全PASSになる",
+      "status": "achieved",
+      "evidence": "独立再実行: validate-coverage-matrix.py --require-complete --require-basis --require-foundation exit 0 (OK: final+basis+foundation)。validate-source-citation.py exit 0。aggregate-completeness.py --session 457219fc-... exit 0 (verdict=PASS, fork証跡接地OK)。report sha256=b39c2d94...8e8090 で親の記録と一致、verdict=PASS, gaps=[], evaluator.context=fork。audit_delegations は Agent dispatch (C07/C06/C08) で、audit-fork-ledger.jsonl の 6 行 (dispatch/completion ×3, いずれも PASS) と対応。build-resume-receipt.py --print-artifact-snapshot の現在値が report.artifact_snapshot と完全一致 (評価後に入力は不変)。compile: pre-compile-sha256.txt の 12 ファイル (md 10 + spec-state + fetched-references) が shasum -c で全て OK。compile-standard.json の outputs_sha256 とも一致。doc-fetch not_required は spec-state の knowledge_candidates が k8s-workload-observability=deepened の 1 件だけで discovered 0 件、という実データと整合。elicit resume (state 無変更) は spec-state sha256 9c14364c... が elicit-receipt と一致、mtime 04:22 で R2 実行 (11:00 JST) より前。plugins/dev-graph には elicitation/compile/coverage/citation ロジックの複製が無い (run-dev-graph-system-spec/scripts は build-evaluation-context.py だけ、関連 grep 0 件。同名 py 2 件は vendored の共有 util)。"
+    },
+    {
+      "item": "取込元を生成する本処理のBashごとに固定rootへの移動・照合をし、独立testの書込みは検証済みscratchだけである",
+      "status": "not_achieved",
+      "evidence": "receipt (elicit/doc-fetch/compile-standard) が記録しているのは絶対パスの argv と exit だけで、各 Bash の先頭に置く `cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = ... ]` の照合は記録されていない。session transcript の参照は隔離ガードで拒否された。test は compile-out1-tests.json で cwd/basetemp=scratch と自己申告されているが、scratch の絶対パスは記録されていない。成果物は絶対 --out-dir で repo の system-spec に出ており、誤った場所への配置は見つからなかった。ただし要件 (Bashごとの照合) を示す証跡は無い。"
+    },
+    {
+      "item": "elicit・doc-fetch・compile の手順にある Bash の呼出しで、毎回 CLAUDE_PROJECT_DIR に開始時の receipt の repo_root を export している",
+      "status": "not_achieved",
+      "evidence": "eval-log/ と system-spec/ を grep した結果、CLAUDE_PROJECT_DIR / pwd -P / cwd_not_repo_root の記録は R2 の receipt に 0 件 (ヒットは R1 の agent-verification だけ)。transcript は隔離ガードで参照できず、独立に確かめられない。"
+    },
+    {
+      "item": "evaluator の args は helper の成功出力の skill_args で、失敗時には起動していない",
+      "status": "achieved",
+      "evidence": "build-evaluation-context.py (write-scope: none。呼び出す resolve-repo-context.py も write-scope: none であることをソースで確認) を cwd=repo root で再実行し exit 0。出力 JSON は R2-delegate/evaluation-context.json と完全一致 (context_sha256 7088b354...)。report.gate_results の command は同じ絶対 spec-dir を使っている。helper 失敗の記録は無い。evaluator の Skill 起動 args そのものは transcript を参照できないため、report.spec_dir との一致で間接的に確認した。"
+    },
+    {
+      "item": "evaluator の report の spec_dir が、--spec-dir に渡したディレクトリ (取込元の章があるディレクトリ) に解決する",
+      "status": "achieved",
+      "evidence": "report.spec_dir=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec104/fx/system-spec (ラベル無しの絶対パス)。helper の spec_dir と完全一致し、C24 content_roots.system_spec とも一致。章 md 10 件 (sha は pre-compile と一致) がこのディレクトリにある。"
+    },
+    {
+      "item": "出力を作った委譲先ごとに、その SKILL.md と責務 prompt を全文読んでいる",
+      "status": "not_achieved",
+      "evidence": "receipt の prompts_read_full には責務 prompt (elicit R0-R5, doc-fetch R1-R3, compile R1-R3 と chapter-template) が並んでいるが、SKILL.md の全文読込は記録されていない。そもそも自己申告であり、transcript は隔離ガードで参照できず独立に確かめられない。"
+    }
+  ],
+  "commands": [
+    "python3 -B plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py --context-receipt <root>/eval-log/run-dev-graph-system-spec/R0-context/c24-receipt.json --output eval-log/system-spec-completeness-report.json  # exit 0, == evaluation-context.json",
+    "python3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --report <root>/eval-log/system-spec-completeness-report.json --spec-dir <root>/system-spec --session 457219fc-7790-4d37-8a72-19ef072257ed  # exit 0",
+    "python3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root <root> --print-artifact-snapshot  # exit 0, == report.artifact_snapshot",
+    "python3 -B plugins/system-spec-harness/scripts/validate-coverage-matrix.py --matrix system-spec/spec-state.json --require-complete --require-basis --require-foundation  # exit 0",
+    "python3 -B plugins/system-spec-harness/scripts/validate-source-citation.py --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root <root>  # exit 0",
+    "shasum -a 256 -c eval-log/run-dev-graph-system-spec/R2-delegate/pre-compile-sha256.txt  # 12/12 OK",
+    "shasum -a 256 eval-log/system-spec-completeness-report.json  # b39c2d9442b88f0bc706c3313cd2091050b64986157b12f75cfc9c91f39e8090",
+    "grep/find over plugins/dev-graph for elicitation/compile duplication  # none",
+    "git status --porcelain + sha256 of system-spec/ eval-log/ .dev-graph/ before/after  # unchanged"
+  ],
+  "verified_at": "2026-11-01T02:19:08Z"
+}

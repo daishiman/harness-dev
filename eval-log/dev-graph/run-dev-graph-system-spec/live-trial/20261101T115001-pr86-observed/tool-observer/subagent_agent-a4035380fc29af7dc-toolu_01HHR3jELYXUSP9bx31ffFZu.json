@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "75fe43d8-8373-40a8-b0ec-e5346e8c6481",
+      "line": 131,
+      "prefix_bytes": 850580,
+      "prefix_sha256": "c7ded9d52a2c36727de352cf90919e3600baa189ded2ab65f526933df54dadb1",
+      "timestamp": "2026-11-01T03:13:08.073Z"
+    },
+    "result": {
+      "uuid": "92b1fbdb-03ac-4e11-befa-cdb7f0d61624",
+      "line": 132,
+      "prefix_bytes": 851674,
+      "prefix_sha256": "30a2cf5c0e99d9009f43c5a316634ef0ed28a78fe51eb11025459e15e6d9a0a6",
+      "timestamp": "2026-11-01T03:13:10.428Z"
+    }
+  },
+  "tool_use_id": "toolu_01HHR3jELYXUSP9bx31ffFZu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport subprocess\nP=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness\"\nr=subprocess.run([\"python3\",P+\"/scripts/validate-knowledge-graph.py\",\"--profile\",\"knowledge\",\"--input\",P+\"/skills/ref-system-design-knowledge/references/knowledge-catalog.json\",\"--order\"],capture_output=True,text=True)\nprint(r.returncode,r.stdout[:2500],r.stderr[:500])\nEOF",
+    "description": "Run knowledge graph topo-order check"
+  },
+  "is_error": false,
+  "tool_result_content": "0 [\"clean-code\", \"ddd\", \"design-patterns\", \"clean-architecture\", \"api-design-patterns\", \"secure-by-design\", \"usability-accessibility\", \"information-design\", \"test-strategy\", \"continuous-delivery\", \"site-reliability-engineering\", \"cloud-architecture-patterns\"]",
+  "tool_use_result": null
+}

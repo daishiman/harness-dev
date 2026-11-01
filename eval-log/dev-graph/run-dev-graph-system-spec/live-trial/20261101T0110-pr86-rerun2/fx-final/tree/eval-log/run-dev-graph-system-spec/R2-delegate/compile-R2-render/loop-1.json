@@ -1,0 +1,26 @@
+{
+  "agent": "run-system-spec-compile/R2-render",
+  "loop": 1,
+  "verdict": "PASS",
+  "scope": "system-spec/{database,auth,ui-ux,security,infrastructure,backend,frontend,maintenance-ops}.md vs spec-state.json + fetched-references.json (read-only)",
+  "checklist": [
+    {"item": "frontmatter status", "result": "YES", "evidence": "8/8 chapters; all status: confirmed, consistent with all-確定 aggregates (web 確定 + 5 対象外 per category)"},
+    {"item": "frontmatter category", "result": "YES", "evidence": "8/8 chapters, matches file category id"},
+    {"item": "frontmatter aggregate", "result": "YES", "evidence": "8/8 aggregate: 確定; re-derivable from cells (web 確定, others 対象外)"},
+    {"item": "frontmatter spec_cells", "result": "YES", "evidence": "8/8 list 6 cells in canonical platform order"},
+    {"item": "frontmatter serves_goals", "result": "YES", "evidence": "8/8 equal union of confirmed-cell serves_goals (e.g. backend [G1, G2], ui-ux [G2], database [G1])"},
+    {"item": "確定セル qa_ref traceable", "result": "YES", "evidence": "every confirmed cell qa_ref + qa_refs appears as `qa-xxx` in chapter and as 主たる接地根拠/裏付け質疑 block; 0 missing across 8 chapters"},
+    {"item": "対象外 reasons traceable", "result": "YES", "evidence": "all 40 対象外 rows show '理由: 承認: appr-001'; each chapter has '### 承認: `appr-001`' with verbatim note"},
+    {"item": "設計知識 explains problem/goal contribution", "result": "YES", "evidence": "every deep card section (14 across 8 chapters) has '#### 解決する問題' and non-empty '#### goalへの寄与'; '### 本章での適用' present"},
+    {"item": "topo order (C14)", "result": "YES", "evidence": "card order in each chapter is a subsequence of validate-knowledge-graph.py --order (exit0): backend ddd→clean-architecture→api-design-patterns; database ddd→cloud-architecture-patterns; infrastructure site-reliability-engineering→cloud-architecture-patterns; frontend clean-architecture→information-design; ui-ux usability-accessibility→information-design"},
+    {"item": "doctrine anchors (C15)", "result": "YES", "evidence": "all 13 category_concern_map pairs render row '| <concern_id> | <authority> |' matching registry; pending_exceptions empty and no category outside map"},
+    {"item": "確定判断ごとの原則採否", "result": "YES", "evidence": "section present after last deep card in 8/8; each confirmed qa_ref's design_applications principle, `applied|not_applicable`, rationale, all tradeoffs rendered verbatim with 対応セル + 資するゴール; no 'unrecorded' needed (all confirmed qa have records); provenance (e.g. legacy_backfill) shown"},
+    {"item": "citations official URL + version", "result": "YES", "evidence": "rows exactly match targets by category/also_categories (database:postgres; backend:fastapi; frontend:react,fastapi,typescript; others 0 rows) with source_url, version, official_host, retrieved/latest_checked_at; no undeclared duplicates"},
+    {"item": "verbatim qa transcription (spot-check byte-for-byte)", "result": "YES", "evidence": "42 qa question/answer blocks compared exactly; all equal. qa-001 answer exact followed by separate '訂正あり' block from corrections[]; qa-009 (superseded_by qa-019) rendered with 旧版 mark and question/answer byte-exact inside ```text fences"}
+  ],
+  "blockers": [],
+  "original_goal": "収集済み spec-state.json と取得済み fetched-references.json・設計知識参照が、上位概念へトレース可能な要件定義書 + 章別 Markdown + index.md の仕様書ドキュメントセットへ、決定論的に組み上がっている",
+  "delta_from_original": "R2-render scope fully satisfied for 8 category chapters. Not verified here (out of R2 scope): 00-requirements-definition.md / index.md (R1/R3), IN1 gates, OUT1 tests, determinism re-run.",
+  "merged_directive_for_next": "Proceed to R3-crosslink verification (index.md requirement-first cross-reference) and IN1/OUT1 gates; no R2 re-render needed.",
+  "drift_signal": "none"
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-aff7283eee0969af5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b6213454-ca3d-4106-81bd-230b38ff9d85",
+      "line": 53,
+      "prefix_bytes": 365022,
+      "prefix_sha256": "98ff91a5e0a21c79a641607c920ec7141c91366f56dea7e6c0d0cfce82f8d00b",
+      "timestamp": "2026-11-01T06:43:56.087Z"
+    },
+    "result": {
+      "uuid": "b40f7ab9-2b7a-466f-b8fe-a5cd549af2e9",
+      "line": 54,
+      "prefix_bytes": 368650,
+      "prefix_sha256": "06824fcbff9851d8a0ba7a51ee6c0b63ff35ab9c87ab4661d60a58a745d37b8e",
+      "timestamp": "2026-11-01T06:43:58.146Z"
+    }
+  },
+  "tool_use_id": "toolu_01WnCNtok3d1TVg2YUAtDN64",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n 155,170p plugins/dev-graph/scripts/build-graph-node.py; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --help 2>&1 | head -20"
+  },
+  "is_error": false,
+  "tool_result_content": "    except ParentNotDirectoryError as exc:\n        raise WriterError(\"parent_not_directory\", str(exc)) from exc\n\n\ndef _canonical_digest(value: Any) -> str:\n    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\")).encode()\n    return \"sha256:\" + hashlib.sha256(raw).hexdigest()\n\n\ndef _sha256(data: bytes) -> str:\n    return hashlib.sha256(data).hexdigest()\n\n\n# ---------------------------------------------------------------- markdown model\n\ndef _unfenced(lines: list[str]) -> Iterator[tuple[int, str]]:\nusage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)",
+  "tool_use_result": {
+    "stdout": "    except ParentNotDirectoryError as exc:\n        raise WriterError(\"parent_not_directory\", str(exc)) from exc\n\n\ndef _canonical_digest(value: Any) -> str:\n    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\")).encode()\n    return \"sha256:\" + hashlib.sha256(raw).hexdigest()\n\n\ndef _sha256(data: bytes) -> str:\n    return hashlib.sha256(data).hexdigest()\n\n\n# ---------------------------------------------------------------- markdown model\n\ndef _unfenced(lines: list[str]) -> Iterator[tuple[int, str]]:\nusage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

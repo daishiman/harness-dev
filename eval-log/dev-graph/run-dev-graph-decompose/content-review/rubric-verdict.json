@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-decompose",
-    "skill_md_sha256": "ee8aa00f2dffc9f674d910b2a36d16cf230804129b5978885d3ac4a931a76bcb"
+    "skill_md_sha256": "7a6ec17a22b6360911822f6b736b9d7d49d6489204528271f18ecac3516d646e"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-dg4 (independent focused combined reviewer; not the SKILL.md author)",
-  "reviewed_at": "2026-10-12T17:28:13Z",
-  "iterations": 3,
+  "reviewer": "cr-run-dev-graph-decompose (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:46:22Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -30,19 +30,19 @@
       "OUT7"
     ],
     "positive_feedback": [
-      "render-findings-score の機械採点は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20)。指摘は2回目と同じ PD-002・FM-005・PD-001 の3件だけで、今回の直しで増えた rubric の指摘は無い。frontmatter は2回目から変わっておらず、lint-skill-tree・validate-frontmatter・lint-goal-seek は rc 0。",
-      "BD-004 (pending_human) は自分で判定して PASS とした。description の1つめの trigger「大きな自然文構想を feature・architecture・機能間依存へマクロ分解したい」は Hard boundary (L134-136) と Macro flow の 1〜3 (L140-142) に、2つめの「ready feature の system-dev-planner package を atomic 登録・binding 別投影したい」は Macro flow の 4〜6 (L143-145) と L147 の binding をまたぐ依存の規則に、それぞれ対応する。",
-      "採点した19件のうち、PD-002・FM-005・PD-001 のほかは満たす。lint-prompt-contract-drift は prompt 6本で fatal 0・warn 0 で、今回変わった R6 の L62 は、SKILL.md の preview の 3 の L183・L184 と同じ内容を書いている。"
+      "render-findings-score の機械採点は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20、pending_human は BD-004 だけ)。指摘は前回 (ee8aa00f の版) と同じ PD-002・FM-005・PD-001 の 3 件で、今回の差分 (L191 の 1 行) で増えた rubric の指摘は無い。frontmatter は変わっておらず、validate-frontmatter・lint-skill-tree・lint-skill-name・lint-skill-description は rc 0、lint-prompt-contract-drift は prompts 6 本で fatal 0・warn 0。",
+      "BD-004 (pending_human) は自分で判定して PASS とした。description (L3) の 1 つめの trigger「大きな自然文構想を feature・architecture・機能間依存へマクロ分解したい」は Hard boundary (L134-136) と Macro flow の 1〜3 (L140-142) に、2 つめの「ready feature の system-dev-planner package を atomic 登録・binding 別投影したい」は Macro flow の 4〜6 (L143-145)、binding をまたぐ依存の規則 (L147)、dry-run の preview (L176-191) に対応する。今回足した L191 は 2 つめの trigger の dry-run 側の検証の口で、新しい trigger を足さず、どの trigger からも外れていない。",
+      "今回の差分は script_refs (L14) にすでにある validate-graph-schema.py だけを参照し、新しい依存を増やさず、IN1 (L67-70) の「送信前検証」と Criteria acceptance の IN1 (L226) を本文の手順に結び付けた。規約の面では、skill 相対の `../../scripts/` 表記と `$DEV_GRAPH_ROOT` (L199 で C24 receipt から固定) の使い方が、ゴールシーク配線と他の dev-graph skill に合っている。"
     ],
     "negative_feedback": [
-      "PD-002 (medium、前から残る。Beads 行き): 本文の頭30行 (frontmatter の後の L116-145) に、採点器が数える禁則の語 (MUST・NEVER・禁止・必ず・『## 守ること』) が無い。L136 の「本 skill が phase task を独自生成してはならない」は禁則の意味だが、その語を含まない。rubric 1.6.0 の threshold 80 に対して 84 なので verdict は止めない。直し方: L136 を「phase task の独自生成は禁止」と書くか、Purpose (L128) の下に `## 守ること` を置き、Hard boundary と L147 の保留の規則を1行ずつ入れる。",
-      "FM-005 (low、前から残る。Beads 行き): description (L3) の最初の句が「大きな自然文構想を」で、採点器は動詞とみなさない。直し方: 2つの trigger を保ったまま最初の句を動詞で始めるか、lint-skill-description が求める「〜したいときに使う」の形と FM-005 の判定のずれを rubric の側で揃える。",
-      "PD-001 (low、前から残る。Beads 行き): 本文 (L116-241) が126行あり、100行を超えるのに skill 直下に references/ が無い (あるのは prompts/ だけ)。今回の直しで preview の 3 に1行増えた。直し方: dry-run の preview (L176-190) と L147 の cross_binding の規則の詳説を references/ に移し、本文には入口と委譲先だけを残す。"
+      "PD-002 (medium、前から残る。前回の verdict では Beads 行き): 本文の頭 30 行 (frontmatter の後の L116-145) に、採点器が数える禁則の語 (MUST・NEVER・禁止・必ず・『## 守ること』) が無い。L136 の「本 skill が phase task を独自生成してはならない」は禁則の意味だが、その語を含まない。threshold 80 に対して 84 なので verdict は止めない。直し方: L136 を「phase task の独自生成は禁止」と書くか、Purpose (L128) の下に `## 守ること` を置き、Hard boundary と L147 の保留の規則を 1 行ずつ入れる。",
+      "FM-005 (low、前から残る): description (L3) の最初の句が「大きな自然文構想を」で、採点器は動詞とみなさない。直し方: 2 つの trigger を保ったまま最初の句を動詞で始めるか、lint-skill-description の「〜したいときに使う」の形と FM-005 の判定のずれを rubric 側でそろえる。",
+      "PD-001 (low、前から残る): 本文 (L116-242) が 127 行あり、100 行を超えるのに skill 直下に references/ が無い (あるのは prompts/ だけ)。今回の差分で L191 の 1 行が増えた。直し方: dry-run の preview (L176-191) と L147 の cross_binding の規則の詳説を references/ に移し、本文には入口と委譲先だけを残す。"
     ],
-    "iteration": 3,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "新しいループの2回目 (9f5663f4、elegance PASS・rubric PASS 84) が出した low のうち、2回目の直しから生じた2件 (E1・E2) の直し。E1 は、preview の 3 の枝が、保留にした beads の node から保留でない beads の node への edge を扱わなかったこと、E2 は、登録済みの package の段落が binding=none の task の operation を書いていなかったこと。team-lead の指示で、この版を3回目 (iteration=3、iteration_limit 3、ループの上限) として数え、判定の範囲を2か所の直しの正しさと、それで生じる新しい矛盾や漏れに絞った",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric=84/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた (PD-002 の −10、FM-005・PD-001 の −3 ずつ)。KL-* は knowledge-loop を持たないので対象外。判定方法: 1つの context で incremental の focused combined review を行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high 0 を同時に判定した (30思考法は使っていない)。範囲は team-lead の指示で、E1・E2 の直しの正しさと、それで生じる新しい矛盾や漏れに絞った。前の回の記録 (schema に history の field が無いので notes に書く): 1回目は 9d6bccca の版で、elegance は FAIL (medium は M3 の1件、low は La・Lb・Lc・Ld の4件)、rubric は PASS 84 (medium は前から残る PD-002、low は FM-005・PD-001) だった。M3 は、cross_binding_dependency の規則が github か none の node に直接依存する edge だけを対象にし、保留にした beads の node に別の beads の node が依存する場合が抜けていた指摘で、La は登録済みの package に register-package --dry-run を当てても今の graph の上の preview にならないこと、Lb は apply の起動での「--dry-run の write count」の項目の扱いが無いこと、Lc は親 feature と package の task の binding が違うときの規則が無いこと、Ld は検証 snippet が progress.json を読まないことだった。1回目の verdict の file は書いていない。2回目は 9f5663f4 の版で、M3・La・Lb が直り、elegance は PASS (low 4件: E1 と E2 の omission 2件、Lc を広げた inconsistency 1件、Ld の omission 1件)、rubric は PASS 84 (PD-002・FM-005・PD-001) だった。2回目の verdict の file は、この3回目の file で置き換わる。このループのもとは live trial 20261012T2336-pr85 (decompose4) の DEGRADED (goal_fit FAIL) で、ループの前の 399ce8e9 の版の review で報告した M1・M2・L1〜L6 は 9d6bccca で直っていた。前の verdict の文は写さず、今の本文を読み直して判定した。読んだもの: SKILL.md の全文 (241行)、R6-dryrun.md の L14-70 (Layer 6 を含む)、R3-decompose.md の L60 (Layer 6 の保留の規則)、bd-bridge.py の projection の linkage の検査と package の投影 (L250-270)・create の分岐 (L670-682)、team-lead の直しの script。ee8aa00f の版に対して read-only で回したもの: render-findings-score は 84 (rubric 1.6.0、threshold 80、high 0、scored 19/20、pending_human は BD-004 だけ)。lint-goal-seek・lint-skill-tree・lint-skill-name・lint-skill-description・validate-frontmatter (SKILL.md の path か skill dir を渡した)・lint-prompt-contract-drift (prompt 6本、fatal 0・warn 0)・lint-feedback-contract --all (80 skill)・lint-plugin-composition (dev-graph、警告0) はどれも rc 0。test_runtime_coverage・test_skill_mass_production_contracts・test_skill_criteria_contracts は 81 passed。live-trial-verdict.py の behavior_closure_files と skill_dir_tree_sha で数えた decompose の behavior closure は 84 file・666d9e0c09ab0cb20f8501a6b75302f99906afe1fbcf4f8208fd967f44c5fbb2 で、依頼の値と一致した。2回目からの差: team-lead の直しの script (scratch の edit-decompose-r18.py の3つの置換) を、今の本文からメモリの上で逆向きに当てると、SKILL.md は 9f5663f4、R6 は 1a534aac にちょうど戻った (file には書いていない)。R3 は 7c13aa14 のままで変わっていない。差は SKILL.md の L184 (preview の 3 に足した枝)、L188 (登録済みの package の段落の一句)、R6 の L62 (一文) だけで、行は L184 の1行だけ増え、frontmatter は変わっていない。実験 exp29: 2〜9 node の乱数の DAG 20000 個に、L147・L182 の不動点で保留の集合を決め、L183〜L186 の4つの枝の条件を文のとおりに当てて、各 edge が当たる枝の数を数えた。結果は findings と positive_feedback に書いた。python は -B で回し、__pycache__ は作っていない (worktree の .pyc の数は前後とも 1351)。2つの verdict のほかに作業ツリーは変えていない (cr-dg4 の scratch を除く)。verify_by=script の IN1、live-trial の OUT1、test の OUT2〜OUT7 は、受入条件と本文・script の対応を静的に見ただけで、実機の run と受入テストの結果はこの verdict の対象外である。low は直さず Beads に回す。"
+  "notes": "rubric=84/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash=sha256:d9d604499d13a401b6d0b67d60e133b09bb702ae022118b7725ba2c32bd048f7)。coverage は applicable 20・scored 19・pending_human 1 (BD-004)・not_applicable 21 (AG/HK/CM/PC/PR/WF は skill に当たらない)。findings は FM-005 (low、frontmatter.description)、PD-001 (low、progressive-disclosure)、PD-002 (medium、progressive-disclosure) の 3 件で、required_fixes は空。100 から medium −10・low −3 ずつで 84。実行コマンド: PYTHONDONTWRITEBYTECODE=1 python3 -B $INT/plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs $INT/plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --target $INT/plugins/dev-graph/skills/run-dev-graph-decompose。判定方法: 1 つの context で incremental の focused combined review を行い、(a)〜(e) を elegance と同時に判定した (30 思考法は使っていない)。SKILL.md の sha256 は審査開始時と書く直前に実測し、7a6ec17a22b6360911822f6b736b9d7d49d6489204528271f18ecac3516d646e で依頼の値と一致した。基準 commit d46ca8ad からの差分は「dry-run の preview」の 7 (L191) の 1 行だけで、frontmatter・prompts は変わっていない。差分の主張と実装の突合 (build-graph-node.py の事前検証、validate-graph-schema.py の stdin 経路、一時 repo での実測、pytest 62 passed) と、その結果の low 3 件は elegance-verdict.json の notes と negative_feedback に書いた。rubric の high は 0 件なので (e) は満たす。そのほかの lint: validate-frontmatter・lint-skill-tree・lint-skill-name・lint-skill-description は rc 0、lint-prompt-contract-drift は prompts 6 本で fatal 0・warn 0、lint-feedback-contract --all は他 skill (system-briefing-book/run-skill-feedback) の違反で rc 1 だが本 skill の行は 0 件。2 つの verdict のほかに INT の作業ツリーは変えていない。"
 }

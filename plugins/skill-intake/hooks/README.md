@@ -8,7 +8,7 @@
 | `pre-publish-secret-scrub.sh` | PreToolUse hook | Notion 公開前に `output/` 配下に Notion PAT / Internal Integration Secret / 汎用 Bearer / `.env` 形式キーが混入していないかを走査。検知で exit 2 → Claude Code が公開をブロック。 |
 | `pre-publish-schema-validate.py` | PreToolUse(Bash) hook | Notion 公開コマンド (`intake_publish_pipeline.py` / `publish_notion_page.py` / `render_notion_page.py`) の起動を捕捉し、`--intake[-file]` / 絶対パス / `output/<hint>/` / `fixtures/<...>/` から `intake.json` パスを抽出して `scripts/validate_intake_schema.py` 経由で `references/intake.schema.json` (required / enum / cross-field rules) に**実際に適合するか検証**する。schema FAIL は exit 2 でハーネスが公開をブロック。`--intake` を宣言しているのにパス抽出不能 / ファイル不在の場合も exit 2 (fail-closed: schema 検証を黙って素通りさせない)。`--intake` を取らない経路 (`render --ctx` 等) と検証対象外コマンドは exit 0 で pass-through。validator / schema 不在は exit 3 (環境不備)。Python stdlib のみで bash 委譲しない。 |
 | `post-publish-notify.sh` → `scripts/post_publish_notify.py` | publish pipeline 専用 post-step | `intake_publish_pipeline.py` が出力した成功 receipt (`status=published`, `exit_code=0`, `publish_event_id`) と hint を検証し、Slack incoming webhook へ最小ペイロードを送信。event ごとの atomic claim で重複送信を防止する。汎用 PostToolUse(Bash) には配線しない。Webhook 未登録時は silent skip。 |
-| `post-keychain-add.sh` | 手動実行 | Keychain 登録直後に `security find-generic-password` で取得可否を検証。本体は表示せず長さと prefix のみ出力。 |
+| `../scripts/post-keychain-add.sh` | 手動実行 | Keychain 登録直後に `security find-generic-password` で取得可否を検証。本体は表示せず長さと prefix のみ出力。自動 hook ではないため `scripts/` に置く。 |
 
 ## 配線方法
 
@@ -49,7 +49,7 @@ chmod +x plugins/skill-intake/hooks/*.sh
 ### 3. 手動検証
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/hooks/post-keychain-add.sh
+bash ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/post-keychain-add.sh
 # → OK: トークン取得成功 (長さ=64, prefix=ntn_...)
 ```
 
@@ -91,7 +91,7 @@ security add-generic-password \
 ## 配線が必要ない場合
 
 - **個人開発でリポジトリにシークレットを書く心配がない**: pre-publish-secret-scrub.sh は無効化可。ただしチーム共有リポジトリでは必ず有効化推奨。
-- **macOS 以外**: post-keychain-add.sh は macOS 専用。Linux/Windows では Keychain helper を別実装に差し替える必要あり。
+- **macOS 以外**: scripts/post-keychain-add.sh は macOS 専用。Linux/Windows では Keychain helper を別実装に差し替える必要あり。
 
 ## トラブルシューティング
 

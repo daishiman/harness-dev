@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a8c181b86c36014c8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "41f24ea8-6377-4a90-ab2a-1633c7f72fce",
+      "line": 58,
+      "prefix_bytes": 431743,
+      "prefix_sha256": "9d09d47339ea203530ca8505aad97bd35748406d8287ae649c16852042e11e6e",
+      "timestamp": "2026-11-01T11:20:23.617Z"
+    },
+    "result": {
+      "uuid": "3616952b-8bee-4e90-85c7-5ae05b6d2bfa",
+      "line": 60,
+      "prefix_bytes": 451089,
+      "prefix_sha256": "c063ca0ff8894a2dbc5628099c1129d6535345c85688adc8de1f0e79615d973e",
+      "timestamp": "2026-11-01T11:20:28.233Z"
+    }
+  },
+  "tool_use_id": "toolu_01FaQ8cR5Gz2Afx21ovJ8V8R",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx; grep -rnE \"spec-state|coverage.matrix|run-system-spec|decision_guid|fetched-references\" plugins/dev-graph --include=*.py --include=*.sh -l | head; grep -rn \"system-spec\" plugins/dev-graph/scripts/*.py | grep -viE \"lineage|origin_kind|source_\" | head -10"
+  },
+  "is_error": false,
+  "tool_result_content": "(eval):1: no matches found: --include=*.py\nplugins/dev-graph/scripts/build-init-scaffold.py:38:# 6 content root。system_spec は system-spec-harness (C19) が作るので init は作らない。\nplugins/dev-graph/scripts/build-graph-node.py:78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\nplugins/dev-graph/scripts/build-graph-node.py:79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\nplugins/dev-graph/scripts/build-graph-node.py:693:    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\nplugins/dev-graph/scripts/build-graph-node.py:701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\nplugins/dev-graph/scripts/guard-requirements-handoff.py:56:    \"system-spec-harness\": (\"run-dev-graph-system-spec\", \"system-spec-harness\"),\nplugins/dev-graph/scripts/resolve-repo-context.py:37:    \"system_spec\": \"system-spec\",",
+  "tool_use_result": {
+    "stdout": "(eval):1: no matches found: --include=*.py\nplugins/dev-graph/scripts/build-init-scaffold.py:38:# 6 content root。system_spec は system-spec-harness (C19) が作るので init は作らない。\nplugins/dev-graph/scripts/build-graph-node.py:78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\nplugins/dev-graph/scripts/build-graph-node.py:79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\nplugins/dev-graph/scripts/build-graph-node.py:693:    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\nplugins/dev-graph/scripts/build-graph-node.py:701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\nplugins/dev-graph/scripts/guard-requirements-handoff.py:56:    \"system-spec-harness\": (\"run-dev-graph-system-spec\", \"system-spec-harness\"),\nplugins/dev-graph/scripts/resolve-repo-context.py:37:    \"system_spec\": \"system-spec\",",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

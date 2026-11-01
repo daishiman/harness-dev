@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4afba76d-6bc6-43bb-b87a-dff1f2e41bfa",
+      "line": 103,
+      "prefix_bytes": 647962,
+      "prefix_sha256": "27b106263f70dd5544eac5489a75e0309f8e4b7d9eb47da0586a76b41f7f11fc",
+      "timestamp": "2026-11-01T11:14:58.402Z"
+    },
+    "result": {
+      "uuid": "ed7a53a7-d9dc-44fb-907e-ae406da87006",
+      "line": 104,
+      "prefix_bytes": 649462,
+      "prefix_sha256": "50dd3dae84168b470e3cb2d0f31ae152d83042e1b055290c9bbb6a6a9aa2f93a",
+      "timestamp": "2026-11-01T11:15:01.815Z"
+    }
+  },
+  "tool_use_id": "toolu_013F2JmBeBMrAEPhGKLXiNN5",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json,hashlib\na='2026-11-01T11:12:26.776540Z'; d='2026-11-01T11:12:12.376331Z'\nfor p in ['specs/billing-audit-system-spec.md','architecture/billing-audit-system-architecture.md']:\n  t=open(p,encoding='utf-8').read().replace(a,d); print(p, hashlib.sha256(t.encode()).hexdigest())\ng=open('.dev-graph/state/graph.json',encoding='utf-8').read().replace(a,d)\ng=json.loads(g); print('graph','sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "specs/billing-audit-system-spec.md 96c6e6a7463084d7e1b982c743dfba62d6833e3cb9a490d06363337f3603776e\narchitecture/billing-audit-system-architecture.md deced2516876fb3c0e1ae746ba2474f095688d0294dab6661861d32d1b60fc9f\ngraph sha256:15eabf1cf223a743f08893d71702ecb521b0fcb8fd848a700db7575a315785b5",
+  "tool_use_result": {
+    "stdout": "specs/billing-audit-system-spec.md 96c6e6a7463084d7e1b982c743dfba62d6833e3cb9a490d06363337f3603776e\narchitecture/billing-audit-system-architecture.md deced2516876fb3c0e1ae746ba2474f095688d0294dab6661861d32d1b60fc9f\ngraph sha256:15eabf1cf223a743f08893d71702ecb521b0fcb8fd848a700db7575a315785b5",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

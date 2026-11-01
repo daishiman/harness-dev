@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4a6d9379-edaa-4f1f-9fb2-52aa62327242",
+      "line": 345,
+      "prefix_bytes": 2245024,
+      "prefix_sha256": "fa6e7c8ca05cecf67cfe98618fa22fd9b0b8f669fe25575fbf982bf375567a73",
+      "timestamp": "2026-11-01T12:02:59.206Z"
+    },
+    "result": {
+      "uuid": "e1bd6d78-3638-4637-9304-67ab484c4d08",
+      "line": 351,
+      "prefix_bytes": 2247229,
+      "prefix_sha256": "75a3e4e81555438f475a394284767b2b141dc78244ed3b8c561afcd5c5b77c54",
+      "timestamp": "2026-11-01T12:03:03.082Z"
+    }
+  },
+  "tool_use_id": "toolu_01E1zvhqUw12284i7EmkSKa1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --require-complete; echo \"g1=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --references $CLAUDE_PROJECT_DIR/system-spec/fetched-references.json --repo-root $CLAUDE_PROJECT_DIR; echo \"g2=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-design-knowledge-refs.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --repo-root $CLAUDE_PROJECT_DIR; echo \"g3=$?\"",
+    "description": "Run compile entry gates"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ng1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ng2=0\nOK: design knowledge_ref は全て実在する (検査 17 件)\ng3=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ng1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ng2=0\nOK: design knowledge_ref は全て実在する (検査 17 件)\ng3=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

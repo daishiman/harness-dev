@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a9d85a0f4b30838ad",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2b3fc682-437f-47f2-a678-90b3c3fbe21f",
+      "line": 40,
+      "prefix_bytes": 605964,
+      "prefix_sha256": "58a600b89a8459a037854355b896b53294c2ecca303814ce8755eeff828bb2be",
+      "timestamp": "2026-11-01T11:02:49.010Z"
+    },
+    "result": {
+      "uuid": "361896d4-d79b-4723-9e2f-d5b02ad1a141",
+      "line": 46,
+      "prefix_bytes": 618714,
+      "prefix_sha256": "6c453ff1e3a62538d3f68b5c50fed0f719745bfdcfe29c9d8499fba714c2c248",
+      "timestamp": "2026-11-01T11:02:58.723Z"
+    }
+  },
+  "tool_use_id": "toolu_01Qe945g8XrkAv9VXGmFZVSR",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://www.typescriptlang.org/download/",
+    "prompt": "Current TypeScript version."
+  },
+  "is_error": false,
+  "tool_result_content": "The current stable release is **TypeScript 7.0**, according to the page, which says `npm install -g typescript` installs \"the latest version (currently 7.0).\" A 7.1 beta is also upcoming.\n\n## Recommended: install per project\n\nInstalling TypeScript in each project lets different projects use different versions, and lockfiles keep everyone on the team on the same version.\n\n```bash\nnpm install typescript --save-dev\nnpx tsc\n```\n\nyarn and pnpm also work as dependency managers.\n\n## Global install\n\nA global install makes `tsc` available in any terminal, which is useful for quick experiments. The page advises that long-term codebases prefer a project-wide install for reproducible builds.\n\n```bash\nnpm install -g typescript\n```\n\n## Visual Studio\n\n- **NuGet (MSBuild projects, such as ASP.NET Core):** In the Package Manager Console, run:\n  ```powershell\n  Install-Package Microsoft.TypeScript.MSBuild\n  ```\n  You can also use the Manage NuGet Packages window.\n- **Visual Studio extension (for project types without NuGet support):** Install it via `Extensions > Manage Extensions`.\n\n## Using other transpilers\n\nBabel, swc, and Sucrase can convert TypeScript to JavaScript faster or fit existing tooling. They don't perform type-checking, so keep the `typescript` dependency and enable `isolatedModules` in your tsconfig:\n\n```json\n{\n  \"compilerOptions\": {\n    \"isolatedModules\": true\n  }\n}\n```",
+  "tool_use_result": {
+    "bytes": 171623,
+    "code": 200,
+    "codeText": "OK",
+    "result": "The current stable release is **TypeScript 7.0**, according to the page, which says `npm install -g typescript` installs \"the latest version (currently 7.0).\" A 7.1 beta is also upcoming.\n\n## Recommended: install per project\n\nInstalling TypeScript in each project lets different projects use different versions, and lockfiles keep everyone on the team on the same version.\n\n```bash\nnpm install typescript --save-dev\nnpx tsc\n```\n\nyarn and pnpm also work as dependency managers.\n\n## Global install\n\nA global install makes `tsc` available in any terminal, which is useful for quick experiments. The page advises that long-term codebases prefer a project-wide install for reproducible builds.\n\n```bash\nnpm install -g typescript\n```\n\n## Visual Studio\n\n- **NuGet (MSBuild projects, such as ASP.NET Core):** In the Package Manager Console, run:\n  ```powershell\n  Install-Package Microsoft.TypeScript.MSBuild\n  ```\n  You can also use the Manage NuGet Packages window.\n- **Visual Studio extension (for project types without NuGet support):** Install it via `Extensions > Manage Extensions`.\n\n## Using other transpilers\n\nBabel, swc, and Sucrase can convert TypeScript to JavaScript faster or fit existing tooling. They don't perform type-checking, so keep the `typescript` dependency and enable `isolatedModules` in your tsconfig:\n\n```json\n{\n  \"compilerOptions\": {\n    \"isolatedModules\": true\n  }\n}\n```",
+    "durationMs": 5578,
+    "url": "https://www.typescriptlang.org/download/"
+  }
+}

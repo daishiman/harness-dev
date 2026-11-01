@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1199ee63-c316-405a-9093-6aa9f39c8ba3",
+      "line": 123,
+      "prefix_bytes": 830636,
+      "prefix_sha256": "7beabb70f6f370d77db3cc746d49faa62fee5e94db88ca3c10ae5af7f4cdb9c4",
+      "timestamp": "2026-11-01T03:12:50.045Z"
+    },
+    "result": {
+      "uuid": "56f5f224-a305-4e10-a1e1-1e3440556a20",
+      "line": 124,
+      "prefix_bytes": 831937,
+      "prefix_sha256": "a1f6f979e9851acada7478208bca6f9f48b27ee236e923239be6ee8e5e0ab69b",
+      "timestamp": "2026-11-01T03:12:52.535Z"
+    }
+  },
+  "tool_use_id": "toolu_015h3iAEz6cHaNwDonFqVVrt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport subprocess,pathlib\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"\nv=R+\"/plugins/harness-creator/vendor/prompt-creator/verify-completeness.py\"\nr=subprocess.run([\"python3\",v,\"--help\"],capture_output=True,text=True); print(r.returncode,r.stdout[:2500],r.stderr[:1000])\nprint(sorted(str(p.relative_to(R)) for p in pathlib.Path(R+\"/plugins/harness-creator/vendor/prompt-creator\").rglob(\"*\") if p.is_file())[:40])\nprompts=sorted(str(p) for p in pathlib.Path(R+\"/plugins/system-spec-harness\").rglob(\"prompts/*.md\")); print(len(prompts))\nEOF",
+    "description": "Inspect prompt-creator verify-completeness usage"
+  },
+  "is_error": false,
+  "tool_result_content": "0 usage: verify-completeness.py [-h] [--input INPUT] [--layers LAYERS]\n\n7層プロンプトの網羅性 + Layer 5 ゴールシーク契約 (l5-contract v2.0.0) を検証する\n\noptions:\n  -h, --help       show this help message and exit\n  --input INPUT\n  --layers LAYERS  必須 Layer のサブセット (brief.layers_required)。例: L1,L2,L5。未指定時は 7\n                   層全て必須。\n \n['plugins/harness-creator/vendor/prompt-creator/verify-completeness.py']\n18",
+  "tool_use_result": null
+}

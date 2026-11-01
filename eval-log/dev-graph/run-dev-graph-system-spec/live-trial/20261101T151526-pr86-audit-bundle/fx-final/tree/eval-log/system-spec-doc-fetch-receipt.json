@@ -1,0 +1,12 @@
+{
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "invocation": "Skill args: --state <abs>/system-spec/spec-state.json --references <abs>/system-spec/fetched-references.json",
+  "prompts_read_in_full": ["prompts/R1-identify.md", "prompts/R2-fetch.md", "prompts/R3-record.md"],
+  "r1_identify": {"targets": ["postgres", "react", "fastapi", "typescript"], "source": "spec-state.targets[]", "duplicates": 0, "discovered_knowledge_candidates": [], "knowledge_candidates": {"k8s-workload-observability": "deepened (qualification already done; no discovered candidate)"}},
+  "necessity_decision": "not_required",
+  "necessity_reason": "起動経路(a) compile前の未取得参照検出で未取得0件: 4 target全てに公式host record・version・実取得時刻(2026-10-31T14:45-14:46Z)・evidence digestがあり、IN1 validate-source-citation.py が exit0。discovered candidate 0件。現行版かの意味判定は本skillでなくC08 (OUT1) の担当で、C05経由の独立C08がWebFetchで再照合する。C08が陳腐化を検出した場合はR2から再取得する。",
+  "in1": {"argv": ["python3", "-B", "plugins/system-spec-harness/scripts/validate-source-citation.py", "--targets", "system-spec/spec-state.json", "--references", "system-spec/fetched-references.json", "--state", "system-spec/spec-state.json", "--repo-root", "<repo_root>"], "exit": 0, "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす"},
+  "references": {"path": "system-spec/fetched-references.json", "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729", "modified": false},
+  "writer_ops": [],
+  "artifact_delivery": {"presented": {"path": "system-spec/fetched-references.json", "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729", "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/fetched-references.json"}, "choice": "standard", "choice_source": "隔離fixtureの事前回答契約 (task.md)", "state": "semantic_evaluator_started", "semantic_evaluation_owner": "C08 via C05"}
+}

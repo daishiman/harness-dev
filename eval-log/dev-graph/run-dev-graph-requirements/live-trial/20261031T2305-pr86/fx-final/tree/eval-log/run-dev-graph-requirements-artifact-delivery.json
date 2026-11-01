@@ -1,0 +1,63 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-requirements",
+  "effect": "local-artifact",
+  "guard": "declared-target-scope-only",
+  "transitions": [
+    {
+      "from": null,
+      "to": "artifact_created",
+      "at": "2026-10-31T14:08:03.573874+00:00",
+      "artifacts": {
+        ".dev-graph/requirements/FEATURE-1/requirements.md": "9333d51f0edb90eda82be6b3b98f26b1d59809f92f0957a8a8b03e8cc2ba228b",
+        ".dev-graph/requirements/FEATURE-1/readiness-matrix.json": "9d900f6b2041ef0187600801317a79bb4b7d183d89fd5bf2905a6dcb1534845a",
+        ".dev-graph/requirements/FEATURE-1/capability-build-handoff.json": "23176737c053b20babacd60b4ed295be3a9cc012ec98eb2e165e55bcb4992a76"
+      }
+    },
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "checks": {
+        "parse_open": "pass",
+        "secret": "pass (0 hits)",
+        "irreversible": "pass (fixture-local writes only, no external mutation)",
+        "corrupt": "pass (atomic replace; json parse ok)",
+        "target_scope": "pass (fx/.dev-graph/requirements/FEATURE-1 only)"
+      }
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "how_to_open": "cat / jq でローカルfileを開く"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "task.md 事前回答契約 (隔離fixture限定の予め指定済みstandard)"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "from": "semantic_evaluator_started",
+      "event": "improvement_complete",
+      "to": "handoff_complete",
+      "at": "2026-10-31T14:12:37.891825+00:00",
+      "artifacts": {
+        ".dev-graph/requirements/FEATURE-1/requirements.md": "9c434d141ff2ba65b42e8e306dfbb5e2c80eeb18b7ba9916093fd6df2530a0df",
+        ".dev-graph/requirements/FEATURE-1/readiness-matrix.json": "ead160b11b331e8402b7700d706b0ecf164cb8e20a662f7443eac9daeb5915aa",
+        ".dev-graph/requirements/FEATURE-1/capability-build-handoff.json": "5438d0b1cb05057a20cd8662dc966c0ee96bbe74f8e1d49a6393bc86ef66deea"
+      }
+    }
+  ],
+  "pre_choice_forbidden_used": [],
+  "release": "not-requested",
+  "exhaustive": "not-requested",
+  "final_state": "handoff_complete"
+}

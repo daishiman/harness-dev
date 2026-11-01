@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a890da400218aa644",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9a572d57-4703-4c7c-bc8e-86e48c77cfa7",
+      "line": 52,
+      "prefix_bytes": 308808,
+      "prefix_sha256": "01ebacc946987ca1445784323baf3d3836769d351d96f20416d1a536c5051c73",
+      "timestamp": "2026-11-01T15:50:41.830Z"
+    },
+    "result": {
+      "uuid": "c5af2dad-5434-4bc0-9cf9-881d1fa0a6c8",
+      "line": 53,
+      "prefix_bytes": 310994,
+      "prefix_sha256": "03f4023a17f8265b5c7bbbbabc2b91c61402545d5e778f685a1845af803750e5",
+      "timestamp": "2026-11-01T15:50:45.821Z"
+    }
+  },
+  "tool_use_id": "toolu_01AEMtzRDxcwsAfLdBPKK1UV",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -I -B -c '\nimport json,sys\nd=json.load(open(\"../workdir/tool-observer/index.json\"))\nprint(type(d).__name__, list(d.keys())[:10] if isinstance(d,dict) else len(d))\nev=d.get(\"events\",d) if isinstance(d,dict) else d\nif isinstance(ev,list): print(len(ev)); print(json.dumps(ev[0])[:600])\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "dict ['observer_projection_id', 'schema_version', 'observer', 'session_id', 'events', 'tool_coverage_included', 'intentional_exclusions', 'observed_streams', 'policy']\n40\n{\"stream\": \"main\", \"kind\": \"tool_call\", \"file\": \"main-toolu_01LrHrmcFtxZ6z7MYLfzoso2.json\", \"source_line\": 32, \"source_prefix_sha256\": \"397ba52a765e72ebed3648b5d3c3c6cd032d8698cdf2d442157e1a9c88682dd4\", \"tool_name\": \"Read\", \"tool_use_id\": \"toolu_01LrHrmcFtxZ6z7MYLfzoso2\", \"is_error\": false, \"input_summary\": \"{\\\"file_path\\\": \\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/workdir/task.md\\\"}\"}",
+  "tool_use_result": {
+    "stdout": "dict ['observer_projection_id', 'schema_version', 'observer', 'session_id', 'events', 'tool_coverage_included', 'intentional_exclusions', 'observed_streams', 'policy']\n40\n{\"stream\": \"main\", \"kind\": \"tool_call\", \"file\": \"main-toolu_01LrHrmcFtxZ6z7MYLfzoso2.json\", \"source_line\": 32, \"source_prefix_sha256\": \"397ba52a765e72ebed3648b5d3c3c6cd032d8698cdf2d442157e1a9c88682dd4\", \"tool_name\": \"Read\", \"tool_use_id\": \"toolu_01LrHrmcFtxZ6z7MYLfzoso2\", \"is_error\": false, \"input_summary\": \"{\\\"file_path\\\": \\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/workdir/task.md\\\"}\"}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true,
+      "shared": true
+    }
+  }
+}

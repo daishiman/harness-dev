@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-a42171b76c10bf1d6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "832f8e1d-9602-47f3-87ef-cac7290c2788",
+      "line": 44,
+      "prefix_bytes": 346887,
+      "prefix_sha256": "610e9456c25772b2b0592db2f6f06b568cc3acb64285feb127eb92ba63dae7e4",
+      "timestamp": "2026-11-01T10:01:48.963Z"
+    },
+    "result": {
+      "uuid": "f9e1059f-5c95-4b72-824c-dce95996303d",
+      "line": 45,
+      "prefix_bytes": 349334,
+      "prefix_sha256": "6a7e378d23e0704839087ae463198a809ec7db9f2635ca6e7b5ff79d3cd31d6a",
+      "timestamp": "2026-11-01T10:01:51.143Z"
+    }
+  },
+  "tool_use_id": "toolu_01Le7mVX2nnE8zUb64RSD1uK",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph; cat .claude-plugin/plugin.json; echo ---; grep -rniE \"elicit|hearing|ヒアリング|compile_spec|spec-compile|coverage.?matrix|spec-state|fetched-references|completeness|doc.?fetch\" scripts lib skills/run-dev-graph-system-spec/scripts hooks 2>/dev/null | grep -v '^Binary' | cut -c1-220 | head -60"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n---\nscripts/build-graph-node.py:78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\nscripts/build-graph-node.py:79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\nscripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+  "tool_use_result": {
+    "stdout": "{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n---\nscripts/build-graph-node.py:78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\nscripts/build-graph-node.py:79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\nscripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

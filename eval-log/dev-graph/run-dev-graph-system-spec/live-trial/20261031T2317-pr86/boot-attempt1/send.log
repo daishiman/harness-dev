@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-send.py", line 120, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-send.py", line 98, in main
+    backend.paste_file(ns.session, tmp)
+  File "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-backend.py", line 230, in paste_file
+    _tmux("load-buffer", "-b", buffer_name, str(path), check=True)
+  File "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-backend.py", line 133, in _tmux
+    return subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "/Users/dm/miniconda3/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['tmux', 'load-buffer', '-b', 'ltpaste-4173e4301c3b145a4d2f6731d621d436', '/private/tmp/claude-501/pr86-ci-live/lt/tmp/tmpt9optlyh.txt']' returned non-zero exit status 1.

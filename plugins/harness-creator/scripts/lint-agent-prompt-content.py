@@ -26,7 +26,8 @@
 verify-completeness.py を vendor/prompt-creator/ へ byte 一致で複製したものを subprocess で
 そのまま再利用する (ロジック二重実装を避け drift を --check-vendor-parity で検出する)。本 lint が
 その上に重ねるのは mode 別の frontmatter 規律のみ:
-  --mode agent : frontmatter が plugin agent YAML (name/description/tools 必須) であること + 本文 7 層 OK
+  --mode agent : frontmatter が plugin agent YAML (name/description 必須、tools か tools-inherit: true の
+                 どちらか一方が必須) であること + 本文 7 層 OK
   --mode prompt: frontmatter が不在 (純粋 7 層 Markdown) であること + 本文 7 層 OK
 
 Exit: 0=OK, 1=violation, 2=usage error。
@@ -52,8 +53,12 @@ CANONICAL_VERIFY = (
 )
 
 # plugin agent frontmatter の必須キー (subagent-hybrid-format.md「frontmatter 契約」)。
-AGENT_FRONTMATTER_REQUIRED = ("name", "description", "tools")
+AGENT_FRONTMATTER_REQUIRED = ("name", "description")
+# tools 宣言はどちらか一方だけが必須 (正本: capability-manifest.schema.json#/definitions/kindAgent の oneOf)。
+AGENT_TOOLS_ONE_OF = ("tools", "tools-inherit")
+AGENT_TOOLS_MISSING = "tools または tools-inherit: true"
 _FM_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*)\s*:", re.MULTILINE)
+_TOOLS_INHERIT_TRUE_RE = re.compile(r"^tools-inherit\s*:\s*(?:true|True|TRUE)\s*(?:#.*)?$", re.MULTILINE)
 
 
 def split_frontmatter(text: str) -> tuple[str | None, str]:
@@ -72,9 +77,59 @@ def split_frontmatter(text: str) -> tuple[str | None, str]:
 
 
 def check_agent_frontmatter(fm: str) -> list[str]:
-    """agent frontmatter に必須キー (name/description/tools) が揃っているか。欠落キー名を返す。"""
+    """agent frontmatter の必須キーの欠落を返す。
+
+    name/description は欠落キー名で、tools 宣言 (tools か tools-inherit) が両方とも無いときは
+    AGENT_TOOLS_MISSING で返す。併記や値の誤りは check_agent_tools_declaration が扱う。
+    """
     keys = set(_FM_KEY_RE.findall(fm))
-    return [k for k in AGENT_FRONTMATTER_REQUIRED if k not in keys]
+    missing = [k for k in AGENT_FRONTMATTER_REQUIRED if k not in keys]
+    if not keys & set(AGENT_TOOLS_ONE_OF):
+        missing.append(AGENT_TOOLS_MISSING)
+    return missing
+
+
+def _tools_values(fm: str) -> list[str]:
+    """`tools:` の値をツール名の list で返す (カンマ区切り・[...]・block list のいずれも)。"""
+    lines = fm.splitlines()
+    for i, line in enumerate(lines):
+        m = re.match(r"^tools\s*:\s*(.*?)\s*$", line)
+        if not m:
+            continue
+        val = re.sub(r"(?:^|\s+)#.*$", "", m.group(1)).strip()
+        if val.startswith("[") and val.endswith("]"):
+            val = val[1:-1]
+        if val:
+            return [v.strip().strip("\"'") for v in val.split(",") if v.strip()]
+        items: list[str] = []
+        for nxt in lines[i + 1:]:
+            item = re.match(r"^\s+-\s*(.*?)\s*$", nxt)
+            if not item:
+                break
+            items.append(item.group(1).strip("\"'"))
+        return [v for v in items if v]
+    return []
+
+
+def check_agent_tools_declaration(fm: str) -> str | None:
+    """tools 宣言が「tools か tools-inherit: true のどちらか一方」を満たさない理由を返す (満たせば None)。
+
+    欠落 (どちらも無い) は check_agent_frontmatter が報告するのでここでは扱わない。
+    """
+    keys = set(_FM_KEY_RE.findall(fm))
+    if "tools" in keys and "tools-inherit" in keys:
+        return "tools と tools-inherit を併記している (どちらか一方だけ)"
+    if "tools-inherit" in keys:
+        if not _TOOLS_INHERIT_TRUE_RE.search(fm):
+            return "tools-inherit の値が true でない (全ツール継承を宣言するときだけ tools-inherit: true と書く)"
+        return None
+    if "tools" in keys:
+        values = _tools_values(fm)
+        if not values:
+            return "tools が空 (ツールを列挙するか、tools を省いて tools-inherit: true と書く)"
+        if any(v.lower() == "inherit" for v in values):
+            return "tools に inherit をツール名として書いている (全ツール継承は tools を省いて tools-inherit: true)"
+    return None
 
 
 def verify_body_7layer(path: Path) -> tuple[bool, str]:
@@ -111,7 +166,13 @@ def lint_file(path: Path, mode: str) -> list[str]:
             if missing:
                 violations.append(
                     f"AGENT-FRONTMATTER-KEYS {rel}: 必須キー欠落 {', '.join(missing)} "
-                    "(name/description/tools は必須)"
+                    "(name/description と、tools か tools-inherit: true のどちらか一方は必須)"
+                )
+            tools_problem = check_agent_tools_declaration(fm)
+            if tools_problem:
+                violations.append(
+                    f"AGENT-FRONTMATTER-TOOLS {rel}: {tools_problem} "
+                    "(subagent-hybrid-format.md: tools か tools-inherit: true のどちらか一方)"
                 )
     elif mode == "prompt":
         if fm is not None:
@@ -232,14 +293,22 @@ def _self_test() -> int:
         failures.append("split_frontmatter: frontmatter 無しを None にできず")
     if check_agent_frontmatter("name: x\ndescription: y\ntools: Read") != []:
         failures.append("check_agent_frontmatter: 完全 frontmatter を違反判定")
-    if "tools" not in check_agent_frontmatter("name: x\ndescription: y"):
-        failures.append("check_agent_frontmatter: tools 欠落を検出できず")
+    if AGENT_TOOLS_MISSING not in check_agent_frontmatter("name: x\ndescription: y"):
+        failures.append("check_agent_frontmatter: tools 宣言の欠落を検出できず")
+    if check_agent_frontmatter("name: x\ndescription: y\ntools-inherit: true") != []:
+        failures.append("check_agent_frontmatter: tools-inherit: true を欠落と誤判定")
+    if check_agent_tools_declaration("name: x\ndescription: y\ntools-inherit: true") is not None:
+        failures.append("check_agent_tools_declaration: tools-inherit: true を違反判定")
+    if check_agent_tools_declaration("name: x\ntools: Read\ntools-inherit: true") is None:
+        failures.append("check_agent_tools_declaration: tools と tools-inherit の併記を検出できず")
+    if check_agent_tools_declaration("name: x\ntools-inherit: false") is None:
+        failures.append("check_agent_tools_declaration: tools-inherit: false を検出できず")
     if failures:
         for f in failures:
             print(f, file=sys.stderr)
         print("self-test: FAIL", file=sys.stderr)
         return 1
-    print("self-test: PASS (frontmatter split + agent key detection)")
+    print("self-test: PASS (frontmatter split + agent key detection + tools declaration)")
     return 0
 
 

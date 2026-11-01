@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-a7147f9cf39ae7479",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2aa7143e-38d0-4384-b373-b43bd0e6f7a7",
+      "line": 80,
+      "prefix_bytes": 528238,
+      "prefix_sha256": "ce288fc3e4c71290f91f28a5eeb29adb40a915ca6f967d438b7c0d867455a486",
+      "timestamp": "2026-11-01T06:37:13.278Z"
+    },
+    "result": {
+      "uuid": "247f1cb3-7fb8-43ce-88c4-82565d753692",
+      "line": 81,
+      "prefix_bytes": 529478,
+      "prefix_sha256": "cafbf41aab894bd8fa807a603325cda9d9d88d2c1f5be484377559cf8aaeabc0",
+      "timestamp": "2026-11-01T06:37:15.677Z"
+    }
+  },
+  "tool_use_id": "toolu_01EcgmDk1WoWqwwK2NsLXcQV",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B - <<'PY'\nimport subprocess,json,pathlib\nps=sorted(str(p) for p in pathlib.Path('plugins/system-spec-harness').rglob('build-resume-receipt.py')); print(ps)\nbefore=subprocess.run(['git','status','--porcelain'],capture_output=True,text=True).stdout\nr=subprocess.run(['python3','-B',ps[0],'--repo-root',str(pathlib.Path('.').resolve()),'--print-artifact-snapshot'],capture_output=True,text=True)\nprint(r.returncode, r.stderr[:300])\ncur=json.loads(r.stdout); rep=json.load(open('eval-log/system-spec-completeness-report.json'))['artifact_snapshot']\nprint('equal', cur==rep, cur.get('schema_version'))\nprint(before==subprocess.run(['git','status','--porcelain'],capture_output=True,text=True).stdout)\nPY",
+    "description": "Compare canonical artifact snapshot with report"
+  },
+  "is_error": false,
+  "tool_result_content": "['plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py']\n0 \nequal True system-spec-artifact-snapshot/v1\nTrue",
+  "tool_use_result": {
+    "stdout": "['plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py']\n0 \nequal True system-spec-artifact-snapshot/v1\nTrue",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "overall": "PASS",
+  "loop": 1,
+  "c24_receipt": {
+    "repo_root": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx",
+    "repository_id": "local:sha256:312b6ad14b065048403c0feea98233ed38cce0cd444c2a97898e391c9de63cbf",
+    "mode": "write",
+    "graph": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/.dev-graph/state/graph.json"
+  },
+  "graph_baseline": {
+    "graph_revision": 0,
+    "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "C24 resolve-repo-context --mode write exit0: repo_root == content_roots.repository, repository_id local:sha256:312b6ad1…3cbf; writer receipt repository_id identical; written paths specs/ and architecture/ resolve inside repo root (integrity auditor confirmed)"},
+    {"id": "classification", "status": "achieved", "evidence": "add receipt: spec decision=auto confidence 0.95 margin 0.65; architecture decision=auto confidence 0.92 margin 0.57 (>=0.80 / >=0.15 thresholds)"},
+    {"id": "schema", "status": "achieved", "evidence": "validate-graph-schema --strict-artifact-readiness exit0, 0 violations, node_readiness complete=2 (eval-log/run-dev-graph-node/schema-report-r1.json); pre_write_validation valid; auditor frontmatter/path match"},
+    {"id": "package", "status": "not_applicable", "evidence": "verb=add (spec+architecture); register-package not invoked; no feature/package/phase nodes in graph (auditor)"},
+    {"id": "receipt", "status": "achieved", "evidence": ".dev-graph/state/receipts/node-r000001-add.json: graph_revision_before 0 (=baseline) -> after 1 == graph.graph_revision; node_ids == graph nodes; graph_digest_after sha256:cc3d8a05…9d81 == current canonical digest"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loops": [{"loop": 1, "status": "PASS", "evidence": "pre_write_validation valid; post-commit validate-graph-schema exit0 missing required keys 0"}]},
+    {"id": "OUT1", "status": "external_pending", "where": "live trial"},
+    {"id": "OUT2", "status": "external_pending", "where": "acceptance test"},
+    {"id": "OUT3", "status": "external_pending", "where": "acceptance test (exact-13 package)"}
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:cc3d8a05be9f4088276e9ecdaff5da1d7e192c04902eb202152f49c7dd659d81"
+  }
+}

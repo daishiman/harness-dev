@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。qa-009 は JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)を名指しで 1 問に束ねていた(N4)。(a) 置き換え先 qa-019 は 1 論点の開いた問で N1-N4 に違反せず、medium 以上の検出もない。(b) superseded_note と両問を照合して同じ論点(JTBD)と確認した。残りの論点は qa-016(対象ユーザー)、qa-020(環境)、qa-021(頻度)で 1 論点ずつ問い直されている。(c) qa-019 には answer、basis=user-decision、answered_at=2026-10-12T00:16:45Z があり、旧 entry は answered_at を持たない。qa-009 を主たる接地根拠 qa_ref とする確定セルは 0 件(ui-ux/web の qa_refs に残るだけ)。effective_source_refs の参照も 0 件。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択と、セッションの有効期間(有効期限とログアウト時の扱い)という独立に決められる 2 論点を 1 問に束ねている。ただし選択肢は中立で、推奨の印はなく、どれも採らない・保留の道も示されている。qa-038 は auth/web の qa_refs(裏付け)にだけ現れ、主たる接地根拠 qa_ref(qa-002)ではないため、aspect-criteria.md の対応では PASS に残す注記になる。修正の指針: C01 が 2 論点に分けて問い直し、supersede-qa する。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約 1 つに対する確定・指摘・保留の選択を求める問。決める対象は要約全体の承認という 1 点で、各項目の根拠 qa id が示され、指摘・保留の道もある。束ねには当たらないと判断したが、疑いとして残す。qa-033 は確定セルの qa_ref ではなく approval_ref appr-foundation-v2 の根拠である。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "qa_id": "qa-009",
+      "observation": "確定セルの qa_ref は qa-003 で qa_log に実在し、dangling はない。qa_refs(裏付け)には置き換え済みの qa-009 が残っているが、置き換え先 qa-019 も同じセルの qa_refs にある。主たる接地根拠 qa_ref ではないため active consumer には当たらず、高重大度にはしない。確定セル 8 件はすべて qa_ref と qa_refs が qa_log に実在した。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U1-U9",
+      "field": "requirements_foundation",
+      "observation": "confirmed=true、schema 1.0 で effective_source_refs は無いため canonical qa-foundation-u1〜u9 へ fallback した。9 件はすべて source.kind=user-dialogue で、answer が元の利用者発言 qa(U1←qa-010/011、U2←qa-012、U3←qa-013、U4←qa-014、U5←qa-015、U6←qa-016/019、U7←qa-017/000、U8←qa-018/031、U9←qa-001/028/024)を空行区切りで逐語連結した内容と完全一致した。approval_ref=appr-foundation-v2 は approval_log に実在し、note が qa-033 の確定を根拠として挙げている。U1/U2/U3 は N/A でなく値である。書面要件(written-requirements)の source は無く、path containment と SHA の検査対象は 0 件。U 値は利用者発言の範囲を超える創作を確認しなかった。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U1-U9",
+      "field": "qa_log.provenance",
+      "observation": "qa-foundation-u1〜u9 と多くの qa の provenance に、シナリオ上の利用者発言を orchestrator が再記録したもので実利用者との対話ログではない、と明示されている(qa-037/038 は orchestrator が書いた既定値を user-decision の turn に変えたと記載)。偽装はなく開示済みの fixture 性質だが、一次入力の実在は実対話では担保されていない。qa-foundation-u1〜u9 には basis と answered_at が無い(schema 1.0 の canonical fallback では必須でない)。"
+    }
+  ]
+}

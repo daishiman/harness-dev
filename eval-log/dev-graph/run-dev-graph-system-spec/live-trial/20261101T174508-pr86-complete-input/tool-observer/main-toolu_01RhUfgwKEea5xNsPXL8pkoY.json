@@ -1,0 +1,72 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "51ac0de3-278b-4d6e-84c2-3c999d99a2a3",
+      "line": 137,
+      "prefix_bytes": 683463,
+      "prefix_sha256": "c695f6ac4be3d034820c95890e7a342ac7748e2bb11c181a9dae9a0813df8aa3",
+      "timestamp": "2026-11-01T08:47:36.708Z"
+    },
+    "result": {
+      "uuid": "7b51b6bf-e52f-496e-8ea9-322e75c8c08a",
+      "line": 140,
+      "prefix_bytes": 687662,
+      "prefix_sha256": "21e4d744f677200365e17178da33f1de1a25b2da2ae610f1c445ec5858cd92ba",
+      "timestamp": "2026-11-01T08:47:43.082Z"
+    }
+  },
+  "tool_use_id": "toolu_01RhUfgwKEea5xNsPXL8pkoY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\n  \"skill\": \"dev-graph:run-dev-graph-system-spec\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"presented_artifact\": {\n    \"path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n    \"sha256\": \"eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30\",\n    \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"\n  },\n  \"transitions\": [\"artifact_created\", \"minimum_guard_pass->minimal_guard_passed\", \"present_actual_artifact->artifact_presented\", \"record_user_choice->user_choice_recorded\", \"standard->semantic_evaluator_started\"],\n  \"choice\": \"standard\",\n  \"choice_source\": \"isolated fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo or external account approval\",\n  \"state\": \"semantic_evaluator_started\"\n}\nJSON\necho ok"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 13,
+              "lines": [
+                "+{",
+                "+  \"skill\": \"dev-graph:run-dev-graph-system-spec\",",
+                "+  \"contract\": \"artifact-delivery-v1\",",
+                "+  \"presented_artifact\": {",
+                "+    \"path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",",
+                "+    \"sha256\": \"eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30\",",
+                "+    \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"",
+                "+  },",
+                "+  \"transitions\": [\"artifact_created\", \"minimum_guard_pass->minimal_guard_passed\", \"present_actual_artifact->artifact_presented\", \"record_user_choice->user_choice_recorded\", \"standard->semantic_evaluator_started\"],",
+                "+  \"choice\": \"standard\",",
+                "+  \"choice_source\": \"isolated fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo or external account approval\",",
+                "+  \"state\": \"semantic_evaluator_started\"",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json"
+      ]
+    }
+  }
+}

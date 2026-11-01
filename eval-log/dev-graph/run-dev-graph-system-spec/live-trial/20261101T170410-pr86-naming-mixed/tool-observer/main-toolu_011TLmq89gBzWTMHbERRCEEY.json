@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "33273f81-a81e-4e69-8e50-05908486471f",
+      "line": 263,
+      "prefix_bytes": 1178139,
+      "prefix_sha256": "ec4e250564da8abc0c6e9759f2276a57a1f9372e08b97aef934e032c33c43a05",
+      "timestamp": "2026-11-01T08:07:52.897Z"
+    },
+    "result": {
+      "uuid": "bfb8be62-8c43-414a-b120-52071fd19dd6",
+      "line": 264,
+      "prefix_bytes": 1180183,
+      "prefix_sha256": "25aac40b428cfa62578ee153f9af8888dea4d0dd9930bc51928044180c2fd4fd",
+      "timestamp": "2026-11-01T08:07:54.187Z"
+    }
+  },
+  "tool_use_id": "toolu_011TLmq89gBzWTMHbERRCEEY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,hashlib,pathlib\nd=pathlib.Path(\"eval-log/run-dev-graph-system-spec\")\nsha=lambda p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()\ninputs={str(p):sha(p) for p in sorted(pathlib.Path(\"system-spec\").rglob(\"*\")) if p.is_file()}\nrep={\"report\":\"run-dev-graph-system-spec preflight report (pre-choice minimum artifact)\",\"caller_root\":\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\",\n\"c24_receipt\":{\"path\":\"eval-log/run-dev-graph-system-spec/c24-receipt.json\",\"sha256\":sha(d/\"c24-receipt.json\")},\n\"r0\":json.load(open(d/\"R0/receipt.json\")),\"r0_verifier\":{\"path\":\"eval-log/run-dev-graph-system-spec/R0/verifier.json\",\"verdict\":\"PASS\"},\n\"r1\":json.load(open(d/\"R1/receipt.json\")),\"r1_verifier\":{\"path\":\"eval-log/run-dev-graph-system-spec/R1/verifier.json\",\"verdict\":json.load(open(d/\"R1/verifier.json\"))[\"verdict\"]},\n\"inputs\":inputs,\n\"guards\":{\"parse\":\"all JSON inputs parsed\",\"secret\":\"none detected (no credentials in inputs)\",\"irreversible\":\"none (no graph write yet)\",\"corrupt\":\"input digests match fixture seed_sha256\"}}\np=d/\"preflight-report.json\"; p.write_text(json.dumps(rep,ensure_ascii=False,indent=2)+\"\\n\")\nprint(p.resolve(), sha(p))\nPY"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin.",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin."
+}

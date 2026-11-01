@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "34379458-1dcf-4163-aa8f-f534a55967c1",
+      "line": 118,
+      "prefix_bytes": 881499,
+      "prefix_sha256": "c1f051cd1c567f4bb67fd75efcc23ef8c645b5d2564d24f00403e390abf5ff98",
+      "timestamp": "2026-11-01T15:48:36.832Z"
+    },
+    "result": {
+      "uuid": "8f811027-c3f0-44cc-8400-a1e328db2608",
+      "line": 119,
+      "prefix_bytes": 887371,
+      "prefix_sha256": "b3c40935ac1c91eafdb2c745122e6832aba6e07711d88114b9fc8c3fef423fb9",
+      "timestamp": "2026-11-01T15:48:40.332Z"
+    }
+  },
+  "tool_use_id": "toolu_01GWCqQyaWcvSaazytJfEpxQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cat plugins/system-spec-harness/.claude-plugin/plugin.json; grep -n -A6 \"system-spec-harness\" plugins/dev-graph/plugin-composition.yaml | head -30; ls plugins/system-spec-harness/references; python3 -c \"import json;d=json.load(open('plugins/system-spec-harness/references/package-contract.json'));print(json.dumps(d.get('entry_points'),indent=1))\"; ls plugins/system-spec-harness/skills; for s in run-system-spec-elicit run-system-spec-doc-fetch run-system-spec-compile assign-system-spec-completeness-evaluator; do sha256sum plugins/system-spec-harness/skills/$s/SKILL.md 2>/dev/null || shasum -a 256 plugins/system-spec-harness/skills/$s/SKILL.md; done",
+    "description": "Check harness manifest, version range, entry points"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n16:    - C19はexternal system-spec-harnessを引用しcompilerを複製しない\n17-    - caller repository外content accessとfeature branch上durable completionを拒否する\n18-\n19-capabilities:\n20-  - { kind: skill, ref: skills/run-dev-graph-decompose, tier: core }\n21-  - { kind: skill, ref: skills/run-dev-graph-init, tier: core }\n22-  - { kind: skill, ref: skills/run-dev-graph-node, tier: core }\n--\n153:  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\n155-    required_entry_points: [run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator]\n156-  system-dev-planner:\n157-    version: \">=0.1.0 <1.0.0\"\n158-    required_entry_points: [run-system-dev-plan, system-dev-plan-architect, system-dev-plan-evaluator]\n159-\npackage-contract.json\n{\n \"skills\": [\n  \"assign-system-spec-completeness-evaluator\",\n  \"ref-system-design-knowledge\",\n  \"run-skill-feedback\",\n  \"run-system-spec-compile\",\n  \"run-system-spec-doc-fetch\",\n  \"run-system-spec-elicit\"\n ],\n \"agents\": [\n  \"system-spec-doc-freshness-auditor\",\n  \"system-spec-hearing-auditor\",\n  \"system-spec-matrix-auditor\"\n ],\n \"commands\": [\n  \"spec-compile\",\n  \"spec-hearing-start\"\n ],\n \"hooks\": [\n  \"guard-confirmed-chapter-overwrite.py\",\n  \"record-audit-fork.py\"\n ]\n}\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\n275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b  plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md\n7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637  plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md\nd793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82  plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md\nb829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6  plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+  "tool_use_result": {
+    "stdout": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n16:    - C19はexternal system-spec-harnessを引用しcompilerを複製しない\n17-    - caller repository外content accessとfeature branch上durable completionを拒否する\n18-\n19-capabilities:\n20-  - { kind: skill, ref: skills/run-dev-graph-decompose, tier: core }\n21-  - { kind: skill, ref: skills/run-dev-graph-init, tier: core }\n22-  - { kind: skill, ref: skills/run-dev-graph-node, tier: core }\n--\n153:  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\n155-    required_entry_points: [run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator]\n156-  system-dev-planner:\n157-    version: \">=0.1.0 <1.0.0\"\n158-    required_entry_points: [run-system-dev-plan, system-dev-plan-architect, system-dev-plan-evaluator]\n159-\npackage-contract.json\n{\n \"skills\": [\n  \"assign-system-spec-completeness-evaluator\",\n  \"ref-system-design-knowledge\",\n  \"run-skill-feedback\",\n  \"run-system-spec-compile\",\n  \"run-system-spec-doc-fetch\",\n  \"run-system-spec-elicit\"\n ],\n \"agents\": [\n  \"system-spec-doc-freshness-auditor\",\n  \"system-spec-hearing-auditor\",\n  \"system-spec-matrix-auditor\"\n ],\n \"commands\": [\n  \"spec-compile\",\n  \"spec-hearing-start\"\n ],\n \"hooks\": [\n  \"guard-confirmed-chapter-overwrite.py\",\n  \"record-audit-fork.py\"\n ]\n}\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\n275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b  plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md\n7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637  plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md\nd793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82  plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md\nb829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6  plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

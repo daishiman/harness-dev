@@ -1,0 +1,158 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-sonnet-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2の委譲先責務全文読込を満たさない。main transcript 202行のBashはcompile R1-R3をgrep/cut -c1-400経由で読み、観測結果には公開source R2-render.md 22行(428文字)と23行(600文字)の全文が存在しない。補完の全文読込がないまま216行でcompileが10ファイルを生成した。公開C19 R2「責務境界」「5.3」の出力前全文読込条件への実違反である。",
+      "B2: C05独立意味監査の必須入力を全文評価していない。C05 stream(agent-ae92246b7328467de)のRead呼出しは0件。Markdown内容を得る操作は46行のcat index.md 00-requirements-definition.md | head -120と50行のgrep件数/serves_goals断片に限られ、8技術章の本文全体もresource-mapも直接読んでいない。公開SS0.1.24 C05 Step3/R1-scoreの全Markdown直接読込と具体適用照合を満たさず、PASS reportや監査台帳だけでその不足を代替できない。",
+      "B3: C19の責務検証と終端状態が未完了である。全native streamのAgent呼出しはC19 R0/R1/R2 verifierとC05配下3 auditorに限られ、C19 R3-import独立検証がない。最終progressの6 checklistはすべてnot_achieved/evidence=pendingのままで、intermediateも初期の1行だけ。C19配線が要求するR0-R3の独立検証と全checklist achieved/IN1 PASSによる完了条件を満たさない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "ee9e3be610074144b1bf40975d342dedae0262ead21b5b0589a814f64f805964",
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2の委譲先責務全文読込を満たさない。main transcript 202行のBashはcompile R1-R3をgrep/cut -c1-400経由で読み、観測結果には公開source R2-render.md 22行(428文字)と23行(600文字)の全文が存在しない。補完の全文読込がないまま216行でcompileが10ファイルを生成した。公開C19 R2「責務境界」「5.3」の出力前全文読込条件への実違反である。",
+      "B2: C05独立意味監査の必須入力を全文評価していない。C05 stream(agent-ae92246b7328467de)のRead呼出しは0件。Markdown内容を得る操作は46行のcat index.md 00-requirements-definition.md | head -120と50行のgrep件数/serves_goals断片に限られ、8技術章の本文全体もresource-mapも直接読んでいない。公開SS0.1.24 C05 Step3/R1-scoreの全Markdown直接読込と具体適用照合を満たさず、PASS reportや監査台帳だけでその不足を代替できない。",
+      "B3: C19の責務検証と終端状態が未完了である。全native streamのAgent呼出しはC19 R0/R1/R2 verifierとC05配下3 auditorに限られ、C19 R3-import独立検証がない。最終progressの6 checklistはすべてnot_achieved/evidence=pendingのままで、intermediateも初期の1行だけ。C19配線が要求するR0-R3の独立検証と全checklist achieved/IN1 PASSによる完了条件を満たさない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec109"
+    },
+    "transcript_sha256": "7f64f0f4740dcb656e08daa77a3de4ecedf69a58b090656ccd99b41b7bffafba",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "tool-observer/index.json",
+      "tool-observer/main-toolu_01V84ovp85yoSgSo33Xm8FB8.json",
+      "tool-observer/main-toolu_014Nui9S87zWcDTZSpdbJGKs.json",
+      "tool-observer/subagent_agent-ae92246b7328467de-toolu_01JvFXyo5qwYQZaCdUmdfwpQ.json",
+      "tool-observer/subagent_agent-ae92246b7328467de-toolu_015stdEu4jqTMXDbskBXSF5P.json",
+      "transcript/subagents/agent-ae92246b7328467de.jsonl",
+      "fx-eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "tool-observer/main-toolu_01SRmJPKkZ8R4S4ESB3V5eJw.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "7f64f0f4740dcb656e08daa77a3de4ecedf69a58b090656ccd99b41b7bffafba",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 609.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "tool-observer/main-toolu_01V84ovp85yoSgSo33Xm8FB8.json"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "tool-observer/main-toolu_01SRmJPKkZ8R4S4ESB3V5eJw.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 609.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "595642949b7cdd25b8bbd640f29ee18f88fe03362a4845003a476165912a9a1b",
+      "tokens": {
+        "input_tokens": 194,
+        "cache_creation_input_tokens": 466071,
+        "cache_read_input_tokens": 5482985,
+        "output_tokens": 54712,
+        "total_tokens": 6003962,
+        "assistant_messages": 89,
+        "assistant_message_ids": 89,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 8,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

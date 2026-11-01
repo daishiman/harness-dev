@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-a3b20491d5f6b471a",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "87f8047a-f009-4227-92da-58839d431b1d",
+      "line": 70,
+      "prefix_bytes": 619677,
+      "prefix_sha256": "bc771a29b19031697b542d413f2e39182a146321b7597edecde431507c00105a",
+      "timestamp": "2026-11-01T13:19:57.060Z"
+    },
+    "result": {
+      "uuid": "29a00323-31d6-4442-b3c0-f7cf496c933a",
+      "line": 71,
+      "prefix_bytes": 621138,
+      "prefix_sha256": "afb439348efd80d2fee6f152eb296344d78e68e07a987491a1b445422c620ace",
+      "timestamp": "2026-11-01T13:20:00.727Z"
+    }
+  },
+  "tool_use_id": "toolu_013SDtNZStqR82Mhb9KLEXuK",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport subprocess,os\nprint(repr(subprocess.run(['git','status','--porcelain','--','plugins'],capture_output=True,text=True).stdout))\nprint(subprocess.run(['git','ls-files','plugins/dev-graph/skills/run-dev-graph-system-spec'],capture_output=True,text=True).stdout)\nfor root,ds,fs in os.walk('plugins/dev-graph/skills/run-dev-graph-system-spec'): print(root,fs)\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "''\n\nplugins/dev-graph/skills/run-dev-graph-system-spec ['SKILL.md']\nplugins/dev-graph/skills/run-dev-graph-system-spec/scripts ['build-evaluation-context.py']\nplugins/dev-graph/skills/run-dev-graph-system-spec/prompts ['R3-import.md', 'R2-delegate.md', 'R0-context.md', 'R1-preflight.md']",
+  "tool_use_result": {
+    "stdout": "''\n\nplugins/dev-graph/skills/run-dev-graph-system-spec ['SKILL.md']\nplugins/dev-graph/skills/run-dev-graph-system-spec/scripts ['build-evaluation-context.py']\nplugins/dev-graph/skills/run-dev-graph-system-spec/prompts ['R3-import.md', 'R2-delegate.md', 'R0-context.md', 'R1-preflight.md']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

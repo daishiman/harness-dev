@@ -128,12 +128,20 @@ PERMANENT_EXCEPTION_PATHS = {
     "plugins/skill-intake/scripts/render_v2_adapter.py": "import render_v2_adapter (dry_render_notion.py:26) — §4.3",
     # build-trace SSOT shim。lint-prompt-placement.py:37 が import。
     "plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py": "import validate_build_trace_shim (lint-prompt-placement.py:37) — §4.3",
+    # elegant-review の Phase 順序・signal・verdict 導出検査を分離した sibling module。
+    # validate-paradigm-coverage.py:58 が素の import で解決する。
+    "plugins/harness-creator/skills/run-elegant-review/scripts/validate_phase_order.py": "from validate_phase_order import ... (validate-paradigm-coverage.py:58) — §4.3",
     # knowledge-skeleton template 内の共有 module。add_entry.py:426 / build_index.py:248 が import。
     "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py": "import search_knowledge (2 箇所) — §4.3",
     # youtube ingest の provider I/F と path 正規化。どちらも
     # run-youtube-sync-oneshot.py:44-45 が素の import で解決する。
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/youtube_provider.py": "import youtube_provider (run-youtube-sync-oneshot.py:44) — §4.3",
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py": "from normalized_source_path import ... (run-youtube-sync-oneshot.py:45) — §4.3",
+    # system-spec-harness の上位概念 (U1-U9) 検証を分けた import 専用 module。
+    # validate-coverage-matrix.py:68 が coverage_foundation を、coverage_foundation.py:14 が
+    # foundation_provenance を素の import で解決する (apply-spec-transition.py も後者を読む)。
+    "plugins/system-spec-harness/scripts/coverage_foundation.py": "from coverage_foundation import ... (validate-coverage-matrix.py:68) — §4.3",
+    "plugins/system-spec-harness/scripts/foundation_provenance.py": "from foundation_provenance import ... (coverage_foundation.py:14) — §4.3",
 }
 
 # 暫定例外: 個別パス (初回投入時の既存スクリプト群、33章 Change Governance 管理下)

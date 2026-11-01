@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "270bb591-7715-4d15-a22e-202406efe261",
+      "line": 131,
+      "prefix_bytes": 920491,
+      "prefix_sha256": "898a7db4cdb1984a412174b0bc88f1364d44896bff746da73b22b0bf99cc5090",
+      "timestamp": "2026-11-01T10:14:20.448Z"
+    },
+    "result": {
+      "uuid": "f160078c-8781-4942-af1a-54b65b5c9c3a",
+      "line": 139,
+      "prefix_bytes": 926836,
+      "prefix_sha256": "0fb22f06546e659090f7729ab859f90ed6c3cfb56ef8c6a1f8c64371d8f07727",
+      "timestamp": "2026-11-01T10:14:23.692Z"
+    }
+  },
+  "tool_use_id": "toolu_01BZkfGMwWhn6MwnhGZMa8J6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cat plugins/system-spec-harness/.claude-plugin/plugin.json; echo ---; find plugins/dev-graph -maxdepth 2 -name 'plugin-composition.yaml' -o -maxdepth 2 -name 'package-contract.json' | head; ls plugins/dev-graph plugins/system-spec-harness plugins/system-spec-harness/references 2>&1",
+    "description": "Inspect harness manifest and composition files"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n---\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/references/package-contract.json\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/system-spec-harness:\nagents\nartifact-delivery.json\ncommands\ndocs\nEVALS.json\nhooks\nplugin-composition.yaml\nREADME.md\nreferences\nRUNBOOK.md\nschemas\nscripts\nskills\ntests\n\nplugins/system-spec-harness/references:\npackage-contract.json",
+  "tool_use_result": {
+    "stdout": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\n---\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/references/package-contract.json\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/system-spec-harness:\nagents\nartifact-delivery.json\ncommands\ndocs\nEVALS.json\nhooks\nplugin-composition.yaml\nREADME.md\nreferences\nRUNBOOK.md\nschemas\nscripts\nskills\ntests\n\nplugins/system-spec-harness/references:\npackage-contract.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

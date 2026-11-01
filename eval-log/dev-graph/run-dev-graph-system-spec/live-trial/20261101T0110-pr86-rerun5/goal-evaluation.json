@@ -1,0 +1,37 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "選択前の実成果物提示が未完了。現行 plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md:81、plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md:94、および今回 task.md:95 は、現物path・digest・開き方を提示した後のstandard記録を要求する。今回 transcript.jsonl:432（pane.txt:317-333）の正規CLI結果には10章のpath/digestがあり、この可視tool出力を提示として認めても開き方はない。直後の可視説明 transcript.jsonl:436（pane.txt:335）にも開き方はない。less system-spec/index.md は transcript.jsonl:437 のcompile-standard.json生成コマンド内のopen_with、および生成後pane.txt:364に初登場し、提示後に選択を記録する独立した先行イベントになっていない。そのまま transcript.jsonl:446 で63件のOUT1 testsへ進んだ。実成果・評価・登録は成立しているが、今回必須とされたartifact_deliveryの順序契約は満たしていない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec92"
+  },
+  "transcript_sha256": "8834327b96cfd23b763e46606370d4630733df1c723d3c720668c2998eff43cc",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "pane.txt",
+    "fixture-provenance.json",
+    "plugins-copy.json",
+    "closure-at-launch.txt",
+    "guard.jsonl",
+    "poll-state.json",
+    "evidence-redaction.json",
+    "fx-eval-log/run-dev-graph-system-spec-c24-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/eval-log/choices/compile-standard.json",
+    "fx-final/tree/eval-log/run-dev-graph-node/import-input.json",
+    "fx-final/tree/eval-log/run-dev-graph-node/dry-run-preview.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "transcript/subagents/agent-a45823581fd2a364f.jsonl",
+    "transcript/subagents/agent-a45823581fd2a364f.forked-skill.marker.json",
+    "transcript/subagents/agent-a5e2056c4d5c54c1e.jsonl",
+    "transcript/subagents/agent-aa88981157d4ce6dd.jsonl",
+    "transcript/subagents/agent-a85a95422f9a37120.jsonl"
+  ]
+}

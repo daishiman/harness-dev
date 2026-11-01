@@ -1,0 +1,137 @@
+[
+  {
+    "qa_id": "qa-o1-fixture-v3",
+    "question": "O1の請求漏れをどう定義し、いつ検知し、誰へ示し、どのデータで月次成果を計測しますか。",
+    "answer": "O1 のテスト用要件を次で確定する。対象は qa-024 の有効契約から当月に発生する請求予定とその契約明細。請求予定ごとに契約ID・対象年月・予定請求期限・期待明細を保持する。予定請求期限を過ぎても有効な請求書がない、または請求書に必要な契約明細が欠ける場合を請求漏れとする。金額の食い違いは既存の突合機能へ分け、請求漏れの定義と混同しない。\n15分ごとに自動走査し、期限超過から30分以内に担当者のWeb画面の「請求漏れ」一覧へ出す。契約担当の経理担当者と経理リーダーが閲覧し、件数・取引先・対象月・期限・不足明細・金額を表示して金額順に並べる。外部メールやSlackは追加しない。請求書を正しく発行すると次の走査で解消し、単なる手動の無視では解消扱いにしない。検知と解消を既存の追記専用監査ログへ残す。\n請求予定は有効契約の期間と月次条件から漏れなく作り、取消済み・対象期間外の契約を除く。締め処理は全有効契約と請求予定・有効請求書を同じ整合した業務スナップショットで再照合し、漏れが残れば確定を拒否して一覧へ返す。結果は対象件数と未解消件数を保持する。締め完了直後の未解消件数をO1の月次計測値とし、元の「月次0件」と「3か月連続0件」を維持する。締め後の変更は元どおり赤黒訂正で、検知履歴・締め検査結果・監査ログを物理削除しない。\n新しい表は billing_expectations、missing_billing_cases、billing_closing_checks、job_outbox とし、既存PostgreSQL 16内に置く。請求予定/検知ケースは契約ID・対象年月・種別の一意キーで重複反映を防ぐ。GET /billing-missing は一覧取得、POST /billing-missing/checks は再検査jobを202で受付け、GET /jobs/{id} で状態を返す。認可と更新競合は既存の担当者/リーダー権限と楽観ロックの規則を使う。業務ルールはAPIとworkerで共通に呼ぶユースケースへ置き、FastAPIやDB rowの型を業務中核へ持ち込まない。",
+    "basis": "user-decision",
+    "source": {
+      "kind": "user-dialogue"
+    },
+    "answered_at": "2026-11-01T08:35:54.756712Z",
+    "provenance": "CI live-trial の正の合成入力 v3 を orchestrator が作成。111でO1実現要件が欠けていたことをC05と独立評価が検出したため補完する。以下の問答・承認はシナリオ上の利用者の既定発言であり、実利用者との対話・本番の承認ではない。対象agentが問答やPASSを自作したものでもない。 v5は独立した新しい正の合成fixture。v4を実行中に更新したものではない。質問/回答/承認/選択は保持し、作者agentの設計解釈だけを新fixtureの回答記録時に正規writerへ渡す。",
+    "design_applications": [
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-architecture.md#中核概念",
+        "principle": "業務規則とHTTP/DB/workerの依存を分ける",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。qa-o1-fixture-v3の請求予定・期限超過/不足明細・締め前再照合を業務ユースケースとし、FastAPIの一覧/再検査APIと独立workerから共有する。billing_expectations/missing_billing_cases/billing_closing_checksと追記監査は同じ業務整合性の境界へ置き、フレームワークやDB row型を中核へ持ち込まない。",
+        "tradeoffs": [
+          "API/workerのadapterと境界テストが増える。"
+        ]
+      },
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/usability-accessibility.md#中核概念",
+        "principle": "利用者の仕事の状態・認知負荷・回復導線を明示する",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。請求担当者/経理リーダーのWeb一覧で件数・取引先・対象月・期限・不足明細・金額を示す。qa-o1-fixture-v3の金額順、正しい請求書発行で次走査に解消、手動無視で解消しないという状態を画面で区別する。表示はWeb内だけであり外部メール/Slack通知を追加しない。",
+        "tradeoffs": [
+          "未解消と走査待ち/解消済みを区別する表示・操作テストが必要。"
+        ]
+      },
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/site-reliability-engineering.md#中核概念",
+        "principle": "利用者視点の指標と観測可能性を業務の検知へ対応させる",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。15分走査/期限超過から30分以内の一覧表示、締め直後の未解消件数という既回答の測定点を計測対象にする。監視の閾値を勝手に新設せず、O1の月次0件/3か月連続0件と検知・解消/締め検査の履歴を追跡する。",
+        "tradeoffs": [
+          "指標収集/履歴保持の費用が残り、SRE適用だけで漏れ0件を保証しない。"
+        ]
+      }
+    ],
+    "approval_id": "appr-o1-fixture-v3",
+    "approval_note": "合成fixtureのO1詳細要件を、シナリオ上の利用者が上記answerどおり確定した設定。実利用者の承認ではない。",
+    "ops": [
+      {
+        "action": "add-qa-ref",
+        "category": "database",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "backend",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "ui-ux",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "maintenance-ops",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "qa_id": "qa-job-choice-fixture-v3",
+    "question": "非同期実行の構成として、(1) PostgreSQL outboxと独立worker/CronJob、(2) PostgreSQL outboxとAPI BackgroundTasks/内部HTTP起動を比較しました。どちらを採用しますか。別案・保留も選べます。理由と運用条件を教えてください。",
+    "answer": "比較した2案のうち pg-worker-cron を選ぶ。既存PostgreSQL 16のjob_outboxへ業務更新と同じtransactionで投入し、社内k8s上のPython worker Deploymentが1秒間隔でclaimする。重い突合と手動の再検査を処理し、15分ごとの請求漏れ走査は同じworker imageのCronJobで起動する。CronJobの重複起動抑制に加え、DB claimの排他・lease/fencing token・業務の一意キーと冪等性を使う。再試行で同じjobが実行され得ることは認め、業務効果の二重反映を禁止する。リトライ上限と失敗状態を保存し、30分を超えた未処理と失敗jobを運用画面へ出す。Worker停止時は永続outboxから再開する。監査ログは元の追記専用規則を保ち、業務/検知結果と整合するtransaction境界で残す。\nAPI BackgroundTasksへ処理を寄せ、CronJobから内部HTTPを叩く案はAPI再起動・replica数・再試行・内部認証の運用が結び付くので採らない。外部broker/Redis/新しい保存基盤は足さない。両案のOSSライセンス追加費を0円とする比較はこの合成fixture内の前提であり、実サービスの総費用0や実相場を主張しない。workerのCPU/DB負荷と実装・監視の工数は残る。",
+    "basis": "user-decision",
+    "source": {
+      "kind": "user-dialogue"
+    },
+    "answered_at": "2026-11-01T08:35:54.756712Z",
+    "provenance": "CI live-trial の正の合成入力 v3 を orchestrator が作成。111でO1実現要件が欠けていたことをC05と独立評価が検出したため補完する。以下の問答・承認はシナリオ上の利用者の既定発言であり、実利用者との対話・本番の承認ではない。対象agentが問答やPASSを自作したものでもない。 v5は独立した新しい正の合成fixture。v4を実行中に更新したものではない。質問/回答/承認/選択は保持し、作者agentの設計解釈だけを新fixtureの回答記録時に正規writerへ渡す。",
+    "design_applications": [
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-architecture.md#中核概念",
+        "principle": "実行機構を業務ユースケースから隔離する",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。qa-job-choice-fixture-v3/D4のPG outbox・独立Python worker・CronJobを外側の実行adapterとし、APIと同じ請求/突合ユースケースを呼ぶ。API BackgroundTasksへ業務を閉じ込めず、worker停止後も永続outboxから再開する。",
+        "tradeoffs": [
+          "worker/CronJobの構成・adapter・共有ユースケースのテストが増える。"
+        ]
+      },
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/site-reliability-engineering.md#中核概念",
+        "principle": "観測可能性と反復作業の自動化を復旧へ結ぶ",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。qa-job-choice-fixture-v3のjob claim/lease/fencing、リトライ上限/失敗状態、30分超未処理、worker停止後の再開を運用画面/履歴へ対応させる。1秒claim/15分走査は既回答の値であり、新たなSLO数値やリトライ回数を解釈だけで確定しない。",
+        "tradeoffs": [
+          "再試行・lease切れ・失敗の観測と復旧手順が必要で、手動運用の消滅を約束しない。"
+        ]
+      },
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/cloud-architecture-patterns.md#中核概念",
+        "principle": "複数資産への補償/Blob offloadingの適用境界を見極める",
+        "applicability": "not_applicable",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。D4は既存の単一PostgreSQL 16内のtransactional outboxと業務データを使い、新broker・外部blob・複数資産の補償を導入しない。このためcard全体の分散資産/Blob設計は非適用とする。PG transaction、claim排他、lease/fencing、業務一意キーによる二重反映防止はQAで確定したDB/worker設計として別に明記する。Cron重複抑制だけをexactly-once保証と扱わない。",
+        "tradeoffs": [
+          "外部資産を後から追加する場合には原子性境界と補償を再検討する必要がある。"
+        ]
+      },
+      {
+        "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/secure-by-design.md#中核概念",
+        "principle": "最小権限と責任分界を非同期実行にも適用する",
+        "applicability": "applied",
+        "rationale": "合成fixture作者agentによる回答時の設計解釈であり、新しい利用者回答・承認ではない。D4の既存権限/追記監査と最小権限のDB接続という比較条件をworker/CronJobのDBアクセスへ解釈適用する。既存の担当者/リーダー認可と監査ログ保持を維持し、未回答のDB role名・秘密配布方式・追加権限を新設したと主張しない。",
+        "tradeoffs": [
+          "APIとworker双方の権限/監査境界を検査する工数が必要。"
+        ]
+      }
+    ],
+    "ops": [
+      {
+        "action": "add-qa-ref",
+        "category": "backend",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "database",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "infrastructure",
+        "platform": "web"
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "maintenance-ops",
+        "platform": "web"
+      }
+    ]
+  }
+]

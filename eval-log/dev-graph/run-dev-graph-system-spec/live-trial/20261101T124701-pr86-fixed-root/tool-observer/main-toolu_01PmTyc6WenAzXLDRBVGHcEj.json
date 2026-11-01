@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "828a5812-d787-4c8a-a071-9e25565969a4",
+      "line": 748,
+      "prefix_bytes": 3821316,
+      "prefix_sha256": "cfde03228317b833bf8e4dd16a7c2882383c93b1b2678377c8daf1965445e4b5",
+      "timestamp": "2026-11-01T04:09:10.065Z"
+    },
+    "result": {
+      "uuid": "5088bfd3-442e-4cfc-847d-1d82e80cea4e",
+      "line": 751,
+      "prefix_bytes": 3824205,
+      "prefix_sha256": "5090fc5f36f1737efa1d6a551aa584e54ccffa8d2bdba8fb7a0a5613fb6ea3ae",
+      "timestamp": "2026-11-01T04:09:12.270Z"
+    }
+  },
+  "tool_use_id": "toolu_01PmTyc6WenAzXLDRBVGHcEj",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\" && DEV_GRAPH_GRAPH=\"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" && awk '/^### ゴールシーク検証/{f=1} f&&/^```bash/{g=1;next} g&&/^```/{exit} g' plugins/dev-graph/skills/run-dev-graph-node/SKILL.md > \"$TMPDIR/node-verify.sh\" && DEV_GRAPH_ROOT=\"$DEV_GRAPH_ROOT\" DEV_GRAPH_GRAPH=\"$DEV_GRAPH_GRAPH\" bash \"$TMPDIR/node-verify.sh\"; echo \"node_verify_exit=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "node_verify_exit=0",
+  "tool_use_result": {
+    "stdout": "node_verify_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

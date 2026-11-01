@@ -5,7 +5,7 @@
 name: system-spec-harness
 description: システム構築 (Web/モバイル/タブレット/デスクトップ横断) の仕様情報を往復ヒアリングでカテゴリ×プラットフォーム網羅マトリクスとして収集し、設計知識参照と最新公式ドキュメント出典を添えて章立て複数 Markdown + index の仕様書ドキュメントセットへまとめるハーネス plugin。
 kind: plugin-composition
-version: 0.1.22
+version: 0.1.24
 owner: team-platform
 since: 2026-07-11
 last-audited: 2026-07-11
@@ -38,6 +38,8 @@ capabilities:
   - { kind: command, ref: commands/spec-compile, tier: core }
   - { kind: command, ref: commands/spec-hearing-start, tier: core }
   - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-TaskAgent/record-audit-fork", tier: core }
+  - { kind: hook, ref: "hook:SubagentStop/record-audit-fork", tier: core }
 
   # === Skills (kind=skill) ===
 
@@ -62,11 +64,14 @@ dependencies:
   - {from: commands/spec-compile, to: scripts/validate-coverage-matrix.py, type: calls}
   - {from: commands/spec-compile, to: scripts/validate-source-citation.py, type: calls}
   - {from: skills/run-system-spec-elicit, to: scripts/validate-knowledge-graph.py, type: calls}
+  - {from: skills/run-system-spec-elicit, to: scripts/validate-coverage-matrix.py, type: calls}
   - {from: skills/run-system-spec-compile, to: scripts/validate-coverage-matrix.py, type: calls}
   - {from: skills/run-system-spec-compile, to: scripts/validate-source-citation.py, type: calls}
+  - {from: skills/run-system-spec-compile, to: scripts/validate-knowledge-graph.py, type: calls}
   - {from: skills/ref-system-design-knowledge, to: scripts/validate-knowledge-graph.py, type: calls}
   - {from: skills/ref-system-design-knowledge, to: scripts/validate-information-priority.py, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: scripts/validate-coverage-matrix.py, type: calls}
+  - {from: skills/assign-system-spec-completeness-evaluator, to: scripts/validate-source-citation.py, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-matrix-auditor, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-hearing-auditor, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-doc-freshness-auditor, type: calls}
@@ -79,4 +84,4 @@ external_dependencies:
 
 eval_sinks: [EVALS.json]
 observability:
-  hooks: [PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite]
+  hooks: [PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite, PostToolUse-TaskAgent/record-audit-fork, SubagentStop/record-audit-fork]

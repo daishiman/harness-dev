@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e4e6d611-4318-4071-973d-6f9b54009deb",
+      "line": 122,
+      "prefix_bytes": 643256,
+      "prefix_sha256": "8668f2db4623b675e8238f2461454c6dcfeaf1f429e850008ce678ab3c959b36",
+      "timestamp": "2026-11-01T09:36:27.268Z"
+    },
+    "result": {
+      "uuid": "055f24ea-36f4-41c9-b581-783bdc208b0b",
+      "line": 123,
+      "prefix_bytes": 644342,
+      "prefix_sha256": "d79458bf2b6b78e444cd5b1c328463ccdf92daad147750083e892fa03e388b34",
+      "timestamp": "2026-11-01T09:36:29.230Z"
+    }
+  },
+  "tool_use_id": "toolu_01DTsEGyJkm8iADGhPyAyg7N",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/system-spec-harness/hooks; grep -rnE \"\\\"name\\\"|'name'|run_in_background|team_name\" plugins/system-spec-harness/hooks/*.py | head -15"
+  },
+  "is_error": false,
+  "tool_result_content": "guard-confirmed-chapter-overwrite.py\nhooks.json\nrecord-audit-fork.py\nreferences\ntests",
+  "tool_use_result": {
+    "stdout": "guard-confirmed-chapter-overwrite.py\nhooks.json\nrecord-audit-fork.py\nreferences\ntests",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

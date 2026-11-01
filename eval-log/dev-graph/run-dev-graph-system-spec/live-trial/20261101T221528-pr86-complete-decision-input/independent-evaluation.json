@@ -1,0 +1,41 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "取込成果未達: 最終 graph は graph_revision=0、nodes=[]。confirmed specification/architecture と source lineage・evaluator evidence を持つ登録 node が存在せず、description の約束および観測1・2を満たさない。",
+    "評価 gate 未達: C06 の実応答と保存 hearing JSON は一致し、auth/web の qa-037・qa-038、security/web の qa-037 の medium traceability 3件を正規 --hearing が FAIL/EXIT=1、blocking=3 と再導出する。現物 provenance は既定値の basis を agent-inference から user-decision に変更した経緯を明記し、その変更を新しい利用者一次入力へ結ぶ記録が示されていない。C05 report は総合 FAIL のため正規 C02 取込へ進めない。",
+    "C05 report の整合 gate 未達: C07 の実判定と hook 台帳は PASS、C06 sub-input に従う matrix_coverage は FAIL。最終 report の C07 primary receipt=PASS は台帳に一致するが aspect=FAIL との一致規則に反し、--report は exit1。初版 receipt=FAIL も台帳不一致で exit1。正規評価の完了条件 --report exit0 を満たしていない。"
+  ],
+  "evaluator_id": "/root/review_sysspec119_fresh",
+  "transcript_sha256": "c78548a27c6ce2da10e6525205627c6a44e3c404131bc3af98d956a8a17d9feb",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a749f5ed1b20ff93e.jsonl",
+    "transcript/subagents/agent-ad9854451a08928c6.jsonl",
+    "transcript/subagents/agent-a1031ed6986c15234.jsonl",
+    "fx-eval-log/hearing-audit.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-final/tree/system-spec/spec-state.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "task.md"
+  ],
+  "observations": {
+    "1": "fx-eval-log/system-spec-completeness-report.json",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-eval-log/run-dev-graph-system-spec-progress.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本全文: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。実観測: transcript.jsonl L373 UUID 8fa950e4-8323-496d-b224-f0819038dc7c に coverage(require-complete/basis/foundation)=0・source-citation=0・strict graph schema=0。後続 L445 に coverage=0/citation=0 だが誤 graph path の schema=2、L465 UUID bb82fded-0e47-44af-8172-dc13d7b7c570 に固定 receipt の正規 graph path で schema=0。これらは空 graph の形状 PASS であり、C05 report/evaluator PASS や import 成功を意味しない。",
+    "OUT1": "正本全文: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。実観測: graph_revision=0/nodes=[]、C05 verdict=FAIL、--report exit1、C02取込未達。よって source lineage 付き確定 node の成果契約を満たさず FAIL。重複ロジック不在と正規フロー全履行の網羅確認は未実施で、PASS を付けない。"
+  },
+  "notes": [
+    "過去 trial/transcript/verdict/review/input-review や他 agent の状態・結論の内容は参照していない。今回の入力 provenance 内に含まれる過去経緯だけを現物入力として読んだ。",
+    "今回は最小の決定的一次証拠による FAIL 判定。全 raw の全 tool I/O・自己 I/O、全 observerv3 event、全 stream の UUID/line/prefixSHA/fullSHA/順序、native Skill metadata/fullbody 注入の網羅再構成は未実施。未確認を未実施の断定に転用していない。",
+    "private raw と D の transcript bytes は一致しない。C06/C05/C07 の最終応答は UUID で突合し message が一致することを確認。hearing JSON・現物 state・graph・C05 report は raw と D の bytes が一致。全 redaction 差分の検証は未実施。transcript_sha256 は依頼どおり D/transcript.jsonl に束縛した。",
+    "合成 fixture 発言であること自体を一律の不正・FAIL 根拠にはしていない。入力の特定 provenance と新しい根拠未提示、実 C06 finding、正規 --hearing の導出を区別した。qa_refs は補助根拠であり、主たる qa_ref の qa-002/qa-004 は実在する。",
+    "C19 の evaluator PASS 前に import を開始しない停止境界は守られた範囲を確認した。停止は安全上の契約に整合するが、positive scenario の成果達成にはならない。C05 が挙げた他5観点の PASS は今回全面監査しておらず、その説明だけで追認していない。",
+    "IN1 の三決定論 CLI の exit0 と evaluator/report gate は別。途中の --session 引数欠落と誤 graph path による非0は raw に存在し、後続の正規 graph path の schema=0 と report exit1 を採用した。out/status の自己申告を判定根拠にしていない。",
+    "補助 metadata の shape や HC 生成用 schema を、C19 局所の6必須キー/hashへ追加要件として重ねていない。重複 elicitation/compile logic の全域不在・R2/R3 verifier の網羅的履行は未確認であり、欠陥や達成を推測していない。"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d3d1adcf-1fc2-4595-a560-fd90c61409c8",
+      "line": 230,
+      "prefix_bytes": 1203925,
+      "prefix_sha256": "9152382bb960afd3440303c50744f1f9c9716cf7ee2e5d180b998e6d415243f5",
+      "timestamp": "2026-11-01T03:58:47.105Z"
+    },
+    "result": {
+      "uuid": "fe9ec0f3-736e-4e17-a863-e1c030387ac5",
+      "line": 231,
+      "prefix_bytes": 1206352,
+      "prefix_sha256": "6befa6deba81abe2cf2bcdf9a17c76fc7d62333408dd5bb2622f00e44bc768ac",
+      "timestamp": "2026-11-01T03:58:49.514Z"
+    }
+  },
+  "tool_use_id": "toolu_01UAdodSYeGzmRWbT1cDqabt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport json,pathlib\np=pathlib.Path('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/eval-log/system-spec-harness/audit-fork-ledger.jsonl')\nfor l in p.read_text(encoding='utf-8').splitlines()[4:]:\n    r=json.loads(l)\n    print({k:r.get(k) for k in ('schema_version','subagent_type','tool_use_id','agent_id','audit_verdict','verdict_state','response_sha256','dispatch_token','session_id')})\nPY",
+    "description": "Read new ledger rows for C08"
+  },
+  "is_error": false,
+  "tool_result_content": "{'schema_version': '1.2', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_use_id': 'toolu_01BPYy667fM1M67idEq1bLfr', 'agent_id': None, 'audit_verdict': None, 'verdict_state': 'pending', 'response_sha256': 'dc3d90f04d4e40fcf4b615007fdf12a16efda9564ec776dafec494167baecd22', 'dispatch_token': 'c05-sysspec107-c08-d01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}\n{'schema_version': '1.3', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_use_id': None, 'agent_id': 'aa3bb11b1575bdbb5', 'audit_verdict': 'PASS', 'verdict_state': 'resolved', 'response_sha256': '59903365e61e6e5cf68460175339c63c10020f447653dd3b3aa3fcd79da62848', 'dispatch_token': 'c05-sysspec107-c08-d01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}",
+  "tool_use_result": {
+    "stdout": "{'schema_version': '1.2', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_use_id': 'toolu_01BPYy667fM1M67idEq1bLfr', 'agent_id': None, 'audit_verdict': None, 'verdict_state': 'pending', 'response_sha256': 'dc3d90f04d4e40fcf4b615007fdf12a16efda9564ec776dafec494167baecd22', 'dispatch_token': 'c05-sysspec107-c08-d01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}\n{'schema_version': '1.3', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_use_id': None, 'agent_id': 'aa3bb11b1575bdbb5', 'audit_verdict': 'PASS', 'verdict_state': 'resolved', 'response_sha256': '59903365e61e6e5cf68460175339c63c10020f447653dd3b3aa3fcd79da62848', 'dispatch_token': 'c05-sysspec107-c08-d01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

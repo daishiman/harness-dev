@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "27ab41cb-634b-4bb6-9492-48b4fd46dcc8",
+      "line": 199,
+      "prefix_bytes": 2189903,
+      "prefix_sha256": "0bbc7ec1118ed6fe0b283a4167f95ef91d9c7aa1147efc1ec41dcb8b53188a10",
+      "timestamp": "2026-11-01T14:16:16.403Z"
+    },
+    "result": {
+      "uuid": "3ed4a7cd-a24b-478a-b00d-0842d9a23698",
+      "line": 200,
+      "prefix_bytes": 2194458,
+      "prefix_sha256": "ae8802227cab951059ba9bd737c1c8e3fc9677291dda55e78669f84d3fea0a0f",
+      "timestamp": "2026-11-01T14:16:16.677Z"
+    }
+  },
+  "tool_use_id": "toolu_01QvrC3U1CHTRLzfPaGG6k2a",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t{\n2\t  \"schema_version\": \"1.1\",\n3\t  \"open_world\": true,\n4\t  \"catalog_semantics\": \"seed examples, not an exhaustive list\",\n5\t  \"lifecycle_ref\": \"open-world-knowledge-lifecycle.md\",\n6\t  \"card_schema_ref\": \"knowledge-card.schema.json\",\n7\t  \"graph_semantics\": {\n8\t    \"validated_by\": \"validate-knowledge-graph.py --profile knowledge\",\n9\t    \"depends_on\": \"A depends_on B = B が前提。位相順で B を A より先に出す precedence DAG。同順位は knowledge_id 昇順。\",\n10\t    \"refines\": \"有向の精緻化 (A refines B = A は B の詳細化)。非循環。位相には参加しない。\",\n11\t    \"conflicts_with\": \"対称な非順序制約 (A conflicts_with B なら B 側も必須)。位相不参加。\"\n12\t  },\n13\t  \"entries\": [\n14\t    {\"knowledge_id\": \"clean-code\", \"file\": \"clean-code.md\", \"status\": \"seed-example\", \"freshness_class\": \"foundational-stable\", \"depends_on\": [], \"refines\": [], \"conflicts_with\": []},\n15\t    {\"knowledge_id\": \"design-patterns\", \"file\": \"design-patterns.md\", \"status\": \"seed-example\", \"freshness_class\": \"foundational-stable\", \"depends_on\": [], \"refines\": [], \"conflicts_with\": []},\n16\t    {\"knowledge_id\": \"ddd\", \"file\": \"ddd.md\", \"status\": \"seed-example\", \"freshness_class\": \"foundational-stable\", \"depends_on\": [\"clean-code\"], \"refines\": [], \"conflicts_with\": []},\n17\t    {\"knowledge_id\": \"clean-architecture\", \"file\": \"clean-architecture.md\", \"status\": \"seed-example\", \"freshness_class\": \"foundational-stable\", \"depends_on\": [\"ddd\", \"design-patterns\"], \"refines\": [], \"conflicts_with\": []},\n18\t    {\"knowledge_id\": \"api-design-patterns\", \"file\": \"api-design-patterns.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [\"clean-architecture\"], \"refines\": [\"design-patterns\"], \"conflicts_with\": []},\n19\t    {\"knowledge_id\": \"secure-by-design\", \"file\": \"secure-by-design.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [\"clean-architecture\"], \"refines\": [], \"conflicts_with\": []},\n20\t    {\"knowledge_id\": \"usability-accessibility\", \"file\": \"usability-accessibility.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [], \"refines\": [], \"conflicts_with\": []},\n21\t    {\"knowledge_id\": \"information-design\", \"file\": \"information-design.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [\"clean-architecture\", \"usability-accessibility\"], \"refines\": [], \"conflicts_with\": []},\n22\t    {\"knowledge_id\": \"test-strategy\", \"file\": \"test-strategy.md\", \"status\": \"seed-example\", \"freshness_class\": \"foundational-stable\", \"depends_on\": [\"clean-code\", \"usability-accessibility\"], \"refines\": [], \"conflicts_with\": []},\n23\t    {\"knowledge_id\": \"continuous-delivery\", \"file\": \"continuous-delivery.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [\"test-strategy\"], \"refines\": [], \"conflicts_with\": []},\n24\t    {\"knowledge_id\": \"site-reliability-engineering\", \"file\": \"site-reliability-engineering.md\", \"status\": \"seed-example\", \"freshness_class\": \"standard-tracked\", \"depends_on\": [\"continuous-delivery\"], \"refines\": [], \"conflicts_with\": []},\n25\t    {\"knowledge_id\": \"cloud-architecture-patterns\", \"file\": \"cloud-architecture-patterns.md\", \"status\": \"seed-example\", \"freshness_class\": \"vendor-tracked\", \"depends_on\": [\"clean-architecture\", \"site-reliability-engineering\"], \"refines\": [], \"conflicts_with\": []}\n26\t  ]\n27\t}\n28\t",
+  "tool_use_result": null
+}

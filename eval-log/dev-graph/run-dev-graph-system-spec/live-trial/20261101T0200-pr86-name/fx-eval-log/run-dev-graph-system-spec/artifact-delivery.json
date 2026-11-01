@@ -1,0 +1,31 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-system-spec",
+  "artifact": {
+    "path": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+    "sha256": "e89b67af523d6d446dc40f76e424a14c1aee431b3277a5a23405e1b9bcc50b70",
+    "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec97/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+  },
+  "transitions": [
+    {
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed"
+    },
+    {
+      "event": "present_actual_artifact",
+      "to": "artifact_presented"
+    },
+    {
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "isolated-fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo/external approval"
+    },
+    {
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    }
+  ],
+  "state": "semantic_evaluator_started",
+  "recorded_at": "2026-10-31T21:57:42.887157+00:00"
+}

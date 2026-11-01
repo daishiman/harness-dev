@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c4f7278e-c1d1-45d2-909b-558d0aa6240d",
+      "line": 332,
+      "prefix_bytes": 3268524,
+      "prefix_sha256": "03da44d5b75f74eef1e488c44aed15592c05861a2ae1d53aebee0f7eed6731e2",
+      "timestamp": "2026-11-01T14:23:24.134Z"
+    },
+    "result": {
+      "uuid": "d57e9f78-0e01-4e3e-aa69-496bf6006e52",
+      "line": 335,
+      "prefix_bytes": 3275563,
+      "prefix_sha256": "5097a5e6f3598d3003be32ef1268d703b670e8e075043fd6c76d47bd10819928",
+      "timestamp": "2026-11-01T14:23:27.350Z"
+    }
+  },
+  "tool_use_id": "toolu_01C8Q9xP7JAzgfMuhxBshUPm",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --matrix /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json --require-complete; echo \"EXIT=$?\"",
+    "description": "Run matrix gate"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"id\": \"G-matrix\",\n  \"name\": \"validate-coverage-matrix\",\n  \"conditions\": [\n    \"matrix_coverage\"\n  ],\n  \"command\": [\n    \"/Users/dm/miniconda3/bin/python3\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py\",\n    \"--matrix\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json\",\n    \"--require-complete\"\n  ],\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\",\n  \"stderr\": \"\"\n}\nEXIT=0",
+  "tool_use_result": null
+}

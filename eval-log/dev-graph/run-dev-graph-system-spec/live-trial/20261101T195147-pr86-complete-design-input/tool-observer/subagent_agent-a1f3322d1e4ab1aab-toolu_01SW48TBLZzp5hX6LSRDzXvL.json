@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bf474948-f129-47e5-9484-f69048e959ed",
+      "line": 78,
+      "prefix_bytes": 560264,
+      "prefix_sha256": "8c1aff6c77a920fce8b32ab19af2d0e6dfd05b773eba13f2077780ac40aff6c6",
+      "timestamp": "2026-11-01T11:14:21.026Z"
+    },
+    "result": {
+      "uuid": "08a1c975-2fa4-48ce-a75e-d14287905b49",
+      "line": 79,
+      "prefix_bytes": 564276,
+      "prefix_sha256": "84a7fec051699f3d443f7dbc3713a92b3d0925a776b98a4c4ecbeaffdffe3e16",
+      "timestamp": "2026-11-01T11:14:25.028Z"
+    }
+  },
+  "tool_use_id": "toolu_01SW48TBLZzp5hX6LSRDzXvL",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "S=plugins/dev-graph/scripts; R=$PWD; python3 $S/validate-graph-schema.py --help 2>&1 | head -30; python3 $S/validate-source-lineage.py --help 2>&1|head -30; python3 $S/resolve-repo-context.py --help 2>&1 | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\nusage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+  "tool_use_result": {
+    "stdout": "usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\nusage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

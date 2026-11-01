@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1e0f3e6b-29c9-4da1-8d5c-120c39d5a81c",
+      "line": 227,
+      "prefix_bytes": 1204215,
+      "prefix_sha256": "9a24480098fc5405507cfc1c13a89b7b5d6de5d28ea8c3c0854b453369e88a7b",
+      "timestamp": "2026-11-01T15:32:03.857Z"
+    },
+    "result": {
+      "uuid": "1e578e9a-0e8b-4158-88d8-65aa5b26a765",
+      "line": 235,
+      "prefix_bytes": 1209886,
+      "prefix_sha256": "1f70c4df8b11678da477b36fafd8a3f5378f6acbf8ed7856cca3260a1b2aa577",
+      "timestamp": "2026-11-01T15:32:07.436Z"
+    }
+  },
+  "tool_use_id": "toolu_017P2dx4Tkc89vaDRhTaHeRv",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c 'import json;json.load(open(\"system-spec/spec-state.json\"));print(\"parse ok\")' && shasum -a 256 system-spec/spec-state.json && git status --porcelain system-spec | head -3; ls plugins/system-spec-harness/tests | head -50"
+  },
+  "is_error": false,
+  "tool_result_content": "parse ok\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n?? system-spec/\ntest_audit_fork_writer_contract.py\ntest_chapter_body_and_provenance.py\ntest_guard_hook.py\ntest_hearing_audit_contract.py\ntest_integration_compile_hook.py\ntest_qa_supersession.py\ntest_responsibility_declaration_contract.py\ntest_set_approval_transition.py\ntest_spec_state_schema_contract.py\ntest_validate_design_application_provenance.py\ntest_validate_design_knowledge_refs.py\ntest_validate_foundation.py\ntest_validate_information_priority.py\ntest_validate_knowledge_graph.py\ntest_validate_scripts.py\ntest_validate_source_citation_integrity.py\ntest_validate_spec_doc_sync.py",
+  "tool_use_result": {
+    "stdout": "parse ok\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n?? system-spec/\ntest_audit_fork_writer_contract.py\ntest_chapter_body_and_provenance.py\ntest_guard_hook.py\ntest_hearing_audit_contract.py\ntest_integration_compile_hook.py\ntest_qa_supersession.py\ntest_responsibility_declaration_contract.py\ntest_set_approval_transition.py\ntest_spec_state_schema_contract.py\ntest_validate_design_application_provenance.py\ntest_validate_design_knowledge_refs.py\ntest_validate_foundation.py\ntest_validate_information_priority.py\ntest_validate_knowledge_graph.py\ntest_validate_scripts.py\ntest_validate_source_citation_integrity.py\ntest_validate_spec_doc_sync.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

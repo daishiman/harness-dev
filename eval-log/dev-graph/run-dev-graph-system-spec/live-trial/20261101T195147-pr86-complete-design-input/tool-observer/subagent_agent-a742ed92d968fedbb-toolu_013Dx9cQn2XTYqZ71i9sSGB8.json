@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a742ed92d968fedbb",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "63e2f8ac-bae7-42bf-80c7-7361cbd6b1b5",
+      "line": 48,
+      "prefix_bytes": 383644,
+      "prefix_sha256": "d463edb89961059f99dfd4da930ed3f2051db1d77a220cdd39f2d26f780b83e6",
+      "timestamp": "2026-11-01T10:54:55.207Z"
+    },
+    "result": {
+      "uuid": "2ed8dc87-40e0-427c-907a-5fd7d3de8f57",
+      "line": 49,
+      "prefix_bytes": 384847,
+      "prefix_sha256": "6403bdfc982840e40cc5d5a776414c330f09ba1134b690417b1f036120568ee1",
+      "timestamp": "2026-11-01T10:54:57.225Z"
+    }
+  },
+  "tool_use_id": "toolu_013Dx9cQn2XTYqZ71i9sSGB8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx; grep -rniE \"elicit|interview|hearing|spec-state|coverage.?matrix|fetched-references|render_chapter|chapter\" plugins/dev-graph --include='*.py' | grep -v '/tests/' | head -40",
+    "description": "Narrow grep for spec-generation logic in dev-graph"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/scripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/scripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

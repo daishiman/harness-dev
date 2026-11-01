@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a4fca5f4-78df-475e-afde-f71043c392e6",
+      "line": 745,
+      "prefix_bytes": 3869075,
+      "prefix_sha256": "258592c73bc9d80b268124168f787f918600edf150574e35bb093d800bcb6631",
+      "timestamp": "2026-11-01T03:41:44.186Z"
+    },
+    "result": {
+      "uuid": "4f3b6eb2-921d-48c6-82de-55c932a87469",
+      "line": 746,
+      "prefix_bytes": 3870022,
+      "prefix_sha256": "decd33009b6b478ec38a125c46ddc4ba109246bc2552a809ca23b23c5390fdbc",
+      "timestamp": "2026-11-01T03:41:46.536Z"
+    }
+  },
+  "tool_use_id": "toolu_01SSdtarg5XStvU8gGfxbbrC",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n '/^```bash$/,/^PY$/p' plugins/dev-graph/skills/run-dev-graph-node/SKILL.md | sed -n '/python3 - /,/^PY$/p' > \"$TMPDIR/c02check.sh\" && DEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\" DEV_GRAPH_GRAPH=\"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" bash \"$TMPDIR/c02check.sh\"; echo \"exit=$?\"",
+    "description": "Run C02 goal-seek verification snippet"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0",
+  "tool_use_result": {
+    "stdout": "exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

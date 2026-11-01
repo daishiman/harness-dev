@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d907e0a2-9a7a-4747-861b-0795b9495040",
+      "line": 56,
+      "prefix_bytes": 397101,
+      "prefix_sha256": "7fdaea1716d17445f09913d432792695a2f9fdc68e3c4efea4d2790f2107c100",
+      "timestamp": "2026-11-01T03:10:47.548Z"
+    },
+    "result": {
+      "uuid": "5b568c79-b535-4638-b1f5-36061709a381",
+      "line": 57,
+      "prefix_bytes": 402964,
+      "prefix_sha256": "5b6146c29fb58d434dc308d183769508fededced8b7c5c4211bc843e81ef3347",
+      "timestamp": "2026-11-01T03:10:49.873Z"
+    }
+  },
+  "tool_use_id": "toolu_01CKZXFC3jzFxiRoZmqaQibA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nt=open(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md\").read()\ni=t.find(\"doc_verification\"); print(t[i-500:i+2500])\nEOF",
+    "description": "Show R4 doc_verification contract"
+  },
+  "is_error": false,
+  "tool_result_content": "的事実の現行性を分けて判定する。\n\n## Layer 2: ドメイン層\n- **用語**: `references[]`=取得済みドキュメントの記録配列 / `target_id`=対象ツール/インフラ/フレームワークの識別子 / `official_publisher`=公式発行者 (例: Meta) / `official_host`=公式ドキュメントの host (例: react.dev) / `version` または `last_updated`=取得時点のドキュメント版・更新日 / `retrieved_at`=取得時刻 / `latest_checked_at`=現行版として最後に確認した時刻 / `source_url`=参照元 URL。`targets[]`=取得対象一覧 (C01 `spec-state.json` 由来、または C02 が特定した target_id 集合)。\n- **二層 × 検出 4 軸**:\n  - **層1 (形式) = C13 (`validate-source-citation.py`)**: 呼出し元 C02/C05 が実行した `doc_verification` を受領し、C13 の実 exit code で判定する。\n    - exit0 = 形式・証跡 OK (全件対応・必須フィールド充足・host・時刻・証跡digest一致)。\n    - exit1 = 形式違反 (欠落 target / 必須フィールド / future・不正形式・一括固定の時刻 / repo外・欠落・digest不一致の取得証跡 / host 不一致 / target_id 重複)。違反行を検出根拠に採る。\n    - exit2 = 入力不備 (ファイル欠落・JSON 破損) → `INDETERMINATE` へ寄せる。\n    - **限界**: C13 の host 一致は「自己申告 `official_host` との文字列一致」まで。その host が本当に公式かは検査しないため、非公式サイトを申告どおり通し得る。この穴は層2 の非公式 host 判定で塞ぐ。\n  - **層2 (内容鮮度) = WebSearch/WebFetch 再照合**:\n    1. **対象一覧の欠落 (missing coverage)**: `targets[]` の各 target_id に対し `references[]` に一件も現れない target を検出する。C13 の全件対応と一致するが、`targets[]` 自体が spec-state の対象を網羅しているか (targets 側の取りこぼし) も意味照合して surface する。\n    2. **非公式 host (unofficial host)**: 各 reference の `official_host`/`source_url` host が `official_publisher` の**実際の公式ドキュメントホスト**かを WebSearch で裏取りする。ミラー・サードパーティ (medium/qiita/stackoverflow/個人ブログ/翻訳転載)・非正規サブドメインを非公式として検出する。publisher の正規ドメインと突合し、C13 が通す自己申告一致の穴を塞ぐ。\n    3. **古い version/更新日 (stale)**: WebFetch で `source_url` (または publisher 公式ドキュメントの現行ページ) を GET し、公式サイトの現行 `version`/`last_updated` と記録値を突合する。記録が現行より世代落ち (メジャー/マイナーの旧版・更新日が現行リリースより前) を検出する。現行版を判別できない場合は憶測で古いと断定せず「鮮度未確認」とする。\n    4. **確認時刻/出典の欠落 (missing citation)**: `latest_checked_at`/`source_url` の欠落 (層1と重複可) に加え、`latest_checked_at` 以降に公式の新リリースがあるのに再確認されていない=現行版確認として実効性を欠く古さも鮮度不足として surface する。\n- **非担当 (境界)**: ヒアリングの進め方は C06 (`system-spec-hearing-auditor`)、マトリクス状態の妥当性は C07 (`system-spec-matrix-auditor`)、収集完了の最終ゲートは C05 (completeness-evaluator)。本責務は「取得済みドキュメントが公式かつ現行版か」だけを見る。\n\n## Layer 3: インフラ層\n- **参照ファイル**: C02 出力の `fetched-references.json` (監査対象)、取得対象一覧 `targets` (`spec-state.json` の `targets[]` 等)、公式 source 判定 SSOT `../references/official-source-catalog.md`。本 SSOT と catalog は開始時必読。\n- **ツール**: C08 は `Read` (SSOT・references・targets・実測証拠)、許可された `WebSearch` (公式ホストの裏取り・現行版の所在特定) と `WebFetch` (公式現行ページを GET) を使う。Bash・shell 探索・独自 Python・書込・POST・mutation は行わない。host が WebSearch を許可しない場合は既知の公式 URL/catalog を WebFetch で裏取りし、確認不能は INDETERMINATE とする。公式性と現行性の意味照合を省略しない。\n- **呼出し元の C13 実行形**: C02/C05 が `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py --targets <取得対象一覧> --references <fetched-references.json> --repo-root <固定project-root>` を実測する。C05 経路では `--state <spec-state.json>` も渡す。C08 は実行せず以下の機械証拠を受領する。\n- **必須入力 `doc_verification`**: `repo_root` (固定 caller root)、`inputs` (少なくとも `targets` / `references`、`--state` 使用時は `state` も、各 `{path, sha256}`)、`validator_path` / `validator_sha256`、実 `argv`、`exit_code` / `stdout` / `stderr`。",
+  "tool_use_result": null
+}

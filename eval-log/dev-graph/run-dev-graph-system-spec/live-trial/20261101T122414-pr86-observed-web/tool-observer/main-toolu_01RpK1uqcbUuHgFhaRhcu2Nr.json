@@ -1,0 +1,101 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "970cf051-5070-4744-853a-02de3aa90695",
+      "line": 95,
+      "prefix_bytes": 520436,
+      "prefix_sha256": "6a871028e6c8693880df83ff136326639d959c380eafef4107d5db9bafd92712",
+      "timestamp": "2026-11-01T03:25:14.102Z"
+    },
+    "result": {
+      "uuid": "2c12d035-2d98-486c-8c53-fd3f4d96e57f",
+      "line": 96,
+      "prefix_bytes": 529614,
+      "prefix_sha256": "ee042044ae8b0ae864347bf5d39310547c653dd3e9e1283b2c4057b54a0fd7c1",
+      "timestamp": "2026-11-01T03:25:22.317Z"
+    }
+  },
+  "tool_use_id": "toolu_01RpK1uqcbUuHgFhaRhcu2Nr",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx; cd -- \"$R\" && [ \"$(pwd -P)\" = \"$R\" ] && mkdir -p eval-log/run-dev-graph-system-spec && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$R\" --mode write > eval-log/run-dev-graph-system-spec/c24-receipt.json; echo exit=$?; cat eval-log/run-dev-graph-system-spec/c24-receipt.json; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$R\"; echo lineage_exit=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n{\n  \"branch\": \"main\",\n  \"content_roots\": {\n    \"architecture\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/architecture\",\n    \"documents\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/docs\",\n    \"features\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/features\",\n    \"issues\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/issues\",\n    \"repository\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n    \"specifications\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/specs\",\n    \"system_spec\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\",\n    \"tasks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/tasks\"\n  },\n  \"coordination_paths\": {\n    \"events\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/events.json\",\n    \"leases\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/leases.json\",\n    \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph\"\n  },\n  \"default_branch\": \"main\",\n  \"diagnostics\": [\n    \"default_branch_fallback_main\"\n  ],\n  \"git_common_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",\n  \"git_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",\n  \"head_sha\": \"2b3053bdec293b5262578182f3be19c01143905f\",\n  \"local_state_paths\": {\n    \"cache\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/cache\",\n    \"config\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/config.json\",\n    \"graph\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/state/graph.json\",\n    \"locks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/locks\"\n  },\n  \"mode\": \"write\",\n  \"plugin_source\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/dev-graph\",\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n  \"repository_id\": \"local:sha256:d44df2adf47d30b8dc94d20a6ef1a7aff136badb48d3ede71db2b1dec9a8ad18\",\n  \"root_trust_evidence\": {\n    \"claude_project_dir_verified\": true,\n    \"git_common_dir_ownership_verified\": true,\n    \"git_toplevel_verified\": true,\n    \"selected_by\": \"explicit --repo-root\"\n  },\n  \"worktree_id\": \"wt_e860682e2aab6efd\"\n}\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0",
+  "tool_use_result": {
+    "stdout": "exit=0\n{\n  \"branch\": \"main\",\n  \"content_roots\": {\n    \"architecture\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/architecture\",\n    \"documents\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/docs\",\n    \"features\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/features\",\n    \"issues\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/issues\",\n    \"repository\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n    \"specifications\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/specs\",\n    \"system_spec\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\",\n    \"tasks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/tasks\"\n  },\n  \"coordination_paths\": {\n    \"events\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/events.json\",\n    \"leases\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/leases.json\",\n    \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph\"\n  },\n  \"default_branch\": \"main\",\n  \"diagnostics\": [\n    \"default_branch_fallback_main\"\n  ],\n  \"git_common_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",\n  \"git_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",\n  \"head_sha\": \"2b3053bdec293b5262578182f3be19c01143905f\",\n  \"local_state_paths\": {\n    \"cache\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/cache\",\n    \"config\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/config.json\",\n    \"graph\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/state/graph.json\",\n    \"locks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/locks\"\n  },\n  \"mode\": \"write\",\n  \"plugin_source\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/dev-graph\",\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n  \"repository_id\": \"local:sha256:d44df2adf47d30b8dc94d20a6ef1a7aff136badb48d3ede71db2b1dec9a8ad18\",\n  \"root_trust_evidence\": {\n    \"claude_project_dir_verified\": true,\n    \"git_common_dir_ownership_verified\": true,\n    \"git_toplevel_verified\": true,\n    \"selected_by\": \"explicit --repo-root\"\n  },\n  \"worktree_id\": \"wt_e860682e2aab6efd\"\n}\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/c24-receipt.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 42,
+              "lines": [
+                "+{",
+                "+  \"branch\": \"main\",",
+                "+  \"content_roots\": {",
+                "+    \"architecture\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/architecture\",",
+                "+    \"documents\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/docs\",",
+                "+    \"features\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/features\",",
+                "+    \"issues\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/issues\",",
+                "+    \"repository\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",",
+                "+    \"specifications\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/specs\",",
+                "+    \"system_spec\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\",",
+                "+    \"tasks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/tasks\"",
+                "+  },",
+                "+  \"coordination_paths\": {",
+                "+    \"events\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/events.json\",",
+                "+    \"leases\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph/leases.json\",",
+                "+    \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git/dev-graph\"",
+                "+  },",
+                "+  \"default_branch\": \"main\",",
+                "+  \"diagnostics\": [",
+                "+    \"default_branch_fallback_main\"",
+                "+  ],",
+                "+  \"git_common_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",",
+                "+  \"git_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.git\",",
+                "+  \"head_sha\": \"2b3053bdec293b5262578182f3be19c01143905f\",",
+                "+  \"local_state_paths\": {",
+                "+    \"cache\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/cache\",",
+                "+    \"config\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/config.json\",",
+                "+    \"graph\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/state/graph.json\",",
+                "+    \"locks\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/.dev-graph/locks\"",
+                "+  },",
+                "+  \"mode\": \"write\",",
+                "+  \"plugin_source\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/dev-graph\",",
+                "+  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",",
+                "+  \"repository_id\": \"local:sha256:d44df2adf47d30b8dc94d20a6ef1a7aff136badb48d3ede71db2b1dec9a8ad18\",",
+                "+  \"root_trust_evidence\": {",
+                "+    \"claude_project_dir_verified\": true,",
+                "+    \"git_common_dir_ownership_verified\": true,",
+                "+    \"git_toplevel_verified\": true,",
+                "+    \"selected_by\": \"explicit --repo-root\"",
+                "+  },",
+                "+  \"worktree_id\": \"wt_e860682e2aab6efd\"",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/c24-receipt.json"
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "933ef94a-c634-4826-9d65-a2b9a966f4e2",
+      "line": 208,
+      "prefix_bytes": 1128579,
+      "prefix_sha256": "fadd747f7b79057c02476e71596c7ad2ded79528c84a8222c22b0c51dc21e506",
+      "timestamp": "2026-11-01T15:31:43.742Z"
+    },
+    "result": {
+      "uuid": "beb1aca1-a637-4ec9-9cec-c8b2c5037a79",
+      "line": 209,
+      "prefix_bytes": 1129953,
+      "prefix_sha256": "0d97fb77873cd504ec66f20b36f506bb060677f7512fa60b38134538ba6a6b4d",
+      "timestamp": "2026-11-01T15:31:47.255Z"
+    }
+  },
+  "tool_use_id": "toolu_015pBUZZXTEm76vLYbA3ssrq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --require-complete --require-basis --require-foundation; echo \"final=$?\"; shasum -a 256 system-spec/spec-state.json"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nfinal=0\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nfinal=0\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

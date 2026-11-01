@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "978739b8-433f-4907-8a6b-75c809f0e598",
+      "line": 159,
+      "prefix_bytes": 1028629,
+      "prefix_sha256": "30f8cfe63cd5a6bfd4bcfd573ec3b4f1dde460b9f0762cc351e662c5fcc3bfa9",
+      "timestamp": "2026-11-01T10:01:27.922Z"
+    },
+    "result": {
+      "uuid": "a316af39-e487-49e9-be36-31f5c7cfba07",
+      "line": 160,
+      "prefix_bytes": 1031427,
+      "prefix_sha256": "0bd41c53950e3ac21ed7aa6f9d480f0415e555b1d7a97d6b68c45baa8c1ab7f8",
+      "timestamp": "2026-11-01T10:01:31.950Z"
+    }
+  },
+  "tool_use_id": "toolu_01TJTV5SHU4PuDzgY5TCmWz7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx'; SYSTEM_SPEC_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/system-spec-harness'; DEV_GRAPH_CODE_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph'; SYSTEM_SPEC_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/system-spec'; GRAPH_PATH='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/.dev-graph/state/graph.json'\npython3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$SYSTEM_SPEC_DIR/spec-state.json\" --require-complete --require-basis --require-foundation; echo \"G1_exit=$?\"\npython3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-source-citation.py\" --targets \"$SYSTEM_SPEC_DIR/spec-state.json\" --references \"$SYSTEM_SPEC_DIR/fetched-references.json\" --state \"$SYSTEM_SPEC_DIR/spec-state.json\" --repo-root \"$DEV_GRAPH_ROOT\"; echo \"G2_exit=$?\"\npython3 -B \"$DEV_GRAPH_CODE_ROOT/scripts/validate-graph-schema.py\" --graph \"$GRAPH_PATH\" --repo-root \"$DEV_GRAPH_ROOT\" --strict-artifact-readiness; echo \"G3_exit=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nG1_exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nG2_exit=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 0,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nG3_exit=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nG1_exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nG2_exit=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 0,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nG3_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-a7bcf779159ed0f0d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "43f116bc-35a5-402d-b324-c5c040b5fdb9",
+      "line": 34,
+      "prefix_bytes": 224744,
+      "prefix_sha256": "9597b0f9161def12498c7643d1833931ff1836ff77f5adb92af3b3b5a7197226",
+      "timestamp": "2026-11-01T03:31:34.640Z"
+    },
+    "result": {
+      "uuid": "608fbf9e-a192-49f1-9ca7-8e72b63535b2",
+      "line": 35,
+      "prefix_bytes": 226859,
+      "prefix_sha256": "9d9ca9dbbe72032b182dd7fdcc043c62ab02c275b58aecaea8f2a042f856d04c",
+      "timestamp": "2026-11-01T03:31:35.902Z"
+    }
+  },
+  "tool_use_id": "toolu_01CB5XXv6tGsDUCPukZdGmnn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && R=\"$CLAUDE_PROJECT_DIR\"; echo goalhash: ; python3 -I -c '\nimport json,hashlib;g=json.load(open(\"eval-log/run-dev-graph-system-spec-goal-spec.json\"));\ns=json.dumps(g,ensure_ascii=False)[:0]\nog=g.get(\"original_goal\") or g.get(\"goal\");print(og);print(hashlib.sha256(og.encode()).hexdigest(), g.get(\"original_goal_hash\"))'\nls -la system-spec | head; [ -L system-spec ] && echo SYMLINK || echo notsymlink; python3 -I -c 'import os;print(os.path.realpath(\"system-spec\"), os.path.realpath(\".\"))'\nfind system-spec -type l -exec sh -c 'echo \"LINK {} -> $(readlink \"{}\")\"' \\; ; find -L system-spec -xtype l 2>/dev/null | head\ngit rev-parse --show-toplevel --git-common-dir --git-dir; git rev-parse --path-format=absolute --git-common-dir\npython3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$R\" --mode read > $TMPDIR/r0read.json; echo rexit=$?\npython3 -I -c 'import json,sys;a=json.load(open(sys.argv[1]));b=json.load(open(\"eval-log/run-dev-graph-system-spec/c24-receipt.json\"))\nfor k in [\"repository_id\",\"worktree_id\",\"git_common_dir\",\"git_dir\",\"repo_root\",\"head_sha\"]: print(k, a.get(k)==b.get(k), a.get(k))\nprint(\"sys_spec\", a[\"content_roots\"][\"system_spec\"]==b[\"content_roots\"][\"system_spec\"])' $TMPDIR/r0read.json\npython3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$R\"; echo lineage_exit=$?\ngit status --porcelain"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin.",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin."
+}

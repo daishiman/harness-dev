@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-aacf11e6a97bfab17",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7d1d76ad-9076-4e26-b486-2baf3aebba4d",
+      "line": 107,
+      "prefix_bytes": 565951,
+      "prefix_sha256": "1d4b241a158c1e49f599e7daddffe1299badea5420dd35d3dc041004add9575d",
+      "timestamp": "2026-11-01T10:10:11.262Z"
+    },
+    "result": {
+      "uuid": "b375851f-860e-4b1b-be11-48a239d35206",
+      "line": 108,
+      "prefix_bytes": 567784,
+      "prefix_sha256": "c80d6f4edd2693052e82302be872f3e9c0386d9abe21abe1b1afa4defe15ce96",
+      "timestamp": "2026-11-01T10:10:12.331Z"
+    }
+  },
+  "tool_use_id": "toolu_01T2hwv68yx4bAacfNB1UCTc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; ls plugins; find plugins /private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins -maxdepth 8 \\( -name verify-completeness.py -o -name validate-prompt.py \\) 2>/dev/null | head; python3 plugins/system-spec-harness/scripts/validate-design-knowledge-refs.py --matrix system-spec/spec-state.json --repo-root \"$PWD\"; echo dk=$?; python3 plugins/system-spec-harness/scripts/validate-spec-doc-sync.py --help 2>&1 | head -8"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

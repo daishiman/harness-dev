@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-aacf11e6a97bfab17",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "71a70242-17c7-44d1-a643-de91f1bf37b8",
+      "line": 117,
+      "prefix_bytes": 585905,
+      "prefix_sha256": "86f36823f38799e2227e587b0186cfee3c3609a0c061dbb7594603a5bcd7d1eb",
+      "timestamp": "2026-11-01T10:10:28.465Z"
+    },
+    "result": {
+      "uuid": "1b1ca107-bfdc-4dd2-b0f6-a95ed8c69cb3",
+      "line": 118,
+      "prefix_bytes": 586762,
+      "prefix_sha256": "41628deddc2ac35ca3f3a3079f95434f171eae1e3a205b62fe91a5a655a4831a",
+      "timestamp": "2026-11-01T10:10:31.872Z"
+    }
+  },
+  "tool_use_id": "toolu_01LeGD5LDYSnHopNwZqBd4Rg",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; V=plugins/harness-creator/vendor/prompt-creator/verify-completeness.py; n=0; f=0; for p in $(find plugins/system-spec-harness -path '*/prompts/*.md'); do n=$((n+1)); out=$(python3 $V --input $p 2>&1); rc=$?; if [ $rc -ne 0 ]; then f=$((f+1)); echo \"FAIL rc=$rc $p\"; echo \"$out\" | tail -5; fi; done; echo \"total=$n fail=$f\""
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 137",
+  "tool_use_result": "Error: Exit code 137"
+}

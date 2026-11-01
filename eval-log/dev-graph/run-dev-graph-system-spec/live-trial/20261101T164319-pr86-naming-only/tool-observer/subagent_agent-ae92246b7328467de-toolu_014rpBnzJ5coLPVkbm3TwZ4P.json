@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ae92246b7328467de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "754186b9-0ce8-40ea-a23c-a0ef4f07088f",
+      "line": 17,
+      "prefix_bytes": 161043,
+      "prefix_sha256": "7e347be5b1d0926c172d069721234c2d30d35566c930fa9c688afae619927dab",
+      "timestamp": "2026-11-01T07:46:14.384Z"
+    },
+    "result": {
+      "uuid": "c742d7d8-a273-4182-b4ab-87073e3cefb0",
+      "line": 18,
+      "prefix_bytes": 163674,
+      "prefix_sha256": "062c0bc1d920416c60deb10258c7e364bf8a31cff2f7d7de4ed0b4d59a336ed5",
+      "timestamp": "2026-11-01T07:46:16.664Z"
+    }
+  },
+  "tool_use_id": "toolu_014rpBnzJ5coLPVkbm3TwZ4P",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export PLUGIN_ROOT=$PWD/plugins/system-spec-harness && python3 \"$PLUGIN_ROOT/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py\" --repo-root \"$PWD\" --print-artifact-snapshot; echo \"exit $?\"; ls system-spec eval-log; echo \"CPD=$CLAUDE_PROJECT_DIR CPR=$CLAUDE_PLUGIN_ROOT\""
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\",\n    \"system-spec/auth.md\": \"21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897\",\n    \"system-spec/backend.md\": \"8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466\",\n    \"system-spec/database.md\": \"3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de\",\n    \"system-spec/fetched-references.json\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\",\n    \"system-spec/frontend.md\": \"10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd\",\n    \"system-spec/maintenance-ops.md\": \"1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0\",\n    \"system-spec/security.md\": \"c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1\",\n    \"system-spec/spec-state.json\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\",\n    \"system-spec/ui-ux.md\": \"420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410\"\n  }\n}\nexit 0\neval-log:\nartifact-delivery-standard.json\nc24-receipt.json\ncompile-standard.json\npreflight-report.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\n\nsystem-spec:\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\nCPD= CPR=",
+  "tool_use_result": null
+}

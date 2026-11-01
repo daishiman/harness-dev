@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "subagent/agent-adc371c3e200ef423",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "db04739c-7884-47f0-8d28-3b5208f1ce10",
+      "line": 30,
+      "prefix_bytes": 246835,
+      "prefix_sha256": "c00228a5a40e67b67a42721c8ed5a8cee34d16f251e0fcde8f64a8996706554d",
+      "timestamp": "2026-11-01T10:21:11.768Z"
+    },
+    "result": {
+      "uuid": "f2481a17-2d42-49c6-bdfc-105702d8a600",
+      "line": 31,
+      "prefix_bytes": 250375,
+      "prefix_sha256": "071d6672a028d2e603760b990583af574967b8648e155d6932c0229bab44f08b",
+      "timestamp": "2026-11-01T10:21:12.014Z"
+    }
+  },
+  "tool_use_id": "toolu_01UQaNNMsbLwVcUVVvHRq2bp",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+    "limit": 60
+  },
+  "is_error": false,
+  "tool_result_content": "1\t---\n2\tname: assign-system-spec-completeness-evaluator\n3\tdescription: 生成された仕様書ドキュメントセットの完成度を独立 context で評価したいとき、上位概念trace・意思決定・マトリクス網羅性・設計知識反映・最新ドキュメント出典・prompt品質の 6 観点で合否判定したいときに使う。\n4\tdisable-model-invocation: false\n5\tuser-invocable: false\n6\tcontext: fork\n7\targument-hint: \"[--spec-dir <path>] [--output <report_path>]\"\n8\targuments: [spec_dir, output]\n9\tkind: assign\n10\tprefix: assign\n11\trole_suffix: evaluator\n12\tversion: 0.1.0\n13\teffect: local-artifact\n14\towner: team-platform\n15\tsince: 2026-07-11\n16\tsource: plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/scoring-rubric.json\n17\tsource-tier: internal\n18\tlast-audited: 2026-07-11\n19\taudit-trigger: quarterly\n20\tallowed-tools:\n21\t  - Read\n22\t  - Bash(python3 *)\n23\t  # 監査 fork の現行経路は Agent。Task は schema 1.1 台帳を書く legacy 経路として残す。\n24\t  - Agent\n25\t  - Task\n26\tresponsibility_refs:\n27\t  - prompts/R1-score.md\n28\t  - prompts/R2-delegate.md\n29\tresponsibilities:\n30\t  - id: R1-score\n31\t    name: score\n32\t    prompt_required: true\n33\t  - id: R2-delegate\n34\t    name: delegate\n35\t    prompt_required: true\n36\tcompleteness_exempt:\n37\t  - \"manifest: assign evaluator is a single forked scoring gate; its rubric, schema and aggregate script are the runtime SSOT.\"\n38\trubric_refs:\n39\t  - references/scoring-rubric.json\n40\treference_refs:\n41\t  - references/resource-map.yaml\n42\t  - references/aspect-criteria.md\n43\tscript_refs:\n44\t  - scripts/aggregate-completeness.py\n45\t  - scripts/validate-json-schema-subset.py\n46\t  - scripts/audit_fork_attribution.py\n47\t  - scripts/build-resume-receipt.py\n48\t  - ../../scripts/validate-coverage-matrix.py\n49\t  - ../../scripts/validate-source-citation.py\n50\tschema_refs:\n51\t  - schemas/completeness-findings.schema.json\n52\t  - schemas/resume-receipt.schema.json\n53\tagent_refs:\n54\t  - ../../agents/system-spec-matrix-auditor.md\n55\t  - ../../agents/system-spec-hearing-auditor.md\n56\t  - ../../agents/system-spec-doc-freshness-auditor.md\n57\tfeedback_contract:\n58\t  skip_reason: \"assign kind は loop criteria 対象外。合否基準は checklist の 6 評価観点 (foundation_trace/decision_guidance/prompt_quality=C05 自前評価 / matrix_coverage=C07 監査 + C06 ヒアリング品質 sub-input / design_knowledge_reflection=C05 自前評価 / doc_freshness=C08 監査) の evaluator ゲート、および validate-coverage-matrix.py の決定論ゲートで担保する。\"\n59\truntime_root_policy: host-skill-path\n60\t---",
+  "tool_use_result": null
+}

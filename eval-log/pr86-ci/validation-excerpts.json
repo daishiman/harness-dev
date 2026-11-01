@@ -1,0 +1,113 @@
+{
+  "purpose": "CI相当ローカル検証の実測ログ抜粋。実走の原本証拠は各live-trialディレクトリに別保存。",
+  "results": [
+    {
+      "source_log": "/tmp/pr86-root-tests.log",
+      "source_sha256": "9fb18c164c82df6cd844f6cb5cd675409018db11338f0387e206ca7aeea2d7dd",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "........................................................................ [ 95%]",
+        ".........................s.............................................. [ 96%]",
+        "........................................................................ [ 97%]",
+        "........................................................................ [ 98%]",
+        "........................................................................ [ 98%]",
+        "...................................s.................................... [ 99%]",
+        "..........................................                               [100%]",
+        "9470 passed, 4 skipped in 790.90s (0:13:10)"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-devgraph-final.log",
+      "source_sha256": "6daba518552eaf4885e968d6c217d3d2b60fab022557473c9f3bd79a127b7a25",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "........................................................................ [ 55%]",
+        "........................................................................ [ 63%]",
+        "........................................................................ [ 70%]",
+        "........................................................................ [ 78%]",
+        "........................................................................ [ 86%]",
+        "........................................................................ [ 94%]",
+        "..................................................                       [100%]",
+        "914 passed in 783.59s (0:13:03)"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-c19-latest-tests.log",
+      "source_sha256": "05f6214bb9f8abe2e092b330c5ff4f5a898cf4f40a4d0271b2bd85bb6fffeb55",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        ".........................................................                [100%]",
+        "57 passed in 13.98s"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-flyer-tests-final.log",
+      "source_sha256": "f482d3c52eef9c3ea49282f7e96e958e01be1349dc3aa86e4d4c191135810a9f",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "# tests 233",
+        "# suites 0",
+        "# pass 228",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 5",
+        "# todo 0",
+        "# duration_ms 22617.918541"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-final-gates-inner.log",
+      "source_sha256": "fc188f880eb158b122ca58e7a7847139578bb777da9436043f4065de79cff25b",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "validate plugin release (version bump 忘れ) 0",
+        "validate local marketplace (非配布 plugin の install 経路が最新か) 0",
+        "lint goal-seek SSOT drift (engine/fork/max_loops 既定の分散コピー一致) 0",
+        "lint goal-seek conformance (実行系の固定手順禁止) 0",
+        "lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす) 0",
+        "lint plugin composition self-test (fixture drift 検出) 0",
+        "lint and validate every plugin composition (dynamic discovery) 0",
+        "lint dependency direction (全プラグイン, prompt-creator cross-plugin 参照解決) 0"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-criteria-final.log",
+      "source_sha256": "96de05ad5d6c3c01aba3085df7743042b00a10dc8656fdfd7b2d831a80a9f97c",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "..............................                                           [100%]",
+        "30 passed in 0.67s"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-live-lint-final.log",
+      "source_sha256": "3c5365b42d5dd27b1f9c694f970a9db6f6105660117179c1ca8458bf24023da2",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "  - ubm-goal-setting/run-ubm-journal: feedback_contract が verify_by: live-trial を宣言するが eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json が無い",
+        "  - x-longpost-creator/run-x-longpost-create: feedback_contract が verify_by: live-trial を宣言するが eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json が無い",
+        "  - x-longpost-creator/run-x-multipost-create: feedback_contract が verify_by: live-trial を宣言するが eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json が無い",
+        "  - x-longpost-creator/run-x-shortpost-optimize: feedback_contract が verify_by: live-trial を宣言するが eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json が無い",
+        "  - x-longpost-creator/run-x-visual-generate: feedback_contract が verify_by: live-trial を宣言するが eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json が無い",
+        "[NOTE] 契約 gate による自走未達免除: 1 verdict(s)",
+        "  - dev-graph/run-dev-graph-sync: 20261031T2343-pr86/verdict.json gate_kind=contractual により gate 応答 1 回が自走未達降格から免除された (接地根拠: frontmatter.allowed-tools:AskUserQuestion, frontmatter.external_mutation_guard) — 被験 skill が契約上その gate を要求することを人間が確認すること",
+        "[OK] live-trial verdict lint: 9 verdict(s) verified, 21 missing (record-only)"
+      ]
+    },
+    {
+      "source_log": "/tmp/pr86-final-gates-complete.log",
+      "source_sha256": "fc188f880eb158b122ca58e7a7847139578bb777da9436043f4065de79cff25b",
+      "excerpt_kind": "末尾8行（全文ではない）",
+      "tail": [
+        "validate plugin release (version bump 忘れ) 0",
+        "validate local marketplace (非配布 plugin の install 経路が最新か) 0",
+        "lint goal-seek SSOT drift (engine/fork/max_loops 既定の分散コピー一致) 0",
+        "lint goal-seek conformance (実行系の固定手順禁止) 0",
+        "lint goal-seek conformance (全 plugin。既知の違反は baseline で固定し、新規と返済済みの残りを落とす) 0",
+        "lint plugin composition self-test (fixture drift 検出) 0",
+        "lint and validate every plugin composition (dynamic discovery) 0",
+        "lint dependency direction (全プラグイン, prompt-creator cross-plugin 参照解決) 0"
+      ]
+    }
+  ]
+}

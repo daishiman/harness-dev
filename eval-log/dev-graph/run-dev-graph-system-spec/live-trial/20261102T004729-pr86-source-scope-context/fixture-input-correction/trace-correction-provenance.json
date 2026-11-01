@@ -1,0 +1,193 @@
+{
+  "kind": "new-synthetic-written-source-recovery",
+  "actual_user_approval_claimed": false,
+  "source_changed": false,
+  "source_fixture": "positive-input-v6",
+  "old_fixture_unchanged": true,
+  "new_document": "system-spec/fixture-requirements-v7.txt",
+  "document_sha256": "8cb2050c84cf0d7936162752eef55b4880da2cea536d6d8a9ced983a5e876ee4",
+  "reason": "根拠なくbasisを変更した旧qa-037/qa-038の本文/履歴を保持し、auth/securityのみ正規reopen/書面source-indexの新given/confirm/supersedeで現行根拠を再構成する。旧basisを後から本物に変えたのではない。",
+  "semantics": "OIDC/ロール/8h、TLS1.3/入力検証/監査、CSRF属性+同期token、PGセッションの値は旧fixtureと同じ。今回の書面はfixture作者が実行前に提供した合成要件であり、実ユーザーの意思決定や本番承認を創作していない。",
+  "all_old_50_QA_core_bytes_unchanged": true,
+  "old_37_38_only_supersession_metadata_added": true,
+  "new_written_QA_count": 4,
+  "foundation_approvals_targets_unchanged": true,
+  "matrix_change_scope": [
+    "auth/web references",
+    "security/web references"
+  ],
+  "decision_change_scope": "D3の注意書きの根拠参照のみ。採択/比較/QA/時刻は保持。",
+  "inherited_review_scope": "v6 input reviewはD4等の旧定義のもの。v7書面再接地の受入や今回のC05/goal PASSを示さない。",
+  "PASS_or_evaluation_seeded": false,
+  "scenario_contract_changed": false,
+  "commands": [
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"reopen\", \"category\": \"auth\", \"platform\": \"web\", \"reason\": \"新規合成fixture: 根拠のないbasis変更を持つ旧qa-037/qa-038を現行の補助根拠にしない。元記録は保持し、提供書面へ正規に再接地する。\", \"reopened_at\": \"2026-11-01T13:47:28.131095Z\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"reopen\", \"category\": \"security\", \"platform\": \"web\", \"reason\": \"新規合成fixture: 根拠のないbasis変更を持つ旧qa-037/qa-038を現行の補助根拠にしない。元記録は保持し、提供書面へ正規に再接地する。\", \"reopened_at\": \"2026-11-01T13:47:28.414720Z\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "chunk",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--turns",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-v7-turns.json",
+        "--max-loops",
+        "4",
+        "--require-all",
+        "--required-info",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"supersede-qa\", \"qa_id\": \"qa-037\", \"superseded_by\": \"qa-csrf-written-v7\", \"superseded_at\": \"2026-11-01T13:47:28.943156Z\", \"note\": \"旧entryのbasis変更を利用者一次入力と扱わない。旧本文/basis/provenanceは保持し、同じCSRF防御の論点を、値を明示した新規合成書面の1論点source-indexへ再接地した。現行セルの主/補助参照に旧entryは残さず、書面の原文とSHAを検証できる。実利用者の新しい対話/承認ではない。\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"supersede-qa\", \"qa_id\": \"qa-038\", \"superseded_by\": \"qa-session-written-v7\", \"superseded_at\": \"2026-11-01T13:47:29.208391Z\", \"note\": \"旧entryのbasis変更を利用者一次入力と扱わない。旧本文/basis/provenanceは保持し、同じセッション保存の論点を、値を明示した新規合成書面の1論点source-indexへ再接地した。現行セルの主/補助参照に旧entryは残さず、書面の原文とSHAを検証できる。実利用者の新しい対話/承認ではない。\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "set-decision",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--decision",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/trace-v7-D3.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"set-design-application\", \"category\": \"auth\", \"text\": \"secure-by-design の最小権限と既定拒否を qa-026 のロールへ当てた。ロールごとに許す操作を列挙し、列挙に無い操作は拒否する: 請求担当は担当取引先の入力と突合、リーダーは確定の承認、内部監査室は閲覧のみ、情報システム部は請求データに触れない。アカウントの寿命は社内 IdP に従わせ、退職・異動で無効になったアカウントは本システムでも使えない (qa-026。qa-030 の『残ったアカウント』への対策)。D3 (qa-034) でバックエンドがトークンを持ち、ブラウザには cookie のセッションだけを渡す方式に決まったので、既定で安全 (secure defaults) と多層防御をブラウザとの境界にも当てる: セッションの cookie には HttpOnly・Secure・SameSite=Lax を付け、状態を変える要求 (POST・PUT・PATCH・DELETE) にはサーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にして、無いか合わない要求は拒否する (qa-csrf-written-v7)。データのライフサイクルとして、セッションは Pod のメモリに置かず、D1 の PostgreSQL 16 の表に保存して、Pod の再起動や複数の replica の間でもログインが切れないようにする。有効期限は 8 時間で (qa-002)、期限切れは使えなくして定期的に消し、ログアウトではすぐに無効にする (qa-session-written-v7)。\\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。\", \"basis\": \"agent-inference\", \"recorded_at\": \"2026-11-01T13:47:29.741994Z\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"set-doctrine-application\", \"category\": \"auth\", \"concern_id\": \"authentication\", \"text\": \"認証は社内 IdP の OIDC に委ね (qa-002, qa-018)、本システムはパスワードを持たない。OIDC のトークンはバックエンドが持ち、ブラウザには cookie のセッションだけを渡す (D3, qa-034)。セッションは Pod のメモリに置かず、D1 の PostgreSQL 16 の表に保存して、Pod の再起動や複数の replica の間でもログインが切れないようにする。有効期限は 8 時間で (qa-002)、期限切れは使えなくして定期的に消し、ログアウトではすぐに無効にする (qa-session-written-v7)。IdP でアカウントが無効になれば入れなくなる (qa-026)。\\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。\", \"basis\": \"agent-inference\", \"recorded_at\": \"2026-11-01T13:47:29.996968Z\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "apply",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--op",
+        "{\"action\": \"set-doctrine-application\", \"category\": \"auth\", \"concern_id\": \"security\", \"text\": \"認可は既定で拒否し、ロールごとに許す操作だけを列挙する (qa-026)。セッションの cookie には HttpOnly・Secure・SameSite=Lax を付け、状態を変える要求 (POST・PUT・PATCH・DELETE) にはサーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にして、無いか合わない要求は拒否する (qa-csrf-written-v7)。OIDC のクライアントシークレットはリポジトリに置かず、k8s の Secret で渡す (シークレット管理)。\\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。\", \"basis\": \"agent-inference\", \"recorded_at\": \"2026-11-01T13:47:30.270313Z\"}"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py",
+        "compile",
+        "--spec",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/fetched-references.json",
+        "--out-dir",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "--matrix",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--require-complete",
+        "--require-basis",
+        "--require-foundation"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/fetched-references.json",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7/system-spec/spec-state.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v7"
+      ],
+      "exit": 0
+    }
+  ]
+}

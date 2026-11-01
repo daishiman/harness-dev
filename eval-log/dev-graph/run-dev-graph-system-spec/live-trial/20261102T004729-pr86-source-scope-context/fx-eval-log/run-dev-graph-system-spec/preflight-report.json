@@ -1,0 +1,32 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "artifact": "pre-choice preflight report",
+  "c24_receipt": {
+    "path": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "sha256": "6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab",
+    "repo_root_equals_content_roots_repository": true,
+    "system_spec_root_inside_repo": true,
+    "repository_id": "local:sha256:2d5539fa5dd03192b16045326daade1249acf9a3724974a5b1a737a7719a507e",
+    "git_common_dir": ".git",
+    "mode": "write"
+  },
+  "R0_lineage_gate": {"command": "plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <repo_root>", "exit_code": 0, "status": "pass", "checked": 0, "decision": "new_creation"},
+  "R1_preflight": {
+    "plugin_manifest": {"path": "plugins/system-spec-harness/.claude-plugin/plugin.json", "sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994", "name": "system-spec-harness", "version": "0.1.24"},
+    "version_range_source": {"path": "plugins/dev-graph/plugin-composition.yaml", "sha256": "d44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712", "range": ">=0.1.22 <1.0.0", "in_range": true},
+    "package_contract": {"path": "plugins/system-spec-harness/references/package-contract.json", "sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486"},
+    "required_entry_points": {
+      "run-system-spec-elicit": {"in_contract": true, "skill_md_sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b"},
+      "run-system-spec-doc-fetch": {"in_contract": true, "skill_md_sha256": "7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637"},
+      "run-system-spec-compile": {"in_contract": true, "skill_md_sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82"},
+      "assign-system-spec-completeness-evaluator": {"in_contract": true, "skill_md_sha256": "b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6"}
+    },
+    "verdict": "PASS"
+  },
+  "inputs": {
+    "system-spec/spec-state.json": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+    "system-spec/fetched-references.json": "471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594",
+    ".dev-graph/state/graph.json": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177"
+  },
+  "verdict": "PASS"
+}

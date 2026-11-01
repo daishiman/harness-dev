@@ -1,0 +1,29 @@
+# 122 初期prefix独立レビュー
+
+最終goal判定は保留。初期完了範囲で確定したgoal blockerはない。
+
+## 原本と再構成
+
+manifest記載のmainと2subagent全3streamのbytes/SHA-256が一致した。observer 43eventのassistant/result側source prefix hashを固定native bytesから再計算し、全件一致した。nativeのapi-request-blob等に同じtool_use_idが再出現するものは別実行に数えていない。
+
+- main: `00217228ab5fc8a1c0ce84a56f1b7caa068cdd8528980a44c40a9a5f215640cf`
+- R0: `a5e9d69e6ef7190fecf8bd1f9a3bf41c7f00f519e3308d125a9af4fd8177c67c`
+- R1: `f645f50fdf46b121de6a0cdf57b36428175b7fac16778aa0ee8fa114dc1e4d7c`
+
+## 完了範囲
+
+C19正規Skillのbody全文注入をsourceと照合し、別Readのfrontmatter 1–80行と合わせ全契約を取得したことを確認した。親のR0–R3と共通層、および4委譲先SKILLは出力作成前に全文Readされている。各Readのstart/numLines/totalLinesとevidenceをJSONへ保存した。
+
+C24 receiptはcaller FXとcontent_roots.repositoryのrealpathを一致させて固定し、lineageはexit0/checked0。R0 Verifierは別streamでidentityとcontainmentを再検査し、19entry内symlink0、lineage exit0を得た。R1 VerifierはSS.24のversion範囲・4entrypoint実在/hash・manifest分離・preflight値・dev-graph内生成ロジック複製なしを読み取り専用で検証した。両Agentの実final PASS後、周回1が達成記録された。
+
+main L175のcoverage/source citation/schemaは、空graphも含め全exit0。L185でprogressと6key/hashを記録・検査しcheck0。OUT1はexternal_pendingで、R2/R3はnot_achievedのまま次指示を引き継いでいる。R2以降を未完了としてblockerに数えていない。
+
+## 選択境界と非blocker差分
+
+main L142でpreflight現物生成、L150/153でJSON parse成功とpath/SHA提示、L155で事前回答standard保存、L162/L163で初の独立Agent起動。preflight実ファイルは読み取り可能な通常JSONで、再計算SHAは `6205a09e2f9317ce627c41a5ce34c08469da5909c1ea50562501708f819f7792` と一致した。
+
+正本はchoice前に「path・digest・開き方」の提示を要求するが、開き方の実文字列はL155のchoice payload内に初出し、choice前のassistant本文/結果では示されていない。この提示形式・順序差分は保存する。ただし現物の可用性、事前回答standard、semantic Agentが選択後であることが実測できているため、実成果物未提示・無同意起動・評価先行の欠損には接地しない。Purpose/完了条件・3観測への直接欠損を示さない補助操作説明の不足をgoal blockerへ拡大しない。
+
+## 保留範囲
+
+正のR0/R1経路のみを確認した。エラー時fail-closedの負の枝の実走を主張しない。R2完遂、C05全必読/18prompt意味評価/3監査、C02正式取込、正本3観測、全周回・予算・回収は終了原本で独立判定する。

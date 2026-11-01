@@ -1,0 +1,100 @@
+{
+  "id": "D4",
+  "category": "backend",
+  "question": "非同期突合とO1自動検知のジョブ実行構成",
+  "status": "confirmed",
+  "serves_goals": [
+    "G1",
+    "G2"
+  ],
+  "options": [
+    {
+      "id": "pg-worker-cron",
+      "label": "既存PG outbox＋独立Python worker＋k8s CronJob",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "month",
+        "tco": "amount=0 JPY/月はこのfixtureが仮定する追加OSSライセンス部分だけ。構築費はoutbox/claim/lease/fencing/冪等性とworker/CronJobの実装・テスト、運用費は既存PG/クラスタのCPU/容量/監視と復旧工数、移行/撤退費はclaim adapter・scheduler/manifestと手順の置換。資源/工数の金額は未見積りで、総TCOが0との主張ではない。"
+      },
+      "free_tier_limits": "PG/Python/Kubernetesのソフトウェア追加ライセンスを無償と置く合成前提であり、商用free-tierの容量保証ではない。workerとCronJob用の既存クラスタCPU/メモリ、DB接続/容量と負荷の余力を別途計測する必要がある。",
+      "goal_fit": "独立workerがAPIの再起動/重いHTTP負荷から分離して永続outboxを継続処理し、G1/O1の15分走査・30分以内表示とG2の重い突合を担う。1秒claim/15分CronJobは合成givenの構成値で、処理時間や達成率の実測保証ではない。",
+      "security_fit": "worker/CronJobのDB接続をAPIと別の実行主体として最小権限化でき、追加のHTTP起動入口を設けない。DB権限・秘密配布・lease/fencing/追記監査の実装検証は必要であり、具体roleや新しい業務閲覧権を承認済みと追加しない。",
+      "pros": [
+        "APIライフサイクルと分離",
+        "永続queueと同じ業務規則を再利用"
+      ],
+      "cons": [
+        "workerのdeploy/監視が増える"
+      ],
+      "risks": [
+        "lease/fencingと冪等実装が必要",
+        "Cronの重複抑制だけではexactly-onceを保証しない"
+      ],
+      "lock_in": "PGのclaim SQL/lease表とKubernetes Deployment/CronJob設定へ依存する。業務ユースケースは純Pythonで共有し、別の実行基盤へ移す際はscheduler/DB claim adapterと運用手順を置換する。APIフレームワークのBackgroundTasksには依存しない。",
+      "ops_burden": "中。workerとCronJobのdeploy/停止/再開、pending齢・lease切れ・失敗件数、DB負荷を観測する対象が増える。HTTP/APIのrolloutから処理系を分離でき、復旧は永続outboxのclaim再開で行う。",
+      "evidence_refs": [
+        "https://www.postgresql.org/docs/16/sql-select.html",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+      ]
+    },
+    {
+      "id": "api-background-http",
+      "label": "既存PG outbox＋API BackgroundTasks＋Cronの内部HTTP呼出し",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "month",
+        "tco": "amount=0 JPY/月はこのfixtureが仮定する追加OSSライセンス部分だけ。構築費はPG outbox/再開/冪等性に内部HTTP認証/起動連携を加え、運用費はAPIのCPU/容量/監視にjob再送/復旧と秘密更新を加える。専用worker Deploymentは減るが実装/運用総費の大小は未実測。移行/撤退時はBackgroundTasks/HTTP起動と再開経路を独立worker等へ置換する費用がある。総TCO0を意味しない。"
+      },
+      "free_tier_limits": "FastAPI/PGの追加ライセンスを無償と置く合成前提で、実行資源無償や商用API枠を意味しない。API replicaのCPU/メモリ/同時実行とDB接続枠をオンライン要求と共有し、重い突合で干渉しない容量検証が必要。",
+      "goal_fit": "PG outboxと再走査/claimを正しく実装すればG1/O1/G2を満たす構成は可能。ただし実行をAPIプロセスとHTTP起動に置くため、APIのrollout/停止/混雑がジョブ開始/進捗と結合する。BackgroundTasksそのものを永続queueや定期schedulerと扱わず、outboxによる再開処理を別に要する。",
+      "security_fit": "API側のDB接続/認可を再利用する一方、CronJobから内部HTTPを起動する認証・認可と呼出し主体/秘密の管理、不要な外部公開を防ぐ境界を増やす。HTTP再送にも業務一意キー/claim排他を適用する必要がある。",
+      "pros": [
+        "worker専用imageを減らせる"
+      ],
+      "cons": [
+        "APIの再起動と負荷へ結合",
+        "内部HTTP認証と再開処理が増える"
+      ],
+      "risks": [
+        "API停止時に処理が遅れる",
+        "複数replica/再試行時に排他が必要"
+      ],
+      "lock_in": "PG outbox/claimに加えてFastAPI BackgroundTasksのプロセス実行と内部HTTP起動API、CronJobの呼出し設定へ依存する。別backend/独立workerへ移す際は起動/再開/認証の接続部を変更する。業務データや純Pythonユースケースは共通化できる。",
+      "ops_burden": "中〜高。専用worker Deploymentは減らせるが、API rollout/replica/負荷制御とjob再開、内部HTTPの認証/再送/失敗切分けを同じ運用で扱う。PG outboxがあるためAPI再起動で必ずjobが消失するとは主張しない。",
+      "evidence_refs": [
+        "https://fastapi.tiangolo.com/tutorial/background-tasks/",
+        "https://www.postgresql.org/docs/16/sql-select.html",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+      ]
+    }
+  ],
+  "recommendation": {
+    "option_id": "pg-worker-cron",
+    "rationale": "G1/O1の定期自動検知とG2の重い突合を、オンラインAPIの停止/rollout/負荷から分離できる点でpg-worker-cronを推奨する。追加のworker/CronJob運用が必要という不利を認め、既存PG/k8sを使い新brokerを増やさないというgivenの制約と整合させる。推奨それ自体は利用者の採否ではない。",
+    "caveats": [
+      "CronJobだけでexactly-onceは保証しない。DB排他/lease/fencing/冪等性を別に設計する。",
+      "FastAPIのBackgroundTasksは応答後の処理であり、それ自体を定期schedulerや永続queueとは扱わない。",
+      "費用比較は明示した合成fixture前提で、実環境価格の見積ではない。",
+      "公式文書で直接確認するのはSQLロック/skip locked、CronJobの反復/重複可能性、BackgroundTasksの応答後実行と重い処理の注意点。workerの1秒claim、lease/fencing/業務冪等性、TCO/権限分離の比較はgiven/設計推論であり公式が性能・安全性を保証したとは扱わない。"
+    ],
+    "confidence": "medium",
+    "latest_checked_at": "2026-11-01T13:09:33.324606Z",
+    "comparison_basis": {
+      "goal_fit": "両案ともPG outboxによる実現は可能。Aは専用実行主体でAPI停止と分離、BはAPIプロセス/HTTP経由なので可用性・負荷と結合する。",
+      "tco": "両案の0円は追加OSSライセンス部分の合成前提。Aはworker/CronJob deploy・監視費、Bは内部HTTP認証・再送/復旧とAPI容量の工数/資源費が異なる。構築/運用/移行/撤退の総額は未見積り。",
+      "security": "Aは別実行主体の最小DB権限と追加HTTP入口無し。BはAPI権限を共有し、内部HTTPの呼出主体認証/認可・秘密更新という追加境界を持つ。どちらもPG claim/業務一意キー/監査が必要。",
+      "operations": "Aは専用worker/CronJobを管理するがAPI rolloutから独立。Bは専用workerを減らせるがAPI replica・再開・HTTP失敗切分けとjob運用が結合する。",
+      "lock_in": "AはPG claim SQLとk8s実行設定、BはそれにFastAPI BackgroundTasks/内部HTTP起動APIへの接続依存が加わる。業務本体とoutboxデータの可搬性は両案で保てる。"
+    }
+  },
+  "qa_ref": "qa-job-choice-fixture-v3",
+  "user_decision": {
+    "option_id": "pg-worker-cron",
+    "confirmed_at": "2026-11-01T08:35:54.756712Z",
+    "note": "このfixtureの合成利用者はqa-job-choice-fixture-v3.answerでpg-worker-cronを明示選択している。confirmed_atは提供済みgivenを初回記録した上限時刻で、実利用者の選択を観測した実測値ではない。実利用者の新しい承認を主張しない。比較の補足/公式情報の再確認は新fixtureの定義時点の情報で、採択回答や業務要件を変えていない。"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a4f0555d775afc22e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7fb7a399-9f0a-48ef-9757-973160612cd0",
+      "line": 17,
+      "prefix_bytes": 110923,
+      "prefix_sha256": "e95cc2d4bd8261df659881bb32d58ef6b9b4f26d03411382d4192f9e5a3f64c3",
+      "timestamp": "2026-11-01T12:24:32.515Z"
+    },
+    "result": {
+      "uuid": "4f49ea49-d1ad-47d5-9892-3d741a2cea8c",
+      "line": 18,
+      "prefix_bytes": 119545,
+      "prefix_sha256": "211687b02e511e0c6880b823a9abe0dd764c47d280d623ed5ee4db23ed6f58a8",
+      "timestamp": "2026-11-01T12:24:32.760Z"
+    }
+  },
+  "tool_use_id": "toolu_017UWaJqGwn3rFAwwCsakS2m",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/agents/dev-graph-integrity-auditor.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t---\n2\tname: dev-graph-integrity-auditor\n3\tdescription: dev-graph の schema・DAG・orphan を独立監査したいとき、macro feature と exact-13 package の境界を検証したいときに使う。\n4\tkind: agent\n5\tversion: 0.1.0\n6\towner: harness maintainers\n7\ttools: Read, Bash\n8\tmodel: sonnet\n9\tisolation: fork\n10\towner_skill: run-dev-graph-node\n11\tsource: plugin-plans/dev-graph/component-inventory.json#C06\n12\t---\n13\t\n14\t## Layer 1: 基本定義層\n15\t\n16\tdev-graph snapshot と登録 receipt を変更せず、graph integrity と macro/micro 境界を独立判定する。判定不能は FAIL とする。\n17\t\n18\t## Layer 2: ドメイン定義層\n19\t\n20\t- 入力: graph snapshot、C02/C14 receipt、schema validation report。\n21\t- 出力: `verdict`, `graph_digest`, `checks`, `findings` を持つ JSON。`graph_digest` は、監査した graph snapshot の canonical digest で、C02 writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) にする。file の bytes の sha256 ではない。\n22\t- 担当: schema、DAG、orphan、path containment、feature/package 境界。\n23\t- 非担当: graph 修正、tracker mutation、task spec 生成。\n24\t\n25\t## Layer 3: インフラストラクチャ定義層\n26\t\n27\t`scripts/validate-graph-schema.py`、`schemas/graph-node.schema.json`、package receipt を Read/Bash で再検証する。caller repository 相対 path だけを読む。\n28\t\n29\t## Layer 4: 共通ポリシー層\n30\t\n31\t最大反復回数は3。全 file path の containment、dangling/orphan/duplicate id、循環、P01..P13 exact-set、共通 parent/package を evidence 付きで判定する。対象を書き換えず、根拠欠落を PASS にしない。\n32\t\n33\t## Layer 5: エージェント定義層\n34\t\n35\t### 5.1 担当 agent\n36\t\n37\t`dev-graph-integrity-auditor`。生成者から分離した fork context で実行する。\n38\t\n39\t### 5.2 ゴール定義\n40\t\n41\t- 目的: graph の構造破損と責務混線を promotion 前に検出する。\n42\t- 背景: writer と評価者の同一化による自己承認を防ぐ必要がある。\n43\t- 達成ゴール: 全 integrity check が digest 束縛 evidence 付きで PASS/FAIL 判定された状態になっている。\n44\t\n45\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n46\t\n47\t- [ ] schema、DAG、orphan、path containment の verdict がある。\n48\t- [ ] macro feature に phase task 生成責務が混入していない。\n49\t- [ ] exact-13 package の phase/parent/package/receipt が一致する。\n50\t- [ ] findings が node id、severity、evidence、suggested fix を持つ。\n51\t- [ ] 対象 digest が入力 snapshot と一致する。\n52\t\n53\t### 5.4 実行方式\n54\t\n55\t未充足 checklist を特定し、必要な read-only 検査を動的に組み立て、結果を自己評価する。各周回末に original goal、current snapshot、delta、next directive、drift signal を記録し、全項目充足または上限到達まで反復する。\n56\t\n57\t## Layer 6: オーケストレーション層\n58\t\n59\tC02/C14 から独立起動される。PASS は caller の次 gate へ、FAIL は findings だけを writer へ返す。ほかの evaluator の中間結果を参照しない。\n60\t\n61\t## Layer 7: UI / 提示層\n62\t\n63\t対話なし。JSON key は英語、根拠と修正提案は簡潔な日本語で返す。\n64\t\n65\t## Prompt Templates\n66\t\n67\t> 指定された graph snapshot と receipt を変更せず監査し、digest-bound verdict を返す。\n68\t\n69\t## Self-Evaluation\n70\t\n71\t- [ ] **完全性**: Layer 5 の停止条件を全件判定した。\n72\t- [ ] **検証可能性**: 対象を書き換えず、判定不能を PASS にしていない。\n73\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/agents/dev-graph-integrity-auditor.md",
+      "content": "---\nname: dev-graph-integrity-auditor\ndescription: dev-graph の schema・DAG・orphan を独立監査したいとき、macro feature と exact-13 package の境界を検証したいときに使う。\nkind: agent\nversion: 0.1.0\nowner: harness maintainers\ntools: Read, Bash\nmodel: sonnet\nisolation: fork\nowner_skill: run-dev-graph-node\nsource: plugin-plans/dev-graph/component-inventory.json#C06\n---\n\n## Layer 1: 基本定義層\n\ndev-graph snapshot と登録 receipt を変更せず、graph integrity と macro/micro 境界を独立判定する。判定不能は FAIL とする。\n\n## Layer 2: ドメイン定義層\n\n- 入力: graph snapshot、C02/C14 receipt、schema validation report。\n- 出力: `verdict`, `graph_digest`, `checks`, `findings` を持つ JSON。`graph_digest` は、監査した graph snapshot の canonical digest で、C02 writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) にする。file の bytes の sha256 ではない。\n- 担当: schema、DAG、orphan、path containment、feature/package 境界。\n- 非担当: graph 修正、tracker mutation、task spec 生成。\n\n## Layer 3: インフラストラクチャ定義層\n\n`scripts/validate-graph-schema.py`、`schemas/graph-node.schema.json`、package receipt を Read/Bash で再検証する。caller repository 相対 path だけを読む。\n\n## Layer 4: 共通ポリシー層\n\n最大反復回数は3。全 file path の containment、dangling/orphan/duplicate id、循環、P01..P13 exact-set、共通 parent/package を evidence 付きで判定する。対象を書き換えず、根拠欠落を PASS にしない。\n\n## Layer 5: エージェント定義層\n\n### 5.1 担当 agent\n\n`dev-graph-integrity-auditor`。生成者から分離した fork context で実行する。\n\n### 5.2 ゴール定義\n\n- 目的: graph の構造破損と責務混線を promotion 前に検出する。\n- 背景: writer と評価者の同一化による自己承認を防ぐ必要がある。\n- 達成ゴール: 全 integrity check が digest 束縛 evidence 付きで PASS/FAIL 判定された状態になっている。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n- [ ] schema、DAG、orphan、path containment の verdict がある。\n- [ ] macro feature に phase task 生成責務が混入していない。\n- [ ] exact-13 package の phase/parent/package/receipt が一致する。\n- [ ] findings が node id、severity、evidence、suggested fix を持つ。\n- [ ] 対象 digest が入力 snapshot と一致する。\n\n### 5.4 実行方式\n\n未充足 checklist を特定し、必要な read-only 検査を動的に組み立て、結果を自己評価する。各周回末に original goal、current snapshot、delta、next directive、drift signal を記録し、全項目充足または上限到達まで反復する。\n\n## Layer 6: オーケストレーション層\n\nC02/C14 から独立起動される。PASS は caller の次 gate へ、FAIL は findings だけを writer へ返す。ほかの evaluator の中間結果を参照しない。\n\n## Layer 7: UI / 提示層\n\n対話なし。JSON key は英語、根拠と修正提案は簡潔な日本語で返す。\n\n## Prompt Templates\n\n> 指定された graph snapshot と receipt を変更せず監査し、digest-bound verdict を返す。\n\n## Self-Evaluation\n\n- [ ] **完全性**: Layer 5 の停止条件を全件判定した。\n- [ ] **検証可能性**: 対象を書き換えず、判定不能を PASS にしていない。\n",
+      "numLines": 73,
+      "startLine": 1,
+      "totalLines": 73
+    }
+  }
+}

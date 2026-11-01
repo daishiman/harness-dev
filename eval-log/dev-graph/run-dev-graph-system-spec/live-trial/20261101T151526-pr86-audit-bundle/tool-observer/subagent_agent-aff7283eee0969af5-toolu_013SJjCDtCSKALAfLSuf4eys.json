@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-aff7283eee0969af5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "719a766a-473f-4ec0-8fbe-c8adc915a351",
+      "line": 111,
+      "prefix_bytes": 894613,
+      "prefix_sha256": "e2c11acc0704daec2d8726601a8e40ac637cc1f35d03fe873b0df9595f147759",
+      "timestamp": "2026-11-01T06:45:26.072Z"
+    },
+    "result": {
+      "uuid": "c4e17d45-a9f9-433a-a84a-8781c5814813",
+      "line": 112,
+      "prefix_bytes": 895795,
+      "prefix_sha256": "ec1f7b724df598c889dea9464804321c76bcef568dce645c814b7a701df142f6",
+      "timestamp": "2026-11-01T06:45:27.841Z"
+    }
+  },
+  "tool_use_id": "toolu_013SJjCDtCSKALAfLSuf4eys",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 .dev-graph/state/graph.json; echo \"--- dup grep (scripts/py)\"; grep -rnlE \"def (elicit|compile_chapter|render_chapter|ask_question|build_coverage_matrix|compile_spec)|qa_log\\[|required_info_items|coverage_matrix\\s*=\" plugins/dev-graph --include=*.py; echo \"--- refs to compile-spec-doc/elicit scripts in dev-graph\"; grep -rnE \"compile-spec-doc|validate-coverage-matrix|run-system-spec-elicit\" plugins/dev-graph --include=*.py | head; ls plugins/dev-graph/skills/run-dev-graph-system-spec/scripts; echo ---; for f in goal-spec progress artifact-delivery; do echo \"== $f\"; cat eval-log/run-dev-graph-node-$f.json | head -c 1800; echo; done; echo \"== intermediate\"; cat eval-log/run-dev-graph-node-intermediate.jsonl | head -c 2500"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\ne0135eadf928be0eada38678b48b0c35bcde0e952d202c6465fa2a09c5ccb978  .dev-graph/state/graph.json\n--- dup grep (scripts/py)\n(eval):1: no matches found: --include=*.py",
+  "tool_use_result": "Error: Exit code 1\ne0135eadf928be0eada38678b48b0c35bcde0e952d202c6465fa2a09c5ccb978  .dev-graph/state/graph.json\n--- dup grep (scripts/py)\n(eval):1: no matches found: --include=*.py"
+}

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a37642456dff99054",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ad387ad7-0c2f-4536-bde4-cd19da4bbed2",
+      "line": 74,
+      "prefix_bytes": 513399,
+      "prefix_sha256": "378f06c21468844bb00aeec11d167ebd419e7202b4dc01bdc895ca2f86d60f33",
+      "timestamp": "2026-11-01T11:58:02.628Z"
+    },
+    "result": {
+      "uuid": "4c87e883-69fa-4444-8140-ac70e6a8fccc",
+      "line": 75,
+      "prefix_bytes": 516254,
+      "prefix_sha256": "89f899f2e1c8014a08c3f9eb8e3e08d649edb23d983afd59bebf76946ba2b3dc",
+      "timestamp": "2026-11-01T11:58:05.066Z"
+    }
+  },
+  "tool_use_id": "toolu_01MSJfC1ycWUzTF6GSWTmBDY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nimport hashlib,json,os\ng=json.load(open(\"eval-log/run-dev-graph-system-spec-goal-spec.json\"))\nprint(\"goal_hash_ok\",hashlib.sha256(g[\"original_goal\"].encode()).hexdigest()==g[\"original_goal_hash\"]==\"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\")\nprint(\"preflight sha\",hashlib.sha256(open(\"eval-log/run-dev-graph-system-spec-preflight-report.json\",\"rb\").read()).hexdigest())\nfor p in [\".git\",\".dev-graph\",\".dev-graph/config.json\",\".dev-graph/state/graph.json\",\"eval-log\",\"plugins/dev-graph\"]:\n  print(p,\"islink\",os.path.islink(p),os.path.realpath(p))\npf=json.load(open(\"eval-log/run-dev-graph-system-spec-preflight-report.json\"))\nbad=[k for k,v in pf[\"inputs\"].items() if hashlib.sha256(open(k,\"rb\").read()).hexdigest()!=v]\nprint(\"input digest mismatches\",bad)\n'; ls eval-log/ eval-log/run-dev-graph-system-spec 2>&1",
+    "description": "Verify goal hash, preflight digests, symlink status"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\ngoal_hash_ok True\npreflight sha ae33b1539fa2111b8449ba1c365c645b0f89eaddc4e724ca738a4f35771a2305\n.git islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.git\n.dev-graph islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph\n.dev-graph/config.json islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph/config.json\n.dev-graph/state/graph.json islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph/state/graph.json\neval-log islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/eval-log\nplugins/dev-graph islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph\ninput digest mismatches []\nls: eval-log/run-dev-graph-system-spec: No such file or directory\neval-log/:\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-preflight-report.json",
+  "tool_use_result": "Error: Exit code 1\ngoal_hash_ok True\npreflight sha ae33b1539fa2111b8449ba1c365c645b0f89eaddc4e724ca738a4f35771a2305\n.git islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.git\n.dev-graph islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph\n.dev-graph/config.json islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph/config.json\n.dev-graph/state/graph.json islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.dev-graph/state/graph.json\neval-log islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/eval-log\nplugins/dev-graph islink False /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph\ninput digest mismatches []\nls: eval-log/run-dev-graph-system-spec: No such file or directory\neval-log/:\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-preflight-report.json"
+}

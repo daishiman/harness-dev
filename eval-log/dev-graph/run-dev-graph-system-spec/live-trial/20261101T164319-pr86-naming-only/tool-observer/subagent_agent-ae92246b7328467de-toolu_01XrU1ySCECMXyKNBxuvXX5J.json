@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ae92246b7328467de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "13627d51-a3c0-438a-9674-0a7e185251c1",
+      "line": 34,
+      "prefix_bytes": 252017,
+      "prefix_sha256": "a227e023c6bca62b30cf704c67acb2d077a4848253c89aba587125ffc89d316e",
+      "timestamp": "2026-11-01T07:46:26.988Z"
+    },
+    "result": {
+      "uuid": "d76423df-8b39-44fe-9739-4c77d74b0bf9",
+      "line": 35,
+      "prefix_bytes": 253645,
+      "prefix_sha256": "ef265b8705df389bfc73d3fd30496131d0ec83b966ecd5a941236b9e6b5ac8ee",
+      "timestamp": "2026-11-01T07:46:31.869Z"
+    }
+  },
+  "tool_use_id": "toolu_01XrU1ySCECMXyKNBxuvXX5J",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "S=plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py; mkdir -p $TMPDIR/g; python3 $S --matrix system-spec/spec-state.json --require-complete > $TMPDIR/g/matrix.json; echo $?; python3 $S --source-citation system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root \"$PWD\" > $TMPDIR/g/src.json; echo $?; python3 $S --knowledge-graph > $TMPDIR/g/kg.json; echo $?; echo $TMPDIR; head -c 1500 $TMPDIR/g/src.json; ls eval-log/system-spec-harness 2>&1"
+  },
+  "is_error": false,
+  "tool_result_content": "0\n0\n0\n/private/tmp/lt86/t/psys109/claude-501\n{\n  \"id\": \"G-source-citation\",\n  \"name\": \"validate-source-citation\",\n  \"conditions\": [\n    \"doc_freshness\"\n  ],\n  \"command\": [\n    \"/Users/dm/miniconda3/bin/python3\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\",\n    \"--targets\",\n    \"system-spec/spec-state.json\",\n    \"--references\",\n    \"system-spec/fetched-references.json\",\n    \"--state\",\n    \"system-spec/spec-state.json\",\n    \"--repo-root\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\"\n  ],\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\",\n  \"stderr\": \"\"\n}\naudit-fork-ledger.jsonl",
+  "tool_use_result": null
+}

@@ -1,0 +1,43 @@
+{
+  "responsibility_id": "R3-import",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (read-only, single output file)",
+  "repo_root": ".",
+  "c24_receipt": {
+    "path": "eval-log/c24-receipt.json",
+    "sha256": "c3ee3705170e6d921bbfcb7a7d5abf9310aff32791a87fa4c5ace72361a77980",
+    "matches_expected": true,
+    "head_sha": "0220461c74b99bfb54c1a8a54d4b93e10765c0e2"
+  },
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "previous_directive": "run-dev-graph-node (C02) で現行 bytes digest・version 0.1.25・evaluator evidence を持つ同一 payload を dry-run→add し、validate-source-lineage と R3 独立 Agent で検証する",
+  "prompts_read": [
+    {"path": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md", "sha256": "34bb6e7506e1d1bd91340505455172e01c73fe0cd366d223fdc4c5190b9d952d"},
+    {"path": "plugins/dev-graph/references/prompt-common-layers.md", "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea"},
+    {"path": "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md", "sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"}
+  ],
+  "checks": [
+    {"id": "1-identical-payload", "status": "PASS", "evidence": "sha256(eval-log/run-dev-graph-node/import-payload.json)=5208ae75fe1edb243e81d09d9241017ea7c47607df9e3c398ffee81df7bdc73e == preview.input_sha256 == add-result.input_sha256 == receipt node-r000001-add.input_sha256. Payload contains confirmation_evidence for both artifacts. Preview vs add sha256_after differ only by the created_at/updated_at timestamp: replacing 01:39:27.891975Z with the preview's recorded_at 01:38:54.356771Z in the written files reproduces the preview sha256_after (cf77dea5..., 1323bd90...) exactly."},
+    {"id": "2-expected-graph-revision", "status": "PASS", "evidence": "payload.expected_graph_revision=0 == preview.graph_revision_before=0 == add.graph_revision_before=0; graph graph_revision=1 == graph_revision_after"},
+    {"id": "3-source-lineage", "status": "PASS", "evidence": "spec-billing-audit-system-spec: origin_kind=system-spec-harness, source_plugin=system-spec-harness, source_path=system-spec/index.md, source_version=0.1.25, source_digest=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 (equals current file sha256), imported_at=2026-11-01T01:38:53Z. arch-billing-audit-system-architecture: source_path=system-spec/00-requirements-definition.md, source_digest=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402 (equals current), version 0.1.25, imported_at set. plugins/system-spec-harness/.claude-plugin/plugin.json name=system-spec-harness version=0.1.25, inside the composition range '>=0.1.22 <1.0.0'. Same lineage in the graph, the node file frontmatter and the payload."},
+    {"id": "4-confirmation-evidence", "status": "PASS", "evidence": "evaluator=system-spec-harness:assign-system-spec-completeness-evaluator; evidence_ref=eval-log/system-spec-completeness-report.json (repo-relative); report verdict=PASS, gaps=[], 6 aspects PASS; report.spec_dir equals realpath(system-spec); evaluated_digest equals source_digest and equals artifact_snapshot['system-spec/index.md'] / ['system-spec/00-requirements-definition.md']. All 12 artifact_snapshot entries match the current file bytes. Fork ledger has resolved PASS completions whose response_sha256 matches the report's audit_delegations (C07 461cd3a5..., C06 0c909143..., C08 efade17f...)."},
+    {"id": "5-status-fields", "status": "PASS", "evidence": "Both nodes: confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete, missing_sections=[]; artifact_kind specification/architecture (canonical kinds); node count 2"},
+    {"id": "6-gates", "status": "PASS", "evidence": "validate-source-lineage.py --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture: exit 0, {status:pass, checked:2, violations:[]}. validate-coverage-matrix.py --require-complete --require-basis --require-foundation: exit 0. validate-source-citation.py --targets/--references/--state/--repo-root: exit 0. validate-graph-schema.py --strict-artifact-readiness: exit 0, valid=true, violations=[], artifact_readiness=complete"},
+    {"id": "7-writer-ownership-no-feature-duplication", "status": "PASS", "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json owner=C02/run-dev-graph-node, status applied, write_count 4. Recomputing build-graph-node.py _canonical_digest over the current graph gives sha256:9f7e402659668f608bc7ac14bf41bf210140ed3a54186ef4465eb82cdc48cf8a == receipt graph_digest_after. sha256 of the current spec/arch files equals the receipt sha256_after. The graph and the node files have mtime 10:39:28, which matches recorded_at 01:39:27.89Z. Only receipts are init + node-r000001-add. features/ is empty, so no feature duplicates the spec body."},
+    {"id": "8-no-duplicate-logic", "status": "PASS", "evidence": "plugins/ is excluded via .git/info/exclude and not tracked, so `git diff HEAD -- plugins/` is empty but vacuous. Supplementary mtime check: no file under plugins/ was modified after the fixture commit (10:16:09); only empty Claude Code .cc-writes dirs (system-spec-harness/.claude, run-dev-graph-node/.claude) were created. grep of plugins/dev-graph *.py for elicitation/compile markers (spec-state, hearing, elicit, required-info-catalog) hits only a system-dev-planner agent name list in register-package.py. The only skill-local script is build-evaluation-context.py (an args helper)."},
+    {"id": "9a-5.3-kinds-lineage-evidence-readiness-missing-0", "status": "PASS", "evidence": "see checks 3-5"},
+    {"id": "9b-5.3-lineage-gate-exit0", "status": "PASS", "evidence": "see check 6"},
+    {"id": "9c-5.3-same-payload-dry-run-and-add", "status": "PASS", "evidence": "see check 1"},
+    {"id": "9d-5.3-input-written-and-C02-invoked-after-PASS", "status": "PASS", "evidence": "report mtime 2026-11-01T10:33:47. import-payload.json written 10:38:53 (imported_at 01:38:53Z). C02 Skill load marker run-dev-graph-node/.claude created 10:35, preview 10:38:54, add 10:39:28. candidate-import.json (10:16:11) is the pre-run fixture draft: stale source_version 0.1.24, no confirmation_evidence, never passed to C02."},
+    {"id": "9e-common-inputs-verified", "status": "PASS", "evidence": "C24 receipt sha matches; R0/R1/R2 verification.json verdict PASS with no blockers; the evaluator report and snapshot are current"},
+    {"id": "9f-common-output-shape-authority", "status": "PASS", "evidence": "C02 receipt plus lineage/confirmation/evidence in the graph and frontmatter; eval-log/run-dev-graph-system-spec/R3-import-lineage.json gate report (pass, checked 2); authority C02 only"},
+    {"id": "9g-common-boundary-violations-0", "status": "PASS", "evidence": "No out-of-C02 graph writes, no plugin edits, no feature duplication, no unconfirmed chapter registered (both sources are in the evaluator PASS snapshot)"}
+  ],
+  "observations": [
+    "plugins/ is git-excluded, so the git-diff check is vacuous. Check 8 relies on the mtime and grep evidence instead.",
+    "Preview and add file sha256 differ only by the write timestamp. That is expected; the input bytes (input_sha256) are identical.",
+    "candidate-import.json (fixture draft) has stale source_version 0.1.24 and a stray 'version' key. It was not used as the C02 input."
+  ],
+  "blockers": [],
+  "verdict": "PASS"
+}

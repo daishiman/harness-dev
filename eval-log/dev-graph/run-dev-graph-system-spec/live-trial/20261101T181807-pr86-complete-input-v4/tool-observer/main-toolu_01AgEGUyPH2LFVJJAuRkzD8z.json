@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "34334b45-0fe4-4ac1-9b9a-c519a12ad1bc",
+      "line": 476,
+      "prefix_bytes": 2773806,
+      "prefix_sha256": "a0eec39a6b2d305c9fbdb17666b051337fc50e6f01e964fa2d91b69c4fd00f33",
+      "timestamp": "2026-11-01T09:32:12.684Z"
+    },
+    "result": {
+      "uuid": "77eeab0a-7cfb-4026-84e2-ee26d84f68f8",
+      "line": 477,
+      "prefix_bytes": 2777757,
+      "prefix_sha256": "196072c7ae4a8dbbaaf0022c9c8fe0307526899f4b080158a1e2386b1f23acb5",
+      "timestamp": "2026-11-01T09:32:15.336Z"
+    }
+  },
+  "tool_use_id": "toolu_01AgEGUyPH2LFVJJAuRkzD8z",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts; R=eval-log/system-spec-completeness-report.json; python3 -B $P/aggregate-completeness.py --report \"$CLAUDE_PROJECT_DIR/$R\" --spec-dir \"$CLAUDE_PROJECT_DIR/system-spec\" > \"$TMPDIR/agg.json\"; echo agg_exit=$?; head -c 600 \"$TMPDIR/agg.json\"; echo; shasum -a 256 $R; python3 -c '\nimport json\nr=json.load(open(\"eval-log/system-spec-completeness-report.json\"))\nprint(\"verdict\",r[\"verdict\"],\"spec_dir\",r[\"spec_dir\"])\nprint({k:v[\"verdict\"] for k,v in r[\"aspects\"].items()})\nfor d in r[\"audit_delegations\"]: print(d[\"aspect\"],d[\"role\"],d[\"auditor\"],d[\"verdict\"],d[\"dispatch\"].get(\"session_id\"),d[\"dispatch\"].get(\"tool_use_id\"))\nprint(\"gates\",[(g[\"id\"],g[\"exit_code\"]) for g in r[\"gate_results\"]])\nprint(\"high\",[f for f in r[\"findings\"] if f[\"severity\"]==\"high\"],\"gaps\",r[\"gaps\"])\nimport hashlib,pathlib\nsnap=r[\"artifact_snapshot\"][\"artifacts\"]\nbad=[p for p,h in snap.items() if hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()!=h.replace(\"sha256:\",\"\")]\nprint(\"snapshot entries\",len(snap),\"mismatch\",bad)\nprint(\"index digest in snapshot\",snap.get(\"system-spec/index.md\"))\n'; python3 -c '\nimport json\nfor l in open(\"eval-log/system-spec-harness/audit-fork-ledger.jsonl\"):\n    j=json.loads(l); print(j.get(\"schema_version\"),j.get(\"subagent_type\"),j.get(\"verdict_state\"),j.get(\"audit_verdict\"),j.get(\"tool_use_id\"))'",
+    "description": "Verify evaluator report and ledger"
+  },
+  "is_error": false,
+  "tool_result_content": "agg_exit=0\nOK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\n\n449817a18e8740f0bc49f0d14ba887f9adbc2e8d075bf3dbe3c8e2b6da31038e  eval-log/system-spec-completeness-report.json\nverdict PASS spec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec\n{'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\nmatrix_coverage primary system-spec-matrix-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01TewrNeajiHhGtytURP5DkM\nmatrix_coverage sub_input system-spec-hearing-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01CBGjQeuHznuN7jB5uu8bPt\ndoc_freshness primary system-spec-doc-freshness-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01Qc3evqBLGqbuRAzkSmxDP4\ngates [('G-matrix', 0), ('G-source-citation', 0), ('G-knowledge-graph', 0)]\nhigh [] gaps []\nsnapshot entries 12 mismatch []\nindex digest in snapshot f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\n1.2 system-spec-matrix-auditor pending None toolu_01TewrNeajiHhGtytURP5DkM\n1.3 system-spec-matrix-auditor resolved PASS None\n1.2 system-spec-hearing-auditor pending None toolu_01CBGjQeuHznuN7jB5uu8bPt\n1.3 system-spec-hearing-auditor resolved PASS None\n1.2 system-spec-doc-freshness-auditor pending None toolu_01Qc3evqBLGqbuRAzkSmxDP4\n1.3 system-spec-doc-freshness-auditor resolved PASS None",
+  "tool_use_result": {
+    "stdout": "agg_exit=0\nOK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\n\n449817a18e8740f0bc49f0d14ba887f9adbc2e8d075bf3dbe3c8e2b6da31038e  eval-log/system-spec-completeness-report.json\nverdict PASS spec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec\n{'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\nmatrix_coverage primary system-spec-matrix-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01TewrNeajiHhGtytURP5DkM\nmatrix_coverage sub_input system-spec-hearing-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01CBGjQeuHznuN7jB5uu8bPt\ndoc_freshness primary system-spec-doc-freshness-auditor PASS 011ab2be-2195-436c-890d-13707ac48197 toolu_01Qc3evqBLGqbuRAzkSmxDP4\ngates [('G-matrix', 0), ('G-source-citation', 0), ('G-knowledge-graph', 0)]\nhigh [] gaps []\nsnapshot entries 12 mismatch []\nindex digest in snapshot f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\n1.2 system-spec-matrix-auditor pending None toolu_01TewrNeajiHhGtytURP5DkM\n1.3 system-spec-matrix-auditor resolved PASS None\n1.2 system-spec-hearing-auditor pending None toolu_01CBGjQeuHznuN7jB5uu8bPt\n1.3 system-spec-hearing-auditor resolved PASS None\n1.2 system-spec-doc-freshness-auditor pending None toolu_01Qc3evqBLGqbuRAzkSmxDP4\n1.3 system-spec-doc-freshness-auditor resolved PASS None",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

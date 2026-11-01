@@ -1,0 +1,54 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "観測0未達。宣言されたsystem-spec-harnessの4 Skill呼出しと実Agentは確認できるが、R2 forkのtranscript行186はcdでrepoへ移動してargsを出力しただけで、固定SKILL/R2が必須とするDEV_GRAPH_ROOT代入・起動前cwd確認を同一Bashで満たしていない。行188でそのままevaluatorを起動している。行211–212の迂回なし確認はcwdがplugins/dev-graph/skills/run-dev-graph-nodeでcheck=1。契約はcdによる回避を禁じ、cwd_not_repo_rootなら起動前停止を要求するため、報告されたevaluator PASSを正規フロー完了の証拠にはできない。",
+    "観測1未達。fx-final/tree/.dev-graph/state/graph.jsonはgraph_revision=0、nodes=[]。confirmed specification/architecture、各nodeのsource_lineage、confirmation evidenceのevaluated_digest、readiness、C02 import receiptが存在しない。上流の仕様章と評価reportがあるだけでは取込完了にならない。",
+    "観測2の正の登録経路を実証できない。main/subagent transcriptの全Skill呼出しにdev-graph:run-dev-graph-nodeがなく、C02登録は実行されていない。未登録のまま停止したことを「C02だけによる登録」の達成とみなせない。同等生成ロジック複製0の検査もprogressでnot_achievedとして残る。",
+    "被験SKILLのgoal_seek契約も未達。intermediate.jsonlの先頭8行には必須6キーがなく、main transcript行324–325で固定SKILL記載の検証を実行してAssertionError、rc=1。最後に正しい形の1行を追記しても全行を検査する契約には合格しない。progressはchecklist 4件をnot_achieved、IN1=fail、phase=stopped_failとして残している。"
+  ],
+  "evaluator_id": "/root/review_sysspec87",
+  "transcript_sha256": "a08a3af53771eb1dd4c865a74a207f89004ebaa5e1d79033b16605e371a70fdd",
+  "evidence_refs": [
+    "session-root.txt",
+    "closure-at-launch.txt",
+    "plugins-copy.json",
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-a599302a06765a012.jsonl",
+    "transcript/subagents/agent-aea54fff968bb131f.jsonl",
+    "transcript/subagents/agent-a2e7e91ab4548a23c.jsonl",
+    "transcript/subagents/agent-abbe1eeba57da70e5.jsonl",
+    "transcript/subagents/agent-ad93a60b07cb06b26.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-preflight-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec-artifact-delivery.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/manifest.tsv",
+    "out/status.json",
+    "poll.log",
+    "poll-state.json",
+    "poll-exit.txt",
+    "guard.jsonl",
+    "evidence-redaction.json",
+    "collection-note.json"
+  ],
+  "observations": {
+    "1": "transcript/subagents/agent-a599302a06765a012.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/graph.json"
+  },
+  "notes": [
+    "シナリオ正本はplugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.jsonのC19-OUT1-positive-system-spec-lineage-r2。pr86-receipt-scenarios.jsonにはC19がなく、同ファイルもC19の正本を前者と明記している。3観測を個別に判定し、完走・既存PASS主張を達成の代用にしていない。",
+    "被験sourceはsession-root.txtが指すfx/plugins/dev-graph/skills/run-dev-graph-system-specの固定コピー。SKILL.md SHA256=4d2b72af529bd2605c2fa2cae5ba53989798f2deb2c376789805e04b272e9279。main transcriptの2回のロード本文はこの固定SKILL本文と一致。固定コピー側のlive-trial-verdict.pyで閉包を読取計算したSHA256=d57f66b154e72d9a81f20bd561843869f4192998050a38b492c274c71a9aa858でclosure-at-launch.txtと一致する。製品作業ツリーの今後の修理は本判定に含めない。",
+    "上流evaluatorと3 auditorは実際に別contextで起動されている。reportのartifact_snapshot 12件はfx-final/tree上の実在bytesのSHA256と全一致する。ただしevaluatorの起動契約違反と未登録を解消する証拠にはならない。",
+    "fx-final/manifest.tsvの53件は実在・bytes数・SHA256が全一致。最終グラフは空であり、lineage/confirmationのnode単位digest確認対象は0件。0件を観測1の合格にはしていない。",
+    "evidence-redaction.jsonに列挙された6 transcriptについて、非公開原本snapshotの実bytesからoriginal_sha256、original_bytesを照合し、公開コピーからredacted_sha256を照合して全一致。全ファイルで行数を維持し、匿名化対象の単一置換ペアを原本へ適用すると公開bytesを厳密に再現する。置換は合計17箇所。原本内容・アカウント名・認証情報は出力していない。",
+    "非公開原本snapshot内の公開対応ファイルを全件比較し、101件は同一bytes、6件は上記匿名化のみ。追加差分はpoll-state.jsonのelapsed 1328→1329の1値だけで、匿名化manifestには列挙されていない。collection-note.jsonにpoll開始補正の説明はあるが、この1秒差を匿名化変更とは扱っていない。",
+    "poll exit=0/DONEは完了マーカー出現とidleを示すだけ。status.jsonとmain最終行はFAIL。公開poll elapsed=1329秒はscenario上限3300秒内で、main/subagent assistant message id重複排除によるinput/cache creation/cache read/output合計は13,797,861 tokensで23,000,000以内。資源不足で達成証拠を推測補完していない。",
+    "guard.jsonlはallow 162件、deny 1件。denyはevaluatorによる利用者設定ディレクトリを含む探索コマンドへの拒否であり、許可された読取りの成功として数えていない。",
+    "読取専用評価を行い、作業ツリーと既存証拠は変更していない。唯一の出力は指定された/tmp/pr86-sysspec87-eval.json。"
+  ]
+}

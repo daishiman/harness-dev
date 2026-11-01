@@ -1,0 +1,31 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "artifact_delivery": {
+    "contract": "artifact-delivery-v1",
+    "transitions": [
+      {
+        "event": "minimum_guard_pass",
+        "to": "minimal_guard_passed",
+        "basis": "R0/R1 verifier PASS; parse/secret/irreversible/corrupt guards"
+      },
+      {
+        "event": "present_actual_artifact",
+        "to": "artifact_presented",
+        "path": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+        "sha256": "397a0020ebaac71703100c8bdf626b4eafcd70671d3f0cd8deb13c8a06840ae2",
+        "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+      },
+      {
+        "event": "record_user_choice",
+        "to": "user_choice_recorded",
+        "choice": "standard",
+        "source": "task.md の隔離fixture事前回答契約 (artifact_deliveryの選択はstandard)。新たな利用者承認ではない"
+      },
+      {
+        "event": "standard",
+        "to": "semantic_evaluator_started"
+      }
+    ]
+  },
+  "recorded_at": "2026-11-01T08:08:23.378695+00:00"
+}

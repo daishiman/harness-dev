@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b72b3662-20c6-4c1c-bf7c-a1aacbcbde4b",
+      "line": 807,
+      "prefix_bytes": 4060568,
+      "prefix_sha256": "3fb88164813529e248ecf0b65226f09799e812c7cc9d11860ed24e2867d811f6",
+      "timestamp": "2026-11-01T03:44:12.203Z"
+    },
+    "result": {
+      "uuid": "0689de57-ed9f-4c86-8a18-45507f7852d1",
+      "line": 808,
+      "prefix_bytes": 4061683,
+      "prefix_sha256": "ce213cdeb0ae068ba506d5c6ff80d5b4d86eaaa679afb7f23d0cae77df9d2f54",
+      "timestamp": "2026-11-01T03:44:14.404Z"
+    }
+  },
+  "tool_use_id": "toolu_01JCzedVubvuKRkPcAi4MYDp",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nprint(len(rows))\nPY\necho \"exit=$?\"; mkdir -p /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/workdir/out && printf '%s\\n' '{\"status\":\"FAIL\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}' > /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/workdir/out/status.json && cat /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/workdir/out/status.json",
+    "description": "Run hash check and write status.json"
+  },
+  "is_error": false,
+  "tool_result_content": "2\nexit=0\n{\"status\":\"FAIL\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}",
+  "tool_use_result": {
+    "stdout": "2\nexit=0\n{\"status\":\"FAIL\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

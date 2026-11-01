@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a50e67752dd668db3",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b96bbc60-31b7-4582-bb43-268d963c84ba",
+      "line": 69,
+      "prefix_bytes": 599338,
+      "prefix_sha256": "90ae214b02edcf7678ff2f66bf03beb5524dbbf301634d9c304b3ed4546d9370",
+      "timestamp": "2026-11-01T09:44:03.075Z"
+    },
+    "result": {
+      "uuid": "30da5363-624a-4f37-8a31-49b67971cdb2",
+      "line": 70,
+      "prefix_bytes": 601686,
+      "prefix_sha256": "b532bd8fe24b063e30d4fa397180beff30238ffeedf7633ac4b5f4e911177603",
+      "timestamp": "2026-11-01T09:44:05.397Z"
+    }
+  },
+  "tool_use_id": "toolu_01TApr1VDEnMDdRJauNqsFEL",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; python3 -B - <<'PY'\nimport os,json\nroot=os.path.realpath('.')\nc24=json.load(open('eval-log/run-dev-graph-node-c24-receipt.json'))\nroots={k:os.path.realpath(v) for k,v in c24['content_roots'].items()}\nprint('repo_root==repository root', os.path.realpath(c24['repo_root'])==roots['repository']==root)\nfor p,cr in [('specs/billing-audit-system-spec.md','specifications'),('architecture/billing-audit-system-architecture.md','architecture'),('.dev-graph/state/graph.json',None),('.dev-graph/state/receipts/node-r000001-add.json',None),('eval-log/c19-import-input.json',None),('system-spec/index.md','system_spec'),('system-spec/00-requirements-definition.md','system_spec'),('eval-log/system-spec-completeness-report.json',None)]:\n    rp=os.path.realpath(p); \n    print(p, os.path.islink(p), rp.startswith(root+'/'), (rp.startswith(roots[cr]+'/') if cr else '-'))\ninit=json.load(open('.dev-graph/state/receipts/init-20261101T091610486495Z.json'))\nprint('init', {k:init.get(k) for k in ('graph_revision_after','graph_revision','repository_id','operation','status') if k in init})\na=json.load(open('eval-log/run-dev-graph-node-c24-receipt.json')); b=json.load(open('eval-log/run-dev-graph-node-c24-post-choice-receipt.json'))\nprint('c24 receipts identical:', a==b)\nPY\ngit -C . rev-parse --git-common-dir; git status --short | head"
+  },
+  "is_error": false,
+  "tool_result_content": "repo_root==repository root True\nspecs/billing-audit-system-spec.md False True True\narchitecture/billing-audit-system-architecture.md False True True\n.dev-graph/state/graph.json False True -\n.dev-graph/state/receipts/node-r000001-add.json False True -\neval-log/c19-import-input.json False True -\nsystem-spec/index.md False True True\nsystem-spec/00-requirements-definition.md False True True\neval-log/system-spec-completeness-report.json False True -\ninit {'repository_id': 'local:sha256:5d43cd95a3e466d00414b64d651215d99991bfbf5a77b7c40ddbe14647f6feae', 'status': 'applied'}\nc24 receipts identical: True\n.git\n?? .dev-graph/\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? specs/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "repo_root==repository root True\nspecs/billing-audit-system-spec.md False True True\narchitecture/billing-audit-system-architecture.md False True True\n.dev-graph/state/graph.json False True -\n.dev-graph/state/receipts/node-r000001-add.json False True -\neval-log/c19-import-input.json False True -\nsystem-spec/index.md False True True\nsystem-spec/00-requirements-definition.md False True True\neval-log/system-spec-completeness-report.json False True -\ninit {'repository_id': 'local:sha256:5d43cd95a3e466d00414b64d651215d99991bfbf5a77b7c40ddbe14647f6feae', 'status': 'applied'}\nc24 receipts identical: True\n.git\n?? .dev-graph/\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? specs/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

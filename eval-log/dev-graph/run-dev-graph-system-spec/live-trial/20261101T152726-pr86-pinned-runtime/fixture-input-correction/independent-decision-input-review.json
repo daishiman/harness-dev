@@ -1,0 +1,140 @@
+{
+  "result": "PASS",
+  "scope": "新規合成入力v6の定義・D4意味適合・正規CLI再現の独立レビュー。live-trialのPASS、119の監査結果、C19 goal達成、実利用者の承認を意味しない。",
+  "evaluator_id": "/root/review_sysspec118_fresh",
+  "blockers": [],
+  "subject": {
+    "private": "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6",
+    "public": "/Users/dm/orca/workspaces/harness/pr86-ci-fix/eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v6",
+    "public_private_bytes_equal_excluding_unread_reviews": true,
+    "state_sha256": "ade246689e3c86d1353a301689ca9bff27b2b8f32a7e21d1135160f2b59abcd5",
+    "decision_sha256": "78054e27fef4aa9c1e0d46be0a3f8e9261e0c509f0cd8e829e5af8eb5cba0c95",
+    "producer_sha256": "f78891cf5996e0f9f9afc808b6efad1f9fc455600d77d6ba34b0e280eb5df70f",
+    "producer_matches_supplied_file": true
+  },
+  "source_contracts": {
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md": "e53d1dff697e2a5cb034e6487f32f4b10121867032fd47c3d20746f143db37d9",
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/references/spec-state-contract.md": "ab369d9b96d76dae8b10ec45832409eb51aadd8b5fcca58d06bc65bd3d4b5789",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md": "b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R1-score.md": "ef674d2766f992048676482ad8d671440966a21df20898014c4e19ad8e488c43",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R2-delegate.md": "030f8c2da816b0fd46a835e1f8d05c7d9e1d09c4624cd97f02c37a9b94b90309",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/scoring-rubric.json": "8fbc9515091328635ebf5d16566794c8a48ca96aeb9c081b76a409488f19065e",
+    "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/aspect-criteria.md": "e01bb2d670a5d9e6e368fd0362edb6ecf94947c51d4dcc2d2b8a4fa2bda96235"
+  },
+  "semantic_checks": {
+    "R5_comparison": "PASS: PG workerとAPI BackgroundTasks/内部HTTPの2案を、goal fit/TCO/security/operations/lock-inで実質比較する。API停止からの独立性と追加worker運用の不利、API案の構成削減とHTTP認証/再開・負荷結合を対称に記録し、一方が実現不能と誤断定していない。",
+    "cost_scope": "PASS: amount=0/currency=JPY/billing_period=monthは追加OSSライセンス部分の合成前提であると各案に明記。構築・運用・移行・撤退の対象と案別要因、資源/工数の未見積りを示し、総TCO0・無料容量保証・最安を実測済みと主張していない。R5の定量見積必須という未宣言条件は追加しない。",
+    "given_inference_official_fact": "PASS: 1秒claim/15分走査/30分以内表示・採択は合成given。権限分離・復旧/TCO/可搬性の比較は設計推論。公式3文書の直接根拠はSQLロックとqueue利用上の注意、CronJobの重複/未実行可能性と冪等性、BackgroundTasksの応答後実行と重い処理の留意点へ限定する。性能・費用・exactly-onceの保証へ拡張していない。",
+    "recommendation_and_adoption": "PASS: id昇順の比較と参考推奨と問/既定回答を別節へ分離。両案に利点と不利を記録し、問に推奨印を入れず別案/保留を許容。pg-worker-cronの採択・採択回答・confirmed_atを維持し、user_decision.noteは時刻がgiven記録の上限で実測選択時刻ではないと明記。比較補足を新しい実利用者の承認と偽称していない。",
+    "new_definition_not_update": "PASS: producerは48QA基礎へ正規chunkで2問答を追加し、D4は初回set-decision入力で登録する。既存凍結QAの上書きや旧fixtureへのupdateではない。compiled成果も正規compilerで再現し、評価report/PASS/監査台帳をseedとしていない。"
+  },
+  "replay": {
+    "evidence": "/tmp/pr86-positive-input-v6-review-replay.json",
+    "command_count": 25,
+    "all_exit0": true,
+    "byte_equal_file_count": 17,
+    "markdown_count": 10,
+    "byte_mismatches": [],
+    "protected": {
+      "original_48_qa_exact": true,
+      "foundation_equal_v5": true,
+      "D1_D3_equal_v5": true,
+      "matrix_equal_v5": true,
+      "approvals_equal_v5": true,
+      "targets_equal_v5": true,
+      "all_50_qa_except_provenance_exact_v5": true,
+      "design_applications_equal_v5": false,
+      "doctrine_applications_equal_v5": false,
+      "design_applications_except_recorded_at_equal_v5": true,
+      "doctrine_applications_except_recorded_at_equal_v5": true
+    },
+    "additional_gates": [
+      {
+        "argv": [
+          "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+          "-B",
+          "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-design-knowledge-refs.py",
+          "--matrix",
+          "/tmp/pr86-positive-input-v6-review-scratch/system-spec/spec-state.json",
+          "--repo-root",
+          "/tmp/pr86-positive-input-v6-review-scratch"
+        ],
+        "exit_code": 0
+      },
+      {
+        "argv": [
+          "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+          "-B",
+          "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+          "--profile",
+          "required-info",
+          "--input",
+          "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json",
+          "--state",
+          "/tmp/pr86-positive-input-v6-review-scratch/system-spec/spec-state.json"
+        ],
+        "exit_code": 0
+      }
+    ]
+  },
+  "official_evidence": [
+    {
+      "name": "postgresql-select",
+      "source_url": "https://www.postgresql.org/docs/16/sql-select.html",
+      "final_url": "https://www.postgresql.org/docs/16/sql-select.html",
+      "status": 200,
+      "retrieved_at": "2026-11-01T13:09:33.324606Z",
+      "sha256": "c510eba99799e42746e44c632aabf5dd291e07bd1aad535648a06179eacd73f4",
+      "bytes": 117599,
+      "content_type": "text/html; charset=utf-8",
+      "independently_verified_digest": true,
+      "independently_verified_bytes": true
+    },
+    {
+      "name": "kubernetes-cronjob",
+      "source_url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "final_url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "status": 200,
+      "retrieved_at": "2026-11-01T13:09:32.676089Z",
+      "sha256": "5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060",
+      "bytes": 521401,
+      "content_type": "text/html; charset=UTF-8",
+      "independently_verified_digest": true,
+      "independently_verified_bytes": true
+    },
+    {
+      "name": "fastapi-background",
+      "source_url": "https://fastapi.tiangolo.com/tutorial/background-tasks/",
+      "final_url": "https://fastapi.tiangolo.com/tutorial/background-tasks/",
+      "status": 200,
+      "retrieved_at": "2026-11-01T13:09:31.882252Z",
+      "sha256": "67a9601d6c1c764d88819a07d8f33c333e40942b73613eae404bcf61dcb4ff6d",
+      "bytes": 126251,
+      "content_type": "text/html; charset=utf-8",
+      "independently_verified_digest": true,
+      "independently_verified_bytes": true
+    }
+  ],
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/decision.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/decision-template-v6.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/decision-comparison-presentation.md",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/decision-evidence/response-metadata.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/design-corrected-turns.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/design-chapter-ops.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/design-correction-provenance.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/design-fixture-correction.py",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/system-spec/spec-state.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v6/system-spec/00-requirements-definition.md",
+    "/tmp/pr86-positive-input-v6-review-replay.json"
+  ],
+  "notes": [
+    "provenanceに記録された正規CLIは25件（chunk/set-decision/set-targets/assembleの4件、章設計apply18件、compile/coverage/citationの3件）で、25 stdoutと空stderrを確認した。依頼文の26件との数差を内容上の欠陥へ拡大していない。",
+    "章単位design_applications/doctrine_applicationsのv5との生比較はrecorded_atが再定義時刻に変わるため不一致。再帰的にrecorded_atだけを除くと両者完全一致し、具体的text/basisは保持される。全50QAもprovenance追記以外は完全一致する。",
+    "decision-template-v6のlatest_checked_atはテンプレート値だが、producerは実取得3応答の最大retrieved_atへ置換し、正本decision.json/state/compiled章へ渡す。テンプレート自体の古い時刻を正本不良と扱わない。",
+    "decision-comparison-presentation.mdは比較提示の補助資料で、R5の全出力を単独で代替するものではない。caveats/confidence/latest_checked_atは正本decision.jsonとcompiled要件章に存在する。補助資料の省略を未宣言の必須条件へ拡大しない。",
+    "official-sourceの保存本文digest/bytesとproducerのGET処理を確認し、公式3URLにも独立にアクセスして主張の範囲を照合した。メタデータだけを根拠に公式の費用/安全性/性能保証と認定していない。",
+    "C05全6観点の本番独立監査・prompt品質評価・全出典の現行性再照合はこの入力レビューでは実行していない。保持されたfoundation/QA/matrix等と正規coverage/source/knowledge-ref/required-infoゲートは確認したが、次の正式C05のPASSを予告しない。",
+    "過去input-review/他agentの結論は参照せず、旧v5と元48QAは実データ比較のみに用いた。元source/fixtureを編集せず、書込みは指定reviewファイルとreview-scratch配下だけ。"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2fc28493-f24c-4a4f-98ac-664f972671ca",
+      "line": 89,
+      "prefix_bytes": 588482,
+      "prefix_sha256": "fd4fbac2c49bdf39d18ab953f6369c3e776f74a75ee23d85e6d3e4bf5cd70176",
+      "timestamp": "2026-11-01T11:14:37.242Z"
+    },
+    "result": {
+      "uuid": "72d5a6a0-0d01-4205-985d-91eb6536741a",
+      "line": 90,
+      "prefix_bytes": 590102,
+      "prefix_sha256": "a6ee092a5691bf1dd7ab8efba14607ba90762c32455733e57cee753fad502c98",
+      "timestamp": "2026-11-01T11:14:39.173Z"
+    }
+  },
+  "tool_use_id": "toolu_012WDPVH1crd36qTmz6jkaVy",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/scripts && grep -n \"duplicate_node\\|graph_revision_conflict\\|def _load_input\\|args.input\\|'-'\" build-graph-node.py | head -40"
+  },
+  "is_error": false,
+  "tool_result_content": "754:            raise WriterError(\"duplicate_node\", f\"{label}: {graph_node_id} or {file_path} already exists\")\n1268:        input_path = contained(Path(args.input) if Path(args.input).is_absolute() else root / args.input, root)\n1296:            raise WriterError(\"graph_revision_conflict\", f\"expected {expected}, graph is at {revision_before}\")",
+  "tool_use_result": {
+    "stdout": "754:            raise WriterError(\"duplicate_node\", f\"{label}: {graph_node_id} or {file_path} already exists\")\n1268:        input_path = contained(Path(args.input) if Path(args.input).is_absolute() else root / args.input, root)\n1296:            raise WriterError(\"graph_revision_conflict\", f\"expected {expected}, graph is at {revision_before}\")",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

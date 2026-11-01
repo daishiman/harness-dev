@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-aa638e88f829bb113",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "75fd211a-d2cc-4822-844c-f0f1b2e9eff4",
+      "line": 77,
+      "prefix_bytes": 509279,
+      "prefix_sha256": "92522403e2f10fa6a8142abe6fc07a228c2d384a6941ad5e396226e9f077ed7b",
+      "timestamp": "2026-11-01T03:39:33.287Z"
+    },
+    "result": {
+      "uuid": "0fde6ab9-f393-4a61-8260-0f54a099fdb8",
+      "line": 78,
+      "prefix_bytes": 510845,
+      "prefix_sha256": "92accedb37f2f82bf9d9e65c8100d743e3a52c5a152b73ec043655bc13f08a3d",
+      "timestamp": "2026-11-01T03:39:35.863Z"
+    }
+  },
+  "tool_use_id": "toolu_01CxCCFHyh7b9RrFMnDrc75H",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c \"\nimport json,hashlib,os,glob\nr=json.load(open('eval-log/system-spec-completeness-report.json'))\ns=r['artifact_snapshot']; print({k:v for k,v in s.items() if k!='artifacts'})\na=s['artifacts']; bad=[]\nfor p,h in a.items():\n  cur=hashlib.sha256(open(p,'rb').read()).hexdigest() if os.path.isfile(p) else None\n  if cur!=h: bad.append((p,h,cur))\nprint('n',len(a),'mismatch',bad)\nallf=[p for p in glob.glob('system-spec/**',recursive=True) if os.path.isfile(p)]\nprint('files not in snapshot',[p for p in allf if p not in a])\n\"; python3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root \"$CLAUDE_PROJECT_DIR\" --print-artifact-snapshot > $TMPDIR/snap.json; echo snap_exit=$?; python3 -I -c \"\nimport json;a=json.load(open('$TMPDIR/snap.json'));r=json.load(open('eval-log/system-spec-completeness-report.json'))['artifact_snapshot'];print('helper_snapshot_equal',a==r)\""
+  },
+  "is_error": false,
+  "tool_result_content": "{'schema_version': 'system-spec-artifact-snapshot/v1'}\nn 12 mismatch []\nfiles not in snapshot ['system-spec/retrieval-evidence/react.json', 'system-spec/retrieval-evidence/postgres.json', 'system-spec/retrieval-evidence/fastapi.json', 'system-spec/retrieval-evidence/typescript.json']\nsnap_exit=0\nhelper_snapshot_equal True",
+  "tool_use_result": {
+    "stdout": "{'schema_version': 'system-spec-artifact-snapshot/v1'}\nn 12 mismatch []\nfiles not in snapshot ['system-spec/retrieval-evidence/react.json', 'system-spec/retrieval-evidence/postgres.json', 'system-spec/retrieval-evidence/fastapi.json', 'system-spec/retrieval-evidence/typescript.json']\nsnap_exit=0\nhelper_snapshot_equal True",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

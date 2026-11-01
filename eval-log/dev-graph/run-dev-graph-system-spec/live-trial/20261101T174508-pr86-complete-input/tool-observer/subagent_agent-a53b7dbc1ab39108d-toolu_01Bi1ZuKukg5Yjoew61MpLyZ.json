@@ -1,0 +1,33 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6fd77881-47e2-4b10-9320-c18e1d69bb6b",
+      "line": 147,
+      "prefix_bytes": 695194,
+      "prefix_sha256": "2d86f9a80aaea1252fd2a9eb464814e24a408cdd4ca8858bc534cfff0ef2bfa2",
+      "timestamp": "2026-11-01T09:01:33.797Z"
+    },
+    "result": {
+      "uuid": "aecb0319-a508-4f65-b57d-c9d728e386ec",
+      "line": 148,
+      "prefix_bytes": 696196,
+      "prefix_sha256": "87b6e9f22a2b1d2a60149bff64414f75d1a1e040076feb42149640cbab468804",
+      "timestamp": "2026-11-01T09:01:44.484Z"
+    }
+  },
+  "tool_use_id": "toolu_01Bi1ZuKukg5Yjoew61MpLyZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "P=plugins/system-spec-harness; python3 $P/scripts/validate-design-knowledge-refs.py --matrix system-spec/spec-state.json --repo-root . ; echo \"dkrefs exit=$?\"; python3 $P/scripts/validate-spec-doc-sync.py --matrix system-spec/spec-state.json --references system-spec/fetched-references.json --spec-root system-spec; echo \"docsync exit=$?\"; fail=0; n=0; for f in $(find $P -path '*/prompts/*.md'); do n=$((n+1)); out=$(python3 plugins/harness-creator/vendor/prompt-creator/verify-completeness.py --input $f 2>&1); rc=$?; if [ $rc -ne 0 ]; then fail=$((fail+1)); echo \"FAIL $f: $(echo \"$out\"|tail -3)\"; fi; done; echo \"prompts=$n fail=$fail\"; find / -maxdepth 1 >/dev/null; find plugins -name 'validate-prompt*' | head",
+    "description": "Run design refs, doc sync, prompt completeness gates",
+    "timeout": 180000
+  },
+  "is_error": false,
+  "tool_result_content": "OK: design knowledge_ref は全て実在する (検査 12 件)\ndkrefs exit=0\nOK: 正本 spec-state.json の goal・根拠・出典が章へ投影されている\ndocsync exit=0\nprompts=18 fail=0",
+  "tool_use_result": null
+}

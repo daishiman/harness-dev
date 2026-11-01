@@ -1,0 +1,47 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "C08の必読監査SSOTが未読。正規source: plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md:42（本SSOTとcatalogは開始時必読）、agents/system-spec-doc-freshness-auditor.md:120（監査SSOTを読み矛盾を照合する完了チェックリスト）。今回 transcript/subagents/agent-ade2df84d4949edb2.jsonl の実toolはRead 2件（toolu_016fNiyJx17DgXg3NqSyEYkd=catalog、toolu_01LSQPrD9pQJjqMBR2qj2qhM=fetched-references）、Bash 1件、WebFetch 4件のみで、R4全文を読む操作がない。prompt_snapshotは詳細なagent定義を含むがR4正本全文は含まず、SSOTとの照合を代替しない。是正: C08がR4正本を全文読んで照合した後に監査を完了する。",
+    "C07/C06のBash責務範囲に違反。正規source: run-system-spec-elicit/prompts/R7-audit-matrix.md:78,94 はC07のBashをvalidate-coverage-matrix.py実行だけに限定。今回 transcript/subagents/agent-aad7025b136ce453e.jsonl:22,26,31,36 の toolu_01FLHC1vkPEpxLyxRdvxTbAy / toolu_01CndyD9to21xwFbJzgZ8ut8 / toolu_01AWXqFt3Xwkys7xDuzF3gaG / toolu_01PNyGe5gWxEqMRTHVQHbtB1 は独自Pythonでstateを抽出・集計・参照照合している。これらはread-onlyのデータ読取/検査補助であり、正規validatorや実auditorの代替、偽PASS、state改変とは認定しない。しかし明示範囲の外で、C07自身も最終応答にSSOTとの差分と記録。C06もR6-audit-hearing.md:48がBashをPython標準ライブラリのpath containment/SHA検査だけに限定するところ、agent-a006d66afaebda59a.jsonl:31 toolu_01PtgxVXphopcoLkFNsrB73cでgrep|headによりcriteriaを読む。是正: データ/基準の読取はRead、Bashは各roleに許された正規CLI/検査だけにする。",
+    "C05がallowed-toolsの範囲外の操作を実行。正規source: assign-system-spec-completeness-evaluator/SKILL.md:20-25 はRead / Bash(python3 *) / Agent / Task。今回 agent-a30a81e1c6a74c56e.jsonl:25 toolu_01SH7Tc8j2e6diXFVdTS3Mat はBash cat/wc、:132 toolu_01XZcbd5j5pcCG3zDWnqme4M はBash find /（後にTaskStop）、:138 toolu_01Rgosh1ciCd2XbxQgXzZyyR は未宣言TaskStop。:34/:38ではtee/redirectでscratchのsnapshot/gate JSONも保存する。正規source R1-score.md:4.3は検証スクリプトとhearing-audit/report保存にBash(python3 *)を限定する。これは仕様/state/graphの改変やC05のWrite/Edit使用ではないが、roleの明示ツール/保存境界は満たさない。是正: source読取はRead、外部探索をせずpin内をRead/Pythonで確認、保存はroleで許可された手段/出力に限定して評価する。",
+    "C02の出力前に責務prompt全文を読んだ証拠が不足。正規source: run-dev-graph-node/SKILL.md:18-42はR0/R1/R2/R3/R4すべてprompt_required=true、:182は担当promptsを読む契約。今回 task.md「契約履行の確認」も各責務prompt全文を成果作成前にReadすることを必須とする。親 transcript.jsonl:481 toolu_01ShpzJz9mdzK1mqtjNLguTK はLayer2〜4直前と5.3〜Layer6だけのsed部分読取。:487 toolu_01Xo9k6qVfKqVKtQSeoxnkonはcat R0/R3 | head -150 | wc -lなので全文はcontextへ出ない。子agent-aad273de54203d394.jsonl:16はR3-write全文を読むがR0/R1/R2/R4全文の読取を補わない。C02のSkill読込はSKILL本文であり、参照prompt全文の読込にはならない。是正: 分類/preview/template/contextを出力する前に担当prompt全文を読み、現行契約でC02を実行する。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec99"
+  },
+  "transcript_sha256": "e5ef0d526afd3a7846bd7e76f2363af8bfd93384b24fae6bdf534231eb961fe3",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "task.md",
+    "evidence-redaction.json",
+    "guard.jsonl",
+    "transcript/subagents/agent-a30a81e1c6a74c56e.jsonl",
+    "transcript/subagents/agent-a30a81e1c6a74c56e.forked-skill.json",
+    "transcript/subagents/agent-aad7025b136ce453e.jsonl",
+    "transcript/subagents/agent-a006d66afaebda59a.jsonl",
+    "transcript/subagents/agent-ade2df84d4949edb2.jsonl",
+    "transcript/subagents/agent-aad273de54203d394.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/eval-log/hearing-audit.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/loop1-gates.txt",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/loop2-gates.txt",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/loop3-gates.txt",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R0-context/verification.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R1-preflight/verification.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/verification.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/compile-standard.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R2-delegate/evaluation-context.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-input.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/dry-run.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/add-result.json",
+    "fx-final/tree/system-spec/index.md",
+    "fx-final/tree/system-spec/00-requirements-definition.md"
+  ]
+}

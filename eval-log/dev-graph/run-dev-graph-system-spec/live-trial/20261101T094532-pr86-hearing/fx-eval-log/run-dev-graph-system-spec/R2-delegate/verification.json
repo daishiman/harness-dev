@@ -1,0 +1,62 @@
+{
+  "responsibility": "R2-delegate",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "report_pass",
+      "result": "PASS",
+      "evidence": "verdict=PASS, gaps=[], spec_dir=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec102/fx/system-spec equals build-evaluation-context.py spec_dir (helper re-run exit 0, context_sha256 e1972b54..., skill_args identical to the args passed); report sha256 1e440e16...2495"
+    },
+    {
+      "id": "artifact_snapshot_current",
+      "result": "PASS",
+      "evidence": "12/12 artifact_snapshot digests equal current bytes of spec dir files; no unsnapshotted top-level files"
+    },
+    {
+      "id": "aggregate_completeness",
+      "result": "PASS",
+      "evidence": "aggregate-completeness.py --session 0af1fa24-5add-4391-801e-a58955f0daa5 exit 0 (verdict=PASS, fork evidence grounded in audit-fork-ledger.jsonl)"
+    },
+    {
+      "id": "C19_gate_coverage",
+      "result": "PASS",
+      "evidence": "validate-coverage-matrix --require-complete --require-basis --require-foundation exit 0"
+    },
+    {
+      "id": "C19_gate_source_citation",
+      "result": "PASS",
+      "evidence": "validate-source-citation --targets/--references/--state/--repo-root exit 0"
+    },
+    {
+      "id": "C19_gate_graph_schema",
+      "result": "PASS",
+      "evidence": "validate-graph-schema.py --strict-artifact-readiness exit 0, valid=true, violations=[]"
+    },
+    {
+      "id": "canonical_skill_invocation",
+      "result": "PASS",
+      "evidence": "elicit/doc-fetch/compile receipts record invoked_via='Skill tool'; report evaluator.name=assign-system-spec-completeness-evaluator context=fork; writer_calls=[] for elicit/doc-fetch; compile used canonical compile-spec-doc.py (exit 0, 10 generated, byte-identical to seed)"
+    },
+    {
+      "id": "doc_fetch_conditional",
+      "result": "PASS",
+      "evidence": "doc-fetch-receipt: 4/4 targets recorded, missing 0, discovered 0, validate-source-citation exit 0 -> fetch not needed"
+    },
+    {
+      "id": "root_pinning",
+      "result": "PASS",
+      "evidence": "C24 receipt sha256 e1972b54... matches; repo_root == content_roots.repository; elicit-receipt cwd_pinned=repo_root; all outputs resolve inside repo_root. Per-Bash CLAUDE_PROJECT_DIR export is attested by receipts only (not independently observable from files)."
+    },
+    {
+      "id": "full_read_of_delegates",
+      "result": "PASS",
+      "evidence": "receipts list read_full: elicit SKILL.md+R0..R5, doc-fetch SKILL.md+R1..R3, compile SKILL.md+resource-map+R1..R3 (self-reported)"
+    },
+    {
+      "id": "no_C02_before_pass",
+      "result": "PASS",
+      "evidence": "graph.json graph_revision=0 nodes=[]; no C02 payload written after C24 receipt; candidate-import.json predates run (pre-existing, older than C24 receipt)"
+    }
+  ],
+  "verified_at": "2026-11-01T01:01:40.212163+00:00"
+}

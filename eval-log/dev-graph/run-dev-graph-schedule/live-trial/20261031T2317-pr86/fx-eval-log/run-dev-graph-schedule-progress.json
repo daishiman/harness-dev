@@ -1,0 +1,21 @@
+{
+  "skill": "run-dev-graph-schedule",
+  "loop": 1,
+  "artifact_delivery_choice": "standard",
+  "checklist": [
+    {"id": "C1", "item": "candidate は confirmed/pass/readiness complete、全 depends_on done、active lease なし", "status": "PASS", "evidence": "R3 checks + C17 verifier MATCH; ready=[task-api-orders, task-docs-runbook]; lease conflicts task-api-users/task-api-users-cache; dependency_unsatisfied task-api-users-e2e/task-cache-warmup"},
+    {"id": "C2", "item": "feature ready と task ready が別 ready-set/batch", "status": "PASS", "evidence": "ready_set.features=[] batches.features=[]; tasks batch separate"},
+    {"id": "C3", "item": "同一 batch の resource_scope.touches 重複 pair 0", "status": "PASS", "evidence": "batch [task-api-orders(src/api/orders/), task-docs-runbook(docs/runbook/)] no prefix overlap"},
+    {"id": "C4", "item": "suggested_branch=devgraph/<id>、public claim command", "status": "PASS", "evidence": "devgraph/task-api-orders, devgraph/task-docs-runbook; unique claim commands '/dev-graph worktree claim <id> --branch ... --session-id <session>'"},
+    {"id": "C5", "item": "実行前後の graph/tracker/lease digest 同一", "status": "PASS", "evidence": "graph 570b69bf...0a5e, leases store 4695af73...9ef, config 504f48fe...dc3 unchanged (digests-before/after.txt); schedule output *_sha256_before==after; tracker n/a (self mode)"}
+  ],
+  "criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "script check: ineligible in ready_set = 0; tests/test_schedule_*.py + scheduler semantic tests 53 passed"},
+    {"id": "OUT1", "status": "PASS", "evidence": "live trial on fixture: all recommended deps done (transitive); task-cache-warmup excluded via done task-base-auth -> active task-docs-runbook"},
+    {"id": "OUT2", "status": "PASS", "evidence": "batch overlap 0; active lease (claimed, expires 2026-10-31T14:45:16Z) respected; conflict_pairs reported"},
+    {"id": "OUT3", "status": "PASS", "evidence": "unique branch/claim per ready task; C27 claim/lease tests 4 passed"}
+  ],
+  "agents": ["R1-elicit", "R2-plan", "R3-schedule", "dev-graph:dev-graph-parallel-safety-verifier (C17) MATCH"],
+  "artifacts": {"schedule": "eval-log/dev-graph/run-dev-graph-schedule/schedule.json", "schedule_r3": "eval-log/dev-graph/run-dev-graph-schedule/schedule-r3.json", "sha256": "0dea9138beab50848cca36551b0cf4e48533d039c50e5f8d74ded0119d53987a", "leases_snapshot": "eval-log/dev-graph/run-dev-graph-schedule/leases.json"},
+  "status": "complete"
+}

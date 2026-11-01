@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-af605a2e8d316c0ee",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7bb657c2-6620-4a89-bd5b-f396afca929d",
+      "line": 38,
+      "prefix_bytes": 485461,
+      "prefix_sha256": "cbcb53598c26582e18b41e8f2df93b2a16ce47a5b0717d139c56f129855d4c12",
+      "timestamp": "2026-11-01T07:47:37.400Z"
+    },
+    "result": {
+      "uuid": "d80902b1-0c6d-4e91-8c39-6b667b363b36",
+      "line": 39,
+      "prefix_bytes": 486866,
+      "prefix_sha256": "94b1e5fa60e1fcac453882b53d2ae8266ca3bd9887791a371dd373d4351b9f37",
+      "timestamp": "2026-11-01T07:47:39.570Z"
+    }
+  },
+  "tool_use_id": "toolu_01CCESNEZ5RZGDoTwkDDiLgd",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/system-spec; python3 -I - <<'E'\nimport json\ns=json.load(open('spec-state.json'))\nqa={q['id']:q for q in s['qa_log']}\nret={i for i,q in qa.items() if q.get('superseded_by')}\nprint('retired',ret)\nnc=0;un=[]\nfor c,d in s['matrix'].items():\n  for p,v in d.items():\n    if v['state']=='確定':\n      nc+=1\n      refs=[v.get('qa_ref')]+v.get('qa_refs',[])\n      for r in refs:\n        if r not in qa: print('dangling',c,p,r)\n        if r in ret: print('retired ref',c,p,r,'primary' if r==v.get('qa_ref') else 'support')\n    elif v['state']!='対象外': un.append((c,p,v['state']))\nprint(nc,un, sum(len(d) for d in s['matrix'].values()))\nm={'u1':['qa-010','qa-011'],'u2':['qa-012'],'u3':['qa-013'],'u4':['qa-014'],'u5':['qa-015'],'u6':['qa-016','qa-019'],'u7':['qa-017','qa-000'],'u8':['qa-018','qa-031'],'u9':['qa-001','qa-028','qa-024']}\nfor k,v in m.items():\n  print(k, qa['qa-foundation-'+k]['answer']==\"\\n\\n\".join(qa[x]['answer'] for x in v))\nfor d in s['decisions']: print(d['id'],d['status'],d.get('qa_ref'))\nprint([a['id'] for a in s['approval_log']])\nE"
+  },
+  "is_error": false,
+  "tool_result_content": "retired {'qa-009'}\nretired ref ui-ux web qa-009 support\n8 [] 48\nu1 True\nu2 True\nu3 True\nu4 True\nu5 True\nu6 True\nu7 True\nu8 True\nu9 True\nD1 confirmed qa-031\nD2 confirmed qa-032\nD3 confirmed qa-034\n['appr-001', 'appr-foundation', 'appr-foundation-v2']",
+  "tool_use_result": {
+    "stdout": "retired {'qa-009'}\nretired ref ui-ux web qa-009 support\n8 [] 48\nu1 True\nu2 True\nu3 True\nu4 True\nu5 True\nu6 True\nu7 True\nu8 True\nu9 True\nD1 confirmed qa-031\nD2 confirmed qa-032\nD3 confirmed qa-034\n['appr-001', 'appr-foundation', 'appr-foundation-v2']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

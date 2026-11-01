@@ -13,7 +13,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--dry-run] [--resolve-conflicts PATH]"
 allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/diff-github-issues.py, ../../scripts/diff-github-project-fields.py, ../../scripts/manage-worktree-lease.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/diff-github-issues.py, ../../scripts/diff-github-project-fields.py, ../../scripts/manage-worktree-lease.py, ../../scripts/build-parity-manifest.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
 reference_refs: [../../references/execution-tracker-contract.md, ../../references/github-lifecycle-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -139,6 +139,8 @@ artifact_delivery:
 - 完了条件: binding ごとの mutation authority が一意で、同一状態の2回目 changes=0。GitHub の両計画は `converged=true` を確認する。done は default-branch merge evidence 満足時にだけ反映される。
 
 local graph が正本。`tracker_binding=beads` は C28 の status/depends_on exact-set parity と push-only viewer mirror、`github` は C12 の Issue/Projects、`none` は external write なし。authority の混在は禁止で、検出したら拒否する。
+
+C28 の parity manifest は sync では作らず、C16 (`run-dev-graph-schedule`) が `--op ready` の直前に作り直す。C28 が `parity_manifest_missing` や stale を報告したときも、`../../scripts/build-parity-manifest.py --repo-root "$DEV_GRAPH_ROOT"` で canonical graph から作り直す。parity manifest を手書きしない。`source_graph_digest` だけを現在値へ書き換える修正は stale 検出を恒久的に無効化する (execution-tracker-contract §10)。
 
 ## Runtime root contract
 

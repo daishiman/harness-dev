@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "subagent/agent-a3e9c29d13b2d7c5b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ceecf7dd-a2c5-4477-8b3c-967eff06eef7",
+      "line": 56,
+      "prefix_bytes": 848818,
+      "prefix_sha256": "61d05113e23c04355b6731c76cfd5b21623c8808cbd1195f75e3851723ce81b8",
+      "timestamp": "2026-11-01T15:24:59.385Z"
+    },
+    "result": {
+      "uuid": "44bb3c5f-992b-4424-b824-f826eb48d83e",
+      "line": 58,
+      "prefix_bytes": 850866,
+      "prefix_sha256": "253cad055d873bff2623a13234e90efed916a7b2398f8b5def58c7bcd509b0a6",
+      "timestamp": "2026-11-01T15:25:01.930Z"
+    }
+  },
+  "tool_use_id": "toolu_01PUuh6uDGXRGVgpLPSpcFTK",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c '\nimport json\nd=json.load(open(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json\",encoding=\"utf-8\"))\ndef ids(o,acc):\n    if isinstance(o,dict):\n        if \"id\" in o and isinstance(o[\"id\"],str): acc.append(o[\"id\"])\n        for v in o.values(): ids(v,acc)\n    elif isinstance(o,list):\n        for v in o: ids(v,acc)\na=[];ids(d,a);print(a)'\n"
+  },
+  "is_error": false,
+  "tool_result_content": "[]",
+  "tool_use_result": {
+    "stdout": "[]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

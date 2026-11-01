@@ -19,6 +19,8 @@ Beads bindingではtask ownershipのauthorityはC28のatomic `bd update --claim`
 
 同じrepository_id内で同一`graph_node_id`のactive leaseは最大1件。別taskであっても`resource_scope.touches`が重なるleaseはC15/C16が同じparallel batchへ入れない。detached HEAD、branch重複checkout、rebase/cherry-pick中、dirty indexは診断対象とする。
 
+detached HEAD は repository/worktree identity の欠落ではなく branch state の一種である。C24 は `branch: null` を返し、C26 の read-only `check` / `drain-pending` はそのまま診断できる。既にdoneのcontentを変更せずcommon ledgerだけを修復する`backfill-done`も実行できる。通常`reconcile`のdurable completionは下記条件1を満たさないため pending に留め、detached worktree を default branch とみなしてはならない。
+
 ## completion convergence
 
 feature branch/worktreeでPR mergeを観測してもtask specを`done`へ直接書かず、共通event ledgerへpending merge factだけを記録する。durableなtask/graph projectionは次の条件を全て満たすworktreeでC26が更新する。

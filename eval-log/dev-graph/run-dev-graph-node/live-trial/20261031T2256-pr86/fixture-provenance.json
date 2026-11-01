@@ -1,0 +1,106 @@
+{
+  "label": "node86",
+  "fixture": "/private/tmp/claude-501/pr86-ci-live/lt/runs/node87/fx",
+  "fixture_origin": "mkfx.sh (lt-env.sh 経由) で run の fx にその場で git init し、README.md 1 つを commit した (c4cad7d fixture: initial)。続けて、run の ws の写しの build-init-scaffold.py で canonical init を行い (cede078)、入力 batch mixed-artifacts.json を置いた (0031b83)。",
+  "fixture_contract": "A contained initialized repository supplies one valid issue, task, specification, architecture, and document artifact in a single input batch.",
+  "prep_init": {
+    "argv": "lt-env.sh python3 -B <run>/ws/plugins/dev-graph/scripts/build-init-scaffold.py --repo-root <fx> --hook-source plugin",
+    "run_1": {
+      "rc": 0,
+      "status": "applied",
+      "planned_changes": 36,
+      "write_count": 36,
+      "receipt_path": ".dev-graph/state/receipts/init-20261030T234514219837Z.json",
+      "preflight": {
+        "status": "pass",
+        "link_state": "absent",
+        "in_use": false
+      }
+    },
+    "run_2": {
+      "rc": 0,
+      "status": "noop",
+      "planned_changes": 0,
+      "write_count": 0
+    },
+    "c11": {
+      "argv": "lt-env.sh python3 -B <run>/ws/plugins/dev-graph/scripts/validate-graph-schema.py --graph <fx>/.dev-graph/state/graph.json --repo-root <fx>",
+      "rc": 0,
+      "valid": true,
+      "violations": 0
+    },
+    "commit": "cede078 fixture: canonical dev-graph init (build-init-scaffold.py --hook-source plugin)",
+    "why": "r2 の fixture_contract が「初期化済みの repo」を求めるため、PR85 の node4 のように init を trial の中の準備にせず、trial の前に orchestrator が正規の script で済ませた。init の Skill を通していないのは、init が被験ではなく fixture の作り方だからで、script は trial と同じ ws の写しのものを使った。"
+  },
+  "prep_skill_closures": {
+    "run-dev-graph-init": "c45a920f28d4ad7cce3317db13562ea5a7f7cde1d3d24f09c178092c0473a453"
+  },
+  "prep_skill_note": "準備で使った run-dev-graph-init の閉包 (run の ws の写しの値。W と同じ)。init は被験ではない。",
+  "input_batch": {
+    "path": "mixed-artifacts.json",
+    "sha256": "17c13ee6a2ec3883b110dad5be0931de373fbe7b789d9df31f3c63e68b8bf57c",
+    "commit": "0031b83 fixture: one mixed input batch (issue/task/specification/architecture/document)",
+    "artifacts": [
+      "issue lt-search-empty-result",
+      "task lt-add-search-index",
+      "specification lt-note-search",
+      "architecture lt-search-service (backend, data)",
+      "document lt-search-runbook"
+    ],
+    "tracker_binding": "全件 none (repo の tracker mode は init の既定の beads。none はどの mode でも可)",
+    "classification": "全件 decision を省き、confidence 0.89〜0.93・margin 0.82〜0.88 で自動確定の閾値 (0.80 / 0.15) を満たす",
+    "expected_graph_revision": "入れていない。R3 の入力契約どおり、被験が R2 preview の graph_revision_before を apply の入力に入れる"
+  },
+  "graph_at_handoff": {
+    "sha256": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177",
+    "graph_revision": 0,
+    "nodes": 0
+  },
+  "config_sha256": "e427ba65dd2003973d243e8918fe0773db2ec92d5b8d1829d6953aa8836393e9",
+  "smoke": {
+    "copy": {
+      "dir": "smoke/node86-fx",
+      "result": "fx の写しでは writer が c24_context_failed (repo config repository_id does not match derived repository) で止まった。repository_id は repo のパスから導かれるので、写しでは試せない (想定どおり)。"
+    },
+    "rebuild": {
+      "dir": "smoke/node86-fx2",
+      "how": "fx と同じ手順 (mkfx.sh → init 2 回 → 同じ mixed-artifacts.json) で別のパスに作った複製",
+      "init": "applied → noop",
+      "add_dry_run": {
+        "rc": 0,
+        "status": "preview",
+        "graph_revision_before": 0
+      },
+      "add_apply": {
+        "rc": 0,
+        "status": "applied",
+        "applied_count": 5,
+        "graph_revision_after": 1
+      },
+      "routing": "5 件とも issues/・tasks/・specs/・architecture/・docs/ の <slug>.md で、frontmatter の kind・id・path が graph と一致",
+      "update": "5 node に append_sections を 1 つずつ: dry-run preview → apply (applied_count 5, revision 2)。id と path は不変、追記は各本文の末尾、frontmatter は graph と一致",
+      "feature_direct_add": {
+        "rc": 1,
+        "status": "rejected",
+        "code": "feature_requires_c14_macro_contract"
+      },
+      "features_after": "features/ 直下 0 件、feature node 0 件",
+      "c11_final": {
+        "rc": 0,
+        "valid": true,
+        "violations": 0
+      },
+      "script": "smoke/node86-smoke.py (結果は smoke/node86-fx2-smoke.json)"
+    }
+  },
+  "session_root": "ws (PR85 の node4 と同じ)。fx は別の dir。",
+  "replay_of": "PR85 の node4 (20261013T0528-pr85) の流し直し。ただし scenario は正本の r2 (C02-OUT1-positive-mixed-artifacts-r2) に替えた。PR85 の node4 は v2 の scenario で、verdict の args に準備の init の args (--repo-root <fx> --hook-source plugin) を記録していた。この run の verdict には r2 の template の args (add --repo-root <fx> --input <fx>/mixed-artifacts.json) を記録する。",
+  "task_design": {
+    "skill_args_flags": [
+      "--repo-root",
+      "--input"
+    ],
+    "steps": "本題 1 = r2 の template の add (5 kind)。本題 2 = observation 2 の「連続 update」を同じ flag の集合で行う。本題 3 = observation 3 の確認として feature の直接 add を実際に投入し、拒否を証跡にする (PR85 の node4 の本題 2 と同じ考え方)",
+    "r2_vs_skill_gap": "r2 の template は add だけだが、observation 2 は連続 update の後の一致を求める。update は skill の別の subcommand なので、task では add の後に update を同じ flag の集合 (--repo-root・--input) で呼ぶ。また apply には R3 の契約で expected_graph_revision が要るので、被験は mixed-artifacts.json をそのまま apply の入力にできず、fx の中の別 file を作る。verdict の --args は template どおり (mixed-artifacts.json) を記録し、flag の集合は一致する。"
+  }
+}

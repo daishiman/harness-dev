@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "auth",
+  "concern_id": "authentication",
+  "text": "認証は社内 IdP の OIDC に委ね (qa-002, qa-018)、本システムはパスワードを持たない。OIDC のトークンはバックエンドが持ち、ブラウザには cookie のセッションだけを渡す (D3, qa-034)。セッションは Pod のメモリに置かず、D1 の PostgreSQL 16 の表に保存して、Pod の再起動や複数の replica の間でもログインが切れないようにする。有効期限は 8 時間で (qa-002)、期限切れは使えなくして定期的に消し、ログアウトではすぐに無効にする (qa-session-written-v7)。IdP でアカウントが無効になれば入れなくなる (qa-026)。\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:47:29.996968Z"
+}

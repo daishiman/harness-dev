@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "0df8c00d-7461-41d8-a350-6708439e61ef",
+      "line": 490,
+      "prefix_bytes": 2359155,
+      "prefix_sha256": "bc30e8ab360a89c03dc3ebe45ffc24b4ec9aa07c58dcbaf4d879dcea5f0fcc6f",
+      "timestamp": "2026-11-01T08:56:07.334Z"
+    },
+    "result": {
+      "uuid": "912bc114-13d0-4f00-bd63-9fc8ac9af4c9",
+      "line": 491,
+      "prefix_bytes": 2360953,
+      "prefix_sha256": "345f7031dafa632b88b1548ac51cf987a2cbfd8761cf7cb697db7365b0386f73",
+      "timestamp": "2026-11-01T08:56:08.837Z"
+    }
+  },
+  "tool_use_id": "toolu_01B2GffFucZH6txBFBXvK8FJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && for i in $(seq 1 1100); do [ -s eval-log/system-spec-completeness-report.json ] && break; sleep 0.5; done; ls -la eval-log/ eval-log/run-dev-graph-system-spec/ 2>&1 | tail -30",
+    "run_in_background": true
+  },
+  "is_error": false,
+  "tool_result_content": "Command running in background with ID: bxbmtthsm. Output is being written to: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec112-fx/c576b35b-a427-484f-85b6-93c2ad8ba4dd/tasks/bxbmtthsm.output. You will be notified when it completes — do not poll that file or sleep while waiting. Read the file only if the user asks for progress, or if you need a line it prints before you can go on, such as a server's ready line or port.\nSession cwd remains /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx; directory changes made by the backgrounded command do not apply to subsequent commands.",
+  "tool_use_result": {
+    "stdout": "",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "backgroundTaskId": "bxbmtthsm",
+    "backgroundCwdHint": "Session cwd remains /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx; directory changes made by the backgrounded command do not apply to subsequent commands."
+  }
+}

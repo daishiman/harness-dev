@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e96f3bcf-98b8-4888-9830-1c838fec3c4d",
+      "line": 447,
+      "prefix_bytes": 2612413,
+      "prefix_sha256": "3d56516da5ed57a6c7cd422374c4292ac8d1d4c343d9918ba5bd50b322d7eabd",
+      "timestamp": "2026-11-01T10:05:06.223Z"
+    },
+    "result": {
+      "uuid": "f7cbf0f2-a2a3-40b1-882e-b60c729fcaf6",
+      "line": 451,
+      "prefix_bytes": 2619443,
+      "prefix_sha256": "dc0fdb9c8465009e887daf6ff94b8732a1cfce0647b7afad7c1684d1d901002c",
+      "timestamp": "2026-11-01T10:05:16.347Z"
+    }
+  },
+  "tool_use_id": "toolu_01BLpuzyR81cCqtiSBUrVCpF",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --require-complete; echo \"coverage exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --references $CLAUDE_PROJECT_DIR/system-spec/fetched-references.json --repo-root $CLAUDE_PROJECT_DIR; echo \"citation exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-design-knowledge-refs.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --repo-root $CLAUDE_PROJECT_DIR; echo \"dk-refs exit=$?\"; shasum -a 256 system-spec/*.md",
+    "description": "Run compile IN1 entry gates"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ncoverage exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncitation exit=0\nOK: design knowledge_ref は全て実在する (検査 12 件)\ndk-refs exit=0\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md\n6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279  system-spec/auth.md\nf3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484  system-spec/backend.md\n5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf  system-spec/database.md\n775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\ncf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076  system-spec/infrastructure.md\n57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e  system-spec/maintenance-ops.md\nb4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347  system-spec/security.md\n26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82  system-spec/ui-ux.md",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ncoverage exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncitation exit=0\nOK: design knowledge_ref は全て実在する (検査 12 件)\ndk-refs exit=0\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md\n6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279  system-spec/auth.md\nf3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484  system-spec/backend.md\n5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf  system-spec/database.md\n775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\ncf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076  system-spec/infrastructure.md\n57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e  system-spec/maintenance-ops.md\nb4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347  system-spec/security.md\n26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82  system-spec/ui-ux.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

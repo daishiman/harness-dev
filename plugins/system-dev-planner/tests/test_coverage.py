@@ -33,23 +33,8 @@ def readiness_files(root: Path, *, placeholder: bool = False) -> None:
     (root / "system-spec/index.md").write_text(text, encoding="utf-8")
     (root / "system-spec/00-requirements-definition.md").write_text("# Requirements\n\nReady.\n", encoding="utf-8")
     fx.dump(root / "architecture/graph.json", {"nodes": [{"id": "A1"}]})
-    aspects = {
-        "foundation_trace": ("assign-system-spec-completeness-evaluator", "C05"),
-        "decision_guidance": ("assign-system-spec-completeness-evaluator", "C05"),
-        "matrix_coverage": ("system-spec-matrix-auditor", "C07"),
-        "design_knowledge_reflection": ("assign-system-spec-completeness-evaluator", "C05"),
-        "doc_freshness": ("system-spec-doc-freshness-auditor", "C08"),
-        "prompt_quality": ("assign-system-spec-completeness-evaluator", "C05"),
-    }
-    fx.dump(root / "system-spec/completeness-findings.json", {
-        "evaluator": {"name": "assign-system-spec-completeness-evaluator", "version": "0.1.0", "context": "fork"},
-        "verdict": "PASS",
-        "aspects": {key: {"verdict": "PASS", "auditor": owner, "component": component,
-                           "summary": "independently verified"}
-                    for key, (owner, component) in aspects.items()},
-        "findings": [{"severity": "info", "bucket": "coverage", "observation": "all aspects checked"}],
-        "gaps": [],
-    })
+    fx.dump(root / "system-spec/completeness-findings.json", fx.completeness_findings_payload())
+    fx.write_audit_fork_ledger(root)
 
 
 class ReadinessCoverageTests(unittest.TestCase):

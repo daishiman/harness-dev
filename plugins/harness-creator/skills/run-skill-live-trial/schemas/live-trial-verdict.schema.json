@@ -28,14 +28,19 @@
       "minLength": 1,
       "description": "被験 skill (plugin:skill)。denylist (run-skill-live-trial / run-skill-iter-improve) は生成前に拒否される"
     },
-    "args": {"type": "string", "description": "被験 skill へ渡したリテラル args (task.md 契約 #1 の引用)"},
+    "args": {
+      "type": "string",
+      "description": "被験 skill へ渡したリテラル args (task.md 契約 #1 の引用)"
+    },
     "requested_model": {
       "type": "string",
       "description": "boot へ渡した model (空文字=ユーザー既定)。READY 行の MODEL: は requested の echo にすぎない"
     },
     "actual_model": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string"
+      },
       "description": "transcript の assistant.message.model の unique 集合 (実走 model の唯一の証明)。proof trial は [requested_model] と完全一致必須"
     },
     "nudge_count": {"type": "integer", "minimum": 0},
@@ -52,26 +57,85 @@
     },
     "goal_verdict": {
       "type": "object",
-      "required": ["result", "blockers"],
+      "required": [
+        "result",
+        "blockers"
+      ],
       "additionalProperties": false,
       "properties": {
         "result": {
-          "enum": ["PASS", "FAIL"],
+          "enum": [
+            "PASS",
+            "FAIL"
+          ],
           "description": "fresh evaluator の達成判定 (点数出力は禁止 — goal-seek-paradigm.md 達成判定節が正本)"
         },
-        "blockers": {"type": "array", "items": {"type": "string"}}
+        "blockers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "goal_evaluation": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["evidence_ref", "sha256", "result", "blockers", "evaluator", "transcript_sha256", "evidence_refs"],
+      "properties": {
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "result": {"type": "string", "enum": ["PASS", "FAIL"]},
+        "blockers": {"type": "array", "items": {"type": "string"}},
+        "evaluator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "id"],
+          "properties": {
+            "mode": {"const": "fresh-independent-context"},
+            "id": {"type": "string", "minLength": 1}
+          }
+        },
+        "transcript_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
       }
     },
     "overall": {
       "type": "object",
-      "required": ["launch", "completion", "goal_fit", "verdict"],
+      "required": [
+        "launch",
+        "completion",
+        "goal_fit",
+        "verdict"
+      ],
       "additionalProperties": false,
       "properties": {
-        "launch": {"enum": ["PASS", "FAIL"]},
-        "completion": {"enum": ["PASS", "FAIL"]},
-        "goal_fit": {"enum": ["PASS", "FAIL", "NOT_EVALUATED"]},
+        "launch": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "completion": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "goal_fit": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_EVALUATED"
+          ]
+        },
         "verdict": {
-          "enum": ["PASS", "DEGRADED", "FAIL", "BLOCKED"],
+          "enum": [
+            "PASS",
+            "DEGRADED",
+            "FAIL",
+            "BLOCKED"
+          ],
           "description": "PASS=✅ / DEGRADED=⚠️ (goal-proxy 乖離 or nudge・gate 応答 >0 の自走未達降格) / FAIL=❌ / BLOCKED=tmux 不在・HARD_CAP 超過等の fail-closed"
         }
       }
@@ -82,45 +146,324 @@
       "description": "被験 skill の宣言済み挙動閉包 (SKILL.md、local scripts/prompts、各 *_refs、native plugin manifest/hooks、per-skill に選択された dependency plugin の executable surface) の複合 sha256。package-contract は raw file 全体でなく対象 skill への依存射影として反映し、無関係な skill の契約変更では invalidation しない。field名は既存verdict互換のため維持"
     },
     "transcript_sha256": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^[0-9a-f]{64}$",
       "description": "回収した transcript.jsonl の sha256。transcript 不在 (tui 層のみ) は null"
     },
-    "scenario_origin": {"enum": ["synthetic", "replay"]},
+    "scenario_origin": {
+      "enum": [
+        "synthetic",
+        "replay"
+      ]
+    },
     "scenario_id": {
       "type": "string",
       "minLength": 1,
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
       "description": "criteria receipt / positive scenario fixture と実走を束縛する stable id。単発 trial では省略可"
     },
-    "environment": {
+    "scenario_contract": {
       "type": "object",
-      "required": ["claude_version", "tmux", "transcript_layer", "permissions_mode"],
+      "description": "scenario 契約の回収状況。scenario_id を束ねた trial は required_observations の未回収項目と task_args_template との乖離をここへ機械的に列挙する (scenario_id 一致だけでは契約未充足の run も PASS になる穴を塞ぐ)。旧 verdict との互換のため required ではない",
+      "required": [
+        "scenario_file",
+        "scenario_id",
+        "required_observations",
+        "observed",
+        "unobserved",
+        "args_divergence"
+      ],
       "additionalProperties": false,
       "properties": {
-        "claude_version": {"type": ["string", "null"]},
-        "tmux": {"type": "boolean"},
-        "transcript_layer": {"enum": ["jsonl", "tui"]},
-        "permissions_mode": {"type": "string"}
+        "scenario_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "required_observations の正本 (scenarios[] を持つ JSON) のパス"
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "scenario_file 内で一意に解決した scenario の id (トップレベル scenario_id と一致)"
+        },
+        "required_observations": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "scenario 正本が要求する観測項目 (この verdict の判定対象)"
+        },
+        "observed": {
+          "type": "array",
+          "description": "実 run 観測として evidence を提示した項目。各 evidence_ref は verdict 生成時に workdir 内の実在ファイルへ解決済み",
+          "items": {
+            "type": "object",
+            "required": ["index", "observation", "evidence_ref"],
+            "additionalProperties": false,
+            "properties": {
+              "index": {"type": "integer", "minimum": 1},
+              "observation": {"type": "string", "minLength": 1},
+              "evidence_ref": {
+                "type": "string",
+                "minLength": 1,
+                "description": "verdict.json のある workdir を起点にした相対ファイルパス。任意で #fragment を付けられるが、絶対パス・workdir 外・不存在ファイルは禁止"
+              }
+            }
+          }
+        },
+        "unobserved": {
+          "type": "array",
+          "description": "evidence が提示されなかった未回収項目。空でなければ goal_verdict は FAIL",
+          "items": {
+            "type": "object",
+            "required": ["index", "observation"],
+            "additionalProperties": false,
+            "properties": {
+              "index": {"type": "integer", "minimum": 1},
+              "observation": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "args_divergence": {
+          "type": "object",
+          "description": "task_args_template と実 args の option flag 差分。placeholder (<...>) を含む template でも比較できるよう flag 単位で測る",
+          "required": [
+            "task_args_template",
+            "template_flags",
+            "actual_flags",
+            "missing_flags",
+            "extra_flags",
+            "matches"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "task_args_template": {"type": "string"},
+            "template_flags": {"type": "array", "items": {"type": "string"}},
+            "actual_flags": {"type": "array", "items": {"type": "string"}},
+            "missing_flags": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "scenario が要求するのに実 args に無い flag (run が契約より弱い)"
+            },
+            "extra_flags": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "実 args にあるのに scenario が要求していない flag (--dry-run 等で run の強度が変わる)"
+            },
+            "matches": {"type": "boolean"}
+          }
+        },
+        "task_contract": {
+          "type": "object",
+          "description": "scenario が task.md の実手順へ要求する必須・禁止断片の照合結果。旧 verdict との互換のため scenario_contract の required には加えない",
+          "required": [
+            "declared",
+            "task_file",
+            "task_file_exists",
+            "required_fragments",
+            "forbidden_fragments",
+            "missing_required_fragments",
+            "present_forbidden_fragments",
+            "matches"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "declared": {"type": "boolean"},
+            "task_file": {"type": "string", "minLength": 1},
+            "task_file_exists": {"type": "boolean"},
+            "required_fragments": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "forbidden_fragments": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "missing_required_fragments": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "present_forbidden_fragments": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "matches": {"type": "boolean"}
+          }
+        },
+        "resource_budget": {
+          "type": "object",
+          "description": "scenario 正本から読み取った変更不能な実走予算。旧 verdict との互換のため optional",
+          "required": ["max_wall_clock_s", "max_total_tokens"],
+          "additionalProperties": false,
+          "properties": {
+            "max_wall_clock_s": {"type": "integer", "minimum": 1},
+            "max_total_tokens": {"type": "integer", "minimum": 1}
+          }
+        },
+        "invocation_contract": {
+          "type": "object",
+          "description": "scenario が禁止する高コスト・迂回 Skill の transcript 実測結果",
+          "required": [
+            "forbidden_invoked_skills",
+            "present_forbidden_invoked_skills",
+            "matches"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "forbidden_invoked_skills": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "present_forbidden_invoked_skills": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "matches": {"type": "boolean"}
+          }
+        },
+        "resource_usage": {
+          "type": "object",
+          "description": "wall clock と transcript 由来 token の実測。violations 非空なら PASS 禁止",
+          "required": ["wall_clock_s", "tokens", "violations"],
+          "additionalProperties": false,
+          "properties": {
+            "wall_clock_s": {"type": ["number", "null"]},
+            "tokens": {
+              "type": "object",
+              "required": [
+                "input_tokens", "cache_creation_input_tokens",
+                "cache_read_input_tokens", "output_tokens", "total_tokens",
+                "assistant_messages", "transcript_files", "measured"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "input_tokens": {"type": "integer", "minimum": 0},
+                "cache_creation_input_tokens": {"type": "integer", "minimum": 0},
+                "cache_read_input_tokens": {"type": "integer", "minimum": 0},
+                "output_tokens": {"type": "integer", "minimum": 0},
+                "total_tokens": {"type": "integer", "minimum": 0},
+                "assistant_messages": {"type": "integer", "minimum": 0},
+                "assistant_message_ids": {"type": "integer", "minimum": 0},
+                "invalid_or_missing_usage_messages": {"type": "integer", "minimum": 0},
+                "idless_assistant_records": {"type": "integer", "minimum": 0},
+                "transcript_files": {"type": "integer", "minimum": 0},
+                "measured": {"type": "boolean"}
+              }
+            },
+            "poll_state_ref": {"type": ["string", "null"]},
+            "poll_state_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+            "violations": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "claude_version",
+        "tmux",
+        "transcript_layer",
+        "permissions_mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "claude_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tmux": {
+          "type": "boolean"
+        },
+        "transcript_layer": {
+          "enum": [
+            "jsonl",
+            "tui"
+          ]
+        },
+        "permissions_mode": {
+          "type": "string"
+        }
       }
     },
     "tier": {
-      "enum": ["static", "fork", "live"],
+      "enum": [
+        "static",
+        "fork",
+        "live"
+      ],
       "description": "実施した受入段 (導出正本 validate-build-plan.py derive_acceptance_tier)"
     },
     "downgrade_reason": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "tier を導出値より下げた/verdict を降格した理由。降格なしは null"
     },
     "timeline": {
       "type": "object",
-      "required": ["boot_s", "poll_exit", "wall_clock_s"],
+      "required": [
+        "boot_s",
+        "poll_exit",
+        "wall_clock_s"
+      ],
       "additionalProperties": false,
       "properties": {
-        "boot_s": {"type": ["number", "null"]},
-        "poll_exit": {"type": ["string", "null"], "description": "poll の終端 (DONE/STALL/GATE/HARD_CAP)"},
-        "wall_clock_s": {"type": ["number", "null"]}
+        "boot_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "poll_exit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "poll の終端 (DONE/STALL/GATE/HARD_CAP)"
+        },
+        "wall_clock_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
       }
+    },
+    "invoked_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "transcript から抽出した Skill ツール呼出しの skill 名。target_skill が含まれない実走は launch=FAIL (skill を起動せず script を直接叩く経路の機械 gate)。既存 verdict との互換のため optional"
+    },
+    "missing_goal_seek_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "goal_seek を宣言した skill が実走で残さなかった配線成果物 (goal-spec.json / progress.json / intermediate.jsonl)。非空なら実行契約の省略として goal_fit=FAIL。既存 verdict との互換のため optional"
+    },
+    "goal_seek_evidence_violations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "goal_seek 成果物の実在・必須6キー・original_goal・sha256 実体検証の違反。非空なら goal_fit=FAIL。既存 verdict との互換のため optional"
     }
   }
 }

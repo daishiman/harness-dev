@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d3b510a2-d9b1-46ee-84ee-3d1dc9d770c7",
+      "line": 742,
+      "prefix_bytes": 3863619,
+      "prefix_sha256": "7e96b43926c98f6a7ff029592c753245dc499854bde3a899d201481e004f26b7",
+      "timestamp": "2026-11-01T03:41:38.080Z"
+    },
+    "result": {
+      "uuid": "4c6c3e98-2374-44d7-ab37-4da57c575a95",
+      "line": 743,
+      "prefix_bytes": 3864570,
+      "prefix_sha256": "84a03a95dfa8c2bf6e07ded55b96b2720d9e21b89422e3b3bb6588d3d5f7083b",
+      "timestamp": "2026-11-01T03:41:40.302Z"
+    }
+  },
+  "tool_use_id": "toolu_01QU8tSRazgXwPaUSe3pJ7TL",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json, hashlib\nfrom pathlib import Path\ngoal = json.load(open('eval-log/run-dev-graph-node-goal-spec.json', encoding='utf-8'))\nrow = {\n \"original_goal\": goal[\"original_goal\"],\n \"original_goal_hash\": hashlib.sha256(goal[\"original_goal\"].encode('utf-8')).hexdigest(),\n \"current_goal_snapshot\": \"spec-billing-audit-system-spec and arch-billing-audit-system-architecture added via build-graph-node add (revision 0->1), schema/lineage pass, integrity auditor PASS\",\n \"delta_from_original\": \"only specification/architecture add path exercised; feature/package paths not applicable\",\n \"merged_directive_for_next\": \"none; C02 run complete, hand ids/lineage/readiness back to run-dev-graph-system-spec R3\",\n \"drift_signal\": \"none\"\n}\np = Path('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-node-intermediate.jsonl')\nwith p.open('a', encoding='utf-8') as f:\n    f.write(json.dumps(row, ensure_ascii=False) + \"\\n\")\nprint(\"appended\")\nPY",
+    "description": "Append C02 intermediate row"
+  },
+  "is_error": false,
+  "tool_result_content": "appended",
+  "tool_use_result": {
+    "stdout": "appended",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

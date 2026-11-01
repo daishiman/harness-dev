@@ -3,6 +3,7 @@
   "$id": "https://harness/schemas/system-spec-state.json",
   "title": "system-spec canonical elicitation state",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "schema_version",
     "categories",
@@ -13,22 +14,489 @@
     "qa_log",
     "approval_log",
     "reopen_log",
-    "targets"
+    "targets",
+    "decisions",
+    "knowledge_candidates",
+    "hearing_progress"
   ],
   "properties": {
-    "schema_version": {"type": "string", "minLength": 1},
-    "categories": {"type": "array", "minItems": 1},
-    "platforms": {"type": "array", "minItems": 1},
-    "matrix": {"type": "object"},
-    "category_aggregate": {"type": "object"},
-    "requirements_foundation": {"type": "object"},
-    "qa_log": {"type": "array"},
-    "approval_log": {"type": "array"},
-    "reopen_log": {"type": "array"},
-    "targets": {"type": "array"},
-    "decisions": {"type": "array"},
-    "knowledge_candidates": {"type": "array"},
-    "hearing_progress": {"type": "object"}
+    "schema_version": {
+      "enum": [
+        "1.0",
+        "1.1"
+      ]
+    },
+    "design_application_contract_version": {
+      "const": "1.0"
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1
+    },
+    "matrix": {
+      "type": "object"
+    },
+    "category_aggregate": {
+      "type": "object"
+    },
+    "requirements_foundation": {
+      "$ref": "#/$defs/requirementsFoundation"
+    },
+    "qa_log": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/qaEntry"
+      }
+    },
+    "approval_log": {
+      "type": "array"
+    },
+    "reopen_log": {
+      "type": "array"
+    },
+    "targets": {
+      "type": "array"
+    },
+    "decisions": {
+      "type": "array"
+    },
+    "knowledge_candidates": {
+      "type": "array"
+    },
+    "hearing_progress": {
+      "type": "object"
+    },
+    "excluded_categories": {
+      "type": "object"
+    },
+    "design_applications": {
+      "type": "object"
+    },
+    "doctrine_applications": {
+      "type": "object"
+    }
   },
-  "additionalProperties": true
+  "oneOf": [
+    {
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        }
+      },
+      "not": {
+        "required": [
+          "design_application_contract_version"
+        ]
+      }
+    },
+    {
+      "required": [
+        "design_application_contract_version"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.1"
+        },
+        "design_application_contract_version": {
+          "const": "1.0"
+        },
+        "requirements_foundation": {
+          "if": {
+            "required": [
+              "confirmed"
+            ],
+            "properties": {
+              "confirmed": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "effective_source_refs"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "qaEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "question",
+        "answer"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "enum": [
+            "user-decision",
+            "observed-fact",
+            "agent-inference"
+          ]
+        },
+        "answered_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_info_items": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/qaCorrection"
+          }
+        },
+        "superseded_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "superseded_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "superseded_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/qaSource"
+        },
+        "approval_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacy_exempt": {
+          "type": "boolean"
+        },
+        "legacy_exempt_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "design_application_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "writer"
+          ],
+          "properties": {
+            "mode": {
+              "const": "legacy_backfill"
+            },
+            "writer": {
+              "const": "set-qa-design-applications"
+            }
+          }
+        },
+        "design_applications": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/designApplication"
+          }
+        },
+        "source_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "writer"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "metadata_backfill",
+                "type_repair"
+              ]
+            },
+            "writer": {
+              "const": "set-qa-source"
+            }
+          }
+        },
+        "source_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledge_ref_corrections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "old_ref",
+              "new_ref",
+              "applied_to",
+              "writer",
+              "reason"
+            ],
+            "properties": {
+              "old_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "new_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "applied_to": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "writer": {
+                "const": "fix-qa-knowledge-ref"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "qaCorrection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "corrected_at",
+        "note"
+      ],
+      "properties": {
+        "corrected_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "corrected_field": {
+          "enum": [
+            "answered_at"
+          ]
+        },
+        "previous_value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "corrected_value": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "requirementsFoundation": {
+      "type": "object",
+      "properties": {
+        "effective_source_refs": {
+          "$ref": "#/$defs/effectiveFoundationSources"
+        }
+      }
+    },
+    "effectiveFoundationSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "U1",
+        "U2",
+        "U3",
+        "U4",
+        "U5",
+        "U6",
+        "U7",
+        "U8",
+        "U9"
+      ],
+      "properties": {
+        "U1": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U2": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U3": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U4": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U5": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U6": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U7": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U8": { "$ref": "#/$defs/foundationSourceBinding" },
+        "U9": { "$ref": "#/$defs/foundationSourceBinding" }
+      }
+    },
+    "foundationSourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qa_ref",
+        "approval_ref"
+      ],
+      "properties": {
+        "qa_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_quote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "designApplication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knowledge_ref",
+        "principle",
+        "applicability",
+        "rationale",
+        "tradeoffs"
+      ],
+      "properties": {
+        "knowledge_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "principle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicability": {
+          "enum": [
+            "applied",
+            "not_applicable"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tradeoffs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "qaSource": {
+      "type": "object",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "user-dialogue"
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "path",
+            "section",
+            "sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "written-requirements"
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "section": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "trigger"
+          ],
+          "properties": {
+            "kind": {
+              "const": "harness-remediation"
+            },
+            "trigger": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "derived_from",
+            "approval_ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "derived-consolidation"
+            },
+            "derived_from": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "approval_ref": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
 }

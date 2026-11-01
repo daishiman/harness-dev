@@ -1,0 +1,99 @@
+{
+  "kind": "synthetic-positive-input-repair",
+  "reason": "111の正規C05 highと独立検証により、既承認O1の実現要件が欠けていたことを確認。テストの既定発言として詳細とD4を追加。",
+  "actual_user_approval_claimed": false,
+  "existing_QA_and_foundation_unchanged": true,
+  "new_QA_ids": [
+    "qa-o1-fixture-v3",
+    "qa-job-choice-fixture-v3"
+  ],
+  "new_decision": "D4",
+  "original_state_sha256": "9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2",
+  "repaired_state_sha256": "cf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f",
+  "writer_only": true,
+  "commands": [
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "chunk",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--turns",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/turns.json",
+        "--max-loops",
+        "2",
+        "--require-all"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "set-decision",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--decision",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/decision.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py",
+        "compile",
+        "--spec",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/fetched-references.json",
+        "--out-dir",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec",
+        "--repo-root",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+        "--matrix",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--require-complete",
+        "--require-basis",
+        "--require-foundation"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/fetched-references.json",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3/system-spec/spec-state.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v3"
+      ],
+      "exit": 0
+    }
+  ],
+  "scenario_observations_changed": false,
+  "PASS_seeded": false,
+  "official_evidence_urls_checked_during_preparation": [
+    "https://www.postgresql.org/docs/16/sql-select.html",
+    "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "https://fastapi.tiangolo.com/tutorial/background-tasks/"
+  ],
+  "prepared_at": "2026-11-01T08:35:54.756712Z"
+}

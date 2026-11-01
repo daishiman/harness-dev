@@ -1,0 +1,39 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "contract": "artifact-delivery-v1",
+ "artifact": {
+  "path": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "sha256": "24c4ca3c4ca4dae5ad2adb14b35c45baed6879fbd030365f5781f849ae4f818c",
+  "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec98/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+ },
+ "transitions": [
+  {
+   "from": "artifact_created",
+   "event": "minimum_guard_pass",
+   "to": "minimal_guard_passed",
+   "at": "2026-10-31T22:28:16.311723+00:00",
+   "guard": "R0 containment+lineage exit0, R1 version/entry points PASS"
+  },
+  {
+   "from": "minimal_guard_passed",
+   "event": "present_actual_artifact",
+   "to": "artifact_presented",
+   "at": "2026-10-31T22:28:16.313523+00:00"
+  },
+  {
+   "from": "artifact_presented",
+   "event": "record_user_choice",
+   "to": "user_choice_recorded",
+   "choice": "standard",
+   "choice_source": "isolated fixture pre-answer contract (task.md: artifact_deliveryの選択はstandard)",
+   "at": "2026-10-31T22:28:16.313535+00:00"
+  },
+  {
+   "from": "user_choice_recorded",
+   "event": "standard",
+   "to": "semantic_evaluator_started",
+   "at": "2026-10-31T22:28:16.313540+00:00"
+  }
+ ],
+ "state": "semantic_evaluator_started"
+}

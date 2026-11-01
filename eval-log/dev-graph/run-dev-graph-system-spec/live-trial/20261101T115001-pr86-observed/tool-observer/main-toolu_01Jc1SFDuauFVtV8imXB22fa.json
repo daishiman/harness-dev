@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b83dfb4d-0a68-4c26-87aa-dc03aa37e9c1",
+      "line": 541,
+      "prefix_bytes": 2547393,
+      "prefix_sha256": "8793b1b0d685b826b3a073c87397c35ca228b85c850b301a965b58118781ac43",
+      "timestamp": "2026-11-01T03:04:17.439Z"
+    },
+    "result": {
+      "uuid": "a78d4d99-17e8-41b9-9a0b-ffdd0868b85c",
+      "line": 542,
+      "prefix_bytes": 2553192,
+      "prefix_sha256": "03eccb7d918286e4ea45b19fa22a7f1dd8f0fd6d5ddc12ac6520e0cb568f2dae",
+      "timestamp": "2026-11-01T03:04:20.019Z"
+    }
+  },
+  "tool_use_id": "toolu_01Jc1SFDuauFVtV8imXB22fa",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && F=$(find plugins/dev-graph -name build-graph-node.py); echo $F; grep -n -E 'confirmation_evidence|invalid_confirmation_evidence|evaluator_verdict|evidence_ref|evidence_sha|imported_at|confirmation_status' $F | head -60",
+    "description": "Locate C02 writer and its evidence contract"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/scripts/build-graph-node.py\n76:    \"macro\", \"confirmation_evidence\",\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n702:    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n703:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n705:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n707:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n708:    ref = raw[\"evidence_ref\"]\n710:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n714:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n716:        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n721:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n722:    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n793:            \"confirmation_status\": \"draft\", \"evaluation_status\": \"pending\",\n794:            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n805:                                    \"completed_at\": None, \"reconciled_at\": None, \"evidence_refs\": []},\n813:        if \"confirmation_evidence\" in entry:\n814:            evidence = _spec_confirmation(entry[\"confirmation_evidence\"], kind, node[\"source_lineage\"], root, label)\n827:            node.update({\"status\": \"done\", \"confirmation_status\": \"confirmed\", \"evaluation_status\": \"pass\",\n828:                         \"confirmation_evidence\": evidence})\n1083:        state = (before_node[\"confirmation_status\"], before_node[\"evaluation_status\"], readiness)\n1241:PLANNED_KEYS = (\"graph_node_id\", \"artifact_kind\", \"status\", \"confirmation_status\", \"evaluation_status\",",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/scripts/build-graph-node.py\n76:    \"macro\", \"confirmation_evidence\",\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n702:    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n703:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n705:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n707:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n708:    ref = raw[\"evidence_ref\"]\n710:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n714:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n716:        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n721:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n722:    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n793:            \"confirmation_status\": \"draft\", \"evaluation_status\": \"pending\",\n794:            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n805:                                    \"completed_at\": None, \"reconciled_at\": None, \"evidence_refs\": []},\n813:        if \"confirmation_evidence\" in entry:\n814:            evidence = _spec_confirmation(entry[\"confirmation_evidence\"], kind, node[\"source_lineage\"], root, label)\n827:            node.update({\"status\": \"done\", \"confirmation_status\": \"confirmed\", \"evaluation_status\": \"pass\",\n828:                         \"confirmation_evidence\": evidence})\n1083:        state = (before_node[\"confirmation_status\"], before_node[\"evaluation_status\"], readiness)\n1241:PLANNED_KEYS = (\"graph_node_id\", \"artifact_kind\", \"status\", \"confirmation_status\", \"evaluation_status\",",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "26aae9b9-6e54-40c2-85ea-4a4304a45102",
+      "line": 241,
+      "prefix_bytes": 1119573,
+      "prefix_sha256": "8aa2d06fe85b4d134d7b873355f07daea5e638c84a8796d65584c23eaa0e6843",
+      "timestamp": "2026-11-01T08:07:17.552Z"
+    },
+    "result": {
+      "uuid": "36231c9f-bb19-4b54-89bc-fc57ed4dd5c5",
+      "line": 242,
+      "prefix_bytes": 1123121,
+      "prefix_sha256": "937fc3533b75ba0e98352f716967b983de15f6c1ffa72d99bb395eed9f163b51",
+      "timestamp": "2026-11-01T08:07:20.979Z"
+    }
+  },
+  "tool_use_id": "toolu_01XUREoz9xqqweuGwqs32PKt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls eval-log/run-dev-graph-system-spec/R1; ls plugins/system-spec-harness/hooks; cat plugins/system-spec-harness/hooks/hooks.json 2>/dev/null | head -50"
+  },
+  "is_error": false,
+  "tool_result_content": "receipt.json\nguard-confirmed-chapter-overwrite.py\nhooks.json\nrecord-audit-fork.py\nreferences\ntests\n{\n  \"description\": \"Protect confirmed system-spec chapters and the canonical spec state from unsafe mutation, and record audit sub-agent forks as tamper-independent evidence.\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-confirmed-chapter-overwrite.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Task|Agent\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"SubagentStop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\\\" --event subagent-stop\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ]\n  }\n}",
+  "tool_use_result": {
+    "stdout": "receipt.json\nguard-confirmed-chapter-overwrite.py\nhooks.json\nrecord-audit-fork.py\nreferences\ntests\n{\n  \"description\": \"Protect confirmed system-spec chapters and the canonical spec state from unsafe mutation, and record audit sub-agent forks as tamper-independent evidence.\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-confirmed-chapter-overwrite.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Task|Agent\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"SubagentStop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\\\" --event subagent-stop\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ]\n  }\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

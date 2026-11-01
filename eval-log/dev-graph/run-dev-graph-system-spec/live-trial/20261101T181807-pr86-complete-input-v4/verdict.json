@@ -1,0 +1,168 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "C08 は開始時必読の R4-audit-doc-freshness.md を読まずに監査を完了した。agent-a3eae3cd4a10fdfba の最終応答に「SSOT の R4 本文は読んでいません」とあり、全 native tool call（Read/Bash を含む）にも同本文の取得がない。公開0.1.24の C08 adapter Layer 5.3 と R4 Layer 3 の必読・完了条件を満たさず、その PASS を C05/doc_freshness の正規受入根拠にできない。",
+      "C05 は prompt_quality の意味評価を16/18 promptで省略したまま PASS にした。native Bash toolu_01SvKHtXn3Yo4qitkVQFq1PK は全18件の見出し・チェックリスト数を出す構造走査のみで、report findings は「他16 prompt の C1-C4 独立精読は行っていない」と明示する。公開0.1.24 rubric の単独install例外は外部機械validatorだけを省略でき、意味層 pass_criteria と独立design findings は必須のまま。従って全6観点を満たす正規 evaluator PASS が成立していない。",
+      "C05 の report生成で、native Bash toolu_012o3zX58AKFmdq49uB9vv67 が cat > $TMPDIR/build_report.py で自作の生成scriptを保存し、それを実行してJSONを供給した。report最終保存先は指定のliteral Pathだったが、公開0.1.24 R1-score 4.3 が許可する書込み（C06出力と評価reportのみ）と Bash(python3 *) の境界を超えている。同節は cat > / redirect を明示的に対象外としている。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "ef2a135a491298b123c46388e8447c97eb06f1b33b6bbdd7f28caf2351601e92",
+    "result": "FAIL",
+    "blockers": [
+      "C08 は開始時必読の R4-audit-doc-freshness.md を読まずに監査を完了した。agent-a3eae3cd4a10fdfba の最終応答に「SSOT の R4 本文は読んでいません」とあり、全 native tool call（Read/Bash を含む）にも同本文の取得がない。公開0.1.24の C08 adapter Layer 5.3 と R4 Layer 3 の必読・完了条件を満たさず、その PASS を C05/doc_freshness の正規受入根拠にできない。",
+      "C05 は prompt_quality の意味評価を16/18 promptで省略したまま PASS にした。native Bash toolu_01SvKHtXn3Yo4qitkVQFq1PK は全18件の見出し・チェックリスト数を出す構造走査のみで、report findings は「他16 prompt の C1-C4 独立精読は行っていない」と明示する。公開0.1.24 rubric の単独install例外は外部機械validatorだけを省略でき、意味層 pass_criteria と独立design findings は必須のまま。従って全6観点を満たす正規 evaluator PASS が成立していない。",
+      "C05 の report生成で、native Bash toolu_012o3zX58AKFmdq49uB9vv67 が cat > $TMPDIR/build_report.py で自作の生成scriptを保存し、それを実行してJSONを供給した。report最終保存先は指定のliteral Pathだったが、公開0.1.24 R1-score 4.3 が許可する書込み（C06出力と評価reportのみ）と Bash(python3 *) の境界を超えている。同節は cat > / redirect を明示的に対象外としている。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec113"
+    },
+    "transcript_sha256": "438200d7f0175622d2e89fa29ef4e9a4a337d12a4768a30b3bb796710282a8b8",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-ad922158d6d9cec16.jsonl",
+      "transcript/subagents/agent-a3eae3cd4a10fdfba.jsonl",
+      "tool-observer/index.json",
+      "tool-observer/subagent_agent-ad922158d6d9cec16-toolu_01SvKHtXn3Yo4qitkVQFq1PK.json",
+      "tool-observer/subagent_agent-ad922158d6d9cec16-toolu_012o3zX58AKFmdq49uB9vv67.json",
+      "fx-final/tree/eval-log/system-spec-completeness-report.json",
+      "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+      "fx-final/tree/eval-log/run-dev-graph-node-progress.json",
+      "tool-observer/main-toolu_01GJsdBtSm1MfQdL1Hxixe5s.json",
+      "tool-observer/main-toolu_01G3Nbqvct7LK2J6wjzQFVbR.json",
+      "tool-observer/main-toolu_01WsmkVVGuhuvTqJxUji9Y6w.json",
+      "evidence-redaction.json",
+      "poll-normalization.json",
+      "plugins-copy.json",
+      "closure-at-launch.txt",
+      "task.md"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "438200d7f0175622d2e89fa29ef4e9a4a337d12a4768a30b3bb796710282a8b8",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1857.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "tool-observer/main-toolu_01WsmkVVGuhuvTqJxUji9Y6w.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1857.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "ff6f4d83d32cc67e8025722d205cead5a27b5e43f0f3f92c7ddc5208523a69ff",
+      "tokens": {
+        "input_tokens": 396,
+        "cache_creation_input_tokens": 1130966,
+        "cache_read_input_tokens": 14562261,
+        "output_tokens": 153861,
+        "total_tokens": 15847484,
+        "assistant_messages": 192,
+        "assistant_message_ids": 192,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 11,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

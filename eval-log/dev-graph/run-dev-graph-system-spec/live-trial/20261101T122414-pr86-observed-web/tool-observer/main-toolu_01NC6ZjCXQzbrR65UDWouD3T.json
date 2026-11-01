@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "572425be-177c-44fa-a26a-97157b504b51",
+      "line": 499,
+      "prefix_bytes": 2409633,
+      "prefix_sha256": "becdc9b57ed6fb46dc36734a3355543ede31f52db32111439e207749126146f8",
+      "timestamp": "2026-11-01T03:37:36.479Z"
+    },
+    "result": {
+      "uuid": "478a5538-e788-4fb5-9621-047a422f7788",
+      "line": 500,
+      "prefix_bytes": 2416411,
+      "prefix_sha256": "044e44afd80cec352858055156457a6cf216053fba2ecc8cf1d6f55f01ebbf6b",
+      "timestamp": "2026-11-01T03:37:36.741Z"
+    }
+  },
+  "tool_use_id": "toolu_01NC6ZjCXQzbrR65UDWouD3T",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R0-context.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Prompt: R0-context\n2\t\n3\t> C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n4\t\n5\t## Layer 1: 基本定義層\n6\t\n7\t- `responsibility_id`: `R0-context`\n8\t- `skill`: `run-dev-graph-node`\n9\t- 不変目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n10\t- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n11\t\n12\t## Layer 2: ドメイン層\n13\t\n14\t### 入力契約\n15\t\n16\t- caller context、repo config、artifact input、graph/content候補path。\n17\t\n18\t### 出力契約\n19\t\n20\t- repository identityと全realpath containment判定を持つwriter preflight receipt。\n21\t\n22\t### 責務境界\n23\t\n24\t- graph/contentを変更せずroot外・broken symlink・別common-dirを許容しない。\n25\t\n26\t### 受入条件\n27\t\n28\t- 全候補pathがroot内でrepository_idがconfig/graphと一致する。\n29\t\n30\t## Layer 3: インフラ層\n31\t\n32\t- 使用資産: `resolve-repo-context.py --mode write`。\n33\t- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n34\t\n35\t## Layer 4: 共通ポリシー層\n36\t\n37\t- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n38\t\n39\t## Layer 5: エージェント層 (l5-contract v2.0.0)\n40\t\n41\t- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n42\t\n43\t### 5.1 担当 agent\n44\t\n45\t- `run-dev-graph-node/R0-context`\n46\t\n47\t### 5.2 ゴール定義\n48\t\n49\t- 目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n50\t- 達成ゴール: repository identityと全realpath containment判定を持つwriter preflight receiptが生成され、受入条件を満たした状態になっている。\n51\t\n52\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n53\t\n54\t- [ ] 全候補pathがroot内でrepository_idがconfig/graphと一致する\n55\t\n56\t## Layer 6: オーケストレーション層\n57\t\n58\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n59\t- PASS receiptだけをR1/R3/R4へ渡す。\n60\t\n61\t## Layer 7: UserInput\n62\t\n63\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n64\t\n65\t## 出力指示\n66\t\n67\tLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n68\t\n69\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R0-context.md",
+      "content": "# Prompt: R0-context\n\n> C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n\n## Layer 1: 基本定義層\n\n- `responsibility_id`: `R0-context`\n- `skill`: `run-dev-graph-node`\n- 不変目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n\n## Layer 2: ドメイン層\n\n### 入力契約\n\n- caller context、repo config、artifact input、graph/content候補path。\n\n### 出力契約\n\n- repository identityと全realpath containment判定を持つwriter preflight receipt。\n\n### 責務境界\n\n- graph/contentを変更せずroot外・broken symlink・別common-dirを許容しない。\n\n### 受入条件\n\n- 全候補pathがroot内でrepository_idがconfig/graphと一致する。\n\n## Layer 3: インフラ層\n\n- 使用資産: `resolve-repo-context.py --mode write`。\n- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n\n## Layer 4: 共通ポリシー層\n\n- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n\n### 5.1 担当 agent\n\n- `run-dev-graph-node/R0-context`\n\n### 5.2 ゴール定義\n\n- 目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする\n- 達成ゴール: repository identityと全realpath containment判定を持つwriter preflight receiptが生成され、受入条件を満たした状態になっている。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n- [ ] 全候補pathがroot内でrepository_idがconfig/graphと一致する\n\n## Layer 6: オーケストレーション層\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n- PASS receiptだけをR1/R3/R4へ渡す。\n\n## Layer 7: UserInput\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n\n## 出力指示\n\nLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n\n",
+      "numLines": 69,
+      "startLine": 1,
+      "totalLines": 69
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "固定run-system-spec-compileの選択後実行契約とtask.md末尾の「各run Skillの最小成果物提示直後にstandardを記録し、その後で意味層testを開始」に違反。transcript.jsonl L348で正規compile後、L361 (2026-10-31T17:27:35.413Z) でOUT1指定のtest_compile_spec_doc.py / test_compile_spec_doc_knowledge.pyを実行して63 passed。compileについてstandardを記録した最初の実操作はL370 (17:28:10.316Z) のdelegated-artifact-delivery.json追記であり、検査後の記録になっている。L348〜L370のassistant発言にも、その前の成果物提示・standard記録は存在しない。scratchで行う既存unit回帰のroot免除と、OUT1 testを選択後に行う時間順序の義務は別であり、この免除では順序違反を解消できない。"
+  ],
+  "evaluator_id": "/root/review_sysspec91",
+  "transcript_sha256": "9dcf75de3aca8d697bb78ed193fa17262924f0a437cd179837d23cd83ac8a346",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-adf4d8e083845d363.jsonl",
+    "transcript/subagents/agent-a59c894b1ef4c83aa.jsonl",
+    "transcript/subagents/agent-abe87021f15a154de.jsonl",
+    "transcript/subagents/agent-ac949903c5e057049.jsonl",
+    "transcript/subagents/agent-aba6fc3511c21fddf.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec/delegated-artifact-delivery.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-goal-spec.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/manifest.tsv",
+    "evidence-redaction.json",
+    "closure-at-launch.txt",
+    "plugins-copy.json",
+    "session-root.txt",
+    "start.epoch",
+    "boot.log",
+    "poll-state.json",
+    "poll-exit.txt",
+    "guard.jsonl"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-eval-log/run-dev-graph-system-spec-progress.json"
+  },
+  "criteria_observed": {
+    "IN1": "今回のraw/public tool結果を独立照合。loop1: transcript.jsonl L390のcoverage/source-citation/schemaは全て実exit0 (空graphもschema実行)、L394 intermediate・L405 progressへのPASS記録後にL407の6キー/元goal/hash検査。loop2: L774の3実exit0 → L791のprogress/intermediate記録とhash検査。前周回への遡及代用なし。goal hash=30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454、2行とも6必須キー一致、OUT1はexternal_pending。今回read-onlyのcoverage/source-citation/schema/lineage再実行もexit0。",
+    "OUT1": "実成果のlineage、evaluator snapshot/正規auditor帰属、C02単一登録、dev-graph内生成ロジック複製0は観測。R0/R1/R2/R3は実Agent別contextで検証され、固定receipt/hash/goal/周回/次指示を受領し、親だけがC19集約ログを更新。2周目R2 promptが直前merged_directiveを受領。正規compile本処理L348には固定CLAUDE_PROJECT_DIR export/cd/realpath照合がある。既存pytestのrootは本処理root義務から分離するが、OUT1 test前のstandard記録義務には違反するため総合FAIL。"
+  },
+  "notes": [
+    "原本snapshotの本文・秘密を出力せず検証。匿名化manifest対象11 transcriptの原本SHA256/public SHA256/原本bytes/行数が全て一致。JSON構造差分37文字列葉は同一のメール置換だけでpublicを再現できた。transcript公開SHA256は本JSONのtranscript_sha256。",
+    "固定/現行の挙動閉包をcanonical skill_dir_tree_shaで独立再計算し、開始時閉包と全て一致: 6849baa57c8340e9c1dbbef3b6aff3c25fe84b719f847f7d510488f32a359d9b。fx-final manifest 74ファイルはbytes/SHA256一致。",
+    "今回のaggregate-completeness.py --report --spec-dir --sessionをread-only再実行しexit0。report形状・総合判定整合・auditor fork ledger帰属は満たす。これをartifact_deliveryの順序違反の免除には使わない。",
+    "初期化receipt・前回state・compiled章は再開入力として区別した。今回compileがbyte-identicalである点だけを成果の根拠にはせず、今回writer実行・新規evaluator・C02登録の実tool呼出しと成果を照合した。",
+    "poll exit0、start.epochと補正poll-stateを照合し実経過1846秒。ディレクトリ名の整理batchIDは開始時刻に用いない。guard拒否4件は記録された拒否であり、拒否した試行自体を成功した外部操作として扱わない。",
+    "非阻害の運用所見: evaluatorはscratchpad/build_report.pyで既に得た各観点判断・監査結果・gate JSONをレポートJSONへ組み立ててからcanonical aggregate-completeness.pyを実行している。compilerや取込writerの代替ではないが、task.mdの自作生成script禁止は広い文言のため、今後は正規のreport保存手順で直接JSONを保存すると適用境界が明確になる。本判定はこの曖昧さをblockerに追加せず、実証できる選択記録順序違反に基づく。"
+  ],
+  "observation_details": {
+    "1": "transcript.jsonl L178/L268/L313/L384で固定system-spec-harnessの4正規entrypointがSkill起動。L348の正規writerが今回10章を再compile。独立fork evaluator transcript/subagents/agent-adf4d8e083845d363.jsonlでC07/C06/C08を実Agent起動し、今回のreportと6行ledgerが生成された。ただしcompileのOUT1 testとstandard記録の順序が契約違反のため、正規flowの完全な契約充足としてはFAIL。",
+    "2": "fx-final/tree/.dev-graph/state/graph.jsonの2 node、fx-eval-log/system-spec-completeness-report.json、fx-final/tree/system-spec/を独立照合。source_lineageの6項目が存在し、現行version=0.1.24、各sourceの実bytes SHA256 == source_digest == confirmation_evidence.evaluated_digest == report.artifact_snapshot値。reportのspec_dirが固定C24 system-spec実dirと一致し、12/12 snapshot一致。confirmed/pass/readiness complete。",
+    "3": "transcript.jsonl L628のC02 Skill → L669 dry-run → L699のC02 R3 Agent内canonical build-graph-node.py addで登録。fx-final/tree/.dev-graph/state/receipts/node-r000001-add.jsonがrev0→1、2nodeを記録。candidate-import.jsonは削除候補payloadの入力であり、今回評価根拠ではない。固定dev-graph C19コードはprepare-evaluation.pyと既存validator参照のみで、elicit/compile本体の複製を認めない。"
+  }
+}

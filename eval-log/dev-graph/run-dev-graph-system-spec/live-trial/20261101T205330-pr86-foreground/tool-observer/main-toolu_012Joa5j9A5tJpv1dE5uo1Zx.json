@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f0ad9ff0-af81-4d6e-88a9-85549666a3d4",
+      "line": 647,
+      "prefix_bytes": 3847715,
+      "prefix_sha256": "775b57488b1a89dc4054a82e7912d7b901e834c3547f385cd00becd1497d2e36",
+      "timestamp": "2026-11-01T12:24:08.652Z"
+    },
+    "result": {
+      "uuid": "011440a9-15db-4815-8e58-9c4346027aeb",
+      "line": 650,
+      "prefix_bytes": 3853455,
+      "prefix_sha256": "b61fd5a8301742fe990cbca1ccefa033bfb49b384f9b37d67626bca5de6c5a9a",
+      "timestamp": "2026-11-01T12:24:19.362Z"
+    }
+  },
+  "tool_use_id": "toolu_012Joa5j9A5tJpv1dE5uo1Zx",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && S=plugins/system-spec-harness; D=\"$CLAUDE_PROJECT_DIR/system-spec\"; python3 -B $S/scripts/validate-coverage-matrix.py --matrix \"$D/spec-state.json\" --require-complete --require-basis --require-foundation >/dev/null; a=$?; python3 -B $S/scripts/validate-source-citation.py --targets \"$D/spec-state.json\" --references \"$D/fetched-references.json\" --state \"$D/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; b=$?; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness; c=$?; echo \"coverage=$a citation=$b schema=$c\"; python3 -c 'import hashlib,json,sys; g=json.load(open(sys.argv[1],encoding=\"utf-8\")); print(g[\"graph_revision\"], \"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(\",\",\":\")).encode()).hexdigest())' \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\"; sha256sum system-spec/index.md system-spec/00-requirements-definition.md 2>/dev/null || shasum -a 256 system-spec/index.md system-spec/00-requirements-definition.md",
+    "description": "Run three loop-2 gates and digest checks"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\ncoverage=0 citation=0 schema=0\n1 sha256:de7b1ff28a5d811277a410fbb58257a84958c73e43df2bc44295290a1b176a08\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md",
+  "tool_use_result": {
+    "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\ncoverage=0 citation=0 schema=0\n1 sha256:de7b1ff28a5d811277a410fbb58257a84958c73e43df2bc44295290a1b176a08\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

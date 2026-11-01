@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c6c8667d-af47-4704-9085-a864d2a391f4",
+      "line": 716,
+      "prefix_bytes": 4284296,
+      "prefix_sha256": "bb8c831bac116700a9e1a562e9e15230e09f444faaf46bbb9fb575e28e56f53d",
+      "timestamp": "2026-11-01T09:43:01.570Z"
+    },
+    "result": {
+      "uuid": "82edbb9c-81b8-4df7-a3ef-21e1a2e0478a",
+      "line": 717,
+      "prefix_bytes": 4285795,
+      "prefix_sha256": "b967fa42c63dac5e6eb2b51157a080f6897a778523de15e7529d975790fe50f5",
+      "timestamp": "2026-11-01T09:43:05.063Z"
+    }
+  },
+  "tool_use_id": "toolu_01G3Nbqvct7LK2J6wjzQFVbR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && R=\"$CLAUDE_PROJECT_DIR\"; S=\"$R/plugins/system-spec-harness\"; D=\"$R/plugins/dev-graph\"; SD=\"$R/system-spec\"\npython3 -B \"$D/scripts/validate-source-lineage.py\" --repo-root \"$R\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo lineage=$?\npython3 -B \"$S/scripts/validate-coverage-matrix.py\" --matrix \"$SD/spec-state.json\" --require-complete --require-basis --require-foundation >/dev/null; echo coverage=$?\npython3 -B \"$S/scripts/validate-source-citation.py\" --targets \"$SD/spec-state.json\" --references \"$SD/fetched-references.json\" --state \"$SD/spec-state.json\" --repo-root \"$R\" >/dev/null; echo citation=$?\npython3 -B \"$D/scripts/validate-graph-schema.py\" --graph \"$R/.dev-graph/state/graph.json\" --repo-root \"$R\" --strict-artifact-readiness >/dev/null; echo schema=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage=0\ncoverage=0\ncitation=0\nschema=0",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage=0\ncoverage=0\ncitation=0\nschema=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

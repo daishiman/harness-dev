@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "91c7daee-6849-42f3-a408-42b63bc75fe3",
+      "line": 48,
+      "prefix_bytes": 370285,
+      "prefix_sha256": "716bc12964955a8ea69b72404a01101e776f4855518e4ebd6f724552de7c9525",
+      "timestamp": "2026-11-01T03:10:32.172Z"
+    },
+    "result": {
+      "uuid": "da72a167-5e94-4cc6-99e9-4f7566f471b1",
+      "line": 49,
+      "prefix_bytes": 376364,
+      "prefix_sha256": "6b44572718b1a62081ca37eddbf6e0ce3b1aab2335d531091e068d8ef3eb49fe",
+      "timestamp": "2026-11-01T03:10:34.725Z"
+    }
+  },
+  "tool_use_id": "toolu_01MKKNVTw2zfDW6WFZSRQMKu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport re\nt=open(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R7-audit-matrix.md\").read()\ni=t.find(\"2.3.1\"); print(t[i-200:i+3000])\nEOF",
+    "description": "Show R7 section 2.3.1"
+  },
+  "is_error": false,
+  "tool_result_content": "`。`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` 配下)。決定論ゲート |\n| matrix_verification | object | yes | 下記の固定入力と C12 両モードの無改変の実測証拠 |\n| ssot_prompt | path | yes | R7-audit-matrix 詳細契約の正本 (本ファイル) |\n\n### 2.3.1 機械証拠の実行者と入力固定\n- 実行者は呼出し元 C01/C05、C07 は `Read` のみで独立した意味監査を行う。呼出し元は同じ state に対し正規 `validate-coverage-matrix.py --matrix <state>` と、同コマンドに `--require-complete` を加えたものを実測する。独自集計・renderer・親の PASS で代替しない。\n- `matrix_verification` は `state_path` / `state_sha256` / `validator_path` / `validator_sha256` と、`loop` / `require_complete` の各 `{exit_code, stdout, stderr}` を持つ。path は検証対象の絶対パス、digest は実ファイル bytes の SHA-256、stdout/stderr は無改変とする。最初の取得時に state/validator を前後で hash 照合し、変化中の入力へ receipt を付けない。C05 は state digest を既存 `artifact_snapshot` とも照合する。\n- 呼出し元は監査後 (C05 は最終 PASS 前) に同じ二コマンドと digest を再取得し、最初の JSON 全体と一致することを確認する。state・validator・stdout/exit code の変更時は旧監査を転用せず、入力固定と独立監査からやり直す。欠落・破損・対応不明は INDETERMINATE。loop/final の exit 1 はそれぞれ FAIL のまま保持する。\n- C07 は SSOT・state・正規 C12 本文・`../../ref-system-design-knowledge/references/system-category-taxonomy.json` を Read で読み、全カテゴリ×6 platform の意味監査を行う。道具発見や Bash・grep・find・ls・独自 Python を実行しない。機械 evidence の受領は意味監査を代替しない。\n\n### 2.4 出力契約\n- verdict: **loop_pass** (loop 妥当= 各セルが 3 値・対象外理由あり・確定 qa_ref あり・集約整合・platform 全存在: PASS/FAIL) と **final_ready** (最終準備= 未収集 0: PASS/FAIL) の 2 判定。\n- findings: script の `VIOLATION:` 逐語引用 + 意味層 findings (placeholder 理由 / dangling・取り違え qa_ref / category_aggregate 宣言欠落 / platform 欠落の分類=未初期化 vs 対象外未宣言)。各 finding に該当カテゴリ×プラットフォームと根拠を付す。\n- summary: カテゴリ数 / セル総数 / 未収集数 / 対象外数 (うち理由要改善数) / 確定数 (うち qa_ref 要確認数) / platform 欠落数 / category_aggregate 不一致・宣言欠落数。\n- read-only。修正提案 (どのセルをどう是正すべきか) は返すが `spec-state.json` を書き換えない。反映は C01 transition writer (R2-interview / R3-reask / R4-reopen) が担う。\n\n## Layer 3: インフラ層 (外部依存)\n\n### 3.1 参照リソース\n| id | path | when_to_read |\n|---|---|---|\n| R-audit SSOT | 本ファイル (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/prompts/R7-audit-matrix.md`) | 実行開始時・判断に迷った時 |\n| spec_state | C01 出力 `spec-state.json` | 監査対象の読み込み時 |\n| validator (C12) | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py` | 決定論ゲート実行時 (loop / --require-complete) |\n| taxonomy (C04) | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/ref-system-design-knowledge/references/` | カテゴリ軸床・カテゴリ初期集合の正本を確認する時 |\n\n### 3.2 外部ツール / API\n- `Read`: R-audit SSOT、`spec-state.json`、カテゴリ taxonomy の参照。\n- C07 は `Read` のみ。C12 両モードの Bash 実行は呼出し元 C01/C05 が 2.3.1 に従って行う。\n- 外部 API・ネットワークアクセスは行わない。\n\n## Layer 4: 共通ポリシー層\n\n### 4.1 失敗時挙動\n- `spec-state.json` 欠落 / JSON 破損 (validator exit 2) は監査不能として確定せず、理由を明示して差し戻す (憶測で PASS にしない)。\n- validator が exit 1 (violation) を返した行は verdict へ反映し、意味層 findings と統合して報告する。\n- 最大反復回数: 3。上限到達後も未検証セルが残る場合は完了扱いにしない (未検証を残さない)。\n\n### 4.2 観測 / ロギング\n- 出力には Layer 2.4 の summary (カテゴリ数 / セル総数 / 未収集数 / 対象外数 (理由要改善数) / 確定数 (qa_ref 要確認数) / platform 欠落数 / 集約不一致・宣言欠落数) を含める。\n- secret は扱わない。`spec-state.json` の仕様本文は該当 finding に必要な最小引用に留め、全文復唱しない。\n\n### 4.3 セキュリティ\n- read-only。`spec-state.json` および外部への書込・送信をしない。\n- C07 は Bash を使わない。呼出し元が C12 二モードを実測し、C07 は機械証拠を受領して独立した意味監査を行う。\n- マトリクス遷移・確定巻き戻しは行わない (C01 transition writer の責務)。\n\n## Layer 5: エージェント層 (ゴール駆動の実行主体)\n\n### 5.1 担当 agent\n- `system-spec",
+  "tool_use_result": null
+}

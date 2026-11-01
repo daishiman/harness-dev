@@ -1,0 +1,34 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出(置き換え先: qa-019)。JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)を名指しで1問に束ねていた。(a) qa-019 は1論点の開いた問で N1-N4 を満たす。(b) superseded_note のとおり同じ論点(JTBD)を問い直している。(c) qa-019 に answer・basis=user-decision・answered_at(00:16:45)があり superseded_at(00:16:46)より前。置き換え先に medium 以上の検出なし。qa-009 は確定セルの主たる qa_ref ではない"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択(3案)と、セッション無効化の期間・ログアウト時の扱いという独立した2論点を1問に束ねている。保留・別案の道は示されているため high ではない。qa-038 は auth/web の主たる qa_ref(qa-002)ではなく qa_refs の裏付けのみなので、PASS に残す注記。C01 の指針: 次の機会に論点を分けて問い直し、supersede-qa で閉じることを推奨(本 agent は実行しない)"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-037",
+      "criteria": ["N2"],
+      "observation": "選択肢(2)だけ具体的な仕組みが詳しく書かれ、(1)には「SameSite の属性だけで防ぐ」と限定的な語がある。推奨の印はなく、別案・保留の道も示されており、答えを左右したとは読めない軽微な偏り。qa-037 は security/web の qa_refs の裏付けのみ"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "field": "qa_refs",
+      "observation": "置き換え済み(retired)の qa-009 が裏付けの qa_refs に残っている。SSOT の active consumer は主たる qa_ref と effective_source_refs のみなので high にしない。主たる qa_ref は qa-003(置き換え対象外)で、qa-019 も同じ qa_refs に含まれている。C01 の指針: 履歴の整理として qa_refs からの除去を検討可"
+    }
+  ]
+}

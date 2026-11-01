@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "subagent/agent-a3e9c29d13b2d7c5b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4ecbe2e6-7219-487e-be77-c23e5266d5ea",
+      "line": 48,
+      "prefix_bytes": 776911,
+      "prefix_sha256": "4d5b090318b68ca718ad0d8f07eecc248d61617669a936fe87b10d2fb134aacc",
+      "timestamp": "2026-11-01T15:24:13.507Z"
+    },
+    "result": {
+      "uuid": "095ab222-ba57-4fa3-b092-8755bd524645",
+      "line": 50,
+      "prefix_bytes": 783316,
+      "prefix_sha256": "e876f7e0b15ea07ab3415aa7684c715483efcbe4cc38206cddebcf91659919a8",
+      "timestamp": "2026-11-01T15:24:13.808Z"
+    }
+  },
+  "tool_use_id": "toolu_01ATSCYZ9VZ8fK2F3eoWUn2W",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx/system-spec/fixture-requirements-v7.txt"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# 新規合成fixture v7の書面要件\n2\t\n3\tこの資料はCI acceptance用にfixture作者がboot前に提供する新しい合成givenである。実利用者との対話・新しい本番承認ではない。古いqa-037/qa-038のbasis変更を有効な利用者入力と主張せず、過去の記録はそのまま残す。本資料に値を明示し、書面source-indexのpath/section/原文SHAで新しいgivenを追跡可能にする。旧fixtureと同じ機能値を使い、採択D1-D4や上位目的は変更しない。\n4\t\n5\t## CSRF防御\n6\t\n7\tcookie には HttpOnly・Secure・SameSite=Lax を付ける。状態を変える要求 (POST・PUT・PATCH・DELETE) には、サーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にし、無いか合わない要求は拒否する。SameSite の属性だけに頼らず、セッションをサーバ側に持つ (D3) ので、トークンもサーバ側で突き合わせたい。\n8\t\n9\t## セッション保存\n10\t\n11\tPostgreSQL 16 (D1) の表に保存する。Pod のメモリには置かず、Pod の再起動や複数の replica でもログインが切れないようにする。Redis などの新しい保存基盤は足さない。有効期限は qa-002 のとおり 8 時間で、期限切れは使えなくして定期的に消す。ログアウトではすぐに無効にする。\n12\t\n13\t## 認証モデル\n14\t\n15\tOIDC(社内 IdP)+ ロールベース認可。セッションは 8h。\n16\t\n17\t## セキュリティ基準\n18\t\n19\tTLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。\n20\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx/system-spec/fixture-requirements-v7.txt",
+      "content": "# 新規合成fixture v7の書面要件\n\nこの資料はCI acceptance用にfixture作者がboot前に提供する新しい合成givenである。実利用者との対話・新しい本番承認ではない。古いqa-037/qa-038のbasis変更を有効な利用者入力と主張せず、過去の記録はそのまま残す。本資料に値を明示し、書面source-indexのpath/section/原文SHAで新しいgivenを追跡可能にする。旧fixtureと同じ機能値を使い、採択D1-D4や上位目的は変更しない。\n\n## CSRF防御\n\ncookie には HttpOnly・Secure・SameSite=Lax を付ける。状態を変える要求 (POST・PUT・PATCH・DELETE) には、サーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にし、無いか合わない要求は拒否する。SameSite の属性だけに頼らず、セッションをサーバ側に持つ (D3) ので、トークンもサーバ側で突き合わせたい。\n\n## セッション保存\n\nPostgreSQL 16 (D1) の表に保存する。Pod のメモリには置かず、Pod の再起動や複数の replica でもログインが切れないようにする。Redis などの新しい保存基盤は足さない。有効期限は qa-002 のとおり 8 時間で、期限切れは使えなくして定期的に消す。ログアウトではすぐに無効にする。\n\n## 認証モデル\n\nOIDC(社内 IdP)+ ロールベース認可。セッションは 8h。\n\n## セキュリティ基準\n\nTLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。\n",
+      "numLines": 20,
+      "startLine": 1,
+      "totalLines": 20
+    }
+  }
+}

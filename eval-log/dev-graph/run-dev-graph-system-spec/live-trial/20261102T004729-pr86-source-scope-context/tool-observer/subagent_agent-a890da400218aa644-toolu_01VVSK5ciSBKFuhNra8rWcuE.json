@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a890da400218aa644",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5b06164b-21d8-47c0-a03a-12c9261130bf",
+      "line": 63,
+      "prefix_bytes": 335684,
+      "prefix_sha256": "da567c4d5739db81fa07a6249fb52323bbc2b63193424e8c205784f889a1957a",
+      "timestamp": "2026-11-01T15:51:00.861Z"
+    },
+    "result": {
+      "uuid": "a9bb3337-8cc8-4156-a34d-e6d429c08b01",
+      "line": 64,
+      "prefix_bytes": 337083,
+      "prefix_sha256": "a54ec96586cf77acb467616da30b16c2b8a91be3be2ceb10c0b94a7d360f803c",
+      "timestamp": "2026-11-01T15:51:04.271Z"
+    }
+  },
+  "tool_use_id": "toolu_01VVSK5ciSBKFuhNra8rWcuE",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -I -B -c '\nimport json\nd=json.load(open(\"../workdir/tool-observer/index.json\"))\nfor i,e in enumerate(d[\"events\"]):\n  s=e.get(\"input_summary\") or \"\"\n  if e.get(\"stream\")==\"main\" and e.get(\"tool_name\")==\"Bash\" and (\"resolve-repo-context\" in s or \"validate-source-lineage\" in s or \"mkdir\" in s): print(i,s[:1500]); print()\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "15 {\"command\": \"export CLAUDE_PROJECT_DIR=\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\\\" && cd -- \\\"$CLAUDE_PROJECT_DIR\\\" && [ \\\"$(pwd -P)\\\" = \\\"$CLAUDE_PROJECT_DIR\\\" ] && mkdir -p eval-log/run-dev-graph-system-spec && python3",
+  "tool_use_result": {
+    "stdout": "15 {\"command\": \"export CLAUDE_PROJECT_DIR=\\\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\\\" && cd -- \\\"$CLAUDE_PROJECT_DIR\\\" && [ \\\"$(pwd -P)\\\" = \\\"$CLAUDE_PROJECT_DIR\\\" ] && mkdir -p eval-log/run-dev-graph-system-spec && python3",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

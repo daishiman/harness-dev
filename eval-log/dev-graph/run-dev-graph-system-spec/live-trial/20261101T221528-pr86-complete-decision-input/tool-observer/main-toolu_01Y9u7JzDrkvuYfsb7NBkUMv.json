@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ca759fa4-ce9d-4287-8c46-61af6657064b",
+      "line": 301,
+      "prefix_bytes": 2347086,
+      "prefix_sha256": "e3b916d3e3e85115d2403f34cffc0f594584f6c6cfa4287a5da03a19b841570c",
+      "timestamp": "2026-11-01T13:22:45.636Z"
+    },
+    "result": {
+      "uuid": "b64fb217-ea42-49e2-9206-fff024511c64",
+      "line": 307,
+      "prefix_bytes": 2349280,
+      "prefix_sha256": "f4de891ec99c554ff412f2b7ee7e26a6f0de14ebcc7f4d1ee41766411cc1c27b",
+      "timestamp": "2026-11-01T13:22:49.356Z"
+    }
+  },
+  "tool_use_id": "toolu_01Y9u7JzDrkvuYfsb7NBkUMv",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=$CLAUDE_PROJECT_DIR/plugins/system-spec-harness && python3 -B $P/scripts/validate-source-citation.py --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root $CLAUDE_PROJECT_DIR; echo \"cite exit=$?\"; python3 -c '\nimport json;d=json.load(open(\"system-spec/fetched-references.json\"))\nfor r in d.get(\"references\",d if isinstance(d,list) else []):\n  print(r.get(\"target_id\"),r.get(\"url\"),r.get(\"version\"),r.get(\"fetched_at\") or r.get(\"checked_at\"))'",
+    "description": "Run source citation gate and list references"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite exit=0\npostgres None 16.15 None\nreact None 19.3 None\nfastapi None 0.162.0 None\ntypescript None 7.0 None\nkubernetes None None None",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite exit=0\npostgres None 16.15 None\nreact None 19.3 None\nfastapi None 0.162.0 None\ntypescript None 7.0 None\nkubernetes None None None",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

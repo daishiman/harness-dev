@@ -20,8 +20,9 @@ design: plugin-plans/plugin-dev-planner/phase-05-implementation.md (C2/C3/C11) +
 phase-04-test-design.md の C2 受入例。canonicalize() の再適用で非正準 (手書き編集)
 を拒否し、DAG 非循環・orphan・producer 一意・inventory 依存整合・consumes producer 実在・
 dangling edge 端点・phase 非逆走・couples_with 直列化実現・node.state pending seed 固定の 10 検査に、
-bootstrap→target shape 移行 gate (l・GAP-BOOTSTRAP-TARGET-SHAPE-001) を additive で加えた検査群を
-fail-soft (violations list) で返す。単一 writer=derive-task-graph.py。
+bootstrap→target shape 移行 gate (l・GAP-BOOTSTRAP-TARGET-SHAPE-001) と
+task node/component ID 一意性 (m) を additive で加えた検査群を fail-soft
+(violations list) で返す。単一 writer=derive-task-graph.py。
 """
 from __future__ import annotations
 
@@ -33,6 +34,20 @@ from pathlib import Path
 
 _SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPTS))
+
+
+def _load_shape_checks():
+    """命名規約に従うハイフン区切りの補助スクリプトをロードする。"""
+    path = _SCRIPTS / "validate-task-graph-shapes.py"
+    spec = importlib.util.spec_from_file_location("task_graph_shape_checks", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load task graph shape checks: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+shape_checks = _load_shape_checks()
 
 
 def _load_derive():
@@ -57,6 +72,35 @@ def _nodes(graph: dict) -> list[dict]:
 
 def _edges(graph: dict) -> list[dict]:
     return [e for e in (graph.get("edges") or []) if isinstance(e, dict)]
+
+
+def _duplicate_ids(entries: list[dict]) -> list[str]:
+    """集合・辞書へ変換する前に、文字列 ID の重複を決定論的に列挙する。"""
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for entry in entries:
+        value = entry.get("id")
+        if not isinstance(value, str):
+            continue
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return sorted(duplicates)
+
+
+def _check_id_uniqueness(nodes: list[dict], inventory: dict) -> list[str]:
+    """(m) downstream の set/dict 化で別要素が同じ ID へ畳み込まれる前に拒否する。"""
+    components = (
+        [c for c in inventory.get("components", []) if isinstance(c, dict)]
+        if isinstance(inventory, dict)
+        else []
+    )
+    out: list[str] = []
+    for label, entries in (("task node", nodes), ("component", components)):
+        duplicates = _duplicate_ids(entries)
+        if duplicates:
+            out.append(f"(m) duplicate {label} id(s): {', '.join(duplicates)}")
+    return out
 
 
 def _check_dag(edges: list[dict]) -> list[str]:
@@ -196,53 +240,9 @@ def _check_node_states(nodes: list[dict]) -> list[str]:
     return out
 
 
-def _target_shape_declared(nodes: list[dict]) -> bool:
-    """graph 内に execution_kind を携帯する node が 1 つでもあれば target shape 採用宣言とみなす。"""
-    return any(isinstance(n.get("execution_kind"), str) and n.get("execution_kind") for n in nodes)
-
-
 def _check_migration_gate(nodes: list[dict], marker: str) -> list[str]:
-    """(l) bootstrap→target shape 移行 gate (marker 非依存の additive 層・C17 風化防止)。
-
-    GAP-BOOTSTRAP-TARGET-SHAPE-001: fixed-13-phase bootstrap は execution_kind を一切携帯せず、
-    legacy join は entity_ref から route を暗黙推測する。C01 build 完了後の target shape は明示
-    route_ref parity を必須化し、legacy join は shape marker でだけ後方互換許可する。本 gate は
-    「一部 node だけ target shape へ移行した中途半端 (=最も危険) な graph」を fail-closed で拒否する。
-
-    発火条件 (どちらか成立):
-      - target shape 採用宣言 = execution_kind を携帯する node が 1 つでも存在する (marker 非依存)。
-      - shape_marker=task-graph-derived (dispatchable node に execution_kind 必須という shape 宣言)。
-    非発火 (後方互換): fixed-13-phase marker かつ execution_kind 全不在 (現行 bootstrap plan)。
-    entity_ref を持つ legacy node が多数あっても execution_kind が皆無なら発火しない。
-
-    要求 (発火時):
-      (l1) 部分携帯 fail-closed: entity_ref 非 null の全 node が execution_kind を携帯すること。
-           一部 component node だけ移行し他は legacy のまま残る中途半端 shape を拒否する。
-      (l2) 明示 route_ref parity: execution_kind==component-build の全 node が非空 route_ref を
-           携帯すること (entity_ref からの暗黙 route 推測を禁止)。direct-task/phase-gate の
-           route_ref=null は schema 通りで (l2) の対象外 ((k) が shape 別の詳細を担う)。
-    """
-    if not (_target_shape_declared(nodes) or marker == "task-graph-derived"):
-        return []
-    out: list[str] = []
-    for n in nodes:
-        entity = n.get("entity_ref")
-        kind = n.get("execution_kind")
-        if isinstance(entity, str) and entity and not (isinstance(kind, str) and kind):
-            out.append(
-                f"(l) migration gate: dispatchable node {n.get('id')} (entity_ref={entity!r}) "
-                "lacks execution_kind — partial bootstrap→target adoption is fail-closed "
-                "(GAP-BOOTSTRAP-TARGET-SHAPE-001)"
-            )
-    for n in nodes:
-        if n.get("execution_kind") == "component-build":
-            route = n.get("route_ref")
-            if not (isinstance(route, str) and route.strip()):
-                out.append(
-                    f"(l) migration gate: component-build node {n.get('id')} requires explicit "
-                    "non-empty route_ref (implicit entity_ref->route inference is forbidden)"
-                )
-    return out
+    """(l) shape 固有検査は support module へ委譲する。"""
+    return shape_checks.check_migration_gate(nodes, marker)
 
 
 def _check_edge_endpoints(nodes: list[dict], edges: list[dict]) -> list[str]:
@@ -295,73 +295,8 @@ def _check_phase_dependency_direction(nodes: list[dict], edges: list[dict]) -> l
 
 
 def _check_couples(nodes: list[dict], edges: list[dict], inventory: dict) -> list[str]:
-    """(j) inventory の couples_with (接合が密な兄弟ペア) が直列化 depends_on で実現され、
-    参照先が実在 component であることを検査する ((d) inventory depends_on 実現検査の鏡像)。
-
-    couples_with は対称宣言。derive の直列化と整合させ、次を対象外にする:
-      - **推移閉包**で既に component depends_on 順序付いたペア (直接 A→B だけでなく A→C→B も)。
-        直列化済ゆえ derive は coupling を skip する (逆走 cycle 回避) — (j) も要求しない。
-      - **共有 phase を持たない** cross-phase ペア。derive は同一 phase のみ直列化し、異 phase は
-        phase 順序 edge が直列化するため coupling edge を焼かない — (j) が直接 edge を要求すると
-        偽陽性になるので skip する。
-    共有 phase を持ち未順序のペアは、その共有 phase の entity node 間 depends_on エッジ (どちらの
-    向きでも) が無ければ「宣言したのに盲目並列へ逆戻り」する silent 穴ゆえ violation とする。
-    """
-    if not isinstance(inventory, dict):
-        return []
-    comp_ids = {c.get("id") for c in inventory.get("components", []) if isinstance(c, dict)}
-    couples: set = set()
-    comp_depends: dict[str, list[str]] = {}
-    out: list[str] = []
-    for c in inventory.get("components", []) or []:
-        if not isinstance(c, dict):
-            continue
-        cid = c.get("id")
-        cw = c.get("couples_with", [])
-        if isinstance(cid, str) and isinstance(cw, list):
-            for other in cw:
-                if not isinstance(other, str) or not other or other == cid:
-                    continue
-                if other not in comp_ids:
-                    out.append(f"(j) couples_with references unknown component: {cid} -> {other}")
-                    continue
-                couples.add(frozenset((cid, other)))
-        deps = c.get("depends_on", [])
-        if isinstance(cid, str) and isinstance(deps, list):
-            comp_depends[cid] = [d for d in deps if isinstance(d, str) and d != cid]
-
-    # 推移閉包は derive の SSOT を import 再利用する (直接ペアでなく推移順序も skip 判定に使う)。
-    reach = derive_task_graph._transitive_closure(comp_depends)
-
-    nodes_by_entity: dict = {}
-    entity_phases: dict = {}
-    for n in nodes:
-        ent = n.get("entity_ref")
-        if isinstance(ent, str):
-            nodes_by_entity.setdefault(ent, set()).add(n.get("id"))
-            entity_phases.setdefault(ent, set()).add(n.get("phase_ref"))
-    dep_pairs = {(e.get("from"), e.get("to")) for e in edges if e.get("type") == "depends_on"}
-
-    for pair in sorted(couples, key=lambda p: sorted(p)):
-        a, b = sorted(pair)
-        if b in reach.get(a, set()) or a in reach.get(b, set()):
-            continue  # 推移閉包で既に順序付き=(d) が担う (逆走 cycle を封じ derive も skip)
-        a_nodes = nodes_by_entity.get(a, set())
-        b_nodes = nodes_by_entity.get(b, set())
-        if not a_nodes or not b_nodes:
-            continue  # 片方に node が無いペアは直列化不能 (component orphan は detect-unassigned が担当)
-        if not (entity_phases.get(a, set()) & entity_phases.get(b, set())):
-            continue  # 共有 phase 無し=cross-phase (phase 順序が直列化・coupling は no-op)
-        serialized = any(
-            (f in a_nodes and t in b_nodes) or (f in b_nodes and t in a_nodes)
-            for (f, t) in dep_pairs
-        )
-        if not serialized:
-            out.append(
-                f"(j) couples_with {a}<->{b} not realized by any serialization depends_on edge "
-                "(densely-coupled siblings would be blindly parallelized)"
-            )
-    return out
+    """(j) couples_with 検査は shape support module へ委譲する。"""
+    return shape_checks.check_couples(nodes, edges, inventory, derive_task_graph)
 
 
 def _check_canonical(graph: dict) -> list[str]:
@@ -376,78 +311,8 @@ def _check_canonical(graph: dict) -> list[str]:
 
 
 def _check_target_shape(graph: dict, plan_dir: Path | None) -> list[str]:
-    """(k) task-graph-derived の renderer 前提と phase-gate/leaf shape を fail-closed 検査する。"""
-    nodes = _nodes(graph)
-    edges = _edges(graph)
-    out: list[str] = []
-    node_ids = {n.get("id") for n in nodes}
-    parent_pairs = {
-        (e.get("from"), e.get("to")) for e in edges if e.get("type") == "parent_of"
-    }
-    producing_nodes = {
-        e.get("from") for e in edges if e.get("type") == "produces"
-    }
-    roots_by_phase: dict[str, list[dict]] = {}
-    leaves: list[dict] = []
-    for node in nodes:
-        nid = node.get("id")
-        ek = node.get("execution_kind")
-        if ek == "phase-gate":
-            roots_by_phase.setdefault(node.get("phase_ref"), []).append(node)
-            if nid != node.get("phase_ref"):
-                out.append(f"(k) phase-gate id must equal phase_ref: {nid}")
-            if node.get("route_ref") is not None or node.get("task_spec_ref") is not None:
-                out.append(f"(k) phase-gate must have null route_ref/task_spec_ref: {nid}")
-            continue
-        leaves.append(node)
-        if ek not in ("direct-task", "component-build"):
-            out.append(f"(k) executable leaf {nid} has invalid/missing execution_kind: {ek!r}")
-        task_spec_ref = node.get("task_spec_ref")
-        if not (isinstance(task_spec_ref, str) and task_spec_ref.startswith("task-specs/") and task_spec_ref.endswith(".md")):
-            out.append(f"(k) executable leaf {nid} requires task_spec_ref=task-specs/*.md")
-        if ek == "component-build" and not (
-            isinstance(node.get("route_ref"), str) and node.get("route_ref").strip()
-        ):
-            out.append(f"(k) component-build leaf {nid} requires explicit route_ref")
-        if ek == "direct-task" and node.get("route_ref") is not None:
-            out.append(f"(k) direct-task leaf {nid} must have null route_ref")
-        if not (isinstance(node.get("acceptance_criterion"), str) and node.get("acceptance_criterion").strip()):
-            out.append(f"(k) executable leaf {nid} requires non-empty acceptance_criterion")
-        if not (isinstance(node.get("write_scope"), str) and node.get("write_scope").strip()):
-            out.append(f"(k) executable leaf {nid} requires non-empty write_scope")
-        if nid not in producing_nodes:
-            out.append(f"(k) executable leaf {nid} requires at least one produces artifact")
-        phase_ref = node.get("phase_ref")
-        if (phase_ref, nid) not in parent_pairs:
-            out.append(f"(k) executable leaf {nid} is not parented by phase root {phase_ref}")
-
-        if plan_dir is not None and isinstance(task_spec_ref, str):
-            spec_path = plan_dir / task_spec_ref
-            if not spec_path.is_file():
-                out.append(f"(k) task_spec_ref does not exist for {nid}: {task_spec_ref}")
-            else:
-                try:
-                    fm = derive_task_graph.specfm.parse_frontmatter(spec_path.read_text(encoding="utf-8"))
-                except OSError as exc:
-                    out.append(f"(k) task spec unreadable for {nid}: {exc}")
-                else:
-                    if fm.get("id") != nid:
-                        out.append(f"(k) task spec id mismatch for {nid}: {fm.get('id')!r}")
-                    for field in ("objective", "verify"):
-                        if not (isinstance(fm.get(field), str) and fm.get(field).strip()):
-                            out.append(f"(k) task spec {task_spec_ref} requires non-empty {field}")
-
-    for phase_ref in sorted({n.get("phase_ref") for n in leaves}, key=str):
-        roots = roots_by_phase.get(phase_ref, [])
-        if len(roots) != 1:
-            out.append(f"(k) phase {phase_ref} requires exactly one phase-gate root (found {len(roots)})")
-    for phase_ref, roots in roots_by_phase.items():
-        if phase_ref not in {n.get("phase_ref") for n in leaves}:
-            out.append(f"(k) phase-gate has no executable leaves: {phase_ref}")
-        for root in roots:
-            if root.get("id") not in node_ids:
-                out.append(f"(k) phase-gate missing from node set: {root.get('id')}")
-    return out
+    """(k) target shape 検査は shape support module へ委譲する。"""
+    return shape_checks.check_target_shape(graph, plan_dir, derive_task_graph)
 
 
 def validate(
@@ -461,6 +326,7 @@ def validate(
     nodes = _nodes(graph)
     edges = _edges(graph)
     violations: list[str] = []
+    violations += _check_id_uniqueness(nodes, inventory)
     violations += _check_dag(edges)
     violations += _check_orphans(nodes, edges)
     violations += _check_producer_unique(edges)

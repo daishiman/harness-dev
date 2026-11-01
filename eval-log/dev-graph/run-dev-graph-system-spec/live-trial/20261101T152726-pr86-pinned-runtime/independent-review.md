@@ -1,0 +1,9 @@
+# 122 最終独立goal評価
+
+**FAIL**。orchestratorがowned reaperで部分中断し、公開終了snapshotのC05 reportはFAIL、graph.nodesは0、`out/status.json`は存在しない。正規フロー完遂とconfirmed specification/architectureのlineage付きC02登録が未達である。
+
+中断原因となったC06のqa-009/qa_refs検出は、正本が許可する補助履歴保持をactive consumerへ拡大した監査範囲の過剰拡張であり、入力不足とはしない。native FAILは変更していない。この原因分類は、実成果未達の最終FAILを覆さない。
+
+C08のWebSearchは1回試行後、disabledとして拒否された。検索成功は確認されない。native finalには、5targetへの既実施WebFetchとcatalogで継続したと記載されている。
+
+公開 `transcript.jsonl` SHA-256: `4ae4241fca3860232c9494708d7c57a5b1c53fc32ee00f9cb91444e3ac2a5b74`。全evidence_refとobservations3件の相対pathがD内実在fileへ解決することを検査済み。JSONに各原本の現在SHAを記録した。初期周回1のIN1は確認済みだが、成功時に必要な全stream・全prompt・全監査・予算の追加監査は行わず、未確認事項をblockerへ増やしていない。

@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a04e9550c49f45f91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e9a7823c-edca-4c21-8eda-73ae3fa910a0",
+      "line": 46,
+      "prefix_bytes": 387560,
+      "prefix_sha256": "4fe65efa38f7fec012d8e77b6bfd499bbe9603d999584feee500a435287604d7",
+      "timestamp": "2026-11-01T15:41:07.633Z"
+    },
+    "result": {
+      "uuid": "1050a697-669f-46af-bc60-e0ddb8a538a9",
+      "line": 49,
+      "prefix_bytes": 393006,
+      "prefix_sha256": "7f77fdffc9658fcd483a25432f983a087d42ac2735ae10e6f00edab1ad988884",
+      "timestamp": "2026-11-01T15:41:10.337Z"
+    }
+  },
+  "tool_use_id": "toolu_01QrJaZ9TG8WoBNJctHd28ZF",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "Find the \"Last modified\" date in the footer and the text about job idempotency (CronJob limitations).",
+    "offset": 100000
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified:** May 13, 2026 at 9:32 PM PST, in commit [c37d572161](https://github.com/kubernetes/website/commit/c37d57216103cd3473e82dc7b481bf5b34a1a197) (\"update api-reference and ref shortcode callers for new URL structure\").\n\n**Job idempotency** (under \"CronJob limitations\" → \"Job creation\"):\n\n> A CronJob creates a Job object approximately once per execution time of its schedule. The scheduling is approximate because there are certain circumstances where two Jobs might be created, or no Job might be created. Kubernetes tries to avoid those situations, but does not completely prevent them. Therefore, the Jobs that you define should be _idempotent_.\n\nBecause duplicate or missed Jobs are possible, your Job's work should be safe to repeat.",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified:** May 13, 2026 at 9:32 PM PST, in commit [c37d572161](https://github.com/kubernetes/website/commit/c37d57216103cd3473e82dc7b481bf5b34a1a197) (\"update api-reference and ref shortcode callers for new URL structure\").\n\n**Job idempotency** (under \"CronJob limitations\" → \"Job creation\"):\n\n> A CronJob creates a Job object approximately once per execution time of its schedule. The scheduling is approximate because there are certain circumstances where two Jobs might be created, or no Job might be created. Kubernetes tries to avoid those situations, but does not completely prevent them. Therefore, the Jobs that you define should be _idempotent_.\n\nBecause duplicate or missed Jobs are possible, your Job's work should be safe to repeat.",
+    "durationMs": 2428,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

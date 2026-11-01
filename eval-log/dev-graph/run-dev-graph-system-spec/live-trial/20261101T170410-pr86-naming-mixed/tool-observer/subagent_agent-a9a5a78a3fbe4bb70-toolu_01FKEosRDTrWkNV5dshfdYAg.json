@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-a9a5a78a3fbe4bb70",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "edf7800c-129f-4515-b0b0-01e1147cc98c",
+      "line": 93,
+      "prefix_bytes": 567129,
+      "prefix_sha256": "9686b5ede3f68639c62b4b3d0292217b48b42aae0f81368ee530df9ddf0d46c4",
+      "timestamp": "2026-11-01T08:13:31.603Z"
+    },
+    "result": {
+      "uuid": "e8ee23b6-65eb-4763-9f2f-1e3ca6d195db",
+      "line": 94,
+      "prefix_bytes": 568846,
+      "prefix_sha256": "0b939e7161db800043f33f28958e1ab971b9e3a499433c6d8f49e7f6a8c0083b",
+      "timestamp": "2026-11-01T08:13:32.873Z"
+    }
+  },
+  "tool_use_id": "toolu_01FKEosRDTrWkNV5dshfdYAg",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec; for f in infrastructure maintenance-ops security ui-ux; do echo \"=========== $f\"; awk '/^## 上流指針/,/^## 確定内容/' $f.md | sed -n '5,20p'; awk '/^### 本章での適用/,/deep knowledge card/' $f.md; awk '/^### 確定判断ごとの原則採否/,/^## 最新ドキュメント出典/' $f.md; awk '/^## 最新ドキュメント出典/,0' $f.md | tail -n +2; done",
+    "description": "Extract design knowledge sections (part 2)"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

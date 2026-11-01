@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3bbfb008-e2cb-4d40-9d52-d2a3522baed4",
+      "line": 763,
+      "prefix_bytes": 4223212,
+      "prefix_sha256": "ea5b7bab03e0a00952391f66d8f0225bd24520963ab512a01a4bec907ffa7250",
+      "timestamp": "2026-11-01T11:11:40.654Z"
+    },
+    "result": {
+      "uuid": "46abb260-1333-44dd-92b5-179039046a06",
+      "line": 764,
+      "prefix_bytes": 4225463,
+      "prefix_sha256": "8c41446adbc800aba43fbaa6932b23e88b94b5622a25fb2f3174e3db80e17242",
+      "timestamp": "2026-11-01T11:11:44.023Z"
+    }
+  },
+  "tool_use_id": "toolu_01F6BfjUxZET66Q9BV7KwLzZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/dev-graph/skills/run-dev-graph-node/ plugins/dev-graph/skills/run-dev-graph-node/prompts; ls plugins/dev-graph/scripts | grep -i resolve; ls eval-log eval-log/run-dev-graph-system-spec; sed -n 1,40p plugins/dev-graph/skills/run-dev-graph-node/SKILL.md | grep -n -A12 \"goal_seek\\|feedback_contract\\|criteria\" | head -60",
+    "description": "List C02 prompts and resolver script"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/skills/run-dev-graph-node/:\nprompts\nSKILL.md\n\nplugins/dev-graph/skills/run-dev-graph-node/prompts:\nR0-context.md\nR1-classify.md\nR2-preview.md\nR3-write.md\nR4-apply-template.md\nresolve-repo-context.py\neval-log:\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec:\nc24-receipt.json\npreflight-report.json\nR3-import",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/skills/run-dev-graph-node/:\nprompts\nSKILL.md\n\nplugins/dev-graph/skills/run-dev-graph-node/prompts:\nR0-context.md\nR1-classify.md\nR2-preview.md\nR3-write.md\nR4-apply-template.md\nresolve-repo-context.py\neval-log:\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec:\nc24-receipt.json\npreflight-report.json\nR3-import",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

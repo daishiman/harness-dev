@@ -1,0 +1,59 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "B1: C02の正規実行契約が未達。toolu_015MoxNf6Xrf2Es3DDVejyDiのdry-run後、toolu_01CryZUNMy6diusiEeh2uYEQが最小実成果をdry-run preview/write_count=0としてstandard・semantic_evaluator_startedを記録し、revision0のbaselineを置いた後、親mainのtoolu_01UwW3yvxE6nL3t3dnY6AYrbがaddを直接実行した。選択後の未達R3-write等を実行する責務Agentは全10rawstreamに存在せず、後段のAgentは独立integrity auditorとC19 R3 verifierだけ。C02 SKILLのfork:subagent/未達responsibility実行契約と、task.mdの「dry-runだけでstandardを記録してmainで未達writerを直接実行しない」「standard後の未達responsibilityはAgentwriter」を満たさない。成果2nodeの整合とwriter-onlyは成立するが、今回要求された正規C02フローの受入証拠にはならない。"
+  ],
+  "evaluator_id": "/root/review_sysspec117",
+  "transcript_sha256": "93fc43bb603fc631b7f98785d013b29336a946ae1b622df939581904deec0be7",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a94daf9eeff991113.jsonl",
+    "transcript/subagents/agent-a86ae6d242a7a4daf.jsonl",
+    "transcript/subagents/agent-af2282454e1db0b43.jsonl",
+    "transcript/subagents/agent-a8e6879606070d8c0.jsonl",
+    "transcript/subagents/agent-ade3cf2dc85799450.jsonl",
+    "transcript/subagents/agent-a4f0555d775afc22e.jsonl",
+    "transcript/subagents/agent-a9356c32580abc2ba.jsonl",
+    "tool-observer/index.json",
+    "fx-eval-log/run-dev-graph-node-artifact-delivery.json",
+    "fx-eval-log/run-dev-graph-node-progress.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/specs/billing-audit-system-spec.md",
+    "fx-final/tree/architecture/billing-audit-system-architecture.md",
+    "poll-state.json",
+    "poll.log",
+    "poll-normalization.json",
+    "poll-observer-path-correction.json",
+    "evidence-redaction.json",
+    "task.md",
+    "project-instructions.md",
+    "closure-at-launch.txt",
+    "out/status.json"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本全文: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。実観測: C19周回1のtoolu_01NdyAL8RTzHc9KDVXpwnjyW、周回2のtoolu_012Joa5j9A5tJpv1dE5uo1Zxで3CLI全exit0。progressは各周回の実測を記録し、後周回からの遡及はない。独立再検証でもstrict schema/lineage/C05 report帰属はexit0。IN1の直接条件は成立。",
+    "OUT1": "正本全文: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。実観測: specificationとarchitectureの2nodeは現行0.1.24のindex/要件定義書を引用し、source_digest=evaluated_digest=C05 artifact_snapshot=実bytes、confirmed/pass/readiness completeを保持。dev-graphのsource閉包は起動時と同一で、実走が同等ロジックを新設せずcanonical compiler/C02 writerのみを使用した。引用・非複製とscenario3観測の直接成果は確認できる。ただしB1のため今回の正規flow全体の受入はFAIL。"
+  },
+  "notes": [
+    "descriptionが約束する引用付き取込の成果状態は実在し、起動/完走だけを合格根拠にしていない。FAILは補助metadataの欠落や成果物不在ではなく、明示必須のC02選択後実行経路の欠落による。",
+    "C05は全10Markdown・state/refs・全18prompt・R1/R2/rubric/aspect/schema・C04自身/own mapを全文取得。18prompt別の実内容根拠があり、意味評価の省略は認められない。C05の保存はliteral Path+JSON heredocの2JSONだけで、C06 JSONと実保存は文字単位一致、3gate stdoutとreport内容/開始終了snapshotも一致。",
+    "C07/C06/C08は1message1foregroundで直列、name/background指定なし、実最終応答/dispatch token/6ledger行のresolvedと3receiptを確認した。C08はSSOT/catalogを全文取得し許可5hostへWebFetch6件、Kubernetes末尾を追加取得した。全state未読を担当外の不足へ拡大していない。",
+    "C06/C08のadapter本文はnative systemに完全投入済み。adapter frontmatter全文の取得は確認できず、tools/modelはnative metadataへ反映。owner/version/phase等の補助metadata差分単独では成果・安全性・意味評価信頼性への阻害が立証できずblockerにしていない。C02 SKILLもnative本文注入は確認できるがfrontmatterを含むReadはない。",
+    "前段提示の差分: C19 preflightはpath/digestをstdout提示し、開き方はstandard記録JSON内に初出。C02はdry-run提示でstandardへ進んでおりB1に統合。preset standardは改善深度の事前回答で、最小実成果と選択後forkを免除する根拠ではない。",
+    "公開10rawfileは固定private原本から同一の匿名化置換44回だけで厳密再構成、各行数を維持。両prefixも原本の正規prefixと全件一致。observer215eventは全10streamから独立再構成しmissing/extra/different=0。scope除外のAgent/Write/observer自己I/Oもnative rawで確認し、未実施の推測に使っていない。",
+    "budget正規計測: measured=true、10streams、161 unique assistant message IDs、total_tokens=13,872,426 <23,000,000。canonical pollはDONE2131s、公開elapsed=ceil(observed-start)=2133 <3300。observer-path補正は同じstart/stateを保持、時間/上限をresetしていない。",
+    "source SMD SHA=10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、closure=ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef、公開SS0.1.24を確認。C19本文6キー/hash/checklistは成立し、HC生成用全文schemaの未宣言enum等へ拡大適用していない。",
+    "実R3 verifierはPASSを返したが、C02の選択時点/責務実行forkを監査していないためB1を覆さない。R3応答内のpayloadとC02 Skill相対順序の説明はraw実時系列と異なるが、evaluator PASSより両方後というR3境界は守られている。",
+    "過去trial transcript/verdict/independent reviewとinput-reviewの結論は根拠にしていない。positive-input-v5は新しい合成givenとして扱い、種のcompiled章/PASSを今回の実走証拠に代用していない。"
+  ]
+}

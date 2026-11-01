@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "03989a09-50d4-46ab-b581-b55a486fc8e2",
+      "line": 189,
+      "prefix_bytes": 1191605,
+      "prefix_sha256": "756b3e3fb66a771422bfd504de98bbb9d9ff691e4fd93e93a871f09ff70774a8",
+      "timestamp": "2026-11-01T14:05:10.843Z"
+    },
+    "result": {
+      "uuid": "2d863248-f217-4919-a1fe-8e10889c6f9e",
+      "line": 196,
+      "prefix_bytes": 1198698,
+      "prefix_sha256": "2a395307c5858dc340800cafa1f316ada70c34faf38b6af47bd8140916e3bc6d",
+      "timestamp": "2026-11-01T14:05:17.566Z"
+    }
+  },
+  "tool_use_id": "toolu_01QmTPnnZFxNHzsZ6fGuYDag",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"six_key_check_exit=$?\"",
+    "description": "Verify intermediate 6 keys and hash"
+  },
+  "is_error": false,
+  "tool_result_content": "six_key_check_exit=0",
+  "tool_use_result": {
+    "stdout": "six_key_check_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

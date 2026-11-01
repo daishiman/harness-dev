@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a24def12-e9b1-4751-8a9a-85af0b2e7043",
+      "line": 286,
+      "prefix_bytes": 2180756,
+      "prefix_sha256": "4369321bbc7dcd823da14de0e02224a8c68fee17d0bf75db812890f69c0b1462",
+      "timestamp": "2026-11-01T14:06:31.810Z"
+    },
+    "result": {
+      "uuid": "b9366a98-3d57-46ca-af24-858dd64859b2",
+      "line": 289,
+      "prefix_bytes": 2184487,
+      "prefix_sha256": "7b71d20abe74c5ee6091d47bbde5dcc5a03e6102e79698921e6ea9bc7b645ab1",
+      "timestamp": "2026-11-01T14:06:35.369Z"
+    }
+  },
+  "tool_use_id": "toolu_01GXqn3c8bVbc9AmpQjmfiCP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import json;json.load(open(\"system-spec/spec-state.json\"));print(\"parse: ok\")' && echo \"path: $CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" && shasum -a 256 system-spec/spec-state.json && echo \"開き方: less $CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"",
+    "description": "Present spec-state path, digest, open method"
+  },
+  "is_error": false,
+  "tool_result_content": "parse: ok\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "parse: ok\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json\n09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

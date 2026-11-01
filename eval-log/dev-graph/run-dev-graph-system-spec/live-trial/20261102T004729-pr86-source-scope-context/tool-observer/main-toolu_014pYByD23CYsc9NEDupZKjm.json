@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "156407f4-f526-4e9c-9d28-4d8ffff35ec6",
+      "line": 137,
+      "prefix_bytes": 924632,
+      "prefix_sha256": "a8cbd9c307a4b7ffbf09e3be568a0339f31a014b0e6832b5e17e8fa1c05e1608",
+      "timestamp": "2026-11-01T15:49:06.423Z"
+    },
+    "result": {
+      "uuid": "f9cb82ef-9b59-4398-bf36-02f0d6d19b44",
+      "line": 138,
+      "prefix_bytes": 926050,
+      "prefix_sha256": "23e3d577cf0cf39233905f021c173d4071c282f9e6d20c8f710489471bb25047",
+      "timestamp": "2026-11-01T15:49:11.991Z"
+    }
+  },
+  "tool_use_id": "toolu_014pYByD23CYsc9NEDupZKjm",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c \"import json;json.load(open('eval-log/run-dev-graph-system-spec/preflight-report.json'));print('parse ok')\" && shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json && echo \"open: cat $CLAUDE_PROJECT_DIR/eval-log/run-dev-graph-system-spec/preflight-report.json\"",
+    "description": "Guard-check and present preflight report"
+  },
+  "is_error": false,
+  "tool_result_content": "parse ok\n7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8  eval-log/run-dev-graph-system-spec/preflight-report.json\nopen: cat /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "tool_use_result": {
+    "stdout": "parse ok\n7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8  eval-log/run-dev-graph-system-spec/preflight-report.json\nopen: cat /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

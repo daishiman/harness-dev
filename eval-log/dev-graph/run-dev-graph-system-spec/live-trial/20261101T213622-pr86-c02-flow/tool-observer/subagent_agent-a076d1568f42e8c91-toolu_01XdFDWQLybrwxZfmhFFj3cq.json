@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-a076d1568f42e8c91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a9c6910c-5b35-414d-8b4a-6141afb58a4b",
+      "line": 42,
+      "prefix_bytes": 429054,
+      "prefix_sha256": "dfb387a918278a1ebdd25cdb4dc947258ea8304348ac4b038c78087032b3336f",
+      "timestamp": "2026-11-01T12:41:01.016Z"
+    },
+    "result": {
+      "uuid": "681225c6-38ad-471a-9cb9-baa13aaddcf0",
+      "line": 43,
+      "prefix_bytes": 432349,
+      "prefix_sha256": "eba3045d8e566c334fd3a9d53bde73fa30579421112cae3d0ce1a53f14354578",
+      "timestamp": "2026-11-01T12:41:04.702Z"
+    }
+  },
+  "tool_use_id": "toolu_01XdFDWQLybrwxZfmhFFj3cq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; shasum -a 256 $R/eval-log/run-dev-graph-system-spec-c24-receipt.json; python3 -B -c \"\nimport os,hashlib,json\nR='$R'\nfor p in [R, R+'/system-spec', R+'/.git', R+'/.dev-graph/state/graph.json', R+'/plugins/dev-graph']:\n    print(p, os.path.realpath(p), os.path.islink(p), os.path.exists(p))\ng=json.load(open(R+'/eval-log/run-dev-graph-system-spec-goal-spec.json'))\nprint(hashlib.sha256(g['original_goal'].encode()).hexdigest())\n\"; git -C $R rev-parse --show-toplevel --git-common-dir --git-dir HEAD; git -C $R rev-parse --path-format=absolute --git-common-dir; find $R/system-spec -type l; echo links-done",
+    "description": "Verify receipt hash, realpaths, git identity, symlinks"
+  },
+  "is_error": false,
+  "tool_result_content": "13c730238359e23b3533047006117bd8d7cf50bbc237471484ee3823a2eca12d  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-c24-receipt.json\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.dev-graph/state/graph.json /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.dev-graph/state/graph.json False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/dev-graph /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/dev-graph False True\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\n.git\n.git\ndc53750edb7baeba6dbdfd3a494b5a331bda4e50\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git\nlinks-done",
+  "tool_use_result": {
+    "stdout": "13c730238359e23b3533047006117bd8d7cf50bbc237471484ee3823a2eca12d  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-c24-receipt.json\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.dev-graph/state/graph.json /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.dev-graph/state/graph.json False True\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/dev-graph /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/dev-graph False True\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\n.git\n.git\ndc53750edb7baeba6dbdfd3a494b5a331bda4e50\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/.git\nlinks-done",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "C19 の必須 R2-delegate 独立検証が初回・再検証とも FAIL で、親 progress の checklist 3 が not_achieved のまま終了した。一次ログから固定root・毎回export・委譲先全文取得の実行は裏付けられるが、その機械一次証拠を sandbox 内の R2 検証者へ受け渡す経路が無く、自己申告だけではチェックリストを閉じられなかった。task.md は PARTIAL/not_achieved が残れば PASS を禁止しており、今回の native status=FAIL を成果物成立だけで反転できない。"
+  ],
+  "evaluator_id": "/root/review_sysspec104",
+  "transcript_sha256": "5b19158c84dbbea7a2fb2308f752f26bde820921429c0236e2aa4cbad2e53226",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "task.md",
+    "out/status.json",
+    "evidence-redaction.json",
+    "poll-normalization.json",
+    "poll-state.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec/R0-context/c24-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/agent-verification.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/agent-verification-2.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/process-attestation.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/agent-verification.json",
+    "transcript/subagents/agent-a33aac9c0aad61499.jsonl",
+    "transcript/subagents/agent-a5daec78203d87c4d.jsonl",
+    "transcript/subagents/agent-a9ee0b801353eefd7.jsonl",
+    "transcript/subagents/agent-a0eacacc983d0377d.jsonl",
+    "transcript/subagents/agent-acd3c051063eeca8e.jsonl",
+    "transcript/subagents/agent-a332e23105a14aa36.jsonl",
+    "transcript/subagents/agent-a8bf9aed79e952983.jsonl"
+  ],
+  "observations": {
+    "1": "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本 criterion: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。一次観測: 親 transcript L365→366 で周回1の正規 coverage --require-complete --require-basis --require-foundation、source-citation --state、graph-schema --strict-artifact-readiness を実行し各 exit0、空 graph も検査した。L381→382 でその後に IN1=PASS と intermediate の6必須キー・元ゴール原文・SHA-256 を記録/検査し hash=0。周回2も L851→857 で3CLIの cov=0 cit=0 schema=0 の後に progress/intermediate を保存し hash_exit=0。両行の original_goal は正本原文、hash は 30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454 で一致。OUT1 は run 内で external_pending に保たれた。IN1 の実測は成立するが、全 checklist 完了には達していない。",
+    "OUT1": "正本 criterion: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。一次観測: 正規4 Skill が起動し elicit resume、doc-fetch not_required、正規 compile で10ファイルを再生成、C05 の真の fork と C07/C06/C08 実 Agent が直列に完了した。C02 正式 Skill 起動前に親が R0-R4 を全文 Read、同一 payload の dry-run/add から2 node を登録し、confirmed/pass/readiness complete・source_version 0.1.25・原本 source_digest=evaluated_digest と今回の独立 report を保持した。C02 receipt owner/operation/graph revision0→1 と原本 bytes を照合し、同等 elicitation/compile 複製は検出されない。しかし観測1の canonical flow completes は R2 verifier 未達で成立せず、task.md の全チェックリスト完了条件を満たさないため OUT1/live goal は FAIL。"
+  },
+  "notes": [
+    "R2 の根因分類は、当該3手順の不実施を一次ログで検出したものではなく、独立検証への機械証拠 handoff 不足。初回 verifier の global transcript 探索は隔離 guard が拒否、再検証では回避せず未達を維持した。",
+    "process-attestation.json は後付けの親自己申告と明示され、独立観測の代用にはならない。記載の実作業内容は先行一次ログと一致するが、prompts_read_in_full_with_Read_tool という名称は不正確で、doc-fetch/compile prompt は Bash cat の全出力、elicit R0-R2 は persisted output を Read、R3-R5 は個別 Read で取得されている。",
+    "C05 の道具は Read/Bash(python3)/Agent、C06/C07 は native Read のみ、C08 は native Read と許可hostへの WebFetch のみ。親の cat >/dev/null ハングと TaskStop は C05 起動前であり、C05 の禁止違反ではない。",
+    "C12/C13/HS の初回実測を全 field 無改変で各監査 prompt に転記し、前後 hash 不変、state SHA と artifact_snapshot 一致を確認した。監査後の C05 L235→236 では snapshot/digest・C12両mode・C13/HSの実 exit/stdout/stderr を再取得し、L241で初回比較後 stable と判定。今回の stdout は slice 上限未満で欠落せず、全構成値の一致を一次ログから照合できる。同形の最終 receipt JSON を再生成して機械的に全体比較する形ではないため、次走では比較を明示すると判定の曖昧さを減らせる。これを出力形式だけを理由に新たな確定違反とは判定しない。",
+    "3監査は明示 background/name 無し、runtime 自動 Async 受理後に実 completion と ledger resolved を待って次を起動。receipt は起動受理 payload ではなく schema1.3 completion digest に束縛され、全3件が同一 session・正規 dispatch ID/token と対応した。",
+    "公開コピーは frozen raw の11 fileについて原本/公開 SHA を全照合し、決定論的な44置換で完全再現。他の原本 file の変更は poll-state elapsed 1862→1863 の切上げだけ。1862.6210000514984 秒の ceil、予算変更なし。source/state/graph/digest の照合は匿名化前の原本 bytes で行った。",
+    "過去 live raw は未読。source/W は無編集。最小の次走修復案は別メモ /tmp/pr86-sysspec104-review.md に記載。"
+  ]
+}

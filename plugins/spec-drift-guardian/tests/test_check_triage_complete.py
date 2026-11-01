@@ -299,6 +299,30 @@ def test_no_change_ok(tmp_path):
     assert payload["reasons"] == []
 
 
+def test_beads_tracker_key_no_change_ok(tmp_path):
+    """Beads id を 4 artifact の共通 key として close 判定できる。"""
+    issue = "HarnessHub-abc"
+    report = base_report(impacted=False)
+    verdict = base_verdict(agree=True)
+    proposal = base_proposal(status="proposed", granted=False, post_image=None)
+    audit = base_audit(verdict="PASS")
+    for artifact in (report, verdict, proposal, audit):
+        artifact["issue"] = issue
+    paths = {
+        "--triage-report": _write(tmp_path, "beads-triage-report.json", report),
+        "--triage-verdict": _write(tmp_path, "beads-triage-verdict.json", verdict),
+        "--sync-proposal": _write(tmp_path, "beads-sync-proposal.json", proposal),
+        "--sync-audit-verdict": _write(tmp_path, "beads-sync-audit-verdict.json", audit),
+    }
+    argv = [sys.executable, str(SCRIPT), "--issue", issue, "--target-root", str(tmp_path)]
+    for flag, path in paths.items():
+        argv += [flag, str(path)]
+    proc = subprocess.run(argv, capture_output=True, text=True)
+    payload = json.loads(proc.stdout)
+    assert proc.returncode == 0, proc.stderr
+    assert payload["status"] == "independently_verified_no_change"
+
+
 # --- 追加: validator fail → INCOMPLETE ---
 def test_validator_fail_incomplete(tmp_path):
     post = _make_applied_target(tmp_path)

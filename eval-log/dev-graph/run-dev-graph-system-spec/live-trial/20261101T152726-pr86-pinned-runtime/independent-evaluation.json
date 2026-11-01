@@ -1,0 +1,42 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "orchestratorによる部分中断で正規フローが完了せず、C05 reportはFAILのまま、confirmed specification/architectureのC02取込は0件である。完了markerも存在せず、目的・正本3観測の完了条件が未達。"
+  ],
+  "evaluator_id": "/root/review_sysspec122_fresh",
+  "transcript_sha256": "4ae4241fca3860232c9494708d7c57a5b1c53fc32ee00f9cb91444e3ac2a5b74",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "abort-reason.json",
+    "collection-note.json",
+    "automatic-reap.log",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "transcript/subagents/agent-a1449746db8c235e1.jsonl",
+    "tool-observer/subagent_agent-a04e9550c49f45f91-toolu_01B3knwSwbV1wmqbNnTrZ9ar.json",
+    "transcript/subagents/agent-a04e9550c49f45f91.jsonl"
+  ],
+  "observations": {
+    "1": "fx-eval-log/system-spec-completeness-report.json",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/graph.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。観測: 初期周回1は3gate exit0を確認済み。中断後の全周回達成は確認しておらず、最終完了の根拠にしない。",
+    "OUT1": "正本: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。観測: 最終graph.nodes=0で引用/lineage/evaluator evidence付き登録成果がなく、受入条件は未達。"
+  },
+  "notes": [
+    "C06のnative FAILは保全した。当該qa-009の補助qa_refs保持をactive consumerへ拡大したblockingは、R6とspec-state-contract L403の明示許可を越える監査範囲の過剰拡張であり、入力不足とは判定しない。この原因分類は未完了runをPASSへ変更しない。",
+    "C08はWebSearchを1回試行したが、No such tool available/disabledで拒否され、成功した検索・外部送信は観測されない。C08のnative finalは、既実施の5target WebFetchとcatalogを根拠として継続した旨を記載している。拒否と継続を成功検索と混同しない。",
+    "今回のFAIL確定に不要な全stream再監査、C05全18prompt意味評価、全監査の内容再評価、最終予算検証は実施していない。未確認事項を追加blockerにしていない。",
+    "公開終了原本を現在SHAへ束縛した。out/status.json不在、partial_snapshot=true、completion_claimed=false、automatic-reap.logのREAPEDを確認した。",
+    "abort-reason.json: sha256=696ad6ccf1b5c7bd4b18b72cc864eb35c6664617bda2240252092ad79eca5a6d",
+    "collection-note.json: sha256=1455b1f0f5d8a8b798fde6a8a809b775cb8704f4f7d5d35d48a9fbca0216b007",
+    "automatic-reap.log: sha256=a192cb19c7da454e5d959b696188d7aa33a86be799162a88ed90f7e1249e0e55",
+    "fx-eval-log/system-spec-completeness-report.json: sha256=568ee385e7ee2a3ef6af19fcf11c4aee1a68bcc23063bc46ffd6b7b954ea1b8d",
+    "fx-final/tree/.dev-graph/state/graph.json: sha256=27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177",
+    "transcript/subagents/agent-a1449746db8c235e1.jsonl: sha256=a3c501fab29dd0ba8bfa64a3f1bf824914257643f822200c6ba054ee20215cc3",
+    "tool-observer/subagent_agent-a04e9550c49f45f91-toolu_01B3knwSwbV1wmqbNnTrZ9ar.json: sha256=994c9cd3b3d911f3a51dffb5dc3457cebb2b8a7f95fc22801c5bd5d8d17bd90a",
+    "transcript/subagents/agent-a04e9550c49f45f91.jsonl: sha256=8da65d7b7bc072c061743c27e2172f77386a937150c91e27b68f971657a0a382"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "afa26f2e-945c-459b-8b72-8583e5f10222",
+      "line": 532,
+      "prefix_bytes": 2422399,
+      "prefix_sha256": "c824318c34eb955c5fa74715fa007e46a9c1ae9663e4baed211e0d4ba705d47b",
+      "timestamp": "2026-11-01T08:21:00.556Z"
+    },
+    "result": {
+      "uuid": "5c61ffa4-3641-4eeb-8b49-0c454b5067c9",
+      "line": 533,
+      "prefix_bytes": 2423797,
+      "prefix_sha256": "fadf2e72303785d69e202960dddcd10ace71c98fe906f35a772f356a829a83eb",
+      "timestamp": "2026-11-01T08:21:05.179Z"
+    }
+  },
+  "tool_use_id": "toolu_01CuFfAU6mgwad6vTP5xsCnj",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import json;r=json.load(open(\"eval-log/system-spec-completeness-report.json\"));print(r.get(\"verdict\"),r.get(\"spec_dir\"),len(r.get(\"gaps\") or []))'; shasum -a 256 eval-log/system-spec-completeness-report.json; H=plugins/system-spec-harness/scripts; S=system-spec/spec-state.json; python3 -B $H/validate-coverage-matrix.py --matrix $S --require-complete --require-basis --require-foundation >/dev/null; echo cov=$?; python3 -B $H/validate-source-citation.py --targets $S --references system-spec/fetched-references.json --state $S --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo cit=$?; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness >/dev/null; echo schema=$?; python3 -c 'import json;g=json.load(open(\".dev-graph/state/graph.json\"));print(\"graph rev\",g[\"graph_revision\"],\"nodes\",len(g[\"nodes\"]))'"
+  },
+  "is_error": false,
+  "tool_result_content": "FAIL /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec 3\nbbe691910f1070d40ded1e875c2f3c8d2e2638decfdfcefa0a091314b77d4771  eval-log/system-spec-completeness-report.json\ncov=0\ncit=0\nschema=0\ngraph rev 0 nodes 0",
+  "tool_use_result": {
+    "stdout": "FAIL /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec 3\nbbe691910f1070d40ded1e875c2f3c8d2e2638decfdfcefa0a091314b77d4771  eval-log/system-spec-completeness-report.json\ncov=0\ncit=0\nschema=0\ngraph rev 0 nodes 0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

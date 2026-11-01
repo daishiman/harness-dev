@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3b8d7036-a2c5-4e82-b0dd-f63d53e4de70",
+      "line": 780,
+      "prefix_bytes": 5365643,
+      "prefix_sha256": "9b15be23f017eeddbc28b7b61d339cd56b0a529c5002924e8d9a8b7580d36847",
+      "timestamp": "2026-11-01T06:42:02.562Z"
+    },
+    "result": {
+      "uuid": "6376de8b-ac19-450a-89b2-a840cfec452e",
+      "line": 781,
+      "prefix_bytes": 5366806,
+      "prefix_sha256": "a95e2f9507eed832e5cf6db05465ab9d5b1b0021b5cc23de902f2b4ba3069c3c",
+      "timestamp": "2026-11-01T06:42:04.508Z"
+    }
+  },
+  "tool_use_id": "toolu_017YHuxHcGvQfcG1M4QE5E2i",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -nE \"elicit|compile-spec|render_chapter\" plugins/dev-graph/scripts/register-package.py | head",
+    "description": "Inspect match in register-package.py"
+  },
+  "is_error": false,
+  "tool_result_content": "196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+  "tool_use_result": {
+    "stdout": "196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

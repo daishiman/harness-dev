@@ -1,0 +1,38 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "C07 の役割固有ツール契約違反。transcript/subagents/agent-ab804216afad12a2d.jsonl の L32 で `grep -rl \"missing_effect\" . | head`、L36 で独自 Python による required-info-catalog.json 抽出と `ls`、L40 で独自 Python による item 集計を実行している。正規 C12 の loop/--require-complete だけに Bash を限定する C05 SKILL/R2-delegate、C07 R7 Layer 3.2/4.3、および実起動 prompt に反する。L14 の必読 R7 読込と L19 の正規二モード成功後に実行されており、道具宣言検索や単なる未遂ではない。したがって正規フロー完了を要する scenario 観測1と C19 OUT1 の受入を満たさない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec102"
+  },
+  "transcript_sha256": "f181f077c8563a368713e23779441449bbb1abc3017607ec747c3c13e885f545",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-a7c15c26886a8353a.jsonl",
+    "transcript/subagents/agent-ab804216afad12a2d.jsonl",
+    "transcript/subagents/agent-a7b70d7d8a721841f.jsonl",
+    "transcript/subagents/agent-a18670fda0d67cd81.jsonl",
+    "transcript/subagents/agent-a900f2221b068bdef.jsonl",
+    "transcript/subagents/agent-a3c011718a76b7323.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-goal-spec.json",
+    "fx-eval-log/run-dev-graph-system-spec/artifact-delivery.json",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/import-report.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/manifest.tsv",
+    "fixture-provenance.json",
+    "plugins-copy.json",
+    "closure-at-launch.txt",
+    "guard.jsonl",
+    "poll-state.json",
+    "poll-normalization.json",
+    "evidence-redaction.json"
+  ]
+}

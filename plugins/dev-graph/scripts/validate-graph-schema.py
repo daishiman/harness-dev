@@ -2,10 +2,10 @@
 # /// script
 # name: validate-graph-schema
 # purpose: Perform side-effect-free fail-closed validation of canonical dev-graph nodes, artifacts, and feature packages.
-# inputs: ["argv: --graph FILE --repo-root PATH?"]
-# outputs: ["stdout: JSON validation report (graph_validation = graph 全体, node_readiness = node 単位)"]
+# inputs: ["argv: --graph FILE|- --repo-root PATH? --require-canonical-envelope? --strict-artifact-readiness?", "stdin: preview graph JSON when --graph -"]
+# outputs: ["stdout: JSON validation report (graph_validation = graph 全体, node_readiness = node 単位, artifact_readiness = 本文の heading_missing/placeholder_only_section)"]
 # requires-python = ">=3.10"
-# dependencies: []
+# dependencies: ["../lib/graph_envelope.py", "../lib/graph_artifact_readiness.py"]
 # contexts: [A, B, C, E]
 # network: false
 # write-scope: none
@@ -26,9 +26,18 @@ from urllib.parse import urlsplit
 # harness に書かない (子の起動にも -B を渡す)。
 sys.dont_write_bytecode = True
 
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PLUGIN_ROOT / "lib"))
+
 from _common import ContractError, contained, dump, load_json
 
-PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+# lib を毎回 exec し直す。test が本 script と ``_common`` を別インスタンスとして読み直したとき、キャッシュ済み
+# lib の ContractError だけが旧世代のクラスに残り、呼出側の ``except ContractError`` が取り逃がす。
+sys.modules.pop("graph_artifact_readiness", None)
+from graph_artifact_readiness import missing_required_headings, placeholder_sections
+from graph_envelope import envelope_violations
+
+CANONICAL_STORE_RELATIVE = PurePosixPath(".dev-graph/state/graph.json")
 SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "graph-node.schema.json"
 TEMPLATE_CONTRACT_PATH = PLUGIN_ROOT / "templates" / "template-contract.json"
 PHASES = {f"P{i:02d}" for i in range(1, 14)}
@@ -40,6 +49,11 @@ ROOT_BY_KIND = {
     "feature": "features",
     "document": "docs",
 }
+# heading_missing を見る kind。task は conditional_required_sections (system_development 系統) を
+# node の lineage で選ぶので世代差を誤検出しない。issue は「概要」見出しを省く慣習と契約が
+# 食い違うだけの誤検出源なので対象外。placeholder_only_section は全 kind を見る。
+HEADING_MISSING_KINDS = {"architecture", "specification", "task"}
+READINESS_CODES = {"heading_missing", "placeholder_only_section"}
 
 
 def nodes_of(data: Any) -> list[dict[str, Any]]:
@@ -47,6 +61,24 @@ def nodes_of(data: Any) -> list[dict[str, Any]]:
     if not isinstance(values, list) or not all(isinstance(item, dict) for item in values):
         raise ContractError("graph must be an array or an object with nodes[]")
     return values
+
+
+def envelope_findings(document: Any) -> list[dict[str, str]]:
+    """canonical store の外枠を検査し、C11 の finding 形式へ写す。
+
+    ``nodes_of()`` は nodes[] を取り出した時点で外枠を捨てるため、C11 は長く「store が
+    canonical writer の書いた形か」を見ていなかった。C10 PreToolUse は書込みを別 script
+    file へ移した間接起動を原理的に遮断できないので、遮断が閉じない範囲は store 側の
+    検査で拾う必要がある。未知 key の混入・schema_version の書換・graph_revision の
+    型崩れは、いずれも正規 writer が作らない形であり迂回書込みの直接の痕跡になる。
+
+    検査対象は canonical store を読んだ経路に限る。``--graph -`` の preview や部分 graph は
+    そもそも外枠を持たない正当な入力であり、ここで落とすと dry-run 検証が壊れる。
+    """
+    return [
+        {"node": "$graph", "code": "envelope_violation", "detail": detail}
+        for detail in envelope_violations(document)
+    ]
 
 
 def _is_type(value: Any, expected: str) -> bool:
@@ -215,8 +247,18 @@ def _repo_root_for(graph: Path, explicit: str | None) -> Path:
     raise ContractError("--repo-root is required when --graph is outside the canonical .dev-graph tree")
 
 
+def _is_canonical_store(graph: Path, repo_root: Path) -> bool:
+    """検証対象が repo の canonical store (.dev-graph/state/graph.json) 自身かを返す。"""
+    try:
+        relative = graph.resolve().relative_to(repo_root.resolve())
+    except (OSError, ValueError):
+        return False
+    return PurePosixPath(relative.as_posix()) == CANONICAL_STORE_RELATIVE
+
+
 def artifact_findings(
-    nodes: list[dict[str, Any]], repo_root: Path | None, template_contract: dict[str, Any]
+    nodes: list[dict[str, Any]], repo_root: Path | None, template_contract: dict[str, Any],
+    allow_missing_artifacts: bool = False,
 ) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
     required_frontmatter = set((template_contract.get("common_frontmatter") or {}).get("required") or [])
@@ -241,7 +283,8 @@ def artifact_findings(
             findings.append({"node": node_id, "code": "artifact_path_invalid", "detail": str(exc)})
             continue
         if not artifact.is_file():
-            findings.append({"node": node_id, "code": "artifact_missing", "detail": raw_path})
+            if not allow_missing_artifacts:
+                findings.append({"node": node_id, "code": "artifact_missing", "detail": raw_path})
             continue
         try:
             frontmatter = frontmatter_of(artifact)
@@ -254,6 +297,41 @@ def artifact_findings(
             if key in node and frontmatter.get(key) != node.get(key):
                 findings.append({"node": node_id, "code": "frontmatter_parity_error", "detail": key})
     return findings
+
+
+def readiness_findings(
+    nodes: list[dict[str, Any]], repo_root: Path | None, template_contract: dict[str, Any],
+) -> list[dict[str, str]]:
+    """artifact 本文の readiness (必須見出しの欠落と、template 既定文のままの section) を返す。
+
+    graph の妥当性とは別の判定なので ``validate()`` には混ぜない。C02 は template 既定文の draft を
+    受け付けて ``implementation_readiness`` に記録する設計であり、ここを violation にすると
+    書込み前検証が draft を拒むようになる。格上げは CLI の ``--strict-artifact-readiness`` だけが行う。
+    未配置・読めない artifact は ``artifact_findings`` が報告済みなので、ここでは黙って飛ばす。
+    """
+    if repo_root is None:
+        return []
+    findings: list[dict[str, str]] = []
+    for index, node in enumerate(nodes):
+        node_id = str(node.get("graph_node_id") or node.get("id") or f"nodes[{index}]")
+        kind = node.get("artifact_kind", node.get("kind"))
+        raw_path = node.get("file_path")
+        if not isinstance(kind, str) or not isinstance(raw_path, str):
+            continue
+        local: list[dict[str, str]] = []
+        try:
+            artifact = contained(repo_root / raw_path, repo_root, must_exist=False)
+            if not artifact.is_file():
+                continue
+            if kind in HEADING_MISSING_KINDS:
+                local += [{"node": node_id, "code": "heading_missing", "detail": section}
+                          for section in missing_required_headings(artifact, kind, template_contract, node)]
+            local += [{"node": node_id, "code": "placeholder_only_section", "detail": section}
+                      for section in placeholder_sections(artifact, kind, template_contract, TEMPLATE_CONTRACT_PATH.parent)]
+        except (ContractError, OSError):
+            continue
+        findings.extend(local)
+    return sorted(findings, key=lambda item: (item["node"], item["code"], item["detail"]))
 
 
 def domain_findings(nodes: list[dict[str, Any]]) -> list[dict[str, str]]:
@@ -350,6 +428,7 @@ def domain_findings(nodes: list[dict[str, Any]]) -> list[dict[str, str]]:
 def validate(
     nodes: list[dict[str, Any]], schema: dict[str, Any] | None = None,
     *, repo_root: Path | None = None, template_contract: dict[str, Any] | None = None,
+    allow_missing_artifacts: bool = False,
 ) -> list[dict[str, str]]:
     canonical_schema = schema or load_json(SCHEMA_PATH)
     if not isinstance(canonical_schema, dict):
@@ -359,23 +438,58 @@ def validate(
         raise ContractError(f"template contract must be an object: {TEMPLATE_CONTRACT_PATH}")
     findings = [item for index, node in enumerate(nodes) for item in schema_findings(node, canonical_schema, index)]
     findings.extend(domain_findings(nodes))
-    findings.extend(artifact_findings(nodes, repo_root, contract))
+    findings.extend(artifact_findings(nodes, repo_root, contract, allow_missing_artifacts))
     return sorted(findings, key=lambda item: (item["node"], item["code"], item["detail"]))
+
+
+def readiness_missing_sections(violations: list[dict[str, str]]) -> list[str]:
+    return sorted({
+        item["detail"] for item in violations
+        if item["code"] in {"frontmatter_missing", "artifact_missing", *READINESS_CODES}
+        or (item["code"] == "schema_violation" and "required property" in item["detail"])
+    })
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--graph", required=True)
+    parser.add_argument("--graph", required=True,
+                        help="graph JSON path、または '-' で stdin から preview graph を読む (dry-run 用)")
     parser.add_argument("--repo-root")
+    parser.add_argument("--require-canonical-envelope", action="store_true",
+                        help="入力が canonical store でなくても envelope を必須にする (監査経路用)")
+    parser.add_argument("--strict-artifact-readiness", action="store_true",
+                        help="artifact 本文の heading_missing/placeholder_only_section を violation に格上げする "
+                             "(既定は artifact_readiness へ報告するだけ)")
     args = parser.parse_args()
-    graph = Path(args.graph).expanduser().resolve(strict=True)
-    nodes = nodes_of(load_json(graph))
-    violations = validate(nodes, repo_root=_repo_root_for(graph, args.repo_root))
-    missing = sorted({
-        item["detail"] for item in violations
-        if item["code"] in {"frontmatter_missing", "artifact_missing"}
-        or (item["code"] == "schema_violation" and "required property" in item["detail"])
-    })
+    canonical_store = False
+    is_stdin = args.graph == "-"
+    if is_stdin:
+        # dry-run preview 検証: 管理対象 repo へ一時ファイルを書かせないための stdin 経路。
+        # --graph FILE は contained(graph, root) を要求するため、preview を検証するには
+        # repo 内へ書くしかなく「dry-run write 0」契約と矛盾する。
+        if not args.repo_root:
+            raise ContractError("--repo-root is required when reading a preview graph from stdin")
+        repo_root = Path(args.repo_root).expanduser().resolve(strict=True)
+        try:
+            document = json.loads(sys.stdin.read())
+        except json.JSONDecodeError as exc:
+            raise ContractError(f"preview graph on stdin is not valid JSON: {exc}") from exc
+    else:
+        graph = Path(args.graph).expanduser().resolve(strict=True)
+        repo_root = _repo_root_for(graph, args.repo_root)
+        document = load_json(graph)
+        canonical_store = _is_canonical_store(graph, repo_root)
+    nodes = nodes_of(document)
+    # stdin preview はまだ書いていない node を送ることが正当な用途 (decompose の dry-run) であり、
+    # ここで artifact_missing を fail させると preview 検証そのものが成立しない。
+    violations = validate(nodes, repo_root=repo_root, allow_missing_artifacts=is_stdin)
+    if canonical_store or args.require_canonical_envelope:
+        violations = sorted(violations + envelope_findings(document),
+                            key=lambda item: (item["node"], item["code"], item["detail"]))
+    readiness = readiness_findings(nodes, repo_root, load_json(TEMPLATE_CONTRACT_PATH))
+    if args.strict_artifact_readiness:
+        violations = sorted(violations + readiness, key=lambda item: (item["node"], item["code"], item["detail"]))
+    missing = readiness_missing_sections(violations)
     dump({
         "valid": not violations,
         # 互換キー: 最上位の implementation_readiness/missing_sections は graph 全体の検証結果 (violations 0 件か) で、
@@ -384,6 +498,14 @@ def main() -> int:
         "missing_sections": missing,
         "graph_validation": {"status": "pass" if not violations else "fail", "violation_count": len(violations)},
         "node_readiness": node_readiness(nodes),
+        # 本文 readiness は既定で報告だけ。enforced=true のときだけ同じ finding が violations にも入る。
+        "artifact_readiness": {
+            "status": "complete" if not readiness else "incomplete",
+            "enforced": args.strict_artifact_readiness,
+            "finding_count": len(readiness),
+            "missing_sections": readiness_missing_sections(readiness),
+            "findings": readiness,
+        },
         "schema": str(SCHEMA_PATH),
         "violations": violations,
     })

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "716336e8-db85-4f87-8fc2-0eb234e37818",
+      "line": 611,
+      "prefix_bytes": 3918412,
+      "prefix_sha256": "7ffa5da31fdf8f652b4fa6abc40a06d6146c04ea2a3889210d2edc4ff30e0d62",
+      "timestamp": "2026-11-01T09:39:12.655Z"
+    },
+    "result": {
+      "uuid": "be391f4b-8b8b-4c20-9e13-85508b2dbfe4",
+      "line": 615,
+      "prefix_bytes": 3926919,
+      "prefix_sha256": "cb94e81cd38b9d71c2d77dadddbfd23337cae1b26e2a0fc8775ae7f7ba5f47f9",
+      "timestamp": "2026-11-01T09:39:15.181Z"
+    }
+  },
+  "tool_use_id": "toolu_01Fd3SnLMXZ1guP6HVgC6pCh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 system-spec/index.md system-spec/00-requirements-definition.md candidate-import.json && python3 -c '\nimport json;r=json.load(open(\"eval-log/system-spec-completeness-report.json\"))\nprint(r.get(\"verdict\"),r.get(\"spec_dir\"));snap=r.get(\"artifact_snapshot\");print(json.dumps(snap,ensure_ascii=False)[:1500])' && grep -n '\"version\"' plugins/system-spec-harness/.claude-plugin/plugin.json && git status --short"
+  },
+  "is_error": false,
+  "tool_result_content": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md\n40dc43d92942d7f0ca4fafb7e85982f447c48dacf2cf7e8eab3d20fc2a01b36a  candidate-import.json\nPASS /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec\n{\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\", \"system-spec/auth.md\": \"6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279\", \"system-spec/backend.md\": \"f3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484\", \"system-spec/database.md\": \"5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8\", \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"system-spec/infrastructure.md\": \"cf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076\", \"system-spec/maintenance-ops.md\": \"57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e\", \"system-spec/security.md\": \"b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347\", \"system-spec/spec-state.json\": \"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f\", \"system-spec/ui-ux.md\": \"26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82\"}}\n3:  \"version\": \"0.1.24\",\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8  system-spec/00-requirements-definition.md\n40dc43d92942d7f0ca4fafb7e85982f447c48dacf2cf7e8eab3d20fc2a01b36a  candidate-import.json\nPASS /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec\n{\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\", \"system-spec/auth.md\": \"6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279\", \"system-spec/backend.md\": \"f3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484\", \"system-spec/database.md\": \"5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8\", \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"system-spec/infrastructure.md\": \"cf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076\", \"system-spec/maintenance-ops.md\": \"57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e\", \"system-spec/security.md\": \"b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347\", \"system-spec/spec-state.json\": \"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f\", \"system-spec/ui-ux.md\": \"26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82\"}}\n3:  \"version\": \"0.1.24\",\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

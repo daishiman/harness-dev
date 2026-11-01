@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e862e70d-29e6-4d2f-8c13-1cf9c8ec5995",
+      "line": 46,
+      "prefix_bytes": 331009,
+      "prefix_sha256": "27f5431e94763511c6a078bf60be1c06f3e43001f79487b14ff72319ef95da48",
+      "timestamp": "2026-11-01T09:33:42.383Z"
+    },
+    "result": {
+      "uuid": "cc3ba82f-96d6-4a0c-b47b-06c16840bc49",
+      "line": 47,
+      "prefix_bytes": 334467,
+      "prefix_sha256": "05c047ac940bf4fa1add58323a379809c2033ba3d5bb7704c9187ecf04d193a0",
+      "timestamp": "2026-11-01T09:33:44.309Z"
+    }
+  },
+  "tool_use_id": "toolu_01CoxvvwK1X89edc2CBhpmCP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && head -15 plugins/dev-graph/scripts/resolve-repo-context.py; grep -nE \"write_text|open\\(.*['\\\"]w|mkdir|\\.write\\(|replace\\(|rename\" plugins/dev-graph/scripts/resolve-repo-context.py plugins/dev-graph/scripts/_common.py | head -20"
+  },
+  "is_error": false,
+  "tool_result_content": "#!/usr/bin/env python3\n# /// script\n# name: resolve-repo-context\n# purpose: Resolve and verify worktree content authority and shared Git coordination authority.\n# inputs: [\"argv: --repo-root PATH? --config PATH --mode read|write\"]\n# outputs: [\"stdout: JSON repository/worktree context\"]\n# requires-python = \">=3.10\"\n# dependencies: []\n# contexts: [A, B, C, E]\n# network: false\n# write-scope: none\n# ///\nfrom __future__ import annotations\n\nimport argparse\nplugins/dev-graph/scripts/_common.py:71:    ``Path.mkdir(parents=True, exist_ok=True)`` raises FileExistsError when the parent is a\nplugins/dev-graph/scripts/_common.py:81:        parent.mkdir(parents=True, exist_ok=True)\nplugins/dev-graph/scripts/_common.py:91:    The file is created with the umask-derived mode, like an ordinary ``open(..., \"w\")``.\nplugins/dev-graph/scripts/_common.py:98:        with os.fdopen(fd, \"wb\") as stream:\nplugins/dev-graph/scripts/_common.py:99:            stream.write(data)\nplugins/dev-graph/scripts/_common.py:105:            os.replace(temp, path)\nplugins/dev-graph/scripts/_common.py:146:    logical.mkdir(parents=True, exist_ok=True)\nplugins/dev-graph/scripts/_common.py:160:    return datetime.now(timezone.utc).isoformat().replace(\"+00:00\", \"Z\")",
+  "tool_use_result": {
+    "stdout": "#!/usr/bin/env python3\n# /// script\n# name: resolve-repo-context\n# purpose: Resolve and verify worktree content authority and shared Git coordination authority.\n# inputs: [\"argv: --repo-root PATH? --config PATH --mode read|write\"]\n# outputs: [\"stdout: JSON repository/worktree context\"]\n# requires-python = \">=3.10\"\n# dependencies: []\n# contexts: [A, B, C, E]\n# network: false\n# write-scope: none\n# ///\nfrom __future__ import annotations\n\nimport argparse\nplugins/dev-graph/scripts/_common.py:71:    ``Path.mkdir(parents=True, exist_ok=True)`` raises FileExistsError when the parent is a\nplugins/dev-graph/scripts/_common.py:81:        parent.mkdir(parents=True, exist_ok=True)\nplugins/dev-graph/scripts/_common.py:91:    The file is created with the umask-derived mode, like an ordinary ``open(..., \"w\")``.\nplugins/dev-graph/scripts/_common.py:98:        with os.fdopen(fd, \"wb\") as stream:\nplugins/dev-graph/scripts/_common.py:99:            stream.write(data)\nplugins/dev-graph/scripts/_common.py:105:            os.replace(temp, path)\nplugins/dev-graph/scripts/_common.py:146:    logical.mkdir(parents=True, exist_ok=True)\nplugins/dev-graph/scripts/_common.py:160:    return datetime.now(timezone.utc).isoformat().replace(\"+00:00\", \"Z\")",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

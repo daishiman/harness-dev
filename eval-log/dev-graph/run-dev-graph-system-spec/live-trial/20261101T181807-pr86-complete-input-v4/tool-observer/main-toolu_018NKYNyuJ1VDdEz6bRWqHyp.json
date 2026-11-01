@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "596054a5-dcf9-46c4-8714-9365a1818318",
+      "line": 733,
+      "prefix_bytes": 4321428,
+      "prefix_sha256": "ea8150c512b354c3908207e3eaa1894619df2f13e8e8f3e3fd1b41b138e90671",
+      "timestamp": "2026-11-01T09:43:17.835Z"
+    },
+    "result": {
+      "uuid": "529f6aba-6930-4ba7-b8e4-5ff66e4b5b98",
+      "line": 734,
+      "prefix_bytes": 4322405,
+      "prefix_sha256": "5ba006c39fbfa278570bbc99f3e48f9ec205dcca63277c96d5cd0c44d4069547",
+      "timestamp": "2026-11-01T09:43:19.847Z"
+    }
+  },
+  "tool_use_id": "toolu_018NKYNyuJ1VDdEz6bRWqHyp",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -rlE \"apply-spec-transition|compile-spec-doc|render_chapter|category_aggregate|requirements_foundation|qa_log|spec-state\" plugins/dev-graph | grep -v '\\.md$' ; echo \"--- md refs:\"; grep -rlE \"apply-spec-transition|compile-spec-doc|render_chapter|category_aggregate\" plugins/dev-graph | head; echo \"--- defs:\"; grep -rnE \"def (render_chapter|compile|apply_transition|derive_aggregate|bootstrap)\" plugins/dev-graph | head"
+  },
+  "is_error": false,
+  "tool_result_content": "--- md refs:\n--- defs:",
+  "tool_use_result": {
+    "stdout": "--- md refs:\n--- defs:",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "claude_hooks": {
+    "post_tool_reconcile": true,
+    "project_plugin_link": ".claude/dev-graph-plugin",
+    "session_start": true,
+    "source": "plugin",
+    "task_completed_gate": true
+  },
+  "content_roots": {
+    "architecture": "architecture",
+    "documents": "docs",
+    "features": "features",
+    "issues": "issues",
+    "specifications": "specs",
+    "system_spec": "system-spec",
+    "tasks": "tasks"
+  },
+  "execution_tracker": {
+    "beads": {
+      "board": "static-render",
+      "github_mirror": "bd_github_push_only",
+      "issue_prefix": "fx",
+      "server_mode": false
+    },
+    "mode": "beads"
+  },
+  "github": {
+    "completion_policy": {
+      "closed_unmerged": "keep_active",
+      "issue_reopened": "reopen_task",
+      "local_reconciliation": [
+        "manual_sync",
+        "claude_hook",
+        "scheduled_sync"
+      ],
+      "required_pull_requests": "all",
+      "revert": "create_follow_up_unless_issue_reopened",
+      "scheduled_reconciliation": {
+        "enabled": true,
+        "entry_point": "dev-graph sync --reconcile-lifecycle",
+        "interval_minutes": 5,
+        "owner": "claude_session_start"
+      },
+      "target_branch": "default",
+      "trigger": "linked_pr_merged"
+    },
+    "enabled": false,
+    "issue_repository": "example/example-repository",
+    "projects": [
+      {
+        "alias": "delivery",
+        "auto_add": {
+          "artifact_kinds": [
+            "task"
+          ],
+          "confirmation_status": "confirmed",
+          "evaluation_status": "pass",
+          "implementation_readiness": "complete"
+        },
+        "default": true,
+        "field_mappings": [
+          {
+            "direction": "local_to_project",
+            "local_field": "status",
+            "option_map": {
+              "active": "In Progress",
+              "blocked": "Blocked",
+              "done": "Done"
+            },
+            "project_field_name": "Status",
+            "value_type": "single_select"
+          },
+          {
+            "direction": "bidirectional",
+            "local_field": "priority",
+            "option_map": {
+              "high": "High",
+              "low": "Low",
+              "medium": "Medium"
+            },
+            "project_field_name": "Priority",
+            "value_type": "single_select"
+          }
+        ],
+        "owner_login": "example",
+        "owner_type": "organization",
+        "project_number": 1
+      }
+    ]
+  },
+  "local_state": {
+    "cache": ".dev-graph/cache",
+    "graph": ".dev-graph/state/graph.json",
+    "locks": ".dev-graph/locks"
+  },
+  "path_policy": {
+    "allow_outside_repository": false,
+    "authority": "caller-repository",
+    "follow_content_symlinks_outside_repository": false,
+    "stored_paths": "repository-relative"
+  },
+  "repository_id": "local:sha256:5d2ceac1e1081c703b871b82f444ebce2bb585ed03dcdce2906465e131e15444",
+  "routing_policy": {
+    "layout": "hybrid",
+    "leaf_threshold": 200,
+    "partition_order": [
+      "domain",
+      "project_id",
+      "YYYY/MM"
+    ],
+    "placement": "artifact_kind"
+  },
+  "schema_version": "1.0.0",
+  "worktrees": {
+    "completion_write_branch": "default",
+    "coordination_store": "git_common_dir",
+    "dirty_worktree_policy": "fail_closed",
+    "enabled": true,
+    "heartbeat_seconds": 60,
+    "lease_ttl_seconds": 1800
+  }
+}

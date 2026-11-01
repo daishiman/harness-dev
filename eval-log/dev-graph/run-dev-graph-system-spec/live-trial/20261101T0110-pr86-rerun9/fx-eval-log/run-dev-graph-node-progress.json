@@ -1,0 +1,20 @@
+{
+  "loop": 1,
+  "overall": "PASS",
+  "graph_baseline": {"graph_revision": 0, "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"},
+  "writer_receipts": [".dev-graph/state/receipts/node-r000001-add.json"],
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "C24 resolve-repo-context --mode write exit0 (eval-log/run-dev-graph-node/c24-receipt.json sha e94ceb5c); writer resolved --input inside repo; node paths specs/ and architecture/ inside repo root (auditor PASS)"},
+    {"id": "classification", "status": "achieved", "evidence": "receipt node-r000001-add.json: spec decision=auto confidence 0.95 margin 0.65; arch decision=auto confidence 0.92 margin 0.57 (>=0.80 / >=0.15)"},
+    {"id": "schema", "status": "achieved", "evidence": "validate-graph-schema.py --strict-artifact-readiness rc=0 valid violations=0, readiness complete 2/2 (eval-log/run-dev-graph-node/schema-report-loop1.json); pre_write_validation findings=0"},
+    {"id": "package", "status": "not_applicable", "evidence": "verb=add (no register-package invocation)"},
+    {"id": "receipt", "status": "achieved", "evidence": ".dev-graph/state/receipts/node-r000001-add.json: graph_revision_before 0 = baseline, graph_revision_after 1 and graph_digest_after sha256:f8b5bf93... equal current graph; node_ids spec-billing-audit-system-spec, arch-billing-audit-system-architecture present"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "detail": "loop 1: dry-run rc0 valid, add rc0 applied_count 2, validate-graph-schema rc0, validate-source-lineage --node-id x2 rc0"},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial / acceptance tests"},
+    {"id": "OUT2", "status": "external_pending", "judged_by": "live trial / acceptance tests"},
+    {"id": "OUT3", "status": "external_pending", "judged_by": "live trial / acceptance tests"}
+  ],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:f8b5bf931082720e2c204d644fecb2d7ff232bf6c459b08e5ad324ac8a6437db"}
+}

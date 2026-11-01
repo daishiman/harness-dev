@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/system-spec-harness/resume-receipt.schema.json",
+  "title": "digest-bound system-spec resume receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "producer", "verdict", "gates", "artifacts", "evaluator", "created_at"],
+  "properties": {
+    "schema_version": {"const": "1.2"},
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plugin", "version", "entry_point"],
+      "properties": {
+        "plugin": {"const": "system-spec-harness"},
+        "version": {"type": "string", "pattern": "^0\\.[1-9][0-9]*\\.[0-9]+(?:[-+].*)?$"},
+        "entry_point": {"const": "assign-system-spec-completeness-evaluator"}
+      }
+    },
+    "verdict": {"const": "PASS"},
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage", "source_citation", "knowledge_graph", "evaluator"],
+      "properties": {
+        "coverage": {"const": "PASS"},
+        "source_citation": {"const": "PASS"},
+        "knowledge_graph": {"const": "PASS"},
+        "evaluator": {"const": "PASS"}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "required": ["system-spec/index.md", "system-spec/00-requirements-definition.md", "system-spec/completeness-report.json", "system-spec/spec-state.json", "system-spec/fetched-references.json"],
+      "properties": {
+        "system-spec/index.md": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "system-spec/00-requirements-definition.md": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "system-spec/completeness-report.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "system-spec/spec-state.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "system-spec/fetched-references.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["report_path", "report_sha256", "fork_ledger_path", "session_id"],
+      "properties": {
+        "report_path": {"const": "system-spec/completeness-report.json"},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "fork_ledger_path": {"type": "string", "minLength": 1},
+        "session_id": {"type": "string", "minLength": 1, "not": {"const": "unknown"}}
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

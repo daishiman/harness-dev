@@ -1,0 +1,33 @@
+# 実走の固定契約（正本sourceの再掲）
+このrunは新規合成given v7、公開SS.24と現行C19の実行。source/入力/guard/設定を編集せず、不足・不正・未知SkillはFAILで止める。期待PASSを仮定しない。input review/probe/過去判定を現在の評価へ転用しない。
+
+## 書面Readの前に行う必須検査
+R6の書面sourceは、Readする前に同じactorのBashでcontainment/実在/SHAを確認する。下の読取専用Pythonをそのまま実行する。C06はshell setupを付けずこのPythonだけを使い、mainだけは後述の固定root前置きを付ける。trusted hookは同じsession/agentの実成功Bashと現在file hashを照合するまで書面Readを拒否する。拒否時は必須の前検査を実行してからReadを再試行するのが正規回復であり、別toolで本文を読む回避は禁止。
+/Users/dm/miniconda3/bin/python3 -I -B -c 'from pathlib import Path;import hashlib,json,sys;r=Path(sys.argv[1]).resolve(strict=True);p=(r/sys.argv[2]).resolve(strict=True);p.relative_to(r);assert p.is_file();print(json.dumps({'"'"'written_source_checked'"'"':True,'"'"'root'"'"':str(r),'"'"'path'"'"':sys.argv[2],'"'"'real_path'"'"':str(p),'"'"'sha256'"'"':hashlib.sha256(p.read_bytes()).hexdigest()},sort_keys=True))' /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx system-spec/fixture-requirements-v7.txt
+
+## 親mainの全Bash
+毎回、診断/JSON保存も含む全main Bashを次の固定前置きで開始する。開始C24 receiptのrootが一致しなければ停止し付け替えない。
+export CLAUDE_PROJECT_DIR="/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx" && cd -- "$CLAUDE_PROJECT_DIR" && [ "$(pwd -P)" = "$CLAUDE_PROJECT_DIR" ] && 
+
+## 必読と所有権
+正本が必読とするSKILL/責務prompt/SSOTは出力前に全文Readし、欠けた範囲を追加取得する。見出し/存在/grepで代用しない。script_refsは依存閉包の宣言であり、sourceが全文Readを要求しない全Python実装を機械的に読む必要はない。責務の出力は指定ownerだけが書く。
+C05はown R1/R2/rubric/aspect/schema/own mapとC04 map（skills/ref-system-design-knowledge/references/resource-map.yaml）を全文取得し、全仕様Markdown/state/refsを評価する。runtime-context/prompt-inventory.jsonはsource由来の18file入力索引だけであり、全件自分で全文ReadしてC1-C4を意味評価する。standalone例外は外部prompt-creatorの機械gateだけで、意味評価は省略しない。
+C06/C07/C08は自分のnative adapterと、指定責務SSOT（R6/R7/R4）・必読資料を取得する。C08はR4とofficial-source-catalog全文を出力前に読み、全5targetを実WebFetch再照合する。
+
+## C05/C06の既存ツール境界
+C05自身のBashは正規python検査CLIとR1-score4.3のliteral Path+引用JSON heredocによる許可2JSON保存だけ。cat/ls/find/grep等や自作reader/builder/tmp保存を使わない。Readで原文を取得し、無改変C06 JSONと自分の意味評価reportを指定絶対Pathへ保存する。保存先不明で拒否されたらsource通りliteral保存先へ直し、同じspec/outputで再試行できる。
+C06のBashはstdlibのpath containment/実在/SHA検査だけ。QA/matrix/danglingの汎用JSON reader/集計や本文抽出はせずReadで監査する。書面も必ず上の前検査を先に行ってから原文をReadし、SHAと逐語を照合する。他roleへ勝手にこの限定を拡張しない。
+CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1。3監査は1message1Agent、background/nameなし、前の実final/台帳resolvedを確認してから次へ。AUDIT_DISPATCH tokenを逐語で渡しechoと最終markerへ束縛し、受付を完了にしない。
+
+## 提示・時刻・周回
+各run Skillは最小実成果物を作り、現物path/実SHA/開き方を別呼出しで提示してから事前回答standardを記録する。compile CLI末尾で提示し、choice/test/Agentを同じ呼出しに混ぜない。
+時刻は推測/丸めた未来値を記さない。source必須時刻は書込直前にUTC実測し、sourceが要求しない任意recorded_at等は追加しない。訂正が必要なら元値と理由を残し、実行順を改変しない。
+各C19周回でcoverage/citation/schemaの3CLIを実測してからIN1を記録する。空graphでもschemaを省略せず、未実施はnot_achieved、成功を遡及しない。intermediate6キー/元goal/hashを検査し、次周回へmerged_directive_for_nextを渡す。
+
+## C02の正式分岐
+C05 PASS後だけC02へ。dry-runだけでstandardを記録せず、pre-choice mainでcanonical writerの実typed node/receiptを作り、path/digest/開き方を提示してからstandardへ進める。依頼2nodeをpre-choiceでcommit済みなら直後graphをbaselineに固定し、そのpre-choice receiptをpost-choice writer_receiptsへ足さない。残る未達writerはAgentへ委譲し、post-choice main直接add/updateで代替しない。どちらでも必須integrity auditorは実Agentで起こし、現graph/receiptを照合する。
+
+## 検証の担当scope
+sourceが要求するfork/Verifier・必読・検査・独立性は全て守る。compileのIN1と指定63 testsが成功しチェックリストを満たした後、sourceにない追加の一般docset再監査Agentは増やさない。未達がある場合のsource正規責務fork/改善は省略しない。
+C19のR0/R1/R2/R3 Verifierは自分の責務の実事実を検証する。trusted observerはworkdir/tool-observer/index.jsonとeventへ、実Read/Bash/Skill/WebFetch/WebSearchだけを射影する。除外項目のabsenceは未実施の証拠ではない。readonly Pythonで担当stream/必要な字段・行被覆・SHAを抽出し、無関係な全index/全文payloadをcontextへ積まない。C05の18promptをR2で再採点したり、担当外の全章を再レンダリングしない。実Readの被覆、snapshot/report、canonical gates、helper args、3監査final/ledger、root、所有権等、担当チェックリストの根拠を確かめる。結果はpath/hash/検証結果/全blockerを簡潔に返し、思考過程やソースの長文復唱は返さない。
+R3-import Verifierだけmodel:sonnet。他は既定を維持する。全必須Verifierの実完了/PASS前に次責務を達成と記録しない。

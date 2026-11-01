@@ -968,6 +968,29 @@ def test_pkg_006_extensionless_entry_point_does_not_match(tmp_path):
     assert any("package-contract entry_points.hooks" in e and "guard" in e for e in evidence)
 
 
+def test_pkg_006_import_only_support_module_is_exempt(tmp_path):
+    """責務分割で hooks/ に生まれた import 専用 module は起動対象ではないので未登録でよい。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir(parents=True)
+    (p / "hooks" / "guard_commands.py").write_text(
+        "\"\"\"guard 本体から import される判定関数群。\"\"\"\n\n\n"
+        "def is_destructive(cmd):\n    return False\n",
+        encoding="utf-8")
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_underscore_hook_with_main_guard_still_fails(tmp_path):
+    """underscore 名でも __main__ guard があれば実 hook なので、宣言漏れを素通りさせない。"""
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir(parents=True)
+    (p / "hooks" / "guard_commands.py").write_text(
+        "def main():\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+        encoding="utf-8")
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "guard_commands.py" in fs[0]["suggested_fix"]
+
+
 # ============================================================================
 # check_pkg_007 : script shebang / +x
 # ============================================================================
@@ -978,9 +1001,10 @@ def test_pkg_007_no_scripts_dir(tmp_path):
 
 
 def test_pkg_007_missing_shebang(tmp_path):
+    """verb-hyphen 名 (import 不能 = 起動されるしかない) の shebang 欠落は従来どおり FAIL。"""
     p = _plugin(tmp_path)
     (p / "scripts").mkdir(parents=True)
-    (p / "scripts" / "noshebang.py").write_text("print('hi')\n", encoding="utf-8")
+    (p / "scripts" / "build-thing.py").write_text("print('hi')\n", encoding="utf-8")
     fs = MOD.check_pkg_007(p)
     assert any("shebang 欠落" in f["evidence"] for f in fs)
 
@@ -1011,6 +1035,55 @@ def test_pkg_007_non_script_files_ignored(tmp_path):
     (p / "scripts" / "data.txt").write_text("not a script", encoding="utf-8")
     (p / "scripts" / "subdir").mkdir()  # ディレクトリは is_file=False で無視
     assert MOD.check_pkg_007(p) == []
+
+
+def test_pkg_007_import_only_support_module_is_exempt(tmp_path):
+    """責務分割で生まれた import 専用 module に shebang を強要しない (偽陽性の解消)。"""
+    p = _plugin(tmp_path)
+    (p / "scripts").mkdir(parents=True)
+    (p / "scripts" / "node_body.py").write_text(
+        "\"\"\"共有ヘルパ。\"\"\"\n\n\ndef build_body(node):\n    return node\n",
+        encoding="utf-8")
+    assert MOD.check_pkg_007(p) == []
+
+
+def test_pkg_007_underscore_module_with_main_guard_still_fails(tmp_path):
+    """import 可能な名前でも __main__ guard があれば entry point なので shebang を要求する。"""
+    p = _plugin(tmp_path)
+    (p / "scripts").mkdir(parents=True)
+    (p / "scripts" / "node_body.py").write_text(
+        "def run():\n    pass\n\n\nif __name__ == \"__main__\":\n    run()\n",
+        encoding="utf-8")
+    fs = MOD.check_pkg_007(p)
+    assert any("shebang 欠落" in f["evidence"] for f in fs)
+
+
+# ============================================================================
+# is_import_only_support_module : 起動される入口かどうかの構造判定
+# ============================================================================
+
+def test_support_module_predicate_accepts_import_only(tmp_path):
+    py = tmp_path / "helper.py"
+    py.write_text("def f():\n    return 1\n", encoding="utf-8")
+    assert MOD.is_import_only_support_module(py) is True
+
+
+def test_support_module_predicate_rejects_non_importable_name(tmp_path):
+    py = tmp_path / "build-thing.py"
+    py.write_text("x = 1\n", encoding="utf-8")
+    assert MOD.is_import_only_support_module(py) is False
+
+
+def test_support_module_predicate_rejects_non_python(tmp_path):
+    sh = tmp_path / "helper.sh"
+    sh.write_text("echo hi\n", encoding="utf-8")
+    assert MOD.is_import_only_support_module(sh) is False
+
+
+def test_support_module_predicate_rejects_shebang(tmp_path):
+    py = tmp_path / "helper.py"
+    py.write_text("#!/usr/bin/env python3\nx = 1\n", encoding="utf-8")
+    assert MOD.is_import_only_support_module(py) is False
 
 
 # ============================================================================

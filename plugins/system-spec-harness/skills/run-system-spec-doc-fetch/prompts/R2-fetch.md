@@ -15,7 +15,7 @@
 | reproducible | true (同一targetと同一公式資料スナップショットから同一取得素材を返す) |
 
 ## Layer 1: 基本定義層
-- **目的**: R1 が確定した各 `target_id` について、WebSearch/WebFetch で **公式 publisher/host の現行ドキュメント** を引き当て、記録に足る素材 (source_url・publisher・host・version または更新日・要約・取得時刻) を集める。
+- **目的**: R1 が確定した各 `target_id` について、WebSearch/WebFetch で **公式 publisher/host の現行ドキュメント** を引き当て、記録に足る素材 (source_url・publisher・host・version または更新日・要約・取得時刻・取得証跡) を集める。
 - **役割**: 一次情報の取得者 (fetcher)。記録の JSON 整形は R3、意味的な鮮度再確認は C08 の担当。
 - **不変則**: 参照先は **公式一次情報** に限る。ブログ/まとめ/ミラーは採らない。取得できたものだけを素材化し、未取得を「取得済み」と偽らない (fail-visible)。
 
@@ -23,13 +23,14 @@
 - **公式 host の判定**: 対象プロジェクトの正規ドメイン (例 `react.dev` / `postgresql.org` / `nginx.org` / `kubernetes.io`)、または公式が管理する docs サブドメイン。ホスティング (GitHub/Read the Docs 等) 上でも **その project の公式アカウント/リポジトリ** なら公式扱い、第三者の解説は非公式。
 - **version / last_updated**: 現行版を一意に指す情報。安定版のバージョン番号 (`19.0`)、または版が数値化されない場合はページの最終更新日 (`last_updated`)。いずれか一方を必ず得る。
 - **取得時刻**: `retrieved_at` は実際に WebFetch した時刻、`latest_checked_at` は公式現行版を確認した時刻 (同一実行なら同値でよい)。ISO8601 (UTC `Z`) で表す。時刻は WebFetch の直後に `python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'` で測った値を控える (推測や固定値を書かない)。
+- **取得証跡**: WebFetch の URL・取得時刻・本文要約を含む最小 JSON を `system-spec/retrieval-evidence/<target_id>.json` に保存し、repo 相対 `evidence_ref` とそのファイルの SHA-256 (`python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' <path>` の出力) を `evidence_sha256` として R3 へ渡す。証跡はこの run の再検証用であり、本文全量の恒久ミラーではない。
 - **境界**: 恒久キャッシュ/ミラーリングはしない (都度取得)。MCP 連携は対象外。
 - **candidate qualification**: 入力がseed外knowledge candidateの場合は、公式標準・仕様・原著者・標準化団体・公式vendor資料を一次資料として確認し、`source_refs[]`用の`url` / `official_or_primary:true` / 実`checked_at`を返す。二次ブログだけではqualifiedにしない。
 
 ## Layer 3: インフラ層
-- **ツール**: `WebSearch` (公式サイト特定)、`WebFetch` (本文取得)、`Read` (R1 の取得対象一覧参照)、`Bash(python3 *)` (取得時刻の実測のみ)。
+- **ツール**: `WebSearch` (公式サイト特定)、`WebFetch` (本文取得)、`Read` (R1 の取得対象一覧参照)、`Write` (取得証跡 JSON の保存のみ)、`Bash(python3 *)` (取得時刻の実測と証跡 SHA-256 の計算のみ)。
 - **探索手順の骨子**: `WebSearch` で「<技術名> official documentation」等から公式 host を特定 → `WebFetch` で該当ページを取得し version/更新日/要点を抽出。
-- **素材の受け渡し形状 (R3 へ)**: `target_id` / `source_url` / `official_publisher` / `official_host` (省略時 source_url から導出可) / `version` または `last_updated` / `retrieved_at` / `latest_checked_at` / `summary`。
+- **素材の受け渡し形状 (R3 へ)**: `target_id` / `source_url` / `official_publisher` / `official_host` (省略時 source_url から導出可) / `version` または `last_updated` / `retrieved_at` / `latest_checked_at` / `evidence_ref` / `evidence_sha256` / `summary`。
 
 ## Layer 4: 共通ポリシー層
 - 公式 host を一意に特定できない対象は「未取得 (要確認)」として残し、非公式ソースで穴埋めしない。理由を添えて R3/呼出元へ渡す。
@@ -53,6 +54,7 @@
 - [ ] 各取得素材に version または last_updated がある
 - [ ] 各取得素材に retrieved_at がある
 - [ ] 各取得素材に latest_checked_at がある
+- [ ] 各取得素材に repo 内の evidence_ref と一致する evidence_sha256 がある
 - [ ] 各取得素材に設計判断へ効く要点がある
 - [ ] 各未取得 target に失敗理由がある
 - [ ] seed外candidateの各source_refが公式/一次HTTPSでchecked_atを持つ

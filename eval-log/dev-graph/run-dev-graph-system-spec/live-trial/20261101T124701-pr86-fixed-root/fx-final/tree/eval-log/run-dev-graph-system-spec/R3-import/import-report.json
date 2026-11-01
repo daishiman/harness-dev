@@ -1,0 +1,56 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "responsibility": "R3-import",
+  "system_spec_index": "system-spec/index.md",
+  "writer": "dev-graph:run-dev-graph-node (C02) -> plugins/dev-graph/scripts/build-graph-node.py add",
+  "payload": {
+    "path": "eval-log/run-dev-graph-system-spec/R3-import/import-payload.json",
+    "sha256": "b38388ecbc97299dffd0e1cd63b6ce0b3e239516e7cbea4085f7e4985df4982d",
+    "dry_run_input_sha256": "b38388ecbc97299dffd0e1cd63b6ce0b3e239516e7cbea4085f7e4985df4982d",
+    "apply_input_sha256": "b38388ecbc97299dffd0e1cd63b6ce0b3e239516e7cbea4085f7e4985df4982d",
+    "dry_run_preview": "eval-log/run-dev-graph-system-spec/R3-import/dry-run-preview.json"
+  },
+  "c02_receipt": {
+    "path": ".dev-graph/state/receipts/node-r000001-add.json",
+    "sha256": "8f9bba4c7a83530cf0736be485926ca99d208235efa1253be307b69160fbf14c",
+    "status": "applied",
+    "applied_count": 2,
+    "graph_revision_before": 0,
+    "graph_revision_after": 1,
+    "graph_digest_after": "sha256:cc3d8a05be9f4088276e9ecdaff5da1d7e192c04902eb202152f49c7dd659d81"
+  },
+  "ordering": {
+    "evaluator_report_mtime_utc": "2026-11-01T04:00:31Z",
+    "payload_written_utc": "2026-11-01T04:06:01Z",
+    "dry_run_utc": "2026-11-01T04:07:33Z",
+    "add_utc": "2026-11-01T04:07:44Z"
+  },
+  "imported_nodes": [
+    {
+      "graph_node_id": "spec-billing-audit-system-spec",
+      "artifact_kind": "specification",
+      "file_path": "specs/billing-audit-system-spec.md",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "readiness": "complete",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.25", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-11-01T04:06:01Z"},
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"}
+    },
+    {
+      "graph_node_id": "arch-billing-audit-system-architecture",
+      "artifact_kind": "architecture",
+      "file_path": "architecture/billing-audit-system-architecture.md",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "readiness": "complete",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.25", "source_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402", "imported_at": "2026-11-01T04:06:01Z"},
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402"}
+    }
+  ],
+  "evaluator_report": {"path": "eval-log/system-spec-completeness-report.json", "sha256": "54641c0d47815141463dabbc1f411f89544504e73b3ecb864da6147c0fc04843", "verdict": "PASS", "spec_dir_matches_source": true},
+  "gates_after_import": {
+    "validate-source-lineage --node-id x2": {"exit": 0, "checked": 2, "violations": 0, "report": "eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json"},
+    "validate-graph-schema --strict-artifact-readiness": {"exit": 0, "node_readiness_complete": 2, "report": "eval-log/run-dev-graph-node/schema-report-r1.json"}
+  },
+  "handoff_to_C04": {"node_ids": ["spec-billing-audit-system-spec", "arch-billing-audit-system-architecture"], "readiness": "complete"}
+}

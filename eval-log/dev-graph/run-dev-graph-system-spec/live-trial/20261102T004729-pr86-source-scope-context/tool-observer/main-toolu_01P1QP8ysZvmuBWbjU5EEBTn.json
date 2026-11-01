@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8074bc02-e615-4b4e-8a28-d4969a365ca5",
+      "line": 422,
+      "prefix_bytes": 2380610,
+      "prefix_sha256": "316e989a9c78493d450cb23507e36dc28836a6efe49fe4885848a40681820ebd",
+      "timestamp": "2026-11-01T16:05:24.260Z"
+    },
+    "result": {
+      "uuid": "5063b08a-d976-49de-8db6-2c0885333b21",
+      "line": 425,
+      "prefix_bytes": 2389450,
+      "prefix_sha256": "b7401e42b11786000d058ed67a1cf2110f9b1bec53fb1ca087bd5f9e8a8529c6",
+      "timestamp": "2026-11-01T16:05:27.786Z"
+    }
+  },
+  "tool_use_id": "toolu_01P1QP8ysZvmuBWbjU5EEBTn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 eval-log/system-spec-completeness-report.json eval-log/hearing-audit.json && python3 -c \"\nimport json;r=json.load(open('eval-log/system-spec-completeness-report.json'));print(list(r.keys()));print(r.get('verdict'),r.get('spec_dir'),r.get('evaluated_at') or r.get('generated_at'));print({k:(v.get('verdict') if isinstance(v,dict) else v) for k,v in (r.get('aspects') or {}).items()} if isinstance(r.get('aspects'),dict) else [ (a.get('id') or a.get('aspect'),a.get('verdict')) for a in r.get('aspects',[])])\nprint(json.dumps(r.get('artifact_snapshot'),ensure_ascii=False)[:1500])\"; ls plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/",
+    "description": "Hash and inspect evaluator report"
+  },
+  "is_error": false,
+  "tool_result_content": "32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52  eval-log/system-spec-completeness-report.json\n93f639cc9307b7efe38e01a5e99fe58f4b0b39b81aa20d169be5e8e052abb07e  eval-log/hearing-audit.json\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'aspects', 'audit_delegations', 'gate_results', 'findings', 'gaps']\nPASS /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec None\n{'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\n{\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\", \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\", \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\", \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac\", \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"system-spec/infrastructure.md\": \"63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b\", \"system-spec/maintenance-ops.md\": \"cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841\", \"system-spec/security.md\": \"39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546\", \"system-spec/spec-state.json\": \"09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\", \"system-spec/ui-ux.md\": \"f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444\"}}\naggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py",
+  "tool_use_result": {
+    "stdout": "32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52  eval-log/system-spec-completeness-report.json\n93f639cc9307b7efe38e01a5e99fe58f4b0b39b81aa20d169be5e8e052abb07e  eval-log/hearing-audit.json\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'aspects', 'audit_delegations', 'gate_results', 'findings', 'gaps']\nPASS /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec None\n{'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\n{\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\", \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\", \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\", \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac\", \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"system-spec/infrastructure.md\": \"63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b\", \"system-spec/maintenance-ops.md\": \"cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841\", \"system-spec/security.md\": \"39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546\", \"system-spec/spec-state.json\": \"09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\", \"system-spec/ui-ux.md\": \"f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444\"}}\naggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-aba42a4dfca29a6b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "18255a9d-5cbe-4565-a4a4-a032bf641e70",
+      "line": 95,
+      "prefix_bytes": 666606,
+      "prefix_sha256": "958bfb64d3f17b631022f20fb67cf18d2e5cef957d7aaea6a6471833e6f52e8e",
+      "timestamp": "2026-11-01T02:57:41.626Z"
+    },
+    "result": {
+      "uuid": "b9bc1e81-d1ed-46ed-b34d-8a6d7ed16ea3",
+      "line": 96,
+      "prefix_bytes": 668428,
+      "prefix_sha256": "55ee0d7d0e3d100259a3b4d01a87e638788b23352c43f4606161cdc83bb55963",
+      "timestamp": "2026-11-01T02:57:42.784Z"
+    }
+  },
+  "tool_use_id": "toolu_018yBV7Wf4BcAZhNZm4kz8NH",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport subprocess, pathlib\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"\nP=R+\"/plugins/system-spec-harness\"\nr=subprocess.run([\"python3\",P+\"/scripts/validate-coverage-matrix.py\",\"--matrix\",R+\"/system-spec/spec-state.json\",\"--require-foundation\"],capture_output=True,text=True)\nprint(\"foundation exit\",r.returncode,r.stdout,r.stderr)\nr=subprocess.run([\"python3\",P+\"/scripts/validate-coverage-matrix.py\",\"--help\"],capture_output=True,text=True); print(r.stdout[:1500])\nhits=[str(p) for base in [pathlib.Path(R+\"/plugins\"), pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/home/.claude\")] if base.exists() for p in base.rglob(\"*.py\") if p.name in (\"verify-completeness.py\",\"validate-prompt.py\")]\nprint(\"prompt-creator validators:\",hits)\nprint(sorted(p.name for p in pathlib.Path(R+\"/plugins\").iterdir()))\nprint(sorted(str(p.relative_to(P)) for p in pathlib.Path(P).rglob(\"prompts/*.md\")))\nPY"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

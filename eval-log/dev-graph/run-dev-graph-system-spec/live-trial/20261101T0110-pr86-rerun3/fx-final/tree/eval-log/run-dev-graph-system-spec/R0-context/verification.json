@@ -1,0 +1,27 @@
+{
+  "responsibility": "run-dev-graph-system-spec/R0-context",
+  "loop": 1,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checks": [
+    {"name": "c24_read_vs_fixed_receipt", "result": "PASS", "evidence": "resolve-repo-context.py --mode read exit 0; only differing key vs fixed receipt is mode (read vs write); repo_root, repository_id local:sha256:6be5024c...c466d, worktree_id wt_627cffd4aa755b84, git_common_dir=git_dir=<repo_root>/.git, content_roots.system_spec=<repo_root>/system-spec identical; root_trust_evidence all true"},
+    {"name": "fixed_receipt_digest", "result": "PASS", "evidence": "sha256(c24-receipt.json)=7fe3323cea67b5090d8376b973e35d96658468ec425d35e7b44fbce4184f0071 matches preflight R0.c24_receipt_sha256"},
+    {"name": "system_spec_containment", "result": "PASS", "evidence": "realpath(system-spec)=<repo_root>/system-spec (inside realpath(repo_root)); test -L system-spec false; find system-spec -type l -> 0 entries; 16 regular files"},
+    {"name": "repository_id_common_dir_agreement", "result": "PASS", "evidence": "git rev-parse --show-toplevel=<repo_root>; --path-format=absolute --git-common-dir=<repo_root>/.git == receipt git_common_dir; repository_id identical in read run and fixed receipt"},
+    {"name": "lineage_gate", "result": "PASS", "evidence": "validate-source-lineage.py --repo-root <repo_root> exit 0, status pass, checked 0, violations []; graph .dev-graph/state/graph.json has nodes [] revision 0"},
+    {"name": "resume_decision", "result": "PASS", "evidence": "checked=0 -> new_import (uniquely determined)"},
+    {"name": "preflight_R0_consistency", "result": "PASS", "evidence": "preflight-report.json R0: status PASS, repository_id same, system_spec_root system-spec, lineage exit 0/checked 0/violations [], resume_decision new_import (checked=0) all match measurement; inputs_sha256 for all 16 system-spec files re-hashed with 0 mismatches and 0 unlisted files"}
+  ],
+  "checklist_5_3": [
+    {"item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる", "yes": true},
+    {"item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた", "yes": true},
+    {"item": "宣言した入力が全て検証済みである", "yes": true},
+    {"item": "出力が宣言した shape と authority を満たす", "yes": true},
+    {"item": "責務境界に反する read/write/delegation が0件である", "yes": true}
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "delta_from_original": "R0 scope satisfied; import itself not yet performed (graph nodes [])",
+  "merged_directive_for_next": "proceed to R2 as new_import (checked=0) using fixed C24 receipt sha256 7fe3323c...0071",
+  "drift_signal": "none"
+}

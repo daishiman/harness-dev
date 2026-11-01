@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "295eb823-aec3-4163-b3ed-9605bf3b53b2",
+      "line": 32,
+      "prefix_bytes": 225725,
+      "prefix_sha256": "d0a35635bc8dcf77fbd1b3de263784a0e12401febf52023296d2269f3b86165b",
+      "timestamp": "2026-11-01T15:20:32.257Z"
+    },
+    "result": {
+      "uuid": "9ca7eb6d-a821-4d13-9bf4-babce4c2d0c5",
+      "line": 35,
+      "prefix_bytes": 229371,
+      "prefix_sha256": "5b4275660cae867b1956dd5a800b1baa178f1515faee7b7d8a4a41ced8a91c39",
+      "timestamp": "2026-11-01T15:20:34.395Z"
+    }
+  },
+  "tool_use_id": "toolu_01WNBmyJ394xJyKq5Sta4ufJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c 'from pathlib import Path;import hashlib,json,sys;r=Path(sys.argv[1]).resolve(strict=True);p=(r/sys.argv[2]).resolve(strict=True);p.relative_to(r);assert p.is_file();print(json.dumps({'\"'\"'written_source_checked'\"'\"':True,'\"'\"'root'\"'\"':str(r),'\"'\"'path'\"'\"':sys.argv[2],'\"'\"'real_path'\"'\"':str(p),'\"'\"'sha256'\"'\"':hashlib.sha256(p.read_bytes()).hexdigest()},sort_keys=True))' /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir task.md",
+    "description": "Verify task.md file exists and compute SHA256"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"path\": \"task.md\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir/task.md\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir\", \"sha256\": \"fc8ccebb090fb01fd6f48b54c1f2773dbf91a985716fdf82d79767396d946305\", \"written_source_checked\": true}",
+  "tool_use_result": {
+    "stdout": "{\"path\": \"task.md\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir/task.md\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir\", \"sha256\": \"fc8ccebb090fb01fd6f48b54c1f2773dbf91a985716fdf82d79767396d946305\", \"written_source_checked\": true}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

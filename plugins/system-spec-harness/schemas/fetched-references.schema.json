@@ -16,6 +16,8 @@
           "official_publisher",
           "official_host",
           "latest_checked_at",
+          "evidence_ref",
+          "evidence_sha256",
           "summary"
         ],
         "properties": {
@@ -25,8 +27,14 @@
           "official_publisher": {"type": "string", "minLength": 1},
           "official_host": {"type": "string", "minLength": 1},
           "version": {"type": ["string", "null"]},
+          "version_derived_from": {
+            "type": "string",
+            "description": "version を自分の証跡ではなく他 record から引いているときの派生元 target_id。C13 の値の接地検査 (F7) は、指した先が実在し digest 検証済みで同じ版がそこに接地することまで確認する。"
+          },
           "last_updated": {"type": ["string", "null"]},
           "latest_checked_at": {"type": "string", "format": "date-time"},
+          "evidence_ref": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+          "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
           "summary": {"type": "string", "minLength": 1}
         },
         "anyOf": [

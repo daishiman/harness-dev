@@ -22,6 +22,8 @@ in-process(monkeypatch sys.stdin/io.StringIO + capsys)で全分岐を踏み、
   * 非対象/不存在ファイル → return 0(stderr 無)
   * frontmatter なし → "frontmatter not found" stderr / return 0
   * jsonschema 経路: 合格(stderr 無) / 違反(errors stderr, schema_used true)
+  * kind=agent の tools 宣言: 文字列・配列・tools-inherit は合格 /
+    無宣言・併記・tools: inherit・空は違反
   * validator 例外経路(schema 破損で validate が ValidationError 以外を投げる)
   * fallback 経路(HAS_JSONSCHEMA=False / schema=None): name 欠落検出
   * トップレベル例外 → return 0 のまま internal error を stderr に出す
@@ -277,6 +279,64 @@ def test_main_schema_violation_bad_version_pattern(monkeypatch, capsys, tmp_path
     err = json.loads(_stderr(capsys))
     assert err["errors"]
     assert any("1.0" in e or "match" in e for e in err["errors"])
+
+
+# ── main: kind=agent の tools 宣言 (HarnessHub-eh99) ─────────────────────────
+AGENT_FM_HEAD = (
+    "---\n"
+    "name: foo-reviewer\n"
+    "description: 十分に長い説明文を持つテスト用 agent です\n"
+    "kind: agent\n"
+    "version: 1.0.0\n"
+    "owner: team-x\n"
+    "isolation: fork\n"
+)
+
+
+def _write_agent(tmp_path, tools_block):
+    p = tmp_path / "agents" / "foo-reviewer.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(AGENT_FM_HEAD + tools_block + "---\n# 本文\n", encoding="utf-8")
+    return p
+
+
+@pytest.mark.parametrize(
+    "tools_block",
+    [
+        "tools: Read, Glob, Bash(python3 *)\n",  # Claude Code の実形式 (build-subagent.py の出力形)
+        "tools: [Read, Glob]\n",
+        "tools:\n  - Read\n  - Bash(python3 *)\n",
+        "tools-inherit: true\n",  # tools を省いた全ツール継承の明示宣言
+    ],
+)
+def test_main_agent_tools_shapes_accepted(monkeypatch, capsys, tmp_path, tools_block):
+    assert MOD.HAS_JSONSCHEMA
+    p = _write_agent(tmp_path, tools_block)
+    rc = _run_main(monkeypatch, {"tool_input": {"file_path": str(p)}})
+    assert rc == 0
+    assert _stderr(capsys) == ""
+
+
+@pytest.mark.parametrize(
+    "tools_block",
+    [
+        "",  # tools も継承宣言も無い → 従来どおり違反
+        "tools: Read\ntools-inherit: true\n",  # 併記は矛盾
+        "tools-inherit: false\n",
+        "tools: inherit\n",  # ツール名でない値は全継承にならない
+        "tools: Read, inherit\n",
+        "tools: []\n",
+        "tools:\n",
+    ],
+)
+def test_main_agent_tools_violations(monkeypatch, capsys, tmp_path, tools_block):
+    assert MOD.HAS_JSONSCHEMA
+    p = _write_agent(tmp_path, tools_block)
+    rc = _run_main(monkeypatch, {"tool_input": {"file_path": str(p)}})
+    assert rc == 0
+    err = json.loads(_stderr(capsys))
+    assert err["schema_used"] is True
+    assert err["errors"]
 
 
 def test_main_validator_unexpected_error_path(monkeypatch, capsys, tmp_path):

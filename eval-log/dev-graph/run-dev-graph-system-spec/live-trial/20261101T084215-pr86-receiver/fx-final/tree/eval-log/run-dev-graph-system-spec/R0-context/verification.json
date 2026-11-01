@@ -1,0 +1,31 @@
+{
+  "responsibility_id": "R0-context",
+  "verifier": "independent",
+  "verified_on": "2026-11-01",
+  "overall": "PASS",
+  "inputs": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "c24_receipt_sha256": "dddc6bacd3d43ce54327721d8ffc902f89e232c9c15ec7fc9a7e8e22eada08bd"
+  },
+  "checklist": [
+    {
+      "item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる",
+      "result": "achieved",
+      "evidence": [
+        "receipt sha256 matches expected",
+        "resolve-repo-context.py --mode write --repo-root <root> exit 0; all identity fields and content_roots identical to receipt (no differing keys)",
+        "realpath(content_roots.repository)==repo_root",
+        "system-spec not symlink, realpath contained under repo_root, 0 symlinks inside system-spec",
+        "git rev-parse git-common-dir/show-toplevel/HEAD exit 0, match receipt"
+      ]
+    },
+    {
+      "item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた",
+      "result": "achieved",
+      "evidence": [
+        "validate-source-lineage.py --repo-root <root> exit 0, status=pass, checked=0, violations=[]",
+        "graph has 0 nodes; preflight-report R0.lineage_gate.mode=new_creation consistent"
+      ]
+    }
+  ]
+}

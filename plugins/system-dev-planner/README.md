@@ -51,7 +51,7 @@ feature context は caller repository 相対 JSON で、feature id、purpose、g
 1. `init`: caller repository を確定し、`.dev-graph/config.json` と不足 directory だけを作ります。既存の文書や設定値は上書きしません。
 2. `plan`: C13 が feature-bound session lock を atomic acquire し、1つの confirmed feature を exact 13 task specs、inventory、DAG として caller repository の staging に生成します。各反復で heartbeat を renew します。
 3. `handoff/validate/evaluate`: C14 が versioned `system-build-handoff.json` を生成し manifest digest に含め、C08/C12 の決定論 gate と fork された独立 evaluator が、同じ canonical digest に対して4条件を判定します。
-4. `promote/release`: 全 gate PASS と digest 一致のときだけ、同じ filesystem 内で staging generation を atomic rename し、C11 所有の promotion receipt・registration request・`current.json` を更新します。registration receipt は dev-graph の all-or-none apply が所有し、run 終了時は C13 がlockを release します。
+4. `promote/release`: 全 gate PASS と digest 一致のときだけ、同じ filesystem 内で staging generation を`plans/generations/<package>/<digest>/`へ atomic rename し、C11 所有の promotion receipt・registration request・feature別`state/current/<package>.json` を更新します。source driftでは旧generation/receiptを変更せず、新receiptの`supersedes`に直前世代を記録します。registration receipt は dev-graph の all-or-none apply/supersede が所有し、run 終了時は C13 がlockを release します。
 
 通常は `/system-dev-plan plan ...` がこの lifecycle を駆動します。検証や障害復旧で各 gate を個別に確認するコマンドは [setup.md](setup.md) を参照してください。
 
@@ -59,7 +59,7 @@ feature context は caller repository 相対 JSON で、feature id、purpose、g
 
 検証・独立評価が未達なら published/current は旧世代を維持し、同じ run の staging と findings を残します。同一 feature id/source digest で最大5周まで再開します。期限切れ lock は audit 付き cleanup 対象です。別 digest の verdict や receipt は再利用しません。
 
-rename 後に `current.json` 更新だけが中断した場合は、同じ C11 promote command を同じ引数で再実行すると promotion intent と immutable receipt を照合して pointer 更新を冪等に完了します。gate 未達や rename 前の失敗では旧 current がそのまま残るため、published directory を手で削除・上書きしないでください。成功後に旧世代へ戻す判断は dev-graph の receipt/pointer recovery 手順で行い、本 plugin は履歴の破壊的削除をしません。
+rename 後に current pointer 更新だけが中断した場合は、同じ C11 promote command を同じ引数で再実行すると promotion intent と immutable receipt を照合して互換用`current.json`とfeature別pointerの更新を冪等に完了します。gate 未達や rename 前の失敗では旧 current がそのまま残るため、published directory を手で削除・上書きしないでください。成功後に旧世代へ戻す判断は dev-graph の receipt/pointer recovery 手順で行い、本 plugin は履歴の破壊的削除をしません。
 
 ## Rollback
 

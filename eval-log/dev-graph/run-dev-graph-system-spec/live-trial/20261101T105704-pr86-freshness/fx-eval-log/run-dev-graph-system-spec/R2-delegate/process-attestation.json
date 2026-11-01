@@ -1,0 +1,108 @@
+{
+  "kind": "parent_process_attestation",
+  "trust": "self-report by parent context (not machine-recorded)",
+  "why_not_machine_evidence": "session transcript は live-trial 隔離ガード (guard-json-data.py) が参照を拒否するため抽出できない。fixture 内に tool 呼出しの hook 記録は存在しない",
+  "bash_prefix_used_on_every_main_process_call": "export TMPPREFIX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec104/tmp/zsh; export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec104/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ...",
+  "repo_root_source": "c24-receipt.json の repo_root を literal 代入",
+  "delegates_via_skill_tool": [
+    "system-spec-harness:run-system-spec-elicit",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:assign-system-spec-completeness-evaluator"
+  ],
+  "skill_md_reading": "各 SKILL.md は Skill tool の読込で本文全体が context に注入された",
+  "corroboration": "SKILL.md sha256 が task 指定の版 (C01 2a64df26…, doc-fetch b4b4d907…) と一致",
+  "prompts_read_in_full_with_Read_tool": {
+    "elicit": [
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md",
+        "bytes": 32181,
+        "sha256": "2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R0-foundation.md",
+        "bytes": 17312,
+        "sha256": "6504ed986790f356c898a296e1c819631305d7e663f44168c4aa9b428597cd83"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R1-init.md",
+        "bytes": 5001,
+        "sha256": "0c680368e000645b74dab2c62852adbdb78458bf68e348597ada3875ee83bf6f"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R2-interview.md",
+        "bytes": 15818,
+        "sha256": "6dbe8048720b950e17daac8425a44a295c9c2255e0293ec315e04323facac084"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R3-reask.md",
+        "bytes": 9481,
+        "sha256": "16ad7f236badf040ffbc9ac790871b17dc7b7cc4c69523c1f606b2a6e2bed9b8"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R4-reopen.md",
+        "bytes": 11738,
+        "sha256": "113078305c2284c6b7e61867534b78da3a30272f5c8800b5a5760872b0cb4fca"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+        "bytes": 13200,
+        "sha256": "e53d1dff697e2a5cb034e6487f32f4b10121867032fd47c3d20746f143db37d9"
+      }
+    ],
+    "doc-fetch": [
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+        "bytes": 15950,
+        "sha256": "b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R1-identify.md",
+        "bytes": 5227,
+        "sha256": "f5b6ef403f0ffca13adaf78a80a6d990cb6529d408eb1a5cb436502712d8404d"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md",
+        "bytes": 6707,
+        "sha256": "c74acafdc2abed1141cdc26f7f4a42b7d0062556e5168588f72e46da4b7587d5"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R3-record.md",
+        "bytes": 7765,
+        "sha256": "df225877a020e1fada8e98b0566373267bdb58614de96bca72cd7339e5e09e28"
+      }
+    ],
+    "compile": [
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md",
+        "bytes": 23330,
+        "sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/prompts/R1-assemble.md",
+        "bytes": 4947,
+        "sha256": "e826d94dafcbddb9296a22c08132f8cb44d5a02bce06e022673222ee51eb1eb6"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/prompts/R2-render.md",
+        "bytes": 8815,
+        "sha256": "f111f404b3df1f684571efa90b9ca3406c943be1fa5aa49326ab4f9444f038b5"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/prompts/R3-crosslink.md",
+        "bytes": 4526,
+        "sha256": "894783fe8485bf5d382230fc6817661507b2ddc5cc29315117d8b99453c6b664"
+      },
+      {
+        "path": "plugins/system-spec-harness/skills/run-system-spec-compile/references/chapter-template.md",
+        "bytes": 5412,
+        "sha256": "cded1566981dbba3bb8860b9f8b1bca7cd28c8591a4f5e2ec6d7c79734d109ba"
+      }
+    ]
+  },
+  "independent_tests_scratch": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec104/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec104-fx/457219fc-7790-4d37-8a72-19ef072257ed/scratch (cwd), --basetemp=<scratch>/pytest, -p no:cacheprovider",
+  "deviations": [
+    "receipt 記録用の1呼出しで `cat > /dev/null` を含め stdin 待ちで停止→TaskStop。prefix 付きで、書込みは eval-log の receipt 1件のみ"
+  ],
+  "recorded_at": "2026-11-01T02:21:46+00:00"
+}

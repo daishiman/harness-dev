@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-ad9854451a08928c6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e5449430-cdc1-4e3d-9071-c9676dabf3e3",
+      "line": 21,
+      "prefix_bytes": 257589,
+      "prefix_sha256": "fe1aa48fbb9c2f48cd2b659f67ae8794afa335dd071f9746d1d6b887ec55182b",
+      "timestamp": "2026-11-01T13:25:33.688Z"
+    },
+    "result": {
+      "uuid": "0d6cb75c-434a-47c1-b877-479e24fc93f9",
+      "line": 22,
+      "prefix_bytes": 259965,
+      "prefix_sha256": "255f8c74027106b349c6dfb1d8cc703485333b31775e22927458b657087b2a7c",
+      "timestamp": "2026-11-01T13:25:33.934Z"
+    }
+  },
+  "tool_use_id": "toolu_01DZ9nyj7BLLDaGdrncTHdXi",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+    "limit": 40
+  },
+  "is_error": false,
+  "tool_result_content": "1\t---\n2\tname: assign-system-spec-completeness-evaluator\n3\tdescription: 生成された仕様書ドキュメントセットの完成度を独立 context で評価したいとき、上位概念trace・意思決定・マトリクス網羅性・設計知識反映・最新ドキュメント出典・prompt品質の 6 観点で合否判定したいときに使う。\n4\tdisable-model-invocation: false\n5\tuser-invocable: false\n6\tcontext: fork\n7\targument-hint: \"[--spec-dir <path>] [--output <report_path>]\"\n8\targuments: [spec_dir, output]\n9\tkind: assign\n10\tprefix: assign\n11\trole_suffix: evaluator\n12\tversion: 0.1.0\n13\teffect: local-artifact\n14\towner: team-platform\n15\tsince: 2026-07-11\n16\tsource: plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/scoring-rubric.json\n17\tsource-tier: internal\n18\tlast-audited: 2026-07-11\n19\taudit-trigger: quarterly\n20\tallowed-tools:\n21\t  - Read\n22\t  - Bash(python3 *)\n23\t  # 監査 fork の現行経路は Agent。Task は schema 1.1 台帳を書く legacy 経路として残す。\n24\t  - Agent\n25\t  - Task\n26\tresponsibility_refs:\n27\t  - prompts/R1-score.md\n28\t  - prompts/R2-delegate.md\n29\tresponsibilities:\n30\t  - id: R1-score\n31\t    name: score\n32\t    prompt_required: true\n33\t  - id: R2-delegate\n34\t    name: delegate\n35\t    prompt_required: true\n36\tcompleteness_exempt:\n37\t  - \"manifest: assign evaluator is a single forked scoring gate; its rubric, schema and aggregate script are the runtime SSOT.\"\n38\trubric_refs:\n39\t  - references/scoring-rubric.json\n40\treference_refs:",
+  "tool_use_result": null
+}
