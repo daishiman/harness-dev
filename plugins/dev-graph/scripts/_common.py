@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: dev-graph-common
-# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write, identity and package-membership (is_package_member) primitives.
+# purpose: Share stdlib-only fail-closed process, JSON, containment, atomic-write, identity, package-membership (is_package_member) and artifact-frontmatter (frontmatter_block) primitives.
 # inputs: ["Python imports only"]
 # outputs: ["Reusable helper functions"]
 # requires-python: ">=3.10"
@@ -118,6 +118,22 @@ def _current_umask() -> int:
 
 def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:
     atomic_bytes(path, json_bytes(value), create_only=create_only)
+
+
+LINE_BREAKERS = {"\x85": "\\u0085", "\u2028": "\\u2028", "\u2029": "\\u2029"}
+
+
+def frontmatter_block(node: dict[str, Any], keys: list[str], unmanaged: list[str] | None = None) -> str:
+    """The artifact frontmatter both C02 writers emit (build-graph-node and register-package)."""
+    # One JSON value per line: escape the code points str.splitlines() treats as line ends.
+    rows = []
+    for key in keys:
+        # sort_keys matches graph.json, so an update re-serialising a node read back from the graph moves no keys.
+        value = json.dumps(node[key], ensure_ascii=False, sort_keys=True)
+        for raw, escaped in LINE_BREAKERS.items():
+            value = value.replace(raw, escaped)
+        rows.append(f"{key}: {value}\n")
+    return "---\n" + "".join(rows) + "".join(unmanaged or []) + "---\n"
 
 
 PACKAGE_KEYS = frozenset({"parent_feature", "feature_package_id", "phase_ref"})

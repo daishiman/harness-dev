@@ -206,13 +206,6 @@ def test_missing_journal_subsection_fails(tmp_path: Path, golden: str):
     assert "J01" in proc.stdout or "S01" in proc.stdout
 
 
-def test_missing_phase_block_fails(tmp_path: Path, golden: str):
-    text = golden.replace("## ◇【10→100】", "## ◇【その他】")
-    proc = run(write(tmp_path, text))
-    assert proc.returncode == 1
-    assert "P01" in proc.stdout
-
-
 def test_unreplaced_placeholder_fails(tmp_path: Path, golden: str):
     text = golden.replace("- 北原さん: 8/16のUBM兵庫支部会", "- [名前]: [感謝の内容] 8/16のUBM兵庫支部会")
     proc = run(write(tmp_path, text))
@@ -700,154 +693,273 @@ def test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section(
     assert "3ヶ月目標" in proc.stdout
 
 
-# --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---------------------------------
+# --- チェックシート①②③ (`# チェックシート` から下) -----------------------------------------
 
-# ネストしたサブ項目も設問なので先頭空白を許す (validator の CHECKBOX_RE と同形)。
+# ネストしたサブ項目も項目なので先頭空白を許す (validator の CHECKBOX_RE と同形)。
 CHECKBOX = re.compile(r"^\s*-\s*\[[ xX]\]")
+CHECKLIST_TEMPLATE = PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
+BUSINESS_PHASE = "# ① 事業フェーズチェックシート（UBM）"
+LIFE_FUNDS = "# ② 人生資金チェックシート"
+UBM_CHECK = "# ③ チェックシート（UBM）"
+SHEETS = (BUSINESS_PHASE, LIFE_FUNDS, UBM_CHECK)
+LEGACY_SHEETS = ("# フェーズ別 課題チェックシート", "# 原理原則 チェックシート")
 
 
-def split_principle(golden: str) -> tuple[str, list[str]]:
-    """golden を「チェックシートより前」と「設問セクションの列」へ割る。
+def template_block() -> str:
+    """principle-checklist.md の「テンプレート（未チェック状態）」のフェンスの中身。"""
+    text = CHECKLIST_TEMPLATE.read_text(encoding="utf-8")
+    m = re.search(r"^```markdown\n(.*?)^```\s*$", text, re.M | re.S)
+    assert m, "principle-checklist.md に ```markdown のテンプレートが無い"
+    return m.group(1)
 
-    先頭要素は `# 原理原則 チェックシート` 直後の空行なので、設問は `sections[1:]` にあたる。
+
+def golden_block(golden: str) -> str:
+    """golden の `# チェックシート` の直前の `---` から末尾まで。"""
+    i = golden.index("---\n# チェックシート\n")
+    return golden[i:]
+
+
+def split_sheet(text: str, heading: str) -> tuple[str, str, str]:
+    """text を「シートより前」「シートの本体 (見出し行を含む)」「シートより後」に割る。
+
+    本体の終わりは次の H1 かフェンスの閉じ。シートの間の `---` は本体の末尾に残る。
     """
-    head, marker, tail = golden.partition("\n# 原理原則 チェックシート\n")
-    assert marker, "golden-sample.md に # 原理原則 チェックシート が無い"
-    return head, re.split(r"(?m)^(?=## ◇)", tail)
+    start = text.index(f"\n{heading}\n") + 1
+    m = re.compile(r"(?m)^(?:# |```)").search(text, start + len(heading))
+    end = m.start() if m else len(text)
+    return text[:start], text[start:end], text[end:]
 
 
-def test_principle_checklist_block_is_required(tmp_path: Path, golden: str):
-    """`# 原理原則 チェックシート` ブロックごと落ちたら S01 で落とす。
+def sub_sheet(golden: str, heading: str, edit) -> str:
+    """golden の 1 シートだけを edit(本体) で置き換えた全文を返す。"""
+    head, body, tail = split_sheet(golden, heading)
+    new = edit(body)
+    assert new != body, f"{heading} の変異が空振りした"
+    return head + new + tail
+
+
+def h3_headings(text: str, heading: str) -> list[str]:
+    """1 シートの H3 見出しを出現順で返す。"""
+    _, body, _ = split_sheet(text, heading)
+    return [l.strip() for l in body.splitlines() if l.startswith("### ")]
+
+
+def drop_checkboxes(body: str) -> str:
+    return re.sub(r"(?m)^\s*-\s*\[[ xX]\].*\n", "", body)
+
+
+def test_checklist_root_is_required(tmp_path: Path, golden: str):
+    """`# チェックシート` から下がまるごと落ちたら、親見出しと 3 シートを S01 で 1 件ずつ挙げる。
 
     「毎回丸ごと出す」が利用者の要求なので、ブロック不在は骨格違反として扱う。
     """
-    head, _ = split_principle(golden)
-    proc = run(write(tmp_path, head), GOLDEN_NUMBER, GOLDEN_DATE)
-    assert proc.returncode == 1
-    assert "S01" in proc.stdout
-    assert "# 原理原則 チェックシート" in proc.stdout
-
-
-def test_principle_checklist_excerpt_fails_per_missing_section(tmp_path: Path, golden: str):
-    """設問を抜粋したチェックシートを PASS にしない。
-
-    「1 つでもあれば可」にすると、3 設問だけ書いたチェックシートが通り、
-    毎回丸ごと出すという要求が検査を素通りして空洞化する。欠落は 1 件 1 行で出す。
-    """
-    head, sections = split_principle(golden)
-    text = head + "\n# 原理原則 チェックシート\n" + "".join(sections[:4])  # 先頭3設問だけ残す
+    text = golden[: golden.index("---\n# チェックシート\n")]
     proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("S01:") == 4, proc.stdout
+    for heading in ("# チェックシート",) + SHEETS:
+        assert f"S01: 必須見出しが見つからないか順序が不正です: {heading}" in proc.stdout
+
+
+@pytest.mark.parametrize("heading", SHEETS)
+def test_each_sheet_is_required(tmp_path: Path, golden: str, heading: str):
+    """3 シートのどれか 1 つだけ落としても S01 で止める。"""
+    text = sub_sheet(golden, heading, lambda body: "")
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert f"S01: 必須見出しが見つからないか順序が不正です: {heading}" in proc.stdout
+
+
+@pytest.mark.parametrize("legacy", LEGACY_SHEETS)
+def test_legacy_sheet_left_behind_fails(tmp_path: Path, golden: str, legacy: str):
+    """新しい①②③と一緒に差し替え前の旧ブロックが残っていたら S02 で止める。
+
+    両方あると、次回の build がどちらを継承するのかを決められない。新しい形は
+    揃っているので S01 は出ず、S02 だけで落ちることを固定する。
+    """
+    text = golden.rstrip("\n") + f"\n\n{legacy}\n\n## ◇ 右肩上がりになっていますか？\n- [x] 個人の口座残高\n"
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("S02:") == 1, proc.stdout
+    assert f"差し替え前のチェックシート「{legacy}」が残っています" in proc.stdout
+    assert "S01:" not in proc.stdout, proc.stdout
+
+
+def test_legacy_only_journal_fails(tmp_path: Path, golden: str):
+    """旧形式だけのジャーナル (2026-10-29 までの形) は S01 と S02 の両方で落ちる。"""
+    head = golden[: golden.index("---\n# チェックシート\n")]
+    text = head + "".join(
+        f"{legacy}\n\n## ◇ 右肩上がりになっていますか？\n- [ ] 個人の口座残高\n\n" for legacy in LEGACY_SHEETS
+    )
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert "S01:" in proc.stdout, proc.stdout
+    assert proc.stdout.count("S02:") == 2, proc.stdout
+
+
+def test_business_phase_missing_section_fails(tmp_path: Path, golden: str):
+    """①のフェーズ・テストの見出しが欠けたら、欠けた分だけ P01 を出す。"""
+    def edit(body: str) -> str:
+        body = body.replace("### ★ 10 → 100 テスト", "### ★ その他のテスト")
+        return body.replace("### 1 → 10 フェーズ", "### 次のフェーズ")
+
+    proc = run(write(tmp_path, sub_sheet(golden, BUSINESS_PHASE, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("P01:") == 2, proc.stdout
+    assert "P01: 事業フェーズチェックシートに「### ★ 10 → 100 テスト…」がありません" in proc.stdout
+
+
+def test_business_phase_checkbox_is_required_per_section(tmp_path: Path, golden: str):
+    """チェックボックスの有無は H3 ごとに見る。
+
+    シート全体から 1 行でも見つかれば可にすると、0 → 1 フェーズだけ埋まっていて
+    残りが見出しだけ、という状態を通す。空にした 5 節すべてが P02 で挙がることを固定する。
+    """
+    def edit(body: str) -> str:
+        i = body.index("### ★ 0 → 1 テスト")
+        return body[:i] + drop_checkboxes(body[i:])
+
+    proc = run(write(tmp_path, sub_sheet(golden, BUSINESS_PHASE, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("P02:") == 5, proc.stdout
+    assert proc.stdout.count("P01:") == 0, proc.stdout
+
+
+def test_life_funds_missing_section_fails(tmp_path: Path, golden: str):
+    edit = lambda body: body.replace("### 振り返りチェック\n", "")
+    proc = run(write(tmp_path, sub_sheet(golden, LIFE_FUNDS, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("M01:") == 1, proc.stdout
+    assert "M01: 人生資金チェックシートに「### 振り返りチェック…」がありません" in proc.stdout
+
+
+def test_life_funds_checkbox_is_required_per_section(tmp_path: Path, golden: str):
+    """②は冒頭の 2 行 (今の生活費・今の収入額) と H3 の 3 節を別々に見る。"""
+    proc = run(write(tmp_path, sub_sheet(golden, LIFE_FUNDS, drop_checkboxes)), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("M02:") == 4, proc.stdout
+    assert "M02: 人生資金チェックシートの冒頭（今の生活費・今の収入額）にチェックボックス行がありません" in proc.stdout
+    assert proc.stdout.count("M01:") == 0, proc.stdout
+    assert proc.stdout.count("M03:") == 0, proc.stdout
+
+
+def test_life_funds_table_is_required(tmp_path: Path, golden: str):
+    """④の見直し項目の表を落としたら M03。見出しとチェック行が残っていても記入欄が消える。"""
+    edit = lambda body: re.sub(r"(?m)^\|.*\n", "", body)
+    proc = run(write(tmp_path, sub_sheet(golden, LIFE_FUNDS, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("M03:") == 1, proc.stdout
+    assert proc.stdout.count("M02:") == 0, proc.stdout
+
+
+def test_ubm_checklist_excerpt_fails_per_missing_section(tmp_path: Path, golden: str):
+    """設問を抜粋した③を PASS にしない。
+
+    「1 つでもあれば可」にすると、3 設問だけ書いたシートが通り、毎回丸ごと出すという
+    要求が検査を素通りして空洞化する。欠落は 1 件 1 行で出す。
+    """
+    def edit(body: str) -> str:
+        parts = re.split(r"(?m)^(?=### ◇)", body)
+        return "".join(parts[:4])  # 見出しの部分と先頭 3 設問だけ残す
+
+    proc = run(write(tmp_path, sub_sheet(golden, UBM_CHECK, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
     assert proc.returncode == 1
     assert proc.stdout.count("K01:") == 8, proc.stdout
-    assert "K01: チェックシートに「## ◇支出は前回から下げられましたか…」の設問がありません" in proc.stdout
+    assert "K01: チェックシート（UBM）に「### ◇ 支出は前回から下げられましたか…」の設問がありません" in proc.stdout
 
 
-def test_principle_checklist_checkbox_is_required_per_section(tmp_path: Path, golden: str):
-    """チェックボックスの有無は設問セクション単位で見る。
+def test_ubm_checklist_checkbox_is_required_per_section(tmp_path: Path, golden: str):
+    """空にした 9 設問すべてが K02 で挙がる (P02 と同じ形の fail-open を塞ぐ)。"""
+    def edit(body: str) -> str:
+        parts = re.split(r"(?m)^(?=### ◇)", body)
+        return "".join(parts[:3] + [drop_checkboxes(p) for p in parts[3:]])
 
-    ブロック全体から 1 行でも見つかれば可にすると、1 設問だけ埋まっていて残り 10 設問が
-    見出しだけ、という状態を通す (P02 と同じ形の fail-open)。空にした 10 設問すべてが
-    K02 で挙がることを固定する。
-    """
-    head, sections = split_principle(golden)
-    stripped = [sections[0], sections[1]] + [
-        re.sub(r"(?m)^\s*-\s*\[[ xX]\].*\n", "", s) for s in sections[2:]
-    ]
-    text = head + "\n# 原理原則 チェックシート\n" + "".join(stripped)
-    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    proc = run(write(tmp_path, sub_sheet(golden, UBM_CHECK, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
     assert proc.returncode == 1
-    assert proc.stdout.count("K02:") == 10, proc.stdout
+    assert proc.stdout.count("K02:") == 9, proc.stdout
     assert proc.stdout.count("K01:") == 0, proc.stdout
 
 
-def principle_headings(text: str) -> list[str]:
-    """`# 原理原則 チェックシート` 配下の H2 設問見出しを出現順で返す。"""
-    _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
-    return [l.strip() for l in tail.splitlines() if l.strip().startswith("## ◇")]
-
-
-def test_principle_sections_stay_in_sync_across_the_four_sources(golden: str):
-    """設問の正本が 4 箇所に分散しているので、ズレをテストで落とす。
-
-    正本テンプレート (principle-checklist.md) / Few-shot (golden-sample.md) /
-    人間向け骨格 (output-format.md) / 機械検査キー (PRINCIPLE_SECTIONS) の 4 つが
-    同じ 11 設問を指していなければならない。1 箇所だけ直す変更は必ず起きるので、
-    「実測で確認した」ではなく検査として固定する。
-    """
-    skill = PLUGIN_ROOT / "skills/run-ubm-journal"
-    template = (skill / "references/principle-checklist.md").read_text(encoding="utf-8")
-    fmt = (skill / "references/output-format.md").read_text(encoding="utf-8")
-    source = (skill / "scripts/validate-journal-output.py").read_text(encoding="utf-8")
-
-    headings = principle_headings(golden)
-    assert len(headings) == 11, headings
-    assert principle_headings(template) == headings
-    assert principle_headings(fmt) == headings
-
-    block = re.search(r"PRINCIPLE_SECTIONS = \[(.*?)\n\]", source, re.S)
-    assert block, "PRINCIPLE_SECTIONS が見つからない"
-    keys = re.findall(r'"([^"]+)"', block.group(1))
-    assert len(keys) == len(headings)
-    # 各キーは 1 つの設問だけに一致すること。複数に当たると K01 が別の設問の存在で
-    # 満たされ、欠落を検出できなくなる。
-    for key in keys:
-        assert sum(key in h for h in headings) == 1, key
-
-
-def test_principle_checklist_template_and_golden_have_same_questions(golden: str):
-    """テンプレートと golden で設問本文（チェックボックス行）が一致する。
-
-    見出しだけ揃えても設問が抜ければ意味がない。チェック状態 (`[ ]` / `[x]`) の
-    違いは正常なので、そこだけ正規化してから比べる。
-    """
-    template = (
-        PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
-    ).read_text(encoding="utf-8")
-
-    def questions(text: str) -> list[str]:
-        _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
-        return [
-            re.sub(r"\[[ xX]\]", "[ ]", l.rstrip())
-            for l in tail.splitlines()
-            if CHECKBOX.match(l)
-        ]
-
-    assert questions(golden) == questions(template)
-    assert len(questions(golden)) == 56
-
-
-def test_principle_checklist_has_no_horizontal_rule(golden: str):
-    """`# 原理原則 チェックシート` 本文に水平線を置かない。
-
-    build-journal-context の section_body は `---` をセクション終端として扱うため、
-    区切り線を書くと翌日の継承がそこで打ち切られ、以降の設問が静かに消える。
-    """
-    _, _, tail = golden.partition("\n# 原理原則 チェックシート\n")
-    assert not [l for l in tail.splitlines() if l.strip() == "---"], tail
-
-
-def test_principle_checklist_nested_checkbox_counts(tmp_path: Path, golden: str):
+def test_ubm_checklist_nested_checkbox_counts(tmp_path: Path, golden: str):
     """インデントされたサブ項目**だけ**の設問も K02 を満たす。
 
-    golden をそのまま通すだけでは、この主張は固定できない。「（1）」の設問は
+    golden をそのまま通すだけでは、この主張は固定できない。「歴史の共有」の設問は
     ネストした項目とトップレベルの項目を両方持つため、先頭空白を許さない正規表現へ
     退行させても K02 はトップレベル側で満たされてしまう。ネスト以外を取り除いた
     設問を作り、それが PASS することで初めて `^\\s*-` の `\\s*` を固定できる。
     """
-    head, sections = split_principle(golden)
-    target = "歴史の共有ができていますか？（1）"
-    rebuilt = []
-    for sec in sections:
-        if target in sec:
-            # トップレベルのチェックボックス行だけ落とし、ネストした項目を残す。
-            sec = re.sub(r"(?m)^-\s*\[[ xX]\].*\n", "", sec)
-            assert re.search(r"(?m)^\s+-\s*\[[ xX]\]", sec), sec
-            assert not re.search(r"(?m)^-\s*\[[ xX]\]", sec), sec
-        rebuilt.append(sec)
-    proc = run(write(tmp_path, head + "\n# 原理原則 チェックシート\n" + "".join(rebuilt)),
-               GOLDEN_NUMBER, GOLDEN_DATE)
+    target = "決めた括りの人が増え、歴史の共有ができていますか"
+
+    def edit(body: str) -> str:
+        parts = re.split(r"(?m)^(?=### ◇)", body)
+        out = []
+        for part in parts:
+            if target in part:
+                part = re.sub(r"(?m)^-\s*\[[ xX]\].*\n", "", part)
+                assert re.search(r"(?m)^\s+-\s*\[[ xX]\]", part), part
+                assert not re.search(r"(?m)^-\s*\[[ xX]\]", part), part
+            out.append(part)
+        return "".join(out)
+
+    proc = run(write(tmp_path, sub_sheet(golden, UBM_CHECK, edit)), GOLDEN_NUMBER, GOLDEN_DATE)
     assert proc.returncode == 0, proc.stdout
 
+
+def test_checklist_sections_stay_in_sync_across_the_four_sources(golden: str):
+    """見出しの正本が 4 箇所に分散しているので、ズレをテストで落とす。
+
+    正本テンプレート (principle-checklist.md) / Few-shot (golden-sample.md) /
+    人間向け骨格 (output-format.md) / 機械検査キー (validator の 3 つの定数) が
+    同じ H3 を指していなければならない。1 箇所だけ直す変更は必ず起きるので、
+    「実測で確認した」ではなく検査として固定する。
+    """
+    mod = _load_validator()
+    template = template_block()
+    fmt = (PLUGIN_ROOT / "skills/run-ubm-journal/references/output-format.md").read_text(encoding="utf-8")
+
+    assert mod.BUSINESS_PHASE_HEADING == BUSINESS_PHASE[2:]
+    assert mod.LIFE_FUNDS_HEADING == LIFE_FUNDS[2:]
+    assert mod.UBM_CHECKLIST_HEADING == UBM_CHECK[2:]
+    assert mod.LEGACY_CHECKLIST_HEADINGS == tuple(h[2:] for h in LEGACY_SHEETS)
+    assert mod.LIFE_FUNDS_TABLE_SECTION in mod.LIFE_FUNDS_SECTIONS
+
+    for heading, keys, count in (
+        (BUSINESS_PHASE, mod.BUSINESS_PHASE_SECTIONS, 6),
+        (LIFE_FUNDS, mod.LIFE_FUNDS_SECTIONS, 3),
+        (UBM_CHECK, mod.UBM_CHECK_SECTIONS, 11),
+    ):
+        expected = h3_headings(template, heading)
+        assert len(expected) == count, expected
+        assert h3_headings(golden, heading) == expected
+        assert h3_headings(fmt, heading) == expected
+        assert len(keys) == count
+        # 各キーは 1 つの見出しだけに一致すること。複数に当たると、別の見出しの存在で
+        # P01/M01/K01 が満たされ、欠落を検出できなくなる。
+        for key in keys:
+            assert sum(key in h for h in expected) == 1, key
+
+
+def test_checklist_template_and_golden_have_same_items(golden: str):
+    """テンプレートと golden で、チェック状態を除いた全文が一致する。
+
+    見出しだけ揃えても項目・注記・②の表が抜ければ意味がない。チェック状態
+    (`[ ]` / `[x]`) の違いは正常なので、そこだけ空欄に戻してから比べる。
+    """
+    template = template_block().rstrip("\n")
+    block = golden_block(golden).rstrip("\n")
+    assert re.search(r"(?m)^\s*-\s*\[[xX]\]", block), "golden にチェック済みの項目が無い"
+    assert re.sub(r"(?m)^(\s*-\s*\[)[xX](\])", r"\1 \2", block) == template
+    assert len([l for l in template.splitlines() if CHECKBOX.match(l)]) == 115
+
+
+def test_checklist_template_has_no_emoji():
+    """出力に絵文字を使わない決まりに合わせ、出典の「振り返りチェック」の頭の電球の絵文字を外してある。
+
+    ★ (U+2605) は出典どおり残すので、範囲は絵文字の面だけに絞る。
+    """
+    template = template_block()
+    assert "\U0001F4A1" not in template
+    assert not re.search("[\U0001F300-\U0001FAFF\uFE0F]", template)
 
 
 # --- 引数・daily-habits.json の不正は exit 2 (ジャーナルの違反 exit 1 と取り違えない) ---

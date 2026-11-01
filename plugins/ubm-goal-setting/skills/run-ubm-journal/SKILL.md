@@ -185,7 +185,7 @@ python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute -
 
 | 段階 | 責務 | 実行体 |
 |---|---|---|
-| Phase0-resolve | 対象日を確定し `build-journal-context.py` で番号・目標4階層・週報引き継ぎ・`warnings` を取得 | 本スキル（Bash） |
+| Phase0-resolve | 対象日を確定し `build-journal-context.py` で番号・目標4階層・週報引き継ぎ・チェックシート①②③（`checklists.block`）・`warnings` を取得 | 本スキル（Bash） |
 | Phase1-open | 「今日は何をやりましたか」で対話を開き、事実を出しきる | 本スキル |
 | Phase2-deepen | 気づき・うまくいかなかったこと・時間の使い方・お金の動きを掘る | 本スキル |
 | Phase3-fill | 埋まっていない枠（感謝・禁止事項・タスク）と**未確認の固定習慣**を、週報の呼び水を使って補う | 本スキル |
@@ -273,9 +273,9 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 - **要約しすぎない**: ユーザーが出した固有名詞・数値・時刻・相手の発言はそのまま残す。
   1項目1事実に分解し、冗長な言い回しだけを削る。
 - **3小節を混ぜない**: 「現状を確認する」に評価や改善案を書かない。事実／解釈／打ち手を分離する。
-- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシート・原理原則チェックシートは
+- **継承値は書き換えない**: 人生の究極目的・チェックシート①②③は
   前回から引き継ぎ、ユーザーが変更を申し出た項目だけ更新する。
-- **原理原則チェックシート**: `references/principle-checklist.md` の「出力規則」に従う。対話へ追加する質問ではなく、Phase4で継承する器として扱う。
+- **チェックシート①②③**: `references/principle-checklist.md` の「出力規則」に従い、Phase0 の `checklists.block` をそのまま貼る。対話へ追加する質問ではなく、Phase4で継承する器として扱う。
 
 ## つまずきやすい点
 
@@ -286,15 +286,16 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
   なお正式保存は中央 guard の `execute`（Bash）だけで行い、Write/Edit を使わない。フックは Daily への直接の
   Write を許すので、「直接 Write しない」という禁則（正式保存の実行境界）をフックは守らない。守るのは本スキルの規則である。
 - **`UBM_VAULT_ROOT` 未設定**: Phase0 が終了コード 2 で終わる。vault のパスをユーザーに確認してから再実行する。
-  Phase0 の終了コード 2 は「引数不正・vault 解決不能・`Daily` ディレクトリ不在・daily-habits.json 破損」の総称なので、
+  Phase0 の終了コード 2 は「引数不正・vault 解決不能・`Daily` ディレクトリ不在・daily-habits.json 破損・principle-checklist.md のテンプレート欠落や破損」の総称なので、
   標準エラー出力の 1 行目を必ず読んでから対処すること。
 - **週報が当日を含まない**: 週をまたいだ直後は直近週報を参照する（`covers_target: false` の警告）。
   1週間目標の残日数は `0日（期間終了・次週分の週報は未作成）` と書く。
 - **1年目標の対応レポートは存在しない**: 前回ジャーナルからの継承のみ。満了していたら対話で確認する。
-- **フェーズ別課題チェックシートは本文の外**: `## 【お金のジャーナル】` の後、レベル1見出しとして置く。
-- **チェックシート2種を取り違えない**: `# フェーズ別 課題チェックシート`（0→1 / 1→10 / 10→100）と
-  `# 原理原則 チェックシート`（11 設問）は別ブロックで、どちらも `- [ ]` の塊なので見た目では区別できない。
-  順序・継承・区切りの規則は `references/principle-checklist.md` の「出力規則」を参照する。
+- **チェックシートは本文の外**: `## 【お金のジャーナル】` の後、レベル1見出し `# チェックシート` の下に
+  ①②③の3シートを置く。順序・継承・区切りの規則は `references/principle-checklist.md` の「出力規則」を参照する。
+- **旧形式を残さない**: 差し替え前の `# フェーズ別 課題チェックシート` と `# 原理原則 チェックシート` は
+  出力しない（S02 で止まる）。前回ジャーナルが旧形式なら、`build-journal-context.py` が文言の同じ項目のチェックだけを
+  ①③へ移し、移した件数を `warnings` に出す。文言が変わった項目は未チェックで始まる。
 
 ## 関連資料
 
@@ -305,7 +306,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
   `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集し、
   `keywords` と `search_scopes`（H01 が検査するセクション）を必ず併記する。`search_scopes` を
   書き忘れた習慣は検査不能として H02 違反になる）/
-  `references/principle-checklist.md`（「テンプレート（未チェック状態）」と「出力規則」の正本。
+  `references/principle-checklist.md`（チェックシート①②③の「テンプレート（未チェック状態）」と「出力規則」の正本。
   設問の変更手順は `references/output-format.md` 冒頭の契約を参照する）。
 - **付属資料**: `assets/golden-sample.md`（検査スクリプトに合格する見本 / 例示（few-shot））。
 - **エージェント**: `journal-composer`（プラグイン直下の `agents/`）。

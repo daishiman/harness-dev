@@ -2,10 +2,10 @@
 # /// script
 # name: bd-bridge
 # purpose: Be the single deterministic CLI choke point for allowed Beads task, edge, mirror and gate operations.
-# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)", "file: ready reads the build-parity-manifest.py snapshot (--parity-manifest)", "file: orphan-audit reads local_state.graph and content_roots markdown of .dev-graph/config.json (--scan-refs also reads the graph at every local/remote ref)", "file: removal-preflight reads the before/after graph (path or git ref) and --disposition-manifest"]
+# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)", "file: ready reads the build-parity-manifest.py snapshot (--parity-manifest), or delegates --graph to that builder in memory", "file: orphan-audit reads local_state.graph and content_roots markdown of .dev-graph/config.json (--scan-refs also reads the graph at every local/remote ref)", "file: removal-preflight reads the before/after graph (path or git ref) and --disposition-manifest"]
 # outputs: ["stdout: normalized JSON receipt"]
 # requires-python = ">=3.10"
-# dependencies: ["../lib/bd_bridge_contracts.py", "../lib/bd_bridge_graph.py", "../lib/bd_bridge_audit.py"]
+# dependencies: ["../lib/bd_bridge_contracts.py", "../lib/bd_bridge_graph.py", "../lib/bd_bridge_audit.py", "build-parity-manifest.py"]
 # contexts: [A, B, C, E]
 # network: true
 # write-scope: approved bd CLI only; never direct .beads I/O
@@ -24,6 +24,7 @@ bd / git を叩く lib 関数は実行関数を ``bd=`` ``git=`` で受け取る
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -611,6 +612,22 @@ def _graph_nodes(root: Path, graph: str | None, config: str, planned_preview: st
     return overlaid, gate
 
 
+def _graph_parity_manifest(graph: dict[str, Any]) -> dict[str, Any]:
+    """Use the canonical parity builder, including provenance, graph identities and MVP ordering.
+
+    ready --graph is a read-only convenience entrypoint: the builder returns its snapshot in memory,
+    so ready does not create a second manifest writer or alter repository files.
+    """
+    path = Path(__file__).resolve().with_name("build-parity-manifest.py")
+    spec = importlib.util.spec_from_file_location("dev_graph_ready_parity_builder", path)
+    if spec is None or spec.loader is None:
+        raise ContractError("cannot load the canonical parity manifest builder")
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    manifest, _diagnostics = builder.build(graph)
+    return manifest
+
+
 def _promotion_blockers(nodes: list[Any], targets: list[str]) -> list[dict[str, Any]]:
     """Every target that may not become a Beads issue yet, in target order; empty means all are promoted."""
     blockers: list[dict[str, Any]] = []
@@ -650,13 +667,16 @@ def _require(a: argparse.Namespace) -> None:
     if a.op == "update":
         # field 皆無・notes と append-notes の併用・不正な priority/labels は、bd を起動する前に落とす。
         _update_argv(a)
+    if a.op == "ready" and a.parity_manifest and a.graph:
+        # Two sources of the expected state could disagree; the report must name the one it compared against.
+        raise ContractError("ready takes --parity-manifest or --graph, not both")
 
 
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "dep-remove", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates", "orphan-audit", "removal-preflight"))
     p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--notes"); p.add_argument("--append-notes"); p.add_argument("--design"); p.add_argument("--priority"); p.add_argument("--assignee"); p.add_argument("--labels", help="update: カンマ区切りの label 集合。bd --set-labels へ置換転送する"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
     p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--duplicate-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
-    p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config"); p.add_argument("--config", default=".dev-graph/config.json")
+    p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config. ready: build the parity manifest from the beads_linkage of this graph.json"); p.add_argument("--config", default=".dev-graph/config.json")
     p.add_argument("--planned-preview", help="create --dry-run only: a build-graph-node.py --dry-run preview whose planned_nodes the gate overlays on graph.json")
     # 既定 off。全 ref の graph を読むため作業ツリー限定より重く、CI の常時実行には向かない。
     # 一方 merge_pending の判定はこれ無しでは不可能なので、処分を決める棚卸しでは必ず付ける。
@@ -766,8 +786,16 @@ def main() -> int:
             # 既に無い edge の remove は no-op として冪等に返す。graph 側で消えた edge を投影し直す経路。
             result = write(["dep", "remove", issue, a.depends_on, "--json"]) if present else {"idempotent": True}
     elif a.op == "ready":
-        manifest = _load_manifest(a.parity_manifest, root, label="parity")
-        result = _ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest)
+        if a.graph:
+            graph = _load_manifest(a.graph, root, label="graph") or {}
+            manifest = _graph_parity_manifest(graph)
+            graph_path = (Path(a.graph) if Path(a.graph).is_absolute() else root / a.graph).resolve().relative_to(root).as_posix()
+            source = {"graph": graph_path, "graph_revision": graph.get("graph_revision", 0),
+                      "linked_count": len(manifest["nodes"])}
+        else:
+            manifest = _load_manifest(a.parity_manifest, root, label="parity")
+            source = {"parity_manifest": a.parity_manifest} if a.parity_manifest else None
+        result = {**_ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest), "parity_source": source}
     elif a.op == "orphan-audit":
         result = _orphan_audit(root, scan_refs=a.scan_refs)
     elif a.op == "removal-preflight":
@@ -815,7 +843,7 @@ def main() -> int:
     if a.op == "update":
         payload["applied_fields"] = applied_fields
     if a.op == "ready" and isinstance(result, dict):
-        payload.update({key: result[key] for key in ("ready_set", "unmapped", "unmapped_summary", "conflicts", "candidate_count", "parity_provenance")})
+        payload.update({key: result[key] for key in ("ready_set", "unmapped", "unmapped_summary", "conflicts", "candidate_count", "parity_provenance", "parity_source")})
     # ready と同じく、集計を receipt の top-level にも出す。orphans[] を数え直さないと
     # 件数が分からない形にすると、下流と人間が「全部見た」を確認できない。
     if a.op == "orphan-audit" and isinstance(result, dict):

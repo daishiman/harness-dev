@@ -253,6 +253,76 @@ def test_spec_board_reference_becomes_link(case_with_png: Path) -> None:
     assert rc == 0 and 'href="#b02"' in html and 'href="#b03"' in html
 
 
+def write_links(base: Path, links: dict[str, list[dict]], *, sha: dict[str, str] | None = None,
+                stems: tuple[str, ...] = STEMS) -> None:
+    """render-board-png.mjs と同じ形で、ボードごとの押せる番号の枠を boards.json に書く。"""
+    sha = sha or {}
+    boards = []
+    for stem in stems:
+        no = stem[:2]
+        html = (base / "_src" / f"{stem}.html").read_bytes()
+        boards.append({"no": no, "status": "ok", "links": links.get(no, []),
+                       "html_sha256": sha.get(no, hashlib.sha256(html).hexdigest()),
+                       "png_sha256": hashlib.sha256((base / f"{stem}.png").read_bytes()).hexdigest()})
+    (base / "_check/boards.json").write_text(json.dumps({"boards": boards}), encoding="utf-8")
+
+
+def board_section(html: str, no: str) -> str:
+    return re.search(rf'<section class="page board-page" id="b{no}">.*?</section>', html, re.S).group(0)
+
+
+def test_numbers_in_board_image_become_hotspots(case_with_png: Path) -> None:
+    write_links(case_with_png, {"02": [
+        {"ref": "S02", "box": [168, 105, 84, 21]},   # S02 を描いたボード 03 へ
+        {"ref": "b03", "box": [168, 105, 84, 21]},   # 同じ行き先で同じ枠は 1 つにまとめる
+        {"ref": "Q01", "box": [0, 525, 168, 52.5]},  # ボードが無い番号は文書の節へ
+        {"ref": "S01", "box": [10, 10, 40, 20]},     # このボード自身は指さない
+        {"ref": "S99", "box": [10, 40, 40, 20]},     # 行き先がまとめに無い
+        {"ref": "b77", "box": [10, 70, 40, 20]},
+        {"ref": "S02", "box": [10, 100, 0, 20]},     # 幅が 0 の枠
+    ]})
+    rc, out, err = build(case_with_png)
+    assert rc == 0, err
+    section = board_section((case_with_png / OUT_NAME).read_text(encoding="utf-8"), "02")
+    hot = re.findall(r'<a class="go" href="#([^"]+)" style="([^"]+)" title="([^"]+)"', section)
+    assert [(h[0], h[1]) for h in hot] == [
+        ("b03", "left:10%;top:10%;width:5%;height:2%"),
+        ("req-q01", "left:0%;top:50%;width:10%;height:5%"),
+    ]
+    assert hot[0][2] == "S02: ボード 03「一覧で直す」 へ移る" and hot[1][2] == "要件定義の Q01 へ移る"
+    assert "画像の中の番号" in section, "押せる枠があることを図の下で知らせる"
+    assert '<a class="ref" href="#req-q01">Q01</a>' in section, "注記の番号も押せる"
+    assert '<div class="hot">' not in board_section((case_with_png / OUT_NAME).read_text(encoding="utf-8"), "03")
+
+
+def test_screen_number_prefers_the_board_titled_with_it(tmp_path: Path) -> None:
+    # 画面の数が同じなら、先にある共通の枠 (S02 の写真を借りただけ) より、見出しが S02 で始まるボードへ
+    pages = [
+        {"no": "00", "file": "00_overview.html", "type": "overview", "title": "全体図", "reader": "発注側の責任者",
+         "screens": [], "message": "写真を送るだけで一覧に入る"},
+        {"no": "01", "file": "01_pc-frame.html", "type": "pc", "title": "どの画面にも出る枠 (写真は S02)",
+         "reader": "現場の担当者", "screens": ["S02"], "message": "左のメニューと上の帯"},
+        {"no": "03", "file": "03_pc-list.html", "type": "pc", "title": "S02 一覧で直す", "reader": "現場の担当者",
+         "screens": ["S02"], "message": "読み取った記録を一覧で直す"},
+    ]
+    base = make_case(tmp_path, pngs=True, pages=pages)
+    write_links(base, {"00": [{"ref": "S02", "box": [168, 105, 84, 21]}]},
+                stems=("00_overview", "01_pc-frame", "03_pc-list"))
+    rc, out, err = build(base)
+    assert rc == 0, err
+    section = board_section((base / OUT_NAME).read_text(encoding="utf-8"), "00")
+    assert re.findall(r'<a class="go" href="#([^"]+)"', section) == ["b03"]
+
+
+def test_hotspots_are_dropped_when_board_changed_after_render(case_with_png: Path) -> None:
+    write_links(case_with_png, {"02": [{"ref": "S02", "box": [168, 105, 84, 21]}]}, sha={"02": "0" * 64})
+    rc, out, err = build(case_with_png)
+    assert rc == 0, err
+    assert "BOARD-CHECK-OLD" in codes(out["warnings"])
+    section = board_section((case_with_png / OUT_NAME).read_text(encoding="utf-8"), "02")
+    assert 'class="go"' not in section and "画像の中の番号" not in section
+
+
 def test_title_with_unsafe_characters(tmp_path: Path) -> None:
     base = make_case(tmp_path, title="配車/記録:試し", pngs=True)
     rc, out, err = build(base)

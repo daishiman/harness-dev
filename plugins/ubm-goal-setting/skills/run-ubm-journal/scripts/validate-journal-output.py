@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-journal-output
-# version: 0.5.1
+# version: 0.6.0
 # purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・REQUIRED_OUTLINE・
-#          目標4階層の期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート・
+#          目標4階層の期間/残り/目標・3ジャーナル×3小節・チェックシート①②③・
 #          毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。習慣の件数と
 #          検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。
 #          未置換プレースホルダと空セクションを FAIL にする。
@@ -162,6 +162,17 @@ EXACT, CONTAINS = "exact", "contains"
 # タプルの先頭が正本。
 QUARTERLY_HEADING = ("3ヶ月目標", "2ヶ月目標")
 
+# ジャーナル末尾のチェックシート (2026-10-30 に利用者が差し替えた形)。項目の正本は
+# references/principle-checklist.md で、見出しを変えるときは build-journal-context.py の
+# 同名の定数と一緒に直す。
+CHECKLIST_ROOT_HEADING = "チェックシート"
+BUSINESS_PHASE_HEADING = "① 事業フェーズチェックシート（UBM）"
+LIFE_FUNDS_HEADING = "② 人生資金チェックシート"
+UBM_CHECKLIST_HEADING = "③ チェックシート（UBM）"
+# 差し替える前の 2 ブロック。新しい形と一緒に残っていると、どちらを継承するのかが
+# 次回の build で決まらないので S02 で止める。
+LEGACY_CHECKLIST_HEADINGS = ("フェーズ別 課題チェックシート", "原理原則 チェックシート")
+
 # (見出しレベル, 照合する文字列, 照合モード) を出現順で並べた骨格の正本。
 # 照合する文字列はタプルにでき、その場合は「どれか 1 つに一致すれば可」を意味する。
 REQUIRED_OUTLINE = [
@@ -179,26 +190,43 @@ REQUIRED_OUTLINE = [
     (2, "【行動のジャーナル】", EXACT),
     (2, "【時間のジャーナル】", EXACT),
     (2, "【お金のジャーナル】", EXACT),
-    (1, "フェーズ別 課題チェックシート", EXACT),
-    (1, "原理原則 チェックシート", EXACT),
+    (1, CHECKLIST_ROOT_HEADING, EXACT),
+    (1, BUSINESS_PHASE_HEADING, EXACT),
+    (1, LIFE_FUNDS_HEADING, EXACT),
+    (1, UBM_CHECKLIST_HEADING, EXACT),
 ]
 
 JOURNAL_SECTIONS = ["【行動のジャーナル】", "【時間のジャーナル】", "【お金のジャーナル】"]
 JOURNAL_SUBSECTIONS = ["現状を確認する", "効果性を評価する", "更に良くする方法はないか"]
 GOAL_SECTIONS = ["1年目標", QUARTERLY_HEADING, "1ヶ月目標", "1週間目標"]
-PHASE_SECTIONS = ["【0→1】", "【1→10】", "【10→100】"]
 
-# `# 原理原則 チェックシート` (原理原則チェックシート) が持つ H2 設問群の正本。
-# 人間向けの正本は references/principle-checklist.md で、増減時は両方を同時に直す。
-# 照合は見出し行の部分一致で行うため、設問文の末尾の記号ゆれ (？ / ?) に依存しない
-# 十分に固有な前半を持たせてある。(1)(2) の対は末尾の括弧まで含めて区別する。
-PRINCIPLE_SECTIONS = [
+# 以下 3 つは各シートが持つ H3 の正本。人間向けの正本は references/principle-checklist.md で、
+# 増減時は両方を同時に直す (test_validate_journal_output が一致を検査する)。
+# 照合は見出し行の部分一致。売上の目安や「（※以下の…）」のような後半の注記に依存しない
+# 前半だけを持たせ、互いの部分文字列にならないこと (「0 → 1」と「10 → 100」) も確かめてある。
+BUSINESS_PHASE_SECTIONS = [
+    "0 → 1 フェーズ",
+    "★ 0 → 1 テスト",
+    "1 → 10 フェーズ",
+    "★ 1 → 10 テスト",
+    "10 → 100 フェーズ",
+    "★ 10 → 100 テスト",
+]
+LIFE_FUNDS_SECTIONS = [
+    "③ 絶対に必要な生活費",
+    "④ 今すぐ節約できるもの",
+    "振り返りチェック",
+]
+# ④ の見直し項目の表。見出しだけ残して表を落とすと、記入欄そのものが消える。
+LIFE_FUNDS_TABLE_SECTION = "④ 今すぐ節約できるもの"
+LIFE_FUNDS_TABLE_RE = re.compile(r"^\s*\|\s*No\.\s*\|")
+UBM_CHECK_SECTIONS = [
     "毎月の利益と口座残高の状況がわかるようになっていますか",
     "右肩上がりになっていますか",
     "原理原則を学び見直す状態は作れていますか",
-    "歴史の共有ができていますか？（1）",
-    "歴史の共有ができていますか？（2）",
+    "決めた括りの人が増え、歴史の共有ができていますか",
     "支出は前回から下げられましたか",
+    "変化を生み出す挑戦が入っていますか",
     "今の行動を積み上げた先に上記のチェックが全て埋まる行動になっていますか",
     "川上に繋がる描きができスケジュールが配置されていますか",
     "次回、UBMで原理原則を学び確認する日は入っていますか",
@@ -312,7 +340,7 @@ def section_lines(
 BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)])\s*")
 
 # チェックボックス行 (`- [ ]` / `- [x]`)。ネストしたサブ項目も数えるため先頭の空白を許す。
-# P02 と K02 が同じ形の行を数えるので、片方だけ書式が緩む/締まることのないよう共有する。
+# P02・M02・K02 が同じ形の行を数えるので、どれかだけ書式が緩む/締まることのないよう共有する。
 CHECKBOX_RE = re.compile(r"^\s*-\s*\[[ xX]\]")
 
 
@@ -494,38 +522,59 @@ def validate(
             elif not content_bullets(sub_body):
                 violations.append(f"J02: {section} の「{sub}」が空です（箇条書き1件以上）")
 
-    phase_body = section_lines(lines, 1, "フェーズ別 課題チェックシート")
-    if phase_body is not None:
-        for phase in PHASE_SECTIONS:
-            if not any(phase in l for l in phase_body if l.strip().startswith("## ")):
-                violations.append(f"P01: フェーズ別課題チェックシートに「## ◇{phase}」がありません")
-        checks = [l for l in phase_body if CHECKBOX_RE.match(l)]
-        if not checks:
-            violations.append("P02: フェーズ別課題チェックシートにチェックボックス行がありません")
+    # --- チェックシート①②③ ---
+    # ブロック自体の有無と順序は S01 が見る (REQUIRED_OUTLINE の末尾 4 要素)。ここは中身を見る。
+    # 3 シートとも「項目を毎回丸ごと出す」ことが利用者の要求そのもので、抜粋・要約された
+    # シートを受理するかどうかは、この検査の厳しさが直接決める。そのため H3 は全件の存在を
+    # 要求し、欠落は 1 件ずつ出す (Phase5 の修正ループが違反行単位で直すため、まとめて
+    # 1 行にすると何を足すのかが読めない)。チェックボックスの探索も H3 ごとに行う。
+    # シート全体から 1 行でも見つかれば可にすると、1 節だけ埋まっていて残りが見出しだけ、
+    # という状態を通す。
+    # シートの見出しは EXACT で取る。「③ チェックシート（UBM）」は「チェックシート」を
+    # 含むので、CONTAINS へ緩めると親見出しと取り違える。
+    for lv, txt, line_no in hs:
+        if lv == 1 and any(heading_matches(txt, h, EXACT) for h in LEGACY_CHECKLIST_HEADINGS):
+            violations.append(
+                f"S02: L{line_no} に差し替え前のチェックシート「# {txt}」が残っています"
+                "（references/principle-checklist.md の①②③に置き換えてください）"
+            )
 
-    # --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---
-    # ブロック自体の有無は S01 が見る (REQUIRED_OUTLINE の最後の要素)。ここは中身を見る。
-    # PHASE 側と違い、このブロックは「11 設問を毎回丸ごと出す」ことが利用者の要求そのもので、
-    # 抜粋・要約されたチェックシートを受理するかどうかは、この検査の厳しさが直接決める。
-    # 見出し名に「原理原則」を冠してあるので `# フェーズ別 課題チェックシート` とは
-    # 部分一致でも衝突しない。EXACT を明示して、将来 CONTAINS へ緩めたくなったときに
-    # 「衝突しないから CONTAINS でよい」と考える余地を残さない。
-    principle_body = section_lines(lines, 1, "原理原則 チェックシート", mode=EXACT)
-    if principle_body is not None:
-        for key in PRINCIPLE_SECTIONS:
-            # 11 設問すべての存在を要求する。「1 つでもあれば可」にすると、設問を 3 つだけ
-            # 抜粋したチェックシートが PASS で通り、「毎回丸ごと出す」という要求が
-            # 検査を素通りして静かに空洞化する。欠落は 1 件ずつ出す (Phase5 の修正ループが
-            # 違反行単位で直すため、まとめて 1 行にすると何を足すのかが読めない)。
-            body = section_lines(principle_body, 2, key, mode=CONTAINS)
+    phase_body = section_lines(lines, 1, BUSINESS_PHASE_HEADING, mode=EXACT)
+    if phase_body is not None:
+        for key in BUSINESS_PHASE_SECTIONS:
+            body = section_lines(phase_body, 3, key, mode=CONTAINS)
             if body is None:
-                violations.append(f"K01: チェックシートに「## ◇{key}…」の設問がありません")
+                violations.append(f"P01: 事業フェーズチェックシートに「### {key}…」がありません")
+            elif not any(CHECKBOX_RE.match(l) for l in body):
+                violations.append(f"P02: 事業フェーズチェックシートの「{key}…」にチェックボックス行がありません")
+
+    funds_body = section_lines(lines, 1, LIFE_FUNDS_HEADING, mode=EXACT)
+    if funds_body is not None:
+        # 最初の H3 より前に「① 今の生活費」「② 今の収入額」の 2 行がある。
+        lead = next(
+            (funds_body[:i] for i, l in enumerate(funds_body) if l.strip().startswith("### ")),
+            funds_body,
+        )
+        if not any(CHECKBOX_RE.match(l) for l in lead):
+            violations.append("M02: 人生資金チェックシートの冒頭（今の生活費・今の収入額）にチェックボックス行がありません")
+        for key in LIFE_FUNDS_SECTIONS:
+            body = section_lines(funds_body, 3, key, mode=CONTAINS)
+            if body is None:
+                violations.append(f"M01: 人生資金チェックシートに「### {key}…」がありません")
                 continue
-            # チェックボックスの探索は設問セクションごとに行う。principle_body 全体から
-            # 1 行でも見つかれば可にすると、1 設問だけ埋まっていて残り 10 設問が見出しだけ、
-            # という状態を通す (P02 と同じ形の fail-open)。
             if not any(CHECKBOX_RE.match(l) for l in body):
-                violations.append(f"K02: チェックシートの「{key}…」にチェックボックス行がありません")
+                violations.append(f"M02: 人生資金チェックシートの「{key}…」にチェックボックス行がありません")
+            if key == LIFE_FUNDS_TABLE_SECTION and not any(LIFE_FUNDS_TABLE_RE.match(l) for l in body):
+                violations.append(f"M03: 人生資金チェックシートの「{key}…」に見直し項目の表（| No. | …）がありません")
+
+    ubm_body = section_lines(lines, 1, UBM_CHECKLIST_HEADING, mode=EXACT)
+    if ubm_body is not None:
+        for key in UBM_CHECK_SECTIONS:
+            body = section_lines(ubm_body, 3, key, mode=CONTAINS)
+            if body is None:
+                violations.append(f"K01: チェックシート（UBM）に「### ◇ {key}…」の設問がありません")
+            elif not any(CHECKBOX_RE.match(l) for l in body):
+                violations.append(f"K02: チェックシート（UBM）の「{key}…」にチェックボックス行がありません")
 
     # --- 未置換プレースホルダ ---
     for i, line in enumerate(lines, start=1):
@@ -539,7 +588,7 @@ def validate(
     #
     # 探索範囲は search_scopes が指す小節本文に限る。本文全体を substring 検索すると、
     # 禁止事項の定型行 (「漫画・YouTubeへ逃げない」)・H1 見出し・必須セクション名
-    # (【行動のジャーナル】)・チェックシートの固定設問 (「発信、営業…」) にキーワードが
+    # (【行動のジャーナル】)・チェックシートの固定項目 (「挑戦を見せる」など) にキーワードが
     # 常在するため、6 習慣中 4 件が骨格さえ正しければ常に PASS する死んだ検査になる。
     violations.extend(check_daily_habits(lines, habits))
 

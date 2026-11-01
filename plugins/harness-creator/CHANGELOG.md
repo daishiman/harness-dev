@@ -2,6 +2,11 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.54 — 2026-11-02
+
+- JSON形式のplugin-composition.yamlを既存の構造検査へ接続し、破損・型不正を拒否する。最上位の版だけを変更し、整形と入れ子の値を保持する。
+- manifest集合に基づく監査とplatform同期の動的照合を保持し、feedback非搭載pluginの免除条件を検証する。
+
 ## [Unreleased]
 
 ### Changed (2026-10-09 rubric 1.5.0 と、cooldown・承認の照合の修正, ubm-goal-setting の elegant-review 継続 run)

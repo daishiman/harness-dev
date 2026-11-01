@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "scope": "元ブランチの全残存差分と未公開commitを最新mainへ統合",
+  "original_branch": "devgraph/package-artifacts-and-feature-promotion",
+  "source_head": "8c1eb6c84c44d6afcfa8bdb6c499c2436898ac71",
+  "pr": "https://github.com/daishiman/harness-dev/pull/87",
+  "branch": "devgraph/task-gdg-review",
+  "base": "main",
+  "root_status_entries": 1440,
+  "unaccounted_count": 0,
+  "source_snapshot_files": 362,
+  "source_manifest_sha256": "a2aa48ac0cd3a5a3825aaf4997150561aa3c40e273f94f2a97c29f72df85f56e",
+  "integrations": {
+    "dev-graph": {
+      "initial_tests": "194 passed, 2 failed, 25 subtests",
+      "retests": "11 passed; failure2 cases passed after fixes",
+      "resolved": "正準parity/MVP/lifecycle保持、planned_features互換キー追加"
+    },
+    "ubm-goal-setting": {
+      "tests": "206 passed",
+      "resolved": "CHANGELOG両履歴保持、Codex2負例/正例追加"
+    },
+    "json_composition": {
+      "initial_tests": "243 passed, 1 failed (採番待ち)",
+      "release": "正規採番後1 passed、初回243passの残り1ケース解消"
+    },
+    "system-briefing-book": {
+      "tests": "77 passed"
+    },
+    "flyer-studio": {
+      "source": "remote1.3.2が元1.3.1を包含、旧版へ戻さず全素材と記録を保存"
+    }
+  },
+  "content_review": {
+    "skills": 8,
+    "verdicts": 16,
+    "result": "PASS",
+    "method": "独立incremental combined semantic review、既存所見保持",
+    "not_run": "新しい30思考法走行・未実施の対話/画面の実走は主張しない"
+  },
+  "versions": {
+    "guide-doc-generator": "0.1.27",
+    "dev-graph": "0.1.27",
+    "harness-creator": "1.4.54",
+    "skill-governance-lint": "0.1.23",
+    "system-briefing-book": "0.2.12",
+    "ubm-goal-setting": "0.9.0"
+  },
+  "gates": {
+    "package": "23 plugin blocking failureなし",
+    "release": "23 plugin整合",
+    "content_review": "96 skills verified",
+    "test_discovery": "orphan0"
+  },
+  "live_trials": {
+    "required_after_behavior_change": 9,
+    "incremental_plan": {
+      "run": 2,
+      "defer": 7
+    },
+    "status": "既定2対象の実走セットアップでBLOCKED。現行CLIの確認画面にharnessの起動検出が追従せず、被験SkillのPASSは未取得。残り7対象は未起動。",
+    "scope_permission": "run-skill-live-trial/SKILL.mdの既定2件制限を維持。回答前に残り7件を起動しない。",
+    "setup_observations": "旧CLIへのPATH解決、project trust、無番号の確認画面を分けて記録。既存ユーザー設定や権限制御は変更せず、追加の確認受理を行わず回収。",
+    "state": "BLOCKED",
+    "artifacts_count": 171,
+    "remaining_sessions": 0,
+    "subjects": 2,
+    "unstarted": 7,
+    "actual_pass": 0,
+    "reason": "既存bootがnative CLI2.1.316の無番号確認画面を検出できない。旧CLI Unknown skill等のセットアップ失敗も全保存。追加の確認は受理せず、正準boot/finalizerで回収。",
+    "evidence_directories": [
+      "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261101T220227-zdotdir-cli",
+      "eval-log/dev-graph/run-dev-graph-init/live-trial/20261101T220227-zdotdir-cli"
+    ]
+  },
+  "graph": {
+    "revision": 5,
+    "task": "tasks/branch-remaining-publication.md",
+    "receipt": ".dev-graph/state/receipts/node-r000005-add.json",
+    "draft_preserved": true,
+    "beads": "harness-86khへscope拡張。新規task promotion gateの拒否は保持。"
+  },
+  "completion": {
+    "all_source_content_accounted": true,
+    "push_of_this_integration": false,
+    "ci_of_this_integration": "未達。変更後の実走9件の有効PASSが必要だが、起動互換性がBLOCKED。現時点の内容公開と検証状態を分離。"
+  },
+  "source_snapshot_verification": {
+    "files": 362,
+    "result": "全件SHA・復元成功",
+    "raw_source_secret_matches": 0
+  }
+}

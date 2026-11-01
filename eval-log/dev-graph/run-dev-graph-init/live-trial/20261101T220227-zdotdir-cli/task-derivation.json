@@ -1,0 +1,11 @@
+{
+  "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
+  "args": "--repo-root /private/tmp/guide-live-20261101T214808-remaining2-ol7yo5pr/init/fx --hook-source plugin",
+  "task_args_template": "--repo-root <contained-fixture-repo> --hook-source plugin",
+  "required_observations": [
+    "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+    "a second init with the same arguments plans 0 changes and preserves user edits",
+    "the repo config stores no absolute path, token, or node ID and the plugin hook source is used"
+  ],
+  "scenario_contract_changed": false
+}

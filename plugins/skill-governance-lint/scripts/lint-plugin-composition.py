@@ -36,6 +36,7 @@
 YAML パーサ非依存 (stdlib only): CI は pip install を行わないため、
 flow-mapping 行 `- { kind: x, ref: y, tier: z }` と block 形
 `- kind: x` + 字下げ `ref:/path:` の両形式を行ベースで読む。
+YAML の JSON 表現は標準 json で読み、同じ構造・依存関係検査へ渡す。
 
 Usage:
   lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml
@@ -126,12 +127,54 @@ def _unquote(v: str) -> str:
     return v
 
 
+def _json_composition(text: str) -> tuple[dict | None, list[str]]:
+    """JSON 表現の YAML を読む。壊れた JSON を空の YAML として扱わない。"""
+    if not text.lstrip().startswith(("{", "[")):
+        return None, []
+    try:
+        document = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return None, [f"composition JSON parse error: {exc}"]
+    if not isinstance(document, dict):
+        return None, ["composition must be an object"]
+    return document, []
+
+
+def _json_mapping_entries(document: dict, key: str, required: tuple[str, ...]) -> tuple[list[dict], list[str]]:
+    entries = document.get(key, [])
+    if not isinstance(entries, list):
+        return [], [f"{key} must be an array"]
+    errors = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            errors.append(f"{key}[{index}] must be an object")
+        elif any(not isinstance(entry.get(field), str) or not entry[field] for field in required):
+            errors.append(f"{key}[{index}] requires string fields: {','.join(required)}")
+    return entries if not errors else [], errors
+
+
 def parse_composition(text: str) -> tuple[list[dict], list[str], list[str]]:
     """Returns (capabilities, outputs, parse_errors).
 
     capabilities: [{"kind": ..., "ref": ...}, ...] (ref は ref/path キーの値)
     outputs: contract.interface.outputs の要素リスト
     """
+    document, errors = _json_composition(text)
+    if errors:
+        return [], [], errors
+    if document is not None:
+        caps, errors = _json_mapping_entries(document, "capabilities", ("kind",))
+        for index, cap in enumerate(caps):
+            ref = cap.get("ref", cap.get("path"))
+            if not isinstance(ref, str) or not ref:
+                errors.append(f"capabilities[{index}] requires a string ref/path")
+        contract = document.get("contract", {})
+        interface = contract.get("interface", {}) if isinstance(contract, dict) else None
+        outputs = interface.get("outputs", []) if isinstance(interface, dict) else None
+        if not isinstance(outputs, list) or any(not isinstance(item, str) for item in outputs):
+            errors.append("contract.interface.outputs must be an array of strings")
+            outputs = []
+        return caps, outputs, errors
     caps: list[dict] = []
     outputs: list[str] = []
     errors: list[str] = []
@@ -183,6 +226,11 @@ def parse_composition(text: str) -> tuple[list[dict], list[str], list[str]]:
 
 def parse_dependencies(text: str) -> tuple[list[dict], list[str]]:
     """dependencies[] のflow/block mappingをstdlibだけで読み取る。"""
+    document, errors = _json_composition(text)
+    if errors:
+        return [], errors
+    if document is not None:
+        return _json_mapping_entries(document, "dependencies", ("from", "to", "type"))
     entries: list[dict] = []
     errors: list[str] = []
     section = None
@@ -249,6 +297,25 @@ def parse_external_dependencies(text: str) -> tuple[dict[str, dict], list[str]]:
     have the same flow/block mapping shape as dependencies[]; inline ``[a, b]``
     lists are materialised so the owner validator sees a real list.
     """
+    document, errors = _json_composition(text)
+    if errors:
+        return {}, errors
+    if document is not None:
+        external = document.get("external_dependencies", {})
+        if not isinstance(external, dict):
+            return {}, ["external_dependencies must be an object"]
+        for owner, spec in external.items():
+            if not isinstance(spec, dict):
+                errors.append(f"external_dependencies.{owner} must be an object")
+                continue
+            _, edge_errors = _json_mapping_entries(spec, "edges", ("from", "to", "type"))
+            errors.extend(f"external_dependencies.{owner}: {error}" for error in edge_errors)
+            if "required_entry_points" not in spec:
+                errors.append(f"external dependency {owner} must declare required_entry_points")
+            required = spec.get("required_entry_points", [])
+            if not isinstance(required, list) or any(not isinstance(entry, str) for entry in required):
+                errors.append(f"external_dependencies.{owner}.required_entry_points must be an array of strings")
+        return external if not errors else {}, errors
     external: dict[str, dict] = {}
     errors: list[str] = []
     in_section = False
@@ -360,6 +427,12 @@ def parse_external_dependencies(text: str) -> tuple[dict[str, dict], list[str]]:
 
 def _top_level_scalar(text: str, key: str) -> str | None:
     """Read one unindented scalar without accepting nested lookalikes."""
+    document, errors = _json_composition(text)
+    if errors:
+        return None
+    if document is not None:
+        value = document.get(key)
+        return value if isinstance(value, str) else None
     pattern = re.compile(rf"^{re.escape(key)}\s*:\s*(.*?)\s*$")
     for raw in text.splitlines():
         if not raw or raw[0].isspace() or raw.startswith("#"):

@@ -857,6 +857,73 @@ class BuildGraphNodeTest(unittest.TestCase):
         update = {"updates": [{"graph_node_id": "task-P01", "node_patch": {"priority": "low"}}]}
         self.assertEqual(self.run_cli("update", update)[1]["code"], "package_member_requires_register_package")
 
+    def beads_node(self, node_id: str) -> dict:
+        return next(item for item in self.graph_state()["nodes"] if item["graph_node_id"] == node_id)
+
+    def test_link_beads_records_the_bd_issue_without_touching_content_state(self) -> None:
+        # bd-bridge create returns the bd issue of each node; link-beads records it, like link-github does for Issues,
+        # as a copy of tracker state: evaluation_status and updated_at stay, and the first linked_at survives.
+        self.add_five()
+        second = {**BASE, "artifact_kind": "task", "slug": "second", "title": "Second", "tracker_binding": "beads",
+                  "classification": candidates("task")}
+        self.assertEqual(self.run_cli("add", {"artifacts": [second]})[0], 0)
+        before = self.beads_node("task-fix-timeout")
+        self.assertEqual((before["tracker_binding"], before["beads_linkage"]), ("beads", None))
+        body = BGN._split_frontmatter((self.root / "tasks" / "fix-timeout.md").read_text(encoding="utf-8"), "tasks/fix-timeout.md")[1]
+        link = {"links": [{"graph_node_id": "task-fix-timeout", "bd_issue_id": "web-1"}]}
+        code, report = self.run_cli("link-beads", link)
+        self.assertEqual((code, report.get("status"), [a["graph_only"] for a in report.get("artifacts", [])]), (0, "applied", [False]), report)
+        node = self.beads_node("task-fix-timeout")
+        linked_at = node["beads_linkage"]["linked_at"]
+        self.assertEqual(node["beads_linkage"], {"bd_issue_id": "web-1", "linked_at": linked_at, "sync_state": "linked"})
+        self.assertEqual((node["evaluation_status"], node["updated_at"]), (before["evaluation_status"], before["updated_at"]))
+        self.assertEqual(BGN.VGS.frontmatter_of(self.root / "tasks" / "fix-timeout.md")["beads_linkage"], node["beads_linkage"])
+        self.assertEqual(BGN._split_frontmatter((self.root / "tasks" / "fix-timeout.md").read_text(encoding="utf-8"), "tasks/fix-timeout.md")[1], body)
+        self.result_is_valid()
+        self.assertEqual(self.run_cli("link-beads", link)[1]["status"], "noop")
+        synced = {"links": [{"graph_node_id": "task-fix-timeout", "bd_issue_id": "web-1", "sync_state": "synced"}]}
+        self.assertEqual(self.run_cli("link-beads", synced)[1]["status"], "applied")
+        self.assertEqual(self.beads_node("task-fix-timeout")["beads_linkage"], {"bd_issue_id": "web-1", "linked_at": linked_at, "sync_state": "synced"})
+        # Leaving sync_state out keeps the recorded one rather than falling back to linked.
+        self.assertEqual(self.run_cli("link-beads", link)[1]["status"], "noop")
+        revision = self.graph_state()["graph_revision"]
+        refused = [
+            ({"links": [{"graph_node_id": "task-fix-timeout", "bd_issue_id": "web-9"}]}, "beads_linkage_conflict"),
+            ({"links": [{"graph_node_id": "task-second", "bd_issue_id": "web-1"}]}, "beads_linkage_conflict"),
+            ({"links": [{"graph_node_id": "task-second", "bd_issue_id": "web-2"},
+                        {"graph_node_id": "task-fix-timeout", "bd_issue_id": "web-2"}]}, "beads_linkage_conflict"),
+            ({"links": [{"graph_node_id": "issue-login-timeout", "bd_issue_id": "web-3"}]}, "link_beads_requires_beads_binding"),
+            ({"links": [{"graph_node_id": "task-second", "bd_issue_id": " "}]}, "invalid_input"),
+            ({"links": [{"graph_node_id": "task-second", "bd_issue_id": "web-2", "sync_state": "unlinked"}]}, "invalid_input"),
+            ({"links": [{"graph_node_id": "task-second", "bd_issue_id": "web-2", "external_ref": "x"}]}, "writer_owned_or_unknown_field"),
+            ({"links": [{"graph_node_id": "task-absent", "bd_issue_id": "web-2"}]}, "unknown_node"),
+            ({"links": []}, "invalid_input"),
+        ]
+        for payload, expected in refused:
+            code, report = self.run_cli("link-beads", payload)
+            self.assertEqual((code, report.get("code"), report.get("write_count")), (1, expected, 0), (payload, report))
+        self.assertEqual(self.graph_state()["graph_revision"], revision)
+        self.assertIsNone(self.beads_node("task-second")["beads_linkage"])
+
+    def test_link_beads_records_a_registered_package_member_in_the_graph_alone(self) -> None:
+        # Beads gets the package members as tasks under the feature epic; their documents are register-package's, so the
+        # linkage lands in the graph alone and the dry-run previews it without writing.
+        state = self.graph_state()
+        state["nodes"] += [RPT.feature_node(), *({**RPT.task_node(index), "tracker_binding": "beads"} for index in range(13))]
+        self.graph.write_text(json.dumps(state), encoding="utf-8")
+        link = {"links": [{"graph_node_id": "task-P01", "bd_issue_id": "web-10"}, {"graph_node_id": "task-P02", "bd_issue_id": "web-11"}]}
+        code, preview = self.run_cli("link-beads", link, "--dry-run")
+        self.assertEqual((code, preview.get("status"), preview.get("write_count"), preview.get("planned_count")), (0, "preview", 0, 2), preview)
+        self.assertIsNone(self.beads_node("task-P01")["beads_linkage"])
+        code, report = self.run_cli("link-beads", link)
+        self.assertEqual((code, report.get("status"), [a["graph_only"] for a in report.get("artifacts", [])]), (0, "applied", [True, True]), report)
+        member = self.beads_node("task-P01")
+        self.assertEqual((member["beads_linkage"]["bd_issue_id"], member["beads_linkage"]["sync_state"]), ("web-10", "linked"))
+        self.assertFalse((self.root / member["file_path"]).exists())
+        self.assertEqual(self.run_cli("link-beads", link)[1]["status"], "noop")
+        self.assertEqual(self.run_cli("link-beads", {"links": [{"graph_node_id": "feature-1", "bd_issue_id": "web-12"}]})[1]["code"],
+                         "link_beads_requires_beads_binding")
+
     def test_project_field_of_a_package_member_is_never_imported(self) -> None:
         # C02 update refuses a package member, so even a bidirectional mapping keeps local authority for it.
         self.published_issue()

@@ -1,0 +1,166 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /private/tmp/guide-live-20261101T214808-remaining2-ol7yo5pr/decompose/fx --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-4-6"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "setup failure: zsh resolved old brew CLI 2.1.62; Unknown skill; no canonical subject operation ran",
+      "Claude Code v2.1.62 の Skill 呼出しが Unknown skill: dev-graph:run-dev-graph-decompose で停止した。初期 graph の C11 pass と digest 計測はあるが、要求された新規2 feature の macro DAG/C02 draft preview、C28 昇格 gate の投影 preview、独立 Agent auditor は実行されず、macro/publication report もない。fixture が不変であることだけでは dry-run の goal/scenario を満たさない。これは実走環境の Skill 解決・登録の構成上の阻害であり、被験 SKILL 本文の実行上の欠陥とは断定できない。",
+      "指定された out/status.json は作成されていない。証跡dir向け Bash は隔離ガードに拒否され、FAIL マーカーは隔離 workspace 内の別 path に書かれたため、指定先への完了引渡しも未達である。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "a21093415cad1109514180f6070558cb2992422f74aa205d22cc4bfbc2dcd2f6",
+    "result": "FAIL",
+    "blockers": [
+      "Claude Code v2.1.62 の Skill 呼出しが Unknown skill: dev-graph:run-dev-graph-decompose で停止した。初期 graph の C11 pass と digest 計測はあるが、要求された新規2 feature の macro DAG/C02 draft preview、C28 昇格 gate の投影 preview、独立 Agent auditor は実行されず、macro/publication report もない。fixture が不変であることだけでは dry-run の goal/scenario を満たさない。これは実走環境の Skill 解決・登録の構成上の阻害であり、被験 SKILL 本文の実行上の欠陥とは断定できない。",
+      "指定された out/status.json は作成されていない。証跡dir向け Bash は隔離ガードに拒否され、FAIL マーカーは隔離 workspace 内の別 path に書かれたため、指定先への完了引渡しも未達である。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/guide_pr_review/fresh_setup_goal_eval"
+    },
+    "transcript_sha256": "1586c5482e344ade5cd195d82b932108b641c79c247816ba9899437996f9942e",
+    "evidence_refs": [
+      "task.md",
+      "fixture-before.json",
+      "fixture-provenance.json",
+      "pane.txt",
+      "transcript.jsonl#L61",
+      "transcript.jsonl#L66",
+      "transcript.jsonl#L69",
+      "transcript.jsonl#L71",
+      "transcript.jsonl#L72",
+      "transcript.jsonl#L78",
+      "transcript.jsonl#L82",
+      "transcript.jsonl#L84",
+      "transcript.jsonl#L87",
+      "misplaced-marker-observation.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose"
+  ],
+  "missing_goal_seek_artifacts": [
+    "goal-spec.json",
+    "progress.json",
+    "intermediate.jsonl"
+  ],
+  "goal_seek_evidence_violations": [
+    "goal-spec-missing: run-dev-graph-decompose-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "progress-missing: run-dev-graph-decompose-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "intermediate-missing: run-dev-graph-decompose-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+  ],
+  "overall": {
+    "launch": "FAIL",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "BLOCKED"
+  },
+  "skill_dir_tree_sha": "9aadd495ea1a7c5a3f84442a67358f5eaf43f3bd5895c22fe3fa8d2ddde293a4",
+  "transcript_sha256": "1586c5482e344ade5cd195d82b932108b641c79c247816ba9899437996f9942e",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.62",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "tmux 不在 / HARD_CAP 超過等の fail-closed",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "SETUP_ABORT",
+    "wall_clock_s": 241.5593020915985
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [],
+    "unobserved": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 241.5593020915985,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "c0c7fd04abaf57ab25bbfc18eaa29ec84ad358c3d39d4e674cfb644c36917ae8",
+      "tokens": {
+        "input_tokens": 14,
+        "cache_creation_input_tokens": 52646,
+        "cache_read_input_tokens": 456851,
+        "output_tokens": 573,
+        "total_tokens": 510084,
+        "assistant_messages": 12,
+        "assistant_message_ids": 12,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

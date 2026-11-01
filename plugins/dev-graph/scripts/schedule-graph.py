@@ -336,6 +336,11 @@ def main() -> int:
     candidates = [by_id[x] for x in sorted(ready_ids - lease_conflicts, key=lambda x: (MVP_FIT_RANK[_mvp_fit(by_id[x])], str(x)))]
     features = [n for n in candidates if n.get("artifact_kind", n.get("kind")) == "feature"]
     tasks = [n for n in candidates if n not in features]
+    # A feature its registered package members name as parent_feature was already planned: its tasks are the
+    # execution candidates, and recommending system-dev-planner for it again would plan the feature twice.
+    planned = {n.get("parent_feature") for n in by_id.values() if n.get("parent_feature")}
+    planned_features = [n.get("graph_node_id") or n.get("id") for n in features if (n.get("graph_node_id") or n.get("id")) in planned]
+    features = [n for n in features if (n.get("graph_node_id") or n.get("id")) not in planned]
 
     def batches(items: list[dict[str, Any]]) -> list[list[Any]]:
         result: list[list[Any]] = []
@@ -380,10 +385,10 @@ def main() -> int:
     dump({"ready_set": {"features": [node_id_of(n) for n in features], "tasks": [node_id_of(n) for n in tasks]},
           "batches": {"features": feature_batches, "tasks": task_batches},
           "conflicts": sorted(lease_conflicts, key=str), "conflict_pairs": conflict_pairs,
-          "excluded": excluded, "assignment_hints": hints, "unmapped": unmapped,
+          "planned_features": planned_features, "excluded": excluded, "assignment_hints": hints, "unmapped": unmapped,
           "ready_source": args.ready_source, "scope": args.scope, "max_parallel": args.max_parallel,
           "graph_digest": graph_digest, "parity_provenance": parity_provenance, "read_only": True,
-          "selection_receipt": _selection_receipt(by_id, candidates),
+          "selection_receipt": _selection_receipt(by_id, [n for n in candidates if node_id_of(n) not in planned]),
           "graph_sha256_before": _sha(graph_before), "graph_sha256_after": _sha(graph_after),
           "tracker_sha256_before": _sha(tracker_before), "tracker_sha256_after": _sha(tracker_after),
           "lease_sha256_before": _sha(lease_before), "lease_sha256_after": _sha(lease_after)})

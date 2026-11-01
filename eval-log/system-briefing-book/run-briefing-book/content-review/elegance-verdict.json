@@ -2,21 +2,21 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "run-briefing-book",
-    "skill_md_sha256": "4b204edd0ca62ee03a36bca1d741d112d8935c05681d653b31b1736505cc800b"
+    "skill_md_sha256": "eea3307cce84ec6e91fd6cecaa597d29846caef52239f3f8511dd0168541e028"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "handout_package_review / assign-skill-design-evaluator（incremental combined semantic reviewのelegance互換投影、30思考法は未実施）",
+  "reviewed_at": "2026-11-01T21:41:45.410085Z",
+  "iterations": 1,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 3,
     "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)",
-  "reviewed_at": "2026-10-02T14:03:13Z",
-  "iterations": 2,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -26,21 +26,22 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "前回の medium (:114 の担当の食い違い) は直った。:114 は TOKENS-MISSING・TOKENS-INVALID を run-briefing に回し、palette を確かめて init を --refresh-css で回し直したあと、run-briefing-boards の「3. PNG にして検査する」から通し直すと書く。この節は run-briefing-boards/SKILL.md:166 に実在する。workflow.md:35・:38 と run-briefing-boards/SKILL.md:190 の持ち場とも合う。:113 の BRIEFING-JSON も、pages は run-briefing-boards、palette と data_policy は run-briefing と鍵ごとに分け、リンク先の workflow.md の「出力フォルダ」(:11) は実在する。",
-      "前回の判定で別のスキルに書いた low 2 件も直った。render は tokens.css が無いときに TOKENS-MISSING、不正なときに TOKENS-INVALID を出す (render-board-png.mjs:736・:750-752)。これは design-contract.md:32 と、book のコード (build-briefing-book.mjs:599・:604) と合う。tests/test_render_board_png.py:404-418 が両方のコードを確かめ、pytest で通った。references/resource-map.yaml:166-178 に design-contract の項目が足され、consumed_by に run-briefing-book が入った。",
-      ":24 と :93 で design-contract.md を指し、book のメッセージ (build-briefing-book.mjs:599) と render のメッセージ (render-board-png.mjs:739) は、どちらも「init --refresh-css で briefing.json の palette から作り直す」と同じ直し方を示す。TOKENS-* はどちらも error なので、まとめだけ別の色で成功扱いにならない (design-contract.md:32)。お手本の tokens.css は validateDesignTokens で指摘 0 件。test_build_briefing_book.py・test_design_tokens.py・render の bad_tokens の 2 件を合わせた 55 件が通った。"
+      "C1/C2: 追加した画像内番号リンクはrenderのboards.json.linksを使い、行き先をbookで解決する。HTMLのSHAがrender受領書と一致しない場合は透明リンクを載せないため、古い座標を現在画像の操作として扱わない。",
+      "C3/C4: boardTargetsは詳細度の高い画面ボードを優先し、無ければ文書の節へ向け、存在しない行き先と自身への画像リンクを除く。比率座標、通常リンク、印刷時の枠非表示が、番号移動・拡大・1ファイル成果物という既存契約と両立する設計になっている。",
+      "BD-004の意味確認: まとめ生成は手順1、版・古いPNG・外部参照の確認と引き渡しは手順2・3に対応する。"
     ],
     "negative_feedback": [
       "[medium / 漏れ。持ち越し・harness-r4p で追う] 担当を run-briefing にしたので、book の表と workflow.md はそろった。しかし受け手の run-briefing の工程5 (:178-184) と工程6 (:186-190) には、TOKENS-* と配色の返事を受ける手順がまだ無い。run-briefing/SKILL.md:189 は「book が示した担当スキル」へ渡すと書くが、その担当が run-briefing 自身になり、何をするかは :114 の括弧の中と design-contract.md:25・:32 にしか無い。2 回目の exit 1 で利用者に相談するので、壊れたまま進むことはない。直すのは run-briefing の SKILL.md で、開いている Beads の課題 harness-r4p で追う。",
       "[low / 食い違い。今回の直しで目立つようになった] 同じ表の EXTERNAL-REF・LOCAL-REF の行 (:121) は、「file が head なら _src/tokens.css の参照で run-briefing-boards」とする。head の参照は、最初のページより前の style、つまり埋め込んだ tokens.css から拾われる (scripts/lib/resource-refs.mjs:65-67)。しかし、tokens.css は init が palette から作り、run-briefing-boards は書き換えない (run-briefing-boards/SKILL.md:190、workflow.md:38)。今回 :114 を run-briefing に直したのと同じ理由で、この行も合わない。design-tokens.mjs は url() の値を止めないので、案件の上書き CSS に外部の url() があると起こりうる。まれなので low。直し方: head のときは run-briefing (palette の CSS から外部参照を消し、init を --refresh-css で回し直す) にする。",
       "[low / 漏れ。今回の直し] :113 の BRIEFING-JSON は「壊れた鍵を書いた担当」へ回すが、BRIEFING-JSON は JSON として読めないときに出る (build-briefing-book.mjs:343-352・:382)。壊れた場所が pages・palette・data_policy 以外 (title など init が書く鍵) のときや、場所が分からない壊れ方のときの担当が書かれていない。JSON.parse のメッセージに位置が出るので、たいていは分かる。直し方: 「それ以外か分からないときは run-briefing」を添える。",
       "[low / 書き方。持ち越し・未解決] Post-choice の節 (:74-76) の、主語の無い「独立レビューとその指摘に基づく改善を行う」。",
-      "[low / 漏れ。持ち越し・未解決] 報告 (:125-130) に warn が入っていない。TOKENS-CSS (build-briefing-book.mjs:607) も warn に入る。"
+      "[low / 漏れ。持ち越し・未解決] 報告 (:125-130) に warn が入っていない。TOKENS-CSS (build-briefing-book.mjs:607) も warn に入る。",
+      "[今回確認した既存規範所見 / medium / PD-002 / progressive-disclosure] body head 30 lines lack a Key Rule / 禁則 (MUST / NEVER / 禁止 / 必ず / '## 守ること')。今回差分による新規退行ではなく、規範採点の減点として保持する。"
     ],
-    "iteration": 2,
-    "iteration_limit": 2,
+    "iteration": 1,
+    "iteration_limit": 1,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "今回の評価対象は、前回の判定 (同じ reviewer の iteration 1、sha b5572d2b…、PASS、medium 1) のあとに入った直し。直したのは、run-briefing-book/SKILL.md の表の BRIEFING-JSON と TOKENS-MISSING・TOKENS-INVALID の担当、render-board-png.mjs のコードの分け方 (tests/test_render_board_png.py の bad_tokens も合わせた)、resource-map.yaml の design-contract の項目。この差分について iteration 2 (上限 2)。今の SKILL.md を shasum -a 256 で取り直した (4b204edd0ca62ee03a36bca1d741d112d8935c05681d653b31b1736505cc800b)。git diff --cached HEAD でこのスキルの差分を読み、表 (:111-121) と報告 (:125-130)、workflow.md の「出力フォルダ」、run-briefing-boards/SKILL.md:166・:190、run-briefing/SKILL.md:178-190、render-board-png.mjs:730-755、build-briefing-book.mjs:343-382・:590-610、scripts/lib/resource-refs.mjs の htmlRefs、resource-map.yaml の design-contract の項目、design-contract.md:32 を読んだ。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、直した点に関わるところだけ見た。リンク先と節の名前は grep で実在を確かめ、コード名と担当は実装の行と照らした。pytest で test_build_briefing_book.py・test_design_tokens.py・render の bad_tokens の 2 件を回し、55 件が通った。判定ファイルのほかは、リポジトリのファイルを変えていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。判定: PASS。high は 0。前回の medium (:114 の担当の食い違い) と、関係する low 2 件 (render のコード名、resource-map.yaml) は直った。run-briefing の側に受け手が無い medium は持ち越しで、harness-r4p で追う。新しい指摘は low 2 (:121 の head の担当、:113 の BRIEFING-JSON の残りの担当)。前回からの low 2 件 (Post-choice の主語、報告に warn が無い) は今回の直しと関係なく、持ち越し・未解決 (findings_summary の omission 3 は medium と BRIEFING-JSON と報告、inconsistency 1 は :121、smell 1 は Post-choice)。next_action は none。"
+  "notes": "静的design claimのみPASS。criteria_evaluatedは各基準の設計上の受け渡し・検証責務を評価したという意味であり、実行成功を意味しない。OUT/live-trialのbehavioral claimは未確認のまま保持する。\n{\n  \"profile\": \"incremental\",\n  \"mode\": \"combined semantic review\",\n  \"design_claim_only\": true,\n  \"review_start_head\": \"92836578285ca0dfdb65e3c2b9611c03b54e9d72\",\n  \"source_base\": \"8c1eb6c8\",\n  \"main_base\": \"76abc53d\",\n  \"skill_sha256_before\": \"eea3307cce84ec6e91fd6cecaa597d29846caef52239f3f8511dd0168541e028\",\n  \"score\": 90,\n  \"threshold\": 80,\n  \"high_count\": 0,\n  \"rubric_id\": \"skill-design\",\n  \"rubric_version\": \"1.6.0\",\n  \"rubric_hash\": \"sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9\",\n  \"composition_hash\": \"sha256:e78cc9f12b2300e991d0a6e4a1d61c2c47830128d922207fcb34016595b44cc0\",\n  \"rubric_refs\": [\n    {\n      \"path\": \"plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json\",\n      \"sha256\": \"22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9\"\n    },\n    {\n      \"path\": \"plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json\",\n      \"sha256\": \"708bc34d97b7025fbd25a2d16e566a5b4896f36c36408d6db2d1148394cf480e\"\n    }\n  ],\n  \"scoring_basis\": \"初期100、rubric違反high=-20/medium=-10/low=-3。機械スコアにBD-004の独立意味判定PASSを加えた。過去の一般改善所見は保持し、今回差分で未再評価のものを新たなrubric rule違反として重複減点しない。\",\n  \"BD-004\": \"LLM意味判定PASS。descriptionの各トリガーと本文手順の対応を上記positive_feedbackで記録。\",\n  \"C1_C4\": \"C1矛盾/C2漏れ/C3規約/C4依存関係を今回差分と責務境界で照合。新規high/medium/low指摘0。\",\n  \"criteria_design_assessment\": {\n    \"IN1\": \"設計照合済み。版・鮮度・外部参照の既存検査と新しいHTML SHA照合を読んだ。今回buildは未実行。\",\n    \"IN2\": \"設計照合済み。出力先・summaryの既存契約を保持する差分であることを確認。実book.json生成は未実行。\",\n    \"OUT1\": \"設計照合のみ。JavaScript不要のanchorとCSS :target、拡大・印刷の定義を読んだ。JS無効ブラウザ操作・画素上のリンク位置は未確認。\",\n    \"OUT2\": \"設計照合のみ。画像・文書を1ファイルへまとめる責務を確認。実利用者が単一HTMLを読む受入は未実施。\"\n  },\n  \"executed_checks\": [\n    \"L0/L2合成rubric採点（journalは登録L1も実注入）\",\n    \"frontmatterの参照パスと本文Markdownリンクの実在確認：欠落0\",\n    \"評価前後の実SKILL SHA照合\"\n  ],\n  \"not_executed\": [\n    \"30思考法\",\n    \"対象スキルの実行・live-trial\",\n    \"今回レビューによる対象機能のpytest\",\n    \"PNGやHTMLの実画素・ブラウザ操作・Windows実機・利用者受入\",\n    \"独立P0 lint群の全再実行\"\n  ],\n  \"source_context\": \"SKILL.md、workflow-manifest.json、workflow.md、execution-contract.md、design-contract.md、build-briefing-book.mjsのboardTargets/hotspots/renderBoard/build、doc-report.mjsのlinkCodes/codeTarget、book.htmlのリンク枠・拡大・印刷CSS。\",\n  \"prior_findings_policy\": \"既存negative_feedbackは両投影の和集合を逐語で保持した。既存所見に含まれる過去のテスト通過記述は過去評価者の記録であり、今回の実行証拠ではない。今回のPASSは差分の静的設計判定のみ。\",\n  \"writes_scope\": \"対象のcontent-review/{elegance,rubric}-verdict.jsonのみ。score.jsonl/receipt/queueやsourceは編集しない（親の明示的所有範囲に従う）。\"\n}"
 }

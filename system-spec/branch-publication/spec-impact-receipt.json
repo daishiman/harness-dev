@@ -1,0 +1,241 @@
+{
+  "schema_version": "1.0",
+  "received_at": "2026-11-01T21:52:52.888541Z",
+  "impact": "あり",
+  "claim_type": "既存機能への仕様影響と文書適用の受領",
+  "full_system_spec_compilation": false,
+  "scope": {
+    "source_head": "8c1eb6c84c44d6afcfa8bdb6c499c2436898ac71",
+    "root_status_entries": 1440,
+    "committed_before_worktree_changes": 11,
+    "source_snapshot_files": 362,
+    "manifest": "docs/branch-publication/manifest.json",
+    "manifest_owner": "親の全件統合担当",
+    "scope_authority": "利用者の元ブランチ全残存をPR #87へ含める明示指示"
+  },
+  "tracking": {
+    "existing_beads_id": "harness-86kh",
+    "existing_beads_scope": "全残存統合へ拡張（親からの引継ぎ）",
+    "task_path": "tasks/branch-remaining-publication.md",
+    "task_state": "draft",
+    "task_tracker_binding": "none",
+    "promotion_limitation": "親からの引継ぎ: normal taskのpromotion writer不在によりC28の新規createが拒否された。draftを保持し、昇格や新規起票の承認を捏造しない。",
+    "new_tracker_mutations_by_this_document_registration": 0
+  },
+  "affected_contracts": [
+    {
+      "area": "dev-graphのCLI・graph/文書projection",
+      "changes": [
+        "package member文書のmaterialize",
+        "promoted packageに基づくconfirm-feature",
+        "C28起票結果のlink-beads記録",
+        "計画済みfeatureをplanned_featuresへ分けるready出力"
+      ],
+      "canonical_refs": [
+        "plugins/dev-graph/skills/run-dev-graph-node/SKILL.md",
+        "plugins/dev-graph/skills/run-dev-graph-requirements/SKILL.md",
+        "plugins/dev-graph/skills/run-dev-graph-schedule/SKILL.md",
+        "plugins/dev-graph/references/feature-execution-package-contract.md"
+      ],
+      "boundary": "C02単一writerとsystem-dev-plannerの本文所有を維持する。"
+    },
+    {
+      "area": "parity生成・突合・鮮度",
+      "changes": [
+        "正準build-parity-manifest.pyのbuild()をready --graphがメモリ内で使用",
+        "永続snapshotの生成CLIと同じprovenance・canonical digestを維持"
+      ],
+      "canonical_refs": [
+        "plugins/dev-graph/scripts/build-parity-manifest.py",
+        "plugins/dev-graph/scripts/bd-bridge.py",
+        "plugins/dev-graph/references/execution-tracker-contract.md",
+        "plugins/dev-graph/references/schedule-graph-contract.md"
+      ],
+      "boundary": "生成規則は単一builder、tracker突合はC28、鮮度と推薦はC16。digestだけを書き換えて修復しない。"
+    },
+    {
+      "area": "UBMの日次journalと書込guard",
+      "changes": [
+        "末尾を①事業フェーズ・②人生資金・③UBMへ変更",
+        "旧形式から同文項目のcheckを継承",
+        "Codexのskills領域だけを追加許可"
+      ],
+      "canonical_refs": [
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/validate-journal-output.py",
+        "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py"
+      ],
+      "boundary": "本文・テンプレート・validatorは既存ownerの正本。mainの相談turn ID重複拒否とfeedback簡素化を戻さない。"
+    },
+    {
+      "area": "JSON compositionのlint・release",
+      "changes": [
+        "JSON表現のcompositionを既存検査経路で扱う",
+        "release writerがtop-level versionだけを原文保持で同期"
+      ],
+      "canonical_refs": [
+        "plugins/skill-governance-lint/scripts/lint-plugin-composition.py",
+        "scripts/build-plugin-release.py"
+      ],
+      "boundary": "manifest/schemaの再定義はしない。版採番の実行は親の正規release writerが所有し、この文書登録では実行しない。"
+    },
+    {
+      "area": "SBBの静的HTML描画・番号ナビゲーション",
+      "changes": [
+        "文中番号と画像内の測定済み番号枠を画面・説明へ接続",
+        "自己参照・リンク先なし・検査後に変わったボードの古い枠を既存規則で扱う"
+      ],
+      "canonical_refs": [
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+        "plugins/system-briefing-book/scripts/render-board-png.mjs",
+        "plugins/system-briefing-book/assets/templates/book.html",
+        "plugins/system-briefing-book/tests/test_book_navigation.py"
+      ],
+      "boundary": "生成器とテンプレートの既存責務に従い、新しいWebアプリやAPIは作らない。"
+    }
+  ],
+  "source_preservation": {
+    "policy": "意味差分を統合し、古い元版は保存する。main新版への全体上書きに使わない。",
+    "flyer": {
+      "runtime_policy": "main 1.3.2を保持し、元1.3.1を現行へ戻さない。",
+      "preserved_groups": {
+        "assets": 42,
+        "verification": 85,
+        "development_plan": 25
+      },
+      "evidence": "docs/branch-publication/manifest.json",
+      "counts_verification": "親の保存・検証済みという引継ぎとmanifestの件数を照合。現在のruntime実装へ追加する機能はない。"
+    },
+    "restore": "docs/branch-publication/restore-source.py",
+    "source_root_unchanged": true
+  },
+  "no_impact": [
+    {
+      "area": "公開HTTP API・DB・新規認証基盤",
+      "reason": "ローカルCLI・JSON/Markdown・静的HTMLの既存経路のみ。endpoint・DB schema・クラウドserviceを新設しない。"
+    },
+    {
+      "area": "guideの既存正規文書",
+      "reason": "system-spec/guide-doc-generatorとspecs/architecture/features/docsのguide資料は本登録で変更しない。既存の仕様・受領書を参照する。"
+    }
+  ],
+  "flow": {
+    "writer": "C02/run-dev-graph-node",
+    "operation": "add",
+    "preview": {
+      "status": "preview",
+      "valid": true,
+      "graph_revision_before": 4,
+      "graph_revision_after": 5,
+      "planned_count": 4,
+      "write_count": 0,
+      "pre_write_validation": {
+        "findings": 0,
+        "validator": "validate-graph-schema.py"
+      },
+      "input_sha256": "c3bdbdd1e4b29224d680c12a653985976496f7d5eafee2bf76c39a4da635a23c"
+    },
+    "apply": {
+      "status": "applied",
+      "valid": true,
+      "graph_path": ".dev-graph/state/graph.json",
+      "graph_revision_before": 4,
+      "graph_revision_after": 5,
+      "graph_digest_after": "sha256:5f368f1594523d48beef82ed05a4fe2a15544e2c93add07cb38bb981e8cf8d2c",
+      "applied_count": 4,
+      "write_count": 6,
+      "receipt_path": ".dev-graph/state/receipts/node-r000005-add.json",
+      "input_sha256": "c3bdbdd1e4b29224d680c12a653985976496f7d5eafee2bf76c39a4da635a23c",
+      "pre_write_validation": {
+        "findings": 0,
+        "validator": "validate-graph-schema.py"
+      },
+      "receipt_sha256": "6025c30defe803a6ee04a7f822f5bfacc14973fc57b74effbea546836cc6d6ad",
+      "graph_sha256": "82e0b858f9af087da09bee52f3defc9ac2fd6888ce5bbaac7088af275c44446d"
+    },
+    "node_ids": [
+      "spec-branch-publication",
+      "arch-branch-publication",
+      "feature-branch-publication",
+      "doc-branch-publication"
+    ],
+    "artifact_state": {
+      "status": "draft",
+      "confirmation_status": "draft",
+      "evaluation_status": "pending",
+      "tracker_binding": "none",
+      "implementation_readiness": "complete"
+    },
+    "feature_policy": "C14 macro整理用のdraft。新しいexact13 packageへの昇格・planner起動・外部tracker投影はしない。"
+  },
+  "validation": {
+    "c11": {
+      "command": "python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root <resolved repository>",
+      "exit_code": 0,
+      "valid": true,
+      "violation_count": 0,
+      "node_readiness": {
+        "complete": 10,
+        "incomplete": 0
+      }
+    },
+    "local_links": "4資料・索引のローカルリンクと影響先canonical_refsは全件実在。受領書自身へのリンクは保存後に再照合。",
+    "artifact_hashes": "C02 receiptの4 artifact SHAと実バイト列が全件一致。",
+    "current_parent_verification": {
+      "manifest_rows": 1440,
+      "unaccounted": 0,
+      "source_snapshot_restore": 362,
+      "content_review": "96 skills verified",
+      "package": "23 plugin blocking failureなし",
+      "release": "23 plugin整合",
+      "fresh_trials": "2対象は構成BLOCKED、7対象は未起動"
+    }
+  },
+  "evidence": [
+    {
+      "path": "specs/branch-publication.md",
+      "sha256": "d732c9481963f30ac2652a29a04c09d7d4518385aee163e8aba4a3d61fe637a4"
+    },
+    {
+      "path": "architecture/branch-publication.md",
+      "sha256": "23c6d2147f318a169264970f47282017e8ca758baba23ed6e5d8675a195f75b7"
+    },
+    {
+      "path": "features/branch-publication.md",
+      "sha256": "bac91c893978209b00531f1ca5d2d355018093db84e31387b3b2e227c7b724c3"
+    },
+    {
+      "path": "docs/branch-publication.md",
+      "sha256": "f3527383b7d41641458e08e775bdeb924dfb43cff7046b93144ddd5a1d0374de"
+    },
+    {
+      "path": "system-spec/branch-publication/README.md",
+      "sha256": "c97413428fe2f25186400ca037934841f31c3fd77319df4f97a0bbed3ee82480"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000005-add.json",
+      "sha256": "6025c30defe803a6ee04a7f822f5bfacc14973fc57b74effbea546836cc6d6ad"
+    },
+    {
+      "path": ".dev-graph/state/graph.json",
+      "sha256": "82e0b858f9af087da09bee52f3defc9ac2fd6888ce5bbaac7088af275c44446d"
+    }
+  ],
+  "completion": {
+    "document_registration": "C02 preview/apply済み。4資料の骨格・参照・draft保持を検証する。",
+    "unreflected_zero": "未確定。本受領書は全件台帳の最終分類と未対応0件を代わりに認定しない。",
+    "publication": "親がPR #87のcommit/push/CIを別証跡で確認する。",
+    "approval_receipt_created": false,
+    "behavioral_trials_executed_by_this_registration": false
+  },
+  "notes": "仕様影響を既存ownerへ参照で接続する受領書であり、実装契約の複製、全system-spec編纂、機能実走、公開完了の証拠ではない。",
+  "publication_evidence": {
+    "manifest": "docs/branch-publication/manifest.json",
+    "manifest_sha256": "a2aa48ac0cd3a5a3825aaf4997150561aa3c40e273f94f2a97c29f72df85f56e",
+    "receipt": "docs/branch-publication/publication-receipt.json",
+    "receipt_sha256": "50e0a1e8099340ca20cf665c908e7de3469e8f24df21e3b765043e3f074741d3",
+    "note": "投稿前のローカル検証記録。push/CIの結果はPR本文とBeadsへ追記する。"
+  }
+}

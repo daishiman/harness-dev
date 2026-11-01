@@ -494,12 +494,44 @@ def sync_plugin_composition_version(plugin_dir: pathlib.Path, version: str) -> N
 
     bundle を持たない plugin は何もしない。version を別操作で更新すると、その更新自体が
     plugin fingerprint を変えて次回 bump を誘発するため、manifest と同じ採番操作の中で
-    原文の top-level version 行だけを同期する。
+    原文の top-level version 値だけを同期する (YAML/JSON とも整形は保つ)。
     """
     path = plugin_dir / "plugin-composition.yaml"
     if not path.exists():
         return
     text = path.read_text(encoding="utf-8")
+    if text.lstrip().startswith(("{", "[")):
+        try:
+            document = json.loads(text)
+            if not isinstance(document, dict) or not isinstance(document.get("version"), str):
+                raise ValueError("top-level version must be a string")
+            # JSON 表現でも原文を保つ。root のキーと値を順に decode し、
+            # nested version や文字列内の同じ語を触らず、該当値だけ差し替える。
+            decoder = json.JSONDecoder()
+            offset = text.index("{") + 1
+            version_spans = []
+            while True:
+                offset = re.compile(r"\s*").match(text, offset).end()
+                if text[offset] == "}":
+                    break
+                key, offset = decoder.raw_decode(text, offset)
+                offset = re.compile(r"\s*:\s*").match(text, offset).end()
+                start = offset
+                _, offset = decoder.raw_decode(text, offset)
+                if key == "version":
+                    version_spans.append((start, offset))
+                offset = re.compile(r"\s*").match(text, offset).end()
+                if text[offset] == ",":
+                    offset += 1
+                    continue
+                break
+            if len(version_spans) != 1:
+                raise ValueError("top-level version must occur exactly once")
+            start, end = version_spans[0]
+        except (ValueError, AttributeError, IndexError) as exc:
+            raise SystemExit(f"[build-plugin-release] {path} の JSON composition が不正: {exc}") from exc
+        path.write_text(text[:start] + json.dumps(version) + text[end:], encoding="utf-8")
+        return
     pattern = re.compile(r"(?m)^(version\s*:\s*)[^\s#]+(\s*(?:#.*)?)$")
     replaced, count = pattern.subn(
         lambda match: f"{match.group(1)}{version}{match.group(2)}", text, count=1

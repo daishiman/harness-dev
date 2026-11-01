@@ -15,6 +15,8 @@
  *   ブラウザは --browser → 環境変数 BRIEFING_BROWSER → 決まった場所 → PATH の順に探す。
  *
  * 書く場所: <dir>/NN_*.png, <dir>/_src/book/NN_*.webp, <dir>/_src/assets/export/<name>.png, <dir>/_check/boards.json。
+ *           boards.json の各ボードの links は、まとめ HTML で押せる所 (文の中の S01 などの番号・「ボード 04」・data-go) の
+ *           番号と枠 [x, y, 幅, 高さ] (ボードの CSS px)。行き先は build-briefing-book.mjs が決める。
  *           --check-only のときは何も書かない (結果は stdout だけ)。
  * stdout: JSON {status, summary, check, errors[], boards[]} (--quiet で要約 1 行)
  * 検査の重さは error・warn・報告 (notices) の 3 段。量 (説明の字数 TEXT-LONG・注記の数 NOTES-MANY) は報告だけで、
@@ -315,6 +317,71 @@ const SHOW_EXPORT_MARKS_JS = `(function () {
   if (s) s.remove();
   return true;
 })()`;
+/**
+ * まとめ HTML で押せる所 (番号の札) を測る。座標はボードの左上からの CSS px で、少し広げる。
+ * 拾うもの: 文の中の F01・Q01・S01・D01・R01・H01、「ボード 04」「ボード: 04」「04 のボード」と、その並び
+ *           (「ボード 04・05」「04・05 のボード」は番号ごとに押せる。「ボード 93 枚」は拾わない)、
+ *           data-go="S12" / data-go="17" の要素 (要素の枠ごと押せる)。
+ * 拾わないもの: 見えない文字、端末の絵 (.phone・.browser) の中、data-nolink の中、data-go の中の文字。
+ * 行き先 (どのボードか、文書のどの節か) は build-briefing-book.mjs が決める。
+ */
+const LINK_LIMIT = 300;
+const LINKS_JS = String.raw`(function (W, H, LIMIT) {
+  var PAD = 3;
+  var CODE = /(?<![\p{L}\p{N}_#-])[FQSDRH]\d{2,}(?![\p{L}\p{N}_])/gu;
+  var BOARD = /(ボード\s*[:：]?\s*)(\d{2}(?:\s*[・,、，]\s*\d{2})*)(?!\d|\s*枚)|(?<![\p{L}\p{N}_#.-])(\d{2}(?:\s*[・,、，]\s*\d{2})*)(\s*のボード)/gu;
+  var NN = /\d{2}/g;
+  var GO = /^(?:[FQSDRH]\d{2,}|\d{2})$/;
+  var links = [], bad = [];
+  function hidden(el) {
+    for (var e = el; e && e.nodeType === 1; e = e.parentElement) {
+      var s = getComputedStyle(e);
+      if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return true;
+    }
+    return false;
+  }
+  function push(ref, r) {
+    var x0 = Math.max(0, r.left - PAD), y0 = Math.max(0, r.top - PAD);
+    var x1 = Math.min(W, r.right + PAD), y1 = Math.min(H, r.bottom + PAD);
+    if (x1 - x0 < 4 || y1 - y0 < 4 || links.length >= LIMIT) return;
+    links.push({ ref: ref, box: [Math.round(x0), Math.round(y0), Math.round(x1 - x0), Math.round(y1 - y0)] });
+  }
+  function textRects(node, start, length, ref) {
+    var range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, start + length);
+    Array.prototype.forEach.call(range.getClientRects(), function (r) { push(ref, r); });
+  }
+  var root = document.querySelector('.board') || document.body;
+  root.querySelectorAll('[data-go]').forEach(function (el) {
+    var v = (el.getAttribute('data-go') || '').trim();
+    if (!GO.test(v)) { bad.push(v); return; }
+    if (hidden(el) || el.closest('[data-nolink]')) return;
+    push(/^\d/.test(v) ? 'b' + v : v, el.getBoundingClientRect());
+  });
+  var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      var el = n.parentElement;
+      if (!el || !n.nodeValue.trim() || el.closest('.phone, .browser, [data-nolink], [data-go]')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  for (var n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (hidden(n.parentElement)) continue;
+    var text = n.nodeValue, m;
+    CODE.lastIndex = 0;
+    while ((m = CODE.exec(text))) textRects(n, m.index, m[0].length, m[0]);
+    BOARD.lastIndex = 0;
+    while ((m = BOARD.exec(text))) {
+      var nos = m[2] || m[3], at = m.index + (m[1] || '').length, k;
+      // 番号が 1 つなら「ボード 04」の全体を、並びなら番号ごとに押せるようにする
+      if (nos.length === 2) { textRects(n, m.index, m[0].length, 'b' + nos); continue; }
+      NN.lastIndex = 0;
+      while ((k = NN.exec(nos))) textRects(n, at + k.index, 2, 'b' + k[0]);
+    }
+  }
+  return { links: links, bad: bad };
+})`;
 
 const issue = (code, message, where = null) => ({ code, message, where });
 
@@ -463,6 +530,7 @@ export function loadBoards(base, only) {
       png: null,
       webp: null,
       pngSize: null,
+      links: null,
       exportFiles: [],
       selected: only === null || only.has(no),
     });
@@ -572,6 +640,11 @@ async function processBoard(board, ctx) {
         timeoutMs: ctx.timeoutMs,
       });
       board.dom = dom && typeof dom === "object" ? dom : { fatal: "ブラウザでの検査に失敗しました (検査の結果を読めませんでした)" };
+      const found = await page.evaluate(`${LINKS_JS}(${T.width}, ${T.height}, ${LINK_LIMIT})`, { timeoutMs: ctx.timeoutMs });
+      board.links = Array.isArray(found?.links) ? found.links : [];
+      for (const value of Array.isArray(found?.bad) ? found.bad : []) {
+        board.warnings.push(issue("LINK-TARGET", `data-go="${value}" の形が違います。S01・F01 などの番号か、ボードの番号 (2 桁) にしてください`));
+      }
     } catch (error) {
       opened = false;
       board.dom = { fatal: `ブラウザでの検査に失敗しました (${error.message})` };
@@ -666,6 +739,8 @@ function buildReport(base, boards, runErrors, browser, checkOnly) {
     const info = board.dom?.info ?? {};
     const png = board.png ?? (checkOnly ? old.get(board.no)?.png ?? null : null);
     const webp = board.webp ?? (checkOnly ? old.get(board.no)?.webp ?? null : null);
+    // 押せる所は撮った PNG と組で残す (--check-only では前回の PNG の分をそのまま残す)
+    const links = checkOnly ? old.get(board.no)?.links ?? null : board.png ? board.links : null;
     entries.push({
       no: board.no,
       file: board.file,
@@ -690,6 +765,7 @@ function buildReport(base, boards, runErrors, browser, checkOnly) {
       warnings: board.warnings,
       notices: board.notices,
       exports: board.exportFiles.length ? board.exportFiles : board.exports.map((name) => ({ name })),
+      links,
     });
   }
   const selected = boards.filter((b) => b.selected);
@@ -824,6 +900,7 @@ export async function main(argv) {
           status: boardStatus(b),
           png: b.png,
           webp: b.webp,
+          links: b.png ? b.links?.length ?? 0 : null,
           exports: b.exportFiles.map((e) => e.name),
           errors: b.errors,
           warnings: b.warnings,
