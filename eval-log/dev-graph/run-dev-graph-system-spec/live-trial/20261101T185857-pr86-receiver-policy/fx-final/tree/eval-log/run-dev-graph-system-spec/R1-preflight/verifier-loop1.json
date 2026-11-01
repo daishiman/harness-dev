@@ -1,0 +1,30 @@
+{
+  "responsibility_id": "R1-preflight",
+  "loop": 1,
+  "role": "independent_verifier",
+  "input_directive": "周回1: R0/R1 の独立検証後、R2 へ進む",
+  "goal_hash_recomputed_match": true,
+  "plugin_name": "system-spec-harness",
+  "plugin_version": "0.1.24",
+  "composition_range": ">=0.1.22 <1.0.0",
+  "in_range": true,
+  "entry_points_present": {
+    "run-system-spec-elicit": true,
+    "run-system-spec-doc-fetch": true,
+    "run-system-spec-compile": true,
+    "assign-system-spec-completeness-evaluator": true
+  },
+  "manifest_harness_keys_mixed": false,
+  "fallback_or_duplicate_logic_in_dev_graph": 0,
+  "preflight_report_sha256": "00b6b402855a62a43d8688d3cb1c748f6082fb32ab2d0e67ff4818c18ff25279",
+  "findings": [
+    "親のpreflight-reportでcomposition_range/in_range/verdictがliteral固定 (計算でない)。値は独立再計算と一致するが再現性上の弱点 (non-blocking)"
+  ],
+  "checklist": {
+    "R1_5.3_version_in_range_and_4_entry_points": "YES",
+    "common_inputs_verified": "YES",
+    "output_shape_authority": "YES",
+    "boundary_violations_zero": "YES"
+  },
+  "verdict": "PASS"
+}

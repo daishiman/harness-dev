@@ -1,0 +1,66 @@
+{
+  "responsibility_id": "R2-delegate",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent read-only",
+  "verified_at": "2026-11-01T03:40:48.527964+00:00",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "verdict": "FAIL",
+  "gate_reruns": {
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": 0,
+    "validate-source-citation --targets/--references/--state/--repo-root": 0,
+    "aggregate-completeness --report --spec-dir": 0,
+    "aggregate-completeness full (matrix/source-citation/state/hearing)": 0,
+    "build-evaluation-context.py rerun": 0
+  },
+  "report": {
+    "sha256": "e385804f5f995d718eb14b45054c68d5bc929b4522a894c9d16b11d687baf2e3",
+    "verdict": "PASS",
+    "spec_dir_equals_realpath": true,
+    "artifact_snapshot_12_of_12_match_current": true,
+    "artifact_snapshot_equals_build-resume-receipt_output": true,
+    "written_by": "evaluator fork agent-a54ba11346239bddc (subagent_agent-a54ba11346239bddc-toolu_01TmhwwG6B13G8Rmheci1Umb.json)"
+  },
+  "checklist_5_3": {
+    "1_canonical_skills_all_gates_pass": {
+      "result": "YES",
+      "evidence": "Skill events main-toolu_011aKvJR4nmJu19xjA9LY68H (elicit), main-toolu_017XNZu1h9L9BNJqYSw3cibo (doc-fetch), main-toolu_01Ko9rWdczRqW8hz1UdFhDvv (compile), main-toolu_01BwNd3jkgt51QZL1rnq9GM8 (evaluator, forked); compile via canonical compile-spec-doc.py (main-toolu_0148MRmwZzhLHs6NDCxgAr4o); verifier reruns cov/citation/aggregate exit 0"
+    },
+    "2_fixed_root_for_import_source_bash_and_scratch_only_tests": {
+      "result": "YES",
+      "evidence": "import-source Bash main-toolu_01U7mjfo5PiUNEJ72HQf5pU1, main-toolu_01WFBreCataGBxP9PKYgaRvu, main-toolu_0148MRmwZzhLHs6NDCxgAr4o all start export/cd/pwd -P; pytest main-toolu_01PqW1Fnpmsd2HbJ3VZjeY8s cwd+TMPDIR=session scratchpad, 63 passed, before/after digest equal",
+      "caveat": "before/after digest skipped system-spec/retrieval-evidence/ (shasum on dir); verifier confirmed all 16 system-spec files equal fixture seed_sha256"
+    },
+    "3_every_elicit_docfetch_compile_bash_exports_CLAUDE_PROJECT_DIR": {
+      "result": "NO",
+      "evidence": "Bash calls in those delegate procedures without export CLAUDE_PROJECT_DIR / cd / pwd -P check: main-toolu_01XRu1weQJVPAzrGAh3XWrZS.json (elicit; export R=..., mkdir + write R2-delegate/elicit-artifact-delivery.json), main-toolu_01XNqENHLW17qvvaeJAz1kJ9.json (doc-fetch; writes doc-fetch-decision.json), main-toolu_01VNue35HGRcFovNe6Z6rF3X.json (compile digest check), main-toolu_01HZuDUJFkKge4UWX1km2Yjc.json (compile; writes compile-standard.json), main-toolu_01QyesRcPfTrTvKEFpANgNyg.json (cd fx without pwd -P; writes compile-out1-tests.json), also read-only main-toolu_01Em8YgZk8jNHK9wBFBU32gy.json (cd into skills dir)"
+    },
+    "4_evaluator_args_are_helper_skill_args": {
+      "result": "YES",
+      "evidence": "helper main-toolu_011SWvcJRZtfpGSCwmKdik4Q exit=0 at 03:30:20Z; evaluator Skill main-toolu_01BwNd3jkgt51QZL1rnq9GM8 at 03:30:32Z args byte-equal to skill_args; single evaluator invocation; helper rerun identical (context_sha256 834cb865...)"
+    },
+    "5_report_spec_dir_resolves_to_spec_dir": {
+      "result": "YES",
+      "evidence": "report spec_dir == realpath(system-spec) == --spec-dir value"
+    },
+    "6_full_read_skill_md_and_prompts_per_delegate": {
+      "result": "YES",
+      "evidence": "skill_body_injection main-prompt-b47dd1ed (elicit), main-prompt-f9121fbd (doc-fetch), main-prompt-d50e5883 (compile) contain full SKILL.md body; whole-file Read (no offset/limit, numLines==totalLines): elicit R0-R5 (events toolu_015CHKF75bjL3wsD6WkLgc53..01LXES6kQaHDYnGu3u1VCKaH), R6/R7 by audit forks; doc-fetch R1-R4; compile R1-R3+resource-map; evaluator fork read R1-score/R2-delegate whole (subagent_agent-a54ba...-toolu_01FGXxgJZfoVcSensihi1df7, -toolu_01FWGCyA7VAdKAjg5jkPbKwh)",
+      "note": "parent sed -n 1,40p on evaluator SKILL.md (main-toolu_01QyesRcPfTrTvKEFpANgNyg) but evaluator output was produced by the fork, not the parent"
+    },
+    "common_inputs_verified": {
+      "result": "YES",
+      "evidence": "C24 receipt repo_root == content_roots.repository == fx; mode=write"
+    },
+    "common_output_shape_authority": {
+      "result": "YES",
+      "evidence": "receipts present; evidence_ref repo-relative eval-log/system-spec-completeness-report.json"
+    },
+    "common_no_boundary_violating_read_write_delegation": {
+      "result": "YES",
+      "evidence": "no copy of compile-spec-doc.py/apply-spec-transition.py/validators under plugins/dev-graph; only shared utility duplicates (extract-plugin-root.py, validate-inline-goal-seek-anchor.py); report not written by parent; system-spec unchanged vs seed"
+    }
+  },
+  "blockers": [
+    "5.3 item 3 NO: elicit/doc-fetch/compile procedure Bash calls without fixed-root export/cd/pwd -P (event files listed above). Fix: redo those receipt-writing steps with the required prefix."
+  ]
+}

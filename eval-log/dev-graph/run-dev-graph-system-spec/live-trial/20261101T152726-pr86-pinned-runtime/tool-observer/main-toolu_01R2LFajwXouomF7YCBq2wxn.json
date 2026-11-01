@@ -1,0 +1,72 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a0649de5-7277-4dc9-86d1-265cceaaa82a",
+      "line": 293,
+      "prefix_bytes": 1346611,
+      "prefix_sha256": "6f7a97da1927c35d588f31589b2de2a8a1443d2a5787359a419e976931768ce5",
+      "timestamp": "2026-11-01T15:33:32.196Z"
+    },
+    "result": {
+      "uuid": "9695ee76-e12d-4636-9d66-790b37d8c4b7",
+      "line": 294,
+      "prefix_bytes": 1348592,
+      "prefix_sha256": "b4abb22afc16de496fe1d3435db4014b529170ac1a15a26146c8e28d4b58911e",
+      "timestamp": "2026-11-01T15:33:39.076Z"
+    }
+  },
+  "tool_use_id": "toolu_01R2LFajwXouomF7YCBq2wxn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && TS=$(date -u +%Y-%m-%dT%H:%M:%SZ) && python3 -I -B - \"$TS\" <<'PY'\nimport json,sys\njson.dump({\"skill\":\"system-spec-harness:run-system-spec-doc-fetch\",\"contract\":\"artifact-delivery-v1\",\"presented_artifact\":{\"path\":\"system-spec/fetched-references.json\",\"sha256\":\"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\",\"open_with\":\"python3 -m json.tool system-spec/fetched-references.json\",\"guard\":\"json parse ok; IN1 validate-source-citation exit0\"},\"choice\":\"standard\",\"choice_source\":\"task.md 事前回答契約\",\"recorded_at\":sys.argv[1]},open(\"eval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-artifact-delivery.json\",\"w\"),ensure_ascii=False,indent=2)\nPY\necho $TS"
+  },
+  "is_error": false,
+  "tool_result_content": "2026-11-01T15:33:34Z",
+  "tool_use_result": {
+    "stdout": "2026-11-01T15:33:34Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/eval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-artifact-delivery.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 13,
+              "lines": [
+                "+{",
+                "+  \"skill\": \"system-spec-harness:run-system-spec-doc-fetch\",",
+                "+  \"contract\": \"artifact-delivery-v1\",",
+                "+  \"presented_artifact\": {",
+                "+    \"path\": \"system-spec/fetched-references.json\",",
+                "+    \"sha256\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\",",
+                "+    \"open_with\": \"python3 -m json.tool system-spec/fetched-references.json\",",
+                "+    \"guard\": \"json parse ok; IN1 validate-source-citation exit0\"",
+                "+  },",
+                "+  \"choice\": \"standard\",",
+                "+  \"choice_source\": \"task.md 事前回答契約\",",
+                "+  \"recorded_at\": \"2026-11-01T15:33:34Z\"",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/eval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-artifact-delivery.json"
+      ]
+    }
+  }
+}

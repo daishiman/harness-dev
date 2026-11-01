@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-a9a5a78a3fbe4bb70",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c9a9ea7d-b514-4e6d-95e7-1b7f6bce27de",
+      "line": 148,
+      "prefix_bytes": 807119,
+      "prefix_sha256": "23e2569bf6c92ddda0c06c342be24e96b454fd801e6aca73fb80653e41c47a3a",
+      "timestamp": "2026-11-01T08:17:36.867Z"
+    },
+    "result": {
+      "uuid": "8d7d229f-b8d6-443e-b309-6013b93972c7",
+      "line": 149,
+      "prefix_bytes": 808948,
+      "prefix_sha256": "fd0c45bd5b3b0ea80979620cef71082a6ba04100fdc47038f2f52eb755699339",
+      "timestamp": "2026-11-01T08:17:38.030Z"
+    }
+  },
+  "tool_use_id": "toolu_01Xa9wzRi2EWy3M2Ebc8kCny",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx; find plugins /private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins -name 'verify-completeness.py' -o -name 'validate-prompt.py' 2>/dev/null | head; grep -rn \"prompt-creator\\|verify-completeness\" plugins/system-spec-harness/plugin-composition.yaml | head -5; ls plugins/system-spec-harness/skills/*/prompts/ | head -40",
+    "description": "Locate prompt-creator validators narrowly"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/plugins)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a840a66f934c8d8d5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "900ed326-ca96-4072-b270-77941583c7b9",
+      "line": 53,
+      "prefix_bytes": 360349,
+      "prefix_sha256": "8b9c4a7aaf070b04c4804435930ce2074bff6064b6c47f296b83c41ac0992972",
+      "timestamp": "2026-11-01T04:02:41.789Z"
+    },
+    "result": {
+      "uuid": "31db28be-c291-4459-9e38-ccc9568b6d97",
+      "line": 54,
+      "prefix_bytes": 361654,
+      "prefix_sha256": "6670e4f11f36c724792cd0d9bbdd6f2191a118a08d7aa963c2c56c81c4bcac53",
+      "timestamp": "2026-11-01T04:02:44.096Z"
+    }
+  },
+  "tool_use_id": "toolu_015LT4hDcUHyKwn2mWeyvjYf",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && O=../workdir/tool-observer; S=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec107-fx/c0ac8162-0bf1-4615-9b58-3c401e528e43/scratchpad; mkdir -p $S; python3 -c \"\nimport json;d=json.load(open('$O/index.json'))\nout=open('$S/main.txt','w')\nfor i,e in enumerate(d['events']):\n  if e['stream']!='main': continue\n  j=json.load(open('$O/'+e['file']))\n  out.write('\\n=========== %d %s %s %s\\n'%(i,e.get('tool_name'),j.get('source',{}).get('assistant',{}).get('timestamp'),j.get('is_error')))\n  out.write(json.dumps(j.get('tool_input'),ensure_ascii=False,indent=1)+'\\n--- RESULT\\n')\n  r=j.get('tool_result_content'); \n  if not isinstance(r,str): r=json.dumps(r,ensure_ascii=False)\n  out.write(r[:4000]+'\\n')\n  if e['kind']!='tool_call': out.write(json.dumps(j,ensure_ascii=False)[:1500])\n\"; wc -c $S/main.txt"
+  },
+  "is_error": false,
+  "tool_result_content": "  238213 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec107-fx/c0ac8162-0bf1-4615-9b58-3c401e528e43/scratchpad/main.txt",
+  "tool_use_result": {
+    "stdout": "  238213 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec107-fx/c0ac8162-0bf1-4615-9b58-3c401e528e43/scratchpad/main.txt",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

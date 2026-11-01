@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b0c9bbdb-5b20-4689-8e5d-bff4f460aef7",
+      "line": 179,
+      "prefix_bytes": 811677,
+      "prefix_sha256": "e4c653d4067208be372286a2160e7e5b81df89bb0db9467143122f967547d847",
+      "timestamp": "2026-11-01T09:03:24.402Z"
+    },
+    "result": {
+      "uuid": "b71e880b-2344-4e17-b447-47b9015f9175",
+      "line": 180,
+      "prefix_bytes": 812500,
+      "prefix_sha256": "ae853fae287a3d0566a3d3ac9ecb6832fa20ebf1dc2bdaa156b9f1316c26c3b9",
+      "timestamp": "2026-11-01T09:03:37.167Z"
+    }
+  },
+  "tool_use_id": "toolu_01NfqewKau2obWws6ocYhtCn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root \"$PWD\" --print-artifact-snapshot > $TMPDIR/snap2.json && python3 -c \"\nimport json,sys;a=json.load(open(sys.argv[1]));b=json.load(open(sys.argv[2]));print('snapshot unchanged' if a==b else 'CHANGED')\" $TMPDIR/snap2.json $TMPDIR/snapshot.json",
+    "description": "Re-verify artifact snapshot unchanged"
+  },
+  "is_error": false,
+  "tool_result_content": "snapshot unchanged",
+  "tool_use_result": null
+}

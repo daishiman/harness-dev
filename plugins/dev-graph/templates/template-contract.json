@@ -16,7 +16,10 @@
       "template": "task.md",
       "required_sections": ["目的", "背景", "入力と前提条件", "出力と成果物", "依存関係", "実装対象", "Write scope と競合制約", "GitHub publication", "実行手順", "受入条件", "検証方法", "リスクとロールバック", "Handoff"],
       "conditional_templates": {"system_development": "system-task-spec.md"},
-      "conditional_required_sections": {"system_development": ["Workstream applicability", "Architecture and deploy unit", "Verification and evidence", "Rollout and rollback", "Tracker publication and completion intent"]}
+      "conditional_required_sections": {
+        "system_development": ["Machine-readable registration fields", "目的", "背景", "前提条件", "Workstream applicability", "Architecture and deploy unit", "成果物", "Tracker publication and completion", "Branch and worktree execution", "スコープ外", "Verification and evidence", "Rollout and rollback", "Handoff", "参照情報"],
+        "system_development_baseline": ["正本仕様書", "依存", "実行契約"]
+      }
     },
     "document": {
       "template": "document.md",
@@ -25,7 +28,13 @@
     "specification": {
       "template": "specification.md",
       "required_sections": ["目的と成功状態", "スコープ", "用語と主体", "ユースケースとユーザーフロー", "機能要件", "非機能要件", "UI・状態遷移", "ビジネスルールと検証", "API契約", "データモデル", "認証・認可", "エラー・例外・回復", "イベント・非同期処理", "可観測性", "互換性・移行・リリース", "テストと受入条件", "未決事項"],
-      "conditional_templates": {"api_changed": "api-contract.md"}
+      "conditional_templates": {"api_changed": "api-contract.md"},
+      "conditional_required_sections": {
+        "system_spec_index": ["要件定義書 (上位概念・憲法)", "章一覧と集約状態", "集約状態サマリ", "全体ドキュメント出典 (未割当参照)"]
+      },
+      "conditional_triggers": [
+        {"family": "system_spec_index", "origin_kind": "system-spec-harness", "source_path": "system-spec/index.md"}
+      ]
     },
     "architecture": {
       "template": "architecture.md",
@@ -37,7 +46,13 @@
         "data": "architecture-data.md",
         "security": "architecture-security.md"
       },
-      "subtype_policy": "one_or_more_or_explicit_not_applicable"
+      "subtype_policy": "one_or_more_or_explicit_not_applicable",
+      "conditional_required_sections": {
+        "system_spec_requirements": ["U1 本質的目的 (essential_purpose)", "U2 背景 (background)", "U3 ゴール (goals)", "U4 目標 (objectives)", "U5 成功基準 (success_criteria)", "U6 ステークホルダー (stakeholders)", "U7 スコープ (scope)", "U8 制約 (constraints)", "U9 具体的にやりたいこと (concrete_intents)"]
+      },
+      "conditional_triggers": [
+        {"family": "system_spec_requirements", "origin_kind": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md"}
+      ]
     },
     "feature": {
       "template": "feature.md",

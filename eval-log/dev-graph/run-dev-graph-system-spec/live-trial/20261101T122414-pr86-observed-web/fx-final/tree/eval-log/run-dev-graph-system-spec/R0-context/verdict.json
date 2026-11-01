@@ -1,0 +1,22 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "original_goal_hash_recomputed_match": true,
+  "verdict": "PASS",
+  "checklist": {
+    "common_inputs_verified": {"result": "YES", "evidence": "receipt read; goal hash recomputed equal; prompt-common-layers.md read (actual path plugins/dev-graph/references/, not skills/.../references/ as given in brief)"},
+    "output_shape_and_authority": {"result": "YES", "evidence": "receipt separates repository_id/worktree_id (identity), content_roots (content), plugin_source (code authority); mode=write; root_trust_evidence all true"},
+    "no_boundary_violating_read_write_delegation": {"result": "YES", "evidence": "system-spec is not a symlink, no symlinks inside it, realpath inside repo_root; verifier wrote only this verdict"},
+    "system_spec_realpath_in_caller_repo_with_id_commondir_match": {"result": "YES", "evidence": "realpath(system-spec)=<repo>/system-spec; repo_root==realpath(content_roots.repository)==git toplevel; independent resolve-repo-context --mode read matches repository_id, worktree_id, git_common_dir, git_dir, head_sha, content_roots"},
+    "lineage_exit0_and_checked_decides_mode": {"result": "YES", "evidence": "validate-source-lineage.py --repo-root <repo> exit 0, status=pass, checked=0, violations=[]; graph.json has 0 nodes => new creation"}
+  },
+  "decision": "new_creation (checked=0)",
+  "tool_observer_confirmation": {
+    "event": "main-toolu_01RpK1uqcbUuHgFhaRhcu2Nr.json (source_line 95, is_error=false)",
+    "observed": "resolve-repo-context.py --repo-root $R --mode write > c24-receipt.json (exit=0) then validate-source-lineage.py --repo-root $R (checked=0, lineage_exit=0); outputs match receipt on disk and verifier rerun",
+    "note": "parent used `export R=...; cd -- \"$R\" && [ \"$(pwd -P)\" = \"$R\" ]` rather than literally exporting CLAUDE_PROJECT_DIR; containment check is equivalent"
+  },
+  "blockers": []
+}

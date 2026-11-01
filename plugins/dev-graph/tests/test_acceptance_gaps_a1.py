@@ -29,7 +29,8 @@ SDP = PLUGIN.parent / "system-dev-planner"
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
 FEATURE = "FEATURE-1"
 ARCHITECTURE = "architecture-system"
-PUBLISHED = ".dev-graph/plans/feature-package-feat"
+# promote は package ごとに `<published>/generations/<package-slug>/<generation_id>` へ世代を積む。
+GENERATIONS = ".dev-graph/plans/generations"
 GRAPH = ".dev-graph/state/graph.json"
 RECEIPTS = ".dev-graph/state/registration-receipts"
 
@@ -79,6 +80,11 @@ def git_init(root: Path) -> None:
                     "commit", "-q", "--allow-empty", "-m", "init"], check=True)
 
 
+def published_dir(cp: subprocess.CompletedProcess[str]) -> str:
+    """promote が公開した世代の場所。receipt の registration_manifest が置かれた directory。"""
+    return Path(json.loads(cp.stdout)["registration_manifest"]).parent.as_posix()
+
+
 def tree_bytes(root: Path) -> dict[str, bytes | str]:
     """root 以下の全 entry の中身 (symlink は link 先の文字列)。書込み 0 件の比較に使う。"""
     result: dict[str, bytes | str] = {}
@@ -102,6 +108,7 @@ class PlanRepo:
         if git:
             git_init(self.root)
         self.rid = RT.make_repo(self.root)
+        self.published: str | None = None
         RT.dump(self.root / ".dev-graph/state/readiness.json", RT.valid_readiness(self.root, self.rid))
         (self.root / RECEIPTS).mkdir(parents=True)
         self.calls = self.root.parent / "tracker-calls.log"
@@ -123,7 +130,8 @@ class PlanRepo:
                               env=self.env, cwd=str(self.root), check=False)
 
     def promote(self, run_id: str, *, replace: dict[str, str] | None = None) -> tuple[subprocess.CompletedProcess[str], str]:
-        """run_id ごとに staging・lock・findings・validation を作り、promote-system-plan.py を起動する。"""
+        """run_id ごとに staging・lock・findings・validation を作り、promote-system-plan.py を起動する。
+        成功したら公開された世代を self.published に覚える (register と binding の既定の入力になる)。"""
         rel = f".dev-graph/staging/{run_id}"
         staging, digest = RT.make_fixture(self.root, self.rid, rel, include_handoff=replace is None)
         if replace:
@@ -153,9 +161,12 @@ class PlanRepo:
                       "--findings", f".dev-graph/state/findings-{run_id}.json",
                       "--readiness", ".dev-graph/state/readiness.json",
                       "--validation", f".dev-graph/state/validation-{run_id}.json")
+        if cp.returncode == 0:
+            self.published = published_dir(cp)
         return cp, digest
 
-    def register(self, published: str = PUBLISHED, receipt: str = "feat.json") -> subprocess.CompletedProcess[str]:
+    def register(self, published: str | None = None, receipt: str = "feat.json") -> subprocess.CompletedProcess[str]:
+        published = published or self.published
         return self.run(SCRIPTS / "register-package.py", "register", "--repo-root", str(self.root),
                         "--package", f"{published}/feature-package.json",
                         "--graph", f"{published}/dev-graph-registration.json",
@@ -224,12 +235,14 @@ def test_decompose_out6_second_auto_dispatch_keeps_one_exact13_set(plan: PlanRep
     """同じ ready feature への2回目の自動起動は同じ published に収束し、C02 register は graph も receipt も変えない。"""
     digest, first = register_first(plan)
     assert first["idempotent"] is False and first["node_ids"] == [n["graph_node_id"] for n in plan.children()]
+    assert plan.published == f"{GENERATIONS}/feature-package-feat/{digest.removeprefix('sha256:')}"
+    published = plan.published
     graph_before = (plan.root / GRAPH).read_bytes()
     receipt_before = (plan.root / RECEIPTS / "feat.json").read_bytes()
 
     cp, again = plan.promote("run-2")
     assert cp.returncode == 0, cp.stderr
-    assert again == digest
+    assert (again, plan.published) == (digest, published)
     cp = plan.register()
     assert cp.returncode == 0, cp.stderr
     report = json.loads(cp.stdout)
@@ -247,7 +260,8 @@ def test_decompose_out6_second_dispatch_under_a_new_package_identity_is_refused(
     graph_before = (plan.root / GRAPH).read_bytes()
     cp, _ = plan.promote("run-3", replace={"feature-package/feat": "feature-package/feat-rerun", "SYS-P": "SYS-RERUN-P"})
     assert cp.returncode == 0, cp.stderr
-    rerun = ".dev-graph/plans/feature-package-feat-rerun"
+    rerun = published_dir(cp)
+    assert rerun.startswith(f"{GENERATIONS}/feature-package-feat-rerun/")
     assert (plan.root / rerun / "dev-graph-registration.json").is_file()
 
     assert f"parent feature {FEATURE} already has tasks outside this package" in refused(plan.register(rerun, "feat-rerun.json"))
@@ -257,17 +271,22 @@ def test_decompose_out6_second_dispatch_under_a_new_package_identity_is_refused(
     assert plan.tracker_calls() == ""
 
 
-def test_decompose_out6_second_dispatch_with_changed_content_stops_at_the_promoter(plan: PlanRepo) -> None:
-    """同じ package id で中身が違う2回目は、promote が published を上書きせずに止める (digest が別になる)。"""
+def test_decompose_out6_second_dispatch_with_changed_content_never_rewrites_the_registered_generation(plan: PlanRepo) -> None:
+    """同じ package id で中身が違う2回目は、promote が登録済みの世代を上書きせず、別の世代を足して supersedes で前の世代を指す。
+    C02 register は同じ node id に別の中身を載せないので、graph は1組目の exact-13 のまま変わらない。"""
     digest, _ = register_first(plan)
-    published_before = tree_bytes(plan.root / PUBLISHED)
+    first = plan.published
+    published_before = tree_bytes(plan.root / first)
     graph_before = (plan.root / GRAPH).read_bytes()
 
     cp, changed = plan.promote("run-2", replace={"- Rollback: revert": "- Rollback: undo"})
     assert changed != digest
-    assert cp.returncode == 2, cp.stdout
-    assert "published generation bytes do not match promotion intent digest" in cp.stderr
-    assert tree_bytes(plan.root / PUBLISHED) == published_before
+    assert cp.returncode == 0, cp.stderr
+    assert plan.published == f"{GENERATIONS}/feature-package-feat/{changed.removeprefix('sha256:')}"
+    assert json.loads(cp.stdout)["supersedes"]["published_path"] == first
+    assert tree_bytes(plan.root / first) == published_before
+
+    assert "duplicate node ids exist with different content" in refused(plan.register())
     assert (plan.root / GRAPH).read_bytes() == graph_before
     assert_one_exact13_set(plan)
 
@@ -306,7 +325,7 @@ def test_decompose_out7_manual_route_cannot_add_a_second_registration(plan: Plan
 
     cp, _ = plan.promote("manual-1", replace={"feature-package/feat": "feature-package/feat-manual", "SYS-P": "SYS-MANUAL-P"})
     assert cp.returncode == 0, cp.stderr
-    manual = plan.register(".dev-graph/plans/feature-package-feat-manual", "feat-manual.json")
+    manual = plan.register(published_dir(cp), "feat-manual.json")
     assert "already has tasks outside this package" in refused(manual)
     assert not (plan.root / RECEIPTS / "feat-manual.json").exists()
     assert (plan.root / GRAPH).read_bytes() == graph_before
@@ -317,8 +336,9 @@ def test_decompose_out7_manual_route_cannot_add_a_second_registration(plan: Plan
 # --- run-dev-graph-requirements IN1 ----------------------------------------------------------------
 
 
-def binding(plan: PlanRepo, published: str = PUBLISHED, receipt: str = f"{RECEIPTS}/feat.json") -> tuple[int, dict]:
+def binding(plan: PlanRepo, published: str | None = None, receipt: str = f"{RECEIPTS}/feat.json") -> tuple[int, dict]:
     """R2b の照合は validate-readiness-binding.py が行う。test は起動して report と exit を受け取るだけ。"""
+    published = published or plan.published
     cp = plan.run(SCRIPTS / "validate-readiness-binding.py", "--repo-root", str(plan.root), "--package-dir", published,
                   "--receipt", receipt, "--system-planner-root", str(SDP))
     assert cp.returncode in (0, 1), cp.stderr
@@ -356,7 +376,7 @@ def test_requirements_in1_three_gates_bind_to_one_digest(git_plan: PlanRepo) -> 
     assert (report["write_count"], tree_bytes(plan.root)) == (0, before)
 
     # validate-system-plan は published の exact-13・共通 parent/package・機能内前方 dependency を見て PASS する。
-    cp = plan.run(SDP / "scripts" / "validate-system-plan.py", "--repo-root", str(plan.root), "--staging", PUBLISHED)
+    cp = plan.run(SDP / "scripts" / "validate-system-plan.py", "--repo-root", str(plan.root), "--staging", plan.published)
     report = json.loads(cp.stdout)
     assert (report["feature_package_id"], report["parent_feature"], report["phase_refs"]) == \
         ("feature-package/feat", FEATURE, PHASES)
@@ -414,9 +434,9 @@ def test_requirements_in1_stale_digest_or_drifted_c02_state_breaks_the_binding(g
     assert (code, violation_codes(report)) == (1, {("receipt_digest_mismatch", None)})
 
     # published の task spec が評価後に変わった: validate-system-plan が fail し、binding も fail する。
-    spec = plan.root / PUBLISHED / RT.VALIDATOR.TASK_PATHS[0]
+    spec = plan.root / plan.published / RT.VALIDATOR.TASK_PATHS[0]
     spec.write_text(spec.read_text(encoding="utf-8") + "\nedited after evaluation\n", encoding="utf-8")
-    cp = plan.run(SDP / "scripts" / "validate-system-plan.py", "--repo-root", str(plan.root), "--staging", PUBLISHED)
+    cp = plan.run(SDP / "scripts" / "validate-system-plan.py", "--repo-root", str(plan.root), "--staging", plan.published)
     assert cp.returncode == 2 and json.loads(cp.stdout)["status"] == "fail"
     code, report = binding(plan)
     assert code == 1 and ("system_plan_failed", None) in violation_codes(report)
@@ -499,7 +519,7 @@ def test_requirements_out2_mixed_incomplete_references_surface_every_missing_sec
 def test_requirements_out2_incomplete_node_in_a_package_handoff_is_refused_without_writes(plan: PlanRepo) -> None:
     cp, _ = plan.promote("run-1")
     assert cp.returncode == 0, cp.stderr
-    registration_path = plan.root / PUBLISHED / "dev-graph-registration.json"
+    registration_path = plan.root / plan.published / "dev-graph-registration.json"
     registration = json.loads(registration_path.read_text(encoding="utf-8"))
     registration["nodes"][6]["implementation_readiness"] = {
         "status": "incomplete", "missing_sections": ["Verification and evidence"], "checked_at": "2026-07-13T00:00:00Z"}
@@ -761,7 +781,7 @@ def test_init_out3_preflight_names_the_severed_or_retargeted_harness_hop_and_its
     code, report = harness.preflight("A")
     assert (code, report["status"], report["link_state"]) == (0, "pass", "ok"), report
     assert report["in_use_by"] == ["settings:.claude/settings.json", "config:claude_hooks.source=project"]
-    assert report["entrypoints"] == {"checked": 2, "missing": []}  # guard-graph-schema.py と reconcile-task-lifecycle.py
+    assert report["entrypoints"] == {"checked": 3, "missing": []}  # guard-graph-schema.py と reconcile-task-lifecycle.py と audit-graph-authority-drift.py
     snapshot = tree_bytes(a)
 
     # 共有 harness の link を外す。repo の link は残るので、link 経由の hook は次の起動で entrypoint に届かない。

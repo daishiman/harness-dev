@@ -1,0 +1,76 @@
+{
+  "skill": "run-dev-graph-node",
+  "original_goal_hash": "eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "loop": 1,
+  "artifact_delivery": {
+    "pre_choice_artifact": "eval-log/run-dev-graph-system-spec/R3-import/dry-run-preview.json",
+    "pre_choice_input": "eval-log/run-dev-graph-system-spec/R3-import/import-payload.json (sha256 71e9c95c…42c4)",
+    "presented_at": "2026-11-01T02:23:39+00:00",
+    "choice": "standard",
+    "choice_source": "task.md artifact_delivery=standard",
+    "state": "semantic_evaluator_started"
+  },
+  "graph_baseline": {
+    "graph_revision": 0,
+    "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"
+  },
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "C24 receipt eval-log/run-dev-graph-node/c24-receipt.json (repo_root==content_roots.repository、R0 receipt と identity 一致)。writer が入力・出力 path を repo 内で解決し applied。auditor path_containment PASS"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json: spec decision=auto conf0.95 margin0.65、arch decision=auto conf0.92 margin0.57 (閾値 0.80/0.15 以上)"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py --strict-artifact-readiness exit0 violation0、readiness complete 2/2 (eval-log/run-dev-graph-system-spec/R3-import/schema-report.json)。auditor schema PASS"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add (register-package を起動しない)"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: graph_revision 0→1 (baseline 0 から鎖)、node_ids 2件が graph と一致、graph_digest_after sha256:2923bc9f…d6d1 が今の graph と一致 (auditor 照合)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "loop1: build-graph-node pre_write_validation findings0、validate-graph-schema --strict-artifact-readiness exit0、validate-source-lineage exit0 checked=2"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "live trial / 受入テストが判定"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "evidence": "live trial / 受入テストが判定"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "evidence": "live trial / 受入テストが判定"
+    }
+  ],
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:2923bc9fb4e0e07a07ece4c3c05b1de281da6727645cb9af28ab3b3d8594d6d1"
+  },
+  "overall": "PASS",
+  "updated_at": "2026-11-01T02:25:30+00:00"
+}

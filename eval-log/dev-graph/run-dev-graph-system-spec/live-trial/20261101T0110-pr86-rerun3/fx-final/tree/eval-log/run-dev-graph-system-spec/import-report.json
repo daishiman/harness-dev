@@ -1,0 +1,25 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "scenario": "C19-OUT1-positive-system-spec-lineage-r2",
+  "system_spec_index": "system-spec/index.md",
+  "harness": {"plugin": "system-spec-harness", "version": "0.1.24", "range": ">=0.1.22 <1.0.0"},
+  "evaluator_evidence": {"report": "eval-log/system-spec-completeness-report.json", "sha256": "d59e1ac386664aea0be66c4ed9c295c06723eb4bca7cfa1d8d918d4b51578e5d", "verdict": "PASS"},
+  "c02_receipt": {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "c0d012f515dee087e7369c2c28ca1c85fb8275ea0a88c086a2972727d7a0b8c3", "graph_revision_before": 0, "graph_revision_after": 1, "graph_digest_after": "sha256:ea3dd5c6715568ca7956fede75bb5e2600dc4b2f0f468d104a994b293381f482"},
+  "imported_nodes": [
+    {"graph_node_id": "spec-billing-audit-system-spec", "artifact_kind": "specification", "file_path": "specs/billing-audit-system-spec.md", "confirmation_status": "confirmed", "evaluation_status": "pass", "readiness": "complete",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.24", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-10-31T16:59:03Z"},
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"}},
+    {"graph_node_id": "arch-billing-audit-system-architecture", "artifact_kind": "architecture", "file_path": "architecture/billing-audit-system-architecture.md", "confirmation_status": "confirmed", "evaluation_status": "pass", "readiness": "complete",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.24", "source_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402", "imported_at": "2026-10-31T16:59:03Z"},
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402"}}
+  ],
+  "gates": {
+    "C19_lineage_R0": "exit0 checked=0 (new import)",
+    "C19_lineage_R3": "exit0 checked=2 (r3-lineage-gate.json)",
+    "dev_graph_schema": "exit0 strict readiness complete 2/2 (r3-schema-gate.json)",
+    "C11_guard": "confirmed-chapter write probe blocked exit2, non-mutating exit0 (c11-gate.json)",
+    "harness": "coverage/source-citation/design-knowledge-refs/required-info exit0; compile OUT1 63 passed; evaluator PASS"
+  },
+  "independent_agents": {"R0-context": "PASS", "R1-preflight": "PASS", "R2-delegate": "PASS", "R3-import": "PASS", "dev-graph-integrity-auditor": "PASS"},
+  "checklist": "6/6 achieved; IN1 PASS; OUT1 external_pending"
+}

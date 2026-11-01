@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c3a65466-a786-4f36-9bef-df9f0fbea22e",
+      "line": 278,
+      "prefix_bytes": 1322596,
+      "prefix_sha256": "02414b236e816df3fc6a4d94ea222fcea5f60ac3599d2758d99be760a74d29a7",
+      "timestamp": "2026-11-01T15:33:11.827Z"
+    },
+    "result": {
+      "uuid": "6596d9eb-beac-427e-81d1-ac38789cea13",
+      "line": 281,
+      "prefix_bytes": 1325996,
+      "prefix_sha256": "c07045c6662105969f7a8beb544cc5e75cae74e6824173b67d2493fc211a0be8",
+      "timestamp": "2026-11-01T15:33:15.277Z"
+    }
+  },
+  "tool_use_id": "toolu_01XdDZwBY9Fh1cVukM32MoL2",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c '\nimport json\ns=json.load(open(\"system-spec/spec-state.json\")); r=json.load(open(\"system-spec/fetched-references.json\"))\nprint([(k[\"id\"],k.get(\"status\"),len(k.get(\"source_refs\",[]))) for k in s[\"knowledge_candidates\"]])\nt=[x[\"target_id\"] for x in s[\"targets\"]]; rr=[x[\"target_id\"] for x in r[\"references\"]]\nprint(\"targets\",t,\"refs\",rr,\"match\",sorted(t)==sorted(rr),\"dups\",len(rr)-len(set(rr)))\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "[('k8s-workload-observability', 'deepened', 4)]\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes'] refs ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes'] match True dups 0",
+  "tool_use_result": {
+    "stdout": "[('k8s-workload-observability', 'deepened', 4)]\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes'] refs ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes'] match True dups 0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

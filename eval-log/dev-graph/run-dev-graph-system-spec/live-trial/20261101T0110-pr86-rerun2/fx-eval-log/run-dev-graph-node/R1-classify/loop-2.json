@@ -1,0 +1,45 @@
+{
+  "responsibility_id": "R1-classify+R4-apply-template (independent check)",
+  "loop": 2,
+  "verdict": "PASS",
+  "input_sha256": "c5f817f09748c9a4337ba285cf4c45faa35e3d7ecee0443bc389ac5e2806219f",
+  "checks": {
+    "lineage_digest": {
+      "result": "PASS",
+      "detail": "Recomputed: sha256(system-spec/index.md)=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2, sha256(system-spec/00-requirements-definition.md)=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402; each equals source_lineage.source_digest and confirmation_evidence.evaluated_digest of its artifact and the matching entry in the report artifact_snapshot. eval-log/system-spec-completeness-report.json verdict=PASS, spec_dir resolves to <repo>/system-spec. dry-run-preview-2.json input_sha256 equals the payload digest (missing_sections [] for both nodes)."
+    },
+    "claim_grounding": {
+      "result": "PASS",
+      "detail": "Iterated all 22 specification sections, 18 architecture sections and 32 subtype_sections (5 subtypes) against spec-state.json qa_log (qa-000..qa-038, qa-foundation-u1..u9), matrix/approval_log, 00-requirements-definition.md (U1-U9, D1-D3), index.md, fetched-references.json, chapter To-Be/Delta, design_applications/doctrine_applications. U1-U9 sections are byte-equal to the requirements definition (bold markers stripped). D1-D3, qa-002/003/004/005/006/007/008/024/025/026/027/030/031/032/034/035/036/037/038 values, 40 non-web cells 対象外 (appr-001), chapter/goal table, aggregate summary, versions PostgreSQL 16.15 / React 19.3 / FastAPI 0.162.0 / TypeScript 7.0 all match. 'ワーカー'/'API とワーカーは k8s の Pod' grounded in backend.md design application (HTTP と worker) and spec-state doctrine_applications (社内k8s上のAPIと非同期worker). 'OIDC のクライアント資格情報' grounded in auth design_application (クライアントシークレットは k8s の Secret). No unsupported or contradicting claim found; only minor wording/citation issues (see minor)."
+    },
+    "loop1_resolution": {
+      "result": "PASS",
+      "detail": "B1 resolved: UI・状態遷移 no longer contains 入力中/突合済み; now restates qa-024 (契約→毎月請求書, 入金消込, 月次突合で食い違い記録) + qa-026 (リーダー承認で確定) + qa-025 (同時更新停止). B2 resolved: data/Data domains and ownership drops '経理チームが所有'; now qa-001 3 schemas + qa-026 role permissions verbatim-equivalent. A1 resolved: cites 収集マトリクス/各章のカテゴリ別収集状態/appr-001 (verified 8x5=40 cells 対象外 appr-001). A2 resolved: qa-019 added. A3 resolved: qa-009 replaced by qa-019 (qa-019 answer: 月末の 3 営業日に…使う). A4 resolved: qa-033 and qa-038 both listed. A5 resolved: '受動' present in 非機能要件, backend/Security and resilience, security/Application and supply-chain controls. A6 resolved: PC browser restricted to 請求担当 (qa-020); actor list cites qa-016."
+    },
+    "classification": {
+      "result": "PASS",
+      "detail": "specification 0.95 vs 0.30 (margin 0.65); architecture 0.92 vs 0.35 (margin 0.57); both >=0.80 and margin >=0.15, decision=auto consistent. Mapping index->specification and requirements-definition->architecture matches template-contract conditional_triggers (system_spec_index / system_spec_requirements)."
+    },
+    "template_apply": {
+      "result": "PASS",
+      "detail": "All 17 specification required_sections + 4 system_spec_index conditional sections present; architecture required_sections present except 'Subtype architecture', which build-graph-node.py generates from subtype_sections; all 9 U1-U9 conditional sections present; artifact_subtypes [frontend, backend, infrastructure, data, security] each with keys equal to the subtype template headings."
+    },
+    "secrets_and_writer_constraints": {
+      "result": "PASS",
+      "detail": "No secret/credential patterns. 2 titles + 71 section/subtype keys (73 total) are single-line, <=120 chars (max 43), no leading '#'."
+    }
+  },
+  "blockers": [],
+  "minor": [
+    {"id": "M1", "artifact": "billing-audit-system-spec", "section": "エラー・例外・回復", "claim": "同時更新の衝突は保存を止めて通知", "finding": "'通知' is not stated in qa-025 or backend.md (後から保存した方を上書きせずに止める / If-Match で保存を止める). Suggest '保存を止めて拒否する'."},
+    {"id": "M2", "artifact": "billing-audit-system-architecture", "section": "System context and boundaries", "claim": "境界: 給与計算システムとは連携しない (U7)", "finding": "U7/qa-017 only state payroll is out of scope (人事部の別システム, 扱わない); 'no integration' is an inference. Suggest '給与計算は対象外 (人事部の別システム, U7)'."},
+    {"id": "M3", "artifact": "billing-audit-system-spec", "section": "用語と主体", "claim": "情報システム部 | 社内 k8s・社内 IdP・監視基盤を運用し、請求データは見ない (qa-026, qa-029)", "finding": "k8s/IdP operation comes from qa-016 (U6), not cited."},
+    {"id": "M4", "artifact": "billing-audit-system-spec", "section": "ユースケースとユーザーフロー", "claim": "2. 月末 3 営業日に請求担当が突合を実行し…修正する (I2, qa-028)", "finding": "'月末 3 営業日' and 修正 come from qa-019; citation omits it."},
+    {"id": "M5", "artifact": "billing-audit-system-architecture", "section": "subtype_sections.infrastructure / Secrets and access", "claim": "OIDC のクライアント資格情報とトークンはバックエンド側だけが持つ (D3)", "finding": "D3 covers tokens only; client secret handling is in the auth design_application (k8s Secret, agent-inference). Citation incomplete."},
+    {"id": "M6", "artifact": "billing-audit-system-architecture", "section": "subtype_sections.data / Access and consistency", "claim": "トランザクションと制約で単一の信頼できる情報源を保つ (G1)", "finding": "Wording originates from D1 fit (G1 に要るトランザクション・制約・バックアップ); cite D1."}
+  ],
+  "original_goal": "Independently verify that the corrected C02 add payload is grounded in current system-spec bytes, correctly classified, template-complete and writer-safe before commit.",
+  "delta_from_original": "None blocking: lineage, grounding, loop-1 B1/B2/A1-A6, classification thresholds, template coverage and writer constraints all pass; 6 minor wording/citation issues remain.",
+  "merged_directive_for_next": "Proceed to R3/commit with payload c5f817f0…; optionally fix M1-M6 (would change the payload digest and require re-preview).",
+  "drift_signal": "none"
+}

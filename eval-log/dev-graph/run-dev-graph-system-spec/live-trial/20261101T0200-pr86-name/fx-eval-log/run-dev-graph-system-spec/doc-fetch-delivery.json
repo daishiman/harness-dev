@@ -1,0 +1,30 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "artifact": {
+    "path": "system-spec/fetched-references.json",
+    "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+    "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec97/fx/system-spec/fetched-references.json"
+  },
+  "guards": {
+    "parse": "ok",
+    "validate-source-citation (IN1)": 0
+  },
+  "choice": "standard",
+  "choice_source": "isolated-fixture pre-answer contract (task.md)",
+  "state": "semantic_evaluator_started",
+  "checklist": {
+    "targets_from_spec_state_no_fabrication": "achieved (postgres/react/fastapi/typescript = spec-state.targets)",
+    "official_host_identified": "achieved (www.postgresql.org/react.dev/fastapi.tiangolo.com/www.typescriptlang.org)",
+    "required_fields_and_version": "achieved",
+    "webfetch_evidence_bound_by_sha256": "achieved (retrieval-evidence/*.json tool=WebFetch, digests match)",
+    "host_match": "achieved",
+    "full_correspondence": "achieved (4/4, dup 0)",
+    "IN1": "achieved exit 0",
+    "discovered_knowledge_candidates_qualified": "achieved (discovered 0; k8s-workload-observability=deepened)"
+  },
+  "decision": "doc-fetch not required: all checklist items satisfied on resume input (retrieved_at 2026-10-31); semantic freshness is C08 (OUT1) scope, delegated to completeness evaluator",
+  "writer_ops": 0,
+  "next": "handoff_complete",
+  "recorded_at": "2026-10-31T21:59:46.347241+00:00"
+}

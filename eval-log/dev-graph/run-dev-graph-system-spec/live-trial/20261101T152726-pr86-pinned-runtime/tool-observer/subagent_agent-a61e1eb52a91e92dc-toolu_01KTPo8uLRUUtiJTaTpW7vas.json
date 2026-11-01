@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a61e1eb52a91e92dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "240e1b4b-51e4-4534-9e4c-266c6910e629",
+      "line": 36,
+      "prefix_bytes": 268160,
+      "prefix_sha256": "cd5fda83086ab0d9f19ae3e6e0eb74d940cb0b6c2fdc064f8b2f5d159e55f4c0",
+      "timestamp": "2026-11-01T15:30:17.941Z"
+    },
+    "result": {
+      "uuid": "236c14f3-3ae4-405f-b437-38a85a8edec0",
+      "line": 37,
+      "prefix_bytes": 271113,
+      "prefix_sha256": "9bf695c4fdf56dc8dc439179374e14b1ef915b6df63476a9c68b30de8dd3e38d",
+      "timestamp": "2026-11-01T15:30:21.427Z"
+    }
+  },
+  "tool_use_id": "toolu_01KTPo8uLRUUtiJTaTpW7vas",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c 'import json;m=json.load(open(\"plugins/system-spec-harness/.claude-plugin/plugin.json\"));print(json.dumps({k:m[k] for k in (\"dependencies\",\"author\")}))'; ls plugins/dev-graph plugins/dev-graph/scripts 2>/dev/null | head -80; grep -rliE \"apply[-_]spec[-_]transition|compile[-_]spec[-_]doc|coverage[-_]matrix|build[-_]matrix\" plugins/dev-graph | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"dependencies\": [\"skill-governance-adapters\"], \"author\": {\"name\": \"harness maintainers\"}}\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nplugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+  "tool_use_result": {
+    "stdout": "{\"dependencies\": [\"skill-governance-adapters\"], \"author\": {\"name\": \"harness maintainers\"}}\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nplugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

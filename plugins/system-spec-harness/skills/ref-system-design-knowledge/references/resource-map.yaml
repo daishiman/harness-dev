@@ -2,6 +2,10 @@
 # ref-system-design-knowledge の Progressive Disclosure 索引。
 # system-category-taxonomy.json は機械可読 contract (C01 seed 初期集合 SSOT)。
 # catalog entries は seed examples で非網羅。未知知識は open-world lifecycle から探索する。
+# card 集合の SSOT は本ファイルの read_when (カテゴリ id が現れる card を章へ割り当てる) だが、
+# 反映順序の SSOT は knowledge-catalog.json の depends_on が定める topo_order である
+# (validate-knowledge-graph.py --profile knowledge --order)。読み手が本ファイルの記述順を
+# 反映順と誤読しないよう、card entry の並びも topo_order と同順に維持する。
 resources:
   - file: open-world-knowledge-lifecycle.md
     topic: 未知/追加知識の discover→qualify→deepen→goal map→candidate→promotion→freshness audit
@@ -15,27 +19,42 @@ resources:
   - file: system-category-taxonomy.json
     topic: カテゴリ×canonical platform id の収集マトリクス初期集合 (C01 R1-init の正本)
     read_when: C01 がマトリクスを初期化するとき / C12 のカテゴリ軸床と整合確認するとき
-  - file: clean-architecture.md
-    topic: クリーンアーキテクチャの目的・適用境界・失敗モード・goal寄与・一次資料・鮮度
-    read_when: backend/frontend の依存設計を章へ反映するとき
+  - file: clean-code.md
+    topic: clean codeの目的・outcome・適用境界・過剰適用失敗モード・一次資料・鮮度
+    read_when: maintenance-ops のコード規約を章へ反映するとき
+  - file: ddd.md
+    topic: DDDの目的・complex domain条件・境界/aggregate失敗モード・一次資料・鮮度
+    read_when: database/backend のドメインモデル境界を章へ反映するとき
   - file: design-patterns.md
     topic: patternの目的・forces・適用/非適用・失敗モード・goal寄与・一次資料・鮮度
     read_when: 拡張点の設計パターン選定を参照するとき
+  - file: clean-architecture.md
+    topic: クリーンアーキテクチャの目的・適用境界・失敗モード・goal寄与・一次資料・鮮度
+    read_when: backend/frontend の依存設計を章へ反映するとき
   - file: api-design-patterns.md
     topic: API契約の目的・interaction選定・適用/非適用・trade-off・一次資料・鮮度
     read_when: backend の API 契約を章へ反映するとき
   - file: secure-by-design.md
     topic: secure-by-designの責任・threat/control・適用境界・失敗モード・一次資料・鮮度
     read_when: security/auth カテゴリの脅威モデルを章へ反映するとき
-  - file: ddd.md
-    topic: DDDの目的・complex domain条件・境界/aggregate失敗モード・一次資料・鮮度
-    read_when: database/backend のドメインモデル境界を章へ反映するとき
+  - file: usability-accessibility.md
+    topic: ユーザビリティ原則とアクセシビリティ適合の目的・POUR・受入基準化・失敗モード・一次資料・鮮度
+    read_when: ui-ux の画面設計・状態表示・回復導線・適合水準を章へ反映するとき
   - file: information-design.md
     topic: 表現物の情報設計 (文脈先行・順位付け・削減/加工・形式の比較選定・視覚変数への写像・意味的装飾) の目的・適用/非適用境界・失敗モード・goal寄与・一次資料・鮮度
     read_when: ui-ux / frontend カテゴリで画面・report・slide・CLI出力など人が読む表現物の情報構成を章へ反映するとき
-  - file: clean-code.md
-    topic: clean codeの目的・outcome・適用境界・過剰適用失敗モード・一次資料・鮮度
-    read_when: maintenance-ops のコード規約を章へ反映するとき
+  - file: test-strategy.md
+    topic: テスト層配分・テストサイズ・契約テスト・カバレッジのGoodhart化・一次資料・鮮度
+    read_when: testing-qa (seed taxonomy 外の open-world カテゴリ。project が追加したとき) のテスト戦略と品質ゲートを章へ反映するとき
+  - file: continuous-delivery.md
+    topic: デプロイパイプライン・成果物昇格・正本経路一本化・稼働ビルド追跡・一次資料・鮮度
+    read_when: dev-workflow (seed taxonomy 外の open-world カテゴリ。project が追加したとき) のブランチ運用・CI・本番反映経路を章へ反映するとき
+  - file: site-reliability-engineering.md
+    topic: SLI/SLO/エラーバジェット・観測可能性・環境再現性・トイル削減・一次資料・鮮度
+    read_when: infrastructure の実行基盤・環境差分・信頼性目標を章へ反映するとき
+  - file: cloud-architecture-patterns.md
+    topic: blob offloading・原子性境界と補償・冪等キー・基盤制約の非機能要件化・劣化順序・一次資料・鮮度
+    read_when: database/infrastructure のデータ配置とサービス跨ぎ書込みの整合性境界を章へ反映するとき
   - file: doctrine-anchor-registry.json
     topic: design concern→doctrine authority (Apple HIG/Clean Arch/OWASP/SRE) と全 category→concern 写像 (goal-spec C15)
     read_when: C03 が章の上流指針を引くとき / 未帰属 category の pending 例外を確認するとき

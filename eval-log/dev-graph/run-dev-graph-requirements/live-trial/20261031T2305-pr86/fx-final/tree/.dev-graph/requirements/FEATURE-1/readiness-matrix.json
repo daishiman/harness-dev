@@ -1,0 +1,522 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "readiness-matrix",
+  "feature_id": "FEATURE-1",
+  "graph_snapshot_digest": "sha256:a84101d9109a6af449c88fc5cfeb05534a22f670e411ca727b59f160db6d7db6",
+  "graph_revision": 2,
+  "readiness_digest": {
+    "c02": "sha256:687f7b8178fcc596c80c33aef073b3435f9a861dca12cc1ffcf89f0190947c35",
+    "c11": "sha256:687f7b8178fcc596c80c33aef073b3435f9a861dca12cc1ffcf89f0190947c35"
+  },
+  "validated_digest": "sha256:5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+  "gates": {
+    "c11": "pass",
+    "c02_binding": "pass",
+    "validate_system_plan": "pass",
+    "guard": "handoff"
+  },
+  "missing_sections_total": 0,
+  "rows": [
+    {
+      "graph_node_id": "FEATURE-1",
+      "artifact_kind": "feature",
+      "phase_ref": null,
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": null,
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": null,
+      "depends_on": []
+    },
+    {
+      "graph_node_id": "SYS-P01",
+      "artifact_kind": "task",
+      "phase_ref": "P01",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-01-requirements.md",
+      "depends_on": []
+    },
+    {
+      "graph_node_id": "SYS-P02",
+      "artifact_kind": "task",
+      "phase_ref": "P02",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-02-architecture.md",
+      "depends_on": [
+        "SYS-P01"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P03",
+      "artifact_kind": "task",
+      "phase_ref": "P03",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-03-design-review.md",
+      "depends_on": [
+        "SYS-P02"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P04",
+      "artifact_kind": "task",
+      "phase_ref": "P04",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-04-test-design.md",
+      "depends_on": [
+        "SYS-P03"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P05",
+      "artifact_kind": "task",
+      "phase_ref": "P05",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-05-implementation.md",
+      "depends_on": [
+        "SYS-P04"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P06",
+      "artifact_kind": "task",
+      "phase_ref": "P06",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-06-test-run.md",
+      "depends_on": [
+        "SYS-P05"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P07",
+      "artifact_kind": "task",
+      "phase_ref": "P07",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-07-acceptance.md",
+      "depends_on": [
+        "SYS-P06"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P08",
+      "artifact_kind": "task",
+      "phase_ref": "P08",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-08-refactoring-migration.md",
+      "depends_on": [
+        "SYS-P07"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P09",
+      "artifact_kind": "task",
+      "phase_ref": "P09",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-09-quality-assurance.md",
+      "depends_on": [
+        "SYS-P08"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P10",
+      "artifact_kind": "task",
+      "phase_ref": "P10",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-10-final-review.md",
+      "depends_on": [
+        "SYS-P09"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P11",
+      "artifact_kind": "task",
+      "phase_ref": "P11",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-11-evidence.md",
+      "depends_on": [
+        "SYS-P10"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P12",
+      "artifact_kind": "task",
+      "phase_ref": "P12",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-12-documentation-operations.md",
+      "depends_on": [
+        "SYS-P11"
+      ]
+    },
+    {
+      "graph_node_id": "SYS-P13",
+      "artifact_kind": "task",
+      "phase_ref": "P13",
+      "status": "active",
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "implementation_readiness": "complete",
+      "source_digest": "5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+      "missing_sections": [],
+      "verdict": "ready",
+      "task_spec_ref": ".dev-graph/plans/generations/feature-package-feat/5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6/task-specs/phase-13-release-deploy.md",
+      "depends_on": [
+        "SYS-P12"
+      ]
+    }
+  ],
+  "referenced_nodes": [
+    {
+      "graph_node_id": "architecture-system",
+      "artifact_kind": "architecture",
+      "verdict": "ready",
+      "in_scope": false
+    }
+  ],
+  "artifact_readiness_advisory": {
+    "source": "validate-graph-schema.py (C11) artifact_readiness",
+    "enforced": false,
+    "status": "incomplete",
+    "finding_count": 49,
+    "missing_sections": [
+      "Architecture decisions",
+      "Architecture overview",
+      "Container and component view",
+      "Context and drivers",
+      "Cross-cutting contracts",
+      "Delivery, migration and rollback",
+      "Goals and non-goals",
+      "Risks and verification",
+      "Subtype architecture",
+      "System context and boundaries",
+      "依存",
+      "実行契約",
+      "正本仕様書"
+    ],
+    "findings": [
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P01"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P01"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P01"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P02"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P02"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P02"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P03"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P03"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P03"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P04"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P04"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P04"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P05"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P05"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P05"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P06"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P06"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P06"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P07"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P07"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P07"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P08"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P08"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P08"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P09"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P09"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P09"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P10"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P10"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P10"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P11"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P11"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P11"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P12"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P12"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P12"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "依存",
+        "node": "SYS-P13"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "実行契約",
+        "node": "SYS-P13"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "正本仕様書",
+        "node": "SYS-P13"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Architecture decisions",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Architecture overview",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Container and component view",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Context and drivers",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Cross-cutting contracts",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Delivery, migration and rollback",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Goals and non-goals",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Risks and verification",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "Subtype architecture",
+        "node": "architecture-system"
+      },
+      {
+        "code": "heading_missing",
+        "detail": "System context and boundaries",
+        "node": "architecture-system"
+      }
+    ],
+    "gate_effect": "none (enforced=false; handoff gate は guard の node readiness missing_sections を正本とする)",
+    "remediation_owners": {
+      "SYS-P01..SYS-P13 task-spec headings": "system-dev-planner",
+      "architecture-system headings": "architecture producer (system-spec-harness)"
+    }
+  }
+}

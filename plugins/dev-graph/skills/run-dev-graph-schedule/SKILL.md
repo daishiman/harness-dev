@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--scope ID] [--max-parallel N]"
 allowed-tools: [Read, Bash, AskUserQuestion, Task, Skill, Agent]
-script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py, ../../scripts/build-parity-manifest.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -103,6 +103,29 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 5. `schedule-graph.py` の resource_scope conflict と C27 lease snapshot を重ね、同じ resource を触る組を分離する。C17 独立 verifier が不一致を出したら推薦しない。
 
 出力は ready sets、parallel batches、conflict pairs、各 task の `devgraph/<graph_node_id>` branch と `dev-graph worktree claim <id>` command。read-only で graph/tracker/lease を変更しない。
+
+候補は `mvp_alignment.mvp_fit` の rank (direct → enabling → 未設定 → deferred、同 rank は node id 順) で並び、その理由を stdout の `selection_receipt` (`policy: mvp-first/v1`) に載せる。利用者へ着手順を示すときは、この receipt の `mvp_fit` と目的/背景/根拠をそのまま添え、順序を独自に並べ替えない。enum 外の `mvp_fit` は停止として扱い、未設定へ丸めない。
+
+### ready-json の生成と消費
+
+beads binding を含むときは、`--ready-json` を消費する前に同じ周回で生成する。committed 済みの古い receipt を使い回さない。parity manifest は canonical graph だけから作り、`source_graph_digest` を持つ。ready payload に `parity_provenance` が付いていれば、`schedule-graph.py` はその `source_graph_digest` を現 graph の canonical digest と照合し、不一致なら stale として停止する。
+
+parity manifest を手書きしない。`../../scripts/build-parity-manifest.py` が唯一の生成経路で、既定の出力先は `eval-log/dev-graph/run-dev-graph-schedule/parity-manifest.json` (下の `$OUT/parity-manifest.json`) である。stale で止まったときも manifest を作り直す。`source_graph_digest` だけを現在値へ書き換える修正は stale 検出を恒久的に無効化する (execution-tracker-contract §10)。
+
+```bash
+OUT="$DEV_GRAPH_ROOT/eval-log/dev-graph/run-dev-graph-schedule"
+python3 -B ../../scripts/build-parity-manifest.py --repo-root "$DEV_GRAPH_ROOT"
+python3 -B ../../scripts/bd-bridge.py --op ready --repo-root "$DEV_GRAPH_ROOT" --parity-manifest "$OUT/parity-manifest.json" > "$OUT/ready.json"
+python3 -B ../../scripts/manage-worktree-lease.py --repo-root "$DEV_GRAPH_ROOT" --op list > "$OUT/leases.json"
+```
+
+```bash
+python3 -B ../../scripts/schedule-graph.py --graph "$DEV_GRAPH_ROOT/.dev-graph/state/graph.json" \
+  --ready-source bd-bridge --ready-json "$OUT/ready.json" --leases "$OUT/leases.json" \
+  --scope "<feature-id>" --max-parallel "<N>"
+```
+
+github/none だけなら `--ready-source self` とし、`--ready-json` は渡さない。除外された候補は `excluded[]` (`dependency_unsatisfied` / `ready_payload_entry_absent` / `beads_parity_stale_or_unconfirmed`)、対応付けの失敗は `unmapped[]` に理由つきで出る。判定順序と理由の一覧は [schedule-graph-contract.md](../../references/schedule-graph-contract.md) を正本とする。
 
 ## ゴールシーク実行
 

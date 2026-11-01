@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-af5121f03251c1726",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "dde87ebc-b66d-46a1-bfce-d73508b90f1d",
+      "line": 29,
+      "prefix_bytes": 309950,
+      "prefix_sha256": "25c4344e676303484328d7c0da25ba917557be706f87e11dc5fa2360358a8150",
+      "timestamp": "2026-11-01T08:14:48.889Z"
+    },
+    "result": {
+      "uuid": "bb555d98-31c7-4ab1-ba4d-ec4f015d6634",
+      "line": 31,
+      "prefix_bytes": 313730,
+      "prefix_sha256": "48b9132a60908323d68a8f45681f4c8f628ca229bb261b979e4e8255bdd226b9",
+      "timestamp": "2026-11-01T08:14:50.029Z"
+    }
+  },
+  "tool_use_id": "toolu_01S51hMUmd3eAA4PqNpNb5jC",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));print(json.dumps(d.get('targets'),ensure_ascii=False))\"; curl -sS -m 8 -I https://react.dev/versions 2>&1 | head -3"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: ネットワーク CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/policy.json']: [live-trial 隔離ガード] 拒否: ネットワーク CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

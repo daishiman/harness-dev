@@ -6,7 +6,7 @@
 name: skill-intake
 description: harness-creator の前段ヒアリングを非エンジニアに開く plugin。曖昧要望から intake 仕様(Markdown 正本 + JSON 副本 + Notion ページ)を 11 phase で生成し、macOS Keychain 経由の Notion PAT で公開する。
 kind: plugin-composition
-version: 0.1.23
+version: 0.1.24
 owner: team-platform
 since: 2026-05-22
 last-audited: 2026-07-01
@@ -57,7 +57,6 @@ capabilities:
   - { kind: hook, ref: "hook:PostToolUse-Skill/hook-guard-skillgen", tier: core }
   - { kind: hook, ref: "hook:Stop/hook-guard-skillgen", tier: core }
   - { kind: hook, ref: "hook:SessionEnd/hook-guard-skillgen", tier: core }
-  - { kind: hook, ref: hooks/post-keychain-add.sh, tier: core }
   # receipt-gated 起動のみで、hook event への常時配線は持たない公開面。
   - { kind: hook, ref: hooks/post-publish-notify.sh, tier: core }
 

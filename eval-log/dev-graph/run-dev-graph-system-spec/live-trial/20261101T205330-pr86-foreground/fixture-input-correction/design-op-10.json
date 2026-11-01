@@ -1,0 +1,7 @@
+{
+  "action": "set-design-application",
+  "category": "infrastructure",
+  "text": "現行resource-mapが注入するSite Reliability EngineeringとCloud Architecture Patterns、および既存候補k8s-workload-observabilityを併用する。qa-005の社内k8s/GitHub Actionsへ、宣言的構成と適用済みイメージ・設定値の観測、段階適用と復旧を対応付ける。qa-036の運用条件に対して、観測結果から復旧行動へ進める手順を置く。qa-025の非同期ジョブ起動の冪等キーと再試行状態は、APIとworkerの原子性の境界を跨ぐ二重適用を防ぐ。これらは既存の問答に対する設計解釈であり、新しい利用者承認を意味しない。\n\nqa-job-choice-fixture-v3/D4への追加解釈: 既存社内k8sのPython worker Deploymentが1秒claim、同じworker imageのCronJobが15分走査を担う。SREの稼働実体/構成の観測と復旧を、PG永続outbox・lease/fencing・失敗状態・30分超未処理の運用表示へ対応させる。CronJobの重複抑制とDB側の一意キー/冪等性を分け、worker停止時は永続状態から再開する。追加broker/外部Blob補償を持ち込まず、未回答の資源上限/SLO/リトライ数値を勝手に確定しない。\nこれは既存回答に対するfixture作者agentの設計解釈であり、新規の利用者承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T10:44:43.266344Z"
+}

@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-ada0b6a212a61248b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c00b49db-4b8c-490a-9593-b6dd781037ae",
+      "line": 200,
+      "prefix_bytes": 2100593,
+      "prefix_sha256": "33d9ebf24a256593bad63416b0bbcdf1ce183bb6f60e204482a99cf58e24a31b",
+      "timestamp": "2026-11-01T12:54:30.229Z"
+    },
+    "result": {
+      "uuid": "1a785d7a-971d-462f-8b91-36503513b91a",
+      "line": 201,
+      "prefix_bytes": 2106560,
+      "prefix_sha256": "55b78616abd3d86d35ca4a892abb6cfdc33020d6ad2417b46a900482bdb8a008",
+      "timestamp": "2026-11-01T12:54:30.478Z"
+    }
+  },
+  "tool_use_id": "toolu_01UcJeU3i12hySZmCLx4pokc",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/prompts/R1-system-design-knowledge.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# ref-system-design-knowledge 責務プロンプト (7層)\n2\t\n3\t## メタ\n4\t\n5\t| key | value |\n6\t|---|---|\n7\t| name | system-design-knowledge-reference |\n8\t| skill | ref-system-design-knowledge |\n9\t| responsibility | 設計知識の探索・深い参照・taxonomy 案内 |\n10\t| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |\n11\t| output_schema | references/resource-map.yaml |\n12\t| reproducible | true |\n13\t\n14\t## Layer 1: 基本定義層\n15\t\n16\t- **目的**: システムの本質的目的と解決問題に適合する設計知識を、既存 references を seed として探索し、深い判断材料として返す。\n17\t- **成功基準**: 参照結果から「何を解決する知識か」「なぜ適用するか」「どこでは適用しないか」を第三者が追跡できる。\n18\t- **境界**: 本責務は知識源であり、個別プロジェクトの最終意思決定は行わない。\n19\t\n20\t## Layer 2: ドメイン層\n21\t\n22\t- `seed knowledge` の現在の集合は `references/knowledge-catalog.json` の entries が正本。案内時はそこを読んでから答え、**この prompt へ領域名を書き写さない** (写した時点で catalog への追加のたびに割れる)。seed は知識領域の固定上限でもない。\n23\t- `deep reference` は目的、背景、解決問題、中核概念、適用条件、非適用条件、トレードオフ、失敗モード、目的達成寄与、一次資料を持つ知識単位である。\n24\t- `open-world discovery` は要求の目的・背景・問題・制約に対して seed だけでは不足する概念を発見し、候補として明示することである。\n25\t- taxonomy はマトリクス初期集合の SSOT だが、ヒアリングで発見した追加カテゴリを禁止する上限ではない。\n26\t\n27\t## Layer 3: インフラ層\n28\t\n29\t- **参照**: `references/resource-map.yaml`、`references/*.md`、`references/system-category-taxonomy.json`。\n30\t- **ツール**: Read。最新性が必要な外部知識は C02 相当の公式一次情報確認へ引き渡す。\n31\t- **出力形状**: topic、purpose、background、problems_solved、core_concepts、applies_when、not_applies_when、tradeoffs、failure_modes、goal_contribution、primary_sources。\n32\t\n33\t## Layer 4: 共通ポリシー層\n34\t\n35\t- seed 一覧だけで探索を終了しない。要求との意味差分があれば追加知識候補を提示する。\n36\t- 要点や書名だけを返さず、知識が目的達成へどう寄与するかを明示する。\n37\t- 一次資料で確認できない主張は未確認と表示し、事実として確定しない。\n38\t- 複数の知識が競合するときは適用条件とトレードオフを並べ、単一の万能解として扱わない。\n39\t\n40\t## Layer 5: エージェント層 (l5-contract v2.0.0)\n41\t\n42\t### 5.1 担当 agent\n43\t\n44\t- ref-system-design-knowledge の参照担当。読み取り専用で動作する。\n45\t\n46\t### 5.2 ゴール定義\n47\t\n48\t- **目的**: 要求に適合する設計知識を、固定一覧に閉じず深い判断材料として提供する。\n49\t- **背景**: 浅い要点とポインタだけでは、知識が何を解決し、いつ有効かを判断できない。\n50\t- **達成ゴール**: 選択した知識ごとに deep reference の全観点と目的への対応が示され、不足領域が追加候補として識別された状態になっている。\n51\t\n52\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n53\t\n54\t- [ ] 各知識候補が解決対象の問題を明示している\n55\t- [ ] 各知識候補が適用条件を明示している\n56\t- [ ] 各知識候補が非適用条件を明示している\n57\t- [ ] 各知識候補が主要なトレードオフを明示している\n58\t- [ ] 各知識候補が実在する上位ゴールへの寄与を明示している\n59\t- [ ] seed 外の不足領域の有無が判定されている\n60\t- [ ] 事実主張が一次資料または未確認表示へ接続している\n61\t\n62\t### 5.4 実行方式\n63\t\n64\t- 固定手順を持たない。要求と完了チェックリストの差分から必要な探索・読込・比較を都度立案し、全項目が満たされるまで参照結果を改善する。\n65\t\n66\t## Layer 6: オーケストレーション層\n67\t\n68\t- 入力は要求の目的、背景、解決問題、制約、参照要求カテゴリ。\n69\t- taxonomy 要求では初期集合を返し、追加カテゴリ候補を別枠で保持する。\n70\t- 最新性の確認が必要な候補は公式一次情報取得へ引き渡す。\n71\t- 出力は elicit、decision-guide、compile、completeness-evaluator が消費できる。\n72\t\n73\t## Layer 7: ユーザーインタラクション層\n74\t\n75\t- ユーザー入力は参照したい領域、解決したい問題、達成したいゴールである。\n76\t- 提示は「推奨知識」「解決する問題」「適用/非適用」「トレードオフ」「目的への寄与」「一次資料」「追加候補」の順で行う。\n77\t",
+  "tool_use_result": null
+}

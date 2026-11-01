@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "097daef9-2ece-4fb9-832c-7e1383684ee7",
+      "line": 187,
+      "prefix_bytes": 1211995,
+      "prefix_sha256": "959ae354477491c04034c53e509ae22de775ba009ed91a7ef7b839a5917f969f",
+      "timestamp": "2026-11-01T03:14:50.756Z"
+    },
+    "result": {
+      "uuid": "79a511f8-91aa-4943-842c-281f39c8953b",
+      "line": 188,
+      "prefix_bytes": 1212985,
+      "prefix_sha256": "15e87c18ae0c7b12679e1299660e2a9817ecda276a77a9f6fd89faf3347f2386",
+      "timestamp": "2026-11-01T03:14:52.953Z"
+    }
+  },
+  "tool_use_id": "toolu_01TmQroS6rm85pPQGpwb5pjZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport pathlib,re\nt=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R2-delegate.md\").read_text()\nfor kw in [\"C08\",\"doc_verification\",\"AUDIT_DISPATCH\"]:\n    for m in re.finditer(kw,t):\n        pass\ni=t.find(\"C08\"); print(len(t))\nidx=[m.start() for m in re.finditer(\"doc_verification|C08|freshness\",t)]\nprint(idx[:40])\nPY",
+    "description": "Locate C08 dispatch instructions in R2 prompt"
+  },
+  "is_error": false,
+  "tool_result_content": "13088\n[179, 747, 4386, 4567, 4717, 6874, 6885, 6906, 7493, 7539, 7756, 7985, 8004, 9613, 9665, 10459, 10467, 10626, 10637, 10990, 11001, 11642, 11651, 12276, 12296, 12630, 12640]",
+  "tool_use_result": null
+}

@@ -1,0 +1,30 @@
+PASS。残存 blocker は 0 件。対象は sysspec123、scenario C19-OUT1-positive-system-spec-lineage-r2 の今回終了原本だけである。点数は出さない。
+
+公開終了 transcript の SHA-256 は c2c113099514c19d97ebb69ece46b9d4bf71fd65bc2e81bb8ca73a04f7e346b0。私用原本の全10 native streamとobserver228eventを、source UUID・行・prefix bytes/SHA・tool input/resultへ再接地した。以前確認した4prefixがそのまま含まれる。公開transcript群10fileは同一メール44箇所を <redacted-email> に置換しただけで、行数・JSON構造・他値は保持。原本/公開の個別SHAと対応を独立再計算し、他の共通file差分はpoll-state.elapsedだけ。新dir名もstart.epochのJST表示に一致した。
+
+目的の達成は内部DONEだけから導かない。C24の開始receiptでcaller root/identity/common-dir/content rootを固定し、.24版とcomposition範囲・4entry pointsを確認、preflight実物/path/SHA/開き方の提示後に事前standardを記録した。R0/R1独立Verifierが担当prompt・共通層と実root/manifest/lineageを検証した後でR2へ進んだ。既に全セル確定または対象外のgivenをelicit --resumeで検証し、doc-fetchは新規取得不要を正規Skillで判断。compileは正規writerで実実行し、指定63 testsが成功。既存compiled章が同bytesでも、seedを今回実行証拠へ転用した形ではない。
+
+C05はhelper成功stdoutの絶対skill_argsをそのまま渡した実fork。owner4 SKILLの全文はfrontmatterを含め出力前にmainがReadし、委譲責務promptも出力前に全文取得。C05自身はown R1/R2/rubric/aspect/schema、C04 map、全18prompt、全10 Markdown、state全実行・refsを全文取得した。18promptをC1-C4/Layer役割/L7→L1/L5成果状態と原子的停止条件・動的方式/再現性/Self-Evaluationで意味評価しreportへ記録。外部prompt-creatorの機械gate不在はsourceのstandalone例外に限ってinfo開示し、意味評価を省略していない。設計知識もポインタ存在だけで肯定せず章別具体適用・dialogue/legacy_backfillと回答を照合、low所見を残す。C06のmedium注記2/closed3もfindingsに残しgapsへ入れず、正本1aの対応を守る。
+
+3監査はnative requestShape=foreground、name/backgroundなしでC07→C06→C08を1message1Agentとして実行し、前の実finalとresolved台帳Readの後だけ次へ進む。全token/ID/session/subagent/promptSHAが一致し、各実finalのAUDIT_VERDICTはPASS。schema1.3 completion本文SHAも全一致。C06はnative41行の同actor成功Bashでcontainment/regular file/fileSHAを確認した後47行で書面Read、55行で4answer SHAを実測。4件すべて指定sectionの逐語とSHAが一致する。retired qaの補助qa_refs保持を許す正本を一般の安全側解釈で禁止へ反転しない。C08はadapter/R4/catalog全文と許可5hostに対する7実WebFetchで5targetを再照合した。
+
+C05の出力は許可されたhearing-audit.jsonと完成度reportの2JSONだけで、literal Pathと引用heredocを使用。C06 JSONは無改変、report snapshotは開始production stdoutと完全一致、3 gate_resultsも正規stdout JSON無改変、knowledge全4profile0。全12 artifact digestは最終frozen実値と一致し、評価対象の追加/改変は無い。reportの6観点PASS/high0/findings12/gaps空と、C05・親のactual --report/--spec-dir/--session aggregate exit0を確認。own resource-map索引未Readは下記の非blocking差分として扱う。
+
+C05 actual PASS後にだけC02 Skillとpayload作成へ進む。最終dry-runとaddは同じpayload SHA dd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238d。canonical addはowner C02/run-dev-graph-node、2node、revision0→1、pre-write finding0。実node/receiptのpath/SHA/開き方を提示した後でstandardを記録し、必須integrity Agentが別contextで実graphを検証してPASSを返した。pre-choiceで2node完成済み・readiness_fill空なのでpost-choice writer再実行は不要。pre-choice receiptをwriter_receiptsに足さずbaseline側へ含める分岐は正本どおり。
+
+最終graphはspecificationとarchitectureの2node、canonical digest sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b。receipt/baseline/verifier/現graphが一致する。source_lineageの全6fieldがあり、index.md/00-requirements-definition.mdの実bytes SHA、confirmation_evidence.evaluated_digest、C05 snapshotが一致。両nodeはconfirmed/pass/readiness complete、artifact SHAもreceiptと一致。R3独立Verifierはsonnetの実Agentで最終PASS、同payload/評価先/順序/lineage/複製0を確認した。R3がobserver summaryでdry-run詳細を読めなかった点は、当評価者がfullnative/observerの実commandとpayload SHAを直接検証して補完した。
+
+C19は全3周回でcoverage/citation/schemaの実CLIが各exit0、空graph周回もschema省略なし。3行すべて6key・元goal・hashが一致し、次指示は次責務/Agentの入力と実操作に保持される。R0/R1/R2/R3の実完了後にだけ各達成を記録し、最終checklist6項目がachieved、OUT1は内部自己採点せずexternal_pendingのまま。周回2/3の実hash assertionも0。最後に完了markerとDONE: PASS、canonical poll DONE/exit0/settle3を確認した。
+
+実資源は10stream・172 unique assistant message、欠測0で14,133,882token。壁時計はceil(observed_at_unix-start.epoch)=1922秒。固定上限3300秒/23,000,000token内、計測不能や上限延長なし。poll公開時のelapsed補正1920→1922以外にfield差分は無く、予算と起点は不変。source挙動閉包はlaunch/current/fixtureすべて ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef。settings/指示/hook/configの前後SHAと現在実fileが一致し、proof cacheはboot時空・subject denyWrite、proof command/stdout/同actor/fileSHAをnativeと照合した。hookはpath/file/hash順序だけを扱い意味判定を代行していない。
+
+非blocking差分と検証限界:
+
+- own resource-map全文取得の明文は補助runnerにあり、C05 sourceはreference_refs/参照表宣言である。索引は新規意味基準を持たず、そこから到達すべきsource必読・正規gate・監査・全対象は実被覆されているため、Purpose/6観点/3観測への直接欠損を認めない。
+- 周回1直後hash assertion欠如は手順差分だが、行自体の6key/goal/hashは最初から一致し、後続assertionが全既存行を検査した。drift_signal=noneは共通正本enum外だが、実goal・差分・次指示・成果を壊す因果はない。
+- C02 baselineのprogress永続化は監査後だが、同値はpre-choice receipt/提示/選択記録へ既に固定され、途中writer0。baseline付替えや隠蔽を観測しない。
+- 提示の一部はBash stdout/choice記録にあり別assistant文章での再掲がない。実物/path/SHAと事前同意・評価後開始の順序を確認し、同意なし/評価先行へ拡大しない。
+- nested C05 native tool_resultは元whole tool_response dictを保存しない。schema1.2 response digestそのもののmetadata込み独立再計算には限界がある。trusted hook台帳・ID/session・actual aggregate・raw foreground metadata・実final・schema1.3全文hashによるsource契約の接地は成立しており、未取得metadataを再計算済みとは述べない。
+- native-model-pinning説明に別namespace番号が残るが、実設定/receipt/session/proof/pathはすべてsysspec123へ一致し、その説明を判定根拠にしない。
+
+最終JSONは公開終了原本のSHAへ束縛し、evidence_refs/observationsは公開dir内の実在相対fileだけとした。原本/source/実成果を補修せず、独立再構成・予算・provenance検証結果は /tmp に保存した。

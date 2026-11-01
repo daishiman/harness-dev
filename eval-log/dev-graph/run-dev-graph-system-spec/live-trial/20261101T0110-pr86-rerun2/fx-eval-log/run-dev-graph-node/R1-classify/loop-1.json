@@ -1,0 +1,51 @@
+{
+  "responsibility_id": "R1-classify+R4-apply-template (independent check)",
+  "loop": 1,
+  "verdict": "FAIL",
+  "checks": {
+    "lineage_digest": {
+      "result": "PASS",
+      "detail": "sha256(system-spec/index.md)=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 and sha256(system-spec/00-requirements-definition.md)=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402 equal source_digest and evaluated_digest; both digests also appear in the report artifact_snapshot; evidence_ref=eval-log/system-spec-completeness-report.json verdict PASS, spec_dir resolves to <repo>/system-spec"
+    },
+    "claim_grounding": {
+      "result": "FAIL",
+      "detail": "All 22 specification sections and 18 architecture sections + 32 subtype sections checked against qa_log, U1-U9, D1-D3, matrix, chapters (To-Be/受入条件/本章での適用/出典), fetched-references.json and the completeness report. Section text is byte-identical to candidate-import.json (no re-grounding was applied). Most claims are supported (U1-U9 verbatim, D1-D3, PostgreSQL 16.15/React 19.3/FastAPI 0.162.0/TypeScript 7.0, qa-002/034/035/036/037/038 values, scope in/out). 2 unsupported claims are blockers; 6 advisory mis-citations/omissions."
+    },
+    "classification": {
+      "result": "PASS",
+      "detail": "index->specification (0.95, 2nd 0.30, margin 0.65), requirements-definition->architecture (0.92, 2nd 0.35, margin 0.57); both satisfy run-dev-graph-node SKILL.md step 2 auto-confirm rule confidence>=0.80 and margin>=0.15; decision=auto consistent. run-dev-graph-system-spec step 4 maps confirmed output to specification/architecture nodes."
+    },
+    "secrets_and_writer_constraints": {
+      "result": "PASS",
+      "detail": "No secret/credential patterns. 2 titles + 73 section/subtype keys are single-line, <=120 chars (max 43), no leading '#'."
+    }
+  },
+  "blockers": [
+    {
+      "id": "B1",
+      "artifact": "billing-audit-system-spec",
+      "section": "UI・状態遷移",
+      "claim": "請求書は入力中→突合済み→確定 (承認済み)。確定後は訂正のみ (赤黒) (qa-024)",
+      "finding": "unsupported: no invoice lifecycle with states 入力中/突合済み exists anywhere in system-spec (0 hits in all chapters, index, requirements definition, spec-state.json). qa-024 only states that 確定 invoices are not rewritten and are corrected by 赤黒訂正; it defines no state machine."
+    },
+    {
+      "id": "B2",
+      "artifact": "billing-audit-system-architecture",
+      "section": "subtype_sections.data / Data domains and ownership",
+      "claim": "請求データは経理チームが所有し、監査ログは内部監査室が閲覧する (qa-016)",
+      "finding": "unsupported: data ownership by 経理チーム is not stated in qa-016 (spec-state.json qa_log) or U6 (00-requirements-definition.md); qa-016 only says 請求担当 use it, リーダー approves, 内部監査室 views audit logs. The 閲覧 half is supported; '所有' is invented."
+    }
+  ],
+  "advisories": [
+    {"id": "A1", "artifact": "billing-audit-system-spec", "section": "スコープ", "claim": "全 8 カテゴリの mobile/tablet/desktop-* セルは対象外として確定済み (system-spec/index.md 章一覧)", "finding": "fact true (spec-state.json matrix: 40 cells 対象外, appr-001; each chapter カテゴリ別収集状態), but index.md 章一覧 only lists 対応セル with chapter state 確定 and never says 対象外; cite spec-state.json matrix / chapter カテゴリ別収集状態 (appr-001) instead."},
+    {"id": "A2", "artifact": "billing-audit-system-spec", "section": "用語と主体", "claim": "請求担当 (40 名) ... 月末 3 営業日に突合する (qa-016, qa-026)", "finding": "'月末 3 営業日' comes from qa-019 (U6), not qa-016/qa-026; citation should include qa-019."},
+    {"id": "A3", "artifact": "billing-audit-system-architecture", "section": "subtype_sections.frontend / Performance and observability", "claim": "月末 3 営業日の集中利用を前提にする (qa-009)", "finding": "qa-009 is superseded_by qa-019 (spec-state.json qa_log; hearing audit closed finding qa-009->qa-019). Fact is supported by qa-029/U2; cite those instead."},
+    {"id": "A4", "artifact": "billing-audit-system-spec", "section": "未決事項", "claim": "完成度評価 ... の medium 指摘: qa-038 が複数論点を束ねている", "finding": "incomplete: the report has two medium notes (qa-033 leading-question and qa-038); qa-033 is omitted."},
+    {"id": "A5", "artifact": "both", "section": "非機能要件 Security/Privacy; security/Application and supply-chain controls; backend/Security and resilience", "claim": "OWASP Top10 対策 (qa-004)", "finding": "qa-004 says 'OWASP Top10 受動対策'; the qualifier 受動 is dropped."},
+    {"id": "A6", "artifact": "billing-audit-system-architecture", "section": "System context and boundaries", "claim": "利用者: 請求担当 40 名・経理リーダー・内部監査室 (社内ネットワークの PC ブラウザ, qa-020)", "finding": "qa-020 describes only 請求担当's environment; extension to リーダー/監査室 is an inference."}
+  ],
+  "original_goal": "Independently verify that the C02 add payload is grounded in current system-spec bytes, correctly classified, and writer-safe before commit.",
+  "delta_from_original": "Lineage/classification/writer constraints pass; content grounding fails on 2 invented claims carried verbatim from candidate-import.json.",
+  "merged_directive_for_next": "Re-ground sections against current system-spec: remove or source the invoice state machine (B1) and the 経理チーム ownership claim (B2); fix citations A1-A6; then re-run this check.",
+  "drift_signal": "sections/subtype_sections are byte-identical to the older draft candidate-import.json; only source_lineage.imported_at was added, so no grounding pass against current system-spec occurred"
+}

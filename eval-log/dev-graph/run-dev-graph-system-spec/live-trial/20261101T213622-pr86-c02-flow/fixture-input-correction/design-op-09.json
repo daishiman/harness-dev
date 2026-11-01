@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "security",
+  "concern_id": "security",
+  "text": "qa-030 の脅威ごとに対策を対応づける: 確定金額の書換えには確定後の更新を禁じ赤黒訂正だけを許す (qa-024)、残ったアカウントには IdP 連携での無効化 (qa-026)、権限の設定ミスには担当取引先による行単位の制限とロール割当ての監査ログ記録、監査ログの改ざんには追記のみの保存と削除権限を誰にも与えないこと。通信は TLS 1.3、入力は検証する (qa-004)。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: secure-by-designの最小権限/責任分界をAPI・独立worker・CronJobの既存PGアクセスへ適用する。担当者/リーダーの閲覧/再検査権限と既存認可・楽観ロックを共有し、情報システム部へ請求閲覧権を新設しない。検知/解消・締め結果・追記専用監査を物理削除せず、業務/検知結果と監査を整合するtransaction境界へ置く。具体DB role名や新しい秘密配布方式を利用者決定として追加しない。 concern=securityの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T10:44:43.266344Z"
+}

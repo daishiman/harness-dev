@@ -1,0 +1,36 @@
+{
+  "contract": "artifact-delivery-v1",
+  "events": [
+    {
+      "event": "minimum_guard_pass",
+      "from": "artifact_created",
+      "to": "minimal_guard_passed",
+      "at": "2026-11-01T01:59:19+00:00",
+      "evidence": "preflight-report.json R0=PASS R1=PASS"
+    },
+    {
+      "event": "present_actual_artifact",
+      "from": "minimal_guard_passed",
+      "to": "artifact_presented",
+      "at": "2026-11-01T01:59:19+00:00",
+      "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+      "sha256": "819c682a908c27963d2ba9edac3f4ce73f4f3a610d7d17bb4d279253662cec42",
+      "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec104/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+    },
+    {
+      "event": "record_user_choice",
+      "from": "artifact_presented",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "at": "2026-11-01T01:59:19+00:00",
+      "source": "task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)"
+    },
+    {
+      "event": "standard",
+      "from": "user_choice_recorded",
+      "to": "semantic_evaluator_started",
+      "at": "2026-11-01T01:59:19+00:00"
+    }
+  ],
+  "state": "semantic_evaluator_started"
+}

@@ -1,0 +1,15 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "contract": "artifact-delivery-v1",
+  "transitions": [
+    {"event": "artifact_created", "evidence": "R0/R1 receipt eval-log/run-dev-graph-system-spec-preflight-receipt.json (minimal usable artifact before any import; import nodes are forbidden before evaluator PASS per R3)"},
+    {"event": "minimum_guard_pass", "evidence": "C24 containment pass; lineage gate exit 0 checked=0; harness 0.1.24 in >=0.1.22 <1.0.0; 4 entry points present; no secrets"},
+    {"event": "present_actual_artifact", "artifacts": [
+      {"path": "eval-log/run-dev-graph-system-spec-preflight-receipt.json", "open_with": "cat / JSON viewer"},
+      {"path": "system-spec/spec-state.json", "sha256": "750cbda7e0c08cb1bf18cd3fed6fe92885a0f6372fda3d1c5735d4b5d83a4851", "open_with": "cat / JSON viewer"}
+    ]},
+    {"event": "record_user_choice", "choice": "standard", "source": "isolated fixture pre-answer contract in task.md (artifact_delivery=standard); not an approval of any real repo or account"},
+    {"event": "standard", "to": "semantic_evaluator_started"}
+  ],
+  "recorded_at": "2026-10-31T14:45:30Z"
+}

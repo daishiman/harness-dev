@@ -1,0 +1,29 @@
+{
+  "responsibility": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (separate context)",
+  "prompt_read_in_full": true,
+  "common_layers_read_in_full": true,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "131662aad21ddda97431298c137d3b1c45e4f9a3d541d11e2b481f93305bf9c2", "head_sha": "a5f34bd4eb71dc8f80922f354c0972b64e012bf4", "branch": "main"},
+  "checks": [
+    {"id": "manifest_name_version", "result": "PASS", "evidence": "plugins/system-spec-harness/.claude-plugin/plugin.json name=system-spec-harness version=0.1.24 (sha256 322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994); plugin-composition.yaml:154 external_dependencies.system-spec-harness.version=\">=0.1.22 <1.0.0\"; 0.1.22 <= 0.1.24 < 1.0.0"},
+    {"id": "required_entry_points", "result": "PASS", "evidence": "references/package-contract.json entry_points.skills includes run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator; SKILL.md present for each under plugins/system-spec-harness/skills/<name>/ (30860/15305/23330/33894 bytes); composition required_entry_points list matches"},
+    {"id": "official_manifest_clean", "result": "PASS", "evidence": "plugin.json keys = name, version, dependencies, description, author only; no entry_points or other harness-specific keys; .claude-plugin/ contains only plugin.json"},
+    {"id": "no_fallback_duplicate_logic_in_dev_graph", "result": "PASS", "evidence": "grep -rniE 'apply[-_]spec[-_]transition|compile[-_]spec[-_]doc|render_chapter|requirements_foundation' plugins/dev-graph -> 0 hits; spec-state/elicit/hearing/fetched-references in dev-graph scripts/lib/hooks -> only register-package.py:196 (system-dev-planner agent name list, not logic); skill-local scripts/build-evaluation-context.py only defines absolute/prepare/main (receipt re-validation + evaluator args), no elicit/compile/render logic; SKILL.md L97/L188 forbid fallback"},
+    {"id": "parent_preflight_report_consistent", "result": "PASS", "evidence": "preflight-report.json R1: version 0.1.24, range '>=0.1.22 <1.0.0 (plugin-composition.yaml)', in_range true, all 4 entry points true, plugin_json_sha256 322ddd15... matches recomputed; c24_receipt_sha256 131662aa... matches recomputed; verdict PASS"}
+  ],
+  "layer_5_3_checklist": {
+    "own": [
+      {"item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる", "result": "YES"}
+    ],
+    "common": [
+      {"item": "宣言した入力が全て検証済みである", "result": "YES"},
+      {"item": "出力が宣言した shape と authority を満たす", "result": "YES"},
+      {"item": "責務境界に反する read/write/delegation が0件である", "result": "YES"}
+    ]
+  },
+  "writes_by_verifier": ["eval-log/run-dev-graph-system-spec/R1-preflight/verification.json"],
+  "verdict": "PASS",
+  "blockers": []
+}

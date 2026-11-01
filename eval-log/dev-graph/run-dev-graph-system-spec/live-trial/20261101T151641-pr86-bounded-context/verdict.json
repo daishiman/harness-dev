@@ -1,0 +1,166 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2-delegate:25-26の必須build-evaluation-context.pyを実行せず、transcript.jsonl:210でC05へ手書き相対args (--spec-dir system-spec --output system-spec/completeness-report.json) を渡した。全終了streamの実tool_useでhelper呼出し0件。固定C24 receiptに評価対象/出力先を束縛する正規境界を迂回した。",
+      "B2: C19 R2-delegate:32が要求する委譲責務prompt全文読込の前に、transcript.jsonl:186でcompileを実行し:192/:194で10ファイル生成成功。先行するcompile R1-assemble/R2-render/R3-crosslinkおよびown resource-mapの取得0件。責務出力前必読は後読みで回復しない。",
+      "B3: C19 SKILL.md:101の正規elicit→必要時doc-fetch→compile→C05順序に対し、elicit Skill 0件のままcompileとC05へ進行。stateの自作診断は必須elicit resumeの代替にならず、scenario観測1のcanonical flowを満たさない。条件付きdoc-fetch未起動自体は違反としない。",
+      "B4: C19/compileのartifact_deliveryが要求する現物path・digest・開き方提示とstandard記録がないまま、transcript.jsonl:210でC05、同C05子stream:60でC07を実起動。事前回答standardは現物提示後の記録を省略する許可ではなく、pre-choice semantic-evaluator/subagent禁止を越えた。",
+      "B5: C05 R1-score:88のBash(python3 *)境界に反し、transcript/subagents/agent-a61cb090a383592b5.jsonl:32-35でfind system-spec ... | head -20を本人が実行し一覧を取得した。source自身の明示ツール境界の逸脱であり、runnerの追加一般監査要件を拡張した判定ではない。",
+      "ゴールシーク配線の実体検証に失敗: goal-spec-missing: run-dev-graph-system-spec-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | progress-missing: run-dev-graph-system-spec-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | intermediate-missing: run-dev-graph-system-spec-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "07d4383e4b7347f8cf36b5b7039143d4fd879924a0ec67c693662978bccf720c",
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2-delegate:25-26の必須build-evaluation-context.pyを実行せず、transcript.jsonl:210でC05へ手書き相対args (--spec-dir system-spec --output system-spec/completeness-report.json) を渡した。全終了streamの実tool_useでhelper呼出し0件。固定C24 receiptに評価対象/出力先を束縛する正規境界を迂回した。",
+      "B2: C19 R2-delegate:32が要求する委譲責務prompt全文読込の前に、transcript.jsonl:186でcompileを実行し:192/:194で10ファイル生成成功。先行するcompile R1-assemble/R2-render/R3-crosslinkおよびown resource-mapの取得0件。責務出力前必読は後読みで回復しない。",
+      "B3: C19 SKILL.md:101の正規elicit→必要時doc-fetch→compile→C05順序に対し、elicit Skill 0件のままcompileとC05へ進行。stateの自作診断は必須elicit resumeの代替にならず、scenario観測1のcanonical flowを満たさない。条件付きdoc-fetch未起動自体は違反としない。",
+      "B4: C19/compileのartifact_deliveryが要求する現物path・digest・開き方提示とstandard記録がないまま、transcript.jsonl:210でC05、同C05子stream:60でC07を実起動。事前回答standardは現物提示後の記録を省略する許可ではなく、pre-choice semantic-evaluator/subagent禁止を越えた。",
+      "B5: C05 R1-score:88のBash(python3 *)境界に反し、transcript/subagents/agent-a61cb090a383592b5.jsonl:32-35でfind system-spec ... | head -20を本人が実行し一覧を取得した。source自身の明示ツール境界の逸脱であり、runnerの追加一般監査要件を拡張した判定ではない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec121_fresh"
+    },
+    "transcript_sha256": "5211d30e6631aeec7b8061125830514a540d300e2a998c7e2a24fe68e2eaebfd",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-a61cb090a383592b5.jsonl",
+      "tool-observer/main-toolu_01M3uUPBf6SREBtiJyDgG9mR.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "task.md",
+      "project-instructions.md",
+      "evidence-redaction.json",
+      "closure-at-launch.txt"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile"
+  ],
+  "missing_goal_seek_artifacts": [
+    "goal-spec.json",
+    "progress.json",
+    "intermediate.jsonl"
+  ],
+  "goal_seek_evidence_violations": [
+    "goal-spec-missing: run-dev-graph-system-spec-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "progress-missing: run-dev-graph-system-spec-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "intermediate-missing: run-dev-graph-system-spec-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+  ],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "5211d30e6631aeec7b8061125830514a540d300e2a998c7e2a24fe68e2eaebfd",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "ABORTED",
+    "wall_clock_s": 331.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "transcript.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 331.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "4d58e06b0677f1658601b6da040c65de12e787aaae0365995458063a2ed2ea0b",
+      "tokens": {
+        "input_tokens": 264,
+        "cache_creation_input_tokens": 363278,
+        "cache_read_input_tokens": 2222777,
+        "output_tokens": 31243,
+        "total_tokens": 2617562,
+        "assistant_messages": 41,
+        "assistant_message_ids": 41,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 5,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

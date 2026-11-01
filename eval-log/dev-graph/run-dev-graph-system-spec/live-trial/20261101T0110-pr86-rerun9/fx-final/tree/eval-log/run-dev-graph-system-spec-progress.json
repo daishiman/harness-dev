@@ -1,0 +1,25 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+  "loop": 2,
+  "overall": "complete",
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "c24-receipt.json repo_root==content_roots.repository realpath; R0 verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/loop-1.json)"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "harness 0.1.24 in >=0.1.22 <1.0.0; 4 entry points present; R1 verifier PASS (R1-preflight/loop-1.json)"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "Skill elicit(--resume, no writer op), doc-fetch(not required), compile(exit0, 10 files), evaluator(fork, report verdict PASS sha f32ddd1b...); R2 verifier PASS (R2-delegate/loop-1.json)"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "loop1 and loop2 gates: coverage exit0, citation exit0, graph schema exit0; evaluator report verdict PASS, gaps []"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "C02 receipt .dev-graph/state/receipts/node-r000001-add.json (rev 0->1, sha d6c1c2e6...); nodes spec-billing-audit-system-spec / arch-billing-audit-system-architecture with full lineage+imported_at, confirmed, confirmation_evidence evaluated_digest==source_digest, readiness complete; validate-source-lineage --node-id x2 exit0; integrity auditor PASS (graph_digest sha256:f8b5bf93...); R3 verifier PASS (R3-import/loop-2.json)"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R2 verifier + loop-2 scan: no compile/render/interview logic in plugins/dev-graph; features/ empty (R3 verifier)"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loops": [
+      {"loop": 1, "status": "PASS", "coverage_exit": 0, "source_citation_exit": 0, "graph_schema_exit": 0, "graph_revision": 0},
+      {"loop": 2, "status": "PASS", "coverage_exit": 0, "source_citation_exit": 0, "graph_schema_exit": 0, "graph_revision": 1}
+    ]},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial after this run"}
+  ],
+  "c02": {"progress": "eval-log/run-dev-graph-node-progress.json", "overall": "PASS", "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:f8b5bf931082720e2c204d644fecb2d7ff232bf6c459b08e5ad324ac8a6437db"}},
+  "import_report": "eval-log/run-dev-graph-system-spec/R3-import/import-report.json",
+  "blockers": []
+}

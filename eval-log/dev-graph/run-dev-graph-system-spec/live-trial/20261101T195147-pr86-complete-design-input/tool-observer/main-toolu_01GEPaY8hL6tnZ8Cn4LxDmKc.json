@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bc657e98-84c8-4224-b58e-fdc74e177fc8",
+      "line": 320,
+      "prefix_bytes": 2152185,
+      "prefix_sha256": "886e4cce1437219a895ed4e55da585b1c1ce60cee9a8a0503a3e858b231d4e50",
+      "timestamp": "2026-11-01T10:56:41.942Z"
+    },
+    "result": {
+      "uuid": "c921863d-41de-4c10-ba46-c83fb7d846fe",
+      "line": 321,
+      "prefix_bytes": 2153716,
+      "prefix_sha256": "b0ddd9010a69e28e27166c66c3a19b204ca5181121c917a575002a518e67fe0e",
+      "timestamp": "2026-11-01T10:56:45.791Z"
+    }
+  },
+  "tool_use_id": "toolu_01GEPaY8hL6tnZ8Cn4LxDmKc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && shasum -a 256 system-spec/spec-state.json && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --require-complete --require-basis --require-foundation; echo \"coverage_exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" | python3 -c 'import json,sys; d=json.load(sys.stdin); c=d.get(\"coverage_certificate\",{}); print(\"status\",d.get(\"status\"),\"ungrounded\",c.get(\"ungrounded_blocking_items\"),\"blocking_n\",len(c.get(\"blocking_items\",[])))'; echo \"reqinfo_exit=${PIPESTATUS[0]}\"",
+    "description": "Digest spec-state and run elicit gates"
+  },
+  "is_error": false,
+  "tool_result_content": "f6b2fed7d76b05bd609fcba75b44f936e7dd1f8998f05f47043d72fa4a05d4aa  system-spec/spec-state.json\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage_exit=0\nstatus ok ungrounded [] blocking_n 6\nreqinfo_exit=",
+  "tool_use_result": {
+    "stdout": "f6b2fed7d76b05bd609fcba75b44f936e7dd1f8998f05f47043d72fa4a05d4aa  system-spec/spec-state.json\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage_exit=0\nstatus ok ungrounded [] blocking_n 6\nreqinfo_exit=",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

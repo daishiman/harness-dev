@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-a50673d9c43d63f54",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "62a11886-3a68-41db-ba0c-4bec61e0c912",
+      "line": 29,
+      "prefix_bytes": 205155,
+      "prefix_sha256": "03dc0176818e6baa583c0d7d5eaa76240be7c3279cbe1fa59d02ede942a24c8d",
+      "timestamp": "2026-11-01T07:44:58.100Z"
+    },
+    "result": {
+      "uuid": "e0cdbb9a-f45a-4878-9f3f-8f0ba6773b83",
+      "line": 30,
+      "prefix_bytes": 206780,
+      "prefix_sha256": "3a4d98e57eae16b3c7f219a145836a455a3080bbe48f9c069ea53822f41ba29d",
+      "timestamp": "2026-11-01T07:45:00.618Z"
+    }
+  },
+  "tool_use_id": "toolu_01BUqttSzG5bkhiaCuVjgzBr",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx && cd -- \"$CLAUDE_PROJECT_DIR\" && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\"; echo exit=$?; ls -ld system-spec; python3 -I -c \"\nimport os;r='$CLAUDE_PROJECT_DIR';p=os.path.join(r,'system-spec');print(os.path.realpath(p),os.path.islink(p),os.path.realpath(p).startswith(os.path.realpath(r)+'/'))\nimport subprocess\nprint(subprocess.run(['find','system-spec','-type','l'],capture_output=True,text=True).stdout or 'no symlinks')\"; git rev-parse --git-common-dir --show-toplevel"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\ndrwxr-xr-x@ 15 dm  wheel  480 11月  1 04:33 system-spec\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/system-spec False True\nno symlinks\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\ndrwxr-xr-x@ 15 dm  wheel  480 11月  1 04:33 system-spec\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/system-spec False True\nno symlinks\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

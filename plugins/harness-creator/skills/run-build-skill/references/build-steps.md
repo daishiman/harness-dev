@@ -368,15 +368,21 @@ python3 "$SKILL_DIR/scripts/build-subagent.py" \
   --skill-md "$OUT_BASE/$SKILL_NAME/SKILL.md" \
   --output-dir ".claude/agents/" \
   --model "${MODEL:-opus}"
+  # 任意: --isolation fork|worktree|inherit (省略時 assign-* は fork / 他は inherit)
+  # 任意: --tools-inherit (tools を省いて全ツール継承。advisor とは組み合わせられず exit 2)
 ```
 
-生成される `.claude/agents/<skill-name>-subagent.md` の frontmatter:
+生成される `.claude/agents/<skill-name>-subagent.md` の frontmatter (CapabilityManifest `kindAgent` 準拠。tools 宣言の規則は `agent-template.md`「tools 宣言」):
 ```yaml
 ---
 name: <skill-name>-subagent
 description: <SKILL.md の description から自動生成>
-tools: <allowed-tools から自動抽出>
+kind: agent
+version: <SKILL.md の version。無ければ省略し lint が欠落を報告>
+owner: <SKILL.md の owner。無ければ省略し lint が欠落を報告>
+tools: <allowed-tools からカンマ区切りで自動抽出。無ければ Read>  # --tools-inherit 指定時だけ tools を省き tools-inherit: true
 model: opus  # PF-F3-001: デフォルト opus
+isolation: <--isolation。省略時 assign-* は fork / 他は inherit>
 ---
 ```
 

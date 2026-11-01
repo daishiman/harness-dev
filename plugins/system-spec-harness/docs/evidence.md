@@ -8,7 +8,7 @@
 | # | 要素 | 再現入力 (fixture) | 再現コマンド | 期待 |
 |---|---|---|---|---|
 | 1 | ヒアリング resume (5周保存→resume) | `plugins/system-spec-harness/skills/run-system-spec-elicit/fixtures/hearing-turns.json` (9 turn=6周超), `expected-resume-spec-state.json` | `python3 -m pytest -q plugins/system-spec-harness/skills/run-system-spec-elicit/tests` | 5周目に `hearing_progress.complete=false`・`next_question` 非null で保存 |
-| 2 | 公式文書鮮度 | `plugins/system-spec-harness/skills/run-system-spec-doc-fetch/tests/fixture-references-host-mismatch.json` / `-missing.json` | `python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets <t> --references <r>` | 正例 exit0 / 非公式host・欠落 exit1 |
+| 2 | 公式文書鮮度・取得証跡 | `plugins/system-spec-harness/skills/run-system-spec-doc-fetch/tests/fixture-references-host-mismatch.json` / `-missing.json` / `evidence/` | `python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets <t> --references <r> --repo-root <fixture-root>` | 正例 exit0 / 非公式host・欠落・future時刻・証跡digest不一致 exit1 |
 | 3 | C02→C03→C05 自動連鎖 | `plugins/system-spec-harness/commands/spec-compile.md` | `/spec-compile` | 出典準備→compile→評価が自動連鎖 |
 | 4 | Write/Edit 負例 (確定章上書き遮断) | `plugins/system-spec-harness/tests/test_guard_hook.py` (確定章 Write/Edit fixture) | `python3 -m pytest -q plugins/system-spec-harness/tests/test_guard_hook.py` | 確定章 Write/Edit → exit2 / 非対象・reopen → exit0 |
 | 5 | Bash 書換負例 (spec-state 動的書換遮断) | `tests/test_guard_hook.py` (sed -i/リダイレクト fixture) | 同上 | spec-state.json への `sed -i`/リダイレクト → exit2 / read-only → exit0 |

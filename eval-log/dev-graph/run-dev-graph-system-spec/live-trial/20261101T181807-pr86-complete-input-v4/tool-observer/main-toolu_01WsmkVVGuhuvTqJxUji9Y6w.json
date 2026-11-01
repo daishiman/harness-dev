@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f970fb19-9447-4b77-a851-7604c93b284d",
+      "line": 677,
+      "prefix_bytes": 4191435,
+      "prefix_sha256": "47c86e185e4f9315aac57d1f9adc5e116edf3316f34fd1841c798f97583b243b",
+      "timestamp": "2026-11-01T09:41:48.971Z"
+    },
+    "result": {
+      "uuid": "e78d88d6-4017-45f9-bdb4-ec68eb377f88",
+      "line": 680,
+      "prefix_bytes": 4195736,
+      "prefix_sha256": "711aaab736e5fb43217c37e06b342cddd07dec80f87729dcb2818bf1617a6eaa",
+      "timestamp": "2026-11-01T09:41:52.641Z"
+    }
+  },
+  "tool_use_id": "toolu_01WsmkVVGuhuvTqJxUji9Y6w",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/c19-import-input.json > \"$TMPDIR/c02-apply.json\"; echo exit=$?; python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print({k:d.get(k) for k in (\"status\",\"applied_count\",\"write_count\",\"graph_revision_before\",\"graph_revision_after\",\"graph_digest_after\",\"receipt_path\",\"node_ids\")})' \"$TMPDIR/c02-apply.json\"; shasum -a 256 .dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n{'status': 'applied', 'applied_count': 2, 'write_count': 4, 'graph_revision_before': 0, 'graph_revision_after': 1, 'graph_digest_after': 'sha256:32e91fed8af406369da1be62d7ce115eed09e0ad7c18bc1120f6ab73974ed157', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture']}\n1cf72513dc015c36ab95c5398e5249e5fc16157b46755813084232cfd2fdbfa8  .dev-graph/state/receipts/node-r000001-add.json",
+  "tool_use_result": {
+    "stdout": "exit=0\n{'status': 'applied', 'applied_count': 2, 'write_count': 4, 'graph_revision_before': 0, 'graph_revision_after': 1, 'graph_digest_after': 'sha256:32e91fed8af406369da1be62d7ce115eed09e0ad7c18bc1120f6ab73974ed157', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture']}\n1cf72513dc015c36ab95c5398e5249e5fc16157b46755813084232cfd2fdbfa8  .dev-graph/state/receipts/node-r000001-add.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

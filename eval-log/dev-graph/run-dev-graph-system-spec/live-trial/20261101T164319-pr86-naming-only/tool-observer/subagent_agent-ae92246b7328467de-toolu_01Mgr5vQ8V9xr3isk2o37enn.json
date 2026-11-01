@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ae92246b7328467de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8ef13a76-1a94-4274-be83-638115b27e4f",
+      "line": 40,
+      "prefix_bytes": 261767,
+      "prefix_sha256": "2630db0b5480d174b3b1aa3dcec16eabebab1f9b53bfb47341bca7d1585a4a25",
+      "timestamp": "2026-11-01T07:46:33.655Z"
+    },
+    "result": {
+      "uuid": "73a4e806-07d5-41e0-9fa0-8607406ad5b8",
+      "line": 41,
+      "prefix_bytes": 263112,
+      "prefix_sha256": "2540ee1ceca058365722a000c01b3b3e898a60eed90d94f9727657cebc497185",
+      "timestamp": "2026-11-01T07:46:33.660Z"
+    }
+  },
+  "tool_use_id": "toolu_01Mgr5vQ8V9xr3isk2o37enn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "sleep 60; cat eval-log/system-spec-harness/audit-fork-ledger.jsonl | cut -c1-600"
+  },
+  "is_error": true,
+  "tool_result_content": "<tool_use_error>Blocked: sleep 60 followed by: cat eval-log/system-spec-harness/audit-fork-ledger.jsonl cut -c1-600. To wait for a condition, use Monitor with an until-loop (e.g. `until <check>; do sleep 2; done`). To wait for a command you started, use run_in_background: true. Do not chain shorter sleeps to work around this block.</tool_use_error>",
+  "tool_use_result": "Error: Blocked: sleep 60 followed by: cat eval-log/system-spec-harness/audit-fork-ledger.jsonl cut -c1-600. To wait for a condition, use Monitor with an until-loop (e.g. `until <check>; do sleep 2; done`). To wait for a command you started, use run_in_background: true. Do not chain shorter sleeps to work around this block."
+}

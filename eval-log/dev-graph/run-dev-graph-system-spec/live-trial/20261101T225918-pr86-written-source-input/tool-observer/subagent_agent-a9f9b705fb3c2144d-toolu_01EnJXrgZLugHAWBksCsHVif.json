@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "807b46bf-3894-4240-ad9a-6b4624bd99f5",
+      "line": 165,
+      "prefix_bytes": 1882252,
+      "prefix_sha256": "0c9b0425d54fe50d21ff325c366eb89084798fee86c8541d65689799bb03a175",
+      "timestamp": "2026-11-01T14:15:09.719Z"
+    },
+    "result": {
+      "uuid": "3c97d856-3637-46b6-80b3-57e53d247021",
+      "line": 166,
+      "prefix_bytes": 1887609,
+      "prefix_sha256": "67c466c750373dcbf2f0ac9d7c6777943d4a62c8ed67dbea33edb54d8ec0b52e",
+      "timestamp": "2026-11-01T14:15:09.978Z"
+    }
+  },
+  "tool_use_id": "toolu_01EnJXrgZLugHAWBksCsHVif",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-code.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Clean Code — deep knowledge card\n2\t\n3\t> knowledge_id: `clean-code` / status: `seed-example`。特定著者の規則を絶対視せず、language/team/domainに合わせて可読性と変更安全性を実測する。\n4\t\n5\t## 目的\n6\t\n7\tcodeを、次の変更者が意図・制約・failureを短時間で理解し、安全に変更・検証できる作業媒体にする。\n8\t\n9\t## 背景\n10\t\n11\tcodeは実行物であると同時に、仕様、設計判断、team communicationの一部である。短期的に動く実装でも、曖昧な名前、隠れた副作用、巨大責務、重複知識が蓄積すると、変更時間と欠陥率が上がる。一方、行数や関数長の機械的な美学だけでは目的を保証しない。\n12\t\n13\t## 解決する問題\n14\t\n15\t- 名前と抽象度が意図を表さず、readerが実装詳細からbusiness ruleを逆算する。\n16\t- 一つの変更理由が複数moduleへ散り、副作用とerror pathを予測できない。\n17\t- 重複したruleが別々に更新され、仕様のSSOTが崩れる。\n18\t- testがimplementation detailへ結合し、refactoringを妨げる。\n19\t\n20\t## 中核概念\n21\t\n22\t- **Intention-revealing names**: domain語彙、単位、状態、side effectを名前で表し、曖昧な略語を避ける。\n23\t- **Cohesion and single reason to change**: 一緒に変わる知識をまとめ、別理由で変わる責務を分ける。\n24\t- **Explicit effects and errors**: I/O、mutation、time、randomness、failureをboundaryへ寄せ、結果型/例外契約を一貫させる。\n25\t- **Appropriate abstraction / DRY**: 見た目の重複でなく同じknowledgeを統合し、偶然似たcodeを早期抽象化しない。\n26\t- **Executable examples**: behaviorとinvariantをtestで表し、内部構造でなくobservable outcomeを守る。\n27\t- **Continuous refactoring**: 小さい安全な変更とfeedbackで設計を保ち、cleanupを大規模後工程へ送らない。\n28\t\n29\t## 適用条件\n30\t\n31\t- 複数人・長期保守・高変更頻度・重要ruleがあり、理解と変更の費用が支配的。\n32\t- test/lint/review/observabilityで改善効果をfeedbackできる。\n33\t- domain languageとcoding conventionをteamで合意・更新できる。\n34\t\n35\t## 非適用条件\n36\t\n37\t- throwaway explorationでは全規則を先行適用せず、学習後に残すcodeだけを整理する。\n38\t- generated/vendor codeへ手動styleを強制しない。generation inputとboundaryを管理する。\n39\t- 短い関数、class化、DRY等を絶対値として扱い、局所的な明瞭さを悪化させる場合は適用しない。\n40\t\n41\t## トレードオフ・失敗モード\n42\t\n43\t- naming/refactoring/testへ時間を使うため、寿命とriskが低いcodeでは投資超過になり得る。\n44\t- micro-function化でcontrol flowが多数fileへ散り、かえって読みにくくなる。\n45\t- DRYを急ぎ、異なるdomain conceptを一つの抽象へ結合して変更を難しくする。\n46\t- commentを全否定して、理由、trade-off、外部制約、security decisionまで消す。\n47\t- coverageやlint scoreを目的化し、重要behaviorの未検証を隠す。\n48\t\n49\t## 目的達成への寄与\n50\t\n51\t- goalに関わるbusiness ruleを名前とtestで明示し、仕様→code→evidenceのtraceを短くする。\n52\t- maintenance objectiveには変更lead time、review指摘、escaped defect、rollback率などのoutcomeを使う。\n53\t- 無料toolの導入自体を成功とせず、teamが継続運用でき、重要riskを減らすかで判断する。\n54\t\n55\t## ヒアリング・判断観点\n56\t\n57\t- 最も変更が多く誤解が高価なruleは何か。誰が読むか。\n58\t- teamが自動検査できる規則と、reviewで意味判断すべき規則は何か。\n59\t- 重複は同じknowledgeか、たまたま同じ形か。抽象を撤退する条件は何か。\n60\t\n61\t## 一次資料\n62\t\n63\t- Robert C. Martin, *Clean Code* (2008), Prentice Hall。\n64\t- Martin Fowler, *Refactoring, Second Edition* (2018), Addison-Wesley, https://martinfowler.com/books/refactoring.html\n65\t- Kent Beck, *Tidy First?* (2023), O’Reilly。\n66\t\n67\t## 鮮度\n68\t\n69\t- class: `foundational-stable`\n70\t- last_checked: `2026-07-11`; review_by: `2027-07-11`\n71\t- trigger: language/tooling変更、teamの変更lead time/defect実測悪化、規則がaccessibility/performance/securityを阻害する場合。\n72\t\n73\t",
+  "tool_use_result": null
+}

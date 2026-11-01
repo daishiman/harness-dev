@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "variants"
+  ],
+  "properties": {
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "paper",
+          "tone",
+          "expression",
+          "name",
+          "signature",
+          "backgroundPrompt",
+          "designIntent"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "paper": {
+            "enum": [
+              "white",
+              "color"
+            ]
+          },
+          "tone": {
+            "enum": [
+              "light",
+              "dark",
+              "color"
+            ]
+          },
+          "expression": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "backgroundPrompt": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "object",
+            "minProperties": 6,
+            "maxProperties": 6,
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            },
+            "$comment": "Exact key set comes from references/design-contract.json and is enforced by design.cjs."
+          },
+          "designIntent": {
+            "$ref": "design-intent.schema.json"
+          }
+        }
+      }
+    }
+  }
+}

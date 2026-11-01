@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-aa638e88f829bb113",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "76d7f5f8-b30e-438f-803b-f1ba43e34b4e",
+      "line": 81,
+      "prefix_bytes": 518933,
+      "prefix_sha256": "d653f659815fbebeca052f2bfea5ad0261d7a9629e7872a1e41619ef6fd5cb69",
+      "timestamp": "2026-11-01T03:39:40.995Z"
+    },
+    "result": {
+      "uuid": "ed5d66c3-3e80-4539-8a62-bb15ec14304e",
+      "line": 82,
+      "prefix_bytes": 521125,
+      "prefix_sha256": "e070a00e7770e2cafeaf9148e599edf284e80286be745fa01a178c3fad73f0fb",
+      "timestamp": "2026-11-01T03:39:43.232Z"
+    }
+  },
+  "tool_use_id": "toolu_01KfLPeEKzF7D1ChxPN3Fwt4",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c \"\nimport json,hashlib,glob\nseed=json.load(open('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/workdir/fixture-provenance.json'))['seed_sha256']\nfor p in sorted(glob.glob('system-spec/**',recursive=True)):\n  try: h=hashlib.sha256(open(p,'rb').read()).hexdigest()\n  except IsADirectoryError: continue\n  print(p, 'seed' if seed.get(p)==h else ('NOT_IN_SEED' if p not in seed else 'CHANGED'))\n\"; git status --porcelain -- plugins | head; git diff --stat HEAD -- plugins | tail -2; find plugins/dev-graph -name 'compile-spec-doc*' -o -name 'apply-spec-transition*' -o -name 'validate-coverage-matrix*' -o -name 'validate-source-citation*' -o -name 'aggregate-completeness*' -o -name 'elicit*' | head; grep -rlE 'def (compile|render_chapter|apply_transition)|spec-state-contract' plugins/dev-graph --include=*.py | head"
+  },
+  "is_error": false,
+  "tool_result_content": "system-spec/00-requirements-definition.md seed\nsystem-spec/auth.md seed\nsystem-spec/backend.md seed\nsystem-spec/database.md seed\nsystem-spec/fetched-references.json seed\nsystem-spec/frontend.md seed\nsystem-spec/index.md seed\nsystem-spec/infrastructure.md seed\nsystem-spec/maintenance-ops.md seed\nsystem-spec/retrieval-evidence/fastapi.json seed\nsystem-spec/retrieval-evidence/postgres.json seed\nsystem-spec/retrieval-evidence/react.json seed\nsystem-spec/retrieval-evidence/typescript.json seed\nsystem-spec/security.md seed\nsystem-spec/spec-state.json seed\nsystem-spec/ui-ux.md seed\n(eval):8: no matches found: --include=*.py",
+  "tool_use_result": {
+    "stdout": "system-spec/00-requirements-definition.md seed\nsystem-spec/auth.md seed\nsystem-spec/backend.md seed\nsystem-spec/database.md seed\nsystem-spec/fetched-references.json seed\nsystem-spec/frontend.md seed\nsystem-spec/index.md seed\nsystem-spec/infrastructure.md seed\nsystem-spec/maintenance-ops.md seed\nsystem-spec/retrieval-evidence/fastapi.json seed\nsystem-spec/retrieval-evidence/postgres.json seed\nsystem-spec/retrieval-evidence/react.json seed\nsystem-spec/retrieval-evidence/typescript.json seed\nsystem-spec/security.md seed\nsystem-spec/spec-state.json seed\nsystem-spec/ui-ux.md seed\n(eval):8: no matches found: --include=*.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

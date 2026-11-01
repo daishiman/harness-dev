@@ -1,0 +1,45 @@
+{
+  "skill": "run-dev-graph-render",
+  "contract": "artifact-delivery-v1",
+  "events": [
+    {
+      "state": "artifact_created",
+      "artifact": ".dev-graph/render/index.html",
+      "output_sha256": "c4bf5ed6a687d824cfd30f3ffb5c87f530d05ac645370b836c78bc180d7eb838",
+      "at": "2026-10-31T13:56:37.054528+00:00"
+    },
+    {
+      "event": "minimum_guard_pass",
+      "guards": {
+        "parse_open": "exit0 receipt ok",
+        "external_refs": 0,
+        "secret": "none",
+        "irreversible": "none (graph read-only)",
+        "corrupt": "none"
+      },
+      "to": "minimal_guard_passed"
+    },
+    {
+      "event": "present_actual_artifact",
+      "path": ".dev-graph/render/index.html",
+      "sha256": "c4bf5ed6a687d824cfd30f3ffb5c87f530d05ac645370b836c78bc180d7eb838",
+      "open_with": "open in browser as file:// (single self-contained HTML)",
+      "to": "artifact_presented"
+    },
+    {
+      "event": "record_user_choice",
+      "choice": "standard",
+      "source": "isolated fixture pre-answer contract in task.md (not approval for repo/external accounts)",
+      "to": "user_choice_recorded"
+    },
+    {
+      "event": "standard",
+      "to": "semantic_evaluator_started",
+      "at": "2026-10-31T13:56:37.054528+00:00"
+    },
+    {
+      "event": "improvement_complete",
+      "to": "handoff_complete"
+    }
+  ]
+}

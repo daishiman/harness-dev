@@ -1,0 +1,330 @@
+{
+  "type": "object",
+  "required": [
+    "version",
+    "producer",
+    "purpose",
+    "constraints",
+    "policyFingerprint",
+    "contextFingerprint",
+    "sources",
+    "requirements",
+    "variants"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "purpose": {
+      "type": "object",
+      "required": [
+        "audience",
+        "benefit",
+        "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "benefit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "contextFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "file",
+          "sha256"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "kind": {
+            "enum": [
+              "required",
+              "proposal"
+            ]
+          },
+          "variantIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceId",
+          "observations",
+          "preservedStrengths",
+          "decisions",
+          "nextActions"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "observations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "region",
+                "observation",
+                "refIds"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "region": {
+                  "type": "object",
+                  "required": [
+                    "x",
+                    "y",
+                    "w",
+                    "h"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "w": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "h": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "observation": {
+                  "type": "string",
+                  "minLength": 12,
+                  "pattern": "\\S"
+                },
+                "refIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^DD[0-9]{2}$"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "preservedStrengths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "requirementId",
+                "candidate",
+                "decision",
+                "reason",
+                "targets",
+                "refIds"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "requirementId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "candidate": {
+                  "type": "string",
+                  "minLength": 12,
+                  "pattern": "\\S"
+                },
+                "decision": {
+                  "enum": [
+                    "adopt",
+                    "maintain",
+                    "decline",
+                    "pending"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 12,
+                  "pattern": "\\S"
+                },
+                "targets": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  }
+                },
+                "refIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^DD[0-9]{2}$"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "nextActions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 12,
+              "pattern": "\\S"
+            }
+          }
+        }
+      }
+    },
+    "executionPlan": {
+      "type": "object",
+      "required": [
+        "pilotVariantIds",
+        "reason",
+        "propagation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pilotVariantIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 12,
+          "pattern": "\\S"
+        },
+        "propagation": {
+          "type": "string",
+          "minLength": 12,
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

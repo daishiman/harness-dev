@@ -1,0 +1,159 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-node",
+  "args": "add --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/node87/fx --input /private/tmp/claude-501/pr86-ci-live/lt/runs/node87/fx/mixed-artifacts.json",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "fa2400e7437f28f33d7bc56f73d30d5bd5a17969a8239b2f87f4586c1259ea01",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/evaluate_init_decompose"
+    },
+    "transcript_sha256": "dab3cf068916954f666dbbe3bb8951763f0715e470879139fef6155a04639360",
+    "evidence_refs": [
+      "transcript.jsonl#L61",
+      "transcript.jsonl#L71",
+      "transcript.jsonl#L79",
+      "transcript.jsonl#L103",
+      "transcript.jsonl#L125",
+      "transcript.jsonl#L151",
+      "transcript.jsonl#L167",
+      "transcript.jsonl#L237",
+      "transcript.jsonl#L295",
+      "transcript.jsonl#L331",
+      "transcript.jsonl#L351",
+      "transcript.jsonl#L368",
+      "transcript/subagents/agent-a6001d9528c3edd1e.jsonl#L29",
+      "transcript/subagents/agent-aedccad0b3d2d8eed.jsonl#L42",
+      "transcript/subagents/agent-ab23d3b5c9f6d1142.jsonl#L44",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000002-update.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-eval-log/feature-apply-output.json",
+      "fx-eval-log/run-dev-graph-node-goal-spec.json",
+      "fx-eval-log/run-dev-graph-node-intermediate.jsonl",
+      "fx-eval-log/runs/run1-add-progress.json",
+      "fx-eval-log/runs/run2-update-progress.json",
+      "fx-eval-log/runs/run3-feature-reject-progress.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "881da267bb1ce15a7ed66e9e0d4a427201cca53cd582914c158ebdd1aa415f1f",
+  "transcript_sha256": "dab3cf068916954f666dbbe3bb8951763f0715e470879139fef6155a04639360",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 419.0
+  },
+  "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+    "required_observations": [
+      "all five artifacts are routed to canonical kind paths",
+      "frontmatter kind and stored path agree after a consecutive update",
+      "no feature is created outside the C14 macro-feature contract"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "all five artifacts are routed to canonical kind paths",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+      },
+      {
+        "index": 2,
+        "observation": "frontmatter kind and stored path agree after a consecutive update",
+        "evidence_ref": "transcript/subagents/agent-aedccad0b3d2d8eed.jsonl#L42"
+      },
+      {
+        "index": 3,
+        "observation": "no feature is created outside the C14 macro-feature contract",
+        "evidence_ref": "fx-eval-log/feature-apply-output.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "template_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 419.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "fec1f46d6ae3bb3c2cb7e8d2290c4aa60f4169fdd9bd27b2950418b99b3e4fc3",
+      "tokens": {
+        "input_tokens": 140,
+        "cache_creation_input_tokens": 203969,
+        "cache_read_input_tokens": 4267408,
+        "output_tokens": 32069,
+        "total_tokens": 4503586,
+        "assistant_messages": 63,
+        "assistant_message_ids": 63,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 4,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

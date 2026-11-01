@@ -2,7 +2,7 @@
 # /// script
 # name: build-fetched-references
 # version: 0.1.0
-# purpose: run-system-spec-doc-fetch R3 の記録形状を決定論的に組み立てる assembler。取得済みドキュメントの record を必須フィールド検証・source_url host と official_host の一致検証付きで正規化し、fetched-references.json (共有データ契約) を出力する。恒久キャッシュ/ミラーリング/ネットワークは行わず WebSearch/WebFetch の取得結果を渡し込む純関数群として動く。内容が現行最新版かの意味判定は C08 が、対象一覧との全件対応の最終突合は plugin-root の validate-source-citation.py が担う。
+# purpose: run-system-spec-doc-fetch R3 の記録形状を決定論的に組み立てる assembler。取得済みドキュメントの record を必須フィールド検証・source_url host と official_host の一致検証・retrieval evidence digest 形式検証付きで正規化し、fetched-references.json (共有データ契約) を出力する。恒久キャッシュ/ミラーリング/ネットワークは行わず WebSearch/WebFetch の取得結果を渡し込む純関数群として動く。内容が現行最新版かの意味判定は C08 が、対象一覧との全件対応と証跡実在の最終突合は plugin-root の validate-source-citation.py が担う。
 # inputs:
 #   - argv: assemble サブコマンドと --records FILE / --targets FILE / --out FILE
 # outputs:
@@ -30,6 +30,8 @@ record 素材 (入力) の期待形状:
    "version": "19.0",                      # version または last_updated のいずれか必須
    "last_updated": "2026-06-01",
    "latest_checked_at": "2026-07-11T00:00:00Z",
+   "evidence_ref": "system-spec/retrieval-evidence/react.json",
+   "evidence_sha256": "<小文字16進数64桁のSHA-256>",
    "summary": "..."}
 
 出力 (fetched-references.json):
@@ -39,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -50,8 +53,11 @@ REQUIRED_INPUT_FIELDS = (
     "official_publisher",
     "retrieved_at",
     "latest_checked_at",
+    "evidence_ref",
+    "evidence_sha256",
     "summary",
 )
+SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 # 正規化後の出力キー順 (契約の可読順)。存在するものだけ載せる。
 OUTPUT_FIELD_ORDER = (
     "target_id",
@@ -62,6 +68,8 @@ OUTPUT_FIELD_ORDER = (
     "version",
     "last_updated",
     "latest_checked_at",
+    "evidence_ref",
+    "evidence_sha256",
     "summary",
 )
 
@@ -104,6 +112,8 @@ def build_record(rec: dict) -> dict:
 
     if not (rec.get("version") or rec.get("last_updated")):
         raise RecordError(f"{tid}: version と last_updated の両方が空 (いずれか必須)")
+    if not SHA256_HEX.fullmatch(str(rec.get("evidence_sha256", ""))):
+        raise RecordError(f"{tid}: evidence_sha256 は小文字16進数64桁の SHA-256 必須")
 
     src = rec["source_url"]
     derived = host_of(src)
@@ -116,9 +126,88 @@ def build_record(rec: dict) -> dict:
             f"{tid}: source_url host={derived!r} が official_host={host!r} と不一致"
         )
 
+    drift = prose_version_drift(rec)
+    if drift:
+        raise RecordError(f"{tid}: {drift}")
+
     normalized = dict(rec)
     normalized["official_host"] = host
     return {k: normalized[k] for k in OUTPUT_FIELD_ORDER if normalized.get(k)}
+
+
+# summary の「現行版を述べている領域」の終端マーカー。これ以降は履歴・訂正・再照合の
+# 記録であり、過去の版番号がそのまま残っているのが正しいので版一致の検査対象外にする。
+HISTORY_MARKERS = ("[以下は履歴]", "[訂正", "鮮度再照合 (", "[C08 ", "[apps/")
+# x.y / x.y.z 形式。慣用の v 接頭辞 (v4.1.10) は版番号として拾う。
+# 前後が英数字・ハイフン・ドットのときは拾わない
+# (日時 2026-08-16T02:49:50Z や sha の断片を誤って版と読まないため)。
+SEMVER = re.compile(r"(?<![\w.-])v?(\d+\.\d+(?:\.\d+)?)(?![\w.-])")
+# R3-record.md が定める「現行の主張」記法に直結した版番号だけを拾う。
+# 任意の散文をまたぐ `.*` は使わず、依存要件の TypeScript 5.5 や Safari 16.4 を
+# target 自身の版と取り違えない。
+CURRENT_VERSION_CLAIM = re.compile(
+    r"(?:現行安定版|現行版|現行メジャー|現行ガイド表示|現行|最新パッチ)"
+    r"\s*(?:は|[:=])?\s*(?:\*\*)?v?(\d+\.\d+(?:\.\d+)?)(?:\*\*)?"
+)
+
+
+def current_version_region(summary: str) -> str:
+    """summary のうち、現行版を現在形で述べている先頭領域を返す。
+
+    履歴マーカーが 1 つも無い summary は全体が現行の主張なので全体を返す。
+    """
+    end = len(summary)
+    for marker in HISTORY_MARKERS:
+        pos = summary.find(marker)
+        if pos != -1:
+            end = min(end, pos)
+    return summary[:end]
+
+
+def prose_version_drift(rec: dict) -> str | None:
+    """summary 先頭が version フィールドと違う版を現行として主張していれば理由を返す。
+
+    決定論ゲート (C13) は version フィールドしか見ないため、散文だけが初回取得時の
+    旧版を現在形で主張し続けても永久に緑のままになる。実装判断者は散文を読むので、
+    そこだけが古いのは実害のある欠陥になる。本 run で nextjs / pnpm / wrangler /
+    playwright の 4 record に同型が見つかり、nextjs では同じ record で 2 度起きた。
+    原因は「先頭は前回のまま、新しい照合は末尾へ追記する」という更新運用そのもので、
+    個別の書き忘れではないため、運用ではなく検査で塞ぐ。
+
+    検出は先頭領域の「現行安定版は」等の現行主張に直結する版を優先する。
+    明示された現行主張は major が変わっても version と照合する。この記法が無い場合は、
+    従来どおり version と同じ major の版だけを候補にする。先頭領域には他製品の版
+    (依存要件の TypeScript 5.5、対応ブラウザの Safari 16.4 など) が正当に現れるため、
+    それらを無条件に横断比較しない。候補が 1 つも無い record は散文で自製品の版を
+    書いていないと判断して対象外。
+    version が semver でない record (日付運用) も対象外。
+
+    「両立」は dotted prefix で判定する。version=7.0.2 に対する散文の「現行メジャーは 7.0」
+    のような系列表記は取り残しではないため許容する。
+    """
+    version = str(rec.get("version") or "")
+    if not SEMVER.fullmatch(version):
+        return None
+    region = current_version_region(str(rec.get("summary") or ""))
+    major = version.split(".")[0]
+    claimed = CURRENT_VERSION_CLAIM.findall(region)
+    found = claimed or [f for f in SEMVER.findall(region) if f.split(".")[0] == major]
+    if not found:
+        return None
+    if any(_version_compatible(version, f) for f in found):
+        return None
+    return (
+        f"summary 先頭が現行として主張する版 {sorted(set(found))} が "
+        f"version={version} と食い違う "
+        "(現行版を先頭に置き、過去の照合は履歴として明示する書式にする)"
+    )
+
+
+def _version_compatible(a: str, b: str) -> bool:
+    """一方が他方の dotted prefix なら両立とみなす (7.0.2 と 7.0 は同一系列)。"""
+    pa, pb = a.split("."), b.split(".")
+    n = min(len(pa), len(pb))
+    return pa[:n] == pb[:n]
 
 
 def assemble(records: list) -> dict:

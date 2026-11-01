@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a1a9cbe3c4f75f752",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "89c0927a-5a23-4e53-b95f-9aeff9872904",
+      "line": 117,
+      "prefix_bytes": 1099297,
+      "prefix_sha256": "17f320ca1f66cf05af0f71303197ce9415f6588b0c1c2d3336c49e96688d65d3",
+      "timestamp": "2026-11-01T14:30:39.792Z"
+    },
+    "result": {
+      "uuid": "d86d68c9-815d-4c43-a6a6-66b446fcae27",
+      "line": 118,
+      "prefix_bytes": 1103118,
+      "prefix_sha256": "4f39d6aa1a21475cfe4310e3041a18348adf9803df6dd77e16547193e889db51",
+      "timestamp": "2026-11-01T14:30:41.877Z"
+    }
+  },
+  "tool_use_id": "toolu_01Ae1c3Wjf9TmipbXE9JGQ2D",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "FX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx; stat -f '%Sm %N' -t '%Y-%m-%dT%H:%M:%S%z' $FX/eval-log/*.json; python3 -c \"\nimport json\nd=json.load(open('$FX/system-spec/fetched-references.json'))\nfor r in d['references']: print(r['target_id'],r.get('version'),r.get('last_updated'),r['retrieved_at'],r['latest_checked_at'],r['source_url'])\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "2026-11-01T23:07:46+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/compile-standard.json\n2026-11-01T23:20:17+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/hearing-audit.json\n2026-11-01T23:01:28+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-goal-spec.json\n2026-11-01T23:05:09+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-progress.json\n2026-11-01T23:01:52+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-standard.json\n2026-11-01T23:06:49+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-system-spec-elicit-standard.json\n2026-11-01T23:26:27+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/system-spec-completeness-report.json\npostgres 16.15 None 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 None 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 None 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 None 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\nkubernetes None 2026-05-13T21:32:47+01:00 2026-11-01T09:14:52.437427Z 2026-11-01T09:14:52.437427Z https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+  "tool_use_result": {
+    "stdout": "2026-11-01T23:07:46+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/compile-standard.json\n2026-11-01T23:20:17+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/hearing-audit.json\n2026-11-01T23:01:28+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-goal-spec.json\n2026-11-01T23:05:09+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-progress.json\n2026-11-01T23:01:52+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-standard.json\n2026-11-01T23:06:49+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-system-spec-elicit-standard.json\n2026-11-01T23:26:27+0900 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/system-spec-completeness-report.json\npostgres 16.15 None 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 None 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 None 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 None 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\nkubernetes None 2026-05-13T21:32:47+01:00 2026-11-01T09:14:52.437427Z 2026-11-01T09:14:52.437427Z https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

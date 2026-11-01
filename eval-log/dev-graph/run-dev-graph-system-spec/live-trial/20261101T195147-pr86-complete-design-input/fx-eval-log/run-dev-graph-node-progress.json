@@ -1,0 +1,23 @@
+{
+  "skill": "run-dev-graph-node",
+  "original_goal_hash": "eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "round": 1,
+  "overall": "PASS",
+  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47"},
+  "writer_receipts": [],
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "C24 receipt eval-log/run-dev-graph-node/c24-receipt.json (sha256 8bf107d8…6205, --mode write exit0, repo_root==realpath(content_roots.repository), repository_id local:sha256:37ba4cb1…5ec7c)。書込先 specs/・architecture/・.dev-graph/state/ は root 内。C02 責務検証 Agent R0 PASS"},
+    {"id": "classification", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: spec 0.95 margin 0.65 / arch 0.92 margin 0.57、ともに閾値 (>=0.80, >=0.15) で decision=auto。C02 責務検証 Agent R1 PASS"},
+    {"id": "schema", "status": "achieved", "evidence": "receipt pre_write_validation findings 0、commit 後 validate-graph-schema.py --strict-artifact-readiness exit0 (violations 0, readiness complete 2)、integrity auditor schema PASS、C02 責務検証 Agent R4 PASS (template_id/version/subtypes 5件)"},
+    {"id": "package", "status": "not_applicable", "evidence": "起動 verb は add のみ (register-package なし)。integrity auditor が feature/package node 0・feature_package_id 全 null を確認"},
+    {"id": "receipt", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json (sha256 334a406a…6fdb7, 唯一の pre-choice commit) の graph_revision_after=1・graph_digest_after=sha256:a5b8ebd0…9e47 が graph_baseline と一致、node_ids 2件が現 graph と一致。post-choice の writer commit は 0 件"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "round1: build-graph-node 書込み前検証 findings 0 (validate-graph-schema.py)、commit 後 --strict-artifact-readiness exit0 必須キー欠落 0、validate-source-lineage.py exit0 (checked 2)", "rounds": [{"round": 1, "status": "PASS"}]},
+    {"id": "OUT1", "status": "external_pending", "evidence": "live trial / 受入テストが判定"},
+    {"id": "OUT2", "status": "external_pending", "evidence": "live trial / 受入テストが判定"},
+    {"id": "OUT3", "status": "external_pending", "evidence": "live trial / 受入テストが判定"}
+  ],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47"},
+  "responsibility_verification": {"agent": "general-purpose (C02 R0-R4 independent)", "verdict": "PASS"}
+}

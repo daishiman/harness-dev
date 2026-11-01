@@ -1,0 +1,26 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先 (Pod メモリ / PostgreSQL / 新規基盤) の選択と、有効期限・ログアウト時の扱いという独立した 2 論点を 1 問に束ねている。ただし『どれも採らない、別の方式と比べる、決めずに保留する』は示されており、推奨の印や片側の不利な点は無い。qa-038 は auth×Web の補助 qa_refs にあるだけで、主たる qa_ref (qa-002) ではない。そのため aspect-criteria.md の対応表では PASS に残す注記。修正案 (C01 の責務): 2 論点を別々の問で問い直し、supersede-qa で置き換える。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出 (置き換え先: qa-019)。旧 qa-009 は JTBD・対象ユーザー・利用文脈の 3 論点を束ねていた (N4)。(a) qa-019 は 1 論点の開いた問で N1-N4 に違反せず、qa-019 自体に medium 以上の検出は無い。(b) 残りの論点は qa-016/020/021 に分けて問い直されており、中心論点 (JTBD) は qa-019 が引き継いでいる。(c) qa-019 は answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z を持ち、旧 entry に answered_at は無い。qa-009 を参照するのは ui-ux×Web の補助 qa_refs のみで、active consumer は 0 件 (主たる qa_ref は qa-003、effective_source_refs は無い、canonical の U6 は qa-016/019 を参照)。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-033",
+      "observation": "U1-U9 の確定確認の問が 9 項目の要約を 1 問にしている。確定・指摘・保留の 3 択を持つ承認の問で、推奨の印や前提の埋め込みは無いため誘導とは判定しない。注記として残す。"
+    }
+  ]
+}

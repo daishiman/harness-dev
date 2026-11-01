@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a952e8c0a019c4c9e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c6b1b177-3e0e-4fe4-a752-10cda86cf2e1",
+      "line": 67,
+      "prefix_bytes": 671633,
+      "prefix_sha256": "484e591f835e618f1db41e3d0161201e881bad04bd5a52c80face7c5b441af0a",
+      "timestamp": "2026-11-01T14:34:13.280Z"
+    },
+    "result": {
+      "uuid": "d935ebbe-3988-4002-b11c-51fc0c389268",
+      "line": 68,
+      "prefix_bytes": 674588,
+      "prefix_sha256": "9e0e919561aadc1878ba37ff4f257a6c16728a8539f51a4b2741c0c72c8ef7d5",
+      "timestamp": "2026-11-01T14:34:15.347Z"
+    }
+  },
+  "tool_use_id": "toolu_014naef7j5XCV8N53gJQc4pY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B -c '\nimport json,hashlib,pathlib\nroot=pathlib.Path(\".\").resolve()\nsha=lambda p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()\nprint(\"spec-state\", sha(\"system-spec/spec-state.json\"))\nprint(\"index.md\", sha(\"system-spec/index.md\"))\nd=json.load(open(\"eval-log/system-spec-completeness-report.json\"))\nprint(\"spec_dir\",d[\"spec_dir\"], \"verdict\", d[\"verdict\"], \"evaluator\", d[\"evaluator\"])\nsnap=d[\"artifact_snapshot\"]\nprint(type(snap), json.dumps(snap,ensure_ascii=False)[:600])\nitems = snap if isinstance(snap,list) else snap.get(\"files\", snap.get(\"artifacts\", snap))\nmis=0;n=0\ndef walk(o):\n  global mis,n\n  if isinstance(o,dict):\n    p=o.get(\"path\"); h=o.get(\"sha256\") or o.get(\"digest\")\n    if p and h:\n      q=pathlib.Path(p); q = q if q.is_absolute() else root/q\n      if not q.exists(): q=root/\"system-spec\"/p\n      n+=1\n      a=sha(q) if q.exists() else None\n      if a!=h: mis+=1; print(\"MISMATCH\",p,h,a)\n    for v in o.values(): walk(v)\n  elif isinstance(o,list):\n    for v in o: walk(v)\nwalk(snap); print(\"snapshot entries\",n,\"mismatch\",mis)\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "spec-state 09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\nindex.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\nspec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec verdict PASS evaluator {'name': 'assign-system-spec-completeness-evaluator', 'version': '0.1.0', 'context': 'fork'}\n<class 'dict'> {\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\", \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\", \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\", \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"68d\nsnapshot entries 0 mismatch 0",
+  "tool_use_result": {
+    "stdout": "spec-state 09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\nindex.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\nspec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec verdict PASS evaluator {'name': 'assign-system-spec-completeness-evaluator', 'version': '0.1.0', 'context': 'fork'}\n<class 'dict'> {\"schema_version\": \"system-spec-artifact-snapshot/v1\", \"artifacts\": {\"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\", \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\", \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\", \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\", \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\", \"system-spec/frontend.md\": \"68d\nsnapshot entries 0 mismatch 0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

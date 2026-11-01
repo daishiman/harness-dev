@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a054198d3d4d78a01",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "780e7e36-cff1-4931-91a6-c4a4a8207d45",
+      "line": 44,
+      "prefix_bytes": 909666,
+      "prefix_sha256": "16886eb36f74d532cf0a849c9c068c401c5158ff6649e16cf21226cc6e1c6483",
+      "timestamp": "2026-11-01T14:18:09.259Z"
+    },
+    "result": {
+      "uuid": "5bc1cb31-205a-42a9-8273-0c8892feeced",
+      "line": 45,
+      "prefix_bytes": 910863,
+      "prefix_sha256": "74c9f695109ba97fb70563969b868edfe927b93c5c2f4c941b23e52ea5d0f744",
+      "timestamp": "2026-11-01T14:18:15.599Z"
+    }
+  },
+  "tool_use_id": "toolu_01W3X7VxcBUXduin9UGM1gj1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -I -c '\nimport json,hashlib\nfrom pathlib import Path\nroot=Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\")\nst=json.loads((root/\"system-spec/spec-state.json\").read_text(encoding=\"utf-8\"))\nids={\"qa-csrf-written-v7\",\"qa-session-written-v7\",\"qa-auth-written-v7\",\"qa-security-written-v7\"}\nfor q in st[\"qa_log\"]:\n    if q[\"id\"] in ids:\n        s=q[\"source\"]\n        p=(root/s[\"path\"]).resolve()\n        try:\n            p.relative_to(root.resolve()); c=True\n        except ValueError: c=False\n        print(q[\"id\"],c,p.is_file(),hashlib.sha256(q[\"answer\"].encode(\"utf-8\")).hexdigest()==s[\"sha256\"])\n'",
+    "description": "Check source path containment and SHA-256 for written entries"
+  },
+  "is_error": false,
+  "tool_result_content": "qa-csrf-written-v7 True True True\nqa-session-written-v7 True True True\nqa-auth-written-v7 True True True\nqa-security-written-v7 True True True",
+  "tool_use_result": {
+    "stdout": "qa-csrf-written-v7 True True True\nqa-session-written-v7 True True True\nqa-auth-written-v7 True True True\nqa-security-written-v7 True True True",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

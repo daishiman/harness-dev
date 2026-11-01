@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d715e50d-2c55-47e4-a1ab-a097b8cfaef9",
+      "line": 82,
+      "prefix_bytes": 471259,
+      "prefix_sha256": "d399431764d3a176ffa61c5f3a6629643531c4d2630d8f43630b07fb9d5c8bb3",
+      "timestamp": "2026-11-01T08:57:44.946Z"
+    },
+    "result": {
+      "uuid": "b1e2b2a9-9739-49c6-acb6-2b088c96020b",
+      "line": 84,
+      "prefix_bytes": 481909,
+      "prefix_sha256": "5d55e8e6db14920b5516a670094bbde365db6fcfce37a845858cf86f3224f197",
+      "timestamp": "2026-11-01T08:57:51.301Z"
+    }
+  },
+  "tool_use_id": "toolu_011biMcJWkZz2L8tjP1EKTn9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "sed -n 126,176p system-spec/backend.md; sed -n 304,330p system-spec/backend.md",
+    "description": "Read backend To-Be and design application"
+  },
+  "is_error": false,
+  "tool_result_content": "## To-Be / Delta\n\n> 本章の**規範**。上位概念 (要件定義書 U3 ゴール / U4 目標 / U9 具体的やりたいこと) を本章の serves_goals で絞り込んだ射影であり、設計知識 card (非規範の参考資料) とは役割が異なる。As-Is (現行実装の姿) は spec-state.json の管轄外のため本節では断定せず、到達点と、その到達を判定する観測点だけを規範として置く。\n\n### 到達すべき状態 (To-Be)\n\n- **G1**: 請求・監査データを単一の信頼できる情報源へ統合する\n- **G2**: 主要業務動線を Web だけで完結できるようにする\n\n### 受入条件 (Delta の判定点)\n\n| 目標 | 到達点 | 達成の観測点 (measure) |\n|---|---|---|\n| O1 | 請求漏れをシステムが自動で検知する | 締め後に残る請求漏れ 月次 0 件 (稼働後最初の月次締めから計測) |\n| O2 | 月末の突合を表計算に書き出さずに終える | 月末 3 営業日の表計算への書き出し 0 回 (稼働後最初の月次締めから計測) |\n\n### 本章がかなえる具体的やりたいこと (U9)\n\n- **I1**: 請求・監査データを日次でバックアップする\n- **I2**: 突合画面は未突合件数と食い違いのある取引先を先頭に出し、食い違いを金額の大きい順に並べ、一致済みの明細は畳む\n- **I3**: 確定した請求書は書き換えず赤黒訂正で直し、監査ログは追記のみとする\n\n### 本章に効く確定意思決定\n\n- **D1**: データベースに使う PostgreSQL の版をどれにするか (情報システム部の提供版は 15 と 16, qa-018)\n  - 採択: PostgreSQL 16 (情報システム部が提供する版) (`pg16`)\n  - 目的適合: G1 (単一の信頼できる情報源) に要るトランザクション・制約・バックアップの機能を満たす\n  - 採択の接地根拠: `qa-031`\n- **D2**: 画面の作り方をどの方式にするか\n  - 採択: React + TypeScript の SPA (`react-spa`)\n  - 目的適合: G2 を満たす。突合の画面で頁を読み直さずに並べ替えと行の修正ができる\n  - 採択の接地根拠: `qa-032`\n- **D3**: 社内 IdP の OIDC で得たトークンを、どこで持ち、API へどう送るか\n  - 採択: バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式 (`bff-session`)\n  - 目的適合: G1 (請求・監査データの単一の情報源) の信頼を、トークンをブラウザに出さないことで支える。8 時間のセッション (qa-002) と、IdP でのアカウントの無効化 (qa-026) をサーバ側で扱える\n  - 採択の接地根拠: `qa-034`\n- **D4**: 非同期突合とO1自動検知のジョブ実行構成\n  - 採択: 既存PG outbox＋独立Python worker＋k8s CronJob (`pg-worker-cron`)\n  - 目的適合: G1/O1の永続ジョブと自動走査、G2のWebからの非同期突合を支える。\n  - 採択の接地根拠: `qa-job-choice-fixture-v3`\n\n## 適用された設計知識\n\n> 以下の deep knowledge card は設計判断を支援する**非規範の参考資料**であり、実装済み・検証済みの証拠ではない。カード内の `採否: applied` は設計採用を意味し、実装状態は意味しない。規範となる差分は本章の To-Be / Delta 節と参照先仕様で管理する。\n\n### 本章での適用\n\nclean-architecture の依存の規則に従い、ユースケース (請求書の登録・更新、突合の実行、確定の承認、監査ログの検索, qa-025) を FastAPI と PostgreSQL から切り離す。api-design-patterns に従い、一覧は不透明なカーソルでページに分け、請求書の更新は ETag と If-Match で版を照合して後勝ちの上書きを止め、突合ジョブの起動には冪等キーを付けて二重実行を防ぐ (いずれも qa-025)。ddd に従い、境界づけられたコンテキストを請求と監査の 2 つに分け、監査は請求のドメインイベント (登録・更新・確定・赤黒訂正) を受けて追記する (qa-024)。\n\n- (根拠の性質: アシスタントの推定 (利用者確認も検証可能な出典も経ていない) / 記録時刻: 2026-10-12T00:17:23Z)\n\n### 確定判断ごとの原則採否\n\n- 確定内容 `qa-006` (対応セル: web)\n  - 確定要件: 「Python/FastAPI。REST + 非同期ジョブ(キュー)。」 (正本: 本章「確定内容 (質疑録)」の `qa-006`)\n  - 設計解釈の記録経路: `legacy_backfill` (`set-qa-design-applications`)\n  - 原則 (`plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-architecture.md#中核概念`): 依存の向きを外側の機構から業務の規則へ向ける\n    - 採否: `applied`\n    - 章固有の根拠: qa-006で採用したFastAPIのREST入口と非同期ジョブを、qa-025の請求書登録・更新・突合・確定・監査検索というユースケースから分離する設計解釈とする。DB rowやFastAPIのrequest型を業務の中核へ持ち込まず、HTTPとworkerの双方から同じ業務境界を呼ぶ。\n    - トレードオフ:\n      - port/adapterの変換と境界テストが増える。\n      - 単にファイルを層へ分けただけで独立性を満たしたとは扱わない。\n- 資するゴール: G1, G2\n\n## 最新ドキュメント出典\n\n| 対象 | バージョン | 公式発行元 | 出典URL | 取得 | 最新確認 |\n|---|---|---|---|---|---|\n| fastapi | 0.162.0 | FastAPI (Sebastián Ramírez / tiangolo) (fastapi.tiangolo.com) | https://fastapi.tiangolo.com/release-notes/ | 2026-10-31T14:46:09Z | 2026-10-31T14:46:09Z |",
+  "tool_use_result": null
+}

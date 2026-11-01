@@ -1,0 +1,177 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/render86/fx --output /private/tmp/claude-501/pr86-ci-live/lt/runs/render86/fx/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "ブラウザ実表示検証が未実行。HTML文字列検査だけで成功を宣言。",
+      "責務promptsの読取り・Agentによる責務検証が未実行。",
+      "C24 resolve-repo-context.pyの実行なし。",
+      "goal-spec/progress/intermediateとartifact_delivery選択記録なし。",
+      "ゴールシーク配線の実体検証に失敗: goal-spec-missing: run-dev-graph-render-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | progress-missing: run-dev-graph-render-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | intermediate-missing: run-dev-graph-render-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+      "poll-state-invalid:poll state.elapsed must be a non-negative integer",
+      "scenario render-feature-progress-receipt-positive-fixture-standard-v3 の resource budget 違反: wall-clock-unmeasured"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "6ca100bf49344ab5b76cb98bf95f57f59df4f444c26b64ecc625b1a67d9fb069",
+    "result": "FAIL",
+    "blockers": [
+      "ブラウザ実表示検証が未実行。HTML文字列検査だけで成功を宣言。",
+      "責務promptsの読取り・Agentによる責務検証が未実行。",
+      "C24 resolve-repo-context.pyの実行なし。",
+      "goal-spec/progress/intermediateとartifact_delivery選択記録なし。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/evaluate_init_decompose"
+    },
+    "transcript_sha256": "342222746fdb90cdeb72b337b3507891a062fc4e245eaa003e9aea9f0551d7a2",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl#L44",
+      "transcript.jsonl#L118",
+      "transcript.jsonl#L119",
+      "transcript.jsonl#L148",
+      "transcript.jsonl#L149",
+      "transcript.jsonl#L160",
+      "transcript.jsonl#L166",
+      "transcript.jsonl#L167",
+      "transcript.jsonl#L173",
+      "transcript.jsonl#L179",
+      "fx-final/tree/.dev-graph/render/index.html",
+      "session-root.txt"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-render"
+  ],
+  "missing_goal_seek_artifacts": [
+    "goal-spec.json",
+    "progress.json",
+    "intermediate.jsonl"
+  ],
+  "goal_seek_evidence_violations": [
+    "goal-spec-missing: run-dev-graph-render-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "progress-missing: run-dev-graph-render-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "intermediate-missing: run-dev-graph-render-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+  ],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "aa020c6baaee1a5b9d589e2f4289d9c031a8429f6859d5089795237588bbfa45",
+  "transcript_sha256": "342222746fdb90cdeb72b337b3507891a062fc4e245eaa003e9aea9f0551d7a2",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": null
+  },
+  "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3",
+    "required_observations": [
+      "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+      "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+      "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+      "two consecutive renders produce identical output digests"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "evidence_ref": "fx-final/tree/.dev-graph/render/index.html"
+      },
+      {
+        "index": 2,
+        "observation": "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "evidence_ref": "transcript.jsonl#L119"
+      },
+      {
+        "index": 3,
+        "observation": "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "evidence_ref": "transcript.jsonl#L118"
+      },
+      {
+        "index": 4,
+        "observation": "two consecutive renders produce identical output digests",
+        "evidence_ref": "transcript.jsonl#L149"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "template_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 3000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": null,
+      "poll_state_ref": null,
+      "poll_state_sha256": null,
+      "tokens": {
+        "input_tokens": 156,
+        "cache_creation_input_tokens": 44263,
+        "cache_read_input_tokens": 666372,
+        "output_tokens": 7251,
+        "total_tokens": 718042,
+        "assistant_messages": 19,
+        "assistant_message_ids": 19,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": [
+        "wall-clock-unmeasured"
+      ]
+    }
+  }
+}

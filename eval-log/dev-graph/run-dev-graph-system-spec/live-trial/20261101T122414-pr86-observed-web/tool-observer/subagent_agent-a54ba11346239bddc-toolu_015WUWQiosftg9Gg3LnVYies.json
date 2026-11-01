@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-a54ba11346239bddc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b148cd82-6f44-4675-8318-3a73fe1aca15",
+      "line": 62,
+      "prefix_bytes": 495122,
+      "prefix_sha256": "bd759d814da907848726ceaad229ebb9af8dfb30f94be93f6d57ab7667eb005c",
+      "timestamp": "2026-11-01T03:31:19.053Z"
+    },
+    "result": {
+      "uuid": "766fa065-2271-405a-a11c-f5c22fde280e",
+      "line": 63,
+      "prefix_bytes": 499338,
+      "prefix_sha256": "89c5abdac89d6a3145514bf8e42e87f129c9a8c3d31d0d6753526b22a663bded",
+      "timestamp": "2026-11-01T03:31:23.002Z"
+    }
+  },
+  "tool_use_id": "toolu_015WUWQiosftg9Gg3LnVYies",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx && python3 - <<'EOF'\nimport subprocess, hashlib, json\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\"\nP=R+\"/plugins/system-spec-harness\"\nS=R+\"/system-spec/spec-state.json\"; F=R+\"/system-spec/fetched-references.json\"\nCM=P+\"/scripts/validate-coverage-matrix.py\"; SC=P+\"/scripts/validate-source-citation.py\"; HS=P+\"/scripts/validate-hearing-sources.py\"\nh=lambda p: hashlib.sha256(open(p,\"rb\").read()).hexdigest()\ndef run(a):\n    r=subprocess.run(a,capture_output=True,text=True); return {\"exit_code\":r.returncode,\"stdout\":r.stdout,\"stderr\":r.stderr}\npre={p:h(p) for p in (S,F,CM,SC,HS)}\nmv={\"state_path\":S,\"state_sha256\":h(S),\"validator_path\":CM,\"validator_sha256\":h(CM),\n    \"loop\":run([\"python3\",CM,\"--matrix\",S]),\"require_complete\":run([\"python3\",CM,\"--matrix\",S,\"--require-complete\"])}\nargv=[\"python3\",SC,\"--targets\",S,\"--references\",F,\"--state\",S,\"--repo-root\",R]\ndv={\"repo_root\":R,\"inputs\":{\"targets\":{\"path\":S,\"sha256\":h(S)},\"references\":{\"path\":F,\"sha256\":h(F)},\"state\":{\"path\":S,\"sha256\":h(S)}},\n    \"validator_path\":SC,\"validator_sha256\":h(SC),\"argv\":argv,**run(argv)}\nhs=run([\"python3\",HS,\"--matrix\",S,\"--repo-root\",R])\npost={p:h(p) for p in (S,F,CM,SC,HS)}\nprint(\"HASH_STABLE\",pre==post)\nprint(\"MATRIX_VERIFICATION\");print(json.dumps(mv,ensure_ascii=False,indent=1))\nprint(\"DOC_VERIFICATION\");print(json.dumps(dv,ensure_ascii=False,indent=1))\nprint(\"HEARING exit\",hs[\"exit_code\"],\"stderr\",hs[\"stderr\"]);print(hs[\"stdout\"])\nfor flag in (\"--require-foundation\",\"--require-basis\"):\n    print(flag, run([\"python3\",CM,\"--matrix\",S,flag]))\nEOF",
+    "description": "Compute machine evidence for auditors"
+  },
+  "is_error": false,
+  "tool_result_content": "HASH_STABLE True\nMATRIX_VERIFICATION\n{\n \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\",\n \"validator_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py\",\n \"validator_sha256\": \"a3046de206e7f5c63921020e3232a4d07b7733fb4b2cf8aae959b6404df9abc0\",\n \"loop\": {\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 収集マトリクス網羅性 (loop) を満たす\\n\",\n  \"stderr\": \"\"\n },\n \"require_complete\": {\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\\n\",\n  \"stderr\": \"\"\n }\n}\nDOC_VERIFICATION\n{\n \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n \"inputs\": {\n  \"targets\": {\n   \"path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n   \"sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n  },\n  \"references\": {\n   \"path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/fetched-references.json\",\n   \"sha256\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\"\n  },\n  \"state\": {\n   \"path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n   \"sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n  }\n },\n \"validator_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\",\n \"validator_sha256\": \"700b289232048a0d48a5309b648346192fcb1d6ccf6a9800690aa29b7d094033\",\n \"argv\": [\n  \"python3\",\n  \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\",\n  \"--targets\",\n  \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n  \"--references\",\n  \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/fetched-references.json\",\n  \"--state\",\n  \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n  \"--repo-root\",\n  \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\"\n ],\n \"exit_code\": 0,\n \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\\n\",\n \"stderr\": \"\"\n}\nHEARING exit 0 stderr \n{\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}\n\n--require-foundation {'exit_code': 0, 'stdout': 'OK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\\n', 'stderr': ''}\n--require-basis {'exit_code': 0, 'stdout': 'OK: 収集マトリクス網羅性 (loop+basis(根拠の性質宣言)) を満たす\\n', 'stderr': ''}",
+  "tool_use_result": null
+}

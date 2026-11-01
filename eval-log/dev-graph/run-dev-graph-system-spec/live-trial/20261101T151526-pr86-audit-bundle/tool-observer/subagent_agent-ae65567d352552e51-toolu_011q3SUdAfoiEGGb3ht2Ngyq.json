@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b999f552-b2a5-4ff7-8a57-5ba376337786",
+      "line": 50,
+      "prefix_bytes": 375119,
+      "prefix_sha256": "18d1a36df7fd9efdb2b6fdb5e8016cf63dd79fdce93e9629f57d1cd964d1f804",
+      "timestamp": "2026-11-01T06:27:03.409Z"
+    },
+    "result": {
+      "uuid": "1801628c-2082-4713-a409-99f0ca445c4b",
+      "line": 51,
+      "prefix_bytes": 377483,
+      "prefix_sha256": "7f17aa4c9da848a0f2e566d75b65a530d9ebf718fbfa7b3d8dc755da3ae19f81",
+      "timestamp": "2026-11-01T06:27:06.507Z"
+    }
+  },
+  "tool_use_id": "toolu_011q3SUdAfoiEGGb3ht2Ngyq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport pathlib\nb=pathlib.Path('plugins/system-spec-harness/skills').resolve()\nfor p in ['run-system-spec-elicit/prompts/R7-audit-matrix.md','run-system-spec-elicit/prompts/R6-audit-hearing.md','run-system-spec-elicit/references/neutral-question-criteria.md','run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md','run-system-spec-doc-fetch/references/official-source-catalog.md','ref-system-design-knowledge/references/system-category-taxonomy.json','ref-system-design-knowledge/references/resource-map.yaml']:\n  q=b/p; print(q.exists(), q)\nl=pathlib.Path('eval-log/system-spec-harness/audit-fork-ledger.jsonl'); print('ledger',l.exists(), l.stat().st_size if l.exists() else None)\nimport subprocess,sys\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/validate-hearing-sources.py','--matrix',str(pathlib.Path('system-spec/spec-state.json').resolve()),'--repo-root',str(pathlib.Path('.').resolve())],capture_output=True,text=True)\nprint(r.returncode); print(r.stdout); print(r.stderr)\n\"",
+    "description": "Check SSOT paths, ledger, run hearing source check"
+  },
+  "is_error": false,
+  "tool_result_content": "True /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R7-audit-matrix.md\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/neutral-question-criteria.md\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/references/official-source-catalog.md\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json\nTrue /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/resource-map.yaml\nledger False None\n0\n{\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}",
+  "tool_use_result": null
+}

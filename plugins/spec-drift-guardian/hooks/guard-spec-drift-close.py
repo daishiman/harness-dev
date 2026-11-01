@@ -2,11 +2,12 @@
 # /// script
 # name: guard-spec-drift-close
 # purpose: spec-drift-guardian の close 前 fail-closed 関門 (C07)。PreToolUse/Bash の command 文字列から
-#          `gh issue close <N>` を検出し、対象 issue の 4 artifact (triage-report / triage-verdict /
+#          GitHub/Beads の close 操作を検出し、対象 tracker key の 4 artifact (triage-report / triage-verdict /
 #          sync-proposal / sync-audit-verdict) と post-image を C10 (check-triage-complete.py) へ供給する。
 #          C10 が applied_verified または independently_verified_no_change を OK 判定したときだけ close を
 #          許可 (exit0) し、artifact 欠落・C10 不在・INCOMPLETE は exit2 で close を遮断する。捕捉対象は
-#          PreToolUse/Bash 経路の gh issue close のみ (Web UI/API/Actions 経路は非カバー)。
+#          PreToolUse/Bash 経路の gh issue close / bd close / bd update --status closed /
+#          bd-bridge.py --op close をカバーする (Web UI/API/Actions 経路は非カバー)。
 # inputs:
 #   - stdin: Claude hook JSON (PreToolUse: {"tool_input": {"command": "..."}, "cwd": "..."})
 #   - env: CLAUDE_PROJECT_DIR (.spec-drift/<N>/ artifact 探索起点) / CLAUDE_PLUGIN_ROOT (C10 の所在)
@@ -19,26 +20,27 @@
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
-"""PreToolUse/Bash fail-closed guard — 未対応 spec-drift issue の close を機械層で止める。
+"""PreToolUse/Bash fail-closed guard — 未対応 spec-drift task の close を機械層で止める。
 
 正本契約: plugin-plans/spec-drift-guardian/component-inventory.json の C07 エントリ
   (event=PreToolUse / matcher=Bash / exit_semantics=fail-closed-exit2 / fail_closed=true)。
 
 close 検出 (close_detection):
-  PreToolUse/Bash の入力 command 文字列に対し正規表現 `gh issue close <N>` を突合し、対象 issue
-  番号を抽出する。これは session 内 gh CLI close の捕捉であり、Web UI/API/Actions 経路の close は
-  本 hook の非カバー経路 (実際の close 主体は人間のまま)。
+  `gh issue close <N>` に加え、Beads 正規実行経路の `bd-bridge.py --op close
+  --bd-issue-id <ID>`、および直接 CLI の `bd close <ID>` / `bd update <ID> --status closed`
+  を検出する。Beads は `.spec-drift/<ID>/` が存在する対象だけを gate し、非対象 task は
+  pass-through する。Web UI/API/Actions 経路は本 hook の非カバー経路。
 
 artifact 解決 (artifact_resolution):
-  issue 番号をキーに $CLAUDE_PROJECT_DIR/.spec-drift/<N>/ 配下の
+  tracker key をキーに $CLAUDE_PROJECT_DIR/.spec-drift/<key>/ 配下の
     triage-report.json / triage-verdict.json / sync-proposal.json / sync-audit-verdict.json
   と対象 post-image を解決し、C10 (scripts/check-triage-complete.py) へ 4 artifact と --target-root を
   供給する。判定ロジック (applied_verified / independently_verified_no_change の許可、proposal-only/
   未承認/未適用/validator 不備の遮断) は C10 が SSOT であり、本 hook では再実装しない。
 
 fail-closed の規律 (boundary):
-  close を確証できない全ケース (artifact 欠落 / C10 不在・起動不能 / C10 INCOMPLETE / issue 番号を
-  抽出できない gh issue close) は exit2 で遮断する。`gh issue close` に該当しない command は exit0 で
+  close を確証できない全ケース (artifact 欠落 / C10 不在・起動不能 / C10 INCOMPLETE /
+  close 対象を抽出できない場合) は exit2 で遮断する。close に該当しない command は exit0 で
   素通しする (無関係な Bash を巻き込まない)。stdin 解釈不能は hook 自体の故障防止のため exit0。
 
 Hook input (stdin): {"tool_input": {"command": "..."}, "cwd": "..."}
@@ -72,6 +74,17 @@ _CLOSE_RE = re.compile(r"\bgh\s+issue\s+close\b(?P<rest>[^\n;&|]*)")
 _ISSUE_URL_RE = re.compile(r"/issues/(\d+)\b")
 _ISSUE_NUM_RE = re.compile(r"#?(\d+)\b")
 
+# Beads の 3 close 形式。command 連結境界を跨いで別コマンドの引数を拾わない。
+_BD_BRIDGE_CLOSE_RE = re.compile(
+    r"\bbd-bridge\.py\b(?P<rest>[^\n;&|]*?(?:--op\s+close|--op=close)[^\n;&|]*)"
+)
+_BD_CLOSE_RE = re.compile(r"(?<![-\w])bd\s+close\b(?P<rest>[^\n;&|]*)")
+_BD_UPDATE_RE = re.compile(
+    r"(?<![-\w])bd\s+update\b(?P<rest>[^\n;&|]*(?:--status\s+closed|--status=closed)[^\n;&|]*)"
+)
+_BD_ID_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_-]*-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)\b")
+_BD_ID_FLAG_RE = re.compile(r"--bd-issue-id(?:=|\s+)([^\s]+)")
+
 
 def _plugin_root() -> Path:
     """C10 を解決するための plugin root を導出する。
@@ -102,6 +115,43 @@ def _extract_issue(rest: str) -> str | None:
     if m:
         return m.group(1)
     return None
+
+
+def _extract_bd_id(kind: str, rest: str) -> str | None:
+    """Beads close 引数列から literal issue id を抽出する。"""
+    if kind == "bridge":
+        match = _BD_ID_FLAG_RE.search(rest)
+        candidate = match.group(1) if match else None
+    else:
+        # bd close/update では issue id は subcommand 直後の位置引数。
+        candidate = rest.strip().split(maxsplit=1)[0] if rest.strip() else None
+    if not candidate or candidate.startswith(("$", "`")):
+        return None
+    return candidate if _BD_ID_RE.fullmatch(candidate) else None
+
+
+def _close_targets(command: str) -> tuple[list[tuple[str, str]], bool]:
+    """(kind, tracker key) と、close 構文はあるが key 不明かを返す。"""
+    targets: list[tuple[str, str]] = []
+    unresolved = False
+    for match in _CLOSE_RE.finditer(command):
+        key = _extract_issue(match.group("rest"))
+        unresolved = unresolved or key is None
+        if key is not None:
+            targets.append(("github", key))
+    for kind, regex in (
+        ("bridge", _BD_BRIDGE_CLOSE_RE),
+        ("beads", _BD_CLOSE_RE),
+        ("beads", _BD_UPDATE_RE),
+    ):
+        for match in regex.finditer(command):
+            key = _extract_bd_id(kind, match.group("rest"))
+            unresolved = unresolved or key is None
+            if key is not None:
+                targets.append(("beads", key))
+    # `python ... bd-bridge.py ...` は `bd close` 正規表現には重複マッチしないが、
+    # 念のため同一 target は 1 回だけ gate する。
+    return list(dict.fromkeys(targets)), unresolved
 
 
 def _gate_issue(issue: str, project_dir: Path, target_root: Path) -> tuple[int, str]:
@@ -165,19 +215,20 @@ def main() -> int:
     # target-root は cwd 優先 (実 post-image の所在)。cwd 不明時のみ project_dir。
     target_root = cwd if payload.get("cwd") else project_dir
 
-    closes = list(_CLOSE_RE.finditer(command))
-    if not closes:
-        return 0  # `gh issue close` 非該当は pass-through
+    targets, unresolved = _close_targets(command)
+    if not targets and not unresolved:
+        return 0  # close 非該当は pass-through
+    if unresolved:
+        sys.stderr.write(
+            "[guard-spec-drift-close] close 操作を検出しましたが tracker key を"
+            "literal として抽出できませんでした。確証不能のため fail-closed で遮断しました。\n"
+        )
+        return 2
 
-    # gh issue close を検出したが番号を抽出できない = 確証不能 → fail-closed。
-    for match in closes:
-        issue = _extract_issue(match.group("rest"))
-        if issue is None:
-            sys.stderr.write(
-                "[guard-spec-drift-close] `gh issue close` を検出しましたが issue 番号を"
-                "抽出できませんでした。確証不能のため fail-closed で close を遮断しました。\n"
-            )
-            return 2
+    for kind, issue in targets:
+        artifact_dir = project_dir / ".spec-drift" / issue
+        if kind == "beads" and not artifact_dir.exists():
+            continue  # spec-drift 対象外の通常 Beads task
         code, reason = _gate_issue(issue, project_dir, target_root)
         if code != 0:
             sys.stderr.write(reason + "\n")

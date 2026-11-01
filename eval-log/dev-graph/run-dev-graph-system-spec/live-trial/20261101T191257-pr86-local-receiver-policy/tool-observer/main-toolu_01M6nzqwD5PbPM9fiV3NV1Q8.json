@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e1aa65ac-71ef-4c73-a3c4-508dddd97594",
+      "line": 142,
+      "prefix_bytes": 946342,
+      "prefix_sha256": "552b93312ccdae9fa0003fa3f804a44aab4b1b31b34d243ef1debe57a1d50329",
+      "timestamp": "2026-11-01T10:14:28.523Z"
+    },
+    "result": {
+      "uuid": "5989fcf8-a4ee-4c0e-98e4-89dc56b3d7cd",
+      "line": 143,
+      "prefix_bytes": 948930,
+      "prefix_sha256": "107fd4adc8862979f5011d4d96baf388266daa6e1d6877e2a844335aa5618f54",
+      "timestamp": "2026-11-01T10:14:32.079Z"
+    }
+  },
+  "tool_use_id": "toolu_01M6nzqwD5PbPM9fiV3NV1Q8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n -A8 'external_dependencies' plugins/dev-graph/plugin-composition.yaml; for s in run-system-spec-elicit run-system-spec-doc-fetch run-system-spec-compile assign-system-spec-completeness-evaluator; do test -f plugins/system-spec-harness/skills/$s/SKILL.md && echo \"present $s $(shasum -a 256 plugins/system-spec-harness/skills/$s/SKILL.md|cut -c1-64)\"; done",
+    "description": "Check version range and entry points"
+  },
+  "is_error": false,
+  "tool_result_content": "148:external_dependencies:\n149-  harness-creator:\n150-    version: \">=1.4.0 <2.0.0\"\n151-    relation: skill-feedback-ssot-provider\n152-    required_entry_points: [run-skill-feedback]\n153-  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\n155-    required_entry_points: [run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator]\n156-  system-dev-planner:\npresent run-system-spec-elicit 275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b\npresent run-system-spec-doc-fetch 7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637\npresent run-system-spec-compile d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\npresent assign-system-spec-completeness-evaluator b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6",
+  "tool_use_result": {
+    "stdout": "148:external_dependencies:\n149-  harness-creator:\n150-    version: \">=1.4.0 <2.0.0\"\n151-    relation: skill-feedback-ssot-provider\n152-    required_entry_points: [run-skill-feedback]\n153-  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\n155-    required_entry_points: [run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator]\n156-  system-dev-planner:\npresent run-system-spec-elicit 275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b\npresent run-system-spec-doc-fetch 7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637\npresent run-system-spec-compile d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\npresent assign-system-spec-completeness-evaluator b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f981bbc0-dc59-4273-ae70-82dd394746f5",
+      "line": 558,
+      "prefix_bytes": 3831167,
+      "prefix_sha256": "104f227280ad510f7d9ea681fd24ffbbe22ac6778e7ee530d00c4a36cbba5bc4",
+      "timestamp": "2026-11-01T06:34:29.049Z"
+    },
+    "result": {
+      "uuid": "8d74c790-b222-4fab-81ff-b0ddfd6cf766",
+      "line": 561,
+      "prefix_bytes": 3835982,
+      "prefix_sha256": "0cad86048d746a2535ac90935502a42013bff70b4fbc520fe501a901032146a5",
+      "timestamp": "2026-11-01T06:34:31.837Z"
+    }
+  },
+  "tool_use_id": "toolu_01V5TyrmB4aSU7q4TqZDqbft",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nimport os,json\nprint(os.listdir(\"plugins/dev-graph/skills/run-dev-graph-system-spec/prompts\"))\nprint(os.listdir(\"eval-log/run-dev-graph-system-spec\"))\nfor d in os.listdir(\"eval-log/run-dev-graph-system-spec\"): print(d, os.listdir(\"eval-log/run-dev-graph-system-spec/\"+d))\nprint(os.listdir(\"eval-log\"))\n'",
+    "description": "List prompt and eval-log directories"
+  },
+  "is_error": false,
+  "tool_result_content": "['R3-import.md', 'R2-delegate.md', 'R0-context.md', 'R1-preflight.md']\n['R0-context', 'R1-preflight']\nR0-context []\nR1-preflight ['verifier-loop1.json']\n['run-dev-graph-system-spec-artifact-delivery.json', 'system-spec-compile-receipt.json', 'system-spec-doc-fetch-receipt.json', 'system-spec-elicit-receipt.json', 'run-dev-graph-system-spec-preflight-report.json', 'run-dev-graph-system-spec-progress.json', 'hearing-audit.json', 'compile-standard.json', 'system-spec-completeness-report.json', 'system-spec-harness', 'run-dev-graph-system-spec', 'run-dev-graph-system-spec-goal-spec.json', 'run-dev-graph-system-spec-intermediate.jsonl', 'c24-receipt.json']",
+  "tool_use_result": {
+    "stdout": "['R3-import.md', 'R2-delegate.md', 'R0-context.md', 'R1-preflight.md']\n['R0-context', 'R1-preflight']\nR0-context []\nR1-preflight ['verifier-loop1.json']\n['run-dev-graph-system-spec-artifact-delivery.json', 'system-spec-compile-receipt.json', 'system-spec-doc-fetch-receipt.json', 'system-spec-elicit-receipt.json', 'run-dev-graph-system-spec-preflight-report.json', 'run-dev-graph-system-spec-progress.json', 'hearing-audit.json', 'compile-standard.json', 'system-spec-completeness-report.json', 'system-spec-harness', 'run-dev-graph-system-spec', 'run-dev-graph-system-spec-goal-spec.json', 'run-dev-graph-system-spec-intermediate.jsonl', 'c24-receipt.json']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6deb4322-6be9-46dc-a567-87d8bf14203d",
+      "line": 349,
+      "prefix_bytes": 2133721,
+      "prefix_sha256": "8a4607f3ee32a16c139e0858a175e6d2c696bb70bf6189d4fbf70ba65ad6612a",
+      "timestamp": "2026-11-01T09:24:01.859Z"
+    },
+    "result": {
+      "uuid": "60696d2b-618b-404f-b40c-83173602c144",
+      "line": 351,
+      "prefix_bytes": 2135996,
+      "prefix_sha256": "e771ad4bc6738b81edca97627e9522db184ba6a0e526f0c0ddb1702dbc3db67f",
+      "timestamp": "2026-11-01T09:24:11.453Z"
+    }
+  },
+  "tool_use_id": "toolu_01Vf9RYPxNGqKWzMQrkVALmW",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cd plugins/system-spec-harness/skills/run-system-spec-compile && python3 -B -m pytest -q -p no:cacheprovider tests/test_compile_spec_doc.py tests/test_compile_spec_doc_knowledge.py 2>&1 | tail -5; git -C \"$CLAUDE_PROJECT_DIR\" status --porcelain | head",
+    "description": "Run compile OUT1 acceptance tests"
+  },
+  "is_error": false,
+  "tool_result_content": "...............................................................          [100%]\n63 passed in 5.80s\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "...............................................................          [100%]\n63 passed in 5.80s\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

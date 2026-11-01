@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "4d7cd3c2925652471f3d43ccf375783a403b004c0c010de72d25000cb8296577"
+    "skill_md_sha256": "490ef914c638d6c20b13ee10af7179e01f0ddaa63dcf6f4f84750b4d329d3310"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 8
   },
-  "reviewer": "focused-combined-content-review",
-  "reviewed_at": "2026-08-24T07:44:25Z",
+  "reviewer": "cr-run-skill-live-trial (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:38:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,17 +27,24 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "L0 v1.3.0 + L2 v1.3.1 合成の機械採点は score=90/100、threshold=80、passed=true、high severity=0。rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a。",
-      "BD-004 の2 triggerは acceptance実走とforkで観測不可能な振る舞のgoal検証に対し、Purpose、適用境界、絶対ルール、goal verificationの各節へ1:1で追跡できる。"
+      "機械採点 (render-findings-score.py、rubric_version 1.6.0) は score=90 / threshold=80 / passed=true、high severity=0、required_fixes=[]。rubric_hash=sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash=sha256:d9d604499d13a401b6d0b67d60e133b09bb702ae022118b7725ba2c32bd048f7。applicable=20、scored=19、pending_human=1 (BD-004)、unscored=0、not_applicable=21。",
+      "pending_human の BD-004 は reviewer が意味判定して PASS: description の 2 trigger (tmux で実走して受け入れ確認する / fork では観測できない自走・入れ子 Skill・対話 gate を goal 適合まで検証する) が、Purpose (L107-109)・適用境界表 (L111-120)・絶対ルール (L130-135)・goal verification (L272-274) に 1:1 で追跡できる。",
+      "差分で増えた script_refs 4 本 (validate-live-trial-resource-budget / build-live-trial-verdict / validate-live-trial-scenario-contract / validate-goal-seek-evidence) と参照 docs (goal-seek-paradigm.md 達成判定節、convergence-policy.json loop_bounds.trial_acceptance、orchestrate-gate-pattern.md Gate D、validate-build-plan.py derive_acceptance_tier) は全て実在し、dependency_break は 0。"
     ],
     "negative_feedback": [
-      "PD-002 medium: body先頭30行に Purpose headingはあるが、機械採点対象の MUST/NEVER/禁止/必ず token は無い。high finding・required fixではなく、score 90でPASS。",
-      "goal-seek generic lintのanchor系3 WARNと llm-coverage under_derived=true は残るが、source差し替えによる新規退行ではなく、criteria 5/5と専用poll/state machineはテスト済みである。"
+      "low/smell: SKILL.md L248-255 の poll exit 表に exit 3 (BLOCKED: tmux 不在 / STATE_CORRUPT / TOKEN_UNMEASURED。live-trial-poll.py L193・L227) の行が無い。挙動は fail-closed で、stdout の `BLOCKED:` 行で停止理由は分かるが、表だけ見た運用者は次の行動を引けない。`| 3 BLOCKED | state 破損・token 計測不能・tmux 不在 | 記録 → kill-session → verdict --blocked |` の 1 行追加で解消する。",
+      "low/smell: Checklist L153 の終端 exit 列挙が (DONE / STALL / GATE / HARD_CAP) のままで、差分で追加された exit 6 TOKEN_CAP (L255) が入っていない。",
+      "low/smell: 判定ロジック L314 の BLOCKED 条件が「tmux 不在 / HARD_CAP 超過」だけで TOKEN_CAP・計測不能を含まない。Gotchas L332 は「到達または計測不能で BLOCKED」と書くが、poll を経ずに verdict 側で事後に予算超過を検出した場合は validate-live-trial-resource-budget.py の budget_violations → completion=FAIL → overall FAIL になる (BLOCKED ではない)。どちらも fail-closed なので受け入れ判定の緩みは無いが、L314 と L332 に「poll が止めた場合は --blocked で BLOCKED、verdict が事後検出した場合は FAIL」と書き分けると一致する。",
+      "low/smell: 検証節 L324 の `python3 -m pytest -q tests/test_live_trial_*.py` は INT ルートで tests/test_live_trial_harness.py の 1 本にしか一致せず、差分で追加された plugins/harness-creator/tests/test_live_trial_plan_scenario_reuse.py と test_live_trial_verdict_scenario_contract.py (scenario 契約・再利用判定) を拾わない。コメントの「scenario 検証」は harness 側の poll scenario テストで部分的には成り立つ。glob に plugins/harness-creator/tests/test_live_trial_*.py を併記すると漏れが無くなる。",
+      "low/smell: validate-live-trial-scenario-contract.py の validate_invocation_contract (scenario の forbidden_invoked_skills を invoked_skills と突合して goal_fit を落とす gate) と verdict schema の scenario_contract.invocation_contract が、SKILL.md の判定ロジック L303-305 にも task.md 契約表 L190-212 にも記述されていない。task_contract (L200) と resource_budget (L201) は書かれているので、L305 の scenario 契約の箇条に「forbidden_invoked_skills の呼出しも goal_fit=FAIL」を 1 文足すと記述と実装がそろう。",
+      "low/smell (script 側の記述ずれ): validate-goal-seek-evidence.py ヘッダ L6 の argv 表記は `[--require-declared]` だが、実装 L184 の引数は `--allow-undeclared` (既定で宣言必須)。SKILL.md 本文 (L304) の主張とは矛盾しないが、ヘッダを実装に合わせるべき。",
+      "low/smell (script 間の境界値ずれ): token 上限の比較が live-trial-poll.py L231 では `total_tokens >= token_cap` (到達で停止)、validate-live-trial-resource-budget.py L171 では `total_tokens > max_total_tokens` (超過のみ違反)。ちょうど上限値で poll が止まった場合は --blocked 経由で BLOCKED になるので実害は無いが、L255 の「予算到達」と L332 の「到達」に対し verdict 側は「超過」なので、どちらかにそろえると境界の解釈が一本になる。",
+      "medium (前回から継続・非 blocking): rubric PD-002。body 先頭 30 行に機械採点対象の MUST/NEVER/禁止/必ず token が無い。high ではなく required_fixes も空で、score 90/80 で PASS。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:source-repair-focused-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined rubric projection。30思考法は実施・申告していない。L0/L2 rubric全applicable ruleを現在SHAへ適用し、applicable=24、scored=23、pending_human=1 (BD-004は意味判定しPASS)、unscored=0。sourceは実在ROADMAP上のanti-Goodhart/Gate D記述と整合。frontmatter/name/tree/runtime-profile/feedback-contract/plugin completeness、backend/status/boot self-tests、関連121 tests、criteria/roster 244 testsはPASS。"
+  "notes": "incremental profile の focused combined review (1 context で (a)〜(e) を判定)。30 思考法は incremental のため適用していない。審査開始時に shasum -a 256 で SKILL.md を実測し 490ef914…3310 で brief の期待値と一致。読んだもの: SKILL.md 全文 (339 行・v0.3.0)、基準 d46ca8ad からの skilldir 差分 (2605 行) のうち SKILL.md 差分と、それが参照する task-template.md、live-trial-backend.py、live-trial-boot.py、live-trial-poll.py、validate-live-trial-resource-budget.py、live-trial-verdict.py、build-live-trial-verdict.py、validate-live-trial-scenario-contract.py、validate-goal-seek-evidence.py、plan-live-trials.py、live-trial-verdict.schema.json、参照 docs (goal-seek-paradigm.md・convergence-policy.json・orchestrate-gate-pattern.md・validate-build-plan.py L192)、dev-graph の live-trial-positive-scenarios.json (4 件全てが resource_budget を持つ)、前回 verdict (2026-08-24, sha 4d7cd3c2…)。実行したコマンドと結果: live-trial-backend.py / live-trial-status.py / live-trial-boot.py の --self-test は 3 本とも exit 0。pytest (-p no:cacheprovider、PYTHONDONTWRITEBYTECODE=1、cwd=scratchpad、--rootdir INT) で tests/test_live_trial_harness.py・plugins/harness-creator/tests/test_live_trial_plan_scenario_reuse.py・plugins/harness-creator/tests/test_live_trial_verdict_scenario_contract.py・tests/test_validate_goal_seek_evidence.py・tests/test_lint_live_trial_verdict.py を実行し 161 passed (52.55s)。判定: (a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 はいずれも違反なし、(e) high 0 件。negative_feedback 8 件のうち 7 件は fail-closed を保ったままの記述の粗さ・script 間の表記ずれ (low/smell)、残る 1 件は前回から継続の PD-002 medium で、いずれも PASS を妨げない。前回指摘の追跡: PD-002 は継続。前回の goal-seek generic lint 3 WARN と llm-coverage under_derived=true は今回は再実行しておらず未確認。 機械採点: python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --target plugins/harness-creator/skills/run-skill-live-trial → score=90、threshold=80、passed=true、rubric_version=1.6.0、rubric_hash=sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash=sha256:d9d604499d13a401b6d0b67d60e133b09bb702ae022118b7725ba2c32bd048f7、applicable=20・scored=19・pending_human=1 (BD-004 → reviewer 判定 PASS)・unscored=0・not_applicable=21、findings=[PD-002 medium] のみ、required_fixes=[]。 書き込み後の確認: 2 ファイルとも jsonschema 4.25.1 で content-review-verdict.schema.json に合格。python3 scripts/lint-content-review.py --all は他 skill の stale-sha 等で全体 exit 1 だが、_all_skills() が harness-creator/run-skill-live-trial を列挙 (127 skill 中) していることを確認したうえで、本 skill の行は 0 件 (合格)。"
 }

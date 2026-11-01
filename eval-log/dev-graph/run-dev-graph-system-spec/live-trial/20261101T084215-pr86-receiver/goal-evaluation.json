@@ -1,0 +1,32 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "途中回収時点でC19/C02の完了条件が閉じていない。transcript.jsonl 560行のC19 R2/R3独立verifierは起動済みだが、回収済み子transcriptは調査中で最終応答・verification.jsonが無く、C19 progressの6項目は全てnot_achievedのまま。複製0の最終検証とimport report、最終周回のIN1/6キー/hash統合も未完了。C02は2nodeのapplyとintegrity auditorの実completion PASSまで到達したが、progressはin_progress、writer_receipts空、independent_verifier空で、intermediateと完了検査への統合が未実施。これらは中断時の未完了であり、未登録やverifier未起動とは判定しない。",
+    "C06が担当の道具境界を越えた。起動時copyのrun-system-spec-elicit/prompts/R6-audit-hearing.md Layer 3（48行）はBashをread-onlyのpath containment/SHA-256検査だけに限定する。agent-a3c755f3d9345e278.jsonl 31→32行ではstate全キー・QA参照・置換問の独自Python解析が成功し、37→38行では手列挙U→QA対応による回答本文比較とgrep/head、47→48行ではfind/grep/headによるsource探索が実行された。Readで行う監査本文の調査を、この許可範囲外のBashで代替している。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec101"
+  },
+  "transcript_sha256": "82789aec044f1dd09ea1197ca9330dc6fee164e6d6d5317e4718335b9d1d48e8",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a9aca21c0ffaeb791.jsonl",
+    "transcript/subagents/agent-a3c755f3d9345e278.jsonl",
+    "transcript/subagents/agent-a40ce8e1ca999304d.jsonl",
+    "transcript/subagents/agent-ae3ab90c9bf537696.jsonl",
+    "transcript/subagents/agent-a608a877b2d11e6ce.jsonl",
+    "transcript/subagents/agent-a21525a73811566d3.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-node-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/apply.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "abort-reason.json",
+    "collection-note.json",
+    "evidence-redaction.json"
+  ]
+}

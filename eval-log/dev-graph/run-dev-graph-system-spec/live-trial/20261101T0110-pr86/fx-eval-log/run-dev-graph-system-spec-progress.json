@@ -1,0 +1,18 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "phase": "stopped_fail",
+  "stop_reason": "cwd_not_repo_root",
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec-preflight-receipt.json R0_context"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "0.1.24 in >=0.1.22 <1.0.0; 4 entry points present"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "not_achieved", "evidence": "Skills invoked, but the evaluator was launched after a cd-based cwd check (forbidden); evaluator reports launch cwd plugins/system-spec-harness/skills != DEV_GRAPH_ROOT"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "not_achieved", "evidence": "coverage/citation/design-knowledge-refs exit0; evaluator report verdict PASS but its launch violated the R2 cwd gate, so not accepted as gate evidence"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "C02 registration withheld"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "not checked (stopped before R3)"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "fail", "evidence": "R2 cwd gate (cwd_not_repo_root)"},
+    {"id": "OUT1", "status": "not_evaluated"}
+  ]
+}

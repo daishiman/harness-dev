@@ -1,0 +1,29 @@
+{
+  "responsibility": "R0-context",
+  "verdict": "PASS",
+  "checklist": [
+    {
+      "item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる",
+      "status": "achieved",
+      "evidence": "独立再実行した resolve-repo-context.py --mode write (write-scope: none をソースで確認、mode は出力に反映されるだけ) の出力が c24-receipt.json と完全一致 (repository_id=local:sha256:b56155ff…6260f6b, worktree_id=wt_4d206c523bc81d64, repo_root, git_common_dir, git_dir, head_sha=cc20435, plugin_source, content_roots 全一致)。content_roots.system_spec は symlink でなく realpath が <repo_root>/system-spec の実ディレクトリで repo 内、plugins/ 配下ではない。system-spec 内から git rev-parse すると toplevel=repo_root, common-dir=../.git (=receipt の git_common_dir) で同一 repo。system-spec 配下に symlink 0件。.dev-graph/config.json の content_roots.system_spec='system-spec' (相対) と整合。"
+    },
+    {
+      "item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた",
+      "status": "achieved",
+      "evidence": "独立再実行で exit 0, {checked:0, checked_node_ids:[], status:pass, violations:[]} となり lineage-gate.json と完全一致。.dev-graph/state/graph.json の nodes=0 とも整合。checked=0 なので判定は『新規作成』(resume ではない) に一意に決まる。"
+    }
+  ],
+  "commands": [
+    {"argv": ["python3", "-B", "plugins/dev-graph/scripts/resolve-repo-context.py", "--help"], "exit": 0, "summary": "オプション確認。ソース上 write-scope: none、ファイル書込み処理なし"},
+    {"argv": ["python3", "-B", "plugins/dev-graph/scripts/resolve-repo-context.py", "--repo-root", "<DEV_GRAPH_ROOT>", "--mode", "write"], "exit": 0, "summary": "出力が c24-receipt.json と全フィールド一致"},
+    {"argv": ["python3", "-B", "plugins/dev-graph/scripts/validate-source-lineage.py", "--repo-root", "<DEV_GRAPH_ROOT>"], "exit": 0, "summary": "checked=0, status=pass, violations=[]; lineage-gate.json と一致"},
+    {"argv": ["git", "-C", "system-spec", "rev-parse", "--show-toplevel", "--git-common-dir"], "exit": 0, "summary": "toplevel=repo_root, common-dir=../.git (receipt と一致)"},
+    {"argv": ["find", "system-spec", "-type", "l"], "exit": 0, "summary": "symlink なし"},
+    {"argv": ["git", "status", "--porcelain"], "exit": 0, "summary": "検証コマンド実行前後で差分なし (副作用なし)"}
+  ],
+  "notes": [
+    "c24-receipt.json は resolver の出力をそのまま保存しており絶対 path を含む (Layer 3 の『環境固有の絶対 path を成果物へ保存しない』との関係は eval-log 内 receipt のため checklist 判定外とした)。",
+    "diagnostics: default_branch_fallback_main (origin remote 無し、ローカル fixture として想定内)。"
+  ],
+  "verified_at": "2026-11-01T02:07:48Z"
+}

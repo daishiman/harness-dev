@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-aacf11e6a97bfab17",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "81598f7a-4ad2-4ce9-b26f-d659bd598f13",
+      "line": 110,
+      "prefix_bytes": 572054,
+      "prefix_sha256": "38ad6e17e2e50ccccf6c2266c95d9fc66032c439b0df400c06ac05503b5d3684",
+      "timestamp": "2026-11-01T10:10:14.602Z"
+    },
+    "result": {
+      "uuid": "b93baebc-6d96-470a-9ed7-ce9202bc3289",
+      "line": 111,
+      "prefix_bytes": 573432,
+      "prefix_sha256": "db341267bf03459ac224606ebc3048517e9a916187689e42bee99e0055019da6",
+      "timestamp": "2026-11-01T10:10:20.061Z"
+    }
+  },
+  "tool_use_id": "toolu_018y4GAu7LN17xTRKqrmSSBk",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; ls plugins; find plugins -maxdepth 8 \\( -name verify-completeness.py -o -name validate-prompt.py \\) 2>/dev/null | head; python3 plugins/system-spec-harness/scripts/validate-design-knowledge-refs.py --matrix system-spec/spec-state.json --repo-root \"$PWD\"; echo dk=$?; python3 plugins/system-spec-harness/scripts/validate-spec-doc-sync.py --help 2>&1 | head -8"
+  },
+  "is_error": false,
+  "tool_result_content": "dev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\nplugins/harness-creator/vendor/prompt-creator/verify-completeness.py\nOK: design knowledge_ref は全て実在する (検査 12 件)\ndk=0\nusage: validate-spec-doc-sync.py [-h] --matrix MATRIX --references REFERENCES\n                                 [--spec-root SPEC_ROOT]\n\n正本 spec-state.json と成果物 system-spec/*.md の同期を検証する\n\noptions:\n  -h, --help            show this help message and exit\n  --matrix MATRIX       spec-state.json のパス",
+  "tool_use_result": null
+}

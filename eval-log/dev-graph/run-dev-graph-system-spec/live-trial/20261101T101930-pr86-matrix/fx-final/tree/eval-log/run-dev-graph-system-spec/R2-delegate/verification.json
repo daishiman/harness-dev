@@ -1,0 +1,98 @@
+{
+  "responsibility_id": "R2-delegate",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (read-only)",
+  "c24_receipt": {
+    "path": "eval-log/c24-receipt.json",
+    "sha256": "c3ee3705170e6d921bbfcb7a7d5abf9310aff32791a87fa4c5ace72361a77980",
+    "matches_fixed": true,
+    "repo_root_eq_content_roots.repository": true
+  },
+  "prompt_read": [
+    {
+      "path": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
+      "sha256": "07ab201d7192adbbbd7722d0130a77b84eb143916998e47e519bfc1d5f286f2f"
+    },
+    {
+      "path": "plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea"
+    }
+  ],
+  "checks": [
+    {
+      "id": "artifact_sha256",
+      "result": "PASS",
+      "detail": "<system_spec_root>/*.md 10件 + spec-state.json(9c14364c...) + fetched-references.json(aa23a77b...) の実測 sha256 が compile-standard.json outputs / elicit-receipt state_sha256_after / doc-fetch-receipt fetched_references_sha256 / report artifact_snapshot 12件と全一致"
+    },
+    {
+      "id": "helper_rerun",
+      "result": "PASS",
+      "detail": "build-evaluation-context.py 同引数再実行 exit0、skill_args='--spec-dir <repo_root>/<system_spec_root> --output <repo_root>/eval-log/system-spec-completeness-report.json'、context_sha256=c24 receipt sha と一致、evidence_ref=eval-log/system-spec-completeness-report.json"
+    },
+    {
+      "id": "report_spec_dir_realpath",
+      "result": "PASS",
+      "detail": "report.spec_dir == helper spec_dir == realpath(取込元章ディレクトリ)。ラベル混入なし"
+    },
+    {
+      "id": "gate_coverage_matrix",
+      "result": "PASS",
+      "detail": "--require-complete --require-basis --require-foundation exit0"
+    },
+    {
+      "id": "gate_source_citation",
+      "result": "PASS",
+      "detail": "--targets/--references/--state/--repo-root exit0"
+    },
+    {
+      "id": "gate_aggregate_completeness",
+      "result": "PASS",
+      "detail": "--report --fork-ledger --session b211b92c-... --spec-dir exit0, verdict=PASS"
+    },
+    {
+      "id": "fork_ledger_pairs",
+      "result": "PASS",
+      "detail": "C07 dispatch 01:28:45(pending)->completion 01:29:25(resolved,PASS); C06 01:29:47->01:30:36(PASS); C08 01:32:06->01:32:38(PASS)。各 response_sha256 は report.audit_delegations と一致。区間は非重複で、前の completion 前に次の dispatch は無い (並列起動なし)"
+    },
+    {
+      "id": "c08_untyped_absent_row",
+      "result": "NON_BLOCKING",
+      "detail": "token c05-sysspec103-c08-0003 を本文に含む completion 行 1件 (ts 01:31:57, agent_id a6d2981581c3feeed, subagent_type null, verdict_state absent, audit_verdict null)。audit_fork_attribution._usable は verdict_state=resolved のみ採用するため昇格・判定に不使用。report が引く C08 response_sha256 は efade17f... (agent a0e90d191ff732ce1) で別行。ts は C06 completion 後・C08 正規 dispatch 前で typed auditor 区間と重ならず、対応する dispatch 行も無いため必須 auditor の並列起動を示さない。発生源 (内部 subagent 等) は transcript 参照が隔離 guard で拒否され特定不能"
+    },
+    {
+      "id": "no_duplicated_logic",
+      "result": "PASS",
+      "detail": "plugins/dev-graph 内の script は build-evaluation-context.py のみ (C24 照合用 helper)。elicitation/compile/render の複製実装なし。plugins/ は HEAD から差分なし"
+    },
+    {
+      "id": "delegate_reads_and_root",
+      "result": "PASS_WITH_LIMITATION",
+      "detail": "compile receipt に prompts R1-assemble/R2-render/R3-crosslink と chapter-template/resource-map の全文 Read 記録、出力は全て <repo_root>/<system_spec_root> 内に生成 (絶対パス CLI)。elicit は --resume で writer_ops 0・state sha 不変、doc-fetch は not_required・writer_ops 0。Bash ごとの export CLAUDE_PROJECT_DIR は receipt に明記なく、transcript 参照は隔離 guard で拒否のため直接確認不能 (成果物位置・hash の整合から間接確認)"
+    },
+    {
+      "id": "scratch_isolation",
+      "result": "PASS",
+      "detail": "OUT1 tests は scratch 隔離と記録、caller 章/state/出典 hash は compile 出力と一致し変更なし。git status の未追跡は既知 4 entry のみ"
+    }
+  ],
+  "checklist": {
+    "R2_5.3": {
+      "正規Skill呼出しだけでcoverage/source/evaluator gate全PASS": "YES",
+      "本処理Bashごとに固定root移動・照合、独立testの書込みは検証済みscratchのみ": "YES (export は間接確認)",
+      "elicit/doc-fetch/compileのBashで毎回CLAUDE_PROJECT_DIRにrepo_rootをexport": "YES (間接確認; transcript 直接確認不能)",
+      "evaluator argsはhelper成功出力のskill_argsで失敗時未起動": "YES",
+      "report spec_dirが--spec-dirの取込元章ディレクトリに解決": "YES",
+      "出力を作った委譲先ごとにSKILL.mdと責務promptを全文Read": "YES"
+    },
+    "common_5.3": {
+      "宣言した入力が全て検証済み": "YES",
+      "出力が宣言したshapeとauthorityを満たす": "YES",
+      "責務境界に反するread/write/delegationが0件": "YES"
+    }
+  },
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": [
+    "report の G-matrix は --require-complete のみだが、検証者が --require-basis --require-foundation 付きで再実行し exit0"
+  ]
+}

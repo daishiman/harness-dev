@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a6ea72a1f73d81e74",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "272609c7-3020-4abf-9ae7-5fee6d7774c7",
+      "line": 50,
+      "prefix_bytes": 312236,
+      "prefix_sha256": "2eb00033893b6814e6c9ccad7a4ac62f58a43971d85ed3866aba79452083306f",
+      "timestamp": "2026-11-01T02:53:26.899Z"
+    },
+    "result": {
+      "uuid": "8eb1cada-a2f4-4da8-a8e8-8d61a7d04c95",
+      "line": 51,
+      "prefix_bytes": 313117,
+      "prefix_sha256": "c0f54b0bee24f9bc5e13e560ee55da2a1ab7792e14fdbdf5d0835ec21d626b7a",
+      "timestamp": "2026-11-01T02:53:29.359Z"
+    }
+  },
+  "tool_use_id": "toolu_01HrjQassYHkYCGYgHWUZ8F6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "D=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/run-dev-graph-system-spec/R1-preflight; mkdir -p $D; cat > $D/verifier-result.json <<'EOF'\n{\n  \"responsibility\": \"R1-preflight\",\n  \"verdict\": \"PASS\",\n  \"checklist\": [\n    {\"item\": \"version が plugin-composition.yaml の範囲内\", \"status\": \"YES\", \"evidence\": \"plugin.json version=0.1.25; plugin-composition.yaml L153-154 external_dependencies.system-spec-harness.version=\\\">=0.1.22 <1.0.0\\\"; 0.1.22<=0.1.25<1.0.0。正本範囲で判定 (計画時値 >=0.1.0 は不使用)\"},\n    {\"item\": \"elicit/doc-fetch/compile/evaluator 実在 (exports + SKILL.md)\", \"status\": \"YES\", \"evidence\": \"package-contract.json entry_points.skills に4件すべて含む; skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md 実在し frontmatter name 一致\"},\n    {\"item\": \"公式 manifest に harness 専用キー混在なし\", \"status\": \"YES\", \"evidence\": \"plugin.json keys = name, version, dependencies, description, author のみ (公式キー)。entry_points/required_entry_points 等の harness 専用キーは package-contract.json 側に分離\"},\n    {\"item\": \"5.3共通: 宣言入力が全て検証済み\", \"status\": \"YES\", \"evidence\": \"manifest/version/exports/composition range を生成 Bash (toolu_018yPvdVfCKpvE2fS17NpqXD) が実ファイルから読取; verifier 再計算と一致; manifest_sha256 94640e71... 実ファイルと一致; R0 receipt_sha256 bad09a95... 固定 C24 receipt と一致\"},\n    {\"item\": \"5.3共通: 出力が宣言 shape と authority を満たす\", \"status\": \"YES\", \"evidence\": \"preflight-report.json R1_preflight に plugin/version/composition_range/in_range/required_entry_points(4件true)/manifest_sha256 を持つ availability receipt; 現ファイル sha256 4f9ec6cc... が生成時出力と一致 (事後改変なし); status=PASS は in_range かつ全 entry point 実在の論理積で算出\"},\n    {\"item\": \"5.3共通: 責務境界違反 read/write/delegation 0件\", \"status\": \"YES\", \"evidence\": \"observer 上 plugins/system-spec-harness への書込み無し (Read/ls/grep のみ); fallback/複製なし; 生成 Bash の書込み先は eval-log/ 配下のみ\"},\n    {\"item\": \"Skill 実呼出し / R1-preflight.md 実 Read / report 生成 Bash の observer 裏付け\", \"status\": \"YES\", \"evidence\": \"Skill dev-graph:run-dev-graph-system-spec (toolu_01TkHPAWy6N57KVMbzr2vQni, success=true, line48); Read R1-preflight.md (toolu_013w74wTd1bPEeCWaAd8aWaL, line86); Read prompt-common-layers.md (toolu_01Ca7LGVeEBA8iXzsAqaMqwG); report 生成 Bash (toolu_018yPvdVfCKpvE2fS17NpqXD, line128, 02:51:44Z, result 'PASS 4f9ec6cc...')\"}\n  ],\n  \"observer_events_checked\": [\n    \"toolu_01TkHPAWy6N57KVMbzr2vQni (Skill)\",\n    \"toolu_013w74wTd1bPEeCWaAd8aWaL (Read R1-preflight.md)\",\n    \"toolu_01Ca7LGVeEBA8iXzsAqaMqwG (Read prompt-common-layers.md)\",\n    \"toolu_01VnmemQ64D9Wnn3qGLgpuKE (Bash composition/exports/SKILL.md 確認)\",\n    \"toolu_018yPvdVfCKpvE2fS17NpqXD (Bash preflight-report.json 生成)\",\n    \"toolu_01CD43cZxumL46d5jswNtida (Bash artifact-delivery.json 記録; report 非改変)\"\n  ],\n  \"blockers\": [],\n  \"notes\": [\n    \"生成 script の範囲下限 (0,1,22) はハードコードだが composition 正本値と一致しており結果に影響なし\",\n    \"preflight-report.json の R0_context に絶対 path (git_common_dir) が含まれる (Layer 3 path 方針)。R1 セクション自体には絶対 path なしのため R1 の blocker とはしない\"\n  ]\n}\nEOF\npython3 -m json.tool $D/verifier-result.json >/dev/null && echo ok"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

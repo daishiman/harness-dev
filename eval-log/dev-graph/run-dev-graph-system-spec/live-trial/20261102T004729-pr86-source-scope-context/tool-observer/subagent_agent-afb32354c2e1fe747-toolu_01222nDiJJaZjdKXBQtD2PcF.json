@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-afb32354c2e1fe747",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e7d1a321-0177-4f6f-86c6-328675947c79",
+      "line": 221,
+      "prefix_bytes": 2301110,
+      "prefix_sha256": "9c3dd57437e8ebc8f5e5a61445d90404c8defb29b639414f57a393ecf359b83a",
+      "timestamp": "2026-11-01T15:58:22.112Z"
+    },
+    "result": {
+      "uuid": "47842f7b-cdba-4c80-bf56-f202cba9a513",
+      "line": 222,
+      "prefix_bytes": 2303674,
+      "prefix_sha256": "92019c8f105cbc61a39616383728454f54d073b5a8dfdab897795bb131868eb7",
+      "timestamp": "2026-11-01T15:58:22.387Z"
+    }
+  },
+  "tool_use_id": "toolu_01222nDiJJaZjdKXBQtD2PcF",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py",
+    "limit": 30
+  },
+  "is_error": false,
+  "tool_result_content": "1\t#!/usr/bin/env python3\n2\t# /// script\n3\t# name: aggregate-completeness\n4\t# version: 0.3.0\n5\t# purpose: C05 完成度評価レポートを fail-closed で集約し、matrix/出典記録/知識グラフの決定論ゲートを実行する\n6\t# inputs:\n7\t#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--spec-dir DIR] / --matrix FILE [--require-complete] / --source-citation FILE --state FILE [--repo-root DIR] / --knowledge-graph / --hearing FILE --state FILE\n8\t# outputs:\n9\t#   - stdout: OK/violation 一覧または gate 結果 JSON\n10\t#   - exit: 0=OK / 1=violation or gate fail / 2=usage error\n11\t# contexts: [E, C]\n12\t# network: false\n13\t# write-scope: none\n14\t# dependencies: [audit_fork_attribution.py, validate-json-schema-subset.py]\n15\t# requires-python: \">=3.9\"\n16\t# ///\n17\t\"\"\"C05 完成度レポートを検証・集約する CLI。\n18\t\n19\treport 形状、全 6 観点の fail-closed verdict、high finding、独立監査の実 fork\n20\t証跡を一つの入口で検証する。台帳読取りと receipt 照合は\n21\t`audit_fork_attribution.py` に分離し、ここでは集約と CLI を所有する。\n22\t\n23\t- `spec_dir_violations(report, spec_dir)` — report の spec_dir が評価を頼まれた dir に\n24\t  解決するかを照合する (呼び出し側の C02 が取込元と照合する前に、ラベル混入を落とす)。\n25\t- `derive_hearing_verdict(audit, spec_state)` — C06 (hearing-auditor) の重大度付き検出から、\n26\t  matrix_coverage の sub-input 判定を `references/aspect-criteria.md` の対応表どおりに導く。\n27\t  C06 自身の verdict は使わない (low 1 件で観点が FAIL になっていた不整合の是正)。\n28\t\"\"\"\n29\tfrom __future__ import annotations\n30\t",
+  "tool_use_result": null
+}

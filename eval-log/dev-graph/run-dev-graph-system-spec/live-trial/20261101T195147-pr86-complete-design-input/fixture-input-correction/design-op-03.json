@@ -1,0 +1,7 @@
+{
+  "action": "set-design-application",
+  "category": "backend",
+  "text": "clean-architecture の依存の規則に従い、ユースケース (請求書の登録・更新、突合の実行、確定の承認、監査ログの検索, qa-025) を FastAPI と PostgreSQL から切り離す。api-design-patterns に従い、一覧は不透明なカーソルでページに分け、請求書の更新は ETag と If-Match で版を照合して後勝ちの上書きを止め、突合ジョブの起動には冪等キーを付けて二重実行を防ぐ (いずれも qa-025)。ddd に従い、境界づけられたコンテキストを請求と監査の 2 つに分け、監査は請求のドメインイベント (登録・更新・確定・赤黒訂正) を受けて追記する (qa-024)。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: Clean Architectureの業務ユースケースをAPIとworkerから共有し、請求漏れ判定・締め前整合照合・突合をHTTP/CronJob/DB row型から隔離する。GET /billing-missing、POST /billing-missing/checksの202受付、GET /jobs/{id}の状態取得に既存認可/楽観ロックを適用し、PG outboxと業務更新を同一transactionへ置く。lease/fencing・リトライ上限/失敗状態・一意キーで少なくとも1回の実行に伴う二重業務反映を防ぐ。新broker/RedisやAPI BackgroundTasks案は採用しない。\nこれは既存回答に対するfixture作者agentの設計解釈であり、新規の利用者承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T10:44:43.266344Z"
+}

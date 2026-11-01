@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-aba42a4dfca29a6b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2b2e868b-2475-4115-bc23-65bd2b93fe8d",
+      "line": 31,
+      "prefix_bytes": 325265,
+      "prefix_sha256": "aa9a0b8148c8bd7f982b21cf806734fe3235122d0e3bea170e7fca9b6e7e260d",
+      "timestamp": "2026-11-01T02:56:35.719Z"
+    },
+    "result": {
+      "uuid": "8293e97f-bf55-45e7-9ac5-800a3068cbde",
+      "line": 32,
+      "prefix_bytes": 328110,
+      "prefix_sha256": "c053cb617c1647a82f08a2c0e3880988a048845a46c5e287a79684959a993c03",
+      "timestamp": "2026-11-01T02:56:38.524Z"
+    }
+  },
+  "tool_use_id": "toolu_01HWBbcfcdW2hCqjzRD1ckGc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "PLUGIN_ROOT=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/system-spec-harness; python3 \"$PLUGIN_ROOT/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py\" --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx --print-artifact-snapshot; echo \"EXIT=$?\"; echo \"SESSION=$CLAUDE_SESSION_ID\"; python3 -c \"import pathlib;print(sorted(str(p) for p in pathlib.Path('system-spec').rglob('*')))\""
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\",\n    \"system-spec/auth.md\": \"21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897\",\n    \"system-spec/backend.md\": \"8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466\",\n    \"system-spec/database.md\": \"3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de\",\n    \"system-spec/fetched-references.json\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\",\n    \"system-spec/frontend.md\": \"10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd\",\n    \"system-spec/maintenance-ops.md\": \"1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0\",\n    \"system-spec/security.md\": \"c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1\",\n    \"system-spec/spec-state.json\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\",\n    \"system-spec/ui-ux.md\": \"420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410\"\n  }\n}\nEXIT=0\nSESSION=\n['system-spec/.claude', 'system-spec/.claude/.cc-writes', 'system-spec/00-requirements-definition.md', 'system-spec/auth.md', 'system-spec/backend.md', 'system-spec/database.md', 'system-spec/fetched-references.json', 'system-spec/frontend.md', 'system-spec/index.md', 'system-spec/infrastructure.md', 'system-spec/maintenance-ops.md', 'system-spec/retrieval-evidence', 'system-spec/retrieval-evidence/fastapi.json', 'system-spec/retrieval-evidence/postgres.json', 'system-spec/retrieval-evidence/react.json', 'system-spec/retrieval-evidence/typescript.json', 'system-spec/security.md', 'system-spec/spec-state.json', 'system-spec/ui-ux.md']",
+  "tool_use_result": null
+}

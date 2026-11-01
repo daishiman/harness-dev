@@ -1,0 +1,70 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b01183ba-ca1f-4688-89e6-506555ef3fed",
+      "line": 695,
+      "prefix_bytes": 4044319,
+      "prefix_sha256": "dcd89fc87b634fc6ebe576b6def8a197560acefe1073ac45947bf984cf89fd01",
+      "timestamp": "2026-11-01T16:15:52.894Z"
+    },
+    "result": {
+      "uuid": "b4b1909a-dda8-46d7-a24d-4e50f4874304",
+      "line": 696,
+      "prefix_bytes": 4047331,
+      "prefix_sha256": "4202fa98395444694d970b8fe9182ce6d8971d25427969ef2be7b8a1fe0941a0",
+      "timestamp": "2026-11-01T16:16:00.001Z"
+    }
+  },
+  "tool_use_id": "toolu_01VMQ8MoFRp8oCzLzCXrv3SZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture > eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json; echo LG=$?; shasum -a 256 system-spec/index.md system-spec/00-requirements-definition.md eval-log/system-spec-completeness-report.json eval-log/run-dev-graph-system-spec/R3-import/import-payload.json eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json eval-log/run-dev-graph-system-spec/R3-import/add-result.json",
+    "description": "Run lineage gate and hash report inputs"
+  },
+  "is_error": false,
+  "tool_result_content": "LG=0\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52  eval-log/system-spec-completeness-report.json\ndd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238d  eval-log/run-dev-graph-system-spec/R3-import/import-payload.json\nbd138fb27f9006a32b4c85b0c0f1efa30bf8aaa112309246f3f9d8e037ef464a  eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json\n5861552019548d2d1e87e40b1de3fbc0bb12a2db9c5e6c074733b477515d9514  eval-log/run-dev-graph-system-spec/R3-import/add-result.json",
+  "tool_use_result": {
+    "stdout": "LG=0\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52  eval-log/system-spec-completeness-report.json\ndd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238d  eval-log/run-dev-graph-system-spec/R3-import/import-payload.json\nbd138fb27f9006a32b4c85b0c0f1efa30bf8aaa112309246f3f9d8e037ef464a  eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json\n5861552019548d2d1e87e40b1de3fbc0bb12a2db9c5e6c074733b477515d9514  eval-log/run-dev-graph-system-spec/R3-import/add-result.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 10,
+              "lines": [
+                "+{",
+                "+  \"checked\": 2,",
+                "+  \"checked_node_ids\": [",
+                "+    \"spec-billing-audit-system-spec\",",
+                "+    \"arch-billing-audit-system-architecture\"",
+                "+  ],",
+                "+  \"graph\": \".dev-graph/state/graph.json\",",
+                "+  \"status\": \"pass\",",
+                "+  \"violations\": []",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json"
+      ]
+    }
+  }
+}

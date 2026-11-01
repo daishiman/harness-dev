@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出 (置き換え先: qa-019)。JTBD・対象ユーザー・利用文脈を名指しで 1 問に束ねた N4 違反。qa-019 は JTBD 1 論点の開いた問で N1-N4 を満たし (a)、superseded_note と両問の照合で同論点 (b)、利用者回答・basis user-decision・answered_at ありの回答 (c) を確認。qa-009 は確定セルの qa_ref ではない (ui-ux/web の qa_refs にのみ残存)。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "開いた問だが『定義・検知時期・提示先・計測データ』の 4 論点を名指しで並べて 1 つの答えを求めており N4 の束ねに当たる。確定セルの主たる qa_ref ではなく qa_refs (database/web, ui-ux/web, backend/web, maintenance-ops/web) の裏付けのみ。PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択と、有効期限・ログアウトの扱いという 2 論点を 1 問に束ねている。選択肢 3 案と『どれも採らない/保留』の道はあり N1-N3 は満たす。auth/web の qa_refs のみで主たる qa_ref ではない。PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の 9 項目を 1 問で確定させる束ね。確定/指摘/保留の 3 択はあり N3 は満たす。どの確定セルの qa_ref/qa_refs からも参照されておらず、foundation の根拠は qa-foundation-u1〜u9。PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-job-choice-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "2 案の選択に加えて『理由と運用条件』も同じ問で求めている軽微な束ね。選択肢は並列で推奨の印なし、別案・保留も明示。qa_refs のみで主たる qa_ref ではない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "low",
+      "cell": "ui-ux/web",
+      "qa_id": "qa-009",
+      "observation": "qa_ref=qa-003 を含む主たる根拠は実在・未置換。qa_refs に置き換え済み (retired) の qa-009 が残存するが、置き換え先 qa-019 が同セルの qa_refs に結ばれており、主たる根拠ではないため影響は限定的。dangling なし。C01 側で qa-009 の qa_refs 整理を検討。"
+    }
+  ]
+}

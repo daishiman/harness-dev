@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9a7c5074-72db-4eb5-b079-ef554a5db649",
+      "line": 145,
+      "prefix_bytes": 1065516,
+      "prefix_sha256": "6a938d752fee468e7d5cfd985b23fe431599ac0da72e7a78bf801682e91be13a",
+      "timestamp": "2026-11-01T13:17:26.967Z"
+    },
+    "result": {
+      "uuid": "e90ec8ef-6aca-4cdc-9179-335d48a2aa1e",
+      "line": 146,
+      "prefix_bytes": 1067560,
+      "prefix_sha256": "e821435beb8cf865c0b5e0547448a3c24cd160c71903bbeafa000df64c2e968e",
+      "timestamp": "2026-11-01T13:17:28.162Z"
+    }
+  },
+  "tool_use_id": "toolu_01DRaBFS4v4oWjD6kT1KQsnR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B - <<'PY'\nimport json,hashlib,os,re,subprocess\nR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx'\ndef sha(p): return hashlib.sha256(open(os.path.join(R,p),'rb').read()).hexdigest()\nrc=json.load(open(R+'/eval-log/run-dev-graph-system-spec/c24-receipt.json'))\nman=json.load(open(R+'/plugins/system-spec-harness/.claude-plugin/plugin.json'))\ncomp=open(R+'/plugins/dev-graph/plugin-composition.yaml').read()\nrng=re.search(r'system-spec-harness:\\n\\s+version: \"([^\"]+)\"',comp).group(1)\nv=tuple(map(int,man['version'].split('.')))\nin_range = (0,1,22)<=v<(1,0,0)\nep=json.load(open(R+'/plugins/system-spec-harness/references/package-contract.json'))['entry_points']['skills']\nreq=['run-system-spec-elicit','run-system-spec-doc-fetch','run-system-spec-compile','assign-system-spec-completeness-evaluator']\neps={s:{'declared':s in ep,'skill_md_exists':os.path.isfile(f'{R}/plugins/system-spec-harness/skills/{s}/SKILL.md')} for s in req}\nlin=subprocess.run(['python3','-B',R+'/plugins/dev-graph/scripts/validate-source-lineage.py','--repo-root',R],capture_output=True,text=True)\ninputs={p:sha(p) for p in ['system-spec/spec-state.json','system-spec/fetched-references.json','.dev-graph/state/graph.json']}\nfor f in sorted(os.listdir(R+'/system-spec')):\n    if f.endswith('.md'): inputs['system-spec/'+f]=sha('system-spec/'+f)\nfor f in sorted(os.listdir(R+'/system-spec/retrieval-evidence')):\n    inputs['system-spec/retrieval-evidence/'+f]=sha('system-spec/retrieval-evidence/'+f)\nrep={'report':'run-dev-graph-system-spec-preflight','skill':'run-dev-graph-system-spec','c24_receipt':{'path':'eval-log/run-dev-graph-system-spec/c24-receipt.json','sha256':sha('eval-log/run-dev-graph-system-spec/c24-receipt.json'),'repo_root_matches_repository':rc['repo_root']==os.path.realpath(rc['content_roots']['repository']),'repository_id':rc['repository_id'],'git_common_dir':rc['git_common_dir'],'system_spec':rc['content_roots']['system_spec'],'system_spec_inside_repo':os.path.realpath(rc['content_roots']['system_spec']).startswith(rc['repo_root']+'/')},\n 'R0_lineage_gate':{'exit':lin.returncode,'result':json.loads(lin.stdout),'decision':'new_creation' if json.loads(lin.stdout)['checked']==0 else 'resume'},\n 'R1_dependency':{'plugin':man['name'],'version':man['version'],'composition_range':rng,'in_range':in_range,'entry_points':eps,'all_entry_points_ok':all(x['declared'] and x['skill_md_exists'] for x in eps.values())},\n 'inputs_sha256':inputs}\nrep['verdict']='PASS' if (rep['c24_receipt']['repo_root_matches_repository'] and rep['c24_receipt']['system_spec_inside_repo'] and lin.returncode==0 and in_range and rep['R1_dependency']['all_entry_points_ok']) else 'FAIL'\nopen(R+'/eval-log/run-dev-graph-system-spec/preflight-report.json','w').write(json.dumps(rep,ensure_ascii=False,indent=2)+'\\n')\nprint(rep['verdict'], rng, man['version'])\nPY\npython3 -c \"import json;json.load(open('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/eval-log/run-dev-graph-system-spec/preflight-report.json'));print('parse ok')\"",
+    "description": "Build preflight report from C24/lineage/manifest checks"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin.",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [python3 \"${PLUGIN_ROOT:-/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/plugins/system-spec-harness}/hooks/guard-confirmed-chapter-overwrite.py\"]: [guard-confirmed-chapter-overwrite] BLOCKED: 保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、書込み先を静的に特定できない書換を安全側で遮断。\n  確定済み仕様章 / 正本 spec-state.json は C01/C03 の単一 writer (根拠付き R4-reopen) 経由でのみ変更してください。\n\nThis hook comes from the system-spec-harness@inline plugin."
+}

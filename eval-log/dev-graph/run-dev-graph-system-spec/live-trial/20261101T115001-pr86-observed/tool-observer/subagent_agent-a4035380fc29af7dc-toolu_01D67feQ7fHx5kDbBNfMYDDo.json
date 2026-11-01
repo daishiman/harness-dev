@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ec80856d-85f2-4da2-88e8-6c9c6eeabe9c",
+      "line": 104,
+      "prefix_bytes": 743116,
+      "prefix_sha256": "f4a6fca6a554e1999baa863dba479b085290cbdecea07b671f5affdae793ee43",
+      "timestamp": "2026-11-01T03:11:58.872Z"
+    },
+    "result": {
+      "uuid": "64a79700-1fdf-4991-91fe-396c8c4c4197",
+      "line": 105,
+      "prefix_bytes": 748357,
+      "prefix_sha256": "c752ae8a19b8eb8b51d16e5ee241aa5742a912d1d78bd688c58908d47172ba17",
+      "timestamp": "2026-11-01T03:12:00.978Z"
+    }
+  },
+  "tool_use_id": "toolu_01D67feQ7fHx5kDbBNfMYDDo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport json,pathlib\np=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/system-spec-harness/audit-fork-ledger.jsonl\")\nprint(p.exists())\nif p.exists():\n    for l in p.read_text().splitlines():\n        d=json.loads(l)\n        print({k:(v if not isinstance(v,str) or len(v)<90 else v[:90]) for k,v in d.items()})\nEOF",
+    "description": "Inspect audit fork ledger rows"
+  },
+  "is_error": false,
+  "tool_result_content": "True\n{'audit_verdict': None, 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c07-0001', 'prompt_sha256': 'c12c3647861e35a4fa685705992fbb1e49660a77fedea96dfd4cece7476faca4', 'record_kind': 'dispatch', 'response_sha256': '8df4a7ba46d423e6dab62fdb2cc4e158647b1d2e231047940c5ccb3ed2c6aa3b', 'schema_version': '1.2', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_013Ghyw31rW7sKS5MoZbi2YD', 'ts': '2026-11-01T02:57:24Z', 'verdict_state': 'pending'}\n{'agent_id': 'a51dca865c11400fe', 'audit_verdict': 'PASS', 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c07-0001', 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': '016f3a142ab8c024cfa6cfaaa53aba4dbf590cb0f4f38dbfe90bbcb70d70184b', 'schema_version': '1.3', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T02:57:53Z', 'verdict_state': 'resolved'}\n{'audit_verdict': None, 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c06-0002', 'prompt_sha256': 'c13cd38f0152dce0bd784a070f5f9d6718181115d49e08ec1197d2a839a56565', 'record_kind': 'dispatch', 'response_sha256': '6c2139be216961ae8b767e86b0212532c8bdf4697df0b11485a733d91fa38085', 'schema_version': '1.2', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-hearing-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_01NhuSzXTgV9hP56DcJiBMbJ', 'ts': '2026-11-01T02:58:13Z', 'verdict_state': 'pending'}\n{'agent_id': 'a181a7d990420d2e8', 'audit_verdict': 'PASS', 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c06-0002', 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': '8bd79a0a0cec936ad45f63ed8f09531e1d17548988922050c0b84674bdc9e1eb', 'schema_version': '1.3', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-hearing-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T02:59:16Z', 'verdict_state': 'resolved'}\n{'audit_verdict': None, 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c08-0003', 'prompt_sha256': '12f31c086ceb72e9c1c7cabc9b73c41463e56e89c2845a3057a26be415b0f44b', 'record_kind': 'dispatch', 'response_sha256': '20f220673f5c4fbfd09c4f64c1643f691b0eeb0d05b0fd24ae302f528328adc0', 'schema_version': '1.2', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_01LW7ay9kTo2Wki2DfQhuhQb', 'ts': '2026-11-01T02:59:51Z', 'verdict_state': 'pending'}\n{'agent_id': 'a76d4d17a5548d7d3', 'audit_verdict': 'PASS', 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': 'c05-sysspec105-c08-0003', 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': 'c07a32b54d7019f08e1a583f8d446299c343015a9547eb628a89f5befd05b92e', 'schema_version': '1.3', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-doc-freshness-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T03:00:25Z', 'verdict_state': 'resolved'}\n{'audit_verdict': None, 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': None, 'prompt_sha256': 'c9b72afb97c9cd58fa343d86b7e520383b16e7f770d105f7b573835c320c9aaa', 'record_kind': 'dispatch', 'response_sha256': 'a66a6e85f65d580461b183f07c144f2b7eeec0d148b497082765d386c26cc089', 'schema_version': '1.2', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_01VyMYQkrDzaYyGXEomb9zfR', 'ts': '2026-11-01T03:11:03Z', 'verdict_state': 'pending'}\n{'agent_id': 'ac26fa67a2460b8cb', 'audit_verdict': 'PASS', 'cwd': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx', 'dispatch_token': None, 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': 'aa22a8302d6f9d3e7cbedf9fec187806f7042f330b2c24c5f1f5bf3e41cea309', 'schema_version': '1.3', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-matrix-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T03:11:55Z', 'verdict_state': 'resolved'}",
+  "tool_use_result": null
+}

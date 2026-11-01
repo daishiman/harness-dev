@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c9394cba-1a3f-4f28-9023-09becb0484cc",
+      "line": 550,
+      "prefix_bytes": 2895538,
+      "prefix_sha256": "42c81609443e3dac9a60379324c190bdcc6ed2c0ee60f71076e566230db16bd6",
+      "timestamp": "2026-11-01T12:20:56.772Z"
+    },
+    "result": {
+      "uuid": "6d760b78-a24f-433f-997f-73b8b6310a59",
+      "line": 553,
+      "prefix_bytes": 2898851,
+      "prefix_sha256": "ec8d88986026f0c2031be005e4af01a94ef36528d0f19cf3d9acd5a094142c70",
+      "timestamp": "2026-11-01T12:21:00.268Z"
+    }
+  },
+  "tool_use_id": "toolu_01VuqyXFoWVskVNm83sXMnJY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && date -u +%Y-%m-%dT%H:%M:%SZ; python3 -c \"import json;print(json.load(open('.dev-graph/config.json')).get('execution_tracker'))\"",
+    "description": "Get UTC time and tracker mode"
+  },
+  "is_error": false,
+  "tool_result_content": "2026-11-01T12:20:59Z\n{'beads': {'board': 'static-render', 'github_mirror': 'bd_github_push_only', 'issue_prefix': 'fx', 'server_mode': False}, 'mode': 'beads'}",
+  "tool_use_result": {
+    "stdout": "2026-11-01T12:20:59Z\n{'beads': {'board': 'static-render', 'github_mirror': 'bd_github_push_only', 'issue_prefix': 'fx', 'server_mode': False}, 'mode': 'beads'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

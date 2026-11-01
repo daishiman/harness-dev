@@ -1,0 +1,21 @@
+[
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/site-reliability-engineering.md#中核概念",
+    "principle": "宣言的な環境と稼働中の実体の観測",
+    "applicability": "applied",
+    "rationale": "qa-005の社内k8sとGitHub Actionsを、構成変更の追跡・適用済みのイメージ/設定値の確認・段階適用と復旧を同じ運用経路に置くための基盤と解釈する。qa-036で定めた運用条件と、既存のk8s-workload-observability候補を観測の対象へ結び付ける。",
+    "tradeoffs": [
+      "メトリクスやログの保管・閾値調整の運用費が必要。",
+      "IaCだけで復旧可能とはせず、実際のリストア訓練を残す。"
+    ]
+  },
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/cloud-architecture-patterns.md#中核概念",
+    "principle": "原子性の境界と再送の冪等性",
+    "applicability": "applied",
+    "rationale": "社内k8s上のAPIと非同期workerは同じDBトランザクションに入らない。qa-025で述べた冪等キーによるジョブ起動と再送をその境界に置き、qa-005の配置を、二重適用を吸収できる運用に結び付ける。",
+    "tradeoffs": [
+      "worker側の冪等性と失敗時の再試行状態の記録が必要。"
+    ]
+  }
+]

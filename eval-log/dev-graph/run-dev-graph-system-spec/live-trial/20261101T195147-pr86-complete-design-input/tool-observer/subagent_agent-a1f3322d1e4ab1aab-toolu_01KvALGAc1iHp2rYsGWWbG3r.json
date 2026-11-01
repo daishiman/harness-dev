@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b18a65dd-9f8d-4602-99ef-916dbe355cf5",
+      "line": 32,
+      "prefix_bytes": 341421,
+      "prefix_sha256": "6d714cba78a2ae9533ea2703f2d7d87142a8e950054f762778dc19142d057e0c",
+      "timestamp": "2026-11-01T11:13:43.864Z"
+    },
+    "result": {
+      "uuid": "3e983f6a-42a9-4352-ae6c-5a02d40bfa59",
+      "line": 33,
+      "prefix_bytes": 348393,
+      "prefix_sha256": "e2c699ea6ee478430bb16ffef53a33efa2754b8e7e9eebdadb00a56e34af0ac2",
+      "timestamp": "2026-11-01T11:13:44.123Z"
+    }
+  },
+  "tool_use_id": "toolu_01KvALGAc1iHp2rYsGWWbG3r",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R1-classify.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Prompt: R1-classify\n2\t\n3\t> 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n4\t\n5\t## Layer 1: 基本定義層\n6\t\n7\t- `responsibility_id`: `R1-classify`\n8\t- `skill`: `run-dev-graph-node`\n9\t- 不変目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n10\t- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n11\t\n12\t## Layer 2: ドメイン層\n13\t\n14\t### 入力契約\n15\t\n16\t- artifact本文、kind/domain/project hint、routing policy、template contract。\n17\t\n18\t### 出力契約\n19\t\n20\t- kind/domain/project/path/confidence/reasonと第二候補を持つclassification preview。\n21\t\n22\t### 責務境界\n23\t\n24\t- 保存先を質問せず書込まずfeatureはC14 macro contract時だけ候補化する。\n25\t\n26\t### 受入条件\n27\t\n28\t- 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる。\n29\t\n30\t## Layer 3: インフラ層\n31\t\n32\t- 使用資産: Readとrouting policy。\n33\t- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n34\t\n35\t## Layer 4: 共通ポリシー層\n36\t\n37\t- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n38\t\n39\t## Layer 5: エージェント層 (l5-contract v2.0.0)\n40\t\n41\t- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n42\t\n43\t### 5.1 担当 agent\n44\t\n45\t- `run-dev-graph-node/R1-classify`\n46\t\n47\t### 5.2 ゴール定義\n48\t\n49\t- 目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n50\t- 達成ゴール: kind/domain/project/path/confidence/reasonと第二候補を持つclassification previewが生成され、受入条件を満たした状態になっている。\n51\t\n52\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n53\t\n54\t- [ ] 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる\n55\t\n56\t## Layer 6: オーケストレーション層\n57\t\n58\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n59\t- R2へ候補集合と根拠を渡す。\n60\t\n61\t## Layer 7: UserInput\n62\t\n63\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n64\t\n65\t## 出力指示\n66\t\n67\tLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n68\t\n69\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R1-classify.md",
+      "content": "# Prompt: R1-classify\n\n> 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n\n## Layer 1: 基本定義層\n\n- `responsibility_id`: `R1-classify`\n- `skill`: `run-dev-graph-node`\n- 不変目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n\n## Layer 2: ドメイン層\n\n### 入力契約\n\n- artifact本文、kind/domain/project hint、routing policy、template contract。\n\n### 出力契約\n\n- kind/domain/project/path/confidence/reasonと第二候補を持つclassification preview。\n\n### 責務境界\n\n- 保存先を質問せず書込まずfeatureはC14 macro contract時だけ候補化する。\n\n### 受入条件\n\n- 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる。\n\n## Layer 3: インフラ層\n\n- 使用資産: Readとrouting policy。\n- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n\n## Layer 4: 共通ポリシー層\n\n- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n\n### 5.1 担当 agent\n\n- `run-dev-graph-node/R1-classify`\n\n### 5.2 ゴール定義\n\n- 目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない\n- 達成ゴール: kind/domain/project/path/confidence/reasonと第二候補を持つclassification previewが生成され、受入条件を満たした状態になっている。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n- [ ] 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる\n\n## Layer 6: オーケストレーション層\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n- R2へ候補集合と根拠を渡す。\n\n## Layer 7: UserInput\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n\n## 出力指示\n\nLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n\n",
+      "numLines": 69,
+      "startLine": 1,
+      "totalLines": 69
+    }
+  }
+}

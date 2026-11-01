@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a1a9cbe3c4f75f752",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e5ccffe7-e142-4bce-ab68-d59aca990434",
+      "line": 64,
+      "prefix_bytes": 776594,
+      "prefix_sha256": "7038b6ffd2aa1196158de446be9103a9abac6e430fa47e129daeba5e1f0e45b3",
+      "timestamp": "2026-11-01T14:28:58.231Z"
+    },
+    "result": {
+      "uuid": "bdc4c37e-5d6d-4d00-a0de-1f62db0a13de",
+      "line": 65,
+      "prefix_bytes": 778559,
+      "prefix_sha256": "3860d034a8575b32b0faadbb094d35ea22587fd02b0a868c1fc44e1e1864cebe",
+      "timestamp": "2026-11-01T14:29:00.437Z"
+    }
+  },
+  "tool_use_id": "toolu_01NAUrjoCamJKCMRsNewd9qA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "shasum -a 256 system-spec/spec-state.json && python3 -c '\nimport re\nfor n,l in enumerate(open(\"system-spec/spec-state.json\",encoding=\"utf-8\"),1):\n  if re.match(r\"^  \\\"[^\\\"]+\\\":\",l): print(n,l.rstrip()[:80])\n  m=re.match(r\"^    \\\"(category|id)\\\": \\\"([^\\\"]+)\\\"\",l)\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n2   \"schema_version\": \"1.0\",\n3   \"categories\": [\n37   \"platforms\": [\n45   \"matrix\": {\n377   \"qa_log\": [\n1333   \"approval_log\": [\n1351   \"reopen_log\": [\n1397   \"category_aggregate\": {\n1407   \"targets\": [\n1436   \"requirements_foundation\": {\n1522   \"decisions\": [\n1923   \"knowledge_candidates\": [\n2041   \"design_applications\": {\n2083   \"hearing_progress\": {\n2089   \"doctrine_applications\": {",
+  "tool_use_result": {
+    "stdout": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n2   \"schema_version\": \"1.0\",\n3   \"categories\": [\n37   \"platforms\": [\n45   \"matrix\": {\n377   \"qa_log\": [\n1333   \"approval_log\": [\n1351   \"reopen_log\": [\n1397   \"category_aggregate\": {\n1407   \"targets\": [\n1436   \"requirements_foundation\": {\n1522   \"decisions\": [\n1923   \"knowledge_candidates\": [\n2041   \"design_applications\": {\n2083   \"hearing_progress\": {\n2089   \"doctrine_applications\": {",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

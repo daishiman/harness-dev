@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9a2ea0b3-151a-4731-a2ed-05930e3990cc",
+      "line": 149,
+      "prefix_bytes": 784308,
+      "prefix_sha256": "ac46f680013b78344bcd539d13646c82324d62e256bfb96f7f70d6710005251c",
+      "timestamp": "2026-11-01T09:30:32.722Z"
+    },
+    "result": {
+      "uuid": "487da09f-7daf-4ddf-9e36-0faa701fb0df",
+      "line": 150,
+      "prefix_bytes": 785131,
+      "prefix_sha256": "8f833ac85b16d2a3c891a259dafe8040c379ccfd94c97da194776efd962de148",
+      "timestamp": "2026-11-01T09:30:35.054Z"
+    }
+  },
+  "tool_use_id": "toolu_01WJCSoDiLYE3uA33mHgjU1v",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; python3 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root $PWD --print-artifact-snapshot > $TMPDIR/snapshot2.json; cmp $TMPDIR/snapshot.json $TMPDIR/snapshot2.json && echo SNAPSHOT_UNCHANGED",
+    "description": "Re-check snapshot unchanged"
+  },
+  "is_error": false,
+  "tool_result_content": "SNAPSHOT_UNCHANGED",
+  "tool_use_result": null
+}

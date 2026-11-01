@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d28dab8a-044d-45cb-9729-2a272cecf5fe",
+      "line": 290,
+      "prefix_bytes": 2187159,
+      "prefix_sha256": "6d9fbae1302043fd30b63129094ada62413b6dacafb17c482615343cc83c90f6",
+      "timestamp": "2026-11-01T14:06:40.794Z"
+    },
+    "result": {
+      "uuid": "bd2ee405-f81c-4d4b-8651-0c70a55f18a5",
+      "line": 291,
+      "prefix_bytes": 2190201,
+      "prefix_sha256": "6cde462ab0c765e8a6af77a7aee02f2b5d8ba83e3e4aa1efb2104f8d29251ebd",
+      "timestamp": "2026-11-01T14:06:44.322Z"
+    }
+  },
+  "tool_use_id": "toolu_01NFobADMctZ8UMjJHXDpPH6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls eval-log/ && python3 -c 'import json;print(json.dumps(json.load(open(\"eval-log/run-dev-graph-system-spec-standard.json\")),ensure_ascii=False,indent=1))'",
+    "description": "List eval-log and view existing standard record format"
+  },
+  "is_error": false,
+  "tool_result_content": "run-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nrun-dev-graph-system-spec-standard.json\n{\n \"skill\": \"run-dev-graph-system-spec\",\n \"contract\": \"artifact-delivery-v1\",\n \"choice\": \"standard\",\n \"choice_source\": \"fixture pre-answered contract (task.md 隔離fixtureの事前回答契約)\",\n \"artifact_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n \"artifact_sha256\": \"0d9c61a4eba2eef7bd680038ea7f9c1569debc1e29018a6b9e94c74390a81024\",\n \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n \"presented_before_choice\": true,\n \"state_transitions\": [\n  \"artifact_created\",\n  \"minimal_guard_passed\",\n  \"artifact_presented\",\n  \"user_choice_recorded\",\n  \"semantic_evaluator_started\"\n ],\n \"recorded_at\": \"2026-11-01T14:01:52+00:00\"\n}",
+  "tool_use_result": {
+    "stdout": "run-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nrun-dev-graph-system-spec-standard.json\n{\n \"skill\": \"run-dev-graph-system-spec\",\n \"contract\": \"artifact-delivery-v1\",\n \"choice\": \"standard\",\n \"choice_source\": \"fixture pre-answered contract (task.md 隔離fixtureの事前回答契約)\",\n \"artifact_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n \"artifact_sha256\": \"0d9c61a4eba2eef7bd680038ea7f9c1569debc1e29018a6b9e94c74390a81024\",\n \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n \"presented_before_choice\": true,\n \"state_transitions\": [\n  \"artifact_created\",\n  \"minimal_guard_passed\",\n  \"artifact_presented\",\n  \"user_choice_recorded\",\n  \"semantic_evaluator_started\"\n ],\n \"recorded_at\": \"2026-11-01T14:01:52+00:00\"\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出(置き換え先: qa-019)。JTBD・対象ユーザー・利用文脈の 3 論点を名指しで 1 問に束ねていた。qa-019 は 1 論点の中立な開いた問(N1-N4 を満たす)で、superseded_note どおり同じ JTBD 論点を扱う。答えは answer、basis=user-decision、answered_at=2026-10-12T00:16:45Z が揃う。残りの論点は qa-016/020/021 で別々に問い直し済み。qa-009 は確定セルの主たる qa_ref ではなく、effective_source_refs の消費もない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約を 1 問で確定確認しており、独立に決められる複数項目を束ねる。ただし『直すところを指摘する』『確定を保留する』の道は示されている。確定セルの主たる qa_ref ではない(approval の根拠)。対応表上は PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択(3 択)と、有効期限・ログアウト時の扱いの開いた問を 1 問に束ねている。他の選択肢と保留の道は示されている。auth×web の裏付け(qa_refs)にとどまり、主たる qa_ref(qa-002)ではない。対応表上は PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-036",
+      "criteria": ["N4"],
+      "observation": "『どこからどのような手段で』と通知元と手段の 2 面を並べた開いた問。決定は求めておらず、答えを左右したとは読めない軽微な束ね。maintenance-ops×web の裏付け(qa_refs)のみ。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "low",
+      "cell": "ui-ux/web",
+      "observation": "qa_refs に置き換え済み(retired)の qa-009 が残る。主たる qa_ref は qa-003 で、SSOT の active consumer(qa_ref・effective_source_refs)には当たらないため閉じた検出は維持。qa-019 を qa_refs に含むため根拠は失われていない。C01 側で qa-009 の参照整理を推奨。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "auth/web",
+      "observation": "qa-037/qa-038 の provenance に、orchestrator の既定値を basis=user-decision の利用者発言の turn に変えた経緯が明記されている。fixture 全体がシナリオ上の発言で、実利用者の対話ログではない旨が全 qa に記録されている。qa_ref の実在と遡及は成立しており、記録の透明性は確保されている。"
+    }
+  ]
+}

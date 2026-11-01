@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "48ee9f2c-2468-470e-b84f-eba07164f649",
+      "line": 408,
+      "prefix_bytes": 2502492,
+      "prefix_sha256": "066c081fe897d74d2a9e3bff7278f2efc01b921afdb07bdaf87cdc1bbd9cbe68",
+      "timestamp": "2026-11-01T10:04:19.992Z"
+    },
+    "result": {
+      "uuid": "5784ccc0-7665-42a9-b00c-87cb3c8ac374",
+      "line": 411,
+      "prefix_bytes": 2505976,
+      "prefix_sha256": "4952e572b6fe8f607cc43e323ab92dee81c3ffdd5bfc6dcddf99525bc3260abe",
+      "timestamp": "2026-11-01T10:04:24.079Z"
+    }
+  },
+  "tool_use_id": "toolu_01Cf9Yq9ipqiS2XxJuZdxLks",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix system-spec/spec-state.json --require-complete --require-basis --require-foundation; echo \"coverage exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" > \"$TMPDIR/ri.json\"; echo \"required-info exit=$?\"; python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); c=d.get(\"coverage_certificate\",{}); print(\"ungrounded\", c.get(\"ungrounded_blocking_items\")); print(\"status\", d.get(\"status\"))' \"$TMPDIR/ri.json\"",
+    "description": "Run elicit completion validators"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage exit=0\nrequired-info exit=0\nungrounded []\nstatus ok",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncoverage exit=0\nrequired-info exit=0\nungrounded []\nstatus ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+ "skill": "run-dev-graph-status",
+ "overall": "PASS",
+ "inner_loop": "complete",
+ "checklist": [
+  {
+   "id": "query_allowed_fields",
+   "status": "PASS",
+   "evidence": "query id=[task-lt-task-001] only; tag none so tag_mode not required"
+  },
+  {
+   "id": "extract_exit0_validation_pass",
+   "status": "PASS",
+   "evidence": "exit0 validation.status=pass violations 0 missing_required_keys []"
+  },
+  {
+   "id": "report_equals_rows_and_graph",
+   "status": "PASS",
+   "evidence": "report = rows verbatim; evaluator matched graph node"
+  },
+  {
+   "id": "empty_result_success",
+   "status": "not_applicable",
+   "reason": "matched query; empty path not exercised"
+  },
+  {
+   "id": "digest_unchanged_external_write_0",
+   "status": "PASS",
+   "evidence": "graph sha256 7fba1fad... and combined 776b25da... unchanged; read_only.changed []; no gh/bd invoked"
+  },
+  {
+   "id": "independent_evaluator",
+   "status": "PASS",
+   "evidence": "Agent general-purpose evaluator verdict PASS"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS"
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending",
+   "judged_by": "live trial"
+  },
+  {
+   "id": "OUT2",
+   "status": "external_pending",
+   "judged_by": "acceptance test"
+  }
+ ],
+ "evaluator": {
+  "agent": "general-purpose (isolated context)",
+  "verdict": "PASS",
+  "graph_sha256": "7fba1fad4d57d00aafa4d5e8c4ad10e2a870a941fab8116e1b0e834a4f2f5d28",
+  "combined_digest": "776b25da241ccd642d9a543bd2a16a0b99e02a50495e4690e6c2e05dd1f9ceeb"
+ }
+}

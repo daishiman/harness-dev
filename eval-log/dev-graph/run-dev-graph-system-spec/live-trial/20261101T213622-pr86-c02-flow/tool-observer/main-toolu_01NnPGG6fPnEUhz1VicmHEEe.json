@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b1d623d4-01da-4ed0-a761-24c6a6eb37e5",
+      "line": 115,
+      "prefix_bytes": 1019228,
+      "prefix_sha256": "395c705db2d42bbdd1467df84fd6876494fbdf5bab081900329ad633ee0c79ff",
+      "timestamp": "2026-11-01T12:38:53.892Z"
+    },
+    "result": {
+      "uuid": "2be7efc5-4331-4c97-a845-bac6038a8958",
+      "line": 123,
+      "prefix_bytes": 1025756,
+      "prefix_sha256": "de9b861d28f616dde3d03cf024a5381ccefce73e0f04d89e69e436ca26dfb401",
+      "timestamp": "2026-11-01T12:39:00.705Z"
+    }
+  },
+  "tool_use_id": "toolu_01NnPGG6fPnEUhz1VicmHEEe",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --help; python3 -B plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py --help; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --help",
+    "description": "Show help for C24 and helper scripts"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nusage: build-evaluation-context.py [-h] --context-receipt CONTEXT_RECEIPT\n                                   --output OUTPUT\n\noptions:\n  -h, --help            show this help message and exit\n  --context-receipt CONTEXT_RECEIPT\n  --output OUTPUT\nusage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)",
+  "tool_use_result": {
+    "stdout": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nusage: build-evaluation-context.py [-h] --context-receipt CONTEXT_RECEIPT\n                                   --output OUTPUT\n\noptions:\n  -h, --help            show this help message and exit\n  --context-receipt CONTEXT_RECEIPT\n  --output OUTPUT\nusage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

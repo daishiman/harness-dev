@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "1cb093c395720360d17a9b178e1db0aafa7958d33e13822933d0cc9548ce9e48"
+    "skill_md_sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T20:45:16Z",
+  "reviewer": "cr-run-system-spec-elicit (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T13:09:42Z",
   "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,15 +25,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "節の移動は中身を1字も変えていない。git diff HEAD の追加と削除 (allowed-tools の1行を除く各11行) を並べ替えて照合すると完全に一致した。入力・出力・完了条件・platforms・cell states・category_aggregate・taxonomy の正本の記述は前と同じで、置き場所を変えるだけで PD-002 を満たした。",
-      "移動後の並び (H1 → Purpose & Output Contract → Runtime root contract → 上位概念 anchor) では、Pre-choice (L115) が『Purpose & Output Contractの最小の実成果物を作成する』と指す節を先に読める。Runtime root contract を扱う検査 (lint-entrypoint-artifact-first.py・build-artifact-delivery.py・audit-capability-parity.py) は見出しの有無と言語だけを見ており、位置の変化で落ちない。対象 SKILL.md の行番号を参照する記述も repo に無い。",
-      "criteria: IN1・OUT1 (validate-coverage-matrix.py による網羅と完了の機械検証) と OUT2 (live trial の完走) は、節の移動で手順も契約も変わっていない。3件とも評価した。"
+      "iteration 2 の dependency_break は解消した。apply-spec-transition.py 0.2.2 の fix_qa_knowledge_ref (L1994・L1999・L2003) は、旧 ref の実在・新 ref の実在・見出しの実在の 3 つを、validate-design-knowledge-refs.py 0.3.0 の公開関数 resolve_knowledge_path (L74-L83) と headings (L70-L71) で判定する。validator は L1922-L1932 で importlib から読み込んでいる。writer 側の MD_HEADING_RE も削除されたので、「実在するか」の定義は validator の 1 か所だけになり、writer と gate が今後ずれる余地が無い。共有モジュールを新しく作らずに validator の関数を公開した判断も、foundation_provenance と同じ読み込み方なので筋が通っている。",
+      "前回の実験を同じ probe_it2.py で再実行し、結果が逆転したことを確かめた。F1 (空の repo root、validator が有効と認める plugin-prefix の旧 ref の付け替え) は exit 1「実在する参照の付け替え…拒否」、F2 (typo の旧 ref を推奨形の card#中核概念 へ直す) は exit 0 で、直した後の validator も exit 0 になった。harness repo を root にした対照 F3 (exit 1)・F4 (exit 0) とも同じ結果で、install 先によらず挙動がそろった。",
+      "references/spec-state-contract.md L411 に「実在の判定は design_applications 節の解決規則 (--repo-root 起点 → 自 plugin root 起点) に従い、validate-design-knowledge-refs.py と同じ関数で行う」が加わり、L368 の解決規則・実装・docstring (apply-spec-transition.py L1962-L1963) の 3 つが一致した。",
+      "tests/test_fix_qa_knowledge_ref.py L165-L177 の 2 件は、空の tmp_path を repo root にし、plugins/ が無いことを assert で確かめてから、前回の F1・F2 と同じ形をテストしている。修正前のコードなら落ちる形なので、退行検知として効く。",
+      "前回の low smell も解消した。SKILL.md frontmatter の deterministic_checks (L78-L80) と references/resource-map.yaml L26-L28 に validate-design-knowledge-refs.py が入り、read_when に fix-qa-knowledge-ref で接地し直すときも書かれている。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[smell / low・PASS を妨げない・今回の差分ではなく iteration 1 からある設計上の空白] 見出しだけが壊れた knowledge_ref を直す経路が無い。fix-qa-knowledge-ref は contract L411 のとおり「旧 ref の path が実在しない」場合だけ差し替える (apply-spec-transition.py L1994 は path だけを判定する)。一方、validator (validate-design-knowledge-refs.py L122) は path が実在して見出しが無い ref を違反にする。このため、対話経路の entry の 'ddd.md#存在しない見出し' は validator で exit 1 になるのに、同じ card の正しい見出しへの訂正は「実在する参照の付け替え」として拒否される (probe_it3.py で、空 root と INT root の両方とも、validator exit 1・fix exit 1 を確認)。contract の docstring が動機に挙げる「放置すると validator が恒久的に赤になる」状態が、見出しの typo では残る。直すなら、旧 ref の path が実在して見出しだけが実在しない場合に、同じ path 内の見出しの訂正に限って許すか、許さない理由を contract L411 に 1 文書く。"
+    ],
     "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review (iteration 3、上限3の最後の周回) で、exhaustive の30思考法は実施していない。builder とは別 context の独立レビュアーが、前回 (iteration 2) の negative_feedback の各項目の解消を行番号つきで現物で確かめ、修正と本体からの merge で生じた変更とその周辺について (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。作者の修正要約は使わず、git diff HEAD と現物だけで判断した。HEAD には前回のレビュー以降のコミットが無く、差分はすべて作業ツリーの未コミット分で、plugin 側の変化は版の更新と artifact-delivery.json の runner_sha256 だけだった。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (stdout だけで、ファイルは書いていない)。テストは pytest -q -p no:cacheprovider (plugins/skill-intake・plugins/system-spec-harness・plugins/system-dev-planner・tests/test_skill_intake_notion_contract.py) で 771 passed、rc=0。対象スキルの本体 (SKILL.md・prompts・references・scripts・agents) は編集していない。 読んだもの: git diff HEAD の SKILL.md (24行)、SKILL.md の 105-190 行、Runtime root contract を扱う lint 3本の該当箇所、rubric.json の PD-002 の定義。迷った例: 移動した完了条件 (L128) の `validate-coverage-matrix.py --require-complete --require-basis --require-foundation` は python3 の付かない書き方だが、完了条件の記述で、実行の形は L152・L186 に解決済みパスで書かれている。前回から1字も変わっていないので指摘に数えなかった。迷った例: Purpose が上位概念 anchor より前に来たので、L127 の `requirements_foundation` が説明より先に出る。ただし L127 自身が『上位概念 `requirements_foundation`』と言い添えており読めるので、指摘にしなかった。前回 (iteration 2) の FAIL は PD-002 の1件だけによるもので、今回それが解消し、修正で生じた新しい high・medium も無いので PASS とした。"
+  "notes": "iteration 3 の再評価。incremental profile の focused combined review (1 context) で、exhaustive の 30 思考法は実施していない。SKILL.md の作者とは別の独立レビュアーが、作者側の修正後の現物を読んで、iteration 2 の negative_feedback 2 件が解消したかを確かめ、新しい差分が持ち込んだ矛盾も探した。SKILL.md の sha256 は shasum -a 256 の実測値 275e7627…983b (234 行) で、依頼の値と一致した。読んだもの: 差分 scratchpad/cr/run-system-spec-elicit.skilldir.diff (5149 行)、validate-design-knowledge-refs.py 0.3.0 のヘッダと L45-L126、apply-spec-transition.py 0.2.2 のヘッダ (dependencies に validator を追加)・L88-L104 (foundation_provenance の読み込み)・L1918-L2012、tests/test_fix_qa_knowledge_ref.py L158-L177、spec-state-contract.md L368・L411、SKILL.md frontmatter L42-L80、references/resource-map.yaml L20-L28。改名の影響: plugins 配下と scripts 配下の *.py を grep し、旧名 _resolve / _headings を validator module から呼んでいる箇所が残っていないことを確かめた (compile-spec-doc.py は validator を subprocess で呼ぶので影響を受けない)。前回指摘の追跡: (1) validator と fix-qa-knowledge-ref の解決規則の食い違い (dependency_break) = 解消。(2) deterministic_checks・resource-map の宣言漏れ (smell/low) = 解消。実物での確認: (1) pytest: cwd を scratchpad にして PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider --rootdir=<plugin> を実行。<skill>/tests と <plugin>/tests では 776 passed、plugin 全体では 1127 passed (依頼の数字と一致)。test_scripts_smoke.py の 539 passed は自分では再実行しておらず、未確認。(2) probe_it2.py の再実行: V1-V5 (validator) は前回と同じ。F1 は exit 1 に、F2 は exit 0 に変わり (前回は F1 exit 0・F2 exit 1)、F3 は exit 1、F4 は exit 0。(3) probe_it3.py: 見出しだけが壊れた旧 ref は、空 root・INT root のどちらでも validator が exit 1、fix が exit 1 (low smell の根拠)。(4) HarnessHub の system-spec/spec-state.json (ref 421 件) を HarnessHub 作業ツリーを root にして validator 0.3.0 で検査し、違反 0 件。判定: (a)〜(d) の違反は 0 件。low の smell が 1 件残るが、PASS は妨げない。human_review_required=false。"
 }

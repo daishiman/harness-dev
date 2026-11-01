@@ -1,0 +1,39 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "JTBD・対象ユーザー・利用文脈の3論点を1問に束ねていた。qa-019(開いた1論点の問、N1-N4 適合、同一論点の JTBD、answer・basis=user-decision・answered_at あり、qa-009 に answered_at なし)で置き換え済み。置き換え先に medium 以上の検出なし。qa_ref / effective_source_refs の active consumer は 0 件。閉じた検出。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択と、有効期限・ログアウトの扱いという独立な2論点を1問に束ねている。保留・別案の道は文面にある。auth/web の qa_refs(裏付け)のみで参照され、主たる接地根拠(qa_ref)ではない。PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約を1問で承認させる形。確定・指摘・保留の道は示され、各 U は qa-foundation-u1〜u9 で個別に根拠づけられている。答えを左右したとは読めない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "qa_ref=qa-003 は実在。裏付け qa_refs に置き換え済み(retired)の qa-009 が残る。active consumer は qa_ref と effective_source_refs のみのため FAIL 要因にしないが、C01 は qa_refs から qa-009 を外す整理を検討されたい。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U9",
+      "observation": "qa-foundation-u9 の canonical answer に qa-001 の旧い『PostgreSQL 15』が含まれる。qa-001 の corrections と U8(版は D1 で 16)で是正済みで、U9 の意図 I1(日次バックアップ)には影響しない。承認 appr-foundation-v2 は実在し、U1-U9 は全て qa-foundation-u1〜u9(user-dialogue)の逐語連結と一致、U1/U2/U3 は値。"
+    }
+  ]
+}

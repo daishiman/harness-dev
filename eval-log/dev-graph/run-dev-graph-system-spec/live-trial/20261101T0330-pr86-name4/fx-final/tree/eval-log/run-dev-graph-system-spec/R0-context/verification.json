@@ -1,0 +1,52 @@
+{
+  "responsibility": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (separate context)",
+  "prompt_read_in_full": true,
+  "common_layers_read_in_full": true,
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checks": [
+    {
+      "id": "resolve-repo-context",
+      "command": "python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root <root> --config <root>/.dev-graph/config.json --mode read",
+      "exit_code": 0,
+      "key_values": {
+        "repository_id": "local:sha256:a8d4d1de120299b125e21886326922f54b02919dcd4a879ab6c21ea28f4fb284",
+        "git_common_dir": "<root>/.git",
+        "git_dir": "<root>/.git",
+        "worktree_id": "wt_7a621553e14c81ac",
+        "content_roots.system_spec": "<root>/system-spec"
+      },
+      "matches_fixed_c24_receipt": {"repository_id": true, "git_common_dir": true, "git_dir": true, "worktree_id": true, "repo_root": true, "content_roots.system_spec": true}
+    },
+    {
+      "id": "system-spec-containment",
+      "command": "python3 os.path.realpath/islink + os.walk symlink scan of system-spec/",
+      "exit_code": 0,
+      "key_values": {"is_symlink": false, "realpath_inside_repo": true, "symlinks_found": 0, "escaping_or_broken_symlinks": 0}
+    },
+    {
+      "id": "validate-source-lineage",
+      "command": "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <root>",
+      "exit_code": 0,
+      "key_values": {"status": "pass", "checked": 0, "checked_node_ids": [], "violations": []},
+      "decision": "checked=0 -> new-import (新規作成); uniquely determined"
+    },
+    {
+      "id": "no-write-by-R0",
+      "command": "cat .dev-graph/state/graph.json; ls -laT; find system-spec -newer c24-receipt.json",
+      "exit_code": 0,
+      "key_values": {"graph_nodes": 0, "graph_revision": 0, "graph_json_mtime": "08:21:12 (before c24-receipt 08:23:19, from init)", "system_spec_files_newer_than_receipt": 0, "git_head": "a5f34bd unchanged"}
+    }
+  ],
+  "checklist": [
+    {"item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる", "result": "YES", "evidence": "re-resolved repository_id/git_common_dir/git_dir/worktree_id/system_spec all equal fixed receipt; realpath inside repo, not symlink, 0 symlinks inside"},
+    {"item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた", "result": "YES", "evidence": "exit 0, status pass, checked=0 -> new-import"},
+    {"item": "宣言した入力が全て検証済みである", "result": "YES", "evidence": "caller context (C24 receipt), repo-local system-spec root, plugin source (<root>/plugins/dev-graph inside repo) verified"},
+    {"item": "出力が宣言した shape と authority を満たす", "result": "YES", "evidence": "c24-receipt separates repository identity (repository_id/git dirs/worktree_id), content_roots, plugin_source (code authority); root_trust_evidence present"},
+    {"item": "責務境界に反する read/write/delegation が0件である", "result": "YES", "evidence": "graph.json nodes empty and mtime predates receipt; no system-spec file newer than receipt; no symlink/out-of-repo content reachable"}
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": ["receipt diagnostics: default_branch_fallback_main (non-blocking)", "fixed receipt has mode=write while verifier re-run used mode=read; identity fields identical"]
+}

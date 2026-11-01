@@ -1,0 +1,74 @@
+{
+  "skill": "run-dev-graph-node",
+  "updated_at": "2026-11-01T01:41:17.983055+00:00",
+  "loop": 1,
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 0,
+    "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "C24 --mode write receipt eval-log/run-dev-graph-node/c24-receipt.json: repo_root==realpath(content_roots.repository), repository_id local:sha256:68991ddb…; integrity auditor path containment PASS"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "add の decision=auto: spec 0.95 (margin 0.65), arch 0.92 (margin 0.57)。閾値 >=0.80 / margin >=0.15 を満たす (receipt node-r000001-add.json)"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py --strict-artifact-readiness valid, 0 violations, readiness complete 2/2 (eval-log/run-dev-graph-node/schema-report.json); pre_write_validation findings 0"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "register-package 非起動 (起動 verb=add のみ)。auditor: feature_package_id/parent_feature/phase_ref は null"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": "receipt node-r000001-add.json: graph_revision 0→1, graph_digest_after sha256:9f7e402659668f608bc7ac14bf41bf210140ed3a54186ef4465eb82cdc48cf8a, node_ids が commit 後 graph と一致 (auditor 確認)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "pre_write_validation_findings": 0,
+          "graph_schema": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_at": "live trial / 受入テスト"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_at": "live trial / 受入テスト"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_at": "live trial / 受入テスト"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:9f7e402659668f608bc7ac14bf41bf210140ed3a54186ef4465eb82cdc48cf8a"
+  }
+}

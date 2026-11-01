@@ -1,0 +1,39 @@
+FAIL
+
+1. C08 は開始時必読の R4-audit-doc-freshness.md を読まずに監査を完了した。agent-a3eae3cd4a10fdfba の最終応答に「SSOT の R4 本文は読んでいません」とあり、全 native tool call（Read/Bash を含む）にも同本文の取得がない。公開0.1.24の C08 adapter Layer 5.3 と R4 Layer 3 の必読・完了条件を満たさず、その PASS を C05/doc_freshness の正規受入根拠にできない。
+
+2. C05 は prompt_quality の意味評価を16/18 promptで省略したまま PASS にした。native Bash toolu_01SvKHtXn3Yo4qitkVQFq1PK は全18件の見出し・チェックリスト数を出す構造走査のみで、report findings は「他16 prompt の C1-C4 独立精読は行っていない」と明示する。公開0.1.24 rubric の単独install例外は外部機械validatorだけを省略でき、意味層 pass_criteria と独立design findings は必須のまま。従って全6観点を満たす正規 evaluator PASS が成立していない。
+
+3. C05 の report生成で、native Bash toolu_012o3zX58AKFmdq49uB9vv67 が cat > $TMPDIR/build_report.py で自作の生成scriptを保存し、それを実行してJSONを供給した。report最終保存先は指定のliteral Pathだったが、公開0.1.24 R1-score 4.3 が許可する書込み（C06出力と評価reportのみ）と Bash(python3 *) の境界を超えている。同節は cat > / redirect を明示的に対象外としている。
+
+検証の範囲と成立した観測
+
+対象C19 SKILL SHA=10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、closure=ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef、実fixtureのpin copyで独立再計算も一致。system-spec-harness公開0.1.24だけを適用。
+
+observer extractを全11 raw streamsから再実行。194events=190tool_call（Bash125/Read54/Skill5/WebFetch6）+4正規Skill本文注入。全event object/index順序/source line/UUID/prefix bytes・SHA/observed stream bytes・SHAが一致し各stream tail=0。native tool全体ではBash150/Skill5/Read54/Agent9/WebFetch6/TaskStop1。observerの範囲外不在を判定根拠にしていない。
+
+公開copyとの共通fileは382件がbyte一致。差分は11 transcript fileの同一匿名化置換45箇所（31行）とpoll elapsed1856→1857だけ。evidence-redaction.jsonの両SHAを照合し、単一置換で全匿名化fileの全文bytesが再現可能。経過秒丸めの実在記録名はpoll-normalization.json。
+
+C05は実fork ad922158d6d9cec16。C07/C06/C08は9:25:23→9:25:49、9:26:10→9:27:20、9:29:38→9:30:08の順に実completion。明示name/backgroundなし。各token・prompt hash・final response hash・台帳schema1.2/1.3・session・receipt/verdictを独立照合し全一致。ホスト自動Asyncであること自体はblockerにしていない。C06 JSON保存もraw応答JSONと最終改行以外byte一致。
+
+C05 artifact_snapshotの12入力（全10 Markdownとstate/references）が凍結final bytesへ一致。C05の6観点は形式上記載され、3集約ゲートと4knowledge profileはexit0。独立のcoverage/source-citation/aggregate --report/lineage/schema再検証も全exit0。ただしこれら機械ゲートは上記意味・手順省略を覆さない。
+
+C24 write receiptでcaller root/common-dir/identity固定。parent本処理Bashは固定rootへexport/cd/照合、helper成功skill_argsをevaluatorへ無改変で渡した。target起動前のtask.md読取Bash1件をR2実処理違反へ持ち込んでいない。
+
+elicit resume→compile→C05は正規Skillで実行、doc-fetchは5targetsの既存有効出典とC13を根拠に条件付き省略。compileはcanonical writerで10文書再生成し、現物path/digest/open_with提示→別呼出しstandard記録→63tests PASSの順。WebFetch6回は許可5hostだけで、WebSearch0。
+
+C19のR0/R1/R2/R3独立verifierが実起動・完了。C19集約ログはparentのみ更新、OUT1はexternal_pending。loop2の操作前に直前directiveを入力。
+
+C02はevaluator report成立後にSkill起動・payload保存。同一payload hashのdry-run後addはrev0→1、applied2/write4。pre-choice実node/receipt提示後standard記録、baselineはそのcommit後rev1、writer_receiptsは空でpre-choice receiptをevidenceへ保持。R0-R4責務verificationと必須integrity auditorが実完了しgraph digest一致。2nodeのlineage・confirmation evidence・evaluated_digest・readinessが欠落なく実byte一致。
+
+fixtureの合成利用者入力・legacy_backfill・非主根拠のmedium注記をそれ自体でblockerにしていない。未公開0.1.25の追加制限、過去trial verdict、input review結論は使っていない。canonical finalizer/reapは評価範囲外で未実施として区別。
+
+正本criteria
+
+IN1: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる
+実観測: PASS。C19 loop1 (main line481) と loop2 (main line716) で各3CLIを実行し coverage=0/citation=0/schema=0 を確認。loop1は空graphでもschema実行。各PASS記録は実測後で、loop2開始時はIN1をnot_achievedへ戻していた。2行のintermediateは6必須キー・不変original_goal・SHA256が一致し、各周回の検査も成功。
+
+OUT1: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する
+実観測: FAIL。2 node は C02 の同一payload dry-run→addで登録され、source bytes/digest/evaluated_digest/report snapshot、source_version0.1.24、confirmed/pass/readiness complete が一致。dev-graph側にelicitation/compile複製を認めず、この構造面は充足。ただし正規依存flowに C08必読省略、C05必須意味評価未完了および保存境界違反があり、正本観測1のcanonical flow completesと有効なevaluator evidenceを満たした受入としてはFAIL。
+
+評価者: /root/review_sysspec113。点数なし。source・fixture・raw・publiccopyの編集なし。評価ファイルは /tmp にのみ作成。

@@ -1,0 +1,48 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "loop": 1,
+ "checklist": [
+  {
+   "item": "system_spec content root が caller repo 内で一致",
+   "status": "achieved",
+   "evidence": "C24 receipt repo_root==content_roots.repository; system_spec=system-spec"
+  },
+  {
+   "item": "system-spec-harness version 範囲と required 4 entry points",
+   "status": "achieved",
+   "evidence": "plugin.json 0.1.24, composition >=0.1.22 <1.0.0, entry_points 4/4"
+  },
+  {
+   "item": "elicit/doc-fetch/compile/evaluator が Skill 経由のみ",
+   "status": "achieved",
+   "evidence": "4 Skill invocations; R2 cwd check exit0 before each"
+  },
+  {
+   "item": "coverage/source-citation/evaluator gate 全PASS",
+   "status": "not_achieved",
+   "evidence": "coverage exit0, source-citation exit0, evaluator verdict=FAIL (decision_guidance FAIL, design_knowledge_reflection FAIL)"
+  },
+  {
+   "item": "C02 登録 node の lineage/confirmation/evaluator evidence/readiness 欠落0",
+   "status": "not_achieved",
+   "evidence": "evaluator PASS 不在のため C02 未起動 (R3 gate); import 0 nodes"
+  },
+  {
+   "item": "dev-graph 内の elicitation/compile 複製0",
+   "status": "achieved",
+   "evidence": "dev-graph は Skill 委譲のみ; 生成ロジック未実装"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "FAIL",
+   "evidence": "harness gates exit0 but evaluator FAIL; no graph import to schema-check"
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending"
+  }
+ ],
+ "blocker": "completeness evaluator FAIL: design_applications 未記録 (要利用者入力), D1 evidence stale (要 R5 利用者確認). 承認の捏造不可・質問不可のため停止"
+}

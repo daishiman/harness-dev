@@ -2,18 +2,28 @@
 # /// script
 # name: bd-bridge
 # purpose: Be the single deterministic CLI choke point for allowed Beads task, edge, mirror and gate operations.
-# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)"]
+# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)", "file: ready reads the build-parity-manifest.py snapshot (--parity-manifest)", "file: orphan-audit reads local_state.graph and content_roots markdown of .dev-graph/config.json (--scan-refs also reads the graph at every local/remote ref)", "file: removal-preflight reads the before/after graph (path or git ref) and --disposition-manifest"]
 # outputs: ["stdout: normalized JSON receipt"]
 # requires-python = ">=3.10"
-# dependencies: []
+# dependencies: ["../lib/bd_bridge_contracts.py", "../lib/bd_bridge_graph.py", "../lib/bd_bridge_audit.py"]
 # contexts: [A, B, C, E]
 # network: true
 # write-scope: approved bd CLI only; never direct .beads I/O
 # ///
+"""Beads 操作の単一決定的 CLI。argv 解析・promotion gate・bd 実行・receipt 出力をここに置く。
+
+受理語彙と純粋判定は ``lib/bd_bridge_contracts.py``、graph 側の正本 (canonical graph・
+parity manifest・spec markdown) の read-only 解決は ``lib/bd_bridge_graph.py``、書かずに
+数える監査 (orphan 棚卸し・node 削除 preflight) は ``lib/bd_bridge_audit.py`` に置く。
+
+bd / git を叩く lib 関数は実行関数を ``bd=`` ``git=`` で受け取る。本 module の薄いラッパが
+**呼び出し時に** module 変数を渡すため、``monkeypatch.setattr(mod, "bd", ...)`` は全経路へ効く。
+``_ready_with_parity`` は build-parity-manifest.py の ``BRIDGE_STATUS_MAP`` と ``status_map`` の
+一致を AST で固定されているため、本ファイルの top-level 関数として残す。
+"""
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -25,10 +35,32 @@ from typing import Any
 # harness に書かない (子の起動にも -B を渡す)。
 sys.dont_write_bytecode = True
 
-from _common import ContractError, dump, run
+from _common import ContractError, dump, git, run
 
-MUTATIONS = {"create", "update", "dep-add", "close", "claim", "github-push", "gate-add", "reconcile-duplicates"}
-PHASES = [f"P{i:02d}" for i in range(1, 14)]
+_LIB_DIR = str(Path(__file__).resolve().parents[1] / "lib")
+if _LIB_DIR not in sys.path:
+    sys.path.insert(0, _LIB_DIR)
+# lib を毎回 exec し直す。本 script は test から spec_from_file_location で何度も読み込まれ、そのとき
+# ``_common`` も別インスタンスとして登録されうる。lib がキャッシュされたままだと lib 側の ContractError
+# だけが旧世代のクラスになり、``except ContractError`` が同名の別クラスを取り逃がす。
+for _stale in ("bd_bridge_contracts", "bd_bridge_graph", "bd_bridge_audit"):
+    sys.modules.pop(_stale, None)
+
+import bd_bridge_audit as _audit
+import bd_bridge_graph as _graph
+from bd_bridge_contracts import MUTATIONS, MVP_FIT_RANK, PHASES, UNMAPPED_REASONS, verify_parity
+from bd_bridge_contracts import dependency_ids as _dependency_ids
+from bd_bridge_contracts import external_ref as _external_ref
+from bd_bridge_contracts import issue_row as _issue
+from bd_bridge_contracts import normalize_priority as _normalize_priority
+from bd_bridge_contracts import rows as _rows
+from bd_bridge_contracts import unmapped_reason as _unmapped_reason
+from bd_bridge_contracts import update_argv as _update_argv
+from bd_bridge_contracts import workspace_identity as _workspace_identity
+from bd_bridge_graph import load_manifest as _load_manifest
+from bd_bridge_graph import manifest_graph_node_ids as _manifest_graph_node_ids
+from bd_bridge_graph import manifest_provenance as _manifest_provenance
+
 # C14 OUT1: only a node evaluated into confirmed/pass/readiness complete becomes a tracker issue. Both the
 # Beads create below and build-github-projection.plan() call is_promoted(). It lives here rather than in a
 # new module because every skill whose script_refs name build-github-projection.py also names bd-bridge.py,
@@ -58,27 +90,6 @@ def bd(args: list[str], *, cwd: Path, check: bool = True) -> Any:
     except json.JSONDecodeError: return {"text": raw, "returncode": cp.returncode}
 
 
-def _rows(value: Any) -> list[dict[str, Any]]:
-    if isinstance(value, list): return [row for row in value if isinstance(row, dict)]
-    if isinstance(value, dict):
-        for key in ("issues", "results", "data"):
-            rows = value.get(key)
-            if isinstance(rows, list): return [row for row in rows if isinstance(row, dict)]
-        return [value]
-    return []
-
-
-def _workspace_identity(value: Any) -> dict[str, Any]:
-    rows = _rows(value)
-    if len(rows) != 1: raise ContractError("bd where must identify exactly one workspace")
-    row = rows[0]
-    identity_keys = ("database_path", "prefix", "schema_version") if row.get("database_path") else ("path", "prefix", "schema_version", "workspace", "id")
-    stable = {key: str(row[key]) for key in identity_keys if row.get(key) is not None}
-    if not stable: raise ContractError("bd where did not expose a stable workspace identity")
-    fingerprint = hashlib.sha256(json.dumps(stable, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    return {"workspace_id": f"bdw_{fingerprint[:24]}", "attributes": stable}
-
-
 def preflight(root: Path, expected_workspace_id: str | None = None) -> dict[str, Any]:
     version_raw = run([os.environ.get("DEV_GRAPH_BD", "bd"), "version"], cwd=root).stdout
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_raw)
@@ -92,69 +103,6 @@ def preflight(root: Path, expected_workspace_id: str | None = None) -> dict[str,
     return {"version": match.group(0), "workspace_identity": identity}
 
 
-def _issue(value: Any, issue_id: str) -> dict[str, Any]:
-    rows = [row for row in _rows(value) if str(row.get("id")) == issue_id]
-    if len(rows) != 1: raise ContractError(f"bd show did not return exactly one issue: {issue_id}")
-    return rows[0]
-
-
-def _dependency_ids(issue: dict[str, Any]) -> set[str]:
-    raw = issue.get("dependencies", [])
-    if not isinstance(raw, list): raise ContractError("bd show dependencies must be an array")
-    result: set[str] = set()
-    for item in raw:
-        relation = (item.get("dependency_type") or item.get("type")) if isinstance(item, dict) else None
-        if relation not in (None, "blocks"):
-            continue
-        dep = item.get("id") if isinstance(item, dict) else item
-        if not isinstance(dep, str) or not dep: raise ContractError("bd dependency is missing its id")
-        result.add(dep)
-    return result
-
-
-def verify_parity(issue: dict[str, Any], expected_status: str | None, expected_dependencies: list[str]) -> dict[str, Any]:
-    if not expected_status: raise ContractError("parity verification requires --expected-status")
-    expected = set(expected_dependencies)
-    actual = _dependency_ids(issue)
-    status_match = issue.get("status") == expected_status
-    edges_match = actual == expected
-    receipt = {
-        "confirmed": status_match and edges_match,
-        "expected_status": expected_status,
-        "actual_status": issue.get("status"),
-        "expected_depends_on": sorted(expected),
-        "actual_depends_on": sorted(actual),
-        "missing_edges": sorted(expected - actual),
-        "unexpected_edges": sorted(actual - expected),
-    }
-    if not receipt["confirmed"]: raise ContractError(f"Beads parity conflict: {json.dumps(receipt, sort_keys=True)}")
-    return receipt
-
-
-def _load_manifest(path: str | None, root: Path, *, label: str) -> dict[str, Any] | None:
-    if not path:
-        return None
-    candidate = Path(path)
-    candidate = candidate if candidate.is_absolute() else root / candidate
-    try:
-        candidate = candidate.resolve(strict=True)
-        candidate.relative_to(root)
-        value = json.loads(candidate.read_text(encoding="utf-8"))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        raise ContractError(f"invalid {label} manifest: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ContractError(f"{label} manifest must be an object")
-    return value
-
-
-def _external_ref(row: dict[str, Any]) -> str | None:
-    direct = row.get("external_ref") or row.get("externalRef")
-    if isinstance(direct, str) and direct:
-        return direct.removeprefix("dev-graph:").removeprefix("external_ref:")
-    match = re.search(r"(?:^|\s)external_ref:([^\s]+)", str(row.get("description", "")))
-    return match.group(1) if match else None
-
-
 def _find_external(root: Path, graph_node_id: str) -> dict[str, Any] | None:
     marker = f"dev-graph:{graph_node_id}"
     # Beads 1.1 requires a positional/query term even when an external-ref
@@ -162,6 +110,11 @@ def _find_external(root: Path, graph_node_id: str) -> dict[str, Any] | None:
     # otherwise a transient/contract error creates a duplicate issue.
     rows = _rows(bd(["search", graph_node_id, "--external-contains", marker, "--status", "all", "--json"], cwd=root))
     exact = [row for row in rows if _external_ref(row) == graph_node_id]
+    if not exact:
+        # 完全一致の無い search 応答はまだ miss ではない。title/ID しか引かない bd では external_ref だけを
+        # 持つ既存 issue が search に現れず、二重起票になった (HH finding 4)。全件 list で miss を確かめる。
+        rows = _rows(bd(["list", "--status", "all", "--limit", "10000", "--json"], cwd=root))
+        exact = [row for row in rows if _external_ref(row) == graph_node_id]
     if len(exact) > 1:
         raise ContractError(f"duplicate beads external_ref for {graph_node_id}")
     return exact[0] if exact else None
@@ -198,18 +151,20 @@ def _create_one(
     issue_type: str,
     parent: str | None = None,
     existing_issue_id: str | None = None,
+    priority: str | None = None,
 ) -> dict[str, Any]:
-    existing = (
-        _validate_bound_issue(
+    if existing_issue_id:
+        existing = _validate_bound_issue(
             root,
             issue_id=existing_issue_id,
             graph_node_id=graph_node_id,
             issue_type=issue_type,
             parent=parent,
         )
-        if existing_issue_id
-        else _find_external(root, graph_node_id)
-    )
+    else:
+        found = _find_external(root, graph_node_id)
+        # search/list の row は parent と issue_type を持たないことがあるため、判定前に show で取り直す。
+        existing = _issue(bd(["show", str(found.get("id")), "--json"], cwd=root), str(found.get("id"))) if found else None
     if existing:
         actual_type = existing.get("issue_type") or existing.get("type")
         if actual_type and actual_type != issue_type:
@@ -222,6 +177,8 @@ def _create_one(
         "create", "--title", title, "--description", description,
         "--external-ref", f"dev-graph:{graph_node_id}", "--type", issue_type,
     ]
+    if priority is not None:
+        argv += ["--priority", _normalize_priority(priority)]
     if parent:
         argv += ["--parent", parent]
     argv += ["--json"]
@@ -490,8 +447,57 @@ def _reconcile_duplicates(
     }
 
 
+# --- lib への実行関数注入 --------------------------------------------------
+# module 変数 `bd` / `git` を呼び出し時に解決して渡す。import 時に束縛すると monkeypatch が届かず、
+# test が本物の bd/git を叩きにいく。
+
+
+def _refs_with_node(root: Path, node_ids: set[str]) -> dict[str, list[str]]:
+    return _graph.refs_with_node(root, node_ids, git=git)
+
+
+def _graph_ids_from_source(
+    root: Path,
+    *,
+    path: str | None,
+    ref: str | None,
+    label: str,
+    default_current: bool = False,
+) -> set[str]:
+    return _graph.graph_ids_from_source(
+        root, git=git, path=path, ref=ref, label=label, default_current=default_current
+    )
+
+
+def _orphan_audit(root: Path, *, scan_refs: bool = False) -> dict[str, Any]:
+    return _audit.orphan_audit(root, bd=bd, git=git, scan_refs=scan_refs)
+
+
+def _removal_preflight(
+    root: Path,
+    *,
+    before_graph: str | None,
+    before_ref: str | None,
+    after_graph: str | None,
+    after_ref: str | None,
+    disposition_manifest: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return _audit.removal_preflight(
+        root,
+        bd=bd,
+        git=git,
+        before_graph=before_graph,
+        before_ref=before_ref,
+        after_graph=after_graph,
+        after_ref=after_ref,
+        disposition_manifest=disposition_manifest,
+    )
+
+
 def _ready_with_parity(root: Path, raw: Any, manifest: dict[str, Any] | None) -> dict[str, Any]:
     candidates = _rows(raw)
+    provenance = _manifest_provenance(manifest) if manifest is not None else None
+    graph_node_ids = _manifest_graph_node_ids(manifest) if manifest is not None else None
     entries = manifest.get("nodes", []) if manifest else []
     if not isinstance(entries, list) or not all(isinstance(row, dict) for row in entries):
         raise ContractError("parity manifest nodes must be an array of objects")
@@ -501,7 +507,13 @@ def _ready_with_parity(root: Path, raw: Any, manifest: dict[str, Any] | None) ->
     by_graph = {str(row.get("graph_node_id")): str(row.get("bd_issue_id")) for row in entries if row.get("graph_node_id") and row.get("bd_issue_id")}
     if len(by_graph) != len(entries):
         raise ContractError("parity manifest requires unique graph_node_id and bd_issue_id for every node")
-    status_map = {"active": "open", "blocked": "blocked", "done": "closed", "closed": "closed", "tombstoned": "closed"}
+    # graph status → Beads 側の期待 status。graph-node.schema.json の status enum を漏れなく覆う。draft を欠くと
+    # 起票済みだが未確定の node が全て conflicts へ落ちる。draft→open は C03 sync の投影と同一で、
+    # build-parity-manifest.py の BRIDGE_STATUS_MAP と一致必須 (test_build_parity_manifest.py が固定する)。
+    status_map = {
+        "draft": "open", "active": "open", "blocked": "blocked",
+        "done": "closed", "closed": "closed", "tombstoned": "closed",
+    }
     ready_set: list[dict[str, Any]] = []
     unmapped: list[dict[str, Any]] = []
     conflicts: list[dict[str, Any]] = []
@@ -509,7 +521,11 @@ def _ready_with_parity(root: Path, raw: Any, manifest: dict[str, Any] | None) ->
         issue_id = str(candidate.get("id") or "")
         expected = by_issue.get(issue_id)
         if not expected:
-            unmapped.append({"bd_issue_id": issue_id or None, "external_ref": _external_ref(candidate), "reason": "parity_manifest_missing"})
+            external_ref = _external_ref(candidate)
+            unmapped.append({
+                "bd_issue_id": issue_id or None, "external_ref": external_ref,
+                "reason": _unmapped_reason(external_ref, graph_node_ids),
+            })
             continue
         shown = _issue(bd(["show", issue_id, "--json"], cwd=root), issue_id)
         try:
@@ -519,6 +535,10 @@ def _ready_with_parity(root: Path, raw: Any, manifest: dict[str, Any] | None) ->
             graph_dependencies = expected.get("depends_on", [])
             if not isinstance(graph_dependencies, list) or any(dep not in by_graph for dep in graph_dependencies):
                 raise ContractError("parity manifest dependency lacks a Beads linkage")
+            # キー欠落 / null は未設定 rank へ寄せ、enum 外の非 null は丸めずに候補単位で fail-closed にする。
+            mvp_fit = expected.get("mvp_fit")
+            if mvp_fit is not None and mvp_fit not in MVP_FIT_RANK:
+                raise ContractError(f"unsupported mvp_fit in parity manifest: {mvp_fit!r}")
             parity = verify_parity(shown, status_map[graph_status], [by_graph[dep] for dep in graph_dependencies])
         except ContractError as exc:
             conflicts.append({"bd_issue_id": issue_id, "graph_node_id": expected.get("graph_node_id"), "reason": str(exc)})
@@ -529,8 +549,18 @@ def _ready_with_parity(root: Path, raw: Any, manifest: dict[str, Any] | None) ->
             "edge_parity": parity,
             "graph_status": graph_status,
             "graph_depends_on": graph_dependencies,
+            "mvp_fit": mvp_fit,
         })
-    return {"ready_set": ready_set, "unmapped": unmapped, "conflicts": conflicts, "candidate_count": len(candidates)}
+    # MVP 直結の候補を先に見せる (mvp_fit rank → external_ref)。これは表示順であり、
+    # 何を並列に着手するかは C16 schedule-graph が graph 側の事実から独立に決める。
+    ready_set.sort(key=lambda row: (MVP_FIT_RANK[row.get("mvp_fit")], str(row.get("external_ref") or "")))
+    # 理由別件数を receipt に載せ、「graph 管理外が何件・管理下の取りこぼしが何件」を数え直さずに見分けられるようにする。
+    summary = {reason: sum(1 for row in unmapped if row["reason"] == reason) for reason in UNMAPPED_REASONS}
+    return {
+        "ready_set": ready_set, "unmapped": unmapped, "unmapped_summary": summary,
+        "conflicts": conflicts, "candidate_count": len(candidates),
+        "parity_provenance": provenance,
+    }
 
 
 def _verify_feature_rollup(manifest: dict[str, Any], issue_id: str) -> dict[str, Any]:
@@ -600,23 +630,43 @@ def _require(a: argparse.Namespace) -> None:
     """The argument checks an apply makes, run before the dry-run branch so a preview never accepts what the apply rejects."""
     if a.op in {"update", "close", "claim", "show"} and not a.bd_issue_id:
         raise ContractError(f"{a.op} requires --bd-issue-id")
-    if a.op == "dep-add" and not (a.bd_issue_id and a.depends_on):
-        raise ContractError("dep-add requires issue and depends-on")
+    if a.op in {"dep-add", "dep-remove"} and not (a.bd_issue_id and a.depends_on):
+        raise ContractError(f"{a.op} requires issue and depends-on")
     if a.op in {"gate-add", "gate-check"} and not (a.bd_issue_id and a.pr):
         raise ContractError("gate operation requires issue and --pr")
     if a.planned_preview and not (a.op == "create" and a.dry_run):
         # Planned nodes are not in graph.json yet; an apply must be judged on the graph C02 actually committed.
         raise ContractError("--planned-preview is only for create --dry-run")
+    stray = [flag for flag, value in (("--assignee", a.assignee), ("--labels", a.labels)) if value is not None]
+    if a.op != "update" and stray:
+        raise ContractError(f"{', '.join(stray)} is accepted only by --op update")
+    if a.op not in {"create", "update"} and a.priority is not None:
+        raise ContractError("--priority is accepted only by --op create or --op update")
+    if a.op == "create" and a.priority is not None:
+        # package 投影は feature と 13 task の priority を個別に持てない。1 値を全件へ撒くと意図しない上書きになる。
+        if a.projection_manifest:
+            raise ContractError("create --priority cannot be combined with --projection-manifest")
+        _normalize_priority(a.priority)
+    if a.op == "update":
+        # field 皆無・notes と append-notes の併用・不正な priority/labels は、bd を起動する前に落とす。
+        _update_argv(a)
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates"))
-    p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
+    p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "dep-remove", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates", "orphan-audit", "removal-preflight"))
+    p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--notes"); p.add_argument("--append-notes"); p.add_argument("--design"); p.add_argument("--priority"); p.add_argument("--assignee"); p.add_argument("--labels", help="update: カンマ区切りの label 集合。bd --set-labels へ置換転送する"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
     p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--duplicate-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
     p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config"); p.add_argument("--config", default=".dev-graph/config.json")
     p.add_argument("--planned-preview", help="create --dry-run only: a build-graph-node.py --dry-run preview whose planned_nodes the gate overlays on graph.json")
+    # 既定 off。全 ref の graph を読むため作業ツリー限定より重く、CI の常時実行には向かない。
+    # 一方 merge_pending の判定はこれ無しでは不可能なので、処分を決める棚卸しでは必ず付ける。
+    p.add_argument("--scan-refs", action="store_true", help="orphan-audit: 他 ref の graph も走査し merge_pending を切り分ける")
+    p.add_argument("--before-graph"); p.add_argument("--before-ref")
+    p.add_argument("--after-graph"); p.add_argument("--after-ref")
+    p.add_argument("--disposition-manifest")
     a = p.parse_args(); root = Path(a.repo_root).resolve(strict=True)
     _require(a)
+    create_priority = _normalize_priority(a.priority) if a.op == "create" and a.priority is not None else None
     projection: dict[str, Any] | None = None
     gate: dict[str, Any] | None = None
     if a.op == "create":
@@ -659,6 +709,7 @@ def main() -> int:
             }
         else:
             preview["issue_type"] = "epic" if a.artifact_kind == "feature" else "task"
+            if create_priority is not None: preview["priority"] = create_priority
             preview["write_count"] = 0
         dump({"op": a.op, "dry_run_preview": preview, **pf}); return 0
 
@@ -669,11 +720,12 @@ def main() -> int:
         return bd(argv, cwd=root)
 
     issue = a.bd_issue_id
+    applied_fields: list[str] = []
     if a.op == "create":
         if projection:
             result = _package_projection(root, projection)
         else:
-            result = _create_one(root, graph_node_id=a.graph_node_id, title=a.title, description=a.description or "", issue_type="epic" if a.artifact_kind == "feature" else "task")
+            result = _create_one(root, graph_node_id=a.graph_node_id, title=a.title, description=a.description or "", issue_type="epic" if a.artifact_kind == "feature" else "task", priority=create_priority)
     elif a.op == "reconcile-duplicates":
         projection = _load_manifest(a.projection_manifest, root, label="projection")
         duplicates = _load_manifest(a.duplicate_manifest, root, label="duplicate")
@@ -685,10 +737,11 @@ def main() -> int:
         current = _issue(shown, issue)
         edge_parity = verify_parity(current, a.expected_status, a.expected_depends_on) if a.verify_parity else None
         if a.op == "update":
-            argv = ["update", issue];
-            if a.status: argv += ["--status", a.status]
-            if a.title: argv += ["--title", a.title]
-            argv += ["--json"]; result = write(argv)
+            # status/title 以外の field も bd へ転送する。受理しない field を黙って捨てると、呼び出し側は
+            # 「反映された」と「渡っていなかった」を区別できない (free-field write route)。
+            flags, applied_fields, normalized = _update_argv(a)
+            preview.update(applied_fields=applied_fields, **normalized)
+            result = write(["update", issue, *flags, "--json"])
         elif a.op == "close":
             rollup = None
             current_type = current.get("issue_type") or current.get("type")
@@ -702,19 +755,52 @@ def main() -> int:
             result = {"id": issue, "idempotent": True, "status": "in_progress"} if current.get("status") == "in_progress" else write(["update", issue, "--claim", "--json"])
         else: result = current
         if edge_parity is not None: result = {"issue": result, "edge_parity": edge_parity}
-    elif a.op == "dep-add":
+    elif a.op in {"dep-add", "dep-remove"}:
         existing = _issue(bd(["show", issue, "--json"], cwd=root), issue)
-        _issue(bd(["show", a.depends_on, "--json"], cwd=root), a.depends_on)  # a missing blocker is rejected before bd dep add
         deps = existing.get("dependencies", [])
-        if any((x.get("id") if isinstance(x, dict) else x) == a.depends_on for x in deps): result = {"idempotent": True}
-        else: result = write(["dep", "add", issue, a.depends_on, "--json"])
+        present = any((x.get("id") if isinstance(x, dict) else x) == a.depends_on for x in deps)
+        if a.op == "dep-add":
+            _issue(bd(["show", a.depends_on, "--json"], cwd=root), a.depends_on)  # a missing blocker is rejected before bd dep add
+            result = {"idempotent": True} if present else write(["dep", "add", issue, a.depends_on, "--json"])
+        else:
+            # 既に無い edge の remove は no-op として冪等に返す。graph 側で消えた edge を投影し直す経路。
+            result = write(["dep", "remove", issue, a.depends_on, "--json"]) if present else {"idempotent": True}
     elif a.op == "ready":
         manifest = _load_manifest(a.parity_manifest, root, label="parity")
         result = _ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest)
+    elif a.op == "orphan-audit":
+        result = _orphan_audit(root, scan_refs=a.scan_refs)
+    elif a.op == "removal-preflight":
+        result = _removal_preflight(
+            root,
+            before_graph=a.before_graph,
+            before_ref=a.before_ref,
+            after_graph=a.after_graph,
+            after_ref=a.after_ref,
+            disposition_manifest=_load_manifest(a.disposition_manifest, root, label="removal disposition"),
+        )
     elif a.op == "github-push": result = write(["github", "sync", "--push-only", "--json"])
     elif a.op in {"gate-add", "gate-check"}:
         gates = _rows(bd(["gate", "list", "--all", "--json"], cwd=root, check=False))
-        matching = [gate for gate in gates if str(gate.get("await_id") or gate.get("awaitId")) == str(a.pr) and (gate.get("blocks") == issue or gate.get("blocked_issue_id") == issue) and (gate.get("gate_type") or gate.get("type")) == "gh:pr"]
+        # bd 1.x の gate list は blocks を持たず、gate は blocked issue の dependency (type blocks) として
+        # だけ現れることがある。issue 側の依存から gate id を引き、両方の表現で同じ gate を見つける。
+        blocked = _issue(bd(["show", issue, "--json"], cwd=root), issue)
+        dependency_gate_ids = {
+            str(dependency.get("id"))
+            for dependency in blocked.get("dependencies", [])
+            if isinstance(dependency, dict) and dependency.get("dependency_type") == "blocks"
+        }
+        matching = [
+            gate
+            for gate in gates
+            if str(gate.get("await_id") or gate.get("awaitId")) == str(a.pr)
+            and (
+                gate.get("blocks") == issue
+                or gate.get("blocked_issue_id") == issue
+                or str(gate.get("id")) in dependency_gate_ids
+            )
+            and (gate.get("gate_type") or gate.get("type") or gate.get("await_type")) == "gh:pr"
+        ]
         if len(matching) > 1: raise ContractError("duplicate gh:pr gates for issue and PR")
         if a.op == "gate-add":
             result = {"gate": matching[0], "idempotent": True} if matching else write(["gate", "create", "--type", "gh:pr", "--blocks", issue, "--await-id", str(a.pr), "--reason", a.reason or f"PR #{a.pr} merge", "--json"])
@@ -725,10 +811,23 @@ def main() -> int:
     if a.dry_run and a.op in MUTATIONS:
         dump({"op": a.op, "dry_run_preview": {**preview, "result": result}, **pf}); return 0
     payload = {"op": a.op, "result": result, "workspace_identity": pf["workspace_identity"], "bd_version": pf["version"]}
+    # 転送した field を receipt に載せ、「呼んだが反映されていない」を呼び出し側から検証可能にする。
+    if a.op == "update":
+        payload["applied_fields"] = applied_fields
     if a.op == "ready" and isinstance(result, dict):
-        payload.update({key: result[key] for key in ("ready_set", "unmapped", "conflicts", "candidate_count")})
+        payload.update({key: result[key] for key in ("ready_set", "unmapped", "unmapped_summary", "conflicts", "candidate_count", "parity_provenance")})
+    # ready と同じく、集計を receipt の top-level にも出す。orphans[] を数え直さないと
+    # 件数が分からない形にすると、下流と人間が「全部見た」を確認できない。
+    if a.op == "orphan-audit" and isinstance(result, dict):
+        payload.update({key: result[key] for key in ("orphans", "orphan_summary", "graph_node_count", "dev_graph_reference_count", "scanned_refs")})
+    if a.op == "removal-preflight" and isinstance(result, dict):
+        payload.update({key: result[key] for key in (
+            "allowed", "write_count", "before_node_count", "after_node_count", "removed_node_count",
+            "removed_nodes", "disposition_exact_set", "decisions", "blockers", "orphan_audit",
+        )})
     dump(payload)
-    return 0
+    # 削除不可は exit 2。ContractError (exit 1 = 入力・契約の不備) と区別し、CI が「判定の結果止めた」を読めるようにする。
+    return 2 if a.op == "removal-preflight" and not result["allowed"] else 0
 
 
 if __name__ == "__main__":

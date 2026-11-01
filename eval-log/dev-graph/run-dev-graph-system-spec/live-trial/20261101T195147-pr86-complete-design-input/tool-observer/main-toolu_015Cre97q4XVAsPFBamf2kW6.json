@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "71f203c4-b363-4aee-9964-9c1d7ac9ea0a",
+      "line": 634,
+      "prefix_bytes": 3850610,
+      "prefix_sha256": "f041515cfe34c5aaf6ca7dcca7b0b9659cbdc783dc34b450bf83f2274a096168",
+      "timestamp": "2026-11-01T11:06:48.234Z"
+    },
+    "result": {
+      "uuid": "56adc3b4-476d-4716-8c0a-4d21fca8da41",
+      "line": 635,
+      "prefix_bytes": 3852663,
+      "prefix_sha256": "331d5666f535c8956637202fa05e17a4579ad27b50d7fc622afc9f723ac2b3d7",
+      "timestamp": "2026-11-01T11:06:51.625Z"
+    }
+  },
+  "tool_use_id": "toolu_015Cre97q4XVAsPFBamf2kW6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c \"\nimport json;r=json.load(open('system-spec/fetched-references.json'))['references']\nfor x in r: print({k:v for k,v in x.items() if k in ('target_id','target','version','last_updated','source_url','publisher_host','category','also_categories')})\"",
+    "description": "List fetched reference targets and versions"
+  },
+  "is_error": false,
+  "tool_result_content": "{'target_id': 'postgres', 'source_url': 'https://www.postgresql.org/docs/16/', 'version': '16.15'}\n{'target_id': 'react', 'source_url': 'https://react.dev/versions', 'version': '19.3'}\n{'target_id': 'fastapi', 'source_url': 'https://fastapi.tiangolo.com/release-notes/', 'version': '0.162.0'}\n{'target_id': 'typescript', 'source_url': 'https://www.typescriptlang.org/download/', 'version': '7.0'}\n{'target_id': 'kubernetes', 'source_url': 'https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/', 'last_updated': '2026-05-13T21:32:47+01:00'}",
+  "tool_use_result": {
+    "stdout": "{'target_id': 'postgres', 'source_url': 'https://www.postgresql.org/docs/16/', 'version': '16.15'}\n{'target_id': 'react', 'source_url': 'https://react.dev/versions', 'version': '19.3'}\n{'target_id': 'fastapi', 'source_url': 'https://fastapi.tiangolo.com/release-notes/', 'version': '0.162.0'}\n{'target_id': 'typescript', 'source_url': 'https://www.typescriptlang.org/download/', 'version': '7.0'}\n{'target_id': 'kubernetes', 'source_url': 'https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/', 'last_updated': '2026-05-13T21:32:47+01:00'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

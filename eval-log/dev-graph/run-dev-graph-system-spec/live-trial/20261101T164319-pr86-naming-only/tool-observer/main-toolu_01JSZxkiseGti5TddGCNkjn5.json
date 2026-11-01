@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2839576b-cce9-4ceb-90ee-0fa1c98e76ae",
+      "line": 270,
+      "prefix_bytes": 889122,
+      "prefix_sha256": "1cda1e5e2d8a8b973020373a3eaeaf4858873764fdd3502e37a9151617ccd9aa",
+      "timestamp": "2026-11-01T07:49:45.255Z"
+    },
+    "result": {
+      "uuid": "3c72768c-637b-4592-919d-6c9542ac2151",
+      "line": 273,
+      "prefix_bytes": 897060,
+      "prefix_sha256": "5f67e8ca3cb1f7ec791aa9f051c8e8a5823d8e350b34a2d4dd6d38ee98acbc62",
+      "timestamp": "2026-11-01T07:49:47.756Z"
+    }
+  },
+  "tool_use_id": "toolu_01JSZxkiseGti5TddGCNkjn5",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls eval-log; python3 - <<'PY'\nimport json\nr=json.load(open('eval-log/system-spec-completeness-report.json'))\nprint({k:(v if not isinstance(v,(dict,list)) else '...') for k,v in r.items()})\nprint(list(r.keys()))\nPY\nshasum -a 256 system-spec/*.md system-spec/spec-state.json | head -12"
+  },
+  "is_error": false,
+  "tool_result_content": "artifact-delivery-standard.json\nc24-receipt.json\ncompile-standard.json\nhearing-audit.json\npreflight-report.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n{'evaluator': '...', 'spec_dir': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/system-spec', 'verdict': 'PASS', 'artifact_snapshot': '...', 'audit_delegations': '...', 'aspects': '...', 'gate_results': '...', 'findings': '...', 'gaps': '...'}\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\n1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402  system-spec/00-requirements-definition.md\n21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897  system-spec/auth.md\n8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466  system-spec/backend.md\n3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de  system-spec/database.md\n10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\nd8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd  system-spec/infrastructure.md\n1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0  system-spec/maintenance-ops.md\nc8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1  system-spec/security.md\n420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410  system-spec/ui-ux.md\n9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2  system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "artifact-delivery-standard.json\nc24-receipt.json\ncompile-standard.json\nhearing-audit.json\npreflight-report.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n{'evaluator': '...', 'spec_dir': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/system-spec', 'verdict': 'PASS', 'artifact_snapshot': '...', 'audit_delegations': '...', 'aspects': '...', 'gate_results': '...', 'findings': '...', 'gaps': '...'}\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\n1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402  system-spec/00-requirements-definition.md\n21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897  system-spec/auth.md\n8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466  system-spec/backend.md\n3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de  system-spec/database.md\n10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\nd8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd  system-spec/infrastructure.md\n1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0  system-spec/maintenance-ops.md\nc8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1  system-spec/security.md\n420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410  system-spec/ui-ux.md\n9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2  system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

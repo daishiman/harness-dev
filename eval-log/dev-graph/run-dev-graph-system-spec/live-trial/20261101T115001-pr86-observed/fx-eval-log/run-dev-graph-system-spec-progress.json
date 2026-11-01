@@ -1,0 +1,70 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "loop": 3,
+ "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+ "checklist": [
+  {
+   "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+   "status": "achieved",
+   "evidence": "c24-receipt.json exit0; R0-context verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/verifier-result.json)"
+  },
+  {
+   "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+   "status": "achieved",
+   "evidence": "version 0.1.25 in >=0.1.22 <1.0.0; 4 entry points present; R1-preflight verifier PASS"
+  },
+  {
+   "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+   "status": "not_achieved",
+   "evidence": "re-evaluation (loop3) also ungrounded: C08 0 WebFetch, report claims official-host re-check (R2-delegate/reevaluation-grounding-check.json)"
+  },
+  {
+   "item": "coverage/source-citation/evaluator gate が全て PASS である",
+   "status": "not_achieved",
+   "evidence": "coverage/citation exit0; evaluator doc_freshness PASS ungrounded twice -> evaluator gate not achieved"
+  },
+  {
+   "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+   "status": "not_achieved",
+   "evidence": "not attempted: C02 import forbidden without a grounded evaluator PASS"
+  },
+  {
+   "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+   "status": "achieved",
+   "evidence": "R2 verifier: no render_chapter/apply-spec-transition/compile-spec-doc/spec writer in plugins/dev-graph"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS",
+   "loops": [
+    {
+     "loop": 1,
+     "status": "PASS",
+     "evidence": "coverage exit0, source-citation exit0, validate-graph-schema --strict-artifact-readiness exit0"
+    },
+    {
+     "loop": 2,
+     "status": "PASS",
+     "evidence": "coverage exit0, source-citation exit0, schema exit0 (loop2 rerun)"
+    },
+    {
+     "loop": 3,
+     "status": "PASS",
+     "evidence": "gates unchanged since loop2 (no input changes); coverage/citation/schema exit0"
+    }
+   ]
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending",
+   "evidence": "judged by post-run live trial"
+  }
+ ],
+ "blockers": [
+  "C08 doc-freshness auditor performed 0 WebFetch in both evaluator runs while reports claim official-host re-verification; single allowed re-evaluation exhausted",
+  "C02 import not performed; graph has 0 nodes"
+ ],
+ "final": "FAIL"
+}

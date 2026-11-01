@@ -1,0 +1,51 @@
+{
+  "skill": "run-dev-graph-decompose",
+  "mode": "dry-run",
+  "artifact_delivery_choice": "standard",
+  "macro_report": {
+    "architecture": [{"graph_node_id": "ARCH-LT-001", "operation": "none (existing, shared)", "tracker_binding": "none"}],
+    "features": [
+      {"graph_node_id": "LT-FEATURE-001", "operation": "none (existing)", "tracker_binding": "none", "depends_on": []},
+      {"graph_node_id": "feature-lt-render-diff", "operation": "C02 add (planned, draft)", "tracker_binding": "beads", "depends_on": ["LT-FEATURE-001"], "architecture_refs": ["ARCH-LT-001"]},
+      {"graph_node_id": "feature-lt-render-diff-summary", "operation": "C02 add (planned, draft)", "tracker_binding": "beads", "depends_on": ["feature-lt-render-diff"], "architecture_refs": ["ARCH-LT-001"]}
+    ],
+    "edges": [
+      {"from": "feature-lt-render-diff", "to": "LT-FEATURE-001", "kind": "depends_on"},
+      {"from": "feature-lt-render-diff-summary", "to": "feature-lt-render-diff", "kind": "depends_on"}
+    ],
+    "cycles": 0,
+    "phase_task_in_macro": 0
+  },
+  "c02_preview": {
+    "path": ".dev-graph/cache/decompose-input/c02-preview.json",
+    "status": "preview", "dry_run": true, "write_count": 0, "applied_count": 0,
+    "graph_revision_before": 3, "graph_revision_after": 4,
+    "graph_digest_after": "sha256:6f453d40aee4f232cbffdf7bbb8f2a3cf0cc2b24b0b66900bdcff63a8a88493a",
+    "pre_write_validation": {"findings": 0, "validator": "validate-graph-schema.py"},
+    "planned_nodes_state": {"status": "draft", "confirmation_status": "draft", "evaluation_status": "pending", "implementation_readiness": "complete"}
+  },
+  "current_graph": {"graph_revision": 3, "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0"},
+  "publication_preview": [
+    {"graph_node_id": "feature-lt-render-diff", "binding": "beads", "operation": "C28 create (epic) — not issued",
+     "c28_dry_run": ".dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff.json",
+     "verdict": "blocked", "reasons": ["promotion_gate: not confirmed/pass/readiness complete (planned draft)", "cross_binding_dependency"],
+     "cross_binding_edge": {"from": {"id": "feature-lt-render-diff", "binding": "beads"}, "to": {"id": "LT-FEATURE-001", "binding": "none"}},
+     "dep_add": "not called (dependency target is binding=none; no Beads issue will exist; not a 'post-create edge')",
+     "human_decision": "どちらかの binding をそろえるか確認が必要"},
+    {"graph_node_id": "feature-lt-render-diff-summary", "binding": "beads", "operation": "C28 create (epic) — not issued",
+     "c28_dry_run": ".dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff-summary.json",
+     "verdict": "blocked", "reasons": ["promotion_gate: not confirmed/pass/readiness complete (planned draft)", "cross_binding_dependency (held chain)"],
+     "edge": {"from": {"id": "feature-lt-render-diff-summary", "binding": "beads"}, "to": {"id": "feature-lt-render-diff", "binding": "beads", "held": true}},
+     "chain_origin_edge": {"from": {"id": "feature-lt-render-diff", "binding": "beads"}, "to": {"id": "LT-FEATURE-001", "binding": "none"}},
+     "dep_add": "not called (dependent is held; not a 'post-create edge')"},
+    {"graph_node_id": "LT-FEATURE-001", "binding": "none", "operation": "no external write", "verdict": "local only"},
+    {"graph_node_id": "ARCH-LT-001", "binding": "none", "operation": "no external write", "verdict": "local only"}
+  ],
+  "issuable_targets": [],
+  "issuable_targets_count": 0,
+  "draft_targets_issued": 0,
+  "package_preview": {"status": "not_applicable", "reason": "--package 指定なし。dry-run では system-dev-planner を起動しない (Macro flow 4)。新 feature は draft で依存先 LT-FEATURE-001 も未完了 (P06..P13 active) のため ready feature 0 件"},
+  "github_preview": {"status": "not_applicable", "reason": "binding=github の target 0 件"},
+  "write_count": {"local_graph": 0, "content": 0, "receipt": 0, "beads": 0, "github": 0, "projects": 0},
+  "fake_bd_calls": 0
+}

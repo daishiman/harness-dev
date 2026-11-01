@@ -1,0 +1,115 @@
+{
+  "scope": "123 C05進行中prefixのみ。C07/C06は実final、C08とC05 reportは未終了として扱う。",
+  "final_result": null,
+  "evaluator_id": "/root/review_sysspec123_fresh",
+  "blockers": [],
+  "transcript_prefix_sha256": "8997ddd3bb9fdae05776a673d2210b565d2b11c28c0c815da1a9a3177c021825",
+  "checks": {
+    "native_and_observer": {
+      "native_streams": 7,
+      "bytes_sha_and_live_native_prefix_match": true,
+      "observer_events": 149,
+      "source_prefix_uuid_input_result_mismatches": 0,
+      "initial_main_prefix_preserved": true
+    },
+    "C05_reads": {
+      "prompt_full_count": 18,
+      "prompt_expected_count": 18,
+      "all_markdown_full_count": 10,
+      "all_markdown_expected_count": 10,
+      "state_all_lines": true,
+      "fetched_refs_full": true,
+      "C04_resource_map_full": true,
+      "own_R1_R2_rubric_aspect_schema_full": true,
+      "own_resource_map": "このprefixでは未Read、最終出力前の取得を保留",
+      "read_result_reconstruction": "C05ではtool_use_resultが文字列のためtool_result_contentの行番号付き本文を正本原文と行単位比較。末尾空行は実内容と区別。state過大Read失敗は後続の小分割で全範囲取得。"
+    },
+    "C05_snapshot": {
+      "canonical_writer_print_snapshot": true,
+      "before_target_reads_and_audit": true,
+      "artifacts": 12,
+      "current_digest_all_match": true
+    },
+    "C05_write_boundary": {
+      "completed_write_targets": [
+        "fx/eval-log/hearing-audit.json"
+      ],
+      "only_allowed_JSON_save": true,
+      "literal_Path_and_quoted_heredoc": true,
+      "C06_JSON_exact_verbatim": true,
+      "hearing_aggregate": "PASS、blocking空、notes2・closed3",
+      "target_spec_write": 0,
+      "custom_reader_builder_or_tmp_save": 0,
+      "wrong_gate_path_recovered": "211行は不存在CLIでexit2、224行で正規CLIに訂正し3gate全0。成功への書換えなし。"
+    },
+    "C07": {
+      "native_agent_id": "a4787ac977fd08faa",
+      "actual_foreground_single_call_line": 236,
+      "native_final_line": 37,
+      "final_verdict": "PASS",
+      "completion_text_sha256": "741901140533ff4fda898722bad482974e777669fd18a3b6d10c777fa15cdae6",
+      "resolved_ledger_read_before_next_dispatch_line": 240,
+      "two_modes_actual_gate_exit": [
+        0,
+        0
+      ],
+      "scope_read": "state1〜1481行でmatrix/QA/approval/category_aggregateを被覆。残りfoundation/decisionsは担当外で全文未取得を欠陥扱いしない。"
+    },
+    "C06": {
+      "native_agent_id": "a965bf4119e6dc68e",
+      "actual_foreground_single_call_line": 245,
+      "native_final_line": 61,
+      "final_verdict": "PASS",
+      "completion_text_sha256": "3ad602059ddfed50970fe953dd4608f8b7d3c5f9d12aa13545becf2999a8ce24",
+      "resolved_ledger_read_before_C08_line": 248,
+      "adapter_R6_neutral_aspect_spec_contract_full": true,
+      "same_actor_written_precheck_line": 41,
+      "written_read_line": 47,
+      "four_answer_sha_check_line": 55,
+      "written_sources": 4,
+      "safe_path_regular_file_sha_and_section_literal_match": true,
+      "state_read_note": "欠け1841行は担当外D4 cost objectの閉じ括弧のみ。担当matrix全セル/QA全質問/approval/U1-U9は取得済み。",
+      "findings": "5件、閉じた検出3件、主根拠以外のmedium注記2件。補助qa_refsのretired参照を正本明示許可どおり扱う。"
+    },
+    "dispatch_ledger": {
+      "for_each_completed_audit": [
+        "prompt SHA一致",
+        "session一致",
+        "qualified subagent種一致",
+        "tool_use_id一致",
+        "token一致",
+        "completion本文SHA一致",
+        "実final marker PASS一致",
+        "dispatch/completion resolved",
+        "次dispatchは前finalと台帳確認後"
+      ],
+      "whole_per_call_response_digest": "台帳の1.2値は収録済みだがC05 nested native resultには元tool_response metadataがない。最終metadata提供後の独立再計算へ保留し、自己申告一致だけで完了としない。"
+    }
+  },
+  "pending": [
+    "C05 own resource-map取得",
+    "C05全18promptのC1-C4意味評価と全6観点report",
+    "C08実finalと5target再照合",
+    "最終report snapshot/gate/receipt集約と全goal",
+    "全3監査のraw whole tool_response digest再計算（最終metadata待ち）"
+  ],
+  "notes": [
+    "未完了項目をblockerにしていない。",
+    "C05 shell代入/echo/cdはCLI実行補助。read/write境界の逸脱や自己製writerへの置換は観測されず、source mustを無差別にgoal blockerへ拡張しない。",
+    "C07/C06が冒頭テキストでもtokenを出し最終本文でもechoするが、completion判定は実final本文だけを使用しdigestが一致する。",
+    "作業中に現ledgerの後続行を見たが、prefix外C08行は本判定根拠へ使っていない。",
+    "source/入力/原本は無編集、過去他runのreview/verdictは未参照。"
+  ],
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/manifest.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/main.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/subagent-agent-afb32354c2e1fe747.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/subagent-agent-a4787ac977fd08faa.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/subagent-agent-a965bf4119e6dc68e.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-audits-partial/tool-observer/index.json",
+    "/tmp/pr86-sysspec123-audits-read-coverage.json",
+    "/tmp/pr86-sysspec123-audits-binding.json",
+    "/tmp/pr86-sysspec123-audits-written-source.json",
+    "/tmp/pr86-sysspec123-audits-observer-validation.json"
+  ]
+}

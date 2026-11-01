@@ -1,0 +1,32 @@
+{
+  "responsibility": "R3-import",
+  "loop": 2,
+  "index": "system-spec/index.md",
+  "c02_skill": "dev-graph:run-dev-graph-node (add)",
+  "c02_receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+  "c02_receipt_sha256": "d6c1c2e65b6604efc4e836b4101714c27c3f965b28c05d5ad3e21072142eeb9b",
+  "payload": "eval-log/run-dev-graph-system-spec/R3-import/c02-add-payload.json",
+  "payload_sha256": "583cd778685a0a8f05aa3d602aaa829d810f3e683fc14355efb1f666b83f2f6b",
+  "dry_run_input_sha256": "583cd778685a0a8f05aa3d602aaa829d810f3e683fc14355efb1f666b83f2f6b",
+  "add_input_sha256": "583cd778685a0a8f05aa3d602aaa829d810f3e683fc14355efb1f666b83f2f6b",
+  "evaluator_report": "eval-log/system-spec-completeness-report.json",
+  "evaluator_report_sha256": "f32ddd1b87726b8d1630f3b0a385fb5007d82eff5b437a2865f27a7a3ae1fc2b",
+  "evaluator_verdict": "PASS",
+  "ordering_mtime": {"evaluator_report": "2026-11-01T05:05:39+09:00", "payload": "2026-11-01T05:12:29+09:00", "c02_receipt": "2026-11-01T05:14:08+09:00"},
+  "graph_revision_before": 0,
+  "graph_revision_after": 1,
+  "graph_digest_after": "sha256:f8b5bf931082720e2c204d644fecb2d7ff232bf6c459b08e5ad324ac8a6437db",
+  "imported_nodes": [
+    {"graph_node_id": "spec-billing-audit-system-spec", "artifact_kind": "specification", "file_path": "specs/billing-audit-system-spec.md",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.24", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-10-31T20:12:11Z"},
+     "confirmation_status": "confirmed", "evaluation_status": "pass",
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"},
+     "readiness": "complete"},
+    {"graph_node_id": "arch-billing-audit-system-architecture", "artifact_kind": "architecture", "file_path": "architecture/billing-audit-system-architecture.md",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.24", "source_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402", "imported_at": "2026-10-31T20:12:11Z"},
+     "confirmation_status": "confirmed", "evaluation_status": "pass",
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402"},
+     "readiness": "complete"}
+  ],
+  "gates": {"validate-source-lineage --node-id x2": 0, "validate-graph-schema --strict-artifact-readiness": 0}
+}

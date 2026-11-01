@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "87c58bf6-c338-4542-ab4b-7498b4eba443",
+      "line": 141,
+      "prefix_bytes": 933719,
+      "prefix_sha256": "33860b44541b455cf8f4d3d308be563523959b45a80a59861a621f835a1808ad",
+      "timestamp": "2026-11-01T15:49:16.570Z"
+    },
+    "result": {
+      "uuid": "eb9e1851-ef91-4584-ae60-51c26e17ffc4",
+      "line": 144,
+      "prefix_bytes": 943887,
+      "prefix_sha256": "5840d561271af643caedc78099c30e754210d5edb48edd0ea04dd5d39c68145e",
+      "timestamp": "2026-11-01T15:49:19.845Z"
+    }
+  },
+  "tool_use_id": "toolu_01CAMYmfPqDZ5oCy24phvwHX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/dev-graph/scripts/../lib plugins/dev-graph/hooks; grep -rln \"artifact_delivery\\|user_choice\" plugins/dev-graph/scripts plugins/dev-graph/lib plugins/dev-graph/hooks 2>/dev/null | head; cat plugins/dev-graph/artifact-delivery.json | head -60",
+    "description": "Find artifact-delivery choice recording mechanism"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/hooks:\naudit-graph-authority-drift.py\nguard-graph-schema.py\nhooks.json\nreconcile-task-lifecycle.py\n\nplugins/dev-graph/scripts/../lib:\nbd_bridge_audit.py\nbd_bridge_contracts.py\nbd_bridge_graph.py\ngraph_artifact_readiness.py\ngraph_envelope.py\nguard_graph_commands.py\nguard_python_path_eval.py\nguard_python_writes.py\nlive_trial_evidence_selection.py\norphan_external_ref.py\nschedule_graph_nodes.py\n{\n  \"schema_version\": 1,\n  \"schema_id\": \"https://harness.local/schemas/artifact-delivery.schema.json\",\n  \"schema_sha256\": \"5d9c851d3642618d3966525c71c93b7a8fdaf6a79921830bcf3e44af97c96a37\",\n  \"policy_id\": \"artifact-delivery-v1\",\n  \"policy_sha256\": \"e4b3aa9b5591f8d363ad4820ae259a339db34946a0ee829b0ef7d3da1ba637c2\",\n  \"plugin\": \"dev-graph\",\n  \"manifest_ref\": \".claude-plugin/plugin.json\",\n  \"artifact_first\": true,\n  \"draft_handoff\": {\n    \"actual_artifact_required\": true,\n    \"minimum_state\": \"usable-draft\",\n    \"present_before_user_choice\": true\n  },\n  \"auto_promotion\": {\n    \"exhaustive\": false,\n    \"release\": false\n  },\n  \"minimum_safe_guard\": {\n    \"fail_closed_on_unknown_effect\": true,\n    \"target_scope_required\": true\n  },\n  \"entrypoints\": [\n    {\n      \"path\": \"skills/run-dev-graph-decompose/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-init/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-node/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-render/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-requirements/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-schedule/SKILL.md\",\n      \"effect\": \"conversation-output\",\n      \"guard\": \"no-target-mutation\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-status/SKILL.md\",\n      \"effect\": \"conversation-output\",\n      \"guard\": \"no-target-mutation\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-sync/SKILL.md\",",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/hooks:\naudit-graph-authority-drift.py\nguard-graph-schema.py\nhooks.json\nreconcile-task-lifecycle.py\n\nplugins/dev-graph/scripts/../lib:\nbd_bridge_audit.py\nbd_bridge_contracts.py\nbd_bridge_graph.py\ngraph_artifact_readiness.py\ngraph_envelope.py\nguard_graph_commands.py\nguard_python_path_eval.py\nguard_python_writes.py\nlive_trial_evidence_selection.py\norphan_external_ref.py\nschedule_graph_nodes.py\n{\n  \"schema_version\": 1,\n  \"schema_id\": \"https://harness.local/schemas/artifact-delivery.schema.json\",\n  \"schema_sha256\": \"5d9c851d3642618d3966525c71c93b7a8fdaf6a79921830bcf3e44af97c96a37\",\n  \"policy_id\": \"artifact-delivery-v1\",\n  \"policy_sha256\": \"e4b3aa9b5591f8d363ad4820ae259a339db34946a0ee829b0ef7d3da1ba637c2\",\n  \"plugin\": \"dev-graph\",\n  \"manifest_ref\": \".claude-plugin/plugin.json\",\n  \"artifact_first\": true,\n  \"draft_handoff\": {\n    \"actual_artifact_required\": true,\n    \"minimum_state\": \"usable-draft\",\n    \"present_before_user_choice\": true\n  },\n  \"auto_promotion\": {\n    \"exhaustive\": false,\n    \"release\": false\n  },\n  \"minimum_safe_guard\": {\n    \"fail_closed_on_unknown_effect\": true,\n    \"target_scope_required\": true\n  },\n  \"entrypoints\": [\n    {\n      \"path\": \"skills/run-dev-graph-decompose/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-init/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-node/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-render/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-requirements/SKILL.md\",\n      \"effect\": \"local-artifact\",\n      \"guard\": \"declared-target-scope-only\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-schedule/SKILL.md\",\n      \"effect\": \"conversation-output\",\n      \"guard\": \"no-target-mutation\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-status/SKILL.md\",\n      \"effect\": \"conversation-output\",\n      \"guard\": \"no-target-mutation\"\n    },\n    {\n      \"path\": \"skills/run-dev-graph-sync/SKILL.md\",",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

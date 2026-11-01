@@ -930,12 +930,17 @@ class BuildGraphNodeTest(unittest.TestCase):
         (self.root / "eval-log" / "pass.json").write_text(json.dumps({"verdict": "PASS", "spec_dir": "system-spec"}), encoding="utf-8")
         (self.root / "eval-log" / "fail.json").write_text(json.dumps({"verdict": "FAIL", "spec_dir": "system-spec"}), encoding="utf-8")
         (self.root / "eval-log" / "other.json").write_text(json.dumps({"verdict": "PASS", "spec_dir": "docs"}), encoding="utf-8")
+        (self.root / "eval-log" / "absolute.json").write_text(
+            json.dumps({"verdict": "PASS", "spec_dir": str(source.parent)}), encoding="utf-8")
+        (self.root / "eval-log" / "foreign.json").write_text(
+            json.dumps({"verdict": "PASS", "spec_dir": str(self.root.parent / "other/system-spec")}), encoding="utf-8")
         evidence = {"evaluator": BGN.SPEC_EVALUATOR, "evidence_ref": "eval-log/pass.json", "evaluated_digest": digest}
         entry = {**BASE, "title": "S", "artifact_kind": "specification", "classification": candidates("specification"),
                  "sections": filled("specification"), "source_lineage": lineage}
         rejected = [
             ({**evidence, "evidence_ref": "eval-log/fail.json"}, entry, "confirmation_evidence_not_pass"),
             ({**evidence, "evidence_ref": "eval-log/other.json"}, entry, "invalid_confirmation_evidence"),
+            ({**evidence, "evidence_ref": "eval-log/foreign.json"}, entry, "invalid_confirmation_evidence"),
             ({**evidence, "evaluated_digest": "0" * 64}, entry, "invalid_confirmation_evidence"),
             ({**evidence, "evaluator": "someone-else"}, entry, "invalid_confirmation_evidence"),
             (evidence, {**entry, "sections": {}}, "confirmed_import_requires_complete_readiness"),
@@ -944,6 +949,10 @@ class BuildGraphNodeTest(unittest.TestCase):
         for index, (bad, base, expected) in enumerate(rejected):
             code, report = self.run_cli("add", {"artifacts": [{**base, "slug": f"bad-{index}", "confirmation_evidence": bad}]})
             self.assertEqual((code, report["code"], report["write_count"]), (1, expected, 0), report)
+        self.assertEqual(self.graph_state()["nodes"], [])
+        code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": "absolute",
+            "confirmation_evidence": {**evidence, "evidence_ref": "eval-log/absolute.json"}}]}, "--dry-run")
+        self.assertEqual(code, 0, report)
         self.assertEqual(self.graph_state()["nodes"], [])
         code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": "system", "confirmation_evidence": evidence}]})
         self.assertEqual(code, 0, report)

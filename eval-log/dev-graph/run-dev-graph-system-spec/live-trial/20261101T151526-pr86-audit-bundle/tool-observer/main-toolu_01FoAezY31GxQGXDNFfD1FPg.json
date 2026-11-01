@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7147c317-c1c6-4a74-8217-8c60e71470fb",
+      "line": 339,
+      "prefix_bytes": 1890299,
+      "prefix_sha256": "00ce904db63b296dbf8990c50b46281fa47fb296da82ed57d544fd868591b59b",
+      "timestamp": "2026-11-01T06:22:53.216Z"
+    },
+    "result": {
+      "uuid": "d7782dbc-9662-4b8c-afc7-1777e17f6fd3",
+      "line": 340,
+      "prefix_bytes": 1891982,
+      "prefix_sha256": "3fe385ef74b495d81547406d98a223a2ed0223571640d4035ed31b0eb10ff362",
+      "timestamp": "2026-11-01T06:22:56.249Z"
+    }
+  },
+  "tool_use_id": "toolu_01FoAezY31GxQGXDNFfD1FPg",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; S=\"$CLAUDE_PROJECT_DIR/system-spec\"; python3 -B \"$P/scripts/validate-coverage-matrix.py\" --matrix \"$S/spec-state.json\" --require-complete >/dev/null; echo \"coverage=$?\"; python3 -B \"$P/scripts/validate-source-citation.py\" --targets \"$S/spec-state.json\" --references \"$S/fetched-references.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo \"citation=$?\"; python3 -B \"$P/scripts/validate-design-knowledge-refs.py\" --matrix \"$S/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"dk=$?\"; ls \"$S\"; git status --short",
+    "description": "Run compile IN1 entry gates"
+  },
+  "is_error": false,
+  "tool_result_content": "coverage=0\ncitation=0\nOK: design knowledge_ref は全て実在する (検査 10 件)\ndk=0\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "coverage=0\ncitation=0\nOK: design knowledge_ref は全て実在する (検査 10 件)\ndk=0\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

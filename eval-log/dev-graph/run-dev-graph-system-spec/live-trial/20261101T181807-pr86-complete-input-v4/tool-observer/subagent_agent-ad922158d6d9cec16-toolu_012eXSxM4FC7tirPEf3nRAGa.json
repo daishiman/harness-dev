@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d3b3b5f9-1de4-4427-9254-9e791fc602ff",
+      "line": 126,
+      "prefix_bytes": 709593,
+      "prefix_sha256": "2cfed8e83ad1b9bda040d406911cb0239f721c34ca4175a02bd1bdb27bc21223",
+      "timestamp": "2026-11-01T09:29:47.130Z"
+    },
+    "result": {
+      "uuid": "d3ebff3e-2ea8-41d5-b037-ec964d51d656",
+      "line": 127,
+      "prefix_bytes": 710702,
+      "prefix_sha256": "84c9e3e85dfed9ea975b56631b10dd3cd3afe8c25e0da163c0bf285835377858",
+      "timestamp": "2026-11-01T09:29:49.123Z"
+    }
+  },
+  "tool_use_id": "toolu_012eXSxM4FC7tirPEf3nRAGa",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; timeout 60 find /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113 -maxdepth 10 \\( -name 'verify-completeness.py' -o -name 'validate-prompt.py' \\) 2>/dev/null | head; echo ---; grep -rln \"verify-completeness\" plugins/system-spec-harness --include=*.py --include=*.yaml --include=*.json 2>/dev/null | head; ls plugins/system-spec-harness/scripts",
+    "description": "Search for validators within the run dir"
+  },
+  "is_error": false,
+  "tool_result_content": "---\n(eval):1: no matches found: --include=*.py\ncoverage_foundation.py\nextract-plugin-root.py\nfoundation_provenance.py\nvalidate-coverage-matrix.py\nvalidate-design-knowledge-refs.py\nvalidate-information-priority.py\nvalidate-knowledge-graph.py\nvalidate-source-citation.py\nvalidate-spec-doc-sync.py",
+  "tool_use_result": null
+}

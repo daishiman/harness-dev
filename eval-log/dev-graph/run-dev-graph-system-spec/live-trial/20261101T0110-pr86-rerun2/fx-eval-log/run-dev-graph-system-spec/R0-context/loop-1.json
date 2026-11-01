@@ -1,0 +1,34 @@
+{
+  "responsibility_id": "run-dev-graph-system-spec/R0-context",
+  "loop": 1,
+  "pinned_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "614249d9c0b2d1c53fb993adcf20cd38ef180e636b2bc25b5304dd41db32d524", "sha256_reverified": true},
+  "receipt_verification": {
+    "resolve_repo_context_rerun_exit": 0,
+    "rerun_output_identical_to_pinned_receipt": true,
+    "repository_id": "local:sha256:dbcf1a73d3a0c8ed333046ee978e07fbe60e686c47abaf81c46eb49ff307ae25",
+    "worktree_id": "wt_03af7ffc61abc275",
+    "git_common_dir": "<repo_root>/.git",
+    "git_dir": "<repo_root>/.git",
+    "git_rev_parse_git_common_dir_absolute": "<repo_root>/.git (match)",
+    "content_roots.system_spec": "<repo_root>/system-spec",
+    "system_spec_realpath_inside_repo_root": true,
+    "system_spec_is_symlink": false,
+    "symlinks_inside_system_spec": 0,
+    "diagnostics": ["default_branch_fallback_main"]
+  },
+  "lineage_gate": {"command": "validate-source-lineage.py --repo-root <repo_root>", "exit": 0, "status": "pass", "checked": 0, "violations": [], "graph": ".dev-graph/state/graph.json", "graph_node_count": 0},
+  "decision": "new_creation",
+  "checklist": [
+    {"layer": "R0 5.3", "item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる", "result": "YES", "evidence": "re-run resolve-repo-context (exit 0) byte-identical fields vs pinned receipt; realpath(system-spec)=<repo_root>/system-spec, not symlink, find -type l = 0; git rev-parse --git-common-dir = <repo_root>/.git"},
+    {"layer": "R0 5.3", "item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた", "result": "YES", "evidence": "exit 0, status pass, checked=0, violations=[] -> new_creation (graph has 0 nodes)"},
+    {"layer": "common 5.3", "item": "宣言した入力が全て検証済みである", "result": "YES", "evidence": "caller context (pinned receipt sha256 re-verified + independent re-resolve), repo-local system-spec root (containment checked), plugin source = <repo_root>/plugins/dev-graph (inside repo, matches receipt)"},
+    {"layer": "common 5.3", "item": "出力が宣言した shape と authority を満たす", "result": "YES", "evidence": "receipt separates repository identity (repository_id/worktree_id/git dirs), content roots (content_roots.*), code authority (plugin_source); resume decision derived uniquely from checked=0"},
+    {"layer": "common 5.3", "item": "責務境界に反する read/write/delegation が0件である", "result": "YES", "evidence": "reads limited to repo_root (prompts, receipt, system-spec listing, graph.json); no symlink targets or other repos read; only write is this loop record; no delegation"}
+  ],
+  "goal_reached": true,
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "delta_from_original": "C24 containment verified and resume decision fixed (new_creation, checked=0). Remaining: R1 preflight, system-spec build via system-spec-harness canonical flow, import into specification/architecture nodes with source/confirmation/upstream trace.",
+  "merged_directive_for_next": "Proceed to R1 preflight with the pinned C24 receipt (sha256 614249d9...d32d524) as handoff; treat as new creation (graph empty, checked=0); do not reuse/repoint any prior import.",
+  "drift_signal": "none"
+}

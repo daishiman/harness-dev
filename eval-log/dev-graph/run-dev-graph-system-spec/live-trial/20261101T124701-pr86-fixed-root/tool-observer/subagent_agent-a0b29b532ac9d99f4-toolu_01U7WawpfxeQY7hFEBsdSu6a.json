@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "49456672-c88e-45a7-a894-2743def5c467",
+      "line": 144,
+      "prefix_bytes": 834740,
+      "prefix_sha256": "4a073b707ca57e6d6a61c7af35c07aac2ae179b4084e2a82d66e508246a71ea4",
+      "timestamp": "2026-11-01T03:56:29.064Z"
+    },
+    "result": {
+      "uuid": "f306823e-4ca2-4d14-9a0b-8399f0e18951",
+      "line": 145,
+      "prefix_bytes": 836483,
+      "prefix_sha256": "0fbbe9bec4e71baf8ee484e95a5304ec5ba86ef66656bbe944c12778b4599a81",
+      "timestamp": "2026-11-01T03:56:30.384Z"
+    }
+  },
+  "tool_use_id": "toolu_01U7WawpfxeQY7hFEBsdSu6a",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport pathlib,os\nroots=[pathlib.Path('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx'),pathlib.Path(os.path.expanduser('~/.claude/plugins'))]\nfor r in roots:\n    if not r.exists(): print('missing',r); continue\n    hits=[p for p in r.rglob('*') if p.name in ('verify-completeness.py','validate-prompt.py')]\n    print(r, hits[:10])\npp=sorted(pathlib.Path('plugins/system-spec-harness').rglob('prompts/*.md')); print(len(pp))\nfor p in pp: print(p)\nPY",
+    "description": "Locate prompt-creator validators and list prompts"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/policy.json']: [live-trial 隔離ガード] 拒否: 利用者の設定ディレクトリへの言及。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/policy.json']: [live-trial 隔離ガード] 拒否: 利用者の設定ディレクトリへの言及。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

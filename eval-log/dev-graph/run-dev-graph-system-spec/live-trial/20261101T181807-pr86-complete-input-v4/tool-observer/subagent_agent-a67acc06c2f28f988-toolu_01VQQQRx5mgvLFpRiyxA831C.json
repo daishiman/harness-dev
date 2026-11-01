@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "df514c3f-e6f3-468a-aaef-6520e42bf014",
+      "line": 133,
+      "prefix_bytes": 681236,
+      "prefix_sha256": "5bad09168c4e519f626970cca744cf06f74d802f9f1562308d06c55cc259672c",
+      "timestamp": "2026-11-01T09:37:00.304Z"
+    },
+    "result": {
+      "uuid": "12dc7794-272c-449f-a6b5-978a9c9325fd",
+      "line": 134,
+      "prefix_bytes": 683698,
+      "prefix_sha256": "7d7bcb55bf14d4c2a2b54d6045b9ae7b1099891fbec457b94c171a91b5857989",
+      "timestamp": "2026-11-01T09:37:02.912Z"
+    }
+  },
+  "tool_use_id": "toolu_01VQQQRx5mgvLFpRiyxA831C",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/dev-graph/scripts plugins/dev-graph/skills/run-dev-graph-system-spec/scripts; grep -rlE \"compile-spec-doc|qa_log|approval_log|def compile|AskUserQuestion.*hearing\" plugins/dev-graph/scripts plugins/dev-graph/skills/*/scripts 2>/dev/null; find plugins/dev-graph -newer .dev-graph/config.json | head; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness >/dev/null; echo schema=$?; P=plugins/system-spec-harness/scripts; python3 -B $P/validate-coverage-matrix.py --matrix system-spec/spec-state.json --require-complete --require-basis --require-foundation >/dev/null; echo cov=$?; python3 -B $P/validate-source-citation.py --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo cite=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n\nplugins/dev-graph/skills/run-dev-graph-system-spec/scripts:\nbuild-evaluation-context.py\nschema=0\ncov=0\ncite=0",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n\nplugins/dev-graph/skills/run-dev-graph-system-spec/scripts:\nbuild-evaluation-context.py\nschema=0\ncov=0\ncite=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

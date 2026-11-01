@@ -1,0 +1,109 @@
+{
+  "scope": "123 C02実登録・独立integrity完了範囲。R3/C19最終goal等は保留。",
+  "final_result": null,
+  "evaluator_id": "/root/review_sysspec123_fresh",
+  "blockers": [],
+  "transcript_prefix_sha256": "c4ce45e04999e817b3304d2a218972d162389b560dfa7fc2799bc52b1f3b2046",
+  "checks": {
+    "native_observer": {
+      "streams": 10,
+      "events": 222,
+      "source_prefix_input_result_mismatches": 0,
+      "manifest_bytes_sha_live_prefix_match": true
+    },
+    "route": {
+      "C05_PASS_before_payload_and_C02": true,
+      "C02_Skill_main_line": 461,
+      "C02_R0_R4_full_read_before_payload": true,
+      "payload_only_input_not_authority_direct_write": true,
+      "final_dry_run_line": 610,
+      "canonical_add_line": 615,
+      "same_payload_SHA256": "dd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238d",
+      "receipt_owner": "C02/run-dev-graph-node",
+      "applied_count": 2,
+      "graph_revision_before": 0,
+      "graph_revision_after": 1,
+      "pre_write_findings": 0
+    },
+    "prechoice": {
+      "actual_nodes_receipt_before_standard": true,
+      "presentation_main_line": 624,
+      "path_digest_opening_in_actual_stdout": true,
+      "typed_nodes_confirmed_pass_complete": true,
+      "standard_main_line": 629,
+      "preauthorized_standard_from_task": true,
+      "prechoice_semantic_Agent": 0
+    },
+    "postchoice": {
+      "C24_receipt_main_line": 634,
+      "baseline_revision": 1,
+      "baseline_digest": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b",
+      "writer_receipts": [],
+      "prechoice_receipt_excluded_from_postchoice_writer_receipts": true,
+      "prechoice_receipt_baseline_and_current_digest_match": true,
+      "postchoice_writer_operation": 0,
+      "no_unmet_writer_requires_redundant_Agent": true,
+      "required_integrity_Agent_call": 648,
+      "actual_completed_native_result": 651,
+      "integrity_child_id": "adb6ec99e2d464843",
+      "integrity_child_final_line": 36,
+      "verdict": "PASS",
+      "canonical_digest_verifier_value_unchanged": true,
+      "schema_and_goal_seek_verification_exit": 0,
+      "outer_criteria": "OUT1-OUT3 external_pending",
+      "package": "not_applicable with add-only evidence",
+      "classification_and_receipt": "achieved with pre-choice receipt evidence"
+    },
+    "lineage_and_evidence": {
+      "node_count": 2,
+      "kinds": [
+        "specification",
+        "architecture"
+      ],
+      "source_paths": [
+        "system-spec/index.md",
+        "system-spec/00-requirements-definition.md"
+      ],
+      "source_version": "0.1.24",
+      "source_digest_actual_bytes_match": true,
+      "confirmation_evaluated_digest_C05_snapshot_match": true,
+      "report_ref_exists_and_PASS": true,
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "readiness": "complete, missing_sections=[]",
+      "lineage_actual_gate_exit": 0,
+      "checked": 2,
+      "receipt_artifact_hash_match": true,
+      "all12_snapshot_digests_current_match": true
+    }
+  },
+  "notes": [
+    {
+      "id": "BASELINE_TIMING",
+      "classification": "記録時点の補足、目的不達の根拠なし",
+      "observation": "baselineのprogress永続化は676行。post-choice開始634直後より後だが、基準digestはpre-choice receipt/presentation624/choice629に既に固定され、間にpost-choice writerが0件、verifierも同じgraphを独立再計算。baseline取り直しや他writer変更の隠蔽は観測しない。"
+    },
+    {
+      "id": "C02_FORMAL_BRANCH",
+      "classification": "正本の正式分岐",
+      "observation": "pre-choiceで依頼2nodeがcanonical commit済みでreadiness_fill=[]。post-choiceの未達writer責務は無く、必須integrity verifierを起こして検証する。単にfork=subagent宣言から同じwriterを再起動させる条件を発明しない。"
+    },
+    {
+      "id": "RECOVERY",
+      "classification": "guardの正規回復",
+      "observation": "690行のPython import-report保存がgraph authority guardに拒否され、695/698行でcanonical lineage gateと独立したliteral report保存へ分離。source/guard/graphを書き換える迂回はない。"
+    },
+    {
+      "id": "PENDING",
+      "classification": "範囲外",
+      "observation": "R3独立Verifier・最終C19周回/予算・原本freeze匿名化・全goalは終了原本待ち。未完了をblockerに数えない。"
+    }
+  ],
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c02-complete/manifest.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c02-complete/main.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c02-complete/subagent-agent-adb6ec99e2d464843.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c02-complete/tool-observer/index.json",
+    "/tmp/pr86-sysspec123-c02-node-validation.json"
+  ]
+}

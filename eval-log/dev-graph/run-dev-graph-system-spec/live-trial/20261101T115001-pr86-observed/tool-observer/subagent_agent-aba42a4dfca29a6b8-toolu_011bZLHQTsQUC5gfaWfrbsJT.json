@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-aba42a4dfca29a6b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5d51cffc-0c9d-428a-8329-48408eab6f0d",
+      "line": 172,
+      "prefix_bytes": 926389,
+      "prefix_sha256": "ea28749bdee4936af20214a47ec145a12ea5c2e2d9cb19e67a45c15dc008c87c",
+      "timestamp": "2026-11-01T02:59:13.110Z"
+    },
+    "result": {
+      "uuid": "ba27c5d8-38c5-4867-908c-29b77d5301e6",
+      "line": 173,
+      "prefix_bytes": 927686,
+      "prefix_sha256": "497a19f89c521cef64cf8fb193a8d4eb0812022329e0fd7ae19976ad9d9fb109",
+      "timestamp": "2026-11-01T02:59:15.424Z"
+    }
+  },
+  "tool_use_id": "toolu_011bZLHQTsQUC5gfaWfrbsJT",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json\nfor l in open('eval-log/system-spec-harness/audit-fork-ledger.jsonl'):\n    d=json.loads(l); print(d['record_kind'],d['subagent_type'],d.get('dispatch_token'),d['verdict_state'],d['audit_verdict'],d.get('tool_use_id'),d['response_sha256'])\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "dispatch system-spec-matrix-auditor c05-sysspec105-c07-0001 pending None toolu_013Ghyw31rW7sKS5MoZbi2YD 8df4a7ba46d423e6dab62fdb2cc4e158647b1d2e231047940c5ccb3ed2c6aa3b\ncompletion system-spec-matrix-auditor c05-sysspec105-c07-0001 resolved PASS None 016f3a142ab8c024cfa6cfaaa53aba4dbf590cb0f4f38dbfe90bbcb70d70184b\ndispatch system-spec-hearing-auditor c05-sysspec105-c06-0002 pending None toolu_01NhuSzXTgV9hP56DcJiBMbJ 6c2139be216961ae8b767e86b0212532c8bdf4697df0b11485a733d91fa38085",
+  "tool_use_result": null
+}

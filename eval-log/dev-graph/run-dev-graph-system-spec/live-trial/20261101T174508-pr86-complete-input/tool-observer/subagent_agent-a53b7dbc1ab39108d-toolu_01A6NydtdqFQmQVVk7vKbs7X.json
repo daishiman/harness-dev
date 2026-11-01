@@ -1,0 +1,33 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "78590a6e-3b73-4952-8c66-517d4842dbbd",
+      "line": 132,
+      "prefix_bytes": 671591,
+      "prefix_sha256": "ee19a3d6d101b24dc8091c948a1385ced5cc0d9f128b40241f9085ea82ee56c0",
+      "timestamp": "2026-11-01T09:01:14.882Z"
+    },
+    "result": {
+      "uuid": "cbe4795e-e74e-4254-abe2-5bc22184b54e",
+      "line": 133,
+      "prefix_bytes": 673407,
+      "prefix_sha256": "dca877a2cde05ea833c7810190a42d7891701876499e51a0f2f0bf09d1edfc9d",
+      "timestamp": "2026-11-01T09:01:15.962Z"
+    }
+  },
+  "tool_use_id": "toolu_01A6NydtdqFQmQVVk7vKbs7X",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "ls plugins; find plugins /private/tmp/claude-501/pr86-ci-live/lt/home/.claude -maxdepth 7 \\( -name validate-prompt.py -o -name verify-completeness.py \\) 2>/dev/null | head; ls plugins/system-spec-harness/scripts | head -50",
+    "description": "Locate prompt-creator validators",
+    "timeout": 60000
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

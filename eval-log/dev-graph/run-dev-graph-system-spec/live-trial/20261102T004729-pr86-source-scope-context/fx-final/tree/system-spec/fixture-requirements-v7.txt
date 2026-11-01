@@ -1,0 +1,19 @@
+# 新規合成fixture v7の書面要件
+
+この資料はCI acceptance用にfixture作者がboot前に提供する新しい合成givenである。実利用者との対話・新しい本番承認ではない。古いqa-037/qa-038のbasis変更を有効な利用者入力と主張せず、過去の記録はそのまま残す。本資料に値を明示し、書面source-indexのpath/section/原文SHAで新しいgivenを追跡可能にする。旧fixtureと同じ機能値を使い、採択D1-D4や上位目的は変更しない。
+
+## CSRF防御
+
+cookie には HttpOnly・Secure・SameSite=Lax を付ける。状態を変える要求 (POST・PUT・PATCH・DELETE) には、サーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にし、無いか合わない要求は拒否する。SameSite の属性だけに頼らず、セッションをサーバ側に持つ (D3) ので、トークンもサーバ側で突き合わせたい。
+
+## セッション保存
+
+PostgreSQL 16 (D1) の表に保存する。Pod のメモリには置かず、Pod の再起動や複数の replica でもログインが切れないようにする。Redis などの新しい保存基盤は足さない。有効期限は qa-002 のとおり 8 時間で、期限切れは使えなくして定期的に消す。ログアウトではすぐに無効にする。
+
+## 認証モデル
+
+OIDC(社内 IdP)+ ロールベース認可。セッションは 8h。
+
+## セキュリティ基準
+
+TLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。

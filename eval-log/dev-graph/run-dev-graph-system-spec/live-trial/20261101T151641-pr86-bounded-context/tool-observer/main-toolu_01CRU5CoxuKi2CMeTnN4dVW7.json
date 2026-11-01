@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "15203a8f-fe0c-4ca1-ad6d-26e416609540",
+      "line": 146,
+      "prefix_bytes": 897136,
+      "prefix_sha256": "e0ba68d017100e6d9715fb9ef2a5b769abe53b89ffcd7b2548e492647f16426d",
+      "timestamp": "2026-11-01T15:21:29.744Z"
+    },
+    "result": {
+      "uuid": "fb1dc593-6968-4c12-8882-56608968ab26",
+      "line": 149,
+      "prefix_bytes": 900796,
+      "prefix_sha256": "9979b14b594f4a3a79fbb96013f7df3db32fd3f0820b854789fc5a5fa8a74897",
+      "timestamp": "2026-11-01T15:21:31.744Z"
+    }
+  },
+  "tool_use_id": "toolu_01CRU5CoxuKi2CMeTnN4dVW7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B - \"$CLAUDE_PROJECT_DIR\" <<'PYTHON'\nimport json\nfrom pathlib import Path\n\nfetched_file = Path(\"system-spec/fetched-references.json\")\nspec_state = Path(\"system-spec/spec-state.json\")\n\nif spec_state.exists():\n    with open(spec_state) as f:\n        state = json.load(f)\n    targets = state.get('targets', [])\n    print(f\"Required targets: {[t.get('id') for t in targets]}\")\n\nif fetched_file.exists():\n    with open(fetched_file) as f:\n        refs = json.load(f)\n    refs_list = refs.get('references', [])\n    print(f\"Fetched references count: {len(refs_list)}\")\n    print(f\"Fetched target IDs: {[r.get('target_id') for r in refs_list]}\")\nelse:\n    print(\"fetched-references.json does not exist - need to run doc-fetch\")\nPYTHON\n",
+    "description": "Check fetched-references status"
+  },
+  "is_error": false,
+  "tool_result_content": "Required targets: [None, None, None, None, None]\nFetched references count: 5\nFetched target IDs: ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']",
+  "tool_use_result": {
+    "stdout": "Required targets: [None, None, None, None, None]\nFetched references count: 5\nFetched target IDs: ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

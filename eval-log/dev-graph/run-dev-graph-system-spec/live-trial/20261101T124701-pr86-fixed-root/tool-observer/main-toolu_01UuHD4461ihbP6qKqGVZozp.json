@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "aa403100-65e4-47b6-a42b-b3311a520848",
+      "line": 94,
+      "prefix_bytes": 543545,
+      "prefix_sha256": "180ed8a35819e622b349a75b9dac8501faa57bada16e27f71a8e6d0b8892e62c",
+      "timestamp": "2026-11-01T03:47:46.115Z"
+    },
+    "result": {
+      "uuid": "5019349d-6825-4e34-8b17-410b46fbff71",
+      "line": 97,
+      "prefix_bytes": 555627,
+      "prefix_sha256": "bd317fb23acf5d01147cc9852d48822f8d65dc86288ca609d966de8887f67126",
+      "timestamp": "2026-11-01T03:47:49.390Z"
+    }
+  },
+  "tool_use_id": "toolu_01UuHD4461ihbP6qKqGVZozp",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins; cat plugins/system-spec-harness/.claude-plugin/plugin.json; ls plugins/system-spec-harness plugins/system-spec-harness/skills plugins/system-spec-harness/skills/* plugins/system-spec-harness/scripts; find plugins/dev-graph -name plugin-composition.yaml; ls plugins/dev-graph plugins/dev-graph/scripts plugins/dev-graph/skills"
+  },
+  "is_error": false,
+  "tool_result_content": "dev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-spec-harness:\nagents\nartifact-delivery.json\ncommands\ndocs\nEVALS.json\nhooks\nplugin-composition.yaml\nREADME.md\nreferences\nRUNBOOK.md\nschemas\nscripts\nskills\ntests\n\nplugins/system-spec-harness/scripts:\ncoverage_foundation.py\nextract-plugin-root.py\nfoundation_provenance.py\nvalidate-coverage-matrix.py\nvalidate-design-knowledge-refs.py\nvalidate-hearing-sources.py\nvalidate-information-priority.py\nvalidate-knowledge-graph.py\nvalidate-source-citation.py\nvalidate-spec-doc-sync.py\n\nplugins/system-spec-harness/skills:\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\n\nplugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator:\nprompts\nreferences\nschemas\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/ref-system-design-knowledge:\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-skill-feedback:\nreferences\nscripts\nSKILL.md\nworkflow-manifest.json\n\nplugins/system-spec-harness/skills/run-system-spec-compile:\nexamples\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch:\nexamples\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-system-spec-elicit:\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n\nplugins/dev-graph/skills:\nrun-dev-graph-decompose\nrun-dev-graph-init\nrun-dev-graph-node\nrun-dev-graph-render\nrun-dev-graph-requirements\nrun-dev-graph-schedule\nrun-dev-graph-status\nrun-dev-graph-sync\nrun-dev-graph-system-spec\nrun-skill-feedback",
+  "tool_use_result": {
+    "stdout": "dev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-spec-harness:\nagents\nartifact-delivery.json\ncommands\ndocs\nEVALS.json\nhooks\nplugin-composition.yaml\nREADME.md\nreferences\nRUNBOOK.md\nschemas\nscripts\nskills\ntests\n\nplugins/system-spec-harness/scripts:\ncoverage_foundation.py\nextract-plugin-root.py\nfoundation_provenance.py\nvalidate-coverage-matrix.py\nvalidate-design-knowledge-refs.py\nvalidate-hearing-sources.py\nvalidate-information-priority.py\nvalidate-knowledge-graph.py\nvalidate-source-citation.py\nvalidate-spec-doc-sync.py\n\nplugins/system-spec-harness/skills:\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\n\nplugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator:\nprompts\nreferences\nschemas\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/ref-system-design-knowledge:\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-skill-feedback:\nreferences\nscripts\nSKILL.md\nworkflow-manifest.json\n\nplugins/system-spec-harness/skills/run-system-spec-compile:\nexamples\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch:\nexamples\nprompts\nreferences\nscripts\nSKILL.md\ntests\n\nplugins/system-spec-harness/skills/run-system-spec-elicit:\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n\nplugins/dev-graph/skills:\nrun-dev-graph-decompose\nrun-dev-graph-init\nrun-dev-graph-node\nrun-dev-graph-render\nrun-dev-graph-requirements\nrun-dev-graph-schedule\nrun-dev-graph-status\nrun-dev-graph-sync\nrun-dev-graph-system-spec\nrun-skill-feedback",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

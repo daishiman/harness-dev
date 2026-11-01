@@ -1,0 +1,25 @@
+{
+  "responsibility": "run-dev-graph-system-spec/R0-context",
+  "loop": 1,
+  "prompt_sha256": "66f723a310a6dbd7cad0eb7cb4a2635498245bfeccf14dc3e4cd241eb71c4c28",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt_sha256": "8866c35ac257b9863edea1d3f7f51f5898f6b3bd928127d11d71dd00c308f40d",
+  "checklist": [
+    {"item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる", "status": "achieved",
+     "evidence": "Independent resolve-repo-context --mode read exit 0: repository_id local:sha256:0b5cefd0...ab1cc, git_common_dir <repo>/.git, worktree_id wt_90ed33623a6d471c, content_roots.system_spec <repo>/system-spec all identical to fixed C24 receipt (only mode differs: receipt=write, rerun=read). realpath(system-spec)==<repo>/system-spec, islink=False, find -type l => 0 symlinks, find -L -type l => 0 broken links; git rev-parse common-dir=.git, toplevel=repo_root."},
+    {"item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた", "status": "achieved",
+     "evidence": "Independent rerun exit 0, status=pass, checked=0, violations=[]; matches r0-lineage-gate.json byte-for-byte in content. graph.json has 0 nodes. Decision: new_creation (checked=0), matching preflight-report resume_decision."},
+    {"item": "宣言した入力が全て検証済みである", "status": "achieved",
+     "evidence": "C24 receipt sha256 8866c35a... matches preflight c24_receipt_sha256; all 16 system-spec files re-hashed and match preflight inputs_sha256; plugin_source <repo>/plugins/dev-graph inside repo."},
+    {"item": "出力が宣言した shape と authority を満たす", "status": "achieved",
+     "evidence": "Receipt separates repository identity (repository_id/git_common_dir/worktree_id), content_roots, and code authority (plugin_source); root_trust_evidence all true, selected_by explicit --repo-root."},
+    {"item": "責務境界に反する read/write/delegation が0件である", "status": "achieved",
+     "evidence": "Verifier ran read-only scripts only; only write is this loop record. No reads outside repo system-spec root; no symlink sources/other repos involved; no delegation."}
+  ],
+  "delta_from_original": "none",
+  "merged_directive_for_next": "none; pass receipt to R1/R2/R3 with new_creation decision",
+  "drift_signal": "none",
+  "notes": ["receipt diagnostics: default_branch_fallback_main (non-blocking)"],
+  "verdict": "PASS",
+  "blockers": []
+}

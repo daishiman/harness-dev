@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a9ce60299eabc8048",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "741956c9-5364-4d68-957c-07de34a9966f",
+      "line": 57,
+      "prefix_bytes": 459748,
+      "prefix_sha256": "1e167606645f35b089977140fc2a9e01519e51eb87a494fa94833a9a7504843e",
+      "timestamp": "2026-11-01T09:05:58.981Z"
+    },
+    "result": {
+      "uuid": "22294545-77b0-46b4-ab30-231a86dbab9a",
+      "line": 58,
+      "prefix_bytes": 462995,
+      "prefix_sha256": "2bb31ec7953e244fdd5d7a19116733bb351ed3214456724c7b2bf60403f976d3",
+      "timestamp": "2026-11-01T09:06:03.281Z"
+    }
+  },
+  "tool_use_id": "toolu_01Jdtp9QxoJpPRbVUWQDK9J6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && O=../workdir/tool-observer && python3 -I - \"$O\" <<'PY'\nimport json,sys,os,pathlib\nO=sys.argv[1]\nidx=json.load(open(os.path.join(O,'index.json')))\ninj=[e for e in idx['events'] if e['kind']=='skill_body_injection']\nfor e in inj:\n    r=json.load(open(os.path.join(O,e['file'])))\n    print(e['source_line'], list(r.keys()))\n    txt=None\n    for k,v in r.items():\n        if isinstance(v,str) and len(v)>500: txt=v;print(' key',k,len(v))\n    if txt is None: print(json.dumps(r,ensure_ascii=False)[:800]); continue\n    base=txt.split('\\n',1)[0].replace('Base directory for this skill: ','').strip()\n    sk=pathlib.Path(base)/'SKILL.md'\n    body=sk.read_text(encoding='utf-8')\n    # strip frontmatter\n    if body.startswith('---'):\n        b2=body.split('---',2)[2]\n    else: b2=body\n    b2s=b2.strip()\n    print(' skill',sk.relative_to(os.getcwd()), 'lines',body.count('\\n'), 'body_in_injection', b2s[:200] in txt, b2s[-200:] in txt, 'full', b2s in txt)\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "48 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 10095\n skill plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md lines 194 body_in_injection True True full True\n230 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 16627\n skill plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md lines 234 body_in_injection True True full False\n310 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 8105\n skill plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md lines 205 body_in_injection True True full False\n407 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 11948\n skill plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md lines 228 body_in_injection True True full False",
+  "tool_use_result": {
+    "stdout": "48 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 10095\n skill plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md lines 194 body_in_injection True True full True\n230 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 16627\n skill plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md lines 234 body_in_injection True True full False\n310 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 8105\n skill plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md lines 205 body_in_injection True True full False\n407 ['observer_projection_id', 'schema_version', 'session_id', 'stream', 'kind', 'source', 'source_tool_use_id', 'parent_result_uuid', 'text']\n key text 11948\n skill plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md lines 228 body_in_injection True True full False",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true,
+      "shared": true
+    }
+  }
+}

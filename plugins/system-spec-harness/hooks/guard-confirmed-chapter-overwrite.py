@@ -3,7 +3,8 @@
 # name: guard-confirmed-chapter-overwrite
 # version: 0.1.0
 # purpose: 確定済み仕様章 (system-spec/ の status:confirmed 章 かつ 正本 spec-state.json の
-#          対応セルが『確定』・非再オープン) と 正本 spec-state.json 自身への Write/Edit/Bash 動的書換を
+#          対応セルが『確定』・非再オープン)・憲法章 (requirements_foundation 確定済みの要件定義書) と
+#          正本 spec-state.json 自身への Write/Edit/MultiEdit/Bash 動的書換を
 #          PreToolUse で遮断する defense-in-depth の層別 fail-closed hook (要件 C3 の派生安全要件)。
 #          Bash はコマンド文字列の字面ではなく書込み先の実パスで判定する。
 #          正本防御は C01/C03 の単一 writer/transition gate。本 hook は二重化の補助防御。
@@ -23,7 +24,7 @@
 # dependencies: []
 # requires-python: ">=3.9"
 # ///
-"""PreToolUse(Write|Edit|Bash) 確定章 / 正本 spec-state.json 保護ガード。
+"""PreToolUse(Write|Edit|MultiEdit|Bash) 確定章 / 憲法章 / 正本 spec-state.json 保護ガード。
 
 判定ソース (章保護 = 2 系統の論理積・章粒度の集約):
   1. system-spec/ 配下の章 Markdown の frontmatter 確定マーカー `status: confirmed`
@@ -35,13 +36,16 @@
 正本位置 (SSOT): `spec-state.json` の判定ソースは `<root>/system-spec/spec-state.json` の 1 経路のみ。
   配下 rglob フォールバックは持たない (同梱 fixture 等を判定ソースに拾う交差汚染を構造的に排除)。
 
-Write|Edit:
+Write|Edit|MultiEdit:
   (a) file_path が正本 spec-state.json (実パス一致) かつ確定 (非再オープン) セルを含むなら exit2
       (Bash 経路と同格の直接書換/確定巻き戻し防御)。別位置の同名 spec-state.json は正本でなく通す。
   (b) file_path が status:confirmed 章 かつ 上記 2 条件を満たす確定章なら exit2。
+      spec_cells を持たない憲法章 (要件定義書・category:requirements-definition) も、
+      requirements_foundation が confirmed なら確定物として exit2。
   (c) file_path が status:confirmed 章 だが 正本 spec-state を解決できない (load 不能) ときは
       confirmed 章限定で安全側 exit2 (F3 層別 fail-closed。誤爆範囲は confirmed 章に限定)。
-  それ以外 (通常ファイル・未確定/再オープン章・新規章・確定セルなき spec-state) は exit0 で素通し。
+  それ以外 (通常ファイル・未確定/再オープン章・新規章・foundation 未確定の憲法章・確定セルなき spec-state)
+  は exit0 で素通し。
 
 Bash:
   コマンド文字列に保護パスが現れるかではなく、書込み先の実パスで判定する。書込み先として集めるのは
@@ -50,12 +54,15 @@ Bash:
   open(...,'w'|'a'|'x'|'+')・Path.write_text・os.remove・shutil.move 等の対象引数。
   bash -c / eval は中身を同じ規則で再帰的に解析する。heredoc の本文はコードとして実行される
   (python/bash の stdin) ときだけ解析し、cat > f <<EOF のようなデータ本文は書込み先にしない。
+  書込み先の $VAR / ${VAR} は、同じコマンド内の静的な代入 (VAR=value・env VAR=value) で一段解決する
+  (値が 1 つに決まる変数だけ。再代入で値が割れる変数や動的な値は解決せず書込み先不明のまま扱う)。
     - 書込み先が 正本 spec-state.json (system-spec/spec-state.json) か、実パス (symlink 解決後) が
       確定章なら exit2。
     - 書込み先を静的に特定できない (変数/glob/コマンド置換/find -exec/xargs 経由) 書込みがあり、
       かつコマンドが保護領域 (system-spec/ 配下・パス境界一致) を参照するときは安全側で exit2。
       ただし書込み先の basename が静的に読め、.md でも spec-state.json でもなければ保護対象に
       なりえないので曖昧扱いしない ("$OUT/progress.json" や rm -rf **/__pycache__ は通す)。
+      記録・生成物 (EXEMPT_NAMES: fetched-references.json / index.md / completeness-*.json) も同様。
     - それ以外 (読み取りのみ・保護領域外への書込み・再オープン章・新規章への具体的書込) は exit0。
   診断のために system-spec/ のパスをデータや読み取り元として書き、書込み先は eval-log/ 等の保護領域外、
   というコマンドは通す (C19 live trial f11 の誤検知)。`system-spec/` はパス境界 (完全なパスセグメント)
@@ -99,6 +106,18 @@ TERMINAL_STATES = {"確定", "対象外"}
 # (reopened_from/reopen_reason) + 後方互換キー。いずれかがあれば当該セルは R4-reopen 済み。
 _REOPEN_KEYS = ("reopened_from", "reopen_reason", "reopened", "reopen", "reopened_at", "reopened_by")
 
+# 記録・生成物 (保護対象外)。確定物ではなく「都度再生成される」ファイルで、正規 writer
+# (C02 build-fetched-references / C03 compile / evaluator) が上書きするのが正常動作。これらへの
+# 書込は監査経路 (R4-reopen) を要さないため遮断しない。境界定義: references/hook-guard-protection-scope.md。
+EXEMPT_NAMES = frozenset(
+    {
+        "fetched-references.json",  # C02 の取得記録 (都度全上書きが正規)
+        "index.md",                 # C03 の相互参照索引 (status 無し・純生成物)
+        "completeness-report.json",  # evaluator の評価レポート
+        "completeness-findings.json",  # evaluator の findings
+    }
+)
+
 # shell として解析できないときの字面の書込み指標 (in-place 変更を行うツール群)。
 _MUTATION_TOOLS = (
     (re.compile(r"\bsed\s+(?:-[a-zA-Z]*i|--in-place)\b"), "sed -i"),
@@ -136,6 +155,8 @@ _SHELL_PUNCT = "();<>|&\n"
 # 出力リダイレクト演算子 (`>`/`>>`/`&>`/`>|`/`>&`/`<>`)。
 _OUT_REDIRECT_OP = re.compile(r"(?:>>?|>\||>&|<>)$")
 _ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+_ASSIGN_BUILTINS = {"export", "local", "readonly", "declare", "typeset"}
+_VAR_REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
 _PYTHON = re.compile(r"^(?:python|pypy)[0-9.]*$")
 _WRAPPERS = {"sudo", "env", "command", "nohup", "time", "exec", "nice"}
 # コマンドの前に置かれる予約語 (`for ...; do sed -i ...` の sed をコマンドとして読むため飛ばす)。
@@ -305,6 +326,25 @@ def _cell_terminal(cell) -> bool:
     return cell.get("state") in TERMINAL_STATES
 
 
+# ── 憲法章 (要件定義書) 判定 ────────────────────────────────────────────────
+# 憲法章 = spec_cells を持たないが requirements_foundation (U1-U9) を正本とする確定章。
+# 対応セルが無いため「対応セル不明」で通すと保護漏れになる。foundation が confirmed のときは
+# 確定物として保護する。
+_CONSTITUTION_CATEGORY = "requirements-definition"
+_CONSTITUTION_NAME = "00-requirements-definition.md"
+
+
+def _is_constitution_chapter(p: Path, fm: dict) -> bool:
+    """章 p が憲法章 (要件定義書) か。frontmatter category を第一に、ファイル名を後方互換で見る。"""
+    return fm.get("category") == _CONSTITUTION_CATEGORY or p.name == _CONSTITUTION_NAME
+
+
+def _foundation_confirmed(spec: dict) -> bool:
+    """正本 spec-state の requirements_foundation が確定済み (confirmed:true) か。"""
+    f = spec.get("requirements_foundation") if isinstance(spec, dict) else None
+    return isinstance(f, dict) and bool(f.get("confirmed"))
+
+
 # ── 確定章の層別判定 ────────────────────────────────────────────────────────
 # chapter_verdict の戻り値 enum。
 _V_PASS = "pass"                       # 明確に protected でない → 通す (誤爆回避優先)
@@ -319,7 +359,8 @@ def chapter_verdict(p: Path, root: Path) -> str:
        誤爆回避優先で通す。
     - `protected`: status:confirmed かつ対応セルが 1 つ以上解決でき、その全てが正本 spec-state 上で
        終端状態 (確定 or 対象外) かつ再オープン対象を含まない。security 章のような 確定+対象外 混在も
-       status:confirmed なら (全セル終端ゆえ) 保護する。
+       status:confirmed なら (全セル終端ゆえ) 保護する。対応セルを持たない憲法章は
+       requirements_foundation が confirmed なら保護する。
     - `confirmed_unresolved`: status:confirmed だが 正本 spec-state を load できない (F3 層別
        fail-closed)。誤爆範囲は confirmed 章に限定される。
 
@@ -344,7 +385,11 @@ def chapter_verdict(p: Path, root: Path) -> str:
         return _V_CONFIRMED_UNRESOLVED
     refs = _extract_cell_refs(fm)
     if not refs:
-        return _V_PASS  # 対応セル不明 (00-requirements 等) は誤爆回避で通す
+        # 憲法章は foundation を正本とする確定章。foundation 未確定の憲法章や
+        # その他の対応セル不明章は誤爆回避で通す。
+        if _is_constitution_chapter(p, fm) and _foundation_confirmed(spec):
+            return _V_PROTECTED
+        return _V_PASS
     # 章粒度の集約: 全対応セルが終端かつ非再オープンのときだけ保護。1 つでも
     # 非終端 / 再オープン / 解決不能セルがあれば「明確に protected」でない → 通す。
     for cat, plat in refs:
@@ -664,8 +709,46 @@ def _command_write_targets(
     return []
 
 
+def _head_assignments(args: list[str]) -> list[tuple[str, str]]:
+    """単純コマンド 1 つが行う静的な代入 (VAR=value・env VAR=value・export VAR=value)。"""
+    out: list[tuple[str, str]] = []
+    idx = 0
+    wrapped = False
+    while idx < len(args):
+        a = args[idx]
+        if a in _WRAPPERS or a in _KEYWORDS or (wrapped and a.startswith("-")):
+            wrapped = wrapped or a in _WRAPPERS
+        elif _ASSIGNMENT.match(a):
+            name, value = a.split("=", 1)
+            out.append((name, value))
+        else:
+            break
+        idx += 1
+    if idx < len(args) and args[idx] in _ASSIGN_BUILTINS:
+        for a in args[idx + 1:]:
+            if _ASSIGNMENT.match(a):
+                name, value = a.split("=", 1)
+                out.append((name, value))
+    return out
+
+
+def _resolve_vars(token: str, variables: dict[str, str | None]) -> str:
+    """token の $VAR / ${VAR} を、値が 1 つに決まる静的代入で置き換える (未知・値が割れる変数は残す)。"""
+    def repl(m: re.Match) -> str:
+        value = variables.get(m.group(1) or m.group(2))
+        return value if value is not None else m.group(0)
+
+    cur = token
+    for _ in range(_MAX_DEPTH):
+        nxt = _VAR_REF.sub(repl, cur)
+        if nxt == cur:
+            break
+        cur = nxt
+    return cur
+
+
 def _bash_write_targets(cmd: str, root: Path, depth: int = 0) -> list[str | None]:
-    """Bash コマンドの書込み先候補を集める。"""
+    """Bash コマンドの書込み先候補を集める。書込み先の変数は同じコマンド内の静的代入で一段解決する。"""
     shell, bodies = _split_heredocs(cmd)
     toks = _shell_tokens(shell)
     if toks is None:
@@ -677,9 +760,13 @@ def _bash_write_targets(cmd: str, root: Path, depth: int = 0) -> list[str | None
     out = []
     args: list[str] = []
     heredocs: list[str] = []
+    # 変数名 → 代入値。再代入で値が割れた変数は None (解決しない)。
+    variables: dict[str, str | None] = {}
 
     def flush() -> None:
         if args:
+            for name, value in _head_assignments(args):
+                variables[name] = value if variables.get(name, value) == value else None
             out.extend(_command_write_targets(list(args), list(heredocs), root, depth))
         args.clear()
         heredocs.clear()
@@ -709,7 +796,7 @@ def _bash_write_targets(cmd: str, root: Path, depth: int = 0) -> list[str | None
             continue
         idx += 1
     flush()
-    return out
+    return [_resolve_vars(t, variables) if t else t for t in out]
 
 
 def _protected_target_reason(token: str, root: Path) -> str:
@@ -738,8 +825,11 @@ def _may_hit_protected(token: str) -> bool:
     """静的に決まらない書込み先が保護対象 (章 .md / spec-state.json) でありうるか。
 
     basename が静的に読めて .md でも spec-state.json でもなければ、変数部分が何であれ保護対象にならない。
+    記録・生成物 (EXEMPT_NAMES) も保護対象にならない。
     """
     base = token.rstrip("/").rsplit("/", 1)[-1]
+    if base in EXEMPT_NAMES:
+        return False
     return bool(_DYN_CHARS.search(base)) or base.endswith(".md") or base == SPEC_STATE_NAME
 
 
@@ -788,7 +878,7 @@ def decide(payload: dict, root: Path) -> tuple[int, str]:
     """PreToolUse ペイロードから許可 (0) / 遮断 (2) と理由を返す。"""
     tool = payload.get("tool_name", "")
     ti = payload.get("tool_input") or {}
-    if tool in ("Write", "Edit"):
+    if tool in ("Write", "Edit", "MultiEdit"):
         fp = ti.get("file_path") or ti.get("path") or ""
         if not fp:
             return 0, ""

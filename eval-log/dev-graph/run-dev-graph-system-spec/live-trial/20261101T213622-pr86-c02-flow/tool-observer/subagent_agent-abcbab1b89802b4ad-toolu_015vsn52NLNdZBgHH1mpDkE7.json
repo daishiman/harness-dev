@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-abcbab1b89802b4ad",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f5b2a106-638e-4f33-b674-975b76be1191",
+      "line": 34,
+      "prefix_bytes": 526670,
+      "prefix_sha256": "cf07e13b06bb679d04d956bf8e058786ec52748300b5c9d8490490d3e45521f1",
+      "timestamp": "2026-11-01T12:50:52.586Z"
+    },
+    "result": {
+      "uuid": "287b0a31-6db1-455f-8fc9-21a67891f52a",
+      "line": 40,
+      "prefix_bytes": 539816,
+      "prefix_sha256": "8bc21ad190fba75dc187d1cae167ca3847f6a32afea54bd87259b0e68e11b625",
+      "timestamp": "2026-11-01T12:51:03.822Z"
+    }
+  },
+  "tool_use_id": "toolu_015vsn52NLNdZBgHH1mpDkE7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json --references /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/fetched-references.json --state /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; echo \"exit=$?\"; python3 -c \"import json;d=json.load(open('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json'));print(json.dumps(d.get('targets'),ensure_ascii=False))\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}, {\"target_id\": \"kubernetes\", \"category\": \"infrastructure\", \"also_categories\": [\"backend\", \"maintenance-ops\"]}]",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}, {\"target_id\": \"kubernetes\", \"category\": \"infrastructure\", \"also_categories\": [\"backend\", \"maintenance-ops\"]}]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

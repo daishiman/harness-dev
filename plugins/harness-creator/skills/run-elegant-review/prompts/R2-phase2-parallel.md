@@ -21,7 +21,7 @@
 - 各 agent は独立 context-fork で起動し、互いの中間結果を参照しない
   - 目的: 30 思考法レンズの独立性と多様性確保
   - 背景: 相互参照や同一 context 実行は paradigm 多様性を均質化し採点バイアスを生む
-- 30 思考法すべてを担当配分どおり網羅 (logical_structural=10 / meta_divergent=9 / system_strategic=11、正本: `references/thought-methods.yaml`)
+- 30 思考法すべてを担当配分どおり網羅 (logical_structural=9 / meta_divergent=9 / system_strategic=12、正本: `references/thought-methods.yaml`)。理由付きでも skip 禁止
   - 目的: paradigm 網羅の機械的保証
   - 背景: 欠落は false-pass の主原因
 - C1-C4 (矛盾/漏れ/整合性/依存関係整合) を全 finding で評価し verdict を付与
@@ -49,13 +49,13 @@
 - 非担当: バイアスリセット (Phase1)、改善パッチ (Phase3)
 
 ### 2.2 ドメインルール
-- 3 エージェント構成 (正本: `./references/thought-methods.yaml`、配分 A2=10 / A3=9 / A4=11):
-  - `elegant-logical-structural-analyst`: thought-methods.yaml `logical_structural.methods` 参照 (10 paradigm)
+- 3 エージェント構成 (正本: `./references/thought-methods.yaml`、配分 A2=9 / A3=9 / A4=12):
+  - `elegant-logical-structural-analyst`: thought-methods.yaml `logical_structural.methods` 参照 (論理5+構造4=9 paradigm)
   - `elegant-meta-divergent-analyst`: thought-methods.yaml `meta_divergent.methods` 参照 (9 paradigm)
-  - `elegant-system-strategic-analyst`: thought-methods.yaml `system_strategic.methods` 参照 (11 paradigm)
+  - `elegant-system-strategic-analyst`: thought-methods.yaml `system_strategic.methods` 参照 (system3+戦略4+problem5=12 paradigm、why は G-problem)
 - 4 条件 (正本: `./references/4-conditions.json`): **C1 矛盾なし** / **C2 漏れなし** / **C3 整合性あり** / **C4 依存関係整合**
 - 各 finding に `observations(>=1) / issues / score` を含む
-- 具体値は `variable_abstraction[]` に分離し `{{VAR}}` 形式で抽象化
+- 具体値は `variable_abstraction[]` に分離し、各項目を `{concrete_value,name,meaning,default,required,not_applicable_when,source_trace}`（`name={{VAR}}`）で記録
 
 ### 2.3 入力契約
 
@@ -97,7 +97,7 @@
   - 背景: 参照は paradigm 多様性を均質化
 
 ### 4.2 観測 / ロギング
-- 出力先: `findings.json`
+- 出力先: 各 agent は payload のみ返す。orchestrator が同一 run directory の `findings-phase2-{logical,meta,system}.json` へ materialize し `findings.json` を集約する
 - trace 連携: `eval-log/<plugin>/<skill>/elegant-review/<run-id>/elegant-review-trace.json` の phase2 セクションに各 agent の paradigm coverage / verdict 件数を記録
 - 反復上限: Layer 4 共通 (max_iterations=3、coverage 不達は該当 agent のみ再実行)
 
@@ -115,13 +115,13 @@
 ### 5.2 ゴール定義
 - **目的**: 各 agent が独立思考法レンズで paradigm_findings を生成し、合計 30 件の網羅性を成立させる
 - **背景**: 中間結果の覗き見は paradigm 多様性を均質化し、編集混在は採点バイアスを生むため、独立性と read-only を要件化する
-- **達成ゴール**: 担当思考法 (9 / 10 / 11) の findings が C1-C4 verdict 付き + 具体値変数化済みで findings.json に格納された状態
+- **達成ゴール**: 担当思考法 (9 / 9 / 12) の findings が C1-C4 verdict 付き + 具体値変数化済みで findings.json に格納された状態
 
 ### 5.3 完了チェックリスト (停止条件)
-- [ ] paradigm_coverage: 担当思考法をすべて埋めた (10 / 9 / 11)
+- [ ] paradigm_coverage: 担当思考法をすべて埋めた (9 / 9 / 12)。skip 0、集約 used 30件一意
 - [ ] condition_matrix: 各 finding で C1-C4 全てに言及
 - [ ] issue_structure: severity / bucket / recommended_intervention が揃う (issues なしは `issues: []` 明示)
-- [ ] variable_extracted: 具体値が `{{VAR}}` で variable_abstraction に登録、source_trace あり
+- [ ] variable_extracted: 具体値が variable contract の7フィールドで登録され、`name={{VAR}}` と source_trace がある
 - [ ] independence: 他エージェント出力を参照していない (検出時 exit 1)
 - [ ] read_only: 対象ファイルを編集しなかった
 - [ ] determinism: 同 phase1_output 再実行で findings の (paradigm, observations) が並び順含め一致
@@ -142,7 +142,7 @@
 - 後続 phase: phase3-execute
 
 ### 6.2 ハンドオフ / 並列性
-- 前 phase 受領元: phase1-reset (`raw_observations.json`)
+- 前 phase 受領元: orchestrator が materialize した phase1-reset の `raw_observations.json` / `shared_state.md`
 - 次 phase 提供先: phase3-execute (`findings.json` + paradigm-scorecard)
 - 並列: 3 エージェント完全独立並列 (context-fork 必須、相互参照禁止)
 
@@ -165,5 +165,5 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 集約後 30 件の `validate-paradigm-coverage.py` / `build-paradigm-scorecard.py` 実行は `phase2-exit` hook / orchestrator の責務であり、並列 agent 内では実行しない。
 他エージェントの中間結果を覗かない (検出時 exit 1)。
 
-出力は `./schemas/phase-output.schema.json#/definitions/phase2_output` 準拠の JSON のみ。
+出力は担当 lane の `./schemas/findings-partial.schema.json` 準拠 JSON payload のみ。ファイル materialize と集約は orchestrator だけが行う。
 余計な前置き・後書き・思考過程出力は禁止。

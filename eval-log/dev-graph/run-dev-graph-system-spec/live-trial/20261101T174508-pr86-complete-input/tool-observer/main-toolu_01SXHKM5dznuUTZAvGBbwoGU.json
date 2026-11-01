@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8af54d36-77c1-40d7-9c88-485c94d545d2",
+      "line": 461,
+      "prefix_bytes": 2315108,
+      "prefix_sha256": "bb184c0bb97d69c85ccebcc37c40c0995b6d424585d239dbd1ecb6fd37951638",
+      "timestamp": "2026-11-01T08:55:24.147Z"
+    },
+    "result": {
+      "uuid": "471133ee-a146-4c4a-ac1c-288869eeab93",
+      "line": 464,
+      "prefix_bytes": 2318782,
+      "prefix_sha256": "5573bcf79ac5271fd12de33740ce84875350112b77061a69ac7673dd90c21e56",
+      "timestamp": "2026-11-01T08:55:33.258Z"
+    }
+  },
+  "tool_use_id": "toolu_01SXHKM5dznuUTZAvGBbwoGU",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && before=$(find system-spec -type f -exec shasum -a 256 {} + | sort | shasum -a 256) && PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -q -p no:cacheprovider --basetemp=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec112-fx/c576b35b-a427-484f-85b6-93c2ad8ba4dd/scratchpad/out1-compile plugins/system-spec-harness/skills/run-system-spec-compile/tests/test_compile_spec_doc.py plugins/system-spec-harness/skills/run-system-spec-compile/tests/test_compile_spec_doc_knowledge.py 2>&1 | tail -5; echo \"pytest_exit=${PIPESTATUS[0]}\"; after=$(find system-spec -type f -exec shasum -a 256 {} + | sort | shasum -a 256); echo \"before=$before\"; echo \"after=$after\"; [ \"$before\" = \"$after\" ] && echo caller_unchanged"
+  },
+  "is_error": false,
+  "tool_result_content": "...............................................................          [100%]\n63 passed in 4.81s\npytest_exit=\nbefore=bccac54ac87bab826c0eea13747e48dd81652e6603bdb2089c9ab8467b64fc89  -\nafter=bccac54ac87bab826c0eea13747e48dd81652e6603bdb2089c9ab8467b64fc89  -\ncaller_unchanged",
+  "tool_use_result": {
+    "stdout": "...............................................................          [100%]\n63 passed in 4.81s\npytest_exit=\nbefore=bccac54ac87bab826c0eea13747e48dd81652e6603bdb2089c9ab8467b64fc89  -\nafter=bccac54ac87bab826c0eea13747e48dd81652e6603bdb2089c9ab8467b64fc89  -\ncaller_unchanged",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

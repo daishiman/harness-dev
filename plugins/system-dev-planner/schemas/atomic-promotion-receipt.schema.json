@@ -2,11 +2,22 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "atomic-promotion-receipt.schema.json",
   "type": "object",
-  "required": ["schema_version", "status", "promoted_at", "repo_identity", "staging_digest", "evaluated_digest", "published_digest", "implementation_readiness", "quality_conditions", "promotion_method", "registration_manifest"],
+  "required": ["schema_version", "status", "promoted_at", "generation_id", "supersedes", "repo_identity", "staging_digest", "evaluated_digest", "published_digest", "implementation_readiness", "quality_conditions", "promotion_method", "registration_manifest"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "status": {"const": "promoted"},
     "promoted_at": {"type": "string", "format": "date-time"},
+    "generation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "supersedes": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["published_path", "published_digest", "receipt"],
+      "properties": {
+        "published_path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+        "published_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "receipt": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}
+      }
+    },
     "repo_identity": {"type": "string", "minLength": 1},
     "staging_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "evaluated_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},

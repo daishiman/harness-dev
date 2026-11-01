@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "cf997f77-61a8-4f80-b70b-9c32dbd2ce5f",
+      "line": 373,
+      "prefix_bytes": 1895839,
+      "prefix_sha256": "e7c508c7f39fe48a170a88fbe7bd596396187aa22ea4cf3853127e6ba7d8821f",
+      "timestamp": "2026-11-01T08:09:58.020Z"
+    },
+    "result": {
+      "uuid": "6ead38f8-17d3-4517-b6d7-1f6db63244b4",
+      "line": 376,
+      "prefix_bytes": 1903204,
+      "prefix_sha256": "3d7167b984ba0c5cb6b44d487a4864472a77c5da9dcd6a0626624067a3374fa0",
+      "timestamp": "2026-11-01T08:10:01.290Z"
+    }
+  },
+  "tool_use_id": "toolu_01KDndTPZJ6Datz61s4QMuuF",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cat eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json; ls eval-log eval-log/run-dev-graph-system-spec"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"artifact_delivery\": {\n    \"contract\": \"artifact-delivery-v1\",\n    \"transitions\": [\n      {\n        \"event\": \"minimum_guard_pass\",\n        \"to\": \"minimal_guard_passed\",\n        \"basis\": \"R0/R1 verifier PASS; parse/secret/irreversible/corrupt guards\"\n      },\n      {\n        \"event\": \"present_actual_artifact\",\n        \"to\": \"artifact_presented\",\n        \"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\",\n        \"sha256\": \"397a0020ebaac71703100c8bdf626b4eafcd70671d3f0cd8deb13c8a06840ae2\",\n        \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"\n      },\n      {\n        \"event\": \"record_user_choice\",\n        \"to\": \"user_choice_recorded\",\n        \"choice\": \"standard\",\n        \"source\": \"task.md の隔離fixture事前回答契約 (artifact_deliveryの選択はstandard)。新たな利用者承認ではない\"\n      },\n      {\n        \"event\": \"standard\",\n        \"to\": \"semantic_evaluator_started\"\n      }\n    ]\n  },\n  \"recorded_at\": \"2026-11-01T08:08:23.378695+00:00\"\n}\neval-log:\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\n\neval-log/run-dev-graph-system-spec:\nartifact-delivery-standard.json\nc24-receipt.json\npreflight-report.json\nR0\nR1",
+  "tool_use_result": {
+    "stdout": "{\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"artifact_delivery\": {\n    \"contract\": \"artifact-delivery-v1\",\n    \"transitions\": [\n      {\n        \"event\": \"minimum_guard_pass\",\n        \"to\": \"minimal_guard_passed\",\n        \"basis\": \"R0/R1 verifier PASS; parse/secret/irreversible/corrupt guards\"\n      },\n      {\n        \"event\": \"present_actual_artifact\",\n        \"to\": \"artifact_presented\",\n        \"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\",\n        \"sha256\": \"397a0020ebaac71703100c8bdf626b4eafcd70671d3f0cd8deb13c8a06840ae2\",\n        \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"\n      },\n      {\n        \"event\": \"record_user_choice\",\n        \"to\": \"user_choice_recorded\",\n        \"choice\": \"standard\",\n        \"source\": \"task.md の隔離fixture事前回答契約 (artifact_deliveryの選択はstandard)。新たな利用者承認ではない\"\n      },\n      {\n        \"event\": \"standard\",\n        \"to\": \"semantic_evaluator_started\"\n      }\n    ]\n  },\n  \"recorded_at\": \"2026-11-01T08:08:23.378695+00:00\"\n}\neval-log:\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\n\neval-log/run-dev-graph-system-spec:\nartifact-delivery-standard.json\nc24-receipt.json\npreflight-report.json\nR0\nR1",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

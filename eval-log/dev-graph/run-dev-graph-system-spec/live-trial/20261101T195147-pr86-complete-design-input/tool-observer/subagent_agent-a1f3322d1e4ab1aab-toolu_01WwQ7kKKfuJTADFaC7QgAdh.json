@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "14d23b9d-513c-43be-bd8a-e57b0757c5fd",
+      "line": 189,
+      "prefix_bytes": 1054298,
+      "prefix_sha256": "22af4ad9f3c6482eb318f2ffff3140205f9ed5cee135bb4e1e9be13d2be893e4",
+      "timestamp": "2026-11-01T11:17:27.963Z"
+    },
+    "result": {
+      "uuid": "f833a5b7-b283-43ac-87d8-3543c69aa84b",
+      "line": 190,
+      "prefix_bytes": 1057860,
+      "prefix_sha256": "e584e8490afd974ae939b53f6b7fcf49c2d454b3f3b8eea03248ae6a2cc0e73a",
+      "timestamp": "2026-11-01T11:17:30.403Z"
+    }
+  },
+  "tool_use_id": "toolu_01WwQ7kKKfuJTADFaC7QgAdh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "for f in specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md; do echo \"## $f\"; grep -n -E \"^(template_id|template_version|artifact_subtypes|artifact_kind|confirmation_evidence|classification_confidence|file_path|graph_node_id):\" $f | cut -c1-250; grep -c -E \"^#{2,4} \" $f; done; ls -la .dev-graph/state/receipts/node-r000001-add.json; git -C . check-ignore -q .dev-graph && echo ignored"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\n## specs/billing-audit-system-spec.md\n2:graph_node_id: \"spec-billing-audit-system-spec\"\n3:artifact_kind: \"specification\"\n4:artifact_subtypes: []\n15:file_path: \"specs/billing-audit-system-spec.md\"\n16:template_id: \"specification\"\n17:template_version: \"1.0.0\"\n20:confirmation_evidence: {\"evaluated_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"evaluator\": \"system-spec-harness:assign-system-spec-completeness-evaluator\", \"evidence_ref\": \"eval-log/system-spec-completeness-report\n36:classification_confidence: 0.95\n20\n## architecture/billing-audit-system-architecture.md\n2:graph_node_id: \"arch-billing-audit-system-architecture\"\n3:artifact_kind: \"architecture\"\n4:artifact_subtypes: [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\n15:file_path: \"architecture/billing-audit-system-architecture.md\"\n16:template_id: \"architecture\"\n17:template_version: \"1.0.0\"\n20:confirmation_evidence: {\"evaluated_digest\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\", \"evaluator\": \"system-spec-harness:assign-system-spec-completeness-evaluator\", \"evidence_ref\": \"eval-log/system-spec-completeness-report\n36:classification_confidence: 0.92\n55\n-rw-r--r--@ 1 dm  wheel  2127 11月  1 20:12 .dev-graph/state/receipts/node-r000001-add.json",
+  "tool_use_result": "Error: Exit code 1\n## specs/billing-audit-system-spec.md\n2:graph_node_id: \"spec-billing-audit-system-spec\"\n3:artifact_kind: \"specification\"\n4:artifact_subtypes: []\n15:file_path: \"specs/billing-audit-system-spec.md\"\n16:template_id: \"specification\"\n17:template_version: \"1.0.0\"\n20:confirmation_evidence: {\"evaluated_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"evaluator\": \"system-spec-harness:assign-system-spec-completeness-evaluator\", \"evidence_ref\": \"eval-log/system-spec-completeness-report\n36:classification_confidence: 0.95\n20\n## architecture/billing-audit-system-architecture.md\n2:graph_node_id: \"arch-billing-audit-system-architecture\"\n3:artifact_kind: \"architecture\"\n4:artifact_subtypes: [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\n15:file_path: \"architecture/billing-audit-system-architecture.md\"\n16:template_id: \"architecture\"\n17:template_version: \"1.0.0\"\n20:confirmation_evidence: {\"evaluated_digest\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\", \"evaluator\": \"system-spec-harness:assign-system-spec-completeness-evaluator\", \"evidence_ref\": \"eval-log/system-spec-completeness-report\n36:classification_confidence: 0.92\n55\n-rw-r--r--@ 1 dm  wheel  2127 11月  1 20:12 .dev-graph/state/receipts/node-r000001-add.json"
+}

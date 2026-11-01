@@ -36,13 +36,21 @@
   },
   "halt_conditions": {
     "converged": {
-      "rule": "delta_neg < 0.10 AND delta_pos < 0.10",
+      "rule": "delta_neg < 0.10 AND delta_pos < 0.10 AND C1-C4 all PASS",
       "status": "complete",
       "description": "もう減らす問題も、増やす良点もない状態"
     },
+    "converged_with_failures": {
+      "rule": "delta_neg < 0.10 AND delta_pos < 0.10 AND any of C1-C4 FAIL",
+      "status": "incomplete",
+      "action": "human_review",
+      "require_human_decision": true,
+      "log_remaining_findings": true,
+      "description": "改善が止まったのに FAIL が残る。自動では PASS に届かないので complete を名乗らない (force_pass禁止)"
+    },
     "diverged": {
       "rule": "delta_neg increases for 2 consecutive iterations",
-      "status": "incomplete",
+      "status": "human_escalate",
       "action": "human_escalate",
       "description": "問題が減らず増えている。改善方針自体に欠陥"
     },

@@ -20,7 +20,7 @@
 - **用語**: `確定マーカー`=章 frontmatter の status/category/aggregate/spec_cells (C11 判定ソース) / `serves_goals`=章が資する上位概念ゴール id の集約 (要件 C9 anchor) / `収集状態表`=platform × 状態 × 根拠 / `出典表`=target × version × 公式発行元 × source_url × 取得/最新確認日時。
 - **不変則**: 確定マーカーの status は集約の終端性で決まる (確定/対象外=confirmed、未着手/収集中=draft)。出典は source_url・公式発行元・version|last_updated・latest_checked_at を必ず伴う (C13 検証)。対象外セルは理由 (または承認参照) を明示する (C12 検証)。各技術章 frontmatter の `serves_goals` はセル serves_goals の和集合で、要件定義書 (00-requirements-definition.md) の goals へトレースする (要件 C9)。
 - **知識の位相順消費 (goal-spec C14)**: 設計知識を章へ反映する順序は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile knowledge --input ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/ref-system-design-knowledge/references/knowledge-catalog.json --order` が返す topo_order (上位概念→下位概念・同順位 knowledge_id 昇順) に従う。C01 R5 と**同一 JSON 順**を消費し、elicit と compile で知識反映順を一致させる (例: clean-architecture を api-design-patterns より先に踏まえる)。
-- **doctrine anchor の上流反映 (goal-spec C15)**: 各カテゴリ章は `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` (Apple HIG / Clean Architecture / OWASP ASVS+Secrets Management / Google SRE) を**上流指針**として章へ反映する (具体技術は直書きせず上流工程を導く)。未帰属 category (pending 例外) がある場合は compile を保留する。写像全射は `validate-knowledge-graph.py --profile doctrine` が事前検証済み。
+- **doctrine anchor の上流反映 (goal-spec C15)**: 各カテゴリ章は `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` (Apple HIG / Clean Architecture / OWASP ASVS+Secrets Management / Google SRE) を**上流指針**として章へ反映する (具体技術は直書きせず上流工程を導く)。`category_concern_map` に無いカテゴリは registry の `pending_exceptions` を引き、`approval_state: approved` で `concerns` を解決済みの例外は authority を上流指針として描き、それ以外の pending 例外は暫定扱いを明示して描く。どちらにも無いカテゴリは `compile-spec-doc.py` が CompileError で止める。写像全射は `validate-knowledge-graph.py --profile doctrine` が事前検証済み。
 
 ## Layer 3: インフラ層
 - **入力**: R1 章立て構成 / `spec-state.json` / `fetched-references.json` / `../ref-system-design-knowledge/references/*.md` (設計知識・C04) / `../ref-system-design-knowledge/references/knowledge-catalog.json` (知識依存グラフ) / `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` (doctrine anchor 写像)。
@@ -31,7 +31,7 @@
 - 各章 frontmatter に確定マーカー (status/category/aggregate/spec_cells) と `serves_goals` (上位概念トレース) を付与する。
 - 本文に (a) カテゴリ別収集状態表、(b) 設計知識cardの目的・解決問題・適用/非適用条件・トレードオフ/失敗モード・goal寄与、(c) 最新ドキュメント出典表を並べる。参照pathだけでは完了しない。
 - 出典は target の category (主たる章) で該当章へ割り当て、target が `also_categories` で宣言した章にも同じ出典を載せる。未割当は index へ回す。宣言の無い章へは推測で重複させない (複数章に載せるのは spec-state が宣言したときだけ)。
-- card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。
+- card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。card本文は汎用原則の逐語転記のため、設計知識節の末尾「確定判断ごとの原則採否」には `qa_log[].design_applications` の具体原則・`applied|not_applicable`・章固有理由・trade-off を確定qa_ref・対応セル・serves_goalsへ束縛して描画する。compiler 自身が定型の「適用済み」文を捏造してはならず、旧 state で記録が無ければ記録経路 `unrecorded` を fail-visible にする。
 - 逐語の描き方と既存章の片付けは SKILL.md の Key Rules 6-8 に従う (逐語をフェンスに閉じ込める・置き換え済み qa の旧版の印・漏れた見出しの移行)。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
@@ -55,6 +55,7 @@
 - [ ] 設計知識が解決問題と目的達成寄与を説明している
 - [ ] 設計知識が知識グラフ topo_order (上位概念→下位概念) の順で反映されている (C14)
 - [ ] 各カテゴリ章に doctrine anchor (concern authority) が上流指針として反映されている (C15)
+- [ ] 設計知識節の末尾に「確定判断ごとの原則採否」があり、`qa_log[].design_applications` の具体原則・採否・章固有理由・trade-off を本章の確定 qa_ref・対応セル・serves_goals へ紐付けている (記録欠落は `unrecorded`、確定セルなしは適用先未確定を明示)
 - [ ] 割当済み出典が公式 URL と版情報を保持している
 
 ### 5.4 実行方式

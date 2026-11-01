@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a04e9550c49f45f91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fda034f5-e859-40b4-890d-31f55db2ebdf",
+      "line": 18,
+      "prefix_bytes": 149432,
+      "prefix_sha256": "997aa35f008277771f142cf2c9235fe4c3daecd416c3c3ea3dde2a5963ea9edc",
+      "timestamp": "2026-11-01T15:40:48.463Z"
+    },
+    "result": {
+      "uuid": "57df6366-1697-4afc-a09e-5991e0dd982c",
+      "line": 22,
+      "prefix_bytes": 171449,
+      "prefix_sha256": "ee6c978b1670a3abdca472613f153888286d9721fbba2d1ae07c3c0a9aa1c630",
+      "timestamp": "2026-11-01T15:40:48.746Z"
+    }
+  },
+  "tool_use_id": "toolu_01XTqHKQ53jqFUdEFQVtrVaK",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/references/official-source-catalog.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# 公式ソース判定カタログ (R2 補助資料)\n2\t\n3\t> R2-fetch が「公式 publisher / official_host」を見極めるための指針集。網羅表ではなく判定基準 + 代表例。\n4\t> 最終的な現行版の意味判定は C08 (`system-spec-doc-freshness-auditor`) が公式サイト再照合で担う。\n5\t\n6\t## 公式 host の判定基準\n7\t\n8\t1. **正規ドメイン優先**: プロジェクトが公式に運用するドメイン、または公式 docs サブドメインを最優先する。\n9\t2. **ホスティング上の公式**: GitHub / Read the Docs / npm 等の上でも、その project の **公式 org / 公式リポジトリ / 公式パッケージ** なら公式扱い。第三者アカウントの複製・解説は非公式。\n10\t   - **GitHub org releases の記録形 (正式規則)**: publisher 直営 org のページを出典にする場合、`official_host` は `github.com`、`source_url` は公式 org 配下 (`github.com/<official-org>/...`) とし、`summary` に org が publisher 直営である根拠 (正規ドメイン docs からのリンク等) を一言残す。リリース版数など**正規ドメイン側の掲載が実リリースに遅行する事実**は、公式 org の GitHub releases を一次根拠としてよい (例: docs サイトの latest-releases 静的ページが旧版告知のまま、実リリースは GitHub releases が先行するケース)。同一事実を正規ドメインが裏付けられるときは正規ドメインを優先する。C08 監査はこの規則を公式性判定の SSOT として参照し、`github.com` を一律に非公式扱いしない。\n11\t3. **非公式の除外**: 個人ブログ、まとめ記事、Q&A、ミラーサイト、AI 生成の要約サイトは採らない。\n12\t4. **一意性**: 公式 host を一意に特定できないときは「未取得 (要確認)」に倒し、非公式で穴埋めしない。\n13\t\n14\t## version / last_updated の取り方\n15\t\n16\t- 安定版のバージョン番号が明示される技術は `version` (例 `19.0`, `16.4`) を記録する。\n17\t- 版が数値で表されない/ローリング更新のドキュメントは、ページの **最終更新日** を `last_updated` (ISO 日付) に記録する。\n18\t- どちらか一方を必ず得る (両欠落は `validate-source-citation.py` で FAIL)。\n19\t\n20\t## 代表例 (公式 host の目安)\n21\t\n22\t| 種別 | 対象例 (target_id) | official_publisher | official_host の目安 |\n23\t|---|---|---|---|\n24\t| フレームワーク | react | Meta | react.dev |\n25\t| フレームワーク | nextjs | Vercel | nextjs.org |\n26\t| 言語ランタイム | node | OpenJS Foundation | nodejs.org |\n27\t| データベース | postgres | PostgreSQL Global Development Group | postgresql.org |\n28\t| データベース | mysql | Oracle | dev.mysql.com |\n29\t| Web サーバ | nginx | F5/NGINX | nginx.org |\n30\t| コンテナ基盤 | kubernetes | CNCF | kubernetes.io |\n31\t| クラウド | aws-s3 | Amazon Web Services | docs.aws.amazon.com |\n32\t| 認証 | oauth2 | IETF | datatracker.ietf.org |\n33\t| ORM (release 実体) | drizzle-orm | Drizzle Team | github.com (公式 org: drizzle-team。docs は orm.drizzle.team だがリリース実体は GitHub releases が先行) |\n34\t\n35\t> 上表は目安であり固定辞書ではない。実際の `official_host` は R2 が WebSearch で都度確認し、`source_url` は必ずその host 配下のページにする。\n36\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/references/official-source-catalog.md",
+      "content": "# 公式ソース判定カタログ (R2 補助資料)\n\n> R2-fetch が「公式 publisher / official_host」を見極めるための指針集。網羅表ではなく判定基準 + 代表例。\n> 最終的な現行版の意味判定は C08 (`system-spec-doc-freshness-auditor`) が公式サイト再照合で担う。\n\n## 公式 host の判定基準\n\n1. **正規ドメイン優先**: プロジェクトが公式に運用するドメイン、または公式 docs サブドメインを最優先する。\n2. **ホスティング上の公式**: GitHub / Read the Docs / npm 等の上でも、その project の **公式 org / 公式リポジトリ / 公式パッケージ** なら公式扱い。第三者アカウントの複製・解説は非公式。\n   - **GitHub org releases の記録形 (正式規則)**: publisher 直営 org のページを出典にする場合、`official_host` は `github.com`、`source_url` は公式 org 配下 (`github.com/<official-org>/...`) とし、`summary` に org が publisher 直営である根拠 (正規ドメイン docs からのリンク等) を一言残す。リリース版数など**正規ドメイン側の掲載が実リリースに遅行する事実**は、公式 org の GitHub releases を一次根拠としてよい (例: docs サイトの latest-releases 静的ページが旧版告知のまま、実リリースは GitHub releases が先行するケース)。同一事実を正規ドメインが裏付けられるときは正規ドメインを優先する。C08 監査はこの規則を公式性判定の SSOT として参照し、`github.com` を一律に非公式扱いしない。\n3. **非公式の除外**: 個人ブログ、まとめ記事、Q&A、ミラーサイト、AI 生成の要約サイトは採らない。\n4. **一意性**: 公式 host を一意に特定できないときは「未取得 (要確認)」に倒し、非公式で穴埋めしない。\n\n## version / last_updated の取り方\n\n- 安定版のバージョン番号が明示される技術は `version` (例 `19.0`, `16.4`) を記録する。\n- 版が数値で表されない/ローリング更新のドキュメントは、ページの **最終更新日** を `last_updated` (ISO 日付) に記録する。\n- どちらか一方を必ず得る (両欠落は `validate-source-citation.py` で FAIL)。\n\n## 代表例 (公式 host の目安)\n\n| 種別 | 対象例 (target_id) | official_publisher | official_host の目安 |\n|---|---|---|---|\n| フレームワーク | react | Meta | react.dev |\n| フレームワーク | nextjs | Vercel | nextjs.org |\n| 言語ランタイム | node | OpenJS Foundation | nodejs.org |\n| データベース | postgres | PostgreSQL Global Development Group | postgresql.org |\n| データベース | mysql | Oracle | dev.mysql.com |\n| Web サーバ | nginx | F5/NGINX | nginx.org |\n| コンテナ基盤 | kubernetes | CNCF | kubernetes.io |\n| クラウド | aws-s3 | Amazon Web Services | docs.aws.amazon.com |\n| 認証 | oauth2 | IETF | datatracker.ietf.org |\n| ORM (release 実体) | drizzle-orm | Drizzle Team | github.com (公式 org: drizzle-team。docs は orm.drizzle.team だがリリース実体は GitHub releases が先行) |\n\n> 上表は目安であり固定辞書ではない。実際の `official_host` は R2 が WebSearch で都度確認し、`source_url` は必ずその host 配下のページにする。\n",
+      "numLines": 36,
+      "startLine": 1,
+      "totalLines": 36
+    }
+  }
+}

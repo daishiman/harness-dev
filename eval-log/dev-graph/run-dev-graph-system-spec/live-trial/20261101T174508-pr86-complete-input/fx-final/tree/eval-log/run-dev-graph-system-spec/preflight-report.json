@@ -1,0 +1,49 @@
+{
+  "kind": "run-dev-graph-system-spec preflight report (pre-choice minimum artifact)",
+  "artifact_delivery_state": "minimal_guard_passed",
+  "R0_context": {
+    "status": "PASS",
+    "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "c24_receipt_sha256": "c291023c4276927b94bcff2bc21e9f9061263ec3fb85223aa3681384d4b15044",
+    "repo_root_equals_content_roots_repository": true,
+    "repository_id": "local:sha256:aa5a48c722a01fcd53a6c083f3e0a5f8edb82277d2a1465340489b602e8c52cd",
+    "git_common_dir": ".git",
+    "system_spec_realpath_in_repo": "system-spec",
+    "symlinks_under_system_spec": 0,
+    "lineage_gate": {"command": "validate-source-lineage.py --repo-root <repo_root>", "exit": 0, "status": "pass", "checked": 0, "violations": []},
+    "resume_decision": "checked=0: 取込済み system-spec node 無し -> 新規取込として手順3へ"
+  },
+  "R1_preflight": {
+    "status": "PASS",
+    "plugin_manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "plugin_manifest_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994",
+    "name": "system-spec-harness",
+    "version": "0.1.24",
+    "composition_range": ">=0.1.22 <1.0.0",
+    "composition": "plugins/dev-graph/plugin-composition.yaml",
+    "composition_sha256": "d44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712",
+    "package_contract": "plugins/system-spec-harness/references/package-contract.json",
+    "package_contract_sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486",
+    "required_entry_points": {"run-system-spec-elicit": true, "run-system-spec-doc-fetch": true, "run-system-spec-compile": true, "assign-system-spec-completeness-evaluator": true},
+    "harness_keys_in_official_manifest": false
+  },
+  "inputs_sha256": {
+    "system-spec/00-requirements-definition.md": "6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8",
+    "system-spec/auth.md": "6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279",
+    "system-spec/backend.md": "f594638926f35eaf7a79b3eef7c041b48eaf20c47ebce9022d602fcf55ba630b",
+    "system-spec/database.md": "5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf",
+    "system-spec/fetched-references.json": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+    "system-spec/frontend.md": "775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8",
+    "system-spec/index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+    "system-spec/infrastructure.md": "15aa694fa7cafff5dd0fb3dc8317626243fd8d1124bd1287e8131da07e02c87d",
+    "system-spec/maintenance-ops.md": "210274b4ccd5ceb5943202fc7469a208233fe5f56ea43db9da61ef472bdba637",
+    "system-spec/retrieval-evidence/fastapi.json": "09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c",
+    "system-spec/retrieval-evidence/postgres.json": "81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54",
+    "system-spec/retrieval-evidence/react.json": "25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f",
+    "system-spec/retrieval-evidence/typescript.json": "2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de",
+    "system-spec/security.md": "b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347",
+    "system-spec/spec-state.json": "cf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f",
+    "system-spec/ui-ux.md": "26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82"
+  },
+  "guards": {"parse_open": "pass (JSON receipt/manifest parse)", "secret": "none embedded", "irreversible": "none (read-only checks)", "corrupt": "input digests equal fixture seed_sha256"}
+}

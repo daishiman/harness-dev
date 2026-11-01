@@ -1,0 +1,32 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "contract": "artifact-delivery-v1",
+  "states": [
+    {
+      "state": "artifact_created",
+      "at": "2026-10-31T23:09:15.619550+00:00",
+      "artifact": "eval-log/run-dev-graph-system-spec/R3-import/dry-run.json",
+      "sha256": "49745ee4489fb1ee9f23ab188ca4cb87b3ebb154daaa71b0d5e0c44dc1cc052d"
+    },
+    {
+      "event": "minimum_guard_pass",
+      "state": "minimal_guard_passed",
+      "guards": "dry-run rc=0, write_count=0, pre_write_validation findings=0, no secrets, input in repo"
+    },
+    {
+      "event": "present_actual_artifact",
+      "state": "artifact_presented",
+      "open": "less <repo>/eval-log/run-dev-graph-system-spec/R3-import/dry-run.json"
+    },
+    {
+      "event": "record_user_choice",
+      "state": "user_choice_recorded",
+      "choice": "standard",
+      "source": "fixture pre-answer contract (task.md artifact_delivery=standard); not an approval of repo/external account"
+    },
+    {
+      "event": "standard",
+      "state": "semantic_evaluator_started"
+    }
+  ]
+}

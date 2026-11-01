@@ -45,11 +45,50 @@ related_artifacts:
     topic: paradigm scorecard 集計スクリプト
     read_when: Phase2 出力から scorecard を生成するとき
   - file: ../scripts/validate-paradigm-coverage.py
-    topic: thought_method_coverage.used + skipped_with_reason == 30 の機械検証
+    topic: thought_method_coverage.used が正本30名称と一意一致し skipped_with_reason が空であることの機械検証
     read_when: 30 思考法の全数カバレッジを検証するとき
   - file: ../scripts/emit-observable.py
     topic: 35章 observable の emit スクリプト
     read_when: safety_valve_fired 等の observable を出力するとき
+  - file: ../scripts/build-review-report.py
+    topic: findings と verdict から人間可読 review report を生成するスクリプト
+    read_when: review-<scope_mode>.md を生成するとき
+  - file: ../scripts/build-verdict.py
+    topic: findings 由来の fail_counts と C1-C4 verdict を単一導出するスクリプト
+    read_when: condition_matrix/issues の一致検証後に verdict.json を生成・照合するとき
+  - file: ../scripts/check-review-trigger.py
+    topic: 変更規模から elegant-review 推奨を判定する Stop hook スクリプト
+    read_when: 自動レビュー推奨の発火条件を確認するとき
+  - file: ../scripts/validate_phase_order.py
+    topic: Phase1→Phase2→Phase3 順序と signal/verdict 導出整合の補助検査
+    read_when: run directory の handoff 順序を検証するとき
+  - file: ../scripts/extract-ready-set-from-checklist.py
+    topic: checklist の depends_on から依存充足順の ready 集合をステートレスに算出する決定論ゲート
+    read_when: task-graph 周回冒頭で次に着手する item を決めるとき
+  - file: ../scripts/build-self-reflection-entry.py
+    topic: self-reflect で発見した新規タスクを checklist 末尾へ単一truth追記する決定論ゲート
+    read_when: 4 条件 FAIL で次反復の分析 / 改善 item を足すとき
+  - file: ../scripts/extract-capability-dependency-graph.py
+    topic: 生成 harness の cross-surface capability 依存グラフを決定論抽出するスクリプト
+    read_when: capability 間の依存詰まり・dangling 参照を knowledge 化する入力を作るとき
+  - file: ../scripts/build-capability-graph-knowledge-entry.py
+    topic: capability 依存グラフと discovered task を Loop A/B knowledge へ source_ref 付きで記録するスクリプト
+    read_when: 依存グラフ由来の学びを knowledge entry 化するとき
+  - file: ../schemas/findings-partial.schema.json
+    topic: Phase2 9/9/12 lane payload の agent 別件数契約
+    read_when: 並列 agent payload を materialize 前に検証するとき
+  - file: ../templates/findings.json
+    topic: 30 findings 集約出力テンプレート
+    read_when: findings.json の初期形を生成するとき
+  - file: ../templates/review-proposal.md
+    topic: proposal 対象の人間可読 review template
+    read_when: proposal scope の report を生成するとき
+  - file: ../templates/review-rubric.md
+    topic: rubric 対象の人間可読 review template
+    read_when: rubric scope の report を生成するとき
+  - file: ../templates/review-skill.md
+    topic: skill 対象の人間可読 review template
+    read_when: skill scope の report を生成するとき
   - file: ../examples/example-review-output.md
     topic: レビュー出力の完成例
     read_when: findings/verdict の書式実例を見たいとき

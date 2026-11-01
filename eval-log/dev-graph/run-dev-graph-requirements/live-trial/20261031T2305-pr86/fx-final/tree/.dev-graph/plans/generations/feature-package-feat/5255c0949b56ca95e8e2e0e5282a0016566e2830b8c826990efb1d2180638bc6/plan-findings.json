@@ -1,0 +1,142 @@
+{
+  "plan_dir": ".dev-graph/staging/pr86-fixture",
+  "evaluator": {
+    "name": "assign-system-dev-plan-evaluator",
+    "version": "1.0.0",
+    "context": "fork"
+  },
+  "evaluated_digest": "sha256:5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6",
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "C1",
+      "status": "PASS",
+      "summary": "verified",
+      "evidence": [
+        "gate:deterministic-validation"
+      ]
+    },
+    "C2": {
+      "id": "C2",
+      "status": "PASS",
+      "summary": "verified",
+      "evidence": [
+        "gate:deterministic-validation"
+      ]
+    },
+    "C3": {
+      "id": "C3",
+      "status": "PASS",
+      "summary": "verified",
+      "evidence": [
+        "gate:deterministic-validation"
+      ]
+    },
+    "C4": {
+      "id": "C4",
+      "status": "PASS",
+      "summary": "verified",
+      "evidence": [
+        "gate:deterministic-validation"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "deterministic-validation",
+      "name": "validate-system-plan",
+      "command": [
+        "python3",
+        "validate-system-plan.py",
+        "--repo-root",
+        "/caller",
+        "--staging",
+        ".dev-graph/staging/pr86-fixture"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "stdout": "{\"status\": \"pass\", \"validated_digest\": \"sha256:5255c0949b56ca95e8e2e0e5282a0016566e2830b8c826990efb1d2180638bc6\", \"violations\": []}"
+    }
+  ],
+  "evaluated_inputs": [
+    {
+      "path": "feature-package.json",
+      "sha256": "a742d04e376cc63ed6533e62547595d7fad4d46e6853f2bc0d0c4f46cd2201b2"
+    },
+    {
+      "path": "staging-manifest.json",
+      "sha256": "6cc906b6532b81174e2a1519ae49d45830d5f487e5d1dd4077c3074d8bc2581e"
+    },
+    {
+      "path": "system-build-handoff.json",
+      "sha256": "fee976f3e2eb6140d433403d946c5de28f93a640c2aea609626db38b0ab33ee3"
+    },
+    {
+      "path": "task-graph.json",
+      "sha256": "507a83333140712db23c2d1e775a08c3e31d006b8ef4e6906aa4c10dc08c0a60"
+    },
+    {
+      "path": "task-specs/phase-01-requirements.md",
+      "sha256": "d04c1af191a155c952c42162f5fa7bbb47777167503a8731508d37c103e78b3d"
+    },
+    {
+      "path": "task-specs/phase-02-architecture.md",
+      "sha256": "5674e12c04af2b520f57e2d9b438bdcf55720343b8911d3b23846e852b6e31ab"
+    },
+    {
+      "path": "task-specs/phase-03-design-review.md",
+      "sha256": "7b403175ae9ea2feb3ece508fd01f43b8d2f839ff2a4844d232f06728a9aa444"
+    },
+    {
+      "path": "task-specs/phase-04-test-design.md",
+      "sha256": "efbd08e76c44920372dde8036b5f97197fa81e944c855f9a93106bbd447bfeb7"
+    },
+    {
+      "path": "task-specs/phase-05-implementation.md",
+      "sha256": "b6a4e39cd938eb5996fd97a77ccf66e96b75381ad07cfd34c42627220f3f2bf8"
+    },
+    {
+      "path": "task-specs/phase-06-test-run.md",
+      "sha256": "ac86267b1b7ad9535a57f1c4a51d51f64549d06a823593d4f7cca7e5cd5e87ef"
+    },
+    {
+      "path": "task-specs/phase-07-acceptance.md",
+      "sha256": "49f74eb43b01db4d1ba79696430c1e206e945d5d5c135bba21953720e25d1b4a"
+    },
+    {
+      "path": "task-specs/phase-08-refactoring-migration.md",
+      "sha256": "3f10604a34fac3855b97c5bd4bb232b009cce53216bf51d4ddc8c25b469cd060"
+    },
+    {
+      "path": "task-specs/phase-09-quality-assurance.md",
+      "sha256": "1eceb99c60c5259aced0c2196bc897a6c83f61e2d9a5249b5d1e312e959d92c7"
+    },
+    {
+      "path": "task-specs/phase-10-final-review.md",
+      "sha256": "d81306033e445150f58bb2eb698452134695ea21ed098863934174c153d238d9"
+    },
+    {
+      "path": "task-specs/phase-11-evidence.md",
+      "sha256": "87354b4ba0346fe7b3b02e2d0cd23ba0705b1ebf01e2aeb463a04652a6f347ad"
+    },
+    {
+      "path": "task-specs/phase-12-documentation-operations.md",
+      "sha256": "3a6bc005e66149db961a5a5c4f6d68d8cc3e177f49200800f080a71c5eacedc0"
+    },
+    {
+      "path": "task-specs/phase-13-release-deploy.md",
+      "sha256": "4e454563236170be528f5d9aaa017bc5b940c3c2acca4dd1e753df43513c79dd"
+    },
+    {
+      "path": "workstream-inventory.json",
+      "sha256": "2f423e1c5e3c62749eb3008cc30d2fd9aa830fff604adb4e2f7fb6542700d35d"
+    }
+  ],
+  "staleness_rule": "C11 recomputes every evaluated input SHA against current staging bytes",
+  "findings": []
+}

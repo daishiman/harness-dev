@@ -1,0 +1,168 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "合成fixtureのU4/O1「請求漏れをシステムが自動で検知する」に、請求漏れの判定条件・検知時点・結果の扱いを定めた確定要件がない。qa-014/qa-foundation-u4は目標と観測指標だけで、qa-024/025およびbackend/databaseの確定内容は契約・請求書・突合の概略にとどまる。C05がfoundation_trace/highとしてFAILを返した一次根拠を独立に確認した。",
+      "C05のFAILにより正本どおりC02取込を停止したため、graphはrevision=0・nodes=0。source lineage・confirmation/evaluated_digest・readiness completeを備えたspecification/architectureの取込成果がなく、C19の元goalおよびpositive scenarioの必須観測1/2/3を充足していない。正しいfail-closed停止だけをpositive acceptanceのPASSにはできない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "a5802b7a2e7713883b2f9e77aeffc2fe17adaec6f1dee15da47c427ebd008277",
+    "result": "FAIL",
+    "blockers": [
+      "合成fixtureのU4/O1「請求漏れをシステムが自動で検知する」に、請求漏れの判定条件・検知時点・結果の扱いを定めた確定要件がない。qa-014/qa-foundation-u4は目標と観測指標だけで、qa-024/025およびbackend/databaseの確定内容は契約・請求書・突合の概略にとどまる。C05がfoundation_trace/highとしてFAILを返した一次根拠を独立に確認した。",
+      "C05のFAILにより正本どおりC02取込を停止したため、graphはrevision=0・nodes=0。source lineage・confirmation/evaluated_digest・readiness completeを備えたspecification/architectureの取込成果がなく、C19の元goalおよびpositive scenarioの必須観測1/2/3を充足していない。正しいfail-closed停止だけをpositive acceptanceのPASSにはできない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec110"
+    },
+    "transcript_sha256": "ebfaca0992cb8dc91e60bb65e364c9c680975afe9fc7b193457aeff57744f26e",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-a9a5a78a3fbe4bb70.jsonl",
+      "fx-eval-log/system-spec-completeness-report.json",
+      "fx-final/tree/system-spec/spec-state.json",
+      "fx-final/tree/system-spec/backend.md",
+      "fx-final/tree/system-spec/database.md",
+      "fx-final/tree/system-spec/00-requirements-definition.md",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fixture-provenance.json",
+      "fixture-task-preparation.py",
+      "task.md",
+      "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+      "tool-observer/index.json",
+      "observer-provenance.json",
+      "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_01AQ6E7JBhkKnz9gS4AWF1xB.json",
+      "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_0119amWZ5uZFuHdpPmRfzqaE.json",
+      "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_017AG6kZ99sNgadZrnuXqre7.json",
+      "tool-observer/main-toolu_016rVciMUbLtZ3KvH2dpS1fD.json",
+      "tool-observer/main-toolu_01CuFfAU6mgwad6vTP5xsCnj.json",
+      "fx-eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "out/status.json",
+      "poll-state.json",
+      "poll-normalization.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "ebfaca0992cb8dc91e60bb65e364c9c680975afe9fc7b193457aeff57744f26e",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1102.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "fx-eval-log/system-spec-completeness-report.json"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "transcript.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1102.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "8a68f9702808b866d590327d2c87b948c5bb4ad5e438e77d0a85e33d55cc969c",
+      "tokens": {
+        "input_tokens": 250,
+        "cache_creation_input_tokens": 671452,
+        "cache_read_input_tokens": 9303429,
+        "output_tokens": 82829,
+        "total_tokens": 10057960,
+        "assistant_messages": 121,
+        "assistant_message_ids": 121,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 7,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

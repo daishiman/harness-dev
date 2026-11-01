@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5157c443-c03e-475f-9c9e-570430e9823a",
+      "line": 125,
+      "prefix_bytes": 648614,
+      "prefix_sha256": "366ca493c8d1c3ee1603cb4ff8955831cc2d86e4d1883188b19cdd9b3838ea17",
+      "timestamp": "2026-11-01T09:36:32.758Z"
+    },
+    "result": {
+      "uuid": "79b053b8-4dd7-4e1d-8ce4-8510dd3be318",
+      "line": 126,
+      "prefix_bytes": 654158,
+      "prefix_sha256": "5c40dcf85a3c36f4740364b18b58fc32fab676b1925a2ec0b378a870df6b515a",
+      "timestamp": "2026-11-01T09:36:35.630Z"
+    }
+  },
+  "tool_use_id": "toolu_01HAiZc1tgt9XDLRY6uHm8RP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -nE \"name|reject|deny|block\" plugins/system-spec-harness/hooks/record-audit-fork.py | head -30; grep -rn \"name\" plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py | grep -iE \"dispatch|agent.*name|\\\"name\\\" in\" | head"
+  },
+  "is_error": false,
+  "tool_result_content": "3:# name: record-audit-fork\n10:#   - stdin: PostToolUse hook JSON ({session_id, tool_name, tool_use_id,\n14:#   - argv: --event post-tool-use|subagent-stop (省略時は payload の hook_event_name で判別)\n20:#   - exit: 0 always (観測専用。session を blocking しない)\n47:subagent 起動 (tool_name が 'Task' または 'Agent') のみ。起動ツール名はハーネス世代で異なる\n56:text block の最終非空行に正規 marker が 1 件だけあれば、本文を保存せず enum として記録する。\n64:`tool_use_id` block を探したり、同一 message の全結果を分割したりしない。\n66:verdict は完了状態を確認してから、応答本文の各 text block の最終非空行だけを候補にする。\n219:def _response_text_blocks(value: object):\n220:    \"\"\"tool_response の応答本文だけから text block を取り出す。\n225:    降りる。content block 自体は ``{\"type\": \"text\", \"text\": ...}`` なので direct\n226:    ``text`` を採る。明示的に text 以外の type を持つ metadata block は除外する。\n232:            yield from _response_text_blocks(item)\n241:                yield from _response_text_blocks(value[key])\n249:    prompt/metadata の文字列は判定材料にしない。応答本文の **text block ごと** に最終非空行を\n257:    for text in _response_text_blocks(tool_response):\n273:def response_is_complete(tool_name: str, tool_response: object) -> bool:\n279:    if tool_name == \"Agent\":\n284:    if tool_name == \"Task\" and isinstance(tool_response, dict) and \"status\" in tool_response:\n315:            blocks = [t for t in _response_text_blocks(value) if t.strip()]\n316:            if blocks:\n317:                return \"\\n\".join(blocks)\n362:        \"tool_name\": \"Agent\",\n378:    現行 Claude Code は 'Agent' を tool_name として渡す。\n380:    ledger_tool_name = payload.get(\"tool_name\")\n381:    if ledger_tool_name not in AUDIT_FORK_TOOL_NAMES:\n395:    if ledger_tool_name == \"Agent\" and not has_tool_use_id:\n401:    if not response_is_complete(ledger_tool_name, tool_response):\n413:        \"tool_name\": ledger_tool_name,\n446:    \"\"\"観測する hook event を決める。--event 明示 > payload の hook_event_name > PostToolUse。\"\"\"",
+  "tool_use_result": {
+    "stdout": "3:# name: record-audit-fork\n10:#   - stdin: PostToolUse hook JSON ({session_id, tool_name, tool_use_id,\n14:#   - argv: --event post-tool-use|subagent-stop (省略時は payload の hook_event_name で判別)\n20:#   - exit: 0 always (観測専用。session を blocking しない)\n47:subagent 起動 (tool_name が 'Task' または 'Agent') のみ。起動ツール名はハーネス世代で異なる\n56:text block の最終非空行に正規 marker が 1 件だけあれば、本文を保存せず enum として記録する。\n64:`tool_use_id` block を探したり、同一 message の全結果を分割したりしない。\n66:verdict は完了状態を確認してから、応答本文の各 text block の最終非空行だけを候補にする。\n219:def _response_text_blocks(value: object):\n220:    \"\"\"tool_response の応答本文だけから text block を取り出す。\n225:    降りる。content block 自体は ``{\"type\": \"text\", \"text\": ...}`` なので direct\n226:    ``text`` を採る。明示的に text 以外の type を持つ metadata block は除外する。\n232:            yield from _response_text_blocks(item)\n241:                yield from _response_text_blocks(value[key])\n249:    prompt/metadata の文字列は判定材料にしない。応答本文の **text block ごと** に最終非空行を\n257:    for text in _response_text_blocks(tool_response):\n273:def response_is_complete(tool_name: str, tool_response: object) -> bool:\n279:    if tool_name == \"Agent\":\n284:    if tool_name == \"Task\" and isinstance(tool_response, dict) and \"status\" in tool_response:\n315:            blocks = [t for t in _response_text_blocks(value) if t.strip()]\n316:            if blocks:\n317:                return \"\\n\".join(blocks)\n362:        \"tool_name\": \"Agent\",\n378:    現行 Claude Code は 'Agent' を tool_name として渡す。\n380:    ledger_tool_name = payload.get(\"tool_name\")\n381:    if ledger_tool_name not in AUDIT_FORK_TOOL_NAMES:\n395:    if ledger_tool_name == \"Agent\" and not has_tool_use_id:\n401:    if not response_is_complete(ledger_tool_name, tool_response):\n413:        \"tool_name\": ledger_tool_name,\n446:    \"\"\"観測する hook event を決める。--event 明示 > payload の hook_event_name > PostToolUse。\"\"\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

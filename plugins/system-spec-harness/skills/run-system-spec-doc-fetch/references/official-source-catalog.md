@@ -7,6 +7,7 @@
 
 1. **正規ドメイン優先**: プロジェクトが公式に運用するドメイン、または公式 docs サブドメインを最優先する。
 2. **ホスティング上の公式**: GitHub / Read the Docs / npm 等の上でも、その project の **公式 org / 公式リポジトリ / 公式パッケージ** なら公式扱い。第三者アカウントの複製・解説は非公式。
+   - **GitHub org releases の記録形 (正式規則)**: publisher 直営 org のページを出典にする場合、`official_host` は `github.com`、`source_url` は公式 org 配下 (`github.com/<official-org>/...`) とし、`summary` に org が publisher 直営である根拠 (正規ドメイン docs からのリンク等) を一言残す。リリース版数など**正規ドメイン側の掲載が実リリースに遅行する事実**は、公式 org の GitHub releases を一次根拠としてよい (例: docs サイトの latest-releases 静的ページが旧版告知のまま、実リリースは GitHub releases が先行するケース)。同一事実を正規ドメインが裏付けられるときは正規ドメインを優先する。C08 監査はこの規則を公式性判定の SSOT として参照し、`github.com` を一律に非公式扱いしない。
 3. **非公式の除外**: 個人ブログ、まとめ記事、Q&A、ミラーサイト、AI 生成の要約サイトは採らない。
 4. **一意性**: 公式 host を一意に特定できないときは「未取得 (要確認)」に倒し、非公式で穴埋めしない。
 
@@ -29,5 +30,6 @@
 | コンテナ基盤 | kubernetes | CNCF | kubernetes.io |
 | クラウド | aws-s3 | Amazon Web Services | docs.aws.amazon.com |
 | 認証 | oauth2 | IETF | datatracker.ietf.org |
+| ORM (release 実体) | drizzle-orm | Drizzle Team | github.com (公式 org: drizzle-team。docs は orm.drizzle.team だがリリース実体は GitHub releases が先行) |
 
 > 上表は目安であり固定辞書ではない。実際の `official_host` は R2 が WebSearch で都度確認し、`source_url` は必ずその host 配下のページにする。

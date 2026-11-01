@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9b00c01e-49d2-4398-9f5e-884c3663773f",
+      "line": 756,
+      "prefix_bytes": 5310866,
+      "prefix_sha256": "44bfe89646fb6d7407146b4e302380835114e03482032ffb7a1384e019fca02a",
+      "timestamp": "2026-11-01T06:41:08.336Z"
+    },
+    "result": {
+      "uuid": "9618ba54-df82-428c-b823-39d2924bbc70",
+      "line": 759,
+      "prefix_bytes": 5315957,
+      "prefix_sha256": "01f81b213dced56db561a5adf1d4939271db3280cc5bf95f97729184ea77184b",
+      "timestamp": "2026-11-01T06:41:11.072Z"
+    }
+  },
+  "tool_use_id": "toolu_017x85dbVkSmUoAjDC3G4Xos",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nimport json,hashlib\ng=json.load(open(\".dev-graph/state/graph.json\",encoding=\"utf-8\"))\nprint(g[\"graph_revision\"],\"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(\",\",\":\")).encode()).hexdigest())' && python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness > \"$TMPDIR/schema.json\"; echo schema_exit=$?; head -c 1500 \"$TMPDIR/schema.json\"",
+    "description": "Compute canonical graph digest and run schema validation"
+  },
+  "is_error": false,
+  "tool_result_content": "1 sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058\nschema_exit=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+  "tool_use_result": {
+    "stdout": "1 sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058\nschema_exit=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

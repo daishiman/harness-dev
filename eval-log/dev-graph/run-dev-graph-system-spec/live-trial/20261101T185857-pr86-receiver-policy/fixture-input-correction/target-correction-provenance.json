@@ -1,0 +1,81 @@
+{
+  "kind": "synthetic-positive-target-completion",
+  "actual_user_approval_claimed": false,
+  "reason": "v3でD4に採用したKubernetesがtargetsとfetched referencesに未列挙だった。既存QA/承認/意思決定は一字も変更せず、単一writerでtargetを追加し実HTTP取得をcanonical assemblerで出典化する。対象agentのSkill実行/監査/PASSとしては主張しない。",
+  "new_target": {
+    "target_id": "kubernetes",
+    "category": "infrastructure",
+    "also_categories": [
+      "backend",
+      "maintenance-ops"
+    ]
+  },
+  "body_sha256": "5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060",
+  "response_metadata": "kubernetes-response-metadata.json",
+  "commands": [
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+        "set-targets",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/spec-state.json",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/targets-v4.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py",
+        "assemble",
+        "--records",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/reference-records-v4.json",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/spec-state.json",
+        "--out",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/fetched-references.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/scripts/validate-source-citation.py",
+        "--targets",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/fetched-references.json",
+        "--state",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/spec-state.json",
+        "--repo-root",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-B",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py",
+        "compile",
+        "--spec",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/spec-state.json",
+        "--references",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec/fetched-references.json",
+        "--out-dir",
+        "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4/system-spec",
+        "--repo-root",
+        "/Users/dm/orca/workspaces/harness/pr86-ci-fix"
+      ],
+      "exit": 0
+    }
+  ],
+  "all_non_target_state_fields_identical": true,
+  "evaluation_or_graph_seeded": false,
+  "scenario_observations_changed": false
+}

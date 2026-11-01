@@ -268,6 +268,55 @@ def test_validate_capability_agent_missing_kind_specific(tmp_path):
     assert any("missing required field 'isolation'" in e for e in errs)
 
 
+# agent の tools 宣言は「tools か tools-inherit: true のどちらか一方」
+# (capability-manifest.schema.json#/definitions/kindAgent の oneOf と同じ規則)
+_AGENT_BASE = {
+    "name": "my-agent",
+    "description": "テスト用エージェント定義です十分長い説明文。",
+    "kind": "agent",
+    "version": "1.0.0",
+    "owner": "team-test",
+    "isolation": "inherit",
+}
+
+
+@pytest.mark.parametrize("tools_decl", [
+    {"tools": "Read, Glob"},
+    {"tools": ["Read", "Glob"]},
+    {"tools-inherit": "true"},
+])
+def test_validate_capability_agent_accepts_one_tools_declaration(tmp_path, tools_decl):
+    _name, errs = MOD.validate_capability(tmp_path / "agent.md", {**_AGENT_BASE, **tools_decl}, "")
+    assert errs == [], errs
+
+
+@pytest.mark.parametrize("tools_decl,needle", [
+    ({"tools": "Read", "tools-inherit": "true"}, "not both"),
+    ({}, "missing required field 'tools' or 'tools-inherit: true'"),
+    ({"tools-inherit": "false"}, "'tools-inherit' must be true"),
+    ({"tools": ""}, "missing required field 'tools'"),
+    ({"tools": "inherit"}, "'inherit' is not a tool name"),
+    ({"tools": ["Read", "Inherit"]}, "'inherit' is not a tool name"),
+])
+def test_validate_capability_agent_rejects_bad_tools_declaration(tmp_path, tools_decl, needle):
+    _name, errs = MOD.validate_capability(tmp_path / "agent.md", {**_AGENT_BASE, **tools_decl}, "")
+    assert any(needle in e for e in errs), errs
+
+
+def test_validate_file_agent_tools_inherit_end_to_end(tmp_path):
+    """parse_fm 経由 (YAML の true とコメント) でも tools-inherit: true を受理し、併記は拒否する。"""
+    head = ("---\nname: my-agent\ndescription: テスト用エージェント定義です十分長い説明文。\n"
+            "kind: agent\nversion: 1.0.0\nowner: team-test\nisolation: inherit\n")
+    ok = tmp_path / "ok.md"
+    ok.write_text(head + "tools-inherit: true  # 全ツール継承\n---\nbody\n", encoding="utf-8")
+    _name, errs = MOD.validate_file(ok)
+    assert errs == [], errs
+    both = tmp_path / "both.md"
+    both.write_text(head + "tools: Read\ntools-inherit: true\n---\nbody\n", encoding="utf-8")
+    _name, errs = MOD.validate_file(both)
+    assert any("not both" in e for e in errs), errs
+
+
 def test_validate_capability_hook_valid(tmp_path):
     p = tmp_path / "hook.md"
     fm = {

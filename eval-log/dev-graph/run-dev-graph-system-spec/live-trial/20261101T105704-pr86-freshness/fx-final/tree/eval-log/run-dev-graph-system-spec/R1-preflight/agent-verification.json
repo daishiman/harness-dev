@@ -1,0 +1,43 @@
+{
+  "responsibility": "R1-preflight",
+  "verdict": "PASS",
+  "checklist": [
+    {
+      "item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる (5.3 完了チェックリスト / 受入条件)",
+      "status": "achieved",
+      "evidence": "plugins/system-spec-harness/.claude-plugin/plugin.json name=system-spec-harness version=0.1.25 (sha256 94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b)。plugins/dev-graph/plugin-composition.yaml:154 external_dependencies.system-spec-harness.version='>=0.1.22 <1.0.0' に 0.1.25 は含まれる。required_entry_points (同 :155) の4件すべてが references/package-contract.json entry_points.skills に宣言され、skills/<name>/SKILL.md が実在し frontmatter name が一致"
+    },
+    {
+      "item": "公式 manifest に harness 専用キーが混在しない",
+      "status": "achieved",
+      "evidence": "plugin.json のキーは author/dependencies/description/name/version のみ。entry_points 等の harness 契約は references/package-contract.json 側にあり、manifest には混在していない。dependencies キーは repo 内の他 plugin manifest でも同じ形で使われている"
+    },
+    {
+      "item": "不一致時の fallback/複製を dev-graph 内に実装していない (責務境界)",
+      "status": "achieved",
+      "evidence": "plugins/dev-graph 配下の *.py に spec-state を書き込むコードはなく、compile 相当の関数もない (grep の結果 0 件)。run-dev-graph-system-spec/scripts は build-evaluation-context.py のみで write-scope: none。'fallback' に一致したのは validate-graph-schema の _schema_fallback と build-project-hook-fallback (init の hook 用) だけで、spec に関係する fallback ではない。SKILL.md:188 も fallback 禁止を明記している"
+    },
+    {
+      "item": "外部 plugin を変更しない",
+      "status": "achieved",
+      "evidence": "検証者は読み取りだけを行った。plugins/ は .git/info/exclude で git 管理外のため、git diff では変更の有無を確認できない。parent の改変は manifest sha256 が preflight-report の記録と一致することで確認した"
+    },
+    {
+      "item": "preflight-report.json の sha256 が記録と一致し、内容が実状態と一致する (version range / entry points availability receipt)",
+      "status": "achieved",
+      "evidence": "preflight-report.json の実測 sha256 は 819c682a908c27963d2ba9edac3f4ce73f4f3a610d7d17bb4d279253662cec42 で、親記録・artifact-delivery の present_actual_artifact と一致。dependency の値 (version 0.1.25、composition_range、in_range=true、manifest_sha256、4 entry points の declared/skill_md=true) はすべて実状態と一致。c24_receipt の sha256 も一致し、inputs に記載された 17 ファイルの sha256 もすべて実測と一致 (不一致 0)"
+    }
+  ],
+  "commands": [
+    "cat plugins/system-spec-harness/.claude-plugin/plugin.json; shasum -a 256 plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "find plugins/dev-graph -name plugin-composition.yaml; grep -n -A8 system-spec-harness plugins/dev-graph/plugin-composition.yaml",
+    "python3 -c \"json.load(open('plugins/system-spec-harness/references/package-contract.json'))['entry_points']\"",
+    "ls -la plugins/system-spec-harness/skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md; head -5 each",
+    "python3 -c sorted(keys) for plugins/*/.claude-plugin/plugin.json",
+    "grep -rn spec-state plugins/dev-graph --include='*.py'; grep -rln -E 'def (compile|render_chapter|write_spec_state)|spec-compile|compile_spec' plugins/dev-graph --include='*.py'; grep -rn -i fallback plugins/dev-graph/skills/run-dev-graph-system-spec plugins/dev-graph/scripts",
+    "shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json",
+    "python3: recompute sha256 of preflight-report inputs and c24 receipt",
+    "git status --porcelain plugins; git check-ignore -v plugins/dev-graph"
+  ],
+  "verified_at": "2026-11-01T02:08:13Z"
+}

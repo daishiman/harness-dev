@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9e9390dc-7ea1-4292-9cb5-19db2faa0478",
+      "line": 123,
+      "prefix_bytes": 895414,
+      "prefix_sha256": "58186a7041e91a165eee58407ed3c3e7412fb79cd8a0c2dd809791d228fdabdd",
+      "timestamp": "2026-11-01T09:19:59.679Z"
+    },
+    "result": {
+      "uuid": "193798d0-e2ff-480f-8cce-59db7f6773ee",
+      "line": 126,
+      "prefix_bytes": 900762,
+      "prefix_sha256": "0d87428a60bead3a3ec98f4e54059b800e9df241dd28e8a4c50c4dcb4779fd9d",
+      "timestamp": "2026-11-01T09:20:03.897Z"
+    }
+  },
+  "tool_use_id": "toolu_017CN7FdC83byTcu9jXmtJnt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --graph .dev-graph/state/graph.json; echo exit=$?; python3 -c \"import os;p='system-spec';print(os.path.realpath(p), os.path.islink(p))\"; git rev-parse --git-common-dir --show-toplevel; find system-spec -type l; cat plugins/system-spec-harness/references/package-contract.json | python3 -c \"import json,sys;d=json.load(sys.stdin);print(d['entry_points'])\"; grep -n '\"name\"\\|\"version\"' plugins/dev-graph/.claude-plugin/plugin.json"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec False\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\n{'skills': ['assign-system-spec-completeness-evaluator', 'ref-system-design-knowledge', 'run-skill-feedback', 'run-system-spec-compile', 'run-system-spec-doc-fetch', 'run-system-spec-elicit'], 'agents': ['system-spec-doc-freshness-auditor', 'system-spec-hearing-auditor', 'system-spec-matrix-auditor'], 'commands': ['spec-compile', 'spec-hearing-start'], 'hooks': ['guard-confirmed-chapter-overwrite.py', 'record-audit-fork.py']}\n2:  \"name\": \"dev-graph\",\n3:  \"version\": \"0.1.26\",\n9:    \"name\": \"harness maintainers\"",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec False\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\n{'skills': ['assign-system-spec-completeness-evaluator', 'ref-system-design-knowledge', 'run-skill-feedback', 'run-system-spec-compile', 'run-system-spec-doc-fetch', 'run-system-spec-elicit'], 'agents': ['system-spec-doc-freshness-auditor', 'system-spec-hearing-auditor', 'system-spec-matrix-auditor'], 'commands': ['spec-compile', 'spec-hearing-start'], 'hooks': ['guard-confirmed-chapter-overwrite.py', 'record-audit-fork.py']}\n2:  \"name\": \"dev-graph\",\n3:  \"version\": \"0.1.26\",\n9:    \"name\": \"harness maintainers\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

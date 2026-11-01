@@ -136,6 +136,23 @@ def _str_list(value: object) -> list[str]:
     return [item for item in value if isinstance(item, str)] if isinstance(value, list) else []
 
 
+def is_import_only_support_module(path: Path) -> bool:
+    """Return whether a file is an import-only support module.
+
+    The 500-line split convention creates ``.py`` helpers in hooks/ and
+    scripts/. PKG-006/007 must not mistake those helpers for entry points,
+    while still rejecting missing declarations for executable files.
+    """
+    if path.suffix != ".py":
+        return False
+    if not path.stem.isidentifier():
+        return False
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    if text.startswith("#!"):
+        return False
+    return not any(line.startswith("if __name__") for line in text.splitlines())
+
+
 def _parse_completeness_exemptions(fm: dict) -> dict[str, str]:
     """Parse only reasoned ``<category>: <reason>`` exemptions.
 
@@ -628,6 +645,8 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
                 register_hook_commands(f"settings/{cfg.name}", hooks)
     idx = len(findings) + 1
     for hook in sorted(actual_hooks):
+        if is_import_only_support_module(hook):
+            continue
         if hook.name not in registered:
             findings.append(make_finding(
                 "PKG-006", idx, str(hook),
@@ -662,6 +681,8 @@ def check_pkg_007(plugin_dir: Path) -> list[dict]:
         if not sc.is_file():
             continue
         if sc.suffix not in {".py", ".sh"}:
+            continue
+        if is_import_only_support_module(sc):
             continue
         text_head = sc.read_text(errors="ignore")[:200] if sc.suffix in {".py", ".sh"} else ""
         if sc.suffix in {".py", ".sh"} and not text_head.startswith("#!"):

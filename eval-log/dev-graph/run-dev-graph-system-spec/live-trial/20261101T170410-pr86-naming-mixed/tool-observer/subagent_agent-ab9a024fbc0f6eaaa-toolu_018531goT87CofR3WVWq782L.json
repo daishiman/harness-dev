@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-ab9a024fbc0f6eaaa",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6d16b558-3aaf-43a8-81f7-0b0c9739e1ed",
+      "line": 48,
+      "prefix_bytes": 279974,
+      "prefix_sha256": "85b0ef2492987a426b5c8faa073dc3e790c7c4e349eec98fe904065338d02a14",
+      "timestamp": "2026-11-01T08:06:54.964Z"
+    },
+    "result": {
+      "uuid": "589533ad-06a2-4388-aae1-0a17632accde",
+      "line": 49,
+      "prefix_bytes": 280916,
+      "prefix_sha256": "5412ec54ad1c6f53d2b7274cb3c06f23142e2873f57fe9d42a3f46791fa7bb5a",
+      "timestamp": "2026-11-01T08:06:59.840Z"
+    }
+  },
+  "tool_use_id": "toolu_018531goT87CofR3WVWq782L",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nimport json\nr={\"responsibility\":\"R0-context\",\"role\":\"independent_verifier\",\"loop\":1,\"verdict\":\"PASS\",\n\"c24_receipt_sha256\":\"e4b70685d1a17d67cd4fbc4eb639f44fe130ee365b88f8522cc60b12a2d23d23\",\"c24_receipt_sha256_match\":True,\n\"checklist\":{\n\"system_spec_realpath_in_caller_repo_not_symlink\":{\"result\":\"YES\",\"evidence\":\"realpath==<repo>/system-spec, islink False, find -type l empty\"},\n\"repository_id_common_dir_match\":{\"result\":\"YES\",\"evidence\":\"read-mode rerun repository_id local:sha256:1cacbaa8...6d15 and git_common_dir .git == c24/R0 receipt\"},\n\"repo_root_equals_content_roots_repository\":{\"result\":\"YES\",\"evidence\":\"c24 repo_root == content_roots.repository (same realpath)\"},\n\"lineage_gate_exit0_resume_decision_unique\":{\"result\":\"YES\",\"evidence\":\"validate-source-lineage exit 0, status pass, checked 0, violations [] -> new_creation\"},\n\"common_inputs_verified\":{\"result\":\"YES\"},\"common_output_shape_authority\":{\"result\":\"YES\",\"evidence\":\"receipt separates repository_id/system_spec_root/code_authority; relative paths only\"},\n\"common_boundary_violations_zero\":{\"result\":\"YES\"}},\n\"observer_events\":[\"toolu_01QSwBSKGPVi94Ms5e6oSD3U\",\"toolu_01DuPKCxFhAaWCTNJAvhfmU6\",\"toolu_01GHRiJdQeCb65hhtn8yVJVu\"],\n\"blockers\":[],\n\"original_goal_sha256\":\"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n\"delta_from_original\":\"none; R0 containment verified\",\n\"merged_directive_for_next\":\"R1 preflight verification then present pre-choice preflight report; mode new_creation (checked=0)\",\n\"drift_signal\":False}\njson.dump(r,open(\"eval-log/run-dev-graph-system-spec/R0/verifier.json\",\"w\"),ensure_ascii=False,indent=2)'; echo ok",
+    "description": "Write verifier record JSON"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

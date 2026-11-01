@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "43268e0b-8182-4b88-97c1-3ba526c09fa6",
+      "line": 295,
+      "prefix_bytes": 2244807,
+      "prefix_sha256": "7c90a6892381d745a4d86e202c57eff036437908a9ac13cc9975ceb07bda3083",
+      "timestamp": "2026-11-01T12:44:24.695Z"
+    },
+    "result": {
+      "uuid": "45b5c601-6355-4756-82f6-c9ee113bb103",
+      "line": 303,
+      "prefix_bytes": 2249176,
+      "prefix_sha256": "e4ed746f8cf6d214cde2603b1f65bc37d521b4b5b0a56b1ccac916eecd2275eb",
+      "timestamp": "2026-11-01T12:44:30.590Z"
+    }
+  },
+  "tool_use_id": "toolu_01M7Fb2Au9XairZhXS3eevjw",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; D=\"$CLAUDE_PROJECT_DIR/system-spec\"; python3 -B \"$P/scripts/validate-source-citation.py\" --targets \"$D/spec-state.json\" --references \"$D/fetched-references.json\" --state \"$D/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"citation_exit=$?\"; python3 -c 'import json; d=json.load(open(\"system-spec/fetched-references.json\")); r=d.get(\"references\",d) ; print(type(r).__name__); [print(x.get(\"target_id\"),x.get(\"url\"),x.get(\"version\"),x.get(\"checked_at\") or x.get(\"fetched_at\")) for x in (r if isinstance(r,list) else [])]'",
+    "description": "Check source citation gate and fetched references"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncitation_exit=0\nlist\npostgres None 16.15 None\nreact None 19.3 None\nfastapi None 0.162.0 None\ntypescript None 7.0 None\nkubernetes None None None",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncitation_exit=0\nlist\npostgres None 16.15 None\nreact None 19.3 None\nfastapi None 0.162.0 None\ntypescript None 7.0 None\nkubernetes None None None",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

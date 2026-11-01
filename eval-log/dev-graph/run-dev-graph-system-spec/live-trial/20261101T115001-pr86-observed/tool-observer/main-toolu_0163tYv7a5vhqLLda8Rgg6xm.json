@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "da7ddd1c-46e6-4dea-b501-81ca346addcf",
+      "line": 587,
+      "prefix_bytes": 2659423,
+      "prefix_sha256": "37a5294a35054cc95db855386d1e6383ec12782551d8396fbd3f7bb6a5744cf6",
+      "timestamp": "2026-11-01T03:09:21.203Z"
+    },
+    "result": {
+      "uuid": "0189642a-ec2e-44c1-9092-1649f49d9a26",
+      "line": 590,
+      "prefix_bytes": 2663211,
+      "prefix_sha256": "12f26470293531bdf527e8a6751bc5e5193790250f2d1424afcc603eb5ae851f",
+      "timestamp": "2026-11-01T03:09:24.008Z"
+    }
+  },
+  "tool_use_id": "toolu_0163tYv7a5vhqLLda8Rgg6xm",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && export TMPPREFIX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/tmp/zsh && \nDEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\"; P=$DEV_GRAPH_ROOT/plugins; S=$DEV_GRAPH_ROOT/system-spec\npython3 -B $P/system-spec-harness/scripts/validate-coverage-matrix.py --matrix $S/spec-state.json --require-complete --require-basis --require-foundation; echo cov=$?\npython3 -B $P/system-spec-harness/scripts/validate-source-citation.py --targets $S/spec-state.json --references $S/fetched-references.json --state $S/spec-state.json --repo-root $DEV_GRAPH_ROOT; echo cit=$?\npython3 -B $P/dev-graph/scripts/validate-graph-schema.py --graph $DEV_GRAPH_ROOT/.dev-graph/state/graph.json --repo-root $DEV_GRAPH_ROOT --strict-artifact-readiness | tail -3; echo schema=${pipestatus[1]}",
+    "description": "Run loop-2 gates read-only"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncit=0\n  \"valid\": true,\n  \"violations\": []\n}\nschema=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncit=0\n  \"valid\": true,\n  \"violations\": []\n}\nschema=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

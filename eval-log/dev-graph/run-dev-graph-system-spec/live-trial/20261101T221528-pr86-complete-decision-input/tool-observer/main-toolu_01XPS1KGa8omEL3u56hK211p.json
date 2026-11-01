@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d486f2a4-4463-4acb-84cc-80f82766695f",
+      "line": 367,
+      "prefix_bytes": 2603966,
+      "prefix_sha256": "eb1b107b3cfd91b59e32d1720d1338ba58a526d65d95a7e70463859d9fe2ef09",
+      "timestamp": "2026-11-01T13:24:07.472Z"
+    },
+    "result": {
+      "uuid": "c0e27e61-a4d6-447d-a136-25e3180df303",
+      "line": 370,
+      "prefix_bytes": 2607219,
+      "prefix_sha256": "0601d64047a17a72784f503ad8beae8f0c2d23f5abf6837ba9dd7de985b2ddf3",
+      "timestamp": "2026-11-01T13:24:17.093Z"
+    }
+  },
+  "tool_use_id": "toolu_01XPS1KGa8omEL3u56hK211p",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && T=$CLAUDE_PROJECT_DIR/plugins/system-spec-harness/skills/run-system-spec-compile/tests && S1=$(shasum -a 256 system-spec/*.md system-spec/spec-state.json system-spec/fetched-references.json | shasum -a 256); PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider $T/test_compile_spec_doc.py $T/test_compile_spec_doc_knowledge.py 2>&1 | tail -5; echo \"pytest exit=${PIPESTATUS[0]}\"; S2=$(shasum -a 256 system-spec/*.md system-spec/spec-state.json system-spec/fetched-references.json | shasum -a 256); [ \"$S1\" = \"$S2\" ] && echo \"caller artifacts unchanged\"",
+    "description": "Run compile OUT1 acceptance tests"
+  },
+  "is_error": false,
+  "tool_result_content": "...............................................................          [100%]\n63 passed in 5.25s\npytest exit=\ncaller artifacts unchanged",
+  "tool_use_result": {
+    "stdout": "...............................................................          [100%]\n63 passed in 5.25s\npytest exit=\ncaller artifacts unchanged",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

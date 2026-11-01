@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-abcbab1b89802b4ad",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c1428af6-d872-4f72-a73d-9b3fdd8cbff2",
+      "line": 39,
+      "prefix_bytes": 537808,
+      "prefix_sha256": "9a8f9342c29b856f20c4e8ff87505d9a4fcf8de036e1fb249f462a73f928b3db",
+      "timestamp": "2026-11-01T12:50:55.184Z"
+    },
+    "result": {
+      "uuid": "34427f86-062a-492a-b780-48f3ca54abed",
+      "line": 45,
+      "prefix_bytes": 550878,
+      "prefix_sha256": "58d09d4633668805212baf410ea09c51652f4d876d7647f5781e7b111acdcacd",
+      "timestamp": "2026-11-01T12:51:10.217Z"
+    }
+  },
+  "tool_use_id": "toolu_015m9iE9piFJxrsVLSi5vcYt",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "What is the last modified date of this page? Does it still say concurrencyPolicy Forbid and need for idempotent jobs?"
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified date:** The text you provided doesn't include one. The page content is cut off (\"[Content truncated due to length...]\") before the footer, where a last-modified date would normally appear. You can find it on the live page or in the [Kubernetes website repo's commit history](https://github.com/kubernetes/website/blob/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md).\n\n**Concurrency Forbid:** Yes. The page documents it:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\n**Idempotency:** The visible portion doesn't mention idempotent Jobs. The \"Job creation\" limitation is in the truncated section, so I can't confirm what it says. If you need that guidance, check the full page.\n\nFor reference, the page's example manifest sets the policy like this:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  concurrencyPolicy: Forbid\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Hello from the Kubernetes cluster\"]\n          restartPolicy: OnFailure\n```\n\nNote that the example above is my addition to show the field. The page's own example doesn't set `concurrencyPolicy`, so it defaults to `Allow`.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified date:** The text you provided doesn't include one. The page content is cut off (\"[Content truncated due to length...]\") before the footer, where a last-modified date would normally appear. You can find it on the live page or in the [Kubernetes website repo's commit history](https://github.com/kubernetes/website/blob/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md).\n\n**Concurrency Forbid:** Yes. The page documents it:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\n**Idempotency:** The visible portion doesn't mention idempotent Jobs. The \"Job creation\" limitation is in the truncated section, so I can't confirm what it says. If you need that guidance, check the full page.\n\nFor reference, the page's example manifest sets the policy like this:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  concurrencyPolicy: Forbid\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Hello from the Kubernetes cluster\"]\n          restartPolicy: OnFailure\n```\n\nNote that the example above is my addition to show the field. The page's own example doesn't set `concurrencyPolicy`, so it defaults to `Allow`.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 6008,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

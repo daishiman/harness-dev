@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f3f6c565-ee52-43eb-a7e6-e5d3f6a6588d",
+      "line": 506,
+      "prefix_bytes": 2761850,
+      "prefix_sha256": "0e71db011d8b14b0850877ff8921fa573926fbb54649ed1a47a84fdff07dbb87",
+      "timestamp": "2026-11-01T12:20:09.961Z"
+    },
+    "result": {
+      "uuid": "b6df45ca-b22d-4a9f-87bd-c2af79d23944",
+      "line": 507,
+      "prefix_bytes": 2767090,
+      "prefix_sha256": "bd213759c4c49a81d2f42f272ad03383ec9cd39b88e466e4816412b528a6e824",
+      "timestamp": "2026-11-01T12:20:13.336Z"
+    }
+  },
+  "tool_use_id": "toolu_018Wrmzzi6k5aSJnGTUon4t3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n \"confirmation_evidence\\|imported_at\\|invalid_confirmation_evidence\\|evaluated_digest\\|evidence_ref\" plugins/dev-graph/scripts/build-graph-node.py | head -60",
+    "description": "Find confirmation_evidence handling in writer"
+  },
+  "is_error": false,
+  "tool_result_content": "76:    \"macro\", \"confirmation_evidence\",\n695:    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n702:    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n703:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n705:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n706:    if raw[\"evaluated_digest\"] != lineage.get(\"source_digest\"):\n707:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n708:    ref = raw[\"evidence_ref\"]\n710:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n714:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n716:        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n721:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n722:    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n794:            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n805:                                    \"completed_at\": None, \"reconciled_at\": None, \"evidence_refs\": []},\n813:        if \"confirmation_evidence\" in entry:\n814:            evidence = _spec_confirmation(entry[\"confirmation_evidence\"], kind, node[\"source_lineage\"], root, label)\n828:                         \"confirmation_evidence\": evidence})",
+  "tool_use_result": {
+    "stdout": "76:    \"macro\", \"confirmation_evidence\",\n695:    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n702:    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n703:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n705:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n706:    if raw[\"evaluated_digest\"] != lineage.get(\"source_digest\"):\n707:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n708:    ref = raw[\"evidence_ref\"]\n710:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n714:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n716:        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n721:        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n722:    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n794:            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n805:                                    \"completed_at\": None, \"reconciled_at\": None, \"evidence_refs\": []},\n813:        if \"confirmation_evidence\" in entry:\n814:            evidence = _spec_confirmation(entry[\"confirmation_evidence\"], kind, node[\"source_lineage\"], root, label)\n828:                         \"confirmation_evidence\": evidence})",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

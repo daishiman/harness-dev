@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "eb5196f0-1d95-4eed-820e-b94658b5882e",
+      "line": 727,
+      "prefix_bytes": 4060343,
+      "prefix_sha256": "723638d546a2bd4ad8749f7961da5500696dadc8e608b9857ca1546e7ca7585a",
+      "timestamp": "2026-11-01T12:28:23.440Z"
+    },
+    "result": {
+      "uuid": "cce3ce3c-65d7-4850-949c-c8a98cfc1bc7",
+      "line": 728,
+      "prefix_bytes": 4061297,
+      "prefix_sha256": "97ca06d0094660440a82073893fbf79fe0f9bb9ee9b03af18fbf0aad49fc0e14",
+      "timestamp": "2026-11-01T12:28:28.922Z"
+    }
+  },
+  "tool_use_id": "toolu_01Fak9bhDpSCbuLsGp5mNSRU",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\" && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"hash_rc=$?\"",
+    "description": "Run C19 intermediate hash check"
+  },
+  "is_error": false,
+  "tool_result_content": "hash_rc=0",
+  "tool_use_result": {
+    "stdout": "hash_rc=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

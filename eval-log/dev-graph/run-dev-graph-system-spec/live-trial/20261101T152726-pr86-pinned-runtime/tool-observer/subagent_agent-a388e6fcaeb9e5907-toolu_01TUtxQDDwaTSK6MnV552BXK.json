@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a388e6fcaeb9e5907",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8dfb964c-2814-4e6d-9402-b625f9c94c0c",
+      "line": 306,
+      "prefix_bytes": 2720062,
+      "prefix_sha256": "02927e3eeafa75df84f95972bc270563c4393ef1ed638601b511ad2190c79765",
+      "timestamp": "2026-11-01T15:46:37.695Z"
+    },
+    "result": {
+      "uuid": "73569810-444e-43fd-a144-046dc49d23ed",
+      "line": 307,
+      "prefix_bytes": 2721243,
+      "prefix_sha256": "635ed588d19d6588e78860ea49429f0ff9040ae82364a2a0f7cc96c72f8bfaca",
+      "timestamp": "2026-11-01T15:46:41.108Z"
+    }
+  },
+  "tool_use_id": "toolu_01TUtxQDDwaTSK6MnV552BXK",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c 'from pathlib import Path;import hashlib,json,sys;r=Path(sys.argv[1]).resolve(strict=True);p=(r/sys.argv[2]).resolve(strict=True);p.relative_to(r);assert p.is_file();print(json.dumps({'\"'\"'written_source_checked'\"'\"':True,'\"'\"'root'\"'\"':str(r),'\"'\"'path'\"'\"':sys.argv[2],'\"'\"'real_path'\"'\"':str(p),'\"'\"'sha256'\"'\"':hashlib.sha256(p.read_bytes()).hexdigest()},sort_keys=True))' /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx eval-log/system-spec-completeness-report.json",
+    "description": "Compute SHA-256 of saved report"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"path\": \"eval-log/system-spec-completeness-report.json\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/eval-log/system-spec-completeness-report.json\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\", \"sha256\": \"568ee385e7ee2a3ef6af19fcf11c4aee1a68bcc23063bc46ffd6b7b954ea1b8d\", \"written_source_checked\": true}",
+  "tool_use_result": null
+}

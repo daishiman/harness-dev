@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-ab6c547a05d3fc313",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "32f1b444-65b7-41ed-8804-4b1b9aee9a9f",
+      "line": 48,
+      "prefix_bytes": 493598,
+      "prefix_sha256": "97baf1f6873e4359baf47e9c0c71fab6fe7bbef50035c4729e5a26263f5fcf80",
+      "timestamp": "2026-11-01T12:41:12.958Z"
+    },
+    "result": {
+      "uuid": "6dad212b-d212-473d-a260-2546f1b723f1",
+      "line": 49,
+      "prefix_bytes": 495863,
+      "prefix_sha256": "d051e907564c117d378d5ed73c86faf2e95bbf770587bf94735195b023efe61f",
+      "timestamp": "2026-11-01T12:41:16.823Z"
+    }
+  },
+  "tool_use_id": "toolu_015FrTV1NRocGLrqA6E6TkAG",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; cd $R && shasum -a 256 eval-log/run-dev-graph-system-spec-c24-receipt.json plugins/system-spec-harness/.claude-plugin/plugin.json plugins/system-spec-harness/references/package-contract.json plugins/dev-graph/plugin-composition.yaml; for s in run-system-spec-elicit run-system-spec-doc-fetch run-system-spec-compile assign-system-spec-completeness-evaluator; do test -f plugins/system-spec-harness/skills/$s/SKILL.md && echo \"$s OK\" || echo \"$s MISSING\"; done; python3 -c \"import hashlib,json;g=json.load(open('eval-log/run-dev-graph-system-spec-goal-spec.json'));print(hashlib.sha256(g['original_goal'].encode()).hexdigest())\"; python3 -c \"\nimport json,hashlib\nr=json.load(open('eval-log/run-dev-graph-system-spec-preflight-report.json'))\nbad=[k for k,v in r['inputs'].items() if hashlib.sha256(open(k,'rb').read()).hexdigest()!=v]\nprint('input mismatches',bad)\"; git status --porcelain plugins | head; git diff --stat HEAD -- plugins | tail -2",
+    "description": "Verify hashes, entry-point files, goal hash, git cleanliness"
+  },
+  "is_error": false,
+  "tool_result_content": "13c730238359e23b3533047006117bd8d7cf50bbc237471484ee3823a2eca12d  eval-log/run-dev-graph-system-spec-c24-receipt.json\n322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994  plugins/system-spec-harness/.claude-plugin/plugin.json\nd4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486  plugins/system-spec-harness/references/package-contract.json\nd44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712  plugins/dev-graph/plugin-composition.yaml\nrun-system-spec-elicit OK\nrun-system-spec-doc-fetch OK\nrun-system-spec-compile OK\nassign-system-spec-completeness-evaluator OK\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\ninput mismatches []",
+  "tool_use_result": {
+    "stdout": "13c730238359e23b3533047006117bd8d7cf50bbc237471484ee3823a2eca12d  eval-log/run-dev-graph-system-spec-c24-receipt.json\n322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994  plugins/system-spec-harness/.claude-plugin/plugin.json\nd4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486  plugins/system-spec-harness/references/package-contract.json\nd44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712  plugins/dev-graph/plugin-composition.yaml\nrun-system-spec-elicit OK\nrun-system-spec-doc-fetch OK\nrun-system-spec-compile OK\nassign-system-spec-completeness-evaluator OK\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\ninput mismatches []",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

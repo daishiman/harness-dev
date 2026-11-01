@@ -18,7 +18,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 ## Layer 1: 基本定義層 (不変原則)
 
 ### 1.1 メタ情報
-- responsibility: run-elegant-review Phase 2 のシステム・戦略・価値・根本原因レーン (A4=11)。
+- responsibility: run-elegant-review Phase 2 のシステム3・戦略4・問題解決5レーン (A4=12、why は G-problem)。
 - owner_skill: run-elegant-review / phase_id: phase2-parallel。
 
 ### 1.2 不変ルール
@@ -27,12 +27,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 ## Layer 2: ドメイン定義層
 
 ### 2.1 単一責務
-- 担当: `thought-methods.yaml` の `system_strategic.methods` 11 種を全て使い、依存関係・介入点・価値・根本原因を評価し優先順位を付ける。
+- 担当: `thought-methods.yaml` の `system_strategic.methods` 12 種を全て使い、依存関係・介入点・価値・根本原因を評価し優先順位を付ける。
 - 非担当: 論理構造分析・メタ発想拡張・改善適用。
 
 ### 2.2 入出力契約
 - 入力: `{{phase1_output}}` (`purpose/scope/facts_vs_assumptions/first_impressions` 等) / `{{target_path}}`。
-- 出力: 11 思考法ぶんの `paradigm_findings[]`。各 issue に bucket と severity を付与する。
+- 出力: 12 思考法ぶんの `paradigm_findings[]`。各 issue に bucket と severity を付与する。
 
 ### 2.3 出力要素
 - issue: `{condition, severity, bucket, description, recommended_intervention, root_cause?, location?, depends_on?}`。
@@ -53,7 +53,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 - `root_cause` は「なぜ」3 段以上 (`→` または改行で階層検出可能) とし末尾に `target_path:line` 参照を付す。
 
 ### 4.2 失敗時挙動
-- 11 思考法未充足 (完全性 FAIL) または因果矛盾 (一貫性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で差し戻す。
+- 12 思考法未充足 (完全性 FAIL) または因果矛盾 (一貫性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で差し戻す。
 
 ## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
 
@@ -61,12 +61,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 - elegant-system-strategic-analyst / context_fork: true。並列他 agent の中間結果は参照しない。
 
 ### 5.2 ゴール定義
-- 目的: A4 11 思考法網羅で根本原因と介入点を特定し、bucket 分類で executor のパッチ単位を確定する。
+- 目的: A4 12 思考法網羅で根本原因と介入点を特定し、bucket 分類で executor のパッチ単位を確定する。
 - 背景: bucket 分類がないと executor が無関係領域を 1 コミットに混在させレビュー困難・rollback 不可になる。
-- 達成ゴール: 11 思考法の finding が root_cause 付きで揃い、issue が severity 順・bucket 別に整理され Phase 3 executor のパッチ順序が確定できる状態になっている。
+- 達成ゴール: 12 思考法の finding が root_cause 付きで揃い、issue が severity 順・bucket 別に整理され Phase 3 executor のパッチ順序が確定できる状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
-- [ ] distinct `paradigm_id` が 11。
+- [ ] distinct `paradigm_id` が 12。
 - [ ] issue を持つ finding は `bucket/severity/root_cause/recommended_intervention` 4 キーが非空。
 - [ ] `root_cause` が「なぜ」3 段以上。
 - [ ] 各 `root_cause` 末尾に line 参照が存在する。
@@ -92,12 +92,12 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-para
 
 ## Prompt Templates
 
-対話なしの自動実行 agent (対話なし: 自動実行 agent)。A4 11 思考法 × 4 条件の起動文・bucket/severity enum の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
+対話なしの自動実行 agent (対話なし: 自動実行 agent)。A4 12 思考法 × 4 条件の起動文・bucket/severity enum の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
 
 ## Self-Evaluation
 
-`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。完全性は distinct paradigm_id==11、深度は `root_cause` の「なぜ」3 段以上、検証可能性は line 参照存在を regex で客観判定する。
+`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。完全性は distinct paradigm_id==12、深度は `root_cause` の「なぜ」3 段以上、検証可能性は line 参照存在を regex で客観判定する。
 
 ## Handoff
 
-severity ソート済み findings と recommended_intervention を Phase 3 elegant-improvement-executor へ渡す。並列他 agent の中間結果は参照しない (独立性確保)。
+findings と recommended_intervention を JSON payload として orchestrator へ返す。orchestrator が materialize・severity sort 後に Phase 3 へ渡す。並列他 agent の中間結果は参照しない。

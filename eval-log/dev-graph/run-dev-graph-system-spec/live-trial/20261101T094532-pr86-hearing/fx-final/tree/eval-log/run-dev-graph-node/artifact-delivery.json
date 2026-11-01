@@ -1,0 +1,25 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "transitions": [
+    "artifact_created",
+    "minimum_guard_pass",
+    "artifact_presented",
+    "user_choice_recorded",
+    "semantic_evaluator_started"
+  ],
+  "artifact": {
+    "path": "eval-log/run-dev-graph-system-spec/R3-import/c02-dry-run.json",
+    "sha256": "27fac08725be6c9acf1d948e0e8af346af498030547a408dee963bc4a28854da",
+    "kind": "C02 add --dry-run preview (write_count 0, graph digest unchanged)",
+    "open": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec102/fx/eval-log/run-dev-graph-system-spec/R3-import/c02-dry-run.json"
+  },
+  "guards": {
+    "parse": "json ok",
+    "secret": "writer secret check passed (valid=true)",
+    "irreversible": "dry-run write_count=0",
+    "corrupt": "pre_write_validation findings 0"
+  },
+  "choice": "standard",
+  "choice_source": "task.md 事前回答契約 (artifact_delivery=standard)",
+  "recorded_at": "2026-11-01T01:03:46.137556+00:00"
+}

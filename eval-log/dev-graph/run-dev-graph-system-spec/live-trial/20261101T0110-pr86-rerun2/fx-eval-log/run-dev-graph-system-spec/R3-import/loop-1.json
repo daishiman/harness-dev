@@ -1,0 +1,27 @@
+{
+  "agent": "run-dev-graph-system-spec/R3-import (independent read-only verifier, covers R2-delegate + R3-import)",
+  "loop": 1,
+  "verdict": "PASS",
+  "checks": [
+    {"id": "R2-c24-receipt", "result": "PASS", "evidence": "c24-receipt.json mode=write, repo_root == content_roots.repository == fx, system_spec=fx/system-spec; sha256 614249d9... matches goal-spec context_receipt_sha256"},
+    {"id": "R2-delegation-chain", "result": "PASS", "evidence": "artifact-delivery-{elicit,doc-fetch,compile}.json name system-spec-harness Skills; elicit guard validate-coverage-matrix --require-complete exit0; doc-fetch refetch_not_required with validate-source-citation exit0; compile exit0 with byte digests equal to current system-spec/*.md; compile R1/R2/R3 loop records all PASS, drift none"},
+    {"id": "R2-evaluator-helper-args", "result": "PASS", "evidence": "re-ran prepare-evaluation.py on the pinned receipt: exit0, spec_dir=fx/system-spec, output=fx/eval-log/system-spec-completeness-report.json, context_sha256=614249d9...; report.spec_dir equals that absolute path (evaluator fork cwd was plugin dir per audit-fork-ledger, so absolute args were what kept the target fixed)"},
+    {"id": "R2-evaluator-report", "result": "PASS", "evidence": "verdict=PASS, gaps=[], findings 15 (no high/critical), gate_results G-matrix/G-source-citation/G-knowledge-graph exit0; artifact_snapshot 12/12 digests equal current bytes; aggregate-completeness.py --report ... --spec-dir <abs> exit 0 (no --session needed)"},
+    {"id": "R2-intermediate", "result": "PASS", "evidence": "intermediate.jsonl rows 1-2 carry all 6 required keys, original_goal_hash 30a1de05... consistent with goal-spec, drift_signal none; row2 evaluator_report_sha256 9a279855... equals current report sha256"},
+    {"id": "R3-c02-path", "result": "PASS", "evidence": "nodes created by build-graph-node add via run-dev-graph-node: receipt .dev-graph/state/receipts/node-r000001-add.json status applied, graph_revision 1, 2 nodes"},
+    {"id": "R3-dry-run-same-payload", "result": "PASS", "evidence": "import-payload.json sha256 c5f817f0... == dry-run-preview-2.input_sha256 == add-result.input_sha256 == receipt.input_sha256; payload includes confirmation_evidence for both artifacts. (earlier dry-run-preview.json used a different payload 6391fdb9..., superseded by preview-2)"},
+    {"id": "R3-node-kinds", "result": "PASS", "evidence": "spec-billing-audit-system-spec artifact_kind=specification; arch-billing-audit-system-architecture artifact_kind=architecture"},
+    {"id": "R3-source-lineage", "result": "PASS", "evidence": "both nodes have origin_kind=system-spec-harness, source_plugin=system-spec-harness, source_path (system-spec/index.md, system-spec/00-requirements-definition.md, repo-relative), source_version=0.1.24 == harness plugin.json version, source_digest f7f64767.../1cc7fe6b... == sha256 of current file bytes, imported_at 2026-10-31T16:08:57Z"},
+    {"id": "R3-confirmation-evidence", "result": "PASS", "evidence": "confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete missing_sections=[]; confirmation_evidence.evaluated_digest == source_digest; evidence_ref=eval-log/system-spec-completeness-report.json (PASS report)"},
+    {"id": "R3-ordering", "result": "PASS", "evidence": "report birth/mtime 2026-11-01T01:07:07 JST < imported_at 01:08:57 JST < first dry-run 01:09:12 < import-payload 01:14:11 < dry-run-2 01:14:19 < add-result/receipt/graph 01:18:05"},
+    {"id": "R3-lineage-gate", "result": "PASS", "evidence": "validate-source-lineage.py --repo-root fx --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture -> status pass, checked 2, violations [], exit 0"},
+    {"id": "R3-schema-gate", "result": "PASS", "evidence": "validate-graph-schema.py --graph .dev-graph/state/graph.json --require-canonical-envelope --strict-artifact-readiness -> valid true, violations [], exit 0"},
+    {"id": "no-duplicated-logic", "result": "PASS", "evidence": "grep of plugins/dev-graph for apply-spec-transition/compile-spec-doc/validate-coverage-matrix/validate-source-citation/aggregate-completeness/coverage matrix/derive_aggregate/chapter_status: only a prose reference in references/feature-execution-package-contract.md (qa_log lookup contract), no implementation; run-dev-graph-system-spec/scripts has only prepare-evaluation.py (98 lines, receipt revalidation via resolve-repo-context.py)"}
+  ],
+  "blockers": [],
+  "non_blocking_notes": [
+    "No dedicated R2-delegate loop record or evaluator artifact-delivery record exists; helper usage is evidenced indirectly (report spec_dir == helper output, aggregate exit0). Per-Bash CLAUDE_PROJECT_DIR export cannot be verified from on-disk artifacts.",
+    "dry-run-preview-2 sha256_after differs from add sha256_after (rendered timestamps); input_sha256 is identical, which is the contract check."
+  ],
+  "drift_signal": "none"
+}

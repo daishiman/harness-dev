@@ -1,0 +1,27 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "responsibility": "R3-import",
+  "index": {"path": "system-spec/index.md", "sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"},
+  "evaluator_report": {"path": "eval-log/system-spec-completeness-report.json", "sha256": "32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52", "verdict": "PASS"},
+  "c02": {
+    "skill": "dev-graph:run-dev-graph-node",
+    "payload": {"path": "eval-log/run-dev-graph-system-spec/R3-import/import-payload.json", "sha256": "dd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238d"},
+    "dry_run": {"exit": 0, "same_payload": true, "write_count": 0},
+    "add": {"exit": 0, "result": "eval-log/run-dev-graph-system-spec/R3-import/add-result.json", "result_sha256": "5861552019548d2d1e87e40b1de3fbc0bb12a2db9c5e6c074733b477515d9514", "applied_count": 2},
+    "receipt": {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94", "graph_revision_before": 0, "graph_revision_after": 1, "graph_digest_after": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b"},
+    "artifact_delivery_choice": "eval-log/run-dev-graph-node/artifact-delivery-choice.json",
+    "progress": "eval-log/run-dev-graph-node-progress.json",
+    "integrity_auditor": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b"}
+  },
+  "lineage_gate": {"path": "eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json", "sha256": "bd138fb27f9006a32b4c85b0c0f1efa30bf8aaa112309246f3f9d8e037ef464a", "exit": 0, "checked": 2},
+  "nodes": [
+    {"graph_node_id": "spec-billing-audit-system-spec", "artifact_kind": "specification", "file_path": "specs/billing-audit-system-spec.md", "file_sha256": "9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620",
+     "status": "done", "confirmation_status": "confirmed", "evaluation_status": "pass", "implementation_readiness": "complete",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.24", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-11-01T16:11:16Z"},
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"}},
+    {"graph_node_id": "arch-billing-audit-system-architecture", "artifact_kind": "architecture", "file_path": "architecture/billing-audit-system-architecture.md", "file_sha256": "ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166",
+     "status": "done", "confirmation_status": "confirmed", "evaluation_status": "pass", "implementation_readiness": "complete",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.24", "source_digest": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd", "imported_at": "2026-11-01T16:11:16Z"},
+     "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd"}}
+  ]
+}

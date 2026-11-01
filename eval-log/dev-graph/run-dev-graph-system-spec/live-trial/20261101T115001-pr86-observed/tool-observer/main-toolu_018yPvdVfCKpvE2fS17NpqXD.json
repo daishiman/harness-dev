@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e6fb6910-eafb-406c-aab7-9790cfd71e0b",
+      "line": 128,
+      "prefix_bytes": 633113,
+      "prefix_sha256": "f27df4245b13df8a1cdd943276265b5850e952ec299a74b41960d06039e5412e",
+      "timestamp": "2026-11-01T02:51:44.979Z"
+    },
+    "result": {
+      "uuid": "dd16be37-339e-4f7f-b10e-3b62a27584f0",
+      "line": 134,
+      "prefix_bytes": 634892,
+      "prefix_sha256": "0c426e2b9820c0ddad98cd1865861320d15ceaccf195ae3ce9002a7b7a1b4d40",
+      "timestamp": "2026-11-01T02:51:47.404Z"
+    }
+  },
+  "tool_use_id": "toolu_018yPvdVfCKpvE2fS17NpqXD",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export TMPPREFIX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/tmp/zsh; export DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$DEV_GRAPH_ROOT\" && [ \"$(pwd -P)\" = \"$DEV_GRAPH_ROOT\" ] && python3 -B - <<'PY'\nimport hashlib, json, pathlib, re, datetime\nroot = pathlib.Path('.').resolve()\ndef sha(p): return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()\nrc = 'eval-log/run-dev-graph-system-spec/c24-receipt.json'\nreceipt = json.loads(open(rc).read())\ninputs = {str(p): sha(p) for p in sorted(pathlib.Path('system-spec').rglob('*')) if p.is_file() and '.claude' not in p.parts}\nman = json.load(open('plugins/system-spec-harness/.claude-plugin/plugin.json'))\ncomp = open('plugins/dev-graph/plugin-composition.yaml').read()\nrng = re.search(r'system-spec-harness:\\n\\s+version: \"([^\"]+)\"', comp).group(1)\neps = json.load(open('plugins/system-spec-harness/references/package-contract.json'))['entry_points']['skills']\nreq = ['run-system-spec-elicit','run-system-spec-doc-fetch','run-system-spec-compile','assign-system-spec-completeness-evaluator']\npresent = {e: (e in eps and pathlib.Path(f'plugins/system-spec-harness/skills/{e}/SKILL.md').is_file()) for e in req}\ndef inrange(v):\n    t=tuple(map(int,v.split('.'))); return (0,1,22) <= t < (1,0,0)\nreport = {\n 'kind': 'run-dev-graph-system-spec-preflight', 'generated_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),\n 'R0_context': {'receipt_path': rc, 'receipt_sha256': sha(rc), 'repo_root_matches_content_root': receipt['repo_root']==receipt['content_roots']['repository'],\n   'system_spec_realpath_in_repo': str(pathlib.Path(receipt['content_roots']['system_spec']).resolve()).startswith(receipt['repo_root']+'/'),\n   'symlinks_in_system_spec': sum(1 for p in pathlib.Path('system-spec').rglob('*') if p.is_symlink()),\n   'repository_id': receipt['repository_id'], 'git_common_dir': receipt['git_common_dir'],\n   'lineage_gate': {'exit': 0, 'checked': 0, 'decision': 'new_creation'}},\n 'R1_preflight': {'plugin': man['name'], 'version': man['version'], 'composition_range': rng, 'in_range': inrange(man['version']),\n   'required_entry_points': present, 'manifest_sha256': sha('plugins/system-spec-harness/.claude-plugin/plugin.json')},\n 'inputs': inputs, 'status': 'PASS' if all(present.values()) and inrange(man['version']) else 'FAIL',\n}\npathlib.Path('eval-log/run-dev-graph-system-spec/preflight-report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\\n', encoding='utf-8')\ngoal = \"仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている\"\ngs = {'skill':'run-dev-graph-system-spec','original_goal': goal, 'original_goal_hash': hashlib.sha256(goal.encode()).hexdigest(),\n 'checklist': [\"system_spec content root が caller repo 内で repository_id/common-dir と一致する\",\n  \"system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす\",\n  \"elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される\",\n  \"coverage/source-citation/evaluator gate が全て PASS である\",\n  \"C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である\",\n  \"dev-graph 内に同等 elicitation/compile logic の複製が0件である\"],\n 'feedback_criteria': ['IN1','OUT1'], 'max_loops': 5, 'context_receipt': rc}\npathlib.Path('eval-log/run-dev-graph-system-spec-goal-spec.json').write_text(json.dumps(gs, ensure_ascii=False, indent=2)+'\\n', encoding='utf-8')\nprint(report['status'], sha('eval-log/run-dev-graph-system-spec/preflight-report.json'))\nPY",
+    "description": "Write preflight report and goal-spec into eval-log"
+  },
+  "is_error": false,
+  "tool_result_content": "PASS 4f9ec6cc1d56adb9d53353c094378f9a66d3119841e98cd9ecf3e64a7546062f",
+  "tool_use_result": {
+    "stdout": "PASS 4f9ec6cc1d56adb9d53353c094378f9a66d3119841e98cd9ecf3e64a7546062f",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

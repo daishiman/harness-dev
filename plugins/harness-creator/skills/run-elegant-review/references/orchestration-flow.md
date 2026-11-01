@@ -15,12 +15,13 @@
 ┌──────────┐ ┌──────────┐ ┌──────────┐
 │ Agent 2  │ │ Agent 3  │ │ Agent 4  │
 │ 論理+構造│ │ メタ+発想│ │ Sys+戦略 │
-│ 10思考法 │ │ 9思考法  │ │ 11思考法 │
+│ 9思考法  │ │ 9思考法  │ │ 12思考法 │
 └──────────┘ └──────────┘ └──────────┘
         │          │          │
         └──────────┴──────────┘
                    ▼
-        scripts/validate-paradigm-coverage.py {{review_workspace}}/findings.json (used + skipped_with_reason == 30)
+        orchestrator single-writer materialize → findings.json 集約
+        scripts/validate-paradigm-coverage.py {{review_workspace}}/findings.json (used=exactly 30 unique / skipped=[])
                    │
                    ▼
         scripts/build-paradigm-scorecard.py
@@ -31,6 +32,7 @@
 │ Agent 5 elegant-improvement-... │
 │  - findings重大度順              │
 │  - C1〜C4 FAIL 項目にパッチ      │
+│  - orchestratorが非重複scope割当 │
 │  - 4条件 PASS or loop<=3 で復帰  │
 └─────────────────────────────────┘
                    │
@@ -56,9 +58,10 @@ Phase 3 完了時、`references/amplified-patterns.json` の各パターンを�
 - frontmatter の `goal_seek.max_loops` は checklist item 消費予算であり、本 `max_iterations` とは別契約
 
 ## ファイル受け渡し
-- Phase1出力: `{{review_workspace}}/raw_observations.json` + `{{review_workspace}}/shared_state.md`
-- Phase2出力: `{{review_workspace}}/phase2-agent{2,3,4}.json`
-- 集約: `{{review_workspace}}/findings.json`
+- Phase1 SubAgent payload → orchestrator が `{{review_workspace}}/raw_observations.json` + `{{review_workspace}}/shared_state.md` へ materialize
+- Phase2 SubAgent payload (9/9/12) → orchestrator が `{{review_workspace}}/findings-phase2-{logical,meta,system}.json` へ materialize
+- 集約: orchestrator が `{{review_workspace}}/findings.json` を生成
+- 改善: orchestrator が独立 finding を非重複 write scope の Agent5 インスタンスへ並列割当し、各 Agent5 は再帰起動しない
 - 最終: 対象ディレクトリ直下に `findings.json` + `review-<type>.md`
 
 ## 作業領域

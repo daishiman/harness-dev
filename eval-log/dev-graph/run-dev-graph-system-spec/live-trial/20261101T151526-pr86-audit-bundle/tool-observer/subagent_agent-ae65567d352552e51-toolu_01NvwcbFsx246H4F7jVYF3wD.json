@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fd102f4a-6dfc-4ed2-bff6-58b23319ee0b",
+      "line": 201,
+      "prefix_bytes": 947273,
+      "prefix_sha256": "f69a1ae247b168306d5b923da7508dadd1997d48906c406b9ab7bc05e63d29ae",
+      "timestamp": "2026-11-01T06:30:56.188Z"
+    },
+    "result": {
+      "uuid": "d86520b6-84c9-454e-bf5c-63f63bf6fc46",
+      "line": 202,
+      "prefix_bytes": 948399,
+      "prefix_sha256": "f22b87cae03ce74867161a6ecd53d63f185e00d2bd85779b8b83a72426ee503d",
+      "timestamp": "2026-11-01T06:30:58.343Z"
+    }
+  },
+  "tool_use_id": "toolu_01NvwcbFsx246H4F7jVYF3wD",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json,pathlib\np=pathlib.Path('eval-log/system-spec-harness/audit-fork-ledger.jsonl')\nfor l in p.read_text().splitlines():\n  d=json.loads(l); print(d.get('record_kind'),d.get('subagent_type'),d.get('verdict_state'),d.get('audit_verdict'))\n\"",
+    "description": "Check ledger status for C08"
+  },
+  "is_error": false,
+  "tool_result_content": "dispatch system-spec-matrix-auditor pending None\ncompletion system-spec-matrix-auditor resolved PASS\ndispatch system-spec-hearing-auditor pending None\ncompletion system-spec-hearing-auditor resolved PASS\ndispatch system-spec-doc-freshness-auditor pending None\ncompletion system-spec-doc-freshness-auditor resolved PASS",
+  "tool_use_result": null
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3f4a7bb7-f3c8-41bc-8e8b-a98eacab1e69",
+      "line": 282,
+      "prefix_bytes": 1313998,
+      "prefix_sha256": "2a4e458f180242aec0a3d6b468a1b56b9e3cc269a7c19d5140f1da79491dd95b",
+      "timestamp": "2026-11-01T03:27:57.562Z"
+    },
+    "result": {
+      "uuid": "28ff12e9-8486-403a-93b5-84c7034e2d57",
+      "line": 286,
+      "prefix_bytes": 1324417,
+      "prefix_sha256": "89fcb06c86a4daf53507ec4b0d9c0e211e12fe1869e3d2d4968bb7d1d8a7c427",
+      "timestamp": "2026-11-01T03:28:01.210Z"
+    }
+  },
+  "tool_use_id": "toolu_01VNue35HGRcFovNe6Z6rF3X",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B - <<'PY'\nimport hashlib,json,pathlib\nR=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\")\nseed=json.load(open(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/workdir/fixture-provenance.json\"))[\"seed_sha256\"]\nfor n in [\"00-requirements-definition.md\",\"database.md\",\"auth.md\",\"ui-ux.md\",\"security.md\",\"infrastructure.md\",\"backend.md\",\"frontend.md\",\"maintenance-ops.md\",\"index.md\"]:\n  p=R/\"system-spec\"/n; h=hashlib.sha256(p.read_bytes()).hexdigest()\n  print(p, h, \"same_as_seed\" if seed.get(\"system-spec/\"+n)==h else \"CHANGED\")\nprint(\"開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md\")\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/00-requirements-definition.md 1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/database.md 3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/auth.md 21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/ui-ux.md 420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/security.md c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/infrastructure.md d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/backend.md 8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/frontend.md 10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/maintenance-ops.md 1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 same_as_seed\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md",
+  "tool_use_result": {
+    "stdout": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/00-requirements-definition.md 1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/database.md 3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/auth.md 21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/ui-ux.md 420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/security.md c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/infrastructure.md d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/backend.md 8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/frontend.md 10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/maintenance-ops.md 1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0 same_as_seed\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 same_as_seed\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

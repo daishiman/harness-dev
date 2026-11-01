@@ -1,0 +1,17 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "invocation": "--resume --spec-dir <repo_root>/system-spec",
+  "artifact": {"path": "system-spec/spec-state.json", "sha256": "3e8000f400da9b84820b7ae40538fb2d84adf3c335bc34e2ea1bca48ac22a377", "open_with": "python3 -m json.tool system-spec/spec-state.json"},
+  "minimum_guard": {
+    "parse": "ok",
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": "exit 0",
+    "validate-knowledge-graph --profile required-info ungrounded_blocking_items": [],
+    "validate-design-knowledge-refs": "exit 0 (10 refs)",
+    "secret_or_irreversible": "none"
+  },
+  "transitions": ["artifact_created->minimal_guard_passed", "minimal_guard_passed->artifact_presented", "artifact_presented->user_choice_recorded(standard)", "user_choice_recorded->semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md)",
+  "post_choice_result": "hearing_progress.complete=true, next_question=null, 0 未収集 cells; goal-seek checklist already met, no writer transition required; no new user approval created; spec-state unchanged (digest equals seed)"
+}

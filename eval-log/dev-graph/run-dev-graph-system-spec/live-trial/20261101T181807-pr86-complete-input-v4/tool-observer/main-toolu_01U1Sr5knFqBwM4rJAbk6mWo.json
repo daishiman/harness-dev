@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "26b813ee-4139-4e89-be74-ac371a4b8469",
+      "line": 144,
+      "prefix_bytes": 951735,
+      "prefix_sha256": "c92776792da38a20ad099cdddf1ec19e0b70cb563603bb7812cc25c6fefe35f9",
+      "timestamp": "2026-11-01T09:20:59.446Z"
+    },
+    "result": {
+      "uuid": "60490815-8cb2-41c7-b563-1d6e063adae9",
+      "line": 145,
+      "prefix_bytes": 954547,
+      "prefix_sha256": "bed478af5829a94e4c9421d981a7f58cbf2e5ffe955158877ebede1bad1f0515",
+      "timestamp": "2026-11-01T09:21:01.686Z"
+    }
+  },
+  "tool_use_id": "toolu_01U1Sr5knFqBwM4rJAbk6mWo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json, pathlib, datetime, hashlib\nroot = pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\")\np = root/\"eval-log/run-dev-graph-system-spec-preflight-report.json\"\nnow = datetime.datetime.now(datetime.timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")\nd = {\"skill\":\"run-dev-graph-system-spec\",\"contract\":\"artifact-delivery-v1\",\"choice\":\"standard\",\n \"choice_source\":\"isolated-fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo/external approval\",\n \"artifact_path\":str(p),\"artifact_sha256\":hashlib.sha256(p.read_bytes()).hexdigest(),\"open_with\":f\"less {p}\",\n \"transitions\":[{\"event\":\"minimum_guard_pass\",\"to\":\"minimal_guard_passed\"},{\"event\":\"present_actual_artifact\",\"to\":\"artifact_presented\"},{\"event\":\"record_user_choice\",\"to\":\"user_choice_recorded\"},{\"event\":\"standard\",\"to\":\"semantic_evaluator_started\"}],\n \"recorded_at\":now}\n(root/\"eval-log/run-dev-graph-system-spec-artifact-delivery.json\").write_text(json.dumps(d,ensure_ascii=False,indent=2)+\"\\n\",encoding=\"utf-8\")\nprint(json.dumps(d,ensure_ascii=False))\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"skill\": \"run-dev-graph-system-spec\", \"contract\": \"artifact-delivery-v1\", \"choice\": \"standard\", \"choice_source\": \"isolated-fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo/external approval\", \"artifact_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\", \"artifact_sha256\": \"e4cd98feb0aee1c2541ef8d0cb58239b1f278362028800e9721990a7482b53d2\", \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\", \"transitions\": [{\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\"}, {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\"}, {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\"}, {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}], \"recorded_at\": \"2026-11-01T09:21:01Z\"}",
+  "tool_use_result": {
+    "stdout": "{\"skill\": \"run-dev-graph-system-spec\", \"contract\": \"artifact-delivery-v1\", \"choice\": \"standard\", \"choice_source\": \"isolated-fixture pre-answer contract in task.md (artifact_delivery=standard); not a repo/external approval\", \"artifact_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\", \"artifact_sha256\": \"e4cd98feb0aee1c2541ef8d0cb58239b1f278362028800e9721990a7482b53d2\", \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\", \"transitions\": [{\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\"}, {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\"}, {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\"}, {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}], \"recorded_at\": \"2026-11-01T09:21:01Z\"}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

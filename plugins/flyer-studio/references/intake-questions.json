@@ -1,0 +1,814 @@
+{
+  "version": 1,
+  "description": "ヒアリング質問の正本（plugin 共通）。intake-template が全質問を 1 枚にまとめて出し、intake-apply が回答を検証して brief と <project>/intake.json へ書く。回答の保存キーは briefPath（brief 内の場所を表す JSON pointer）、briefPath が null の質問は 'intake.<id>'。各質問は essence.json の本質条項（E1〜E5）のどれに効くかを essence に持ち、効かない質問は置かない（R3）。preset は references/presets/<name>/intake-questions.json の {questions, overrides} で追加・差し替えでき、brief に場所を持たない質問（ロゴなど）の前回の値は preset.json の intakePrefill（{質問 id: 値}）に置く。前回の値は事実として使わず、毎回確かめる。案件固有の値（依頼主名・会場・ロゴの種類など）は質問・選択肢・例文に書かず、preset にだけ置く。聞き方の指針は skills/run-intake-flyer/references/interview-guide.md。",
+  "groups": [
+    {
+      "id": "purpose",
+      "title": "目的と読者"
+    },
+    {
+      "id": "facts",
+      "title": "載せる事実（日時・会場・料金など）"
+    },
+    {
+      "id": "assets",
+      "title": "写真とロゴ"
+    },
+    {
+      "id": "rights",
+      "title": "公開範囲と権利"
+    },
+    {
+      "id": "expression",
+      "title": "見た目の希望"
+    },
+    {
+      "id": "paper",
+      "title": "用紙と印刷"
+    },
+    {
+      "id": "variants",
+      "title": "案の数"
+    },
+    {
+      "id": "confirm",
+      "title": "最後の確認"
+    }
+  ],
+  "questions": [
+    {
+      "id": "mode",
+      "label": "新規か修正か",
+      "group": "purpose",
+      "briefPath": null,
+      "prompt": "今回は新しく作りますか、それとも既にあるチラシを直しますか。",
+      "why": "直す場合は、まず元のチラシの良い点と課題を診断してから作るため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "choice",
+      "options": [
+        {
+          "value": "new",
+          "label": "新しく作る"
+        },
+        {
+          "value": "revise",
+          "label": "既にあるチラシを直す"
+        }
+      ]
+    },
+    {
+      "id": "revise-source",
+      "label": "直す元のチラシ",
+      "group": "purpose",
+      "briefPath": null,
+      "prompt": "直したいチラシのファイルの場所（案件フォルダ内のパスなど）を教えてください。",
+      "why": "診断は元の画像そのものを見て行うため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E1",
+        "E5"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.mode",
+        "equals": "revise"
+      }
+    },
+    {
+      "id": "audience",
+      "label": "届けたい相手",
+      "group": "purpose",
+      "briefPath": "/purpose/audience",
+      "prompt": "このチラシを一番届けたい相手は誰ですか。",
+      "why": "構図・言葉・見た目の判断をすべてこの相手に合わせるため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "text",
+      "example": "子育て中で、平日の夜に参加できる地域の方"
+    },
+    {
+      "id": "benefit",
+      "label": "相手が得られること",
+      "group": "purpose",
+      "briefPath": "/purpose/benefit",
+      "prompt": "その相手にとって、この催し・案内で得られる一番の良いことは何ですか。",
+      "why": "紙面で最初に伝える価値を決めるため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "text",
+      "example": "同じ悩みを持つ人と気軽に話し、次の一歩が見つかる"
+    },
+    {
+      "id": "action",
+      "label": "してほしい行動",
+      "group": "purpose",
+      "briefPath": "/purpose/action",
+      "prompt": "読んだ相手に最後にしてほしい行動は何ですか。",
+      "why": "申込や来場など、行動までの読み順を紙面に作るため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "text",
+      "example": "QR コードから申し込む"
+    },
+    {
+      "id": "hero",
+      "label": "一番目立たせる言葉",
+      "group": "purpose",
+      "briefPath": "/hero",
+      "prompt": "一番大きく目に入れたい言葉（見出し）はありますか。複数行なら行ごとに書いてください。まだ無ければ「おまかせ」で、目的に沿った候補を作ります。",
+      "why": "最初に読まれる言葉が目的に合っているかを、全案で同じ基準で見るため。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "title",
+      "label": "正式な名前",
+      "group": "facts",
+      "briefPath": "/title",
+      "prompt": "チラシの正式な名前（催し名・商品名）。回数（vol. など）があれば今回のものを書いてください。",
+      "why": "ブランド名と催し名の取り違えや、前回の回数の流用を防ぐため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text"
+    },
+    {
+      "id": "content",
+      "label": "内容",
+      "group": "facts",
+      "briefPath": "/copy/content",
+      "prompt": "何をする催し・何の案内ですか。短く書いてください（食事や交流の有無も）。",
+      "why": "紙面の説明文を、推測ではなく回答から組むため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text"
+    },
+    {
+      "id": "speakers",
+      "label": "登壇者・出演者",
+      "group": "facts",
+      "briefPath": "/copy/speakers",
+      "prompt": "登壇者・出演者の名前を正しい漢字で。全員を同じ扱いで並べるか、主役がいるかも書いてください。いなければ「なし」。",
+      "why": "氏名の誤字と、扱いの差の付け間違いを防ぐため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "date",
+      "label": "開催日",
+      "group": "facts",
+      "briefPath": "/copy/date",
+      "prompt": "開催日を年・月・日・曜日まで書いてください。日付の無い案内なら「なし」。",
+      "why": "年の抜けと、暦と合わない曜日をここで見つけるため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "date",
+      "example": "2027年3月14日（日）"
+    },
+    {
+      "id": "time",
+      "label": "時間",
+      "group": "facts",
+      "briefPath": "/copy/time",
+      "prompt": "時間（開始〜終了。受付・開場があればその時刻も）。時間の無い案内なら「なし」。",
+      "why": "開始と受付の取り違えを防ぐため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text",
+      "example": "13:30〜15:00（受付 13:00）"
+    },
+    {
+      "id": "venue",
+      "label": "会場",
+      "group": "facts",
+      "briefPath": "/copy/venue",
+      "prompt": "会場名（施設名・階・部屋）。駅との位置を書くなら「駅前」か「駅周辺」かも正確に。オンラインや会場の無い案内なら「なし」。",
+      "why": "「駅前」と「駅周辺」のような、参加の判断を変える言い違いを防ぐため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text"
+    },
+    {
+      "id": "address",
+      "label": "住所",
+      "group": "facts",
+      "briefPath": "/copy/address",
+      "prompt": "会場の住所。載せない場合は「なし」。",
+      "why": "住所は推測で補わず、回答か資料からだけ載せるため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text"
+    },
+    {
+      "id": "price",
+      "label": "料金",
+      "group": "facts",
+      "briefPath": "/copy/price",
+      "prompt": "料金（税込か、何が含まれるか、区分があれば区分ごと）。無料なら「無料」、料金の無い案内なら「なし」。",
+      "why": "税込・含むものの書き漏れは参加の判断を変えるため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "text",
+      "example": "参加費 500円（資料代込み・税込）"
+    },
+    {
+      "id": "apply-url",
+      "label": "申込先 URL",
+      "group": "facts",
+      "briefPath": "/qrUrl",
+      "prompt": "申込先や詳しい案内ページの URL（QR コードにします）。電話・当日受付・来場案内だけで URL が無ければ「なし」。",
+      "why": "QR が実在の今回のページへつながることを検査するため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E2",
+        "E4"
+      ],
+      "answerType": "url",
+      "allowSkip": true
+    },
+    {
+      "id": "apply-method",
+      "label": "申込・来場の案内",
+      "group": "facts",
+      "briefPath": "/copy/apply",
+      "prompt": "読者がどう申し込む・来場するかを、紙面に載せる文で教えてください。URL があれば「QR コードから申し込む」、無ければ電話番号や当日受付・会場への行き方など、実際の案内を書いてください。",
+      "why": "URL や QR の有無にかかわらず、読者が行動できる正確な案内を残すため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E1",
+        "E2"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "notice",
+      "label": "その他の事実",
+      "group": "facts",
+      "briefPath": "/copy/notice",
+      "prompt": "締切・定員・問い合わせ先・注意事項など、ほかに載せる必要がある事実。無ければ「なし」。",
+      "why": "載せるべき条件の書き漏れを防ぐため。",
+      "mustFact": true,
+      "required": true,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "forbidden",
+      "label": "載せない言葉",
+      "group": "facts",
+      "briefPath": "/forbiddenText",
+      "prompt": "紙面に載せてはいけない言葉（古い会場名・前回の催し名・今回使わないサービス名など）。無ければ「なし」。",
+      "why": "前回の値や誤った表記が紙面に残っていないかを機械で検査するため。",
+      "mustFact": false,
+      "required": false,
+      "allowSkip": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "overflow",
+      "label": "詳細先へ回せる情報",
+      "group": "facts",
+      "briefPath": null,
+      "prompt": "紙面に入りきらないとき、申込先（QR の先）へ回してよい情報はどれですか。",
+      "why": "文字を小さくして詰め込まず、読める大きさを保つため。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E4"
+      ],
+      "answerType": "text"
+    },
+    {
+      "id": "photo-source",
+      "label": "写真の用意",
+      "group": "assets",
+      "briefPath": null,
+      "prompt": "写真はどうしますか（複数選べます）。用意済みの写真は、一覧をサムネイル付きで見せてから選んでもらいます。",
+      "why": "使える写真の有無で、選べる見た目と必要な公開確認が変わるため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "multi",
+      "options": [
+        {
+          "value": "catalog",
+          "label": "用意済みの写真から選ぶ"
+        },
+        {
+          "value": "new",
+          "label": "新しい写真を渡す"
+        },
+        {
+          "value": "none",
+          "label": "写真は使わない"
+        }
+      ]
+    },
+    {
+      "id": "catalog-photos",
+      "label": "使う用意済み写真",
+      "group": "assets",
+      "briefPath": null,
+      "prompt": "使う写真の ID（一覧から選んでください）。",
+      "why": "用意済みの写真は、それぞれに決まっている公開条件の範囲で使うため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "list",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "catalog"
+      }
+    },
+    {
+      "id": "logo",
+      "label": "ロゴ",
+      "group": "assets",
+      "briefPath": null,
+      "prompt": "ロゴを載せますか。載せる場合は、支給されたロゴのファイルを次の項目で指定してください。",
+      "why": "支給ロゴは原本を改変せずに置くため、使うかどうかと元のファイルを先に決める。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "choice",
+      "options": [
+        {
+          "value": "file",
+          "label": "支給ロゴを使う（ファイルを指定）"
+        },
+        {
+          "value": "none",
+          "label": "ロゴは載せない"
+        }
+      ]
+    },
+    {
+      "id": "logo-file",
+      "label": "ロゴのファイル",
+      "group": "assets",
+      "briefPath": null,
+      "prompt": "使うロゴのファイルを書いてください（案件フォルダ内の場所か、用意済み素材の ID）。版が複数あれば、印刷に使う版を書いてください。",
+      "why": "支給ロゴは原本を改変せずに置くため、元のファイルを特定する。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.logo",
+        "equals": "file"
+      }
+    },
+    {
+      "id": "distribution",
+      "label": "配り方・見せ方",
+      "group": "rights",
+      "briefPath": null,
+      "prompt": "このチラシをどこで使いますか（複数選べます）。",
+      "why": "公開の広さで、写真や個人情報の扱いと印刷の条件が変わるため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E3",
+        "E4"
+      ],
+      "answerType": "multi",
+      "options": [
+        {
+          "value": "poster",
+          "label": "掲示する（ポスター）"
+        },
+        {
+          "value": "handout",
+          "label": "手渡し・配布する"
+        },
+        {
+          "value": "web",
+          "label": "SNS・Web に載せる"
+        },
+        {
+          "value": "screen",
+          "label": "画面に映す"
+        }
+      ]
+    },
+    {
+      "id": "privacy-owner-face",
+      "label": "顔を出してよい人",
+      "group": "rights",
+      "briefPath": null,
+      "privacyKey": "ownerFace",
+      "prompt": "新しい写真に写る人のうち、顔を出してよい人は誰ですか（本人・許可をもらった人）。",
+      "why": "許可のない人の顔を公開しないため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "new"
+      }
+    },
+    {
+      "id": "privacy-other-faces",
+      "label": "それ以外に写る人",
+      "group": "rights",
+      "briefPath": null,
+      "privacyKey": "otherFaces",
+      "prompt": "それ以外に写っている人の扱い（ぼかす・切り取る・その写真は使わない）。",
+      "why": "許可のない人の顔を公開しないため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "new"
+      }
+    },
+    {
+      "id": "privacy-child",
+      "label": "子どもの写り込み",
+      "group": "rights",
+      "briefPath": null,
+      "privacyKey": "child",
+      "prompt": "子どもが写っている場合の扱い。写っていなければ「写っていない」と書いてください。",
+      "why": "子どもの写り込みは特に慎重に扱うため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "new"
+      }
+    },
+    {
+      "id": "privacy-device-screens",
+      "label": "画面の写り込み",
+      "group": "rights",
+      "briefPath": null,
+      "privacyKey": "personalDeviceScreens",
+      "prompt": "写っている PC・スマートフォンの画面やスクリーンの扱い（公開してよい画面か、隠すか）。",
+      "why": "画面に映った個人情報や社外秘を公開しないため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "new"
+      }
+    },
+    {
+      "id": "privacy-event-marks",
+      "label": "名札・他の催し名",
+      "group": "rights",
+      "briefPath": null,
+      "privacyKey": "unrelatedEventMarks",
+      "prompt": "名札や、別の催しの名前・ロゴが写っている場合の扱い。",
+      "why": "関係のない催しや個人名を紙面に残さないため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "intake.photo-source",
+        "includes": "new"
+      }
+    },
+    {
+      "id": "real-person-style",
+      "label": "実在の人を絵にする許可",
+      "group": "rights",
+      "briefPath": null,
+      "prompt": "写真以外の見た目で実在の人を描く場合、本人から絵柄に描き直す許可はありますか。",
+      "why": "本人の許可なく実在の人を絵柄に変えないため。",
+      "mustFact": true,
+      "required": true,
+      "essence": [
+        "E3"
+      ],
+      "answerType": "choice",
+      "options": [
+        {
+          "value": "permitted",
+          "label": "許可がある"
+        },
+        {
+          "value": "no-real-people",
+          "label": "実在の人は描かない"
+        }
+      ],
+      "askWhen": {
+        "key": "/stylePreferences",
+        "anyNotMatch": "写真|実写|フォト"
+      }
+    },
+    {
+      "id": "style",
+      "label": "見た目の様式",
+      "group": "expression",
+      "briefPath": "/stylePreferences",
+      "prompt": "どんな見た目にしたいですか。様式の名前・雰囲気の言葉・参考にしたい画像や物・避けたい雰囲気のどれでも、いくつでも書いてください。",
+      "why": "見た目を目的に結び付けて決めるため。言葉にしにくい場合は、回答から読み取って 2〜3 案を提案します。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "list",
+      "example": "例: 写真、水彩、切り絵、漫画、墨絵、レトロ印刷… 何でも可。言葉にしにくければ雰囲気だけ・おまかせでも可"
+    },
+    {
+      "id": "style-mood",
+      "label": "雰囲気の言葉",
+      "group": "expression",
+      "partOf": "style",
+      "briefPath": null,
+      "prompt": "雰囲気の言葉（写真の使い方や文字の印象も可）。",
+      "why": "様式名が決まらないときの提案の根拠にするため。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "list",
+      "example": "登壇の迫力、相談しやすさ、上品な静けさ、写真を大きく、数字を目立たせる"
+    },
+    {
+      "id": "style-references",
+      "label": "参考にしたいもの",
+      "group": "expression",
+      "partOf": "style",
+      "briefPath": null,
+      "prompt": "参考にしたい画像や物（案件フォルダ内のファイルの場所、または言葉での説明）。",
+      "why": "参考は雰囲気を読み取るためだけに使い、そのまま写したり、写っている第三者を転載したりしない。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E1",
+        "E3"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "style-avoid",
+      "label": "避けたい雰囲気",
+      "group": "expression",
+      "partOf": "style",
+      "briefPath": null,
+      "prompt": "避けたい雰囲気。",
+      "why": "提案から外す方向を先に知るため。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "list"
+    },
+    {
+      "id": "tones",
+      "label": "必ず入れる配色",
+      "group": "expression",
+      "briefPath": "/policy/requiredTones",
+      "prompt": "必ず入れたい配色の系統があれば選んでください（複数選べます）。決めかねる場合は「おまかせ」で、案ごとに配色を変えて比べます。前回や preset の配色から変える場合は理由も添えてください。",
+      "why": "配色は様式とは別に決め、印刷や読みやすさの条件と合わせて比べるため。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E1",
+        "E4"
+      ],
+      "answerType": "multi",
+      "options": [
+        {
+          "value": "light",
+          "label": "白系（外周が純白へ戻る明るい紙面）"
+        },
+        {
+          "value": "dark",
+          "label": "黒系（暗い地の力強い紙面）"
+        },
+        {
+          "value": "color",
+          "label": "色の強い系統"
+        }
+      ]
+    },
+    {
+      "id": "brush-font",
+      "label": "筆文字の書体",
+      "group": "expression",
+      "briefPath": null,
+      "prompt": "筆文字・手書き風の書体を使う場合、書体名と、使ってよい許諾（商用可など）。分からなければ「おまかせ」で、許諾を確認できる書体だけを使います。",
+      "why": "日本語の文字が欠けない書体で、許諾の確認できるものだけを使うため。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E3",
+        "E4"
+      ],
+      "answerType": "text",
+      "askWhen": {
+        "key": "/stylePreferences",
+        "anyMatch": "筆|墨|書道|毛筆|手書き"
+      }
+    },
+    {
+      "id": "center",
+      "label": "中心線にそろえるか",
+      "group": "expression",
+      "briefPath": "/policy/center",
+      "prompt": "日時・会場・料金などを、紙面の中央の 1 本の線にそろえますか。「おまかせ」なら、preset を選んだ案件はその preset の値、選んでいなければ design-contract.json の initDefaults にある中心線の方針を出発点に、今回の目的と素材から制作担当が決めます。",
+      "why": "条件のまとまりが探さず読める並べ方を、目的に合わせて選ぶため。",
+      "mustFact": false,
+      "required": false,
+      "allowOmakase": true,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "choice",
+      "options": [
+        {
+          "value": "whole-page",
+          "label": "中央の線にそろえる"
+        },
+        {
+          "value": "none",
+          "label": "そろえず、余白の釣り合いで組む"
+        }
+      ]
+    },
+    {
+      "id": "page-size",
+      "label": "用紙と向き",
+      "group": "paper",
+      "briefPath": "/page",
+      "prompt": "用紙の大きさと向き（A3・A4・A5・B4・B5 と、縦か横）。それ以外は 幅×高さ（mm）で書いてください。",
+      "why": "寸法と余白の検査を、実際に印刷する紙で行うため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E4"
+      ],
+      "answerType": "page-size",
+      "example": "A4 縦"
+    },
+    {
+      "id": "print-method",
+      "label": "印刷のしかた",
+      "group": "paper",
+      "briefPath": null,
+      "prompt": "どこで印刷しますか。",
+      "why": "家庭や職場のプリンターでは紙の外周が白く残るため、外周の扱いを変える。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E4"
+      ],
+      "answerType": "choice",
+      "options": [
+        {
+          "value": "office",
+          "label": "家庭・職場のプリンター"
+        },
+        {
+          "value": "shop",
+          "label": "印刷所へ入稿"
+        },
+        {
+          "value": "none",
+          "label": "印刷しない（画面だけ）"
+        }
+      ]
+    },
+    {
+      "id": "count",
+      "label": "案の数",
+      "group": "variants",
+      "briefPath": "/count",
+      "prompt": "何案作って比べますか（2〜30）。1 案だけ欲しい場合も、比べて選ぶために 2 案以上を作ります。",
+      "why": "複数の案を比べることで、目的に合う 1 案を根拠を持って選ぶため。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E1"
+      ],
+      "answerType": "integer",
+      "min": 2,
+      "max": 30
+    },
+    {
+      "id": "white-count",
+      "label": "白い背景の案の数",
+      "group": "variants",
+      "briefPath": "/whiteCount",
+      "prompt": "そのうち、白い背景（外周が純白へ戻る明るい紙面）の案をいくつ作りますか（0〜案の数）。家庭・職場のプリンターで刷るなら 1 案以上を勧めます。",
+      "why": "家庭や職場のプリンターは紙の外周が白く残るため、白い外周の案が要るかを先に決める。",
+      "mustFact": false,
+      "required": false,
+      "essence": [
+        "E4"
+      ],
+      "answerType": "integer",
+      "min": 0,
+      "max": 30
+    },
+    {
+      "id": "confirm-facts",
+      "label": "確定事実の確認",
+      "group": "confirm",
+      "briefPath": "/confirmations/facts",
+      "prompt": "上の確定事実の一覧に間違いはありませんか。正しければ「はい」。違う項目があれば、その項目を直して答えてください。",
+      "why": "紙面に載せる事実を、作り始める前に利用者の目で確かめるため。",
+      "mustFact": false,
+      "required": true,
+      "essence": [
+        "E2"
+      ],
+      "answerType": "boolean",
+      "askWhen": {
+        "readback": true
+      }
+    }
+  ]
+}

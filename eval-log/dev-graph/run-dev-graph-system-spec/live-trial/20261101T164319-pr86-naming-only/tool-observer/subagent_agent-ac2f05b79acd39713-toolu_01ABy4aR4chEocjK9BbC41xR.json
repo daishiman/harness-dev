@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ac2f05b79acd39713",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "02adbc87-a977-403d-a28b-59fbfb764fac",
+      "line": 39,
+      "prefix_bytes": 314962,
+      "prefix_sha256": "f792e32f3dd995d6d9880560b0bba01d2f2df39f74612b75dc0d729274d1724e",
+      "timestamp": "2026-11-01T07:48:21.781Z"
+    },
+    "result": {
+      "uuid": "64e013dc-583c-4eb6-81be-eeefa74106f5",
+      "line": 42,
+      "prefix_bytes": 323211,
+      "prefix_sha256": "a93621a10529de81a7157c3f4e71b7d0b1a982ce10232f7ac088cc09c90743d4",
+      "timestamp": "2026-11-01T07:48:28.422Z"
+    }
+  },
+  "tool_use_id": "toolu_01ABy4aR4chEocjK9BbC41xR",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://www.typescriptlang.org/download/",
+    "prompt": "Current stable TypeScript version; beta versions"
+  },
+  "is_error": false,
+  "tool_result_content": "# Setting Up TypeScript\n\nThe page describes three installation routes, depending on how you plan to use TypeScript.\n\n## Per-project installation (recommended)\n\nThe page recommends a per-project install so each project can use its own TypeScript version and stay consistent.\n\n**Via npm** (requires [Node.js](https://nodejs.org/en/)):\n\n```bash\nnpm install typescript --save-dev\n```\n\nYou can also use yarn or pnpm. All three support lockfiles, so everyone on a team uses the same version. Then run the compiler with:\n\n```bash\nnpx tsc\n```\n\n**Via Visual Studio / NuGet** (for MSBuild projects such as ASP.NET Core):\n\n- Use the **Manage NuGet Packages** window (right-click a project node), or\n- Run this in **Tools > NuGet Package Manager > Package Manager Console**:\n\n```powershell\nInstall-Package Microsoft.TypeScript.MSBuild\n```\n\nFor project types that don't support NuGet, install the [TypeScript Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.typescript-593) via **Extensions > Manage Extensions**.\n\n## Global installation\n\nA global install makes `tsc` available in any terminal, which is useful for one-off experiments. The page advises against it for real codebases because it hurts reproducible builds across machines.\n\n```bash\nnpm install -g typescript\n```\n\nThe page says this installs the latest version, currently **7.0**. A 7.1 beta is also announced.\n\n## Using TypeScript-compatible transpilers\n\nTools like these convert TypeScript to JavaScript faster or fit existing build pipelines, but they don't perform type-checking. You still need the `typescript` package, and you should enable [`isolatedModules`](/tsconfig/#isolatedModules) in your tsconfig.\n\n- **Babel**: via `@babel/plugin-transform-typescript`\n- **swc**: a Rust-based transpiler\n- **Sucrase**: a Babel fork focused on development-mode speed, with native TypeScript support",
+  "tool_use_result": {
+    "bytes": 171623,
+    "code": 200,
+    "codeText": "OK",
+    "result": "# Setting Up TypeScript\n\nThe page describes three installation routes, depending on how you plan to use TypeScript.\n\n## Per-project installation (recommended)\n\nThe page recommends a per-project install so each project can use its own TypeScript version and stay consistent.\n\n**Via npm** (requires [Node.js](https://nodejs.org/en/)):\n\n```bash\nnpm install typescript --save-dev\n```\n\nYou can also use yarn or pnpm. All three support lockfiles, so everyone on a team uses the same version. Then run the compiler with:\n\n```bash\nnpx tsc\n```\n\n**Via Visual Studio / NuGet** (for MSBuild projects such as ASP.NET Core):\n\n- Use the **Manage NuGet Packages** window (right-click a project node), or\n- Run this in **Tools > NuGet Package Manager > Package Manager Console**:\n\n```powershell\nInstall-Package Microsoft.TypeScript.MSBuild\n```\n\nFor project types that don't support NuGet, install the [TypeScript Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.typescript-593) via **Extensions > Manage Extensions**.\n\n## Global installation\n\nA global install makes `tsc` available in any terminal, which is useful for one-off experiments. The page advises against it for real codebases because it hurts reproducible builds across machines.\n\n```bash\nnpm install -g typescript\n```\n\nThe page says this installs the latest version, currently **7.0**. A 7.1 beta is also announced.\n\n## Using TypeScript-compatible transpilers\n\nTools like these convert TypeScript to JavaScript faster or fit existing build pipelines, but they don't perform type-checking. You still need the `typescript` package, and you should enable [`isolatedModules`](/tsconfig/#isolatedModules) in your tsconfig.\n\n- **Babel**: via `@babel/plugin-transform-typescript`\n- **swc**: a Rust-based transpiler\n- **Sucrase**: a Babel fork focused on development-mode speed, with native TypeScript support",
+    "durationMs": 6328,
+    "url": "https://www.typescriptlang.org/download/"
+  }
+}

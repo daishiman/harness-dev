@@ -1,0 +1,19 @@
+python3 plugins/harness-creator/scripts/build-hook-registry.py --repo-root . --check
+noop entries=41 codex_reachable=34 codex_unreachable=6
+  - dev-graph:TaskCompleted:0:0: event-unsupported-on-codex
+  - harness-creator:PostToolUse:1:0: no-codex-tool-equivalent (Skill)
+  - harness-creator:PostToolUse:1:1: no-codex-tool-equivalent (Skill)
+  - harness-creator:PostToolUseFailure:0:0: event-unsupported-on-codex (Skill)
+  - skill-intake:PostToolUse:0:0: no-codex-tool-equivalent (Skill)
+  - system-spec-harness:PostToolUse:0:0: no-codex-tool-equivalent (Task|Agent)
+python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --check
+mode: check  verdict: success (exit 0)
+  adapter claude_symlinks: noop changed=0 exit=0
+  adapter claude_settings: noop changed=0 exit=0
+  adapter codex_project_settings: noop changed=0 exit=0
+  adapter codex_parity: checked changed=0 exit=0
+  scope enabled: contract-generator, dev-graph, extract-system-blueprint, harness-creator, plugin-dev-planner, prompt-creator, skill-governance-adapters, skill-governance-automation, skill-governance-config, skill-governance-hooks, skill-governance-lint, skill-governance-migration, skill-governance-secrets, skill-intake, slide-report-generator, system-dev-planner, system-spec-harness, ubm-goal-setting, x-longpost-creator
+  scope skipped: flyer-studio (exact plugin@marketplace identity not enabled in .claude/settings.json enabledPlugins)
+  scope skipped: guide-doc-generator (exact plugin@marketplace identity not enabled in .claude/settings.json enabledPlugins)
+  scope skipped: spec-drift-guardian (exact plugin@marketplace identity not enabled in .claude/settings.json enabledPlugins)
+  scope skipped: system-briefing-book (exact plugin@marketplace identity not enabled in .claude/settings.json enabledPlugins)

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a742ed92d968fedbb",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "49463f31-b95b-416a-afb0-e95c68887d05",
+      "line": 44,
+      "prefix_bytes": 373165,
+      "prefix_sha256": "7d5007a5cea51efeb6f8203fc75a7c44ab7891f9370a91cb0e39e76e8712ebba",
+      "timestamp": "2026-11-01T10:54:48.901Z"
+    },
+    "result": {
+      "uuid": "67fdf4fd-b321-457b-ac9b-5174a814e406",
+      "line": 45,
+      "prefix_bytes": 376930,
+      "prefix_sha256": "70426a771a2978a040744167e623d4e393c2e3813508333c90b1252e3a5bb9ab",
+      "timestamp": "2026-11-01T10:54:52.420Z"
+    }
+  },
+  "tool_use_id": "toolu_014bA3McfMBe626yugJ3aYX1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx; grep -rlniE \"elicit|interview|hearing|coverage_matrix|spec-state|compile\" plugins/dev-graph | grep -E '\\.py$'; echo ----; grep -niE \"elicit|interview|hearing|spec-state|compile|matrix\" plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py | head -20; wc -l plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py; ls plugins/dev-graph/.claude-plugin; cat plugins/dev-graph/.claude-plugin/plugin.json",
+    "description": "Grep py files for elicit/compile logic, inspect helper and dev-graph manifest"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/tests/test_hooks_entry_point_contract.py\nplugins/dev-graph/hooks/audit-graph-authority-drift.py\nplugins/dev-graph/hooks/reconcile-task-lifecycle.py\nplugins/dev-graph/hooks/guard-graph-schema.py\nplugins/dev-graph/scripts/diff-github-issues.py\nplugins/dev-graph/scripts/extract-plugin-root.py\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/reconcile-github-lifecycle.py\nplugins/dev-graph/scripts/lint-open-residue.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/build-github-projection.py\nplugins/dev-graph/lib/orphan_external_ref.py\nplugins/dev-graph/lib/guard_graph_commands.py\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/scripts/validate-harness-link.py\nplugins/dev-graph/lib/bd_bridge_contracts.py\nplugins/dev-graph/scripts/register-package.py\nplugins/dev-graph/lib/guard_python_writes.py\n----\n      98 plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\nplugin.json\n{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/tests/test_hooks_entry_point_contract.py\nplugins/dev-graph/hooks/audit-graph-authority-drift.py\nplugins/dev-graph/hooks/reconcile-task-lifecycle.py\nplugins/dev-graph/hooks/guard-graph-schema.py\nplugins/dev-graph/scripts/diff-github-issues.py\nplugins/dev-graph/scripts/extract-plugin-root.py\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/reconcile-github-lifecycle.py\nplugins/dev-graph/scripts/lint-open-residue.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/build-github-projection.py\nplugins/dev-graph/lib/orphan_external_ref.py\nplugins/dev-graph/lib/guard_graph_commands.py\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/scripts/validate-harness-link.py\nplugins/dev-graph/lib/bd_bridge_contracts.py\nplugins/dev-graph/scripts/register-package.py\nplugins/dev-graph/lib/guard_python_writes.py\n----\n      98 plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\nplugin.json\n{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

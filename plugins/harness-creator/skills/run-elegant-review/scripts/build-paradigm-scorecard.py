@@ -53,7 +53,7 @@ EXPECTED_PARADIGMS = [
     (23, "plus-sum", "F-strategic"),
     (24, "value-proposition", "F-strategic"),
     (25, "strategic", "F-strategic"),
-    (26, "why", "A-logical"),
+    (26, "why", "G-problem"),
     (27, "kaizen", "G-problem"),
     (28, "hypothesis", "G-problem"),
     (29, "issue", "G-problem"),
@@ -71,27 +71,45 @@ def main(argv: list[str]) -> int:
     data = json.loads(src.read_text(encoding="utf-8"))
     findings = {f["paradigm_id"]: f for f in data.get("paradigm_findings", [])}
     coverage = data.get("thought_method_coverage", {})
-    skipped = {
-        item.get("method"): item.get("reason", "")
-        for item in coverage.get("skipped_with_reason", [])
-        if isinstance(item, dict)
-    }
-    missing = [
-        pid
-        for pid, name, _ in EXPECTED_PARADIGMS
-        if pid not in findings and name not in skipped
-    ]
+    skipped = coverage.get("skipped_with_reason", [])
+    used = coverage.get("used", [])
+    canonical = [name for _, name, _ in EXPECTED_PARADIGMS]
+    if skipped:
+        print("skipped_with_reason must be empty; all 30 methods are required", file=sys.stderr)
+        return 1
+    if len(used) != 30 or len(set(used)) != 30 or set(used) != set(canonical):
+        print("used must contain exactly 30 unique canonical methods", file=sys.stderr)
+        return 1
+    if len(data.get("paradigm_findings", [])) != 30 or len(findings) != 30:
+        print("paradigm_findings must contain exactly 30 unique ids", file=sys.stderr)
+        return 1
+    missing = [pid for pid, _, _ in EXPECTED_PARADIGMS if pid not in findings]
     if missing:
         print(f"missing paradigm_findings ids: {missing}", file=sys.stderr)
         return 1
 
     out_stream = open(argv[2], "w", encoding="utf-8", newline="") if len(argv) >= 3 else sys.stdout
     writer = csv.writer(out_stream)
-    writer.writerow(["paradigm_id", "paradigm_name", "category", *CONDITIONS, "score", "skip_reason"])
+    for pid, _, _ in EXPECTED_PARADIGMS:
+        finding = findings[pid]
+        issue_conditions = {
+            issue.get("condition")
+            for issue in finding.get("issues", [])
+            if isinstance(issue, dict)
+        }
+        matrix = finding.get("condition_matrix", {})
+        for condition in CONDITIONS:
+            status = (matrix.get(condition) or {}).get("verdict")
+            issues_fail = condition in issue_conditions
+            if (status == "PASS" and issues_fail) or (status in {"FAIL", "PARTIAL"} and not issues_fail):
+                print(
+                    f"paradigm {pid}: condition_matrix.{condition} conflicts with issues-derived verdict",
+                    file=sys.stderr,
+                )
+                return 1
+
+    writer.writerow(["paradigm_id", "paradigm_name", "category", *CONDITIONS, "score"])
     for pid, name, cat in EXPECTED_PARADIGMS:
-        if pid not in findings:
-            writer.writerow([pid, name, cat, *("SKIP" for _ in CONDITIONS), "", skipped.get(name, "")])
-            continue
         f = findings[pid]
         issues = f.get("issues", [])
         cond_flags = {c: "PASS" for c in CONDITIONS}
@@ -100,7 +118,7 @@ def main(argv: list[str]) -> int:
             if c in cond_flags:
                 cond_flags[c] = "FAIL"
         score = f.get("score", 0.0)
-        writer.writerow([pid, name, cat, *(cond_flags[c] for c in CONDITIONS), score, ""])
+        writer.writerow([pid, name, cat, *(cond_flags[c] for c in CONDITIONS), score])
     if out_stream is not sys.stdout:
         out_stream.close()
     return 0

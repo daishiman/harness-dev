@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a3eae3cd4a10fdfba",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "02ee4688-9c55-4d36-a906-273a6dafc4ba",
+      "line": 16,
+      "prefix_bytes": 112084,
+      "prefix_sha256": "c9887d9534775600bd1dacd1b5e37c9b662e82c66a9cfab7dd2563b1ded6eefa",
+      "timestamp": "2026-11-01T09:29:40.923Z"
+    },
+    "result": {
+      "uuid": "c09dfb73-a4ff-4de7-bd36-f4aad25c0d59",
+      "line": 18,
+      "prefix_bytes": 116626,
+      "prefix_sha256": "152cf5dfc6a3c2e8303b923633f7e092089ada045a4063c45e7ff45992daa7ed",
+      "timestamp": "2026-11-01T09:29:43.481Z"
+    }
+  },
+  "tool_use_id": "toolu_01J5X3EyHwknTxn4tSZVpSn6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "S=system-spec/spec-state.json && python3 -I plugins/system-spec-harness/scripts/validate-source-citation.py --targets $S --references system-spec/fetched-references.json --state $S --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; echo EXIT=$?; ls system-spec/retrieval-evidence/; python3 -I -c \"import json;d=json.load(open('$S'));print(json.dumps(d.get('targets'),ensure_ascii=False,indent=1))\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nEXIT=0\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\n[\n {\n  \"target_id\": \"postgres\",\n  \"category\": \"database\"\n },\n {\n  \"target_id\": \"react\",\n  \"category\": \"frontend\"\n },\n {\n  \"target_id\": \"fastapi\",\n  \"category\": \"backend\",\n  \"also_categories\": [\n   \"frontend\"\n  ]\n },\n {\n  \"target_id\": \"typescript\",\n  \"category\": \"frontend\"\n },\n {\n  \"target_id\": \"kubernetes\",\n  \"category\": \"infrastructure\",\n  \"also_categories\": [\n   \"backend\",\n   \"maintenance-ops\"\n  ]\n }\n]",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nEXIT=0\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\n[\n {\n  \"target_id\": \"postgres\",\n  \"category\": \"database\"\n },\n {\n  \"target_id\": \"react\",\n  \"category\": \"frontend\"\n },\n {\n  \"target_id\": \"fastapi\",\n  \"category\": \"backend\",\n  \"also_categories\": [\n   \"frontend\"\n  ]\n },\n {\n  \"target_id\": \"typescript\",\n  \"category\": \"frontend\"\n },\n {\n  \"target_id\": \"kubernetes\",\n  \"category\": \"infrastructure\",\n  \"also_categories\": [\n   \"backend\",\n   \"maintenance-ops\"\n  ]\n }\n]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

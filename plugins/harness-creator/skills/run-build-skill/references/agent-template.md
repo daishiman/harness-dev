@@ -17,6 +17,20 @@ version: 1.0.0
 - 入力・絶対パスの出所と元Skillの操作制約を Layer 3、依存順序・出力・検証・残る未達の引き継ぎを Layer 6 に保持する。
 - 日本語・英語の見出し方針は `ja-contract-policy.md` に従う。Layer番号・構造IDは翻訳しない。
 
+### tools 宣言
+
+正本は `capability-manifest.schema.json` の `kindAgent` で、`lint-capability-manifest.py`・`validate-frontmatter.py`・`lint-agent-prompt-content.py --mode agent` が同じ規則で検査する。`tools` と `tools-inherit` はどちらか一方だけを書く。
+
+| 書き方 | 意味 | 判定 |
+|---|---|---|
+| `tools: Read, Glob, Grep` | allowlist。Claude Code の実形式で `build-subagent.py` の出力形 | ✅ |
+| `tools: [Read, Glob, Grep]` (block 配列も可) | 同じ allowlist の配列形 | ✅ |
+| `tools: Read` | allowed-tools が無いときの既定。全ツール継承を既定にしない | ✅ |
+| `tools` を省き `tools-inherit: true` | 全ツール継承 (実行時に見つかる MCP ツールを含む)。ツール名を前もって列挙できない agent 用。`build-subagent.py --tools-inherit` を明示したときだけ出す | ✅ |
+| advisor で `tools-inherit: true` | 全ツール継承は書き込みの道具を含むので、読み取り専用の advisor では使えない (`build-subagent.py` は exit 2) | ❌ |
+| `tools` も `tools-inherit` も無い / 両方ある | 宣言漏れ / 矛盾 | ❌ |
+| `tools: inherit` | Claude Code は値をツール名として読むため全継承にならない | ❌ |
+
 ## prompt-creator 連携
 
 起動条件は `run-build-skill/SKILL.md` Step 0・Step 7.5 と `validate-build-trace.py` の現在の resolved policy / provenance 契約を正本とする。本書に別の kind 別既定値表を置かない。

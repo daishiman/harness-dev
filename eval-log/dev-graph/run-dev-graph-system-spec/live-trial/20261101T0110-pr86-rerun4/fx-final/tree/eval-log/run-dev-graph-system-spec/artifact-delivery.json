@@ -1,0 +1,39 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-system-spec",
+  "transitions": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "artifact": {
+        "path": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+        "sha256": "f62a356ae62b5dca61ccb6d251aff2c5000223f57336eff9a936b713719bf461",
+        "open_with": "cat"
+      }
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract in task.md (artifact_delivery=standard); not an approval for any real repo or external account"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "from": "semantic_evaluator_started",
+      "event": "improvement_complete",
+      "to": "handoff_complete"
+    }
+  ],
+  "current_state": "handoff_complete"
+}

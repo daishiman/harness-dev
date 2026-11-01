@@ -1,0 +1,35 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "contract": "artifact-delivery-v1",
+  "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "artifact_sha256": "3339caa50775ee5db006dc41a5114218291c6c18fdac3605f13d62c990b0b452",
+  "transitions": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "at": "2026-11-01T00:47:41.216413+00:00"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "at": "2026-11-01T00:47:41.216413+00:00"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "task.md 隔離fixtureの事前回答契約 (artifact_delivery=standard)",
+      "at": "2026-11-01T00:47:41.216413+00:00"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started",
+      "at": "2026-11-01T00:47:41.216413+00:00"
+    }
+  ],
+  "state": "semantic_evaluator_started"
+}

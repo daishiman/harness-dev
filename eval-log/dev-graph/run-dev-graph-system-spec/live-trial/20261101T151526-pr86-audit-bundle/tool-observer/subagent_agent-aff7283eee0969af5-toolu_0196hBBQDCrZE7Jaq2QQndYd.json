@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-aff7283eee0969af5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9fb2d749-071a-4be2-8f72-f4dacf366161",
+      "line": 118,
+      "prefix_bytes": 919460,
+      "prefix_sha256": "ee5bdef11bf233874b171316486dda41d417505db90461cb43795810e3183db1",
+      "timestamp": "2026-11-01T06:45:40.044Z"
+    },
+    "result": {
+      "uuid": "526ed494-6878-4161-849a-5088ccc0499b",
+      "line": 119,
+      "prefix_bytes": 920864,
+      "prefix_sha256": "5a4340bd55fa55cae304db57a4c033f01ebdebffc9d0bbb793c69285d91e33ea",
+      "timestamp": "2026-11-01T06:45:41.943Z"
+    }
+  },
+  "tool_use_id": "toolu_0196hBBQDCrZE7Jaq2QQndYd",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -rnE \"qa_log|spec-state|coverage_matrix|chapter-template|AskUserQuestion.*(質問|elicit)|doctrine|knowledge-catalog\" plugins/dev-graph --include='*.py' | head -20; echo ---; grep -nE \"^def |subprocess|Skill\" plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "---\n19:import subprocess\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n47:    proc = subprocess.run([sys.executable, \"-B\", str(resolver), \"--repo-root\", str(root),\n83:def main() -> int:",
+  "tool_use_result": {
+    "stdout": "---\n19:import subprocess\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n47:    proc = subprocess.run([sys.executable, \"-B\", str(resolver), \"--repo-root\", str(root),\n83:def main() -> int:",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

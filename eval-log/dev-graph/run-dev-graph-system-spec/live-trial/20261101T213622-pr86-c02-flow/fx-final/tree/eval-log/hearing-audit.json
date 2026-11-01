@@ -1,0 +1,29 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出 (置き換え先: qa-019)。qa-009 は JTBD・対象ユーザー・利用文脈 (場所/端末/頻度/制約) を名指しで 1 問に束ねており N4 違反 (決めない道はある開いた問のため medium)。qa-019 で置き換え済み。(a) qa-019 は「どんな場面で、何を成し遂げるためにこのシステムを使いますか」の 1 論点の開いた問で N1-N4 を満たす。(b) superseded_note と両問を照合し、中心論点の JTBD を同じ論点として問い直している (対象ユーザーは qa-016、環境は qa-020、頻度は qa-021 へ分割)。(c) qa-019 に answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z があり、qa-009 には answered_at が無いため順序も問題ない。active consumer は 0 件: 確定セルの qa_ref として qa-009 を参照するセルは無く、effective_source_refs も無い。ui-ux×web の qa_refs (補助) に qa-009 が残るが、主たる接地根拠は qa-003 で、qa-019 も同じ qa_refs に載っている。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": null,
+      "observation": "質問がセッション保存先の選択 (メモリ/PostgreSQL 16/新しい保存基盤) と、有効期限およびログアウト時の扱いという独立に決められる 2 論点を「あわせて」1 問に束ねている (N4)。選択肢には「どれも採らない・別の方式と比べる・保留」の道があるため high ではなく medium。auth×web では qa_refs (補助) にだけ含まれ、主たる qa_ref は qa-002。aspect-criteria 1a により PASS に残す注記で、FAIL にならない。superseded_by は無い。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "supersession_valid": null,
+      "observation": "開いた問ではあるが、「どう定義し、いつ検知し、誰へ示し、どのデータで月次成果を計測しますか」と独立な 4 論点を名指しで並べて答えを求めており、N4 の「N4 と開いた問」の束ねに当たる。選択肢や可否は示しておらず、決めない道は塞がれていないため medium。database×web / ui-ux×web / backend×web / maintenance-ops×web では qa_refs (補助) にだけ含まれ、いずれのセルも主たる qa_ref ではない。aspect-criteria 1a により PASS に残す注記で、FAIL にならない。superseded_by は無い。"
+    }
+  ]
+}

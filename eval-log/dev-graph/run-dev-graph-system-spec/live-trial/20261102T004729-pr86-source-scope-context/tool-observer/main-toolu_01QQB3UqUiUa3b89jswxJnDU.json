@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "243f4a20-bc6a-4e7f-ae25-da3725454c99",
+      "line": 667,
+      "prefix_bytes": 3979295,
+      "prefix_sha256": "0242fa69cab54c2aa06c07402dbe6934e0c41766d7d0b91251d97352afa37c1b",
+      "timestamp": "2026-11-01T16:14:53.594Z"
+    },
+    "result": {
+      "uuid": "e1df022b-9b85-41b2-a739-c08de9418595",
+      "line": 668,
+      "prefix_bytes": 3982669,
+      "prefix_sha256": "92d53529d7b516da4d554e19869761f3d090d44896799c199a2ceea5e4be4c7c",
+      "timestamp": "2026-11-01T16:14:56.901Z"
+    }
+  },
+  "tool_use_id": "toolu_01QQB3UqUiUa3b89jswxJnDU",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n -E \"id: (IN1|OUT[123])\" -A5 plugins/dev-graph/skills/run-dev-graph-node/SKILL.md | head -50",
+    "description": "Find criteria definitions in C02 SKILL.md"
+  },
+  "is_error": false,
+  "tool_result_content": "58:    - id: IN1\n59-      loop_scope: inner\n60-      text: \"validate-graph-schema.py でノード書込み前検証しスキーマの必須キー欠落が 0 件\"\n61-      verify_by: script\n62:    - id: OUT1\n63-      loop_scope: outer\n64-      text: \"通常5 artifact混在入力は自動routingされ、featureはC14 macro contractだけからfeatures/へ入り、連続更新後もfrontmatter/path整合性が維持される\"\n65-      verify_by: live-trial\n66:    - id: OUT2\n67-      loop_scope: outer\n68-      text: \"新規ノード作成時にartifact_kind (architectureは選択したsubtype全て、specificationはAPI変更有無に応じたapi-contract合成) に対応する本文必須セクション見出しが欠落0件で適用されることを受入テストが確認する (要件C18/C19)\"\n69-      verify_by: test\n70:    - id: OUT3\n71-      loop_scope: outer\n72-      text: \"12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる\"\n73-      verify_by: test\n74-artifact_delivery:\n75-  contract: artifact-delivery-v1",
+  "tool_use_result": {
+    "stdout": "58:    - id: IN1\n59-      loop_scope: inner\n60-      text: \"validate-graph-schema.py でノード書込み前検証しスキーマの必須キー欠落が 0 件\"\n61-      verify_by: script\n62:    - id: OUT1\n63-      loop_scope: outer\n64-      text: \"通常5 artifact混在入力は自動routingされ、featureはC14 macro contractだけからfeatures/へ入り、連続更新後もfrontmatter/path整合性が維持される\"\n65-      verify_by: live-trial\n66:    - id: OUT2\n67-      loop_scope: outer\n68-      text: \"新規ノード作成時にartifact_kind (architectureは選択したsubtype全て、specificationはAPI変更有無に応じたapi-contract合成) に対応する本文必須セクション見出しが欠落0件で適用されることを受入テストが確認する (要件C18/C19)\"\n69-      verify_by: test\n70:    - id: OUT3\n71-      loop_scope: outer\n72-      text: \"12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる\"\n73-      verify_by: test\n74-artifact_delivery:\n75-  contract: artifact-delivery-v1",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

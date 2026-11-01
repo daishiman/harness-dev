@@ -2,7 +2,7 @@
 # /// script
 # name: validate-coverage-matrix
 # version: 0.1.0
-# purpose: システム構成カテゴリ×canonical platform id の収集マトリクスの全セルが『未収集/対象外/確定』のいずれかで埋まり、対象外に理由・確定に qa_ref が付与され、必須プラットフォーム行が全存在し、カテゴリ集約状態が真理値表と一致することを検証する決定論ゲート (goal-spec C7 の直接実装)。
+# purpose: システム構成カテゴリ×canonical platform id の収集マトリクスの全セルが『未収集/対象外/確定』のいずれかで埋まり、対象外に理由・確定に qa_ref が付与され、必須プラットフォーム行が全存在し、カテゴリ集約状態が真理値表と一致し、参照先 ID (qa_log/approval_log/categories/goals) が一意であることを検証する決定論ゲート (goal-spec C7 の直接実装)。
 # inputs:
 #   - argv: --matrix FILE [--require-complete] [--require-basis] [--require-foundation]
 # outputs:
@@ -12,7 +12,7 @@
 # contexts: [E, C]
 # network: false
 # write-scope: none
-# dependencies: []
+# dependencies: [coverage_foundation.py]
 # requires-python: ">=3.9"
 # ///
 """カテゴリ×プラットフォーム収集マトリクス (spec-state.json) の網羅性を機械検証する。
@@ -28,8 +28,8 @@ matrix ファイル (spec-state.json) の期待形状:
       "<platform_id>": {"state": "未収集"}                            # loop 中のみ許容
     }, ...
   },
-  "qa_log": [{"id": "qa-001", ...}],          # 確定 qa_ref の参照先 (存在検証)
-  "approval_log": [{"id": "appr-001", ...}],  # 一括承認 (対象外/確定を承認ログ参照で代替可)
+  "qa_log": [{"id": "qa-001", ...}],          # 確定 qa_ref の参照先 (存在検証 + id 一意性検証)
+  "approval_log": [{"id": "appr-001", ...}],  # 一括承認 (対象外/確定を承認ログ参照で代替可・id 一意)
   "category_aggregate": {"<category_id>": "確定"|"収集中"|"未着手"|"対象外"}  # 任意 (あれば真理値表照合)
 }
 
@@ -39,20 +39,33 @@ matrix ファイル (spec-state.json) の期待形状:
   全セル対象外              -> 対象外
   それ以外で未収集 0        -> 確定
 
+ID 一意性 (fail-closed・既定で有効): qa_log / approval_log / categories / goals の id は参照先を
+識別する前提なので、集合へ正規化する前に出現順で走査して重複を検出する。集合内包で組み立てると
+重複 id が黙って 1 件へ畳み込まれ、二重採番が「参照先は実在する」という緑のまま通り抜ける
+(issues/sys-qa-log-id-uniqueness-gate-20260726.md)。
+
 要件 C9 (上位概念 anchor・opt-in): --require-foundation を付けると validate_foundation() が
 requirements_foundation の U1-U5 非空・各『確定』セルの serves_goals トレース (実在 goal へ ≥1)・
 どのゴールにも資さない確定セル (drift 候補) を追加検証する。既定 (--matrix / --require-complete) は
 従来どおりで validate() を一切変えないため後方互換 (foundation 検証は完全にオプトイン)。
+検証本体は同ディレクトリの coverage_foundation.py (import-only support module) にある。
 """
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
 import json
 import re
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
+
+# 回答本文が引用する承認 id の形 (approval_log の canonical id は appr-NNN)。
+_APPROVAL_ID_RE = re.compile(r"appr-\d+")
+
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from coverage_foundation import validate_foundation
 
 CELL_STATES = {"未収集", "対象外", "確定"}
 CANONICAL_PLATFORMS = (
@@ -74,11 +87,135 @@ GOAL_SPEC_CATEGORIES = (
     "frontend",
     "maintenance-ops",
 )
-DECISION_COST_CATEGORIES = {"free", "low-cost", "paid", "unknown"}
-DECISION_COMPARISON_AXES = ("goal_fit", "tco", "security", "operations", "lock_in")
-RFC3339_RE = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
-)
+DESIGN_APPLICATION_CONTRACT_VERSION = "1.0"
+CURRENT_STATE_SCHEMA_VERSION = "1.1"
+LEGACY_STATE_SCHEMA_VERSION = "1.0"
+DESIGN_APPLICATION_STATES = {"applied", "not_applicable"}
+LEGACY_BACKFILL_PROVENANCE = {
+    "mode": "legacy_backfill",
+    "writer": "set-qa-design-applications",
+}
+
+
+def _validate_design_application_provenance(entry: dict) -> list[str]:
+    """qa の参照有無に関わらず事後補完の由来を検証する。"""
+    qa_id = entry.get("id", "<unknown>")
+    if "design_application_provenance" not in entry:
+        return []
+    provenance = entry["design_application_provenance"]
+    if provenance == LEGACY_BACKFILL_PROVENANCE:
+        return []
+    return [
+        f"qa_log[{qa_id}].design_application_provenance: "
+        "legacy_backfill/set-qa-design-applications の完全一致が必須"
+    ]
+
+
+QA_SOURCE_KINDS = {
+    "user-dialogue",
+    "written-requirements",
+    "harness-remediation",
+    "derived-consolidation",
+}
+
+
+def _validate_qa_source_shape(entry: dict) -> list[str]:
+    """qa entry の出所メタデータが契約形状であることを検証する。
+
+    契約は ``source`` を object と定め ``kind`` を必須とするが、本ゲートは長らく ``source``
+    を一度も参照していなかった。そのため素の文字列 (採番変更の注記など) が混入しても全ゲートが
+    緑のまま通り、実際に監査 reader が型を前提に走査して途中で落ちる事故が起きた。
+
+    出所は「その回答が利用者の一次入力か否か」を決める唯一の手掛かりなので、形状が壊れている
+    ことは中立性監査と foundation trace の前提が崩れていることを意味する。source を持たない
+    entry (schema 1.1 移行前の legacy) は別の経路が扱うため、ここでは非 None のみを検査する。
+    """
+    qa_id = entry.get("id", "<unknown>")
+    source = entry.get("source")
+    if source is None:
+        return []
+    if not isinstance(source, dict):
+        return [
+            f"qa_log[{qa_id}].source: object 必須 ({type(source).__name__} が混入)。"
+            " 注記は source_note へ退避し set-qa-source で契約形状へ修復する"
+        ]
+    kind = source.get("kind")
+    if kind not in QA_SOURCE_KINDS:
+        return [f"qa_log[{qa_id}].source.kind={kind!r} は {sorted(QA_SOURCE_KINDS)} のいずれか必須"]
+    return []
+
+
+def _validate_design_applications(entry: dict) -> list[str]:
+    """確定 qa の章固有設計解釈を fail-closed に検証する。"""
+    qa_id = entry.get("id", "<unknown>")
+    applications = entry.get("design_applications")
+    if not isinstance(applications, list) or not applications:
+        return [f"qa_log[{qa_id}]: design_applications は非空配列必須"]
+    findings: list[str] = []
+    for index, application in enumerate(applications):
+        label = f"qa_log[{qa_id}].design_applications[{index}]"
+        if not isinstance(application, dict):
+            findings.append(f"{label}: object でない")
+            continue
+        for key in ("knowledge_ref", "principle", "rationale"):
+            value = application.get(key)
+            if not isinstance(value, str) or not value.strip():
+                findings.append(f"{label}.{key}: 非空文字列でない")
+        applicability = application.get("applicability")
+        if applicability not in DESIGN_APPLICATION_STATES:
+            findings.append(
+                f"{label}.applicability={applicability!r}: applied|not_applicable でない"
+            )
+        tradeoffs = application.get("tradeoffs")
+        if (
+            not isinstance(tradeoffs, list)
+            or not tradeoffs
+            or any(not isinstance(value, str) or not value.strip() for value in tradeoffs)
+        ):
+            findings.append(f"{label}.tradeoffs: 非空文字列の配列でない")
+    return findings
+
+
+def _collect_unique_ids(entries, label: str) -> tuple[set[str], list[str]]:
+    """id 付きエントリ列から一意な ID 集合を作り、id の欠落と重複を finding として返す。
+
+    集合内包 ({e.get("id") for e in ...}) で組み立てると重複 id が黙って 1 件へ畳み込まれ、
+    「参照先が一意か」という前提が検査される前に消える (= 二重採番の無検出)。
+    正規化より先に検査するため、出現順に走査して重複を明示的に検出する。
+
+    Returns:
+        (一意な id の集合, findings)。findings が非空なら呼び出し側が違反として扱う。
+    """
+    findings: list[str] = []
+    seen: set[str] = set()
+    counts: dict[str, int] = {}
+    if not isinstance(entries, list):
+        if entries is not None:
+            findings.append(f"{label}: 配列でない")
+        return seen, findings
+
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            findings.append(f"{label}[{i}]: エントリがオブジェクトでない")
+            continue
+        eid = entry.get("id")
+        if not eid:
+            findings.append(f"{label}[{i}]: id 欠落")
+            continue
+        if not isinstance(eid, str):
+            findings.append(f"{label}[{i}]: id が文字列でない ({eid!r})")
+            continue
+        if eid in seen:
+            counts[eid] = counts.get(eid, 1) + 1
+        else:
+            seen.add(eid)
+
+    for eid in sorted(counts):
+        findings.append(
+            f"{label}: id={eid!r} が {counts[eid]} 件重複"
+            " (ID が一意でなければ参照先を識別できない)"
+        )
+    return seen, findings
 
 
 def _derive_aggregate(cells: list[str]) -> str:
@@ -109,6 +246,10 @@ def validate(data: dict, require_complete: bool = False, require_basis: bool = F
         if not isinstance(c, dict) or not c.get("id"):
             findings.append(f"categories: id 欠落エントリ ({c!r})")
             continue
+        # 重複 category id は同一 matrix 行を二重評価し、片方の定義を静かに握り潰す
+        if c["id"] in cat_ids:
+            findings.append(f"categories: id={c['id']!r} が重複 (matrix 行が二重に評価される)")
+            continue
         cat_ids.append(c["id"])
 
     # カテゴリ軸床: goal-spec 例示カテゴリを最低含むか除外根拠 (excluded_categories) を持つ
@@ -121,12 +262,45 @@ def validate(data: dict, require_complete: bool = False, require_basis: bool = F
             f"カテゴリ軸床: goal-spec 例示カテゴリ {missing_cat} が未定義かつ除外根拠 (excluded_categories) 無し"
         )
 
-    qa_ids = {e.get("id") for e in data.get("qa_log", []) if isinstance(e, dict)}
-    approval_ids = {e.get("id") for e in data.get("approval_log", []) if isinstance(e, dict)}
+    # 参照先 ID の一意性検査 (集合化で重複を潰す前に検査する)
+    qa_ids, qa_findings = _collect_unique_ids(data.get("qa_log"), "qa_log")
+    approval_ids, approval_findings = _collect_unique_ids(data.get("approval_log"), "approval_log")
+    findings.extend(qa_findings)
+    findings.extend(approval_findings)
+    # 両ログは ref_ids へ統合されるため、ログを跨いだ id 衝突も参照先を一意に定められなくする
+    collision = sorted(qa_ids & approval_ids)
+    if collision:
+        findings.append(
+            f"qa_log/approval_log: id {collision} が両ログに重複 (qa_ref の参照先が一意に定まらない)"
+        )
     ref_ids = qa_ids | approval_ids
+    # 承認主張の突合用に qa_log entry の本文 (question + answer) を id 索引する。
+    qa_entry_text: dict[str, str] = {}
+    qa_entries: dict[str, dict] = {}
+    for entry in data.get("qa_log") or []:
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str):
+            qa_entries[entry["id"]] = entry
+            qa_entry_text[entry["id"]] = " ".join(
+                str(entry.get(key, "")) for key in ("question", "answer")
+            )
+            findings.extend(_validate_design_application_provenance(entry))
+            findings.extend(_validate_qa_source_shape(entry))
+
+    # supersede-qa の後継は qa_log 内の別 entry でなければならない (後継がさらに置き換えられる連鎖は正当)
+    for qa_id, entry in qa_entries.items():
+        superseded_by = entry.get("superseded_by")
+        if superseded_by is None:
+            continue
+        if superseded_by == qa_id or superseded_by not in qa_entries:
+            findings.append(
+                f"qa_log[{qa_id}].superseded_by={superseded_by!r}: "
+                "qa_log の別の entry を指す必要がある"
+            )
 
     unresolved = 0
     reasons_by_category: dict[str, set[str]] = {}
+    confirmed_qa_refs: set[str] = set()
+    confirmed_non_qa_refs: set[str] = set()
     for cat_id in cat_ids:
         row = matrix.get(cat_id)
         if not isinstance(row, dict):
@@ -172,6 +346,31 @@ def validate(data: dict, require_complete: bool = False, require_basis: bool = F
                     findings.append(
                         f"matrix[{cat_id}][{pf}]: 確定 qa_ref={qa_ref!r} が qa_log/approval_log に不在"
                     )
+                elif qa_ref in qa_entries:
+                    confirmed_qa_refs.add(qa_ref)
+                    if qa_entries[qa_ref].get("superseded_by") is not None:
+                        findings.append(
+                            f"matrix[{cat_id}][{pf}]: 置き換え済み (retired) qa_ref={qa_ref!r} を"
+                            " active consumer が参照している"
+                        )
+                else:
+                    confirmed_non_qa_refs.add(qa_ref)
+                approval_ref = cell.get("approval_ref")
+                if approval_ref is not None and approval_ref not in approval_ids:
+                    findings.append(
+                        f"matrix[{cat_id}][{pf}]: 確定 approval_ref={approval_ref!r} が approval_log に不在"
+                    )
+                # 承認主張 × 承認記録の突合 (F-0025)。回答本文が承認 id を引用しているのに
+                # セルに approval_ref が無いと、確定セルから承認記録へ機械追跡できない。
+                # 誤検出を避けるため「承認」という語ではなく appr-NNN の明示引用だけを見る。
+                if approval_ref is None and qa_ref in qa_entry_text:
+                    cited = _APPROVAL_ID_RE.findall(qa_entry_text[qa_ref])
+                    known = sorted({c for c in cited if c in approval_ids})
+                    if known:
+                        findings.append(
+                            f"matrix[{cat_id}][{pf}]: 確定の根拠 {qa_ref} が承認 {known} を引用しているが "
+                            f"セルに approval_ref が無い (set-approval op で付与すること)"
+                        )
 
         reasons_by_category[cat_id] = cat_reasons
 
@@ -186,6 +385,32 @@ def validate(data: dict, require_complete: bool = False, require_basis: bool = F
 
     if require_complete and unresolved:
         findings.append(f"未収集セルが {unresolved} 件残存 (最終時は未収集 0 が必須)")
+
+    if require_complete:
+        schema_version = data.get("schema_version")
+        marker_present = "design_application_contract_version" in data
+        if not marker_present and schema_version != LEGACY_STATE_SCHEMA_VERSION:
+            findings.append(
+                "design_application_contract_version が欠落: schema 1.1 以降は "
+                f"{DESIGN_APPLICATION_CONTRACT_VERSION!r} 必須"
+            )
+        if marker_present:
+            version = data.get("design_application_contract_version")
+        else:
+            version = None
+        if marker_present and version != DESIGN_APPLICATION_CONTRACT_VERSION:
+            findings.append(
+                "design_application_contract_version="
+                f"{version!r} は {DESIGN_APPLICATION_CONTRACT_VERSION!r} 必須"
+            )
+        elif marker_present:
+            for qa_ref in sorted(confirmed_non_qa_refs):
+                findings.append(
+                    f"確定 qa_ref={qa_ref!r}: schema 1.1 では design_applications を持つ "
+                    "qa_log entry の参照が必須"
+                )
+            for qa_ref in sorted(confirmed_qa_refs):
+                findings.extend(_validate_design_applications(qa_entries[qa_ref]))
 
     findings.extend(_boilerplate_reason_findings(reasons_by_category))
     findings.extend(_inference_only_findings(data, matrix, cat_ids, require_basis))
@@ -265,296 +490,6 @@ def _boilerplate_reason_findings(reasons_by_category: dict[str, set[str]]) -> li
             )
     return findings
 
-
-# 上位概念 (requirements_foundation) の検証対象キー (U1-U9)。
-_FOUNDATION_REQUIRED = (
-    ("essential_purpose", "U1 本質的目的"),
-    ("background", "U2 背景"),
-    ("goals", "U3 ゴール"),
-    ("objectives", "U4 目標"),
-    ("success_criteria", "U5 成功基準"),
-    ("stakeholders", "U6 ステークホルダー"),
-    ("scope", "U7 スコープ"),
-    ("constraints", "U8 制約"),
-    ("concrete_intents", "U9 具体的にやりたいこと"),
-)
-
-
-# U1-U3 (本質的目的/背景/ゴール) は N/A 不可 (値必須)。writer 側 FOUNDATION_NA_FORBIDDEN と同一契約。
-_FOUNDATION_NA_FORBIDDEN = ("essential_purpose", "background", "goals")
-
-
-def _is_explicit_na(value) -> bool:
-    return (
-        isinstance(value, dict)
-        and value.get("status") == "not_applicable"
-        and bool(str(value.get("reason") or "").strip())
-    )
-
-
-def _foundation_value_present(key: str, value) -> bool:
-    if key not in _FOUNDATION_NA_FORBIDDEN and _is_explicit_na(value):
-        return True
-    if key in ("essential_purpose", "background"):
-        return isinstance(value, str) and bool(value.strip())
-    if key == "scope":
-        return (
-            isinstance(value, dict)
-            and isinstance(value.get("in"), list)
-            and isinstance(value.get("out"), list)
-            and bool(value.get("in") or value.get("out"))
-        )
-    return isinstance(value, list) and bool(value)
-
-
-def _is_nonempty_string_list(value) -> bool:
-    return (
-        isinstance(value, list)
-        and bool(value)
-        and all(isinstance(item, str) and bool(item.strip()) for item in value)
-    )
-
-
-def _is_https_url(value) -> bool:
-    if not isinstance(value, str) or not value.strip():
-        return False
-    try:
-        parsed = urlsplit(value)
-    except ValueError:
-        return False
-    return parsed.scheme == "https" and bool(parsed.hostname) and parsed.username is None
-
-
-def _is_rfc3339(value) -> bool:
-    if not isinstance(value, str) or not RFC3339_RE.fullmatch(value):
-        return False
-    try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return False
-    return True
-
-
-def _validate_cost_model(value, prefix: str) -> tuple[list[str], str | None]:
-    findings: list[str] = []
-    if not isinstance(value, dict):
-        return [f"{prefix}: cost_model は object 必須"], None
-    category = value.get("category")
-    if category not in DECISION_COST_CATEGORIES:
-        findings.append(f"{prefix}: cost_model.category={category!r} が許容値外")
-        category = None
-    amount = value.get("amount")
-    if category == "unknown":
-        if amount is not None and (
-            isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount < 0
-        ):
-            findings.append(f"{prefix}: cost_model.amount は非負数または null 必須")
-    elif category is not None and (
-        isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount < 0
-    ):
-        findings.append(f"{prefix}: cost_model.amount は非負数必須")
-    if category == "free" and amount != 0:
-        findings.append(f"{prefix}: category=free の amount は 0 必須")
-    if category in {"low-cost", "paid"} and amount == 0:
-        findings.append(f"{prefix}: category={category} の amount は正数必須")
-    for field in ("currency", "billing_period", "tco"):
-        if not isinstance(value.get(field), str) or not value[field].strip():
-            findings.append(f"{prefix}: cost_model.{field} が空")
-    return findings, category
-
-
-def validate_decisions(data: dict, goal_ids: set[str]) -> list[str]:
-    """decisions[] の比較・推奨・ユーザー確認・goal trace 契約を検証する。"""
-    findings: list[str] = []
-    decisions = data.get("decisions")
-    if not isinstance(decisions, list):
-        return ["decisions: 配列が存在しない"]
-    seen: set[str] = set()
-    statuses = {"needs_guidance", "recommended_pending_confirmation", "confirmed"}
-    option_fields = (
-        "id", "label", "free_tier_limits", "goal_fit", "security_fit", "pros", "cons",
-        "risks", "lock_in", "ops_burden", "evidence_refs",
-    )
-    for decision in decisions:
-        if not isinstance(decision, dict):
-            findings.append(f"decision: object でない ({decision!r})")
-            continue
-        did = decision.get("id")
-        prefix = f"decision[{did or '?'}]"
-        if not isinstance(did, str) or not did.strip():
-            findings.append(f"{prefix}: id が空")
-        elif did in seen:
-            findings.append(f"{prefix}: id が重複")
-        else:
-            seen.add(did)
-        if not str(decision.get("question") or "").strip():
-            findings.append(f"{prefix}: question が空")
-        status = decision.get("status")
-        if status not in statuses:
-            findings.append(f"{prefix}: status={status!r} が許容値外")
-        serves = decision.get("serves_goals")
-        if not isinstance(serves, list) or not serves:
-            findings.append(f"{prefix}: serves_goals が空")
-        else:
-            dangling = [gid for gid in serves if gid not in goal_ids]
-            if dangling:
-                findings.append(f"{prefix}: serves_goals {dangling} が dangling")
-
-        options = decision.get("options")
-        option_ids: list[str] = []
-        cost_categories: set[str] = set()
-        if not isinstance(options, list) or not 2 <= len(options) <= 3:
-            findings.append(f"{prefix}: options は2-3件必須")
-            options = []
-        for option in options:
-            if not isinstance(option, dict):
-                findings.append(f"{prefix}: option が object でない")
-                continue
-            for field in option_fields:
-                value = option.get(field)
-                if value is None or value == "" or value == []:
-                    findings.append(f"{prefix}: option.{field} が空")
-            cost_findings, cost_category = _validate_cost_model(
-                option.get("cost_model"), f"{prefix}: option"
-            )
-            findings.extend(cost_findings)
-            if cost_category:
-                cost_categories.add(cost_category)
-            for field in ("pros", "cons", "risks"):
-                if not _is_nonempty_string_list(option.get(field)):
-                    findings.append(f"{prefix}: option.{field} は非空文字列の配列必須")
-            evidence_refs = option.get("evidence_refs")
-            if not _is_nonempty_string_list(evidence_refs):
-                findings.append(f"{prefix}: option.evidence_refs は非空文字列の配列必須")
-            elif any(not _is_https_url(ref) for ref in evidence_refs):
-                findings.append(f"{prefix}: option.evidence_refs は公式 https URL 必須")
-            oid = option.get("id")
-            if oid in option_ids:
-                findings.append(f"{prefix}: option id {oid!r} が重複")
-            elif oid:
-                option_ids.append(oid)
-        if options and not cost_categories.intersection({"free", "low-cost"}):
-            findings.append(f"{prefix}: options には free または low-cost 候補が最低1件必須")
-
-        recommendation = decision.get("recommendation")
-        if status != "needs_guidance":
-            if not isinstance(recommendation, dict):
-                findings.append(f"{prefix}: recommendation が必須")
-            else:
-                for field in ("option_id", "rationale", "caveats", "confidence", "latest_checked_at"):
-                    value = recommendation.get(field)
-                    if value is None or value == "" or value == []:
-                        findings.append(f"{prefix}: recommendation.{field} が空")
-                if not _is_nonempty_string_list(recommendation.get("caveats")):
-                    findings.append(f"{prefix}: recommendation.caveats は非空文字列の配列必須")
-                comparison_basis = recommendation.get("comparison_basis")
-                if not isinstance(comparison_basis, dict):
-                    findings.append(f"{prefix}: recommendation.comparison_basis は object 必須")
-                else:
-                    for axis in DECISION_COMPARISON_AXES:
-                        value = comparison_basis.get(axis)
-                        if not isinstance(value, str) or not value.strip():
-                            findings.append(
-                                f"{prefix}: recommendation.comparison_basis.{axis} が空"
-                            )
-                if not _is_rfc3339(recommendation.get("latest_checked_at")):
-                    findings.append(f"{prefix}: recommendation.latest_checked_at は RFC3339 必須")
-                if recommendation.get("option_id") not in option_ids:
-                    findings.append(f"{prefix}: recommendation.option_id が options に不在")
-
-        user_decision = decision.get("user_decision")
-        if status == "confirmed":
-            if not isinstance(user_decision, dict):
-                findings.append(f"{prefix}: confirmed には user_decision が必須")
-            else:
-                if user_decision.get("option_id") not in option_ids:
-                    findings.append(f"{prefix}: user_decision.option_id が options に不在")
-                if not str(user_decision.get("confirmed_at") or "").strip():
-                    findings.append(f"{prefix}: user_decision.confirmed_at が空")
-                elif not _is_rfc3339(user_decision.get("confirmed_at")):
-                    findings.append(f"{prefix}: user_decision.confirmed_at は RFC3339 必須")
-        elif user_decision:
-            findings.append(f"{prefix}: ユーザー確認前に user_decision を記録している")
-    return findings
-
-
-def validate_foundation(data: dict) -> list[str]:
-    """上位概念 (requirements_foundation) と serves_goals トレースを検証する (要件 C9・anti-drift)。
-
-    検証内容 (opt-in; --require-foundation 時のみ):
-      (a) requirements_foundation の U1-U9 が値あり (U1-U3 は N/A 不可)、または明示 N/A+理由で
-          確定され、confirmed=true はユーザー合意の approval_ref (approval_log 実在) を伴う。
-      (b) 各『確定』セルが serves_goals で 1 つ以上の実在する goal id へトレースされる。
-      (c) どのゴールにも資さない確定セル (serves_goals 無し = drift 候補) を surface。
-    上位概念がブレると仕様が整ってもブレるため、収集を上位概念へ機械的に結び付ける。
-    """
-    findings: list[str] = []
-    rf = data.get("requirements_foundation")
-    if not isinstance(rf, dict):
-        findings.append(
-            "requirements_foundation: オブジェクトが存在しない (上位概念 U1-U9 が未抽出)"
-        )
-        return findings
-
-    # (a) U1-U9 が値あり、または明示 N/A+理由
-    goal_ids: list[str] = []
-    for key, label in _FOUNDATION_REQUIRED:
-        val = rf.get(key)
-        if not _foundation_value_present(key, val):
-            findings.append(
-                f"requirements_foundation: {label}({key}) が空 (値または明示 N/A+理由が必須)"
-            )
-    if not rf.get("confirmed"):
-        findings.append("requirements_foundation: confirmed=true でない")
-    else:
-        # confirmed はユーザー合意の approval_log 参照が必須 (writer の approval_ref と同一契約)
-        approval_ids = {
-            e.get("id") for e in data.get("approval_log", []) if isinstance(e, dict)
-        }
-        approval_ref = rf.get("approval_ref")
-        if not (isinstance(approval_ref, str) and approval_ref.strip()):
-            findings.append(
-                "requirements_foundation: confirmed だが approval_ref (ユーザー合意) が空"
-            )
-        elif approval_ref not in approval_ids:
-            findings.append(
-                f"requirements_foundation: approval_ref={approval_ref!r} が approval_log に不在"
-            )
-    goals = rf.get("goals") or []
-    if _is_explicit_na(goals):
-        goals = []
-    for g in goals:
-        if isinstance(g, dict) and g.get("id"):
-            goal_ids.append(g["id"])
-            if not str(g.get("text") or "").strip():
-                findings.append(f"requirements_foundation: goal {g['id']!r} の text が空")
-        else:
-            findings.append(f"requirements_foundation: goal に id 欠落 ({g!r})")
-
-    # (b)(c) 各確定セルの serves_goals トレース (実在 goal へ ≥1 / drift 候補の surface)
-    goal_id_set = set(goal_ids)
-    matrix = data.get("matrix")
-    if isinstance(matrix, dict):
-        for cat_id, row in matrix.items():
-            if not isinstance(row, dict):
-                continue
-            for pf, cell in row.items():
-                if not isinstance(cell, dict) or cell.get("state") != "確定":
-                    continue
-                serves = cell.get("serves_goals")
-                if not isinstance(serves, list) or not serves:
-                    findings.append(
-                        f"drift 候補: 確定セル {cat_id}.{pf} が serves_goals を持たず"
-                        " どのゴールにも資さない (上位概念へ未トレース)"
-                    )
-                    continue
-                dangling = [s for s in serves if s not in goal_id_set]
-                if dangling:
-                    findings.append(
-                        f"matrix[{cat_id}][{pf}]: serves_goals {dangling} が実在 goal を指さない (dangling)"
-                    )
-    findings += validate_decisions(data, goal_id_set)
-    return findings
 
 
 def main(argv: list[str]) -> int:

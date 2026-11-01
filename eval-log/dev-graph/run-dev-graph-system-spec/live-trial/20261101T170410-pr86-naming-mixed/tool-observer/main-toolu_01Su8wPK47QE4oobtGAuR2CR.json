@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7f512578-455f-47d8-b74b-17a0226a2e73",
+      "line": 249,
+      "prefix_bytes": 1149730,
+      "prefix_sha256": "950e270d83d80adbf10fb73a3a205890474cf036a2f07dfdea11f5351bfde24e",
+      "timestamp": "2026-11-01T08:07:30.300Z"
+    },
+    "result": {
+      "uuid": "afc52e92-c920-4b27-92c8-1101d130d010",
+      "line": 255,
+      "prefix_bytes": 1152794,
+      "prefix_sha256": "8ff821f986379beae13042dbb4fd55f7bfe791a0421d7e842552b6508ac40226",
+      "timestamp": "2026-11-01T08:07:33.781Z"
+    }
+  },
+  "tool_use_id": "toolu_01Su8wPK47QE4oobtGAuR2CR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c '\nimport json;d=json.load(open(\"system-spec/fetched-references.json\"))\nfor r in d[\"references\"]: print(r[\"target_id\"],r.get(\"version\"),r.get(\"last_updated\"),r[\"retrieved_at\"],r[\"latest_checked_at\"],r[\"source_url\"])\ns=json.load(open(\"system-spec/spec-state.json\"))\nprint(json.dumps(s[\"targets\"],ensure_ascii=False)[:800]); print([ (k[\"id\"] if \"id\" in k else k.get(\"candidate_id\"),k.get(\"status\")) for k in s[\"knowledge_candidates\"]])'"
+  },
+  "is_error": false,
+  "tool_result_content": "postgres 16.15 None 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 None 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 None 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 None 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]\n[('k8s-workload-observability', 'deepened')]",
+  "tool_use_result": {
+    "stdout": "postgres 16.15 None 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 None 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 None 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 None 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]\n[('k8s-workload-observability', 'deepened')]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

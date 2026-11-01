@@ -1,0 +1,92 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "scope": "read-order guard v2の限定レビュー。SS0.1.24 C06/R6 Layer3の書面Read前containment/実在検証に関わる順序・actor/文書fingerprint接地・副作用だけ。C05の意味評価、trial採点、C19 goal達成を示さない。",
+  "evaluator_id": "/root/review_sysspec118_fresh",
+  "artifacts_sha256": {
+    "/tmp/pr86-written-read-order-guard.py": "d77ccb162ef6d6360f686e7d6ff16d624dd4c93a60dcebcf6b7dbd29d9818741",
+    "/tmp/pr86-written-read-order-guard-tests.py": "3b612dd8d2aed707c6d27d4458c15010f0f93369dd6a216b87fb736ef5b31750",
+    "/tmp/pr86-written-read-order-guard-probe.json": "dfe95297240155eb6ce5aba0144041aa260d5bd4169b9050c3fe2ff49ce8ad65",
+    "/private/tmp/claude-501/pr86-ci-live/lt/hook/written-read-order-v2.py": "d77ccb162ef6d6360f686e7d6ff16d624dd4c93a60dcebcf6b7dbd29d9818741",
+    "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/workdir/written-source-order-guard-source.py": "d77ccb162ef6d6360f686e7d6ff16d624dd4c93a60dcebcf6b7dbd29d9818741",
+    "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx/.claude/settings.local.json": "0eb2179875875d4d3b3b69d641329cb11e9f3ac4f61f5aa7862297ea50dfb9a8",
+    "/private/tmp/claude-501/pr86-ci-live/lt/hook-state/sysspec121/config.json": "06b34efeeb48e01974f4e617eb2c7ae19168b71cfe053d4d21db3e43e138d601",
+    "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx/CLAUDE.local.md": "488786b0537189942eee4344b1c8d003f8cdb4452a67d558eb26c9f2ad2b8259",
+    "/private/tmp/claude-501/pr86-ci-live/lt/runs/order121probe3/workdir/native-stream.jsonl": "0f00b48dd3171c589d8311395ef67cc3d27b419d396daa626e86c031f81c968c",
+    "/private/tmp/claude-501/pr86-ci-live/lt/hook-state/order121probe3/events.jsonl": "0d1519a69a1e9cdfdb0d207e370c4e02152e94d1bb597ea9cb9d717d51b9d19d",
+    "/Users/dm/orca/workspaces/harness/pr86-ci-fix/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md": "9521a9048ef144a307ee50508dc16895b86c105a1891a6d805669b3fa82f2e83"
+  },
+  "source_alignment": {
+    "version": "0.1.24",
+    "R6_source_matches_prospective_plugin": true,
+    "assessment": "Python標準ライブラリでroot/対象pathをstrict resolveし、relative_toでcontainmentを確認、通常file実在を確認してSHAを計算する読取専用Bashである。内容抽出・書換・ネットワークをしない。C06にはsetup shellを加えず、mainには固定root前置きを付ける運用がprospective文書に明記される。",
+    "not_substituted": "guardのsha256は文書全体のfingerprintであり、source.sha256が要求するanswer UTF-8 bytesのdigestとは別。section原文、answerの逐語一致・answer SHA、5軸の意味監査はC06自身が別途実施する必要がある。guardはそれらのPASSを作らない。"
+  },
+  "unit_reexecution": {
+    "checks": 10,
+    "result": "PASS",
+    "evidence": "/tmp/pr86-written-read-order-independent-review-test-result.json",
+    "runner": "/tmp/pr86-written-read-order-independent-review-tests.py",
+    "notes": "原本testを編集せず、出力先とTemporaryDirectoryだけreview prefixの/tmpへ変更したコピーをpython -Bで実行しexit0。session/agent違い、内容変更、外向きsymlink、無関係Read、偽command、interrupted、32並行callbackとtmp残骸0を確認。"
+  },
+  "native_integration": {
+    "session_id": "cf7bc751-e0ee-48ca-8ac6-db6211a194b7",
+    "agent_id": "a68c50fe659ddce4a",
+    "sequence": [
+      "read-denied",
+      "post-shape",
+      "bash-verified",
+      "read-allowed"
+    ],
+    "evidence": [
+      {
+        "file": "/private/tmp/claude-501/pr86-ci-live/lt/runs/order121probe3/workdir/native-stream.jsonl",
+        "line": 7,
+        "uuid": "14115c5a-0c83-49a1-8b3f-d26963029bd8",
+        "tool_use_id": "toolu_01WhLtt52F3ynDWxFtu1QVFV",
+        "meaning": "最初のRead。line8の実tool_resultはhook由来reject。"
+      },
+      {
+        "file": "/private/tmp/claude-501/pr86-ci-live/lt/runs/order121probe3/workdir/native-stream.jsonl",
+        "line": 10,
+        "uuid": "abf9e68e-b179-4066-b990-c91813fefd0b",
+        "tool_use_id": "toolu_01Xm1cFFPqsP7f1KyriUKL47",
+        "meaning": "guardが返したliteral確認Bashを同じagentが実行。line11はis_error=falseのJSON応答。"
+      },
+      {
+        "file": "/private/tmp/claude-501/pr86-ci-live/lt/runs/order121probe3/workdir/native-stream.jsonl",
+        "line": 13,
+        "uuid": "e0642fb4-80fa-4d5b-862a-ae0d85f985a0",
+        "tool_use_id": "toolu_01YSCjYEsnY8KYDYXzgSwLoZ",
+        "meaning": "再Read。line14で実本文が返る。"
+      }
+    ],
+    "proof_and_ABI": "eventsのpost-shapeはnative tool_response=dict、stdout/stderr/interrupted/isImage/noOutputExpectedを記録。interrupted=falseとstdout JSONの現在値一致によりproof生成され、そのsession/agent/pathのSHAから導いたproof名と、実command/stdout/current-fileのSHAを独立再計算して一致した。native応答はexit_code fieldを持たないが、literalのPython末尾で生成するJSONとinterrupted=false、is_error=falseへ接地する。子の自己報告だけからPostToolUse実施を推測していない。"
+  },
+  "prospective_configuration": {
+    "config": {
+      "root": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx",
+      "source_path": "system-spec/fixture-requirements-v7.txt",
+      "proof_dir": "/private/tmp/claude-501/pr86-ci-live/lt/hook-state/sysspec121"
+    },
+    "proof_cache_empty_at_review": true,
+    "protection": "proof_dirと実hook/configはallowWriteのrun/sysspec121・lt/tmpの外で、sandbox.denyWriteにlt/hook-stateおよびlt/hookが明示される。PreToolUseの既存guard-json-data.pyもWrite/Edit系をrealpathでallowed_write_rootsへ限定する。BashはOS sandbox維持かつdangerouslyDisableSandbox拒否。trusted hook callbackだけがsandbox外proofを更新する前提が設定と整合する。",
+    "source_hash_consistency": "/tmp原本、trusted hook、native probe copy、121 workdir copyのguard SHAはすべてd77ccb162ef6d6360f686e7d6ff16d624dd4c93a60dcebcf6b7dbd29d9818741で一致。config本体とworkdir copy、提示commandも一致。",
+    "hook_registration": "PreToolUse matcher Read|Bashでpre、PostToolUse matcher Bashでpost。checkのpre分岐が実際に止める対象は設定書面を指すReadのみ。既存tool権限を増やす処理はない。"
+  },
+  "stale_atomic_and_effects": {
+    "binding": "proofの保存先はnative session_id/agent_id/source_pathから導出され、保存内容のactorとcheckedを再Read時に照合。別session/agentのproofを流用せず、path実体/SHA変更やproof欠落/破損は拒否する。",
+    "atomic": "同じproof_dir内のNamedTemporaryFileへJSONを書き、os.replaceで置換しfinallyで残骸を除去。32並行callbackのテスト後も完全なproofとして読め、tmpは残らなかった。fsyncによる障害時永続性まで保証するものではない。",
+    "side_effects": "確認Bashの副作用はstdoutのみ。hookが作るのはproof_dir、actor proof JSON、events.jsonlと一時fileだけ。spec/state/report/graph/verdict/PASS、criteriaや予算を生成・変更する経路はない。意味判定はPython実装に含まれない。"
+  },
+  "limitations": [
+    "正本のanswer SHA検査や意味評価は代替しない。文書fingerprintの一致だけでsource-indexを合格にしない。",
+    "対象は宣言済み1文書のRead tool。Bash/Grep/別toolによる本文取得を全面遮断するguardではなく、source上のツール境界・回避禁止とraw監査を併用する。",
+    "内容とpathが同じなら同session/agentのproofは再利用可能で、TTLや1Read1proof消費を要求しない。時間経過だけではstaleにしない。",
+    "PreToolUse照合から実Readまでを同一file descriptorで固定していないので、敵対的な同時差替えのTOCTOUまで排除しない。",
+    "設定/hook自体の改変に対する万能防御ではない。保護設定の維持と前後SHA/raw監査が前提。今回のnative probeは拒否→回復の統合確認で、121 actorからproof書込みを試すOS攻撃試験は行っていない。",
+    "literal確認commandだけをproof化する実装上の運用制約はあるが、sourceの内容合否や予算を緩めない。任意の等価Python表記を認識する静的解析器とは主張しない。",
+    "prospective設定は起動前に確認したもの。121本番で同じABI/guardが維持され実際に発火したかは、当該runの一次記録で別途確認する。"
+  ],
+  "read_only_boundary": "source/fixture/config/probe原本は編集していない。既存testの出力を上書きせず、review prefixの/tmp成果物だけを作成。過去trialの採点は参照していない。"
+}

@@ -1,0 +1,18 @@
+{
+  "responsibility": "R3-import",
+  "loop": 2,
+  "verifier": {"agent": "general-purpose (independent, read-only, full R3-import.md text given)", "verdict": "PASS"},
+  "input_directive": "loop-1 merged_directive_for_next (R2 PASS. Loop 2 (R3): import only from receipt system_spec dir via C02 ...)",
+  "c24_receipt_sha256": "e94ceb5c2198185b9444f08ee176f86eecc1e8d385fc7292e0238f24822659b5",
+  "c02_receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+  "import_report": "eval-log/run-dev-graph-system-spec/R3-import/import-report.json",
+  "checklist": [
+    {"item": "全node正規kind、lineage全field/evidence/readiness欠落0", "status": "YES"},
+    {"item": "validate-source-lineage.py --node-id x2 exit 0", "status": "YES"},
+    {"item": "dry-run と add に confirmation_evidence を含む同じ payload (sha 583cd778...)", "status": "YES"},
+    {"item": "payload 作成と C02 起動は evaluator PASS report の後 (mtime 05:05:39 < 05:12:29 < 05:14:08)", "status": "YES"},
+    {"item": "common 5.3: inputs verified / output authority / no boundary violation", "status": "YES"}
+  ],
+  "non_blocking_notes": ["C02 artifact-delivery open_with holds absolute path (eval-log only, not graph/lineage)", "nodes status done (not restricted by R3)"],
+  "blockers": []
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "81fcd14d-09cb-4ec9-8b96-d02e64f1cdfd",
+      "line": 770,
+      "prefix_bytes": 4466656,
+      "prefix_sha256": "b6fdada311d92da140f95d736409c4a34c611df0cfa28bf9097e2aeae231cafa",
+      "timestamp": "2026-11-01T14:43:15.105Z"
+    },
+    "result": {
+      "uuid": "c3ea9939-6a29-4bf2-aeb3-66634ff96346",
+      "line": 776,
+      "prefix_bytes": 4468356,
+      "prefix_sha256": "21c8b5494002cab315235c273289b8c7a0f702e13445a6c9531f9f9155eece68",
+      "timestamp": "2026-11-01T14:43:17.233Z"
+    }
+  },
+  "tool_use_id": "toolu_01K9NppkUvAGvUuoTwew3Gkx",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\" && DEV_GRAPH_GRAPH=\"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-progress.json\" \"$DEV_GRAPH_GRAPH\" \"$DEV_GRAPH_ROOT\" <<'PY'\nimport hashlib, json, os, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nprogress = json.load(open(sys.argv[3], encoding='utf-8'))\ngraph = json.load(open(sys.argv[4], encoding='utf-8'))\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\ndigest = 'sha256:' + hashlib.sha256(json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')).hexdigest()\nreceipts = [json.load(open(os.path.join(sys.argv[5], p), encoding='utf-8')) for p in progress.get('writer_receipts') or []]\nbaseline = progress.get('graph_baseline') or {}\nrevisions = [baseline.get('graph_revision')] + [r.get('graph_revision_after') for r in receipts]\nassert all(r.get('graph_revision_before') == before for r, before in zip(receipts, revisions)), f'writer receipts do not chain from the baseline: {[(r.get(\"graph_revision_before\"), r.get(\"graph_revision_after\")) for r in receipts]}'\nlast = (receipts[-1].get('graph_revision_after'), receipts[-1].get('graph_digest_after')) if receipts else (baseline.get('graph_revision'), baseline.get('graph_digest'))\nassert last == (graph.get('graph_revision'), digest), f'graph changed after the last writer receipt or the graph baseline: {last}'\nverifier = progress.get('independent_verifier') or {}\nassert verifier.get('agent') in {'dev-graph-integrity-auditor', 'dev-graph:dev-graph-integrity-auditor'}, 'independent verifier not run'\nassert verifier.get('verdict') in {'PASS', 'FAIL'}, verifier\nassert verifier.get('graph_digest') == digest, f'verifier audited {verifier.get(\"graph_digest\")}, not the current graph {digest}'\ndef entries(value):\n    pairs = list(value.items() if isinstance(value, dict) else ((c.get('id'), c) for c in value))\n    out = {cid: (c if isinstance(c, dict) else {'status': c}) for cid, c in pairs}\n    assert len(out) == len(pairs), f'duplicate ids: {sorted(map(str, out))}'\n    return out\nstatus = {cid: c.get('status') for cid, c in entries(progress.get('feedback_criteria') or {}).items()}\nassert set(status) == {'IN1', 'OUT1', 'OUT2', 'OUT3'}, sorted(map(str, status))\nouter = {cid: s for cid, s in status.items() if cid != 'IN1'}\nassert set(outer.values()) == {'external_pending'}, f'outer criteria are judged outside this run: {outer}'\nchecklist = entries(progress.get('checklist') or {})\nassert set(checklist) == {'containment', 'classification', 'schema', 'package', 'receipt'}, sorted(map(str, checklist))\nassert all(c.get('status') in {'achieved', 'not_achieved', 'not_applicable'} for c in checklist.values()), checklist\nassert checklist['containment'].get('status') != 'not_applicable' and checklist['schema'].get('status') != 'not_applicable', 'containment and schema are never not_applicable'\nassert all(str(c.get('evidence') or '').strip() for c in checklist.values() if c.get('status') == 'not_applicable'), 'not_applicable needs evidence'\nna = {cid for cid, c in checklist.items() if c.get('status') == 'not_applicable'}\nclassified = any(r.get('operation') == 'add' and any((a.get('classification') or {}).get('decision') != 'c14_macro_contract' for a in r.get('artifacts') or []) for r in receipts)\nrequired = {'receipt'} if receipts else set()\nrequired |= {'package'} if any('feature_package_id' in r for r in receipts) else set()\nrequired |= {'classification'} if classified else set()\nassert not (na & required), f'not_applicable contradicts the writer receipts: {sorted(na & required)}'\nassert progress.get('overall') in {'in_progress', 'blocked', 'PASS'}, progress.get('overall')\nif progress['overall'] == 'PASS':\n    assert verifier['verdict'] == 'PASS' and status['IN1'] == 'PASS' and all(c['status'] != 'not_achieved' for c in checklist.values()), (verifier['verdict'], status['IN1'], checklist)\nPY\necho verify_exit=$?",
+    "description": "Run C02 goal-seek verification check"
+  },
+  "is_error": false,
+  "tool_result_content": "verify_exit=0",
+  "tool_use_result": {
+    "stdout": "verify_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

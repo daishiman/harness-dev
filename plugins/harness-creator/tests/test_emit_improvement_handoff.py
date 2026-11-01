@@ -16,7 +16,7 @@ def _args(tmp_path, findings, **over):
         source_ref="plugin-plans/sample/elegant-review-20260705.md",
         target_plugin_slug="sample-plugin",
         plan_dir="plugin-plans/sample-plugin",
-        schema_version="1.0.0",
+        schema_version="1.1.0",
         generated_by=None,
         source_intake=None,
         prev_goal_spec=None,
@@ -34,13 +34,18 @@ def _findings_file(tmp_path, payload):
     return p
 
 
-_GOOD = [{"id": "F1", "severity": "high", "summary": "断線 X", "recommendation": "配線する"}]
+_GOOD = [{
+    "id": "F1", "severity": "high", "summary": "断線 X", "recommendation": "配線する",
+    "disposition": "applied", "disposition_ref": "plugins/sample/SKILL.md",
+    "disposition_recorded_at": "2026-07-22T00:00:00Z",
+}]
 
 
 # ─────────────────── normalize_findings ───────────────────
 def test_normalize_bare_array(emit):
     out = emit.normalize_findings(_GOOD)
     assert out[0]["id"] == "F1" and out[0]["severity"] == "high"
+    assert out[0]["disposition"] == "applied"
 
 
 def test_normalize_wrapped_object(emit):
@@ -123,6 +128,16 @@ def test_validate_clean(emit, tmp_path):
 def test_validate_bad_schema_version(emit, tmp_path):
     h = emit.build_handoff(_args(tmp_path, _GOOD, schema_version="1.0"), emit.normalize_findings(_GOOD))
     assert any("semver" in e for e in emit.validate(h))
+
+
+def test_validate_rejects_legacy_schema_and_missing_disposition(emit, tmp_path):
+    h = emit.build_handoff(
+        _args(tmp_path, _GOOD, schema_version="1.0.0"),
+        emit.normalize_findings([{"id": "F1", "severity": "low", "summary": "x"}]),
+    )
+    errors = emit.validate(h)
+    assert any("旧形式" in e for e in errors)
+    assert any("disposition" in e for e in errors)
 
 
 def test_validate_bad_slug(emit, tmp_path):

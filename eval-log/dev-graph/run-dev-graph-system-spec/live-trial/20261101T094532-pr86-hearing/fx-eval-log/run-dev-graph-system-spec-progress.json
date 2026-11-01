@@ -1,0 +1,75 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "updated_at": "2026-11-01T01:07:48.193202+00:00",
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "c24-receipt.json + R0-context/verification.json PASS"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "preflight-report.json (0.1.25 in >=0.1.22 <1.0.0; 4 entry points) + R1-preflight/verification.json PASS"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "elicit/doc-fetch(不要判定)/compile/evaluator を Skill 経由で実行 (R2-delegate receipts + verification.json PASS)"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "coverage=0 citation=0 graph_schema=0; evaluator report PASS sha256 1e440e1637b0368623419ab3b607f2dc7f6d2c5937eee61efa1fc13206882495"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "achieved",
+      "evidence": "2 node confirmed/pass/readiness complete、lineage gate exit 0、evaluated_digest==source_digest (R3-import/verification.json PASS)"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R3-import/verification.json: dev-graph scripts に elicitation/compile 複製 0、登録は C02 receipt のみ"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "loops": [
+        {
+          "loop": 1,
+          "status": "PASS",
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "at": "2026-11-01T00:52:35.613540+00:00"
+        },
+        {
+          "loop": 2,
+          "status": "PASS",
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "source_lineage": 0,
+          "at": "2026-11-01T01:07:48.193202+00:00"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "compile_OUT1_tests": {
+    "files": [
+      "test_compile_spec_doc.py",
+      "test_compile_spec_doc_knowledge.py"
+    ],
+    "result": "63 passed",
+    "exit": 0
+  },
+  "import_report": "eval-log/run-dev-graph-system-spec/R3-import/import-report.json"
+}

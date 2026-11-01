@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "38340b43-c2f0-43d0-a4b2-0506b8b33522",
+      "line": 889,
+      "prefix_bytes": 4553574,
+      "prefix_sha256": "9a4eca08d7e64b7789e7bb30844a340fc3e09f34709753cf198afca817793c87",
+      "timestamp": "2026-11-01T11:18:50.664Z"
+    },
+    "result": {
+      "uuid": "512a0a65-1d9b-4c44-8d49-a77210461436",
+      "line": 892,
+      "prefix_bytes": 4556871,
+      "prefix_sha256": "93c1a9add1b9c8f753d63f0e8ccf761d09eb93cc2fd61eb43bc6b10acf52d6ad",
+      "timestamp": "2026-11-01T11:18:55.401Z"
+    }
+  },
+  "tool_use_id": "toolu_01M8mUWg613X6CcbHzPzZCpc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && D=$PWD; S=$D/plugins/system-spec-harness; G=$D/plugins/dev-graph; python3 -B \"$S/scripts/validate-coverage-matrix.py\" --matrix \"$D/system-spec/spec-state.json\" --require-complete --require-basis --require-foundation >/dev/null; echo cov=$?; python3 -B \"$S/scripts/validate-source-citation.py\" --targets \"$D/system-spec/spec-state.json\" --references \"$D/system-spec/fetched-references.json\" --state \"$D/system-spec/spec-state.json\" --repo-root \"$D\" >/dev/null; echo cit=$?; python3 -B \"$G/scripts/validate-graph-schema.py\" --graph \"$D/.dev-graph/state/graph.json\" --repo-root \"$D\" --strict-artifact-readiness >/dev/null; echo schema=$?; python3 -B \"$G/scripts/validate-source-lineage.py\" --repo-root \"$D\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture >/dev/null; echo lineage=$?; git status --short",
+    "description": "Run round 3 gates and lineage gate"
+  },
+  "is_error": false,
+  "tool_result_content": "cov=0\ncit=0\nschema=0\nlineage=0\n?? .dev-graph/\n?? CLAUDE.local.md\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? specs/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "cov=0\ncit=0\nschema=0\nlineage=0\n?? .dev-graph/\n?? CLAUDE.local.md\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? specs/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "head": "fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
+  "governance_check": {
+    "run_id": 41245004079,
+    "job_id": 124666499244,
+    "failure": "lint-script-naming: prepare is not an allowed verb"
+  },
+  "plugin_governance": {
+    "run_id": 41245003938,
+    "plugin_tests": "success",
+    "root_test_summary": "2 failed, 9464 passed, 9 skipped",
+    "failures": [
+      "tests/scripts-root/test_root__lint_script_naming.py::test_cli_real_repo_report_exit_zero",
+      "tests/scripts-root/test_root__lint_script_naming.py::test_main_absolute_repo_roots_from_other_cwd_have_no_violation"
+    ],
+    "same_cause": "prepare-evaluation.py prefix prepare not allowed"
+  },
+  "fix": "build-evaluation-context.pyへ改名し参照を更新。例外追加/規則緩和なし。"
+}

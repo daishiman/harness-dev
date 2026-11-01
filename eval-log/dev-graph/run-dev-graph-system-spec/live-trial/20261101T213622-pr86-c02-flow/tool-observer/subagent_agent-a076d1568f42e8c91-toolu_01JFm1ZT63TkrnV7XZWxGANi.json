@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-a076d1568f42e8c91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "71bf9384-215a-4bcf-97bd-447857fae789",
+      "line": 46,
+      "prefix_bytes": 439190,
+      "prefix_sha256": "54fd76433ce4f96289d756bc553498e86ababc271b44fa74b1540f065210733b",
+      "timestamp": "2026-11-01T12:41:09.015Z"
+    },
+    "result": {
+      "uuid": "db9ff60e-4ca9-4798-849d-a3e286b04f4f",
+      "line": 47,
+      "prefix_bytes": 441737,
+      "prefix_sha256": "0d3756ff4e612c278e17fe0c8fea555b6b9833539c398b9b711d80bc9419749b",
+      "timestamp": "2026-11-01T12:41:12.405Z"
+    }
+  },
+  "tool_use_id": "toolu_01JFm1ZT63TkrnV7XZWxGANi",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; grep -n \"repository_id\\|local:sha256\\|def main\\|--mode\\|mkdir\\|write\" $R/plugins/dev-graph/scripts/resolve-repo-context.py | head -60",
+    "description": "Inspect repository_id derivation in resolver"
+  },
+  "is_error": false,
+  "tool_result_content": "5:# inputs: [\"argv: --repo-root PATH? --config PATH --mode read|write\"]\n11:# write-scope: none\n25:sys.dont_write_bytecode = True\n77:def repository_id_for(remote: str, common: Path) -> str:\n84:    return f\"local:sha256:{digest}\"\n182:def main() -> int:\n186:    parser.add_argument(\"--mode\", choices=(\"read\", \"write\"), default=\"read\")\n201:    repository_id = repository_id_for(remote, common)\n217:        configured = config.get(\"repository_id\") if isinstance(config, dict) else None\n218:        if configured and configured != repository_id:\n219:            raise ContractError(\"repo config repository_id does not match derived repository\")\n232:    worktree_id = stable_id(\"wt_\", repository_id, str(root))\n237:        \"repo_root\": str(root), \"repository_id\": repository_id, \"worktree_id\": worktree_id,",
+  "tool_use_result": {
+    "stdout": "5:# inputs: [\"argv: --repo-root PATH? --config PATH --mode read|write\"]\n11:# write-scope: none\n25:sys.dont_write_bytecode = True\n77:def repository_id_for(remote: str, common: Path) -> str:\n84:    return f\"local:sha256:{digest}\"\n182:def main() -> int:\n186:    parser.add_argument(\"--mode\", choices=(\"read\", \"write\"), default=\"read\")\n201:    repository_id = repository_id_for(remote, common)\n217:        configured = config.get(\"repository_id\") if isinstance(config, dict) else None\n218:        if configured and configured != repository_id:\n219:            raise ContractError(\"repo config repository_id does not match derived repository\")\n232:    worktree_id = stable_id(\"wt_\", repository_id, str(root))\n237:        \"repo_root\": str(root), \"repository_id\": repository_id, \"worktree_id\": worktree_id,",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

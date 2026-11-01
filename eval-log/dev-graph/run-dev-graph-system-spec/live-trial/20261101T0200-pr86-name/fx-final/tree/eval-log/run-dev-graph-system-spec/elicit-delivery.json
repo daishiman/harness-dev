@@ -1,0 +1,30 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "args": "--spec-state <repo>/system-spec/spec-state.json --resume",
+  "artifact": {
+    "path": "system-spec/spec-state.json",
+    "sha256": "9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2",
+    "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec97/fx/system-spec/spec-state.json"
+  },
+  "guards": {
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": 0,
+    "validate-knowledge-graph --profile required-info ungrounded_blocking_items": [],
+    "validate-design-knowledge-refs": 0
+  },
+  "choice": "standard",
+  "choice_source": "isolated-fixture pre-answer contract (task.md)",
+  "state": "semantic_evaluator_started",
+  "goal_seek_result": {
+    "unmet_cells": 0,
+    "hearing_progress": {
+      "loop_count": 4,
+      "complete": true,
+      "next_question": null
+    },
+    "writer_ops": 0,
+    "note": "resume: 未収集0・foundation確定済みのため新規質問/writer適用なし (新しい利用者入力・承認を作らない)"
+  },
+  "next": "handoff_complete",
+  "recorded_at": "2026-10-31T21:58:44.160420+00:00"
+}

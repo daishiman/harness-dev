@@ -11,21 +11,24 @@
 | skill | run-system-spec-doc-fetch |
 | responsibility | R4-audit-doc-freshness (公式性・現行性の独立read-only監査) |
 | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | tests/fixture-references-valid.json (verdict/findings 契約) |
+| output_schema | schema 無し (自然文レポート + 最終行 `AUDIT_VERDICT: PASS\|FAIL\|INDETERMINATE` の 1 行 marker が機械可読部。詳細は L7.1) |
+| input_fixture | tests/fixture-references-valid.json (監査対象 `fetched-references.json` の形状例。出力契約ではない) |
 | reproducible | true (同一targets・取得記録・公式照合結果から同一verdictを導出) |
 
 ## Layer 1: 基本定義層
 - **目的**: C02 が出力した `fetched-references.json` を独立 context で読み、取得済みドキュメントが**公式かつ現行版か** — **対象一覧の欠落 / 非公式 host / 古い version・更新日 / 確認時刻・出典の欠落** の 4 軸 — を**二層**で監査し、verdict と検出根拠を返す。これは C02 の OUT1 (outer-loop 受入=公式サイト上の現行版を再確認) を担う。
 - **役割**: read-only 監査 (auditor)。`fetched-references.json` の書き換え・再取得・target 追記・記録更新はしない。修正は C02 (R2-fetch/R3-record)、収集完了の最終ゲートは C05 の責務。
-- **二層の分担 (不変則)**: **層1=形式** は C13 (`validate-source-citation.py`) が担い、全件対応・必須フィールド・`source_url` host が自己申告 `official_host` と一致するかを機械検査する。**層2=内容鮮度** は本責務が担い、WebSearch/WebFetch で公式サイト現行版を再照合し、記録された version/更新日が現行か・宣言 host が本当に publisher の公式ホストかを意味照合する。**C13 は形式のみ・C08 は内容鮮度**。C13 が PASS でも内容が古い/非公式なら本責務は `FAIL` にする (両層は補完関係)。
+- **二層の分担 (不変則)**: **層1=形式** は C13 (`validate-source-citation.py`) が担い、全件対応・必須フィールド・`source_url` host・時刻・repo内の取得証跡digestが一致するかを機械検査する。**層2=内容鮮度** は本責務が担い、WebSearch/WebFetch で公式サイト現行版を再照合し、記録された version/更新日が現行か・宣言 host が本当に publisher の公式ホストかを意味照合する。**C13 は形式/証跡・C08 は内容鮮度**。C13 が PASS でも内容が古い/非公式なら本責務は `FAIL` にする (両層は補完関係)。
 - **不変則**: 記録と証跡 (`official_host`/`version`/`last_updated`/`latest_checked_at`/`source_url`) の実在と公式サイト裏取りに基づき判定し、裏取りできないものを「問題なし」と楽観しない。疑い (非公式/古い/未確認) は検出側に倒す (安全側)。
+- **公式性の SSOT**: 監査開始時に `../references/official-source-catalog.md` を必ず Read する。publisher 直営 GitHub org/repository は公式一次ソースとして許可されるため、直営性を確認できる github.com を一律に非公式扱いしない。catalog と一般的な「docs host 優先」が競合するときは catalog の明示規則を優先する。
+- **鮮度の単位**: `version` / `last_updated` は record 固有 claim が最後に公式照合された版・時点を表す。rolling changelog に後続の新記事が存在しても、その記事が record 固有 claim を変更・撤回・世代落ちさせる一次証拠でない限り、新記事の存在だけで stale にしない。rolling page 全体の最新月と、record が採用判断へ束縛する具体的事実の現行性を分けて判定する。
 
 ## Layer 2: ドメイン層
 - **用語**: `references[]`=取得済みドキュメントの記録配列 / `target_id`=対象ツール/インフラ/フレームワークの識別子 / `official_publisher`=公式発行者 (例: Meta) / `official_host`=公式ドキュメントの host (例: react.dev) / `version` または `last_updated`=取得時点のドキュメント版・更新日 / `retrieved_at`=取得時刻 / `latest_checked_at`=現行版として最後に確認した時刻 / `source_url`=参照元 URL。`targets[]`=取得対象一覧 (C01 `spec-state.json` 由来、または C02 が特定した target_id 集合)。
 - **二層 × 検出 4 軸**:
-  - **層1 (形式) = C13 (`validate-source-citation.py`)**: `--targets <取得対象一覧>` と `--references <fetched-references.json>` を渡して Bash 実行し、exit code で判定する。
-    - exit0 = 形式 OK (全件対応・必須フィールド充足・host 文字列一致)。
-    - exit1 = 形式違反 (欠落 target / 必須フィールド `retrieved_at`・`source_url`・`official_publisher`・`official_host`・(`version`または`last_updated`)・`latest_checked_at` の空欠落 / `source_url` host が自己申告 `official_host` と不一致 / `target_id` 重複)。違反行を検出根拠に採る。
+  - **層1 (形式) = C13 (`validate-source-citation.py`)**: `--targets <取得対象一覧>` / `--references <fetched-references.json>` / `--repo-root <project-root>` を渡して Bash 実行し、exit code で判定する。
+    - exit0 = 形式・証跡 OK (全件対応・必須フィールド充足・host・時刻・証跡digest一致)。
+    - exit1 = 形式違反 (欠落 target / 必須フィールド / future・不正形式・一括固定の時刻 / repo外・欠落・digest不一致の取得証跡 / host 不一致 / target_id 重複)。違反行を検出根拠に採る。
     - exit2 = 入力不備 (ファイル欠落・JSON 破損) → `INDETERMINATE` へ寄せる。
     - **限界**: C13 の host 一致は「自己申告 `official_host` との文字列一致」まで。その host が本当に公式かは検査しないため、非公式サイトを申告どおり通し得る。この穴は層2 の非公式 host 判定で塞ぐ。
   - **層2 (内容鮮度) = WebSearch/WebFetch 再照合**:
@@ -36,11 +39,11 @@
 - **非担当 (境界)**: ヒアリングの進め方は C06 (`system-spec-hearing-auditor`)、マトリクス状態の妥当性は C07 (`system-spec-matrix-auditor`)、収集完了の最終ゲートは C05 (completeness-evaluator)。本責務は「取得済みドキュメントが公式かつ現行版か」だけを見る。
 
 ## Layer 3: インフラ層
-- **参照ファイル**: C02 出力の `fetched-references.json` (監査対象)、取得対象一覧 `targets` (`spec-state.json` の `targets[]` 等)。本 SSOT。
+- **参照ファイル**: C02 出力の `fetched-references.json` (監査対象)、取得対象一覧 `targets` (`spec-state.json` の `targets[]` 等)、公式 source 判定 SSOT `../references/official-source-catalog.md`。本 SSOT と catalog は開始時必読。
 - **ツール**: `Read` (SSOT: references と targets)、`Bash` (C13 `validate-source-citation.py` の実行と JSON 検査のみ・read-only/network:false)、`WebSearch` (公式ホストの裏取り・現行版の所在特定)、`WebFetch` (公式現行ページを GET し version/更新日を照合)。書込・POST・mutation は行わない。
-- **C13 実行形**: `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py --targets <取得対象一覧> --references <fetched-references.json>`。
+- **C13 実行形**: `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py --targets <取得対象一覧> --references <fetched-references.json> --repo-root $CLAUDE_PROJECT_DIR`。
 - **fetched-references.json 形状 (共有データ契約)**:
-  - `references[]` = `{target_id, retrieved_at, source_url, official_publisher, official_host, version または last_updated, latest_checked_at, summary}`。
+  - `references[]` = `{target_id, retrieved_at, source_url, official_publisher, official_host, version または last_updated, latest_checked_at, evidence_ref, evidence_sha256, summary}`。
   - `targets[]` = `[{target_id, ...}, ...]` または `["react", ...]` (文字列 id 配列も可)。
 
 ## Layer 4: 共通ポリシー層
@@ -78,4 +81,4 @@
 - 修正は実行せず、根拠だけを C02/C05 へ返す。
 
 ## Layer 7: ユーザーインタラクション層
-- ユーザー対話はない。自動監査結果として PASS・FAIL・INDETERMINATE と target 別根拠を返す。
+- ユーザー対話はない。自動監査結果として PASS・FAIL・INDETERMINATE と target 別根拠を返す。**応答の最終行は必ず `AUDIT_VERDICT: PASS`、`AUDIT_VERDICT: FAIL`、または `AUDIT_VERDICT: INDETERMINATE` のいずれか 1 行だけにする**。この marker は PostToolUse hook が実際の監査判定を C05 の receipt に束縛するための機械可読な証跡であり、本文中・コードブロック中へ重複して書かない。

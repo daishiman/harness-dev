@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
     "component_id": "C03",
-    "skill_md_sha256": "227715b085af8c09b4848ffd337ae2c0b3e5ed88c0761c82caa90e5603024ba6"
+    "skill_md_sha256": "9291fa42c54074121a1d8b027df171a5909ca4f93924eee3d1f865ed6b05c3f7"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-pr85",
+  "reviewer": "/root/fresh_verify_sync（実走を独立再評価。その他の既存試験記録は維持）",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -31,7 +31,7 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261031T2343-pr86/verdict.json",
         "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/transcript.jsonl",
         "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/goal-verdict.json",
         "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/task.md",
@@ -45,9 +45,9 @@
         "plugins/dev-graph/scripts/diff-github-issues.py",
         "plugins/dev-graph/scripts/diff-github-project-fields.py"
       ],
-      "observed": "live trial 20261013T0145-pr85（20261012T1947-pr85 の再試行）の verdict は、scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict はすべて PASS、nudge 0、gate_kind contractual で gate の応答は1回。verdict は live-trial-verdict.schema.json に通り（error 0）、skill_dir_tree_sha（edaa2b91…）は今の skill dir の tree sha と自分で計算して一致し、transcript_sha256 も自分で計算して一致した（247行）。trial-note の closure_matches_wtpy は true。transcript を自分で読んだ。L35 で Skill を起動し、L37 で SKILL.md が読み込まれた。L101-102 で validate-graph-schema.py は valid true。1回目の計画（L106-108）は、Issue が export 1・import 1、Project が links 2。export は guard を通った：preview（L139-140）→ CONFIRM の1行（L149、gate-sent.log に1回）→ hook の確認（L151）→ authorize（L158-159）→ execute（L161-162、#102 の issue-update）。import と link は R3 の fork（L182）が C02 で反映した（fork の transcript の L4-5 で update、L10-11 で link-github、graph_revision は 4 から 5）。2回目（L204-205）は、計画の前後で graph.json・github-sync-snapshot.json・tasks・adapter の sha が同じ（DIGESTS_UNCHANGED）で、diff-github-issues.py と diff-github-project-fields.py の計画はどちらも changes 0、converged true、unresolved_count 0、next converged、imports・exports・conflicts・confirmations・missing・held・skipped・links はすべて0。adapter の mutation_log は1件のまま（1回目の export だけ）。L210-211 で、node ごとの Issue 番号と (alias, project, item) は HEAD と同じ（stable_ids_equal True）。converged は changes と unresolved から決定論で決まり、欠落・衝突・フラグが残る間は converged にならないことを SyncProgressTest が確かめる（今回 PASS）。独立した dev-graph-sync-conflict-verifier（transcript 29行）は L215 と L232 で 条件付きの PASS。guard.jsonl は36行すべて allow、out/status.json は PASS。fixture の変更（seed の写し、rekey、fake-gh の修正、TMPDIR、伏せ字）は orchestrator が行ったもので、fixture-provenance.json と trial-note に記録がある。評価者の skill_defects（last-synced snapshot の github-sync-snapshot.json を読み書きする script が無く、Issue の計画は base の無い 2-way）は、被験自身も L193-203 で気づいている。評価者が書くとおり、OUT1 の文（2回目の changes 0 と converged true）は満たしているので blocker にはしない。この欠陥の扱いは OUT7 に書いた。留意：verifier は Issue の計画を 3-way と説明したが、実装は updated_at の 2-way で、これは LLM の説明の誤り。verifier の task-notification から hook が intent receipt を作ったが、被験はそれを使っていない（skill-governance-adapters の hook の穴で、sync の基準の外）。R7 の C26 reconcile は、この fixture に PR の linkage が無いので trial では通っていない。",
-      "scenario_id": "C03-OUT1-positive-second-sync-zero-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85/verdict.json"
+      "observed": "live trial 20261013T0145-pr85（20261012T1947-pr85 の再試行）の verdict は、scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2、tier live、downgrade なし、goal_verdict PASS で blockers なし、overall の launch・completion・goal_fit・verdict はすべて PASS、nudge 0、gate_kind contractual で gate の応答は1回。verdict は live-trial-verdict.schema.json に通り（error 0）、skill_dir_tree_sha（edaa2b91…）は今の skill dir の tree sha と自分で計算して一致し、transcript_sha256 も自分で計算して一致した（247行）。trial-note の closure_matches_wtpy は true。transcript を自分で読んだ。L35 で Skill を起動し、L37 で SKILL.md が読み込まれた。L101-102 で validate-graph-schema.py は valid true。1回目の計画（L106-108）は、Issue が export 1・import 1、Project が links 2。export は guard を通った：preview（L139-140）→ CONFIRM の1行（L149、gate-sent.log に1回）→ hook の確認（L151）→ authorize（L158-159）→ execute（L161-162、#102 の issue-update）。import と link は R3 の fork（L182）が C02 で反映した（fork の transcript の L4-5 で update、L10-11 で link-github、graph_revision は 4 から 5）。2回目（L204-205）は、計画の前後で graph.json・github-sync-snapshot.json・tasks・adapter の sha が同じ（DIGESTS_UNCHANGED）で、diff-github-issues.py と diff-github-project-fields.py の計画はどちらも changes 0、converged true、unresolved_count 0、next converged、imports・exports・conflicts・confirmations・missing・held・skipped・links はすべて0。adapter の mutation_log は1件のまま（1回目の export だけ）。L210-211 で、node ごとの Issue 番号と (alias, project, item) は HEAD と同じ（stable_ids_equal True）。converged は changes と unresolved から決定論で決まり、欠落・衝突・フラグが残る間は converged にならないことを SyncProgressTest が確かめる（今回 PASS）。独立した dev-graph-sync-conflict-verifier（transcript 29行）は L215 と L232 で 条件付きの PASS。guard.jsonl は36行すべて allow、out/status.json は PASS。fixture の変更（seed の写し、rekey、fake-gh の修正、TMPDIR、伏せ字）は orchestrator が行ったもので、fixture-provenance.json と trial-note に記録がある。評価者の skill_defects（last-synced snapshot の github-sync-snapshot.json を読み書きする script が無く、Issue の計画は base の無い 2-way）は、被験自身も L193-203 で気づいている。評価者が書くとおり、OUT1 の文（2回目の changes 0 と converged true）は満たしているので blocker にはしない。この欠陥の扱いは OUT7 に書いた。留意：verifier は Issue の計画を 3-way と説明したが、実装は updated_at の 2-way で、これは LLM の説明の誤り。verifier の task-notification から hook が intent receipt を作ったが、被験はそれを使っていない（skill-governance-adapters の hook の穴で、sync の基準の外）。R7 の C26 reconcile は、この fixture に PR の linkage が無いので trial では通っていない。\n2026-10-31再評価: eval-log/dev-graph/run-dev-graph-sync/live-trial/20261031T2343-pr86/verdict.json の実走証跡と成果を別コンテキストで確認しPASS。以前のrunの観測は過去の記録として維持した。",
+      "scenario_id": "C03-OUT1-positive-second-sync-zero-r2",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261031T2343-pr86/verdict.json"
     },
     "OUT2": {
       "status": "PASS",

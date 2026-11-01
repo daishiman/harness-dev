@@ -1,0 +1,34 @@
+{
+  "responsibility_id": "R0-context",
+  "agent": "run-dev-graph-system-spec/R0-context",
+  "mode": "independent-readonly-verification",
+  "loop": 1,
+  "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "10ba6d5e72d17f2869c1ad970d7b87513775474787ee8445031e873d61705f3c", "sha256_match": true},
+  "evidence": {
+    "repo_root_equals_content_roots_repository": true,
+    "system_spec_realpath": "system-spec (inside repo_root, is_symlink=false, real directory)",
+    "symlinks_under_system_spec": 0,
+    "broken_links": 0,
+    "git_common_dir": {"git_rev_parse": ".git", "receipt": "<repo_root>/.git", "match": true},
+    "git_toplevel_matches_repo_root": true,
+    "resolve_repo_context_read_vs_receipt": {"exit": 0, "repo_root": true, "repository_id": true, "git_common_dir": true, "git_dir": true, "worktree_id": true, "head_sha": true, "plugin_source": true, "content_roots.system_spec": true},
+    "lineage_gate": {"exit": 0, "status": "pass", "checked": 0, "checked_node_ids": [], "violations": []},
+    "graph_node_count": 0,
+    "resume_decision": "checked=0 -> new import into dev-graph (no imported nodes to preserve)",
+    "preflight_input_digests": {"count": 16, "mismatches": 0},
+    "notes": ["system-spec/ is untracked in git (HEAD commit is empty); not a containment violation", "receipt diagnostics: default_branch_fallback_main"]
+  },
+  "checklist": {
+    "common_5.3_inputs_verified": "YES",
+    "common_5.3_output_shape_and_authority": "YES",
+    "common_5.3_zero_boundary_violations": "YES",
+    "R0_system_spec_realpath_in_caller_repo_identity_match": "YES",
+    "R0_lineage_gate_exit0_and_checked_decides_new_or_resume": "YES"
+  },
+  "blockers": [],
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "delta_from_original": "none",
+  "merged_directive_for_next": "R0 PASS; pass the receipt to R1/R2. R2 should resume elicit and continue with doc-fetch/compile/evaluator. Dev-graph import is a new import (checked=0).",
+  "drift_signal": "none",
+  "verdict": "PASS"
+}

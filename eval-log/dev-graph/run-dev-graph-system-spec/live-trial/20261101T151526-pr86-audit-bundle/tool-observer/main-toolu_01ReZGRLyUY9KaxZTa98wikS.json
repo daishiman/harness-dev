@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2d731c02-ddd6-4848-b811-04d43dee96b4",
+      "line": 623,
+      "prefix_bytes": 4229452,
+      "prefix_sha256": "c9977d4bd4108d261917d473ec210856473ec7606a26c470a494209808b6fc30",
+      "timestamp": "2026-11-01T06:35:46.399Z"
+    },
+    "result": {
+      "uuid": "aa7b6b44-eff8-4a7b-b5e9-f329454d8349",
+      "line": 624,
+      "prefix_bytes": 4232773,
+      "prefix_sha256": "8db4a93fcea88f2654f00bbd078409b536a2085b45e3b7dccef0b57484fb2a24",
+      "timestamp": "2026-11-01T06:35:48.991Z"
+    }
+  },
+  "tool_use_id": "toolu_01ReZGRLyUY9KaxZTa98wikS",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nsrc=open(\"plugins/dev-graph/scripts/build-graph-node.py\",encoding=\"utf-8\").read().splitlines()\nfor i,l in enumerate(src,1):\n  if \"SPEC_EVALUATOR\" in l and \"=\" in l and \"!=\" not in l or \"SPEC_IMPORT_KINDS =\" in l or \"def main\" in l or \"add_argument\" in l: print(i,l[:220])\nsrc=open(\"plugins/dev-graph/scripts/validate-source-lineage.py\",encoding=\"utf-8\").read().splitlines()\nfor i,l in enumerate(src,1):\n  if \"imported_at\" in l or \"REQUIRED\" in l: print(\"L\",i,l[:200])\n'",
+    "description": "Find evaluator constant and CLI args"
+  },
+  "is_error": false,
+  "tool_result_content": "79 SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n80 SPEC_IMPORT_KINDS = {\"specification\", \"architecture\"}\n1510         command.add_argument(\"--repo-root\", required=True)\n1511         command.add_argument(\"--input\", required=True, help=\"repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}\")\n1512         command.add_argument(\"--config\", default=\".dev-graph/config.json\")\n1513         command.add_argument(\"--dry-run\", action=\"store_true\")\n1519     parser.add_argument(\"--operation\", required=True, choices=[LIFECYCLE_OPERATION])\n1520     parser.add_argument(\"--request\", required=True, help=\"<git-common-dir>/dev-graph/completion-receipts/*.writer-request.json\")\n1521     parser.add_argument(\"--receipt\", required=True, help=\"sibling path the applied receipt is written to\")\n1522     parser.add_argument(\"--repo-root\", default=\".\", help=\"C26 starts the consumer with cwd = repo root\")\n1523     parser.add_argument(\"--config\", default=\".dev-graph/config.json\")\n1527 def main(argv: list[str] | None = None) -> int:",
+  "tool_use_result": {
+    "stdout": "79 SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n80 SPEC_IMPORT_KINDS = {\"specification\", \"architecture\"}\n1510         command.add_argument(\"--repo-root\", required=True)\n1511         command.add_argument(\"--input\", required=True, help=\"repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}\")\n1512         command.add_argument(\"--config\", default=\".dev-graph/config.json\")\n1513         command.add_argument(\"--dry-run\", action=\"store_true\")\n1519     parser.add_argument(\"--operation\", required=True, choices=[LIFECYCLE_OPERATION])\n1520     parser.add_argument(\"--request\", required=True, help=\"<git-common-dir>/dev-graph/completion-receipts/*.writer-request.json\")\n1521     parser.add_argument(\"--receipt\", required=True, help=\"sibling path the applied receipt is written to\")\n1522     parser.add_argument(\"--repo-root\", default=\".\", help=\"C26 starts the consumer with cwd = repo root\")\n1523     parser.add_argument(\"--config\", default=\".dev-graph/config.json\")\n1527 def main(argv: list[str] | None = None) -> int:",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

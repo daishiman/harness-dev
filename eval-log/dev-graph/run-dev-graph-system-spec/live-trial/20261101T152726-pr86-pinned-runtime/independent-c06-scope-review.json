@@ -1,0 +1,115 @@
+{
+  "status": "C06_SCOPE_REVIEW_COMPLETE_FINAL_RUN_PENDING",
+  "evaluator_id": "/root/review_sysspec122_fresh",
+  "conclusion": "AUDIT_SCOPE_OVEREXTENSION",
+  "scope": "122 raw C06 a1449746db8c235e1最終応答のqa-009/qa_refs検出だけ。最終goal評価でも他のC06全所見の再評価でもない。",
+  "native_result_preserved": "FAIL",
+  "native_stream": {
+    "path": "/tmp/pr86-sysspec122-c06-native.jsonl",
+    "bytes": 761558,
+    "sha256": "a811b9fd44d157f975a817da31c7782f5cc14c26097378ad4ff40d0fa8988571",
+    "original_path": "/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec122-fx/062ed4b3-73fa-4468-be23-977e38275da5/subagents/agent-a1449746db8c235e1.jsonl",
+    "final_line": 55
+  },
+  "artifacts": {
+    "native_final": "/tmp/pr86-sysspec122-c06-final.txt",
+    "unaltered_audit_json": "/tmp/pr86-sysspec122-c06-audit-original.json",
+    "unaltered_aggregate_result": "/tmp/pr86-sysspec122-c06-aggregate-original.json"
+  },
+  "source_authorities": [
+    {
+      "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md",
+      "sha256": "9521a9048ef144a307ee50508dc16895b86c105a1891a6d805669b3fa82f2e83"
+    },
+    {
+      "path": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/aspect-criteria.md",
+      "sha256": "e01bb2d670a5d9e6e368fd0362edb6ecf94947c51d4dcc2d2b8a4fa2bda96235"
+    },
+    {
+      "path": "plugins/system-spec-harness/skills/run-system-spec-elicit/references/spec-state-contract.md",
+      "sha256": "ab369d9b96d76dae8b10ec45832409eb51aadd8b5fcca58d06bc65bd3d4b5789"
+    }
+  ],
+  "input_observed": {
+    "state_sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+    "cell": "ui-ux/web",
+    "primary_qa_ref": "qa-003",
+    "primary_exists": true,
+    "auxiliary_qa_refs": [
+      "qa-009",
+      "qa-016",
+      "qa-019",
+      "qa-020",
+      "qa-021",
+      "qa-022",
+      "qa-023",
+      "qa-028",
+      "qa-o1-fixture-v3"
+    ],
+    "qa009_exists": true,
+    "qa009_superseded_by": "qa-019",
+    "replacement_exists": true,
+    "replacement_basis": "user-decision",
+    "replacement_answered_at": "2026-10-12T00:16:45Z",
+    "confirmed_primary_consumers_of_qa009": [],
+    "effective_source_refs": null,
+    "raw_state_observation": "rawの4成功Read範囲(1–721、722–1442、1436–1835、2060–2173)は現在stateの対応行と全て一致。当該cell/qa-009/qa-019を原本と現fileで照合した。全stateのRead被覆判定は今回のscope外。"
+  },
+  "reasoning": [
+    {
+      "authority": "R6 Layer2 軸4",
+      "requirement": "確定セルのqa_refが存在し、その参照先qa_log IDが実在するか。欠落・danglingを検出。",
+      "observation": "主qa_ref=qa-003も補助qa-009も実在する。C06自身も主qa_ref全8件・qa_refs全件が実在しdanglingなしと報告。"
+    },
+    {
+      "authority": "R6 Layer2 置き換え済みの問/active consumer、Layer5.3",
+      "requirement": "active consumerは確定セルqa_refまたはeffective_source_refsのqa_ref。置換済み問の有効性とactive consumerを数える。",
+      "observation": "qa-009を主qa_refに持つ確定セル0、schema1.0でeffective_source_refsなし。C06は有効置換と認めながらqa_refsだけをactive consumerへ追加した。"
+    },
+    {
+      "authority": "spec-state-contract.md L396–406、特にL403",
+      "requirement": "supersede-qaは旧entryが主qa_refのままなら拒否するが、裏付けqa_refsからの参照は残してよい。",
+      "observation": "当該入力のqa-009保持は明示許可に一致する。安全側という一般原則でこの許可を覆して必須是正にする根拠がない。"
+    },
+    {
+      "authority": "aspect-criteria.md 1a",
+      "requirement": "有効置換は閉じた検出。軸2のmediumは補助qa_refsだけなら注記。非軸2mediumはFAILだが、まずその軸の正当な検出である必要がある。",
+      "observation": "許可された履歴参照を新しいtraceability mediumへ付け替えると、主たる接地根拠と補助根拠を分けた契約を迂回してFAILになる。軸4ラベルを付けただけでscopeの正当性が証明されるわけではない。"
+    },
+    {
+      "authority": "R6 重大度の例外",
+      "requirement": "補助根拠のdangling等、影響限定の真の根拠欠損はmediumとできる。",
+      "observation": "今回はdanglingでなく有効にsupersedeされた実在履歴。主根拠/置換先とも実在し、実際の入力不足の証拠は提示されていない。"
+    }
+  ],
+  "mechanical_reproduction": {
+    "command": [
+      "python3",
+      "-B",
+      "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py",
+      "--hearing",
+      "/tmp/pr86-sysspec122-c06-audit-original.json",
+      "--state",
+      "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec/spec-state.json"
+    ],
+    "exit_code": 1,
+    "declared": "FAIL",
+    "derived": "FAIL",
+    "blocking_count": 1,
+    "blocking_identity": [
+      {
+        "axis": "traceability",
+        "severity": "medium",
+        "qa_id": "qa-009",
+        "cell": "ui-ux/web"
+      }
+    ],
+    "meaning": "原本findingをそのまま与えるとFAILが忠実に再導出される。集約器の故障ではなく、監査が正本外のblocking findingを生成した意味判定の問題。"
+  },
+  "final_run_result": null,
+  "limits": [
+    "native FAIL・台帳・C05への入力・spec-state・sourceは変更していない。反実仮想のPASS reportは生成していない。",
+    "当該qa_refs保持に新入力や正本変更が必要とは認めない。",
+    "このscope判定だけでrunをPASSにしない。C05 PASS、正規C02取込、3観測等が未達のまま終了すればgoalはFAIL。終了原本まで最終run判定を留保する。"
+  ]
+}

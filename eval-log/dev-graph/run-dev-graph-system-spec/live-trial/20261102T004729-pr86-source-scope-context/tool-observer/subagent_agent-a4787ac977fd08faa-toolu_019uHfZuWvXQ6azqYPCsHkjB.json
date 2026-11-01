@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a4787ac977fd08faa",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "87582dc0-9a7b-474d-8dba-05563eca6866",
+      "line": 21,
+      "prefix_bytes": 194552,
+      "prefix_sha256": "2fb18cd1f808330f449b8d1cbeb605d7dce835dd572b3082d03b8f4306839f0d",
+      "timestamp": "2026-11-01T15:58:51.688Z"
+    },
+    "result": {
+      "uuid": "8deb1c69-90fd-4a7d-b9c7-9dd671199056",
+      "line": 23,
+      "prefix_bytes": 197863,
+      "prefix_sha256": "339b3930fab7cae52814c88a6cdae51efaf548abd691a9c45db4e6efcf39c6ce",
+      "timestamp": "2026-11-01T15:58:55.342Z"
+    }
+  },
+  "tool_use_id": "toolu_019uHfZuWvXQ6azqYPCsHkjB",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PLUGIN_ROOT=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/system-spec-harness; S=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec/spec-state.json; python3 \"$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix $S; echo \"exit=$?\"; python3 \"$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix $S --require-complete; echo \"exit=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

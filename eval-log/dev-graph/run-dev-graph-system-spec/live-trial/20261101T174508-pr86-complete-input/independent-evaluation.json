@@ -1,0 +1,90 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "B1 goal未達・未登録: final graph は graph_revision=0、nodes=[]。全rawの実tool呼出しに dev-graph:run-dev-graph-node は無く、C02登録・import receipt・R3検証も無い。specification/architecture のsource_lineage・confirmation_evidence.evaluated_digest・readiness completeを保持する取込成果を実証できない。C02未起動なので、その選択前例外の違反とは判定しない。",
+    "B2 compile全文取得不足: main L403でcompile Skillを起動し、L407の正規注入はSKILL本文（source L91–228）のみ。R1/R2/R3 promptsは全文取得済みだが、mainの全Read/Bash/Skill応答をcompile実行L441より前で照合するとcompile SKILL.md frontmatter L1–90は取得されていない。C19 R2は出力を作る委譲先のSKILL.md全文を出力前に読むことを要求する。L441で正規compilerが10ファイルを生成したため、gate-only例外は使えない。R2独立Agentの同じFAILを一次証拠から確認した。",
+    "B3 doc-fetch必要性の見落とし: fetch_needed=falseは既存targets4件とdeepened candidateだけを根拠にしている。確定infrastructure/backend/maintenance-opsの根拠とD4はKubernetes CronJobへ依存し、D4 options.evidence_refsはCronJob/PG SQL/FastAPI BackgroundTasksの具体URLを持つが、取得記録・retrieval-evidenceへ未接地。公開SS.24 doc-fetchの入力契約とR1-identifyは確定セルの外部技術とdecision evidenceを対象導出に含める。既存targetsだけを検査したC13 exit0で未取得を免除できない。",
+    "B4 C05の全Markdown意味評価が未履行: 真のC05 fork a53b7dbcは存在するが、実Read/Bash応答で全文を得た仕様Markdownはindexだけ。残る9章は見出しgrep、特定節のawk/sed、cut出力等に限定される。全10ファイル・全非空行を応答と照合して9章に未取得本文を確認し、C04 resource-map.yaml本文も未取得だった。C05 SKILL Step3/R1-scoreが要求する全Markdown直接読込と具体適用評価を、このreportのPASS・shape gate・3監査の実在で代替できない。",
+    "B5 C05の保存経路違反: observerの対象外であるWriteを全rawから別途確認した。a53b7dbc raw L170（uuid 4d2507ac-cc5e-4c34-82eb-64f6d6506c7f、toolu_01B1HMVyqpzJgGxC8gcmjyAz）でscratch/build_report.pyをWriteし、L171で実作成成功、L174で自作builderを実行してreportを出力した。公開SS.24 C05 allowed-toolsにWriteはなく、R1-score 4.3は評価出力をpython3のliteral Path＋quoted heredocのstdin無改変保存へ限定する。単なるJSON組立のstdout利用や正規production receipt writerではない。"
+  ],
+  "evaluator_id": "/root/review_sysspec112",
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec112"
+  },
+  "transcript_sha256": "9e5574a4aa4d84a422b4d96da4aa61085f93cadaff1ac2f6058d99445a655d64",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a9ce60299eabc8048.jsonl",
+    "transcript/subagents/agent-a53b7dbc1ab39108d.jsonl",
+    "tool-observer/index.json",
+    "tool-observer-source.py",
+    "observer-provenance.json",
+    "evidence-redaction.json",
+    "plugins-copy.json",
+    "closure-at-launch.txt",
+    "task.md",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-receipt.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-goal-spec.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/system-spec/spec-state.json",
+    "fx-final/tree/system-spec/fetched-references.json",
+    "fx-final/manifest.tsv",
+    "abort-reason.json",
+    "collection-note.json",
+    "poll-state.json",
+    "poll-normalization.json",
+    "tool-observer/main-toolu_01WjwQfCRdmn8tU4ufxHL1bQ.json",
+    "tool-observer/main-toolu_01KdRnNFCqD7VL4ZKwWKT42e.json",
+    "tool-observer/subagent_agent-a53b7dbc1ab39108d-toolu_014TBosjizvUzAoJnMv6xaFg.json",
+    "tool-observer/subagent_agent-a53b7dbc1ab39108d-toolu_01WUpuurLW1wbUvgZWj7PXCS.json",
+    "tool-observer/subagent_agent-a53b7dbc1ab39108d-toolu_01NxbB57q3iDzXtUKbnjBnfw.json"
+  ],
+  "observations": {
+    "1": "fx-eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "transcript.jsonl"
+  },
+  "criteria_observed": [
+    {
+      "id": "IN1",
+      "text": "system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる",
+      "status": "FAIL",
+      "observed": "閉じた周回1はmain L210でcoverage --require-complete --require-basis --require-foundation、source-citation、strict-artifact-readiness schemaの3 CLIが実exit0。L221でIN1 PASSを記録し、intermediate6必須キーと元goal/hash照合exit0。周回2はR2 FAIL後に閉じず、最終progressは周回1のまま。全run達成や周回2のIN1 PASSには拡張しない。",
+      "evidence_refs": [
+        "tool-observer/main-toolu_01EN91ojD64uJCtLejVp8HeM.json",
+        "tool-observer/main-toolu_01ABN9fy5JAiCQAhdTHD2w2k.json",
+        "fx-eval-log/run-dev-graph-system-spec-progress.json",
+        "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl"
+      ]
+    },
+    {
+      "id": "OUT1",
+      "text": "仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する",
+      "status": "FAIL",
+      "observed": "対象Skillと正規elicit/doc-fetch/compile/C05は実起動し、canonical compilerの今回の実行もある。しかしR2責務未達で、取込は未実施。graph.nodes=[]のため2 kindのlineage/evaluated_digest/readinessを検査できない。dev-graph側の同等生成ロジック複製をこのrunが導入した形跡は無いが、観測3の登録部分を空集合のままPASSにはしない。",
+      "evidence_refs": [
+        "tool-observer/index.json",
+        "fx-eval-log/run-dev-graph-system-spec/R2-delegate/verification.json",
+        "fx-final/tree/.dev-graph/state/graph.json"
+      ]
+    }
+  ],
+  "notes": [
+    "今回runの原本以外の過去trial raw/verdict/eval、独立input-reviewの結論は読んでいない。入力provenance/正規writerログはgivenの定義としてだけ使用した。合成QA/承認/D4を実利用者の発話・本番承認と扱っていない。",
+    "現行sourceを再照合: DG 0.1.26/SS 0.1.24、C19 SKILL SHA 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、behavior closure ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef、C05 SKILL SHA b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6。未公開.25の要件は使用していない。",
+    "observer parser SHA d0ac1e4c9dc5053bf5262bd779bcfe4de6ba1699bbc288352b07b0966fc79184のextractを使い、main+7 subagent全8 raw streamから162 eventを再構成。indexの全entry/順序と全event JSON、全stream bytes/SHA、source UUID/line/prefix bytes/SHAが一致。raw user/assistant UUIDの重複conflictは0。Dの全observer JSONは原本とbyte一致。公開8 transcriptのSHAはevidence-redactionのoriginal/redacted SHAと全一致。原本main SHAはa1c5f94e72e2f622f80f93f336b2b3ace2edaed4bf6398c2a3d352f90ea6f83b。",
+    "observer対象はRead/Bash/Skill/WebFetch/WebSearchとmetadata接地Skill注入だけ。Agent/Write/parent判断のabsenceは未実施の根拠にせず全rawの実user/assistant tool_use/tool_resultを別に照合した。thinking/api-request-blobは実行証拠から除外。",
+    "C05はforked-skill marker/metaとraw実体を持つ真のfork。C07→C06→C08をname/background指定なしで実起動し、host async受理後にそれぞれcompletion/台帳resolvedを待ってから次を起動した。3 dispatch(schema1.2)＋3 completion(schema1.3)をtoken/Agent id/session/親tool_use_idで照合し、raw最終応答SHAは3 completion SHAと一致。receiptもcompletion digestに束縛され、独立aggregate --report --spec-dir --fork-ledger --sessionの再検査はexit0。ただし機械層の正しさはB4/B5を免除しない。",
+    "C05 artifact_snapshot 12 pathのdigestが収集最終treeと一致し、全10 Markdownを含む。resume receiptはcallerが要求しておらず、無いことを欠陥にしていない。",
+    "R2のmain処理Bashはelicit後からC05起動前まで13/13が固定C24 rootのexport/cd/pwd prefixに一致。helper exit0のskill_argsとC05実argsが一致。compile OUT1はscratch隔離で63 passed、caller tree before/after digest一致。これらの成立もB2/B3と独立。",
+    "原本の最終main実応答L763はR2二つのFAILを認め、C02停止と正規回復の検討を述べてturnを終了した。修復実行・周回2閉鎖・status.json・DONE行は記録されていない。outは空。orchestratorがその後ABORTEDとして保存した部分snapshotであり、被験者の完了宣言や正常poll DONEではない。最終cleanup/reapは本評価の収集scope外であり未実施と断定しない。",
+    "通常acceptanceでproof model要件は課していない。scenario r2の3観測と3300秒/23000000 token予算は不変。公表poll elapsedはceil補正1765秒（原本1764秒、boot epoch不変）で、時間予算超過を理由にしていない。",
+    "この詳細JSONは依頼された追加fieldを含む。live-trial-verdict.pyの正式goal-evaluationへ渡す際はresult/blockers/evaluator/transcript_sha256/evidence_refsの5 keyだけを同内容で射影すること。"
+  ]
+}

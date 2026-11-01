@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "67cb8698-bf9e-450b-91f0-d1a94ebf4e66",
+      "line": 469,
+      "prefix_bytes": 2318189,
+      "prefix_sha256": "18cc072fe218d3218ca702824c15a546cd6252b83b5ca09ca43baac7542c7c48",
+      "timestamp": "2026-11-01T03:36:46.263Z"
+    },
+    "result": {
+      "uuid": "0d64d5e8-4330-4770-ac21-91f6981eb4fa",
+      "line": 473,
+      "prefix_bytes": 2326173,
+      "prefix_sha256": "e58af011b0808695aae555624558ed74faa019bd7b58e60648ae05ced1818620",
+      "timestamp": "2026-11-01T03:36:48.669Z"
+    }
+  },
+  "tool_use_id": "toolu_014DL49yGrSEgAukyCMw9zVk",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,hashlib\np='eval-log/system-spec-completeness-report.json'\nb=open(p,'rb').read();d=json.loads(b)\nprint('sha',hashlib.sha256(b).hexdigest())\nprint({k:(v if not isinstance(v,(dict,list)) else type(v).__name__) for k,v in d.items()})\nfor k in ('verdict','overall','spec_dir','output','gaps'):\n    print(k, d.get(k))\nPY\npython3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --help 2>&1 | head -20"
+  },
+  "is_error": false,
+  "tool_result_content": "sha e385804f5f995d718eb14b45054c68d5bc929b4522a894c9d16b11d687baf2e3\n{'evaluator': 'dict', 'spec_dir': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec', 'verdict': 'PASS', 'artifact_snapshot': 'dict', 'audit_delegations': 'list', 'aspects': 'dict', 'gate_results': 'list', 'findings': 'list', 'gaps': 'list'}\nverdict PASS\noverall None\nspec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\noutput None\ngaps []\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES",
+  "tool_use_result": {
+    "stdout": "sha e385804f5f995d718eb14b45054c68d5bc929b4522a894c9d16b11d687baf2e3\n{'evaluator': 'dict', 'spec_dir': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec', 'verdict': 'PASS', 'artifact_snapshot': 'dict', 'audit_delegations': 'list', 'aspects': 'dict', 'gate_results': 'list', 'findings': 'list', 'gaps': 'list'}\nverdict PASS\noverall None\nspec_dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\noutput None\ngaps []\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

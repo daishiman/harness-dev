@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-adb6ec99e2d464843",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5c36105d-1745-44fe-8e0f-736ffa8444cd",
+      "line": 23,
+      "prefix_bytes": 138059,
+      "prefix_sha256": "8857d4dfceb4e9e1d36df9e149d1dd40d7e67115a759d678a63405960e0b6628",
+      "timestamp": "2026-11-01T16:14:00.857Z"
+    },
+    "result": {
+      "uuid": "77148cb1-349a-4f03-a1cb-ec464f6a58b6",
+      "line": 24,
+      "prefix_bytes": 144388,
+      "prefix_sha256": "48b80e32c6a904ddc67aaf80db82375f84ea8d90c0e610800b3a7652b2d8695b",
+      "timestamp": "2026-11-01T16:14:04.740Z"
+    }
+  },
+  "tool_use_id": "toolu_01RmUR7wHVd81jUuqs2QySd6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && /Users/dm/miniconda3/bin/python3 -I -B - <<'E'\nimport json,hashlib,os\ng=json.load(open('.dev-graph/state/graph.json'))\nprint(\"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())\nfor n in g['nodes']:\n    p=n['file_path'];print(p,os.path.realpath(p).startswith(os.getcwd()+'/'),hashlib.sha256(open(p,'rb').read()).hexdigest())\n    sp=n['source_lineage']['source_path'];print(sp,hashlib.sha256(open(sp,'rb').read()).hexdigest(),n['source_lineage']['source_digest'])\n    print(open(p).read()[:600].split('\\n---')[0])\nE\nfor s in validate-source-lineage validate-graph-schema; do ls plugins/dev-graph/scripts/$s.py; done\n/Users/dm/miniconda3/bin/python3 -I -B plugins/dev-graph/scripts/validate-source-lineage.py --help 2>&1 | head -20\n/Users/dm/miniconda3/bin/python3 -I -B plugins/dev-graph/scripts/validate-graph-schema.py --help 2>&1 | head -20"
+  },
+  "is_error": false,
+  "tool_result_content": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\nspecs/billing-audit-system-spec.md True 9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620\nsystem-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\n---\ngraph_node_id: \"spec-billing-audit-system-spec\"\nartifact_kind: \"specification\"\nartifact_subtypes: []\ntitle: \"請求・監査統合 Web システム 仕様書 (system-spec index 取込)\"\nproject_id: \"billing-audit\"\ndomain: \"billing\"\nstatus: \"done\"\npriority: null\nstart_date: null\ntarget_date: null\niteration: null\nowners: []\ntags: []\nfile_path: \"specs/billing-audit-system-spec.md\"\ntemplate_id: \"specification\"\ntemplate_version: \"1.0.0\"\nconfirmation_status: \"confirmed\"\nevaluation_status: \"pass\"\nconfirmation_evidence: {\"evaluated_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"evaluator\": \"system-\narchitecture/billing-audit-system-architecture.md True ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166\nsystem-spec/00-requirements-definition.md 22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd 22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\n---\ngraph_node_id: \"arch-billing-audit-system-architecture\"\nartifact_kind: \"architecture\"\nartifact_subtypes: [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\ntitle: \"請求・監査統合 Web システム アーキテクチャ (要件定義書取込)\"\nproject_id: \"billing-audit\"\ndomain: \"billing\"\nstatus: \"done\"\npriority: null\nstart_date: null\ntarget_date: null\niteration: null\nowners: []\ntags: []\nfile_path: \"architecture/billing-audit-system-architecture.md\"\ntemplate_id: \"architecture\"\ntemplate_version: \"1.0.0\"\nconfirmation_status: \"confirmed\"\nevaluation_status: \"pass\"\nconfirmation_evidence: {\"evaluated_digest\": \"22d455478633a2846\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/validate-graph-schema.py\nTraceback (most recent call last):\n  File \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/scripts/validate-source-lineage.py\", line 28, in <module>\n    from _common import ContractError, contained, dump, load_json\nModuleNotFoundError: No module named '_common'\nTraceback (most recent call last):\n  File \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/scripts/validate-graph-schema.py\", line 32, in <module>\n    from _common import ContractError, contained, dump, load_json\nModuleNotFoundError: No module named '_common'",
+  "tool_use_result": {
+    "stdout": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\nspecs/billing-audit-system-spec.md True 9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620\nsystem-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\n---\ngraph_node_id: \"spec-billing-audit-system-spec\"\nartifact_kind: \"specification\"\nartifact_subtypes: []\ntitle: \"請求・監査統合 Web システム 仕様書 (system-spec index 取込)\"\nproject_id: \"billing-audit\"\ndomain: \"billing\"\nstatus: \"done\"\npriority: null\nstart_date: null\ntarget_date: null\niteration: null\nowners: []\ntags: []\nfile_path: \"specs/billing-audit-system-spec.md\"\ntemplate_id: \"specification\"\ntemplate_version: \"1.0.0\"\nconfirmation_status: \"confirmed\"\nevaluation_status: \"pass\"\nconfirmation_evidence: {\"evaluated_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\", \"evaluator\": \"system-\narchitecture/billing-audit-system-architecture.md True ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166\nsystem-spec/00-requirements-definition.md 22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd 22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\n---\ngraph_node_id: \"arch-billing-audit-system-architecture\"\nartifact_kind: \"architecture\"\nartifact_subtypes: [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\ntitle: \"請求・監査統合 Web システム アーキテクチャ (要件定義書取込)\"\nproject_id: \"billing-audit\"\ndomain: \"billing\"\nstatus: \"done\"\npriority: null\nstart_date: null\ntarget_date: null\niteration: null\nowners: []\ntags: []\nfile_path: \"architecture/billing-audit-system-architecture.md\"\ntemplate_id: \"architecture\"\ntemplate_version: \"1.0.0\"\nconfirmation_status: \"confirmed\"\nevaluation_status: \"pass\"\nconfirmation_evidence: {\"evaluated_digest\": \"22d455478633a2846\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/validate-graph-schema.py\nTraceback (most recent call last):\n  File \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/scripts/validate-source-lineage.py\", line 28, in <module>\n    from _common import ContractError, contained, dump, load_json\nModuleNotFoundError: No module named '_common'\nTraceback (most recent call last):\n  File \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/scripts/validate-graph-schema.py\", line 32, in <module>\n    from _common import ContractError, contained, dump, load_json\nModuleNotFoundError: No module named '_common'",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

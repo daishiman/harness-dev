@@ -59,10 +59,11 @@
 | review_workspace | path | yes | 観察ログ保存先 |
 | variable_contract | path | yes | ./references/variable-template-contract.md |
 
-### 2.4 出力契約 (成果物 2 点)
-- 成果物1 `review_workspace/raw_observations.json`: schema `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠
+### 2.4 出力契約 (payload 2 点)
+- `raw_observations`: schema `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠 JSON payload
   - 必須: `purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`
-- 成果物2 `eval-log/<plugin>/<skill>/elegant-review/<run-id>/shared_state.md`: 先行 context 要約 200 字以内 (log_dir 配下固定パス、SS-006)。Phase2 ファンアウト中継の handoff 兼 completion_signal (file-exists) 判定対象。欠落時は Phase1 abort
+- `shared_state`: 先行 context 要約 200 字以内の Markdown payload
+- SubAgent はファイルへ書かない。orchestrator だけが同一 run directory の `raw_observations.json` / `shared_state.md` へ atomic materialize する (single-writer)
 
 ## Layer 3: インフラ層 (外部依存)
 
@@ -83,7 +84,7 @@
   - 背景: 観察フェーズでの編集は採点を汚染する
 
 ### 4.2 観測 / ロギング
-- 出力先: `review_workspace/raw_observations.json`
+- 出力先: orchestrator が `review_workspace/raw_observations.json` へ materialize（本 agent は payload のみ返す）
 - trace 連携: `eval-log/<plugin>/<skill>/elegant-review/<run-id>/elegant-review-trace.json` の phase1 セクションに概要記録
 - 反復上限: Layer 4 共通 (max_iterations=3、未充足は Phase2 開始前にエスカレーション)
 
@@ -112,7 +113,7 @@
 - [ ] concrete_values_to_abstract: 固有名詞・固定パス・URL・owner を `{value, kind}` 形式で列挙
 - [ ] scope_explicit: in_scope / out_of_scope を区別して記録
 - [ ] schema_conform: `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠
-- [ ] shared_state: 先行 context 要約を 200 字以内で `eval-log/<plugin>/<skill>/elegant-review/<run-id>/shared_state.md` (log_dir 配下固定パス) に成立させ Phase2 handoff を用意した
+- [ ] shared_state: 先行 context 要約を 200 字以内の payload として返し、orchestrator が log_dir 配下へ materialize できる
 - [ ] determinism: 同 target_path で facts が並び順含め一致 (sort 安定化)
 
 ### 5.4 実行方式 (固定手順を持たない動的生成ループ)
@@ -150,8 +151,8 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 read-only で `{{target_path}}` を観察し、`purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`
 を抽出する。編集系ツールは使用禁止 (検出時 exit 1)。採点・改善提案はしない。
 
-返す成果物は 2 点 (ファイル materialize は orchestrator 責務、subagent は read-only を維持):
-1. `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON → `review_workspace/raw_observations.json`
-2. 先行 context 要約 200 字以内の `shared_state.md` 本文 → `eval-log/<plugin>/<skill>/elegant-review/<run-id>/shared_state.md` (Phase2 handoff)
+返す payload は 2 点 (ファイル materialize は orchestrator 責務、subagent は read-only を維持):
+1. `raw_observations`: `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠 JSON
+2. `shared_state`: 先行 context 要約 200 字以内の Markdown 本文
 
-両成果物が揃わないと completion_signal (file-exists) 未充足で Phase1 は abort する。余計な前置き・後書き・思考過程出力は禁止。
+orchestrator は受領後に同一 run directory へ2点を atomic materialize する。両 payload が揃わないと Phase1 は abort する。余計な前置き・後書き・思考過程出力は禁止。

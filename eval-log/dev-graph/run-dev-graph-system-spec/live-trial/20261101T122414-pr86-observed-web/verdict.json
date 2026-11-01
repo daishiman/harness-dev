@@ -1,0 +1,159 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2-delegate 5.3第3項の毎Bash固定root契約が未達。main transcript line191/237/282/290/304（toolu_01XRu1weQJVPAzrGAh3XWrZS / 01XNqENHLW17qvvaeJAz1kJ9 / 01VNue35HGRcFovNe6Z6rF3X / 01HZuDUJFkKge4UWX1km2Yjc / 01QyesRcPfTrTvKEFpANgNyg）はelicit・doc-fetch・compileの提示/記録/検査を行うBashだが、各呼出しで固定receipt由来のCLAUDE_PROJECT_DIR exportがない。実compile等の取込元生成は正しい前置きで行われたため、root外生成が起きたという判定ではない。",
+      "B2: C05最終PASS前のdoc_verification全JSON再取得・一致確認が未達。C05 transcript line145 / toolu_011MRa3FtqZ3oaoYYkBfcxGF は初回のrepo_root・inputs各path/sha256・validator_path/sha256・argv・exit/stdout/stderrを持つ完全形を再構築せず、{refs,state,val,exit_code,stdout,stderr}へ縮約したDOC_SAME=Trueで代替した。C05 SMD99、R1/R2、doc-fetch R4 Layer3とtask132に反する。入力不変や機械exit0はこの実行義務を代替しない。",
+      "B3: 正式C02のpost-choice未達responsibilityのAgent forkが欠落。run-dev-graph-node SMD176/182は各周回の責務実行をforkへ出すが、main line623でstandardを記録し、line632で全checklist pendingを作成して同じmain Bashでcanonical addを実行している。C02担当の責務Agentは実際には0件。post-addのdev-graph-integrity-auditorとC19 R3 verifierは実行されたが、C02責務実行forkの代替ではない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "9df7854b7c80a3b679429cc151eb9f8c8d9eaab96b309131dcc91322eb838229",
+    "result": "FAIL",
+    "blockers": [
+      "B1: C19 R2-delegate 5.3第3項の毎Bash固定root契約が未達。main transcript line191/237/282/290/304（toolu_01XRu1weQJVPAzrGAh3XWrZS / 01XNqENHLW17qvvaeJAz1kJ9 / 01VNue35HGRcFovNe6Z6rF3X / 01HZuDUJFkKge4UWX1km2Yjc / 01QyesRcPfTrTvKEFpANgNyg）はelicit・doc-fetch・compileの提示/記録/検査を行うBashだが、各呼出しで固定receipt由来のCLAUDE_PROJECT_DIR exportがない。実compile等の取込元生成は正しい前置きで行われたため、root外生成が起きたという判定ではない。",
+      "B2: C05最終PASS前のdoc_verification全JSON再取得・一致確認が未達。C05 transcript line145 / toolu_011MRa3FtqZ3oaoYYkBfcxGF は初回のrepo_root・inputs各path/sha256・validator_path/sha256・argv・exit/stdout/stderrを持つ完全形を再構築せず、{refs,state,val,exit_code,stdout,stderr}へ縮約したDOC_SAME=Trueで代替した。C05 SMD99、R1/R2、doc-fetch R4 Layer3とtask132に反する。入力不変や機械exit0はこの実行義務を代替しない。",
+      "B3: 正式C02のpost-choice未達responsibilityのAgent forkが欠落。run-dev-graph-node SMD176/182は各周回の責務実行をforkへ出すが、main line623でstandardを記録し、line632で全checklist pendingを作成して同じmain Bashでcanonical addを実行している。C02担当の責務Agentは実際には0件。post-addのdev-graph-integrity-auditorとC19 R3 verifierは実行されたが、C02責務実行forkの代替ではない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec106"
+    },
+    "transcript_sha256": "0a2e3c771df2a37cf1f6a4ab7bf47d3a77f7671ad1d23350cd31f5effc770fa9",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-a54ba11346239bddc.jsonl",
+      "tool-observer/subagent_agent-a54ba11346239bddc-toolu_011MRa3FtqZ3oaoYYkBfcxGF.json",
+      "tool-observer/main-toolu_01UtkrrvGRrnbx9nRiKS2HoB.json",
+      "tool-observer/index.json",
+      "tool-observer-source.py",
+      "observer-provenance.json",
+      "evidence-redaction.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-eval-log/system-spec-completeness-report.json",
+      "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "50b5e3b8c7b4508ecf20ec0df53644aa27cc87ecfc8dd19b650eda12d02869c6",
+  "transcript_sha256": "0a2e3c771df2a37cf1f6a4ab7bf47d3a77f7671ad1d23350cd31f5effc770fa9",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1226.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1226.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "1981d4f97a9ea24c3e3baa662e9fbffada768bbb1d9c2053b882f326d67cd707",
+      "tokens": {
+        "input_tokens": 366,
+        "cache_creation_input_tokens": 1027529,
+        "cache_read_input_tokens": 13268956,
+        "output_tokens": 151068,
+        "total_tokens": 14447919,
+        "assistant_messages": 171,
+        "assistant_message_ids": 171,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 10,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

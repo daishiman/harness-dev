@@ -1770,6 +1770,40 @@ def test_agent_missing_tools():
     assert any("agent.tools must be non-empty" in f for f in findings)
 
 
+# tools 宣言は tools (文字列か配列) か tools-inherit: true のどちらか一方 (schema kindAgent の oneOf と同じ)
+_AGENT_MANIFEST = {
+    "name": "agent-x",
+    "description": "tools 宣言の形を確かめるエージェントの本文記述。十分な長さ。",
+    "kind": "agent",
+    "version": "1.0.0",
+    "owner": "team",
+    "isolation": "inherit",
+    "phase": "p1",
+}
+
+
+@pytest.mark.parametrize("decl", [
+    {"tools": "Read, Grep"},          # build-subagent.py の出力形 (カンマ区切り文字列)
+    {"tools": ["Read"]},
+    {"tools-inherit": True},
+])
+def test_agent_tools_declaration_accepted(decl):
+    valid, _, findings = M.validate_manifest({**_AGENT_MANIFEST, **decl})
+    assert valid is True, findings
+
+
+@pytest.mark.parametrize("decl,needle", [
+    ({"tools": ["Read"], "tools-inherit": True}, "exclusive"),
+    ({"tools-inherit": False}, "tools-inherit must be true"),
+    ({"tools": ""}, "agent.tools must be non-empty"),
+    ({"tools": []}, "agent.tools must be non-empty"),
+])
+def test_agent_tools_declaration_rejected(decl, needle):
+    valid, _, findings = M.validate_manifest({**_AGENT_MANIFEST, **decl})
+    assert valid is False
+    assert any(needle in f for f in findings), findings
+
+
 def test_command_entrypoint_resolved_ok(tmp_path):
     """entrypoint が実在 SKILL.md を指すなら finding 無し。"""
     plugin_root = tmp_path / "plugins" / "demo"

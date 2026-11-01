@@ -1,0 +1,81 @@
+{
+  "label": "sync86",
+  "source_fixture": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-sync",
+  "source_git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-sync/.git",
+  "fixture": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sync86/fx",
+  "head": "f8fb0616be6ca22ec6b94e41e73e10b8f61b5a4b",
+  "tracked_files_committed": 38,
+  "rekey": {
+    "repository_id": [
+      "local:sha256:3392565b6f2846f6d0c97d35f0c3bd0135b3982cf2cbeb95d02e8d66801b9979",
+      "local:sha256:84065559b06249add9438777b2d75259ed0aa93237361364cf341e54774ff134"
+    ],
+    "worktree_id": [
+      "wt_be49c8ccb7b424c8",
+      "wt_c7ed1437c34c1f78"
+    ]
+  },
+  "rekeyed_files": [
+    ".dev-graph/config.json"
+  ],
+  "unmatched_worktree_ids": [],
+  "excluded": [],
+  "note": "orchestrator による fixture 準備。trial の session 開始前に行い、被験 skill の挙動ではない。",
+  "replay_of": "PR85 の sync7 (eval-log/dev-graph/run-dev-graph-sync/live-trial/20261013T0145-pr85、scenario C03-OUT1-positive-second-sync-zero-fixture-standard-v2)。seed と fixture の作り方は同じで、scenario は正本 r2 (plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json の C03-OUT1-positive-second-sync-zero-r2) に替えた。",
+  "args_change": {
+    "previous": "sync --repo-root <FX> --binding github --adapter-fixture <FX>/github-adapter.json --repeat 2 (Skill 1 回)",
+    "now": "--repo-root <FX> を同じ args で Skill 2 回",
+    "why": "r2 の task_args_template は「--repo-root <contained-fixture-repo> を同じ入力で 2 回続けて実行する」で、flag の集合は {--repo-root} だけ。今の SKILL.md の argument-hint も [--repo-root PATH] [--dry-run] [--resolve-conflicts PATH] で、前回の sync・--binding・--adapter-fixture・--repeat は持たない。remote は args ではなく session の環境変数 DEV_GRAPH_GH=<FX>/tools/fake-gh.py で fixture の github-adapter.json に向ける (r2 の template と fixture_contract のとおり)。"
+  },
+  "post_rekey_commit": "rekey した tracked の .dev-graph/config.json を 2 つ目の commit (bb8656b) にした (sync2 から sync7 と同じ手順)",
+  "fake_gh_patch": {
+    "path": "tools/fake-gh.py",
+    "commit": "611f587 (fixture の 3 つ目の commit)。mode は seed のまま 755",
+    "restored_how": "sync7 の fx は plugins/ しか残っておらず git から取り出せなかった。sync7 の fixture-provenance.json の fake_gh_patch.unified_diff を seed の tools/fake-gh.py (sha256 6f63037f…、sync7 の sha256_before と一致) に git apply で当てた (lt/smoke/sync86-patch)。結果の sha256 が sync7 の sha256_after と一致したので、そのまま写した。作り直しではなく復元。",
+    "sha256_before": "6f63037f73f4104a9ffe2a17894ebd6a42440f740b5a7c28af21ad7193301c27",
+    "sha256_after": "025f9bddfb9d7200a5decab80b3e9ad48d2ec8882a495dcb6c877dde810816c7",
+    "matches_sync7_sha256_after": true,
+    "why": "seed の fake-gh は diff-github-project-fields.py の ITEM_QUERY と clearProjectV2ItemFieldValue に答えられない (PR85 sync1 で止まった)。gh-bridge.py・diff-github-issues.py・diff-github-project-fields.py は PR85 の受理 (3fb72347) から変わっていないので、sync2 から sync7 と同じ修正をそのまま使う。plugins/dev-graph と元 fixture は変えていない。"
+  },
+  "adapter": {
+    "path": "github-adapter.json",
+    "sha256": "8e74cc2df2a5e54a0f3eeda258177b400cd359cfcbc7268d8d9d5338c469f322",
+    "note": "seed のまま (seed の commit に入っている)。sync7 の記録にも adapter を変えた記述はない。"
+  },
+  "run_env": {
+    "file": "workdir/extra-env.txt",
+    "line": "DEV_GRAPH_GH=<FX>/tools/fake-gh.py",
+    "why": "lt-env.sh の既定の DEV_GRAPH_GH は lt/bin/gh (exit 4 の stub)。launch.sh が extra-env.txt の行を既定の後ろに足すので、この run だけ fixture の fake-gh に上書きされる。guard の execute は subprocess.run を env を指定せずに呼ぶので、session の DEV_GRAPH_GH が gh-bridge まで届く (読んで確かめた)。"
+  },
+  "session_layout": {
+    "session_cwd": "<RUN>/fx (sync3 から sync7 と同じ。UserPromptSubmit hook が fx の preview と照合できるように、session の cwd を fixture の root にする)",
+    "plugins": "mkrun.py sync86 run-dev-graph-sync --session-root fx で fx/plugins/ に 5 plugin を写した (閉包 d2c872bf715c…、W と一致)。mkseed.py は fx が空でないと止まるので、写しを <RUN>/plugins-hold へ mv で退け、mkseed の後に戻した。戻した後に closure.py と diff -rq で W と一致することを確かめた。",
+    "settings": "fx/.claude/settings.local.json (mksettings.py sync86 --session-root fx)",
+    "git_exclude": "fx/.git/info/exclude に /plugins/ と /.claude/ を足した。fixture の git status は clean"
+  },
+  "fixture_check": {
+    "when": "起動の前。被験の外で、fx/plugins の script を lt-env.sh と python3 -B で回した。",
+    "results": [
+      "C11 validate-graph-schema.py --graph fx/.dev-graph/state/graph.json --repo-root fx: rc=0、graph_validation pass・violation 0 (workdir/c11.json)",
+      "C24 resolve-repo-context.py --repo-root fx --mode write: rc=0 (workdir/c24.json)"
+    ],
+    "unchanged": "前後で fx のファイル (plugins/・.claude/・.git を除く 38 ファイル) の sha256 は同じ (workdir/fx-check-pre.sha と fx-check-post.sha)。graph.json は 0cd59052… で sync7 と同じ"
+  },
+  "smoke_offline": {
+    "where": "fx の写し lt/smoke/sync86-fx2 (写しの config.json の repository_id だけを写しの値に替えて commit)。この run の fx では試していない (adapter と github-adapter-calls.jsonl を変えないため)。lt/smoke/sync86-fx は --issue-plan を repo の外に置いて止まった 1 回目の写しで、使っていない。",
+    "script": "lt/smoke/sync86-kit/run-smoke.py。lt-env.sh に DEV_GRAPH_GH=<写し>/tools/fake-gh.py を足し、fx/plugins の script を python3 -B で呼んだ",
+    "gate": "external mutation guard (preview / hook-confirm / authorize / execute) はこの smoke では通していない。preview は receipt を書き、確認待ちの間は Bash を止めるため。export は計画の bridge_args を gh-bridge.py へ直接渡した。gate の流れは guard の code を読んで確かめただけ (CONFIRM_RE は ^CONFIRM EXTERNAL MUTATION ([0-9A-F]{24})$。python3 gh-bridge.py の argv は自然文の intent による自動承認の対象クラスに入らないので、challenge の確認が要る)",
+    "results": [
+      "1 回目の Issue 計画: exports 1 (#102 issue-update、title を local revision 2 へ)・imports 1 (tasks/T-SYNC-001 の title を remote revision 2 へ)・changes 2",
+      "export を当てた後: fake-gh の mutation は issue-edit 1 件だけ。import は C02 update で graph revision 3→4",
+      "計画し直し: Issue は changes 0・converged true。Projects (--issue-plan 付き) は exports 0・imports 0・links 2 (next=apply link_input)。C02 link-github で revision 4→5、その後は両計画とも converged",
+      "2 回目: Issue と Projects の両方で changes 0・converged true・unresolved_count 0、counts はすべて 0",
+      "2 回目の前後で graph・github-sync-snapshot.json・adapter の sha256 は変わらない。stable ID (node id、issue 101/102、item PVTI_…0101/0102) も同じ。snapshot ファイルは 1 回目の前から変わらない (d4a5c0a2…)"
+    ]
+  },
+  "gate_expectation": {
+    "count": 1,
+    "why": "smoke では 1 回目の export は Issue の 1 件だけで、Projects の export は 0。2 回目は changes 0 で mutation が無いので preview を作らない。sync7 の gate_response_count も 1"
+  },
+  "trust_note": "sync7 では、独立した git repo を cwd にすると親 dir の信頼を引き継がないため、起動の前に偽 HOME の .claude.json に projects[<FX>].hasTrustDialogAccepted=true を足していた。sync86 の準備ではこの登録をしていない (準備の書込み範囲の外)。"
+}

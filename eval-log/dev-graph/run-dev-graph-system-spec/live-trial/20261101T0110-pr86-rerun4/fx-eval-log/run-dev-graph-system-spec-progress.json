@@ -1,0 +1,63 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "loop": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json; R0 independent Agent verification eval-log/run-dev-graph-system-spec/R0-context/verification.json (PASS)"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "preflight-report.json; R1 independent Agent verification eval-log/run-dev-graph-system-spec/R1-preflight/verification.json (PASS)"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "elicit/doc-fetch(fetch_not_required)/compile/evaluator を system-spec-harness Skill で実行 (delegated-artifact-delivery.json, system-spec-completeness-report.json); R2 independent Agent PASS eval-log/run-dev-graph-system-spec/R2-delegate/verification.json"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "loop2: coverage exit0, source-citation exit0, evaluator report verdict PASS (sha256 f094d163…362d, spec_dir=<repo>/system-spec, artifact_snapshot 一致)"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "achieved",
+      "evidence": "C02 receipt .dev-graph/state/receipts/node-r000001-add.json; spec-billing-audit-system-spec / arch-billing-audit-system-architecture: lineage 6 field 非null, confirmation_evidence(evaluated_digest==source_digest==report snapshot), confirmed/pass/readiness complete; validate-source-lineage --node-id exit0 checked=2 (R3-import/lineage-gate.json); import report R3-import/import-report.json; R3 independent Agent PASS R3-import/verification.json; C02 integrity auditor PASS"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R1 Agent と R3 Agent が plugins/dev-graph に elicitation/compile/doc-fetch writer の複製0件を確認; features/ 空; plugins/ 作業ツリー差分0"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS"
+        },
+        {
+          "loop": 2,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "overall": "PASS"
+}

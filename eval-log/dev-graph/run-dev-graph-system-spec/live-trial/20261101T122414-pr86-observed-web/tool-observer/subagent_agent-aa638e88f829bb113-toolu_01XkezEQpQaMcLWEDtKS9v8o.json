@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-aa638e88f829bb113",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "46e66afe-6e6f-4d3e-b52e-8c314d0b2677",
+      "line": 67,
+      "prefix_bytes": 482919,
+      "prefix_sha256": "2de2f93ad2fb7ec0283b7f63740c9e3082511a792b2040b1a40f0010c9bac1ac",
+      "timestamp": "2026-11-01T03:39:13.446Z"
+    },
+    "result": {
+      "uuid": "817e677b-3742-4440-bab9-a77411553cd8",
+      "line": 68,
+      "prefix_bytes": 486539,
+      "prefix_sha256": "e81e12b278eda0b4cea19bafb9127b9dddd6303d0027d3de9bd73560051c4ab2",
+      "timestamp": "2026-11-01T03:39:16.093Z"
+    }
+  },
+  "tool_use_id": "toolu_01XkezEQpQaMcLWEDtKS9v8o",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=plugins/system-spec-harness; S=system-spec/spec-state.json; python3 -B $P/scripts/validate-coverage-matrix.py --matrix $S --require-complete --require-basis --require-foundation; echo cov_exit=$?; python3 -B $P/scripts/validate-source-citation.py --targets $S --references system-spec/fetched-references.json --state $S --repo-root \"$CLAUDE_PROJECT_DIR\"; echo cite_exit=$?; python3 -B $P/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --help 2>&1 | head -20"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov_exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite_exit=0\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov_exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite_exit=0\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

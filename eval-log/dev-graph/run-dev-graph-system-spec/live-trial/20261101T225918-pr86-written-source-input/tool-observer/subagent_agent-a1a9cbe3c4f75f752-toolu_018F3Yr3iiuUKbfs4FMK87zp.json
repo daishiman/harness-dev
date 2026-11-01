@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a1a9cbe3c4f75f752",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "924cd0d0-98bc-4681-b0cc-698d175f4e2e",
+      "line": 102,
+      "prefix_bytes": 1050935,
+      "prefix_sha256": "4e109a1065408305b38e9b5436734e7eb242fbc21decf981b8ce36b59160642a",
+      "timestamp": "2026-11-01T14:30:05.875Z"
+    },
+    "result": {
+      "uuid": "8bdfd75e-05bc-4a67-a666-79970179a6c6",
+      "line": 103,
+      "prefix_bytes": 1052044,
+      "prefix_sha256": "93468090fc8854e1a523d945814e332b42fe838f806d0b82ad5260c194564b3f",
+      "timestamp": "2026-11-01T14:30:07.843Z"
+    }
+  },
+  "tool_use_id": "toolu_018F3Yr3iiuUKbfs4FMK87zp",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "FX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx; cd $FX/plugins/dev-graph && git -C $FX ls-files plugins/dev-graph | wc -l; grep -rlE \"qa_log|hearing_progress|apply-spec-transition|compile-spec-doc|chapter-template|render_chapter|def (compile|elicit|interview|reask)\" --include=*.py . | head -20; echo ---; grep -rnE \"def (compile|elicit|interview|reask|render)\" --include=*.py . | head"
+  },
+  "is_error": false,
+  "tool_result_content": "       0\n(eval):1: no matches found: --include=*.py\n---\n(eval):1: no matches found: --include=*.py",
+  "tool_use_result": {
+    "stdout": "       0\n(eval):1: no matches found: --include=*.py\n---\n(eval):1: no matches found: --include=*.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

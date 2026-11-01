@@ -1,0 +1,41 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent fork (read-only except this record)",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "original_goal_hash_source": "eval-log/run-dev-graph-system-spec-goal-spec.json#original_goal_hash (matched)",
+  "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "ec53be0f55dc0264d09edceeca8041b7872fc294bcecaaca1d3da2a268bc087b", "matches_preflight_report": true, "head_sha": "82de149bad39a5d77089fc262a38a1a5ed1e4830"},
+  "availability_receipt": {
+    "plugin": "system-spec-harness",
+    "manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "name": "system-spec-harness",
+    "version": "0.1.24",
+    "range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "required_entry_points": {
+      "run-system-spec-elicit": {"declared": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md", "frontmatter_name_match": true, "bytes": 30860},
+      "run-system-spec-doc-fetch": {"declared": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md", "frontmatter_name_match": true, "bytes": 15305},
+      "run-system-spec-compile": {"declared": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md", "frontmatter_name_match": true, "bytes": 23330},
+      "assign-system-spec-completeness-evaluator": {"declared": true, "skill_md": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md", "frontmatter_name_match": true, "bytes": 33894}
+    }
+  },
+  "checklist": [
+    {"id": "R1-5.3-1", "item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる", "result": "YES", "evidence": "plugin.json name=system-spec-harness version=0.1.24; composition range '>=0.1.22 <1.0.0' (0.1.22<=0.1.24<1.0.0); package-contract.json entry_points.skills contains all 4; each skills/<id>/SKILL.md exists, non-empty, frontmatter name matches"},
+    {"id": "R1-extra-manifest", "item": "公式manifestにharness専用キーが混在していない", "result": "YES", "evidence": "plugin.json keys = name, version, dependencies, description, author (official manifest fields only); harness-specific data lives in references/package-contract.json"},
+    {"id": "R1-extra-nofallback", "item": "dev-graph 内に system-spec-harness 不在/不一致時の fallback・複製が実装されていない", "result": "YES", "evidence": "grep of plugins/dev-graph: 'fallback' hits are only hook-wiring project-fallback / bd list / MVP metadata, unrelated to system-spec-harness; no elicit/doc-fetch/compile/evaluator-equivalent files; SKILL.md L100/L188 and README L36 require stop without fallback; skill scripts dir has only build-evaluation-context.py"},
+    {"id": "common-5.3-1", "item": "宣言した入力が全て検証済みである", "result": "YES", "evidence": "manifest, version, composition range, package-contract exports, C24 receipt sha, goal hash all read and checked"},
+    {"id": "common-5.3-2", "item": "出力が宣言した shape と authority を満たす", "result": "YES", "evidence": "availability receipt above (version range + 4 entry points); parent preflight-report.json R1 block agrees (PASS, 0.1.24, same range, 4x true); range authority = composition, not planning-time '>=0.1.0'"},
+    {"id": "common-5.3-3", "item": "責務境界に反する read/write/delegation が0件である", "result": "YES", "evidence": "only reads within caller repo; sole write is this file; git status shows no changes under plugins/; no external plugin modified; no network; no delegation"}
+  ],
+  "status": "PASS",
+  "blockers": [],
+  "loop": {
+    "loop_index": 1,
+    "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+    "previous_directive": "loop1 start: verify R1 version range and 4 entry points",
+    "delta_from_original": "R1 preflight verified independently; spec generation (R2) and import (R3) remain",
+    "merged_directive_for_next": "R1 PASS: hand off to R2-delegate using system-spec-harness 0.1.24 via its 4 Skill entry points only",
+    "drift_signal": "none"
+  }
+}

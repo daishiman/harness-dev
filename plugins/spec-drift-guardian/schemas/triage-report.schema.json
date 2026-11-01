@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["issue", "base_commit", "source_commit", "diff_sha256", "complete", "impacts"],
   "properties": {
-    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "issue": {"type": ["integer", "string"], "description": "対象 tracker key (GitHub issue 番号または Beads issue id)"},
     "base_commit": {"type": "string", "minLength": 7, "description": "完全 diff の親 (base) commit sha"},
     "source_commit": {"type": "string", "minLength": 7, "description": "完全 diff の対象 (head) commit sha"},
     "diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "C11 が算出した完全 diff の digest。C03 verdict と一致必須"},

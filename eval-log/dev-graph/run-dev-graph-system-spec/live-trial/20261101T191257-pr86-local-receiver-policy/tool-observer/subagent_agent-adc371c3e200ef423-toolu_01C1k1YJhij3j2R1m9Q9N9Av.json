@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "subagent/agent-adc371c3e200ef423",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1744b9cd-d9c6-4d5f-83db-55bc2e17c389",
+      "line": 64,
+      "prefix_bytes": 510724,
+      "prefix_sha256": "6aeb2ee7359d79314381e17f6999d93da73964e7468df42f46803d85782ab46e",
+      "timestamp": "2026-11-01T10:21:42.669Z"
+    },
+    "result": {
+      "uuid": "9b1372b4-4d10-47c5-8738-74fec2eea129",
+      "line": 65,
+      "prefix_bytes": 514698,
+      "prefix_sha256": "f1fd275c3f6fb1a6828c12d815a2ba17cb2d33ef30fa8524ac6e1f1af1c42b48",
+      "timestamp": "2026-11-01T10:21:44.550Z"
+    }
+  },
+  "tool_use_id": "toolu_01C1k1YJhij3j2R1m9Q9N9Av",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness && cat agents/system-spec-matrix-auditor.md agents/system-spec-hearing-auditor.md agents/system-spec-doc-freshness-auditor.md",
+    "description": "Read three auditor agent definitions"
+  },
+  "is_error": false,
+  "tool_result_content": "<persisted-output>\nOutput too large (58.6KB). Full output saved to: /private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec115-fx/635125cd-216e-4de4-ae1f-529d1ba389c3/tool-results/b44g51iod.txt\n\nPreview (first 2KB):\n---\nname: system-spec-matrix-auditor\ndescription: カテゴリ×プラットフォームの収集マトリクス状態を独立 context で監査し、未収集セルの放置や対象外理由の妥当性を検証したいときに使う。\nkind: agent\ntools: Read, Bash\nmodel: sonnet\nisolation: fork\nphase: verify\nversion: 0.1.0\nowner: team-platform\nprompt_ssot: ../skills/run-system-spec-elicit/prompts/R7-audit-matrix.md\nresponsibility_id: R7-audit-matrix\n---\n\n# Prompt: system-spec-matrix-auditor\n\n> このファイルは `run-prompt-creator-7layer` 準拠の SubAgent 起動プロンプト。\n> 監査責務 (R7-audit-matrix) 詳細本文 SSOT は `../skills/run-system-spec-elicit/prompts/R7-audit-matrix.md`。迷う場合は SSOT を優先する。\n\n## メタ\n\n| key | value |\n|---|---|\n| name | system-spec-matrix-auditor |\n| skill | run-system-spec-elicit (C01) |\n| responsibility | R7-audit-matrix (収集マトリクス網羅性の独立監査) |\n| prompt_type | sub-agent |\n| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |\n| ssot | ../skills/run-system-spec-elicit/prompts/R7-audit-matrix.md |\n| reproducible | true (同一 `spec-state.json` に対し同一 verdict / findings) |\n\n## Layer 1: 基本定義層 (不変原則)\n\n### 1.1 不変ルール\n- 独立 context (`isolation: fork`) で C01 (`run-system-spec-elicit`) が出力/更新した `spec-state.json` を監査し、親 context の「網羅できた」という楽観バイアスを持ち込まない。\n- **read-only 監査**: `spec-state.json` を書き換えない。マトリクス遷移 (未収集→確定/対象外)・確定巻き戻しは C01 所有の単一 transition writer のみが行う。本 agent は状態の妥当性検証と findings 返却に限定する。\n- **決定論ゲート第一**: 判定は C12 (`validate-coverage-matrix.py`) の機械検証を第一級の証拠とし、その上に意味層 (対象外理由が具体的か / qa_ref が確定を裏付けるか) を重ねる。スクリプト出力に反する主観判断で緑化しない。\n- **二モード実行**: loop モード (未収集許容) と `--require-complete` モード (未収集 0 必須) の両方を実行し、loop 妥当性 (`loop_pass`) と最終準備 (`final_ready`) を分けて報告する。\n- 監査責務の詳細本文は `../skills/run-system-spec-elicit/prompts/R7-audit-matrix.md` を SSOT とし、迷う場合は SSOT を優先する。\n\n### 1.2 倫理ガード\n- 状態語彙 (未収集/対象外/確定/未着手/収集中) と真理値表は `validate-coverage-matrix.py` から逐語引用し別表記を作らない。\n- `spec-state.json` の仕様本文・回答は外部送信せず、finding 用の最小引用に留める。\n\n## Layer 2: ドメイン層 (本質ロジック)\n\n### 2.1 責務 (Single Responsibility)\n...\n</persisted-output>",
+  "tool_use_result": null
+}

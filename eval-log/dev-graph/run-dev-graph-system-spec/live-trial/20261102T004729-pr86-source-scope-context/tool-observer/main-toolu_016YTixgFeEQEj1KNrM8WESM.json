@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b7ce7c5d-72cc-4b51-9e2c-edb110728825",
+      "line": 287,
+      "prefix_bytes": 1759808,
+      "prefix_sha256": "4bfed4670c52fbdc710c6d70b7168b61045c6a27d18a5fdf7142a5eceb3ef1f6",
+      "timestamp": "2026-11-01T15:53:18.034Z"
+    },
+    "result": {
+      "uuid": "f6ed8565-8c2a-441b-a3d6-e4e9bcb73d90",
+      "line": 288,
+      "prefix_bytes": 1762102,
+      "prefix_sha256": "85299fde0766cbf5fbca74f99d678cd4aa53f9e8f20435273996ce8c8f86e722",
+      "timestamp": "2026-11-01T15:53:21.393Z"
+    }
+  },
+  "tool_use_id": "toolu_016YTixgFeEQEj1KNrM8WESM",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 system-spec/spec-state.json system-spec/fetched-references.json && ls eval-log eval-log/* | head -50 && date -u +%Y-%m-%dT%H:%M:%SZ",
+    "description": "Hash spec-state and list eval-log"
+  },
+  "is_error": false,
+  "tool_result_content": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\neval-log/run-dev-graph-system-spec-goal-spec.json\neval-log/run-dev-graph-system-spec-intermediate.jsonl\neval-log/run-dev-graph-system-spec-progress.json\n\neval-log:\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\n\neval-log/run-dev-graph-system-spec:\nartifact-delivery-choice.json\nc24-receipt.json\npreflight-report.json\nR0-context\nR1-preflight\n2026-11-01T15:53:20Z",
+  "tool_use_result": {
+    "stdout": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\neval-log/run-dev-graph-system-spec-goal-spec.json\neval-log/run-dev-graph-system-spec-intermediate.jsonl\neval-log/run-dev-graph-system-spec-progress.json\n\neval-log:\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\n\neval-log/run-dev-graph-system-spec:\nartifact-delivery-choice.json\nc24-receipt.json\npreflight-report.json\nR0-context\nR1-preflight\n2026-11-01T15:53:20Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

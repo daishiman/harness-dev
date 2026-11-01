@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-adad94b5b24f0f517",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2f0b1f4b-3304-4aec-bcc3-68dd51f361a1",
+      "line": 16,
+      "prefix_bytes": 110137,
+      "prefix_sha256": "dc777bbd0d7a0138081cd0a641c00863dc30c9e983a4e64e29057a53bf8cb45d",
+      "timestamp": "2026-11-01T03:31:24.929Z"
+    },
+    "result": {
+      "uuid": "a61f94c4-2602-4ddc-95f6-6bc3510667b0",
+      "line": 17,
+      "prefix_bytes": 113148,
+      "prefix_sha256": "b2285fee54167d817de844dee4adfaeb5738b131cc8edaaa016b22726f0686f2",
+      "timestamp": "2026-11-01T03:31:27.389Z"
+    }
+  },
+  "tool_use_id": "toolu_01GkQ3ru2AG2KvipfmRBzRik",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cat plugins/system-spec-harness/.claude-plugin/plugin.json; find plugins/dev-graph -name plugin-composition.yaml; cat plugins/system-spec-harness/references/package-contract.json | python3 -c \"import json,sys;d=json.load(sys.stdin);print(json.dumps(d.get('entry_points'),indent=1))\"; ls eval-log/run-dev-graph-system-spec/"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/dev-graph/plugin-composition.yaml\n{\n \"skills\": [\n  \"assign-system-spec-completeness-evaluator\",\n  \"ref-system-design-knowledge\",\n  \"run-skill-feedback\",\n  \"run-system-spec-compile\",\n  \"run-system-spec-doc-fetch\",\n  \"run-system-spec-elicit\"\n ],\n \"agents\": [\n  \"system-spec-doc-freshness-auditor\",\n  \"system-spec-hearing-auditor\",\n  \"system-spec-matrix-auditor\"\n ],\n \"commands\": [\n  \"spec-compile\",\n  \"spec-hearing-start\"\n ],\n \"hooks\": [\n  \"guard-confirmed-chapter-overwrite.py\",\n  \"record-audit-fork.py\"\n ]\n}\nc24-receipt.json\npreflight-report.json\nR2-delegate",
+  "tool_use_result": {
+    "stdout": "{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/dev-graph/plugin-composition.yaml\n{\n \"skills\": [\n  \"assign-system-spec-completeness-evaluator\",\n  \"ref-system-design-knowledge\",\n  \"run-skill-feedback\",\n  \"run-system-spec-compile\",\n  \"run-system-spec-doc-fetch\",\n  \"run-system-spec-elicit\"\n ],\n \"agents\": [\n  \"system-spec-doc-freshness-auditor\",\n  \"system-spec-hearing-auditor\",\n  \"system-spec-matrix-auditor\"\n ],\n \"commands\": [\n  \"spec-compile\",\n  \"spec-hearing-start\"\n ],\n \"hooks\": [\n  \"guard-confirmed-chapter-overwrite.py\",\n  \"record-audit-fork.py\"\n ]\n}\nc24-receipt.json\npreflight-report.json\nR2-delegate",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

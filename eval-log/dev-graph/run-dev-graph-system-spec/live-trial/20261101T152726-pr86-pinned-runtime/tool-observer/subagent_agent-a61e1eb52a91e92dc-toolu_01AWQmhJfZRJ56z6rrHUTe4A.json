@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a61e1eb52a91e92dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c0ae4e64-2d48-49dd-816f-026f7a248e03",
+      "line": 47,
+      "prefix_bytes": 289501,
+      "prefix_sha256": "2fb4a1361a7d15c74babbb9be56edcf2bb0b6097c3ec1bfde8d984dae8f968ad",
+      "timestamp": "2026-11-01T15:30:29.417Z"
+    },
+    "result": {
+      "uuid": "2b454ddf-511f-496a-a87f-35cee54ce82f",
+      "line": 48,
+      "prefix_bytes": 291596,
+      "prefix_sha256": "9af03f601d661723a90e041bc989ddaad7d7fb9ca0682f7f3edb329935b7ee14",
+      "timestamp": "2026-11-01T15:30:32.653Z"
+    }
+  },
+  "tool_use_id": "toolu_01AWQmhJfZRJ56z6rrHUTe4A",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "f=plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py; wc -l $f; grep -nE \"^def |^class |argparse|description=\" $f | cut -c1-160; grep -rnE \"def (apply_transition|compile|render_chapter|build_matrix)|elicit|transition\" plugins/dev-graph/scripts plugins/dev-graph/lib | cut -c1-160 | head"
+  },
+  "is_error": false,
+  "tool_result_content": "      98 plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\n15:import argparse\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:\n84:    parser = argparse.ArgumentParser(description=__doc__)\nplugins/dev-graph/scripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],\nplugins/dev-graph/scripts/register-package.py:488:    \"\"\"C02-owned durable projection consumed by C27 after each lease transition.\"\"\"",
+  "tool_use_result": {
+    "stdout": "      98 plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\n15:import argparse\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:\n84:    parser = argparse.ArgumentParser(description=__doc__)\nplugins/dev-graph/scripts/register-package.py:196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],\nplugins/dev-graph/scripts/register-package.py:488:    \"\"\"C02-owned durable projection consumed by C27 after each lease transition.\"\"\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

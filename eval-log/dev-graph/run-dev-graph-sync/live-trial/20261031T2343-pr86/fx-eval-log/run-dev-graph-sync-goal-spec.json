@@ -1,0 +1,15 @@
+{
+  "skill": "run-dev-graph-sync",
+  "original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側task仕様へ収束した状態になっている",
+  "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43",
+  "checklist": [
+    "全 Issue/Project 差分が3-way planの一分類と snapshot digest を持つ",
+    "task ごとの mutation authority が beads/C28、github/C12、none の一経路だけである",
+    "--dry-run の local/Beads/GitHub/Projects write count が0である",
+    "双方変更は manual conflict、片側変更は mapping どおりの反映 receipt を持つ",
+    "close/delete は graph_node_id を保持した tombstone/status transition になり、削除の tombstone を当てた後の再計画に missing_issues が残らない",
+    "default-branch merge evidence を満たす場合だけ done となり、dirty/feature worktree event は pending に残る",
+    "同一状態の二回目 sync の imports/exports/Project item add が0件である"
+  ],
+  "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5}
+}
