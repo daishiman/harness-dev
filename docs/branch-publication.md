@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-01T21:51:01.228579Z"
+updated_at: "2026-11-01T23:30:03.715426Z"
 depends_on: []
 related_nodes: ["spec-branch-publication", "arch-branch-publication", "feature-branch-publication", "task-branch-remaining-publication"]
 resource_scope: []
@@ -44,12 +44,12 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-01T21:51:01.228579Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T23:30:03.715426Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
 
-元ブランチの全残存をPR #87へ統合する際の実装・保存・検証の参照先をまとめる。
+元rootの全残存を実際にcommitし、最新main・既存PRを統合した同一履歴を公開してrootをcleanにする作業の参照先をまとめる。
 
 ## 対象読者
 
@@ -57,31 +57,33 @@ implementation_readiness: {"checked_at": "2026-11-01T21:51:01.228579Z", "missing
 
 ## 要約
 
-mainの修正を保持し、dev-graph・UBM・composition・SBBの差分は既存ownerの契約へ接続する。flyerは現行1.3.2を維持し、元1.3.1と素材42・検証85・計画25をsource snapshotとして保存する。
+元の1440差分はsource commit d71ac0a6へ記録し、mainとレビュー済みPRを元ブランチで統合する。raw eval-log1063件を元pathで保持し、flyer旧追加165件はdocs/branch-publication/source-files/plugins/flyer-studio/にraw保存して現行1.3.2を戻さない。最後に元ブランチとPRブランチを同一HEADへ揃えて両方をpushし、元rootのcleanを確認する。
 
 ## 本文
 
-[全件台帳](branch-publication/manifest.json) が元rootの1440 status entriesと元HEADの先行11変更を分類する。元版362ファイルは台帳のSHA付きsource-evidenceから [restore-source.py](branch-publication/restore-source.py) で復元する。現行pluginのファイルへ旧版を丸ごと戻さない。
+[全件台帳](branch-publication/manifest.json) と [worktree統合記録](branch-publication/worktree-integration.json) が、元rootの1440 status entries・元HEADの先行11変更・source commitのbytes・現行の統合先を対応付ける。source commitは元pathの正確な版を保持する。raw eval-logは元path、旧flyer165ファイルは [raw保存先](branch-publication/source-files/plugins/flyer-studio/) に置く。従来の元版362ファイルのZIP保存と [復元script](branch-publication/restore-source.py) も過去の保存証拠として残す。
 
-正規の説明は [仕様](../specs/branch-publication.md)、[責務設計](../architecture/branch-publication.md)、[macro feature](../features/branch-publication.md) を参照する。dev-graphのmaterialize/confirm-feature/link-beads/planned_features、parity単一builder、UBM3シート・Codex guard、JSON composition、SBB番号クリックの実行契約は各pluginの正本に残す。
+正規の説明は [仕様](../specs/branch-publication.md)、[責務設計](../architecture/branch-publication.md)、[macro feature](../features/branch-publication.md) を参照する。既存製品のCLI・描画・文書契約は各pluginの正本に残し、今回のscope修正で新しいHTTP/DB/製品仕様は追加しない。
 
 ## 決定事項
 
-新しいHTTP/DB/認証基盤は作らない。本資料4件はdraft/pending・tracker_binding noneで保持し、新しい13計画へ昇格しない。通常taskのpromotion writer不在を回避せず [draft task](../tasks/branch-remaining-publication.md) を保持し、既存harness-86khの拡張scopeで追跡する。未取得の承認は作らない。
+「PR作業ツリーだけ」「元worktreeを変更しない」という旧条件を、元rootで全残存をcommit・統合・clean化する確定scopeへ置き換える。文書/feature/taskはdraft/pending・tracker_binding noneを維持し、新しい13計画へ昇格しない。[draft task](../tasks/branch-remaining-publication.md) は既存harness-86khの拡張scopeで追跡する。未取得の承認、promotion、CI PASSは作らない。
 
 ## 運用・更新方法
 
-manifestの各元差分に反映/統合/元版保存/一時状態の扱いと実パスを記録し、未対応0件を別途検証する。版採番・push・CI・PR状態は親の実行証跡で確認する。C02文書の変更は直接編集せず同writerのpreview/applyを通す。
+親が最終commit後に元ブランチ devgraph/package-artifacts-and-feature-promotion とPRブランチ devgraph/task-gdg-reviewを同一HEADへ揃え、両remote branchへpushし、元ブランチの同名origin追跡先とroot cleanを実測する。対応先不明0件と、commit/push/CI/mergeの達成は別々に記録する。C02文書を直接編集せずpreview/applyを通し、古いreceiptの当時SHAは書き換えずfollowupを追記する。
 
 ## 関連資料
 
-- [統合タスク](../tasks/branch-remaining-publication.md)
-- [task契約の独立評価](branch-publication/task-contract-review.json)
+- [確定scopeの統合タスク](../tasks/branch-remaining-publication.md)
+- [元worktree統合記録](branch-publication/worktree-integration.json)
+- [全残存の案内](branch-publication/README.md)
+- [当時のtask契約評価](branch-publication/task-contract-review.json)：当時SHAの評価であり、今回修正したscopeへ自動流用しない。
 - [system-spec影響索引](../system-spec/branch-publication/README.md)
-- [仕様影響受領書](../system-spec/branch-publication/spec-impact-receipt.json)
+- [仕様影響受領書と追記](../system-spec/branch-publication/spec-impact-receipt.json)
 - [既存guide資料](../system-spec/guide-doc-generator/README.md)
 
 ## 変更履歴
 
-2026-11-02: 全残存統合の参照資料をC02単一writerで初回draft登録する。本文とreadinessが揃っても、公開・merge・タスクpromotionの完了を意味しない。
+2026-11-02: C02で4資料を初回draft登録。その後、利用者のgs明示により元1440差分そのもののcommit、元rootの統合・clean化、2ブランチの同一HEADと両pushを受入へ追加。過去receiptの当時SHAは保持し、新しいC02 updateの証拠をfollowupへ追記する。
 

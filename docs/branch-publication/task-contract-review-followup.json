@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "reviewed_at": "2026-11-01T23:32:29.090326+00:00",
+  "reviewer": "root（C02文書更新担当とは別の統合担当）",
+  "claim_type": "task-specification-contract",
+  "targets_sha256": {
+    "tasks/branch-remaining-publication.md": "77ba093e0003fe6ff0158ae71098dfdf4d56c7ebfe4e0919f9fe0cef01840e5e",
+    "specs/branch-publication.md": "30cee905f4f114876f3778220d23ab9dd0f716278868c08ede94801b763e6bce",
+    "architecture/branch-publication.md": "8107dd67f5b1f3e3ab1b1afd36aef904383532a0869f345b28db7688ef9bf31a",
+    "features/branch-publication.md": "ae2d16373e0ce10c42445c8a0b327cb46d6e631714da8c69a4fba8d227004379",
+    "docs/branch-publication.md": "e2574c0b488b8fae92c8919e0f6439581d2a21c35072f5448e08ad021d613f6c"
+  },
+  "scope": "gsで提示された元1440差分の実commit、元root clean、最新main/PR統合、両branch同一HEAD・同名追跡先・両pushの契約を評価。",
+  "four_conditions": {
+    "矛盾なし": {
+      "verdict": "PASS",
+      "basis": "5文書は元rootも変更・commit・clean化する確定scopeへ統一。旧版でmainを戻さず、CI未達と公開の成否を分離。"
+    },
+    "漏れなし": {
+      "verdict": "PASS",
+      "basis": "source commitの全1440bytes保存、raw eval1063、flyer旧追加165、競合解消、source/PR両branch公開、追跡先、検証・rollback・handoffを包含。"
+    },
+    "整合性あり": {
+      "verdict": "PASS",
+      "basis": "branch名・PR #87・base main・source commit・元path/保存先・docs参照を照合。C02 revision6の5 artifact SHAと実在ファイルを確認。"
+    },
+    "依存関係整合": {
+      "verdict": "PASS",
+      "basis": "remote→local main→元branch→PR branchの順序、C02単一writer、C28既存Beads、固定SHA付き非実行test写しの境界を保持。"
+    }
+  },
+  "execution_acceptance": "この評価は仕様契約の充足のみ。最終commit/push・両branch HEAD・root cleanは公開時に実測し、CI9対象をPASSに変換しない。",
+  "prior_review": "task-contract-review.jsonは当時SHAとともに保持し、現在の契約評価へ付け替えない。"
+}

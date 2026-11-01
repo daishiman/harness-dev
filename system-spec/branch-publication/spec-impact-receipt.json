@@ -250,6 +250,208 @@
     {
       "path": "docs/branch-publication/ci-contract-repair.json",
       "role": "CIで発覚した期待値/反復予算検査の修復。live証跡9件の未達を保持。"
+    },
+    {
+      "id": "root-worktree-commit-scope-correction",
+      "recorded_at": "2026-11-01T23:31:23.245971Z",
+      "impact": "作業scope・履歴保存・公開受入条件の修正。新HTTP/DB/製品仕様は追加しない。",
+      "scope_authority": "利用者のgs明示（親からの引継ぎ）: 元rootの1440差分そのものをcommitし、rootをcleanにしてPR #87へ上げる。",
+      "supersedes_for_current_scope": [
+        "初回受領書のsource_preservation.source_root_unchangedは初回の作業時点の記録として保持する。今回の元rootには適用しない。",
+        "正規文書の『PR作業ツリーだけ』『元worktreeを変更しない』は今回の確定scopeで置き換える。"
+      ],
+      "scope": {
+        "working_root": "/Users/dm/dev/dev/個人開発/harness",
+        "source_commit": "d71ac0a67b6dc906254cfa2a32cb00011c1cb8ec",
+        "latest_main": "76abc53de88189e4afa5fc382b5fd9ad9bb974f0",
+        "reviewed_pr_commit": "86adf784efd977bf4d4bcd6d0a4084214fbacdd1",
+        "integration_head_observed_by_c24": "a4bc8d14909d7053109a2ee6fe9512bac55ec0c1",
+        "source_status_entries": 1440,
+        "raw_eval_log_delta_files": 1063,
+        "raw_legacy_flyer_files": 165,
+        "raw_legacy_flyer_root": "docs/branch-publication/source-files/plugins/flyer-studio",
+        "source_branch": "devgraph/package-artifacts-and-feature-promotion",
+        "pr_branch": "devgraph/task-gdg-review",
+        "pull_request": 87,
+        "target": "元rootの最終commit/clean、元/PR両branchの同一HEAD・両push、元branchの同名origin追跡先。最終の実測は親が記録する。"
+      },
+      "integration_evidence": {
+        "path": "docs/branch-publication/worktree-integration.json",
+        "status": "既に実在する統合記録を読取参照。今回の文書更新後の最終commit/push結果は親の追記対象。",
+        "parent_report": "親から全1440 source blob SHA照合PASS、legacy165保持、37 discovery tests PASS、release/content/SSOT PASSの報告を受領。本担当による再実行結果ではない。",
+        "observed_sha256": "f852a1d3f36a62ee67a3d847566b4979cb03e039b06029c866818d9b931b2059"
+      },
+      "c02": {
+        "writer": "C02/run-dev-graph-node",
+        "operation": "update",
+        "preview": {
+          "valid": true,
+          "write_count": 0,
+          "planned_count": 5,
+          "graph_revision_before": 5,
+          "graph_revision_after": 6,
+          "pre_write_validation": {
+            "findings": 0,
+            "validator": "validate-graph-schema.py"
+          }
+        },
+        "apply": {
+          "valid": true,
+          "status": "applied",
+          "graph_revision_before": 5,
+          "graph_revision_after": 6,
+          "applied_count": 5,
+          "write_count": 7,
+          "graph_path": ".dev-graph/state/graph.json",
+          "graph_digest_after": "sha256:2240cae6ce89a4ca312d34e862fbca05ef58878586cf677db0f841cf502301ba",
+          "receipt_path": ".dev-graph/state/receipts/node-r000006-update.json",
+          "input_sha256": "c40963ba6058193257e68e04224d2cdcd8ed592b55ccd899f037e951d8cfcf50",
+          "pre_write_validation": {
+            "findings": 0,
+            "validator": "validate-graph-schema.py"
+          },
+          "receipt_sha256": "12a9cd270049f0ddd2224e61a4c5aae2cd884a8c06dfe9e35f9c505378003ab9",
+          "graph_sha256": "3fdb4e9d8be05d523c27cde04fa2a1292dfe7ff92f4595b6294b9b19e3bd1567"
+        },
+        "artifacts": [
+          {
+            "path": "tasks/branch-remaining-publication.md",
+            "graph_node_id": "task-branch-remaining-publication",
+            "sha256_before": "6b57a5c05e5cdde62f95568df0d8333b10092fc0fe1af6bb8494cbb93d5523aa",
+            "sha256_after": "77ba093e0003fe6ff0158ae71098dfdf4d56c7ebfe4e0919f9fe0cef01840e5e",
+            "sections_replaced": [
+              "目的",
+              "背景",
+              "入力と前提条件",
+              "出力と成果物",
+              "依存関係",
+              "実装対象",
+              "Write scope と競合制約",
+              "GitHub publication",
+              "実行手順",
+              "受入条件",
+              "検証方法",
+              "リスクとロールバック",
+              "Handoff"
+            ],
+            "sections_regenerated": [],
+            "macro_fields_patched": [],
+            "implementation_readiness": "complete"
+          },
+          {
+            "path": "docs/branch-publication.md",
+            "graph_node_id": "doc-branch-publication",
+            "sha256_before": "f3527383b7d41641458e08e775bdeb924dfb43cff7046b93144ddd5a1d0374de",
+            "sha256_after": "e2574c0b488b8fae92c8919e0f6439581d2a21c35072f5448e08ad021d613f6c",
+            "sections_replaced": [
+              "目的",
+              "要約",
+              "本文",
+              "決定事項",
+              "運用・更新方法",
+              "関連資料",
+              "変更履歴"
+            ],
+            "sections_regenerated": [],
+            "macro_fields_patched": [],
+            "implementation_readiness": "complete"
+          },
+          {
+            "path": "specs/branch-publication.md",
+            "graph_node_id": "spec-branch-publication",
+            "sha256_before": "d732c9481963f30ac2652a29a04c09d7d4518385aee163e8aba4a3d61fe637a4",
+            "sha256_after": "30cee905f4f114876f3778220d23ab9dd0f716278868c08ede94801b763e6bce",
+            "sections_replaced": [
+              "目的と成功状態",
+              "スコープ",
+              "ユースケースとユーザーフロー",
+              "非機能要件",
+              "ビジネスルールと検証",
+              "データモデル",
+              "認証・認可",
+              "可観測性",
+              "互換性・移行・リリース",
+              "テストと受入条件",
+              "未決事項"
+            ],
+            "sections_regenerated": [],
+            "macro_fields_patched": [],
+            "implementation_readiness": "complete"
+          },
+          {
+            "path": "architecture/branch-publication.md",
+            "graph_node_id": "arch-branch-publication",
+            "sha256_before": "23c6d2147f318a169264970f47282017e8ca758baba23ed6e5d8675a195f75b7",
+            "sha256_after": "8107dd67f5b1f3e3ab1b1afd36aef904383532a0869f345b28db7688ef9bf31a",
+            "sections_replaced": [
+              "Architecture overview",
+              "Context and drivers",
+              "System context and boundaries",
+              "Operations and verification",
+              "Architecture decisions",
+              "Delivery, migration and rollback",
+              "Risks and verification"
+            ],
+            "sections_regenerated": [],
+            "macro_fields_patched": [],
+            "implementation_readiness": "complete"
+          },
+          {
+            "path": "features/branch-publication.md",
+            "graph_node_id": "feature-branch-publication",
+            "sha256_before": "bac91c893978209b00531f1ca5d2d355018093db84e31387b3b2e227c7b724c3",
+            "sha256_after": "ae2d16373e0ce10c42445c8a0b327cb46d6e631714da8c69a4fba8d227004379",
+            "sections_replaced": [
+              "Handoff"
+            ],
+            "sections_regenerated": [
+              "目的",
+              "到達状態",
+              "スコープ",
+              "受入"
+            ],
+            "macro_fields_patched": [
+              "acceptance",
+              "goal",
+              "purpose",
+              "scope_in"
+            ],
+            "implementation_readiness": "complete"
+          }
+        ]
+      },
+      "validation": {
+        "graph_schema": {
+          "exit_code": 0,
+          "valid": true,
+          "violation_count": 0,
+          "node_readiness": {
+            "complete": 10,
+            "incomplete": 0,
+            "incomplete_nodes": [],
+            "not_applicable": 0,
+            "unknown": 0
+          }
+        },
+        "local_links": "更新5文書のローカル参照先は全件実在。",
+        "file_sha256": "C02 applyのartifact SHAと5ファイルの実バイト列は全件一致。",
+        "state": "status=draft / confirmation=draft / evaluation=pending / tracker_binding=none。feature/taskのpromotionなし。"
+      },
+      "history_policy": "初回flow/evidence/publication_evidenceおよび既存followupは当時の記録として値を変更せず保持。本追記が現在scopeの文書とSHAを示す。過去task-contract-reviewのSHAは今回のtask本文に対してstaleとなり、現在の評価PASSへ流用しない。",
+      "not_claimed": [
+        "最終root clean（親の最終commit後に実測）",
+        "元/PRの最終同一HEAD・両push・追跡先の実測",
+        "新しいtask/feature承認・promotion",
+        "未取得のguard承認receipt",
+        "本文書更新を根拠にしたCI PASS・PR merge",
+        "本担当による過去テスト写し188件の修正や広い再評価"
+      ],
+      "tracking": {
+        "existing_beads_id": "harness-86kh",
+        "status": "既存scope拡張で追跡。新taskはdraft保持。",
+        "beads_mutations_by_this_update": 0,
+        "git_commit_push_by_this_update": false
+      }
     }
   ]
 }

@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-01T21:51:01.228579Z"
+updated_at: "2026-11-01T23:30:03.715426Z"
 depends_on: ["spec-branch-publication"]
 related_nodes: []
 resource_scope: []
@@ -44,16 +44,16 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-01T21:51:01.228579Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T23:30:03.715426Z", "missing_sections": [], "status": "complete"}
 ---
 
 # Architecture overview
 
-既存プラグインのCLI・validator・静的HTML生成を維持し、元版保存と現行実装の統合経路を分離する。仕様上の基準は [統合仕様](../specs/branch-publication.md) と各ownerの既存契約。
+既存プラグインのCLI・validator・静的HTML生成を維持する。元rootの全1440差分をsource commitとして保存し、mainと既存PRを同じ元ブランチへ統合する。scope修正は作業履歴・公開先・受入条件に限定し、新しいHTTP/DB/製品仕様は作らない。
 
 ## Context and drivers
 
-複数プラグインの未公開差分とmain先行修正が共存する。全残存を説明できることと、古い元worktreeで新版を巻き戻さないことを同時に満たす。
+全残存の意味差分をPRへ載せるだけでは、元の作業場所に1440差分が残る。利用者のgs明示により、元rootの実commitとclean化、元/PRの同一履歴と両pushまでを受入へ含める。main先行修正は保持する。
 
 ## Goals and non-goals
 
@@ -61,7 +61,7 @@ implementation_readiness: {"checked_at": "2026-11-01T21:51:01.228579Z", "missing
 
 ## System context and boundaries
 
-元rootは読取保存元、PR worktreeは統合先、manifest/source-evidenceは保存の台帳。C02は正規文書/graph、C28/C12は外部tracker、親はrelease・PR・全件対応表を所有する。
+元rootをsource commit・main/PR統合・最終commit/clean化の作業場所とする。元ブランチとPRブランチを同一HEADへ揃え、両remote branchと元の同名追跡先を確認する。C02は正規文書/graph、親はGit操作・全件台帳・統合記録、別担当は過去テスト写し188件のdiscovery lintを所有する。
 
 ## Container and component view
 
@@ -139,17 +139,17 @@ UBM guardは.codex/skills/だけを追加許可し、他の.codex領域を保護
 
 #### Operations and verification
 
-C02のrevision/artifact digest、対象pluginの回帰、compositionの原文保持、source snapshotのSHAを観測する。実装実走の証拠と文書readinessを分離する。
+元1440件のsource SHAと統合先、raw eval-log1063件の元path、旧flyer165件のraw保存、C02 revision/artifact SHAを確認する。最終root status、両branch/remote HEAD、元の追跡先は親が実測し、実走9対象やCIの未達とは分けて報告する。
 
 ## Architecture decisions
 
-CLIの処理・transaction境界をbackend subtype、SBBの静的HTML内の番号移動をfrontend subtypeで記述する。新規Web backendを意味しない。4資料は同じC02 add transactionでdraft登録し、featureはC14 macro契約で宣言するがplanner起動やconfirm-featureは行わない。
+CLI/transactionとSBB静的ナビゲーションの既存subtypeは維持する。正規5文書のscope修正はC02 updateの同一transactionで行い、status/confirmation/evaluationはdraft/draft/pending、trackerはnoneのまま保つ。featureはmacro_patchで更新し、新planner・13計画・promotionを起動しない。
 
 ## Delivery, migration and rollback
 
-元差分は3-way統合し、source snapshotは [全件台帳](../docs/branch-publication/manifest.json) と [復元script](../docs/branch-publication/restore-source.py) で照合する。失敗時はC02のrollback/receiptを確認し、公開後の変更は親が追加commit/revertで履歴を保つ。
+source commit d71ac0a6は元path全体の正確な版を保持する。main 76abc53dと既存PR 86adf784を元rootへ統合し、旧flyer165件は [raw保存先](../docs/branch-publication/source-files/plugins/flyer-studio/) へ置いて現行entrypointと分離する。[統合記録](../docs/branch-publication/worktree-integration.json) から最終commit・同一HEAD・両push・追跡先・cleanの証拠へ接続する。過去receiptの当時SHAを改変せずfollowupを追記し、公開後の修正は追加commit/revertで履歴を保つ。
 
 ## Risks and verification
 
-元版の全体上書き、parityのdigestだけの補修、未検証snapshotの受け渡し、画像リンクの古い座標が主要リスク。既存回帰とSHA、C02 finding、source対応表で確認し、未取得の承認やmerge証拠を補わない。
+元rootを放置したまま保存コピーだけで完了すること、旧flyerを現行runtimeへ混在させること、他者の変更の撤回、過去テストを現CIのPASSへ転用することを防ぐ。source/統合先のSHA、C02 finding、最終status/branch/remote/追跡先を別々に確認する。
 

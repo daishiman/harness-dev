@@ -15,6 +15,14 @@
 
 版・marketplace・fingerprintは正規release writerで整合させた。元ブランチの古い採番値を新しいmainへ上書きしていない。元のファイル内容とモードも保存した。
 
+## 元の作業場所もコミット済みにする
+
+利用者が提示した `git status` の全1,440ファイルを、元ブランチ上のcommit `d71ac0a6` に記録した。その後、ローカルmainを最新のorigin/mainへ揃え、元ブランチへmainとPRの修正版を順にマージし、67件と10件の競合を解消した。元版を含むコミット履歴はPRへ統合する。
+
+[元path・source blob・統合先の全件照合](worktree-integration.json) は、全1,440ファイルのsource commit内のbytesを元SHA256と照合し、不一致0件を確認する。過去のeval-logは原pathに保持する。現行flyerへ旧entry pointを再導入しないよう、旧追加ファイル165件は [参照用の原文](source-files/plugins/flyer-studio/) に保持する。ZIPだけに依存せず確認できる。
+
+公開時は元ブランチとPRブランチを同じHEADへ揃え、元ブランチの追跡先も同名のoriginブランチへ設定する。最終のcommit・push・clean確認はPR本文とBeadsに記録し、実走証跡不足とは区別する。
+
 ## 全ての元データを確認・復元する
 
 `manifest.json` の `all_source_changes` は全status項目を列挙し、各項目の元SHA・反映先・判断・元版保存先を示す。`unaccounted_count=0` は、対応先が不明な元変更が0件という意味であり、未実施の検証を成功扱いするものではない。

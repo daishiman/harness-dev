@@ -16,6 +16,9 @@ elegant-review finding (2026-06-30, 3 analyst 収束 LS-F1 / SS-02 / SS-05):
   - 実 repo 統合: ALLOWLIST 以外の orphan=0 で lint exit 0
 """
 import importlib.util
+import hashlib
+import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
@@ -162,6 +165,79 @@ class TestLintOrphans:
         root = make_repo(tmp_path, ["tests/test_a.py"])
         errors, _ = LINTMOD.check_orphans(root, allowlist={"tests/test_a.py": "不要な理由"})
         assert any("stale" in e for e in errors)
+
+
+class TestHistoricalSnapshotEvidence:
+    def test_repo_without_snapshot_uses_normal_discovery(self, tmp_path, monkeypatch):
+        root = make_repo(tmp_path, ["tests/test_current.py", "plugins/foo/tests/test_current.py"], ci_yml=GOOD_CI)
+        monkeypatch.setattr(LINTMOD, "ALLOWLIST", {})
+        assert LINTMOD.historical_test_allowlist(root) == ({}, [])
+        assert LINTMOD.main(["--repo-root", str(root)]) == 0
+
+    def test_snapshot_without_manifest_is_rejected(self, tmp_path, monkeypatch):
+        review = Path("eval-log/guide-doc-generator/run-handout-build/elegant-review/20261031-html-route-review")
+        root = make_repo(tmp_path, [str(review / "before/tests/test_historical.py")], ci_yml=GOOD_CI)
+        monkeypatch.setattr(LINTMOD, "ALLOWLIST", {})
+        allowed, errors = LINTMOD.historical_test_allowlist(root)
+        assert allowed == {}
+        assert any("before-manifest.json" in error and "読めない" in error for error in errors)
+        assert LINTMOD.main(["--repo-root", str(root)]) == 1
+
+    @pytest.fixture
+    def snapshot_repo(self, tmp_path, monkeypatch):
+        review = Path("eval-log/guide-doc-generator/run-handout-build/elegant-review/20261031-html-route-review")
+        manifest_ref = review / "before-manifest.json"
+        root = make_repo(tmp_path, ["tests/test_current.py"])
+        manifest = json.loads((ROOT / manifest_ref).read_text(encoding="utf-8"))
+        (root / review).mkdir(parents=True)
+        shutil.copyfile(ROOT / manifest_ref, root / manifest_ref)
+        refs = []
+        prefix = "plugins/guide-doc-generator/"
+        for item in manifest:
+            source = PurePosixPath(item["path"])
+            if not str(source).startswith(prefix + "tests/") or not DRT._is_test_filename(source.name):
+                continue
+            ref = review / "before" / str(source).removeprefix(prefix)
+            (root / ref).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / ref, root / ref)
+            refs.append(ref)
+        assert len(refs) == 188
+        monkeypatch.setattr(LINTMOD, "ALLOWLIST", {})
+        return root, review, refs
+
+    def test_exact_188_snapshot_tests_are_non_executable_evidence(self, snapshot_repo):
+        root, _review, refs = snapshot_repo
+        errors, report = LINTMOD.check_orphans(root)
+        assert errors == []
+        assert any("allowlist 188" in line for line in report)
+        assert len(DRT.discover_test_files(root)) == len(refs) + 1
+
+    def test_unknown_test_under_same_snapshot_is_still_an_orphan(self, snapshot_repo):
+        root, review, _refs = snapshot_repo
+        unknown = review / "before/tests/test_not_in_manifest.py"
+        (root / unknown).write_text("def test_unlisted(): pass\n", encoding="utf-8")
+        errors, _report = LINTMOD.check_orphans(root)
+        assert len(errors) == 1 and str(unknown) in errors[0]
+
+    def test_modified_snapshot_test_is_not_allowlisted(self, snapshot_repo):
+        root, _review, refs = snapshot_repo
+        target = root / refs[0]
+        target.write_bytes(target.read_bytes() + b"\n# changed historical bytes\n")
+        errors, _report = LINTMOD.check_orphans(root)
+        assert any(str(refs[0]) in error and "SHA" in error for error in errors)
+
+    def test_extending_manifest_cannot_allow_an_unknown_test(self, snapshot_repo):
+        root, review, _refs = snapshot_repo
+        unknown = review / "before/tests/test_not_in_manifest.py"
+        (root / unknown).write_text("def test_unlisted(): pass\n", encoding="utf-8")
+        manifest_path = root / review / "before-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest.append({"path": "plugins/guide-doc-generator/tests/test_not_in_manifest.py",
+                         "sha256": hashlib.sha256((root / unknown).read_bytes()).hexdigest()})
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        errors, _report = LINTMOD.check_orphans(root)
+        assert any("before-manifest.json" in error and "SHA" in error for error in errors)
+        assert any(str(unknown) in error for error in errors)
 
 
 class TestLintCiRunsRoots:
@@ -311,7 +387,11 @@ class TestRealRepoIntegration:
     def test_real_repo_module_orphans_empty(self):
         """ALLOWLIST に理由付きで宣言した証跡以外に orphan が無いこと。"""
         orphans = {str(rel) for rel in DRT.orphan_test_files(ROOT)}
-        assert orphans - set(LINTMOD.ALLOWLIST) == set()
+        historical, errors = LINTMOD.historical_test_allowlist(ROOT)
+        assert errors == []
+        assert len(historical) == 188
+        assert all(historical.values())
+        assert orphans - set(LINTMOD.ALLOWLIST) - set(historical) == set()
 
     def test_real_workflow_uses_extracted_bounded_runner(self):
         workflow = (

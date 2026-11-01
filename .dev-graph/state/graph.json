@@ -1,5 +1,5 @@
 {
-  "graph_revision": 5,
+  "graph_revision": 6,
   "nodes": [
     {
       "acceptance": [],
@@ -528,7 +528,7 @@
       "goal": null,
       "graph_node_id": "task-branch-remaining-publication",
       "implementation_readiness": {
-        "checked_at": "2026-11-01T21:31:31.563501Z",
+        "checked_at": "2026-11-01T23:30:03.715426Z",
         "missing_sections": [],
         "status": "complete"
       },
@@ -565,7 +565,7 @@
       "template_version": "1.0.0",
       "title": "元ブランチの残存全変更を最新mainへ統合してPR化する",
       "tracker_binding": "none",
-      "updated_at": "2026-11-01T21:31:31.563501Z"
+      "updated_at": "2026-11-01T23:30:03.715426Z"
     },
     {
       "acceptance": [],
@@ -618,7 +618,7 @@
       "goal": null,
       "graph_node_id": "spec-branch-publication",
       "implementation_readiness": {
-        "checked_at": "2026-11-01T21:51:01.228579Z",
+        "checked_at": "2026-11-01T23:30:03.715426Z",
         "missing_sections": [],
         "status": "complete"
       },
@@ -659,7 +659,7 @@
       "template_version": "1.0.0",
       "title": "元ブランチ全残存の統合と保存の仕様",
       "tracker_binding": "none",
-      "updated_at": "2026-11-01T21:51:01.228579Z"
+      "updated_at": "2026-11-01T23:30:03.715426Z"
     },
     {
       "acceptance": [],
@@ -712,7 +712,7 @@
       "goal": null,
       "graph_node_id": "arch-branch-publication",
       "implementation_readiness": {
-        "checked_at": "2026-11-01T21:51:01.228579Z",
+        "checked_at": "2026-11-01T23:30:03.715426Z",
         "missing_sections": [],
         "status": "complete"
       },
@@ -751,14 +751,15 @@
       "template_version": "1.0.0",
       "title": "全残存統合の単一writerと保存の責務設計",
       "tracker_binding": "none",
-      "updated_at": "2026-11-01T21:51:01.228579Z"
+      "updated_at": "2026-11-01T23:30:03.715426Z"
     },
     {
       "acceptance": [
-        "全元差分の実装または保存先をmanifestで説明できる",
-        "mainの先行修正と元worktreeを保持する",
-        "対象別の必須ゲートと保存SHAを確認する",
-        "本資料とfeatureはdraft・trackerなしのまま保持する"
+        "元1440差分の元bytesがsource commitから辿れ、各統合先またはraw保存先を説明できる",
+        "mainの先行修正を保ち旧flyer entrypointを現行1.3.2へ混在させない",
+        "元rootの未commit/未追跡0件を最終commit後に確認する",
+        "元ブランチとPRブランチの同一HEAD・両push・元の同名origin追跡先を確認する",
+        "文書・feature・taskはdraft/pending・trackerなしで既存harness-86khの追跡を維持する"
       ],
       "architecture_refs": [
         "arch-branch-publication"
@@ -803,10 +804,10 @@
         "mode": "local_only",
         "project_aliases": []
       },
-      "goal": "全元差分に統合先または保存先・検証根拠を持たせ、未対応0件を確認してPR #87へ渡せる。",
+      "goal": "元1440件をsource commitと統合先で説明でき、元rootがclean、元/PRブランチが同一HEADで両push・同名追跡先を確認できる。",
       "graph_node_id": "feature-branch-publication",
       "implementation_readiness": {
-        "checked_at": "2026-11-01T21:51:01.228579Z",
+        "checked_at": "2026-11-01T23:30:03.715426Z",
         "missing_sections": [],
         "status": "complete"
       },
@@ -820,13 +821,14 @@
       "priority": null,
       "project_id": "harness",
       "pull_request_linkages": [],
-      "purpose": "元ブランチの意味差分と元版の保存先を、mainの修正を戻さず全件説明できるようにする。",
+      "purpose": "元rootの全1440差分そのものをcommit・統合し、mainの新版を保持した同一履歴をPRへ公開できるようにする。",
       "related_nodes": [],
       "resource_scope": [],
       "scope_in": [
-        "元HEAD先行11変更と元root1440 status entriesの対応付け",
-        "dev-graph・UBM・composition・SBBの既存契約への統合",
-        "flyer旧版と素材・検証・計画を含む元版362ファイルの保存"
+        "元1440差分の元ブランチ上commitと元HEAD先行11変更の統合",
+        "最新mainと既存PRの元rootへの統合および競合解消",
+        "raw eval-log1063件の元path保持と旧flyer165件のraw保存",
+        "元rootのclean化・元/PR同一HEAD・両push・同名追跡先の確認"
       ],
       "scope_out": [
         "新規HTTP・DB・認証基盤の追加",
@@ -853,7 +855,7 @@
       "template_version": "1.0.0",
       "title": "元ブランチの全残存を新版を保持してPRへまとめる",
       "tracker_binding": "none",
-      "updated_at": "2026-11-01T21:51:01.228579Z"
+      "updated_at": "2026-11-01T23:30:03.715426Z"
     },
     {
       "acceptance": [],
@@ -906,7 +908,7 @@
       "goal": null,
       "graph_node_id": "doc-branch-publication",
       "implementation_readiness": {
-        "checked_at": "2026-11-01T21:51:01.228579Z",
+        "checked_at": "2026-11-01T23:30:03.715426Z",
         "missing_sections": [],
         "status": "complete"
       },
@@ -950,7 +952,7 @@
       "template_version": "1.0.0",
       "title": "元ブランチ全残存の統合・保存先の案内",
       "tracker_binding": "none",
-      "updated_at": "2026-11-01T21:51:01.228579Z"
+      "updated_at": "2026-11-01T23:30:03.715426Z"
     }
   ],
   "schema_version": "1.0.0"

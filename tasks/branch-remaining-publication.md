@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-01T21:31:31.563501Z"
-updated_at: "2026-11-01T21:31:31.563501Z"
+updated_at: "2026-11-01T23:30:03.715426Z"
 depends_on: []
 related_nodes: ["task-gdg-review"]
 resource_scope: []
@@ -44,58 +44,58 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-01T21:31:31.563501Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-01T23:30:03.715426Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
 
-元ブランチに残る全変更を、最新リモートを取り込んだPRへ漏れなく統合する。
+元rootの全1440差分そのものを元ブランチ上でcommitし、最新mainと既存PRの修正を統合した同一HEADを元ブランチとPR #87のブランチへ公開して、元rootをcleanにする。
 
 ## 背景
 
-利用者はguide関連だけでなく、このブランチの残存変更全体をPR対象と指定した。
+利用者がgsで確定したscopeは、保存用コピーをPRへ載せるだけでなく、元の作業場所の全残存をcommitして公開することまで含む。以前の「PR作業ツリーだけ」「元worktreeを変更しない」という制約は、この確定scopeに置き換える。
 
 ## 入力と前提条件
 
-元worktree HEAD 8c1eb6c8と未commit差分、PR #87、origin/main 76abc53d。古い元ファイルでmainの修正を戻さない。
+元HEAD 8c1eb6c8の全1440差分を記録したsource commit d71ac0a6、最新main 76abc53d、既存PRの86adf784、統合時HEAD a4bc8d14を入力にする。67件と10件の競合解消およびsource bytesの照合は [統合記録](../docs/branch-publication/worktree-integration.json) に接続する。古い元版でmainの修正を戻さない。
 
 ## 出力と成果物
 
-全残存変更の対応表・統合コード・仕様影響受領書・最小検証・PR。
+全元差分を保持するsource commitと統合履歴、元path/統合先の全件対応表、raw eval-logの元path保持、flyer旧追加165件のraw保存、C02正規文書と追記の影響受領書、元rootのclean確認、同一HEADの2ブランチと各push/追跡先の記録。
 
 ## 依存関係
 
-既存task-gdg-reviewと関連するが、他の作業者のBeadsを無断で完了にしない。
+[guideタスク](gdg-review.md) と関連するが、他者のBeadsを無断で完了にしない。通常taskのpromotion writer不在により本taskはdraftを維持し、実行追跡は既存harness-86khの拡張scopeに集約する。過去テスト写し188件のdiscovery lint対応は別担当の変更を待ち、ここで編集しない。
 
 ## 実装対象
 
-dev-graph、UBM、harness-creator、governance lint、release writer、flyer、system-briefingの未公開分。
+dev-graph、UBM、harness-creator、governance lint、release writer、flyer、SBB、guide関連と過去証跡を含む全残存。raw eval-log1063件は元pathを保持し、flyer旧追加165件はdocs/branch-publication/source-files/plugins/flyer-studio/へraw保存する。元path全体の正確な版はsource commitにも保持する。
 
 ## Write scope と競合制約
 
-PR作業ツリーだけに3-way統合。元worktreeは保持。他の実行担当と所有ファイルを分担し、main側変更を保存。
+元root /Users/dm/dev/dev/個人開発/harness を統合・commit・clean化の対象にする。元ブランチへ最新mainとレビュー済みPRを統合し、最後にPRブランチを同じHEADへ揃える。他の実行担当と所有を分担し、mainの新版と他者の変更を戻さない。C02文書/graph/receiptは単一writerで更新する。
 
 ## GitHub publication
 
-PR #87、head devgraph/task-gdg-review、base main。全対象の対応表と残存0件を記録。
+PR #87はhead devgraph/task-gdg-review、base mainを維持する。元ブランチ devgraph/package-artifacts-and-feature-promotion とPRブランチを同一HEADへ揃え、両方をpushする。元ブランチの追跡先は同名のoriginブランチへ設定する。完了は実際のHEAD・remote到達・追跡先・元rootのgit statusで確認し、CI PASSやmergeは未確認なら主張しない。
 
 ## 実行手順
 
-1. 全件棚卸し。2. remote→local main→PRへmerge。3. 3-way統合と競合解消。4. 最小ゲート。5. commit/push/CI。
+1. 元の1440差分と先行11変更を棚卸しする。2. 元ブランチで1440件をsource commitとして記録する。3. 最新remote mainと既存PRを元ブランチへ取り込み、mainの新修正を保って競合を解消する。4. raw証跡とflyer旧版の保存先を照合する。5. C02で確定scopeへ文書を更新し、最小検証と別担当のlint対応を集約する。6. 最終変更をcommitしてrootをcleanにする。7. PRブランチを同一HEADへ進めて両方pushし、元ブランチの追跡先と公開結果を記録する。既に実施済みの段階は統合記録を参照し、未実施を成功扱いにしない。
 
 ## 受入条件
 
-全元差分について、反映済み/統合/元版保存/一時状態の扱いを実パスで説明できる。新旧履歴とmainの修正を保持。
+元1440差分全件の元bytesがsource commitに保存され、各項目の現行統合先またはraw保存先を説明できる。mainの新修正を保持し、元rootの未commit/未追跡が0件となる。元ブランチとPRブランチが同一HEADで、両remote branchへのpushと元ブランチの同名追跡先を確認できる。文書/feature/taskはdraft・trackerなしを維持し、既存harness-86khで追跡する。
 
 ## 検証方法
 
-対象ごとの既存回帰とpackage/release/意味評価の必須ゲート。MVPとして全30思考法を再走しない。
+[全件台帳](../docs/branch-publication/manifest.json) と [元worktree統合記録](../docs/branch-publication/worktree-integration.json) のsource SHA・元path・統合先を照合する。対象別の最小回帰、C02 preview/apply/C11、ファイルSHA、最終のroot statusとlocal/remote HEAD・追跡先を別々に記録する。未達のdev-graph実走9対象とCI結果をPASSへ読み替えず、全30思考法は再走しない。
 
 ## リスクとロールバック
 
-旧版の丸ごと上書きや他人の変更の撤回を避ける。公開後の修正は追加commit/revert。
+旧flyerのentrypointを現行1.3.2へ混在させず、旧版はraw保存とsource commitで辿れるようにする。他者の変更を撤回しない。公開後の修正は追加commit/revertで履歴を残す。古いreceiptや過去テストのSHAを現在版のPASSへ書き換えない。
 
 ## Handoff
 
-利用者の全件指示に基づく統合タスク。残存差分一覧をPRへ載せる。
+親へC02 revision/immutable receipt/artifact SHAを渡す。最終commit・両branchのHEAD一致・両push・同名追跡先・root cleanの実測は親が統合記録へ追記する。本taskのdraft保持と既存harness-86khの追跡、未取得承認・promotion・CI PASSを作らない条件を維持する。
 
