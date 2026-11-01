@@ -1,0 +1,20 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+ "loop": 2,
+ "checklist": [
+  {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/c24-receipt.json; R0 verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/)"},
+  {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec-preflight-report.json; R1 verifier PASS (eval-log/run-dev-graph-system-spec/R1-preflight/verifier-loop1.json)"},
+  {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "Skill calls elicit/doc-fetch/compile/assign-system-spec-completeness-evaluator (skill_args from build-evaluation-context.py unchanged); R2 verifier PASS (eval-log/run-dev-graph-system-spec/R2-delegate/verifier-loop2.json)"},
+  {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "loop2 coverage=0, source-citation=0; eval-log/system-spec-completeness-report.json verdict PASS (sha afa4bad751cdb473a5620e8b81a41060ca0af23eeb66608dca5524ab996028eb), aggregate-completeness --report exit 0, spec_dir matches"},
+  {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "C02 import pending (evaluator PASS now available)"},
+  {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "R2 verifier confirmed delegation only; final confirmation after C02 import by R3 verifier"}
+ ],
+ "feedback_criteria": [
+  {"id": "IN1", "status": "PASS", "loops": [
+   {"loop": 1, "coverage": 0, "source_citation": 0, "graph_schema_strict": 0, "status": "PASS"},
+   {"loop": 2, "coverage": 0, "source_citation": 0, "graph_schema_strict": 0, "status": "PASS"}
+  ]},
+  {"id": "OUT1", "status": "external_pending"}
+ ]
+}

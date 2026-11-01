@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1adef016-61a6-4bae-a139-fcc5e57e67fe",
+      "line": 433,
+      "prefix_bytes": 2208706,
+      "prefix_sha256": "d5f51816c2514fb5626e1c682a14233cef1c06e1bbd8f90df80cdc2b4e47ceba",
+      "timestamp": "2026-11-01T02:56:12.764Z"
+    },
+    "result": {
+      "uuid": "e8c7e863-51f4-4435-b2d3-069803f5c6be",
+      "line": 434,
+      "prefix_bytes": 2210825,
+      "prefix_sha256": "59748ff09fc3e4d17e46ae06966f7c2819d9bb6d4f828c4ae36c83c152cb2f9d",
+      "timestamp": "2026-11-01T02:56:15.056Z"
+    }
+  },
+  "tool_use_id": "toolu_01LQB27Q1ujMBXzpbgR1nFZ1",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && cat > eval-log/run-dev-graph-system-spec/R2-delegate/evaluation-context.json <<'JSON'\n{\"helper\":\"plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\",\"exit\":0,\n\"skill_args\":\"--spec-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec --output /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/system-spec-completeness-report.json\",\n\"spec_dir\":\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec\",\n\"output\":\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/system-spec-completeness-report.json\",\n\"evidence_ref\":\"eval-log/system-spec-completeness-report.json\",\n\"context_sha256\":\"bad09a95e12f0d011bf05c074b8e245192bdc83382599f22e96a7ff95f160f52\"}\nJSON\nls plugins/system-spec-harness/skills/run-system-spec-elicit/prompts plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts plugins/system-spec-harness/agents; ls plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json",
+    "description": "Save evaluation context and list auditor SSOT paths"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/system-spec-harness/agents:\nsystem-spec-doc-freshness-auditor.md\nsystem-spec-hearing-auditor.md\nsystem-spec-matrix-auditor.md\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts:\nR1-identify.md\nR2-fetch.md\nR3-record.md\nR4-audit-doc-freshness.md\n\nplugins/system-spec-harness/skills/run-system-spec-elicit/prompts:\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md\nplugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json",
+  "tool_use_result": {
+    "stdout": "plugins/system-spec-harness/agents:\nsystem-spec-doc-freshness-auditor.md\nsystem-spec-hearing-auditor.md\nsystem-spec-matrix-auditor.md\n\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts:\nR1-identify.md\nR2-fetch.md\nR3-record.md\nR4-audit-doc-freshness.md\n\nplugins/system-spec-harness/skills/run-system-spec-elicit/prompts:\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md\nplugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

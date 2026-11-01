@@ -1,0 +1,40 @@
+{
+  "responsibility": "R1-preflight",
+  "verifier": "independent-fork",
+  "loop": 1,
+  "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+  "c24_receipt_sha256": "e4b70685d1a17d67cd4fbc4eb639f44fe130ee365b88f8522cc60b12a2d23d23",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checklist": {
+    "version_in_composition_range_and_4_entry_points_exist": {
+      "result": "YES",
+      "evidence": "plugin.json name=system-spec-harness version=0.1.24; plugin-composition.yaml:154 external_dependencies.system-spec-harness.version '>=0.1.22 <1.0.0' -> in range; package-contract.json#entry_points.skills contains all 4; skills/<name>/SKILL.md exist (elicit 30860B, doc-fetch 15305B, compile 23330B, evaluator 33894B)"
+    },
+    "declared_inputs_verified": {
+      "result": "YES",
+      "evidence": "manifest, version, exports(package-contract entry_points) and composition range all read; c24 receipt sha256 matches"
+    },
+    "output_shape_and_authority": {
+      "result": "YES",
+      "evidence": "R1/receipt.json has version, composition_range+source, in_range, required 4, missing=[], verdict PASS; all paths repo-relative, no secrets; values match independent re-check"
+    },
+    "zero_boundary_violations": {
+      "result": "YES",
+      "evidence": "no writes to plugins/system-spec-harness (also sandbox write-denied); official manifest keys only name/version/dependencies/description/author; no compiler/elicit/doc-fetch fallback or duplicate in plugins/dev-graph (only build-project-hook-fallback.py, unrelated C01 hook fallback)"
+    }
+  },
+  "observer_events": {
+    "R1_prompt_full_read": "toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)",
+    "common_layers_read": "toolu_01KTyVVc7p5YTHDj2VYuzuKz (Read prompt-common-layers.md, main stream)",
+    "manifest_inspection_bash_with_fixed_root_prefix": [
+      "toolu_01AZ7doHVPRZW1phxAG2PZSe",
+      "toolu_01FRuPX5piM5gPFhPZQTot79"
+    ],
+    "receipt_write": "toolu_01PnsYGgajfhbvYJsfX11YUY"
+  },
+  "notes": [
+    "receipt in_range/version values were literal in the write script, but the preceding observed Bash outputs (toolu_01AZ7doHVPRZW1phxAG2PZSe, toolu_01FRuPX5piM5gPFhPZQTot79) support them and independent re-check agrees"
+  ],
+  "blockers": [],
+  "verdict": "PASS"
+}

@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ecd23b96-07db-4578-9ec8-4522093b2f5b",
+      "line": 153,
+      "prefix_bytes": 1813586,
+      "prefix_sha256": "4db78707ae3df32b0db5af8f3bfdf04a7ce7697c06cdda5fcb5befdf047ba103",
+      "timestamp": "2026-11-01T14:14:56.155Z"
+    },
+    "result": {
+      "uuid": "fb3b3971-9d70-4e2b-a5cd-3e965550d40e",
+      "line": 154,
+      "prefix_bytes": 1819276,
+      "prefix_sha256": "3eba03e40f06643e2062837c5be37f8dc2c61a213703c3afb6ffac7b3f29f086",
+      "timestamp": "2026-11-01T14:14:56.463Z"
+    }
+  },
+  "tool_use_id": "toolu_01Lu7kjD6T8NT83jhihcaFcp",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/secure-by-design.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Secure by Design — deep knowledge card\n2\t\n3\t> knowledge_id: `secure-by-design` / status: `seed-example`。OWASP/CISA等は探索seedであり、法域・業界・threat model固有の統制を網羅しない。\n4\t\n5\t## 目的\n6\t\n7\t利用者の注意や運用後のpatchへ安全性を押し付けず、systemのdefault、architecture、development lifecycleに安全な結果を組み込み、被害可能性と復旧費を下げる。\n8\t\n9\t## 背景\n10\t\n11\t脆弱性対応をrelease直前の診断や利用者設定に限定すると、設計由来の欠陥、過大権限、unsafe default、観測不能は残る。Secure by Designはsecurityを品質属性と製造者責任として早期から扱い、Secure by Defaultと継続的検証を組み合わせる。\n12\t\n13\t## 解決する問題\n14\t\n15\t- 認証・認可・data protectionが後付けで、business flowと矛盾する。\n16\t- defaultが過大権限/公開状態で、利用者の完全な設定に安全性が依存する。\n17\t- 単一防御の突破で全面侵害になり、検知・封じ込め・復旧の証拠が無い。\n18\t- dependency、secret、build、releaseの供給chain riskが製品境界外として放置される。\n19\t\n20\t## 中核概念\n21\t\n22\t- **Threat modeling**: asset、actor、trust boundary、abuse case、impactを設計前提にする。\n23\t- **Least privilege / deny by default**: identity、service、data、networkの権限を最小化し、判断不能時はfail closed。\n24\t- **Defense in depth**: preventive、detective、responsive controlを独立層で持ち、単一failureを全体failureにしない。\n25\t- **Secure defaults and usable security**: 初期状態を安全にし、MFA/logging/update等を利用者が無理なく維持できる。\n26\t- **Data lifecycle**: collection minimization、classification、encryption、retention、deletion、backupまで設計する。\n27\t- **Assurance**: abuse-case test、dependency/provenance、review、logging、incident exerciseでcontrolの実効性を検証する。\n28\t\n29\t## 適用条件\n30\t\n31\t- identity、個人/機密data、金銭、外部入力、admin操作、multi-tenant boundaryを扱う全system。\n32\t- compromise時の影響がgoal、法規、信頼、運用継続を損なう。\n33\t- vendor/serviceを使う場合も、共有責任とfailure/exit planを明示できる。\n34\t\n35\t## 非適用条件\n36\t\n37\t- security自体が不要なsystemは原則ない。asset/threatが極小ならcontrolを軽量化できるが、根拠付きrisk acceptanceが必要。\n38\t- controlがthreatを減らさず、accessibility/availability/safetyを重大に損なう場合はそのcontrolを採用しない。代替・補償統制を設計する。\n39\t- checklist準拠だけでproject固有のtrust boundaryとabuse caseを置き換えない。\n40\t\n41\t## トレードオフ・失敗モード\n42\t\n43\t- friction、latency、delivery費、運用負荷が増えるため、risk reductionと明示的に釣り合わせる。\n44\t- security theaterとしてcontrol数だけ増やし、owner、evidence、responseを持たない。\n45\t- fail closedを無差別適用してavailability/safety incidentを起こす。degraded modeとbreak-glass監査が必要。\n46\t- secretを隠しても過大権限や長期credentialを残す、暗号化してもkey lifecycleを設計しない等の局所最適。\n47\t- free tier製品を価格だけで選び、audit、export、retention、MFA、incident support不足を見落とす。\n48\t\n49\t## 目的達成への寄与\n50\t\n51\t- stakeholderの安全・信頼・継続性をsuccess criteriaへ変換し、threat/control/evidenceをgoalへトレースする。\n52\t- security controlは「導入済み」ではなく、阻止/検知/復旧時間、権限範囲、data exposureで効果を測る。\n53\t- 予算0制約でも、secure default、最小data、短命credential、標準機能、open-source検査を優先し、残余riskを隠さない。\n54\t\n55\t## ヒアリング・判断観点\n56\t\n57\t- 守るasset、攻撃者、trust boundary、最大impact、法規、復旧目標は何か。\n58\t- userが設定しなくても安全なdefaultか。管理者・service accountの権限は最小か。\n59\t- control failureを誰が何で検知し、どのevidenceで復旧を確認するか。\n60\t\n61\t## 一次資料\n62\t\n63\t- CISA, Secure by Design, https://www.cisa.gov/securebydesign\n64\t- NIST SP 800-218, Secure Software Development Framework, https://csrc.nist.gov/pubs/sp/800/218/final\n65\t- OWASP ASVS, https://github.com/OWASP/ASVS\n66\t\n67\t## 鮮度\n68\t\n69\t- class: `standard-tracked`\n70\t- last_checked: `2026-07-11`; review_by: `2026-10-11`\n71\t- trigger: CISA/NIST/OWASP改訂、CVE/advisory、threat model・法規・data classification変更、vendor EOL/価格・security機能変更。\n72\t\n73\t",
+  "tool_use_result": null
+}

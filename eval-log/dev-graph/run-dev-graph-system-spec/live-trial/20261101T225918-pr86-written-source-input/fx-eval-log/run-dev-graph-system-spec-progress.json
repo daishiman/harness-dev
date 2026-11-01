@@ -1,0 +1,63 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "updated_at": "2026-11-01T14:36:01+00:00",
+  "round": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "C24 receipt eval-log/run-dev-graph-system-spec/c24-receipt.json (sha256 a012ba55…); R0独立Verifier Agent(a626249a06e70d577) PASS; lineage gate checked=0 exit0 → 新規取込"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "plugin.json 0.1.24 ∈ composition '>=0.1.22 <1.0.0'; 4 entry points 契約+SKILL.md実在; R1独立Verifier Agent(a251867e41d354524) PASS"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "Skill elicit(--resume, complete済・spec-state 09380939…)/compile(compile-spec-doc.py exit0, OUT1 63 passed, 評価Agent ab696cb95d0e3a24b PASS)/C05(fork, C07/C06/C08 Agent resolved, report 821cc3d5…)。doc-fetchはC13 exit0で不要。R2 Verifier 初回(a1a9cbe3c4f75f752) FAIL(receipt recorded_at誤記)→訂正後再検証(a952e8c0a019c4c9e) PASS"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "周回2実測: coverage exit0, source-citation exit0; evaluator report verdict=PASS, aggregate-completeness.py exit0"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "C02登録未実施 (graph.nodes=0)。周回3 R3で実施"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "R1/R2 Verifierで複製0の所見。R3完了時に最終確認"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "rounds": [
+        {
+          "round": 1,
+          "status": "PASS",
+          "gates": {"validate-coverage-matrix": 0, "validate-source-citation": 0, "validate-graph-schema": 0},
+          "measured_at": "2026-11-01T14:05:09+00:00"
+        },
+        {
+          "round": 2,
+          "status": "PASS",
+          "gates": {"validate-coverage-matrix": 0, "validate-source-citation": 0, "validate-graph-schema": 0},
+          "measured_at": "2026-11-01T14:36:01+00:00"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "blockers": []
+}

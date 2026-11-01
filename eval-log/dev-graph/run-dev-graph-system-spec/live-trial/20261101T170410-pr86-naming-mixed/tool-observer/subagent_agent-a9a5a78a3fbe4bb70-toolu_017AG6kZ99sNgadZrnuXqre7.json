@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-a9a5a78a3fbe4bb70",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8f2b1f93-06de-4225-b349-1b868069fe03",
+      "line": 175,
+      "prefix_bytes": 874125,
+      "prefix_sha256": "30fcfd07caee9d628cc7c422cb044d9c8af431142d8eb935467b419d7a71f275",
+      "timestamp": "2026-11-01T08:18:39.838Z"
+    },
+    "result": {
+      "uuid": "6a1b47a0-7255-4fb2-85a9-f4f804d8a61d",
+      "line": 176,
+      "prefix_bytes": 874936,
+      "prefix_sha256": "3ce18cd61e65504ea3574bf0deec39150125f873be952bec7cb33644afb3e521",
+      "timestamp": "2026-11-01T08:18:43.492Z"
+    }
+  },
+  "tool_use_id": "toolu_017AG6kZ99sNgadZrnuXqre7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx; python3 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx --print-artifact-snapshot > \"$TMPDIR/ev/snapshot2.json\"; python3 -c \"import json,sys;print('UNCHANGED' if json.load(open(sys.argv[1]))==json.load(open(sys.argv[2])) else 'CHANGED')\" \"$TMPDIR/ev/snapshot.json\" \"$TMPDIR/ev/snapshot2.json\"",
+    "description": "Re-take snapshot and compare"
+  },
+  "is_error": false,
+  "tool_result_content": "UNCHANGED",
+  "tool_use_result": null
+}

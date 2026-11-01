@@ -1,0 +1,49 @@
+{
+  "schema": "run-dev-graph-system-spec/import-report",
+  "generated_at": "2026-10-31T23:13:19Z",
+  "index": "system-spec/index.md",
+  "plugin": {"name": "system-spec-harness", "version": "0.1.24", "composition_range": ">=0.1.22 <1.0.0"},
+  "imported_nodes": [
+    {
+      "graph_node_id": "spec-billing-audit-system-spec",
+      "artifact_kind": "specification",
+      "file_path": "specs/billing-audit-system-spec.md",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.24", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-10-31T23:08:41Z"},
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"},
+      "implementation_readiness": "complete"
+    },
+    {
+      "graph_node_id": "arch-billing-audit-system-architecture",
+      "artifact_kind": "architecture",
+      "file_path": "architecture/billing-audit-system-architecture.md",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.24", "source_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402", "imported_at": "2026-10-31T23:08:41Z"},
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402"},
+      "implementation_readiness": "complete"
+    }
+  ],
+  "c02_receipt": {
+    "path": "receipts/node-r000001-add.json (under the graph state dir)",
+    "sha256": "1cff0bcf51972ad57b052409bc3ca47156ac8ea1e8517d6d7b2f64028aa707c1",
+    "owner": "C02/run-dev-graph-node",
+    "status": "applied",
+    "graph_revision_before": 0,
+    "graph_revision_after": 1,
+    "graph_digest_after": "sha256:857ed57f6a41eea72add76f819a1b5240b8d63ed6875e3bf86ce99594f0eeab0",
+    "input_sha256": "a5883cfbe8e02b640522bb523952b4d1b60a6f3e66619f3f7c23c89752c5f5da",
+    "dry_run_input_sha256": "a5883cfbe8e02b640522bb523952b4d1b60a6f3e66619f3f7c23c89752c5f5da"
+  },
+  "evaluator_report": {"path": "eval-log/system-spec-completeness-report.json", "sha256": "f6282181abcbee26611ff439aaf1f8c7834953ac7625d38cd8229cfb67e38a71", "verdict": "PASS"},
+  "gates": {"C11_coverage_matrix": 0, "C13_source_citation": 0, "dev_graph_schema_strict": 0, "source_lineage_node_ids": 0},
+  "verifiers": {
+    "R0": "PASS (R0-context/verification.json)",
+    "R1": "PASS (R1-preflight/verification.json)",
+    "R2": "PASS (R2-delegate/verification.json sha b9823195…)",
+    "R3": "PASS (R3-import/verification.json sha 5f09d0a4…)",
+    "dev_graph_integrity_auditor": "PASS graph_digest sha256:857ed57f…"
+  },
+  "duplicate_logic_matches_in_dev_graph": 0
+}

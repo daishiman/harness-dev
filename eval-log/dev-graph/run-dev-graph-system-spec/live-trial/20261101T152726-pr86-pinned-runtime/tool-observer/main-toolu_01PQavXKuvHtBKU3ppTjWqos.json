@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ba374d16-156a-474f-9328-4655f4198cd2",
+      "line": 380,
+      "prefix_bytes": 1970821,
+      "prefix_sha256": "243e2201a5f7edc109cbe181809979b986aeab92987d3c6f2e52de84cab3e6f4",
+      "timestamp": "2026-11-01T15:35:08.857Z"
+    },
+    "result": {
+      "uuid": "5d10c54d-1ce6-4a43-95e2-9b4915fce981",
+      "line": 381,
+      "prefix_bytes": 1971918,
+      "prefix_sha256": "dbfe9f3c8f5a8fcca2d205e3ba42dc367ff4d83cea22149a38ef9c22f76e76ed",
+      "timestamp": "2026-11-01T15:35:12.805Z"
+    }
+  },
+  "tool_use_id": "toolu_01PQavXKuvHtBKU3ppTjWqos",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -B \"$P/scripts/validate-coverage-matrix.py\" --matrix \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --require-complete >/dev/null; echo \"cov=$?\"; python3 -B \"$P/scripts/validate-source-citation.py\" --targets \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --references \"$CLAUDE_PROJECT_DIR/system-spec/fetched-references.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo \"cit=$?\"; python3 -B \"$P/scripts/validate-design-knowledge-refs.py\" --matrix \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" | tail -c 400; echo \"dkr=$?\"",
+    "description": "Run compile entry gates"
+  },
+  "is_error": false,
+  "tool_result_content": "cov=0\ncit=0\nOK: design knowledge_ref は全て実在する (検査 21 件)\ndkr=0",
+  "tool_use_result": {
+    "stdout": "cov=0\ncit=0\nOK: design knowledge_ref は全て実在する (検査 21 件)\ndkr=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

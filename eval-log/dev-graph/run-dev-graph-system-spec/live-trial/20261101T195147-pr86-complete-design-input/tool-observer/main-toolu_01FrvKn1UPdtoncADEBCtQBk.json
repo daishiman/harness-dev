@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "06eedd98-4afe-4683-b236-4478bba47686",
+      "line": 745,
+      "prefix_bytes": 4136034,
+      "prefix_sha256": "62161e9b85d20dec180e9071de118e53eed2e3bf91bff29ab79d1913b10d5375",
+      "timestamp": "2026-11-01T11:11:25.500Z"
+    },
+    "result": {
+      "uuid": "b85c2245-77d4-48b5-877b-ded5c2e95d2c",
+      "line": 748,
+      "prefix_bytes": 4139688,
+      "prefix_sha256": "258635e6ffb836b89c15c6ba724c4a1d6696d638640297bec4904c328f05be56",
+      "timestamp": "2026-11-01T11:11:31.110Z"
+    }
+  },
+  "tool_use_id": "toolu_01FrvKn1UPdtoncADEBCtQBk",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c \"import json;d=json.load(open('eval-log/run-dev-graph-system-spec/R3-import/import-payload.json'));print([ (a['slug'],a['source_lineage']['imported_at'],a['confirmation_evidence']['evaluated_digest'][:8]) for a in d['artifacts']])\" && shasum -a 256 eval-log/run-dev-graph-system-spec/R3-import/import-payload.json",
+    "description": "Parse payload and compute digest"
+  },
+  "is_error": false,
+  "tool_result_content": "[('billing-audit-system-spec', '2026-11-01T11:10:38Z', 'f7f64767'), ('billing-audit-system-architecture', '2026-11-01T11:10:38Z', '6a5f58b0')]\n93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b  eval-log/run-dev-graph-system-spec/R3-import/import-payload.json",
+  "tool_use_result": {
+    "stdout": "[('billing-audit-system-spec', '2026-11-01T11:10:38Z', 'f7f64767'), ('billing-audit-system-architecture', '2026-11-01T11:10:38Z', '6a5f58b0')]\n93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b  eval-log/run-dev-graph-system-spec/R3-import/import-payload.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

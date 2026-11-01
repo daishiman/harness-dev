@@ -1,0 +1,67 @@
+{
+  "responsibility": "R2-delegate",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "verdict": "FAIL",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "original_goal_hash_verified": true,
+  "c24_receipt_sha256": "c291023c4276927b94bcff2bc21e9f9061263ec3fb85223aa3681384d4b15044",
+  "c24_receipt_sha256_verified": true,
+  "checklist": [
+    {
+      "id": "5.3-1 canonical Skill calls only and coverage/source/evaluator gates PASS",
+      "status": "PASS",
+      "evidence": "Observer main Skill calls: run-system-spec-elicit (line 226), run-system-spec-doc-fetch (306), run-system-spec-compile (403), assign-system-spec-completeness-evaluator (476, forked agent a53b7dbc1ab39108d). Compile output came from the canonical compile-spec-doc.py (line 441, exit 0). No self-written driver or compiler. Verifier re-ran: validate-coverage-matrix --require-complete --require-basis --require-foundation exit 0; validate-source-citation exit 0; aggregate-completeness --report --spec-dir --session c576b35b-... exit 0 (verdict=PASS), also exit 0 with --fork-ledger."
+    },
+    {
+      "id": "5.3-2 fixed-root move/check per main-processing Bash; independent test writes only to verified scratch",
+      "status": "PASS",
+      "evidence": "All 13 main-stream Bash calls from elicit Skill (226) through evaluator launch (476) start with the exact fixed-root export/cd/pwd prefix (0 unprefixed). The pytest run (line 461) used --basetemp under session scratchpad, -p no:cacheprovider, -B. The caller system-spec tree digest bccac54a... was the same before and after. Note: pytest_exit was printed empty (PIPESTATUS under zsh), but '63 passed' was observed. Unprefixed Bash calls exist only in subagents a37e549/a815c86/a8894576/a53b7dbc. All of them began after the evaluator launch at 08:55:56Z, so they are C05 evaluator/audit forks, not elicit/doc-fetch/compile main processing."
+    },
+    {
+      "id": "5.3-3 CLAUDE_PROJECT_DIR exported to receipt repo_root on every elicit/doc-fetch/compile Bash",
+      "status": "PASS",
+      "evidence": "Same observer scan. Each call exports CLAUDE_PROJECT_DIR=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx, which equals c24-receipt repo_root and content_roots.repository."
+    },
+    {
+      "id": "5.3-4 evaluator args equal helper successful skill_args; not launched on failure",
+      "status": "PASS",
+      "evidence": "build-evaluation-context.py --context-receipt <abs c24> --output eval-log/system-spec-completeness-report.json (line 472) gave helper_exit=0, context_sha256 c291023c... Its skill_args string is byte-equal to the evaluator Skill args at line 476 (programmatic compare True). There is only one evaluator invocation."
+    },
+    {
+      "id": "5.3-5 report spec_dir resolves to --spec-dir (source chapter dir); artifact_snapshot digests current",
+      "status": "PASS",
+      "evidence": "report.spec_dir=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec. Its realpath is identical and equals the helper spec_dir and content_roots.system_spec. aggregate-completeness --spec-dir check exit 0. All 12 artifact_snapshot digests match the current files, and no file in system-spec/ is missing from the snapshot. Chapter digests also match compile-standard.json."
+    },
+    {
+      "id": "5.3-6 SKILL.md and responsibility prompts read in full before each output-producing delegate",
+      "status": "FAIL",
+      "evidence": "compile produced output (10 chapters rewritten at line 441). Its prompts R1-assemble/R2-render/R3-crosslink were Read in full (lines 415-419, no limit), and the SKILL.md body (lines 91-228) arrived via Skill injection at line 407 (diff: only CLAUDE_PLUGIN_ROOT substitution). The frontmatter (lines 1-90 of 228: responsibility_refs, script_refs, feedback_contract, artifact_delivery state machine) was never Read or printed by any main-stream call before line 441. So run-system-spec-compile/SKILL.md was not read in full. By contrast, the parent explicitly Read the frontmatter for elicit (Read 1-80 + offset 80 limit 40, covering through line 119; frontmatter ends at 114) and for doc-fetch (Read 1-80; frontmatter ends at 81). elicit and doc-fetch wrote nothing (spec-state cf8638ae.. and fetched-references aa23a77b.. unchanged; writer_calls []), so they count as gate-only calls exempt from the rule. Even so, their SKILL.md coverage (frontmatter Read + injected body) and all of their prompts (elicit R0-R5; doc-fetch R1-R3) were full."
+    },
+    {
+      "id": "doc-fetch no-fetch decision soundness",
+      "status": "FAIL",
+      "evidence": "doc-fetch SKILL.md declares its input as targets[], decisions[].options[].evidence_refs candidates, and knowledge_candidates[]. R1-identify Layer 2 makes an infra/runtime external technology that appears in confirmed cell content a target, and Layer 4 says to lean toward including uncertain candidates. The confirmed infrastructure/web cell (qa-005: 社内 k8s) and backend/maintenance cells (qa-job-choice-fixture-v3: worker Deployment + CronJob on k8s, D4 pg-worker-cron) depend on Kubernetes CronJob semantics. D4 evidence_refs (kubernetes.io cron-jobs, postgresql.org/docs/16/sql-select.html, fastapi background-tasks) have no fetched-references record or retrieval-evidence (only postgres/react/fastapi/typescript exist). The parent's fetch_needed=false reason looked only at the existing targets[] and knowledge_candidates. It did not derive targets from the matrix or decisions[].evidence_refs. The evaluator's medium decision_guidance finding reports exactly this gap and suggests doc-fetch for kubernetes (CronJob). validate-source-citation passes only because it checks the declared targets[] set."
+    },
+    {
+      "id": "common 5.3: declared inputs verified",
+      "status": "FAIL",
+      "evidence": "C24 receipt sha256 and repo_root realpath are verified, and the goal hash is verified. The doc-fetch necessity input was not verified against the doc-fetch criteria (see the item above)."
+    },
+    {
+      "id": "common 5.3: output shape/authority",
+      "status": "PASS",
+      "evidence": "Receipts exist for elicit, doc-fetch, compile, and the OUT1 tests. The evaluator report is at eval-log/system-spec-completeness-report.json with verdict PASS and an absolute spec_dir. The helper evidence_ref is repo-relative."
+    },
+    {
+      "id": "common 5.3: zero boundary-violating read/write/delegation",
+      "status": "PASS",
+      "evidence": "Main writes went to system-spec/ only through canonical compile and to eval-log receipts. The evaluator was not rewritten. No dev-graph import was attempted in R2 (C02 run-dev-graph-node files were only Read, at lines 582+). WebFetch occurred only in the C05 doc-freshness audit fork (a8894576), not in parent doc-fetch."
+    }
+  ],
+  "blockers": [
+    "compile_skill_md_not_read_in_full: before compile produced chapters, the parent never read the frontmatter (lines 1-90) of plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md. Only the injected body and the R1-R3 prompts were read.",
+    "doc_fetch_need_misjudged: Kubernetes (CronJob) is an infra/runtime external technology in confirmed infrastructure/backend cells and in D4 evidence_refs, but it has no fetched reference. Under the doc-fetch R1-identify criteria and the SKILL input contract (decisions[].options[].evidence_refs), a fetch was needed. The evaluator raised this as a medium finding."
+  ],
+  "suggested_next": "Read run-system-spec-compile/SKILL.md in full. Re-run run-system-spec-doc-fetch through the Skill, with kubernetes (CronJob) identified per R1-identify and with D4 evidence_refs grounded. Then re-run compile, the helper with the same c24 receipt, and the C05 evaluator. Then re-verify R2.",
+  "observer_index": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/workdir/tool-observer/index.json"
+}

@@ -1,0 +1,158 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec100/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "起動時固定sourceのC05はRead/Bash(python3 *)/Agent/Taskのみを許可するが、C05 transcriptの行17のBashでls/find/head/wcを実行し行18に実出力が返っている。行24のcat、行31のtee、行39のhead/grep等も実行しており、source既存の道具契約を満たさない。Read専用の参照を許可外shellへ置き換えた実違反であり、後続の評価レポートPASSでは解消しない。",
+      "途中終了snapshotのgraphはgraph_revision=0・nodes=[]で、今回必要なspecification/architectureの2node登録が存在しない。source_lineage・confirmation evidence/evaluated_digest・readinessを保持したC02登録とimport後lineage gateを実証できず、必須観測2およびC19の到達ゴールは未完了である。",
+      "C19 progressはloop=0、全6チェック項目not_achieved、IN1=not_achievedのまま固定されている。1周目の3CLI exit0とintermediateの6キー/hash検査は観測したが、最終progressへの統合と残る周回・R3取込の完了証拠がないため、完了チェックリスト全達成および最終IN1充足を確認できない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "5dfed91519d284d0f63b76396c5651937f3ae07fecd40a78516af76348f4411e",
+    "result": "FAIL",
+    "blockers": [
+      "起動時固定sourceのC05はRead/Bash(python3 *)/Agent/Taskのみを許可するが、C05 transcriptの行17のBashでls/find/head/wcを実行し行18に実出力が返っている。行24のcat、行31のtee、行39のhead/grep等も実行しており、source既存の道具契約を満たさない。Read専用の参照を許可外shellへ置き換えた実違反であり、後続の評価レポートPASSでは解消しない。",
+      "途中終了snapshotのgraphはgraph_revision=0・nodes=[]で、今回必要なspecification/architectureの2node登録が存在しない。source_lineage・confirmation evidence/evaluated_digest・readinessを保持したC02登録とimport後lineage gateを実証できず、必須観測2およびC19の到達ゴールは未完了である。",
+      "C19 progressはloop=0、全6チェック項目not_achieved、IN1=not_achievedのまま固定されている。1周目の3CLI exit0とintermediateの6キー/hash検査は観測したが、最終progressへの統合と残る周回・R3取込の完了証拠がないため、完了チェックリスト全達成および最終IN1充足を確認できない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec100"
+    },
+    "transcript_sha256": "ba47d2277dd9a31cd5d6662e214c700bf7decdb95ac8806614ebe261253907e5",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-a8cfc0c1c434d6a22.jsonl",
+      "plugins-copy.json",
+      "closure-at-launch.txt",
+      "abort-reason.json",
+      "collection-note.json",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-eval-log/system-spec-completeness-report.json",
+      "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+      "fx-eval-log/run-dev-graph-system-spec/R2-delegate/compile-standard.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "ba47d2277dd9a31cd5d6662e214c700bf7decdb95ac8806614ebe261253907e5",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "ABORTED",
+    "wall_clock_s": 980.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "abort-reason.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 980.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "8d404903bf6dd77bedb6449fb0409bc2a7174cc0cb2c0972c05c3fa8f114b0f4",
+      "tokens": {
+        "input_tokens": 230,
+        "cache_creation_input_tokens": 579875,
+        "cache_read_input_tokens": 7965331,
+        "output_tokens": 74528,
+        "total_tokens": 8619964,
+        "assistant_messages": 111,
+        "assistant_message_ids": 111,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 8,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

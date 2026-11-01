@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2e96ea25-df61-4daa-8ac9-66ead6eba0f2",
+      "line": 25,
+      "prefix_bytes": 224605,
+      "prefix_sha256": "cc11d3b65689ec13491a820ec4330238d27907bb484d41b94410237f13505e80",
+      "timestamp": "2026-11-01T09:25:03.304Z"
+    },
+    "result": {
+      "uuid": "a4930a8c-83d4-46d2-875e-baf68a4323e8",
+      "line": 27,
+      "prefix_bytes": 229076,
+      "prefix_sha256": "7c93a997c0eb98a2ab4beec5234a0ab26c2fc150ee9730251c6afbc69a8e1653",
+      "timestamp": "2026-11-01T09:25:05.575Z"
+    }
+  },
+  "tool_use_id": "toolu_01JwGRU9TEKq4FybK29yBAqM",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; P=$PWD/plugins/system-spec-harness; S=$P/skills/assign-system-spec-completeness-evaluator; python3 $S/scripts/build-resume-receipt.py --repo-root $PWD --print-artifact-snapshot > $TMPDIR/snapshot.json; echo exit=$?; cat $TMPDIR/snapshot.json",
+    "description": "Capture artifact snapshot"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\",\n    \"system-spec/auth.md\": \"6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279\",\n    \"system-spec/backend.md\": \"f3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484\",\n    \"system-spec/database.md\": \"5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf\",\n    \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\",\n    \"system-spec/frontend.md\": \"775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"cf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076\",\n    \"system-spec/maintenance-ops.md\": \"57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e\",\n    \"system-spec/security.md\": \"b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347\",\n    \"system-spec/spec-state.json\": \"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f\",\n    \"system-spec/ui-ux.md\": \"26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82\"\n  }\n}",
+  "tool_use_result": null
+}

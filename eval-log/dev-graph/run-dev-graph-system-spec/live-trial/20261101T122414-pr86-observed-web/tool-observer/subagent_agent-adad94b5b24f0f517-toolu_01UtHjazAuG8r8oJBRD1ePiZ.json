@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-adad94b5b24f0f517",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "538ccd60-f345-4198-a2e6-dc029c59f62c",
+      "line": 34,
+      "prefix_bytes": 222618,
+      "prefix_sha256": "1ea764f2caab01e9bd8019a636d5afe8d587c1170c0da5f6f5f672be7d548063",
+      "timestamp": "2026-11-01T03:32:02.522Z"
+    },
+    "result": {
+      "uuid": "3420447b-cbe8-48fe-8a96-4ee86044a156",
+      "line": 35,
+      "prefix_bytes": 223593,
+      "prefix_sha256": "16af71ddd82f9d19b3e8868f298e0486e5408792667a98c6b0ce169cfda7492f",
+      "timestamp": "2026-11-01T03:32:04.746Z"
+    }
+  },
+  "tool_use_id": "toolu_01UtHjazAuG8r8oJBRD1ePiZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && D=eval-log/run-dev-graph-system-spec/R1-preflight && mkdir -p \"$D\" && cat > \"$D/verdict.json\" <<'EOF'\n{\n  \"responsibility_id\": \"R1-preflight\",\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"verifier\": \"independent\",\n  \"verdict\": \"PASS\",\n  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n  \"c24_receipt_sha256\": \"834cb86507b712df4a571edcc82988da644c1ef60fb31e70158e7c54e9fae80a\",\n  \"evidence\": {\n    \"plugin_manifest\": {\"path\": \"plugins/system-spec-harness/.claude-plugin/plugin.json\", \"name\": \"system-spec-harness\", \"version\": \"0.1.25\", \"sha256\": \"94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b\"},\n    \"version_range_source\": \"plugins/dev-graph/plugin-composition.yaml external_dependencies.system-spec-harness.version\",\n    \"version_range\": \">=0.1.22 <1.0.0\",\n    \"in_range\": true,\n    \"package_contract\": {\"path\": \"plugins/system-spec-harness/references/package-contract.json\", \"sha256\": \"d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486\", \"required_4_in_entry_points_skills\": true},\n    \"entry_points\": {\n      \"run-system-spec-elicit\": {\"skill_md_exists\": true, \"sha256\": \"2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\", \"pin_prefix\": \"2a64df26\", \"pin_match\": true},\n      \"run-system-spec-doc-fetch\": {\"skill_md_exists\": true, \"sha256\": \"b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\", \"pin_prefix\": \"b4b4d907\", \"pin_match\": true},\n      \"run-system-spec-compile\": {\"skill_md_exists\": true, \"sha256\": \"d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\", \"pin_prefix\": \"d793d397\", \"pin_match\": true},\n      \"assign-system-spec-completeness-evaluator\": {\"skill_md_exists\": true, \"sha256\": \"6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\", \"pin_prefix\": \"6e7458506d\", \"pin_match\": true}\n    },\n    \"preflight_report\": {\"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\", \"claimed_sha256\": \"57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c\", \"actual_sha256\": \"57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c\", \"R1_section_consistent\": true, \"manifest_sha256_consistent\": true, \"c24_sha256_consistent\": true},\n    \"tool_observer\": \"index.json shows parent read plugin.json/plugin-composition.yaml, generated preflight.json via python and copied it to preflight-report.json before invoking C01/doc-fetch/compile/C05 Skills; all is_error=false\",\n    \"plugins_dir_git_status_clean\": true\n  },\n  \"checklist_5_3\": {\n    \"inputs_all_verified\": \"YES\",\n    \"output_shape_and_authority\": \"YES\",\n    \"no_boundary_violating_read_write_delegation\": \"YES\",\n    \"version_in_composition_range_and_elicit_docfetch_compile_evaluator_exist\": \"YES\"\n  },\n  \"blockers\": [],\n  \"observations\": [\"preflight-report.json contains absolute paths (caller_root, R0.spec_realpath) — outside R1 section; relevant to Layer 3 path-portability for R0, not an R1 blocker\"]\n}\nEOF\npython3 -c \"import json;json.load(open('$D/verdict.json'));print('ok')\""
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

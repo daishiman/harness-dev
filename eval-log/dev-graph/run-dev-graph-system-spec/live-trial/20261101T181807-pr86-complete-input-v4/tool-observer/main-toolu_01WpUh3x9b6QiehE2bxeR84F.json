@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fc1843c6-5c27-43a6-b194-2813c8007f30",
+      "line": 847,
+      "prefix_bytes": 5107995,
+      "prefix_sha256": "5034876aca90e5e6de4443205408fefb67051e62b953401aba03dd48b2b5242c",
+      "timestamp": "2026-11-01T09:48:25.729Z"
+    },
+    "result": {
+      "uuid": "2c4fe28f-c1ec-49b5-8963-422e6c084e5a",
+      "line": 850,
+      "prefix_bytes": 5111099,
+      "prefix_sha256": "2790f609e88863a7af22712518b49de4d48850940cc06490dcf6bead96859854",
+      "timestamp": "2026-11-01T09:48:27.872Z"
+    }
+  },
+  "tool_use_id": "toolu_01WpUh3x9b6QiehE2bxeR84F",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && mkdir -p /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/workdir/out && python3 -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/workdir/out/status.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\"status\":\"PASS\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}\nJSON\nls -A /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/workdir/out; cat /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/workdir/out/status.json"
+  },
+  "is_error": false,
+  "tool_result_content": "status.json\n{\"status\":\"PASS\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}",
+  "tool_use_result": {
+    "stdout": "status.json\n{\"status\":\"PASS\",\"scenario\":\"C19-OUT1-positive-system-spec-lineage-r2\"}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

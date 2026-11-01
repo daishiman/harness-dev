@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "107c7a5d-394f-47d5-aa61-06f35bc04146",
+      "line": 682,
+      "prefix_bytes": 4257682,
+      "prefix_sha256": "18d0d5428b1c4d5175d4c3ddf40596a54c78bffad0e936d818ee54ee01cfacf9",
+      "timestamp": "2026-11-01T14:41:03.076Z"
+    },
+    "result": {
+      "uuid": "585f3a13-02e4-4302-acca-de8c211a1523",
+      "line": 685,
+      "prefix_bytes": 4264259,
+      "prefix_sha256": "00079dfba2d0aba1f7a0d050b4e0ba40bea5e621ed5083800992026f8b236ada",
+      "timestamp": "2026-11-01T14:41:05.573Z"
+    }
+  },
+  "tool_use_id": "toolu_016o796kSzpD38ZsSjib2iPz",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && for f in specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md .dev-graph/state/receipts/node-r000001-add.json .dev-graph/state/graph.json; do p=\"$CLAUDE_PROJECT_DIR/$f\"; echo \"path: $p\"; echo \"sha256: $(shasum -a 256 \"$p\" | cut -d' ' -f1)\"; echo \"開き方: less $p\"; echo; done; python3 -c 'import json;json.load(open(\".dev-graph/state/receipts/node-r000001-add.json\"));g=json.load(open(\".dev-graph/state/graph.json\"));print(\"parse ok; graph_revision\",g.get(\"graph_revision\"),\"nodes\",len(g[\"nodes\"]))'; date -u +%Y-%m-%dT%H:%M:%SZ",
+    "description": "Present registered nodes, receipt, and graph"
+  },
+  "is_error": false,
+  "tool_result_content": "path: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/specs/billing-audit-system-spec.md\nsha256: 1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/specs/billing-audit-system-spec.md\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/architecture/billing-audit-system-architecture.md\nsha256: fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/architecture/billing-audit-system-architecture.md\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/receipts/node-r000001-add.json\nsha256: f6a06b6ef3f57a2930950cd79c51b24b57e21fdc6c28791f041ddda907f21ca2\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/receipts/node-r000001-add.json\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/graph.json\nsha256: 32b67c19a663ae76e3203d3c7c60c9d35bda6af94b4d90e93a247e428b993d38\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/graph.json\n\nparse ok; graph_revision 1 nodes 2\n2026-11-01T14:41:05Z",
+  "tool_use_result": {
+    "stdout": "path: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/specs/billing-audit-system-spec.md\nsha256: 1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/specs/billing-audit-system-spec.md\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/architecture/billing-audit-system-architecture.md\nsha256: fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/architecture/billing-audit-system-architecture.md\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/receipts/node-r000001-add.json\nsha256: f6a06b6ef3f57a2930950cd79c51b24b57e21fdc6c28791f041ddda907f21ca2\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/receipts/node-r000001-add.json\n\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/graph.json\nsha256: 32b67c19a663ae76e3203d3c7c60c9d35bda6af94b4d90e93a247e428b993d38\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/graph.json\n\nparse ok; graph_revision 1 nodes 2\n2026-11-01T14:41:05Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4aad0a39-9e25-435b-8823-fc5f902a80fb",
+      "line": 525,
+      "prefix_bytes": 2836709,
+      "prefix_sha256": "f2590abf92e8e2432c3cd2b6ec2a7f6256fb2194dea3d912214f0d4b4dcf548b",
+      "timestamp": "2026-11-01T12:20:33.289Z"
+    },
+    "result": {
+      "uuid": "d766f949-d4d7-4bc6-bd00-8f0b12efb0d0",
+      "line": 531,
+      "prefix_bytes": 2842061,
+      "prefix_sha256": "91574306954830c5ef2f67eb0d3ff60188563c6dc5421d473e9a3d0f91322da3",
+      "timestamp": "2026-11-01T12:20:33.576Z"
+    }
+  },
+  "tool_use_id": "toolu_01EALFKK5M8mh4BeVtxRLfhL",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json",
+    "offset": 388,
+    "limit": 60
+  },
+  "is_error": false,
+  "tool_result_content": "388\t      \"description\": \"confirmation/evaluationを同一artifact digestへpinしstale PASSを拒否する\"\n389\t    },\n390\t    \"source_lineage\": {\n391\t      \"type\": \"object\",\n392\t      \"required\": [\n393\t        \"origin_kind\",\n394\t        \"source_plugin\",\n395\t        \"source_path\",\n396\t        \"source_version\",\n397\t        \"source_digest\",\n398\t        \"imported_at\"\n399\t      ],\n400\t      \"properties\": {\n401\t        \"origin_kind\": {\n402\t          \"type\": \"string\",\n403\t          \"enum\": [\n404\t            \"manual\",\n405\t            \"github\",\n406\t            \"system-spec-harness\",\n407\t            \"system-dev-planner\",\n408\t            \"generated\"\n409\t          ]\n410\t        },\n411\t        \"source_plugin\": {\n412\t          \"type\": [\n413\t            \"string\",\n414\t            \"null\"\n415\t          ]\n416\t        },\n417\t        \"source_path\": {\n418\t          \"type\": [\n419\t            \"string\",\n420\t            \"null\"\n421\t          ],\n422\t          \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"\n423\t        },\n424\t        \"source_version\": {\n425\t          \"type\": [\n426\t            \"string\",\n427\t            \"null\"\n428\t          ]\n429\t        },\n430\t        \"source_digest\": {\n431\t          \"type\": [\n432\t            \"string\",\n433\t            \"null\"\n434\t          ],\n435\t          \"pattern\": \"^[a-f0-9]{64}$\"\n436\t        },\n437\t        \"imported_at\": {\n438\t          \"type\": [\n439\t            \"string\",\n440\t            \"null\"\n441\t          ],\n442\t          \"format\": \"date-time\"\n443\t        }\n444\t      },\n445\t      \"additionalProperties\": false,\n446\t      \"description\": \"引用・import元を追跡し、C19およびexternal plugin system-dev-planner由来のimportが外部正本を利用したことを検証する\"\n447\t    },",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json",
+      "content": "      \"description\": \"confirmation/evaluationを同一artifact digestへpinしstale PASSを拒否する\"\n    },\n    \"source_lineage\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"origin_kind\",\n        \"source_plugin\",\n        \"source_path\",\n        \"source_version\",\n        \"source_digest\",\n        \"imported_at\"\n      ],\n      \"properties\": {\n        \"origin_kind\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"manual\",\n            \"github\",\n            \"system-spec-harness\",\n            \"system-dev-planner\",\n            \"generated\"\n          ]\n        },\n        \"source_plugin\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_path\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"\n        },\n        \"source_version\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_digest\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^[a-f0-9]{64}$\"\n        },\n        \"imported_at\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"format\": \"date-time\"\n        }\n      },\n      \"additionalProperties\": false,\n      \"description\": \"引用・import元を追跡し、C19およびexternal plugin system-dev-planner由来のimportが外部正本を利用したことを検証する\"\n    },",
+      "numLines": 60,
+      "startLine": 388,
+      "totalLines": 1563
+    }
+  }
+}

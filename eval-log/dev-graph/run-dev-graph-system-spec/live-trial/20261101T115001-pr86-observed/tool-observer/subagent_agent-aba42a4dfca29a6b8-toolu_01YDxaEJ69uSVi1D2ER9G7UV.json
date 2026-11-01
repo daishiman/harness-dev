@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-aba42a4dfca29a6b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "30e44668-ca98-44c1-acf1-4ac8931c4905",
+      "line": 166,
+      "prefix_bytes": 914453,
+      "prefix_sha256": "1a41035f5fc87ea3a8ee119287c26b9c9f0257f6dee96d71665649aa888d486b",
+      "timestamp": "2026-11-01T02:59:07.778Z"
+    },
+    "result": {
+      "uuid": "182acc26-7747-4c64-bf31-46fae799b685",
+      "line": 167,
+      "prefix_bytes": 916344,
+      "prefix_sha256": "a2f835b4efa085470ea65edf0a2341eba78366dbf0391753568764685ac0536c",
+      "timestamp": "2026-11-01T02:59:09.881Z"
+    }
+  },
+  "tool_use_id": "toolu_01YDxaEJ69uSVi1D2ER9G7UV",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json\ns=json.load(open('system-spec/spec-state.json')); print('targets',s['targets'])\nf=json.load(open('system-spec/fetched-references.json')); print(list(f.keys()))\nfor r in f['references']: print({k:r.get(k) for k in ('target_id','source_url','official_host','version','last_updated','latest_checked_at')})\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "targets [{'target_id': 'postgres', 'category': 'database'}, {'target_id': 'react', 'category': 'frontend'}, {'target_id': 'fastapi', 'category': 'backend', 'also_categories': ['frontend']}, {'target_id': 'typescript', 'category': 'frontend'}]\n['references']\n{'target_id': 'postgres', 'source_url': 'https://www.postgresql.org/docs/16/', 'official_host': 'www.postgresql.org', 'version': '16.15', 'last_updated': None, 'latest_checked_at': '2026-10-31T14:45:20Z'}\n{'target_id': 'react', 'source_url': 'https://react.dev/versions', 'official_host': 'react.dev', 'version': '19.3', 'last_updated': None, 'latest_checked_at': '2026-10-31T14:45:58Z'}\n{'target_id': 'fastapi', 'source_url': 'https://fastapi.tiangolo.com/release-notes/', 'official_host': 'fastapi.tiangolo.com', 'version': '0.162.0', 'last_updated': None, 'latest_checked_at': '2026-10-31T14:46:09Z'}\n{'target_id': 'typescript', 'source_url': 'https://www.typescriptlang.org/download/', 'official_host': 'www.typescriptlang.org', 'version': '7.0', 'last_updated': None, 'latest_checked_at': '2026-10-31T14:46:21Z'}",
+  "tool_use_result": null
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a8894576d1a54b8b0",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "488c1850-8405-4a13-a763-78c504b7425a",
+      "line": 27,
+      "prefix_bytes": 304841,
+      "prefix_sha256": "f198113757b7d4e2dffe9ac483c634028c51c82440d36a83abb7c863d9d849f4",
+      "timestamp": "2026-11-01T09:01:17.204Z"
+    },
+    "result": {
+      "uuid": "94dd5010-86b4-42a8-8878-fb85ccea7584",
+      "line": 28,
+      "prefix_bytes": 306653,
+      "prefix_sha256": "1cf1aad7bcb3f2073d2c3c84310eb029faa7ffb607a18f33f2eba81bb456f752",
+      "timestamp": "2026-11-01T09:01:22.821Z"
+    }
+  },
+  "tool_use_id": "toolu_01KqkvgH4MkJFLUFEFEJzXcX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx; python3 -I -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));print(json.dumps(d.get('targets')))\"; ls system-spec/retrieval-evidence; export CLAUDE_PROJECT_DIR=$PWD; python3 -I -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));json.dump({'targets':d['targets']},open('$TMPDIR/t.json','w'))\"; python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets $TMPDIR/t.json --references system-spec/fetched-references.json --repo-root $PWD; echo exit=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]\nfastapi.json\npostgres.json\nreact.json\ntypescript.json\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0",
+  "tool_use_result": {
+    "stdout": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]\nfastapi.json\npostgres.json\nreact.json\ntypescript.json\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

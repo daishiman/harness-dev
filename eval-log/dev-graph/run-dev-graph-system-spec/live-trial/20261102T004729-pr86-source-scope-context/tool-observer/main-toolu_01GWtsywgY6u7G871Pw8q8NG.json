@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e8220cd8-956c-429a-9488-d335cc894a07",
+      "line": 339,
+      "prefix_bytes": 2153375,
+      "prefix_sha256": "717a05f025021db456e8c6b3680a7a8d61c05592f829e45dac4e520e0fbca808",
+      "timestamp": "2026-11-01T15:53:51.899Z"
+    },
+    "result": {
+      "uuid": "59125766-59f4-448c-9995-fc2b4956b7ad",
+      "line": 342,
+      "prefix_bytes": 2158393,
+      "prefix_sha256": "368a6b0463559db8e322d81387d7db9b6a3caa0cdc9c042787c94cd073f1cef7",
+      "timestamp": "2026-11-01T15:53:55.501Z"
+    }
+  },
+  "tool_use_id": "toolu_01GWtsywgY6u7G871Pw8q8NG",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -c \"\nimport json;r=json.load(open('system-spec/fetched-references.json'))['references'];s=json.load(open('system-spec/spec-state.json'))\nprint([ (x['target_id'],x['official_host'],x.get('version'),x.get('last_updated'),x['retrieved_at'],x['latest_checked_at']) for x in r])\nprint('targets',[t['target_id'] for t in s['targets']]); print('discovered',[k['id'] for k in s['knowledge_candidates'] if k.get('status')=='discovered'])\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root \"$CLAUDE_PROJECT_DIR\"; echo cite=$?",
+    "description": "Check reference coverage and citation gate"
+  },
+  "is_error": false,
+  "tool_result_content": "[('postgres', 'www.postgresql.org', '16.15', None, '2026-10-31T14:45:20Z', '2026-10-31T14:45:20Z'), ('react', 'react.dev', '19.3', None, '2026-10-31T14:45:58Z', '2026-10-31T14:45:58Z'), ('fastapi', 'fastapi.tiangolo.com', '0.162.0', None, '2026-10-31T14:46:09Z', '2026-10-31T14:46:09Z'), ('typescript', 'www.typescriptlang.org', '7.0', None, '2026-10-31T14:46:21Z', '2026-10-31T14:46:21Z'), ('kubernetes', 'kubernetes.io', None, '2026-05-13T21:32:47+01:00', '2026-11-01T09:14:52.437427Z', '2026-11-01T09:14:52.437427Z')]\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']\ndiscovered []\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite=0",
+  "tool_use_result": {
+    "stdout": "[('postgres', 'www.postgresql.org', '16.15', None, '2026-10-31T14:45:20Z', '2026-10-31T14:45:20Z'), ('react', 'react.dev', '19.3', None, '2026-10-31T14:45:58Z', '2026-10-31T14:45:58Z'), ('fastapi', 'fastapi.tiangolo.com', '0.162.0', None, '2026-10-31T14:46:09Z', '2026-10-31T14:46:09Z'), ('typescript', 'www.typescriptlang.org', '7.0', None, '2026-10-31T14:46:21Z', '2026-10-31T14:46:21Z'), ('kubernetes', 'kubernetes.io', None, '2026-05-13T21:32:47+01:00', '2026-11-01T09:14:52.437427Z', '2026-11-01T09:14:52.437427Z')]\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']\ndiscovered []\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

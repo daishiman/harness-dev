@@ -1,0 +1,21 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "loop": 1,
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "C24 resolve-repo-context.py --mode write exit0; repo_root == realpath(content_roots.repository); repository_id local:sha256:105c7fd1...6de1; writer resolved --input inside repo"},
+    {"id": "classification", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: spec decision auto confidence 0.95 margin 0.65; arch decision auto confidence 0.92 margin 0.57 (>=0.80, >=0.15)"},
+    {"id": "schema", "status": "achieved", "evidence": "validate-graph-schema.py --strict-artifact-readiness exit0 valid=true violations 0 readiness complete 2/2 (eval-log/run-dev-graph-system-spec/R3-import/schema-report-r1.json); writer pre_write_validation findings 0"},
+    {"id": "package", "status": "not_applicable", "evidence": "verb add only; register-package not invoked"},
+    {"id": "receipt", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json graph_revision_after 1, graph_digest_after sha256:fce692c2...b058, node_ids [spec-billing-audit-system-spec, arch-billing-audit-system-architecture] equal commit-after graph and graph_baseline; single pre-choice commit"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "loop1: validate-graph-schema pre-write findings 0 and post-commit exit0"},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial / acceptance tests"},
+    {"id": "OUT2", "status": "external_pending", "judged_by": "live trial / acceptance tests"},
+    {"id": "OUT3", "status": "external_pending", "judged_by": "live trial / acceptance tests"}
+  ],
+  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058"},
+  "writer_receipts": [],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058"},
+  "overall": "PASS"
+}

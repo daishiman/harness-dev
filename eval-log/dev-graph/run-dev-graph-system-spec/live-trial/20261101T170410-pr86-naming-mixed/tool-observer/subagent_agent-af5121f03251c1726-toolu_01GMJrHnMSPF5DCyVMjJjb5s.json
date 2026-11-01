@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-af5121f03251c1726",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "00209165-680a-4db8-a1cb-79a27eb54171",
+      "line": 37,
+      "prefix_bytes": 323249,
+      "prefix_sha256": "bd2852fe5f07c04287a0ccbdcefa9afe21834c0881a7ec114bc78c564b1e6961",
+      "timestamp": "2026-11-01T08:14:55.154Z"
+    },
+    "result": {
+      "uuid": "77486bbb-5786-4bf0-ac57-4a88e91e1519",
+      "line": 41,
+      "prefix_bytes": 331212,
+      "prefix_sha256": "f1dbdb9e76310d6971dbbec5f6827b5d0b6780c185a9b5a8548055ac1776b897",
+      "timestamp": "2026-11-01T08:14:58.516Z"
+    }
+  },
+  "tool_use_id": "toolu_01GMJrHnMSPF5DCyVMjJjb5s",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));print(json.dumps(d.get('targets'),ensure_ascii=False))\""
+  },
+  "is_error": false,
+  "tool_result_content": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]",
+  "tool_use_result": {
+    "stdout": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

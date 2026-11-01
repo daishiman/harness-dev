@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a8e6879606070d8c0",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ff5249ea-d7c3-4449-a767-b64993311fca",
+      "line": 36,
+      "prefix_bytes": 359789,
+      "prefix_sha256": "f217e59b82cd638d077b98585b8a216079d9e2e9598c2e0814ecfff0fe8a31cb",
+      "timestamp": "2026-11-01T12:10:23.950Z"
+    },
+    "result": {
+      "uuid": "4728320a-5504-42b7-9446-597a865d91b2",
+      "line": 41,
+      "prefix_bytes": 370540,
+      "prefix_sha256": "827db48b2ea0487b831cf89e001e7472446810cf3003ebfeffdffbf92950f2b9",
+      "timestamp": "2026-11-01T12:10:30.118Z"
+    }
+  },
+  "tool_use_id": "toolu_016L8YSH15rcCj4YdJL7RxBr",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "What is the page last modified date, and what does it say about concurrencyPolicy Forbid and idempotency?"
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified date:** The content doesn't include one. The page footer, where Kubernetes docs usually show it, was cut off in the truncated text.\n\n**concurrencyPolicy: Forbid:** The page says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nA minimal manifest using it:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  concurrencyPolicy: Forbid\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Hello from the Kubernetes cluster\"]\n          restartPolicy: OnFailure\n```\n\n**Idempotency:** The visible text doesn't mention idempotency. The Job-creation limitations section, which was truncated, is where the docs typically discuss it. From general Kubernetes knowledge, not this page, the CronJob controller can occasionally create more than one Job for the same scheduled time, so Job workloads should be idempotent. I can't confirm that wording from the content you provided.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified date:** The content doesn't include one. The page footer, where Kubernetes docs usually show it, was cut off in the truncated text.\n\n**concurrencyPolicy: Forbid:** The page says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nA minimal manifest using it:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  concurrencyPolicy: Forbid\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: hello\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Hello from the Kubernetes cluster\"]\n          restartPolicy: OnFailure\n```\n\n**Idempotency:** The visible text doesn't mention idempotency. The Job-creation limitations section, which was truncated, is where the docs typically discuss it. From general Kubernetes knowledge, not this page, the CronJob controller can occasionally create more than one Job for the same scheduled time, so Job workloads should be idempotent. I can't confirm that wording from the content you provided.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 4705,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

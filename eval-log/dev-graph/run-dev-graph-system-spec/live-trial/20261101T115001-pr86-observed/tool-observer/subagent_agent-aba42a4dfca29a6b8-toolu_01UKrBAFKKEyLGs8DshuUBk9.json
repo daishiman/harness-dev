@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-aba42a4dfca29a6b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f2b6c93f-2886-4b6a-b45d-7d42a0a8d307",
+      "line": 100,
+      "prefix_bytes": 676972,
+      "prefix_sha256": "306c1930c454e9010dd1dc90d098c096b6a5657381c207075880a8beae8bed77",
+      "timestamp": "2026-11-01T02:57:46.307Z"
+    },
+    "result": {
+      "uuid": "f6018939-bdb6-4dcd-9737-ed97a5bbf45d",
+      "line": 101,
+      "prefix_bytes": 678167,
+      "prefix_sha256": "fe312e9aa4792f0a49a104910d47129756d8b7e693edac30852c443253aa0e5a",
+      "timestamp": "2026-11-01T02:57:48.869Z"
+    }
+  },
+  "tool_use_id": "toolu_01UKrBAFKKEyLGs8DshuUBk9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport subprocess, pathlib\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx\"\nP=R+\"/plugins/system-spec-harness\"\nr=subprocess.run([\"python3\",P+\"/scripts/validate-coverage-matrix.py\",\"--matrix\",R+\"/system-spec/spec-state.json\",\"--require-foundation\"],capture_output=True,text=True)\nprint(\"foundation exit\",r.returncode,r.stdout,r.stderr)\nhits=[str(p) for p in pathlib.Path(R+\"/plugins\").rglob(\"*.py\") if p.name in (\"verify-completeness.py\",\"validate-prompt.py\")]\nprint(\"prompt-creator validators:\",hits)\nprint(sorted(p.name for p in pathlib.Path(R+\"/plugins\").iterdir()))\nprint(len(list(pathlib.Path(P).rglob(\"prompts/*.md\"))))\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "foundation exit 0 OK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\n \nprompt-creator validators: ['/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/harness-creator/vendor/prompt-creator/verify-completeness.py']\n['dev-graph', 'harness-creator', 'skill-governance-adapters', 'system-dev-planner', 'system-spec-harness']\n18",
+  "tool_use_result": null
+}

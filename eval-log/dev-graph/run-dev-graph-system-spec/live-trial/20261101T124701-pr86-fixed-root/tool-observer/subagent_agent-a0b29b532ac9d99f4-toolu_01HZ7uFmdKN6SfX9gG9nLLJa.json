@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ee6e8578-e86c-4c2e-a6f8-6da0a82f5433",
+      "line": 247,
+      "prefix_bytes": 1253845,
+      "prefix_sha256": "e9abe2665522e3fff40892ae6d7eefb599a18d563907af6c97bf627a6f180bed",
+      "timestamp": "2026-11-01T03:59:23.420Z"
+    },
+    "result": {
+      "uuid": "bfdbdcec-a6da-4614-b275-fb206d1e32e2",
+      "line": 248,
+      "prefix_bytes": 1255624,
+      "prefix_sha256": "176245946772cfd04bac887c8b177fad93017a6a3f24c6e691090bab532a844d",
+      "timestamp": "2026-11-01T03:59:26.508Z"
+    }
+  },
+  "tool_use_id": "toolu_01HZ7uFmdKN6SfX9gG9nLLJa",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c '\nimport subprocess\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\"\nr=subprocess.run([\"python3\",R+\"/plugins/system-spec-harness/scripts/validate-hearing-sources.py\",\"--matrix\",R+\"/system-spec/spec-state.json\",\"--repo-root\",R],capture_output=True,text=True)\nprint(r.returncode,r.stdout,repr(r.stderr))'",
+    "description": "Re-run hearing source validator"
+  },
+  "is_error": false,
+  "tool_result_content": "0 {\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}\n ''",
+  "tool_use_result": {
+    "stdout": "0 {\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}\n ''",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

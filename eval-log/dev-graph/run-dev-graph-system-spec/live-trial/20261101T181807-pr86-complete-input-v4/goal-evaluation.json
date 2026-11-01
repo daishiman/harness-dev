@@ -1,0 +1,36 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "C08 は開始時必読の R4-audit-doc-freshness.md を読まずに監査を完了した。agent-a3eae3cd4a10fdfba の最終応答に「SSOT の R4 本文は読んでいません」とあり、全 native tool call（Read/Bash を含む）にも同本文の取得がない。公開0.1.24の C08 adapter Layer 5.3 と R4 Layer 3 の必読・完了条件を満たさず、その PASS を C05/doc_freshness の正規受入根拠にできない。",
+    "C05 は prompt_quality の意味評価を16/18 promptで省略したまま PASS にした。native Bash toolu_01SvKHtXn3Yo4qitkVQFq1PK は全18件の見出し・チェックリスト数を出す構造走査のみで、report findings は「他16 prompt の C1-C4 独立精読は行っていない」と明示する。公開0.1.24 rubric の単独install例外は外部機械validatorだけを省略でき、意味層 pass_criteria と独立design findings は必須のまま。従って全6観点を満たす正規 evaluator PASS が成立していない。",
+    "C05 の report生成で、native Bash toolu_012o3zX58AKFmdq49uB9vv67 が cat > $TMPDIR/build_report.py で自作の生成scriptを保存し、それを実行してJSONを供給した。report最終保存先は指定のliteral Pathだったが、公開0.1.24 R1-score 4.3 が許可する書込み（C06出力と評価reportのみ）と Bash(python3 *) の境界を超えている。同節は cat > / redirect を明示的に対象外としている。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec113"
+  },
+  "transcript_sha256": "438200d7f0175622d2e89fa29ef4e9a4a337d12a4768a30b3bb796710282a8b8",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-ad922158d6d9cec16.jsonl",
+    "transcript/subagents/agent-a3eae3cd4a10fdfba.jsonl",
+    "tool-observer/index.json",
+    "tool-observer/subagent_agent-ad922158d6d9cec16-toolu_01SvKHtXn3Yo4qitkVQFq1PK.json",
+    "tool-observer/subagent_agent-ad922158d6d9cec16-toolu_012o3zX58AKFmdq49uB9vv67.json",
+    "fx-final/tree/eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/eval-log/run-dev-graph-node-progress.json",
+    "tool-observer/main-toolu_01GJsdBtSm1MfQdL1Hxixe5s.json",
+    "tool-observer/main-toolu_01G3Nbqvct7LK2J6wjzQFVbR.json",
+    "tool-observer/main-toolu_01WsmkVVGuhuvTqJxUji9Y6w.json",
+    "evidence-redaction.json",
+    "poll-normalization.json",
+    "plugins-copy.json",
+    "closure-at-launch.txt",
+    "task.md"
+  ]
+}

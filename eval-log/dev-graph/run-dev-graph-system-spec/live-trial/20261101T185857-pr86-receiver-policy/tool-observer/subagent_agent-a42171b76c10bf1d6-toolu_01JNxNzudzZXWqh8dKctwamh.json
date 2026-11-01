@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-a42171b76c10bf1d6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "986fd633-7ca2-4776-9742-fcb5aad88cf4",
+      "line": 47,
+      "prefix_bytes": 353702,
+      "prefix_sha256": "d8e7046df2799c90275535881ac8739a4cfcb708ebb77064d21d68dc99009f65",
+      "timestamp": "2026-11-01T10:01:53.780Z"
+    },
+    "result": {
+      "uuid": "cac41e83-aa02-4ac8-9e74-12f3cd58db11",
+      "line": 48,
+      "prefix_bytes": 355429,
+      "prefix_sha256": "b728b138467d7278a2209a96ae95959b4c084e9cd3d2d43d56b5494fdd091c3f",
+      "timestamp": "2026-11-01T10:01:55.948Z"
+    }
+  },
+  "tool_use_id": "toolu_01JNxNzudzZXWqh8dKctwamh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph; grep -rnlE \"matrix|platform|official_source|citation|question\" scripts lib skills/*/scripts 2>/dev/null; echo ---; grep -nE \"^def |import\" skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py | head -40; wc -l skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py; grep -rnE \"def .*(elicit|compile|hearing|coverage|citation)\" scripts lib skills 2>/dev/null | head"
+  },
+  "is_error": false,
+  "tool_result_content": "scripts/build-project-hook-fallback.py\n---\n13:from __future__ import annotations\n15:import argparse\n16:import hashlib\n17:import json\n18:import shlex\n19:import subprocess\n20:import sys\n21:from pathlib import Path\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:\n      98 skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py",
+  "tool_use_result": {
+    "stdout": "scripts/build-project-hook-fallback.py\n---\n13:from __future__ import annotations\n15:import argparse\n16:import hashlib\n17:import json\n18:import shlex\n19:import subprocess\n20:import sys\n21:from pathlib import Path\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:\n      98 skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

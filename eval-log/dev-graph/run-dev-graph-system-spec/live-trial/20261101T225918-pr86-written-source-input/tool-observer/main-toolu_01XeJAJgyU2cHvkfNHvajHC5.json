@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "45141271-9474-4cf2-b65d-b349b3cc534e",
+      "line": 348,
+      "prefix_bytes": 2366149,
+      "prefix_sha256": "bc4b7b6d06b7f9839b99b5eeb85bbb15b142ab744c1020b446fb792209000a12",
+      "timestamp": "2026-11-01T14:07:25.414Z"
+    },
+    "result": {
+      "uuid": "dd004fe2-706f-4d9f-918e-33148c585f07",
+      "line": 351,
+      "prefix_bytes": 2370503,
+      "prefix_sha256": "c444ff0c160fae9983c8cd3b2a4eb1e344acea665db7d660b45cb5a76212904a",
+      "timestamp": "2026-11-01T14:07:29.504Z"
+    }
+  },
+  "tool_use_id": "toolu_01XeJAJgyU2cHvkfNHvajHC5",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && S=\"$CLAUDE_PROJECT_DIR/system-spec\" && python3 -B \"$P/scripts/validate-coverage-matrix.py\" --matrix \"$S/spec-state.json\" --require-complete; echo \"cov=$?\"; python3 -B \"$P/scripts/validate-source-citation.py\" --targets \"$S/spec-state.json\" --references \"$S/fetched-references.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"cit=$?\"; python3 -B \"$P/scripts/validate-design-knowledge-refs.py\" --matrix \"$S/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"dkr=$?\"; ls \"$S\"",
+    "description": "Run compile IN1 entry gates"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncit=0\nOK: design knowledge_ref は全て実在する (検査 21 件)\ndkr=0\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfixture-requirements-v7.txt\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncit=0\nOK: design knowledge_ref は全て実在する (検査 21 件)\ndkr=0\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfixture-requirements-v7.txt\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

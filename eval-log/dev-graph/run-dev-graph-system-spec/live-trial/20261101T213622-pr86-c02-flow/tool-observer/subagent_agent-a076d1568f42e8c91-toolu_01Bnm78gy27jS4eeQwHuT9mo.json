@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-a076d1568f42e8c91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "0dbc0587-599e-402b-836e-58eff2177a56",
+      "line": 50,
+      "prefix_bytes": 448374,
+      "prefix_sha256": "0b9dbacd29072d71aa8713f6c93f82e460776ae9f2530981db9ddb66e0768faa",
+      "timestamp": "2026-11-01T12:41:18.352Z"
+    },
+    "result": {
+      "uuid": "a09a31c5-8018-4027-9bf6-848f4e60be5a",
+      "line": 51,
+      "prefix_bytes": 451840,
+      "prefix_sha256": "c4deff9864a5f6473263ecbcc473b61989cfcff65212dad12443332cae7db5bd",
+      "timestamp": "2026-11-01T12:41:22.901Z"
+    }
+  },
+  "tool_use_id": "toolu_01Bnm78gy27jS4eeQwHuT9mo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; sed -n 70,90p $R/plugins/dev-graph/scripts/resolve-repo-context.py; cd $R && CLAUDE_PROJECT_DIR=$R python3 -B $R/plugins/dev-graph/scripts/resolve-repo-context.py --repo-root $R --mode write | python3 -c \"\nimport json,sys\na=json.load(sys.stdin); b=json.load(open('$R/eval-log/run-dev-graph-system-spec-c24-receipt.json'))\ndiff=[k for k in set(a)|set(b) if a.get(k)!=b.get(k)]\nprint('diff keys:',diff)\n\"; echo \"resolver exit=${PIPESTATUS[0]}\"; python3 -B $R/plugins/dev-graph/scripts/validate-source-lineage.py --repo-root $R; echo \"lineage exit=$?\"; git -C $R status --porcelain",
+    "description": "Re-run resolver and lineage gate read-only, compare"
+  },
+  "is_error": false,
+  "tool_result_content": "    if root != actual:\n        raise ContractError(f\"selected root is not current worktree root: {root} != {actual}\")\n    if trusted and Path(trusted).expanduser().resolve(strict=True) != root:\n        raise ContractError(\"--repo-root and CLAUDE_PROJECT_DIR disagree\")\n    return root, choices[0][1]\n\n\ndef repository_id_for(remote: str, common: Path) -> str:\n    \"\"\"Derive the durable repository identity from the canonical authority.\"\"\"\n    match = GITHUB_REMOTE.fullmatch(remote.strip()) if remote else None\n    if match:\n        owner, repository = match.groups()\n        return f\"github:{owner}/{repository.removesuffix('.git')}\"\n    digest = hashlib.sha256(str(common.resolve(strict=True)).encode(\"utf-8\")).hexdigest()\n    return f\"local:sha256:{digest}\"\n\n\ndef _absolute_git_path(raw: str, root: Path) -> Path:\n    path = Path(raw)\n    return (root / path).resolve(strict=True) if not path.is_absolute() else path.resolve(strict=True)\n\ndiff keys: []\nresolver exit=\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage exit=0\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "    if root != actual:\n        raise ContractError(f\"selected root is not current worktree root: {root} != {actual}\")\n    if trusted and Path(trusted).expanduser().resolve(strict=True) != root:\n        raise ContractError(\"--repo-root and CLAUDE_PROJECT_DIR disagree\")\n    return root, choices[0][1]\n\n\ndef repository_id_for(remote: str, common: Path) -> str:\n    \"\"\"Derive the durable repository identity from the canonical authority.\"\"\"\n    match = GITHUB_REMOTE.fullmatch(remote.strip()) if remote else None\n    if match:\n        owner, repository = match.groups()\n        return f\"github:{owner}/{repository.removesuffix('.git')}\"\n    digest = hashlib.sha256(str(common.resolve(strict=True)).encode(\"utf-8\")).hexdigest()\n    return f\"local:sha256:{digest}\"\n\n\ndef _absolute_git_path(raw: str, root: Path) -> Path:\n    path = Path(raw)\n    return (root / path).resolve(strict=True) if not path.is_absolute() else path.resolve(strict=True)\n\ndiff keys: []\nresolver exit=\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage exit=0\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

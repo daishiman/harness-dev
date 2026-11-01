@@ -1,0 +1,105 @@
+{
+  "result": "PASS",
+  "evaluator_id": "/root/review_sysspec110",
+  "scope": "v4合成givenのKubernetes target/出典補完だけの独立検証。v3 review結論を転用せず、現物・差分・正規CLI再実行・独立HTTP GETから確認した。新native trialのgoal/acceptance/実利用者承認は判定しない。",
+  "blockers": [],
+  "checks": {
+    "non_target_state_preservation": {
+      "result": "PASS",
+      "basis": "targets-before-state.jsonはv3最終stateとbytes完全一致。v4 stateからtargetsを除く全fieldをv3と比較して完全一致し、qa_log全50件・foundation・D1-D4・approval_logを保持。旧targets4件のprefixも完全一致し、kubernetes1件だけを追加。"
+    },
+    "canonical_producers": {
+      "result": "PASS",
+      "basis": "producer /tmp/pr86-complete-positive-targets.pyと保存済target-fixture-correction.pyのbytes一致。set-targets単一writer、canonical build-fetched-references assemble、C13、canonical compileの実ログは全exit0。別scratchで4 CLIを独立再実行して全exit0、生成state・fetched-references・全10 Markdownがv4とbytes一致。fixture自体には書込なし。",
+      "replay": [
+        {
+          "entrypoint": "skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+          "operation": "set-targets",
+          "exit": 0
+        },
+        {
+          "entrypoint": "skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py",
+          "operation": "assemble",
+          "exit": 0
+        },
+        {
+          "entrypoint": "scripts/validate-source-citation.py",
+          "operation": "--targets",
+          "exit": 0
+        },
+        {
+          "entrypoint": "skills/run-system-spec-compile/scripts/compile-spec-doc.py",
+          "operation": "compile",
+          "exit": 0
+        }
+      ]
+    },
+    "http_evidence_binding": {
+      "result": "PASS",
+      "basis": "保存metadataのstatus200、Content-Length/bytes=521401、source_url、取得/確認時刻、HTML中itemprop=dateModified、evidence_sha256が新kubernetes recordへ一致。元の取得fileとも一致。さらに独立GETでHTTP200・同一521401 bytes・同一SHAと更新日時を確認した。本文はCronJobの重複/欠落可能性・冪等性・同一CronJobのconcurrencyPolicy制約を支え、summaryのexactly-once非保証の説明と矛盾しない。",
+      "details": {
+        "metadata_status": 200,
+        "metadata_bytes": 521401,
+        "saved_body_sha256": "5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060",
+        "saved_body_bytes_match_headers": true,
+        "source_url_time_date_digest_bound": true,
+        "original_download_files_equal": true,
+        "independent_get_status": 200,
+        "independent_get_url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+        "independent_get_bytes": 521401,
+        "independent_get_sha256": "5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060",
+        "independent_get_body_equal": true,
+        "independent_get_last_updated": "2026-05-13T21:32:47+01:00",
+        "saved_last_updated": "2026-05-13T21:32:47+01:00",
+        "review_get_at": "2026-11-01T09:16:56.408022+00:00"
+      }
+    },
+    "chapter_and_target_correspondence": {
+      "result": "PASS",
+      "basis": "5 targets/5 referencesは各target_id一意で全件対応。旧4 referencesはv3と全field一致。kubernetesの主category infrastructureとalso_categories backend/maintenance-opsの3章に公式URL出典行があり、指定外5章へ同出典行を推測追加していない。"
+    },
+    "public_copy_and_seed_absence": {
+      "result": "PASS",
+      "basis": "元D/publicの47 fileを相対path exact-setとSHAで照合し全bytes一致。graph/verdict/completeness-report/audit-ledger/resume-receipt seedなし。candidate-importの2 artifactにconfirmation_evidenceなし。新provenanceは実利用者承認ではなく対象agentのSkill実行/監査/PASSでもないと明示。"
+    }
+  },
+  "insufficiencies": [],
+  "notes": [
+    "このPASSは入力のtarget補完という限定scopeのみ。111のFAILを変更せず、112以降のrawは読んでいない。新native trialでは独立C05/監査/C02/R3その他の正規経路とgoal達成を別fresh agentが判断する。",
+    "ホスト側の準備用GETと正規CLI再実行は、被験native sessionによるSkill呼出しやWebFetch、独立監査の証拠として扱わない。canonical producerによる再現性と入力出典の対応を確認しただけである。",
+    "新しいactual_user_approvalを認めていない。合成QA/承認/D4の出所の明示は保持され、今回のtarget追加自体は利用者発話を追加・変更していない。",
+    "v3から継承したfixture-correction-provenance.jsonのrepaired_state_sha256はv3時点の履歴であり、v4の現値ではない。target-correction-provenance.jsonとtargets-before-state.jsonが次の補完を明示し、レビューでv3/v4現物を独立照合した。",
+    "全外部技術のtarget閉包、全QAのN1-N4、全必読Skill全文Read、全監査観点、新native trialの予算/モデル/reaperはこの限定レビューではPASS認定しない。公開.24の既存基準を変更していない。"
+  ],
+  "v3_state_sha256": "cf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f",
+  "v4_state_sha256": "2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f",
+  "fixture_root": "/private/tmp/claude-501/pr86-ci-live/lt/positive-input-v4",
+  "public_copy": "/Users/dm/orca/workspaces/harness/pr86-ci-fix/eval-log/dev-graph/live-trial-fixtures/pr86-system-spec-positive-v4",
+  "evidence_refs": [
+    "target-correction-provenance.json",
+    "target-fixture-correction.py",
+    "targets-before-state.json",
+    "targets-v4.json",
+    "reference-records-v4.json",
+    "kubernetes-response-metadata.json",
+    "system-spec/spec-state.json",
+    "system-spec/fetched-references.json",
+    "system-spec/retrieval-evidence/kubernetes.html",
+    "system-spec/infrastructure.md",
+    "system-spec/backend.md",
+    "system-spec/maintenance-ops.md",
+    "target-v4-0.stdout",
+    "target-v4-0.stderr",
+    "target-v4-1.stdout",
+    "target-v4-1.stderr",
+    "target-v4-2.stdout",
+    "target-v4-2.stderr",
+    "target-v4-3.stdout",
+    "target-v4-3.stderr",
+    "candidate-import.json"
+  ],
+  "review_artifacts": [
+    "/tmp/pr86-positive-input-v4-replay.json",
+    "/tmp/pr86-positive-input-v4-http-review.json"
+  ]
+}

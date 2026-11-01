@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "run_id": "sysspec114",
+  "evaluator": "/root/review_sysspec114",
+  "method": "独立parserで原本JSONLのuuidを重複排除し、実tool/resultと各source行・prefix digestを照合。既存observerのextract関数は実行しない。",
+  "result": "PASS",
+  "errors": [],
+  "event_count": 108,
+  "kind_counts": {
+    "tool_call": 105,
+    "skill_body_injection": 3
+  },
+  "tool_counts": {
+    "Bash": 60,
+    "Read": 41,
+    "Skill": 4
+  },
+  "verified_events": [
+    "main-toolu_018hTAeb5Z32E15BLGoREST1.json",
+    "main-toolu_01TH4n7mGVXRdecDyTuCregc.json",
+    "main-toolu_01BaP5rzfxqLBDkhrTRgnPn8.json",
+    "main-toolu_01Tmyjcb3Q74CuD7xwSZVcQG.json",
+    "main-toolu_01KADjSG4LDhwTecRjH9Gs1Z.json",
+    "main-toolu_014LgPBmcjF6hBPGpfK9Z2D3.json",
+    "main-toolu_017DPryn2zf1f1zo3ykorYSx.json",
+    "main-toolu_01Ks6tHiDGhdv238cfo6bTqw.json",
+    "main-toolu_01JJYfePv5kmCyvbptMNmqPn.json",
+    "main-toolu_01H3xYvqPRA8vKmCw7L51dSu.json",
+    "main-toolu_017AXbbUnRhCdqvETZAYLEvD.json",
+    "main-toolu_01Qa3uZz9bgF5SbNBH3t5iTr.json",
+    "main-toolu_011NXuqgwxJ9fruRXPD3bMQY.json",
+    "main-toolu_01A3Fuf871X3UdyH2VJTrR2S.json",
+    "main-toolu_01XMDQJWYNcwp6YTb4U311Ke.json",
+    "main-toolu_01Wogt5dZTfwWv2kYRKJFCZL.json",
+    "main-toolu_01LpX3xsoe1E27DshQzAmBgn.json",
+    "main-toolu_01W1H6bVGF15JC6cP4uFX9om.json",
+    "main-toolu_01TJTV5SHU4PuDzgY5TCmWz7.json",
+    "main-toolu_0152PCUWrgSpiXNuWM44CuhX.json",
+    "main-toolu_01DLxF8JhFbgEk38dmqoWHt2.json",
+    "main-toolu_01Kv9f9t6GGK3naoZSwNG1oE.json",
+    "main-toolu_01TDkXHTa6HwRofLyJyMZ4PX.json",
+    "main-toolu_01LL5b4BWt3mkygW7N9rG3gZ.json",
+    "main-toolu_01BvcXe5gZeaXBuHkp2T5bnj.json",
+    "main-toolu_01KRG6LfZpfgP8kbgRHkGvX2.json",
+    "main-toolu_01XeZsVb8teUDVZbEkD8VYaB.json",
+    "main-toolu_01UBtcTpTs1XUMjHVzygs3cm.json",
+    "main-toolu_01BaPiWkWA9FtJRLdCjCjFSo.json",
+    "main-toolu_01RN3uVCDh6moAHAuoSv8a8j.json",
+    "main-toolu_0134AZmMqoJjPzZo82HTLTq3.json",
+    "main-toolu_01DQLrsKfdfPvGd3V3fbL8JV.json",
+    "main-toolu_01BuLQQ79MHsZzgPram4zBmq.json",
+    "main-toolu_018Xs8U1sRM54sEtutT6pNWW.json",
+    "main-toolu_019s7GXaAdKLnpz4P1b2dFmW.json",
+    "main-toolu_01A4pgAny3DhmxT9Mkk58AnR.json",
+    "main-toolu_011MPyrZFe3oBr5G2Dtc3wRT.json",
+    "main-toolu_01BW9LyevmzhjA1U7Hbwecsu.json",
+    "main-toolu_01KmmYbbiFJUhYUJAcquoeDW.json",
+    "main-toolu_017irZQ4Bi2uPWPadCRgq53F.json",
+    "main-toolu_01XysmhfFc9vLB8vEjuhvJcU.json",
+    "main-toolu_017Egx2eZR9mn9EcSxFAgLZU.json",
+    "main-toolu_014nX1aM7iGVF7VM8MNEs65v.json",
+    "main-toolu_01VgAfLbFiFwzpmP3nQDyt7n.json",
+    "main-toolu_01VShzoFNmxmDzmDCgUUnP9h.json",
+    "main-toolu_01AZuYQrmfZ819AK9sxjrxmW.json",
+    "main-toolu_01Cf9Yq9ipqiS2XxJuZdxLks.json",
+    "main-toolu_012gTJeGq6pe2mxAmxyhqNcn.json",
+    "main-toolu_01SjpHCz5gkR3Xk2ZvxJEfmk.json",
+    "main-toolu_019wQencA41gNJVSKQJDwisP.json",
+    "main-toolu_01WgCsRQ8MX6To86xG1C1suv.json",
+    "main-toolu_01BLpuzyR81cCqtiSBUrVCpF.json",
+    "main-toolu_01EAzCJV5pRbbFkqbLaxLNZu.json",
+    "main-toolu_01R6S8n4fnBbbKAFEwd6xMEy.json",
+    "main-toolu_018ULoLC96K7zhBDA15RRaf8.json",
+    "main-toolu_01WAQnpdB5VhPY2wkHt8A5Ba.json",
+    "main-toolu_019DRZVzz7XVpxxL6uaCXfSV.json",
+    "main-prompt-159d2648-ecb1-4ff0-b215-0dfa0379ee1a.json",
+    "main-prompt-6eb2bcad-77c3-4843-9177-31af2e8e8af3.json",
+    "main-prompt-b408f6ee-14b7-4bdf-9f5d-2e7d3fae4d78.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_014TotT4mVJwR8iViJYeW2o6.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01PtpJPYZTEJRA9swSDSTTqv.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01BRRwXBVFeVBoapWF6of37Y.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01AGGBpXSJnwtcZZbeUJbT7c.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01Ek7GfAubwezwhDpRrcmrxQ.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_011xt2KUSp97R4g8aqVzACde.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_014yTaKUGaQvW4GGvpYYSQZ9.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01RLTuymtSfswirziAgE8KN6.json",
+    "subagent_agent-a2ae5aaec39ee8c04-toolu_01FPCaKvtMLaRiMwp7QcnwfQ.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01VyKWtMCRKuK4ike5Gn4qxh.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_016cz2wAN5CFRaM7mgdGkucB.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01EBdTitf34nEUQ6KcX96SUM.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_011MGrimoWo4eYTXoZxJqn4h.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01HLZLm7AGnyrMPXuXFjJUZY.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_0164vmFfFiifw2HmtqD32VH6.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_012NutZKAo6GLLLbGJxZpSSF.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01Le7mVX2nnE8zUb64RSD1uK.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01JNxNzudzZXWqh8dKctwamh.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_011RMnA9oqJakdpb9w74Zvaz.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_01SkC49Tm1hJ7XX7UHBcdL9c.json",
+    "subagent_agent-a42171b76c10bf1d6-toolu_013tsAs2nU8Ajjp8apdAtjrh.json",
+    "subagent_agent-a4e6eaa45957c927b-toolu_015wY6bqxRisUawdFn9h5PJb.json",
+    "subagent_agent-a4e6eaa45957c927b-toolu_01K5n8HS13KzPav6LHWfUD9F.json",
+    "subagent_agent-a4e6eaa45957c927b-toolu_01YKiqjCTBx8qAZssnWsDowS.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01RLccNnPorfZiXSJz5Xanv8.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01Dm4btm9bvwPe4RGMjiQkkF.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01KZPshuQ3ws1iyZ3NJSktQg.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01QNyXkN6re6vy7yXTiG8afp.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01EhJZJi1KrGT4T6q7uB1RBv.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01KMoD9ySD3AU111nZ28vVEr.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01Wfg25Vs644GtLuP2PHdPT1.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01YGqwmEubkjCP4EYpMELYwi.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01MEriUMTJvZQyXD7yCBwWZW.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_012vTY1pMKoNfy3gPuhq5BCY.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01MX2oGjCfWJ52fwEUmMR7k6.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01Gv2VqsQ7KghPpMRewGsyHT.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_014h1DmwFr2TkSccq2nJ8N1k.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01Uz86snMoCKSQ7FGZjai9s4.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01Dwk5ZrVktVXk6SJPy36fZJ.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01A4WBurzQsb1Eg2cmHUbjgw.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01T2hwv68yx4bAacfNB1UCTc.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_018y4GAu7LN17xTRKqrmSSBk.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01As1DsxEkETyca7ZR6Jq8n7.json",
+    "subagent_agent-aacf11e6a97bfab17-toolu_01LeGD5LDYSnHopNwZqBd4Rg.json",
+    "subagent_agent-adc1b028166bc499b-toolu_01VmfNr2oZPERY6CnJsh3cdm.json",
+    "subagent_agent-adc1b028166bc499b-toolu_01TbQo1p8g1pnb3gEAz92y3J.json",
+    "subagent_agent-adc1b028166bc499b-toolu_01S3CyA8ezoADmFX1D5mgVkB.json",
+    "subagent_agent-adc1b028166bc499b-toolu_0129LHxsYW42oSnonkWgMPkJ.json"
+  ],
+  "primitive_missing": [],
+  "primitive_extra": [],
+  "intentional_self_io_excluded": [
+    {
+      "stream": "main",
+      "tool_use_id": "toolu_0198gmhtAoCkpSCqwVvokYXr"
+    },
+    {
+      "stream": "subagent/agent-a2ae5aaec39ee8c04",
+      "tool_use_id": "toolu_016y3sdyp9Ru9Nq8UhVJMAAG"
+    },
+    {
+      "stream": "subagent/agent-a2ae5aaec39ee8c04",
+      "tool_use_id": "toolu_01KkZQsWJbngEXpiAkUNMgo9"
+    },
+    {
+      "stream": "subagent/agent-a2ae5aaec39ee8c04",
+      "tool_use_id": "toolu_01Xy2FDAexP7xM2G5C43hhmo"
+    },
+    {
+      "stream": "subagent/agent-a2ae5aaec39ee8c04",
+      "tool_use_id": "toolu_019efn4YyxvgE1MsbyKfGjLs"
+    },
+    {
+      "stream": "subagent/agent-a42171b76c10bf1d6",
+      "tool_use_id": "toolu_014jt3rjF5bU8SDW49AYjrk2"
+    },
+    {
+      "stream": "subagent/agent-a42171b76c10bf1d6",
+      "tool_use_id": "toolu_015XLWNYrhab3HHZudt9NKFe"
+    },
+    {
+      "stream": "subagent/agent-a42171b76c10bf1d6",
+      "tool_use_id": "toolu_01Pv6VV9wg6UfvphrzwxzkQA"
+    },
+    {
+      "stream": "subagent/agent-a42171b76c10bf1d6",
+      "tool_use_id": "toolu_0167Ry8ZfonTxv8ME6AtYHqM"
+    }
+  ],
+  "unpaired_calls_at_abort": [
+    {
+      "stream": "subagent/agent-a4e6eaa45957c927b",
+      "tool_use_id": "toolu_013MHiGnUqboNWs3zuNxTDme",
+      "name": "Bash"
+    }
+  ],
+  "streams": [
+    {
+      "stream": "main",
+      "bytes": 2702472,
+      "sha256": "1f31fc258570e818b26b562243becf0f8328187fe163987c331ab2d48e63a070",
+      "matches": true
+    },
+    {
+      "stream": "subagent/agent-a2ae5aaec39ee8c04",
+      "bytes": 390428,
+      "sha256": "7f18af3b4590f1cc540e8d1df0605c1ecb989f979ce500e47a4190795508f88a",
+      "matches": true
+    },
+    {
+      "stream": "subagent/agent-a42171b76c10bf1d6",
+      "bytes": 532179,
+      "sha256": "5b503ea3596d1d6742e107adb1f78fec96424e46197933409755c8d441fdc1c9",
+      "matches": true
+    },
+    {
+      "stream": "subagent/agent-a4e6eaa45957c927b",
+      "bytes": 400620,
+      "sha256": "64db54fbc73b7f787b432b436f5a61975b1704be55af74411fe61a67ec2a4a5e",
+      "matches": true
+    },
+    {
+      "stream": "subagent/agent-aacf11e6a97bfab17",
+      "bytes": 586762,
+      "sha256": "41628deddc2ac35ca3f3a3079f95434f171eae1e3a205b62fe91a5a655a4831a",
+      "matches": true
+    },
+    {
+      "stream": "subagent/agent-adc1b028166bc499b",
+      "bytes": 293921,
+      "sha256": "c99f16527ae7ad15a41f9cd91c6d938f09e33777675180ebfa91a1aaf5d10569",
+      "matches": true
+    }
+  ],
+  "raw_to_published": {
+    "common_files_compared": 287,
+    "changed_common_files": [
+      "transcript.jsonl",
+      "poll-state.json",
+      "transcript/subagents/agent-a2ae5aaec39ee8c04.jsonl",
+      "transcript/subagents/agent-aacf11e6a97bfab17.jsonl",
+      "transcript/subagents/agent-a42171b76c10bf1d6.jsonl",
+      "transcript/subagents/agent-a4e6eaa45957c927b.jsonl",
+      "transcript/subagents/agent-adc1b028166bc499b.jsonl"
+    ],
+    "redaction": [
+      {
+        "path": "transcript.jsonl",
+        "declared_hashes_match": true,
+        "rows": 500,
+        "changed_scalar_paths": [
+          "line:15.attachment.context.userEmail",
+          "line:15.rendered[0].content",
+          "line:21.message.content[0].text",
+          "line:233.message.content[0].text",
+          "line:240.attachment.context.userEmail",
+          "line:240.rendered[0].content",
+          "line:271.message.content[0].text"
+        ]
+      },
+      {
+        "path": "transcript/subagents/agent-a2ae5aaec39ee8c04.jsonl",
+        "declared_hashes_match": true,
+        "rows": 67,
+        "changed_scalar_paths": [
+          "line:7.attachment.context.userEmail",
+          "line:7.rendered[0].content",
+          "line:13.message.content[0].text"
+        ]
+      },
+      {
+        "path": "transcript/subagents/agent-aacf11e6a97bfab17.jsonl",
+        "declared_hashes_match": true,
+        "rows": 118,
+        "changed_scalar_paths": [
+          "line:7.attachment.context.userEmail",
+          "line:7.rendered[0].content",
+          "line:13.message.content[0].text"
+        ]
+      },
+      {
+        "path": "transcript/subagents/agent-a42171b76c10bf1d6.jsonl",
+        "declared_hashes_match": true,
+        "rows": 78,
+        "changed_scalar_paths": [
+          "line:7.attachment.context.userEmail",
+          "line:7.rendered[0].content",
+          "line:13.message.content[0].text"
+        ]
+      },
+      {
+        "path": "transcript/subagents/agent-a4e6eaa45957c927b.jsonl",
+        "declared_hashes_match": true,
+        "rows": 30,
+        "changed_scalar_paths": [
+          "line:5.attachment.context.userEmail",
+          "line:5.rendered[0].content",
+          "line:11.message.content[0].text"
+        ]
+      },
+      {
+        "path": "transcript/subagents/agent-adc1b028166bc499b.jsonl",
+        "declared_hashes_match": true,
+        "rows": 34,
+        "changed_scalar_paths": [
+          "line:5.attachment.context.userEmail",
+          "line:5.rendered[0].content",
+          "line:11.message.content[0].text"
+        ]
+      }
+    ],
+    "all_other_common_files_identical": true
+  },
+  "poll_normalization": {
+    "raw_elapsed": 672,
+    "published_elapsed": 673,
+    "exact": 672.4345779418945,
+    "ceil_only": true,
+    "budget_changed": false
+  },
+  "artifact_snapshot": {
+    "artifact_count": 12,
+    "checks": [
+      {
+        "path": "system-spec/00-requirements-definition.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/auth.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/backend.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/database.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/fetched-references.json",
+        "matches": true
+      },
+      {
+        "path": "system-spec/frontend.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/index.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/infrastructure.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/maintenance-ops.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/security.md",
+        "matches": true
+      },
+      {
+        "path": "system-spec/spec-state.json",
+        "matches": true
+      },
+      {
+        "path": "system-spec/ui-ux.md",
+        "matches": true
+      }
+    ]
+  },
+  "limitations": [
+    "Agent/ToolSearch/TaskStop/Writeはobserver対象外なので原本で別途確認",
+    "中断時点の未対完了toolはobserverに現れない。absenceは完了していない範囲のみを示す",
+    "匿名化の変更位置を照合。個人情報の置換前の字面は本レポートへ転記しない"
+  ],
+  "final_snapshot_manifest": {
+    "file_count": 57,
+    "all_path_size_sha256_match": true
+  },
+  "resource_budget": {
+    "budget": {
+      "max_wall_clock_s": 3300,
+      "max_total_tokens": 23000000
+    },
+    "token_usage": {
+      "input_tokens": 200,
+      "cache_creation_input_tokens": 587118,
+      "cache_read_input_tokens": 7049013,
+      "output_tokens": 52252,
+      "total_tokens": 7688583,
+      "assistant_messages": 96,
+      "assistant_message_ids": 96,
+      "invalid_or_missing_usage_messages": 0,
+      "idless_assistant_records": 0
+    },
+    "token_count_method": "main/subagentを横断してassistant.message.idで重複排除、最初の有効usageの4fieldを合算（正本と同規則）",
+    "within_token_budget": true,
+    "measured_elapsed_within_wall_budget": true
+  }
+}

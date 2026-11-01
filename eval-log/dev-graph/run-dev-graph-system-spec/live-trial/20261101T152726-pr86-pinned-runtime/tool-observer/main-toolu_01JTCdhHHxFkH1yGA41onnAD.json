@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7e9659e7-f5f6-4b28-ab15-87be57aafc8e",
+      "line": 425,
+      "prefix_bytes": 2340606,
+      "prefix_sha256": "7b84cf9aef217a38455f33816d91bf013f464a0a434d3bbcdbfdf6183445cffa",
+      "timestamp": "2026-11-01T15:36:05.126Z"
+    },
+    "result": {
+      "uuid": "7a49b017-452c-4238-8fa3-bb1b0b3f1f0a",
+      "line": 426,
+      "prefix_bytes": 2341771,
+      "prefix_sha256": "b665ac548aa13869bd9bd5032d4ac99c3955cc980f51e2f4b8322f6ebeb108ea",
+      "timestamp": "2026-11-01T15:36:14.189Z"
+    }
+  },
+  "tool_use_id": "toolu_01JTCdhHHxFkH1yGA41onnAD",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && S=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec122-fx/062ed4b3-73fa-4468-be23-977e38275da5/scratchpad/compile-tests && rm -rf \"$S\" && mkdir -p \"$S\" && cp -R plugins/system-spec-harness \"$S/\" && B=$(shasum -a 256 system-spec/* 2>/dev/null | shasum -a 256) && cd \"$S/system-spec-harness\" && python3 -B -m pytest -q -p no:cacheprovider skills/run-system-spec-compile/tests/test_compile_spec_doc.py skills/run-system-spec-compile/tests/test_compile_spec_doc_knowledge.py 2>&1 | tail -5; cd \"$CLAUDE_PROJECT_DIR\" && A=$(shasum -a 256 system-spec/* 2>/dev/null | shasum -a 256) && [ \"$A\" = \"$B\" ] && echo caller_unchanged",
+    "description": "Run compile acceptance tests in scratch",
+    "timeout": 300000
+  },
+  "is_error": false,
+  "tool_result_content": "...............................................................          [100%]\n63 passed in 4.69s\ncaller_unchanged",
+  "tool_use_result": {
+    "stdout": "...............................................................          [100%]\n63 passed in 4.69s\ncaller_unchanged",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

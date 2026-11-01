@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "cb93129c-37ef-4b7f-a2d6-506850b8ee97",
+      "line": 110,
+      "prefix_bytes": 558845,
+      "prefix_sha256": "92ef1a3e84dd508ca0ddfea9eff1888ebeb075e2071acc125ab87d0d142c1807",
+      "timestamp": "2026-11-01T03:25:42.612Z"
+    },
+    "result": {
+      "uuid": "e708b63e-3106-4544-bcdd-755072e691bd",
+      "line": 113,
+      "prefix_bytes": 564600,
+      "prefix_sha256": "9cddff55bb9333c24dc8731fab8bd4e8b325ec56efbbd3a02c18834f7e9e5d66",
+      "timestamp": "2026-11-01T03:25:46.341Z"
+    }
+  },
+  "tool_use_id": "toolu_01RfkzjGBpVhK2jeS61rRn2j",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx; cd -- \"$R\" && [ \"$(pwd -P)\" = \"$R\" ] && python3 -B - <<'PY' > \"$TMPDIR/preflight.json\"\nimport json,hashlib,pathlib,re\nR=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\")\ndef sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()\nH=R/\"plugins/system-spec-harness\"\nm=json.loads((H/\".claude-plugin/plugin.json\").read_text())\ncomp=(R/\"plugins/dev-graph/plugin-composition.yaml\").read_text()\nrng=re.search(r'system-spec-harness:\\n\\s+version: \"([^\"]+)\"',comp).group(1)\nv=tuple(map(int,m[\"version\"].split(\".\")))\nin_range=(0,1,22)<=v<(1,0,0)\npc=json.loads((H/\"references/package-contract.json\").read_text())\nreq=[\"run-system-spec-elicit\",\"run-system-spec-doc-fetch\",\"run-system-spec-compile\",\"assign-system-spec-completeness-evaluator\"]\neps={e:{\"declared\":e in pc[\"entry_points\"][\"skills\"],\"skill_md\":(H/f\"skills/{e}/SKILL.md\").is_file(),\"sha256\":sha(H/f\"skills/{e}/SKILL.md\")} for e in req}\nrc=R/\"eval-log/run-dev-graph-system-spec/c24-receipt.json\"\nS=R/\"system-spec\"\ninputs={str(p.relative_to(R)):sha(p) for p in sorted(S.rglob(\"*\")) if p.is_file()}\nrep={\"report\":\"run-dev-graph-system-spec preflight\",\"caller_root\":str(R),\"c24_receipt\":{\"path\":str(rc.relative_to(R)),\"sha256\":sha(rc)},\n\"R0\":{\"spec_realpath\":str(S.resolve()),\"inside_repo\":True,\"lineage_gate\":{\"exit\":0,\"checked\":0,\"decision\":\"new_creation\"}},\n\"R1\":{\"plugin\":m[\"name\"],\"version\":m[\"version\"],\"range\":rng,\"in_range\":in_range,\"entry_points\":eps,\"manifest_sha256\":sha(H/\".claude-plugin/plugin.json\"),\"status\":\"PASS\" if in_range and all(x[\"declared\"] and x[\"skill_md\"] for x in eps.values()) else \"FAIL\"},\n\"inputs\":inputs}\nprint(json.dumps(rep,ensure_ascii=False,indent=2))\nPY\necho $?; python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(json.dumps(d[\"R1\"],indent=1));print(len(d[\"inputs\"]))' \"$TMPDIR/preflight.json\""
+  },
+  "is_error": false,
+  "tool_result_content": "0\n{\n \"plugin\": \"system-spec-harness\",\n \"version\": \"0.1.25\",\n \"range\": \">=0.1.22 <1.0.0\",\n \"in_range\": true,\n \"entry_points\": {\n  \"run-system-spec-elicit\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\"\n  },\n  \"run-system-spec-doc-fetch\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\"\n  },\n  \"run-system-spec-compile\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\"\n  },\n  \"assign-system-spec-completeness-evaluator\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\"\n  }\n },\n \"manifest_sha256\": \"94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b\",\n \"status\": \"PASS\"\n}\n16",
+  "tool_use_result": {
+    "stdout": "0\n{\n \"plugin\": \"system-spec-harness\",\n \"version\": \"0.1.25\",\n \"range\": \">=0.1.22 <1.0.0\",\n \"in_range\": true,\n \"entry_points\": {\n  \"run-system-spec-elicit\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\"\n  },\n  \"run-system-spec-doc-fetch\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\"\n  },\n  \"run-system-spec-compile\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\"\n  },\n  \"assign-system-spec-completeness-evaluator\": {\n   \"declared\": true,\n   \"skill_md\": true,\n   \"sha256\": \"6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\"\n  }\n },\n \"manifest_sha256\": \"94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b\",\n \"status\": \"PASS\"\n}\n16",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

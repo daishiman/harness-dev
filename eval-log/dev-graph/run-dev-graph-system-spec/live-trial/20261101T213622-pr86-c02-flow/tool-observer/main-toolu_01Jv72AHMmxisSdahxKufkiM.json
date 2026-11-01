@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d6249bd5-941b-4b47-80b3-f7a5745f3ab9",
+      "line": 446,
+      "prefix_bytes": 2702005,
+      "prefix_sha256": "3bdd6b977755ac6b982c4450b9fd23a00210ad5d1c1ad710e78dff412fe85599",
+      "timestamp": "2026-11-01T12:59:58.717Z"
+    },
+    "result": {
+      "uuid": "36d8144c-370e-4c0a-9b4c-0d34dbb877a9",
+      "line": 447,
+      "prefix_bytes": 2703473,
+      "prefix_sha256": "132094b40520b9a174a3a7babd3e2e45a35bda2e50ee164e3e5a8b184801337f",
+      "timestamp": "2026-11-01T13:00:03.123Z"
+    }
+  },
+  "tool_use_id": "toolu_01Jv72AHMmxisSdahxKufkiM",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx' && SYSTEM_SPEC_ROOT=\"$DEV_GRAPH_ROOT/plugins/system-spec-harness\" && DEV_GRAPH_CODE_ROOT=\"$DEV_GRAPH_ROOT/plugins/dev-graph\" && SYSTEM_SPEC_DIR=\"$DEV_GRAPH_ROOT/system-spec\" && GRAPH_PATH=\"$DEV_GRAPH_ROOT/.dev-graph/state/graph.json\" && python3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$SYSTEM_SPEC_DIR/spec-state.json\" --require-complete --require-basis --require-foundation; echo \"g1=$?\"; python3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-source-citation.py\" --targets \"$SYSTEM_SPEC_DIR/spec-state.json\" --references \"$SYSTEM_SPEC_DIR/fetched-references.json\" --state \"$SYSTEM_SPEC_DIR/spec-state.json\" --repo-root \"$DEV_GRAPH_ROOT\"; echo \"g2=$?\"; python3 -B \"$DEV_GRAPH_CODE_ROOT/scripts/validate-graph-schema.py\" --graph \"$GRAPH_PATH\" --repo-root \"$DEV_GRAPH_ROOT\" --strict-artifact-readiness >/dev/null; echo \"g3=$?\"",
+    "description": "Run round-2 three IN1 gates"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ng1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ng2=0\ng3=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ng1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ng2=0\ng3=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

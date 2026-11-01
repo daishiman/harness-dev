@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-aff7283eee0969af5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "72a5ef4f-4348-419e-bb38-2dd2ce4007b9",
+      "line": 50,
+      "prefix_bytes": 354260,
+      "prefix_sha256": "dcec40c14286d5df341bbf96952002916737308e11fd3d0e70b3cb6eb4ad207a",
+      "timestamp": "2026-11-01T06:43:50.779Z"
+    },
+    "result": {
+      "uuid": "e0076219-39ac-4c99-a982-3c6f1ca78d88",
+      "line": 51,
+      "prefix_bytes": 360952,
+      "prefix_sha256": "d65a3d3e24f386440ba370aceb771e9020b3a29b9be5c14857823d6496dc9983",
+      "timestamp": "2026-11-01T06:43:52.852Z"
+    }
+  },
+  "tool_use_id": "toolu_013wiTo52FYef2A67LkmeRDq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo \"lineage exit=$?\"; ls plugins/dev-graph/scripts | head -50; grep -rn '\"version\"' plugins/system-spec-harness/.claude-plugin/plugin.json; grep -rn \"def .*canonical\\|graph_digest\" plugins/dev-graph/scripts/*.py | head -15"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage exit=0\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nplugins/system-spec-harness/.claude-plugin/plugin.json:3:  \"version\": \"0.1.25\",\nplugins/dev-graph/scripts/bd-bridge.py:610:                planned_graph_digest=preview.get(\"graph_digest_after\"))\nplugins/dev-graph/scripts/build-graph-node.py:159:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/build-graph-node.py:1331:            \"graph_revision_after\": revision_before + 1, \"graph_digest_after\": _canonical_digest(proposed),\nplugins/dev-graph/scripts/build-graph-node.py:1489:        if _canonical_digest(json.loads(graph_after)) != written[\"graph_digest_after\"]:\nplugins/dev-graph/scripts/build-parity-manifest.py:21:必須フィールドは `generated_at` / `source_graph_digest` / `nodes[]` / `graph_node_ids[]` で、\nplugins/dev-graph/scripts/build-parity-manifest.py:22:`source_graph_digest` は C16 schedule-graph.py `_canonical_digest` と同一式でなければ\nplugins/dev-graph/scripts/build-parity-manifest.py:66:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/build-parity-manifest.py:205:        \"source_graph_digest\": _canonical_digest(graph),\nplugins/dev-graph/scripts/build-parity-manifest.py:266:        \"source_graph_digest\": manifest[\"source_graph_digest\"],\nplugins/dev-graph/scripts/register-package.py:47:    \"graph_revision_after\", \"graph_digest_after\", \"output_path\",\nplugins/dev-graph/scripts/register-package.py:165:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/register-package.py:455:        graph_digest = _canonical_digest(proposed)\nplugins/dev-graph/scripts/register-package.py:461:            \"graph_revision_after\": revision_before + 1, \"graph_digest_after\": graph_digest,\nplugins/dev-graph/scripts/validate-graph-schema.py:250:def _is_canonical_store(graph: Path, repo_root: Path) -> bool:\nplugins/dev-graph/scripts/validate-readiness-binding.py:19:   登録時点の graph (``graph_revision_after`` と ``graph_digest_after``)、登録した package member の",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage exit=0\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nplugins/system-spec-harness/.claude-plugin/plugin.json:3:  \"version\": \"0.1.25\",\nplugins/dev-graph/scripts/bd-bridge.py:610:                planned_graph_digest=preview.get(\"graph_digest_after\"))\nplugins/dev-graph/scripts/build-graph-node.py:159:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/build-graph-node.py:1331:            \"graph_revision_after\": revision_before + 1, \"graph_digest_after\": _canonical_digest(proposed),\nplugins/dev-graph/scripts/build-graph-node.py:1489:        if _canonical_digest(json.loads(graph_after)) != written[\"graph_digest_after\"]:\nplugins/dev-graph/scripts/build-parity-manifest.py:21:必須フィールドは `generated_at` / `source_graph_digest` / `nodes[]` / `graph_node_ids[]` で、\nplugins/dev-graph/scripts/build-parity-manifest.py:22:`source_graph_digest` は C16 schedule-graph.py `_canonical_digest` と同一式でなければ\nplugins/dev-graph/scripts/build-parity-manifest.py:66:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/build-parity-manifest.py:205:        \"source_graph_digest\": _canonical_digest(graph),\nplugins/dev-graph/scripts/build-parity-manifest.py:266:        \"source_graph_digest\": manifest[\"source_graph_digest\"],\nplugins/dev-graph/scripts/register-package.py:47:    \"graph_revision_after\", \"graph_digest_after\", \"output_path\",\nplugins/dev-graph/scripts/register-package.py:165:def _canonical_digest(value: Any) -> str:\nplugins/dev-graph/scripts/register-package.py:455:        graph_digest = _canonical_digest(proposed)\nplugins/dev-graph/scripts/register-package.py:461:            \"graph_revision_after\": revision_before + 1, \"graph_digest_after\": graph_digest,\nplugins/dev-graph/scripts/validate-graph-schema.py:250:def _is_canonical_store(graph: Path, repo_root: Path) -> bool:\nplugins/dev-graph/scripts/validate-readiness-binding.py:19:   登録時点の graph (``graph_revision_after`` と ``graph_digest_after``)、登録した package member の",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-abd772b00074dbaea",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "74035e2a-39bb-46e5-8e85-b36df23aeb70",
+      "line": 34,
+      "prefix_bytes": 437092,
+      "prefix_sha256": "4dcc82f8f34ec4d281743861c7981b440209ae78122dffb029408acb074b75b1",
+      "timestamp": "2026-11-01T14:42:19.044Z"
+    },
+    "result": {
+      "uuid": "ac88fb5a-67a7-40f2-ad19-5e077681d122",
+      "line": 35,
+      "prefix_bytes": 440233,
+      "prefix_sha256": "9ed5e5df83cc7ad2f7fab2dcb136fd007d2ac084d8ef75e3dae347a251109dd5",
+      "timestamp": "2026-11-01T14:42:21.731Z"
+    }
+  },
+  "tool_use_id": "toolu_017qmjNMeKgqHXbZpRmygrYB",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/.dev-graph/state/graph.json --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx --strict-artifact-readiness; echo \"exit=$?\"\npython3 -B -I -c '\nimport json,hashlib,os\nR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\"\ng=json.load(open(R+\"/.dev-graph/state/graph.json\",encoding=\"utf-8\"))\nprint(\"digest\",\"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(\",\",\":\")).encode()).hexdigest())\nids=[n[\"graph_node_id\"] for n in g[\"nodes\"]];print(ids,len(ids)==len(set(ids)))\nfor n in g[\"nodes\"]:\n    p=os.path.realpath(os.path.join(R,n[\"file_path\"]));print(n[\"file_path\"],p.startswith(R+\"/\"),os.path.isfile(p),hashlib.sha256(open(p,\"rb\").read()).hexdigest())\n    print(n[\"depends_on\"],n[\"related_nodes\"],n[\"parent_feature\"],n[\"feature_package_id\"],n[\"phase_ref\"])\n'"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nexit=0\ndigest sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c\n['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'] True\nspecs/billing-audit-system-spec.md True True 1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\n[] [] None None None\narchitecture/billing-audit-system-architecture.md True True fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\n[] [] None None None",
+  "tool_use_result": {
+    "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nexit=0\ndigest sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c\n['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'] True\nspecs/billing-audit-system-spec.md True True 1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\n[] [] None None None\narchitecture/billing-audit-system-architecture.md True True fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\n[] [] None None None",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

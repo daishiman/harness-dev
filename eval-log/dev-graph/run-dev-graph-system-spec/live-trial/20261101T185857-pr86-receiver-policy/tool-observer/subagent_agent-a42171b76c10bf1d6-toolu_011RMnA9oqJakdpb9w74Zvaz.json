@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-a42171b76c10bf1d6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "03e8f0ca-72d0-4b03-b2d2-db93c1ee356a",
+      "line": 50,
+      "prefix_bytes": 359319,
+      "prefix_sha256": "a5fbd0fcfba037cf7a1a7847368792431cab3ef038a06bdab9c6d6f1c1c6cfb2",
+      "timestamp": "2026-11-01T10:01:57.657Z"
+    },
+    "result": {
+      "uuid": "c71bb3c6-2e15-4aec-af93-84d57643bc19",
+      "line": 51,
+      "prefix_bytes": 364062,
+      "prefix_sha256": "d34f0f0263ed1339fd6a960184e6bb0b0543d14df5c614788499b99ce24f05da",
+      "timestamp": "2026-11-01T10:01:59.829Z"
+    }
+  },
+  "tool_use_id": "toolu_011RMnA9oqJakdpb9w74Zvaz",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/dev-graph; sed -n 1,30p scripts/build-project-hook-fallback.py; grep -nE \"matrix|platform|official_source|citation|question\" scripts/build-project-hook-fallback.py | head"
+  },
+  "is_error": false,
+  "tool_result_content": "#!/usr/bin/env python3\n# /// script\n# name: build-project-hook-fallback\n# purpose: C01 R5 の決定論本体。plain-symlink 導入の repo だけで plugin hooks.json の全 event を `.claude/settings.json` へ (event, matcher, command) 単位で追記 merge し、既存 key/hook group の hash 不変と二重登録 0 を自己検証して rollback manifest を残す。effective plugin hook・disableAllHooks・allowManagedHooksOnly・他 scope の dev-graph hook・link 不一致は書込み 0 で拒否する。\n# inputs: [\"argv: --repo-root PATH [--config PATH] [--mode preview|apply|rollback] [--manifest PATH] [--user-settings PATH] [--managed-settings PATH]\"]\n# outputs: [\"stdout: JSON preview/noop/applied/rolled_back or rejection report\"]\n# requires-python = \">=3.10\"\n# dependencies: [_common.py, validate-graph-schema.py, resolve-repo-context.py]\n# contexts: [A, B, C, E]\n# network: false\n# write-scope: caller repository .claude/settings.json, .dev-graph/config.json (claude_hooks.source only) and .dev-graph/state/receipts/hook-fallback-*.json\n# ///\n\"\"\"run-dev-graph-init の R5 project fallback。dev-graph を Claude plugin として有効化していない導入先だけで使う。\n\nhook の同一性は (event, matcher, command) とする。command は `${CLAUDE_PROJECT_DIR}/<link>/hooks/<script>` を\n引用符付きで固定するので、同じ組があれば登録済みとして足さない。interpreter の `-B` の有無だけの違いは\n同じ組とみなす (`_wiring`)。settings に独自の識別 key は足さない。\"\"\"\nfrom __future__ import annotations\n\nimport argparse\nimport hashlib\nimport importlib.util\nimport json\nimport os\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\nfrom typing import Any\n45:MANAGED_DEFAULT = (\"/Library/Application Support/ClaudeCode/managed-settings.json\" if sys.platform == \"darwin\"",
+  "tool_use_result": {
+    "stdout": "#!/usr/bin/env python3\n# /// script\n# name: build-project-hook-fallback\n# purpose: C01 R5 の決定論本体。plain-symlink 導入の repo だけで plugin hooks.json の全 event を `.claude/settings.json` へ (event, matcher, command) 単位で追記 merge し、既存 key/hook group の hash 不変と二重登録 0 を自己検証して rollback manifest を残す。effective plugin hook・disableAllHooks・allowManagedHooksOnly・他 scope の dev-graph hook・link 不一致は書込み 0 で拒否する。\n# inputs: [\"argv: --repo-root PATH [--config PATH] [--mode preview|apply|rollback] [--manifest PATH] [--user-settings PATH] [--managed-settings PATH]\"]\n# outputs: [\"stdout: JSON preview/noop/applied/rolled_back or rejection report\"]\n# requires-python = \">=3.10\"\n# dependencies: [_common.py, validate-graph-schema.py, resolve-repo-context.py]\n# contexts: [A, B, C, E]\n# network: false\n# write-scope: caller repository .claude/settings.json, .dev-graph/config.json (claude_hooks.source only) and .dev-graph/state/receipts/hook-fallback-*.json\n# ///\n\"\"\"run-dev-graph-init の R5 project fallback。dev-graph を Claude plugin として有効化していない導入先だけで使う。\n\nhook の同一性は (event, matcher, command) とする。command は `${CLAUDE_PROJECT_DIR}/<link>/hooks/<script>` を\n引用符付きで固定するので、同じ組があれば登録済みとして足さない。interpreter の `-B` の有無だけの違いは\n同じ組とみなす (`_wiring`)。settings に独自の識別 key は足さない。\"\"\"\nfrom __future__ import annotations\n\nimport argparse\nimport hashlib\nimport importlib.util\nimport json\nimport os\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\nfrom typing import Any\n45:MANAGED_DEFAULT = (\"/Library/Application Support/ClaudeCode/managed-settings.json\" if sys.platform == \"darwin\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

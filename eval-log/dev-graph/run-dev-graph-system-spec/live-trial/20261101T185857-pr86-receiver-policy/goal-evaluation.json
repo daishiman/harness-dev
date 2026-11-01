@@ -1,0 +1,28 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "設定伝達不成立のまま調整役が中断した部分実走である。out/status.json、C05最終評価レポート、C06完了、C08監査、R2/R3独立検証、C02取込がなく、元の3観測とOUT1を満たす新規specification/architecture nodeは0件。C05/C06/C08が確定FAILを返したという意味ではない。",
+    "C05は公開R1-score 4.3/R2-delegate 2.4の保存境界を越え、$TMPDIR/snapshot.jsonと3gate JSONをshell redirectで保存した。さらにfixture外を含むfind /探索を実行し、既定の隔離対象外のパスを返した。これらは中断前に実測された逸脱であり、未完了の最終評価を推測しているものではない。",
+    "C07は独立Agentとして実在しPASS completionを返したが、完了までにR7-audit-matrix.mdを全文取得した記録がない。起動promptは正本へのポインタだけで本文ではなく、親が読んだことでも代替できないため、契約履行済みの監査PASSとして採用できない。",
+    "C19周回1のintermediateは6キーと元goal/hashを保持する一方、drift_signalがnoneであり、参照先goal-seek正本の6値enum（initial/aligned/compressing/stagnant/widening/oscillating）を満たさない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec114"
+  },
+  "transcript_sha256": "35fb819d579d7ea0841dc5784b8d74282b2b7dff516c9c83bffcac9d1424100e",
+  "evidence_refs": [
+    "abort-reason.json",
+    "collection-note.json",
+    "transcript.jsonl",
+    "transcript/subagents/agent-aacf11e6a97bfab17.jsonl",
+    "transcript/subagents/agent-adc1b028166bc499b.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01RLccNnPorfZiXSJz5Xanv8.json",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01EhJZJi1KrGT4T6q7uB1RBv.json",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01Dwk5ZrVktVXk6SJPy36fZJ.json"
+  ]
+}

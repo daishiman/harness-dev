@@ -1,0 +1,75 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d949cdee-e2bd-4c6f-a029-786a849d8eec",
+      "line": 629,
+      "prefix_bytes": 3890680,
+      "prefix_sha256": "ccf11f2921314e9245546b98dc35487fc92f26893f8b6ce65553c243d7f4a8e5",
+      "timestamp": "2026-11-01T16:13:02.883Z"
+    },
+    "result": {
+      "uuid": "001e5655-78cc-47b0-9741-bd4306183bed",
+      "line": 632,
+      "prefix_bytes": 3895575,
+      "prefix_sha256": "9493b3ebc300065cb79fc10cc732ab67e2e9cd1bbf592359ca298d0fa2a5c900",
+      "timestamp": "2026-11-01T16:13:10.668Z"
+    }
+  },
+  "tool_use_id": "toolu_01Kp5CjmSzPvZMkPwrQFGkQq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && mkdir -p eval-log/run-dev-graph-node && T=$(date -u +%Y-%m-%dT%H:%M:%SZ) && cat > eval-log/run-dev-graph-node/artifact-delivery-choice.json <<EOF\n{\n  \"skill\": \"dev-graph:run-dev-graph-node\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"transitions\": [\n    {\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\", \"evidence\": \"build-graph-node.py add --dry-run exit0 (pre_write_validation findings 0) then add exit0 applied_count 2; validate-source-lineage --node-id x2 exit0 checked 2\"},\n    {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\", \"artifacts\": [\n      {\"path\": \"specs/billing-audit-system-spec.md\", \"sha256\": \"9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620\"},\n      {\"path\": \"architecture/billing-audit-system-architecture.md\", \"sha256\": \"ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166\"},\n      {\"path\": \".dev-graph/state/receipts/node-r000001-add.json\", \"sha256\": \"52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94\"},\n      {\"path\": \".dev-graph/state/graph.json\", \"graph_revision\": 1, \"graph_digest\": \"sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\"}],\n     \"open_with\": \"less <repo_root>/specs/billing-audit-system-spec.md ; less <repo_root>/architecture/billing-audit-system-architecture.md\"},\n    {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\", \"choice\": \"standard\", \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\", \"recorded_at\": \"$T\"},\n    {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}\n  ]\n}\nEOF\npython3 -m json.tool eval-log/run-dev-graph-node/artifact-delivery-choice.json >/dev/null && echo ok $T",
+    "description": "Record standard choice for C02 run"
+  },
+  "is_error": false,
+  "tool_result_content": "ok 2026-11-01T16:13:05Z",
+  "tool_use_result": {
+    "stdout": "ok 2026-11-01T16:13:05Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-node/artifact-delivery-choice.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 15,
+              "lines": [
+                "+{",
+                "+  \"skill\": \"dev-graph:run-dev-graph-node\",",
+                "+  \"contract\": \"artifact-delivery-v1\",",
+                "+  \"transitions\": [",
+                "+    {\"event\": \"minimum_guard_pass\", \"to\": \"minimal_guard_passed\", \"evidence\": \"build-graph-node.py add --dry-run exit0 (pre_write_validation findings 0) then add exit0 applied_count 2; validate-source-lineage --node-id x2 exit0 checked 2\"},",
+                "+    {\"event\": \"present_actual_artifact\", \"to\": \"artifact_presented\", \"artifacts\": [",
+                "+      {\"path\": \"specs/billing-audit-system-spec.md\", \"sha256\": \"9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620\"},",
+                "+      {\"path\": \"architecture/billing-audit-system-architecture.md\", \"sha256\": \"ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166\"},",
+                "+      {\"path\": \".dev-graph/state/receipts/node-r000001-add.json\", \"sha256\": \"52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94\"},",
+                "+      {\"path\": \".dev-graph/state/graph.json\", \"graph_revision\": 1, \"graph_digest\": \"sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b\"}],",
+                "+     \"open_with\": \"less <repo_root>/specs/billing-audit-system-spec.md ; less <repo_root>/architecture/billing-audit-system-architecture.md\"},",
+                "+    {\"event\": \"record_user_choice\", \"to\": \"user_choice_recorded\", \"choice\": \"standard\", \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\", \"recorded_at\": \"2026-11-01T16:13:05Z\"},",
+                "+    {\"event\": \"standard\", \"to\": \"semantic_evaluator_started\"}",
+                "+  ]",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/eval-log/run-dev-graph-node/artifact-delivery-choice.json"
+      ]
+    }
+  }
+}

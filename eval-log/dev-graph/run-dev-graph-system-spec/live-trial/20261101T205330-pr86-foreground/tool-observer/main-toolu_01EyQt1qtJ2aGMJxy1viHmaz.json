@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6d5ec420-316f-4fd5-9a90-eb7099466286",
+      "line": 619,
+      "prefix_bytes": 3786892,
+      "prefix_sha256": "7561f3932f6fce95d97cc03b5a39d6d87802e7f22fbee723be2d680c3ac0b070",
+      "timestamp": "2026-11-01T12:23:29.957Z"
+    },
+    "result": {
+      "uuid": "cf95083e-2771-4150-9465-42a7069f8536",
+      "line": 622,
+      "prefix_bytes": 3791388,
+      "prefix_sha256": "3e968b33dcd51aad407f80fd949464779c33927bdc6d1e70e962fd2779b7ceef",
+      "timestamp": "2026-11-01T12:23:33.571Z"
+    }
+  },
+  "tool_use_id": "toolu_01EyQt1qtJ2aGMJxy1viHmaz",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import json,sys; g=json.load(open(sys.argv[1])); print({k:(v if not isinstance(v,(list,dict)) else type(v).__name__+str(len(v))) for k,v in g.items()})' .dev-graph/state/graph.json; ls eval-log; python3 -c 'import hashlib;print(hashlib.sha256(\"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ\".encode()).hexdigest())'",
+    "description": "Inspect graph keys and eval-log contents"
+  },
+  "is_error": false,
+  "tool_result_content": "{'graph_revision': 0, 'nodes': 'list0', 'schema_version': '1.0.0'}\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-preflight-report.json\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\neb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "tool_use_result": {
+    "stdout": "{'graph_revision': 0, 'nodes': 'list0', 'schema_version': '1.0.0'}\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-preflight-report.json\nrun-dev-graph-system-spec-progress.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\neb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

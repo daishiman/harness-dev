@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--resume]"
 allowed-tools: [Read, Bash, Skill, Agent, AskUserQuestion]
-script_refs: [scripts/prepare-evaluation.py, ../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-source-lineage.py]
+script_refs: [scripts/build-evaluation-context.py, ../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-source-lineage.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -98,7 +98,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 1. C24 で caller repo の `system-spec/` を解決し、plugin source/別 repo の content を拒否する。
 2. `plugins/system-spec-harness/.claude-plugin/plugin.json` の name が一致し、version が `plugin-composition.yaml` の `external_dependencies.system-spec-harness.version` の範囲に入り、かつ `references/package-contract.json#entry_points.skills` が `run-system-spec-elicit`, `run-system-spec-doc-fetch`, `run-system-spec-compile`, `assign-system-spec-completeness-evaluator` を持つことを確認する。公式manifestへharness専用キーを混在させず、不在/不一致は fallback を実装せず停止する。版の範囲の正本は composition で、frontmatter の R1 の summary にある `>=0.1.0` は計画時の値である。
-3. Skill 呼出しで elicit → 必要時 doc-fetch → compile → completeness evaluator を順に委譲する。開始時の C24 receipt を JSON ファイルで保存して R2 へ渡す。委譲先の Bash は呼出しごとに receipt の `repo_root` を `CLAUDE_PROJECT_DIR` に export し、その固定 root へ移ってから書込む。evaluator には `scripts/prepare-evaluation.py` が receipt を再検証して出力した絶対パスの args を渡す。Skill の読込や fork で cwd が変わっても評価対象を変えない (R2)。
+3. Skill 呼出しで elicit → 必要時 doc-fetch → compile → completeness evaluator を順に委譲する。開始時の C24 receipt を JSON ファイルで保存して R2 へ渡す。委譲先の Bash は呼出しごとに receipt の `repo_root` を `CLAUDE_PROJECT_DIR` に export し、その固定 root へ移ってから書込む。evaluator には `scripts/build-evaluation-context.py` が receipt を再検証して出力した絶対パスの args を渡す。Skill の読込や fork で cwd が変わっても評価対象を変えない (R2)。
 4. confirmed 章と evaluator PASS だけを C02 に渡し、`source_lineage={origin_kind,plugin,path,version,digest,imported_at}`, confirmation evidence, readiness を specification/architecture node に保存する。
 
 出力は import report (`system-spec/index.md`, imported node ids, lineage, confirmation_status, readiness)。feature は `architecture_refs` で参照し、内容を複製しない。1 feature→13 task は system-dev-planner の責務であり本 skill は扱わない。
@@ -188,7 +188,7 @@ PY
 - system-spec-harness 不在や version/entry-point 不一致時に、簡易 fallback を dev-graph 内へ実装しない。
 - plugin source 側や別 repo の `system-spec/` を読まず、C24 receipt の caller repo だけを content authority にする。
 - evaluator PASS と confirmed の両方が揃わない章を C02 へ登録しない。evaluator の report が PASS になる前に、取込の入力を書いたり C02 の Skill を起動したりもしない (R3)。
-- evaluator の起動前に `python3 -B "<skill root>/scripts/prepare-evaluation.py" --context-receipt "<開始時の C24 receipt の絶対パス>" --output eval-log/system-spec-completeness-report.json` を実行する。exit 0 の JSON の `skill_args` をそのまま Skill に渡す。helper は固定 receipt と現在の C24 identity/content root を照合し、repo 外・symlink 経由の書き先を拒否する。失敗時は `evaluation_context_invalid` で止め、手書き args で回避しない。
+- evaluator の起動前に `python3 -B "<skill root>/scripts/build-evaluation-context.py" --context-receipt "<開始時の C24 receipt の絶対パス>" --output eval-log/system-spec-completeness-report.json` を実行する。exit 0 の JSON の `skill_args` をそのまま Skill に渡す。helper は固定 receipt と現在の C24 identity/content root を照合し、repo 外・symlink 経由の書き先を拒否する。失敗時は `evaluation_context_invalid` で止め、手書き args で回避しない。
 - evaluator の `--spec-dir`・`--output` と report の `spec_dir` は、helper が得た絶対パスに揃える。これは当該実走の評価先を固定するローカル証跡であり、移動して再利用しない。C02 の `evidence_ref` と source lineage は repo 相対のまま保つ。report の評価先が取込元と違えば手で書き換えず、R2 の検証を通した新しい評価を1回だけ行う。それでも違えば FAIL。dry-run にも確定と同じ payload (`confirmation_evidence` を含む) を渡す (R2・R3)。
 - 委譲先の SKILL.md と責務 prompt は、出力を作る前に全文を読む。一部の Layer だけを読んで委譲先の出力を作らない (R2)。
 - feature に仕様本文を複製せず、`architecture_refs` と source lineage で参照する。

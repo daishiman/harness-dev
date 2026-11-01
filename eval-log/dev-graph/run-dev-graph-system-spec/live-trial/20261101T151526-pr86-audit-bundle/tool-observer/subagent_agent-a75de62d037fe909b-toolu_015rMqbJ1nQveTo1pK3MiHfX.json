@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-a75de62d037fe909b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "de4eae56-8e19-4d5e-bc58-b03b700be7f3",
+      "line": 56,
+      "prefix_bytes": 500215,
+      "prefix_sha256": "7626e5cf6e63d132aa271a04029191e2362eb775c94e7f6445c29438220c9615",
+      "timestamp": "2026-11-01T06:30:36.386Z"
+    },
+    "result": {
+      "uuid": "eff82c7c-5151-4b0a-9f5d-0e170ae6b1da",
+      "line": 57,
+      "prefix_bytes": 503827,
+      "prefix_sha256": "3fad0c42452fa361077adf53194e88c62af44203c3d07ba6bee72879d173f72e",
+      "timestamp": "2026-11-01T06:30:36.653Z"
+    }
+  },
+  "tool_use_id": "toolu_015rMqbJ1nQveTo1pK3MiHfX",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/retrieval-evidence/postgres.json"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t{\n2\t  \"target_id\": \"postgres\",\n3\t  \"tool\": \"WebFetch\",\n4\t  \"fetches\": [\n5\t    {\n6\t      \"url\": \"https://www.postgresql.org/docs/16/\",\n7\t      \"excerpt_verbatim\": \"PostgreSQL 16.15 Documentation\",\n8\t      \"page_title\": \"PostgreSQL: Documentation: 16: PostgreSQL 16.15 Documentation\",\n9\t      \"notes\": \"Current: 18. Supported: 18, 17, 16, 15, 14. PostgreSQL 16 is supported but not the current major.\"\n10\t    },\n11\t    {\n12\t      \"url\": \"https://www.postgresql.org/support/versioning/\",\n13\t      \"excerpt_verbatim\": [\n14\t        \"15 | 15.19 | Yes | October 13, 2022 | November 11, 2027\",\n15\t        \"16 | 16.15 | Yes | September 14, 2023 | November 9, 2028\",\n16\t        \"We recommend that users always run the current minor release associated with their major version.\",\n17\t        \"The PostgreSQL Global Development Group supports a major version for 5 years after its initial release. After this, a final minor version will be released and the software will then be unsupported (end-of-life).\"\n18\t      ]\n19\t    }\n20\t  ],\n21\t  \"retrieved_at\": \"2026-10-31T14:45:20Z\",\n22\t  \"summary\": \"PostgreSQL 16 の現行マイナー版は 16.15。コミュニティ保守の最終リリース (EOL) は 2028-11-09。15 は 15.19 / EOL 2027-11-11。現行メジャーは 18。\"\n23\t}\n24\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/retrieval-evidence/postgres.json",
+      "content": "{\n  \"target_id\": \"postgres\",\n  \"tool\": \"WebFetch\",\n  \"fetches\": [\n    {\n      \"url\": \"https://www.postgresql.org/docs/16/\",\n      \"excerpt_verbatim\": \"PostgreSQL 16.15 Documentation\",\n      \"page_title\": \"PostgreSQL: Documentation: 16: PostgreSQL 16.15 Documentation\",\n      \"notes\": \"Current: 18. Supported: 18, 17, 16, 15, 14. PostgreSQL 16 is supported but not the current major.\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/support/versioning/\",\n      \"excerpt_verbatim\": [\n        \"15 | 15.19 | Yes | October 13, 2022 | November 11, 2027\",\n        \"16 | 16.15 | Yes | September 14, 2023 | November 9, 2028\",\n        \"We recommend that users always run the current minor release associated with their major version.\",\n        \"The PostgreSQL Global Development Group supports a major version for 5 years after its initial release. After this, a final minor version will be released and the software will then be unsupported (end-of-life).\"\n      ]\n    }\n  ],\n  \"retrieved_at\": \"2026-10-31T14:45:20Z\",\n  \"summary\": \"PostgreSQL 16 の現行マイナー版は 16.15。コミュニティ保守の最終リリース (EOL) は 2028-11-09。15 は 15.19 / EOL 2027-11-11。現行メジャーは 18。\"\n}\n",
+      "numLines": 24,
+      "startLine": 1,
+      "totalLines": 24
+    }
+  }
+}

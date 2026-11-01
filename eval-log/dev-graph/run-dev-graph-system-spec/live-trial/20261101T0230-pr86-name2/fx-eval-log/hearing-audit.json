@@ -1,0 +1,34 @@
+{
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "axis": "traceability",
+      "severity": "high",
+      "cell": "ui-ux/web",
+      "qa_id": "qa-009",
+      "observation": "matrix.ui-ux.web.qa_refs が、superseded_by=qa-019 を持つ置き換え済み(retired)の qa-009 をなお参照している。確定セルの active consumer が retired entry を現行根拠として消費しているため、置き換えが有効でも閉じた検出にせず軸4の通常の検出(high)とする。主たる qa_ref=qa-003 は実在し、他の qa_refs(qa-016/019/020/021/022/023/028)も実在する。qa-009 は裏付け1件だけ。欠落種別: retired 参照。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)の3論点を名指しで1問に束ねており N4 に違反。qa-019 で置き換え済み。置き換えの有効性は (a)qa-019 は1論点の開いた問で中立 (b)superseded_note と両問の照合で同じ論点(JTBD)を扱い、残りは qa-016/qa-020/qa-021 に分割 (c)qa-019 に answer・basis=user-decision・answered_at あり、で有効。ただし ui-ux/web の qa_refs が active consumer としてなお参照しているため閉じた検出にはせず、上記の軸4 high を併記する。qa-009 は主たる qa_ref ではない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先(Pod メモリ/PostgreSQL 16/新規保存基盤の選択)と、無効化の期間(有効期限とログアウト時の扱い)という独立に決められる2論点を「あわせて」1問に束ねている。保留・別案の道(どれも採らない/別方式/保留)は示されているため medium。qa-038 は auth/web の qa_refs(裏付け)であり主たる qa_ref ではない。置き換え(superseded_by)は無い。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の AI 作成要約を1問で一括して確定可否を問う確認質問で、独立した9項目の承認を1つの回答に束ねている。選択肢(確定する/直すところを指摘する/確定を保留する)に保留と修正の道があり、推奨の印や前提の埋め込みは無いため medium。qa-033 は確定セルの qa_ref ではなく、appr-foundation-v2 の根拠。U1-U9 の値自体は qa-foundation-u1〜u9 経由で利用者一次発言に遡れており(軸5は検出なし)、C01 が次回以降は項目単位の確認に分けることが望ましい。"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fe49a30c-af7e-4610-9a5e-b0916baaf767",
+      "line": 663,
+      "prefix_bytes": 3973886,
+      "prefix_sha256": "09b523e7a9e9893246f978827f179748b14a2bd8c044813438b909ae33dc0333",
+      "timestamp": "2026-11-01T16:14:47.859Z"
+    },
+    "result": {
+      "uuid": "ee5b40e3-7a73-43e4-9c34-43bd48f66752",
+      "line": 666,
+      "prefix_bytes": 3976779,
+      "prefix_sha256": "f30360b1efe12b6779221bcc3468feaae4e340095acd1f56163a8f1ae0a9eca8",
+      "timestamp": "2026-11-01T16:14:51.217Z"
+    }
+  },
+  "tool_use_id": "toolu_0191cmtyNrC1GxD1oYTbMLZv",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && awk 'NR==1,/^---$/{if(NR>1&&/^---$/)exit;print}' plugins/dev-graph/skills/run-dev-graph-node/SKILL.md | grep -n -A6 -E \"IN1|OUT[123]\" | head -60",
+    "description": "Show C02 feedback criteria in frontmatter"
+  },
+  "is_error": false,
+  "tool_result_content": "(Bash completed with no output)",
+  "tool_use_result": {
+    "stdout": "",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

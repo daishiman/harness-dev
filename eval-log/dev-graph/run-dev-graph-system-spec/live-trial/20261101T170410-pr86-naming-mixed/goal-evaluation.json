@@ -1,0 +1,38 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "合成fixtureのU4/O1「請求漏れをシステムが自動で検知する」に、請求漏れの判定条件・検知時点・結果の扱いを定めた確定要件がない。qa-014/qa-foundation-u4は目標と観測指標だけで、qa-024/025およびbackend/databaseの確定内容は契約・請求書・突合の概略にとどまる。C05がfoundation_trace/highとしてFAILを返した一次根拠を独立に確認した。",
+    "C05のFAILにより正本どおりC02取込を停止したため、graphはrevision=0・nodes=0。source lineage・confirmation/evaluated_digest・readiness completeを備えたspecification/architectureの取込成果がなく、C19の元goalおよびpositive scenarioの必須観測1/2/3を充足していない。正しいfail-closed停止だけをpositive acceptanceのPASSにはできない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec110"
+  },
+  "transcript_sha256": "ebfaca0992cb8dc91e60bb65e364c9c680975afe9fc7b193457aeff57744f26e",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a9a5a78a3fbe4bb70.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/system-spec/spec-state.json",
+    "fx-final/tree/system-spec/backend.md",
+    "fx-final/tree/system-spec/database.md",
+    "fx-final/tree/system-spec/00-requirements-definition.md",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fixture-provenance.json",
+    "fixture-task-preparation.py",
+    "task.md",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "tool-observer/index.json",
+    "observer-provenance.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_01AQ6E7JBhkKnz9gS4AWF1xB.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_0119amWZ5uZFuHdpPmRfzqaE.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_017AG6kZ99sNgadZrnuXqre7.json",
+    "tool-observer/main-toolu_016rVciMUbLtZ3KvH2dpS1fD.json",
+    "tool-observer/main-toolu_01CuFfAU6mgwad6vTP5xsCnj.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "out/status.json",
+    "poll-state.json",
+    "poll-normalization.json"
+  ]
+}

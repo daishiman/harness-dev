@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ae92246b7328467de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1dd01093-5e1e-4f63-b4f3-022b110ad6a7",
+      "line": 88,
+      "prefix_bytes": 413790,
+      "prefix_sha256": "0ef7b59c1c6ef3180c80b77d9bf0d69d9163230d4fdc3aee5b4eec111b2fc690",
+      "timestamp": "2026-11-01T07:48:48.657Z"
+    },
+    "result": {
+      "uuid": "8665df7f-3d16-4f9e-a39d-855d463cec09",
+      "line": 89,
+      "prefix_bytes": 415131,
+      "prefix_sha256": "bf2e82fdaf4981ffd9c2b99788ab14e085b8029d7e4235ae3d51fe128ebcec41",
+      "timestamp": "2026-11-01T07:48:50.622Z"
+    }
+  },
+  "tool_use_id": "toolu_01JXq5xg1uKymAd2WGXrj3E8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'E'\nimport json\nd=json.load(open('system-spec/spec-state.json'))\nprint([ (x['id'],[k for k in x if k not in('options',)] ) for x in d['decisions']][:1])\nfor x in d['decisions']: print(x['id'],x.get('selected_option') or x.get('chosen_option'),str(x.get('adoption_rationale') or x.get('rationale'))[:200], x.get('approval_ref'))\nda=d['design_applications']; print(json.dumps(da[0],ensure_ascii=False)[:700])\ndc=d['doctrine_applications']; print(type(dc),len(dc)); print(json.dumps(dc,ensure_ascii=False)[:700])\nE"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\n[('D1', ['id', 'category', 'question', 'status', 'serves_goals', 'recommendation', 'qa_ref', 'user_decision'])]\nD1 None None None\nD2 None None None\nD3 None None None\nTraceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nKeyError: 0",
+  "tool_use_result": "Error: Exit code 1\n[('D1', ['id', 'category', 'question', 'status', 'serves_goals', 'recommendation', 'qa_ref', 'user_decision'])]\nD1 None None None\nD2 None None None\nD3 None None None\nTraceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nKeyError: 0"
+}

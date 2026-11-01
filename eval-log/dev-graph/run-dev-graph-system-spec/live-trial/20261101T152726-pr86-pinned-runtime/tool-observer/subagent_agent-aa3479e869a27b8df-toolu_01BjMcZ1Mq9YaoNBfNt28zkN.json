@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-aa3479e869a27b8df",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "99e5f4bf-0388-4a4a-beef-b2671d984e31",
+      "line": 21,
+      "prefix_bytes": 228948,
+      "prefix_sha256": "84e79ef10f19ad09b8cb3ca1e58644761f20ddf1f66ccc5a7c18f3285d18593e",
+      "timestamp": "2026-11-01T15:37:16.629Z"
+    },
+    "result": {
+      "uuid": "56f38bbb-3c85-4bce-8e5a-069c6cfc46a4",
+      "line": 22,
+      "prefix_bytes": 230134,
+      "prefix_sha256": "3ac8f9447d0fa6efe3ae32eb700a86278b97eac2e1d82541481a956b712412c7",
+      "timestamp": "2026-11-01T15:37:20.255Z"
+    }
+  },
+  "tool_use_id": "toolu_01BjMcZ1Mq9YaoNBfNt28zkN",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx; S=plugins/system-spec-harness/scripts/validate-coverage-matrix.py; python3 $S --matrix system-spec/spec-state.json; echo \"exit=$?\"; python3 $S --matrix system-spec/spec-state.json --require-complete; echo \"exit=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

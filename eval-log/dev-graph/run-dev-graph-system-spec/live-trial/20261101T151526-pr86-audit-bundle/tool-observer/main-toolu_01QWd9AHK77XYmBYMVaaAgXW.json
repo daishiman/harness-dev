@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8364c50f-5ab3-4ac9-8ea6-eb895372be3f",
+      "line": 117,
+      "prefix_bytes": 644406,
+      "prefix_sha256": "16327a0ea94019dddd8a2f711ee7ffcd2f40d7ce1c108cc60ceb7c3df1efd5a8",
+      "timestamp": "2026-11-01T06:17:17.658Z"
+    },
+    "result": {
+      "uuid": "8be1d2a8-080d-43b1-9f13-b39182452a03",
+      "line": 118,
+      "prefix_bytes": 647362,
+      "prefix_sha256": "3b02698f42973a6d7a5348ea15010bc13f9550da5dcf3305bbbd5110117ce10f",
+      "timestamp": "2026-11-01T06:17:27.714Z"
+    }
+  },
+  "tool_use_id": "toolu_01QWd9AHK77XYmBYMVaaAgXW",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n -A6 \"external_dependencies\" plugins/dev-graph/plugin-composition.yaml; ls plugins/system-spec-harness/skills/; for s in run-system-spec-elicit run-system-spec-doc-fetch run-system-spec-compile assign-system-spec-completeness-evaluator; do ls plugins/system-spec-harness/skills/$s; done; cat plugins/dev-graph/.claude-plugin/plugin.json",
+    "description": "Check version range and entry points"
+  },
+  "is_error": false,
+  "tool_result_content": "148:external_dependencies:\n149-  harness-creator:\n150-    version: \">=1.4.0 <2.0.0\"\n151-    relation: skill-feedback-ssot-provider\n152-    required_entry_points: [run-skill-feedback]\n153-  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nexamples\nprompts\nreferences\nscripts\nSKILL.md\ntests\nexamples\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nprompts\nreferences\nschemas\nscripts\nSKILL.md\ntests\n{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}",
+  "tool_use_result": {
+    "stdout": "148:external_dependencies:\n149-  harness-creator:\n150-    version: \">=1.4.0 <2.0.0\"\n151-    relation: skill-feedback-ssot-provider\n152-    required_entry_points: [run-skill-feedback]\n153-  system-spec-harness:\n154-    version: \">=0.1.22 <1.0.0\"\nassign-system-spec-completeness-evaluator\nref-system-design-knowledge\nrun-skill-feedback\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nexamples\nprompts\nreferences\nscripts\nSKILL.md\ntests\nexamples\nfixtures\nprompts\nreferences\nscripts\nSKILL.md\ntests\nprompts\nreferences\nschemas\nscripts\nSKILL.md\ntests\n{\n  \"name\": \"dev-graph\",\n  \"version\": \"0.1.26\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

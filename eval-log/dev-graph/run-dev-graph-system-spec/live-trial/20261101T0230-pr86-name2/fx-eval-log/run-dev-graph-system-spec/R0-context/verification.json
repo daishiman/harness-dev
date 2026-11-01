@@ -1,0 +1,65 @@
+{
+ "responsibility_id": "R0-context",
+ "skill": "run-dev-graph-system-spec",
+ "role": "independent_verifier",
+ "loop": 1,
+ "generated_at": "2026-10-31T22:29:31.395943+00:00",
+ "c24_receipt": {
+  "path": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+  "sha256": "76081a381f68b534b84544940e468c11ee6f5cb5439b1696ae8b1b96cbe768e4",
+  "sha256_reverified": true
+ },
+ "checks": {
+  "resolve_repo_context": {
+   "cmd": "python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root <repo_root> --mode read",
+   "exit": 0,
+   "matches_receipt": {
+    "repository_id": true,
+    "worktree_id": true,
+    "git_common_dir": true,
+    "repo_root": true,
+    "head_sha": true,
+    "content_roots.system_spec": true,
+    "content_roots.repository==repo_root": true
+   }
+  },
+  "git": {
+   "common_dir_equals_receipt": true,
+   "toplevel_equals_repo_root": true
+  },
+  "containment": {
+   "system_spec_realpath_in_repo": true,
+   "symlinks": [],
+   "broken_links": [],
+   "files": 16,
+   "files_resolving_outside": [],
+   "preflight_input_digests_match": true
+  },
+  "lineage_gate": {
+   "cmd": "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <repo_root>",
+   "exit": 0,
+   "status": "pass",
+   "checked": 0,
+   "violations": [],
+   "graph_revision": 0,
+   "nodes": 0,
+   "decision": "new_creation"
+  }
+ },
+ "checklist": {
+  "system_spec_realpath_in_caller_repo_with_repository_id_common_dir_match": "YES",
+  "lineage_gate_exit0_and_decision_from_checked": "YES",
+  "declared_inputs_verified": "YES",
+  "output_shape_and_authority": "YES",
+  "zero_boundary_violating_read_write_delegation": "YES"
+ },
+ "observations": [
+  "c24-receipt.json holds absolute paths; it is a runtime eval-log receipt, not a stored deliverable — not treated as a Layer 3 violation"
+ ],
+ "verdict": "PASS",
+ "blockers": [],
+ "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+ "delta_from_original": "none",
+ "merged_directive_for_next": "proceed to R1 with c24 receipt sha256 76081a38...; decision=new_creation",
+ "drift_signal": false
+}

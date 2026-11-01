@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a4f0555d775afc22e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7ec8f917-f7f4-4e83-a17f-9544ac136a35",
+      "line": 29,
+      "prefix_bytes": 202060,
+      "prefix_sha256": "9fef4c6f86fcddffe912ba54b6325f6c8a922bb35801232b74c6fe98e62b8579",
+      "timestamp": "2026-11-01T12:24:37.384Z"
+    },
+    "result": {
+      "uuid": "8ef7db48-4ba2-492a-82a8-540214aa4797",
+      "line": 30,
+      "prefix_bytes": 206003,
+      "prefix_sha256": "49e0b03c2be66c4233762f872ee9931bed189addf121feb34083e9c987b92bfa",
+      "timestamp": "2026-11-01T12:24:41.777Z"
+    }
+  },
+  "tool_use_id": "toolu_012jXTeAFkfJ6EwjCPVTPJZd",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx; python3 -B $R/plugins/dev-graph/scripts/validate-graph-schema.py --graph $R/.dev-graph/state/graph.json --repo-root $R --strict-artifact-readiness; echo \"rc=$?\"; python3 -B $R/plugins/dev-graph/scripts/validate-source-lineage.py --repo-root $R --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo \"rc=$?\"; python3 -B -c \"\nimport json,hashlib\ng=json.load(open('$R/.dev-graph/state/graph.json',encoding='utf-8'))\nprint('sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode('utf-8')).hexdigest())\nfor p in ['specs/billing-audit-system-spec.md','architecture/billing-audit-system-architecture.md','system-spec/index.md','system-spec/00-requirements-definition.md','eval-log/system-spec-completeness-report.json']:\n    print(p,hashlib.sha256(open('$R/'+p,'rb').read()).hexdigest())\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nrc=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nsha256:de7b1ff28a5d811277a410fbb58257a84958c73e43df2bc44295290a1b176a08\nspecs/billing-audit-system-spec.md 87e3c37fbb0ba55771198887b44f54ff01858e41beab9f14c87ec80773fc2bcb\narchitecture/billing-audit-system-architecture.md e9f086c86d910928bc948f4795a033e08f168830e6b7d1a8814db54e501fb18c\nsystem-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\nsystem-spec/00-requirements-definition.md 6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\neval-log/system-spec-completeness-report.json 65b4d79d148197e47bd16ca37503c6e0731ba2aee82c63fc4c130f4e43da918e",
+  "tool_use_result": {
+    "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nrc=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nsha256:de7b1ff28a5d811277a410fbb58257a84958c73e43df2bc44295290a1b176a08\nspecs/billing-audit-system-spec.md 87e3c37fbb0ba55771198887b44f54ff01858e41beab9f14c87ec80773fc2bcb\narchitecture/billing-audit-system-architecture.md e9f086c86d910928bc948f4795a033e08f168830e6b7d1a8814db54e501fb18c\nsystem-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\nsystem-spec/00-requirements-definition.md 6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\neval-log/system-spec-completeness-report.json 65b4d79d148197e47bd16ca37503c6e0731ba2aee82c63fc4c130f4e43da918e",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

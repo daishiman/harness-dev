@@ -1,0 +1,19 @@
+{
+  "responsibility_id": "R1-preflight",
+  "verifier": "independent",
+  "verified_on": "2026-11-01",
+  "overall": "PASS",
+  "checklist": [
+    {
+      "item": "version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる",
+      "result": "achieved",
+      "evidence": [
+        "system-spec-harness plugin.json name=system-spec-harness version=0.1.25",
+        "package-contract.json plugin_name=system-spec-harness, entry_points.skills includes all 4",
+        "dev-graph plugin-composition.yaml external_dependencies.system-spec-harness.version >=0.1.22 <1.0.0; 0.1.25 in range",
+        "4 skill dirs with SKILL.md exist, non-symlink, name matches",
+        "preflight-report: 16/16 system-spec input digests match current files, no unlisted files; R0.receipt_sha256 matches receipt"
+      ]
+    }
+  ]
+}

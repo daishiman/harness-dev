@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a828acfc-3c7d-4709-832a-885cc02ae5df",
+      "line": 281,
+      "prefix_bytes": 2215440,
+      "prefix_sha256": "f79c9209d4ec1fe9cd8a6c979971779fa299cf341cef750abc85c6eff3917e91",
+      "timestamp": "2026-11-01T12:44:02.263Z"
+    },
+    "result": {
+      "uuid": "48a4afbf-8535-4eec-b052-bea4f2585671",
+      "line": 282,
+      "prefix_bytes": 2216914,
+      "prefix_sha256": "58a3840f518683f8e4e7d3301131fb6359a6575149d74b1c3c313fae47d4b35d",
+      "timestamp": "2026-11-01T12:44:05.952Z"
+    }
+  },
+  "tool_use_id": "toolu_011N3DRm7z3oHxEW492hWn34",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import json;json.load(open(\"system-spec/spec-state.json\"))' && echo \"path: $CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" && echo \"sha256: $(shasum -a 256 system-spec/spec-state.json | cut -d\" \" -f1)\" && echo \"開き方: less $CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"",
+    "description": "Present elicit artifact path, digest, open method"
+  },
+  "is_error": false,
+  "tool_result_content": "path: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json\nsha256: f6b2fed7d76b05bd609fcba75b44f936e7dd1f8998f05f47043d72fa4a05d4aa\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "path: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json\nsha256: f6b2fed7d76b05bd609fcba75b44f936e7dd1f8998f05f47043d72fa4a05d4aa\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

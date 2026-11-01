@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "aaf4b7d8-530c-4c21-bea7-c65c9702c6a8",
+      "line": 577,
+      "prefix_bytes": 3621726,
+      "prefix_sha256": "9f72f668551dfc7d2f47edb1e018b0a59cc95126a7cfad24d11f6f77217f36f5",
+      "timestamp": "2026-11-01T11:05:41.341Z"
+    },
+    "result": {
+      "uuid": "41332a80-0df0-4246-8b62-432843a707b4",
+      "line": 578,
+      "prefix_bytes": 3626377,
+      "prefix_sha256": "fd9248cf4f151b0ebdf39b5aa3e052fafc05192699709f23726ddfa17604a6c9",
+      "timestamp": "2026-11-01T11:05:44.832Z"
+    }
+  },
+  "tool_use_id": "toolu_01JtiQq3Ywaep2Jn8ss4WYTh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/ && python3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --help 2>&1 | head -30",
+    "description": "List evaluator scripts and aggregator usage"
+  },
+  "is_error": false,
+  "tool_result_content": "aggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES\n                        fetched-references.json のパス。--state と併用し出典記録 gate\n                        (G-source-citation) を実行\n  --repo-root REPO_ROOT\n                        --source-citation の証跡 path を解決する repo root (既定 cwd)\n  --knowledge-graph     C13-C16 の 4 profile gate を実行\n  --spec-dir SPEC_DIR   --report と併用。report の spec_dir がこの dir に解決するかも検証する\n  --hearing HEARING     C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input\n                        判定を導く\n  --state STATE         --hearing / --source-citation が読む spec-state.json",
+  "tool_use_result": {
+    "stdout": "aggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py\nusage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES\n                        fetched-references.json のパス。--state と併用し出典記録 gate\n                        (G-source-citation) を実行\n  --repo-root REPO_ROOT\n                        --source-citation の証跡 path を解決する repo root (既定 cwd)\n  --knowledge-graph     C13-C16 の 4 profile gate を実行\n  --spec-dir SPEC_DIR   --report と併用。report の spec_dir がこの dir に解決するかも検証する\n  --hearing HEARING     C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input\n                        判定を導く\n  --state STATE         --hearing / --source-citation が読む spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

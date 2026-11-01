@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-a1e9ca43d085a43e2",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8a4091bf-72b0-4aeb-8144-e5827c62ba49",
+      "line": 43,
+      "prefix_bytes": 303704,
+      "prefix_sha256": "41e4bc6e806a206f87f43621264da58e17ccac6129f55dee8750a28ea7093a3c",
+      "timestamp": "2026-11-01T06:20:18.927Z"
+    },
+    "result": {
+      "uuid": "2dd92404-55a9-4405-990e-db6e3b79f27e",
+      "line": 44,
+      "prefix_bytes": 308087,
+      "prefix_sha256": "3bcad024192922b2139cde780c287950c82cb9b097946ba1045c76b66c3940b8",
+      "timestamp": "2026-11-01T06:20:21.249Z"
+    }
+  },
+  "tool_use_id": "toolu_01GeCHrL7pF32t32dX382GkA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "F=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx; cd $F; for f in validate-source-lineage build-graph-node resolve-repo-context guard-requirements-handoff build-init-scaffold; do echo \"== $f\"; grep -nE 'system-spec-harness|system_spec' plugins/dev-graph/scripts/$f.py | head -8; done; echo \"== bec\"; grep -nE 'def |harness' plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "== validate-source-lineage\n4:# purpose: origin_kind=system-spec-harness の node について source_path の実在 (repo 内) と source_digest (生 bytes の sha256 hex) の一致を副作用なしで fail-closed 検査する。\n30:ORIGIN = \"system-spec-harness\"\n41:    \"\"\"system-spec-harness 由来の node だけを検査する。finding は validate-graph-schema と同じ {node, code, detail}。\"\"\"\n84:    parser = argparse.ArgumentParser(description=\"system-spec-harness 由来の source_lineage を検査する (読取りのみ)\")\n== build-graph-node\n78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\n79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n103:# C19 の R0/R3 gate と同じ関数で、system-spec-harness 由来の lineage を登録前に検査する。\n693:    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\n699:    if kind not in SPEC_IMPORT_KINDS or lineage.get(\"origin_kind\") != \"system-spec-harness\":\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n== resolve-repo-context\n37:    \"system_spec\": \"system-spec\",\n== guard-requirements-handoff\n56:    \"system-spec-harness\": (\"run-dev-graph-system-spec\", \"system-spec-harness\"),\n== build-init-scaffold\n38:# 6 content root。system_spec は system-spec-harness (C19) が作るので init は作らない。\n== bec\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:",
+  "tool_use_result": {
+    "stdout": "== validate-source-lineage\n4:# purpose: origin_kind=system-spec-harness の node について source_path の実在 (repo 内) と source_digest (生 bytes の sha256 hex) の一致を副作用なしで fail-closed 検査する。\n30:ORIGIN = \"system-spec-harness\"\n41:    \"\"\"system-spec-harness 由来の node だけを検査する。finding は validate-graph-schema と同じ {node, code, detail}。\"\"\"\n84:    parser = argparse.ArgumentParser(description=\"system-spec-harness 由来の source_lineage を検査する (読取りのみ)\")\n== build-graph-node\n78:# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).\n79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n103:# C19 の R0/R3 gate と同じ関数で、system-spec-harness 由来の lineage を登録前に検査する。\n693:    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\n699:    if kind not in SPEC_IMPORT_KINDS or lineage.get(\"origin_kind\") != \"system-spec-harness\":\n701:                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n== resolve-repo-context\n37:    \"system_spec\": \"system-spec\",\n== guard-requirements-handoff\n56:    \"system-spec-harness\": (\"run-dev-graph-system-spec\", \"system-spec-harness\"),\n== build-init-scaffold\n38:# 6 content root。system_spec は system-spec-harness (C19) が作るので init は作らない。\n== bec\n26:def absolute(value: object) -> Path:\n32:def prepare(receipt_path: Path, report_ref: str) -> dict:\n83:def main() -> int:",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

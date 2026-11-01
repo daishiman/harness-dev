@@ -1,0 +1,27 @@
+{
+  "responsibility_id": "R0-context",
+  "role": "independent_verifier",
+  "loop": 1,
+  "original_goal_hash_verified": true,
+  "checks": {
+    "identity_matches_fixed_receipt": "YES",
+    "system_spec_realpath_in_repo_no_symlink": "YES",
+    "repo_root_eq_content_repository_realpath": "YES",
+    "lineage_gate_exit0_checked0_new_import": "YES",
+    "observer_fixed_root_prefix_actual_calls": "YES",
+    "R0_5_3_item1": "YES",
+    "R0_5_3_item2": "YES",
+    "common_5_3_inputs_verified": "YES",
+    "common_5_3_output_shape_authority": "YES",
+    "common_5_3_boundary_violations_zero": "YES"
+  },
+  "notes": [
+    "Skill引数は --resume だが lineage gate checked=0 (graph nodes=0) により新規作成と判定されており、gate を正としている",
+    "preflight-report の lineage_gate 値は実出力の転記ではなく literal だが observer event toolu_01Wogt5dZTfwWv2kYRKJFCZL の実出力 (checked=0, exit 0) と一致"
+  ],
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "delta_from_original": "R0 containment/lineage は充足。goal 全体の残りは R1 検証後の R2/R3",
+  "merged_directive_for_next": "R0 PASS を前提に R1 独立検証後、R2 (elicit resume→必要時 doc-fetch→compile→evaluator) へ進む",
+  "drift_signal": "none",
+  "verdict": "PASS"
+}

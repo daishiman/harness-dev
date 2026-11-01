@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-ad9854451a08928c6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "52423dc0-610f-411a-8acf-651619fffc55",
+      "line": 288,
+      "prefix_bytes": 2736431,
+      "prefix_sha256": "cd7973397e6f97faa8698af73679a2de1542154cc83a02d0d16e43f03c906a89",
+      "timestamp": "2026-11-01T13:36:51.663Z"
+    },
+    "result": {
+      "uuid": "8eed1c8f-c30b-425a-8404-9267ec9423f1",
+      "line": 290,
+      "prefix_bytes": 2738484,
+      "prefix_sha256": "d3da7f1a41f00ae0dc557ac4a41528b6e949ab47cc327a4b5e09a371665cf3f9",
+      "timestamp": "2026-11-01T13:37:00.247Z"
+    }
+  },
+  "tool_use_id": "toolu_0121qkQ5mEtgPTcdagDHL55h",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --report /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/eval-log/system-spec-completeness-report.json --spec-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/system-spec --session 98be79d1-6a7c-4568-8523-67f5e763bdbe; echo \"EXIT=$?\"",
+    "description": "Validate report with canonical CLI"
+  },
+  "is_error": false,
+  "tool_result_content": "VIOLATION: audit_delegations[matrix_coverage/primary]: schema 1.2 receipt が hook 観測値と一致しない (verdict) (session/subagent/tool/response/verdict を同一 dispatch へ束縛する)\nFAIL: 1 件のレポート整合違反 (fork 台帳: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/eval-log/system-spec-harness/audit-fork-ledger.jsonl / exists=True / 裏取り fork 3 件)\nEXIT=1",
+  "tool_use_result": null
+}

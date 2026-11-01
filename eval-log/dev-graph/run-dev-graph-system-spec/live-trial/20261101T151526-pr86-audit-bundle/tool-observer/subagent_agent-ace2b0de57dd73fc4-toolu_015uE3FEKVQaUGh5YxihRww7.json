@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ace2b0de57dd73fc4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b7aced6f-23e2-466a-a6de-28c60476e1a2",
+      "line": 15,
+      "prefix_bytes": 63183,
+      "prefix_sha256": "483da885e0471c7f4c85cf260c4ee9831aa8cc959c124754ff89ba73a5216a31",
+      "timestamp": "2026-11-01T06:41:42.138Z"
+    },
+    "result": {
+      "uuid": "1da35d88-2e48-43c6-a185-b930ff4430ee",
+      "line": 17,
+      "prefix_bytes": 90641,
+      "prefix_sha256": "e36b85cb7fe8f60881268e3c8f98886eba17eb4c864dcdbf13cb02269589a1ac",
+      "timestamp": "2026-11-01T06:41:45.572Z"
+    }
+  },
+  "tool_use_id": "toolu_015uE3FEKVQaUGh5YxihRww7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --help 2>&1 | head -20; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\"; echo rc=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0",
+  "tool_use_result": {
+    "stdout": "usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

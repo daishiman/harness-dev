@@ -2,14 +2,14 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
-    "skill_md_sha256": "27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30"
+    "skill_md_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"
   },
-  "reviewer": "review_c19_scope（独立incremental reviewer）",
-  "reviewed_at": "2026-10-31T17:19:01.377704Z",
+  "reviewer": "review_c19_name（独立 incremental rename reviewer）",
+  "reviewed_at": "2026-10-31T21:53:18.742906Z",
   "iterations": 1,
   "human_review_required": false,
-  "review_kind": "elegance",
   "verdict": "PASS",
+  "review_kind": "elegance",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -25,16 +25,16 @@
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "親の明示委譲: 各周回IN1実測前PASSを防ぐcanonical3gate blockの独立incremental review。過去PASSは根拠にしない。",
+    "hook_trigger": "親の明示委譲: C19 helperの非許可動詞prepareをdoc28許可動詞buildへ変更した限定差分の独立incremental rename review。baseline fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
     "next_action": "none",
     "positive_feedback": [
-      "coverage/source/schema全てexit0だけ当該周回IN1 PASS、未実施/待ち/非0はnot_achieved、後周回結果の遡及禁止が明記される。",
-      "canonical CLIの全引数が実parserに存在し、inputは開始C24 receipt、codeは検証済みplugin rootへ固定する。実結果記録後に6キー/hash検査を行う。",
-      "fx90へforeign cwdから3gateをread-only再実行して全exit0、/tmp独立負例は全非0。入力SHA不変を確認。"
+      "git show baselineとの正規化比較でSKILL/R2/testはprepare-evaluation→build-evaluation-context置換だけ。helperはname headerだけ変更しAST・CLI・安全境界は同一。rename-measurements.json/source-manifest.jsonに現物と照合結果を保存。",
+      "dev-graph配下に旧参照0、新script_refs全件実在。新helperは同じskill-local directory深度でowner plugin resolverを解決し、network:false/write-scope:noneを維持。buildはdoc28許可動詞でJSON context生成の責務に合う。",
+      "IN1/OUT1の定義・verify_by・閾値は不変。IN1の3 canonical gateとOUT1の委譲/C02/lineage契約を弱めるsource差分がない。追加pytestによるcwd/root/identity/symlink拒否の結果はpytest-output.txt。"
     ],
     "negative_feedback": [
-      "low: 6キー/hash検査自体には各gate exit/時刻の自動照合はない。本文の実測記録要求と独立Agent検証で運用する契約。"
+      "既存low制約を継続: 6キー/hash検査自体は各gateのexit/時刻を自動照合しない。本文の実測記録要求と独立Agent検証で運用する。renameで追加退行はない。"
     ]
   },
-  "notes": "4条件focused incremental reviewとしてPASS。前回PASSや報告されたtrial成功を根拠にしない。現在のread-only gate再実行は過去loop1の実施証拠にならない。30思考法/host trialを行ったとは主張しない。"
+  "notes": "incremental rename reviewとして4条件PASS。30思考法full reviewを再走したという主張ではなく、baselineからの限定rename差分の意味不変と安全境界を確認した。smell1は既存制約の継続。IN1/OUT1は変更影響の評価であり、今回host live-trial再走/OUT1実走PASSや過去周回IN1の証明ではない。"
 }

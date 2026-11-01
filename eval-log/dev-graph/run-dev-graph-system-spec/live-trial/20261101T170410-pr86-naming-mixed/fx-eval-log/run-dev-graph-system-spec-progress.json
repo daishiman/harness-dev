@@ -1,0 +1,71 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "updated_at": "2026-11-01T08:21:28.959262+00:00",
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "R0 receipt + R0 verifier PASS (eval-log/run-dev-graph-system-spec/R0/verifier.json)"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "R1 receipt + R1 verifier PASS (0.1.24 in >=0.1.22 <1.0.0; 4 entry points)"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "achieved",
+      "evidence": "loop2: elicit --resume (validators only, eval-log/run-dev-graph-system-spec/R2/elicit-standard.json), doc-fetch not needed (recorded), compile Skill exit0 + 63 OUT1 tests passed (R2/compile-standard.json, R2/compile-out1-tests.json), evaluator Skill launched with build-evaluation-context skill_args"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "loop2: coverage/citation exit0 but completeness evaluator verdict FAIL (eval-log/system-spec-completeness-report.json sha256 bbe69191…4771; high gap foundation_trace U4 O1 unbacked)"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "loop2: evaluator FAIL -> C02 import forbidden; graph rev 0 nodes 0"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "loop2: no R3 import performed; final confirmation not reached"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "coverage_exit": 0,
+          "source_citation_exit": 0,
+          "graph_schema_exit": 0,
+          "status": "PASS"
+        },
+        {
+          "loop": 2,
+          "coverage_exit": 0,
+          "source_citation_exit": 0,
+          "graph_schema_exit": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "artifact_delivery": {
+    "state": "semantic_evaluator_started",
+    "choice": "standard",
+    "record": "eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json"
+  },
+  "overall": "blocked",
+  "blocker": "Completeness evaluator FAIL (high: U4 O1 missing-bill auto-detection unbacked by any requirement; medium: chapter To-Be generic; medium: async queue base undecided). Fix requires new user input via elicit (forbidden in this run: no questions/no new approvals). C02 import not performed."
+}

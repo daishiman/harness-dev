@@ -1,0 +1,67 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "round": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json (repo_root==content_roots.repository) + R0 Verifier PASS"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "harness 0.1.24 in >=0.1.22 <1.0.0, 4 entry points実在 + R1 Verifier PASS"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "elicit(resume, 完了済みstate・追加書込なし)とcompile(compile-spec-doc.py exit0, OUT1 63 passed)を実施。doc-fetchは出典gate exit0のため不要。evaluator未実施"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "round2: coverage exit0, source-citation exit0, evaluator report verdict=FAIL (matrix_coverage FAIL via C06 hearing audit FAIL; qa-037/qa-038 lack user primary input), aggregate-completeness.py --report exit1"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "C02 not invoked: evaluator PASS absent (Gotchas forbid import before PASS)"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "R3/Verifierで確認予定"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "rounds": [
+        {
+          "round": 1,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS"
+        },
+        {
+          "round": 2,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "blockers": [
+    "evaluator_fail: C06 hearing FAIL, qa-037/qa-038 retroactive basis change without user input; fix requires re-asking user (R3-reask/R4-reopen), which is a new human decision forbidden in this run",
+    "aggregate-completeness.py exit1 (C07 primary receipt PASS vs aspect FAIL)"
+  ],
+  "final_status": "FAIL"
+}

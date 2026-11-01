@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "subagent/agent-a7836a65efe94cd56",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e17ba69b-365f-4179-8c3e-feb2bc33d5bf",
+      "line": 57,
+      "prefix_bytes": 421930,
+      "prefix_sha256": "32db503e71cff8776396655cec320ff8314ea1d2ba2a750faedbb56ceaecebba",
+      "timestamp": "2026-11-01T10:17:06.879Z"
+    },
+    "result": {
+      "uuid": "2e8b6cd1-f395-4ba8-9ee8-1e390202a86b",
+      "line": 58,
+      "prefix_bytes": 426469,
+      "prefix_sha256": "54474b9ebe1b5468e6af6af93dfb9eb5c671a931ee81ebfedbc5738b898f1ec5",
+      "timestamp": "2026-11-01T10:17:10.376Z"
+    }
+  },
+  "tool_use_id": "toolu_01LeLAVgQ8fPFsHtcAng9aZC",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx; shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json; git status --porcelain -- plugins | head; git diff --stat HEAD -- plugins | tail -3; echo ---; grep -rlnE 'spec-state\\.json|coverage[-_]matrix|fetched-references|validate-source-citation|compile_spec|elicit' plugins/dev-graph --include=*.py | head; echo ---py-defs; grep -rnE 'def .*(elicit|interview|compile|hearing|render_chapter|assemble)' plugins/dev-graph --include=*.py | head; echo ---; grep -rln 'system-spec' plugins/dev-graph | head -30",
+    "description": "Check report hash, plugin changes, duplication grep"
+  },
+  "is_error": false,
+  "tool_result_content": "bfc38736fbb47761f20c5ba4e79821dc174984a287d93db30c1dfa729f04b467  eval-log/run-dev-graph-system-spec/preflight-report.json\n---\n(eval):1: no matches found: --include=*.py\n---py-defs\n(eval):1: no matches found: --include=*.py\n---\nplugins/dev-graph/artifact-delivery.json\nplugins/dev-graph/README.md\nplugins/dev-graph/EVALS.json\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/references/package-contract.json\nplugins/dev-graph/references/feature-execution-package-contract.md\nplugins/dev-graph/references/execution-tracker-contract.md\nplugins/dev-graph/tests/test_build_graph_node.py\nplugins/dev-graph/tests/test_graph_artifact_readiness.py\nplugins/dev-graph/tests/test_guard_graph_schema_indirect_mutation.py\nplugins/dev-graph/tests/test_validate_source_lineage.py\nplugins/dev-graph/tests/test_system_spec_evaluation_paths.py\nplugins/dev-graph/tests/test_semantic_c26_completion.py\nplugins/dev-graph/tests/test_validate_graph_schema_c11_heading_readiness.py\nplugins/dev-graph/tests/test_live_trial_evidence_selection.py\nplugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json\nplugins/dev-graph/agents/dev-graph-requirements-verifier.md\nplugins/dev-graph/schemas/graph-node.schema.json\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/guard-requirements-handoff.py\nplugins/dev-graph/scripts/build-init-scaffold.py\nplugins/dev-graph/templates/system-phase-spec.md\nplugins/dev-graph/templates/template-contract.json\nplugins/dev-graph/templates/system-plan-contract.json\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/templates/repo-config.example.json\nplugins/dev-graph/templates/README.md\nplugins/dev-graph/commands/dev-graph.md",
+  "tool_use_result": {
+    "stdout": "bfc38736fbb47761f20c5ba4e79821dc174984a287d93db30c1dfa729f04b467  eval-log/run-dev-graph-system-spec/preflight-report.json\n---\n(eval):1: no matches found: --include=*.py\n---py-defs\n(eval):1: no matches found: --include=*.py\n---\nplugins/dev-graph/artifact-delivery.json\nplugins/dev-graph/README.md\nplugins/dev-graph/EVALS.json\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/references/package-contract.json\nplugins/dev-graph/references/feature-execution-package-contract.md\nplugins/dev-graph/references/execution-tracker-contract.md\nplugins/dev-graph/tests/test_build_graph_node.py\nplugins/dev-graph/tests/test_graph_artifact_readiness.py\nplugins/dev-graph/tests/test_guard_graph_schema_indirect_mutation.py\nplugins/dev-graph/tests/test_validate_source_lineage.py\nplugins/dev-graph/tests/test_system_spec_evaluation_paths.py\nplugins/dev-graph/tests/test_semantic_c26_completion.py\nplugins/dev-graph/tests/test_validate_graph_schema_c11_heading_readiness.py\nplugins/dev-graph/tests/test_live_trial_evidence_selection.py\nplugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json\nplugins/dev-graph/agents/dev-graph-requirements-verifier.md\nplugins/dev-graph/schemas/graph-node.schema.json\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/guard-requirements-handoff.py\nplugins/dev-graph/scripts/build-init-scaffold.py\nplugins/dev-graph/templates/system-phase-spec.md\nplugins/dev-graph/templates/template-contract.json\nplugins/dev-graph/templates/system-plan-contract.json\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/templates/repo-config.example.json\nplugins/dev-graph/templates/README.md\nplugins/dev-graph/commands/dev-graph.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

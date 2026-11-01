@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "60500819-02cd-4163-95ed-b92a77c419ac",
+      "line": 803,
+      "prefix_bytes": 4340694,
+      "prefix_sha256": "e9a32a0d6eb083200d88c643db759a44b19cb0bf3aa5fe8564750d65c6bd1ac0",
+      "timestamp": "2026-11-01T11:12:38.651Z"
+    },
+    "result": {
+      "uuid": "92f848fe-f5bc-40e8-8899-e4633de63489",
+      "line": 806,
+      "prefix_bytes": 4346859,
+      "prefix_sha256": "40eff449faff670a76e1b197dad15c694cdd387aa5d28cc9443f9a2700bc747c",
+      "timestamp": "2026-11-01T11:12:44.810Z"
+    }
+  },
+  "tool_use_id": "toolu_01Bk2K5sppWt7kUY5uyEcTWk",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo lineage=$?; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness | python3 -c \"import json,sys;r=json.load(sys.stdin);print({k:r[k] for k in r if k!='nodes'})\"; echo schema=${pipestatus[1]}; shasum -a 256 specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md .dev-graph/state/receipts/node-r000001-add.json",
+    "description": "Run lineage and schema gates after import"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage=0\n{'artifact_readiness': {'enforced': True, 'finding_count': 0, 'findings': [], 'missing_sections': [], 'status': 'complete'}, 'graph_validation': {'status': 'pass', 'violation_count': 0}, 'implementation_readiness': 'complete', 'missing_sections': [], 'node_readiness': {'complete': 2, 'incomplete': 0, 'incomplete_nodes': [], 'not_applicable': 0, 'unknown': 0}, 'schema': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/schemas/graph-node.schema.json', 'valid': True, 'violations': []}\nschema=0\n705c6350f35bcd629f8e62eb74be9e74a100207ca1d959022ebbf0bf1b193d70  specs/billing-audit-system-spec.md\n23bfe9a6341f78d65ed9ca53a31f309d652e0cf1d24a60f0cef3c2291a2e782f  architecture/billing-audit-system-architecture.md\n334a406a4d41e9937e363ceb867918577699436ffaf3990adfc3d274d3e6fdb7  .dev-graph/state/receipts/node-r000001-add.json",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage=0\n{'artifact_readiness': {'enforced': True, 'finding_count': 0, 'findings': [], 'missing_sections': [], 'status': 'complete'}, 'graph_validation': {'status': 'pass', 'violation_count': 0}, 'implementation_readiness': 'complete', 'missing_sections': [], 'node_readiness': {'complete': 2, 'incomplete': 0, 'incomplete_nodes': [], 'not_applicable': 0, 'unknown': 0}, 'schema': '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/schemas/graph-node.schema.json', 'valid': True, 'violations': []}\nschema=0\n705c6350f35bcd629f8e62eb74be9e74a100207ca1d959022ebbf0bf1b193d70  specs/billing-audit-system-spec.md\n23bfe9a6341f78d65ed9ca53a31f309d652e0cf1d24a60f0cef3c2291a2e782f  architecture/billing-audit-system-architecture.md\n334a406a4d41e9937e363ceb867918577699436ffaf3990adfc3d274d3e6fdb7  .dev-graph/state/receipts/node-r000001-add.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

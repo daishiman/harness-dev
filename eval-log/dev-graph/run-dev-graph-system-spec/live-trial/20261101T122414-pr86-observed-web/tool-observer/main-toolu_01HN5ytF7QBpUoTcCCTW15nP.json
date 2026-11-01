@@ -1,0 +1,124 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "abc2022c-9dc4-464f-82ed-7e5fef600ed8",
+      "line": 115,
+      "prefix_bytes": 569866,
+      "prefix_sha256": "86df7998c645b508162c84935b82cf51ea7400360e24c23816cba538cd065905",
+      "timestamp": "2026-11-01T03:25:49.315Z"
+    },
+    "result": {
+      "uuid": "56d4c0c8-67ff-428f-b596-d3fa78a24290",
+      "line": 121,
+      "prefix_bytes": 575903,
+      "prefix_sha256": "329316d10b71e3e1e94ff8a86dac891fb5dca82f72579457db5bf805d8bee7d3",
+      "timestamp": "2026-11-01T03:25:56.600Z"
+    }
+  },
+  "tool_use_id": "toolu_01HN5ytF7QBpUoTcCCTW15nP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cp \"$TMPDIR/preflight.json\" /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json && shasum -a 256 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+  },
+  "is_error": false,
+  "tool_result_content": "57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "tool_use_result": {
+    "stdout": "57fcad31b5368d87faedf104f2432ded3ff09f83260893397124da1adb4b691c  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 65,
+              "lines": [
+                "+{",
+                "+  \"report\": \"run-dev-graph-system-spec preflight\",",
+                "+  \"caller_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx\",",
+                "+  \"c24_receipt\": {",
+                "+    \"path\": \"eval-log/run-dev-graph-system-spec/c24-receipt.json\",",
+                "+    \"sha256\": \"834cb86507b712df4a571edcc82988da644c1ef60fb31e70158e7c54e9fae80a\"",
+                "+  },",
+                "+  \"R0\": {",
+                "+    \"spec_realpath\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec\",",
+                "+    \"inside_repo\": true,",
+                "+    \"lineage_gate\": {",
+                "+      \"exit\": 0,",
+                "+      \"checked\": 0,",
+                "+      \"decision\": \"new_creation\"",
+                "+    }",
+                "+  },",
+                "+  \"R1\": {",
+                "+    \"plugin\": \"system-spec-harness\",",
+                "+    \"version\": \"0.1.25\",",
+                "+    \"range\": \">=0.1.22 <1.0.0\",",
+                "+    \"in_range\": true,",
+                "+    \"entry_points\": {",
+                "+      \"run-system-spec-elicit\": {",
+                "+        \"declared\": true,",
+                "+        \"skill_md\": true,",
+                "+        \"sha256\": \"2a64df26ca071eb095f783c1d954404a42e0b25ae5cae52fd3abf7310b1739d7\"",
+                "+      },",
+                "+      \"run-system-spec-doc-fetch\": {",
+                "+        \"declared\": true,",
+                "+        \"skill_md\": true,",
+                "+        \"sha256\": \"b4b4d907bfdc9921cf0845a9cc15495eca7e71d5b39e82eba793dad2e86e85a5\"",
+                "+      },",
+                "+      \"run-system-spec-compile\": {",
+                "+        \"declared\": true,",
+                "+        \"skill_md\": true,",
+                "+        \"sha256\": \"d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82\"",
+                "+      },",
+                "+      \"assign-system-spec-completeness-evaluator\": {",
+                "+        \"declared\": true,",
+                "+        \"skill_md\": true,",
+                "+        \"sha256\": \"6e7458506d681e0d6ff83042b95ac2c8e54b3bd5dd077fe6464d2b175e644431\"",
+                "+      }",
+                "+    },",
+                "+    \"manifest_sha256\": \"94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b\",",
+                "+    \"status\": \"PASS\"",
+                "+  },",
+                "+  \"inputs\": {",
+                "+    \"system-spec/00-requirements-definition.md\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\",",
+                "+    \"system-spec/auth.md\": \"21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897\",",
+                "+    \"system-spec/backend.md\": \"8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466\",",
+                "+    \"system-spec/database.md\": \"3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de\",",
+                "+    \"system-spec/fetched-references.json\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\",",
+                "+    \"system-spec/frontend.md\": \"10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5\",",
+                "+    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",",
+                "+    \"system-spec/infrastructure.md\": \"d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd\",",
+                "+    \"system-spec/maintenance-ops.md\": \"1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0\",",
+                "+    \"system-spec/retrieval-evidence/fastapi.json\": \"09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c\",",
+                "+    \"system-spec/retrieval-evidence/postgres.json\": \"81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54\",",
+                "+    \"system-spec/retrieval-evidence/react.json\": \"25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f\",",
+                "+    \"system-spec/retrieval-evidence/typescript.json\": \"2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de\",",
+                "+    \"system-spec/security.md\": \"c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1\",",
+                "+    \"system-spec/spec-state.json\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\",",
+                "+    \"system-spec/ui-ux.md\": \"420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410\"",
+                "+  }",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/preflight-report.json"
+      ]
+    }
+  }
+}

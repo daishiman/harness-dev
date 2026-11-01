@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "577d3435-3e9c-43a4-9146-e1cfc36d65bb",
+      "line": 170,
+      "prefix_bytes": 806876,
+      "prefix_sha256": "62e209f51f402239019be013e5a96b124226c84f65fe5ce703e6d5daa1443ae5",
+      "timestamp": "2026-11-01T08:06:33.293Z"
+    },
+    "result": {
+      "uuid": "e535c7d0-552f-438b-b113-7981f385fe3f",
+      "line": 171,
+      "prefix_bytes": 811280,
+      "prefix_sha256": "4635db519ad5b4a4079e62365ef535cf3c823a7c10790d66b83d09654d4baf4c",
+      "timestamp": "2026-11-01T08:06:36.870Z"
+    }
+  },
+  "tool_use_id": "toolu_01M1RD5wkKcHJUEbnMANUe3T",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py --help 2>&1 | head -40"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: apply-spec-transition.py [-h]\n                                {bootstrap,init,add-category,apply,chunk,aggregate,set-targets,set-foundation,set-decision,set-knowledge-candidate,set-qa-source,set-qa-design-applications,fix-qa-knowledge-ref}\n                                ...\n\nspec-state.json 単一 transition writer (run-system-spec-elicit)\n\npositional arguments:\n  {bootstrap,init,add-category,apply,chunk,aggregate,set-targets,set-foundation,set-decision,set-knowledge-candidate,set-qa-source,set-qa-design-applications,fix-qa-knowledge-ref}\n    bootstrap           R0 用の空 state envelope を生成\n    init                taxonomy からマトリクスを初期化\n    add-category        taxonomy に無いカテゴリ行を 1 件足す\n    apply               単一セル op を適用\n    chunk               ターン列を 1 invocation ぶん適用\n    aggregate           集約状態を再計算\n    set-targets         取得対象一覧 targets[] を設定\n    set-foundation      requirements_foundation (上位概念 U1-U9) を設定/確定\n    set-decision        意思決定支援 record を upsert\n    set-knowledge-candidate\n                        seed 外 knowledge candidate を lifecycle 付きで upsert\n    set-qa-source       既存 qa の質問・回答を保ったまま欠落した出所メタデータだけを追記\n    set-qa-design-applications\n                        既存 qa の質問・回答を保ったまま設計適用を追記\n    fix-qa-knowledge-ref\n                        解釈本文を変えず、実在しない knowledge_ref だけを実在する参照へ差し替え\n\noptions:\n  -h, --help            show this help message and exit",
+  "tool_use_result": {
+    "stdout": "usage: apply-spec-transition.py [-h]\n                                {bootstrap,init,add-category,apply,chunk,aggregate,set-targets,set-foundation,set-decision,set-knowledge-candidate,set-qa-source,set-qa-design-applications,fix-qa-knowledge-ref}\n                                ...\n\nspec-state.json 単一 transition writer (run-system-spec-elicit)\n\npositional arguments:\n  {bootstrap,init,add-category,apply,chunk,aggregate,set-targets,set-foundation,set-decision,set-knowledge-candidate,set-qa-source,set-qa-design-applications,fix-qa-knowledge-ref}\n    bootstrap           R0 用の空 state envelope を生成\n    init                taxonomy からマトリクスを初期化\n    add-category        taxonomy に無いカテゴリ行を 1 件足す\n    apply               単一セル op を適用\n    chunk               ターン列を 1 invocation ぶん適用\n    aggregate           集約状態を再計算\n    set-targets         取得対象一覧 targets[] を設定\n    set-foundation      requirements_foundation (上位概念 U1-U9) を設定/確定\n    set-decision        意思決定支援 record を upsert\n    set-knowledge-candidate\n                        seed 外 knowledge candidate を lifecycle 付きで upsert\n    set-qa-source       既存 qa の質問・回答を保ったまま欠落した出所メタデータだけを追記\n    set-qa-design-applications\n                        既存 qa の質問・回答を保ったまま設計適用を追記\n    fix-qa-knowledge-ref\n                        解釈本文を変えず、実在しない knowledge_ref だけを実在する参照へ差し替え\n\noptions:\n  -h, --help            show this help message and exit",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

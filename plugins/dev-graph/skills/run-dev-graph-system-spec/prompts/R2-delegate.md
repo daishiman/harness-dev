@@ -22,7 +22,7 @@
 ### 出力契約
 
 - elicit/条件付きdoc-fetch/compile/evaluator receiptsとconfirmed artifacts。
-- evaluator の直前に `python3 -B "<skill root>/scripts/prepare-evaluation.py" --context-receipt "<開始時の C24 receipt の絶対パス>" --output eval-log/system-spec-completeness-report.json` を実行する。helper は receipt の write mode・repo/worktree/common-dir identity・content root を現在の C24 と照合し、repo 外の spec と、`eval-log/` 外・symlink 経由の report を拒否する。検査は読取専用で、exit 0 のときだけ args を含む JSON を返す。
+- evaluator の直前に `python3 -B "<skill root>/scripts/build-evaluation-context.py" --context-receipt "<開始時の C24 receipt の絶対パス>" --output eval-log/system-spec-completeness-report.json` を実行する。helper は receipt の write mode・repo/worktree/common-dir identity・content root を現在の C24 と照合し、repo 外の spec と、`eval-log/` 外・symlink 経由の report を拒否する。検査は読取専用で、exit 0 のときだけ args を含む JSON を返す。
 - evaluator の Skill に渡す args は helper 出力の `skill_args` をそのまま使う。`--spec-dir` と `--output` は検証済み絶対パスなので、起動先の cwd が変わっても別の資料へ解決されない。helper が失敗したら `evaluation_context_invalid` で停止し、手書き args・receipt の書換え・cwd からの root 付替えで回避しない。再評価時も同じ開始時 receipt に対して helper を通す。
 - evaluator の report の `spec_dir` は `--spec-dir` の絶対パスをそのまま格納し、ラベルや説明を混ぜない。C02 はこの絶対パスと取込元の実ディレクトリを照合できる。`evidence_ref` は helper 出力の repo 相対パス、source lineage も repo 相対にする。評価用の絶対パスは当該実走のローカル証跡に限り、別 repo や別 worktree に移して再利用しない。
 

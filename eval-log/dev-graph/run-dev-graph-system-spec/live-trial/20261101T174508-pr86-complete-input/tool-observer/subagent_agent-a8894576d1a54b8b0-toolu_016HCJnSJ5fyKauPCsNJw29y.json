@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a8894576d1a54b8b0",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "0d35ce8d-b0a0-48de-a7d7-2813e93b8eec",
+      "line": 35,
+      "prefix_bytes": 319522,
+      "prefix_sha256": "2ec8c09d4a219d58a43d891a71497bfaf17fde539049be3e197b44d2effe2d9f",
+      "timestamp": "2026-11-01T09:01:25.839Z"
+    },
+    "result": {
+      "uuid": "1111ce3a-b221-4814-9d44-768b60014af6",
+      "line": 39,
+      "prefix_bytes": 328924,
+      "prefix_sha256": "08b47b11c8c92980fc9ac3b91a2b9a8033d23ece8af9bb84162297387275ad53",
+      "timestamp": "2026-11-01T09:01:31.335Z"
+    }
+  },
+  "tool_use_id": "toolu_016HCJnSJ5fyKauPCsNJw29y",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://www.typescriptlang.org/download/",
+    "prompt": "Current TypeScript version."
+  },
+  "is_error": false,
+  "tool_result_content": "TypeScript can be installed in three ways, depending on how you use it:\n\n**1. Per-project install (recommended for teams)**\n\nWith npm, yarn, or pnpm, install TypeScript as a dev dependency. The page notes this keeps each project on a consistent version, and lockfiles keep everyone on the team on the same version.\n\n```bash\nnpm install typescript --save-dev\n```\n\nThen run the compiler:\n\n```bash\nnpx tsc\n```\n\nYou need [Node.js](https://nodejs.org/en/) to run the npm package.\n\n**2. Visual Studio / MSBuild**\n\n- **NuGet (MSBuild projects, e.g., ASP.NET Core):** Use the Manage NuGet Packages window, or run this in the Package Manager Console:\n  ```powershell\n  Install-Package Microsoft.TypeScript.MSBuild\n  ```\n- **Visual Studio extension:** For project types that don't support NuGet, install the [TypeScript Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.typescript-593) via `Extensions > Manage Extensions`.\n\n**3. Global install (for one-off experiments)**\n\n```bash\nnpm install -g typescript\n```\n\nThis makes `tsc` available in any terminal. The page advises against relying on a global install for long-term projects, since it hurts reproducible builds across machines. The page says this installs the latest version, currently 7.0.\n\n**Using other transpilers**\n\nBabel, swc, and Sucrase can convert TypeScript to JavaScript faster, but they don't type-check. You'll still need the `typescript` package for type checking, and the page recommends enabling `isolatedModules` in your tsconfig:\n\n```json\n{\n  \"compilerOptions\": {\n    \"isolatedModules\": true\n  }\n}\n```",
+  "tool_use_result": {
+    "bytes": 171623,
+    "code": 200,
+    "codeText": "OK",
+    "result": "TypeScript can be installed in three ways, depending on how you use it:\n\n**1. Per-project install (recommended for teams)**\n\nWith npm, yarn, or pnpm, install TypeScript as a dev dependency. The page notes this keeps each project on a consistent version, and lockfiles keep everyone on the team on the same version.\n\n```bash\nnpm install typescript --save-dev\n```\n\nThen run the compiler:\n\n```bash\nnpx tsc\n```\n\nYou need [Node.js](https://nodejs.org/en/) to run the npm package.\n\n**2. Visual Studio / MSBuild**\n\n- **NuGet (MSBuild projects, e.g., ASP.NET Core):** Use the Manage NuGet Packages window, or run this in the Package Manager Console:\n  ```powershell\n  Install-Package Microsoft.TypeScript.MSBuild\n  ```\n- **Visual Studio extension:** For project types that don't support NuGet, install the [TypeScript Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.typescript-593) via `Extensions > Manage Extensions`.\n\n**3. Global install (for one-off experiments)**\n\n```bash\nnpm install -g typescript\n```\n\nThis makes `tsc` available in any terminal. The page advises against relying on a global install for long-term projects, since it hurts reproducible builds across machines. The page says this installs the latest version, currently 7.0.\n\n**Using other transpilers**\n\nBabel, swc, and Sucrase can convert TypeScript to JavaScript faster, but they don't type-check. You'll still need the `typescript` package for type checking, and the page recommends enabling `isolatedModules` in your tsconfig:\n\n```json\n{\n  \"compilerOptions\": {\n    \"isolatedModules\": true\n  }\n}\n```",
+    "durationMs": 5268,
+    "url": "https://www.typescriptlang.org/download/"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ddb2e394-59b4-4bb4-aa2e-0fb575ded394",
+      "line": 176,
+      "prefix_bytes": 1030445,
+      "prefix_sha256": "46ff64030d23627a0aefed7ea752f0391a55a7128e63cf87bc910003c06bdd2f",
+      "timestamp": "2026-11-01T03:57:30.687Z"
+    },
+    "result": {
+      "uuid": "88974805-4686-49c6-b83c-fbe935afb0c1",
+      "line": 177,
+      "prefix_bytes": 1032805,
+      "prefix_sha256": "bbdded8cb72a496fc66ec4adbfb0a719fb6b0a975fa91727ada541311a6f569e",
+      "timestamp": "2026-11-01T03:57:32.762Z"
+    }
+  },
+  "tool_use_id": "toolu_01VrPhfdex2R1Ao2f2U5pBC3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport json,pathlib\np=pathlib.Path('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/eval-log/system-spec-harness/audit-fork-ledger.jsonl')\nfor l in p.read_text(encoding='utf-8').splitlines():\n    r=json.loads(l)\n    print({k:r.get(k) for k in ('schema_version','event','subagent_type','tool_use_id','agent_id','audit_verdict','verdict_state','response_sha256','dispatch_token','session_id')})\nPY",
+    "description": "Read audit ledger rows"
+  },
+  "is_error": false,
+  "tool_result_content": "{'schema_version': '1.2', 'event': None, 'subagent_type': 'system-spec-matrix-auditor', 'tool_use_id': 'toolu_01AMiSSfPZbsTesTCmQksfUR', 'agent_id': None, 'audit_verdict': None, 'verdict_state': 'pending', 'response_sha256': 'b7992d88a4c3505bc7f2775e5274e12f4b389dabfe00cda88d539a1ae869b6b2', 'dispatch_token': 'c05-sysspec107-c07-m01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}\n{'schema_version': '1.3', 'event': None, 'subagent_type': 'system-spec-matrix-auditor', 'tool_use_id': None, 'agent_id': 'af8281545bc3497ea', 'audit_verdict': 'PASS', 'verdict_state': 'resolved', 'response_sha256': 'e1f243ce34edf5f31c7efc7d607e37f9cec59d4aedd237245d924ec7af901776', 'dispatch_token': 'c05-sysspec107-c07-m01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}\n{'schema_version': '1.2', 'event': None, 'subagent_type': 'system-spec-hearing-auditor', 'tool_use_id': 'toolu_019aRUVMvfPFR6x4SiZPE6w4', 'agent_id': None, 'audit_verdict': None, 'verdict_state': 'pending', 'response_sha256': 'ed83da2a517478e2bbdf3ccd575f5e82b6f344e6baa28ffa0a86fe4636eb846c', 'dispatch_token': 'c05-sysspec107-c06-h01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}\n{'schema_version': '1.3', 'event': None, 'subagent_type': 'system-spec-hearing-auditor', 'tool_use_id': None, 'agent_id': 'ae82ebdc0929bf678', 'audit_verdict': 'PASS', 'verdict_state': 'resolved', 'response_sha256': '6eab00797dbeeb4946ce6ec71e5f84537059d853f7e97c98cd8f66aec88db27d', 'dispatch_token': 'c05-sysspec107-c06-h01', 'session_id': 'c0ac8162-0bf1-4615-9b58-3c401e528e43'}",
+  "tool_use_result": null
+}

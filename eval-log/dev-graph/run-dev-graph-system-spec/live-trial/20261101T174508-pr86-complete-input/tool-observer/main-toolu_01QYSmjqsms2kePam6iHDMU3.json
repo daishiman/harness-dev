@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "039db6a6-e067-48f2-9364-00b95a1b9c0e",
+      "line": 520,
+      "prefix_bytes": 2423157,
+      "prefix_sha256": "6765981acce5630cbb037414ce69523bbfcb518aa27e5ba306fb81049f629144",
+      "timestamp": "2026-11-01T09:03:31.169Z"
+    },
+    "result": {
+      "uuid": "e27a7afd-956b-4391-8e79-e500571a3512",
+      "line": 521,
+      "prefix_bytes": 2424944,
+      "prefix_sha256": "109aa21ae8a035f9a032f2e91dd7a8781ed2450fc603f56a01fe0e1907d52167",
+      "timestamp": "2026-11-01T09:03:37.834Z"
+    }
+  },
+  "tool_use_id": "toolu_01QYSmjqsms2kePam6iHDMU3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && find eval-log/system-spec-harness -type f | xargs ls -la; python3 -c \"\nimport json;d=json.load(open('eval-log/system-spec-completeness-report.json'))\nprint(list(d.keys()))\nfor k in ('verdict','status','overall','spec_dir','evaluated_digest','score','pass'):\n  print(k, json.dumps(d.get(k),ensure_ascii=False)[:400])\n\""
+  },
+  "is_error": false,
+  "tool_result_content": "-rw-r--r--@ 1 dm  wheel  3363 11月  1 18:01 eval-log/system-spec-harness/audit-fork-ledger.jsonl\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\nverdict \"PASS\"\nstatus null\noverall null\nspec_dir \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec\"\nevaluated_digest null\nscore null\npass null",
+  "tool_use_result": {
+    "stdout": "-rw-r--r--@ 1 dm  wheel  3363 11月  1 18:01 eval-log/system-spec-harness/audit-fork-ledger.jsonl\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\nverdict \"PASS\"\nstatus null\noverall null\nspec_dir \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec\"\nevaluated_digest null\nscore null\npass null",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

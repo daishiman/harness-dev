@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "07795efa-54f1-4441-a54b-61a476ee8df7",
+      "line": 334,
+      "prefix_bytes": 3274154,
+      "prefix_sha256": "aba46b700677e0faf68f45b2460ec65153313c1d2e2b2c5d87a9bfb35d04152d",
+      "timestamp": "2026-11-01T14:23:27.126Z"
+    },
+    "result": {
+      "uuid": "a25de18b-4a41-42f6-895c-bf5767b0d020",
+      "line": 337,
+      "prefix_bytes": 3280990,
+      "prefix_sha256": "d73ec28a64c795bb34576884147ebdc749ae7b9d0a51a53191d420aa38d6700f",
+      "timestamp": "2026-11-01T14:23:41.009Z"
+    }
+  },
+  "tool_use_id": "toolu_01TErYhYRuh8myZiPNnQF892",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --knowledge-graph; echo \"EXIT=$?\"",
+    "description": "Run knowledge graph gate"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"id\": \"G-knowledge-graph\",\n  \"name\": \"validate-knowledge-graph\",\n  \"conditions\": [\n    \"design_knowledge_reflection\",\n    \"matrix_coverage\"\n  ],\n  \"exit_code\": 0,\n  \"subgates\": [\n    {\n      \"profile\": \"knowledge\",\n      \"command\": [\n        \"/Users/dm/miniconda3/bin/python3\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py\",\n        \"--profile\",\n        \"knowledge\",\n        \"--input\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json\"\n      ],\n      \"exit_code\": 0,\n      \"stderr\": \"\"\n    },\n    {\n      \"profile\": \"doctrine\",\n      \"command\": [\n        \"/Users/dm/miniconda3/bin/python3\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py\",\n        \"--profile\",\n        \"doctrine\",\n        \"--input\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json\"\n      ],\n      \"exit_code\": 0,\n      \"stderr\": \"\"\n    },\n    {\n      \"profile\": \"required-info\",\n      \"command\": [\n        \"/Users/dm/miniconda3/bin/python3\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py\",\n        \"--profile\",\n        \"required-info\",\n        \"--input\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json\"\n      ],\n      \"exit_code\": 0,\n      \"stderr\": \"\"\n    },\n    {\n      \"profile\": \"cross\",\n      \"command\": [\n        \"/Users/dm/miniconda3/bin/python3\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py\",\n        \"--profile\",\n        \"cross\",\n        \"--taxonomy\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json\",\n        \"--doctrine\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json\",\n        \"--required-info\",\n        \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json\"\n      ],\n      \"exit_code\": 0,\n      \"stderr\": \"\"\n    }\n  ]\n}\nEXIT=0",
+  "tool_use_result": null
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a6faabbd-738a-4bda-a0fb-779df5c153dd",
+      "line": 50,
+      "prefix_bytes": 341282,
+      "prefix_sha256": "8bd3ab40826d2489f30b923b3405367d559cd2afc486c8e6feb38e27c2cdd78b",
+      "timestamp": "2026-11-01T09:33:48.088Z"
+    },
+    "result": {
+      "uuid": "303b2d01-fadd-41c7-8a1d-08e39e818019",
+      "line": 51,
+      "prefix_bytes": 343502,
+      "prefix_sha256": "7240e2ee36f800c17c18e4648cf05dfb1ede0591cc24b488feeb8559ff8fa76c",
+      "timestamp": "2026-11-01T09:33:53.362Z"
+    }
+  },
+  "tool_use_id": "toolu_01GTS3sva1mmvwphycva5YtL",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n 60,160p plugins/dev-graph/scripts/_common.py | grep -n \"^def \" ; grep -nE \"from _common|import _common|_common\\.|atomic|ensure_|mkdir\" plugins/dev-graph/scripts/resolve-repo-context.py | head"
+  },
+  "is_error": false,
+  "tool_result_content": "4:def json_bytes(value: Any) -> bytes:\n9:def _ensure_parent_directory(parent: Path) -> None:\n27:def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:\n54:def _current_umask() -> int:\n60:def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:\n67:def is_package_member(node: dict[str, Any]) -> bool:\n71:def contained(path: Path, root: Path, *, must_exist: bool = True) -> Path:\n81:def repository_eval_root(root: Path) -> Path:\n94:def stable_id(prefix: str, *parts: str, size: int = 16) -> str:\n99:def utc_now() -> str:\n27:from _common import ContractError, contained, dump, git, load_json, stable_id",
+  "tool_use_result": {
+    "stdout": "4:def json_bytes(value: Any) -> bytes:\n9:def _ensure_parent_directory(parent: Path) -> None:\n27:def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:\n54:def _current_umask() -> int:\n60:def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:\n67:def is_package_member(node: dict[str, Any]) -> bool:\n71:def contained(path: Path, root: Path, *, must_exist: bool = True) -> Path:\n81:def repository_eval_root(root: Path) -> Path:\n94:def stable_id(prefix: str, *parts: str, size: int = 16) -> str:\n99:def utc_now() -> str:\n27:from _common import ContractError, contained, dump, git, load_json, stable_id",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1368255d-620e-4c6f-813a-c8d91c93584b",
+      "line": 216,
+      "prefix_bytes": 1166338,
+      "prefix_sha256": "2a03efb1adcd1396d9e5aadbef1ef1762bafd3bc09190914e4a2c7c3bf1a0264",
+      "timestamp": "2026-11-01T03:58:27.160Z"
+    },
+    "result": {
+      "uuid": "07ad43b4-81d1-40d1-b697-f2af45c2c48f",
+      "line": 217,
+      "prefix_bytes": 1167560,
+      "prefix_sha256": "4c2ad30433cb202cac9ae881949230d1c40327c411a221f627faf8cc787be9cf",
+      "timestamp": "2026-11-01T03:58:29.415Z"
+    }
+  },
+  "tool_use_id": "toolu_01RhPczwJq5Erf9MskwMpy1F",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport subprocess\nV='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/plugins/harness-creator/vendor/prompt-creator/verify-completeness.py'\nr=subprocess.run(['python3',V,'--help'],capture_output=True,text=True)\nprint(r.returncode);print(r.stdout[:3000]);print(r.stderr[:2000])\nPY",
+    "description": "Show prompt validator usage"
+  },
+  "is_error": false,
+  "tool_result_content": "0\nusage: verify-completeness.py [-h] [--input INPUT] [--layers LAYERS]\n\n7層プロンプトの網羅性 + Layer 5 ゴールシーク契約 (l5-contract v2.0.0) を検証する\n\noptions:\n  -h, --help       show this help message and exit\n  --input INPUT\n  --layers LAYERS  必須 Layer のサブセット (brief.layers_required)。例: L1,L2,L5。未指定時は 7\n                   層全て必須。",
+  "tool_use_result": null
+}

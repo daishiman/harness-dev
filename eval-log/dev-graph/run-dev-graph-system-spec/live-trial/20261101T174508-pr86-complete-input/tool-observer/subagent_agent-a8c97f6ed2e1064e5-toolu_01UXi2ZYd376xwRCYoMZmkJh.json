@@ -1,0 +1,100 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a8c97f6ed2e1064e5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "338737d1-7da6-4cb5-b3ab-c625b3bb79de",
+      "line": 67,
+      "prefix_bytes": 405231,
+      "prefix_sha256": "ac47d163225912b3692306946f85fcf192b84b46aeffa422c87d80855ab0866a",
+      "timestamp": "2026-11-01T08:50:35.475Z"
+    },
+    "result": {
+      "uuid": "fc0ef25a-bd1c-481b-922c-b9c01264db09",
+      "line": 68,
+      "prefix_bytes": 411939,
+      "prefix_sha256": "035e44edb6e9b41b995519c5fd69049b4398dbab7941e2ca3ac6023ac5de7357",
+      "timestamp": "2026-11-01T08:50:42.807Z"
+    }
+  },
+  "tool_use_id": "toolu_01UXi2ZYd376xwRCYoMZmkJh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json && python3 -I -c \"\nv=lambda s:tuple(map(int,s.split('.')));print(v('0.1.22')<=v('0.1.24')<v('1.0.0'))\" && mkdir -p eval-log/run-dev-graph-system-spec/R1-preflight && python3 -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/R1-preflight/verification.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\n  \"responsibility\": \"run-dev-graph-system-spec/R1-preflight\",\n  \"verifier\": \"independent read-only Agent\",\n  \"loop\": 1,\n  \"verdict\": \"PASS\",\n  \"inputs\": {\n    \"c24_receipt\": \"eval-log/run-dev-graph-system-spec/c24-receipt.json\",\n    \"c24_receipt_sha256\": \"c291023c4276927b94bcff2bc21e9f9061263ec3fb85223aa3681384d4b15044\",\n    \"c24_receipt_sha256_matches_expected\": true,\n    \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n    \"parent_artifact\": \"eval-log/run-dev-graph-system-spec/preflight-report.json#R1_preflight\",\n    \"parent_artifact_sha256\": \"eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30\",\n    \"prompts_read\": [\"plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R1-preflight.md\", \"plugins/dev-graph/references/prompt-common-layers.md\", \"plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md (step 2)\"]\n  },\n  \"checklist\": [\n    {\"id\": \"R1-5.3-specific\", \"text\": \"version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在\", \"result\": \"YES\",\n     \"evidence\": \"plugins/system-spec-harness/.claude-plugin/plugin.json (sha256 322ddd15...6994): name=system-spec-harness, version=0.1.24. plugins/dev-graph/plugin-composition.yaml (sha256 d44fc0e4...8712) external_dependencies.system-spec-harness.version='>=0.1.22 <1.0.0' -> 0.1.22<=0.1.24<1.0.0. package-contract.json (sha256 d4c3ca02...b75e486) entry_points.skills contains all 4 required; skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md exist as regular files with matching frontmatter name; no symlinks under plugins/system-spec-harness.\"},\n    {\"id\": \"manifest-no-harness-keys\", \"text\": \"公式 manifest に harness 専用キー混在なし\", \"result\": \"YES\",\n     \"evidence\": \"system-spec-harness plugin.json keys = {name, version, dependencies, description, author}; dev-graph plugin.json keys同様。harness 専用キー無し。\"},\n    {\"id\": \"no-fallback-or-duplicate\", \"text\": \"dev-graph 内に fallback/elicit・compile 相当ロジックの複製なし\", \"result\": \"YES\",\n     \"evidence\": \"grep plugins/dev-graph/**/*.py for spec-state.json|coverage_matrix|fetched-references|elicit|hearing: 唯一の hit は scripts/register-package.py:196 (system-dev-planner agent 名の列挙) で複製ではない。C19 skill の scripts は build-evaluation-context.py (receipt 再検証・args 生成のみ, 98 lines) だけ。\"},\n    {\"id\": \"common-5.3-inputs-validated\", \"text\": \"宣言した入力が全て検証済み\", \"result\": \"YES\",\n     \"evidence\": \"manifest/composition/package-contract の sha256 が preflight-report 記載値と一致、receipt sha256 一致。\"},\n    {\"id\": \"common-5.3-output-shape-authority\", \"text\": \"出力が宣言 shape と authority を満たす\", \"result\": \"YES\",\n     \"evidence\": \"R1_preflight 節に status, name, version, composition_range, 各 path+sha256, required_entry_points(4件 true), harness_keys_in_official_manifest=false。path は repo 相対で環境固有絶対 path 無し。range は composition 正本を使用 (frontmatter >=0.1.0 不使用)。\"},\n    {\"id\": \"common-5.3-boundary-violations-0\", \"text\": \"責務境界違反 read/write/delegation 0件\", \"result\": \"YES\",\n     \"evidence\": \"trusted observer index (sha256 6d5707eb...ed6b) main events 13/14/15 は plugins/ の read-only 読取 (cat/grep/sha256)。writes は events 16/17 の eval-log/ 配下のみ。plugins/ への write・fallback 実装・外部 plugin 変更 0件。\"}\n  ],\n  \"observer_events_checked\": [\n    {\"index\": 13, \"tool_use_id\": \"toolu_01K95mJPT2y43wd6MR2fcLf6\", \"observed\": \"cat system-spec-harness plugin.json -> name/version 0.1.24\"},\n    {\"index\": 14, \"tool_use_id\": \"toolu_01UF3AdoGDLq9cuvEzBoaTdr\", \"observed\": \"plugin-composition.yaml range '>=0.1.22 <1.0.0'; package-contract entry_points.skills\"},\n    {\"index\": 15, \"tool_use_id\": \"toolu_012gsDyXxo4s6E2pYyWd56gR\", \"observed\": \"sha256 of manifest/composition/package-contract match report\"}\n  ],\n  \"blockers\": [],\n  \"notes\": [\"plugins/ is git-ignored in this fixture, so git diff cannot prove non-modification; non-modification is evidenced by observer events only (no write to plugins/).\"],\n  \"original_goal\": \"仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている\",\n  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n  \"delta_from_original\": \"none\",\n  \"merged_directive_for_next\": \"R1 PASS: R2-delegate へ進める (elicit→必要時 doc-fetch→compile→evaluator を Skill 経由で委譲)。\",\n  \"drift_signal\": \"none\"\n}\nJSON\npython3 -I -c \"import json;json.load(open('eval-log/run-dev-graph-system-spec/R1-preflight/verification.json'));print('ok')\""
+  },
+  "is_error": false,
+  "tool_result_content": "eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30  eval-log/run-dev-graph-system-spec/preflight-report.json\nTrue\nok",
+  "tool_use_result": {
+    "stdout": "eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30  eval-log/run-dev-graph-system-spec/preflight-report.json\nTrue\nok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/R1-preflight/verification.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 41,
+              "lines": [
+                "+{",
+                "+  \"responsibility\": \"run-dev-graph-system-spec/R1-preflight\",",
+                "+  \"verifier\": \"independent read-only Agent\",",
+                "+  \"loop\": 1,",
+                "+  \"verdict\": \"PASS\",",
+                "+  \"inputs\": {",
+                "+    \"c24_receipt\": \"eval-log/run-dev-graph-system-spec/c24-receipt.json\",",
+                "+    \"c24_receipt_sha256\": \"c291023c4276927b94bcff2bc21e9f9061263ec3fb85223aa3681384d4b15044\",",
+                "+    \"c24_receipt_sha256_matches_expected\": true,",
+                "+    \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",",
+                "+    \"parent_artifact\": \"eval-log/run-dev-graph-system-spec/preflight-report.json#R1_preflight\",",
+                "+    \"parent_artifact_sha256\": \"eceac595d0f9324a92d796c3af3949cf0b6f2897b22cd71570677e5e0ffc0d30\",",
+                "+    \"prompts_read\": [\"plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R1-preflight.md\", \"plugins/dev-graph/references/prompt-common-layers.md\", \"plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md (step 2)\"]",
+                "+  },",
+                "+  \"checklist\": [",
+                "+    {\"id\": \"R1-5.3-specific\", \"text\": \"version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在\", \"result\": \"YES\",",
+                "+     \"evidence\": \"plugins/system-spec-harness/.claude-plugin/plugin.json (sha256 322ddd15...6994): name=system-spec-harness, version=0.1.24. plugins/dev-graph/plugin-composition.yaml (sha256 d44fc0e4...8712) external_dependencies.system-spec-harness.version='>=0.1.22 <1.0.0' -> 0.1.22<=0.1.24<1.0.0. package-contract.json (sha256 d4c3ca02...b75e486) entry_points.skills contains all 4 required; skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md exist as regular files with matching frontmatter name; no symlinks under plugins/system-spec-harness.\"},",
+                "+    {\"id\": \"manifest-no-harness-keys\", \"text\": \"公式 manifest に harness 専用キー混在なし\", \"result\": \"YES\",",
+                "+     \"evidence\": \"system-spec-harness plugin.json keys = {name, version, dependencies, description, author}; dev-graph plugin.json keys同様。harness 専用キー無し。\"},",
+                "+    {\"id\": \"no-fallback-or-duplicate\", \"text\": \"dev-graph 内に fallback/elicit・compile 相当ロジックの複製なし\", \"result\": \"YES\",",
+                "+     \"evidence\": \"grep plugins/dev-graph/**/*.py for spec-state.json|coverage_matrix|fetched-references|elicit|hearing: 唯一の hit は scripts/register-package.py:196 (system-dev-planner agent 名の列挙) で複製ではない。C19 skill の scripts は build-evaluation-context.py (receipt 再検証・args 生成のみ, 98 lines) だけ。\"},",
+                "+    {\"id\": \"common-5.3-inputs-validated\", \"text\": \"宣言した入力が全て検証済み\", \"result\": \"YES\",",
+                "+     \"evidence\": \"manifest/composition/package-contract の sha256 が preflight-report 記載値と一致、receipt sha256 一致。\"},",
+                "+    {\"id\": \"common-5.3-output-shape-authority\", \"text\": \"出力が宣言 shape と authority を満たす\", \"result\": \"YES\",",
+                "+     \"evidence\": \"R1_preflight 節に status, name, version, composition_range, 各 path+sha256, required_entry_points(4件 true), harness_keys_in_official_manifest=false。path は repo 相対で環境固有絶対 path 無し。range は composition 正本を使用 (frontmatter >=0.1.0 不使用)。\"},",
+                "+    {\"id\": \"common-5.3-boundary-violations-0\", \"text\": \"責務境界違反 read/write/delegation 0件\", \"result\": \"YES\",",
+                "+     \"evidence\": \"trusted observer index (sha256 6d5707eb...ed6b) main events 13/14/15 は plugins/ の read-only 読取 (cat/grep/sha256)。writes は events 16/17 の eval-log/ 配下のみ。plugins/ への write・fallback 実装・外部 plugin 変更 0件。\"}",
+                "+  ],",
+                "+  \"observer_events_checked\": [",
+                "+    {\"index\": 13, \"tool_use_id\": \"toolu_01K95mJPT2y43wd6MR2fcLf6\", \"observed\": \"cat system-spec-harness plugin.json -> name/version 0.1.24\"},",
+                "+    {\"index\": 14, \"tool_use_id\": \"toolu_01UF3AdoGDLq9cuvEzBoaTdr\", \"observed\": \"plugin-composition.yaml range '>=0.1.22 <1.0.0'; package-contract entry_points.skills\"},",
+                "+    {\"index\": 15, \"tool_use_id\": \"toolu_012gsDyXxo4s6E2pYyWd56gR\", \"observed\": \"sha256 of manifest/composition/package-contract match report\"}",
+                "+  ],",
+                "+  \"blockers\": [],",
+                "+  \"notes\": [\"plugins/ is git-ignored in this fixture, so git diff cannot prove non-modification; non-modification is evidenced by observer events only (no write to plugins/).\"],",
+                "+  \"original_goal\": \"仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている\",",
+                "+  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",",
+                "+  \"delta_from_original\": \"none\",",
+                "+  \"merged_directive_for_next\": \"R1 PASS: R2-delegate へ進める (elicit→必要時 doc-fetch→compile→evaluator を Skill 経由で委譲)。\",",
+                "+  \"drift_signal\": \"none\"",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/eval-log/run-dev-graph-system-spec/R1-preflight/verification.json"
+      ]
+    }
+  }
+}

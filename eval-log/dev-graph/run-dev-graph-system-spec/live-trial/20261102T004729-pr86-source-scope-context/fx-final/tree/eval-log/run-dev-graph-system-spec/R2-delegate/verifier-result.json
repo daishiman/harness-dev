@@ -1,0 +1,55 @@
+{
+  "responsibility": "R2-delegate",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "root_and_helper_args",
+      "result": "PASS",
+      "evidence": "c24-receipt sha 6d80dec9… repo_root==content_roots.repository==fx; build-evaluation-context.py rerun exit0, output identical to saved evaluation-context.json (a489f2ef…); report.spec_dir == helper spec_dir (abs fx/system-spec); observed evaluator Skill args == helper skill_args verbatim (abs --spec-dir/--output)"
+    },
+    {
+      "id": "artifact_snapshot_sha",
+      "result": "PASS",
+      "evidence": "report sha 32b043246d2d9eb9…; 12/12 artifact_snapshot sha256 match current files (not in snapshot: fixture-requirements-v7.txt, retrieval-evidence/* — inputs/evidence, not chapters)"
+    },
+    {
+      "id": "aggregate_rerun",
+      "result": "PASS",
+      "evidence": "aggregate-completeness.py --report <abs> --spec-dir <abs> --session 5153f99b-… exit0 'verdict=PASS'; aspects 6/6 PASS; gaps []"
+    },
+    {
+      "id": "observer_reads_and_skills",
+      "result": "PASS",
+      "evidence": "main stream: full Read (no offset/limit, numLines==totalLines) of 4 SKILL.md before first delegated Skill; elicit R0-R5, doc-fetch R1-R3, compile R1-R3 full Read immediately after each Skill call and before its outputs; evaluator fork (agent-afb32354…) full Read of SKILL.md, R1-score (1-144), R2-delegate (1-133); Skill order elicit→doc-fetch→compile→helper Bash→evaluator"
+    },
+    {
+      "id": "fixed_root_prefix",
+      "result": "PASS",
+      "evidence": "all observed main Bash for elicit/doc-fetch/compile/helper/aggregate start with fixed CLAUDE_PROJECT_DIR export+cd+pwd -P check; pytest (63 passed) ran read-only in plugin tests dir after prefix"
+    },
+    {
+      "id": "no_logic_duplication",
+      "result": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-system-spec/scripts contains only build-evaluation-context.py; no dev-graph .py references compile-spec-doc/elicit writers/validators (only an unrelated agent name string in register-package.py); shared basenames are byte-identical common utilities"
+    },
+    {
+      "id": "state_refs_unmodified",
+      "result": "PASS",
+      "evidence": "spec-state.json 09380939cfdf2a35…, fetched-references.json 471b0103e0faf92c… (match expected)"
+    },
+    {
+      "id": "c05_audits_ledger",
+      "result": "PASS",
+      "evidence": "audit-fork-ledger.jsonl: C07/C06/C08 dispatch+completion records, verdict_state resolved, audit_verdict PASS, tokens c05-c07-matrix-v7r1-a91f / c05-c06-hearing-v7r1-b27e / c05-c08-freshness-v7r1-c53d; tool_use_ids match report audit_delegations"
+    },
+    {
+      "id": "goal_and_directive",
+      "result": "PASS",
+      "evidence": "sha256(original_goal)=30a1de05…; intermediate last line has 7 keys incl merged_directive_for_next (R2 directive consistent with observed execution)"
+    }
+  ],
+  "blockers": [],
+  "notes": [
+    "helper Bash (observer) printed 'exit=' empty because ${PIPESTATUS[0]} is unset in zsh; helper JSON output was complete and verifier rerun exit0 — non-blocking"
+  ]
+}

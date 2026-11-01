@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4f1e0856-4521-4b23-8cfc-13e443036f05",
+      "line": 740,
+      "prefix_bytes": 5271332,
+      "prefix_sha256": "bcf7d4d7124c5fb4a194648559b92a94dc004b368e961e4a0820a8419e3e16cb",
+      "timestamp": "2026-11-01T06:40:45.657Z"
+    },
+    "result": {
+      "uuid": "252d52a5-cf0b-4617-9e64-8c87e49d9bfe",
+      "line": 743,
+      "prefix_bytes": 5277989,
+      "prefix_sha256": "a1b0a920b427d871116b8a9645690424008d8bb0f03da847761edb0582a39fed",
+      "timestamp": "2026-11-01T06:40:49.631Z"
+    }
+  },
+  "tool_use_id": "toolu_01Xp3Z85EhpLvXmong69Ng2u",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 eval-log/run-dev-graph-system-spec/R3-import/c02-add-input.json && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/run-dev-graph-system-spec/R3-import/c02-add-input.json > \"$TMPDIR/c02-apply.json\"; echo exit=$?; python3 -c 'import json,sys;r=json.load(open(sys.argv[1]));print({k:r.get(k) for k in [\"status\",\"applied_count\",\"write_count\",\"graph_revision_before\",\"graph_revision_after\",\"graph_digest_after\",\"receipt_path\",\"node_ids\",\"input_sha256\"]})' \"$TMPDIR/c02-apply.json\"; shasum -a 256 .dev-graph/state/receipts/node-r000001-add.json specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md .dev-graph/state/graph.json; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo lineage_exit=$?",
+    "description": "Apply C02 add and run lineage gate"
+  },
+  "is_error": false,
+  "tool_result_content": "18cf5dfdd162d586fc5dd547b9c1e64ba054cae92d36a1fed923ea6180b14cd6  eval-log/run-dev-graph-system-spec/R3-import/c02-add-input.json\nexit=0\n{'status': 'applied', 'applied_count': 2, 'write_count': 4, 'graph_revision_before': 0, 'graph_revision_after': 1, 'graph_digest_after': 'sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'], 'input_sha256': '18cf5dfdd162d586fc5dd547b9c1e64ba054cae92d36a1fed923ea6180b14cd6'}\n273b4cc4a1fff1eac77f886c4be10d2e81c385d6717bf224a4b85835c8bca367  .dev-graph/state/receipts/node-r000001-add.json\n1a27b761f66b2f8c21f55ba59ec624371f90ed27b9912df58fc7bfbfa3490b6c  specs/billing-audit-system-spec.md\n50806c9ddb42c1c6c1417dd3541a86a05f2333bf094ea7faa99f376deb99ae65  architecture/billing-audit-system-architecture.md\ne0135eadf928be0eada38678b48b0c35bcde0e952d202c6465fa2a09c5ccb978  .dev-graph/state/graph.json\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0",
+  "tool_use_result": {
+    "stdout": "18cf5dfdd162d586fc5dd547b9c1e64ba054cae92d36a1fed923ea6180b14cd6  eval-log/run-dev-graph-system-spec/R3-import/c02-add-input.json\nexit=0\n{'status': 'applied', 'applied_count': 2, 'write_count': 4, 'graph_revision_before': 0, 'graph_revision_after': 1, 'graph_digest_after': 'sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'], 'input_sha256': '18cf5dfdd162d586fc5dd547b9c1e64ba054cae92d36a1fed923ea6180b14cd6'}\n273b4cc4a1fff1eac77f886c4be10d2e81c385d6717bf224a4b85835c8bca367  .dev-graph/state/receipts/node-r000001-add.json\n1a27b761f66b2f8c21f55ba59ec624371f90ed27b9912df58fc7bfbfa3490b6c  specs/billing-audit-system-spec.md\n50806c9ddb42c1c6c1417dd3541a86a05f2333bf094ea7faa99f376deb99ae65  architecture/billing-audit-system-architecture.md\ne0135eadf928be0eada38678b48b0c35bcde0e952d202c6465fa2a09c5ccb978  .dev-graph/state/graph.json\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

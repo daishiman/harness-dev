@@ -1,0 +1,18 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 1,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "c24-receipt.json sha256 c291023c…; R0-context/verification.json PASS (独立Agent); lineage gate exit0 checked=0"},
+    {"item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "0.1.24 ∈ >=0.1.22 <1.0.0, 4 entry points; R1-preflight/verification.json PASS (独立Agent)"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "not_achieved", "evidence": "R2 未着手"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "not_achieved", "evidence": "coverage/citation exit0 (loop1), evaluator 未実施"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "R3 未着手"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "R1 verifier の grep で複製0を観測。最終確認は R3 後"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "loops": [{"loop": 1, "status": "PASS", "coverage_exit": 0, "citation_exit": 0, "schema_exit": 0}]},
+    {"id": "OUT1", "status": "external_pending"}
+  ],
+  "artifact_delivery": {"choice": "standard", "record": "eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json", "state": "semantic_evaluator_started"}
+}

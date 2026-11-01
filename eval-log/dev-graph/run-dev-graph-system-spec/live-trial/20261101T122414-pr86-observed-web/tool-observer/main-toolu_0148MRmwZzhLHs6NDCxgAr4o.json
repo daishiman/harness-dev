@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9df676c9-da17-4d29-af78-498a615f97de",
+      "line": 277,
+      "prefix_bytes": 1303085,
+      "prefix_sha256": "d5f7c18753176ad1be4f6f60dc8a3b6e504acabede566ffcd4000a806705f4b5",
+      "timestamp": "2026-11-01T03:27:48.154Z"
+    },
+    "result": {
+      "uuid": "60f6c4c3-6aad-4aa1-bae8-70f618dab18c",
+      "line": 280,
+      "prefix_bytes": 1307487,
+      "prefix_sha256": "5df0bc5116bc629bcd8f40192ea25ad380dd95fe20148846843c1c68b0086b10",
+      "timestamp": "2026-11-01T03:27:52.582Z"
+    }
+  },
+  "tool_use_id": "toolu_0148MRmwZzhLHs6NDCxgAr4o",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" &&\npython3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --require-complete && \npython3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --references $CLAUDE_PROJECT_DIR/system-spec/fetched-references.json --repo-root $CLAUDE_PROJECT_DIR &&\npython3 -B \"$PLUGIN_ROOT/scripts/validate-design-knowledge-refs.py\" --matrix $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --repo-root $CLAUDE_PROJECT_DIR && echo IN1_ALL_EXIT0 &&\npython3 -B \"$PLUGIN_ROOT/skills/run-system-spec-compile/scripts/compile-spec-doc.py\" compile --spec $CLAUDE_PROJECT_DIR/system-spec/spec-state.json --references $CLAUDE_PROJECT_DIR/system-spec/fetched-references.json --out-dir $CLAUDE_PROJECT_DIR/system-spec --repo-root $CLAUDE_PROJECT_DIR; echo compile_exit=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nOK: design knowledge_ref は全て実在する (検査 10 件)\nIN1_ALL_EXIT0\nOK: 10 ファイルを /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/ へ生成 (00-requirements-definition.md, database.md, auth.md, ui-ux.md, security.md, infrastructure.md, backend.md, frontend.md, maintenance-ops.md, index.md)\ncompile_exit=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nOK: design knowledge_ref は全て実在する (検査 10 件)\nIN1_ALL_EXIT0\nOK: 10 ファイルを /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/ へ生成 (00-requirements-definition.md, database.md, auth.md, ui-ux.md, security.md, infrastructure.md, backend.md, frontend.md, maintenance-ops.md, index.md)\ncompile_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

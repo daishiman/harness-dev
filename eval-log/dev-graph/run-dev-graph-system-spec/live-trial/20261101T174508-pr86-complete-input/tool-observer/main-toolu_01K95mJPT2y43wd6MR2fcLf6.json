@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5f7d441f-c200-44a0-bc0a-ed21373d789a",
+      "line": 108,
+      "prefix_bytes": 608464,
+      "prefix_sha256": "82dd12ded6f5b5f055bd04dc98d6922229530602277003bf4dabca711a1ab16a",
+      "timestamp": "2026-11-01T08:46:18.272Z"
+    },
+    "result": {
+      "uuid": "bca4f037-94fb-4fcc-a06d-1067ed55307e",
+      "line": 111,
+      "prefix_bytes": 614342,
+      "prefix_sha256": "61598dfcb7e2e031586fa28f28f3e8e7ee200cec5036378da3b100d4f777b96f",
+      "timestamp": "2026-11-01T08:46:22.097Z"
+    }
+  },
+  "tool_use_id": "toolu_01K95mJPT2y43wd6MR2fcLf6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\"; echo exit=$?; cat .dev-graph/state/graph.json; echo; realpath system-spec; git rev-parse --git-common-dir --show-toplevel; find system-spec -type l; cat plugins/system-spec-harness/.claude-plugin/plugin.json; find plugins -name plugin-composition.yaml | head; "
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n{\n  \"graph_revision\": 0,\n  \"nodes\": [],\n  \"schema_version\": \"1.0.0\"\n}\n\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-dev-planner/plugin-composition.yaml\nplugins/dev-graph/plugin-composition.yaml\nplugins/system-spec-harness/plugin-composition.yaml\nplugins/harness-creator/plugin-composition.yaml\nplugins/skill-governance-adapters/plugin-composition.yaml",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n{\n  \"graph_revision\": 0,\n  \"nodes\": [],\n  \"schema_version\": \"1.0.0\"\n}\n\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.24\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-dev-planner/plugin-composition.yaml\nplugins/dev-graph/plugin-composition.yaml\nplugins/system-spec-harness/plugin-composition.yaml\nplugins/harness-creator/plugin-composition.yaml\nplugins/skill-governance-adapters/plugin-composition.yaml",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

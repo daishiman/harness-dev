@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e4b87cab-a596-4206-a0f5-74c724f0bdd3",
+      "line": 720,
+      "prefix_bytes": 3731899,
+      "prefix_sha256": "ff6091388f53c301796b017f87e4d3b781611b01701ec826a9300c81bf0e0e2e",
+      "timestamp": "2026-11-01T09:11:16.426Z"
+    },
+    "result": {
+      "uuid": "bd1d1f12-4893-4081-a51e-a595f4dce5a5",
+      "line": 721,
+      "prefix_bytes": 3737252,
+      "prefix_sha256": "406751a46cab528690dff2515c59f2d3ae3a22d6c0532f225b5bb9a6d508b25f",
+      "timestamp": "2026-11-01T09:11:20.108Z"
+    }
+  },
+  "tool_use_id": "toolu_01WB9yt1Civyhdy47aUjFoxa",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && D=plugins/system-spec-harness/skills/run-system-spec-doc-fetch && python3 -B $D/scripts/build-fetched-references.py --help 2>&1 | head -20; grep -n \"retrieval-evidence\\|evidence_ref\" $D/prompts/R2-fetch.md $D/prompts/R3-record.md | head -20; python3 -c \"import json;s=json.load(open('system-spec/spec-state.json'));print(s.get('targets'))\""
+  },
+  "is_error": false,
+  "tool_result_content": "usage: build-fetched-references.py [-h] {assemble} ...\n\nfetched-references.json の R3 決定論 assembler\n\npositional arguments:\n  {assemble}\n    assemble  record 素材から fetched-references.json を組む\n\noptions:\n  -h, --help  show this help message and exit\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:26:- **取得証跡**: WebFetch の URL・取得時刻・本文要約を含む最小 JSON を `system-spec/retrieval-evidence/<target_id>.json` に保存し、repo 相対 `evidence_ref` とそのファイルの SHA-256 (`python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],\"rb\").read()).hexdigest())' <path>` の出力) を `evidence_sha256` として R3 へ渡す。証跡はこの run の再検証用であり、本文全量の恒久ミラーではない。\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:33:- **素材の受け渡し形状 (R3 へ)**: `target_id` / `source_url` / `official_publisher` / `official_host` (省略時 source_url から導出可) / `version` または `last_updated` / `retrieved_at` / `latest_checked_at` / `evidence_ref` / `evidence_sha256` / `summary`。\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:57:- [ ] 各取得素材に repo 内の evidence_ref と一致する evidence_sha256 がある\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R3-record.md:30:     \"evidence_ref\":\"system-spec/retrieval-evidence/react.json\",\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R3-record.md:34:- **必須フィールド**: `target_id` / `retrieved_at` / `source_url` / `official_publisher` / `official_host` / `latest_checked_at` / `evidence_ref` / `evidence_sha256` / `summary`、および `version` か `last_updated` のいずれか。`evidence_ref` は project root からの相対パス、`evidence_sha256` は小文字16進数64桁である。\n[{'target_id': 'postgres', 'category': 'database'}, {'target_id': 'react', 'category': 'frontend'}, {'target_id': 'fastapi', 'category': 'backend', 'also_categories': ['frontend']}, {'target_id': 'typescript', 'category': 'frontend'}]",
+  "tool_use_result": {
+    "stdout": "usage: build-fetched-references.py [-h] {assemble} ...\n\nfetched-references.json の R3 決定論 assembler\n\npositional arguments:\n  {assemble}\n    assemble  record 素材から fetched-references.json を組む\n\noptions:\n  -h, --help  show this help message and exit\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:26:- **取得証跡**: WebFetch の URL・取得時刻・本文要約を含む最小 JSON を `system-spec/retrieval-evidence/<target_id>.json` に保存し、repo 相対 `evidence_ref` とそのファイルの SHA-256 (`python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],\"rb\").read()).hexdigest())' <path>` の出力) を `evidence_sha256` として R3 へ渡す。証跡はこの run の再検証用であり、本文全量の恒久ミラーではない。\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:33:- **素材の受け渡し形状 (R3 へ)**: `target_id` / `source_url` / `official_publisher` / `official_host` (省略時 source_url から導出可) / `version` または `last_updated` / `retrieved_at` / `latest_checked_at` / `evidence_ref` / `evidence_sha256` / `summary`。\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R2-fetch.md:57:- [ ] 各取得素材に repo 内の evidence_ref と一致する evidence_sha256 がある\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R3-record.md:30:     \"evidence_ref\":\"system-spec/retrieval-evidence/react.json\",\nplugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R3-record.md:34:- **必須フィールド**: `target_id` / `retrieved_at` / `source_url` / `official_publisher` / `official_host` / `latest_checked_at` / `evidence_ref` / `evidence_sha256` / `summary`、および `version` か `last_updated` のいずれか。`evidence_ref` は project root からの相対パス、`evidence_sha256` は小文字16進数64桁である。\n[{'target_id': 'postgres', 'category': 'database'}, {'target_id': 'react', 'category': 'frontend'}, {'target_id': 'fastapi', 'category': 'backend', 'also_categories': ['frontend']}, {'target_id': 'typescript', 'category': 'frontend'}]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "infrastructure",
+  "concern_id": "operations",
+  "text": "デプロイは GitHub Actions から社内 k8s へ行い (qa-005)、死活とエラー率の監視は情報システム部の社内監視基盤に載せる (qa-029)。本システム独自の監視基盤は作らない。\n\nqa-job-choice-fixture-v3/D4への追加解釈: 既存社内k8sのPython worker Deploymentが1秒claim、同じworker imageのCronJobが15分走査を担う。SREの稼働実体/構成の観測と復旧を、PG永続outbox・lease/fencing・失敗状態・30分超未処理の運用表示へ対応させる。CronJobの重複抑制とDB側の一意キー/冪等性を分け、worker停止時は永続状態から再開する。追加broker/外部Blob補償を持ち込まず、未回答の資源上限/SLO/リトライ数値を勝手に確定しない。 concern=operationsの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:09:33.335262Z"
+}

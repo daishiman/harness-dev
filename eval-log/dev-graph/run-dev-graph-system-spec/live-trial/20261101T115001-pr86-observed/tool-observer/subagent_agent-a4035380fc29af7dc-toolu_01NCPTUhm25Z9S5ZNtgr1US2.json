@@ -1,0 +1,33 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-a4035380fc29af7dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a6386c90-4231-45fe-9b8b-123fc2daaaf6",
+      "line": 142,
+      "prefix_bytes": 905916,
+      "prefix_sha256": "f6c8b4cb34069d7621c32f6ac0393b567f7fca768c0c69b182a3b231266c7a62",
+      "timestamp": "2026-11-01T03:13:16.992Z"
+    },
+    "result": {
+      "uuid": "39e543bb-7c25-4150-b535-e6d786540ea4",
+      "line": 143,
+      "prefix_bytes": 907714,
+      "prefix_sha256": "6ffde0f1b8fce24b8fc43c969f0be21503bd79e222cfd4fb18a8a7b216f22779",
+      "timestamp": "2026-11-01T03:13:22.353Z"
+    }
+  },
+  "tool_use_id": "toolu_01NCPTUhm25Z9S5ZNtgr1US2",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'EOF'\nimport json,time,pathlib\np=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/system-spec-harness/audit-fork-ledger.jsonl\")\nfor i in range(110):\n    rows=[json.loads(l) for l in p.read_text().splitlines()]\n    c=[r for r in rows if r.get(\"dispatch_token\")==\"c05r2-sysspec105-c06-e90cf7f2\"]\n    if any(r.get(\"record_kind\")==\"completion\" for r in c):\n        for r in c: print({k:v for k,v in r.items() if k!=\"cwd\"})\n        break\n    time.sleep(1)\nelse:\n    print(\"not yet\", c)\nEOF",
+    "description": "Wait for C06 completion row in ledger",
+    "timeout": 130000
+  },
+  "is_error": false,
+  "tool_result_content": "{'audit_verdict': None, 'dispatch_token': 'c05r2-sysspec105-c06-e90cf7f2', 'prompt_sha256': '8fb1326213ec446273e7233a9f820fa06682396fc7cff25a2be5ff1f50482d0c', 'record_kind': 'dispatch', 'response_sha256': 'd41dc84afc5aef1b50d188b800637f3daa0a8902dae733c3878c31af5bb60cf5', 'schema_version': '1.2', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-hearing-auditor', 'tool_name': 'Agent', 'tool_use_id': 'toolu_018x1ws7ttWJ6VDgJbAA27Fg', 'ts': '2026-11-01T03:12:19Z', 'verdict_state': 'pending'}\n{'agent_id': 'aa562dc03efd73ee2', 'audit_verdict': 'PASS', 'dispatch_token': 'c05r2-sysspec105-c06-e90cf7f2', 'prompt_sha256': None, 'record_kind': 'completion', 'response_sha256': '9931f3e3da42da5d9eb4d5b23bffa1d2562f8976c2721e2f3bc5aec6537cd33f', 'schema_version': '1.3', 'session_id': 'e90cf7f2-108a-4d17-81f2-78ff44dc4b6a', 'subagent_type': 'system-spec-hearing-auditor', 'tool_name': 'Agent', 'ts': '2026-11-01T03:13:21Z', 'verdict_state': 'resolved'}",
+  "tool_use_result": null
+}

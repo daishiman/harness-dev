@@ -1,0 +1,18 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 1,
+  "overall": "in_progress",
+  "checklist": [
+    {"id": "content_root", "text": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json; R0 verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/verifier-loop1.json)"},
+    {"id": "harness_version", "text": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "0.1.24 in >=0.1.22 <1.0.0, 4 entry points present; R1 verifier PASS (eval-log/run-dev-graph-system-spec/R1-preflight/verifier-loop1.json)"},
+    {"id": "delegation", "text": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "not_achieved", "evidence": "R2 not started"},
+    {"id": "gates", "text": "coverage/source-citation/evaluator gate が全て PASS である", "status": "not_achieved", "evidence": "coverage/source-citation exit0 in loop1; evaluator not yet run"},
+    {"id": "c02_node", "text": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "R3 not started"},
+    {"id": "no_duplication", "text": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "R1 verifier grep found 0 duplicates; final confirmation pending R3 verifier"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loops": [{"loop": 1, "coverage_exit": 0, "source_citation_exit": 0, "graph_schema_exit": 0, "status": "PASS"}]},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial after this run"}
+  ]
+}

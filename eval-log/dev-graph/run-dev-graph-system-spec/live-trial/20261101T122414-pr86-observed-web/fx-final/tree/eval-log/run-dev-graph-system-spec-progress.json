@@ -1,0 +1,71 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+ "updated_at": "2026-11-01T03:44:06.068015+00:00",
+ "loop": 2,
+ "checklist": [
+  {
+   "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+   "status": "achieved",
+   "evidence": "C24 receipt repo_root==content_roots.repository; R0-context verifier PASS (eval-log/run-dev-graph-system-spec/R0-context/verdict.json)"
+  },
+  {
+   "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+   "status": "achieved",
+   "evidence": "system-spec-harness 0.1.25 in >=0.1.22 <1.0.0, 4 entry points; R1-preflight verifier PASS"
+  },
+  {
+   "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+   "status": "not_achieved",
+   "evidence": "4 canonical Skills invoked, but R2-delegate verifier FAIL 5.3 item3: some elicit/doc-fetch/compile Bash calls lacked export CLAUDE_PROJECT_DIR/cd/pwd -P prefix (eval-log/run-dev-graph-system-spec/R2-delegate/verifier/verdict.json); historical, cannot be repaired within this run"
+  },
+  {
+   "item": "coverage/source-citation/evaluator gate が全て PASS である",
+   "status": "achieved",
+   "evidence": "coverage/source-citation exit0 (loop2), C05 report verdict PASS sha e385804f..., aggregate-completeness exit0"
+  },
+  {
+   "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+   "status": "achieved",
+   "evidence": "C02 writer receipt node-r000001-add.json; validate-source-lineage exit0; R3-import verifier PASS; integrity auditor PASS"
+  },
+  {
+   "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+   "status": "achieved",
+   "evidence": "R2/R3 verifiers: no copy of elicit/compile/validator logic in plugins/dev-graph"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS",
+   "loops": [
+    {
+     "loop": 1,
+     "status": "PASS",
+     "coverage_exit": 0,
+     "source_citation_exit": 0,
+     "graph_schema_exit": 0,
+     "at": "2026-11-01T03:30:16.654803+00:00"
+    },
+    {
+     "loop": 2,
+     "status": "PASS",
+     "coverage_exit": 0,
+     "source_citation_exit": 0,
+     "graph_schema_exit": 0,
+     "at": "2026-11-01T03:44:06.068015+00:00"
+    }
+   ]
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending"
+  }
+ ],
+ "overall": "blocked",
+ "blockers": [
+  "R2-delegate 5.3 item3 NO (Bash prefix missing on several delegate calls)",
+  "task constraint violation: parent ran cat R3-import.md redirected to devnull at 03:39:46Z"
+ ]
+}

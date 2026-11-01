@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d158f194-1069-4802-aa98-73b34bf4b55c",
+      "line": 63,
+      "prefix_bytes": 400219,
+      "prefix_sha256": "e9a8f338a954e1506ef86533759b15d496f168c1273f2b86d5f7b521a486fa07",
+      "timestamp": "2026-11-01T08:57:09.625Z"
+    },
+    "result": {
+      "uuid": "d1266f06-4c7b-4e32-8a1f-ca3beab0684d",
+      "line": 64,
+      "prefix_bytes": 403503,
+      "prefix_sha256": "5f56b44f65fda19f96af8af118e306ecbb95abf41275d38ce74812200145b776",
+      "timestamp": "2026-11-01T08:57:13.466Z"
+    }
+  },
+  "tool_use_id": "toolu_01WDZyqCaiHRz7m21KPabmdG",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 plugins/system-spec-harness/scripts/validate-coverage-matrix.py --matrix system-spec/spec-state.json --require-foundation; echo \"foundation exit=$?\"; python3 plugins/system-spec-harness/scripts/validate-coverage-matrix.py --help 2>&1 | head -30; python3 -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'))\nfor x in d['decisions']:\n  print(x['id'],x['category'],x['status'],len(x['options']),[o['cost_model']['category'] for o in x['options']],x['recommendation']['option_id'],x.get('user_decision'),x.get('qa_ref'), x['recommendation'].get('latest_checked_at'))\n  for o in x['options']:\n    miss=[k for k in ['goal_fit','security_fit','lock_in','ops_burden','evidence_refs','risks','pros','cons'] if not o.get(k)]\n    print('  ',o['id'],'missing',miss)\nprint(d['category_aggregate']); print(d['categories']); print(d['platforms'])\nprint(json.dumps(d['hearing_progress'],ensure_ascii=False)[:1500])\n\"",
+    "description": "Foundation gate and decisions summary"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\nfoundation exit=0\nusage: validate-coverage-matrix.py [-h] --matrix MATRIX [--require-complete]\n                                   [--require-basis] [--require-foundation]\n\n収集マトリクス網羅性の決定論検証 (goal-spec C7)\n\noptions:\n  -h, --help            show this help message and exit\n  --matrix MATRIX       spec-state.json のパス\n  --require-complete    最終時: 未収集セル 0 を必須にする (OUT1/C7 受入)\n  --require-basis       確定セルの根拠 qa_ref に basis 宣言 (user-decision/observed-\n                        fact/agent-inference) を必須にする (opt-in)\n  --require-foundation  上位概念 (requirements_foundation U1-U9\n                        値ありまたは明示N/A)・decisions・goalトレースを検証 (C9・opt-in)\nD1 database confirmed 2 ['free', 'free'] pg16 {'option_id': 'pg16', 'confirmed_at': '2026-10-12T00:16:56Z'} qa-031 2026-10-31T14:45:20Z\n   pg15 missing []\n   pg16 missing []\nD2 frontend confirmed 2 ['free', 'free'] react-spa {'option_id': 'react-spa', 'confirmed_at': '2026-10-12T00:17:04Z'} qa-032 2026-10-12T02:28:51Z\n   server-templates missing []\n   react-spa missing []\nD3 auth confirmed 2 ['free', 'free'] bff-session {'option_id': 'bff-session', 'confirmed_at': '2026-10-12T07:38:46Z'} qa-034 2026-10-12T07:24:36Z\n   bff-session missing []\n   spa-pkce-memory missing []\nD4 backend confirmed 2 ['free', 'free'] pg-worker-cron {'option_id': 'pg-worker-cron', 'confirmed_at': '2026-11-01T08:35:54.756712Z'} qa-job-choice-fixture-v3 2026-11-01T08:35:54.756712Z\n   pg-worker-cron missing []\n   api-background-http missing []\n{'database': '確定', 'auth': '確定', 'ui-ux': '確定', 'security': '確定', 'infrastructure': '確定', 'backend': '確定', 'frontend': '確定', 'maintenance-ops': '確定'}\n[{'id': 'database', 'label': 'データベース'}, {'id': 'auth', 'label': '認証(ログイン)'}, {'id': 'ui-ux', 'label': 'UI-UX'}, {'id': 'security', 'label': 'セキュリティ'}, {'id': 'infrastructure', 'label': 'インフラ'}, {'id': 'backend', 'label': 'バックエンド'}, {'id': 'frontend', 'label': 'フロントエンド'}, {'id': 'maintenance-ops', 'label': '保守運用管理'}]\n['web', 'mobile', 'tablet', 'desktop-windows', 'desktop-linux', 'desktop-macos']\n{\"loop_count\": 2, \"next_question\": null, \"complete\": true, \"max_loops\": 2}",
+  "tool_use_result": null
+}

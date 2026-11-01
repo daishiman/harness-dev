@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f7a3b6da-7bdd-4721-b5ce-729034b21302",
+      "line": 203,
+      "prefix_bytes": 1007831,
+      "prefix_sha256": "d3f0dd9209d8f0057bd111626e2e3c74649533c14f295fc0f224c823faa19d14",
+      "timestamp": "2026-11-01T15:22:01.348Z"
+    },
+    "result": {
+      "uuid": "791d1e68-08e6-4264-920d-f3881db34fec",
+      "line": 206,
+      "prefix_bytes": 1014668,
+      "prefix_sha256": "0dc140424af5c8a33ae3e59e0b07ddfd6295e21a06b5dc2e42dd45813be159c8",
+      "timestamp": "2026-11-01T15:22:03.402Z"
+    }
+  },
+  "tool_use_id": "toolu_016KyXiE4XGgtmcWsbvPZ4jJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && \\\npython3 -B \"${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/plugins/system-spec-harness}/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py\" --repo-root \"$CLAUDE_PROJECT_DIR\" --print-artifact-snapshot 2>&1 | head -100",
+    "description": "Build artifact snapshot for evaluator"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\",\n    \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\",\n    \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\",\n    \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\",\n    \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\",\n    \"system-spec/frontend.md\": \"68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b\",\n    \"system-spec/maintenance-ops.md\": \"cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841\",\n    \"system-spec/security.md\": \"39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546\",\n    \"system-spec/spec-state.json\": \"09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\",\n    \"system-spec/ui-ux.md\": \"f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444\"\n  }\n}",
+  "tool_use_result": {
+    "stdout": "{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd\",\n    \"system-spec/auth.md\": \"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548\",\n    \"system-spec/backend.md\": \"357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf\",\n    \"system-spec/database.md\": \"55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8\",\n    \"system-spec/fetched-references.json\": \"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594\",\n    \"system-spec/frontend.md\": \"68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b\",\n    \"system-spec/maintenance-ops.md\": \"cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841\",\n    \"system-spec/security.md\": \"39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546\",\n    \"system-spec/spec-state.json\": \"09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2\",\n    \"system-spec/ui-ux.md\": \"f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444\"\n  }\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-ad12b15abe6a152b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ac381bc1-e278-4e74-8b1b-6926f71923e9",
+      "line": 24,
+      "prefix_bytes": 166625,
+      "prefix_sha256": "e1dd70e286001f003a395c702a93f88fc9b8b57b367f57f61e7a62b7f878cb05",
+      "timestamp": "2026-11-01T02:52:22.131Z"
+    },
+    "result": {
+      "uuid": "87f6dcbd-6e33-4627-b019-40185e80a72e",
+      "line": 26,
+      "prefix_bytes": 188801,
+      "prefix_sha256": "413260d31e352a0be2b84cad7210ddd8969729d206ea081c670cd3acc79b8649",
+      "timestamp": "2026-11-01T02:52:25.489Z"
+    }
+  },
+  "tool_use_id": "toolu_01R6rzcbxZ9Rg5jvE7QrnDsD",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cat /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/plugins/dev-graph/references/prompt-common-layers.md"
+  },
+  "is_error": false,
+  "tool_result_content": "# dev-graph prompt 共通層 (Layer 4〜7)\n\ndev-graph の `skills/run-dev-graph-*/prompts/R*.md` が共有する Layer 4〜7 の定型部分の正本。各 prompt は層の見出しと、この reference の該当節を指す 1 行と、責務に固有の行だけを持つ。\n\n## 読み方\n\n- 各 prompt の Layer 4〜7 は、この reference の同名の節と prompt 側の固有行を合わせた内容とする。どちらも適用し、一方で他方を置き換えない。\n- 節は prompt の見出しと同じ名前で引く (例: 「Layer 5」はこの reference の `## Layer 5: エージェント層 (l5-contract v2.0.0)`)。\n- この reference は 9 skill の SKILL.md の `reference_refs` に入っており、skill の挙動閉包に含まれる。書き換えると 9 skill すべての live trial verdict が古くなる。\n\n## Layer 4: 共通ポリシー層\n\n- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。\n- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。\n- 同一入力と同一 revision/digest では同じ decision と output shape を返す。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n### 5.1 担当 agent\n\n- 担当 agent は各 prompt の 5.1 に書く。重い判断または独立検証は `Agent` で分離 context に fork する。\n\n### 5.2 ゴール定義\n\n- 目的と達成ゴールは各 prompt の 5.2 に書く。\n- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n全責務に共通の項目。各 prompt の 5.3 の項目と合わせ、すべてが YES になったときにゴール到達とする。\n\n- [ ] 宣言した入力が全て検証済みである\n- [ ] 出力が宣言した shape と authority を満たす\n- [ ] 責務境界に反する read/write/delegation が0件である\n\n### 5.4 実行方式\n\n- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。\n\n## Layer 6: オーケストレーション層\n\n- 渡し先・返し先は各 prompt の Layer 6 に書く。\n- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。\n\n## Layer 7: UserInput\n\n- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。\n- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。",
+  "tool_use_result": {
+    "stdout": "# dev-graph prompt 共通層 (Layer 4〜7)\n\ndev-graph の `skills/run-dev-graph-*/prompts/R*.md` が共有する Layer 4〜7 の定型部分の正本。各 prompt は層の見出しと、この reference の該当節を指す 1 行と、責務に固有の行だけを持つ。\n\n## 読み方\n\n- 各 prompt の Layer 4〜7 は、この reference の同名の節と prompt 側の固有行を合わせた内容とする。どちらも適用し、一方で他方を置き換えない。\n- 節は prompt の見出しと同じ名前で引く (例: 「Layer 5」はこの reference の `## Layer 5: エージェント層 (l5-contract v2.0.0)`)。\n- この reference は 9 skill の SKILL.md の `reference_refs` に入っており、skill の挙動閉包に含まれる。書き換えると 9 skill すべての live trial verdict が古くなる。\n\n## Layer 4: 共通ポリシー層\n\n- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。\n- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。\n- 同一入力と同一 revision/digest では同じ decision と output shape を返す。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n### 5.1 担当 agent\n\n- 担当 agent は各 prompt の 5.1 に書く。重い判断または独立検証は `Agent` で分離 context に fork する。\n\n### 5.2 ゴール定義\n\n- 目的と達成ゴールは各 prompt の 5.2 に書く。\n- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n全責務に共通の項目。各 prompt の 5.3 の項目と合わせ、すべてが YES になったときにゴール到達とする。\n\n- [ ] 宣言した入力が全て検証済みである\n- [ ] 出力が宣言した shape と authority を満たす\n- [ ] 責務境界に反する read/write/delegation が0件である\n\n### 5.4 実行方式\n\n- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。\n\n## Layer 6: オーケストレーション層\n\n- 渡し先・返し先は各 prompt の Layer 6 に書く。\n- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。\n\n## Layer 7: UserInput\n\n- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。\n- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

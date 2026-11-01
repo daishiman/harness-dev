@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-adb6ec99e2d464843",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "200a5669-61bb-416f-9e54-db2d7314a296",
+      "line": 32,
+      "prefix_bytes": 162694,
+      "prefix_sha256": "cf934e122a38c31bfee8e3cdb79ad4c3fbbcd5ef484375c50b2c2eed0b21cc45",
+      "timestamp": "2026-11-01T16:14:22.550Z"
+    },
+    "result": {
+      "uuid": "dbf55fe7-a1cd-4ef1-a0ac-39384af3ff62",
+      "line": 33,
+      "prefix_bytes": 165427,
+      "prefix_sha256": "2c8cdad6dcfaab692b962045ae153e95579fb141ab68447dee8840ea276f5494",
+      "timestamp": "2026-11-01T16:14:26.697Z"
+    }
+  },
+  "tool_use_id": "toolu_01H3b94SNkohEMChPHkP5ZEE",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && export PYTHONDONTWRITEBYTECODE=1 && P=/Users/dm/miniconda3/bin/python3; $P plugins/dev-graph/scripts/validate-source-lineage.py --repo-root . 2>&1 | head -40; echo ---; $P plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root . --require-canonical-envelope --strict-artifact-readiness 2>&1 | head -40"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\n---\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\n---\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

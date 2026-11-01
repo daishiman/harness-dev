@@ -1,0 +1,15 @@
+123 の C05 進行中 prefix の完了範囲を確認した。確定した goal blocker は 0 件。最終判定は保留。
+
+7 native stream の manifest bytes/SHA と現 native の prefix 一致を確認し、初期prefixも保持される。observer 149 event の source行・UUID・prefix bytes/SHA・tool input/result は native と全一致。C05 の Read は通常のfile objectでなく行番号付き文字列としてnativeへ記録されているため、その原文を行ごとに実正本と照合した。過大Readエラーを取得済みに数えず、後続の分割取得を統合した。
+
+C05 (agent-afb32354c2e1fe747) は全18 prompt・仕様全10 Markdown・state全実内容・fetched-references全文・C04 resource-map・自身のR1/R2/rubric/aspect/schemaを全文取得。自身のresource-mapはprefix時点で取得を観測できず、最終report前の未了項目として保留する。18promptの意味評価結果はC05最終report待ちで、読了だけをC1-C4充足の証拠にはしない。
+
+評価開始のproduction snapshot CLIをC05 30行で実行し、監査/対象Readに先行する。stdoutの12 path/digestは現在値とすべて一致。C05の実Bashは正規snapshot/aggregate/foundation gateと、許可されたliteral Path＋引用heredocによるhearing-audit.json保存。保存JSONはC06最終応答のJSON部分と1文字も違わず、現fileも一致。仕様書/state/refsへの書込み、自作reader/builder、一時file保存は観測しない。211行のaggregate path間違いはexit2として残り、224行で正規CLIの3gateすべて0へ回復している。shell代入/echo/cdは補助差分として記録するが、実境界逸脱・生成ロジック複製の根拠にしない。
+
+C07 はC05 236行のsingle foreground Agent、child a4787ac977fd08faaの実final37行でAUDIT_VERDICT: PASS。loop/require-complete両ゲート0。自身adapter/R7全文とstate1〜1481行で担当matrix/QA/approval/category_aggregateを取得し、foundation/decisionsの後続未取得は担当範囲の拡張に使わない。親C05は240行でresolved台帳をReadしてから245行のC06へ進む。
+
+C06 はC05 245行のsingle foreground Agent、child a965bf4119e6dc68eの実final61行でAUDIT_VERDICT: PASS。adapter/R6/neutral/aspect/spec-state-contract全文を取得。同actor41行のstdlib Bashでsource path containment・実在regular file・file SHAを検査した後、47行で書面全文をReadし、55行で4answerのUTF-8 SHAを実測。4QAのsection逐語とsource.sha256はすべて実書面に一致。stateの未取得1841行はD4 cost objectの閉じ括弧のみでC06担当外。全5軸を意味監査し、閉じた検出3・主根拠以外のmedium注記2を残す。retired qaを補助qa_refsへ残せる正本の明示許可を一般の安全側解釈で覆していない。親は248行でresolved台帳をReadしてからC08を257行で起動。
+
+C07/C06のdispatch prompt SHA・ID・session・subagent種・tokenはその時点のRead済み1.2台帳と一致。childの実final全文SHAは1.3 completion台帳の741901140533ff4fda898722bad482974e777669fd18a3b6d10c777fa15cdae6 / 3ad602059ddfed50970fe953dd4608f8b7d3c5f9d12aa13545becf2999a8ce24と一致し、verdictとも一致する。C05 nested native tool_resultは表示本文のみで元tool_response metadataを持たないため、whole per-call response digestの完全独立再計算は最終metadataまで保留する。台帳に値があるだけでこの確認を済ませたとは扱わない。
+
+C08・C05最終意味評価・report集約・残るgoal証拠は未完了として保留し、blockerに数えない。source/入力/原本は編集していない。過去他runのreview/verdictは未参照。

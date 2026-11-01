@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a0e1a2c479baac390",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6ed901c2-75d3-458a-a2ab-e647a2e1df9d",
+      "line": 30,
+      "prefix_bytes": 198772,
+      "prefix_sha256": "b23ce62f2fcdd98f964ced92596e6227292c9137ddddb37acacaa401d00d94d9",
+      "timestamp": "2026-11-01T09:21:40.901Z"
+    },
+    "result": {
+      "uuid": "ae1501d9-e166-4e36-ae82-2e665820a48e",
+      "line": 31,
+      "prefix_bytes": 202683,
+      "prefix_sha256": "1e78c7ee8121aad23804a05e2fc33faa153303cb889f84e1ad5b6951ae97eee6",
+      "timestamp": "2026-11-01T09:21:45.006Z"
+    }
+  },
+  "tool_use_id": "toolu_01WPPbZ7WzPchsFBwE3TBEGJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$CLAUDE_PROJECT_DIR\" --mode read > \"$TMPDIR/ctx.json\"; echo rc=$?; python3 -c \"\nimport json,os\na=json.load(open(os.environ['TMPDIR']+'/ctx.json'));b=json.load(open('eval-log/run-dev-graph-system-spec-c24-receipt.json'))\nfor k in ['repository_id','git_common_dir','worktree_id','head_sha','repo_root']: print(k,a.get(k)==b.get(k),a.get(k))\nprint('system_spec',a['content_roots']['system_spec']==b['content_roots']['system_spec'])\np=a['content_roots']['system_spec'];r=os.path.realpath(p);print('realpath',r,'islink',os.path.islink(p),'inside',r.startswith(os.path.realpath(a['repo_root'])+'/'))\nlinks=[];broken=[]\nfor d,ds,fs in os.walk(p):\n  for n in ds+fs:\n    q=os.path.join(d,n)\n    if os.path.islink(q): links.append(q)\nprint('symlinks',links)\n\"; shasum -a 256 eval-log/run-dev-graph-system-spec-c24-receipt.json; printf '%s' \"$(python3 -c \"import json;print(json.load(open('eval-log/run-dev-graph-system-spec-goal-spec.json'))['original_goal'],end='')\")\" | shasum -a 256; ls -la .dev-graph .dev-graph/state 2>&1; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\"; echo rc=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "rc=0\nrepository_id True local:sha256:5d43cd95a3e466d00414b64d651215d99991bfbf5a77b7c40ddbe14647f6feae\ngit_common_dir True /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/.git\nworktree_id True wt_c1e277733b05352b\nhead_sha True 8e5472bb5b1a5d30715dd8a0cb6e325c41171e73\nrepo_root True /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\nsystem_spec True\nrealpath /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec islink False inside True\nsymlinks []\nc0d96f9f8be616fd3078d75a167ea0c3d54d8720fe7c387dfda753270b45e98b  eval-log/run-dev-graph-system-spec-c24-receipt.json\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454  -\n.dev-graph:\ntotal 8\ndrwxr-xr-x@  8 dm  wheel   256 11月  1 18:18 .\ndrwxr-xr-x@ 15 dm  wheel   480 11月  1 18:19 ..\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 18:16 cache\n-rw-r--r--@  1 dm  wheel  3338 11月  1 18:16 config.json\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 18:16 locks\ndrwxr-xr-x@  4 dm  wheel   128 11月  1 18:16 state\ndrwxr-xr-x@ 23 dm  wheel   736 11月  1 18:16 templates\ndrwxr-xr-x@  3 dm  wheel    96 11月  1 18:21 tmp\n\n.dev-graph/state:\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 18:16 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 18:18 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 18:16 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 18:16 receipts\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0",
+  "tool_use_result": {
+    "stdout": "rc=0\nrepository_id True local:sha256:5d43cd95a3e466d00414b64d651215d99991bfbf5a77b7c40ddbe14647f6feae\ngit_common_dir True /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/.git\nworktree_id True wt_c1e277733b05352b\nhead_sha True 8e5472bb5b1a5d30715dd8a0cb6e325c41171e73\nrepo_root True /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\nsystem_spec True\nrealpath /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec islink False inside True\nsymlinks []\nc0d96f9f8be616fd3078d75a167ea0c3d54d8720fe7c387dfda753270b45e98b  eval-log/run-dev-graph-system-spec-c24-receipt.json\n30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454  -\n.dev-graph:\ntotal 8\ndrwxr-xr-x@  8 dm  wheel   256 11月  1 18:18 .\ndrwxr-xr-x@ 15 dm  wheel   480 11月  1 18:19 ..\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 18:16 cache\n-rw-r--r--@  1 dm  wheel  3338 11月  1 18:16 config.json\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 18:16 locks\ndrwxr-xr-x@  4 dm  wheel   128 11月  1 18:16 state\ndrwxr-xr-x@ 23 dm  wheel   736 11月  1 18:16 templates\ndrwxr-xr-x@  3 dm  wheel    96 11月  1 18:21 tmp\n\n.dev-graph/state:\ntotal 8\ndrwxr-xr-x@ 4 dm  wheel  128 11月  1 18:16 .\ndrwxr-xr-x@ 8 dm  wheel  256 11月  1 18:18 ..\n-rw-r--r--@ 1 dm  wheel   70 11月  1 18:16 graph.json\ndrwxr-xr-x@ 3 dm  wheel   96 11月  1 18:16 receipts\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

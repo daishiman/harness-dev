@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bb58b7db-63bc-47c3-9d0d-c54d3897e475",
+      "line": 650,
+      "prefix_bytes": 3582241,
+      "prefix_sha256": "e17ce0a48333d4ab73c80e836711998959e875b56a5e36601cc39ee58c8f96a4",
+      "timestamp": "2026-11-01T04:07:30.738Z"
+    },
+    "result": {
+      "uuid": "ee5226f6-537a-4318-9545-e62238605567",
+      "line": 656,
+      "prefix_bytes": 3587463,
+      "prefix_sha256": "6d35b6864cc8eb4888eabe628cc420414b9ee33b488a8f779ceaf8819aadc0fd",
+      "timestamp": "2026-11-01T04:07:34.504Z"
+    }
+  },
+  "tool_use_id": "toolu_01VgvepkmT73rbppidYX5mmX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/run-dev-graph-system-spec/R3-import/import-payload.json --dry-run > \"$TMPDIR/dry.json\"; echo \"exit=$?\"; python3 -B -c '\nimport json,sys\nd=json.load(open(sys.argv[1]))\ndef show(o,depth=0):\n  print({k:(v if not isinstance(v,(list,dict)) else type(v).__name__+str(len(v))) for k,v in o.items()})\nshow(d)\nfor k in (\"findings\",\"readiness\",\"nodes\",\"artifacts\",\"previews\"):\n  if k in d: print(k, json.dumps(d[k],ensure_ascii=False)[:1500])\n' \"$TMPDIR/dry.json\"; shasum -a 256 .dev-graph/state/graph.json"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n{'applied_count': 0, 'artifacts': 'list2', 'dry_run': True, 'graph_digest_after': 'sha256:68e672fe9e2f64fbdcbc101008205749808cd6ad6808e7460c050daa090dce02', 'graph_path': '.dev-graph/state/graph.json', 'graph_revision_after': 1, 'graph_revision_before': 0, 'input_sha256': 'b38388ecbc97299dffd0e1cd63b6ce0b3e239516e7cbea4085f7e4985df4982d', 'node_ids': 'list2', 'operation': 'add', 'owner': 'C02/run-dev-graph-node', 'planned_count': 2, 'planned_nodes': 'list2', 'pre_write_validation': 'dict2', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'recorded_at': '2026-11-01T04:07:33.579121Z', 'repository_id': 'local:sha256:312b6ad14b065048403c0feea98233ed38cce0cd444c2a97898e391c9de63cbf', 'schema_version': '1.0.0', 'status': 'preview', 'template_sources': 'list7', 'valid': True, 'write_count': 0}\nartifacts [{\"classification\": {\"confidence\": 0.95, \"decision\": \"auto\", \"margin\": 0.65}, \"file_path\": \"specs/billing-audit-system-spec.md\", \"graph_node_id\": \"spec-billing-audit-system-spec\", \"implementation_readiness\": \"complete\", \"missing_sections\": [], \"readiness_fill\": [], \"sha256_after\": \"4e0774d09f87ae5415f844b72e8aaf29d87195980ad57b563d06f813dee1774d\", \"sha256_before\": null}, {\"classification\": {\"confidence\": 0.92, \"decision\": \"auto\", \"margin\": 0.57}, \"file_path\": \"architecture/billing-audit-system-architecture.md\", \"graph_node_id\": \"arch-billing-audit-system-architecture\", \"implementation_readiness\": \"complete\", \"missing_sections\": [], \"readiness_fill\": [], \"sha256_after\": \"896f84fc5de3a7d2c41cbaa86206c3555afacba8503281d42825cd2d3efc29fd\", \"sha256_before\": null}]\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json",
+  "tool_use_result": {
+    "stdout": "exit=0\n{'applied_count': 0, 'artifacts': 'list2', 'dry_run': True, 'graph_digest_after': 'sha256:68e672fe9e2f64fbdcbc101008205749808cd6ad6808e7460c050daa090dce02', 'graph_path': '.dev-graph/state/graph.json', 'graph_revision_after': 1, 'graph_revision_before': 0, 'input_sha256': 'b38388ecbc97299dffd0e1cd63b6ce0b3e239516e7cbea4085f7e4985df4982d', 'node_ids': 'list2', 'operation': 'add', 'owner': 'C02/run-dev-graph-node', 'planned_count': 2, 'planned_nodes': 'list2', 'pre_write_validation': 'dict2', 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'recorded_at': '2026-11-01T04:07:33.579121Z', 'repository_id': 'local:sha256:312b6ad14b065048403c0feea98233ed38cce0cd444c2a97898e391c9de63cbf', 'schema_version': '1.0.0', 'status': 'preview', 'template_sources': 'list7', 'valid': True, 'write_count': 0}\nartifacts [{\"classification\": {\"confidence\": 0.95, \"decision\": \"auto\", \"margin\": 0.65}, \"file_path\": \"specs/billing-audit-system-spec.md\", \"graph_node_id\": \"spec-billing-audit-system-spec\", \"implementation_readiness\": \"complete\", \"missing_sections\": [], \"readiness_fill\": [], \"sha256_after\": \"4e0774d09f87ae5415f844b72e8aaf29d87195980ad57b563d06f813dee1774d\", \"sha256_before\": null}, {\"classification\": {\"confidence\": 0.92, \"decision\": \"auto\", \"margin\": 0.57}, \"file_path\": \"architecture/billing-audit-system-architecture.md\", \"graph_node_id\": \"arch-billing-audit-system-architecture\", \"implementation_readiness\": \"complete\", \"missing_sections\": [], \"readiness_fill\": [], \"sha256_after\": \"896f84fc5de3a7d2c41cbaa86206c3555afacba8503281d42825cd2d3efc29fd\", \"sha256_before\": null}]\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

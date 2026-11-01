@@ -1,0 +1,41 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "B1: scenarioの固定wall-clock上限3300秒を超過した。正規pollはHARD_CAP(exit 1)、raw elapsed=3510秒、公開elapsed=3512秒（収集時のceil補正）であり、いずれも予算外。tokenは正規集計15856376/23000000で予算内だが、wall-clock違反は解消しない。",
+    "B2: C19の自走完了が未達。R3 verifierはverifier-loop3.jsonを保存したが完了応答を返さず、親はloop3の3gate exit0後に待機したまま中断された。C19 progressはloop2のまま最終2項目not_achieved、loop3のintermediate/最終handoff/out/status.jsonが無い。R3の保存済みPASSだけを親の完了とみなせない。",
+    "B3: C05の明示された道具境界違反。C05 subagent raw180行のBashはschema調査に python3 -c ... | head -c 9000 を実行した。C05 SKILL「fork先で完結する実行契約」はhead等のshell調査を禁止している。observer event toolu_016jTNUTj3h6hqyYzoSTYHuSとnative rawで実行・結果を確認した。",
+    "B4: C07の必読入力欠落。R7 2.3.1はSSOT・state・正規C12本文・taxonomyをReadする契約だが、C07の全native tool callはRead4件（R7、taxonomy、state前半、state後半）だけで、validate-coverage-matrix.py本文を読んでいない。機械証拠受領と全セル意味監査のPASS/receiptは、この必読義務の代替にならない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec108"
+  },
+  "transcript_sha256": "f20486f3f9e5789ef9e0e6ecbb64e2402a4940ed3dc53c1ce41c04a467f7c0dc",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "poll-state.json",
+    "poll-normalization.json",
+    "abort-reason.json",
+    "collection-note.json",
+    "tool-observer/index.json",
+    "observer-provenance.json",
+    "evidence-redaction.json",
+    "tool-observer/subagent_agent-ae65567d352552e51-toolu_01WX2FXpMibpmfxgQ36Fye3H.json",
+    "tool-observer/subagent_agent-ae65567d352552e51-toolu_01U84Y2HUdWgkeSgsnCet4EX.json",
+    "tool-observer/subagent_agent-ae65567d352552e51-toolu_016jTNUTj3h6hqyYzoSTYHuS.json",
+    "transcript/subagents/agent-affa4cd48d52f0cdf.jsonl",
+    "transcript/subagents/agent-aff7283eee0969af5.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-eval-log/run-dev-graph-node-artifact-delivery.json",
+    "fx-eval-log/run-dev-graph-node-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/verifier-loop3.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "tool-observer/main-toolu_017m56egq7VGiEU2tfHve6rk.json",
+    "tool-observer/main-toolu_01Xp3Z85EhpLvXmong69Ng2u.json",
+    "task.md"
+  ]
+}

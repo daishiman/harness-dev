@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-ab696cb95d0e3a24b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "29f9c4b0-6042-4b0b-8100-fc8e1a576211",
+      "line": 165,
+      "prefix_bytes": 2330113,
+      "prefix_sha256": "97632be94474f4631ef27bbd6c0098259879ffeafc7bcfa7ba774769993a5ee4",
+      "timestamp": "2026-11-01T14:11:33.179Z"
+    },
+    "result": {
+      "uuid": "3a921b3c-2730-47f9-b4c0-843a256b8fab",
+      "line": 166,
+      "prefix_bytes": 2333146,
+      "prefix_sha256": "0a1db60402d4f77bd31dcc03bba3180ecddaf7723b9a4787151af5a59b413031",
+      "timestamp": "2026-11-01T14:11:36.759Z"
+    }
+  },
+  "tool_use_id": "toolu_01JjU5JpDfLftb7zpk45DEgt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "shasum -a 256 system-spec/*.md && python3 -I -c 'import json;d=json.load(open(\"eval-log/compile-standard.json\"));print({k:d[k] for k in d if k in(\"choice\",\"digest\",\"artifact_digest\",\"presented_before_choice\",\"artifact_path\")})'",
+    "description": "Recheck sha256 and compile-standard digest"
+  },
+  "is_error": false,
+  "tool_result_content": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548  system-spec/auth.md\n357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf  system-spec/backend.md\n55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8  system-spec/database.md\n68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b  system-spec/infrastructure.md\ncef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841  system-spec/maintenance-ops.md\n39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546  system-spec/security.md\nf7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444  system-spec/ui-ux.md\n{'choice': 'standard', 'digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'presented_before_choice': True}",
+  "tool_use_result": {
+    "stdout": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548  system-spec/auth.md\n357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf  system-spec/backend.md\n55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8  system-spec/database.md\n68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b  system-spec/infrastructure.md\ncef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841  system-spec/maintenance-ops.md\n39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546  system-spec/security.md\nf7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444  system-spec/ui-ux.md\n{'choice': 'standard', 'digest': 'f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2', 'presented_before_choice': True}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

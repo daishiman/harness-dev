@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "18f378ee-7f8d-4933-b2c2-c93772c33c5f",
+      "line": 399,
+      "prefix_bytes": 2284753,
+      "prefix_sha256": "528a6fd08a9155dd2e546b93d9fcf5adf6795a24b9e2661c5bbeae085600bd7e",
+      "timestamp": "2026-11-01T15:35:19.152Z"
+    },
+    "result": {
+      "uuid": "2cc8c673-9474-400b-b76f-e4ab4927ab02",
+      "line": 402,
+      "prefix_bytes": 2288823,
+      "prefix_sha256": "e88a366e170a410eec8bda9e13a84f6b189931175d394139080fe95812e78cd3",
+      "timestamp": "2026-11-01T15:35:20.219Z"
+    }
+  },
+  "tool_use_id": "toolu_0116cVdeG9EsB89GYnEVayz8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py\" compile --spec /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec/spec-state.json --references /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec/fetched-references.json --out-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx; echo \"compile_exit=$?\"; echo \"--- artifacts (open with Read / any Markdown viewer) ---\"; shasum -a 256 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec/*.md",
+    "description": "Compile spec docset and present artifacts"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-a2ae5aaec39ee8c04",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "33db67ff-1fb9-437f-9502-21d0098ce023",
+      "line": 59,
+      "prefix_bytes": 365556,
+      "prefix_sha256": "5d443ed6f1dcbcabc9bf40f79cfb4d260554f3dd4897831300ab58363f67e90f",
+      "timestamp": "2026-11-01T10:02:11.245Z"
+    },
+    "result": {
+      "uuid": "1c8bcb3c-e071-4518-96d5-0136ee6ac866",
+      "line": 60,
+      "prefix_bytes": 366699,
+      "prefix_sha256": "038df6770e8c2c90d696fba7199f9a825adb3f24cdcf3de60d88fbcb68ca72c8",
+      "timestamp": "2026-11-01T10:02:14.779Z"
+    }
+  },
+  "tool_use_id": "toolu_01RLTuymtSfswirziAgE8KN6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; python3 -B -c \"\nimport json;g=json.load(open('$R/.dev-graph/state/graph.json'));print(list(g.keys()) if isinstance(g,dict) else type(g)); n=g.get('nodes',[]);print('nodes',len(n)); print([x.get('id') or x.get('graph_node_id') for x in n][:20]); print(sum(1 for x in n if 'source_lineage' in json.dumps(x)))\"; find $R -maxdepth 2 -type l 2>/dev/null; ls $R/eval-log/run-dev-graph-system-spec/",
+    "description": "Inspect graph nodes and symlinks"
+  },
+  "is_error": false,
+  "tool_result_content": "['graph_revision', 'nodes', 'schema_version']\nnodes 0\n[]\n0\nartifact-delivery-choice.json\nc24-receipt.json\npreflight-report.json",
+  "tool_use_result": {
+    "stdout": "['graph_revision', 'nodes', 'schema_version']\nnodes 0\n[]\n0\nartifact-delivery-choice.json\nc24-receipt.json\npreflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

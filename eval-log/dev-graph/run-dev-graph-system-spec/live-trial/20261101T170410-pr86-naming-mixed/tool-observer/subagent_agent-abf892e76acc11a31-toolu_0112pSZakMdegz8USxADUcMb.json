@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-abf892e76acc11a31",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "273b4892-5f56-467d-aa50-db735c71b95a",
+      "line": 14,
+      "prefix_bytes": 83954,
+      "prefix_sha256": "dd317e52a8f6dfc08447564bc22d30b570aa9fff629f3dc2749d70af6bf001b4",
+      "timestamp": "2026-11-01T08:12:20.434Z"
+    },
+    "result": {
+      "uuid": "b854e8f7-49b3-436d-bc7c-b7183b6559e5",
+      "line": 17,
+      "prefix_bytes": 89882,
+      "prefix_sha256": "72a121eb1cb6106f82ddb7c2414abc92fef585044d812d7a8acac6b94875e9ef",
+      "timestamp": "2026-11-01T08:12:25.900Z"
+    }
+  },
+  "tool_use_id": "toolu_0112pSZakMdegz8USxADUcMb",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx; P=plugins/system-spec-harness; python3 $P/scripts/validate-coverage-matrix.py --matrix system-spec/spec-state.json; echo \"exit $?\"; python3 $P/scripts/validate-coverage-matrix.py --matrix system-spec/spec-state.json --require-complete; echo \"exit $?\"; wc -c system-spec/spec-state.json $P/skills/run-system-spec-elicit/references/required-info-catalog.json"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit 0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit 0\n  126275 system-spec/spec-state.json\n   10761 plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json\n  137036 total",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit 0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit 0\n  126275 system-spec/spec-state.json\n   10761 plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json\n  137036 total",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

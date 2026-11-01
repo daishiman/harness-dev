@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2a7d3071-67cb-4a66-b7e9-01dad7b0b1ca",
+      "line": 588,
+      "prefix_bytes": 3790094,
+      "prefix_sha256": "24d2622209012540c658a8e13a5aea7c715573e99549711ec33abec5a18762c3",
+      "timestamp": "2026-11-01T09:38:50.684Z"
+    },
+    "result": {
+      "uuid": "595c250c-70e9-4ffd-81af-b842e027f33c",
+      "line": 591,
+      "prefix_bytes": 3801595,
+      "prefix_sha256": "4a67afb60829af3035665e3eca1097d81a81dbec47a982cbab544730f75d508f",
+      "timestamp": "2026-11-01T09:38:52.827Z"
+    }
+  },
+  "tool_use_id": "toolu_012VFTsdLNXNCbxpyUsWGfbr",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n \"SPEC_EVALUATOR\\s*=\\|SPEC_IMPORT_KINDS\\s*=\\|def _classification\" -A3 plugins/dev-graph/scripts/build-graph-node.py | head -40; grep -n \"source_lineage\" -A20 plugins/dev-graph/schemas/graph-node.schema.json | head -50; ls plugins/dev-graph/templates/ 2>/dev/null; find plugins/dev-graph -name template-contract.json"
+  },
+  "is_error": false,
+  "tool_result_content": "79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n80:SPEC_IMPORT_KINDS = {\"specification\", \"architecture\"}\n81-PATCH_KEYS = {\n82-    \"title\", \"project_id\", \"domain\", \"owners\", \"tags\", \"priority\", \"start_date\", \"target_date\",\n83-    \"iteration\", \"depends_on\", \"related_nodes\", \"resource_scope\", \"status\",\n--\n622:def _classification(raw: Any, kind: str, slug: str) -> dict[str, Any]:\n623-    if not isinstance(raw, dict) or set(raw) - {\"reason\", \"candidates\", \"decision\"}:\n624-        raise WriterError(\"invalid_classification\", \"classification is {reason, candidates, decision}\")\n625-    reason, candidates, decision = raw.get(\"reason\"), raw.get(\"candidates\"), raw.get(\"decision\")\n35:    \"source_lineage\",\n36-    \"classification_confidence\",\n37-    \"classification_reason\",\n38-    \"classification_candidates\",\n39-    \"github_publication\",\n40-    \"issue_linkage\",\n41-    \"tracker_binding\",\n42-    \"beads_linkage\",\n43-    \"github_project_linkages\",\n44-    \"pull_request_linkages\",\n45-    \"execution_contexts\",\n46-    \"completion_evidence\",\n47-    \"implementation_readiness\"\n48-  ],\n49-  \"properties\": {\n50-    \"graph_node_id\": {\n51-      \"type\": \"string\",\n52-      \"minLength\": 1,\n53-      \"description\": \"移動・再分類・GitHub同期後も変化しない論理identity。file_pathはこのIDを参照する可変projectionでありidentityに使わない\"\n54-    },\n55-    \"id\": {\n--\n390:    \"source_lineage\": {\n391-      \"type\": \"object\",\n392-      \"required\": [\n393-        \"origin_kind\",\n394-        \"source_plugin\",\n395-        \"source_path\",\n396-        \"source_version\",\n397-        \"source_digest\",\n398-        \"imported_at\"\n399-      ],\n400-      \"properties\": {\n401-        \"origin_kind\": {\n402-          \"type\": \"string\",\n403-          \"enum\": [\n404-            \"manual\",\n405-            \"github\",\n406-            \"system-spec-harness\",\n407-            \"system-dev-planner\",\n408-            \"generated\"\n409-          ]\n410-        },\n--\n1351:          \"source_lineage\": {\n1352-            \"properties\": {\n1353-              \"origin_kind\": {\n1354-                \"enum\": [\n1355-                  \"system-spec-harness\",\n1356-                  \"system-dev-planner\"\napi-contract.md\narchitecture-backend.md\narchitecture-data.md\narchitecture-frontend.md\narchitecture-infrastructure.md\narchitecture-security.md\narchitecture.md\nclaude-settings.example.json\ncommon-frontmatter.md\ndocument.md\nfeature.md\nissue.md\nREADME.md\nrepo-config.example.json\nspecification.md\nsystem-phase-spec.md\nsystem-plan-contract.json\nsystem-task-spec.md\ntask-graph-node.md\ntask.md\ntemplate-contract.json\nplugins/dev-graph/templates/template-contract.json",
+  "tool_use_result": {
+    "stdout": "79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"\n80:SPEC_IMPORT_KINDS = {\"specification\", \"architecture\"}\n81-PATCH_KEYS = {\n82-    \"title\", \"project_id\", \"domain\", \"owners\", \"tags\", \"priority\", \"start_date\", \"target_date\",\n83-    \"iteration\", \"depends_on\", \"related_nodes\", \"resource_scope\", \"status\",\n--\n622:def _classification(raw: Any, kind: str, slug: str) -> dict[str, Any]:\n623-    if not isinstance(raw, dict) or set(raw) - {\"reason\", \"candidates\", \"decision\"}:\n624-        raise WriterError(\"invalid_classification\", \"classification is {reason, candidates, decision}\")\n625-    reason, candidates, decision = raw.get(\"reason\"), raw.get(\"candidates\"), raw.get(\"decision\")\n35:    \"source_lineage\",\n36-    \"classification_confidence\",\n37-    \"classification_reason\",\n38-    \"classification_candidates\",\n39-    \"github_publication\",\n40-    \"issue_linkage\",\n41-    \"tracker_binding\",\n42-    \"beads_linkage\",\n43-    \"github_project_linkages\",\n44-    \"pull_request_linkages\",\n45-    \"execution_contexts\",\n46-    \"completion_evidence\",\n47-    \"implementation_readiness\"\n48-  ],\n49-  \"properties\": {\n50-    \"graph_node_id\": {\n51-      \"type\": \"string\",\n52-      \"minLength\": 1,\n53-      \"description\": \"移動・再分類・GitHub同期後も変化しない論理identity。file_pathはこのIDを参照する可変projectionでありidentityに使わない\"\n54-    },\n55-    \"id\": {\n--\n390:    \"source_lineage\": {\n391-      \"type\": \"object\",\n392-      \"required\": [\n393-        \"origin_kind\",\n394-        \"source_plugin\",\n395-        \"source_path\",\n396-        \"source_version\",\n397-        \"source_digest\",\n398-        \"imported_at\"\n399-      ],\n400-      \"properties\": {\n401-        \"origin_kind\": {\n402-          \"type\": \"string\",\n403-          \"enum\": [\n404-            \"manual\",\n405-            \"github\",\n406-            \"system-spec-harness\",\n407-            \"system-dev-planner\",\n408-            \"generated\"\n409-          ]\n410-        },\n--\n1351:          \"source_lineage\": {\n1352-            \"properties\": {\n1353-              \"origin_kind\": {\n1354-                \"enum\": [\n1355-                  \"system-spec-harness\",\n1356-                  \"system-dev-planner\"\napi-contract.md\narchitecture-backend.md\narchitecture-data.md\narchitecture-frontend.md\narchitecture-infrastructure.md\narchitecture-security.md\narchitecture.md\nclaude-settings.example.json\ncommon-frontmatter.md\ndocument.md\nfeature.md\nissue.md\nREADME.md\nrepo-config.example.json\nspecification.md\nsystem-phase-spec.md\nsystem-plan-contract.json\nsystem-task-spec.md\ntask-graph-node.md\ntask.md\ntemplate-contract.json\nplugins/dev-graph/templates/template-contract.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

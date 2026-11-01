@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 PLUGIN = Path(__file__).resolve().parents[1]
-PREPARE = PLUGIN / "skills/run-dev-graph-system-spec/scripts/prepare-evaluation.py"
+PREPARE = PLUGIN / "skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py"
 RESOLVE = PLUGIN / "scripts/resolve-repo-context.py"
 
 

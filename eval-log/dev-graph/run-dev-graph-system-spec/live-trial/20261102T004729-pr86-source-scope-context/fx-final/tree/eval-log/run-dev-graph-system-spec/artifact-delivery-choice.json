@@ -1,0 +1,10 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "contract": "artifact-delivery-v1",
+  "transitions": [
+    {"event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "preflight-report.json JSON parse ok; R0 lineage exit 0 checked=0; R1 version 0.1.24 in >=0.1.22 <1.0.0; 4 entry points present"},
+    {"event": "present_actual_artifact", "to": "artifact_presented", "artifact_path": "eval-log/run-dev-graph-system-spec/preflight-report.json", "artifact_sha256": "7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8", "open_with": "cat <repo_root>/eval-log/run-dev-graph-system-spec/preflight-report.json"},
+    {"event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)", "recorded_at": "2026-11-01T15:49:24Z"},
+    {"event": "standard", "to": "semantic_evaluator_started"}
+  ]
+}

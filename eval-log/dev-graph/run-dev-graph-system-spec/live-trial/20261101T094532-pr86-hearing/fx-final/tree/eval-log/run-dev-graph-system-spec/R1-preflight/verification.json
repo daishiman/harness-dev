@@ -1,0 +1,47 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent-fork (read-only)",
+  "inputs": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "c24_receipt_sha256_measured": "e1972b54f97b340976072c5d20d0b281f54919594de82344a862275c22cc6bc4",
+    "c24_receipt_sha256_matches_report_and_goal_spec": true,
+    "preflight_report": "eval-log/run-dev-graph-system-spec/preflight-report.json"
+  },
+  "measurements": {
+    "manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "manifest_name": "system-spec-harness",
+    "manifest_version": "0.1.25",
+    "composition_range": ">=0.1.22 <1.0.0",
+    "composition_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "in_range": true,
+    "manifest_keys": ["name", "version", "dependencies", "description", "author"],
+    "harness_only_keys_in_manifest": [],
+    "package_contract_entry_points_skills": ["assign-system-spec-completeness-evaluator", "ref-system-design-knowledge", "run-skill-feedback", "run-system-spec-compile", "run-system-spec-doc-fetch", "run-system-spec-elicit"],
+    "required_entry_points": {
+      "run-system-spec-elicit": {"in_contract": true, "skill_md_exists": true, "frontmatter_name_matches": true},
+      "run-system-spec-doc-fetch": {"in_contract": true, "skill_md_exists": true, "frontmatter_name_matches": true},
+      "run-system-spec-compile": {"in_contract": true, "skill_md_exists": true, "frontmatter_name_matches": true},
+      "assign-system-spec-completeness-evaluator": {"in_contract": true, "skill_md_exists": true, "frontmatter_name_matches": true}
+    },
+    "report_matches_measurement": true,
+    "external_plugin_modified": false
+  },
+  "checklist": {
+    "R1_5.3_version_in_composition_range_and_4_entry_points_exist": {"result": "YES", "evidence": "0.1.25 satisfies >=0.1.22 <1.0.0; 4 skills listed in package-contract.json and skills/<name>/SKILL.md exist"},
+    "common_inputs_all_verified": {"result": "YES", "evidence": "plugin.json, plugin-composition.yaml, package-contract.json, 4 SKILL.md, c24 receipt digest all read and checked"},
+    "common_output_shape_and_authority": {"result": "YES", "evidence": "preflight-report.dependency has name/version/composition_range/in_range/required_entry_points, all matching measurement; range authority is composition (not the planning value >=0.1.0)"},
+    "common_boundary_violations_zero": {"result": "YES", "evidence": "no fallback/duplication; git status shows no changes under plugins/; verifier wrote only this file"}
+  },
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": [
+    "preflight-report.caller_root is an absolute path; SKILL.md requires the caller root in the preflight report, so this is not treated as a blocker, but it is environment-specific (cf. Layer 3)."
+  ],
+  "loop": {
+    "original_goal": "system-spec-harness version range and required 4 entry points availability receipt (fail-closed on mismatch)",
+    "delta_from_original": "none",
+    "merged_directive_for_next": "R1 PASS: hand off to R2 elicit resume (with R0 PASS)",
+    "drift_signal": false
+  }
+}

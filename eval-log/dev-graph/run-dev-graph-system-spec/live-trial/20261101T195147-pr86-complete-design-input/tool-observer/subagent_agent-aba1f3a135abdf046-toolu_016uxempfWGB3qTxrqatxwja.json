@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-aba1f3a135abdf046",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f8ddcdad-55a8-474b-8549-d53076ab14d2",
+      "line": 29,
+      "prefix_bytes": 176919,
+      "prefix_sha256": "2c63c86e77fc9634ac4f185473ed2745887a8817e3dd80328f8b9f314c20e8cb",
+      "timestamp": "2026-11-01T11:13:33.004Z"
+    },
+    "result": {
+      "uuid": "5d8fbee0-6456-4677-a279-97da6f3e4ca3",
+      "line": 30,
+      "prefix_bytes": 179813,
+      "prefix_sha256": "f1ed6ef644bd513112a784fb1f64344b3c6293d6d133207e142715e079f3b889",
+      "timestamp": "2026-11-01T11:13:39.317Z"
+    }
+  },
+  "tool_use_id": "toolu_016uxempfWGB3qTxrqatxwja",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "R=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx; cd $R; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph $R/.dev-graph/state/graph.json --repo-root $R --strict-artifact-readiness; echo \"rc=$?\"; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root $R; echo \"rc=$?\"; python3 -B -c \"\nimport json,hashlib\ng=json.load(open('$R/.dev-graph/state/graph.json'))\nprint('sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode('utf-8')).hexdigest())\""
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nrc=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nsha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47",
+  "tool_use_result": {
+    "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nrc=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nsha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

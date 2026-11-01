@@ -1,0 +1,26 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "B1: C19 R2-delegate 5.3第3項の毎Bash固定root契約が未達。main transcript line191/237/282/290/304（toolu_01XRu1weQJVPAzrGAh3XWrZS / 01XNqENHLW17qvvaeJAz1kJ9 / 01VNue35HGRcFovNe6Z6rF3X / 01HZuDUJFkKge4UWX1km2Yjc / 01QyesRcPfTrTvKEFpANgNyg）はelicit・doc-fetch・compileの提示/記録/検査を行うBashだが、各呼出しで固定receipt由来のCLAUDE_PROJECT_DIR exportがない。実compile等の取込元生成は正しい前置きで行われたため、root外生成が起きたという判定ではない。",
+    "B2: C05最終PASS前のdoc_verification全JSON再取得・一致確認が未達。C05 transcript line145 / toolu_011MRa3FtqZ3oaoYYkBfcxGF は初回のrepo_root・inputs各path/sha256・validator_path/sha256・argv・exit/stdout/stderrを持つ完全形を再構築せず、{refs,state,val,exit_code,stdout,stderr}へ縮約したDOC_SAME=Trueで代替した。C05 SMD99、R1/R2、doc-fetch R4 Layer3とtask132に反する。入力不変や機械exit0はこの実行義務を代替しない。",
+    "B3: 正式C02のpost-choice未達responsibilityのAgent forkが欠落。run-dev-graph-node SMD176/182は各周回の責務実行をforkへ出すが、main line623でstandardを記録し、line632で全checklist pendingを作成して同じmain Bashでcanonical addを実行している。C02担当の責務Agentは実際には0件。post-addのdev-graph-integrity-auditorとC19 R3 verifierは実行されたが、C02責務実行forkの代替ではない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec106"
+  },
+  "transcript_sha256": "0a2e3c771df2a37cf1f6a4ab7bf47d3a77f7671ad1d23350cd31f5effc770fa9",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a54ba11346239bddc.jsonl",
+    "tool-observer/subagent_agent-a54ba11346239bddc-toolu_011MRa3FtqZ3oaoYYkBfcxGF.json",
+    "tool-observer/main-toolu_01UtkrrvGRrnbx9nRiKS2HoB.json",
+    "tool-observer/index.json",
+    "tool-observer-source.py",
+    "observer-provenance.json",
+    "evidence-redaction.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl"
+  ]
+}

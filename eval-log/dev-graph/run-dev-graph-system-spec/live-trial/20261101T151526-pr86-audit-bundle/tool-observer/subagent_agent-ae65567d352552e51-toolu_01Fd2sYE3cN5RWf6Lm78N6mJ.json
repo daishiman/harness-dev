@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c7613bfb-1b6a-495e-826e-ff787ab31d68",
+      "line": 119,
+      "prefix_bytes": 641567,
+      "prefix_sha256": "f1ab39718f95bb2b1e6f06dd1837c3b81261987badeb05e8a8032f35dee96f56",
+      "timestamp": "2026-11-01T06:28:29.705Z"
+    },
+    "result": {
+      "uuid": "a4071c74-c9c7-4616-a511-d60b58a73901",
+      "line": 120,
+      "prefix_bytes": 642547,
+      "prefix_sha256": "02ecc6377de2379efab241f976ea705c252b8981512519b7b74e854c19efbd58",
+      "timestamp": "2026-11-01T06:28:32.393Z"
+    }
+  },
+  "tool_use_id": "toolu_01Fd2sYE3cN5RWf6Lm78N6mJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport subprocess,sys,pathlib\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/validate-coverage-matrix.py','--matrix','system-spec/spec-state.json','--require-foundation'],capture_output=True,text=True)\nprint('foundation',r.returncode,r.stdout,r.stderr)\nfor p in pathlib.Path('.').rglob('*.py'):\n  if p.name in ('verify-completeness.py','validate-prompt.py'): print(p)\n\"",
+    "description": "Run foundation gate, find prompt validators in repo"
+  },
+  "is_error": false,
+  "tool_result_content": "foundation 0 OK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\n \nplugins/harness-creator/vendor/prompt-creator/verify-completeness.py",
+  "tool_use_result": null
+}

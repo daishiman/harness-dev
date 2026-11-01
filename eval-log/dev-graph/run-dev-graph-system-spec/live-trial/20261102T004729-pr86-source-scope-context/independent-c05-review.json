@@ -1,0 +1,128 @@
+{
+  "scope": "123 C05完了prefix。C19全goal/R2/C02/R3は保留。",
+  "final_result": null,
+  "evaluator_id": "/root/review_sysspec123_fresh",
+  "blockers": [],
+  "transcript_prefix_sha256": "c69eaf24a999b3222069aed757e7c213c840e9875ff48496c893873077e30fd5",
+  "checks": {
+    "native_observer": {
+      "streams": 8,
+      "events": 169,
+      "native_manifest_bytes_sha_and_live_prefix": true,
+      "observer_source_uuid_line_prefix_sha_input_result": true
+    },
+    "C05_required_input": {
+      "all_18_prompt_full": true,
+      "all_10_markdown_full": true,
+      "state_refs_full": true,
+      "own_R1_R2_rubric_aspect_schema_full": true,
+      "C04_resource_map_full": true,
+      "own_resource_map_Read": false
+    },
+    "prompt_meaning": {
+      "report_aspect": "prompt_quality PASS",
+      "semantic_checks_recorded": [
+        "C1-C4",
+        "Layer roles",
+        "L7→L1 dependency",
+        "L5 goal as outcome",
+        "atomic checklist stopping condition",
+        "dynamic execution",
+        "reproducibility",
+        "Self-Evaluation"
+      ],
+      "not_read_only_proxy": true,
+      "claim_location": "C05 report aspects.prompt_quality.summary and findings prompt_quality; C05 final283",
+      "per_prompt_matrix_required_by_source": false,
+      "mechanical_gate_exception": "外部prompt-creator不在のstandalone例外。意味評価は行い、機械gate未実行をinfoで開示。"
+    },
+    "C05_report": {
+      "actual_native_report_write": 279,
+      "sha256": "32b043246d2d9eb98461fa4ce8d7f02236788802d5b07985c667ca3723217f52",
+      "spec_dir": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec",
+      "all_six_aspects": "PASS",
+      "high_findings": 0,
+      "findings": 12,
+      "gaps": [],
+      "snapshot_matches_start_stdout": true,
+      "all_12_snapshot_digest_matches_current": true,
+      "all_3_gate_json_matches_stdout_unmodified": true,
+      "G_knowledge_all_4_profiles_exit": 0,
+      "hearing_result_JSON_exact": true,
+      "actual_aggregate_C05": {
+        "line": 279,
+        "exit": 0,
+        "session": "5153f99b-12af-4c89-b679-20816bb67111"
+      },
+      "actual_aggregate_main": {
+        "line": 427,
+        "exit": 0
+      }
+    },
+    "C05_boundary": {
+      "saved_only": [
+        "fx/eval-log/hearing-audit.json",
+        "fx/eval-log/system-spec-completeness-report.json"
+      ],
+      "literal_Path_quoted_heredoc_both": true,
+      "report_saved_content_equals_native_heredoc": true,
+      "spec_state_refs_markdown_writes": 0,
+      "custom_reader_builder_temp_save": 0
+    },
+    "helper": {
+      "main_line": 402,
+      "fixed_C24_digest": "6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab",
+      "receipt_validated": true,
+      "helper_stdout_skill_args_equals_actual_Skill409": true,
+      "absolute_spec_dir_output_report_spec_dir_all_same": true
+    },
+    "audits": {
+      "foreground_no_name_no_background": 3,
+      "native_order": "C07 call236→final237→resolved ledger240→C06 call245→final246→resolved ledger248→C08 call257→final258→resolved ledger260",
+      "all_native_final_markers": "AUDIT_VERDICT: PASS",
+      "session_one": "5153f99b-12af-4c89-b679-20816bb67111",
+      "all_prompt_sha_and_ID_token": true,
+      "all_completion_text_sha_match": true,
+      "C07_completion_sha256": "741901140533ff4fda898722bad482974e777669fd18a3b6d10c777fa15cdae6",
+      "C06_completion_sha256": "3ad602059ddfed50970fe953dd4608f8b7d3c5f9d12aa13545becf2999a8ce24",
+      "C08_completion_sha256": "63ff4f2707b3c960233872cdf364544d2a050e24a1ab25915f3bcaa09cb691bc",
+      "report_dispatch_receipts_match_schema12_ledger": true,
+      "C08_full_R4_adapter_catalog": true,
+      "C08_actual_WebFetch": 7,
+      "C08_targets": 5,
+      "C08_hosts_all_allowed": true,
+      "C08_time_offset_issue": "C05はKubernetes timezoneずれをlow findingへ残した。現行claim失効は示されず、新記事があるだけでstaleへ拡張しない。"
+    }
+  },
+  "notes": [
+    {
+      "id": "C05_MAP",
+      "classification": "補助runner契約の索引Read漏れ、goal blocker未認定",
+      "exact_runner_text": "C05はown R1/R2/rubric/aspect/schema/own mapとC04 map（skills/ref-system-design-knowledge/references/resource-map.yaml）を全文取得し、全仕様Markdown/state/refsを評価する。",
+      "source_text": "C05 SKILL reference_refs に references/resource-map.yaml、R1-score Layer3.1 に resource-map | references/resource-map.yaml を宣言。source自身に own mapを全文Readしてから評価との必読明文は見つからない。Step3が設計知識に用いるmapはC04参照で全文Read済み。",
+      "reference_coverage_and_causality": "own mapは正本ポインタ索引で新評価規則を定義しない。rubric/aspect/schema/対象資料、正規aggregate/snapshot/coverage/citation、3native監査と各SSOT、C04map/18promptは実被覆。索引未読によるPurpose/6観点評価/3観測の欠落への直接因果は観測できない。resume receiptを求めない今回では該当schema/writerの未Readも追加mustにしない。"
+    },
+    {
+      "id": "RAW_RESPONSE",
+      "classification": "最終metadata待ち",
+      "observation": "C05 nested native resultは表示本文のみ。1.2 whole tool_response digestをmetadata込みで独立再計算する材料はまだない。台帳/receipt/actual aggregate整合と1.3実final本文digestは確認済みだが、この未検査を済みとはしない。"
+    },
+    {
+      "id": "PENDING",
+      "classification": "範囲外未完了",
+      "observation": "R2 Verifier/C02/R3/C19最終IN1とgoal判定は未完了として保留しblockerにしない。"
+    }
+  ],
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/manifest.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/main.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/subagent-agent-afb32354c2e1fe747.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/subagent-agent-ab7bc5380f2087975.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/subagent-agent-a4787ac977fd08faa.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/subagent-agent-a965bf4119e6dc68e.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-c05-complete/tool-observer/index.json",
+    "/tmp/pr86-sysspec123-c05-observer-validation.json",
+    "/tmp/pr86-sysspec123-audits-read-coverage.json",
+    "/tmp/pr86-sysspec123-audits-written-source.json"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c2880ff6-787c-43f0-aea8-b06abfea43b1",
+      "line": 444,
+      "prefix_bytes": 3041855,
+      "prefix_sha256": "ab2b92ff0897cadc6e7eb4b20627045165cf96fb9290697e7497ac6c88cdd0f1",
+      "timestamp": "2026-11-01T13:40:01.728Z"
+    },
+    "result": {
+      "uuid": "ef80330d-2e78-4cc1-8654-2d93d038a2da",
+      "line": 445,
+      "prefix_bytes": 3044060,
+      "prefix_sha256": "2599a45968bf4aa73c5b0520dd6f5c736459d68f14a6020a319a6d1d95b21f7a",
+      "timestamp": "2026-11-01T13:40:06.224Z"
+    }
+  },
+  "tool_use_id": "toolu_01Lpx8cjxE99hCgZqAgkBTBQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && S=$CLAUDE_PROJECT_DIR/plugins/system-spec-harness; D=$CLAUDE_PROJECT_DIR/system-spec; python3 -B $S/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --report $CLAUDE_PROJECT_DIR/eval-log/system-spec-completeness-report.json --spec-dir $D --session 2>&1 | tail -15; echo \"agg=$?\"; python3 -B $S/scripts/validate-coverage-matrix.py --matrix $D/spec-state.json --require-complete --require-basis --require-foundation >/dev/null 2>&1; echo cov=$?; python3 -B $S/scripts/validate-source-citation.py --targets $D/spec-state.json --references $D/fetched-references.json --state $D/spec-state.json --repo-root $CLAUDE_PROJECT_DIR >/dev/null 2>&1; echo cite=$?; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/graph.json --repo-root $CLAUDE_PROJECT_DIR --strict-artifact-readiness >/dev/null 2>&1; echo schema=$?; python3 -c 'import json;r=json.load(open(\"eval-log/system-spec-completeness-report.json\"));print(r.get(\"verdict\"))'",
+    "description": "Run aggregator and three round gates"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\naggregate-completeness.py: error: argument --session: expected one argument\nagg=0\ncov=0\ncite=0\nschema=2\nFAIL",
+  "tool_use_result": {
+    "stdout": "usage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\naggregate-completeness.py: error: argument --session: expected one argument\nagg=0\ncov=0\ncite=0\nschema=2\nFAIL",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

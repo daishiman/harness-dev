@@ -1,0 +1,40 @@
+{
+  "contract": "artifact-delivery-v1",
+  "transitions": [
+    {
+      "state": "artifact_created",
+      "event": null,
+      "at": "2026-11-01T02:51:57.688498+00:00"
+    },
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "at": "2026-11-01T02:51:57.688498+00:00"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+      "sha256": "4f9ec6cc1d56adb9d53353c094378f9a66d3119841e98cd9ecf3e64a7546062f",
+      "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+      "at": "2026-11-01T02:51:57.688498+00:00"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "isolated-fixture pre-answer contract (task.md: artifact_deliveryの選択はstandard)",
+      "at": "2026-11-01T02:51:57.688498+00:00"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started",
+      "at": "2026-11-01T02:51:57.688498+00:00"
+    }
+  ],
+  "current": "semantic_evaluator_started"
+}

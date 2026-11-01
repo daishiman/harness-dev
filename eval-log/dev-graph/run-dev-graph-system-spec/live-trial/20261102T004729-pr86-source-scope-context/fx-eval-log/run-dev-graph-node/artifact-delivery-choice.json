@@ -1,0 +1,15 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "contract": "artifact-delivery-v1",
+  "transitions": [
+    {"event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "build-graph-node.py add --dry-run exit0 (pre_write_validation findings 0) then add exit0 applied_count 2; validate-source-lineage --node-id x2 exit0 checked 2"},
+    {"event": "present_actual_artifact", "to": "artifact_presented", "artifacts": [
+      {"path": "specs/billing-audit-system-spec.md", "sha256": "9fcd5f5e7bf96b5da8702a7dc13e8b2af73e3da076e0be0b4d41e12d5435d620"},
+      {"path": "architecture/billing-audit-system-architecture.md", "sha256": "ae3a1be034863747dd1bb6fc41b823b14f6694392869b462de91559ec590f166"},
+      {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "52c432801deaee5ed99177455ec290e38a2bbf973a63a36efaae54160965fe94"},
+      {"path": ".dev-graph/state/graph.json", "graph_revision": 1, "graph_digest": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b"}],
+     "open_with": "less <repo_root>/specs/billing-audit-system-spec.md ; less <repo_root>/architecture/billing-audit-system-architecture.md"},
+    {"event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)", "recorded_at": "2026-11-01T16:13:05Z"},
+    {"event": "standard", "to": "semantic_evaluator_started"}
+  ]
+}

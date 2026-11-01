@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "426a8d59-e796-45df-b6fc-f60be1ad9ec9",
+      "line": 595,
+      "prefix_bytes": 3661290,
+      "prefix_sha256": "c090ba5a19ba0c45730143ff3839c997d3bd7c6807652ced20d00d03d73345c6",
+      "timestamp": "2026-11-01T11:06:13.963Z"
+    },
+    "result": {
+      "uuid": "f2307fa0-d3a6-4b14-926a-da2586b71884",
+      "line": 596,
+      "prefix_bytes": 3662319,
+      "prefix_sha256": "e69198b0af83473bd7a1537c1d1ec76a34d8636e737a2d69ba17a5a0d7211aab",
+      "timestamp": "2026-11-01T11:06:17.981Z"
+    }
+  },
+  "tool_use_id": "toolu_017Z8WwGj5Ev9sNdcJDYkb3N",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && D=$PWD; S=$D/plugins/system-spec-harness; G=$D/plugins/dev-graph; python3 -B \"$S/scripts/validate-coverage-matrix.py\" --matrix \"$D/system-spec/spec-state.json\" --require-complete --require-basis --require-foundation >/dev/null; echo cov=$?; python3 -B \"$S/scripts/validate-source-citation.py\" --targets \"$D/system-spec/spec-state.json\" --references \"$D/system-spec/fetched-references.json\" --state \"$D/system-spec/spec-state.json\" --repo-root \"$D\" >/dev/null; echo cit=$?; python3 -B \"$G/scripts/validate-graph-schema.py\" --graph \"$D/.dev-graph/state/graph.json\" --repo-root \"$D\" --strict-artifact-readiness | tail -2; echo schema=$?",
+    "description": "Run round 2 three IN1 gates"
+  },
+  "is_error": false,
+  "tool_result_content": "cov=0\ncit=0\n  \"violations\": []\n}\nschema=0",
+  "tool_use_result": {
+    "stdout": "cov=0\ncit=0\n  \"violations\": []\n}\nschema=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

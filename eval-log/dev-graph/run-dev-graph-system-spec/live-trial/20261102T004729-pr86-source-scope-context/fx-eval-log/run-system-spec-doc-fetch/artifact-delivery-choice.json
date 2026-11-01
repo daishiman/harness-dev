@@ -1,0 +1,11 @@
+{
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "contract": "artifact-delivery-v1",
+  "need_decision": {"doc_fetch_required": false, "reason": "R1: spec-state.targets 5件 (postgres/react/fastapi/typescript/kubernetes) が fetched-references に各1件対応・重複0、knowledge_candidates の discovered 0件。validate-source-citation exit0。未取得参照なしのため再取得/assemble を行わず入力を保持。現行版の意味的鮮度は C08 (OUT1) が evaluator 内で再照合する。"},
+  "transitions": [
+    {"event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "fetched-references JSON parse ok; validate-source-citation --state exit0"},
+    {"event": "present_actual_artifact", "to": "artifact_presented", "artifact_path": "system-spec/fetched-references.json", "artifact_sha256": "471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594", "open_with": "cat <repo_root>/system-spec/fetched-references.json"},
+    {"event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)", "recorded_at": "2026-11-01T15:54:08Z"},
+    {"event": "standard", "to": "semantic_evaluator_started"}
+  ]
+}

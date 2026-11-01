@@ -1,0 +1,41 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "07f1e0b4-d1d5-40b4-843d-d54025367b40",
+      "line": 318,
+      "prefix_bytes": 1375763,
+      "prefix_sha256": "b2a433d026b7340aa63a20e49eaf0c118fb3593fe1f93113c6d6e2d3521dba37",
+      "timestamp": "2026-11-01T08:52:54.978Z"
+    },
+    "result": {
+      "uuid": "46de74a5-98cf-4ac6-9fc8-8b83e547e3fc",
+      "line": 319,
+      "prefix_bytes": 1384155,
+      "prefix_sha256": "37176ea5081d5a5ca7e463b8bcfe4c61a122cd836f5a34db590456e065f14bcf",
+      "timestamp": "2026-11-01T08:52:55.238Z"
+    }
+  },
+  "tool_use_id": "toolu_01QHAwYayxZq6Px58HZ4hfFB",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+    "limit": 80
+  },
+  "is_error": false,
+  "tool_result_content": "1\t---\n2\tname: run-system-spec-doc-fetch\n3\tdescription: 対象カテゴリで使う予定のツール・インフラ・フレームワークの最新公式ドキュメントを集めて公式host・version や更新日・確認時刻・参照元を fetched-references.json に記録したいとき、spec-compile 前に公式サイトの現行版で裏取りしたいときに使う。\n4\tdisable-model-invocation: false\n5\tuser-invocable: true\n6\tkind: run\n7\tprefix: run\n8\teffect: local-artifact\n9\towner: team-platform\n10\tsince: 2026-07-11\n11\tversion: 0.1.0\n12\tsource: plugin-plans/system-spec-harness/component-inventory.json\n13\tsource-tier: internal\n14\tlast-audited: 2026-07-11\n15\taudit-trigger: official-update\n16\tallowed-tools:\n17\t  - WebSearch\n18\t  - WebFetch\n19\t  - Read\n20\t  - Write\n21\t  - Bash(python3 *)\n22\tresponsibility_refs:\n23\t  - prompts/R1-identify.md\n24\t  - prompts/R2-fetch.md\n25\t  - prompts/R3-record.md\n26\t  - prompts/R4-audit-doc-freshness.md\n27\tschema_refs:\n28\t  - ../../schemas/fetched-references.schema.json\n29\tresponsibilities:\n30\t  - id: R1-identify\n31\t    name: identify\n32\t    prompt_required: true\n33\t  - id: R2-fetch\n34\t    name: fetch\n35\t    prompt_required: true\n36\t  - id: R3-record\n37\t    name: record\n38\t    prompt_required: true\n39\t  - id: R4-audit-doc-freshness\n40\t    name: audit-doc-freshness\n41\t    prompt_required: true\n42\tcombinators:\n43\t  - with-goal-seek\n44\t  - with-feedback-contract\n45\tgoal_seek:\n46\t  activation_state: semantic_evaluator_started\n47\t  engine: inline\n48\t  fork: subagent\n49\t  max_loops: 5\n50\tcompleteness_exempt:\n51\t  - \"manifest: official-source discovery is an inline goal-seek loop selected from unmet targets; the SKILL body is the runtime SSOT.\"\n52\tfeedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)\n53\t  activation_state: semantic_evaluator_started\n54\t  max_iterations: 5\n55\t  criteria:\n56\t    - id: IN1\n57\t      loop_scope: inner\n58\t      text: validate-source-citation.py で対象 target_id と fetched-references.json が全件対応し retrieved_at/source_url/official_publisher/official_host/(version または last_updated)/latest_checked_at/evidence_ref/evidence_sha256 を持ち、公式host・時刻・repo内取得証跡digestが一致することを検証し欠落0件。\n59\t      verify_by: script\n60\t    - id: OUT1\n61\t      loop_scope: outer\n62\t      text: 対象ツール/インフラ/フレームワークごとに C08 が公式サイト上の現行版を再確認し version/更新日・確認時刻・参照元が記録されていることを受入テストが確認する。\n63\t      verify_by: test\n64\tartifact_delivery:\n65\t  contract: artifact-delivery-v1\n66\t  state_machine:\n67\t    initial: artifact_created\n68\t    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]\n69\t    transitions:\n70\t      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}\n71\t      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}\n72\t      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}\n73\t      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}\n74\t      - {from: user_choice_recorded, event: \"light|standard|detailed\", to: semantic_evaluator_started}\n75\t      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}\n76\t    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]\n77\t    accept_contexts: {evaluator: 0, improver: 0}\n78\t  release: explicit-only\n79\t  exhaustive: explicit-only\n80\truntime_root_policy: host-skill-path",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+      "content": "---\nname: run-system-spec-doc-fetch\ndescription: 対象カテゴリで使う予定のツール・インフラ・フレームワークの最新公式ドキュメントを集めて公式host・version や更新日・確認時刻・参照元を fetched-references.json に記録したいとき、spec-compile 前に公式サイトの現行版で裏取りしたいときに使う。\ndisable-model-invocation: false\nuser-invocable: true\nkind: run\nprefix: run\neffect: local-artifact\nowner: team-platform\nsince: 2026-07-11\nversion: 0.1.0\nsource: plugin-plans/system-spec-harness/component-inventory.json\nsource-tier: internal\nlast-audited: 2026-07-11\naudit-trigger: official-update\nallowed-tools:\n  - WebSearch\n  - WebFetch\n  - Read\n  - Write\n  - Bash(python3 *)\nresponsibility_refs:\n  - prompts/R1-identify.md\n  - prompts/R2-fetch.md\n  - prompts/R3-record.md\n  - prompts/R4-audit-doc-freshness.md\nschema_refs:\n  - ../../schemas/fetched-references.schema.json\nresponsibilities:\n  - id: R1-identify\n    name: identify\n    prompt_required: true\n  - id: R2-fetch\n    name: fetch\n    prompt_required: true\n  - id: R3-record\n    name: record\n    prompt_required: true\n  - id: R4-audit-doc-freshness\n    name: audit-doc-freshness\n    prompt_required: true\ncombinators:\n  - with-goal-seek\n  - with-feedback-contract\ngoal_seek:\n  activation_state: semantic_evaluator_started\n  engine: inline\n  fork: subagent\n  max_loops: 5\ncompleteness_exempt:\n  - \"manifest: official-source discovery is an inline goal-seek loop selected from unmet targets; the SKILL body is the runtime SSOT.\"\nfeedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)\n  activation_state: semantic_evaluator_started\n  max_iterations: 5\n  criteria:\n    - id: IN1\n      loop_scope: inner\n      text: validate-source-citation.py で対象 target_id と fetched-references.json が全件対応し retrieved_at/source_url/official_publisher/official_host/(version または last_updated)/latest_checked_at/evidence_ref/evidence_sha256 を持ち、公式host・時刻・repo内取得証跡digestが一致することを検証し欠落0件。\n      verify_by: script\n    - id: OUT1\n      loop_scope: outer\n      text: 対象ツール/インフラ/フレームワークごとに C08 が公式サイト上の現行版を再確認し version/更新日・確認時刻・参照元が記録されていることを受入テストが確認する。\n      verify_by: test\nartifact_delivery:\n  contract: artifact-delivery-v1\n  state_machine:\n    initial: artifact_created\n    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]\n    transitions:\n      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}\n      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}\n      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}\n      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}\n      - {from: user_choice_recorded, event: \"light|standard|detailed\", to: semantic_evaluator_started}\n      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}\n    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]\n    accept_contexts: {evaluator: 0, improver: 0}\n  release: explicit-only\n  exhaustive: explicit-only\nruntime_root_policy: host-skill-path",
+      "numLines": 80,
+      "startLine": 1,
+      "totalLines": 206
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "run-dev-graph-system-spec",
+  "loop": 2,
+  "elicit": {
+    "skill": "system-spec-harness:run-system-spec-elicit",
+    "args": "--resume --repo-root <repo_root>",
+    "mode": "gate-only resume: hearing_progress.complete=true, next_question=null, loop_count=4; no writer op executed",
+    "gates": {"validate-coverage-matrix --require-complete --require-basis --require-foundation": 0, "validate-knowledge-graph --profile required-info --state": 0, "ungrounded_blocking_items": []},
+    "spec_state": {"path": "system-spec/spec-state.json", "sha256": "9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2", "schema_version": "1.0"},
+    "artifact_delivery": "standard (task pre-answer)"
+  },
+  "doc_fetch": {
+    "invoked": false,
+    "reason": "trigger (a) unfetched references before compile not met: all 4 targets (postgres, react, fastapi, typescript) have fetched-references records and validate-source-citation exit 0; trigger (b) hearing back-up request not raised (no hearing turn in this resume)",
+    "fetched_references": {"path": "system-spec/fetched-references.json", "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729", "versions": {"postgres": "16.15", "react": "19.3", "fastapi": "0.162.0", "typescript": "7.0"}}
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a8e0a010-b053-4b1d-a799-31506efc6773",
+      "line": 137,
+      "prefix_bytes": 837081,
+      "prefix_sha256": "a4e1e5bcb722952254f97258b47be31bba666ffe800fbadaa6cef911ddd99d02",
+      "timestamp": "2026-11-01T11:16:02.044Z"
+    },
+    "result": {
+      "uuid": "1f714d64-d8b1-418c-bfae-1cfcde206021",
+      "line": 138,
+      "prefix_bytes": 838567,
+      "prefix_sha256": "dbd2c271960d56e0d757ee8b7149684b3427d24d7a1ef6e8400f6837974407f2",
+      "timestamp": "2026-11-01T11:16:05.319Z"
+    }
+  },
+  "tool_use_id": "toolu_0186d14LTD7RtGfjVTzCpypE",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "diff <(python3 -m json.tool --sort-keys candidate-import.json) <(python3 -m json.tool --sort-keys eval-log/run-dev-graph-system-spec/R3-import/import-payload.json); ls -la candidate-import.json; git show --stat HEAD | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "diff: /dev/fd/12: Operation not permitted\n-rw-r--r--@ 1 dm  wheel  25755 11月  1 19:49 candidate-import.json\ncommit 6ae4c59250031db2abe7109c5fe3bb58f0cfd009\nAuthor: live-trial <live-trial@example.invalid>\nDate:   Sun Nov 1 19:49:22 2026 +0900\n\n    fixture: canonical resume inputs",
+  "tool_use_result": {
+    "stdout": "diff: /dev/fd/12: Operation not permitted\n-rw-r--r--@ 1 dm  wheel  25755 11月  1 19:49 candidate-import.json\ncommit 6ae4c59250031db2abe7109c5fe3bb58f0cfd009\nAuthor: live-trial <live-trial@example.invalid>\nDate:   Sun Nov 1 19:49:22 2026 +0900\n\n    fixture: canonical resume inputs",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

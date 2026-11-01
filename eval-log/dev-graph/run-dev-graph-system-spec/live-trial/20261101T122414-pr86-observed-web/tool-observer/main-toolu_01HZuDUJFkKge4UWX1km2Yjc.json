@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ed5ea9ad-69e5-47b7-bf96-69cdaee24554",
+      "line": 290,
+      "prefix_bytes": 1336634,
+      "prefix_sha256": "a6a9dd4adaf01609fbbbaf99f37b733fbe747f650a9dbd88436fb98c632665b2",
+      "timestamp": "2026-11-01T03:28:18.539Z"
+    },
+    "result": {
+      "uuid": "1ade82ca-4ba4-4c96-9611-205604fd773c",
+      "line": 296,
+      "prefix_bytes": 1338342,
+      "prefix_sha256": "45ccbfdac56187586913acc3c69dd9f42d50427fc080013697f07aff2d03acd2",
+      "timestamp": "2026-11-01T03:28:22.455Z"
+    }
+  },
+  "tool_use_id": "toolu_01HZuDUJFkKge4UWX1km2Yjc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B - <<'PY'\nimport json,datetime,pathlib\nnow=datetime.datetime.now(datetime.timezone.utc).isoformat()\nfiles={\"00-requirements-definition.md\":\"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\",\"database.md\":\"3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de\",\"auth.md\":\"21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897\",\"ui-ux.md\":\"420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410\",\"security.md\":\"c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1\",\"infrastructure.md\":\"d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd\",\"backend.md\":\"8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466\",\"frontend.md\":\"10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5\",\"maintenance-ops.md\":\"1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0\",\"index.md\":\"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\"}\nrec={\"delegate\":\"system-spec-harness:run-system-spec-compile\",\"compiled_at\":now,\"IN1_entry_gates\":{\"validate-coverage-matrix --require-complete\":0,\"validate-source-citation\":0,\"validate-design-knowledge-refs\":0},\n\"compile\":{\"argv\":\"compile-spec-doc.py compile --spec <root>/system-spec/spec-state.json --references <root>/system-spec/fetched-references.json --out-dir <root>/system-spec --repo-root <root>\",\"exit\":0,\"files\":{\"system-spec/\"+k:v for k,v in files.items()},\"deterministic_note\":\"bytes identical to pre-run seed: same inputs -> same output\"},\n\"open_with\":\"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/index.md\",\n\"events\":[{\"state\":\"artifact_created\",\"at\":now},{\"state\":\"minimum_guard_pass\",\"at\":now},{\"state\":\"artifact_presented\",\"at\":now},{\"state\":\"user_choice_recorded\",\"at\":now,\"choice\":\"standard\",\"source\":\"task.md 事前回答契約\"},{\"state\":\"semantic_evaluator_started\",\"at\":now}]}\npathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log/run-dev-graph-system-spec/R2-delegate/compile-standard.json\").write_text(json.dumps(rec,ensure_ascii=False,indent=2)+\"\\n\",encoding=\"utf-8\")\nPY\necho ok"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

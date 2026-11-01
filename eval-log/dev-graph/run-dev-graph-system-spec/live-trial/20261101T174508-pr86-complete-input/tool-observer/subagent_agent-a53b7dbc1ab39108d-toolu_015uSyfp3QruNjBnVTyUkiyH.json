@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "556eba4c-98fe-4903-8233-b4d72d4e52f1",
+      "line": 142,
+      "prefix_bytes": 685683,
+      "prefix_sha256": "1a866c2e182f4f539fafdeb18499d3171449b39afe145bd95cc90ecad0fd113f",
+      "timestamp": "2026-11-01T09:01:24.665Z"
+    },
+    "result": {
+      "uuid": "d3950efc-10e2-4d09-8bf3-a4eab531aaf4",
+      "line": 143,
+      "prefix_bytes": 688591,
+      "prefix_sha256": "6e7b5bebd627af5e255f7635cea06363320e18938f6f24bf339b86fa05bfab72",
+      "timestamp": "2026-11-01T09:01:28.665Z"
+    }
+  },
+  "tool_use_id": "toolu_015uSyfp3QruNjBnVTyUkiyH",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "ls plugins/harness-creator/vendor/prompt-creator/; python3 plugins/harness-creator/vendor/prompt-creator/verify-completeness.py --help 2>&1 | head -20; for s in validate-design-knowledge-refs validate-spec-doc-sync validate-information-priority; do echo \"== $s\"; python3 plugins/system-spec-harness/scripts/$s.py --help 2>&1 | head -12; done",
+    "description": "Inspect validator CLIs"
+  },
+  "is_error": false,
+  "tool_result_content": "verify-completeness.py\nusage: verify-completeness.py [-h] [--input INPUT] [--layers LAYERS]\n\n7層プロンプトの網羅性 + Layer 5 ゴールシーク契約 (l5-contract v2.0.0) を検証する\n\noptions:\n  -h, --help       show this help message and exit\n  --input INPUT\n  --layers LAYERS  必須 Layer のサブセット (brief.layers_required)。例: L1,L2,L5。未指定時は 7\n                   層全て必須。\n== validate-design-knowledge-refs\nusage: validate-design-knowledge-refs.py [-h] --matrix MATRIX\n                                         [--repo-root REPO_ROOT] [--json]\n\n``design_applications[].knowledge_ref`` の参照先実在を検証する決定論ゲート。\n\n``validate-coverage-matrix.py`` は design_applications の**形状** (具体原則・採否・章固有理由・\n非空 trade-off) を検査するが、``knowledge_ref`` が実在の知識カードを指すかは見ていない。\nそのため存在しないファイルや綴り違いのファイル名を参照したまま緑になる。参照先が無い設計解釈は\n「C04 の deep card / doctrine anchor に基づいて判断した」という主張の根拠を持たないため、\n形状だけ揃った空の引用として通してしまう。\n\n検査対象:\n== validate-spec-doc-sync\nusage: validate-spec-doc-sync.py [-h] --matrix MATRIX --references REFERENCES\n                                 [--spec-root SPEC_ROOT]\n\n正本 spec-state.json と成果物 system-spec/*.md の同期を検証する\n\noptions:\n  -h, --help            show this help message and exit\n  --matrix MATRIX       spec-state.json のパス\n  --references REFERENCES\n                        fetched-references.json のパス\n  --spec-root SPEC_ROOT\n                        章 Markdown のディレクトリ\n== validate-information-priority\nusage: validate-information-priority.py [-h] maps [maps ...]\n\ninformation priority map の決定論ゲート\n\npositional arguments:\n  maps        information-priority-map JSON のパス\n\noptions:\n  -h, --help  show this help message and exit",
+  "tool_use_result": null
+}

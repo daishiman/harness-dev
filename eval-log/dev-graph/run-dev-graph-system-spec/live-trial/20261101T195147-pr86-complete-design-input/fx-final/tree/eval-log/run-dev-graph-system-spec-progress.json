@@ -1,0 +1,17 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "round": 3,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "C24 receipt eval-log/run-dev-graph-system-spec/c24-receipt.json (sha256 8bf107d8…6205); R0 独立 verifier Agent R0_VERDICT: PASS (read-mode C24 再実行で repository_id/common-dir/content_roots 一致)"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "plugin.json 0.1.24 ∈ >=0.1.22 <1.0.0, package-contract entry_points 4件; R1 独立 verifier Agent R1_VERDICT: PASS"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "Skill run-system-spec-elicit --resume / run-system-spec-compile / assign-system-spec-completeness-evaluator (build-evaluation-context.py の skill_args をそのまま渡す)。doc-fetch は全5 target 出典記録済み・source-citation exit0 で起動条件外。R2 独立 verifier Agent R2_VERDICT: PASS (observer index 照合)"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "Round2: coverage --require-complete --require-basis --require-foundation exit0, source-citation exit0, eval-log/system-spec-completeness-report.json verdict PASS (sha256 55869ceaf14bcc8b47a5b2d2fab46ce04ccf1a33ad17b51ec3cb5d7c90616ade), aggregate-completeness.py --report --spec-dir --fork-ledger --session exit0; C07/C06/C08 台帳 completion 揃い。Round3 でも coverage/citation exit0 を再実測"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "Skill dev-graph:run-dev-graph-node で同一 payload (eval-log/run-dev-graph-system-spec/R3-import/import-payload.json sha256 93e158a9…990b) を dry-run→確定 add。receipt .dev-graph/state/receipts/node-r000001-add.json (sha256 334a406a…6fdb7, rev0→1, graph_digest_after sha256:a5b8ebd0…9e47)。node spec-billing-audit-system-spec / arch-billing-audit-system-architecture は confirmed/pass/complete、source_lineage 6 field と confirmation_evidence (evaluated_digest = system-spec/index.md f7f64767…e2, 00-requirements-definition.md 6a5f58b0…c8 の実 bytes digest) 欠落0。validate-source-lineage.py --node-id x2 exit0 (checked 2), validate-graph-schema.py --strict-artifact-readiness exit0。C02 integrity auditor PASS、R3 独立 verifier Agent (sonnet) R3_VERDICT: PASS。import report eval-log/run-dev-graph-system-spec/R3-import/import-report.json"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R1 verifier と R3 独立 verifier (sonnet) が plugins/dev-graph を grep し、elicitation/matrix 収集/compile ロジックの複製0 (ヒットは参照・定数・guard のみ)。R3_VERDICT: PASS"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "Round3: validate-coverage-matrix --require-complete --require-basis --require-foundation exit0; validate-source-citation exit0; validate-graph-schema --strict-artifact-readiness exit0 (nodes 2, readiness complete 2); validate-source-lineage exit0", "rounds": [{"round": 1, "status": "PASS"}, {"round": 2, "status": "PASS"}, {"round": 3, "status": "PASS"}]},
+    {"id": "OUT1", "status": "external_pending", "evidence": "run 後の live trial が判定"}
+  ]
+}

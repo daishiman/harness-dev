@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-adb6ec99e2d464843",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "929963da-07f7-4cb3-9190-f8c1e506421c",
+      "line": 28,
+      "prefix_bytes": 152787,
+      "prefix_sha256": "837bcad5ffe55356806751631fa27076d65352e766120c070697eb7ad034ea21",
+      "timestamp": "2026-11-01T16:14:14.196Z"
+    },
+    "result": {
+      "uuid": "9898d6ae-5369-4d5a-a0d8-36bd439d909c",
+      "line": 29,
+      "prefix_bytes": 156546,
+      "prefix_sha256": "712a84973cb5a4e3b99063940519924dd955744aa0caf750813ae317e8baac80",
+      "timestamp": "2026-11-01T16:14:18.041Z"
+    }
+  },
+  "tool_use_id": "toolu_013D7MkkW6pjHPzdcjhdXDcU",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && export PYTHONDONTWRITEBYTECODE=1 && P=/Users/dm/miniconda3/bin/python3; $P plugins/dev-graph/scripts/validate-source-lineage.py --help 2>&1 | head -15; $P plugins/dev-graph/scripts/validate-graph-schema.py --help 2>&1 | head -15; git status --short | head"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)\nusage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\n?? .dev-graph/\n?? CLAUDE.local.md\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? runtime-context/\n?? specs/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "usage: validate-source-lineage.py [-h] --repo-root REPO_ROOT [--graph GRAPH]\n                                  [--node-id NODE_ID]\n\nsystem-spec-harness 由来の source_lineage を検査する (読取りのみ)\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --graph GRAPH         repo 相対または絶対 path (既定: .dev-graph/state/graph.json)\n  --node-id NODE_ID     検査対象を絞る graph_node_id (複数可)\nusage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]\n                                [--require-canonical-envelope]\n                                [--strict-artifact-readiness]\n\noptions:\n  -h, --help            show this help message and exit\n  --graph GRAPH         graph JSON path、または '-' で stdin から preview graph を読む\n                        (dry-run 用)\n  --repo-root REPO_ROOT\n  --require-canonical-envelope\n                        入力が canonical store でなくても envelope を必須にする (監査経路用)\n  --strict-artifact-readiness\n                        artifact 本文の heading_missing/placeholder_only_section\n                        を violation に格上げする (既定は artifact_readiness へ報告するだけ)\n?? .dev-graph/\n?? CLAUDE.local.md\n?? architecture/\n?? candidate-import.json\n?? eval-log/\n?? runtime-context/\n?? specs/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

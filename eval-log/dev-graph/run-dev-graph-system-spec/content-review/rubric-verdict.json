@@ -2,14 +2,14 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
-    "skill_md_sha256": "27b41039f3bcca8ad3faa09c90b2c301df6d0fab9d7a185fa700d3d8e47a6b30"
+    "skill_md_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"
   },
-  "reviewer": "review_c19_scope（独立incremental reviewer）",
-  "reviewed_at": "2026-10-31T17:19:01.377704Z",
+  "reviewer": "review_c19_name（独立 incremental rename reviewer）",
+  "reviewed_at": "2026-10-31T21:53:18.742906Z",
   "iterations": 1,
   "human_review_required": false,
-  "review_kind": "rubric",
   "verdict": "PASS",
+  "review_kind": "rubric",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -25,11 +25,12 @@
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "親の明示委譲: 各周回IN1実測前PASSを防ぐcanonical3gate blockの独立incremental review。過去PASSは根拠にしない。",
+    "hook_trigger": "親の明示委譲: C19 helperの非許可動詞prepareをdoc28許可動詞buildへ変更した限定差分の独立incremental rename review。baseline fdaf4c06085c6d5c52be40f990f7166c1f9a1437",
     "next_action": "none",
     "positive_feedback": [
-      "新SHAへ正規採点器を再実行し84/100、threshold80、high0。適用24の機械23とBD-004独立LLM意味判断1。",
-      "新blockのcanonical引数・root固定・記録順を現在sourceで確認し、実データread-only3gateと/tmp負例で検証。"
+      "現行SHAへ正規render-findings-score.pyを再実行し84/100、threshold80、high0。100-3(FM-005)-3(PD-001)-10(PD-002)=84を再計算、単なる前版scoreの転記ではない。rubric-raw.jsonを参照。",
+      "適用24項目の機械採点23は現行sourceで再実行、BD-004の2triggerと正規委譲/lineage取込の対応は独立LLMで現在のSKILL/R2/R3を再確認。生出力pending_humanは変更せず保持。",
+      "renameによってNM系のskill名・trigger・責務・権限・IN1/OUT1には変更がない。script名はdoc28規約を修復し参照を同時更新するため、新たなrubric減点要因はなくscore84を維持する。"
     ],
     "negative_feedback": [
       "FM-005 low: description first phrase 'system-spec-harness' is not a verb",
@@ -37,5 +38,5 @@
       "PD-002 medium: body head 30 lines lack a Key Rule / 禁則 (MUST / NEVER / 禁止 / 必ず / '## 守ること')"
     ]
   },
-  "notes": "rubric_hash=sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9; composition_hash=sha256:c54a453fb8547778c051f02ae3c2e9374a6c74f69dd6ed836f2a2ee851158cc9。生出力pending_humanは保持。BD-004はLLMであり人間採点ではない。30思考法/host trial成功を意味しない。"
+  "notes": "incremental rename review。sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9; composition_hash=sha256:c54a453fb8547778c051f02ae3c2e9374a6c74f69dd6ed836f2a2ee851158cc9。機械採点は現行sourceで再実行し、BD-004だけ独立LLM意味判定。既存3findingsとscoreは不変。30思考法full reviewまたはhost live-trial再走PASSを主張しない。"
 }

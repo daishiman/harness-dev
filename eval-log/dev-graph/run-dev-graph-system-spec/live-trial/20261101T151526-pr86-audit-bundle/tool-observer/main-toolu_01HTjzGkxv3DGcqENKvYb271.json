@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1e05206c-8bb5-4d93-8572-9e5943b0ec2a",
+      "line": 138,
+      "prefix_bytes": 703813,
+      "prefix_sha256": "1dd87e23395867d410b61b1e6129dd98060150ab1280c42551f3626668c24bbe",
+      "timestamp": "2026-11-01T06:18:25.961Z"
+    },
+    "result": {
+      "uuid": "e393a580-b36c-4678-9d82-d7d1139a7f6e",
+      "line": 146,
+      "prefix_bytes": 707797,
+      "prefix_sha256": "fdb6f6f8a9a5109797bb8901b8aeda4601bc191e6d824eeab356a780c23d1964",
+      "timestamp": "2026-11-01T06:18:29.979Z"
+    }
+  },
+  "tool_use_id": "toolu_01HTjzGkxv3DGcqENKvYb271",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\n  \"kind\": \"run-dev-graph-system-spec-preflight-report\",\n  \"generated_at\": \"2026-11-01T06:18:00+00:00\",\n  \"c24_receipt\": {\n    \"path\": \"eval-log/c24-receipt.json\",\n    \"sha256\": \"77f94e47a09b205f023744e87ddb6102e690932b1f23e5be3cd7e77c1d78d1aa\",\n    \"repo_root_matches_content_root\": true,\n    \"repository_id\": \"local:sha256:105c7fd10f832cb7b34171a8b9795738c00225eb295f6e49257912e668b46de1\",\n    \"git_common_dir_inside_repo\": true,\n    \"system_spec_root\": \"system-spec\"\n  },\n  \"inputs\": {\n    \"system-spec/00-requirements-definition.md\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\",\n    \"system-spec/auth.md\": \"21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897\",\n    \"system-spec/backend.md\": \"8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466\",\n    \"system-spec/database.md\": \"3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de\",\n    \"system-spec/fetched-references.json\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\",\n    \"system-spec/frontend.md\": \"10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd\",\n    \"system-spec/maintenance-ops.md\": \"1d07f7aee51da98e8e98f565af8f476cea157871b68ece622f9214fee934fba0\",\n    \"system-spec/retrieval-evidence/fastapi.json\": \"09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c\",\n    \"system-spec/retrieval-evidence/postgres.json\": \"81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54\",\n    \"system-spec/retrieval-evidence/react.json\": \"25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f\",\n    \"system-spec/retrieval-evidence/typescript.json\": \"2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de\",\n    \"system-spec/security.md\": \"c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1\",\n    \"system-spec/spec-state.json\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\",\n    \"system-spec/ui-ux.md\": \"420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410\"\n  },\n  \"system_spec_harness\": {\n    \"manifest\": \"plugins/system-spec-harness/.claude-plugin/plugin.json\",\n    \"manifest_sha256\": \"94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b\",\n    \"name\": \"system-spec-harness\",\n    \"version\": \"0.1.25\",\n    \"composition_source\": \"plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version\",\n    \"composition_range\": \">=0.1.22 <1.0.0\",\n    \"in_range\": true,\n    \"required_entry_points\": {\n      \"run-system-spec-elicit\": true,\n      \"run-system-spec-doc-fetch\": true,\n      \"run-system-spec-compile\": true,\n      \"assign-system-spec-completeness-evaluator\": true\n    }\n  },\n  \"lineage_gate\": {\n    \"script\": \"plugins/dev-graph/scripts/validate-source-lineage.py\",\n    \"exit\": 0,\n    \"status\": \"pass\",\n    \"checked\": 0,\n    \"violations\": [],\n    \"decision\": \"new_import: system-spec-harness由来nodeは0件。system-spec/の再開入力はelicit --resumeで継続\"\n  },\n  \"R0\": \"PASS\",\n  \"R1\": \"PASS\"\n}\nJSON\necho exit=$?; shasum -a 256 eval-log/run-dev-graph-system-spec-preflight-report.json",
+    "description": "Save preflight report to literal path"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n9fadb9cc89aa8c40d743f3a615d7ce18f370623cbba92395471661b5ea0f491c  eval-log/run-dev-graph-system-spec-preflight-report.json",
+  "tool_use_result": {
+    "stdout": "exit=0\n9fadb9cc89aa8c40d743f3a615d7ce18f370623cbba92395471661b5ea0f491c  eval-log/run-dev-graph-system-spec-preflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

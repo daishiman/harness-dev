@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-aacf11e6a97bfab17",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5dc146bb-5467-4aa0-b1fa-a2f9dfd3215f",
+      "line": 25,
+      "prefix_bytes": 224995,
+      "prefix_sha256": "eebfd560c8452a8ec55a403a89ed4e2e20624dbceb5c7192c1f6fa9d8b5175e3",
+      "timestamp": "2026-11-01T10:06:35.555Z"
+    },
+    "result": {
+      "uuid": "cd92f834-9418-4074-bed8-2f314f84fe49",
+      "line": 27,
+      "prefix_bytes": 231170,
+      "prefix_sha256": "8de801aa4521a282517d4f454e318d001b5c4cead381ab08ec79f5ee96ff193c",
+      "timestamp": "2026-11-01T10:06:37.521Z"
+    }
+  },
+  "tool_use_id": "toolu_01Dm4btm9bvwPe4RGMjiQkkF",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator; cat prompts/R2-delegate.md prompts/R1-score.md"
+  },
+  "is_error": false,
+  "tool_result_content": "<persisted-output>\nOutput too large (34KB). Full output saved to: /private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec114-fx/5ae0e544-0fe8-4950-bba2-32ce2690e16b/tool-results/bjfzxva1b.txt\n\nPreview (first 2KB):\n# Prompt: R2-delegate\n\n## メタ\n\n| key | value |\n|---|---|\n| name | delegate |\n| skill | assign-system-spec-completeness-evaluator |\n| responsibility | R2-delegate (監査 sub-agent C07/C08/C06 を独立 context で fork し集約 → R1 へ渡す。C06 は matrix_coverage の sub-input。design_knowledge は R1 自前評価で auditor を立てない) |\n| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |\n| output_schema | schemas/completeness-findings.schema.json (aspects 部) |\n| reproducible | true (同一入力に対し同一の観点別 verdict 集合) |\n\n## Layer 1: 基本定義層\n\n### 1.1 不変ルール\n- sub-agent担当観点は **独立 context (`isolation: fork`) で起動**し、foundation/decision/deep-knowledge/prompt品質は必要入力と機械gate結果をR1へ透過する。\n- 監査は現行 `Agent` tool で対応 sub-agent (`system-spec-matrix-auditor` / `system-spec-hearing-auditor` / `system-spec-doc-freshness-auditor`) を起動して得る (`Task` は legacy 互換のみ)。R2 自身は監査ロジックを再実装しない (単一情報源 = 各 agent の SSOT prompt)。\n- **正式 evaluator は 1 件ずつ foreground で直列実行する**: 現行 PostToolUse は matching tool call ごとに top-level `tool_use_id` と当該 call の response を受け取り、parallel dispatch 時も各 hook が並行発火する (batch 全体は PostToolBatch の責務)。ただし parallel 対応は defensive hardening / canary であり、正式 evaluator の parallel 許可ではない。current runtime の fresh live-trial で schema 1.2 の end-to-end 帰属を実証するまでは、1 回の assistant message に複数の Task/Agent tool call を並べず、1 件の完全な応答と最終行 `AUDIT_VERDICT` が返り PostToolUse 台帳行が確定したことを確認してから次の 1 件を起動する。\n- **background launch は最終 response ではない**: background/非同期起動の「起動受理」だけの response は監査 verdict として扱わない。`verdict_state=pending|absent|ambiguous` または `audit_verdict=null` の台帳行を receipt に使うことを禁止する。\n- **監査 fork に `name` を付けない**: `name` 付きで起動した Agent は `taskKind=in_process_teammate` になり、最終応答を返した後も session 終端まで生存するため **`SubagentStop` が発火しない**。completion 行 (schema 1.3) が永久に書かれず、dispatch 行が `pending` のまま残って帰属が接地しない。同時に payload の `agent_type` は `name` の値になり (`customAgentType` が本来の auditor 名を持つ) subagent_type 照合も外れる。監査 fork は `subagent_type` だけを指定して起動する。\n...\n</persisted-output>",
+  "tool_use_result": null
+}

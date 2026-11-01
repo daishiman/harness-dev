@@ -1,0 +1,74 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "合成fixtureのU4/O1「請求漏れをシステムが自動で検知する」に、請求漏れの判定条件・検知時点・結果の扱いを定めた確定要件がない。qa-014/qa-foundation-u4は目標と観測指標だけで、qa-024/025およびbackend/databaseの確定内容は契約・請求書・突合の概略にとどまる。C05がfoundation_trace/highとしてFAILを返した一次根拠を独立に確認した。",
+    "C05のFAILにより正本どおりC02取込を停止したため、graphはrevision=0・nodes=0。source lineage・confirmation/evaluated_digest・readiness completeを備えたspecification/architectureの取込成果がなく、C19の元goalおよびpositive scenarioの必須観測1/2/3を充足していない。正しいfail-closed停止だけをpositive acceptanceのPASSにはできない。"
+  ],
+  "evaluator_id": "/root/review_sysspec110",
+  "transcript_sha256": "ebfaca0992cb8dc91e60bb65e364c9c680975afe9fc7b193457aeff57744f26e",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a9a5a78a3fbe4bb70.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/system-spec/spec-state.json",
+    "fx-final/tree/system-spec/backend.md",
+    "fx-final/tree/system-spec/database.md",
+    "fx-final/tree/system-spec/00-requirements-definition.md",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fixture-provenance.json",
+    "fixture-task-preparation.py",
+    "task.md",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "tool-observer/index.json",
+    "observer-provenance.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_01AQ6E7JBhkKnz9gS4AWF1xB.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_0119amWZ5uZFuHdpPmRfzqaE.json",
+    "tool-observer/subagent_agent-a9a5a78a3fbe4bb70-toolu_017AG6kZ99sNgadZrnuXqre7.json",
+    "tool-observer/main-toolu_016rVciMUbLtZ3KvH2dpS1fD.json",
+    "tool-observer/main-toolu_01CuFfAU6mgwad6vTP5xsCnj.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "out/status.json",
+    "poll-state.json",
+    "poll-normalization.json"
+  ],
+  "observations": {
+    "1": "fx-eval-log/system-spec-completeness-report.json",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "transcript.jsonl"
+  },
+  "criteria_observed": {
+    "IN1": {
+      "text": "system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる",
+      "result": "PASS",
+      "observation": "loop1の実Bash応答にcoverage_exit=0/citation_exit=0/schema_exit=0、loop2の実Bash応答にcov=0/cit=0/schema=0。空graphでもstrict-artifact-readinessのschema gateを実行している。これはIN1のCLI結果のみの判定で、C05の意味評価やC19全goalのPASSを意味しない。",
+      "evidence_refs": [
+        "tool-observer/main-toolu_016rVciMUbLtZ3KvH2dpS1fD.json",
+        "tool-observer/main-toolu_01CuFfAU6mgwad6vTP5xsCnj.json",
+        "fx-eval-log/run-dev-graph-system-spec-progress.json"
+      ]
+    },
+    "OUT1": {
+      "text": "仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する",
+      "result": "FAIL",
+      "observation": "正規elicit/compile/C05のSkill起動とC05のFAILは一次記録に存在するが、C02未起動・取込node0のためlineage付き引用成果がない。no-duplicate側の網羅的監査は未完了で、空graphや停止を根拠にその部分をPASSにはしていない。",
+      "evidence_refs": [
+        "transcript.jsonl",
+        "fx-eval-log/system-spec-completeness-report.json",
+        "fx-final/tree/.dev-graph/state/graph.json"
+      ]
+    }
+  },
+  "notes": [
+    "本評価は公開DG 0.1.26 / SS 0.1.24の実sourceを基準にした。未公開SS 0.1.25の新制約は適用していない。110および過去trialのraw/verdict/evalを読まず、111の収集指定後に初めて当該証拠を読んだ。111 fixture-provenanceが過去入力の由来を記す部分は入力provenanceとしてのみ扱った。",
+    "task.md、qa_logのprovenance、appr-foundation-v2はorchestratorが作ったシナリオ上の発言/承認であり、実利用者との対話・実利用者の承認ではないと明記している。fixture準備scriptは正規builderで空graphを初期化し、評価report/台帳/receipt/登録nodeをseedしない。今回の入力不足を実利用者の承認不足や本番データの欠陥と読み替えない。",
+    "C05 high発生時にFAILを保持し、reportをPASSへ書き換えず、追加承認を自作せず、C02入力作成・Skill起動・登録へ進まなかった停止判断は、C19 R2/R3とC05のhigh→FAIL規則に合致する。これは停止境界の確認であり、全実行責務の遵守を認定するものではない。",
+    "C05 reportに含まれるsnapshot全12 path/digestを凍結最終入力へ照合し一致。評価開始時のproduction --print-artifact-snapshot実出力、後段UNCHANGED、--report実行exit0も一次eventで確認。raw report+raw ledger+当該sessionでaggregate-completeness.pyを独立再実行し、FAIL再導出/形状/帰属検証がexit0だった。",
+    "C07/C06/C08の実Agent起動、schema1.2 dispatch行およびschema1.3 resolved completion行、receiptのsession/tool_use_id/completion response_sha256/verdictの対応を確認。監査全観点の意味的十分性、全Markdownの完全読込、全responsibilityの完了順序などの正の全要件については今回のgoal未達確定後に網羅的PASS監査をしていない。C05 reportの他5観点PASSをこの独立評価のPASSとして転記していない。",
+    "trusted observer parser SHA d0ac1e4c9dc5053bf5262bd779bcfe4de6ba1699bbc288352b07b0966fc79184を確認し、全7 raw streamをextractで再構成した。127 eventのJSON完全一致、index exact-set、各stream bytes/SHA、source prefix/uuid計251照合が全て一致し、未観測末尾bytesは0。observerはRead/Bash/Skill/WebFetch/WebSearchのみを対象とし、Agent結果等のscope外absenceを未実施証明には用いていない。独立再構成の詳細は/tmp/pr86-sysspec111-observer-reconstruction.json。",
+    "C19 intermediateの2行はdrift_signal=\"none\"で、goal-seek正本が示すinitial/aligned/compressing/stagnant/widening/oscillatingの6 enumには入らない。C19ローカルの6キー/hash検査が通っても、この差異の解消まで含めた全契約PASSは認定していない。",
+    "停止後のC02 atomic registration、pre-choice成果/standard/baseline/receipt鎖、post-choice責務fork、independent integrity verifier、R3-import verifierおよび2node lineage/evaluated_digest/readinessは未達・未観測であり、PASSとして扱わない。",
+    "公開poll elapsed=1102はboot epochからの実測1101.259962秒のceilで、raw値1101からの+1補正はpoll-normalization.jsonに開示されている。3300秒上限は変更されていない。token集計と最終reaperは今回のsemantic blocker確定後の網羅監査対象から外しており、未検証をPASSとしない。",
+    "入力の補完は別runの試験fixture改善として、明示的な合成QA/合成承認を正規writerで事前記録し、provenanceとbefore/afterを残す必要がある。111の入力・報告・判定を遡及変更せず、既存受入条件と判定閾値を弱めない。"
+  ]
+}

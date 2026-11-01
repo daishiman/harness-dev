@@ -1,0 +1,18 @@
+{
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "mode": "--resume",
+  "writes": "none (state already complete; validators only)",
+  "artifact_delivery": {
+    "contract": "artifact-delivery-v1",
+    "transitions": [
+      {"event": "minimum_guard_pass", "to": "minimal_guard_passed", "basis": "JSON parse ok; hearing_progress.complete=true; coverage --require-complete --require-basis --require-foundation exit0; required-info exit0 ungrounded_blocking_items=[]; validate-design-knowledge-refs exit0"},
+      {"event": "present_actual_artifact", "to": "artifact_presented", "path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec/spec-state.json", "sha256": "9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2", "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec/spec-state.json"},
+      {"event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "source": "task.md pre-specified standard (no new approval)"},
+      {"event": "standard", "to": "semantic_evaluator_started"}
+    ]
+  },
+  "doc_fetch_decision": {
+    "needed": false,
+    "basis": "validate-source-citation exit0 in loop1; all 4 fetched targets retrieved 2026-10-31; knowledge candidate k8s-workload-observability state=deepened; discovered candidates=0. run-system-spec-doc-fetch not invoked."
+  }
+}

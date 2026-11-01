@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a5e25a78386433e09",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d2c4b41f-d637-4bca-8ab0-4f9fbd5c5d79",
+      "line": 19,
+      "prefix_bytes": 141075,
+      "prefix_sha256": "1379836a4969e0b6af123e565535871d30f794aa1e2dbfa0bf731972747c29f8",
+      "timestamp": "2026-11-01T15:29:54.466Z"
+    },
+    "result": {
+      "uuid": "f0c11abe-5e9b-450b-a48c-6cdf979b020a",
+      "line": 20,
+      "prefix_bytes": 147902,
+      "prefix_sha256": "df6d1c63da7d46b0df4ff12046933f2c0b7daff7c8ef8dca48eff9bcad7286ed",
+      "timestamp": "2026-11-01T15:29:54.748Z"
+    }
+  },
+  "tool_use_id": "toolu_01GmSjUMCJqmgY1bEse52nwA",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/dev-graph/references/prompt-common-layers.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# dev-graph prompt 共通層 (Layer 4〜7)\n2\t\n3\tdev-graph の `skills/run-dev-graph-*/prompts/R*.md` が共有する Layer 4〜7 の定型部分の正本。各 prompt は層の見出しと、この reference の該当節を指す 1 行と、責務に固有の行だけを持つ。\n4\t\n5\t## 読み方\n6\t\n7\t- 各 prompt の Layer 4〜7 は、この reference の同名の節と prompt 側の固有行を合わせた内容とする。どちらも適用し、一方で他方を置き換えない。\n8\t- 節は prompt の見出しと同じ名前で引く (例: 「Layer 5」はこの reference の `## Layer 5: エージェント層 (l5-contract v2.0.0)`)。\n9\t- この reference は 9 skill の SKILL.md の `reference_refs` に入っており、skill の挙動閉包に含まれる。書き換えると 9 skill すべての live trial verdict が古くなる。\n10\t\n11\t## Layer 4: 共通ポリシー層\n12\t\n13\t- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。\n14\t- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。\n15\t- 同一入力と同一 revision/digest では同じ decision と output shape を返す。\n16\t\n17\t## Layer 5: エージェント層 (l5-contract v2.0.0)\n18\t\n19\t### 5.1 担当 agent\n20\t\n21\t- 担当 agent は各 prompt の 5.1 に書く。重い判断または独立検証は `Agent` で分離 context に fork する。\n22\t\n23\t### 5.2 ゴール定義\n24\t\n25\t- 目的と達成ゴールは各 prompt の 5.2 に書く。\n26\t- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。\n27\t\n28\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n29\t\n30\t全責務に共通の項目。各 prompt の 5.3 の項目と合わせ、すべてが YES になったときにゴール到達とする。\n31\t\n32\t- [ ] 宣言した入力が全て検証済みである\n33\t- [ ] 出力が宣言した shape と authority を満たす\n34\t- [ ] 責務境界に反する read/write/delegation が0件である\n35\t\n36\t### 5.4 実行方式\n37\t\n38\t- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。\n39\t\n40\t## Layer 6: オーケストレーション層\n41\t\n42\t- 渡し先・返し先は各 prompt の Layer 6 に書く。\n43\t- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。\n44\t\n45\t## Layer 7: UserInput\n46\t\n47\t- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。\n48\t- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。\n49\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/dev-graph/references/prompt-common-layers.md",
+      "content": "# dev-graph prompt 共通層 (Layer 4〜7)\n\ndev-graph の `skills/run-dev-graph-*/prompts/R*.md` が共有する Layer 4〜7 の定型部分の正本。各 prompt は層の見出しと、この reference の該当節を指す 1 行と、責務に固有の行だけを持つ。\n\n## 読み方\n\n- 各 prompt の Layer 4〜7 は、この reference の同名の節と prompt 側の固有行を合わせた内容とする。どちらも適用し、一方で他方を置き換えない。\n- 節は prompt の見出しと同じ名前で引く (例: 「Layer 5」はこの reference の `## Layer 5: エージェント層 (l5-contract v2.0.0)`)。\n- この reference は 9 skill の SKILL.md の `reference_refs` に入っており、skill の挙動閉包に含まれる。書き換えると 9 skill すべての live trial verdict が古くなる。\n\n## Layer 4: 共通ポリシー層\n\n- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。\n- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。\n- 同一入力と同一 revision/digest では同じ decision と output shape を返す。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n### 5.1 担当 agent\n\n- 担当 agent は各 prompt の 5.1 に書く。重い判断または独立検証は `Agent` で分離 context に fork する。\n\n### 5.2 ゴール定義\n\n- 目的と達成ゴールは各 prompt の 5.2 に書く。\n- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n全責務に共通の項目。各 prompt の 5.3 の項目と合わせ、すべてが YES になったときにゴール到達とする。\n\n- [ ] 宣言した入力が全て検証済みである\n- [ ] 出力が宣言した shape と authority を満たす\n- [ ] 責務境界に反する read/write/delegation が0件である\n\n### 5.4 実行方式\n\n- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。\n\n## Layer 6: オーケストレーション層\n\n- 渡し先・返し先は各 prompt の Layer 6 に書く。\n- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。\n\n## Layer 7: UserInput\n\n- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。\n- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。\n",
+      "numLines": 49,
+      "startLine": 1,
+      "totalLines": 49
+    }
+  }
+}

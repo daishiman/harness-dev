@@ -1,0 +1,33 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent read-only",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+  "c24_receipt_sha256": "e1972b54f97b340976072c5d20d0b281f54919594de82344a862275c22cc6bc4",
+  "c24_receipt_sha256_match": true,
+  "checks": {
+    "repo_root_realpath_eq_content_roots_repository": true,
+    "system_spec_realpath_in_repo_real_dir_no_symlink_component": true,
+    "c24_rerun_exit": 0,
+    "c24_rerun_match": {"repository_id": true, "git_common_dir": true, "repo_root": true, "head_sha": true, "worktree_id": true, "content_roots": true},
+    "system_spec_symlink_scan": {"entries": 19, "symlinks": 0, "broken": 0, "outside_repo": 0},
+    "lineage_gate": {"exit": 0, "status": "pass", "checked": 0, "checked_node_ids": [], "violations": [], "graph": ".dev-graph/state/graph.json", "graph_nodes": 0}
+  },
+  "resume_decision": "new_creation",
+  "resume_decision_basis": "lineage gate exit 0 and checked=0 => 新規作成 (dev-graph 側に取込済み node なし)。system-spec-harness 側 elicit の resume は R2 の判断事項で、本判定とは別軸",
+  "checklist_5_3": {
+    "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる": "YES",
+    "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた": "YES",
+    "宣言した入力が全て検証済みである": "YES",
+    "出力が宣言した shape と authority を満たす": "YES",
+    "責務境界に反する read/write/delegation が0件である": "YES"
+  },
+  "verdict": "PASS",
+  "blockers": [],
+  "notes": [
+    "c24-receipt.json は環境固有の絶対 path を含む (resolve-repo-context の出力仕様どおり、eval-log 内の実行証跡)。graph/成果物への保存ではないため非 blocker",
+    "receipt diagnostics: default_branch_fallback_main (非 blocker)"
+  ],
+  "merged_directive_for_next": "R1 独立検証結果と併せ PASS なら R2 へ。dev-graph 側は新規作成 (checked=0) として receipt を R1/R2/R3 へ渡す"
+}
