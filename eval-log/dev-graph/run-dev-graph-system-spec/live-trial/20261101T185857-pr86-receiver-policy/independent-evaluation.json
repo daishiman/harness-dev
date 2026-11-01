@@ -1,0 +1,40 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "設定伝達不成立のまま調整役が中断した部分実走である。out/status.json、C05最終評価レポート、C06完了、C08監査、R2/R3独立検証、C02取込がなく、元の3観測とOUT1を満たす新規specification/architecture nodeは0件。C05/C06/C08が確定FAILを返したという意味ではない。",
+    "C05は公開R1-score 4.3/R2-delegate 2.4の保存境界を越え、$TMPDIR/snapshot.jsonと3gate JSONをshell redirectで保存した。さらにfixture外を含むfind /探索を実行し、既定の隔離対象外のパスを返した。これらは中断前に実測された逸脱であり、未完了の最終評価を推測しているものではない。",
+    "C07は独立Agentとして実在しPASS completionを返したが、完了までにR7-audit-matrix.mdを全文取得した記録がない。起動promptは正本へのポインタだけで本文ではなく、親が読んだことでも代替できないため、契約履行済みの監査PASSとして採用できない。",
+    "C19周回1のintermediateは6キーと元goal/hashを保持する一方、drift_signalがnoneであり、参照先goal-seek正本の6値enum（initial/aligned/compressing/stagnant/widening/oscillating）を満たさない。"
+  ],
+  "evaluator_id": "/root/review_sysspec114",
+  "transcript_sha256": "35fb819d579d7ea0841dc5784b8d74282b2b7dff516c9c83bffcac9d1424100e",
+  "evidence_refs": [
+    "abort-reason.json",
+    "collection-note.json",
+    "transcript.jsonl",
+    "transcript/subagents/agent-aacf11e6a97bfab17.jsonl",
+    "transcript/subagents/agent-adc1b028166bc499b.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01RLccNnPorfZiXSJz5Xanv8.json",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01EhJZJi1KrGT4T6q7uB1RBv.json",
+    "tool-observer/subagent_agent-aacf11e6a97bfab17-toolu_01Dwk5ZrVktVXk6SJPy36fZJ.json"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/graph.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本全文: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。既確認の一次観測: tool-observer/main-toolu_01TJTV5SHU4PuDzgY5TCmWz7.jsonに周回1のcoverage (--require-complete --require-basis --require-foundation)、source-citation (--stateを含む)、graph-schema (--strict-artifact-readiness)の実出力とG1/G2/G3_exit=0がある。その後fx-eval-log/run-dev-graph-system-spec-progress.jsonで周回1のIN1をPASSと記録。C05内の別gate実測exit0もあるがevaluator PASSの代用ではない。中断時点で周回2は未完了のため、R2/R3後の最終IN1が完了したとは判定しない。",
+    "OUT1": "正本全文: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。既確認の一次観測: transcript.jsonlとtool-observerはC19、elicit resume、正規compile、C05の実Skill起動を示す。R1の独立検証は複製0件を返し、同等ロジック新設も観測していない。ただしfx-final/tree/.dev-graph/state/graph.jsonはrevision0・nodes=[]で、C05最終レポート/C06 completion/C08/R2-R3独立検証/C02登録は未到達。fx-eval-log/run-dev-graph-system-spec-progress.jsonもOUT1=external_pendingであり、seedの章とcandidate-importを新規取込や評価PASSに数えない。受入ゴールは未達。"
+  },
+  "notes": [
+    "形式追加のみ。既に確認済みの一次観測と独立判定を保持し、新しい再評価は実施していない。",
+    "設定伝達不成立のため調整役が途中中断した部分実走。受入FAILはC05/C06/C08が最終FAILを返したという意味ではない。",
+    "元のexact5key版はpr86-sysspec114-goal-evaluation.jsonに無変更で保持。",
+    "source/fixture無編集。"
+  ]
+}

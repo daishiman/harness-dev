@@ -1,0 +1,44 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "727a4c0d-b1a7-49ae-976c-b3d65aa24970",
+      "line": 469,
+      "prefix_bytes": 2654333,
+      "prefix_sha256": "145475091ba05e307658aa43e695e8bf58ae4338f192ac70f40dd6f03a6b94f9",
+      "timestamp": "2026-11-01T10:05:51.313Z"
+    },
+    "result": {
+      "uuid": "bb727efe-33da-4a5c-9926-d28cdee6b21f",
+      "line": 470,
+      "prefix_bytes": 2655924,
+      "prefix_sha256": "51ca9f122601ac89c1b460f4e9db2abf831d9ca14d028ca5b2c64d8c8c7b9acc",
+      "timestamp": "2026-11-01T10:06:00.765Z"
+    }
+  },
+  "tool_use_id": "toolu_018ULoLC96K7zhBDA15RRaf8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && git status --porcelain system-spec | head; cd plugins/system-spec-harness/skills/run-system-spec-compile && python3 -B -m pytest -q -p no:cacheprovider tests/test_compile_spec_doc.py tests/test_compile_spec_doc_knowledge.py 2>&1 | tail -5; cd \"$CLAUDE_PROJECT_DIR\" && shasum -a 256 system-spec/index.md system-spec/spec-state.json",
+    "description": "Run compile OUT1 acceptance tests",
+    "timeout": 300000
+  },
+  "is_error": false,
+  "tool_result_content": "?? system-spec/\n...............................................................          [100%]\n63 passed in 5.44s\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "?? system-spec/\n...............................................................          [100%]\n63 passed in 5.44s\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-afad2757865ab50c1",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a6ba3b5d-b04a-4347-b2f7-15c275d5b9c4",
+      "line": 19,
+      "prefix_bytes": 140590,
+      "prefix_sha256": "06514ebd539912d17300c055d4884cffa4abf2d45a4345d921dc5cd0d134394b",
+      "timestamp": "2026-11-01T16:16:49.494Z"
+    },
+    "result": {
+      "uuid": "e4041984-0974-4387-b5da-abbad5d449e6",
+      "line": 21,
+      "prefix_bytes": 144492,
+      "prefix_sha256": "4d05a0986be70889f5955132cc32ee7a6150973d1855ea7f1a04df71d0f630ef",
+      "timestamp": "2026-11-01T16:16:53.032Z"
+    }
+  },
+  "tool_use_id": "toolu_01Eba7qhPdTHxWsbgb7p3BeH",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && /Users/dm/miniconda3/bin/python3 -I -B -c 'from pathlib import Path;import hashlib,json,sys;r=Path(sys.argv[1]).resolve(strict=True);p=(r/sys.argv[2]).resolve(strict=True);p.relative_to(r);assert p.is_file();print(json.dumps({\"written_source_checked\":True,\"root\":str(r),\"path\":sys.argv[2],\"real_path\":str(p),\"sha256\":hashlib.sha256(p.read_bytes()).hexdigest()},sort_keys=True))' /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"path\": \"plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\", \"sha256\": \"34bb6e7506e1d1bd91340505455172e01c73fe0cd366d223fdc4c5190b9d952d\", \"written_source_checked\": true}",
+  "tool_use_result": {
+    "stdout": "{\"path\": \"plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\", \"sha256\": \"34bb6e7506e1d1bd91340505455172e01c73fe0cd366d223fdc4c5190b9d952d\", \"written_source_checked\": true}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

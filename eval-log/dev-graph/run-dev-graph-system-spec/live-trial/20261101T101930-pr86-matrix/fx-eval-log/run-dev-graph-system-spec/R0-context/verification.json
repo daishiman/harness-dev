@@ -1,0 +1,71 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent Agent (read-only)",
+  "prompt_read": [
+    {
+      "path": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R0-context.md",
+      "sha256": "66f723a310a6dbd7cad0eb7cb4a2635498245bfeccf14dc3e4cd241eb71c4c28"
+    },
+    {
+      "path": "plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea"
+    }
+  ],
+  "c24_receipt": {
+    "path": "eval-log/c24-receipt.json",
+    "sha256": "c3ee3705170e6d921bbfcb7a7d5abf9310aff32791a87fa4c5ace72361a77980"
+  },
+  "checks": [
+    {
+      "name": "receipt_sha256",
+      "status": "PASS",
+      "evidence": "shasum matches fixed c3ee3705..."
+    },
+    {
+      "name": "resolve_repo_context_rerun_identity",
+      "status": "PASS",
+      "evidence": "resolve-repo-context.py --mode write exit 0; full JSON equal to receipt (repo_root, repository_id local:sha256:68991ddb..., worktree_id wt_064eb506cc019925, git_common_dir=git_dir=<repo>/.git, content_roots.repository=repo_root, content_roots.system_spec=<repo>/<system_spec_root>)"
+    },
+    {
+      "name": "system_spec_containment",
+      "status": "PASS",
+      "evidence": "realpath(content_roots.system_spec)==declared path, inside repo_root, not a symlink; rglob found 0 symlinks beneath it"
+    },
+    {
+      "name": "git_common_dir_match",
+      "status": "PASS",
+      "evidence": "git rev-parse --git-common-dir/--git-dir = .git, toplevel = repo_root; realpath matches receipt"
+    },
+    {
+      "name": "lineage_gate",
+      "status": "PASS",
+      "evidence": "validate-source-lineage.py --repo-root <repo> exit 0, status pass, checked 0, violations [] -> new_import"
+    },
+    {
+      "name": "preflight_report_R0_consistency",
+      "status": "PASS",
+      "evidence": "preflight c24_receipt sha/repository_id/worktree_id/git_common_dir/system_spec_realpath_in_repo and R0_lineage_gate exit0/checked0/new_import match measurements"
+    }
+  ],
+  "checklist": {
+    "R0_5.3": {
+      "system_spec realpath in caller repo with repository_id/common-dir match": "YES",
+      "validate-source-lineage exit 0 and new/resume decided from checked": "YES (checked=0 -> new_import)"
+    },
+    "common_5.3": {
+      "declared inputs all verified": "YES",
+      "output satisfies declared shape and authority": "YES",
+      "0 read/write/delegation violating boundary": "YES (only this verification.json written)"
+    }
+  },
+  "decision": "new_import",
+  "verdict": "PASS",
+  "blockers": [],
+  "loop_record": {
+    "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+    "delta_from_original": "none; R0 containment verified",
+    "merged_directive_for_next": "proceed to R1/R2 independent verification then completeness evaluator",
+    "drift_signal": "none"
+  }
+}

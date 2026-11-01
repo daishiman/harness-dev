@@ -45,7 +45,7 @@
 |---|---|---|
 | diff-rubric-impact.py | `--logs` 配下の score ログ（`*-score.jsonl`）に提案を当て、`would_flip`・`flip_rate`・`required_bump`・`exceeds_flip_rate_limit`・`impact_model` を JSON で出す。向きは `change.type`（add=厳格化 / remove=緩和）と、modify なら `change.direction`（relax / tighten）で決める。`required_bump` は厳格化なら常に major、緩和なら提案の bump と minor の大きい方。bump が major・minor・patch 以外なら exit 2 | `--proposal <proposal.json> --logs eval-log [--threshold 80]` |
 | lint-rubric-violation.py（`$SKILL_DIR/scripts/`） | `--logs` 配下の score ログの findings を rule ごとに数える（release は区別しない） | `--logs eval-log [--rule <rule_id>]` |
-| aggregate-evals.py（`$SKILL_DIR/scripts/`） | 改正提案 md の置き場をまとめて JSON で一覧する。手書きは `$SKILL_DIR/proposals/`、SessionEnd hook の自動ドラフト（`generated: true`）は plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` とその退避先。`CLAUDE_PROJECT_DIR` が無ければ cwd と git の作業ツリーの root を project とみなす | `--list-proposals` |
+| aggregate-evals.py（`$SKILL_DIR/scripts/`） | 改正提案 md の置き場をまとめて JSON で一覧する。手書きは `$SKILL_DIR/proposals/`、SessionEnd hook の自動ドラフト（`generated: true`）は plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` とその退避先。`CLAUDE_PROJECT_DIR` が無ければ cwd と git の作業ツリーの root を project とみなす。引数なし（SessionEnd hook）では、4 つの入力源の異常を episode 単位で数えて前の日までの最新の自動ドラフトと比べ、new・changed・retired があるときだけ観測差分 `<date>-rubric-update.md`（`kind: rubric-anomaly-delta`。改正案ではない。同じ日の 2 回目以降は観測が変わったときだけ上書き）を書く。入力源が欠けたとき・置き場が使用中のときは書かずに exit 0 | `--list-proposals` |
 | version bumper | `rubric_version` を major/minor/patch で bump | bump_kind |
 
 ## Layer 4: 共通ポリシー層

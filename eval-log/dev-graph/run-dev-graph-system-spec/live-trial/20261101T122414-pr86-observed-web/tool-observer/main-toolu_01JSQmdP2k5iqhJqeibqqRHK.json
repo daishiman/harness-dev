@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ef28d143-9ae5-49e7-bf0e-67dbb337e6a2",
+      "line": 790,
+      "prefix_bytes": 4021162,
+      "prefix_sha256": "1146ad1d332d39f9401ed36024bd0744775a9ed41d6d168e9ca01b12f75dc77e",
+      "timestamp": "2026-11-01T03:43:49.037Z"
+    },
+    "result": {
+      "uuid": "a6976296-40cc-410b-96a0-45c6dd730f8d",
+      "line": 794,
+      "prefix_bytes": 4028986,
+      "prefix_sha256": "db3d3e6c1d77ef593ce82199d2c9705b6a59e310d0235c75c430e3abf824394d",
+      "timestamp": "2026-11-01T03:43:51.446Z"
+    }
+  },
+  "tool_use_id": "toolu_01JSQmdP2k5iqhJqeibqqRHK",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"exit=$?\"",
+    "description": "Run intermediate hash check"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0",
+  "tool_use_result": {
+    "stdout": "exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

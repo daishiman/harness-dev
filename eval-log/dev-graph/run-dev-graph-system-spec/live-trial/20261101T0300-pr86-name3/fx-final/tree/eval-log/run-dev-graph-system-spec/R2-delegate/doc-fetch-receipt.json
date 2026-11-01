@@ -1,0 +1,32 @@
+{
+  "skill": "system-spec-harness:run-system-spec-doc-fetch",
+  "at": "2026-10-31T22:49:59.488810+00:00",
+  "decision": "not_required",
+  "reason": "R1-identify: targets=[postgres,react,fastapi,typescript] (spec-state.targets 由来・重複0・抽象方針混入0)、knowledge_candidates の discovered=0 (k8s-workload-observability は deepened)。既存 fetched-references.json は全target 1件ずつ・公式host一致・version・retrieved_at/latest_checked_at (2026-10-31T14:45-14:46Z, 前実走の正規doc-fetch実取得)・retrieval-evidence digest一致で IN1 exit0。完了チェックリスト全充足のため再取得局面を選ばない。現行版の意味判定は C08 (OUT1) が evaluator 内で公式サイトへ再照合する。",
+  "IN1": {
+    "cmd": "validate-source-citation.py --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root <root>",
+    "exit": 0
+  },
+  "fetched_references_sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+  "evidence": {
+    "fastapi.json": "09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c",
+    "postgres.json": "81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54",
+    "react.json": "25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f",
+    "typescript.json": "2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de"
+  },
+  "prompts_read_full": [
+    "R1-identify.md",
+    "R2-fetch.md",
+    "R3-record.md"
+  ],
+  "writes": 0,
+  "artifact_delivery": {
+    "presented": {
+      "path": "system-spec/fetched-references.json",
+      "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729",
+      "open": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec99/fx/system-spec/fetched-references.json"
+    },
+    "choice": "standard",
+    "choice_source": "isolated fixture pre-answer contract"
+  }
+}

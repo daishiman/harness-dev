@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fbe6d21f-d0f0-4b83-a5ac-25223d677d6b",
+      "line": 102,
+      "prefix_bytes": 539278,
+      "prefix_sha256": "bd5dc272741969d609249006d3ca5f459a50dee0a2b15edf4c251ffc739a2ac4",
+      "timestamp": "2026-11-01T08:58:09.343Z"
+    },
+    "result": {
+      "uuid": "9259f92e-3561-415e-9e25-ee58c36f4bba",
+      "line": 103,
+      "prefix_bytes": 540998,
+      "prefix_sha256": "031e09435d9eeda7f870e6541a36092233c80f2084602b2edb5d9c60aaea7812",
+      "timestamp": "2026-11-01T08:58:10.377Z"
+    }
+  },
+  "tool_use_id": "toolu_01B66W3n1bBPhkcWMUUooYvA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "for f in database auth ui-ux security infrastructure frontend maintenance-ops; do echo \"=================== $f\"; awk '/^### 本章での適用/{p=1} /^### .*deep knowledge card/{p=0} p' system-spec/$f.md; awk '/^### 確定判断ごとの原則採否/{p=1} /^## 最新ドキュメント出典/{p=0} p' system-spec/$f.md; done 2>&1 | cut -c1-700",
+    "description": "Extract design application sections per chapter"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/policy.json']: [live-trial 隔離ガード] 拒否: macOS の外部起動・資格情報 CLI。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

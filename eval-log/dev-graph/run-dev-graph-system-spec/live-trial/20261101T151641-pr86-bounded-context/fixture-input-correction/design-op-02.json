@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "database",
+  "concern_id": "reliability",
+  "text": "日次バックアップ (qa-001) と週次のリストア訓練 (qa-008) を、データを戻せることの確認として扱う。データ構造の変更前のバックアップと戻し手順 (qa-027) も同じ扱いにする。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: billing_expectations/missing_billing_cases/billing_closing_checks/job_outboxを既存PostgreSQL 16内に置く。契約ID・対象年月・種別の一意キー、業務更新と同一transactionのoutbox投入、claim排他/lease/fencing、再試行時の冪等な業務反映を対応付ける。締めでは全有効契約・請求予定・有効請求書を同じ整合した業務snapshotで再照合し漏れがあれば拒否する。Cloud Architecture Patternsの外部Blob配置/複数資産の補償は単一DBの本構成には非適用で、外部保存基盤を足さない。原子性境界と再送の比較はDB内transactionと既承認の一意キー/claimに具体化し、Cronだけのexactly-onceを主張しない。 concern=reliabilityの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:09:33.335262Z"
+}

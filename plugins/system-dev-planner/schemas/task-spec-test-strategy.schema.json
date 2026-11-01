@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task-spec-test-strategy.schema.json",
+  "title": "Task spec テスト戦略 section の構造契約 (qa-076 / qa-078 / qa-079 / qa-081)",
+  "description": "validate-system-plan.py が task spec 本文の `## テスト戦略` を構造化した中間表現の正本。4 項目の存在は required、各項目が満たすべき必須マーカーは pattern で表現する。層別方針の充足 (Workstream applicability からの導出) は文脈依存のため本 schema では表現せず Python 側が担当する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "test_levels",
+    "coverage_target",
+    "layer_policies",
+    "maintainability_constraints"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "test_levels": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "(?=[\\s\\S]*単体)(?=[\\s\\S]*結合)(?=[\\s\\S]*境界値)(?=[\\s\\S]*回帰)",
+      "description": "qa-076: 単体・結合・境界値・回帰の 4 レベルすべてに言及し、当該 task での適用可否を判別できること。適用外は `N/A:` を伴って明示する。"
+    },
+    "coverage_target": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "80\\s*[%％]",
+      "description": "qa-077 / qa-081: 既定 80% を数値で明示すること。層別の上書き値は追記できるが既定値の表現は省略しない。"
+    },
+    "layer_policies": {
+      "type": "string",
+      "minLength": 1,
+      "description": "qa-078: フロント (behavior ベース) / バックエンド (API 契約 + ロジック単体 + DB 結合) / インフラ (IaC 静的検証 + smoke) のうち当該 task が触る層の方針。どの層が必須かは Workstream applicability から導出されるため、必須マーカーの検査は Python 側 (derive_required_layers) が行う。"
+    },
+    "maintainability_constraints": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "(?=[\\s\\S]*[Pp]ixel)(?=[\\s\\S]*DOM)",
+      "description": "qa-078: pixel 位置依存と DOM 構造依存の禁止を明記し、過剰テスト (実装詳細への密結合) を作らない線引きを述べること。"
+    }
+  }
+}

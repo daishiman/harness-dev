@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a5e25a78386433e09",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c7f9677f-17b7-4b8d-a082-28d0d88f9062",
+      "line": 35,
+      "prefix_bytes": 261156,
+      "prefix_sha256": "a5875add93956283699984eb50bb7ee71aa98f9f7fc5a99248299b2dee47e3af",
+      "timestamp": "2026-11-01T15:30:09.514Z"
+    },
+    "result": {
+      "uuid": "557a05bf-7e19-4b12-9f82-032cc6a5b1b0",
+      "line": 36,
+      "prefix_bytes": 263281,
+      "prefix_sha256": "49c668d10ad3da0f7f3ee4b7fb7ea86e687e031b2ed827d9bf64bcaed147af0e",
+      "timestamp": "2026-11-01T15:30:13.620Z"
+    }
+  },
+  "tool_use_id": "toolu_01HvhdHge6XtG5XFph9k47Ke",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "git rev-parse --show-toplevel --git-common-dir --absolute-git-dir; python3 -B -I - <<'EOF'\nimport os,json\nfrom pathlib import Path\nroot=Path('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx').resolve(strict=True)\nr=json.load(open(root/'eval-log/run-dev-graph-system-spec/c24-receipt.json'))\nprint('repo_root==realpath(repository):', os.path.realpath(r['content_roots']['repository'])==r['repo_root']==str(root))\nss=Path(r['content_roots']['system_spec']).resolve(strict=True); ss.relative_to(root); print('system_spec real in repo:',ss, ss.is_dir())\nprint('diagnostics:',r['diagnostics'],'plugin_source:',r['plugin_source'])\nbad=[];n=0;links=0\nfor dp,dn,fn in os.walk(ss,followlinks=False):\n    for x in dn+fn:\n        p=Path(dp)/x;n+=1\n        if p.is_symlink():\n            links+=1\n            try:\n                t=p.resolve(strict=True);t.relative_to(root)\n            except Exception as e: bad.append((str(p),repr(e)))\nprint('entries',n,'symlinks',links,'bad',bad)\nEOF\npython3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx; echo exit=$?",
+    "description": "Check git identity, symlinks, lineage gate"
+  },
+  "is_error": false,
+  "tool_result_content": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/.git\nrepo_root==realpath(repository): True\nsystem_spec real in repo: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec True\ndiagnostics: ['default_branch_fallback_main'] plugin_source: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/dev-graph\nentries 19 symlinks 0 bad []\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0",
+  "tool_use_result": {
+    "stdout": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/.git\nrepo_root==realpath(repository): True\nsystem_spec real in repo: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/system-spec True\ndiagnostics: ['default_branch_fallback_main'] plugin_source: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx/plugins/dev-graph\nentries 19 symlinks 0 bad []\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

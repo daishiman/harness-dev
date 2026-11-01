@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9aac935c-e219-4892-b9e9-70a070d5903e",
+      "line": 134,
+      "prefix_bytes": 729039,
+      "prefix_sha256": "7091062a410a5e65ff2f2a8ff6fa504dfc3d690fcdb60d802c62c19bf67f7d55",
+      "timestamp": "2026-11-01T09:29:59.944Z"
+    },
+    "result": {
+      "uuid": "74da8df4-51c1-481b-a989-0086e8256223",
+      "line": 135,
+      "prefix_bytes": 730296,
+      "prefix_sha256": "12b83bde1e9745f43b1a112dee6bd3886bff2adf057d935c83a35c11be34aba2",
+      "timestamp": "2026-11-01T09:30:02.590Z"
+    }
+  },
+  "tool_use_id": "toolu_01J4adTDT8xPp9GBGNk6NCiF",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx; S=plugins/system-spec-harness/scripts; python3 $S/validate-design-knowledge-refs.py --matrix system-spec/spec-state.json --repo-root $PWD; echo dk=$?; python3 $S/validate-spec-doc-sync.py --matrix system-spec/spec-state.json --references system-spec/fetched-references.json --spec-root system-spec; echo sync=$?; python3 $S/validate-knowledge-graph.py --profile knowledge --order --input plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json 2>&1 | head -c 1500; echo; echo ko=$?",
+    "description": "Run knowledge-ref, doc-sync, topo-order checks"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: design knowledge_ref は全て実在する (検査 12 件)\ndk=0\nOK: 正本 spec-state.json の goal・根拠・出典が章へ投影されている\nsync=0\n[\"clean-code\", \"ddd\", \"design-patterns\", \"clean-architecture\", \"api-design-patterns\", \"secure-by-design\", \"usability-accessibility\", \"information-design\", \"test-strategy\", \"continuous-delivery\", \"site-reliability-engineering\", \"cloud-architecture-patterns\"]\n\nko=0",
+  "tool_use_result": null
+}

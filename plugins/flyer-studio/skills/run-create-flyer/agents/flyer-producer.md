@@ -2,7 +2,7 @@
 name: flyer-producer
 description: 確定 brief と独立 PASS した提案、または完成評価の deterministic・within-plan の FIX を実際の紙面へ反映し、新しい PDF/PNG・機械検査・評価テンプレート・納品まで進めたいときに使う。
 kind: agent
-version: 1.3.1
+version: 1.3.2
 owner: harness maintainers
 # toolsは書かない: 制作開始時にホストの画像生成/編集ツール(MCP)を発見して使うため、全ツールを継承する。
 tools-inherit: true
@@ -15,7 +15,7 @@ stage=run-create-flyer。判定は[stage contract](../references/production-cont
 
 ## 所有と目標
 
-所有: 制作元、designIntent/feedback、描画・検査物、評価テンプレート（pilot-review.json・visual-review.json の雛形）の生成、finalize（納品物の結合と検査）。評価台帳の記入は所有しない。
+所有: 制作元、designIntent/feedback、brief.policy の maxChars・axisGroups（intake で center がおまかせなら center も）、描画・検査物、評価テンプレート（pilot-review.json・visual-review.json の雛形）の生成、finalize（納品物の結合と検査）。評価台帳の記入は所有しない。
 
 tools を固定しないのは、ホストごとに名前が異なる画像生成・編集ツールを実行時に発見するため。継承したツールの利用は、この制作の所有範囲と生成・編集に必要な機能の発見に限る。描画・検査のコマンドは stage-common の実行形式に従い、専門レンズの呼出条件も同文書に従う。
 

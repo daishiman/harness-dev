@@ -4,7 +4,7 @@
 
 ## 全体の流れ
 
-[run-intake-flyer](../skills/run-intake-flyer/SKILL.md) →（既存紙面があるときは run-analyze-flyer → assign-flyer-analysis-review）→ run-create-flyer → assign-flyer-review → finalize → [run-learn-flyer](../skills/run-learn-flyer/SKILL.md)。段階の依存・分岐・実行許可の扱いは [workflow](workflow.md) が正本。
+[run-intake-flyer](../skills/run-intake-flyer/SKILL.md) →（既存紙面があるときは run-analyze-flyer → assign-flyer-analysis-evaluator）→ run-create-flyer → assign-flyer-evaluator → finalize → [run-learn-flyer](../skills/run-learn-flyer/SKILL.md)。段階の依存・分岐・実行許可の扱いは [workflow](workflow.md) が正本。
 
 ## 共通の判断手順
 
@@ -20,7 +20,7 @@ SKILL は担当の目標・入出力・受渡しを選ぶ入口。local agent �
 ## 起点と実行形式
 
 - PLUGIN_ROOT（plugin の最上位フォルダ）は `skills/<stage>/SKILL.md` の 2 階層上。cwd（今いるフォルダ）や旧案件のパスから推測しない。
-- コマンドは PLUGIN_ROOT で `python3 scripts/flyer.py <command> --project <DIR>` と実行する。flyer.py は同じ引数を scripts/cli.cjs へ渡す入口で、コマンド実行を許可された担当はこの Python 入口を使う。専門レンズはコマンドを実行せず、受け取った画像・資料の所見だけを返す。
+- コマンドは PLUGIN_ROOT で `python3 scripts/build-flyer.py <command> --project <DIR>` と実行する。build-flyer.py は同じ引数を scripts/cli.cjs へ渡す入口で、コマンド実行を許可された担当はこの Python 入口を使う。専門レンズはコマンドを実行せず、受け取った画像・資料の所見だけを返す。
 - コマンドの意味と失敗時の扱いは [runtime のコマンド一覧](runtime.md#コマンド一覧)、データの型は schemas が正本。pending（未判定）の台帳を自動で承認しない。
 
 ## 所有と機械による付随更新
@@ -46,7 +46,14 @@ AI の直接編集は担当の所有物だけに限る。指定コマンドに�
 
 ## 戻り先と改善上限
 
-FIX の分類と戻り先、cycle（改善の 1 往復）の数え方と停止条件は [workflow の改善と納品](workflow.md#改善と納品) が正本。premise の戻し方は同節の表と[ヒアリングの手順 9](../skills/run-intake-flyer/SKILL.md#手順)を参照する。上限は [design-contract](design-contract.json) の cycleBudget。登録簿の maxCycles と skill の max_loops は機械検査で一致を確かめる写し。知識の選択・候補比較・資料解釈など AI が判断する回数と、評価 FIX に基づく納品改善 cycle の消費は別であり、考え直した回数を台帳へ足さない。
+FIX の分類と戻り先、cycle（改善の 1 往復）の数え方と停止条件は [workflow の改善と納品](workflow.md#改善と納品) が正本。premise の戻し方は同節の表と[ヒアリングの局面 9](../skills/run-intake-flyer/SKILL.md#局面カタログ)を参照する。上限は [design-contract](design-contract.json) の cycleBudget。登録簿の maxCycles と skill の max_loops は機械検査で一致を確かめる写し。知識の選択・候補比較・資料解釈など AI が判断する回数と、評価 FIX に基づく納品改善 cycle の消費は別であり、考え直した回数を台帳へ足さない。
+
+## 深さの選択と戻り
+
+intake・analyze・create・learn は、選ぶ前の実成果物を見せてから、現状で試す／軽微／標準／詳細のどれにするかを利用者に選んでもらう。深さが変えるのは、各 SKILL が書いた手間の量だけである。独立性・停止条件・cycleBudget は変えない。選んだ深さは型に欄が無いので、[記録の残し方](#記録の残し方)どおり返却文へ書く。
+
+- 現状で試す（`accept-as-is`）を選んだ stage は、その場で終わる。後続の stage が読む成果物（brief.json・essence-baseline.json・PASS した analysis-review・delivery.json）は作られないので、次の stage へは進めない。進めるには、その stage に入り直して軽微・標準・詳細のどれかを選ぶ。
+- 評価の FIX や premise の戻し（[workflow の改善と納品](workflow.md#改善と納品)）で同じ案件の stage に入り直したときは、直す対象の現物（パスとハッシュ値）を示し、その stage で前に記録した深さをそのまま記録する。選び直しは求めない。前に記録した深さが無い stage と、別の会話で入り直して前の返却文が読めない stage だけ、1 回選んでもらう。
 
 ## 知識の読み込み
 

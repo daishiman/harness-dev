@@ -1,0 +1,7 @@
+{
+  "action": "set-design-application",
+  "category": "auth",
+  "text": "secure-by-design の最小権限と既定拒否を qa-026 のロールへ当てた。ロールごとに許す操作を列挙し、列挙に無い操作は拒否する: 請求担当は担当取引先の入力と突合、リーダーは確定の承認、内部監査室は閲覧のみ、情報システム部は請求データに触れない。アカウントの寿命は社内 IdP に従わせ、退職・異動で無効になったアカウントは本システムでも使えない (qa-026。qa-030 の『残ったアカウント』への対策)。D3 (qa-034) でバックエンドがトークンを持ち、ブラウザには cookie のセッションだけを渡す方式に決まったので、既定で安全 (secure defaults) と多層防御をブラウザとの境界にも当てる: セッションの cookie には HttpOnly・Secure・SameSite=Lax を付け、状態を変える要求 (POST・PUT・PATCH・DELETE) にはサーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にして、無いか合わない要求は拒否する (qa-csrf-written-v7)。データのライフサイクルとして、セッションは Pod のメモリに置かず、D1 の PostgreSQL 16 の表に保存して、Pod の再起動や複数の replica の間でもログインが切れないようにする。有効期限は 8 時間で (qa-002)、期限切れは使えなくして定期的に消し、ログアウトではすぐに無効にする (qa-session-written-v7)。\nCSRF/セッションの現行根拠は新fixtureの提供書面source-indexであり、旧entryのbasis変更を正当な利用者入力と主張しない。これは与えられた書面値への設計解釈で、実利用者の新承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:47:29.741994Z"
+}

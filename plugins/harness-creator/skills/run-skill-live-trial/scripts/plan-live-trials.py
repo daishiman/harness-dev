@@ -22,6 +22,8 @@ DEFAULT_MAX_CONCURRENCY = 2
 ACCEPTANCE_TIERS = {"static", "fork", "live"}
 LIVE_SIGNAL_TOOLS = {"Skill", "Agent", "AskUserQuestion"}
 LOOP_KINDS = {"run", "wrap", "delegate"}
+# plugin が live-trial の scenario 正本を置く慣例パス。
+SCENARIO_FIXTURE_REL = ("tests", "fixtures", "live-trial-positive-scenarios.json")
 
 
 def _load_sibling(name: str):
@@ -105,46 +107,86 @@ def _entry_skills(plugin_dir: Path) -> list[str]:
     return skills
 
 
+def _current_scenario_ids(plugin_dir: Path, skill: str) -> set[str] | None:
+    """scenario 正本が定める、その skill の現行 scenario_id 集合を返す。
+
+    正本を持たない plugin だけは None を返して突合しない。正本が存在するのに対象
+    skill の scenario が 0 件なら空集合を返す。0 件を None と同一視すると、scenario を
+    削除しても削除前の PASS 証拠を再利用でき、契約の失効操作が無効になるため。
+    """
+    path = plugin_dir.joinpath(*SCENARIO_FIXTURE_REL)
+    if not path.is_file():
+        return None
+    try:
+        suite = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        # 正本が読めないなら再利用可否を判断できない。黙って全再利用に倒すと
+        # 「正本を壊せば旧証跡が永久に通る」経路になるので fail-closed。
+        raise ValueError(f"scenario fixture is unreadable: {path}") from exc
+    scenarios = suite.get("scenarios")
+    if not isinstance(scenarios, list):
+        raise ValueError(f"scenario fixture has no scenarios list: {path}")
+    ids = {
+        item["scenario_id"]
+        for item in scenarios
+        if isinstance(item, dict)
+        and item.get("skill") == skill
+        and isinstance(item.get("scenario_id"), str)
+        and item["scenario_id"]
+    }
+    return ids
+
+
 def _valid_reusable_evidence(
     verdict_module, schema: dict, eval_root: Path, plugin: str, skill: str,
-    behavior_sha: str,
+    behavior_sha: str, scenario_ids: set[str] | None = None,
 ) -> tuple[Path | None, str]:
     trial_root = eval_root / plugin / skill / "live-trial"
     verdicts = sorted(trial_root.glob("*/verdict.json"), reverse=True)
     if not verdicts:
         return None, "missing-evidence"
-    last_reason = "no-current-pass"
+    # verdicts は新しい順。返す理由は「最新の証跡がなぜ失格か」でなければならない。
+    # 走査の最後 (= 最古の証跡) の理由を返すと、運用者は既に解決済みの古い理由を
+    # 見せられ、現在の再走要因を取り違える。
+    reasons: list[str] = []
     for path in verdicts:
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
-            last_reason = "invalid-verdict-json"
+            reasons.append("invalid-verdict-json")
             continue
         if verdict_module.validate_schema(doc, schema):
-            last_reason = "invalid-verdict-schema"
+            reasons.append("invalid-verdict-schema")
             continue
         if doc.get("target_skill") != f"{plugin}:{skill}":
-            last_reason = "target-mismatch"
+            reasons.append("target-mismatch")
             continue
         if doc.get("overall", {}).get("verdict") != "PASS" or doc.get("tier") != "live":
-            last_reason = "latest-evidence-not-pass"
+            reasons.append("latest-evidence-not-pass")
             continue
         if doc.get("skill_dir_tree_sha") != behavior_sha:
-            last_reason = "behavior-changed"
+            reasons.append("behavior-changed")
             continue
-        if not doc.get("scenario_id"):
-            last_reason = "scenario-unbound"
+        scenario_id = doc.get("scenario_id")
+        if not scenario_id:
+            reasons.append("scenario-unbound")
+            continue
+        if scenario_ids is not None and scenario_id not in scenario_ids:
+            # policy は「scenario 契約を変えたら scenario_id を bump して旧証跡を無効化
+            # する」と宣言しているが、非空検査だけでは bump が失効操作にならず、契約を
+            # 改訂しても旧契約下の PASS が current-pass のまま再利用され続ける。
+            reasons.append("scenario-contract-superseded")
             continue
         expected_transcript_sha = doc.get("transcript_sha256")
         transcript = path.parent / "transcript.jsonl"
         if not expected_transcript_sha or not transcript.is_file():
-            last_reason = "transcript-missing"
+            reasons.append("transcript-missing")
             continue
         if _sha256(transcript) != expected_transcript_sha:
-            last_reason = "transcript-digest-mismatch"
+            reasons.append("transcript-digest-mismatch")
             continue
         return path, "current-pass"
-    return None, last_reason
+    return None, reasons[0] if reasons else "no-current-pass"
 
 
 def build_plan(
@@ -193,7 +235,8 @@ def build_plan(
             records.append(record)
             continue
         evidence, reason = _valid_reusable_evidence(
-            verdict_module, schema, eval_root, plugin_dir.name, skill, behavior_sha
+            verdict_module, schema, eval_root, plugin_dir.name, skill, behavior_sha,
+            _current_scenario_ids(plugin_dir, skill),
         )
         if profile == "build-only":
             record.update({

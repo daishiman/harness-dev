@@ -95,8 +95,10 @@ NON_SKILL_KINDS = {"agent", "hook", "command", "plugin-composition", "prompt", "
 # SKILL.md / 非SKILL.md(agent/hook/...) の双方がこの同一集合を共有する。
 COMMON_CORE_REQUIRED = _load_common_core_required()
 # kind 固有の必須フィールド (同 schema の kind<Kind>.required)。
+# agent の tools 宣言は oneOf (tools か tools-inherit: true のどちらか一方) なので
+# ここには置かず、_agent_tools_errors で検査する。
 KIND_SPECIFIC_REQUIRED = {
-    "agent": ("tools", "isolation"),
+    "agent": ("isolation",),
     "command": ("argument-hint", "allowed-tools"),
     "hook": ("event", "command"),
     "plugin-composition": ("capabilities",),
@@ -347,6 +349,31 @@ def _check_source_tier_demotion(
     return None
 
 
+def _agent_tools_errors(fm: dict) -> list[str]:
+    """kindAgent の tools 宣言: `tools` (空でない) か `tools-inherit: true` のどちらか一方だけ。
+
+    正本は capability-manifest.schema.json#/definitions/kindAgent の oneOf。
+    tools に 'inherit' をツール名として書くと全継承にならないので、それも指摘する。
+    """
+    ref = "(capability-manifest.schema.json#/definitions/kindAgent)"
+    has_tools = "tools" in fm
+    has_inherit = "tools-inherit" in fm
+    if has_tools and has_inherit:
+        return [f"kind=agent: declare only one of 'tools' or 'tools-inherit: true', not both {ref}"]
+    if has_inherit:
+        value = fm["tools-inherit"]
+        if not isinstance(value, str) or value not in ("true", "True", "TRUE"):
+            return [f"kind=agent: 'tools-inherit' must be true, got {value!r} {ref}"]
+        return []
+    tools = fm.get("tools")
+    if tools in (None, "", []):
+        return [f"kind=agent: missing required field 'tools' or 'tools-inherit: true' (exactly one) {ref}"]
+    names = tools if isinstance(tools, list) else tools.split(",")
+    if any(str(t).strip().lower() == "inherit" for t in names):
+        return [f"kind=agent: 'inherit' is not a tool name; omit tools and declare 'tools-inherit: true' {ref}"]
+    return []
+
+
 def validate_capability(p: Path, fm: dict, text: str) -> tuple[str, list[str]]:
     """SKILL.md 以外の Capability (agent/command/hook/...) を commonCore + kind 固有で検証する。
 
@@ -374,6 +401,8 @@ def validate_capability(p: Path, fm: dict, text: str) -> tuple[str, list[str]]:
         if field not in fm or fm[field] in (None, "", []):
             errs.append(f"kind={kind}: missing required field '{field}' "
                         f"(capability-manifest.schema.json#/definitions/kind{kind.title().replace('-', '')})")
+    if kind == "agent":
+        errs.extend(_agent_tools_errors(fm))
     # 未展開テンプレート変数
     _unresolved_re = re.compile(r"\{\{[^}]+\}\}")
     for _k, _v in fm.items():

@@ -1,0 +1,26 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "JTBD・対象ユーザー・利用文脈を名指しで1問に束ねた(N4)。qa-019(1論点の開いた問・user-decision・answered_at あり)が同じ JTBD 論点を問い直し、(a)(b)(c) を満たす。残りの論点は qa-016/020/021 に分割済み。qa-009 は ui-ux×web の qa_refs(裏付け)のみで主たる qa_ref ではなく、foundation の参照もない。閉じた検出。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択と、有効期限・ログアウトの扱いを『あわせて』1問で問う独立2論点の束ね。選択肢(1)-(3)と『保留』の道は示されており high ではない。auth×web の qa_refs(裏付け)のみで主たる qa_ref ではないため PASS に残す注記。置き換え済みではないので supersession_valid は付かない。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U9",
+      "observation": "canonical qa-foundation-u9 に qa-001 の旧回答『PostgreSQL 15』が逐語で含まれる(初回確定の immutable な履歴)。現行値 U8 は qa-031 の PostgreSQL 16 と整合し、concrete_intents の I1 は版に依存しない。現在値との食い違いは検出にしないため注記のみ。"
+    }
+  ]
+}

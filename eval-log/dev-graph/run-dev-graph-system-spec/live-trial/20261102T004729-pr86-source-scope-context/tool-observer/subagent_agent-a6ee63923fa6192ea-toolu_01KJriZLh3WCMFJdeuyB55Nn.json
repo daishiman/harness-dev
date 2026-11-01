@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a6ee63923fa6192ea",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2db88f86-83e7-437b-91ed-6544fd1a5ba6",
+      "line": 78,
+      "prefix_bytes": 444067,
+      "prefix_sha256": "6ef83fcb30f3748860f85ef3eb1e584d9f15faee0ba39d5c4e6ab521eec2b10b",
+      "timestamp": "2026-11-01T16:08:19.462Z"
+    },
+    "result": {
+      "uuid": "9f9f56b1-5971-43af-a064-90efec6147a7",
+      "line": 79,
+      "prefix_bytes": 445440,
+      "prefix_sha256": "9c7fad11402a4297d222beac315d13e5e5dbefde02ab5756ffec3d8592b787f0",
+      "timestamp": "2026-11-01T16:08:22.746Z"
+    }
+  },
+  "tool_use_id": "toolu_01KJriZLh3WCMFJdeuyB55Nn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -nE 'compile_spec_doc|compile-spec-doc|record-answer|validate-coverage-matrix|validate-source-citation|elicit' plugins/dev-graph/scripts/register-package.py | head -5; git status --porcelain | head; git diff --stat HEAD | tail -2",
+    "description": "Inspect register-package match, git status"
+  },
+  "is_error": false,
+  "tool_result_content": "196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? runtime-context/\n?? system-spec/",
+  "tool_use_result": {
+    "stdout": "196:        \"agents\": [\"system-dev-plan-elicitor\", \"system-dev-plan-architect\", \"system-dev-plan-evaluator\"],\n?? .dev-graph/\n?? CLAUDE.local.md\n?? candidate-import.json\n?? eval-log/\n?? runtime-context/\n?? system-spec/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

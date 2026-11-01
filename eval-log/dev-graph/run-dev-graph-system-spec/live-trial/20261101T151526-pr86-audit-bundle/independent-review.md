@@ -1,0 +1,43 @@
+FAIL
+
+B1: scenarioの固定wall-clock上限3300秒を超過した。正規pollはHARD_CAP(exit 1)、raw elapsed=3510秒、公開elapsed=3512秒（収集時のceil補正）であり、いずれも予算外。tokenは正規集計15856376/23000000で予算内だが、wall-clock違反は解消しない。
+
+B2: C19の自走完了が未達。R3 verifierはverifier-loop3.jsonを保存したが完了応答を返さず、親はloop3の3gate exit0後に待機したまま中断された。C19 progressはloop2のまま最終2項目not_achieved、loop3のintermediate/最終handoff/out/status.jsonが無い。R3の保存済みPASSだけを親の完了とみなせない。
+
+B3: C05の明示された道具境界違反。C05 subagent raw180行のBashはschema調査に python3 -c ... | head -c 9000 を実行した。C05 SKILL「fork先で完結する実行契約」はhead等のshell調査を禁止している。observer event toolu_016jTNUTj3h6hqyYzoSTYHuSとnative rawで実行・結果を確認した。
+
+B4: C07の必読入力欠落。R7 2.3.1はSSOT・state・正規C12本文・taxonomyをReadする契約だが、C07の全native tool callはRead4件（R7、taxonomy、state前半、state後半）だけで、validate-coverage-matrix.py本文を読んでいない。機械証拠受領と全セル意味監査のPASS/receiptは、この必読義務の代替にならない。
+
+独立評価。108以外の過去trial raw/verdict/evalは参照せず、source契約を先に読んでから108収集証拠を監査した。source/Git/repo/rawへ編集していない。出力は/tmpの評価記録だけ。
+
+observer v3のSHA d0ac1e4c9dc5053bf5262bd779bcfe4de6ba1699bbc288352b07b0966fc79184を照合。凍結rawのmain+subagent9本すべてに extract(raw,stream,sid,original_observer_path,project_root) を再適用し195event、indexの順序/全項目、全eventの内容、各prefix bytes/SHA・uuid・行対応、10 observed_streamsのbytes/SHAが全一致。公開observerのindex/195eventもrawコピーとbytes一致。observer範囲外のabsenceを未実施証明には使っていない。C07等の道具範囲についてはnative assistant/user tool_useも全走査した。
+
+C05正規bundle CLIの履行は確認できた。初回raw39行でexit0、verification_sha256=20ed2084039553161edcf0ca3aba61c0e2b5205fe2aeed311c707b7f11300d6aを固定。C07/C06/C08の起動前で、state digest=9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2はsnapshotと一致。三監査完了後・report書込前のraw210行に同じCLI/固定引数/初回expected SHAを実指定し、reverify exit0/同digest。CLI source SHA1689ed86b82690aa7fb0584afdf2ef4de724a0aeb057e69418371c5a07a1b1f0の実装は4正規呼出しと全input/validator/argv/result JSONを再取得してhash比較する。評価者も元のfixtureに読取専用で同expected CLIを再実行しexit0・同digestを確認した。
+
+C05は正規Skillから実forkされた。C07/C06/C08は別contextでname/run_in_backgroundの明示なしに1件ずつ起動され、前件の実completion・resolved台帳を確認してから次へ進んだ。三receiptのsession/tool_use_id/completion response digest/verdictは正規aggregateの台帳帰属検査に接地し、評価者の --report --spec-dir --fork-ledger --session 再検査もexit0。runtimeがasync launchを返すこと自体は違反としない。
+
+C06はnative全callがRead5件で、SSOT/N1-N4/aspect基準とstate1802行を分割して全読。C08はRead10件+公式4URLへのWebFetch4件で、Bash/書込なし。C07はReadのみでstate全1802行とtaxonomyを読んだがB4のC12本文読込を欠く。C08の最新版主張は当該WebFetch実結果の観測であり、本評価が現在のWeb情報を別に取得して再認定したものではない。
+
+C02 pre-choice例外のwriter/baseline部分は整合。mainのdry-runとaddは同payload SHA18cf5dfdd162d586fc5dd547b9c1e64ba054cae92d36a1fed923ea6180b14cd6。mainでrev0→1、2nodeをatomic commitした後にstandardを記録し、post-choice graph_baselineはrev1/canonical digest sha256:fce692c2423e9a7297e7221c23dd735b3a6c8cf71cc56ae7d9eb92dc3211b058。writer_receipts=[]はpre-choice receiptを足さない正本の規定どおりで、classification/receiptはachievedかつpre-choice receipt pathをevidenceに保持。現graph、receipt.graph_digest_after、baseline、独立integrity auditorが返したdigestが一致する。
+
+C02 standard後の新規writer操作や未達R-id責務をmainが実行した証拠は見つからなかった。分類/preview/template/writeはpre-choiceで完了しており、このscopeでは責務forkが無いことだけを違反にしない。必須integrity auditorは実forkされ、graph/schema/receipt/contentを読んでPASS/digestを返している。評価者のstrict graph gate再実行もexit0、2nodeともcomplete。
+
+C02提示順序の疑義: add結果で現物path/digestはstdoutに出ているが、開き方 less ... はstandardと同じartifact-delivery保存コマンド内のrecordに現れ、独立した事前提示出力は確認できない。記録されたevent順を実際の提示と同一視した全条件PASSは付けない。現時点ではB1-B4と分けたnotesに保持する。
+
+C19各周回のgate実測: loop1(raw390)、loop2(raw641)、loop3(raw807)でcoverage --require-complete --require-basis --require-foundation/source-citation/strict graph schemaの3exit0を確認。loop1/2のIN1はその結果の後に記録され、loop3はgate実行後のanchor/progressが未記録である。二つのintermediateは6必須キーとoriginal_goal/hash不変を満たすがdrift_signal=noneはparadigmの6enum外（ローカルC19検査はenumを検査しない）。この適用差はnotesに留め、enum適合PASSとはしない。
+
+C19開始後の親main Bashは全て指定の固定CLAUDE_PROJECT_DIR export/cd/pwd-P照合prefixを持つ。起動前のtask読込Bashは別scopeとして区別した。compile OUT1は隔離scratchの--basetemp/-p no:cacheproviderで63 passed、caller_unchanged出力がある。pytest_exitはshellで空になっており終了コードの保存は弱いが、63 passedの実出力は存在する。scratch結果をC05/C02成果物へ流用した証拠はない。
+
+必要4entry pointsのavailability/pinと正規Skill経路を確認。doc-fetchは必要時のみの契約であり、今回の既存refs検証によるno-fetchを恒常的な実Web再取得不足として落とさない。native Skill6呼出し（C19/elicit/doc-fetch/compile/C05/C02）、成功注入5件は正規metadataに接地し、bodyはfrontmatter除去/CLAUDE_PLUGIN_ROOTのhost展開後のsource本文と一致した。C05は別のforked-skill実体として確認。
+
+独立snapshot照合でC05 reportの全12artifact digestは現物と一致。仕様nodeはsystem-spec/index.md、architecture nodeは00-requirements-definition.mdをsourceに持ち、origin/source_plugin/source_version0.1.25/source_digest/imported_atとconfirmation_evidence.evaluated_digest/evaluator/evidence_refが両方に揃う。confirmed/pass/readiness completeも現graphで確認した。これらの部分成果をもってC19自走完了やB3/B4の解消とはしない。
+
+C05 prompt_qualityはverify-completeness18件exit0、validate-prompt.py不在のskipを明記している。意味評価の説明はR1/R2を全文読んだ範囲に限られ、全18promptの独立C1-C4評価まで実証したとは扱わない。設計知識評価も全Markdownの見出し/対象節をPythonで抽出しており、全本文をモデルが読んだことまで主張しない。今回の確定B1-B4以外の疑義として保持する。
+
+全native tool callの集合はBash132/Read79/Agent8/Skill6/WebFetch4で、Write/Edit呼出しなし。ただしBash内mutationの有無はこの集計だけで否定しない。source/scriptの書換えによる正規フロー代替は観測していない。
+
+公開transcriptは匿名化済みでraw SHA160c5bfa9e9d38c1342df605d79804acb6fea38da72d20ab8b2e6c01e888ff86と異なる。評価結果は公開SHAへ束縛し、rawと公開の対応はevidence-redaction.jsonで確認した。
+
+公開transcript SHA-256: f20486f3f9e5789ef9e0e6ecbb64e2402a4940ed3dc53c1ce41c04a467f7c0dc
+
+評価対象sourceは108起動時のfxコピー/frozen rawと、事前に全文確認したsystem-spec-harness0.1.25/dev-graph0.1.26の契約へ固定した。今後WのsourceがHEAD公開0.1.24等へ変わっても、本判定の対象や根拠を付け替えない。

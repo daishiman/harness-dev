@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d8e950e0-65f0-4864-a435-90d8ef6e3e63",
+      "line": 481,
+      "prefix_bytes": 2301597,
+      "prefix_sha256": "3bec12564128f71099f4246376dd9434797605e3d4f42ab6a613daa361a4d501",
+      "timestamp": "2026-11-01T08:11:55.352Z"
+    },
+    "result": {
+      "uuid": "63bc86be-7fd0-4ed4-847c-d90bd64731e5",
+      "line": 482,
+      "prefix_bytes": 2308020,
+      "prefix_sha256": "b7edafcd3c22924013930c1597e4e46471ae8982a798bfb1601776d1fe7e7f6e",
+      "timestamp": "2026-11-01T08:11:58.493Z"
+    }
+  },
+  "tool_use_id": "toolu_013m7vkfqhCQcKJfcNKPtzkN",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c '\nimport json;d=json.load(open(\"candidate-import.json\"))\nprint(\"top keys\",list(d.keys()))\nfor a in d[\"artifacts\"]:\n  print(a[\"artifact_kind\"],a[\"slug\"],sorted(k for k in a if k!=\"sections\"))\n  for k in a:\n    if k not in(\"sections\",\"subtype_sections\",\"classification\"): print(\"  \",k,json.dumps(a[k],ensure_ascii=False)[:300])\n  print(\"  subtype_sections:\",{k:list(v) for k,v in (a.get(\"subtype_sections\") or {}).items()})\n'; git log --oneline -1 -- candidate-import.json; git check-ignore -v candidate-import.json; shasum -a 256 candidate-import.json"
+  },
+  "is_error": false,
+  "tool_result_content": "top keys ['artifacts', 'expected_graph_revision']\nspecification billing-audit-system-spec ['artifact_kind', 'classification', 'domain', 'project_id', 'slug', 'source_lineage', 'title', 'tracker_binding']\n   artifact_kind \"specification\"\n   slug \"billing-audit-system-spec\"\n   title \"請求・監査統合 Web システム 仕様書 (system-spec index 取込)\"\n   project_id \"billing-audit\"\n   domain \"billing\"\n   tracker_binding \"none\"\n   source_lineage {\"origin_kind\": \"system-spec-harness\", \"source_plugin\": \"system-spec-harness\", \"source_path\": \"system-spec/index.md\", \"source_version\": \"0.1.24\", \"source_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\"}\n  subtype_sections: {}\narchitecture billing-audit-system-architecture ['artifact_kind', 'artifact_subtypes', 'classification', 'domain', 'project_id', 'slug', 'source_lineage', 'subtype_sections', 'title', 'tracker_binding']\n   artifact_kind \"architecture\"\n   slug \"billing-audit-system-architecture\"\n   title \"請求・監査統合 Web システム アーキテクチャ (要件定義書取込)\"\n   project_id \"billing-audit\"\n   domain \"billing\"\n   tracker_binding \"none\"\n   artifact_subtypes [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\n   source_lineage {\"origin_kind\": \"system-spec-harness\", \"source_plugin\": \"system-spec-harness\", \"source_path\": \"system-spec/00-requirements-definition.md\", \"source_version\": \"0.1.24\", \"source_digest\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\"}\n  subtype_sections: {'frontend': ['Rendering and application pattern', 'Routes, screens and navigation', 'Component and design-system boundaries', 'State and data flow', 'Backend integration', 'Performance and observability', 'Frontend verification'], 'backend': ['Runtime and architecture pattern', 'Domain and module boundaries', 'API and service contracts', 'Data and transaction behavior', 'Async processing', 'Security and resilience', 'Operations and verification'], 'infrastructure': ['Environments and topology', 'Compute and storage', 'IaC and delivery', 'Secrets and access', 'Reliability and recovery', 'Infrastructure verification'], 'data': ['Data domains and ownership', 'Logical and physical model', 'Access and consistency', 'Lifecycle and governance', 'Migration and recovery', 'Data verification'], 'security': ['Assets, actors and threat model', 'Identity and authorization', 'Data and secret protection', 'Application and supply-chain controls', 'Detection and response', 'Security verification']}\nd582b8787926f1ad200567740c67c71bcc2a35d1cfd32a1db917674f73eea1d2  candidate-import.json",
+  "tool_use_result": {
+    "stdout": "top keys ['artifacts', 'expected_graph_revision']\nspecification billing-audit-system-spec ['artifact_kind', 'classification', 'domain', 'project_id', 'slug', 'source_lineage', 'title', 'tracker_binding']\n   artifact_kind \"specification\"\n   slug \"billing-audit-system-spec\"\n   title \"請求・監査統合 Web システム 仕様書 (system-spec index 取込)\"\n   project_id \"billing-audit\"\n   domain \"billing\"\n   tracker_binding \"none\"\n   source_lineage {\"origin_kind\": \"system-spec-harness\", \"source_plugin\": \"system-spec-harness\", \"source_path\": \"system-spec/index.md\", \"source_version\": \"0.1.24\", \"source_digest\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\"}\n  subtype_sections: {}\narchitecture billing-audit-system-architecture ['artifact_kind', 'artifact_subtypes', 'classification', 'domain', 'project_id', 'slug', 'source_lineage', 'subtype_sections', 'title', 'tracker_binding']\n   artifact_kind \"architecture\"\n   slug \"billing-audit-system-architecture\"\n   title \"請求・監査統合 Web システム アーキテクチャ (要件定義書取込)\"\n   project_id \"billing-audit\"\n   domain \"billing\"\n   tracker_binding \"none\"\n   artifact_subtypes [\"frontend\", \"backend\", \"infrastructure\", \"data\", \"security\"]\n   source_lineage {\"origin_kind\": \"system-spec-harness\", \"source_plugin\": \"system-spec-harness\", \"source_path\": \"system-spec/00-requirements-definition.md\", \"source_version\": \"0.1.24\", \"source_digest\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\"}\n  subtype_sections: {'frontend': ['Rendering and application pattern', 'Routes, screens and navigation', 'Component and design-system boundaries', 'State and data flow', 'Backend integration', 'Performance and observability', 'Frontend verification'], 'backend': ['Runtime and architecture pattern', 'Domain and module boundaries', 'API and service contracts', 'Data and transaction behavior', 'Async processing', 'Security and resilience', 'Operations and verification'], 'infrastructure': ['Environments and topology', 'Compute and storage', 'IaC and delivery', 'Secrets and access', 'Reliability and recovery', 'Infrastructure verification'], 'data': ['Data domains and ownership', 'Logical and physical model', 'Access and consistency', 'Lifecycle and governance', 'Migration and recovery', 'Data verification'], 'security': ['Assets, actors and threat model', 'Identity and authorization', 'Data and secret protection', 'Application and supply-chain controls', 'Detection and response', 'Security verification']}\nd582b8787926f1ad200567740c67c71bcc2a35d1cfd32a1db917674f73eea1d2  candidate-import.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true,
+      "shared": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "database",
+  "concern_id": "data-access",
+  "text": "請求書・入金・突合結果の保存は、ユースケース層が定めるリポジトリのポート越しに行い、PostgreSQL 16 (D1) 固有の SQL はアダプタ側に閉じる。qa-031 で版を選び直したときに影響がアダプタだけで済む構造にする。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: billing_expectations/missing_billing_cases/billing_closing_checks/job_outboxを既存PostgreSQL 16内に置く。契約ID・対象年月・種別の一意キー、業務更新と同一transactionのoutbox投入、claim排他/lease/fencing、再試行時の冪等な業務反映を対応付ける。締めでは全有効契約・請求予定・有効請求書を同じ整合した業務snapshotで再照合し漏れがあれば拒否する。Cloud Architecture Patternsの外部Blob配置/複数資産の補償は単一DBの本構成には非適用で、外部保存基盤を足さない。原子性境界と再送の比較はDB内transactionと既承認の一意キー/claimに具体化し、Cronだけのexactly-onceを主張しない。 concern=data-accessの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T10:44:43.266344Z"
+}

@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "68bdcf8a-7880-4d6c-9e3b-8d4600937636",
+      "line": 193,
+      "prefix_bytes": 1069638,
+      "prefix_sha256": "afb27b5e87ed5e2cea09659a1c49861c6891ac3769adf19d3a99bdb438694b0a",
+      "timestamp": "2026-11-01T03:49:50.497Z"
+    },
+    "result": {
+      "uuid": "f2dde57e-1ce8-482e-a10f-944cbd0953d3",
+      "line": 194,
+      "prefix_bytes": 1071980,
+      "prefix_sha256": "6336da7533e84165c9e55158a394cf1715c4f76974de709e583faa9b422e25df",
+      "timestamp": "2026-11-01T03:49:55.220Z"
+    }
+  },
+  "tool_use_id": "toolu_01TDcQWXHRXTEiaCuCiUkXjQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && export PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && S=\"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$S\" --require-complete --require-basis --require-foundation; echo \"exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$S\" --require-foundation; echo \"exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$S\" >/dev/null; echo \"kg exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-hearing-sources.py\" --matrix \"$S\" --repo-root \"$CLAUDE_PROJECT_DIR\" | head -c 600; echo; echo \"hs exit=${pipestatus[1]}\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\nexit=0\nkg exit=0\n{\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}\n\nhs exit=0",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (loop+foundation(上位概念トレース)) を満たす\nexit=0\nkg exit=0\n{\n  \"errors\": [],\n  \"ok\": true,\n  \"repo_root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\",\n  \"schema_version\": \"1.0\",\n  \"scope\": \"written-source-path-and-digest\",\n  \"sources\": [],\n  \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\",\n  \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\"\n}\n\nhs exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

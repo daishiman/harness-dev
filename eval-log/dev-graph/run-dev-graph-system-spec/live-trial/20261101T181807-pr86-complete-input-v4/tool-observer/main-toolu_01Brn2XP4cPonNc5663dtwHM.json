@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "dfa0afd4-0d4a-4c45-978b-b544102fc815",
+      "line": 320,
+      "prefix_bytes": 2044101,
+      "prefix_sha256": "7e4a93731dc2568e80714fa252fe5be8b5f321007b57c860cc0bd784f439b987",
+      "timestamp": "2026-11-01T09:23:23.103Z"
+    },
+    "result": {
+      "uuid": "c5e10e41-de8b-4307-b243-97a05722f2f3",
+      "line": 323,
+      "prefix_bytes": 2047938,
+      "prefix_sha256": "f77f51b7da7d81d18b436061788ede6d6730e533dbd56bee9efd8054f8f22e21",
+      "timestamp": "2026-11-01T09:23:26.464Z"
+    }
+  },
+  "tool_use_id": "toolu_01Brn2XP4cPonNc5663dtwHM",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; S=\"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"; python3 -c 'import json,sys;json.load(open(sys.argv[1]))' \"$S\" && echo parse_ok; shasum -a 256 \"$S\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$S\" --require-complete --require-basis --require-foundation >/dev/null; echo coverage_exit=$?; python3 -B \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$S\" > \"$TMPDIR/ri.json\"; echo ri_exit=$?; python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(\"ungrounded\",d.get(\"coverage_certificate\",{}).get(\"ungrounded_blocking_items\"))' \"$TMPDIR/ri.json\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-design-knowledge-refs.py\" --matrix \"$S\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo dkr_exit=$?; grep -l -iE 'sk-|password|secret_key' \"$S\" || echo no_secret_hits; echo \"開き方: less $S\"",
+    "description": "Validate spec-state and print path/digest"
+  },
+  "is_error": false,
+  "tool_result_content": "parse_ok\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec/spec-state.json\ncoverage_exit=0\nri_exit=0\nungrounded []\ndkr_exit=0\nno_secret_hits\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "parse_ok\n2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec/spec-state.json\ncoverage_exit=0\nri_exit=0\nungrounded []\ndkr_exit=0\nno_secret_hits\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

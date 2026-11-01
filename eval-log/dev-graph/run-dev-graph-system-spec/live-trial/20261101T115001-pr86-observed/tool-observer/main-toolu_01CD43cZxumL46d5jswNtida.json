@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7bd5021e-8c2c-4d25-b9d9-e7e111f27150",
+      "line": 137,
+      "prefix_bytes": 644725,
+      "prefix_sha256": "01c356f90943e549603fa8260cbfc574ea218d769909ec9e9ac15654253eddb1",
+      "timestamp": "2026-11-01T02:51:55.761Z"
+    },
+    "result": {
+      "uuid": "9b1e9918-8872-4b40-b403-3fbf445eea43",
+      "line": 140,
+      "prefix_bytes": 647528,
+      "prefix_sha256": "5b8388763217aea10451cfecceac74dde3fb297843bf5e50179021709982b133",
+      "timestamp": "2026-11-01T02:51:57.994Z"
+    }
+  },
+  "tool_use_id": "toolu_01CD43cZxumL46d5jswNtida",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$DEV_GRAPH_ROOT\" && [ \"$(pwd -P)\" = \"$DEV_GRAPH_ROOT\" ] && python3 -B - <<'PY'\nimport json, datetime, hashlib, pathlib\np='eval-log/run-dev-graph-system-spec/preflight-report.json'\nev = [\n {'state':'artifact_created','event':None},\n {'from':'artifact_created','event':'minimum_guard_pass','to':'minimal_guard_passed'},\n {'from':'minimal_guard_passed','event':'present_actual_artifact','to':'artifact_presented','artifact':p,'sha256':hashlib.sha256(open(p,'rb').read()).hexdigest(),'open_with':'less '+str(pathlib.Path(p).resolve())},\n {'from':'artifact_presented','event':'record_user_choice','to':'user_choice_recorded','choice':'standard','choice_source':'isolated-fixture pre-answer contract (task.md: artifact_deliveryの選択はstandard)'},\n {'from':'user_choice_recorded','event':'standard','to':'semantic_evaluator_started'}]\nnow=datetime.datetime.now(datetime.timezone.utc).isoformat()\nfor e in ev: e['at']=now\npathlib.Path('eval-log/run-dev-graph-system-spec/artifact-delivery.json').write_text(json.dumps({'contract':'artifact-delivery-v1','transitions':ev,'current':'semantic_evaluator_started'},ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')\nprint('ok')\nPY",
+    "description": "Record standard choice in artifact-delivery log"
+  },
+  "is_error": false,
+  "tool_result_content": "ok",
+  "tool_use_result": {
+    "stdout": "ok",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "action": "set-design-application",
+  "category": "database",
+  "text": "DDD の集約を、確定した請求書の不変条件へ当てた。請求書と請求明細を 1 つの集約にし、確定後は書き換えず赤黒訂正で直す (qa-024)。qa-001 の 3 スキーマのうち、請求スキーマが取引先・契約・請求書・明細・入金・突合結果を持ち、監査ログスキーマは追記だけを受ける。表と列の名前には利用者の言葉 (請求書・明細・突合・確定・赤黒訂正) をそのまま使う (ユビキタス言語)。版は D1 で PostgreSQL 16。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: billing_expectations/missing_billing_cases/billing_closing_checks/job_outboxを既存PostgreSQL 16内に置く。契約ID・対象年月・種別の一意キー、業務更新と同一transactionのoutbox投入、claim排他/lease/fencing、再試行時の冪等な業務反映を対応付ける。締めでは全有効契約・請求予定・有効請求書を同じ整合した業務snapshotで再照合し漏れがあれば拒否する。Cloud Architecture Patternsの外部Blob配置/複数資産の補償は単一DBの本構成には非適用で、外部保存基盤を足さない。原子性境界と再送の比較はDB内transactionと既承認の一意キー/claimに具体化し、Cronだけのexactly-onceを主張しない。\nこれは既存回答に対するfixture作者agentの設計解釈であり、新規の利用者承認ではない。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:09:33.335262Z"
+}

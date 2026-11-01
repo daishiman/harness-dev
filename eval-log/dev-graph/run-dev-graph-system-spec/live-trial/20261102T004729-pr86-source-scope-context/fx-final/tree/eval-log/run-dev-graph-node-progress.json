@@ -1,0 +1,21 @@
+{
+  "skill": "run-dev-graph-node",
+  "current_loop": 1,
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "eval-log/run-dev-graph-node/c24-receipt.json repo_root == realpath(content_roots.repository); writer C24 resolve + input repo-internal; auditor path containment PASS"},
+    {"id": "classification", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: spec decision auto confidence 0.95 margin 0.65; architecture decision auto confidence 0.92 margin 0.57 (>=0.80, >=0.15)"},
+    {"id": "schema", "status": "achieved", "evidence": "eval-log/run-dev-graph-node/validate-graph-schema-report.json valid, violations 0, strict artifact readiness complete 2; writer pre_write_validation findings 0"},
+    {"id": "package", "status": "not_applicable", "evidence": "verb add only (register-package not invoked)"},
+    {"id": "receipt", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json (single pre-choice commit): graph_revision_after 1, graph_digest_after sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b == graph_baseline; node_ids match graph"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "loop1: validate-graph-schema.py exit0 violations 0 (writer pre-write findings 0)"},
+    {"id": "OUT1", "status": "external_pending", "where": "live trial"},
+    {"id": "OUT2", "status": "external_pending", "where": "acceptance test"},
+    {"id": "OUT3", "status": "external_pending", "where": "acceptance test"}
+  ],
+  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b"},
+  "writer_receipts": [],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07b"},
+  "overall": "PASS"
+}

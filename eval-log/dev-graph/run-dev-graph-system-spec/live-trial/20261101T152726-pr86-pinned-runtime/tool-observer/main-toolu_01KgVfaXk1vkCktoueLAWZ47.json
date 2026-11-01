@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "fc43dbae-5331-41a6-a642-e0d9a2acde06",
+      "line": 247,
+      "prefix_bytes": 1242030,
+      "prefix_sha256": "b8194e4032c2f7fe21922b38fccc049f1d4202ccc4e6ef6da56c391088c28c1e",
+      "timestamp": "2026-11-01T15:32:37.548Z"
+    },
+    "result": {
+      "uuid": "4298b2df-e700-4cfa-90ae-4a5efac7c0e5",
+      "line": 255,
+      "prefix_bytes": 1246669,
+      "prefix_sha256": "0788940d9fcbc0dc9edd8fdea7135861405b775cb33b38d5854577248e65d544",
+      "timestamp": "2026-11-01T15:32:45.401Z"
+    }
+  },
+  "tool_use_id": "toolu_01KgVfaXk1vkCktoueLAWZ47",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && SCR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/tmp/claude-501/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec122-fx/062ed4b3-73fa-4468-be23-977e38275da5/scratchpad/elicit-tests\" && mkdir -p \"$SCR\" && B=$(find system-spec -type f -exec shasum -a 256 {} + | sort | shasum -a 256) && (cd \"$SCR\" && PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider --basetemp \"$SCR/bt\" \"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness/skills/run-system-spec-elicit/tests\" 2>&1 | tail -5); A=$(find system-spec -type f -exec shasum -a 256 {} + | sort | shasum -a 256); [ \"$B\" = \"$A\" ] && echo \"system-spec unchanged\"",
+    "timeout": 600000
+  },
+  "is_error": false,
+  "tool_result_content": "........................................................................ [ 26%]\n........................................................................ [ 52%]\n........................................................................ [ 78%]\n............................................................             [100%]\n276 passed in 3.55s\nsystem-spec unchanged",
+  "tool_use_result": {
+    "stdout": "........................................................................ [ 26%]\n........................................................................ [ 52%]\n........................................................................ [ 78%]\n............................................................             [100%]\n276 passed in 3.55s\nsystem-spec unchanged",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

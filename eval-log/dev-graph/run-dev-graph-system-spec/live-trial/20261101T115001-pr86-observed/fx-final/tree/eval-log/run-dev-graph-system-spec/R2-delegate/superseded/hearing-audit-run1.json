@@ -1,0 +1,40 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出 (置き換え先: qa-019)。旧問は JTBD・対象ユーザー・利用文脈 (場所/端末/頻度/制約) を名指しで 1 問に束ねていた (N4)。(a) qa-019 は『どんな場面で何を成し遂げるために使うか』の 1 論点の開いた問で N1-N4 を満たし、medium 以上の検出はない。(b) superseded_note と両問を照合し、中心論点の JTBD を問い直している。残りの論点は qa-016・qa-020・qa-021 に分けて問い直されている。(c) qa-019 は answer 非空・basis=user-decision・answered_at=2026-10-12T00:16:45Z を持つ (旧 entry に answered_at なし)。qa-009 は確定セルの主たる qa_ref ではない (ui-ux/web の qa_ref は qa-003)。foundation の canonical 根拠 qa-foundation-u1〜u9 にも参照されていない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": null,
+      "observation": "セッション保存先の 3 択に加え、『あわせて、セッションをどれだけの期間で無効にするか (有効期限と、ログアウトのときの扱い)』を同一問で求めており、独立に決められる 2 論点を束ねている。選択肢には『どれも採らない・比較・保留』の道が示されているため high ではなく medium。qa-038 は auth/web の主たる qa_ref (qa-002) ではなく qa_refs の裏付けにとどまるため、aspect-criteria の対応表では PASS に残す注記に当たる。置き換え済みではない。C01 への指針: 保存先と期限・ログアウトの扱いを 1 論点ずつ別の問で問い直す。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約を 1 問で確認させる確定確認の問。『確定する・直すところを指摘する・確定を保留する』の 3 つの道があり、各項目に根拠 qa id が付いている。個別の決定の束ねとはせず、疑いの注記として残す。推奨の印や前提の埋め込みはない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "retired の qa-009 (superseded_by=qa-019) が qa_refs に残っている。qa_ref (主たる根拠) は qa-003 であり、SSOT の active consumer の定義 (確定セルの qa_ref と effective_source_refs の qa_ref) には当たらないため、通常の high 検出にはしない。置き換え先 qa-019 も同じ qa_refs に含まれる。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "qa_id": "qa-037",
+      "observation": "qa-037 と qa-038 の provenance は、orchestrator が書いた既定値で、basis を agent-inference から user-decision に変えたと記録している (実利用者との対話ではない)。この fixture の他 QA も同様にシナリオ上の利用者発言と開示されており、state 上は basis=user-decision・answered_at 付きで qa_log に実在する。どちらも auth/security の qa_refs の裏付けで、主たる qa_ref ではない。真正性は provenance の開示にとどめ、検出としては info の注記とする。"
+    }
+  ]
+}

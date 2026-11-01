@@ -38,7 +38,7 @@
     "options": {
       "dry_run": "bool (default false)",
       "max_iterations": "int (default 3)",
-      "skip_thought_methods": "string[] (skip_reason 必須)"
+      "commit_authorized": "bool (default false)"
     }
   },
   "phases": [
@@ -59,13 +59,15 @@
         ]
       },
       "output": {
-        "artifacts": ["raw_observations.json", "eval-log/<plugin>/<skill>/elegant-review/<run-id>/shared_state.md"],
-        "_comment_artifact": "log_dir 配下に固定 (SS-006: パス未固定だと completion_signal の存在判定が曖昧になる)",
+        "artifacts": ["raw_observations.json", "shared_state.md"],
+        "artifact_dir": "log_dir (eval-log/<plugin>/<skill>/elegant-review/<run-id>/)",
+        "materialized_by": "orchestrator",
+        "_comment_artifact": "SubAgent は payload を返すだけで write しない。orchestrator が両成果物を log_dir 配下へ atomic materialize する (single-writer)",
         "schema": "./schemas/phase-output.schema.json#/definitions/phase1_output"
       },
       "completion_signal": {
         "type": "file-exists-and-schema-validate",
-        "files": ["raw_observations.json", "eval-log/<plugin>/<skill>/elegant-review/<run-id>/shared_state.md"],
+        "files": ["<log_dir>/raw_observations.json", "<log_dir>/shared_state.md"],
         "schema_file": "raw_observations.json",
         "must_include": ["purpose", "scope", "stakeholders", "concrete_values_to_abstract"]
       },
@@ -82,9 +84,9 @@
       "dependsOn": ["phase1-reset"],
       "parallel": true,
       "subagents": [
-        {"id": "elegant-logical-structural-analyst", "thought_methods_count": 10, "category": "A2"},
+        {"id": "elegant-logical-structural-analyst", "thought_methods_count": 9, "category": "A2"},
         {"id": "elegant-meta-divergent-analyst", "thought_methods_count": 9, "category": "A3"},
-        {"id": "elegant-system-strategic-analyst", "thought_methods_count": 11, "category": "A4"}
+        {"id": "elegant-system-strategic-analyst", "thought_methods_count": 12, "category": "A4"}
       ],
       "context": "fork",
       "prompt": "./prompts/R2-phase2-parallel.md",
@@ -99,18 +101,19 @@
           "findings-phase2-system.json"
         ],
         "artifact_dir": "log_dir (eval-log/<plugin>/<skill>/elegant-review/<run-id>/) 配下に出力",
+        "materialized_by": "orchestrator",
         "schema": "./schemas/findings-partial.schema.json",
-        "_comment_schema": "per-agent 部分出力 (10/9/11 思考法) は paradigm_findings 件数制約なしの partial schema を適用 (SS-005)。集約後 findings.json のみ 30 固定の findings.schema.json (正本) を適用",
+        "_comment_schema": "per-agent payload (9/9/12 思考法) を partial schema で検査後、orchestrator だけが log_dir へ materialize・集約する。集約後 findings.json は30固定",
         "aggregation": "merge into findings.json (Phase 3 input, schema: ./schemas/findings.schema.json)"
       },
       "completion_signal": {
         "type": "paradigm-coverage",
-        "command": "python3 scripts/validate-paradigm-coverage.py <log_dir>/findings.json",
-        "rule": "thought_method_coverage.used + skipped_with_reason == 30 and every skipped method has skip_reason (B2, C1 緩和)"
+        "command": "python3 scripts/validate-paradigm-coverage.py --strict-signal <log_dir>/findings.json",
+        "rule": "thought_method_coverage.used is exactly 30 unique canonical methods AND skipped_with_reason is empty"
       },
       "failure_action": {
-        "policy": "partial-continue",
-        "rule": "1 SubAgent 失敗時は他 2 つを保持して continue、欠落分は次反復で補完"
+        "policy": "abort",
+        "rule": "1 SubAgent でも失敗・欠落なら Phase3 へ進まない。最大3反復内で当該 lane を再実行する"
       },
       "entryHookId": "phase2-entry",
       "exitHookId": "phase2-exit"
@@ -131,10 +134,10 @@
       "steps": [
         "step0: DAG 生成 (findings[].location + depends_on または paradigm_findings[].issues[].location + depends_on から依存グラフ構築、B3)",
         "step1: issues[].severity 優先順位 (critical > high > medium > low)。4条件 signal は condition_signal/fail_counts で別管理",
-        "step2: 独立対象 parallel / 依存あり serial",
-        "step3: dry_run=false かつ auto_fixable=true のみ pre-phase3.patch 記録後に最小パッチ適用 / それ以外は提案のみ。commit / PR は明示依頼時だけ後続で実行",
+        "step2: orchestrator が独立対象を非重複 write scope の executor へ parallel 割当 / 依存あり serial。各 executor は再帰起動しない",
+        "step3: dry_run=false かつ auto_fixable=true のみ pre-phase3.patch 記録後に最小パッチ適用 / それ以外は提案のみ。git commit は commit_authorized=true の明示時だけ許可し、PR は明示依頼時だけ後続で実行",
         "step4: 4 条件再検証 (max_iter=options.max_iterations, default 3)",
-        "step5: verdict.json を schemas/verdict.schema.json 準拠で生成",
+        "step5: orchestrator が executor の convergence_status を findings.json の run_status へ写し (complete→complete / diverging・human_escalate→human_escalate / in_progress・incomplete→incomplete。正本 references/convergence-policy.json halt_conditions)、python3 scripts/build-verdict.py --findings <log_dir>/findings.json --verdict <log_dir>/verdict.json で verdict.json を導出する (手書き禁止。初回は --plugin/--skill/--scope-mode/--run-id を付ける)",
         "step6: emit_observable (always実行) - python3 scripts/emit-observable.py --verdict <log_dir>/verdict.json (PASS/FAIL 双方で観測完全性を確保、safety_valve_fired は verdict 独立で emit を強制)"
       ],
       "delegate_codex_criteria": {
@@ -159,6 +162,8 @@
         "rule": "fail_counts.contradiction == 0 AND .omission == 0 AND .inconsistency == 0 AND .dependency_break == 0",
         "task_graph_trace_command": "python3 scripts/validate-paradigm-coverage.py --task-graph-trace eval-log/run-elegant-review-progress.json eval-log/run-elegant-review-intermediate.jsonl",
         "task_graph_trace_rule": "exit 0 required before completed",
+        "strict_signal_command": "python3 scripts/validate-paradigm-coverage.py --strict-signal <log_dir>/findings.json",
+        "strict_signal_rule": "exit 0 required before completed (smell の便宜値 condition と condition/condition_signal 不一致を error にする)",
         "max_iterations": 3,
         "convergence_policy": "./references/convergence-policy.json"
       },
@@ -177,7 +182,8 @@
   "side_effect_boundaries": {
     "phase1": "read-only",
     "phase2": "read-only",
-    "phase3": "dry_run=false のみ target write-allowed。dry_run=true は eval-log/observable 出力のみ"
+    "phase3": "dry_run=false のみ target write-allowed (findings に紐づく patch、observable emit)。dry_run=true は eval-log/observable 出力のみ",
+    "git": "patch-only unless commit_authorized=true"
   },
   "approval_policy": {
     "rule": "proposer != approver (C4, 23 章)",
@@ -212,9 +218,10 @@
     {"id": "ref-variable-template", "kind": "reference", "path": "./references/variable-template-contract.md", "phaseIds": ["phase1-reset", "phase2-parallel", "phase3-execute"]},
     {"id": "ref-amplified-patterns", "kind": "reference", "path": "./references/amplified-patterns.json", "phaseIds": ["phase3-execute"]},
     {"id": "ref-verification-obligation", "kind": "reference", "path": "../run-build-skill/references/verification-obligation-protocol.md", "phaseIds": ["phase3-execute"]},
-    {"id": "script-validate-coverage", "kind": "script", "path": "./scripts/validate-paradigm-coverage.py", "phaseIds": ["phase2-parallel"]},
+    {"id": "script-validate-coverage", "kind": "script", "path": "./scripts/validate-paradigm-coverage.py", "phaseIds": ["phase2-parallel", "phase3-execute"]},
     {"id": "script-build-scorecard", "kind": "script", "path": "./scripts/build-paradigm-scorecard.py", "phaseIds": ["phase2-parallel"]},
-    {"id": "script-emit-observable", "kind": "script", "path": "./scripts/emit-observable.py", "phaseIds": ["phase3-execute"]}
+    {"id": "script-emit-observable", "kind": "script", "path": "./scripts/emit-observable.py", "phaseIds": ["phase3-execute"]},
+    {"id": "script-build-verdict", "kind": "script", "path": "./scripts/build-verdict.py", "phaseIds": ["phase3-execute"]}
   ],
   "entry": [
     {"id": "phase1-entry", "command": "validate input_contract.target (plugin, skill, scope_mode all required); enforce read-only"},
@@ -222,9 +229,9 @@
     {"id": "phase3-entry", "command": "validate aggregated findings; verify thought_method_coverage.total == 30; write pre-phase3.patch with git diff --binary"}
   ],
   "exit": [
-    {"id": "phase1-exit", "command": "handoff shared_state.md"},
-    {"id": "phase2-exit", "command": "run validate-paradigm-coverage.py; build-paradigm-scorecard.py; aggregate findings.json"},
-    {"id": "phase3-exit", "command": "run --task-graph-trace validator; verify 4 conditions; on FAIL/safety_valve emit observable; on max_iter human_review"}
+    {"id": "phase1-exit", "command": "orchestrator atomically materializes raw_observations.json and shared_state.md under log_dir, then handoff"},
+    {"id": "phase2-exit", "command": "orchestrator validates 9/9/12 payloads, atomically materializes three partials under log_dir, aggregates findings.json, then runs coverage and scorecard"},
+    {"id": "phase3-exit", "command": "run --task-graph-trace validator and --strict-signal <log_dir>/findings.json; verify 4 conditions; derive verdict.json with scripts/build-verdict.py; on FAIL/safety_valve emit observable; on max_iter human_review"}
   ],
   "design_chapters": ["09", "17", "25 §runbook Step 5.5", "26 §dogfooding", "30", "35 §observables", "36"]
 }

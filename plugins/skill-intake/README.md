@@ -486,14 +486,14 @@ plugins/skill-intake/
 ├── references/                        # 共有 references — 旧 aggregator から移設した SSOT 正本
 ├── assets/                            # Mermaid 12 + samples 8 + SVG 8 カタログ (28本) — 旧 aggregator から移設
 ├── schemas/                           # handoff / findings / intake-final (3本) — 旧 aggregator から移設
-├── hooks/                             # PreToolUse / PostToolUse / Stop / SessionEnd / 手動 (5本 + README)
+├── hooks/                             # PreToolUse / PostToolUse / Stop / SessionEnd (4本 + README)
 │   ├── hook-guard-skillgen.py         # intake 実行中の skill 生成を exit 2 で 100% ブロック
 │   ├── pre-publish-secret-scrub.sh    # 公開前 secret 走査 (exit 2 でブロック)
 │   ├── pre-publish-schema-validate.py # 公開前スキーマ検証
 │   ├── post-publish-notify.sh         # scripts/post_publish_notify.py 互換 entry
-│   ├── post-keychain-add.sh           # Keychain 登録直後の検証 (手動)
 │   └── README.md
 ├── scripts/                           # 共有スクリプト (Python 3.9+、vendor/python を自動使用)
+│   ├── post-keychain-add.sh           # Keychain 登録直後の検証 (手動)
 │   ├── keychain_get_secret.py         # Keychain アクセスの唯一経路
 │   ├── notion_http.py                 # Notion REST wrapper
 │   ├── intake_publish_pipeline.py     # publish/republish/revise の単一発火点

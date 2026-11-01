@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a37e549a77ce8c6c5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8c859c1a-cce5-4d06-ab1b-dd2850fff5aa",
+      "line": 38,
+      "prefix_bytes": 310122,
+      "prefix_sha256": "fd85cc07ec8e480ba7d6f9e45da41382f6885d7eaae5d3a10d36422964d5eb60",
+      "timestamp": "2026-11-01T08:57:19.737Z"
+    },
+    "result": {
+      "uuid": "65e0af2d-5567-48bd-acd8-a833c13f9c6d",
+      "line": 39,
+      "prefix_bytes": 312759,
+      "prefix_sha256": "b2d6cc14889b0975fe322d5991770e842caa0724c0b740399510fbda2f44c157",
+      "timestamp": "2026-11-01T08:57:22.906Z"
+    }
+  },
+  "tool_use_id": "toolu_014Xdjd54nqijrLNXSKx5hzo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx; P=plugins/system-spec-harness; python3 $P/scripts/validate-knowledge-graph.py --profile required-info --input $P/skills/run-system-spec-elicit/references/required-info-catalog.json --state system-spec/spec-state.json 2>&1 | python3 -I -c \"\nimport sys,json\nt=sys.stdin.read()\ntry:\n    j=json.loads(t); print(json.dumps(j.get('coverage_certificate',j),ensure_ascii=False)[:1500])\nexcept Exception: print(t[:1500])\n\"; echo \"exit=${PIPESTATUS[0]}\"\npython3 $P/scripts/validate-coverage-matrix.py --matrix system-spec/spec-state.json --require-complete --require-basis --require-foundation; echo exit=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"in_scope_domains\": [\"api\", \"auth\", \"backend\", \"database\", \"frontend\", \"infrastructure\", \"maintenance-ops\", \"security\", \"ui-ux\"], \"domains_covered_by_item\": [\"api\", \"auth\", \"backend\", \"database\", \"frontend\", \"infrastructure\", \"maintenance-ops\", \"security\", \"ui-ux\"], \"na_approved_domains\": [], \"total_items\": 12, \"blocking_items\": [\"auth-model\", \"context-of-use\", \"domain-model\", \"product-goal\", \"security-posture\", \"target-platforms\"], \"grounded_blocking_items\": [\"auth-model\", \"context-of-use\", \"domain-model\", \"product-goal\", \"security-posture\", \"target-platforms\"], \"ungrounded_blocking_items\": []}\nexit=\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit=0",
+  "tool_use_result": {
+    "stdout": "{\"in_scope_domains\": [\"api\", \"auth\", \"backend\", \"database\", \"frontend\", \"infrastructure\", \"maintenance-ops\", \"security\", \"ui-ux\"], \"domains_covered_by_item\": [\"api\", \"auth\", \"backend\", \"database\", \"frontend\", \"infrastructure\", \"maintenance-ops\", \"security\", \"ui-ux\"], \"na_approved_domains\": [], \"total_items\": 12, \"blocking_items\": [\"auth-model\", \"context-of-use\", \"domain-model\", \"product-goal\", \"security-posture\", \"target-platforms\"], \"grounded_blocking_items\": [\"auth-model\", \"context-of-use\", \"domain-model\", \"product-goal\", \"security-posture\", \"target-platforms\"], \"ungrounded_blocking_items\": []}\nexit=\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true,
+      "shared": true
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a1f3322d1e4ab1aab",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "acfa5857-1237-4620-bb33-8496d959e719",
+      "line": 59,
+      "prefix_bytes": 502385,
+      "prefix_sha256": "5df860b00474ad73c3d3ba7e279910674fc2921f589f297ea1eb9094c093eb44",
+      "timestamp": "2026-11-01T11:14:01.934Z"
+    },
+    "result": {
+      "uuid": "de4ffb6a-c6a4-4318-9288-28afe159849e",
+      "line": 60,
+      "prefix_bytes": 508083,
+      "prefix_sha256": "f16d95c457fa46efe9cd00b1cd8fe1ebd1688478d7b6471c297961046c01c37c",
+      "timestamp": "2026-11-01T11:14:04.183Z"
+    }
+  },
+  "tool_use_id": "toolu_01VNifVjpiwVQW9qd2Ms9UaJ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cat eval-log/run-dev-graph-node/add-result.json; echo ===; cat .dev-graph/state/receipts/node-r000001-add.json; echo ===; cat .dev-graph/tmp/authority-audit.json; echo; shasum -a 256 specs/*.md architecture/*.md .dev-graph/state/receipts/* eval-log/run-dev-graph-node/* system-spec/index.md system-spec/00-requirements-definition.md eval-log/system-spec-completeness-report.json"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\n{\n  \"applied_count\": 2,\n  \"artifacts\": [\n    {\n      \"classification\": {\n        \"confidence\": 0.95,\n        \"decision\": \"auto\",\n        \"margin\": 0.65\n      },\n      \"file_path\": \"specs/billing-audit-system-spec.md\",\n      \"graph_node_id\": \"spec-billing-audit-system-spec\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"705c6350f35bcd629f8e62eb74be9e74a100207ca1d959022ebbf0bf1b193d70\",\n      \"sha256_before\": null\n    },\n    {\n      \"classification\": {\n        \"confidence\": 0.92,\n        \"decision\": \"auto\",\n        \"margin\": 0.57\n      },\n      \"file_path\": \"architecture/billing-audit-system-architecture.md\",\n      \"graph_node_id\": \"arch-billing-audit-system-architecture\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"23bfe9a6341f78d65ed9ca53a31f309d652e0cf1d24a60f0cef3c2291a2e782f\",\n      \"sha256_before\": null\n    }\n  ],\n  \"dry_run\": false,\n  \"graph_digest_after\": \"sha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47\",\n  \"graph_path\": \".dev-graph/state/graph.json\",\n  \"graph_revision_after\": 1,\n  \"graph_revision_before\": 0,\n  \"input_sha256\": \"93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b\",\n  \"node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"operation\": \"add\",\n  \"owner\": \"C02/run-dev-graph-node\",\n  \"pre_write_validation\": {\n    \"findings\": 0,\n    \"validator\": \"validate-graph-schema.py\"\n  },\n  \"receipt_path\": \".dev-graph/state/receipts/node-r000001-add.json\",\n  \"recorded_at\": \"2026-11-01T11:12:26.776540Z\",\n  \"repository_id\": \"local:sha256:37ba4cb18290679dd40eb0f5ff8e7a99ed1586fe3cb62e6b417ac26b4375ec7c\",\n  \"schema_version\": \"1.0.0\",\n  \"status\": \"applied\",\n  \"template_sources\": [\n    \"repository:architecture-backend.md\",\n    \"repository:architecture-data.md\",\n    \"repository:architecture-frontend.md\",\n    \"repository:architecture-infrastructure.md\",\n    \"repository:architecture-security.md\",\n    \"repository:architecture.md\",\n    \"repository:specification.md\"\n  ],\n  \"valid\": true,\n  \"write_count\": 4\n}\n(eval):1: == not found",
+  "tool_use_result": "Error: Exit code 1\n{\n  \"applied_count\": 2,\n  \"artifacts\": [\n    {\n      \"classification\": {\n        \"confidence\": 0.95,\n        \"decision\": \"auto\",\n        \"margin\": 0.65\n      },\n      \"file_path\": \"specs/billing-audit-system-spec.md\",\n      \"graph_node_id\": \"spec-billing-audit-system-spec\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"705c6350f35bcd629f8e62eb74be9e74a100207ca1d959022ebbf0bf1b193d70\",\n      \"sha256_before\": null\n    },\n    {\n      \"classification\": {\n        \"confidence\": 0.92,\n        \"decision\": \"auto\",\n        \"margin\": 0.57\n      },\n      \"file_path\": \"architecture/billing-audit-system-architecture.md\",\n      \"graph_node_id\": \"arch-billing-audit-system-architecture\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"23bfe9a6341f78d65ed9ca53a31f309d652e0cf1d24a60f0cef3c2291a2e782f\",\n      \"sha256_before\": null\n    }\n  ],\n  \"dry_run\": false,\n  \"graph_digest_after\": \"sha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47\",\n  \"graph_path\": \".dev-graph/state/graph.json\",\n  \"graph_revision_after\": 1,\n  \"graph_revision_before\": 0,\n  \"input_sha256\": \"93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b\",\n  \"node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"operation\": \"add\",\n  \"owner\": \"C02/run-dev-graph-node\",\n  \"pre_write_validation\": {\n    \"findings\": 0,\n    \"validator\": \"validate-graph-schema.py\"\n  },\n  \"receipt_path\": \".dev-graph/state/receipts/node-r000001-add.json\",\n  \"recorded_at\": \"2026-11-01T11:12:26.776540Z\",\n  \"repository_id\": \"local:sha256:37ba4cb18290679dd40eb0f5ff8e7a99ed1586fe3cb62e6b417ac26b4375ec7c\",\n  \"schema_version\": \"1.0.0\",\n  \"status\": \"applied\",\n  \"template_sources\": [\n    \"repository:architecture-backend.md\",\n    \"repository:architecture-data.md\",\n    \"repository:architecture-frontend.md\",\n    \"repository:architecture-infrastructure.md\",\n    \"repository:architecture-security.md\",\n    \"repository:architecture.md\",\n    \"repository:specification.md\"\n  ],\n  \"valid\": true,\n  \"write_count\": 4\n}\n(eval):1: == not found"
+}

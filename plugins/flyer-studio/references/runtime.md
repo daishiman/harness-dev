@@ -4,7 +4,7 @@
 
 ## コマンド一覧
 
-すべて PLUGIN_ROOT で `python3 scripts/flyer.py <command> [引数]` と実行する（flyer.py は同じ引数を cli.cjs へ渡す入口）。パスは絶対パスで渡す。
+すべて PLUGIN_ROOT で `python3 scripts/build-flyer.py <command> [引数]` と実行する（build-flyer.py は同じ引数を cli.cjs へ渡す入口）。パスは絶対パスで渡す。
 
 | command | 引数 | 用途 |
 |---|---|---|
@@ -41,7 +41,7 @@
 
 | ファイル | 作るもの | 中身 |
 |---|---|---|
-| brief.json | init → intake-apply | 目的・読者・価値・行動、確定事実と掲載文、形式・案数・印刷条件、policy、feedback（[brief schema](../schemas/brief.schema.json)） |
+| brief.json | init → intake-apply（policy の maxChars・axisGroups と、intake でおまかせだった center、feedback は run-create-flyer が書く） | 目的・読者・価値・行動、確定事実と掲載文、形式・案数・印刷条件、policy、feedback（[brief schema](../schemas/brief.schema.json)） |
 | intake.json | intake-apply | 回答ごとの値・出典（answer / document / preset-reconfirmed / placeholder / proposal）・ラウンド・未解決 |
 | style-proposals.json | run-intake-flyer | 様式提案 2〜3 案・根拠・目的への効き方と、chosen・chosenBy（user / delegated） |
 | essence-baseline.json | essence-baseline | 開始時の依頼文・purpose・must-fact と sha256 |
@@ -75,9 +75,9 @@ qrUrl が無い案件は QR を作らず、copy.apply に電話・当日受付�
 
 [run-analyze-flyer](../skills/run-analyze-flyer/SKILL.md) が全元画像を実見して下書きを埋める。特定案だけの要求は requirements.variantIds で対象を限り、全案へ強制しない。先行試作するなら executionPlan（pilotVariantIds・reason・propagation）を書き、pilot は既存案の一部に限る。seal は提案の承認ではない。分析の記述を変えれば analysisSha が、目的・制約・要求を変えれば context が変わる。
 
-分析担当が analysis-review-template で用意した台帳を、[assign-flyer-analysis-review](../skills/assign-flyer-analysis-review/SKILL.md) が別 context で記入・照合し、analysis-review-validate が独立 PASS だけを通す。元画像・analysis・規範・要求 context が変われば旧承認は使えない。実施者の別名で自己承認を装わない。brief.analysisMode（分析の進め方）は init で new-from-brief（brief から新規に作る。分析の 2 段は飛ばす）になり、analysis-template を実行すると source-artifact（既存紙面を診断する）に切り替わる。source-artifact の案件は、有効な独立承認が無いと制作へ進めない。値が未決の案件は既定値で補わずに止める。コマンドの mode 切替・評価退避は呼出側に許された準備と履歴保全で、AI が brief や退避記録を自由に編集する許可ではない（[所有規則](stage-common.md#所有と機械による付随更新)）。
+分析担当が analysis-review-template で用意した台帳を、[assign-flyer-analysis-evaluator](../skills/assign-flyer-analysis-evaluator/SKILL.md) が別 context で記入・照合し、analysis-review-validate が独立 PASS だけを通す。元画像・analysis・規範・要求 context が変われば旧承認は使えない。実施者の別名で自己承認を装わない。brief.analysisMode（分析の進め方）は init で new-from-brief（brief から新規に作る。分析の 2 段は飛ばす）になり、analysis-template を実行すると source-artifact（既存紙面を診断する）に切り替わる。source-artifact の案件は、有効な独立承認が無いと制作へ進めない。値が未決の案件は既定値で補わずに止める。コマンドの mode 切替・評価退避は呼出側に許された準備と履歴保全で、AI が brief や退避記録を自由に編集する許可ではない（[所有規則](stage-common.md#所有と機械による付随更新)）。
 
-提案の mandatoryFixes は text と serves（E1〜E5）を持ち、好みは preferenceNotes の text へ分ける。FIX の判定条件は [提案評価契約](../skills/assign-flyer-analysis-review/references/evaluation-contract.md) を正とする。提案 FIX は analysis-review の差戻しとして cycle を数え、画像用の premise と推定しない。旧形式の文字列 FIX は通常の検査・制作で停止する。移行は呼出側が analysis-review-template を再発行し、旧記録を serves を補わない未分類の履歴として予算へ記録・原文のまま退避してから、新型で独立評価を受け直す。
+提案の mandatoryFixes は text と serves（E1〜E5）を持ち、好みは preferenceNotes の text へ分ける。FIX の判定条件は [提案評価契約](../skills/assign-flyer-analysis-evaluator/references/evaluation-contract.md) を正とする。提案 FIX は analysis-review の差戻しとして cycle を数え、画像用の premise と推定しない。旧形式の文字列 FIX は通常の検査・制作で停止する。移行は呼出側が analysis-review-template を再発行し、旧記録を serves を補わない未分類の履歴として予算へ記録・原文のまま退避してから、新型で独立評価を受け直す。
 
 ## 採否から制作へ
 
@@ -97,7 +97,7 @@ render は背景と写真をラスタ化し、文字・ロゴ・QR を独立レ�
 
 ## 完成画像の独立評価
 
-[assign-flyer-review](../skills/assign-flyer-review/SKILL.md) が [評価コストの原則](review-rubric.md#評価コストの原則)に従う評価対象の新しい PDF 由来 PNG を実見する。見る順序と物差しは [review-rubric](review-rubric.md) が正本。意図を読む前の初見は readingTest（紙面に見えた語のまま）、保持点の確認は preservationChecks へ残す。criteria の本文は 1 回だけ保存し、専門レンズの所見は担当 criterion を参照する（レンズと観点の対応は design-contract.json の expertDimensions）。
+[assign-flyer-evaluator](../skills/assign-flyer-evaluator/SKILL.md) が [評価コストの原則](review-rubric.md#評価コストの原則)に従う評価対象の新しい PDF 由来 PNG を実見する。見る順序と物差しは [review-rubric](review-rubric.md) が正本。意図を読む前の初見は readingTest（紙面に見えた語のまま）、保持点の確認は preservationChecks へ残す。criteria の本文は 1 回だけ保存し、専門レンズの所見は担当 criterion を参照する（レンズと観点の対応は design-contract.json の expertDimensions）。
 
 mode は、制作と別の 1 担当が判定し、必要なレンズを自分で当てるなら independent-reviewer-lenses、昇格して専門レンズを別担当で呼んだなら independent-agents。独立した担当が無ければ self-review で未完となり、finalize しない。全担当が同じ snapshot を評価し終わるまで編集を止める。
 
@@ -122,4 +122,3 @@ finalize は入力と画像の fingerprint・reviewPolicyFingerprint・各 PNG �
 記録・集計の母集団は納品完了案件だけで、INCOMPLETE や分析のみの案件を含まない。AI の改善仮説はこの範囲の根拠・反例・欠けた入力から判断し、全実行の失敗率や因果へ一般化しない。提案差戻し trigger=analysis-review の cycle は premise の統計から除き、旧記録にある同 trigger の偽 premise も前提崩れとして数えない。
 
 learn-record は `${FLYER_STUDIO_HOME:-~/.flyer-studio}/ledger/cases.jsonl` へ 1 案件 1 行を追記する（append-only＝追記だけで書き換えない）。同じ案件・同じ finalize SHA なら追記しない。保存するのは field path・出典・分類名・回数だけで、個人情報・事実値・参考画像は入れない（E3）。learn-report の改善提案と learn-suggest の質問候補は、件数の下限（--min-cases。省くと learn.cjs の既定）と、各集計対象に占める割合の下限（learn.cjs の minRate。CLI からは変えられない）を両方満たす傾向だけを返す。今回の値は learn-report の出力の minCases・minRate で確かめる。様式ラベルの参考候補は min-cases 以上の件数だけで選び、最低割合は適用しない。learn-suggest の値は再確認が必須の参考値で、preset と質問票は自動で書き換えない。型は [learn-record schema](../schemas/learn-record.schema.json)。
-

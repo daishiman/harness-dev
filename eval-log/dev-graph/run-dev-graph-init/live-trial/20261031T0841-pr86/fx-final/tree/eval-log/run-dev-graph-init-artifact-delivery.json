@@ -1,0 +1,35 @@
+{
+  "contract": "artifact-delivery-v1",
+  "transitions": [
+    {
+      "event": "artifact_created",
+      "evidence": ".dev-graph/state/receipts/init-20261030T234150104237Z.json"
+    },
+    {
+      "event": "minimum_guard_pass",
+      "checks": [
+        "json_parse",
+        "no_secret",
+        "no_absolute_path",
+        "no_node_id"
+      ]
+    },
+    {
+      "event": "present_actual_artifact",
+      "artifacts": {
+        ".dev-graph/config.json": "9171a28e4f6fc4dff8e9cbf8da305c97ab01ba33168659811ea120fc47d26709",
+        ".dev-graph/state/graph.json": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177"
+      }
+    },
+    {
+      "event": "record_user_choice",
+      "choice": "standard",
+      "source": "isolated fixture pre-answer contract"
+    },
+    {
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    }
+  ],
+  "state": "semantic_evaluator_started"
+}

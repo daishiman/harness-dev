@@ -14,7 +14,10 @@
 # dependencies: []
 # requires-python: ">=3.9"
 # ///
-"""run-system-spec-elicit acceptance tests (IN1 / OUT1 / resume / single-writer)。"""
+"""run-system-spec-elicit acceptance tests (IN1 / OUT1 / resume / single-writer)。
+
+foundation・decision・knowledge の遷移は test_spec_transition_{foundation,knowledge}.py に分けた。
+"""
 from __future__ import annotations
 
 import copy
@@ -25,6 +28,11 @@ import sys
 from pathlib import Path
 
 import pytest
+
+from spec_transition_support import (
+    record_foundation_sources,
+    valid_foundation as _valid_foundation,
+)
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = SKILL_DIR.parents[1]
@@ -233,6 +241,7 @@ def test_resume_then_finish_reaches_complete():
     assert mod.count_unresolved(state) == 0
     # C9: 上位概念を確定し全確定セルを serves_goals で anchor する。canonical 最終状態は
     # C7 (マトリクス網羅) と C9 (上位概念トレース) の両方を満たすべき (上位概念なき仕様=drift)。
+    record_foundation_sources(mod, state)
     mod.set_foundation(state, _valid_foundation())
     for cat, row in state["matrix"].items():
         for pf, cell in row.items():
@@ -539,543 +548,6 @@ def test_cli_stdout_emit(capsys, tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# requirements_foundation (上位概念・要件 C9) の set-foundation op              #
-# --------------------------------------------------------------------------- #
-def _valid_foundation() -> dict:
-    return {
-        "essential_purpose": "請求と監査を単一 Web システムへ統合し二重管理をなくす",
-        "background": "表計算と個別ツールが乱立し請求漏れと監査コストが慢性化している",
-        "goals": [
-            {"id": "G1", "text": "請求・監査データを単一の信頼できる情報源へ統合する"},
-            {"id": "G2", "text": "主要業務動線を Web だけで完結できるようにする"},
-        ],
-        "objectives": [{"id": "O1", "text": "請求漏れ検知を自動化", "measure": "月次0件"}],
-        "success_criteria": ["請求漏れ0件が3ヶ月継続"],
-        "stakeholders": ["経理チーム"],
-        "scope": {"in": ["請求管理"], "out": ["給与計算"]},
-        "constraints": ["社内 k8s 上で稼働"],
-        "concrete_intents": [{"id": "I1", "text": "日次バックアップ", "serves": ["G1"]}],
-        "confirmed": True,
-        # 確定にはユーザー合意の approval が必須。approval_note で approval_log へ idempotent 登録される。
-        "approval_ref": "appr-foundation",
-        "approval_note": "上位概念 U1-U9 をユーザーと確認し合意した",
-    }
-
-
-def test_init_state_has_empty_foundation():
-    state = mod.init_state(_taxonomy())
-    rf = state["requirements_foundation"]
-    assert rf == mod.empty_foundation()
-    assert rf["confirmed"] is False
-    assert rf["goals"] == [] and rf["essential_purpose"] == ""
-    assert rf["scope"] == {"in": [], "out": []}
-
-
-def test_set_foundation_confirmed_ok():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    rf = state["requirements_foundation"]
-    assert rf["confirmed"] is True
-    assert [g["id"] for g in rf["goals"]] == ["G1", "G2"]
-
-
-def test_set_foundation_confirm_requires_essential_purpose():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f["essential_purpose"] = "   "
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_confirm_requires_background():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f["background"] = ""
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_confirm_requires_goals():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f["goals"] = []
-    f["concrete_intents"] = []  # G1 参照が dangling にならないよう除去
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, f)
-
-
-@pytest.mark.parametrize(
-    "field,empty",
-    [
-        ("objectives", []),
-        ("success_criteria", []),
-        ("stakeholders", []),
-        ("scope", {"in": [], "out": []}),
-        ("constraints", []),
-        ("concrete_intents", []),
-    ],
-)
-def test_set_foundation_confirm_requires_all_u1_u9(field, empty):
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f[field] = empty
-    with pytest.raises(mod.TransitionError, match=field):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_accepts_explicit_na_with_reason():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f["constraints"] = {"status": "not_applicable", "reason": "制約なしをユーザー確認済み"}
-    mod.set_foundation(state, f)
-    assert state["requirements_foundation"]["confirmed"] is True
-
-
-# F1: confirmed はユーザー合意の approval_ref (approval_log 実在) を機械証跡として要求する
-def test_set_foundation_confirm_requires_approval_ref():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    del f["approval_ref"]
-    del f["approval_note"]
-    with pytest.raises(mod.TransitionError, match="approval_ref"):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_confirm_rejects_dangling_approval_ref():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    del f["approval_note"]  # 自動登録させない → approval_log に実在しない参照
-    f["approval_ref"] = "appr-nonexistent"
-    with pytest.raises(mod.TransitionError, match="approval_log に不在"):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_registers_approval_from_note():
-    state = mod.init_state(_taxonomy())
-    assert state["approval_log"] == []
-    mod.set_foundation(state, _valid_foundation())
-    assert mod._has_entry(state["approval_log"], "appr-foundation")
-    rf = state["requirements_foundation"]
-    assert rf["approval_ref"] == "appr-foundation"
-    assert "approval_note" not in rf  # 承認本文は approval_log が持つ (foundation へは保存しない)
-
-
-# F2: U1-U3 (essential_purpose/background/goals) は N/A 不可 (値必須)。"目的が N/A" を弾く
-@pytest.mark.parametrize("field", ["essential_purpose", "background", "goals"])
-def test_set_foundation_confirm_rejects_na_for_u1_u3(field):
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f[field] = {"status": "not_applicable", "reason": "N/A にはできないはず"}
-    if field == "goals":
-        f["concrete_intents"] = []  # goals 消滅で intent.serves が dangling にならないよう除去
-    with pytest.raises(mod.TransitionError, match=field):
-        mod.set_foundation(state, f)
-
-
-def test_bootstrap_then_foundation_then_init_preserves_foundation_and_decisions():
-    state = mod.bootstrap_state()
-    mod.set_foundation(state, _valid_foundation())
-    state["decisions"] = [{"id": "D-bootstrap"}]
-    initialized = mod.init_state(_taxonomy(), state)
-    assert initialized["requirements_foundation"] == state["requirements_foundation"]
-    assert initialized["decisions"] == [{"id": "D-bootstrap"}]
-    assert initialized["matrix"]["database"]["web"]["state"] == "未収集"
-
-
-def test_set_foundation_unconfirmed_allows_empty():
-    # confirmed=False なら未完成 (空) の上位概念でも保存できる (途中保存)
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, {"essential_purpose": "検討中"})
-    rf = state["requirements_foundation"]
-    assert rf["confirmed"] is False
-    assert rf["essential_purpose"] == "検討中"
-
-
-def test_set_foundation_rejects_unknown_key():
-    state = mod.init_state(_taxonomy())
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, {"nonsense": 1})
-
-
-def test_set_foundation_rejects_goal_without_id_and_dupe():
-    state = mod.init_state(_taxonomy())
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, {"goals": [{"text": "id 無し"}]})
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, {"goals": [{"id": "G1", "text": "a"}, {"id": "G1", "text": "b"}]})
-
-
-def test_set_foundation_rejects_dangling_intent_serves():
-    state = mod.init_state(_taxonomy())
-    f = _valid_foundation()
-    f["concrete_intents"] = [{"id": "I1", "text": "x", "serves": ["G9"]}]  # G9 不在
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, f)
-
-
-def test_set_foundation_partial_merge_preserves_prior():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, {"essential_purpose": "目的A"})
-    mod.set_foundation(state, {"background": "背景B"})
-    rf = state["requirements_foundation"]
-    assert rf["essential_purpose"] == "目的A"  # 先の設定が保持される
-    assert rf["background"] == "背景B"
-
-
-def test_set_foundation_rejects_non_object():
-    state = mod.init_state(_taxonomy())
-    with pytest.raises(mod.TransitionError):
-        mod.set_foundation(state, [1, 2])
-
-
-# --------------------------------------------------------------------------- #
-# serves_goals トレース (confirm 付随 / set-serves op)                          #
-# --------------------------------------------------------------------------- #
-def test_confirm_with_serves_goals():
-    state = mod.init_state(_taxonomy())
-    mod.apply_turn(state, {"qa_id": "qa-001", "question": "q", "answer": "a"})
-    mod.apply_cell_op(
-        state,
-        {"action": "confirm", "category": "database", "platform": "web",
-         "qa_ref": "qa-001", "serves_goals": ["G1", "G1", "G2"]},
-    )
-    assert state["matrix"]["database"]["web"] == {
-        "state": "確定", "qa_ref": "qa-001", "serves_goals": ["G1", "G2"],
-    }
-
-
-def test_set_serves_on_confirmed_cell():
-    state = _confirmed_state()  # database.web = 確定 (serves_goals 無し)
-    mod.apply_cell_op(
-        state, {"action": "set-serves", "category": "database", "platform": "web", "serves_goals": ["G1"]}
-    )
-    cell = state["matrix"]["database"]["web"]
-    assert cell["state"] == "確定"  # state は 確定 のまま (rollback でない)
-    assert cell["serves_goals"] == ["G1"]
-
-
-def test_set_serves_requires_confirmed_cell():
-    state = mod.init_state(_taxonomy())  # 未収集
-    with pytest.raises(mod.TransitionError):
-        mod.apply_cell_op(
-            state, {"action": "set-serves", "category": "database", "platform": "web", "serves_goals": ["G1"]}
-        )
-
-
-def test_set_serves_requires_nonempty_and_valid():
-    state = _confirmed_state()
-    with pytest.raises(mod.TransitionError):
-        mod.apply_cell_op(state, {"action": "set-serves", "category": "database", "platform": "web", "serves_goals": []})
-    with pytest.raises(mod.TransitionError):
-        mod.apply_cell_op(state, {"action": "set-serves", "category": "database", "platform": "web", "serves_goals": [""]})
-    with pytest.raises(mod.TransitionError):
-        mod.apply_cell_op(state, {"action": "confirm", "category": "auth", "platform": "web", "qa_ref": "q", "serves_goals": "G1"})
-
-
-def test_cli_set_foundation_string_and_file(tmp_path):
-    state_path = tmp_path / "spec-state.json"
-    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
-    inline = json.dumps(_valid_foundation())
-    assert mod.main(["set-foundation", "--state", str(state_path), "--foundation", inline]) == 0
-    st = json.loads(state_path.read_text(encoding="utf-8"))
-    assert st["requirements_foundation"]["confirmed"] is True
-    # ファイル入力経路
-    ffile = tmp_path / "foundation.json"
-    ffile.write_text(json.dumps({"stakeholders": ["A"]}), encoding="utf-8")
-    assert mod.main(["set-foundation", "--state", str(state_path), "--foundation", str(ffile)]) == 0
-    st = json.loads(state_path.read_text(encoding="utf-8"))
-    assert st["requirements_foundation"]["stakeholders"] == ["A"]
-
-
-def _valid_decision(status="recommended_pending_confirmation") -> dict:
-    options = [
-        {
-            "id": "free-managed", "label": "managed無料枠",
-            "cost_model": {
-                "category": "free", "amount": 0, "currency": "JPY",
-                "billing_period": "month", "tco": "無料枠内は月額0円、超過後は従量課金",
-            },
-            "free_tier_limits": "1万MAU", "goal_fit": "短期導入に適合", "pros": ["運用容易"],
-            "security_fit": "managed更新とMFAで要件を満たす",
-            "cons": ["上限後課金"], "risks": ["価格改定"], "lock_in": "中",
-            "ops_burden": "低", "evidence_refs": ["https://vendor.example/pricing"],
-        },
-        {
-            "id": "oss", "label": "OSS",
-            "cost_model": {
-                "category": "low-cost", "amount": 1000, "currency": "JPY",
-                "billing_period": "month", "tco": "月額基盤費に保守工数を加算",
-            },
-            "free_tier_limits": "制限なし", "goal_fit": "内製運用時に適合", "pros": ["自由度"],
-            "security_fit": "内製で脆弱性更新を期限内に適用する場合に適合",
-            "cons": ["保守必要"], "risks": ["更新遅延"], "lock_in": "低",
-            "ops_burden": "高", "evidence_refs": ["https://project.example/docs"],
-        },
-    ]
-    return {
-        "id": "D1", "question": "認証基盤をどれにするか", "status": status,
-        "options": options,
-        "recommendation": {
-            "option_id": "free-managed", "rationale": "無料枠内で運用負荷が低い",
-            "caveats": ["上限監視"], "confidence": "medium",
-            "latest_checked_at": "2026-07-11T00:00:00Z",
-            "comparison_basis": {
-                "goal_fit": "短期導入目標に最も適合", "tco": "無料枠内の総費用が最小",
-                "security": "managed更新とMFAを利用可能", "operations": "保守負荷が低い",
-                "lock_in": "中程度の移行費を許容できる",
-            },
-        },
-        "serves_goals": ["G1"], "user_decision": None,
-    }
-
-
-def test_set_decision_recommendation_stays_pending_until_user_confirmation():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision()
-    mod.set_decision(state, decision)
-    assert state["decisions"][0]["status"] == "recommended_pending_confirmation"
-    assert state["decisions"][0]["user_decision"] is None
-
-
-def test_set_decision_confirmed_requires_user_decision():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision("confirmed")
-    with pytest.raises(mod.TransitionError, match="user_decision"):
-        mod.set_decision(state, decision)
-    decision["user_decision"] = {
-        "option_id": "free-managed", "confirmed_at": "2026-07-11T01:00:00Z"
-    }
-    mod.set_decision(state, decision)
-    assert state["decisions"][0]["status"] == "confirmed"
-
-
-def test_set_decision_rejects_too_few_options_and_dangling_goal():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision()
-    decision["options"] = decision["options"][:1]
-    with pytest.raises(mod.TransitionError, match="2-3"):
-        mod.set_decision(state, decision)
-    decision = _valid_decision()
-    decision["serves_goals"] = ["G9"]
-    with pytest.raises(mod.TransitionError, match="実在 goal"):
-        mod.set_decision(state, decision)
-
-
-def test_set_decision_rejects_all_paid_options():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision()
-    for option in decision["options"]:
-        option["cost_model"]["category"] = "paid"
-        option["cost_model"]["amount"] = 5000
-    with pytest.raises(mod.TransitionError, match="free または low-cost"):
-        mod.set_decision(state, decision)
-
-
-@pytest.mark.parametrize(
-    "mutate,match",
-    [
-        (lambda d: d["options"][0].update(evidence_refs=["http://vendor.example/pricing"]), "https URL"),
-        (lambda d: d["recommendation"].update(latest_checked_at="not-a-date"), "RFC3339"),
-        (lambda d: d["recommendation"]["comparison_basis"].pop("security"), "comparison_basis.security"),
-    ],
-)
-def test_set_decision_rejects_invalid_evidence_date_and_comparison_axis(mutate, match):
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision()
-    mutate(decision)
-    with pytest.raises(mod.TransitionError, match=match):
-        mod.set_decision(state, decision)
-
-
-def test_set_decision_confirmed_rejects_non_rfc3339_confirmation_time():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    decision = _valid_decision("confirmed")
-    decision["user_decision"] = {"option_id": "free-managed", "confirmed_at": "2026-07-11"}
-    with pytest.raises(mod.TransitionError, match="confirmed_at は RFC3339"):
-        mod.set_decision(state, decision)
-
-
-def test_cli_bootstrap_init_preserves_foundation(tmp_path):
-    state_path = tmp_path / "spec-state.json"
-    assert mod.main(["bootstrap", "--out", str(state_path)]) == 0
-    assert mod.main([
-        "set-foundation", "--state", str(state_path),
-        "--foundation", json.dumps(_valid_foundation()),
-    ]) == 0
-    assert mod.main([
-        "init", "--taxonomy", str(TAXONOMY), "--state", str(state_path), "--out", str(state_path)
-    ]) == 0
-    state = json.loads(state_path.read_text(encoding="utf-8"))
-    assert state["requirements_foundation"]["confirmed"] is True
-
-
-def test_cli_set_foundation_confirm_gate_returns_1(tmp_path):
-    state_path = tmp_path / "spec-state.json"
-    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
-    bad = json.dumps({"confirmed": True})  # essential_purpose 等が空
-    assert mod.main(["set-foundation", "--state", str(state_path), "--foundation", bad]) == 1
-
-
-def test_cli_apply_set_serves(tmp_path):
-    state_path = tmp_path / "spec-state.json"
-    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
-    _cli_register_qa(tmp_path, state_path)
-    confirm = json.dumps({"action": "confirm", "category": "database", "platform": "web", "qa_ref": "qa-001"})
-    assert mod.main(["apply", "--state", str(state_path), "--op", confirm, "--required-info", str(REQUIRED_INFO)]) == 0
-    serves = json.dumps({"action": "set-serves", "category": "database", "platform": "web", "serves_goals": ["G1"]})
-    assert mod.main(["apply", "--state", str(state_path), "--op", serves]) == 0
-    st = json.loads(state_path.read_text(encoding="utf-8"))
-    assert st["matrix"]["database"]["web"]["serves_goals"] == ["G1"]
-
-
-# --------------------------------------------------------------------------- #
-# KNOWLEDGE_CANDIDATES_EXTENSION_C                                             #
-# --------------------------------------------------------------------------- #
-def _knowledge_source() -> dict:
-    return {
-        "url": "https://www.rfc-editor.org/rfc/rfc6902",
-        "official_or_primary": True,
-        "checked_at": "2026-07-11T00:00:00Z",
-    }
-
-
-def _deep_knowledge_card() -> dict:
-    return {
-        "purpose": "オフライン更新競合を利用者の意図を失わず解決する",
-        "background": "複数端末が切断中に同じ業務データを変更するため競合が起きる",
-        "problems": ["単純な最終書込優先では利用者の更新を失う"],
-        "core_concepts": ["因果順序を保持する", "競合を明示的に解決する"],
-        "applies_when": ["複数端末がオフラインで同じデータを変更する"],
-        "does_not_apply_when": ["常時オンラインで単一writerが保証される"],
-        "tradeoffs": ["競合メタデータと同期処理の複雑性が増える"],
-        "failure_modes": ["競合を黙って上書きし利用者の更新を失う"],
-        "goal_contribution": ["G1のオフライン継続利用とデータ保全に寄与する"],
-        "primary_sources": [
-            {
-                "title": "JSON Patch",
-                "publisher_or_author": "IETF",
-                "locator": "https://www.rfc-editor.org/rfc/rfc6902",
-            }
-        ],
-        "freshness": {
-            "class": "standard-tracked",
-            "last_checked": "2026-07-11",
-            "review_by": "2027-01-11",
-            "triggers": ["標準改訂"],
-        },
-    }
-
-
-def _knowledge_candidate(status: str) -> dict:
-    candidate = {
-        "id": "offline-first-conflict-resolution",
-        "topic": "offline-first conflict resolution",
-        "status": status,
-        "problem": "複数端末のオフライン更新競合を解決する必要がある",
-        "serves_goals": ["G1"],
-        "source_refs": [],
-    }
-    if status in {"qualified", "deepened", "promoted"}:
-        candidate["source_refs"] = [_knowledge_source()]
-    if status in {"deepened", "promoted"}:
-        candidate["card"] = _deep_knowledge_card()
-    if status == "promoted":
-        candidate["curation_ref"] = "ref-system-design-knowledge/references/offline-first.md"
-    return candidate
-
-
-def test_unknown_seed_candidate_discover_qualify_deepen_integration():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    assert state["knowledge_candidates"] == []
-    for status in ("discovered", "qualified", "deepened"):
-        mod.set_knowledge_candidate(state, _knowledge_candidate(status))
-        assert state["knowledge_candidates"][0]["status"] == status
-    assert state["knowledge_candidates"][0]["card"]["does_not_apply_when"]
-    assert state["knowledge_candidates"][0]["card"]["goal_contribution"]
-
-
-def test_knowledge_candidate_qualified_requires_official_https_and_checked_at():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    mod.set_knowledge_candidate(state, _knowledge_candidate("discovered"))
-    bad = _knowledge_candidate("qualified")
-    bad["source_refs"][0]["url"] = "http://example.invalid/blog"
-    bad["source_refs"][0]["official_or_primary"] = False
-    with pytest.raises(mod.TransitionError, match="HTTPS"):
-        mod.set_knowledge_candidate(state, bad)
-
-
-def test_knowledge_candidate_deepened_requires_complete_card():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    mod.set_knowledge_candidate(state, _knowledge_candidate("discovered"))
-    mod.set_knowledge_candidate(state, _knowledge_candidate("qualified"))
-    bad = _knowledge_candidate("deepened")
-    del bad["card"]["does_not_apply_when"]
-    with pytest.raises(mod.TransitionError, match="card.does_not_apply_when"):
-        mod.set_knowledge_candidate(state, bad)
-
-
-def test_knowledge_candidate_rejects_skip_rollback_topic_change_and_dangling_goal():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    with pytest.raises(mod.TransitionError, match="discovered"):
-        mod.set_knowledge_candidate(state, _knowledge_candidate("qualified"))
-    mod.set_knowledge_candidate(state, _knowledge_candidate("discovered"))
-    with pytest.raises(mod.TransitionError, match="1段階前進"):
-        mod.set_knowledge_candidate(state, _knowledge_candidate("deepened"))
-    changed = _knowledge_candidate("discovered")
-    changed["topic"] = "changed topic"
-    with pytest.raises(mod.TransitionError, match="stable topic"):
-        mod.set_knowledge_candidate(state, changed)
-    dangling = _knowledge_candidate("discovered")
-    dangling["id"] = "another-candidate"
-    dangling["serves_goals"] = ["G999"]
-    with pytest.raises(mod.TransitionError, match="実在 goal"):
-        mod.set_knowledge_candidate(state, dangling)
-
-
-def test_knowledge_candidate_promoted_requires_curation_ref():
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    for status in ("discovered", "qualified", "deepened"):
-        mod.set_knowledge_candidate(state, _knowledge_candidate(status))
-    promoted = _knowledge_candidate("promoted")
-    del promoted["curation_ref"]
-    with pytest.raises(mod.TransitionError, match="curation_ref"):
-        mod.set_knowledge_candidate(state, promoted)
-
-
-def test_cli_set_knowledge_candidate(tmp_path):
-    state = mod.init_state(_taxonomy())
-    mod.set_foundation(state, _valid_foundation())
-    state_path = tmp_path / "spec-state.json"
-    state_path.write_text(mod.dump_state(state), encoding="utf-8")
-    candidate_path = tmp_path / "candidate.json"
-    candidate_path.write_text(
-        json.dumps(_knowledge_candidate("discovered"), ensure_ascii=False), encoding="utf-8"
-    )
-    assert mod.main(
-        [
-            "set-knowledge-candidate",
-            "--state",
-            str(state_path),
-            "--candidate",
-            str(candidate_path),
-        ]
-    ) == 0
-    written = json.loads(state_path.read_text(encoding="utf-8"))
-    assert written["knowledge_candidates"][0]["status"] == "discovered"
-
-
-# --------------------------------------------------------------------------- #
 # 根拠参照の実在・required-info catalog の不正・書込の原子性                    #
 # --------------------------------------------------------------------------- #
 @pytest.mark.parametrize(
@@ -1344,3 +816,208 @@ def test_chunk_without_applied_confirm_needs_no_required_info(tmp_path):
     actual = json.loads(state_path.read_text(encoding="utf-8"))
     assert [entry["id"] for entry in actual["qa_log"]] == ["qa-block"]
     assert actual["matrix"]["backend"]["web"]["state"] == "未収集"
+
+
+# --------------------------------------------------------------------------- #
+# add-category: 確定セルを触らずに行を足す                                       #
+# --------------------------------------------------------------------------- #
+def test_add_category_appends_row_without_touching_confirmed():
+    state = _confirmed_state()
+    before = copy.deepcopy(state["matrix"])
+    mod.add_category(state, {"id": "dev-workflow", "label": "開発フロー"})
+    for category, row in before.items():
+        assert state["matrix"][category] == row
+    assert set(state["matrix"]["dev-workflow"]) == set(mod.CANONICAL_PLATFORMS)
+    assert all(cell["state"] == "未収集" for cell in state["matrix"]["dev-workflow"].values())
+    assert state["category_aggregate"]["dev-workflow"] == "未着手"
+    assert {"id": "dev-workflow", "label": "開発フロー"} in state["categories"]
+
+
+def test_add_category_existing_id_rejected_no_rollback():
+    state = _confirmed_state()
+    with pytest.raises(mod.TransitionError):
+        mod.add_category(state, {"id": "database", "label": "上書き試行"})
+    assert state["matrix"]["database"]["web"]["state"] == "確定"
+
+
+@pytest.mark.parametrize(
+    "category",
+    [
+        {"id": "Dev_Workflow", "label": "開発フロー"}, {"id": "dev-workflow"},
+        {"id": "", "label": "開発フロー"}, {"id": "dev-workflow", "label": "  "}, ["dev-workflow"],
+    ],
+)
+def test_add_category_invalid_input_rejected(category):
+    state = mod.init_state(_taxonomy())
+    with pytest.raises(mod.TransitionError):
+        mod.add_category(state, category)
+
+
+def test_add_category_state_passes_validator_loop(tmp_path):
+    state = mod.init_state(_taxonomy())
+    mod.add_category(state, {"id": "dev-workflow", "label": "開発フロー"})
+    out = tmp_path / "spec-state.json"
+    out.write_text(mod.dump_state(state), encoding="utf-8")
+    assert _run_validator(out) == 0
+
+
+# --------------------------------------------------------------------------- #
+# qa の design_applications (回答とは別の設計解釈) と schema 1.1 opt-in           #
+# --------------------------------------------------------------------------- #
+def test_apply_turn_preserves_valid_design_application_as_separate_interpretation():
+    state = mod.init_state(_taxonomy(), schema_version="1.1")
+    assert state["design_application_contract_version"] == "1.0"
+    mod.apply_turn(
+        state,
+        {
+            "qa_id": "qa-design-001",
+            "question": "永続化方式は?",
+            "answer": "SQLite 単一ファイル",
+            "design_applications": [
+                {
+                    "knowledge_ref": "ddd.md#Bounded Context / Context Map",
+                    "principle": "Bounded Context / Context Map",
+                    "applicability": "not_applicable",
+                    "rationale": "単一利用者の単純 CRUD で文脈間翻訳が無い",
+                    "tradeoffs": ["複数業務語彙が生じたら再評価する"],
+                }
+            ],
+            "ops": [{"action": "confirm", "category": "database", "platform": "web"}],
+        },
+    )
+    qa = state["qa_log"][0]
+    assert qa["answer"] == "SQLite 単一ファイル"
+    assert qa["design_applications"][0]["applicability"] == "not_applicable"
+    assert qa["design_applications"][0]["rationale"] == "単一利用者の単純 CRUD で文脈間翻訳が無い"
+
+
+@pytest.mark.parametrize("schema_version", ["1.0", "1.1"])
+@pytest.mark.parametrize(
+    "application",
+    [
+        {},
+        {"knowledge_ref": "ddd.md", "principle": "DDD", "applicability": "maybe", "rationale": "x", "tradeoffs": ["x"]},
+        {"knowledge_ref": "ddd.md", "principle": "DDD", "applicability": "applied", "rationale": "x", "tradeoffs": []},
+    ],
+)
+def test_apply_turn_rejects_malformed_design_application(application, schema_version):
+    # 形の検査は版に依らない。1.0 でも渡された design_applications は黙って保存しない。
+    state = mod.init_state(_taxonomy(), schema_version=schema_version)
+    with pytest.raises(mod.TransitionError):
+        mod.apply_turn(
+            state,
+            {
+                "qa_id": "qa-design-bad",
+                "question": "q",
+                "answer": "a",
+                "design_applications": [application],
+                "ops": [{"action": "confirm", "category": "database", "platform": "web"}],
+            },
+        )
+    assert state["qa_log"] == []
+
+
+def test_writer_rejects_confirm_without_design_applications_only_under_1_1():
+    current = mod.init_state(_taxonomy(), schema_version="1.1")
+    turn = {
+        "qa_id": "qa-no-design",
+        "question": "q",
+        "answer": "a",
+        "ops": [{"action": "confirm", "category": "database", "platform": "web"}],
+    }
+    with pytest.raises(mod.TransitionError, match="design_applications は非空配列必須"):
+        mod.apply_turn(current, copy.deepcopy(turn))
+    assert not mod._has_entry(current["qa_log"], "qa-no-design")
+
+    # 既定の 1.0 は design application 契約を持たないので、従来どおり確定できる。
+    legacy = mod.init_state(_taxonomy())
+    mod.apply_turn(legacy, copy.deepcopy(turn))
+    assert legacy["matrix"]["database"]["web"]["state"] == "確定"
+
+
+@pytest.mark.parametrize(
+    "broken",
+    [
+        {},
+        {"schema_version": "1.1"},
+        {"schema_version": "1.1", "design_application_contract_version": "2.0"},
+        {"schema_version": "1.0", "design_application_contract_version": "1.0"},
+        {"schema_version": "2.0"},
+    ],
+)
+def test_init_rejects_noncanonical_existing_state_instead_of_repairing(broken):
+    with pytest.raises(mod.TransitionError):
+        mod.init_state(_taxonomy(), broken)
+
+
+def test_cli_legacy_state_stays_writable_and_init_opts_in_to_1_1(tmp_path):
+    legacy_path = tmp_path / "legacy-spec-state.json"
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(legacy_path)]) == 0
+    legacy = json.loads(legacy_path.read_text(encoding="utf-8"))
+    assert legacy["schema_version"] == "1.0"
+    assert "design_application_contract_version" not in legacy
+    assert mod.main(["aggregate", "--state", str(legacy_path)]) == 0
+
+    migrated_path = tmp_path / "migrated-spec-state.json"
+    assert mod.main([
+        "init", "--taxonomy", str(TAXONOMY), "--state", str(legacy_path),
+        "--schema-version", "1.1", "--out", str(migrated_path),
+    ]) == 0
+    migrated = json.loads(migrated_path.read_text(encoding="utf-8"))
+    assert migrated["schema_version"] == "1.1"
+    assert migrated["design_application_contract_version"] == "1.0"
+    assert mod.main(["aggregate", "--state", str(migrated_path)]) == 0
+
+    # 1.1 から 1.0 への降格は、契約 marker を黙って外すことになるので拒否する。
+    assert mod.main([
+        "init", "--taxonomy", str(TAXONOMY), "--state", str(migrated_path),
+        "--schema-version", "1.0", "--out", str(tmp_path / "downgraded.json"),
+    ]) == 1
+
+
+# --------------------------------------------------------------------------- #
+# chunk の未消化 turn を黙って捨てない                                          #
+# --------------------------------------------------------------------------- #
+def test_run_chunk_warns_on_unprocessed_turns(capsys):
+    """max_loops を超えた turn を黙って捨てず、未消化件数を stderr へ出す。
+
+    hearing_progress.complete は未収集セル 0 を意味するだけで turn 消化の証跡にならない。
+    未消化が可視化されないと、投入した turn の一部だけが適用された state を完了扱いできてしまう。
+    """
+    turns = _turns()
+    state = mod.init_state(_taxonomy())
+    processed = mod.run_chunk(state, turns, max_loops=5)
+    assert processed == 5
+    err = capsys.readouterr().err
+    assert "未消化" in err
+    assert f"投入 {len(turns)} turn" in err and "5 turn を適用" in err
+    assert f"{len(turns) - 5} turn が未消化" in err
+
+
+def test_run_chunk_require_all_raises_on_unprocessed_turns():
+    turns = _turns()
+    state = mod.init_state(_taxonomy())
+    with pytest.raises(mod.TransitionError) as excinfo:
+        mod.run_chunk(state, turns, max_loops=5, require_all=True)
+    assert f"{len(turns) - 5} turn が未消化" in str(excinfo.value)
+
+
+def test_run_chunk_require_all_passes_when_all_consumed(capsys):
+    state = mod.init_state(_taxonomy())
+    turns = _turns()
+    assert mod.run_chunk(state, turns, max_loops=len(turns), require_all=True) == len(turns)
+    assert "未消化" not in capsys.readouterr().err
+
+
+def test_cli_chunk_require_all_returns_1_on_unprocessed(tmp_path):
+    state_path = tmp_path / "spec-state.json"
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(TURNS.read_text(encoding="utf-8"), encoding="utf-8")
+    assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0
+    before = state_path.read_text(encoding="utf-8")
+    assert mod.main([
+        "chunk", "--state", str(state_path), "--turns", str(turns_path),
+        "--max-loops", "5", "--require-all", "--required-info", str(REQUIRED_INFO),
+    ]) == 1
+    # fail-closed: 停止時に部分適用を書き戻さない。
+    assert state_path.read_text(encoding="utf-8") == before

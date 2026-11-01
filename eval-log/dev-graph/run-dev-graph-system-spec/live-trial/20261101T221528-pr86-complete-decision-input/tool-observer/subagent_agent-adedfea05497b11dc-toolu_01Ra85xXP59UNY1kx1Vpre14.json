@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-adedfea05497b11dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "335a49d6-f7e9-43af-89ba-1510d8edb1f9",
+      "line": 37,
+      "prefix_bytes": 467869,
+      "prefix_sha256": "de036e5d5e8d766bba8b89926ef550307bd161b18fc760fe08f78a315b47b208",
+      "timestamp": "2026-11-01T13:33:38.359Z"
+    },
+    "result": {
+      "uuid": "cc9d8fa9-1ecf-481f-9df1-b23a3fba4d00",
+      "line": 40,
+      "prefix_bytes": 473257,
+      "prefix_sha256": "c213a988dc8d306e2292339a23a0305c42bdbafdac46326ae679097c213af2ba",
+      "timestamp": "2026-11-01T13:33:42.070Z"
+    }
+  },
+  "tool_use_id": "toolu_01Ra85xXP59UNY1kx1Vpre14",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx; cd $CLAUDE_PROJECT_DIR; python3 -I -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));json.dump({'targets':d['targets']},open('$TMPDIR/t.json','w'))\"; python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets $TMPDIR/t.json --references $CLAUDE_PROJECT_DIR/system-spec/fetched-references.json --repo-root $CLAUDE_PROJECT_DIR; echo exit=$?"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

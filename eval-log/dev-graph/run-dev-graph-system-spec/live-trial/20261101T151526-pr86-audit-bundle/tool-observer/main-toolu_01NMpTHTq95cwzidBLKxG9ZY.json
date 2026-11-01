@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "697065ee-99d5-4ae1-b3bc-32ea1ccfb2da",
+      "line": 113,
+      "prefix_bytes": 634874,
+      "prefix_sha256": "008360a9491c277ea90ba21d6acfe9f24d5a97d344ee9d96822e08d6980bfb95",
+      "timestamp": "2026-11-01T06:17:02.600Z"
+    },
+    "result": {
+      "uuid": "a3f6c149-15fd-464a-a03d-21d1ad475fdf",
+      "line": 116,
+      "prefix_bytes": 641437,
+      "prefix_sha256": "3b7373980a25f3cd6ed34cdcaf9bf6584c1dbf5228f254004374e30ea1286c8a",
+      "timestamp": "2026-11-01T06:17:13.301Z"
+    }
+  },
+  "tool_use_id": "toolu_01NMpTHTq95cwzidBLKxG9ZY",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\"; echo exit=$?; cat plugins/system-spec-harness/.claude-plugin/plugin.json; find plugins -name plugin-composition.yaml; python3 -c \"import json;print(json.load(open('plugins/system-spec-harness/references/package-contract.json'))['entry_points'])\"",
+    "description": "Run lineage gate and inspect manifests"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-dev-planner/plugin-composition.yaml\nplugins/dev-graph/plugin-composition.yaml\nplugins/system-spec-harness/plugin-composition.yaml\nplugins/harness-creator/plugin-composition.yaml\nplugins/skill-governance-adapters/plugin-composition.yaml\n{'skills': ['assign-system-spec-completeness-evaluator', 'ref-system-design-knowledge', 'run-skill-feedback', 'run-system-spec-compile', 'run-system-spec-doc-fetch', 'run-system-spec-elicit'], 'agents': ['system-spec-doc-freshness-auditor', 'system-spec-hearing-auditor', 'system-spec-matrix-auditor'], 'commands': ['spec-compile', 'spec-hearing-start'], 'hooks': ['guard-confirmed-chapter-overwrite.py', 'record-audit-fork.py']}",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n{\n  \"name\": \"system-spec-harness\",\n  \"version\": \"0.1.25\",\n  \"dependencies\": [\n    \"skill-governance-adapters\"\n  ],\n  \"description\": \"カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。\",\n  \"author\": {\n    \"name\": \"harness maintainers\"\n  }\n}\nplugins/system-dev-planner/plugin-composition.yaml\nplugins/dev-graph/plugin-composition.yaml\nplugins/system-spec-harness/plugin-composition.yaml\nplugins/harness-creator/plugin-composition.yaml\nplugins/skill-governance-adapters/plugin-composition.yaml\n{'skills': ['assign-system-spec-completeness-evaluator', 'ref-system-design-knowledge', 'run-skill-feedback', 'run-system-spec-compile', 'run-system-spec-doc-fetch', 'run-system-spec-elicit'], 'agents': ['system-spec-doc-freshness-auditor', 'system-spec-hearing-auditor', 'system-spec-matrix-auditor'], 'commands': ['spec-compile', 'spec-hearing-start'], 'hooks': ['guard-confirmed-chapter-overwrite.py', 'record-audit-fork.py']}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

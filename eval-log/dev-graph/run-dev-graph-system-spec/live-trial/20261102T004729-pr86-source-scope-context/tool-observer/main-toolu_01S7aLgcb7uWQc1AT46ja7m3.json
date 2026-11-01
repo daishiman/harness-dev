@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "96be47a4-0d6e-4425-b690-20873bde4121",
+      "line": 122,
+      "prefix_bytes": 895707,
+      "prefix_sha256": "7a0e437883857cc3c8c351b325991cec31501317a5d0cacb0da4a40270239122",
+      "timestamp": "2026-11-01T15:48:46.465Z"
+    },
+    "result": {
+      "uuid": "9d8de8af-6c42-489e-a462-4e4334165579",
+      "line": 125,
+      "prefix_bytes": 905347,
+      "prefix_sha256": "f7508a042702975dcc88383cade516de7cbc02a4ba8389c94008e2cb3900ccd1",
+      "timestamp": "2026-11-01T15:48:49.867Z"
+    }
+  },
+  "tool_use_id": "toolu_01S7aLgcb7uWQc1AT46ja7m3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && shasum -a 256 system-spec/spec-state.json system-spec/fetched-references.json system-spec/*.md system-spec/retrieval-evidence/* eval-log/run-dev-graph-system-spec/c24-receipt.json plugins/system-spec-harness/.claude-plugin/plugin.json plugins/dev-graph/plugin-composition.yaml plugins/system-spec-harness/references/package-contract.json .dev-graph/state/graph.json; date -u +%Y-%m-%dT%H:%M:%SZ",
+    "description": "Compute input digests and UTC time"
+  },
+  "is_error": false,
+  "tool_result_content": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\n22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548  system-spec/auth.md\n357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf  system-spec/backend.md\n55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8  system-spec/database.md\n68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b  system-spec/infrastructure.md\ncef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841  system-spec/maintenance-ops.md\n39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546  system-spec/security.md\nf7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444  system-spec/ui-ux.md\n09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c  system-spec/retrieval-evidence/fastapi.json\n5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060  system-spec/retrieval-evidence/kubernetes.html\n81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54  system-spec/retrieval-evidence/postgres.json\n25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f  system-spec/retrieval-evidence/react.json\n2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de  system-spec/retrieval-evidence/typescript.json\n6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab  eval-log/run-dev-graph-system-spec/c24-receipt.json\n322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994  plugins/system-spec-harness/.claude-plugin/plugin.json\nd44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712  plugins/dev-graph/plugin-composition.yaml\nd4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486  plugins/system-spec-harness/references/package-contract.json\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json\n2026-11-01T15:48:48Z",
+  "tool_use_result": {
+    "stdout": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2  system-spec/spec-state.json\n471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594  system-spec/fetched-references.json\n22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd  system-spec/00-requirements-definition.md\n2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548  system-spec/auth.md\n357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf  system-spec/backend.md\n55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8  system-spec/database.md\n68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac  system-spec/frontend.md\nf7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2  system-spec/index.md\n63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b  system-spec/infrastructure.md\ncef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841  system-spec/maintenance-ops.md\n39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546  system-spec/security.md\nf7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444  system-spec/ui-ux.md\n09b2fb8823462b795548d69746177648d302f39c812c74d7d4db613c0801fa1c  system-spec/retrieval-evidence/fastapi.json\n5a2d3ee6094792da1d8ecb0dc9038e42f7a9101faf75511374bd68afda76b060  system-spec/retrieval-evidence/kubernetes.html\n81468ee64b33aceba30eabe0557e4a8ae943682f18903fe69273c29bc1fdfd54  system-spec/retrieval-evidence/postgres.json\n25572ad42e64595c502042c90e060d095eba57a2bac76ca1be28dd3dea15963f  system-spec/retrieval-evidence/react.json\n2d325e0ab24b02985397b5794be8c588d7df1e126bed66e71b0e7aed05c182de  system-spec/retrieval-evidence/typescript.json\n6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab  eval-log/run-dev-graph-system-spec/c24-receipt.json\n322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994  plugins/system-spec-harness/.claude-plugin/plugin.json\nd44fc0e444341056689660c2427118eb590696d541dd9ac9e8fc668376278712  plugins/dev-graph/plugin-composition.yaml\nd4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486  plugins/system-spec-harness/references/package-contract.json\n27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json\n2026-11-01T15:48:48Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a0b29b532ac9d99f4",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9c83f49d-23c9-488b-8612-e0e9419c5fc9",
+      "line": 201,
+      "prefix_bytes": 1128630,
+      "prefix_sha256": "8adac82641715d42de6004eebb0e27b708676b4898dd42ce6c0b0f32fa01bdfd",
+      "timestamp": "2026-11-01T03:58:01.280Z"
+    },
+    "result": {
+      "uuid": "f348d560-80eb-4053-8f68-25474ee3e77f",
+      "line": 202,
+      "prefix_bytes": 1131022,
+      "prefix_sha256": "082173524858965a37941b1864abb9e59ed01eb4d61a6042546d83e719dc0dea",
+      "timestamp": "2026-11-01T03:58:03.704Z"
+    }
+  },
+  "tool_use_id": "toolu_017TtDPHMkgYuibqvHqKdmfQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport subprocess,hashlib,pathlib,json\nR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx'\nV=R+'/plugins/system-spec-harness/scripts/validate-source-citation.py'\nS=R+'/system-spec/spec-state.json'; F=R+'/system-spec/fetched-references.json'\nargv=['python3',V,'--targets',S,'--references',F,'--state',S,'--repo-root',R]\nr=subprocess.run(argv,capture_output=True,text=True)\nh=lambda p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()\nprint(json.dumps({\"validator\":V,\"validator_sha256\":h(V),\"references_path\":F,\"references_sha256\":h(F),\"state_path\":S,\"state_sha256\":h(S),\"targets_path\":S,\"targets_sha256\":h(S),\"argv\":argv,\"exit_code\":r.returncode,\"stdout\":r.stdout,\"stderr\":r.stderr},ensure_ascii=False))\nPY",
+    "description": "Regenerate doc_verification evidence"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"validator\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\", \"validator_sha256\": \"700b289232048a0d48a5309b648346192fcb1d6ccf6a9800690aa29b7d094033\", \"references_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/fetched-references.json\", \"references_sha256\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\", \"state_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\", \"state_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\", \"targets_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\", \"targets_sha256\": \"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\", \"argv\": [\"python3\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\", \"--targets\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\", \"--references\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/fetched-references.json\", \"--state\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/system-spec/spec-state.json\", \"--repo-root\", \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\"], \"exit_code\": 0, \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\\n\", \"stderr\": \"\"}",
+  "tool_use_result": null
+}

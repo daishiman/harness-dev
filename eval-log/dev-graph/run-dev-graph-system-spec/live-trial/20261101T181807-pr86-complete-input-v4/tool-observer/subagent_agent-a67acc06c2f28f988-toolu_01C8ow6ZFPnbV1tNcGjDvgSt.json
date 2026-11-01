@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f95e8e1d-ccd2-4f80-9465-fd7dcc7d988d",
+      "line": 111,
+      "prefix_bytes": 610764,
+      "prefix_sha256": "98bf85cff2f6fab876891e2aa5ad6f886be54e878d4b1eca3c09465dcacdf87f",
+      "timestamp": "2026-11-01T09:36:03.886Z"
+    },
+    "result": {
+      "uuid": "9b109e9e-c9e3-4ba3-a24e-86cd0a113525",
+      "line": 112,
+      "prefix_bytes": 613770,
+      "prefix_sha256": "873f5a6b33da00ef0719b41b8ae559eca83761123dd57d6f2ec4a5e4da6a4cdb",
+      "timestamp": "2026-11-01T09:36:05.919Z"
+    }
+  },
+  "tool_use_id": "toolu_01C8ow6ZFPnbV1tNcGjDvgSt",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n 1,80p plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md | grep -nE \"必要|いつ|when|description|再取得|鮮度|stale|未取得|skip|不要|freshness|latest_checked|日\" | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "3:description: 対象カテゴリで使う予定のツール・インフラ・フレームワークの最新公式ドキュメントを集めて公式host・version や更新日・確認時刻・参照元を fetched-references.json に記録したいとき、spec-compile 前に公式サイトの現行版で裏取りしたいときに使う。\n26:  - prompts/R4-audit-doc-freshness.md\n39:  - id: R4-audit-doc-freshness\n40:    name: audit-doc-freshness\n58:      text: validate-source-citation.py で対象 target_id と fetched-references.json が全件対応し retrieved_at/source_url/official_publisher/official_host/(version または last_updated)/latest_checked_at/evidence_ref/evidence_sha256 を持ち、公式host・時刻・repo内取得証跡digestが一致することを検証し欠落0件。\n62:      text: 対象ツール/インフラ/フレームワークごとに C08 が公式サイト上の現行版を再確認し version/更新日・確認時刻・参照元が記録されていることを受入テストが確認する。",
+  "tool_use_result": {
+    "stdout": "3:description: 対象カテゴリで使う予定のツール・インフラ・フレームワークの最新公式ドキュメントを集めて公式host・version や更新日・確認時刻・参照元を fetched-references.json に記録したいとき、spec-compile 前に公式サイトの現行版で裏取りしたいときに使う。\n26:  - prompts/R4-audit-doc-freshness.md\n39:  - id: R4-audit-doc-freshness\n40:    name: audit-doc-freshness\n58:      text: validate-source-citation.py で対象 target_id と fetched-references.json が全件対応し retrieved_at/source_url/official_publisher/official_host/(version または last_updated)/latest_checked_at/evidence_ref/evidence_sha256 を持ち、公式host・時刻・repo内取得証跡digestが一致することを検証し欠落0件。\n62:      text: 対象ツール/インフラ/フレームワークごとに C08 が公式サイト上の現行版を再確認し version/更新日・確認時刻・参照元が記録されていることを受入テストが確認する。",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

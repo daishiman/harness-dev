@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-adedfea05497b11dc",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6c5490bb-0528-4bf9-b84a-d401cb5550a4",
+      "line": 48,
+      "prefix_bytes": 488507,
+      "prefix_sha256": "539ce0b339c2f0d6177040ba84b8ca1a08c262ea1ec607de23fae416d1d412d3",
+      "timestamp": "2026-11-01T13:33:52.063Z"
+    },
+    "result": {
+      "uuid": "785d310f-e608-4e82-8c73-21e9363e8e3a",
+      "line": 51,
+      "prefix_bytes": 497946,
+      "prefix_sha256": "a93a12e8903e83a9260afcb7f8d4a6b8ec8dd4adb7c586d4294aa1737f31765b",
+      "timestamp": "2026-11-01T13:33:59.572Z"
+    }
+  },
+  "tool_use_id": "toolu_01PvVsb2v9DWoVhqU4F8vTwj",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "Last modified date of the page, and what it says about concurrencyPolicy Forbid and idempotency of jobs"
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified date:** The provided content doesn't include one. The page text is cut off, and the visible parts (navigation, banners, the \"Edit this page\" links) don't show a date. You can find it at the bottom of the live page, or in the page's Git history on the [kubernetes/website repository](https://github.com/kubernetes/website/commits/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md).\n\n**`concurrencyPolicy: Forbid`:** The visible text says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nExample:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: report\nspec:\n  schedule: \"*/5 * * * *\"\n  concurrencyPolicy: Forbid\n  startingDeadlineSeconds: 200\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: report\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Generating report\"]\n          restartPolicy: OnFailure\n```\n\nThe page also notes that the policy applies only to Jobs created by the same CronJob. Jobs from different CronJobs can always run concurrently.\n\n**Idempotency of Jobs:** The provided content doesn't reach this topic. The sections that would cover it, such as \"Job creation\" under CronJob limitations, were truncated. From my general knowledge of the Kubernetes docs, that section warns that in rare cases a CronJob can create more than one Job for the same scheduled time, so Jobs should be idempotent. I haven't verified that wording against this page, so check the \"CronJob limitations\" section of the live page before relying on it.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified date:** The provided content doesn't include one. The page text is cut off, and the visible parts (navigation, banners, the \"Edit this page\" links) don't show a date. You can find it at the bottom of the live page, or in the page's Git history on the [kubernetes/website repository](https://github.com/kubernetes/website/commits/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md).\n\n**`concurrencyPolicy: Forbid`:** The visible text says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nExample:\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: report\nspec:\n  schedule: \"*/5 * * * *\"\n  concurrencyPolicy: Forbid\n  startingDeadlineSeconds: 200\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: report\n            image: busybox:1.28\n            command: [\"/bin/sh\", \"-c\", \"date; echo Generating report\"]\n          restartPolicy: OnFailure\n```\n\nThe page also notes that the policy applies only to Jobs created by the same CronJob. Jobs from different CronJobs can always run concurrently.\n\n**Idempotency of Jobs:** The provided content doesn't reach this topic. The sections that would cover it, such as \"Job creation\" under CronJob limitations, were truncated. From my general knowledge of the Kubernetes docs, that section warns that in rare cases a CronJob can create more than one Job for the same scheduled time, so Jobs should be idempotent. I haven't verified that wording against this page, so check the \"CronJob limitations\" section of the live page before relying on it.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 7259,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

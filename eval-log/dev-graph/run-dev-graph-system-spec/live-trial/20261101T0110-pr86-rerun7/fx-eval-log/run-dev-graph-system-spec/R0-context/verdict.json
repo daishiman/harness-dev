@@ -1,0 +1,17 @@
+{
+  "responsibility": "R0-context",
+  "verdict": "PASS",
+  "checks": [
+    {"name": "prompt_read_in_full", "result": "PASS", "evidence": "prompts/R0-context.md (Layers 1-7) and SKILL.md read in full"},
+    {"name": "receipt_sha256", "result": "PASS", "evidence": "shasum -a 256 eval-log/run-dev-graph-system-spec-c24-receipt.json = e64c151641fc47bdecefd3396d96abe93126ebfd66a0c2c2cd956462569cf53d (matches expected and goal-spec.c24_receipt_sha256)"},
+    {"name": "repo_root_equals_realpath_repository", "result": "PASS", "evidence": "realpath(content_roots.repository) == repo_root == FX"},
+    {"name": "system_spec_in_caller_repo_not_plugin_source", "result": "PASS", "evidence": "content_roots.system_spec = FX/system-spec; realpath identical; not a symlink; no symlinks inside system-spec/; not under plugin_source FX/plugins/dev-graph"},
+    {"name": "repository_id_common_dir_match", "result": "PASS", "evidence": "re-run resolve-repo-context.py --repo-root FX --mode write exit 0; repository_id local:sha256:79328cf2..., worktree_id wt_509557c36f0021d2, repo_root, content_roots, git_common_dir (FX/.git, matches git rev-parse --git-common-dir), plugin_source, local_state_paths all identical; zero differing keys vs fixed receipt"},
+    {"name": "original_goal_hash", "result": "PASS", "evidence": "sha256(original_goal UTF-8) = 30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454 = goal-spec.original_goal_hash = intermediate loop1 original_goal_hash"},
+    {"name": "previous_directive_received", "result": "PASS", "evidence": "loop 1 merged_directive_for_next requests independent R0/R1/R2 verifiers before evaluator; this verification fulfils the R0 part; drift_signal none"},
+    {"name": "lineage_gate_exit0_and_mode", "result": "PASS", "evidence": "validate-source-lineage.py --repo-root FX exit 0, status pass, checked 0, violations []; identical to eval-log/run-dev-graph-system-spec-r0-lineage.json; checked=0 => new creation path (unambiguous)"}
+  ],
+  "receipt_sha256": "e64c151641fc47bdecefd3396d96abe93126ebfd66a0c2c2cd956462569cf53d",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "notes": "goal-spec.json file sha256 (3f5adae4...) differs from 30a1de05..., as expected: 30a1de05... is the hash of the original_goal string per the SKILL.md check, not of the file. Receipt diagnostic default_branch_fallback_main is informational and not an R0 criterion."
+}

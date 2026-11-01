@@ -1,0 +1,41 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-a1f213f356d5222f5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "703509eb-35c4-49b1-9e13-460ff1f1d1bd",
+      "line": 32,
+      "prefix_bytes": 526761,
+      "prefix_sha256": "71f0982515d32b6834334cf787e4a05566070d1a208b32705f361296ef0f979d",
+      "timestamp": "2026-11-01T12:49:10.004Z"
+    },
+    "result": {
+      "uuid": "72b6c6aa-5b6b-4262-806f-a4d098535e93",
+      "line": 34,
+      "prefix_bytes": 664535,
+      "prefix_sha256": "e4a3850cd39e6386b35f267cdde67b338e7057416fbc102d8468e40a6ebe33dc",
+      "timestamp": "2026-11-01T12:49:10.253Z"
+    }
+  },
+  "tool_use_id": "toolu_01CQQkn4EzvxqnkwkA2YJg5B",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/CLAUDE.local.md",
+    "limit": 5
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# 実走fixtureの共通実行契約\n2\t\n3\tこれは公開system-spec-harness 0.1.24とC19の既存契約を各独立contextへ届けるプロジェクト指示であり、判定基準・権限・予算・資料を変更しない。過去の評価結果は今回の判断に使わない。出力は日本語とする。\n4\t\n5\t各Skill/Agentは担当の出力を作る前に、このCLAUDE.local.mdをReadし、自分のSKILL.md・起動adapter・責務prompt・必読SSOTをfrontmatterも含め全文取得する。親のReadや親の会話を、自分が読んだ証拠と数えない。内容がツール上限で欠けたら残りを取得し、見出し/先頭/grep/存在確認で意味評価を代用しない。sourceが許すtool/CLIと読取専用境界を守り、sourceやguard/この指示を編集しない。",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/CLAUDE.local.md",
+      "content": "# 実走fixtureの共通実行契約\n\nこれは公開system-spec-harness 0.1.24とC19の既存契約を各独立contextへ届けるプロジェクト指示であり、判定基準・権限・予算・資料を変更しない。過去の評価結果は今回の判断に使わない。出力は日本語とする。\n\n各Skill/Agentは担当の出力を作る前に、このCLAUDE.local.mdをReadし、自分のSKILL.md・起動adapter・責務prompt・必読SSOTをfrontmatterも含め全文取得する。親のReadや親の会話を、自分が読んだ証拠と数えない。内容がツール上限で欠けたら残りを取得し、見出し/先頭/grep/存在確認で意味評価を代用しない。sourceが許すtool/CLIと読取専用境界を守り、sourceやguard/この指示を編集しない。",
+      "numLines": 5,
+      "startLine": 1,
+      "totalLines": 201
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "evaluator": {"name": "assign-system-spec-completeness-evaluator", "version": "0.1.0", "context": "fork"},
+  "spec_dir": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/system-spec",
+  "verdict": "FAIL",
+  "artifact_snapshot": {"schema_version":"system-spec-artifact-snapshot/v1","artifacts":{"system-spec/00-requirements-definition.md":"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8","system-spec/auth.md":"6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279","system-spec/backend.md":"f3b8829e888a8ebe69d14e38b4a149349ea10c6c4c014c5d4cfa7229c56de484","system-spec/database.md":"5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf","system-spec/fetched-references.json":"471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594","system-spec/frontend.md":"775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8","system-spec/index.md":"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2","system-spec/infrastructure.md":"cf30113b4ed17df81dacdac7913bf57cb57368669ed04a7d84e119320bba8076","system-spec/maintenance-ops.md":"57558e5a7ca552f9e109c9eb16fd4a72603d0d45572a139015513e7d55be8b8e","system-spec/security.md":"b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347","system-spec/spec-state.json":"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f","system-spec/ui-ux.md":"26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82"}},
+  "aspects": {
+    "foundation_trace": {
+      "verdict": "PASS",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "requirements_foundation は confirmed=true、U1-U9 全てに値があり approval_ref=appr-foundation-v2 (qa-033) が approval_log に実在。U1-U9 は qa-foundation-u1〜u9 の利用者一次入力へ遡及し、C06 も逐語一致を確認。U3 G1/G2 は U4 O1/O2・U9 I1-I3 の serves、全確定セル serves_goals、各章 frontmatter と index の資するゴールへ dangling なく接続。00-requirements-definition.md は U1-U9 を正本として描画。G-matrix (--require-complete) exit 0。注記: U7 scope.in に請求漏れ検知が明記されず O1 で補完 (low)。",
+      "evidence": ["system-spec/spec-state.json requirements_foundation (confirmed, approval_ref=appr-foundation-v2)", "system-spec/00-requirements-definition.md U1-U9", "system-spec/index.md 章一覧の資するゴール G1/G2", "eval-log/hearing-audit.json 軸5 foundation-trace 検出なし"]
+    },
+    "decision_guidance": {
+      "verdict": "PASS",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "decisions D1-D4 は全て status=confirmed で user_decision.qa_ref が利用者回答へ遡及し、AI 推奨のみでの確定は無い。各 decision は 2 案・無料/低コスト案を含み、goal_fit/security_fit/cost_model/free_tier_limits/pros/cons/risks/lock_in/ops_burden/evidence_refs と recommendation (rationale/caveats/confidence/latest_checked_at) を持つ。注記: D4 (非同期実行構成) は両案の goal_fit/security_fit/free_tier_limits/lock_in が同一文言で案ごとの差別化が弱く、billing_period に追加OSSライセンス費という不自然な表現がある (low)。",
+      "evidence": ["system-spec/spec-state.json decisions[] D1-D4", "qa-job-choice-fixture-v3 (D4 利用者選択 pg-worker-cron)"]
+    },
+    "matrix_coverage": {
+      "verdict": "PASS",
+      "auditor": "system-spec-matrix-auditor",
+      "component": "C07",
+      "summary": "C07 独立監査 PASS: 8カテゴリ×6 platform=48セル、確定8 (web列) / 対象外40 (理由付き) / 未収集0、qa_ref dangling 0、category_aggregate 真理値表一致、C16 block item 全接地。sub-input C06 は aggregate-completeness.py --hearing で verdict PASS、blocking 0 (notes 4件・closed 1件は findings に bucket=matrix_coverage で記録)。G-matrix --require-complete exit 0、G-knowledge-graph required-info subgate exit 0。",
+      "evidence": ["audit_delegations C07 toolu_019pJXYo2RMqaTGzxzxZXwTA", "audit_delegations C06 toolu_015nE8oqaMVkFnKhMHwWns3w", "eval-log/hearing-audit.json"]
+    },
+    "design_knowledge_reflection": {
+      "verdict": "FAIL",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "機械層: 全8章が resource-map 由来の設計知識ポインタ節・doctrine anchor・確定判断ごとの原則採否を持ち、G-knowledge-graph (knowledge/doctrine/required-info/cross) 全 exit 0。意味層: auth/security/infrastructure/backend/ui-ux/frontend は確定セル (qa-002/004/005/006/003/007) へ具体適用あり。しかし (1) O1 請求漏れ検知 (qa-o1-fixture-v3) と非同期実行構成 (qa-job-choice-fixture-v3) の design_applications が同一文面のコピーで、job-choice の回答 (job_outbox・claim/lease/fencing・リトライ上限・CronJob 重複抑制) に対する解釈になっておらず design_application_provenance も null。(2) 章の確定判断ごとの原則採否は主 qa_ref の legacy_backfill のみを描き、O1/D4 で追加された billing_expectations/missing_billing_cases/billing_closing_checks/job_outbox、GET /billing-missing・POST /billing-missing/checks・GET /jobs/{id}、請求漏れ一覧画面、worker/CronJob 運用への原則適用が database/backend/ui-ux/maintenance-ops/security の各章に無い。(3) maintenance-ops は Google SRE を qa-008/029/001 に結ぶが、失敗job・30分超未処理・worker停止再開という新しい運用要件へ適用が無い。直近に確定した中核要件 (U1 の信頼性に直結する請求漏れ検知) で具体適用が欠けるため、pass_criteria 意味層と C15 doctrine 具体反映を満たさない。high はないが medium 4件で FAIL。",
+      "evidence": ["system-spec/spec-state.json qa_log qa-o1-fixture-v3 / qa-job-choice-fixture-v3 design_applications", "system-spec/maintenance-ops.md 確定判断ごとの原則採否 (legacy_backfill)", "system-spec/database.md / backend.md 確定判断ごとの原則採否", "G-knowledge-graph exit 0"]
+    },
+    "doc_freshness": {
+      "verdict": "PASS",
+      "auditor": "system-spec-doc-freshness-auditor",
+      "component": "C08",
+      "summary": "C08 独立監査 PASS: R4-audit-doc-freshness と official-source-catalog を読了し、C13 exit 0 の上で WebFetch により5 target を公式サイトで実再照合 (postgres 16.15・EOL 2028-11-09 / react 19.3 / fastapi 0.162.0 / typescript 7.0 / kubernetes CronJob last modified 2026-05-13) し全て現行・公式 host と一致。G-source-citation exit 0。",
+      "evidence": ["audit_delegations C08 toolu_01A3fTbABzBCCE3NjvmSFZtZ", "system-spec/fetched-references.json"]
+    },
+    "prompt_quality": {
+      "verdict": "PASS",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "summary": "plugins/system-spec-harness/skills/*/prompts/*.md 全18件をこの context で全文読了し C1 (Layer 役割分離)・C2 (L7→L1 整合)・C3 (再現性)・C4 (Self-Evaluation=完了チェックリストによる客観停止条件) を意味評価した。全件がメタ表 (layers_covered L1-L7・output_schema・reproducible) と L1-L7 を持ち、L5 は担当agent/ゴール定義 (目的・背景・達成ゴール)/完了チェックリスト/固定手順を持たない実行方式で構成。high なし。medium 1件 (R2-render が qa_refs 側の design_applications を章に描かない設計の穴)、low 4件。外部 prompt-creator の verify-completeness.py / validate-prompt.py は plugin 内に存在せず standalone 例外として機械gateのみ skip (意味評価は全件実施)。",
+      "evidence": [
+        "assign-system-spec-completeness-evaluator/R1-score: C1 L1 総合判定規則・L2 6観点評価主体・L3 snapshot/aggregate CLI・L4 fail-closed/保存境界を分離。C2 L7 出力指示が L1 の aggregate_verdict 一致と artifact_snapshot 無改変に従う。C3 build-resume-receipt --print-artifact-snapshot と aggregate_verdict 再導出で決定論。C4 完了チェックリストで全aspect充足・Goodhart防止を検査。",
+        "assign-system-spec-completeness-evaluator/R2-delegate: C1 委譲責務に限定し監査ロジックを各agent SSOTへ委ねる。C2 L7 の1件ずつforeground起動が L1 の fork・AUDIT_DISPATCH token 規則と整合。C3 token join key で台帳帰属が一意。C4 receipt・C06 sub-input・evidence 透過のチェックリスト。",
+        "ref-system-design-knowledge/R1-system-design-knowledge: C1 seed正本を knowledge-catalog に委ね転記禁止 (L2)、L3 出力11項目。C2 L4 未確認表示・競合トレードオフ併記が L7 に反映。C3 reproducible=true だが open-world 探索のため決定論の根拠が弱い (low)。C4 7項目チェックリスト。",
+        "run-system-spec-compile/R1-assemble: C1 真理値表不変則と決定論ヘルパ群。C2 L7 が derive_aggregate 等の出力へ一致。C3 ヘルパによる決定論。C4 7チェック。",
+        "run-system-spec-compile/R2-render: C1 C14 topo_order・C15 doctrine anchor・原則採否描画。C2 unrecorded fail-visible が L7 まで一貫。C3 決定論描画。C4 10超チェック。ただし原則採否が主 qa_ref のみに束縛され qa_refs の design_applications を描かない (medium)。",
+        "run-system-spec-compile/R3-crosslink: C1 render_index/compile_docset。C2 書込を system-spec/ に限定し L7 と整合。C3 決定論。C4 7チェック。",
+        "run-system-spec-doc-fetch/R1-identify: C1 対象同定のみ (取得/記録は後続) と spec-state 由来限定の不変則。C2 L4 過収集側へ倒す方針が L5 チェックと整合。C3 同一spec-stateから同一target集合。C4 6項目 (根拠・重複・抽象方針混入・0件根拠・candidate追跡)。",
+        "run-system-spec-doc-fetch/R2-fetch: C1 公式一次情報取得に限定し整形はR3・鮮度はC08。C2 時刻実測・証跡SHA-256 が L3 ツール制約と整合。C3 同一公式スナップショット前提を明示 (外部変動はlow注記)。C4 9項目 (公式性・host・版・時刻・証跡・未取得理由)。",
+        "run-system-spec-doc-fetch/R3-record: C1 正規化と IN1 検証に限定。C2 summary 版ドリフト規約が assembler 検査・L5 チェックまで一貫。C3 同一素材→同一record、壁時計上書き禁止。C4 8項目 (assembler/validator exit0・件数一致・ドリフト)。",
+        "run-system-spec-doc-fetch/R4-audit-doc-freshness: C1 二層 (C13形式/C08内容鮮度) と4軸、catalog必読。C2 L7 AUDIT_VERDICT 1行が L1 read-only 監査・L6 出力と整合。C3 同一入力・照合結果→同一verdict、最大3回。C4 7項目 (全target形式/公式/現行判定・到達不能識別・書込0)。",
+        "run-system-spec-elicit/R0-foundation: C1 U1-U9抽出と set-foundation 単一writer、canonical/effective 分離、共有binding規則。C2 L7 N1-N4・承認逐語保全が L1 承認必須と整合。C3 writer の機械強制と source.sha256。C4 10項目 (U1-U3値必須・approval実在・--require-foundation exit0 等)。",
+        "run-system-spec-elicit/R1-init: C1 taxonomy 正本・6 platform 全存在・初期未収集。C2 L7 初期化サマリが L5 達成ゴールと一致。C3 init CLI 単発・既存時skip。C4 4項目。",
+        "run-system-spec-elicit/R2-interview: C1 未収集セルの往復と writer 反映、required-info 順序、design_applications、set-targets/knowledge-candidate。C2 L3 の --required-info 有無規則が L5 チェックと整合。C3 collection_order と writer 候補検証。C4 10項目。",
+        "run-system-spec-elicit/R3-reask: C1 再質問と resume 保存に限定、next_question を提示文にしない。C2 L7 の collection_order 照合が L1 順序ゲートと整合。C3 writer の決定論 next_question。C4 5項目 (complete/next_question 条件)。",
+        "run-system-spec-elicit/R4-reopen: C1 reopen 一本化・実測 reopened_at・参照の結び直し・set-serves/set-approval 区別。C2 L7 理由提示と再確認独立性が L1/L2 と整合。C3 writer 拒否条件で決定論。C4 8項目。",
+        "run-system-spec-elicit/R5-decision-guide: C1 比較・推奨・確認待ちに限定し推奨を問の外に置く。C2 L7 提示順序が L1 不変則・L2 必須比較軸と整合。C3 option_id 昇順の決定論並び。C4 20項目。decision record を渡す writer op 名が本文に無い (low)。",
+        "run-system-spec-elicit/R6-audit-hearing: C1 監査5軸・重大度付与・閾値は aspect-criteria に委譲。C2 L6 finding JSON 形が aggregate-completeness --hearing と整合し L7 marker 規則も一貫。C3 同一state・基準→同一判定。C4 13項目 (supersession 照合・active consumer・書込0)。",
+        "run-system-spec-elicit/R7-audit-matrix: C1 決定論ゲート第一+意味層の二層、5検査対象。C2 L7 final_ready=AUDIT_VERDICT が L2.4 二判定と整合。C3 同一state→同一verdict。C4 11項目。L5 見出しに l5-contract v2.0.0 表記が無い (構造は準拠、low)。"
+      ]
+    }
+  },
+  "audit_delegations": [
+    {
+      "aspect": "matrix_coverage", "role": "primary", "auditor": "system-spec-matrix-auditor", "component": "C07",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-matrix-auditor", "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3", "tool_use_id": "toolu_019pJXYo2RMqaTGzxzxZXwTA", "response_sha256": "f02d9626d81faabd63cb214fed04ee6a0e5e74a370f4cffc0b5fa1f158eff4db"},
+      "verdict": "PASS",
+      "evidence": ["AUDIT_DISPATCH c05-sysspec115-c07-m01", "loop_pass=PASS / final_ready=PASS: 48セル 確定8・対象外40・未収集0、dangling 0、集約一致、C16 block item 全接地"]
+    },
+    {
+      "aspect": "matrix_coverage", "role": "sub_input", "auditor": "system-spec-hearing-auditor", "component": "C06",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-hearing-auditor", "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3", "tool_use_id": "toolu_015nE8oqaMVkFnKhMHwWns3w", "response_sha256": "946a6472e5b6a4042429d571e2295a0861665e843e122d27150d24a1ea7c9a67"},
+      "verdict": "PASS",
+      "evidence": ["AUDIT_DISPATCH c05-sysspec115-c06-h01", "eval-log/hearing-audit.json を無改変保存。aggregate-completeness.py --hearing: verdict PASS, blocking [], notes 4, closed 1, errors []"]
+    },
+    {
+      "aspect": "doc_freshness", "role": "primary", "auditor": "system-spec-doc-freshness-auditor", "component": "C08",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-doc-freshness-auditor", "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3", "tool_use_id": "toolu_01A3fTbABzBCCE3NjvmSFZtZ", "response_sha256": "4bf1c6cf168503b2248cf2a923b4da297917e751adeaeeaa28510dc2c2032742"},
+      "verdict": "PASS",
+      "evidence": ["AUDIT_DISPATCH c05-sysspec115-c08-d01", "C13 exit 0、WebFetch で5 target 公式現行版を実再照合し全一致"]
+    }
+  ],
+  "gate_results": [
+    {"id": "G-matrix", "name": "validate-coverage-matrix", "conditions": ["matrix_coverage"], "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-coverage-matrix.py", "--matrix", "system-spec/spec-state.json", "--require-complete"], "exit_code": 0, "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす", "stderr": ""},
+    {"id": "G-source-citation", "name": "validate-source-citation", "conditions": ["doc_freshness"], "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-source-citation.py", "--targets", "system-spec/spec-state.json", "--references", "system-spec/fetched-references.json", "--state", "system-spec/spec-state.json", "--repo-root", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx"], "exit_code": 0, "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす", "stderr": ""},
+    {"id": "G-knowledge-graph", "name": "validate-knowledge-graph", "conditions": ["design_knowledge_reflection", "matrix_coverage"], "exit_code": 0, "subgates": [
+      {"profile": "knowledge", "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py", "--profile", "knowledge", "--input", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json"], "exit_code": 0, "stderr": ""},
+      {"profile": "doctrine", "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py", "--profile", "doctrine", "--input", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json"], "exit_code": 0, "stderr": ""},
+      {"profile": "required-info", "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py", "--profile", "required-info", "--input", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"], "exit_code": 0, "stderr": ""},
+      {"profile": "cross", "command": ["/Users/dm/miniconda3/bin/python3", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/scripts/validate-knowledge-graph.py", "--profile", "cross", "--taxonomy", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json", "--doctrine", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json", "--required-info", "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"], "exit_code": 0, "stderr": ""}
+    ]}
+  ],
+  "findings": [
+    {"severity": "medium", "bucket": "design_knowledge_reflection", "observation": "qa-o1-fixture-v3 と qa-job-choice-fixture-v3 の design_applications が同一文面 (clean-architecture 中核概念・請求漏れ判定のport/adapter分離・通知表示) のコピーで、design_application_provenance も null。job-choice 回答の job_outbox・claim排他・lease/fencing token・リトライ上限・CronJob重複抑制への原則採否 (SRE・cloud patterns 等) が無く、回答との適合を再照合すると不一致。O1 回答は外部通知を追加しないのに通知表示と記している。", "suggested_fix": "C01 で qa-job-choice-fixture-v3 と qa-o1-fixture-v3 に回答内容へ即した design_applications を set-qa-design-applications で記録し直し (provenance 付き)、C03 で再コンパイルする。", "evidence": ["system-spec/spec-state.json qa_log[qa-o1-fixture-v3].design_applications", "system-spec/spec-state.json qa_log[qa-job-choice-fixture-v3].design_applications"]},
+    {"severity": "medium", "bucket": "design_knowledge_reflection", "observation": "各章の確定判断ごとの原則採否は主 qa_ref (qa-031/qa-006/qa-003/qa-008 等, legacy_backfill) だけを描き、qa_refs で結ばれた O1/D4 の新要件 (billing_expectations/missing_billing_cases/billing_closing_checks/job_outbox、GET /billing-missing・POST /billing-missing/checks・GET /jobs/{id}、請求漏れ一覧画面) への設計原則の具体適用が database/backend/ui-ux の章に無い。", "suggested_fix": "C03 R2-render で qa_refs 側の design_applications も章へ描画するか、C01 で該当セルへ章単位の set-design-application を追記して再コンパイルする。", "evidence": ["system-spec/database.md", "system-spec/backend.md", "system-spec/ui-ux.md"]},
+    {"severity": "medium", "bucket": "design_knowledge_reflection", "observation": "maintenance-ops 章は Google SRE を qa-008/qa-029/qa-001 (オンコール・遅延通知・リストア訓練) に結ぶが、qa-job-choice-fixture-v3 で確定した失敗job・30分超未処理の運用画面提示・worker停止時の再開という新しい運用要件に SRE 原則 (監視・トイル・障害対応) の適用が無い。原則採否も Clean Code のみ。", "suggested_fix": "C01 で maintenance-ops の worker/CronJob 運用に対する SRE の適用を記録し、C03 で再コンパイルする。", "evidence": ["system-spec/maintenance-ops.md doctrine anchor operations 行 / 確定判断ごとの原則採否"]},
+    {"severity": "medium", "bucket": "design_knowledge_reflection", "observation": "database 章の Cloud Architecture Patterns 適用は非適用条件に該当しうる汎用ポインタ止まりで、job_outbox の transactional outbox など確定要件への具体適用として読めない。security 章に worker/CronJob の DB 接続最小権限など新要件の反映が無い。", "suggested_fix": "database と security の章に job_outbox/worker への具体適用 (transactional outbox・最小権限) を記録し再コンパイルする。", "evidence": ["system-spec/database.md 適用された設計知識", "system-spec/security.md"]},
+    {"severity": "low", "bucket": "design_knowledge_reflection", "observation": "security 章の原則採否 rationale に qa-030 の回答に無い情報漏えいの記述があり、doctrine 反映は全て agent-inference。", "evidence": ["system-spec/security.md"]},
+    {"severity": "low", "bucket": "foundation_trace", "observation": "U7 scope.in に請求漏れ検知が明記されず、U4 O1 と qa-o1-fixture-v3 で補完されている。trace は dangling なし。", "evidence": ["system-spec/spec-state.json requirements_foundation.scope"]},
+    {"severity": "low", "bucket": "decision_guidance", "observation": "D4 の2案で goal_fit/security_fit/free_tier_limits/lock_in が同一文言で案ごとの差別化が弱い (comparison_basis では差あり)。billing_period に追加OSSライセンス費という不自然な記述。", "evidence": ["system-spec/spec-state.json decisions[D4]"]},
+    {"severity": "medium", "bucket": "matrix_coverage", "observation": "C06 注記 (primary_ground=false): qa-o1-fixture-v3 が定義・検知時期・提示先・計測データの4論点を1問に束ねる (N4)。裏付けの qa_refs のみで主たる qa_ref ではない。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "medium", "bucket": "matrix_coverage", "observation": "C06 注記 (primary_ground=false): qa-038 がセッション保存先と有効期限・ログアウト時の扱いの2論点を束ねる (N4)。auth/web の qa_refs のみ。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "low", "bucket": "matrix_coverage", "observation": "C06 注記: qa-033 が U1-U9 要約確認を1問で行う (N4、承認の問で軽微)。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "info", "bucket": "matrix_coverage", "observation": "C06 注記: 置き換え済み qa-009 が ui-ux/web の qa_refs に残る。主 qa_ref qa-003 は実在。閉じた検出: qa-009 は qa-019 で有効に置き換え済み (supersession_valid=true)。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "medium", "bucket": "prompt_quality", "observation": "run-system-spec-compile/prompts/R2-render.md: 確定判断ごとの原則採否を主 qa_ref の design_applications のみに束縛し、qa_refs で結ばれた裏付け qa の design_applications を章へ描く経路が無い。後から追加要件を add-qa-ref で結ぶ運用では設計解釈が仕様書から脱落する (今回の design_knowledge_reflection 欠落の一因)。", "suggested_fix": "R2-render に qa_refs 側 design_applications の描画 (または未描画の fail-visible 表示) を追加する。"},
+    {"severity": "low", "bucket": "prompt_quality", "observation": "ref-system-design-knowledge/prompts/R1-system-design-knowledge.md: reproducible=true だが open-world 探索を含み、決定論的再現の根拠 (入力スナップショット固定等) が弱い。"},
+    {"severity": "low", "bucket": "prompt_quality", "observation": "run-system-spec-elicit/prompts/R5-decision-guide.md: decision record を writer へ渡すと書くが writer op 名・CLI が本文に無く、再現手順が他 prompt より曖昧。"},
+    {"severity": "low", "bucket": "prompt_quality", "observation": "run-system-spec-elicit/prompts/R7-audit-matrix.md: Layer 5 見出しに l5-contract v2.0.0 の表記が無い (5.1-5.4 の構造と内容は準拠)。"},
+    {"severity": "info", "bucket": "prompt_quality", "observation": "外部 prompt-creator の verify-completeness.py / validate-prompt.py は plugin 内に存在しない standalone 環境のため機械gateのみ skip。意味評価は18件全件実施。run-system-spec-doc-fetch/prompts/R2-fetch.md の reproducible は同一公式スナップショット前提で外部変動を明示しており妥当。"}
+  ],
+  "gaps": [
+    "design_knowledge_reflection FAIL → C01 (run-system-spec-elicit): qa-o1-fixture-v3 / qa-job-choice-fixture-v3 に回答へ即した design_applications を provenance 付きで記録し直す。job_outbox・lease/fencing・リトライ・CronJob・失敗job運用への SRE/cloud patterns/最小権限の適用を記録する。",
+    "design_knowledge_reflection FAIL → C03 (run-system-spec-compile): qa_refs 側の設計解釈を database/backend/ui-ux/maintenance-ops/security 章へ反映して再コンパイルし、その後 C05 を再実行する。"
+  ]
+}

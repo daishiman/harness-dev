@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "18bad631-8216-4677-afcb-316a303f82cd",
+      "line": 412,
+      "prefix_bytes": 2528321,
+      "prefix_sha256": "7cfedf5fb0ff0db94e6f41036961446b81e3e0a0e949889eaef3dd5f45904130",
+      "timestamp": "2026-11-01T14:32:31.100Z"
+    },
+    "result": {
+      "uuid": "3a620371-33bd-4710-8031-52fccec6412b",
+      "line": 415,
+      "prefix_bytes": 2531535,
+      "prefix_sha256": "99eb2d66d0f1de906ae2a87f62f96ccc11e32b49817900df8e921487952e6fa2",
+      "timestamp": "2026-11-01T14:32:33.159Z"
+    }
+  },
+  "tool_use_id": "toolu_01HDAHn2JfstYRts3HVteRQQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import os,datetime\nfor f in [\"eval-log/run-system-spec-elicit-standard.json\",\"eval-log/compile-standard.json\"]:\n  print(f, datetime.datetime.fromtimestamp(os.stat(f).st_mtime, datetime.timezone.utc).isoformat(timespec=\"seconds\"))'",
+    "description": "Measure actual write times of standard receipts"
+  },
+  "is_error": false,
+  "tool_result_content": "eval-log/run-system-spec-elicit-standard.json 2026-11-01T14:06:49+00:00\neval-log/compile-standard.json 2026-11-01T14:07:46+00:00",
+  "tool_use_result": {
+    "stdout": "eval-log/run-system-spec-elicit-standard.json 2026-11-01T14:06:49+00:00\neval-log/compile-standard.json 2026-11-01T14:07:46+00:00",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

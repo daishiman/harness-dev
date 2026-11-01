@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "subagent/agent-a3e9c29d13b2d7c5b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "61bffb5a-3efc-4a5e-bca9-1ce19860a3b9",
+      "line": 55,
+      "prefix_bytes": 845884,
+      "prefix_sha256": "6f5a0f2ed7f789d077dce6007942270e729fb1da26788d50817339ab4b094b78",
+      "timestamp": "2026-11-01T15:24:57.824Z"
+    },
+    "result": {
+      "uuid": "0655d7a2-be77-4265-9a2f-b500b4aa96bf",
+      "line": 57,
+      "prefix_bytes": 849985,
+      "prefix_sha256": "038f4277a5f3a5cf189961342f2e7386e0c20c491831c30b018e19b5d9833449",
+      "timestamp": "2026-11-01T15:24:59.935Z"
+    }
+  },
+  "tool_use_id": "toolu_01LPTkk5irHaS8hYBa6sgj8p",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c '\nimport json,hashlib\nfrom pathlib import Path\nr=Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\").resolve(strict=True)\ns=json.loads((r/\"system-spec/spec-state.json\").read_text(encoding=\"utf-8\"))\nfor q in s[\"qa_log\"]:\n    src=q.get(\"source\") or {}\n    if src.get(\"kind\")==\"written-requirements\":\n        p=(r/src[\"path\"]).resolve(strict=True); p.relative_to(r)\n        t=p.read_text(encoding=\"utf-8\")\n        print(q[\"id\"],hashlib.sha256(q[\"answer\"].encode(\"utf-8\")).hexdigest()==src[\"sha256\"], q[\"answer\"] in t, (\"## \"+src[\"section\"]) in t)\n'\n"
+  },
+  "is_error": false,
+  "tool_result_content": "qa-csrf-written-v7 True True True\nqa-session-written-v7 True True True\nqa-auth-written-v7 True True True\nqa-security-written-v7 True True True",
+  "tool_use_result": {
+    "stdout": "qa-csrf-written-v7 True True True\nqa-session-written-v7 True True True\nqa-auth-written-v7 True True True\nqa-security-written-v7 True True True",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

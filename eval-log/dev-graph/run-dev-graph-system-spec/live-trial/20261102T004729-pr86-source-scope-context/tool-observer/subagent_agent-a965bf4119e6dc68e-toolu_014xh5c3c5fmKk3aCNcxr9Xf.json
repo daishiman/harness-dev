@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a965bf4119e6dc68e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9efeaded-92ce-4203-9153-543a5be5c33a",
+      "line": 55,
+      "prefix_bytes": 1005643,
+      "prefix_sha256": "90be636f19c16e02d667ce4ec217167e301ea84ea30e2fc249532b1c5a86ba40",
+      "timestamp": "2026-11-01T16:00:07.164Z"
+    },
+    "result": {
+      "uuid": "2d9a3702-afd5-4845-9838-feb6b34db524",
+      "line": 56,
+      "prefix_bytes": 1007122,
+      "prefix_sha256": "f64d6db40aa85d993f54c4e444d5ead191a986eb0d164638a1501973d5481d42",
+      "timestamp": "2026-11-01T16:00:10.603Z"
+    }
+  },
+  "tool_use_id": "toolu_014xh5c3c5fmKk3aCNcxr9Xf",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c '\nimport hashlib\na={\"csrf\":\"cookie には HttpOnly・Secure・SameSite=Lax を付ける。状態を変える要求 (POST・PUT・PATCH・DELETE) には、サーバがセッションごとに発行する CSRF トークン (synchronizer token) を必須にし、無いか合わない要求は拒否する。SameSite の属性だけに頼らず、セッションをサーバ側に持つ (D3) ので、トークンもサーバ側で突き合わせたい。\",\n\"session\":\"PostgreSQL 16 (D1) の表に保存する。Pod のメモリには置かず、Pod の再起動や複数の replica でもログインが切れないようにする。Redis などの新しい保存基盤は足さない。有効期限は qa-002 のとおり 8 時間で、期限切れは使えなくして定期的に消す。ログアウトではすぐに無効にする。\",\n\"auth\":\"OIDC(社内 IdP)+ ロールベース認可。セッションは 8h。\",\n\"sec\":\"TLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。\"}\nfor k,v in a.items(): print(k,hashlib.sha256(v.encode(\"utf-8\")).hexdigest())'",
+    "description": "Recompute answer SHA-256 digests"
+  },
+  "is_error": false,
+  "tool_result_content": "csrf a0cbb5178c51e3a4f01533ded8460cd7bc28d570b7995ad98c5ba60eb83c952b\nsession df299e589ab5884e5716252ac6d8924da436f6f55fe50be2d410be260656689a\nauth b35c47ec38b145b8238a1930e7ebe1ff3a723c1213e49bb9d5ce4e11ef0aad41\nsec ba77b130311e55a8e64121aeace22897f6ea67f7ed55a1dae2501b4787464003",
+  "tool_use_result": {
+    "stdout": "csrf a0cbb5178c51e3a4f01533ded8460cd7bc28d570b7995ad98c5ba60eb83c952b\nsession df299e589ab5884e5716252ac6d8924da436f6f55fe50be2d410be260656689a\nauth b35c47ec38b145b8238a1930e7ebe1ff3a723c1213e49bb9d5ce4e11ef0aad41\nsec ba77b130311e55a8e64121aeace22897f6ea67f7ed55a1dae2501b4787464003",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

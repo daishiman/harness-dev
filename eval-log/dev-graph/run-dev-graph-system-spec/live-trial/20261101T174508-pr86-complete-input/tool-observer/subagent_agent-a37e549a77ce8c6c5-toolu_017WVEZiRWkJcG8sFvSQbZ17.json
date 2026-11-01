@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a37e549a77ce8c6c5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b55754ac-2714-489b-9495-e25d6b787d30",
+      "line": 14,
+      "prefix_bytes": 83666,
+      "prefix_sha256": "2f1aeb1beae2d499ec8e2212646376a847830a42be70e46dfb562326be1b08a7",
+      "timestamp": "2026-11-01T08:56:44.563Z"
+    },
+    "result": {
+      "uuid": "c2103ae6-1b71-402f-b7d5-2fbc9614f672",
+      "line": 16,
+      "prefix_bytes": 87394,
+      "prefix_sha256": "e92013ae53d7568864c183ca7fe92b97cd7dbaae7601bb98ecdc71e00d3cdc1c",
+      "timestamp": "2026-11-01T08:56:50.584Z"
+    }
+  },
+  "tool_use_id": "toolu_017WVEZiRWkJcG8sFvSQbZ17",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx; P=plugins/system-spec-harness; S=system-spec/spec-state.json; python3 $P/scripts/validate-coverage-matrix.py --matrix $S; echo \"exit=$?\"; python3 $P/scripts/validate-coverage-matrix.py --matrix $S --require-complete; echo \"exit=$?\"; wc -c $S; ls $P/skills/run-system-spec-elicit/prompts/ | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0\n  138461 system-spec/spec-state.json\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (loop) を満たす\nexit=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit=0\n  138461 system-spec/spec-state.json\nR0-foundation.md\nR1-init.md\nR2-interview.md\nR3-reask.md\nR4-reopen.md\nR5-decision-guide.md\nR6-audit-hearing.md\nR7-audit-matrix.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true,
+      "shared": true
+    }
+  }
+}

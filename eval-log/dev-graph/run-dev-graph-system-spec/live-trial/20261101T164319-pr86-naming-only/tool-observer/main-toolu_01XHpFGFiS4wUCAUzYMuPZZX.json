@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5b84b4b8-c757-40cc-84ff-434bedba3ca7",
+      "line": 335,
+      "prefix_bytes": 1106705,
+      "prefix_sha256": "f434dc83922a9a7768c82240f5f68c14464a9a3fc2990f6a8627f6ee6dd81451",
+      "timestamp": "2026-11-01T07:50:52.906Z"
+    },
+    "result": {
+      "uuid": "259c3466-ba25-4256-88a0-b90a26aac7b8",
+      "line": 336,
+      "prefix_bytes": 1112321,
+      "prefix_sha256": "ba972c652ce3be81ad5ea01bb51ac6c503d1a879ceb24c3994e1ac60a8d4d822",
+      "timestamp": "2026-11-01T07:50:55.417Z"
+    }
+  },
+  "tool_use_id": "toolu_01XHpFGFiS4wUCAUzYMuPZZX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/plugins/dev-graph/scripts && sed -n 776,800p build-graph-node.py; grep -n \"def _lineage\\|imported_at\" build-graph-node.py _common.py validate-source-lineage.py | head"
+  },
+  "is_error": false,
+  "tool_result_content": "            classified = _classification(entry.get(\"classification\"), kind, slug)\n        for field in (\"title\", \"project_id\", \"domain\"):\n            if not isinstance(entry.get(field), str) or not entry[field].strip():\n                raise WriterError(\"missing_required_field\", f\"{label}.{field} must be a non-empty string\")\n            if SECRET.search(entry[field]):\n                raise WriterError(\"secret_like_content\", f\"{label}.{field}\")\n        node = {\n            \"graph_node_id\": graph_node_id, \"artifact_kind\": kind, \"artifact_subtypes\": subtypes,\n            \"title\": entry.get(\"title\"), \"project_id\": entry.get(\"project_id\"), \"domain\": entry.get(\"domain\"),\n            \"status\": \"draft\", \"owners\": entry.get(\"owners\", []), \"tags\": entry.get(\"tags\", []),\n            \"priority\": entry.get(\"priority\"), \"start_date\": entry.get(\"start_date\"),\n            \"target_date\": entry.get(\"target_date\"), \"iteration\": entry.get(\"iteration\"),\n            \"created_at\": now, \"updated_at\": now, \"depends_on\": entry.get(\"depends_on\", []),\n            \"related_nodes\": entry.get(\"related_nodes\", []), \"resource_scope\": entry.get(\"resource_scope\", []),\n            **macro,\n            \"parent_feature\": None, \"feature_package_id\": None, \"phase_ref\": None,\n            \"file_path\": file_path, \"template_id\": kind, \"template_version\": composer.contract[\"template_version\"],\n            \"confirmation_status\": \"draft\", \"evaluation_status\": \"pending\",\n            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n            \"source_lineage\": entry.get(\"source_lineage\") or {\n                \"origin_kind\": \"generated\" if kind == \"feature\" else \"manual\",\n                \"source_plugin\": \"dev-graph\" if kind == \"feature\" else None, \"source_path\": None,\n                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n            \"classification_confidence\": classified[\"confidence\"], \"classification_reason\": classified[\"reason\"],\n            \"classification_candidates\": classified[\"candidates\"],\nbuild-graph-node.py:798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},",
+  "tool_use_result": {
+    "stdout": "            classified = _classification(entry.get(\"classification\"), kind, slug)\n        for field in (\"title\", \"project_id\", \"domain\"):\n            if not isinstance(entry.get(field), str) or not entry[field].strip():\n                raise WriterError(\"missing_required_field\", f\"{label}.{field} must be a non-empty string\")\n            if SECRET.search(entry[field]):\n                raise WriterError(\"secret_like_content\", f\"{label}.{field}\")\n        node = {\n            \"graph_node_id\": graph_node_id, \"artifact_kind\": kind, \"artifact_subtypes\": subtypes,\n            \"title\": entry.get(\"title\"), \"project_id\": entry.get(\"project_id\"), \"domain\": entry.get(\"domain\"),\n            \"status\": \"draft\", \"owners\": entry.get(\"owners\", []), \"tags\": entry.get(\"tags\", []),\n            \"priority\": entry.get(\"priority\"), \"start_date\": entry.get(\"start_date\"),\n            \"target_date\": entry.get(\"target_date\"), \"iteration\": entry.get(\"iteration\"),\n            \"created_at\": now, \"updated_at\": now, \"depends_on\": entry.get(\"depends_on\", []),\n            \"related_nodes\": entry.get(\"related_nodes\", []), \"resource_scope\": entry.get(\"resource_scope\", []),\n            **macro,\n            \"parent_feature\": None, \"feature_package_id\": None, \"phase_ref\": None,\n            \"file_path\": file_path, \"template_id\": kind, \"template_version\": composer.contract[\"template_version\"],\n            \"confirmation_status\": \"draft\", \"evaluation_status\": \"pending\",\n            \"confirmation_evidence\": {\"evaluator\": None, \"evidence_ref\": None, \"evaluated_digest\": None},\n            \"source_lineage\": entry.get(\"source_lineage\") or {\n                \"origin_kind\": \"generated\" if kind == \"feature\" else \"manual\",\n                \"source_plugin\": \"dev-graph\" if kind == \"feature\" else None, \"source_path\": None,\n                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},\n            \"classification_confidence\": classified[\"confidence\"], \"classification_reason\": classified[\"reason\"],\n            \"classification_candidates\": classified[\"candidates\"],\nbuild-graph-node.py:798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

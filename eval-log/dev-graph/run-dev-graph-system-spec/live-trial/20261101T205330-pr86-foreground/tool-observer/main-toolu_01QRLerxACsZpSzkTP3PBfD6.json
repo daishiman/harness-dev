@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "05d667f5-dfe8-4c4b-a489-c4af630e1312",
+      "line": 287,
+      "prefix_bytes": 1992583,
+      "prefix_sha256": "3555b12b31869a42bf34ce5fb92227520cdad0a915484a7ce22064016a51b0ab",
+      "timestamp": "2026-11-01T12:02:18.181Z"
+    },
+    "result": {
+      "uuid": "b0291f4d-5461-4bb3-a707-4a068a0b94ea",
+      "line": 288,
+      "prefix_bytes": 1993773,
+      "prefix_sha256": "da0894377a12688fe77b487e02273a4a832e19bae17613816672af129bb1e06f",
+      "timestamp": "2026-11-01T12:02:23.434Z"
+    }
+  },
+  "tool_use_id": "toolu_01QRLerxACsZpSzkTP3PBfD6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; S=\"$CLAUDE_PROJECT_DIR/system-spec\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets \"$S/spec-state.json\" --references \"$S/fetched-references.json\" --state \"$S/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"cite_exit=$?\"",
+    "description": "Check source citations against fetched references"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite_exit=0",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

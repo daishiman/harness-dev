@@ -1,0 +1,90 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a1c906b8-269c-4075-be14-a11b0851eb37",
+      "line": 291,
+      "prefix_bytes": 1282750,
+      "prefix_sha256": "90cf7b2294ea2f5ff7cab28c665bae08e96180a98211d45e6df7efde7eddca62",
+      "timestamp": "2026-11-01T08:08:20.947Z"
+    },
+    "result": {
+      "uuid": "f3d4fc1f-73c2-4423-949d-169bb18f2a60",
+      "line": 297,
+      "prefix_bytes": 1286129,
+      "prefix_sha256": "01948920b23c8393e566d0910a5fde72f65b0b01aaddd0b0d74e199fc7d2aa2c",
+      "timestamp": "2026-11-01T08:08:27.545Z"
+    }
+  },
+  "tool_use_id": "toolu_01N3HZgX7SqRMYQL6NqABzWs",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,datetime,pathlib\nnow=datetime.datetime.now(datetime.timezone.utc).isoformat()\nrec={\"skill\":\"run-dev-graph-system-spec\",\"artifact_delivery\":{\"contract\":\"artifact-delivery-v1\",\"transitions\":[\n {\"event\":\"minimum_guard_pass\",\"to\":\"minimal_guard_passed\",\"basis\":\"R0/R1 verifier PASS; parse/secret/irreversible/corrupt guards\"},\n {\"event\":\"present_actual_artifact\",\"to\":\"artifact_presented\",\"path\":\"eval-log/run-dev-graph-system-spec/preflight-report.json\",\"sha256\":\"397a0020ebaac71703100c8bdf626b4eafcd70671d3f0cd8deb13c8a06840ae2\",\"open_with\":\"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"},\n {\"event\":\"record_user_choice\",\"to\":\"user_choice_recorded\",\"choice\":\"standard\",\"source\":\"task.md の隔離fixture事前回答契約 (artifact_deliveryの選択はstandard)。新たな利用者承認ではない\"},\n {\"event\":\"standard\",\"to\":\"semantic_evaluator_started\"}]},\"recorded_at\":now}\npathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json\").write_text(json.dumps(rec,ensure_ascii=False,indent=2)+\"\\n\")\nprint(\"recorded standard\")\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "recorded standard",
+  "tool_use_result": {
+    "stdout": "recorded standard",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 31,
+              "lines": [
+                "+{",
+                "+  \"skill\": \"run-dev-graph-system-spec\",",
+                "+  \"artifact_delivery\": {",
+                "+    \"contract\": \"artifact-delivery-v1\",",
+                "+    \"transitions\": [",
+                "+      {",
+                "+        \"event\": \"minimum_guard_pass\",",
+                "+        \"to\": \"minimal_guard_passed\",",
+                "+        \"basis\": \"R0/R1 verifier PASS; parse/secret/irreversible/corrupt guards\"",
+                "+      },",
+                "+      {",
+                "+        \"event\": \"present_actual_artifact\",",
+                "+        \"to\": \"artifact_presented\",",
+                "+        \"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\",",
+                "+        \"sha256\": \"397a0020ebaac71703100c8bdf626b4eafcd70671d3f0cd8deb13c8a06840ae2\",",
+                "+        \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\"",
+                "+      },",
+                "+      {",
+                "+        \"event\": \"record_user_choice\",",
+                "+        \"to\": \"user_choice_recorded\",",
+                "+        \"choice\": \"standard\",",
+                "+        \"source\": \"task.md の隔離fixture事前回答契約 (artifact_deliveryの選択はstandard)。新たな利用者承認ではない\"",
+                "+      },",
+                "+      {",
+                "+        \"event\": \"standard\",",
+                "+        \"to\": \"semantic_evaluator_started\"",
+                "+      }",
+                "+    ]",
+                "+  },",
+                "+  \"recorded_at\": \"2026-11-01T08:08:23.378695+00:00\"",
+                "+}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/artifact-delivery-standard.json"
+      ]
+    }
+  }
+}

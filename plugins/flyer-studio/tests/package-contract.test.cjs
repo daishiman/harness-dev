@@ -5,32 +5,9 @@ const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 // python は -I（cwd と環境変数を import 経路に入れない）と -B（__pycache__ を書かない）で起動する。
 const python = (source) => spawnSync("python3", ["-I", "-B", "-c", source], { cwd: path.resolve(__dirname, ".."), encoding: "utf8" });
-test("単独キットはrepository専用runtimeだけを除き、全資産を検査可能な状態で保持する", () => {
-  const result = python(String.raw`
-import hashlib,json,subprocess,sys,tempfile
-from pathlib import Path
-with tempfile.TemporaryDirectory(prefix='flyer-kit-regression-') as tmp:
- out=Path(tmp)/'kit'
- made=subprocess.run([sys.executable,'-I','-B','scripts/package.py','--out',str(out)],capture_output=True,text=True)
- assert made.returncode==0,(made.stdout,made.stderr)
- plugin=out/'plugins/flyer-studio'
- contract=json.loads((plugin/'references/package-contract.json').read_text())
- manifest=json.loads((plugin/'.claude-plugin/plugin.json').read_text())
- assert 'skill-governance-adapters' not in manifest.get('dependencies',[])
- assert 'skill-governance-adapters' not in contract['depends_on']
- assert 'repository_runtime_dependencies' not in contract
- assert not (plugin/'artifact-delivery.json').exists()
- assert 'artifact-delivery.json' not in contract['required_files']
- assert not (plugin/'node_modules').exists() and not (plugin/'.claude').exists()
- checked=subprocess.run([sys.executable,'-I','-B',str(plugin/'scripts/package.py'),'--check'],capture_output=True,text=True)
- assert checked.returncode==0,(checked.stdout,checked.stderr)
- listing=json.loads((out/'kit-manifest.json').read_text())
- for entry in listing['files']:
-  assert hashlib.sha256((out/entry['file']).read_bytes()).hexdigest()==entry['sha256']
-`);
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-});
-// 実物の package.py と一覧スクリプトを写した最小のプラグイン。CLI の終了コードと出力を、実プラグインの中身から切り離して確かめる。
+// 配布キットでは package() がキットの最上位（plugin の 2 つ上）に kit-manifest.json を書く。repo でだけ成り立つ前提はこれで分ける。
+const IN_KIT = require("node:fs").existsSync(path.resolve(__dirname, "../../../kit-manifest.json")) ? "True" : "False";
+// 実物の build-local-package.py と一覧スクリプトを写した最小のプラグイン。CLI の終了コードと出力を、実プラグインの中身から切り離して確かめる。
 const miniPlugin = String.raw`
 import json,shutil,subprocess,sys,tempfile
 from pathlib import Path
@@ -47,23 +24,32 @@ def catalog(root,data,gallery=True):
   assert done.returncode==0,done.stderr
 def mini(top):
  root=top/'mini-flyer'
- for name in ['package.py','build-asset-gallery.py']:
+ for name in ['build-local-package.py','build-asset-gallery.py']:
   put(root/'scripts'/name,(SCRIPTS/name).read_text(encoding='utf-8'))
  put(root/'rules.md','# 節\n')
  put(root/'references/design-knowledge-index.json',{'entries':[{'id':'DD01','path':'rules.md','section':'節','usedBy':[]}]})
- put(root/'references/package-contract.json',{'manifests':['plugin.json'],'required_files':['package.json','package-lock.json','EVALS.json'],
-  'entry_points':{'skills':[],'agents':[]},'distribution':{'distributable':False}})
- put(root/'plugin-composition.yaml',{'version':'1.0.0','capabilities':[],'dependencies':[],'implementation':{'knowledgeIndex':'references/design-knowledge-index.json',
-  'attached_resources':{'docs':['rules.md'],'scripts':['scripts/package.py','scripts/build-asset-gallery.py'],
+ put(root/'references/package-contract.json',{'manifests':['.claude-plugin/plugin.json'],'required_files':['package.json','package-lock.json','EVALS.json'],
+  'entry_points':{'skills':[],'agents':[]},'user_invocable_skills':[],'distribution':{'distributable':False}})
+ put(root/'references/registry.json',{'capabilities':[],'dependencies':[],'implementation':{'knowledgeIndex':'references/design-knowledge-index.json',
+  'attached_resources':{'docs':['rules.md'],'scripts':['scripts/build-local-package.py','scripts/build-asset-gallery.py'],
    'references':['references/design-knowledge-index.json','references/package-contract.json'],'assets':['assets/catalog.json','assets/index.html']}}})
- put(root/'plugin.json',{'name':'mini-flyer','version':'1.0.0','description':'検査用の最小プラグイン','author':{'name':'test'}})
+ # repo の manifest は共有部品の plugin への依存を宣言する。キットへ写すときに KIT_EXCLUDED_DEPENDENCIES だけを外す。
+ put(root/'.claude-plugin/plugin.json',{'name':'mini-flyer','version':'1.0.0','description':'検査用の最小プラグイン','author':{'name':'test'},
+  'dependencies':['skill-governance-adapters','kept-plugin']})
  for name in ['package.json','EVALS.json']:
   put(root/name,{'version':'1.0.0'})
  put(root/'package-lock.json',{'version':'1.0.0','packages':{'':{'version':'1.0.0'}}})
+ # repo 用の台帳は plugin 直下に置き、登録簿には載せず、キットへも写さない（KIT_EXCLUDED_ROOT_FILES）。
+ put(root/'artifact-delivery.json',{'plugin':'mini-flyer','entrypoints':[]})
  catalog(root,{'entries':[]})
+ # harness 書式の composition は登録簿からの生成物。登録簿や manifest を変えたテストは書き直してから検査する。
+ compose(root)
  return root
+def compose(root):
+ code,out,err=run(root,'--write-composition')
+ assert code==0,(code,out,err)
 def run(root,*args):
- done=subprocess.run([sys.executable,'-I','-B',str(root/'scripts/package.py'),*args],capture_output=True,text=True)
+ done=subprocess.run([sys.executable,'-I','-B',str(root/'scripts/build-local-package.py'),*args],capture_output=True,text=True)
  return done.returncode,done.stdout,done.stderr
 def report(root):
  """--check の報告。終了コードは失敗の有無と、fail はエラーの数と一致する。"""
@@ -76,7 +62,7 @@ test("package checks read the registry and reject drift in both directions", () 
   const source = String.raw`
 import importlib.util,json,os,shutil,tempfile
 from pathlib import Path
-spec=importlib.util.spec_from_file_location('flyer_package','scripts/package.py')
+spec=importlib.util.spec_from_file_location('flyer_package','scripts/build-local-package.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 STAGES={'run-a':'first','run-b':'second'}
 def write(path,data):
@@ -89,7 +75,7 @@ def build():
  write(root/'agents/lens.md','---\nname: lens\n---\n')
  write(root/'references/design-knowledge-index.json',{'entries':[{'id':'DD01','path':'rules.md','section':'節','usedBy':list(STAGES.values())}]})
  caps=[{'kind':'skill','ref':'skills/'+n,'stage':s} for n,s in STAGES.items()]+[{'kind':'agent','ref':'agents/lens'}]
- write(root/'plugin-composition.yaml',{'version':'1.0.0','capabilities':caps,
+ write(root/'references/registry.json',{'capabilities':caps,
   'dependencies':[{'from':'skills/run-a','to':'skills/run-b','type':'calls'}],
   'implementation':{'owner':'skills/run-a','entrypoint':'scripts/run.py','workflow':'rules.md#節','knowledgeIndex':'references/design-knowledge-index.json',
    'attached_resources':{'scripts':['scripts/run.py'],'references':['references/design-knowledge-index.json','references/package-contract.json']}},'retired':[],'eval_sinks':['EVALS.json']})
@@ -104,7 +90,7 @@ def build():
  write(root/'package.json',{'version':'1.0.0','scripts':{'test':'node --test tests/*.test.cjs'}})
  write(root/'package-lock.json',{'version':'1.0.0','packages':{'':{'version':'1.0.0'}}})
  return root
-CONTRACT={'manifests':['plugin.json'],'entry_points':{'skills':['run-a','run-b'],'agents':['lens']}}
+CONTRACT={'manifests':['plugin.json'],'entry_points':{'skills':['run-a','run-b'],'agents':['lens']},'user_invocable_skills':['run-a','run-b']}
 def errors(root):
  return module.check_stage_contracts(root)+module.check_registry(root)+module.check_links(root)+module.check_symlinks(root)+module.check_entry_points(root,CONTRACT)+module.check_versions(root,'1.0.0',CONTRACT)
 def expect(mutate,needle):
@@ -116,6 +102,39 @@ def expect(mutate,needle):
  finally:
   shutil.rmtree(root)
 root=build();assert errors(root)==[],errors(root);shutil.rmtree(root)
+# キットから外す skill は宣言（KIT_EXCLUDED_SKILLS）で決め、symlink かどうかでは決めない。
+# 実体のフォルダで置き、入口の台帳には載せ、独立キットへは写さない。共有正本への symlink とSKILL.mdの無いフォルダは止める。
+assert module.KIT_EXCLUDED_SKILLS=={'run-skill-feedback'},module.KIT_EXCLUDED_SKILLS
+assert module.KIT_EXCLUDED_DEPENDENCIES=={'skill-governance-adapters'},module.KIT_EXCLUDED_DEPENDENCIES
+assert module.KIT_EXCLUDED_ROOT_FILES=={'artifact-delivery.json'},module.KIT_EXCLUDED_ROOT_FILES
+root=build();sandbox=Path(tempfile.mkdtemp());copied=sandbox/'kit';shared=sandbox/'shared'
+LISTED={**CONTRACT,'entry_points':{**CONTRACT['entry_points'],'skills':['run-a','run-b','run-skill-feedback']}}
+def listed(root):
+ return module.check_stage_contracts(root)+module.check_registry(root)+module.check_links(root)+module.check_symlinks(root)+module.check_kit_exclusions(root)+module.check_entry_points(root,LISTED)+module.check_versions(root,'1.0.0',LISTED)
+try:
+ feedback=root/'skills/run-skill-feedback'
+ # 版も登録も別の正本に従う実体コピー。登録簿・版の照合には入らない。
+ write(feedback/'SKILL.md','---\nname: run-skill-feedback\nversion: 0.1.0\n---\n')
+ write(feedback/'workflow-manifest.json',{'version':'0.1.0'})
+ assert listed(root)==[],listed(root)
+ # 実体があるのに入口の台帳へ載せなければ止める。
+ assert any('入口の不一致: entry_points.skills' in e for e in errors(root)),errors(root)
+ shutil.copytree(root,copied,ignore=lambda folder,names:module.IGNORE(folder,names,root=root))
+ assert not (copied/'skills/run-skill-feedback').exists()
+ assert (copied/'skills/run-a/SKILL.md').exists()
+ # 宣言していない名前は実体でも外さず、登録簿の照合に掛かる。
+ write(root/'skills/run-other/SKILL.md','unregistered copy')
+ assert any('登録簿に無い: skills/run-other' in e for e in listed(root)),listed(root)
+ shutil.rmtree(root/'skills/run-other')
+ # 共有正本への symlink に戻すと、キットから外れていても止める（repo の外では解決できない）。
+ write(shared/'SKILL.md','---\nname: run-skill-feedback\n---\n')
+ shutil.rmtree(feedback);feedback.symlink_to(shared,target_is_directory=True)
+ assert any('キット除外skillがsymlink: skills/run-skill-feedback' in e for e in listed(root)),listed(root)
+ feedback.unlink();feedback.mkdir()
+ assert any('キット除外skillにSKILL.mdが無い: skills/run-skill-feedback' in e for e in listed(root)),listed(root)
+finally:
+ shutil.rmtree(root);shutil.rmtree(sandbox)
+
 def rename(root):
  write(root/'skills/run-a/SKILL.md','---\nname: wrong\nreference_refs:\n  - missing.md\nknowledge_refs:\n  - DD99\n---\n')
 for needle in ['frontmatter name不一致','stage参照切れ','未知の指針ID']:
@@ -128,10 +147,10 @@ def loops(root):
  write(root/'references/design-contract.json',{'cycleBudget':3})
  write(root/'skills/run-a/SKILL.md','---\nname: run-a\nreference_refs:\n  - ../../rules.md#節\nknowledge_refs:\n  - DD01\ngoal_seek:\n  enabled: true\n  max_loops: 4\n---\n')
 expect(loops,'goal_seek.max_loops が cycleBudget と不一致: run-a')
-def composition_budget(root):
+def registry_budget(root):
  write(root/'references/design-contract.json',{'cycleBudget':3})
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text());data['revisionBudget']={'maxCycles':4};write(file,data)
-expect(composition_budget,'revisionBudget.maxCycles が cycleBudget と不一致')
+ file=root/'references/registry.json';data=json.loads(file.read_text());data['revisionBudget']={'maxCycles':4};write(file,data)
+expect(registry_budget,'revisionBudget.maxCycles が cycleBudget と不一致')
 
 expect(lambda r:manifest(r,resources=[],phases=[{'id':'A','dependsOn':[]}]),'resourcesに無い')
 expect(lambda r:write(r/'skills/run-b/references/extra.md','x'),'resourcesに無いskill資産')
@@ -183,7 +202,7 @@ for name in ['scripts/extra.py','scripts/.secret','scripts/sub/.secret']:
  expect(lambda r:npm_glob(r,name),'登録簿に無い: '+name)
 # フォルダ単位の登録（attached_resources の '/' 終わり・npm の glob）でも、隠し名は登録で信頼しない。
 def presets(root,name):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['implementation']['attached_resources']['presets']=['references/presets/'];write(file,data)
  write(root/'references/presets/x/preset.json',{'id':'x'});write(root/name,'x')
 accept(lambda r:presets(r,'references/presets/x/notes.md'))
@@ -202,11 +221,23 @@ finally:
 for name in ['draft.tmp','node_modules/pkg/index.js','__pycache__/run.pyc','.DS_Store','scripts/.DS_Store','skills/run-a/.DS_Store','.claude/settings.json','.gitignore']:
  accept(lambda r:write(r/name,'x'))
 # 実物の .gitignore が除外する名前は、どれも IGNORE で配布キットから外れる。
-rules=[l.strip() for l in Path('.gitignore').read_text().splitlines() if l.strip() and not l.startswith('#')]
-assert rules,'.gitignore'
-for prefix in ['','scripts/']:
- for rule in rules:
-  accept(lambda r:write(r/(prefix+rule.replace('*','any').rstrip('/')+('/x' if rule.endswith('/') else '')),'x'))
+# ただし assets/ の素材画像は git 管理から外すだけで、ローカルキットへは写す（catalog の登録で照合する）。
+# .gitignore 自身はキットへ写らない（BASE_IGNORE）ので、キットの中では写っていないことだけを確かめる。
+if ${IN_KIT}:
+ assert not Path('.gitignore').exists()
+else:
+ rules=[l.strip() for l in Path('.gitignore').read_text().splitlines() if l.strip() and not l.startswith('#')]
+ private=[rule for rule in rules if rule.startswith('assets/')]
+ assert rules and private,'.gitignore'
+ for prefix in ['','scripts/']:
+  for rule in rules:
+   if rule not in private:
+    accept(lambda r:write(r/(prefix+rule.replace('*','any').rstrip('/')+('/x' if rule.endswith('/') else '')),'x'))
+ probe=build()
+ try:
+  assert not any(module.ignored(probe,probe/rule.replace('**/','').replace('*','any')) for rule in private),private
+ finally:
+  shutil.rmtree(probe)
 # '.' で始まるフォルダも、配布契約の manifest を含めば中へ降りて照合する。
 def dot_manifest(root):
  file=root/'references/package-contract.json';data=json.loads(file.read_text())
@@ -217,7 +248,7 @@ expect(lambda r:(dot_manifest(r),write(r/'.claude-plugin/.env.local','x')),'登�
 expect(lambda r:write(r/'skills/notes.md','x'),'登録簿に無い: skills/notes.md')
 # 素材は catalog の file と別名が指す実ファイルで登録され、形式の崩れた行は素材フォルダ全体を通す理由にならない。
 def catalog(root):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['implementation']['attached_resources']['assets']=['assets/catalog.json'];write(file,data)
  write(root/'assets/catalog.json',{'entries':[{'file':'logo.png','provenance':{'aliases':[{'file':'old/logo.png'}]}},{'file':''},{'file':3},'broken',{'provenance':'x'}]})
  write(root/'assets/logo.png','x');write(root/'assets/old/logo.png','x')
@@ -238,7 +269,7 @@ expect(lambda r:write(r/'rules.md','# 節\n\n<img src="missing.png">\n'),'本文
 expect(lambda r:write(r/'rules.md',"# 節\n\n<a href='agents/lens.md#無い見出し'>先</a>\n"),'本文リンク切れ: rules.md -> agents/lens.md#無い見出し')
 # 配布する HTML の href/src。'?' 以降と、markdown 以外への '#' は外して実在を見る。
 def page(root,body):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['implementation']['attached_resources']['pages']=['pages/'];write(file,data)
  write(root/'pages/index.html','<!doctype html><title>x</title>'+body)
 accept(lambda r:page(r,'<a href="#top">上へ</a><a href="../rules.md#節">節</a><a href="../agents/lens.md?v=1">レンズ</a><a href="index.html#top">先頭</a><a href="mailto:a@example.com">連絡</a><img SRC="HTTPS://example.com/a.png"><script src="//cdn.example.com/x.js"></script>'))
@@ -255,7 +286,7 @@ def only(mutate,needle):
 only(lambda r:os.symlink(r/'scripts/run.py',r/'scripts/alias.py'),'配布対象のsymlink: scripts/alias.py -> ')
 only(lambda r:os.symlink(r/'agents',r/'docs'),'配布対象のsymlink: docs -> ')
 def composed(root,**change):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text());data.update(change);write(file,data)
+ file=root/'references/registry.json';data=json.loads(file.read_text());data.update(change);write(file,data)
 def retire(path='docs/old.md',to='rules.md'):
  return {'path':path,'replacedBy':to}
 outside=Path(tempfile.mkdtemp())
@@ -277,7 +308,7 @@ only(lambda r:(composed(r,retired=[retire()]),write(r/'docs/old.md','旧版')),'
 # design-contract が名指す知見索引は、登録簿が名指して照合した索引と同じファイルにする。別の実在する JSON も通さない。
 def design_contract(root,data):
  write(root/'references/design-contract.json',data)
- file=root/'plugin-composition.yaml';comp=json.loads(file.read_text())
+ file=root/'references/registry.json';comp=json.loads(file.read_text())
  comp['implementation']['attached_resources']['references'].append('references/design-contract.json');write(file,comp)
 for named in [None,'references/design-knowledge-index.json','./references/../references/design-knowledge-index.json']:
  accept(lambda r:design_contract(r,{} if named is None else {'knowledgeIndex':named}))
@@ -285,10 +316,10 @@ for named in ['references/missing.json','references/package-contract.json',3]:
  only(lambda r:design_contract(r,{'knowledgeIndex':named}),'design-contract の knowledgeIndex が登録簿と不一致: '+str(named))
 accept(lambda r:(write(r/'node_modules/pkg/index.js','x'),os.symlink(r/'node_modules/pkg',r/'node_modules/.bin')))
 def depend(root):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['dependencies'].append({'from':'skills/run-a','to':'skills/run-z','type':'calls'});write(file,data)
 expect(depend,'未登録の部品への依存')
-accept(lambda r:write(r/'skills/run-a/SKILL.md','---\nname: run-a\nuser-invocable: false\nreference_refs:\n  - ../../rules.md#節\nknowledge_refs:\n  - DD01\n---\n'))
+expect(lambda r:write(r/'skills/run-a/SKILL.md','---\nname: run-a\nuser-invocable: false\nreference_refs:\n  - ../../rules.md#節\nknowledge_refs:\n  - DD01\n---\n'),'入口の不一致')
 expect(lambda r:write(r/'EVALS.json',{'version':'0.9.0'}),'版の不一致: EVALS.json')
 def locked_version(root,top=None,package=None):
  file=root/'package-lock.json';data=json.loads(file.read_text())
@@ -298,13 +329,13 @@ def locked_version(root,top=None,package=None):
 expect(lambda r:locked_version(r,top='0.9.0'),'版の不一致: package-lock.json =')
 expect(lambda r:locked_version(r,package='0.9.0'),'版の不一致: package-lock.json#packages[""].version')
 def revision_without_contract(root):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['dependencies'].append({'from':'skills/run-b','to':'skills/run-a','type':'revision','fixClass':'premise'})
  write(file,data)
 expect(revision_without_contract,'fixRouting の無い revision 関係')
 expect(revision_without_contract,'部品の依存循環')
 def unknown_type(root):
- file=root/'plugin-composition.yaml';data=json.loads(file.read_text())
+ file=root/'references/registry.json';data=json.loads(file.read_text())
  data['dependencies'].append({'from':'skills/run-b','to':'skills/run-a','type':'skip-cycle'})
  write(file,data)
 expect(unknown_type,'未知の依存type')
@@ -320,7 +351,7 @@ test("package asset gate rejects unsafe scope, privacy types, and aliases that d
   const source = String.raw`
 import importlib.util,json,shutil,tempfile
 from pathlib import Path
-spec=importlib.util.spec_from_file_location('flyer_package','scripts/package.py')
+spec=importlib.util.spec_from_file_location('flyer_package','scripts/build-local-package.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 def build():
  root=Path(tempfile.mkdtemp())
@@ -411,11 +442,11 @@ print('asset gate negative cases: PASS')
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
-test("FIX routing agrees across composition, contract and workflow without bypassing the dependency DAG", () => {
+test("FIX routing agrees across registry, contract and workflow without bypassing the dependency DAG", () => {
   const source = String.raw`
 import importlib.util,json,shutil,tempfile
 from pathlib import Path
-spec=importlib.util.spec_from_file_location('flyer_package','scripts/package.py')
+spec=importlib.util.spec_from_file_location('flyer_package','scripts/build-local-package.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 def write(file,data):
  file.parent.mkdir(parents=True,exist_ok=True)
@@ -423,9 +454,9 @@ def write(file,data):
 def build():
  root=Path(tempfile.mkdtemp())
  stages={'run-intake-flyer':'intake','run-analyze-flyer':'analyze','run-create-flyer':'create'}
- for name in stages: write(root/'skills'/name/'SKILL.md','---\nname: '+name+'\n---\n\n## 手順\n\n## ゴールシーク実行\n')
+ for name in stages: write(root/'skills'/name/'SKILL.md','---\nname: '+name+'\n---\n\n## ゴールシーク実行\n\n### 局面カタログ\n')
  comp={'capabilities':[{'kind':'skill','ref':'skills/'+n,'stage':stage} for n,stage in stages.items()],
- 'nonFixReturns':[{'from':'skills/run-create-flyer','to':'skills/run-intake-flyer','trigger':'style-unresolved','step':'skills/run-intake-flyer/SKILL.md#手順',
+ 'nonFixReturns':[{'from':'skills/run-create-flyer','to':'skills/run-intake-flyer','trigger':'style-unresolved','step':'skills/run-intake-flyer/SKILL.md#局面カタログ',
   'stepTitle':'様式を決める','consumesCycle':False,'source':'skills/run-create-flyer/SKILL.md#ゴールシーク実行','note':'評価 FIX ではない差し戻し'}],
  'implementation':{'attached_resources':{'references':['references/']}},'dependencies':[
  {'from':'skills/run-intake-flyer','to':'skills/run-analyze-flyer','type':'calls','analysisMode':'source-artifact'},
@@ -439,7 +470,7 @@ def check(mutate=None,needle=None):
  root,comp=build()
  try:
   if mutate: mutate(root,comp)
-  write(root/'plugin-composition.yaml',comp)
+  write(root/'references/registry.json',comp)
   errors=m.check_registry(root)
   if needle: assert any(needle in e for e in errors),(needle,errors)
   else: assert errors==[],errors
@@ -460,7 +491,7 @@ check(lambda r,c:c['dependencies'].append({'from':'skills/run-analyze-flyer','to
 def only(mutate,error):
  root,comp=build()
  try:
-  mutate(root,comp);write(root/'plugin-composition.yaml',comp)
+  mutate(root,comp);write(root/'references/registry.json',comp)
   errors=m.check_registry(root);assert errors==[error],(error,errors)
  finally: shutil.rmtree(root)
 back=lambda c:c['nonFixReturns'][0]
@@ -493,7 +524,7 @@ only(lambda r,c:c['dependencies'][3].update(consumesCycle=False),'dependencies �
 only(lambda r,c:c['dependencies'][0].update(trigger='style-unresolved'),'dependencies に非FIXの差し戻しが混入: skills/run-intake-flyer→skills/run-analyze-flyer')
 check(lambda r,c:c['dependencies'].append(dict(back(c),type='revision')),'dependencies に非FIXの差し戻しが混入: skills/run-create-flyer→skills/run-intake-flyer')
 # 実プラグインの nonFixReturns は空ではなく、どれもこの検査を通る。
-real=m.composition(m.ROOT)
+real=m.registry(m.ROOT)
 assert real['nonFixReturns'] and m.check_non_fix_returns(m.ROOT,real)==[],m.check_non_fix_returns(m.ROOT,real)
 print('FIX routing and DAG negative cases: PASS')
 `;
@@ -505,12 +536,12 @@ test("policy coverage follows usedBy DD bodies, related sections and stage contr
   const source = String.raw`
 import copy,importlib.util,json,shutil,tempfile
 from pathlib import Path
-spec=importlib.util.spec_from_file_location('flyer_package','scripts/package.py')
+spec=importlib.util.spec_from_file_location('flyer_package','scripts/build-local-package.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 root=Path(tempfile.mkdtemp())
 try:
  shutil.copytree(m.ROOT/'references',root/'references')
- comp=m.composition(m.ROOT)
+ comp=m.registry(m.ROOT)
  for cap in comp['capabilities']:
   if cap['kind']=='skill':
    file=m.capability_file(m.ROOT,cap);dest=root/file.relative_to(m.ROOT)
@@ -533,7 +564,7 @@ try:
   assert errors==['専門知見の本文の参照切れ: expertSourcesRef -> '+str(ref)],(ref,errors)
  assert coverage(lambda c,e:c.pop('expertSourcesRef'))==['専門知見の本文の参照切れ: expertSourcesRef -> None']
  check(lambda c,e:(c.pop('expertSourcesRef'),c.update(expertRoles=[])))
- for key,file in [('analysisPolicyFiles','references/design-rules.md'),('analysisPolicyFiles','references/designer-knowledge.md'),('analysisPolicyFiles','references/style-profiles.md'),('analysisPolicyFiles','skills/assign-flyer-review/references/review-contract.md'),('analysisPolicyFiles','skills/run-analyze-flyer/references/analysis-contract.md'),('analysisPolicyFiles','schemas/analysis-review.schema.json'),('analysisPolicyFiles','references/workflow.md'),('reviewPolicyFiles','skills/assign-flyer-review/references/review-contract.md'),('reviewPolicyFiles','references/workflow.md')]:
+ for key,file in [('analysisPolicyFiles','references/design-rules.md'),('analysisPolicyFiles','references/designer-knowledge.md'),('analysisPolicyFiles','references/style-profiles.md'),('analysisPolicyFiles','skills/assign-flyer-evaluator/references/review-contract.md'),('analysisPolicyFiles','skills/run-analyze-flyer/references/analysis-contract.md'),('analysisPolicyFiles','schemas/analysis-review.schema.json'),('analysisPolicyFiles','references/workflow.md'),('reviewPolicyFiles','skills/assign-flyer-evaluator/references/review-contract.md'),('reviewPolicyFiles','references/workflow.md')]:
   check(lambda c,e:c[key].remove(file),'規範集合の被覆漏れ: '+key+' -> '+file)
  check(lambda c,e:c.pop('analysisPolicyFiles'),'規範集合がありません: analysisPolicyFiles')
  def remove_role(entries,role):
@@ -571,11 +602,143 @@ try:
  (root/'notes.txt').unlink()
  code,out,err=run(root,'--check')
  assert code==0 and json.loads(out)['fail']==0,(code,out,err)
+ # composition は登録簿からの生成物。手で直したもの・無いものは不一致として止め、書き直せば通る。
+ composed=root/'plugin-composition.yaml';text=composed.read_text(encoding='utf-8')
+ DRIFT='plugin-composition.yaml が references/registry.json からの生成と不一致（--write-composition で書き直す）'
+ composed.write_text(text+'# 手直し\n',encoding='utf-8')
+ assert report(root)['errors']==[DRIFT],report(root)
+ composed.unlink()
+ assert report(root)['errors']==[DRIFT],report(root)
+ compose(root)
+ assert composed.read_text(encoding='utf-8')==text and report(root)['fail']==0
  code,out,err=run(root,'--out',str(kit))
- assert code==0 and json.loads(out)['archive']==str(archive) and archive.is_file() and (kit/'plugins/flyer-studio/scripts/package.py').is_file(),(code,out,err)
+ assert code==0 and json.loads(out)['archive']==str(archive) and archive.is_file() and (kit/'plugins/flyer-studio/scripts/build-local-package.py').is_file(),(code,out,err)
+ # キットの manifest からは KIT_EXCLUDED_DEPENDENCIES だけが外れ、repo の manifest はそのまま残る。
+ shipped=json.loads((kit/'plugins/flyer-studio/.claude-plugin/plugin.json').read_text(encoding='utf-8'))
+ assert shipped['dependencies']==['kept-plugin'],shipped
+ assert json.loads((root/'.claude-plugin/plugin.json').read_text(encoding='utf-8'))['dependencies']==['skill-governance-adapters','kept-plugin']
+ # 外す依存しか持たない manifest は、キットで dependencies の鍵ごと消す（空の配列を残さない。実 plugin はこちら）。
+ import importlib.util
+ spec=importlib.util.spec_from_file_location('mini_package',root/'scripts/build-local-package.py')
+ pkg=importlib.util.module_from_spec(spec);spec.loader.exec_module(pkg)
+ solo=kit/'plugins/flyer-studio';put(solo/'.claude-plugin/plugin.json',{**shipped,'dependencies':['skill-governance-adapters']})
+ pkg.narrow_kit(solo,root)
+ assert 'dependencies' not in json.loads((solo/'.claude-plugin/plugin.json').read_text(encoding='utf-8'))
+ # 直下の repo 用台帳はキットに写らず、repo 側には残る。
+ assert not (kit/'plugins/flyer-studio/artifact-delivery.json').exists() and (root/'artifact-delivery.json').is_file()
+ # 外すのは直下の名前だけ。下のフォルダに置いた同名ファイルは写る側として登録簿と照合する。
+ (root/'references/artifact-delivery.json').write_text('{}')
+ code,out,err=run(root,'--check')
+ assert code==1 and json.loads(out)['errors']==['登録簿に無い: references/artifact-delivery.json'],(code,out,err)
 finally: shutil.rmtree(top)
 print('package CLI exit and refusal: PASS')
 `;
   const result = python(miniPlugin + source);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("the kit drops excluded skills and their dependencies from its ledger and passes its own --check", () => {
+  const source = String.raw`
+top=Path(tempfile.mkdtemp()).resolve()
+try:
+ # キットの中では plugin のフォルダ名が flyer-studio になる。名前の照合を両側で通すため、repo 側も同じ名前にする。
+ root=mini(top).rename(top/'flyer-studio');kit=top/'kit'
+ manifest=json.loads((root/'.claude-plugin/plugin.json').read_text(encoding='utf-8'));manifest['name']='flyer-studio'
+ put(root/'.claude-plugin/plugin.json',manifest)
+ put(root/'skills/run-skill-feedback/SKILL.md','---\nname: run-skill-feedback\nversion: 1.0.0\n---\n')
+ # 本物の skills/ には登録済みの skill が並ぶ。外した skill だけのフォルダにしないよう、登録済みのファイルを 1 つ置く。
+ put(root/'skills/README.md','# skills\n')
+ comp=json.loads((root/'references/registry.json').read_text(encoding='utf-8'))
+ comp['implementation']['attached_resources']['docs'].append('skills/README.md')
+ contract=json.loads((root/'references/package-contract.json').read_text(encoding='utf-8'))
+ contract['entry_points']['skills']=['run-skill-feedback']
+ # 本物の台帳は、外す skill の実行時の依存と、その所有者・manifest と同じ repo 側 plugin への依存を宣言する。
+ contract['depends_on']=['harness-creator','skill-governance-adapters','kept-plugin']
+ contract['runtime_dependencies']=[{'capability':'run-skill-feedback','owner':'harness-creator','required_entry_point':'run-skill-feedback'},
+  {'capability':'run-kept','owner':'kept-plugin','required_entry_point':'run-kept'}]
+ put(root/'references/package-contract.json',contract)
+ comp['external_dependencies']={'harness-creator':{'version':'>=1.4.0 <2.0.0','relation':'skill-feedback-ssot-provider','required_entry_points':['run-skill-feedback']},
+  'kept-plugin':{'version':'>=1.0.0','relation':'kept','required_entry_points':['run-kept']}}
+ put(root/'references/registry.json',comp)
+ compose(root)
+ assert report(root)['fail']==0,report(root)
+ composed=(root/'plugin-composition.yaml').read_text(encoding='utf-8')
+ assert 'ref: skills/run-skill-feedback' in composed and 'harness-creator:' in composed and 'kept-plugin:' in composed,composed
+ code,out,err=run(root,'--out',str(kit))
+ assert code==0,(code,out,err)
+ # キットの台帳からは外れ、repo の台帳には残る。キットは自分の --check を通る。
+ shipped=kit/'plugins/flyer-studio'
+ ledger=json.loads((shipped/'references/package-contract.json').read_text(encoding='utf-8'))
+ assert ledger['entry_points']['skills']==[],ledger
+ # 外した skill の実行時の依存と、それだけが要る plugin・KIT_EXCLUDED_DEPENDENCIES も台帳から落ち、他の依存は残る。
+ assert ledger['depends_on']==['kept-plugin'],ledger
+ assert [d['required_entry_point'] for d in ledger['runtime_dependencies']]==['run-kept'],ledger
+ assert json.loads((root/'references/package-contract.json').read_text(encoding='utf-8'))==contract
+ assert not (shipped/'skills/run-skill-feedback').exists()
+ # キットの composition は写した中身から作り直す。外した skill と、それだけが要る外部依存が落ち、他の外部依存は残る。
+ composed=(shipped/'plugin-composition.yaml').read_text(encoding='utf-8')
+ assert 'run-skill-feedback' not in composed and 'harness-creator' not in composed and 'kept-plugin:' in composed,composed
+ assert report(shipped)['fail']==0,report(shipped)
+finally: shutil.rmtree(top)
+print('kit entry ledger: PASS')
+`;
+  const result = python(miniPlugin + source);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("the entry map lives in references/kit-entry.md and is written as the kit's root SKILL.md", () => {
+  const source = String.raw`
+top=Path(tempfile.mkdtemp()).resolve()
+FENCE=chr(96)*3
+try:
+ root=mini(top);kit=top/'kit'
+ contract=json.loads((root/'references/package-contract.json').read_text(encoding='utf-8'))
+ contract['required_files'].append('references/kit-entry.md')
+ put(root/'references/package-contract.json',contract)
+ entry=lambda body,name='mini-flyer':'---\nname: '+name+'\ndescription: 入口\n---\n\n'+body+'\n'
+ good='[節](../rules.md#節)・[索引](design-knowledge-index.json)・[外部](https://example.com)\n\n'+FENCE+'\n[そのまま](../rules.md)\n'+FENCE
+ put(root/'references/kit-entry.md',entry(good))
+ assert report(root)['fail']==0
+ # キット直下の SKILL.md へ、リンクを plugin 直下からの相対に直して書き出す。コードフェンスと外部リンクは変えない。
+ code,out,err=run(root,'--out',str(kit))
+ assert code==0,(code,out,err)
+ written=(kit/'plugins/flyer-studio/SKILL.md').read_text(encoding='utf-8')
+ for part in ['[節](rules.md#節)','[索引](references/design-knowledge-index.json)','[外部](https://example.com)','[そのまま](../rules.md)']:
+  assert part in written,(part,written)
+ assert (kit/'plugins/flyer-studio/references/kit-entry.md').is_file() and not (root/'SKILL.md').exists()
+ # 直下に SKILL.md を置くなら、正本から書き出したものと一致させる（書き出し済みのキットと同じ形）。
+ put(root/'SKILL.md',written)
+ assert report(root)['fail']==0
+ put(root/'SKILL.md','---\nname: mini-flyer\n---\n')
+ assert report(root)['errors']==['plugin 直下の SKILL.md が references/kit-entry.md の書き出しと不一致'],report(root)
+ (root/'SKILL.md').unlink()
+ # name が plugin 名と違う・書き出すと切れる見出し・plugin の外を指すリンクは止める。
+ put(root/'references/kit-entry.md',entry(good,'other'))
+ assert report(root)['errors']==['入口の地図の name が plugin 名と不一致: references/kit-entry.md'],report(root)
+ put(root/'references/kit-entry.md',entry('[外](../../outside.md)'))
+ assert '入口の地図のリンクが plugin の外を指す: references/kit-entry.md -> ../../outside.md' in report(root)['errors'],report(root)
+ code,out,err=run(root,'--out',str(top/'kit2'))
+ assert code==1 and not (top/'kit2').exists(),(code,out,err)
+finally: shutil.rmtree(top)
+print('kit entry map: PASS')
+`;
+  const result = python(miniPlugin + source);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("the real plugin has a root SKILL.md only in the kit and its entry map resolves from the plugin root", () => {
+  const result = python(String.raw`
+import importlib.util
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('flyer_package','scripts/build-local-package.py')
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+# repo は harness の規約で plugin 直下に SKILL.md を置かない。キットには narrow_kit() が書き出した入口の地図がある
+# （書き出しとの一致は check_kit_entry が見る）。
+assert (m.ROOT/'SKILL.md').exists()==${IN_KIT}
+assert m.check_kit_entry(m.ROOT)==[],m.check_kit_entry(m.ROOT)
+text=m.render_kit_entry(m.ROOT)
+assert '](skills/run-intake-flyer/SKILL.md)' in text and '](../' not in text,text
+print('real kit entry: PASS')
+`);
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });

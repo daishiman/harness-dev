@@ -1,0 +1,33 @@
+{
+ "contract": "artifact-delivery-v1",
+ "skill": "run-dev-graph-system-spec",
+ "transitions": [
+  {
+   "from": "artifact_created",
+   "event": "minimum_guard_pass",
+   "to": "minimal_guard_passed",
+   "evidence": "R1 preflight pass (system-spec-harness 0.1.24 in >=0.1.22 <1.0.0, 4 entry points); R0 validate-source-lineage checked=0 exit0"
+  },
+  {
+   "from": "minimal_guard_passed",
+   "event": "present_actual_artifact",
+   "to": "artifact_presented",
+   "evidence": {
+    "artifact": "system-spec/index.md",
+    "open_with": "cat system-spec/index.md"
+   }
+  },
+  {
+   "from": "artifact_presented",
+   "event": "record_user_choice",
+   "to": "user_choice_recorded",
+   "choice": "standard",
+   "choice_source": "task.md 事前指定 (artifact_delivery=standard)"
+  },
+  {
+   "from": "user_choice_recorded",
+   "event": "standard",
+   "to": "semantic_evaluator_started"
+  }
+ ]
+}

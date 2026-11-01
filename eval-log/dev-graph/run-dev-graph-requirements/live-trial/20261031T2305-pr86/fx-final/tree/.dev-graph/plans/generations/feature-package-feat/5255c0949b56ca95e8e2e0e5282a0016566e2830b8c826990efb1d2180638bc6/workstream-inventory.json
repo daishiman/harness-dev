@@ -1,0 +1,938 @@
+{
+  "schema_version": "1.0.0",
+  "feature_package_id": "feature-package/feat",
+  "parent_feature": "FEATURE-1",
+  "p01_entry_gate": {
+    "selector": "parent_feature.depends_on",
+    "operator": "all",
+    "required_statuses": [
+      "done",
+      "closed"
+    ]
+  },
+  "repo_context": {
+    "config_path": ".dev-graph/config.json",
+    "repo_identity": "local:sha256:3b67cef8a39e9e616b090caa21507829d15ae86f82907729d6de2740ba2833a5",
+    "root_resolution_source": "explicit-cli"
+  },
+  "source_lineage": {
+    "source_plugin": "system-spec-harness",
+    "source_version": "0.1.0",
+    "compile_entrypoint": "run-system-spec-compile",
+    "completeness_entrypoint": "assign-system-spec-completeness-evaluator",
+    "source_paths": [
+      "system-spec/index.md"
+    ],
+    "confirmed": true
+  },
+  "tasks": [
+    {
+      "id": "SYS-P01",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P01",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p01"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P01",
+      "depends_on": [],
+      "write_scope": [
+        "src/p01"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P01.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P01 is complete"
+      ],
+      "verification": [
+        "verify P01"
+      ],
+      "rollback": "revert P01",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P01",
+        "file_path": "tasks/FEATURE-1/SYS-P01.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P01"
+      }
+    },
+    {
+      "id": "SYS-P02",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P02",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p02"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P02",
+      "depends_on": [
+        "SYS-P01"
+      ],
+      "write_scope": [
+        "src/p02"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P02.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P02 is complete"
+      ],
+      "verification": [
+        "verify P02"
+      ],
+      "rollback": "revert P02",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P02",
+        "file_path": "tasks/FEATURE-1/SYS-P02.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P02"
+      }
+    },
+    {
+      "id": "SYS-P03",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P03",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p03"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P03",
+      "depends_on": [
+        "SYS-P02"
+      ],
+      "write_scope": [
+        "src/p03"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P03.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P03 is complete"
+      ],
+      "verification": [
+        "verify P03"
+      ],
+      "rollback": "revert P03",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P03",
+        "file_path": "tasks/FEATURE-1/SYS-P03.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P03"
+      }
+    },
+    {
+      "id": "SYS-P04",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P04",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p04"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P04",
+      "depends_on": [
+        "SYS-P03"
+      ],
+      "write_scope": [
+        "src/p04"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P04.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P04 is complete"
+      ],
+      "verification": [
+        "verify P04"
+      ],
+      "rollback": "revert P04",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P04",
+        "file_path": "tasks/FEATURE-1/SYS-P04.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P04"
+      }
+    },
+    {
+      "id": "SYS-P05",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P05",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p05"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P05",
+      "depends_on": [
+        "SYS-P04"
+      ],
+      "write_scope": [
+        "src/p05"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P05.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P05 is complete"
+      ],
+      "verification": [
+        "verify P05"
+      ],
+      "rollback": "revert P05",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P05",
+        "file_path": "tasks/FEATURE-1/SYS-P05.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P05"
+      }
+    },
+    {
+      "id": "SYS-P06",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P06",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p06"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P06",
+      "depends_on": [
+        "SYS-P05"
+      ],
+      "write_scope": [
+        "src/p06"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P06.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P06 is complete"
+      ],
+      "verification": [
+        "verify P06"
+      ],
+      "rollback": "revert P06",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P06",
+        "file_path": "tasks/FEATURE-1/SYS-P06.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P06"
+      }
+    },
+    {
+      "id": "SYS-P07",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P07",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p07"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P07",
+      "depends_on": [
+        "SYS-P06"
+      ],
+      "write_scope": [
+        "src/p07"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P07.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P07 is complete"
+      ],
+      "verification": [
+        "verify P07"
+      ],
+      "rollback": "revert P07",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P07",
+        "file_path": "tasks/FEATURE-1/SYS-P07.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P07"
+      }
+    },
+    {
+      "id": "SYS-P08",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P08",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p08"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P08",
+      "depends_on": [
+        "SYS-P07"
+      ],
+      "write_scope": [
+        "src/p08"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P08.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P08 is complete"
+      ],
+      "verification": [
+        "verify P08"
+      ],
+      "rollback": "revert P08",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P08",
+        "file_path": "tasks/FEATURE-1/SYS-P08.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P08"
+      }
+    },
+    {
+      "id": "SYS-P09",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P09",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p09"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P09",
+      "depends_on": [
+        "SYS-P08"
+      ],
+      "write_scope": [
+        "src/p09"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P09.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P09 is complete"
+      ],
+      "verification": [
+        "verify P09"
+      ],
+      "rollback": "revert P09",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P09",
+        "file_path": "tasks/FEATURE-1/SYS-P09.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P09"
+      }
+    },
+    {
+      "id": "SYS-P10",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P10",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p10"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P10",
+      "depends_on": [
+        "SYS-P09"
+      ],
+      "write_scope": [
+        "src/p10"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P10.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P10 is complete"
+      ],
+      "verification": [
+        "verify P10"
+      ],
+      "rollback": "revert P10",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P10",
+        "file_path": "tasks/FEATURE-1/SYS-P10.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P10"
+      }
+    },
+    {
+      "id": "SYS-P11",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P11",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p11"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P11",
+      "depends_on": [
+        "SYS-P10"
+      ],
+      "write_scope": [
+        "src/p11"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P11.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P11 is complete"
+      ],
+      "verification": [
+        "verify P11"
+      ],
+      "rollback": "revert P11",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P11",
+        "file_path": "tasks/FEATURE-1/SYS-P11.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P11"
+      }
+    },
+    {
+      "id": "SYS-P12",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P12",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p12"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P12",
+      "depends_on": [
+        "SYS-P11"
+      ],
+      "write_scope": [
+        "src/p12"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P12.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P12 is complete"
+      ],
+      "verification": [
+        "verify P12"
+      ],
+      "rollback": "revert P12",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P12",
+        "file_path": "tasks/FEATURE-1/SYS-P12.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P12"
+      }
+    },
+    {
+      "id": "SYS-P13",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "Execute P13",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p13"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P13",
+      "depends_on": [
+        "SYS-P12"
+      ],
+      "write_scope": [
+        "src/p13"
+      ],
+      "deploy_unit": "application",
+      "source_lineage": [
+        "system-spec/index.md"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "phase mapping",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P13.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P13 is complete"
+      ],
+      "verification": [
+        "verify P13"
+      ],
+      "rollback": "revert P13",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P13",
+        "file_path": "tasks/FEATURE-1/SYS-P13.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P13"
+      }
+    }
+  ]
+}

@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+# /// script
+# name: build-asset-gallery
+# purpose: 素材台帳からオフライン素材一覧HTMLを生成し、--checkで再生成結果を照合する
+# inputs: argv: --check、assets/catalog.json
+# outputs: assets/index.html または一致/不一致の終了コード
+# contexts: [C, E]
+# network: false
+# write-scope: --checkはnone。生成時はassets/index.htmlのみ
+# dependencies: []
+# ///
 """Derive the existing offline asset gallery from catalog.json (stdlib only)."""
 import argparse
 import json

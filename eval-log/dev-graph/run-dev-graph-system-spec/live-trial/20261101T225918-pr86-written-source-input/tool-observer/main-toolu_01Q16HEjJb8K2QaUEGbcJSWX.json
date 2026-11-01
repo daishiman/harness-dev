@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "cbff9922-5f1c-487c-9f8b-274f0b4579cc",
+      "line": 398,
+      "prefix_bytes": 2479546,
+      "prefix_sha256": "e710755892bd090a80143410526f97e7697d207b6a0a3fd2fe6bcd6fd7648399",
+      "timestamp": "2026-11-01T14:27:05.244Z"
+    },
+    "result": {
+      "uuid": "7f4a36a8-09f3-4b0d-a996-3f92552418f9",
+      "line": 399,
+      "prefix_bytes": 2481564,
+      "prefix_sha256": "c364719c7ade8c7b29376bcc5c57d255c73bb61cfdcdd2f34b83cfeae7e79a80",
+      "timestamp": "2026-11-01T14:27:07.760Z"
+    }
+  },
+  "tool_use_id": "toolu_01Q16HEjJb8K2QaUEGbcJSWX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && P=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && A=$(ls \"$P\"/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py 2>/dev/null || ls \"$P\"/scripts/aggregate-completeness.py) && python3 -B \"$A\" --report eval-log/system-spec-completeness-report.json --spec-dir \"$CLAUDE_PROJECT_DIR/system-spec\" --session f4f10424-d995-4451-be78-9d34a26e9fe3; echo \"agg_exit=$?\"; shasum -a 256 eval-log/system-spec-completeness-report.json eval-log/hearing-audit.json; python3 -c 'import json;d=json.load(open(\"eval-log/system-spec-completeness-report.json\"));print(d.get(\"verdict\"),d.get(\"overall_verdict\"),d.get(\"spec_dir\"));print([k for k in d])'",
+    "description": "Re-run canonical report validation and digest"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\nagg_exit=0\n821cc3d5e69b895b7733d01d20c7f78d896db97b9848f0d93cd7a413055929e3  eval-log/system-spec-completeness-report.json\ne74b48dbcc36c3fbcdd2754a5295c112aabf52f75e1aa6d2b12722b0f44d65b8  eval-log/hearing-audit.json\nPASS None /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'aspects', 'audit_delegations', 'gate_results', 'findings', 'gaps']",
+  "tool_use_result": {
+    "stdout": "OK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\nagg_exit=0\n821cc3d5e69b895b7733d01d20c7f78d896db97b9848f0d93cd7a413055929e3  eval-log/system-spec-completeness-report.json\ne74b48dbcc36c3fbcdd2754a5295c112aabf52f75e1aa6d2b12722b0f44d65b8  eval-log/hearing-audit.json\nPASS None /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec\n['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'aspects', 'audit_delegations', 'gate_results', 'findings', 'gaps']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

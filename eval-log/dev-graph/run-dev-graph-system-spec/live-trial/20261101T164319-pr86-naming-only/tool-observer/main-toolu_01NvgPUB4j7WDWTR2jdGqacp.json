@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bd98f2f2-1c3d-49b0-9f61-841324a2efe0",
+      "line": 104,
+      "prefix_bytes": 458447,
+      "prefix_sha256": "3675918d71b668ebefd52fce708427a6db0e49a0b2e793376e28f64c6c03487a",
+      "timestamp": "2026-11-01T07:44:08.984Z"
+    },
+    "result": {
+      "uuid": "e8ed4557-9f04-481d-9d30-c2d0a9a65235",
+      "line": 108,
+      "prefix_bytes": 462612,
+      "prefix_sha256": "915236d8f6fca43419ab547cfeeddf83ec3029fb26469b8abea95f9cb2af8345",
+      "timestamp": "2026-11-01T07:44:11.402Z"
+    }
+  },
+  "tool_use_id": "toolu_01NvgPUB4j7WDWTR2jdGqacp",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,hashlib,glob,os\nd=lambda p:hashlib.sha256(open(p,'rb').read()).hexdigest()\nfiles=sorted(p for p in glob.glob('system-spec/**',recursive=True) if os.path.isfile(p))\npc=json.load(open('plugins/system-spec-harness/references/package-contract.json'))\nrep={\"kind\":\"preflight-report\",\"repo_root\":json.load(open('eval-log/c24-receipt.json'))['repo_root'],\n\"c24_receipt\":\"eval-log/c24-receipt.json\",\"system_spec_inputs\":{p:d(p) for p in files},\n\"harness\":{\"name\":\"system-spec-harness\",\"version\":\"0.1.24\",\"required_range\":\">=0.1.22 <1.0.0\",\"in_range\":True,\n\"entry_points_required\":[\"run-system-spec-elicit\",\"run-system-spec-doc-fetch\",\"run-system-spec-compile\",\"assign-system-spec-completeness-evaluator\"],\n\"entry_points_present\":all(e in pc['entry_points']['skills'] for e in [\"run-system-spec-elicit\",\"run-system-spec-doc-fetch\",\"run-system-spec-compile\",\"assign-system-spec-completeness-evaluator\"])},\n\"lineage_gate\":{\"status\":\"pass\",\"checked\":0,\"mode\":\"new\"},\"R0\":\"PASS\",\"R1\":\"PASS\"}\nopen('eval-log/preflight-report.json','w').write(json.dumps(rep,ensure_ascii=False,indent=1))\nPY\necho; sha256sum eval-log/preflight-report.json 2>/dev/null || shasum -a 256 eval-log/preflight-report.json; echo \"開き方: less $CLAUDE_PROJECT_DIR/eval-log/preflight-report.json\"; grep -E '\"(R0|R1|in_range|entry_points_present)\"' eval-log/preflight-report.json"
+  },
+  "is_error": false,
+  "tool_result_content": "75959844576ae1e86ea3ac1604c034410b2e5b3c408c37d6c1ea1d49183a207e  eval-log/preflight-report.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/eval-log/preflight-report.json\n  \"in_range\": true,\n  \"entry_points_present\": true\n \"R0\": \"PASS\",\n \"R1\": \"PASS\"",
+  "tool_use_result": {
+    "stdout": "75959844576ae1e86ea3ac1604c034410b2e5b3c408c37d6c1ea1d49183a207e  eval-log/preflight-report.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/eval-log/preflight-report.json\n  \"in_range\": true,\n  \"entry_points_present\": true\n \"R0\": \"PASS\",\n \"R1\": \"PASS\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

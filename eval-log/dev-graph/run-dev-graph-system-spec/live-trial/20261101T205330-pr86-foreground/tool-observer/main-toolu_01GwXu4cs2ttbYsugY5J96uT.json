@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "62ebe3df-9e66-436b-bc4b-04206236bd6e",
+      "line": 430,
+      "prefix_bytes": 2421497,
+      "prefix_sha256": "8e1373660c86fdd119e79840db487e4395dff33edd59c8b5a5c8c390b75458eb",
+      "timestamp": "2026-11-01T12:15:09.713Z"
+    },
+    "result": {
+      "uuid": "168c79cf-3a88-4915-8216-a1a3e3bfabef",
+      "line": 433,
+      "prefix_bytes": 2424366,
+      "prefix_sha256": "22b23e9a1332cc23c683a128aca4094a46f6a74ae9bec7d511737a4d8f7f9a99",
+      "timestamp": "2026-11-01T12:15:15.106Z"
+    }
+  },
+  "tool_use_id": "toolu_01GwXu4cs2ttbYsugY5J96uT",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"hash_check=$?\"",
+    "description": "Verify intermediate 6 keys and goal hash"
+  },
+  "is_error": false,
+  "tool_result_content": "hash_check=0",
+  "tool_use_result": {
+    "stdout": "hash_check=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

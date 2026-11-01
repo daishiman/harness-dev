@@ -1,0 +1,101 @@
+{
+  "id": "D3",
+  "category": "auth",
+  "question": "社内 IdP の OIDC で得たトークンを、どこで持ち、API へどう送るか",
+  "status": "confirmed",
+  "serves_goals": [
+    "G1"
+  ],
+  "options": [
+    {
+      "id": "bff-session",
+      "label": "バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "なし (OSS)",
+        "tco": "ライセンス費 0。FastAPI の中に、ログインの往復 (認可コードの受取りとトークンの交換) とセッションの保存を作る手間が加わる"
+      },
+      "free_tier_limits": "OSS のため利用上限なし",
+      "goal_fit": "G1 (請求・監査データの単一の情報源) の信頼を、トークンをブラウザに出さないことで支える。8 時間のセッション (qa-002) と、IdP でのアカウントの無効化 (qa-026) をサーバ側で扱える",
+      "security_fit": "トークンはサーバ側に留まり、ブラウザへは cookie のセッションだけを渡す。公式の cookie の頁は応答に cookie を付ける方法を説明しているが、HttpOnly などの属性の細部は取得した頁では確かめていない。cookie で認証するため、状態を変える要求には CSRF 対策が要る",
+      "pros": [
+        "OIDC のトークンがブラウザに出ない",
+        "セッションの 8 時間の期限 (qa-002) とログアウトを、サーバ側の一か所で管理できる",
+        "D2 で選んだ SPA (qa-032) からは、API を cookie 付きで呼ぶだけで済み、画面側にトークンの処理を足さない"
+      ],
+      "cons": [
+        "FastAPI 側にログインの往復とセッションの保存を作る分、バックエンドの実装が増える",
+        "SPA と API を、cookie が送られる構成 (同じ origin など) で配信する必要がある"
+      ],
+      "risks": [
+        "cookie で認証するため、CSRF 対策 (SameSite の指定や CSRF トークン) を怠ると、利用者になりすました変更の要求を受け付けてしまう",
+        "セッションの保存先を Pod のメモリにすると、Pod の再起動や複数の replica でログインが切れる"
+      ],
+      "lock_in": "低い。OIDC は標準の仕様で、セッションの扱いはサーバ側に閉じる",
+      "ops_burden": "中程度。セッションの保存先と、期限切れのセッションの掃除を運用する",
+      "evidence_refs": [
+        "https://fastapi.tiangolo.com/tutorial/security/",
+        "https://fastapi.tiangolo.com/advanced/response-cookies/"
+      ]
+    },
+    {
+      "id": "spa-pkce-memory",
+      "label": "SPA が PKCE 付きの認可コードフローでトークンを取り、ブラウザのメモリだけに置いて Authorization: Bearer で API へ送る方式",
+      "cost_model": {
+        "category": "free",
+        "amount": 0,
+        "currency": "JPY",
+        "billing_period": "なし (OSS)",
+        "tco": "ライセンス費 0。SPA 側に OIDC のクライアントの処理 (ライブラリの導入と更新) が加わり、API 側はトークンの検証だけを作る"
+      },
+      "free_tier_limits": "OSS のため利用上限なし",
+      "goal_fit": "G1 は満たせる。API はトークンを検証するだけで状態を持たないので、サーバ側は単純になる",
+      "security_fit": "トークンがブラウザのメモリに置かれるため、画面のスクリプトに脆弱性 (XSS) があると盗まれうる。cookie を使わないので CSRF の影響は受けにくい。公式の OAuth2 と JWT の頁は、Authorization の Bearer トークンを検証し、だめなら 401 を返す作りを説明している",
+      "pros": [
+        "API はトークンの検証だけで済み、サーバ側にセッションを持たない",
+        "cookie を使わないので、CSRF の影響を受けにくい",
+        "SPA と API を別の origin で配信できる"
+      ],
+      "cons": [
+        "再読込みでメモリのトークンが消えるため、8 時間のセッション (qa-002) を保つには、トークンを取り直す仕組みが別に要る",
+        "ブラウザ側にトークンを扱う処理とライブラリが増え、D2 で最小限に抑えるとした SPA の保守 (qa-007, qa-032) が重くなる"
+      ],
+      "risks": [
+        "画面のスクリプトに XSS があると、トークンが盗まれて有効期限まで使われる",
+        "ブラウザで OIDC を使うときの推奨は改訂されることがあり、ライブラリと設定の追随が要る"
+      ],
+      "lock_in": "低い。OIDC は標準の仕様だが、SPA 側のクライアントのライブラリに依存する",
+      "ops_burden": "低い。サーバ側にセッションの保存先を持たない",
+      "evidence_refs": [
+        "https://fastapi.tiangolo.com/tutorial/security/",
+        "https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/"
+      ]
+    }
+  ],
+  "recommendation": {
+    "option_id": "bff-session",
+    "rationale": "qa-002 の 8 時間のセッションと qa-026 のアカウントの無効化は、サーバ側の一か所で扱うほうが確実で、トークンをブラウザに出さずに済む。D2 で選んだ SPA (qa-032) の保守を増やさない点でも合う。代わりに CSRF 対策とセッションの保存先の設計が要る。",
+    "caveats": [
+      "比較の根拠は 2026-10-12T07:24:36Z までに取得した FastAPI の公式文書 3 頁 (tutorial/security、advanced/response-cookies、tutorial/security/oauth2-jwt)。security の頁は OAuth2 と OpenID Connect の位置づけを、cookie の頁は応答に cookie を付ける方法を、JWT の頁は Bearer トークンの検証と期限 (例は 30 分) を説明している",
+      "cookieのHttpOnly・Secure・SameSite属性の細部は本比較の公式資料では未確認。具体値とCSRF防御は新規合成書面source-index qa-csrf-written-v7のgivenであり、公式が安全性を保証したとは主張しない。D3の方式採択はqa-034の提供済み回答で保持し、旧qa-037のbasis変更を採択/設定の根拠にしない。",
+      "ブラウザで OIDC を使うときの推奨を述べる IETF などの文書は、許可された host の外にあり、確かめていない",
+      "推奨は参考であり、採否は利用者が qa-034 で選んだ"
+    ],
+    "confidence": "medium",
+    "latest_checked_at": "2026-10-12T07:24:36Z",
+    "comparison_basis": {
+      "goal_fit": "どちらも G1 を満たす。8 時間のセッション (qa-002) とアカウントの無効化 (qa-026) は、サーバ側でセッションを持つ方式のほうが一か所で扱える",
+      "tco": "どちらもライセンス費 0。cookie のセッションはバックエンドの実装が、メモリのトークンは SPA 側の処理とライブラリの保守が増える",
+      "security": "cookie のセッションはトークンをブラウザに出さないが CSRF 対策が要る。メモリのトークンは CSRF を受けにくいが、XSS で盗まれうる",
+      "operations": "cookie のセッションはセッションの保存先の運用が加わる。メモリのトークンはサーバ側の運用が増えない",
+      "lock_in": "どちらも OIDC の標準に沿い低い。メモリのトークンは SPA 側のライブラリに依存する"
+    }
+  },
+  "qa_ref": "qa-034",
+  "user_decision": {
+    "option_id": "bff-session",
+    "confirmed_at": "2026-10-12T07:38:46Z"
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "17fd774ed8cad2d84aaef374b0f30ab022ecd6f86dde5492dd867eafb04ed1a5",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/review_sysspec123_fresh"
+    },
+    "transcript_sha256": "c2c113099514c19d97ebb69ece46b9d4bf71fd65bc2e81bb8ca73a04f7e346b0",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "transcript/subagents/agent-afb32354c2e1fe747.jsonl",
+      "transcript/subagents/agent-a4787ac977fd08faa.jsonl",
+      "transcript/subagents/agent-a965bf4119e6dc68e.jsonl",
+      "transcript/subagents/agent-ab7bc5380f2087975.jsonl",
+      "transcript/subagents/agent-afad2757865ab50c1.jsonl",
+      "transcript/subagents/agent-adb6ec99e2d464843.jsonl",
+      "tool-observer/index.json",
+      "evidence-redaction.json",
+      "poll-state.json",
+      "poll-normalization.json",
+      "execution-invariants-before.json",
+      "execution-invariants-after.json",
+      "written-source-order-proofs/events.jsonl",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+      "fx-final/tree/eval-log/system-spec-completeness-report.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-report.json",
+      "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/verifier-result.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef",
+  "transcript_sha256": "c2c113099514c19d97ebb69ece46b9d4bf71fd65bc2e81bb8ca73a04f7e346b0",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1922.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-report.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1922.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "25fbf72dfd0fc3f28f06ed7e9ee88992f8e905d7b09c6d08fcb00c5718eaa43f",
+      "tokens": {
+        "input_tokens": 354,
+        "cache_creation_input_tokens": 1279339,
+        "cache_read_input_tokens": 12715398,
+        "output_tokens": 138791,
+        "total_tokens": 14133882,
+        "assistant_messages": 172,
+        "assistant_message_ids": 172,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 10,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

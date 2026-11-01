@@ -1,0 +1,51 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "receipt_summary": {
+    "receipt_path": "eval-log/system-spec-c24-receipt.json",
+    "receipt_sha256": "f64cd743daac1217d324c09cfc8b0a57f63d580a38cdfb3edfe463bb46c2ac62",
+    "repository_id": "local:sha256:9adf026eb0975ecf330a2d3ac76207083f1d46edf264a3b8b2c08d680f3423fd",
+    "worktree_id": "wt_ba64516431b9fb7e",
+    "head_sha": "abfd84085a4e381bffff8608141bcbb7ffbd7fcf",
+    "branch": "main",
+    "git_common_dir": ".git",
+    "content_root_system_spec": "system-spec",
+    "code_authority_plugin_source": "plugins/dev-graph",
+    "graph": ".dev-graph/state/graph.json",
+    "diagnostics": ["default_branch_fallback_main"],
+    "root_trust_selected_by": "explicit --repo-root"
+  },
+  "fresh_resolve_comparison": {
+    "command": "python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --mode read --repo-root <DEV_GRAPH_ROOT>",
+    "exit": 0,
+    "matched_fields": ["repository_id", "git_common_dir", "git_dir", "repo_root", "head_sha", "worktree_id", "content_roots.system_spec"],
+    "mismatched_fields": []
+  },
+  "containment": {
+    "system_spec_realpath_inside_repo": true,
+    "symlinks_under_system_spec": 0,
+    "broken_links_under_system_spec": 0
+  },
+  "lineage_gate": {
+    "command": "python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root <DEV_GRAPH_ROOT>",
+    "exit": 0,
+    "status": "pass",
+    "checked": 0,
+    "violations": []
+  },
+  "decision": "new",
+  "checklist": {
+    "common_inputs_verified": "YES",
+    "common_output_shape_and_authority": "YES",
+    "common_no_boundary_violation": "YES",
+    "r0_system_spec_realpath_in_repo_identity_match": "YES",
+    "r0_lineage_exit0_and_decision_from_checked": "YES"
+  },
+  "blockers": [],
+  "original_goal": "C24で呼出しrepoのsystem_spec rootを解決し、containmentを検証する",
+  "delta_from_original": "none",
+  "merged_directive_for_next": "R0 reached; hand receipt (sha256 f64cd743...) and decision=new to R1/R2/R3",
+  "drift_signal": false
+}

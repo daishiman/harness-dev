@@ -1,0 +1,71 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "R0: C24 receipt eval-log/run-dev-graph-system-spec/c24-receipt.json sha256 76081a38…68e4; content_roots.system_spec within repo; R0 verifier PASS (R0-context/verification.json)"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "R1: system-spec-harness 0.1.24 in >=0.1.22 <1.0.0, 4 entry points present; R1 verifier PASS (R1-preflight/verification.json sha256 aa2d3b1f…bb9)"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "elicit(gate-only)/doc-fetch(not needed)/compile/evaluator ran via Skill only, but evaluator verdict FAIL so canonical flow did not complete"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "loop2 coverage/source-citation exit 0; evaluator report verdict FAIL (high: matrix.ui-ux.web.qa_refs keeps superseded qa-009) and aggregate-completeness --report exit 1"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "not attempted: R3 forbidden without evaluator PASS"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "R1 grep shows no spec logic in dev-graph; final confirmation at R3"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "result": "PASS"
+        },
+        {
+          "loop": 2,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "evaluator_fail",
+      "detail": "completeness report verdict FAIL; fix requires changing confirmed cell evidence (remove qa-009 from ui-ux.web qa_refs) which the task forbids (no change to existing Q&A/adoptions, no invented approvals); report validation exit 1",
+      "evidence_ref": "eval-log/system-spec-completeness-report.json"
+    }
+  ],
+  "outcome": "FAIL"
+}

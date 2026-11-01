@@ -1,0 +1,45 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "B1 resource_budget_exceeded: scenarioの上限3300秒に対し、正規pollの最初のHARD_CAP検出が4275秒。公開poll-stateの補正4316秒でも上限超過は変わらない。late_supervision=trueで回収も遅延した。上限の延長・成功扱いは認めない。",
+    "B2 completion_not_reached: out/status.jsonが存在せず、C19 progressはloop1のR2/R3等がnot_achievedのまま。R3独立Verifierの初回はAPI ENOTFOUNDで終了し、再試行は収集時点で最終判定なし。C19の全checklist完了・最終周回Anchor・DONE報告を確認できない。",
+    "B3 C05_final_verification_incomplete: C05は03:54:15.893Zにstate/refs/validatorを含む初回機械証拠を取得したが、C08前03:58:01.280Zの再取得はrepo_root/inputs/validator_pathを持つ正規doc_verificationと異なるflat形状。C08完了03:58:43Z以降は03:59:06Zのaggregate --source-citationと章/state/refs snapshot照合のみで、C13 validator bytes hash・固定argv・全input digestを含むdoc_verificationを再構成し初回JSON全体と比較した実行がない。C07最終再実行03:59:16Zも二モードstdout/exit/stderrだけでvalidator digest再取得を欠く。C05の最終「全て一致」申告とaggregate --report exit0は、これら必須の全値再照合を代替しない。",
+    "B4 C02_responsibility_fork_missing: C02 goal-specは04:07:22.253Zにstandardを記録し、progressは04:07:27.351Zにbaseline rev0・全責務未達を記録。初commitは04:07:44.112612Z。その後04:09:01.347Zにoverall=PASSにするまでR0/R1/R2/R3/R4担当の責務Agent起動は0件で、唯一のAgentはdev-graph-integrity-auditor。sourceが区別する「未達responsibilityのfork」と「必須integrity verifier」の前者を後者で代用している。commitがstandardより後のためpre-choice完成済みの例外は適用できない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/review_sysspec107"
+  },
+  "transcript_sha256": "f877896e288292956a8cff0b1406c3044245aed72f25c595b90ee2382ad37fd5",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-a0b29b532ac9d99f4.jsonl",
+    "transcript/subagents/agent-aa48e9af78204d444.jsonl",
+    "transcript/subagents/agent-a47d17e8fa27d6697.jsonl",
+    "tool-observer/index.json",
+    "tool-observer-source.py",
+    "observer-provenance.json",
+    "evidence-redaction.json",
+    "abort-reason.json",
+    "poll-state.json",
+    "poll.log",
+    "poll-normalization.json",
+    "collection-note.json",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-node-goal-spec.json",
+    "fx-eval-log/run-dev-graph-node-progress.json",
+    "fx-eval-log/run-dev-graph-node-intermediate.jsonl",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fx-eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json",
+    "tool-observer/subagent_agent-a0b29b532ac9d99f4-toolu_01Lhp1wEEQj8vBM7zegEL63e.json",
+    "tool-observer/subagent_agent-a0b29b532ac9d99f4-toolu_017TtDPHMkgYuibqvHqKdmfQ.json",
+    "tool-observer/subagent_agent-a0b29b532ac9d99f4-toolu_01Pgb2SjPw4iUQ3ujaMMMXNQ.json",
+    "tool-observer/subagent_agent-a0b29b532ac9d99f4-toolu_01GkMPzbrGKW4cg1Aa4TahMZ.json",
+    "tool-observer/main-toolu_01NnZbh6TzMwcdMaKEu5nHoN.json",
+    "tool-observer/main-toolu_01Fx9bfy7JcrYFpUkHE6QEyq.json"
+  ]
+}

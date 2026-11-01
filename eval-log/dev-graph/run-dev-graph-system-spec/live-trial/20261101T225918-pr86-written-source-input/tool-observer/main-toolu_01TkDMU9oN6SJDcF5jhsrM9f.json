@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "db05bc20-ebe0-4478-b896-96f98c058b0d",
+      "line": 155,
+      "prefix_bytes": 1097550,
+      "prefix_sha256": "09a375ba4722d22f1832ef064c61fdb89ebae68b7beb0e51bfd9c3c1bb36f09a",
+      "timestamp": "2026-11-01T14:01:49.819Z"
+    },
+    "result": {
+      "uuid": "7f0b6e9c-0dd2-4157-a2e3-85501f42691a",
+      "line": 158,
+      "prefix_bytes": 1100600,
+      "prefix_sha256": "e04ead78f8f9e5716b96821373bf765d4646ab42fde3e198df824ceff090f3f3",
+      "timestamp": "2026-11-01T14:01:56.225Z"
+    }
+  },
+  "tool_use_id": "toolu_01TkDMU9oN6SJDcF5jhsrM9f",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c '\nimport json,hashlib,datetime,pathlib\np=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\")\nd={\"skill\":\"run-dev-graph-system-spec\",\"contract\":\"artifact-delivery-v1\",\"choice\":\"standard\",\"choice_source\":\"fixture pre-answered contract (task.md 隔離fixtureの事前回答契約)\",\"artifact_path\":str(p),\"artifact_sha256\":hashlib.sha256(p.read_bytes()).hexdigest(),\"open_with\":\"less \"+str(p),\"presented_before_choice\":True,\"state_transitions\":[\"artifact_created\",\"minimal_guard_passed\",\"artifact_presented\",\"user_choice_recorded\",\"semantic_evaluator_started\"],\"recorded_at\":datetime.datetime.now(datetime.timezone.utc).isoformat(timespec=\"seconds\")}\npathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/eval-log/run-dev-graph-system-spec-standard.json\").write_text(json.dumps(d,ensure_ascii=False,indent=2)+\"\\n\",encoding=\"utf-8\");print(d[\"artifact_sha256\"])'",
+    "description": "Record standard choice for C19"
+  },
+  "is_error": false,
+  "tool_result_content": "0d9c61a4eba2eef7bd680038ea7f9c1569debc1e29018a6b9e94c74390a81024",
+  "tool_use_result": {
+    "stdout": "0d9c61a4eba2eef7bd680038ea7f9c1569debc1e29018a6b9e94c74390a81024",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "unavailable": true
+    }
+  }
+}

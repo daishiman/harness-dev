@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7f816f3a-cd0b-4a18-b633-7583ba301019",
+      "line": 143,
+      "prefix_bytes": 1768231,
+      "prefix_sha256": "1fbd1725f3914700d2b28b92997e5ab4fd89829fdbd87661dafee42d028ff67f",
+      "timestamp": "2026-11-01T14:14:41.856Z"
+    },
+    "result": {
+      "uuid": "a2e5d88b-7da5-4170-8dd8-288518b14c8d",
+      "line": 144,
+      "prefix_bytes": 1773678,
+      "prefix_sha256": "2797048428a8e63dee46f6580e4706e1917a00cd6ed7a349b00304b956396de6",
+      "timestamp": "2026-11-01T14:14:42.125Z"
+    }
+  },
+  "tool_use_id": "toolu_01DDS2erd8TN8cvzTLFBBJn3",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/ddd.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Domain-Driven Design — deep knowledge card\n2\t\n3\t> knowledge_id: `ddd` / status: `seed-example`。DDDは複雑domain向けの設計approachで、microservices採用や全codeのobject化を意味しない。\n4\t\n5\t## 目的\n6\t\n7\tbusinessの重要なruleと用語をmodel/code/会話で一致させ、複雑性を適切な境界へ閉じ込め、継続的な学習をsoftwareへ反映する。\n8\t\n9\t## 背景\n10\t\n11\t大規模domainでは同じ「顧客」「商品」でも部門やprocessごとに意味が異なる。単一enterprise modelへ無理に統一すると曖昧さがcodeへ入り、逆にtechnical layer中心で分割するとbusiness invariantが散る。DDDはdomain expertとのmodel探索とbounded contextによる意味境界を重視する。\n12\t\n13\t## 解決する問題\n14\t\n15\t- 仕様語、画面語、DB列、code名がずれ、変更時に意味を再解釈する。\n16\t- 異なる業務文脈の同名概念を一modelへ押し込み、巨大で矛盾したmodelになる。\n17\t- invariantとtransaction ownerが不明で、どこからでもdataを変更できる。\n18\t- legacy codeのtechnical構造がbusiness capabilityを隠し、改善順を決められない。\n19\t\n20\t## 中核概念\n21\t\n22\t- **Ubiquitous Language**: bounded context内でexpertとdeveloperが同じ語とruleを使い、会話・test・codeで継続検証する。\n23\t- **Bounded Context / Context Map**: modelが一貫する境界と、境界間の関係・翻訳・ownershipを明示する。\n24\t- **Entity / Value Object**: identityで追跡するものと、値・不変性で表す概念を区別する。\n25\t- **Aggregate**: 強いinvariantを一transactionで守る整合性境界。外部変更はaggregate rootを経由する。\n26\t- **Domain Event**: domainで起きた過去の事実を明示し、境界間の連携と監査を支える。\n27\t- **Strategic design**: core/supporting/generic subdomainを区別し、投資とbuild/buy判断を目的価値へ合わせる。\n28\t\n29\t## 適用条件\n30\t\n31\t- rule、例外、用語、状態遷移が多く、domain expertとの継続的なmodel学習が価値を持つ。\n32\t- team/部門ごとに言葉やownershipが異なり、integrationで翻訳が必要。\n33\t- core domainの差別化がsystemの本質的目的に直結する。\n34\t\n35\t## 非適用条件\n36\t\n37\t- 単純CRUD、汎用supporting機能、既製serviceで十分なgeneric subdomain。\n38\t- domain expertへアクセスできず、用語とruleを検証するfeedback loopを作れない段階。\n39\t- bounded contextをservice数へ機械変換する目的。monolith内moduleでも境界は成立する。\n40\t\n41\t## トレードオフ・失敗モード\n42\t\n43\t- workshop、model、mapping、専門語彙の維持に継続的な時間が必要。\n44\t- aggregateを大きくしすぎてlock/latencyを増やす、細かくしすぎてinvariantをeventual consistencyへ漏らす。\n45\t- 「Repository/Entity」等のpattern名だけ採用したanemic modelになり、business ruleがserviceへ散る。\n46\t- bounded contextを組織図やDB tableから決め、実際の言語・capability境界を検証しない。\n47\t- eventを事実でなくcommandとして命名し、ordering/idempotency/failure recoveryを設計しない。\n48\t\n49\t## 目的達成への寄与\n50\t\n51\t- U1-U9の語彙をmodelへ接続し、goalがどのcontext/capability/invariantで実現されるかを示す。\n52\t- core domainへ設計投資を集中し、generic領域は無料/低コストserviceや標準実装も比較対象にできる。\n53\t- refactoringは一括rewriteでなく、重要なbusiness rule周辺からstrangler/bubble context等で境界を育てる。\n54\t\n55\t## ヒアリング・判断観点\n56\t\n57\t- 同じ語がstakeholderごとに別の意味を持つ箇所はどこか。\n58\t- 失敗してはいけないinvariantと、その変更を承認するownerは誰か。\n59\t- 差別化するcore domainと、購入/外部化可能なgeneric subdomainは何か。\n60\t\n61\t## 一次資料\n62\t\n63\t- Eric Evans, *Domain-Driven Design* (2003), Addison-Wesley。\n64\t- Martin Fowler, “Bounded Context”, https://martinfowler.com/bliki/BoundedContext.html\n65\t- Martin Fowler, “DDD Aggregate”, https://martinfowler.com/bliki/DDD_Aggregate.html\n66\t\n67\t## 鮮度\n68\t\n69\t- class: `foundational-stable`\n70\t- last_checked: `2026-07-11`; review_by: `2027-07-11`\n71\t- trigger: domain language/ownership変更、context間integration failure、aggregateのlatency/consistency実測悪化、原典の重要な解釈訂正。\n72\t\n73\t",
+  "tool_use_result": null
+}

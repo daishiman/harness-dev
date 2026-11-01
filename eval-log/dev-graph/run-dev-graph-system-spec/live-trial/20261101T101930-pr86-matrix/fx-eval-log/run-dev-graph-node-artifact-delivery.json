@@ -1,0 +1,37 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "run-dev-graph-node",
+  "events": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "at": "2026-11-01T01:39:18.240909+00:00",
+      "evidence": "C24 containment OK; build-graph-node.py add --dry-run exit0 valid=true write_count=0 findings=0; graph digest unchanged"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "at": "2026-11-01T01:39:18.240909+00:00",
+      "artifact": "eval-log/run-dev-graph-node/preview.json",
+      "sha256": "10063bec6e1f31c54e09227c466e1f19e5d05380067d64c587e832bd7728d9c4",
+      "open": "less <repo_root>/eval-log/run-dev-graph-node/preview.json"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "at": "2026-11-01T01:39:18.240909+00:00",
+      "choice": "standard",
+      "source": "task.md 隔離fixtureの事前回答契約 (artifact_delivery=standard)。本repo/外部アカウントの承認ではない"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started",
+      "at": "2026-11-01T01:39:18.240909+00:00"
+    }
+  ],
+  "state": "semantic_evaluator_started"
+}

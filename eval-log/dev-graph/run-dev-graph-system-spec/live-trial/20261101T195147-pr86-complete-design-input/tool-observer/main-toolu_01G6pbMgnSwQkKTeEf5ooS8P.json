@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2dd44e5d-fa74-48e5-b486-30a42ce5b2b7",
+      "line": 684,
+      "prefix_bytes": 3986554,
+      "prefix_sha256": "4f1116c32b0b4440c3077cae9ed2e8470856dae516f0db1728c879ba139da26b",
+      "timestamp": "2026-11-01T11:10:30.575Z"
+    },
+    "result": {
+      "uuid": "e51a5a49-ba61-4880-bfe4-cfaa3d5f25b7",
+      "line": 687,
+      "prefix_bytes": 3996055,
+      "prefix_sha256": "6091d76c4422690afb115d1abcf4061bb6af51a2f35ab9cdce9cdb6f776cc3b8",
+      "timestamp": "2026-11-01T11:10:33.836Z"
+    }
+  },
+  "tool_use_id": "toolu_01G6pbMgnSwQkKTeEf5ooS8P",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n 385,445p plugins/dev-graph/schemas/graph-node.schema.json; sed -n 1370,1395p plugins/dev-graph/schemas/graph-node.schema.json",
+    "description": "Read lineage schema section"
+  },
+  "is_error": false,
+  "tool_result_content": "        }\n      },\n      \"additionalProperties\": false,\n      \"description\": \"confirmation/evaluationを同一artifact digestへpinしstale PASSを拒否する\"\n    },\n    \"source_lineage\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"origin_kind\",\n        \"source_plugin\",\n        \"source_path\",\n        \"source_version\",\n        \"source_digest\",\n        \"imported_at\"\n      ],\n      \"properties\": {\n        \"origin_kind\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"manual\",\n            \"github\",\n            \"system-spec-harness\",\n            \"system-dev-planner\",\n            \"generated\"\n          ]\n        },\n        \"source_plugin\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_path\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"\n        },\n        \"source_version\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_digest\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^[a-f0-9]{64}$\"\n        },\n        \"imported_at\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"format\": \"date-time\"\n        }\n      },\n      \"additionalProperties\": false,\n              },\n              \"source_path\": {\n                \"type\": \"string\",\n                \"minLength\": 1\n              },\n              \"source_version\": {\n                \"type\": \"string\",\n                \"minLength\": 1\n              },\n              \"source_digest\": {\n                \"type\": \"string\",\n                \"pattern\": \"^[a-f0-9]{64}$\"\n              },\n              \"imported_at\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\"\n              }\n            }\n          }\n        }\n      }\n    },\n    {\n      \"if\": {\n        \"properties\": {\n          \"tracker_binding\": {",
+  "tool_use_result": {
+    "stdout": "        }\n      },\n      \"additionalProperties\": false,\n      \"description\": \"confirmation/evaluationを同一artifact digestへpinしstale PASSを拒否する\"\n    },\n    \"source_lineage\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"origin_kind\",\n        \"source_plugin\",\n        \"source_path\",\n        \"source_version\",\n        \"source_digest\",\n        \"imported_at\"\n      ],\n      \"properties\": {\n        \"origin_kind\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"manual\",\n            \"github\",\n            \"system-spec-harness\",\n            \"system-dev-planner\",\n            \"generated\"\n          ]\n        },\n        \"source_plugin\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_path\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"\n        },\n        \"source_version\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"source_digest\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"pattern\": \"^[a-f0-9]{64}$\"\n        },\n        \"imported_at\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"format\": \"date-time\"\n        }\n      },\n      \"additionalProperties\": false,\n              },\n              \"source_path\": {\n                \"type\": \"string\",\n                \"minLength\": 1\n              },\n              \"source_version\": {\n                \"type\": \"string\",\n                \"minLength\": 1\n              },\n              \"source_digest\": {\n                \"type\": \"string\",\n                \"pattern\": \"^[a-f0-9]{64}$\"\n              },\n              \"imported_at\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\"\n              }\n            }\n          }\n        }\n      }\n    },\n    {\n      \"if\": {\n        \"properties\": {\n          \"tracker_binding\": {",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

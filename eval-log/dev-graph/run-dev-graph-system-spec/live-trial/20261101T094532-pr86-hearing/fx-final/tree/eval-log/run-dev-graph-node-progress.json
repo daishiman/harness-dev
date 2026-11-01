@@ -1,0 +1,74 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 0,
+    "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+    "recorded_at": "2026-11-01T01:03:46.137556+00:00"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "c24-receipt.json repo_root==content_roots.repository; auditor path_containment PASS"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: decision auto (0.95 margin 0.65 / 0.92 margin 0.57) >= 0.80/0.15"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "pre_write_validation findings 0; validate-graph-schema --strict-artifact-readiness exit0 (R3-import/graph-schema-report.json)"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add (register-package を起動していない)。auditor exact_13_package: package node 0"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: graph_revision 0->1, graph_digest_after sha256:df368b69…5f8f == current graph, node_ids == graph nodes"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "status": "PASS",
+          "pre_write_missing_keys": 0,
+          "at": "2026-11-01T01:06:19.358008+00:00"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "where": "live trial / 受入テスト"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "where": "live trial / 受入テスト"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "where": "live trial / 受入テスト"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:df368b69396a4f2e3df8cdad5ef2473e8da05db850e5f5f774b9b3b85e015f8f"
+  },
+  "updated_at": "2026-11-01T01:06:19.358008+00:00"
+}

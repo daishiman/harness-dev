@@ -10,6 +10,8 @@ from pathlib import Path
 
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "setup-playwright.py"
+_REPO_ROOT = _SCRIPT.parents[3]
+_BROWSER_CI = _REPO_ROOT / ".github" / "workflows" / "slide-report-generator-ci.yml"
 
 
 def _load_module():
@@ -91,3 +93,16 @@ def test_cli_check_respects_relocated_srg_root(tmp_path):
     assert payload["detected"]["browser_dir"] == str(
         tmp_path / "vendor" / "playwright-browsers"
     )
+
+
+def test_browser_acceptance_suite_is_wired_to_github_actions():
+    workflow = _BROWSER_CI.read_text(encoding="utf-8")
+    assert "permissions:\n  contents: read" in workflow
+    assert "timeout-minutes: 30" in workflow
+    assert "plugins/slide-report-generator/**" in workflow
+    assert ".github/workflows/slide-report-generator-ci.yml" in workflow
+    assert "working-directory: plugins/slide-report-generator/vendor" in workflow
+    install = workflow.index("python3 ../scripts/setup-playwright.py --install")
+    test = workflow.index("npm test")
+    check = workflow.index("python3 ../scripts/setup-playwright.py --check")
+    assert install < test < check

@@ -1,0 +1,59 @@
+{
+ "skill": "run-dev-graph-system-spec",
+ "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+ "loop": 2,
+ "checklist": [
+  {
+   "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+   "status": "achieved",
+   "evidence": "eval-log/run-dev-graph-system-spec-c24-receipt.json (sha256 e64c151641fc47bdecefd3396d96abe93126ebfd66a0c2c2cd956462569cf53d) repo_root=content_roots.repository; R0 verifier pending; R0 verifier PASS eval-log/run-dev-graph-system-spec/R0-context/verdict.json"
+  },
+  {
+   "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+   "status": "achieved",
+   "evidence": "plugin.json system-spec-harness 0.1.24 in >=0.1.22 <1.0.0; package-contract entry_points 4 skills present; R1 verifier pending; R1 verifier PASS eval-log/run-dev-graph-system-spec/R1-preflight/verdict.json"
+  },
+  {
+   "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+   "status": "achieved",
+   "evidence": "elicit/doc-fetch/compile/evaluator all via system-spec-harness Skill; evaluator fork launched C07/C06/C08 Agents (audit-fork-ledger.jsonl)"
+  },
+  {
+   "item": "coverage/source-citation/evaluator gate が全て PASS である",
+   "status": "not_achieved",
+   "evidence": "eval-log/system-spec-completeness-report.json (sha256 226bb71c...) verdict=FAIL: design_knowledge_reflection FAIL (maintenance-ops qa-008 legacy_backfill cites ungrounded RTO/RPO)"
+  },
+  {
+   "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+   "status": "not_achieved",
+   "evidence": "C02 import not performed: evaluator verdict FAIL (R3 forbids import before PASS)"
+  },
+  {
+   "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+   "status": "not_achieved",
+   "evidence": "R3 not reached"
+  }
+ ],
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS",
+   "loops": [
+    {
+     "loop": 1,
+     "status": "PASS",
+     "evidence": "validate-coverage-matrix exit0; validate-source-citation exit0; validate-graph-schema --strict-artifact-readiness exit0 (empty graph)"
+    }
+   ]
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending",
+   "evidence": "live trial judges after this run"
+  }
+ ],
+ "blocker": {
+  "code": "evaluator_fail",
+  "detail": "Completeness evaluator FAIL; remediation requires changing qa-008 design interpretation or eliciting RTO/RPO from the user (new decision/user input). Not authorized in this run; no import."
+ }
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "400469de-d273-45a0-acdb-1198c95672f0",
+      "line": 195,
+      "prefix_bytes": 1015961,
+      "prefix_sha256": "604b833b792b1f4a933cd0f490c97af9454c6437bfaeae413813e5c6af67ab75",
+      "timestamp": "2026-11-01T02:52:42.910Z"
+    },
+    "result": {
+      "uuid": "7a0a82a6-27f3-4ace-9a2a-57f970c46de8",
+      "line": 196,
+      "prefix_bytes": 1018615,
+      "prefix_sha256": "2a13bd1648f4e1d08ea18c817f9fad4ec6bc3418e257f872bbd9881b22bfad61",
+      "timestamp": "2026-11-01T02:52:46.066Z"
+    }
+  },
+  "tool_use_id": "toolu_011jr8vmfKRvRMN2mJAamrcP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx && P=plugins/system-spec-harness; S=system-spec/spec-state.json; python3 -B $P/scripts/validate-coverage-matrix.py --matrix $S --require-complete --require-basis --require-foundation | head -c 1500; echo \" exit=$?\"; python3 -B $P/scripts/validate-source-citation.py --targets $S --references system-spec/fetched-references.json --state $S --repo-root \"$PWD\" | head -c 1500; echo; python3 -B $P/scripts/validate-design-knowledge-refs.py --matrix $S --repo-root \"$PWD\" | head -c 600; echo; python3 -c \"\nimport json;d=json.load(open('$S'));print(d.get('schema_version'),d['hearing_progress']);print([t['target_id'] for t in d['targets']]);print([(k['id'] if 'id' in k else k.get('candidate_id'),k.get('status')) for k in d.get('knowledge_candidates',[])])\"; cat system-spec/fetched-references.json | python3 -c \"import json,sys;[print(r['target_id'],r['version'] if 'version' in r else r.get('last_updated'),r['retrieved_at'],r['latest_checked_at'],r['source_url']) for r in json.load(sys.stdin)['references']]\"",
+    "description": "Run read-only gates and summarize state"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\n exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\n\nOK: design knowledge_ref は全て実在する (検査 10 件)\n\n1.0 {'loop_count': 4, 'next_question': None, 'complete': True, 'max_loops': 5}\n['postgres', 'react', 'fastapi', 'typescript']\n[('k8s-workload-observability', 'deepened')]\npostgres 16.15 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\n exit=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\n\nOK: design knowledge_ref は全て実在する (検査 10 件)\n\n1.0 {'loop_count': 4, 'next_question': None, 'complete': True, 'max_loops': 5}\n['postgres', 'react', 'fastapi', 'typescript']\n[('k8s-workload-observability', 'deepened')]\npostgres 16.15 2026-10-31T14:45:20Z 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 2026-10-31T14:45:58Z 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 2026-10-31T14:46:09Z 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 2026-10-31T14:46:21Z 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

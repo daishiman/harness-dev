@@ -1,0 +1,26 @@
+{
+  "responsibility_id": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent fork (read-only)",
+  "caller_root": ".",
+  "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "76081a381f68b534b84544940e468c11ee6f5cb5439b1696ae8b1b96cbe768e4", "sha256_matches": true},
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checks": {
+    "version_in_range": {"result": "YES", "plugin_json": "plugins/system-spec-harness/.claude-plugin/plugin.json", "plugin_json_sha256": "322ddd15b0b4392ce87b778fd41ba9e82d51bb0b543a46897acb26fa7f126994", "name": "system-spec-harness", "version": "0.1.24", "range_source": "plugins/dev-graph/plugin-composition.yaml external_dependencies.system-spec-harness.version", "range": ">=0.1.22 <1.0.0", "evaluation": "0.1.24 >= 0.1.22 (patch 24>22) and 0.1.24 < 1.0.0 (major 0<1)"},
+    "required_entry_points": {"result": "YES", "contract": "plugins/system-spec-harness/references/package-contract.json entry_points.skills", "entries": {
+      "run-system-spec-elicit": {"in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md", "frontmatter_name_match": true},
+      "run-system-spec-doc-fetch": {"in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md", "frontmatter_name_match": true},
+      "run-system-spec-compile": {"in_contract": true, "skill_md": "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md", "frontmatter_name_match": true},
+      "assign-system-spec-completeness-evaluator": {"in_contract": true, "skill_md": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md", "frontmatter_name_match": true}}},
+    "manifest_clean_no_fallback": {"result": "YES", "plugin_json_keys": ["name", "version", "dependencies", "description", "author"], "harness_specific_keys": [], "dev_graph_grep_apply-spec-transition|compile-spec-doc|build-fetched-references|aggregate-completeness": 0, "dev_graph_system_spec_scripts": ["build-evaluation-context.py (C24 receipt -> evaluator args only; no compile/elicit/fetch/aggregate logic)"], "basename_overlaps": ["extract-plugin-root.py", "validate-inline-goal-seek-anchor.py (generic infra, not spec logic)"]},
+    "layer5_3_common": {"inputs_verified": "YES", "output_shape_and_authority": "YES (parent preflight-report.json R1 block matches independent values incl. plugin_json_sha256; no absolute env paths)", "boundary_violations_zero": "YES (git: plugins/ clean vs HEAD; only this file written)"},
+    "prompt_specific_5_3": "YES"
+  },
+  "parent_report_agreement": true,
+  "blockers": [],
+  "verdict": "PASS",
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "delta_from_original": "R0,R1 verified; specification/architecture import not yet done",
+  "merged_directive_for_next": "R1 verified PASS (harness 0.1.24 in >=0.1.22 <1.0.0, 4 entry points present); proceed to R2.",
+  "drift_signal": "none"
+}

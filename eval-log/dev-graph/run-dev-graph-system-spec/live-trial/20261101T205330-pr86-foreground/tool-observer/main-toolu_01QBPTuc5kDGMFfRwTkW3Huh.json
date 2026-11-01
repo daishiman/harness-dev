@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4d68003d-f348-4628-8f9c-a5a6c51d02a8",
+      "line": 393,
+      "prefix_bytes": 2341521,
+      "prefix_sha256": "07946495aad56d98fa19e8c8c22fce8e705f3631fd054fd3041855ae55b3337b",
+      "timestamp": "2026-11-01T12:14:17.338Z"
+    },
+    "result": {
+      "uuid": "c6f26314-07e7-4e6b-ab92-a8c080ba8e96",
+      "line": 394,
+      "prefix_bytes": 2345259,
+      "prefix_sha256": "7e98f116d6a1587c26592143ff8084e375876a6c3c1da29d1d4c9473849e069b",
+      "timestamp": "2026-11-01T12:14:21.108Z"
+    }
+  },
+  "tool_use_id": "toolu_01QBPTuc5kDGMFfRwTkW3Huh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && SP=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; ls \"$SP/skills/assign-system-spec-completeness-evaluator/scripts/\"; python3 -B \"$SP/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py\" --report \"$CLAUDE_PROJECT_DIR/eval-log/system-spec-completeness-report.json\" --spec-dir \"$CLAUDE_PROJECT_DIR/system-spec\" --session 7e088399-8515-4f72-b8c8-7b1f9861cc44 >/dev/null 2>\"$TMPDIR/agg.err\"; echo \"agg_exit=$?\"; tail -3 \"$TMPDIR/agg.err\"; python3 -c \"\nimport json\nr=json.load(open('eval-log/system-spec-completeness-report.json'))\nprint('overall',r.get('overall_verdict') or r.get('verdict'), {k:(v.get('verdict') if isinstance(v,dict) else v) for k,v in (r.get('aspects') or {}).items()} if isinstance(r.get('aspects'),dict) else [ (a.get('id') or a.get('aspect'), a.get('verdict')) for a in r.get('aspects',[])])\nprint('keys',list(r.keys()))\nfor l in open('eval-log/system-spec-harness/audit-fork-ledger.jsonl'):\n  d=json.loads(l); print({k:d.get(k) for k in ('agent','auditor','status','verdict','tool_use_id','audit_dispatch','event')})\n\"; shasum -a 256 eval-log/system-spec-completeness-report.json",
+    "description": "Verify completeness report and inspect ledger"
+  },
+  "is_error": false,
+  "tool_result_content": "aggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py\nagg_exit=0\noverall PASS {'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\nkeys ['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01C6cGTuD3JemFEd5vwsrjPP', 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01659PT3NqmrfNP2z6SuCHoJ', 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01TN7etqQPqn9F2UyDd7nnGa', 'audit_dispatch': None, 'event': None}\n65b4d79d148197e47bd16ca37503c6e0731ba2aee82c63fc4c130f4e43da918e  eval-log/system-spec-completeness-report.json",
+  "tool_use_result": {
+    "stdout": "aggregate-completeness.py\naudit_fork_attribution.py\nbuild-resume-receipt.py\nvalidate-json-schema-subset.py\nagg_exit=0\noverall PASS {'foundation_trace': 'PASS', 'decision_guidance': 'PASS', 'matrix_coverage': 'PASS', 'design_knowledge_reflection': 'PASS', 'doc_freshness': 'PASS', 'prompt_quality': 'PASS'}\nkeys ['evaluator', 'spec_dir', 'verdict', 'artifact_snapshot', 'audit_delegations', 'aspects', 'gate_results', 'findings', 'gaps']\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01C6cGTuD3JemFEd5vwsrjPP', 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01659PT3NqmrfNP2z6SuCHoJ', 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': None, 'audit_dispatch': None, 'event': None}\n{'agent': None, 'auditor': None, 'status': None, 'verdict': None, 'tool_use_id': 'toolu_01TN7etqQPqn9F2UyDd7nnGa', 'audit_dispatch': None, 'event': None}\n65b4d79d148197e47bd16ca37503c6e0731ba2aee82c63fc4c130f4e43da918e  eval-log/system-spec-completeness-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

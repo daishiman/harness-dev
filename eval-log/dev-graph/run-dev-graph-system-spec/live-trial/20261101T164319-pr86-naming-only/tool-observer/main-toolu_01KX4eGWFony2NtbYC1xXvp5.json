@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f1f84116-9058-4337-a3ae-bf868731044a",
+      "line": 116,
+      "prefix_bytes": 482202,
+      "prefix_sha256": "edb8ee9e1b7a3cdb806e2b45d0389e0cb88962fbff15dc227e57fee00ff974f7",
+      "timestamp": "2026-11-01T07:44:22.829Z"
+    },
+    "result": {
+      "uuid": "cd3c36e3-c138-43db-a272-ece5ebc76ada",
+      "line": 117,
+      "prefix_bytes": 484156,
+      "prefix_sha256": "f8e23f4709f0183ff5ac161d657bc09387379188ad106325619f7dc44d5caea4",
+      "timestamp": "2026-11-01T07:44:25.943Z"
+    }
+  },
+  "tool_use_id": "toolu_01KX4eGWFony2NtbYC1xXvp5",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && SYSTEM_SPEC_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" DEV_GRAPH_CODE_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/dev-graph\" SYSTEM_SPEC_DIR=\"$CLAUDE_PROJECT_DIR/system-spec\" GRAPH_PATH=\"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" DEV_GRAPH_ROOT=\"$CLAUDE_PROJECT_DIR\" && \npython3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$SYSTEM_SPEC_DIR/spec-state.json\" --require-complete --require-basis --require-foundation | tail -15; echo \"exit1=$?\";\npython3 -B \"$SYSTEM_SPEC_ROOT/scripts/validate-source-citation.py\" --targets \"$SYSTEM_SPEC_DIR/spec-state.json\" --references \"$SYSTEM_SPEC_DIR/fetched-references.json\" --state \"$SYSTEM_SPEC_DIR/spec-state.json\" --repo-root \"$DEV_GRAPH_ROOT\" | tail -15; echo \"pipe-skip\";\npython3 -B \"$DEV_GRAPH_CODE_ROOT/scripts/validate-graph-schema.py\" --graph \"$GRAPH_PATH\" --repo-root \"$DEV_GRAPH_ROOT\" --strict-artifact-readiness | tail -8"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\npipe-skip\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\nexit1=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\npipe-skip\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

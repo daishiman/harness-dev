@@ -1,0 +1,15 @@
+123 C02完了範囲の確認を終えた。確定goal blockerは0件、C19全体判定は保留。
+
+10 native stream / 222 observer eventのmanifest bytes・SHA・現native prefixと、source行・UUID・prefixSHA・tool input/resultを再接地して不一致0。
+
+C05のactual PASS後にC02 Skillをmain461で起動、R0〜R4 prompt全文を478〜486で取得。candidate草案から整形したJSONはC02入力であり、graph/content/receiptの直接書込の代替にはしない。最終payloadでdry-run610を実施し、同じpath/SHA dd4b591e8e4df93890d59810605796820dca4e617cada4bce9fa6f46f6a4238dをcanonical add615へ渡した。receipt owner=C02/run-dev-graph-node、applied_count=2、revision0→1、pre_write findings0。
+
+main624で実ノード2件・receipt・graphのpath/SHA、node状態、実lineage gate exit0/checked2、開き方をstdoutへ提示。その後629で事前指定standardを記録。dry-runだけを最小成果物にした形ではない。post-choiceのC24は634、strict schema643は全2node complete。integrity auditorを648で実Agent起動し、child adb6ec99e2d464843のfinal36行、親651のcompleted応答でPASSを確認した。独立canonical digestをそのままprogressへ写し、親の期待verdictを入力していない。
+
+graph canonical digest sha256:47308f725ae9de0df69cde0b28d5c13e248723ae7be2d3b6aaadd99a0363a07bはpre-choice receipt・presentation・baseline・integrity verifier・現graphで一致。writer_receipts=[]はpre-choice commitをpost-choice鎖へ入れない正本どおり。依頼2nodeはpre-choiceで完成しreadiness_fill=[]、post-choice未達writerが0なので同じaddの再起動/重複forkは要求しない。必須integrity verifierは実行済み。分類/receiptはpre-choice receiptを根拠にachieved、packageのみadd-onlyの証拠付きnot_applicable、OUT1〜OUT3はexternal_pending。C02の6key/hash/receipt鎖/verifier/schema検査は実exit0。
+
+baselineのprogressへの永続化は676で、C24直後より遅い。ただしそのdigestは既にpre-choice receipt/624提示/629選択記録へ固定され、間のwriterが0、auditorも同値を再計算している。後から別graphをbaselineへ取り直す、変更を隠蔽する因果は無いので補足へ分離する。
+
+specificationはsystem-spec/index.md、architectureは00-requirements-definition.mdへsource lineageを保持し、origin/source_plugin/.24/source_path/imported_at/source_digestの全fieldあり。source bytesのSHA、confirmation_evidence.evaluated_digest、C05 artifact_snapshotの対応digestは一致。両nodeはconfirmed/pass/readiness complete、evidence_refの実reportはPASS。receipt artifact SHAは各現fileと一致、report snapshot全12digestも現在値と一致する。source/評価対象への改変や未評価成果の登録は観測しない。
+
+690のreport保存はguardに拒否され、695/698でcanonical lineage gateとreport保存を分離した。authorityの直接writeやguard変更による回避は無い。R3 verifier・C19最終周回/予算・原本freeze匿名化・全goalは未完了として保留しblockerに数えない。原本/source/実成果は無編集、過去他runは未参照。

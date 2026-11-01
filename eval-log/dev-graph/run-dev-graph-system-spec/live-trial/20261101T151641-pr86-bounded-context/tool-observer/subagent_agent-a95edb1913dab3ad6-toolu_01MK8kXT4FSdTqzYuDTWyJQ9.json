@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "subagent/agent-a95edb1913dab3ad6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d0b9afd4-bed0-49ed-a2aa-a78be95a911d",
+      "line": 16,
+      "prefix_bytes": 125695,
+      "prefix_sha256": "aa32587f09303e20f0e2fb6f76c0e59336b7340bd7a39e4141ddd6da645f868d",
+      "timestamp": "2026-11-01T15:25:50.782Z"
+    },
+    "result": {
+      "uuid": "5d7b4113-d699-48f9-9a90-0c79b659be5d",
+      "line": 17,
+      "prefix_bytes": 128148,
+      "prefix_sha256": "f9d9b738625620770cb9381b48c0eea9036c1660a54eeee6a4077106333b7770",
+      "timestamp": "2026-11-01T15:25:52.716Z"
+    }
+  },
+  "tool_use_id": "toolu_01MK8kXT4FSdTqzYuDTWyJQ9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls system-spec system-spec/retrieval-evidence; ls skills/run-system-spec-doc-fetch/prompts skills/run-system-spec-doc-fetch/references 2>&1 | head -30; echo \"PLUGIN=$CLAUDE_PLUGIN_ROOT\"; find . -name validate-source-citation.py -o -name R4-audit-doc-freshness.md -o -name official-source-catalog.md 2>/dev/null | head"
+  },
+  "is_error": false,
+  "tool_result_content": "system-spec:\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfixture-requirements-v7.txt\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n\nsystem-spec/retrieval-evidence:\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\nls: skills/run-system-spec-doc-fetch/prompts: No such file or directory\nls: skills/run-system-spec-doc-fetch/references: No such file or directory\nPLUGIN=\n./plugins/system-spec-harness/scripts/validate-source-citation.py\n./plugins/system-spec-harness/skills/run-system-spec-doc-fetch/references/official-source-catalog.md\n./plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md",
+  "tool_use_result": {
+    "stdout": "system-spec:\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfixture-requirements-v7.txt\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n\nsystem-spec/retrieval-evidence:\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\nls: skills/run-system-spec-doc-fetch/prompts: No such file or directory\nls: skills/run-system-spec-doc-fetch/references: No such file or directory\nPLUGIN=\n./plugins/system-spec-harness/scripts/validate-source-citation.py\n./plugins/system-spec-harness/skills/run-system-spec-doc-fetch/references/official-source-catalog.md\n./plugins/system-spec-harness/skills/run-system-spec-doc-fetch/prompts/R4-audit-doc-freshness.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

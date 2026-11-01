@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evaluator_id": "/root/review_sysspec123_fresh",
+  "transcript_sha256": "c2c113099514c19d97ebb69ece46b9d4bf71fd65bc2e81bb8ca73a04f7e346b0",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "transcript/subagents/agent-afb32354c2e1fe747.jsonl",
+    "transcript/subagents/agent-a4787ac977fd08faa.jsonl",
+    "transcript/subagents/agent-a965bf4119e6dc68e.jsonl",
+    "transcript/subagents/agent-ab7bc5380f2087975.jsonl",
+    "transcript/subagents/agent-afad2757865ab50c1.jsonl",
+    "transcript/subagents/agent-adb6ec99e2d464843.jsonl",
+    "tool-observer/index.json",
+    "evidence-redaction.json",
+    "poll-state.json",
+    "poll-normalization.json",
+    "execution-invariants-before.json",
+    "execution-invariants-after.json",
+    "written-source-order-proofs/events.jsonl",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-final/tree/eval-log/system-spec-completeness-report.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-report.json",
+    "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/verifier-result.json"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/eval-log/run-dev-graph-system-spec/R3-import/import-report.json"
+  },
+  "criteria_observed": {
+    "IN1": "正本: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。観測: C19全3周回で3CLIがそれぞれ実exit0（main167/443/721）。空graph周回もschemaを省略せず、最終graphは2node/readiness complete。C05 actual aggregateも親再実行を含めexit0。",
+    "OUT1": "正本: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。観測: elicit resume/必要性判断doc-fetch/actual compile/新規fork C05を正規Skill経由で完了し、C05 .24の全6観点PASSと独立3監査の実final/台帳を得た後だけC02経由でspecification/architecture2nodeを登録。source_lineage全field・source bytes SHA・evaluated_digest・C05 snapshotが一致、confirmed/pass/readiness complete、receipt owner=C02、複製0をR1/R2/R3の実走とsource閉包不変で確認。"
+  },
+  "notes": [
+    "判定対象はsysspec123のみ。既往4prefixの独立確認を引き継ぎ、終了差分と全体の束縛を検証。過去他runのtrial/review/verdictおよび他agentのレビュー結論は参照していない。",
+    "公開transcriptは私用終了原本に対する同一メール表記44か所の <redacted-email> 置換のみ（10file、行数保持）。observerは私用原本へ全228eventを再接地し、公開コピーとのSHA対応を独立再構成した。公開transcript SHAへ本評価を束縛する。",
+    "C05 own resource-map索引の全文Readは未実施。明示的なown map全文要求は補助runnerのCLAUDE.localにあり、sourceはreference_refs/参照表として宣言。sourceの意味基準・全18prompt・全10Markdown・state/refs/C04 map・schema/rubric/aspect・全3監査/正規gateは実被覆され、索引漏れがPurpose/6観点/3観測を壊す直接因果はない。",
+    "周回1のappend直後hash assertionは未実施で、周回2/3の実assertionが全既存行を検査した。各行の6key/元goal/hashは最初から実値一致。全周回drift_signal=noneは共通正本enum外だが、goal/差分/次指示は保持され、未達の達成偽装やgoal逸脱は観測しない。手順差分と実成果への因果を分離する。",
+    "C02 baselineのprogress永続化はintegrity監査後だが、同digestは既にpre-choice receipt/現物提示/選択記録に固定され、途中writer0、verifier/最終graphと一致。baseline取り直しや変更隠蔽はない。pre-choiceで2node完成済みなのでpost-choiceの不要なwriter再実行/forkは要求しない。",
+    "提示の一部はBash stdout/choice記録で開き方を示し、別assistant文面での再掲は省略された。実file/path/SHAの提示、事前standard同意、評価開始の順序は成立しており、同意なし・現物なし・評価先行の欠陥へ拡大しない。",
+    "3監査のnative Agent request metadataはforeground、各実finalとID/session/token/prompt SHA・hook台帳・receipt・actual aggregateは一致。nested native resultには元whole tool_response dictが残らず、schema1.2 response digestそのものの独立再計算には限界がある。trusted hook正本の実行/台帳接地と、schema1.3実final全文digest一致は確認し、未取得metadataを再計算済みとは主張しない。",
+    "pollの公開時補正はelapsedのみ1920→1922で、ceil(observed_at_unix-start.epoch)=1922を再計算。予算・起点・他field不変。公開dir名は同start.epochのJST表示と一致し、native run-id/session/source/criteriaを変更しない。",
+    "canonical budget実測は1922秒・14,133,882token（10stream、172 unique assistant message、欠測0）。上限3300秒・23,000,000token内。source閉包launch/current/fixtureは同一、settings/指示/hook/config前後SHA一致。保護proof cacheはboot時空、subject denyWrite、同actor成功Bash→書面Readをnative/command SHA/stdout SHA/実file SHAで検証。",
+    "補助metadata native-model-pinning.jsonには別namespace番号の説明残りがあるが、実設定/receipt/proof/session/固定pathはいずれもsysspec123で一致する。意味判定の根拠にその説明を使用しない。"
+  ]
+}

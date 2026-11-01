@@ -1,0 +1,41 @@
+{
+  "loop": 1,
+  "checklist": {
+    "preflight_pass": {
+      "status": "PASS",
+      "evidence": "init1/init2 preflight.status=pass"
+    },
+    "c24_receipt_match": {
+      "status": "PASS",
+      "evidence": "repo_root==content_roots.repository; repository_id matches config (R1)"
+    },
+    "roots_and_local_state_and_routing_policy": {
+      "status": "PASS",
+      "evidence": "6 roots + .dev-graph/{config,state/graph,cache,locks}; routing_policy schema const ok (R2)"
+    },
+    "templates_complete_user_edit_preserved": {
+      "status": "PASS",
+      "evidence": "21/21 templates; edited README sha 2a38c173 unchanged; migration_preview (R4)"
+    },
+    "single_hook_path_settings_unchanged": {
+      "status": "PASS",
+      "evidence": "plugin hooks only; no .claude settings; no fallback manifest (R5)"
+    },
+    "schema_exit0_second_init_zero": {
+      "status": "PASS",
+      "evidence": "validate-graph-schema exit0 violations 0; init2 status=noop planned_changes=0 write_count=0 (R3)"
+    }
+  },
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS",
+    "OUT2": "PASS",
+    "OUT3": "PASS (abs path 0, plugin unchanged; preflight pass)",
+    "OUT4": "PASS (enabled:false, no token/node id)",
+    "OUT5": "N/A (hook-source plugin)"
+  },
+  "preflight": {
+    "status": "pass",
+    "code": null
+  }
+}

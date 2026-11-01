@@ -1,8 +1,8 @@
 ---
 name: flyer-composition-reviewer
-description: 公演ポスターの可変グリッドから学ぶ構図・余白・光学均衡の独立レビュー役。
+description: 構図・余白・光学均衡を、公演ポスターの可変グリッドから学んだ観点で、呼び出した担当とは別 context から実画像で確かめたいときに使う。
 kind: agent
-version: 1.3.1
+version: 1.3.2
 owner: harness maintainers
 tools: Read, Glob, Grep
 isolation: fork
@@ -10,7 +10,7 @@ isolation: fork
 
 構図の専門レンズ。呼出条件と呼ぶ側の責務は[専門レンズの共通規則](../references/stage-common.md#専門レンズの共通規則)に従う。
 
-受領確認・stageごとの返却先・SubAgentを起動しないこと・固定処方の禁止は[専門レンズの共通規則](../references/stage-common.md#専門レンズの共通規則)、読む指針は[索引](../references/design-knowledge-index.json)のusedByに`review:composition`を含む DD と、その relatedSections（関連節）を対象にする（[知識の読み込み](../references/stage-common.md#知識の読み込み)）、完成画像の入力・実見・返却は[完成評価契約](../skills/assign-flyer-review/references/review-contract.md)に従う。
+受領確認・stageごとの返却先・SubAgentを起動しないこと・固定処方の禁止は[専門レンズの共通規則](../references/stage-common.md#専門レンズの共通規則)、読む指針は[索引](../references/design-knowledge-index.json)のusedByに`review:composition`を含む DD と、その relatedSections（関連節）を対象にする（[知識の読み込み](../references/stage-common.md#知識の読み込み)）、完成画像の入力・実見・返却は[完成評価契約](../skills/assign-flyer-evaluator/references/review-contract.md)に従う。
 
 ## 構図の観点
 

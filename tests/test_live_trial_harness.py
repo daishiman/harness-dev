@@ -1,17 +1,23 @@
 """run-skill-live-trial harness の機械検証 (tmux 非依存)。
 
 - live-trial-status: transcript JSONL の 4 状態分類 + interrupt 例外 + subagents bytes 合算
-- live-trial-poll: 終端 4 分岐 (DONE/STALL/GATE/HARD_CAP) + state-file JSON 永続化
+- live-trial-poll: 終端 4 分岐 (DONE/STALL/GATE/HARD_CAP) + state-file JSON 永続化 +
+  scenario 予算 (wall/token cap) + 壊れた state・usage 欠落の fail-closed
+- build-live-trial-verdict: verdict 成否に関係なく自 run だけを reap する finalizer
 - live-trial-verdict: schema 自己検証 / skill_dir_tree_sha 決定論 / proof 機械 gate /
-  nudge 降格 / denylist 拒否
-- live-trial-backend/boot/send: オフライン検査 (tmux 呼出は BLOCKED/fallback 側のみ)
+  nudge 降格 / denylist 拒否 / 被験 skill 起動 gate / goal_seek 配線 gate
+- live-trial-backend/boot/send: オフライン検査 (tmux 呼出は BLOCKED/fallback 側のみ) +
+  run-id・owner-pid で範囲を絞った reap
 
 合成 fixture は references/transcript-jsonl.md の実測スキーマに従う。
 """
+import hashlib
 import importlib.util
 import json
+import os
 import shutil
 import sys
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -43,6 +49,7 @@ planner_mod = _load("plan-live-trials")
 backend_mod = _load("live-trial-backend")
 boot_mod = _load("live-trial-boot")
 send_mod = _load("live-trial-send")
+finalize_mod = _load("build-live-trial-verdict")
 
 
 # ---- 合成 transcript fixture -------------------------------------------------
@@ -66,10 +73,13 @@ def _turn_end():
     return {"type": "system", "subtype": "turn_duration"}
 
 
-def _tool_use(tid, name):
+def _tool_use(tid, name, tool_input=None):
+    block = {"type": "tool_use", "id": tid, "name": name}
+    if tool_input is not None:
+        block["input"] = tool_input
     return {"type": "assistant", "message": {
         "model": "claude-opus-4-8",
-        "content": [{"type": "tool_use", "id": tid, "name": name}]}}
+        "content": [block]}}
 
 
 def _tool_result(tid):
@@ -190,6 +200,58 @@ def test_poll_hard_cap(monkeypatch, tmp_path, capsys):
     assert "HARD_CAP" in out
 
 
+def _scenario_file(tmp_path, *, wall=60, tokens=1000):
+    path = tmp_path / "scenarios.json"
+    path.write_text(json.dumps({
+        "scenarios": [{
+            "scenario_id": "bounded",
+            "required_observations": ["bounded run completes"],
+            "resource_budget": {
+                "max_wall_clock_s": wall,
+                "max_total_tokens": tokens,
+            },
+        }],
+    }), encoding="utf-8")
+    return path
+
+
+def test_poll_scenario_wall_cap_cannot_be_raised_by_environment(
+    monkeypatch, tmp_path, capsys
+):
+    projects = _poll_env(monkeypatch, tmp_path, INTERVAL="1", HARD_CAP="7200")
+    _write_jsonl(projects / "u-1.jsonl", [dict(e) for e in FIXTURES["busy_gen"]])
+    rc = poll_mod.main([
+        "--state-file", str(tmp_path / "poll-state.json"),
+        "--scenario-file", str(_scenario_file(tmp_path, wall=1)),
+        "--scenario-id", "bounded",
+        str(tmp_path / "out" / "status.json"), "lt-test",
+    ])
+    assert rc == poll_mod.EXIT_HARD_CAP
+    assert "1s 到達" in capsys.readouterr().out
+
+
+def test_poll_scenario_token_cap_stops_immediately(monkeypatch, tmp_path, capsys):
+    projects = _poll_env(monkeypatch, tmp_path)
+    transcript = projects / "u-1.jsonl"
+    _write_jsonl(transcript, [{
+        "type": "assistant",
+        "message": {
+            "id": "msg-1",
+            "model": "claude-test",
+            "content": [],
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        },
+    }])
+    rc = poll_mod.main([
+        "--state-file", str(tmp_path / "poll-state.json"),
+        "--scenario-file", str(_scenario_file(tmp_path, tokens=2)),
+        "--scenario-id", "bounded",
+        str(tmp_path / "out" / "status.json"), "lt-test",
+    ])
+    assert rc == poll_mod.EXIT_TOKEN_CAP
+    assert "TOKEN_CAP (2 >= 2)" in capsys.readouterr().out
+
+
 def test_poll_state_file_persists_counters(monkeypatch, tmp_path):
     projects = _poll_env(monkeypatch, tmp_path, INTERVAL="1")
     _write_jsonl(projects / "u-1.jsonl", [dict(e) for e in FIXTURES["busy_gen"]])
@@ -214,7 +276,7 @@ def test_poll_state_file_persists_counters(monkeypatch, tmp_path):
     assert json.loads(state_file.read_text())["elapsed"] >= 1
 
 
-def test_poll_corrupt_state_file_recovers(monkeypatch, tmp_path):
+def test_poll_corrupt_state_file_fails_closed_without_reset(monkeypatch, tmp_path, capsys):
     projects = _poll_env(monkeypatch, tmp_path)
     _write_jsonl(projects / "u-1.jsonl", [dict(e) for e in FIXTURES["idle"]])
     state_file = tmp_path / "state.json"
@@ -223,7 +285,82 @@ def test_poll_corrupt_state_file_recovers(monkeypatch, tmp_path):
     marker.parent.mkdir()
     marker.write_text("{}", encoding="utf-8")
     assert poll_mod.main(["--state-file", str(state_file),
-                          str(marker), "lt-test"]) == poll_mod.EXIT_DONE
+                          str(marker), "lt-test"]) == poll_mod.EXIT_BLOCKED
+    assert "STATE_CORRUPT" in capsys.readouterr().out
+
+
+def test_poll_missing_usage_fails_closed(monkeypatch, tmp_path, capsys):
+    projects = _poll_env(monkeypatch, tmp_path)
+    _write_jsonl(projects / "u-1.jsonl", [{
+        "type": "assistant",
+        "message": {"id": "msg-no-usage", "model": "claude-test", "content": []},
+    }])
+    rc = poll_mod.main([
+        "--state-file", str(tmp_path / "poll-state.json"),
+        "--scenario-file", str(_scenario_file(tmp_path)),
+        "--scenario-id", "bounded",
+        str(tmp_path / "out" / "status.json"), "lt-test",
+    ])
+    assert rc == poll_mod.EXIT_BLOCKED
+    assert "TOKEN_UNMEASURED" in capsys.readouterr().out
+
+
+def test_scenario_poll_requires_persisted_state_file(monkeypatch, tmp_path):
+    _poll_env(monkeypatch, tmp_path)
+    with pytest.raises(SystemExit):
+        poll_mod.main([
+            "--scenario-file", str(_scenario_file(tmp_path)),
+            "--scenario-id", "bounded",
+            str(tmp_path / "out" / "status.json"), "lt-test",
+        ])
+
+
+def test_finalizer_reaps_even_when_verdict_fails():
+    calls = []
+
+    class Backend:
+        @staticmethod
+        def valid_session_name(value): return True
+        @staticmethod
+        def valid_run_id(value): return True
+        @staticmethod
+        def session_belongs_to_run(session, run_id): return True
+        @staticmethod
+        def reap(run_id, owner_pid): calls.append(("reap", run_id, owner_pid)); return []
+        @staticmethod
+        def has_session(session): return False
+
+    class Verdict:
+        @staticmethod
+        def main(_args): raise SystemExit(2)
+
+    rc = finalize_mod.finalize(
+        session="lt-run-1", run_id="run-1", owner_pid=123,
+        verdict_args=["--bad"], backend=Backend, verdict=Verdict,
+    )
+    assert rc == 2
+    assert calls == [("reap", "run-1", 123)]
+
+
+def test_finalizer_never_kills_session_when_tmux_ownership_mismatches():
+    calls = []
+
+    class Backend:
+        valid_session_name = staticmethod(lambda _value: True)
+        valid_run_id = staticmethod(lambda _value: True)
+        session_belongs_to_run = staticmethod(lambda _session, _run_id: True)
+        reap = staticmethod(lambda run_id, owner_pid: calls.append(("reap", run_id, owner_pid)) or [])
+        has_session = staticmethod(lambda _session: True)
+
+    class Verdict:
+        main = staticmethod(lambda _args: 0)
+
+    rc = finalize_mod.finalize(
+        session="lt-run-1", run_id="run-1", owner_pid=123,
+        verdict_args=["--ok"], backend=Backend, verdict=Verdict,
+    )
+    assert rc == 1
+    assert calls == [("reap", "run-1", 123)]
 
 
 # ---- live-trial-verdict: schema / tree sha / gate ----------------------------
@@ -239,9 +376,37 @@ def _fake_skill_dir(tmp_path: Path, *, gate_declared: bool = False) -> Path:
     return d
 
 
+def _goal_evaluation_args(workdir: Path, transcript: Path, extra: list[str]) -> list[str]:
+    """肯定 trial に要る、transcript へ束縛された独立 evaluator の証跡を作る。"""
+    if "--goal-result" not in extra:
+        return []
+    workdir.mkdir(parents=True, exist_ok=True)
+    goal_result = extra[extra.index("--goal-result") + 1]
+    goal_blockers = [
+        extra[index + 1]
+        for index, value in enumerate(extra[:-1])
+        if value == "--blocker"
+    ]
+    evidence = workdir / "evaluator-evidence.json"
+    evidence.write_text("{}\n", encoding="utf-8")
+    goal_evaluation = workdir / "goal-evaluation.json"
+    goal_evaluation.write_text(json.dumps({
+        "result": goal_result,
+        "blockers": goal_blockers,
+        "evaluator": {
+            "mode": "fresh-independent-context",
+            "id": "pytest-live-trial-goal-evaluator",
+        },
+        "transcript_sha256": verdict_mod.sha256_file(transcript),
+        "evidence_refs": ["evaluator-evidence.json"],
+    }), encoding="utf-8")
+    return ["--goal-evaluation", str(goal_evaluation)]
+
+
 def _run_verdict(tmp_path, transcript: Path, extra: list[str],
                  *, gate_declared: bool = False) -> tuple[int, Path]:
     workdir = tmp_path / "workdir"
+    goal_eval_args = _goal_evaluation_args(workdir, transcript, extra)
     skill_dir = _fake_skill_dir(tmp_path, gate_declared=gate_declared)
     argv = [
         "--workdir", str(workdir),
@@ -250,15 +415,21 @@ def _run_verdict(tmp_path, transcript: Path, extra: list[str],
         "--transcript", str(transcript),
         "--launch", "PASS", "--completion", "PASS",
         "--poll-exit", "DONE",
-    ] + extra
+    ] + goal_eval_args + extra
     rc = verdict_mod.main(argv)
     return rc, workdir / "verdict.json"
 
 
 @pytest.fixture()
 def transcript(tmp_path):
-    entries = [dict(_prompt()), dict(_tool_use("t9", "Bash")),
-               dict(_tool_result("t9")), dict(_turn_end())]
+    entries = [
+        dict(_prompt()),
+        dict(_tool_use("t8", "Skill", {"skill": "some-plugin:run-something"})),
+        dict(_tool_result("t8")),
+        dict(_tool_use("t9", "Bash")),
+        dict(_tool_result("t9")),
+        dict(_turn_end()),
+    ]
     entries[1]["version"] = "2.1.173"
     return _write_jsonl(tmp_path / "src" / "u-9.jsonl", entries)
 
@@ -339,15 +510,15 @@ def test_verdict_contractual_grounds_on_external_mutation_guard(tmp_path, transc
         encoding="utf-8",
     )
     (skill_dir / "scripts" / "a.py").write_text("print('a')\n", encoding="utf-8")
+    extra = ["--goal-result", "PASS", "--gate-response-count", "1",
+             "--gate-kind", "contractual"]
     rc = verdict_mod.main([
         "--workdir", str(tmp_path / "workdir"),
         "--target-skill", "some-plugin:run-something",
         "--skill-dir", str(skill_dir),
         "--transcript", str(transcript),
         "--launch", "PASS", "--completion", "PASS", "--poll-exit", "DONE",
-        "--goal-result", "PASS", "--gate-response-count", "1",
-        "--gate-kind", "contractual",
-    ])
+    ] + _goal_evaluation_args(tmp_path / "workdir", transcript, extra) + extra)
     assert rc == 0
     doc = json.loads((tmp_path / "workdir" / "verdict.json").read_text())
     assert doc["gate_contract_evidence"] == ["frontmatter.external_mutation_guard"]
@@ -419,6 +590,193 @@ def test_verdict_denylist_rejected(tmp_path, transcript, capsys):
     ])
     assert rc == 2
     assert "DENYLIST" in capsys.readouterr().err
+
+
+# ---- live-trial-verdict: 被験 skill 起動 gate と goal_seek 配線 gate ----------
+
+def test_verdict_fails_when_the_target_skill_was_never_invoked(tmp_path):
+    """被験 skill を起動せず script を直接叩いた実走は launch=FAIL になる。
+
+    2026-07-21 live-trial r14 の C05 (render) は Skill 呼出しが transcript に0件のまま
+    render-graph-html.py を Bash から直接実行し、成果物が出たため PASS を自己申告した。
+    起動の有無を orchestrator の --launch ではなく transcript の機械判定へ移す。
+    """
+    entries = [dict(_prompt()), dict(_tool_use("t1", "Bash")),
+               dict(_tool_result("t1")), dict(_turn_end())]
+    src = _write_jsonl(tmp_path / "src" / "no-skill.jsonl", entries)
+
+    rc, out = _run_verdict(tmp_path, src, ["--goal-result", "PASS"])
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert verdict_mod.validate_schema(doc, json.loads(SCHEMA.read_text())) == []
+    assert doc["invoked_skills"] == []
+    assert doc["overall"]["launch"] == "FAIL"
+    assert doc["overall"]["verdict"] == "FAIL"
+    assert any("Skill 呼出しが transcript に0件" in b for b in doc["goal_verdict"]["blockers"])
+
+
+def test_verdict_accepts_a_trial_that_invoked_the_target_skill(tmp_path):
+    """target skill を起動した実走は従来どおり通り、invoked_skills に記録される。"""
+    entries = [dict(_prompt()),
+               dict(_tool_use("t1", "Skill", {"skill": "some-plugin:run-something"})),
+               dict(_tool_result("t1")),
+               dict(_tool_use("t2", "Skill", {"skill": "other-plugin:run-helper"})),
+               dict(_tool_result("t2")), dict(_turn_end())]
+    src = _write_jsonl(tmp_path / "src" / "with-skill.jsonl", entries)
+
+    rc, out = _run_verdict(tmp_path, src, ["--goal-result", "PASS"])
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["invoked_skills"] == ["other-plugin:run-helper", "some-plugin:run-something"]
+    assert doc["overall"]["launch"] == "PASS"
+    assert doc["overall"]["verdict"] == "PASS"
+
+
+def _goal_seek_skill_dir(tmp_path: Path) -> Path:
+    """goal_seek を宣言した被験 skill (実行契約として配線成果物を要求する)。"""
+    d = tmp_path / "run-something"
+    (d / "scripts").mkdir(parents=True, exist_ok=True)
+    (d / "SKILL.md").write_text(
+        "---\nname: run-something\ncombinators:\n  - with-goal-seek\n"
+        "goal_seek:\n  engine: inline\n  fork: subagent\n  max_loops: 5\n---\nbody\n",
+        encoding="utf-8",
+    )
+    (d / "scripts" / "a.py").write_text("print('a')\n", encoding="utf-8")
+    return d
+
+
+def _run_verdict_with_skill_dir(
+    tmp_path, transcript: Path, skill_dir: Path, extra: list[str], eval_root: Path | None = None
+):
+    workdir = tmp_path / "workdir"
+    goal_eval_args = _goal_evaluation_args(workdir, transcript, extra)
+    argv = [
+        "--workdir", str(workdir),
+        "--target-skill", "some-plugin:run-something",
+        "--skill-dir", str(skill_dir),
+        "--transcript", str(transcript),
+        "--launch", "PASS", "--completion", "PASS",
+        "--poll-exit", "DONE",
+    ]
+    if eval_root is not None:
+        argv.extend(["--goal-seek-eval-root", str(eval_root)])
+    argv.extend(goal_eval_args)
+    argv.extend(extra)
+    return verdict_mod.main(argv), workdir / "verdict.json"
+
+
+def _skill_invocation_entries():
+    return [dict(_prompt()),
+            dict(_tool_use("s1", "Skill", {"skill": "some-plugin:run-something"})),
+            dict(_tool_result("s1"))]
+
+
+def test_verdict_flags_missing_goal_seek_wiring(tmp_path):
+    """goal_seek を宣言した skill が配線成果物を残さない実走を機械検出する。
+
+    2026-07-21 の live-trial r13/r14 では 7 skill で goal-spec.json / progress.json /
+    intermediate.jsonl が一つも生成されず、SKILL.md の実行契約が一律に省略されていた。
+    fresh evaluator の目視ではなく transcript の書込み記録で判定する。
+    """
+    entries = _skill_invocation_entries() + [dict(_tool_use("t1", "Bash")),
+                                             dict(_tool_result("t1")), dict(_turn_end())]
+    src = _write_jsonl(tmp_path / "src" / "no-wiring.jsonl", entries)
+    eval_root = tmp_path / "eval-log"
+    eval_root.mkdir()
+
+    rc, out = _run_verdict_with_skill_dir(
+        tmp_path,
+        src,
+        _goal_seek_skill_dir(tmp_path),
+        ["--goal-result", "PASS"],
+        eval_root,
+    )
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert verdict_mod.validate_schema(doc, json.loads(SCHEMA.read_text())) == []
+    assert set(doc["missing_goal_seek_artifacts"]) == {
+        "goal-spec.json", "progress.json", "intermediate.jsonl"}
+    # evaluator が PASS を返しても機械 gate が勝つ (fail-closed)
+    assert doc["overall"]["goal_fit"] == "FAIL"
+    assert doc["overall"]["verdict"] == "DEGRADED"
+    assert any("ゴールシーク配線" in b for b in doc["goal_verdict"]["blockers"])
+
+
+def test_verdict_accepts_complete_goal_seek_wiring(tmp_path):
+    """3 種の配線成果物が実在し、内容も整合する実走は gate を通る。"""
+    entries = _skill_invocation_entries() + [dict(_turn_end())]
+    src = _write_jsonl(tmp_path / "src" / "wired.jsonl", entries)
+    eval_root = tmp_path / "eval-log"
+    eval_root.mkdir()
+    goal = "target skill の目的を最後まで達成する"
+    goal_hash = hashlib.sha256(goal.encode("utf-8")).hexdigest()
+    (eval_root / "run-something-goal-spec.json").write_text(
+        json.dumps({"original_goal": goal}), encoding="utf-8"
+    )
+    (eval_root / "run-something-progress.json").write_text(
+        json.dumps({"checklist": ["done"]}), encoding="utf-8"
+    )
+    (eval_root / "run-something-intermediate.jsonl").write_text(
+        json.dumps(
+            {
+                "original_goal": goal,
+                "original_goal_hash": goal_hash,
+                "current_goal_snapshot": goal,
+                "delta_from_original": "none",
+                "merged_directive_for_next": "continue",
+                "drift_signal": "none",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    rc, out = _run_verdict_with_skill_dir(
+        tmp_path,
+        src,
+        _goal_seek_skill_dir(tmp_path),
+        ["--goal-result", "PASS"],
+        eval_root,
+    )
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["missing_goal_seek_artifacts"] == []
+    assert doc["goal_seek_evidence_violations"] == []
+    assert doc["overall"]["verdict"] == "PASS"
+
+
+def test_verdict_rejects_goal_seek_files_with_invalid_content(tmp_path):
+    """ファイル名だけ揃えたダミー成果物は goal_seek 履行の証拠にしない。"""
+    entries = _skill_invocation_entries() + [dict(_turn_end())]
+    src = _write_jsonl(tmp_path / "src" / "invalid-wiring.jsonl", entries)
+    eval_root = tmp_path / "eval-log"
+    eval_root.mkdir()
+    (eval_root / "run-something-goal-spec.json").write_text(
+        json.dumps({"original_goal": "goal"}), encoding="utf-8"
+    )
+    (eval_root / "run-something-progress.json").write_text("{}", encoding="utf-8")
+    (eval_root / "run-something-intermediate.jsonl").write_text("{}\n", encoding="utf-8")
+
+    rc, out = _run_verdict_with_skill_dir(
+        tmp_path,
+        src,
+        _goal_seek_skill_dir(tmp_path),
+        ["--goal-result", "PASS"],
+        eval_root,
+    )
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["goal_seek_evidence_violations"]
+    assert doc["overall"]["goal_fit"] == "FAIL"
+
+
+def test_verdict_skips_wiring_gate_when_skill_does_not_declare_goal_seek(tmp_path, transcript):
+    """goal_seek 非宣言の skill には配線 gate を適用しない (過剰適用の防止)。"""
+    rc, out = _run_verdict(tmp_path, transcript, ["--goal-result", "PASS"])
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["missing_goal_seek_artifacts"] == []
+    assert doc["overall"]["verdict"] == "PASS"
 
 
 def test_tree_sha_deterministic_and_content_sensitive(tmp_path):
@@ -596,6 +954,50 @@ def test_tree_sha_ignores_ephemeral_tool_caches(tmp_path):
     (skill_dir / "scripts" / "local.pyc").write_text("noise\n", encoding="utf-8")
 
     assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
+def test_tree_sha_resolves_declared_repo_root_relative_ref(tmp_path):
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    repo_ref = tmp_path / "doc" / "notion-schema" / "contract.md"
+    repo_ref.parent.mkdir(parents=True)
+    repo_ref.write_text("repo-contract-v1\n", encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        "---\n"
+        "name: run-behavior\n"
+        "reference_refs: [doc/notion-schema/contract.md]\n"
+        "---\nbody\n",
+        encoding="utf-8",
+    )
+
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    repo_ref.write_text("repo-contract-v2\n", encoding="utf-8")
+
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
+
+
+def test_tree_sha_prefers_skill_relative_ref_over_repo_root_ref(tmp_path):
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    relative = Path("doc/notion-schema/contract.md")
+    repo_ref = tmp_path / relative
+    skill_ref = skill_dir / relative
+    repo_ref.parent.mkdir(parents=True)
+    skill_ref.parent.mkdir(parents=True)
+    repo_ref.write_text("repo-contract-v1\n", encoding="utf-8")
+    skill_ref.write_text("skill-contract-v1\n", encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        "---\n"
+        "name: run-behavior\n"
+        "reference_refs: [doc/notion-schema/contract.md]\n"
+        "---\nbody\n",
+        encoding="utf-8",
+    )
+
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    repo_ref.write_text("repo-contract-v2\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+    skill_ref.write_text("skill-contract-v2\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
 
 
 def test_tree_sha_ignores_dependency_outside_skill_scope(tmp_path):
@@ -846,15 +1248,38 @@ def test_backend_self_test_cli():
 def test_boot_denylist_and_validation(tmp_path, capsys):
     assert boot_mod.main(["--self-test"]) == 0
     rc = boot_mod.main(["lt-x", str(tmp_path),
+                        "--run-id", "x",
                         "--target-skill", "run-skill-iter-improve"])
     assert rc == 2
     assert "DENYLIST" in capsys.readouterr().err
-    assert boot_mod.main(["../evil", str(tmp_path)]) == 2
-    assert boot_mod.main(["lt-x", str(tmp_path / "missing")]) == 2
-    assert boot_mod.main(["lt-x", str(tmp_path), "--model", "bad model;rm"]) == 2
+    assert boot_mod.main(["../evil", str(tmp_path), "--run-id", "x"]) == 2
     assert boot_mod.main([
-        "lt-x", str(tmp_path), "--session-id", "bad; touch /tmp/injected"
+        "lt-x", str(tmp_path / "missing"), "--run-id", "x"
     ]) == 2
+    assert boot_mod.main([
+        "lt-x", str(tmp_path), "--run-id", "x", "--model", "bad model;rm"
+    ]) == 2
+    assert boot_mod.main([
+        "lt-x", str(tmp_path), "--run-id", "x",
+        "--session-id", "bad; touch /tmp/injected"
+    ]) == 2
+    assert boot_mod.main(["lt-x", str(tmp_path)]) == 2
+    assert "missing run-id" in capsys.readouterr().err
+    assert boot_mod.main([
+        "lt-other", str(tmp_path), "--run-id", "x"
+    ]) == 2
+
+
+def test_boot_audit_ledger_stays_inside_trial_repo(tmp_path):
+    ledger = tmp_path / "eval-log" / "system-spec-harness" / "audit-fork-ledger.jsonl"
+    assert boot_mod.resolve_audit_fork_ledger(str(ledger), str(tmp_path)) == str(ledger)
+    assert boot_mod.resolve_audit_fork_ledger(
+        "eval-log/system-spec-harness/audit-fork-ledger.jsonl", str(tmp_path)
+    ) == str(ledger)
+    with pytest.raises(ValueError, match="escapes trial repo"):
+        boot_mod.resolve_audit_fork_ledger("/tmp/audit-fork-ledger.jsonl", str(tmp_path))
+    with pytest.raises(ValueError, match="filename"):
+        boot_mod.resolve_audit_fork_ledger("eval-log/other.jsonl", str(tmp_path))
 
 
 def _write_trial_plugin(
@@ -1104,11 +1529,19 @@ class FakeBootBackend:
         self.killed = []
         self.sent = ""
         self.argv = None
+        self.run_id = None
+        self.environment_overrides = None
         self.send_calls = 0
         self.key_sends = []
 
-    def new_session(self, _s, _c, command_argv=None):
+    def new_session(
+        self, _s, _c, command_argv=None, *, run_id, owner_pid,
+        environment_overrides=None,
+    ):
         self.argv = command_argv
+        self.run_id = run_id
+        self.owner_pid = owner_pid
+        self.environment_overrides = environment_overrides
         if command_argv:
             self.sent = " ".join(command_argv)
 
@@ -1133,9 +1566,13 @@ class FakeBootBackend:
 
 def test_boot_ready_line_contract(monkeypatch, capsys):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    monkeypatch.setenv(
+        "SYSTEM_SPEC_AUDIT_FORK_LEDGER", "/tmp/current-session-ledger.jsonl"
+    )
     fb = FakeBootBackend(["Type /help for shortcuts\n❯ "], ["2.1.173"])
-    rc = boot_mod.boot(fb, "lt-x", "/tmp", "claude-opus-4-8", "u-1",
-                       timeout=5, grace=1)
+    explicit_ledger = "/tmp/fixture/eval-log/system-spec-harness/audit-fork-ledger.jsonl"
+    rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "claude-opus-4-8", "u-1",
+                       timeout=5, grace=1, audit_fork_ledger=explicit_ledger)
     assert rc == 0
     out = capsys.readouterr().out
     # SESSION_ID: は行末固定 (parse 互換) / MODEL: は requested の echo
@@ -1145,6 +1582,9 @@ def test_boot_ready_line_contract(monkeypatch, capsys):
     assert "--model claude-opus-4-8" in fb.sent
     assert "--setting-sources local" in fb.sent
     assert fb.argv == boot_mod.build_claude_argv("u-1", "claude-opus-4-8")
+    assert fb.environment_overrides["SYSTEM_SPEC_AUDIT_FORK_LEDGER"] == explicit_ledger
+    assert fb.run_id == "x"
+    assert f"OWNER_PID:{fb.owner_pid}" in out
     assert fb.send_calls == 0  # 対話 shell への send-line を経由しない
     assert fb.key_sends == []
 
@@ -1156,7 +1596,7 @@ def test_boot_accepts_exact_bypass_gate_once_then_waits_for_prompt(monkeypatch, 
         [gate, "Welcome to Claude Code\nType /help for shortcuts\n❯ "],
         ["claude", "claude"],
     )
-    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=4, grace=1)
+    rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=4, grace=1)
     assert rc == 0
     assert fb.key_sends == [("Down",), ("Enter",)]
     assert "READY: lt-x (2s)" in capsys.readouterr().out
@@ -1174,7 +1614,7 @@ def test_boot_never_repeats_bypass_gate_acceptance(monkeypatch, capsys):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
     gate = "\n".join(boot_mod._BYPASS_CONFIRM_MARKERS)
     fb = FakeBootBackend([gate], ["claude"])
-    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=3, grace=1)
+    rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=3, grace=1)
     assert rc == 1
     assert fb.key_sends == [("Down",), ("Enter",)]
     assert "TIMEOUT" in capsys.readouterr().out
@@ -1188,7 +1628,7 @@ def test_boot_does_not_answer_non_exact_gate(monkeypatch):
     )
     fb = FakeBootBackend([partial], ["claude"])
     assert boot_mod.boot(
-        fb, "lt-x", "/tmp", "", "u-1", timeout=1, grace=1
+        fb, "lt-x", "x", "/tmp", "", "u-1", timeout=1, grace=1
     ) == 1
     assert fb.key_sends == []
 
@@ -1196,7 +1636,7 @@ def test_boot_does_not_answer_non_exact_gate(monkeypatch):
 def test_boot_fail_when_claude_dies(monkeypatch, capsys):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
     fb = FakeBootBackend(["zsh: command not found: claude"], ["zsh"])
-    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=5, grace=0)
+    rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=5, grace=0)
     assert rc == 1
     assert "BOOT_FAIL" in capsys.readouterr().out
     assert fb.killed == ["lt-x"]  # 失敗経路でも session を掃除する
@@ -1205,7 +1645,7 @@ def test_boot_fail_when_claude_dies(monkeypatch, capsys):
 def test_boot_timeout_no_ready(monkeypatch, capsys):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
     fb = FakeBootBackend(["still starting"], ["2.1.173"])
-    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=2, grace=1)
+    rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=2, grace=1)
     assert rc == 1
     assert "TIMEOUT" in capsys.readouterr().out
     assert fb.killed == ["lt-x"]
@@ -1216,29 +1656,71 @@ def test_backend_tmux_wrappers_with_fake_subprocess(monkeypatch, tmp_path):
 
     class CP:
         returncode = 0
-        stdout = "lt-a\nlt-b\nother\n"
+        stdout = ""
         stderr = ""
 
     def fake_run(args, capture_output=True, text=True, check=False):
         calls.append(list(args))
-        return CP()
+        cp = CP()
+        if args[1] == "list-sessions" and "\t" in args[-1]:
+            cp.stdout = (
+                "lt-run-a-one\trun-a\t111\n"
+                "lt-run-a-sibling\trun-a\t222\n"
+                "lt-run-a-spoof\trun-b\t222\n"
+                "lt-run-a-unowned\t\t\n"
+                "lt-run-b-one\trun-b\t222\n"
+                "other\t\t\n"
+            )
+        elif args[1] == "list-sessions":
+            cp.stdout = (
+                "lt-run-a-one\n"
+                "lt-run-a-sibling\n"
+                "lt-run-a-spoof\n"
+                "lt-run-a-unowned\n"
+                "lt-run-b-one\n"
+                "other\n"
+            )
+        elif args[1] == "list-panes":
+            cp.stdout = "claude\n"
+        elif args[1] == "capture-pane":
+            cp.stdout = "pane output\n"
+        return cp
 
     monkeypatch.setattr(backend_mod.shutil, "which", lambda _c: "/usr/bin/tmux")
     monkeypatch.setattr(backend_mod.subprocess, "run", fake_run)
 
-    backend_mod.new_session("lt-x", str(tmp_path))
+    backend_mod.new_session("lt-x", str(tmp_path), run_id="x", owner_pid=111)
     backend_mod.new_session(
-        "lt-direct", str(tmp_path),
+        "lt-direct", str(tmp_path), run_id="direct", owner_pid=111,
         command_argv=("printf", "%s", "safe; touch /tmp/not-created"),
+        environment_overrides={
+            "SYSTEM_SPEC_AUDIT_FORK_LEDGER": "/tmp/current ledger.jsonl",
+        },
     )
     backend_mod.send_line("lt-x", "hello")
     backend_mod.paste_text("lt-x", "task body\nwith newline")
-    assert backend_mod.capture_pane("lt-x", scrollback=True) == CP.stdout
+    assert backend_mod.capture_pane("lt-x", scrollback=True) == "pane output\n"
     assert backend_mod.has_session("lt-x")
-    assert backend_mod.pane_current_command("lt-x") == "lt-a"
-    assert backend_mod.reap("lt-") == ["lt-a", "lt-b"]
+    assert backend_mod.pane_current_command("lt-x") == "claude"
+    assert backend_mod.reap("run-a", 111) == ["lt-run-a-one"]
+    with pytest.raises(ValueError, match="run_id"):
+        backend_mod.reap()
+    with pytest.raises(ValueError, match="owner_pid"):
+        backend_mod.reap("run-a")
+    assert backend_mod.reap(all_sessions=True) == [
+        "lt-run-a-one",
+        "lt-run-a-sibling",
+        "lt-run-a-spoof",
+        "lt-run-a-unowned",
+        "lt-run-b-one",
+    ]
     kill_calls = [c for c in calls if c[:2] == ["tmux", "kill-session"]]
-    assert len(kill_calls) >= 3  # new_session 前掃除 + reap 2 件
+    assert len(kill_calls) >= 8  # new_session 前掃除 2 + scoped 1 + explicit all 5
+    option_calls = [c for c in calls if c[:2] == ["tmux", "set-option"]]
+    assert ["tmux", "set-option", "-t", "lt-x", "@lt_run_id", "x"] in option_calls
+    assert [
+        "tmux", "set-option", "-t", "lt-x", "@lt_owner_pid", "111"
+    ] in option_calls
     # paste は session/file 固有 named buffer を load → paste → delete する。
     flat = [c[1] for c in calls]
     assert {"load-buffer", "paste-buffer", "delete-buffer"} <= set(flat)
@@ -1251,16 +1733,53 @@ def test_backend_tmux_wrappers_with_fake_subprocess(monkeypatch, tmp_path):
     assert backend_mod.valid_buffer_name(load_call[3])
     assert len(load_call[3]) <= backend_mod._BUFFER_NAME_MAX
     direct = next(c for c in calls if c[1:5] == ["new-session", "-d", "-s", "lt-direct"])
+    env_index = direct.index("-e")
+    assert direct[env_index + 1] == (
+        "SYSTEM_SPEC_AUDIT_FORK_LEDGER=/tmp/current ledger.jsonl"
+    )
     assert direct[-1] == "printf %s 'safe; touch /tmp/not-created'"
     # CLI dispatch も同じ境界を通る
-    assert backend_mod.main(["new-session", "lt-y", str(tmp_path)]) == 0
+    assert backend_mod.main([
+        "new-session", "lt-y", str(tmp_path), "--run-id", "y"
+    ]) == 0
     assert backend_mod.main(["send-line", "lt-y", "hi"]) == 0
     assert backend_mod.main(["capture-pane", "lt-y", "--scrollback"]) == 0
     assert backend_mod.main(["has-session", "lt-y"]) == 0
     assert backend_mod.main(["kill-session", "lt-y"]) == 0
-    assert backend_mod.main(["reap"]) == 0
+    assert backend_mod.main([
+        "reap", "--run-id", "run-a", "--owner-pid", "111"
+    ]) == 0
     assert backend_mod.main(["require"]) == 0
     assert backend_mod.main(["kill-session", "../evil"]) == 2  # session 名検証は CLI 層でも効く
+
+
+def test_backend_reap_cli_requires_an_explicit_scope():
+    """引数なし reap が従来の lt-* 全 kill へ戻らないことを固定する。"""
+    with pytest.raises(SystemExit) as exc:
+        backend_mod.main(["reap"])
+    assert exc.value.code == 2
+    assert backend_mod.main(["reap", "--run-id", "../unsafe"]) == 2
+    assert backend_mod.main(["reap", "--run-id", "safe"]) == 2
+    assert backend_mod.main(["reap", "--all", "--owner-pid", "123"]) == 2
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"BAD-NAME": "value"}, "invalid environment override name"),
+        ({"SAFE_NAME": "line1\nline2"}, "invalid environment override value"),
+    ],
+)
+def test_backend_rejects_unsafe_environment_overrides(
+    monkeypatch, tmp_path, overrides, message
+):
+    monkeypatch.setattr(backend_mod, "require_tmux", lambda: None)
+    monkeypatch.setattr(backend_mod, "kill_session", lambda _session: True)
+    with pytest.raises(ValueError, match=message):
+        backend_mod.new_session(
+            "lt-env-guard", str(tmp_path), run_id="env-guard",
+            environment_overrides=overrides,
+        )
 
 
 def test_backend_cli_does_not_expose_arbitrary_direct_command(tmp_path):
@@ -1340,6 +1859,7 @@ def test_backend_real_tmux_eight_parallel_pastes_are_session_isolated(
                 session,
                 str(tmp_path),
                 command_argv=(sys.executable, "-u", "-c", receiver),
+                run_id="buffer-race",
             )
 
         def synchronized_tmux(*args, check=False):
@@ -1397,7 +1917,9 @@ def test_backend_real_tmux_direct_process_avoids_interactive_shell(tmp_path):
         f"import time; print('{marker}', flush=True); time.sleep(5)",
     )
     try:
-        backend_mod.new_session(session, str(tmp_path), command_argv=argv)
+        backend_mod.new_session(
+            session, str(tmp_path), command_argv=argv, run_id="direct-process"
+        )
         captured = ""
         for _ in range(40):
             captured = backend_mod.capture_pane(session)
@@ -1407,5 +1929,140 @@ def test_backend_real_tmux_direct_process_avoids_interactive_shell(tmp_path):
         assert marker in captured
         assert backend_mod.has_session(session)
         assert backend_mod.pane_current_command(session) not in {"", "zsh", "bash", "sh"}
+        ownership = {
+            name: (run_id, owner_pid)
+            for name, run_id, owner_pid in backend_mod.list_session_ownership()
+        }
+        assert ownership[session][0] == "direct-process"
+        assert ownership[session][1].isdecimal()
+        assert int(ownership[session][1]) > 0
     finally:
         backend_mod.kill_session(session)
+
+
+@pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux unavailable")
+def test_backend_real_tmux_session_environment_overrides_stale_global_value(
+    monkeypatch, tmp_path
+):
+    """session 固有値が隔離 tmux server の stale global 値を上書きする。"""
+    # macOS の Unix socket path 上限に収めつつ、通常利用中の tmux server と隔離する。
+    socket_root = tempfile.mkdtemp(prefix="lt-env-")
+    monkeypatch.delenv("TMUX", raising=False)
+    monkeypatch.setenv("TMUX_TMPDIR", socket_root)
+
+    env_name = "SYSTEM_SPEC_AUDIT_FORK_LEDGER"
+    stale_value = "/tmp/stale-global-ledger.jsonl"
+    current_value = "current value; 'quoted' $(not-executed)"
+    token = f"env-override-{os.getpid()}"
+    anchor = f"lt-{token}-anchor"
+    current_session = f"lt-{token}-current"
+    empty_session = f"lt-{token}-empty"
+    sleeper = (sys.executable, "-u", "-c", "import time; time.sleep(30)")
+
+    def env_reporter():
+        return (
+            sys.executable,
+            "-u",
+            "-c",
+            (
+                "import os,time; "
+                f"print('ENV='+repr(os.environ.get('{env_name}')), flush=True); "
+                "time.sleep(30)"
+            ),
+        )
+
+    try:
+        backend_mod.new_session(
+            anchor, str(tmp_path), command_argv=sleeper, run_id=token
+        )
+        socket_path = backend_mod._tmux(
+            "display-message", "-p", "#{socket_path}", check=True
+        ).stdout.strip()
+        assert os.path.commonpath(
+            (os.path.realpath(socket_root), os.path.realpath(socket_path))
+        ) == os.path.realpath(socket_root)
+        backend_mod._tmux(
+            "set-environment", "-g", env_name, stale_value, check=True
+        )
+        backend_mod.new_session(
+            current_session,
+            str(tmp_path),
+            command_argv=env_reporter(),
+            run_id=token,
+            environment_overrides={env_name: current_value},
+        )
+        backend_mod.new_session(
+            empty_session,
+            str(tmp_path),
+            command_argv=env_reporter(),
+            run_id=token,
+            environment_overrides={env_name: ""},
+        )
+
+        captures = {}
+        for session in (current_session, empty_session):
+            for _ in range(40):
+                captures[session] = backend_mod.capture_pane(session)
+                if "ENV=" in captures[session]:
+                    break
+                time.sleep(0.05)
+
+        assert f"ENV={current_value!r}" in captures[current_session]
+        assert "ENV=''" in captures[empty_session]
+        assert stale_value not in captures[current_session]
+        assert stale_value not in captures[empty_session]
+    finally:
+        backend_mod._tmux("set-environment", "-gu", env_name)
+        for session in (current_session, empty_session, anchor):
+            backend_mod.kill_session(session)
+        backend_mod._tmux("kill-server")
+        shutil.rmtree(socket_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux unavailable")
+def test_backend_real_tmux_reap_is_limited_to_its_owned_run(tmp_path):
+    """実 tmux でも別 run と metadata 無し session を巻き添えにしない。"""
+    token = f"reap-scope-{os.getpid()}"
+    owned_run = f"{token}-owned"
+    owned_session = f"lt-{owned_run}-worker"
+    other_session = f"lt-{owned_run}-sibling"
+    unowned_session = f"lt-{owned_run}-legacy"
+    argv = (
+        sys.executable,
+        "-u",
+        "-c",
+        "import time; time.sleep(30)",
+    )
+    try:
+        backend_mod.new_session(
+            owned_session,
+            str(tmp_path),
+            command_argv=argv,
+            run_id=owned_run,
+            owner_pid=111,
+        )
+        backend_mod.new_session(
+            other_session,
+            str(tmp_path),
+            command_argv=argv,
+            run_id=owned_run,
+            owner_pid=222,
+        )
+        backend_mod._tmux(
+            "new-session",
+            "-d",
+            "-s",
+            unowned_session,
+            "-c",
+            str(tmp_path),
+            backend_mod._direct_process_command(argv),
+            check=True,
+        )
+
+        assert backend_mod.reap(owned_run, 111) == [owned_session]
+        assert not backend_mod.has_session(owned_session)
+        assert backend_mod.has_session(other_session)
+        assert backend_mod.has_session(unowned_session)
+    finally:
+        for session in (owned_session, other_session, unowned_session):
+            backend_mod.kill_session(session)

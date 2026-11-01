@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "71603389-4f12-4ef1-9cd8-1b5b058a5e37",
+      "line": 580,
+      "prefix_bytes": 3630994,
+      "prefix_sha256": "4ada3c3e2aed6a4e603ad309edbc63bd764e916db54fdbf96d5853d9fa6e614c",
+      "timestamp": "2026-11-01T11:05:48.113Z"
+    },
+    "result": {
+      "uuid": "9fde06dc-c4b6-440b-b4e3-2591f6432a86",
+      "line": 583,
+      "prefix_bytes": 3634195,
+      "prefix_sha256": "8f6795e5c62c82db5db143a634f6c464ace2562516e9f0e6e0308ba859c99cb6",
+      "timestamp": "2026-11-01T11:05:51.584Z"
+    }
+  },
+  "tool_use_id": "toolu_01VnhGhcJUEx9g2nULQNHZKy",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --report \"$PWD/eval-log/system-spec-completeness-report.json\" --spec-dir \"$PWD/system-spec\" --fork-ledger \"$PWD/eval-log/system-spec-harness/audit-fork-ledger.jsonl\" --session 21d0dbf5-d111-4bba-a3fa-3f763f6be4ad | tail -20; echo \"exit=${pipestatus[1]}\"",
+    "description": "Re-run canonical completeness report validator"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\nexit=0",
+  "tool_use_result": {
+    "stdout": "OK: レポート形状・総合判定整合・独立 auditor 帰属の fork 証跡接地を満たす (verdict=PASS)\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

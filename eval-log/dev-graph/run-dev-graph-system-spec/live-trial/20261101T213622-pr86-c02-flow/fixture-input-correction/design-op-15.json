@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "frontend",
+  "concern_id": "application-architecture",
+  "text": "画面の状態は最小限のグローバルストア (qa-007) に置き、サーバから取った請求データはサーバを正としたキャッシュとして扱う。画面部品から API 呼び出しを分け、API の形の変化を 1 か所で受ける。\n\nqa-o1-fixture-v3への追加解釈: 既存の画面/API取得層の依存境界を請求漏れ一覧とjobs状態取得へ使う。担当者/経理リーダーが見るWeb内の件数・期限・不足明細・金額順・未解消/解消を状態として表現し、業務の判定や解消をクライアント独自に決めない。POSTの202受付と最終的なjob状態を区別し、外部通知や新しいグローバル状態管理基盤を追加しない。 concern=application-architectureの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T10:44:43.266344Z"
+}

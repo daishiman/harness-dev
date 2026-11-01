@@ -1,0 +1,42 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈の3論点を1問に束ねていた (N4)。置き換え先は qa-019 で、(a) 1論点の開いた中立な問、(b) JTBD の同論点 (残りは qa-016/020/021 で個別に問い直し)、(c) 回答・basis=user-decision・answered_at=2026-10-12T00:16:45Z あり (qa-009 に answered_at なし、superseded_at=00:16:46Z)。active consumer は 0 件。ui-ux の補助 qa_refs に残るのは spec-state-contract.md の supersede-qa 節が許可している。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。セッション保存先の選択と有効期限・ログアウトの扱いの独立2論点を1問に束ねていた。ただし別案・保留の道は示されていた。置き換え先は qa-session-written-v7 で、(a) 書面 source-index の中立な問、(b) セッション保存の同論点、(c) answer・basis=user-decision・answered_at=2026-11-01T13:47:28.672221Z あり (旧 2026-10-12T17:34:57Z より後)。書面の原文と SHA-256 は一致を確認した。確定セルの qa_ref / qa_refs と foundation 根拠のどちらにも旧 entry は残っていない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-037",
+      "supersession_valid": true,
+      "observation": "閉じた検出。問の文面に N1-N4 の違反は見当たらない。置き換え理由は basis 変更の根拠不足 (provenance) で、問の設計欠陥ではない。置き換え先は qa-csrf-written-v7 で、(a) 中立、(b) CSRF 防御の同論点、(c) answer・basis・answered_at=2026-11-01T13:47:28.671871Z あり (旧より後)。書面の原文と SHA-256 は一致した。active consumer は 0 件。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "O1 について定義・検知時期・提示先・計測データの4論点を名指しで並べて答えを求めており、N4 の束ねに当たる。確定セルの主たる qa_ref ではなく、database / ui-ux / backend / maintenance-ops の補助 qa_refs としてのみ参照されている。主たる接地根拠は別の問にあるため、1a により PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の9項目の要約を1問で一括承認させている。ただし『直すところを指摘する』『確定を保留する』の道は示されている。確定セルの qa_ref でも effective_source_refs でもなく、appr-foundation-v2 の承認の根拠である。U1-U9 の接地は qa-foundation-u1〜u9 が担うため、1a により PASS に残す注記。"
+    }
+  ]
+}

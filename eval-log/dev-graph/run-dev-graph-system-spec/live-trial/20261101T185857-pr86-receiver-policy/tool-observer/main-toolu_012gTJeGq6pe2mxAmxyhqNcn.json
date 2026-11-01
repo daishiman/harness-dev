@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c852983f-b408-4e5d-9e89-cfd321ce2146",
+      "line": 414,
+      "prefix_bytes": 2514895,
+      "prefix_sha256": "d5f403ad20f9b5ceb3250b986d68eae21e6ae844eaa6c98388605c9d7dcab751",
+      "timestamp": "2026-11-01T10:04:30.606Z"
+    },
+    "result": {
+      "uuid": "dc4804c0-f268-4a37-a126-91642e11b322",
+      "line": 422,
+      "prefix_bytes": 2520377,
+      "prefix_sha256": "4e7f6568a1d8c001fcbcf60baca92fc7a53d3da6de4a7d7fbb7cc529e061feed",
+      "timestamp": "2026-11-01T10:04:40.375Z"
+    }
+  },
+  "tool_use_id": "toolu_012gTJeGq6pe2mxAmxyhqNcn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets system-spec/spec-state.json --references system-spec/fetched-references.json --state system-spec/spec-state.json --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"source-citation exit=$?\"; python3 -c '\nimport json\ns=json.load(open(\"system-spec/spec-state.json\")); r=json.load(open(\"system-spec/fetched-references.json\"))\nprint(\"targets\", [t if isinstance(t,str) else t.get(\"target_id\") for t in s.get(\"targets\",[])])\nfor x in r[\"references\"]: print(x[\"target_id\"], x.get(\"version\") or x.get(\"last_updated\"), x.get(\"latest_checked_at\"), x[\"source_url\"])'",
+    "description": "Check source citation gate for doc-fetch need"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nsource-citation exit=0\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']\npostgres 16.15 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\nkubernetes 2026-05-13T21:32:47+01:00 2026-11-01T09:14:52.437427Z https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nsource-citation exit=0\ntargets ['postgres', 'react', 'fastapi', 'typescript', 'kubernetes']\npostgres 16.15 2026-10-31T14:45:20Z https://www.postgresql.org/docs/16/\nreact 19.3 2026-10-31T14:45:58Z https://react.dev/versions\nfastapi 0.162.0 2026-10-31T14:46:09Z https://fastapi.tiangolo.com/release-notes/\ntypescript 7.0 2026-10-31T14:46:21Z https://www.typescriptlang.org/download/\nkubernetes 2026-05-13T21:32:47+01:00 2026-11-01T09:14:52.437427Z https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

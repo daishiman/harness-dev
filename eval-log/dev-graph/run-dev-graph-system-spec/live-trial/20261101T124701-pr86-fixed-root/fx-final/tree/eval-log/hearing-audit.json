@@ -1,0 +1,33 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の選択(1)-(3)と、有効期限・ログアウトの扱いを「あわせて」で 1 問に束ねている。選択肢のほかに「どれも採らない・比較・保留」も示されており、誘導の程度は限定的。qa-038 は auth/web の qa_refs(裏付け)のみで、主たる qa_ref は qa-002。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約確認を 1 問で行っている。確定・指摘・保留の道があり、承認の問であって決定論点の束ねではない。答えを左右したとは読めない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈の 3 論点を名指しで束ねていた(N4)。置き換え先 qa-019 は 1 論点の開いた問で N1-N4 を満たす。同じ論点で、論点ごとに qa-016・020・021 へ分割されている。qa-019 には回答・basis: user-decision・answered_at がある。qa-009 は確定セルの主たる qa_ref ではなく、effective_source_refs にも無い。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "retired の qa-009 が qa_refs(裏付け)に残っている。主たる qa_ref は qa-003 で、同じ qa_refs に置き換え先 qa-019 もある。SSOT の active consumer 定義(qa_ref と effective_source_refs)には当たらないため high にはしない。C01 側で整理する余地がある。"
+    }
+  ]
+}

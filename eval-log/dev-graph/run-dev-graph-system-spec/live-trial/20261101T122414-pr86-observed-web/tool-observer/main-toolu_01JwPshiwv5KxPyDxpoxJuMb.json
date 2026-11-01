@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3bfddf84-7487-4ee1-a833-45ff2fc0ac64",
+      "line": 623,
+      "prefix_bytes": 2824470,
+      "prefix_sha256": "c0858a8c31be091a419cf0ba8d6b407a37bb6ffb2910d95ac2b615ff885e7afd",
+      "timestamp": "2026-11-01T03:39:15.201Z"
+    },
+    "result": {
+      "uuid": "bcdedd7b-388b-4a61-bf6c-ee860e3f447a",
+      "line": 624,
+      "prefix_bytes": 2825559,
+      "prefix_sha256": "cbab8cb8174860edca5e56e75c78bc85672e0b900037ed94ae23d681e69239dc",
+      "timestamp": "2026-11-01T03:39:17.535Z"
+    }
+  },
+  "tool_use_id": "toolu_01JwPshiwv5KxPyDxpoxJuMb",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json,hashlib,datetime,pathlib\nnow=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat()\nbase=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/eval-log\")\ndr=(base/\"run-dev-graph-node/dry-run.json\").read_bytes()\nev=[{\"event\":\"artifact_created\",\"at\":now(),\"path\":\"eval-log/run-dev-graph-node/dry-run.json\",\"sha256\":hashlib.sha256(dr).hexdigest()},\n {\"event\":\"minimum_guard_pass\",\"at\":now(),\"checks\":[\"json parse ok\",\"write_count 0 (dry-run)\",\"no secret\",\"containment c24 exit0\"]},\n {\"event\":\"artifact_presented\",\"at\":now(),\"open\":\"less eval-log/run-dev-graph-node/dry-run.json\"},\n {\"event\":\"user_choice_recorded\",\"at\":now(),\"choice\":\"standard\",\"source\":\"task.md pre-specified artifact_delivery=standard\"},\n {\"event\":\"semantic_evaluator_started\",\"at\":now()}]\n(base/\"run-dev-graph-node-artifact-delivery.json\").write_text(json.dumps({\"skill\":\"run-dev-graph-node\",\"events\":ev},ensure_ascii=False,indent=1),encoding='utf-8')\ngoal=\"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ\"\n(base/\"run-dev-graph-node-goal-spec.json\").write_text(json.dumps({\"skill\":\"run-dev-graph-node\",\"original_goal\":goal,\"original_goal_hash\":hashlib.sha256(goal.encode()).hexdigest(),\"created_at\":now(),\"c24_receipt\":\"eval-log/run-dev-graph-node/c24-receipt.json\",\"request\":\"import system-spec-harness confirmed specification+architecture\"},ensure_ascii=False,indent=1),encoding='utf-8')\nprint(\"ok\")\nPY\npython3 -c \"\nimport json,hashlib;g=json.load(open('.dev-graph/state/graph.json'));print(g['graph_revision'],'sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())\""
+  },
+  "is_error": false,
+  "tool_result_content": "ok\n0 sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+  "tool_use_result": {
+    "stdout": "ok\n0 sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

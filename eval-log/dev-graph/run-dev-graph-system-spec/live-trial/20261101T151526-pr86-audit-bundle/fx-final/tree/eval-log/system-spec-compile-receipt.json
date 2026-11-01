@@ -1,0 +1,12 @@
+{
+  "skill": "system-spec-harness:run-system-spec-compile",
+  "args": "--state /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/spec-state.json --references /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec/fetched-references.json --out-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/system-spec",
+  "prompts_read_in_full": ["prompts/R1-assemble.md", "prompts/R2-render.md", "prompts/R3-crosslink.md", "references/chapter-template.md"],
+  "in1_entry_gates": {"validate-coverage-matrix --require-complete": 0, "validate-source-citation": 0, "validate-design-knowledge-refs": 0},
+  "writer": "plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py compile --repo-root <fx>",
+  "compile_exit": 0,
+  "generated": 10,
+  "index_sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+  "artifact_delivery_record": "eval-log/compile-standard.json",
+  "out1_tests": {"files": ["tests/test_compile_spec_doc.py", "tests/test_compile_spec_doc_knowledge.py"], "result": "63 passed", "cwd": "scratch (isolated)", "caller_system_spec_unchanged": true, "evidence_use": "scratch results are not C05/C02 evidence"}
+}

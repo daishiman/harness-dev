@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ac2f05b79acd39713",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3688b0a5-a529-40b3-87b6-42d477335de5",
+      "line": 26,
+      "prefix_bytes": 293156,
+      "prefix_sha256": "cff1850fc2b080f340d74d876705eda3962a25a2d81b8675cbfc92da22bf8988",
+      "timestamp": "2026-11-01T07:48:08.520Z"
+    },
+    "result": {
+      "uuid": "8719a8f4-6ce7-485b-96b9-5bdf2c5000ce",
+      "line": 27,
+      "prefix_bytes": 294573,
+      "prefix_sha256": "c934553f4f6e653f9d1d64d6b9c1a4b5f2c626b18a863ee83b841005a992c3ef",
+      "timestamp": "2026-11-01T07:48:10.665Z"
+    }
+  },
+  "tool_use_id": "toolu_013yickqhXdzu73ybbjjRdBW",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx; python3 -I -c \"\nimport json;d=json.load(open('system-spec/spec-state.json'));print(json.dumps(d.get('targets'),ensure_ascii=False))\"\n"
+  },
+  "is_error": false,
+  "tool_result_content": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]",
+  "tool_use_result": {
+    "stdout": "[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a1a9cbe3c4f75f752",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c0ab2c9c-edf2-4fe3-8676-c5914cba9831",
+      "line": 125,
+      "prefix_bytes": 1135022,
+      "prefix_sha256": "d3ac7af09b3520d9cfeb45365fed76ddeb439e4165bcd2348421adc65923cd36",
+      "timestamp": "2026-11-01T14:31:19.790Z"
+    },
+    "result": {
+      "uuid": "52cd1910-651f-442e-8da5-ea6feb9f39c9",
+      "line": 126,
+      "prefix_bytes": 1138579,
+      "prefix_sha256": "55ed3f28690cea44f78a849efe878dfb2e1a35a37c2844e71de0ef97129bc7f2",
+      "timestamp": "2026-11-01T14:31:21.872Z"
+    }
+  },
+  "tool_use_id": "toolu_01RTo8JnB9HqrK5oH9rcGU2Q",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "FX=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx; python3 -c \"\nimport json\ns=json.load(open('$FX/system-spec/spec-state.json'))\nfor d in s['decisions']:\n  print(d.get('id'),d.get('status'),d.get('category'),d.get('selected') or d.get('selected_option') or d.get('choice'), [k for k in d][:20])\n  for o in d.get('options',[])[:4]: print('   ',o.get('id'),o.get('name') or o.get('label'), [e.get('target_id') or e.get('source_url') for e in (o.get('official_evidence') or o.get('evidence') or [])][:3] if isinstance(o.get('official_evidence') or o.get('evidence'),list) else '')\n\" 2>&1 | head -40"
+  },
+  "is_error": false,
+  "tool_result_content": "D1 confirmed database None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    pg15 PostgreSQL 15 (情報システム部が提供する版) \n    pg16 PostgreSQL 16 (情報システム部が提供する版) \nD2 confirmed frontend None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    server-templates FastAPI のテンプレート (Jinja2) でサーバ側が HTML を返す方式 \n    react-spa React + TypeScript の SPA \nD3 confirmed auth None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    bff-session バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式 \n    spa-pkce-memory SPA が PKCE 付きの認可コードフローでトークンを取り、ブラウザのメモリだけに置いて Authorization: Bearer で API へ送る方式 \nD4 confirmed backend None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    pg-worker-cron 既存PG outbox＋独立Python worker＋k8s CronJob \n    api-background-http 既存PG outbox＋API BackgroundTasks＋Cronの内部HTTP呼出し",
+  "tool_use_result": {
+    "stdout": "D1 confirmed database None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    pg15 PostgreSQL 15 (情報システム部が提供する版) \n    pg16 PostgreSQL 16 (情報システム部が提供する版) \nD2 confirmed frontend None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    server-templates FastAPI のテンプレート (Jinja2) でサーバ側が HTML を返す方式 \n    react-spa React + TypeScript の SPA \nD3 confirmed auth None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    bff-session バックエンド (FastAPI) がトークンを持ち、ブラウザには cookie のセッションだけを渡す方式 \n    spa-pkce-memory SPA が PKCE 付きの認可コードフローでトークンを取り、ブラウザのメモリだけに置いて Authorization: Bearer で API へ送る方式 \nD4 confirmed backend None ['id', 'category', 'question', 'status', 'serves_goals', 'options', 'recommendation', 'qa_ref', 'user_decision']\n    pg-worker-cron 既存PG outbox＋独立Python worker＋k8s CronJob \n    api-background-http 既存PG outbox＋API BackgroundTasks＋Cronの内部HTTP呼出し",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent fork (R0-context Verifier)",
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "inputs_verified": {
+    "c24_receipt": {"path": "eval-log/run-dev-graph-system-spec/c24-receipt.json", "sha256": "6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab", "sha_match": true},
+    "preflight_report": {"path": "eval-log/run-dev-graph-system-spec/preflight-report.json", "sha256": "7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8"},
+    "spec_state_sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+    "fetched_references_sha256": "471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594",
+    "graph_sha256": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177",
+    "preflight_input_digests_match_current": true
+  },
+  "recomputation": {
+    "resolve_repo_context_read": {"exit_code": 0, "differs_from_receipt_only_in": ["mode (read vs write)"], "repository_id": "local:sha256:2d5539fa5dd03192b16045326daade1249acf9a3724974a5b1a737a7719a507e", "git_common_dir": ".git (== git_dir, repo_root/.git)", "repo_root_equals_git_toplevel": true, "head_sha": "2de743c53b6e4caae97bb1f5023c7e42dcc906e0"},
+    "system_spec": {"is_symlink": false, "realpath_inside_repo_root": true, "symlinks_under_tree": 0, "files": 18},
+    "validate_source_lineage": {"exit_code": 0, "status": "pass", "checked": 0, "checked_node_ids": [], "violations": [], "graph_nodes": 0, "decision": "new_creation"}
+  },
+  "checklist": {
+    "R0_system_spec_realpath_in_caller_repo_repository_id_common_dir_match": "YES",
+    "R0_validate_source_lineage_exit0_checked_determines_new_or_resume": "YES",
+    "common_inputs_all_verified": "YES",
+    "common_output_shape_and_authority": "YES",
+    "common_zero_boundary_violating_read_write_delegation": "YES"
+  },
+  "notes": [
+    "Receipt separates repository identity (repository_id/git_common_dir/worktree_id), content roots, and code authority (plugin_source).",
+    "Main invocation passed --resume but lineage checked=0 uniquely yields new_creation per R0 Layer2; preflight decision=new_creation is consistent.",
+    "Observer main stream: all Read/Bash targets within repo root or the run workdir task.md; no system-spec reads outside root observed."
+  ],
+  "blockers": [],
+  "verdict": "PASS"
+}

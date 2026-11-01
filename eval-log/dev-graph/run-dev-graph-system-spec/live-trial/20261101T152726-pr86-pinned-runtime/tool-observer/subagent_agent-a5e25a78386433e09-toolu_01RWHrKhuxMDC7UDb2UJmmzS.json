@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a5e25a78386433e09",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "72b0495d-be00-4791-a920-61c1f4d959c0",
+      "line": 41,
+      "prefix_bytes": 272378,
+      "prefix_sha256": "23169b8530137204d30692a415c960142865af367fd8e73eb5fc35bc82e8a8a2",
+      "timestamp": "2026-11-01T15:30:16.744Z"
+    },
+    "result": {
+      "uuid": "80708de8-d426-4219-a775-2a048f5b084a",
+      "line": 42,
+      "prefix_bytes": 273443,
+      "prefix_sha256": "b1e6bb68280436b1bd29755838d32d8345f484f6395a4269612b5b9955bafbd0",
+      "timestamp": "2026-11-01T15:30:20.680Z"
+    }
+  },
+  "tool_use_id": "toolu_01RWHrKhuxMDC7UDb2UJmmzS",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -B -I -c \"\nimport json,os;p='.dev-graph/state/graph.json';print(os.path.exists(p))\nif os.path.exists(p):\n  g=json.load(open(p));print({k:(len(v) if isinstance(v,(list,dict)) else v) for k,v in g.items()})\"",
+    "description": "Check graph node count for consistency with checked=0"
+  },
+  "is_error": false,
+  "tool_result_content": "True\n{'graph_revision': 0, 'nodes': 0, 'schema_version': '1.0.0'}",
+  "tool_use_result": {
+    "stdout": "True\n{'graph_revision': 0, 'nodes': 0, 'schema_version': '1.0.0'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

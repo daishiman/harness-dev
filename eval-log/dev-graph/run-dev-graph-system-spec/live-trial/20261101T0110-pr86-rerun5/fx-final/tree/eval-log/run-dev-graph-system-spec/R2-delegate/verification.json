@@ -1,0 +1,52 @@
+{
+  "responsibility": "R2-delegate",
+  "loop": 2,
+  "verdict": "FAIL",
+  "verifier": "independent read-only verifier (no writer/compile/evaluator re-run)",
+  "inputs_checked": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec-c24-receipt.json",
+    "c24_receipt_sha256": "1571a5347455ca9b8173cf7f9e6bd43ed57fdbe1a3cfee6c810ddde52e9e0e1b",
+    "c24_receipt_sha256_match": true,
+    "repo_root_equals_content_roots_repository": true,
+    "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+    "original_goal_sha256_match": true,
+    "input_directive_matches_loop1_merged_directive_for_next": true,
+    "documents_read_in_full": [
+      "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
+      "plugins/dev-graph/references/prompt-common-layers.md",
+      "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md"
+    ],
+    "skill_md_sections_read": "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md (R2 step 3 and evaluator/prepare-evaluation contract, lines 100-101, 184, 191)"
+  },
+  "verified_facts": {
+    "elicit_resume": "choices/run-system-spec-elicit-standard.json: choice=standard, presented_before_choice=true, minimum_guard exits 0. spec-state.json sha256 3e8000f4... equals the fixture-provenance seed, and its mtime predates loop 2 (unchanged).",
+    "doc_fetch_decision": "Consistent. Doc-fetch SKILL trigger (a), unfetched refs before compile: all 4 targets have fetched-references and retrieval-evidence entries, byte-identical to the seed. Trigger (b): none, because there was no new hearing. Key Rule 6 assigns freshness to C08, and C08 resolved PASS (postgres 16.15 / react 19.3 / fastapi 0.162.0 / typescript 7.0 re-checked, stale 0).",
+    "compile": "The 10 chapter files in FX/system-spec were rewritten at mtime 1793470306.70-.73 (bytes equal the seed, deterministic). Order by mtime: compile-standard.json 1793470328.1 < compile-out1.json 1793470354.3 < hearing-audit 1793470607 < ledger 1793470658 < report 1793470745.5, so present -> record -> tests/Agent holds. The compile-standard artifact digests equal the current bytes.",
+    "out1_tests": "compile-out1.json reports 63 passed, exit 0. Under plugins/, no regular file, .pytest_cache, or __pycache__ is newer than the receipt. No unexpected FX file was modified.",
+    "prepare_evaluation_rerun": "exit 0. skill_args='--spec-dir <FX>/system-spec --output <FX>/eval-log/system-spec-completeness-report.json'. context_sha256 equals the receipt sha.",
+    "report": "verdict PASS. spec_dir equals the absolute FX/system-spec path with no label. All 6 aspects PASS, gaps []. The 12 artifact_snapshot digests equal the current bytes.",
+    "ledger": "C07/C06/C08 each have dispatch and completion records, verdict_state resolved, audit_verdict PASS. Each completion response_sha256 equals the matching report audit_delegations entry.",
+    "aggregate_completeness_rerun": "exit 0 (verdict=PASS, fork evidence grounded)",
+    "gates_rerun": {
+      "coverage --require-complete --require-basis --require-foundation": 0,
+      "source-citation --state --repo-root": 0,
+      "validate-graph-schema --strict-artifact-readiness (0 nodes)": 0
+    },
+    "cwd_drift_observed": "Empty harness dirs .claude/.cc-writes were created under plugins/system-spec-harness/skills/{,run-system-spec-elicit,run-system-spec-compile,run-system-spec-doc-fetch} and plugins/dev-graph, and the ledger cwd is plugins/dev-graph. So the session cwd did move into the delegate dirs. This is the case the fixed-root export/cd rule guards against."
+  },
+  "checklist": [
+    {"item": "正規Skill呼出しだけでcoverage/source/evaluator gate全PASSになる", "answer": "YES", "evidence": "3 gate re-runs exit 0. aggregate-completeness exit 0. Report verdict PASS. Ledger C07/C06/C08 resolved PASS. No hand-written driver or compiler artifacts found."},
+    {"item": "取込元を生成する本処理のBashごとに固定rootへの移動・照合をし、独立testの書込みは検証済みscratchだけである", "answer": "NO", "evidence": "The test-write half is consistent: no writes under plugins/ and no FX writes outside the expected files. The fixed-root half cannot be verified. No file records the compile or elicit-validator Bash command lines with the cd/pwd -P check. compile-standard.json compile_cli shows only placeholder <FX> absolute args. The session transcript is blocked by the isolation guard. cwd drift into the delegate skill dirs was observed."},
+    {"item": "elicit・doc-fetch・compile の手順にある Bash の呼出しで、毎回 CLAUDE_PROJECT_DIR に開始時の receipt の repo_root を export している", "answer": "NO", "evidence": "No eval-log file shows the export (grep for CLAUDE_PROJECT_DIR / pwd -P over eval-log: 0 hits). The parent's report does not claim it either."},
+    {"item": "evaluator の args は helper の成功出力の skill_args で、失敗時には起動していない", "answer": "YES", "evidence": "The helper re-run exits 0, and its skill_args spec_dir and output exactly equal report.spec_dir and the report path. The report mtime is after the ledger completions. No failed helper run is recorded. Args are inferred from the report and output path, because the transcript is unavailable."},
+    {"item": "evaluator の report の spec_dir が --spec-dir に渡したディレクトリ (取込元の章があるディレクトリ) に解決する", "answer": "YES", "evidence": "spec_dir=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec92/fx/system-spec equals receipt content_roots.system_spec. The artifact_snapshot digests equal the current chapter bytes."},
+    {"item": "出力を作った委譲先ごとに、その SKILL.md と責務 prompt を全文読んでいる", "answer": "NO", "evidence": "No file records which SKILL.md and prompt files of run-system-spec-compile, run-system-spec-elicit, and assign-system-spec-completeness-evaluator were read in full (for example, a read receipt with sha256). Cannot be verified from files."},
+    {"item": "[common] 宣言した入力が全て検証済みである", "answer": "YES", "evidence": "Checked: receipt sha and root identity, goal hash, loop 1 directive, preflight PASS, spec-state seed digest, and the doc-fetch need."},
+    {"item": "[common] 出力が宣言した shape と authority を満たす", "answer": "YES", "evidence": "The elicit, doc-fetch-decision, compile, and evaluator receipts are present. aggregate-completeness validated the report shape. The confirmed artifacts are digest-bound."},
+    {"item": "[common] 責務境界に反する read/write/delegation が0件である", "answer": "YES", "evidence": "plugins/ regular files are unchanged since the receipt. graph.json still has 0 nodes (revision 0). No FAIL output was imported. Only the expected eval-log/system-spec files are newer than the elicit choice, plus .dev-graph/tmp/authority-audit.json (a guard baseline). The empty .cc-writes dirs are harness markers, not agent writes."}
+  ],
+  "blockers": [
+    {"code": "fixed_root_export_unevidenced", "detail": "R2-delegate 5.3 items 2 and 3: there is no persisted evidence that each elicit-validator and compile Bash call began with the export CLAUDE_PROJECT_DIR=<receipt repo_root> && cd && pwd -P check. cwd drift into the plugin skill dirs was observed, so this cannot be presumed.", "remedy": "Record the exact Bash command lines used for the elicit validators and compile-spec-doc.py, with the export/cd/pwd -P prefix and exit codes, in an R2-delegate eval-log receipt. Re-run compile with the prefix if it was not used."},
+    {"code": "delegate_full_read_unevidenced", "detail": "R2-delegate 5.3 item 6: there is no record that the SKILL.md and responsibility prompts of run-system-spec-compile, run-system-spec-elicit, and assign-system-spec-completeness-evaluator were read in full before their outputs were produced.", "remedy": "Record a read manifest (path and sha256 of each SKILL.md and prompt read in full) for each delegate that produced output."}
+  ]
+}

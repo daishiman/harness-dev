@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-ad12b15abe6a152b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "eb09b355-b08a-4df4-9f1f-0635dac73428",
+      "line": 32,
+      "prefix_bytes": 212898,
+      "prefix_sha256": "3f03cae074bf40c2898c76dae14e87bfbb03f6496486245f8f441b2664cc2bbd",
+      "timestamp": "2026-11-01T02:52:36.643Z"
+    },
+    "result": {
+      "uuid": "7195e53a-1e1e-4d0d-b40c-e0bf951fa2d8",
+      "line": 33,
+      "prefix_bytes": 215613,
+      "prefix_sha256": "1c9300746f3fd35f7b058dcd8e2bb3af988d2c8c84f5d009cbaee624f02d731e",
+      "timestamp": "2026-11-01T02:52:40.255Z"
+    }
+  },
+  "tool_use_id": "toolu_01XLhygba1KxyKU4GJfaLfz7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx; ls -la system-spec/.claude system-spec/.claude/.cc-writes; python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$PWD\" --mode read > $TMPDIR/r0read.json; echo rc=$?; python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$PWD\"; echo rc=$?; python3 - <<'E'\nimport json,os\na=json.load(open(os.environ['TMPDIR']+'/r0read.json'));b=json.load(open('eval-log/run-dev-graph-system-spec/c24-receipt.json'))\nfor k in ['repository_id','git_common_dir','git_dir','repo_root','head_sha','worktree_id','content_roots','plugin_source','branch']:\n  print(k, a.get(k)==b.get(k), a.get(k) if a.get(k)!=b.get(k) else '')\nprint(a.get('mode'), a.get('diagnostics'), a.get('root_trust_evidence'))\nE\ncat .dev-graph/state/graph.json"
+  },
+  "is_error": false,
+  "tool_result_content": "system-spec/.claude:\ntotal 0\ndrwxr-xr-x@  3 dm  wheel   96 11月  1 08:27 .\ndrwxr-xr-x@ 16 dm  wheel  512 11月  1 08:27 ..\ndrwx------@  2 dm  wheel   64 11月  1 08:27 .cc-writes\n\nsystem-spec/.claude/.cc-writes:\ntotal 0\ndrwx------@ 2 dm  wheel  64 11月  1 08:27 .\ndrwxr-xr-x@ 3 dm  wheel  96 11月  1 08:27 ..\nrc=0\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nrepository_id True \ngit_common_dir True \ngit_dir True \nrepo_root True \nhead_sha True \nworktree_id True \ncontent_roots True \nplugin_source True \nbranch True \nread ['default_branch_fallback_main'] {'claude_project_dir_verified': True, 'git_common_dir_ownership_verified': True, 'git_toplevel_verified': True, 'selected_by': 'explicit --repo-root'}\n{\n  \"graph_revision\": 0,\n  \"nodes\": [],\n  \"schema_version\": \"1.0.0\"\n}",
+  "tool_use_result": {
+    "stdout": "system-spec/.claude:\ntotal 0\ndrwxr-xr-x@  3 dm  wheel   96 11月  1 08:27 .\ndrwxr-xr-x@ 16 dm  wheel  512 11月  1 08:27 ..\ndrwx------@  2 dm  wheel   64 11月  1 08:27 .cc-writes\n\nsystem-spec/.claude/.cc-writes:\ntotal 0\ndrwx------@ 2 dm  wheel  64 11月  1 08:27 .\ndrwxr-xr-x@ 3 dm  wheel  96 11月  1 08:27 ..\nrc=0\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nrc=0\nrepository_id True \ngit_common_dir True \ngit_dir True \nrepo_root True \nhead_sha True \nworktree_id True \ncontent_roots True \nplugin_source True \nbranch True \nread ['default_branch_fallback_main'] {'claude_project_dir_verified': True, 'git_common_dir_ownership_verified': True, 'git_toplevel_verified': True, 'selected_by': 'explicit --repo-root'}\n{\n  \"graph_revision\": 0,\n  \"nodes\": [],\n  \"schema_version\": \"1.0.0\"\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

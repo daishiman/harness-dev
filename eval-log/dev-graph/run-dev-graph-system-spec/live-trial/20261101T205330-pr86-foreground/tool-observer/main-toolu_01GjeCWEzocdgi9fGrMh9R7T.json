@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b34ea82d-7a60-488f-aa7b-53edbbe52794",
+      "line": 481,
+      "prefix_bytes": 2589373,
+      "prefix_sha256": "f2dcc3c95774f5e89bafb18cfa7127964a90860385f0ef3cd59425c6c4d3a0ad",
+      "timestamp": "2026-11-01T12:19:57.791Z"
+    },
+    "result": {
+      "uuid": "9556b3eb-a197-44d5-8f3d-95c2f5589b25",
+      "line": 482,
+      "prefix_bytes": 2598976,
+      "prefix_sha256": "8d026ba6c0daaedf8dc9cac44525383862215cd2feee3a5f124650e7c3bca242",
+      "timestamp": "2026-11-01T12:19:58.042Z"
+    }
+  },
+  "tool_use_id": "toolu_01GjeCWEzocdgi9fGrMh9R7T",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Prompt: R2-preview\n2\t\n3\t> 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n4\t\n5\t## Layer 1: 基本定義層\n6\t\n7\t- `responsibility_id`: `R2-preview`\n8\t- `skill`: `run-dev-graph-node`\n9\t- 不変目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n10\t- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n11\t\n12\t## Layer 2: ドメイン層\n13\t\n14\t### 入力契約\n15\t\n16\t- R1候補、confidence/margin閾値、任意user decision。分類を伴わない `bind-github` は R1 候補を持たず、代わりに切り替え対象の確定済み issue/task の `bindings[]` (`graph_node_id` と任意の `publication_mode`) を受け取る。`link-github` も分類を伴わず、`links[]` (`graph_node_id` と任意の `issue_linkage`・`github_project_linkages`) を受け取る。\n17\t\n18\t### 出力契約\n19\t\n20\t- 自動確定または明示確認済みkind/domain/project/path decision receipt。分類を伴わない `bind-github`/`link-github` は decision receipt を作らず、`graph_node_id` と preview の `graph_revision_before` だけを返す。\n21\t\n22\t### 責務境界\n23\t\n24\t- 閾値達成時は質問せず未達時だけAskUserQuestionを使い任意pathを要求しない。\n25\t- preview は `build-graph-node.py add|update|bind-github|link-github --dry-run` だけで作り、write 0 とする。`bind-github` は確定済みの既存 issue/task の binding を切り替えるだけなので kind/domain/project/path を分類せず、preview の `graph_revision_before` だけを R3 へ渡す。\n26\t\n27\t### 受入条件\n28\t\n29\t- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。\n30\t\n31\t## Layer 3: インフラ層\n32\t\n33\t- 使用資産: AskUserQuestionとRead、`build-graph-node.py add|update|bind-github|link-github --dry-run` (preview)。\n34\t- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n35\t\n36\t## Layer 4: 共通ポリシー層\n37\t\n38\t- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n39\t\n40\t## Layer 5: エージェント層 (l5-contract v2.0.0)\n41\t\n42\t- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n43\t\n44\t### 5.1 担当 agent\n45\t\n46\t- `run-dev-graph-node/R2-preview`\n47\t\n48\t### 5.2 ゴール定義\n49\t\n50\t- 目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n51\t- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receipt (`bind-github`/`link-github` では `graph_node_id` と `graph_revision_before`) が生成され、受入条件を満たした状態になっている。\n52\t\n53\t### 5.3 完了チェックリスト (ゴール到達の停止条件)\n54\t\n55\t- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する\n56\t\n57\t## Layer 6: オーケストレーション層\n58\t\n59\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n60\t- decisionをR3/R4へ渡す。\n61\t\n62\t## Layer 7: UserInput\n63\t\n64\t- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n65\t\n66\t## 出力指示\n67\t\n68\tLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n69\t\n70\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md",
+      "content": "# Prompt: R2-preview\n\n> 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n\n## Layer 1: 基本定義層\n\n- `responsibility_id`: `R2-preview`\n- `skill`: `run-dev-graph-node`\n- 不変目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。\n\n## Layer 2: ドメイン層\n\n### 入力契約\n\n- R1候補、confidence/margin閾値、任意user decision。分類を伴わない `bind-github` は R1 候補を持たず、代わりに切り替え対象の確定済み issue/task の `bindings[]` (`graph_node_id` と任意の `publication_mode`) を受け取る。`link-github` も分類を伴わず、`links[]` (`graph_node_id` と任意の `issue_linkage`・`github_project_linkages`) を受け取る。\n\n### 出力契約\n\n- 自動確定または明示確認済みkind/domain/project/path decision receipt。分類を伴わない `bind-github`/`link-github` は decision receipt を作らず、`graph_node_id` と preview の `graph_revision_before` だけを返す。\n\n### 責務境界\n\n- 閾値達成時は質問せず未達時だけAskUserQuestionを使い任意pathを要求しない。\n- preview は `build-graph-node.py add|update|bind-github|link-github --dry-run` だけで作り、write 0 とする。`bind-github` は確定済みの既存 issue/task の binding を切り替えるだけなので kind/domain/project/path を分類せず、preview の `graph_revision_before` だけを R3 へ渡す。\n\n### 受入条件\n\n- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。\n\n## Layer 3: インフラ層\n\n- 使用資産: AskUserQuestionとRead、`build-graph-node.py add|update|bind-github|link-github --dry-run` (preview)。\n- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。\n\n## Layer 4: 共通ポリシー層\n\n- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。\n\n## Layer 5: エージェント層 (l5-contract v2.0.0)\n\n- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。\n\n### 5.1 担当 agent\n\n- `run-dev-graph-node/R2-preview`\n\n### 5.2 ゴール定義\n\n- 目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する\n- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receipt (`bind-github`/`link-github` では `graph_node_id` と `graph_revision_before`) が生成され、受入条件を満たした状態になっている。\n\n### 5.3 完了チェックリスト (ゴール到達の停止条件)\n\n- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する\n\n## Layer 6: オーケストレーション層\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。\n- decisionをR3/R4へ渡す。\n\n## Layer 7: UserInput\n\n- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。\n\n## 出力指示\n\nLayer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。\n\n",
+      "numLines": 70,
+      "startLine": 1,
+      "totalLines": 70
+    }
+  }
+}

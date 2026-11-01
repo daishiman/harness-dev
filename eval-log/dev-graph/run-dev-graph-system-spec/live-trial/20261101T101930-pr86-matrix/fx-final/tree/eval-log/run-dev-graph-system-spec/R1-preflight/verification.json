@@ -1,0 +1,112 @@
+{
+  "responsibility_id": "R1-preflight",
+  "verifier": "independent Agent (read-only)",
+  "c24_receipt": {
+    "path": "eval-log/c24-receipt.json",
+    "sha256": "c3ee3705170e6d921bbfcb7a7d5abf9310aff32791a87fa4c5ace72361a77980",
+    "sha256_match": true
+  },
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "prompt_read": [
+    {
+      "path": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R1-preflight.md",
+      "sha256": "d05b4acfcdea5afec086e0a7869d327be3c4dc79d45ae2408245a8202d5a348a"
+    },
+    {
+      "path": "plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea"
+    },
+    {
+      "path": "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md",
+      "section": "手順 2"
+    }
+  ],
+  "checks": [
+    {
+      "id": "manifest_name",
+      "observed": "system-spec-harness",
+      "result": "PASS"
+    },
+    {
+      "id": "manifest_version_in_range",
+      "observed": "0.1.25",
+      "range": ">=0.1.22 <1.0.0",
+      "range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+      "result": "PASS"
+    },
+    {
+      "id": "manifest_sha256",
+      "observed": "94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b",
+      "matches_report": true,
+      "result": "PASS"
+    },
+    {
+      "id": "manifest_no_harness_specific_keys",
+      "observed_keys": [
+        "name",
+        "version",
+        "dependencies",
+        "description",
+        "author"
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "package_contract_entry_points",
+      "observed": [
+        "assign-system-spec-completeness-evaluator",
+        "ref-system-design-knowledge",
+        "run-skill-feedback",
+        "run-system-spec-compile",
+        "run-system-spec-doc-fetch",
+        "run-system-spec-elicit"
+      ],
+      "required_4_present": true,
+      "result": "PASS"
+    },
+    {
+      "id": "required_skill_md_exist",
+      "paths": [
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md",
+        "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+        "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md",
+        "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md"
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "preflight_report_R1_matches_observation",
+      "path": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+      "fields": [
+        "name",
+        "version",
+        "range",
+        "range_source",
+        "in_range",
+        "plugin_json_sha256",
+        "entry_points.*",
+        "all_entry_points_present"
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "no_fallback_or_duplicate_logic_in_dev_graph",
+      "method": "grep plugins/dev-graph for compile-spec-doc|apply-spec-transition|spec-state|coverage-matrix|fetched-references|elicit (non-md) + listing scripts",
+      "observed": "hits only in plugin-composition.yaml (dependency declaration), test fixture, register-package.py (system-dev-planner agent name); build-evaluation-context.py is receipt/args helper only; build-project-hook-fallback.py is C01 hook merge, unrelated",
+      "result": "PASS"
+    },
+    {
+      "id": "external_plugin_unmodified",
+      "observed": "git status --porcelain plugins/ empty",
+      "result": "PASS"
+    }
+  ],
+  "checklist": {
+    "R1_5.3: version が plugin-composition.yaml の範囲に入り、かつ elicit/doc-fetch/compile/evaluator 実在になる": "YES",
+    "common_5.3: 宣言した入力が全て検証済みである": "YES",
+    "common_5.3: 出力が宣言した shape と authority を満たす": "YES",
+    "common_5.3: 責務境界に反する read/write/delegation が0件である": "YES"
+  },
+  "verdict": "PASS",
+  "blockers": []
+}

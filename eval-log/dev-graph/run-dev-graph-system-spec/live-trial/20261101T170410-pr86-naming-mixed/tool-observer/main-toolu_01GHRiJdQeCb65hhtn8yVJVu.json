@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "accfdeb4-9a66-4246-b172-b26883733b9f",
+      "line": 99,
+      "prefix_bytes": 504878,
+      "prefix_sha256": "604ebc961d3a2ab281647a385a6580305892f459e0f0aabd23dafb8ccc925de7",
+      "timestamp": "2026-11-01T08:05:09.137Z"
+    },
+    "result": {
+      "uuid": "1373c412-d1ce-4477-8ffa-5ab99e382ae3",
+      "line": 102,
+      "prefix_bytes": 508569,
+      "prefix_sha256": "40676dc14a5255ca10d3a54a66bd1b6cfb08a02474ecc69aa7eb64c4cf6a0761",
+      "timestamp": "2026-11-01T08:05:12.878Z"
+    }
+  },
+  "tool_use_id": "toolu_01GHRiJdQeCb65hhtn8yVJVu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\"; echo exit=$?; python3 -c 'import os;p=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec\";print(os.path.realpath(p), os.path.islink(p))'; find system-spec -type l; git rev-parse --git-common-dir --show-toplevel"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec False\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nexit=0\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/system-spec False\n.git\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

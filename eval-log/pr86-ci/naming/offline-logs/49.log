@@ -1,0 +1,34 @@
+usage error: --all は単一 inventory 位置引数と併用不可 (併存: ['some-inv.json'])。sweep か単一照合のどちらかを指定する。
+{
+  "ok": false,
+  "gated_ok": [
+    "plugin-plans/built-ok/component-inventory.json"
+  ],
+  "gated_failures": [
+    {
+      "inventory": "plugin-plans/built-gap/component-inventory.json",
+      "missing_components": [
+        "C2 (sub-agent): plugins/built-gap/agents/z.md — ファイル不在"
+      ],
+      "missing_surfaces": []
+    },
+    {
+      "inventory": "plugin-plans/malformed/component-inventory.json",
+      "missing_components": [
+        "build_target が 1 つも plugins/<plugin>/... 形式でない (malformed inventory)"
+      ],
+      "missing_surfaces": []
+    }
+  ],
+  "skipped": [
+    "plugin-plans/not-built/component-inventory.json — 未 build (対象 plugin 不在。build 実行時に自動 gate 化)",
+    "plugin-plans/planned-doc/component-inventory.json — build_status=planned (未 build の計画ドキュメント。build 実行時に build_status を realized へ更新すると gate 化)"
+  ]
+}
+{
+  "ok": true,
+  "gated_ok": [],
+  "gated_failures": [],
+  "skipped": []
+}
+OK: validate-plan-coverage self-test (8 groups)

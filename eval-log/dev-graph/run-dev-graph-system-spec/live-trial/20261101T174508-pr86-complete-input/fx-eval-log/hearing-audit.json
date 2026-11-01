@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {"axis": "leading-question", "severity": "medium", "qa_id": "qa-009", "criteria": ["N4"], "supersession_valid": true, "observation": "JTBD・対象ユーザー・利用文脈の3論点を束ねた問。qa-019(中立な開いた1論点・同一JTBD・user-decision・answered_at 2026-10-12T00:16:45Z)で有効に置き換え済み。ui-ux/web の qa_refs に残るだけで、主たる qa_ref は qa-003。閉じた検出。"},
+    {"axis": "leading-question", "severity": "medium", "qa_id": "qa-o1-fixture-v3", "criteria": ["N4"], "supersession_valid": false, "observation": "定義・検知時期・提示先・計測データの4論点を名指しで束ねた開いた問。置き換えなし。主たる qa_ref とするセルはなく、qa_refs(database/web, ui-ux/web, backend/web, maintenance-ops/web)のみ。PASSに残す注記。"},
+    {"axis": "leading-question", "severity": "medium", "qa_id": "qa-038", "criteria": ["N4"], "supersession_valid": false, "observation": "セッション保存先の選択と有効期限・ログアウトの扱いを1問に束ねている。選択肢と保留の道はある。auth/web では qa_refs のみで、主たる qa_ref は qa-002。PASSに残す注記。"},
+    {"axis": "traceability", "severity": "info", "cell": "ui-ux/web", "observation": "確定セルの主たる qa_ref=qa-003 は実在する。qa_refs に置き換え済み(retired)の qa-009 が残る。R6 SSOT の active consumer は qa_ref と effective_source_refs で qa_refs を含まないため high にしない。qa_refs の整理を推奨。"},
+    {"axis": "premature-stop", "severity": "info", "field": "hearing_progress", "observation": "loop_count=2 は max_loops=2 に到達しているが、未収集セル 0、complete=true、next_question=null で、未収集を完了扱いにしていない。(a)(b)とも検出なし。"},
+    {"axis": "foundation-trace", "severity": "info", "u_item": "U9", "observation": "schema 1.0 のため canonical qa-foundation-u1〜u9 へ fallback して照合。全 U が user-dialogue の逐語連結に遡れ、approval_ref=appr-foundation-v2 は実在し、U1/U2/U3 は値。U9 の連結に含まれる qa-001 の PostgreSQL 15 は corrections で凍結済みで、正本は qa-031/D1(16)。"}
+  ]
+}

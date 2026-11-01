@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a3dc2d1f8ded24a0f",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "793cbd7a-df91-48e1-b962-c47791f8617e",
+      "line": 34,
+      "prefix_bytes": 528128,
+      "prefix_sha256": "65dcc4f39af40856dcdcbe2a5dd341ec679d1846d98c16173c2fe156497d2125",
+      "timestamp": "2026-11-01T14:20:37.054Z"
+    },
+    "result": {
+      "uuid": "df7df18d-4ea7-4933-8010-18bd8defa8eb",
+      "line": 40,
+      "prefix_bytes": 541325,
+      "prefix_sha256": "42fda391d5382f7180989da05c32074b828be9c5c7e0eba8bd733f9b238cf155",
+      "timestamp": "2026-11-01T14:20:48.598Z"
+    }
+  },
+  "tool_use_id": "toolu_01NqKWX2aEZy4SD5KDENeR98",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 plugins/system-spec-harness/scripts/validate-source-citation.py --targets /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json --references /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/fetched-references.json --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx; echo \"exit=$?\"; python3 -I -c \"import json;d=json.load(open('/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec/spec-state.json'));print(json.dumps(d.get('targets'),ensure_ascii=False))\""
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}, {\"target_id\": \"kubernetes\", \"category\": \"infrastructure\", \"also_categories\": [\"backend\", \"maintenance-ops\"]}]",
+  "tool_use_result": {
+    "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\nexit=0\n[{\"target_id\": \"postgres\", \"category\": \"database\"}, {\"target_id\": \"react\", \"category\": \"frontend\"}, {\"target_id\": \"fastapi\", \"category\": \"backend\", \"also_categories\": [\"frontend\"]}, {\"target_id\": \"typescript\", \"category\": \"frontend\"}, {\"target_id\": \"kubernetes\", \"category\": \"infrastructure\", \"also_categories\": [\"backend\", \"maintenance-ops\"]}]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

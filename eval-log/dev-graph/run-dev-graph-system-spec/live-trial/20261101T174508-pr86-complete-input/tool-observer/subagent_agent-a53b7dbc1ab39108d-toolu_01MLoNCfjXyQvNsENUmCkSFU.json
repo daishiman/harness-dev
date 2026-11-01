@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-a53b7dbc1ab39108d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d9f07f00-014d-4a37-acec-123b0388e0a4",
+      "line": 18,
+      "prefix_bytes": 167638,
+      "prefix_sha256": "452e3bb4fe534d2d315d02790c5ebf8cd908bff01c989254a69b0f48e30442e5",
+      "timestamp": "2026-11-01T08:56:01.566Z"
+    },
+    "result": {
+      "uuid": "cae56fcd-be3e-40d4-9c36-3d3731d42774",
+      "line": 19,
+      "prefix_bytes": 171128,
+      "prefix_sha256": "a4ec2930b1d500ec0d45d6646def3971ca8a9de35e15b737758fa8681c3d21f8",
+      "timestamp": "2026-11-01T08:56:04.861Z"
+    }
+  },
+  "tool_use_id": "toolu_01MLoNCfjXyQvNsENUmCkSFU",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "PLUGIN_ROOT=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/plugins/system-spec-harness; echo \"PROJ=$CLAUDE_PROJECT_DIR\"; python3 \"$PLUGIN_ROOT/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py\" --repo-root \"$PWD\" --print-artifact-snapshot > $TMPDIR/snapshot.json; echo \"exit=$?\"; cat $TMPDIR/snapshot.json; echo; find system-spec eval-log -type f | head -50; ls $PLUGIN_ROOT/skills/assign-system-spec-completeness-evaluator/prompts",
+    "description": "Capture artifact snapshot and list inputs"
+  },
+  "is_error": false,
+  "tool_result_content": "PROJ=\nexit=0\n{\n  \"schema_version\": \"system-spec-artifact-snapshot/v1\",\n  \"artifacts\": {\n    \"system-spec/00-requirements-definition.md\": \"6a5f58b008f16a4351a66e64ef7b1eb439908821565078c01d8115f53ac22bc8\",\n    \"system-spec/auth.md\": \"6573d094d9726dfde44360844cff989683cd850f90ae916ab7c7c06b9869a279\",\n    \"system-spec/backend.md\": \"f594638926f35eaf7a79b3eef7c041b48eaf20c47ebce9022d602fcf55ba630b\",\n    \"system-spec/database.md\": \"5d8450dae4cf05751f8df3cced904a4486015e798a690227f6891b02ea3cfaaf\",\n    \"system-spec/fetched-references.json\": \"aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729\",\n    \"system-spec/frontend.md\": \"775e43ee060278c62f2a4bf8e39d4a615d0ae5e482a224362334a513aac7e7e8\",\n    \"system-spec/index.md\": \"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2\",\n    \"system-spec/infrastructure.md\": \"15aa694fa7cafff5dd0fb3dc8317626243fd8d1124bd1287e8131da07e02c87d\",\n    \"system-spec/maintenance-ops.md\": \"210274b4ccd5ceb5943202fc7469a208233fe5f56ea43db9da61ef472bdba637\",\n    \"system-spec/security.md\": \"b4aa4fad07174b8a0a90a05d5ed56b49f4eee9e16cb9c9c80bfa900d339e6347\",\n    \"system-spec/spec-state.json\": \"cf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f\",\n    \"system-spec/ui-ux.md\": \"26d5f3d23cdb22518ab75cd301add618ce56d7f0dbaf4f055f975eec6ffe3e82\"\n  }\n}\n\nsystem-spec/00-requirements-definition.md\nsystem-spec/maintenance-ops.md\nsystem-spec/fetched-references.json\nsystem-spec/backend.md\nsystem-spec/index.md\nsystem-spec/auth.md\nsystem-spec/ui-ux.md\nsystem-spec/frontend.md\nsystem-spec/spec-state.json\nsystem-spec/infrastructure.md\nsystem-spec/security.md\nsystem-spec/database.md\neval-log/run-dev-graph-system-spec-progress.json\neval-log/run-dev-graph-system-spec-goal-spec.json\neval-log/run-dev-graph-system-spec-intermediate.jsonl\nsystem-spec/retrieval-evidence/react.json\nsystem-spec/retrieval-evidence/postgres.json\nsystem-spec/retrieval-evidence/fastapi.json\nsystem-spec/retrieval-evidence/typescript.json\neval-log/run-dev-graph-system-spec/artifact-delivery-standard.json\neval-log/run-dev-graph-system-spec/preflight-report.json\neval-log/run-dev-graph-system-spec/c24-receipt.json\neval-log/run-dev-graph-system-spec/R2-delegate/doc-fetch-receipt.json\neval-log/run-dev-graph-system-spec/R2-delegate/compile-out1-tests.json\neval-log/run-dev-graph-system-spec/R2-delegate/compile-standard.json\neval-log/run-dev-graph-system-spec/R2-delegate/elicit-receipt.json\neval-log/run-dev-graph-system-spec/R0-context/verification.json\neval-log/run-dev-graph-system-spec/R1-preflight/verification.json\nR1-score.md\nR2-delegate.md",
+  "tool_use_result": null
+}

@@ -1,0 +1,18 @@
+{
+  "rule": "BD-004",
+  "judge": "review_c19_name 独立LLM、human判定ではない",
+  "passed": true,
+  "target_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049",
+  "trigger_mapping": [
+    {
+      "trigger": "正規フローで仕様を作りたいとき",
+      "loc": "SKILL.md:98-101; prompts/R2-delegate.md",
+      "assessment": "4 entry point検査後にelicit/doc-fetch/compile/evaluatorへ委譲する。renameはhelper呼出先だけを更新し、生成ロジックの所有を変更しない。"
+    },
+    {
+      "trigger": "source lineage付きで取り込みたいとき",
+      "loc": "SKILL.md:102; prompts/R3-import.md",
+      "assessment": "confirmed章とevaluator PASSだけをC02へ渡す。R3はbaselineから未変更。"
+    }
+  ]
+}

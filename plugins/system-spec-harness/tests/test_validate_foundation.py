@@ -22,6 +22,8 @@ C12 検証は一切変更しない (本ファイルは foundation 検証の新�
 from __future__ import annotations
 
 import importlib.util
+import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -63,12 +65,32 @@ def _valid_foundation() -> dict:
         "concrete_intents": [{"id": "I1", "text": "日次バックアップ", "serves": ["G1"]}],
         "confirmed": True,
         "approval_ref": "appr-foundation",
+        "effective_source_refs": {
+            f"U{number}": {
+                "qa_ref": f"qa-foundation-u{number}",
+                "approval_ref": "appr-foundation",
+            }
+            for number in range(1, 10)
+        },
     }
+
+
+def _foundation_source_indexes() -> list[dict]:
+    return [
+        {
+            "id": f"qa-foundation-u{number}",
+            "question": f"利用者との対話で U{number} は何か",
+            "answer": f"利用者が回答した U{number} の原文",
+            "source": {"kind": "user-dialogue"},
+        }
+        for number in range(1, 10)
+    ]
 
 
 def _valid_state() -> dict:
     """全確定セルが serves_goals で実在 goal へトレースされ、上位概念 U1-U5 が非空の状態。"""
     return {
+        "schema_version": "1.1",
         "matrix": {
             "database": {
                 "web": {"state": "確定", "qa_ref": "q", "serves_goals": ["G1"]},
@@ -78,6 +100,7 @@ def _valid_state() -> dict:
                 "web": {"state": "確定", "qa_ref": "q", "serves_goals": ["G2", "G1"]},
             },
         },
+        "qa_log": _foundation_source_indexes(),
         "approval_log": [{"id": "appr-foundation", "note": "上位概念をユーザーと合意した"}],
         "requirements_foundation": _valid_foundation(),
         "decisions": [],
@@ -87,6 +110,141 @@ def _valid_state() -> dict:
 # ── validate_foundation() 正例 ─────────────────────────────────────────────
 def test_foundation_valid():
     assert c12.validate_foundation(_valid_state()) == []
+
+
+def test_foundation_source_index_is_required_per_u():
+    d = _valid_state()
+    d["qa_log"] = d["qa_log"][:-1]
+    assert any("U9 effective source-index" in f for f in c12.validate_foundation(d))
+
+
+def test_current_confirmed_foundation_requires_effective_source_refs():
+    d = _valid_state()
+    del d["requirements_foundation"]["effective_source_refs"]
+    assert any("effective_source_refs" in f for f in c12.validate_foundation(d))
+
+
+def test_exact_legacy_state_may_fall_back_to_canonical_source_indexes():
+    d = _valid_state()
+    d["schema_version"] = "1.0"
+    del d["requirements_foundation"]["effective_source_refs"]
+    assert c12.validate_foundation(d) == []
+
+
+def test_effective_source_rejects_dangling_and_non_primary_refs():
+    dangling = _valid_state()
+    dangling["requirements_foundation"]["effective_source_refs"]["U1"]["qa_ref"] = "qa-missing"
+    assert any("qa_log に不在" in f for f in c12.validate_foundation(dangling))
+
+    non_primary = _valid_state()
+    non_primary["qa_log"][0]["source"] = {
+        "kind": "harness-remediation",
+        "trigger": "review",
+    }
+    assert any("source.kind" in f for f in c12.validate_foundation(non_primary))
+
+
+def test_effective_source_rejects_superseded_qa():
+    d = _valid_state()
+    d["qa_log"][0]["superseded_by"] = d["qa_log"][-1]["id"]
+    assert any("retired" in f for f in c12.validate_foundation(d))
+
+
+def test_effective_source_rejects_qa_that_does_not_identify_the_bound_u():
+    """presenceだけでなく、各bindingのQA本文が対象Uを明示することを要求する。"""
+    d = _valid_state()
+    u1_binding = copy.deepcopy(
+        d["requirements_foundation"]["effective_source_refs"]["U1"]
+    )
+    d["requirements_foundation"]["effective_source_refs"] = {
+        f"U{number}": copy.deepcopy(u1_binding)
+        for number in range(1, 10)
+    }
+
+    findings = c12.validate_foundation(d)
+    assert any("U2 effective source-index" in finding and "示す" in finding for finding in findings)
+
+
+def _shared_u3_u4_state() -> dict:
+    """Return an explicit two-U binding with independently readable answer clauses."""
+    d = _valid_state()
+    evidence = {
+        "U3": "U3 はデータ統合をゴールとする",
+        "U4": "U4 は請求漏れ月0件を目標とする",
+    }
+    d["qa_log"].append(
+        {
+            "id": "qa-shared-u3-u4",
+            "question": "利用者との対話で U3 と U4 を共有確認する",
+            "answer": f"{evidence['U3']}。{evidence['U4']}。",
+            "source": {"kind": "user-dialogue"},
+        }
+    )
+    for label in ("U3", "U4"):
+        d["requirements_foundation"]["effective_source_refs"][label] = {
+            "qa_ref": "qa-shared-u3-u4",
+            "approval_ref": "appr-foundation",
+            "evidence_quote": evidence[label],
+            "evidence_sha256": hashlib.sha256(evidence[label].encode("utf-8")).hexdigest(),
+        }
+    return d
+
+
+def test_effective_source_accepts_explicit_shared_qa_with_consumer_evidence():
+    assert c12.validate_foundation(_shared_u3_u4_state()) == []
+
+
+def test_effective_source_rejects_shared_qa_when_answer_replaces_bound_evidence():
+    d = _shared_u3_u4_state()
+    d["qa_log"][-1]["answer"] = "AI が上位概念をひとつに要約した。"
+
+    findings = c12.validate_foundation(d)
+    assert any("shared qa_ref" in finding and "evidence_quote" in finding for finding in findings)
+
+
+def test_effective_source_rejects_out_of_scope_u_marker_in_shared_question():
+    d = _shared_u3_u4_state()
+    d["qa_log"][-1]["question"] += "。U5 も同時に扱う"
+
+    findings = c12.validate_foundation(d)
+    assert any("shared qa_ref" in finding and "question" in finding for finding in findings)
+
+
+def test_effective_source_rejects_mixed_approvals_for_one_shared_qa():
+    d = _shared_u3_u4_state()
+    d["approval_log"].append({"id": "appr-other", "note": "別の承認"})
+    d["requirements_foundation"]["effective_source_refs"]["U4"][
+        "approval_ref"
+    ] = "appr-other"
+
+    findings = c12.validate_foundation(d)
+    assert any("shared qa_ref" in finding and "approval_ref" in finding for finding in findings)
+
+
+def test_effective_source_rejects_missing_or_tampered_shared_evidence():
+    missing = _shared_u3_u4_state()
+    del missing["requirements_foundation"]["effective_source_refs"]["U3"]["evidence_quote"]
+    assert any(
+        "shared qa_ref" in finding and "evidence_quote" in finding
+        for finding in c12.validate_foundation(missing)
+    )
+
+    tampered = _shared_u3_u4_state()
+    tampered["requirements_foundation"]["effective_source_refs"]["U4"][
+        "evidence_sha256"
+    ] = "0" * 64
+    assert any("evidence_sha256" in finding for finding in c12.validate_foundation(tampered))
+
+
+def test_effective_source_rejects_same_shared_evidence_for_multiple_consumers():
+    d = _shared_u3_u4_state()
+    u3 = d["requirements_foundation"]["effective_source_refs"]["U3"]
+    u4 = d["requirements_foundation"]["effective_source_refs"]["U4"]
+    u4["evidence_quote"] = u3["evidence_quote"]
+    u4["evidence_sha256"] = u3["evidence_sha256"]
+
+    findings = c12.validate_foundation(d)
+    assert any("consumer ごとに独立" in finding for finding in findings)
 
 
 # ── (a) requirements_foundation 不在 / U1-U5 空 ────────────────────────────
@@ -189,6 +347,20 @@ def test_foundation_goal_empty_text():
     assert any("text が空" in f for f in c12.validate_foundation(d))
 
 
+# F3: goal id の一意性 (同種の集合化取りこぼし。set(goal_ids) の前に重複を検査する)
+def test_foundation_duplicate_goal_id_fails():
+    d = _valid_state()
+    d["requirements_foundation"]["goals"].append({"id": "G1", "text": "別内容の二重採番"})
+    findings = c12.validate_foundation(d)
+    assert any("goal id" in f and "重複" in f and "G1" in f for f in findings)
+
+
+def test_foundation_unique_goal_ids_keep_passing():
+    d = _valid_state()
+    d["requirements_foundation"]["goals"].append({"id": "G3", "text": "追加ゴール"})
+    assert c12.validate_foundation(d) == []
+
+
 # ── (b)(c) serves_goals トレース (drift 候補 / dangling) ────────────────────
 def test_foundation_confirmed_cell_without_serves_is_drift():
     d = _valid_state()
@@ -218,10 +390,23 @@ def _full_valid_matrix() -> dict:
         for c in CATEGORIES
     }
     return {
+        "schema_version": "1.1",
+        "design_application_contract_version": "1.0",
         "categories": [{"id": c, "label": c} for c in CATEGORIES],
         "platforms": PLATFORMS,
         "matrix": matrix,
-        "qa_log": [{"id": "qa-001", "question": "q", "answer": "a"}],
+        "qa_log": [{
+            "id": "qa-001",
+            "question": "q",
+            "answer": "a",
+            "design_applications": [{
+                "knowledge_ref": "design-knowledge:test",
+                "principle": "single source of truth",
+                "applicability": "applied",
+                "rationale": "all confirmed cells share one test decision",
+                "tradeoffs": ["fixture is intentionally compact"],
+            }],
+        }] + _foundation_source_indexes(),
         "approval_log": [{"id": "appr-001"}, {"id": "appr-foundation"}],
         "requirements_foundation": _valid_foundation(),
         "decisions": [],
@@ -357,7 +542,8 @@ def test_main_require_foundation_missing_foundation_fails(tmp_path):
 
 # ── 後方互換: foundation 検証は opt-in (既定は C12 挙動不変) ─────────────────
 def test_backward_compat_default_ignores_foundation(tmp_path, capsys):
-    # requirements_foundation 不在でも、--require-foundation 無しなら従来どおり OK。
+    # requirements_foundation 不在でも、--require-foundation 無しなら OK。
+    # schema 1.1 の design-application 契約は foundation opt-in と独立に維持される。
     d = _full_valid_matrix()
     del d["requirements_foundation"]
     for row in d["matrix"].values():
@@ -369,6 +555,7 @@ def test_backward_compat_default_ignores_foundation(tmp_path, capsys):
 
 
 def test_validate_unchanged_ignores_serves_goals():
-    # validate() (C12 本体) は serves_goals / requirements_foundation を無視し従来判定のまま。
+    # validate() は serves_goals / requirements_foundation を無視するが、
+    # schema 1.1 の design-application 契約は常に検証する。
     d = _full_valid_matrix()
     assert c12.validate(d, require_complete=True) == []

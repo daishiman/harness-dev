@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a37642456dff99054",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b057fd23-b4f5-43d3-b0e6-9e8628e8254e",
+      "line": 43,
+      "prefix_bytes": 368091,
+      "prefix_sha256": "1266ff1152832e33035c425b9ec057bd466775ef499a97e047e4ed9e39379b57",
+      "timestamp": "2026-11-01T11:56:40.200Z"
+    },
+    "result": {
+      "uuid": "dd550350-3a1e-46d6-ade0-c648b7c08cdf",
+      "line": 44,
+      "prefix_bytes": 369828,
+      "prefix_sha256": "010dd4c9ccd710829c9db144236eae336cb23446c088481c976afcd97f12db10",
+      "timestamp": "2026-11-01T11:56:44.412Z"
+    }
+  },
+  "tool_use_id": "toolu_01Ei4pmEW8oivc84Ype55831",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$CLAUDE_PROJECT_DIR\" --config \"$CLAUDE_PROJECT_DIR/.dev-graph/config.json\" --mode write > \"$TMPDIR/c24-rerun.json\"; echo \"exit=$?\"; python3 -B -c '\nimport json,sys,os,hashlib\na=json.load(open(sys.argv[1]));b=json.load(open(sys.argv[2]))\ndiff={k:(a.get(k),b.get(k)) for k in set(a)|set(b) if a.get(k)!=b.get(k)}\nprint(\"diff:\",diff)\nprint(\"receipt sha256:\",hashlib.sha256(open(sys.argv[1],\"rb\").read()).hexdigest())\nss=a[\"content_roots\"][\"system_spec\"]; root=a[\"repo_root\"]\nprint(\"islink\",os.path.islink(ss),\"isdir\",os.path.isdir(ss),\"realpath\",os.path.realpath(ss))\nprint(\"contained\",os.path.commonpath([os.path.realpath(ss),os.path.realpath(root)])==os.path.realpath(root))\nlinks=[]\nfor d,dn,fn in os.walk(ss):\n  for n in dn+fn:\n    p=os.path.join(d,n)\n    if os.path.islink(p): links.append(p)\nprint(\"symlinks under system-spec:\",links)\n' eval-log/run-dev-graph-system-spec-c24-receipt.json \"$TMPDIR/c24-rerun.json\"; git rev-parse --show-toplevel --git-common-dir --git-dir HEAD; git rev-parse --path-format=absolute --git-common-dir",
+    "description": "Re-run C24 resolver and compare with receipt, check containment"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\ndiff: {}\nreceipt sha256: 6cbce34a2c83a54c82f2e067810f58b5519cf77eea0b7bf61ac972bd27dfd3e6\nislink False isdir True realpath /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec\ncontained True\nsymlinks under system-spec: []\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\n.git\n.git\n8d3ecdaae2cd7075863e7c5a8c10f39433c55a89\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.git",
+  "tool_use_result": {
+    "stdout": "exit=0\ndiff: {}\nreceipt sha256: 6cbce34a2c83a54c82f2e067810f58b5519cf77eea0b7bf61ac972bd27dfd3e6\nislink False isdir True realpath /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec\ncontained True\nsymlinks under system-spec: []\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\n.git\n.git\n8d3ecdaae2cd7075863e7c5a8c10f39433c55a89\n/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/.git",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

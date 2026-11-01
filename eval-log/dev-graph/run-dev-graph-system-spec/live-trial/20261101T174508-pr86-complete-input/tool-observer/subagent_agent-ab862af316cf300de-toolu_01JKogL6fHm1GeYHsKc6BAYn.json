@@ -1,0 +1,42 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "subagent/agent-ab862af316cf300de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "56f10d22-83b6-4197-8f81-77c52dd263ea",
+      "line": 33,
+      "prefix_bytes": 204117,
+      "prefix_sha256": "da0efac15a27119ae53cb3ce9bf22eb06595fd26bdbb9325166b40155588c660",
+      "timestamp": "2026-11-01T08:48:36.460Z"
+    },
+    "result": {
+      "uuid": "ffe0215c-48b9-4db5-84aa-77b610f178f6",
+      "line": 34,
+      "prefix_bytes": 206498,
+      "prefix_sha256": "caac0dd84638bfff0d3c7914cea5df392d361770f35a0262c1d3a9b7f9eb89f3",
+      "timestamp": "2026-11-01T08:48:41.058Z"
+    }
+  },
+  "tool_use_id": "toolu_01JKogL6fHm1GeYHsKc6BAYn",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && R=\"$CLAUDE_PROJECT_DIR\"; python3 plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$R\" --mode write > \"$TMPDIR/rc.json\"; echo rc_exit=$?; python3 -I - \"$TMPDIR/rc.json\" eval-log/run-dev-graph-system-spec/c24-receipt.json <<'PY'\nimport json,sys\na=json.load(open(sys.argv[1]));b=json.load(open(sys.argv[2]))\nfor k in sorted(set(a)|set(b)):\n    if a.get(k)!=b.get(k): print(\"DIFF\",k,a.get(k),b.get(k))\nprint(\"done\")\nPY\npython3 plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$R\"; echo lineage_exit=$?\npython3 -I - <<'PY'\nimport os\nr=os.path.realpath(\"system-spec\")\nbad=[p for d,ds,fs in os.walk(\"system-spec\") for p in [os.path.join(d,x) for x in ds+fs] if os.path.islink(p) or not os.path.realpath(p).startswith(r+os.sep)]\nprint(\"out_of_root_or_links\",bad)\nPY\ngit status --porcelain; ls -la .dev-graph .dev-graph/state 2>&1 | head"
+  },
+  "is_error": false,
+  "tool_result_content": "rc_exit=0\ndone\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0\nout_of_root_or_links []\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/\n.dev-graph:\ntotal 8\ndrwxr-xr-x@  8 dm  wheel   256 11月  1 17:45 .\ndrwxr-xr-x@ 15 dm  wheel   480 11月  1 17:46 ..\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 17:42 cache\n-rw-r--r--@  1 dm  wheel  3338 11月  1 17:42 config.json\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 17:42 locks\ndrwxr-xr-x@  4 dm  wheel   128 11月  1 17:42 state\ndrwxr-xr-x@ 23 dm  wheel   736 11月  1 17:42 templates\ndrwxr-xr-x@  3 dm  wheel    96 11月  1 17:48 tmp",
+  "tool_use_result": {
+    "stdout": "rc_exit=0\ndone\n{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_exit=0\nout_of_root_or_links []\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/\n.dev-graph:\ntotal 8\ndrwxr-xr-x@  8 dm  wheel   256 11月  1 17:45 .\ndrwxr-xr-x@ 15 dm  wheel   480 11月  1 17:46 ..\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 17:42 cache\n-rw-r--r--@  1 dm  wheel  3338 11月  1 17:42 config.json\ndrwxr-xr-x@  2 dm  wheel    64 11月  1 17:42 locks\ndrwxr-xr-x@  4 dm  wheel   128 11月  1 17:42 state\ndrwxr-xr-x@ 23 dm  wheel   736 11月  1 17:42 templates\ndrwxr-xr-x@  3 dm  wheel    96 11月  1 17:48 tmp",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

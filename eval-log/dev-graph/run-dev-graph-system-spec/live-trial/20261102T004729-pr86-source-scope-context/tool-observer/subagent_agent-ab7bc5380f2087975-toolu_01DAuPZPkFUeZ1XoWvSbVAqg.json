@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-ab7bc5380f2087975",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d9c809ae-2b17-49fa-9e6f-668f1d3485ff",
+      "line": 47,
+      "prefix_bytes": 458439,
+      "prefix_sha256": "b062d5f4a1341b525b166f3e525cb90702db37d54a9fe75eb50585bb766ba629",
+      "timestamp": "2026-11-01T16:02:31.503Z"
+    },
+    "result": {
+      "uuid": "1db35238-1b1e-4458-a9a5-b9f04da8e3f2",
+      "line": 52,
+      "prefix_bytes": 470423,
+      "prefix_sha256": "b0e0904f6027db6bc65ca7077e563ce791feae6c790601727572e92559bdf0ee",
+      "timestamp": "2026-11-01T16:02:37.844Z"
+    }
+  },
+  "tool_use_id": "toolu_01DAuPZPkFUeZ1XoWvSbVAqg",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "What is the page's last modified date? Does it say CronJob may create zero/two jobs (idempotent needed), and describe concurrencyPolicy Forbid? Which Kubernetes version is the docs for?"
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified date:** The page content doesn't include one. The text is truncated and the visible parts have no \"last modified\" timestamp.\n\n**Zero/two jobs and idempotency:** The visible text says only that \"in certain circumstances, a single CronJob can create multiple concurrent Jobs\" and links to a [limitations](#cron-job-limitations) section. That section is cut off, so I can't confirm whether it mentions zero or two Jobs or says anything about idempotency. The visible text does support the general point that a CronJob can create more than one Job at a time, so Jobs should tolerate overlapping runs.\n\n**`concurrencyPolicy: Forbid`:** Yes, the page describes it:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nThe other options are `Allow` (the default) and `Replace`, which replaces the running Job with a new one. The page also notes that this policy applies only to Jobs created by the same CronJob.\n\n**Kubernetes version:** The page doesn't state a version explicitly. The URL has no version path, and the version selector lists v1.37 first, linking to the main domain. That suggests these are the current docs, which would be v1.37, but this is an inference. The page also says the CronJob feature has been \"Stable since Kubernetes v1.21,\" which describes the feature's maturity, not the docs version.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified date:** The page content doesn't include one. The text is truncated and the visible parts have no \"last modified\" timestamp.\n\n**Zero/two jobs and idempotency:** The visible text says only that \"in certain circumstances, a single CronJob can create multiple concurrent Jobs\" and links to a [limitations](#cron-job-limitations) section. That section is cut off, so I can't confirm whether it mentions zero or two Jobs or says anything about idempotency. The visible text does support the general point that a CronJob can create more than one Job at a time, so Jobs should tolerate overlapping runs.\n\n**`concurrencyPolicy: Forbid`:** Yes, the page describes it:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nThe other options are `Allow` (the default) and `Replace`, which replaces the running Job with a new one. The page also notes that this policy applies only to Jobs created by the same CronJob.\n\n**Kubernetes version:** The page doesn't state a version explicitly. The URL has no version path, and the version selector lists v1.37 first, linking to the main domain. That suggests these are the current docs, which would be v1.37, but this is an inference. The page also says the CronJob feature has been \"Stable since Kubernetes v1.21,\" which describes the feature's maturity, not the docs version.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 5609,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

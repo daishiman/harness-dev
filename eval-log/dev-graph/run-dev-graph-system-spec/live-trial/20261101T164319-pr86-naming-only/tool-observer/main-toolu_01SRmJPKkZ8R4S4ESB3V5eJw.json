@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "24fb5ab8-0717-46cc-9abe-3692bcce518d",
+      "line": 351,
+      "prefix_bytes": 1136801,
+      "prefix_sha256": "4adc9391ed8cb3a6de7c97fe567d0e157662663ac262462107d29984f6c77d05",
+      "timestamp": "2026-11-01T07:51:07.274Z"
+    },
+    "result": {
+      "uuid": "489c817a-6585-4fd5-a7f1-0d7e8e8f6602",
+      "line": 352,
+      "prefix_bytes": 1140203,
+      "prefix_sha256": "a9a14de8a5b2f65c09a5e730d01c9db43aba3ef743354cad237914affe948da7",
+      "timestamp": "2026-11-01T07:51:10.972Z"
+    }
+  },
+  "tool_use_id": "toolu_01SRmJPKkZ8R4S4ESB3V5eJw",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/c02-import-payload.json > $TMPDIR/add.json; echo rc=$?; python3 -c \"\nimport json;d=json.load(open('$TMPDIR/add.json'));print({k:v for k,v in d.items() if k not in('artifacts','planned_nodes')})\"; ls .dev-graph/state .dev-graph/state/receipts 2>/dev/null"
+  },
+  "is_error": false,
+  "tool_result_content": "rc=0\n{'applied_count': 2, 'dry_run': False, 'graph_digest_after': 'sha256:e205070ec45c8811e8035b217bc13be86e59b918184beb98a5939f43c217426f', 'graph_path': '.dev-graph/state/graph.json', 'graph_revision_after': 1, 'graph_revision_before': 0, 'input_sha256': '80c2694f9f2ae3a6fad392dcdc6b8b1d7f53abf7a43c6655709abe7863f818a4', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'], 'operation': 'add', 'owner': 'C02/run-dev-graph-node', 'pre_write_validation': {'findings': 0, 'validator': 'validate-graph-schema.py'}, 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'recorded_at': '2026-11-01T07:51:10.115598Z', 'repository_id': 'local:sha256:1417c67a56997f65ef69720ba900d1ebbecda7707cbec04bf1ff5be2aeecca83', 'schema_version': '1.0.0', 'status': 'applied', 'template_sources': ['repository:architecture-backend.md', 'repository:architecture-data.md', 'repository:architecture-frontend.md', 'repository:architecture-infrastructure.md', 'repository:architecture-security.md', 'repository:architecture.md', 'repository:specification.md'], 'valid': True, 'write_count': 4}\n.dev-graph/state:\ngraph.json\nreceipts\n\n.dev-graph/state/receipts:\ninit-20261101T074159393276Z.json\nnode-r000001-add.json",
+  "tool_use_result": {
+    "stdout": "rc=0\n{'applied_count': 2, 'dry_run': False, 'graph_digest_after': 'sha256:e205070ec45c8811e8035b217bc13be86e59b918184beb98a5939f43c217426f', 'graph_path': '.dev-graph/state/graph.json', 'graph_revision_after': 1, 'graph_revision_before': 0, 'input_sha256': '80c2694f9f2ae3a6fad392dcdc6b8b1d7f53abf7a43c6655709abe7863f818a4', 'node_ids': ['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture'], 'operation': 'add', 'owner': 'C02/run-dev-graph-node', 'pre_write_validation': {'findings': 0, 'validator': 'validate-graph-schema.py'}, 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'recorded_at': '2026-11-01T07:51:10.115598Z', 'repository_id': 'local:sha256:1417c67a56997f65ef69720ba900d1ebbecda7707cbec04bf1ff5be2aeecca83', 'schema_version': '1.0.0', 'status': 'applied', 'template_sources': ['repository:architecture-backend.md', 'repository:architecture-data.md', 'repository:architecture-frontend.md', 'repository:architecture-infrastructure.md', 'repository:architecture-security.md', 'repository:architecture.md', 'repository:specification.md'], 'valid': True, 'write_count': 4}\n.dev-graph/state:\ngraph.json\nreceipts\n\n.dev-graph/state/receipts:\ninit-20261101T074159393276Z.json\nnode-r000001-add.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "04a6706c-0439-45cc-b5ec-7dcdc18ba043",
+      "line": 288,
+      "prefix_bytes": 2318261,
+      "prefix_sha256": "a165f8af199a0e2bb7162d960e64fa4c40e1d5ed378cb7c3a673c5de9248fadb",
+      "timestamp": "2026-11-01T13:22:11.943Z"
+    },
+    "result": {
+      "uuid": "4c54e038-59a9-446f-855b-29c9036693f4",
+      "line": 289,
+      "prefix_bytes": 2321462,
+      "prefix_sha256": "c6ffd251f69912cdddcced4a9aecc3ac70c2c1c1f7f54ebfa616f0de47e06c00",
+      "timestamp": "2026-11-01T13:22:15.354Z"
+    }
+  },
+  "tool_use_id": "toolu_01XXoYRy3THQCvYkfY7bjrHw",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && find eval-log -type f | sort && cat eval-log/run-dev-graph-system-spec-artifact-choice.json",
+    "description": "List eval-log files and show earlier choice record"
+  },
+  "is_error": false,
+  "tool_result_content": "eval-log/run-dev-graph-system-spec-artifact-choice.json\neval-log/run-dev-graph-system-spec-goal-spec.json\neval-log/run-dev-graph-system-spec/c24-receipt.json\neval-log/run-dev-graph-system-spec/preflight-report.json\n{\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"artifact\": {\n    \"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\",\n    \"sha256\": \"226c2546dac045a08e2b698c4a8c655f14b129ec9aa01f5533734fa2ffa51585\"\n  },\n  \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n  \"transitions\": [\n    \"artifact_created->minimal_guard_passed (parse ok, verdict PASS)\",\n    \"minimal_guard_passed->artifact_presented (stdout presentation prior call)\",\n    \"artifact_presented->user_choice_recorded\",\n    \"user_choice_recorded->semantic_evaluator_started\"\n  ],\n  \"choice\": \"standard\",\n  \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\",\n  \"recorded_at\": \"2026-11-01T13:18:15.898144+00:00\"\n}",
+  "tool_use_result": {
+    "stdout": "eval-log/run-dev-graph-system-spec-artifact-choice.json\neval-log/run-dev-graph-system-spec-goal-spec.json\neval-log/run-dev-graph-system-spec/c24-receipt.json\neval-log/run-dev-graph-system-spec/preflight-report.json\n{\n  \"skill\": \"run-dev-graph-system-spec\",\n  \"contract\": \"artifact-delivery-v1\",\n  \"artifact\": {\n    \"path\": \"eval-log/run-dev-graph-system-spec/preflight-report.json\",\n    \"sha256\": \"226c2546dac045a08e2b698c4a8c655f14b129ec9aa01f5533734fa2ffa51585\"\n  },\n  \"open_with\": \"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/eval-log/run-dev-graph-system-spec/preflight-report.json\",\n  \"transitions\": [\n    \"artifact_created->minimal_guard_passed (parse ok, verdict PASS)\",\n    \"minimal_guard_passed->artifact_presented (stdout presentation prior call)\",\n    \"artifact_presented->user_choice_recorded\",\n    \"user_choice_recorded->semantic_evaluator_started\"\n  ],\n  \"choice\": \"standard\",\n  \"choice_source\": \"task.md 隔離fixtureの事前回答契約 (artifact_deliveryの選択はstandard)\",\n  \"recorded_at\": \"2026-11-01T13:18:15.898144+00:00\"\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

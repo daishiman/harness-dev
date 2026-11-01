@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "1aa3b193-0044-4c1d-b271-bd3f99e86a41",
+      "line": 114,
+      "prefix_bytes": 632115,
+      "prefix_sha256": "0cf40d2c374baaadefda78473ebd08fc95e793047f877ff7140fd02de5e24e9d",
+      "timestamp": "2026-11-01T06:28:24.701Z"
+    },
+    "result": {
+      "uuid": "4a7a62d4-18c1-4bb8-b13f-068337afc661",
+      "line": 115,
+      "prefix_bytes": 633929,
+      "prefix_sha256": "e4e3082480894e0bf0d4f213c607f70f66a0cca234840335bbe111a054427f24",
+      "timestamp": "2026-11-01T06:28:25.922Z"
+    }
+  },
+  "tool_use_id": "toolu_01DBnusHA6RFMhhBm1efTJ9v",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport subprocess,sys,pathlib\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/validate-coverage-matrix.py','--matrix','system-spec/spec-state.json','--require-foundation'],capture_output=True,text=True)\nprint('foundation',r.returncode,r.stdout,r.stderr)\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/validate-coverage-matrix.py','--help'],capture_output=True,text=True); print(r.stdout[-1500:])\nfor p in pathlib.Path('.').rglob('*.py'):\n  if p.name in ('verify-completeness.py','validate-prompt.py'): print(p)\nfor p in pathlib.Path('/private/tmp/claude-501/pr86-ci-live/lt/home/.claude').rglob('validate-prompt.py'): print(p)\n\"",
+    "description": "Run foundation gate, find prompt validators"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

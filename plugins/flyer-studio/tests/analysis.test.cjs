@@ -26,7 +26,7 @@ test("required scope cannot silently target a nonexistent original artifact",t=>
 const P=require("../scripts/project.cjs");
 const purpose={audience:"AI導入の担当者",benefit:"実例と相談の理解",action:"QRで詳細を確認する"};
 function caseDir(t){const root=setup(t),dir=root+"/case";P.init(dir);const b=A.read(dir+"/brief.json");b.purpose=purpose;A.write(dir+"/brief.json",b);fs.writeFileSync(dir+"/source.png","readonly image fixture");return dir;}
-test("new-from-brief records the skipped diagnosis stages and refuses a hidden analysis",t=>{const dir=caseDir(t);assert.equal(A.read(dir+"/brief.json").analysisMode,"new-from-brief");assert.deepEqual(A.assertApproved(dir),{fail:0,mode:"new-from-brief",skippedStages:["run-analyze-flyer","assign-flyer-analysis-review"]});A.write(dir+"/analysis.json",{});assert.throws(()=>A.assertApproved(dir),/new-from-brief/);});
+test("new-from-brief records the skipped diagnosis stages and refuses a hidden analysis",t=>{const dir=caseDir(t);assert.equal(A.read(dir+"/brief.json").analysisMode,"new-from-brief");assert.deepEqual(A.assertApproved(dir),{fail:0,mode:"new-from-brief",skippedStages:["run-analyze-flyer","assign-flyer-analysis-evaluator"]});A.write(dir+"/analysis.json",{});assert.throws(()=>A.assertApproved(dir),/new-from-brief/);});
 test("an undecided analysis mode is rejected instead of defaulting",t=>{const dir=setup(t);assert.throws(()=>A.assertApproved(dir,{brief:{}}),/未決/);assert.throws(()=>A.assertApproved(dir,{brief:{analysisRequired:true}}),/analysisRequired は廃止/);});
 test("analysis-template switches the case to source-artifact and copies the brief purpose",t=>{const dir=caseDir(t);const r=A.template(dir,{sources:[{id:"F07",file:dir+"/source.png"}]});assert.equal(r.analysisMode,"source-artifact");assert.equal(A.read(dir+"/brief.json").analysisMode,"source-artifact");assert.deepEqual(A.read(dir+"/analysis.json").purpose,purpose);assert.throws(()=>A.assertApproved(dir),/分析契約が不足|analysis-review/);});
 test("analysis purpose cannot differ from the brief purpose",t=>{const dir=caseDir(t);assert.throws(()=>A.template(dir,{...draft(dir),purpose:{...purpose,action:"別の行動"}}),/brief の今回の目的/);assert.equal(fs.existsSync(dir+"/analysis.json"),false);A.template(dir,draft(dir));const {a}=filled(dir);assert.doesNotThrow(()=>A.validate(dir,{unsealed:true}));a.purpose.action="分析で書き換えた行動";A.write(dir+"/analysis.json",a);assert.throws(()=>A.validate(dir,{unsealed:true}),/brief の今回の目的/);});
@@ -105,4 +105,17 @@ test("旧文字列FIXは通常取込を止め、原記録を改変せず退避�
  approve(dir);
  assert.equal(A.validateReview(dir).fail,0);
  assert.equal(C.cycleSummary(C.recordCycles(dir)).consumed,1);
+});
+
+test("analysis-review CLI validation stays read-only for PASS/FIX; caller still records the cycle", t => {
+ const {spawnSync}=require("node:child_process");
+ const {dir}=ready(t);const review=approve(dir);
+ const snapshot=()=>Object.fromEntries(fs.readdirSync(dir,{recursive:true}).filter(f=>fs.statSync(path.join(dir,f)).isFile()).sort().map(f=>[f,fs.readFileSync(path.join(dir,f)).toString("base64")]));
+ const run=()=>spawnSync(process.execPath,[path.join(__dirname,"../scripts/cli.cjs"),"analysis-review-validate","--project",dir],{encoding:"utf8"});
+ const passBefore=snapshot();assert.equal(run().status,0);assert.deepEqual(snapshot(),passBefore);
+ review.decision="FIX";review.returnTo="run-analyze-flyer";review.checks.evidenceAlignment.verdict="FIX";
+ review.mandatoryFixes=[{text:"観察と採否理由を元画像の領域へ結び直す",serves:["E1"]}];A.write(path.join(dir,"analysis-review.json"),review);
+ const fixBefore=snapshot();const result=run();assert.equal(result.status,1);assert.match(result.stderr,/run-analyze-flyer|FIX|修正/);assert.deepEqual(snapshot(),fixBefore);
+ assert.equal(fs.existsSync(path.join(dir,"cycle-ledger.json")),false);
+ A.reviewTemplate(dir);const ledger=A.read(path.join(dir,"cycle-ledger.json"));assert.equal(ledger.entries.filter(e=>e.trigger==="analysis-review"&&e.consumed).length,1);
 });

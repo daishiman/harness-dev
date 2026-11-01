@@ -1,0 +1,100 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-a10b4ed8ed407cfe6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "33c4a660-2851-4cc0-9d48-af946e910e8e",
+      "line": 64,
+      "prefix_bytes": 336734,
+      "prefix_sha256": "7a3b3b3a269da4012ed8318248ce8d3cd75e51d53b18d8dce3063d88906b2516",
+      "timestamp": "2026-11-01T08:07:45.775Z"
+    },
+    "result": {
+      "uuid": "76c46670-68f5-43cd-92d1-43e2e5b45e48",
+      "line": 65,
+      "prefix_bytes": 342897,
+      "prefix_sha256": "ac71b4f3daf47f7e8ad6d22e919360bd79fd5c16daaa64f3268d31779fbf3d89",
+      "timestamp": "2026-11-01T08:07:52.967Z"
+    }
+  },
+  "tool_use_id": "toolu_01MYXd8Jo3TGyW3odLYKCUvh",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I - <<'EOF'\nimport json\np=\"eval-log/run-dev-graph-system-spec/R1/verifier.json\"\nd=json.load(open(p))\nd[\"observer_events\"][\"common_layers_read\"]=\"toolu_01KTyVVc7p5YTHDj2VYuzuKz (Read prompt-common-layers.md, main stream)\"\nopen(p,\"w\").write(json.dumps(d,ensure_ascii=False,indent=2)+\"\\n\")\nprint(d[\"observer_events\"])\nEOF"
+  },
+  "is_error": false,
+  "tool_result_content": "{'R1_prompt_full_read': 'toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)', 'common_layers_read': 'toolu_01KTyVVc7p5YTHDj2VYuzuKz (Read prompt-common-layers.md, main stream)', 'manifest_inspection_bash_with_fixed_root_prefix': ['toolu_01AZ7doHVPRZW1phxAG2PZSe', 'toolu_01FRuPX5piM5gPFhPZQTot79'], 'receipt_write': 'toolu_01PnsYGgajfhbvYJsfX11YUY'}",
+  "tool_use_result": {
+    "stdout": "{'R1_prompt_full_read': 'toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)', 'common_layers_read': 'toolu_01KTyVVc7p5YTHDj2VYuzuKz (Read prompt-common-layers.md, main stream)', 'manifest_inspection_bash_with_fixed_root_prefix': ['toolu_01AZ7doHVPRZW1phxAG2PZSe', 'toolu_01FRuPX5piM5gPFhPZQTot79'], 'receipt_write': 'toolu_01PnsYGgajfhbvYJsfX11YUY'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/R1/verifier.json",
+          "hunks": [
+            {
+              "oldStart": 6,
+              "oldLines": 18,
+              "newStart": 6,
+              "newLines": 35,
+              "lines": [
+                "   \"c24_receipt_sha256\": \"e4b70685d1a17d67cd4fbc4eb639f44fe130ee365b88f8522cc60b12a2d23d23\",",
+                "   \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",",
+                "   \"checklist\": {",
+                "-    \"version_in_composition_range_and_4_entry_points_exist\": {\"result\": \"YES\", \"evidence\": \"plugin.json name=system-spec-harness version=0.1.24; plugin-composition.yaml:154 external_dependencies.system-spec-harness.version '>=0.1.22 <1.0.0' -> in range; package-contract.json#entry_points.skills contains all 4; skills/<name>/SKILL.md exist (elicit 30860B, doc-fetch 15305B, compile 23330B, evaluator 33894B)\"},",
+                "-    \"declared_inputs_verified\": {\"result\": \"YES\", \"evidence\": \"manifest, version, exports(package-contract entry_points) and composition range all read; c24 receipt sha256 matches\"},",
+                "-    \"output_shape_and_authority\": {\"result\": \"YES\", \"evidence\": \"R1/receipt.json has version, composition_range+source, in_range, required 4, missing=[], verdict PASS; all paths repo-relative, no secrets; values match independent re-check\"},",
+                "-    \"zero_boundary_violations\": {\"result\": \"YES\", \"evidence\": \"no writes to plugins/system-spec-harness (also sandbox write-denied); official manifest keys only name/version/dependencies/description/author; no compiler/elicit/doc-fetch fallback or duplicate in plugins/dev-graph (only build-project-hook-fallback.py, unrelated C01 hook fallback)\"}",
+                "+    \"version_in_composition_range_and_4_entry_points_exist\": {",
+                "+      \"result\": \"YES\",",
+                "+      \"evidence\": \"plugin.json name=system-spec-harness version=0.1.24; plugin-composition.yaml:154 external_dependencies.system-spec-harness.version '>=0.1.22 <1.0.0' -> in range; package-contract.json#entry_points.skills contains all 4; skills/<name>/SKILL.md exist (elicit 30860B, doc-fetch 15305B, compile 23330B, evaluator 33894B)\"",
+                "+    },",
+                "+    \"declared_inputs_verified\": {",
+                "+      \"result\": \"YES\",",
+                "+      \"evidence\": \"manifest, version, exports(package-contract entry_points) and composition range all read; c24 receipt sha256 matches\"",
+                "+    },",
+                "+    \"output_shape_and_authority\": {",
+                "+      \"result\": \"YES\",",
+                "+      \"evidence\": \"R1/receipt.json has version, composition_range+source, in_range, required 4, missing=[], verdict PASS; all paths repo-relative, no secrets; values match independent re-check\"",
+                "+    },",
+                "+    \"zero_boundary_violations\": {",
+                "+      \"result\": \"YES\",",
+                "+      \"evidence\": \"no writes to plugins/system-spec-harness (also sandbox write-denied); official manifest keys only name/version/dependencies/description/author; no compiler/elicit/doc-fetch fallback or duplicate in plugins/dev-graph (only build-project-hook-fallback.py, unrelated C01 hook fallback)\"",
+                "+    }",
+                "   },",
+                "   \"observer_events\": {",
+                "     \"R1_prompt_full_read\": \"toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)\",",
+                "-    \"common_layers_read\": \"toolu_01AZ7doHVPRZW1phxAG2PZSe? no -> toolu_01KTyVVc7p5YTHDj2VYuzuKz is R3; common layers: index entry Read prompt-common-layers.md in main stream\",",
+                "-    \"manifest_inspection_bash_with_fixed_root_prefix\": [\"toolu_01AZ7doHVPRZW1phxAG2PZSe\", \"toolu_01FRuPX5piM5gPFhPZQTot79\"],",
+                "+    \"common_layers_read\": \"toolu_01KTyVVc7p5YTHDj2VYuzuKz (Read prompt-common-layers.md, main stream)\",",
+                "+    \"manifest_inspection_bash_with_fixed_root_prefix\": [",
+                "+      \"toolu_01AZ7doHVPRZW1phxAG2PZSe\",",
+                "+      \"toolu_01FRuPX5piM5gPFhPZQTot79\"",
+                "+    ],",
+                "     \"receipt_write\": \"toolu_01PnsYGgajfhbvYJsfX11YUY\"",
+                "   },",
+                "-  \"notes\": [\"receipt in_range/version values were literal in the write script, but the preceding observed Bash outputs (toolu_01AZ7doHVPRZW1phxAG2PZSe, toolu_01FRuPX5piM5gPFhPZQTot79) support them and independent re-check agrees\"],",
+                "+  \"notes\": [",
+                "+    \"receipt in_range/version values were literal in the write script, but the preceding observed Bash outputs (toolu_01AZ7doHVPRZW1phxAG2PZSe, toolu_01FRuPX5piM5gPFhPZQTot79) support them and independent re-check agrees\"",
+                "+  ],",
+                "   \"blockers\": [],",
+                "   \"verdict\": \"PASS\"",
+                " }"
+              ]
+            }
+          ]
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx/eval-log/run-dev-graph-system-spec/R1/verifier.json"
+      ]
+    }
+  }
+}

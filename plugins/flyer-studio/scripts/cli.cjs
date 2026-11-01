@@ -127,7 +127,7 @@ async function main(argv = process.argv.slice(2)) {
     case "help":
       console.log(
         "Flyer Studio（各コマンドの用途は references/runtime.md#コマンド一覧）\n" +
-          USAGE.map((u) => "python3 scripts/flyer.py " + u).join("\n") +
+          USAGE.map((u) => "python3 scripts/build-flyer.py " + u).join("\n") +
           "\n\n新写真の import には --privacy FILE が必要。依存: npm ci。",
       );
       return;
@@ -195,8 +195,7 @@ async function main(argv = process.argv.slice(2)) {
       result = require("./analysis.cjs").reviewTemplate(dir);
       break;
     case "analysis-review-validate":
-      // A FIX verdict throws below; count it in the cycle ledger first.
-      require("./checks.cjs").recordCycles(dir);
+      // 評価者の検査は読取専用。FIXは呼出側の再発行・render・finalizeで記録する。
       result = require("./analysis.cjs").validateReview(dir);
       break;
     case "validate":

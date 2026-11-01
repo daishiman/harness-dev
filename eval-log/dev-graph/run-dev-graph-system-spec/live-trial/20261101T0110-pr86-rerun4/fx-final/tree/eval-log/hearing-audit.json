@@ -1,0 +1,33 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "JTBD・対象ユーザー・利用文脈の 3 論点を 1 問に束ねていた。superseded_by=qa-019。置き換え先 qa-019 は N1-N4 を満たす 1 論点の開いた問で、qa-009 と同じ論点 (JTBD) を扱い、user-decision の回答と answered_at (2026-10-12T00:16:45Z) がある。残りの論点は qa-016/qa-020/qa-021 に分割済み。qa-009 は確定セルの主たる qa_ref ではなく、effective_source_refs もないため、閉じた検出にできる。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッションの保存先とセッションの無効化の期間を併せて問うている。どちらもセッションのライフサイクルという 1 つの話題で、選択肢と「採らない・別方式・保留」の道が示されている。答えを左右したとは読めない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "qa_refs に置き換え済みの qa-009 を含む。裏付けの参照であって主たる qa_ref (qa-003、実在) ではなく、active consumer に当たらないため high/medium にはしない。qa-019 へ付け替えるのが望ましい (修正は C01 の責務)。"
+    },
+    {
+      "axis": "foundation-trace",
+      "severity": "info",
+      "u_item": "U9",
+      "field": "qa-foundation-u9",
+      "observation": "canonical entry (2026-10-30 の再記録) は利用者発言を逐語連結したもので、実利用者との対話ログではない。U9 の canonical に、訂正済みの旧版回答 (qa-001 の『PostgreSQL 15』) が逐語で残る。版の正本は qa-031/D1 と U8。U9 の意図 (I1 日次バックアップ、I2、I3) は旧版の記述に依存せず、遡及性は保たれている。"
+    }
+  ]
+}

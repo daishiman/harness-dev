@@ -1,16 +1,16 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "harness": {
     "mechanical": [
       "npm test",
-      "python3 scripts/flyer.py doctor",
+      "python3 scripts/build-flyer.py doctor",
       "claude plugin validate .",
-      "python3 scripts/package.py --check（登録簿と実ファイルの両方向照合・stage参照・指針ID・版の一致）",
+      "python3 scripts/build-local-package.py --check（登録簿と実ファイルの両方向照合・stage参照・指針ID・版の一致）",
       "intake-apply/intake-residual",
       "essence-baseline/essence-check",
       "analysis-seal/analysis-validate",
       "analysis-review-validate",
-      "python3 scripts/flyer.py verify --project <project>",
+      "python3 scripts/build-flyer.py verify --project <project>",
       "cycle-status",
       "selected singleUseRefs occurrence validation independent of maxChars",
       "approved analysis requirements -> scoped feedback bridge",
@@ -21,8 +21,8 @@
     "llm_eval": [
       "run-intake-flyerが全質問を1枚で出し、不足と矛盾だけを1ラウンドで追加確認する。資料に明示された回答は出典付きで引き継ぎ、preset由来の仮値を確認済みの事実として扱わない",
       "run-analyze-flyerが元画像を実見し保持点/要求別候補/採否理由/nextActionsを具体化する",
-      "別contextのassign-flyer-analysis-reviewが観察一致/網羅/変更規律/実現性を検証し、FIXはrun-analyze-flyerへ返す",
-      "assign-flyer-reviewがreview-rubricの評価対象の最終PDF由来PNGを個別実見し、案件方針の軸・読み順・文字・自然な境界・公開範囲・構図差を具体的に評価する。同一入力/画像/規範のPASSはreusedFromで引き継ぎ、FIXをfixClassで分類して返す",
+      "別contextのassign-flyer-analysis-evaluatorが観察一致/網羅/変更規律/実現性を検証し、FIXはrun-analyze-flyerへ返す",
+      "assign-flyer-evaluatorがreview-rubricの評価対象の最終PDF由来PNGを個別実見し、案件方針の軸・読み順・文字・自然な境界・公開範囲・構図差を具体的に評価する。同一入力/画像/規範のPASSはreusedFromで引き継ぎ、FIXをfixClassで分類して返す",
       "run-learn-flyerが納品済み案件の集計・根拠件数・反例から適用限界付きの改善仮説を示す。好みを規範へ自動昇格せず、個人情報や事実値を横断知見へ保存しない",
       "30法が求められた場合は俯瞰→9/9/12法の並列分析→統合改善→4条件確認を行う"
     ],

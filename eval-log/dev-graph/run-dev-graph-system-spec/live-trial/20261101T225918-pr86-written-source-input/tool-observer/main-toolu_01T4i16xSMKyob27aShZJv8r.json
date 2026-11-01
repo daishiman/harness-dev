@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "7ca6ff44-292b-4351-80ba-f0f9e227a30a",
+      "line": 644,
+      "prefix_bytes": 4089723,
+      "prefix_sha256": "d410ae55b25424c20c390e36a5d8698294018e63b77acce239e809c0e772e691",
+      "timestamp": "2026-11-01T14:39:03.764Z"
+    },
+    "result": {
+      "uuid": "f4cf5e95-58b3-411c-bede-510f95bb6d00",
+      "line": 647,
+      "prefix_bytes": 4093484,
+      "prefix_sha256": "c15764da50e07626d3caeec3a2eca7f3be4c4a584ee371ff1988472d32f8f45b",
+      "timestamp": "2026-11-01T14:39:05.935Z"
+    }
+  },
+  "tool_use_id": "toolu_01T4i16xSMKyob27aShZJv8r",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && date -u +%Y-%m-%dT%H:%M:%SZ && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --help 2>&1 | head -20",
+    "description": "Get UTC time and resolver usage"
+  },
+  "is_error": false,
+  "tool_result_content": "2026-11-01T14:39:05Z\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+  "tool_use_result": {
+    "stdout": "2026-11-01T14:39:05Z\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

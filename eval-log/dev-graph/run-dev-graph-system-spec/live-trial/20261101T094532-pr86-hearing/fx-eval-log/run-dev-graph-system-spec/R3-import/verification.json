@@ -1,0 +1,62 @@
+{
+  "responsibility": "R3-import",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "same-payload-dry-run-and-add",
+      "result": "PASS",
+      "evidence": "sha256(payload)=fa7527976dbc00b555c5444698810bae70b68da32b2e731218731eb109d2ca96; dry-run.input_sha256=fa7527976dbc00b555c5444698810bae70b68da32b2e731218731eb109d2ca96; add.input_sha256=fa7527976dbc00b555c5444698810bae70b68da32b2e731218731eb109d2ca96; receipt.input_sha256=fa7527976dbc00b555c5444698810bae70b68da32b2e731218731eb109d2ca96; payload confirmation_evidence on all 2 artifacts=True"
+    },
+    {
+      "id": "node-lineage-spec-billing-audit-system-spec",
+      "result": "PASS",
+      "evidence": "kind=specification; source_path=system-spec/index.md; version=0.1.25 (harness plugin.json 0.1.25); source_digest=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2; real sha256=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2; snapshot=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2; evaluated_digest=f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2; imported_at=2026-11-01T01:03:06Z; confirmation=confirmed; eval=pass; readiness=complete; report verdict=PASS sha256=1e440e1637b0368623419ab3b607f2dc7f6d2c5937eee61efa1fc13206882495; errors=[]"
+    },
+    {
+      "id": "node-lineage-arch-billing-audit-system-architecture",
+      "result": "PASS",
+      "evidence": "kind=architecture; source_path=system-spec/00-requirements-definition.md; version=0.1.25 (harness plugin.json 0.1.25); source_digest=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402; real sha256=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402; snapshot=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402; evaluated_digest=1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402; imported_at=2026-11-01T01:03:06Z; confirmation=confirmed; eval=pass; readiness=complete; report verdict=PASS sha256=1e440e1637b0368623419ab3b607f2dc7f6d2c5937eee61efa1fc13206882495; errors=[]"
+    },
+    {
+      "id": "lineage-gate-rerun",
+      "result": "PASS",
+      "evidence": "exit=0; output={\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}"
+    },
+    {
+      "id": "C19-gate-coverage",
+      "result": "PASS",
+      "evidence": "exit=0; output=OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす"
+    },
+    {
+      "id": "C19-gate-source-citation",
+      "result": "PASS",
+      "evidence": "exit=0; output=OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす"
+    },
+    {
+      "id": "C19-gate-graph-schema",
+      "result": "PASS",
+      "evidence": "exit=0; output={\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 2,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"<R>/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}"
+    },
+    {
+      "id": "registration-via-C02",
+      "result": "PASS",
+      "evidence": "receipts={'init-20261101T004335474741Z.json': 'C01/run-dev-graph-init', 'node-r000001-add.json': 'C02/run-dev-graph-node'}; graph_revision=1; receipt graph_revision_after=1; graph nodes=['spec-billing-audit-system-spec', 'arch-billing-audit-system-architecture']; graph file digest=sha256:280c609a1754ab9331c2423485d62f30fb120997d8db29f391ef48dc92e2d0d5 vs receipt graph_digest_after=sha256:df368b69396a4f2e3df8cdad5ef2473e8da05db850e5f5f774b9b3b85e015f8f (informational, receipt digest may be canonical-form); canonical digest (json sort_keys, compact, ensure_ascii=False, as build-graph-node.py _canonical_digest) of current graph = sha256:df368b69... matches receipt graph_digest_after; node file sha256 match receipt sha256_after (spec 1f3cd2c0..., arch 711e97dd...)"
+    },
+    {
+      "id": "pass-before-import-order",
+      "result": "PASS",
+      "evidence": "mtimes: completeness report (verdict PASS, sha256 1e440e16...2495) 00:59:39Z < R2 verification (PASS) 01:01:40Z < payload 01:03:06Z < dry-run 01:03:19Z < add 01:04:22Z"
+    },
+    {
+      "id": "no-duplicated-elicitation-compile-logic",
+      "result": "PASS",
+      "evidence": "scanned all .py under plugins/dev-graph (scripts, lib, hooks, skills/*/scripts, tests) for elicit/hearing/ヒアリング/coverage matrix/compile-spec/render_chapter/spec-transition/spec_state: 0 implementations; only hit is register-package.py:196 listing system-dev-planner agent names in a required entry-point list (contract check, not logic). run-dev-graph-system-spec/scripts/build-evaluation-context.py only re-validates C24 receipt and emits evaluator args."
+    },
+    {
+      "id": "node-bodies-reference-not-duplicate",
+      "result": "PASS",
+      "evidence": "body vs system-spec/*.md long-line (>40 chars) exact overlap: {\"specs/billing-audit-system-spec.md\": {\"size\": 8933, \"refs_system_spec\": 21, \"max_chapter_line_overlap\": [\"00-requirements-definition.md\", 0, 62]}, \"architecture/billing-audit-system-architecture.md\": {\"size\": 9347, \"refs_system_spec\": 10, \"max_chapter_line_overlap\": [\"00-requirements-definition.md\", 7, 62]}}; bodies are summarized sections citing system-spec/<chapter>.md paths and qa-/U-/D- ids rather than wholesale chapter copies"
+    }
+  ],
+  "verified_at": "2026-11-01T01:07:04.943475Z"
+}

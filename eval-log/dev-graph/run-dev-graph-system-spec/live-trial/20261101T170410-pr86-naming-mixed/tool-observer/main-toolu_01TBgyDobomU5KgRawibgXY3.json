@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ffd0bb14-05d4-41ef-b13d-c25522f3a6dc",
+      "line": 400,
+      "prefix_bytes": 1974470,
+      "prefix_sha256": "b93e9654290b75d33fc96488d23654d0db790a9c404a26ab14b0de2be8e5699a",
+      "timestamp": "2026-11-01T08:10:23.964Z"
+    },
+    "result": {
+      "uuid": "2c70769c-d2c4-48dd-a72a-799f6900e8c0",
+      "line": 403,
+      "prefix_bytes": 1977451,
+      "prefix_sha256": "dd71fa3d14d91d1b1684f0f515b6621429846870d6fb8f1e99808ed6661ff42c",
+      "timestamp": "2026-11-01T08:10:27.965Z"
+    }
+  },
+  "tool_use_id": "toolu_01TBgyDobomU5KgRawibgXY3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && S=\"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" && R=\"$CLAUDE_PROJECT_DIR/system-spec/fetched-references.json\" && python3 -B \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$S\" --require-complete >/dev/null; echo \"coverage exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-source-citation.py\" --targets \"$S\" --references \"$R\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo \"citation exit=$?\"; python3 -B \"$PLUGIN_ROOT/scripts/validate-design-knowledge-refs.py\" --matrix \"$S\" --repo-root \"$CLAUDE_PROJECT_DIR\" >/dev/null; echo \"design-refs exit=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "coverage exit=0\ncitation exit=0\ndesign-refs exit=0",
+  "tool_use_result": {
+    "stdout": "coverage exit=0\ncitation exit=0\ndesign-refs exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

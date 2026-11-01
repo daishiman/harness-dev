@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "024603f7-5526-434d-98f7-426455881f65",
+      "line": 544,
+      "prefix_bytes": 2557144,
+      "prefix_sha256": "a965a750e8d4cb4236bc19175521b62bbe4273c98d9e0996ff8759d00e2fa763",
+      "timestamp": "2026-11-01T03:04:21.847Z"
+    },
+    "result": {
+      "uuid": "cea337ff-2a1b-40fa-83b9-0d02b08144e9",
+      "line": 550,
+      "prefix_bytes": 2564860,
+      "prefix_sha256": "4b8ef6f0d3296f0b11e5f36f75e8c381c7cf7fae20ea1cc7856b4108afd02531",
+      "timestamp": "2026-11-01T03:04:24.118Z"
+    }
+  },
+  "tool_use_id": "toolu_01KkeZ6FYBb1j37Zv9PX1LmR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "sed -n 690,725p plugins/dev-graph/scripts/build-graph-node.py; grep -n 'SPEC_EVALUATOR *=' plugins/dev-graph/scripts/build-graph-node.py",
+    "description": "Read confirmation_evidence validator"
+  },
+  "is_error": false,
+  "tool_result_content": "def _spec_confirmation(raw: Any, kind: str, lineage: dict[str, Any], root: Path, label: str) -> dict[str, str]:\n    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\n\n    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、\n    PASS が別の bytes へ流用されることはない。report は repo 内の通常ファイルで、評価した spec_dir が取込元の\n    ディレクトリと一致し、verdict が PASS のものだけを受ける。\n    \"\"\"\n    if kind not in SPEC_IMPORT_KINDS or lineage.get(\"origin_kind\") != \"system-spec-harness\":\n        raise WriterError(\"confirmation_requires_spec_import\",\n                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n    if raw[\"evaluator\"] != SPEC_EVALUATOR:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n    if raw[\"evaluated_digest\"] != lineage.get(\"source_digest\"):\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n    ref = raw[\"evidence_ref\"]\n    if not isinstance(ref, str) or not ref or Path(ref).is_absolute() or \"..\" in Path(ref).parts:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n    try:\n        report = load_json(contained(root / ref, root, must_exist=True))\n    except (ContractError, OSError, ValueError) as exc:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n    if not isinstance(report, dict) or report.get(\"verdict\") != \"PASS\":\n        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n    spec_dir = report.get(\"spec_dir\")\n    source_dir = (root / str(lineage[\"source_path\"])).parent.resolve()\n    evaluated = Path(spec_dir).expanduser() if isinstance(spec_dir, str) and spec_dir else None\n    if evaluated is None or (evaluated if evaluated.is_absolute() else root / evaluated).resolve() != source_dir:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n\n\n# ---------------------------------------------------------------- operations\n79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"",
+  "tool_use_result": {
+    "stdout": "def _spec_confirmation(raw: Any, kind: str, lineage: dict[str, Any], root: Path, label: str) -> dict[str, str]:\n    \"\"\"C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。\n\n    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、\n    PASS が別の bytes へ流用されることはない。report は repo 内の通常ファイルで、評価した spec_dir が取込元の\n    ディレクトリと一致し、verdict が PASS のものだけを受ける。\n    \"\"\"\n    if kind not in SPEC_IMPORT_KINDS or lineage.get(\"origin_kind\") != \"system-spec-harness\":\n        raise WriterError(\"confirmation_requires_spec_import\",\n                          f\"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness\")\n    if not isinstance(raw, dict) or set(raw) != {\"evaluator\", \"evidence_ref\", \"evaluated_digest\"}:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}\")\n    if raw[\"evaluator\"] != SPEC_EVALUATOR:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluator must be {SPEC_EVALUATOR}\")\n    if raw[\"evaluated_digest\"] != lineage.get(\"source_digest\"):\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evaluated_digest must equal source_lineage.source_digest\")\n    ref = raw[\"evidence_ref\"]\n    if not isinstance(ref, str) or not ref or Path(ref).is_absolute() or \"..\" in Path(ref).parts:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref must be a repo-relative path\")\n    try:\n        report = load_json(contained(root / ref, root, must_exist=True))\n    except (ContractError, OSError, ValueError) as exc:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: evidence_ref {ref} is unreadable ({exc})\") from exc\n    if not isinstance(report, dict) or report.get(\"verdict\") != \"PASS\":\n        raise WriterError(\"confirmation_evidence_not_pass\", f\"{label}: {ref} verdict is not PASS\")\n    spec_dir = report.get(\"spec_dir\")\n    source_dir = (root / str(lineage[\"source_path\"])).parent.resolve()\n    evaluated = Path(spec_dir).expanduser() if isinstance(spec_dir, str) and spec_dir else None\n    if evaluated is None or (evaluated if evaluated.is_absolute() else root / evaluated).resolve() != source_dir:\n        raise WriterError(\"invalid_confirmation_evidence\", f\"{label}: {ref} evaluated {spec_dir!r}, not the import source directory\")\n    return {\"evaluator\": raw[\"evaluator\"], \"evidence_ref\": ref, \"evaluated_digest\": raw[\"evaluated_digest\"]}\n\n\n# ---------------------------------------------------------------- operations\n79:SPEC_EVALUATOR = \"system-spec-harness:assign-system-spec-completeness-evaluator\"",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

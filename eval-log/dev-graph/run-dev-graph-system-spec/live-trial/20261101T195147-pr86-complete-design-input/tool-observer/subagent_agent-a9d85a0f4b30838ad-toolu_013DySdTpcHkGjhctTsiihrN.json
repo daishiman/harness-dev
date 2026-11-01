@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a9d85a0f4b30838ad",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "14720636-c055-4894-8d6a-8bf4acab6807",
+      "line": 53,
+      "prefix_bytes": 714884,
+      "prefix_sha256": "503bd787fb1ed573e10bcdc7ab7b35e5a70c003b4ab3fc107958e73bae5c0aa3",
+      "timestamp": "2026-11-01T11:03:04.735Z"
+    },
+    "result": {
+      "uuid": "de7b991a-c83c-496b-8e50-95c0a7021bc8",
+      "line": 54,
+      "prefix_bytes": 717955,
+      "prefix_sha256": "d0e78cc89f4e295be6ec00776e3d9bc55fd67e5e0a9c415cee9068ddd54bd200",
+      "timestamp": "2026-11-01T11:03:09.560Z"
+    }
+  },
+  "tool_use_id": "toolu_013DySdTpcHkGjhctTsiihrN",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "Report the 'Last modified' date text at the page footer, and any content about time zones/concurrency duplicates.",
+    "offset": 100000
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified:** \"Last modified May 13, 2026 at 9:32 PM PST: update api-reference and ref shortcode callers for new URL structure (c37d572161)\"\n\n**Time zones and concurrency duplicates:** I found no verbatim duplicates. The content appears as follows:\n\n- **Time zones:** The \"Time zones\" section appears once in this excerpt. A related but distinct passage is in \"Unsupported TimeZone specification,\" which says that `CRON_TZ` or `TZ` in `.spec.schedule` is not supported and that you should use the time zone field instead.\n- **Concurrency:** `concurrencyPolicy` is mentioned several times in the \"Job creation\" section, each in a different context:\n  - With `Allow`: \"if `concurrencyPolicy` is set to `Allow`, the Jobs will always run at least once.\"\n  - With `Forbid`: \"when using `concurrencyPolicy: Forbid`, long-running Jobs may cause scheduled times to be skipped,\" and a run is counted as missed if a previous schedule is still running.\n\nThe excerpt starts partway through the page, so any earlier sections on these topics are not included here.",
+  "tool_use_result": {
+    "bytes": 522574,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified:** \"Last modified May 13, 2026 at 9:32 PM PST: update api-reference and ref shortcode callers for new URL structure (c37d572161)\"\n\n**Time zones and concurrency duplicates:** I found no verbatim duplicates. The content appears as follows:\n\n- **Time zones:** The \"Time zones\" section appears once in this excerpt. A related but distinct passage is in \"Unsupported TimeZone specification,\" which says that `CRON_TZ` or `TZ` in `.spec.schedule` is not supported and that you should use the time zone field instead.\n- **Concurrency:** `concurrencyPolicy` is mentioned several times in the \"Job creation\" section, each in a different context:\n  - With `Allow`: \"if `concurrencyPolicy` is set to `Allow`, the Jobs will always run at least once.\"\n  - With `Forbid`: \"when using `concurrencyPolicy: Forbid`, long-running Jobs may cause scheduled times to be skipped,\" and a run is counted as missed if a previous schedule is still running.\n\nThe excerpt starts partway through the page, so any earlier sections on these topics are not included here.",
+    "durationMs": 4582,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

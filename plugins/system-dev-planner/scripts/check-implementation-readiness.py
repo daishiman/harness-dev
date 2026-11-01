@@ -173,7 +173,14 @@ def _probe_source_plugin(plugin_root: Path) -> Probe:
 
 
 def _probe_completeness(repo_root: Path, rel: str, producer_root: Path) -> Probe:
-    """Delegate completeness semantics to the producer-owned aggregate validator."""
+    """Delegate completeness semantics to the producer-owned aggregate validator.
+
+    The attribution corroboration ledger is bound to the *inspected* repo via an
+    explicit --fork-ledger argument. Without it the gate resolves the ledger from
+    its own env (CLAUDE_PROJECT_DIR) / cwd, so a probe run from another workspace
+    could corroborate against an unrelated repo's ledger (cross-scope leak;
+    issue: HarnessHub-sk0). Path mirrors the producer's LEDGER_RELPATH contract.
+    """
     report = repo_root / rel
     if not report.is_file():
         return Probe(rel, False, False, False, 0, detail="completeness report missing")
@@ -181,8 +188,10 @@ def _probe_completeness(repo_root: Path, rel: str, producer_root: Path) -> Probe
             "scripts" / "aggregate-completeness.py")
     if not gate.is_file():
         return Probe(rel, True, True, True, 0, detail="producer completeness validator missing")
+    fork_ledger = repo_root / "eval-log" / "system-spec-harness" / "audit-fork-ledger.jsonl"
     completed = subprocess.run(
-        [sys.executable or "python3", str(gate), "--report", str(report)],
+        [sys.executable or "python3", str(gate), "--report", str(report),
+         "--fork-ledger", str(fork_ledger)],
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
     )
     detail = (completed.stderr or completed.stdout).strip()

@@ -1,0 +1,23 @@
+{
+  "kind": "native-local-instruction-transport",
+  "path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/CLAUDE.local.md",
+  "sha256": "1b14cc8396069a24ae19868d546621cc03385cc36f062be087ba08dcd97bd1b4",
+  "source_unchanged": true,
+  "permissions_changed": false,
+  "scenario_contract_changed": false,
+  "budget_changed": false,
+  "rationale": "context:forkは親会話を継承しない。通常project CLAUDE.local.mdで既存source契約を受け側にも届ける。期待判定/PASSは渡さない。",
+  "official_docs": [
+    "https://code.claude.com/docs/en/skills#run-skills-in-a-subagent",
+    "https://code.claude.com/docs/en/sub-agents#what-loads-at-startup"
+  ],
+  "C05_contract_clarification": "R1-score4.3とC04索引の既存source境界を具体的なpath/CLI種別とsource由来18file inventoryで再掲。権限/criterionの追加や期待判定は無し。",
+  "execution_mode_changed": true,
+  "runtime_env": {
+    "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS": "1"
+  },
+  "tool_schema_change": "run_in_background parameterをnative設定で除去。権限を追加せず、source正式運用どおりforegroundのみ。",
+  "parent_Bash_contract": "observer/readonly診断も含む全main Bashに固定root前置き。source/Task既存契約をliteral再掲。",
+  "transport_smoke": "native-memory-probe/provenance.json",
+  "foreground_runtime_probe": "foreground-runtime-probe/"
+}

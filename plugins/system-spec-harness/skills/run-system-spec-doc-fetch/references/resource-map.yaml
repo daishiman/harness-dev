@@ -11,6 +11,9 @@ resources:
   - file: ../prompts/R3-record.md
     topic: fetched-references.json へ正規化記録する R3 責務
     read_when: 取得素材を記録し IN1 検証にかけるとき
+  - file: ../prompts/R4-audit-doc-freshness.md
+    topic: 取得済み記録を公式サイトへ再照合する R4 責務 (C08 auditor の起動アダプタ側ではなく本文が SSOT)
+    read_when: OUT1 (鮮度の意味判定) を独立 context で監査するとき
   - file: ../scripts/build-fetched-references.py
     topic: record 素材を契約形状へ正規化・全件突合する決定論 assembler
     read_when: R3 で fetched-references.json を組み立てるとき

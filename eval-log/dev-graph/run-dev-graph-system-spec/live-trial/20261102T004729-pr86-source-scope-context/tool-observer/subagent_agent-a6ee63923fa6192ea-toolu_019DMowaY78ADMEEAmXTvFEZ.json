@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a6ee63923fa6192ea",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "351a2f8e-2ba7-4828-91db-0f1204ccde61",
+      "line": 33,
+      "prefix_bytes": 272041,
+      "prefix_sha256": "2d1351b32eb20cfad24d7a2db991ed33ef363d3e160878de6182c38df3d15555",
+      "timestamp": "2026-11-01T16:06:27.454Z"
+    },
+    "result": {
+      "uuid": "b0cdf2de-e7e7-45c2-85b7-d81f239a4e92",
+      "line": 34,
+      "prefix_bytes": 276770,
+      "prefix_sha256": "6daf0e8966d8a9adee40becae700fb39c4f0282f342f74aee98b3580cf47f3ff",
+      "timestamp": "2026-11-01T16:06:30.975Z"
+    }
+  },
+  "tool_use_id": "toolu_019DMowaY78ADMEEAmXTvFEZ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -B - <<'EOF'\nimport json,hashlib,pathlib\nrep=json.load(open('eval-log/system-spec-completeness-report.json'))\na=rep['artifact_snapshot']['artifacts'];bad=[]\nfor p,s in a.items():\n  f=pathlib.Path(p)\n  if not f.is_file() or hashlib.sha256(f.read_bytes()).hexdigest()!=s: bad.append(p)\nprint('n',len(a),'bad',bad)\ncur=sorted(str(p) for p in pathlib.Path('system-spec').rglob('*') if p.is_file())\nprint('not in snapshot',[c for c in cur if c not in a])\nprint('audit verdicts',[(d['component'],d['verdict']) for d in rep['audit_delegations']])\nEOF\nls eval-log/ eval-log/*/ | head -80; ls -la ../workdir/tool-observer/ 2>&1 | head",
+    "description": "Verify snapshot hashes, list eval logs"
+  },
+  "is_error": false,
+  "tool_result_content": "n 12 bad []\nnot in snapshot ['system-spec/fixture-requirements-v7.txt', 'system-spec/retrieval-evidence/fastapi.json', 'system-spec/retrieval-evidence/kubernetes.html', 'system-spec/retrieval-evidence/postgres.json', 'system-spec/retrieval-evidence/react.json', 'system-spec/retrieval-evidence/typescript.json']\naudit verdicts [('C07', 'PASS'), ('C06', 'PASS'), ('C08', 'PASS')]\neval-log/:\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec/:\nartifact-delivery-choice.json\nc24-receipt.json\nevaluation-context.json\npreflight-report.json\nR0-context\nR1-preflight\n\neval-log/run-system-spec-compile/:\nartifact-delivery-choice.json\n\neval-log/run-system-spec-doc-fetch/:\nartifact-delivery-choice.json\n\neval-log/run-system-spec-elicit/:\nartifact-delivery-choice.json\n\neval-log/system-spec-harness/:\naudit-fork-ledger.jsonl\ntotal 6832\ndrwx------@ 173 dm  wheel    5536 11月  2 01:06 .\ndrwxr-xr-x@  54 dm  wheel    1728 11月  2 00:48 ..\n-rw-------@   1 dm  wheel  103883 11月  2 01:06 index.json\n-rw-------@   1 dm  wheel   26176 11月  2 01:06 main-prompt-4e35a3ae-9068-41be-a641-4d7e66de4d75.json\n-rw-------@   1 dm  wheel   13104 11月  2 01:06 main-prompt-a29aa384-2c05-493c-943e-2d397e029bbf.json\n-rw-------@   1 dm  wheel   15632 11月  2 01:06 main-prompt-cfb44501-2637-4640-a42a-b0e549b16401.json\n-rw-------@   1 dm  wheel   20625 11月  2 01:06 main-prompt-dc67c028-8db0-46b6-b9a7-260a8f28c4a4.json\n-rw-------@   1 dm  wheel    4806 11月  2 01:06 main-toolu_011PAPF7BQJPzSiKw9yyFg2t.json\n-rw-------@   1 dm  wheel    4075 11月  2 01:06 main-toolu_011zkFwiU6vmcbXRa9pQqYQr.json",
+  "tool_use_result": {
+    "stdout": "n 12 bad []\nnot in snapshot ['system-spec/fixture-requirements-v7.txt', 'system-spec/retrieval-evidence/fastapi.json', 'system-spec/retrieval-evidence/kubernetes.html', 'system-spec/retrieval-evidence/postgres.json', 'system-spec/retrieval-evidence/react.json', 'system-spec/retrieval-evidence/typescript.json']\naudit verdicts [('C07', 'PASS'), ('C06', 'PASS'), ('C08', 'PASS')]\neval-log/:\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-intermediate.jsonl\nrun-dev-graph-system-spec-progress.json\nrun-system-spec-compile\nrun-system-spec-doc-fetch\nrun-system-spec-elicit\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec/:\nartifact-delivery-choice.json\nc24-receipt.json\nevaluation-context.json\npreflight-report.json\nR0-context\nR1-preflight\n\neval-log/run-system-spec-compile/:\nartifact-delivery-choice.json\n\neval-log/run-system-spec-doc-fetch/:\nartifact-delivery-choice.json\n\neval-log/run-system-spec-elicit/:\nartifact-delivery-choice.json\n\neval-log/system-spec-harness/:\naudit-fork-ledger.jsonl\ntotal 6832\ndrwx------@ 173 dm  wheel    5536 11月  2 01:06 .\ndrwxr-xr-x@  54 dm  wheel    1728 11月  2 00:48 ..\n-rw-------@   1 dm  wheel  103883 11月  2 01:06 index.json\n-rw-------@   1 dm  wheel   26176 11月  2 01:06 main-prompt-4e35a3ae-9068-41be-a641-4d7e66de4d75.json\n-rw-------@   1 dm  wheel   13104 11月  2 01:06 main-prompt-a29aa384-2c05-493c-943e-2d397e029bbf.json\n-rw-------@   1 dm  wheel   15632 11月  2 01:06 main-prompt-cfb44501-2637-4640-a42a-b0e549b16401.json\n-rw-------@   1 dm  wheel   20625 11月  2 01:06 main-prompt-dc67c028-8db0-46b6-b9a7-260a8f28c4a4.json\n-rw-------@   1 dm  wheel    4806 11月  2 01:06 main-toolu_011PAPF7BQJPzSiKw9yyFg2t.json\n-rw-------@   1 dm  wheel    4075 11月  2 01:06 main-toolu_011zkFwiU6vmcbXRa9pQqYQr.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

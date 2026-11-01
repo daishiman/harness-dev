@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "cfc215c4-0211-4f67-9c4b-28bb116abc41",
+      "line": 331,
+      "prefix_bytes": 1098143,
+      "prefix_sha256": "488e712a0f3312f118f3fb6b83e72bc425f101e459ca96ed4ad3a426faaa7f08",
+      "timestamp": "2026-11-01T07:50:46.827Z"
+    },
+    "result": {
+      "uuid": "e245629d-20e4-4044-bf5f-4c2fd9bca3f0",
+      "line": 332,
+      "prefix_bytes": 1099979,
+      "prefix_sha256": "5cd486a4f6b6cd68f39053aec8eeb15f850c539276d5bc262641c8df7f01a0b7",
+      "timestamp": "2026-11-01T07:50:50.482Z"
+    }
+  },
+  "tool_use_id": "toolu_01AnDMBF82ySPRLkBx6JirVa",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/c02-import-payload.json --dry-run | python3 -c \"\nimport json,sys;d=json.load(sys.stdin);print({k:v for k,v in d.items() if k not in('artifacts','details')});\nfor x in d.get('artifacts',d.get('details',[])): print({k:x.get(k) for k in ('graph_node_id','file_path','implementation_readiness','missing_sections','classification')})\""
+  },
+  "is_error": false,
+  "tool_result_content": "{'applied_count': 0, 'code': 'pre_write_validation_failed', 'error': '2 validate-graph-schema finding(s)', 'findings': [{'code': 'schema_violation', 'detail': \"$.source_lineage: 'imported_at' is a required property\", 'node': 'spec-billing-audit-system-spec'}, {'code': 'schema_violation', 'detail': \"$.source_lineage: 'imported_at' is a required property\", 'node': 'arch-billing-audit-system-architecture'}], 'status': 'rejected', 'valid': False, 'write_count': 0}",
+  "tool_use_result": {
+    "stdout": "{'applied_count': 0, 'code': 'pre_write_validation_failed', 'error': '2 validate-graph-schema finding(s)', 'findings': [{'code': 'schema_violation', 'detail': \"$.source_lineage: 'imported_at' is a required property\", 'node': 'spec-billing-audit-system-spec'}, {'code': 'schema_violation', 'detail': \"$.source_lineage: 'imported_at' is a required property\", 'node': 'arch-billing-audit-system-architecture'}], 'status': 'rejected', 'valid': False, 'write_count': 0}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

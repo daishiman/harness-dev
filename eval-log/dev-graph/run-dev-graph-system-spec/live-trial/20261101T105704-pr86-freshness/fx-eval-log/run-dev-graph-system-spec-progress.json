@@ -1,0 +1,70 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "R0独立Agent PASS: eval-log/run-dev-graph-system-spec/R0-context/agent-verification.json (C24再実行が receipt と全一致、lineage gate checked=0 exit0)"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "R1独立Agent PASS: eval-log/run-dev-graph-system-spec/R1-preflight/agent-verification.json (0.1.25 ∈ >=0.1.22 <1.0.0、4 entry points 実在)"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "R2独立Agent 2回 FAIL (R2-delegate/agent-verification.json, agent-verification-2.json): 63 Bashごとの固定root移動・照合、64 CLAUDE_PROJECT_DIR毎回export、67 委譲先SKILL.md/prompt全文読込 が自己申告 (process-attestation.json) しか裏付けがなく not_achieved"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "R2独立Agent: gate全PASS/skill_args/spec_dir は achieved。C05 report verdict PASS (6観点PASS, high0)、loop2 coverage=0 citation=0 schema=0"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "achieved",
+      "evidence": "R3独立Agent PASS (R3-import/agent-verification.json)。C02 receipt .dev-graph/state/receipts/node-r000001-add.json、lineage gate exit0 checked=2、evaluated_digest==source_digest、confirmed/pass/readiness complete、integrity-auditor PASS"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R3独立Agent項目7: dev-graph に spec-state 遷移・章レンダリング・ヒアリングの実装なし (_spec_confirmation は report 照合のみ)。R2検証でも複製0"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "loop2: coverage=0, source-citation=0, validate-graph-schema --strict-artifact-readiness=0 (graph rev1, 2 node readiness complete)",
+      "loop_results": [
+        {
+          "loop": 1,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS",
+          "at": "2026-11-01T02:06:23+00:00"
+        },
+        {
+          "loop": 2,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS",
+          "at": "2026-11-01T02:27:35+00:00"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "run後のlive trialが判定"
+    }
+  ],
+  "updated_at": "2026-11-01T02:27:35+00:00",
+  "blocker": "checklist 3 (R2 の手順証跡) が独立検証で not_achieved。隔離ガードで transcript を証拠化できず、自己申告では閉じられない",
+  "overall": "blocked"
+}

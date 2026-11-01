@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "subagent/agent-a04e9550c49f45f91",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "db8f8972-8614-4cdc-9c62-16dc4f86da16",
+      "line": 36,
+      "prefix_bytes": 362418,
+      "prefix_sha256": "cabf29419badce4ca918092638971023934cfc0d02dc9859bec2d9aba81db654",
+      "timestamp": "2026-11-01T15:40:56.211Z"
+    },
+    "result": {
+      "uuid": "759eeb0b-f023-42b4-98ba-a3d9f2086fbd",
+      "line": 42,
+      "prefix_bytes": 377417,
+      "prefix_sha256": "f6da0944b39f27a4235d4cd390a7abbded5460435efc7a822725cfaa8a2fc3fa",
+      "timestamp": "2026-11-01T15:41:04.959Z"
+    }
+  },
+  "tool_use_id": "toolu_01XrGCanWKe91TCfkgHpSsi4",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "prompt": "What is the page last modified date? What does it say about concurrencyPolicy Forbid and idempotency of jobs?"
+  },
+  "is_error": false,
+  "tool_result_content": "**Last modified date:** The content I have doesn't include one. The page text is truncated before any footer or \"Last modified\" line, so I can't determine it from this excerpt.\n\n**concurrencyPolicy: Forbid:** The visible text says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nIt also notes that concurrency policy only applies to Jobs created by the same CronJob. Jobs from different CronJobs can always run concurrently.\n\n**Idempotency:** The visible portion doesn't discuss idempotency in connection with `Forbid` or anywhere else. The truncated \"CronJob limitations\" section (including \"Job creation\") likely covers it, since the page's limitations section typically warns that a CronJob can occasionally create more than one Job for a single schedule time. From general Kubernetes behavior, you should design the Job's work to be idempotent, because `Forbid` prevents overlapping runs but doesn't guarantee exactly-once execution. I can't confirm the page's exact wording on this from the content provided.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+  "tool_use_result": {
+    "bytes": 521401,
+    "code": 200,
+    "codeText": "OK",
+    "result": "**Last modified date:** The content I have doesn't include one. The page text is truncated before any footer or \"Last modified\" line, so I can't determine it from this excerpt.\n\n**concurrencyPolicy: Forbid:** The visible text says:\n\n> `Forbid`: The CronJob does not allow concurrent runs; if it is time for a new Job run and the previous Job run hasn't finished yet, the CronJob skips the new Job run. Also note that when the previous Job run finishes, `.spec.startingDeadlineSeconds` is still taken into account and may result in a new Job run.\n\nIt also notes that concurrency policy only applies to Jobs created by the same CronJob. Jobs from different CronJobs can always run concurrently.\n\n**Idempotency:** The visible portion doesn't discuss idempotency in connection with `Forbid` or anywhere else. The truncated \"CronJob limitations\" section (including \"Job creation\") likely covers it, since the page's limitations section typically warns that a CronJob can occasionally create more than one Job for a single schedule time. From general Kubernetes behavior, you should design the Job's work to be idempotent, because `Forbid` prevents overlapping runs but doesn't guarantee exactly-once execution. I can't confirm the page's exact wording on this from the content provided.\n\n[WebFetch note: this page's text is 108641 characters long and the answer above covers only characters 0 to 100000; the final 8641 were not read — to read on, call WebFetch again with the same url and offset: 100000.]",
+    "durationMs": 7900,
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
+  }
+}

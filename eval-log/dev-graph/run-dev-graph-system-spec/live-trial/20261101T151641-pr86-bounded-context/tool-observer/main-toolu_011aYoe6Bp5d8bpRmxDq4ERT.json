@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "abfb6bfa-3342-49cc-9448-3f6f076ec89f",
+      "line": 112,
+      "prefix_bytes": 845202,
+      "prefix_sha256": "61e804055a579bf5ccf52c5f4a075c51f522ce94158da63f60642ba8992b630c",
+      "timestamp": "2026-11-01T15:21:08.299Z"
+    },
+    "result": {
+      "uuid": "8f49d8dd-b28a-49d6-944c-42ed40c8ecca",
+      "line": 120,
+      "prefix_bytes": 849009,
+      "prefix_sha256": "3c467a457569fb12201e63b700ddd3809bb4983736d1a972a6aa731ac611a5bc",
+      "timestamp": "2026-11-01T15:21:10.163Z"
+    }
+  },
+  "tool_use_id": "toolu_011aYoe6Bp5d8bpRmxDq4ERT",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B - <<'PYTHON'\nimport json, sys\nfrom pathlib import Path\n\n# Verify system-spec-harness plugin requirements\nplugin_root = Path(CLAUDE_PROJECT_DIR) / \"plugins\" / \"system-spec-harness\"\nmanifest = plugin_root / \".claude-plugin\" / \"plugin.json\"\n\nif not manifest.exists():\n    print(json.dumps({\"status\": \"FAIL\", \"reason\": \"plugin manifest not found\"}))\n    sys.exit(1)\n\nwith open(manifest) as f:\n    manifest_data = json.load(f)\n\nrequired_skills = [\n    \"run-system-spec-elicit\",\n    \"run-system-spec-doc-fetch\", \n    \"run-system-spec-compile\",\n    \"assign-system-spec-completeness-evaluator\"\n]\n\npackage_contract = plugin_root / \"references\" / \"package-contract.json\"\nif not package_contract.exists():\n    print(json.dumps({\"status\": \"FAIL\", \"reason\": \"package-contract.json not found\"}))\n    sys.exit(1)\n\nwith open(package_contract) as f:\n    contract = json.load(f)\n\nentry_points = contract.get(\"entry_points\", {}).get(\"skills\", [])\nentry_point_names = [s.get(\"name\") if isinstance(s, dict) else s for s in entry_points]\n\nmissing = [s for s in required_skills if s not in entry_point_names]\nif missing:\n    print(json.dumps({\"status\": \"FAIL\", \"reason\": f\"Missing entry points: {missing}\"}))\n    sys.exit(1)\n\nprint(json.dumps({\n    \"status\": \"PASS\",\n    \"plugin_root\": str(plugin_root),\n    \"manifest_name\": manifest_data.get(\"name\"),\n    \"version\": manifest_data.get(\"version\"),\n    \"required_skills\": required_skills,\n    \"found_skills\": entry_point_names\n}))\nPYTHON\n",
+    "description": "Verify system-spec-harness plugin requirements"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\nTraceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nNameError: name 'CLAUDE_PROJECT_DIR' is not defined",
+  "tool_use_result": "Error: Exit code 1\nTraceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nNameError: name 'CLAUDE_PROJECT_DIR' is not defined"
+}

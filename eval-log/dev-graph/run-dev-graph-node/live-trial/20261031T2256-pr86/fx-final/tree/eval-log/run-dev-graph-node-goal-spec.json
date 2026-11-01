@@ -1,0 +1,145 @@
+{
+  "skill": "run-dev-graph-node",
+  "original_goal": "通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ",
+  "original_goal_hash": "eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "invocations": [
+    {
+      "verb": "add",
+      "args": "--repo-root <fx> --input mixed-artifacts.json",
+      "apply_input": "mixed-artifacts.apply.json"
+    },
+    {
+      "verb": "update",
+      "args": "--repo-root <fx> --input update-append.json",
+      "apply_input": "update-append.apply.json",
+      "artifact_delivery": {
+        "presented_artifacts": [
+          {
+            "path": "issues/lt-search-empty-result.md",
+            "sha256": "4d8c1997314220818ccd9be135136bb4e84e21c7a430b2cbb16382f4ba50161d"
+          },
+          {
+            "path": "tasks/lt-add-search-index.md",
+            "sha256": "113013df6847c351ccaecaf95d655f27ff79f5f130cb50170555dc45d2c957d2"
+          },
+          {
+            "path": "specs/lt-note-search.md",
+            "sha256": "a176f8d42f166562bf75829c1d3e19e4ca932bcc881b6cd81c9cdea33c51dcca"
+          },
+          {
+            "path": "architecture/lt-search-service.md",
+            "sha256": "4ccdfbcf951a9b7c1885e1f529c495b66e9f3c82c0b4f219b066d0bf5615a2f8"
+          },
+          {
+            "path": "docs/lt-search-runbook.md",
+            "sha256": "ec129da90ca1961831843d4913a208b18339412846e3ea8e77241b58370dd100"
+          },
+          {
+            "path": ".dev-graph/state/graph.json",
+            "graph_revision": 2,
+            "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94"
+          }
+        ],
+        "minimal_guard": {
+          "validator": "validate-graph-schema.py",
+          "graph_validation": "pass",
+          "violation_count": 0,
+          "body_diff": "append-only (one H2 per file)"
+        },
+        "state_trace": [
+          "artifact_created",
+          "minimal_guard_passed",
+          "artifact_presented",
+          "user_choice_recorded",
+          "semantic_evaluator_started"
+        ],
+        "user_choice": "standard",
+        "choice_source": "isolated fixture pre-answer contract (task.md)"
+      }
+    },
+    {
+      "verb": "add",
+      "args": "--repo-root <fx> --input feature-direct-add.json",
+      "apply_input": "feature-direct-add.apply.json",
+      "artifact_delivery": {
+        "presented_artifacts": [
+          {
+            "path": "eval-log/feature-apply-output.json",
+            "note": "writer rejection output (code feature_requires_c14_macro_contract, applied_count 0, write_count 0)"
+          },
+          {
+            "path": ".dev-graph/state/graph.json",
+            "graph_revision": 2,
+            "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94",
+            "note": "unchanged"
+          }
+        ],
+        "minimal_guard": {
+          "validator": "validate-graph-schema.py",
+          "graph_validation": "pass",
+          "violation_count": 0,
+          "corrupt_guard": "graph file sha256 identical before/after; no new receipt; features/ empty"
+        },
+        "state_trace": [
+          "artifact_created",
+          "minimal_guard_passed",
+          "artifact_presented",
+          "user_choice_recorded",
+          "semantic_evaluator_started"
+        ],
+        "user_choice": "standard",
+        "choice_source": "isolated fixture pre-answer contract (task.md)"
+      }
+    }
+  ],
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "artifact_delivery": {
+    "contract": "artifact-delivery-v1",
+    "presented_artifacts": [
+      {
+        "path": "issues/lt-search-empty-result.md",
+        "sha256": "6ec9e4d271245b4969d576ef22f0c8b85bdbbbc09903d6679776e34b6a5705c0"
+      },
+      {
+        "path": "tasks/lt-add-search-index.md",
+        "sha256": "a43e2ee31e1983c9b1d5c5efd13c00fe5618b3e74d44c3f37aba6b04958415f7"
+      },
+      {
+        "path": "specs/lt-note-search.md",
+        "sha256": "c7f1d19eb68dd5bfef3072ab22d1ba88ec2691e5798c8b75f1aba28dbe9f612a"
+      },
+      {
+        "path": "architecture/lt-search-service.md",
+        "sha256": "af41266f4b1ba6381a272a1c15f99cf9437beb2f31316d708cf9ef2ec04946a4"
+      },
+      {
+        "path": "docs/lt-search-runbook.md",
+        "sha256": "c4086e19b6c01742235e653085a258ae2a8663921d80af19baba41d660bf9558"
+      },
+      {
+        "path": ".dev-graph/state/graph.json",
+        "graph_revision": 1,
+        "graph_digest": "sha256:1565bc703b1e965bd687ba60bbca4bb667b3b82a1d0aab51f2d55f2b1c906d6a"
+      }
+    ],
+    "open_with": "Markdown viewer for content files; jq for graph.json",
+    "minimal_guard": {
+      "validator": "validate-graph-schema.py",
+      "graph_validation": "pass",
+      "violation_count": 0
+    },
+    "state_trace": [
+      "artifact_created",
+      "minimal_guard_passed",
+      "artifact_presented",
+      "user_choice_recorded",
+      "semantic_evaluator_started"
+    ],
+    "user_choice": "standard",
+    "choice_source": "isolated fixture pre-answer contract (task.md): artifact_delivery=standard; not an approval of the repo or external accounts"
+  }
+}

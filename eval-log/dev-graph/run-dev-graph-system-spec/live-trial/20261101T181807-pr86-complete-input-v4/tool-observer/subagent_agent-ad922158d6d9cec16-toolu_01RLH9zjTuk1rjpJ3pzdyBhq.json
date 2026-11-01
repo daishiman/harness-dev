@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-ad922158d6d9cec16",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "023c5db4-953a-4b5a-b4cf-2c92f5984d53",
+      "line": 131,
+      "prefix_bytes": 720874,
+      "prefix_sha256": "aaa9f328b5da271b3591bd9bc8addc33f0eeca5bc4adb1533461614f620820ed",
+      "timestamp": "2026-11-01T09:29:53.305Z"
+    },
+    "result": {
+      "uuid": "a71f48b2-ed8e-4097-bbbc-88badcf1afe9",
+      "line": 132,
+      "prefix_bytes": 724318,
+      "prefix_sha256": "8ea9ba8510f04b718bcf3f7dbedc59e1f9e16dedaecc57d34ff1f5b5002a08ce",
+      "timestamp": "2026-11-01T09:29:56.183Z"
+    }
+  },
+  "tool_use_id": "toolu_01RLH9zjTuk1rjpJ3pzdyBhq",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx/plugins/system-spec-harness/scripts; for s in validate-design-knowledge-refs validate-information-priority validate-spec-doc-sync; do echo \"== $s\"; python3 $s.py --help 2>&1 | head -25; done",
+    "description": "Show helper validators usage"
+  },
+  "is_error": false,
+  "tool_result_content": "== validate-design-knowledge-refs\nusage: validate-design-knowledge-refs.py [-h] --matrix MATRIX\n                                         [--repo-root REPO_ROOT] [--json]\n\n``design_applications[].knowledge_ref`` の参照先実在を検証する決定論ゲート。\n\n``validate-coverage-matrix.py`` は design_applications の**形状** (具体原則・採否・章固有理由・\n非空 trade-off) を検査するが、``knowledge_ref`` が実在の知識カードを指すかは見ていない。\nそのため存在しないファイルや綴り違いのファイル名を参照したまま緑になる。参照先が無い設計解釈は\n「C04 の deep card / doctrine anchor に基づいて判断した」という主張の根拠を持たないため、\n形状だけ揃った空の引用として通してしまう。\n\n検査対象:\n  1. ``knowledge_ref`` の path 部 (``#`` の手前) が repo root 配下に実在すること\n  2. path が repo root の外を指さないこと (絶対 path / ``..`` を拒否)\n  3. anchor 部 (``#`` の後ろ) がある場合、その見出しが参照先 Markdown に実在すること\n\n解決規則: path はまず repo root 起点で解決する。C04 deep card は harness repo の配置\n``plugins/<本 plugin 名>/...`` で書き、repo root に無い場合 (plugin を別の場所へ install した\n利用側 repo) に限り、本 script が属する plugin root 起点で解決し直す。他 plugin の prefix は\n読み替えない。spec-state の writer (``apply-spec-transition.py fix-qa-knowledge-ref``) も\n``resolve_knowledge_path`` / ``headings`` で実在を判定し、validator と writer の判定をずらさない。\n\n使い方:\n  python3 validate-design-knowledge-refs.py --matrix <spec-state.json> [--repo-root PATH] [--json]\n\n== validate-information-priority\nusage: validate-information-priority.py [-h] maps [maps ...]\n\ninformation priority map の決定論ゲート\n\npositional arguments:\n  maps        information-priority-map JSON のパス\n\noptions:\n  -h, --help  show this help message and exit\n== validate-spec-doc-sync\nusage: validate-spec-doc-sync.py [-h] --matrix MATRIX --references REFERENCES\n                                 [--spec-root SPEC_ROOT]\n\n正本 spec-state.json と成果物 system-spec/*.md の同期を検証する\n\noptions:\n  -h, --help            show this help message and exit\n  --matrix MATRIX       spec-state.json のパス\n  --references REFERENCES\n                        fetched-references.json のパス\n  --spec-root SPEC_ROOT\n                        章 Markdown のディレクトリ",
+  "tool_use_result": null
+}

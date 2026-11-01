@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a965bf4119e6dc68e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "f764f31f-eb8f-48b9-972e-e48e76b7e24c",
+      "line": 41,
+      "prefix_bytes": 822120,
+      "prefix_sha256": "1a222c63ce01171d891c11c4124f3f6b4bbac28bc36073cb23785797b13b7a7e",
+      "timestamp": "2026-11-01T15:59:52.854Z"
+    },
+    "result": {
+      "uuid": "10e64b7e-6939-42da-af39-e5215021605c",
+      "line": 42,
+      "prefix_bytes": 823759,
+      "prefix_sha256": "ab65c20083bae15b5ba8fdafba2568a8c00731f8a28b7759105fd0597df710c5",
+      "timestamp": "2026-11-01T15:59:59.058Z"
+    }
+  },
+  "tool_use_id": "toolu_01Q59aDc3DspotbWFsjjAA7E",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "/Users/dm/miniconda3/bin/python3 -I -B -c 'from pathlib import Path;import hashlib,json,sys;r=Path(sys.argv[1]).resolve(strict=True);p=(r/sys.argv[2]).resolve(strict=True);p.relative_to(r);assert p.is_file();print(json.dumps({'\"'\"'written_source_checked'\"'\"':True,'\"'\"'root'\"'\"':str(r),'\"'\"'path'\"'\"':sys.argv[2],'\"'\"'real_path'\"'\"':str(p),'\"'\"'sha256'\"'\"':hashlib.sha256(p.read_bytes()).hexdigest()},sort_keys=True))' /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx system-spec/fixture-requirements-v7.txt",
+    "description": "Check written source containment and SHA"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"path\": \"system-spec/fixture-requirements-v7.txt\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec/fixture-requirements-v7.txt\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\", \"sha256\": \"8cb2050c84cf0d7936162752eef55b4880da2cea536d6d8a9ced983a5e876ee4\", \"written_source_checked\": true}",
+  "tool_use_result": {
+    "stdout": "{\"path\": \"system-spec/fixture-requirements-v7.txt\", \"real_path\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx/system-spec/fixture-requirements-v7.txt\", \"root\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec123/fx\", \"sha256\": \"8cb2050c84cf0d7936162752eef55b4880da2cea536d6d8a9ced983a5e876ee4\", \"written_source_checked\": true}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

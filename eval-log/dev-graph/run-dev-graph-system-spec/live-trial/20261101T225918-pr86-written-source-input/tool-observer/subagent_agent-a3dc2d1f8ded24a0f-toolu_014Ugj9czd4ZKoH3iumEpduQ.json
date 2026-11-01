@@ -1,0 +1,39 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a3dc2d1f8ded24a0f",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "031a74bc-59e3-487f-b88d-e0d2d9b8889a",
+      "line": 35,
+      "prefix_bytes": 530428,
+      "prefix_sha256": "665b03a4f0fd8ffcca840e99440a11e401efe20916c8c76966297de7838e4370",
+      "timestamp": "2026-11-01T14:20:37.821Z"
+    },
+    "result": {
+      "uuid": "1958346f-d696-4943-ad08-a36e3ad241f7",
+      "line": 45,
+      "prefix_bytes": 554769,
+      "prefix_sha256": "158c33c4d91af2cd205585284c2440430baeb93b41e32799607f2c31ee050b7c",
+      "timestamp": "2026-11-01T14:20:56.433Z"
+    }
+  },
+  "tool_use_id": "toolu_014Ugj9czd4ZKoH3iumEpduQ",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://www.postgresql.org/support/versioning/",
+    "prompt": "Current minor versions for each major (esp. 16.x, 18.x), release dates, EOL dates. Today's date context 2026-11-01."
+  },
+  "is_error": false,
+  "tool_result_content": "As of 2026-11-01, these are the supported PostgreSQL branches:\n\n| Major | Current minor | First release | Final release (EOL) | Status |\n|---|---|---|---|---|\n| 18 | 18.6 | Sep 25, 2025 | Nov 14, 2030 | Supported |\n| 17 | 17.11 | Sep 26, 2024 | Nov 8, 2029 | Supported |\n| 16 | 16.15 | Sep 14, 2023 | Nov 9, 2028 | Supported |\n| 15 | 15.19 | Oct 13, 2022 | Nov 11, 2027 | Supported |\n| 14 | 14.24 | Sep 30, 2021 | Nov 12, 2026 | Supported, EOL in about 11 days |\n\nMajors 13 and older are unsupported. The most recent was 13, which reached EOL on Nov 13, 2025.\n\nKey points from the policy:\n- Each major is supported for 5 years after its initial release.\n- Minor releases with bug and security fixes come at least once every three months.\n- Minor upgrades don't need a dump and restore. Stop the server, install the new binaries, and restart. Always read the release notes first.\n- Major upgrades require `pg_upgrade` or a dump/reload.\n- The PostgreSQL project recommends always running the current minor release of your major version.\n\nPostgreSQL 14 users should plan a major upgrade before November 12, 2026. The page also announces PostgreSQL 19 RC 1 (released October 15, 2026), which isn't in the table yet.",
+  "tool_use_result": {
+    "bytes": 12669,
+    "code": 200,
+    "codeText": "OK",
+    "result": "As of 2026-11-01, these are the supported PostgreSQL branches:\n\n| Major | Current minor | First release | Final release (EOL) | Status |\n|---|---|---|---|---|\n| 18 | 18.6 | Sep 25, 2025 | Nov 14, 2030 | Supported |\n| 17 | 17.11 | Sep 26, 2024 | Nov 8, 2029 | Supported |\n| 16 | 16.15 | Sep 14, 2023 | Nov 9, 2028 | Supported |\n| 15 | 15.19 | Oct 13, 2022 | Nov 11, 2027 | Supported |\n| 14 | 14.24 | Sep 30, 2021 | Nov 12, 2026 | Supported, EOL in about 11 days |\n\nMajors 13 and older are unsupported. The most recent was 13, which reached EOL on Nov 13, 2025.\n\nKey points from the policy:\n- Each major is supported for 5 years after its initial release.\n- Minor releases with bug and security fixes come at least once every three months.\n- Minor upgrades don't need a dump and restore. Stop the server, install the new binaries, and restart. Always read the release notes first.\n- Major upgrades require `pg_upgrade` or a dump/reload.\n- The PostgreSQL project recommends always running the current minor release of your major version.\n\nPostgreSQL 14 users should plan a major upgrade before November 12, 2026. The page also announces PostgreSQL 19 RC 1 (released October 15, 2026), which isn't in the table yet.",
+    "durationMs": 7545,
+    "url": "https://www.postgresql.org/support/versioning/"
+  }
+}

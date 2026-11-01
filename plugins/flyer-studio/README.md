@@ -21,7 +21,7 @@
 
 ```bash
 npm ci --ignore-scripts
-python3 scripts/flyer.py doctor
+python3 scripts/build-flyer.py doctor
 claude --plugin-dir .
 ```
 
@@ -31,7 +31,7 @@ claude --plugin-dir .
 
 判断に必要な指針は [指針索引](references/design-knowledge-index.json)（DD で始まる ID の一覧）から必要な分だけ読みます。著名作家の人格や作品の模写は生成しません。案数などの汎用の既定は少数案（[design-contract](references/design-contract.json) の initDefaults）。選択した preset の値・案件知見は preset.json の knowledgeFiles を通して使い、一般案件へ文言・書体・座標を強制しません。各案の構図差と保持点を説明し、色だけを変える方式にしません。
 
-[素材一覧](assets/index.html)から今回の写真・ロゴ・参照を選び、公開範囲と必須 crop（切り抜き範囲）を確認します。原本を残して加工物を分け、未公開素材を外部へ送りません。コマンドはすべて `python3 scripts/flyer.py <command>` で、一覧と案件ファイルは [runtime](references/runtime.md)。
+[素材一覧](assets/index.html)から今回の写真・ロゴ・参照を選び、公開範囲と必須 crop（切り抜き範囲）を確認します。原本を残して加工物を分け、未公開素材を外部へ送りません。コマンドはすべて `python3 scripts/build-flyer.py <command>` で、一覧と案件ファイルは [runtime](references/runtime.md)。
 
 ## 完成と検証
 
@@ -39,6 +39,10 @@ claude --plugin-dir .
 
 ```bash
 npm test
-python3 scripts/package.py --check
+python3 scripts/build-local-package.py --check
 claude plugin validate .
 ```
+
+## スキル自体への改善要望
+
+このrepository内では共通の `/flyer-studio:run-skill-feedback` から改善要望を伝えられます。harness-creator が所有する共有部品の実体コピーを `skills/run-skill-feedback/` に置きます（install 先には自分の plugin フォルダしか展開されないため、共有部品への symlink では切れます）。正本とのbyte一致はrepositoryの検査（vendored SSOT の lint）が保ちます。利用者が要望収集を依頼した場合だけ起動し、認証や送信は共有部品の契約に従います。単独ローカルキットには含めません。外す skill は `scripts/build-local-package.py` の `KIT_EXCLUDED_SKILLS` で名前を宣言し、キットの `references/package-contract.json` の entry_points.skills と runtime_dependencies からも外します。その skill だけが要る依存もキットの宣言から外す（`KIT_EXCLUDED_DEPENDENCIES` は `.claude-plugin/plugin.json` の dependencies と `references/package-contract.json` の depends_on から、harness-creator への外部依存は `plugin-composition.yaml` と depends_on から）ので、キットはチラシ制作の6skillを自己完結で配布します。

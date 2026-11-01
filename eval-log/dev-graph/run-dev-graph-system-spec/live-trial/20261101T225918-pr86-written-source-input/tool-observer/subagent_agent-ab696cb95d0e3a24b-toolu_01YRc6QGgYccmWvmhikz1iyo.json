@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-ab696cb95d0e3a24b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4f310ad8-8047-4c60-9081-1f2fb47dbe24",
+      "line": 157,
+      "prefix_bytes": 2305664,
+      "prefix_sha256": "0e6af75687c84c8255114493da4d669956e848969cbdfddec345441906f46ed3",
+      "timestamp": "2026-11-01T14:11:11.415Z"
+    },
+    "result": {
+      "uuid": "bb77be3e-0679-4367-b4a6-6a337b2286f3",
+      "line": 158,
+      "prefix_bytes": 2307333,
+      "prefix_sha256": "fda4653d9d64c93560023204fd57ee9bab4db767aa495dee126407ad3f8b9038",
+      "timestamp": "2026-11-01T14:11:14.919Z"
+    }
+  },
+  "tool_use_id": "toolu_01YRc6QGgYccmWvmhikz1iyo",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/system-spec && python3 -I -c '\nimport json\ns=json.load(open(\"spec-state.json\"))\nm=s[\"matrix\"]; print(type(m), list(m)[:3] if isinstance(m,dict) else m[0])\nc=m[\"database\"]; print(type(c), c if not isinstance(c,dict) else {k:(type(v).__name__) for k,v in c.items()})\nw=c[\"web\"] if isinstance(c,dict) else None; print(json.dumps(w,ensure_ascii=False)[:800])\n'",
+    "description": "Inspect matrix structure read-only"
+  },
+  "is_error": false,
+  "tool_result_content": "<class 'dict'> ['database', 'auth', 'ui-ux']\n<class 'dict'> {'web': 'dict', 'mobile': 'dict', 'tablet': 'dict', 'desktop-windows': 'dict', 'desktop-linux': 'dict', 'desktop-macos': 'dict'}\n{\"state\": \"確定\", \"qa_ref\": \"qa-031\", \"serves_goals\": [\"G1\"], \"qa_refs\": [\"qa-001\", \"qa-018\", \"qa-024\", \"qa-027\", \"qa-o1-fixture-v3\", \"qa-job-choice-fixture-v3\"]}",
+  "tool_use_result": {
+    "stdout": "<class 'dict'> ['database', 'auth', 'ui-ux']\n<class 'dict'> {'web': 'dict', 'mobile': 'dict', 'tablet': 'dict', 'desktop-windows': 'dict', 'desktop-linux': 'dict', 'desktop-macos': 'dict'}\n{\"state\": \"確定\", \"qa_ref\": \"qa-031\", \"serves_goals\": [\"G1\"], \"qa_refs\": [\"qa-001\", \"qa-018\", \"qa-024\", \"qa-027\", \"qa-o1-fixture-v3\", \"qa-job-choice-fixture-v3\"]}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

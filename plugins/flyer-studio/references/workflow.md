@@ -13,10 +13,10 @@ intake →（既存紙面があるときだけ analyze → analysis-review）→
 | intake | [run-intake-flyer](../skills/run-intake-flyer/SKILL.md) | 依頼文・支給資料 | brief.json・intake.json・essence-baseline.json | intake-residual（不足と矛盾）。must-fact は finalize の assertResolved |
 | ↳ 様式提案 | run-intake-flyer | 雰囲気の言葉・参考・避けたいもの | 様式が言葉にならなければ 2〜3 案の様式提案（`<project>/style-proposals.json`）→ 利用者が選ぶか、おまかせ | style-proposals.json の chosen |
 | analyze | [run-analyze-flyer](../skills/run-analyze-flyer/SKILL.md) | 元紙面の画像（SOURCES.json）・brief | analysis.json・未判定の analysis-review.json | analysis-seal・analysis-validate。呼出側が評価台帳を準備 |
-| analysis-review | [assign-flyer-analysis-review](../skills/assign-flyer-analysis-review/SKILL.md) | 元画像・analysis.json・生成済み評価台帳 | 記入した analysis-review.json | analysis-review-validate（PASS/FIX）・FIX は cycle-ledger.json |
+| analysis-review | [assign-flyer-analysis-evaluator](../skills/assign-flyer-analysis-evaluator/SKILL.md) | 元画像・analysis.json・生成済み評価台帳 | 記入した analysis-review.json | analysis-review-validate（PASS/FIX）・FIX は cycle-ledger.json |
 | create | [run-create-flyer](../skills/run-create-flyer/SKILL.md) | brief・assets・concepts・scene・承認済み analysis | out/<案ID>/ の print.pdf・print.png | verify → out/checks.json |
-| ↳ pilot | run-create-flyer → assign-flyer-review | analysis の executionPlan が指す案だけ | out/pilot-checks.json・pilot-review.json | 独立 PASS まで残りの案は描画できない |
-| review | [assign-flyer-review](../skills/assign-flyer-review/SKILL.md) | [評価対象](review-rubric.md#評価コストの原則)の新 PDF 由来 PNG・checks | visual-review.json | 案ごとの PASS/FIX・cycle-ledger.json |
+| ↳ pilot | run-create-flyer → assign-flyer-evaluator | analysis の executionPlan が指す案だけ | out/pilot-checks.json・pilot-review.json | 独立 PASS まで残りの案は描画できない |
+| review | [assign-flyer-evaluator](../skills/assign-flyer-evaluator/SKILL.md) | [評価対象](review-rubric.md#評価コストの原則)の新 PDF 由来 PNG・checks | visual-review.json | 案ごとの PASS/FIX・cycle-ledger.json |
 | finalize | run-create-flyer（制作側） | 全案 PASS の visual-review | out/all.pdf・index.html・delivery.json（白案があるときは white.pdf） | finalize（complete か INCOMPLETE） |
 | learn | [run-learn-flyer](../skills/run-learn-flyer/SKILL.md) | finalize 済みの案件 | 知見台帳 `${FLYER_STUDIO_HOME:-~/.flyer-studio}/ledger/cases.jsonl` | learn-record（同じ案件・同じ finalize は再追記しない） |
 
@@ -51,8 +51,8 @@ intake →（既存紙面があるときだけ analyze → analysis-review）→
 | preference | どの本質条項にも結べない好み | 記録のみ（知見台帳へ） | しない |
 
 - visual-review と pilot-review の必須修正（mandatoryFixes）は fixClass・serves（E1〜E5）・returnTo を持ち、fixClass と returnTo は表と一致させる。preference は必須修正に入れず preferenceNotes へ残す。型は [visual-review schema](../schemas/visual-review.schema.json)。
-- deterministic と within-plan は制作が直接直し、新描画・検査 → 別担当の再実見へ進む。premise は run-intake-flyer で原因となる前提と確定事実・公開条件を再確認する。purpose や確定事実を変えるときは利用者の明示承認を essence-revise で記録し、essence-check を通す（R2）。既存紙面がある案件は分析担当が保持点と修正提案を更新し、別担当の提案評価 → 制作へ戻す。元画像の無い新規案件は analysisMode=new-from-brief のまま制作へ戻し、架空の元画像を作らない。どちらも新描画・検査 → 別担当の再実見へ進み、cycle の予算は引き継ぐ。
-- analysis-review の FIX は提案そのものへの指摘なので、常に run-analyze-flyer へ戻す。必須修正は text と serves を持ち、4 条件の判定と整合させる（[提案評価契約](../skills/assign-flyer-analysis-review/references/evaluation-contract.md)）。好みは preferenceNotes へ分ける。提案差戻しは trigger=analysis-review として cycle を消費するが、画像用 fixClass を推定せず fixClasses は空とし、前提崩れの premise 件数へ加算しない。
+- deterministic と within-plan は制作が直接直し、新描画・検査 → 別担当の再実見へ進む。premise は run-intake-flyer で原因となる前提と確定事実・公開条件を再確認する。purpose や確定事実を変えるときは利用者の明示承認を essence-revise で記録し、essence-check を通す（R2）。既存紙面がある案件は分析担当が保持点と修正提案を更新し、別担当の提案評価 → 制作へ戻す。元画像の無い新規案件は analysisMode=new-from-brief のまま制作へ戻し、架空の元画像を作らない。どちらも新描画・検査 → 別担当の再実見へ進み、cycle の予算と、各 stage で前に選んだ深さを引き継ぐ（[深さの選択と戻り](stage-common.md#深さの選択と戻り)）。
+- analysis-review の FIX は提案そのものへの指摘なので、常に run-analyze-flyer へ戻す。必須修正は text と serves を持ち、4 条件の判定と整合させる（[提案評価契約](../skills/assign-flyer-analysis-evaluator/references/evaluation-contract.md)）。好みは preferenceNotes へ分ける。提案差戻しは trigger=analysis-review として cycle を消費するが、画像用 fixClass を推定せず fixClasses は空とし、前提崩れの premise 件数へ加算しない。
 - FIX には案 ID・画像領域・理由・元要求 ID を添え、元要求の意味を勝手に変えない。要求に無い新しい改善仮説は候補として記録し、必須要求へ勝手に昇格しない。
 
 **cycle の予算**: 上限の数値は [design-contract.json](design-contract.json) の cycleBudget を正とする。予算は案件全体で 1 つで、stage を戻っても提案を再評価してもリセットせず、提案 FIX だけの往復も同じ予算で数える。1 cycle は「FIX を返した評価 → 修正 → 新描画・検査 → 再評価」（提案評価だけの往復では修正提案の検査・再評価）で、FIX を返した評価は render・評価台帳の作り直し・finalize のときに評価記録から `cycle-ledger.json` へ 1 entry ずつ追記され（同じ評価記録は 1 回だけ）、消費した entry だけが cycle 番号を進める。

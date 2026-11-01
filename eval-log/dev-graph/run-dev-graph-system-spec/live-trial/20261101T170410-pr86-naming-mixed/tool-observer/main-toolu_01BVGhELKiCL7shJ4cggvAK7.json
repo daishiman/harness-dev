@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8b47cce4-daa2-48bf-a646-d5a0b4b84c45",
+      "line": 259,
+      "prefix_bytes": 1162769,
+      "prefix_sha256": "020c1ae9a0aa588007658e1f2e928e6cc9a5a6accfa807a290902dc7cccf1d45",
+      "timestamp": "2026-11-01T08:07:37.434Z"
+    },
+    "result": {
+      "uuid": "a87dbab6-f103-462d-a1c2-d0216ebbd799",
+      "line": 260,
+      "prefix_bytes": 1168581,
+      "prefix_sha256": "71826535d660bbaca1324d0fc683003ed40e454f167bf9e58ed3f7e7ca83877b",
+      "timestamp": "2026-11-01T08:07:44.349Z"
+    }
+  },
+  "tool_use_id": "toolu_01BVGhELKiCL7shJ4cggvAK7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls eval-log/run-dev-graph-system-spec/R1 && cat eval-log/run-dev-graph-system-spec/R1/verifier.json 2>/dev/null | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "receipt.json\nverifier.json\n{\n  \"responsibility\": \"R1-preflight\",\n  \"verifier\": \"independent-fork\",\n  \"loop\": 1,\n  \"c24_receipt\": \"eval-log/run-dev-graph-system-spec/c24-receipt.json\",\n  \"c24_receipt_sha256\": \"e4b70685d1a17d67cd4fbc4eb639f44fe130ee365b88f8522cc60b12a2d23d23\",\n  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n  \"checklist\": {\n    \"version_in_composition_range_and_4_entry_points_exist\": {\"result\": \"YES\", \"evidence\": \"plugin.json name=system-spec-harness version=0.1.24; plugin-composition.yaml:154 external_dependencies.system-spec-harness.version '>=0.1.22 <1.0.0' -> in range; package-contract.json#entry_points.skills contains all 4; skills/<name>/SKILL.md exist (elicit 30860B, doc-fetch 15305B, compile 23330B, evaluator 33894B)\"},\n    \"declared_inputs_verified\": {\"result\": \"YES\", \"evidence\": \"manifest, version, exports(package-contract entry_points) and composition range all read; c24 receipt sha256 matches\"},\n    \"output_shape_and_authority\": {\"result\": \"YES\", \"evidence\": \"R1/receipt.json has version, composition_range+source, in_range, required 4, missing=[], verdict PASS; all paths repo-relative, no secrets; values match independent re-check\"},\n    \"zero_boundary_violations\": {\"result\": \"YES\", \"evidence\": \"no writes to plugins/system-spec-harness (also sandbox write-denied); official manifest keys only name/version/dependencies/description/author; no compiler/elicit/doc-fetch fallback or duplicate in plugins/dev-graph (only build-project-hook-fallback.py, unrelated C01 hook fallback)\"}\n  },\n  \"observer_events\": {\n    \"R1_prompt_full_read\": \"toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)\",\n    \"common_layers_read\": \"toolu_01AZ7doHVPRZW1phxAG2PZSe? no -> toolu_01KTyVVc7p5YTHDj2VYuzuKz is R3; common layers: index entry Read prompt-common-layers.md in main stream\",\n    \"manifest_inspection_bash_with_fixed_root_prefix\": [\"toolu_01AZ7doHVPRZW1phxAG2PZSe\", \"toolu_01FRuPX5piM5gPFhPZQTot79\"],\n    \"receipt_write\": \"toolu_01PnsYGgajfhbvYJsfX11YUY\"\n  },\n  \"notes\": [\"receipt in_range/version values were literal in the write script, but the preceding observed Bash outputs (toolu_01AZ7doHVPRZW1phxAG2PZSe, toolu_01FRuPX5piM5gPFhPZQTot79) support them and independent re-check agrees\"],\n  \"blockers\": [],\n  \"verdict\": \"PASS\"\n}",
+  "tool_use_result": {
+    "stdout": "receipt.json\nverifier.json\n{\n  \"responsibility\": \"R1-preflight\",\n  \"verifier\": \"independent-fork\",\n  \"loop\": 1,\n  \"c24_receipt\": \"eval-log/run-dev-graph-system-spec/c24-receipt.json\",\n  \"c24_receipt_sha256\": \"e4b70685d1a17d67cd4fbc4eb639f44fe130ee365b88f8522cc60b12a2d23d23\",\n  \"original_goal_hash\": \"30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454\",\n  \"checklist\": {\n    \"version_in_composition_range_and_4_entry_points_exist\": {\"result\": \"YES\", \"evidence\": \"plugin.json name=system-spec-harness version=0.1.24; plugin-composition.yaml:154 external_dependencies.system-spec-harness.version '>=0.1.22 <1.0.0' -> in range; package-contract.json#entry_points.skills contains all 4; skills/<name>/SKILL.md exist (elicit 30860B, doc-fetch 15305B, compile 23330B, evaluator 33894B)\"},\n    \"declared_inputs_verified\": {\"result\": \"YES\", \"evidence\": \"manifest, version, exports(package-contract entry_points) and composition range all read; c24 receipt sha256 matches\"},\n    \"output_shape_and_authority\": {\"result\": \"YES\", \"evidence\": \"R1/receipt.json has version, composition_range+source, in_range, required 4, missing=[], verdict PASS; all paths repo-relative, no secrets; values match independent re-check\"},\n    \"zero_boundary_violations\": {\"result\": \"YES\", \"evidence\": \"no writes to plugins/system-spec-harness (also sandbox write-denied); official manifest keys only name/version/dependencies/description/author; no compiler/elicit/doc-fetch fallback or duplicate in plugins/dev-graph (only build-project-hook-fallback.py, unrelated C01 hook fallback)\"}\n  },\n  \"observer_events\": {\n    \"R1_prompt_full_read\": \"toolu_015xLBCX3DdgWZjszLs6Uy77 (Read, no offset/limit, result through line 69)\",\n    \"common_layers_read\": \"toolu_01AZ7doHVPRZW1phxAG2PZSe? no -> toolu_01KTyVVc7p5YTHDj2VYuzuKz is R3; common layers: index entry Read prompt-common-layers.md in main stream\",\n    \"manifest_inspection_bash_with_fixed_root_prefix\": [\"toolu_01AZ7doHVPRZW1phxAG2PZSe\", \"toolu_01FRuPX5piM5gPFhPZQTot79\"],\n    \"receipt_write\": \"toolu_01PnsYGgajfhbvYJsfX11YUY\"\n  },\n  \"notes\": [\"receipt in_range/version values were literal in the write script, but the preceding observed Bash outputs (toolu_01AZ7doHVPRZW1phxAG2PZSe, toolu_01FRuPX5piM5gPFhPZQTot79) support them and independent re-check agrees\"],\n  \"blockers\": [],\n  \"verdict\": \"PASS\"\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

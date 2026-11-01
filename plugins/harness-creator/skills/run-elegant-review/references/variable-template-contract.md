@@ -29,7 +29,7 @@
 | `{{secret_backend}}` | secret backend 名 | `keychain` / `xdg` / `base64-file` / `env` |
 | `{{install_mode}}` | kit 展開方式 | `symlink` または `copy` |
 
-各変数は `name`, `meaning`, `default`, `required`, `not_applicable_when` を持つ。
+`variable_abstraction[]` の各項目は `concrete_value`, `name`, `meaning`, `default`, `required`, `not_applicable_when`, `source_trace` を持つ。`name` は `{{...}}` 形式、`required` は boolean とする。
 `not_applicable_when` が空の変数は横展開時に過剰適用されやすいため、review 出力では必ず不適用条件を明示する。
 
 ## findings で使う分類

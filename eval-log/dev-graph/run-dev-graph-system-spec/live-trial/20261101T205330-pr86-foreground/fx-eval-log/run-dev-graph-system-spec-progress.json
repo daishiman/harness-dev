@@ -1,0 +1,22 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 2,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec-c24-receipt.json (sha256 6cbce34a2c83a54c82f2e067810f58b5519cf77eea0b7bf61ac972bd27dfd3e6); R0 verifier PASS eval-log/run-dev-graph-system-spec/R0-context/verifier-loop-1.json; writer receipt repository_id local:sha256:4b13716f… 一致"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "version 0.1.24 in >=0.1.22 <1.0.0, 4 entry points; eval-log/run-dev-graph-system-spec-preflight-report.json; R1 verifier PASS; R3 verifier で source_version 0.1.24 一致を再確認"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "elicit(resume)/compile/evaluator を Skill 経由で実行、doc-fetch は未取得 target・discovered candidate 0 件で不要判断。R2 verifier PASS eval-log/run-dev-graph-system-spec/R2-delegate/loop-1-verifier.json"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "loop2: coverage exit0, source-citation exit0; evaluator report verdict PASS (sha256 65b4d79d148197e47bd16ca37503c6e0731ba2aee82c63fc4c130f4e43da918e, aggregate-completeness verify exit0, 3監査 resolved PASS); R2 verifier PASS"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json (revision 0→1); validate-source-lineage.py exit0 checked 2; validate-graph-schema --strict-artifact-readiness exit0 complete 2/2; import report eval-log/run-dev-graph-system-spec/R3-import/import-report.json; integrity auditor PASS; R3 verifier PASS eval-log/run-dev-graph-system-spec/R3-import/loop-2-verifier.json"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R3 verifier (sonnet) が plugins/dev-graph 内を確認し複製 0 件、登録は C02 build-graph-node.py 経由のみ"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loop_results": [
+      {"loop": 1, "coverage": 0, "source_citation": 0, "graph_schema": 0, "status": "PASS"},
+      {"loop": 2, "coverage": 0, "source_citation": 0, "graph_schema": 0, "status": "PASS"}
+    ]},
+    {"id": "OUT1", "status": "external_pending"}
+  ],
+  "blockers": [],
+  "next": "完了。OUT1 は後続 live trial で判定"
+}

@@ -1,0 +1,65 @@
+{
+ "skill": "run-dev-graph-node",
+ "overall": "PASS",
+ "graph_baseline": {
+  "graph_revision": 0,
+  "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"
+ },
+ "writer_receipts": [
+  ".dev-graph/state/receipts/node-r000001-add.json"
+ ],
+ "checklist": [
+  {
+   "id": "containment",
+   "status": "achieved",
+   "evidence": "C24 receipt eval-log/run-dev-graph-node/c24-receipt.json repo_root == content_roots.repository realpath; build-graph-node add resolved input/content paths inside repo; integrity auditor path containment PASS"
+  },
+  {
+   "id": "classification",
+   "status": "achieved",
+   "evidence": "verb add, decision auto (spec margin 0.65, arch margin 0.57, confidence>=0.80) recorded in receipt .dev-graph/state/receipts/node-r000001-add.json"
+  },
+  {
+   "id": "schema",
+   "status": "achieved",
+   "evidence": "validate-graph-schema.py --strict-artifact-readiness valid=true, 0 findings, readiness complete 2; integrity auditor schema PASS"
+  },
+  {
+   "id": "package",
+   "status": "not_applicable",
+   "evidence": "verb add only; register-package not invoked"
+  },
+  {
+   "id": "receipt",
+   "status": "achieved",
+   "evidence": ".dev-graph/state/receipts/node-r000001-add.json graph_revision_before 0 == baseline, graph_revision_after 1 == graph, graph_digest_after sha256:0a192158e32ab1f84c565d37795a3bbf8c63edc73813d28c8d3031a8b960bd11 == auditor digest, node_ids match graph"
+  }
+ ],
+ "independent_verifier": {
+  "agent": "dev-graph:dev-graph-integrity-auditor",
+  "verdict": "PASS",
+  "graph_digest": "sha256:0a192158e32ab1f84c565d37795a3bbf8c63edc73813d28c8d3031a8b960bd11"
+ },
+ "feedback_criteria": [
+  {
+   "id": "IN1",
+   "status": "PASS",
+   "evidence": "loop1: dry-run exit0, add exit0, validate-graph-schema strict pass, validate-source-lineage exit0"
+  },
+  {
+   "id": "OUT1",
+   "status": "external_pending",
+   "judged_by": "live trial"
+  },
+  {
+   "id": "OUT2",
+   "status": "external_pending",
+   "judged_by": "acceptance tests"
+  },
+  {
+   "id": "OUT3",
+   "status": "external_pending",
+   "judged_by": "acceptance tests"
+  }
+ ]
+}

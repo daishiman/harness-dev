@@ -1,0 +1,161 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/render87/fx --output /private/tmp/claude-501/pr86-ci-live/lt/runs/render87/fx/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "1dec45caf6f30b0090e9d0a85ebca75bce3f0274efddf3423c85464ec6532d4c",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/evaluate_init_decompose"
+    },
+    "transcript_sha256": "ac901d6be52e5fe44fa1f5e0ad72788001ee5eb462b757d0cdaa0bdade34e538",
+    "evidence_refs": [
+      "transcript.jsonl#L47",
+      "transcript.jsonl#L59",
+      "transcript.jsonl#L74",
+      "transcript.jsonl#L90",
+      "transcript.jsonl#L97",
+      "transcript.jsonl#L99",
+      "transcript.jsonl#L146",
+      "transcript.jsonl#L166",
+      "transcript.jsonl#L176",
+      "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L24",
+      "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L35",
+      "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L39",
+      "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L44",
+      "fx-final/tree/.dev-graph/render/index.html",
+      "fx-eval-log/run-dev-graph-render-artifact-delivery.json",
+      "fx-eval-log/run-dev-graph-render-goal-spec.json",
+      "fx-eval-log/run-dev-graph-render-progress.json",
+      "fx-eval-log/run-dev-graph-render-intermediate.jsonl",
+      "browser-trial/shot.png",
+      "browser-trial/dom.html"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-render"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "aa020c6baaee1a5b9d589e2f4289d9c031a8429f6859d5089795237588bbfa45",
+  "transcript_sha256": "ac901d6be52e5fe44fa1f5e0ad72788001ee5eb462b757d0cdaa0bdade34e538",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 258.0
+  },
+  "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3",
+    "required_observations": [
+      "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+      "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+      "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+      "two consecutive renders produce identical output digests"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "evidence_ref": "fx-final/tree/.dev-graph/render/index.html"
+      },
+      {
+        "index": 2,
+        "observation": "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "evidence_ref": "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L35"
+      },
+      {
+        "index": 3,
+        "observation": "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "evidence_ref": "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L23"
+      },
+      {
+        "index": 4,
+        "observation": "two consecutive renders produce identical output digests",
+        "evidence_ref": "transcript/subagents/agent-a6e1697b09be29c88.jsonl#L24"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "template_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 3000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": 258.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "877df2c17b1ac3ceb0fbcc77785207aa1aa932e18ae4e897af9f71e1a890b7ed",
+      "tokens": {
+        "input_tokens": 84,
+        "cache_creation_input_tokens": 131592,
+        "cache_read_input_tokens": 1304754,
+        "output_tokens": 22621,
+        "total_tokens": 1459051,
+        "assistant_messages": 37,
+        "assistant_message_ids": 37,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 4,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

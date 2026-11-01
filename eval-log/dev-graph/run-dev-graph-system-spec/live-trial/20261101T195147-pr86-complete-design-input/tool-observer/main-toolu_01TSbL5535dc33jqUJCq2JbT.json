@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5b7a0691-a4a3-4fbf-982c-1c9e0675e7fa",
+      "line": 681,
+      "prefix_bytes": 3980486,
+      "prefix_sha256": "b2cd01e3cf5fb503cecdb19d3ea802362cf0c5ea51a712b5c268506a07f44578",
+      "timestamp": "2026-11-01T11:10:24.783Z"
+    },
+    "result": {
+      "uuid": "a90238f6-c303-42c4-92c9-e65927c44f75",
+      "line": 682,
+      "prefix_bytes": 3982479,
+      "prefix_sha256": "04ba92c7f849a18c534ffd28c60308199e350010ed9ba2728e7681a65a5fc56f",
+      "timestamp": "2026-11-01T11:10:28.071Z"
+    }
+  },
+  "tool_use_id": "toolu_01TSbL5535dc33jqUJCq2JbT",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && grep -n \"imported_at\\|source_version\\|REQUIRED\\|def lineage_findings\" -A2 plugins/dev-graph/scripts/validate-source-lineage.py | head -40; grep -rn \"imported_at\" plugins/dev-graph/references/*.json plugins/dev-graph/schemas/* 2>/dev/null | head",
+    "description": "Check lineage required fields"
+  },
+  "is_error": false,
+  "tool_result_content": "40:def lineage_findings(nodes: list[dict[str, Any]], root: Path) -> list[dict[str, str]]:\n41-    \"\"\"system-spec-harness 由来の node だけを検査する。finding は validate-graph-schema と同じ {node, code, detail}。\"\"\"\n42-    authority = root.resolve(strict=True)\nplugins/dev-graph/schemas/graph-node.schema.json:398:        \"imported_at\"\nplugins/dev-graph/schemas/graph-node.schema.json:437:        \"imported_at\": {\nplugins/dev-graph/schemas/graph-node.schema.json:1383:              \"imported_at\": {",
+  "tool_use_result": {
+    "stdout": "40:def lineage_findings(nodes: list[dict[str, Any]], root: Path) -> list[dict[str, str]]:\n41-    \"\"\"system-spec-harness 由来の node だけを検査する。finding は validate-graph-schema と同じ {node, code, detail}。\"\"\"\n42-    authority = root.resolve(strict=True)\nplugins/dev-graph/schemas/graph-node.schema.json:398:        \"imported_at\"\nplugins/dev-graph/schemas/graph-node.schema.json:437:        \"imported_at\": {\nplugins/dev-graph/schemas/graph-node.schema.json:1383:              \"imported_at\": {",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

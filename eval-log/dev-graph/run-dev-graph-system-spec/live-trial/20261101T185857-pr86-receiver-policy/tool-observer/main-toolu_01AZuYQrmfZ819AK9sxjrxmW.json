@@ -1,0 +1,61 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "25fd65c3-cb87-4c7f-8eec-63fd44b52590",
+      "line": 404,
+      "prefix_bytes": 2492260,
+      "prefix_sha256": "b027b611b30078fa8abdd60110f3018fe74d419ed41ac44089be3452c4c02bb1",
+      "timestamp": "2026-11-01T10:04:07.638Z"
+    },
+    "result": {
+      "uuid": "8a7ef4c0-b54e-44b1-9b83-132da01432f6",
+      "line": 405,
+      "prefix_bytes": 2494199,
+      "prefix_sha256": "ef084de50eaa73771bcbff26e3759935a724ada15b98ebd3c9715d7dfde7078a",
+      "timestamp": "2026-11-01T10:04:15.038Z"
+    }
+  },
+  "tool_use_id": "toolu_01AZuYQrmfZ819AK9sxjrxmW",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c 'import pathlib,sys; pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/eval-log/run-system-spec-elicit/artifact-delivery-choice.json\").parent.mkdir(parents=True,exist_ok=True); pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/eval-log/run-system-spec-elicit/artifact-delivery-choice.json\").write_text(sys.stdin.read(), encoding=\"utf-8\")' <<'JSON'\n{\"skill\":\"run-system-spec-elicit\",\"state_transitions\":[\"artifact_created\",\"minimal_guard_passed\",\"artifact_presented\",\"user_choice_recorded\",\"semantic_evaluator_started\"],\"choice\":\"standard\",\"choice_source\":\"pre-answered by user task instruction (artifact_delivery=standard)\",\"presented_path\":\"system-spec/spec-state.json\",\"presented_sha256\":\"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f\",\"open_with\":\"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/system-spec/spec-state.json\",\"guard\":\"json parse ok; no write\"}\nJSON\necho rc=$?",
+    "description": "Record elicit artifact delivery choice standard"
+  },
+  "is_error": false,
+  "tool_result_content": "rc=0",
+  "tool_use_result": {
+    "stdout": "rc=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [
+        {
+          "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/eval-log/run-system-spec-elicit/artifact-delivery-choice.json",
+          "hunks": [
+            {
+              "oldStart": 0,
+              "oldLines": 0,
+              "newStart": 1,
+              "newLines": 1,
+              "lines": [
+                "+{\"skill\":\"run-system-spec-elicit\",\"state_transitions\":[\"artifact_created\",\"minimal_guard_passed\",\"artifact_presented\",\"user_choice_recorded\",\"semantic_evaluator_started\"],\"choice\":\"standard\",\"choice_source\":\"pre-answered by user task instruction (artifact_delivery=standard)\",\"presented_path\":\"system-spec/spec-state.json\",\"presented_sha256\":\"2035e4e8ee83d762a9405c71783d932c9ecb451d8bc416cc847fd8c10ef8b00f\",\"open_with\":\"less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/system-spec/spec-state.json\",\"guard\":\"json parse ok; no write\"}"
+              ]
+            }
+          ],
+          "created": true
+        }
+      ],
+      "moreFiles": 0,
+      "changedFiles": [
+        "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx/eval-log/run-system-spec-elicit/artifact-delivery-choice.json"
+      ]
+    }
+  }
+}

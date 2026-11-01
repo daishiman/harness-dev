@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "73a0ad2a-fd94-4ad8-9237-23d68896b916",
+      "line": 381,
+      "prefix_bytes": 2409448,
+      "prefix_sha256": "bf6ff8f5352fb45ee52cbff5b2d08b918017be879a3d83a258a8577e9755e184",
+      "timestamp": "2026-11-01T10:03:44.437Z"
+    },
+    "result": {
+      "uuid": "123eeab9-0acb-434b-ab20-ec7bad2a9d17",
+      "line": 384,
+      "prefix_bytes": 2412313,
+      "prefix_sha256": "1414742a21e8b6a618a5fd3503d44d762144d3b67c237fbef695c20c611b4a08",
+      "timestamp": "2026-11-01T10:03:49.852Z"
+    }
+  },
+  "tool_use_id": "toolu_014nX1aM7iGVF7VM8MNEs65v",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && DEV_GRAPH_ROOT='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx' && python3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"check exit=$?\"",
+    "description": "Run goal-seek intermediate hash check"
+  },
+  "is_error": false,
+  "tool_result_content": "check exit=0",
+  "tool_use_result": {
+    "stdout": "check exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

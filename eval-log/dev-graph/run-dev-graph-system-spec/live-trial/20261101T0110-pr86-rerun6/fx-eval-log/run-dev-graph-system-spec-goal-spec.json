@@ -1,0 +1,17 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "why": "system-spec-harnessが既に持つヒアリング、カテゴリ×platform matrix、公式出典、確定章保護、独立完成度評価を複製せず引用し、dev-graphはグラフ登録とlineage維持だけを担うため。",
+  "checklist": [
+    "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+    "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+    "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+    "coverage/source-citation/evaluator gate が全て PASS である",
+    "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+    "dev-graph 内に同等 elicitation/compile logic の複製が0件である"
+  ],
+  "max_loops": 5,
+  "context_receipt": "eval-log/c24-receipt.json",
+  "created_at": "2026-10-31T18:43:27.497988+00:00"
+}

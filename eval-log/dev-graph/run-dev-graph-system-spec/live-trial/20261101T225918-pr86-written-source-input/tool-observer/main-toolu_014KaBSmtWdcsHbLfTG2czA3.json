@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "12fc37fb-13ea-48c4-bbdb-473d455070f2",
+      "line": 116,
+      "prefix_bytes": 1002674,
+      "prefix_sha256": "9bf749d4ca9e88900fe4fd815a8ea7ac4462d825c5edd095e288495492b41a80",
+      "timestamp": "2026-11-01T14:00:21.304Z"
+    },
+    "result": {
+      "uuid": "79983e11-8375-4ad6-bd9c-8e015f37d1cf",
+      "line": 117,
+      "prefix_bytes": 1008020,
+      "prefix_sha256": "642bfa5203eb1d708680d2ead1d4e60fd3144d73b3fc45b987ff0397608455be",
+      "timestamp": "2026-11-01T14:00:27.814Z"
+    }
+  },
+  "tool_use_id": "toolu_014KaBSmtWdcsHbLfTG2czA3",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --help 2>&1 | head -30; ls plugins plugins/dev-graph plugins/dev-graph/scripts; ls /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/workdir",
+    "description": "Inspect resolver help and layout"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nplugins:\ndev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nboot.log\nc02-choice-guard-probe.json\nc02-choice-guard-provenance.json\nc02-choice-guard-source.py\nclosure-at-launch.txt\nextra-env.txt\nfixture-canonical-backfill.log\nfixture-canonical-compile.log\nfixture-init-receipt.json\nfixture-input-correction\nfixture-preparation.py\nfixture-provenance.json\nfixture-qa008-correction.json\nfixture-task-preparation.py\nguard-provenance.json\nisolation-guard-source.py\nobserver-provenance.json\nout\nplugins-copy.json\npoll-state.json\npoll-supervisor-provenance.json\npoll-supervisor.py\npoll.log\npr86-guard-json-tests.json\npr86-heredoc-probe.json\npr86-heredoc-shell-probe.json\npr86-observer-review-v3.md\npr86-observer-v3-independent-probe.json\nproject-instructions-provenance.json\nproject-instructions.md\nqa008-grounded-applications.json\nqa008-original-input.json\nqa008-prior-backfill.json\nsend.log\nsession-id.txt\nsession-root.txt\nstart.epoch\nstub-calls.log\ntask.md\ntmpdir.txt\ntmux-tmpdir.txt\ntool-observer\ntool-observer-source.py",
+  "tool_use_result": {
+    "stdout": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nplugins:\ndev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n\nplugins/dev-graph:\nagents\nartifact-delivery.json\ncodex\ncommands\nEVALS.json\nhooks\nlib\nplugin-composition.yaml\nREADME.md\nreferences\nschemas\nscripts\nskills\ntemplates\ntests\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\nboot.log\nc02-choice-guard-probe.json\nc02-choice-guard-provenance.json\nc02-choice-guard-source.py\nclosure-at-launch.txt\nextra-env.txt\nfixture-canonical-backfill.log\nfixture-canonical-compile.log\nfixture-init-receipt.json\nfixture-input-correction\nfixture-preparation.py\nfixture-provenance.json\nfixture-qa008-correction.json\nfixture-task-preparation.py\nguard-provenance.json\nisolation-guard-source.py\nobserver-provenance.json\nout\nplugins-copy.json\npoll-state.json\npoll-supervisor-provenance.json\npoll-supervisor.py\npoll.log\npr86-guard-json-tests.json\npr86-heredoc-probe.json\npr86-heredoc-shell-probe.json\npr86-observer-review-v3.md\npr86-observer-v3-independent-probe.json\nproject-instructions-provenance.json\nproject-instructions.md\nqa008-grounded-applications.json\nqa008-original-input.json\nqa008-prior-backfill.json\nsend.log\nsession-id.txt\nsession-root.txt\nstart.epoch\nstub-calls.log\ntask.md\ntmpdir.txt\ntmux-tmpdir.txt\ntool-observer\ntool-observer-source.py",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

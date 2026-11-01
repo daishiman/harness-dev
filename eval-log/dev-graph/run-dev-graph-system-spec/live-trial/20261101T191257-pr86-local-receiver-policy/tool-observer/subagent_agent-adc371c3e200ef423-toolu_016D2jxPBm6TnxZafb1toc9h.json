@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "635125cd-216e-4de4-ae1f-529d1ba389c3",
+  "stream": "subagent/agent-adc371c3e200ef423",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "18191233-354b-45b8-9892-dc78c1d965ee",
+      "line": 43,
+      "prefix_bytes": 377939,
+      "prefix_sha256": "f2ac043a143ca84c956eb5bda73daf41db9b2ad41a4fa26a8d94c96f3eda1ca3",
+      "timestamp": "2026-11-01T10:21:18.230Z"
+    },
+    "result": {
+      "uuid": "4d8195bd-3db4-472e-a650-c684de9f9406",
+      "line": 44,
+      "prefix_bytes": 382501,
+      "prefix_sha256": "9c561ac463387fbf7c5220310cd66d2ce050aa976c9517767001ab9360665f49",
+      "timestamp": "2026-11-01T10:21:18.470Z"
+    }
+  },
+  "tool_use_id": "toolu_016D2jxPBm6TnxZafb1toc9h",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec115/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/references/resource-map.yaml"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# assign-system-spec-completeness-evaluator の参照リソース索引 (read_when 付き)\n2\t# 正本ポインタ集約。本文に再掲せず、必要時に該当エントリを参照する。\n3\t\n4\tschemas:\n5\t  - id: completeness_findings\n6\t    path: schemas/completeness-findings.schema.json\n7\t    read_when: 評価レポート (観点別スコア + 総合判定 + 不足事項一覧) の構造を確認する時\n8\t  - id: resume_receipt\n9\t    path: schemas/resume-receipt.schema.json\n10\t    read_when: PASS report を再利用可能な receipt へ変換する前に、digest-bound 出力形状と canonical path を確認する時\n11\t\n12\tscripts:\n13\t  - id: aggregate\n14\t    path: scripts/aggregate-completeness.py\n15\t    read_when: レポート形状検証と全 6 観点→総合 fail-closed 集約を機械実行する時\n16\t  - id: json-schema-subset\n17\t    path: scripts/validate-json-schema-subset.py\n18\t    read_when: 外部 package 無しで公開 completeness schema の Draft 7 部分集合検証と未知 schema 語彙の fail-closed 拒否を確認する時\n19\t  - id: audit_fork_attribution\n20\t    path: scripts/audit_fork_attribution.py\n21\t    read_when: 独立監査 receipt と PostToolUse fork 台帳の照合・run/session 束縛を確認する時\n22\t  - id: build_resume_receipt\n23\t    path: scripts/build-resume-receipt.py\n24\t    read_when: aggregate 検証・全 production gate・artifact snapshot 現在値照合が全て PASS した後だけ、resume receipt を atomic 生成する時\n25\t  - id: coverage_gate\n26\t    path: ../../scripts/validate-coverage-matrix.py\n27\t    read_when: マトリクス網羅性観点 (C07) の一次根拠を独立に回収する時 (C05 deterministic_check)\n28\t  - id: citation_gate\n29\t    path: ../../scripts/validate-source-citation.py\n30\t    read_when: 最新ドキュメント出典観点 (C08) の形式層根拠を確認する時 (doc-freshness auditor と、Step 2 で aggregate --source-citation が G-source-citation として実行する)\n31\t\n32\treferences:\n33\t  - id: rubric\n34\t    path: references/scoring-rubric.json\n35\t    read_when: 全 6 観点機械判定ルールと集約ポリシーを取得する時\n36\t  - id: criteria\n37\t    path: references/aspect-criteria.md\n38\t    read_when: 観点別意味判定の詳細基準と観点↔監査 agent 対応を確認する時\n39\t\n40\tagents:\n41\t  - id: matrix_auditor\n42\t    path: ../../agents/system-spec-matrix-auditor.md\n43\t    read_when: マトリクス網羅性 (C07) を fork 監査する起動契約を確認する時\n44\t  - id: hearing_auditor\n45\t    path: ../../agents/system-spec-hearing-auditor.md\n46\t    read_when: 'matrix_coverage の sub-input (C06 ヒアリング品質: 聞き漏れ/誘導/早期停止/トレーサビリティ) を fork 監査する起動契約を確認する時'\n47\t  - id: doc_freshness_auditor\n48\t    path: ../../agents/system-spec-doc-freshness-auditor.md\n49\t    read_when: 最新ドキュメント出典 (C08) を fork 監査する起動契約を確認する時\n50\t\n51\tevaluated_inputs:\n52\t  - id: spec_docs\n53\t    path: system-spec/\n54\t    read_when: 評価対象の章立て Markdown + index (C03 出力) を読む時\n55\t  - id: spec_state\n56\t    path: system-spec/spec-state.json\n57\t    read_when: 収集マトリクス (C01 出力) を読む時\n58\t  - id: fetched_refs\n59\t    path: system-spec/fetched-references.json\n60\t    read_when: 取得済み公式ドキュメント出典 (C02 出力) を読む時\n61\t\n62\tdesign_knowledge:\n63\t  - id: design_ref\n64\t    path: ../ref-system-design-knowledge/SKILL.md\n65\t    read_when: 設計知識反映観点で章が反映すべき設計知識ポインタを確認する時\n66\t",
+  "tool_use_result": null
+}

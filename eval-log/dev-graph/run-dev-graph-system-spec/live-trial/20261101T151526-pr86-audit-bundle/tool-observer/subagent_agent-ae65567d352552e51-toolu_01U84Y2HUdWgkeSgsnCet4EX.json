@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "291b5927-942a-47da-9f26-036b5595e31b",
+  "stream": "subagent/agent-ae65567d352552e51",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c076c433-2876-44b5-ac72-0c37de2baf1d",
+      "line": 210,
+      "prefix_bytes": 987876,
+      "prefix_sha256": "b8881a1f003906c6fe0eccb8f01ba84f06f884c0f67a8a14ccc688f6253f4285",
+      "timestamp": "2026-11-01T06:31:10.236Z"
+    },
+    "result": {
+      "uuid": "1b9fca59-699f-463f-a695-a0c716beb3a0",
+      "line": 211,
+      "prefix_bytes": 989858,
+      "prefix_sha256": "4a5c3c2a085a118257900b098a64e43f476ffed791950bf35fe92d9c36f427ee",
+      "timestamp": "2026-11-01T06:31:14.486Z"
+    }
+  },
+  "tool_use_id": "toolu_01U84Y2HUdWgkeSgsnCet4EX",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c \"\nimport json,pathlib,subprocess,sys\np=pathlib.Path('eval-log/system-spec-harness/audit-fork-ledger.jsonl')\nfor l in p.read_text().splitlines():\n  d=json.loads(l); print(d.get('record_kind'),d.get('subagent_type'),d.get('tool_use_id'),d.get('session_id'),d.get('response_sha256'),d.get('audit_verdict'))\nR=str(pathlib.Path('.').resolve())\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/build-audit-verification.py','--state',R+'/system-spec/spec-state.json','--references',R+'/system-spec/fetched-references.json','--repo-root',R,'--expected-sha256','20ed2084039553161edcf0ca3aba61c0e2b5205fe2aeed311c707b7f11300d6a'],capture_output=True,text=True)\nprint('reverify exit',r.returncode, json.loads(r.stdout).get('verification_sha256') if r.stdout.strip().startswith('{') else r.stdout[:300], r.stderr[:300])\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/scripts/validate-hearing-sources.py','--matrix',R+'/system-spec/spec-state.json','--repo-root',R],capture_output=True,text=True)\nprint('hearing src exit',r.returncode, json.loads(r.stdout)==json.loads('''{\\\"errors\\\": [], \\\"ok\\\": true, \\\"repo_root\\\": \\\"'''+R+'''\\\", \\\"schema_version\\\": \\\"1.0\\\", \\\"scope\\\": \\\"written-source-path-and-digest\\\", \\\"sources\\\": [], \\\"state_path\\\": \\\"'''+R+'''/system-spec/spec-state.json\\\", \\\"state_sha256\\\": \\\"9c14364c152783c1decc09072eada93cdfc78f0fef15d83d2874a028b718e6c2\\\"}'''))\nr=subprocess.run([sys.executable,'plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py','--repo-root',R,'--print-artifact-snapshot'],capture_output=True,text=True)\nprint('snapshot sha', __import__('hashlib').sha256(r.stdout.encode()).hexdigest())\n\"",
+    "description": "Ledger digests, final re-verification, snapshot recheck"
+  },
+  "is_error": false,
+  "tool_result_content": "dispatch system-spec-matrix-auditor toolu_015zgm57awfvpwNcEhQfzdFQ 291b5927-942a-47da-9f26-036b5595e31b 87fa94c8a4c39d950f47548115ecdec2103260a44bbb04f7060e3f6de545a346 None\ncompletion system-spec-matrix-auditor None 291b5927-942a-47da-9f26-036b5595e31b 700cc4502de555ed133d09b90f7ce611e3a558c1838df139de3c05a1f5fd919f PASS\ndispatch system-spec-hearing-auditor toolu_01Az4zMJ4bfZhcTMmwAWzN8i 291b5927-942a-47da-9f26-036b5595e31b 9560cff9a0c38cd42f891e1c5e01edcc474af4e75047ce7f2a91250a5c6298a8 None\ncompletion system-spec-hearing-auditor None 291b5927-942a-47da-9f26-036b5595e31b de6ee7f1d2fed587e017ccedc1ea31ff1c45b373416b73b187eafa0f3f8c9e1b PASS\ndispatch system-spec-doc-freshness-auditor toolu_011wRqLgNsgTiZeCD8xwBRAE 291b5927-942a-47da-9f26-036b5595e31b d2eab1240bd1f086e89fea753cb625e2f3733fc9d4a1fd84d74b1c1ffe1c1ded None\ncompletion system-spec-doc-freshness-auditor None 291b5927-942a-47da-9f26-036b5595e31b 23d10caa526290c2849a7432d28cb08f31b6d6ec727af3d7f8df950108437574 PASS\nreverify exit 0 20ed2084039553161edcf0ca3aba61c0e2b5205fe2aeed311c707b7f11300d6a \nhearing src exit 0 True\nsnapshot sha 402e4e94903ec0bb7505fc6ce8476959e231bb36fe26ca9d8b9f0181286bb91c",
+  "tool_use_result": null
+}

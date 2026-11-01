@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
 import shlex
 import shutil
@@ -43,6 +44,7 @@ DENY_TARGET_SKILLS = frozenset({"run-skill-live-trial", "run-skill-iter-improve"
 
 # session 名: path traversal / 区切り文字を拒否 (tmux -t への注入防止)
 _SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 # tmux buffer は server 全体で共有される。default buffer を使うと並列 trial の
 # load-buffer → paste-buffer 間で別 session の本文へ上書きされるため、すべての
@@ -63,6 +65,21 @@ def valid_session_name(name: str) -> bool:
     if not name or ".." in name:
         return False
     return bool(_SESSION_RE.fullmatch(name))
+
+
+def valid_run_id(run_id: str) -> bool:
+    """tmux user option と session prefix に安全に埋め込める run-id か。"""
+    if not run_id or ".." in run_id:
+        return False
+    return bool(_RUN_ID_RE.fullmatch(run_id))
+
+
+def session_belongs_to_run(session: str, run_id: str) -> bool:
+    """session 名が run-id の単独名または配下 slug であることを検証する。"""
+    if not valid_session_name(session) or not valid_run_id(run_id):
+        return False
+    root = f"lt-{run_id}"
+    return session == root or session.startswith(f"{root}-")
 
 
 def valid_buffer_name(name: str) -> bool:
@@ -142,21 +159,52 @@ def new_session(
     width: int = 220,
     height: int = 50,
     command_argv: Sequence[str] | None = None,
+    *,
+    run_id: str,
+    owner_pid: int | None = None,
+    environment_overrides: dict[str, str] | None = None,
 ) -> None:
     """tmux session を作成し、任意の検証済み argv を直接起動する。
 
     command_argv=None は従来どおり tmux 既定 shell を起動する。
     CLI に command 受付は公開せず、boot 等の内部 caller だけが argv を渡す。
+    session には run-id と作成 PID を user option として刻み、reap が名前だけで
+    他の実行主体を巻き添えにしないための所有権証拠にする。
     """
     require_tmux()
+    if not session_belongs_to_run(session, run_id):
+        raise ValueError(
+            f"session {session!r} does not belong to run-id {run_id!r}"
+        )
+    effective_owner_pid = os.getpid() if owner_pid is None else owner_pid
+    if not isinstance(effective_owner_pid, int) or effective_owner_pid <= 0:
+        raise ValueError("owner_pid must be a positive integer")
     kill_session(session)  # 同名残骸は事前掃除 (boot 再試行の冪等性)
     args = [
         "new-session", "-d", "-s", session, "-c", cwd,
         "-x", str(width), "-y", str(height),
     ]
+    for name, value in sorted((environment_overrides or {}).items()):
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            raise ValueError(f"invalid environment override name: {name!r}")
+        if "\x00" in value or "\n" in value or "\r" in value:
+            raise ValueError(f"invalid environment override value for {name}")
+        args += ["-e", f"{name}={value}"]
     if command_argv is not None:
         args.append(_direct_process_command(command_argv))
     _tmux(*args, check=True)
+    try:
+        _tmux(
+            "set-option", "-t", session, "@lt_run_id", run_id, check=True
+        )
+        _tmux(
+            "set-option", "-t", session, "@lt_owner_pid",
+            str(effective_owner_pid), check=True,
+        )
+    except Exception:
+        # 所有権 metadata 無しの session を残すと scoped reap で回収不能になる。
+        kill_session(session)
+        raise
 
 
 def send_keys(session: str, *keys: str) -> None:
@@ -239,9 +287,63 @@ def list_sessions() -> list[str]:
     return [ln.strip() for ln in cp.stdout.splitlines() if ln.strip()]
 
 
-def reap(prefix: str = "lt-") -> list[str]:
-    """取りこぼした trial セッションの一括回収 (全終了経路のリーク掃除)。"""
-    victims = [s for s in list_sessions() if s.startswith(prefix)]
+def list_session_ownership() -> list[tuple[str, str, str]]:
+    """session 名・run-id・owner PID を tmux server から一括取得する。"""
+    if not tmux_available():
+        return []
+    cp = _tmux(
+        "list-sessions",
+        "-F",
+        "#{session_name}\t#{@lt_run_id}\t#{@lt_owner_pid}",
+    )
+    if cp.returncode != 0:
+        return []
+    records = []
+    for line in cp.stdout.splitlines():
+        fields = line.split("\t")
+        if len(fields) != 3:
+            # metadata を持たない/壊れた行は scoped reap の対象にしない。
+            continue
+        session, run_id, owner_pid = (field.strip() for field in fields)
+        if session:
+            records.append((session, run_id, owner_pid))
+    return records
+
+
+def reap(
+    run_id: str | None = None,
+    owner_pid: int | None = None,
+    *,
+    all_sessions: bool = False,
+) -> list[str]:
+    """取りこぼした trial セッションを所有 run 内に限定して回収する。
+
+    通常経路は session 名・tmux の ``@lt_run_id``・``@lt_owner_pid`` が
+    すべて呼出側指定と一致する session だけを対象にする。同じ run-id 内で
+    並行する別 owner の session も回収しない。tmux server 全体の ``lt-*`` を
+    回収する破壊的な経路は ``all_sessions=True`` の明示 opt-in に限定する。
+    """
+    if all_sessions:
+        if run_id is not None or owner_pid is not None:
+            raise ValueError(
+                "run_id/owner_pid and all_sessions are mutually exclusive"
+            )
+        victims = [s for s in list_sessions() if s.startswith("lt-")]
+    else:
+        if run_id is None or not valid_run_id(run_id):
+            raise ValueError("a valid run_id is required unless all_sessions=True")
+        if not isinstance(owner_pid, int) or owner_pid <= 0:
+            raise ValueError(
+                "a positive owner_pid is required unless all_sessions=True"
+            )
+        victims = [
+            session
+            for session, recorded_run_id, recorded_owner_pid
+            in list_session_ownership()
+            if session_belongs_to_run(session, run_id)
+            and recorded_run_id == run_id
+            and recorded_owner_pid == str(owner_pid)
+        ]
     for s in victims:
         kill_session(s)
     return victims
@@ -252,6 +354,11 @@ def _self_test() -> int:
     assert not valid_session_name("../evil")
     assert not valid_session_name("a/b")
     assert not valid_session_name("")
+    assert valid_run_id("20260702T120000Z-r1")
+    assert not valid_run_id("../evil")
+    assert session_belongs_to_run("lt-run-1-node", "run-1")
+    assert session_belongs_to_run("lt-run-1", "run-1")
+    assert not session_belongs_to_run("lt-run-10-node", "run-1")
     assert valid_buffer_name("ltpaste-0123456789abcdef")
     assert not valid_buffer_name("x; display-message")
     assert not valid_buffer_name("x" * (_BUFFER_NAME_MAX + 1))
@@ -284,6 +391,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("new-session")
     p.add_argument("session")
     p.add_argument("cwd")
+    p.add_argument("--run-id", required=True)
     p = sub.add_parser("send-line")
     p.add_argument("session")
     p.add_argument("text")
@@ -300,7 +408,15 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("pane-command")
     p.add_argument("session")
     p = sub.add_parser("reap")
-    p.add_argument("--prefix", default="lt-")
+    reap_scope = p.add_mutually_exclusive_group(required=True)
+    reap_scope.add_argument("--run-id")
+    reap_scope.add_argument(
+        "--all",
+        dest="all_sessions",
+        action="store_true",
+        help="tmux server 上の lt-* を全回収する管理者向け明示 opt-in",
+    )
+    p.add_argument("--owner-pid", type=int)
     p = sub.add_parser("deny-check")
     p.add_argument("target")
     ns = ap.parse_args(argv)
@@ -323,8 +439,23 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(ns, "session", None) is not None and not valid_session_name(ns.session):
         print(f"[ERROR] invalid session name: {ns.session}", file=sys.stderr)
         return 2
+    if ns.cmd == "reap" and ns.run_id is not None and not valid_run_id(ns.run_id):
+        print(f"[ERROR] invalid run-id: {ns.run_id}", file=sys.stderr)
+        return 2
+    if ns.cmd == "reap":
+        if ns.all_sessions and ns.owner_pid is not None:
+            print("[ERROR] --owner-pid cannot be combined with --all", file=sys.stderr)
+            return 2
+        if ns.run_id is not None and (
+            ns.owner_pid is None or ns.owner_pid <= 0
+        ):
+            print(
+                "[ERROR] --run-id requires a positive --owner-pid",
+                file=sys.stderr,
+            )
+            return 2
     if ns.cmd == "new-session":
-        new_session(ns.session, ns.cwd)
+        new_session(ns.session, ns.cwd, run_id=ns.run_id)
         print(f"OK: new-session {ns.session}")
     elif ns.cmd == "send-line":
         send_line(ns.session, ns.text)
@@ -340,7 +471,11 @@ def main(argv: list[str] | None = None) -> int:
         kill_session(ns.session)
         print(f"OK: kill-session {ns.session}")
     elif ns.cmd == "reap":
-        for s in reap(ns.prefix):
+        for s in reap(
+            ns.run_id,
+            ns.owner_pid,
+            all_sessions=ns.all_sessions,
+        ):
             print(f"REAPED: {s}")
     return 0
 

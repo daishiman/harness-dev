@@ -130,7 +130,7 @@ rubric は全 Skill 採点の SSOT であり、直接編集や手順抜けは採
 ### 局面カタログ (順序は都度判断)
 
 - 出力先解決: `python3 plugins/harness-creator/skills/run-build-skill/scripts/resolve-skill-dirs.py --skill-dir-name run-skill-rubric-governance > eval-log/skill-dirs.json`
-- 提案を探す: 手書きの改正提案は `$SKILL_DIR/proposals/` に置く。SessionEnd hook（`scripts/aggregate-evals.py`）の自動ドラフト `<date>-rubric-update.md` は plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` に書かれる（書けなければ `$XDG_STATE_HOME` か `~/.claude/state` の `harness-creator/proposals/`。`HARNESS_CREATOR_PROPOSALS_DIR` があればそこだけ）。`$SKILL_DIR/proposals/` には書かないが、以前の版が書いた分が残っていることがある。両方の置き場を一度に見るには `python3 "$SKILL_DIR/scripts/aggregate-evals.py" --list-proposals`（JSON。`generated: true` が自動ドラフト）。環境変数を前に付けずに呼べる。`CLAUDE_PROJECT_DIR` が無ければ cwd と git の作業ツリーの root を project とみなして読むので、見た置き場は出力の `dirs` で確かめる
+- 提案を探す: 手書きの改正提案は `$SKILL_DIR/proposals/` に置く。SessionEnd hook（`scripts/aggregate-evals.py`）は、4 つの入力源（`EVALS.json` の旧 `evaluations`、score ログ、content-review の verdict、live-trial の verdict）から異常（連続 FAIL・平均スコアの低下・苦戦の重なり）を出し、前の日までの最新の自動ドラフトに埋めた観測と比べる。new・changed・retired のどれかがあるときだけ、観測差分のドラフト `<date>-rubric-update.md`（frontmatter は `kind: rubric-anomaly-delta`。同じ日の 2 回目以降は、観測が変わったときだけ上書きする）を plugin の外の `$CLAUDE_PROJECT_DIR/.claude/state/harness-creator/proposals/` に書く（書けなければ `$XDG_STATE_HOME` か `~/.claude/state` の `harness-creator/proposals/`。`HARNESS_CREATOR_PROPOSALS_DIR` があればそこだけ）。ドラフトは改正案ではない。New と Changed を見て、改正するなら `templates/proposal.json` で起票する。異常は episode 単位で数える（content-review の 2 ファイルは `skill_md_sha256` で 1 レビューにし、それが無い記録の件数はドラフトに出す）。入力源のどれかが読めないとき、同じ置き場を別の session が更新中のとき、marker 行の無い同名のファイル（手書き）があるときは、書かずに終えて理由を stderr に出す。`$SKILL_DIR/proposals/` には書かないが、以前の版が書いた分が残っていることがある。両方の置き場を一度に見るには `python3 "$SKILL_DIR/scripts/aggregate-evals.py" --list-proposals`（JSON。`generated: true` が自動ドラフト）。環境変数を前に付けずに呼べる。`CLAUDE_PROJECT_DIR` が無ければ cwd と git の作業ツリーの root を project とみなして読むので、見た置き場は出力の `dirs` で確かめる
 - 影響評価コマンド群:
   ```bash
   python3 plugins/skill-governance-lint/scripts/lint-rubric-violation.py --log-dir eval-log --n 3 --threshold 0.20 --out eval-log/trigger.json
@@ -175,7 +175,7 @@ python3 plugins/skill-governance-automation/scripts/rollback-to-stable.py \
 
 ## Additional Resources
 
-- `templates/proposal.json` — 改正提案テンプレ
+- `templates/proposal.json` — 改正提案テンプレ（SessionEnd hook の観測差分ドラフトから起票するときもこれを使う）
 - `plugins/skill-governance-lint/scripts/lint-rubric-violation.py` — **時系列違反率検出（連続 N×閾値超 → trigger.json）正本（27章§3.2）**
 - `$SKILL_DIR/scripts/lint-rubric-violation.py` — ルール別違反集計（`--logs` 配下の score ログの findings を rule ごとに数える。release は区別しない）
 - `$SKILL_DIR/scripts/diff-rubric-impact.py` — 差分影響評価

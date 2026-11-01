@@ -1,0 +1,26 @@
+{
+  "responsibility": "R1-preflight",
+  "verdict": "PASS",
+  "checklist": [
+    {"item": "version が plugin-composition.yaml の範囲内", "status": "YES", "evidence": "plugin.json version=0.1.25; plugin-composition.yaml L153-154 external_dependencies.system-spec-harness.version=\">=0.1.22 <1.0.0\"; 0.1.22<=0.1.25<1.0.0。正本範囲で判定 (計画時値 >=0.1.0 は不使用)"},
+    {"item": "elicit/doc-fetch/compile/evaluator 実在 (exports + SKILL.md)", "status": "YES", "evidence": "package-contract.json entry_points.skills に4件すべて含む; skills/{run-system-spec-elicit,run-system-spec-doc-fetch,run-system-spec-compile,assign-system-spec-completeness-evaluator}/SKILL.md 実在し frontmatter name 一致"},
+    {"item": "公式 manifest に harness 専用キー混在なし", "status": "YES", "evidence": "plugin.json keys = name, version, dependencies, description, author のみ (公式キー)。entry_points/required_entry_points 等の harness 専用キーは package-contract.json 側に分離"},
+    {"item": "5.3共通: 宣言入力が全て検証済み", "status": "YES", "evidence": "manifest/version/exports/composition range を生成 Bash (toolu_018yPvdVfCKpvE2fS17NpqXD) が実ファイルから読取; verifier 再計算と一致; manifest_sha256 94640e71... 実ファイルと一致; R0 receipt_sha256 bad09a95... 固定 C24 receipt と一致"},
+    {"item": "5.3共通: 出力が宣言 shape と authority を満たす", "status": "YES", "evidence": "preflight-report.json R1_preflight に plugin/version/composition_range/in_range/required_entry_points(4件true)/manifest_sha256 を持つ availability receipt; 現ファイル sha256 4f9ec6cc... が生成時出力と一致 (事後改変なし); status=PASS は in_range かつ全 entry point 実在の論理積で算出"},
+    {"item": "5.3共通: 責務境界違反 read/write/delegation 0件", "status": "YES", "evidence": "observer 上 plugins/system-spec-harness への書込み無し (Read/ls/grep のみ); fallback/複製なし; 生成 Bash の書込み先は eval-log/ 配下のみ"},
+    {"item": "Skill 実呼出し / R1-preflight.md 実 Read / report 生成 Bash の observer 裏付け", "status": "YES", "evidence": "Skill dev-graph:run-dev-graph-system-spec (toolu_01TkHPAWy6N57KVMbzr2vQni, success=true, line48); Read R1-preflight.md (toolu_013w74wTd1bPEeCWaAd8aWaL, line86); Read prompt-common-layers.md (toolu_01Ca7LGVeEBA8iXzsAqaMqwG); report 生成 Bash (toolu_018yPvdVfCKpvE2fS17NpqXD, line128, 02:51:44Z, result 'PASS 4f9ec6cc...')"}
+  ],
+  "observer_events_checked": [
+    "toolu_01TkHPAWy6N57KVMbzr2vQni (Skill)",
+    "toolu_013w74wTd1bPEeCWaAd8aWaL (Read R1-preflight.md)",
+    "toolu_01Ca7LGVeEBA8iXzsAqaMqwG (Read prompt-common-layers.md)",
+    "toolu_01VnmemQ64D9Wnn3qGLgpuKE (Bash composition/exports/SKILL.md 確認)",
+    "toolu_018yPvdVfCKpvE2fS17NpqXD (Bash preflight-report.json 生成)",
+    "toolu_01CD43cZxumL46d5jswNtida (Bash artifact-delivery.json 記録; report 非改変)"
+  ],
+  "blockers": [],
+  "notes": [
+    "生成 script の範囲下限 (0,1,22) はハードコードだが composition 正本値と一致しており結果に影響なし",
+    "preflight-report.json の R0_context に絶対 path (git_common_dir) が含まれる (Layer 3 path 方針)。R1 セクション自体には絶対 path なしのため R1 の blocker とはしない"
+  ]
+}

@@ -7,7 +7,7 @@ const write=(f,v)=>{fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileS
 const sha=f=>crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
 const hash=v=>crypto.createHash("sha256").update(JSON.stringify(v)).digest("hex");
 const CHECKS=["evidenceAlignment","completeness","changeDiscipline","feasibility"];
-const SKIPPED=["run-analyze-flyer","assign-flyer-analysis-review"];
+const SKIPPED=["run-analyze-flyer","assign-flyer-analysis-evaluator"];
 // The yardstick list lives only in design-contract.json; a missing file fails closed.
 function policyFingerprint(){
  const files=read(path.join(ROOT,"references/design-contract.json")).analysisPolicyFiles;

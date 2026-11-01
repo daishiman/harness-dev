@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "subagent/agent-ad12b15abe6a152b8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "430480c8-4c27-442a-af80-d4395b151591",
+      "line": 46,
+      "prefix_bytes": 307113,
+      "prefix_sha256": "7c20dece3c44c4e09f07f9d3960b75e182a9fcc9df9e837481ecb4eb465509e2",
+      "timestamp": "2026-11-01T02:53:08.813Z"
+    },
+    "result": {
+      "uuid": "110355ee-29da-4564-bc5c-be46c2587d04",
+      "line": 47,
+      "prefix_bytes": 308470,
+      "prefix_sha256": "15b3eb97eda2175cbab2be64f5dab5f444ac5b988f4d4e94e208442839b357f0",
+      "timestamp": "2026-11-01T02:53:11.380Z"
+    }
+  },
+  "tool_use_id": "toolu_01JnJTB9XeLqqpnZdSpZc1ic",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx; shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json; git status --porcelain; git config --get core.symlinks; find system-spec -exec test -L {} \\; -print | wc -l; python3 -c '\nimport os,pathlib\nr=os.path.realpath(\".\")\nbad=[str(p) for p in pathlib.Path(\"system-spec\").rglob(\"*\") if not os.path.realpath(p).startswith(r+\"/system-spec\")]\nprint(\"outside\",bad)'; env | grep -E 'CLAUDE_PROJECT_DIR|DEV_GRAPH_ROOT'"
+  },
+  "is_error": false,
+  "tool_result_content": "4f9ec6cc1d56adb9d53353c094378f9a66d3119841e98cd9ecf3e64a7546062f  eval-log/run-dev-graph-system-spec/preflight-report.json\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/\n       0\noutside []",
+  "tool_use_result": {
+    "stdout": "4f9ec6cc1d56adb9d53353c094378f9a66d3119841e98cd9ecf3e64a7546062f  eval-log/run-dev-graph-system-spec/preflight-report.json\n?? .dev-graph/\n?? candidate-import.json\n?? eval-log/\n?? system-spec/\n       0\noutside []",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "returnCodeInterpretation": "No matches found",
+    "noOutputExpected": false
+  }
+}

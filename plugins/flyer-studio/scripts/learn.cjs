@@ -854,13 +854,16 @@ function suggest(opts = {}) {
         { path: s.path },
       );
   const styleKey = q.byPath[STYLE_KEY]?.id ?? q.byPath["/" + STYLE_KEY]?.id ?? STYLE_KEY;
-  const labels = r.sections.styleLabels.status === "ok" ? r.sections.styleLabels.trends.slice(0, 3) : [];
+  const g = r.sections.styleLabels;
+  const labels = g.status === "ok" ? g.trends.slice(0, 3) : [];
+  // 件数は文にだけ添える。labels は intake が回答の値として使うので、ラベルのまま返す。
+  const counted = labels.map((l) => `${l}（${g.byLabel.find((s) => s.label === l).cases}/${g.cases} 件）`);
   const unspoken = arr(r.sections.styleSource.proposals).some((p) => p.id === "f:not-verbalized");
   if (labels.length || unspoken)
     suggestions[styleKey] = entry(
       [
         labels.length
-          ? `前回までに選ばれた様式（参考・要確認）: ${labels.join("・")}。今回も同じとは限らないので確かめてください。`
+          ? `前回までに選ばれた様式（参考・要確認）: ${counted.join("・")}。今回も同じとは限らないので確かめてください。`
           : "",
         unspoken ? "様式名が浮かばなければ、雰囲気の言葉・参考にしたい物・おまかせでも答えられます。" : "",
       ].join(""),

@@ -1,0 +1,66 @@
+{
+  "skill": "run-dev-graph-node",
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 1,
+    "graph_digest": "sha256:1565bc703b1e965bd687ba60bbca4bb667b3b82a1d0aab51f2d55f2b1c906d6a"
+  },
+  "writer_receipts": [],
+  "pre_choice_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "resolve-repo-context.py --mode write: repo_root == content_roots.repository realpath, repository_id local:sha256:040142ef... matches config; writer resolved all 5 paths inside repo"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (confidence>=0.89, margin>=0.81)"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py on rev1: graph_validation pass, violation_count 0 (eval-log/validate-graph-schema-r1.json); writer pre_write_validation findings 0"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add (ordinary artifacts); register-package not invoked"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: graph_revision 0->1, graph_revision_after=1 and graph_digest_after=sha256:1565bc70... equal graph_baseline; node_ids (5) present in graph. Single pre-choice commit (no chain needed)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "pre_write_validation findings 0 and validate-graph-schema.py violation_count 0 at rev1"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live-trial"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:1565bc703b1e965bd687ba60bbca4bb667b3b82a1d0aab51f2d55f2b1c906d6a"
+  }
+}

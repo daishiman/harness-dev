@@ -1,0 +1,67 @@
+{
+  "skill": "run-dev-graph-node",
+  "run": "update (run 2; run 1 progress archived at eval-log/runs/run1-add-progress.json)",
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 2,
+    "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94"
+  },
+  "writer_receipts": [],
+  "pre_choice_receipts": [
+    ".dev-graph/state/receipts/node-r000002-update.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "resolve-repo-context.py --mode write re-run for this invocation: repo_root == content_roots.repository, repository_id local:sha256:040142ef... matches config; writer resolved all 5 paths inside repo"
+    },
+    {
+      "id": "classification",
+      "status": "not_applicable",
+      "evidence": "verb=update (no classification performed); ids/kinds come from add receipt node-r000001-add.json decision=auto"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py on rev2: graph_validation pass, violation_count 0 (eval-log/validate-graph-schema-r2.json); writer pre_write_validation findings 0; frontmatter graph_node_id/artifact_kind/file_path unchanged vs pre-update copies (diff shows only updated_at, readiness checked_at and one appended H2)"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=update; register-package not invoked"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000002-update.json: graph_revision 1->2, graph_revision_after=2 and graph_digest_after=sha256:85a53957... equal graph_baseline; node_ids (5) present in graph; previous receipt node-r000001-add.json graph_revision_after=1 == this receipt's graph_revision_before (chain intact)"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "pre_write_validation findings 0 and validate-graph-schema.py violation_count 0 at rev2"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live-trial"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "acceptance test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:85a539577e7874ac2f44fffa55fab6f727ab81c875e325da22c68e1e69913e94"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "qa-008",
+  "question": "保守運用管理（maintenance-ops）× Web の要件は?",
+  "answer": "オンコール輪番・障害 runbook・週次リストア訓練。",
+  "basis": "user-decision",
+  "required_info_items": [
+    "ops-runbook"
+  ],
+  "provenance": "live-trial fixture 原本 (orig-spec-state.json、ファイル更新 2026-10-05) に当初から記録されていたシナリオ上の利用者回答。対話の逐語ログと回答時刻は残っていない。問は開いた問 (選択肢なし) で、代替案を提示した記録は無い (basis の user-decision は原本の値で、writer は記録済みの basis を上書きできない)",
+  "design_applications": [
+    {
+      "knowledge_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-code.md#中核概念",
+      "principle": "意図と効果・失敗を明示し、実行例で手順を検証する",
+      "applicability": "applied",
+      "rationale": "qa-008のオンコール輪番・障害runbook・週次リストア訓練を、誰が何を実行し何を確認すれば回復したと言えるかが読み取れる単位で記録する。バックアップが存在することだけで復旧済みとはせず、既存のRTO/RPOの運用条件と訓練結果へ結び付ける。",
+      "tradeoffs": [
+        "手順と実際の運用がずれないよう、訓練後の更新作業が必要。",
+        "自動化は目的ではなく、障害時にも効果と失敗が追えることを優先する。"
+      ]
+    }
+  ],
+  "design_application_provenance": {
+    "mode": "legacy_backfill",
+    "writer": "set-qa-design-applications"
+  },
+  "knowledge_ref_corrections": [
+    {
+      "old_ref": "skills/ref-system-design-knowledge/references/clean-code.md#中核概念",
+      "new_ref": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/clean-code.md#中核概念",
+      "applied_to": 1,
+      "writer": "fix-qa-knowledge-ref",
+      "reason": "参照先が実在しない引用を、解釈本文を変えずに実在する参照へ接地させる"
+    }
+  ]
+}

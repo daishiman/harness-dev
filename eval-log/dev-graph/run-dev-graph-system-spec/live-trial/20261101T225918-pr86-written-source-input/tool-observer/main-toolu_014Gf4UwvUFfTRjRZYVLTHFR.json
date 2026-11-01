@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "a7f0b77e-a5a8-4197-b005-71546437f6bc",
+      "line": 707,
+      "prefix_bytes": 4302725,
+      "prefix_sha256": "8bbb4222159fa4a41fa17c8e919b2f2762e9db809a9cc04e2f46bc495984562f",
+      "timestamp": "2026-11-01T14:41:32.848Z"
+    },
+    "result": {
+      "uuid": "40673648-16b5-4c29-a395-bbfba0b2907c",
+      "line": 710,
+      "prefix_bytes": 4306716,
+      "prefix_sha256": "bc7d8600579f86586d3cec328bc9d39f5b8021e6ea6d6e9bb695a0f22bda3133",
+      "timestamp": "2026-11-01T14:41:35.836Z"
+    }
+  },
+  "tool_use_id": "toolu_014Gf4UwvUFfTRjRZYVLTHFR",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --repo-root \"$CLAUDE_PROJECT_DIR\" --mode write > eval-log/run-dev-graph-node/c24-receipt-post-choice.json && shasum -a 256 eval-log/run-dev-graph-node/c24-receipt-post-choice.json && python3 -c '\nimport json,hashlib\nc=json.load(open(\"eval-log/run-dev-graph-node/c24-receipt-post-choice.json\")); import os\nassert os.path.realpath(c[\"repo_root\"])==os.path.realpath(c[\"content_roots\"][\"repository\"])\ng=json.load(open(c[\"local_state_paths\"][\"graph\"]))\nd=\"sha256:\"+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(\",\",\":\")).encode()).hexdigest()\nr=json.load(open(\".dev-graph/state/receipts/node-r000001-add.json\"))\nprint(\"revision\",g[\"graph_revision\"],\"digest\",d,\"receipt\",r[\"graph_revision_after\"],r[\"graph_digest_after\"], d==r[\"graph_digest_after\"])\nprint(hashlib.sha256(\"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ\".encode()).hexdigest())\n'; date -u +%Y-%m-%dT%H:%M:%SZ",
+    "description": "Post-choice C24 receipt and baseline digest"
+  },
+  "is_error": false,
+  "tool_result_content": "a012ba55922275f70420221ed5fdef37055eceb1fa7272486a208804c4146471  eval-log/run-dev-graph-node/c24-receipt-post-choice.json\nrevision 1 digest sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c receipt 1 sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c True\neb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2\n2026-11-01T14:41:35Z",
+  "tool_use_result": {
+    "stdout": "a012ba55922275f70420221ed5fdef37055eceb1fa7272486a208804c4146471  eval-log/run-dev-graph-node/c24-receipt-post-choice.json\nrevision 1 digest sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c receipt 1 sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c True\neb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2\n2026-11-01T14:41:35Z",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

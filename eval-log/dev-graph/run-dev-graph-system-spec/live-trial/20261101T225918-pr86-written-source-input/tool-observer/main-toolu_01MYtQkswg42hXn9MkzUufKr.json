@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "9b00b845-de52-4cdf-9274-f12481443ea1",
+      "line": 634,
+      "prefix_bytes": 4077760,
+      "prefix_sha256": "a6477c003e4c7e9b7c985d7da4ba0a90550b566e7e459fc8603b4d806224a432",
+      "timestamp": "2026-11-01T14:38:57.961Z"
+    },
+    "result": {
+      "uuid": "aaca103d-acc4-4596-9318-89fb146ea54d",
+      "line": 637,
+      "prefix_bytes": 4083704,
+      "prefix_sha256": "afe40b5d6f98f882d1e1223eba93caed3c4104806dcedb36a23c2315f6663558",
+      "timestamp": "2026-11-01T14:39:00.057Z"
+    }
+  },
+  "tool_use_id": "toolu_01MYtQkswg42hXn9MkzUufKr",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c '\nimport json;s=json.load(open(\"plugins/dev-graph/schemas/graph-node.schema.json\"))\np=s[\"properties\"][\"source_lineage\"]; print(json.dumps(p,ensure_ascii=False)[:1500])\n'; grep -n \"imported_at\" plugins/dev-graph/scripts/build-graph-node.py plugins/dev-graph/scripts/validate-source-lineage.py | head",
+    "description": "Check source_lineage schema shape"
+  },
+  "is_error": false,
+  "tool_result_content": "{\"type\": \"object\", \"required\": [\"origin_kind\", \"source_plugin\", \"source_path\", \"source_version\", \"source_digest\", \"imported_at\"], \"properties\": {\"origin_kind\": {\"type\": \"string\", \"enum\": [\"manual\", \"github\", \"system-spec-harness\", \"system-dev-planner\", \"generated\"]}, \"source_plugin\": {\"type\": [\"string\", \"null\"]}, \"source_path\": {\"type\": [\"string\", \"null\"], \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"}, \"source_version\": {\"type\": [\"string\", \"null\"]}, \"source_digest\": {\"type\": [\"string\", \"null\"], \"pattern\": \"^[a-f0-9]{64}$\"}, \"imported_at\": {\"type\": [\"string\", \"null\"], \"format\": \"date-time\"}}, \"additionalProperties\": false, \"description\": \"引用・import元を追跡し、C19およびexternal plugin system-dev-planner由来のimportが外部正本を利用したことを検証する\"}\nplugins/dev-graph/scripts/build-graph-node.py:798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},",
+  "tool_use_result": {
+    "stdout": "{\"type\": \"object\", \"required\": [\"origin_kind\", \"source_plugin\", \"source_path\", \"source_version\", \"source_digest\", \"imported_at\"], \"properties\": {\"origin_kind\": {\"type\": \"string\", \"enum\": [\"manual\", \"github\", \"system-spec-harness\", \"system-dev-planner\", \"generated\"]}, \"source_plugin\": {\"type\": [\"string\", \"null\"]}, \"source_path\": {\"type\": [\"string\", \"null\"], \"pattern\": \"^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$\"}, \"source_version\": {\"type\": [\"string\", \"null\"]}, \"source_digest\": {\"type\": [\"string\", \"null\"], \"pattern\": \"^[a-f0-9]{64}$\"}, \"imported_at\": {\"type\": [\"string\", \"null\"], \"format\": \"date-time\"}}, \"additionalProperties\": false, \"description\": \"引用・import元を追跡し、C19およびexternal plugin system-dev-planner由来のimportが外部正本を利用したことを検証する\"}\nplugins/dev-graph/scripts/build-graph-node.py:798:                \"source_version\": None, \"source_digest\": None, \"imported_at\": None},",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

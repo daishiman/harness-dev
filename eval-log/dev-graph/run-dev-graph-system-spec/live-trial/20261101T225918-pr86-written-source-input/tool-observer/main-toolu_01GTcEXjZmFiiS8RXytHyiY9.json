@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c0fc4077-be5d-4308-bb6a-13b12c2e71ca",
+      "line": 606,
+      "prefix_bytes": 4006812,
+      "prefix_sha256": "26caed007a64084b66b1307556bed889cd2159317231f78b09fc72988945c618",
+      "timestamp": "2026-11-01T14:38:28.650Z"
+    },
+    "result": {
+      "uuid": "7f113af9-1b1d-4a7b-a1eb-c684224f23e0",
+      "line": 614,
+      "prefix_bytes": 4010628,
+      "prefix_sha256": "a4545d97191d44c7474e1f0855691cc7c1bc9d2ddddee08ef77c5f6adfcc7efd",
+      "timestamp": "2026-11-01T14:38:30.422Z"
+    }
+  },
+  "tool_use_id": "toolu_01GTcEXjZmFiiS8RXytHyiY9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -c '\nimport json;s=json.load(open(\"system-spec/spec-state.json\"))\nfor q in s[\"qa_log\"]:\n  if q[\"qa_id\"] in (\"qa-auth-written-v7\",\"qa-csrf-written-v7\",\"qa-session-written-v7\",\"qa-security-written-v7\",\"qa-o1-fixture-v3\",\"qa-job-choice-fixture-v3\",\"qa-025\",\"qa-035\",\"qa-036\",\"qa-006\",\"qa-037\",\"qa-038\") :\n    print(\"##\",q[\"qa_id\"],\"superseded_by=\",q.get(\"superseded_by\")); print(\"Q:\",q[\"question\"][:400]); print(\"A:\",q[\"answer\"][:1500])\n'",
+    "description": "Show answers of newer and superseded QA entries"
+  },
+  "is_error": true,
+  "tool_result_content": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nKeyError: 'qa_id'",
+  "tool_use_result": "Error: Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nKeyError: 'qa_id'"
+}

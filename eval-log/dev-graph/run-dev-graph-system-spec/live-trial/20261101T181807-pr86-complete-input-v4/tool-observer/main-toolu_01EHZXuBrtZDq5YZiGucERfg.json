@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b1584266-285c-44c9-824c-eb742f5fb6b3",
+      "line": 110,
+      "prefix_bytes": 870575,
+      "prefix_sha256": "2ddafefc199a6b9df75f40650c39fa00978142806d5100f01d30d6a1c54751d2",
+      "timestamp": "2026-11-01T09:19:31.865Z"
+    },
+    "result": {
+      "uuid": "f519526b-83fb-4420-94e7-08422e151b1d",
+      "line": 113,
+      "prefix_bytes": 875181,
+      "prefix_sha256": "cbc84d72e39404472a4fe3ef9aee7f67d01d70032ca7cf9e0e9c1ac18f157be2",
+      "timestamp": "2026-11-01T09:19:41.799Z"
+    }
+  },
+  "tool_use_id": "toolu_01EHZXuBrtZDq5YZiGucERfg",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && ls system-spec system-spec/retrieval-evidence; python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --help 2>&1 | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "system-spec:\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n\nsystem-spec/retrieval-evidence:\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+  "tool_use_result": {
+    "stdout": "system-spec:\n00-requirements-definition.md\nauth.md\nbackend.md\ndatabase.md\nfetched-references.json\nfrontend.md\nindex.md\ninfrastructure.md\nmaintenance-ops.md\nretrieval-evidence\nsecurity.md\nspec-state.json\nui-ux.md\n\nsystem-spec/retrieval-evidence:\nfastapi.json\nkubernetes.html\npostgres.json\nreact.json\ntypescript.json\nusage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

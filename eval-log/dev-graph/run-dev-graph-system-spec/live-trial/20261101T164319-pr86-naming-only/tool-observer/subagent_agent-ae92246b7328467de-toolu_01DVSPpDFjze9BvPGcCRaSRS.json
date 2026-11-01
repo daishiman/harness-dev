@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-ae92246b7328467de",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bf3b46de-e102-420b-a8b4-92545911fa96",
+      "line": 105,
+      "prefix_bytes": 464830,
+      "prefix_sha256": "171b86609e62994d200386ba80e246923e4d64bdffb1f4709907a72626cb1127",
+      "timestamp": "2026-11-01T07:49:07.477Z"
+    },
+    "result": {
+      "uuid": "dc8cafc8-121d-4ba7-8843-0aa0e989c47c",
+      "line": 107,
+      "prefix_bytes": 468291,
+      "prefix_sha256": "fdffcd72954bd33028aa660fbc7c5edc253ebeb4dbf39a2c93977360d99de153",
+      "timestamp": "2026-11-01T07:49:09.624Z"
+    }
+  },
+  "tool_use_id": "toolu_01DVSPpDFjze9BvPGcCRaSRS",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 -c '\nimport pathlib,sys\np=pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx/eval-log/hearing-audit.json\");p.parent.mkdir(parents=True,exist_ok=True);p.write_text(sys.stdin.read(),encoding=\"utf-8\")' <<'HEARING_JSON'\n{\n  \"verdict\": \"PASS\",\n  \"findings\": [\n    {\"axis\": \"leading-question\", \"severity\": \"medium\", \"qa_id\": \"qa-009\", \"criteria\": [\"N4\"], \"supersession_valid\": true,\n     \"observation\": \"JTBD・対象ユーザー・利用文脈の3論点を名指しで1問に束ねている。qa-019(JTBD)、qa-016(対象ユーザー)、qa-020(利用環境)、qa-021(頻度)で1論点ずつ開いた問に分けて問い直されている。置き換え先はいずれも N1-N4 を満たし、中心論点は同じで、answer・basis=user-decision・answered_at を持つ。qa-009 は確定セルの qa_ref ではなく、effective_source_refs もない。閉じた検出(置き換え先: qa-019)。\"},\n    {\"axis\": \"leading-question\", \"severity\": \"medium\", \"qa_id\": \"qa-038\", \"criteria\": [\"N4\"],\n     \"observation\": \"セッションの保存先(3択)と、無効にする期間(有効期限・ログアウト時の扱い)という独立した2論点を1問に束ねている。保存先の選択肢には保留・別案の道がある。qa-038 は auth/web の qa_refs(裏付け)のみで qa_ref(主たる根拠)ではないため、PASS に残す注記。\"},\n    {\"axis\": \"leading-question\", \"severity\": \"low\", \"qa_id\": \"qa-036\", \"criteria\": [\"N4\"],\n     \"observation\": \"通知の送り元(どこから)と手段を並べて聞く開いた問。実質1論点(通知経路)と読め、答えを左右したとは読めない軽微な束ね。infrastructure/web の qa_refs(裏付け)のみ。注記。\"},\n    {\"axis\": \"traceability\", \"severity\": \"info\", \"cell\": \"ui-ux/web\", \"qa_id\": \"qa-009\",\n     \"observation\": \"置き換え済み(retired)の qa-009 が ui-ux/web の qa_refs(裏付け)に残っている。主たる根拠 qa_ref=qa-003 ではなく、effective_source_refs でもないので active consumer には当たらない。置き換え先の qa-019/016/020/021 は同セルの qa_refs に結ばれている。C01 側で整理する余地があるという注記。\"}\n  ]\n}\nHEARING_JSON"
+  },
+  "is_error": false,
+  "tool_result_content": "(Bash completed with no output)",
+  "tool_use_result": {
+    "stdout": "",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

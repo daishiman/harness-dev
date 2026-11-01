@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "subagent/agent-a2ec44df2e8dbda1e",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "5a124914-8278-4773-9b49-750e2a2e3256",
+      "line": 17,
+      "prefix_bytes": 176497,
+      "prefix_sha256": "36d795c680e2407ff3cdbc2bf77268da539305af57d0a9f26be350dc02f75b20",
+      "timestamp": "2026-11-01T07:46:26.583Z"
+    },
+    "result": {
+      "uuid": "825a8b61-4149-4730-b077-44ab1e4ef4eb",
+      "line": 18,
+      "prefix_bytes": 177824,
+      "prefix_sha256": "0c480ecd47b456e3b96be4bb298b1bd93192511f4d70de199f896004bb519e40",
+      "timestamp": "2026-11-01T07:46:29.482Z"
+    }
+  },
+  "tool_use_id": "toolu_01TTUoFrW8KN8GygrSEk5WA6",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx; S=system-spec/spec-state.json; echo \"CPR=$CLAUDE_PLUGIN_ROOT\"; V=\"$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py\"; [ -f \"$V\" ] || V=$(find . -name validate-coverage-matrix.py -not -path '*/node_modules/*' | head -1); echo \"V=$V\"; python3 \"$V\" --matrix $S; echo \"exit_loop=$?\"; python3 \"$V\" --matrix $S --require-complete; echo \"exit_final=$?\""
+  },
+  "is_error": false,
+  "tool_result_content": "CPR=\nV=./plugins/system-spec-harness/scripts/validate-coverage-matrix.py\nOK: 収集マトリクス網羅性 (loop) を満たす\nexit_loop=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit_final=0",
+  "tool_use_result": {
+    "stdout": "CPR=\nV=./plugins/system-spec-harness/scripts/validate-coverage-matrix.py\nOK: 収集マトリクス網羅性 (loop) を満たす\nexit_loop=0\nOK: 収集マトリクス網羅性 (final(未収集0)) を満たす\nexit_final=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

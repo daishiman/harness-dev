@@ -1,6 +1,6 @@
 # 完成画像の評価の物差し
 
-完成画像の独立評価で、全案に同じ物差しを当てるための基準。評価を始める前に固定し、評価の途中で合格に合わせて書き換えない。判定はPASS/FIXの2値で、点数・平均・合計から自動で決めない。見る順序の正本はこの文書で、他の文書はここへリンクするだけにする。データ形は[visual-review schema](../schemas/visual-review.schema.json)、独立性と統合は[review-contract](../skills/assign-flyer-review/references/review-contract.md)、FIXの戻り先は[workflow](workflow.md#改善と納品)、様式で崩れやすい点は[style-profiles](style-profiles.md)を正本とする。
+完成画像の独立評価で、全案に同じ物差しを当てるための基準。評価を始める前に固定し、評価の途中で合格に合わせて書き換えない。判定はPASS/FIXの2値で、点数・平均・合計から自動で決めない。見る順序の正本はこの文書で、他の文書はここへリンクするだけにする。データ形は[visual-review schema](../schemas/visual-review.schema.json)、独立性と統合は[review-contract](../skills/assign-flyer-evaluator/references/review-contract.md)、FIXの戻り先は[workflow](workflow.md#改善と納品)、様式で崩れやすい点は[style-profiles](style-profiles.md)を正本とする。
 
 ## 評価コストの原則
 

@@ -1,0 +1,23 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": "eval-log/run-dev-graph-system-spec-c24-receipt.json",
+  "round": 2,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "C24 receipt repo_root=content_roots.repository=fx, system_spec=fx/system-spec; R0 Verifier PASS"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "plugin.json version 0.1.24 ∈ >=0.1.22 <1.0.0; package-contract entry_points 4件実在; R1 Verifier PASS"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "not_achieved", "evidence": "elicit/compile/evaluatorはSkill経由で実行。doc-fetchはcitation exit0で不要。ただしevaluatorがFAILでR2受入条件(evaluator gate PASS)未達、R2 Verifier未実施"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "not_achieved", "evidence": "coverage exit0, source-citation exit0。evaluator report eval-log/system-spec-completeness-report.json (sha256 eebe9f3b85da04976d6c0f4fd70b0a362c245755417bb0abfff6afd632a73933) verdict=FAIL: decision_guidance FAIL (D4の案別比較が同一文言で比較不成立、確定根拠が合成QAのみ)"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "not_achieved", "evidence": "evaluator FAILのためC02を起動していない (graph nodes=0)"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "not_achieved", "evidence": "R3未到達のため独立Verifier未実施"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "round_results": [{"round": 1, "coverage_exit": 0, "source_citation_exit": 0, "graph_schema_exit": 0}, {"round": 2, "coverage_exit": 0, "source_citation_exit": 0, "graph_schema_exit": 0}]},
+    {"id": "OUT1", "status": "external_pending"}
+  ],
+  "blockers": [
+    "C05 evaluator verdict=FAIL (decision_guidance high: D4 pg-worker-cron vs api-background-http の比較が不成立)",
+    "修正にはR5-decision-guideで案別比較を作り直し利用者の採否を中立な問で取り直す必要があり、新しい利用者の意思決定を要する。task契約により人へ質問せず、承認を捏造しないため停止"
+  ],
+  "status": "FAIL"
+}

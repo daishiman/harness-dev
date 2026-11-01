@@ -1,0 +1,45 @@
+{
+  "responsibility_id": "R0-context",
+  "skill": "run-dev-graph-system-spec",
+  "verifier": "independent fork (run-dev-graph-system-spec/R0-context)",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "generated_at": "2026-10-31T22:48:44Z",
+  "loop": 1,
+  "checklist": [
+    {
+      "item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる",
+      "result": "YES",
+      "evidence": "resolve-repo-context.py --mode read exit 0; output equals c24-receipt.json on every key except mode (read vs write, expected). content_roots.system_spec=<repo_root>/system-spec, realpath identical and inside repo_root; repository_id local:sha256:0534ecd4a77eb510eed33391005b9045a9bfa38f1268a013a69cbfeac9e70263 matches; git_common_dir <repo_root>/.git matches git rev-parse --git-common-dir / --show-toplevel. 0 symlinks and 0 realpath escapes across 18 entries under system-spec/."
+    },
+    {
+      "item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた",
+      "result": "YES",
+      "evidence": "validate-source-lineage.py --repo-root <repo_root> exit 0, status=pass, checked=0, checked_node_ids=[], violations=[], graph=.dev-graph/state/graph.json -> decision new_import (matches preflight R0.lineage_gate)."
+    },
+    {
+      "item": "宣言した入力が全て検証済みである",
+      "result": "YES",
+      "evidence": "c24-receipt sha256 ec53be0f55dc0264d09edceeca8041b7872fc294bcecaaca1d3da2a268bc087b matches preflight; sha256(original_goal) recomputed = 30a1de05...e454 matches goal-spec; all 16 system-spec files sha256 match preflight inputs_sha256, no unlisted files; plugin_source <repo_root>/plugins/dev-graph inside root."
+    },
+    {
+      "item": "出力が宣言した shape と authority を満たす",
+      "result": "YES",
+      "evidence": "receipt separates repository identity (repository_id/worktree_id/git_common_dir), content roots (content_roots.*), and code authority (plugin_source); new_import/resume decision derived uniquely from checked."
+    },
+    {
+      "item": "責務境界に反する read/write/delegation が0件である",
+      "result": "YES",
+      "evidence": "Reads limited to repo_root; no symlink-source or other-repo content read; only write is this verification.json; no delegation; no network."
+    }
+  ],
+  "lineage_decision": {
+    "exit": 0,
+    "checked": 0,
+    "decision": "new_import"
+  },
+  "status": "PASS",
+  "blockers": [],
+  "delta_from_original": "none",
+  "merged_directive_for_next": "R0 PASS (new_import, checked=0); hand c24 receipt sha256 ec53be0f55dc0264d09edceeca8041b7872fc294bcecaaca1d3da2a268bc087b to R1/R2/R3",
+  "drift_signal": false
+}

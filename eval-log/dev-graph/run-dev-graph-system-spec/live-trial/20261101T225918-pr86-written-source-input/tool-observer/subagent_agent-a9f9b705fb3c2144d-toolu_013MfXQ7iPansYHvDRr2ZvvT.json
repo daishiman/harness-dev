@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-a9f9b705fb3c2144d",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "3d1795ee-d9a0-48fe-802e-a0f0ce7a5fa7",
+      "line": 155,
+      "prefix_bytes": 1821484,
+      "prefix_sha256": "c93b04720f81aacc35bc19ac5b9095c4401a298f137bbe39ad07042f662f5821",
+      "timestamp": "2026-11-01T14:14:56.962Z"
+    },
+    "result": {
+      "uuid": "431e349c-c88a-49cc-9faa-afe2d2311f1f",
+      "line": 156,
+      "prefix_bytes": 1828852,
+      "prefix_sha256": "b840c56eca1c8f9b80b6ee7e7ab56e9355cfb78b4402ebea793dd6fdede078bc",
+      "timestamp": "2026-11-01T14:14:57.272Z"
+    }
+  },
+  "tool_use_id": "toolu_013MfXQ7iPansYHvDRr2ZvvT",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/site-reliability-engineering.md"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t# Site Reliability Engineering — deep knowledge card\n2\t\n3\t> knowledge_id: `site-reliability-engineering` / status: `seed-example`。可用性 100% を目標にせず、目標値・許容誤差・観測手段を先に決めてから基盤構成を選ぶ。\n4\t\n5\t## 目的\n6\t\n7\t実行基盤・環境・リソースの構成を、目標信頼性 (SLO) と運用負荷の観点から選び、稼働中の状態を観測して是正できる形にする。\n8\t\n9\t## 背景\n10\t\n11\t実行基盤の選定は往々にしてサービス名の比較として行われるが、決めるべきは「どの水準の信頼性を、どれだけの運用コストで満たすか」である。SRE はこれを SLI (測る指標)・SLO (満たす目標)・エラーバジェット (許容する逸脱量) として明文化し、機能追加と安定性のどちらに資源を割くかを合意可能な数値に還元する。基盤構成 (環境分離・binding・スケーリング単位・デプロイ境界) はこの目標から導かれる従属変数であり、逆ではない。あわせて、環境差分を人手手順ではなくコードとして持つこと (Infrastructure as Code) が、再現性と復旧速度の前提になる。\n12\t\n13\t## 解決する問題\n14\t\n15\t- 目標信頼性が未定義のまま冗長化・監視を積み、費用と運用負荷だけが増える。\n16\t- 環境 (本番/検証/ローカル) の差分が人の記憶に残り、本番でのみ再現する障害が生まれる。\n17\t- 稼働中の構成 (環境変数・binding・シークレット) を外から確認できず、障害時に仮説を検証できない。\n18\t- 復旧手順が実行されたことのない文書として存在し、実際の障害時に機能しない。\n19\t- 手作業の運用 (トイル) が担当者に固定化され、人の交代で運用品質が落ちる。\n20\t\n21\t## 中核概念\n22\t\n23\t- **SLI / SLO / エラーバジェット**: 利用者視点の指標を選び、目標値と許容逸脱量を決め、逸脱時の行動 (機能追加の停止・是正優先) を事前に合意する。\n24\t- **観測可能性**: 稼働中の実体 (バージョン・構成値の由来・依存の健全性) を外部から確認でき、症状から原因へ辿れる状態を保つ。\n25\t- **環境の再現性 (Infrastructure as Code)**: 環境と binding を宣言として持ち、差分を人手手順ではなく差分適用で解消する。\n26\t- **段階適用と復旧**: 変更を段階的に反映し、逆操作 (ロールバック・復元) を実際に実行して検証する。\n27\t- **キャパシティと需要**: スケーリング単位と上限、コールドスタートや同時実行の制約を、目標指標に対する影響として扱う。\n28\t- **トイル削減とポストモーテム**: 反復手作業を自動化対象として計上し、障害後は非難でなく仕組みの欠落として記録する。\n29\t- **前提知識との関係**: 本カードは `continuous-delivery` を前提とする (`depends_on`)。段階適用・逆操作・稼働中の実体の確認は、デプロイパイプラインと単一の正本経路が提供する仕組みの上に成り立つため。\n30\t\n31\t## 適用条件\n32\t\n33\t- 利用者に対する可用性・遅延の期待があり、逸脱を検知して是正する責任を負う。\n34\t- 環境が複数あり (本番・検証・ローカル)、差分が事故要因になり得る。\n35\t- 観測・デプロイ・復旧を自動化する余地があり、運用担当が継続的に関与する。\n36\t\n37\t## 非適用条件\n38\t\n39\t- 利用者も稼働期間も限定された使い捨て環境に、SLO 運用とエラーバジェット会計を先行適用しない。\n40\t- 実測データが無い段階で SLO を数値確定しない (暫定値であることを明示して観測から始める)。\n41\t- マネージド基盤が既に保証している性質を、自前の冗長化で二重化しない (責任分界点を先に確認する)。\n42\t\n43\t## トレードオフ・失敗モード\n44\t\n45\t- SLO を高く置きすぎ、変更速度と費用を不必要に犠牲にする。\n46\t- 監視項目を増やすこと自体を目的化し、誰も見ないダッシュボードとアラート疲れを生む。\n47\t- Infrastructure as Code を導入しても本番へ手作業変更を許し、宣言と実体が乖離する (drift)。\n48\t- 復旧手順を一度も実行せず、実際の障害時に前提条件の欠落が判明する。\n49\t- 稼働中ビルドの素性を確認する手段を用意せず、「コードは直っている」と「本番が直っている」を区別できなくなる。\n50\t\n51\t## 目的達成への寄与\n52\t\n53\t- 基盤選定の判断を、製品名の比較ではなく目標指標への寄与として記述でき、後から根拠を検証できる。\n54\t- エラーバジェットにより、機能追加と安定化の優先順位を都度の力関係でなく事前合意で決められる。\n55\t- 稼働実体の観測手段を要件に含めることで、障害の切り分け時間を短縮し、原因究明のラウンド数を減らす。\n56\t\n57\t## ヒアリング・判断観点\n58\t\n59\t- 利用者にとっての「動いている」は何を指すか。それはどの指標で測れるか。\n60\t- 目標値を外したとき、何を止め、何を優先するか。誰が判断するか。\n61\t- 環境差分はどこに宣言されているか。本番への手作業変更は禁止されているか、検知できるか。\n62\t- 稼働中の成果物が、どのコードに対応するかを確認する手段はあるか。\n63\t- 復旧手順は実行済みか。最後に実行したのはいつか。\n64\t\n65\t## 一次資料\n66\t\n67\t- Google, *Site Reliability Engineering: How Google Runs Production Systems* (2016), https://sre.google/sre-book/table-of-contents/\n68\t- Google, *The Site Reliability Workbook* (2018), https://sre.google/workbook/table-of-contents/\n69\t- Kief Morris, *Infrastructure as Code, Second Edition* (2020), O'Reilly, https://infrastructure-as-code.com/book/\n70\t\n71\t## 鮮度\n72\t\n73\t- class: `standard-tracked`\n74\t- last_checked: `2026-08-08`; review_by: `2027-02-08`\n75\t- trigger: SRE 書籍/公式ガイドの更新、採用する実行基盤の制約 (実行時間・同時実行・binding 反映方式) の変更、SLO 実測が目標と継続的に乖離した場合。\n76\t",
+  "tool_use_result": null
+}

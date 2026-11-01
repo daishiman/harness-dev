@@ -1,0 +1,40 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "319c9b8c-4537-47a3-bbd6-f7140c6a85bb",
+  "stream": "subagent/agent-a5099cd400786854c",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "75b8bc22-79d4-4f9a-99e4-8e7feeb1148e",
+      "line": 25,
+      "prefix_bytes": 229511,
+      "prefix_sha256": "96a75c7493425ab7da6f3db82154fe41ee28a23f90b4e0ea465edc47308e057a",
+      "timestamp": "2026-11-01T03:34:12.418Z"
+    },
+    "result": {
+      "uuid": "3e244e2a-0829-4f50-ac7d-07ee5d7d3507",
+      "line": 26,
+      "prefix_bytes": 232179,
+      "prefix_sha256": "d8f33059b73ccf2a3a24868c5db844995e2b6ef20c299188b2d7117e67d2750c",
+      "timestamp": "2026-11-01T03:34:12.681Z"
+    }
+  },
+  "tool_use_id": "toolu_01MqSgE7FWAMgrU3DsVMUJX3",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/retrieval-evidence/fastapi.json"
+  },
+  "is_error": false,
+  "tool_result_content": "1\t{\n2\t  \"target_id\": \"fastapi\",\n3\t  \"tool\": \"WebFetch\",\n4\t  \"fetches\": [\n5\t    {\n6\t      \"url\": \"https://fastapi.tiangolo.com/release-notes/\",\n7\t      \"excerpt_verbatim\": [\n8\t        \"0.162.0 (2026-10-23)\",\n9\t        \"0.161.1 (2026-10-22)\",\n10\t        \"0.160.0 (2026-10-22)\"\n11\t      ],\n12\t      \"notes\": \"Top of release notes. 0.162.0 and 0.160.0 contain 'Breaking Changes' sections (bullet text not read: page truncated by fetch tool at 100000 chars). Many 0.14x-0.16x releases in Oct 2026 include Breaking Changes, so pin the minor version.\"\n13\t    }\n14\t  ],\n15\t  \"retrieved_at\": \"2026-10-31T14:46:09Z\",\n16\t  \"summary\": \"FastAPI の最新版は 0.162.0 (2026-10-23)。0.x 系で直近のマイナー版に破壊的変更が続くため、採用時は版を固定する。\"\n17\t}\n18\t",
+  "tool_use_result": {
+    "type": "text",
+    "file": {
+      "filePath": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec106/fx/system-spec/retrieval-evidence/fastapi.json",
+      "content": "{\n  \"target_id\": \"fastapi\",\n  \"tool\": \"WebFetch\",\n  \"fetches\": [\n    {\n      \"url\": \"https://fastapi.tiangolo.com/release-notes/\",\n      \"excerpt_verbatim\": [\n        \"0.162.0 (2026-10-23)\",\n        \"0.161.1 (2026-10-22)\",\n        \"0.160.0 (2026-10-22)\"\n      ],\n      \"notes\": \"Top of release notes. 0.162.0 and 0.160.0 contain 'Breaking Changes' sections (bullet text not read: page truncated by fetch tool at 100000 chars). Many 0.14x-0.16x releases in Oct 2026 include Breaking Changes, so pin the minor version.\"\n    }\n  ],\n  \"retrieved_at\": \"2026-10-31T14:46:09Z\",\n  \"summary\": \"FastAPI の最新版は 0.162.0 (2026-10-23)。0.x 系で直近のマイナー版に破壊的変更が続くため、採用時は版を固定する。\"\n}\n",
+      "numLines": 18,
+      "startLine": 1,
+      "totalLines": 18
+    }
+  }
+}

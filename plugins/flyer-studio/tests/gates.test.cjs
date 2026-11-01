@@ -59,9 +59,9 @@ const spent = (n) => ({
 const ledgerWith = (dir, n) =>
   P.write(dir + "/cycle-ledger.json", { version: 1, budget: 3, entries: Array.from({ length: n }, (_, i) => spent(i + 1)) });
 
-test("cycleBudget は composition の revisionBudget.maxCycles と一致する", () => {
-  const composition = JSON.parse(fs.readFileSync(path.join(P.ROOT, "plugin-composition.yaml"), "utf8"));
-  assert.equal(D.contract.cycleBudget, composition.revisionBudget.maxCycles);
+test("cycleBudget は登録簿の revisionBudget.maxCycles と一致する", () => {
+  const registry = JSON.parse(fs.readFileSync(path.join(P.ROOT, "references", "registry.json"), "utf8"));
+  assert.equal(D.contract.cycleBudget, registry.revisionBudget.maxCycles);
   assert.ok(Number.isInteger(D.contract.cycleBudget) && D.contract.cycleBudget >= 1);
 });
 

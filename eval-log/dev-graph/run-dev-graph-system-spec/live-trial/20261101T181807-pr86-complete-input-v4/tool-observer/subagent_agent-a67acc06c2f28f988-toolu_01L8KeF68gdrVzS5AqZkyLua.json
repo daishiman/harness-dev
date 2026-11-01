@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "011ab2be-2195-436c-890d-13707ac48197",
+  "stream": "subagent/agent-a67acc06c2f28f988",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "eab156ce-14d7-429b-bad9-65bf3a225d9b",
+      "line": 118,
+      "prefix_bytes": 634281,
+      "prefix_sha256": "568a9fef87cd25feb4ffe6286ac6fddc6b961ea36cd6f794c116819fb407043d",
+      "timestamp": "2026-11-01T09:36:21.734Z"
+    },
+    "result": {
+      "uuid": "78eb807e-4312-4164-a7e6-40d8c02e2f9b",
+      "line": 119,
+      "prefix_bytes": 636307,
+      "prefix_sha256": "c414b02130bd34f9d83d9ce41f7b12dd861ebb1f4bdc64154eb350d67196bdd8",
+      "timestamp": "2026-11-01T09:36:22.885Z"
+    }
+  },
+  "tool_use_id": "toolu_01L8KeF68gdrVzS5AqZkyLua",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && D=/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec113-fx/011ab2be-2195-436c-890d-13707ac48197; ls $D $D/subagents 2>/dev/null | head -20; python3 -B - \"$D\" <<'PY'\nimport json,sys,glob,os\nD=sys.argv[1]\nfiles=glob.glob(D+'/**/*.jsonl',recursive=True)+glob.glob(D+'.jsonl')\nfor f in files:\n    for line in open(f):\n        try: o=json.loads(line)\n        except: continue\n        m=o.get('message',{})\n        if not isinstance(m,dict): continue\n        for c in (m.get('content') or []) if isinstance(m.get('content'),list) else []:\n            if isinstance(c,dict) and c.get('type')=='tool_use' and c.get('name') in('Agent','Task','WebSearch'):\n                inp=c['input']; print(os.path.basename(f), c['name'], c['id'], {k:(v if k!='prompt' else len(v)) for k,v in inp.items()})\nPY"
+  },
+  "is_error": true,
+  "tool_result_content": "PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec113-fx/011ab2be-2195-436c-890d-13707ac48197)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n",
+  "tool_use_result": "Error: PreToolUse:Bash hook error: [/Users/dm/miniconda3/bin/python3 '/private/tmp/claude-501/pr86-ci-live/lt/hook/guard-json-data.py' '/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec113/policy.json']: [live-trial 隔離ガード] 拒否: 監査対象の領域への言及 (/private/tmp/claude-501/pr86-ci-live/lt/home/.claude/projects/-private-tmp-claude-501-pr86-ci-live-lt-runs-sysspec113-fx/011ab2be-2195-436c-890d-13707ac48197)。この trial は隔離環境で実行中で、書込みは許可された作業領域の内側だけ、外部サービスへの接続は禁止です。\n"
+}

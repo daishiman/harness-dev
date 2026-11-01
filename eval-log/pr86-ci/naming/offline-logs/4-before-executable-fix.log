@@ -1,0 +1,32 @@
+[PASS] C1: 正本 enum ロード成功: ステータス=6件, パターン=5件, ワークフロー=5件
+[PASS] C2: projection が schema 15 プロパティを網羅 (auto=['作成日'] 除外)
+[PASS] C3: handoff-contract.md: ワークフロー二重定義なし (正本参照のみ)
+[PASS] C4: 全 A-E 定義箇所に軸独立性注記あり (mode/パターン/ワークフロー)
+=> ALL PASS
+[lint-vendored-ssot] OK: vendored SSOT 124 件が正本と byte 一致
+[plugin-package-check] blocking failure あり
+[plugin-package-check] 23 plugin を検査 (advisory: ['PKG-002', 'PKG-004', 'PKG-014'] は非ブロッキング)
+  contract-generator               OK (advisory=['PKG-004', 'PKG-014'])
+  dev-graph                        OK (clean)
+  extract-system-blueprint         OK (advisory=['PKG-014'])
+  flyer-studio                     OK (advisory=['PKG-004', 'PKG-014'])
+  guide-doc-generator              OK (advisory=['PKG-004', 'PKG-014'])
+  harness-creator                  OK (advisory=['PKG-004', 'PKG-014'])
+  plugin-dev-planner               OK (advisory=['PKG-004', 'PKG-014'])
+  prompt-creator                   OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-adapters        OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-automation      OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-config          OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-hooks           OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-lint            OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-migration       OK (advisory=['PKG-004', 'PKG-014'])
+  skill-governance-secrets         OK (advisory=['PKG-004', 'PKG-014'])
+  skill-intake                     OK (advisory=['PKG-004', 'PKG-014'])
+  slide-report-generator           OK (advisory=['PKG-004', 'PKG-014'])
+  spec-drift-guardian              OK (advisory=['PKG-004', 'PKG-014'])
+  system-briefing-book             OK (advisory=['PKG-004', 'PKG-014'])
+  system-dev-planner               OK (clean)
+  system-spec-harness              FAIL (blocking): ['PKG-007']
+  ubm-goal-setting                 OK (clean)
+  x-longpost-creator               OK (clean)
+[plugin-package-check] advisory finding 35 件 (PKG-002/004 = 未採用の将来標準。repo 横断マイグレーションで対応予定。非ブロッキング)

@@ -1,0 +1,40 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出(置き換え先: qa-019)。JTBD・対象ユーザー・利用文脈を名指しで1問に束ねていた。qa-019 は1論点の開いた問で N1-N4 を満たし、同じ JTBD の論点を扱う。残りの論点は qa-016/020/021 が1論点ずつ補う。qa-019 に回答・basis=user-decision・answered_at(2026-10-12T00:16:45Z)がある。qa-009 は確定セルの qa_ref でも effective_source_refs でもなく、active consumer は 0 件。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "observation": "セッション保存先の3択と、有効期限・ログアウトの扱いという独立した2論点を1問に束ねている。ただし『どれも採らない、別の方式と比べる、決めずに保留する』の道は示されているため medium。qa-038 は auth/web の裏付け qa_refs のみで、主たる qa_ref(qa-002)ではない。aspect-criteria.md の対応表では PASS に残す注記。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約を一括で確定確認する問。確定・指摘・保留の選択肢があり、各項目の根拠 qa id が付いているため違反とはせず、注記にとどめる。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "qa_id": "qa-009",
+      "observation": "matrix.ui-ux.web.qa_refs に retired(superseded_by=qa-019)の qa-009 が残っている。主たる qa_ref は qa-003 で、qa-019 も qa_refs にあり、active consumer の定義(qa_ref / effective_source_refs)には当たらないため閉じた検出を維持する。C01 は qa_refs から qa-009 を整理することが望ましい。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "qa_id": "qa-037",
+      "observation": "qa-037 と qa-038 の provenance に、orchestrator の既定値を user-decision に変えた経緯が自己開示されている。fixture 全体がシナリオ上の利用者発言であるという前提と同じ。この2件は auth/web と security/web の裏付け qa_refs のみで、主たる qa_ref ではない。"
+    }
+  ]
+}

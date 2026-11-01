@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-elegant-review",
-    "skill_md_sha256": "e17d139a47f33161b20a640bd90c389f2b1529a5c045e6107f0efce2ed145dc3"
+    "skill_md_sha256": "2f4b3cddab2449449e7765d3a6a7ea4b4c754f654b63453b27653c6155af56d4"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "focused-runtime-simplification-review",
-  "reviewed_at": "2026-08-24T06:17:30Z",
-  "iterations": 1,
+  "reviewer": "cr-run-elegant-review (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T13:40:21Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,19 +26,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "task-graph/agent-team は実在する Phase1→Phase2→Phase3→最終検証の依存だけを checklist-graph へ射影し、Phase2 の 3 分析者は read-only fan-out/fan-in、Phase3 だけが単一 writer である。4 engine asset は生成テンプレート正本と 4/4 byte 一致した。",
-      "30 思考法の正本は thought-methods.yaml 1 箇所で、10/9/11、合計 30、ID 重複 0。実走 findings は validate-paradigm-coverage.py と findings.schema.json の両方を通過した。",
-      "差分再評価は changed_paths/grep の自己申告を廃し、verification-obligation-protocol の exact fingerprint + current PASS receipt DAG にみ一本化した。",
-      "dry_run は Phase3 input schema で required bool として worker へ渡り、true 時の target Edit/Write/commit/PR を禁止。改善反復は outer max_iterations=3 と task-graph 消費予算 max_loops=12 を別契約とし、4 条件未達は force_pass せず human_review へ閉じる。",
-      "既存 domain validator の --task-graph-trace mode が progress/intermediate 不在、ready exact/min、過去 done 依存、closure/cycle、done 完全性、completed 時の未完了残、bound を fail-closed 検証し、8 focused tests が PASS した。"
+      "N1 の直し方が良い: convergence-policy.json:38-49 で converged に『AND C1-C4 all PASS』を足し、converged_with_failures (status incomplete・action human_review・require_human_decision) を新設して『収束した』と『合格した』を分けた。同じ規則が SKILL.md:363-364 (停止条件 1・2)・findings.schema.json:23・R3-phase3-execute.md:30・2 つのエラー文 (build-verdict.py:136-143 / validate_phase_order.py:142) の 5 か所で一致し、エラー文は『incomplete に写す』という解消手段を直接示すようになった。",
+      "写し経路に新しい矛盾が無い: workflow-manifest.json:140 step5 と R3:70 は executor の convergence_status (5 値) を run_status (3 値) へ写す方式のままで、停滞時は R3:30 により executor が incomplete を返すので run_status=incomplete となり、policy の converged_with_failures.status と一致する。orchestrator が halt_conditions を直接評価する経路 (SKILL.md:242、executor agent L85・L108) でも同じく incomplete になる。5 値→3 値の写像表を変えずに済ませたのは妥当。",
+      "fail-closed ガードは維持されている: scratch で FAIL が残る complete は build-verdict.py が exit 2 で止まり verdict.json を作らず、--phase-order でも exit 1 になり、どちらも新しいエラー文が出ることを実測した。4 条件 PASS の complete は status=complete のまま。",
+      "停止条件を 4 項目に増やしても参照が壊れていない: 停止条件の番号を参照している箇所は repo に無く、resource-map.yaml:97 は『安全弁発火時』と名前で参照している。エラー文の文言に依存するテストも 0 件。",
+      "思考法配分 9/9/12・skip 禁止・STRICT_SIGNAL_FROM による免除の終了条件・single-writer と commit_authorized は前回どおり維持されている。"
     ],
     "negative_feedback": [
-      "[medium/smell][PD-002] rubric 機械採点は body 先頭 30 行に Purpose/Output Contract heading がないと判定。先頭の artifact-delivery 共通契約と Reading Order から目的と出力へ辿れ、実行不能・誤分岐・4条件違反は生じないため high ではない。共通 artifact-delivery 配置の個別変更は SSOT drift を生むため本 focused patch では保留。"
+      "[smell/low] N2 (iteration 3 で新たに見えた点): halt_conditions→status の列挙が説明文 2 か所で追従していない。SKILL.md:242 の括弧『(converged→`complete` / diverged→`human_escalate` / max_iterations_reached→`incomplete`)』に converged_with_failures→`incomplete` が無い (policy は 4 キー、findings.schema.json:23 は 4 件)。schemas/verdict.schema.json:58 の description『incomplete=max_iter 到達』も停滞を含まない。停止条件 (SKILL.md:364)・policy・R3:30 には定義があり、実装もそれに従うので矛盾ではない。直し方: SKILL.md:242 の括弧に『converged_with_failures→`incomplete`』を足し、verdict.schema.json:58 を『incomplete=max_iter 到達、または収束したが FAIL が残る』にする。",
+      "[smell/low] N3: agents/elegant-improvement-executor.md:60 は差し戻し条件として max_iter 超過→incomplete と Δneg 2 周連続増→diverging だけを書き、停滞 (Δneg/Δpos が閾値未満でも C1-C4 に FAIL が残る)→incomplete を書いていない。同 agent の L47 が正本を R3 と定め、R3:30 と convergence-policy に定義があるので矛盾ではないが、agent 単体で読むと停滞時に complete を返す余地が見える。直し方: L60 に『Δneg/Δpos が閾値未満でも C1-C4 に FAIL が残るなら convergence_status=incomplete (human_review 必須)』を 1 文足す。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-focused-runtime-simplification-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "content-review-protocol の incremental profileによる 1 context / 1 target の fresh focused combined review。対象 SKILL.md 全文と今回の依存閉包（workflow manifest、R1-R3、convergence policy、verification obligation SSOT、4 engine asset、schema、validator、verdict example）を現在バイト列で再評価した。初回に検出した high は、旧 grep 再利用判定、max_loops/max_iterations 混同、dry_run 非伝搬、未宣言 auto commit/PR、task-graph trace 検査の個別配線漏れで、SSOT 参照への縮約と既存 domain validator 拡張で是正後、fresh rereview で未解決 high=0。IN1/IN2/OUT1/OUT2 を全て評価し、4条件は全 PASS。この PASS は content design claim に限り、live/criteria の実走受入証拠を代替しない。30思考法による exhaustive audit は本評価で実施しておらず、実施したとは申告しない。"
+  "notes": "incremental profile の focused combined review、iteration 3 (最終。iteration 2 の smell N1『収束したのに 4 条件の FAIL が残る run の run_status が決まっていない』に対する修正の再評価)。30 思考法は使っていない。SKILL.md sha256 実測 2f4b3cddab2449449e7765d3a6a7ea4b4c754f654b63453b27653c6155af56d4 (shasum -a 256、コーディネーター提示値と一致)。読んだもの: コーディネーターの修正主張 (変更点 1-5)、INT の未 commit 差分のうち SKILL.md:242・244・363-366、references/convergence-policy.json:38-62、schemas/findings.schema.json:20-24、scripts/build-verdict.py:81・91-99・136-143、scripts/validate_phase_order.py:112・138-143、prompts/R3-phase3-execute.md:30・70・129-130、workflow-manifest.json:140・165-166・234、agents/elegant-improvement-executor.md:41・47・60・85・108、schemas/phase-output.schema.json の convergence_status enum、schemas/verdict.schema.json:57-58、references/resource-map.yaml:17・97。N1 の解消確認: policy の halt_conditions は converged (C1-C4 all PASS→complete)・converged_with_failures (FAIL 残存→incomplete・human_review)・diverged (→human_escalate)・max_iterations_reached (→incomplete) の 4 キーで、SKILL.md:363-366 の停止条件 4 項目・findings.schema.json:23 の写像 4 件・R3:30 と一致する。build-verdict.py と validate_phase_order.py のエラー文は『(収束していても FAIL が残る run は incomplete。convergence-policy.json の halt_conditions.converged_with_failures)』になり、解消手段を示す。よって N1 は解消。重点確認 (新しい矛盾の有無): (1) workflow-manifest.json:140 step5 は executor の convergence_status を写す方式で、停滞時に executor が incomplete を返す (R3:30) ので run_status=incomplete となり policy と整合。写像表 (complete→complete、diverging・human_escalate→human_escalate、in_progress・incomplete→incomplete) は SKILL.md:242・manifest:140・R3:70・schema:23 で同一のまま。(2) executor agent L60 は停滞を書いていないが、L47 で正本を R3 とし、L85・L108 で収束判定を convergence-policy に委ねているので矛盾ではない (N3 として smell 記録)。(3) halt_conditions を列挙している箇所は repo 全体で policy・SKILL.md:242・findings.schema.json・2 つの script だけ。うち SKILL.md:242 と verdict.schema.json:58 の説明が converged_with_failures を欠く (N2 として smell 記録)。(4) 停止条件の番号参照は無く、エラー文依存のテストも 0 件 (grep で確認)。実測: (a) PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q で iteration 2 と同じ 17 ファイル (signal_gate・task_graph・kit_contract・validate_paradigm_coverage 通常版と r4・check_review_trigger・render_frontmatter・lint_content_review_s2・test_iter_improve_contract・plugin-dev-planner の test_matrix_doc_integrity ほか) が 611 passed / 1 skipped。作者申告の 64 passed / 1 skipped は対象ファイル集合が不明のため未照合。(b) convergence-policy.json と findings.schema.json は JSON として読める。scratch (scratchpad/cr/run-elegant-review/it3/) で build-verdict.py を実行し、FAIL+complete は exit 2・verdict.json 不在・新エラー文、4 条件 PASS+complete は exit 0・status=complete。(c) scratch に複製した run を run_status=complete にして validate-paradigm-coverage.py --phase-order を実行すると exit 1、新エラー文が出る。(d) validate-paradigm-coverage.py --phase-order INT/eval-log は exit 0 (phase order 26 run、verdict derivation 17 run、strict 0 run、warning 354 件はいずれも境界 20260809 より前の run)。(e) validate-frontmatter.py と lint-skill-tree.py はどちらも ok。判定: (a) 矛盾 0 (b) 漏れ 0 (c) 規約整合 (d) 依存関係整合はいずれも違反なし、(e) rubric high 0。残るのは smell (low) の N2・N3 だけなので PASS。"
 }

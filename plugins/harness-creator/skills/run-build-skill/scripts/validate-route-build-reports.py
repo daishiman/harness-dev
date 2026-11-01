@@ -88,6 +88,28 @@ def _is_str_list(value: object) -> bool:
     return isinstance(value, list) and all(isinstance(x, str) and x for x in value)
 
 
+def _duplicate_ids(entries: list[dict]) -> list[str]:
+    """route lookup を dict/set 化する前に、同じ ID の別定義を検出する。"""
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for entry in entries:
+        value = entry.get("id")
+        if not isinstance(value, str):
+            continue
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return sorted(duplicates)
+
+
+def _handoff_route_id_findings(handoff: dict) -> list[str]:
+    routes = [route for route in handoff.get("routes", []) if isinstance(route, dict)]
+    duplicates = _duplicate_ids(routes)
+    if not duplicates:
+        return []
+    return [f"handoff routes の route id が重複: {', '.join(duplicates)}"]
+
+
 def _hash_target(path: Path) -> str:
     """file または directory tree の決定論 SHA-256 (接頭辞なし)。"""
     if path.is_file():
@@ -548,6 +570,9 @@ def validate_route(
     plan_dir: Path | None = None,
 ) -> list[str]:
     slug = handoff.get("target_plugin_slug", "")
+    route_id_findings = _handoff_route_id_findings(handoff)
+    if route_id_findings:
+        return route_id_findings
     routes = {r.get("id"): r for r in handoff.get("routes", []) if isinstance(r, dict)}
     route = routes.get(route_id)
     if route is None:
@@ -573,7 +598,9 @@ def validate_complete(
 ) -> list[str]:
     slug = handoff.get("target_plugin_slug", "")
     routes = [r for r in handoff.get("routes", []) if isinstance(r, dict)]
-    findings: list[str] = []
+    findings = _handoff_route_id_findings(handoff)
+    if findings:
+        return findings
     for route in routes:
         rid = route.get("id", "?")
         route_findings = validate_route(handoff, reports_dir, rid, repo_root, plan_dir)

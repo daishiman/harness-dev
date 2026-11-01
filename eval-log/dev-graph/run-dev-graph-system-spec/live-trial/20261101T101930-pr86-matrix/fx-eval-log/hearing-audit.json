@@ -1,0 +1,36 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出 (置き換え先: qa-019)。JTBD・対象ユーザー・利用文脈の 3 論点を 1 問に名指しで束ねていた (N4)。qa-019 は JTBD 1 論点の開いた問で N1-N4 を満たす (a)。同じ論点を扱い、superseded_note とも整合する (b)。qa-019 に answer、basis=user-decision、answered_at=2026-10-12T00:16:45Z がある (c)。qa-009 は確定セルの主たる接地根拠 (qa_ref) ではなく、effective_source_refs でも参照されていない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "セッションの保存先 (3 択) と、有効期限・ログアウトの扱いという独立に決められる 2 論点を 1 問に束ねている。ただし選択肢に保留・別案の道はある。qa-038 は auth/web の qa_refs (裏付け) にだけ現れ、主たる接地根拠は qa-002 のため、1a により PASS に残す注記。置き換え済みではない (supersession_valid:false は置き換えなしの意味)。再質問は C01 の判断に委ねる。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "U1-U9 の要約を 1 問で確定確認する構成。「確定する/直すところを指摘する/保留」の 3 択で、各項目に根拠 qa id が付き、修正と保留の道もある。答えを左右したとは読めないため low (注記)。置き換え済みではない。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "low",
+      "cell": "ui-ux/web",
+      "qa_id": "qa-009",
+      "observation": "ui-ux/web の qa_refs (裏付け) が置き換え済み (retired) の qa-009 を参照している。主たる qa_ref は qa-003 で実在し、確定の根拠は崩れていない。SSOT が active consumer と定める qa_ref と effective_source_refs には該当しないため、閉じた検出は成立と判断した。保守上は、裏付けを qa-019 などに付け替えるのが望ましい (C01 の add-qa-ref)。"
+    }
+  ]
+}

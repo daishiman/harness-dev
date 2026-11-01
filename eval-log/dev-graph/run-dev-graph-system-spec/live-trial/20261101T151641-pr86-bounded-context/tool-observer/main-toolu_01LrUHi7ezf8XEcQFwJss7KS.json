@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "6ce39f3e-7de7-4936-87e0-693d24a17080",
+      "line": 180,
+      "prefix_bytes": 978553,
+      "prefix_sha256": "24b9cdfe9852fc73c3262ac09d1f9bc4865dc65fe750d62d10e6df8e7d3d3a44",
+      "timestamp": "2026-11-01T15:21:47.195Z"
+    },
+    "result": {
+      "uuid": "bf47513a-5a41-4fd9-b8a6-47336240a25f",
+      "line": 181,
+      "prefix_bytes": 979577,
+      "prefix_sha256": "77200d599b5fd612f74fcc20a6b45c3a27019538e83d3124dc24c3b0e58a147c",
+      "timestamp": "2026-11-01T15:21:49.265Z"
+    }
+  },
+  "tool_use_id": "toolu_01LrUHi7ezf8XEcQFwJss7KS",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && \\\npython3 -B \"${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/plugins/system-spec-harness}/scripts/validate-design-knowledge-refs.py\" --matrix \"system-spec/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" 2>&1 | head -50",
+    "description": "IN1 Gate 3: Validate design knowledge references"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: design knowledge_ref は全て実在する (検査 21 件)",
+  "tool_use_result": {
+    "stdout": "OK: design knowledge_ref は全て実在する (検査 21 件)",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

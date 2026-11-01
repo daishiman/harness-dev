@@ -1,0 +1,1425 @@
+{
+  "plugin_count": 23,
+  "pass_count": 23,
+  "fail_count": 0,
+  "error_count": 0,
+  "dependency_scc": [
+    {
+      "members": [
+        "dev-graph",
+        "system-dev-planner"
+      ],
+      "edges": [
+        {
+          "from": "dev-graph",
+          "to": "system-dev-planner"
+        },
+        {
+          "from": "system-dev-planner",
+          "to": "dev-graph"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    },
+    {
+      "members": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ],
+      "edges": [
+        {
+          "from": "harness-creator",
+          "to": "skill-governance-adapters"
+        },
+        {
+          "from": "skill-governance-adapters",
+          "to": "harness-creator"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    }
+  ],
+  "plugins": [
+    {
+      "plugin": "contract-generator",
+      "inventory": {
+        "skills": 4,
+        "agents": 3,
+        "commands": 0,
+        "hooks": 1,
+        "scripts": 4,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 3
+      },
+      "surfaces": {
+        "skills": [
+          "run-contract-finalize",
+          "run-contract-generate",
+          "run-skill-feedback",
+          "run-template-sync"
+        ],
+        "agents": [
+          "contract-draft-agent",
+          "contract-finalize-agent",
+          "template-sync-agent"
+        ],
+        "commands": [],
+        "hooks": [
+          "hook-guard-secret.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "dev-graph",
+      "inventory": {
+        "skills": 10,
+        "agents": 4,
+        "commands": 1,
+        "hooks": 3,
+        "scripts": 26,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 8
+      },
+      "surfaces": {
+        "skills": [
+          "run-dev-graph-decompose",
+          "run-dev-graph-init",
+          "run-dev-graph-node",
+          "run-dev-graph-render",
+          "run-dev-graph-requirements",
+          "run-dev-graph-schedule",
+          "run-dev-graph-status",
+          "run-dev-graph-sync",
+          "run-dev-graph-system-spec",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "dev-graph-integrity-auditor",
+          "dev-graph-parallel-safety-verifier",
+          "dev-graph-requirements-verifier",
+          "dev-graph-sync-conflict-verifier"
+        ],
+        "commands": [
+          "dev-graph"
+        ],
+        "hooks": [
+          "audit-graph-authority-drift.py",
+          "guard-graph-schema.py",
+          "reconcile-task-lifecycle.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionStart",
+          "TaskCompleted"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionStart"
+        ],
+        "omitted_events": [
+          "TaskCompleted"
+        ]
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "system-dev-planner",
+        "system-spec-harness"
+      ]
+    },
+    {
+      "plugin": "extract-system-blueprint",
+      "inventory": {
+        "skills": 4,
+        "agents": 5,
+        "commands": 1,
+        "hooks": 1,
+        "scripts": 8,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 3
+      },
+      "surfaces": {
+        "skills": [
+          "assign-blueprint-fidelity-evaluator",
+          "run-blueprint-apply",
+          "run-extract-blueprint",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "architecture-essence-synthesizer",
+          "backend-inference-analyzer",
+          "content-intent-analyzer",
+          "frontend-surface-analyzer",
+          "uiux-rationale-analyzer"
+        ],
+        "commands": [
+          "extract-blueprint"
+        ],
+        "hooks": [
+          "pre-fetch-authz-guard.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "flyer-studio",
+      "inventory": {
+        "skills": 7,
+        "agents": 3,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 17,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 70
+      },
+      "surfaces": {
+        "skills": [
+          "assign-flyer-analysis-evaluator",
+          "assign-flyer-evaluator",
+          "run-analyze-flyer",
+          "run-create-flyer",
+          "run-intake-flyer",
+          "run-learn-flyer",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "flyer-color-reviewer",
+          "flyer-composition-reviewer",
+          "flyer-typography-reviewer"
+        ],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ]
+    },
+    {
+      "plugin": "guide-doc-generator",
+      "inventory": {
+        "skills": 5,
+        "agents": 2,
+        "commands": 3,
+        "hooks": 1,
+        "scripts": 17,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 13
+      },
+      "surfaces": {
+        "skills": [
+          "assign-handout-readability-evaluator",
+          "ref-handout-design-system",
+          "run-handout-build",
+          "run-handout-extract",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "handout-content-architect",
+          "handout-readability-reviewer"
+        ],
+        "commands": [
+          "handout-build",
+          "handout-extract",
+          "handout-verify"
+        ],
+        "hooks": [
+          "guard-handout-external-ref.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse"
+        ],
+        "codex_events": [
+          "PostToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "slide-report-generator"
+      ]
+    },
+    {
+      "plugin": "harness-creator",
+      "inventory": {
+        "skills": 32,
+        "agents": 8,
+        "commands": 6,
+        "hooks": 11,
+        "scripts": 33,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 25
+      },
+      "surfaces": {
+        "skills": [
+          "assign-plugin-package-evaluator",
+          "assign-skill-design-evaluator",
+          "delegate-codex-skill-review",
+          "ref-claude-code-skill-spec",
+          "ref-cross-platform-runtime",
+          "ref-domain-rubric-template",
+          "ref-domain-task-spec-rubric",
+          "ref-knowledge-loop",
+          "ref-output-routing",
+          "ref-pkg-contract",
+          "ref-skill-design-rubric",
+          "ref-skill-glossary",
+          "ref-skill-naming-convention",
+          "ref-task-context-map",
+          "ref-yaml-spec-fetcher",
+          "run-build-skill",
+          "run-codex-plugin-install",
+          "run-codex-plugin-package",
+          "run-elegant-review",
+          "run-goal-elicit",
+          "run-goal-seek",
+          "run-migrate-audit",
+          "run-plugin-package-check",
+          "run-skill-create",
+          "run-skill-elicit",
+          "run-skill-feedback",
+          "run-skill-iter-improve",
+          "run-skill-live-trial",
+          "run-skill-rename",
+          "run-skill-rubric-governance",
+          "run-skill-update-notifier",
+          "wrap-git-commit-safe"
+        ],
+        "agents": [
+          "elegant-bounded-improvement-executor",
+          "elegant-improvement-executor",
+          "elegant-initial-draft-evaluator",
+          "elegant-logical-structural-analyst",
+          "elegant-meta-divergent-analyst",
+          "elegant-reset-observer",
+          "elegant-system-strategic-analyst",
+          "run-build-skill-subagent"
+        ],
+        "commands": [
+          "capability-build",
+          "capability-review",
+          "install-bundle",
+          "marketplace-register",
+          "plugin-compose",
+          "skill-improve"
+        ],
+        "hooks": [
+          "aggregate-evals.py",
+          "auto-sync-on-session-start.py",
+          "cache-refresh.py",
+          "content-review-queue.py",
+          "diff-rubric-impact.py",
+          "elegant-review-trigger.py",
+          "external-intelligence-observe.py",
+          "lint-capability-manifest.py",
+          "notify-skill-end.py",
+          "ref-task-context-map-preload.py",
+          "wrap-git-commit-safe.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PostToolUseFailure",
+          "PreToolUse",
+          "SessionEnd",
+          "SessionStart",
+          "Stop",
+          "UserPromptSubmit"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PostToolUseFailure",
+          "PreToolUse",
+          "SessionEnd",
+          "SessionStart",
+          "Stop",
+          "UserPromptSubmit"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "skill-governance-adapters"
+      ]
+    },
+    {
+      "plugin": "plugin-dev-planner",
+      "inventory": {
+        "skills": 3,
+        "agents": 4,
+        "commands": 1,
+        "hooks": 2,
+        "scripts": 1,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "assign-plugin-plan-evaluator",
+          "run-plugin-dev-plan",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "plugin-dev-plan-architect",
+          "plugin-dev-plan-elicitor",
+          "plugin-dev-plan-evaluator",
+          "plugin-dev-plan-improvement-reviewer"
+        ],
+        "commands": [
+          "plugin-dev-plan"
+        ],
+        "hooks": [
+          "enforce-provenance-chain.py",
+          "hook-validate-plugin-plan.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "prompt-creator",
+      "inventory": {
+        "skills": 5,
+        "agents": 3,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 1,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "assign-prompt-design-evaluator",
+          "run-prompt-create",
+          "run-prompt-creator-7layer",
+          "run-prompt-elicit",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "prompt-creator-generate-prompt",
+          "prompt-creator-interview-user",
+          "prompt-creator-review-prompt"
+        ],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "skill-governance-lint"
+      ]
+    },
+    {
+      "plugin": "skill-governance-adapters",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 2,
+        "scripts": 12,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 3
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-adapters",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": [
+          "build-external-intelligence-context.py",
+          "build-external-mutation-guard.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse",
+          "UserPromptSubmit"
+        ],
+        "codex_events": [
+          "PreToolUse",
+          "UserPromptSubmit"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-governance-automation",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 15,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-automation",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "skill-governance-config"
+      ]
+    },
+    {
+      "plugin": "skill-governance-config",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 1,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 13
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-config",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-governance-hooks",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 7,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-hooks",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-governance-lint",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 22,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-lint",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-governance-migration",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 4,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-migration",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-governance-secrets",
+      "inventory": {
+        "skills": 2,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 4,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "run-governance-secrets",
+          "run-skill-feedback"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "skill-intake",
+      "inventory": {
+        "skills": 12,
+        "agents": 4,
+        "commands": 4,
+        "hooks": 4,
+        "scripts": 52,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 74
+      },
+      "surfaces": {
+        "skills": [
+          "assign-notion-fidelity-evaluator",
+          "run-intake-finalize",
+          "run-intake-interview",
+          "run-intake-kickoff",
+          "run-intake-next-action",
+          "run-intake-option-catalog",
+          "run-intake-revise",
+          "run-intake-status",
+          "run-intake-visualize",
+          "run-notion-intake-publish",
+          "run-skill-feedback",
+          "run-skill-intake"
+        ],
+        "agents": [
+          "skill-intake-assumption-challenger",
+          "skill-intake-purpose-excavator",
+          "skill-intake-summarizer",
+          "skill-intake-user-profiler"
+        ],
+        "commands": [
+          "intake-publish",
+          "intake-revise",
+          "intake-status",
+          "intake"
+        ],
+        "hooks": [
+          "hook-guard-skillgen.py",
+          "post-publish-notify.sh",
+          "pre-publish-schema-validate.py",
+          "pre-publish-secret-scrub.sh"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionEnd",
+          "Stop"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionEnd",
+          "Stop"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "plugin-dev-planner"
+      ]
+    },
+    {
+      "plugin": "slide-report-generator",
+      "inventory": {
+        "skills": 6,
+        "agents": 17,
+        "commands": 2,
+        "hooks": 1,
+        "scripts": 27,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 85
+      },
+      "surfaces": {
+        "skills": [
+          "ref-diagram-system",
+          "run-cross-deck-review",
+          "run-skill-feedback",
+          "run-slide-report-generate",
+          "run-slide-report-modify",
+          "run-slide-report-status"
+        ],
+        "agents": [
+          "ai-image-diagram-producer",
+          "cross-deck-reviewer",
+          "d3-diagram-designer",
+          "data-visualizer",
+          "deck-evaluator",
+          "hearing-facilitator",
+          "html-generator",
+          "layout-optimizer",
+          "report-composer",
+          "report-quality-reviewer",
+          "report-structure-designer",
+          "slide-renderer",
+          "slide-report-modifier",
+          "structure-designer",
+          "structure-validator",
+          "ui-quality-reviewer",
+          "visual-strategist"
+        ],
+        "commands": [
+          "slide-report-generate",
+          "slide-report-status"
+        ],
+        "hooks": [
+          "hook-postgen-eval.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse"
+        ],
+        "codex_events": [
+          "PostToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "spec-drift-guardian",
+      "inventory": {
+        "skills": 3,
+        "agents": 2,
+        "commands": 2,
+        "hooks": 1,
+        "scripts": 8,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 5
+      },
+      "surfaces": {
+        "skills": [
+          "run-rubric-sync",
+          "run-skill-feedback",
+          "run-spec-drift-triage"
+        ],
+        "agents": [
+          "rubric-sync-auditor",
+          "spec-impact-verifier"
+        ],
+        "commands": [
+          "rubric-sync",
+          "spec-drift-triage"
+        ],
+        "hooks": [
+          "guard-spec-drift-close.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "system-briefing-book",
+      "inventory": {
+        "skills": 7,
+        "agents": 1,
+        "commands": 2,
+        "hooks": 0,
+        "scripts": 20,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 31
+      },
+      "surfaces": {
+        "skills": [
+          "assign-briefing-evaluator",
+          "run-briefing",
+          "run-briefing-boards",
+          "run-briefing-book",
+          "run-briefing-docs",
+          "run-briefing-hearing",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "briefing-reviewer"
+        ],
+        "commands": [
+          "briefing-build",
+          "briefing-revise"
+        ],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "system-dev-planner",
+      "inventory": {
+        "skills": 3,
+        "agents": 3,
+        "commands": 1,
+        "hooks": 1,
+        "scripts": 13,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 10
+      },
+      "surfaces": {
+        "skills": [
+          "assign-system-dev-plan-evaluator",
+          "run-skill-feedback",
+          "run-system-dev-plan"
+        ],
+        "agents": [
+          "system-dev-plan-architect",
+          "system-dev-plan-elicitor",
+          "system-dev-plan-evaluator"
+        ],
+        "commands": [
+          "system-dev-plan"
+        ],
+        "hooks": [
+          "guard-implementation-readiness.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "dev-graph",
+        "harness-creator",
+        "system-spec-harness"
+      ]
+    },
+    {
+      "plugin": "system-spec-harness",
+      "inventory": {
+        "skills": 6,
+        "agents": 3,
+        "commands": 2,
+        "hooks": 2,
+        "scripts": 9,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 1
+      },
+      "surfaces": {
+        "skills": [
+          "assign-system-spec-completeness-evaluator",
+          "ref-system-design-knowledge",
+          "run-skill-feedback",
+          "run-system-spec-compile",
+          "run-system-spec-doc-fetch",
+          "run-system-spec-elicit"
+        ],
+        "agents": [
+          "system-spec-doc-freshness-auditor",
+          "system-spec-hearing-auditor",
+          "system-spec-matrix-auditor"
+        ],
+        "commands": [
+          "spec-compile",
+          "spec-hearing-start"
+        ],
+        "hooks": [
+          "guard-confirmed-chapter-overwrite.py",
+          "record-audit-fork.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SubagentStop"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SubagentStop"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator"
+      ]
+    },
+    {
+      "plugin": "ubm-goal-setting",
+      "inventory": {
+        "skills": 7,
+        "agents": 9,
+        "commands": 6,
+        "hooks": 1,
+        "scripts": 10,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 16
+      },
+      "surfaces": {
+        "skills": [
+          "run-skill-feedback",
+          "run-ubm-challenge",
+          "run-ubm-consult",
+          "run-ubm-goal-setting",
+          "run-ubm-journal",
+          "run-ubm-knowledge-sync",
+          "run-ubm-youtube-ingest"
+        ],
+        "agents": [
+          "challenge-advisor",
+          "goal-reviewer",
+          "info-collector",
+          "journal-composer",
+          "knowledge-extractor",
+          "knowledge-relation-extractor",
+          "output-formatter",
+          "phase3-coordinator",
+          "youtube-transcript-normalizer"
+        ],
+        "commands": [
+          "ubm-challenge",
+          "ubm-consult",
+          "ubm-goal-setting",
+          "ubm-journal",
+          "ubm-knowledge-sync",
+          "ubm-youtube-ingest"
+        ],
+        "hooks": [
+          "ubm-write-path-guard.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PreToolUse"
+        ],
+        "codex_events": [
+          "PreToolUse"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "skill-governance-config"
+      ]
+    },
+    {
+      "plugin": "x-longpost-creator",
+      "inventory": {
+        "skills": 6,
+        "agents": 0,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 20,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 14
+      },
+      "surfaces": {
+        "skills": [
+          "ref-x-longpost-canon",
+          "run-skill-feedback",
+          "run-x-longpost-create",
+          "run-x-multipost-create",
+          "run-x-shortpost-optimize",
+          "run-x-visual-generate"
+        ],
+        "agents": [],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ]
+    }
+  ],
+  "verdict": "PASS"
+}
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: blueprint.md (WARN のみ・生成前は正当)
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: blueprint.json (WARN のみ・生成前は正当)
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: mermaid/ (WARN のみ・生成前は正当)
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: rendered/ (WARN のみ・生成前は正当)
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: verdict.json (WARN のみ・生成前は正当)
+plugins/extract-system-blueprint/plugin-composition.yaml: WARN: output path not found: apply-recommendations.json (WARN のみ・生成前は正当)
+plugins/flyer-studio/plugin-composition.yaml: WARN: output path not found: out/<案ID>/print.pdf・print.png (WARN のみ・生成前は正当)
+plugins/flyer-studio/plugin-composition.yaml: WARN: output path not found: out/all.pdf (WARN のみ・生成前は正当)
+plugins/flyer-studio/plugin-composition.yaml: WARN: output path not found: out/white.pdf（白案がある場合） (WARN のみ・生成前は正当)
+plugins/flyer-studio/plugin-composition.yaml: WARN: output path not found: out/index.html (WARN のみ・生成前は正当)
+plugins/flyer-studio/plugin-composition.yaml: WARN: output path not found: out/delivery.json (WARN のみ・生成前は正当)
+plugins/guide-doc-generator/plugin-composition.yaml: WARN: output path not found: handout.html (WARN のみ・生成前は正当)
+plugins/guide-doc-generator/plugin-composition.yaml: WARN: output path not found: handout-config.json (WARN のみ・生成前は正当)
+plugins/guide-doc-generator/plugin-composition.yaml: WARN: output path not found: extract-report.json (WARN のみ・生成前は正当)
+plugins/guide-doc-generator/plugin-composition.yaml: WARN: output path not found: gate-summary.json (WARN のみ・生成前は正当)
+plugins/plugin-dev-planner/plugin-composition.yaml: WARN: output path not found: index.md (WARN のみ・生成前は正当)
+plugins/plugin-dev-planner/plugin-composition.yaml: WARN: output path not found: component-inventory.json (WARN のみ・生成前は正当)
+plugins/plugin-dev-planner/plugin-composition.yaml: WARN: output path not found: task-graph.json (WARN のみ・生成前は正当)
+plugins/plugin-dev-planner/plugin-composition.yaml: WARN: output path not found: build-handoff.json (WARN のみ・生成前は正当)
+plugins/prompt-creator/plugin-composition.yaml: WARN: output path not found: seven-layer-prompt.md (WARN のみ・生成前は正当)
+plugins/prompt-creator/plugin-composition.yaml: WARN: output path not found: prompt-build-trace.json (WARN のみ・生成前は正当)
+plugins/prompt-creator/plugin-composition.yaml: WARN: output path not found: findings.json (WARN のみ・生成前は正当)
+plugins/prompt-creator/plugin-composition.yaml: WARN: output path has no match yet: handoff-*.json (WARN のみ・生成前は正当)
+plugins/skill-intake/plugin-composition.yaml: WARN: output path not found: intake.md (WARN のみ・生成前は正当)
+plugins/skill-intake/plugin-composition.yaml: WARN: output path not found: intake.json (WARN のみ・生成前は正当)
+plugins/skill-intake/plugin-composition.yaml: WARN: output path not found: notion-url.txt (WARN のみ・生成前は正当)
+plugins/skill-intake/plugin-composition.yaml: WARN: output path not found: next-action.json (WARN のみ・生成前は正当)
+plugins/skill-intake/plugin-composition.yaml: WARN: output path not found: eval-log/intake-trace.json (WARN のみ・生成前は正当)
+plugins/slide-report-generator/plugin-composition.yaml: WARN: output path not found: index.html (WARN のみ・生成前は正当)
+plugins/slide-report-generator/plugin-composition.yaml: WARN: output path not found: report.html (WARN のみ・生成前は正当)
+plugins/slide-report-generator/plugin-composition.yaml: WARN: output path not found: styles.css (WARN のみ・生成前は正当)
+plugins/slide-report-generator/plugin-composition.yaml: WARN: output path not found: scripts.js (WARN のみ・生成前は正当)
+plugins/slide-report-generator/plugin-composition.yaml: WARN: output path not found: evaluation-report.json (WARN のみ・生成前は正当)
+plugins/spec-drift-guardian/plugin-composition.yaml: WARN: output path not found: triage-report.json (WARN のみ・生成前は正当)
+plugins/spec-drift-guardian/plugin-composition.yaml: WARN: output path not found: triage-verdict.json (WARN のみ・生成前は正当)
+plugins/spec-drift-guardian/plugin-composition.yaml: WARN: output path not found: sync-proposal.json (WARN のみ・生成前は正当)
+plugins/spec-drift-guardian/plugin-composition.yaml: WARN: output path not found: sync-audit-verdict.json (WARN のみ・生成前は正当)
+plugins/system-briefing-book/plugin-composition.yaml: WARN: output path not found: ヒアリング.md (WARN のみ・生成前は正当)
+plugins/system-briefing-book/plugin-composition.yaml: WARN: output path not found: 要件定義.md (WARN のみ・生成前は正当)
+plugins/system-briefing-book/plugin-composition.yaml: WARN: output path not found: 仕様書.md (WARN のみ・生成前は正当)
+plugins/system-briefing-book/plugin-composition.yaml: WARN: output path not found: 変更点.md (WARN のみ・生成前は正当)
+plugins/system-spec-harness/plugin-composition.yaml: WARN: output path not found: spec-state.json (WARN のみ・生成前は正当)
+plugins/system-spec-harness/plugin-composition.yaml: WARN: output path not found: fetched-references.json (WARN のみ・生成前は正当)
+plugins/system-spec-harness/plugin-composition.yaml: WARN: output path has no match yet: system-spec/*.md (WARN のみ・生成前は正当)
+plugins/system-spec-harness/plugin-composition.yaml: WARN: output path not found: index.md (WARN のみ・生成前は正当)
+plugins/ubm-goal-setting/plugin-composition.yaml: WARN: output path not found: Daily.md embed更新 (WARN のみ・生成前は正当)
+plugins/ubm-goal-setting/plugin-composition.yaml: WARN: output path has no match yet: knowledge/*.json更新 (WARN のみ・生成前は正当)
+plugins/ubm-goal-setting/plugin-composition.yaml: WARN: output path not found: router.json/registry.json/sync-log.jsonl追記 (WARN のみ・生成前は正当)
+plugins/ubm-goal-setting/plugin-composition.yaml: WARN: output path not found: 日次ジャーナル(02_Configs/Daily/YYYY-MM-DD.md) (WARN のみ・生成前は正当)
+plugins/ubm-goal-setting/plugin-composition.yaml: WARN: output path not found: 挑戦宣言と企画のファイル(05_Project/UBM/挑戦宣言/)と提出用テキスト (WARN のみ・生成前は正当)
+plugins/x-longpost-creator/plugin-composition.yaml: WARN: output path has no match yet: X長文投稿-prompt作成 - YYYY-MM-DD_[タイトル].md (WARN のみ・生成前は正当)
+plugins/x-longpost-creator/plugin-composition.yaml: WARN: output path not found: diagram.png (WARN のみ・生成前は正当)
+plugins/x-longpost-creator/plugin-composition.yaml: WARN: output path not found: x-thumb.png (WARN のみ・生成前は正当)
+plugins/x-longpost-creator/plugin-composition.yaml: WARN: output path not found: note-thumb.png (WARN のみ・生成前は正当)
+OK: 23 composition file(s) passed (54 warning(s))

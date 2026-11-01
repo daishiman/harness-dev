@@ -14,11 +14,16 @@ network / keychain は無し (純粋なファイル I/O とテキスト変換)�
   goal-seek 節優先 / legacy Steps フォールバック / steps 不在の placeholder /
   ### 見出しの抽出 / Purpose 節の role 反映 / 出力先 mkdir / stdout=生成パス /
   description フォールバック / tools 無しなら tools 行省略
+- kindAgent 契約: 文字列形 allowed-tools の分割 / tools 既定は Read (全継承は --tools-inherit
+  明示時だけ tools-inherit: true) / advisor と --tools-inherit の組み合わせは exit 2 /
+  kind・version・owner・isolation の出力 (version・owner は推測で埋めない) /
+  生成物が lint-capability-manifest・validate-frontmatter・lint-agent-prompt-content を通る
 
 を tmp_path 配下の fixture で実入力 assert + main を subprocess(sys.executable) と
 in-process(monkeypatch sys.argv) の両経路で確認。repo は汚さない。
 """
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -35,6 +40,9 @@ SCRIPT = (
     / "scripts"
     / "build-subagent.py"
 )
+LINT = SCRIPT.parent / "lint-capability-manifest.py"
+VALIDATE_FM = ROOT / "plugins" / "skill-governance-lint" / "scripts" / "validate-frontmatter.py"
+CONTENT_LINT = ROOT / "plugins" / "harness-creator" / "scripts" / "lint-agent-prompt-content.py"
 
 _SPEC = importlib.util.spec_from_file_location("build_subagent_s3", SCRIPT)
 BS = importlib.util.module_from_spec(_SPEC)
@@ -72,6 +80,21 @@ Generate artifacts from a SKILL brief and emit a build trace.
 ## 次の節
 
 無視されるべき本文。
+"""
+
+# commonCore (name/description/kind/version/owner) を満たす SKILL.md
+FULL_SKILL = """---
+name: run-foo
+description: 十分に長い説明文を持つテスト用スキルです
+kind: run
+version: 2.3.4
+owner: team-x
+allowed-tools:
+  - Bash(python3 *)
+  - Read
+---
+## Steps
+### A: x
 """
 
 
@@ -130,6 +153,15 @@ def test_parse_frontmatter_list_item_without_active_key():
     assert fm == {"name": "foo"}
 
 
+def test_parse_frontmatter_strips_inline_comment_of_unquoted_scalar():
+    # version に注記を付けた SKILL.md (run-build-skill など) から注記ごと version を写さない
+    fm, _ = BS.parse_frontmatter(
+        '---\nversion: 0.3.0 # + 注記\nowner: "team # x"\ntag: C#\n---\n')
+    assert fm["version"] == "0.3.0"
+    assert fm["owner"] == "team # x"  # 引用符の中の # はコメントではない
+    assert fm["tag"] == "C#"          # 空白の後でない # はコメントではない
+
+
 # ===================== extract_section =====================
 
 def test_extract_section_basic():
@@ -170,6 +202,20 @@ def test_map_tools_empty_list():
     assert BS.map_tools([]) == ""
 
 
+def test_map_tools_comma_string_splits_each_tool():
+    # 文字列形 allowed-tools は 1 トークン扱いせず、カンマで個々のツールへ分ける
+    assert BS.map_tools("Read, Write, Bash(python3 *)") == "Read, Write, Bash"
+
+
+def test_map_tools_space_string_keeps_paren_args_together():
+    # 空白区切りでも、括弧内の空白・カンマでは分けない
+    assert BS.map_tools("Read Bash(git add, git commit) Grep") == "Read, Bash, Grep"
+
+
+def test_map_tools_unclosed_paren_does_not_leak_args():
+    assert BS.map_tools("Read, Bash(python3 *") == "Read, Bash"
+
+
 def test_map_tools_none():
     assert BS.map_tools(None) == ""
 
@@ -179,7 +225,9 @@ def test_map_tools_none():
 def _run_main_inproc(monkeypatch, capsys, **kwargs):
     argv = ["build-subagent.py"]
     for k, v in kwargs.items():
-        argv += [f"--{k.replace('_', '-')}", str(v)]
+        flag = f"--{k.replace('_', '-')}"
+        # True は値を取らないフラグ (--tools-inherit など) として渡す
+        argv += [flag] if v is True else [flag, str(v)]
     monkeypatch.setattr(sys, "argv", argv)
     rc = BS.main()
     out = capsys.readouterr().out
@@ -301,8 +349,118 @@ def test_main_no_tools_defaults_to_read(tmp_path, monkeypatch, capsys):
     assert rc == 0
     content = (out_dir / "notools-subagent.md").read_text(encoding="utf-8")
     assert "tools: Read" in content
+    assert "tools-inherit" not in content  # 全継承は既定にしない (明示したときだけ)
     # model 行は常にある
     assert "model: opus" in content
+
+
+def test_main_tools_inherit_flag_declares_inherit(tmp_path, monkeypatch, capsys):
+    # --tools-inherit を明示したときだけ、tools の値ではなく別キーで全ツール継承を宣言する
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: inh\ndescription: d\n---\n## Steps\n### A: x\n")
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="inh", skill_md=str(skill), output_dir=str(out_dir),
+        tools_inherit=True)
+    assert rc == 0
+    content = (out_dir / "inh-subagent.md").read_text(encoding="utf-8")
+    assert "tools-inherit: true" in content
+    assert "\ntools:" not in content
+    assert "(writer)" in content  # 全ツール継承は書き込みの道具を含むので auto は writer
+
+
+def test_main_tools_inherit_overrides_allowed_tools(tmp_path, monkeypatch, capsys):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, FULL_SKILL)
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="run-foo", skill_md=str(skill), output_dir=str(out_dir),
+        tools_inherit=True)
+    assert rc == 0
+    content = (out_dir / "run-foo-subagent.md").read_text(encoding="utf-8")
+    assert "tools-inherit: true" in content
+    assert "\ntools:" not in content  # tools と tools-inherit は併記しない
+
+
+@pytest.mark.parametrize("allowed", ["", "allowed-tools: [Read, Grep]\n"])
+def test_advisor_with_tools_inherit_is_rejected(tmp_path, allowed):
+    # 全ツール継承は書き込みの道具を含むので、読み取り専用の advisor とは組み合わせられない
+    skill = tmp_path / "SKILL.md"
+    _write(skill, f"---\nname: run-x\ndescription: d\n{allowed}---\n## Purpose & Output Contract\nx\n")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--skill-name", "run-x", "--skill-md", str(skill),
+                        "--output-dir", str(tmp_path / "agents"), "--role", "advisor", "--tools-inherit"],
+                       capture_output=True, text=True)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "advisor role cannot" in r.stderr and "--tools-inherit" in r.stderr
+    assert not (tmp_path / "agents" / "run-x-subagent.md").exists()
+
+
+def test_main_emits_capability_manifest_fields(tmp_path, monkeypatch, capsys):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, FULL_SKILL)
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="run-foo", skill_md=str(skill), output_dir=str(out_dir))
+    assert rc == 0
+    content = (out_dir / "run-foo-subagent.md").read_text(encoding="utf-8")
+    assert "kind: agent" in content
+    assert 'version: "2.3.4"' in content  # SKILL.md の version を引き継ぐ
+    assert 'owner: "team-x"' in content
+    assert "isolation: inherit" in content
+
+
+def test_main_version_comment_is_not_copied(tmp_path, monkeypatch, capsys):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, FULL_SKILL.replace("version: 2.3.4\n", "version: 2.3.4 # 変種の注記\n"))
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="run-foo", skill_md=str(skill), output_dir=str(out_dir))
+    assert rc == 0
+    content = (out_dir / "run-foo-subagent.md").read_text(encoding="utf-8")
+    assert 'version: "2.3.4"\n' in content
+
+
+def test_main_version_and_owner_not_guessed(tmp_path, monkeypatch, capsys):
+    # version と owner は同じ規則: SKILL.md に無ければ省き、lint に欠落を報告させる (0.1.0 で補わない)
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: bare\ndescription: d\n---\n## Steps\n### A: x\n")
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="bare", skill_md=str(skill), output_dir=str(out_dir))
+    assert rc == 0
+    content = (out_dir / "bare-subagent.md").read_text(encoding="utf-8")
+    assert "version:" not in content
+    assert "owner:" not in content
+
+
+def test_main_assign_skill_defaults_to_fork(tmp_path, monkeypatch, capsys):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: assign-x\ndescription: d\n---\n## Steps\n### A: x\n")
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="assign-x", skill_md=str(skill), output_dir=str(out_dir))
+    assert rc == 0
+    content = (out_dir / "assign-x-subagent.md").read_text(encoding="utf-8")
+    assert "isolation: fork" in content
+
+
+def test_main_isolation_flag_overrides_default(tmp_path, monkeypatch, capsys):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, "---\nname: assign-y\ndescription: d\n---\n## Steps\n### A: x\n")
+    out_dir = tmp_path / "agents"
+    rc, _ = _run_main_inproc(
+        monkeypatch, capsys,
+        skill_name="assign-y", skill_md=str(skill), output_dir=str(out_dir),
+        isolation="worktree")
+    assert rc == 0
+    content = (out_dir / "assign-y-subagent.md").read_text(encoding="utf-8")
+    assert "isolation: worktree" in content
 
 
 def test_main_creates_nested_output_dir(tmp_path, monkeypatch, capsys):
@@ -365,6 +523,74 @@ def test_subprocess_missing_required_arg(tmp_path):
         capture_output=True, text=True)
     assert r.returncode == 2
     assert "required" in r.stderr.lower() or "usage" in r.stderr.lower()
+
+
+# ===================== 生成物 × tools 宣言の消費側 lint 契約 (HarnessHub-eh99) =====================
+# schema・生成器・lint の tools 表現がずれると、生成器どおりの agent 定義ほど lint で赤になる。
+
+def _generate(tmp_path, skill_text, skill_name="run-foo", extra=()):
+    skill = tmp_path / "SKILL.md"
+    _write(skill, skill_text)
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT),
+         "--skill-name", skill_name,
+         "--skill-md", str(skill),
+         "--output-dir", str(tmp_path / "agents"), *extra],
+        capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    return Path(r.stdout.strip())
+
+
+def _lint_stderr(path: Path) -> str:
+    r = subprocess.run(
+        [sys.executable, str(LINT)],
+        input=json.dumps({"tool_input": {"file_path": str(path)}}),
+        capture_output=True, text=True)
+    assert r.returncode == 0
+    return r.stderr.strip()
+
+
+def test_generated_agent_with_tools_passes_lint(tmp_path):
+    out = _generate(tmp_path, FULL_SKILL)
+    assert "tools: Bash, Read" in out.read_text(encoding="utf-8")
+    assert _lint_stderr(out) == ""
+
+
+def test_generated_inherit_agent_passes_lint(tmp_path):
+    # 全継承は --tools-inherit を明示したときだけ (allowed-tools 無しの既定は tools: Read)
+    no_tools = "\n".join(
+        ln for ln in FULL_SKILL.splitlines()
+        if ln != "allowed-tools:" and not ln.startswith("  - ")) + "\n"
+    out = _generate(tmp_path, no_tools, extra=("--tools-inherit",))
+    assert "tools-inherit: true" in out.read_text(encoding="utf-8")
+    assert _lint_stderr(out) == ""
+
+
+def test_generated_agent_without_owner_is_flagged_by_lint(tmp_path):
+    # owner を推測で埋めないので、SKILL.md 側の欠落はそのまま lint が報告する
+    no_owner = FULL_SKILL.replace("owner: team-x\n", "")
+    out = _generate(tmp_path, no_owner)
+    err = json.loads(_lint_stderr(out))
+    assert any("owner" in e for e in err["errors"])
+
+
+def test_generated_agent_without_version_is_flagged_by_lint(tmp_path):
+    # version も owner と同じ規則 (0.1.0 で補わない)
+    no_version = FULL_SKILL.replace("version: 2.3.4\n", "")
+    out = _generate(tmp_path, no_version)
+    err = json.loads(_lint_stderr(out))
+    assert any("version" in e for e in err["errors"])
+
+
+@pytest.mark.parametrize("extra", [(), ("--tools-inherit",)])
+def test_generated_agent_passes_validate_frontmatter_and_content_lint(tmp_path, extra):
+    # tools と tools-inherit: true のどちらの生成物も、frontmatter と本文 7 層の lint を通る
+    out = _generate(tmp_path, FULL_SKILL, extra=extra)
+    r = subprocess.run([sys.executable, str(VALIDATE_FM), str(out)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    r = subprocess.run([sys.executable, str(CONTENT_LINT), "--mode", "agent", "--plugins-dir", str(tmp_path)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
 
 @pytest.mark.parametrize('language', ['ja', 'en'])
 @pytest.mark.parametrize('role,tools', [('advisor', '[Read, Glob]'), ('writer', '[Read, Write]')])

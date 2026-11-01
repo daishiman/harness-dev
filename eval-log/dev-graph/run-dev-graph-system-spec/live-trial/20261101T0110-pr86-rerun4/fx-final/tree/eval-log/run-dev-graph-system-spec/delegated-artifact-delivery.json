@@ -1,0 +1,52 @@
+{
+  "records": [
+    {
+      "skill": "system-spec-harness:run-system-spec-elicit",
+      "args": "--resume system-spec/spec-state.json",
+      "minimum_artifact": {"path": "system-spec/spec-state.json", "sha256": "3e8000f400da9b84820b7ae40538fb2d84adf3c335bc34e2ea1bca48ac22a377", "open_with": "python3 -m json.tool"},
+      "guard": {"parse_open": "pass", "secret": "none", "irreversible": "none", "corrupt": "none"},
+      "presented": true,
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract (task.md)",
+      "post_choice_result": "resume found hearing_progress.complete=true, next_question=null, 0 uncollected cells, required-info ungrounded_blocking_items=[]; no writer op required (no new user input exists, so no turns/approvals were added). Gates: coverage --require-complete --require-basis --require-foundation exit0, required-info exit0, design-knowledge-refs exit0."
+    },
+    {
+      "skill": "system-spec-harness:run-system-spec-doc-fetch",
+      "args": "--targets system-spec/spec-state.json --references system-spec/fetched-references.json (pre-compile detection)",
+      "prompts_read_in_full": ["prompts/R1-identify.md", "prompts/R2-fetch.md"],
+      "minimum_artifact": {"path": "system-spec/fetched-references.json", "sha256": "aa23a77b41810e70c16eb51c1c31dddff63529fe68dabf723734228c3c437729", "open_with": "python3 -m json.tool"},
+      "guard": {"parse_open": "pass", "secret": "none", "irreversible": "none", "corrupt": "none"},
+      "presented": true,
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract (task.md)",
+      "R1_identify": {"targets": ["postgres", "react", "fastapi", "typescript"], "grounded_in_spec_state_targets_and_qa_log": true, "duplicates": 0, "discovered_knowledge_candidates": []},
+      "decision": "fetch_not_required",
+      "reason": "every target_id has exactly one record (retrieved 2026-10-31T14:45-14:46Z on official hosts www.postgresql.org/react.dev/fastapi.tiangolo.com/www.typescriptlang.org), evidence digests bind, validate-source-citation exit0; no missing/insufficient record and no discovered candidate. Semantic currency is C08 (doc-freshness-auditor) territory, run inside the completeness evaluator with WebFetch.",
+      "files_written": []
+    },
+    {
+      "skill": "system-spec-harness:run-system-spec-compile",
+      "args": "--out-dir system-spec",
+      "prompts_read_in_full": ["SKILL.md", "references/resource-map.yaml", "references/chapter-template.md", "prompts/R1-assemble.md", "prompts/R2-render.md", "prompts/R3-crosslink.md"],
+      "entry_gates": {"coverage_require_complete": 0, "source_citation": 0, "design_knowledge_refs": 0},
+      "writer": "plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py compile (exit 0, 10 files)",
+      "minimum_artifact": {"path": "system-spec/index.md", "sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "open_with": "less system-spec/index.md", "docset": {
+        "system-spec/00-requirements-definition.md": "1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402",
+        "system-spec/database.md": "3e60551d01e851aab0e21ec5f40f074603f97f080f5137651e9099f7e82a59de",
+        "system-spec/auth.md": "21d023fa360f9564762e969ed9f4c746b6cdfe8d948ffb711804b58680d7b897",
+        "system-spec/ui-ux.md": "420fa7d4744cf9e02dcd6bc466779f3b3aa13bfc6731eb137615a6299f3bd410",
+        "system-spec/security.md": "c8384b5698887484560466a3a182fe951636ef4582c74983f7532751e7fc5ce1",
+        "system-spec/infrastructure.md": "d8539b0af37de272adab56e8b8658981790120faf16c649dd24a6fdbecb268dd",
+        "system-spec/backend.md": "8af577372440a8106307f1d8dca4beff29179904d5bab2d70dac5d8b42ef2466",
+        "system-spec/frontend.md": "10d31ac6705bcb990faff1d4ecf0d1643449a5f89c0ede53b3490570014cc4d5",
+        "system-spec/maintenance-ops.md": "d244629b650c8183ec165deada6f8dcd6da23117e51249542552364b5c471f28"
+      }},
+      "deterministic_recompile_byte_identical_to_resume_input": true,
+      "guard": {"parse_open": "pass", "secret": "none", "irreversible": "none", "corrupt": "none"},
+      "presented": true,
+      "choice": "standard",
+      "choice_source": "isolated fixture pre-answer contract (task.md)",
+      "post_choice_OUT1": "pytest tests/test_compile_spec_doc.py tests/test_compile_spec_doc_knowledge.py: 63 passed (temp dirs only; caller files untouched)"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "subagent/agent-ab696cb95d0e3a24b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "b3f408d7-5c63-4f9e-9c62-bc4f2eda3bd3",
+      "line": 150,
+      "prefix_bytes": 2286541,
+      "prefix_sha256": "f106cf7f068b2c900112a1202fa8245d95a5a290a662ea34dc9e1e4886011cab",
+      "timestamp": "2026-11-01T14:10:47.659Z"
+    },
+    "result": {
+      "uuid": "852adfeb-3e3d-4fff-a98b-69a4a582a07e",
+      "line": 151,
+      "prefix_bytes": 2290288,
+      "prefix_sha256": "b610fecf343496eaa94b2ea17852bfce434173e84103bb6dd9a1543edf300818",
+      "timestamp": "2026-11-01T14:10:51.375Z"
+    }
+  },
+  "tool_use_id": "toolu_01XfhMMaBEEthRwFn5ZbM9WP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "P=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx/plugins/system-spec-harness; python3 $P/scripts/validate-knowledge-graph.py --profile knowledge --input $P/skills/ref-system-design-knowledge/references/knowledge-catalog.json --order; echo EXIT=$?; python3 $P/scripts/validate-knowledge-graph.py --profile doctrine --input $P/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json 2>&1 | head -c 3000; echo EXIT=$?",
+    "description": "Run knowledge-graph topo order and doctrine checks"
+  },
+  "is_error": false,
+  "tool_result_content": "[\"clean-code\", \"ddd\", \"design-patterns\", \"clean-architecture\", \"api-design-patterns\", \"secure-by-design\", \"usability-accessibility\", \"information-design\", \"test-strategy\", \"continuous-delivery\", \"site-reliability-engineering\", \"cloud-architecture-patterns\"]\nEXIT=0\n{\n  \"status\": \"ok\",\n  \"category_concern_mapping\": {\n    \"auth\": [\n      \"authentication\",\n      \"security\"\n    ],\n    \"backend\": [\n      \"application-architecture\",\n      \"data-access\"\n    ],\n    \"database\": [\n      \"data-access\",\n      \"reliability\"\n    ],\n    \"frontend\": [\n      \"presentation\",\n      \"application-architecture\"\n    ],\n    \"infrastructure\": [\n      \"reliability\",\n      \"operations\"\n    ],\n    \"maintenance-ops\": [\n      \"operations\"\n    ],\n    \"security\": [\n      \"security\"\n    ],\n    \"ui-ux\": [\n      \"presentation\"\n    ]\n  },\n  \"concern_authorities\": {\n    \"application-architecture\": \"Robert C. Martin — Clean Architecture\",\n    \"authentication\": \"OWASP ASVS + Secrets Management Cheat Sheet\",\n    \"data-access\": \"Robert C. Martin — Clean Architecture\",\n    \"operations\": \"Google SRE\",\n    \"presentation\": \"Apple Human Interface Guidelines\",\n    \"reliability\": \"Google SRE\",\n    \"security\": \"OWASP ASVS + Secrets Management Cheat Sheet\"\n  },\n  \"pending_exceptions\": []\n}\nEXIT=0",
+  "tool_use_result": {
+    "stdout": "[\"clean-code\", \"ddd\", \"design-patterns\", \"clean-architecture\", \"api-design-patterns\", \"secure-by-design\", \"usability-accessibility\", \"information-design\", \"test-strategy\", \"continuous-delivery\", \"site-reliability-engineering\", \"cloud-architecture-patterns\"]\nEXIT=0\n{\n  \"status\": \"ok\",\n  \"category_concern_mapping\": {\n    \"auth\": [\n      \"authentication\",\n      \"security\"\n    ],\n    \"backend\": [\n      \"application-architecture\",\n      \"data-access\"\n    ],\n    \"database\": [\n      \"data-access\",\n      \"reliability\"\n    ],\n    \"frontend\": [\n      \"presentation\",\n      \"application-architecture\"\n    ],\n    \"infrastructure\": [\n      \"reliability\",\n      \"operations\"\n    ],\n    \"maintenance-ops\": [\n      \"operations\"\n    ],\n    \"security\": [\n      \"security\"\n    ],\n    \"ui-ux\": [\n      \"presentation\"\n    ]\n  },\n  \"concern_authorities\": {\n    \"application-architecture\": \"Robert C. Martin — Clean Architecture\",\n    \"authentication\": \"OWASP ASVS + Secrets Management Cheat Sheet\",\n    \"data-access\": \"Robert C. Martin — Clean Architecture\",\n    \"operations\": \"Google SRE\",\n    \"presentation\": \"Apple Human Interface Guidelines\",\n    \"reliability\": \"Google SRE\",\n    \"security\": \"OWASP ASVS + Secrets Management Cheat Sheet\"\n  },\n  \"pending_exceptions\": []\n}\nEXIT=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

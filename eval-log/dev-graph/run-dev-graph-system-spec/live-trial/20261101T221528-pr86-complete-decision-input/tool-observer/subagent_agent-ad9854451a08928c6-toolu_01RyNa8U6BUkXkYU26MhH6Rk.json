@@ -1,0 +1,33 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "98be79d1-6a7c-4568-8523-67f5e763bdbe",
+  "stream": "subagent/agent-ad9854451a08928c6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "0f0e4fc7-1bd0-4b29-9851-dfac78e4c630",
+      "line": 35,
+      "prefix_bytes": 432864,
+      "prefix_sha256": "31eb9d50a6ae27c82ec5843d7d696613b2c5baa395f23372c25c2fdbbedf472e",
+      "timestamp": "2026-11-01T13:25:39.548Z"
+    },
+    "result": {
+      "uuid": "aa77b5d7-845f-478c-9ddb-0192933598df",
+      "line": 36,
+      "prefix_bytes": 437226,
+      "prefix_sha256": "ef3c012490cdce1c70b67437b44143c4f0b9674191ccde9cd2f06fff84242fda",
+      "timestamp": "2026-11-01T13:25:39.835Z"
+    }
+  },
+  "tool_use_id": "toolu_01RyNa8U6BUkXkYU26MhH6Rk",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec119/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md",
+    "offset": 40,
+    "limit": 40
+  },
+  "is_error": false,
+  "tool_result_content": "40\treference_refs:\n41\t  - references/resource-map.yaml\n42\t  - references/aspect-criteria.md\n43\tscript_refs:\n44\t  - scripts/aggregate-completeness.py\n45\t  - scripts/validate-json-schema-subset.py\n46\t  - scripts/audit_fork_attribution.py\n47\t  - scripts/build-resume-receipt.py\n48\t  - ../../scripts/validate-coverage-matrix.py\n49\t  - ../../scripts/validate-source-citation.py\n50\tschema_refs:\n51\t  - schemas/completeness-findings.schema.json\n52\t  - schemas/resume-receipt.schema.json\n53\tagent_refs:\n54\t  - ../../agents/system-spec-matrix-auditor.md\n55\t  - ../../agents/system-spec-hearing-auditor.md\n56\t  - ../../agents/system-spec-doc-freshness-auditor.md\n57\tfeedback_contract:\n58\t  skip_reason: \"assign kind は loop criteria 対象外。合否基準は checklist の 6 評価観点 (foundation_trace/decision_guidance/prompt_quality=C05 自前評価 / matrix_coverage=C07 監査 + C06 ヒアリング品質 sub-input / design_knowledge_reflection=C05 自前評価 / doc_freshness=C08 監査) の evaluator ゲート、および validate-coverage-matrix.py の決定論ゲートで担保する。\"\n59\truntime_root_policy: host-skill-path\n60\t---\n61\t\n62\t# assign-system-spec-completeness-evaluator\n63\t\n64\t## Runtime root contract\n65\t\n66\t- `runtime_root_policy: host-skill-path` を適用する。\n67\t- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。\n68\t- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。\n69\t- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。\n70\t- `prompts/` 配下はこのowner Skill契約を継承する。\n71\t\n72\t> 生成された仕様書ドキュメントセットを、上位概念trace / 意思決定根拠 / マトリクス網羅性 / deep knowledge目的適合 / 最新出典 / prompt品質の観点で評価し、観点別スコア + 総合判定 (PASS/FAIL) + 不足事項一覧を返す independent evaluator。`context:fork` で生成者と評価者を分離する。\n73\t\n74\t## Purpose & Output Contract\n75\t\n76\t**入力**: `system-spec/` 配下の全 Markdown (`Path.rglob(\"*.md\")`) + index (C03 出力) / `spec-state.json` (C01) / `fetched-references.json` (C02)\n77\t**出力**: 評価レポート (`schemas/completeness-findings.schema.json` 準拠) — 観点別スコア + 総合判定 + 不足事項一覧。総合 PASS で呼び出し側が再利用 receipt を求めたときだけ、正規 validator と fork 台帳へ束縛した `system-spec/resume-receipt.json` も生成する (Step 4)。\n78\t**完了条件**: 全観点 verdict 付与 + findings[] (info 以上を最低 1 件) + 総合判定が観点スコアからの fail-closed 再導出値と一致 + 総合 FAIL 時は不足事項一覧が非空 + `aggregate-completeness.py --report <output> --spec-dir <spec_dir>` が exit 0 (Step 4)。評価開始前に production writer の `--print-artifact-snapshot` で入力を固定し、その JSON を評価レポートの `artifact_snapshot` へ改変せず格納する。PASS の再利用は `build-resume-receipt.py` が作った resume-receipt schema 1.2 に限る (fork 台帳 schema 1.1 / 1.2 とは別の version 軸)。writer はレポートのスナップショットと現在値の完全一致を要求し、固定ゲート入力と `system-spec/` 配下の全 Markdown を個別 digest へ束縛する。\n79\t",
+  "tool_use_result": null
+}

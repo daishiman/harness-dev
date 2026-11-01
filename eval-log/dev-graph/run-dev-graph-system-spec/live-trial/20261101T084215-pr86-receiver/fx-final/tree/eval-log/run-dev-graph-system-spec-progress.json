@@ -1,0 +1,56 @@
+{
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "loop": 1,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "not_achieved",
+      "evidence": "C24 receipt c24-receipt.json: repo_root==content_roots.repository, system_spec非symlink・repo内 (独立R0検証待ち)"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "not_achieved",
+      "evidence": "system-spec-harness 0.1.25 ∈ >=0.1.22 <1.0.0、4 entry points実在 (独立R1検証待ち)"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "elicit(resume, writer操作0)・doc-fetch不要判定・compile(exit0)はSkill経由。evaluator未実施"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "coverage/citation gate exit0。evaluator gate未実施"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "C02登録未実施"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "dev-graph側の複製検査未実施"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS (loop1)",
+      "loops": [
+        {
+          "loop": 1,
+          "coverage": 0,
+          "source_citation": 0,
+          "graph_schema": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "updated_at": "2026-10-31T23:47:19.489967+00:00"
+}

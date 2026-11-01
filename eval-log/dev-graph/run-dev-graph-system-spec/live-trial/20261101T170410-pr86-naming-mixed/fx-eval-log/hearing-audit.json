@@ -1,0 +1,27 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈(場所/端末/頻度/制約)の3論点を1問に束ねていた。qa-019 が JTBD を1論点の開いた問として問い直し (置き換え先は中立)、同じ論点を扱い、利用者回答・basis=user-decision・answered_at あり。qa-009 は確定セルの主たる qa_ref ではない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "セッション保存先の3択と、有効期限・ログアウトの扱いという独立した2論点を1問に束ねている。選択肢はすべて並べ、どれも採らない/保留の道は示されている。auth/web の補助 qa_refs にのみ現れ、主たる qa_ref (qa-002) ではない。置き換え済みではない通常の検出。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "qa_refs に retired の qa-009 (superseded_by=qa-019) が残る補助参照。主たる qa_ref=qa-003 は実在し健全。補助参照を qa-019 に付け替えれば解消 (修正は C01 の責務)。"
+    }
+  ]
+}

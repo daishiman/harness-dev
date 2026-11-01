@@ -32,6 +32,15 @@ def wanted() -> list[tuple[str, str | None, str]]:
             for event, groups in PLUGIN_HOOKS.items() for group in groups for hook in group["hooks"]]
 
 
+def row_commands(rows: list[dict]) -> list[str]:
+    """added / already_present は hook group 単位の行なので、group 内の command を平らにして hook 単位で数える。"""
+    return sorted(command for row in rows for command in row["commands"])
+
+
+def wanted_commands() -> list[str]:
+    return sorted(command for _, _, command in wanted())
+
+
 def identities(settings: dict) -> list[tuple[str, str | None, str]]:
     return [(event, group.get("matcher"), hook["command"])
             for event, groups in settings.get("hooks", {}).items() for group in groups for hook in group["hooks"]]
@@ -83,7 +92,7 @@ class ProjectHookFallbackTest(unittest.TestCase):
 
         code, preview = self.run_cli()
         self.assertEqual((code, preview["status"], preview["write_count"]), (0, "preview", 0), preview)
-        self.assertEqual(len(preview["added"]), len(wanted()))
+        self.assertEqual(row_commands(preview["added"]), wanted_commands())
         self.assertEqual(self.settings.read_bytes(), self.original)
         self.assertEqual(self.manifests(), [])
 
@@ -108,7 +117,7 @@ class ProjectHookFallbackTest(unittest.TestCase):
 
         code, again = self.run_cli("--mode", "apply")
         self.assertEqual((code, again["status"], again["planned_changes"], again["write_count"]), (0, "noop", 0, 0), again)
-        self.assertEqual(len(again["already_present"]), len(wanted()))
+        self.assertEqual(row_commands(again["already_present"]), wanted_commands())
         self.assertEqual(self.manifests(), [Path(applied["manifest_path"]).name])
 
     def test_wiring_from_before_minus_b_is_the_same_wiring_and_rerun_stays_noop(self) -> None:
@@ -123,7 +132,7 @@ class ProjectHookFallbackTest(unittest.TestCase):
 
         code, again = self.run_cli("--mode", "apply")
         self.assertEqual((code, again["status"], again["write_count"]), (0, "noop", 0), again)
-        self.assertEqual(len(again["already_present"]), len(wanted()))
+        self.assertEqual(row_commands(again["already_present"]), wanted_commands())
         self.assertTrue(all(row.get("legacy_wiring") is True for row in again["already_present"]), again)
         self.assertEqual(self.settings.read_bytes(), before)
         self.assertEqual(self.manifests(), [Path(applied["manifest_path"]).name])

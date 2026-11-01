@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "02d78a91-3ff8-40be-a81e-e69c5097c01d",
+      "line": 150,
+      "prefix_bytes": 936746,
+      "prefix_sha256": "23d8036a6d5816a53853060cb0f0e0c2815477a243094b66de8776f263f06295",
+      "timestamp": "2026-11-01T15:29:15.904Z"
+    },
+    "result": {
+      "uuid": "d630bd3f-219f-4868-b19d-3ed6525f2eea",
+      "line": 153,
+      "prefix_bytes": 939939,
+      "prefix_sha256": "3e20a8a77df76b90a8e97b4ed16c8e176dcf62b077b8b0087a6c70cf1acdad1c",
+      "timestamp": "2026-11-01T15:29:19.426Z"
+    }
+  },
+  "tool_use_id": "toolu_01HCfaGGTndfBP9VxwDaLQA2",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -I -c 'import json;json.load(open(\"eval-log/run-dev-graph-system-spec/preflight-report.json\"));print(\"parse ok\")' && shasum -a 256 eval-log/run-dev-graph-system-spec/preflight-report.json"
+  },
+  "is_error": false,
+  "tool_result_content": "parse ok\n6205a09e2f9317ce627c41a5ce34c08469da5909c1ea50562501708f819f7792  eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "tool_use_result": {
+    "stdout": "parse ok\n6205a09e2f9317ce627c41a5ce34c08469da5909c1ea50562501708f819f7792  eval-log/run-dev-graph-system-spec/preflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

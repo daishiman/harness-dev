@@ -1,0 +1,43 @@
+{
+  "responsibility": "R1-preflight",
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "verifier": "independent",
+  "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+  "c24_receipt_sha256": "e94ceb5c2198185b9444f08ee176f86eecc1e8d385fc7292e0238f24822659b5",
+  "preflight_report": "eval-log/run-dev-graph-system-spec/preflight-report.json",
+  "preflight_report_sha256": "d9d704ff5fa56f6b9e619c178419849bbd8959b1864501b22c58b92e3b6a810a",
+  "checklist": [
+    {
+      "item": "system-spec-harness manifest name == system-spec-harness and version within plugin-composition.yaml external_dependencies.system-spec-harness.version",
+      "status": "achieved",
+      "evidence": "plugins/system-spec-harness/.claude-plugin/plugin.json name=system-spec-harness version=0.1.24; plugins/dev-graph/plugin-composition.yaml:154 version \">=0.1.22 <1.0.0\"; 0.1.22 <= 0.1.24 < 1.0.0"
+    },
+    {
+      "item": "package-contract.json entry_points.skills contains elicit/doc-fetch/compile/evaluator and each skills/<name>/SKILL.md exists",
+      "status": "achieved",
+      "evidence": "plugins/system-spec-harness/references/package-contract.json entry_points.skills includes run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator; all four skills/<name>/SKILL.md present; matches composition required_entry_points (line 155)"
+    },
+    {
+      "item": "official manifest has no harness-specific extra keys",
+      "status": "achieved",
+      "evidence": "plugin.json keys = [author, dependencies, description, name, version]; all standard plugin manifest keys; .claude-plugin/ contains only plugin.json"
+    },
+    {
+      "item": "parent preflight report claims match reality",
+      "status": "achieved",
+      "evidence": "report sha256 matches; version 0.1.24, required_range >=0.1.22 <1.0.0, range_source, in_range=true, entry_points_present=true all verified; dev_graph_version 0.1.25 matches plugins/dev-graph/.claude-plugin/plugin.json; input sha256s for system-spec/spec-state.json, fetched-references.json, index.md all match; c24 receipt sha256 and repository_id/worktree_id match receipt; re-ran validate-source-lineage.py --repo-root -> exit 0, status pass, checked 0"
+    },
+    {
+      "item": "common 5.3: declared inputs verified / output shape+authority / zero boundary violations",
+      "status": "achieved",
+      "evidence": "inputs (manifest, composition range, contract exports) verified; report records range source from composition (not >=0.1.0 summary); git status shows no modifications under plugins/ (external plugin unchanged, no fallback/duplication); report stores repo-relative paths except caller_root.repo_root echoing the C24 receipt"
+    }
+  ],
+  "verdict": "PASS",
+  "blockers": [],
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "delta_from_original": "none; R1 scope (dependency preflight) satisfied",
+  "merged_directive_for_next": "R1 PASS; hand off to R2 with preflight-report sha256 d9d704ff5fa56f6b9e619c178419849bbd8959b1864501b22c58b92e3b6a810a",
+  "drift_signal": false
+}

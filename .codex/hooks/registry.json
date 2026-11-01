@@ -40,13 +40,31 @@
       ]
     },
     {
+      "id": "dev-graph:PostToolUse:0:1",
+      "plugin": "dev-graph",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/audit-graph-authority-drift.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
       "id": "dev-graph:PreToolUse:0:0",
       "plugin": "dev-graph",
       "event": "PreToolUse",
       "tool_scoped": true,
       "matcher": {
-        "claude": "Bash",
-        "codex": "shell_command|exec_command"
+        "claude": "Bash|Write|Edit|MultiEdit|NotebookEdit",
+        "codex": "shell_command|exec_command|apply_patch"
       },
       "scope": {},
       "command": "python3 -B \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
@@ -650,16 +668,51 @@
       ]
     },
     {
+      "id": "system-spec-harness:PostToolUse:0:0",
+      "plugin": "system-spec-harness",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Task|Agent",
+        "codex": ""
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
       "id": "system-spec-harness:PreToolUse:0:0",
       "plugin": "system-spec-harness",
       "event": "PreToolUse",
       "tool_scoped": true,
       "matcher": {
-        "claude": "Write|Edit|Bash",
+        "claude": "Write|Edit|MultiEdit|Bash",
         "codex": "apply_patch|shell_command|exec_command"
       },
       "scope": {},
       "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-confirmed-chapter-overwrite.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "system-spec-harness:SubagentStop:0:0",
+      "plugin": "system-spec-harness",
+      "event": "SubagentStop",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/record-audit-fork.py\" --event subagent-stop",
       "timeout": 10,
       "async": false,
       "products": [
@@ -718,6 +771,14 @@
       "reason": "no-codex-tool-equivalent",
       "tools": [
         "Skill"
+      ]
+    },
+    {
+      "id": "system-spec-harness:PostToolUse:0:0",
+      "reason": "no-codex-tool-equivalent",
+      "tools": [
+        "Task",
+        "Agent"
       ]
     }
   ]

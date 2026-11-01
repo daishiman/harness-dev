@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v2",
+  "schema_version": 2,
+  "session_id": "e90cf7f2-108a-4d17-81f2-78ff44dc4b6a",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "cd0a2766-d39c-481e-8e3d-c2b66b3859ee",
+      "line": 533,
+      "prefix_bytes": 2529013,
+      "prefix_sha256": "89e491b595cdc29c731f220203afe149d8418a52833cf1bc3ad5cb0024f0e32d",
+      "timestamp": "2026-11-01T03:04:05.268Z"
+    },
+    "result": {
+      "uuid": "9079c4db-5557-4701-8058-d74c14284c5c",
+      "line": 534,
+      "prefix_bytes": 2532596,
+      "prefix_sha256": "6c00c1a5314c26a2d4bf3adb637a2c638de1a47edd8edeb0a0d4e5a8c54409bf",
+      "timestamp": "2026-11-01T03:04:07.498Z"
+    }
+  },
+  "tool_use_id": "toolu_01YMbd1gg8tm2DSxV5LAW66r",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR='/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx' && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && sed -n 150,400p candidate-import.json; python3 -c \"\nimport json;d=json.load(open('candidate-import.json'));print([k for k in d]);[print(a['slug'],sorted(a.keys())) for a in d['artifacts']]\"",
+    "description": "Show rest of candidate-import draft"
+  },
+  "is_error": false,
+  "tool_result_content": "          \"Application and supply-chain controls\": \"入力検証と OWASP Top10 受動対策 (qa-004)、状態変更要求の CSRF synchronizer token (qa-037)\",\n          \"Detection and response\": \"全操作の監査ログ (qa-024)、監視基盤のアラートとオンコール通知 (qa-036)\",\n          \"Security verification\": \"qa-030 の 4 脅威それぞれに対応する統制が働くことを受入時に確認する。詳細は system-spec/security.md と system-spec/auth.md\"\n        }\n      },\n      \"source_lineage\": {\n        \"origin_kind\": \"system-spec-harness\",\n        \"source_plugin\": \"system-spec-harness\",\n        \"source_path\": \"system-spec/00-requirements-definition.md\",\n        \"source_version\": \"0.1.25\",\n        \"source_digest\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\"\n      }\n    }\n  ],\n  \"expected_graph_revision\": 0\n}\n['artifacts', 'expected_graph_revision']\nbilling-audit-system-spec ['artifact_kind', 'classification', 'domain', 'project_id', 'sections', 'slug', 'source_lineage', 'title', 'tracker_binding']\nbilling-audit-system-architecture ['artifact_kind', 'artifact_subtypes', 'classification', 'domain', 'project_id', 'sections', 'slug', 'source_lineage', 'subtype_sections', 'title', 'tracker_binding']",
+  "tool_use_result": {
+    "stdout": "          \"Application and supply-chain controls\": \"入力検証と OWASP Top10 受動対策 (qa-004)、状態変更要求の CSRF synchronizer token (qa-037)\",\n          \"Detection and response\": \"全操作の監査ログ (qa-024)、監視基盤のアラートとオンコール通知 (qa-036)\",\n          \"Security verification\": \"qa-030 の 4 脅威それぞれに対応する統制が働くことを受入時に確認する。詳細は system-spec/security.md と system-spec/auth.md\"\n        }\n      },\n      \"source_lineage\": {\n        \"origin_kind\": \"system-spec-harness\",\n        \"source_plugin\": \"system-spec-harness\",\n        \"source_path\": \"system-spec/00-requirements-definition.md\",\n        \"source_version\": \"0.1.25\",\n        \"source_digest\": \"1cc7fe6bd148679b1bb2450fbc61c8dfad42ae7edbcee6bd0463711c3ffa1402\"\n      }\n    }\n  ],\n  \"expected_graph_revision\": 0\n}\n['artifacts', 'expected_graph_revision']\nbilling-audit-system-spec ['artifact_kind', 'classification', 'domain', 'project_id', 'sections', 'slug', 'source_lineage', 'title', 'tracker_binding']\nbilling-audit-system-architecture ['artifact_kind', 'artifact_subtypes', 'classification', 'domain', 'project_id', 'sections', 'slug', 'source_lineage', 'subtype_sections', 'title', 'tracker_binding']",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

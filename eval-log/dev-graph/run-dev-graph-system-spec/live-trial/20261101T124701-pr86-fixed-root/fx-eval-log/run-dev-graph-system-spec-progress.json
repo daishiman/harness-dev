@@ -1,0 +1,62 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "updated_at": "2026-11-01T04:01:40.696024+00:00",
+  "loop": 1,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "C24 receipt (sha256 0ea19bf6…7532) repo_root=content_roots.repository, repository_id local:sha256:312b6ad1…3cbf; R0 独立 verifier PASS"
+    },
+    {
+      "item": "system-spec-harness が `plugin-composition.yaml` の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "system-spec-harness 0.1.25 ∈ >=0.1.22 <1.0.0 (plugin-composition.yaml)、4 entry points 実在; R1 独立 verifier PASS"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "elicit (Skill, no-op resume) / doc-fetch 不要判定 (C13 exit0) / compile (Skill, exit0, bytes決定論一致) / evaluator (Skill fork, PASS) は実行済み。R2 独立 verifier 待ち"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "achieved",
+      "evidence": "loop1: coverage --require-complete --require-basis --require-foundation exit0, source-citation --state exit0, graph schema --strict-artifact-readiness exit0; evaluator report eval-log/system-spec-completeness-report.json verdict PASS (sha256 54641c0d…4843), aggregate --report --session exit0"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "C02 登録は R3 で実施予定 (graph nodes 0)"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": "R1 verifier で dev-graph 内の複製0を確認済み。最終確認は R3 verifier 後"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "loops": [
+        {
+          "loop": 1,
+          "status": "PASS",
+          "gates": {
+            "coverage": 0,
+            "source_citation": 0,
+            "graph_schema": 0
+          },
+          "at": "2026-11-01T04:01:40.696024+00:00"
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "note": "live trial が判定する。run 内では PASS と書かない"
+    }
+  ],
+  "blockers": []
+}

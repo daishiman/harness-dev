@@ -1,0 +1,55 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": "R0 Verifier PASS (agent a5e25a78386433e09); c24-receipt sha256 72bb3c72…; lineage gate exit0 checked=0"
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": "R1 Verifier PASS (agent a61e1eb52a91e92dc); version 0.1.24 in >=0.1.22 <1.0.0; 4 entry points"
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": "未実施: R2 delegate (elicit resume/doc-fetch判断/compile/evaluator) は周回2で実施"
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": "coverage/citation exit0 (周回1)。evaluator gate 未実施"
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": "未実施: C02 import は evaluator PASS 後"
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "achieved",
+      "evidence": "R1 Verifier: dev-graph 内に apply-spec-transition/compile-spec-doc 相当の複製なし"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "rounds": [
+        {
+          "round": 1,
+          "coverage_exit": 0,
+          "citation_exit": 0,
+          "schema_exit": 0,
+          "status": "PASS"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ]
+}

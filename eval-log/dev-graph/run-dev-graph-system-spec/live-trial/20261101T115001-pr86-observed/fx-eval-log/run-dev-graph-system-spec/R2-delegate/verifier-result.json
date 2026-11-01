@@ -1,0 +1,47 @@
+{
+  "responsibility": "R2-delegate",
+  "verdict": "FAIL",
+  "checklist": [
+    {"item": "[common 5.3] Declared inputs verified (C24 receipt fixed, goal hash, previous directive)", "status": "YES", "evidence": "c24-receipt.json sha256=bad09a95...0f52 matches; mode=write; repo_root == content_roots.repository == realpath fx; goal-spec original_goal sha256 recomputed = 30a1de05...ce454; intermediate.jsonl last merged_directive_for_next = the given loop2 directive"},
+    {"item": "[common 5.3] Output meets declared shape and authority", "status": "NO", "evidence": "R2-delegate/ has elicit-resume-receipt, doc-fetch-decision, pre-compile-md.sha256, compile-standard, evaluation-context; report shape passes aggregate-completeness.py (exit 0). But the evaluator report's doc_freshness PASS (and doc-fetch-decision.reason 'Content freshness re-verified by C08 via WebFetch') is not backed by any observed event: the C08 stream (agent a76d4d17a5548d7d3, 8 tool calls) contains only Read calls, with 0 WebFetch and 0 WebSearch. audit_delegations[C08].evidence still says '層2: postgres 16.15 / react 19.3 / fastapi 0.162.0 / typescript 7.0 を公式 host で WebFetch 再照合し全件現行・公式 ... 鮮度未確認 0'"},
+    {"item": "[common 5.3] 0 boundary-violating read/write/delegation", "status": "YES", "evidence": "No dev-graph duplicate of elicit/compile logic; plugins/ has no git changes; only R2-delegate receipts were written under eval-log; compile ran through the harness compile-spec-doc.py (event 45); pytest ran with cwd=scratchpad and git status was checked (event 47)"},
+    {"item": "[R2 5.3] Coverage, source and evaluator gates all PASS through canonical Skill calls only", "status": "NO", "evidence": "Rerun results: coverage --require-complete --require-basis --require-foundation exit 0; source-citation exit 0; design-knowledge-refs exit 0 (10 refs); graph schema exit 0; aggregate-completeness.py --session e90cf7f2-108a-4d17-81f2-78ff44dc4b6a exit 0, verdict=PASS. The evaluator gate is not grounded, however: C08's layer-2 content-freshness check requires WebFetch/WebSearch (R4-audit-doc-freshness.md L34-37,43,53; auditor agent L124-125,136), and none occurred. Under its own rules every target should be 鮮度未確認, not PASS"},
+    {"item": "[R2 5.3] Every main-processing Bash moves to and checks the fixed root; independent test writes stay in verified scratch", "status": "YES", "evidence": "All state/chapter/receipt-producing Bash calls (events 35,36,38,44,45,46,47,48,49) start with the exact export/cd/pwd -P prefix. Event 47 pytest ran with cwd=scratchpad/out1, followed by git status --porcelain. The scratch result is recorded only as OUT1_tests and is not used as the C05 target or as main-processing evidence"},
+    {"item": "[R2 5.3] Bash calls in the elicit/doc-fetch/compile procedures export CLAUDE_PROJECT_DIR=receipt.repo_root every time", "status": "YES", "evidence": "Every Bash in the elicit (35-36), doc-fetch decision (38) and compile (44-48) steps has the prefix. Exception: event 37 is a read-only `cd <harness>/run-system-spec-doc-fetch && sed -n 1,400p SKILL.md | grep ...` without the prefix. It reads plugin source and writes nothing; see the observer check below"},
+    {"item": "[R2 5.3] Evaluator args are the successful helper output's skill_args, and the evaluator was not launched on failure", "status": "YES", "evidence": "Event 48: helper exit 0. Event 50 Skill args == evaluation-context.json skill_args (byte-equal). My read-only rerun of the helper returns identical skill_args/spec_dir/output/evidence_ref/context_sha256"},
+    {"item": "[R2 5.3] Report spec_dir resolves to the --spec-dir directory (where the source chapters are)", "status": "YES", "evidence": "report.spec_dir == helper spec_dir == /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec105/fx/system-spec. All 12 artifact_snapshot digests equal the current file bytes, and they match pre-compile-md.sha256 and compile-standard.json"},
+    {"item": "[R2 5.3] Each delegate that produced output had its SKILL.md and responsibility prompts read in full", "status": "YES", "evidence": "Full Reads with no offset/limit (numLines == totalLines): elicit SKILL (15) plus R0-R5 prompts (21-26); doc-fetch SKILL (16; no doc-fetch output was produced); compile SKILL (17) plus R1-assemble, R2-render, R3-crosslink and chapter-template (40-43, after the compile Skill at 39); evaluator SKILL (19) and, in the fork, R1-score/R2-delegate (90-91)"},
+    {"item": "[observer] Skill calls elicit(--resume), compile, and evaluator(args == helper skill_args), plus body injections", "status": "YES", "evidence": "Events 34/39/50, all is_error=false. skill_body_injection for elicit (65, main-prompt-561f3e88) and compile (66, main-prompt-235bad89). The evaluator is context: fork and executed in fork agent aba42a4dfca29a6b8, so it has no main injection, which is consistent with a forked skill"},
+    {"item": "[observer] Every Bash call after the elicit Skill begins with the export/cd/pwd -P prefix", "status": "NO", "evidence": "Events 37 (doc-fetch SKILL.md sed|grep, during R2) and 63 (sed of build-graph-node.py, R3 prep after R2) lack the prefix. Both are read-only, and all writer Bash calls are prefixed"},
+    {"item": "[observer] Full Reads of compile R1-assemble, R2-render, R3-crosslink and chapter-template", "status": "YES", "evidence": "Events 40-43: full, not truncated"},
+    {"item": "[observer] C05 fork dispatched C07, C06 and C08 sequentially", "status": "YES", "evidence": "Ledger plus subagent streams: C07 dispatch 02:57:24 / completion 02:57:53; C06 02:58:13 / 02:59:16; C08 02:59:51 / 03:00:25. No overlap"},
+    {"item": "[observer] C08 used WebFetch only to allowed hosts and no WebSearch", "status": "NO", "evidence": "0 WebSearch (OK). 0 WebFetch of any kind, so the required layer-2 re-verification against postgresql.org/react.dev/fastapi.tiangolo.com/typescriptlang.org/kubernetes.io never happened. The PASS claim rests only on local Reads of fetched-references.json and retrieval-evidence"},
+    {"item": "Duplicate-logic check: dev-graph contains no elicit/compile logic", "status": "YES", "evidence": "No render_chapter, apply-spec-transition, compile-spec-doc or system-spec/*.md writer in plugins/dev-graph code. Only test fixtures and lineage references mention system-spec paths. build-evaluation-context.py is write-scope none"}
+  ],
+  "observer_events_checked": [
+    "main#34 Skill system-spec-harness:run-system-spec-elicit --resume",
+    "main#65 skill_body_injection run-system-spec-elicit",
+    "main#35-38,44-49 Bash prefix ok; main#37 and main#63 no prefix (read-only)",
+    "main#39 Skill system-spec-harness:run-system-spec-compile",
+    "main#66 skill_body_injection run-system-spec-compile",
+    "main#40-43 Read compile R1-assemble/R2-render/R3-crosslink/chapter-template (full)",
+    "main#15-17,19,21-26 Read delegate SKILL.md/prompts (full)",
+    "main#45 compile-spec-doc.py compile with --repo-root fixed root",
+    "main#48 build-evaluation-context.py exit 0",
+    "main#50 Skill assign-system-spec-completeness-evaluator args == helper skill_args (forked)",
+    "subagent aba42a4dfca29a6b8 (C05 fork) events 90-119",
+    "subagent a51dca865c11400fe (C07) Reads only",
+    "subagent a181a7d990420d2e8 (C06) Reads only",
+    "subagent a76d4d17a5548d7d3 (C08) 8 Reads, 0 WebFetch, 0 WebSearch"
+  ],
+  "blockers": [
+    "C08 doc-freshness auditor made no WebFetch/WebSearch calls, yet the evaluator report records doc_freshness PASS with evidence of 'WebFetch 再照合 ... 鮮度未確認 0'. That evidence does not match the observed events, so the evaluator gate PASS is ungrounded. Re-run the evaluator through the same helper (same receipt) so that C08 really WebFetches the allowed official hosts, or records the targets as 鮮度未確認/INDETERMINATE.",
+    "Main Bash event 37 (inside R2, doc-fetch decision) runs without the required export CLAUDE_PROJECT_DIR/cd/pwd -P prefix. It is read-only but breaks the 'every Bash after elicit' rule. Event 63 (R3 prep) does the same."
+  ],
+  "notes": [
+    "All deterministic gates exit 0 on rerun: coverage, source-citation, design-knowledge-refs, graph schema, aggregate-completeness.",
+    "doc-fetch was not invoked (doc_fetch_not_required: 0 missing targets, 0 discovered knowledge candidates). That is acceptable under 必要時, but its reason text claims a C08 WebFetch check that did not happen.",
+    "Compile re-render was byte-stable: the pre-compile-md.sha256 digests equal the post-compile and current digests.",
+    "The observer index has no Agent tool_call entries. C05 dispatches were confirmed through the subagent streams and the audit-fork-ledger tool_use_ids."
+  ]
+}

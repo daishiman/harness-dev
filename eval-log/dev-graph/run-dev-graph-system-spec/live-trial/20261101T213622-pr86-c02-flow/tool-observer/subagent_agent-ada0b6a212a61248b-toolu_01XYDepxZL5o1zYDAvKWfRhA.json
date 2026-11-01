@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "subagent/agent-ada0b6a212a61248b",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "80d059b0-2307-4edc-9c80-3b029cb1a48a",
+      "line": 53,
+      "prefix_bytes": 637108,
+      "prefix_sha256": "9394464a13f32f97a61a93e09a7e7420c88b98862e9842a1c984f138997f37b0",
+      "timestamp": "2026-11-01T12:47:29.613Z"
+    },
+    "result": {
+      "uuid": "eadad781-933e-4adc-8753-852cbd15be24",
+      "line": 56,
+      "prefix_bytes": 642709,
+      "prefix_sha256": "2445ffa838a7e175a278eb49963e80c41874315c1c42964b0c36be702f4e0f40",
+      "timestamp": "2026-11-01T12:47:35.742Z"
+    }
+  },
+  "tool_use_id": "toolu_01XYDepxZL5o1zYDAvKWfRhA",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --source-citation /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/fetched-references.json --state /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx; echo \"EXIT=$?\"",
+    "description": "Run source citation deterministic gate"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"id\": \"G-source-citation\",\n  \"name\": \"validate-source-citation\",\n  \"conditions\": [\n    \"doc_freshness\"\n  ],\n  \"command\": [\n    \"/Users/dm/miniconda3/bin/python3\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\",\n    \"--targets\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json\",\n    \"--references\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/fetched-references.json\",\n    \"--state\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/system-spec/spec-state.json\",\n    \"--repo-root\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\"\n  ],\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\",\n  \"stderr\": \"\"\n}\nEXIT=0",
+  "tool_use_result": null
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "subagent/agent-a8c181b86c36014c8",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "94985f65-7341-4a91-aa51-2e30938b6dbc",
+      "line": 52,
+      "prefix_bytes": 407394,
+      "prefix_sha256": "d8494135de37a5c1af4687afe9e1b1f1c1a45be0ed973af142ee88c75fb4a884",
+      "timestamp": "2026-11-01T11:20:13.193Z"
+    },
+    "result": {
+      "uuid": "a08d7bb6-cfcf-4aae-8aaa-384d805879f1",
+      "line": 54,
+      "prefix_bytes": 421778,
+      "prefix_sha256": "0a5f5d7d16232e36859824805250e7f884803282dfcfe0efcbd21814d1c95e1d",
+      "timestamp": "2026-11-01T11:20:18.369Z"
+    }
+  },
+  "tool_use_id": "toolu_01JGNDJeDsK5oFYnmNmU8sU9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx; A=plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py; python3 -B $A --help 2>&1 | head -25; grep -rliE \"elicit|interview|hearing|compile|coverage-matrix\" plugins/dev-graph | head -30"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES\n                        fetched-references.json のパス。--state と併用し出典記録 gate\n                        (G-source-citation) を実行\n  --repo-root REPO_ROOT\n                        --source-citation の証跡 path を解決する repo root (既定 cwd)\n  --knowledge-graph     C13-C16 の 4 profile gate を実行\nplugins/dev-graph/README.md\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/tests/test_hooks_entry_point_contract.py\nplugins/dev-graph/agents/dev-graph-requirements-verifier.md\nplugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json\nplugins/dev-graph/hooks/reconcile-task-lifecycle.py\nplugins/dev-graph/hooks/audit-graph-authority-drift.py\nplugins/dev-graph/hooks/guard-graph-schema.py\nplugins/dev-graph/scripts/diff-github-issues.py\nplugins/dev-graph/scripts/extract-plugin-root.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/lint-open-residue.py\nplugins/dev-graph/scripts/reconcile-github-lifecycle.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/lib/guard_python_writes.py\nplugins/dev-graph/scripts/build-github-projection.py\nplugins/dev-graph/lib/guard_graph_commands.py\nplugins/dev-graph/scripts/validate-harness-link.py\nplugins/dev-graph/lib/bd_bridge_contracts.py\nplugins/dev-graph/scripts/register-package.py\nplugins/dev-graph/lib/orphan_external_ref.py\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/commands/dev-graph.md\nplugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md\nplugins/dev-graph/skills/run-dev-graph-requirements/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-requirements/prompts/R2-plan.md\nplugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+  "tool_use_result": {
+    "stdout": "usage: aggregate-completeness.py [-h] [--report REPORT]\n                                 [--fork-ledger FORK_LEDGER]\n                                 [--session SESSION] [--matrix MATRIX]\n                                 [--require-complete]\n                                 [--source-citation FETCHED_REFERENCES]\n                                 [--repo-root REPO_ROOT] [--knowledge-graph]\n                                 [--spec-dir SPEC_DIR] [--hearing HEARING]\n                                 [--state STATE]\n\nC05 完成度評価レポートの形状検証 / 決定論ゲート実行\n\noptions:\n  -h, --help            show this help message and exit\n  --report REPORT       評価レポート JSON のパス\n  --fork-ledger FORK_LEDGER\n                        監査 fork 台帳 JSONL のパス\n  --session SESSION     現在の評価 run の session_id (receipt と照合)\n  --matrix MATRIX       spec-state.json のパス (matrix gate を実行)\n  --require-complete    matrix gate を未収集 0 必須で実行\n  --source-citation FETCHED_REFERENCES\n                        fetched-references.json のパス。--state と併用し出典記録 gate\n                        (G-source-citation) を実行\n  --repo-root REPO_ROOT\n                        --source-citation の証跡 path を解決する repo root (既定 cwd)\n  --knowledge-graph     C13-C16 の 4 profile gate を実行\nplugins/dev-graph/README.md\nplugins/dev-graph/plugin-composition.yaml\nplugins/dev-graph/tests/test_hooks_entry_point_contract.py\nplugins/dev-graph/agents/dev-graph-requirements-verifier.md\nplugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json\nplugins/dev-graph/hooks/reconcile-task-lifecycle.py\nplugins/dev-graph/hooks/audit-graph-authority-drift.py\nplugins/dev-graph/hooks/guard-graph-schema.py\nplugins/dev-graph/scripts/diff-github-issues.py\nplugins/dev-graph/scripts/extract-plugin-root.py\nplugins/dev-graph/scripts/build-graph-node.py\nplugins/dev-graph/scripts/lint-open-residue.py\nplugins/dev-graph/scripts/reconcile-github-lifecycle.py\nplugins/dev-graph/scripts/resolve-repo-context.py\nplugins/dev-graph/scripts/validate-source-lineage.py\nplugins/dev-graph/lib/guard_python_writes.py\nplugins/dev-graph/scripts/build-github-projection.py\nplugins/dev-graph/lib/guard_graph_commands.py\nplugins/dev-graph/scripts/validate-harness-link.py\nplugins/dev-graph/lib/bd_bridge_contracts.py\nplugins/dev-graph/scripts/register-package.py\nplugins/dev-graph/lib/orphan_external_ref.py\nplugins/dev-graph/lib/graph_artifact_readiness.py\nplugins/dev-graph/commands/dev-graph.md\nplugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md\nplugins/dev-graph/skills/run-dev-graph-requirements/prompts/R1-elicit.md\nplugins/dev-graph/skills/run-dev-graph-requirements/prompts/R2-plan.md\nplugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

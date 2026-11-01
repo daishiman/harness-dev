@@ -1,0 +1,8 @@
+{
+  "action": "set-doctrine-application",
+  "category": "backend",
+  "concern_id": "application-architecture",
+  "text": "請求書・突合・確定承認のユースケースを FastAPI のルーティングから分け、内側のエンティティ (取引先・契約・請求書・明細・入金・突合結果・監査ログ, qa-024) は FastAPI と PostgreSQL に依存しない。非同期の突合ジョブ (qa-006, qa-025) も同じユースケースを呼ぶ。\n\nqa-o1-fixture-v3/qa-job-choice-fixture-v3/D4への追加解釈: Clean Architectureの業務ユースケースをAPIとworkerから共有し、請求漏れ判定・締め前整合照合・突合をHTTP/CronJob/DB row型から隔離する。GET /billing-missing、POST /billing-missing/checksの202受付、GET /jobs/{id}の状態取得に既存認可/楽観ロックを適用し、PG outboxと業務更新を同一transactionへ置く。lease/fencing・リトライ上限/失敗状態・一意キーで少なくとも1回の実行に伴う二重業務反映を防ぐ。新broker/RedisやAPI BackgroundTasks案は採用しない。 concern=application-architectureの章固有適用として記録する。",
+  "basis": "agent-inference",
+  "recorded_at": "2026-11-01T13:09:33.335262Z"
+}

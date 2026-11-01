@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d93f3866-63b6-476c-8c93-baa68484f77b",
+      "line": 402,
+      "prefix_bytes": 2371794,
+      "prefix_sha256": "8ee74f32073a1278e634171cf079484c6c188992831af9c35a720503630adc33",
+      "timestamp": "2026-11-01T12:14:36.796Z"
+    },
+    "result": {
+      "uuid": "ef1e07cc-c8a5-4ccf-9939-d48f640449ea",
+      "line": 410,
+      "prefix_bytes": 2379425,
+      "prefix_sha256": "242472a92ab418e19e3776fe2d51c82d2f1bb86723e3f7d304369fceca25296b",
+      "timestamp": "2026-11-01T12:14:40.769Z"
+    }
+  },
+  "tool_use_id": "toolu_01NdyAL8RTzHc9KDVXpwnjyW",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && SP=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\"; DG=\"$CLAUDE_PROJECT_DIR/plugins/dev-graph\"; D=\"$CLAUDE_PROJECT_DIR/system-spec\"; python3 -B \"$SP/scripts/validate-coverage-matrix.py\" --matrix \"$D/spec-state.json\" --require-complete --require-basis --require-foundation; echo \"cov=$?\"; python3 -B \"$SP/scripts/validate-source-citation.py\" --targets \"$D/spec-state.json\" --references \"$D/fetched-references.json\" --state \"$D/spec-state.json\" --repo-root \"$CLAUDE_PROJECT_DIR\"; echo \"cite=$?\"; python3 -B \"$DG/scripts/validate-graph-schema.py\" --graph \"$CLAUDE_PROJECT_DIR/.dev-graph/state/graph.json\" --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness; echo \"schema=$?\"; ls eval-log eval-log/run-dev-graph-system-spec",
+    "description": "Run round 1 three gates and list eval-log"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 0,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nschema=0\neval-log:\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-preflight-report.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec:\nR0-context\nR1-preflight",
+  "tool_use_result": {
+    "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov=0\nOK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\ncite=0\n{\n  \"artifact_readiness\": {\n    \"enforced\": true,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 0,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\nschema=0\neval-log:\ncompile-standard.json\nelicit-standard.json\nhearing-audit.json\nrun-dev-graph-system-spec\nrun-dev-graph-system-spec-artifact-delivery.json\nrun-dev-graph-system-spec-c24-receipt.json\nrun-dev-graph-system-spec-goal-spec.json\nrun-dev-graph-system-spec-preflight-report.json\nsystem-spec-completeness-report.json\nsystem-spec-harness\n\neval-log/run-dev-graph-system-spec:\nR0-context\nR1-preflight",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

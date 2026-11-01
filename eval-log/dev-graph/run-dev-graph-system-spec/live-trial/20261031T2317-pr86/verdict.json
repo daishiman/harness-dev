@@ -1,0 +1,178 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec86/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "正規フローは完成度 evaluator の FAIL で停止した。確定判断ごとの設計適用が48件のqa_log全件に未記録で、8技術章に unrecorded が残る。infrastructure章の適用記述も注入済みカードと矛盾する。",
+      "D1 は PostgreSQL 16/16.15 の取得済み証拠を根拠にするが、新規 fetched-references は docs/current の18.6のみを保持し、採択判断と現行出典が一致しない。",
+      "graph は nodes=[]・revision=0。C02 Skillによる specification/architecture の新規登録、登録receipt、source lineage、confirmation evidence/evaluated_digest の成果が0件で、成功シナリオの必須観測2・3を満たさない。fail-closed停止自体を成功とは判定しない。",
+      "C19本体で未達責務をAgentへforkした実行証拠がない。収集済みsubagentは完成度evaluatorとC06/C07/C08監査のみ。standardとgoal-spec/progress/intermediateはevaluator終了後のtranscript #L530/#L532でまとめて記録され、要求されたgoal_seekとstandard選択後の検証の実行証拠を満たさない。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "f1133f27144feda688878da97cad1737a452647ed33e69afc3d03884f0e5b900",
+    "result": "FAIL",
+    "blockers": [
+      "正規フローは完成度 evaluator の FAIL で停止した。確定判断ごとの設計適用が48件のqa_log全件に未記録で、8技術章に unrecorded が残る。infrastructure章の適用記述も注入済みカードと矛盾する。",
+      "D1 は PostgreSQL 16/16.15 の取得済み証拠を根拠にするが、新規 fetched-references は docs/current の18.6のみを保持し、採択判断と現行出典が一致しない。",
+      "graph は nodes=[]・revision=0。C02 Skillによる specification/architecture の新規登録、登録receipt、source lineage、confirmation evidence/evaluated_digest の成果が0件で、成功シナリオの必須観測2・3を満たさない。fail-closed停止自体を成功とは判定しない。",
+      "C19本体で未達責務をAgentへforkした実行証拠がない。収集済みsubagentは完成度evaluatorとC06/C07/C08監査のみ。standardとgoal-spec/progress/intermediateはevaluator終了後のtranscript #L530/#L532でまとめて記録され、要求されたgoal_seekとstandard選択後の検証の実行証拠を満たさない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/fresh_verify_schedule_sys"
+    },
+    "transcript_sha256": "688c45e18f6fce293054860fae81e9378757f2e9065418b43b759f94d542b247",
+    "evidence_refs": [
+      "task.md",
+      "bootstrap-note.json",
+      "transcript.jsonl#L140",
+      "transcript.jsonl#L178",
+      "transcript.jsonl#L213",
+      "transcript.jsonl#L362",
+      "transcript.jsonl#L395",
+      "transcript.jsonl#L473",
+      "transcript.jsonl#L507",
+      "transcript.jsonl#L530",
+      "transcript.jsonl#L532",
+      "transcript.jsonl#L541",
+      "transcript/subagents/agent-a8f2b0287920999e6.jsonl#L52",
+      "transcript/subagents/agent-a8f2b0287920999e6.jsonl#L91",
+      "transcript/subagents/agent-a8f2b0287920999e6.jsonl#L107",
+      "transcript/subagents/agent-a8f2b0287920999e6.jsonl#L191",
+      "fx-eval-log/system-spec-completeness-report.json",
+      "fx-eval-log/run-dev-graph-system-spec-progress.json",
+      "fx-eval-log/run-dev-graph-system-spec-artifact-delivery.json",
+      "fx-eval-log/run-dev-graph-system-spec-goal-spec.json",
+      "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+      "fx-final/tree/.dev-graph/state/graph.json",
+      "fx-final/tree/system-spec/spec-state.json",
+      "fx-final/tree/system-spec/fetched-references.json",
+      "fx-final/tree/system-spec/infrastructure.md#L166",
+      "fx-final/tree/system-spec/infrastructure.md#L170",
+      "fx-final/tree/system-spec/infrastructure.md#L214",
+      "out/status.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-init",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "d57f66b154e72d9a81f20bd561843869f4192998050a38b492c274c71a9aa858",
+  "transcript_sha256": "688c45e18f6fce293054860fae81e9378757f2e9065418b43b759f94d542b247",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1103.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "transcript.jsonl#L178"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "fx-final/tree/.dev-graph/state/graph.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1103.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "0ca79bd750b36383603a4b711d1aaa03b93fab39835e8be8c6fa5df11faaf0f2",
+      "tokens": {
+        "input_tokens": 210,
+        "cache_creation_input_tokens": 523696,
+        "cache_read_input_tokens": 9116503,
+        "output_tokens": 68959,
+        "total_tokens": 9709368,
+        "assistant_messages": 98,
+        "assistant_message_ids": 98,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 5,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

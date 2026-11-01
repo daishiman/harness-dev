@@ -1,0 +1,93 @@
+{
+  "scope": "sysspec123 初期prefixの完了範囲のみ。main 247行（末尾Bashは未応答）、R0/R1 2独立stream。最終判定ではない。",
+  "final_result": null,
+  "evaluator_id": "/root/review_sysspec123_fresh",
+  "blockers": [],
+  "transcript_prefix_sha256": "a9bdc6663723300c7f070fc9da5d6cfe16aa051dfc5c3559e0ce1055ed22cf89",
+  "checks": {
+    "native_prefix": {
+      "streams": 3,
+      "sha_bytes_and_live_prefix_match": true
+    },
+    "observer": {
+      "events": 58,
+      "source_line_uuid_prefix_bytes_sha_tool_input_result_match": true,
+      "mismatches": []
+    },
+    "required_read": {
+      "delegate_owner_skill_full_reads_before_output": 4,
+      "C19_R0_R3_full_reads": true,
+      "C19_skill_body_injection_full_and_frontmatter_read": true,
+      "R0_R1_own_prompt_and_common_full_reads": true,
+      "elicit_R0_R5_full_reads_before_unfinished_gate_call": true
+    },
+    "prechoice": {
+      "artifact": "fx/eval-log/run-dev-graph-system-spec/preflight-report.json",
+      "sha256": "7f8c0efd4f2d4b5b4b8037b1bf95420390cded3324781f698d881389203dd5d8",
+      "sequence": "main128 Write→137 parse/SHA/path/open stdout→155 preauthorized standard record→182/183 independent Agent",
+      "evaluation_before_choice": false
+    },
+    "C24": {
+      "receipt_sha256": "6d80dec961fe5a8939eedb17957adfa639e79aabb723c71cc08e8d3d97d301ab",
+      "root_identity_match": true,
+      "lineage_exit": 0,
+      "checked": 0,
+      "decision": "new_creation"
+    },
+    "R0_R1": {
+      "actual_Agent": 2,
+      "complete_results_main_lines": [
+        184,
+        192
+      ],
+      "progress_after_both_completed": 199,
+      "verified_claims": "固定receipt、repo/common-dir/system_spec containment、0.1.24 in >=0.1.22 <1.0.0、4 entry points、複製なしの検証事実をnative子streamから確認。"
+    },
+    "loop1": {
+      "coverage": 0,
+      "source_citation": 0,
+      "schema": 0,
+      "empty_graph_schema_not_skipped": true,
+      "six_keys_present": true,
+      "goal_same": true,
+      "goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+      "intermediate_main_line": 195,
+      "progress_main_line": 199,
+      "OUT1": "external_pending"
+    }
+  },
+  "notes": [
+    {
+      "id": "N1",
+      "class": "source手順差分・goal blocker未認定",
+      "observation": "周回1 append後、次周回Skill開始までにC19所定の6key/goal/hash assertionコマンドはない。実ファイルの6key/goal/hashは独立再計算ですべて整合する。",
+      "causality": "正本の検査手順未実施は確定だが、初期goal変更や誤った達成記録は観測せず、3観測の成果を壊した直接因果はまだない。"
+    },
+    {
+      "id": "N2",
+      "class": "source共通enum差分・goal blocker未認定",
+      "observation": "intermediate drift_signal は none。共通goal-seek正本の6enumにない。",
+      "causality": "行の元goal/hash/current snapshot/delta/次指示は保持される。C19自身の提示検査は6key/hashを検査しenumをassertしない。目的不達の直接証拠とは分ける。"
+    },
+    {
+      "id": "N3",
+      "class": "補助runner差分",
+      "observation": "現物path/SHA/openはBash応答にあり、別assistant文章での再掲はない。standardはtask事前指定を現物提示後に記録。",
+      "causality": "実物提示も事前同意もあるため、評価先行・同意なしとして扱わない。"
+    },
+    {
+      "id": "N4",
+      "class": "prefix境界",
+      "observation": "main247のelicit検査Bashはtool結果未収録。C05/compile/C02/R2/R3検証は後続であり未実施をblockerにしていない。"
+    }
+  ],
+  "evidence_refs": [
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-initial/manifest.json",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-initial/main.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-initial/subagent-agent-a890da400218aa644.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-initial/subagent-agent-a94c0e7a326ee25a5.jsonl",
+    "/private/tmp/claude-501/pr86-ci-live/lt/review-prefix-sysspec123-initial/tool-observer/index.json",
+    "/tmp/pr86-sysspec123-initial-observer-validation.json",
+    "/tmp/pr86-sysspec123-initial-read-coverage.json"
+  ]
+}

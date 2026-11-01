@@ -1,0 +1,154 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /private/tmp/claude-501/-Users-dm-dev-dev------harness/4c56fd8f-ccd6-4ef6-a546-d1f3c2d79696/scratchpad/lt/runs/decompose86/fx --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "279cc8900f023263f9c139b230e00f52c8b922682f826d3711b75eb8e2bd7ce8",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/evaluate_init_decompose"
+    },
+    "transcript_sha256": "0f3774dad4ee964dd9bfb87af02c5a67be4b52effc0c550e1da17ecc4140255f",
+    "evidence_refs": [
+      "transcript.jsonl#L42",
+      "transcript.jsonl#L149",
+      "transcript.jsonl#L162",
+      "transcript.jsonl#L166",
+      "transcript.jsonl#L245",
+      "transcript.jsonl#L272",
+      "transcript/subagents/agent-a48d534450da5339c.jsonl#L56",
+      "fx-final/tree/.dev-graph/cache/decompose-input/c02-preview.json",
+      "fx-final/tree/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff.json",
+      "fx-final/tree/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff-summary.json",
+      "fx-final/tree/.dev-graph/cache/decompose-input/dry-run-preview-report.json",
+      "fx-eval-log/run-dev-graph-decompose-progress.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose",
+    "dev-graph:run-dev-graph-node"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "1fe67aba74749a0384f5f1ca01ee8817fd7f9145ac6aa95ea4aadc7a3b5fc1f1",
+  "transcript_sha256": "0f3774dad4ee964dd9bfb87af02c5a67be4b52effc0c550e1da17ecc4140255f",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.314",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 450.819696187973
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/live-trial-scenarios/pr86-receipt-scenarios.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "evidence_ref": "transcript/subagents/agent-a48d534450da5339c.jsonl#L56"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "evidence_ref": "fx-final/tree/.dev-graph/cache/decompose-input/c02-preview.json"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "evidence_ref": "transcript.jsonl#L166"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0",
+        "evidence_ref": "transcript.jsonl#L272"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 450.819696187973,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "2f35a0cc53de7496610c5188358b1dfa30687105fc39e1128ff3a8211083613c",
+      "tokens": {
+        "input_tokens": 100,
+        "cache_creation_input_tokens": 182534,
+        "cache_read_input_tokens": 2882006,
+        "output_tokens": 37432,
+        "total_tokens": 3102072,
+        "assistant_messages": 45,
+        "assistant_message_ids": 45,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 3,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

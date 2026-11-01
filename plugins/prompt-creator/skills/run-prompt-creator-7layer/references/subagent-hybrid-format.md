@@ -36,7 +36,11 @@ SubAgent の frontmatter は Claude Code プラグインの agent 仕様に従�
 
 - `name`: agent 名（ファイル名 stem と一致、kebab-case）。
 - `description`: 「〜なとき、〜したいときに使う。」形式の起動条件（`lint-skill-description` 準拠）。
-- `tools`: 許可ツールのカンマ区切り（例 `Read, Glob, Grep`）または YAML リスト。
+- tools 宣言（次の**どちらか一方だけ**。併記もどちらも無いのも違反。正本は harness-creator の
+  `capability-manifest.schema.json#/definitions/kindAgent` の oneOf）:
+  - `tools`: 許可ツールのカンマ区切り（例 `Read, Glob, Grep`）または YAML リスト。空は不可。`inherit` をツール名として書かない。
+  - `tools-inherit: true`: `tools` を省いて全ツール（実行時に見つかる MCP ツールを含む）を継承する明示宣言。
+    ツール名を前もって列挙できない agent に限る。書き込みの道具も継承するため、読み取り専用の advisor では使わない。
 
 推奨キー（provenance / governance）:
 
@@ -74,7 +78,7 @@ frontmatter 終端（`---`）の直後から、以下の 7 層を Markdown 見�
 ## 機械検証（harness-creator 側 C02 / C09 が参照）
 
 - **内容 lint**: harness-creator の `scripts/lint-agent-prompt-content.py`（本契約準拠を強制する内容 lint）。
-  - `--mode agent`: `agents/*.md` の frontmatter が plugin YAML（`name`/`description`/`tools` 必須）を満たし、本文 7 層が `verify-completeness.py` 相当ロジックを exit0 で通過することを検証。
+  - `--mode agent`: `agents/*.md` の frontmatter が plugin YAML（`name`/`description` 必須、`tools` か `tools-inherit: true` のどちらか一方が必須）を満たし、本文 7 層が `verify-completeness.py` 相当ロジックを exit0 で通過することを検証。
   - `--mode prompt`: `skills/*/prompts/*.md` が frontmatter 不在の純粋 7 層で `verify-completeness.py` 相当を通過することを検証。
   - `--check-vendor-parity`: 上記ロジックが本 skill の `scripts/verify-completeness.py` から byte 一致で vendoring されていることを検証（drift 検出）。
 - **配置 lint との直交**: `run-build-skill/scripts/lint-prompt-placement.py` は prompts/*.md の**配置**（どのディレクトリ・ファイル名か、空殻リダイレクト禁止）を検査する。本契約が課すのは**本文内容**の 7 層準拠であり、両者は直交する独立検査である。

@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "f4f10424-d995-4451-be78-9d34a26e9fe3",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ae8282f3-ee64-4ad8-b2db-3025b4bf5e1b",
+      "line": 671,
+      "prefix_bytes": 4238850,
+      "prefix_sha256": "40ed89817fa925aa75d5cdfe478cf4dd98d8a5ec8ab3de3c8c31bc78d0637147",
+      "timestamp": "2026-11-01T14:40:53.623Z"
+    },
+    "result": {
+      "uuid": "82a01867-640b-4bc9-ae28-9328b53050cd",
+      "line": 674,
+      "prefix_bytes": 4248886,
+      "prefix_sha256": "dc3e2821f96a59e6ab554a5a2f830a8e614bf496231150c7a56d66d63b734ffc",
+      "timestamp": "2026-11-01T14:40:56.927Z"
+    }
+  },
+  "tool_use_id": "toolu_016CfNYSphScBREDV9SJG1nc",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec120/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/build-graph-node.py add --repo-root \"$CLAUDE_PROJECT_DIR\" --input eval-log/run-dev-graph-node/import-payload.json; echo exit=$?",
+    "description": "Register nodes via canonical writer add"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"applied_count\": 2,\n  \"artifacts\": [\n    {\n      \"classification\": {\n        \"confidence\": 0.95,\n        \"decision\": \"auto\",\n        \"margin\": 0.65\n      },\n      \"file_path\": \"specs/billing-audit-system-spec.md\",\n      \"graph_node_id\": \"spec-billing-audit-system-spec\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\",\n      \"sha256_before\": null\n    },\n    {\n      \"classification\": {\n        \"confidence\": 0.92,\n        \"decision\": \"auto\",\n        \"margin\": 0.57\n      },\n      \"file_path\": \"architecture/billing-audit-system-architecture.md\",\n      \"graph_node_id\": \"arch-billing-audit-system-architecture\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\",\n      \"sha256_before\": null\n    }\n  ],\n  \"dry_run\": false,\n  \"graph_digest_after\": \"sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c\",\n  \"graph_path\": \".dev-graph/state/graph.json\",\n  \"graph_revision_after\": 1,\n  \"graph_revision_before\": 0,\n  \"input_sha256\": \"5b50ea4a9f8263a63359f3a2ef4ba59de41ed155fef045b623131fddf60872ae\",\n  \"node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"operation\": \"add\",\n  \"owner\": \"C02/run-dev-graph-node\",\n  \"pre_write_validation\": {\n    \"findings\": 0,\n    \"validator\": \"validate-graph-schema.py\"\n  },\n  \"receipt_path\": \".dev-graph/state/receipts/node-r000001-add.json\",\n  \"recorded_at\": \"2026-11-01T14:40:56.305780Z\",\n  \"repository_id\": \"local:sha256:f13fcef095dcbed936815730fb13d9ace16d1c8b034e8d6cccd9c583bd4bde58\",\n  \"schema_version\": \"1.0.0\",\n  \"status\": \"applied\",\n  \"template_sources\": [\n    \"repository:architecture-backend.md\",\n    \"repository:architecture-data.md\",\n    \"repository:architecture-frontend.md\",\n    \"repository:architecture-infrastructure.md\",\n    \"repository:architecture-security.md\",\n    \"repository:architecture.md\",\n    \"repository:specification.md\"\n  ],\n  \"valid\": true,\n  \"write_count\": 4\n}\nexit=0",
+  "tool_use_result": {
+    "stdout": "{\n  \"applied_count\": 2,\n  \"artifacts\": [\n    {\n      \"classification\": {\n        \"confidence\": 0.95,\n        \"decision\": \"auto\",\n        \"margin\": 0.65\n      },\n      \"file_path\": \"specs/billing-audit-system-spec.md\",\n      \"graph_node_id\": \"spec-billing-audit-system-spec\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"1f2fb59e89b73256b91992ba11dc0156e99758a48eda516e583b78f2e3c5ac4f\",\n      \"sha256_before\": null\n    },\n    {\n      \"classification\": {\n        \"confidence\": 0.92,\n        \"decision\": \"auto\",\n        \"margin\": 0.57\n      },\n      \"file_path\": \"architecture/billing-audit-system-architecture.md\",\n      \"graph_node_id\": \"arch-billing-audit-system-architecture\",\n      \"implementation_readiness\": \"complete\",\n      \"missing_sections\": [],\n      \"readiness_fill\": [],\n      \"sha256_after\": \"fc63800f7d9fa3259cfd0645c1ebefbfcd043a3a8842c86072e4ef8bb17a3f5d\",\n      \"sha256_before\": null\n    }\n  ],\n  \"dry_run\": false,\n  \"graph_digest_after\": \"sha256:33404a49b55d9c7b12d0701468393b33b6e358bdc148dd893261c4602e5e336c\",\n  \"graph_path\": \".dev-graph/state/graph.json\",\n  \"graph_revision_after\": 1,\n  \"graph_revision_before\": 0,\n  \"input_sha256\": \"5b50ea4a9f8263a63359f3a2ef4ba59de41ed155fef045b623131fddf60872ae\",\n  \"node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"operation\": \"add\",\n  \"owner\": \"C02/run-dev-graph-node\",\n  \"pre_write_validation\": {\n    \"findings\": 0,\n    \"validator\": \"validate-graph-schema.py\"\n  },\n  \"receipt_path\": \".dev-graph/state/receipts/node-r000001-add.json\",\n  \"recorded_at\": \"2026-11-01T14:40:56.305780Z\",\n  \"repository_id\": \"local:sha256:f13fcef095dcbed936815730fb13d9ace16d1c8b034e8d6cccd9c583bd4bde58\",\n  \"schema_version\": \"1.0.0\",\n  \"status\": \"applied\",\n  \"template_sources\": [\n    \"repository:architecture-backend.md\",\n    \"repository:architecture-data.md\",\n    \"repository:architecture-frontend.md\",\n    \"repository:architecture-infrastructure.md\",\n    \"repository:architecture-security.md\",\n    \"repository:architecture.md\",\n    \"repository:specification.md\"\n  ],\n  \"valid\": true,\n  \"write_count\": 4\n}\nexit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

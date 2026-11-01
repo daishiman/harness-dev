@@ -1,0 +1,15 @@
+{
+  "skill": "run-dev-graph-init",
+  "loop": 1,
+  "checklist": [
+    {"item": "preflight validate-harness-link status=pass", "status": "PASS", "evidence": "init report preflight.status=pass link_state=absent in_use=false"},
+    {"item": "C24 receipt repository_id/common-dir/content root match caller repo", "status": "PASS", "evidence": "resolve-repo-context --mode write: repo_root==content_roots.repository, repository_id local:sha256:12b16ff5...ad59"},
+    {"item": "6 roots + .dev-graph/{config,graph,cache,locks} exist; routing_policy passes schema", "status": "PASS", "evidence": "init status=applied, content_roots=6, schema_result valid"},
+    {"item": "template-contract assets missing 0; user-edited digests unchanged", "status": "PASS", "evidence": "20 templates copied, migration_preview=0, preserved=0 (fresh)"},
+    {"item": "effective hook single path; settings key/hash change 0", "status": "PASS", "evidence": "hook_source=plugin; build-project-hook-fallback not run; .claude/settings.local.json untouched"},
+    {"item": "validate-graph-schema exit0; 2nd init planned changes 0", "status": "PASS", "evidence": "valid=true violation_count=0 rc=0; 2nd run status=noop planned_changes=0 write_count=0"}
+  ],
+  "unmet_responsibilities": [],
+  "forked_agents": [],
+  "status": "complete"
+}

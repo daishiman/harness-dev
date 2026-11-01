@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-a42171b76c10bf1d6",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c55099db-3c7d-4b8c-9880-8c53e3717e20",
+      "line": 69,
+      "prefix_bytes": 506102,
+      "prefix_sha256": "1312a1f9ddc5e77b065c0f92ecbfde8084a962cf2b910f050d5aefb00b1b0ea6",
+      "timestamp": "2026-11-01T10:02:42.890Z"
+    },
+    "result": {
+      "uuid": "da7609b6-9cff-4cb2-ba5d-791a3d2f93af",
+      "line": 70,
+      "prefix_bytes": 507861,
+      "prefix_sha256": "f3e0a41fc42a64c4357d66701fc009fdb279e6962984c1406b3ea1aea66cec58",
+      "timestamp": "2026-11-01T10:02:44.962Z"
+    }
+  },
+  "tool_use_id": "toolu_01SkC49Tm1hJ7XX7UHBcdL9c",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; ls -la plugins; grep -rniE \"system-spec|system_spec\" plugins/dev-graph/scripts plugins/dev-graph/lib plugins/dev-graph/skills/run-dev-graph-system-spec/scripts | grep -iE \"fallback|elicit|compile|generate\" | cut -c1-200 | head; grep -rlnE \"AskUserQuestion|hearing_question|questions\\[\" plugins/dev-graph/scripts plugins/dev-graph/lib | head"
+  },
+  "is_error": false,
+  "tool_result_content": "total 0\ndrwxr-xr-x@  7 dm  wheel  224 11月  1 18:58 .\ndrwxr-xr-x@ 16 dm  wheel  512 11月  1 19:00 ..\ndrwxr-xr-x@ 21 dm  wheel  672 10月 31 22:51 dev-graph\ndrwxr-xr-x@ 24 dm  wheel  768 10月 31 22:51 harness-creator\ndrwxr-xr-x@ 11 dm  wheel  352 10月 31 22:47 skill-governance-adapters\ndrwxr-xr-x@ 20 dm  wheel  640 10月 31 22:53 system-dev-planner\ndrwxr-xr-x@ 19 dm  wheel  608 11月  1 16:38 system-spec-harness",
+  "tool_use_result": {
+    "stdout": "total 0\ndrwxr-xr-x@  7 dm  wheel  224 11月  1 18:58 .\ndrwxr-xr-x@ 16 dm  wheel  512 11月  1 19:00 ..\ndrwxr-xr-x@ 21 dm  wheel  672 10月 31 22:51 dev-graph\ndrwxr-xr-x@ 24 dm  wheel  768 10月 31 22:51 harness-creator\ndrwxr-xr-x@ 11 dm  wheel  352 10月 31 22:47 skill-governance-adapters\ndrwxr-xr-x@ 20 dm  wheel  640 10月 31 22:53 system-dev-planner\ndrwxr-xr-x@ 19 dm  wheel  608 11月  1 16:38 system-spec-harness",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

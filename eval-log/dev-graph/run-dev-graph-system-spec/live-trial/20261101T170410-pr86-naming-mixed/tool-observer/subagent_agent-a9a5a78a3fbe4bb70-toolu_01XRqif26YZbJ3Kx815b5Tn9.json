@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "376a23b7-f8bd-4886-9e02-f96576e4bf54",
+  "stream": "subagent/agent-a9a5a78a3fbe4bb70",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "48f9aaa2-1343-4a1e-940d-143630abc05f",
+      "line": 172,
+      "prefix_bytes": 867766,
+      "prefix_sha256": "a535e7306e0b0a1414828ed2a794e112c4a38c759996b97e016928fa46ac50de",
+      "timestamp": "2026-11-01T08:18:27.509Z"
+    },
+    "result": {
+      "uuid": "9a99ddec-f69b-4fff-8f39-0f6b1159cd4d",
+      "line": 173,
+      "prefix_bytes": 869623,
+      "prefix_sha256": "b141e7b6cc5392827ee0c3b52b2e0ac88382c55d4e333ab99c2da0725db43ea1",
+      "timestamp": "2026-11-01T08:18:36.935Z"
+    }
+  },
+  "tool_use_id": "toolu_01XRqif26YZbJ3Kx815b5Tn9",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx; python3 plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/build-resume-receipt.py --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec111/fx --print-artifact-snapshot | diff - \"$TMPDIR/ev/snapshot.json\" && echo UNCHANGED; grep -o '\"tool_use_id\": \"[^\"]*\"\\|\"response_sha256\": \"[^\"]*\"\\|\"record_kind\": \"[^\"]*\"' eval-log/system-spec-harness/audit-fork-ledger.jsonl | paste - - - ",
+    "description": "Verify snapshot unchanged and list ledger digests"
+  },
+  "is_error": false,
+  "tool_result_content": "diff: -: Operation not permitted\nException ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>\nBrokenPipeError: [Errno 32] Broken pipe\n\"record_kind\": \"dispatch\"\t\"response_sha256\": \"a2f5bf22db6a451e93a128004196382c643898d722063a4ef3bb8c2a32e8bd87\"\t\"tool_use_id\": \"toolu_01QYK2kniPPRc5K7BNKrJ7Zz\"\n\"record_kind\": \"completion\"\t\"response_sha256\": \"bbe7d361530615b09a5669c1d98904554a546a3e3268adba009775df5ddd5e84\"\t\"record_kind\": \"dispatch\"\n\"response_sha256\": \"f2f230b8c46da4d10aed20b32ab30ef24b62aef43db66fe5bb439462bfe72092\"\t\"tool_use_id\": \"toolu_016UJrRWhgW4x17tATAxKZC5\"\t\"record_kind\": \"completion\"\n\"response_sha256\": \"b1ebddd71844546428bf1f5867d6fd4a14d3b0c71ffa6408ad34fc22c6a0edf1\"\t\"record_kind\": \"dispatch\"\t\"response_sha256\": \"d2b1c0002a6f6cefa2330cce9f0d52c5f509be4596009fd74e872c5a73ee8cf5\"\n\"tool_use_id\": \"toolu_01StAZKccjJxZwCXF6qPwDtF\"\t\"record_kind\": \"completion\"\t\"response_sha256\": \"066be677104d5b2c109c9d912a88ad6f791cf0942dbc13d380dec9bcce44202e\"",
+  "tool_use_result": null
+}

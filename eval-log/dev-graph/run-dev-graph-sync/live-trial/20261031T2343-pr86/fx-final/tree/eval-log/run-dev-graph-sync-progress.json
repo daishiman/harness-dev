@@ -1,0 +1,31 @@
+{
+  "skill": "run-dev-graph-sync",
+  "run": 2,
+  "overall": "PASS",
+  "graph_baseline": {"graph_revision": 5, "graph_digest": "sha256:80d3acdca08651e5734be17b4ff566b70f46c413a547bd43d1224d72e39c67ab"},
+  "writer_receipts": [],
+  "external_mutations": [],
+  "checklist": [
+    {"id": "C1-plan-classification", "status": "achieved", "evidence": "sync-run2 issue-plan-1 / project-plan-1 at rev5: all rows unchanged; changes=0"},
+    {"id": "C2-single-authority", "status": "achieved", "evidence": "both nodes tracker_binding=github, beads_linkage=null; no writer or bridge mutation used in run 2"},
+    {"id": "C3-dry-run-zero-write", "status": "achieved", "evidence": "planners read-only; github-adapter.json sha256 unchanged 7787cca8...; mutation_log still 1 entry from run 1"},
+    {"id": "C4-manual-conflict-and-receipts", "status": "achieved", "evidence": "conflicts=0 confirmations=0; no one-sided changes to apply, so no new receipts"},
+    {"id": "C5-tombstone", "status": "not_applicable", "evidence": "tombstones=0 deleted_issues=0 missing_issues=0"},
+    {"id": "C6-lifecycle-done-authority", "status": "not_applicable", "evidence": "reconcile-github-lifecycle drain-pending --dry-run: no pending events/transactions; no PR linkages"},
+    {"id": "C7-second-sync-zero", "status": "achieved", "evidence": "Issue plan changes=0 converged=true unresolved_count=0 next=converged; Projects plan changes=0 converged=true unresolved_count=0 next=converged (held/skipped/missing/conflicts 0); graph rev5 digest, issue numbers, item_ids, field_snapshot, snapshot file identical to run-1 end"}
+  ],
+  "feedback_criteria": {
+    "IN1": {"status": "PASS", "evidence": "validate-graph-schema valid=true violations=0 at rev5; no payload sent"},
+    "OUT1": {"status": "external_pending", "judged_by": "live-trial"},
+    "OUT2": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT3": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT4": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT5": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT6": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT7": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT8": {"status": "external_pending", "judged_by": "acceptance-test"},
+    "OUT9": {"status": "external_pending", "judged_by": "acceptance-test"}
+  },
+  "independent_verifier": {"agent": "dev-graph:dev-graph-sync-conflict-verifier", "verdict": "PASS", "graph_digest": "sha256:80d3acdca08651e5734be17b4ff566b70f46c413a547bd43d1224d72e39c67ab"},
+  "notes": ["Verifier observation (non-blocking): .dev-graph/state/github-sync-snapshot.json is not written by any C03 script; the per-node field_snapshot in the graph is the base the planners use."]
+}

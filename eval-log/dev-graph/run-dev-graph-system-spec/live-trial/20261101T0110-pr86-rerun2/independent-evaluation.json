@@ -1,0 +1,50 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "R2-delegateの毎回固定root照合契約に違反。transcript/subagents/agent-af670f29967868e67.jsonl:50（2026-10-31T15:58:32.583Z）のBashは、$TMPDIR/w.pyを作りcanonical compile-spec-doc.pyをimportし、compile_docsetとwrite_docsetを呼んでfresh/over-existingのscratch章を実生成する。先頭はcd <FX>で、CLAUDE_PROJECT_DIRのexportもpwd -P比較も無い。:51の成功結果がfresh differing/over-existing differingを返しており、単なる未実行コードではない。固定source prompts/R2-delegate.mdは各Bashごとのexport・移動・照合を要求し、task.mdはscratch検証compileも含めると明記している。main:298の初回compileが照合していてもこの後続writer呼出しの欠落を補えない。",
+    "C19の周回継承・責務fork契約の実行順が不足。main transcript.jsonl:148でR2のelicitを開始（15:54:53.237Z）、:276でcompileも開始（15:56:25.805Z）した後、loop1のmerged_directive_for_nextを:370で初めてappend（15:57:58.955Z）している。固定SKILLは次周回の必須入力を直前merged_directiveとし、未達責務をAgentへforkして固定receipt・元goal/hash・直前次指示を渡す契約。実際のC19 R2/R3 Agentは:791（16:21:04.271Z）の完了後read-only verifierで、委譲実処理開始前のR2責務Agentは無い。事後の3行ログ・achieved宣言だけではこの実行順を満たさない。"
+  ],
+  "evaluator_id": "/root/review_sysspec89",
+  "transcript_sha256": "11ed5f875e755c925fb3337210df21afe9433c9f8a2734256d6977960f5b30cc",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/agent-af670f29967868e67.jsonl",
+    "transcript/subagents/agent-aeb83534ccc715c76.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    "fx-eval-log/run-dev-graph-system-spec-progress.json",
+    "fx-eval-log/run-dev-graph-system-spec/R2-delegate/artifact-delivery-compile.json",
+    "fx-final/tree/.dev-graph/state/graph.json",
+    "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json",
+    "fx-eval-log/system-spec-completeness-report.json",
+    "fixture-provenance.json",
+    "fixture-preparation.py",
+    "fixture-init-receipt.json",
+    "evidence-redaction.json",
+    "closure-at-launch.txt",
+    "plugins-copy.json",
+    "poll-state.json",
+    "guard.jsonl",
+    "fx-final/manifest.tsv"
+  ],
+  "observations": {
+    "1": "transcript.jsonl",
+    "2": "fx-final/tree/.dev-graph/state/graph.json",
+    "3": "fx-final/tree/.dev-graph/state/receipts/node-r000001-add.json"
+  },
+  "criteria_observed": {
+    "IN1": "固定fixtureに対して/Users/dm/miniconda3/bin/python3 -Bでcoverage(--require-complete --require-basis --require-foundation)、source-citation(--targets --references --state --repo-root)、design-knowledge-refs、validate-source-lineage、validate-graph-schema(--strict-artifact-readiness)、aggregate-completeness(--report --spec-dir --session)を今回読取専用で再実行し、全6コマンドexit0。登録2nodeはconfirmed/pass/readiness complete、post-import lineage checked=2、graph schema valid。再実行出力は/tmp/pr86-sysspec89-{coverage,citation,designrefs,lineage,graphschema,evalreport}.txt。",
+    "OUT1": "mainでC19→elicit→doc-fetch→compile→completeness evaluator→C02のSkill実呼出しを観測し、evaluator forkとC06/C07/C08実Agent・現session監査台帳も確認。C02 writer receiptはrev0→1、2node、最終payload SHA=c5f817f09748c9a4337ba285cf4c45faa35e3d7ecee0443bc389ac5e2806219fと一致。source_version=0.1.24、2nodeのsource_digest/evaluated_digest/実bytes/evaluator artifact_snapshotが一致し、snapshot全12fileも一致。dev-graph固定sourceにヒアリングstate writer/章compilerの同等実装複製は見つからない。ただし正規flow完遂の観測1はR2 writer呼出しとC19周回継承の上記契約違反により未達で、総合PASSにはできない。"
+  },
+  "notes": [
+    "既存レビュー・criteria receiptのPASS結論は根拠に使用していない。被験sourceはsession-root.txt配下の固定コピーであり、SKILL.md、R0〜R3、共通層、委譲先run Skill契約を参照した。",
+    "artifact_delivery記録の保存とsemantic Agent開始順: C19 main108→R0/R1 Agent128/130、elicit174（resume completeでwriter遷移無し）、doc-fetch242→C08 Agent256、compile304→OUT1 tests318→R1/R2/R3 Agent328/330/332、C02 main616内dry-run/選択記録→classify Agent631。各記録はstandard、path/digest/open方法を持つ。completenessはassign skillで、main462に実fork。",
+    "C19集約goal/intermediateは親contextだけが更新し、intermediate3行すべて6必須キー・original_goal完全一致・SHA30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454を保持。progressは6項目achieved、IN1 PASS、OUT1 external_pending。構造上の一致と実際の周回開始順の充足は別に検査した。",
+    "fixture-preparation.pyとfixture-provenanceは前FAIL runの正規writer state/出典/compiled章をbyte-identical再開入力とし、C01 builderでgraph.nodes=[]を初期化。候補payloadからconfirmation_evidence/imported_atを除去している。今回の評価report/監査台帳/登録nodeをseedした記録は無い。今回初回compileはmain298で実行しexit0、出力がseedと同一なのは決定論の結果。前run評価PASSの再利用とは扱っていない。",
+    "開始時closure-at-launch、固定fx、現行Wの挙動閉包175fileをcanonical skill_dir_tree_shaで再計算し、全て95833f2df24937cd27942852c064e22d108f3e831b6f48c01a31800c500aeee3で一致。fx-final77fileのmanifest SHA/sizeと現行fx bytesも全一致。",
+    "evidence-redactionの15変更ファイルについて私用原本original SHA/bytes・公開redacted SHA・行数・JSON shapeを検証。52 scalar変更はattachment/context/userEmailから得た同一識別子置換1組を全文に一貫適用したものだけで、その他のJSON変更無し。秘密/原本文面は出力していない。",
+    "raw_snapshotとの未変更ファイル比較ではpoll-state.jsonのelapsedだけ2027→2028の差があった。started_at_unix=1793461965、observed_at_unix=1793463992.421477は同一で、公開elapsed=ceil(2027.421477)。collection-note.jsonに開始起点補正を明記しており上限引上げではない。start.epoch/boot/pollを時刻正本とした。実測約2028秒<3300秒、main/subagent重複message idを除いたtoken計18267522<23000000。proof指定は無い。",
+    "guard249行はallow245/deny4。compile R1の:38はC11が拒否したので成功writerの証拠に数えていない。blockerは後の:50→:51の実成功scratch writerに接地した。",
+    "今回評価メモ・再検証出力以外のsource/fixture/既存証拠は変更していない。"
+  ]
+}

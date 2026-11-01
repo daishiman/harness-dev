@@ -302,16 +302,18 @@ test("fixRouting は workflow.md の改善と納品の表と一致する", () =>
   assert.equal(/run-[a-z-]+/.test(rows.preference), false, "preference は記録のみ");
 });
 test("FIX の revision 辺と、cycle を消費しない差し戻し（nonFixReturns）は混ざらない", () => {
-  const comp = JSON.parse(fs.readFileSync(path.join(P.ROOT, "plugin-composition.yaml"), "utf8"));
+  const comp = JSON.parse(fs.readFileSync(path.join(P.ROOT, "references", "registry.json"), "utf8"));
   const skills = new Set(comp.capabilities.filter((c) => c.kind === "skill").map((c) => c.ref));
   const fixClasses = Object.keys(D.contract.fixRouting).filter((k) => k !== "notes");
   const section = (ref) => {
     const [file, heading] = ref.split("#");
     const doc = fs.readFileSync(path.join(P.ROOT, file), "utf8");
-    const start = doc.search(new RegExp(`^#+ ${heading}$`, "m"));
-    assert.ok(start >= 0, ref);
-    const end = doc.slice(start + 1).search(/^## /m);
-    return end < 0 ? doc.slice(start) : doc.slice(start, start + 1 + end);
+    // 見出しの深さを読み、同じ深さ以上の次の見出しまでを節とする（### 局面カタログ は ### ゴールシーク配線 の前で終わる）。
+    const m = new RegExp(`^(#+) ${heading}$`, "m").exec(doc);
+    assert.ok(m, ref);
+    const body = m.index + m[0].length;
+    const end = doc.slice(body).search(new RegExp(`^#{1,${m[1].length}} `, "m"));
+    return end < 0 ? doc.slice(m.index) : doc.slice(m.index, body + end);
   };
   const revisions = comp.dependencies.filter((d) => d.type === "revision");
   for (const d of revisions) assert.equal(d.to, `skills/${D.contract.fixRouting[d.fixClass]}`, `revision 辺は FIX だけ: ${d.fixClass}`);
@@ -323,11 +325,11 @@ test("FIX の revision 辺と、cycle を消費しない差し戻し（nonFixRet
     assert.ok(![...fixClasses, "preference"].includes(r.trigger), r.trigger);
     assert.ok(skills.has(r.from) && skills.has(r.to) && r.step.startsWith(`${r.to}/`), r.trigger);
     const n = section(r.step).match(new RegExp(`^(\\d+)\\. \\*\\*${r.stepTitle}\\*\\*`, "m"))?.[1];
-    assert.ok(n, `戻り先の手順が実在する: ${r.stepTitle}`);
+    assert.ok(n, `戻り先の局面が実在する: ${r.stepTitle}`);
     const base = path.posix.dirname(r.source.split("#")[0]);
     const links = [...section(r.source).matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)].filter((m) => path.posix.join(base, m[2]) === r.step);
-    assert.ok(links.some((m) => m[1].endsWith(`手順 ${n}`)), `source が戻り先の手順番号（${n}）を指す`);
-    for (const d of revisions) assert.ok(![r.stepTitle, `手順 ${n}`, "消費しない"].some((w) => d.condition.includes(w)), "revision 辺の条件に非FIXの用途を書かない");
+    assert.ok(links.some((m) => m[1].endsWith(`局面 ${n}`)), `source が戻り先の局面番号（${n}）を指す`);
+    for (const d of revisions) assert.ok(![r.stepTitle, `局面 ${n}`, "消費しない"].some((w) => d.condition.includes(w)), "revision 辺の条件に非FIXの用途を書かない");
   }
 });
 test("skill の feedback_contract.max_iterations は goal_seek.max_loops と揃い、どちらも cycleBudget の写し", () => {

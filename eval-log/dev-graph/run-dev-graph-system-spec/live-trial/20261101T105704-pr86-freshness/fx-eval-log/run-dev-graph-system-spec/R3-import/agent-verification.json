@@ -1,0 +1,56 @@
+{
+  "responsibility": "R3-import",
+  "verdict": "PASS",
+  "checked_at": "2026-11-01T02:26:31Z",
+  "items": [
+    {
+      "id": "evaluator_pass_before_input",
+      "criterion": "evaluator report が PASS、spec_dir が取込元 dir と一致し、C02 入力 payload と C02 起動より前に存在する",
+      "status": "achieved",
+      "evidence": "eval-log/system-spec-completeness-report.json verdict=PASS, spec_dir=<repo>/system-spec (両 source_path の親 dir と一致)。artifact_snapshot 12 件すべて現 bytes の sha256 と一致。mtime: report 11:16:34 < import-payload.json 11:22:18 < run-dev-graph-node c24-receipt 11:22 < dry-run recorded_at 02:23:16Z < add 02:23:58Z"
+    },
+    {
+      "id": "c02_only_receipt_matches_graph",
+      "criterion": "登録は C02 (build-graph-node.py add) 経由のみで、receipt の owner/operation/revision/node_ids/graph_digest_after が今の graph と一致",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: owner=C02/run-dev-graph-node, operation=add, graph_revision 0→1 (graph.graph_revision=1), node_ids=[spec-billing-audit-system-spec, arch-billing-audit-system-architecture] = graph の全 node, graph_digest_after=sha256:2923bc9f…d6d1 = 再計算 canonical digest。receipt の artifacts sha256_after が specs/・architecture/ の実ファイル sha256 と一致。receipts/ には init と本 add のみ"
+    },
+    {
+      "id": "lineage_fields_and_digest",
+      "criterion": "全 node の source_lineage 6 field 欠落0、source_digest=実ファイル sha256、source_version=system-spec-harness plugin.json version",
+      "status": "achieved",
+      "evidence": "spec: system-spec/index.md digest f7f64767…45e2 一致; arch: system-spec/00-requirements-definition.md digest 1cc7fe6b…1402 一致。origin_kind/source_plugin=system-spec-harness, source_version=0.1.25 (plugin.json 0.1.25), imported_at=2026-11-01T02:22:18Z。artifact_kind は schema enum の正規値 specification/architecture"
+    },
+    {
+      "id": "confirmation_evidence_readiness",
+      "criterion": "evaluated_digest=source_digest、evidence_ref が report を指す、confirmation_status=confirmed、evaluation_status=pass、readiness complete",
+      "status": "achieved",
+      "evidence": "両 node で evaluated_digest==source_digest, evidence_ref=eval-log/system-spec-completeness-report.json, evaluator=system-spec-harness:assign-system-spec-completeness-evaluator, confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete (missing_sections [])"
+    },
+    {
+      "id": "gates_rerun",
+      "criterion": "validate-source-lineage.py と validate-graph-schema.py --strict-artifact-readiness を再実行して exit 0",
+      "status": "achieved",
+      "evidence": "validate-source-lineage.py --repo-root <repo> --node-id 2件: exit 0, status=pass, checked=2, violations []。validate-graph-schema.py --graph .dev-graph/state/graph.json --strict-artifact-readiness: exit 0, valid=true, violation_count 0, readiness complete 2/2, artifact findings 0"
+    },
+    {
+      "id": "same_payload_dryrun_add",
+      "criterion": "dry-run と add に confirmation_evidence を含む同じ payload を渡した",
+      "status": "achieved",
+      "evidence": "import-payload.json の実 sha256=71e9c95c…42c4 が dry-run-preview.json / add-result.json / receipt の input_sha256 と一致。payload の両 artifact に confirmation_evidence あり。dry-run と add の artifact sha256_after の差は created_at/updated_at/checked_at の時刻差 (frontmatter に recorded_at が入る) による"
+    },
+    {
+      "id": "no_logic_duplication",
+      "criterion": "plugins/dev-graph に elicitation/compile/spec-state 遷移/章レンダリング相当のロジック複製が無い",
+      "status": "achieved",
+      "evidence": "plugins/dev-graph の *.py を spec-state/hearing/elicit/ヒアリング/compile/章 で grep: 該当は build-graph-node.py の _spec_confirmation (report の PASS/spec_dir/digest 検証のみ)、graph_artifact_readiness.py の見出し判定 docstring、tests のみ。spec-state.json を読む/遷移する .py は無し。build-evaluation-context.py は C24 receipt から evaluator 引数を作るだけ (write-scope none)"
+    }
+  ],
+  "graph_digest": "sha256:2923bc9fb4e0e07a07ece4c3c05b1de281da6727645cb9af28ab3b3d8594d6d1",
+  "notes": [
+    "草案 candidate-import.json の mtime は 10:56 で report (11:16) より前。ただし C02 に渡した入力は import-payload.json (11:22、report より後) であり、草案は C02 に渡されていない。責務境界の対象は C02 入力 payload なので違反とはしない。",
+    "取り込んだのは index.md→specification と 00-requirements-definition.md→architecture の 2 node だけ。他の章は本文から参照するのみで、feature への複製は無い。",
+    "schema-report.json の schema field に環境固有の絶対 path が入っている (validator 出力そのまま)。report の spec_dir の絶対 path は C02 契約上必要。どちらも判定に影響しない軽微な点。",
+    "session transcript は読んでいない。dry-run は graph が revision 1 になっているので再実行せず、記録された input_sha256 で同一性を確認した。"
+  ]
+}

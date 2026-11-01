@@ -837,6 +837,7 @@ def test_repo_all_compositions_pass_as_one_fleet():
         path.parents[1]
         for path in (ROOT / "plugins").glob("*/.claude-plugin/plugin.json")
     }
+    assert expected_plugins
     assert {path.parent for path in compositions} == expected_plugins
 
     proc = run_cli(*(str(path) for path in compositions))

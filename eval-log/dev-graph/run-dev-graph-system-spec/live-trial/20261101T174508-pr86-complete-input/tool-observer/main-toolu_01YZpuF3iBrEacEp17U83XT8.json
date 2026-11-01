@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c576b35b-a427-484f-85b6-93c2ad8ba4dd",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "d0defd8d-7b75-4ba2-9091-db763654c562",
+      "line": 291,
+      "prefix_bytes": 1313891,
+      "prefix_sha256": "fa745a633d6776ca41c25237ea9e713ea65f52cf01a695ad61556a680e7df0ba",
+      "timestamp": "2026-11-01T08:52:21.893Z"
+    },
+    "result": {
+      "uuid": "4c2ab555-1283-49dc-8f38-4a547a1e2480",
+      "line": 294,
+      "prefix_bytes": 1318041,
+      "prefix_sha256": "865c8f9f0ec34490fd8bf3096d86f0641a8b063c7f935b27cc3408c1ad38a9b5",
+      "timestamp": "2026-11-01T08:52:25.559Z"
+    }
+  },
+  "tool_use_id": "toolu_01YZpuF3iBrEacEp17U83XT8",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && PLUGIN_ROOT=\"$CLAUDE_PROJECT_DIR/plugins/system-spec-harness\" && python3 \"$PLUGIN_ROOT/scripts/validate-knowledge-graph.py\" --profile required-info --input \"$PLUGIN_ROOT/skills/run-system-spec-elicit/references/required-info-catalog.json\" --state \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" >/dev/null; echo ri_exit=$?; python3 \"$PLUGIN_ROOT/scripts/validate-coverage-matrix.py\" --matrix \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\" --require-complete --require-basis --require-foundation; echo cov_exit=$?; f=system-spec/spec-state.json; echo \"現物: $CLAUDE_PROJECT_DIR/$f\"; shasum -a 256 $f; echo \"開き方: less $CLAUDE_PROJECT_DIR/$f\""
+  },
+  "is_error": false,
+  "tool_result_content": "ri_exit=0\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov_exit=0\n現物: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec/spec-state.json\ncf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f  system-spec/spec-state.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec/spec-state.json",
+  "tool_use_result": {
+    "stdout": "ri_exit=0\nOK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\ncov_exit=0\n現物: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec/spec-state.json\ncf8638ae6a83de351e908364a57f6028ea340d0594fb0067c413c8ae22d0ef6f  system-spec/spec-state.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec112/fx/system-spec/spec-state.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

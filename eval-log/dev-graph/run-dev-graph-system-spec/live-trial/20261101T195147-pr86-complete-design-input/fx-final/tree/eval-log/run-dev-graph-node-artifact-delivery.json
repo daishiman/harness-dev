@@ -1,0 +1,17 @@
+{
+  "skill": "run-dev-graph-node",
+  "contract": "artifact-delivery-v1",
+  "pre_choice": {
+    "dry_run": {"result": "eval-log/run-dev-graph-node/dry-run-preview.json", "input": "eval-log/run-dev-graph-system-spec/R3-import/import-payload.json", "input_sha256": "93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b", "write_count": 0, "graph_revision": 0, "graph_digest_before_and_after": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245"},
+    "commit": {"result": "eval-log/run-dev-graph-node/add-result.json", "input_sha256": "93e158a9bf90fd9360d35f26161f07e29dee67a8d50d3fda18d189fe53d6990b", "receipt": ".dev-graph/state/receipts/node-r000001-add.json", "receipt_sha256": "334a406a4d41e9937e363ceb867918577699436ffaf3990adfc3d274d3e6fdb7", "graph_revision_after": 1, "graph_digest_after": "sha256:a5b8ebd04adb86e665df9f774c1bd9c52f27c4299e4a9fb7f89d00e61d919e47"}
+  },
+  "presented_artifact": [
+    {"path": "specs/billing-audit-system-spec.md", "sha256": "705c6350f35bcd629f8e62eb74be9e74a100207ca1d959022ebbf0bf1b193d70", "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/specs/billing-audit-system-spec.md"},
+    {"path": "architecture/billing-audit-system-architecture.md", "sha256": "23bfe9a6341f78d65ed9ca53a31f309d652e0cf1d24a60f0cef3c2291a2e782f", "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/architecture/billing-audit-system-architecture.md"}
+  ],
+  "minimal_guards": {"validate-source-lineage.py --node-id x2": "exit0 (checked 2, violations 0)", "validate-graph-schema.py --strict-artifact-readiness": "exit0 (violations 0, readiness complete 2)"},
+  "transitions": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md: artifact_deliveryの選択はstandard)",
+  "recorded_at": "2026-11-01T11:13:30Z"
+}

@@ -1,0 +1,65 @@
+{
+  "responsibility_id": "R3-import",
+  "skill": "run-dev-graph-system-spec",
+  "loop": 1,
+  "decision": "PASS",
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "c24_receipt": {
+    "path": "eval-log/system-spec-c24-receipt.json",
+    "sha256": "f64cd743daac1217d324c09cfc8b0a57f63d580a38cdfb3edfe463bb46c2ac62",
+    "sha256_verified": true
+  },
+  "checklist": [
+    {
+      "item": "全node正規kind、lineage全field/evidence/readiness欠落0",
+      "status": "achieved",
+      "evidence": "graph.json rev1 has exactly 2 nodes: spec-billing-audit-system-spec (specification, specs/) and arch-billing-audit-system-architecture (architecture, subtypes frontend/backend/infrastructure/data/security, architecture/). source_lineage has origin_kind=system-spec-harness, source_plugin, source_path, source_version=0.1.24 (=plugins/system-spec-harness/.claude-plugin/plugin.json version), source_digest, imported_at=2026-10-31T15:36:35Z on both nodes. confirmation_status=confirmed, evaluation_status=pass, implementation_readiness.status=complete, missing_sections=[] on both nodes"
+    },
+    {
+      "item": "source_digest == sha256(source file bytes)",
+      "status": "achieved",
+      "evidence": "system-spec/index.md sha256 f7f64767...45e2 == spec node source_digest; system-spec/00-requirements-definition.md sha256 1cc7fe6b...1402 == arch node source_digest"
+    },
+    {
+      "item": "confirmation_evidence matches evaluator report",
+      "status": "achieved",
+      "evidence": "evaluated_digest == source_digest on both nodes and == eval-log/system-spec-completeness-report.json artifact_snapshot entries for system-spec/index.md and 00-requirements-definition.md; all 12 snapshot entries still match current bytes; report verdict=PASS, spec_dir=<repo_root>/system-spec (import source dir), evaluator.name=assign-system-spec-completeness-evaluator (node evaluator=system-spec-harness:assign-system-spec-completeness-evaluator), gate_results G-matrix/G-source-citation/G-knowledge-graph exit 0, all 6 aspects PASS, gaps=[]"
+    },
+    {
+      "item": "source chapters confirmed",
+      "status": "achieved",
+      "evidence": "00-requirements-definition.md and all 8 technical chapters frontmatter status: confirmed; index.md is compile-generated (frontmatter kind: index only, by design) and lists all 8 chapters 集約状態=確定 / marker confirmed"
+    },
+    {
+      "item": "import 後 validate-source-lineage.py exit 0",
+      "status": "achieved",
+      "evidence": "validate-source-lineage.py --repo-root <root> --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture -> exit 0, status=pass, checked=2, violations=[]; validate-graph-schema.py --strict-artifact-readiness -> exit 0, valid=true, violation_count=0, node_readiness complete=2"
+    },
+    {
+      "item": "written only by C02",
+      "status": "achieved",
+      "evidence": "receipt node-r000001-add.json owner=C02/run-dev-graph-node, operation=add, status=applied, applied_count=2, graph_revision 0->1 (graph.json graph_revision=1), graph_digest_after sha256:7d363f02...11bf == canonical digest of current graph.json, sha256_after of specs/billing-audit-system-spec.md (160590e0...) and architecture/billing-audit-system-architecture.md (47bcc764...) match current files, input_sha256 8fb1221c...a957 == sha256 of eval-log/c02-import-payload.json, pre_write_validation findings 0; only receipts are init + this add"
+    },
+    {
+      "item": "C02 dry-run と確定 add に confirmation_evidence を含む同じ payload",
+      "status": "achieved",
+      "evidence": "run-dev-graph-node-goal-spec.json records dry-run input sha256 5948fe00...; removing only the line '\"expected_graph_revision\": 0,' from the add payload reproduces exactly 5948fe00..., so artifacts incl. source_lineage/confirmation_evidence were byte-identical; the only delta is the CAS field that C02 requires for apply (optional for dry-run)"
+    },
+    {
+      "item": "取込入力の作成と C02 起動は evaluator PASS report の後",
+      "status": "achieved",
+      "evidence": "completeness report birth/mtime 00:32:54 local (PASS); payload birth 00:38:49, C02 goal-spec 00:38:26 (15:38:17Z), receipt recorded 15:39:04Z; imported_at 15:36:35Z also after report"
+    },
+    {
+      "item": "node 本文が source 章と矛盾せず新要件を発明しない",
+      "status": "achieved",
+      "evidence": "arch U1-U9 sections are text-identical to 00-requirements-definition.md (ignoring ** bold); D1 PostgreSQL 16, D2 React+TypeScript SPA, D3 bff-session (backend holds OIDC tokens, browser gets HttpOnly/Secure/SameSite=Lax cookie session) match decisions table; spec FR/BR/NFR items carry qa/U/D refs traceable to chapters/spec-state (e.g., WCAG 2.1 AA + 3 clicks qa-003, p95 2s/5xx 1% qa-035, synchronizer token qa-037, 8h session qa-002, ETag/If-Match no last-write-wins qa-025); details deferred to system-spec/*.md by reference; no feature nodes created (no duplication into features)"
+    }
+  ],
+  "blockers": [],
+  "notes": [
+    "dry-run payload differs from add payload only by expected_graph_revision (C02-mandated CAS); content identical",
+    "report findings: 1 medium (qa-038 bundles 2 topics) carried into spec 未決事項; not blocking (verdict PASS)"
+  ],
+  "next_directive": "R3-import PASS: C02 receipt node-r000001-add.json (rev 0->1) registered spec-billing-audit-system-spec + arch-billing-audit-system-architecture with full source_lineage/confirmation_evidence/readiness complete; lineage gate and strict schema gate exit 0. Parent: update C19 progress/intermediate (IN1 PASS, OUT1 external_pending), hand ids/lineage/readiness to C04, and emit import report."
+}

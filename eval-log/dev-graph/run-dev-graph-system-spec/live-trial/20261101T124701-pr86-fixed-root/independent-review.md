@@ -1,0 +1,29 @@
+FAIL
+
+B1 resource_budget_exceeded: scenarioの上限3300秒に対し、正規pollの最初のHARD_CAP検出が4275秒。公開poll-stateの補正4316秒でも上限超過は変わらない。late_supervision=trueで回収も遅延した。上限の延長・成功扱いは認めない。
+
+B2 completion_not_reached: out/status.jsonが存在せず、C19 progressはloop1のR2/R3等がnot_achievedのまま。R3独立Verifierの初回はAPI ENOTFOUNDで終了し、再試行は収集時点で最終判定なし。C19の全checklist完了・最終周回Anchor・DONE報告を確認できない。
+
+B3 C05_final_verification_incomplete: C05は03:54:15.893Zにstate/refs/validatorを含む初回機械証拠を取得したが、C08前03:58:01.280Zの再取得はrepo_root/inputs/validator_pathを持つ正規doc_verificationと異なるflat形状。C08完了03:58:43Z以降は03:59:06Zのaggregate --source-citationと章/state/refs snapshot照合のみで、C13 validator bytes hash・固定argv・全input digestを含むdoc_verificationを再構成し初回JSON全体と比較した実行がない。C07最終再実行03:59:16Zも二モードstdout/exit/stderrだけでvalidator digest再取得を欠く。C05の最終「全て一致」申告とaggregate --report exit0は、これら必須の全値再照合を代替しない。
+
+B4 C02_responsibility_fork_missing: C02 goal-specは04:07:22.253Zにstandardを記録し、progressは04:07:27.351Zにbaseline rev0・全責務未達を記録。初commitは04:07:44.112612Z。その後04:09:01.347Zにoverall=PASSにするまでR0/R1/R2/R3/R4担当の責務Agent起動は0件で、唯一のAgentはdev-graph-integrity-auditor。sourceが区別する「未達responsibilityのfork」と「必須integrity verifier」の前者を後者で代用している。commitがstandardより後のためpre-choice完成済みの例外は適用できない。
+
+実観測と限界
+
+評価者は/root/review_sysspec107。source/契約のみ先読みしたfresh独立contextで、107収集指示後に107だけを評価。106その他のraw/verdict/evalは参照していない。点数は出力しない。source/Git/実走rawは変更していない。
+
+指定のparser SHA d0ac1e4c9dc5053bf5262bd779bcfe4de6ba1699bbc288352b07b0966fc79184をraw同梱tool-observer-source.pyで照合。凍結raw main+10subagentの全11streamをextract(raw,stream,session_id,original_observer_path,project_root)へ渡し、187eventsを独立再構成した。observed_streamsのbytes/SHA、indexの順序と全field、全event JSON、source uuid/line/prefix_bytes/prefix_sha256を完全一致で確認。original_observer_path=/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/workdir/tool-observer、project_rootは同runのfx。observerはAgent/Write/Editを含まないため、それらはraw native message/tool_use/tool_resultで別に走査した。
+
+raw main SHA=b6bb3b45c2c330ce195cb0f09fa844e1bad0eb13aebabb4d0793e28ac5b0c52a。公開transcript SHAと全11streamの匿名化対応をevidence-redaction.json記載の原本/公開digestと独立照合。prefix/uuid監査は匿名化前の凍結rawへ接地させた。
+
+C05はgenuine fork agent-a0b29b532ac9d99f4として実在し、R1-score/R2-delegate全文Readがある。C07/C06/C08は別contextで順番に実完了し、各必読SSOTのReadを確認。C06/C07はReadのみ、C08はRead/WebFetchのみ。4公式URLの実WebFetch responseがあり、親の意味PASSだけを証拠にしていない。監査台帳のdispatch 1.2とcompletion 1.3のtoken join、receipt session/tool/type/tool_use_id/completion digest/verdictの全一致を確認した。
+
+2 nodeのsource digestとevaluated_digest、評価snapshot中の12artifactの現在bytes、confirmation=confirmed/evaluation_status=pass/readiness=completeを凍結最終treeへ独立照合。C02 dry-run/applyは同input_sha256で、apply receiptはapplied_count=2・rev0→1。これらの部分成果はC19全フロー完了または独立監査契約の充足を意味しない。
+
+追加の形式上の疑義: C19/C02 intermediateのdrift_signalはnone。goal-seek-paradigmの6 enum(initial/aligned/compressing/stagnant/widening/oscillating)には含まれない。実走のhashcheckは6キー/goal/hashのみを検査してexit0となっており、このenum差分を検出しない。今回の全体FAILとは独立に次回の記録で確認が必要。
+
+R0/R1 verifier完了より前にelicitが始まった点、compile-standard.json内の未来時刻、C05 prompt_qualityのvalidate-prompt未実行と単独install例外の適用可否、C05が全Markdown本文・全QA/設計適用を十分に意味監査したかは追加精査範囲として残す。今回それらを独立した確定blockerへ格上げしていない。
+
+未監査範囲: すべてのfoundation/QA/設計解釈の正当性・全Markdownの意味完全性、prompt品質全観点、実走予算token量の独立再計算、timeout後の未完了R3検証の意味判定、最終成果物全量の網羅的品質評価。予算超過・未完了・上記2実行欠陥が確定したため、部分成果を全面PASSと断定しない。
+
+pane.txtはowned-reap後に取得不能だった記録であり成功証拠に使わない。abort-reasonの回収遅延とAPIエラーは実走側の品質失敗とインフラ事象を区別して記録するが、3300秒上限と完了条件は緩和しない。

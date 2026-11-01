@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "862ca8ce-d518-49cc-a815-eb81020ecffe",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8c1de8d9-c253-4620-9a94-73150c5d3127",
+      "line": 106,
+      "prefix_bytes": 833450,
+      "prefix_sha256": "f4f76c2a0eccabbcce30bc6e98bc703ba03ffc5fa01b8dda4c4b7bfd35d54ea4",
+      "timestamp": "2026-11-01T15:21:00.722Z"
+    },
+    "result": {
+      "uuid": "5b20fd30-177d-4c4e-b7b9-00e8f6a57e5c",
+      "line": 109,
+      "prefix_bytes": 836606,
+      "prefix_sha256": "c840b77701bb7cef8bf81250fe6b240b88bc1008dbe6d2c1d0d4ce7cf849fc49",
+      "timestamp": "2026-11-01T15:21:02.798Z"
+    }
+  },
+  "tool_use_id": "toolu_017EabWZvpje9UJdryvFghUP",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec121/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" 2>&1",
+    "description": "Check resume state - validate existing system-spec source lineage"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 0,\n  \"checked_node_ids\": [],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

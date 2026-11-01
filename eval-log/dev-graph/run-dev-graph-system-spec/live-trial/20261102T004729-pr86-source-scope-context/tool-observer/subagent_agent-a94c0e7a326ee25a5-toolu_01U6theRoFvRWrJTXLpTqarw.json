@@ -1,0 +1,43 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5153f99b-12af-4c89-b679-20816bb67111",
+  "stream": "subagent/agent-a94c0e7a326ee25a5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "bbb75c58-6654-47fe-8c8d-c433cbfd38dd",
+      "line": 67,
+      "prefix_bytes": 408379,
+      "prefix_sha256": "afe95c14d903d53bad5468b06cdc94919e7365bf536afc1b337efdc69d06e307",
+      "timestamp": "2026-11-01T15:50:54.055Z"
+    },
+    "result": {
+      "uuid": "f7fc25d4-a647-4d4e-9142-4ebd45335804",
+      "line": 68,
+      "prefix_bytes": 410290,
+      "prefix_sha256": "f0527924f41587a963a57759d7b1c04471129fe4b77a4a97f55fc7c745d22176",
+      "timestamp": "2026-11-01T15:50:58.360Z"
+    }
+  },
+  "tool_use_id": "toolu_01U6theRoFvRWrJTXLpTqarw",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "grep -rlE \"def (compile|render)_spec|apply_spec_transition|build_fetched_references|aggregate_completeness\" plugins/dev-graph | head; echo rc=$?; sed -n 1,12p plugins/dev-graph/scripts/build-project-hook-fallback.py | grep -E \"name|purpose\"",
+    "description": "Search dev-graph for harness implementation copies"
+  },
+  "is_error": false,
+  "tool_result_content": "rc=0\n# name: build-project-hook-fallback\n# purpose: C01 R5 の決定論本体。plain-symlink 導入の repo だけで plugin hooks.json の全 event を `.claude/settings.json` へ (event, matcher, command) 単位で追記 merge し、既存 key/hook group の hash 不変と二重登録 0 を自己検証して rollback manifest を残す。effective plugin hook・disableAllHooks・allowManagedHooksOnly・他 scope の dev-graph hook・link 不一致は書込み 0 で拒否する。",
+  "tool_use_result": {
+    "stdout": "rc=0\n# name: build-project-hook-fallback\n# purpose: C01 R5 の決定論本体。plain-symlink 導入の repo だけで plugin hooks.json の全 event を `.claude/settings.json` へ (event, matcher, command) 単位で追記 merge し、既存 key/hook group の hash 不変と二重登録 0 を自己検証して rollback manifest を残す。effective plugin hook・disableAllHooks・allowManagedHooksOnly・他 scope の dev-graph hook・link 不一致は書込み 0 で拒否する。",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "bashEditDiff": {
+      "files": [],
+      "moreFiles": 0,
+      "shared": true
+    }
+  }
+}

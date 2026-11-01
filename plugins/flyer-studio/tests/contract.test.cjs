@@ -577,10 +577,10 @@ test("汎用の文書は特定presetの中身へMarkdownリンクしない", () 
         return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel) && ids.includes(rel.split(path.sep)[0]);
       });
   // 走査するのは配布キットへ写る .md のうち preset の中身を除いたもの。何が写るかの正本は
-  // scripts/package.py の shipped() で、除外規則をここへ写さない（新しいフォルダは既定で走査に入る）。
+  // scripts/build-local-package.py の shipped() で、除外規則をここへ写さない（新しいフォルダは既定で走査に入る）。
   const listed = require("node:child_process").spawnSync("python3", ["-I", "-B", "-c", [
     "import importlib.util, json",
-    "spec = importlib.util.spec_from_file_location('flyer_package', 'scripts/package.py')",
+    "spec = importlib.util.spec_from_file_location('flyer_package', 'scripts/build-local-package.py')",
     "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)",
     "print(json.dumps([str(p.relative_to(m.ROOT)) for p in m.shipped(m.ROOT) if p.suffix == '.md' and p.is_file()]))",
   ].join("\n")], { cwd: P.ROOT, encoding: "utf8" });
@@ -617,7 +617,7 @@ test("presetの無い素材は参照専用か、人物を含まないものに�
 
 for (const policyFile of [
   "references/design-rules.md",
-  "skills/assign-flyer-review/references/review-contract.md",
+  "skills/assign-flyer-evaluator/references/review-contract.md",
   "references/workflow.md",
 ]) test("判断本文だけの変更で分析承認と完成レビューが失効する: " + policyFile, t => {
   const A = require("../scripts/analysis.cjs"), D = require("../scripts/design.cjs");

@@ -1,0 +1,32 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "7e088399-8515-4f72-b8c8-7b1f9861cc44",
+  "stream": "subagent/agent-a94daf9eeff991113",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "078845e3-9563-4239-98a1-75aeee48909a",
+      "line": 239,
+      "prefix_bytes": 2364125,
+      "prefix_sha256": "4ffe97326a375b7901bb0c1212550a75272755199f4ce7cde4d7faa9822260ce",
+      "timestamp": "2026-11-01T12:11:00.005Z"
+    },
+    "result": {
+      "uuid": "0446250c-0db3-44e5-8c91-d063f3523211",
+      "line": 242,
+      "prefix_bytes": 2369697,
+      "prefix_sha256": "5f03131f283778ccc9034c5dafe2feeed4b4238ace6d8a4acd3841bfacee2049",
+      "timestamp": "2026-11-01T12:11:07.402Z"
+    }
+  },
+  "tool_use_id": "toolu_01ToyzL7cqTGwoV4nJFP1eG2",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py --source-citation /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec/fetched-references.json --state /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec/spec-state.json --repo-root /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx; echo \"exit=$?\"",
+    "description": "Run source citation gate"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"id\": \"G-source-citation\",\n  \"name\": \"validate-source-citation\",\n  \"conditions\": [\n    \"doc_freshness\"\n  ],\n  \"command\": [\n    \"/Users/dm/miniconda3/bin/python3\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/plugins/system-spec-harness/scripts/validate-source-citation.py\",\n    \"--targets\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec/spec-state.json\",\n    \"--references\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec/fetched-references.json\",\n    \"--state\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx/system-spec/spec-state.json\",\n    \"--repo-root\",\n    \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec117/fx\"\n  ],\n  \"exit_code\": 0,\n  \"stdout\": \"OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす\",\n  \"stderr\": \"\"\n}\nexit=0",
+  "tool_use_result": null
+}

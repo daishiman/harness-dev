@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "4779f8f9-a60d-42d0-8e6f-0b3532c041d6",
+      "line": 700,
+      "prefix_bytes": 3697679,
+      "prefix_sha256": "0427788d7d55a0d525b8898caab2fab9b15de5856c01624c43e3db46bb641812",
+      "timestamp": "2026-11-01T04:08:21.301Z"
+    },
+    "result": {
+      "uuid": "82f4224b-8723-4dc4-93d8-117632abacbd",
+      "line": 706,
+      "prefix_bytes": 3701153,
+      "prefix_sha256": "4c2f7637754f9ef693242f347c72c8f555753845430f04dad3d9c32621c18060",
+      "timestamp": "2026-11-01T04:08:23.544Z"
+    }
+  },
+  "tool_use_id": "toolu_01F8odmJJfaCPUaQWs3KU3mQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture > eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json; echo \"exit=$?\"; cat eval-log/run-dev-graph-system-spec/R3-import/lineage-gate.json; stat -f '%Sm %N' -t '%Y-%m-%dT%H:%M:%S' eval-log/system-spec-completeness-report.json eval-log/run-dev-graph-system-spec/R3-import/import-payload.json eval-log/run-dev-graph-system-spec/R3-import/dry-run-preview.json .dev-graph/state/receipts/node-r000001-add.json; shasum -a 256 .dev-graph/state/receipts/node-r000001-add.json specs/billing-audit-system-spec.md architecture/billing-audit-system-architecture.md"
+  },
+  "is_error": false,
+  "tool_result_content": "exit=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\n2026-11-01T13:00:31 eval-log/system-spec-completeness-report.json\n2026-11-01T13:06:01 eval-log/run-dev-graph-system-spec/R3-import/import-payload.json\n2026-11-01T13:07:42 eval-log/run-dev-graph-system-spec/R3-import/dry-run-preview.json\n2026-11-01T13:07:44 .dev-graph/state/receipts/node-r000001-add.json\n8f9bba4c7a83530cf0736be485926ca99d208235efa1253be307b69160fbf14c  .dev-graph/state/receipts/node-r000001-add.json\n541284b7db65fe336ca94305bab5467dc4eb21097c71e7101cfb9305c18f857b  specs/billing-audit-system-spec.md\nf95cabe5b9d4d928f94b589d401468a2fe124a3b54cca27a76c87cb138e3b1a0  architecture/billing-audit-system-architecture.md",
+  "tool_use_result": {
+    "stdout": "exit=0\n{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\n2026-11-01T13:00:31 eval-log/system-spec-completeness-report.json\n2026-11-01T13:06:01 eval-log/run-dev-graph-system-spec/R3-import/import-payload.json\n2026-11-01T13:07:42 eval-log/run-dev-graph-system-spec/R3-import/dry-run-preview.json\n2026-11-01T13:07:44 .dev-graph/state/receipts/node-r000001-add.json\n8f9bba4c7a83530cf0736be485926ca99d208235efa1253be307b69160fbf14c  .dev-graph/state/receipts/node-r000001-add.json\n541284b7db65fe336ca94305bab5467dc4eb21097c71e7101cfb9305c18f857b  specs/billing-audit-system-spec.md\nf95cabe5b9d4d928f94b589d401468a2fe124a3b54cca27a76c87cb138e3b1a0  architecture/billing-audit-system-architecture.md",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "e5da3047-f2ae-4197-820c-0dc5f20fae80",
+      "line": 550,
+      "prefix_bytes": 2684064,
+      "prefix_sha256": "c2d464a9f32dcfd7d8e545a39199d81bada8db061137aafe493b14177cce7c93",
+      "timestamp": "2026-11-01T04:05:43.058Z"
+    },
+    "result": {
+      "uuid": "f0d3b09e-8e80-4560-80f3-02d1fd35d21c",
+      "line": 551,
+      "prefix_bytes": 2685020,
+      "prefix_sha256": "c2888188c72ff5e7199b948d98582cd4d448d521b01faa1c90cee1fc0ef1cced",
+      "timestamp": "2026-11-01T04:05:45.229Z"
+    }
+  },
+  "tool_use_id": "toolu_01K4tFjHwdZzVXnZVezqMRRz",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 - <<'PY'\nimport json, pathlib\np = pathlib.Path(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx/eval-log/run-dev-graph-system-spec/receipts/compile-standard.json\")\nd = json.loads(p.read_text(encoding=\"utf-8\"))\nfor t in d[\"transitions\"]:\n    t[\"at\"] = \"2026-11-01T03:53:02Z\"\nd[\"timestamp_correction\"] = \"初回記録の at 値 (04:10:00Z) は手入力で実時刻ではなかったため、本ファイルの実書込時刻 (mtime 03:53:02Z) に訂正した (R2 verifier 指摘)。\"\np.write_text(json.dumps(d, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\nprint(\"corrected\")\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "corrected",
+  "tool_use_result": {
+    "stdout": "corrected",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

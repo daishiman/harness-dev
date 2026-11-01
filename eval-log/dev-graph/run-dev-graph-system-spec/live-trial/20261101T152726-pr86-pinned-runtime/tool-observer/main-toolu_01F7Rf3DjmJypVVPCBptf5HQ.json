@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "062ed4b3-73fa-4468-be23-977e38275da5",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c93b3911-c93f-4563-a3be-a31d189a271e",
+      "line": 108,
+      "prefix_bytes": 849144,
+      "prefix_sha256": "3e4bc1b3278f8e9de0f6dfbbfbefaa9b4967b10775e9f546449e332e0312b225",
+      "timestamp": "2026-11-01T15:28:11.411Z"
+    },
+    "result": {
+      "uuid": "00755714-ee4a-4065-ba5f-e8d35566611a",
+      "line": 116,
+      "prefix_bytes": 861115,
+      "prefix_sha256": "0c33cfafaf7efca239f064a875cb8bec4552b7df75bb7e6a8dd242869e216163",
+      "timestamp": "2026-11-01T15:28:17.802Z"
+    }
+  },
+  "tool_use_id": "toolu_01F7Rf3DjmJypVVPCBptf5HQ",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec122/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/resolve-repo-context.py --help 2>&1 | head -30; ls plugins/dev-graph/scripts plugins; cat ../workdir/fixture-init-receipt.json | head -50"
+  },
+  "is_error": false,
+  "tool_result_content": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nplugins:\ndev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n{\n  \"content_roots\": {\n    \"architecture\": \"architecture\",\n    \"documents\": \"docs\",\n    \"features\": \"features\",\n    \"issues\": \"issues\",\n    \"specifications\": \"specs\",\n    \"tasks\": \"tasks\"\n  },\n  \"created\": [\n    \".dev-graph\",\n    \".dev-graph/cache\",\n    \".dev-graph/config.json\",\n    \".dev-graph/locks\",\n    \".dev-graph/state\",\n    \".dev-graph/state/graph.json\",\n    \".dev-graph/state/receipts\",\n    \".dev-graph/templates\",\n    \".dev-graph/templates/README.md\",\n    \".dev-graph/templates/api-contract.md\",\n    \".dev-graph/templates/architecture-backend.md\",\n    \".dev-graph/templates/architecture-data.md\",\n    \".dev-graph/templates/architecture-frontend.md\",\n    \".dev-graph/templates/architecture-infrastructure.md\",\n    \".dev-graph/templates/architecture-security.md\",\n    \".dev-graph/templates/architecture.md\",\n    \".dev-graph/templates/claude-settings.example.json\",\n    \".dev-graph/templates/common-frontmatter.md\",\n    \".dev-graph/templates/document.md\",\n    \".dev-graph/templates/feature.md\",\n    \".dev-graph/templates/issue.md\",\n    \".dev-graph/templates/repo-config.example.json\",\n    \".dev-graph/templates/specification.md\",\n    \".dev-graph/templates/system-phase-spec.md\",\n    \".dev-graph/templates/system-plan-contract.json\",\n    \".dev-graph/templates/system-task-spec.md\",\n    \".dev-graph/templates/task-graph-node.md\",\n    \".dev-graph/templates/task.md\",\n    \".dev-graph/templates/template-contract.json\",\n    \"architecture\",\n    \"docs\",\n    \"features\",\n    \"issues\",\n    \"specs\",\n    \"tasks\"\n  ],\n  \"dry_run\": false,\n  \"hook_source\": \"plugin\",\n  \"local_state\": {\n    \"cache\": \".dev-graph/cache\",",
+  "tool_use_result": {
+    "stdout": "usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]\n                               [--mode {read,write}]\n\noptions:\n  -h, --help            show this help message and exit\n  --repo-root REPO_ROOT\n  --config CONFIG\n  --mode {read,write}\nplugins:\ndev-graph\nharness-creator\nskill-governance-adapters\nsystem-dev-planner\nsystem-spec-harness\n\nplugins/dev-graph/scripts:\n_common.py\nbd-bridge.py\nbuild-github-projection.py\nbuild-graph-node.py\nbuild-init-scaffold.py\nbuild-merged-graph.py\nbuild-parity-manifest.py\nbuild-project-hook-fallback.py\ndiff-github-issues.py\ndiff-github-project-fields.py\nextract-graph-status.py\nextract-plugin-root.py\ngh-bridge.py\nguard-requirements-handoff.py\nlint-open-residue.py\nlint-orphan-external-ref.py\nmanage-worktree-lease.py\nreconcile-github-lifecycle.py\nregister-package.py\nrender-graph-html.py\nresolve-repo-context.py\nschedule-graph.py\nvalidate-graph-schema.py\nvalidate-harness-link.py\nvalidate-readiness-binding.py\nvalidate-source-lineage.py\n{\n  \"content_roots\": {\n    \"architecture\": \"architecture\",\n    \"documents\": \"docs\",\n    \"features\": \"features\",\n    \"issues\": \"issues\",\n    \"specifications\": \"specs\",\n    \"tasks\": \"tasks\"\n  },\n  \"created\": [\n    \".dev-graph\",\n    \".dev-graph/cache\",\n    \".dev-graph/config.json\",\n    \".dev-graph/locks\",\n    \".dev-graph/state\",\n    \".dev-graph/state/graph.json\",\n    \".dev-graph/state/receipts\",\n    \".dev-graph/templates\",\n    \".dev-graph/templates/README.md\",\n    \".dev-graph/templates/api-contract.md\",\n    \".dev-graph/templates/architecture-backend.md\",\n    \".dev-graph/templates/architecture-data.md\",\n    \".dev-graph/templates/architecture-frontend.md\",\n    \".dev-graph/templates/architecture-infrastructure.md\",\n    \".dev-graph/templates/architecture-security.md\",\n    \".dev-graph/templates/architecture.md\",\n    \".dev-graph/templates/claude-settings.example.json\",\n    \".dev-graph/templates/common-frontmatter.md\",\n    \".dev-graph/templates/document.md\",\n    \".dev-graph/templates/feature.md\",\n    \".dev-graph/templates/issue.md\",\n    \".dev-graph/templates/repo-config.example.json\",\n    \".dev-graph/templates/specification.md\",\n    \".dev-graph/templates/system-phase-spec.md\",\n    \".dev-graph/templates/system-plan-contract.json\",\n    \".dev-graph/templates/system-task-spec.md\",\n    \".dev-graph/templates/task-graph-node.md\",\n    \".dev-graph/templates/task.md\",\n    \".dev-graph/templates/template-contract.json\",\n    \"architecture\",\n    \"docs\",\n    \"features\",\n    \"issues\",\n    \"specs\",\n    \"tasks\"\n  ],\n  \"dry_run\": false,\n  \"hook_source\": \"plugin\",\n  \"local_state\": {\n    \"cache\": \".dev-graph/cache\",",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

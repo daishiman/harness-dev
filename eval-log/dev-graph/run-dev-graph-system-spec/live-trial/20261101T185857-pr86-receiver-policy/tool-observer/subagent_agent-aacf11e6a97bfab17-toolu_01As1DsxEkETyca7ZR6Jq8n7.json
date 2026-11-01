@@ -1,0 +1,31 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "5ae0e544-0fe8-4950-bba2-32ce2690e16b",
+  "stream": "subagent/agent-aacf11e6a97bfab17",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "2f472ccf-5f3b-47d8-897d-ce8d7008398d",
+      "line": 113,
+      "prefix_bytes": 577592,
+      "prefix_sha256": "970aacb385bf8ad369986b2ab242418b4cca228b5bbda350c83186f81bd0d6e1",
+      "timestamp": "2026-11-01T10:10:22.038Z"
+    },
+    "result": {
+      "uuid": "d6d23775-56d9-41a7-b0ca-68d0b235d3d9",
+      "line": 114,
+      "prefix_bytes": 578922,
+      "prefix_sha256": "12fafbfb2be717bf5be7cd05859d1317f8286d35c465c9ac924ff7112ce08e91",
+      "timestamp": "2026-11-01T10:10:25.514Z"
+    }
+  },
+  "tool_use_id": "toolu_01As1DsxEkETyca7ZR6Jq8n7",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec114/fx; python3 plugins/system-spec-harness/scripts/validate-spec-doc-sync.py --matrix system-spec/spec-state.json --references system-spec/fetched-references.json --spec-root system-spec; echo sync=$?; V=plugins/harness-creator/vendor/prompt-creator; ls $V; python3 $V/verify-completeness.py --help 2>&1 | head -12"
+  },
+  "is_error": false,
+  "tool_result_content": "OK: 正本 spec-state.json の goal・根拠・出典が章へ投影されている\nsync=0\nverify-completeness.py\nusage: verify-completeness.py [-h] [--input INPUT] [--layers LAYERS]\n\n7層プロンプトの網羅性 + Layer 5 ゴールシーク契約 (l5-contract v2.0.0) を検証する\n\noptions:\n  -h, --help       show this help message and exit\n  --input INPUT\n  --layers LAYERS  必須 Layer のサブセット (brief.layers_required)。例: L1,L2,L5。未指定時は 7\n                   層全て必須。",
+  "tool_use_result": null
+}

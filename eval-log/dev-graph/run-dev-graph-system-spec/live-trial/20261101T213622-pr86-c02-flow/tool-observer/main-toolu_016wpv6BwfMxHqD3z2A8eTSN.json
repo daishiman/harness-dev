@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "74233574-a960-4a43-b45f-5681a2702a4d",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "c99fc1c3-179d-43c7-98da-ebb8d15125a1",
+      "line": 156,
+      "prefix_bytes": 1152223,
+      "prefix_sha256": "41a21d406cad69a2d95eabe4d672aad69dbafcab03fc877a9894aeb1500c1bb0",
+      "timestamp": "2026-11-01T12:40:00.061Z"
+    },
+    "result": {
+      "uuid": "10fb9fa9-6f52-43a6-a2dd-7600d8f528c7",
+      "line": 159,
+      "prefix_bytes": 1156421,
+      "prefix_sha256": "6d77afe5e3bdf9e47f21fb16ad382c573d82bcd20d2069458a68755864cd717d",
+      "timestamp": "2026-11-01T12:40:03.824Z"
+    }
+  },
+  "tool_use_id": "toolu_016wpv6BwfMxHqD3z2A8eTSN",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B -c 'import json;json.load(open(\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\"));print(\"minimal_guard: json parse OK\")' && echo \"path: $CLAUDE_PROJECT_DIR/eval-log/run-dev-graph-system-spec-preflight-report.json\" && shasum -a 256 \"$CLAUDE_PROJECT_DIR/eval-log/run-dev-graph-system-spec-preflight-report.json\" && echo \"開き方: less $CLAUDE_PROJECT_DIR/eval-log/run-dev-graph-system-spec-preflight-report.json\"",
+    "description": "Guard and present preflight report path/digest"
+  },
+  "is_error": false,
+  "tool_result_content": "minimal_guard: json parse OK\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\nf1ad0f8c7096e4f71ad5692fbae86f14cbe4811ded7764d482fda8edc9f6e717  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json",
+  "tool_use_result": {
+    "stdout": "minimal_guard: json parse OK\npath: /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\nf1ad0f8c7096e4f71ad5692fbae86f14cbe4811ded7764d482fda8edc9f6e717  /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json\n開き方: less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec118/fx/eval-log/run-dev-graph-system-spec-preflight-report.json",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

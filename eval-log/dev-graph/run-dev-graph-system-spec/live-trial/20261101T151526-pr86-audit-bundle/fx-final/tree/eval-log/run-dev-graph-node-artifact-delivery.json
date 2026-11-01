@@ -1,0 +1,11 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "transitions": [
+    {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "C24 write receipt repo_root==realpath(content_roots.repository); dry-run valid findings 0; apply status applied applied_count 2; validate-source-lineage exit0 checked 2"},
+    {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented", "artifact": {"receipt": {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "273b4cc4a1fff1eac77f886c4be10d2e81c385d6717bf224a4b85835c8bca367"}, "nodes": [{"path": "specs/billing-audit-system-spec.md", "sha256": "1a27b761f66b2f8c21f55ba59ec624371f90ed27b9912df58fc7bfbfa3490b6c"}, {"path": "architecture/billing-audit-system-architecture.md", "sha256": "50806c9ddb42c1c6c1417dd3541a86a05f2333bf094ea7faa99f376deb99ae65"}], "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec108/fx/.dev-graph/state/receipts/node-r000001-add.json"}},
+    {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "隔離fixtureの事前回答契約 (task.md: artifact_deliveryの選択はstandard)。本repoや外部アカウントの承認ではない"},
+    {"from": "user_choice_recorded", "event": "standard", "to": "semantic_evaluator_started"}
+  ],
+  "current_state": "semantic_evaluator_started"
+}

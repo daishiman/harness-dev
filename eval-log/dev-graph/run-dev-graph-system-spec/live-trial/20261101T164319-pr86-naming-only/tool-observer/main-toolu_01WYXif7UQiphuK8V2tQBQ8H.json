@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "fa71c6f2-1629-45db-98fa-9a3cac494523",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "8e1646e6-125d-4833-ab8f-addb838f642f",
+      "line": 358,
+      "prefix_bytes": 1155208,
+      "prefix_sha256": "635526455e19ef86d975177d908ec7a1ad89a96452a6bdf1e215edac248582de",
+      "timestamp": "2026-11-01T07:51:15.882Z"
+    },
+    "result": {
+      "uuid": "c5efc386-ed50-4679-96d4-eae81db15bef",
+      "line": 364,
+      "prefix_bytes": 1158038,
+      "prefix_sha256": "8608f8fdae217769ba91b2f9e42a9992939bda202d773ee01385cf412b9d2957",
+      "timestamp": "2026-11-01T07:51:19.139Z"
+    }
+  },
+  "tool_use_id": "toolu_01WYXif7UQiphuK8V2tQBQ8H",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec109/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B plugins/dev-graph/scripts/validate-source-lineage.py --repo-root \"$CLAUDE_PROJECT_DIR\" --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture; echo lineage_rc=$?; python3 -B plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root \"$CLAUDE_PROJECT_DIR\" --strict-artifact-readiness >/dev/null; echo schema_rc=$?; python3 - <<'PY'\nimport json,hashlib\ng=json.load(open('.dev-graph/state/graph.json'))\nfor n in g['nodes']:\n    sl=n['source_lineage'];ce=n['confirmation_evidence']\n    print(n['graph_node_id'],n['confirmation_status'],n['evaluation_status'],n['implementation_readiness']['status'],sl['source_path'],sl['source_version'],sl['imported_at'],ce['evaluated_digest']==sl['source_digest']==hashlib.sha256(open(sl['source_path'],'rb').read()).hexdigest())\nprint(g['graph_revision'],'sha256:'+hashlib.sha256(json.dumps(g,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())\nPY"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_rc=0\nschema_rc=0\nspec-billing-audit-system-spec confirmed pass complete system-spec/index.md 0.1.24 2026-11-01T07:51:01Z True\narch-billing-audit-system-architecture confirmed pass complete system-spec/00-requirements-definition.md 0.1.24 2026-11-01T07:51:01Z True\n1 sha256:e205070ec45c8811e8035b217bc13be86e59b918184beb98a5939f43c217426f",
+  "tool_use_result": {
+    "stdout": "{\n  \"checked\": 2,\n  \"checked_node_ids\": [\n    \"spec-billing-audit-system-spec\",\n    \"arch-billing-audit-system-architecture\"\n  ],\n  \"graph\": \".dev-graph/state/graph.json\",\n  \"status\": \"pass\",\n  \"violations\": []\n}\nlineage_rc=0\nschema_rc=0\nspec-billing-audit-system-spec confirmed pass complete system-spec/index.md 0.1.24 2026-11-01T07:51:01Z True\narch-billing-audit-system-architecture confirmed pass complete system-spec/00-requirements-definition.md 0.1.24 2026-11-01T07:51:01Z True\n1 sha256:e205070ec45c8811e8035b217bc13be86e59b918184beb98a5939f43c217426f",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

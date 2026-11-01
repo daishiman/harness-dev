@@ -1,0 +1,17 @@
+{
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "mode": "--resume",
+  "presented_artifact": {
+    "path": "/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec/spec-state.json",
+    "sha256": "f6b2fed7d76b05bd609fcba75b44f936e7dd1f8998f05f47043d72fa4a05d4aa",
+    "open_with": "less /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec/spec-state.json"
+  },
+  "guards": {
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": "exit0",
+    "validate-knowledge-graph --profile required-info ungrounded_blocking_items": []
+  },
+  "transitions": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started"],
+  "choice": "standard",
+  "choice_source": "isolated fixture pre-answer contract (task.md: artifact_delivery=standard)",
+  "post_choice_result": "hearing_progress.complete=true / next_question=null / 未収集0 のため追加 turn なし (新規利用者入力なしで approval・回答を作らない)。writer 遷移 0 件で state digest 不変"
+}

@@ -1,6 +1,6 @@
 # 責務と正本
 
-入口の地図は root の [SKILL.md](../SKILL.md)、工程の順序と戻り先は [workflow](workflow.md)。この文書は、skill ごとの責務の境界と、どの情報をどこで一元管理するかを示す。6 skill が既存の agent・reference・知識・schema を使って、判断・制作・独立評価・学習を分担する。local agent がある段階はその担当が、無い intake・learn は呼び出された AI が実行する。共通の判断手順と資産の使い分けは [stage-common](stage-common.md#共通の判断手順) が正本。
+入口の地図は [kit-entry](kit-entry.md)（ローカルキットでは plugin 直下の SKILL.md として書き出す）、工程の順序と戻り先は [workflow](workflow.md)。この文書は、skill ごとの責務の境界と、どの情報をどこで一元管理するかを示す。6 skill が既存の agent・reference・知識・schema を使って、判断・制作・独立評価・学習を分担する。local agent がある段階はその担当が、無い intake・learn は呼び出された AI が実行する。共通の判断手順と資産の使い分けは [stage-common](stage-common.md#共通の判断手順) が正本。
 
 ## 6 skill の境界
 
@@ -8,9 +8,9 @@
 |---|---|---|
 | run-intake-flyer | AI が資料の意味と出典・不足・様式候補を判断し、一括質問と回答検査をコマンドへ渡す → brief.json・intake.json・style-proposals.json・essence-baseline.json | interview-guide、[intake-questions.json](intake-questions.json)、intake.cjs・essence.cjs |
 | run-analyze-flyer | 元画像は read-only。現物診断・保持点・候補・採否理由と、別担当へ渡す未判定台帳の準備 → analysis.json・analysis-review.json の雛形 | artifact-analyst、analysis-contract |
-| assign-flyer-analysis-review | 生成済み台帳へ評価を記入。提案の独立 PASS/FIX と本質条項に結ぶ根拠 → analysis-review.json | analysis-evaluator、evaluation-contract |
+| assign-flyer-analysis-evaluator | 生成済み台帳へ評価を記入。提案の独立 PASS/FIX と本質条項に結ぶ根拠 → analysis-review.json | analysis-evaluator、evaluation-contract |
 | run-create-flyer | 採用案の実装、意図・要求と実要素の対応、新 PDF/PNG・機械検査・finalize | flyer-producer、production-contract |
-| assign-flyer-review | 評価のみ。新画像の 5 観点と要求ごとの充足 → visual-review.json | visual-review-coordinator、review-contract |
+| assign-flyer-evaluator | 評価のみ。新画像の 5 観点と要求ごとの充足 → visual-review.json | visual-review-coordinator、review-contract |
 | run-learn-flyer | 機械が納品完了案件を記録・集計し、AI が根拠・反例・限界を解釈して改善仮説と次回の参考値を返す。規範は自動変更しない | learn.cjs、知見台帳 |
 
 評価テンプレートの生成・再発行と履歴保全は呼出側の準備、評価者の直接編集は生成済み台帳の判定記入に限る。コマンドの付随更新は [stage-common の所有規則](stage-common.md#所有と機械による付随更新) に従い、自由な上流変更や履歴編集には広げない。
@@ -28,7 +28,8 @@
 | [design-contract.json](design-contract.json) | initDefaults・cycleBudget・expertEscalation・reviewPolicyFiles・analysisPolicyFiles と、観点・担当・キー |
 | [design-knowledge-index.json](design-knowledge-index.json) | 指針 ID（DD）の参照先・読み込み条件・usedBy（どの stage と観点が使うか） |
 | [intake-questions.json](intake-questions.json) | ヒアリングの質問と must-fact |
-| [plugin-composition.yaml](../plugin-composition.yaml) | 部品の登録と呼び出し関係 |
+| [registry.json](registry.json) | 部品の登録と呼び出し関係・FIX の戻り（revision）・非FIXの差し戻し・退役の記録（登録簿の正本） |
+| [plugin-composition.yaml](../plugin-composition.yaml) | harness 書式の部品宣言。登録簿と manifest から、名前・版・説明・owner・contract・eval_sinks・公開面（登録簿の skill・repo で実在する run-skill-feedback・plugin 直下の agent）・依存の DAG・外部依存を写した生成物で、手で直さない。FIX の戻り・非FIXの差し戻し・退役の記録は写さない |
 | [package-contract.json](package-contract.json) | 配布の検査条件 |
 | [`references/presets/<name>/`](presets/) | 案件固有の値と知見。選択した preset.json の knowledgeFiles から読む |
 | [examples](../examples) | 特定の案件に依らない架空の brief・scene の形の見本（init は読まない）。preset 固有の見本は各 preset.json の briefExample（preset 付き init の下書き）と sceneExample が指し、汎用の見本と置き場を分ける |

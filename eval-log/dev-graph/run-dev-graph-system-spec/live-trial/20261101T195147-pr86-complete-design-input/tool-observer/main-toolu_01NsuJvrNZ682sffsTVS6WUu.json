@@ -1,0 +1,38 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "21d0dbf5-d111-4bba-a3fa-3f763f6be4ad",
+  "stream": "main",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "ace4027b-ce45-4687-8a22-c27759c77cdc",
+      "line": 431,
+      "prefix_bytes": 2549925,
+      "prefix_sha256": "8166c8a07f7add907612f4480c9ce2e94db5e831530208cfdf98119b0174c21d",
+      "timestamp": "2026-11-01T10:58:19.352Z"
+    },
+    "result": {
+      "uuid": "b02a22f1-92e1-4f15-b8f9-300b8f7acced",
+      "line": 432,
+      "prefix_bytes": 2552102,
+      "prefix_sha256": "a096a21748d74371705fe090995dd42aeb91ee86767d5187976e00d80a2dbeb4",
+      "timestamp": "2026-11-01T10:58:23.622Z"
+    }
+  },
+  "tool_use_id": "toolu_01NsuJvrNZ682sffsTVS6WUu",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && python3 -B \"$CLAUDE_PROJECT_DIR/plugins/dev-graph/skills/run-dev-graph-system-spec/scripts/build-evaluation-context.py\" --context-receipt \"$CLAUDE_PROJECT_DIR/eval-log/run-dev-graph-system-spec/c24-receipt.json\" --output eval-log/system-spec-completeness-report.json; echo \"helper_exit=$?\"",
+    "description": "Build evaluator context args"
+  },
+  "is_error": false,
+  "tool_result_content": "{\n  \"skill_args\": \"--spec-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec --output /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/eval-log/system-spec-completeness-report.json\",\n  \"spec_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec\",\n  \"output\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/eval-log/system-spec-completeness-report.json\",\n  \"evidence_ref\": \"eval-log/system-spec-completeness-report.json\",\n  \"context_sha256\": \"8bf107d8cc2ed039bc513645fdb1f7c2eb060d5a646f57eeda5a44a1bc6c6205\"\n}\nhelper_exit=0",
+  "tool_use_result": {
+    "stdout": "{\n  \"skill_args\": \"--spec-dir /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec --output /private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/eval-log/system-spec-completeness-report.json\",\n  \"spec_dir\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/system-spec\",\n  \"output\": \"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec116/fx/eval-log/system-spec-completeness-report.json\",\n  \"evidence_ref\": \"eval-log/system-spec-completeness-report.json\",\n  \"context_sha256\": \"8bf107d8cc2ed039bc513645fdb1f7c2eb060d5a646f57eeda5a44a1bc6c6205\"\n}\nhelper_exit=0",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

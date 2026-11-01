@@ -1,0 +1,12 @@
+[
+  {
+    "knowledge_ref": "skills/ref-system-design-knowledge/references/secure-by-design.md#中核概念",
+    "principle": "最小権限と既定拒否",
+    "applicability": "applied",
+    "rationale": "qa-002の社内IdPのOIDCとロール認可・8時間セッションを前提に、qa-026の請求担当・リーダー・内部監査・情報システム部の操作権限を許可表へ分ける。列挙されない操作は拒否し、画面表示だけでなくAPI側でも担当取引先の範囲を判定する設計解釈とする。",
+    "tradeoffs": [
+      "IdP停止の影響を受けるため、障害時の扱いと監査が必要。",
+      "細粒度の認可は権限表と境界テストの保守負担を伴う。"
+    ]
+  }
+]

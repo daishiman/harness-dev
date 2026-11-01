@@ -1,0 +1,37 @@
+{
+  "observer_projection_id": "harness-native-event-mirror-v3",
+  "schema_version": 3,
+  "session_id": "c0ac8162-0bf1-4615-9b58-3c401e528e43",
+  "stream": "subagent/agent-a840a66f934c8d8d5",
+  "kind": "tool_call",
+  "source": {
+    "assistant": {
+      "uuid": "24de320d-b789-4445-86f2-5fb85a4eb0c3",
+      "line": 93,
+      "prefix_bytes": 714959,
+      "prefix_sha256": "0a91f3726dd1a0705dfa8f6f727723afc1f3232c84e42699e93aa8065ed80c88",
+      "timestamp": "2026-11-01T04:04:14.380Z"
+    },
+    "result": {
+      "uuid": "8f92b4a4-a0db-4a6d-be90-0ecf2af3c7f5",
+      "line": 94,
+      "prefix_bytes": 716400,
+      "prefix_sha256": "2723345efbcebdd998f0d4bf8a1138b5aed5799549112f85b67b95da86c6d852",
+      "timestamp": "2026-11-01T04:04:16.439Z"
+    }
+  },
+  "tool_use_id": "toolu_01JYC94AosngxmLAPQCoar5q",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "export CLAUDE_PROJECT_DIR=\"/private/tmp/claude-501/pr86-ci-live/lt/runs/sysspec107/fx\" && cd -- \"$CLAUDE_PROJECT_DIR\" && [ \"$(pwd -P)\" = \"$CLAUDE_PROJECT_DIR\" ] && A=plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py; grep -nE \"write_text|open\\(.*['\\\"]w|\\.write\\(|mkdir|unlink|replace\\(\" $A plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/audit_fork_attribution.py plugins/dev-graph/scripts/validate-graph-schema.py plugins/system-spec-harness/scripts/validate-coverage-matrix.py plugins/system-spec-harness/scripts/validate-source-citation.py | grep -v \"sys.stdout.write\\|sys.stderr.write\" | head"
+  },
+  "is_error": false,
+  "tool_result_content": "plugins/dev-graph/scripts/validate-graph-schema.py:101:            datetime.fromisoformat(value.replace(\"Z\", \"+00:00\"))\nplugins/dev-graph/scripts/validate-graph-schema.py:123:                target = target[part.replace(\"~1\", \"/\").replace(\"~0\", \"~\")]",
+  "tool_use_result": {
+    "stdout": "plugins/dev-graph/scripts/validate-graph-schema.py:101:            datetime.fromisoformat(value.replace(\"Z\", \"+00:00\"))\nplugins/dev-graph/scripts/validate-graph-schema.py:123:                target = target[part.replace(\"~1\", \"/\").replace(\"~0\", \"~\")]",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  }
+}

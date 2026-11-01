@@ -364,6 +364,28 @@ test("様式: report は言葉にできなかった割合 (f) と採択ラベル
   assert.equal(style.reconfirm, true);
 });
 
+test("様式: 採択ラベルの傾向 (g) と suggest の参考候補は minCases だけで選び、割合が minRate 未満のラベルも返す", () => {
+  freshHome();
+  for (let i = 0; i < 3; i++) L.record(makeCase({ styleLabel: ["切り絵"] }));
+  for (const label of ["水彩", "水彩", "レトロ印刷", "レトロ印刷", "版画", "版画", "線画", "線画"])
+    L.record(makeCase({ styleLabel: [label] }));
+  const { json } = L.report();
+  assert.equal(json.minCases, 3);
+  assert.equal(json.minRate, 0.3);
+  const g = json.sections.styleLabels;
+  assert.equal(g.status, "ok");
+  assert.equal(g.cases, 11);
+  const kirie = g.byLabel.find((s) => s.label === "切り絵");
+  assert.deepEqual(kirie, { label: "切り絵", cases: 3, rate: 0.273 });
+  assert.ok(kirie.rate < json.minRate, "割合が minRate 未満のデータになっていない");
+  assert.deepEqual(g.trends, ["切り絵"]);
+  const style = Object.values(L.suggest().suggestions).find((v) => v.path === "stylePreferences");
+  assert.ok(style, "様式の参考候補が無い");
+  assert.deepEqual(style.labels, ["切り絵"]);
+  // 根拠と反例が読めるよう、文には件数と母数が付く（反例は 11 - 3）。
+  assert.match(style.text, /切り絵（3\/11 件）/);
+});
+
 test("様式: 件数が minCases 未満なら (f)(g) は insufficient で、suggest も様式を返さない", () => {
   freshHome();
   L.record(makeCase({ style: "proposal" }));
