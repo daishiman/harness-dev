@@ -726,5 +726,24 @@
     },
     "model_pinning_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/native-model-pinning.json",
     "model_pinning_scope": "既存default実測モデルを明示pinしdefault選択driftを排除。actual_modelはnative messageから確認。proofへ変更せずsource/3観測/予算を維持。"
+  },
+  "post_publish_guard_correction": {
+    "commit_before_correction": "3655815a769b96e29d4686720b9d4458857fb269",
+    "failure_job_url": "https://github.com/daishiman/harness-dev/actions/runs/41326697816/job/124908030466",
+    "proposal_id": "PROP-2026-11-02-PR86-PROBE-EVIDENCE-P1",
+    "scope": "既存の隔離probe manifest4件のP1記録を追記。source/closure/実走原本/合格条件/CI実装は不変。",
+    "target_sha256": {
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T191257-pr86-local-receiver-policy/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T195147-pr86-complete-design-input/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T205330-pr86-foreground/foreground-runtime-probe/nested-probe-plugin/.claude-plugin/plugin.json": "bc571966de0dcee7870b503292cae185a3498d19250791423bad8e81b423f32e",
+      "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261101T205330-pr86-foreground/native-memory-probe/probe-plugin/.claude-plugin/plugin.json": "26ec3525bb41db9199932ff6351dcd7ef9e14838a67b7dd2b8abe89e9b910c62"
+    },
+    "validation_command": "python3 -B scripts/guard-change-category.py --base origin/main",
+    "latest_head_ci_result": "追補push後にGitHub Actionsの同headで確認する。",
+    "local_validation": {
+      "exit": 0,
+      "summary": "total=11970 blocked=0",
+      "closure_sha256_unchanged": "ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef"
+    }
   }
 }
