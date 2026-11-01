@@ -1,0 +1,99 @@
+{
+  "reviewer": "elegant_verifier",
+  "independent_of_implementers": true,
+  "reset_statement": "先行分析と改善結果を正解とみなす前提を破棄し、現在の実装・契約・生成済みHTMLを新たに読み直した。対象の変更・git操作は行わない。",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "R5の原因別R2/R3差戻しと、図解枚数の自動復帰禁止を確認"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "媒体の使い分け・実例リンク・専用作図担当・display_unavailable release未達を確認"
+      ]
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "初期11所見は解消したが、追加反例F-0012で元のdescriptionが支援技術から消失するため訂正"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "C01/R3の専用作図→figure IMG、実表示証跡のC01/R4→C03→C06、C19の同一バイト複製を確認"
+      ]
+    }
+  },
+  "finding_resolutions": [
+    {
+      "id": "F-0001",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0002",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0003",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0004",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0005",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0006",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0007",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0008",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0009",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0010",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0011",
+      "status": "resolved"
+    },
+    {
+      "id": "F-0012",
+      "status": "unresolved",
+      "evidence": [
+        "同じbignumber入力をC14とC11に渡しChrome AXツリーを比較。SVG imageのdescriptionにある文がHTML figureには無かった"
+      ]
+    }
+  ],
+  "visual_observations": [
+    "1440/768/375pxでページ全体の横はみ出し0、候補のリンク切れ0",
+    "375pxのKPI数値はx143.984〜169.156、単位はx177.156〜231で、数値の実文字サイズ37.5px",
+    "gallery専用step CSSを除去した本番相当でも、短い3手順は16px、領域267px内に収まる",
+    "専用図表IMGの1200px原寸、キーボード拡大とEsc/焦点復帰の独立試験成功"
+  ],
+  "tests": {
+    "focused": 10,
+    "browser": 11,
+    "status": "PASS"
+  },
+  "limits": [
+    "任意の資料・図・元画像・作図ツールの存在・紙面可読性を保証するものではない",
+    "初期判定後にAX説明の追加反例を発見したため、4条件全PASSとして完了させていない"
+  ]
+}

@@ -1,0 +1,929 @@
+{
+  "version": 1,
+  "producer": "/root/proposal_meta / logo2-analysis-producer",
+  "purpose": {
+    "audience": "会社のAI導入・活用に悩み、個人活用にも関心のある参加候補者。既存13案の対象や本文は変更しない。",
+    "benefit": "最新の正式HyogoAIロゴで催しのブランドを認知でき、相談できる価値と参加条件を既存の流れで理解できる。",
+    "action": "主題から参加条件を確認し、元のQRから詳細/申し込みへ進む。今回の変更はロゴ差替えだけ。"
+  },
+  "constraints": [
+    "唯一の必須要求LOGO2。全13案へ新版SVGを適用する。今回の分析はlogo-onlyで、既存30法全体の再反復や間隔調整を含まない。",
+    "現行preview13をsourcesへ同一バイト/readonlyで固定。前版の全出力/brand/レイアウト/チェックと最終receiptをv13-before-logo2.zipへ保全済み。",
+    "原SVGはXML宣言/DOCTYPE/namespaceを含め10918bytesそのまま保持。指定正本SHA256=5bbc15ed25840ffd876091410a703073fb12854595b666678918131a67aca9ad。原本への塗り/線/文字/gradient/path/座標変更を禁止する。",
+    "placementは描画canvas0,0,2000,1000から透明域だけを除くviewBox127,220,1736,466を採用候補とする。見える画素境界139,232,1850,673へ12単位の透明余白を保ち、造形を切らない。",
+    "print PNGは原本SVGを元canvas2000x1000のまま2xでnative描画し、透明canvasだけ整数RGBA lossless cropする。placement viewBoxを再描画した時のgradient量子化差を避け、原描画の色/形を保持する。placement SVGのXML/DOCTYPE/namespace/gradient/pathはviewBox以外同一。",
+    "現行x/y/wは不変: F09はx170/y10/w30mm、他12案はx165/y10/w35mm。高さのみ新版支給比率466/1736に従い、それぞれ8.052995/9.395161mmへ。独立した縦横倍率や歪み、色変更は禁止。",
+    "本文/文字属性/全13固有構図/写真/crop/公開条件/背景/QR URLと位置/価格/日付/個人文同格化は全て保持する。間隔を詰める要望は提案に留め、今回実施しない。",
+    "制作は独立proposal review PASS後のみ。新ロゴ正本SHAへ保全検査の契約だけを更新し、旧ロゴ不変判定を最新支給ロゴへ意図的に置換する。写真/QR/本文保持検査を弱めない。",
+    "全13最終350dpi PNGを前版と厳密比較し、旧/新logo枠の和集合外で画素差分0を要求する。ロゴ内は新正本の造形/色/比率とPDF可視を確認。",
+    "全13再描画前に共通brand/入力/codeを確定し、描画途中で共有入力を変えない。11checks/26pageQR/新freezeと、新画像の独立確認を旧画像のPASSで代用しない。",
+    "分析/独立評価はrootが固定したreview-runtime-freeze.jsonのsnapshot規範に限定する。並行して変更中のlive pluginの新機能全体を承認したという実績にしない。"
+  ],
+  "policyFingerprint": "bd45867514f5d2c8c70c3f437275971d2cc1cded69ada9d8ef89361257e7f74f",
+  "contextFingerprint": "c872a93b6e17a757624d113f813e5cdacf94275202375dfcda05aad69738908f",
+  "sources": [
+    {
+      "id": "F01",
+      "file": "sources/F01-current.png",
+      "sha256": "e7823aa88c0132691c123ed4db56cafe75540abeb15eab1c8b4934449ae67b77"
+    },
+    {
+      "id": "F02",
+      "file": "sources/F02-current.png",
+      "sha256": "ec1f8de88162477951b5dc37570c775f41a1b32660c05407b500494417ff7115"
+    },
+    {
+      "id": "F03",
+      "file": "sources/F03-current.png",
+      "sha256": "658c5c396e6f29063aa2634db486b97ab24a7ce6f1a902cb75572f20da84e401"
+    },
+    {
+      "id": "F04",
+      "file": "sources/F04-current.png",
+      "sha256": "1b556aa4649c66a587b6254e4abde63733498a0b310a8e551501149765c533e7"
+    },
+    {
+      "id": "F05",
+      "file": "sources/F05-current.png",
+      "sha256": "00a294597a35fd2141bddc16a59ffee95dbf71788a60f2c5c620914ac61b2e59"
+    },
+    {
+      "id": "F06",
+      "file": "sources/F06-current.png",
+      "sha256": "4b310e4a97968e528e423b813b44f48d08f2c610e089332acd849e9664509857"
+    },
+    {
+      "id": "F07",
+      "file": "sources/F07-current.png",
+      "sha256": "97a389c6deae84d3732c17daa321331cfaaf28d17263083df3887d5e996ec47d"
+    },
+    {
+      "id": "F08",
+      "file": "sources/F08-current.png",
+      "sha256": "e01a5dadc0d0b3c47bda96c965284d16cb679abd184a55cfc5748c4ad4c64754"
+    },
+    {
+      "id": "F09",
+      "file": "sources/F09-current.png",
+      "sha256": "4614fec4d297df636066bde03d45e1d48ec1239ecf3529a2c7e387326fe71d27"
+    },
+    {
+      "id": "F10",
+      "file": "sources/F10-current.png",
+      "sha256": "94d787ff0ec643a72eb2573e2ab5344627de0cdd2f8c870f3e7fe7eee298df76"
+    },
+    {
+      "id": "F11",
+      "file": "sources/F11-current.png",
+      "sha256": "ac40e8a7ee714f1c74d275998543f8d41509423b6ee6adc32118d0e08121cb66"
+    },
+    {
+      "id": "F12",
+      "file": "sources/F12-current.png",
+      "sha256": "0bafda1bc80370c097ec2589e2c50b259c921d391c0f60b177efacf5358e40a0"
+    },
+    {
+      "id": "F13",
+      "file": "sources/F13-current.png",
+      "sha256": "f96544bc0ad1c6d6e9210d3426efa5867c204f6e744c6c1c6bd30fb1dc17c948"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "LOGO2",
+      "kind": "required",
+      "variantIds": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13"
+      ],
+      "text": "指定新版HyogoAI SVGへ全13案のロゴを交換する。原本/支給色/造形/比率を保持し透明canvasだけcrop、幅とx/yは現行30/35mmのまま。本文・写真・QR・背景・間隔・全構図を変更しない。"
+    }
+  ],
+  "variants": [
+    {
+      "id": "F01",
+      "sourceId": "F01",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "黒金の暗い上部右で旧細線ロゴが見え、左の内容名と離れている。講座写真と巨大回答から条件/QRへ進む現在の構図はロゴ交換で変える理由がない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "講座の本人/参加者と黒金の自然な接続、白い大回答と金の入口の主従を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "講座の本人/参加者と黒金の自然な接続、白い大回答と金の入口の主従を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "黒金の暗い上部右で旧細線ロゴが見え、左の内容名と離れている。講座写真と巨大回答から条件/QRへ進む現在の構図はロゴ交換で変える理由がない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F02",
+      "sourceId": "F02",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "明るい銀灰色の右上に旧ロゴがあり、右縦入口と十分離れている。供給色を保って交換し、縦組/写真/明朝日付を移動しない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "縦入口と横回答の意味役割、明るい写真の大きさ、全幅中央の条件群を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "縦入口と横回答の意味役割、明るい写真の大きさ、全幅中央の条件群を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "明るい銀灰色の右上に旧ロゴがあり、右縦入口と十分離れている。供給色を保って交換し、縦組/写真/明朝日付を移動しない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F03",
+      "sourceId": "F03",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "右上ロゴの下に金色の光が走る赤黒地。最新の塗り造形を同じ幅へ交換するが、既存背景や色を読取対策として勝手に変えず実出力で判読を確認する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "赤金の世界観と明朝の回答、右下相談写真、同格二問と条件の順序を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "赤金の世界観と明朝の回答、右下相談写真、同格二問と条件の順序を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "右上ロゴの下に金色の光が走る赤黒地。最新の塗り造形を同じ幅へ交換するが、既存背景や色を読取対策として勝手に変えず実出力で判読を確認する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F04",
+      "sourceId": "F04",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "青い曲面の右上に旧細線ロゴが見え、左二行回答の主役と役割が分かれている。新版も供給色と横幅を保ち、写真場面や下部中央群は維持する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "左二行の大回答と右講座写真の役割差、青系の世界観と中央条件群を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "左二行の大回答と右講座写真の役割差、青系の世界観と中央条件群を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "青い曲面の右上に旧細線ロゴが見え、左二行回答の主役と役割が分かれている。新版も供給色と横幅を保ち、写真場面や下部中央群は維持する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F05",
+      "sourceId": "F05",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "暖色の天井写真上の右上に旧ロゴが載る。新ロゴの塗り形状を同じ横幅へ置換し、写真・文字影・人物の公開範囲に手を加えない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "暖色の場の写真を広く見せる構図と白い回答、写真上の質問群と人の顔を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "暖色の場の写真を広く見せる構図と白い回答、写真上の質問群と人の顔を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "暖色の天井写真上の右上に旧ロゴが載る。新ロゴの塗り形状を同じ横幅へ置換し、写真・文字影・人物の公開範囲に手を加えない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F06",
+      "sourceId": "F06",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "明るい灰白地の右上に青緑の旧ロゴがあり、左の内容名と分離している。濃緑主題と相談写真の構図、同格の質問二文、下部QRは保持する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "明るい相談場面と濃緑の明朝回答、赤い細いアクセントと同格二問を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "明るい相談場面と濃緑の明朝回答、赤い細いアクセントと同格二問を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "明るい灰白地の右上に青緑の旧ロゴがあり、左の内容名と分離している。濃緑主題と相談写真の構図、同格の質問二文、下部QRは保持する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F07",
+      "sourceId": "F07",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "斜めの黒い右上領域に旧ロゴがあり、その下に縦の導入と金の入口が続く。縦横混在と顔/横回答を維持し、ロゴのために間隔を詰めない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "縦のAI導入/まずここへと横の聞ける人が/ここにいる、本人顔と黒金の斜面を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "縦のAI導入/まずここへと横の聞ける人が/ここにいる、本人顔と黒金の斜面を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "斜めの黒い右上領域に旧ロゴがあり、その下に縦の導入と金の入口が続く。縦横混在と顔/横回答を維持し、ロゴのために間隔を詰めない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F08",
+      "sourceId": "F08",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "青と天井の茶が接する右上に旧ロゴが見える。段階改行、右人物と左下QRの固有構図を保ち、最新SVGの塗り色は再配色せず実画像で確認する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "まず/ここへの段階改行、右人物と大きい横回答、左下のQRという固有構図を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "まず/ここへの段階改行、右人物と大きい横回答、左下のQRという固有構図を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "青と天井の茶が接する右上に旧ロゴが見える。段階改行、右人物と左下QRの固有構図を保ち、最新SVGの塗り色は再配色せず実画像で確認する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F09",
+      "sourceId": "F09",
+      "observations": [
+        {
+          "region": {
+            "x": 170,
+            "y": 10,
+            "w": 30,
+            "h": 9.966443
+          },
+          "observation": "右上の青緑の写真上に旧ロゴが30mm幅で載る。局所の緑と新版末尾の緑の関係は要実出力確認で、背景の暗色帯追加や他案同35mmへの拡大を行わない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "独立提案を経た横の前半から中央回答への連続、二場面の写真と3名同格を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "独立提案を経た横の前半から中央回答への連続、二場面の写真と3名同格を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x170/y10/w30mmを維持し、h8.052995mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "右上の青緑の写真上に旧ロゴが30mm幅で載る。局所の緑と新版末尾の緑の関係は要実出力確認で、背景の暗色帯追加や他案同35mmへの拡大を行わない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅30mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F10",
+      "sourceId": "F10",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "黒い静かな上部右に旧ロゴがあり、その下の会社/導入後/個人の問いと別の群になっている。右上の質問位置や左巨大回答を動かさず35mmで置換する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "左の巨大な回答と右上3問の役割分担、下段の相談写真と全幅中央の条件を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "左の巨大な回答と右上3問の役割分担、下段の相談写真と全幅中央の条件を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "黒い静かな上部右に旧ロゴがあり、その下の会社/導入後/個人の問いと別の群になっている。右上の質問位置や左巨大回答を動かさず35mmで置換する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F11",
+      "sourceId": "F11",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "白い外縁を持つ右上に旧ロゴがあり、左内容名と役割を分ける。右へ移した水平入口や写真/巨大回答、純白8mmと安全域を保つ。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "右へ置いた水平のまずここへ、左写真との均衡と大回答、白外縁/自然境界を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "右へ置いた水平のまずここへ、左写真との均衡と大回答、白外縁/自然境界を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "白い外縁を持つ右上に旧ロゴがあり、左内容名と役割を分ける。右へ移した水平入口や写真/巨大回答、純白8mmと安全域を保つ。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F12",
+      "sourceId": "F12",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "白い上部右に旧ロゴがあり、右側縦コピーより上で分離する。縦の主題三群、相談写真と自然境界、明朝日付をロゴ交換に伴って移動しない。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "縦の導入/前半/回答の主従と相談写真の関係、白い外縁と中央条件群を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "縦の導入/前半/回答の主従と相談写真の関係、白い外縁と中央条件群を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "白い上部右に旧ロゴがあり、右側縦コピーより上で分離する。縦の主題三群、相談写真と自然境界、明朝日付をロゴ交換に伴って移動しない。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    },
+    {
+      "id": "F13",
+      "sourceId": "F13",
+      "observations": [
+        {
+          "region": {
+            "x": 165,
+            "y": 10,
+            "w": 35,
+            "h": 11.627517
+          },
+          "observation": "白い右上に旧ロゴが見え、左青色二行回答と講座写真の重みが保たれている。新版への交換だけで、内容名の色/二行構成/自然な写真境界を維持する。",
+          "refIds": [
+            "DD06",
+            "DD02"
+          ]
+        },
+        {
+          "region": {
+            "x": 10,
+            "y": 25,
+            "w": 190,
+            "h": 262
+          },
+          "observation": "青い二行回答と右写真、左の文字面積と下部の中央条件/QRの均衡を保持する。 ロゴ以外の版面は今回の差替え範囲に含めない。",
+          "refIds": [
+            "DD01",
+            "DD08",
+            "DD10"
+          ]
+        }
+      ],
+      "preservedStrengths": [
+        "青い二行回答と右写真、左の文字面積と下部の中央条件/QRの均衡を保持する。",
+        "会社→導入後→個人の順、同格二文、食事込み料金1回と日本語日付、詳細/申込QRの行動を保持する。"
+      ],
+      "decisions": [
+        {
+          "requirementId": "LOGO2",
+          "candidate": "原SVGを同一バイトで保持し、元canvasのnative描画から透明canvasのみRGBA lossless cropしたPNGで旧ロゴを交換。x165/y10/w35mmを維持し、h9.395161mmは新支給比率で決める。",
+          "decision": "adopt",
+          "reason": "白い右上に旧ロゴが見え、左青色二行回答と講座写真の重みが保たれている。新版への交換だけで、内容名の色/二行構成/自然な写真境界を維持する。 ユーザーが指定した最新版を使い、ロゴ内の塗り造形と比率変更だけを許容する。間隔/他の配置を同時に変えると要求外の差分となるため見送る。",
+          "targets": [
+            "supplied-logo-original",
+            "supplied-logo-placement-viewBox",
+            "supplied-logo-print-raster",
+            "logo-record-aspect-and-sha",
+            "logo-only-regression-contract"
+          ],
+          "refIds": [
+            "DD06",
+            "DD08",
+            "DD09"
+          ]
+        }
+      ],
+      "nextActions": [
+        "別contextの独立提案評価へLOGO2/元13preview/新SVG白黒preview/保全manifestを渡し、PASS前はproduction brandやcodeを変更しない。",
+        "PASS後は原本SHA/透明余白/紙面幅35mmとnative描画比率を確定し、ロゴ領域外records/画素が一切変わらないことを確認する。",
+        "再描画後は最終PDF由来ロゴの可視/支給色/切れを全案実見し、11checks・まとめ26pageQRと新freezeをrootの独立確認へ渡す。"
+      ]
+    }
+  ],
+  "executionPlan": {
+    "pilotVariantIds": [
+      "F07",
+      "F11"
+    ],
+    "reason": "黒い斜面のF07と白地のF11で塗りロゴの比率/境界/判読/差分限定を先行確認する。既存配置の変更を比較候補に混ぜない。",
+    "propagation": "独立提案PASS後に同じ正式brandを全13へ。F07/F11の作者確認後は共通入力を凍結し全案再描画し、同じ正本SHA/幅/比率とロゴ領域外差分0を確認する。"
+  }
+}

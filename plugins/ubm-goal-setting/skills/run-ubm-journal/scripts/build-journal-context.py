@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-journal-context
-# version: 0.6.0
+# version: 0.7.0
 # purpose: 日次ジャーナル作成の決定論的な前提 (通し番号・出力パス・目標4階層の期間と残日数・
-#          最新週報から引き継ぐ習慣目標/判断基準/当日タスク・前回ジャーナルの継承値) を
-#          1 回の実行で JSON 化する。番号採番と日数計算を LLM に推測させないための決定論ゲート。
+#          最新週報から引き継ぐ習慣目標/判断基準/当日タスク・前回ジャーナルの継承値・
+#          継承済みのチェックシート①②③) を 1 回の実行で JSON 化する。番号採番と日数計算と
+#          チェック状態の引き継ぎを LLM に推測させないための決定論ゲート。
 # inputs:
 #   - argv: --vault-root <path> (省略時 env UBM_VAULT_ROOT) / --date YYYY-MM-DD (省略時 today)
 #   - files: {vault}/02_Configs/Daily/*.md, {vault}/05_Project/UBM/目標設定/*.md
 #   - files: {skill}/references/daily-habits.json (欠落・破損は fail-closed で exit 2)
+#   - files: {skill}/references/principle-checklist.md (テンプレートの欠落・破損は exit 2)
 # outputs:
 #   - stdout: コンテキストの JSON (下記 SCHEMA 節)
 #   - exit: 0=解決成功 / 2=引数不正・vault 解決不能・Daily ディレクトリ不在・
-#           daily-habits.json 欠落/破損 (すべて fail-closed。1 は使わない)
+#           daily-habits.json か principle-checklist.md の欠落/破損 (すべて fail-closed。1 は使わない)
 # contexts: [E]
 # network: false
 # write-scope: none
@@ -48,9 +50,19 @@ stdout は以下の形の JSON オブジェクト 1 個。キーは常に全て�
       "previous_journal": null | {
         "path": str, "file_date": "YYYY-MM-DD", "number": int,
         "heading_date": "YYYY-MM-DD"|null,
-        "ultimate_purpose": [str], "prohibitions": [str], "phase_checklist": str,
-        "principle_checklist": str,          # 前回にブロックが無いとき空文字。前回自体が無ければ previous_journal=null
+        "ultimate_purpose": [str], "prohibitions": [str],
         "goals": { <key>: {"period_start":…, "period_end":…, "goal": str} }
+      },
+      "checklists": {                       # ジャーナル末尾へそのまま貼るチェックシート①②③
+        "block": str,                       # `---` / `# チェックシート` から③の末尾まで
+        "sheets": {                         # key = business_phase|life_funds|ubm (3 件固定)
+          <key>: {
+            "heading": str,                 # H1 見出し (`#` を除く)
+            "source": "previous_journal" | "migrated_from_legacy" | "template",
+            "checked": int, "total": int,   # block 内のこのシートの [x] 件数 / チェック行の件数
+            "migrated": int                 # 旧形式から移した [x] の件数 (それ以外は 0)
+          }
+        }
       },
       "goals": {                            # key = yearly|quarterly|monthly|weekly (4 件固定)
         <key>: {
@@ -91,6 +103,20 @@ GOALS_REL = "05_Project/UBM/目標設定"
 # 毎日必ずヒアリングする固定習慣の正本 (週報の【習慣目標】= 週ごとに変わる4群とは別軸)。
 # plugin 同梱のため欠落は「壊れた install」であり、素通しせず fail-closed で止める。
 DAILY_HABITS_PATH = Path(__file__).resolve().parents[1] / "references" / "daily-habits.json"
+
+# ジャーナル末尾のチェックシートの正本 (未チェックのテンプレート)。daily-habits.json と同じく
+# plugin 同梱なので、読めない・欠けているときは壊れた install として exit 2 にする。
+CHECKLIST_TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "references" / "principle-checklist.md"
+CHECKLIST_ROOT_HEADING = "チェックシート"
+# (context のキー, H1 見出し, 差し替え前に同じ役割を持っていた H1)。見出しは
+# validate-journal-output.py の同名の定数と同じ値にする。②は差し替えで新しく入ったので旧形式が無い。
+CHECKLIST_SHEETS = (
+    ("business_phase", "① 事業フェーズチェックシート（UBM）", "フェーズ別 課題チェックシート"),
+    ("life_funds", "② 人生資金チェックシート", None),
+    ("ubm", "③ チェックシート（UBM）", "原理原則 チェックシート"),
+)
+CHECKLIST_FENCE_RE = re.compile(r"^```markdown\n(?P<body>.*?)^```\s*$", re.MULTILINE | re.DOTALL)
+CHECK_LINE_RE = re.compile(r"^(?P<pre>\s*-\s*\[)(?P<mark>[ xX])(?P<post>\]\s*)(?P<text>.*)$")
 
 # ジャーナル見出し: 「# No.388 - ジャーナル（2026-08-16）」
 HEADING_RE = re.compile(r"^#\s*No\.\s*(\d+)\s*[-–—]\s*ジャーナル\s*[（(]\s*([\d]{4}[-/][\d]{2}[-/][\d]{2})\s*[)）]")
@@ -282,29 +308,136 @@ def section_body(
     return "\n".join(out).strip("\n")
 
 
-def principle_checklist_body(text: str, notes: list[str] | None = None) -> str:
-    """前回ジャーナルの `# 原理原則 チェックシート` 本文。ブロックが無ければ "" を返す。
+def h1_block(text: str, title: str) -> str | None:
+    """`# {title}` の次の行から次の H1 の手前までを返す。見出しが無ければ None。
 
-    section_body に任せず完全一致の有無を先に確かめるのは、本ブロックを持たない移行期の
-    ジャーナル (導入前に書かれた過去分) を黙って "" で通さず、テンプレから初期化せよという
-    note を残すため。section_body は不在をただの空文字として返すので、区別が付かない。
+    section_body と違い水平線で止めない。③の「右肩上がり」の節は `-------` を項目の
+    一部として持つので、そこで切ると以降の設問がまるごと落ちる。末尾の空行と、
+    次のシートとの区切りの `---` はシートの本体ではないので落とす。
 
-    見出しに「原理原則」を冠したことで `# フェーズ別 課題チェックシート` との部分一致衝突は
-    起きないが、両者とも `- [ ]` 行の塊で取り違えても目視では気づけない以上、照合は完全一致に
-    寄せておく。
+    照合は装飾を落とした完全一致。「③ チェックシート（UBM）」は「チェックシート」を
+    含むので、部分一致にすると親見出しの `# チェックシート` と取り違える。
     """
-    for line in text.splitlines():
+    lines = text.splitlines()
+    start = end = None
+    for i, line in enumerate(lines):
         s = line.strip()
         if not s.startswith("# "):
             continue
-        if s[1:].strip().strip(TITLE_DECOR).strip() == "原理原則 チェックシート":
-            return section_body(text, "原理原則 チェックシート", level="#", notes=notes)
-    if notes is not None:
-        notes.append(
-            "前回ジャーナルに「# 原理原則 チェックシート」がありません。"
-            "references/principle-checklist.md のテンプレートを未チェック状態で書き出してください。"
+        if start is not None:
+            end = i
+            break
+        if s[1:].strip().strip(TITLE_DECOR).strip() == title:
+            start = i + 1
+    if start is None:
+        return None
+    body = lines[start:end]
+    while body and (not body[-1].strip() or HRULE_RE.match(body[-1])):
+        body.pop()
+    return "\n".join(body)
+
+
+def check_lines(body: str) -> list[re.Match[str]]:
+    return [m for line in body.splitlines() if (m := CHECK_LINE_RE.match(line))]
+
+
+def check_key(text: str) -> str:
+    """チェック行の文言の照合キー。旧形式とは空白の入れ方だけが違う行がある
+    (「増えていますか？ or 離れて…」と「増えていますか？or離れて…」)。"""
+    return re.sub(r"\s+", "", text)
+
+
+def load_checklist_template() -> dict[str, str]:
+    """principle-checklist.md のフェンスから、3 シートの未チェックの本体を読む。"""
+    try:
+        text = CHECKLIST_TEMPLATE_PATH.read_text(encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        print(
+            f"[build-journal-context] principle-checklist.md を読めない ({type(exc).__name__}: {exc})",
+            file=sys.stderr,
         )
-    return ""
+        sys.exit(2)
+    m = CHECKLIST_FENCE_RE.search(text)
+    if m is None:
+        print(
+            "[build-journal-context] principle-checklist.md に ```markdown のテンプレートがありません",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    sheets: dict[str, str] = {}
+    for key, heading, _ in CHECKLIST_SHEETS:
+        body = h1_block(m.group("body"), heading)
+        if body is None or not check_lines(body):
+            print(
+                f"[build-journal-context] principle-checklist.md のテンプレートに「# {heading}」の項目がありません",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        sheets[key] = body
+    return sheets
+
+
+def carry_checks(template_body: str, legacy_body: str) -> tuple[str, int]:
+    """旧形式で [x] だった項目を、文言が同じテンプレートの行へ移す。移した件数も返す。
+
+    同じ文言が何度か出る項目 (「6カ月前よりも基準が上がり…」など) は、出てきた順に
+    対応させる。文言で引き当てられない項目は未チェックのまま残す。推測で付けると、
+    利用者が付けていないチェックが付いた状態で継承され続ける。
+    """
+    queues: dict[str, list[bool]] = {}
+    for m in check_lines(legacy_body):
+        queues.setdefault(check_key(m.group("text")), []).append(m.group("mark") in "xX")
+    out: list[str] = []
+    moved = 0
+    for line in template_body.splitlines():
+        m = CHECK_LINE_RE.match(line)
+        if m:
+            queue = queues.get(check_key(m.group("text")))
+            if queue and queue.pop(0):
+                line = f"{m.group('pre')}x{m.group('post')}{m.group('text')}"
+                moved += 1
+        out.append(line)
+    return "\n".join(out), moved
+
+
+def build_checklists(prev_text: str | None, notes: list[str]) -> dict[str, Any]:
+    """ジャーナル末尾へそのまま貼るチェックシート①②③を、前回ジャーナルから継承して組む。
+
+    シートごとに、前回の同じシート → 差し替え前の旧形式から移す → テンプレート、の順で
+    材料を探す。整形役 (journal-composer) に旧形式からの移し替えを任せると、文言の照合を
+    LLM が目でやることになり、チェックの取りこぼしも付け過ぎも検査で見分けられない。
+    """
+    template = load_checklist_template()
+    sheets: dict[str, Any] = {}
+    parts: list[str] = []
+    for key, heading, legacy in CHECKLIST_SHEETS:
+        body, source, migrated = template[key], "template", 0
+        current = h1_block(prev_text, heading) if prev_text is not None else None
+        old = h1_block(prev_text, legacy) if prev_text is not None and legacy else None
+        if current is not None and check_lines(current):
+            body, source = current, "previous_journal"
+        elif old is not None:
+            body, migrated = carry_checks(template[key], old)
+            source = "migrated_from_legacy"
+            notes.append(
+                f"旧形式の「# {legacy}」から、文言が同じ項目のチェック {migrated} 件を「# {heading}」へ"
+                "移しました。文言が変わった項目は未チェックで始まります。"
+            )
+        elif prev_text is not None:
+            notes.append(
+                f"「# {heading}」の項目が無いので、テンプレートの未チェック状態を checklists.block に入れました。"
+            )
+        found = check_lines(body)
+        sheets[key] = {
+            "heading": heading,
+            "source": source,
+            "checked": sum(1 for m in found if m.group("mark") in "xX"),
+            "total": len(found),
+            "migrated": migrated,
+        }
+        parts.append(f"# {heading}\n{body}")
+    block = f"---\n# {CHECKLIST_ROOT_HEADING}\n\n---\n\n" + "\n\n---\n\n".join(parts)
+    return {"block": block, "sheets": sheets}
 
 
 def bullets(body: str) -> list[str]:
@@ -735,6 +868,7 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
     prev_notes: list[str] = []
     wk_notes: list[str] = []
     past_journals = [j for j in journals if j["file_date"] < target and j["number"] is not None]
+    prev_text: str | None = None
     if past_journals:
         prev = max(past_journals, key=lambda j: j["file_date"])
         prev_text = read(prev["path"])
@@ -746,8 +880,6 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             "ultimate_purpose": bullets(section_body(prev_text, "人生の究極目的", notes=prev_notes)),
             "goals": extract_journal_goals(prev_text, notes=prev_notes),
             "prohibitions": bullets(section_body(prev_text, "【禁止事項】", notes=prev_notes)),
-            "phase_checklist": section_body(prev_text, "フェーズ別 課題チェックシート", level="#", notes=prev_notes),
-            "principle_checklist": principle_checklist_body(prev_text, notes=prev_notes),
         }
         if prev["number"] is not None and number != prev["number"] + 1 and not is_regeneration:
             warnings.append(
@@ -755,10 +887,11 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             )
     else:
         warnings.append(
-            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
-            "原理原則チェックシートは references/principle-checklist.md の未チェックテンプレートを使い、"
+            "前回ジャーナルが見つかりません。目標本文・究極目的は対話で確定し、"
+            "チェックシート①②③は checklists.block (未チェックのテンプレート) をそのまま使い、"
             "あわせてジャーナル習慣が途切れていないかも確認してください。"
         )
+    checklists = build_checklists(prev_text, prev_notes)
 
     reports = scan_reports(goals_dir)
     if not reports:
@@ -886,6 +1019,7 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
         "output_path": str(daily_dir / f"{target.isoformat()}.md"),
         "heading": f"# No.{number} - ジャーナル（{target.isoformat()}）",
         "previous_journal": previous,
+        "checklists": checklists,
         "goals": goals,
         "report_sources": report_info,
         "weekly_report": weekly_payload,

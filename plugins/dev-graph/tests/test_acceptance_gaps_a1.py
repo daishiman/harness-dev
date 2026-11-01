@@ -4,6 +4,7 @@
 - run-dev-graph-requirements IN1/OUT2: validate-readiness-binding.py が validate-system-plan・C02 保存 state・
   C11 を通した graph を同じ digest で照合することと、guard-requirements-handoff.py が incomplete な参照 node の
   混ざった closure で全件の missing_sections と remediation owner を返し handoff を0件にすることを見る。
+  draft の feature は build-graph-node.py confirm-feature が昇格済みの package を根拠に確定し、その後で handoff できる。
 - run-dev-graph-init OUT3: 同じ symlink harness を repo A/B から起動し、validate-harness-link.py が link の切断を
   起動前・write 前に検出して修復導線を返すことを見る。
 
@@ -12,6 +13,7 @@ Skill や slash command の起動そのものは Claude Code 本体の挙動な�
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -47,6 +49,8 @@ def _load(path: Path, name: str):
 RT = _load(SDP / "tests" / "test_runtime.py", "dev_graph_a1_sdp_runtime")
 TRP = _load(PLUGIN / "tests" / "test_register_package.py", "dev_graph_a1_register_fixtures")
 RP = _load(SCRIPTS / "register-package.py", "dev_graph_a1_register_package")
+BGN = _load(SCRIPTS / "build-graph-node.py", "dev_graph_a1_build_graph_node")
+CONTRACT = json.loads((PLUGIN / "templates" / "template-contract.json").read_text(encoding="utf-8"))
 
 
 def write_artifact(root: Path, node: dict) -> None:
@@ -122,14 +126,24 @@ class PlanRepo:
         return subprocess.run([sys.executable, str(script), *argv], text=True, capture_output=True,
                               env=self.env, cwd=str(self.root), check=False)
 
-    def promote(self, run_id: str, *, replace: dict[str, str] | None = None) -> tuple[subprocess.CompletedProcess[str], str]:
-        """run_id ごとに staging・lock・findings・validation を作り、promote-system-plan.py を起動する。"""
+    def promote(self, run_id: str, *, replace: dict[str, str] | None = None,
+                context: dict | None = None) -> tuple[subprocess.CompletedProcess[str], str]:
+        """run_id ごとに staging・lock・findings・validation を作り、promote-system-plan.py を起動する。
+
+        context を渡すと features/feature.json をその内容にし、package と lock の feature digest もその bytes に合わせる
+        (planner がこの feature の context を読んで計画したことになる)。"""
         rel = f".dev-graph/staging/{run_id}"
-        staging, digest = RT.make_fixture(self.root, self.rid, rel, include_handoff=replace is None)
-        if replace:
+        staging, digest = RT.make_fixture(self.root, self.rid, rel, include_handoff=replace is None and context is None)
+        feature_path = self.root / "features/feature.json"
+        feature_hex = hashlib.sha256(feature_path.read_bytes()).hexdigest()
+        rewrite = dict(replace or {})
+        if context is not None:
+            RT.dump(feature_path, context)
+            rewrite[feature_hex] = feature_hex = hashlib.sha256(feature_path.read_bytes()).hexdigest()
+        if rewrite:
             for path in sorted(p for p in staging.rglob("*") if p.is_file() and p.name != "staging-manifest.json"):
                 text = path.read_text(encoding="utf-8")
-                for old, new in replace.items():
+                for old, new in rewrite.items():
                     text = text.replace(old, new)
                 path.write_text(text, encoding="utf-8")
             RT.refresh_manifest(staging)
@@ -141,7 +155,8 @@ class PlanRepo:
             digest = RT.HANDOFF._commit(staging, manifest, handoff, contents)["canonical_digest"]
         session = f"session-{run_id}"
         lock = self.root / RT.LOCK.LOCK_ROOT_REL / RT.LOCK.LOCK_NAME
-        RT.dump(lock, {**json.loads(lock.read_text(encoding="utf-8")), "run_id": run_id, "session_owner": session})
+        RT.dump(lock, {**json.loads(lock.read_text(encoding="utf-8")), "run_id": run_id, "session_owner": session,
+                       "feature_digest": "sha256:" + feature_hex})
         findings = RT.valid_findings(staging, digest)
         findings["plan_dir"] = rel
         findings["gate_results"][0]["command"][-1] = rel
@@ -172,12 +187,11 @@ class PlanRepo:
     def children(self) -> list[dict]:
         return [node for node in self.graph()["nodes"] if node.get("parent_feature") == FEATURE]
 
-    def materialize_task_artifacts(self) -> None:
-        """task artifact の書出しは C02 register の責務外なので、C11 の artifact 検査用に node から作る。
-        task node は macro 欄 (purpose..architecture_refs) を持たないので、frontmatter では空値で埋める。"""
-        macro = {"purpose": None, "goal": None, "scope_in": [], "scope_out": [], "acceptance": [], "architecture_refs": []}
-        for node in self.children():
-            write_artifact(self.root, {**macro, **node})
+    def assert_registered_artifacts_pass_c11(self) -> None:
+        """C02 register は 13 task の文書も書くので、登録の直後に C11 の artifact 検査が通る。"""
+        assert all((self.root / node["file_path"]).is_file() for node in self.children())
+        code, report = self.c11()
+        assert (code, report["violations"]) == (0, []), report["violations"]
 
     def tracker_calls(self) -> str:
         return self.calls.read_text(encoding="utf-8") if self.calls.exists() else ""
@@ -336,7 +350,7 @@ def node_id_of(plan: PlanRepo, phase: str) -> str:
 def test_requirements_in1_three_gates_bind_to_one_digest(git_plan: PlanRepo) -> None:
     plan = git_plan
     digest, registered = register_first(plan)
-    plan.materialize_task_artifacts()
+    plan.assert_registered_artifacts_pass_c11()
     before = tree_bytes(plan.root)
 
     code, report = binding(plan)
@@ -365,7 +379,7 @@ def test_requirements_in1_three_gates_bind_to_one_digest(git_plan: PlanRepo) -> 
 def test_requirements_in1_stale_digest_or_drifted_c02_state_breaks_the_binding(git_plan: PlanRepo) -> None:
     plan = git_plan
     register_first(plan)
-    plan.materialize_task_artifacts()
+    plan.assert_registered_artifacts_pass_c11()
     graph_path = plan.root / GRAPH
     clean = graph_path.read_bytes()
     p05, p07 = node_id_of(plan, "P05"), node_id_of(plan, "P07")
@@ -516,7 +530,7 @@ def test_requirements_out2_incomplete_node_in_a_package_handoff_is_refused_witho
 def test_requirements_out2_one_regressed_package_member_withholds_the_whole_feature_handoff(git_plan: PlanRepo) -> None:
     plan = git_plan
     register_first(plan)
-    plan.materialize_task_artifacts()
+    plan.assert_registered_artifacts_pass_c11()
     p07 = node_id_of(plan, "P07")
     code, report = handoff_guard(plan.root, FEATURE, env=plan.env)
     assert (code, report["handoff"]) == (0, [FEATURE])
@@ -540,7 +554,7 @@ def test_requirements_handoff_guard_is_pinned_to_the_binding_graph_snapshot(git_
     """R3 は binding の graph.digest を guard へ渡す。2つの script の間に graph が変わると handoff は0件で止まる。"""
     plan = git_plan
     register_first(plan)
-    plan.materialize_task_artifacts()
+    plan.assert_registered_artifacts_pass_c11()
     code, bound = binding(plan)
     assert (code, bound["status"]) == (0, "pass"), bound["violations"]
     snapshot = bound["graph"]["digest"]
@@ -572,6 +586,180 @@ def test_requirements_handoff_guard_is_pinned_to_the_binding_graph_snapshot(git_
     assert code == 0 and rebound["graph"]["digest"] == report["graph"]["digest"]
     code, report = handoff_guard(plan.root, FEATURE, env=plan.env, expect=rebound["graph"]["digest"])
     assert (code, report["handoff"]) == (0, [FEATURE])
+    assert plan.tracker_calls() == ""
+
+
+# --- run-dev-graph-requirements: confirm-feature ---------------------------------------------------
+
+
+CONFIRM_INPUT = "eval-log/confirm-feature.json"
+
+
+def draft_feature(plan: PlanRepo) -> dict:
+    """C14 が登録したままの feature にする: draft/pending で、本文は add と同じ composer の projection。"""
+    graph = plan.graph()
+    node = next(node for node in graph["nodes"] if node["graph_node_id"] == FEATURE)
+    node.update(status="draft", confirmation_status="draft", evaluation_status="pending",
+                confirmation_evidence={"evaluator": None, "evidence_ref": None, "evaluated_digest": None})
+    body = BGN.Composer(plan.root, CONTRACT).compose("feature", {"subtypes": [], "api_count": 0, "node": node}, {}, {}, [])
+    keys = list(CONTRACT["common_frontmatter"]["required"])
+    (plan.root / node["file_path"]).write_text(BGN._frontmatter(node, keys) + "\n" + "".join(body), encoding="utf-8")
+    RT.dump(plan.root / GRAPH, graph)
+    return node
+
+
+def feature_context(node: dict) -> dict:
+    """C09 が planner に渡す feature context。macro は node と同じ値で、architecture は file_path で引く。"""
+    return {"graph_node_id": node["graph_node_id"], "artifact_kind": "feature",
+            **{key: node[key] for key in ("purpose", "goal", "scope_in", "scope_out", "acceptance")},
+            "architecture_refs": ["architecture/system.md"], "updated_at": "2026-07-13T00:00:00Z"}
+
+
+def confirm(plan: PlanRepo, expected: int | None = None, *, dry_run: bool = False, **overrides: str) -> tuple[int, dict]:
+    """build-graph-node.py confirm-feature を起動する。overrides は confirmations[0] の値を差し替える。"""
+    entry = {"graph_node_id": FEATURE, "package": f"{PUBLISHED}/feature-package.json", "receipt": f"{RECEIPTS}/feat.json",
+             "feature_context": "features/feature.json", **overrides}
+    payload: dict = {"confirmations": [entry]}
+    if expected is not None:
+        payload["expected_graph_revision"] = expected
+    RT.dump(plan.root / CONFIRM_INPUT, payload)
+    cp = plan.run(SCRIPTS / "build-graph-node.py", "confirm-feature", "--repo-root", str(plan.root),
+                  "--input", CONFIRM_INPUT, *(["--dry-run"] if dry_run else []))
+    assert cp.returncode in (0, 1), cp.stderr
+    return cp.returncode, json.loads(cp.stdout)
+
+
+def tree_without_input(root: Path) -> dict[str, bytes | str]:
+    """confirm の入力 (と入れ物の dir) は起動のたびに書くので、書込み 0 件の比較から外す。"""
+    return {key: value for key, value in tree_bytes(root).items() if key not in (CONFIRM_INPUT, Path(CONFIRM_INPUT).parent.as_posix())}
+
+
+def body_of(path: Path) -> str:
+    return path.read_text(encoding="utf-8").partition("\n---\n")[2]
+
+
+def planned_and_registered(plan: PlanRepo) -> tuple[dict, str]:
+    node = draft_feature(plan)
+    cp, digest = plan.promote("run-1", context=feature_context(node))
+    assert cp.returncode == 0, cp.stderr
+    cp = plan.register()
+    assert cp.returncode == 0, cp.stderr
+    plan.assert_registered_artifacts_pass_c11()
+    return node, digest
+
+
+def test_requirements_confirm_feature_promotes_the_planned_feature_so_the_handoff_proceeds(git_plan: PlanRepo) -> None:
+    """register-package の後も feature は draft のままで、guard は handoff を止める。confirm-feature が package の
+    評価 PASS を根拠に feature を確定すると、binding と guard が通る。"""
+    plan = git_plan
+    node, digest = planned_and_registered(plan)
+    feature_path = plan.root / node["file_path"]
+    body = body_of(feature_path)
+
+    code, report = handoff_guard(plan.root, FEATURE, env=plan.env)
+    assert (code, report["status"], report["handoff_count"]) == (1, "withheld", 0)
+    assert FEATURE in {item["graph_node_id"] for item in report["blocked"]}
+
+    # dry-run は何も書かずに昇格後の状態を返す。apply は CAS を要する。
+    revision = plan.graph()["graph_revision"]
+    before = tree_without_input(plan.root)
+    code, preview = confirm(plan, dry_run=True)
+    assert (code, preview["status"], preview["write_count"], preview["applied_count"]) == (0, "preview", 0, 0)
+    assert preview["planned_nodes"][0]["confirmation_status"] == "confirmed"
+    assert preview["graph_revision_before"] == revision
+    assert tree_without_input(plan.root) == before
+    code, report = confirm(plan)
+    assert (code, report["code"], report["write_count"]) == (1, "missing_expected_graph_revision", 0)
+    code, report = confirm(plan, revision - 1)
+    assert (code, report["code"], report["write_count"]) == (1, "graph_revision_conflict", 0)
+    assert tree_without_input(plan.root) == before
+
+    code, applied = confirm(plan, revision)
+    assert (code, applied["status"], applied["node_ids"]) == (0, "applied", [FEATURE]), applied
+    assert applied["graph_revision_after"] == revision + 1 == plan.graph()["graph_revision"]
+    assert applied["graph_digest_after"] == RP._canonical_digest(plan.graph())
+    (detail,) = applied["artifacts"]
+    evidence = {"evaluator": "system-dev-planner:assign-system-dev-plan-evaluator",
+                "evidence_ref": f"{PUBLISHED}/plan-findings.json", "evaluated_digest": digest.removeprefix("sha256:")}
+    assert (detail["body_preserved"], detail["confirmation_evidence"], detail["promoted_members"]) == (True, evidence, 13)
+    assert detail["status"] == {"before": "draft", "after": "active"}
+    confirmed = next(item for item in plan.graph()["nodes"] if item["graph_node_id"] == FEATURE)
+    assert (confirmed["status"], confirmed["confirmation_status"], confirmed["evaluation_status"],
+            confirmed["implementation_readiness"]["status"], confirmed["confirmation_evidence"]) == \
+        ("active", "confirmed", "pass", "complete", evidence)
+    # 本文は変えず、frontmatter だけが新しい状態になる。C11 の artifact 検査も通る。
+    assert body_of(feature_path) == body
+    code, c11 = plan.c11()
+    assert (code, c11["violations"]) == (0, []), c11["violations"]
+
+    # binding は登録より後の revision を readiness view で照合して通り、guard はその snapshot で handoff する。
+    code, bound = binding(plan)
+    assert (code, bound["status"], bound["graph"]["relation"]) == (0, "pass", "later_revision"), bound["violations"]
+    code, report = handoff_guard(plan.root, FEATURE, env=plan.env, expect=bound["graph"]["digest"])
+    assert (code, report["status"], report["handoff"]) == (0, "handoff", [FEATURE])
+
+    # 2回目は noop で、graph も receipt も増えない。tracker は一度も呼ばれない。
+    before = tree_without_input(plan.root)
+    code, again = confirm(plan, revision + 1)
+    assert (code, again["status"], again["idempotent"], again["write_count"]) == (0, "noop", True, 0)
+    assert tree_without_input(plan.root) == before
+    assert plan.tracker_calls() == ""
+
+
+def test_requirements_confirm_feature_refuses_a_broken_evidence_chain_without_writes(git_plan: PlanRepo) -> None:
+    """根拠の鎖のどこかが食い違えば、その理由の code で止まり、何も書かない。"""
+    plan = git_plan
+    node, _ = planned_and_registered(plan)
+    revision = plan.graph()["graph_revision"]
+    before = tree_without_input(plan.root)
+
+    def hand_edited_body(text: str) -> str:
+        head, sep, body = text.partition("\n---\n")
+        return head + sep + body.replace(node["purpose"], "Hand-edited purpose", 1)
+
+    # task は確定の対象ではない。
+    code, report = confirm(plan, revision, graph_node_id=node_id_of(plan, "P01"))
+    assert (code, report["status"], report["code"], report["write_count"]) == \
+        (1, "rejected", "feature_confirmation_requires_feature", 0), report
+    assert tree_without_input(plan.root) == before
+
+    cases = [
+        # planner が読んだ context の目的が、この feature の macro と違う。
+        ("features/feature.json", lambda text: text.replace(json.dumps(node["purpose"]), json.dumps("purpose")),
+         "feature_context_mismatch"),
+        # 計画の後に context の bytes が変わった: package の source_feature_digest と合わない。
+        ("features/feature.json", lambda text: text.replace("2026-07-13T00:00:00Z", "2026-07-14T00:00:00Z"),
+         "package_receipt_mismatch"),
+        # evaluator の判定が PASS でない。
+        (f"{PUBLISHED}/plan-findings.json", lambda text: text.replace('"verdict": "PASS"', '"verdict": "FAIL"'),
+         "plan_evaluation_not_pass"),
+        # 本文の projection を手で編集した: frontmatter だけを再生成すると本文と食い違う。
+        (node["file_path"], hand_edited_body, "feature_projection_diverged"),
+    ]
+    for rel, change, expected_code in cases:
+        original = (plan.root / rel).read_bytes()
+        (plan.root / rel).write_text(change(original.decode("utf-8")), encoding="utf-8")
+        assert (plan.root / rel).read_bytes() != original, rel
+        changed = tree_without_input(plan.root)
+        code, report = confirm(plan, revision)
+        assert (code, report["code"], report["write_count"]) == (1, expected_code, 0), report
+        assert tree_without_input(plan.root) == changed
+        (plan.root / rel).write_bytes(original)
+
+    # graph の member が 1 件でも昇格済みでない (stale に戻った)。
+    graph_path = plan.root / GRAPH
+    clean = graph_path.read_bytes()
+    graph = plan.graph()
+    p07 = node_id_of(plan, "P07")
+    next(item for item in graph["nodes"] if item["graph_node_id"] == p07)["evaluation_status"] = "stale"
+    RT.dump(graph_path, graph)
+    code, report = confirm(plan, revision)
+    assert (code, report["code"], report["write_count"]) == (1, "package_member_not_promoted", 0), report
+    assert [item["node"] for item in report["findings"]] == [p07]
+    graph_path.write_bytes(clean)
+
+    assert tree_without_input(plan.root) == before
+    assert next(item for item in plan.graph()["nodes"] if item["graph_node_id"] == FEATURE)["confirmation_status"] == "draft"
     assert plan.tracker_calls() == ""
 
 

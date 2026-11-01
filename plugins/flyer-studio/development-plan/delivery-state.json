@@ -1,0 +1,75 @@
+{
+  "contract": "artifact-delivery-v1",
+  "state": "handoff_complete",
+  "mode": "update",
+  "artifact": "index.md",
+  "index_sha256": "1d148989dbd43ea909093d97f04cf5ba78c479c52ceda7c6e4a76195815fe541",
+  "plan_digest": "70582e795ed1126c5457bb1fb164a248dcf88365ae584f388ba3cdc1252b6f02",
+  "plan_digest_scope": "PLAN_DIR配下の全ファイル(delivery-state.json自身を除く)の相対パスとsha256の連結",
+  "review_choice": "detailed",
+  "events": [
+    {
+      "event": "artifact_created",
+      "at": "2026-10-22T11:20:44.794626+00:00",
+      "note": "inventory 12実体・13phase・index・handoff 12routes・task-graph再導出"
+    },
+    {
+      "event": "minimum_guard_pass",
+      "at": "2026-10-22T11:20:44.794626+00:00",
+      "note": "決定論ゲート12本exit0、25ファイルparse/UTF-8/非空OK、inventory=phases=routes=task-graphのID集合一致、資格情報パターン0件、変更はPLAN_DIR内18ファイルのみ・削除0・外部送信/commit/install無し"
+    },
+    {
+      "event": "present_actual_artifact",
+      "at": "2026-10-22T11:20:44.794626+00:00"
+    },
+    {
+      "event": "record_user_choice",
+      "at": "2026-10-22T11:26:26.079101+00:00",
+      "choice": "detailed",
+      "by": "user(AskUserQuestion)"
+    },
+    {
+      "event": "detailed",
+      "at": "2026-10-22T11:26:26.079101+00:00",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "event": "user_directive",
+      "at": "2026-10-22T11:43:53.461418+00:00",
+      "note": "利用者の追加指示: 本質課題への適合、評価・検証の費用への配慮、改善反復による品質低下と本質からのずれを防ぐ仕組み"
+    },
+    {
+      "event": "artifact_revised",
+      "at": "2026-10-22T11:43:53.461418+00:00",
+      "note": "専門役3本(C09-C11)を知見lensへ畳み9実体へ。C15本質アンカー/C16費用比例の評価/C17 essence-checkを追加。handoff 9routes・task-graph再導出・決定論ゲート12本exit0"
+    },
+    {
+      "event": "evaluation_scope_reduced",
+      "at": "2026-10-22T11:43:53.461418+00:00",
+      "note": "detailedの選択は維持しつつ、利用者の費用配慮の指示により独立評価は1体1回(plugin-dev-plan-evaluator)に限定し、多agentのelegant-review展開と反復評価は行わない"
+    },
+    {
+      "event": "evaluation_round",
+      "at": "2026-10-22T12:01:38.076340+00:00",
+      "note": "独立評価(plugin-dev-plan-evaluator)3周: 初回FAIL(F1-F8)→再判定1 FAIL(F1-F5 resolved・新F9)→再判定2 FAIL(F9-F11 resolved・新F14 medium/F15 low)"
+    },
+    {
+      "event": "improvement_complete",
+      "at": "2026-10-22T12:01:38.076340+00:00",
+      "note": "F14/F15を制作側で修正し決定論ゲート12本exit0。評価周回の上限3に達したため再評価せず、plan-findings.jsonのverdict FAILは評価者の最終判定として残す"
+    }
+  ],
+  "known_limits": [
+    "plan-findings.jsonは独立評価で上書きされる。前版計画(1.0.1対応)の評価結果はround1/round2と作業用退避にのみ残る。評価結果は利用者のホーム絶対パスを含むが資格情報ではない",
+    "本質成果E*の文言・予算の具体値はbuild時に実事例から起こし利用者確認を経る契約で、計画には焼いていない",
+    "plan-findings.jsonの最終判定はFAIL(medium F14・low F15)。両件とも制作側で修正済みだが評価者は未確認。build時のP03設計レビューで確認する",
+    "承認記録essence-approvals.jsonlはローカルファイルで偽装を機械で完全には防げない。P10の独立判定で利用者の発言原文と照合する",
+    "リリース作業中、基準を書き出してから版を上げるまでの間はessence-checkが基準の版不一致で失敗する。P13の手順内に限られる一時状態",
+    "harness-creator全般への本質アンカー・変更受付・ラチェットの一般化は本計画の範囲外。bd HarnessHub-6ar9で追跡"
+  ],
+  "previous": {
+    "state": "detailed_review_complete",
+    "plan_digest": "a4df223a8d603381242c1846f894adf5c03453b3504d84a4895889f6a23c9e11",
+    "review_choice": "detailed"
+  }
+}

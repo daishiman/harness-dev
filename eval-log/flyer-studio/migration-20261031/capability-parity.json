@@ -1,0 +1,97 @@
+{
+  "plugin_count": 1,
+  "pass_count": 1,
+  "fail_count": 0,
+  "error_count": 0,
+  "dependency_scc": [
+    {
+      "members": [
+        "dev-graph",
+        "system-dev-planner"
+      ],
+      "edges": [
+        {
+          "from": "dev-graph",
+          "to": "system-dev-planner"
+        },
+        {
+          "from": "system-dev-planner",
+          "to": "dev-graph"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    },
+    {
+      "members": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ],
+      "edges": [
+        {
+          "from": "harness-creator",
+          "to": "skill-governance-adapters"
+        },
+        {
+          "from": "skill-governance-adapters",
+          "to": "harness-creator"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    }
+  ],
+  "plugins": [
+    {
+      "plugin": "flyer-studio",
+      "inventory": {
+        "skills": 6,
+        "agents": 3,
+        "commands": 0,
+        "hooks": 0,
+        "scripts": 16,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 68
+      },
+      "surfaces": {
+        "skills": [
+          "assign-flyer-analysis-review",
+          "assign-flyer-review",
+          "run-analyze-flyer",
+          "run-create-flyer",
+          "run-intake-flyer",
+          "run-learn-flyer"
+        ],
+        "agents": [
+          "flyer-color-reviewer",
+          "flyer-composition-reviewer",
+          "flyer-typography-reviewer"
+        ],
+        "commands": [],
+        "hooks": []
+      },
+      "hooks": {
+        "claude_events": [],
+        "codex_events": [],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "skill-governance-adapters"
+      ]
+    }
+  ],
+  "verdict": "PASS"
+}

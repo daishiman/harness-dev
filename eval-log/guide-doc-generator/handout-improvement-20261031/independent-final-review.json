@@ -1,0 +1,30 @@
+{
+  "status": "ok",
+  "verdict": "PASS",
+  "reviewed_as": {
+    "reader": "前回から続けて来る方と、今回から来る方",
+    "prior_knowledge_level": "basic",
+    "usage_scene": "対面勉強会で投影し、参加者が配布HTMLを見ながらClaude Codeで実習する"
+  },
+  "findings": [],
+  "strengths": [
+    {"axis": "goal-chain", "detail": "冒頭のゴールから、概念理解、既存のサブエージェントへの依頼、呼び方、得失、スキルとの使い分け、自作へ進む筋が辿れる。whatが作業を分ける理由を示し、makeが実際に作って呼ぶ到達点を受け持つ。"},
+    {"axis": "opening-order", "detail": "冒頭は主張に続いてゴール・目的・背景を提示し、カードの役割を見出しで判別できる。「今日の流れ」と番号付きの全13節のナビが、これから進む内容と量を示している。"},
+    {"axis": "nav-scannability", "detail": "概念、任せる実習、呼び出し方、自作が異なるラベルになっており、実習中に目的の節を探せる。追加画像で目次から移動した直後の現在地と節見出しも確認した。"},
+    {"axis": "lead-line", "section_id": "what", "detail": "「別の机で作業して、結果だけを返す」という主張が短く、比較と受け渡しの説明を読むための軸になる。"},
+    {"axis": "concreteness", "section_id": "what", "detail": "途中の紙を担当側に残す比較、依頼と結果の往復、通常はメインの会話を見ていないという説明が対応し、机の比喩を具体的な使い方へ結び付けている。"},
+    {"axis": "visual-fit", "section_id": "what", "detail": "挿絵の実画素では、二つの机、担当側に積まれた途中の紙、依頼を渡す矢印、結果一枚を戻す矢印が本文と一致する。1440・768・375pxの実ビューポートで、移動直後の主張と挿絵、展開した各補足を読めることを確認した。"},
+    {"axis": "lead-line", "section_id": "make", "detail": "任せたいことと使う場面を書き、Claudeに作ってもらうという主張から、作成依頼文と実習へ自然に進める。"},
+    {"axis": "card-granularity", "section_id": "make", "detail": "作成、呼び出し、任意のスキル追加を分け、各操作に成功の目安とつまずいた場合の対応を添えている。375pxでも対応関係を保って縦に読める。"},
+    {"axis": "glossary", "section_id": "make", "detail": "nameを呼ぶときの名前、descriptionをいつ使うかの説明と言い換え、役目の日本語名と実際に呼ぶ英字名も区別している。前回参加していない読者は任意のスキル追加を飛ばせる。"},
+    {"axis": "visual-fit", "section_id": "make", "detail": "挿絵の実画素は依頼、作業台での組み立て、置き場所、名前の確認、呼び出しを表し、whatと画風を揃えながら別の場面を伝える。追加の375・768px実ビューポート全状態で、依頼文の末尾とコピー操作、各実習手順、展開した補足を確認した。375pxの表は中間・末尾の横スクロール状態も含めて読める。"},
+    {"axis": "decision-line", "detail": "whatは経過を見ずに任せられるかと結果を確認できるかを問い、makeは読むだけで済むかと依頼の要素を言えるかを問う。読者が次に選ぶ行動につながっている。"},
+    {"axis": "sentence-flow", "detail": "whatとmakeの本文・詳細を現在のHTMLから通読し、主語や指示先の欠落で読みが止まる箇所は認めなかった。"},
+    {"axis": "visual-fit", "detail": "現在HTMLのSHA256はmanifestと一致し、183画面・16素材の全パスが実在する。追加された実ビューポート78画面を確認した。指定範囲について必要な表示を確認でき、display_unavailableは残らない。"}
+  ],
+  "not_reviewed": [
+    {"reason_code": "scope", "section_ids": ["hyogo-ai", "intro", "flow", "can", "ask", "call", "cost", "skill", "qa", "closing", "logistics"], "axes": ["lead-line", "concreteness", "decision-line", "glossary", "card-granularity", "sentence-flow", "visual-fit"], "reason": "指定scopeがwhatとmakeのため、対象外の節内評価と画像実画素検査は行っていない。goal-chain・opening-order・nav-scannabilityは資料全体で確認した。"},
+    {"reason_code": "machine_gate_overlap", "axes": ["C12", "C16", "C17", "C18", "C22"], "reason": "字数・文数、自己完結性、aria属性、印刷宣言、日付、要素と用語被覆の存在検査は意味findingへ含めていない。4ゲートのexit_code=0と各JSONのPASSを確認した。"}
+  ],
+  "blocked_reason": ""
+}

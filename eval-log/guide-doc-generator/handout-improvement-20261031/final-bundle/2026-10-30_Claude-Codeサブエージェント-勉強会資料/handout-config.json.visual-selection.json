@@ -1,0 +1,799 @@
+{
+  "config_sha256": "3b63784f0b7fa6ca9f12816e9c8a674138d491f013bca483ea627ff0597d4c05",
+  "decision_log": [
+    {
+      "kind": "visual-selection",
+      "section_id": "hyogo-ai",
+      "source_excerpt": "12月6日（日） 19:00〜21:00（入場 18:30〜）／ウィズあかし（アスピア明石）",
+      "reader_question": "何の会で、いつどこで参加するか",
+      "relations": "催し・日時・場所の列挙",
+      "candidates": [
+        {
+          "form": "HTMLカード",
+          "reason": "日時・場所をひとまとまりで拾える"
+        },
+        {
+          "form": "タイムライン",
+          "reason": "一度の催しへ時系列を付ける必要がない"
+        }
+      ],
+      "chosen": "B07の案内カード",
+      "mode": "part",
+      "target_part_ids": [
+        "event-card"
+      ],
+      "reason": "QRが申込先、カードが日時と内容を担当する。時系列や数量関係は足さない。",
+      "preserved_facts": [
+        "AI活用の実例トーク＆交流会（食事付き）",
+        "12月6日（日）19:00〜21:00、入場18:30〜",
+        "ウィズあかし（アスピア明石）"
+      ],
+      "replaced_content": [
+        "冒頭リードの複数文は交流会の内容1文へ整理"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "intro",
+      "source_excerpt": "現場監督から始めて、いまは明石でAI活用の支援をしている。",
+      "reader_question": "誰の経験から選ばれた使い方か",
+      "relations": "時期と仕事の対応",
+      "candidates": [
+        {
+          "form": "HTML年表",
+          "reason": "期間ごとに場所と仕事を同じ列で読める"
+        },
+        {
+          "form": "timeline",
+          "reason": "3項目をノードへ詰めるより表の2列が読みやすい"
+        }
+      ],
+      "chosen": "既存B05のライフ表",
+      "mode": "part",
+      "target_part_ids": [
+        "life-table"
+      ],
+      "reason": "プロフィールの事実をそのまま残し、QRは連絡先だけを担当する。",
+      "preserved_facts": [
+        "2011〜2020：建設の現場で工程と人を回す",
+        "2021〜2024：業務のしくみを作る",
+        "2024〜2025：AIへの頼み方を作る",
+        "2025〜現在：明石で独立し企業のAI活用を支える"
+      ],
+      "replaced_content": [
+        "重複するHyogo AI案内の導線TEXTを削除（冒頭と運営連絡に保持）"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "flow",
+      "source_excerpt": "知って、任せて、最後に自分のサブエージェントを作る。",
+      "reader_question": "今日どの順に進み、どこで手を動かすか",
+      "relations": "学習と実習の時系列",
+      "candidates": [
+        {
+          "form": "HTMLステップ行",
+          "reason": "5つの節目と実習の札を短く読める"
+        },
+        {
+          "form": "flow",
+          "reason": "5つの長い箱より折り返せる行が投影と手元の両方で読みやすい"
+        }
+      ],
+      "chosen": "B03の短い5行",
+      "mode": "part",
+      "target_part_ids": [
+        "flow-steps"
+      ],
+      "reason": "順序は実在するため行順を残し、各工程の操作は実習節に任せる。",
+      "preserved_facts": [
+        "できることを知る→任せる→呼び方と使い分け→自分用を作る→Q&Aとまとめ",
+        "任せる・呼び方・自分用作成では実習する"
+      ],
+      "replaced_content": [
+        "5行の長い見出しを20字以内の節目へ短縮"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "what",
+      "source_excerpt": "調べた途中の紙が、全部メインの机に積まれる",
+      "reader_question": "作業を分けるとメインに何が残るか",
+      "relations": "同じ机の比喩での対比",
+      "candidates": [
+        {
+          "form": "HTML二択グリッド",
+          "reason": "紙が残る場所を左右同じ軸で比べ、狭い画面では折り返せる"
+        },
+        {
+          "form": "versusのSVG",
+          "reason": "比較自体は合うが、挿絵と長い箇条書きを再び大きな図へする必要がない"
+        }
+      ],
+      "chosen": "B06の机の比較",
+      "mode": "part",
+      "target_part_ids": [
+        "desk-compare"
+      ],
+      "reason": "挿絵は作業の場面、HTML比較は途中の紙と結果の違いを担当する。",
+      "preserved_facts": [
+        "一人で全部やると途中の紙がメインに積まれ、本題の場所が減る",
+        "任せると途中の紙は別の机に残り、メインには結果の紙1枚が届く"
+      ],
+      "replaced_content": [
+        "what-deskの6項目を二択の4項目へ整理",
+        "長い会話の要約による細部の欠落はwhat-moreへ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "what",
+      "source_excerpt": "必要なことは頼む文に書く",
+      "reader_question": "誰が何を渡し、戻った何を見ればよいか",
+      "relations": "主体間の依頼と結果の時間順の受渡し",
+      "candidates": [
+        {
+          "form": "sequence",
+          "reason": "送り手・受け手・内容を往復の向きで追える"
+        },
+        {
+          "form": "flow",
+          "reason": "工程は分かるが主体が交代する向きが薄れる"
+        }
+      ],
+      "chosen": "sequenceの依頼と結果",
+      "mode": "diagram",
+      "target_part_ids": [
+        "handoff-diagram",
+        "blank-start",
+        "watch-once"
+      ],
+      "reason": "図へ受渡しを集め、文章は会話を見ていない前提、チェック行は実演で見る場所だけを担当する。",
+      "preserved_facts": [
+        "依頼時に必要な前提を渡す",
+        "ふつうは白紙から始まり、メインの会話は見ていない",
+        "調べた結果だけを返す",
+        "講師の画面で動作表示と戻った結果を見る"
+      ],
+      "replaced_content": [
+        "what-handoffの4段階flowを2主体の往復へ置換",
+        "blank-startの依頼方法の再掲と例外の長文を削減"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "what",
+      "source_excerpt": "読むだけ、などと絞れる",
+      "reader_question": "別の机の設定や例外まで確認したいときは何を見るか",
+      "relations": "基本概念を支える設定と例外の補足",
+      "candidates": [
+        {
+          "form": "閉じたB10",
+          "reason": "主な受渡しを隠さず、設定や例外だけ必要時に開ける"
+        },
+        {
+          "form": "常設の3カードと散文",
+          "reason": "原資料の設定説明を常時並べると受渡しの主張が埋もれる"
+        }
+      ],
+      "chosen": "具体的summaryのB10",
+      "mode": "text",
+      "target_part_ids": [
+        "what-more"
+      ],
+      "reason": "机・専用指示・道具の範囲と、長い会話・引継ぎ例外は、実習の次の操作に不要なため補足へ置く。",
+      "preserved_facts": [
+        "別の作業場所、専用の指示、使える道具の範囲を分けられる",
+        "長い会話は前の方が要約され細部が抜ける",
+        "会話を引き継ぐ例外はcan節で扱う"
+      ],
+      "replaced_content": [
+        "three-thingsの3カードを折り畳みへ置換",
+        "元のblank-startの例外の説明を分離"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "can",
+      "source_excerpt": "3本の資料を、3つのサブエージェントが同時に読む",
+      "reader_question": "どのように仕事を分けて任せられるか",
+      "relations": "独立した能力の列挙",
+      "candidates": [
+        {
+          "form": "HTML特徴カード",
+          "reason": "量・並行・道具の3つを独立した能力として並べられる"
+        },
+        {
+          "form": "ステップ行",
+          "reason": "互いに実行順のない能力へ順番があるように見える"
+        }
+      ],
+      "chosen": "3枚のB07",
+      "mode": "part",
+      "target_part_ids": [
+        "can-cards"
+      ],
+      "reason": "独立した能力をカードで示し、軽いAIの具体的な頼み方は補足へ移す。",
+      "preserved_facts": [
+        "たくさん読んでもメインには要約だけ返す",
+        "3本を3つの別の机で同時に読める",
+        "読むだけに絞ればファイルを書き換えない"
+      ],
+      "replaced_content": [
+        "can-rowsの順序のない4行を3カードと補足へ整理"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "can",
+      "source_excerpt": "覚えるのは Explore（調べる）と general-purpose（何でもする）の2つで足りる。",
+      "reader_question": "最初からいる誰に任せ、運用の例外をどこで確認するか",
+      "relations": "担当と書き換え可否の比較、背景動作・継続・引継ぎの補足",
+      "candidates": [
+        {
+          "form": "HTML比較表とB10",
+          "reason": "まず2軸で顔ぶれを選び、必要な例外だけ開ける"
+        },
+        {
+          "form": "hierarchy",
+          "reason": "担当間の上下関係は原文になく、階層にすると誤解させる"
+        }
+      ],
+      "chosen": "B05＋結論TEXT＋B10",
+      "mode": "part",
+      "target_part_ids": [
+        "builtin",
+        "builtin-note",
+        "more"
+      ],
+      "reason": "顔ぶれは同じ比較軸、覚える範囲は1文、運用の細目は具体的なsummaryに分ける。",
+      "preserved_facts": [
+        "Exploreは速く探して読むだけ",
+        "Planは計画前の下調べで書き換えず、Claudeが自分で使う",
+        "general-purposeは書き換えもする",
+        "Exploreとgeneral-purposeの2つで足りる",
+        "裏で動く間、メインで別の話を進められる",
+        "同じ会話では継続依頼が可能だがExploreとPlanは頼み直す",
+        "会話ごと引継ぐ例外とターミナル版の/subtask",
+        "軽いAIなら速く使用量も少ない"
+      ],
+      "replaced_content": [
+        "builtin-noteのPlan説明をB10へ移動",
+        "続きを頼む説明を意味単位の改行へ整理"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "ask",
+      "source_excerpt": "Code タブで Local と練習フォルダを選ぶ",
+      "reader_question": "自分の画面で何を操作し、何が返れば次へ進めるか",
+      "relations": "操作→期待結果、3種類の依頼文との対応",
+      "candidates": [
+        {
+          "form": "操作ごとのB17と原文B11",
+          "reason": "該当する操作と貼る依頼文を近くに置ける"
+        },
+        {
+          "form": "まとめたflow",
+          "reason": "期待結果や詰まったときの手当てが工程名だけでは足りない"
+        }
+      ],
+      "chosen": "準備・調べる・同時依頼に分けたB17",
+      "mode": "part",
+      "target_part_ids": [
+        "ask-setup",
+        "ask-explore",
+        "ask-steps",
+        "ask-help"
+      ],
+      "reason": "コピー原文を変えず、操作を小さく分ける。止めた作業の再依頼だけは補足とし、一覧を開くタイミングは常時表示する。",
+      "preserved_facts": [
+        "Localと練習フォルダを選ぶ",
+        "架空の会議メモ3本・商品一覧・案内文を作る",
+        "Exploreで未完了の宿題一覧を受け取る",
+        "3本同時の依頼後、表が返る前に一覧を開く",
+        "Background tasksは上の帯の⋮から開く",
+        "停止後は続きから動かず、必要なら同じ依頼文を貼る"
+      ],
+      "replaced_content": [
+        "1つの長いask-stepsを3つの操作単位に分割",
+        "最後の長いstuck_hintの停止後の説明をask-helpへ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "ask",
+      "source_excerpt": "3本の会議メモを、それぞれ別のサブエージェントで同時に要約してください。",
+      "reader_question": "1回の依頼から3つの机へ分かれ、どこで1つになるか",
+      "relations": "同時の分配と要約の回収・合流",
+      "candidates": [
+        {
+          "form": "relationship",
+          "reason": "中央に3つの机を並べ、左の依頼から分岐し右の表へ合流する関係を示せる"
+        },
+        {
+          "form": "flow",
+          "reason": "単線の工程だけでは3つが同時に動く関係が見えない"
+        }
+      ],
+      "chosen": "3枝のrelationship",
+      "mode": "diagram",
+      "target_part_ids": [
+        "parallel-diagram"
+      ],
+      "reason": "左の依頼から中央の3つの机へ分け、右の表へ集める。3行へ圧縮し、狭い画面でも始点から読めるようにする。コピーする依頼文は原文B11に任せる。",
+      "preserved_facts": [
+        "依頼文を1回貼る",
+        "メモごとに別のサブエージェントが同時に要約する",
+        "メインが3本の要約を1つの表にまとめる"
+      ],
+      "replaced_content": [
+        "ask-parallelの直列flowを分岐合流へ置換"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "call",
+      "source_excerpt": "呼び方は4つ。迷ったら、サブエージェントの名前を書いて頼む。",
+      "reader_question": "どの呼び方が目的に合い、どこまで確実に動くか",
+      "relations": "4つの選択肢の比較",
+      "candidates": [
+        {
+          "form": "HTML比較表",
+          "reason": "各呼び方に同じ頼み方・選ばれ方の軸を当てられる"
+        },
+        {
+          "form": "flow",
+          "reason": "通常→名前→@という常に必要な手順に見え、その場の依頼が落ちる"
+        }
+      ],
+      "chosen": "4択のB05",
+      "mode": "part",
+      "target_part_ids": [
+        "call-choices"
+      ],
+      "reason": "4つの呼び方は選択肢なので順序の線を外し、確実さの違いを1か所で読めるようにする。",
+      "preserved_facts": [
+        "普通に頼むとClaudeが選ぶ",
+        "名前を書くと選ばれやすくなる",
+        "@はその1回は必ず動く",
+        "その場で任せる担当はClaudeが選び、ファイルは残らない"
+      ],
+      "replaced_content": [
+        "call-orderの3段階flowを4つの選択肢の表へ置換"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "call",
+      "source_excerpt": "@ を打ち、Explore を選んで頼む",
+      "reader_question": "4つの呼び方をどう試し、表示の違いをどう受け止めるか",
+      "relations": "実習として試す順と期待結果",
+      "candidates": [
+        {
+          "form": "B17",
+          "reason": "呼び方の選択肢とは別に、実習の操作順と期待結果を示せる"
+        },
+        {
+          "form": "sequence",
+          "reason": "人や担当間の受渡しより入力と表示の確認が中心"
+        }
+      ],
+      "chosen": "既存B17の実習",
+      "mode": "part",
+      "target_part_ids": [
+        "call-steps"
+      ],
+      "reason": "表は呼び方の選択、B17は今回試す操作と成功の見方を担当する。",
+      "preserved_facts": [
+        "4つの呼び方を実際に試す",
+        "普通・名前・その場はメインが答えても誤りではない",
+        "@一覧に出なければ名前で頼んで進む",
+        "その場の依頼でファイルは残らない"
+      ],
+      "replaced_content": [
+        "4つ目の期待結果と注意の長文を短縮"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "cost",
+      "source_excerpt": "机は別でも、財布は同じ。",
+      "reader_question": "任せると何が得で、何を余分に使うか",
+      "relations": "机・使用量・時間・道具の得失比較",
+      "candidates": [
+        {
+          "form": "HTML比較表",
+          "reason": "4つの観点を左右同じ行で読み比べられる"
+        },
+        {
+          "form": "財布のhierarchy",
+          "reason": "挿絵の同じ財布を再掲するだけでは得失の判断材料が増えない"
+        }
+      ],
+      "chosen": "B05の得失表",
+      "mode": "part",
+      "target_part_ids": [
+        "trade-table"
+      ],
+      "reason": "画像が同じ財布の場面、表が判断の観点を担当する。操作手順ではないためattainment_stepはnullとし、段の宣言で比較を工程へ変えない。",
+      "preserved_facts": [
+        "大量の途中資料を別の机へ置けるが、詳しい返答が多いとメインも埋まる",
+        "軽いAIで抑えられるが使用量の上限は同じ",
+        "並行なら待ち時間を減らせるが、前提集め直しに時間と使用量がかかる",
+        "道具を絞ると書き換えを防げるが、必要資料を読めないこともある"
+      ],
+      "replaced_content": [
+        "cost-walletの重複する階層図を削除",
+        "trade-tableの各セルを1つの意味へ短縮"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "cost",
+      "source_excerpt": "たくさん読んで結果だけほしい作業はサブエージェントへ、すぐ終わる頼みごとはそのまま頼む。",
+      "reader_question": "今の作業は任せる方か、そのまま頼む方か",
+      "relations": "結果・前提と道具・作業単位による選択条件の比較",
+      "candidates": [
+        {
+          "form": "HTML比較表とB10",
+          "reason": "複数の判断条件を同時に見渡し、依頼の具体例だけ補足できる"
+        },
+        {
+          "form": "決定木",
+          "reason": "量・対話・道具の条件は単一のはい/いいえへ忠実に圧縮できず、複雑な分岐になる"
+        }
+      ],
+      "chosen": "B05の選択条件＋補足B10",
+      "mode": "part",
+      "target_part_ids": [
+        "split-table",
+        "cost-save"
+      ],
+      "reason": "判断条件を常時表示し、短く返す・軽いAIの依頼の言い方は折り畳む。",
+      "preserved_facts": [
+        "長い資料の要約など結果だけでよいまとまりは任せる",
+        "案内文を一緒に練るなど対話で直す作業はそのまま頼む",
+        "読むだけの道具制約で任せることもできる",
+        "同じ前提を使い続ける作業・小さく即答が必要な作業はそのまま頼む",
+        "軽いAIと短い返答で使用量を抑える"
+      ],
+      "replaced_content": [
+        "split-tableの長い例文を短縮",
+        "順番のない節約の2行を具体的なsummaryのB10へ整理"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "skill",
+      "source_excerpt": "スキルは手順書。サブエージェントは、別の机で作業して結果を返す。",
+      "reader_question": "手順をそろえるか、作業場所を分けるか",
+      "relations": "手順・場所・適性・呼び方を同じ軸で比較",
+      "candidates": [
+        {
+          "form": "HTML比較表",
+          "reason": "用途と確実な呼び方まで同じ行で対照できる"
+        },
+        {
+          "form": "versusと表の併置",
+          "reason": "同じ場所・適性・呼び方を二度読ませる"
+        }
+      ],
+      "chosen": "B05へ比較を一本化",
+      "mode": "part",
+      "target_part_ids": [
+        "compare"
+      ],
+      "reason": "挿絵は手順書と別の机の場面、表は使い分け、後続図は組合せだけを担当する。",
+      "preserved_facts": [
+        "スキルは作業手順、サブエージェントは役目・返す結果・道具・AIを設定する",
+        "スキルは今の会話、サブエージェントは別の会話",
+        "同じ手順を使いたい作業と、途中を見なくてよい調べものの違い",
+        "スキルは/、サブエージェントは名前か@"
+      ],
+      "replaced_content": [
+        "skill-vsのversusを削除",
+        "比較表の設定パスはskill-qaへ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "skill",
+      "source_excerpt": "動き出したときから、手順書の中身がサブエージェントの机に入っている",
+      "reader_question": "サブエージェントへ先に手順書を持たせると、何が渡るか",
+      "relations": "開始時に手順書の中身を渡す依存関係",
+      "candidates": [
+        {
+          "form": "HTML手順（B03）",
+          "reason": "入口と作業の2段階を、狭幅でもまとめて読める"
+        },
+        {
+          "form": "SVG関係図",
+          "reason": "関係は表せるが、狭幅で2箱を同時に見られず横移動が必要"
+        }
+      ],
+      "chosen": "HTML手順（B03）：入口と別の机での作業を縦にも読める形で示す",
+      "mode": "part",
+      "target_part_ids": [
+        "carry-diagram"
+      ],
+      "reason": "2箱のSVGは狭幅で接続相手が見切れるため、順序と開始条件を保つHTMLの短いステップへ置換する。文字は縮小しない。",
+      "preserved_facts": [
+        "動き出したときから手順書を読んだ状態になる",
+        "例は文章チェック"
+      ],
+      "replaced_content": [
+        "combineの1行目をcarry-diagramへ置換、例はskill-qaへ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "skill",
+      "source_excerpt": "スキルを呼ぶとサブエージェントが動き、手順書の中身がその指示になる",
+      "reader_question": "スキルを入口にすると、どこが動くか",
+      "relations": "スキルの呼出しから別の机の起動への関係",
+      "candidates": [
+        {
+          "form": "HTML手順（B03）",
+          "reason": "入口と作業の2段階を、狭幅でもまとめて読める"
+        },
+        {
+          "form": "SVG関係図",
+          "reason": "関係は表せるが、狭幅で2箱を同時に見られず横移動が必要"
+        }
+      ],
+      "chosen": "HTML手順（B03）：入口と別の机での作業を縦にも読める形で示す",
+      "mode": "part",
+      "target_part_ids": [
+        "fork-diagram"
+      ],
+      "reason": "2箱のSVGは狭幅で接続相手が見切れるため、順序と開始条件を保つHTMLの短いステップへ置換する。文字は縮小しない。",
+      "preserved_facts": [
+        "スキルを呼ぶとサブエージェントが動く",
+        "手順書の中身が指示になる",
+        "例は毎週の報告まとめ"
+      ],
+      "replaced_content": [
+        "combineの2行目をfork-diagramへ置換、例はskill-qaへ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "skill",
+      "source_excerpt": "使える。持たせれば読んだ状態で動き出す。",
+      "reader_question": "優先関係・併用・名前や置き場所を詳しく確認するには",
+      "relations": "主な使い分けを支える例外と設定の補足",
+      "candidates": [
+        {
+          "form": "閉じたB10",
+          "reason": "主たる比較と組合せを残し、運用の疑問だけ具体名で開ける"
+        },
+        {
+          "form": "常設の長い表",
+          "reason": "設定パスや例外が主たる判断の4軸を押し下げる"
+        }
+      ],
+      "chosen": "具体的summaryのB10",
+      "mode": "text",
+      "target_part_ids": [
+        "skill-qa"
+      ],
+      "reason": "主要な比較と向きは開いたまま、優先の決まりがないことや設定場所は補足へ置く。",
+      "preserved_facts": [
+        "通常依頼の優先順は公式に定められていない",
+        "持たせなくても必要なら手順書を自分で開く",
+        "同名は見分けにくいため避ける",
+        "前回のスキルはそのまま使える",
+        "スキルとサブエージェントの設定場所",
+        "組合せAは文章チェック、Bは毎週の報告まとめの例"
+      ],
+      "replaced_content": [
+        "どっちが先に動く？の重複した呼出し方法を比較表への参照に変更",
+        "設定パスとcombineの例をB10へ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "make",
+      "source_excerpt": "任せたいことと使う場面を書いて、サブエージェントを Claude に作ってもらう。",
+      "reader_question": "自分のどの作業を、何の場面で任せるか",
+      "relations": "役目と作業内容・使う場面の対応",
+      "candidates": [
+        {
+          "form": "HTML対応表",
+          "reason": "文章・宿題・数字の3例を同じ2軸で比べて選べる"
+        },
+        {
+          "form": "階層図",
+          "reason": "3例に親子関係がなく、役目と場面を同時に読める表が速い"
+        }
+      ],
+      "chosen": "既存B05の例の表",
+      "mode": "part",
+      "target_part_ids": [
+        "examples"
+      ],
+      "reason": "自分の依頼へ置き換える材料だけを見せ、設定の細部を加えない。",
+      "preserved_facts": [
+        "文章チェックは誤字と敬語を送付前に見る",
+        "宿題拾いは誰が何をいつまでにやるか会議後に拾う",
+        "数字の確認は合計・前回との差を提出前に見る"
+      ],
+      "replaced_content": []
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "make",
+      "source_excerpt": "呼ぶときは、役目の名前ではなく、Claude が教えた英字の name を書く。",
+      "reader_question": "作ってもらってから、どの名前で動作を確認するか",
+      "relations": "操作順と期待結果、役目の日本語名と英字nameの区別",
+      "candidates": [
+        {
+          "form": "B17と短い注意文",
+          "reason": "作成・確認・新しい会話・呼出しに期待結果を対応できる"
+        },
+        {
+          "form": "flowとB17の併置",
+          "reason": "同じ経路を二度追わせ、具体的な操作と注意が離れる"
+        }
+      ],
+      "chosen": "B17へ経路を一本化",
+      "mode": "part",
+      "target_part_ids": [
+        "make-setup",
+        "make-steps",
+        "name-note"
+      ],
+      "reason": "make-routeをなくし、実際に行う操作と期待結果を依頼文の近くへ分ける。nameの区別は必須なので折り畳まない。",
+      "preserved_facts": [
+        "練習フォルダで作成する",
+        "nameとdescriptionを確認し、細かい項目は読まなくてよい",
+        "初めて置き場所を作ったら新しい会話を始める",
+        "役目名ではなく英字nameで呼ぶ",
+        "必要なら@で必ず動かす",
+        "名前なしで呼ばれるかも試す"
+      ],
+      "replaced_content": [
+        "make-routeの4段階flowを削除",
+        "作成前2操作と呼出し確認4操作にB17を分割"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "make",
+      "source_excerpt": "（任意）前回のフォルダで、下の2つを貼る",
+      "reader_question": "前回作った手順書を持たせ、後から直すには",
+      "relations": "任意の併用操作と保守・共有範囲の補足",
+      "candidates": [
+        {
+          "form": "任意のB17とB10",
+          "reason": "任意実習は見えるまま示し、開き方や後日の変更は必要時に確認できる"
+        },
+        {
+          "form": "すべて常設の散文",
+          "reason": "初めて作る人に不要な管理の話が続き、nameで呼ぶ操作が埋もれる"
+        }
+      ],
+      "chosen": "任意B17＋具体的summaryのB10",
+      "mode": "part",
+      "target_part_ids": [
+        "make-optional",
+        "make-help"
+      ],
+      "reason": "任意実習の前提と新しい会話のタイミングは隠さず、後日の保守と困ったときの詳細だけを畳む。",
+      "preserved_facts": [
+        "前回のスキルがなければ任意実習を飛ばせる",
+        "前回フォルダの新しい会話で2つの依頼文を貼る",
+        "呼ぶ前にも新しい会話を始める",
+        "開き方・英字nameの綴り確認の頼み方",
+        "説明に使う場面を足すと呼ばれやすくなる",
+        "修正はClaudeに頼む",
+        "全部のフォルダ用はホームの.claude/agents/に置く"
+      ],
+      "replaced_content": [
+        "fix-noteの長文をmake-helpへ移動",
+        "長いstuck_hintのファイルの開き方と綴り確認を補足へ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "qa",
+      "source_excerpt": "名前を書いて頼む",
+      "reader_question": "呼ばれないとき、次に何を試すか",
+      "relations": "試行の優先順と確実さ",
+      "candidates": [
+        {
+          "form": "HTMLステップ行",
+          "reason": "名前→@→説明追加の実際に試す順を短く追える"
+        },
+        {
+          "form": "選択肢カード",
+          "reason": "今回は困った後の試行順があるため、順序が見えた方がよい"
+        }
+      ],
+      "chosen": "既存B03をQ&Aの前へ",
+      "mode": "part",
+      "target_part_ids": [
+        "qa-order"
+      ],
+      "reason": "全員が次に行える操作は開いて示し、細かな理由と例外は後続のQ&Aで読めるようにする。",
+      "preserved_facts": [
+        "まず名前で頼む",
+        "@はその1回は必ず動く",
+        "説明に使う場面を足すと次から呼ばれやすい"
+      ],
+      "replaced_content": [
+        "qa-itemsの後ろにあったqa-orderを前へ移動"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "qa",
+      "source_excerpt": "作ったばかりなら、先に新しい会話を始める。",
+      "reader_question": "使用量・書き換え・継続などの迷いをどう解決するか",
+      "relations": "独立した疑問と答えの対応",
+      "candidates": [
+        {
+          "form": "閉じたB10",
+          "reason": "疑問を選んだ人だけ詳細を開き、一覧性を保てる"
+        },
+        {
+          "form": "すべて開いた表",
+          "reason": "8つの別の疑問を常時展開すると実習の流れを止める"
+        }
+      ],
+      "chosen": "既存B10を維持して参照と改行を整理",
+      "mode": "text",
+      "target_part_ids": [
+        "qa-items"
+      ],
+      "reason": "必須の呼出し順は前へ出し、例外や相談事項は疑問文で探せる形にする。",
+      "preserved_facts": [
+        "使用量は同じ上限に数える",
+        "読むだけの指定とExploreは書き換えをしない",
+        "作成直後は新しい会話を始める",
+        "その場の依頼は後から名前/@では呼べない",
+        "白紙開始と同じ会話での継続、Explore/Planの例外",
+        "同名ならこのフォルダ用が優先される",
+        "修正・削除はClaudeへ頼む",
+        "エージェントチームは試験中で今日のCodeタブでは使えない"
+      ],
+      "replaced_content": [
+        "下の1〜3の参照を上の順へ修正",
+        "2回目の質問見出しと継続の長文を短く整理"
+      ]
+    },
+    {
+      "kind": "visual-selection",
+      "section_id": "closing",
+      "source_excerpt": "小さな頼みごと",
+      "reader_question": "この後、どの作業をどう頼み始めるか",
+      "relations": "独立した作業条件と選ぶ行動の対応",
+      "candidates": [
+        {
+          "form": "HTMLカード",
+          "reason": "小さい・たくさん読む・繰り返すの条件を独立して選べる"
+        },
+        {
+          "form": "flow",
+          "reason": "3つを順番に経る手順ではなく、直列は意味を変える"
+        }
+      ],
+      "chosen": "条件ごとのB07",
+      "mode": "part",
+      "target_part_ids": [
+        "takeaways"
+      ],
+      "reason": "章の要約の再掲を減らし、次の作業を選ぶ3つの条件に集める。画像は任せて本題へ戻る全体の場面を担当する。",
+      "preserved_facts": [
+        "小さな頼みはそのまま頼む",
+        "たくさん読み結果だけほしい作業は任せ、結果を確認する",
+        "繰り返す調べものは自分用を作り、名前か@で呼ぶ",
+        "@ならその1回は必ず動く"
+      ],
+      "replaced_content": [
+        "closing-useの直列flowと重複するtakeawaysを条件別の3カードへ置換"
+      ]
+    }
+  ]
+}

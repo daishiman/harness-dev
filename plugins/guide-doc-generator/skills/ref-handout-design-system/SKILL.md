@@ -21,13 +21,14 @@ version: 0.2.0
 ## Purpose & Output Contract
 
 guide-doc-generator が生成する資料のデザイン言語について、問い合わせに対して規範を
-引用で返す参照。返す面は 5 つに限る。
+引用で返す参照。扱う面は次のとおり。
 
 1. 部品カタログの構成データ表現
 2. CSS 変数トークン一覧
 3. アイコン規約
 4. 文章設計の型
 5. カードとナビの視覚設計 (R25)
+6. 関係から選ぶ図解と詳細の開閉
 
 デザイン言語の出所は jp-web-design のモードB「Pop・親しみ」である。実行時に
 plugin の外を読まないため、採用した規範は `assets/jp-web-design-mode-b.md` へ
@@ -213,3 +214,15 @@ viewBox を混ぜない。
   判定もしない。
 - 参照先のキーが正本ファイルに存在しないときは、記憶や推測で埋めない。
   「未確定」と答え、正本の owner へ差し戻す。
+
+## 面 6: 関係から選ぶ図解と詳細の開閉
+
+図種の名簿をここへ複製しない。選定の実行規則は
+`config/handout-visual-policy.json#diagram_selection`、候補・入力例は
+`config/handout-diagrams.json`。図中の最小表示文字・接続・配色は同 policy の
+`diagram_presentation`、トグルは `disclosure` を読む。
+参考HTMLの観察と採否の根拠は `references/reference-handout-analysis.md` にある。
+
+図で伝えられる関係が長文だけに残る、矢印が本文と異なる、箱や文字へ線が重なる、
+縮小で文字が読めない、テーマから色が外れる場合は、図の有無に関わらず読める状態ではない。
+具体的な意味判断の確認項目は `references/visual-expression-review.md`、実表示の取得・委譲・未確認の扱いは `references/visual-evidence-contract.md` を参照する。

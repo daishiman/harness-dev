@@ -1145,6 +1145,45 @@ def _data_uri_payload_length(value):
     return len(payload.encode("utf-8"))
 
 
+def _complete_html_metric(node):
+    """C11の単一KPIはSVG不要だが、枠や本文だけでは実体と認めない。"""
+    if (node.attrs.get("data-hb-diagram-renderer") != "html" or
+            node.attrs.get("data-hb-diagram-pattern") != "bignumber"):
+        return False
+    try:
+        spec = json.loads(node.attrs.get("data-hb-diagram-data", ""))
+    except (ValueError, TypeError):
+        return False
+    if not isinstance(spec, dict) or any(not isinstance(spec.get(key), str) or not spec[key].strip()
+                                         for key in ("title", "value", "caption")):
+        return False
+    description = spec.get("description")
+    expected_description = description if isinstance(description, str) and description.strip() else None
+    if node.attrs.get("aria-description") != expected_description:
+        return False
+    descendants = list(node.descendants())
+    if sum("diagram-metric" in _class_tokens(child) for child in descendants) != 1:
+        return False
+    for key, class_name, tag in (("title", "diagram-title", "figcaption"),
+                                 ("value", "diagram-metric-value", "span"),
+                                 ("caption", "diagram-metric-caption", "dt"),
+                                 ("unit", "diagram-metric-unit", "span"),
+                                 ("sub", "diagram-metric-sub", "p")):
+        value = spec.get(key)
+        matches = [child for child in descendants if class_name in _class_tokens(child)]
+        if value is None or value == "":
+            if matches:
+                return False
+            continue
+        if not isinstance(value, str):
+            return False
+        if len(matches) != 1 or matches[0].tag != tag or "hidden" in matches[0].attrs:
+            return False
+        if re.sub(r"\s+", " ", matches[0].visible_text()).strip() != re.sub(r"\s+", " ", value).strip():
+            return False
+    return True
+
+
 def _detect_sc09(doc):
     violations = []
     part_ids = figure_part_ids()
@@ -1159,12 +1198,12 @@ def _detect_sc09(doc):
         imgs = [child for child in node.descendants() if child.tag == "img"]
         svgs = [child for child in node.descendants() if child.tag == "svg"]
 
-        if not imgs and not svgs:
+        if not imgs and not svgs and not _complete_html_metric(node):
             violations.append(Violation(
                 "SC-09", node.line, node.col,
                 "図表の枠だけが残り <img> も <svg> も持たない", node.raw))
         else:
-            satisfied = False
+            satisfied = _complete_html_metric(node)
             reasons = []
             for img in imgs:
                 src = img.attrs.get("src")

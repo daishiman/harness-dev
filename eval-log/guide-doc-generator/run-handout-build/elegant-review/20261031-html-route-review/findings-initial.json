@@ -1,0 +1,1586 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/guide-doc-generator",
+    "reviewed_at": "2026-10-31T06:56:48.671290+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+        "plugins/guide-doc-generator/config/handout-diagrams.json:5"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:5"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:5"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:5"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:5"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "候補と描画方式・実例が結び付かず、狭幅の表が長く折り返す",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/guide-doc-generator/config/handout-diagrams.json"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "批判的思考"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+        "plugins/guide-doc-generator/scripts/render-handout.py:1561"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:1561"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:1561"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:1561"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:1561"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0003",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "専用図表IMGの可読性とキーボード拡大が内蔵図より弱い",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/guide-doc-generator/scripts/render-handout.py"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "演繹思考"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+        "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+            "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+            "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+            "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+            "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "帰納的思考"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "アブダクション"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0008",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "選定記録の項目名が方針と契約で異なる",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/guide-doc-generator/config/handout-visual-policy.json"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "垂直思考"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+        "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+            "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+            "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+            "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+            "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "要素分解"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "MECE"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+        "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+            "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "2軸思考"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "プロセス思考"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "メタ思考"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:498"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:498"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:498"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:498"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:498"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "候補と描画方式・実例が結び付かず、狭幅の表が長く折り返す",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/guide-doc-generator/config/handout-visual-policy.json"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "抽象化思考"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:362"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:362"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:362"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:362"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:362"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0009",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "挿絵の変更で全節の図解枚数下限を戻す旧規則が残る",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/guide-doc-generator/config/handout-visual-policy.json"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "ダブル・ループ思考"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "ブレインストーミング"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+        "実表示: 図領域291px、数値位置379〜420px"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+            "実表示: 図領域291px、数値位置379〜420px"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+            "実表示: 図領域291px、数値位置379〜420px"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+            "実表示: 図領域291px、数値位置379〜420px"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+            "実表示: 図領域291px、数値位置379〜420px"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0002",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "単一KPIの数字が狭幅の初期表示から消える",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "実表示"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "水平思考"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+        "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+            "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+            "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+            "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+            "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "逆説思考"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+            "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "候補と描画方式・実例が結び付かず、狭幅の表が長く折り返す",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/guide-doc-generator/scripts/build-diagram-gallery.py"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "類推思考"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+        "実表示: 375pxの図幅291px、内容幅753〜860px"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+            "実表示: 375pxの図幅291px、内容幅753〜860px"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+            "実表示: 375pxの図幅291px、内容幅753〜860px"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+            "実表示: 375pxの図幅291px、内容幅753〜860px"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+            "実表示: 375pxの図幅291px、内容幅753〜860px"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "if思考"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+        "実表示375px: 表幅293px/高さ4977.1px"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+            "実表示375px: 表幅293px/高さ4977.1px"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+            "実表示375px: 表幅293px/高さ4977.1px"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+            "実表示375px: 表幅293px/高さ4977.1px"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+            "実表示375px: 表幅293px/高さ4977.1px"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "候補と描画方式・実例が結び付かず、狭幅の表が長く折り返す",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "実表示375px"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "素人思考"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0004",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "専用作図のソース作成から素材生成までの実行担当が未接続",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "システム思考"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+            "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0007",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "文字の小ささを描画のみへ差し戻し構成の分割を禁止する",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "因果関係分析"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+        "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+            "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0006",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "実表示未確認がreleaseへ流れる状態規則の不足",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "因果ループ"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+        "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+            "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+            "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+            "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+            "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "レビュアーの表示確認要求と許可された入力・ツールが未接続",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "トレードオン思考"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+        "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+            "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "プラスサム思考"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+        "plugins/guide-doc-generator/README.md:295"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+            "plugins/guide-doc-generator/README.md:295"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+            "plugins/guide-doc-generator/README.md:295"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+            "plugins/guide-doc-generator/README.md:295"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+            "plugins/guide-doc-generator/README.md:295"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "価値提案思考"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+        "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "戦略的思考"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+        "plugins/guide-doc-generator/scripts/route-handout-output.py:497"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:497"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:497"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:497"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:497"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0010",
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "選定証跡が納品構成へ引き継がれない",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/guide-doc-generator/scripts/route-handout-output.py"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "why思考"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+        "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+            "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+            "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+            "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+            "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0011",
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "other",
+          "description": "自明な短文・導線に形式的な候補比較を増やす恐れ",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/guide-doc-generator/scripts/validate-visual-selection.py"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 1.0,
+      "paradigm_label_ja": "改善思考"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+        "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+            "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "仮説思考"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+            "plugins/guide-doc-generator/config/handout-visual-policy.json:499"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0008",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "選定記録の項目名が方針と契約で異なる",
+          "recommended_intervention": "統合所見に対応する最小差分を適用し、実装担当と異なるcontextで再検証する",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/guide-doc-generator/config/handout-visual-policy.json"
+          },
+          "depends_on": []
+        }
+      ],
+      "score": 0.0,
+      "paradigm_label_ja": "論点思考"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+        "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+            "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "KJ法"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0007: 文字の小ささを描画のみへ差し戻し構成の分割を禁止する",
+        "F-0009: 挿絵の変更で全節の図解枚数下限を戻す旧規則が残る"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0001: 候補と描画方式・実例が結び付かず、狭幅の表が長く折り返す",
+        "F-0006: 実表示未確認がreleaseへ流れる状態規則の不足"
+      ],
+      "violation_count": 2
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0002: 単一KPIの数字が狭幅の初期表示から消える",
+        "F-0008: 選定記録の項目名が方針と契約で異なる"
+      ],
+      "violation_count": 2
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0003: 専用図表IMGの可読性とキーボード拡大が内蔵図より弱い",
+        "F-0004: 専用作図のソース作成から素材生成までの実行担当が未接続",
+        "F-0005: レビュアーの表示確認要求と許可された入力・ツールが未接続",
+        "F-0010: 選定証跡が納品構成へ引き継がれない"
+      ],
+      "violation_count": 4
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "score_note": "scoreは観測されたblocking所見の有無の二値投影。最適性の点数や意味評価の代替にはしない。",
+  "why_cross_check": "利用者指定どおりシステム担当も26whyを独立適用。論理担当の補助確認と統合し、集約では同一IDを1行にまとめた。"
+}

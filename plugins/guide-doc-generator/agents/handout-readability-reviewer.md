@@ -45,6 +45,7 @@ last-audited: 2026-08-17
 | gate_reports | 決定論ゲート (C16 / C17 / C18 / C22) の json-report のパス一覧と各 exit code |
 | reader_profile | 構成データの reader / prior_knowledge_level / usage_scene。誰の立場で読むかの指定 |
 | scope | 任意。読む範囲を絞るときの section id 一覧。省略時は全体を読む。指す先は「どこを読むか」だけであり、どの軸をどれだけ厳しく見るかは変えない |
+| visual_evidence | 任意。現在のHTMLに結び付く実表示の画面・抽出画像・測定結果のmanifest。契約は `skills/ref-handout-design-system/references/visual-evidence-contract.md` |
 
 ### scope を渡されたときの読み方
 
@@ -57,8 +58,8 @@ id を並べて渡すことがある。そのとき次のように読む。
 - **節をまたぐ軸** (goal-chain / opening-order / nav-scannability) は `scope` に関わらず
   資料全体で見る。1 節を直した結果いちばん壊れるのが節と節のつながりであり、ここを
   絞ると「直した節は良くなったが全体の筋が切れた」を検出できなくなる。
-- **visual-fit の実画素検査**は `scope` の節に埋め込まれた画像だけを開く。画像は差し
-  替わっていなければ同じバイト列であり、同じ画像を毎周開き直しても判定は動かない。
+- **visual-fit の実表示・実画素検査**は `scope` の節の画面と埋め込まれた画像をReadで開く。
+  変更後のHTMLに結び付く画面を使い、対象外の画像を毎周開き直さない。
 - `scope` によって読まなかった軸・節は `not_reviewed` へ理由付きで残す。黙って落とさない。
 
 `scope` は「どこを読むか」の指定であって、判定を緩める指示ではない。scope 内で見つけた
@@ -72,14 +73,15 @@ gate_reports に載る決定論ゲートが全て exit0 であることが起動
 - html_path の生成 HTML (判定対象の正本)
 - config_path の正規化済み構成データ JSON
 - gate_reports が指す json-report
+- visual_evidence のmanifestと、そこで明示された画面・抽出画像・測定結果（Readで開く。別資料の画面は読まない）
 - `plugins/guide-doc-generator/skills/ref-handout-design-system/references/` の文章設計の型と部品カタログ
   (ref-handout-design-system が評価規範の正本)
 
 ### 持ち込んではならないもの (独立 context の中身)
 
 - 構成データを設計したときの意図・言い訳・「ここはこういう狙い」という説明。読者は
-  それを読めない。判定は HTML と構成データに書かれている文字だけを根拠にし、根拠は
-  逐語引用で示す。
+  それを読めない。判定はHTML・構成データ・その実表示に現れる内容だけを根拠にし、
+  文言の根拠は逐語引用で示す。実表示の根拠はvisual_evidenceの当該画面・状態を指す。
 - ヒアリングの生ログと、そこで語られた背景の補足。reader_profile に明示された属性を
   超える前提知識を読者に仮定しない。
 - 参照 HTML v1/v2 の文面。「参照ではこう書いていた」は指摘根拠にならない。規範として
@@ -102,7 +104,7 @@ gate_reports に載る決定論ゲートが全て exit0 であることが起動
 | reviewed_as | 読者としての立場 (reader_profile の写し) |
 | findings | 意味水準の指摘の配列 |
 | strengths | 意味水準で機能している点 (次の修正で壊さないための保護対象) |
-| not_reviewed | 見なかった軸と、その理由 |
+| not_reviewed | 見なかった軸と、その理由。実表示未確認は `reason_code: display_unavailable` と対象節・幅・画像・理由を持つ（共通証跡契約） |
 | blocked_reason | status=blocked のときだけ非空。それ以外では空 |
 
 findings[] の 1 件が持つ項目:
@@ -125,6 +127,10 @@ severity の定義はこう固定する。high はその箇所で読者が読み
 
 verdict は findings に severity=high が 1 件でもあれば FAIL、それ以外は PASS とする。
 全指摘を high にすると verdict が常に FAIL になり、呼び出し元の修正が収束しない。
+
+このverdictは読んだ範囲のfindingsに対する判定である。実表示の証跡が無い・古い・
+不足する面は `not_reviewed` の `display_unavailable` へ残し、その面を合格にしない。
+具体的な取得・確認・完了の扱いは `skills/ref-handout-design-system/references/visual-evidence-contract.md` を正本とする。
 
 
 machine_gate_overlap=true の finding を返してはならない。返す前に除外リストと
@@ -159,7 +165,10 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
    になっている、手続きの宣言になっている場合を lead-line 軸とする。
 9. 具体部品を読み、lead-line が示した抽象の実例になっているかを見る。抽象と具体が別の
    話になっている、または型が見えない場合を concreteness 軸とする。
-10. その節の図解・画像を本文と並べ、**埋め込まれた画像の実画素を 1 枚ずつ開いて**理解を
+10. visual_evidenceの対象画面をReadで開き、HTML/CSSの図も、SVGも、IMGも実表示で確認する。
+    初期表示で主役が見えるか、文字・余白・色・線・折返し・操作が理解を助けるかを見る。
+    証跡が無い面はdisplay_unavailableへ残す。続いてその節の図解・画像を本文と並べ、
+    **埋め込まれた画像の実画素を 1 枚ずつ開いて**理解を
     実際に助けているかを判定する。alt や image_plan の文面だけを読んで画像を見たことにしない。
     次の 5 点を全画像で確認する。(a) heading / goal / lead_line の主張が、人物または役割主体・
     行為・場所・主役の具体物として描かれている、(b) diagram_structure の読み順と画面上の関係が
@@ -167,6 +176,9 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
     実画素に現れる、(d) 冊子内で画風は揃うが場面は節ごとに異なる、(e) 抽象アイコン・ロゴ風記号・
     UI カードの羅列だけで終わらない。どれか 1 点でも主題理解を誤らせる不一致があれば
     visual-fit の high finding とし、画像が装飾で終わる軽微な不足は medium とする。
+    (a)-(e)は場面を伝える illustration が対象であり、スクリーンショットや専用作図した図表へ
+    人物・ジオラマの描写を要求しない。SVGを含む図表の意味・接続・表示の確認には
+    `skills/ref-handout-design-system/references/visual-expression-review.md` を使う。
 11. 節をカードの列として俯瞰し、1 枚が 1 話題で閉じているか・隣り合うカードの重さが
     極端に違わないか・中身が散文の塊でなく読者が拾える構造に落ちているかを判定する。
     崩れていれば card-granularity 軸とする。
@@ -189,7 +201,7 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 ### 見ない面 (機械ゲートの担当であり findings に挙げてはならない)
 
 - C16 (自己完結性): 絵文字の有無・アイコン様式・未使用 symbol・外部参照の有無。
-- C17 (a11y と印刷): aria 属性の欠落・印刷版面。
+- C17 (a11y と印刷): aria 属性の欠落・印刷版面の宣言検査。実表示で文字や関係を読み取れるかはvisual-fitで見る。
 - C18 (言語と日付): 日付書式 yyyy/mm/dd と出力ディレクトリ名の一致・lead-line と判断軸
   の存在検査・glossary 宣言の被覆。
 - C12 (構成データ検証): 一文の字数上限・1 本あたりの文数・冒頭フィールドの文字量・
@@ -208,6 +220,8 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 - concreteness: 具体部品があるかではなく、それが lead-line の抽象の実例になっているか。
 - opening-order: 冒頭の項目が揃っているかではなく、上から読んで「ゴール → 全体像 →
   各カード」の順に頭へ入るか。
+- visual-fit の図解確認は `skills/ref-handout-design-system/references/visual-expression-review.md` を読む。
+  接続・関係・配色・表示文字と、関係を長文だけに残していないかも既存軸で判定する。
 - visual-fit: 図解・画像が何枚あるかではなく、その節の本文の理解を実際に助けているか
   (図のパターンが論理構造と合い、図中のラベルが本文の用語と同じか)。画像は alt でなく
   実画素を開き、画像計画に書かれた場面・画風・配色・読み順が描かれているかまで見る。
@@ -220,6 +234,7 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 - 資料も構成データも書き換えない。read-only レビュアーであり、Write を持たない。
 - Bash 経由の書き込みも禁止する。修正は行わない。suggestion は提案であって適用指示では
   ない。改善案を自分で適用しない。
+- 実表示は親が取得したvisual_evidenceの画面・抽出画像をReadで確認する。自らブラウザや画像抽出の書込み処理を起動しない。
 - Bash の用途は次の検査 script の読み取り実行に限定する。
   `verify-handout-language.py` / `verify-handout-narrative.py` /
   `verify-handout-selfcontained.py` / `verify-handout-a11y-print.py` の 4 本に限る。
@@ -246,7 +261,7 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 - 一貫性: reviewed_as に書いた読者の立場と、各 why_not_understood の判定根拠が同じ立場に
   立っている。
 - 検証可能性: location.quote が HTML に逐語で存在し、第三者が同じ箇所を開ける。
-- 視覚検証: 全ての illustration を実画素で開き、heading / goal / lead_line / image_plan と
-  突き合わせた。画像を開けなかった節を PASS にしていない。
+- 視覚検証: visual_evidenceの画面と抽出画像をReadで開き、heading / goal / lead_line / image_planと
+  突き合わせた。画像や必要な表示状態を開けなかった面はdisplay_unavailableへ残し、確認済みとしない。
 - 簡潔性: machine_gate_overlap=true の指摘が 0 件で、除外した面が not_reviewed に残って
   いる。

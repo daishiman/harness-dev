@@ -1,0 +1,790 @@
+{
+  "plugin_concept": "多表現の自然な境界を持つチラシ制作プラグイン",
+  "derivation": "1.2.0の現物に合わせ、4段階(現物診断・提案評価・制作・完成画像評価)をskill4本、各段階の実行担当をstage local agent4本、4skillが共有する実行入口をplugin-root script1本に分解した。1.2.0の共有専門役3本(C09-C11)は知見を参照資料へ委ねる薄い相談役で、段階ごとに起動するとLLM呼出しが掛け算で増えるため、references/design-knowledge-index.jsonの構図・文字・配色lensへ畳み、各stage担当が必要なlensだけ読む。ID C09-C11は過去周回の記録と対応させるため欠番にする。本質成果・非目的・予算・golden事例はreferences/essence.jsonを正本とし、C12のessence-checkが案件とプラグインの両方で照合する。旧agents/flyer-reviewer.mdは独立agentでなく完成画像評価の共通手順なので、visual-review-coordinatorの契約へ吸収する。5種を検討し、常駐hookと重複slash-commandは不採用。",
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "depends_on": [
+        "C04",
+        "C02",
+        "C08",
+        "C12"
+      ],
+      "skill_name": "run-create-flyer",
+      "prefix": "run",
+      "kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "run-create-flyer",
+        "チラシ制作"
+      ],
+      "output_contract": "比較一覧・PDF・PNG・事実と素材履歴・機械検査・目視所見",
+      "boundary": "外部公開・global設定変更・実機印刷は対象外",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [
+        "python3",
+        "node"
+      ],
+      "deterministic_checks": [
+        "render",
+        "verify",
+        "finalize"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": false,
+      "goal": "用途・表現形式のヒアリングから新構図のチラシを印刷用データまで制作する状態",
+      "purpose_background": "過去のQR除外中心と見切り・公開範囲の問題を完成前に発見するため",
+      "checklist": [
+        "用途・表現形式のヒアリングから新構図のチラシを印刷用データまで制作する",
+        "紙面全体の中央軸を確認",
+        "未実見画像をPASSにしない",
+        "完成画像評価のFIXは、決定論検査の失敗は制作へ直接、目的・事実・公開範囲のずれは分析担当の改訂案と提案評価を経て制作へ戻し、工程全体3周の上限で未達ならINCOMPLETEを返す",
+        "原依頼と本質成果を不変の基準に固定し、完了を本質成果のPASSで判定する"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-produce",
+          "summary": "用途・表現形式のヒアリングから新構図のチラシを印刷用データまで制作する",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "新構図の全案で紙面中央軸・QR・白外縁・文字欠け検査が失敗0",
+            "verify_by": "test"
+          },
+          {
+            "id": "IN2",
+            "loop_scope": "inner",
+            "text": "完成画像評価のFIXが決定論検査の失敗は制作へ・目的/事実/公開範囲のずれは分析へ振り分けられ、周回が工程全体3周以内で、上限時はINCOMPLETEと未解決項目を返す",
+            "verify_by": "test"
+          },
+          {
+            "id": "IN3",
+            "loop_scope": "inner",
+            "text": "各周回の所見が本質/好みに区分されて原依頼との差分が記録され、好みだけの所見で周回が増えない",
+            "verify_by": "test"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "原依頼の本質成果を全案が満たし、用途と表現形式に合った新構図の全案を個別実見して公開範囲と読み順の必須修正が0",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "inline",
+        "max_loops": 3
+      },
+      "combinators": [
+        "with-goal-seek"
+      ],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      },
+      "name": "run-create-flyer",
+      "build_target": "plugins/flyer-studio/skills/run-create-flyer/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "output_language": "ja",
+      "mass_production_profile": "strict",
+      "build_args": {
+        "skill_name": "run-create-flyer",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "skill_kind": "run"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "depends_on": [
+        "C03",
+        "C12"
+      ],
+      "skill_name": "assign-flyer-review",
+      "prefix": "assign",
+      "kind": "assign",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "assign-flyer-review",
+        "チラシ検証"
+      ],
+      "output_contract": "各画像のSHA・個別所見・必須修正・判定JSON",
+      "boundary": "外部公開・global設定変更・実機印刷は対象外",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [
+        "node"
+      ],
+      "deterministic_checks": [
+        "review-template"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": false,
+      "goal": "全案PDF由来画像を独立した目で検査し、画像SHAに紐付く目視所見を返す状態",
+      "purpose_background": "過去のQR除外中心と見切り・公開範囲の問題を完成前に発見するため",
+      "checklist": [
+        "全案PDF由来画像を独立した目で検査し、画像SHAに紐付く目視所見を返す",
+        "紙面全体の中央軸を確認",
+        "未実見画像をPASSにしない",
+        "制作物と制作元を変更せず、FIXは元要件ID・本質成果ID・戻り先(制作/分析)を添えて返す",
+        "決定論検査で判定済みの項目を再判定せず、画像SHA・要求・規範が同じ案の案単位の実見判定だけを再利用し、案の集合に掛かる判定は毎回担当へ渡す",
+        "担当への入力束をflyer.pyで発行して呼出記録へ追記させ、記録に無い入力束IDの判定を受け付けない"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-inspect",
+          "summary": "全案PDF由来画像を独立した目で検査し、画像SHAに紐付く目視所見を返す",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "skip_reason": "assign kind は loop criteria 必須対象外"
+      },
+      "combinators": [],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "assign=evaluator-verdict"
+      },
+      "name": "assign-flyer-review",
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "output_language": "ja",
+      "mass_production_profile": "strict",
+      "build_args": {
+        "skill_name": "assign-flyer-review",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "skill_kind": "assign"
+    },
+    {
+      "id": "C03",
+      "component_kind": "sub-agent",
+      "depends_on": [],
+      "name": "visual-review-coordinator",
+      "description": "全案の新しいPDF由来PNGを個別に実見し、5観点・構図/文字/配色の知見lensと最新要求の充足を本質/好みに区分してvisual-review.jsonへ返す。画像や制作元は変更しない",
+      "tools": [
+        "Read"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "skills/assign-flyer-review/references/review-contract.md",
+      "prompt_layer": "7layer",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      },
+      "goal": "制作担当の先入観を外し、全案の中央軸・可読性・写真公開範囲・余白を新しい画像で個別実見する状態",
+      "purpose_background": "過去のQR除外中心と見切り・公開範囲の問題を完成前に発見するため",
+      "checklist": [
+        "制作担当の先入観を外し、全案の中央軸・可読性・写真公開範囲・余白を個別実見する",
+        "紙面全体の中央軸を確認",
+        "未実見画像をPASSにしない",
+        "checks.jsonで判定済みの項目を再判定せず、実見が要る項目だけを本質/好みに区分して返す"
+      ],
+      "supersedes": "agents/flyer-reviewer.md (共通完成レビュー手順は review-contract.md へ吸収し、独立agentとして登録しない)",
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "visual-review-coordinator"
+      }
+    },
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "depends_on": [
+        "C05",
+        "C06",
+        "C12"
+      ],
+      "skill_name": "run-analyze-flyer",
+      "prefix": "run",
+      "kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "run-analyze-flyer",
+        "チラシ分析",
+        "既存チラシの改善"
+      ],
+      "output_contract": "analysis.json(領域付き所見・保持点・要求別の候補と採否理由・nextActions)と提案評価の判定",
+      "boundary": "外部公開・global設定変更・実機印刷は対象外",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [
+        "node"
+      ],
+      "deterministic_checks": [
+        "analysis-template",
+        "analysis-seal",
+        "analysis-validate"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": false,
+      "goal": "既存紙面の実画像と最新要望から、残す長所と要求別の採否理由を持つ改善提案を作り、独立した提案評価を通す状態",
+      "purpose_background": "既存紙面の長所を失う修正、評価者による自己承認、古いPASSの転用を完成前に止めるため",
+      "checklist": [
+        "既存紙面の実画像と最新要望から、残す長所と要求別の採否理由を持つ改善提案を作る",
+        "全元画像を実見し領域付き所見を記録",
+        "提案評価のFIXを受けて改訂し、評価者に提案を修正させない",
+        "原依頼を不変の基準として各提案に本質成果IDを付け、好みだけの所見を改善要求にしない"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-diagnose",
+          "summary": "既存紙面の実画像と最新要望から、残す長所と要求別の採否理由を持つ改善提案を作る",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "全元画像の所見・保持点・要求別の採否理由が欠落0でanalysis-sealとanalysis-validateが成功",
+            "verify_by": "test"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "独立した提案評価が元画像・原依頼・最新要望に照らして改善提案をPASSと判定し、残す長所の喪失と原依頼からのずれが0",
+            "verify_by": "evaluator"
+          }
+        ]
+      },
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "inline",
+        "max_loops": 3
+      },
+      "combinators": [
+        "with-goal-seek"
+      ],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      },
+      "name": "run-analyze-flyer",
+      "build_target": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "output_language": "ja",
+      "mass_production_profile": "strict",
+      "build_args": {
+        "skill_name": "run-analyze-flyer",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C04.json"
+      },
+      "skill_kind": "run"
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "depends_on": [
+        "C07",
+        "C12"
+      ],
+      "skill_name": "assign-flyer-analysis-review",
+      "prefix": "assign",
+      "kind": "assign",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "assign-flyer-analysis-review",
+        "提案評価"
+      ],
+      "output_contract": "analysis-review.json(観察一致・網羅・変更規律・実現性の根拠、必須修正、PASS/FIXと戻り先)",
+      "boundary": "外部公開・global設定変更・実機印刷は対象外",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [
+        "node"
+      ],
+      "deterministic_checks": [
+        "analysis-review-template",
+        "analysis-review-validate"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": false,
+      "goal": "元画像・最新要望と改善提案を別contextで照合し、提案を修正せずに判定と戻り先を返す状態",
+      "purpose_background": "既存紙面の長所を失う修正、評価者による自己承認、古いPASSの転用を完成前に止めるため",
+      "checklist": [
+        "元画像・最新要望と改善提案を別contextで照合し、判定と戻り先を返す",
+        "提案と元画像を変更しない",
+        "未照合の元画像をPASSにしない",
+        "原依頼と本質成果に結び付かない提案をFIXにし、好みだけの差を要求にしない",
+        "flyer.pyが発行した入力束だけで判定し、判定に入力束IDを添える"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-evaluate",
+          "summary": "元画像・最新要望と改善提案を別contextで照合し、判定と戻り先を返す",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "skip_reason": "assign kind は loop criteria 必須対象外"
+      },
+      "combinators": [],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "assign=evaluator-verdict"
+      },
+      "name": "assign-flyer-analysis-review",
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "output_language": "ja",
+      "mass_production_profile": "strict",
+      "build_args": {
+        "skill_name": "assign-flyer-analysis-review",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C05.json"
+      },
+      "skill_kind": "assign"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "depends_on": [],
+      "name": "artifact-analyst",
+      "description": "既存チラシの実画像・最新要望・素材制約を診断し、残す長所と採否理由が追跡できるanalysis.jsonを作る。完成画像の合格判定は行わない",
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "skills/run-analyze-flyer/references/analysis-contract.md",
+      "prompt_layer": "7layer",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      },
+      "goal": "全元画像を実見して、残す長所と要求別の採否理由を追跡できる診断を作る状態",
+      "purpose_background": "既存紙面の長所を失う修正、評価者による自己承認、古いPASSの転用を完成前に止めるため",
+      "checklist": [
+        "全元画像を実見して残す長所と要求別の採否理由を記録する",
+        "完成画像の合格判定をしない",
+        "未実見画像を診断済みにしない",
+        "所見を原依頼の本質成果IDへ結び、好みだけの所見を改善要求にしない"
+      ],
+      "build_target": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "artifact-analyst"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "depends_on": [],
+      "name": "analysis-evaluator",
+      "description": "元画像・最新要望とanalysis.jsonを独立照合し、観察の妥当性・要望の網羅・変更規律・実現性の判定を呼出元skillへ返す(書込みはassign skillが行う)。提案と制作物は修正しない",
+      "tools": [
+        "Read"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "skills/assign-flyer-analysis-review/references/evaluation-contract.md",
+      "prompt_layer": "7layer",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      },
+      "goal": "提案者の先入観を外し、改善提案を元画像と最新要望へ照合して判定する状態",
+      "purpose_background": "既存紙面の長所を失う修正、評価者による自己承認、古いPASSの転用を完成前に止めるため",
+      "checklist": [
+        "改善提案を元画像と最新要望へ照合して判定する",
+        "提案と制作物を修正しない",
+        "未照合の元画像をPASSにしない",
+        "原依頼から外れた提案と本質成果へ結び付かない提案をFIXにする"
+      ],
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "analysis-evaluator"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "depends_on": [],
+      "name": "flyer-producer",
+      "description": "用途・素材・公開条件からチラシを制作し、独立評価済みの改善提案か決定論検査の失敗項目に基づいて修正し、新しいPDF/PNGを完成画像評価へ渡す",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "skills/run-create-flyer/references/production-contract.md",
+      "prompt_layer": "7layer",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      },
+      "goal": "独立評価済みの提案か決定論検査の失敗項目だけを根拠に制作・修正し、新しい画像を評価へ渡す状態",
+      "purpose_background": "既存紙面の長所を失う修正、評価者による自己承認、古いPASSの転用を完成前に止めるため",
+      "checklist": [
+        "独立評価済みの提案か決定論検査の失敗項目だけを根拠に制作・修正する",
+        "紙面全体の中央軸を確認",
+        "自分の画像を合格判定しない"
+      ],
+      "build_target": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "flyer-producer"
+      }
+    },
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "depends_on": [],
+      "name": "flyer.py",
+      "script_name": "flyer.py",
+      "purpose": "4段階skillが共有する実行入口。Node.js 22の有無を確認し、同梱のChromium描画・検査backend(scripts/cli.cjs)へ引数を渡す。加えて標準ライブラリだけで動くessence-checkを持ち、案件では原依頼アンカー・所見の本質/好み区分・FIX振分を、プラグインでは変更受付(serves/evidence)・担当数とLLM評価の予算・golden事例の対応を、references/essence.jsonと直前リリースの基準references/essence-baseline.json・利用者の承認記録に照らして読取専用で検査する",
+      "inputs": "argv(<subcommand> --project DIR ほか。描画系subcommandはcli.cjsと同一。essence-check [--project DIR]はPython側で処理)",
+      "outputs": "stdout(JSON/結果パス・essence-checkの違反一覧)/stderr(違反・Node未導入の案内)",
+      "exit_codes": "0/1/2(1=essence-checkを含む検査違反、2=Node未導入)",
+      "network": false,
+      "write_scope": "--project で指定した案件dirのみ(PLUGIN_ROOT内は書かない)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "backend": "scripts/cli.cjs ほか既存の*.cjs。Chromium描画はPython標準ライブラリで代替できないため既存Node backendを維持し、新規の.js/.shは追加しない",
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/flyer-studio/scripts/flyer.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    }
+  ],
+  "omitted_component_kinds": {
+    "slash-command": "4skillがユーザー起動コマンドを提供するため重複させない",
+    "hook": "全セッション監視は不要。段階順序と鮮度は実行入口のseal/validate/finalizeで、本質アンカーとの照合はessence-checkでfail closedに検査する"
+  },
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".claude-plugin/plugin.json"
+    },
+    "composition": {
+      "required": true,
+      "path": "plugin-composition.yaml"
+    },
+    "harness_eval": {
+      "required": true,
+      "path": "EVALS.json"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup",
+      "anchors": [
+        "references/essence.json",
+        "references/design-knowledge-index.json",
+        "references/essence-baseline.json"
+      ]
+    },
+    "schemas": {
+      "required": true,
+      "path": "schemas/"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "他pluginへの実行時参照なし。依存はpackage-lockで固定"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "画像生成はホストの利用可能ツールを発見し、無い場合は確認する。生成APIを固定しない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "制作情報・レビュー・改善履歴はproject配下のJSON/Markdownで保持し、Notion DBも外部feedback受け皿も利用しない。個人写真を自動送信しない。"
+    }
+  }
+}

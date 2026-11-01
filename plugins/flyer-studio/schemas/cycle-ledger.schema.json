@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cycle-ledger.schema.json",
+  "title": "改善 cycle の台帳 <project>/cycle-ledger.json",
+  "description": "scripts/checks.cjs の recordCycles だけが書く（追記のみ）。評価の記録（analysis-review.json・pilot-review.json・visual-review.json と reviews/ の退避分）から毎回導き、記録ごとの SHA で同じ評価を二重に数えない。FIX の評価 1 件が 1 entry。同じ画像への再提出と、好み（preference）だけの所見は consumed=false（R4）。finalize は消費数が design-contract.json の cycleBudget を超えると INCOMPLETE を返す。数え方の正本は references/workflow.md#改善と納品。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "budget", "entries"],
+  "properties": {
+    "version": { "const": 1 },
+    "budget": { "type": "integer", "minimum": 1, "$comment": "書いた時点の cycleBudget の写し。判定は常に design-contract.json の値で行う。" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cycle", "at", "trigger", "findingsDigest", "renderDigest", "fixClasses", "returnTo", "consumed", "reason", "source"],
+        "properties": {
+          "cycle": { "type": "integer", "minimum": 0, "$comment": "この entry までに消費した cycle 数。consumed=false の entry は直前の番号のまま。" },
+          "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$" },
+          "trigger": { "enum": ["visual-review", "analysis-review"] },
+          "findingsDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "renderDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$", "$comment": "評価が見た対象の指紋。目視は案ごとの PNG SHA、提案評価は analysis.json の SHA と元画像の指紋。" },
+          "fixClasses": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "deterministic": { "type": "integer", "minimum": 1 },
+              "within-plan": { "type": "integer", "minimum": 1 },
+              "premise": { "type": "integer", "minimum": 1 },
+              "preference": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "returnTo": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "enum": ["run-create-flyer", "run-analyze-flyer", "run-intake-flyer"] }
+          },
+          "consumed": { "type": "boolean" },
+          "reason": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["file", "sha256"],
+            "properties": {
+              "file": { "type": "string", "minLength": 1 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

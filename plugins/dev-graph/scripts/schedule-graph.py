@@ -155,6 +155,11 @@ def main() -> int:
                   and x not in leased_ids and not overlaps(touches(by_id[x]), leased_touches)]
     features = [n for n in candidates if n.get("artifact_kind", n.get("kind")) == "feature"]
     tasks = [n for n in candidates if n not in features]
+    # A feature its registered package members name as parent_feature was already planned: its tasks are the
+    # execution candidates, and recommending system-dev-planner for it again would plan the feature twice.
+    planned = {n.get("parent_feature") for n in by_id.values() if n.get("parent_feature")}
+    planned_features = [n.get("graph_node_id") or n.get("id") for n in features if (n.get("graph_node_id") or n.get("id")) in planned]
+    features = [n for n in features if (n.get("graph_node_id") or n.get("id")) not in planned]
     def batches(items: list[dict[str, Any]]) -> list[list[str]]:
         result: list[list[str]] = []
         for node in items:
@@ -176,7 +181,8 @@ def main() -> int:
     dump({"ready_set": {"features": [n.get("graph_node_id") or n.get("id") for n in features],
                          "tasks": [n.get("graph_node_id") or n.get("id") for n in tasks]},
           "batches": {"features": feature_batches, "tasks": task_batches}, "conflicts": conflicts,
-          "assignment_hints": hints, "unmapped": unmapped, "ready_source": args.ready_source})
+          "planned_features": planned_features, "assignment_hints": hints, "unmapped": unmapped,
+          "ready_source": args.ready_source})
     return 0
 
 

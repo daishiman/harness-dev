@@ -1,0 +1,164 @@
+
+> flyer-studio@1.0.1 test
+> node --test tests/*.test.cjs
+
+TAP version 13
+# Subtest: 実際のPDF/PNGを使う完了・鮮度・目視の受入試験
+ok 1 - 実際のPDF/PNGを使う完了・鮮度・目視の受入試験
+  ---
+  duration_ms: 19360.88325
+  type: 'test'
+  ...
+# Subtest: 既定は13案・白3・形式と素材の確認待ち
+ok 2 - 既定は13案・白3・形式と素材の確認待ち
+  ---
+  duration_ms: 210.499125
+  type: 'test'
+  ...
+# Subtest: 承認済み白黒の中央軸シーンが検査を通る
+ok 3 - 承認済み白黒の中央軸シーンが検査を通る
+  ---
+  duration_ms: 134.817625
+  type: 'test'
+  ...
+# Subtest: QRを除いた幅の中央90mmに寄せた文章を拒否
+ok 4 - QRを除いた幅の中央90mmに寄せた文章を拒否
+  ---
+  duration_ms: 109.919375
+  type: 'test'
+  ...
+# Subtest: 全幅の中央軸はQR位置を変えても不変
+ok 5 - 全幅の中央軸はQR位置を変えても不変
+  ---
+  duration_ms: 73.537708
+  type: 'test'
+  ...
+# Subtest: 白系または黒系の欠落を拒否
+ok 6 - 白系または黒系の欠落を拒否
+  ---
+  duration_ms: 75.821041
+  type: 'test'
+  ...
+# Subtest: 色だけ違う構図を拒否
+ok 7 - 色だけ違う構図を拒否
+  ---
+  duration_ms: 72.545791
+  type: 'test'
+  ...
+# Subtest: 写真の承認cropを外すと拒否
+ok 8 - 写真の承認cropを外すと拒否
+  ---
+  duration_ms: 72.776167
+  type: 'test'
+  ...
+# Subtest: 参考人物画像を実素材として使うことを拒否
+ok 9 - 参考人物画像を実素材として使うことを拒否
+  ---
+  duration_ms: 32.301875
+  type: 'test'
+  ...
+# Subtest: 生成プロンプトだけで背景生成済みにはならない
+ok 10 - 生成プロンプトだけで背景生成済みにはならない
+  ---
+  duration_ms: 69.289458
+  type: 'test'
+  ...
+# Subtest: 過去の駅前表記・必須住所の欠落を拒否
+ok 11 - 過去の駅前表記・必須住所の欠落を拒否
+  ---
+  duration_ms: 69.436416
+  type: 'test'
+  ...
+# Subtest: 非公開の新写真は確認記録なしでimportしない
+ok 12 - 非公開の新写真は確認記録なしでimportしない
+  ---
+  duration_ms: 1.933291
+  type: 'test'
+  ...
+# Subtest: プロジェクト外の相対パスを拒否
+ok 13 - プロジェクト外の相対パスを拒否
+  ---
+  duration_ms: 0.394875
+  type: 'test'
+  ...
+# Subtest: 中心ポリシーの上書きを入力契約で拒否
+ok 14 - 中心ポリシーの上書きを入力契約で拒否
+  ---
+  duration_ms: 45.025917
+  type: 'test'
+  ...
+# Subtest: 希望していない表現形式を拒否
+ok 15 - 希望していない表現形式を拒否
+  ---
+  duration_ms: 66.212
+  type: 'test'
+  ...
+# Subtest: 意味群の付け替えで中央軸検査を回避できない
+ok 16 - 意味群の付け替えで中央軸検査を回避できない
+  ---
+  duration_ms: 66.578334
+  type: 'test'
+  ...
+# Subtest: 欠落した数値と単一案は入力契約で拒否
+ok 17 - 欠落した数値と単一案は入力契約で拒否
+  ---
+  duration_ms: 45.696334
+  type: 'test'
+  ...
+# Subtest: 公開条件の確認後も素材変更はSHAで検出
+ok 18 - 公開条件の確認後も素材変更はSHAで検出
+  ---
+  duration_ms: 71.761583
+  type: 'test'
+  ...
+# Subtest: 白外縁0mmと安全域を超える外縁を拒否
+ok 19 - 白外縁0mmと安全域を超える外縁を拒否
+  ---
+  duration_ms: 108.936
+  type: 'test'
+  ...
+# Subtest: 新写真は各公開項目の確認内容が必要
+ok 20 - 新写真は各公開項目の確認内容が必要
+  ---
+  duration_ms: 8.635209
+  type: 'test'
+  ...
+# Subtest: 同梱写真の台帳から承認crop条件を削除しても拒否
+ok 21 - 同梱写真の台帳から承認crop条件を削除しても拒否
+  ---
+  duration_ms: 64.612417
+  type: 'test'
+  ...
+# Subtest: 同梱写真の顔の公開条件を変更しても拒否
+ok 22 - 同梱写真の顔の公開条件を変更しても拒否
+  ---
+  duration_ms: 82.436917
+  type: 'test'
+  ...
+# Subtest: QRとロゴ・被写体保護領域の重なりを拒否
+ok 23 - QRとロゴ・被写体保護領域の重なりを拒否
+  ---
+  duration_ms: 145.198875
+  type: 'test'
+  ...
+# Subtest: ロゴ枠への写真の誤指定を拒否
+ok 24 - ロゴ枠への写真の誤指定を拒否
+  ---
+  duration_ms: 65.564041
+  type: 'test'
+  ...
+# Subtest: 目視台帳は文字列false・不正日時・重複IDを拒否
+ok 25 - 目視台帳は文字列false・不正日時・重複IDを拒否
+  ---
+  duration_ms: 3.054959
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19574.632042

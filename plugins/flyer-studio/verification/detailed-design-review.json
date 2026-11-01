@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "reviewType": "independent-plugin-design-and-flow",
+  "reviewer": "detailed_design_review (implementation authorとは別)",
+  "reviewedAt": "2026-10-21T23:28:10.551502+00:00",
+  "scope": "プラグイン文書・入力契約・制作フロー・既存2例の独立実見。新規13案制作の評価ではない。",
+  "reset": {
+    "completed": true,
+    "observation": "従来の手直しを正当化せず、用途から完成納品までの初見フローを再構成。主要な問題は美観の数式不足ではなく、許される選択の文書/実装不一致。"
+  },
+  "decision": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": "D01",
+      "severity": "medium",
+      "condition": [
+        "C1",
+        "C3"
+      ],
+      "evidence": [
+        "references/design-rules.md §1",
+        "references/workflow.md §5.4",
+        "references/runtime.md 構図とシーン",
+        "scripts/project.cjs validate centerGroups"
+      ],
+      "observation": "中央に置いた本文ブロック内の左揃えを制作規則は許すが、実装はalign=centerだけ許可する。",
+      "impact": "指示に忠実に群内左揃えを選ぶと描画前にpage-axisで停止する。",
+      "minimalFix": "紙面中心と群内揃えを分離して実装する、または全規則を群内も中央揃えの制約に統一する。前者が中央軸の意味を保ち多用途に適する。",
+      "status": "open"
+    },
+    {
+      "id": "D02",
+      "severity": "medium",
+      "condition": [
+        "C1",
+        "C3"
+      ],
+      "evidence": [
+        "references/interview.md 単一案等の選択肢",
+        "references/workflow.md §0",
+        "schemas/brief.schema.json count/whiteCount",
+        "scripts/project.cjs white-black"
+      ],
+      "observation": "白1案/黒1案を確認して例外保存できると案内するが、スキーマと検査には例外経路が無く常に白黒2案以上を要求する。",
+      "impact": "確認した回答を反映できない利用経路になる。",
+      "minimalFix": "少なくとも白黒各1案という今回の既定を守りつつ、現在選べる範囲を白黒2案へ明記するか、明示回答付きの例外契約を検査まで実装する。",
+      "status": "open"
+    }
+  ],
+  "coverage": {
+    "C1": {
+      "status": "FAIL",
+      "reason": "D01/D02の文書・入力契約不一致"
+    },
+    "C2": {
+      "status": "PASS",
+      "reason": "履歴上の必須設計条件はヒアリング/規則/プリセット/目視に対応。未実証と欠落を区別。"
+    },
+    "C3": {
+      "status": "FAIL",
+      "reason": "行揃えと配色枚数の案内が実装に揃っていない。"
+    },
+    "C4": {
+      "status": "PASS",
+      "reason": "事実/素材確認→生成→配置→PDF→実見→finalizeの依存とSHA鮮度拒否が明確。"
+    }
+  },
+  "visualObservations": [
+    {
+      "id": "F07",
+      "file": "/Users/dm/dev/dev/ObsidianMemo/05_Project/プラグイン/flyer-studio/evidence/runtime-final/out/F07/print.png",
+      "sha256": "d340333de3a4768a6ce706df3c3b18ba4a97dfe8cec8069f2d4b3f04611ed563",
+      "viewedFull": true,
+      "viewedDetails": false,
+      "note": "実画像全体を実見。下部の3名、会社→導入不調→個人、日時・住所・価格が全幅中央に連なる。上部は白い聞ける人が、が明るい投影画面に重なり、内蔵F07見本より文字背景のコントラストが弱い。機能試験用画像としては成立するが、集客向け完成例の品質の断定には使わない。"
+    },
+    {
+      "id": "F11",
+      "file": "/Users/dm/dev/dev/ObsidianMemo/05_Project/プラグイン/flyer-studio/evidence/runtime-final/out/F11/print.png",
+      "sha256": "d7454b63fe95e49e8965c76de3da476fd01d5ee470c3cbd3b685949e9b049e88",
+      "viewedFull": true,
+      "viewedDetails": false,
+      "note": "実画像全体を実見。外周は白へ自然に溶け、写真の四辺も硬い枠になっていない。下部は中央軸とQRが独立し住所も読める。内蔵F11見本と比べ背景の金属調模様が強いため、これだけで白系の静けさや一般用途の品質を代表させない。"
+    }
+  ],
+  "visualConclusion": "下部全幅中央、3名同格、会社課題の優先、住所、CTA括弧、自然な写真境界、最新ロゴは確認できる。2例は描画機能の試験であり、内蔵F07/F11の完成度と同一ではない。",
+  "methods": [
+    {
+      "method": "批判的思考",
+      "evidence": "C1",
+      "finding": "数値の中央なら美しいという前提を検証。機械検査と実見は分離され、黄金比強制もない。",
+      "recommendation": "維持。機械合格を美観合格と混同しない。"
+    },
+    {
+      "method": "演繹思考",
+      "evidence": "D01",
+      "finding": "全幅中心という要件から群の中心を導くと、群内左揃えまで禁止する必然性はない。文書は許可、実装は拒否。",
+      "recommendation": "中心位置と行揃えを分離するか、文書を実装の制約へ統一。"
+    },
+    {
+      "method": "帰納的思考",
+      "evidence": "V01",
+      "finding": "F07/F11の実見では、文字とQRを別群にする下部中央は共通して読みやすい。",
+      "recommendation": "中央軸を品質基準として保持。2例から13案の出来まで一般化しない。"
+    },
+    {
+      "method": "アブダクション",
+      "evidence": "D01",
+      "finding": "繰り返す左右の迷いの最善説明は、黄金比不足より意味群と整列軸の混在。",
+      "recommendation": "意味群を保持し、本文の揃え規則だけ矛盾解消。"
+    },
+    {
+      "method": "垂直思考",
+      "evidence": "D02",
+      "finding": "単一案の質問→回答保存→検査の経路を掘ると、schemaと白黒検査に例外の受け皿がない。",
+      "recommendation": "選択できると案内した経路を実装するか、提供する選択を白黒2案に限定。"
+    },
+    {
+      "method": "要素分解",
+      "evidence": "C2",
+      "finding": "主題・参加内容・日時・会場住所・価格・申込と、素材・公開範囲を分解して文書と比較。",
+      "recommendation": "必要事項の区分は揃う。不要な説明の追加は不要。"
+    },
+    {
+      "method": "MECE",
+      "evidence": "C2",
+      "finding": "表現形式と配色、掲載素材と参照専用の区分が独立し、写真以外を排除しない。",
+      "recommendation": "この区分を維持。"
+    },
+    {
+      "method": "2軸思考",
+      "evidence": "C2",
+      "finding": "写真/漫画等の形式×白/黒等の色は別々に保存される。",
+      "recommendation": "配色だけの13案を防ぐ事前メタデータと実見を併用。"
+    },
+    {
+      "method": "プロセス思考",
+      "evidence": "C4",
+      "finding": "ヒアリング→素材承諾→生成→仮配置→文字→PDF→PNG実見→納品の依存が明文化。",
+      "recommendation": "維持。未確認フラグを自動で立てない。"
+    },
+    {
+      "method": "メタ思考",
+      "evidence": "L01",
+      "finding": "レビュー名や30法の列挙を実検証と誤認する危険を確認。",
+      "recommendation": "各方法に観察と処置を残す本記録と、実画像SHAを結び付ける。"
+    },
+    {
+      "method": "抽象化思考",
+      "evidence": "C2",
+      "finding": "過去の3名・会社優先・明石会場は一般原則とHyogoプリセットに区分。",
+      "recommendation": "次回へ過去事実を自動転記しない設計を維持。"
+    },
+    {
+      "method": "ダブル・ループ思考",
+      "evidence": "D01",
+      "finding": "余白を埋めることではなく読む順序を作ることが目的かを検証。",
+      "recommendation": "自然な濃淡と近接を維持し、硬いカード増設で解決しない。"
+    },
+    {
+      "method": "ブレインストーミング",
+      "evidence": "D02",
+      "finding": "単一案例外、白黒2案比較、必須白黒固定という3候補を比較。",
+      "recommendation": "未実装の選択肢をユーザーに提示しない最小の修正を選ぶ。"
+    },
+    {
+      "method": "水平思考",
+      "evidence": "V01",
+      "finding": "右のQRに対する解決を横移動以外のY位置・群間隔・画像トリミングで探る。",
+      "recommendation": "既存の配置方針を維持。"
+    },
+    {
+      "method": "逆説思考",
+      "evidence": "V01",
+      "finding": "全余白を埋めた場合の読みにくさを想定。",
+      "recommendation": "225字を絶対化せず案件ごとに必須情報から上限設定する方針を維持。"
+    },
+    {
+      "method": "類推思考",
+      "evidence": "C2",
+      "finding": "参考家具チラシと7枚の人物主体参考を、文言量ではなく大小差・写真との関係として抽出。",
+      "recommendation": "参考の人物と文言の転載を禁止し、系統として書体を学ぶ。"
+    },
+    {
+      "method": "if思考",
+      "evidence": "D02",
+      "finding": "白系1枚と回答された場合、案内の通り進めるとschemaで停止する。",
+      "recommendation": "回答と生成能力を一致させる。"
+    },
+    {
+      "method": "素人思考",
+      "evidence": "D02",
+      "finding": "利用者は確認した選択肢が使えると理解する。CLIのcount失敗まで気付けない。",
+      "recommendation": "選択可能範囲を会話と検査で統一。"
+    },
+    {
+      "method": "システム思考",
+      "evidence": "C4",
+      "finding": "画像変更が背景・保護領域・文字・最終PNG・レビューへ波及。fingerprintは対応。",
+      "recommendation": "版と実見の結合を維持。"
+    },
+    {
+      "method": "因果関係分析",
+      "evidence": "V01",
+      "finding": "明るい投影画面へ白文字→字面の輪郭が弱まる→主題の一部を見失う可能性。",
+      "recommendation": "新作の画像別コントラスト確認を必須のまま保持。fixtureは機能試験と明示。"
+    },
+    {
+      "method": "因果ループ",
+      "evidence": "C4",
+      "finding": "小さな修正後に再実見しないと回帰が重なり、古いPASSが残る。",
+      "recommendation": "PNG SHAと旧レビュー拒否、最大3回の有界反復を維持。"
+    },
+    {
+      "method": "トレードオン思考",
+      "evidence": "C2",
+      "finding": "日本語本文を独立文字にしつつ漫画/筆致を画像に担わせれば、表現と訂正可能性を両立。",
+      "recommendation": "文字を背景生成に焼き込まない方針を維持。"
+    },
+    {
+      "method": "プラスサム思考",
+      "evidence": "C2",
+      "finding": "本人の登壇臨場感と第三者プライバシーはトリミング・選択的保護で両立。",
+      "recommendation": "U01承認crop、U02/U03/U04の利用条件を維持。"
+    },
+    {
+      "method": "価値提案思考",
+      "evidence": "C2",
+      "finding": "目的はデザイン語で納得させることより、誰に聞けて何を相談できるかをすぐ伝えること。",
+      "recommendation": "主題最優先、会社課題→個人の順、3名同格を維持。"
+    },
+    {
+      "method": "戦略的思考",
+      "evidence": "L01",
+      "finding": "新作13案を一度作るより、毎案件の事実・許諾・中心軸を再現することがプラグインの価値。",
+      "recommendation": "固定座標例を新13テンプレートと呼ばない。"
+    },
+    {
+      "method": "why思考",
+      "evidence": "D01",
+      "finding": "なぜバランス不満か→左右の混在→QR除外中心の利用→実装上の空き幅への追随→意味群より物理空間を優先した仮説。最新全幅中心で原因を対処。",
+      "recommendation": "数式追加より既存の意味群・全幅中心を保持。ただし群内行揃えの文書矛盾は解く。"
+    },
+    {
+      "method": "改善思考",
+      "evidence": "D01,D02",
+      "finding": "不整合は行揃えと配色枚数の2点に局在。",
+      "recommendation": "機能全体を作り直さず、契約と案内の該当箇所を修正。"
+    },
+    {
+      "method": "仮説思考",
+      "evidence": "L01",
+      "finding": "画像生成のプロンプトとレイヤー契約で漫画/手書きにも対応できる仮説はあるが、新生成実走の証拠はない。",
+      "recommendation": "実施済みと記載しない。納品の検証限界を保持。"
+    },
+    {
+      "method": "論点思考",
+      "evidence": "C1",
+      "finding": "今回解くべき論点は黄金比の証明ではなく、最新指示が再現される契約と利用フローか。",
+      "recommendation": "最小2修正へ集中。"
+    },
+    {
+      "method": "KJ法",
+      "evidence": "C1-C4",
+      "finding": "観察を契約不整合・充足要件・実見所見・未実証範囲の4群へ整理。",
+      "recommendation": "findings/coverage/visual/limitationsとして保存。"
+    }
+  ],
+  "limitations": [
+    "13案全ての新構成・新背景生成は本レビューでは未実施。",
+    "漫画/手書きの新生成やフォント実搭載の完成紙面は未実見。",
+    "Claude Code/Codexそれぞれの新規会話からの全制作試験は本レビュー範囲外。",
+    "PNGは全体を個別に実見したが詳細cropは未作成。元の技術検査結果を独立で再実行したとは記載しない。",
+    "実機印刷/読者の来場効果は未測定。"
+  ]
+}

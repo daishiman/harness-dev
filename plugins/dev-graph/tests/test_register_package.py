@@ -27,6 +27,16 @@ PHASES = [f"P{i:02d}" for i in range(1, 14)]
 DIGEST = "sha256:" + "a" * 64
 HEX_DIGEST = "a" * 64
 NOW = "2026-07-13T00:00:00Z"
+# The package sits at the repo root, so each spec path is the same relative to the package and to the repo.
+SPEC_PATHS = [
+    "task-specs/phase-01-requirements.md", "task-specs/phase-02-architecture.md",
+    "task-specs/phase-03-design-review.md", "task-specs/phase-04-test-design.md",
+    "task-specs/phase-05-implementation.md", "task-specs/phase-06-test-run.md",
+    "task-specs/phase-07-acceptance.md", "task-specs/phase-08-refactoring-migration.md",
+    "task-specs/phase-09-quality-assurance.md", "task-specs/phase-10-final-review.md",
+    "task-specs/phase-11-evidence.md", "task-specs/phase-12-documentation-operations.md",
+    "task-specs/phase-13-release-deploy.md",
+]
 
 
 def feature_node() -> dict:
@@ -68,7 +78,7 @@ def task_node(index: int) -> dict:
         "confirmation_evidence": {"evaluator": "system-dev-plan-evaluator", "evidence_ref": "plan-findings.json",
                                   "evaluated_digest": HEX_DIGEST},
         "source_lineage": {"origin_kind": "system-dev-planner", "source_plugin": "system-dev-planner",
-                           "source_path": f"published/demo/task-specs/{phase}.md", "source_version": "0.1.0",
+                           "source_path": SPEC_PATHS[index], "source_version": "0.1.0",
                            "source_digest": HEX_DIGEST, "imported_at": NOW},
         "classification_confidence": 1.0, "classification_reason": "exact phase", "classification_candidates": [],
         "github_publication": {"mode": "local_only", "project_aliases": [], "labels": [], "milestone": None},
@@ -94,15 +104,7 @@ class RegisterPackageTest(unittest.TestCase):
             "schema_version": "1.0.0", "feature_package_id": "feature-package/demo",
             "parent_feature": "feature-1", "source_feature_digest": "sha256:" + "b" * 64,
             "task_count": 13, "phase_refs": PHASES,
-            "task_spec_paths": [
-                "task-specs/phase-01-requirements.md", "task-specs/phase-02-architecture.md",
-                "task-specs/phase-03-design-review.md", "task-specs/phase-04-test-design.md",
-                "task-specs/phase-05-implementation.md", "task-specs/phase-06-test-run.md",
-                "task-specs/phase-07-acceptance.md", "task-specs/phase-08-refactoring-migration.md",
-                "task-specs/phase-09-quality-assurance.md", "task-specs/phase-10-final-review.md",
-                "task-specs/phase-11-evidence.md", "task-specs/phase-12-documentation-operations.md",
-                "task-specs/phase-13-release-deploy.md",
-            ],
+            "task_spec_paths": SPEC_PATHS,
             "task_node_ids": [node["graph_node_id"] for node in nodes],
         })
         self.write(self.registration, {
@@ -121,6 +123,23 @@ class RegisterPackageTest(unittest.TestCase):
         self.config.parent.mkdir()
         self.write(self.config, {"execution_tracker": {"mode": "beads"}})
         self.tracker: tuple[str, ...] = ()
+        # register writes each member's artifact from its planner spec, so the published specs must exist.
+        (self.root / "task-specs").mkdir()
+        for index, spec in enumerate(SPEC_PATHS):
+            (self.root / spec).write_text(f"# {PHASES[index]}\n\nplanner spec body\n", encoding="utf-8")
+
+    def fail_graph_restore(self):
+        """atomic_bytes that fails only for the graph, so the member artifacts still write and undo for real."""
+        real = RP.atomic_bytes
+
+        def fake(path, data, **kwargs):
+            if Path(path).resolve() == self.output.resolve():
+                raise OSError("restore disk failure")
+            return real(path, data, **kwargs)
+        return mock.patch.object(RP, "atomic_bytes", side_effect=fake)
+
+    def artifacts(self) -> list[Path]:
+        return sorted((self.root / "tasks").rglob("*.md")) if (self.root / "tasks").exists() else []
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -359,7 +378,7 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
     def test_receipt_and_restore_failures_are_both_reported(self) -> None:
         before = self.output.read_bytes()
         with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")), \
-                mock.patch.object(RP, "atomic_bytes", side_effect=OSError("restore disk failure")):
+                self.fail_graph_restore():
             with self.assertRaises(RP.RollbackIncompleteError) as caught:
                 RP._register(self.args())
         message = str(caught.exception)
@@ -377,8 +396,7 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
     def test_main_reports_incomplete_rollback_with_unknown_counts(self) -> None:
         output = io.StringIO()
         with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")), \
-                mock.patch.object(RP, "atomic_bytes", side_effect=OSError("restore disk failure")), \
-                redirect_stdout(output):
+                self.fail_graph_restore(), redirect_stdout(output):
             code = RP.main(["register", "--repo-root", str(self.root), "--package", self.package.name,
                             "--graph", self.registration.name, "--output", self.output.name,
                             "--receipt", self.receipt.name])
@@ -582,6 +600,7 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
             with self.subTest(binding):
                 self.output.write_bytes(before)
                 if self.receipt.exists(): self.receipt.unlink()
+                for artifact in self.artifacts(): artifact.unlink()
                 self.write(self.config, {"execution_tracker": {"mode": mode}})
                 registration = copy.deepcopy(original)
                 registration["binding_intents"] = {node_id: intent for node_id in registration["binding_intents"]}
@@ -596,10 +615,14 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
                 self.assertEqual({n["github_publication"]["mode"] for n in tasks}, {publication})
                 self.assertEqual({n["beads_linkage"] is None for n in tasks}, {True})
                 graph_after, receipt_after = self.output.read_bytes(), self.receipt.read_bytes()
+                artifacts_after = {path: path.read_bytes() for path in self.artifacts()}
+                self.assertEqual(len(artifacts_after), 13)
                 second = self.invoke()
                 self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
                 self.assertTrue(json.loads(second.stdout)["idempotent"])
+                self.assertEqual(json.loads(second.stdout)["artifacts_missing"], [])
                 self.assertEqual((self.output.read_bytes(), self.receipt.read_bytes()), (graph_after, receipt_after))
+                self.assertEqual({path: path.read_bytes() for path in self.artifacts()}, artifacts_after)
 
     def test_schema_engine_covers_ref_condition_arrays_and_objects(self) -> None:
         schema = {
@@ -642,6 +665,154 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         self.assertEqual(code, 2)
         self.assertFalse(json.loads(output.getvalue())["valid"])
 
+
+
+VGS_SPEC = importlib.util.spec_from_file_location("dev_graph_validate_graph_schema_for_rp",
+                                                  SCRIPT.parent / "validate-graph-schema.py")
+assert VGS_SPEC and VGS_SPEC.loader
+VGS = importlib.util.module_from_spec(VGS_SPEC)
+VGS_SPEC.loader.exec_module(VGS)
+
+
+class RegisterPackageArtifactTest(RegisterPackageTest):
+    """register writes the 13 member artifacts with the nodes; materialize converges them later from the graph."""
+
+    def materialize(self, *extra: str) -> dict:
+        return RP._materialize(RP._parser().parse_args([
+            "materialize", "--repo-root", str(self.root), "--package", self.package.name,
+            "--output", self.output.name, "--receipt", self.receipt.name, *extra,
+        ]))
+
+    def member_findings(self) -> list[dict[str, str]]:
+        nodes = json.loads(self.output.read_text())["nodes"]
+        members = {node["graph_node_id"] for node in nodes if node.get("feature_package_id")}
+        return [item for item in VGS.validate(nodes, repo_root=self.root) if item["node"] in members]
+
+    def test_register_writes_member_artifacts_that_pass_c11(self) -> None:
+        report = RP._register(self.args())
+        self.assertEqual(report["write_count"], 15)
+        self.assertEqual(len(report["artifact_paths"]), 13)
+        self.assertEqual(self.member_findings(), [])
+        graph = json.loads(self.output.read_text())
+        for index, node in enumerate(graph["nodes"][1:]):
+            path = self.root / node["file_path"]
+            front = VGS.frontmatter_of(path)
+            for key in ("graph_node_id", "artifact_kind", "file_path", "template_id", "template_version",
+                        "tracker_binding", "implementation_readiness", "source_lineage"):
+                self.assertEqual(front[key], node[key], key)
+            self.assertEqual((front["purpose"], front["scope_in"]), (None, []))
+            # The planner's spec follows the frontmatter byte for byte.
+            self.assertTrue(path.read_bytes().endswith(b"\n" + (self.root / SPEC_PATHS[index]).read_bytes()))
+
+    def test_register_refuses_a_different_file_at_a_member_path_without_writing(self) -> None:
+        graph_before = self.output.read_bytes()
+        squatter = self.root / "tasks" / "feature-1" / "p05.md"
+        squatter.parent.mkdir(parents=True)
+        squatter.write_text("someone else's file\n", encoding="utf-8")
+        with self.assertRaisesRegex(RP.ContractError, "artifact_exists_with_different_content: tasks/feature-1/p05.md"):
+            RP._register(self.args())
+        self.assertEqual(self.output.read_bytes(), graph_before)
+        self.assertFalse(self.receipt.exists())
+        self.assertEqual(self.artifacts(), [squatter])
+
+    def test_graph_write_failure_removes_the_created_artifacts(self) -> None:
+        graph_before = self.output.read_bytes()
+        with mock.patch.object(RP, "atomic_json", side_effect=OSError("graph disk failure")):
+            with self.assertRaisesRegex(OSError, "graph disk failure"):
+                RP._register(self.args())
+        self.assertEqual(self.output.read_bytes(), graph_before)
+        self.assertEqual(self.artifacts(), [])
+        self.assertFalse(self.receipt.exists())
+
+    def test_receipt_failure_removes_the_created_artifacts(self) -> None:
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")):
+            with self.assertRaisesRegex(OSError, "receipt disk failure"):
+                RP._register(self.args())
+        self.assertEqual(self.artifacts(), [])
+
+    def test_dry_run_plans_the_artifacts_without_writing_them(self) -> None:
+        report = RP._register(self.args("--dry-run"))
+        self.assertEqual(report["write_count"], 0)
+        self.assertEqual([row["action"] for row in report["planned_artifacts"]], ["create"] * 13)
+        self.assertEqual(self.artifacts(), [])
+
+    def test_idempotent_rerun_reports_artifacts_a_legacy_registration_lacks(self) -> None:
+        RP._register(self.args())
+        for artifact in self.artifacts()[:2]: artifact.unlink()
+        report = RP._register(self.args())
+        self.assertTrue(report["idempotent"])
+        self.assertEqual(report["artifacts_missing"], ["tasks/feature-1/p01.md", "tasks/feature-1/p02.md"])
+        self.assertIn("materialize", report["next"])
+
+    def test_materialize_creates_missing_then_is_a_noop(self) -> None:
+        RP._register(self.args())
+        graph_before, receipt_before = self.output.read_bytes(), self.receipt.read_bytes()
+        expected = {path: path.read_bytes() for path in self.artifacts()}
+        for artifact in self.artifacts(): artifact.unlink()
+        preview = self.materialize("--dry-run")
+        self.assertEqual((preview["status"], preview["write_count"]), ("materialized", 0))
+        self.assertEqual(self.artifacts(), [])
+        applied = self.materialize()
+        self.assertEqual((applied["status"], applied["write_count"]), ("materialized", 13))
+        self.assertEqual({path: path.read_bytes() for path in self.artifacts()}, expected)
+        again = self.materialize()
+        self.assertEqual((again["status"], again["write_count"]), ("noop", 0))
+        self.assertEqual({row["action"] for row in again["artifacts"]}, {"unchanged"})
+        # materialize never touches the graph or the receipt.
+        self.assertEqual((self.output.read_bytes(), self.receipt.read_bytes()), (graph_before, receipt_before))
+
+    def test_materialize_refreshes_a_frontmatter_the_graph_moved_past(self) -> None:
+        RP._register(self.args())
+        graph = json.loads(self.output.read_text())
+        graph["nodes"][3]["title"] = "P03 renamed by a later graph write"
+        graph["graph_revision"] += 1
+        self.write(self.output, graph)
+        target = self.root / graph["nodes"][3]["file_path"]
+        report = self.materialize()
+        self.assertEqual(report["write_count"], 1)
+        self.assertEqual([row["graph_node_id"] for row in report["artifacts"] if row["action"] == "refresh"],
+                         [graph["nodes"][3]["graph_node_id"]])
+        self.assertEqual(VGS.frontmatter_of(target)["title"], "P03 renamed by a later graph write")
+        self.assertTrue(target.read_bytes().endswith(b"\n" + (self.root / SPEC_PATHS[2]).read_bytes()))
+
+    def test_materialize_refuses_an_edited_body_and_writes_nothing(self) -> None:
+        RP._register(self.args())
+        graph = json.loads(self.output.read_text())
+        graph["nodes"][1]["title"] = "renamed"
+        graph["graph_revision"] += 1
+        self.write(self.output, graph)
+        edited = self.root / graph["nodes"][2]["file_path"]
+        edited.write_bytes(edited.read_bytes() + b"hand edit\n")
+        stale = self.root / graph["nodes"][1]["file_path"]
+        stale_before, edited_before = stale.read_bytes(), edited.read_bytes()
+        graph["nodes"][2]["title"] = "renamed too"
+        self.write(self.output, graph)
+        with self.assertRaisesRegex(RP.ContractError, "artifact_diverged: tasks/feature-1/p02.md"):
+            self.materialize()
+        self.assertEqual((stale.read_bytes(), edited.read_bytes()), (stale_before, edited_before))
+
+    def test_materialize_rejects_a_receipt_of_another_package(self) -> None:
+        RP._register(self.args())
+        receipt = json.loads(self.receipt.read_text())
+        receipt["parent_feature"] = "feature-2"
+        self.write(self.receipt, receipt)
+        with self.assertRaisesRegex(RP.ContractError, r"does not belong to this package and graph: \['parent_feature'\]"):
+            self.materialize()
+
+    def test_main_routes_materialize_and_reports_zero_writes_on_refusal(self) -> None:
+        RP._register(self.args())
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = RP.main(["materialize", "--repo-root", str(self.root), "--package", self.package.name,
+                            "--output", self.output.name, "--receipt", self.receipt.name])
+        self.assertEqual((code, json.loads(output.getvalue())["status"]), (0, "noop"))
+        self.receipt.unlink()
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = RP.main(["materialize", "--repo-root", str(self.root), "--package", self.package.name,
+                            "--output", self.output.name, "--receipt", self.receipt.name])
+        report = json.loads(output.getvalue())
+        self.assertEqual((code, report["valid"], report["write_count"]), (2, False, 0))
 
 if __name__ == "__main__":
     unittest.main()

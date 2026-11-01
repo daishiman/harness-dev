@@ -2,7 +2,7 @@
 # /// script
 # name: bd-bridge
 # purpose: Be the single deterministic CLI choke point for allowed Beads task, edge, mirror and gate operations.
-# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)"]
+# inputs: ["argv: --op OP and operation fields", "file: create reads graph.json (--graph or local_state.graph in --config) for the promotion gate", "file: ready reads the parity manifest from --parity-manifest, or builds it from the beads_linkage of graph.json (--graph)", "file: create --dry-run may overlay the planned_nodes of a build-graph-node.py --dry-run preview (--planned-preview)"]
 # outputs: ["stdout: normalized JSON receipt"]
 # requires-python = ">=3.10"
 # dependencies: []
@@ -581,6 +581,24 @@ def _graph_nodes(root: Path, graph: str | None, config: str, planned_preview: st
     return overlaid, gate
 
 
+def _graph_parity_manifest(nodes: list[Any]) -> dict[str, Any]:
+    """The ready parity manifest of graph.json: every beads-bound node with a recorded Beads linkage.
+
+    The linkage is C02 ``link-beads``'s record. A node whose dependency has no linkage stays in the manifest,
+    so ``_ready_with_parity`` reports it as a conflict instead of dropping the edge from the comparison.
+    """
+    rows: list[dict[str, Any]] = []
+    for node in nodes:
+        if not isinstance(node, dict) or node.get("tracker_binding") != "beads":
+            continue
+        linkage = node.get("beads_linkage")
+        issue_id = linkage.get("bd_issue_id") if isinstance(linkage, dict) else None
+        if issue_id:
+            rows.append({"graph_node_id": node.get("graph_node_id"), "bd_issue_id": issue_id,
+                         "graph_status": node.get("status"), "depends_on": list(node.get("depends_on") or [])})
+    return {"nodes": rows}
+
+
 def _promotion_blockers(nodes: list[Any], targets: list[str]) -> list[dict[str, Any]]:
     """Every target that may not become a Beads issue yet, in target order; empty means all are promoted."""
     blockers: list[dict[str, Any]] = []
@@ -607,13 +625,16 @@ def _require(a: argparse.Namespace) -> None:
     if a.planned_preview and not (a.op == "create" and a.dry_run):
         # Planned nodes are not in graph.json yet; an apply must be judged on the graph C02 actually committed.
         raise ContractError("--planned-preview is only for create --dry-run")
+    if a.op == "ready" and a.parity_manifest and a.graph:
+        # Two sources of the expected state could disagree; the report must name the one it compared against.
+        raise ContractError("ready takes --parity-manifest or --graph, not both")
 
 
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates"))
     p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
     p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--duplicate-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
-    p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config"); p.add_argument("--config", default=".dev-graph/config.json")
+    p.add_argument("--graph", help="create: graph.json the promotion gate reads; defaults to local_state.graph in --config. ready: build the parity manifest from the beads_linkage of this graph.json"); p.add_argument("--config", default=".dev-graph/config.json")
     p.add_argument("--planned-preview", help="create --dry-run only: a build-graph-node.py --dry-run preview whose planned_nodes the gate overlays on graph.json")
     a = p.parse_args(); root = Path(a.repo_root).resolve(strict=True)
     _require(a)
@@ -709,8 +730,14 @@ def main() -> int:
         if any((x.get("id") if isinstance(x, dict) else x) == a.depends_on for x in deps): result = {"idempotent": True}
         else: result = write(["dep", "add", issue, a.depends_on, "--json"])
     elif a.op == "ready":
-        manifest = _load_manifest(a.parity_manifest, root, label="parity")
-        result = _ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest)
+        if a.graph:
+            nodes, gate = _graph_nodes(root, a.graph, a.config)
+            manifest = _graph_parity_manifest(nodes)
+            source = {**gate, "linked_count": len(manifest["nodes"])}
+        else:
+            manifest = _load_manifest(a.parity_manifest, root, label="parity")
+            source = {"parity_manifest": a.parity_manifest} if a.parity_manifest else None
+        result = {**_ready_with_parity(root, bd(["ready", "--json"], cwd=root), manifest), "parity_source": source}
     elif a.op == "github-push": result = write(["github", "sync", "--push-only", "--json"])
     elif a.op in {"gate-add", "gate-check"}:
         gates = _rows(bd(["gate", "list", "--all", "--json"], cwd=root, check=False))
@@ -726,7 +753,7 @@ def main() -> int:
         dump({"op": a.op, "dry_run_preview": {**preview, "result": result}, **pf}); return 0
     payload = {"op": a.op, "result": result, "workspace_identity": pf["workspace_identity"], "bd_version": pf["version"]}
     if a.op == "ready" and isinstance(result, dict):
-        payload.update({key: result[key] for key in ("ready_set", "unmapped", "conflicts", "candidate_count")})
+        payload.update({key: result[key] for key in ("ready_set", "unmapped", "conflicts", "candidate_count", "parity_source")})
     dump(payload)
     return 0
 

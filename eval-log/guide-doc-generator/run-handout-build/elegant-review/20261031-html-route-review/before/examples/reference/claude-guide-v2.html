@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja" data-mode="pop">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claudeにさわってみる会 — 8/17</title>
+<style>
+/* ============================================================
+   jp-web-design モードB「Pop・親しみ」準拠
+   ============================================================ */
+:root {
+  --pop-primary: #43a4f5;
+  --pop-primary-pastel: #8ecdf8;
+  --pop-primary-soft: #d9edfe;
+  --pop-primary-deep: #2273b8;
+  --pop-bg: #eaf5fe;
+  --pop-card-radius: 24px;
+  --pop-control-radius: 12px;
+
+  --ink: #16191d;
+  --ink-muted: #545e6b;
+  --line: #e3e6ea;
+  --subtle: #f5f6f8;
+
+  --font-num: "Helvetica Neue", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* マスコット再着色トークン */
+  --border-light: #eef6ff;
+  --border-mid:   #dcedfe;
+  --border-dark:  #c8e3fc;
+  --body-light:   #5db4f8;
+  --body-main:    #43a4f5;
+  --body-dark:    #3892e0;
+  --eye-white:    #FFFFFF;
+  --pupil-light:  #6A6A6A;
+  --pupil-dark:   #515151;
+  --highlight:    #FFFFFF;
+  --pupil-gloss:  rgba(255,255,255,0.24);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--pop-bg);
+  color: var(--ink);
+  font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+  font-feature-settings: "palt";
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: -0.015em; white-space: nowrap; }
+.unit { font-size: 62%; font-weight: 600; margin-left: 2px; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in { animation: rise-in 260ms cubic-bezier(0.2, 0, 0, 1) both; animation-delay: var(--stagger, 0ms); }
+@media (prefers-reduced-motion: reduce) { .rise-in { animation: none; } }
+
+:where(a, button, input, summary):focus-visible {
+  outline: 2px solid var(--pop-primary-deep); outline-offset: 2px; border-radius: 6px;
+}
+
+/* ヘッダー */
+.pop-header {
+  max-width: 760px;
+  margin: 16px auto 0;
+  background: #fff;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 12px;
+}
+.pop-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.pop-logo .name { font-weight: 700; font-size: 16px; }
+.date-pill {
+  background: var(--subtle);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--ink-muted);
+}
+.mascot-img { display: block; flex: none; }
+
+main.pop { max-width: 760px; margin: 0 auto; padding: 40px 20px 0; }
+
+/* ヒーロー(文字はすべて水平に置く) */
+.pop-hero { text-align: center; margin-bottom: 6px; display: grid; justify-items: center; gap: 14px; }
+.pop-hero h1 {
+  font-size: clamp(26px, 5.4vw, 34px);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+.pop-hero h1 .squiggle {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--pop-primary-pastel);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 8px;
+}
+.pop-hero p { margin: 0; color: var(--ink-muted); font-size: 15px; }
+
+.hand-note {
+  color: var(--pop-primary-deep);
+  font-weight: 700;
+  font-size: 14px;
+  margin: 16px 0 4px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+
+/* カード */
+.pop-card {
+  background: #fff;
+  border-radius: var(--pop-card-radius);
+  padding: 26px 24px;
+  margin-top: 18px;
+}
+.section-label { font-size: 16px; font-weight: 700; margin: 0 0 16px; }
+.section-label .squiggle {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--pop-primary-pastel);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+.section-label .count { font-weight: 700; color: var(--ink-muted); font-size: 13px; margin-left: 8px; }
+.lead-line { margin: -8px 0 16px; color: var(--ink-muted); font-size: 14px; }
+
+/* 番号つきステップ(今日やること) */
+.step-row { display: flex; align-items: flex-start; gap: 14px; padding: 13px 4px; border-bottom: 1px solid var(--subtle); }
+.step-row:last-of-type { border-bottom: none; }
+.step-num {
+  flex: none;
+  width: 34px; height: 34px;
+  border-radius: 12px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+}
+.step-row .s-title { font-weight: 700; font-size: 16px; }
+.step-row .s-sub { font-size: 13.5px; color: var(--ink-muted); }
+.step-row .s-time {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink-muted);
+  background: var(--subtle);
+  border-radius: 999px;
+  padding: 3px 11px;
+  margin-top: 5px;
+}
+
+/* 3人のキャラカード */
+.trio { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .trio { grid-template-columns: 1fr 1fr 1fr; } }
+.trio-card {
+  border-radius: 18px;
+  padding: 18px 16px;
+  background: var(--subtle);
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.trio-card.today { background: var(--pop-primary-soft); }
+.trio-card .t-tag {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 12px;
+  background: #fff;
+  color: var(--ink-muted);
+}
+.trio-card.today .t-tag { background: var(--pop-primary); color: #fff; }
+.trio-card .t-name { font-weight: 700; font-size: 17px; margin-top: 4px; }
+.trio-card .t-role { font-weight: 700; font-size: 13.5px; color: var(--pop-primary-deep); }
+.trio-card.rest .t-role { color: var(--ink-muted); }
+.trio-card .t-sub { font-size: 13px; color: var(--ink-muted); }
+
+/* おおきなルール */
+.big-rule {
+  text-align: center;
+  padding: 10px 0 4px;
+}
+.big-rule .rule-text {
+  font-size: clamp(21px, 4.4vw, 27px);
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 0;
+  text-wrap: balance;
+}
+.big-rule .rule-text .hl { color: var(--pop-primary-deep); }
+.big-rule .rule-sub { font-size: 13.5px; color: var(--ink-muted); margin: 8px 0 0; }
+
+.vs-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
+@media (min-width: 640px) { .vs-grid { grid-template-columns: 1fr 1fr; } }
+.vs-col { border-radius: 18px; padding: 16px 18px; }
+.vs-col.chat { background: var(--pop-primary-soft); }
+.vs-col.cowork { background: var(--subtle); }
+.vs-col .v-head { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+.vs-col.chat .v-head { color: var(--pop-primary-deep); }
+.vs-col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.vs-col li { font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+.vs-col li::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--pop-primary); transform: translateY(-2px); }
+.vs-col.cowork li::before { background: #b0bac4; }
+
+/* アウトプット形式マップ(押すと一言が出る) */
+.map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (min-width: 640px) { .map-grid { grid-template-columns: repeat(4, 1fr); } }
+.map-item {
+  border: 2px dashed #c3ddf5;
+  background: transparent;
+  border-radius: 18px;
+  padding: 14px 12px;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 100ms, background 100ms, border-color 100ms;
+  color: var(--ink);
+}
+.map-item:hover { background: #f6fbff; transform: translateY(-2px); }
+.map-item[aria-pressed="true"] { background: var(--pop-primary-soft); border-color: var(--pop-primary); border-style: solid; }
+@media (prefers-reduced-motion: reduce) { .map-item, .map-item:hover { transition: none; transform: none; } }
+.map-item .m-title { font-weight: 700; font-size: 15px; }
+.map-item .m-cat { font-size: 12px; color: var(--ink-muted); }
+.map-detail {
+  margin-top: 14px;
+  background: var(--subtle);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 14px;
+  min-height: 54px;
+  display: grid;
+  align-content: center;
+}
+.map-detail .d-title { font-weight: 700; color: var(--pop-primary-deep); }
+.map-question {
+  margin: 16px 0 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+.map-question .hl { color: var(--pop-primary-deep); }
+
+/* チャレンジ(チェックできる) */
+.pop-row { display: flex; align-items: flex-start; gap: 12px; padding: 13px 4px; border-bottom: 1px solid var(--subtle); }
+.pop-row:last-of-type { border-bottom: none; }
+.pop-row input[type="checkbox"] {
+  appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 8px;
+  border: 2px solid #c9dff5;
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-top: 3px;
+  transition: background 120ms, border-color 120ms;
+}
+.pop-row input[type="checkbox"]:checked { background: var(--pop-primary); border-color: var(--pop-primary); }
+.pop-row input[type="checkbox"]:checked::after {
+  content: "";
+  width: 12px; height: 7px;
+  border-left: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  border-radius: 1px;
+  transform: rotate(-45deg) translate(0, -2px);
+}
+@media (prefers-reduced-motion: reduce) { .pop-row input[type="checkbox"] { transition: none; } }
+.pop-row .pr-title { font-weight: 700; font-size: 15.5px; }
+.pop-row .pr-sub { font-size: 13.5px; color: var(--ink-muted); }
+
+.tips-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.tip-chip {
+  background: var(--subtle);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 7px 15px;
+  color: var(--ink-muted);
+}
+
+/* プロンプト例のひらき */
+.tune-btn {
+  border: 2px solid var(--pop-primary);
+  background: #fff;
+  color: var(--pop-primary-deep);
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.tune-btn:hover, .tune-btn[aria-expanded="true"] { background: var(--pop-primary-soft); }
+.prompt-panel { margin-top: 14px; display: grid; gap: 10px; }
+.prompt-box {
+  background: var(--subtle);
+  border-radius: 14px;
+  padding: 13px 16px;
+  font-size: 14px;
+}
+.prompt-box .p-label { font-size: 12px; font-weight: 700; color: var(--pop-primary-deep); display: block; }
+
+/* Cowork 機能カード */
+.pop-features { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .pop-features { grid-template-columns: 1fr 1fr 1fr; } }
+.pop-feature {
+  border: 2px dashed #c3ddf5;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: transparent;
+}
+.pop-feature .f-title { font-weight: 700; font-size: 15px; }
+.pop-feature .f-sub { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+
+/* 基本の型(作戦会議→丸投げ) */
+.flow { display: flex; align-items: stretch; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.flow-step {
+  flex: 1 1 200px;
+  background: var(--subtle);
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: center;
+}
+.flow-step.goal { background: var(--pop-primary-soft); }
+.flow-step .fl-tag { font-size: 12px; font-weight: 700; color: var(--ink-muted); }
+.flow-step.goal .fl-tag { color: var(--pop-primary-deep); }
+.flow-step .fl-main { font-weight: 700; font-size: 15px; }
+.flow-arrow { align-self: center; color: var(--pop-primary-deep); flex: none; display: grid; place-items: center; }
+@media (max-width: 639px) { .flow { flex-direction: column; } .flow-arrow svg { transform: rotate(90deg); } }
+
+/* 共通のしくみ */
+.duo { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .duo { grid-template-columns: 1fr 1fr; } }
+
+/* 日程チップ */
+.pop-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.pop-chip {
+  border: none;
+  background: var(--subtle);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 8px;
+  border-radius: var(--pop-control-radius);
+  cursor: pointer;
+  text-align: center;
+}
+.pop-chip:hover { background: #e9edf2; }
+.pop-chip[aria-pressed="true"] { background: var(--pop-primary-soft); color: var(--pop-primary-deep); }
+.sched-note { font-size: 13.5px; color: var(--ink-muted); margin: 14px 0 0; }
+.sched-block + .sched-block { margin-top: 22px; }
+.sched-block .sb-title { font-weight: 700; font-size: 15px; margin: 0 0 8px; }
+
+/* フッター */
+.pop-bottom { margin-top: 44px; font-size: 0; }
+.pop-bottom .wave { display: block; width: 100%; height: 40px; margin: 0 0 -1px; }
+.pop-bottom .foot { background: #fff; padding: 18px 20px 52px; }
+.pop-footer { text-align: center; font-size: 13px; color: var(--ink-muted); margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- マスコット定義(jp-web-design公式素材・インライン化) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="var(--border-light)"/>
+      <stop offset="48%" stop-color="var(--border-mid)"/>
+      <stop offset="100%" stop-color="var(--border-dark)"/>
+    </linearGradient>
+    <radialGradient id="bodyGradient" cx="35%" cy="28%" r="85%">
+      <stop offset="0%" stop-color="var(--body-light)"/>
+      <stop offset="58%" stop-color="var(--body-main)"/>
+      <stop offset="100%" stop-color="var(--body-dark)"/>
+    </radialGradient>
+    <linearGradient id="pupilGradient" x1="20%" y1="10%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="var(--pupil-light)"/>
+      <stop offset="100%" stop-color="var(--pupil-dark)"/>
+    </linearGradient>
+    <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/>
+      <feOffset dy="2" result="offsetBlur"/>
+      <feColorMatrix in="offsetBlur" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <g id="mascot-face">
+      <rect x="130" y="126" width="989" height="1024" rx="258" fill="url(#bodyGradient)"/>
+      <g filter="url(#softShadow)">
+        <ellipse cx="486" cy="574" rx="173" ry="180" fill="var(--eye-white)"/>
+        <ellipse cx="770" cy="576" rx="170" ry="177" fill="var(--eye-white)"/>
+      </g>
+      <g>
+        <g transform="rotate(8 491 570)">
+          <ellipse cx="491" cy="570" rx="73" ry="88" fill="url(#pupilGradient)"/>
+          <ellipse cx="472" cy="527" rx="20" ry="18" fill="var(--highlight)"/>
+          <path d="M458 621 Q490 638 523 615" fill="none" stroke="var(--pupil-gloss)" stroke-width="17" stroke-linecap="round"/>
+        </g>
+        <g transform="rotate(8 766 574)">
+          <ellipse cx="766" cy="574" rx="72" ry="86" fill="url(#pupilGradient)"/>
+          <ellipse cx="747" cy="532" rx="19" ry="18" fill="var(--highlight)"/>
+          <path d="M733 625 Q764 640 798 618" fill="none" stroke="var(--pupil-gloss)" stroke-width="17" stroke-linecap="round"/>
+        </g>
+      </g>
+    </g>
+    <symbol id="mascot-bordered" viewBox="49 40 1155 1194">
+      <rect x="59" y="50" width="1135" height="1174" rx="315" fill="url(#borderGradient)"/>
+      <use href="#mascot-face"/>
+    </symbol>
+    <symbol id="mascot-plain" viewBox="120 116 1009 1044">
+      <use href="#mascot-face"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="pop-header">
+  <a class="pop-logo" href="#" aria-label="ページの先頭に戻る">
+    <svg class="mascot-img" width="34" height="35" aria-hidden="true"><use href="#mascot-plain"/></svg>
+    <span class="name">Claudeにさわってみる会</span>
+  </a>
+  <span class="date-pill num">8/17</span>
+</header>
+
+<main class="pop">
+
+  <div class="pop-hero rise-in">
+    <svg class="mascot-img" width="92" height="95" aria-hidden="true"><use href="#mascot-bordered"/></svg>
+    <h1>今日は、<span class="squiggle">Claudeと友だちになる日</span>。</h1>
+    <p>アプリ開発はまだ先。まずは触って、慣れる。それだけでOK。</p>
+  </div>
+
+  <div class="hand-note rise-in" style="--stagger: 60ms">
+    うまく話せなくても大丈夫
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <path d="M16 4.2 a4.2 4.2 0 1 0 -1.5 8.1 C 13.2 15.6 14.6 19.2 18.4 21.6"
+            stroke="var(--pop-primary-deep)" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+      <path d="M14.4 21.4 L 18.9 22 L 18.1 17.7"
+            stroke="var(--pop-primary-deep)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- 視覚的主役: 今日やること -->
+  <section class="pop-card rise-in" style="--stagger: 120ms">
+    <p class="section-label"><span class="squiggle">今日やること</span><span class="count">ぜんぶで55分</span></p>
+    <div class="step-row">
+      <span class="step-num">1</span>
+      <div>
+        <div class="s-title">ログインする</div>
+        <div class="s-sub">自分のPCでClaude Desktopアプリを起動。ここでつまずいてもぜんぜんOK</div>
+      </div>
+      <span class="s-time">10分</span>
+    </div>
+    <div class="step-row">
+      <span class="step-num">2</span>
+      <div>
+        <div class="s-title">チャットとおしゃべりする</div>
+        <div class="s-sub">自分の業務ファイルを投げて、分析させたり資料にさせたり</div>
+      </div>
+      <span class="s-time">20分</span>
+    </div>
+    <div class="step-row">
+      <span class="step-num">3</span>
+      <div>
+        <div class="s-title">Coworkに任せてみる</div>
+        <div class="s-sub">「丸ごとやっといて」で仕事を委託する感覚を体験</div>
+      </div>
+      <span class="s-time">15分</span>
+    </div>
+    <div class="step-row">
+      <span class="step-num">4</span>
+      <div>
+        <div class="s-title">宿題と日程をきめる</div>
+        <div class="s-sub">次に集まる日を、このページの下でぽちっと</div>
+      </div>
+      <span class="s-time">10分</span>
+    </div>
+  </section>
+
+  <!-- Claudeは3人いる -->
+  <section class="pop-card rise-in" style="--stagger: 180ms">
+    <p class="section-label"><span class="squiggle">Claudeは3人いる</span></p>
+    <p class="lead-line">同じアプリの中に、性格のちがう3人が住んでいます。</p>
+    <div class="trio">
+      <div class="trio-card today">
+        <span class="t-tag">今日さわる</span>
+        <div class="t-name">チャット</div>
+        <div class="t-role">会話する相手</div>
+        <div class="t-sub">1往復ずつ話す。ファイルを渡して相談・分析・資料づくり</div>
+      </div>
+      <div class="trio-card today">
+        <span class="t-tag">今日さわる</span>
+        <div class="t-name">Cowork</div>
+        <div class="t-role">仕事を任せる担当者</div>
+        <div class="t-sub">フォルダごと渡して「やっといて」。アプリを閉じても働き続ける</div>
+      </div>
+      <div class="trio-card rest">
+        <span class="t-tag">次回以降</span>
+        <div class="t-name">Claude Code</div>
+        <div class="t-role">開発の何でも屋</div>
+        <div class="t-sub">アプリそのものを作る。3ヵ月後のゴールはここ</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い分けの大原則 -->
+  <section class="pop-card rise-in" style="--stagger: 240ms">
+    <div class="big-rule">
+      <p class="rule-text">チャットでできそうなら、<br><span class="hl">チャットでやる。</span></p>
+      <p class="rule-sub">チャットは体力(トークン)の消費が少ない。Coworkは働き者のぶん、たくさん食べます。</p>
+    </div>
+    <div class="vs-grid">
+      <div class="vs-col chat">
+        <div class="v-head">チャット向き — 1対1のやりとり</div>
+        <ul>
+          <li>ファイル1つを渡して分析・要約</li>
+          <li>議事録・メール・説明文をつくる</li>
+          <li>「どう進める?」の壁打ち・たたき台</li>
+          <li>その場で答えがほしい調べもの</li>
+        </ul>
+      </div>
+      <div class="vs-col cowork">
+        <div class="v-head">Cowork向き — 丸ごと委託・自動化</div>
+        <ul>
+          <li>フォルダごと・複数ファイルの処理</li>
+          <li>集計→グラフ→資料まで通しの作業</li>
+          <li>毎週・毎月のくり返し作業</li>
+          <li>時間のかかる作業(閉じても動く)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- アウトプット形式マップ -->
+  <section class="pop-card rise-in" style="--stagger: 300ms">
+    <p class="section-label"><span class="squiggle">同じExcelが、ここまで化ける</span></p>
+    <p class="lead-line">1つのデータから出せる形はこんなにある。押してみてください。</p>
+    <div class="map-grid" id="map-grid">
+      <button type="button" class="map-item" aria-pressed="false" data-title="テキストで説明" data-detail="その場でサクッと傾向を知りたいとき。会話の中で完結。いちばん手軽">
+        <div class="m-title">テキスト</div>
+        <div class="m-cat">いちばん手軽</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="グラフ・図解" data-detail="パッと見て伝えたいとき。数字が苦手な人にも一瞬で伝わる">
+        <div class="m-title">グラフ・図解</div>
+        <div class="m-cat">一目で伝える</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="Excel(シミュレーター)" data-detail="関数・条件付き書式こみで作れる。数字を入れ替えると結果が変わる見積書のようなものも">
+        <div class="m-title">Excel</div>
+        <div class="m-cat">数字をいじれる</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="パワポのレポート" data-detail="報告・プレゼン用に。分析結果をそのままスライドにまとめてもらえる">
+        <div class="m-title">パワポ</div>
+        <div class="m-cat">報告・プレゼン</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="Wordの書類" data-detail="白黒・明朝体の「お堅い書類」もお手のもの。行政に出すような文書に">
+        <div class="m-title">Word書類</div>
+        <div class="m-cat">お堅い文書</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="サイト・アプリ" data-detail="誰でも触れる形にする最終形。3ヵ月後にはこれを自分たちで作れるように">
+        <div class="m-title">サイト・アプリ</div>
+        <div class="m-cat">3ヵ月後のゴール</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="Notionへ出力" data-detail="コネクタでつなげば、結果を直接Notionに書き込んでくれる">
+        <div class="m-title">Notionへ</div>
+        <div class="m-cat">直接書き込む</div>
+      </button>
+      <button type="button" class="map-item" aria-pressed="false" data-title="Kintoneと連携" data-detail="Kintoneの情報を読む・書くもできる。Claudeがアプリ同士をつなぐハブになる">
+        <div class="m-title">Kintoneと</div>
+        <div class="m-cat">読み書き両方</div>
+      </button>
+    </div>
+    <div class="map-detail" id="map-detail">
+      <span>↑ 気になる形を押すと、使いどころが出ます</span>
+    </div>
+    <p class="map-question">形をえらぶ質問はひとつ。<span class="hl">「誰が見て、次に何につながる?」</span></p>
+  </section>
+
+  <!-- チャットでやってみよう -->
+  <section class="pop-card rise-in" id="challenge-card" style="--stagger: 360ms">
+    <p class="section-label"><span class="squiggle">チャットでやってみよう</span><span class="count" id="challenge-count">3つ中 0クリア</span></p>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="チャレンジ1を完了にする">
+      <div>
+        <div class="pr-title">① 自分のExcel・CSVを投げて「分析して」</div>
+        <div class="pr-sub">普段の実データでOK。誰向けか・何を知りたいかを添えると精度が上がる</div>
+      </div>
+    </div>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="チャレンジ2を完了にする">
+      <div>
+        <div class="pr-title">② 関数・条件付き書式入りのExcelを作らせる</div>
+        <div class="pr-sub">「赤字の行は赤くして」「合計は自動計算で」まで組み込み済みで出てくる</div>
+      </div>
+    </div>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="チャレンジ3を完了にする">
+      <div>
+        <div class="pr-title">③ 上司に見せる形に仕上げる</div>
+        <div class="pr-sub">分析結果を報告資料に。さっきのマップから形をえらんで指定してみる</div>
+      </div>
+    </div>
+    <div class="tips-chips">
+      <span class="tip-chip">実データを投げる</span>
+      <span class="tip-chip">一発で完璧を狙わない</span>
+      <span class="tip-chip">追加指示で直していく</span>
+      <span class="tip-chip">迷ったらOpus・軽い作業はSonnet</span>
+    </div>
+    <button type="button" class="tune-btn" id="prompt-btn" aria-expanded="false" aria-controls="prompt-panel">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 7h9"/><circle cx="17" cy="7" r="2.6"/>
+        <path d="M20 15h-9"/><circle cx="7" cy="15" r="2.6"/>
+      </svg>
+      指示の例を見る
+    </button>
+    <div class="prompt-panel" id="prompt-panel" hidden>
+      <div class="prompt-box">
+        <span class="p-label">分析をたのむ</span>
+        このExcelは月次の実績データです。車両別の推移と、赤字になっている要因を分析して、経営者に説明できる言葉でまとめてください。
+      </div>
+      <div class="prompt-box">
+        <span class="p-label">Excelを作らせる</span>
+        燃料費と走行距離を入力すると利益が自動計算されるExcelを作ってください。赤字の行は条件付き書式で赤くしてください。
+      </div>
+      <div class="prompt-box">
+        <span class="p-label">資料に仕上げる</span>
+        この分析結果を、上司への報告用にA4で1枚のパワポにまとめてください。結論を最初に、数字は大きく見せてください。
+      </div>
+    </div>
+  </section>
+
+  <!-- Coworkのすごいところ -->
+  <section class="pop-card rise-in" style="--stagger: 420ms">
+    <p class="section-label"><span class="squiggle">Coworkのすごいところ</span></p>
+    <div class="pop-features">
+      <div class="pop-feature">
+        <div class="f-title">フォルダごと任せられる</div>
+        <div class="f-sub">中のファイルを自分で探して読んで、整理・書き込みまでやる</div>
+      </div>
+      <div class="pop-feature">
+        <div class="f-title">時間で勝手に動く</div>
+        <div class="f-sub">毎週・毎月のレポートをスケジュール設定して自動実行</div>
+      </div>
+      <div class="pop-feature">
+        <div class="f-title">操作を録画→覚える</div>
+        <div class="f-sub">普段のPC作業を見せると「スキル」として覚えて、次から自動でやる</div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="fl-tag">まず チャットで</div>
+        <div class="fl-main">作戦会議(壁打ち)</div>
+      </div>
+      <div class="flow-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+      <div class="flow-step goal">
+        <div class="fl-tag">きまったら Coworkに</div>
+        <div class="fl-main">丸ごとおまかせ</div>
+      </div>
+    </div>
+    <p class="sched-note">コツ:「何を・どうやって・どんな形で」を最初に伝える。あとは他の仕事をしていてOK。</p>
+  </section>
+
+  <!-- ふたりに共通のしくみ -->
+  <section class="pop-card rise-in" style="--stagger: 480ms">
+    <p class="section-label"><span class="squiggle">チャットとCowork、共通のしくみ</span></p>
+    <p class="lead-line">どちらで覚えても、両方で使えます。</p>
+    <div class="duo">
+      <div class="pop-feature">
+        <div class="f-title">コネクタ = 外とつながる</div>
+        <div class="f-sub">Notion・Kintone・カレンダーなどと接続。Claudeがアプリ同士をつなぐハブになる</div>
+      </div>
+      <div class="pop-feature">
+        <div class="f-title">スキル = やり方を覚える</div>
+        <div class="f-sub">仕事の手順・型をClaudeに覚えさせて、何度でも使い回す</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 宿題 -->
+  <section class="pop-card rise-in" style="--stagger: 540ms">
+    <p class="section-label"><span class="squiggle">次までの宿題</span></p>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="今西さんの宿題">
+      <div>
+        <div class="pr-title">今西さん — 自動化したいことの棚卸し</div>
+        <div class="pr-sub">「これ面倒だな」を思いつくだけメモしてくる</div>
+      </div>
+    </div>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="山元さんの宿題">
+      <div>
+        <div class="pr-title">山元さん — 自動化したいことの棚卸し</div>
+        <div class="pr-sub">同じく。実データ(Excel・CSV)も手元に用意しておくと◎</div>
+      </div>
+    </div>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="あつしさんの宿題">
+      <div>
+        <div class="pr-title">あつしさん — Cloudflare・GitHubのアカウント作成</div>
+        <div class="pr-sub">2回目の研修開始までに(手順書はこちらで用意します)</div>
+      </div>
+    </div>
+    <div class="pop-row">
+      <input type="checkbox" aria-label="万壽本の宿題">
+      <div>
+        <div class="pr-title">万壽本 — 導入資料の作成・共有と研修①の準備</div>
+        <div class="pr-sub">Cloudflare・Git・GitHubの導入資料を共有します</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 日程をきめる -->
+  <section class="pop-card rise-in" style="--stagger: 600ms">
+    <p class="section-label"><span class="squiggle">日程をきめる</span></p>
+    <div class="sched-block">
+      <p class="sb-title">8/31(月)定例の代替日は?</p>
+      <div class="pop-chips" data-single>
+        <button type="button" class="pop-chip" aria-pressed="false"><span class="num">9/1</span>(火) <span class="num">11:00</span></button>
+        <button type="button" class="pop-chip" aria-pressed="false"><span class="num">9/2</span>(水) <span class="num">11:00</span></button>
+      </div>
+    </div>
+    <div class="sched-block">
+      <p class="sb-title">勉強会①(チャットの使い方・外部連携・指示のコツ)は?</p>
+      <div class="pop-chips" data-single>
+        <button type="button" class="pop-chip" aria-pressed="false"><span class="num">8/25</span>(火)以降で調整</button>
+        <button type="button" class="pop-chip" aria-pressed="false">この場で候補を出す</button>
+      </div>
+    </div>
+    <p class="sched-note">定例は毎週月曜 11:00〜12:00 が基本(都度調整あり)。第1回定例は 8/19(水) 11:00〜。1on1の開始タイミングもこの場で確認します。</p>
+  </section>
+
+</main>
+
+<div class="pop-bottom">
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,20 C240,40 480,0 720,20 C960,40 1200,0 1440,20 L1440,40 L0,40 Z" fill="#fff"/>
+  </svg>
+  <div class="foot">
+    <svg class="mascot-img" width="30" height="31" style="margin: 0 auto 10px; display:block" aria-hidden="true"><use href="#mascot-plain"/></svg>
+    <p class="pop-footer">Claudeにさわってみる会 — 2026.8.17</p>
+  </div>
+</div>
+
+<script>
+'use strict'
+
+/* アウトプットマップ: 押すと使いどころが出る */
+const detail = document.getElementById('map-detail')
+document.querySelectorAll('#map-grid .map-item').forEach((item) => {
+  item.addEventListener('click', () => {
+    const wasOn = item.getAttribute('aria-pressed') === 'true'
+    document.querySelectorAll('#map-grid .map-item').forEach((i) => i.setAttribute('aria-pressed', 'false'))
+    if (wasOn) {
+      detail.innerHTML = '<span>↑ 気になる形を押すと、使いどころが出ます</span>'
+      return
+    }
+    item.setAttribute('aria-pressed', 'true')
+    detail.innerHTML = ''
+    const t = document.createElement('span')
+    t.className = 'd-title'
+    t.textContent = item.dataset.title + ' — '
+    const d = document.createElement('span')
+    d.textContent = item.dataset.detail
+    const wrap = document.createElement('span')
+    wrap.append(t, d)
+    detail.append(wrap)
+  })
+})
+
+/* チャレンジのクリア数(濃く太い数字=変わる値) */
+const challengeBoxes = document.querySelectorAll('#challenge-card input[type="checkbox"]')
+function syncChallenges() {
+  const n = Array.from(challengeBoxes).filter((c) => c.checked).length
+  document.getElementById('challenge-count').textContent = `3つ中 ${n}クリア`
+}
+challengeBoxes.forEach((cb) => cb.addEventListener('change', syncChallenges))
+
+/* プロンプト例のひらき */
+const promptBtn = document.getElementById('prompt-btn')
+promptBtn.addEventListener('click', () => {
+  const panel = document.getElementById('prompt-panel')
+  const open = panel.hidden
+  panel.hidden = !open
+  promptBtn.setAttribute('aria-expanded', String(open))
+})
+
+/* 日程チップ(単一選択) */
+document.querySelectorAll('[data-single]').forEach((group) => {
+  group.querySelectorAll('.pop-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const wasOn = chip.getAttribute('aria-pressed') === 'true'
+      group.querySelectorAll('.pop-chip').forEach((c) => c.setAttribute('aria-pressed', 'false'))
+      chip.setAttribute('aria-pressed', String(!wasOn))
+    })
+  })
+})
+</script>
+</body>
+</html>

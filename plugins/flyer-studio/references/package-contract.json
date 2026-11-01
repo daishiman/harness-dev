@@ -1,0 +1,152 @@
+{
+  "name": "flyer-studio",
+  "package_mode": "bundle",
+  "distribution": {
+    "distributable": false
+  },
+  "entry_points": {
+    "skills": [
+      "assign-flyer-analysis-review",
+      "assign-flyer-review",
+      "run-analyze-flyer",
+      "run-create-flyer",
+      "run-intake-flyer",
+      "run-learn-flyer"
+    ],
+    "agents": [
+      "flyer-composition-reviewer",
+      "flyer-typography-reviewer",
+      "flyer-color-reviewer"
+    ],
+    "commands": [],
+    "hooks": []
+  },
+  "manifests": [
+    "plugin.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json"
+  ],
+  "required_files": [
+    "SKILL.md",
+    "README.md",
+    "INSTALL.md",
+    "CHANGELOG.md",
+    "EVALS.json",
+    "package.json",
+    "package-lock.json",
+    "plugin-composition.yaml",
+    ".codex-plugin-overrides.json",
+    "artifact-delivery.json"
+  ],
+  "codex_distribution": {
+    "distributable": true,
+    "marketplace": ".agents/plugins/marketplace.json",
+    "source": "./plugins/flyer-studio",
+    "supports": [
+      "local-path"
+    ]
+  },
+  "runtime": {
+    "orchestration": "Python standard library",
+    "render_backend": "Node 22+ / Chromium / Poppler",
+    "dependencies": "package-lock.json",
+    "image_generation": "host-tool-discovery-and-confirmation"
+  },
+  "install": {
+    "global_changes": "explicit-user-request-only",
+    "hook_trust_changes": false
+  },
+  "entry_point_policy": {
+    "skills": "skills/直下の全skillを台帳へ登録する。利用者の直接入口は各SKILL.mdのuser-invocableで制限する。",
+    "agents": "agents/ 直下の専門レンズのみ。skill 内 agents/ の4担当は委任専用で、直接の入口には含めない。"
+  },
+  "plugin_name": "flyer-studio",
+  "distribution_reason": "ユーザーの写真・ロゴ・参考チラシを含む個人用ローカルキット。公開登録しない。",
+  "depends_on": [
+    "skill-governance-adapters"
+  ],
+  "runtime_dependencies": [],
+  "pkg_checks": {},
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {
+      "flyer-composition-reviewer": {
+        "relation": "orchestrated-by",
+        "purpose": "独立した完成画像評価の中でflyer-composition-reviewerの専門観点を同じ契約から実見する。",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "同一版の画像・評価台帳・公開条件を渡し、agents/flyer-composition-reviewer.mdを読む。"
+        },
+        "effect": {
+          "policy": "orchestrated",
+          "notes": "専門レンズは読取所見だけを返す。制作とは別contextの完成評価担当が所見を台帳へ集約し、対象を変更しない。"
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        }
+      },
+      "flyer-typography-reviewer": {
+        "relation": "orchestrated-by",
+        "purpose": "独立した完成画像評価の中でflyer-typography-reviewerの専門観点を同じ契約から実見する。",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "同一版の画像・評価台帳・公開条件を渡し、agents/flyer-typography-reviewer.mdを読む。"
+        },
+        "effect": {
+          "policy": "orchestrated",
+          "notes": "専門レンズは読取所見だけを返す。制作とは別contextの完成評価担当が所見を台帳へ集約し、対象を変更しない。"
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        }
+      },
+      "flyer-color-reviewer": {
+        "relation": "orchestrated-by",
+        "purpose": "独立した完成画像評価の中でflyer-color-reviewerの専門観点を同じ契約から実見する。",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "同一版の画像・評価台帳・公開条件を渡し、agents/flyer-color-reviewer.mdを読む。"
+        },
+        "effect": {
+          "policy": "orchestrated",
+          "notes": "専門レンズは読取所見だけを返す。制作とは別contextの完成評価担当が所見を台帳へ集約し、対象を変更しない。"
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "flyer-studio",
+          "entry_points": [
+            "assign-flyer-review"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  },
+  "repository_runtime_dependencies": [
+    "skill-governance-adapters"
+  ],
+  "repository_runtime_reason": "harnessの共通観測runtimeをnative依存で有効にする。チラシ機能は呼び出さないため、自己完結キットではこのrepository専用依存のみを除く。"
+}

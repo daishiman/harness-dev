@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "maximumCycles": 3,
+  "cycle": 2,
+  "history": [
+    {
+      "cycle": 1,
+      "stage": "analysis-review",
+      "decision": "FIX",
+      "evidence": "analysis-review-initial-FIX.json"
+    },
+    {
+      "cycle": 1,
+      "stage": "analysis-review-recheck",
+      "decision": "PASS",
+      "evidence": "analysis-review.json"
+    },
+    {
+      "cycle": 1,
+      "stage": "visual-review",
+      "decision": "PASS",
+      "evidence": "visual-review-before-date.json"
+    },
+    {
+      "cycle": 2,
+      "stage": "new-user-date-analysis",
+      "decision": "PASS",
+      "evidence": "analysis-review-before-personal-parity.json"
+    },
+    {
+      "cycle": 2,
+      "stage": "visual-review",
+      "decision": "PASS",
+      "evidence": "visual-review-before-personal-parity.json"
+    },
+    {
+      "cycle": 2,
+      "stage": "personal-parity-and-final-runtime-analysis",
+      "decision": "PASS",
+      "evidence": "analysis-review.json",
+      "analysisSha256": "e73d26382cf12f8ee4f7f6d88fa9b9ba8ab13d17bfcb287a34124ac065770127",
+      "reviewSha256": "e252be47f96c214cd67539b5e4d7021806c1eb249765a8e96916c56a21a830e4"
+    },
+    {
+      "cycle": 2,
+      "stage": "personal-parity-final-runtime-visual-review",
+      "decision": "PASS",
+      "evidence": "visual-review.json",
+      "reviewSha256": "dc6b4da2f8d6f1e9c43c448e717ae88484b7d574d5f62c2c30b39462ca9f327e",
+      "observations": "independent-visual-observations-final.json"
+    },
+    {
+      "cycle": 2,
+      "stage": "fresh-restored-actual-native-acceptance",
+      "decision": "PASS",
+      "tests": 95,
+      "skipped": 0,
+      "evidence": "/Users/dm/dev/dev/個人開発/HarnessHub/eval-log/flyer-studio/run-create-flyer/elegant-review/2026-10-22-proposal-implementation/real-suite-final.log",
+      "sha256": "0220d89712920e98cf49b925ae1f6cec9d804b1a7a6442500193e02db72e3c44"
+    }
+  ],
+  "status": "complete",
+  "rule": "画像FIX後の再提案でも予算をリセットしない。全件PASS即停止、上限未達はINCOMPLETE。"
+}

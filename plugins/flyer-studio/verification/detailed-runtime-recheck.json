@@ -1,0 +1,270 @@
+{
+  "reviewer": "independent-detailed-runtime-review",
+  "reviewedAt": "2026-10-21T23:32:58.492361+00:00",
+  "status": "PASS",
+  "scope": "Independent regression of RT01–RT05 plus boundary/type mutation cases; implementation read-only",
+  "sourceHashes": {
+    "scripts/project.cjs": "63493ecdcad88806f8dd8b1264d8859aa072dddc41019f549685a7ffa752a816",
+    "scripts/checks.cjs": "528be77408362d474e7aba1acfdb1cd5945b6c75913697ab6b9f28d70cd64ddd",
+    "references/design-rules.md": "5acdb47fcd8f2b9c09bcc82c0c784d198e5f5720603d84446ffbab19dc56bb8b",
+    "references/runtime.md": "8cf8cb005fbfaf48dacb46c4beedac1f82bad8dcd00eaa9218b8207a042c276c"
+  },
+  "originalFindings": "verification/detailed-runtime-review.json (unchanged)",
+  "findings": [
+    {
+      "id": "RT-01",
+      "status": "resolved",
+      "evidence": "Strict true comparisons now reject strings false/true, numeric1, booleanfalse and null for all five flags. Invalid/missing ISO timestamps, duplicate/unknown variant IDs also rejected. Valid record accepted."
+    },
+    {
+      "id": "RT-02",
+      "status": "resolved",
+      "evidence": "Single reviewed:true import rejected. Each missing privacy category rejected. Complete five-category record accepted; post-import category deletion rejected in validate. Catalog privacy/crop edits rejected.",
+      "limit": "Recorded decisions remain user/reviewer attestations. The code does not visually recognize faces, children or screens, and does not authenticate the truth of a free-text record."
+    },
+    {
+      "id": "RT-03",
+      "status": "resolved",
+      "evidence": "White edge -1,0,3.999,10.001,100mm rejected with safe10. Bounds4/8/10 accepted. Prior actual bad output now fails validation before finalize."
+    },
+    {
+      "id": "RT-04",
+      "status": "resolved",
+      "evidence": "Exact prior QR/logo overlap rejected. QR/protected face and logo/protected face overlap independently rejected. Prior adversarial render can no longer finalize."
+    },
+    {
+      "id": "RT-05",
+      "status": "resolved",
+      "evidence": "design-rules explicitly centers lower short semantic groups internally and externally; removes left-aligned lower-body exception. runtime retains the same whole-page align=center invariant; upper hero/logo/QR retain independent roles."
+    }
+  ],
+  "testSummary": {
+    "cases": 54,
+    "pass": 54,
+    "fail": 0
+  },
+  "tests": [
+    {
+      "name": "baseline valid",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge reject -1",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge reject 0",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge reject 3.999",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge reject 10.001",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge reject 100",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge accept 4",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge accept 8",
+      "result": "PASS"
+    },
+    {
+      "name": "whiteEdge accept 10",
+      "result": "PASS"
+    },
+    {
+      "name": "reviewed true only import reject",
+      "result": "PASS"
+    },
+    {
+      "name": "privacy missing ownerFace",
+      "result": "PASS"
+    },
+    {
+      "name": "privacy missing otherFaces",
+      "result": "PASS"
+    },
+    {
+      "name": "privacy missing child",
+      "result": "PASS"
+    },
+    {
+      "name": "privacy missing personalDeviceScreens",
+      "result": "PASS"
+    },
+    {
+      "name": "privacy missing unrelatedEventMarks",
+      "result": "PASS"
+    },
+    {
+      "name": "complete custom record import succeeds",
+      "result": "PASS"
+    },
+    {
+      "name": "direct record omission validate reject",
+      "result": "PASS"
+    },
+    {
+      "name": "catalog crop metadata removal reject",
+      "result": "PASS"
+    },
+    {
+      "name": "catalog privacy edit reject",
+      "result": "PASS"
+    },
+    {
+      "name": "overlap original reproduction reject",
+      "result": "PASS"
+    },
+    {
+      "name": "qr versus protected face reject",
+      "result": "PASS"
+    },
+    {
+      "name": "logo versus protected face reject",
+      "result": "PASS"
+    },
+    {
+      "name": "valid review record accepted",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedFull=\"false\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedFull=\"true\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedFull=1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedFull=false",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedFull=null",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedDetails=\"false\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedDetails=\"true\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedDetails=1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedDetails=false",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects viewedDetails=null",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects privacyChecked=\"false\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects privacyChecked=\"true\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects privacyChecked=1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects privacyChecked=false",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects privacyChecked=null",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects axisChecked=\"false\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects axisChecked=\"true\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects axisChecked=1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects axisChecked=false",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects axisChecked=null",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects worldviewChecked=\"false\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects worldviewChecked=\"true\"",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects worldviewChecked=1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects worldviewChecked=false",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects worldviewChecked=null",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects date not-a-date",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects date 2026-10-22",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects date 2026-99-99T00:00:00Z",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects wrong ids F1",
+      "result": "PASS"
+    },
+    {
+      "name": "review rejects wrong ids F3",
+      "result": "PASS"
+    },
+    {
+      "name": "original full bad temporary output rejected before finalize",
+      "result": "PASS"
+    }
+  ],
+  "newMandatoryFindings": [],
+  "limitations": [
+    "This recheck tested the new rejection gates using temporary fixture inputs and old actual adversarial output; it did not rerender production evidence under the changed engine. Fresh rendering, PNG inspection and finalization are root workflow responsibility.",
+    "New background generation, full thirteen newly composed designs, live native host sessions and actual printer output remain outside this recheck.",
+    "Metadata completeness is enforced; image privacy/appearance and truthful visual-review attestations require actual human/assistant inspection of final PNGs."
+  ]
+}

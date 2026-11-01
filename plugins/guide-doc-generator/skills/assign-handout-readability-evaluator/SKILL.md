@@ -58,10 +58,16 @@ verdict を呼び出し元 (C01 run-handout-build) へ運ぶ。委譲する理�
 | `gate_reports` | 決定論ゲート (C16 / C17 / C18 / C22) の json-report のパス一覧と各 exit code |
 | `reader_profile` | 構成データの reader / prior_knowledge_level / usage_scene。誰の立場で読むかの指定 |
 | `scope` | 任意。読む範囲を絞るときの section id 一覧。省略時は資料全体。指すのは「どこを読むか」だけで、どの軸をどれだけ厳しく見るかは変えない。節をまたぐ軸は C06 が `scope` に関わらず全体で見る |
+| `visual_evidence` | 任意。親が取得した実表示の証跡manifest。`skills/ref-handout-design-system/references/visual-evidence-contract.md`に従い現在のHTMLとの結び付きを読取専用で確認し、不足もそのままC06へ運ぶ |
 
 `gate_reports` は本 skill が収集する。`verify-handout-language.py` は
 `--json-report` つきで実行し、出力されたレポートのパスと exit code をそのまま載せる。
 収集はするが中身の合否を本 skill が解釈し直すことはしない。
+
+実表示証跡の取得・形式・不足の扱いは
+`skills/ref-handout-design-system/references/visual-evidence-contract.md` が正本である。
+C03はファイルの存在と現在のHTMLへの結び付きを確認するだけで、画面の良し悪しを
+判定しない。表示証跡が無くても文字のレビューへ渡せるが、その面は未確認として運ぶ。
 
 **回収する出力 (C06 の戻り値をそのまま返す)**
 

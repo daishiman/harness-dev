@@ -97,9 +97,9 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 完了条件: 全推薦が confirmed/pass/readiness complete、全 dependency done、lease/resource conflict 0 を同時に満たす。
 
 1. 対象 subgraph と max parallel を確定する。
-2. beads binding は C28 の `ready` と status/depends_on exact-set parity=confirmed の積集合だけを採用する。github/none は local graph から算出する。
+2. beads binding は C28 の `ready` と status/depends_on exact-set parity=confirmed の積集合だけを採用する。github/none は local graph から算出する。parity の期待値は `bd-bridge.py --op ready --graph <graph>` が graph の `beads_linkage` (sync の起票結果を C02 `link-beads` が記録したもの) から組み立て、その出力を `schedule-graph.py --ready-source bd-bridge --ready-json <path>` に渡す。linkage の無い beads の node は ready に出ず、linkage の無い依存先を持つ node は conflict になる。
 3. confirmed/pass/readiness complete、全依存 done、active lease なしだけを候補にする。
-4. feature ready は system-dev-planner 起動候補、task ready は実行候補として別 batch にする。両者を同じ batch に混ぜない。
+4. feature ready は system-dev-planner 起動候補、task ready は実行候補として別 batch にする。両者を同じ batch に混ぜない。登録済みの package の member が `parent_feature` に名指す feature は計画済みなので planner の候補に出さず、`schedule-graph.py` の `planned_features` に分けて返す (同じ feature を2回計画しない)。その feature の実行候補は member の task である。
 5. `schedule-graph.py` の resource_scope conflict と C27 lease snapshot を重ね、同じ resource を触る組を分離する。C17 独立 verifier が不一致を出したら推薦しない。
 
 出力は ready sets、parallel batches、conflict pairs、各 task の `devgraph/<graph_node_id>` branch と `dev-graph worktree claim <id>` command。read-only で graph/tracker/lease を変更しない。

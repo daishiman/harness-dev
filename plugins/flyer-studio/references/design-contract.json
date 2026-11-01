@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "initDefaults": {
+    "notes": "案件の値が決まる前の中立な初期値。案は少数から始め、白系は求められたときだけ作る。文字量（maxChars）と中心軸を通す意味群（axisGroups）は紙面の設計判断なので、制作の段（run-create-flyer）で決めるまで空にして validate を通さない（intake では聞かない）。",
+    "variantCount": 3,
+    "whiteCount": 0,
+    "analysisMode": "new-from-brief",
+    "page": {
+      "width": 210,
+      "height": 297,
+      "safe": 10,
+      "whiteEdge": 8
+    },
+    "policy": {
+      "center": "whole-page",
+      "axisGroups": [],
+      "requiredTones": [],
+      "maxChars": null,
+      "minFontPt": 8.5,
+      "axisToleranceMm": 1
+    }
+  },
+  "signatureKeys": [
+    "hero",
+    "photo",
+    "type",
+    "flow",
+    "information",
+    "background"
+  ],
+  "qualityDimensions": [
+    "balance",
+    "color",
+    "hierarchy",
+    "spacing",
+    "integration"
+  ],
+  "expertRoles": [
+    "composition",
+    "typography",
+    "color"
+  ],
+  "expertSourcesRef": "references/designer-knowledge.md",
+  "intentRoots": {
+    "balance": [
+      "/balanceReason",
+      "/groups",
+      "/whitespace"
+    ],
+    "color": [
+      "/palette"
+    ],
+    "hierarchy": [
+      "/readingOrder",
+      "/groups"
+    ],
+    "spacing": [
+      "/whitespace",
+      "/groups"
+    ],
+    "integration": [
+      "/imageRelationship"
+    ]
+  },
+  "reviewPolicyFiles": [
+    "references/design-contract.json",
+    "references/essence.json",
+    "schemas/visual-review.schema.json",
+    "schemas/design-intent.schema.json",
+    "references/review-rubric.md",
+    "references/stage-common.md",
+    "references/design-rules.md",
+    "references/designer-knowledge.md",
+    "references/style-profiles.md",
+    "references/design-knowledge-index.json",
+    "prompts/visual-review.md",
+    "skills/assign-flyer-review/references/review-contract.md",
+    "references/workflow.md"
+  ],
+  "analysisPolicyFiles": [
+    "schemas/analysis.schema.json",
+    "schemas/analysis-review.schema.json",
+    "references/essence.json",
+    "references/design-knowledge-index.json",
+    "references/stage-common.md",
+    "references/review-rubric.md",
+    "skills/run-analyze-flyer/references/analysis-contract.md",
+    "skills/assign-flyer-analysis-review/references/evaluation-contract.md",
+    "references/design-rules.md",
+    "references/designer-knowledge.md",
+    "references/style-profiles.md",
+    "skills/assign-flyer-review/references/review-contract.md",
+    "references/workflow.md"
+  ],
+  "expertDimensions": {
+    "composition": [
+      "balance",
+      "spacing"
+    ],
+    "typography": [
+      "hierarchy"
+    ],
+    "color": [
+      "color",
+      "integration"
+    ]
+  },
+  "fixRouting": {
+    "notes": "必須修正の分類（fixClass）ごとの戻り先。正本は references/workflow.md の「改善と納品」の表で、tests/design.test.cjs が表との一致を検査する。preference は必須修正にできないのでここに無い。",
+    "deterministic": "run-create-flyer",
+    "within-plan": "run-create-flyer",
+    "premise": "run-intake-flyer"
+  },
+  "cycleBudget": 3,
+  "expertEscalation": {
+    "notes": "専門レンズ（composition・typography・color）を呼ぶ条件。どれかに当たった案の、その観点を受け持つ役だけを必須にする。当たらない案は統合担当の 5 観点で足りる（essence の nonGoals・R3）。",
+    "criterionConfidence": [
+      "low"
+    ],
+    "priorVerdicts": [
+      "FIX"
+    ],
+    "briefRequestKey": "requestedExpertRoles"
+  },
+  "knowledgeIndex": "references/design-knowledge-index.json"
+}

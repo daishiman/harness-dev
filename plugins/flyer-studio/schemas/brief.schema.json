@@ -1,0 +1,430 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "version",
+    "title",
+    "hero",
+    "copy",
+    "copyGroups",
+    "requiredRefs",
+    "count",
+    "whiteCount",
+    "stylePreferences",
+    "page",
+    "policy",
+    "confirmations",
+    "designer",
+    "purpose",
+    "analysisMode"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "title": {
+      "type": "string"
+    },
+    "hero": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "copy": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "copyGroups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "requiredRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbiddenText": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "qrUrl": {
+      "type": "string",
+      "description": "申込・詳細ページがある案件だけ指定する HTTP(S) URL。省略・空文字のときは QR を描画せず、copy.apply に確定した申込・来場案内を必須掲載する。"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 30
+    },
+    "whiteCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stylePreferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "safe",
+        "whiteEdge"
+      ],
+      "properties": {
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "safe": {
+          "type": "number"
+        },
+        "whiteEdge": {
+          "minimum": 4,
+          "type": "number"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "center",
+        "maxChars",
+        "minFontPt",
+        "axisToleranceMm"
+      ],
+      "properties": {
+        "center": {
+          "enum": [
+            "whole-page",
+            "none"
+          ]
+        },
+        "axisGroups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "requiredTones": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "light",
+              "dark",
+              "color"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "maxChars": {
+          "type": "number"
+        },
+        "minFontPt": {
+          "type": "number"
+        },
+        "axisToleranceMm": {
+          "type": "number"
+        }
+      }
+    },
+    "confirmations": {
+      "type": "object",
+      "required": [
+        "facts",
+        "assets",
+        "privacy",
+        "referenceUse",
+        "styles"
+      ],
+      "properties": {
+        "facts": {
+          "type": "boolean"
+        },
+        "assets": {
+          "type": "boolean"
+        },
+        "privacy": {
+          "type": "boolean"
+        },
+        "referenceUse": {
+          "type": "boolean"
+        },
+        "styles": {
+          "type": "boolean"
+        }
+      }
+    },
+    "designer": {
+      "type": "string",
+      "$comment": "Runtime requires the real nonempty designer identity before rendering."
+    },
+    "purpose": {
+      "type": "object",
+      "required": [
+        "audience",
+        "benefit",
+        "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "benefit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "feedback": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "request",
+          "source",
+          "targets",
+          "analysis",
+          "decision",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,48}$"
+          },
+          "kind": {
+            "enum": [
+              "required",
+              "proposal"
+            ]
+          },
+          "request": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "variantId",
+              "pngSha256"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "variantId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pngSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "variantIds": {
+            "oneOf": [
+              {
+                "const": "all"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "analysis": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "observation"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "observation": {
+                  "type": "string",
+                  "minLength": 12,
+                  "pattern": "\\S"
+                }
+              }
+            }
+          },
+          "decision": {
+            "enum": [
+              "apply",
+              "preserve",
+              "decline",
+              "pending"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          },
+          "change": {
+            "type": "string",
+            "minLength": 12,
+            "pattern": "\\S"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "decision": {
+                  "const": "apply"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "change"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "analysisMode": {
+      "enum": [
+        "source-artifact",
+        "new-from-brief"
+      ],
+      "$comment": "source-artifact: 既存紙面を診断する案件。analysis.json と独立 PASS の analysis-review.json が制作の前に要る。new-from-brief: brief から新規に作る案件。診断 stage を省き、省いた事実を承認結果へ残す。init は new-from-brief、analysis-template が source-artifact へ切り替える。"
+    },
+    "requestedExpertRoles": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "$comment": "利用者が明示した専門レンズ（design-contract.json の expertRoles）。指定した役は全案で必須になる。"
+    },
+    "preset": {
+      "type": "object",
+      "required": [
+        "id",
+        "knowledgeFiles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledgeFiles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^references/presets/[a-z0-9-]+/[^/]+\\.md$"
+          }
+        }
+      },
+      "$comment": "init --preset で選んだ preset と、この案件だけが読む知見ファイル。"
+    },
+    "singleUseRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "$comment": "Optional exact-once refs. Values are NFKC/whitespace-normalized whole logical groups (arrays joined), at least 6 code points. Literal duplication is checked within each rendered text block; semantic paraphrases remain visual-review work."
+    },
+    "analysisBindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirementId",
+          "feedbackId",
+          "variantIds"
+        ],
+        "properties": {
+          "requirementId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "feedbackId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variantIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "$comment": "Only needed when analyzed input variant IDs differ from production output IDs (or feedback IDs are explicitly mapped). Global requirements must cover all output variants. Included in approved analysis context."
+    }
+  }
+}

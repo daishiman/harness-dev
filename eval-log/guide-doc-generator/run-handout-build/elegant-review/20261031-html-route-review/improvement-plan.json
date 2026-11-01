@@ -1,0 +1,61 @@
+{
+  "iteration_count": 1,
+  "max_iterations": 3,
+  "changes": [
+    {
+      "finding_ids": [
+        "F-0002",
+        "F-0003"
+      ],
+      "owner": "improve_rendering",
+      "paths": [
+        "scripts/render-handout.py",
+        "scripts/verify-handout-selfcontained.py"
+      ],
+      "approach": "KPIだけを宣言駆動HTML/CSSへし、専用図表role=figureを共通拡大へ接続する"
+    },
+    {
+      "finding_ids": [
+        "F-0001"
+      ],
+      "owner": "improve_gallery",
+      "paths": [
+        "scripts/build-diagram-gallery.py",
+        "config/handout-diagrams.json",
+        "examples/diagram-gallery.html"
+      ],
+      "approach": "既存HTML部品の実例、同じカタログからのリンク、意味と描画補足の分離、局所スクロール"
+    },
+    {
+      "finding_ids": [
+        "F-0004",
+        "F-0005",
+        "F-0006",
+        "F-0007",
+        "F-0008",
+        "F-0009",
+        "F-0011"
+      ],
+      "owner": "improve_workflow",
+      "paths": [
+        "config/handout-visual-policy.json",
+        "agents",
+        "skills",
+        "README.md"
+      ],
+      "approach": "所有・入力・未確認・差戻しを既存契約へ接続し、重複する規則を一本化"
+    },
+    {
+      "finding_ids": [
+        "F-0010"
+      ],
+      "owner": "root",
+      "paths": [
+        "scripts/route-handout-output.py",
+        "tests/route-handout-output.py/test_selection_receipt.py"
+      ],
+      "approach": "構成の隣にある有効な選定証跡だけをバイト同一で同梱する"
+    }
+  ],
+  "authorization": "利用者の現在の改善依頼。大幅構造変更は行わず、先行成果物と元の利用者差分を保存した最小差分で実行。"
+}

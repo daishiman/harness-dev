@@ -2,13 +2,13 @@
 # /// script
 # name: register-package
 # purpose: Validate and atomically register one promoted exact-13 system-dev-planner package in the dev graph.
-# inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
+# inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: materialize --package/--output/--receipt", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
 # outputs: ["stdout: JSON preview/receipt/preflight report"]
 # requires-python: ">=3.10"
 # dependencies: [_common.py, extract-plugin-root.py]
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: explicitly selected dev-graph output, immutable receipt, and the single-writer lock file .<output>.register.lock beside the output (left in place; shared with build-graph-node.py)
+# write-scope: explicitly selected dev-graph output, immutable receipt, the 13 member artifacts at each node's file_path (tasks/<parent_feature>/), and the single-writer lock file .<output>.register.lock beside the output (left in place; shared with build-graph-node.py)
 # ///
 """C02 exact-13 package registration consumer and cross-plugin preflight."""
 from __future__ import annotations
@@ -30,11 +30,17 @@ from typing import Any, Iterator
 # harness に書かない (子の起動にも -B を渡す)。
 sys.dont_write_bytecode = True
 
-from _common import ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained, dump, load_json, utc_now
+from _common import (ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained, dump,
+                     frontmatter_block, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
+TEMPLATE_CONTRACT_PATH = PLUGIN_ROOT / "templates" / "template-contract.json"
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
+# A package member carries no macro content keys; its artifact frontmatter fills them like a plain task (build-graph-node).
+MEMBER_CONTENT_DEFAULTS = {"purpose": None, "goal": None, "scope_in": [], "scope_out": [], "acceptance": [],
+                           "architecture_refs": []}
+FRONT_KEY = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):")
 SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 REGISTRATION_KEYS = {
@@ -363,6 +369,121 @@ def _atomic_create_json(path: Path, value: dict[str, Any]) -> None:
         raise ContractError(f"immutable receipt parent is not a directory: {exc}") from exc
 
 
+def _frontmatter_keys() -> list[str]:
+    keys = (_json_object(TEMPLATE_CONTRACT_PATH).get("common_frontmatter") or {}).get("required")
+    if not isinstance(keys, list) or not keys or not all(isinstance(key, str) for key in keys):
+        raise ContractError("template-contract common_frontmatter.required is missing")
+    return keys
+
+
+def _member_text(node: dict[str, Any], keys: list[str], spec: bytes) -> bytes:
+    """The member's artifact: the C11 frontmatter of the graph node, then the planner's task spec byte for byte."""
+    return (frontmatter_block({**MEMBER_CONTENT_DEFAULTS, **node}, keys) + "\n").encode("utf-8") + spec
+
+
+def _body_after_frontmatter(data: bytes) -> tuple[list[str], bytes] | None:
+    """(frontmatter keys, bytes after the closing `---` line) of a member artifact, or None without a frontmatter."""
+    lines = data.splitlines(keepends=True)
+    if not lines or lines[0].rstrip(b"\r\n") != b"---":
+        return None
+    keys: list[str] = []
+    for index in range(1, len(lines)):
+        line = lines[index].rstrip(b"\r\n")
+        if line == b"---":
+            return keys, b"".join(lines[index + 1:])
+        match = FRONT_KEY.match(line.decode("utf-8", errors="replace"))
+        if match:
+            keys.append(match.group(1))
+    return None
+
+
+def _plan_artifacts(root: Path, package_path: Path, package: dict[str, Any], nodes: list[dict[str, Any]],
+                    keys: list[str], *, refresh: bool) -> list[dict[str, Any]]:
+    """One plan row per member artifact: create a missing file, keep an identical one, refresh a stale frontmatter.
+
+    register (refresh=False) never overwrites: a different file at the path is someone else's. materialize
+    (refresh=True) rewrites only the frontmatter of a file whose body is still the planner's spec and whose
+    frontmatter holds contract keys alone; anything else diverged and is reported without a write.
+    """
+    spec_paths = package.get("task_spec_paths")
+    if not isinstance(spec_paths, list) or len(spec_paths) != 13 or not all(isinstance(p, str) for p in spec_paths):
+        raise ContractError("feature package task_spec_paths must list exactly 13 paths")
+    rows = []
+    for index, node in enumerate(nodes):
+        spec_path = contained(package_path.parent / spec_paths[index], root, must_exist=True)
+        lineage_path = (node.get("source_lineage") or {}).get("source_path")
+        if not isinstance(lineage_path, str) or _path(root, lineage_path, must_exist=True) != spec_path:
+            raise ContractError(f"{node['graph_node_id']}: source_lineage.source_path does not point to "
+                                f"task_spec_paths[{index}] ({spec_paths[index]})")
+        spec = spec_path.read_bytes()
+        text = _member_text(node, keys, spec)
+        target = contained(root / node["file_path"], root, must_exist=False)
+        before = target.read_bytes() if target.is_file() else None
+        if before is None and target.exists():
+            raise ContractError(f"{node['file_path']} exists and is not a regular file")
+        if before is None:
+            action = "create"
+        elif before == text:
+            action = "unchanged"
+        elif not refresh:
+            raise ContractError(f"artifact_exists_with_different_content: {node['file_path']}; "
+                                "run register-package.py materialize to refresh a stale frontmatter")
+        else:
+            parsed = _body_after_frontmatter(before)
+            if parsed is None or parsed[1] != b"\n" + spec or not set(parsed[0]) <= set(keys):
+                raise ContractError(f"artifact_diverged: {node['file_path']} no longer holds the planner spec "
+                                    "under a contract-only frontmatter; nothing was written")
+            action = "refresh"
+        rows.append({"graph_node_id": node["graph_node_id"], "file_path": node["file_path"], "path": target,
+                     "before": before, "text": text, "action": action})
+    return rows
+
+
+def _write_artifacts(rows: list[dict[str, Any]], root: Path) -> list[dict[str, Any]]:
+    """Write the create/refresh rows; on failure undo the ones written and re-raise."""
+    done: list[dict[str, Any]] = []
+    try:
+        for row in rows:
+            if row["action"] == "unchanged":
+                continue
+            if row["action"] == "create":
+                try: atomic_bytes(row["path"], row["text"], create_only=True)
+                except FileExistsError as exc:
+                    raise ContractError(f"artifact_exists_with_different_content: {row['file_path']} appeared "
+                                        "while registering") from exc
+            else:
+                if row["path"].read_bytes() != row["before"]:
+                    raise ContractError(f"{row['file_path']} changed while materializing")
+                atomic_bytes(row["path"], row["text"])
+            done.append(row)
+    except Exception as exc:
+        failures = _undo_artifacts(done, root)
+        if failures:
+            raise RollbackIncompleteError(f"artifact write failed ({type(exc).__name__}: {exc}) and undoing the "
+                                          "written artifacts failed; restore the listed paths by hand", failures) from exc
+        raise
+    return done
+
+
+def _undo_artifacts(done: list[dict[str, Any]], root: Path) -> list[dict[str, str]]:
+    failures = []
+    for row in reversed(done):
+        try:
+            if row["before"] is None:
+                row["path"].unlink()
+            else:
+                atomic_bytes(row["path"], row["before"])
+        except Exception as exc:
+            failures.append({"node": row["path"].relative_to(root).as_posix(), "code": "rollback_failed",
+                             "detail": f"{'remove the created file' if row['before'] is None else 'restore sha256 ' + hashlib.sha256(row['before']).hexdigest()}: {exc}"})
+    return failures
+
+
+def _artifact_report(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{"graph_node_id": row["graph_node_id"], "file_path": row["file_path"], "action": row["action"],
+             "sha256_after": hashlib.sha256(row["text"]).hexdigest()} for row in rows]
+
+
 @contextmanager
 def _single_writer(output: Path) -> Iterator[None]:
     lock_path = output.with_name(f".{output.name}.register.lock")
@@ -392,6 +513,7 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
     _promotion_matches(root, registration_path, registration)
     mode = _tracker_mode(root, args.config, args.tracker_mode)
     resolved = _resolved_nodes(incoming, registration["binding_intents"], mode, node_schema)
+    keys = _frontmatter_keys()
 
     def perform() -> dict[str, Any]:
         current = _json_object(output_path)
@@ -440,7 +562,10 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
             after = receipt.get("graph_revision_after")
             if not isinstance(before, int) or not isinstance(after, int) or after != before + 1 or after > revision_before:
                 raise ContractError("immutable receipt graph revision conflicts with registered package")
-            return {**receipt, "idempotent": True, "dry_run": bool(args.dry_run)}
+            # A package registered before register wrote member artifacts has none; materialize writes them.
+            missing = [node["file_path"] for node in resolved if not (root / node["file_path"]).is_file()]
+            return {**receipt, "idempotent": True, "dry_run": bool(args.dry_run), "artifacts_missing": missing,
+                    **({"next": "register-package.py materialize writes the missing member artifacts"} if missing else {})}
         if receipt_path.exists(): raise ContractError("immutable receipt exists before graph registration")
         proposed = copy.deepcopy(current)
         proposed["nodes"] = [*existing, *resolved]
@@ -455,23 +580,95 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
             "output_path": output_path.relative_to(root).as_posix(),
         }
         _validate_schema(receipt, receipt_schema, receipt_schema, "registration-receipt")
+        # C11 checks every graph node's artifact, so the members' files land in the same transaction as the nodes.
+        rows = _plan_artifacts(root, package_path, package, resolved, keys, refresh=False)
         if args.dry_run:
-            return {**receipt, "dry_run": True, "idempotent": False, "write_count": 0}
-        # Restore the exact original bytes (not a canonical re-serialization) if the receipt cannot be created.
+            return {**receipt, "dry_run": True, "idempotent": False, "write_count": 0,
+                    "planned_artifacts": _artifact_report(rows)}
+        # Restore the exact original bytes (not a canonical re-serialization) if the graph or receipt write fails.
         original = output_path.read_bytes()
-        atomic_json(output_path, proposed)
+        written = _write_artifacts(rows, root)
+        try: atomic_json(output_path, proposed)
+        except Exception as exc:
+            failures = _undo_artifacts(written, root)
+            if failures:
+                raise RollbackIncompleteError(f"graph write failed ({type(exc).__name__}: {exc}) and undoing the "
+                                              "member artifacts failed; restore the listed paths by hand", failures) from exc
+            raise
         try: _atomic_create_json(receipt_path, receipt)
         except Exception as exc:
+            failures = _undo_artifacts(written, root)
             try: atomic_bytes(output_path, original)
             except Exception as restore_exc:
                 raise RollbackIncompleteError(
                     f"receipt creation failed ({type(exc).__name__}: {exc}) and restoring the graph failed "
                     f"({type(restore_exc).__name__}: {restore_exc}); restore the listed path by hand",
                     [{"node": output_path.relative_to(root).as_posix(), "code": "rollback_failed",
-                      "detail": f"restore sha256 {hashlib.sha256(original).hexdigest()}: {restore_exc}"}],
+                      "detail": f"restore sha256 {hashlib.sha256(original).hexdigest()}: {restore_exc}"}, *failures],
                 ) from exc
+            if failures:
+                raise RollbackIncompleteError(f"receipt creation failed ({type(exc).__name__}: {exc}) and undoing the "
+                                              "member artifacts failed; restore the listed paths by hand", failures) from exc
             raise
-        return {**receipt, "dry_run": False, "idempotent": False}
+        return {**receipt, "dry_run": False, "idempotent": False, "artifact_paths": [row["file_path"] for row in written],
+                "write_count": len(written) + 2}
+
+    if args.dry_run: return perform()
+    with _single_writer(output_path): return perform()
+
+
+def _materialize(args: argparse.Namespace) -> dict[str, Any]:
+    """Write or refresh the member artifacts of an already registered package; graph and receipt stay untouched.
+
+    Packages registered before register wrote artifacts have none, and a later graph write to a member (sync's
+    beads/GitHub linkage) leaves its frontmatter behind the graph. Both converge here from the graph node.
+    """
+    root = Path(args.repo_root or os.getcwd()).resolve(strict=True)
+    package_path = _path(root, args.package, must_exist=True)
+    output_path = _path(root, args.output, must_exist=True)
+    receipt_path = _path(root, args.receipt, must_exist=True)
+    system_root = _system_root(args).resolve(strict=True)
+    preflight_contract(system_root, args.required_version, args.required_schema_version)
+    package_schema = _json_object(system_root / "schemas" / "feature-execution-package.schema.json")
+    node_schema = _json_object(PLUGIN_ROOT / "schemas" / "graph-node.schema.json")
+    receipt_schema = _json_object(PLUGIN_ROOT / "schemas" / "package-registration-receipt.schema.json")
+    package = _json_object(package_path); _validate_package(package, package_schema)
+    receipt = _json_object(receipt_path)
+    _validate_schema(receipt, receipt_schema, receipt_schema, "registration-receipt")
+    identity = {"status": "registered", "feature_package_id": package["feature_package_id"],
+                "parent_feature": package["parent_feature"], "node_ids": package["task_node_ids"],
+                "output_path": output_path.relative_to(root).as_posix()}
+    conflicts = sorted(key for key, value in identity.items() if receipt.get(key) != value)
+    if conflicts:
+        raise ContractError(f"registration receipt does not belong to this package and graph: {conflicts}")
+    keys = _frontmatter_keys()
+
+    def perform() -> dict[str, Any]:
+        graph = _json_object(output_path)
+        nodes = graph.get("nodes")
+        if not isinstance(nodes, list) or not all(isinstance(node, dict) for node in nodes):
+            raise ContractError("output graph must contain nodes[] objects")
+        revision = graph.get("graph_revision")
+        if not isinstance(revision, int) or revision < receipt["graph_revision_after"]:
+            raise ContractError(f"graph_revision {revision!r} is older than the registration receipt "
+                                f"({receipt['graph_revision_after']})")
+        members = []
+        for node_id in package["task_node_ids"]:
+            node = _find_node(nodes, node_id)
+            if node is None or node.get("parent_feature") != package["parent_feature"] \
+                    or node.get("feature_package_id") != package["feature_package_id"]:
+                raise ContractError(f"{node_id} is not a registered member of {package['feature_package_id']}")
+            _validate_schema(node, node_schema, node_schema, f"output.nodes[{node_id}]")
+            members.append(node)
+        rows = _plan_artifacts(root, package_path, package, members, keys, refresh=True)
+        pending = [row for row in rows if row["action"] != "unchanged"]
+        report = {"status": "materialized" if pending else "noop", "dry_run": bool(args.dry_run),
+                  "feature_package_id": package["feature_package_id"], "parent_feature": package["parent_feature"],
+                  "graph_revision": revision, "artifacts": _artifact_report(rows), "write_count": 0}
+        if args.dry_run or not pending:
+            return report
+        written = _write_artifacts(rows, root)
+        return {**report, "write_count": len(written)}
 
     if args.dry_run: return perform()
     with _single_writer(output_path): return perform()
@@ -581,6 +778,16 @@ def _parser() -> argparse.ArgumentParser:
                           help="default: resolved by scripts/extract-plugin-root.py")
     register.add_argument("--required-version", default=None)
     register.add_argument("--required-schema-version", default="1.0.0")
+    materialize = sub.add_parser("materialize", help="write or refresh the member artifacts of a registered package")
+    materialize.add_argument("--repo-root")
+    materialize.add_argument("--package", required=True, help="feature-execution-package JSON")
+    materialize.add_argument("--output", required=True, help="dev graph JSON holding the registered members")
+    materialize.add_argument("--receipt", required=True, help="the package's immutable registration receipt")
+    materialize.add_argument("--dry-run", action="store_true")
+    materialize.add_argument("--system-planner-root", default=None,
+                             help="default: resolved by scripts/extract-plugin-root.py")
+    materialize.add_argument("--required-version", default=None)
+    materialize.add_argument("--required-schema-version", default="1.0.0")
     preflight = sub.add_parser("preflight")
     preflight.add_argument("--system-planner-root", default=None,
                           help="default: resolved by scripts/extract-plugin-root.py")
@@ -602,6 +809,8 @@ def main(argv: list[str] | None = None) -> int:
             report = preflight_contract(_system_root(args), args.required_version, args.required_schema_version)
         elif args.command == "execution-context":
             report = _project_execution_context(args)
+        elif args.command == "materialize":
+            report = _materialize(args)
         else: report = _register(args)
         dump(report); return 0
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
@@ -613,6 +822,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "register":
             # 拒否は graph にも receipt にも書かないので、適用件数は 0 と明示する (build-graph-node の拒否出力と同じ)。
             report["applied_count"] = 0
+        elif args.command == "materialize":
+            # 書いた文書は失敗時に戻すので、戻しきれた拒否は 0 件。
+            report["write_count"] = 0
         dump(report); return 2
 
 

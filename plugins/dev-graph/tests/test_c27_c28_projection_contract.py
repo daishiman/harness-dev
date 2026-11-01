@@ -143,6 +143,64 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
     assert closed["result"]["feature_rollup"]["closed_count"] == 13
 
 
+def test_c28_ready_builds_the_parity_manifest_from_graph_linkages(tmp_path, monkeypatch, capsys):
+    """ready --graph compares bd ready against the beads_linkage C02 link-beads recorded, not a hand-made manifest."""
+    module = load(SCRIPTS / "bd-bridge.py", "c28_ready_graph")
+    monkeypatch.setattr(module, "preflight", lambda root: {"version": "1.1.0", "workspace_identity": {"workspace_id": "bdw_fixture"}})
+    manifest = package_manifest()
+    issue_of = {"F": "B01", **{row["graph_node_id"]: f"B{i + 2:02d}" for i, row in enumerate(manifest["children"])}}
+    issues = {issue_of["F"]: {"id": "B01", "status": "open", "issue_type": "epic", "dependencies": []}}
+    for row in manifest["children"]:
+        issues[issue_of[row["graph_node_id"]]] = {
+            "id": issue_of[row["graph_node_id"]], "status": "open", "issue_type": "task",
+            "dependencies": [{"id": "B01", "dependency_type": "parent-child"},
+                             *({"id": issue_of[dep], "dependency_type": "blocks"} for dep in row["depends_on"])]}
+
+    def fake_bd(args, cwd, check=True):
+        if args[0] == "ready":
+            return list(issues.values())
+        if args[0] == "show":
+            return issues[args[1]]
+        raise AssertionError(args)
+
+    monkeypatch.setattr(module, "bd", fake_bd)
+    linkage = lambda node_id: {"bd_issue_id": issue_of[node_id], "linked_at": "2026-10-20T00:00:00Z", "sync_state": "linked"}
+    nodes = [{"graph_node_id": "F", "status": "active", "tracker_binding": "beads", "depends_on": [], "beads_linkage": linkage("F")}]
+    nodes += [{"graph_node_id": row["graph_node_id"], "status": "active", "tracker_binding": "beads",
+               "depends_on": row["depends_on"], "beads_linkage": linkage(row["graph_node_id"])} for row in manifest["children"]]
+    nodes.append({"graph_node_id": "N", "status": "active", "tracker_binding": "none", "depends_on": [], "beads_linkage": None})
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"graph_revision": 7, "nodes": nodes}))
+
+    code, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph)
+    assert code == 0
+    assert ready["parity_source"] == {"graph": "graph.json", "graph_revision": 7, "linked_count": 14}
+    assert sorted(row["external_ref"] for row in ready["ready_set"]) == sorted(issue_of)
+    assert not ready["conflicts"] and not ready["unmapped"] and ready["candidate_count"] == 14
+
+    # A dependency without a linkage stays in the comparison as a conflict instead of vanishing.
+    nodes[2]["depends_on"] = ["T01", "N"]
+    graph.write_text(json.dumps({"graph_revision": 8, "nodes": nodes}))
+    _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph)
+    assert [row["graph_node_id"] for row in ready["conflicts"]] == ["T02"]
+    assert "lacks a Beads linkage" in ready["conflicts"][0]["reason"] and len(ready["ready_set"]) == 13
+
+    # An issue whose node has no linkage yet is unmapped, never guessed from its external_ref.
+    nodes[3]["beads_linkage"] = None
+    nodes[2]["depends_on"] = ["T01"]
+    graph.write_text(json.dumps({"graph_revision": 9, "nodes": nodes}))
+    _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph)
+    assert ready["parity_source"]["linked_count"] == 13
+    assert [row["bd_issue_id"] for row in ready["unmapped"]] == [issue_of["T03"]]
+    assert [row["graph_node_id"] for row in ready["conflicts"]] == ["T04"]
+
+    parity = tmp_path / "parity.json"; parity.write_text(json.dumps({"nodes": []}))
+    with pytest.raises(module.ContractError, match="not both"):
+        call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--graph", graph, "--parity-manifest", parity)
+    _, ready = call_main(module, monkeypatch, capsys, "--op", "ready", "--repo-root", tmp_path, "--parity-manifest", parity)
+    assert ready["parity_source"] == {"parity_manifest": str(parity)} and len(ready["unmapped"]) == 14
+
+
 def test_c28_reuses_manifest_linkages_when_external_search_is_stale(tmp_path, monkeypatch, capsys):
     module = load(SCRIPTS / "bd-bridge.py", "c28_linkage_first")
     identity = {"workspace_id": "bdw_fixture"}
