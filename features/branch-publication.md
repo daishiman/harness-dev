@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "generated", "source_digest": null, "source_path": null, "source_plugin": "dev-graph", "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-02T04:02:36.456667Z"
+updated_at: "2026-11-02T04:35:15.160101Z"
 depends_on: []
 related_nodes: []
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-02T04:02:36.456667Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-02T04:35:15.160101Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -87,19 +87,13 @@ implementation_readiness: {"checked_at": "2026-11-02T04:02:36.456667Z", "missing
 
 ## 2026年11月2日のCI実走と再開条件
 
-提供機能はCodex nativeの実証拠を収集し、外部変更の確認を実runtimeへ束縛すること。今回はsource修復と再受入準備の記録であり、受入完了ではない。
+最新 origin/main 26cc8692 の3更新をローカル main 経由で統合した。競合6件は版・生成fingerprintの差分であり、今回のruntime対応を保持し、上流の仕様cache/historyの2ファイルは原bytesと一致する状態で採用した。harness-creator は統合内容と子履歴parser修復を含め1.4.59へ正規採番し、他22pluginの版は維持する。
 
-利用者の「codexで進めて」に基づき、明示 `--runtime codex` の実受入を進める。省略時のClaude経路を保持し、runtime間のPASS再利用や原JSONLのClaude形式への変換はしない。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md)、[Codex native契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、[外部変更guard契約](../plugins/skill-governance-adapters/references/external-mutation-guard-contract.md)。今回の影響と検証は [Codex native受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) に追記する。
+Codexのfork_turns=all子ログは、物理先頭の子metadataに続いて親履歴を持つ。公式0.165.0のv2/paginated ordinal境界・親chain・連番と子固有threadを厳密に検査し、原ログ全体を残したまま子固有の呼出し・model・完了・usageだけを集計する。境界不明や欠落は拒否する。合同244件、最終native46件と独立4条件・実raw再照合は成功しているが、製品goalの成功を意味しない。
 
-製品契約への追加影響あり。SGAの `hook-confirm` / `pretool` は信頼済みhook commandの `--runtime claude|codex` を受け、既定Claudeを保持する。確認・intent receiptのproducerを署名前にruntimeから選び、Codexは `codex-user-prompt-submit`、Claudeは既存値とする。payloadの自己申告をruntimeに使わず、生成後のreceipt・署名を書き換えない。Codexが実際に渡すcanonical `Bash` / `tool_input.command` と既存deny形式を利用し、架空のBash/UserPromptSubmitを注入しない。HCのtyped外部gate接続は実装・独立確認中で、深度選択とは別の契約として扱う。
+旧source4d54dabaのci3先行2試行は原freeze176件を保持した。C19は入口・選択・監査後、後続owner操作前のcontroller解析不備で停止し、fresh goal FAIL・正規verdict FAIL。renderは静的成果物・5/13・receipt・外部参照0・二回同bytesを確認したが、Chrome起動未達でfresh goal FAIL・正規verdict DEGRADED。旧結果やSHAを新sourceのPASSへ付け替えない。
 
-正規 `build-artifact-delivery` writerによる23 pluginのprojection更新は共有runnerのSHA同期だけであり、他plugin全体への新機能・権限追加とは区別する。SGAの動作検査33件成功・projection検査1件成功は親担当の報告で、この文書担当が再実行した結果やnative hook実走の成功ではない。最終版番号・release整合・source SHAは採番とfreeze待ちとし、途中の値を確定値へ付け替えない。
+次試行は最新main統合後の固定sourceを使い、全9対象を最大同時2で検証する。render用の既存headless-shellは同等の書込・通信制限で実起動・DOM・画像を確認済みで、その起動条件を新試行前に固定する。C03は試行fixtureと2hookだけの信頼許可を利用者へ質問済みで回答待ち。ユーザー設定・信頼状態を未許可で変更しない。
 
-共有SGA実装は全9対象のruntime閉包に含まれるため、今回の変更で旧init PASSも現行sourceの合格根拠ではなくなる。必要な新受入はinitを含む全9対象へ更新する。C01のCodex scenarioは旧args・required observations・時間/token予算を逐語保持し、native IDを付けた正本を親が追加済み。旧criteriaの1 passed・8 failedは当時のsourceの実測として保持し、新sourceでも同じ結果だったとは主張しない。canonical criteria receiptは未更新である。
-
-旧source `8c710295` のC05/renderとC19/system-specはnamespace不一致によりnative skill注入0件、正規BLOCKED・goal_fit NOT_EVALUATED・残process 0の履歴を保持する。旧freezeの137ファイル、revision9/10のimmutable receipt、過去のClaude FAIL/DEGRADED/利用上限BLOCKEDと [以前の実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) の原SHAを書き換えない。続く旧 `43a` sourceのBASEci2はC19 fixture準備のみ・actor起動0件で、private原固定を保持する。これらを新sourceの実走やPASSに数えない。
-
-C03/syncは、最終command/sourceをレビュー可能にしてから隔離fixtureの2handlerに限るnative `/hooks` の信頼許可を1回確認する予定で、現在は未提示・未承認。logging wrapperを含む最終定義を固定し、実native UserPromptSubmitと正規guard consumerの到達まで保留する。trust hash・確認receipt・署名を自作せず、generic resumeを外部変更の承認へ読み替えない。fake-ghによるfixture内の変更だけを許し、実GitHub/Beads/Projectsへの接続・一般trust/sandbox bypass・他ユーザー設定の変更を行わない。
-
-新sourceの実受入PASSは0件、CIは未達である。新しい `/private/tmp/harness-codex-ci3-20261102` の試行は最終freeze後に行う。最大同時2と元の反復上限・予算を守り、全scenario、goal-seek実体、原SHA/runtime閉包、fixture-final/freeze、別contextのfresh goalを確認する。成果物の本文提示→実user選択→独立Agentの順と、typed native handoffの回数・順序を記録する。source/private control/raw/公開workdirはactor workspace外とし、書込先はfixtureと完了マーカー用outだけ。Claude固有のSkill/Agent/Stop/権限hookの成立や単一入力での無対話自走と同一視せず、旧PASSのSHA付替え、CI成功・全9対象完了・最終commit/push/PR完了・新promotionの認定を行わない。
+新sourceの受入PASSは0、CI未達を維持する。9対象の原観測・時間/token予算・goal-seek実体・source閉包・原transcript SHA・fixture-final/freezeとfresh独立goalを省略しない。仕様影響と旧r9/r10/r11の履歴、検査・source SHAはCodex native受入受領書に接続する。
 

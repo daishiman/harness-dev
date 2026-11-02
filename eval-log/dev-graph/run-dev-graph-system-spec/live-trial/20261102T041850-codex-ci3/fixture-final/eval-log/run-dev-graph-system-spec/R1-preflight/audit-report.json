@@ -1,0 +1,56 @@
+{
+  "responsibility_id": "R1-preflight",
+  "status": "PASS",
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "current_goal_snapshot": "依存manifest、正本version range、4 entry pointsとpreflight digestの独立監査を完了",
+  "delta_from_original": "R1 の依存可用性のみ確定。生成・評価・取込は未実施",
+  "merged_directive_for_next": "R0のPASSと合わせ、固定C24 receiptを渡して正規elicitへ引き継ぐ",
+  "drift_signal": false,
+  "context_receipt": "eval-log/c19-context-receipt.json",
+  "context_receipt_sha256": "f8aa30cc657916aea3ed0112ba86edb1709e993faa5a6b860b66a27e101ad7a1",
+  "artifact_digest_verified": "51210d56d7249098b454dc7bf06623c66428d68ee393bc0da92c442bd042f1b1",
+  "dependency": {
+    "name": "system-spec-harness",
+    "version": "0.1.25",
+    "range": ">=0.1.22 <1.0.0",
+    "entry_points": [
+      {
+        "name": "run-system-spec-elicit",
+        "path": "skills/run-system-spec-elicit/SKILL.md",
+        "sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b",
+        "available": true
+      },
+      {
+        "name": "run-system-spec-doc-fetch",
+        "path": "skills/run-system-spec-doc-fetch/SKILL.md",
+        "sha256": "7920435214136422aa1741cc06381482e7f3aefd7419fe3c0b806a58f37e9637",
+        "available": true
+      },
+      {
+        "name": "run-system-spec-compile",
+        "path": "skills/run-system-spec-compile/SKILL.md",
+        "sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82",
+        "available": true
+      },
+      {
+        "name": "assign-system-spec-completeness-evaluator",
+        "path": "skills/assign-system-spec-completeness-evaluator/SKILL.md",
+        "sha256": "b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6",
+        "available": true
+      }
+    ]
+  },
+  "input_digests": {
+    "plugin-composition.yaml": "60fa9a9de35afc2d4cb47ce1acbfddab6f6d34232d5d1b6702e835b83db5ecf5",
+    ".claude-plugin/plugin.json": "94640e71fba164e69433aaa9e5626f84d94b53db59dc58061946081a5afe6c9b",
+    "references/package-contract.json": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486"
+  },
+  "checklist": {
+    "declared_inputs_verified": true,
+    "output_shape_and_authority_valid": true,
+    "boundary_violations_zero": true,
+    "version_range_and_four_entrypoints_valid": true
+  },
+  "blockers": []
+}

@@ -297,6 +297,86 @@ def test_codex_duplicate_usage_record_does_not_double_count(tmp_path):
     assert usage["total_tokens"] == 180
 
 
+def _codex_inherited_child(tmp_path):
+    """Native v2 paginated physical layout, not a rewritten acceptance log."""
+    path, skill = _codex_rollout(tmp_path)
+    parent = list(map(json.loads, path.read_text().splitlines()))
+    meta = {"id": "native-child", "session_id": "native-root", "parent_thread_id": "native-root",
+            "agent_path": "/root/child", "multi_agent_version": "v2", "history_mode": "paginated",
+            "cwd": str(tmp_path), "cli_version": "0.165.0", "subagent_history_start_ordinal": len(parent) + 1}
+    owned = [
+        {"type":"event_msg", "payload":{"type":"thread_settings_applied", "thread_id":"native-child"}},
+        {"type":"event_msg", "payload":{"type":"task_started", "turn_id":"child-turn"}},
+        {"type":"turn_context", "payload":{"model":"gpt-child", "cwd":str(tmp_path)}},
+        {"type":"token_usage_record", "payload":{"thread_id":"native-child", "thread_token_usage":{"input_tokens":20,"output_tokens":5,"total_tokens":25}}},
+        {"type":"event_msg", "payload":{"type":"task_complete", "turn_id":"child-turn"}},
+    ]
+    rows = [{"type":"session_meta", "payload":meta}, *parent, *owned]
+    for index, row in enumerate(rows): row["ordinal"] = index
+    child = path.with_suffix("") / "subagents/child.jsonl"
+    child.parent.mkdir(parents=True)
+    _write_jsonl(child, rows)
+    return path, skill, child, rows
+
+
+def test_codex_v2_inherited_prefix_is_not_child_work_or_usage(tmp_path):
+    path, skill, child, rows = _codex_inherited_child(tmp_path)
+    raw = child.read_bytes()
+    native = _load("extract-codex-transcript")
+    one = native._inspect_one(child, skill_dir=skill, target_skill="demo:run-native")
+    assert one["session_id"] == "native-child"
+    assert one["models"] == ["gpt-child"]
+    assert one["invoked_skills"] == []  # the parent's injection and Read are context only
+    assert one["user_turns"] == []
+    assert one["usage"]["total_tokens"] == 25
+    assert one["history_projection"]["boundary_ordinal"] == rows[0]["payload"]["subagent_history_start_ordinal"]
+    result = native.inspect_transcript(path)
+    assert result["format_errors"] == []
+    assert result["completed"] is True
+    assert result["usage"]["measured"] is True
+    assert result["usage"]["total_tokens"] == 205  # parent180 + owned child25, no inherited180 again
+    assert child.read_bytes() == raw
+
+
+@pytest.mark.parametrize("mutation", ["missing_boundary", "bool_boundary", "out_of_range", "wrong_version", "wrong_parent",
+                                    "duplicate_ordinal", "missing_ordinal", "ordinal_gap", "wrong_boundary_thread",
+                                    "own_meta", "history_base", "malformed_inherited_record"])
+def test_codex_v2_ambiguous_or_invalid_history_never_selects_arbitrary_meta(tmp_path, mutation):
+    path, _skill, child, rows = _codex_inherited_child(tmp_path)
+    meta = rows[0]["payload"]; boundary = meta["subagent_history_start_ordinal"]
+    if mutation == "missing_boundary": del meta["subagent_history_start_ordinal"]
+    elif mutation == "bool_boundary": meta["subagent_history_start_ordinal"] = True
+    elif mutation == "out_of_range": meta["subagent_history_start_ordinal"] = len(rows)
+    elif mutation == "wrong_version": meta["multi_agent_version"] = "unknown"
+    elif mutation == "wrong_parent": rows[1]["payload"]["id"] = "unrelated"
+    elif mutation == "duplicate_ordinal": rows[3]["ordinal"] = 2
+    elif mutation == "missing_ordinal": del rows[3]["ordinal"]
+    elif mutation == "ordinal_gap": rows[3]["ordinal"] = 4
+    elif mutation == "wrong_boundary_thread": rows[boundary]["payload"]["thread_id"] = "native-root"
+    elif mutation == "own_meta": rows[-1] = {"ordinal":len(rows)-1, "type":"session_meta", "payload":{"id":"stray"}}
+    elif mutation == "history_base": meta["history_base"] = {"end_ordinal_exclusive":7}
+    elif mutation == "malformed_inherited_record": rows[3]["type"] = "unknown-native-record"
+    _write_jsonl(child, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path)
+    assert result["format_errors"]
+    assert result["completed"] is False
+    assert result["usage"]["measured"] is False
+
+
+@pytest.mark.parametrize("mutation", ["no_own_usage", "no_own_completion", "own_usage_wrong_thread"])
+def test_codex_inherited_completion_and_usage_cannot_prove_child_success(tmp_path, mutation):
+    path, _skill, child, rows = _codex_inherited_child(tmp_path)
+    boundary = rows[0]["payload"]["subagent_history_start_ordinal"]
+    if mutation == "no_own_usage":
+        rows[boundary+3] = {"ordinal":boundary+3, "type":"event_msg", "payload":{"type":"agent_message", "message":"no usage"}}
+    elif mutation == "no_own_completion": rows.pop()
+    else: rows[boundary+3]["payload"]["thread_id"] = "native-root"
+    _write_jsonl(child, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path)
+    if mutation == "no_own_completion": assert result["completed"] is False
+    else: assert result["usage"]["measured"] is False
+
+
 @pytest.mark.parametrize("complete,read_ok,expected", [(True, True, "PASS"), (False, True, "FAIL"), (True, False, "FAIL")])
 def test_codex_verdict_uses_native_runtime_gates(tmp_path, complete, read_ok, expected):
     path, skill = _codex_rollout(tmp_path, complete=complete, read_ok=read_ok)

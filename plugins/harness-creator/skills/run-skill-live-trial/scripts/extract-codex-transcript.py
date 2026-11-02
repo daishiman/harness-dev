@@ -197,17 +197,73 @@ def _sandbox(payload: dict) -> dict:
             "profile_restricted": filesystem.get("type") == "restricted"}
 
 
+def _parent_thread(meta: dict) -> str | None:
+    parent = meta.get("parent_thread_id")
+    source = meta.get("source")
+    subagent = source.get("subagent") if isinstance(source, dict) else None
+    spawned_from = subagent.get("thread_spawn") if isinstance(subagent, dict) else None
+    return parent or (spawned_from.get("parent_thread_id") if isinstance(spawned_from, dict) else None)
+
+
+def _own_history(records: list[dict]) -> tuple[dict, list[tuple[int, dict]], dict, list[str]]:
+    """Project v2 child events using the host's explicit ordinal contract.
+
+    Codex rust-v0.165.0 protocol::SessionMeta and rollout::ordinal make the
+    physical first metadata authoritative. Earlier ordinals than the declared
+    subagent boundary are inherited context, not child work. Never infer a
+    boundary from event names or discard malformed source records.
+    https://github.com/openai/codex/blob/rust-v0.165.0/codex-rs/protocol/src/protocol.rs#L3123
+    https://github.com/openai/codex/blob/rust-v0.165.0/codex-rs/rollout/src/ordinal.rs#L79
+    """
+    indexed = list(enumerate(records))
+    metas = [(index, row["payload"]) for index, row in indexed if row.get("type") == "session_meta"]
+    if not metas or metas[0][0] != 0 or not isinstance(metas[0][1].get("id"), str) or not metas[0][1]["id"]:
+        return {}, indexed, {}, ["native-session-meta-missing-or-ambiguous"]
+    meta = metas[0][1]
+    boundary = meta.get("subagent_history_start_ordinal")
+    if boundary is None and len(metas) != 1:
+        return {}, indexed, {}, ["native-session-meta-missing-or-ambiguous"]
+    if meta.get("history_mode") == "paginated":
+        if meta.get("history_base") is not None:
+            return meta, [], {}, ["native-history-base-uncollected"]
+        if any(isinstance(row.get("ordinal"), bool) or not isinstance(row.get("ordinal"), int) or row["ordinal"] != index for index, row in indexed):
+            return meta, [], {}, ["native-history-ordinal-missing-gap-or-duplicate"]
+    if boundary is None:
+        return meta, indexed, {}, []
+    if (meta.get("history_mode") != "paginated" or meta.get("multi_agent_version") != "v2"
+            or isinstance(boundary, bool) or not isinstance(boundary, int) or not 1 <= boundary < len(records)):
+        return meta, [], {}, ["native-subagent-history-boundary-invalid-or-incomplete"]
+    parent = _parent_thread(meta)
+    if not isinstance(parent, str) or not parent or parent == meta["id"]:
+        return meta, [], {}, ["native-subagent-history-parent-invalid"]
+    if any(index >= boundary for index, _value in metas[1:]):
+        return meta, [], {}, ["native-subagent-own-history-metadata-ambiguous"]
+    if boundary > 1 and (len(metas) < 2 or metas[1][0] != 1 or metas[1][1].get("id") != parent):
+        return meta, [], {}, ["native-subagent-inherited-parent-metadata-mismatch"]
+    if any(inherited.get("id") != _parent_thread(previous) for (_index, previous), (_next, inherited) in zip(metas, metas[1:])):
+        return meta, [], {}, ["native-subagent-inherited-ancestry-metadata-mismatch"]
+    # This observed v2 writer starts the owned suffix with its own settings.
+    # An unsupported transition is rejected, never used as a guessed cutoff.
+    first_owned = records[boundary]
+    payload = first_owned["payload"]
+    if (first_owned.get("type") != "event_msg" or payload.get("type") != "thread_settings_applied"
+            or payload.get("thread_id") != meta["id"]):
+        return meta, [], {}, ["native-subagent-history-boundary-thread-mismatch"]
+    report = {"boundary_ordinal": boundary, "inherited_records": boundary - 1,
+              "owned_records": len(records) - boundary, "raw_records_preserved": len(records),
+              "rule": "physical-first-meta-and-explicit-v2-paginated-ordinal-boundary"}
+    return meta, indexed[boundary:], report, []
+
+
 def _inspect_one(path: Path, *, skill_dir: Path | None = None, target_skill: str | None = None) -> dict:
     records, errors = _records(path)
-    metas = [r["payload"] for r in records if r.get("type") == "session_meta"]
-    if len(metas) != 1 or not isinstance(metas[0].get("id"), str) or not metas[0].get("id"):
-        errors.append("native-session-meta-missing-or-ambiguous")
-    meta = metas[0] if len(metas) == 1 else {}
+    meta, own_records, projection, projection_errors = _own_history(records)
+    errors.extend(projection_errors)
     source = (skill_dir / "SKILL.md").read_bytes().decode("utf-8") if skill_dir is not None else None
     models, injections, calls, successful, spawned, user_turns, sandboxes = set(), [], {}, {}, [], [], []
     latest_usage, invalid_usage, usage_checkpoints = None, False, set()
     last_started = last_complete = -1
-    for index, row in enumerate(records):
+    for index, row in own_records:
         payload, kind = row["payload"], row.get("type")
         typ = payload.get("type")
         if kind == "turn_context" and isinstance(payload.get("model"), str) and payload["model"]:
@@ -329,11 +385,7 @@ def _inspect_one(path: Path, *, skill_dir: Path | None = None, target_skill: str
                     break
             else:
                 activation_errors.append(f"native-skill-read-unproven:{entry['name']}")
-    parent = meta.get("parent_thread_id")
-    if not parent and isinstance(meta.get("source"), dict):
-        subagent = meta["source"].get("subagent")
-        spawned_from = subagent.get("thread_spawn") if isinstance(subagent, dict) else None
-        parent = spawned_from.get("parent_thread_id") if isinstance(spawned_from, dict) else None
+    parent = _parent_thread(meta)
     measured = bool(latest_usage) and not invalid_usage and not errors
     return {"session_id": meta.get("id"), "cwd": meta.get("cwd"), "parent_thread_id": parent, "agent_path": meta.get("agent_path"),
             "models": sorted(models), "cli_version": meta.get("cli_version"), "format": FORMAT,
@@ -341,6 +393,7 @@ def _inspect_one(path: Path, *, skill_dir: Path | None = None, target_skill: str
             "injected_skills": [{**{k: v for k, v in entry.items() if k != "body"},
                                  "body_sha256": hashlib.sha256(entry["body"].strip().encode()).hexdigest()} for entry in injections],
             "format_errors": errors, "activation_errors": activation_errors,
+            "history_projection": projection,
             "completed": last_complete > last_started >= 0 and not (set(calls) - set(successful)),
             "user_turns": user_turns, "sandbox_contexts": sandboxes,
             "pending_tools": sorted(set(calls) - set(successful)), "spawned_agents": spawned,

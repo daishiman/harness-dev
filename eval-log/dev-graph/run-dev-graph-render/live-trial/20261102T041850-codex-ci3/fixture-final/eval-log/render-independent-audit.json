@@ -1,0 +1,178 @@
+{
+  "verdict": "FAIL",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "checks": {
+    "schema": {
+      "status": "PASS",
+      "evidence": "render-auditor-schema.json"
+    },
+    "containment": {
+      "status": "PASS",
+      "evidence": "/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.dev-graph/render/index.html"
+    },
+    "unique_nodes": {
+      "status": "PASS",
+      "evidence": {
+        "count": 15
+      }
+    },
+    "registration_exact_set": {
+      "status": "PASS",
+      "evidence": {
+        "actual": [
+          "LT-FEATURE-001-P01",
+          "LT-FEATURE-001-P02",
+          "LT-FEATURE-001-P03",
+          "LT-FEATURE-001-P04",
+          "LT-FEATURE-001-P05",
+          "LT-FEATURE-001-P06",
+          "LT-FEATURE-001-P07",
+          "LT-FEATURE-001-P08",
+          "LT-FEATURE-001-P09",
+          "LT-FEATURE-001-P10",
+          "LT-FEATURE-001-P11",
+          "LT-FEATURE-001-P12",
+          "LT-FEATURE-001-P13"
+        ],
+        "expected": [
+          "LT-FEATURE-001-P01",
+          "LT-FEATURE-001-P02",
+          "LT-FEATURE-001-P03",
+          "LT-FEATURE-001-P04",
+          "LT-FEATURE-001-P05",
+          "LT-FEATURE-001-P06",
+          "LT-FEATURE-001-P07",
+          "LT-FEATURE-001-P08",
+          "LT-FEATURE-001-P09",
+          "LT-FEATURE-001-P10",
+          "LT-FEATURE-001-P11",
+          "LT-FEATURE-001-P12",
+          "LT-FEATURE-001-P13"
+        ]
+      }
+    },
+    "registration_count": {
+      "status": "PASS",
+      "evidence": {
+        "done": 5,
+        "total": 13,
+        "expected_count": 13
+      }
+    },
+    "lineage_digest": {
+      "status": "PASS",
+      "evidence": {
+        "source_digest": "sha256:d85dfa3dc8b643020a2f9c37d897d34a71e63a6e8198c599794b3cc791aa7e84",
+        "mismatch_ids": []
+      }
+    },
+    "renderer_digests": {
+      "status": "PASS",
+      "evidence": {
+        "input": "2ed57eab5df249146b285318d5ac55027dcb4f67b4878e2199e2df684932fd0b",
+        "output": "c4bf5ed6a687d824cfd30f3ffb5c87f530d05ac645370b836c78bc180d7eb838"
+      }
+    },
+    "renderer_counts": {
+      "status": "PASS",
+      "evidence": {
+        "nodes": 15,
+        "edges": 12,
+        "progress": {
+          "done": 5,
+          "total": 13
+        }
+      }
+    },
+    "receipt_checks": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "actual_count": 13,
+          "digest_mismatch_ids": [],
+          "expected_count": 13,
+          "extra_ids": [],
+          "feature": "LT-FEATURE-001",
+          "missing_ids": [],
+          "problems": [],
+          "receipt": "/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+          "source_digest": "sha256:d85dfa3dc8b643020a2f9c37d897d34a71e63a6e8198c599794b3cc791aa7e84"
+        }
+      ]
+    },
+    "external_resources": {
+      "status": "PASS",
+      "evidence": []
+    },
+    "inline_svg_js": {
+      "status": "PASS",
+      "evidence": {
+        "svg": 1,
+        "scripts": 2
+      }
+    },
+    "browser_live_trial": {
+      "status": "FAIL",
+      "evidence": {
+        "blocker": "BrowserType.launch_persistent_context: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=[REDACTED_AUTHORIZATION] --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --disable-background-networking --disable-component-update --no-first-run --disable-crash-reporter --disable-breakpad --user-data-dir=/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.native-tmp/auditor-chrome-profile --remote-debugging-pipe about:blank\n<launched> pid=53496\nCall log:\n  - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=[REDACTED_AUTHORIZATION] --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --disable-background-networking --disable-component-update --no-first-run --disable-crash-reporter --disable-breakpad --user-data-dir=/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.native-tmp/auditor-chrome-profile --remote-debugging-pipe about:blank\n  - <launched> pid=53496\n  - [pid=53496] <gracefully close start>\n  - [pid=53496] <kill>\n  - [pid=53496] <will force kill>\n  - [pid=53496] exception while trying to kill process: Error: kill EPERM\n  - [pid=53496] <process did exit: exitCode=null, signal=SIGABRT>\n  - [pid=53496] starting temporary directories cleanup\n  - [pid=53496] finished temporary directories cleanup\n  - [pid=53496] <gracefully close end>\n"
+      }
+    },
+    "svg_node_edge_placement": {
+      "status": "PASS",
+      "evidence": {
+        "node_ids": [
+          "ARCH-LT-001",
+          "LT-FEATURE-001",
+          "LT-FEATURE-001-P01",
+          "LT-FEATURE-001-P02",
+          "LT-FEATURE-001-P03",
+          "LT-FEATURE-001-P04",
+          "LT-FEATURE-001-P05",
+          "LT-FEATURE-001-P06",
+          "LT-FEATURE-001-P07",
+          "LT-FEATURE-001-P08",
+          "LT-FEATURE-001-P09",
+          "LT-FEATURE-001-P10",
+          "LT-FEATURE-001-P11",
+          "LT-FEATURE-001-P12",
+          "LT-FEATURE-001-P13"
+        ],
+        "edge_paths": 12,
+        "expected_edges": 12
+      }
+    },
+    "render_model_exactness": {
+      "status": "PASS",
+      "evidence": {
+        "nodes": 15,
+        "edges": 12
+      }
+    }
+  },
+  "findings": [
+    {
+      "severity": "error",
+      "check": "browser_live_trial",
+      "evidence": {
+        "blocker": "BrowserType.launch_persistent_context: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=[REDACTED_AUTHORIZATION] --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --disable-background-networking --disable-component-update --no-first-run --disable-crash-reporter --disable-breakpad --user-data-dir=/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.native-tmp/auditor-chrome-profile --remote-debugging-pipe about:blank\n<launched> pid=53496\nCall log:\n  - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=[REDACTED_AUTHORIZATION] --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --disable-background-networking --disable-component-update --no-first-run --disable-crash-reporter --disable-breakpad --user-data-dir=/private/tmp/harness-codex-ci3-20261102/cases/render/fx/.native-tmp/auditor-chrome-profile --remote-debugging-pipe about:blank\n  - <launched> pid=53496\n  - [pid=53496] <gracefully close start>\n  - [pid=53496] <kill>\n  - [pid=53496] <will force kill>\n  - [pid=53496] exception while trying to kill process: Error: kill EPERM\n  - [pid=53496] <process did exit: exitCode=null, signal=SIGABRT>\n  - [pid=53496] starting temporary directories cleanup\n  - [pid=53496] finished temporary directories cleanup\n  - [pid=53496] <gracefully close end>\n"
+      },
+      "suggested_fix": "ブラウザ起動可能な実行環境でlive trialを再実施する。グラフやHTMLの変更は不要。"
+    }
+  ],
+  "browser_attempts": [
+    {
+      "method": "Playwright default chromium",
+      "result": "実行ファイル未配置。インストールせず停止。"
+    },
+    {
+      "method": "Playwright existing Google Chrome with FX-only profile/TMPDIR",
+      "result": "SIGABRT起動失敗。詳細はchecks.browser_live_trial.evidence.blocker。"
+    },
+    {
+      "method": "existing Google Chrome CLI --headless=new --dump-dom",
+      "result": "exit 134。DOM出力なし。",
+      "stdout": "eval-log/render-browser-dump.html",
+      "stderr": "eval-log/render-browser-dump.stderr"
+    }
+  ]
+}

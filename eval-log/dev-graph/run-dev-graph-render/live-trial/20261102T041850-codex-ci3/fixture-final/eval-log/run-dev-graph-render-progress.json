@@ -1,0 +1,49 @@
+{
+  "state": "evaluation_failed",
+  "verdict": "FAIL",
+  "choice": "standard",
+  "choice_record": "artifact-delivery-choice.json",
+  "checklist": [
+    {
+      "id": "schema_containment",
+      "status": "PASS",
+      "evidence": "render-auditor-schema.json; render-repo-context.json"
+    },
+    {
+      "id": "model_counts",
+      "status": "PASS",
+      "evidence": "render-independent-audit.json: renderer_counts, unique_nodes, inline_svg_js, svg_node_edge_placement"
+    },
+    {
+      "id": "zero_external_inline",
+      "status": "PASS",
+      "evidence": "render-independent-audit.json: external_resources, inline_svg_js"
+    },
+    {
+      "id": "receipt_digests",
+      "status": "PASS",
+      "evidence": "render-independent-audit.json: renderer_digests"
+    },
+    {
+      "id": "registration_receipt",
+      "status": "PASS",
+      "evidence": "render-independent-audit.json: registration_exact_set, registration_count, lineage_digest, receipt_checks"
+    },
+    {
+      "id": "browser_live_trial",
+      "status": "FAIL",
+      "evidence": "render-independent-audit.json: browser_live_trial"
+    },
+    {
+      "id": "consecutive_render_determinism",
+      "status": "PASS",
+      "evidence": "render-determinism.json"
+    }
+  ],
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "FAIL"
+  },
+  "blocker": "既存ChromeがSIGABRT/exit 134で起動せず、ブラウザlive trialが未達。静的検証を表示確認の代用にはしない。",
+  "graph_unchanged": true
+}

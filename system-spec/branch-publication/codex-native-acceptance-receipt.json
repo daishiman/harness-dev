@@ -45,36 +45,19 @@
   ],
   "current_acceptance": {
     "codex_targets_total": 9,
-    "targets_include_init": true,
-    "reason_all_targets_require_new_evidence": "共有SGA実装変更が全9対象のbehavior closureに含まれ、旧init PASSも現行sourceへ再利用不可。",
-    "new_source_trials_executed": 0,
     "new_source_pass_count": 0,
-    "previous_measured_criteria_on_old_source": {
-      "passed": 1,
-      "failed": 8,
-      "rerun_on_new_source_by_documentation_agent": false
+    "ci3_source": "4d54daba",
+    "ci3_trials_executed": 2,
+    "ci3_fresh_goals": {
+      "system-spec": "FAIL",
+      "render": "FAIL"
     },
-    "old_8c710295_trials": {
-      "blocked": 2,
-      "native_activation": 0,
-      "remaining_actor_processes": 0,
-      "freeze_files_unchanged": 137
+    "ci3_verdicts": {
+      "system-spec": "FAIL",
+      "render": "DEGRADED"
     },
-    "old_43a_source_ci2": {
-      "state": "C19 fixture準備のみ",
-      "actor_starts": 0,
-      "raw_evidence_preserved": true
-    },
-    "next_base": "/private/tmp/harness-codex-ci3-20261102",
-    "held_targets": [
-      {
-        "component": "C03",
-        "skill": "run-dev-graph-sync",
-        "reason": "native user-hook-trustは未提示/未承認。最終source/command確定後に限定確認し実hook/正規consumer到達まで保留。"
-      }
-    ],
-    "ci_success": false,
-    "canonical_criteria_receipts_updated": false
+    "c03_trust": "asked_pending",
+    "ci_success": false
   },
   "source_finalization": {
     "state": "shared_runtime_guard_source_repair_in_progress_release_and_freeze_pending",
@@ -2414,6 +2397,50 @@
         "source_proposal": "/private/tmp/harness-codex-ci3-20261102/cases/sync/control/native-hook-proposal.json"
       },
       "native_acceptance_complete": false
+    },
+    {
+      "id": "main26cc-integration-and-native-inherited-history",
+      "recorded_at": "2026-11-02T04:35:15.365356+00:00",
+      "receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/main-integration-receipt.json",
+      "previous_current_acceptance": {
+        "codex_targets_total": 9,
+        "targets_include_init": true,
+        "reason_all_targets_require_new_evidence": "共有SGA実装変更が全9対象のbehavior closureに含まれ、旧init PASSも現行sourceへ再利用不可。",
+        "new_source_trials_executed": 0,
+        "new_source_pass_count": 0,
+        "previous_measured_criteria_on_old_source": {
+          "passed": 1,
+          "failed": 8,
+          "rerun_on_new_source_by_documentation_agent": false
+        },
+        "old_8c710295_trials": {
+          "blocked": 2,
+          "native_activation": 0,
+          "remaining_actor_processes": 0,
+          "freeze_files_unchanged": 137
+        },
+        "old_43a_source_ci2": {
+          "state": "C19 fixture準備のみ",
+          "actor_starts": 0,
+          "raw_evidence_preserved": true
+        },
+        "next_base": "/private/tmp/harness-codex-ci3-20261102",
+        "held_targets": [
+          {
+            "component": "C03",
+            "skill": "run-dev-graph-sync",
+            "reason": "native user-hook-trustは未提示/未承認。最終source/command確定後に限定確認し実hook/正規consumer到達まで保留。"
+          }
+        ],
+        "ci_success": false,
+        "canonical_criteria_receipts_updated": false
+      },
+      "impact": "native measurementの子固有履歴集計を正確化。原観測やPASS要件を変えず、親継承を二重計上しない。最新mainの取得済仕様cache/historyを保持。",
+      "c02_graph_revision": 12,
+      "versions": {
+        "harness-creator": "1.4.59"
+      },
+      "ci_success": false
     }
   ],
   "namespace_fix_source_finalization": {
