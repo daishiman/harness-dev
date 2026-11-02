@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "schedule-positive-ready-set-fixture-standard-v2",
+      "component_id": "C15",
+      "skill": "run-dev-graph-schedule",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0456-pr85: wall_clock_s=580, total_tokens=2.09M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "fixture_contract": "A contained repository transplanted from the accepted schedule seed fixture, rekeyed to the new repository, mixing ready tasks (overlapping and disjoint resource_scope), blocked tasks, draft/unconfirmed/evaluation-non-pass/readiness-non-complete tasks, and one active lease.",
+      "required_observations": [
+        "every recommended task has all depends_on satisfied (ready)",
+        "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+        "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+        "suggested_branch and the worktree claim command are unique per recommended task"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+ "mode": "dry-run",
+ "graph_revision": 3,
+ "current_graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+ "digests": {
+  "c02_preview": {
+   "graph_revision_before": 3,
+   "graph_digest_after": "sha256:1b9a9ffa5825289274ea16ea2e8242c74fbb83d9866a5f5840439bb59f5b86bd",
+   "input_sha256": "f941e8d690fcbec552a9aa9f32d5587d7d438e6f1f4f4ec233faf89646a7ce6b"
+  },
+  "register_package_receipt": null
+ },
+ "macro": {
+  "features": [
+   {
+    "id": "feature-lt-render-diff",
+    "depends_on": [
+     "LT-FEATURE-001"
+    ],
+    "architecture_refs": [
+     "ARCH-LT-001"
+    ],
+    "state": "draft/draft/pending/readiness complete"
+   },
+   {
+    "id": "feature-lt-render-diff-summary",
+    "depends_on": [
+     "feature-lt-render-diff"
+    ],
+    "architecture_refs": [
+     "ARCH-LT-001"
+    ],
+    "state": "draft/draft/pending/readiness complete"
+   }
+  ],
+  "architecture": [
+   {
+    "id": "ARCH-LT-001",
+    "existing": true
+   }
+  ],
+  "phase_task_nodes_added": 0
+ },
+ "targets": [
+  {
+   "graph_node_id": "feature-lt-render-diff",
+   "binding": "beads",
+   "operation": "none (C28 create epic blocked)",
+   "c28_status": "blocked",
+   "c28_reason": "promotion_gate",
+   "planned": true,
+   "verdict": "blocked",
+   "reasons": [
+    "promotion_gate: draft/pending",
+    "cross_binding_dependency"
+   ],
+   "held_edge": {
+    "from": "feature-lt-render-diff",
+    "from_binding": "beads",
+    "to": "LT-FEATURE-001",
+    "to_binding": "none"
+   }
+  },
+  {
+   "graph_node_id": "feature-lt-render-diff-summary",
+   "binding": "beads",
+   "operation": "none (C28 create epic blocked)",
+   "c28_status": "blocked",
+   "c28_reason": "promotion_gate",
+   "planned": true,
+   "verdict": "blocked",
+   "reasons": [
+    "promotion_gate: draft/pending",
+    "cross_binding_dependency (chain via held feature-lt-render-diff)"
+   ],
+   "chain_origin_edge": {
+    "from": "feature-lt-render-diff",
+    "from_binding": "beads",
+    "to": "LT-FEATURE-001",
+    "to_binding": "none"
+   }
+  }
+ ],
+ "edges": [
+  {
+   "from": "feature-lt-render-diff",
+   "from_binding": "beads",
+   "to": "LT-FEATURE-001",
+   "to_binding": "none",
+   "classification": "cross_binding_dependency: not projectable to Beads; dep-add not called; not 'edge after create'"
+  },
+  {
+   "from": "feature-lt-render-diff-summary",
+   "from_binding": "beads (held)",
+   "to": "feature-lt-render-diff",
+   "to_binding": "beads (held)",
+   "classification": "dependent held by cross_binding_dependency (origin edge feature-lt-render-diff->LT-FEATURE-001); dep-add not called; not 'edge after create'"
+  }
+ ],
+ "human_confirmation_required": "cross_binding_dependency: align binding of feature-lt-render-diff (beads) or LT-FEATURE-001 (none)",
+ "ready_features": {
+  "count": 0,
+  "reasons": {
+   "feature-lt-render-diff": "draft (not confirmed/pass); held by cross_binding_dependency",
+   "feature-lt-render-diff-summary": "draft; depends on unfinished draft feature-lt-render-diff"
+  }
+ },
+ "package": {
+  "--package": null,
+  "system_dev_planner_started": false,
+  "reason": "--dry-run (Macro flow 4)"
+ },
+ "github_targets": 0,
+ "write_counts": {
+  "local_graph": 0,
+  "content": 0,
+  "receipt": 0,
+  "beads": 0,
+  "github": 0,
+  "projects": 0
+ },
+ "fake_bd_calls": 0
+}

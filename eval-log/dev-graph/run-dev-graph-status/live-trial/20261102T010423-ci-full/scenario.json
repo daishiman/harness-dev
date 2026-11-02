@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2",
+      "component_id": "C18",
+      "skill": "run-dev-graph-status",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1800,
+        "max_total_tokens": 8000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2229-pr85: wall_clock_s=775, total_tokens=3.91M incl. subagents and the in-trial init/node preparation), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --id task-lt-task-001",
+      "fixture_contract": "A contained plain git repository that the trial initializes with the canonical init and populates through the C02 single writer (task-lt-task-001 with depends_on and a meaningful closed_at) before the status run.",
+      "required_observations": [
+        "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+        "C11 validate-graph-schema exits 0 on the queried graph",
+        "the graph digest is unchanged across the status run and GitHub/Beads writes are 0"
+      ]
+    }
+  ]
+}

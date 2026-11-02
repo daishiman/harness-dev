@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T01:26:37.079588+00:00",
+  "beads_id": "harness-86kh",
+  "pr": 87,
+  "source_head": "848a2b2fe73806c3a92da382224bd592432ae78d",
+  "authorization": {
+    "event": "利用者のok",
+    "scope": "残り8対象をexhaustiveで実走。initの有効PASSは再利用。追加確認不要。",
+    "max_concurrency": 2
+  },
+  "plan": {
+    "run_id": "20261102T010423-ci-full",
+    "skills": [
+      "decompose",
+      "node",
+      "render",
+      "requirements",
+      "schedule",
+      "status",
+      "sync",
+      "system-spec"
+    ],
+    "deferred": 0
+  },
+  "ci_baseline": {
+    "run": 41368586871,
+    "plugin_job": 125033953506,
+    "passed": 974,
+    "failed": 8,
+    "subtests_passed": 69,
+    "failure_scope": "8対象のcriteria-test受入証跡。governanceはsuccess、verifyは集約連動。"
+  },
+  "observed_trials": {
+    "decompose": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261102T010423-ci-full/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "PASS",
+        "goal_fit": "FAIL",
+        "verdict": "DEGRADED"
+      },
+      "goal": {
+        "result": "FAIL",
+        "blockers": [
+          "必須順序違反。task.mdは実在する最小成果物のpathとbytes digestをassistantメッセージで提示してからstandard選択記録を保存し、以後に独立Agentを起動するよう要求する。transcript.jsonl:103の本文は「Minimal artifact created. Digests:」だけでpath/digestが無い。実値は105のuser/tool_resultにだけ存在し、145でartifact_presentedを自己記録、149で遷移を宣言、162でAgentを起動した。起動前の全assistant本文にもpath+digest提示は無い。事前指定standardと最終4観測の成立はこの欠落を免除しないため、status.jsonおよびDONEのPASSは契約上成立しない。",
+          "責務promptの事前読込不足。正規SkillはR1-elicit/R2-planをprompt_required:trueとし、task.mdも責務promptを出力前に読むよう要求するが、transcriptの実tool呼出しで読まれた責務promptは80のR3-decompose/R6-dryrunのみ。100でmacro inputとC02 previewを生成する前にも、その後にもR1-elicit.md/R2-plan.mdの読込記録が無い。"
+        ]
+      }
+    },
+    "node": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-node/live-trial/20261102T010423-ci-full/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "PASS",
+        "goal_fit": "FAIL",
+        "verdict": "DEGRADED"
+      },
+      "goal": {
+        "result": "FAIL",
+        "blockers": [
+          "本題2・3の指定Skill再呼出しが未達。task.mdはupdateを同じSkillで再度呼び、通常feature-addも同じSkillへ投入するよう要求するが、transcript.jsonlの実assistant Skill呼出しはL45の初回addのみ。L184のupdate applyとL202のfeature-add applyはBashでbuild-graph-node.pyを直接呼んでいる。writerでの連続更新・拒否の実証はあるが、指定された3本題をSkillとして全て実行したとは認められず、out/status.jsonのPASSは採用しない。",
+          "必須の提示順序が未達。task.mdが要求する実path+bytes digestのassistantメッセージ提示がL147のstandard選択記録保存前に存在しない。L127およびL135のdigestはtool_resultでありassistant提示ではない。L147でpresent_actual_artifactとpath+sha256 presented in assistant message before choiceを記録しただけで、その事実はtranscriptにない。L151でsemantic_evaluator_startedへ進みL214でAgent監査を開始しているため、事前指定standardによっても免除されない提示→記録→評価の契約を満たさない。"
+        ]
+      }
+    },
+    "render": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T010423-ci-full/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "FAIL",
+        "goal_fit": "NOT_EVALUATED",
+        "verdict": "BLOCKED"
+      },
+      "host_blocker_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T010423-ci-full/host-blocker.json",
+      "goal_evaluation": "NOT_EVALUATED: target Skill/tool未実行、canonical --blockedを使用"
+    },
+    "system-spec": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T010423-ci-full/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "FAIL",
+        "goal_fit": "NOT_EVALUATED",
+        "verdict": "BLOCKED"
+      },
+      "host_blocker_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T010423-ci-full/host-blocker.json",
+      "goal_evaluation": "NOT_EVALUATED: target Skill/tool未実行、canonical --blockedを使用"
+    }
+  },
+  "result": "BLOCKED_EXTERNAL_USAGE_LIMIT",
+  "acceptance_unchanged": true,
+  "updated_at": "2026-11-02T01:36:40.997097+00:00",
+  "external_blocker": {
+    "service": "Claude native CLI",
+    "message": "You've hit your weekly limit · resets Nov 6 at 5pm (Asia/Tokyo)",
+    "reset_at": "2026-11-06T17:00:00+09:00",
+    "affected_started": [
+      "system-spec",
+      "render"
+    ],
+    "skill_or_tool_calls": 0,
+    "not_started": [
+      "requirements",
+      "schedule",
+      "status",
+      "sync"
+    ],
+    "additional_starts_after_limit": 0,
+    "billing_or_account_changes": 0,
+    "ci_success": false
+  },
+  "unstarted_skills": [
+    "requirements",
+    "schedule",
+    "status",
+    "sync"
+  ],
+  "canonical_criteria_receipts_updated": false,
+  "next_protocol_ref": "eval-log/dev-graph/ci-repair-2026-11-02/retry-artifact-choice/plan.json",
+  "spec_receipt_ref": "system-spec/branch-publication/ci-exhaustive-attempt-receipt.json",
+  "cleanup": {
+    "remaining_sessions": 0,
+    "terminal_status_ref": "eval-log/dev-graph/ci-repair-2026-11-02/controller-terminal-status.json",
+    "private_archive": "/private/tmp/harness-ci-full-20261102T010423-ci-full",
+    "tree_sha256_before_and_after": "5dffd9e176643f20f547be5917aff95b8bce113db8c994ce19666430d805e0ee",
+    "entry_counts": {
+      "file": 10801,
+      "symlink": 9,
+      "directory": 3365
+    },
+    "relocation_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T010423-ci-full/private-evidence-relocation.json"
+  },
+  "validation": {
+    "test_discovery": "PASS, orphan0 after exact historical allowlist",
+    "current_criteria": "1 passed / 8 failed",
+    "current_criteria_ref": "eval-log/dev-graph/ci-repair-2026-11-02/current-criteria-check.json",
+    "public_secret_scan_ref": "eval-log/dev-graph/ci-repair-2026-11-02/public-secret-scan-summary.json",
+    "new_product_source_files_changed": 0,
+    "new_live_passes": 0
+  }
+}

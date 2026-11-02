@@ -1,0 +1,120 @@
+[
+  {
+    "label": "decompose",
+    "live_started": true,
+    "session_exists": false,
+    "goal_evaluation_exists": true,
+    "overall": {
+      "launch": "PASS",
+      "completion": "PASS",
+      "goal_fit": "FAIL",
+      "verdict": "DEGRADED"
+    },
+    "goal_verdict": {
+      "result": "FAIL",
+      "blockers": [
+        "必須順序違反。task.mdは実在する最小成果物のpathとbytes digestをassistantメッセージで提示してからstandard選択記録を保存し、以後に独立Agentを起動するよう要求する。transcript.jsonl:103の本文は「Minimal artifact created. Digests:」だけでpath/digestが無い。実値は105のuser/tool_resultにだけ存在し、145でartifact_presentedを自己記録、149で遷移を宣言、162でAgentを起動した。起動前の全assistant本文にもpath+digest提示は無い。事前指定standardと最終4観測の成立はこの欠落を免除しないため、status.jsonおよびDONEのPASSは契約上成立しない。",
+        "責務promptの事前読込不足。正規SkillはR1-elicit/R2-planをprompt_required:trueとし、task.mdも責務promptを出力前に読むよう要求するが、transcriptの実tool呼出しで読まれた責務promptは80のR3-decompose/R6-dryrunのみ。100でmacro inputとC02 previewを生成する前にも、その後にもR1-elicit.md/R2-plan.mdの読込記録が無い。"
+      ]
+    },
+    "schema": "canonical finalizer self-validation exit0",
+    "frozen_evidence_unchanged": true,
+    "transcript_original_sha256": "1b321074b1b81f5af983259e65603742e00d840460511fd5a363a910085e78cd",
+    "transcript_public_sha256": "1b321074b1b81f5af983259e65603742e00d840460511fd5a363a910085e78cd",
+    "redacted": false
+  },
+  {
+    "label": "node",
+    "live_started": true,
+    "session_exists": false,
+    "goal_evaluation_exists": true,
+    "overall": {
+      "launch": "PASS",
+      "completion": "PASS",
+      "goal_fit": "FAIL",
+      "verdict": "DEGRADED"
+    },
+    "goal_verdict": {
+      "result": "FAIL",
+      "blockers": [
+        "本題2・3の指定Skill再呼出しが未達。task.mdはupdateを同じSkillで再度呼び、通常feature-addも同じSkillへ投入するよう要求するが、transcript.jsonlの実assistant Skill呼出しはL45の初回addのみ。L184のupdate applyとL202のfeature-add applyはBashでbuild-graph-node.pyを直接呼んでいる。writerでの連続更新・拒否の実証はあるが、指定された3本題をSkillとして全て実行したとは認められず、out/status.jsonのPASSは採用しない。",
+        "必須の提示順序が未達。task.mdが要求する実path+bytes digestのassistantメッセージ提示がL147のstandard選択記録保存前に存在しない。L127およびL135のdigestはtool_resultでありassistant提示ではない。L147でpresent_actual_artifactとpath+sha256 presented in assistant message before choiceを記録しただけで、その事実はtranscriptにない。L151でsemantic_evaluator_startedへ進みL214でAgent監査を開始しているため、事前指定standardによっても免除されない提示→記録→評価の契約を満たさない。"
+      ]
+    },
+    "schema": "canonical finalizer self-validation exit0",
+    "frozen_evidence_unchanged": true,
+    "transcript_original_sha256": "778449064f2a139824ada1eb34bcff0f58d3d60b11086d6fc83eb3dce183a0e2",
+    "transcript_public_sha256": "778449064f2a139824ada1eb34bcff0f58d3d60b11086d6fc83eb3dce183a0e2",
+    "redacted": false
+  },
+  {
+    "label": "render",
+    "live_started": true,
+    "session_exists": false,
+    "goal_evaluation_exists": false,
+    "overall": {
+      "launch": "PASS",
+      "completion": "FAIL",
+      "goal_fit": "NOT_EVALUATED",
+      "verdict": "BLOCKED"
+    },
+    "goal_verdict": {
+      "result": "FAIL",
+      "blockers": [
+        "You've hit your weekly limit · resets Nov 6 at 5pm (Asia/Tokyo); reset=2026-11-06T17:00:00+09:00; Skill invocations=0; tool calls=0"
+      ]
+    },
+    "schema": "canonical finalizer self-validation exit0",
+    "frozen_evidence_unchanged": true,
+    "transcript_original_sha256": "e6fa74e5e76d8cedc82c18b79b3e175e75e0971ca2a24c6497fca6ec1e751007",
+    "transcript_public_sha256": "e6fa74e5e76d8cedc82c18b79b3e175e75e0971ca2a24c6497fca6ec1e751007",
+    "redacted": false
+  },
+  {
+    "label": "requirements",
+    "live_started": false,
+    "session_exists": false,
+    "goal_evaluation_exists": false
+  },
+  {
+    "label": "schedule",
+    "live_started": false,
+    "session_exists": false,
+    "goal_evaluation_exists": false
+  },
+  {
+    "label": "status",
+    "live_started": false,
+    "session_exists": false,
+    "goal_evaluation_exists": false
+  },
+  {
+    "label": "sync",
+    "live_started": false,
+    "session_exists": false,
+    "goal_evaluation_exists": false
+  },
+  {
+    "label": "system-spec",
+    "live_started": true,
+    "session_exists": false,
+    "goal_evaluation_exists": false,
+    "overall": {
+      "launch": "PASS",
+      "completion": "FAIL",
+      "goal_fit": "NOT_EVALUATED",
+      "verdict": "BLOCKED"
+    },
+    "goal_verdict": {
+      "result": "FAIL",
+      "blockers": [
+        "You've hit your weekly limit · resets Nov 6 at 5pm (Asia/Tokyo); reset=2026-11-06T17:00:00+09:00; Skill invocations=0; tool calls=0"
+      ]
+    },
+    "schema": "canonical finalizer self-validation exit0",
+    "frozen_evidence_unchanged": true,
+    "transcript_original_sha256": "74a61862ea614e5885a200bd96e2259ed58fc437b82b05c8b7b06e3de480a01e",
+    "transcript_public_sha256": "74a61862ea614e5885a200bd96e2259ed58fc437b82b05c8b7b06e3de480a01e",
+    "redacted": false
+  }
+]

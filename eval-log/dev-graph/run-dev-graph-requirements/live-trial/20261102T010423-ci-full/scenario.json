@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "C04-OUT1-positive-ready-handoff-r2",
+      "component_id": "C04",
+      "skill": "run-dev-graph-requirements",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1500,
+        "max_total_tokens": 7000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2252-pr85: wall_clock_s=655, total_tokens=3.24M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --feature-id <ready-feature-id> --package-dir <published-package-dir>",
+      "fixture_contract": "The feature is confirmed/evaluation-pass/readiness-complete and the package is a valid P01..P13 exact-13 DAG with matching source digest and parent feature.",
+      "required_observations": [
+        "a capability-build task-graph handoff is emitted for the exact-13 package",
+        "the handoff remains bound to the feature and source digest",
+        "the requirements skill generates no implementation source file"
+      ]
+    }
+  ]
+}

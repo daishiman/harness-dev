@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3",
+      "component_id": "C05",
+      "skill": "run-dev-graph-render",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 900,
+        "max_total_tokens": 3000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2212-pr85: wall_clock_s=385, total_tokens=1.29M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "fixture_contract": "A contained repository transplanted from the accepted render seed fixture (feature LT-FEATURE-001, its exact-13 package with a registration receipt, some tasks done), rekeyed to the new repository and with the previous render output excluded.",
+      "required_observations": [
+        "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "two consecutive renders produce identical output digests"
+      ]
+    }
+  ]
+}

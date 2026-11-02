@@ -1,0 +1,29 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "必須順序違反。task.mdは実在する最小成果物のpathとbytes digestをassistantメッセージで提示してからstandard選択記録を保存し、以後に独立Agentを起動するよう要求する。transcript.jsonl:103の本文は「Minimal artifact created. Digests:」だけでpath/digestが無い。実値は105のuser/tool_resultにだけ存在し、145でartifact_presentedを自己記録、149で遷移を宣言、162でAgentを起動した。起動前の全assistant本文にもpath+digest提示は無い。事前指定standardと最終4観測の成立はこの欠落を免除しないため、status.jsonおよびDONEのPASSは契約上成立しない。",
+    "責務promptの事前読込不足。正規SkillはR1-elicit/R2-planをprompt_required:trueとし、task.mdも責務promptを出力前に読むよう要求するが、transcriptの実tool呼出しで読まれた責務promptは80のR3-decompose/R6-dryrunのみ。100でmacro inputとC02 previewを生成する前にも、その後にもR1-elicit.md/R2-plan.mdの読込記録が無い。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/ci_full_decompose_goal"
+  },
+  "transcript_sha256": "1b321074b1b81f5af983259e65603742e00d840460511fd5a363a910085e78cd",
+  "evidence_refs": [
+    "task.md",
+    "scenario.json",
+    "transcript.jsonl",
+    "transcript/subagents/agent-a06d0df3924f61d46.jsonl",
+    "fixture-final/eval-log/run-dev-graph-decompose-artifact-delivery.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c02-input.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff-summary.json",
+    "fixture-final/.dev-graph/state/graph.json",
+    "fixture-before.json",
+    "guard.jsonl",
+    "evidence-freeze.json",
+    "out/status.json",
+    "poll-state.json"
+  ]
+}
