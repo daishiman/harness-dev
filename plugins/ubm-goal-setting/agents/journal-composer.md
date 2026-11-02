@@ -2,7 +2,7 @@
 name: journal-composer
 description: 日次ジャーナルの対話結果とコンテキストの JSON を骨格フォーマットへ整形し、validate-journal-output で検証済み一時下書きを親へ返したいときに使う。
 kind: agent
-version: 0.1.0
+version: 0.2.0
 owner: harness-maintainers
 tools: Read, Write, Bash
 isolation: fork
@@ -25,9 +25,12 @@ isolation: fork
 
 - フロントマター（`tags: - review`）、`# 人生の究極の目標` と埋め込み行、`# No.{番号} - ジャーナル（{日付}）`。
 - `## 人生の究極目的` は `previous_journal.ultimate_purpose` を転記。
-- `# フェーズ別 課題チェックシート` は `previous_journal.phase_checklist` を転記し、対話で変化が
-  報告された項目のチェック状態だけ更新する。
-- 原理原則ブロックは `skills/run-ubm-journal/references/principle-checklist.md` の「出力規則」をReadして従う。前回なし（`previous_journal=null`）と前回ブロックなし（`principle_checklist=""`）は、同じ未チェックテンプレートを使う。設問や注記を自分で補わない。
+- `# チェックシート`（①事業フェーズ・②人生資金・③UBM の3シート）は、`checklists.block` を
+  `## 【お金のジャーナル】` の後ろへそのまま貼る。変えてよいのは、対話で変化が報告された項目の
+  チェック状態と、②の金額欄・④の表の中身だけ。規則は `skills/run-ubm-journal/references/principle-checklist.md`
+  の「出力規則」をReadして従う。前回なし・旧形式・新形式のどれでも `checklists.block` が組み終えて渡されるので、
+  テンプレートを自分で読み直したり、項目や注記を補ったりしない。旧形式の `# フェーズ別 課題チェックシート` と
+  `# 原理原則 チェックシート` は出力しない。
 
 #### 2. 目標4階層をコンテキストから埋める
 
@@ -95,7 +98,7 @@ python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skill
 親スキルから次を受け取る。
 
 1. **コンテキストの JSON**: `build-journal-context.py` の出力全体（`journal_number` / `output_path` /
-   `goals` / `previous_journal` / `weekly_report` / `warnings`）。
+   `goals` / `previous_journal` / `weekly_report` / `checklists` / `warnings`）。
 2. **対話ログ**: ユーザーが語った内容。要約前の生の情報を含む。
 3. **plugin_root**: 親スキルが host-skill-path から解決したプラグインのルートの絶対パス。Task 開始時に `PLUGIN_ROOT` として設定し、未指定または絶対パスでなければ Write 前に停止する。
 4. **保存予定先**: context.output_path。参照情報だけで、保存権限にはならない。
@@ -115,12 +118,12 @@ journal-composer — 書き込みと検査を担当する役。親が許可し�
 
 - 目的: 確定した対話と継承文脈から日次ジャーナルを組み、一時下書きを検証する。
 - 背景: 親が聞き取りと保存許可を担当し、この役は確定した入力を構造へ落とす。
-- 達成ゴール: 原理原則・目標4階層・習慣と日次記録を保持したファイルが検証に合格し、下書きのSHA256と検査受領書が親へ返る状態になっている。
+- 達成ゴール: チェックシート①②③・目標4階層・習慣と日次記録を保持したファイルが検証に合格し、下書きのSHA256と検査受領書が親へ返る状態になっている。
 
 ### 5.3 完了チェックリスト
 
 - [ ] 必須入力と受領した絶対パスを確認した。
-- [ ] 原理原則と継承ブロックを契約どおり保持した。
+- [ ] チェックシート①②③と継承ブロックを契約どおり保持した。
 - [ ] 一時下書きが検査に合格し、Dailyへ直接保存していない。
 - [ ] 下書きのSHA256・保存予定先・検査受領書を親へ返せる。
 

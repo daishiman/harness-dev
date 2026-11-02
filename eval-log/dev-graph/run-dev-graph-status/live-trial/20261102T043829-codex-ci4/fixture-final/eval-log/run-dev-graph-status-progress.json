@@ -1,0 +1,37 @@
+{
+  "state": "handoff_complete",
+  "checklist": {
+    "query": "pass",
+    "extract": "pass",
+    "report": "pass",
+    "empty": {
+      "status": "not_applicable",
+      "reason": "指定IDは1件該当するため"
+    },
+    "read_only": "pass",
+    "independent_evaluator": "pass"
+  },
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS",
+    "OUT2": "PASS",
+    "content-review": "PASS"
+  },
+  "verdict": "PASS",
+  "independent_evaluator": {
+    "agent": "/root/status_auditor",
+    "verdict": "PASS",
+    "evidence": "eval-log/status-independent-audit.json"
+  },
+  "external_writes": {
+    "github": 0,
+    "beads": 0,
+    "evidence": "観測した主・評価contextの呼出しに外部CLI/networkは0。正規extractはnetwork:false/write-scope:none、writer/sync/render呼出し0。外部サービスへ照会せず、当該実行によるwriteが0であることを確認。"
+  },
+  "evidence": {
+    "report": "status-report.json",
+    "audit": "eval-log/status-independent-audit.json",
+    "C11_exit": 0,
+    "graph_digest": "sha256:b6e9e224a4f5ac8a48d25d66a3e4b458025014ff26a69b065df7d8a6a5debb30"
+  }
+}

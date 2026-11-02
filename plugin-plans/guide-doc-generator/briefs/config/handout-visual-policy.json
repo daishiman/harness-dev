@@ -1,38 +1,20 @@
 {
   "build_target": "plugins/guide-doc-generator/config/handout-visual-policy.json",
-  "note": "ここは plugin-plans 配下の設計 plan 上の表現であり、実ファイルの生成は P05 の担当。内容はこのファイルを正とする",
   "owner_component": "C12 validate-handout-config.py",
   "resolution": "briefs/RESOLUTION-R24-visual-first-draft-first.md",
+  "note": "公開済み設定の設計スナップショット。実行時の正本は build_target を参照し、変更時は対応する設計項目を同期する。閾値や図種を本文へ再列挙しない。",
   "_meta": {
     "role": "図解密度と散文量の方針の単一正本。『図があるのとないのとでは理解の粒度が一段変わる』という編集方針を、prompt の散文ではなく機械検査できる数値として置く場所",
-    "canon_authority": "C12 validate-handout-config.py (W-VISUAL-ABSENT / W-DIAGRAM-FEW / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG / W-DETAIL-ABSENT / W-LAYER-ORDER / W-DETAIL-FLOWLESS / W-HERO-LONG / W-OPENS-PROSE の閾値解決)",
+    "canon_authority": "C12 validate-handout-config.py (W-VISUAL-ABSENT / W-DIAGRAM-FEW / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG / W-DETAIL-ABSENT / W-LAYER-ORDER / W-DETAIL-FLOWLESS / W-HERO-LONG / W-OPENS-PROSE の閾値解決 / W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / E-IMAGE-ABSENT の閾値解決)",
     "produced_by": "P05-x-03 (config/ の唯一の producer)",
     "readers": [
       "C12 validate-handout-config.py (閾値の解決と警告の発火)",
       "C01 run-handout-build (R2-design の設計規則。値を本文へ書き写さず、このファイルを読む)",
-      "C04 ref-handout-design-system (カード/ナビの設計問い合わせに答えるとき opening.hero_card_fields と micro_copy.roles を読む。本文へ複製しない)",
-      "C05 handout-content-architect (構成データ設計時の部品選択。content_selection を読む)",
-      "C11 render-handout.py (read-only reader。opening.hero_card_fields.layout / .list_headings.headings / .connector_card.heading と micro_copy.roles の role=\"label\" の max_chars / fields を読む。判定はせず描画にのみ使う)"
+      "C05 handout-content-architect (構成データ設計時の部品選択)"
     ],
     "rule": "閾値をこのファイル以外の場所へ書かない。script 側は既定値を fallback として持つだけで、正本はここにある",
-    "why_warning_not_error": "スキーマ側を error にすると既存の構成データと最小例が一斉に落ちる。値域の縛りは warning に留め、『警告 0 件で完了』という強制は C01 のゴールシーク完了チェックリスト側が持つ。層を分けることで、機械検査の互換性を壊さずに編集方針だけを厳しくできる",
     "since": "利用者フィードバック 2026-08-18 (たたき台優先・図解優先への方針転換)",
-    "readers_criterion": {
-      "definition": "reader = 実行時に本ファイルを開いて値を引く component。ブリーフ本文で本ファイルを『正本』として言及するだけの component は reader ではない",
-      "why": "言及を reader と数えると一覧が 14 件へ膨らみ、値を変えたとき本当に影響が及ぶ先が読めなくなる。readers は影響範囲の一覧であって参照関係の一覧ではない",
-      "mentions_but_does_not_read": [
-        "C03",
-        "C06",
-        "C07",
-        "C10",
-        "C14",
-        "C18",
-        "C21",
-        "C22",
-        "C23"
-      ],
-      "measured_2026-08-19": "briefs/*.json で本ファイル名を含むのは 14 本。うち『読む』と明記があるのは C01 / C04 / C05 / C11 と owner の C12 の 5 本で、残り 9 本は閾値の帰属や第1稿スキップ可否の根拠として名前を挙げているだけ"
-    }
+    "severity_is_declared_not_inferred": "重大度は code の接頭辞 (E-/W-) から推し量らず、各閾値の level フィールドを正本とする。level:'error' を宣言した閾値は W- 接頭辞であっても完了を止める (C12 が接頭辞と level の論理和で判定する)。かつて『スキーマを error にすると既存の構成データが一斉に落ちる』を理由に全て warning へ寄せていたが、利用者指定 2026-08-18『長ったらしく何行も書くのは絶対に防ぐ』に対し警告 (exit 0) は要求を満たさない。既存の構成データと最小例が落ちるのは副作用ではなく、この改善が求めている変更そのものである (text-length-gate-decision.json#risk_and_impact.existing_artifacts)"
   },
   "schema_version": 1,
   "visual_parts": {
@@ -55,39 +37,8 @@
     ]
   },
   "diagram_patterns_by_intent": {
-    "note": "『何を伝えたいか』から図解パターンを引くための対応表。C14 render-diagram-svg.py が受け付ける 6 パターンが値域であり、ここは意図から値への写像だけを持つ",
-    "map": [
-      {
-        "intent": "順番に進む手順・処理の流れ",
-        "pattern": "flow",
-        "shape": "steps 2-6 件。各件 {label, note?}"
-      },
-      {
-        "intent": "同じ観点で複数の対象を並べる",
-        "pattern": "compare",
-        "shape": "axes 1-6 件・items 2-4 件・cells は items×axes の全マス"
-      },
-      {
-        "intent": "全体と内訳・分類の親子関係",
-        "pattern": "hierarchy",
-        "shape": "root {label} と children 1-5 件。深さは root を第1層として 3 まで"
-      },
-      {
-        "intent": "回り続ける繰り返し・改善の輪",
-        "pattern": "cycle",
-        "shape": "steps 3-6 件。各件 {label}"
-      },
-      {
-        "intent": "2 軸で位置づけを配置する",
-        "pattern": "matrix",
-        "shape": "x_axis/y_axis の {low, high} と items 1-8 件。各件 {label, x, y} は 0.0-1.0"
-      },
-      {
-        "intent": "2 つの選択肢を突き合わせる",
-        "pattern": "versus",
-        "shape": "left/right の {label, bullets 1-5 件}"
-      }
-    ]
+    "catalog": "config/handout-diagrams.json",
+    "note": "本文の関係を解析して候補を選ぶ。選定手順と採用しない理由の記録は diagram_selection。パターンと形の例をここへ重複定義しない"
   },
   "micro_copy": {
     "note": "図解・カード・表の中に置く『1 要素あたりの文字数』の上限。参考資料 (analysis/guide-doc-generator/reference-analysis.md §12) の実測が根拠であり、当てる範囲は sections[].parts[].data と diagrams[].data の中の文字列に限る。文書・セクション直下のフィールドには当てない (そちらは別の検査が既に持っている)",
@@ -102,7 +53,7 @@
     "roles": [
       {
         "role": "label",
-        "max_chars": 14,
+        "max_chars": 16,
         "fields": [
           "label",
           "term",
@@ -110,14 +61,14 @@
           "header",
           "columns",
           "tag",
-          "kind",
-          "nav_item"
+          "kind"
         ],
-        "why": "分類や見出しの札。目で一瞬に拾える長さに留める。nav_item は R25/REQ-8 (goal-spec C74) で追加。トップナビ (render-handout.py:2012-2021) が飾りの無いリンク列のままだった箇所をチップ化する際のラベル上限"
+        "why": "分類や見出しの札。目で一瞬に拾える長さに留める",
+        "max_chars_previous": 14
       },
       {
         "role": "title",
-        "max_chars": 22,
+        "max_chars": 28,
         "fields": [
           "title",
           "heading",
@@ -125,11 +76,12 @@
           "operation",
           "name"
         ],
-        "why": "カード 1 枚の要点。これ 1 行だけ読んでも意味が通る言い切りにする"
+        "why": "カード 1 枚の要点。これ 1 行だけ読んでも意味が通る言い切りにする",
+        "max_chars_previous": 22
       },
       {
         "role": "caption",
-        "max_chars": 32,
+        "max_chars": 52,
         "fields": [
           "text",
           "detail",
@@ -138,14 +90,10 @@
           "alt",
           "cells",
           "sub",
-          "body",
-          "focus_theme",
-          "target_tasks",
-          "must_remember",
-          "no_need_to_remember",
-          "prerequisite_connectors"
+          "body"
         ],
-        "why": "図解・カードの補足。1 文で終える (利用者フィードバック 2026-08-18 追補『もっと図解・文章は最小限に』により引き上げ)。40 字では 2 文が入り、カードが小さな段落になった。focus_theme 以下 5 フィールドは R25/REQ-8・REQ-9 (goal-spec C74/C75 / hero-card-decision.json#decision.list_item_budget) で追加。ヒーローカード化した各リストの 1 項目あたりの上限として micro_copy の秩序をそのまま延長する (新規閾値を作らない)。goal_chips はここへ加えない — 既存の opening.hero_fields.goal_chips.max_chars_each=14 (label 秩序) が正であり、caption(32) を重ねると緩い方が実質の基準になってしまうため意図的に据え置く"
+        "why": "図解・カードの補足。1 文で終える (利用者フィードバック 2026-08-18 追補『もっと図解・文章は最小限に』により引き上げ)。40 字では 2 文が入り、カードが小さな段落になった",
+        "max_chars_previous": 32
       }
     ],
     "exempt_parts": {
@@ -171,36 +119,11 @@
         "owner",
         "fallback_hint",
         "note_key",
-        "tone",
-        "time"
+        "tone"
       ],
       "why": "識別子・機械値であり、読み手が読む文ではない。key は B03 / B16 / B08 の行識別子で、C11 render-handout.py が data 属性の出力時に id と並べて skip する値であり、読み手の目に触れない。"
-    }
-  },
-  "sentence": {
-    "note": "REQ-7 (goal-spec C73 / improvement/text-length-gate-decision.json 正本)。TEXT 本文中の 1 文の長さと、本文 1 個あたりの文数を縛る。validate-handout-config.py:72-73 の LONG_SENTENCE_CHARS=45 / LONG_SENTENCE_COUNT=3 の正本をここへ移し、script 側は fallback 定数へ降格する (FALLBACK_BODY_MAX_CHARS と同じ扱い)",
-    "why_error_not_warning": "警告は exit 0 で通る。現行は長文に関する検査が全て警告か無効化であり一度も止まらなかった。利用者指定『文章が長ったらしく何行も続くのは絶対に防いでほしい』を満たすため全て error にする",
-    "sentence_gate": {
-      "code": "W-SENTENCE-LONG",
-      "level": "error",
-      "max_chars": 60,
-      "max_count": 1,
-      "why": "参照資料の文は中央値 20.5 字・最大 67 字。旧基準 (45 字超が 3 つ以上で警告) は緩すぎた。上限 60 字とし 1 文でも超えたら落とす。長い 1 文は改行では解決せず、文を割るしかない"
     },
-    "sentences_per_body": {
-      "code": "E-TEXT-PARAGRAPH",
-      "level": "error",
-      "max_sentences": 3,
-      "why": "参照資料は 1 段落あたり中央値 1 文・最大 3 文。文字数だけを縛ると短文を並べた長い段落が残るため文の本数でも縛る。3 文を超えるなら箇条書きへ落とす"
-    },
-    "fold_escape_hatch": {
-      "code": "E-TEXT-FOLDED",
-      "level": "error",
-      "max_fold_count": 0,
-      "why": "text_length_fold (CR-TEXT-FOLD) による B10 への退避を長文の逃げ道として使えなくする。折り畳みは『構造上どうしても長い本文』の救済であって要約を省く手段ではない。回数 0 にすると超過は必ず書き手が短くして解決する。B10 は micro_copy.exempt_parts のまま変更しない (免除規則自体は妥当。逃げ道を塞ぐのは fold 回数の側で行う)",
-      "report_overflow_fix": "validate-handout-config.py:1977 の report_overflow=not args.normalize を廃し、--normalize の有無に関わらず E-TEXT-OVERFLOW を常に報告する"
-    },
-    "decision_source": "plugin-plans/guide-doc-generator/improvement/text-length-gate-decision.json"
+    "max_chars_canon": "利用者指定 2026-08-19『文章の長さはもうちょっと多くてもいい。ただし膨大に多くなりすぎるとダメ。UI/UX エンジニアとしてどれぐらいの粒度の文字数がいいかを整えて調整して』。目安は本文 1 行 ≒ 35-40 字 (16 インチ画面・本文幅 900px 前後) で、カード 1 枚は 3 行で読み切れる量、詰めても 5 行を超えないこと。上限を上げたのは『2 文目を書ける』ようにするためで、段落を書かせるためではない (文数の上限は sentence / max_sentences が別に押さえる)"
   },
   "content_selection": {
     "note": "何を載せ、何を載せないかの方針。図解密度や文字数の上限より前に効く、最上位の編集方針",
@@ -215,63 +138,84 @@
     "applies_to": "全 doc_type / 全プリセット共通。preset ごとの上書きを認めない (『どの資料でも同じ粒度』はここで担保する)。粒度の既定 (C23 granularity_defaults) は説明の詳しさを決めるものであり、載せる項目数を増やす根拠ではない",
     "prose_vs_list": "関係は図解、列挙は箇条書き、散文は最後の手段。1 つの部品に 2 文以上の散文が入ったら、箇条書きへ割るか図解へ逃がすか、その情報自体を落とす",
     "what_to_do_with_the_rest": "落とした情報は書き足さない。後から要ると分かったものだけを R5-refine の周回で戻す。判断がつかない補足は B10 (既定で閉じた折り畳み) か role=appendix のセクションへ隔離し、本編の流れへ混ぜない",
-    "enforced_by": "この原則そのものは機械検査しない (『要点か否か』は値域で判定できない)。代理指標として C12 の micro_copy.roles と thresholds が発火し、強制は C01 のゴールシーク完了条件が持つ。ただし prose_vs_list の『1 つの部品に 2 文以上の散文』は REQ-5(b) (goal-spec C71) により C12 の machine check へ昇格する: TEXT 以外の部品に文が 2 文以上入っていることを sentence.sentences_per_body (E-TEXT-PARAGRAPH) が検出し、加えて main セクションが list/table 系の構造化部品 (B03/B04/B05/B06/B07/B08/B09/B13/B14/B15/B16) を 1 件以上持つことを新設の E-SECTION-NO-STRUCTURE で検査する"
+    "enforced_by": "この原則そのものは機械検査しない (『要点か否か』は値域で判定できない)。代理指標として C12 の micro_copy.roles と thresholds が発火し、強制は C01 のゴールシーク完了条件が持つ"
   },
   "opening": {
     "note": "資料の冒頭と各節の冒頭で『何を言いたいか』を先に置き、説明を後から足すための規則。散文の羅列を冒頭に置かない",
     "why": "冒頭は読み手が『自分に関係があるか』を決める場所である。ここに段落が積まれると、関係があるかを判断する前に読むのをやめる。宣言は 1 行で置き、中身はカードと図解で見せる",
+    "hero_card_fields": {
+      "note": "冒頭に置く文書直下フィールドの並び順と、その描画の形。順序の単一正本はこの order であり、script (C11 描画 / C22 順序検査) は順序を自前の定数で持たない",
+      "order": [
+        "goal",
+        "purpose",
+        "background"
+      ],
+      "why": "利用者要求 R3『ゴールを最初に置き、次に全体像、そのあと各項目をカードで』。読み手が冒頭で決めるのは『自分に関係があるか』であり、その判断に最初に要るのは読み終えたときの状態 (goal) である。目的と背景はゴールを裏づける材料なので後ろに置く",
+      "supersedes": "旧順序 purpose → background → goal。C22 NAR-01 の条項本文 (briefs/script-brief-C22.json#detections[NAR-01]) は旧順序を literal で綴ったままなので、plan 側の条項を『順序はこの正本から引く』へ改める必要がある (structural discovered-task で planner へ返す)",
+      "labels_source": "config/handout-vocabulary.json#hero_card_labels。カードの見出し語 (目的 / 背景 / ゴール) はこの正本にしか置かない。script へ焼くと表示語彙の第 2 の出所ができる",
+      "list_headings_source": "config/handout-vocabulary.json#hero_list_headings。hero の各箇条リストにも見出しを付ける。見出しの無い ul が縦に積まれると、読み手は何の一覧なのか分からないまま行を読む",
+      "dom": {
+        "grid": "hero-card-grid",
+        "card": "hero-card",
+        "label": "hero-card-label",
+        "selector": "各 .hero-card は data-hb-field を保持する (同定はマーカーのみ・CR-HERO1)"
+      },
+      "what_replaced": "p.hero-purpose / p.hero-background / p.hero-goal の散文 3 行。ラベルが行頭の inline span だったため、3 行が 1 つの段落の塊に見えていた"
+    },
+    "hero_list_fields": {
+      "note": "冒頭カードの下へ縦に積まれる箇条リストのうち、既定で紙面に描かないものの名簿。非表示の単一正本はこの hidden_by_default であり、script (C11 描画 / C12 総量計上 / C20 復元) は非表示名簿を自前の定数で持たない",
+      "why": "利用者指定 2026-09-08『扱うテーマ・対象業務・到達段階・覚えておくこと・覚えなくてよいことは毎回削除。表示するのはゴール・目的・背景・達成目標のみ』。冒頭は読み手が『自分に関係があるか』を決める場所であり、一覧が積み上がるほどその判断が遅れる。判断に要らない欄を既定で下ろす",
+      "hidden_by_default": [
+        "focus_theme",
+        "target_tasks",
+        "attainment_level",
+        "prerequisite_connectors",
+        "must_remember",
+        "no_need_to_remember"
+      ],
+      "still_rendered": "title / lead / 冒頭カード (goal / purpose / background) / goal_chips。goal_chips は『読み終えたときの到達形』であり、関係があるかの判断に直接効くため残す",
+      "how_to_show_again": "この hidden_by_default から欄名を外す。構成データ側 (handout-config.schema.json#hero_hidden_fields) は追加の非表示宣言であり、そこを空にしても既定の非表示は解除されない",
+      "effective_rule": "実効の非表示集合 = hidden_by_default ∪ 構成データの hero_hidden_fields",
+      "values_are_kept": "隠すのは紙面だけで、構成データからは消さない。消すと E-SECTION-UNTIED-TASK / E-ATTAINMENT-UNREACHED などの整合検査が効かなくなり、『紙面に出さない』と『関係を切る』が同じ操作になってしまう",
+      "read_by": "C11 render-handout.py (hero_hidden_by_default / build_hero・root へ data-hb-hero-hidden と data-hb-hero-hidden-data を刻む) / C12 validate-handout-config.py (opening.hero_total の計上対象から外す) / C20 extract-handout-config.py (欠落として数えず、値は root 属性から戻す)"
+    },
     "hero_fields": {
-      "note": "文書直下の目的・背景・ゴール。R25/REQ-8 (goal-spec C74 / improvement/hero-card-decision.json#decision.hero_field_budget 正本) により、これらは v1 の段落描画ではなくヒーローカードとして描画され (hero_card_fields 参照)、level を warning から error へ昇格して止める。**新コードは作らない** — 同ファイルの _meta.correction_2026-08-18 が明記するとおり、当初検討していた新規コード案 (purpose/goal/background=60/60/100) は誤りとして撤回済みであり、既存の W-HERO-LONG / W-HERO-HEAVY と既存の数値 (60/80/50/40) をそのまま使う。参照する際は必ず decision ファイル本体で撤回済みでないか確認すること",
+      "note": "文書直下の目的・背景・ゴール。C11 が hero へカードとして描画するため、長いとそのままカードの中の散文の塊になる",
       "code": "W-HERO-LONG",
       "level": "error",
-      "decision_source": "plugin-plans/guide-doc-generator/improvement/hero-card-decision.json#decision.hero_field_budget",
-      "why_error_not_warning": "REQ-7 の sentence.sentence_gate と同じ理由 (利用者指定『文章が長ったらしく…絶対に防いでほしい』を 2 度目に指摘された)。警告は exit 0 で通るため一度も止まらない",
       "max_chars": {
+        "purpose": 110,
+        "background": 140,
+        "goal": 80,
+        "lead": 70
+      },
+      "max_sentences": {
+        "note": "字数が収まっていても、短い文を並べれば冒頭は段落になる。カードの中身は宣言 1 文が既定で、背景だけ『こうだから』の 1 文を足せる",
+        "code": "E-HERO-PARAGRAPH",
+        "level": "error",
+        "value": {
+          "purpose": 2,
+          "background": 3,
+          "goal": 1,
+          "lead": 2
+        }
+      },
+      "escape": "溢れた説明はカードの外へ出す。箇条書き (focus_theme / must_remember) へ落とすか、先頭セクションの本文・カード・図解へ移す。冒頭を折り畳んで隠す逃げ道は用意しない (E-TEXT-FOLDED と同じ理由: 折り畳みは長さを消さず、読み手から見えなくするだけ)",
+      "basis": "section.lead_line (1 行の抽象) の schema 上限 80 字 / 警告 60 字と同じ秩序に置く。冒頭の各要素も『1 行の宣言』であり、説明ではない",
+      "what_to_do_instead": "説明したい中身は先頭セクションのカード (B07 / B04) と図解へ移す。hero に残すのは、その形を読む前に必要な 1 行だけにする",
+      "max_chars_previous": {
         "purpose": 60,
         "background": 80,
         "goal": 50,
         "lead": 40
       },
-      "max_sentences": {
-        "purpose": 1,
-        "goal": 1,
-        "lead": 1,
-        "background": 2
-      },
-      "basis": "section.lead_line (1 行の抽象) の schema 上限 80 字 / 警告 60 字と同じ秩序に置く (既存 basis を維持。値は変えない — 実測 目的102/背景185/ゴール89 文字はいずれも既存値でも超過するため、値を変えなくても利用者の指摘は解消する)。文数上限は REQ-7 の sentences_per_body (E-TEXT-PARAGRAPH) と同じ考え方を hero へ適用したもの (新規ロジックではなく対象を広げるだけ)。essential_problem と attainment_level は hero_field_budget の対象に含まれない (measured_from の実測対象外であり、hero-card-decision.json が budget を追加しなかった)",
-      "scope_wiring": "check_text_bodies (validate-handout-config.py:1402-1416) は sections[].parts[] の TEXT 部品しか走査せず、文書レベルの hero フィールドは検査対象に入っていなかった (hero-card-decision.json#root_cause.not_gated)。R25/REQ-8 でこの走査対象へ hero フィールドを加える。同時に REQ-7 の W-SENTENCE-LONG (1 文 60 字) も hero フィールドへ適用対象を広げる (新規ロジックの追加ではなく対象拡張のみ)",
-      "what_to_do_instead": "説明したい中身は先頭セクションのカード (B07 / B04) と図解へ移すか、箇条書きへ落とす。B10 折り畳みは逃げ道にしない (REQ-7 の fold_escape_hatch=0 と同じ制約)。診断メッセージ (W-HERO-LONG / W-HERO-HEAVY) にはどちらへ落とすべきかを明記する",
-      "goal_chips": {
-        "note": "REQ-1 (goal-spec C67)。lead の直後に置く短い達成目標の札。render-handout.py:1944-1957 で既に描画されているが schema が additionalProperties:false でこのキーを拒み E-KEY-UNKNOWN になっていたため、schema 側に properties.lead / properties.goal_chips を追加する",
-        "max_count": 4,
-        "max_chars_each": 14,
-        "why": "micro_copy.roles.label と同じ『札』の秩序 (max_chars 14) を流用する。goal_chips は要点の見出し語であり文ではない"
-      }
-    },
-    "hero_card_fields": {
-      "note": "R25/REQ-8 (goal-spec C74 / improvement/hero-card-decision.json#decision.hero_card_contract)。冒頭をカード形へ変える描画契約の設計内容。ファイル置き場は本ファイル (opening 節) を採用し config/handout-opening.json は新設しない (実装判断。理由: R25/REQ-1 の opening.hero_fields が既にここに同居しており、語彙分散を避ける R20 の原則にも合う)",
-      "layout": "purpose / background / goal はそれぞれ独立した 1 枚のカードとして描画する (v1 の <p class=\"hero-purpose\"> 等の素の段落描画をカード枠へ置き換える。hero_card_contract.rules が挙げる対象はこの 3 項目のみ)。goal_chips は lead 直後の札列のまま (カード化しない・既存の描画を維持)。essential_problem は本文へ描画しない必須メタのまま (data-hb-meta-problem) でカード化の対象に含めない。attainment_level は描画位置を変えず、可視テキストのみ表示ラベルへ差し替える (raw_enum_leak 節参照。カード化は hero-card-decision.json に明記が無い)",
-      "list_headings": {
-        "note": "focus_theme / target_tasks / must_remember / no_need_to_remember の 4 リストは、現状 4 つ連続した無ラベルの <ul class=\"meta-list\"> として並んでいる (render-handout.py:1962-1990) ため、それぞれに見出しを付けたカードへ改める",
-        "headings": {
-          "focus_theme": "冒頭で扱う主題",
-          "target_tasks": "できるようになること",
-          "must_remember": "覚えていただきたいこと",
-          "no_need_to_remember": "覚えなくてよいこと"
-        },
-        "why": "見出しが無いと 4 つの箇条列が何を並べたものか読者が推測する羽目になる。見出し文言自体は micro_copy.roles.label の 14 字上限に収まる長さを選ぶ"
-      },
-      "connector_card": {
-        "note": "R25/REQ-9 (goal-spec C75)。prerequisite_connectors を宣言した場合のみ、他のヒーローカードと並ぶ『前提』カードとして 1 枚描画する。未宣言時はカード自体を描画しない (任意フィールドであることを DOM でも表す)",
-        "heading": "前提"
-      }
+      "max_chars_canon": "利用者指定 2026-08-19『文章の長さはもうちょっと多くてもいい。ただし膨大に多くなりすぎるとダメ。UI/UX エンジニアとしてどれぐらいの粒度の文字数がいいかを整えて調整して』。目安は本文 1 行 ≒ 35-40 字 (16 インチ画面・本文幅 900px 前後) で、カード 1 枚は 3 行で読み切れる量、詰めても 5 行を超えないこと。上限を上げたのは『2 文目を書ける』ようにするためで、段落を書かせるためではない (文数の上限は sentence / max_sentences が別に押さえる)"
     },
     "hero_total": {
       "note": "hero に描画される文の総量。1 フィールドずつ短くしても、短い行が積み上がれば冒頭は長くなる。個別の上限とは別に総量でも縛る",
       "code": "W-HERO-HEAVY",
       "level": "error",
-      "level_change_source": "R25/REQ-8 (improvement/hero-card-decision.json#decision.hero_field_budget.changes[0])。W-HERO-LONG と同時に warning から error へ昇格する。数値 (400 字) は変更しない",
-      "max_chars": 400,
+      "max_chars": 640,
       "counted_fields": [
         "purpose",
         "background",
@@ -283,10 +227,11 @@
         "must_remember",
         "no_need_to_remember"
       ],
-      "not_counted": "title / duration / attainment_level。いずれも 1 語であり、読み手が『読む』量ではない",
+      "not_counted": "title / attainment_level。いずれも 1 語であり、読み手が『読む』量ではない",
       "basis": "原稿用紙 1 枚 (400 字)。本文へ入る前に読ませてよい量の上限として、日本語の書き手が共有できる目盛りを使う。個別上限の合計 (目的 60 + 背景 80 + ゴール 50 = 190) に、箇条 8 件 × 25 字を足した値ともほぼ一致する",
       "why": "利用者フィードバック 2026-08-18 追補『冒頭のタイトルがあって、目的とか背景とかっていう文章のところめちゃくちゃ長い』。hero は 5 つの箇条リストを縦に積む描画をするため、1 件ずつが短くても 15 行を超えることがある。読み手は本文の 1 行目に着く前に読むのをやめる",
-      "what_to_do_instead": "『読み終えたときの持ち帰り』(覚えておくこと・覚えなくてよいこと) は冒頭の判断材料ではない。本編末尾または role=appendix の節へ移す。冒頭に残すのは『自分に関係があるか』を決めるのに要るものだけにする"
+      "what_to_do_instead": "『読み終えたときの持ち帰り』(覚えておくこと・覚えなくてよいこと) は冒頭の判断材料ではない。本編末尾または role=appendix の節へ移す。冒頭に残すのは『自分に関係があるか』を決めるのに要るものだけにする",
+      "max_chars_canon": "利用者指定 2026-08-19『文章の長さはもうちょっと多くてもいい。ただし膨大に多くなりすぎるとダメ。UI/UX エンジニアとしてどれぐらいの粒度の文字数がいいかを整えて調整して』。目安は本文 1 行 ≒ 35-40 字 (16 インチ画面・本文幅 900px 前後) で、カード 1 枚は 3 行で読み切れる量、詰めても 5 行を超えないこと。上限を上げたのは『2 文目を書ける』ようにするためで、段落を書かせるためではない (文数の上限は sentence / max_sentences が別に押さえる) 総量は原稿用紙 1 枚半 (640 字)。個別上限の合計 (110+140+80+70=400) に箇条 8 件 × 30 字を足した値と揃う"
     },
     "section_opening": {
       "note": "節の中の並び順。『言いたいこと → 形 → 補足』の順に置く",
@@ -294,9 +239,11 @@
       "rule": "本編の節は散文 (TEXT) で始めない",
       "why": "何を言いたいかは lead_line が既に 1 行で担っている。その直後に段落が来ると、読み手は形を見る前に文章を読まされる。lead_line で宣言し、図解やカードで形を見せ、その後に『なぜそうなるか』を 1 本の TEXT で補う",
       "order": [
-        "lead_line — この節で言いたいこと 1 行 (schema 必須)",
-        "図解・カード・表 — その 1 行を目で確かめられる形",
-        "TEXT — 形を見て湧いた『なぜ』への補足 1 本"
+        "見出し (h2・節番号 + 題)",
+        "絵 (IMG / DIAGRAM) — 1 節 1 枚。何の話かを先に目で掴ませる",
+        "goal / lead_line — この節の目的と、言いたいこと 1 行",
+        "要点を並べる部品 (B04 / B05 / B07 / B16 など)",
+        "TEXT — 形を見て湧いた『なぜ』への補足"
       ],
       "assertion_style": {
         "note": "lead_line の書き方。『何の話か』ではなく『何が言えるか』を書く",
@@ -339,7 +286,16 @@
         ],
         "rule": "step を飛ばしてよいが、順番を入れ替えない。図解を先に置いて要点を後から足す形にしない (図が何の主張を支えているのか分からないまま図を読ませることになる)",
         "enforced_by": "機械検査は W-OPENS-PROSE (step 4 を先頭に置いていないか) だけが持つ。step 2 と step 3 の前後は値域で判定できないため、C05 の設計時と C01 の完了条件が持つ"
-      }
+      },
+      "order_why": "利用者指定 2026-08-19『セクションごとに一番最初にタイトル、その後に画像が記述されるように。その後に目的だったり、ここで一番伝えたいことだったりを整える』。絵を先に置くのは、読み手が文章の意味を取る前に『何の話か』を掴めるようにするため。絵は節の先頭 1 枚だけ前へ出す — 全部を先頭へ集めると節が図録になり、どの文がどの絵の話か分からなくなる",
+      "visual_first_code": "W-SECTION-VISUAL-NOT-FIRST",
+      "visual_first_rule": "本編の節は blocks[0] を image / diagram にする。描画側 (C11) は並べ替えない — DOM の並びは構成データの並びの写しであり、描画で入れ替えると round-trip (C20) が別の並びを読み戻す。並びの責任は構成データが持つ"
+    },
+    "section_heading": {
+      "note": "節見出しの節番号と題の間に置く記号",
+      "number_separator": ".",
+      "why": "利用者指定 2026-08-19『ナンバリングで数字の後にすぐに文章が入っているので、ピリオドをつけてセクションのナンバーとタイトルを切り分けてほしい』。区切りが無いと『1毎日の確認作業』が 1 つの語に見える",
+      "read_by": "C11 render-handout.py (.section-num の描画)。見出しの素値には混ぜない — 連番は index からの派生であり、素値へ混ぜると round-trip で戻せない"
     }
   },
   "layering": {
@@ -372,6 +328,27 @@
     "not_a_license_to_dump": "詳細層は網羅の逃がし先ではない。付録 (role=appendix) と同じく、載せない判断は詳細層でも同じだけ働く",
     "scope_of_check": "本編が 2 節以上あり、かつ要点層の節が 1 つ以上ある資料だけを検査する。全節が同じ段の資料 (層を分けていない資料) には当てない。層の分離を始めた資料が中途半端な形で止まるのを防ぐのが目的であり、分離していない既存資料を一斉に落とすのが目的ではない"
   },
+  "nav": {
+    "note": "ナビ (目次・現在はサイドバー) のラベルに当てる上限。micro_copy とは別の検査点として持つ理由は 出所 が違うことにある — micro_copy は sections[].parts[].data と diagrams[].data の中の文字列だけを見るが、ナビのラベルはそこに無い。render-handout.py が sections[].heading を写して nav を導出するため (:789-793)、micro_copy の roles[].fields へ nav_item という名前を足しても構成データ上に該当キーが存在せず、検査は 1 件も走らない",
+    "source_field": "sections[].heading",
+    "derived_by": "C11 render-handout.py:789-793 (nav[] は sections から導出し、構成データ側に第 2 の名簿を作らない)",
+    "max_chars": 16,
+    "code": "W-NAV-LONG",
+    "measured_from": {
+      "source": "参考資料 HTML のナビ実測 (2026-08-18) と micro_copy.roles[label] と同値",
+      "why": "ナビは横 1 列に全項目が並ぶ。1 項目が長いと折り返して 2 段になり、どこを押せばよいかを掴む前に読む対象になる。札として一瞬で拾える長さ (label ロールと同じ 14 字) に揃える"
+    },
+    "why": "利用者要求 R11 (2026-08-18『上部の要点とか、現行の大きな流れとかっていうところ。ここ、見やすくしてください』)。見出しは節の中では 22 字まで許すが (micro_copy.roles[title])、ナビへ写った瞬間に横並びの札になるため別の上限が要る。heading そのものを短くして解決する — ナビ専用の別名フィールドを構成データへ増やすと、同じ文言の第 2 の出所ができる",
+    "max_rows": 2,
+    "max_rows_why": "利用者指定 2026-08-19『情報量が多い場合はセクションを増やしてもOK。その場合インデックスは2行にするとか整える』。節が増えて 1 行に収まらなくなったら、横スクロール (右にまだ項目があることが見えない) ではなく折り返して 2 行目へ回す。2 行を超えた分は帯の中で縦スクロールし、帯自体は sticky で常に見える。読み手は 1 行に収める。C11 render-handout.py が .navbar の max-height をここから引く。layout=sidebar へ移行後、この行数上限は collapse_below_px 未満の帯フォールバック時にだけ効く (柱では縦に積むため行数でなく 100vh が上限)",
+    "max_chars_canon": "目次は 2 行まで折り返せるようになった (nav.max_rows) ため、1 札あたりを 14 字から 16 字へ広げる。札として一瞬で拾える長さは超えない",
+    "layout": "sidebar",
+    "layout_why": "利用者指定 2026-08-19『投影とインデックスがヘッダーにあるので、サイドバーに置くように。スクロールしても常に表示。インデックスは左揃い』。上帯は本文の上へ被るため、常時表示にすると本文の可読領域を縦に削る (16 インチでも 2 行帯で約 96px)。左の柱へ移すと縦は 100vh 使えて全項目が一望でき、本文は横幅だけを譲る。帯へ戻す条件は collapse_below_px が正本",
+    "sidebar_width_px": 248,
+    "sidebar_width_why": "札の文字上限 16 字 (max_chars) + 連番の丸 + 余白が 1 行に収まる最小幅。16 インチ (幅 1728 CSS px 相当) で本文 960px の器と左右の余白を保ったまま置ける。広げると本文が痩せ、狭めるとラベルが省略記号だらけになる",
+    "collapse_below_px": 1080,
+    "collapse_below_why": "この幅を下回るとサイドバー (248px) + 本文 960px が並ばず本文が読める幅を割る。そこでは従来の上帯 (max_rows 行で折返し) へ戻す。帯・柱のどちらでも sticky は維持するため『スクロールしても常に見える』は幅に依らず成立する"
+  },
   "thresholds": {
     "min_visual_parts_per_main_section": {
       "value": 1,
@@ -379,13 +356,14 @@
       "why": "本文だけのセクションは読み飛ばされる。1 つでも形のある部品があれば、読み手は本文を読む前に『何の話か』を掴める"
     },
     "min_diagrams_per_main_section": {
-      "value": 1,
+      "value": 0,
       "code": "W-DIAGRAM-FEW",
-      "level": "error",
+      "level": "warning",
       "unit": "main セクション 1 個あたりの DIAGRAM 部品の最低件数",
-      "why": "REQ-2(b) (goal-spec C68 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補『図解と画像は毎回セクションごとに必ず追加する』): 判定単位を資料全体の総量比から main セクション単位へ変える。総量比 (旧: main セクション数 × 0.4、floor 2 の大きい方) は資料全体で何枚あるかしか見ず、9 節の資料が 4 枚で通ることで図解の無い節が 5 つ残っても合格した。per-section 1 件は常に総量比以上に厳しい下限になるため、総量比の閾値はこの規則へ吸収され二重に持たない。図解を持たない main セクションが 1 つでもあれば FAIL とする",
-      "decision_source": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
-      "superseded": "plugin-plans/guide-doc-generator/improvement/diagram-gate-decision.json#decision (総量比 value=0.4 / floor=2 の下限式)。参照しないこと"
+      "why": "枚数の一律強制はしない。図解を既定で省く旧運用を廃止し、diagram_selectionの関係抽出で初稿から必要な情報単位を図へ置換する。先頭の挿絵と役割を分け、二重説明を削る。",
+      "decision_source": "利用者指定 2026-10-31: 文章から最適な図を選び、列挙例へ限定せず、長文・小さい文字・未接続・配色のずれを防ぐ",
+      "superseded": "plugin-plans/guide-doc-generator/improvement/diagram-gate-decision.json#decision (総量比 value=0.4 / floor=2 の下限式)。参照しないこと",
+      "on_illustration_change": "挿絵の画風や有無が変わったときも枚数の下限を自動で戻さず、diagram_selectionで各情報単位の関係と媒体を再選定する"
     },
     "min_images_per_main_section": {
       "value": 1,
@@ -419,13 +397,21 @@
       "value": 1,
       "code": "W-TEXT-RUN",
       "why": "TEXT が 2 つ以上続くと、画面上は 1 つの長文と区別がつかない。間に形のある部品を挟むか、1 つへまとめる"
+    },
+    "nav_label_max_chars": {
+      "value": 14,
+      "code": "W-NAV-LONG",
+      "level": "warning",
+      "unit": "ナビ 1 項目あたりの文字数上限",
+      "mirrors": "nav.max_chars (検査点側の正本)。ここは重大度だけを宣言する",
+      "why": "超過は書き手が heading を短くして解決する種類の指摘であり、完了を止める性質ではない。error にすると既存資料が一斉に止まり、短くする作業が完了の前提になる。--strict では従来どおり違反として扱われる"
     }
   },
   "draft_first": {
     "note": "たたき台優先の進め方。速さは『質問を減らすこと』ではなく『確定を待たずに一度出すこと』で得る",
     "max_question_rounds_before_first_draft": 1,
     "first_draft_detail_level": "overview",
-    "why": "最初の 1 本は overview 粒度 (本文上限 60 文字) で出す。粒度を上げるのは、利用者が現物を見て『ここはもっと詳しく』と指した箇所だけにする。全体を detailed で作ってから削るより速く、削り残しも出ない",
+    "why": "最初の 1 本は overview 粒度 (本文上限 180 文字) で出す。粒度を上げるのは、利用者が現物を見て『ここはもっと詳しく』と指した箇所だけにする。全体を detailed で作ってから削るより速く、削り残しも出ない",
     "inferred_value_disclosure": "素材から推定して埋めた項目は、生成レポートで『仮置き』として一覧にする。構成データ側には印を持たせない (provenance は C12 の閉じた語彙であり、推定の別を持つ層ではない)",
     "never_inferred_fields": {
       "note": "推定で埋めてはならない項目。取り違えると第1稿を作り直す羽目になり、たたき台の速さが帳消しになる。ここに挙がる項目だけが『回答を待つ』理由になり得る",
@@ -436,7 +422,7 @@
       "why": "doc_type はセクション構成そのものを決めるプリセットの鍵であり、外すと全節を組み直すことになる。out_dir は書き出し先であって内容の推定対象ではない (誤った場所へ置くと利用者が成果物を見つけられない)。逆にこの 2 つ以外は、素材から読み取れる限り仮置きしてよい"
     },
     "granularity_anchor": {
-      "note": "第1稿の目標形。参照資料 (analysis/guide-doc-generator/reference-analysis.md §2) を実測した値であり、『サンプルと同じ粒度で出す』の機械化された表現。C12 は検査しない (第1稿を落とすのは本末転倒) が、C01 と C05 は設計時にこの形を狙う。利用者指定 2026-08-18 追補『この分量に絞る必要はない。内容に合わせて増やしたらいい』により、main_sections / parts_per_section は下限の目安であり上限ではない。内容量に応じて増やしてよく、超過を警告にしない。diagram_parts (旧: main セクション本数に対する目標図解枚数の目安 [2,3]) は thresholds.min_diagrams_per_main_section の per-section 規則と矛盾するため削除する。parts_per_section は器・本文側の部品本数の目安であり、必須の DIAGRAM と IMG は別枠で数える (毎 main セクションが両方を持つため、視覚部品を含めた実数は常に 2 件以上になる)",
+      "note": "第1稿の目標形。参照資料 (analysis/guide-doc-generator/reference-analysis.md §2) を実測した値であり、『サンプルと同じ粒度で出す』の機械化された表現。C12 は検査しない (第1稿を落とすのは本末転倒) が、C01 と C05 は設計時にこの形を狙う",
       "main_sections": [
         4,
         6
@@ -445,22 +431,108 @@
         1,
         2
       ],
+      "diagram_parts": [
+        2,
+        3
+      ],
       "table_rows_max": 9,
       "glossary_terms": [
         4,
         8
-      ],
-      "duration_minutes": [
-        15,
-        25
       ]
     },
     "skipped_in_draft": {
-      "note": "第1稿で回さない工程。いずれも『現物が出てから効く』ものであり、初回の待ち時間へ入れると出力が遅れるだけで質は上がらない。REQ-3 (goal-spec C69) により srg_images はこの一覧から外れ、第1稿から挿絵生成を回す",
+      "note": "第1稿で回さない工程。いずれも『現物が出てから効く』ものであり、初回へ入れると出力が遅れるだけで質は上がらない。挿絵の生成委譲 (C21) はここに入らない — R25 (goal-spec C69) で第1稿から回すと決めた。min_images_per_main_section が level=error (E-IMAGE-ABSENT) である以上、外すと第1稿が構成データ検証を通らないため、これは速さと引き換えにできる工程ではない",
       "readability_review": "C03 への意味レビュー委譲。第1稿は利用者本人が現物を見るため、レビュアーより早い",
-      "why_gates_are_not_skipped": "決定論ゲート (C16/C17/C18/C22) は数百ミリ秒で終わる。速さのために外す対象ではなく、外すと第1稿が『開けない HTML』になり得る",
-      "why_srg_images_no_longer_skipped": "REQ-3 (2026-08-18 利用者判断): 実画面・概念図の挿絵 (C21 srg-image-bridge.py への生成委譲) が第1稿から欠けると、demo_first の資料が『最初の提示物が実画面である』(NAR-07/C56) を満たせない。第1稿の待ち時間が延びることを利用者は受け入れており、待ち時間増の理由はここへ明記して追跡可能にする。図解 SVG (C14) は決定論で従来どおり第1稿でも回す",
-      "wait_time_scales_with_main_sections": "挿絵の生成待ちは main セクション数に比例して伸びる。全 main セクションが IMG を 1 件以上持つが、生成対象は role=illustration の節に限られる (role=screenshot の節は素材の埋め込みのみで生成が不要)。プリセットで role を宣言する設計 (thresholds.min_images_per_main_section.role_split) がそのまま待ち時間の制御になる"
+      "why_gates_are_not_skipped": "決定論ゲート (C16/C17/C18/C22) は機械検査だけで完結する。速さのために外す対象ではなく、外すと第1稿が『開けない HTML』になり得る"
     }
+  },
+  "sentence": {
+    "note": "1 文の長さと 1 本文あたりの文数の上限。micro_copy が『図解・カードの中の 1 要素』を縛るのに対し、こちらは TEXT 本文そのものの読みやすさを縛る。文字数予算 (assets/tokens/*.json の text_limits) は総量を見るだけなので、短い文を何本も並べた段落や、予算内に収まった 1 本の長い文を止められない。その 2 つを塞ぐのがこの節である",
+    "decision_source": "plugin-plans/guide-doc-generator/improvement/text-length-gate-decision.json#decision.sentence_gate / #decision.sentences_per_body",
+    "measured_from": {
+      "source": "参照資料 /Users/dm/Downloads/guide (2).html の全 <p> 実測 (2026-08-18)",
+      "sentences": "50 文: 中央値 20.5 字 / 最大 67 字 / 45 字超は 5 文",
+      "sentences_per_paragraph": "中央値 1 文 / 最大 3 文",
+      "reading": "参照資料の本文は『1 段落 = 1〜2 文・最大でも 81 字』で終わっている。見やすさの実体はこの短さである"
+    },
+    "key_names": "節と各フィールドの名前は briefs/config/handout-visual-policy.json#sentence を正本とする (sentence_gate.max_chars / sentence_gate.max_count / sentences_per_body.max_sentences)。実体化のときに value / count_threshold / max_sentences_per_body へ言い換えた版が出回っていたが、名前が違えば正本を読んだつもりの検査が空振りするので、言い換えを撤回して正本の綴りへ戻した",
+    "sentence_gate": {
+      "max_chars": 60,
+      "max_count": 1,
+      "code": "W-SENTENCE-LONG",
+      "level": "error",
+      "unit": "1 本文の中で、この字数を超える文が何件あれば落とすか (max_count)",
+      "counting": "字数は句点 (。!?！？) を含めて数える。句点も読み手には見えており、落として数えると上限が実質 1 文字ぶん緩む",
+      "why": "参照資料の文は中央値 20.5 字・最大 67 字であり、45 字超の文も 50 文中 5 つある。したがって『45 字超が 3 つ以上で警告』という現行は参照資料を通すための緩さではなく単に緩い。上限を 60 字とし、1 つでも超えたら落とす。長い 1 文は改行では解決せず、文を割るしかないためこの形が正しい"
+    },
+    "sentences_per_body": {
+      "max_sentences": 3,
+      "code": "E-TEXT-PARAGRAPH",
+      "level": "error",
+      "unit": "TEXT 本文 1 件あたりの文の本数の上限",
+      "why": "参照資料は 1 段落あたり中央値 1 文・最大 3 文。文字数だけを縛ると『短い文を何本も並べた長い段落』が残るため、文の本数でも縛る。3 文を超えるなら箇条書きへ落とすべき内容である",
+      "max_sentences_by_detail_level": {
+        "overview": 2,
+        "standard": 3,
+        "detailed": 5
+      },
+      "why_by_detail_level": "利用者指定 2026-08-19『各セクションごとの情報量が少ない。もう少し情報量を増やす。ただしバランスが重要』を受けて字数予算 (assets/tokens/*.json の block_body_max_chars_by_detail_level) を 110/180/280 へ広げた。文数を 3 文に固定したままだと、広げた分は 1 文を長くすることでしか使えず、1 文 60 字の上限 (sentence_gate) に当たって実際には書けない。文数も同じ水準で動かすことで『短い文を並べる』ではなく『短い文を必要な本数だけ並べる』方向へ量が増える。5 文 × 56 字 ≒ 280 字で detailed の予算と釣り合う。水準の宣言が無い構成データでは max_sentences (3) をそのまま使う (fail-soft)"
+    },
+    "fold_escape_hatch_location": "正本 (briefs 側) は折り畳み回数の上限を sentence.fold_escape_hatch に置くが、実体はこのファイルの top-level fold 節にある。位置だけの差であり値と code (E-TEXT-FOLDED / 0 回) は一致する。統合は本文予算の担当ノード側で行う"
+  },
+  "fold": {
+    "note": "本文が予算を超えたときに B10 (折り畳み) へ退避できる回数の上限。免除規則 (micro_copy.exempt_parts に B10 を含めること) は触らず、逃げ道は回数の側で塞ぐ",
+    "decision_source": "plugin-plans/guide-doc-generator/improvement/text-length-gate-decision.json#decision.close_the_escape_hatch",
+    "max_folds_per_section": {
+      "value": 0,
+      "code": "E-TEXT-FOLDED",
+      "level": "error",
+      "unit": "1 セクションあたりの fold_section 実行回数の上限",
+      "why": "折り畳みは『構造上どうしても長い本文』の救済であって、要約を省く手段ではない。回数 0 にすると、超過は必ず書き手が短くして解決することになる"
+    }
+  },
+  "diagram_selection": {
+    "principle": "図で理解が速くなる情報単位は初稿から図へ置き換える。挿絵があることを図解を省く理由にしない。全節1枚の強制ではなく、必要な関係を文章だけで残さない",
+    "procedure": [
+      "文章を結論・主体・対象・関係・条件・数量/単位・時点/期間・根拠へ分解する。根拠のない関係を補わない",
+      "読み手が判断する問いを1つ決め、順序/因果/分岐/包含/比較/数量/時間/相互作用/列挙等の関係を抽出する。キーワード一致だけで図種を決めない",
+      "カタログ内外から候補を比較し、意味の忠実さ→読める大きさ→読む手間の順で選ぶ。表や短い箇条書きが速ければそれを選ぶ",
+      "挿絵・図・表・本文の各情報の担当を割り当て、同じ説明の重複を除く。図は文章の代替として配置し、本文は結論/例外/出典だけを補う",
+      "実装可能性を確認する。順序・比較・列挙・数値の強調は既存のHTML/CSS部品、接続線や座標が意味を持つ図は内蔵SVG、専用記法は事前描画してasset.role=figureのIMGへ接続する。選択をこの順へ固定せず、意味と可読性を優先する",
+      "decision_logの項目名と検査はskills/run-handout-build/references/visual-selection-contract.mdを正本とする。非採用理由はcandidates[].reason、配置はsection_id/target_part_ids、媒体はmodeへ記録し、別名フィールドを増やさない",
+      "全節を見直し、図が有利な関係が文章だけに残っていないか確認する。残す場合は具体的な理由と代替表現を記録する。単に画像がある/利用者未指定/未対応は省略理由にしない"
+    ],
+    "placement": "節の先頭画像の後で、対応する説明位置へ図を置く。全図を冒頭に集めない。トグルを閉じても主張と判断材料が通るようにする",
+    "not_a_quota": "枚数の下限で意味判断を代替しない。図に適さない節へ飾りの図を追加しない",
+    "record_unit": "記録は読者の問いを共有する情報単位でまとめ、結論・補足の短文や導線も同じ記録のtarget_part_idsへ含めてよい。自明な1部品ごとに形式的な2候補を増やさない。図へ置き換えるときは既存の文章との重複を除く"
+  },
+  "diagram_presentation": {
+    "min_text_px": 14,
+    "min_width_px": 640,
+    "review_widths_px": [
+      1440,
+      768,
+      375
+    ],
+    "rules": [
+      "本文と同じテーマ変数で主題・補助・文字・罫線を指定する。種類ごとに無関係なパレットを増やさない",
+      "色だけで区別せずラベル・形・線種を併用する。淡色の上にも読める濃い文字を置く",
+      "小さく縮めて収めない。長いラベルは短い意味単位に分け、図を概要と詳細へ分割する",
+      "接続先・矢印方向・条件・凡例を検査する。線の途切れ、箱の貫通、文字との衝突、見かけだけの関係を許さない",
+      "複雑な接続図は図領域のスクロールとキーボード拡大で読める大きさを保つ。単一KPIや短いカードはHTML/CSS等の折返し可能な表示を選び、初期表示から主役を隠さない。紙面で読めない図は分図または横向きの専用素材へ変更する",
+      "文字の実表示サイズと重なりはブラウザで確認する。構文検査の合格だけを視覚確認の代わりにしない",
+      "IMGへ埋め込むSVGは文書のCSS変数を継承しない。専用描画時に選択テーマのトークンを素材内へ適用し、埋め込み後の色を確認する"
+    ],
+    "visual_evidence_contract": "skills/ref-handout-design-system/references/visual-evidence-contract.md"
+  },
+  "disclosure": {
+    "component": "B10",
+    "rules": [
+      "全員に必要な結論・判断軸・次の操作は常時表示する",
+      "補足の理由・例外・詳細手順だけを既定で閉じる。トグルは1段に留め、summaryだけで開く価値が分かる具体名にする",
+      "閉じた本文とsummaryに同じ説明を書かない。本文は改行で意味単位を分ける",
+      "ネイティブdetails/summaryのキーボード操作・開閉の視覚状態・フォーカス表示を保つ。印刷時は本文を開き、終了後に状態を復元する"
+    ]
   }
 }

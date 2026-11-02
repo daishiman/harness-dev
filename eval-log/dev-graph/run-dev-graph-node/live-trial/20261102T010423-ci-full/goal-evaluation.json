@@ -1,0 +1,43 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "本題2・3の指定Skill再呼出しが未達。task.mdはupdateを同じSkillで再度呼び、通常feature-addも同じSkillへ投入するよう要求するが、transcript.jsonlの実assistant Skill呼出しはL45の初回addのみ。L184のupdate applyとL202のfeature-add applyはBashでbuild-graph-node.pyを直接呼んでいる。writerでの連続更新・拒否の実証はあるが、指定された3本題をSkillとして全て実行したとは認められず、out/status.jsonのPASSは採用しない。",
+    "必須の提示順序が未達。task.mdが要求する実path+bytes digestのassistantメッセージ提示がL147のstandard選択記録保存前に存在しない。L127およびL135のdigestはtool_resultでありassistant提示ではない。L147でpresent_actual_artifactとpath+sha256 presented in assistant message before choiceを記録しただけで、その事実はtranscriptにない。L151でsemantic_evaluator_startedへ進みL214でAgent監査を開始しているため、事前指定standardによっても免除されない提示→記録→評価の契約を満たさない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "ci-full-node-goal-independent-20261102"
+  },
+  "transcript_sha256": "778449064f2a139824ada1eb34bcff0f58d3d60b11086d6fc83eb3dce183a0e2",
+  "evidence_refs": [
+    "task.md",
+    "scenario.json",
+    "transcript.jsonl#L45",
+    "transcript.jsonl#L60-L61",
+    "transcript.jsonl#L110-L114",
+    "transcript.jsonl#L126-L127",
+    "transcript.jsonl#L130-L151",
+    "transcript.jsonl#L184-L189",
+    "transcript.jsonl#L202-L207",
+    "transcript.jsonl#L214-L215",
+    "fixture-before.json",
+    "fixture-final/.dev-graph/config.json",
+    "fixture-final/.dev-graph/state/graph.json",
+    "fixture-final/.dev-graph/state/receipts/node-r000001-add.json",
+    "fixture-final/.dev-graph/state/receipts/node-r000002-update.json",
+    "fixture-final/eval-log/inputs/mixed-artifacts-apply.json",
+    "fixture-final/eval-log/snap-r1/graph.json",
+    "fixture-final/eval-log/update-integrity-check.json",
+    "fixture-final/eval-log/inputs/feature-add-apply.json",
+    "fixture-final/eval-log/inputs/feature-add-apply-result.json",
+    "fixture-final/eval-log/inputs/validate-after-feature-reject.json",
+    "fixture-final/eval-log/artifact-delivery-selection.json",
+    "fixture-final/eval-log/run-dev-graph-node-progress.json",
+    "transcript/subagents/agent-aa183ad5fbef3b5fb.jsonl",
+    "transcript/subagents/agent-aa183ad5fbef3b5fb.meta.json",
+    "evidence-freeze.json",
+    "guard.jsonl#L7",
+    "guard.jsonl#L13",
+    "out/status.json"
+  ]
+}

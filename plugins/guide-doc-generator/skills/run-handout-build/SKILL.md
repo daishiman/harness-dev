@@ -18,6 +18,7 @@ script_refs:
   - ../../scripts/resolve-handout-preset.py
   - ../../scripts/embed-assets.py
   - ../../scripts/render-diagram-svg.py
+  - ../../scripts/validate-visual-selection.py
   - ../../scripts/build-icon-sprite.py
   - ../../scripts/srg-image-bridge.py
   - ../../scripts/render-handout.py
@@ -211,6 +212,10 @@ frontmatter の `hearing_required_items_r21` が plugin 全体で唯一の項目
 
 ## 構成データの設計と検証
 
+文章からの図解選定と重複除去は `config/handout-visual-policy.json#diagram_selection` を適用し、
+候補と宣言例は `config/handout-diagrams.json` を読む。図解を個別指定まで保留しない。
+表示の可読性・接続・テーマ整合と開閉の規則は同 policy の `diagram_presentation` / `disclosure` を使う。
+
 用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
 
 資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
@@ -221,7 +226,11 @@ C05 が書いた構成データは validate-handout-config.py で検証し、`--
 
 ## 単一 HTML の決定論生成
 
-素材の data URI 化 (embed-assets.py)、概念図解の inline SVG 生成 (render-diagram-svg.py)、使用アイコンだけの symbol 生成 (build-icon-sprite.py)、挿絵の生成委譲 (srg-image-bridge.py)、単一 HTML のレンダリング (render-handout.py) を決定論 script 列として実行する。本 skill はこれらの引数を組み立てるだけで、HTML の断片を自分で書かない。
+素材の data URI 化 (embed-assets.py)、概念図解の描画、使用アイコンだけの symbol 生成 (build-icon-sprite.py)、挿絵の生成委譲 (srg-image-bridge.py)、単一 HTML のレンダリング (render-handout.py) を決定論script列として実行する。表・カード・ステップ等は既存HTML/CSS部品、接続や座標が必要な図は内蔵SVG、専用作図は事前描画した `asset.role: "figure"` のIMGへ接続する。本 skill は配布HTMLの断片を自由記述しない。
+
+カタログ外の作図を新規に準備する担当は親C01のR3である。選定記録と保持する事実を受け、
+ソース・描画済み素材・テーマをR3の専用作図分岐で確定してから通常の埋め込みへ進む。
+生成手段が無い場合は代替または未達を明示し、記法だけを渡して完成としない。
 
 共有時のサムネイル (OGP)・帯の一番上の題・紙面に出さない日付 (root 属性 data-hb-date が唯一の運び手)・節番号と題の区切り・2 行まで折り返す常時表示の目次・常駐する操作帯 (メモを埋め込んだ HTML の保存) は、すべて C11 が構成データから決定論に組み立てる面である。指摘を受けても HTML を手で足さず、出ていなければ C11 か構成データ側の欠落として扱う。
 
@@ -234,6 +243,13 @@ C05 が書いた構成データは validate-handout-config.py で検証し、`--
 検証ゲートは `/handout-verify` (C09) を `--json-report` つきで起動して実行し、返った summary.json の verdict と各ゲート面の状態をそのまま受け取る。状態分類と全体 verdict の判定規則は C09 の CR-GATE-AGG が単一正本であり、本 skill では再実装も再解釈もしない。verdict が pass 以外なら該当箇所を直して再実行する。not-run を「通った」と読み替える判断を本 skill 側に持たない。
 
 出力先ルーティングは route-handout-output.py (C19) へ `--place-config` と `--assets-src` を渡して実行する。構成データと素材原本の複製は C19 に行わせ、ディレクトリ名の組み立ても C19 の責務である。C19 が返した出力ディレクトリ直下へ `README.md` を書くのは本 skill の責務で、節は原題・目的・適用プリセット・同梱物一覧・各同梱物の使い方とする。
+選定証跡が構成の隣にある場合は `--place-config` のC19が検査・同梱する。親が証跡の
+ハッシュだけを書き換えて通さない。専用作図のソースと描画済み素材も素材原本に含める。
+
+親C01はR4で生成した資料そのものを実表示し、画面と埋め込み画像を作業域へ取得する。
+取得・委譲・未確認の扱いは `skills/ref-handout-design-system/references/visual-evidence-contract.md`
+を正本とし、C03へ `visual_evidence` として渡す。ギャラリーや静的検査だけを今回の資料の
+実表示確認へ読み替えない。
 
 ## 読みやすさレビューの委譲
 
@@ -247,7 +263,13 @@ release 段でゲートの verdict が pass になった資料について assig
 
 **`scope` を絞ったときの `verdict=PASS` は、それだけでは release の完了根拠にならない。** verdict はレビュアーが読んだ範囲の findings から計算されるので、`severity=high` の指摘を受けた節を直さないまま `scope` から外せば、その節は読まれず findings に現れず PASS が返る。これを塞ぐため、本 skill は受け取った `severity=high` の指摘を**解消するまで自分の側に残す**。解消とは資料を直したうえで、その節を次の `scope` に載せて再度レビューを受け、その周の findings に現れないことである。同じ形で、**最後に手を入れて以降まだ一度も読まれていない節**も未解消として扱う。初回の全件レビューで読み終えた無改修の節は既読なので消え、直した節は次周の `scope` に載せて読ませれば消える。「そのレビューで読まれなかった節」を数えてはならない — 2 周目以降は `scope` を絞る以上つねに未読の節があり、それを未解消と数えると release へ永久に到達しない。
 
-`not_reviewed` を一括で未解消にしてはならない。この配列は性質の異なる 2 群を運んでいる — (a) `scope` により読まなかった節・軸 と、(b) `machine_gate_overlap` により除外した面である。(b) は決定論ゲートが既に見ている面を二重に指摘しないための除外であり、C06 は全件レビューでも必ず理由付きで残す。したがって `not_reviewed` は非空が正常形であり、(a) についても上のとおり「未読のまま残っているか」で見る。
+`not_reviewed` を一括で未解消にしてはならない。この配列は性質の異なる3群を運ぶ。
+(a) `scope` による未読、(b) `machine_gate_overlap` による除外、
+(c) `reason_code: display_unavailable` による実表示未確認である。
+(b)は静的検査との重複指摘を避ける除外なので、全件レビューでも残る正常な記録である。
+(a)は上記のとおり最後の変更以降に未読かで扱う。(c)は節の文字を読んだだけでは解消しない。
+共通の実表示証跡契約に従って当該節・画像・表示幅を取得し、再レビューで確認されるまで
+releaseのvisual-fit未達として保持する。取得不能なら未確認を開示し、全面合格を宣言しない。
 
 これは verdict の再判定ではない。severity を決めるのも PASS/FAIL を決めるのも C06 のままで、本 skill が持つのは「受け取った指摘がまだ残っているか」だけである。
 
@@ -275,7 +297,12 @@ release 段でゲートの verdict が pass になった資料について assig
 #### G1: 構成データが確定している
 
 - [ ] draft: validate-handout-config.py が exit0 で、**読まれない状態を示す warning** が 0 件である
+
 - [ ] release: 同左を維持している (指摘の反映で新たに出していない)
+
+新規設計では `references/visual-selection-contract.md` に従い、選定記録と実配置の検査もexit0にする。
+既存構成の再生成では同契約の未実施開示を適用する。
+
 
 0 件を求めるのは次の 13 コードであって、C12 が出す warning の全件ではない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`)、用語の言い換え (`W-GLOSSARY-EMPTY`)。最後の 1 つを外せない理由は `criteria:IN1` が「用語言い換え宣言の欠落 0 件」を要求する一方、**欠落**を見る診断がこれしか無いためである (error 側の `E-GLOSSARY-DUP` は重複を見るので代わりにならない)。いずれも同じ 1 回の出力に並んでいるので、種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える — だから 13 項目ではなく 1 項目で受ける。
 
@@ -290,7 +317,7 @@ release 段でゲートの verdict が pass になった資料について assig
 #### G2: 資料が読める形で成立している
 
 - [ ] draft: 単一 HTML を決定論 script 列で生成し、`/handout-verify` の集約 verdict が pass で、同梱構成データからの再生成がバイト一致する
-- [ ] release: 同左に加えて、C03 (`draft_first.skipped_in_draft` の可読性レビュー) から回収した verdict が PASS で、**未解消の `severity=high` 指摘が 0 件**であり、**最後に手を入れて以降まだ一度も読まれていない節が 0 件**である
+- [ ] release: 同左に加えて、C03 (`draft_first.skipped_in_draft` の可読性レビュー) から回収した verdict が PASS で、**未解消の `severity=high` 指摘が 0 件**であり、**最後に手を入れて以降まだ一度も読まれていない節が 0 件**で、`display_unavailable` の実表示未確認が 0 件である
 
 ゲート面を面ごとに数え直さない。集約は C09 の CR-GATE-AGG が単一正本であり、本 skill が受け取るのは verdict 1 個である。第1稿の粒度 (`draft_first.first_draft_detail_level` — 全体を詳細で作ってから削らない) が守られているかもここで落ちる。実態との一致を見るのは C22 の NAR-09 / NAR-10 であって散文の自己申告ではない。
 

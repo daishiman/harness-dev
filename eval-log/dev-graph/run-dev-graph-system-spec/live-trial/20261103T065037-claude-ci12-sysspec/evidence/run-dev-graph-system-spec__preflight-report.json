@@ -1,0 +1,55 @@
+{
+  "artifact": "run-dev-graph-system-spec pre-choice preflight report",
+  "generated_at": "2026-11-03",
+  "R0_context": {
+    "c24_receipt": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "c24_receipt_sha256": "d5b68b3fdd29ae4446780ba4507df7a7b95d57e33ac372f5a02de50e33f4c19f",
+    "mode": "write",
+    "repo_root_equals_content_roots_repository": true,
+    "repository_id": "local:sha256:bfe6955cd95cebc06f4c66f543d5cf75ec818c16fd077e870fbc6903d85687ab",
+    "worktree_id": "wt_c761d2b2eaac2144",
+    "git_common_dir_matches_repo": true,
+    "system_spec_root": "system-spec",
+    "system_spec_inside_repo": true,
+    "diagnostics": [],
+    "lineage_gate": {"command": "validate-source-lineage.py --repo-root <DEV_GRAPH_ROOT>", "exit": 0, "status": "pass", "checked": 0, "violations": []},
+    "resume_decision": "checked=0 -> 取込済み system-spec node なし。新規作成として手順3へ進む (system-spec/ の state は elicit --resume で再開)",
+    "status": "PASS"
+  },
+  "R1_preflight": {
+    "manifest": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+    "manifest_sha256": "e3f2bc13cd2e90ea286a273d899281b54f1a3ed5c5f376c12cfcf905f0c971aa",
+    "name": "system-spec-harness",
+    "version": "0.1.26",
+    "range_source": "plugins/dev-graph/plugin-composition.yaml#external_dependencies.system-spec-harness.version",
+    "range_source_sha256": "024ec54d29477dd5ede1963b17c0d2473d5a9f44f08621a0ee2461ec6a2b9f42",
+    "range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "package_contract": "plugins/system-spec-harness/references/package-contract.json",
+    "package_contract_sha256": "d4c3ca023a3538bfd7f0bb1e374239bc7c08c73eef87f3f9364dc6735b75e486",
+    "required_entry_points": {
+      "run-system-spec-elicit": "present (skills/run-system-spec-elicit/SKILL.md)",
+      "run-system-spec-doc-fetch": "present (skills/run-system-spec-doc-fetch/SKILL.md)",
+      "run-system-spec-compile": "present (skills/run-system-spec-compile/SKILL.md)",
+      "assign-system-spec-completeness-evaluator": "present (skills/assign-system-spec-completeness-evaluator/SKILL.md)"
+    },
+    "status": "PASS"
+  },
+  "inputs": {
+    "system-spec/spec-state.json": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+    "system-spec/fetched-references.json": "471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594",
+    "system-spec/index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+    "system-spec/00-requirements-definition.md": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd",
+    "system-spec/auth.md": "2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548",
+    "system-spec/backend.md": "357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf",
+    "system-spec/database.md": "55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8",
+    "system-spec/frontend.md": "68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac",
+    "system-spec/infrastructure.md": "63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b",
+    "system-spec/maintenance-ops.md": "cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841",
+    "system-spec/security.md": "39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546",
+    "system-spec/ui-ux.md": "f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444",
+    "system-spec/fixture-requirements-v7.txt": "8cb2050c84cf0d7936162752eef55b4880da2cea536d6d8a9ced983a5e876ee4"
+  },
+  "confirmed_nodes_created": false,
+  "next": "artifact_delivery の選択記録後に R2 (elicit --resume -> 必要時 doc-fetch -> compile -> completeness evaluator) へ"
+}

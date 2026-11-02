@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T03:28:52.141818+00:00",
+  "base_head": "8c7102952e40279b152bc91e7a0d0a3d7b854932",
+  "new_version": "harness-creator 1.4.57",
+  "status": "SOURCE_CORRECTED_NATIVE_RETRY_PENDING",
+  "first_attempts": {
+    "render": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "FAIL",
+        "goal_fit": "NOT_EVALUATED",
+        "verdict": "BLOCKED"
+      },
+      "transcript_sha256": "a02b99045367c7e9c3418f1cf31575978669034ce9d5a792c1d2c403e2833a6e",
+      "freeze_files": 83
+    },
+    "system-spec": {
+      "verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T024626-codex-ci/verdict.json",
+      "overall": {
+        "launch": "PASS",
+        "completion": "FAIL",
+        "goal_fit": "NOT_EVALUATED",
+        "verdict": "BLOCKED"
+      },
+      "transcript_sha256": "c743e619ca5322d33a5a49ff8b51cfc2cc93c32b8d90c91f0b253a595b533442",
+      "freeze_files": 54
+    }
+  },
+  "diagnoses": [
+    "実catalogはqualified plugin:skill、producerはsuffix-onlyでnative selected_skill_instructionsが0だった。正規適用前に停止。",
+    "child_rolloutsでnext(records(path))が各全履歴本文を読んでいた。read-only sample653件と別日4.2MBファイルopenを観測、全1278履歴に依存した遅延。",
+    "poll-stateにfloat elapsedを保存し共通整数契約に不一致。旧値は変更せず次sourceでceil integerへ。",
+    "初回catの全文は出たがlogin shellのnice警告がoutput先頭へ混入。次taskはlogin:false、parserの任意prefix stripでは緩和しない。"
+  ],
+  "corrections": [
+    "strictqualified names、namespace/source/projection/actualRead binding",
+    "boot-frozen controller projection receipt reference+SHA、移設後の正本source照合",
+    "streamJSONL、2day/startwindow、boundedmetadata cache、finalfresh/fullnativeparse",
+    "actual elapsed/startを維持し共通poll整数へ"
+  ],
+  "source_sha256": {
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex.py": "d7ef3176d506b9928ec34bc667eba373acd206b531b8f7b3dffe305f766fc1bc",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex-transcript.py": "ce29a863730b1ee21a1bd292c899672b477592d9f18167261d9431fb3308f3bd",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "a6d54cf7c10754c8add5d02a32e28d8137c28aa5e0f79b4efd6e9df7e2ba70ea",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md": "4415bbbe9f48e45f8a1ab85750046e14fda10a509a97287992ed15d0f798258d",
+    "tests/test_live_trial_harness.py": "97c69bf9e6e34881b422be64a8f3b9c69258c89d1ba635d6e8700a2dbeb9026f",
+    "tests/test_codex_live_trial.py": "cd1b43b5f307367ff246d0b9d6a5a25f8d1b9c75446cb0bf239ec465f03edf76"
+  },
+  "validation": {
+    "related_regression": "275 passed in 23.20s",
+    "release": "23 plugins OK",
+    "design_review_ref": "eval-log/harness-creator/run-skill-live-trial/codex-native-20261102/namespace-history-fix-review.json",
+    "new_native_passes": 0,
+    "old_freeze_files_unchanged": 137,
+    "old_processes_remaining": 0
+  },
+  "next_control_root": "/private/tmp/harness-codex-ci2-20261102",
+  "runtime_hooks": "C03 pending user-hook-trust; no approval receipts invented",
+  "ci_success": false
+}

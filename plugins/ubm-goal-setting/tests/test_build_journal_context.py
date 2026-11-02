@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -223,7 +224,7 @@ def test_output_path_matches_target_date(vault: Path):
     assert ctx["output_path"].endswith("02_Configs/Daily/2026-08-18.md")
 
 
-def test_previous_journal_inherits_purpose_and_checklist(vault: Path):
+def test_previous_journal_inherits_purpose(vault: Path):
     ctx = run(vault, "2026-08-18")
     prev = ctx["previous_journal"]
     assert prev["number"] == 388
@@ -231,39 +232,175 @@ def test_previous_journal_inherits_purpose_and_checklist(vault: Path):
         "AIを思い通りに使いこなし、自分の時間を有益に過ごした人財を世界一輩出した。"
     ]
     assert len(prev["prohibitions"]) == 2
-    assert "◇【0→1】" in prev["phase_checklist"]
+    # チェックシートは checklists へ移した。旧キーを残すと、整形役が旧形式の本文を
+    # そのまま貼る経路が残る。
+    assert "phase_checklist" not in prev
+    assert "principle_checklist" not in prev
 
 
-def test_principle_checklist_absent_does_not_borrow_phase_checklist(vault: Path):
-    """前回に `# 原理原則 チェックシート` が無いとき、フェーズ別の中身を継承しない。
+# --- チェックシート①②③ (checklists) ------------------------------------------------------
 
-    `# フェーズ別 課題チェックシート` は「チェックシート」を部分一致で含むため、
-    section_body の fallback に任せると本ブロックを持たない移行期のジャーナルから
-    フェーズ別の中身が原理原則チェックシートとして流れ込む。どちらも `- [ ]` の塊なので
-    取り違えても見た目では気づけない。空で返してテンプレート初期化へ倒す経路を固定する。
+CHECKLIST_TEMPLATE = PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
+LEGACY_PHASE = "# フェーズ別 課題チェックシート"
+LEGACY_PRINCIPLE = "# 原理原則 チェックシート"
+
+
+def template_block() -> str:
+    text = CHECKLIST_TEMPLATE.read_text(encoding="utf-8")
+    m = re.search(r"^```markdown\n(.*?)^```\s*$", text, re.M | re.S)
+    assert m, "principle-checklist.md に ```markdown のテンプレートが無い"
+    return m.group(1)
+
+
+def journal_head() -> str:
+    """JOURNAL_TEMPLATE の、旧形式のチェックシートより前 (No.388 の本文)。"""
+    text = JOURNAL_TEMPLATE.format(number=388, date="2026-08-17")
+    return text[: text.index(LEGACY_PHASE)]
+
+
+def write_previous(vault: Path, tail: str) -> None:
+    (vault / "02_Configs/Daily/2026-08-17.md").write_text(journal_head() + tail, encoding="utf-8")
+
+
+def test_checklists_from_fixture_legacy_moves_nothing(vault: Path):
+    """前回が旧形式でも、文言が違う項目のチェックは移さない。
+
+    旧 0→1 の「セーフティーゾーンは整っていますか？」と、新しい①の「セーフティーゾーンが
+    崩れようがない状態になっている」は別の文言。推測で付けると、利用者が付けていない
+    チェックが付いた状態で継承され続ける。
     """
     ctx = run(vault, "2026-08-18")
-    prev = ctx["previous_journal"]
-    assert prev["principle_checklist"] == ""
-    assert "◇【0→1】" not in prev["principle_checklist"]
-    assert any("principle-checklist.md" in w for w in ctx["warnings"]), ctx["warnings"]
+    sheets = ctx["checklists"]["sheets"]
+    assert sheets["business_phase"]["source"] == "migrated_from_legacy"
+    assert sheets["business_phase"]["migrated"] == 0
+    assert sheets["business_phase"]["checked"] == 0
+    assert sheets["business_phase"]["total"] == 43
+    assert "セーフティーゾーンは整っていますか" not in ctx["checklists"]["block"]
+    # ②は差し替えで新しく入った。③は前回に旧形式も無い。どちらもテンプレートで始まる。
+    assert sheets["life_funds"]["source"] == "template"
+    assert sheets["ubm"]["source"] == "template"
+    assert any("「# ③ チェックシート（UBM）」の項目が無いので" in w for w in ctx["warnings"]), ctx["warnings"]
 
 
-def test_principle_checklist_inherited_when_present(vault: Path):
-    """前回に `# 原理原則 チェックシート` があればその中身をそのまま継承する。"""
-    prev_path = vault / "02_Configs/Daily/2026-08-17.md"
-    prev_path.write_text(
-        prev_path.read_text(encoding="utf-8")
-        + "\n# 原理原則 チェックシート\n\n## ◇ 右肩上がりになっていますか？\n\n"
-        "- [x] 会社（事業）の口座残高\n- [ ] 個人の口座残高\n",
-        encoding="utf-8",
+def test_checklists_migrate_checks_by_identical_wording(vault: Path):
+    """旧形式から移すのは、空白を除いた文言が同じ行の [x] だけ。同じ文言は出た順に対応させる。"""
+    write_previous(
+        vault,
+        # 順番どおりに対応させるかを見るので、前後対称にならない並び ([ ] [x] [x]) にする。
+        f"{LEGACY_PHASE}\n\n## ◇【0→1】\n\n"
+        "- [ ] セーフティーゾーンが崩れようがない状態になっている\n\n"
+        "## ◇【1→10】\n\n"
+        "- [x] セーフティーゾーンが崩れようがない状態になっている\n\n"
+        "## ◇【10→100】\n\n"
+        "- [x] セーフティーゾーンが崩れようがない状態になっている\n\n"
+        f"{LEGACY_PRINCIPLE}\n\n## ◇ 右肩上がりになっていますか？\n\n"
+        "- [x] 会社（事業）の口座残高\n"
+        "- [x] 個人口座の残高\n\n"
+        "## ◇ 決めた括りの人が増え、歴史の共有ができていますか？（1）\n\n"
+        "- [x] 共に生きる横並びの生涯メンバーは増えていますか？ or 離れていませんか？\n",
     )
     ctx = run(vault, "2026-08-18")
-    body = ctx["previous_journal"]["principle_checklist"]
-    assert "◇ 右肩上がりになっていますか？" in body
-    assert "- [x] 会社（事業）の口座残高" in body
-    assert "◇【0→1】" not in body
-    assert not [w for w in ctx["warnings"] if "principle-checklist.md" in w], ctx["warnings"]
+    block = ctx["checklists"]["block"]
+    sheets = ctx["checklists"]["sheets"]
+
+    safety = [l for l in block.splitlines() if l.endswith("セーフティーゾーンが崩れようがない状態になっている")]
+    assert safety == [
+        "- [ ] セーフティーゾーンが崩れようがない状態になっている",
+        "- [x] セーフティーゾーンが崩れようがない状態になっている",
+        "- [x] セーフティーゾーンが崩れようがない状態になっている",
+    ]
+    assert sheets["business_phase"]["migrated"] == 2
+
+    assert "- [x] 会社（事業）の口座残高" in block
+    # 文言が違う (「個人口座の残高」と「個人の口座残高」) ので移らない。
+    assert "- [ ] 個人の口座残高" in block
+    # 空白の入れ方だけが違う行は同じ項目として移す。
+    assert "- [x] 共に生きる横並びの生涯メンバーは増えていますか？or離れていませんか？" in block
+    assert sheets["ubm"]["source"] == "migrated_from_legacy"
+    assert sheets["ubm"]["migrated"] == 2
+    assert sheets["ubm"]["checked"] == 2
+
+    assert LEGACY_PHASE not in block and LEGACY_PRINCIPLE not in block
+    assert any(
+        "旧形式の「# 原理原則 チェックシート」から、文言が同じ項目のチェック 2 件を" in w
+        for w in ctx["warnings"]
+    ), ctx["warnings"]
+
+
+def test_checklists_inherit_previous_new_format(vault: Path):
+    """前回が新しい形なら、3 シートともその本文をそのまま継承する (金額欄の記入も含む)。
+
+    `-------` と「必要に応じて↓」は③の項目の一部。水平線で切る section_body で読むと
+    「右肩上がり」より後ろの設問がまるごと落ちるので、残ることを確かめる。
+    """
+    filled = template_block().replace(
+        "- [ ] ① 今の生活費（月額合計）：　　円", "- [x] ① 今の生活費（月額合計）：300,000円"
+    ).replace("- [ ] 個人の口座残高", "- [x] 個人の口座残高")
+    write_previous(vault, filled)
+    ctx = run(vault, "2026-08-18")
+    block = ctx["checklists"]["block"]
+    sheets = ctx["checklists"]["sheets"]
+    assert {k: v["source"] for k, v in sheets.items()} == {
+        "business_phase": "previous_journal",
+        "life_funds": "previous_journal",
+        "ubm": "previous_journal",
+    }
+    assert block == filled.rstrip("\n")
+    assert "- [x] ① 今の生活費（月額合計）：300,000円" in block
+    assert "\n-------\n必要に応じて↓\n" in block
+    assert sheets["ubm"]["checked"] == 1
+    assert not [w for w in ctx["warnings"] if "checklists.block" in w or "旧形式" in w], ctx["warnings"]
+
+
+def test_checklists_template_when_no_previous(vault: Path):
+    """前回ジャーナルが無ければ、テンプレートの未チェック状態をそのまま返す。"""
+    ctx = run(vault, "2026-08-16")
+    assert ctx["previous_journal"] is None
+    checklists = ctx["checklists"]
+    assert checklists["block"] == template_block().rstrip("\n")
+    assert {k: (v["source"], v["checked"], v["total"]) for k, v in checklists["sheets"].items()} == {
+        "business_phase": ("template", 0, 43),
+        "life_funds": ("template", 0, 12),
+        "ubm": ("template", 0, 60),
+    }
+    assert "\n-------\n必要に応じて↓\n" in checklists["block"]
+    # 出典の「振り返りチェック」の頭にある電球の絵文字は外してある。
+    assert "\U0001F4A1" not in checklists["block"]
+
+
+@pytest.mark.parametrize("breakage", ["missing", "no_fence", "no_sheet"])
+def test_broken_checklist_template_is_exit_2(vault: Path, tmp_path: Path, breakage):
+    """principle-checklist.md が読めない・テンプレートが壊れているなら exit 2。
+
+    空のシートで続けると、チェックシートの抜けたジャーナルが組まれ、保存前の検査で
+    初めて止まる。壊れた install として入口で止める。
+    """
+    import os
+    import shutil
+
+    sandbox = tmp_path / f"sandbox-checklist-{breakage}"
+    shutil.copytree(SCRIPT.parent.parent, sandbox)
+    path = sandbox / "references" / "principle-checklist.md"
+    if breakage == "missing":
+        path.unlink()
+    elif breakage == "no_fence":
+        path.write_text(path.read_text(encoding="utf-8").replace("```markdown", "```"), encoding="utf-8")
+    else:
+        # 見出しの文字列は「出力規則」の説明文にも出るので、フェンスの中から探す。
+        text = path.read_text(encoding="utf-8")
+        fence = text.index("```markdown")
+        start = text.index("\n# ② 人生資金チェックシート", fence)
+        end = text.index("\n# ③ チェックシート（UBM）", start)
+        path.write_text(text[:start] + text[end:], encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / SCRIPT.name), "--date", "2026-08-18"],
+        capture_output=True,
+        text=True,
+        env={**dict(os.environ), "UBM_VAULT_ROOT": str(vault)},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "principle-checklist.md" in proc.stderr, proc.stderr
+    assert "Traceback" not in proc.stderr, proc.stderr
 
 
 def test_days_remaining_uses_report_period(vault: Path):

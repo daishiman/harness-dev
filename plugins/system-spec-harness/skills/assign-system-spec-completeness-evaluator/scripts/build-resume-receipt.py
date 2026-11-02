@@ -3,12 +3,12 @@
 # name: build-resume-receipt
 # version: 0.2.0
 # purpose: Build a digest-bound C19 resume receipt only after the canonical evaluator report and fork ledger pass validation.
-# inputs: [argv --repo-root --report --fork-ledger --session --output --print-artifact-snapshot]
+# inputs: [argv --repo-root --report --fork-ledger --session --runtime claude|codex --output --print-artifact-snapshot]
 # outputs: [system-spec/resume-receipt.json, stdout JSON or artifact snapshot JSON]
 # contexts: [E]
 # network: false
 # write-scope: caller-repo/system-spec/resume-receipt.json
-# dependencies: [aggregate-completeness.py]
+# dependencies: [aggregate-completeness.py, audit_fork_attribution.py]
 # requires-python = ">=3.11"
 # ///
 """Materialize the production resume receipt owned by the completeness evaluator."""
@@ -28,6 +28,9 @@ from typing import Any
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from audit_fork_attribution import select_runtime, load_fork_ledger, LEDGER_ENV, LEDGER_RELPATH
 PLUGIN_ROOT = SCRIPT_DIR.parents[2]
 MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 AGGREGATE = SCRIPT_DIR / "aggregate-completeness.py"
@@ -182,7 +185,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--repo-root", required=True, type=Path)
     parser.add_argument("--report", type=Path, help="canonical completeness report (schema default)")
-    parser.add_argument("--fork-ledger", default="eval-log/system-spec-harness/audit-fork-ledger.jsonl", type=Path)
+    parser.add_argument("--fork-ledger", type=Path)
+    parser.add_argument("--runtime", choices=("claude", "codex"))
     parser.add_argument("--session")
     parser.add_argument("--output", type=Path, help="canonical sibling resume receipt (schema default)")
     parser.add_argument(
@@ -192,6 +196,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     try:
+        runtime = select_runtime(args.runtime)
         root = args.repo_root.resolve(strict=True)
         artifacts_required, canonical_report, state_relative, references_relative = receipt_contract()
         evaluator_inputs = artifacts_required - {canonical_report.as_posix()}
@@ -204,7 +209,17 @@ def main(argv: list[str] | None = None) -> int:
         report_arg = args.report or canonical_report
         output_arg = args.output or canonical_output
         report_path = contained(root, report_arg, must_exist=True)
-        ledger_path = contained(root, args.fork_ledger, must_exist=True)
+        ledger_arg = args.fork_ledger or Path(os.environ.get(LEDGER_ENV, str(LEDGER_RELPATH)))
+        if runtime == "codex":
+            if not ledger_arg.is_absolute():
+                raise ValueError("Codex requires the absolute protected host ledger path")
+            ledger_path = ledger_arg.resolve(strict=True)
+            native_ledger = load_fork_ledger(ledger_path, runtime=runtime)
+            if (not native_ledger.get("exists") or native_ledger.get("malformed")
+                    or native_ledger.get("runtime_violations") or not native_ledger.get("native_receipts")):
+                raise ValueError("Codex native ledger is not exclusively verified protected schema 2.0")
+        else:
+            ledger_path = contained(root, ledger_arg, must_exist=True)
         output_path = contained(root, output_arg, must_exist=False)
         if report_path != (root / canonical_report).resolve():
             raise ValueError(f"--report must be the canonical path: {canonical_report}")
@@ -228,6 +243,8 @@ def main(argv: list[str] | None = None) -> int:
                 str(ledger_path),
                 "--session",
                 args.session,
+                "--runtime",
+                runtime,
             ],
             capture_output=True,
             text=True,

@@ -1,0 +1,364 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.2.0",
+    "context": "fork"
+  },
+  "verdict": "FAIL",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "基準・承認・初期化の記述はP02/P04/P09/P13で矛盾しない。",
+      "evidence": [
+        "F16"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "FAIL",
+      "summary": "基準の古さ判定の定義と、リリース時の順序が欠ける(F14)。",
+      "evidence": [
+        "F14"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "9実体・欠番・agent4体・C1..C17の記述は整合。ゲート全exit0(親実行)。",
+      "evidence": [
+        "gates-r4.txt 全exit0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "phase順序・component DAG・handoff・task graphのゲート適合(親実行、12ゲートexit0)。",
+      "evidence": [
+        "verify-index-topsort exit=0",
+        "check-build-handoff exit=0",
+        "validate-task-graph exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "--inventory",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan/component-inventory.json",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan/component-inventory.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan/handoff-run-plugin-dev-plan.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "stdout": "OK: build handoff が 3 routes と envelope 契約を満たす",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    },
+    {
+      "id": "G11",
+      "name": "validate-task-graph",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/.codex/plugins/cache/harness-dev/plugin-dev-planner/0.1.23/skills/run-plugin-dev-plan/scripts/validate-task-graph.py",
+        "/Users/dm/dev/dev/個人開発/HarnessHub/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "note": "親が derive-task-graph 再生成後に再実行(12ゲート13回すべてexit 0・plan digest e5ed1ae5...1527)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F14",
+      "severity": "medium",
+      "bucket": "C17 baseline-steady-state",
+      "observation": "F9修正が定常運用(1.3.0以降の次回リリース)に残した曖昧さ。基準の古さを『基準の版とplugin.jsonの現在版の間にCHANGELOGのリリースが挟まる』で判定するが、リリース作業中は新版のCHANGELOG項目が先に入り(release: changelog-then-bump)、その時点で基準(直前版)との間に新版の項目が『挟まる』と読めてしまう。するとpackage.pyが基準更新前に呼ぶessence-checkが古い基準で必ず失敗し、基準を更新できない循環になる。逆に『作業中の版は数えない』と読むと、CHANGELOGを先に書いた変更が古さの検査をすり抜ける。どちらに読むかが計画に無く、build後の判定が実装者の解釈に依存する。",
+      "recommended_fix": "phase-02の基準行に定義を足す。『基準が古い』=基準の版が、CHANGELOGにある『リリース済み(plugin.jsonのversion以下)』の最新版と異なること。作業中の版の項目は数えない。package.pyはCHANGELOG確定とversion bumpの前にessence-checkを呼び、通過後に基準を新版へ書き出す順序をphase-13に明記し、phase-04に『作業中版の項目だけ先に入った状態は通り、リリース済み版が挟まると失敗する』境界ケースを足す。",
+      "files": [
+        "phase-02-design.md",
+        "phase-04-test-design.md",
+        "phase-13-release.md"
+      ],
+      "evidence": [
+        "phase-02-design.md",
+        "phase-04-test-design.md",
+        "phase-13-release.md"
+      ]
+    },
+    {
+      "id": "F15",
+      "severity": "low",
+      "bucket": "C16 reuse-vs-bundle",
+      "observation": "F11の『記録に無い入力束IDの判定は受け付けない』は、3 digest一致で再利用した判定が今回の呼出記録に入力束IDを持たない点との関係が書かれていない。再利用判定を誤って拒否するか、逆に再利用を口実にID無しを通す余地がある。",
+      "recommended_fix": "再利用判定は元の入力束IDと再利用元digestを持ち、新規発行は無いと明記し、essence-checkが再利用元の存在を検査する。",
+      "files": [
+        "phase-02-design.md",
+        "phase-04-test-design.md"
+      ],
+      "evidence": [
+        "phase-02-design.md",
+        "phase-04-test-design.md"
+      ]
+    },
+    {
+      "id": "F16",
+      "severity": "info",
+      "bucket": "resolution",
+      "observation": "再判定: F9 resolved(phase-02基準行のbaseline_introduced_in初期化と事前解決、phase-04 L44の3異常系、phase-09 L39/L40、phase-13 L37を確認。初回の循環は解消)。F10 resolved(phase-02 L43にSHAと基準文言の一致条件)。F11 resolved(phase-02 L44、phase-04 L43の入力束ID。追記漏れは判定欠落として表に出る)。新規は定常運用のF14のみmedium。",
+      "recommended_fix": "対応不要。",
+      "files": [
+        "phase-02-design.md",
+        "phase-04-test-design.md",
+        "phase-09-quality-assurance.md",
+        "phase-13-release.md"
+      ],
+      "evidence": [
+        "phase-02-design.md",
+        "phase-04-test-design.md",
+        "phase-09-quality-assurance.md",
+        "phase-13-release.md"
+      ]
+    }
+  ],
+  "evaluated_inputs": [
+    {
+      "path": "component-inventory.json",
+      "sha256": "b05283f94748dc44ddb5370c1922ab2b6ead2d9b9fad0757154d7b6e70e9fc63"
+    },
+    {
+      "path": "envelope-draft/plugin.json",
+      "sha256": "00fdce0f874e9f266589b7ff9cfc130a1e12518f7be84c31d4adfc51252b32ac"
+    },
+    {
+      "path": "goal-spec.json",
+      "sha256": "73ac79101a81e98400773f863759bef59d2fe799522332bf0f1e527fbd7e8fb5"
+    },
+    {
+      "path": "handoff-run-plugin-dev-plan.json",
+      "sha256": "83b097d40d2b8736014c8963d1ba2bd1d59eb47fe3d92fbd843d607c51497d7e"
+    },
+    {
+      "path": "index.md",
+      "sha256": "1d148989dbd43ea909093d97f04cf5ba78c479c52ceda7c6e4a76195815fe541"
+    },
+    {
+      "path": "phase-01-requirements.md",
+      "sha256": "e1420f9c86619170aa4de4983ce372b4af74ed2d168e1b264d225b75be704049"
+    },
+    {
+      "path": "phase-02-design.md",
+      "sha256": "cafc5cc275abccaafee4a9cc3be36ff3bb1643f2436fdfbf46c412a8a0b8dd1d"
+    },
+    {
+      "path": "phase-03-design-review.md",
+      "sha256": "aafac663a8e02c1584d26e0b1e109dd7f99627067262397620dde225a5c26d45"
+    },
+    {
+      "path": "phase-04-test-design.md",
+      "sha256": "956fe4175f52cdceafe1c3bbdeec9add94f50ff47569bfb949d0653a9bba231f"
+    },
+    {
+      "path": "phase-05-implementation.md",
+      "sha256": "6e0920ec84c075251d0bca502e0d53dbecf428b7f991e7fe999f8ce01b88d883"
+    },
+    {
+      "path": "phase-06-test-run.md",
+      "sha256": "bd7836064465d11f065a0a1b02d008e7617db4bb40b7779d2c6091c08d99ae64"
+    },
+    {
+      "path": "phase-07-acceptance-criteria.md",
+      "sha256": "9e31783cd803db626c78fed89b3dad40c61e8596f1f29e15ad518f4048a8ee48"
+    },
+    {
+      "path": "phase-08-refactoring.md",
+      "sha256": "d2c686dc1d2ff4d14ab35b6623ee9734f506215ba521d1dd78d37df246c66fd5"
+    },
+    {
+      "path": "phase-09-quality-assurance.md",
+      "sha256": "77683e016b07692172459de348f2fbef7ec3172347962eb2a57bd9832ca1824b"
+    },
+    {
+      "path": "phase-10-final-review.md",
+      "sha256": "d187572505a425680416496d790e5e54712b484a514f51cebc54530b92dc7b21"
+    },
+    {
+      "path": "phase-11-evidence.md",
+      "sha256": "d80c3bb65d9b3820f564e36d4f0accedb916560e2738af48112b44f691ba481e"
+    },
+    {
+      "path": "phase-12-documentation.md",
+      "sha256": "606f0dcf2db09e6e2815b5b6bd019d027d82ab5fa02b89dc1cfd7c90d76055d0"
+    },
+    {
+      "path": "phase-13-release.md",
+      "sha256": "7f6197ec8ca8bb9320733498ae27a6caaf532322368d6ad858bd1c69e4a0f9ab"
+    },
+    {
+      "path": "task-graph.json",
+      "sha256": "177f0f81657613803610a7a9955134330d5d3eee9778e755b65d425bc309e0a0"
+    }
+  ],
+  "staleness_rule": "evaluated_inputs は plan 配下の安定 artifact を再帰収集した鮮度台帳である。path 集合または sha256 が現物と一致しない findings は stale とする。この台帳は semantic 再評価範囲を決めず、証拠再利用を認可しない。"
+}

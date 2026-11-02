@@ -1,0 +1,62 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 1,
+    "graph_digest": "sha256:b75be1128a8b4cff54dc67388fce5e60f2e18459a29ca8162c035d77091b966c"
+  },
+  "writer_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "c24-add-post-choice.json: repo_root=content_roots.repository、repository_idはgraph/receiptと一致。独立auditorが全5pathの実体をroot内と確認。"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: 通常5件のdecision=auto、confidence>=0.80かつmargin>=0.15。"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "eval-log/add-schema-report.json: valid=true、violations=[]。pre_write_validation.findings=0。独立auditor PASS。draft readinessはincomplete。"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add。register-package未実行、feature/package所属nodeなし。"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json: revision_after=1、node_ids全5件がgraphと一致。唯一のpre-choice receiptのgraph_revision_after=1とgraph_digest_after=sha256:b75be1128a8b4cff54dc67388fce5e60f2e18459a29ca8162c035d77091b966cはgraph_baselineと一致。pre-choice commitは1回。"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "writer pre_write_validation.findings=0、正規validator report violations=[]。"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:b75be1128a8b4cff54dc67388fce5e60f2e18459a29ca8162c035d77091b966c"
+  }
+}

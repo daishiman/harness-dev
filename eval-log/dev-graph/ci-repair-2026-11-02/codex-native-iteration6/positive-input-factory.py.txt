@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""Controller-authored meaningful upstream input. No LLM, implementation or live PASS."""
+from __future__ import annotations
+import ast, datetime as dt, hashlib, importlib.util, json, os, shlex, subprocess, sys
+from pathlib import Path
+sys.dont_write_bytecode=True
+BASE=Path(__file__).resolve().parent
+REF=Path('/private/tmp/harness-codex-ci5-20261102/providers')
+FX=BASE/'fx'; CONTROL=BASE/'control'
+PY=['/usr/bin/arch','-x86_64','/Library/Frameworks/Python.framework/Versions/3.11/bin/python3','-B']
+RUN='positive-upstream-input-v3'; FEATURE='FEATURE-1'
+NOW=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+
+def dump(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(v,ensure_ascii=False,indent=2)+'\n')
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def load(p,n):
+ s=importlib.util.spec_from_file_location(n,p);m=importlib.util.module_from_spec(s);sys.modules[n]=m;s.loader.exec_module(m);return m
+def run(argv,label):
+ env=os.environ.copy();env.update(CLAUDE_PROJECT_DIR=str(FX),SYSTEM_DEV_PROJECT_ROOT=str(FX),DEV_GRAPH_PROJECT_ROOT=str(FX),PLUGIN_ROOT=str(REF/'plugins/system-dev-planner'),CLAUDE_PLUGIN_ROOT=str(REF/'plugins/system-dev-planner'))
+ r=subprocess.run([str(x) for x in argv],cwd=FX,env=env,text=True,capture_output=True)
+ (CONTROL/(label+'.stdout')).write_text(r.stdout);(CONTROL/(label+'.stderr')).write_text(r.stderr)
+ dump(CONTROL/(label+'.command.json'),{'argv':[str(x) for x in argv],'returncode':r.returncode})
+ if r.returncode:raise RuntimeError(label+' failed: '+r.stdout[-2000:]+r.stderr[-1000:])
+ return json.loads(r.stdout) if r.stdout.strip() else None
+
+def cmd(code):ast.parse(code);return shlex.join(['python3','-B','-c',code])
+AC={
+ 'AC01':'空UTF-8ファイルはstdoutが0と改行、exit 0。',
+ 'AC02':'a\\nb\\nは2行、a\\nbも末尾改行なしで2行。',
+ 'AC03':'日本語の2行は文字数によらず2。UTF-8 strictで読む。',
+ 'AC04':'LF・CRLF・単独CRをPython universal newlineの1境界として扱う。',
+ 'AC05':'存在しないpath・directory・権限拒否はstdout空、stderrに説明、exit 2、traceback無し。',
+ 'AC06':'不正UTF-8はstdout空、stderrに説明、exit 2、traceback無し。',
+ 'AC07':'引数が0件または2件以上ならusageをstderrへ出しexit 2、stdout空。',
+ 'AC08':'入力ファイルのbytesを変更せず、外部network・DB・認証・サービスを使わない。',
+ 'AC09':'ファイルを行iteratorで読み、ファイル全体readで保持しない。カウンタ以外の追加メモリは1行分。'
+}
+PURPOSE='UTF-8のテキストファイルの行数を、Linux/macOSの利用者がPython標準ライブラリだけで安全に取得できるようにする。'
+GOAL='python3 src/utf8_line_count.py PATH がAC01..AC09を満たし、CLI利用説明と検証記録を伴うローカル配布ZIPとして引き渡せる状態。'
+INS=['1ファイルpathのCLI入力','UTF-8 strictとuniversal newlineの逐次カウント','整数と改行だけの成功出力','入力/復号/usage失敗時exit 2','stdlib unittestとローカルZIP・手動利用説明']
+OUTS=['stdin・複数ファイル・再帰探索','GUI・HTTP API・DB・認証','Windowsでの動作保証','pip公開・クラウドdeploy・実GitHub/Beads mutation']
+PHASES=[
+ ('要件を固定','AC01..AC09を仕様・エラー表へ写し、末尾改行なし/CRLF/不正UTF-8を曖昧にしない。',['docs/requirements-utf8-lines.md'],'documentation',"from pathlib import Path; t=Path('docs/requirements-utf8-lines.md').read_text(); assert all(('AC%02d'%i) in t for i in range(1,10))"),
+ ('CLI構造を設計','A1引数解析→A2逐次読取→A3出力/失敗写像の責務を分け、ファイル非変更と1行分メモリを設計する。',['docs/architecture-utf8-lines.md'],'backend',"from pathlib import Path; t=Path('docs/architecture-utf8-lines.md').read_text(); assert all(x in t for x in ('A1','A2','A3','UTF-8','AC09'))"),
+ ('設計を独立レビュー','P01/P02を独立contextで照合し、改行定義・exit 2・書込ゼロの矛盾と不足をC1..C4で評価する。',['docs/design-review-utf8-lines.json'],'quality',"import json; v=json.load(open('docs/design-review-utf8-lines.json')); assert set(v['conditions'])=={'C1','C2','C3','C4'}; assert all(x=='PASS' for x in v['conditions'].values()); assert v['evidence_refs']"),
+ ('境界テストを設計','unittestに空/LF/末尾改行なし/日本語/CRLF/CR/不正UTF-8/不足過剰引数/dir/不存在を別caseとして設計し、期待stdout/stderr/exitを固定する。',['tests/test_utf8_line_count.py','tests/fixtures/','docs/test-matrix-utf8-lines.json'],'quality',"import ast,json; from pathlib import Path; ast.parse(Path('tests/test_utf8_line_count.py').read_text()); m=json.load(open('docs/test-matrix-utf8-lines.json')); assert set(m)=={'AC%02d'%i for i in range(1,10)}; assert all(m.values())"),
+ ('逐次CLIを実装','src/utf8_line_count.pyをstdlibのみで実装する。argparseはpath1件、open(encoding=\"utf-8\",newline=None)の行iterator、例外をexit 2へ写し入力を変更しない。',['src/utf8_line_count.py'],'backend',None),
+ ('全境界テストを実行','P04のunittestを全件実行し、失敗0・入力hash不変を証拠へ残す。未実行やskipを成功に数えない。',[],'quality',None),
+ ('利用者経路で受入確認','実CLI subprocessでAC01..AC08を再実行し、P06の内部テストだけで受入を代用しない。',[],'quality',None),
+ ('外部挙動を保ち整理','重複する失敗処理を整理する場合もCLI契約を変えず、テスト全件を再実行する。不要なframeworkや依存を導入しない。',['src/utf8_line_count.py','tests/','docs/refactoring-utf8-lines.md'],'backend',None),
+ ('品質と非変更を確認','構文・テスト・input非変更を確認し、AC09は実コードの行iteratorを独立レビューする。大きなファイル全体readを正当化しない。',['docs/quality-utf8-lines.json'],'quality',None),
+ ('最終独立レビュー','全ACとP01..P09の実証跡を独立contextで確認し、未達ならP13を保留する。',['docs/final-review-utf8-lines.json'],'quality',"import json; from pathlib import Path; v=json.load(open('docs/final-review-utf8-lines.json')); assert set(v['acceptance'])=={'AC%02d'%i for i in range(1,10)}; assert all(x=='PASS' for x in v['acceptance'].values()); assert all(Path(p).is_file() for p in v['evidence_refs'])"),
+ ('証跡manifestを固定','P01..P10のJSON記録と参照artifactをSHA-256で束縛し、未実行/失敗を成功へ書き換えない。',['evidence/utf8-lines/manifest.json'],'documentation',"import json,hashlib; from pathlib import Path; v=json.load(open('evidence/utf8-lines/manifest.json')); assert len(v['phase_evidence'])==10; assert all(hashlib.sha256(Path(x['path']).read_bytes()).hexdigest()==x['sha256'] for x in v['phase_evidence'])"),
+ ('利用と保守を説明','実行例、成功/失敗exit、UTF-8と改行規則、ファイル不変、ローカルrollbackをREADMEへまとめ、日本語2行の実例で確認する。',['docs/README-utf8-lines.md','examples/input.txt'],'documentation',"import subprocess,sys; from pathlib import Path; t=Path('docs/README-utf8-lines.md').read_text(); assert all(x in t for x in ('UTF-8','exit 2','AC04')); p=subprocess.run([sys.executable,'src/utf8_line_count.py','examples/input.txt'],capture_output=True); assert p.returncode==0 and p.stdout==b'2\\n'"),
+ ('ローカル配布と仕様反映','コード/READMEをZIPへまとめ、実行結果・設計判断・改善点をsystem-specとarchitectureへ正規writebackする。公開API/リモートpushはしない。',['dist/utf8-line-count.zip','system-spec/index.md','architecture/system.md'],'operations',"from pathlib import Path; import zipfile; p=Path('dist/utf8-line-count.zip'); assert p.is_file(); z=zipfile.ZipFile(p); assert 'src/utf8_line_count.py' in z.namelist(); assert all(x in Path('system-spec/index.md').read_text() for x in ('実行結果','改善点')); assert '実行結果' in Path('architecture/system.md').read_text()")
+]
+
+
+def make():
+ if FX.exists():raise RuntimeError('new fixture only; no overwrite')
+ CONTROL.mkdir(exist_ok=True);FX.mkdir();(FX/'.native-tmp').mkdir()
+ genv={k:v for k,v in os.environ.items() if not k.startswith('GIT_CONFIG_')};genv.update(GIT_CONFIG_GLOBAL='/dev/null',GIT_CONFIG_NOSYSTEM='1')
+ def git(*args):subprocess.run(['git','-c','core.hooksPath=/dev/null','-c','user.name=fixture-author','-c','user.email=fixture@example.invalid',*args],cwd=FX,env=genv,check=True,capture_output=True)
+ git('init','-q','-b','main');(FX/'README.md').write_text('# UTF-8 line-count positive input\nController-authored upstream test data; no implementation or live evaluation outcome.\n');git('add','README.md');git('commit','-qm','fixture: initial input container')
+ mod=load(REF/'plugins/dev-graph/tests/test_acceptance_gaps_a1.py','positive_planrepo_factory');rt=mod.RT
+ rid=rt.make_repo(FX);(FX/mod.RECEIPTS).mkdir(parents=True,exist_ok=True);rel='.dev-graph/staging/'+RUN;staging,_=rt.make_fixture(FX,rid,rel,include_handoff=False,run_id=RUN,feature_goal=GOAL)
+ feature=json.loads((FX/'features/feature.json').read_text());feature.update(purpose=PURPOSE,goal=GOAL,scope_in=INS,scope_out=OUTS,acceptance=[k+': '+v for k,v in AC.items()],architecture_refs=['architecture/system.md','architecture/graph.json','system-spec/index.md'],updated_at=NOW);dump(FX/'features/feature.json',feature);fd='sha256:'+sha(FX/'features/feature.json')
+ goal={'purpose':PURPOSE,'background':'このfixtureは小さなPOSIX CLI一機能の実装計画引継ぎを検証する。既存generic packageの意味不足を引き継がない。','goal':GOAL,'checklist':[{'id':'C'+str(i),'criterion':v,'done':False,'verify_by':'test' if i<9 else 'reasoning'} for i,v in enumerate(AC.values(),1)],'constraints':OUTS+['本factoryでは実装sourceとcurrent live evaluator結果を生成しない'],'max_loops':3,'open_questions':[]};dump(FX/'goal-spec.json',goal)
+ categories=[{'id':k,'label':label} for k,label in [('backend','CLI処理'),('security','入力と副作用'),('maintenance-ops','利用と保守')]];platforms=['desktop-linux','desktop-macos']
+ state={'schema_version':'1.0','categories':categories,'platforms':platforms,'matrix':{c['id']:{p:{'state':'確定','qa_ref':'CLI-Q1','serves_goals':['CLI-G1']} for p in platforms} for c in categories},'category_aggregate':{c['id']:{'state':'確定','qa_ref':'CLI-Q1'} for c in categories},'requirements_foundation':{'purpose':PURPOSE,'goal':GOAL,'scope_in':INS,'scope_out':OUTS,'acceptance':AC,'source_refs':['goal-spec.json','system-spec/requirements.md']},'qa_log':[{'id':'CLI-Q1','question':'この検証用fixtureの確定入力契約は何か。','answer':json.dumps({'purpose':PURPOSE,'goal':GOAL,'scope_in':INS,'scope_out':OUTS,'acceptance':AC},ensure_ascii=False),'basis':'observed-fact','provenance':'controller-authored fixture facts; not a real product-user interview or current-run evaluation','answered_at':NOW}],'approval_log':[],'reopen_log':[],'targets':[{'platform':p,'runtime':'Python 3.11+ standard library'} for p in platforms],'decisions':[{'id':'CLI-D1','decision':'ローカル一機能CLI、Linux/macOS、外部service無し','qa_ref':'CLI-Q1'}],'knowledge_candidates':[],'hearing_progress':{'state':'confirmed-input-fixture','open_questions':[]}};dump(FX/'system-spec/spec-state.json',state)
+ req='# UTF-8行数CLI 要件\n\n'+PURPOSE+'\n\n## 利用契約\n\n`python3 src/utf8_line_count.py PATH`。引数1件、成功はASCII十進整数とLFのみ、exit 0。失敗はstdout空、stderr説明、exit 2。\n\n## 受入条件\n\n'+'\n'.join('- '+k+': '+v for k,v in AC.items())+'\n\n## スコープ\n\n'+'\n'.join('- '+x for x in INS)+'\n\n## スコープ外\n\n'+'\n'.join('- '+x for x in OUTS)+'\n';(FX/'system-spec/requirements.md').write_text(req)
+ (FX/'system-spec/index.md').write_text('# UTF-8行数CLI 仕様入口\n\nこの確定入力はcontroller-authored test data。実装済み/PASS済みの主張ではない。\n\n- [受入要件](requirements.md) AC01..AC09\n- [同一契約の状態](spec-state.json) CLI-Q1 / CLI-G1\n- [原ゴール](../goal-spec.json) C1..C9は全て未実行false\n- [feature](../features/feature.json) FEATURE-1\n- [architecture](../architecture/system.md) A1..A3\n\n## 確認範囲\nPython 3.11+、Linux/macOS、1 path、UTF-8 strict、universal newline。HTTP/API/DB/auth/Windows保証は対象外。\n')
+ dump(FX/'architecture/graph.json',{'nodes':[{'id':'A1','responsibility':'argparseでpath1件を受け取る'},{'id':'A2','responsibility':'encoding=utf-8/newline=Noneで行iteratorを数える'},{'id':'A3','responsibility':'成功数値/失敗stderr・exit 2へ写像する'}],'edges':[{'from':'A1','to':'A2'},{'from':'A2','to':'A3'}]})
+ # C11 artifacts are meaningful and contain the current canonical required headings.
+ arch=mod.architecture_node();arch.update(title='UTF-8 line-count CLI architecture')
+ feat=mod.feature_node();feat.update(title='UTF-8 text line-count CLI',purpose=PURPOSE,goal=GOAL,scope_in=INS,scope_out=OUTS,acceptance=feature['acceptance'])
+ def artifact(node):
+  p=FX/node['file_path'];p.parent.mkdir(parents=True,exist_ok=True);body=['---',*(f'{k}: {json.dumps(v,ensure_ascii=False)}' for k,v in node.items()),'---','', '# '+node['title']]
+  for h in mod.CONTRACT['artifacts'][node['artifact_kind']]['required_sections']:
+   body.extend(['','## '+h,'',PURPOSE+' '+GOAL,'A1: argparse path1件。A2: UTF-8 strict / universal newline / 行iterator。A3: stdout数値+LF、またはstderr説明+exit 2。','根拠: system-spec/index.md、system-spec/requirements.md AC01..AC09。外部service無し。'])
+  p.write_text('\n'.join(body)+'\n')
+ artifact(arch);artifact(feat);dump(FX/mod.GRAPH,{'schema_version':'1.0.0','graph_revision':1,'nodes':[arch,feat]})
+ package=json.loads((staging/'feature-package.json').read_text());package['source_feature_digest']=fd;dump(staging/'feature-package.json',package)
+ inv=json.loads((staging/'workstream-inventory.json').read_text());inv['source_lineage'].update(source_version='0.1.0',source_paths=['system-spec/index.md','system-spec/requirements.md','system-spec/spec-state.json','goal-spec.json','architecture/system.md'],confirmed=True)
+ test_cmd='PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p test_utf8_line_count.py'
+ accept_code="""import subprocess,sys
+from pathlib import Path
+root=Path('evidence/utf8-lines/P07/inputs'); root.mkdir(parents=True,exist_ok=True)
+cases=[('empty',b'',b'0\\n'),('lf',b'a\\nb\\n',b'2\\n'),('end',b'a\\nb',b'2\\n'),('jp','一\\n二'.encode(),b'2\\n'),('crlf',b'a\\r\\nb\\r\\n',b'2\\n'),('cr',b'a\\rb',b'2\\n')]
+for name,data,want in cases:
+    path=root/name; path.write_bytes(data)
+    result=subprocess.run([sys.executable,'src/utf8_line_count.py',str(path)],capture_output=True)
+    assert result.returncode==0 and result.stdout==want and not result.stderr
+    assert path.read_bytes()==data
+bad=root/'invalid-utf8'; bad.write_bytes(b'\\xff')
+for arguments in ([str(bad)],[str(root/'missing')],[str(root)],[],[str(root/'lf'),str(root/'end')]):
+    result=subprocess.run([sys.executable,'src/utf8_line_count.py',*arguments],capture_output=True)
+    assert result.returncode==2 and not result.stdout and result.stderr and b'Traceback' not in result.stderr
+"""
+ for i,(title,work,products,kind,check) in enumerate(PHASES,1):
+  phase=f'P{i:02d}';task=inv['tasks'][i-1];evidence=f'evidence/utf8-lines/{phase}.json';temp=f'evidence/utf8-lines/{phase}/';scopes=sorted(set(products+[evidence,temp]));verify=[cmd(check)] if check else [test_cmd]
+  if i==7:verify=[cmd(accept_code)]
+  if i==9:verify=[cmd("import ast; from pathlib import Path; ast.parse(Path('src/utf8_line_count.py').read_text()); ast.parse(Path('tests/test_utf8_line_count.py').read_text())"),test_cmd]
+  verify=[('mkdir -p '+temp+'tmp && TMPDIR='+temp+'tmp '+v) if v==test_cmd else v for v in verify]
+  if i==13:verify.insert(0,'python3 -m zipfile -c dist/utf8-line-count.zip src/utf8_line_count.py docs/README-utf8-lines.md')
+  rollback=f'{phase}開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。'+('P05コード未導入へ戻しCLI提供を保留する。' if i==5 else '前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。')
+  task.update(title=title+' (UTF-8 line-count)',workstream_kind=kind,build_target_kind='application-code',write_scope=scopes,deploy_unit='utf8-line-count-local-cli',source_lineage=['system-spec/index.md','system-spec/requirements.md','goal-spec.json'],acceptance=[work,'生成する証跡 '+evidence+' に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。'],verification=verify,rollback=rollback)
+  task['classification']['reason']='UTF-8 CLI単一機能の'+phase+'責務を明示した入力。feature増設ではない。'
+  gate='parent_feature.depends_on all done|closed' if i==1 else 'SYS-P%02d'%(i-1)+'完了と受理証跡を確認して開始する。'
+  sections={
+   'Machine-readable registration fields':f'- phase_ref: {phase}\n- feature_package_id: feature-package/feat\n- graph_node_id: SYS-{phase}\n- parent_feature: FEATURE-1',
+   '目的':work,'背景':PURPOSE+' P01..P13はこの単一CLIの契約だけを実装・検証する。',
+   '前提条件':'- '+gate+'\n- 原goal: goal-spec.json、確定仕様: system-spec/spec-state.json / requirements.md\n- このplan inputは未実装。先行phaseの成果物が無ければ実行を止める。',
+   'Workstream applicability':'- '+kind.title()+': applicable; '+work+'\n- Frontend: N/A: GUI/HTTPを作らない。\n- Infrastructure: N/A: remote deploy/IaC無し。',
+   'Architecture and deploy unit':'A1 argparse → A2 UTF-8 stream iterator → A3 stdout/exit。architecture/system.mdを根拠としdeploy unitはutf8-line-count-local-cli。',
+   '成果物':'\n'.join('- Produced artifact: '+x for x in products+[evidence])+'\n- Write scope: '+', '.join(scopes)+'\n- temp/test作業dirは'+temp+'配下のみ。code/source全体の変更許可ではない。',
+   'Tracker publication and completion':'tracker_binding_intent=none、github publication=local_only。linked_pr_merged_allは将来linked PRがある場合の標準metadata。現在fixtureはplanningだけ、外部Issue/PRを作らず、実行完了やmerge済みを偽装しない。',
+   'Branch and worktree execution':f'one-task-one-branch、worktree lease required。dev-graph-schedulerがdevgraph/SYS-{phase}を割当。repository-local claimを正規CLIで取り、別phaseのscopeへ書かない。',
+   'スコープ外':'\n'.join('- '+x for x in OUTS)+'\n- 未記載path・provider tree・user config・別featureの変更。',
+   'Verification and evidence':'\n'.join('- Automated command: `'+x+'`' for x in verify)+'\n- 実行cwdはcaller repository。TMPDIRは'+temp+'tmpへ向け、必要dirをこの許可内で作る。\n- Required evidence: '+evidence+'（実行日時/コマンド/exit/実ファイルSHA、失敗も保持）。\n- package再検証: `python3 "$SYSTEM_DEV_PLANNER_ROOT/scripts/validate-system-plan.py" --repo-root . --feature-package feature-package/feat`',
+   'Inner goal-seek execution loop':f'Methodology contract: system-task-goal-seek/v1\nGoal: {work}\n原goal/checklist/constraintsを保持し、実結果をrubricへ突合。未達は原因を記録して許可内で修正、rubric verdict=PASSまで最大3回。不可なら停止しPASSを生成しない。\n'+('P13 spec/architecture writeback: required' if i==13 else 'P13 spec/architecture writeback: N/A: P13 owns writeback'),
+   'Rollout and rollback':'Rollout: このphaseの受理証跡と次phase入力を同じfeatureへ渡す。\nRollback: '+rollback,
+   'Handoff':f'Executor: capability-build/task-graph application-code route。SYS-{phase}の成果物/検証/証跡が実際に満たされた時だけ次phaseへ。未実行・FAIL・不明をcompleteにしない。',
+   '参照情報':'goal-spec.json / system-spec/index.md / system-spec/spec-state.json / system-spec/requirements.md / architecture/system.md / architecture/graph.json / features/feature.json。全てcaller内、同一AC01..AC09。'
+  }
+  content=['# '+phase+' '+title]
+  for h in rt.VALIDATOR.REQUIRED_TASK_SPEC_SECTIONS:
+   content+=['','## '+h,'',sections[h]]
+   if h=='スコープ外':content+=['','## テスト戦略','','- テストレベル選定: 単体・結合・境界値・回帰をAC01..09へ割当。','- カバレッジ目標: 80%以上、ただし全ACとエラー分岐は100%の受入caseで確認。','- 層別方針: Backend: API 契約はCLI stdout/stderr/exit。DB 結合はN/A: DB無し。Infrastructure: N/A: IaC/remote無し。','- 保守性制約: pixel位置・DOM構造依存を禁止し、CLIの観測可能な振舞いと入力不変を検査する。']
+  (staging/rt.VALIDATOR.TASK_PATHS[i-1]).write_text('\n'.join(content)+'\n')
+  assert all(any(x==s or (s.endswith('/') and x.startswith(s)) for s in scopes) for x in products+[evidence,temp])
+ dump(staging/'workstream-inventory.json',inv)
+ # Existing lock is exclusively this controller's new input preparation identity.
+ lock_path=FX/rt.LOCK.LOCK_ROOT_REL/rt.LOCK.LOCK_NAME;lock=json.loads(lock_path.read_text());lock.update(run_id=RUN,session_owner='controller-'+RUN,feature_digest=fd);dump(lock_path,lock)
+ rt.refresh_manifest(staging)
+ dump(FX/'.dev-graph/state/readiness.json',rt.valid_readiness(FX,rid))
+ provenance={'kind':'controller-authored positive upstream input','reference_provider_root':str(REF),'reference_source_head':'950277388283b166727db0523bec64d9e0af3843','factory':'PlanRepo/RT.make_repo + RT.make_fixture(include_handoff=False), enrich fresh staging only before first promotion','facts':'UTF-8 line-count CLI AC01..AC09; no implementation source or current live evaluation results','synthetic_upstream_readiness_and_findings_are_input_only':True,'source_lineage_is_upstream_fixture_declaration_not_current_SSH_execution':True,'source_lineage_contract_version':'0.1.0 required by source schema const','reference_SSH_release':json.loads((REF/'plugins/system-spec-harness/.claude-plugin/plugin.json').read_text())['version'],'live_owner_or_evaluator_pass_seeded':False,'source_provider_edited':False,'old_generation_edited':False,'actor_started':False};dump(CONTROL/'input-provenance.json',provenance)
+ # Schema validation is deterministic input checking, not a live semantic PASS.
+ import jsonschema
+ jsonschema.validate(goal,json.loads((REF/'plugins/harness-creator/skills/run-goal-elicit/schemas/goal-spec.schema.json').read_text()))
+ jsonschema.validate(state,json.loads((REF/'plugins/system-spec-harness/schemas/spec-state.schema.json').read_text()))
+ handoff=run([*PY,REF/'plugins/system-dev-planner/scripts/build-system-handoff.py','--repo-root',FX,'--staging',rel],'handoff')
+ validation=run([*PY,REF/'plugins/system-dev-planner/scripts/validate-system-plan.py','--repo-root',FX,'--staging',rel],'validation')
+ digest=validation['validated_digest'];findings=rt.valid_findings(staging,digest);findings['plan_dir']=rel;findings['gate_results'][0]['command']=[*PY,str(REF/'plugins/system-dev-planner/scripts/validate-system-plan.py'),'--repo-root',str(FX),'--staging',rel];findings['gate_results'][0]['stdout']=json.dumps(validation,ensure_ascii=False);dump(FX/'.dev-graph/state/upstream-input-findings.json',findings);dump(FX/'.dev-graph/state/upstream-input-validation.json',validation)
+ receipt=run([*PY,REF/'plugins/system-dev-planner/scripts/promote-system-plan.py','--repo-root',FX,'--feature-id',FEATURE,'--feature-context','features/feature.json','--run-id',RUN,'--session-owner','controller-'+RUN,'--staging',rel,'--findings','.dev-graph/state/upstream-input-findings.json','--readiness','.dev-graph/state/readiness.json','--validation','.dev-graph/state/upstream-input-validation.json'],'promotion')
+ published=Path(receipt['registration_manifest']).parent.as_posix()
+ reg=run([*PY,REF/'plugins/dev-graph/scripts/register-package.py','register','--repo-root',FX,'--package',published+'/feature-package.json','--graph',published+'/dev-graph-registration.json','--output','.dev-graph/state/graph.json','--receipt','.dev-graph/state/registration-receipts/positive.json','--system-planner-root',REF/'plugins/system-dev-planner'],'registration')
+ run([*PY,REF/'plugins/system-dev-planner/scripts/manage-system-plan-lock.py','--lock-action','release','--repo-root',FX,'--run-id',RUN,'--session-owner','controller-'+RUN,'--feature-id',FEATURE,'--feature-digest',fd],'preparation-lock-release')
+ c11=run([*PY,REF/'plugins/dev-graph/scripts/validate-graph-schema.py','--repo-root',FX,'--graph','.dev-graph/state/graph.json'],'C11')
+ binding=run([*PY,REF/'plugins/dev-graph/scripts/validate-readiness-binding.py','--repo-root',FX,'--package-dir',published,'--receipt','.dev-graph/state/registration-receipts/positive.json','--system-planner-root',REF/'plugins/system-dev-planner'],'source-binding')
+ assert not (FX/'src').exists() and not (FX/'tests').exists()
+ dump(CONTROL/'preflight.json',{'state':'input_preparation_only_no_actor','published':published,'source_digest':digest,'feature_digest':fd,'feature_id':FEATURE,'task_count':13,'phase_refs':[f'P{i:02d}' for i in range(1,14)],'goal_spec_schema':'pass','spec_state_schema':'pass','canonical_validation':validation,'canonical_C11':c11,'canonical_source_binding':binding,'implementation_source_generated':0,'live_evaluator_result_seeded':False,'actor_started':False})
+ print(json.dumps({'state':'PREPARED_INPUT_NOT_A_LIVE_PASS','fx':str(FX),'published':published,'source_digest':digest,'task_count':13,'preflight':str(CONTROL/'preflight.json')}))
+
+if __name__=='__main__':make()

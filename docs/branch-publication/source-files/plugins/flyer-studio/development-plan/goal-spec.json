@@ -1,0 +1,133 @@
+{
+  "purpose": "多様な用途のチラシを少ない手戻りで制作し、紙面中央・公開範囲・印刷品質の失敗を反復しない。",
+  "background": "写真13案の制作で中心軸混在、情報の離散、境界、文字階層の修正が多数発生した。F07/F11を品質基準にしつつ、毎回の用途と表現形式に応じ新構図を設計したい。改善を繰り返すほど規則・担当・評価が増えて品質が落ち、本質課題からずれ、トークンと時間が増え続ける恐れがあるため、本質を不変の基準に置き、評価を費用に比例させたい。",
+  "goal": "素材選択から新構図・背景生成・紙面全体中央の文字組み・全案検証・印刷用納品まで実行できる両ホスト対応プラグインと検証証拠が存在し、本質アンカー・変更受付・費用に比例した評価によって、制作の周回でもプラグインの改善でも本質成果から外れず肥大しない。",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "flyer-studio",
+  "out_dir": "plugins/flyer-studio/development-plan",
+  "plan_dir": "plugins/flyer-studio/development-plan",
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "用途・読者・主題・必須事実・表現形式を制作ごとに確認し、既回答を重複質問しない",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C2",
+      "criterion": "13案は固定型でなく毎回新構図。写真・漫画・手書き・イラスト等から希望を確認し、構図差を3要素以上持つ",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "少なくとも白系・黒系各1案を含み、白系は外周8mm純白と外向き白gradient、写真境界は自然になじむ",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "下部の登壇・相談・日時・住所・料金を紙面全体の中心で配置し、QR除外幅の中心を使わない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "既定の写真・最新ロゴ・参考21・完成13例を同梱し、毎回選択、公開範囲、子供・顔・PC画面・別イベント文字の保護を確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "背景を実際に新生成し、生成手段が無い時は確認。文字/QR/ロゴを独立レイヤーとし、プロンプト・出力SHAを保存する",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C7",
+      "criterion": "情報は最小限、主題最優先。意味群の近接、役割別フォント・可読サイズ、CTAと補足分離を実装する",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C8",
+      "criterion": "HTML・PDF・PDF由来PNG・比較一覧を生成し、全案のQR読取、安全域、文字欠け、中心軸、外縁、入力鮮度を検査する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C9",
+      "criterion": "全案PNGの個別目視とSHA照合を完了条件とし、未検証・失敗時に完成扱いしない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C10",
+      "criterion": "Claude Code/Codex双方のmanifest・ローカル導入パッケージ・更新version・検証結果がそろう",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "13フェーズ・component inventory・task graph・build handoffをplanner仕様に沿って保持する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C12",
+      "criterion": "旧成果物と利用者のグローバル設定を変更せず、個人素材を含むキットを公開配布しない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C13",
+      "criterion": "現物診断・提案評価・制作・完成画像評価の4段階を別contextの担当が持ち、各担当がlocal agentとstage契約を備え、評価担当は制作物/分析を修正できない。段階横断の専門知見(構図・文字・配色)は参照資料として各担当が読み、専門役をagentとして起動しない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C14",
+      "criterion": "改善周回は工程全体で最大3回とし、提案の再評価で数え直さず、同一画像と同一所見の反復と好みだけの所見を進捗・周回に数えない。上限で未達ならINCOMPLETEと未解決項目を返す",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C15",
+      "criterion": "制作ごとに原依頼と本質成果を不変の基準として固定し、各周回の所見を本質/好みに区分し(本質区分は失敗した本質成果基準の観測を必須とする)、原依頼との差分を記録する。完了は本質成果のPASSで判定し、決定論検査の失敗は制作へ、目的・事実・公開範囲のずれは分析へ戻す",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C16",
+      "criterion": "評価は費用に比例させる。決定論検査で判定済みの項目をLLM評価へ回さず、LLM評価は実見が要る項目に限り、画像SHA・要求・規範が同じ案の案単位の実見判定は再利用し、標準制作で起動するLLM担当数を呼出記録から数えて本質アンカーの予算内に収める",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C17",
+      "criterion": "プラグイン自体の改善では、追加・変更する規則と担当が現行の本質成果IDと同梱の実事例に解決する根拠を持ち、担当数・LLM評価の予算・本質成果の数が直前リリースの基準を超えず(超過は利用者の承認記録がある時だけ)、golden事例の決定論検査が後退しないことをessence-checkで機械判定する",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "プランと実装を分離。planのC番号は要件、inventoryのC番号は実体であり別名前空間。",
+    "ユーザー指定の正本はplugins/flyer-studio。素材も自己完結して同梱する。",
+    "Python標準ライブラリの計画・配布制御と、Chromiumを扱うNode描画バックエンドを分離。画像生成はホストツール経由で有無を確認する。",
+    "単一案依頼時は白黒要件との相違をユーザーに確認。",
+    "公開marketplace・外部通知・PR・グローバルinstallは今回行わない。",
+    "1.2.0の現物(skill4・agent8・共有runtime)を出発点の正とし(改善後はagent4へ縮約する)、計画をEdit差分で現物へ追従させる。既存の達成証拠は新しい証拠に転用しない。",
+    "本質アンカー(references/essence.json)を計画と実体の上位基準とし、本質成果へ結び付かない規則・担当・評価を追加しない。本質成果の文言と予算の具体値はbuild時に原依頼・production-history・1.2.0実測から確定し、計画へ焼かない。"
+  ],
+  "handoff_targets": [
+    "run-skill-create",
+    "run-build-skill"
+  ],
+  "max_loops": 3,
+  "open_questions": [
+    "画像生成サービスが無いホストでは、制作時に接続方法か既存素材再利用を確認する。",
+    "文章途中の「失敗して」は要件に推測追加しない。",
+    "agents/flyer-reviewer.mdは共通完成レビュー手順であり独立agentとして起動させない方針。移設先の参照張替えで旧検証証拠のパス表記が変わる場合は、証拠本体を書き換えず移設記録で対応付ける。",
+    "本質成果E*の文言は、build時にproduction-historyとhyogo-v13-feedbackの実事例から起こし、利用者の確認を経て確定する。"
+  ]
+}

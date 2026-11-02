@@ -1,0 +1,20 @@
+{
+ "agent": "dev-graph:dev-graph-integrity-auditor",
+ "verdict": "PASS",
+ "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+ "checks": [
+  "dag_reference_integrity PASS",
+  "macro_boundary_no_phase_task PASS",
+  "new_nodes_draft_preview PASS",
+  "exact13_package_receipt PASS",
+  "schema_orphan_path_containment PASS",
+  "digest_binding PASS"
+ ],
+ "findings": [
+  {
+   "severity": "info",
+   "evidence": "planned_nodes omit architecture_refs; present in c02-input macro",
+   "suggested_fix": "re-audit after apply"
+  }
+ ]
+}

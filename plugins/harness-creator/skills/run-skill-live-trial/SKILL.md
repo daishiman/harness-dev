@@ -1,6 +1,6 @@
 ---
 name: run-skill-live-trial
-description: 対象skillを本物のclaudeセッション(tmux)でfresh contextのまま実走させて受け入れ確認したいとき、fork実行では観測できない自走・入れ子Skill・対話gateの本番挙動をgoal適合まで検証したいときに起動する。
+description: 対象skillを本物のClaudeまたはCodexの新規セッションで実走させて受け入れ確認したいとき、実行基盤ごとの呼出し・対話gate・goal達成を原ログと独立評価で検証したいときに起動する。
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<plugin:skill> [args] [--proof] [--model <model-id>]"
@@ -29,6 +29,7 @@ schema_refs:
 reference_refs:
   - references/task-template.md
   - references/transcript-jsonl.md
+  - references/codex-live-trial.md
   - ../run-elegant-review/references/convergence-policy.json
   - ../run-build-skill/references/goal-seek-paradigm.md
   - ../../references/orchestrate-gate-pattern.md
@@ -41,6 +42,9 @@ script_refs:
   - scripts/live-trial-poll.py
   - scripts/validate-live-trial-resource-budget.py
   - scripts/live-trial-verdict.py
+  - scripts/manage-codex-live-trial.py
+  - scripts/record-codex-audit.py
+  - scripts/extract-codex-transcript.py
   - scripts/build-live-trial-verdict.py
   - scripts/validate-live-trial-scenario-contract.py
   - scripts/validate-goal-seek-evidence.py
@@ -73,7 +77,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: live-trial
     - id: OUT3
       loop_scope: outer
-      text: 全終了経路で tmux セッションが所有 run-id と owner PID の完全一致に限定した reaper により回収され denylist 被験 skill の起動が boot と verdict の機械 gate で拒否される
+      text: 全終了経路でClaudeはrun-idとowner PIDが一致するtmuxセッションだけ、Codexは自ら起動したprocess groupだけを回収し、denylist被験skillを起動・verdictの機械gateで拒否する
       verify_by: script
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -106,7 +110,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Purpose & Output Contract
 
-対象 skill を**別プロセスの本物の claude セッション** (tmux backend) で fresh context のまま実走させ、**期待どおり動くか (受け入れ) を確認する** acceptance harness。実走証拠 (verdict + transcript) は behavioral claim (自走完遂 / 入れ子 Skill / 対話 gate 越え / goal 達成) の唯一の収束根拠であり、静的レビューの design claim とは直交する (`../../references/orchestrate-gate-pattern.md` **Gate D**)。
+対象skillを**別プロセスの本物のClaudeまたはCodexセッション**で実走させ、**期待どおり動くかを確認する**acceptance harness。既定はClaudeのtmux方式。Codexは明示指定した場合だけnative exec/resumeと原rolloutを使う。実走証拠はそのruntimeで実際に観測した挙動だけを裏づけ、静的レビューとは区別する (`../../references/orchestrate-gate-pattern.md` **Gate D**)。
+
+## Runtimeの選択
+
+計画時に`--runtime claude|codex`を指定し、省略時は従来どおりClaudeを使う。以下のtmux・Skill tool・Claude確認画面の手順はClaude専用。Codexは[専用契約](references/codex-live-trial.md)と`manage-codex-live-trial.py --config <path> run|collect|finalize`を使い、Claudeの起動器へ渡さない。
+
+Codexではnativeの`$skill`適用・本文の実Read・subagent・実user turnを原JSONLで検査する。`Skill`/`Agent`やStop/権限hookのClaudeイベントを生成しない。native operationを複数user turnで渡した試行は、その回数と順序を記録し、単一入力での無対話自走とは主張しない。未確認のnative hookを必要とするscenarioは保留し、代替receiptを自作しない。
+
+runtimeをまたいだPASS再利用は禁止。旧runtime未記録の証跡はClaudeとして保持する。`--profile refresh` は受領 verdict の runtime へ計画を合わせ、その runtime の current PASS だけを再利用する。別 runtime の PASS を、指定 runtime の合格としては使わない。CodexはCodex面を含む閉包・CLI版・実model・累積usage・親子session・原transcriptを検査し、既存の全観測・予算・fresh独立goal判定を省略しない。
 
 ## 適用境界 (fork acceptance との直交)
 
@@ -123,7 +135,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 - **acceptance 専用**: 「対象 skill が fresh context で期待どおり動くか」だけを扱う。**selection (複数 skill / 設定の比較) は扱わない** — acceptance に品質比較を混ぜると目的がぼやける。1 回の実走 = 1 skill の受け入れ。
 - **常設 = 常時発火可能 + 条件必須** (D9): 本 skill はいつでも起動できるが、無条件の全 kind 実行はしない。発火は「behavioral trait 該当 × 挙動面 SHA 差分 × 予算内」の三積、非該当は queue へ deferred 記録。**proof trial のみ無条件**。
-- **既定は incremental plan**: 複数 skill を検証するときは、実セッションを起動する前に `scripts/plan-live-trials.py` を必ず実行する。schema-valid PASS verdict・挙動閉包 SHA・stable `scenario_id`・transcript SHA が一致する証跡は再利用し、既定では新規 live trial を最大2本・同時2本までに制限する。scenario 契約を変更したら `scenario_id` も更新して旧証跡を無効化する。全件再実走は利用者が `--profile exhaustive` を明示した場合だけ許可する。
+- **既定は incremental plan**: 複数 skill を検証するときは、実セッションを起動する前に `scripts/plan-live-trials.py` を必ず実行する。criteria receipt が live-trial PASS を指す skill は、その verdict だけを再利用候補にする。辞書順で新しい BLOCKED / DEGRADED / FAIL は、その PASS を隠さない。壊れた receipt は別の PASS へ読み替えず、実走枠にも入れない。receipt が無い skill だけ、新しい順で schema-valid PASS・挙動閉包 SHA・stable `scenario_id`・transcript SHA が一致する証跡を再利用する。既定では新規 live trial を最大2本・同時2本までとし、枠は `behavior-changed` から使う。予算で遅れた skill は `evidence_reason` と `behavior_drift` を残す。scenario 契約を変更したら `scenario_id` も更新して旧証跡を無効化する。current PASS を再実走せず、再利用できない live skill をすべて実走するのは `--profile refresh`。refresh は受領 verdict の runtime で閉包を見て、current ならその runtime のまま再利用し、stale ならその runtime で再実走する。`--runtime` は receipt が無い skill の実行基盤だけを決める。incremental と exhaustive は runtime をまたいだ PASS を再利用しない。受領閉包が stale なら runtime が違っても `behavior-changed` と `behavior_drift` と `acceptance_runtime` を残し、予算は `behavior-changed` から使う。`live_batches` は同じ runtime だけを同時に走らせる。current PASS を含めて全件再実走するのは、利用者が `--profile exhaustive` を明示した場合だけ。
 - **ローカル開発環境限定** (D14): 本 skill は harness-creator の開発環境でのみ動かす。**量産先 plugin への配備対象外** (composition invariant)。
 - **被験 skill denylist (再帰遮断)**: `run-skill-live-trial` / `run-skill-iter-improve` 自身は被験体にできない (trial 内で trial/改善ループが入れ子起動して発散するため)。正本は `scripts/live-trial-backend.py` の `DENY_TARGET_SKILLS` で、boot / verdict が機械拒否する。
 
@@ -131,7 +143,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 1. **goal を proxy にしない**: 「起動した / 完走した」で合格にしない。fresh evaluator が「skill の目的 (description が約束する成果) を成果物が満たすか」を判定する。
 2. **送信は必ずファイル経由 + session 固有 named buffer** (`live-trial-send.py` → `live-trial-backend.py paste-file`): タスク本文を send-keys で生送信しない。改行/括弧で TUI のペースト検知が誤動作する。tmux default buffer は server 全体で共有され、並列 trial の `load-buffer` → `paste-buffer` 間で別 route の本文へ上書きされるため使用禁止。backend が session + file path から injection-safe・固定長・決定論的な buffer 名を生成し、`load-buffer -b <name>` → `paste-buffer -b <name>` → `finally: delete-buffer -b <name>` を一送信単位で保証する。例外は gate 応答 (短い固定キー) のみで、それも `live-trial-backend.py send-keys` を通す。
-3. **boot は direct process + declared plugin pinning**: 検証済み `claude` argv を `tmux new-session` の pane shell-command として直接起動する。ユーザーの対話 zsh 起動完了や startup file に依存しない。`--setting-sources local` を固定し、auth/sessionは維持しつつ無関係なuser/project settings driftをacceptance環境から除外する。`--target-skill plugin:skill` は caller cwd 内の target と、**2 系統の direct dependency の union** を `--plugin-dir` へ固定する: (a) `.claude-plugin/plugin.json#dependencies` — ホストが plugin 登録の前提として要求する必須集合で、欠けると target plugin ごと未登録になるため skill 単位へ narrowing できない、(b) `references/package-contract.json#depends_on` — harness sidecar の package-level allow-list で、任意の `skill_dependencies.<skill>` があればその部分集合だけへ絞る (map省略は後方互換で全depends_on、map内の未列挙skillは依存0)。キーは `entry_points.skills`、値は `depends_on` の部分集合でなければ boot/package check がfail-closed。(b) の narrowing により無関係な依存pluginをload/hashせず全件trial invalidationを防ぐ。**この union は `skill_dir_tree_sha` の閉包と同一でなければならない** — load される集合が digest される集合より広いと、trial に実在して挙動へ効く plugin (hooks を出荷する dependency 等) の変更が verdict を stale にせず、古い PASS が再利用される。実装は `live-trial-boot.py#_merge_dependency_slugs` と `live-trial-verdict.py#behavior_closure_files` の両方。未宣言plugin、missing/malformed manifest、symlink escape は起動前にfail-closed。installed/global版への偶然依存は禁止。plain skill nameは後方互換のためplugin pinningなし。
+3. **boot は direct process + declared plugin pinning**: 検証済みの絶対pathをargv先頭に固定し、`tmux new-session` のpane shell-commandとして起動する。`--claude-executable ABS_PATH`で実行可能なCLIを明示でき、省略時はcallerのPATHで`which`した実体を起動前に解決する。tmux側のshell初期化によるPATH再解決には依存せず、ユーザーのPATH/startup fileを変更しない。`--setting-sources local` を固定し、auth/sessionは維持しつつ無関係なuser/project settings driftをacceptance環境から除外する。`--target-skill plugin:skill` は caller cwd 内の target と、**2 系統の direct dependency の union** を `--plugin-dir` へ固定する: (a) `.claude-plugin/plugin.json#dependencies` — ホストが plugin 登録の前提として要求する必須集合で、欠けると target plugin ごと未登録になるため skill 単位へ narrowing できない、(b) `references/package-contract.json#depends_on` — harness sidecar の package-level allow-list で、任意の `skill_dependencies.<skill>` があればその部分集合だけへ絞る (map省略は後方互換で全depends_on、map内の未列挙skillは依存0)。キーは `entry_points.skills`、値は `depends_on` の部分集合でなければ boot/package check がfail-closed。(b) の narrowing により無関係な依存pluginをload/hashせず全件trial invalidationを防ぐ。**この union は `skill_dir_tree_sha` の閉包と同一でなければならない** — load される集合が digest される集合より広いと、trial に実在して挙動へ効く plugin (hooks を出荷する dependency 等) の変更が verdict を stale にせず、古い PASS が再利用される。実装は `live-trial-boot.py#_merge_dependency_slugs` と `live-trial-verdict.py#behavior_closure_files` の両方。未宣言plugin、missing/malformed manifest、symlink escape は起動前にfail-closed。installed/global版への偶然依存は禁止。plain skill nameは後方互換のためplugin pinningなし。
 4. **完了 = 「成果物の出現 + busy 不在」の二層判定** (`live-trial-poll.py`): 目視やアドホック grep でアイドル判定しない。一次 = transcript JSONL (`live-trial-status.py` が 4 状態分類。スキーマは `references/transcript-jsonl.md`)、fallback = TUI capture。busy 不在だけだと未着手 / tool 境界 / 質問返し停止を完走と誤判定する。
 
 ## ゴールシーク実行
@@ -150,7 +162,7 @@ fork subagent では自走 / 入れ子 Skill / 対話 gate / 本番 hook ロー�
 
 - [ ] 被験 skill が denylist 外で、workdir が `eval-log/<plugin>/<skill>/live-trial/<run-id>/` に作られた
 - [ ] task.md が契約 8 項目 (下表) を満たし、`READY:` 確認後にファイル経由で送信された
-- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP) で閉じ、`--state-file` で counter が呼び越し永続化された
+- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP / TOKEN_CAP / BLOCKED) で閉じ、`--state-file` で counter が呼び越し永続化された。`TICK_BUDGET` (exit 5) は終端ではなく、同一 `--state-file` で再呼びする
 - [ ] out/ + pane.txt + transcript.jsonl の 3 点が workdir に揃った (回収完了条件)
 - [ ] fresh evaluator が PASS | FAIL + blocker 列挙のみを返した (点数出力なし。正本 = goal-seek-paradigm.md 達成判定節)
 - [ ] `verdict.json` が schema 自己検証を通過して書き出され、scenario 観測の `evidence_ref` が workdir 内の実在ファイルへ解決した (proof trial は actual_model 機械 gate 込み)
@@ -177,7 +189,7 @@ python3 "$SCRIPTS/plan-live-trials.py" \
   --max-concurrency 2
 ```
 
-`skills[].action` が `reuse` のものは実走しない。`run` だけを `live_batches` の順に実走し、`defer` は予算超過として queue / 最終報告へ残す。`exhaustive` は明示指定時だけ全 live candidate を再実走する。planner はLLMを起動せず、既存証跡と挙動閉包だけで決定する。
+`skills[].action` が `reuse` のものは実走しない。`run` だけを `live_batches` の順に実走する。`defer` のうち `live-budget-exhausted` は予算超過で、`evidence_reason` が再実走の理由、`behavior_drift` が変わった挙動ファイルである。`criteria-receipt-` で始まる `defer` は受領書の修復待ちで、実走しない。再利用できないものだけをすべて実走するときは `--profile refresh`。refresh の `run` と `reuse` は `skills[].runtime` に受領 verdict の runtime を書く。receipt が無い skill だけ計画の `--runtime` を使う。1 つの `live_batches` 要素は同じ runtime だけを含む。incremental で受領が current だが runtime が違う skill は `runtime-mismatch` で、再利用しない。受領閉包が stale なら runtime が違っても `behavior-changed`、`behavior_drift`、`acceptance_runtime` を残す。`exhaustive` は明示指定時だけ、current PASS を含めて全 live candidate を再実走する。planner は LLM を起動せず、受領証跡と挙動閉包だけで決定する。sha は手で書き換えない。
 
 ### 準備: 入力解析 + workdir + task.md
 
@@ -223,7 +235,7 @@ scenario の task contract が fixture 内の監査 fork 台帳を要求する�
 を追加する。空の `SYSTEM_SPEC_AUDIT_FORK_LEDGER` を渡して cwd 相対へ fallback させない。
 この引数は trial repo 外および別ファイル名を拒否し、tmux session にだけ明示継承する。
 
-`READY:` を確認してから次へ。`SESSION_ID` (行末固定) は以後の send / poll / verdict に env / 引数で渡す — transcript JSONL 一次判定が有効になる。`OWNER_PID` も同じ READY 行から取り、回収時の `--owner-pid` にそのまま渡す (現在の shell の `$$` で代用しない)。boot は対話shellを経由せず、model/session-idを検証したargvで`claude`をpaneに直接起動し、`--setting-sources local`でuser/project settingsを読まない。qualified targetではcwd配下のtarget pluginとpackage contractが宣言するdependencyだけを複数`--plugin-dir`でloadするため、plugin自身のskill/hookと正規delegateはacceptance対象に残る。初回の bypass-permissions 確認は `WARNING: Claude Code running in Bypass Permissions mode` + `1. No, exit` + `2. Yes, I accept` + `Enter to confirm` の4 markerが全て一致する場合だけ、`Down`→短いrender待ち→Enterでoption 2を1回受理する (実TUIで数字2は選択移動にならない)。他のgateは自動応答しない。その後の`for shortcuts`、または行頭`❯` + space/NBSP + `Try ...`/空promptを検出するまでREADYを返さない。番号付き`❯ 1.`はREADY対象外。`TIMEOUT:` は project trust / claude PATH を確認。`BOOT_FAIL:` はcapture tailにCLIエラー原文が残る。**proof trial では model 必須** — 空のまま boot したら即 kill して確定後に再 boot (既定 model の完走を proof と報告するのが最悪の故障モード)。**boot は安全な文字集合でない model/session-id を起動前に拒否するが、存在しない model id の有効性は検出しない** (READY 行の MODEL: は requested の echo)。tmux 不在は exit 3 BLOCKED — verdict を `--blocked` で記録して中断 (fail-closed)。
+`READY:` を確認してから次へ。`SESSION_ID` (行末固定) は以後の send / poll / verdict に env / 引数で渡す — transcript JSONL 一次判定が有効になる。`OWNER_PID` も同じ READY 行から取り、回収時の `--owner-pid` にそのまま渡す (現在の shell の `$$` で代用しない)。CLI実体・model/session-id・plugin pinning・setting sourcesは絶対ルール3の起動契約に従う。初回のbypass-permissions確認は、警告行`WARNING: Claude Code running in Bypass Permissions mode`、連続した二択`1. No, exit`/`2. Yes, I accept`またはnativeの無番号`No, exit`/`Yes, I accept`、末尾`Enter to confirm`（任意で` · Esc to cancel`付き）が一致し、Noだけに選択印`❯`がある場合に限る。前面shell・混在形式・逆順・追加選択肢・未知gateは受理しない。`Down`→短いrender待ち→同一形式でYesだけが選択されたことと前面非shellを再確認→Enterを一度だけ送る。再確認が不一致ならBOOT_FAILとして当該sessionを回収し、再試行しない。他のgateは自動応答しない。その後の`for shortcuts`、または行頭`❯` + space/NBSP + `Try ...`/空promptを検出するまでREADYを返さない。bypass警告が残る画面と番号付き`❯ 1.`はREADY対象外。`TIMEOUT:` はproject trustと選択したCLI実体を確認し、未知gateを自動受理しない。`BOOT_FAIL:` はcapture tailにCLIエラー原文が残る。**proof trial では model 必須** — 空のまま boot したら即 kill して確定後に再 boot (既定 model の完走を proof と報告するのが最悪の故障モード)。**boot は安全な文字集合でない model/session-id を起動前に拒否するが、存在しない model id の有効性は検出しない** (READY 行の MODEL: は requested の echo)。tmux 不在は exit 3 BLOCKED — verdict を `--blocked` で記録して中断 (fail-closed)。
 
 tmux server は作成時の環境変数を保持するため、hook の出力先など session 固有の routing
 変数は boot 呼び出し元の現在値を `new-session -e` で上書きする。呼び出し元で未設定の
@@ -250,9 +262,10 @@ SESSION_ID="$SESSION_ID" python3 $SCRIPTS/live-trial-poll.py --state-file "$WORK
 | 0 DONE | 成果物出現 + busy 不在安定 | 回収へ |
 | 4 GATE | 対話入力待ち (jsonl 判定時のみ) | `python3 $SCRIPTS/live-trial-backend.py send-line "$SESSION" '<応答>'` → 再 poll。**gate 応答回数と種別 (rescue / contractual) を記録** |
 | 2 STALL | 進捗停止 | 下の STALL 分岐表を上から順に |
-| 1 HARD_CAP | 絶対打切り (安全弁) | 記録 → kill-session → verdict `--blocked` |
+| 1 HARD_CAP | 絶対打切り (安全弁) | 記録 → kill-session → verdict `--blocked --poll-exit HARD_CAP` |
 | 5 TICK_BUDGET | tick 予算消化 | 同一 state-file で再呼び (エラーではない) |
-| 6 TOKEN_CAP | scenario token 予算到達 | 記録 → kill-session → verdict `--blocked`。上限延長禁止 |
+| 6 TOKEN_CAP | scenario token 予算到達 | 記録 → kill-session → verdict `--blocked --poll-exit TOKEN_CAP`。上限延長禁止 |
+| 3 BLOCKED | state 破損 (`STATE_CORRUPT`) または token 計測不能 (`TOKEN_UNMEASURED`) | 記録 → kill-session → verdict `--blocked` に `--poll-exit STATE_CORRUPT` または `--poll-exit TOKEN_UNMEASURED` を付ける。経過を 0 に戻さない。欠測を 0 token としない。`--poll-exit` を空にすると原因が tmux 不在の既定文になる。tmux 不在自体は poll の前に boot / send / backend が exit 3 で止まり、この行には来ない |
 
 ### STALL 分岐表 (上から順。各行 1 回判定で次へ — 裁量で順序を入れ替えない)
 
@@ -289,7 +302,7 @@ python3 $SCRIPTS/build-live-trial-verdict.py --session "$SESSION" --run-id "$RUN
    --observation "1=<evidence ref>" --observation "2=<evidence ref>" ...]
 ```
 
-verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、**boot が load するのと同じ union の** direct dependency (manifest `dependencies` ∪ package-contract `depends_on` の skill 単位射影) の manifest/hooks/entry point/scripts/schemas を含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。scenario の wall-clock は呼出側 `--wall-clock-s` でなく、必須 `poll-state.json` の開始・最終観測時刻/elapsed から再計算し、その SHA を verdict へ束縛する。**DONE / STALL / HARD_CAP / 中断の全経路で必ず `build-live-trial-verdict.py` を使う**。finalizer は verdict が usage/schema error で失敗しても `finally` で scoped `reap(run-id, owner PID)` を実行し、所有 metadata が一致しない session を直接 kill しない。boot は tmux session に `@lt_run_id` と `@lt_owner_pid` を記録し、通常の reap は session 名の prefix・`@lt_run_id`・READY が返した `@lt_owner_pid` の 3 点が一致する自分の trial だけを回収する。同じ run-id 内の別 owner も対象外である。
+verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、**boot が load するのと同じ union の** direct dependency (manifest `dependencies` ∪ package-contract `depends_on` の skill 単位射影) の manifest/hooks/entry point/scripts/schemas を含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。scenario の wall-clock は呼出側 `--wall-clock-s` でなく、必須 `poll-state.json` の開始・最終観測時刻/elapsed から再計算し、その SHA を verdict へ束縛する。**DONE / STALL / HARD_CAP / TOKEN_CAP / BLOCKED / 中断の全経路で必ず `build-live-trial-verdict.py` を使う**。finalizer は verdict が usage/schema error で失敗しても `finally` で scoped `reap(run-id, owner PID)` を実行し、所有 metadata が一致しない session を直接 kill しない。boot は tmux session に `@lt_run_id` と `@lt_owner_pid` を記録し、通常の reap は session 名の prefix・`@lt_run_id`・READY が返した `@lt_owner_pid` の 3 点が一致する自分の trial だけを回収する。同じ run-id 内の別 owner も対象外である。
 
 ## 判定ロジック
 
@@ -311,8 +324,11 @@ verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから
   - **`contractual` の主張は被験 skill 側の宣言へ接地させる**。免除を申告するのは trial を回す当人なので、無検証で信じると「実際は stall 救済だった介入を contractual と言い換えるだけで `DEGRADED` を `PASS` へ反転できる」= 受け入れ基準の自己申告による緩和になる。gate 応答 > 0 かつ `contractual` のとき、`live-trial-verdict.py` は被験 skill の frontmatter に `external_mutation_guard` か `allowed-tools` の `AskUserQuestion` / `ExitPlanMode` (= `live-trial-status.py` の `GATE_TOOLS`) があることを確認し、**根拠 0 件なら exit 2 で拒否して verdict を書かない**。認めた根拠は verdict の `gate_contract_evidence` へ焼き付ける。本文の散文は根拠にしない (書き足すだけで主張が通るなら接地にならない)。
   - 回数上限は置かない。gate は transcript の pending `AskUserQuestion` / `ExitPlanMode` が無ければ発生せず捏造できないので、上限そのものより「その gate が契約上必須か」の接地が本質であり、根拠のない閾値は緩められる。
 - **proof trial** は「人手介入なし PASS」が受け入れ条件 — 種別を問わず gate 応答 > 0 は `FAIL`、DEGRADED 相当も `FAIL`、さらに actual_model ≠ requested_model で `FAIL` (機械 gate)。
-- tmux 不在 / HARD_CAP 超過は `BLOCKED` (fail-closed)。
-- この表の機械実装は `live-trial-verdict.py` の `derive_overall()`。
+- tmux 不在は boot / send / backend が poll の前に exit 3 で止まる。verdict は `--blocked` だけを渡し、`--poll-exit` は空にする。`downgrade_reason` は原因を特定できないときの既定文（tmux 不在）になる。
+- poll exit 3 は `STATE_CORRUPT` と `TOKEN_UNMEASURED` だけ。どちらも `--blocked` と、その名前の `--poll-exit` を渡して `BLOCKED` にする。`blocked_cause_for()` がその名前を `downgrade_reason` に分ける。空の `--poll-exit` で `--blocked` だけ渡すと、token 計測不能が tmux 不在の既定文へ落ちる。
+- wall-clock の `HARD_CAP`（poll exit 1）と token 予算の `TOKEN_CAP`（poll exit 6）は poll 表どおり `--blocked` と対応する `--poll-exit` を渡したとき `BLOCKED` になる。Codex の token 到達を tmux 不在と書かない。
+- 進捗停止の `STALL`（poll exit 2）は分岐表へ進む。#5 と #6 は不合格として回収または中断し、`--blocked` も `--poll-exit STALL` も付けない。判定表の hang 行は `FAIL`。`derive_overall()` は `blocked=True` のときだけ `BLOCKED` を返す。`poll_exit=STALL` だけでは `completion=FAIL` の `FAIL` になり、`downgrade_reason` は STALL に分かれない。
+- この表の機械実装は `live-trial-verdict.py` の `derive_overall()` と `blocked_cause_for()`。
 
 ## 検証
 
@@ -329,8 +345,8 @@ python3 -m pytest -q tests/test_live_trial_*.py       # 責務別 fixture の po
 - **完了検知の急所**: busy 中の jsonl は完全無音 (長 Bash で 200s 級) — 経過時間で busy 判定しない。kill/crash したセッションは jsonl 上 BUSY_GENERATING のまま凍結 → tmux 生存確認が最終 fallback。TUI 層の busy 判定は ASCII マーカー (経過秒/token) のみ。詳細と版依存性は `references/transcript-jsonl.md` (spec-drift 監視対象)。
 - **claude 起動は `--dangerously-skip-permissions`**。trust 済み project が前提 (未 trust だと boot がプロンプトで止まる)。
 - **外部 CLI 依存 skill** (codex/cursor 委譲等) は usage limit で成果物が空振りしうる。
-- **scenario の絶対上限を持つ**。`max_wall_clock_s` / `max_total_tokens` は実行中に延長せず、到達または計測不能で BLOCKED とする。
-- **tmux 依存**: 輸送層の唯一の境界は `live-trial-backend.py` (版依存モジュール境界)。plugin.json `requirements.external_clis` に登録済み。不在は BLOCKED。
+- **scenario の絶対上限を持つ**。`max_wall_clock_s` / `max_total_tokens` は実行中に延長しない。到達は poll の `HARD_CAP` / `TOKEN_CAP` で、`--blocked` と対応する `--poll-exit` を渡して `BLOCKED` にする。token 計測不能は poll exit 3 の `TOKEN_UNMEASURED` で、`--blocked --poll-exit TOKEN_UNMEASURED` にする。進捗停止の `STALL` はこの `BLOCKED` に含めない。
+- **tmux 依存**: 輸送層の唯一の境界は `live-trial-backend.py` (版依存モジュール境界)。plugin.json `requirements.external_clis` に登録済み。不在は poll 前の exit 3 で、verdict は `--blocked` かつ `--poll-exit` なしで記録する。
 
 ## 関連
 

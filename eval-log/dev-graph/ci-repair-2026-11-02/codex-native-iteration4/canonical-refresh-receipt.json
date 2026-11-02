@@ -1,0 +1,97 @@
+{
+  "recorded_at": "2026-11-02T05:05:48.694895+00:00",
+  "reviewer": "/root/codex_acceptance_contract",
+  "status": "APPLIED",
+  "canonical_targets": [
+    {
+      "skill": "run-dev-graph-init",
+      "path": "eval-log/dev-graph/run-dev-graph-init/criteria-test/scenario-verdict.json",
+      "old_original_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json",
+      "old_original_sha256": "725a51aff2ddc53bfd51f3928370947ee0fde32a6034fe6a84fc86fc5da22815",
+      "current_canonical_sha256": "cdaeb88f51c16c5f11dd441bb0513e3a8882257c58ac0d41db2753d8552c4775",
+      "criteria_ids": [
+        "IN1",
+        "OUT1",
+        "OUT2",
+        "OUT3",
+        "OUT4",
+        "OUT5"
+      ]
+    },
+    {
+      "skill": "run-dev-graph-render",
+      "path": "eval-log/dev-graph/run-dev-graph-render/criteria-test/scenario-verdict.json",
+      "old_original_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-render/scenario-verdict.json",
+      "old_original_sha256": "2deb19aee7c584390c9e5b813ca176c16c96696f016585422e47d7e2bb3a9f98",
+      "current_canonical_sha256": "9db5bf38a62eb5197dc8d42ea8b20fb0183fcdbf636c808f3c91a76414bdaa25",
+      "criteria_ids": [
+        "IN1",
+        "OUT1"
+      ]
+    },
+    {
+      "skill": "run-dev-graph-decompose",
+      "path": "eval-log/dev-graph/run-dev-graph-decompose/criteria-test/scenario-verdict.json",
+      "old_original_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-decompose/scenario-verdict.json",
+      "old_original_sha256": "60ff41ef035f866dc6b626298e83471cec6e74727b9b0fa14508c0ccf99d8659",
+      "current_canonical_sha256": "3aa1f61cf748ff012051fa67c38524d90f97906f69e7c4068a09dc96d64b4340",
+      "criteria_ids": [
+        "IN1",
+        "OUT1",
+        "OUT2",
+        "OUT3",
+        "OUT4",
+        "OUT5",
+        "OUT6",
+        "OUT7"
+      ]
+    }
+  ],
+  "independent_positive_review_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-positive-review.json",
+  "static_tests": {
+    "command_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+    "log_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+    "result": "23 passed / 16 subtests passed"
+  },
+  "new_macro_contract_tests": {
+    "command_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-new-contract-tests.json",
+    "result": "2 passed"
+  },
+  "inherited_render_tests": {
+    "log_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-static-tests.log",
+    "executed_by": "/root/ci4_render_goal",
+    "product_result": "7 passed / 9 deselected / exit0",
+    "later_historical_failure_preserved": "同log後半の旧canonical mapping失敗は原文のまま。今回の現source3受入で別判定。"
+  },
+  "source_review": {
+    "init_and_render_skill_sha_same_as_old_canonical": true,
+    "decompose_old_skill_source_commit": "46218e92453b0295823e79301f1a8ba60200d8b8",
+    "decompose_skill_diff": "Macro flow5に13member文書の同一transaction生成とconfirm-featureの記述を追加。静的検査と新live draft/promotion gateを再確認。"
+  },
+  "acceptance": {
+    "command": [
+      "/usr/bin/arch",
+      "-x86_64",
+      "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "plugins/dev-graph/tests/test_skill_criteria_evidence.py",
+      "-k",
+      "independent_scenario_receipt_covers_exact_criteria and (C01 or C05 or C14)"
+    ],
+    "exit_code": 0,
+    "log_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-acceptance-tests.log",
+    "log_sha256": "86844aacdabcbad36c1a080884d7959d372a6ae89d10e7e05b48c164163b0462"
+  },
+  "html_static_independent_check": {
+    "external_script_link_refs": 0,
+    "inline_svg_count": 1
+  },
+  "old_originals_unchanged": true,
+  "native_actors_started": 0,
+  "source_or_run_goal_verdict_modified": false
+}

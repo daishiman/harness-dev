@@ -1,0 +1,14 @@
+実行者: /root/ci4_render_goal
+対象: 現sourceのrender関連製品テスト。過去のscratch試験は再実施していない。
+command: /usr/bin/arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -B -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_render_receipt.py plugins/dev-graph/tests/test_runtime_coverage.py -k render
+exit_code: 0
+.......                                                                  [100%]
+7 passed, 9 deselected in 2.28s
+
+canonical訂正候補のschema検証: PASS（Draft202012Validator）
+command: /usr/bin/arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -B -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_skill_criteria_evidence.py -k "independent_scenario_receipt_covers_exact_criteria and C05"
+exit_code: 1
+1 failed, 39 deselected in 0.37s
+failed assertion: C05/OUT1: invalid native runtime evidence
+validate_runtime_evidence errors: native-skill-activation-unproven; native-skill-path-source-mismatch:dev-graph:run-dev-graph-render
+根拠: 被験の実Readは固定provider配下、C05受入testはrepository配下のskill_pathを検証引数へ渡す。製品source/test/原証跡は未変更。canonical変更は元bytesへ復元し適用保留。

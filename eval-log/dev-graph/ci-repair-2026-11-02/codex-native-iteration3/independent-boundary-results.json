@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-11-02T04:15:37.235398+00:00",
+  "reviewer": "/root/codex_acceptance_contract",
+  "evidence_kind": "independent-synthetic-boundary-probes",
+  "not_native_live_acceptance": true,
+  "llm_runs": 0,
+  "real_user_configuration_writes": 0,
+  "source_writes": 0,
+  "source_sha256_before": {
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "6fd68faac4f58f08bfbadeedfe6ae2310226980a4a5dde75b6c37fc5383f911f",
+    "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py": "b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "21cbb0aed760d48d4870446f9e33cc554c8116cc130e31ef81da5ed57e491976"
+  },
+  "source_sha256_after": {
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "6fd68faac4f58f08bfbadeedfe6ae2310226980a4a5dde75b6c37fc5383f911f",
+    "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py": "b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "21cbb0aed760d48d4870446f9e33cc554c8116cc130e31ef81da5ed57e491976"
+  },
+  "source_unchanged_during_probes": true,
+  "results": [
+    {
+      "boundary": "回答前の有効hook recordを後続回答へ再利用すると拒否・proof未発行",
+      "result": "PASS"
+    },
+    {
+      "boundary": "actor writable prefixからprivate hook logへ向くsymlinkを起動前に拒否",
+      "result": "PASS"
+    },
+    {
+      "boundary": "公開proofの有効receiptを一般continueのnative userへ付替えると拒否",
+      "result": "PASS"
+    }
+  ],
+  "overall": "PASS"
+}

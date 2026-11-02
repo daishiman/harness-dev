@@ -1,0 +1,15 @@
+{
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "invocation": "Skill args: --resume --spec-dir <repo_root>/system-spec",
+  "read_before_output": ["SKILL.md (frontmatter含む全文)", "prompts/R0-foundation.md", "prompts/R1-init.md", "prompts/R2-interview.md", "prompts/R3-reask.md", "prompts/R4-reopen.md", "prompts/R5-decision-guide.md"],
+  "resume_result": "hearing_progress.complete=true, next_question=null。未収集0のため新規問答・writer 書込なし (新しい利用者入力なしに approval/QA を作らない)",
+  "artifact": {"path": "system-spec/spec-state.json", "sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2", "open_with": "python3 -m json.tool system-spec/spec-state.json", "modified": false},
+  "artifact_delivery": {"minimum_guard_pass": "JSON parse OK", "present_actual_artifact": "path/sha256/open_with を別呼出しで提示済み", "record_user_choice": "standard", "choice_source": "隔離 fixture の事前回答契約"},
+  "gates": {
+    "validate-coverage-matrix --require-complete --require-basis --require-foundation": 0,
+    "validate-coverage-matrix (loop)": 0,
+    "validate-knowledge-graph --profile required-info --state: ungrounded_blocking_items": [],
+    "validate-design-knowledge-refs": "schema_version=1.0 のため対象外"
+  },
+  "status": "PASS"
+}

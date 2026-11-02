@@ -1,0 +1,37 @@
+{
+  "expected_graph_revision": 14,
+  "updates": [
+    {
+      "graph_node_id": "doc-branch-publication",
+      "set_sections": {
+        "2026年11月2日のCI実走と再開条件": "最新main 26cc8692はlocal main経由で統合済み。PR #87はMERGEABLEで、競合6件は解消した。CI全体はまだ成功していない。初期化・描画・構想分解・状態照会・スケジュールの5件はfresh独立goal・共通verdict・canonical再受入までPASS。スケジュールの原DEGRADEDは評価JSON形式エラーの履歴として残し、同じ独立判断の厳密5キー版を別judgmentへ渡して訂正した。新actor・時計reset・予算延長は0。\n\n残る作業は[タスク](../tasks/branch-remaining-publication.md)、検証の条件は[仕様](../specs/branch-publication.md)、記録の経路は[設計](../architecture/branch-publication.md)を参照する。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。"
+      }
+    },
+    {
+      "graph_node_id": "feature-branch-publication",
+      "set_sections": {
+        "2026年11月2日のCI実走と再開条件": "CIが止まる原因を、処理の不具合・検証入力の矛盾・実走証拠の不足へ分けて修復する。保存時にprivate領域へ出るリンクを残さず、実際の親子エージェントの監査結果を追跡できるようにする。要件処理が矛盾した検証データを拒否する挙動は維持し、新しい整合したデータだけで再試行する。\n\n元の機能・必須観測・実行予算は維持する。検証に無関係なスキル一覧は、そのプロセス内だけ除外できる。ユーザーの設定・認証・hook信頼状態は変更しない。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。"
+      }
+    },
+    {
+      "graph_node_id": "spec-branch-publication",
+      "set_sections": {
+        "2026年11月2日のCI実走と再開条件": "Codex監査は専用producer/schemaを使い、実spawn call・親子identity・fresh fork・agent/SSOT全文Read・実completion・応答SHAをhost保護原本へ束縛し、consumerが再構築する。Claude Task/Agentやhookイベントへの偽変換、actor自作台帳、任意JSONへの置換を認めない。外部変更の確認hookは別契約で、未回答の信頼許可をこの経路で代替しない。\n\n公開snapshotでは元fixture内部のリンクだけ相対化し、元target・metadata・解決先と変換後の証拠を保存する。外部・欠落・除外対象は拒否する。recollectは旧partialと固定rawを残した各公開先へ一度だけの別publication（前の失敗先を保持し、新ordinalでの再収集を明示する）とし、task/config/source/clock/予算を不変に保つ。実行時刻と回収時刻は分ける。native_skill_exclusionsは起動前の実path/bytes SHAへ固定し、fixture/provider/projectionの許可sourceは除外しない。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。",
+        "テストと受入条件": "元1440差分のsource保存と現行/保存先の説明、main修正保持、raw eval-log1063件と旧flyer165件の所在、C02更新5文書のfinding0・draft保持を確認する。最終のroot未commit/未追跡0件、両branch同一HEAD、両push、同名追跡先を親が実測する。旧init PASSと残8対象の結果は当時の履歴として保持する。共有SGA変更後の現行受入には全9対象の再実走が必要であり、当時の新PASS0件・CI未達を履歴として保持し、現在の結果は後掲のCI実走と再開条件を参照する。過去テスト写し188件のdiscovery対応は別担当の既存記録を参照する。"
+      }
+    },
+    {
+      "graph_node_id": "arch-branch-publication",
+      "set_sections": {
+        "2026年11月2日のCI実走と再開条件": "監査のwriterはruntime別に分離する。Claudeは既存hook台帳1.x、Codexはactor書込外のhost observer台帳2.0を使い、共通consumerが対応する原証拠を検証する。actorは評価結果を参照・転記し、台帳のwriterにはならない。\n\n```mermaid\nflowchart LR\n  A[Codexの実行原ログ] --> B[host側の監査記録]\n  B --> C[保護された台帳と原本]\n  C --> D[consumerによる再検証]\n  D --> E[独立評価と受入判定]\n```\n\n公開回収は実行とは別の段階である。元fixtureと固定rawを変更せず、内部リンクをsnapshotへ閉じ込める。途中失敗のpartialを残し、新publicationのbindingをfinalizeまで使う。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。",
+        "Backend architecture > Operations and verification": "元1440件のsource SHAと統合先、raw eval-log1063件の元path、旧flyer165件のraw保存、C02 revision/artifact SHAを確認する。最終root status、両branch/remote HEAD、元の追跡先は親が実測し、旧sourceのinit PASS・残8対象の履歴と、共有SGA変更後の全9対象の新受入を分けて報告する。当時のsourceにおける新PASS0件・CI未達を履歴として保持し、現在の結果は後掲のCI実走と再開条件を参照する。"
+      }
+    },
+    {
+      "graph_node_id": "task-branch-remaining-publication",
+      "set_sections": {
+        "2026年11月2日のCI実走と再開条件": "完了済みはmain統合・競合6件解消と、現行sourceの5件の独立実走/canonical受入である。残りは、requirementsの矛盾のない新入力での実走、nodeの元5Mtoken/1200秒内での実走、C19のCodex監査経路での実走、C03の信頼許可後の実走である。最大同時2を維持する。\n\n修復後の独立design review4判定はPASS。HC1.4.61/SSH0.1.26へ正規採番し、業務閉包の変更はC19だけ、他8対象は一致した。新しいrequirements入力は初回promotion前から要件・13工程・参照・証跡scopeを整合させた準備データであり、live PASSではない。C03の試行フォルダと2hookへの信頼許可は質問済み・未回答である。許可と無関係な修復は継続する。全受入/CIを確認し、対象ファイルのcommit/push・両branch同一HEAD・全remote treeを実測する。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。"
+      }
+    }
+  ]
+}

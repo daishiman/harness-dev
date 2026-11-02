@@ -1,0 +1,130 @@
+{
+  "before": {
+    ".dev-graph/state/graph.json": "sha256:b6e9e224a4f5ac8a48d25d66a3e4b458025014ff26a69b065df7d8a6a5debb30",
+    ".dev-graph/config.json": "sha256:f599e851068f08a16c4740f07722bb3a9467618e8deafd599d635b2eee775b4b",
+    "tasks/lt-task-dep.md": "sha256:53f98bad79a0d1c0a219adac122324cb171bb40ad75b0ed9480bd7237650978b",
+    "tasks/lt-task-001.md": "sha256:1435d071e262c9830c0193ebf04b9adcd0d64969865c9ba32c47310f2082594c"
+  },
+  "c11_exit": 0,
+  "c11": {
+    "artifact_readiness": {
+      "enforced": false,
+      "finding_count": 0,
+      "findings": [],
+      "missing_sections": [],
+      "status": "complete"
+    },
+    "graph_validation": {
+      "status": "pass",
+      "violation_count": 0
+    },
+    "implementation_readiness": "complete",
+    "missing_sections": [],
+    "node_readiness": {
+      "complete": 2,
+      "incomplete": 0,
+      "incomplete_nodes": [],
+      "not_applicable": 0,
+      "unknown": 0
+    },
+    "schema": "/private/tmp/harness-codex-ci4-20261102/providers/plugins/dev-graph/schemas/graph-node.schema.json",
+    "valid": true,
+    "violations": []
+  },
+  "extract_exit": 0,
+  "reextract": {
+    "count": 1,
+    "graph": {
+      "digest": "sha256:b6e9e224a4f5ac8a48d25d66a3e4b458025014ff26a69b065df7d8a6a5debb30",
+      "graph_revision": 2,
+      "node_count": 2,
+      "path": ".dev-graph/state/graph.json"
+    },
+    "missing_required_keys": [],
+    "query": {
+      "domain": [],
+      "feature": [],
+      "id": [
+        "task-lt-task-001"
+      ],
+      "keyword": null,
+      "kind": [],
+      "project": [],
+      "status": [],
+      "tag": [],
+      "tag_mode": null
+    },
+    "read_only": {
+      "changed": [],
+      "tracked_files": 4
+    },
+    "result": "matched",
+    "rows": [
+      {
+        "artifact_kind": "task",
+        "beads_linkage": null,
+        "closed_at": "2026-11-02T04:39:54.500587Z",
+        "dependents": [],
+        "depends_on": [
+          "task-lt-task-dep"
+        ],
+        "domain": "status",
+        "feature_package_id": null,
+        "file_path": "tasks/lt-task-001.md",
+        "github_project_linkages": [],
+        "graph_node_id": "task-lt-task-001",
+        "issue_linkage": null,
+        "parent_feature": null,
+        "project_id": "fixture",
+        "status": "closed",
+        "tags": [],
+        "title": "lt-task-001",
+        "tracker_binding": "none"
+      }
+    ],
+    "schema_version": "1.0.0",
+    "validation": {
+      "status": "pass",
+      "violation_count": 0,
+      "violations": []
+    }
+  },
+  "verdict": "PASS",
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS",
+    "OUT2": "PASS",
+    "content-review": "PASS"
+  },
+  "after": {
+    ".dev-graph/state/graph.json": "sha256:b6e9e224a4f5ac8a48d25d66a3e4b458025014ff26a69b065df7d8a6a5debb30",
+    ".dev-graph/config.json": "sha256:f599e851068f08a16c4740f07722bb3a9467618e8deafd599d635b2eee775b4b",
+    "tasks/lt-task-dep.md": "sha256:53f98bad79a0d1c0a219adac122324cb171bb40ad75b0ed9480bd7237650978b",
+    "tasks/lt-task-001.md": "sha256:1435d071e262c9830c0193ebf04b9adcd0d64969865c9ba32c47310f2082594c"
+  },
+  "changed": [],
+  "report_sha256": "1a02bfeb3d27dd6196e598bdfd400475373dd8d8299b4173ecaedd7bea36aa72",
+  "all_row_fields_match_graph": true,
+  "dependents_reverse_index_match": true,
+  "external_writes": {
+    "github": 0,
+    "beads": 0,
+    "evidence": "観測した主・評価contextの呼出しに外部CLI/networkは0。正規extractはnetwork:false/write-scope:none、writer/sync/render呼出し0。外部サービスへ照会せず、当該実行によるwriteが0であることを確認。"
+  },
+  "limitations": [
+    "初回extractのconfig/content個別digestは標準出力に露出しない。初回read_only.changed=[]（4ファイル）の正規CLI内部比較を根拠とし、評価時の全4ファイルの前後digestを独立再測定した。",
+    "外部サービス自体の別actorによる変更有無は照会していない。"
+  ],
+  "evidence": {
+    "status": "closed",
+    "closed_at": "2026-11-02T04:39:54.500587Z",
+    "depends_on": [
+      "task-lt-task-dep"
+    ],
+    "dependents": [],
+    "first_extract_read_only": {
+      "changed": [],
+      "tracked_files": 4
+    }
+  }
+}

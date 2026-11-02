@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "plugin": "dev-graph",
+  "profile": "incremental",
+  "policy": {
+    "max_live_trials": 2,
+    "max_concurrency": 2,
+    "effective_concurrency": 2,
+    "evidence_reuse_requires": [
+      "schema-valid PASS live verdict",
+      "matching behavior closure digest",
+      "stable scenario_id (bump when scenario contract changes)",
+      "matching transcript digest"
+    ]
+  },
+  "counts": {
+    "static": 0,
+    "fork": 1,
+    "reuse": 0,
+    "run": 2,
+    "defer": 7
+  },
+  "live_batches": [
+    [
+      "run-dev-graph-decompose",
+      "run-dev-graph-init"
+    ]
+  ],
+  "skills": [
+    {
+      "skill": "run-dev-graph-decompose",
+      "acceptance_tier": "live",
+      "behavior_sha256": "9aadd495ea1a7c5a3f84442a67358f5eaf43f3bd5895c22fe3fa8d2ddde293a4",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-init",
+      "acceptance_tier": "live",
+      "behavior_sha256": "058711bd7bfbb666b76c2da714bc70514ce25fc550d8ad1fece8d431e8ffdcda",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-node",
+      "acceptance_tier": "live",
+      "behavior_sha256": "eb883e2e990483e614aeffd67902c42255dd43b007c0b6cc95853fced8f66803",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-render",
+      "acceptance_tier": "live",
+      "behavior_sha256": "40f20ce5b71bfcab257d66eb8a83f708ee2105e91c39c9e3cb0d640b8a56aa50",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-requirements",
+      "acceptance_tier": "live",
+      "behavior_sha256": "15598a4ae7ce228da94b957e5a3db1e2a42aa74b329ffd390e4a8090ec0b765b",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-schedule",
+      "acceptance_tier": "live",
+      "behavior_sha256": "fafb2a1db022bb069eb75352881f1a1fef8b6ad3ddef7fc780b5b72800ecfd0d",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-status",
+      "acceptance_tier": "live",
+      "behavior_sha256": "f42a70300131a5bbd1fff74b5ffd760c31d620a1b878a21a7d83e05095c94ca0",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-sync",
+      "acceptance_tier": "live",
+      "behavior_sha256": "4c0c9b8cc1e74a2019d73a9317d3a55c606ba1b039f668e36be76caee5fd59a0",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-system-spec",
+      "acceptance_tier": "live",
+      "behavior_sha256": "bddcc887b9dcb25c2ff4f0c2e4a6de28c4ee18e51dd99a94fb54d557002f0eda",
+      "action": "defer",
+      "reason": "live-budget-exhausted:2",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-skill-feedback",
+      "acceptance_tier": "fork",
+      "behavior_sha256": "d31c846501ed0d7f2442ed5c1a87ed34ae6f4bbc8e1acddf3022a7a452cb1122",
+      "action": "fork",
+      "reason": "acceptance-tier-fork",
+      "reused_evidence": null
+    }
+  ]
+}

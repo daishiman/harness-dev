@@ -63,6 +63,7 @@ STAGE_CONFIG = "handout-output.json"
 
 ROUTE_MARKER = ".handout-route.json"
 PLACED_CONFIG_NAME = "handout-config.json"
+SELECTION_SUFFIX = ".visual-selection.json"
 ASSETS_DIRNAME = "assets"
 BODY_NAME = "handout.html"
 READ_ME_NAME = "README.md"
@@ -175,19 +176,24 @@ def require_doc_type(data: dict) -> str:
     return value
 
 
-def load_preset_module():
-    """C23 を importlib でモジュールとして読み込む (sanctioned_access の唯一の経路)。"""
-    if not PRESET_SCRIPT.is_file():
-        raise ContractError("語彙正本の入口 {} が実在しない".format(PRESET_SCRIPT.name))
+def load_peer_module(path: Path, name: str):
+    """同梱のPython実体を1つの読込機構で解決する。"""
+    if not path.is_file():
+        raise ContractError("同梱スクリプト {} が実在しない".format(path.name))
     try:
-        spec = importlib.util.spec_from_file_location(PRESET_MODULE_NAME, PRESET_SCRIPT)
+        spec = importlib.util.spec_from_file_location(name, path)
         if spec is None or spec.loader is None:
             raise ImportError("spec を組み立てられない")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
     except BaseException as exc:
-        raise ContractError("語彙正本の入口を読み込めない: {} ({})".format(PRESET_SCRIPT.name, exc))
+        raise ContractError("同梱スクリプトを読み込めない: {} ({})".format(path.name, exc))
     return module
+
+
+def load_preset_module():
+    """C23への到達は、このモジュール読込呼出し1か所に閉じる。"""
+    return load_peer_module(PRESET_SCRIPT, PRESET_MODULE_NAME)
 
 
 def resolve_dir_token(module, doc_type: str):
@@ -437,6 +443,23 @@ def write_marker(directory: Path, payload: dict) -> None:
     )
 
 
+def read_selection_receipt(path: Path, config_data: dict):
+    """C01が作った選定証跡を既存の検査点で確認する。新たに採点・再束縛しない。"""
+    if not path.exists():
+        return None
+    try:
+        raw = path.read_bytes()
+        receipt = json.loads(raw.decode("utf-8"))
+        validator_path = Path(__file__).resolve().parent / "validate-visual-selection.py"
+        validator = load_peer_module(validator_path, "hb_selection_receipt")
+        errors = validator.validate(config_data, receipt)
+    except (OSError, ValueError, UnicodeDecodeError) as error:
+        raise ContractError("図解選定証跡を読めない: {} ({})".format(path, error))
+    if errors:
+        raise ViolationError(["図解選定証跡 {}: {}".format(path, error) for error in errors])
+    return raw
+
+
 # ---------------------------------------------------------------------------
 # 同梱 4 点の検査 (algorithm 10)
 # ---------------------------------------------------------------------------
@@ -464,6 +487,8 @@ def run(args) -> int:
     require_normalized(config_data)
     date_value = require_date(config_data)
     doc_type = require_doc_type(config_data)
+    selection_source = Path(str(config_path) + SELECTION_SUFFIX)
+    selection_bytes = read_selection_receipt(selection_source, config_data)
 
     module = load_preset_module()
     token = resolve_dir_token(module, doc_type)
@@ -496,6 +521,8 @@ def run(args) -> int:
             copy_assets(assets_src, target / ASSETS_DIRNAME)
         if args.place_config:
             (target / PLACED_CONFIG_NAME).write_bytes(config_bytes)
+            if selection_bytes is not None:
+                (target / (PLACED_CONFIG_NAME + SELECTION_SUFFIX)).write_bytes(selection_bytes)
         write_marker(
             target,
             {
@@ -510,6 +537,9 @@ def run(args) -> int:
         )
 
     states = inspect_bundle(target)
+    placed_selection = target / (PLACED_CONFIG_NAME + SELECTION_SUFFIX)
+    if args.check_only and placed_selection.exists():
+        read_selection_receipt(placed_selection, config_data)
 
     lines = [os.path.realpath(target_text), "resolved_from: {}".format(stage)]
     for name, writer, state in states:
@@ -524,6 +554,7 @@ def run(args) -> int:
             "config_sha256": digest,
             "bundle": {name: state for name, _writer, state in states},
             "bundle_writers": {name: writer for name, writer, _state in states},
+            "visual_selection": "present" if placed_selection.is_file() else "absent",
         }
         Path(args.json_report).write_text(
             json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -536,6 +567,8 @@ def run(args) -> int:
             for name, writer, state in states
             if state == "absent"
         ]
+        if selection_bytes is not None and not placed_selection.is_file():
+            missing.append("図解選定証跡が納品構成へ同梱されていない: " + placed_selection.name)
         if missing:
             emit_errors(missing)
             return EXIT_VIOLATION

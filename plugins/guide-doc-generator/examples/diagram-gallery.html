@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>図解の表現と読みやすさ</title><style>:root {
+  --nav-h: 0px;
+  --side-nav-w: 248px;
+  --pop-primary: #43a4f5;
+  --pop-primary-pastel: #8ecdf8;
+  --pop-primary-soft: #d9edfe;
+  --pop-primary-deep: #2273b8;
+  --pop-bg: #eaf5fe;
+  --ink: #1b2733;
+  --ink-muted: #5b6b7a;
+  --line: #dbe6ef;
+  --subtle: #f4f8fc;
+  --card-radius: 24px;
+  --font-num: "Helvetica Neue", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+/* 停止位置の余白は 2 段に分ける。ここは節の上へ必ず空ける最小の余白 (定数)、
+   目次に被る分は .section-card の scroll-margin-top (--nav-h) が足す。
+   柱では --nav-h が 0 になるため、残るのはこの余白だけになる。 */
+html { scroll-padding-top: 12px; }
+body {
+  margin: 0;
+  background: var(--pop-bg);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  font-feature-settings: "palt";
+  line-height: 1.8;
+}
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.unit { font-size: 62%; font-weight: 600; }
+.pop-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--subtle);
+  border-bottom: 1px solid var(--line);
+  /* 本文がナビ帯の下へ潜るとき、境界が線 1 本だと重なりが読めない。
+     影は高さを持たないので sticky のオフセット計算 (--nav-h) に影響しない。 */
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
+}
+/* 節が増えても目次を隠さない。1 行に収まらなくなったら横スクロールではなく
+   折り返して 2 行目へ回す (横スクロールは「まだ右に項目がある」ことが見えない)。
+   行数の上限は config/handout-visual-policy.json#nav.max_rows が正本で、
+   そこを超えた分だけこの帯の中で縦スクロールする。帯そのものは sticky なので
+   どこまでスクロールしても目次は消えない。 */
+/* 目次を左の柱へ置く (nav.layout=sidebar)。柱は本文と横に並ぶので、
+   縦は 100vh を丸ごと使えて全項目が一望でき、本文の上には一切被らない
+   (--nav-h が 0 になるのはこのため)。柱の中で溢れた分だけが柱の中で
+   縦スクロールし、柱そのものは sticky なのでどこまで読んでも消えない。 */
+.page-shell { display: block; }
+/* 柱は DOM 上つねに本文より前にある。キーボードで読む人は毎回すべての札を
+   通り抜けないと本文へ入れないので、最初の Tab で本文へ跳べる出口を置く。
+   display:none にすると focus できないため、幅 1px へ畳んで隠し、
+   focus されたときだけ柱の上へ現れる (マウスで読む人の紙面は変わらない)。 */
+.skip-to-main {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-to-main:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 40;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 8px 14px;
+  clip-path: none;
+  border-radius: 999px;
+  background: var(--pop-primary-deep);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.doc-title-bar {
+  margin: 0;
+  padding: 8px 16px 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.navbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  max-height: calc(2 * 2.5rem + 20px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 16px;
+  scrollbar-width: thin;
+}
+@media (min-width: 1080px) {
+  .page-shell {
+    display: grid;
+    /* 柱の幅は正本 (nav.sidebar_width_px)。本文側は minmax(0,1fr) にする —
+       auto のままだと図表 1 枚が列幅を押し広げ、柱ごと横スクロールになる。 */
+    grid-template-columns: var(--side-nav-w) minmax(0, 1fr);
+    align-items: start;
+  }
+  .pop-header--sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    border-bottom: none;
+    border-right: 1px solid var(--line);
+    box-shadow: 1px 0 6px rgba(15, 23, 42, 0.06);
+  }
+  .pop-header--sidebar .doc-title-bar {
+    /* 左揃え。柱では行頭が視線の起点になるため、題も札も同じ縦線へ揃える。 */
+    text-align: left;
+    white-space: normal;
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pop-header--sidebar .navbar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    padding: 10px;
+  }
+  .pop-header--sidebar .nav-chip {
+    max-width: none;
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    border-radius: 10px;
+    border-color: transparent;
+    background: transparent;
+  }
+  .pop-header--sidebar .nav-chip:hover,
+  .pop-header--sidebar .nav-chip:focus-visible { background: #fff; }
+  .pop-header--sidebar .nav-chip[aria-current="true"] {
+    background: var(--chip-accent);
+    border-color: var(--chip-accent);
+  }
+  /* 下の帯は本文に対する操作なので、柱の上には掛けない。画面幅いっぱいに
+     敷くと 100vh の柱の足元 (最後の札) が帯の下に隠れて押せなくなる。 */
+  .toolbar { left: var(--side-nav-w); }
+}
+@media (max-width: 1079px) {
+  /* 柱を置くと本文が読める幅を割る画面では、従来どおり上の帯へ戻す
+     (nav.collapse_below_px が正本)。帯は本文の上に被るので、被る量
+     --nav-h を戻さないとアンカー移動でセクション先頭が帯の下へ潜る。 */
+  :root { --nav-h: 96px; }
+}
+.navbar a { color: var(--pop-primary-deep); text-decoration: none; }
+.nav-chip {
+  /* 単色。未読・既読で色を変えず、現在地だけを塗りで示す。 */
+  --chip-accent: var(--pop-primary-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  max-width: 16em;
+  padding: 3px 12px 3px 3px;
+  /* 未選択の枠は罫線色。全チップを主題色で囲うと現在地の塗りが埋もれる。 */
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chip-accent);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.nav-chip-num {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--chip-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.nav-chip-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-chip:hover, .nav-chip:focus-visible { background: var(--subtle); }
+.nav-chip[aria-current="true"] {
+  background: var(--chip-accent);
+  border-color: var(--chip-accent);
+  color: #fff;
+}
+.nav-chip[aria-current="true"] .nav-chip-num { background: #fff; color: var(--chip-accent); }
+.wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+.doc-head { padding: 10px 16px 0; }
+.doc-date { margin: 0; }
+.hero {
+  position: relative;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.hero-frame {
+  position: absolute;
+  inset: 0;
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  pointer-events: none;
+}
+.hero > *:not(.hero-frame) { position: relative; }
+.hero-thumb {
+  margin: 0 0 16px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.hero-thumb-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* 縦横比を固定して切り出す。素材の比率がまちまちでも冒頭の高さが揃い、
+     タイトルの位置が資料ごとに上下しない。 */
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.hero h1 { margin: 0 0 8px; }
+.date-pill {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+}
+.goal-chip {
+  display: inline-block;
+  padding: 2px 12px;
+  margin: 2px 4px 2px 0;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+}
+/* 冒頭は「読む段落」でなく「1 行ずつ拾える箇条書き」。ラベルを行頭の札に固定し、
+   本文は 1 列で流す (利用者要求 R9/R3 + 2026-08-25『箇条書きでわかりやすく
+   シンプルに』)。3 枚を横へ並べると 1 列が 220px まで細り、1 行 10 字前後で
+   折り返して語の途中が切れる — 読みにくさの出所は文の長さでなく列の細さだった。 */
+.hero-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+/* 面は白 1 色、区別は主題色 1 色の細い帯だけで付ける。新しい色トークンは足さない
+   (テーマのアクセント 4 段以外の色を増やさない規約)。札は本文の左でなく 1 段上に
+   置き、冒頭の他の塊 (hero-list 群) と入れ物の形を同値にする (2026-08-26 利用者
+   要求『冒頭の他の一覧と同じく、1 つ上の行に見出しを置く』)。左に並べると
+   本文の左端だけがカードごとに違い、同じ冒頭の中で読み口が 2 種類に割れていた。 */
+.hero-card {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--pop-primary);
+  border-radius: var(--card-radius);
+  padding: 12px 16px;
+  background: #fff;
+}
+.hero-card-label {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+}
+/* 日本語を語の途中で折らない。auto-phrase は文節の切れ目で折り、未対応の環境でも
+   line-break: strict が最低限の禁則を担う (どちらも 1 行の見え方だけを変え、
+   可視テキストは変えない = NAR-02 の一致は保たれる)。 */
+.hero-card-body {
+  margin: 0;
+  line-height: 1.9;
+  line-break: strict;
+  overflow-wrap: break-word;
+  word-break: auto-phrase;
+  text-wrap: pretty;
+}
+/* 文が 2 つ以上ある本文は段落で流さず、文ごとの行にする (2026-08-25 利用者要求
+   『目的や背景が複数あるときは冒頭の他の一覧と同じ表示方法に』)。行頭記号と
+   字下げは meta-list と同値にして、冊子の中で箇条書きの形が 1 つになるようにする。
+   左の主題色の帯はカード側に残るので、色の手がかりは変わらない。 */
+.hero-card-body-list {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.hero-card-body-list > li + li { margin-top: 4px; }
+/* 最初に読む 1 枚 (並び順の先頭 = goal) だけ面を淡く塗って視線の入口にする。 */
+.hero-card:first-child { background: var(--pop-primary-soft); }
+.hero-card:first-child .hero-card-label { background: #fff; }
+/* 見出しの無い ul が縦に積まれると、何の一覧かを知らないまま行を読むことに
+   なる。リストごとに見出しを付け、塊として区切る。左の帯はカードと同値にして、
+   冒頭の塊がどれも同じ読み口に見えるようにする。 */
+.hero-list {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--pop-primary);
+  border-radius: var(--card-radius);
+  background: #fff;
+}
+/* いま指している 1 枚を、面と帯の濃さで返す (2026-08-25 利用者要求『カードごとに
+   ホバーしたら今ここを見ていると分かるように』)。増やすのは主題色 1 色の濃淡と影
+   だけで、新しい色トークンも文字も足さない — CSS の content へ語を置くと、構成
+   データの外から可視テキストが生えて NAR-02 の一致が崩れる。 */
+@media (hover: hover) {
+  .hero-card, .hero-list {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .hero-card:hover, .hero-list:hover {
+    border-color: var(--pop-primary-deep);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+  .hero-card:hover .hero-card-label,
+  .hero-list:hover .hero-list-heading {
+    background: var(--pop-primary);
+    color: #fff;
+  }
+}
+/* 動きを減らす設定では持ち上げをやめる。色の変化だけで「いま指している」は伝わる。 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-card, .hero-list { transition: none; }
+  .hero-card:hover, .hero-list:hover { transform: none; }
+}
+.hero-list-heading {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+  font-size: 0.8em;
+  font-weight: 700;
+}
+.meta-list { margin: 8px 0; padding-left: 1.2em; }
+/* 前提コネクタは「読む文」でなく「並ぶ札」。行頭記号と字下げを外し、
+   チップとして横に並べる (箇条書きのまま長い行にしない・R11/R9)。 */
+.prerequisite-connectors {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prerequisite-connectors .connector {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--subtle);
+  font-size: 0.92em;
+}
+.prerequisite-connectors .connector-label { font-weight: 600; }
+.prerequisite-connectors .connector-note { color: var(--ink-muted); font-size: 0.9em; }
+.section-card {
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  scroll-margin-top: var(--nav-h, 96px);
+  animation: rise-in 420ms ease-out both;
+  animation-delay: var(--stagger, 0ms);
+}
+.section-label { margin: 0 0 8px; }
+.lead-line { font-weight: 600; }
+.judgment-axis {
+  border-left: 4px solid var(--pop-primary);
+  padding-left: 12px;
+}
+.steps, .checklist, .downloads, .nav-links, .action-items, .handson {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.step-row, .check-row, .dl-row, .nav-link-row, .ai-row, .hs-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.step-num {
+  display: inline-block;
+  min-width: 2em;
+  color: var(--pop-primary-deep);
+  font-weight: 700;
+}
+.step-row { display: grid; grid-template-columns: 2em minmax(140px, 1fr) minmax(0, 2fr); gap: 12px; }
+.step-label, .step-detail { min-width: 0; overflow-wrap: anywhere; }
+.handson-title { margin: 24px 0 12px; font-size: 1.1rem; }
+.hs-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--pop-bg);
+}
+.hs-cell { min-width: 0; overflow-wrap: anywhere; }
+.hs-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--pop-primary-deep);
+}
+@media (max-width: 640px) {
+  .hs-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .step-row { grid-template-columns: 2em minmax(0, 1fr); gap: 4px 8px; }
+  .step-detail { grid-column: 2; }
+}
+.trio, .features { display: flex; gap: 12px; flex-wrap: wrap; }
+.trio-card, .feature-card, .versus-side {
+  flex: 1 1 220px;
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  background: var(--pop-bg);
+}
+/* 節の中のカードも冒頭と同じ返し方にする。指している 1 枚だけ左に主題色の帯が
+   立ち、面が浮く (冒頭だけホバーが効くと、同じ見た目の箱で反応が食い違う)。
+   帯は透明な border を最初から確保した上で色を差すので、幅は動かない。節の外枠
+   (.section-card) は入れない — 面が広すぎて、常時点いているのと変わらなくなる。 */
+.trio-card, .feature-card, .versus-side {
+  border-left: 4px solid transparent;
+}
+@media (hover: hover) {
+  .trio-card, .feature-card, .versus-side {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover {
+    border-left-color: var(--pop-primary);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trio-card, .feature-card, .versus-side { transition: none; }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover { transform: none; }
+}
+.versus { display: flex; gap: 12px; flex-wrap: wrap; }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { border-collapse: collapse; width: 100%; min-width: var(--table-min-width, 480px); }
+.table-wrap th[scope="row"] { min-width: 7em; }
+.table-scroll-hint { display: none; }
+@media (max-width: 640px) {
+  .table-scroll-hint { display: block; font-size: 0.875rem; color: var(--ink-muted); }
+}
+@media print {
+  .table-wrap table { min-width: 0; }
+  .table-wrap th[scope="row"] { min-width: 0; }
+  .table-scroll-hint { display: none; }
+}
+.table-wrap th, .table-wrap td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: left;
+}
+.hl-cell { background: var(--pop-primary-soft); }
+.choice-map { display: flex; gap: 8px; flex-wrap: wrap; }
+.map-item, .chip, .tab-btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--pop-bg);
+  color: var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.map-item[aria-pressed="true"], .chip[aria-pressed="true"] {
+  background: var(--pop-primary-soft);
+  border-color: var(--pop-primary);
+}
+.prompt-box { border: 1px solid var(--line); border-radius: var(--card-radius); padding: 12px; }
+.prompt-text { white-space: pre-wrap; margin: 0 0 8px; }
+.prompt-copy, .memo-btn, .toolbar-toggle, .lightbox-close {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--pop-bg);
+  color: var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.dl-hint { color: var(--ink-muted); font-size: 88%; }
+.nav-link { font-weight: 600; }
+.nav-link-note { color: var(--ink-muted); font-size: 88%; }
+/* 画面ではラベルの方が行き先を早く伝えるので URL は隠す。紙では打ち込む以外に
+   辿る手段が無いため、印刷時にだけ出す (@media print で display を戻す)。 */
+.nav-link-url { display: none; }
+.tab-strip { display: flex; gap: 8px; margin-bottom: 8px; }
+.accordion { display: grid; gap: 10px; margin: 14px 0; }
+.fold { border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); overflow: hidden; }
+.fold > summary { display: flex; align-items: center; gap: 10px; padding: 14px; cursor: pointer; font-weight: 700; line-height: 1.6; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: var(--pop-primary-soft); }
+.fold-mark { flex: none; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--pop-primary-soft); position: relative; }
+.fold-mark::before { content: ""; position: absolute; left: 50%; top: 50%; width: .42em; height: .42em; border-right: 2px solid var(--pop-primary-deep); border-bottom: 2px solid var(--pop-primary-deep); transform: translate(-65%, -50%) rotate(-45deg); }
+.fold[open] > summary .fold-mark::before { transform: translate(-50%, -70%) rotate(45deg); }
+.fold[open] > summary { border-bottom: 1px dashed var(--line); }
+.fold-title { min-width: 0; overflow-wrap: anywhere; }
+.fold-body { display: grid; gap: 8px; padding: 14px 18px; overflow-wrap: anywhere; }
+.fold-line { margin: 0; white-space: pre-wrap; }
+.fold > summary:focus-visible { outline-offset: -3px; }
+.asset { margin: 12px 0; }
+.asset-img { max-width: 100%; height: auto; cursor: zoom-in; }
+.asset-caption { color: var(--ink-muted); font-size: 88%; }
+.diagram { margin: 18px 0; min-width: 0; }
+.diagram-viewport { overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); }
+.diagram-viewport svg { display: block; width: max(100%, var(--diagram-width)); max-width: none; height: auto; }
+.diagram-viewport .diagram-image { display: block; width: auto; max-width: none; max-height: none; height: auto; cursor: default; }
+.diagram-title { margin: 0 0 10px; font-size: 1rem; font-weight: 700; }
+.diagram-metric { border: 1px solid var(--line); border-radius: 16px; padding: 24px 16px; background: var(--pop-primary-soft); text-align: center; overflow-wrap: anywhere; }
+.diagram-metric dl { display: flex; flex-direction: column; margin: 0; gap: 10px; }
+.diagram-metric-caption { order: 2; font-size: 1rem; font-weight: 700; }
+.diagram-metric-amount { order: 1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 8px; margin: 0; }
+.diagram-metric-value { min-width: 0; font-size: clamp(2rem, 10vw, 4rem); font-weight: 800; color: var(--pop-primary-deep); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.diagram-metric-unit { font-size: 1.25rem; color: var(--ink-muted); }
+.diagram-metric-sub { margin: 14px 0 0; font-size: .875rem; color: var(--ink-muted); }
+.diagram-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.diagram-hint { color: var(--ink-muted); font-size: .875rem; }
+.diagram-expand, .diagram-close { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; background: var(--pop-primary-soft); color: var(--ink); cursor: pointer; font: inherit; }
+.diagram-expand[hidden] { display: none; }
+.diagram-dialog { width: 96vw; max-width: 1400px; max-height: 94dvh; padding: 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); background: var(--surface, #fff); }
+.diagram-dialog::backdrop { background: rgba(15, 23, 42, .6); }
+.diagram-dialog .diagram-viewport { margin-top: 12px; max-height: 78dvh; overflow: auto; }
+.ic { width: 1.1em; height: 1.1em; vertical-align: -0.15em; color: var(--pop-primary-deep); }
+.memo, .memo-global {
+  border: 1px dashed var(--line);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--pop-bg);
+}
+.memo-body { width: 100%; min-height: 4.5em; border: 1px solid var(--line); border-radius: 12px; }
+.memo-note { margin: 8px 0; font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+/* 画面下に常駐する帯。メモを残す手段 (埋め込み保存) は、全体メモの箱まで
+   スクロールしないと押せない位置に置かない — 押されなければメモは消える。
+   利用者指定 2026-08-19『フッターも常に表示。メモを埋め込んだ HTML のボタンは
+   常に表示する』。 */
+.toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--subtle);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -1px 6px rgba(15, 23, 42, 0.06);
+}
+/* 帯の下へ本文の最後が潜らないようにする (帯は本文の上に浮いている)。 */
+body.handout { padding-bottom: 64px; }
+.toolbar-primary {
+  background: var(--pop-primary-deep);
+  border-color: var(--pop-primary-deep);
+  color: #fff;
+  font-weight: 700;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.lightbox[hidden] { display: none; }
+.lightbox-stage img { max-width: 92vw; max-height: 82vh; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--pop-primary-deep);
+  outline-offset: 2px;
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none; transition: none; }
+}
+@page { size: A4; margin: 14mm; }
+@media print {
+  .pop-header { position: static; }
+  /* 紙には横スクロールが無い。1 行固定のままだと溢れた項目が黙って消えるため
+     折返しへ戻す (sticky でなくなるので高さ可変が無害になる)。
+     柱も紙では成立しない (100vh の柱が 1 ページ目を占領する) ので、
+     段組みを解いて目次を先頭の帯へ戻す。 */
+  .page-shell { display: block; }
+  .pop-header--sidebar { height: auto; border-right: none; box-shadow: none; }
+  /* 紙に「本文へ移動」は届かない。焦点を持てない媒体では消す。 */
+  .skip-to-main, .skip-to-main:focus { display: none; }
+  /* 逆に案内リンクの URL は紙でだけ要る。押せないので文字列が唯一の手掛かり。 */
+  .nav-link-url { display: inline; color: var(--ink-muted); font-size: 88%; }
+  .navbar { flex-wrap: wrap; overflow-x: visible; }
+  .pop-header--sidebar .navbar { flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
+  .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
+  .toolbar { position: static; }
+  .lightbox { display: none; }
+  .diagram-tools, .diagram-dialog { display: none; }
+  .diagram-viewport { overflow: visible; border: none; }
+  .diagram-viewport svg { width: 100%; max-width: 100%; min-width: 0; }
+  .diagram-viewport .diagram-image { width: auto !important; max-width: 100%; height: auto; }
+  .fold { break-inside: avoid; }
+  .fold-mark { display: none; }
+  [data-hb-part="lightbox"] { display: none; }
+  [data-hb-part="toolbar"] { display: none; }
+  [data-hb-part="memo"] { display: none; }
+  [data-hb-part="memo-global"] { display: none; }
+  .section-card { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3, h4, h5, h6 { break-after: avoid; break-inside: avoid; }
+}
+
+.gallery-medium, .candidate-rendering, .candidate-no-example { color: var(--ink-muted); font-size: .875rem; }
+.gallery-medium { margin: 0 0 14px; }
+.gallery-html-example { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); }
+.gallery-html-example .step-label { flex: 0 0 7em; font-weight: 600; }
+.gallery-html-example .step-detail { min-width: 0; }
+.candidate-table-scroll { min-width: 0; overscroll-behavior-inline: contain; }
+.candidate-table { min-width: 640px; table-layout: fixed; }
+.candidate-table .candidate-relation { width: 112px; }
+.candidate-table .candidate-forms { width: 250px; }
+.candidate-table .candidate-condition { width: auto; }
+.candidate-examples { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; }
+.candidate-examples a { color: var(--pop-primary-deep); text-underline-offset: .2em; font-size: .875rem; }
+.candidate-rendering, .candidate-no-example { margin: 8px 0 0; }
+@media (max-width: 600px) {
+  .gallery-html-example { padding: 12px; }
+  .gallery-html-example .step-row { display: grid; grid-template-columns: 2em minmax(0,1fr); gap: 2px 8px; }
+  .gallery-html-example .step-num { grid-row: span 2; }
+  .gallery-html-example .step-detail { grid-column: 2; }
+}
+@media print {
+  .candidate-table { min-width: 0; table-layout: auto; }
+  .candidate-table-scroll { overflow: visible; }
+  .candidate-table col { width: auto; }
+  .candidate-scroll-hint { display: none; }
+}
+</style></head><body><a class="skip-to-main" href="#handout-main">本文へ移動</a><div class="page-shell"><header class="pop-header pop-header--sidebar"><p class="doc-title-bar">図解の表現と読みやすさ</p><nav class="navbar" aria-label="目次"><a class="nav-chip" href="#flow"><span class="chip-text">申請から承認までの流れ</span></a><a class="nav-chip" href="#compare"><span class="chip-text">案Aと案Bの比較</span></a><a class="nav-chip" href="#hierarchy"><span class="chip-text">組織の階層</span></a><a class="nav-chip" href="#cycle"><span class="chip-text">改善のサイクル</span></a><a class="nav-chip" href="#matrix"><span class="chip-text">施策の位置づけ</span></a><a class="nav-chip" href="#versus"><span class="chip-text">自前で作るか既製品を使うか</span></a><a class="nav-chip" href="#before_after"><span class="chip-text">手作業から自動化へ</span></a><a class="nav-chip" href="#analogy"><span class="chip-text">倉庫にたとえる</span></a><a class="nav-chip" href="#bignumber"><span class="chip-text">回答までの時間</span></a><a class="nav-chip" href="#relationship"><span class="chip-text">条件で承認先を分ける</span></a><a class="nav-chip" href="#sequence"><span class="chip-text">依頼と結果の受け渡し</span></a><a class="nav-chip" href="#timeline"><span class="chip-text">準備から公開までの節目</span></a><a class="nav-chip" href="#gantt"><span class="chip-text">確認と実装を並行する</span></a><a class="nav-chip" href="#bar"><span class="chip-text">同じ単位で件数を比べる</span></a><a class="nav-chip" href="#line"><span class="chip-text">週ごとの変化を見る</span></a><a class="nav-chip" href="#stages"><span class="chip-text">対象を段階的に絞る</span></a><a class="nav-chip" href="#html-steps"><span class="chip-text">短い手順を順番に読む</span></a><a class="nav-chip" href="#html-features"><span class="chip-text">独立した要点を並べる</span></a><a class="nav-chip" href="#html-table"><span class="chip-text">同じ観点で比べる</span></a><a class="nav-chip" href="#candidates">関係から表現を探す</a></nav></header><main class="wrap" id="handout-main"><div class="hero"><h1>文章の関係を、読める図へ</h1><p>HTMLは図の種類ではなく、資料の出力形式・描画方法です。短い手順や比較はHTML/CSS、接続線や座標を追う図はSVG、専用の記法は描画済み素材を選べます。</p><p><a href="#candidates">関係から表現を探し、実例へ進む</a></p><p>以下の数値・日程は表現確認用の架空データです。</p></div><section class="section-card" id="flow"><h2>1. 申請から承認までの流れ</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-flow" class="diagram" data-hb-diagram-pattern="flow" data-hb-diagram-data="{&quot;description&quot;: &quot;申請者が出してから承認が下りるまでの 3 段階&quot;, &quot;steps&quot;: [{&quot;id&quot;: &quot;st1&quot;, &quot;label&quot;: &quot;申請する&quot;, &quot;note&quot;: &quot;様式Aを使う&quot;}, {&quot;id&quot;: &quot;st2&quot;, &quot;label&quot;: &quot;確認する&quot;}, {&quot;id&quot;: &quot;st3&quot;, &quot;label&quot;: &quot;承認する&quot;}], &quot;id&quot;: &quot;example-flow&quot;, &quot;title&quot;: &quot;申請から承認までの流れ&quot;, &quot;pattern&quot;: &quot;flow&quot;}" data-hb-diagram-id="example-flow"><div class="diagram-viewport" tabindex="0" role="region" aria-label="申請から承認までの流れ（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-flow-1" role="img" viewBox="0 0 860 144">
+  <title>申請から承認までの流れ</title>
+  <desc>申請者が出してから承認が下りるまでの 3 段階</desc>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">申請から承認までの流れ</text>
+  <rect x="16" y="55" width="260" height="73" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="146" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">申請する</text>
+  <text x="146" y="110" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">様式Aを使う</text>
+  <rect x="300" y="55" width="260" height="73" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">確認する</text>
+  <rect x="584" y="55" width="260" height="73" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="714" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">承認する</text>
+  <path d="M 278 91 L 291 91" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 299 91 L 290 96 L 290 86 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <path d="M 562 91 L 575 91" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 583 91 L 574 96 L 574 86 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="steps 2-6 件。各件 {label, note?}" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">steps 2-6 件。各件 {label, note?}</p></div></details></div></section><section class="section-card" id="compare"><h2>2. 案Aと案Bの比較</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-compare" class="diagram" data-hb-diagram-pattern="compare" data-hb-diagram-data="{&quot;axes&quot;: [&quot;費用&quot;, &quot;速さ&quot;], &quot;items&quot;: [&quot;案A&quot;, &quot;案B&quot;], &quot;cells&quot;: [[&quot;高い&quot;, &quot;速い&quot;], [&quot;安い&quot;, &quot;遅い&quot;]], &quot;id&quot;: &quot;example-compare&quot;, &quot;title&quot;: &quot;案Aと案Bの比較&quot;, &quot;pattern&quot;: &quot;compare&quot;}" data-hb-diagram-id="example-compare"><div class="diagram-viewport" tabindex="0" role="region" aria-label="案Aと案Bの比較（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-compare-1" role="img" viewBox="0 0 860 209">
+  <title>案Aと案Bの比較</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">案Aと案Bの比較</text>
+  <rect x="16" y="55" width="828" height="44" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="383" y="81" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle" font-weight="600">費用</text>
+  <text x="690" y="81" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle" font-weight="600">速さ</text>
+  <rect x="16" y="99" width="828" height="47" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="28" y="127" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="600">案A</text>
+  <text x="383" y="125" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">高い</text>
+  <text x="690" y="125" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">速い</text>
+  <line x1="230" y1="99" x2="230" y2="146" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <line x1="537" y1="99" x2="537" y2="146" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <rect x="16" y="146" width="828" height="47" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="28" y="174" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="600">案B</text>
+  <text x="383" y="172" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">安い</text>
+  <text x="690" y="172" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">遅い</text>
+  <line x1="230" y1="146" x2="230" y2="193" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <line x1="537" y1="146" x2="537" y2="193" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="axes 1-6 件・items 2-4 件・cells は items×axes の全マス" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">axes 1-6 件・items 2-4 件・cells は items×axes の全マス</p></div></details></div></section><section class="section-card" id="hierarchy"><h2>3. 組織の階層</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-hierarchy" class="diagram" data-hb-diagram-pattern="hierarchy" data-hb-diagram-data="{&quot;root&quot;: {&quot;label&quot;: &quot;全社&quot;}, &quot;children&quot;: [{&quot;label&quot;: &quot;営業部&quot;, &quot;children&quot;: [{&quot;label&quot;: &quot;第1課&quot;}]}, {&quot;label&quot;: &quot;開発部&quot;}], &quot;id&quot;: &quot;example-hierarchy&quot;, &quot;title&quot;: &quot;組織の階層&quot;, &quot;pattern&quot;: &quot;hierarchy&quot;}" data-hb-diagram-id="example-hierarchy"><div class="diagram-viewport" tabindex="0" role="region" aria-label="組織の階層（横スクロール対応）" style="--diagram-width: 753px"><svg data-hb-kind="figure" id="hbdg-example-hierarchy-1" role="img" viewBox="0 0 860 276">
+  <title>組織の階層</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">組織の階層</text>
+  <path d="M 430 102 L 430 118 L 298 118 L 298 134" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 430 102 L 430 118 L 562 118 L 562 134" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 298 181 L 298 197 L 430 197 L 430 213" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <rect x="310" y="55" width="240" height="47" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">全社</text>
+  <rect x="178" y="134" width="240" height="47" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="298" y="162" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">営業部</text>
+  <rect x="442" y="134" width="240" height="47" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="562" y="162" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">開発部</text>
+  <rect x="310" y="213" width="240" height="47" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="430" y="241" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">第1課</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="root {label} と children 1-5 件。深さは root を第1層として 3 まで" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">root {label} と children 1-5 件。深さは root を第1層として 3 まで</p></div></details></div></section><section class="section-card" id="cycle"><h2>4. 改善のサイクル</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-cycle" class="diagram" data-hb-diagram-pattern="cycle" data-hb-diagram-data="{&quot;steps&quot;: [{&quot;id&quot;: &quot;cy1&quot;, &quot;label&quot;: &quot;計画する&quot;}, {&quot;id&quot;: &quot;cy2&quot;, &quot;label&quot;: &quot;実行する&quot;}, {&quot;id&quot;: &quot;cy3&quot;, &quot;label&quot;: &quot;見直す&quot;}], &quot;id&quot;: &quot;example-cycle&quot;, &quot;title&quot;: &quot;改善のサイクル&quot;, &quot;pattern&quot;: &quot;cycle&quot;}" data-hb-diagram-id="example-cycle"><div class="diagram-viewport" tabindex="0" role="region" aria-label="改善のサイクル（横スクロール対応）" style="--diagram-width: 753px"><svg data-hb-kind="figure" id="hbdg-example-cycle-1" role="img" viewBox="0 0 860 458">
+  <title>改善のサイクル</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">改善のサイクル</text>
+  <path d="M 541 119 A 170 170 0 0 1 597 216" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 597 216 L 590 208 L 600 206 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <path d="M 486 409 A 170 170 0 0 1 374 409" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 374 409 L 384 407 L 381 416 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <path d="M 263 216 A 170 170 0 0 1 319 119" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 319 119 L 315 129 L 309 121 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <rect x="335" y="55" width="190" height="47" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">計画する</text>
+  <rect x="482" y="310" width="190" height="47" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="577" y="338" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">実行する</text>
+  <rect x="188" y="310" width="190" height="47" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="283" y="338" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">見直す</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="steps 3-6 件。各件 {label}" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">steps 3-6 件。各件 {label}</p></div></details></div></section><section class="section-card" id="matrix"><h2>5. 施策の位置づけ</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-matrix" class="diagram" data-hb-diagram-pattern="matrix" data-hb-diagram-data="{&quot;x_axis&quot;: {&quot;low&quot;: &quot;低い&quot;, &quot;high&quot;: &quot;高い&quot;}, &quot;y_axis&quot;: {&quot;low&quot;: &quot;小さい&quot;, &quot;high&quot;: &quot;大きい&quot;}, &quot;items&quot;: [{&quot;id&quot;: &quot;mx1&quot;, &quot;label&quot;: &quot;施策A&quot;, &quot;x&quot;: 0.2, &quot;y&quot;: 0.8}, {&quot;id&quot;: &quot;mx2&quot;, &quot;label&quot;: &quot;施策B&quot;, &quot;x&quot;: 0.7, &quot;y&quot;: 0.3}], &quot;id&quot;: &quot;example-matrix&quot;, &quot;title&quot;: &quot;施策の位置づけ&quot;, &quot;pattern&quot;: &quot;matrix&quot;}" data-hb-diagram-id="example-matrix"><div class="diagram-viewport" tabindex="0" role="region" aria-label="施策の位置づけ（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-matrix-1" role="img" viewBox="0 0 860 550">
+  <title>施策の位置づけ</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">施策の位置づけ</text>
+  <rect x="80" y="63" width="382" height="221" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <rect x="462" y="63" width="382" height="221" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <rect x="80" y="284" width="382" height="222" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <rect x="462" y="284" width="382" height="222" fill="var(--subtle, #f4f8fc)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <line x1="462" y1="63" x2="462" y2="506" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <line x1="80" y1="284" x2="844" y2="284" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <text x="16" y="77" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">大きい</text>
+  <text x="16" y="506" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">小さい</text>
+  <text x="80" y="528" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">低い</text>
+  <text x="844" y="528" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="end">高い</text>
+  <circle cx="233" cy="152" r="7" fill="var(--pop-primary-deep, #2273b8)" stroke="var(--surface, #ffffff)" stroke-width="2" />
+  <text x="233" y="174" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">施策A</text>
+  <circle cx="615" cy="373" r="7" fill="var(--pop-primary-deep, #2273b8)" stroke="var(--surface, #ffffff)" stroke-width="2" />
+  <text x="615" y="395" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">施策B</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="x_axis/y_axis の {low, high} と items 1-8 件。各件 {label, x, y} は 0.0-1.0" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">x_axis/y_axis の {low, high} と items 1-8 件。各件 {label, x, y} は 0.0-1.0</p></div></details></div></section><section class="section-card" id="versus"><h2>6. 自前で作るか既製品を使うか</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-versus" class="diagram" data-hb-diagram-pattern="versus" data-hb-diagram-data="{&quot;left&quot;: {&quot;label&quot;: &quot;自前で作る&quot;, &quot;bullets&quot;: [&quot;自由度が高い&quot;, &quot;工数がかかる&quot;]}, &quot;right&quot;: {&quot;label&quot;: &quot;既製品を使う&quot;, &quot;bullets&quot;: [&quot;早く始められる&quot;]}, &quot;id&quot;: &quot;example-versus&quot;, &quot;title&quot;: &quot;自前で作るか既製品を使うか&quot;, &quot;pattern&quot;: &quot;versus&quot;}" data-hb-diagram-id="example-versus"><div class="diagram-viewport" tabindex="0" role="region" aria-label="自前で作るか既製品を使うか（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-versus-1" role="img" viewBox="0 0 860 184">
+  <title>自前で作るか既製品を使うか</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">自前で作るか既製品を使うか</text>
+  <rect x="16" y="55" width="402" height="113" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="217" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">自前で作る</text>
+  <circle cx="32" cy="105" r="3" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="46" y="114" fill="var(--ink, #1b2733)" font-size="14" text-anchor="start">自由度が高い</text>
+  <circle cx="32" cy="133" r="3" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="46" y="142" fill="var(--ink, #1b2733)" font-size="14" text-anchor="start">工数がかかる</text>
+  <rect x="442" y="55" width="402" height="113" rx="8" fill="var(--subtle, #f4f8fc)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="643" y="83" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">既製品を使う</text>
+  <circle cx="458" cy="105" r="3" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="472" y="114" fill="var(--ink, #1b2733)" font-size="14" text-anchor="start">早く始められる</text>
+  <line x1="430" y1="55" x2="430" y2="168" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="left/right の {label, bullets 1-5 件}" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">left/right の {label, bullets 1-5 件}</p></div></details></div></section><section class="section-card" id="before_after"><h2>7. 手作業から自動化へ</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-before_after" class="diagram" data-hb-diagram-pattern="before_after" data-hb-diagram-data="{&quot;before&quot;: {&quot;label&quot;: &quot;変更前&quot;, &quot;bullets&quot;: [&quot;毎回手入力&quot;]}, &quot;after&quot;: {&quot;label&quot;: &quot;変更後&quot;, &quot;bullets&quot;: [&quot;自動で反映&quot;]}, &quot;arrow_label&quot;: &quot;切り替える&quot;, &quot;id&quot;: &quot;example-before_after&quot;, &quot;title&quot;: &quot;手作業から自動化へ&quot;, &quot;pattern&quot;: &quot;before_after&quot;}" data-hb-diagram-id="example-before_after"><div class="diagram-viewport" tabindex="0" role="region" aria-label="手作業から自動化へ（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-before_after-1" role="img" viewBox="0 0 860 167">
+  <title>手作業から自動化へ</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">手作業から自動化へ</text>
+  <rect x="16" y="55" width="346" height="96" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="189" y="84" fill="var(--ink-muted, #5b6b7a)" font-size="17" text-anchor="middle" font-weight="700">変更前</text>
+  <circle cx="32" cy="101" r="3" fill="var(--line, #dbe6ef)" aria-hidden="true" />
+  <text x="46" y="110" fill="var(--ink, #1b2733)" font-size="14" text-anchor="start">毎回手入力</text>
+  <rect x="498" y="55" width="346" height="96" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="671" y="84" fill="var(--ink, #1b2733)" font-size="17" text-anchor="middle" font-weight="700">変更後</text>
+  <circle cx="514" cy="101" r="3" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="528" y="110" fill="var(--ink, #1b2733)" font-size="14" text-anchor="start">自動で反映</text>
+  <text x="432" y="85" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle" font-weight="600">切り替える</text>
+  <path d="M 368 103 L 480 103" fill="none" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="6" aria-hidden="true" />
+  <path d="M 496 103 L 478 116 L 478 90 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="before/after の {label, bullets 0-4 件} と arrow_label?" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">before/after の {label, bullets 0-4 件} と arrow_label?</p></div></details></div></section><section class="section-card" id="analogy"><h2>8. 倉庫にたとえる</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-analogy" class="diagram" data-hb-diagram-pattern="analogy" data-hb-diagram-data="{&quot;known&quot;: {&quot;label&quot;: &quot;倉庫&quot;, &quot;note&quot;: &quot;品物をしまう&quot;}, &quot;target&quot;: {&quot;label&quot;: &quot;データベース&quot;, &quot;note&quot;: &quot;情報をしまう&quot;}, &quot;pairs&quot;: [{&quot;from&quot;: &quot;棚&quot;, &quot;to&quot;: &quot;テーブル&quot;}], &quot;id&quot;: &quot;example-analogy&quot;, &quot;title&quot;: &quot;倉庫にたとえる&quot;, &quot;pattern&quot;: &quot;analogy&quot;}" data-hb-diagram-id="example-analogy"><div class="diagram-viewport" tabindex="0" role="region" aria-label="倉庫にたとえる（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-analogy-1" role="img" viewBox="0 0 860 177">
+  <title>倉庫にたとえる</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">倉庫にたとえる</text>
+  <text x="197" y="71" fill="var(--ink-muted, #5b6b7a)" font-size="16" text-anchor="middle" font-weight="700">倉庫</text>
+  <text x="197" y="96" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">品物をしまう</text>
+  <text x="663" y="71" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="700">データベース</text>
+  <text x="663" y="96" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">情報をしまう</text>
+  <rect x="16" y="112" width="362" height="49" rx="8" fill="var(--surface, #ffffff)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <rect x="482" y="112" width="362" height="49" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="197" y="141" fill="var(--ink-muted, #5b6b7a)" font-size="17" text-anchor="middle" font-weight="600">棚</text>
+  <text x="663" y="141" fill="var(--ink, #1b2733)" font-size="17" text-anchor="middle" font-weight="700">テーブル</text>
+  <line x1="382" y1="136" x2="416" y2="136" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <line x1="444" y1="136" x2="478" y2="136" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <text x="430" y="143" fill="var(--pop-primary-deep, #2273b8)" font-size="16" text-anchor="middle" font-weight="700">≒</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="known/target の {label, note?} と pairs 1-4 件 {from, to}" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">known/target の {label, note?} と pairs 1-4 件 {from, to}</p></div></details></div></section><section class="section-card" id="bignumber"><h2>9. 回答までの時間</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-bignumber" class="diagram" data-hb-diagram-pattern="bignumber" data-hb-diagram-data="{&quot;value&quot;: &quot;3&quot;, &quot;unit&quot;: &quot;営業日&quot;, &quot;caption&quot;: &quot;回答まで&quot;, &quot;sub&quot;: &quot;最短の場合&quot;, &quot;id&quot;: &quot;example-bignumber&quot;, &quot;title&quot;: &quot;回答までの時間&quot;, &quot;pattern&quot;: &quot;bignumber&quot;}" data-hb-diagram-id="example-bignumber" data-hb-diagram-renderer="html"><figcaption class="diagram-title">回答までの時間</figcaption><div class="diagram-metric"><dl><dt class="diagram-metric-caption">回答まで</dt><dd class="diagram-metric-amount"><span class="diagram-metric-value">3</span><span class="diagram-metric-unit">営業日</span></dd></dl><p class="diagram-metric-sub">最短の場合</p></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="{value, unit?, caption, sub?}" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">{value, unit?, caption, sub?}</p></div></details></div></section><section class="section-card" id="relationship"><h2>10. 条件で承認先を分ける</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-relationship" class="diagram" data-hb-diagram-pattern="relationship" data-hb-diagram-data="{&quot;nodes&quot;: [{&quot;id&quot;: &quot;a&quot;, &quot;label&quot;: &quot;金額確認&quot;, &quot;row&quot;: 0, &quot;col&quot;: 1, &quot;shape&quot;: &quot;decision&quot;}, {&quot;id&quot;: &quot;b&quot;, &quot;label&quot;: &quot;担当が承認&quot;, &quot;row&quot;: 1, &quot;col&quot;: 0}, {&quot;id&quot;: &quot;c&quot;, &quot;label&quot;: &quot;上長が承認&quot;, &quot;row&quot;: 1, &quot;col&quot;: 2}, {&quot;id&quot;: &quot;d&quot;, &quot;label&quot;: &quot;結果を記録&quot;, &quot;row&quot;: 2, &quot;col&quot;: 1}], &quot;edges&quot;: [{&quot;from&quot;: &quot;a&quot;, &quot;to&quot;: &quot;b&quot;, &quot;label&quot;: &quot;範囲内&quot;}, {&quot;from&quot;: &quot;a&quot;, &quot;to&quot;: &quot;c&quot;, &quot;label&quot;: &quot;範囲外&quot;}, {&quot;from&quot;: &quot;b&quot;, &quot;to&quot;: &quot;d&quot;}, {&quot;from&quot;: &quot;c&quot;, &quot;to&quot;: &quot;d&quot;}], &quot;id&quot;: &quot;example-relationship&quot;, &quot;title&quot;: &quot;条件で承認先を分ける&quot;, &quot;pattern&quot;: &quot;relationship&quot;}" data-hb-diagram-id="example-relationship"><div class="diagram-viewport" tabindex="0" role="region" aria-label="条件で承認先を分ける（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-relationship-1" role="img" viewBox="0 0 860 525">
+  <title>条件で承認先を分ける</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">条件で承認先を分ける</text>
+  <line x1="324" y1="102" x2="228" y2="282" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 228 282 L 228 272 L 237 276 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <rect x="198" y="170" width="156" height="29" rx="4" fill="var(--surface, #ffffff)" />
+  <text x="276" y="187" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">範囲内</text>
+  <line x1="536" y1="102" x2="632" y2="282" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 632 282 L 623 276 L 632 272 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <rect x="506" y="170" width="156" height="29" rx="4" fill="var(--surface, #ffffff)" />
+  <text x="584" y="187" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">範囲外</text>
+  <line x1="228" y1="282" x2="324" y2="462" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 324 462 L 315 456 L 324 452 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <line x1="632" y1="282" x2="536" y2="462" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 536 462 L 536 452 L 545 456 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <path d="M 430 55 L 536 102 L 430 149 L 324 102 Z" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <text x="430" y="107" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">金額確認</text>
+  <rect x="16" y="235" width="212" height="94" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="122" y="287" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">担当が承認</text>
+  <rect x="632" y="235" width="212" height="94" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="738" y="287" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">上長が承認</text>
+  <rect x="324" y="415" width="212" height="94" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="467" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">結果を記録</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="nodes[{id,label,row:0..7,col:0..2,shape?:box|decision}], edges[{from,to,label?}]" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">nodes[{id,label,row:0..7,col:0..2,shape?:box|decision}], edges[{from,to,label?}]</p></div></details></div></section><section class="section-card" id="sequence"><h2>11. 依頼と結果の受け渡し</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-sequence" class="diagram" data-hb-diagram-pattern="sequence" data-hb-diagram-data="{&quot;actors&quot;: [&quot;利用者&quot;, &quot;受付&quot;, &quot;担当&quot;], &quot;messages&quot;: [{&quot;from&quot;: &quot;利用者&quot;, &quot;to&quot;: &quot;受付&quot;, &quot;label&quot;: &quot;申請する&quot;}, {&quot;from&quot;: &quot;受付&quot;, &quot;to&quot;: &quot;担当&quot;, &quot;label&quot;: &quot;確認を頼む&quot;}, {&quot;from&quot;: &quot;担当&quot;, &quot;to&quot;: &quot;利用者&quot;, &quot;label&quot;: &quot;結果を返す&quot;}], &quot;id&quot;: &quot;example-sequence&quot;, &quot;title&quot;: &quot;依頼と結果の受け渡し&quot;, &quot;pattern&quot;: &quot;sequence&quot;}" data-hb-diagram-id="example-sequence"><div class="diagram-viewport" tabindex="0" role="region" aria-label="依頼と結果の受け渡し（横スクロール対応）" style="--diagram-width: 803px"><svg data-hb-kind="figure" id="hbdg-example-sequence-1" role="img" viewBox="0 0 860 403">
+  <title>依頼と結果の受け渡し</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">依頼と結果の受け渡し</text>
+  <rect x="24" y="55" width="260" height="52" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="154" y="79" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">利用者</text>
+  <line x1="154" y1="107" x2="154" y2="387" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <rect x="300" y="55" width="260" height="52" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="430" y="79" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">受付</text>
+  <line x1="430" y1="107" x2="430" y2="387" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <rect x="576" y="55" width="260" height="52" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--line, #dbe6ef)" stroke-width="1" />
+  <text x="706" y="79" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle">担当</text>
+  <line x1="706" y1="107" x2="706" y2="387" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <line x1="154" y1="155" x2="430" y2="155" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 430 155 L 421 160 L 421 150 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="292" y="120" fill="var(--ink, #1b2733)" font-size="15" text-anchor="middle">申請する</text>
+  <line x1="430" y1="239" x2="706" y2="239" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 706 239 L 697 244 L 697 234 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="568" y="204" fill="var(--ink, #1b2733)" font-size="15" text-anchor="middle">確認を頼む</text>
+  <line x1="706" y1="323" x2="154" y2="323" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 154 323 L 163 318 L 163 328 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="430" y="288" fill="var(--ink, #1b2733)" font-size="15" text-anchor="middle">結果を返す</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="actors[string] 2-4, messages[{from,to,label}] 1-10。配列順が時系列" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">actors[string] 2-4, messages[{from,to,label}] 1-10。配列順が時系列</p></div></details></div></section><section class="section-card" id="timeline"><h2>12. 準備から公開までの節目</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-timeline" class="diagram" data-hb-diagram-pattern="timeline" data-hb-diagram-data="{&quot;events&quot;: [{&quot;date&quot;: &quot;第1週&quot;, &quot;label&quot;: &quot;目的を決める&quot;}, {&quot;date&quot;: &quot;第2週&quot;, &quot;label&quot;: &quot;小さく試す&quot;}, {&quot;date&quot;: &quot;第3週&quot;, &quot;label&quot;: &quot;結果を確認する&quot;}], &quot;id&quot;: &quot;example-timeline&quot;, &quot;title&quot;: &quot;準備から公開までの節目&quot;, &quot;pattern&quot;: &quot;timeline&quot;}" data-hb-diagram-id="example-timeline"><div class="diagram-viewport" tabindex="0" role="region" aria-label="準備から公開までの節目（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-timeline-1" role="img" viewBox="0 0 860 355">
+  <title>準備から公開までの節目</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">準備から公開までの節目</text>
+  <line x1="40" y1="67" x2="40" y2="267" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <circle cx="40" cy="67" r="6" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="64" y="71" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">第1週</text>
+  <text x="260" y="71" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">目的を決める</text>
+  <circle cx="40" cy="167" r="6" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="64" y="171" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">第2週</text>
+  <text x="260" y="171" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">小さく試す</text>
+  <circle cx="40" cy="267" r="6" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="64" y="271" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">第3週</text>
+  <text x="260" y="271" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">結果を確認する</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="events[{date:string,label}] 2-10。等間隔の出来事列で期間の長さは表さない" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">events[{date:string,label}] 2-10。等間隔の出来事列で期間の長さは表さない</p></div></details></div></section><section class="section-card" id="gantt"><h2>13. 確認と実装を並行する</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-gantt" class="diagram" data-hb-diagram-pattern="gantt" data-hb-diagram-data="{&quot;tasks&quot;: [{&quot;label&quot;: &quot;要件確認&quot;, &quot;start&quot;: &quot;2026-10-01&quot;, &quot;end&quot;: &quot;2026-10-03&quot;}, {&quot;label&quot;: &quot;試作&quot;, &quot;start&quot;: &quot;2026-10-02&quot;, &quot;end&quot;: &quot;2026-10-07&quot;}, {&quot;label&quot;: &quot;利用確認&quot;, &quot;start&quot;: &quot;2026-10-06&quot;, &quot;end&quot;: &quot;2026-10-09&quot;}], &quot;id&quot;: &quot;example-gantt&quot;, &quot;title&quot;: &quot;確認と実装を並行する&quot;, &quot;pattern&quot;: &quot;gantt&quot;}" data-hb-diagram-id="example-gantt"><div class="diagram-viewport" tabindex="0" role="region" aria-label="確認と実装を並行する（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-gantt-1" role="img" viewBox="0 0 860 355">
+  <title>確認と実装を並行する</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">確認と実装を並行する</text>
+  <text x="236" y="71" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">2026-10-01</text>
+  <text x="844" y="71" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="end">2026-10-09</text>
+  <text x="16" y="123" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">要件確認</text>
+  <line x1="236" y1="115" x2="844" y2="115" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <rect x="236" y="103" width="201" height="24" rx="3" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="236" y="156" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">2026-10-01 → 2026-10-03</text>
+  <text x="16" y="207" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">試作</text>
+  <line x1="236" y1="199" x2="844" y2="199" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <rect x="303" y="187" width="402" height="24" rx="3" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="236" y="240" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">2026-10-02 → 2026-10-07</text>
+  <text x="16" y="291" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">利用確認</text>
+  <line x1="236" y1="283" x2="844" y2="283" stroke="var(--line, #dbe6ef)" stroke-width="1" aria-hidden="true" />
+  <rect x="571" y="271" width="268" height="24" rx="3" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="236" y="324" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="start">2026-10-06 → 2026-10-09</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="tasks[{label,start:YYYY-MM-DD,end:YYYY-MM-DD}] 1-10。終了日を含む" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">tasks[{label,start:YYYY-MM-DD,end:YYYY-MM-DD}] 1-10。終了日を含む</p></div></details></div></section><section class="section-card" id="bar"><h2>14. 同じ単位で件数を比べる</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-bar" class="diagram" data-hb-diagram-pattern="bar" data-hb-diagram-data="{&quot;unit&quot;: &quot;件&quot;, &quot;items&quot;: [{&quot;label&quot;: &quot;受付&quot;, &quot;value&quot;: 24}, {&quot;label&quot;: &quot;確認中&quot;, &quot;value&quot;: 8}, {&quot;label&quot;: &quot;完了&quot;, &quot;value&quot;: 16}], &quot;id&quot;: &quot;example-bar&quot;, &quot;title&quot;: &quot;同じ単位で件数を比べる&quot;, &quot;pattern&quot;: &quot;bar&quot;}" data-hb-diagram-id="example-bar"><div class="diagram-viewport" tabindex="0" role="region" aria-label="同じ単位で件数を比べる（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-bar-1" role="img" viewBox="0 0 860 305">
+  <title>同じ単位で件数を比べる</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">同じ単位で件数を比べる</text>
+  <line x1="206" y1="55" x2="206" y2="265" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <text x="206" y="283" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">0</text>
+  <text x="16" y="77" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">受付</text>
+  <rect x="206" y="59" width="534" height="28" rx="2" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="748" y="80" fill="var(--ink, #1b2733)" font-size="15" text-anchor="start">24件</text>
+  <text x="16" y="147" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">確認中</text>
+  <rect x="206" y="129" width="178" height="28" rx="2" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="392" y="150" fill="var(--ink, #1b2733)" font-size="15" text-anchor="start">8件</text>
+  <text x="16" y="217" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start">完了</text>
+  <rect x="206" y="199" width="356" height="28" rx="2" fill="var(--pop-primary-deep, #2273b8)" />
+  <text x="570" y="220" fill="var(--ink, #1b2733)" font-size="15" text-anchor="start">16件</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="unit:string, items[{label,value:有限非負数}] 1-10。棒の起点は0" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">unit:string, items[{label,value:有限非負数}] 1-10。棒の起点は0</p></div></details></div></section><section class="section-card" id="line"><h2>15. 週ごとの変化を見る</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-line" class="diagram" data-hb-diagram-pattern="line" data-hb-diagram-data="{&quot;unit&quot;: &quot;件&quot;, &quot;items&quot;: [{&quot;label&quot;: &quot;第1週&quot;, &quot;value&quot;: 4}, {&quot;label&quot;: &quot;第2週&quot;, &quot;value&quot;: 9}, {&quot;label&quot;: &quot;第3週&quot;, &quot;value&quot;: 7}, {&quot;label&quot;: &quot;第4週&quot;, &quot;value&quot;: 15}], &quot;id&quot;: &quot;example-line&quot;, &quot;title&quot;: &quot;週ごとの変化を見る&quot;, &quot;pattern&quot;: &quot;line&quot;}" data-hb-diagram-id="example-line"><div class="diagram-viewport" tabindex="0" role="region" aria-label="週ごとの変化を見る（横スクロール対応）" style="--diagram-width: 860px"><svg data-hb-kind="figure" id="hbdg-example-line-1" role="img" viewBox="0 0 860 401">
+  <title>週ごとの変化を見る</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">週ごとの変化を見る</text>
+  <line x1="86" y1="87" x2="86" y2="307" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <line x1="86" y1="307" x2="790" y2="307" stroke="var(--line, #dbe6ef)" stroke-width="2" aria-hidden="true" />
+  <text x="74" y="312" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="end">0</text>
+  <circle cx="86" cy="248" r="4" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="86" y="218" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">4件</text>
+  <text x="86" y="337" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">第1週</text>
+  <line x1="86" y1="248" x2="320" y2="175" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <circle cx="320" cy="175" r="4" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="320" y="145" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">9件</text>
+  <text x="320" y="337" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">第2週</text>
+  <line x1="320" y1="175" x2="555" y2="204" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <circle cx="555" cy="204" r="4" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="555" y="174" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">7件</text>
+  <text x="555" y="337" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">第3週</text>
+  <line x1="555" y1="204" x2="790" y2="87" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <circle cx="790" cy="87" r="4" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <text x="790" y="57" fill="var(--ink, #1b2733)" font-size="14" text-anchor="middle">15件</text>
+  <text x="790" y="337" fill="var(--ink-muted, #5b6b7a)" font-size="14" text-anchor="middle">第4週</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="unit:string, items[{label,value:有限非負数}] 2-10。等間隔系列に限る" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">unit:string, items[{label,value:有限非負数}] 2-10。等間隔系列に限る</p></div></details></div></section><section class="section-card" id="stages"><h2>16. 対象を段階的に絞る</h2><figure data-hb-part="DIAGRAM" data-hb-part-id="example-stages" class="diagram" data-hb-diagram-pattern="stages" data-hb-diagram-data="{&quot;direction&quot;: &quot;narrowing&quot;, &quot;levels&quot;: [{&quot;label&quot;: &quot;候補を集める&quot;}, {&quot;label&quot;: &quot;条件で絞る&quot;}, {&quot;label&quot;: &quot;優先する1案を決める&quot;}], &quot;id&quot;: &quot;example-stages&quot;, &quot;title&quot;: &quot;対象を段階的に絞る&quot;, &quot;pattern&quot;: &quot;stages&quot;}" data-hb-diagram-id="example-stages"><div class="diagram-viewport" tabindex="0" role="region" aria-label="対象を段階的に絞る（横スクロール対応）" style="--diagram-width: 753px"><svg data-hb-kind="figure" id="hbdg-example-stages-1" role="img" viewBox="0 0 860 301">
+  <title>対象を段階的に絞る</title>
+  <text x="16" y="32" fill="var(--ink, #1b2733)" font-size="16" text-anchor="start" font-weight="700">対象を段階的に絞る</text>
+  <rect x="16" y="55" width="828" height="62" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="82" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">候補を集める</text>
+  <line x1="430" y1="117" x2="430" y2="135" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 430 135 L 426 129 L 434 129 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <rect x="129" y="137" width="600" height="62" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="164" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">条件で絞る</text>
+  <line x1="430" y1="199" x2="430" y2="217" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="2" aria-hidden="true" />
+  <path d="M 430 217 L 426 211 L 434 211 Z" fill="var(--pop-primary-deep, #2273b8)" aria-hidden="true" />
+  <rect x="243" y="219" width="372" height="62" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary-deep, #2273b8)" stroke-width="1" />
+  <text x="430" y="246" fill="var(--ink, #1b2733)" font-size="16" text-anchor="middle" font-weight="600">優先する1案を決める</text>
+</svg></div><div class="diagram-tools" data-hb-part-role="aux"><span class="diagram-hint">図がはみ出す場合は、図の中を横にスクロールできます</span><button type="button" class="diagram-expand" hidden>図を拡大</button></div></figure><div class="accordion"><details class="fold" data-hb-key="i0" data-hb-summary="この表現に渡すデータ" data-hb-body="levels[{label}] 2-6, direction:narrowing|widening|equal。面積は数量ではない" data-hb-open="false"><summary><span class="fold-mark" aria-hidden="true"></span><span class="fold-title">この表現に渡すデータ</span></summary><div class="fold-body"><p class="fold-line">levels[{label}] 2-6, direction:narrowing|widening|equal。面積は数量ではない</p></div></details></div></section><section class="section-card" id="html-steps" data-hb-gallery-medium="html"><h2>短い手順を順番に読む</h2><p class="gallery-medium">HTML/CSSの既存部品で描画</p><div class="gallery-html-example"><ol data-hb-part="B03" data-hb-part-id="html-steps" class="steps" data-hb-entries="rows"><li class="step-row" data-hb-key="prepare" data-hb-text="目的を決める" data-hb-sub="誰に何を伝えるか"><span class="step-num num">1</span><span class="step-label">目的を決める</span><span class="step-detail">誰に何を伝えるか</span></li><li class="step-row" data-hb-key="try" data-hb-text="小さく試す" data-hb-sub="一つの題材で確かめる"><span class="step-num num">2</span><span class="step-label">小さく試す</span><span class="step-detail">一つの題材で確かめる</span></li><li class="step-row" data-hb-key="review" data-hb-text="結果を見る" data-hb-sub="次の改善を選ぶ"><span class="step-num num">3</span><span class="step-label">結果を見る</span><span class="step-detail">次の改善を選ぶ</span></li></ol></div><p>行ごとに操作と短い補足を持つ。番号の並びで順序を示す。</p></section><section class="section-card" id="html-features" data-hb-gallery-medium="html"><h2>独立した要点を並べる</h2><p class="gallery-medium">HTML/CSSの既存部品で描画</p><div class="gallery-html-example"><div data-hb-part="B07" data-hb-part-id="html-features" class="features" data-hb-entries="cards"><div class="feature-card" data-hb-key="i0" data-hb-title="相手を決める" data-hb-body="読む人の前提を揃える"><h4 class="card-title">相手を決める</h4><p class="card-body">読む人の前提を揃える</p></div><div class="feature-card" data-hb-key="i1" data-hb-title="結論を絞る" data-hb-body="持ち帰ることを一つ選ぶ"><h4 class="card-title">結論を絞る</h4><p class="card-body">持ち帰ることを一つ選ぶ</p></div><div class="feature-card" data-hb-key="i2" data-hb-title="根拠を添える" data-hb-body="確かめ方を残す"><h4 class="card-title">根拠を添える</h4><p class="card-body">確かめ方を残す</p></div></div></div><p>カードごとに一つの要点と短い補足を持つ。無関係な項目を線でつながない。</p></section><section class="section-card" id="html-table" data-hb-gallery-medium="html"><h2>同じ観点で比べる</h2><p class="gallery-medium">HTML/CSSの既存部品で描画</p><div class="gallery-html-example"><div data-hb-part="B05" data-hb-part-id="html-table" class="table-wrap" tabindex="0" role="region" aria-label="図解例の比較表（横スクロール対応）" style="--table-min-width: 480px" data-hb-entries="rows"><table><thead><tr><th scope="col"></th><th scope="col" data-hb-field="columns">会議</th><th scope="col" data-hb-field="columns">共有メモ</th></tr></thead><tbody><tr data-hb-key="r0" data-hb-header="向く場面"><th scope="row" data-hb-field="header">向く場面</th><td data-hb-field="cells">その場で相談</td><td data-hb-field="cells">後から確認</td></tr><tr data-hb-key="r1" data-hb-header="残すもの"><th scope="row" data-hb-field="header">残すもの</th><td data-hb-field="cells">話した結論</td><td data-hb-field="cells">説明の記録</td></tr></tbody></table><p class="table-scroll-hint" data-hb-part-role="aux">表の中を横にスクロールできます。</p></div></div><p>各案へ同じ比較軸を当てる。多い列は分割し、見出しを省かない。</p></section><section class="section-card" id="candidates"><h2>関係から表現を探す</h2><p>掲載例は候補集です。文章の主張と関係を先に確かめ、実例で見え方を確認します。</p><p class="candidate-scroll-hint">狭い画面では、この一覧の中を横にスクロールできます。</p><div class="table-wrap candidate-table-scroll" tabindex="0" role="region" aria-label="関係から表現を探す一覧（横スクロール対応）"><table class="candidate-table"><colgroup><col class="candidate-relation"><col class="candidate-forms"><col class="candidate-condition"></colgroup><thead><tr><th scope="col">伝える関係</th><th scope="col">表現の候補</th><th scope="col">選ぶ条件</th></tr></thead><tbody><tr><th scope="row">順序</th><td>ステップ図・工程フロー<div class="candidate-examples"><a href="#flow">申請から承認までの流れ</a><a href="#html-steps">短い手順を順番に読む</a></div></td><td>前後の順序が事実であるとき。選択肢の列挙へ矢印を付けない<p class="candidate-rendering">描画：SVG・HTML/CSS</p></td></tr><tr><th scope="row">条件</th><td>決定木・判断フロー<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>判断ノードと全ての出口条件を明記する<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">分配と回収</th><td>分岐型・合流型・並列処理<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>誰に分け何をまとめるか。並列と順次を混同しない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">因果</th><td>因果関係図・問題構造図<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>原因と結果を原文が支持するとき。相関だけなら因果の矢印にしない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">依存</th><td>依存関係図・前提関係図<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>前提から利用先へ向きを統一する<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">階層</th><td>ロジックツリー・分類木・WBS・組織図<div class="candidate-examples"><a href="#hierarchy">組織の階層</a></div></td><td>親子の包含関係を示す。時間順や因果と取り違えない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">深い階層</th><td>多段のロジックツリー・マインドマップ<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a><a href="#hierarchy">組織の階層</a></div></td><td>深い木は概要と枝の詳細へ分図する<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">反復</th><td>サイクル・PDCA・フィードバック<div class="candidate-examples"><a href="#cycle">改善のサイクル</a></div></td><td>最後から最初へ戻る関係があるときだけ<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">比較</th><td>対比・選択肢比較・メリットと制約<div class="candidate-examples"><a href="#versus">自前で作るか既製品を使うか</a><a href="#compare">案Aと案Bの比較</a><a href="#html-table">同じ観点で比べる</a></div></td><td>全対象に同じ比較軸を当てる<p class="candidate-rendering">描画：SVG・HTML/CSS</p></td></tr><tr><th scope="row">変化</th><td>Before/After・現状と目標<div class="candidate-examples"><a href="#before_after">手作業から自動化へ</a></div></td><td>変化の軸を一致させる<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">位置づけ</th><td>2軸マトリックス・優先順位<div class="candidate-examples"><a href="#matrix">施策の位置づけ</a></div></td><td>軸の意味と高低を定義する。主観位置を実測と見せない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">対応</th><td>アナロジー・対応関係<div class="candidate-examples"><a href="#analogy">倉庫にたとえる</a></div></td><td>たとえが成立する範囲と限界を短く添える<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">受け渡し</th><td>シーケンス・担当間のやり取り<div class="candidate-examples"><a href="#sequence">依頼と結果の受け渡し</a></div></td><td>送り手・受け手・内容・時系列を保持する<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">時点</th><td>タイムライン・ロードマップ<div class="candidate-examples"><a href="#timeline">準備から公開までの節目</a></div></td><td>出来事の順序を示す。正確な所要期間を伝えるなら期間図を選ぶ<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">期間と並行</th><td>ガントチャート・日程表<div class="candidate-examples"><a href="#gantt">確認と実装を並行する</a></div></td><td>実日付と期間の重なりを保持する<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">担当と工程</th><td>スイムレーン・業務フロー<div class="candidate-examples"><a href="#sequence">依頼と結果の受け渡し</a><a href="#relationship">条件で承認先を分ける</a></div></td><td>担当の受け渡しが中心か、条件分岐が中心かで表現を選ぶ<p class="candidate-rendering">描画：SVG。厳密なレーンが要る場合は専用作図し、図表素材として取り込む</p></td></tr><tr><th scope="row">状態</th><td>状態遷移・ライフサイクル<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>状態と操作を区別し、遷移する条件を示す<p class="candidate-rendering">描画：SVG。自己遷移など内蔵図で保てない記号は専用作図で描く</p></td></tr><tr><th scope="row">構造</th><td>UMLクラス図・ER図・コンポーネント図<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>要素のつながりと、多重度や継承など省けない規約を区別する<p class="candidate-rendering">描画：SVG。箱と線の概略は内蔵図。厳密なUML・ERの規約は専用作図で保持する</p></td></tr><tr><th scope="row">利用関係</th><td>ユースケース・アクター図<div class="candidate-examples"><a href="#relationship">条件で承認先を分ける</a></div></td><td>主体と、主体ができることの関係を示す<p class="candidate-rendering">描画：SVG。厳密なUML記号が必要なら専用作図で保持する</p></td></tr><tr><th scope="row">数値比較</th><td>横棒・順位比較<div class="candidate-examples"><a href="#bar">同じ単位で件数を比べる</a></div></td><td>同じ単位、0起点。順位を主張するときだけ並べ替える<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">時系列数値</th><td>折れ線・推移<div class="candidate-examples"><a href="#line">週ごとの変化を見る</a></div></td><td>根拠のある等間隔系列のみ。欠測を補間で捏造しない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">数値強調</th><td>KPI・ビッグナンバー<div class="candidate-examples"><a href="#bignumber">回答までの時間</a></div></td><td>単位・対象期間・出典を添える<p class="candidate-rendering">描画：HTML/CSS</p></td></tr><tr><th scope="row">絞り込み</th><td>ファネル・選別過程<div class="candidate-examples"><a href="#stages">対象を段階的に絞る</a></div></td><td>段階的な選別を示す。実測の減少量を伝えるなら数量図を選ぶ<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">積み上げ</th><td>ピラミッド・上昇型・成熟段階<div class="candidate-examples"><a href="#stages">対象を段階的に絞る</a></div></td><td>方向を選び、数量比を面積から推測させない<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">背景の整理</th><td>背景列挙型・並列列挙・グルーピング<div class="candidate-examples"><a href="#html-features">独立した要点を並べる</a></div></td><td>独立した項目をまとめ、関係のない項目は線で結ばない<p class="candidate-rendering">描画：HTML/CSS</p></td></tr><tr><th scope="row">責任分担</th><td>RACI・役割表<div class="candidate-examples"><a href="#html-table">同じ観点で比べる</a></div></td><td>責任を持つ人と、実際に作業する人を区別する<p class="candidate-rendering">描画：HTML/CSS</p></td></tr><tr><th scope="row">検討の枠組み</th><td>SWOT・3C・4P・PEST・バリューチェーン<div class="candidate-examples"><a href="#compare">案Aと案Bの比較</a><a href="#relationship">条件で承認先を分ける</a><a href="#html-features">独立した要点を並べる</a><a href="#html-table">同じ観点で比べる</a></div></td><td>枠の名前で図を決めず、比較か因果かから選ぶ。表やカードも使う<p class="candidate-rendering">描画：SVG・HTML/CSS</p></td></tr><tr><th scope="row">割合と内訳</th><td>積み上げ棒・円・ドーナツ・ツリーマップ<p class="candidate-no-example">内蔵の実例なし。専用作図で意味を保持します。</p></td><td>合計・分母・単位が判明した実数だけを使う。比較が目的なら棒を優先する<p class="candidate-rendering">描画：専用作図または既存部品の組合せ。内蔵の棒以外は専用作図し、図表素材として取り込む</p></td></tr><tr><th scope="row">相関と分布</th><td>散布図・ヒストグラム・箱ひげ・ヒートマップ<p class="candidate-no-example">内蔵の実例なし。専用作図で意味を保持します。</p></td><td>観測値・軸・集計法が必要。位置づけの概念図で実測図を代用しない<p class="candidate-rendering">描画：専用作図または既存部品の組合せ。専用作図で観測値を描き、図表素材として取り込む</p></td></tr><tr><th scope="row">増減の寄与</th><td>ウォーターフォール・パレート・サンキー<p class="candidate-no-example">内蔵の実例なし。専用作図で意味を保持します。</p></td><td>加減の整合、累積、流量保存を確かめてから使う<p class="candidate-rendering">描画：専用作図または既存部品の組合せ。専用作図し、図表素材として取り込む</p></td></tr><tr><th scope="row">空間と重なり</th><td>ベン図・包含図・ポジショニングマップ<p class="candidate-no-example">内蔵の実例なし。専用作図で意味を保持します。</p></td><td>面積が量を表すかを明示し、必要な重なりの正確さを保つ<p class="candidate-rendering">描画：専用作図または既存部品の組合せ。正確な重なりが必要なら専用作図で描く</p></td></tr><tr><th scope="row">課題の分析</th><td>魚骨図・なぜなぜ・目的手段ツリー<div class="candidate-examples"><a href="#hierarchy">組織の階層</a><a href="#relationship">条件で承認先を分ける</a></div></td><td>根拠のある因果と仮説を区別する。大きい枝は分図<p class="candidate-rendering">描画：SVG</p></td></tr><tr><th scope="row">体験</th><td>カスタマージャーニー・サービスブループリント<div class="candidate-examples"><a href="#html-table">同じ観点で比べる</a></div></td><td>工程・主体・接点の違いが追える単位へ分ける<p class="candidate-rendering">描画：HTML/CSS。表または専用作図で表す</p></td></tr><tr><th scope="row">未分類</th><td>カタログ外・複合表現<div class="candidate-examples"><a href="#html-steps">短い手順を順番に読む</a><a href="#html-features">独立した要点を並べる</a><a href="#html-table">同じ観点で比べる</a></div></td><td>関係を分解して複数の図や表を組み合わせ、適用範囲と理由を残す<p class="candidate-rendering">描画：HTML/CSS。忠実に表せなければ専用作図を選ぶ。描画済み素材を取り込み、未描画の記法だけで完成としない</p></td></tr></tbody></table></div></section></main></div><script>'use strict';
+(function () {
+  var STORE_PREFIX = 'handout:';
+  var SLUG = document.documentElement.getAttribute('data-hb-subject-slug') || '';
+
+  function storeKey(kind, id) {
+    return STORE_PREFIX + SLUG + ':' + kind + ':' + id;
+  }
+
+  function headerOffset() {
+    var header = document.querySelector('.pop-header');
+    if (!header) { return 0; }
+    var box = header.getBoundingClientRect();
+    // 補正したいのは「目次が本文の上に被る量」であって目次の高さではない。
+    // 柱 (画面の左端に立つ縦長) は本文に被らないので補正 0。画面幅の過半を
+    // 占める帯のときだけ高さを引く (柱の 100vh を引くと行き過ぎる)。
+    if (box.width < window.innerWidth * 0.5) { return 0; }
+    return Math.ceil(box.height);
+  }
+
+  function jumpTo(id) {
+    var target = document.getElementById(id);
+    if (!target) { return; }
+    var y = target.getBoundingClientRect().top + window.pageYOffset - headerOffset() - 8;
+    window.scrollTo(0, y < 0 ? 0 : y);
+  }
+
+  function wireNav() {
+    var links = document.querySelectorAll('.navbar a[href^="#"]');
+    Array.prototype.forEach.call(links, function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var id = link.getAttribute('href').slice(1);
+        jumpTo(id);
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', link.getAttribute('href'));
+        }
+      });
+    });
+  }
+
+  function wireNavCurrent() {
+    var chips = document.querySelectorAll('.nav-chip[href^="#"]');
+    if (!chips.length || !window.IntersectionObserver) { return; }
+    var byId = {};
+    Array.prototype.forEach.call(chips, function (chip) {
+      byId[chip.getAttribute('href').slice(1)] = chip;
+    });
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) { return; }
+        Array.prototype.forEach.call(chips, function (chip) {
+          chip.removeAttribute('aria-current');
+        });
+        var chip = byId[entry.target.id];
+        if (!chip) { return; }
+        chip.setAttribute('aria-current', 'true');
+        // 節が多いと現在地の札が柱の外へ出る。柱の中だけを送り、
+        // ページ本体は動かさない (読んでいる位置が飛ぶのを避ける)。
+        var box = chip.parentNode;
+        if (!box || box.scrollHeight <= box.clientHeight) { return; }
+        var top = chip.offsetTop - box.offsetTop;
+        if (top < box.scrollTop) { box.scrollTop = top; }
+        else if (top + chip.offsetHeight > box.scrollTop + box.clientHeight) {
+          box.scrollTop = top + chip.offsetHeight - box.clientHeight;
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    Object.keys(byId).forEach(function (id) {
+      var target = document.getElementById(id);
+      if (target) { observer.observe(target); }
+    });
+  }
+
+  function wireToggles() {
+    var toggles = document.querySelectorAll('[aria-pressed]');
+    Array.prototype.forEach.call(toggles, function (node) {
+      node.addEventListener('click', function () {
+        var group = node.closest('[data-hb-single="true"]');
+        var on = node.getAttribute('aria-pressed') !== 'true';
+        if (group && on) {
+          Array.prototype.forEach.call(
+            group.querySelectorAll('[aria-pressed="true"]'), function (other) {
+              other.setAttribute('aria-pressed', 'false');
+            });
+        }
+        node.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    });
+  }
+
+  function wireTabs() {
+    var strips = document.querySelectorAll('[role="tablist"]');
+    Array.prototype.forEach.call(strips, function (strip) {
+      var tabs = strip.querySelectorAll('[role="tab"]');
+      Array.prototype.forEach.call(tabs, function (tab) {
+        tab.addEventListener('click', function () {
+          Array.prototype.forEach.call(tabs, function (other) {
+            var selected = other === tab;
+            other.setAttribute('aria-selected', selected ? 'true' : 'false');
+            var panel = document.getElementById(other.getAttribute('aria-controls'));
+            if (!panel) { return; }
+            if (selected) { panel.removeAttribute('hidden'); }
+            else { panel.setAttribute('hidden', ''); }
+          });
+        });
+      });
+    });
+  }
+
+  function wireCheckboxes() {
+    var boxes = document.querySelectorAll('.check-row input[type="checkbox"]');
+    Array.prototype.forEach.call(boxes, function (box) {
+      var key = storeKey('check', box.id);
+      try {
+        box.checked = window.localStorage.getItem(key) === '1';
+      } catch (err) { /* 保存不可でも本文は読める */ }
+      box.addEventListener('change', function () {
+        try {
+          window.localStorage.setItem(key, box.checked ? '1' : '0');
+        } catch (err) { /* noop */ }
+      });
+    });
+  }
+
+  function memoFields() {
+    return document.querySelectorAll('.memo-body');
+  }
+
+  function wireMemo() {
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      var key = storeKey('memo', field.id);
+      try {
+        // 保存済みが無いときは HTML に書き込まれた本文を残す。空文字で上書きすると、
+        // メモを焼き込んだ HTML を別の環境 (localStorage が空) で開いた瞬間に
+        // 画面から消える — 保存したはずの物が最初の描画で失われる。
+        var stored = window.localStorage.getItem(key);
+        if (stored !== null) { field.value = stored; }
+      } catch (err) { /* noop */ }
+      field.addEventListener('input', function () {
+        try { window.localStorage.setItem(key, field.value); } catch (err) { /* noop */ }
+      });
+    });
+  }
+
+  function collectMemo() {
+    var out = [];
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      if (field.value) {
+        out.push('# ' + (field.getAttribute('data-hb-key') || '') + '\n' + field.value);
+      }
+    });
+    return out.join('\n\n');
+  }
+
+  function embedMemoHtml() {
+    // 入力値は DOM の属性ではないため、そのまま直列化しても保存されない。
+    // 書き込んだ内容を textarea の中身と checkbox の属性へ写してから直列化する
+    // (これで出来上がった HTML は、localStorage が使えない環境で開いても
+    //  メモが載ったまま読める — file:// では localStorage が働かない環境がある)。
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      field.textContent = field.value;
+    });
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.check-row input[type="checkbox"]'),
+      function (box) {
+        if (box.checked) { box.setAttribute('checked', 'checked'); }
+        else { box.removeAttribute('checked'); }
+      }
+    );
+    var root = document.documentElement;
+    root.setAttribute('data-hb-memo-embedded', 'true');
+    var saved = root.cloneNode(true);
+    Array.prototype.forEach.call(saved.querySelectorAll('.diagram-dialog'), function (node) { node.remove(); });
+    return '<!doctype html>\n' + saved.outerHTML;
+  }
+
+  function wireMemoActions() {
+    var embedBtn = document.querySelector('[data-hb-action="embed"]');
+    var copyBtn = document.querySelector('[data-hb-action="copy"]');
+    var saveBtn = document.querySelector('[data-hb-action="save"]');
+    var clearBtn = document.querySelector('[data-hb-action="clear"]');
+    if (embedBtn) {
+      embedBtn.addEventListener('click', function () {
+        var html = embedMemoHtml();
+        var url;
+        try {
+          url = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
+        } catch (err) {
+          // Blob が作れない環境でも書き出せる方が良い。素材が data URI で
+          // 畳まれている分だけ長くなるが、落として何も出さないよりは渡る。
+          url = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+        }
+        var link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', (SLUG || 'handout') + '-メモ入り.html');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (url.slice(0, 5) === 'blob:') {
+          window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+        }
+      });
+    }
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var text = collectMemo();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+        }
+      });
+    }
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        var body = encodeURIComponent(collectMemo());
+        var link = document.createElement('a');
+        link.setAttribute('href', 'data:text/plain;charset=utf-8,' + body);
+        link.setAttribute('download', (SLUG || 'handout') + '-memo.txt');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        Array.prototype.forEach.call(memoFields(), function (field) {
+          field.value = '';
+          try {
+            window.localStorage.removeItem(storeKey('memo', field.id));
+          } catch (err) { /* noop */ }
+        });
+      });
+    }
+  }
+
+  function wireDiagramViews() {
+    Array.prototype.forEach.call(document.querySelectorAll('.diagram-dialog'), function (node) { node.remove(); });
+    var dialog = document.createElement('dialog');
+    if (typeof dialog.showModal !== 'function') { return; }
+    dialog.className = 'diagram-dialog';
+    dialog.setAttribute('aria-label', '図の拡大表示');
+    dialog.setAttribute('data-hb-part-role', 'aux');
+    var close = document.createElement('button');
+    close.type = 'button'; close.className = 'diagram-close'; close.textContent = '閉じる';
+    var stage = document.createElement('div');
+    dialog.appendChild(close); dialog.appendChild(stage); document.body.appendChild(dialog);
+    close.addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('close', function () { stage.innerHTML = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('.diagram, .asset--figure'), function (figure) {
+      var button = figure.querySelector('.diagram-expand');
+      var viewport = figure.querySelector('.diagram-viewport');
+      if (!button || !viewport) { return; }
+      button.hidden = false;
+      button.addEventListener('click', function () {
+        var clone = viewport.cloneNode(true);
+        Array.prototype.forEach.call(clone.querySelectorAll('[id]'), function (node) { node.removeAttribute('id'); });
+        stage.innerHTML = ''; stage.appendChild(clone);
+        dialog.showModal(); close.focus();
+      });
+    });
+  }
+
+  function wireFoldPrint() {
+    var opened = [];
+    window.addEventListener('beforeprint', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('details.fold:not([open])'), function (node) {
+        node.open = true; opened.push(node);
+      });
+    });
+    window.addEventListener('afterprint', function () {
+      opened.forEach(function (node) { node.open = false; }); opened = [];
+    });
+  }
+
+  function wireLightbox() {
+    var box = document.querySelector('[data-hb-part="lightbox"]');
+    if (!box) { return; }
+    var stage = box.querySelector('.lightbox-stage');
+    var closeBtn = box.querySelector('.lightbox-close');
+    function close() {
+      box.setAttribute('hidden', '');
+      if (stage) { stage.innerHTML = ''; }
+    }
+    if (closeBtn) { closeBtn.addEventListener('click', close); }
+    box.addEventListener('click', function (event) {
+      if (event.target === box) { close(); }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { close(); }
+    });
+    var images = document.querySelectorAll('.asset:not(.asset--figure) .asset-img');
+    Array.prototype.forEach.call(images, function (image) {
+      image.addEventListener('click', function () {
+        if (!stage) { return; }
+        var big = document.createElement('img');
+        big.setAttribute('src', image.getAttribute('src'));
+        big.setAttribute('alt', image.getAttribute('alt') || '');
+        stage.innerHTML = '';
+        stage.appendChild(big);
+        box.removeAttribute('hidden');
+      });
+    });
+  }
+
+  function wireToolbar() {
+    var toggle = document.querySelector('.toolbar-toggle');
+    if (!toggle) { return; }
+    toggle.addEventListener('click', function () {
+      var on = toggle.getAttribute('aria-pressed') === 'true';
+      Array.prototype.forEach.call(
+        document.querySelectorAll('[data-hb-part="memo"]'), function (node) {
+          node.style.display = on ? '' : 'none';
+        });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    wireNav();
+    wireNavCurrent();
+    wireToggles();
+    wireTabs();
+    wireCheckboxes();
+    wireMemo();
+    wireMemoActions();
+    wireLightbox();
+    wireDiagramViews();
+    wireFoldPrint();
+    wireToolbar();
+    if (window.location.hash.length > 1) {
+      jumpTo(window.location.hash.slice(1));
+    }
+  });
+}());
+</script></body></html>

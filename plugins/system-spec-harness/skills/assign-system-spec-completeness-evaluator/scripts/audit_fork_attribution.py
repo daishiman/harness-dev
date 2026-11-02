@@ -68,6 +68,7 @@ DELEGATION_ROLES = {"primary", "sub_input"}
 LEDGER_ENV = "SYSTEM_SPEC_AUDIT_FORK_LEDGER"
 LEDGER_RELPATH = Path("eval-log") / "system-spec-harness" / "audit-fork-ledger.jsonl"
 LEDGER_TOOL_NAMES = ("Task", "Agent")
+NATIVE_LEDGER_TOOL_NAMES = LEDGER_TOOL_NAMES + ("spawn_agent",)
 LEDGER_SCHEMA_LEGACY = "1.1"
 LEDGER_SCHEMA_TOOL_USE = "1.2"
 # 1.3: SubagentStop が書く completion 行。非同期 fork では PostToolUse が起動受理しか観測できず、
@@ -105,10 +106,24 @@ def default_ledger_path() -> Path:
     return Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()) / LEDGER_RELPATH
 
 
-def empty_ledger() -> dict:
+def select_runtime(runtime: str | None = None) -> str:
+    """Host選択を伝播する。Codex環境内で行う旧fixtureの検査もClaude既定を維持する。"""
+    environment = os.environ.get("SYSTEM_SPEC_AUDIT_RUNTIME")
+    if environment is not None and environment not in {"claude", "codex"}:
+        raise ValueError("SYSTEM_SPEC_AUDIT_RUNTIME must be exactly claude or codex")
+    if runtime is not None and runtime not in {"claude", "codex"}:
+        raise ValueError("audit runtime must be exactly claude or codex")
+    if runtime is not None and environment is not None and runtime != environment:
+        raise ValueError("audit runtime conflicts with host runtime selection")
+    return runtime if runtime is not None else (environment if environment is not None else "claude")
+
+
+def empty_ledger(runtime: str | None = None) -> dict:
     """台帳不在時の fail-closed な空集計を返す。"""
     return {
         "path": None,
+        "runtime": select_runtime(runtime),
+        "runtime_violations": [],
         "exists": False,
         "dispatched": {},
         "sessions": {},
@@ -236,49 +251,59 @@ def _apply_promotion(receipt: dict, completion: dict, join: str) -> None:
     receipt["completion_agent_id"] = completion.get("agent_id")
 
 
-def load_fork_ledger(path) -> dict:
+def load_fork_ledger(path, runtime: str | None = None) -> dict:
     """JSONL 台帳を subagent と session 単位で集計する。
 
-    部分破損した追記専用台帳では、壊れた行を数えつつ健全な fork 証跡を保持する。
+    Claudeの部分破損台帳では健全な旧fork証跡を保持する。
+    Codexではschema 2.0だけを検証し、混在・破損を含む台帳は下流で全体拒否する。
     """
+    runtime = select_runtime(runtime)
+    empty = empty_ledger(runtime)
     if path is None:
-        return empty_ledger()
+        return empty
     ledger_path = Path(path)
+    empty["path"] = str(ledger_path)
     if not ledger_path.is_file():
-        return {
-            "path": str(ledger_path),
-            "exists": False,
-            "dispatched": {},
-            "sessions": {},
-            "receipts": {},
-            "receipts_v12": {},
-            "malformed": 0,
-        }
+        return empty
     dispatched: dict[str, int] = {}
     sessions: dict[str, dict[str, int]] = {}
     receipts: dict[str, dict[str, dict[str, dict[str, str]]]] = {}
     receipts_v12: dict[str, dict[str, list[dict[str, str]]]] = {}
     # session_id -> subagent_type -> [completion 行]。SubagentStop が書く 1.3 行の受け皿。
     completions: dict[str, dict[str, list[dict]]] = {}
+    native_receipts: dict = {}
+    runtime_violations = []
     malformed = 0
     try:
         lines = ledger_path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeDecodeError):
-        return {
-            "path": str(ledger_path),
-            "exists": False,
-            "dispatched": {},
-            "sessions": {},
-            "receipts": {},
-            "receipts_v12": {},
-            "malformed": 0,
-        }
+        return empty
     for line in lines:
         if not line.strip():
             continue
         try:
             record = json.loads(line)
         except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if isinstance(record, dict) and record.get("schema_version") == "2.0":
+            if runtime != "codex":
+                runtime_violations.append("Codex native row is incompatible with Claude ledger")
+                malformed += 1
+                continue
+            try:
+                import importlib.util
+                verifier_path = Path(__file__).with_name("validate-codex-audit.py")
+                spec = importlib.util.spec_from_file_location("native_codex_audit", verifier_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                native = module.verify_record(record, ledger_path, _plugin_root())
+                native_receipts.setdefault(native["session_id"], {}).setdefault(native["tool_use_id"], []).append(native)
+            except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError):
+                malformed += 1
+            continue
+        if runtime == "codex":
+            runtime_violations.append("Codex ledger contains legacy or incompatible row")
             malformed += 1
             continue
         if not isinstance(record, dict) or record.get("tool_name") not in LEDGER_TOOL_NAMES:
@@ -294,7 +319,7 @@ def load_fork_ledger(path) -> dict:
                     completion["subagent_type"], []
                 ).append(completion)
             continue
-        if schema_version not in {LEDGER_SCHEMA_LEGACY, LEDGER_SCHEMA_TOOL_USE}:
+        if schema_version not in {LEDGER_SCHEMA_LEGACY, LEDGER_SCHEMA_TOOL_USE} or record.get("tool_name") == "spawn_agent":
             malformed += 1
             continue
         if schema_version == LEDGER_SCHEMA_LEGACY and record.get("tool_name") != "Task":
@@ -367,12 +392,15 @@ def load_fork_ledger(path) -> dict:
             by_session[session_id] = by_session.get(session_id, 0) + 1
     return {
         "path": str(ledger_path),
+        "runtime": runtime,
+        "runtime_violations": runtime_violations,
         "exists": True,
         "dispatched": dispatched,
         "sessions": sessions,
         "receipts": receipts,
         "receipts_v12": receipts_v12,
         "completions": completions,
+        "native_receipts": native_receipts,
         "malformed": malformed,
     }
 
@@ -384,10 +412,35 @@ def agent_definition_exists(auditor: str) -> bool:
     return (_plugin_root() / "agents" / f"{auditor}.md").is_file()
 
 
-def ledger_corroborates(delegation: dict, ledger: dict) -> tuple[bool, str]:
+def ledger_corroborates(delegation: dict, ledger: dict, runtime: str | None = None) -> tuple[bool, str]:
     """receipt が実 fork の session・tool・response verdict へ束縛されるか検証する。"""
     dispatch = delegation.get("dispatch")
     subagent_type = dispatch.get("subagent_type") if isinstance(dispatch, dict) else None
+    try:
+        runtime = select_runtime(runtime)
+    except ValueError as exc:
+        return False, str(exc)
+    if ledger.get("runtime") not in {None, runtime}:
+        return False, "ledger runtime differs from host runtime selection"
+    if ledger.get("runtime_violations"):
+        return False, "mixed or incompatible audit ledger runtime"
+    if runtime == "codex":
+        if not isinstance(dispatch, dict) or dispatch.get("tool") != "spawn_agent":
+            return False, "Codex runtime accepts only verified schema 2.0 spawn_agent receipts"
+        if any(ledger.get(key) for key in ("receipts", "receipts_v12", "completions")):
+            return False, "Codex runtime rejects a legacy/mixed audit ledger"
+        # A caller-created in-memory native_receipts index is never attestation.
+        # Reopen the host ledger and reconstruct protected original-rollout proof.
+        if ledger.get("runtime") != "codex" or not isinstance(ledger.get("path"), str):
+            return False, "Codex runtime requires a protected native ledger path"
+        try:
+            ledger = load_fork_ledger(ledger["path"], runtime=runtime)
+        except (ValueError, OSError, TypeError) as exc:
+            return False, f"Codex native ledger revalidation failed: {exc}"
+        if ledger.get("runtime_violations") or ledger.get("malformed"):
+            return False, "Codex runtime rejects the whole mixed/invalid native ledger"
+    elif isinstance(dispatch, dict) and dispatch.get("tool") == "spawn_agent":
+        return False, "Claude runtime cannot accept Codex native receipts"
     if not ledger.get("exists"):
         return False, (
             f"fork 台帳が存在しない ({ledger.get('path')}) ため独立監査の帰属を裏取りできない "
@@ -413,6 +466,20 @@ def ledger_corroborates(delegation: dict, ledger: dict) -> tuple[bool, str]:
             "dispatch.response_sha256 が無いか不正で、実監査 response の verdict と突合できない "
             "(PostToolUse hook が記録した response digest を receipt へ転記する)"
         )
+
+    if dispatch.get("tool") == "spawn_agent":
+        call_id = dispatch.get("tool_use_id")
+        if not isinstance(call_id, str) or not call_id:
+            return False, "Codex native dispatch requires exact spawn call ID"
+        candidates = ledger.get("native_receipts", {}).get(declared_session, {}).get(call_id, [])
+        if len(candidates) != 1:
+            return False, "Codex native original-rollout attribution absent or duplicated"
+        expected = {"subagent_type": subagent_type, "tool_name": "spawn_agent",
+                    "response_sha256": response_sha256, "audit_verdict": delegation.get("verdict"),
+                    "verdict_state": "resolved"}
+        if any(candidates[0].get(key) != value for key, value in expected.items()):
+            return False, "Codex native receipt differs from protected original-rollout evidence"
+        return True, ""
 
     tool_use_id = dispatch.get("tool_use_id")
     if tool_use_id is not None:
@@ -517,11 +584,17 @@ def ledger_corroborates(delegation: dict, ledger: dict) -> tuple[bool, str]:
 
 
 def validate_attribution(
-    report: dict, ledger: dict | None = None, expected_session: str | None = None
+    report: dict, ledger: dict | None = None, expected_session: str | None = None, runtime: str | None = None
 ) -> list[str]:
     """独立監査 receipt を実 fork 証跡へ fail-closed で接地する。"""
     violations: list[str] = []
-    ledger = ledger if isinstance(ledger, dict) else empty_ledger()
+    try:
+        runtime = select_runtime(runtime)
+    except ValueError as exc:
+        return [str(exc)]
+    ledger = ledger if isinstance(ledger, dict) else empty_ledger(runtime)
+    if ledger.get("runtime") not in {None, runtime} or ledger.get("runtime_violations"):
+        violations.append("audit ledger runtime is mixed or differs from host selection")
     aspects = report.get("aspects") if isinstance(report.get("aspects"), dict) else {}
     delegations = report.get("audit_delegations")
     if not isinstance(delegations, list):
@@ -568,9 +641,10 @@ def validate_attribution(
         if not isinstance(dispatch, dict):
             violations.append(f"{label}.dispatch: オブジェクトでない (fork の起動方法が記録されていない)")
         else:
-            if dispatch.get("tool") not in LEDGER_TOOL_NAMES:
+            allowed_tools = LEDGER_TOOL_NAMES if runtime == "claude" else ("spawn_agent",)
+            if dispatch.get("tool") not in allowed_tools:
                 violations.append(
-                    f"{label}.dispatch.tool={dispatch.get('tool')!r} が {list(LEDGER_TOOL_NAMES)} 外"
+                    f"{label}.dispatch.tool={dispatch.get('tool')!r} が {list(allowed_tools)} 外"
                     " (独立 context の fork は subagent 起動ツール経由必須)"
                 )
             if dispatch.get("subagent_type") != requirement["auditor"]:
@@ -592,7 +666,7 @@ def validate_attribution(
         evidence = delegation.get("evidence")
         if not isinstance(evidence, list) or not evidence:
             violations.append(f"{label}.evidence: 非空配列でない (監査の根拠が空)")
-        corroborated, reason = ledger_corroborates(delegation, ledger)
+        corroborated, reason = ledger_corroborates(delegation, ledger, runtime=runtime)
         if not corroborated:
             violations.append(f"{label}: {reason}")
 

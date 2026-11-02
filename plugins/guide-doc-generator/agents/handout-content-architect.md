@@ -30,6 +30,7 @@ last-audited: 2026-08-17
   decision_line」の往復で組み立てる。抽象だけでも具体だけでも読者は動けない。
 - R13 / R19: 資料全体のゴールから各セクションの goal へ連なりを通す。goal が空のセクションを作らない。
 - R23: セクションごとに内容へ適応した挿絵を 1 枚だけ計画する。計画までが責務で、生成は C21 に渡す。
+- 実習を複数のまとまりに分ける場合は、ハンズオン部品（IDは部品カタログを参照）の `data.title` に「準備」「呼び出し」などの短い区切り名を付ける。操作番号が再開しても、どの実習かを見出しで判断できる形にする。
 
 ## Inputs
 
@@ -127,11 +128,11 @@ text_policy_reason / motifs / adaptation_trace である。
 14. 節の部品順は config/handout-visual-policy.json#opening.section_opening.progression を
     単一正本として使う。step は飛ばしてよいが順番は入れ替えず、各段の carries / answers を
     ここへ書き写さない。
-15. 節の重要な情報は既存の DIAGRAM / IMG で視覚化し、diagram.title / asset.caption を
-    絵が言っていることが一読で分かる短い 1 行の主張にする。何も知らない読み手向けには
-    config/handout-visual-policy.json#diagram_patterns_by_intent の beginner=yes の entry を
-    先に検討し、情報単位から媒体への対応を既存の
-    decision_log に記録する。専用の部品や閾値は増やさない。
+15. 各節の文章を関係へ分解し、config/handout-visual-policy.json#diagram_selection を
+    実行する。候補は config/handout-diagrams.json、表示の条件は同policyの
+    diagram_presentation、補足の開閉は disclosure を読む。先頭の挿絵だけで後続の説明を
+    視覚化したと扱わない。候補比較・採否・置換した文章・保った関係を既存 decision_log に残す。
+    記録の形は skills/run-handout-build/references/visual-selection-contract.md を読む。
 16. 冒頭 (hero) に描画される文を総量で抑える。上限の正本は
     config/handout-visual-policy.json#opening.hero_total。目的・背景・ゴールをそれぞれ 1 行に収
     めても、focus_theme・target_tasks・must_remember・no_need_to_remember の 4 リストが縦に積み
@@ -147,8 +148,10 @@ text_policy_reason / motifs / adaptation_trace である。
 19. 初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の対を宣言する。言い換えは
     前提知識レベルに合わせ、別の専門用語で言い換えない。宣言した用語は本文フィールドの初出で 括
     弧書き併記される形にする (C16)。
-20. 図解が要るセクションは、schema と C11 / C14 が持つ図解型の閉じた列挙から 1 つを選び、構造デ
-    ータを宣言する。図解型で表せない内容は図解にせず部品で表す。
+20. 表現方法を掲載例へ限定しない。ネイティブ図解ならスキーマと C14 の入力契約へ結線し、
+    未対応なら分図・既存部品の組合せ・事前描画した SVG/PNG を IMG で使う。Mermaid や UML の
+    ソースだけを載せて図の完成としない。実装不能の表現は open_questions に残し、文章への
+    黙った退避で処理しない。図中の用語・主体・数値・接続方向と本文の一致を確かめる。
 21. 素材を論理名で結線し、使わなかった素材は理由付きで materials_unused に残す。
 22. 日付を扱う。入力に date があればそのまま写す。無ければ日付フィールドを出力しない。既定充填は
     C12 の --normalize に委ねる。テーマも同様に、指定があるときだけテーマ欄を出す。
@@ -220,7 +223,9 @@ style reference として固定し、参照画像の題材や配置そのもの�
   構成データ JSON 1 個だけであり、単一 HTML への写像は決定論レンダラ C11 の専有責務である。
 - 図解はパターン名と構造データの宣言までで、SVG の座標計算は C14 が行う。
 - アイコンは名称参照までで、symbol 抽出は C15 が行う。
-- 素材は論理名の参照までで、data URI 化は C13 が行う。
+- 素材は論理名の参照までで、data URI 化は C13 が行う。カタログ外の専用作図は選定記録へ
+  原文・保持する事実・対象部品を残し、未生成なら親C01のR3がソースと描画済み素材を準備する。
+  その図表のasset.roleは既存の `figure` を使う。作図不能をHTML本文へ黙って退避しない。
 - 挿絵は計画までで、画像生成そのものと生成後の評価は C21 の先へ委ねる。画像生成プロンプトの
   本文を書かない。genome ファイルを書かない・複製しない・値を構成データへ写さない。
 - 画風の参照画像が渡された場合、そのファイルパスを構成データへ焼き込まない。親が画像計画の

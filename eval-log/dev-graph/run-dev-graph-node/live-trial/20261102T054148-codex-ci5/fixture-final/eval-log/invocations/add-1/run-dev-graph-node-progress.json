@@ -1,0 +1,62 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 1,
+    "graph_digest": "sha256:437ab908d481ad92e44aba0fb2920659c807db804944fc2db453a13563b43e24"
+  },
+  "writer_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "add-context-receipt.json: repo_root=content_roots.repository、config/receipt identity一致、全対象realpathはFX内。R0分離検証。"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json 全5件 auto confidence/margin .93/.88,.90/.84,.91/.84,.89/.81,.92/.88。R1分離検証。R2 dry-runは親の実tool出力でrevision_before=0 write_count=0 findings=0、apply expected_graph_revision=0と一致。"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "add-schema-report.json valid=true violations=[]。R4分離検証:必須見出し欠落0、architecture backend/data保持、template metadata/path一致。本文placeholderはdraft/incompleteで保持。"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=add、通常5 artifact、register-packageは実行しない。"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000001-add.json pre-choice commitは1回。revision_after=1 graph_digest_after=sha256:437ab908d481ad92e44aba0fb2920659c807db804944fc2db453a13563b43e24 がgraph_baselineと一致。node_ids/本文bytes SHAも一致。"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "schema report"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで判定"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで判定"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで判定"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:437ab908d481ad92e44aba0fb2920659c807db804944fc2db453a13563b43e24"
+  }
+}

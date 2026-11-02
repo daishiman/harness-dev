@@ -1,0 +1,85 @@
+{
+  "original_goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "original_goal_hash": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "iteration": 1,
+  "context_receipt": "eval-log/c19-context-receipt.json",
+  "artifact_delivery_state": "semantic_evaluator_started",
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": [
+        "eval-log/run-dev-graph-system-spec/R0-context/audit-report.json"
+      ]
+    },
+    {
+      "item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": [
+        "eval-log/run-dev-graph-system-spec/R1-preflight/audit-report.json"
+      ]
+    },
+    {
+      "item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": [
+        "正規native適用待ち"
+      ]
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全て PASS である",
+      "status": "not_achieved",
+      "evidence": [
+        "coverage/source/schema exit0、独立completeness評価は未実施"
+      ]
+    },
+    {
+      "item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である",
+      "status": "not_achieved",
+      "evidence": [
+        "未登録"
+      ]
+    },
+    {
+      "item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である",
+      "status": "not_achieved",
+      "evidence": [
+        "R3で最終監査予定"
+      ]
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "iterations": [
+        {
+          "iteration": 1,
+          "status": "PASS",
+          "gates": [
+            {
+              "name": "coverage",
+              "exit_code": 0,
+              "evidence": "eval-log/c19-initial-coverage-gate.json"
+            },
+            {
+              "name": "source-citation",
+              "exit_code": 0,
+              "evidence": "eval-log/c19-initial-source-citation-gate.json"
+            },
+            {
+              "name": "schema",
+              "exit_code": 0,
+              "evidence": "eval-log/c19-initial-schema-gate.json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "blockers": []
+}

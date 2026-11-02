@@ -325,15 +325,35 @@ C20 route report (`eval-log/guide-doc-generator/build/route-P05-C20-01.json`) �
       "rationale": "利用者指定 2026-09-08 により、これらの欄は既定で紙面に描かない (config/handout-visual-policy.json#opening.hero_list_fields.hidden_by_default)。可視要素が無くなるので data-hb-field からは読めないが、値まで落とすのは採らない — /notes_enabled と同じ基準で、それは P1 (再生成可能) ではなく値の消失であり、逆抽出した構成データが schema 必須の 5 欄を欠いて validate を通らなくなる (『HTML を出発点に構成データを起こす』経路が成立しない)。日付 (/date を root の data-hb-date で運ぶ判断) と同じく、紙面には出さず記録は残す。宣言そのものだけを免除するのは、HTML が運ぶのが実効名簿 (正本の既定 ∪ 構成データの宣言) であり、構成データ側の宣言と同じものではないため — 読み戻すと、書いていない宣言を書いたことになる。",
       "how_to_restore_roundtrip": "宣言キーの免除は残る (実効名簿と宣言は別物であるため)。欄の値は隠していても隠していなくても無損失に戻る。",
       "residual_work": "無し"
+    },
+    {
+      "pointer": "/thumbnail_asset_id",
+      "decision": "marker",
+      "marker": "figure[data-hb-thumbnail] の値",
+      "marker_status": "emitted-and-restored",
+      "evidence": "render-handout.py#build_hero_thumbnail / extract-handout-config.py#extract",
+      "rationale": "著者が選んだ表紙素材IDをそのまま復元する。不在なら選択を捏造せずキーを置かず、複数なら欠落として報告する。"
     }
   ],
   "exempt_preexisting": {
     "note": "以下は本裁定で新たに免除したものではなく、script-brief-C20.json#roundtrip_granularity.not_preserved_by_design が既に宣言していた免除である。本裁定はこれを追認するだけで、範囲を広げない。",
     "items": [
-      {"pointer": "/provenance", "principle": "P2"},
-      {"pointer": "html whitespace / attribute order / DOCTYPE / comments", "principle": "P3"},
-      {"pointer": "config key order", "principle": "P3"},
-      {"pointer": "generated chrome (B01 nav / B02 hero frame / sprite / css / js / footer / memo ui / lightbox)", "principle": "P1"}
+      {
+        "pointer": "/provenance",
+        "principle": "P2"
+      },
+      {
+        "pointer": "html whitespace / attribute order / DOCTYPE / comments",
+        "principle": "P3"
+      },
+      {
+        "pointer": "config key order",
+        "principle": "P3"
+      },
+      {
+        "pointer": "generated chrome (B01 nav / B02 hero frame / sprite / css / js / footer / memo ui / lightbox)",
+        "principle": "P1"
+      }
     ]
   },
   "blocking_contract_divergences": [

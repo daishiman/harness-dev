@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "handout_builder_version": "0.1.0",
+  "evaluations": [
+    {
+      "date": "2026-08-18",
+      "skill": "run-handout-build",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。生成統括 (ヒアリング→構成データ設計→決定論レンダリング→4 ゲート→出力先ルーティング)。機械検証は tests/render-handout.py (219 件 OK) と tests/validate-handout-config.py (278 件 OK)。"
+    },
+    {
+      "date": "2026-08-18",
+      "skill": "run-handout-extract",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。逆抽出統括。round-trip 等価は正規化後の構成データ等価で判定し (schemas/ROUNDTRIP-CONTRACT.md §1)、バイト一致はその派生検査として従う。機械検証は tests/extract-handout-config.py (152 件 OK) と tests/render-handout.py/test_cross_component.py::test_round_trip_equivalence。"
+    },
+    {
+      "date": "2026-08-18",
+      "skill": "assign-handout-readability-evaluator",
+      "kind": "assign",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。読みやすさ判定を独立 context の handout-readability-reviewer へ委譲する (proposer≠approver)。生成した本人が採点しない。"
+    },
+    {
+      "date": "2026-08-18",
+      "skill": "ref-handout-design-system",
+      "kind": "ref",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。デザイントークン・マスコット・アイコン規約の参照面。絵文字を使わずインライン SVG で図記号を表す規範を持つ。"
+    }
+  ],
+  "mechanical": {
+    "suites": [
+      {
+        "target": "assign-handout-readability-evaluator",
+        "tests": "tests/assign-handout-readability-evaluator/",
+        "runner": "python3 -m unittest discover -s tests/assign-handout-readability-evaluator -t tests/assign-handout-readability-evaluator -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 34
+      },
+      {
+        "target": "scripts/build-icon-sprite.py",
+        "tests": "tests/build-icon-sprite.py/",
+        "runner": "python3 -m unittest discover -s tests/build-icon-sprite.py -t tests/build-icon-sprite.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 128
+      },
+      {
+        "target": "scripts/embed-assets.py",
+        "tests": "tests/embed-assets.py/",
+        "runner": "python3 -m unittest discover -s tests/embed-assets.py -t tests/embed-assets.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 96
+      },
+      {
+        "target": "scripts/extract-handout-config.py",
+        "tests": "tests/extract-handout-config.py/",
+        "runner": "python3 -m unittest discover -s tests/extract-handout-config.py -t tests/extract-handout-config.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 152
+      },
+      {
+        "target": "guard-handout-external-ref",
+        "tests": "tests/guard-handout-external-ref/",
+        "runner": "python3 -m unittest discover -s tests/guard-handout-external-ref -t tests/guard-handout-external-ref -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 196
+      },
+      {
+        "target": "handout-build",
+        "tests": "tests/handout-build/",
+        "runner": "python3 -m unittest discover -s tests/handout-build -t tests/handout-build -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 45
+      },
+      {
+        "target": "handout-content-architect",
+        "tests": "tests/handout-content-architect/",
+        "runner": "python3 -m unittest discover -s tests/handout-content-architect -t tests/handout-content-architect -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 49
+      },
+      {
+        "target": "handout-extract",
+        "tests": "tests/handout-extract/",
+        "runner": "python3 -m unittest discover -s tests/handout-extract -t tests/handout-extract -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 47
+      },
+      {
+        "target": "handout-readability-reviewer",
+        "tests": "tests/handout-readability-reviewer/",
+        "runner": "python3 -m unittest discover -s tests/handout-readability-reviewer -t tests/handout-readability-reviewer -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 164
+      },
+      {
+        "target": "handout-verify",
+        "tests": "tests/handout-verify/",
+        "runner": "python3 -m unittest discover -s tests/handout-verify -t tests/handout-verify -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 60
+      },
+      {
+        "target": "ref-handout-design-system",
+        "tests": "tests/ref-handout-design-system/",
+        "runner": "python3 -m unittest discover -s tests/ref-handout-design-system -t tests/ref-handout-design-system -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 37
+      },
+      {
+        "target": "scripts/render-diagram-svg.py",
+        "tests": "tests/render-diagram-svg.py/",
+        "runner": "python3 -m unittest discover -s tests/render-diagram-svg.py -t tests/render-diagram-svg.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 166
+      },
+      {
+        "target": "scripts/render-handout.py",
+        "tests": "tests/render-handout.py/",
+        "runner": "python3 -m unittest discover -s tests/render-handout.py -t tests/render-handout.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 219
+      },
+      {
+        "target": "scripts/resolve-handout-preset.py",
+        "tests": "tests/resolve-handout-preset.py/",
+        "runner": "python3 -m unittest discover -s tests/resolve-handout-preset.py -t tests/resolve-handout-preset.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 128
+      },
+      {
+        "target": "scripts/route-handout-output.py",
+        "tests": "tests/route-handout-output.py/",
+        "runner": "python3 -m unittest discover -s tests/route-handout-output.py -t tests/route-handout-output.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 113
+      },
+      {
+        "target": "run-handout-build",
+        "tests": "tests/run-handout-build/",
+        "runner": "python3 -m unittest discover -s tests/run-handout-build -t tests/run-handout-build -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 53
+      },
+      {
+        "target": "run-handout-extract",
+        "tests": "tests/run-handout-extract/",
+        "runner": "python3 -m unittest discover -s tests/run-handout-extract -t tests/run-handout-extract -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 46
+      },
+      {
+        "target": "scripts/srg-image-bridge.py",
+        "tests": "tests/srg-image-bridge.py/",
+        "runner": "python3 -m unittest discover -s tests/srg-image-bridge.py -t tests/srg-image-bridge.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 291
+      },
+      {
+        "target": "scripts/validate-handout-config.py",
+        "tests": "tests/validate-handout-config.py/",
+        "runner": "python3 -m unittest discover -s tests/validate-handout-config.py -t tests/validate-handout-config.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 278
+      },
+      {
+        "target": "scripts/verify-handout-a11y-print.py",
+        "tests": "tests/verify-handout-a11y-print.py/",
+        "runner": "python3 -m unittest discover -s tests/verify-handout-a11y-print.py -t tests/verify-handout-a11y-print.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 187
+      },
+      {
+        "target": "scripts/verify-handout-language.py",
+        "tests": "tests/verify-handout-language.py/",
+        "runner": "python3 -m unittest discover -s tests/verify-handout-language.py -t tests/verify-handout-language.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 248
+      },
+      {
+        "target": "scripts/verify-handout-narrative.py",
+        "tests": "tests/verify-handout-narrative.py/",
+        "runner": "python3 -m unittest discover -s tests/verify-handout-narrative.py -t tests/verify-handout-narrative.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 217
+      },
+      {
+        "target": "scripts/verify-handout-selfcontained.py",
+        "tests": "tests/verify-handout-selfcontained.py/",
+        "runner": "python3 -m unittest discover -s tests/verify-handout-selfcontained.py -t tests/verify-handout-selfcontained.py -p 'test_*.py'",
+        "last_run": "2026-08-18",
+        "result": "OK",
+        "count": 354
+      }
+    ],
+    "totals": {
+      "suite_count": 23,
+      "tests": 3308,
+      "failed_test_names": 0,
+      "red_suites": []
+    },
+    "note": "全 suite は Python 3.10+ 標準ライブラリのみの unittest (pytest / yaml / .sh / .js 不使用)。判定は件数でなく失敗テスト名の集合で行う。**母集合は tests/ 直下の全ディレクトリであり、一部だけを走らせた結果を全体の緑と読み替えない** — 2026-08-18 以前の本ファイルは 4 suite 836 件を『全 suite』と記述していたが、実際の母集合は 23 suite 3308 件で 19 suite が未計測だった。是正の実測は plugin-plans/guide-doc-generator/evidence/P06.json。",
+    "discovery_command": "ls -d plugins/guide-doc-generator/tests/*/ で母集合を列挙してから全件走らせる"
+  },
+  "llm_eval": {
+    "required": true,
+    "owner": "agents/handout-readability-reviewer.md",
+    "axes": [
+      "専門用語に初出言い換えがあるか",
+      "抽象と具体が交互に現れているか",
+      "一文が読み切れる長さか",
+      "各セクションの判断軸が読み手の迷いを解消しているか"
+    ],
+    "note": "生成物の読みやすさは機械では判定しきれないため、独立 context の sub-agent が採点する。生成した本人は採点しない (proposer≠approver)。"
+  }
+}

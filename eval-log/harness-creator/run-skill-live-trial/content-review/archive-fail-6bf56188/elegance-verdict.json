@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-live-trial",
+    "skill_md_sha256": "6bf5618821cea38be988155d89bba2aefbf62ac08e350f25bae1f1688fa853e1"
+  },
+  "review_kind": "elegance",
+  "verdict": "FAIL",
+  "reviewer": "grok-fresh-content-review-live-trial-ci13",
+  "reviewed_at": "2026-11-03T08:13:47+09:00",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 1,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "refresh は受領 runtime が current PASS のときだけ skills[].runtime をその runtime に合わせて reuse し、incremental の runtime 違い current PASS は runtime-mismatch で再利用しない。",
+      "criteria receipt の PASS だけを再利用候補にし、壊れた receipt は criteria-receipt-* の defer で実走枠に入れず、別 PASS へ読み替えない。",
+      "poll exit 6 は TOKEN_CAP で、--blocked かつ poll_exit=TOKEN_CAP の downgrade_reason は TOKEN_CAP 文になり tmux 不在の文言を含まない。"
+    ],
+    "negative_feedback": [
+      "進捗停止の STALL を L326 は BLOCKED とし機械実装を derive_overall としているが、判定表の hang 行は FAIL、STALL 分岐表 #5/#6 は不合格として回収・中断する。derive_overall は blocked=True のときだけ BLOCKED を返し、poll_exit=STALL だけでは completion FAIL の FAIL になり downgrade_reason は STALL に分かれない。HARD_CAP と TOKEN_CAP の poll 表は verdict --blocked を指示するが、STALL 分岐表は --blocked も --poll-exit STALL も指示しない。",
+      "live-trial-poll.py は STATE_CORRUPT と TOKEN_UNMEASURED で exit 3 を返して終端するが、チェックリストと poll 表の終端は DONE/STALL/GATE/HARD_CAP/TOKEN_CAP だけで exit 3 が無い。tokens-unmeasured は blocked_cause_for の原因にならず、poll_exit 無しの --blocked は downgrade_reason を tmux 不在 / HARD_CAP 超過等へ落とす。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual: SKILL.md の refresh/TOKEN_CAP 説明を現行scriptと照合",
+    "next_action": "improve"
+  },
+  "notes": "skill_md_sha256 は SKILL.md 全バイトの sha256 で、提示値 6bf5618821cea38be988155d89bba2aefbf62ac08e350f25bae1f1688fa853e1 と一致した。照合した正本は plan-live-trials.py の receipt/refresh/runtime と live-trial-verdict.py の blocked_cause_for/derive_overall、および live-trial-poll.py の終端 exit。refresh の current PASS 再利用、壊れた receipt の defer、TOKEN_CAP の exit 6 と token 到達時の downgrade_reason 分離は script と一致する。FAIL 理由は STALL 終端の本文内分裂と、exit 3 の手順漏れ。この静的照合は live 実走の goal 達成を証明しない。"
+}

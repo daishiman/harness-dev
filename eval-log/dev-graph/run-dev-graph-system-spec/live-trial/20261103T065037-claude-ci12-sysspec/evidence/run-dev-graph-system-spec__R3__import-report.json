@@ -1,0 +1,32 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "responsibility": "R3-import",
+  "system_spec_index": "system-spec/index.md",
+  "evaluator_evidence": {"evidence_ref": "eval-log/system-spec-completeness-report.json", "sha256": "d49ce9faa8b6213541ab55ade4c1e5635523e0f33d8df6ff7ccd4a29f4981903", "verdict": "PASS"},
+  "c02": {
+    "skill": "dev-graph:run-dev-graph-node",
+    "writer": "plugins/dev-graph/scripts/build-graph-node.py add",
+    "input": "eval-log/run-dev-graph-system-spec/R3/import-payload.json",
+    "input_sha256": "7a4e0f5573e9b67f765780c3a504488607fb788113b5a9fb5c89354f7392b91c",
+    "dry_run": {"result": "eval-log/run-dev-graph-system-spec/R3/dry-run-result.json", "exit": 0, "write_count": 0, "readiness_fill": []},
+    "apply": {"result": "eval-log/run-dev-graph-system-spec/R3/apply-result.json", "exit": 0, "applied_count": 2, "expected_graph_revision": 0},
+    "receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+    "graph_revision_after": 1,
+    "graph_digest_after": "sha256:d4326d19d73ff12ad27f1f360c23e3f2a0ada925862659ff117dd44189c276cb",
+    "artifact_delivery": "eval-log/run-dev-graph-node/artifact-delivery.json (提示後 standard)",
+    "integrity_auditor": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:d4326d19d73ff12ad27f1f360c23e3f2a0ada925862659ff117dd44189c276cb"},
+    "goal_seek_verification_exit": 0
+  },
+  "imported_nodes": [
+    {"graph_node_id": "spec-billing-audit-system-spec", "artifact_kind": "specification", "file_path": "specs/billing-audit-system-spec.md",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.26", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-11-02T22:12:46Z"},
+     "confirmation_status": "confirmed", "evaluation_status": "pass", "readiness": "complete"},
+    {"graph_node_id": "arch-billing-audit-system-architecture", "artifact_kind": "architecture", "file_path": "architecture/billing-audit-system-architecture.md",
+     "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.26", "source_digest": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd", "imported_at": "2026-11-02T22:12:46Z"},
+     "confirmation_status": "confirmed", "evaluation_status": "pass", "readiness": "complete"}
+  ],
+  "lineage_gate": {"command": "validate-source-lineage.py --node-id spec-billing-audit-system-spec --node-id arch-billing-audit-system-architecture", "exit": 0, "result": "eval-log/run-dev-graph-system-spec/R3/lineage-gate.json"},
+  "in1_gates_after_import": {"coverage": 0, "source_citation": 0, "graph_schema": 0},
+  "independent_verification": {"agent": "R3-import 独立 Agent (general-purpose, agentId a9bd7cbad52528fe5)", "verdict": "PASS"},
+  "status": "PASS"
+}

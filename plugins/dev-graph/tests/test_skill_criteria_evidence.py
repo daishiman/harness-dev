@@ -22,6 +22,12 @@ LIVE_TRIAL_ROOT = (
 LIVE_TRIAL_SCHEMA = LIVE_TRIAL_ROOT / "schemas" / "live-trial-verdict.schema.json"
 LIVE_TRIAL_VERDICT = LIVE_TRIAL_ROOT / "scripts" / "live-trial-verdict.py"
 POSITIVE_SCENARIOS = PLUGIN / "tests" / "fixtures" / "live-trial-positive-scenarios.json"
+CONTENT_REVIEW_SCHEMA = (
+    REPO / "plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json"
+)
+CONTENT_REVIEW_POLICY = (
+    REPO / "plugins/harness-creator/skills/run-elegant-review/references/convergence-policy.json"
+)
 
 
 def _load_content_lint():
@@ -42,13 +48,71 @@ def _load_live_trial_verdict():
     return module
 
 
-def _skill_criteria(skill_path: Path) -> dict[str, dict]:
+def _behavior_drift_suffix(verdict_mod, skill_dir: Path, receipt: dict) -> str:
+    """受領 verdict の commit から見た挙動差分。git 不能や ref 不一致では空。"""
+    results = receipt.get("criteria_results")
+    if not isinstance(results, dict):
+        return ""
+    refs = {
+        result.get("live_trial_verdict_ref")
+        for result in results.values()
+        if isinstance(result, dict) and result.get("live_trial_verdict_ref")
+    }
+    if len(refs) != 1:
+        return ""
+    ref = next(iter(refs))
+    if not isinstance(ref, str):
+        return ""
+    verdict_path = (REPO / ref)
+    if not verdict_path.is_file():
+        return ""
+    try:
+        verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    runtime = "claude"
+    environment = verdict.get("environment") if isinstance(verdict, dict) else None
+    if isinstance(environment, dict) and environment.get("runtime") == "codex":
+        runtime = "codex"
+    commit = verdict_mod.verdict_baseline_commit(REPO, verdict_path)
+    if not commit:
+        return ""
+    labels = verdict_mod.closure_drift_labels(REPO, skill_dir, commit, runtime=runtime)
+    drift = verdict_mod.format_closure_drift(labels)
+    return f" {drift}" if drift else ""
+
+
+def _skill_metadata(skill_path: Path) -> dict:
     text = skill_path.read_text(encoding="utf-8")
     assert text.startswith("---\n")
     _opening, frontmatter, _body = text.split("---", 2)
-    metadata = yaml.safe_load(frontmatter)
+    return yaml.safe_load(frontmatter)
+
+
+def _skill_criteria(skill_path: Path) -> dict[str, dict]:
+    metadata = _skill_metadata(skill_path)
     criteria = metadata["feedback_contract"]["criteria"]
     return {criterion["id"]: criterion for criterion in criteria}
+
+
+def _assert_content_review_loop(verdict: dict, feedback_contract: dict) -> None:
+    schema = json.loads(CONTENT_REVIEW_SCHEMA.read_text(encoding="utf-8"))
+    loop = verdict["feedback_loop"]
+    jsonschema.Draft7Validator(schema["properties"]["feedback_loop"]).validate(loop)
+    jsonschema.Draft7Validator(schema["properties"]["iterations"]).validate(verdict["iterations"])
+    policy = json.loads(CONTENT_REVIEW_POLICY.read_text(encoding="utf-8"))
+    scopes = ("inner", "outer") if loop["loop_scope"] == "both" else (loop["loop_scope"],)
+    ceilings = [policy["loop_bounds"][f"content_review_{scope}_reeval"]["value"] for scope in scopes]
+    ceilings.append(feedback_contract["max_iterations"])
+    for scope in scopes:
+        scoped_limit = feedback_contract.get(f"{scope}_loop", {}).get("max_iterations")
+        if scoped_limit is not None:
+            ceilings.append(scoped_limit)
+    assert all(type(limit) is int and limit >= 1 for limit in ceilings)
+    # policy/frontmatter は上限であり、実際のincremental reviewが全予算を使う義務ではない。
+    assert loop["iteration_limit"] <= min(ceilings), "review limit exceeds policy/frontmatter ceiling"
+    assert verdict["iterations"] == loop["iteration"], "review iteration counts disagree"
+    assert loop["iteration"] <= loop["iteration_limit"], "review exceeded its declared limit"
 
 
 def _contained_repo_ref(value: str) -> Path:
@@ -92,6 +156,16 @@ def test_independent_scenario_receipt_covers_exact_criteria(
     receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
     current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+    recorded_sha = receipt["target"].get("skill_md_sha256")
+    live_verdict_module = _load_live_trial_verdict()
+    drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
+    assert recorded_sha == current_sha, (
+        f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+        f"(receipt={recorded_sha} current={current_sha})。"
+        " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+        " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+        f"{drift}"
+    )
     assert receipt["target"] == {
         "plugin": "dev-graph",
         "skill": skill_name,
@@ -107,7 +181,6 @@ def test_independent_scenario_receipt_covers_exact_criteria(
     assert set(results) == criteria_ids
     criteria = _skill_criteria(skill_path)
     assert set(criteria) == criteria_ids
-    live_verdict_module = _load_live_trial_verdict()
     live_schema = json.loads(LIVE_TRIAL_SCHEMA.read_text(encoding="utf-8"))
     for criterion_id, result in results.items():
         assert result["status"] == "PASS", f"{component_id}/{criterion_id}"
@@ -148,9 +221,20 @@ def test_independent_scenario_receipt_covers_exact_criteria(
             "goal_fit": "PASS",
             "verdict": "PASS",
         }
-        assert verdict["skill_dir_tree_sha"] == live_verdict_module.skill_dir_tree_sha(
-            skill_path.parent
-        ), f"{component_id}/{criterion_id}: stale behavior closure digest"
+        runtime = verdict.get("environment", {}).get("runtime", "claude")
+        digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
+                  if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
+        assert verdict["skill_dir_tree_sha"] == digest, (
+            f"{component_id}/{criterion_id}: stale behavior closure digest "
+            f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+            " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+            f"{drift}"
+        )
+        if runtime == "codex":
+            assert not live_verdict_module.validate_runtime_evidence(
+                verdict, verdict_path.parent / "transcript.jsonl", skill_path.parent,
+            ), f"{component_id}/{criterion_id}: invalid native runtime evidence"
 
 
 def _synthetic_scenario_receipt(verdict: str, statuses: tuple[str, ...]) -> dict:
@@ -296,9 +380,40 @@ def test_canonical_content_reviews_are_current_and_complete(
         )
         assert error is None, f"{component_id}/{filename}: {error}"
         verdict = json.loads((review_dir / filename).read_text(encoding="utf-8"))
+        schema = json.loads(CONTENT_REVIEW_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft7Validator(schema).validate(verdict)
         loop = verdict["feedback_loop"]
         assert set(loop["criteria_evaluated"]) == criteria_ids
         assert loop["loop_scope"] == "both"
-        assert loop["iteration_limit"] == 3
-        assert loop["iteration"] <= loop["iteration_limit"]
+        _assert_content_review_loop(verdict, _skill_metadata(skill_path)["feedback_contract"])
         assert loop["next_action"] == "none"
+
+
+@pytest.mark.parametrize(("limit", "iteration", "iterations", "frontmatter_limit", "valid"), [
+    (1, 1, 1, 3, True),   # incremental の単回評価
+    (3, 3, 3, 3, True),   # 既存の最大3周の評価
+    (2, 1, 1, 2, True),   # 上限を使い切る必要はない
+    (0, 1, 1, 3, False),  # schema の正の整数制約
+    (4, 1, 1, 4, False),  # frontmatter が大きくても正規policyを超えない
+    (3, 1, 1, 2, False),  # 対象skillの上限も超えない
+    (1, 0, 0, 3, False),
+    (1, 2, 2, 3, False),  # 申告した予算内に実反復が収まる
+    (3, 1, 2, 3, False),  # top-level とloopの実反復回数が一致する
+    (True, 1, 1, 3, False),
+])
+def test_content_review_loop_keeps_schema_and_policy_bounds(
+    limit, iteration, iterations, frontmatter_limit, valid,
+) -> None:
+    verdict = {
+        "iterations": iterations,
+        "feedback_loop": {
+            "loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1"],
+            "positive_feedback": ["synthetic design strength"], "negative_feedback": [],
+            "iteration": iteration, "iteration_limit": limit, "hook_trigger": "manual", "next_action": "none",
+        },
+    }
+    if valid:
+        _assert_content_review_loop(verdict, {"max_iterations": frontmatter_limit})
+    else:
+        with pytest.raises((AssertionError, jsonschema.ValidationError)):
+            _assert_content_review_loop(verdict, {"max_iterations": frontmatter_limit})

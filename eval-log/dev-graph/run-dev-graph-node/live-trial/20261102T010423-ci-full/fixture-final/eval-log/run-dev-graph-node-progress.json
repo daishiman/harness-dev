@@ -1,0 +1,64 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 1,
+    "graph_digest": "sha256:2ed54af803e93b3fa05b8196a9d7a7e6fce08acfbfdbadc5eb22baf140976197"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000002-update.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "eval-log/c24-receipt.json repo_root==content_roots.repository, repository_id matches config; auditor path containment PASS"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81); feature add rejected feature_requires_c14_macro_contract (eval-log/inputs/feature-add-apply-result.json)"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "eval-log/inputs/validate-after-feature-reject.json valid=true violations=0; pre_write_validation findings=0 on add and update; frontmatter kind/id==graph (eval-log/update-integrity-check.json)"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verbs run: add, update, add(feature, rejected); no register-package invoked"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json graph_revision_after=1 graph_digest_after=sha256:2ed54af8...6197 == graph_baseline; post-choice receipt node-r000002-update.json chains 1->2 and matches current graph digest sha256:f9fd2de0...e4dc"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "validate-graph-schema pre-write findings=0 (add r1, update r2); post-rejection C11 violations=0"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live-trial"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "acceptance-test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "acceptance-test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:f9fd2de0d4afe70e780cbd47514e3a18f9991c8b36e2ee496199d4206d30e4dc"
+  }
+}

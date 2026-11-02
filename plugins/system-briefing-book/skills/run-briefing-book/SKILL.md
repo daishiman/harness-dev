@@ -94,6 +94,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 
 - 先方に渡すのはこの 1 ファイルだけ。画像ははめ込み済みなので、素材フォルダやボードの PNG を一緒に送らなくてよい。ファイルや外部への参照が残ると LOCAL-REF・EXTERNAL-REF で止まり、書かない。
 - 左の目次で選んだページが出る。前へ/次へ、拡大、印刷 (1 ボード 1 ページ横向き) に対応し、JavaScript が動かなくても全ページを縦に読める。
+- ボードの画像の中の番号 (S01・ボード 04 など) と注記の番号は押せて、その画面のボードや文書の節へ移る。枠は render が `_check/boards.json` の `links` に残したもので、検査の後で HTML が変わったボードには付けない。
 - 文書のページ (要件定義・仕様書・ヒアリング・変更点) は、カードや区切りを使ったレポートの形で描く。正本は Markdown のままで、変わるのはまとめ HTML の見た目だけ (validate と /build-app は Markdown を読む)。
 - 書くファイルと中身の順は [build-briefing-book.mjs](../../scripts/build-briefing-book.mjs) の先頭の説明を読む。このスキルはスクリプトを呼ぶだけで、ほかのファイルを書かない。
 - 確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ。単独で呼ばれたときは結果を見せて終わる。

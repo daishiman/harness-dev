@@ -1,0 +1,48 @@
+{
+  "state": "prepared_not_started",
+  "label": "system-spec",
+  "frozen_head": "8c7102952e40279b152bc91e7a0d0a3d7b854932",
+  "runtime": "codex",
+  "behavior_sha256": "948e3dcb029e2ce996f3c7c4772176cfb2371161edecc4278e8ce9a61c914074",
+  "source_behavior_sha256": "948e3dcb029e2ce996f3c7c4772176cfb2371161edecc4278e8ce9a61c914074",
+  "scenario_source_sha256": "75d4c6ca639c26c5ee4dca15a025b4909f46a81cdef49f6675f0d8120ade83fe",
+  "source_provider_tree_frozen": true,
+  "task_sha256": "eb8d639baca8c6aa479a341277924579606e863cbbb735248f3d2853db7f660a",
+  "config_path": "/private/tmp/harness-codex-ci-20261102/cases/system-spec/control/config.json",
+  "config_sha256": "97022905cd99644320c5f010f4b13aa5babd2421160cd2c4868aeb7937cdd49d",
+  "native_operations": [
+    {
+      "id": "system-spec-elicit",
+      "target_skill": "system-spec-harness:run-system-spec-elicit",
+      "args": "--spec-state /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/spec-state.json --resume",
+      "skill_dir": "/private/tmp/harness-codex-ci-20261102/providers/plugins/system-spec-harness/skills/run-system-spec-elicit"
+    },
+    {
+      "id": "system-spec-doc-fetch",
+      "target_skill": "system-spec-harness:run-system-spec-doc-fetch",
+      "args": "/private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/spec-state.json と既存の /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/fetched-references.json の正規出典ゲートを実行し、fixture内の取得済み証拠を検証・再利用する。外部networkを使わず、既存の確定source/citationを偽造しない。",
+      "skill_dir": "/private/tmp/harness-codex-ci-20261102/providers/plugins/system-spec-harness/skills/run-system-spec-doc-fetch"
+    },
+    {
+      "id": "system-spec-compile",
+      "target_skill": "system-spec-harness:run-system-spec-compile",
+      "args": "確定済み /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/spec-state.json と /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/fetched-references.json を使い、repo root /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx のsystem-specへ正規compileする。",
+      "skill_dir": "/private/tmp/harness-codex-ci-20261102/providers/plugins/system-spec-harness/skills/run-system-spec-compile"
+    },
+    {
+      "id": "system-spec-evaluator",
+      "target_skill": "system-spec-harness:assign-system-spec-completeness-evaluator",
+      "args": "--spec-dir /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec --output /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx/system-spec/evaluation-report.json",
+      "skill_dir": "/private/tmp/harness-codex-ci-20261102/providers/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator"
+    },
+    {
+      "id": "system-spec-finish",
+      "target_skill": "dev-graph:run-dev-graph-system-spec",
+      "args": "--repo-root /private/tmp/harness-codex-ci-20261102/cases/system-spec/fx --resume",
+      "skill_dir": "/private/tmp/harness-codex-ci-20261102/providers/plugins/dev-graph/skills/run-dev-graph-system-spec"
+    }
+  ],
+  "live_started": false,
+  "held_for_native_hook_delivery": false,
+  "schedule_requires_fresh_lease": false
+}

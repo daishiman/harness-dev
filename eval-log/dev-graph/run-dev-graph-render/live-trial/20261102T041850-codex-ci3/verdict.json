@@ -1,0 +1,183 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/harness-codex-ci3-20261102/cases/render/fx --output /private/tmp/harness-codex-ci3-20261102/cases/render/fx/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "sourceの完了条件・OUT1・checklistが必須とする、追加runtimeなしでブラウザにSVGとfeature進捗X/Yが実表示される受入確認が未達。選択後の独立auditor原ログでは既存ChromeがSIGABRT、CLIのdump-domもexit 134でDOM出力なし。実HTML・graph・receiptから5/13、exact-13子task集合、source_digest対応、15ノード/12辺、外部resource参照0、連続2renderのbyte digest一致は独立に再照合できるが、それらだけではブラウザlive trialの必須条件を閉じられない。",
+      "scenario render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1 の required_observations 未回収 1/4 件: [4] two consecutive renders produce identical output digests"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "787ff307b3e86e0efce6608c89ee53667f4442041a9c6f021aa226b251773617",
+    "result": "FAIL",
+    "blockers": [
+      "sourceの完了条件・OUT1・checklistが必須とする、追加runtimeなしでブラウザにSVGとfeature進捗X/Yが実表示される受入確認が未達。選択後の独立auditor原ログでは既存ChromeがSIGABRT、CLIのdump-domもexit 134でDOM出力なし。実HTML・graph・receiptから5/13、exact-13子task集合、source_digest対応、15ノード/12辺、外部resource参照0、連続2renderのbyte digest一致は独立に再照合できるが、それらだけではブラウザlive trialの必須条件を閉じられない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci3_fresh_goals"
+    },
+    "transcript_sha256": "47369209346bed82b2c1d993d82a536bdb1776ef0b413003e99836499f909b19",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a19a7d-e80e-7a21-8aa5-93cc957a791e.jsonl",
+      "out/status.json",
+      "fixture-final/eval-log/render-independent-audit.json",
+      "fixture-final/eval-log/run-dev-graph-render-progress.json",
+      "fixture-final/eval-log/render-browser-dump.html",
+      "fixture-final/eval-log/render-determinism.json",
+      "fixture-final/.dev-graph/render/index.html",
+      "fixture-final/.dev-graph/render/repeat-1.html",
+      "fixture-final/.dev-graph/render/repeat-2.html",
+      "fixture-final/.dev-graph/render-receipt.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+      "evidence-freeze.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-render"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "fae898714999ded14e50912471101ed924da0991e063ec6a4fd5487241e99353",
+  "transcript_sha256": "47369209346bed82b2c1d993d82a536bdb1776ef0b413003e99836499f909b19",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T041850-codex-ci3/out",
+          "/private/tmp/harness-codex-ci3-20261102/cases/render/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "41bf7264940160283bff770c4558788578a9cc4a68d7e57ebc9a75aa7f1ab1de"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 286.7292912006378
+  },
+  "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci3-20261102/cases/render/control/scenario.json",
+    "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+      "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+      "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+      "two consecutive renders produce identical output digests"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 2,
+        "observation": "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 3,
+        "observation": "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "evidence_ref": "goal-evaluation.json"
+      }
+    ],
+    "unobserved": [
+      {
+        "index": 4,
+        "observation": "two consecutive renders produce identical output digests"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "template_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 3000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": 286.7292912006378,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "cd184136e555ddd594382ccf3d73306372bfcb2d921c939d98d22b0e1af73b3c",
+      "tokens": {
+        "input_tokens": 2005032,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 12915,
+        "total_tokens": 2017947,
+        "assistant_messages": 39,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "plugin_count": 1,
+  "pass_count": 1,
+  "fail_count": 0,
+  "error_count": 0,
+  "dependency_scc": [
+    {
+      "members": [
+        "dev-graph",
+        "system-dev-planner"
+      ],
+      "edges": [
+        {
+          "from": "dev-graph",
+          "to": "system-dev-planner"
+        },
+        {
+          "from": "system-dev-planner",
+          "to": "dev-graph"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    },
+    {
+      "members": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ],
+      "edges": [
+        {
+          "from": "harness-creator",
+          "to": "skill-governance-adapters"
+        },
+        {
+          "from": "skill-governance-adapters",
+          "to": "harness-creator"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    }
+  ],
+  "plugins": [
+    {
+      "plugin": "dev-graph",
+      "inventory": {
+        "skills": 10,
+        "agents": 4,
+        "commands": 1,
+        "hooks": 3,
+        "scripts": 26,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 8
+      },
+      "surfaces": {
+        "skills": [
+          "run-dev-graph-decompose",
+          "run-dev-graph-init",
+          "run-dev-graph-node",
+          "run-dev-graph-render",
+          "run-dev-graph-requirements",
+          "run-dev-graph-schedule",
+          "run-dev-graph-status",
+          "run-dev-graph-sync",
+          "run-dev-graph-system-spec",
+          "run-skill-feedback"
+        ],
+        "agents": [
+          "dev-graph-integrity-auditor",
+          "dev-graph-parallel-safety-verifier",
+          "dev-graph-requirements-verifier",
+          "dev-graph-sync-conflict-verifier"
+        ],
+        "commands": [
+          "dev-graph"
+        ],
+        "hooks": [
+          "audit-graph-authority-drift.py",
+          "guard-graph-schema.py",
+          "reconcile-task-lifecycle.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionStart",
+          "TaskCompleted"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PreToolUse",
+          "SessionStart"
+        ],
+        "omitted_events": [
+          "TaskCompleted"
+        ]
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "harness-creator",
+        "system-dev-planner",
+        "system-spec-harness"
+      ]
+    }
+  ],
+  "verdict": "PASS"
+}

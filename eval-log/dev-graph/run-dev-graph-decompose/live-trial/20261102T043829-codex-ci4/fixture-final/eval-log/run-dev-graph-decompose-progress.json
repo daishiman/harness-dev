@@ -1,0 +1,64 @@
+{
+  "overall": "PASS",
+  "checklist": [
+    {
+      "id": "macro_dag",
+      "status": "achieved",
+      "evidence": "eval-log/integrity-audit.json: macro_dag/macro_contract; 4 macro nodes, task0, cycle0"
+    },
+    {
+      "id": "draft_publication_zero",
+      "status": "achieved",
+      "evidence": "C28 draft2 blocked, promoted13 pass; publication-report-final.json"
+    },
+    {
+      "id": "exact13_package",
+      "status": "achieved",
+      "evidence": "既存入力packageを再登録せず独立検査。P01..P13・共通parent/package・内部DAG一致"
+    },
+    {
+      "id": "c02_local_commit",
+      "status": "not_applicable",
+      "evidence": "dry-run。C02 preview write_count0、graph revision3不変、全target operation/digestを追補に記載"
+    },
+    {
+      "id": "single_projection_authority",
+      "status": "not_applicable",
+      "evidence": "dry-run。新規beads2件保留、既存beads13件preview、none2件外部writeなし"
+    },
+    {
+      "id": "dryrun_writes",
+      "status": "achieved",
+      "evidence": "保護19ファイルbytes不変。Beads version/whereのみ26 read calls、外部write0"
+    }
+  ],
+  "inner_criteria": {
+    "IN1": "PASS",
+    "evidence": "C02 pre_write_validation findings0; independent canonical_schema violation0"
+  },
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "scenario_checks": {
+    "macro_dag_acyclic_and_no_task": "PASS",
+    "new_nodes_draft_c14_preview_only": "PASS",
+    "beads_projection_only_promoted": "PASS",
+    "original_graph_and_external_mutation_zero": "PASS"
+  },
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "writes": {
+    "graph": 0,
+    "content": 0,
+    "receipt": 0,
+    "beads": 0,
+    "github": 0,
+    "projects": 0
+  },
+  "publication_report": ".dev-graph/cache/decompose-input/publication-report-final.json"
+}

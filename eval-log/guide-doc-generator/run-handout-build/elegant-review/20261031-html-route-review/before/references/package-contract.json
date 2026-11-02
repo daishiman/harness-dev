@@ -1,0 +1,184 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "guide-doc-generator",
+  "entry_points": {
+    "skills": [
+      "assign-handout-readability-evaluator",
+      "ref-handout-design-system",
+      "run-handout-build",
+      "run-handout-extract",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "handout-content-architect",
+      "handout-readability-reviewer"
+    ],
+    "commands": [
+      "handout-build",
+      "handout-extract",
+      "handout-verify"
+    ],
+    "hooks": [
+      "guard-handout-external-ref.py"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "Productivity",
+    "tags": [
+      "handout",
+      "html",
+      "self-contained",
+      "beginner",
+      "print",
+      "a11y"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "slide-report-generator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "handout-build": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command handout-build through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        },
+        "owner_route": {
+          "plugin": "guide-doc-generator",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        }
+      },
+      "handout-extract": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command handout-extract through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-handout-extract"
+          ]
+        },
+        "owner_route": {
+          "plugin": "guide-doc-generator",
+          "entry_points": [
+            "run-handout-extract"
+          ]
+        }
+      },
+      "handout-verify": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command handout-verify through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        },
+        "owner_route": {
+          "plugin": "guide-doc-generator",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "handout-content-architect": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent handout-content-architect through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        },
+        "owner_route": {
+          "plugin": "guide-doc-generator",
+          "entry_points": [
+            "run-handout-build"
+          ]
+        }
+      },
+      "handout-readability-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent handout-readability-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-handout-readability-evaluator"
+          ]
+        },
+        "owner_route": {
+          "plugin": "guide-doc-generator",
+          "entry_points": [
+            "assign-handout-readability-evaluator"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

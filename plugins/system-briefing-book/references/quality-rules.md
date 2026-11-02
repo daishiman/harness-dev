@@ -129,6 +129,7 @@ SPEC-DETAIL-MISSING は記載の不足を調べるだけで、exit0やwarnが0�
 | FONT-SMALL | error | 文字を小さくして収めない。文を短くするか、ページを分ける。端末の絵の中の文字も同じ |
 | OVERLAP | warn | 重なった 2 つの位置をずらす。わざとなら `data-overlap-ok` |
 | NO-SAMPLE-FLAG / SAMPLE-FLAG-UNNEEDED | warn | meta の札を briefing.json の `data_policy` に合わせる (「2. 正確さ」の表) |
+| LINK-TARGET | warn | `data-go` の値を番号 (`S01` `F01` など) か、ボードの番号 2 桁にする ([page-patterns.md](page-patterns.md) の「押せる番号」) |
 | NOTES-MANY | 報告 | 止めない。同じ話の注記を 1 つにまとめる。外した話は 決めること か 仕様書へ |
 | TEXT-LONG | 報告 | 止めない。減らすときは下の「量を減らすとき」に従う |
 | BOARD-ATTR / BOARD-SCREENS-MISMATCH | error / warn | HTML の `data-board` `data-type` `data-screens` を briefing.json の pages に合わせる |

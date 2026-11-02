@@ -1,0 +1,31 @@
+{
+  "skill": "system-spec-harness:run-system-spec-compile",
+  "invocation": "Skill args: --spec-dir <repo_root>/system-spec",
+  "read_before_output": ["SKILL.md (frontmatter含む全文)", "prompts/R1-assemble.md", "prompts/R2-render.md", "prompts/R3-crosslink.md"],
+  "bash_prefix": "export CLAUDE_PROJECT_DIR=<receipt.repo_root> && cd && pwd -P 照合 (毎回)",
+  "in1_entry_gates": {
+    "validate-coverage-matrix --require-complete": 0,
+    "validate-source-citation": 0,
+    "validate-design-knowledge-refs": 0,
+    "validate-knowledge-graph --profile knowledge --order": 0,
+    "validate-knowledge-graph --profile doctrine": 0
+  },
+  "writer": "plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py compile --spec system-spec/spec-state.json --references system-spec/fetched-references.json --out-dir system-spec --repo-root <repo_root>",
+  "writer_exit": 0,
+  "outputs": {
+    "system-spec/00-requirements-definition.md": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd",
+    "system-spec/database.md": "55205cf41236aa5a6e27dae0129c0c62ae53f7337a13f3e335104361ceb72ad8",
+    "system-spec/auth.md": "2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548",
+    "system-spec/ui-ux.md": "f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444",
+    "system-spec/security.md": "39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546",
+    "system-spec/infrastructure.md": "63070576c9502446182c55d8a0bfda22e0937c55ef176dcab04d94fe52b7ab7b",
+    "system-spec/backend.md": "357a9c3ef3adc56b9a2da92a2501a70f2320358a320f0581684cd665037543bf",
+    "system-spec/frontend.md": "68d141feaf1badedccefcd35fca9780414d276045576d75f7a20f0889d1b6dac",
+    "system-spec/maintenance-ops.md": "cef333a33481d413b96e6f22019c0a8ee8be22bfe7917f5f6f1af729c77dd841",
+    "system-spec/index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"
+  },
+  "determinism": "今回の compile 出力は再開入力の章と bytes 一致 (同一入力→同一出力)。spec-state.json / fetched-references.json は非改変",
+  "artifact_delivery": {"minimum_guard_pass": "Markdown 生成10件・secret パターン0", "present_actual_artifact": "system-spec/index.md sha256 f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2 / less で開く (別呼出しで提示済み)", "record_user_choice": "standard", "choice_source": "隔離 fixture の事前回答契約"},
+  "out1_tests": {"command": "pytest -p no:cacheprovider --basetemp=<scratchpad> tests/test_compile_spec_doc.py tests/test_compile_spec_doc_knowledge.py", "result": "63 passed", "isolation": "fixture の git status/ignored と system-spec digest が実行前後で不変"},
+  "status": "PASS"
+}

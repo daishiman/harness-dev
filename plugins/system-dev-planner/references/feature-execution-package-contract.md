@@ -34,6 +34,8 @@ system-dev-planner の 1 run は、dev-graph が管理する **1つの feature**
 
 別の「13 lifecycle phase documents」は生成しない。13 task specs自体がlifecycleを実行する。各taskは同じ`feature_package_id`と`parent_feature`を持つ。
 
+dev-graph C02 の `register-package.py register` は、graph への登録と同じ transaction で13 taskの文書 (`graph_node_registration.file_path`) を書く。文書は graph node の C11 frontmatter の後に、`task-specs/` の task spec のバイト列をそのまま続けたもので、task spec の正本は system-dev-planner のまま変わらない。登録済みの package の文書を graph node から書き直す入口は `register-package.py materialize` だけである。登録の後、C02 `build-graph-node.py confirm-feature` が、この package の `atomic-promotion-receipt.json`・`plan-findings.json` (system-dev-planner の evaluator の PASS)・`dev-graph-registration.json` と C02 の登録 receipt を根拠に、`parent_feature` の feature を確定する。evaluator の PASS 以外に、feature を確定へ進める根拠は無い。
+
 ### 2.1 登録先 file_path の命名規約 (feature 単位 namespace)
 
 - `graph_node_registration.file_path` は **`tasks/<parent_feature>/<task-id小文字>.md`** とする (例: `tasks/feat-hub-foundation/sys-hub-foundation-p01.md`)。`tasks/` 直下へのフラット配置は禁止。

@@ -604,6 +604,11 @@ def test_repository_fleet_is_complete_self_contained_and_excludes_retired_plugin
     )
     marketplace_names = {item["name"] for item in marketplace["plugins"]}
 
+    expected_names = {
+        path.parents[1].name
+        for path in (repo / "plugins").glob("*/.claude-plugin/plugin.json")
+    }
+    assert discovered_names == expected_names
     assert discovered_names
     assert discovered_names == codex_names == marketplace_names
     assert retired.isdisjoint(discovered_names)

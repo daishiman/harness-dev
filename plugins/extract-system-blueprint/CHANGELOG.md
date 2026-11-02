@@ -2,6 +2,10 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`extract-system-blueprint` plugin の変更履歴を記録する。harness-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.2.19] - 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [0.2.18] - 2026-10-30
 
 - `run-skill-feedback`: 必須項目を「要望タイトル・要望種別・やってほしいこと」の 3 つに絞った。背景・優先度・重要度・関連 URL は任意で、利用者が示した値だけを保持する (優先度と重要度は未指定なら中)。対象スキル名は同定の確定値から自動で設定し、対象プラグインを確定できないときは「不明」で投入せず、ヒアリングへ戻る。

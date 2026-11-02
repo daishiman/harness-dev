@@ -15,12 +15,12 @@ class PatternVocabularyTest(unittest.TestCase):
 
     def test_unknown_pattern_word_is_exit1(self):
         with tempfile.TemporaryDirectory() as td:
-            res = H.render(td, H.flow_spec(pattern="timeline"), pattern="timeline")
+            res = H.render(td, H.flow_spec(pattern="unknown-pattern"), pattern="unknown-pattern")
         self.assertEqual(res.returncode, 1, res)
 
     def test_unknown_pattern_stderr_lists_the_six_accepted_words(self):
         with tempfile.TemporaryDirectory() as td:
-            res = H.render(td, H.flow_spec(pattern="timeline"), pattern="timeline")
+            res = H.render(td, H.flow_spec(pattern="unknown-pattern"), pattern="unknown-pattern")
         self.assertEqual(res.returncode, 1, res)
         missing = [p for p in H.PATTERNS if p not in res.stderr]
         self.assertEqual(missing, [], "stderr へ受理する 9 語を列挙する: %r" % res.stderr)

@@ -1,0 +1,96 @@
+{
+  "recorded_at": "2026-11-02T04:34:04.889068+00:00",
+  "reviewer": "/root/codex_acceptance_contract",
+  "scope": "extract-codex-transcript.py のv2 paginated inherited history投影差分約73行。全repo監査・製品goal評価ではない。",
+  "verdict": "PASS_IN_REVIEWED_SCOPE",
+  "source_sha256_before": "62d264f0ad69f44cf042966b5288643dc6cadc852132019b196e6a6f0069fc75",
+  "source_sha256_at_save": "62d264f0ad69f44cf042966b5288643dc6cadc852132019b196e6a6f0069fc75",
+  "official_primary_sources": [
+    "https://github.com/openai/codex/blob/rust-v0.165.0/codex-rs/protocol/src/protocol.rs#L3123",
+    "https://github.com/openai/codex/blob/rust-v0.165.0/codex-rs/rollout/src/ordinal.rs#L79"
+  ],
+  "independent_observations": [
+    {
+      "case": "render",
+      "raw_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T041850-codex-ci3/transcript/subagents/01a19a7d-e80e-7a21-8aa5-93cc957a791e.jsonl",
+      "raw_sha256": "d7467facf42b847ab672b2840656e5268ad9cdcf5b5d54d3d048e6ecc11a16b0",
+      "records": 124,
+      "boundary_ordinal": 48,
+      "own_records": 76,
+      "inherited_context_records": 47,
+      "manual_owned_usage": {
+        "input_tokens": 575170,
+        "output_tokens": 5414,
+        "total_tokens": 580584
+      },
+      "parser_owned_usage": {
+        "input_tokens": 575170,
+        "output_tokens": 5414,
+        "total_tokens": 580584
+      },
+      "models_from_owned_suffix": [
+        "gpt-6.1-sol"
+      ],
+      "completed": true,
+      "incorrect_later_boundary_rejected": [
+        "native-subagent-history-boundary-thread-mismatch"
+      ],
+      "raw_bytes_unchanged": true
+    },
+    {
+      "case": "system-spec",
+      "raw_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T041850-codex-ci3/transcript/subagents/01a19a7d-d51c-71f1-9171-42f1088829cc.jsonl",
+      "raw_sha256": "7a2ea9cceb1b947687df5e9506dcdb15ceae7c14a4d9caa64a75348b2d226a5c",
+      "records": 68,
+      "boundary_ordinal": 45,
+      "own_records": 23,
+      "inherited_context_records": 44,
+      "manual_owned_usage": {
+        "input_tokens": 169433,
+        "output_tokens": 1366,
+        "total_tokens": 170799
+      },
+      "parser_owned_usage": {
+        "input_tokens": 169433,
+        "output_tokens": 1366,
+        "total_tokens": 170799
+      },
+      "models_from_owned_suffix": [
+        "gpt-6.1-sol"
+      ],
+      "completed": true,
+      "incorrect_later_boundary_rejected": [
+        "native-subagent-history-boundary-thread-mismatch"
+      ],
+      "raw_bytes_unchanged": true
+    }
+  ],
+  "frozen_evidence": {
+    "checked_files": 176,
+    "changed_files": []
+  },
+  "existing_goal_artifacts_unchanged": {
+    "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T041850-codex-ci3/goal-evaluation.json": {
+      "sha256": "787ff307b3e86e0efce6608c89ee53667f4442041a9c6f021aa226b251773617",
+      "result": "FAIL"
+    },
+    "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T041850-codex-ci3/goal-evaluation.json": {
+      "sha256": "2dde42a97c86f87afff2cbb8688ad8cd14d079fa8e795ab06c8b15aa68b2f550",
+      "result": "FAIL"
+    }
+  },
+  "conditions": {
+    "矛盾なし": "PASS: physical first session_metaが子identity。明示ordinal境界より前は継承contextとしてのみ保持し、子のtool/model/completion/usageへ計上しない。",
+    "漏れなし": "PASS: raw JSONエラーを保持し、paginated ordinal欠落/gap/重複、history_base未回収、境界不明、親/祖先chain不一致、境界のthread不一致を拒否する。",
+    "整合性あり": "PASS: original indexを保つowned suffix上で全観測を同じ境界へ統一。原JSONLを書換えず、独立手計算usageと子model集合が一致する。",
+    "依存関係整合": "PASS: 明示parent/ancestor連鎖を照合。親本体と子固有範囲だけを合算する既存collector/予算契約へ接続し、不明境界はmeasured/completionの合格根拠にしない。"
+  },
+  "findings": [],
+  "limitations": [
+    "実sourceが宣言するv2 paginated/全prefix収集済み形だけを受理する。未知形式は推測で一般化しない。",
+    "この再解析は観測契約の修復であり、既存の独立fresh goal FAILをPASSにしない。",
+    "actorの再起動・task/scenario/state/clock/予算変更・source/Git/docs/Beads/利用者設定変更は行っていない。",
+    "保存後のsource変更は本レビュー対象外。"
+  ],
+  "new_native_product_goal_passes": 0
+}

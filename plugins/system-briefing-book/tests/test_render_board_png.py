@@ -348,6 +348,32 @@ def test_render_png_webp_and_export(scaffolded: Path) -> None:
     assert [b["no"] for b in report["boards"]] == ["01", "02"], "前回の 01 の結果は残す"
 
 
+@needs_browser
+def test_numbers_on_board_are_measured_as_links(scaffolded: Path) -> None:
+    edit_src(scaffolded, "01_phone-send.html", '<span class="sub">どの画面でも同じ場所に出す。',
+             '<span class="sub">送ったあとは S02 とボード 02 を見る。続きはボード 05・06 に。全部でボード 93 枚。'
+             '<span data-nolink>S05 は押せない。</span>'
+             '<span data-go="02">送ったあと</span><span data-go="x1">ほか</span>')
+    edit_src(scaffolded, "01_phone-send.html", "送ったあとは事務所の PC で確かめる", "送ったあとは S03 を見る")
+    rc, out, err = run_script(SCRIPT, "--dir", str(scaffolded), "--only", "01", "--allow-warn")
+    assert rc == 0, err
+    (entry,) = out["boards"]
+    assert [w["code"] for w in entry["warnings"]] == ["LINK-TARGET"], "data-go の形の誤りは warn"
+    report = json.loads((scaffolded / "_check" / "boards.json").read_text(encoding="utf-8"))
+    links = report["boards"][0]["links"]
+    assert entry["links"] == len(links)
+    refs = [link["ref"] for link in links]
+    assert {"F01", "S01", "S02"} <= set(refs), "注記・要件の札・画面の名札の番号を拾う"
+    assert refs.count("b02") == 2, "「ボード 02」と data-go=\"02\" の 2 つ"
+    assert refs.count("b05") == 1 and refs.count("b06") == 1, "並びは番号ごとに押せる"
+    assert "b93" not in refs, "「ボード 93 枚」は数で、行き先ではない"
+    assert "S03" not in refs, "端末の絵の中の文字は押せる番号にしない"
+    assert "S05" not in refs, "data-nolink の中は拾わない"
+    for link in links:
+        x, y, w, h = link["box"]
+        assert 0 <= x and 0 <= y and w > 0 and h > 0 and x + w <= 1680 and y + h <= 1050, link
+
+
 @pytest.mark.parametrize("html", [
     '<img srcset="assets/a.png 1x, https://example.com/b.png 2x">',
     '<img srcset="data:image/png;base64,AAAA 1x, https://example.com/b.png 2x">',

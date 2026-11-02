@@ -28,6 +28,7 @@ guard は UBM_VAULT_ROOT 配下への Write|Edit|MultiEdit のみを検査対象
   - 05_Project/  (UBM目標設定に限らず、各種プロジェクト成果物の出力先全般)
   - .claude/skills/ .claude/agents/ .claude/commands/ .claude/rules/ .claude/prompts/
     (スキル・エージェント・コマンド等の開発領域)
+  - .codex/skills/  (Codex 側のスキルの開発領域。利用者の明示指示 2026-10-21)
   - 02_Configs/Daily/  (run-ubm-journal が生成する日次ジャーナル YYYY-MM-DD.md)
   - 02_Configs/Templates/Daily.md  (embed 参照更新)
 のみ許可し、それ以外の vault パス（01_Notes/・02_Configs/の他ファイル・03_Sources/・
@@ -51,6 +52,8 @@ ALLOWED_PREFIXES = (
     ".claude/commands/",
     ".claude/rules/",
     ".claude/prompts/",
+    # 利用者の明示指示 (2026-10-21) で許可。.codex/ のうち skills/ だけで、ほかは保護のまま
+    ".codex/skills/",
 )
 ALLOWED_EXACT = ("02_Configs/Templates/Daily.md",)
 
@@ -113,7 +116,7 @@ def main() -> int:
         "ubm-write-path-guard: vault 配下の保護パスへの書込を阻止しました。\n"
         f"  対象: {rel}\n"
         "  許可: 05_Project/ 配下 / 02_Configs/Daily/ 配下"
-        " / .claude/skills|agents|commands|rules|prompts/ 配下"
+        " / .claude/skills|agents|commands|rules|prompts/ 配下 / .codex/skills/ 配下"
         " / 02_Configs/Templates/Daily.md のみ。\n"
         "  01_Notes/・02_Configs/(Daily/・Templates/Daily.md 除く)・03_Sources/・logs/・.obsidian/ 等、"
         "移植元由来の領域は読み取り専用ソースです (フォーク・複製・改変禁止)。\n"

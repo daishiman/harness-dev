@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.54 / skills 32 + agents 8 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.63 / skills 32 + agents 8 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -529,7 +529,7 @@ UserPromptSubmit / PreToolUse / PostToolUseFailure / Stop / SessionEnd）。共�
 
 **native surface projection (C01)**: `sync-native-surfaces.py` が唯一の desired-set owner。install / trust は `pending_user_gate` として分離される（＝ツールが勝手にユーザー環境へ有効化しない）。
 
-`package-contract.json`: `package_mode: bundle` / `entry_points` / `requirements.external_clis` に tmux（live-trial の輸送層。不在時は verdict=BLOCKED として明示失敗）。
+`package-contract.json`: `package_mode: bundle` / `entry_points` / `requirements.external_clis`。live-trialは選択したruntimeのCLIだけを要求する。既定Claudeはtmux、明示選択のCodexはnative CLIを使い、原ログ・閉包・実user turnをruntime別に検証する。両方のCLIを同時に必須とはしない。未確認のhookや起動停止は合格へ読み替えない。
 
 ---
 

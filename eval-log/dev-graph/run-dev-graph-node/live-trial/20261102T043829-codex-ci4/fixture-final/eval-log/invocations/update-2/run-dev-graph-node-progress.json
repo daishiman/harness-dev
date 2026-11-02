@@ -1,0 +1,62 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 2,
+    "graph_digest": "sha256:537dadfcd1df5bd2d6d4de1926ad8512f46445d4ac22223b79d401f9a038c374"
+  },
+  "writer_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "c24-update-post-choice.json: repo_root=content_roots.repository、repository_id一致。独立auditorで全5実pathのroot containmentを検証。"
+    },
+    {
+      "id": "classification",
+      "status": "not_applicable",
+      "evidence": "verb=update、decisionは今回生成せず既存のauto分類を維持。"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "eval-log/update-schema-report.json: valid=true、構造違反0。pre_write_validation.findings=0。独立auditor PASS。draft readinessはincomplete。"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=update、register-packageは実行していない。"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000002-update.json: revision_after=2、node_ids全5件がgraphと一致。唯一のpre-choice receiptのgraph_revision_after=2およびgraph_digest_after=sha256:537dadfcd1df5bd2d6d4de1926ad8512f46445d4ac22223b79d401f9a038c374はgraph_baselineと一致。pre-choice commitは1回。"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "正規writerのpre_write_validation.findings=0、正規validator構造違反0。"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "evidence": "live trial・受入テストで外部評価"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:537dadfcd1df5bd2d6d4de1926ad8512f46445d4ac22223b79d401f9a038c374"
+  }
+}

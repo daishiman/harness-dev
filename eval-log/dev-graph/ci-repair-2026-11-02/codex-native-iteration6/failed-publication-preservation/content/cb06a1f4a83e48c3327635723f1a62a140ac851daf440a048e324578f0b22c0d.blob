@@ -1,0 +1,72 @@
+{
+  "loop": 1,
+  "checklist": [
+    {
+      "item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する",
+      "status": "achieved",
+      "evidence": [
+        "run-dev-graph-system-spec/R0-context/audit.json",
+        "run-dev-graph-system-spec/R1-preflight/audit.json"
+      ]
+    },
+    {
+      "item": "system-spec-harness が version範囲と required 4 entry points を満たす",
+      "status": "achieved",
+      "evidence": [
+        "run-dev-graph-system-spec/R0-context/audit.json",
+        "run-dev-graph-system-spec/R1-preflight/audit.json"
+      ]
+    },
+    {
+      "item": "elicit/doc-fetch/compile/evaluator が正規Skill経由だけで実行される",
+      "status": "not_achieved",
+      "evidence": [
+        "正規委譲・独立評価・C02登録待ち"
+      ]
+    },
+    {
+      "item": "coverage/source-citation/evaluator gate が全てPASSである",
+      "status": "not_achieved",
+      "evidence": [
+        "正規委譲・独立評価・C02登録待ち"
+      ]
+    },
+    {
+      "item": "C02登録nodeのlineage/confirmation/evaluator evidence/readiness欠落0",
+      "status": "not_achieved",
+      "evidence": [
+        "正規委譲・独立評価・C02登録待ち"
+      ]
+    },
+    {
+      "item": "dev-graph内に同等生成ロジックの複製0",
+      "status": "not_achieved",
+      "evidence": [
+        "正規委譲・独立評価・C02登録待ち"
+      ]
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "scope": "周回1の3決定論gateのみ。新evaluatorは未実施",
+      "evidence": [
+        "c19-coverage-gate.json",
+        "c19-source-gate.json",
+        "c19-schema-gate.json"
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending"
+    }
+  ],
+  "run_status": "ERROR",
+  "blocker": "eval-log/system-spec-evaluator-blocker.json"
+}

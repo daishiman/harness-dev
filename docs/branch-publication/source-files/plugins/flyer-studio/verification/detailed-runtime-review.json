@@ -1,0 +1,85 @@
+{
+  "reviewer": "independent-detailed-runtime-review",
+  "reviewedAt": "2026-10-21T23:29:50.323659+00:00",
+  "status": "CHANGES_REQUIRED",
+  "scope": "scripts / schemas / skills / design-rules / fixture contracts; adversarial temporary real PDF renders; no implementation edits",
+  "evidence": {
+    "temporaryProject": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/flyer-independent-T6GiCt/project",
+    "mechanicalResult": "out/checks.json fail=0 before fixes",
+    "darkPngViewed": true,
+    "whiteOuter8mmNonWhitePixels": 1048772,
+    "zeroWidthWhiteCheckBadPixels": 0,
+    "invalidReviewStringsFalse": "finalize returned status complete; only adversarial temp project, not a genuine design approval"
+  },
+  "findings": [
+    {
+      "id": "RT-01",
+      "priority": "P1",
+      "severity": "high",
+      "status": "open",
+      "file": "scripts/checks.cjs",
+      "topic": "finalize accepts false strings as visual approval",
+      "reproduction": "Fresh fixture real render -> each inspection field set to string \"false\", reviewedAt=\"not-a-date\", correct fingerprint/SHA, decision=\"PASS\" -> finalize status complete.",
+      "impact": "A JSON value/type error can bypass the mandatory inspection gate despite the record explicitly saying false.",
+      "recommendation": "Validate visual-review against a schema and require every inspection flag === true, parse valid review timestamp, unique exact variant IDs. Keep attestations honest: this only enforces record shape, not external proof of viewing."
+    },
+    {
+      "id": "RT-02",
+      "priority": "P1",
+      "severity": "high",
+      "status": "open",
+      "file": "scripts/project.cjs",
+      "topic": "new photo privacy record omits required scope",
+      "reproduction": "importAsset with a new photo, privacy:{reviewed:true} succeeds and stores no decisions for presenter / other people / children / device screens / event text.",
+      "impact": "A single coarse flag is enough to pass the contractual gate, although the documented workflow requires these publication decisions separately.",
+      "recommendation": "Require structured per-category allow/hide/not-present/unknown decisions and concrete disposition; reject unknown or incomplete categories before publication, plus retain visual verification. Do not pretend metadata automatically detects faces."
+    },
+    {
+      "id": "RT-03",
+      "priority": "P2",
+      "severity": "medium",
+      "status": "open",
+      "file": "schemas/brief.schema.json; scripts/project.cjs; scripts/checks.cjs",
+      "topic": "white edge width zero makes verification vacuous",
+      "reproduction": "fixture brief.page.whiteEdge=0 validates and renders; verify fail=0. Actual white PDF image has 1,048,772 pixels below 250 in the expected outer 8mm; whiteEdge(...,0,...) returns 0.",
+      "impact": "The white-print option can lose its required paper-white border while reporting success.",
+      "recommendation": "Enforce a positive, bounded white edge that fits inside the safe margin. Preserve A4 default 8mm; require explicit confirmed custom print conditions for changing it."
+    },
+    {
+      "id": "RT-04",
+      "priority": "P2",
+      "severity": "medium",
+      "status": "open",
+      "file": "scripts/project.cjs; scripts/checks.cjs",
+      "topic": "logo and QR can fully overlap without mechanical failure",
+      "reproduction": "Set F07.logo to {asset:\"LOGO_PRINT\",x:166,y:253,w:32,h:32}, equal to its QR. validate=0 and real PDF verify=0. Viewed PDF-derived PNG: top-right logo disappears and QR covers the relocated logo.",
+      "impact": "QR remains decodable, so decoder cannot detect that another required asset is hidden.",
+      "recommendation": "Check independent logo / QR overlap and safe bounds, and protect face regions from QR/logo as well as text; leave intentional background-photo intersections to visual review."
+    },
+    {
+      "id": "RT-05",
+      "priority": "P2",
+      "severity": "medium",
+      "status": "open",
+      "file": "references/design-rules.md versus scripts/project.cjs and references/runtime.md",
+      "topic": "left-aligned centered body promise conflicts with renderer contract",
+      "reproduction": "The documentation allows a left-aligned body block centered on the page. A question block with x=12,w=186,align=\"left\" is geometrically centered but rejected page-axis.",
+      "impact": "The assistant cannot follow both contract instructions consistently.",
+      "recommendation": "Select one documented invariant. Root chose strict center for the short lower semantic blocks based on latest user requirement; update design-rules accordingly, preserving upper hero freedom."
+    }
+  ],
+  "positiveEvidence": [
+    "Whole-page axis enforcement rejects QR-excluded center and is stable when QR moves.",
+    "U01 exact approved crop, reference-only assets, selected expression, mandatory facts, forbidden station-front copy, and asset SHA checks have explicit machine gates.",
+    "Real PDF QR decoding is clipped to the application QR frame, so public QR inside a photo is not mistaken for the application code.",
+    "Input/output fingerprint, mandatory per-image visual review and independent print layers are appropriate architecture; fix strict review record validation rather than remove gates.",
+    "Style interview supports manga/handwriting etc separately from white/black palette; default13 and white3 are not hardcoded templates."
+  ],
+  "limitations": [
+    "This review did not run a new image-generation provider or thirteen genuinely new composition outputs. Host image-generation orchestration remains a documented assistant workflow, not an embedded service.",
+    "The two fixture scenes exercise the rendering pipeline, not proof that thirteen future aesthetic alternatives will be good. Diversity signature comparison is metadata-only; actual images must be independently viewed.",
+    "No live Claude Code or Codex full-session execution was performed by this reviewer.",
+    "Photo privacy, selected font appearance, contrast and natural seams cannot be proven by the current mechanical tests; final-image visual inspection remains necessary.",
+    "No automatic source-image effective PPI check exists despite print-resolution language. The raster artwork screenshot is at 288dpi and PDF-derived PNG is350dpi; these are distinct from original photo resolution."
+  ]
+}

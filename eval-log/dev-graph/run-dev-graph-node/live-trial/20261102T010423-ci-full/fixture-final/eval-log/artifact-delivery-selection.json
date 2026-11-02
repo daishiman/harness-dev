@@ -1,0 +1,53 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "effect": "local-artifact",
+  "guard": "declared-target-scope-only",
+  "transitions": [
+    {
+      "from": "artifact_created",
+      "event": "minimum_guard_pass",
+      "to": "minimal_guard_passed",
+      "evidence": "eval-log/inputs/validate-after-add.json graph_validation=pass violations=0; frontmatter kind/id == graph for 5 nodes"
+    },
+    {
+      "from": "minimal_guard_passed",
+      "event": "present_actual_artifact",
+      "to": "artifact_presented",
+      "evidence": "path+sha256 presented in assistant message before choice"
+    },
+    {
+      "from": "artifact_presented",
+      "event": "record_user_choice",
+      "to": "user_choice_recorded",
+      "choice": "standard",
+      "choice_source": "pre-specified by task.md (artifact_delivery=standard)"
+    },
+    {
+      "from": "user_choice_recorded",
+      "event": "standard",
+      "to": "semantic_evaluator_started"
+    },
+    {
+      "from": "semantic_evaluator_started",
+      "event": "improvement_complete",
+      "to": "handoff_complete",
+      "evidence": "eval-log/run-dev-graph-node-progress.json overall=PASS, auditor PASS"
+    }
+  ],
+  "state": "handoff_complete",
+  "choice": "standard",
+  "presented_artifacts": {
+    "issues/lt-search-empty-result.md": "14614834e78353c5f4629be7c15f3889e91da1261428478ba6539dcc4c52059d",
+    "tasks/lt-add-search-index.md": "a31dd91558ce712e1630017e97e11aa628fb59541bf913a2c1548d9b7df07dc9",
+    "specs/lt-note-search.md": "69f337b2a9d516aa791aea02f8751e92f5f9c2ba8d31470afa8632f71d77c9c3",
+    "architecture/lt-search-service.md": "6410d4b4caf867a685c9074290d475f725e89f13444740574cc3c2f05a56d2fd",
+    "docs/lt-search-runbook.md": "758a2617e59da0cb1042bb4fcfae26e58046593e0c28037d89fdebc213d5453a",
+    ".dev-graph/state/graph.json": "8a45c163fdeecc447300d5bac5a2a4f76cb54a87631a12dff143da4921d2e93e",
+    ".dev-graph/state/receipts/node-r000001-add.json": "d6d28c359bab378513bbbbfe404adae8999b9d74e25d737a1c086b4381a5da6e"
+  },
+  "pre_choice_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "recorded_at": "2026-11-02T01:13:22.862725+00:00"
+}

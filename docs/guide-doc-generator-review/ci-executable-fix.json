@@ -1,0 +1,80 @@
+{
+  "recorded_at": "2026-10-31T13:46:24.609240+00:00",
+  "beads_id": "harness-86kh",
+  "pr": "https://github.com/daishiman/harness-dev/pull/87",
+  "failed_commit": "68cc657dc0307d99148dc288bbfa86dd4635fa13",
+  "failed_run": 41192352426,
+  "failed_job": 124511518243,
+  "failed_step": "Verify skill-intake contracts (enum SSOT / vendored SSOT / plugin packages)",
+  "cause": "追加した2スクリプトが100644のまま登録され、PKG-007の実行可能ビット検査で失敗。python3経由の動作テストだけでは検出できなかった。",
+  "fix": "対象2ファイルに実行権限を付与して100755でgit登録。コード本文は変更しない。",
+  "files": [
+    {
+      "path": "plugins/guide-doc-generator/scripts/build-diagram-gallery.py",
+      "mode_before": "100644",
+      "mode_after": "100755",
+      "sha256": "60c52e1f8e53546f31fb50a149cfdb9efc6f891754a9436df1606290c98d975f"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/validate-visual-selection.py",
+      "mode_before": "100644",
+      "mode_after": "100755",
+      "sha256": "a3d33de7159512083f3f38723bd2a538880dd0ca5e2646246f127d7d157d5c6a"
+    }
+  ],
+  "checks": [
+    {
+      "command": "python3 plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin guide-doc-generator --check pkg-007",
+      "before": {
+        "total": 1,
+        "pass": 0,
+        "fail": 1,
+        "skip": 0,
+        "not_applicable": 0
+      },
+      "after": {
+        "total": 1,
+        "pass": 1,
+        "fail": 0,
+        "skip": 0,
+        "not_applicable": 0
+      }
+    },
+    {
+      "command": "python3 scripts/contract-intake-enum-ssot.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/lint-vendored-ssot.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/validate-plugin-packages.py",
+      "exit_code": 0,
+      "result": "22 plugins; blocking failureなし。既存advisory33件は維持。"
+    },
+    {
+      "command": "plugins/guide-doc-generator/scripts/build-diagram-gallery.py --help",
+      "exit_code": 0
+    },
+    {
+      "command": "plugins/guide-doc-generator/scripts/validate-visual-selection.py --help",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/build-plugin-release.py --check --only guide-doc-generator",
+      "exit_code": 0
+    }
+  ],
+  "specification_impact": {
+    "impact": "なし",
+    "reason": "ファイルの実行権限のみ。本文SHA・入力/出力・描画・スキル契約・依存・保存構造は同一。既存のPKG-007契約へ適合させる修正。C02文書を再生成する変更はない。"
+  },
+  "ci_at_failed_commit": {
+    "plugin-tests": "pass",
+    "change-category-guard": "pass",
+    "governance": "fail PKG-007",
+    "verify": "fail upstream governance"
+  },
+  "ci_after_fix": "push後のGitHub CIで再確認する。ローカル検査をリモート成功と読み替えない。"
+}

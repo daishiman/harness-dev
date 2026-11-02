@@ -88,7 +88,7 @@ FAMILY_GENOME = {
     FAMILY_FLAT: ("hb", "genomes/style-genome-flat-infographic-jp.json"),
 }
 
-# 図解型 (C11 / C14 の 9 語) からの全域写像。fallback は置かない。
+# 図解型 (C11 / C14 の登録語) からの全域写像。fallback は置かない。
 # 語は C14 render-diagram-svg.py の PATTERNS と同一の id であり、ここで別名を作らない
 # (RESOLUTION-R23 (2) は「C11 / C14 が持つ図解パターン語彙がそのまま定義域」と裁定している)。
 PATTERN_TO_FAMILY = {
@@ -101,6 +101,13 @@ PATTERN_TO_FAMILY = {
     "before_after": FAMILY_FLAT,
     "analogy": FAMILY_FLAT,
     "bignumber": FAMILY_FLAT,
+    "relationship": FAMILY_FLAT,
+    "sequence": FAMILY_FLAT,
+    "timeline": FAMILY_FLAT,
+    "gantt": FAMILY_FLAT,
+    "bar": FAMILY_FLAT,
+    "line": FAMILY_FLAT,
+    "stages": FAMILY_FLAT,
 }
 
 # --- RESOLUTION-R23 (a)(b): 焼き込みの policy と量的規律 --------------------

@@ -1,0 +1,191 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 4,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "required_observations[0]未達。宣言pluginと4 entry pointの実Read、elicit・保存済み出典再利用・compileの正規実行は観測したが、C05独立完成度評価はnative_audit_attribution_route_unavailableで停止した。C06/C07/C08の独立監査、正式audit-fork-ledger、完成度評価reportとaggregate帰属gateの成立を観測できない。前段4 subagentの確認やcompileの63テストPASSは完成度評価PASSの代替にならない。",
+      "required_observations[1]および[2]の登録部分未達。fixture-finalのgraph_revisionは0、nodesは空、specs/architectureに登録成果物はなく、C02 receipt・import report・評価PASS後の取込payloadも存在しない。system-spec-finish native適用、C19 R2/R3独立受入確認、取込後lineage gateも未実施。source lineage・confirmation・evaluator evidence・readinessを保持したspecification/architectureの実取込は成立していない。観測した生成は正規system-spec-harnessへ委譲され、迂回登録やdev-graph側での代替compileは観測しないが、登録0件をC02経由の登録達成とは扱えない。",
+      "C19 R2の評価引数契約が未解決。固定C24 receiptを検証したhelperのskill_argsは --output /private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx/eval-log/system-spec-completeness-report.json だが、実native evaluator要求は --output /private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx/system-spec/evaluation-report.json を指定している。helperの成功出力をそのまま使用する凍結sourceの約束を満たさず、出力先差異は記録されたまま解消されていない。最終statusはERROR/DONE: ERRORであり、required_observations全体の成功を示していない。",
+      "scenario C19-OUT1-positive-system-spec-lineage-r2-codex-v1 の required_observations 未回収 3/3 件: [1] the declared system-spec-harness plugin is loaded and its canonical flow completes / [2] the imported specification and architecture retain source lineage and evaluator evidence / [3] registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "d49843a4b4f889e56f4dba8f28461d7be35ce6e8b67e09c8c663d5028f9ce9b1",
+    "result": "FAIL",
+    "blockers": [
+      "required_observations[0]未達。宣言pluginと4 entry pointの実Read、elicit・保存済み出典再利用・compileの正規実行は観測したが、C05独立完成度評価はnative_audit_attribution_route_unavailableで停止した。C06/C07/C08の独立監査、正式audit-fork-ledger、完成度評価reportとaggregate帰属gateの成立を観測できない。前段4 subagentの確認やcompileの63テストPASSは完成度評価PASSの代替にならない。",
+      "required_observations[1]および[2]の登録部分未達。fixture-finalのgraph_revisionは0、nodesは空、specs/architectureに登録成果物はなく、C02 receipt・import report・評価PASS後の取込payloadも存在しない。system-spec-finish native適用、C19 R2/R3独立受入確認、取込後lineage gateも未実施。source lineage・confirmation・evaluator evidence・readinessを保持したspecification/architectureの実取込は成立していない。観測した生成は正規system-spec-harnessへ委譲され、迂回登録やdev-graph側での代替compileは観測しないが、登録0件をC02経由の登録達成とは扱えない。",
+      "C19 R2の評価引数契約が未解決。固定C24 receiptを検証したhelperのskill_argsは --output /private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx/eval-log/system-spec-completeness-report.json だが、実native evaluator要求は --output /private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx/system-spec/evaluation-report.json を指定している。helperの成功出力をそのまま使用する凍結sourceの約束を満たさず、出力先差異は記録されたまま解消されていない。最終statusはERROR/DONE: ERRORであり、required_observations全体の成功を示していない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci5_system_spec_goal"
+    },
+    "transcript_sha256": "0bb69bdf559bebaecfb424d9cd99d6a17a94dd24692c9590473a7f15c01d5e16",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "native-run-state.json",
+      "evidence-freeze.json",
+      "project-projection.json",
+      "collection-recovery-receipt.json",
+      "native-collection-validation.json",
+      "fixture-publication-receipt.json",
+      "native-exec/turn-008.jsonl",
+      "native-exec/turn-009.jsonl",
+      "out/status.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/eval-log/system-spec-evaluator-blocker.json",
+      "fixture-final/eval-log/system-spec-evaluation-context.json",
+      "fixture-final/eval-log/run-dev-graph-system-spec-progress.json",
+      "fixture-final/eval-log/system-spec-preflight-report.json",
+      "fixture-final/eval-log/system-spec-compile-receipt.json",
+      "fixture-final/eval-log/system-spec-compile-tests.txt",
+      "fixture-final/eval-log/run-dev-graph-system-spec/R0-context/audit.json",
+      "fixture-final/eval-log/run-dev-graph-system-spec/R1-preflight/audit.json",
+      "transcript/subagents/01a19ac9-b0be-7fd3-9b6e-33f29b980b2f.jsonl",
+      "transcript/subagents/01a19acb-bff5-7ca0-872f-e54208c627b6.jsonl",
+      "transcript/subagents/01a19acd-dfa0-79e0-b759-f5a402a8d59a.jsonl",
+      "transcript/subagents/01a19acf-f70c-7843-a732-7c0305609775.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-doc-fetch",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "61f01c76fd32403c012fa3f228bee9f536dfdccc34467622c90305ce36e98c42",
+  "transcript_sha256": "0bb69bdf559bebaecfb424d9cd99d6a17a94dd24692c9590473a7f15c01d5e16",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T054148-codex-ci5/out",
+          "/private/tmp/harness-codex-ci5-20261102/cases/system-spec/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 4,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "5acedfdc8d9393c72b9b85cc80cf1a4d42c06a1b725d9d2d5c266b0d4ac8b954"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 679.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci5-20261102/cases/system-spec/control/scenario.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2-codex-v1",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [],
+    "unobserved": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 679.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "920d54c2bed195393465cdba33ee190643586a1025dcc8bfb66142e24924cdcc",
+      "tokens": {
+        "input_tokens": 9870949,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 24271,
+        "total_tokens": 9895220,
+        "assistant_messages": 81,
+        "transcript_files": 5,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

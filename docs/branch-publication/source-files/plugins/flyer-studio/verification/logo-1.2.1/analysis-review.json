@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "analysisSha256": "62f52cf26daa8cf71b5ba7561df98e5822a6deb4351a77cda4c3b1f53e6ef1aa",
+  "sourceFingerprint": "34b640a986984a5a4a309f34c03e4bf673227df6ac9ae45b5980c190b2a10f75",
+  "policyFingerprint": "bd45867514f5d2c8c70c3f437275971d2cc1cded69ada9d8ef89361257e7f74f",
+  "reviewer": "/root/proposal_reset / independent-logo2-analysis-reviewer",
+  "reviewedAt": "2026-10-22T12:57:29.113928+00:00",
+  "checks": {
+    "evidenceAlignment": {
+      "verdict": "PASS",
+      "evidence": "DD02/DD06/DD09。L/sourcesの全13元previewを個別に先に実見し、新SVGの白地/黒地preview（通常cropと新lossless版）を見てからanalysisを照合した。旧ロゴは全案右上で可視。F03の金光を背にしたロゴ、F05の天井写真、F07の縦導入上、F09の緑写真上の30mm、F11〜13の白地という観察は実像と一致する。新ロゴはHyogo AIの太い塗り文字と青→緑/ロケット形状で、旧細線ロゴのままという誤認はない。source13全SHA一致、指定原SVGは10918bytes/SHA5bbc15...で同バイト保全。"
+    },
+    "completeness": {
+      "verdict": "PASS",
+      "evidence": "LOGO2 requiredを全13へ明示し全案adopt。原SVGの色/造形/比率、透明canvasのみcrop、x/y/幅30/35mm保持、新比率に従う高さ8.052995/9.395161mmを追跡。本文/文字属性/主従/会社→個人の順/同格二文/日付/料金1回/QR原URLと位置/顔・公開範囲/背景/白外縁/各固有構図を保持対象に列挙し、間隔変更は実施しない。P既定/同梱完成例の反映はroot所有の別成果であり、このL13案の分析承認だけでP全体完成としない。"
+    },
+    "changeDiscipline": {
+      "verdict": "PASS",
+      "evidence": "DD03/DD06/DD07/DD10。新版の造形への交換と、既存画面の再設計を区別する。XML比較でplacement-proposal.svgはviewBox以外の図形/gradient/style/座標に変更がなく外部参照なし。実printは原SVGfullcanvas2xのnative描画からRGBA lossless cropを使い、異viewport再描画で生じる輪郭/gradient量子化差を避ける理由が具体的。独立PIL比較でcrop内RGBA完全一致、crop外可視alpha0を確認。背景暗帯/再配色/縦句間隔変更/他案への35mm一律化を加えず、変更範囲に規律がある。"
+    },
+    "feasibility": {
+      "verdict": "PASS",
+      "evidence": "DD06/DD08/DD09。既存engineの独立logo PNGレイヤーを交換する実装経路と、元SVG描画からの3472x932 PNGが存在する。x/y/幅を保持して新比率の高さだけ変えるため、元のロゴ枠から新しい文字/顔/QR領域へ広がらない。全13再描画前の共有入力確定、ロゴ旧新枠和集合外の350dpi画素差分0、records保持、11checks/まとめQR/新freezeと全案独立実見で検証可能。F03の金光とF09の緑背景における実判読・主役との競合は最終PDFで必ず再確認する。小さく確実な素材差替えなのでexecutionPlan省略はfixed契約に適合。規範は230file一致の固定snapshot/policybd458...であり、livePの別改訂全体を承認していない。"
+    }
+  },
+  "mandatoryFixes": [],
+  "decision": "PASS",
+  "returnTo": "run-create-flyer"
+}

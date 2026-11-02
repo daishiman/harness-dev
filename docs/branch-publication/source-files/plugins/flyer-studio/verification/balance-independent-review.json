@@ -1,0 +1,632 @@
+{
+  "reviewer": "/root/elegant_reset_flyer",
+  "producer": "fixture-author",
+  "status": "PASS",
+  "reviewed_at": "2026-10-22T00:32:09.470444+00:00",
+  "independence": {
+    "implementation_authored_by_reviewer": false,
+    "separate_context_from_producer": true,
+    "mode": "independent-reviewer-lenses",
+    "note": "3人の専門役を並列起動したとは主張しない。独立した同じレビュアーが3つの出典付き知見レンズを適用した。"
+  },
+  "scope": [
+    "Phase2全30観点との実装照合",
+    "現1.1.0の規範/契約/役割/実装/負例コード確認",
+    "今回新描画2案の最終PDF由来PNGの全体と下部/写真/ロゴの拡大実見",
+    "visual-review.jsonへの独立所見記録"
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "reason": "透明文字、signature無関係キー、自己レビューによる旧完成経路を閉じ、明示中央制約と上部光学均衡を別物として説明する。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "reason": "ID24のpurpose={audience,benefit,action}をbrief必須として追加。initでpresetにも空欄を要求し、CLI背景指示は欠落/空白を拒否して実値を伝播。設計promptと独立共通手順が目的を実際に参照する。今回目的と同一SHAの両最終画像を再照合し、会社導入優先/3人実例と質問/Peatix申込との適合をhierarchyへ記録した。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "reason": "規範・機械共有契約・実行データ・工程・役割の正本を分け、30法再掲と素材台帳の手同期を整理。旧development-plan/verificationは1.0.1履歴として明示され、新実行証拠へ混同しない。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "reason": "最新入力1bbafd...、render、fail0のchecks、実見済み両PNG SHA、独立台帳、現行policy d342a5...が一致しvalidateReview受理。親担当の全44実PDFテストログはpass44/fail0/skipped0。結合検査はall.pdf F07→F11の2頁とwhite.pdf F11の1頁で、固定150dpi/AA無効の全3頁ラスタSHAが個別承認済みPDFと一致。各元PDF/PNGと結合PDFの現物SHA、delivery内の私のreviewSHAも私が読取照合した。"
+    }
+  },
+  "paradigm_verification": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:validateReview / schemas/visual-review.schema.json",
+        "5観点・3専門参照・具体領域・適切な意図参照・案固有所見を要求し、単なるOKや欠落は受理しない。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:validateIntent / schemas/design-intent.schema.json",
+        "designIntentの読む順序・全実在群の配置理由・宣言色の理由・余白領域・均衡・画像関係を必須化。今回2案も該当意図と画像を照合した。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "status": "resolved",
+      "evidence": [
+        "tests/design.test.cjs",
+        "観点欠落、一言、不正参照、紙面外、同文、自己承認、旧規範SHA、透明文字の負例が追加された。今回2案を別担当が実見した。テスト実行は親担当であり私の再実行ではない。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "status": "no_additional_change",
+      "evidence": [
+        "references/design-contract.json / scripts/design.cjs",
+        "知識不在という仮説に置換せず、規範→designIntent→画像criteria→判定という接続を実装。著名人名だけ追加する解決にはしていない。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 0,
+      "outcome": "追加変更不要"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/project.cjs:signature comparison / scripts/design.cjs:validateIntent",
+        "比較はcontract.signatureKeysの6要素に限定しsameSetでも既知キーを検査。追加キーによる3要素水増しの旧経路は閉じた。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "status": "resolved",
+      "evidence": [
+        "scripts/project.cjs:text-invisible / scripts/contrast.cjs",
+        "透明または実効ゼロalphaを入力時に拒否し、背景画素の実測で不可視を検出する。混在背景の警告は今回実見して記録した。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "status": "resolved",
+      "evidence": [
+        "references/architecture.md / scripts/build-asset-gallery.py / references/workflow.md",
+        "規範/機械契約/工程/担当の所有を明示、30法の再掲を参照へ、素材HTMLをcatalogから生成しcheck可能にした。互換manifestは維持。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "status": "no_additional_change",
+      "evidence": [
+        "references/design-rules.md §0,§1 / visual-review.json criteria",
+        "中央軸と光学均衡、意味の重要度と視覚強度を分ける。今回黒明朝・白太ゴシックそれぞれで主題/写真/下部の重さを画像領域付きで観察した。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 0,
+      "outcome": "追加変更不要"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:reviewPolicyFingerprint / tests/design.test.cjs",
+        "規範・知見・schema・担当指示のdigestを台帳へ保存し比較。今回実際に更新中の旧台帳が拒否され、値だけで回避していない。"
+      ],
+      "source": "findings-phase2-logical.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "status": "no_additional_change",
+      "evidence": [
+        "references/architecture.md / references/design-rules.md §1",
+        "下部中央はユーザー指定制約として維持し、普遍的な美の法則にはしないと明示。上部の非対称と紙面均衡は別に評価できる。alignmentPolicy拡張を必須の追加要件にはしない。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "追加変更不要"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "status": "resolved",
+      "evidence": [
+        "schemas/design-intent.schema.json / scripts/design.cjs",
+        "バランス・色・余白・配置の意図と実画像の必須5観点をつなぎ、各項目のintentRefを領域別に検査。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "status": "resolved",
+      "evidence": [
+        "references/design-rules.md §9 / references/designer-knowledge.md",
+        "反例と適用限界・明示制約との衝突を記録する経路を追加。中央規則の黙示緩和や過去PASSの再利用を禁止し、再利用原理と案件固有嗜好を区別。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "status": "resolved",
+      "evidence": [
+        "references/designer-knowledge.md / agents/flyer-*-reviewer.md",
+        "Müller-Brockmann/Paula Scher/田中一光の実績・一次資料・問い・適用限界を小さな知見正本にまとめ、3役はそこを参照。人格模倣や本人承認の捏造をしない。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "status": "resolved",
+      "evidence": [
+        "visual-review.json:color/spacing",
+        "色は役割と画像上の分離、余白は群切替の機能として記録できる。今回はF07主題上の写真/金地、F11 CTA補足の警告も実見し読めた理由を記した。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "status": "no_additional_change",
+      "evidence": [
+        "agents/flyer-reviewer.md / references/design-rules.md §0",
+        "5主要観点へ一度だけ観察を記録し3レンズが参照するため、3役で全文所見を複製しない。装飾・色数・黄金比・人数を美観点数へ置換しない。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "追加変更不要"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "status": "resolved",
+      "evidence": [
+        "references/architecture.md / references/designer-knowledge.md / prompts",
+        "知見は1正本、規範はdesign-rules、promptとagentは短い役割固有参照として分離。必要な互換manifestは残る。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if 思考",
+      "status": "resolved",
+      "evidence": [
+        "references/design-rules.md §9 / references/workflow.md §3",
+        "長い必須会場名/複数日程/写真なしでの両立不能を具体化し、必要情報の勝手な削除やQR移管・中央回避をしないと追加。極端入力の完成紙面実測まで完了したとはしない。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "status": "resolved",
+      "evidence": [
+        "agents/flyer-reviewer.md / visual-review.json:observations/hierarchy",
+        "制作意図より先の初見観察を要求し、今回も最終画像を開いてから主題・次情報・迷いを記録。下部拡大で日時/会場/料金/CTAの再述可能性を確認。"
+      ],
+      "source": "findings-phase2-meta.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "システム思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:validateIntent/validateReview",
+        "全実在群と宣言色の理由を必須化し、JSON Pointerと紙面領域で意味の連鎖を作った。入力の4正本は維持。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "因果関係分析",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:validateEvidence/validateReview",
+        "非空一文だけの旧受理から5項目別の根拠充足へ変更。記録の真実性は機械保証とせず、今回私自身の独立画像実見が補う。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "因果ループ",
+      "status": "resolved",
+      "evidence": [
+        "scripts/design.cjs:reviewPolicyFingerprint",
+        "画像変更と品質方針変更を別digestで扱い、更新した規範で旧PASSを無条件利用できない。変更後の再照合が必要。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "トレードオン思考",
+      "status": "resolved",
+      "evidence": [
+        "visual-review.json:balance / references/design-rules.md §1",
+        "下部中央を維持し、上部の左大句・右人物・ロゴ・下部QRの重さを別に観察する記録を実装。黄金比/面積重心で合否を代用しない。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "プラスサム思考",
+      "status": "resolved",
+      "evidence": [
+        "references/designer-knowledge.md",
+        "原則・出典・適用条件・限界・画像での問いを対象内に保存し、旧8役や他plugin/固定配色比率への依存を増やさなかった。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "価値提案思考",
+      "status": "resolved",
+      "evidence": [
+        "schemas/brief.schema.json:purpose / scripts/project.cjs:init / scripts/cli.cjs:prompts / agents/flyer-reviewer.md / tests/design.test.cjs",
+        "purpose3点が必須非空で、presetを含む新案件では空欄初期化。背景promptへ実値を渡し、設計と独立hierarchy評価が同じ3値へ対応する。今回briefの具体3値を読んで実画像適合を私が記録。新規・欠落/空白・別用途伝播の3負例/変化テストも実装された（実行主体は親担当）。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "戦略的思考",
+      "status": "resolved",
+      "evidence": [
+        "references/architecture.md / references/workflow.md",
+        "規範、受理契約、進行、担当の責務表を持ち詳細再掲を削減。履歴/manifest/HTML派生物の用途を分けた。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/checks.cjs:finalizeChecked / scripts/design.cjs:validateReview",
+        "技術検査だけではcompleteにならず独立性modeと5観点/3レンズを検査しapprovalをreceiptへ記録。今回は実際に制作と別contextで確認している。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "改善思考",
+      "status": "resolved",
+      "evidence": [
+        "agents/flyer-reviewer.md / scripts/design.cjs:validateReview",
+        "self-reviewは完成不可。正規化同一identityも拒否。独立した単一担当の3レンズを正直に許す。本件実施者はfixture-authorと異なる別agent context。文字列差だけを独立実見の証明とはしていない。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "仮説思考",
+      "status": "resolved",
+      "evidence": [
+        "references/runtime.md / tests/design.test.cjs / visual-review.json",
+        "signatureは事前ヒントと明示、同文項目やIDを足すだけのコピーを拒否。今回2画像の明朝/太ゴシック、上部/中央写真、黒金/紙白の実差を具体的に観察した。画像類似度判定の新システムは不要。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "論点思考",
+      "status": "resolved",
+      "evidence": [
+        "scripts/merge-checks.cjs / scripts/checks.cjs:finalizeChecked / tests/merge-checks.test.cjs",
+        "結合後のページ数/順序/同一ラスタを検査して不一致ならcompleteを出さず、結果をreceiptへ保存。今回この実行は親担当が後続で担当し、本報告は独立コード確認まで。",
+        "最終実行証拠: 実PDF統合44/44、逆順/元PDF改変の拒否試験もPASS。今回結合3頁の順序・pixelSHA・元PDF/PNG対応を読取確認。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 1,
+      "outcome": "修正確認"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "KJ法",
+      "status": "resolved",
+      "evidence": [
+        "references/architecture.md / references/designer-knowledge.md / scripts/build-asset-gallery.py",
+        "原則/専門知見/素材の正本と生成物/互換manifest/履歴を分けて保存。出典のない有名人ペルソナ追加や履歴削除はなく、台帳の編集元はcatalogに固定。"
+      ],
+      "source": "findings-phase2-system.json",
+      "original_issue_count": 2,
+      "outcome": "修正確認"
+    }
+  ],
+  "coverage": {
+    "used": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "skipped": [],
+    "total": 30
+  },
+  "open_findings": [],
+  "new_regressions": [],
+  "image_review": {
+    "status": "PASS",
+    "ids": [
+      "F07",
+      "F11"
+    ],
+    "sha256": {
+      "F07": "47d425c9c672f9fa03fd049b72c8ee2b33132dba458d80fd61213c9c7a85e7c9",
+      "F11": "d7454b63fe95e49e8965c76de3da476fd01d5ee470c3cbd3b685949e9b049e88"
+    },
+    "viewing": [
+      "view_image originalで全体2画像を個別表示",
+      "元PNGからメモリ内だけで下部/写真/ロゴを切り出して個別表示、画像ファイルは書き換えず追加出力もしない",
+      "支給LOGO_PRINT.png原図をview_imageで比較"
+    ],
+    "first_impression_before_intent": true,
+    "criteria_recorded": 10,
+    "expert_references_recorded": 6,
+    "mandatory_fixes": [],
+    "contrast_warnings_reviewed": [
+      "F07 brand/mainを拡大で判読",
+      "F11 apply補足を拡大で判読"
+    ],
+    "same_byte_refresh": {
+      "new_fingerprint": "1bbafd4f4557db22f323f0688adf782e020c5ff34a2f657658564ab1892a211a",
+      "new_policy_fingerprint": "d342a5a7a97ce1ac9f924213def75787e7f06019a015af0c77edbfd626b040ca",
+      "png_identical_to_independently_viewed_images": true,
+      "reason": "purpose追加後再描画の両PNGをファイルSHAで比較し実見済みの同一バイトと確認。画像未変更でも新目的と新規範を読み直し、hierarchyとsummaryを今回の判断として更新した。"
+    }
+  },
+  "source_checks": [
+    {
+      "url": "https://www.pentagram.com/work/the-public-theater/story",
+      "fact": "劇場の使命に応じた書体と公演広告、Noise/Funkと継続的な変化を公式事例で確認。適用判断は本レビュアーの推論。"
+    },
+    {
+      "url": "https://www.moma.org/collection/works/7233",
+      "fact": "Josef Müller-Brockmann / Musica Viva /1958の作品記録を確認。"
+    },
+    {
+      "url": "https://www.moma.org/collection/works/7848/",
+      "fact": "Ikko Tanaka / Nihon Buyo /1981の作品記録を確認。"
+    },
+    {
+      "url": "https://umma.umich.edu/objects/nihon-buyo-2017-2-25/",
+      "fact": "作品と幾何形/色面の公式記述を確認。"
+    }
+  ],
+  "validation": {
+    "executed_by_this_reviewer": [
+      "validateReviewのみ（初回はpolicy鮮度不一致で期待通り拒否）",
+      "最新purpose/入力/規範/画像SHAを照合してvalidateReview受理PASS",
+      "結合/個別PDF/PNG/台帳/receiptのSHAを読み取り照合。44件終了ログと結合3頁一致のreceiptを確認。"
+    ],
+    "not_executed": [
+      "テストsuite再実行",
+      "描画",
+      "verify（出力を書き込むため親担当所有）",
+      "finalize",
+      "結合実試験"
+    ],
+    "visual_review_sha256": "1c1ca5203e8997e20e866ee84cd1e9d09ca2131c787e4565397d08e3d8b5fc8e",
+    "current_input_fingerprint": "1bbafd4f4557db22f323f0688adf782e020c5ff34a2f657658564ab1892a211a",
+    "current_policy_fingerprint": "d342a5a7a97ce1ac9f924213def75787e7f06019a015af0c77edbfd626b040ca"
+  },
+  "limitations": [
+    "画像記録の真実性を機械検査だけで暗号学的に証明するものではない。",
+    "既存背景再利用2案の描画経路・独立実見であり、新規13構図・新背景生成・全表現形式・両ホスト通し試験・実機印刷・来場効果を認証しない。",
+    "150dpi AA無効の結合比較は固定条件下の同一性診断で、350dpi最終PNGそのもののピクセル同一性を主張しない。個別PDFのSHA鎖と組み合わせる。"
+  ],
+  "followup": "本レビュー範囲の未解決指摘は0。全13新規構図・新背景生成・全形式・実ホスト通し・実印刷・集客効果は未実施範囲として残し、今回のPASSへ読み替えない。",
+  "resolved_during_independent_review": [
+    {
+      "id": "FINAL-24",
+      "status": "resolved",
+      "reason": "指摘を不要へ降格せず最小purpose契約を実装し、独立担当が目的と実画像を照合。"
+    },
+    {
+      "id": "FINAL-FRESH",
+      "status": "resolved",
+      "reason": "rootが機械checksを新入力へ更新。独立担当が最新policy実読後に台帳を更新しvalidateReviewはPASS。"
+    },
+    {
+      "id": "FINAL-COMBINED",
+      "status": "resolved",
+      "reason": "実PDF全44件PASS/skip0のログを読了し、結合3頁一致と最新receiptのSHA鎖を独立読取確認。"
+    }
+  ],
+  "purpose_evaluation": {
+    "purpose": {
+      "audience": "会社でのAI導入・活用に悩む方を中心に、個人での利用に関心がある方",
+      "benefit": "3人の実例と直接の質問・交流から、自社や自分が始める一歩を見つける",
+      "action": "開催日時・場所・費用を確認し、Peatixで申し込む"
+    },
+    "verdict": "PASS",
+    "evidence": [
+      "会社向け導入の質問2行が個人利用質問の前にあり、優先読者に対応。",
+      "3人実例トークの見出し、等しい三名表示、質問内容が実例と直接相談/交流の価値を示す。",
+      "日付・会場住所・税込食事込み料金を読んでからPeatix付きCTAと右下QRへ進める。"
+    ],
+    "not_claimed": "来場率、申込増、実際の相談体験の効果は測定していない。"
+  },
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0
+  },
+  "final_execution_evidence": {
+    "test_log": {
+      "path": "/private/tmp/flyer-balance-final-tests.txt",
+      "sha256": "67d0d40faf770a24eaafd9728522a939e4b2def8ce715ca57b03e9a6a8c3b862",
+      "tests": 44,
+      "pass": 44,
+      "fail": 0,
+      "skipped": 0,
+      "executor": "root",
+      "reviewer_action": "ログを読み最終サマリーと結合テスト43/44の個別PASSを確認"
+    },
+    "combined": {
+      "receipt_path": "/Users/dm/dev/dev/ObsidianMemo/05_Project/プラグイン/flyer-studio/evidence/runtime-balance-refactor/out/combined-checks.json",
+      "receipt_sha256": "559a42d8c6c3a3e1644401c335f4490fe9d5c0d1c8103ed947cd92876dbc17bd",
+      "fail": 0,
+      "matched_pages": 3,
+      "files": [
+        {
+          "file": "all.pdf",
+          "pageCount": 2,
+          "matchedPages": 2,
+          "sha256": "0752c1ee470eabddc5e6b89dc9f9eaf6d141ef76865b9ec9eff49fa435f1d13f"
+        },
+        {
+          "file": "white.pdf",
+          "pageCount": 1,
+          "matchedPages": 1,
+          "sha256": "d973a66420c37989916f7c496835cb31a652a4d9b6376135cb3c0e63a7b89343"
+        }
+      ],
+      "pixel_identity": true
+    },
+    "delivery": {
+      "path": "/Users/dm/dev/dev/ObsidianMemo/05_Project/プラグイン/flyer-studio/evidence/runtime-balance-refactor/out/delivery.json",
+      "sha256": "665ae51981658a0c80542f9b6400a94950954c55d60a36ac4492c6959c1dd6bb",
+      "status": "complete",
+      "review_sha256": "1c1ca5203e8997e20e866ee84cd1e9d09ca2131c787e4565397d08e3d8b5fc8e",
+      "fingerprint": "1bbafd4f4557db22f323f0688adf782e020c5ff34a2f657658564ab1892a211a",
+      "reviewPolicyFingerprint": "d342a5a7a97ce1ac9f924213def75787e7f06019a015af0c77edbfd626b040ca"
+    },
+    "review_only_validation": "validateReviewを再度実行し受理。入力/現在checks/台帳/receiptのfingerprint、policy、現物PDF/PNG SHAを読み取りで照合。私はverify/finalize/結合/全テストを実行していない。"
+  },
+  "evaluated_inputs": {
+    "scripts/build-asset-gallery.py": "8a8fbe92ab580defe77b554906c6dfb6c684322df3bfe88ec8e7e748ebb9c6a8",
+    "scripts/checks.cjs": "8088412f654402909dbe11e138dc6e2dc5acd2f6cfc1898c8406a90eed81400b",
+    "scripts/cli.cjs": "41ef573eda1702d3d5ba74eb5f0a4ce6aa6ed7d241b2b00c865c96849ab552e3",
+    "scripts/contrast.cjs": "412f5aa6c48a8346d51c37a55b14a8baa6961ba337e7a5e68d44bfd4b55b7c77",
+    "scripts/design.cjs": "813e5552c32a70f191b87b2af91e0101a76c953e38066d1f7b6f6203dd19e112",
+    "scripts/flyer.py": "9f8f6d190732fec42d6116fc32d97960e46af0371c4fa96e09a49d3ccc9e12d8",
+    "scripts/geometry.cjs": "f852defed8b65bad007e17324c880ea01485d76a3075dcedc1a7752b880e908b",
+    "scripts/merge-checks.cjs": "f3623bad43f1ea2765375a6e0676411802081872e5a501321f417ef5d370797a",
+    "scripts/package.py": "dfdf46f27de36168c2e277bc24030b9fc0733f7aded23f2ceb21b139912a49e6",
+    "scripts/project.cjs": "7538e1609bd8458213310ae05f85bfa86fd53f3947c10a0502b2268c748828ab",
+    "scripts/render.cjs": "8ce4c6154748a8e8b3a1fec45982c5d51703af0e28c6324818e68fe0b2c0fd07",
+    "schemas/brief.schema.json": "43ab4c0a11f6dbb80553ef21cbe51f0c102fbf9b3ef951f0161ef770a2cb9997",
+    "schemas/concepts.schema.json": "593ff955de3157cd373d4c71c69333b5513e1252417318851946a6106e4bd9d2",
+    "schemas/design-intent.schema.json": "ad5411dd26c03c169eb8382d780926e1645277566ca99a0a79c51d8857e3a089",
+    "schemas/scene.schema.json": "9bca92f38cbfcdb96f7efc1743640202740352c6bf1b1e152e17784016080b9f",
+    "schemas/visual-review.schema.json": "a384c0376ab312da7a9c548f1b70a0129be9cb91eb69a3a0aac21a54dbc703a4",
+    "agents/flyer-color-reviewer.md": "1bc7c0d279eae1c9aa18c2218efaa6c0fe7a764bf8489c9b5a7f154a9970b949",
+    "agents/flyer-composition-reviewer.md": "8306fed9cc87ec89c165c07005208048b0c0f2af9f754b01980c9501778d3eb5",
+    "agents/flyer-reviewer.md": "1a39ae5c336f9042ce2f290f60df724ba2eceadb8f880e6e8db87eb9fcbb3aea",
+    "agents/flyer-typography-reviewer.md": "7f6f58972efb30e5395f0b5ecc2352a2ecfe156c7240fac58e0842565469c009",
+    "references/architecture.md": "f1497113907a3e4d4f5bd973eadc77c0d808c51d2e4dec254abed0207dabce18",
+    "references/design-contract.json": "23f7191d1c6cd9df1fc3ccf732c805f0e4c39234c5a8b60a6978547b846f51a1",
+    "references/design-rules.md": "96ddf29ae5991ba2cab3094fab795b771ea6b9b16b4c2a4fe3e2d5691b922f4e",
+    "references/designer-knowledge.md": "6000ef90a4ae5ae54fae01a377cf13c7d6d28afa088ea81d59d8e199b88a15c8",
+    "references/interview.md": "aa8c8965ad3918a8b87b303aaf52b74798711dc5a1678c2fa460f7c6d133fbc7",
+    "references/package-contract.json": "241e7480586c37019c328a5b85f6c5eafe480f1f9262a55472255174dde8d1b1",
+    "references/runtime.md": "5ffdf492181c12d084a015dd877ced0d12b25fd556b32cee4a5023d3a96109c6",
+    "references/thirty-methods.md": "6b297c567a61b493672790500ffd6f53c068be033db6f48c9b96f86288b0edd6",
+    "references/workflow.md": "545ae69c16e7cf10e09fb95610d60b2098892be035cb214cb7fd7b22c5a8d767",
+    "skills/assign-flyer-review/SKILL.md": "df08dd4c17cb9e69986f53a49aa4239b6a90ae9e9a28963b4a8faf174a3942c9",
+    "skills/assign-flyer-review/workflow-manifest.json": "54aa75fe2af2aee9218dafe8344567056727890352feaae111cb14ac5fbbf8d9",
+    "skills/run-create-flyer/SKILL.md": "cb3ce50e91a504dded79565d2d34ba50b3b5115ea6b8c47280a7ae0884f49be6",
+    "skills/run-create-flyer/workflow-manifest.json": "79405b39aeda7319f8f76033a4681934ada5002d61cbee4d6c4a97a17f417dbd",
+    "prompts/background.md": "093b16b8f3987d8e7f0448d1486b628c7bbf5ca01fdfe82f35a33b941ce5f966",
+    "prompts/design.md": "d1a9225a04b75884123a75eb89701f685c8c3099183021ad4afb7d9527c9baa9",
+    "prompts/visual-review.md": "4763ccfb84b9f9c79e007ca08e0e2432d185ff0d60249ea66e3706fc6225869b",
+    "visual-review.json": "1c1ca5203e8997e20e866ee84cd1e9d09ca2131c787e4565397d08e3d8b5fc8e"
+  }
+}

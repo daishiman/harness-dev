@@ -95,7 +95,7 @@ verdict を受け取る。not-run を pass 側へ畳む経路は存在させな�
 
 - `html-path` 未指定 / 不在 / ディレクトリ指定: 1 ゲートも実行せず停止する。空の集約結果を pass として返さない
 - `--config` 未指定: selfcontained / a11y-print は実行し、language / narrative は not-run (config-missing)。全体 verdict は incomplete
-- `--config` が未正規化: `validate-handout-config.py --strict` (書き込みなし) で検出し、language / narrative を not-run (config-not-normalized) とする。この command 側で正規化して通すことはしない。同梱の正規化済み構成データを渡すよう案内する
+- `--config` が未正規化: `validate-handout-config.py --config <path>` (書き込みなし) が exit0 で、かつ `provenance.normalized_by` がスキーマの定義値であることを確認する。満たさない場合は language / narrative を not-run (config-not-normalized) とする。この command 側で正規化して通すことはしない。同梱の正規化済み構成データを渡すよう案内する。`--strict` は警告も失敗へ変えるため正規化判定には使わない。節数などの助言と、正規化の有無を混同しない
 - script が見つからない: 当該ゲートを not-run (script-absent) とし、解決を試みたパス (HB_ROOT / CLAUDE_PLUGIN_ROOT / __file__ 相対) を提示する。script 不在は環境の問題であって資料の合格を意味しない
 - `--only` で除外したゲート: not-run (excluded-by-only)。成功時でも全体 verdict は pass ではなく partial に固定する
 - `--only` に未知の gate_id: 1 ゲートも実行せず停止し、有効な gate_id 一覧を示す

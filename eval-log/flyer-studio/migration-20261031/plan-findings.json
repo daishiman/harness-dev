@@ -1,0 +1,423 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.2.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "歴史計画の契約間衝突なし。現物1.3.0適合は別監査。",
+      "evidence": [
+        "check-build-handoff exit=0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "13phase・9実体・不要surface理由と要件RTMを網羅。",
+      "evidence": [
+        "detect-unassigned exit=0",
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-surface-inventory exit=0",
+        "check-requirements-coverage exit=0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "現行マトリクスとfrontmatter/gatesの決定論検査が全exit0。",
+      "evidence": [
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-spec-matrix-coverage-self-test exit=0",
+        "check-spec-matrix-coverage-plan exit=0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "phase昇順、component DAG、handoff、共有script境界、参照graph構造が全exit0。",
+      "evidence": [
+        "verify-index-topsort exit=0",
+        "detect-unassigned exit=0",
+        "check-build-handoff exit=0",
+        "check-runtime-portability exit=0",
+        "validate-task-graph exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環",
+      "stderr": ""
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "--inventory",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/component-inventory.json",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持",
+      "stderr": ""
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足",
+      "stderr": ""
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)",
+      "stderr": ""
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み",
+      "stderr": ""
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/component-inventory.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み",
+      "stderr": ""
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/handoff-run-plugin-dev-plan.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "stdout": "OK: build handoff が 9 routes と envelope 契約を満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み",
+      "stderr": ""
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結",
+      "stderr": ""
+    },
+    {
+      "id": "G11",
+      "name": "validate-task-graph",
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C1",
+      "observation": "13フェーズ・9実体の歴史計画として genuine PASS。builderとcomponent_kind、非公開キット、独立評価の所有境界、manifest独自キーをnativeへ転記しない境界は内部で整合する。現物1.3.0の実装適合PASSは意味しない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/handoff-run-plugin-dev-plan.json"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2",
+      "observation": "必要性に基づくsurface検討は genuine PASS。skill・sub-agent・共有scriptを持ち、commands/hooks/MCP/外部DBを採らない理由が明示され、単一skillへの退化はない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/component-inventory.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/goal-spec.json"
+      ]
+    },
+    {
+      "severity": "medium",
+      "bucket": "layer-a-generative-fidelity",
+      "observation": "現物1.3.0への再実装計画としては genuine FAIL。計画は4skill＋stage agent4＋共有入口1の9実体、専門役3をroot agentsから除去する設計、13案と白黒/中央軸の固定、pluginレベルessence baseline/release制御を要求する。現物はintake/learnを含む6skill、root専門agent3、案件方針による案数・中心指定、stage共通規則の現行essence方式であり、旧計画のままbuilderへ投入すると現仕様を巻き戻す。移行で発生した破損ではなく持ち込まれた計画の版差である。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-02-design.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-05-implementation.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-13-release.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/README.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/stage-common.md"
+      ],
+      "suggested_fix": "原本計画と当時のFAIL記録は履歴として保持し、現行プラグインの実行契約を正本にする。次回の機能改修ではこの計画から自動生成せず、必要時だけ現行6skill構成に対応する新計画を作る。"
+    },
+    {
+      "severity": "info",
+      "bucket": "layer-b-downstream-harness",
+      "observation": "歴史計画の受入例と事前解決済み判断は genuine PASS。古いSHAのレビュー再利用を拒否、プロンプト作成だけで生成済みとしない、privateキット検査を実環境install receiptへ転用しない等、具体的誤動作を二値で区別する。補助2ゲートもexit0。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-02-design.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-05-implementation.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-13-release.md",
+        "check-generative-fidelity.py exit 0",
+        "check-downstream-harness.py exit 0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "task-graph-semantics",
+      "observation": "参照射影として genuine PASS。134nodeはphase-gate13とverification-claim121で、entity成果物scopeと4種edgeを持つ。index/handoffがdispatch_ready:falseを明示するので実行可能taskと扱わない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/task-graph.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/handoff-run-plugin-dev-plan.json"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "shape-ab-comparison",
+      "observation": "N/A。shape_marker=fixed-13-phaseでtask-graph-derivedへの切替を提案しておらず、旧新shape実効性比較は本移行に適用しない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "task-graph-consumer",
+      "observation": "N/A。harness-creator consumerへ渡す実行契約ではなくconsumerも起動していない。graph_hash照合/state更新が正常実走したという主張はしない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/handoff-run-plugin-dev-plan.json"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "execution-envelope",
+      "observation": "自動dispatch不可を拒否する境界は genuine PASS。P01-C03-01へrendererを実行するとverification-claimがenum外、task_spec_ref欠落としてexit1となった。全134nodeのtask_spec_refはnull。参照射影と明示するため移行必須修復に数えず、実行できるenvelopeのPASSも与えない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/task-graph.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md",
+        "render-task-execution-envelope.py --task-id P01-C03-01 exit 1 (expected rejection)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "cycle-knowledge",
+      "observation": "有界再利用検査は genuine PASS (check-cycle-knowledge exit0)。本参照計画はcycle task-specも過去cycle active node複写も持たず、過去履歴を無条件注入しない。実際のcross-cycle consumer運用の証明ではない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/task-graph.json",
+        "check-cycle-knowledge.py --repo-root /Users/dm/dev/dev/個人開発/harness exit 0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "migration-provenance",
+      "observation": "旧HarnessHub絶対パスはplan-findings/progress/delivery-stateの当時の証拠位置として残る。現在のplan/phase/inventory/handoff/task-graphの能動契約に旧ユーザー絶対パスはない。HarnessHub名の2箇所はcanonical将来契約の歴史説明で、移行必須修復ではない。一括置換して過去証拠が本環境で再実行されたようには見せない。旧plan-findings.jsonのFAILは過去の最終判定として保持し、この出力と区別する。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/plan-findings.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/delivery-state.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/phase-13-release.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/development-plan/index.md"
+      ]
+    }
+  ],
+  "evaluated_inputs": [
+    {
+      "path": "component-inventory.json",
+      "sha256": "b05283f94748dc44ddb5370c1922ab2b6ead2d9b9fad0757154d7b6e70e9fc63"
+    },
+    {
+      "path": "delivery-state.json",
+      "sha256": "89c78d6aa326f4695fdc6b7667489c85b3c4e30e495bf5494b037bd4bf9c51a4"
+    },
+    {
+      "path": "envelope-draft/plugin.json",
+      "sha256": "7d73808982c8e4b646e797107cc069edffceb8eca35a18ead46f31d2542b8323"
+    },
+    {
+      "path": "goal-spec.json",
+      "sha256": "73ac79101a81e98400773f863759bef59d2fe799522332bf0f1e527fbd7e8fb5"
+    },
+    {
+      "path": "handoff-run-plugin-dev-plan.json",
+      "sha256": "83b097d40d2b8736014c8963d1ba2bd1d59eb47fe3d92fbd843d607c51497d7e"
+    },
+    {
+      "path": "index.md",
+      "sha256": "1d148989dbd43ea909093d97f04cf5ba78c479c52ceda7c6e4a76195815fe541"
+    },
+    {
+      "path": "phase-01-requirements.md",
+      "sha256": "e1420f9c86619170aa4de4983ce372b4af74ed2d168e1b264d225b75be704049"
+    },
+    {
+      "path": "phase-02-design.md",
+      "sha256": "810926e425e559bdb4f93597e062141e259be65702a6b777223af1194994ae28"
+    },
+    {
+      "path": "phase-03-design-review.md",
+      "sha256": "aafac663a8e02c1584d26e0b1e109dd7f99627067262397620dde225a5c26d45"
+    },
+    {
+      "path": "phase-04-test-design.md",
+      "sha256": "fed3b0f2332a4da61364c9059e8be22bafc910df740cdc3ad960233e18623f82"
+    },
+    {
+      "path": "phase-05-implementation.md",
+      "sha256": "6e0920ec84c075251d0bca502e0d53dbecf428b7f991e7fe999f8ce01b88d883"
+    },
+    {
+      "path": "phase-06-test-run.md",
+      "sha256": "bd7836064465d11f065a0a1b02d008e7617db4bb40b7779d2c6091c08d99ae64"
+    },
+    {
+      "path": "phase-07-acceptance-criteria.md",
+      "sha256": "9e31783cd803db626c78fed89b3dad40c61e8596f1f29e15ad518f4048a8ee48"
+    },
+    {
+      "path": "phase-08-refactoring.md",
+      "sha256": "d2c686dc1d2ff4d14ab35b6623ee9734f506215ba521d1dd78d37df246c66fd5"
+    },
+    {
+      "path": "phase-09-quality-assurance.md",
+      "sha256": "77683e016b07692172459de348f2fbef7ec3172347962eb2a57bd9832ca1824b"
+    },
+    {
+      "path": "phase-10-final-review.md",
+      "sha256": "d187572505a425680416496d790e5e54712b484a514f51cebc54530b92dc7b21"
+    },
+    {
+      "path": "phase-11-evidence.md",
+      "sha256": "d80c3bb65d9b3820f564e36d4f0accedb916560e2738af48112b44f691ba481e"
+    },
+    {
+      "path": "phase-12-documentation.md",
+      "sha256": "606f0dcf2db09e6e2815b5b6bd019d027d82ab5fa02b89dc1cfd7c90d76055d0"
+    },
+    {
+      "path": "phase-13-release.md",
+      "sha256": "f6a86f21a9be5c53ab5e2b294e6d619d879a4e7ac4e6ef5c57aabb042f0dcebd"
+    },
+    {
+      "path": "plan-findings-round1.json",
+      "sha256": "ba5611c469e441333c49337ae7ba70439f7de8369bbff80e0ea1415a4e26689c"
+    },
+    {
+      "path": "plan-findings-round2.json",
+      "sha256": "b8ec49a64b69d20a76289b508483d8cb5af23949302707be1555b3f538653451"
+    },
+    {
+      "path": "task-graph.json",
+      "sha256": "3e1f614124ebd3179b45643ed0b03ddb5f85699429289adc6d9912fbb414cd18"
+    }
+  ],
+  "staleness_rule": "evaluated_inputs は plan 配下の安定 artifact を再帰収集した鮮度台帳である。path 集合または sha256 が現物と一致しない findings は stale とする。この台帳は semantic 再評価範囲を決めず、証拠再利用を認可しない。"
+}

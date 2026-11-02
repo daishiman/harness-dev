@@ -1,0 +1,270 @@
+{
+  "consumer": "capability-build/task-graph build",
+  "execution_tasks": [
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [],
+      "phase_ref": "P01",
+      "task_id": "SYS-P01",
+      "task_spec_path": "task-specs/phase-01-requirements.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P01"
+      ],
+      "phase_ref": "P02",
+      "task_id": "SYS-P02",
+      "task_spec_path": "task-specs/phase-02-architecture.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P02"
+      ],
+      "phase_ref": "P03",
+      "task_id": "SYS-P03",
+      "task_spec_path": "task-specs/phase-03-design-review.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P03"
+      ],
+      "phase_ref": "P04",
+      "task_id": "SYS-P04",
+      "task_spec_path": "task-specs/phase-04-test-design.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P04"
+      ],
+      "phase_ref": "P05",
+      "task_id": "SYS-P05",
+      "task_spec_path": "task-specs/phase-05-implementation.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P05"
+      ],
+      "phase_ref": "P06",
+      "task_id": "SYS-P06",
+      "task_spec_path": "task-specs/phase-06-test-run.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P06"
+      ],
+      "phase_ref": "P07",
+      "task_id": "SYS-P07",
+      "task_spec_path": "task-specs/phase-07-acceptance.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P07"
+      ],
+      "phase_ref": "P08",
+      "task_id": "SYS-P08",
+      "task_spec_path": "task-specs/phase-08-refactoring-migration.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P08"
+      ],
+      "phase_ref": "P09",
+      "task_id": "SYS-P09",
+      "task_spec_path": "task-specs/phase-09-quality-assurance.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P09"
+      ],
+      "phase_ref": "P10",
+      "task_id": "SYS-P10",
+      "task_spec_path": "task-specs/phase-10-final-review.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P10"
+      ],
+      "phase_ref": "P11",
+      "task_id": "SYS-P11",
+      "task_spec_path": "task-specs/phase-11-evidence.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P11"
+      ],
+      "phase_ref": "P12",
+      "task_id": "SYS-P12",
+      "task_spec_path": "task-specs/phase-12-documentation-operations.md"
+    },
+    {
+      "build_target_kind": "application-code",
+      "depends_on": [
+        "SYS-P12"
+      ],
+      "phase_ref": "P13",
+      "task_id": "SYS-P13",
+      "task_spec_path": "task-specs/phase-13-release-deploy.md"
+    }
+  ],
+  "feature_id": "FEATURE-1",
+  "feature_package_id": "feature-package/feat",
+  "gates": {
+    "guard_requirements_handoff": {
+      "digest_match": true,
+      "exit": 0,
+      "report": "eval-log/run-dev-graph-requirements/R3-guard-report.json",
+      "status": "handoff"
+    },
+    "validate_readiness_binding": {
+      "exit": 0,
+      "status": "pass",
+      "violations": []
+    },
+    "validate_system_plan": {
+      "exit": 0,
+      "status": "pass",
+      "violations": []
+    }
+  },
+  "graph_revision": 2,
+  "graph_snapshot_digest": "sha256:121c83ad33d94cb52349faca9e2fc5329c0c1b440f10d123fed29254927e3017",
+  "handoff_count": 14,
+  "handoff_nodes": [
+    "FEATURE-1",
+    "SYS-P01",
+    "SYS-P02",
+    "SYS-P03",
+    "SYS-P04",
+    "SYS-P05",
+    "SYS-P06",
+    "SYS-P07",
+    "SYS-P08",
+    "SYS-P09",
+    "SYS-P10",
+    "SYS-P11",
+    "SYS-P12",
+    "SYS-P13"
+  ],
+  "implementation_code_generated": 0,
+  "kind": "capability-build/task-graph handoff",
+  "package_reference": {
+    "path": ".dev-graph/plans/generations/feature-package-feat/9a04f52c11bdcf4c3f7fc55be0753a693de3ed698baa5d4a112cbb7792d0a379",
+    "registration_receipt": ".dev-graph/state/registration-receipts/positive.json",
+    "system_build_handoff": ".dev-graph/plans/generations/feature-package-feat/9a04f52c11bdcf4c3f7fc55be0753a693de3ed698baa5d4a112cbb7792d0a379/system-build-handoff.json",
+    "system_build_handoff_digest": "sha256:feb5ed7189d3e38e95463bf5f26dbc1620b7d7ca5822a7bb1696be2abdad9b1a",
+    "task_graph": ".dev-graph/plans/generations/feature-package-feat/9a04f52c11bdcf4c3f7fc55be0753a693de3ed698baa5d4a112cbb7792d0a379/task-graph.json"
+  },
+  "parent_feature": "FEATURE-1",
+  "producer": "dev-graph:run-dev-graph-requirements",
+  "readiness_matrix": ".dev-graph/handoffs/requirements/FEATURE-1/121c83ad33d94cb52349faca9e2fc5329c0c1b440f10d123fed29254927e3017/readiness-matrix.json",
+  "readiness_matrix_digest": "sha256:a22edc90eda6ee831a4f800b5aa3b0edfdfa796390f581abe5ba2a686a1ffb56",
+  "requirements": [
+    {
+      "acceptance": "AC01: 空UTF-8ファイルはstdoutが0と改行、exit 0。",
+      "id": "REQ-AC01",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC01",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC01",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10"]
+    },
+    {
+      "acceptance": "AC02: a\\nb\\nは2行、a\\nbも末尾改行なしで2行。",
+      "id": "REQ-AC02",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC02",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC02",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10"]
+    },
+    {
+      "acceptance": "AC03: 日本語の2行は文字数によらず2。UTF-8 strictで読む。",
+      "id": "REQ-AC03",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC03",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC03",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10", "SYS-P12"]
+    },
+    {
+      "acceptance": "AC04: LF・CRLF・単独CRをPython universal newlineの1境界として扱う。",
+      "id": "REQ-AC04",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC04",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC04",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10", "SYS-P12"]
+    },
+    {
+      "acceptance": "AC05: 存在しないpath・directory・権限拒否はstdout空、stderrに説明、exit 2、traceback無し。",
+      "id": "REQ-AC05",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC05",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC05",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10", "SYS-P12"]
+    },
+    {
+      "acceptance": "AC06: 不正UTF-8はstdout空、stderrに説明、exit 2、traceback無し。",
+      "id": "REQ-AC06",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC06",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC06",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10", "SYS-P12"]
+    },
+    {
+      "acceptance": "AC07: 引数が0件または2件以上ならusageをstderrへ出しexit 2、stdout空。",
+      "id": "REQ-AC07",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC07",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC07",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P10"]
+    },
+    {
+      "acceptance": "AC08: 入力ファイルのbytesを変更せず、外部network・DB・認証・サービスを使わない。",
+      "id": "REQ-AC08",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC08",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC08",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P02", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P09", "SYS-P10"]
+    },
+    {
+      "acceptance": "AC09: ファイルを行iteratorで読み、ファイル全体readで保持しない。カウンタ以外の追加メモリは1行分。",
+      "id": "REQ-AC09",
+      "source_refs": [
+        "system-spec/requirements.md#受入条件/AC09",
+        "system-spec/spec-state.json#requirements_foundation.acceptance.AC09",
+        "features/FEATURE-1.md#acceptance"
+      ],
+      "system_tasks": ["SYS-P01", "SYS-P02", "SYS-P04", "SYS-P05", "SYS-P09", "SYS-P10"]
+    }
+  ],
+  "requirements_document": ".dev-graph/handoffs/requirements/FEATURE-1/121c83ad33d94cb52349faca9e2fc5329c0c1b440f10d123fed29254927e3017/requirements.md",
+  "requirements_document_digest": "sha256:47be1d75c0ff1f93550ea47f78f88dc312f32aa861f794707b7bd8a22e27b57c",
+  "revision": 2,
+  "schema_version": "1.0.0",
+  "source_digest": "sha256:9a04f52c11bdcf4c3f7fc55be0753a693de3ed698baa5d4a112cbb7792d0a379",
+  "supersedes": "sha256:8e9fe0d25382c731464f48c083d8c670c2b8f8ccf458c7f03623bbf9929da75d"
+}

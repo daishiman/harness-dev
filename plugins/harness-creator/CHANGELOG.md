@@ -2,6 +2,55 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.63 — 2026-11-03
+
+- live-trial の STALL は不合格の FAIL のままにし、BLOCKED へ昇格しない手順へ本文を合わせた。
+- poll exit 3 の状態破損と token 計測不能を、tmux 不在とは別の原因文として記録する。
+
+## 1.4.62 — 2026-11-03
+
+- live-trial の受入証跡と verdict 検査を、現行の挙動閉包へ合わせた。
+
+## 1.4.61 — 2026-11-02
+
+- Codexの実監査をactor書込外の原ログと台帳へ結び、専用consumerによる再検証へ対応。
+- 公開snapshotの内部リンク変換と、原データ・失敗先・実行時計を保持した別公開先への再収集を追加。
+- 不要なスキル一覧を試行単位で除外する任意設定を追加。必要なsource・検査・予算・ユーザー設定は維持。
+
+## 1.4.60 — 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 1.4.59 — 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 1.4.58 — 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 1.4.57 — 2026-11-02
+
+- 実カタログの修飾名 `plugin:skill` でCodex nativeを起動し、別namespace・未宣言依存・source対応表の改変を拒否する。controllerの対応表を起動前に固定し、移設後も元pathとsource bytesを照合する。
+- 原ログを行単位で読み、子session探索を実走の日付・開始時刻へ限定してmetadataを有限cacheする。過去の全履歴本文を繰り返し読み込んでいた遅延を修正。
+- 実測の経過時間を維持したままpoll-stateの共通整数形式へ接続する。初回に正規適用へ至らなかった試行はBLOCKEDとして保持。
+
+## 1.4.56 — 2026-11-02
+
+- 明示選択のCodex native実走を追加。実skill適用・全文Read・親子session・モデル・累積usageを原rolloutから検査し、Claude形式への変換を行わない。
+- runtime別の閉包と再利用判定を導入し、既存Claudeの証拠・既定動作を維持。成果物提示後の実user選択と、宣言済み複数operationの実user turnを分けて記録する。
+- actorのworkspaceとsource/private証拠を分離し、時間・token予算・独立goal評価・scoped cleanupを共通の受入条件へ接続。未確認のnative hookを必要とする試行は合格にしない。
+
+## 1.4.55 — 2026-11-02
+
+- live trial起動時のClaude CLIを呼出し元で解決した実行可能な絶対pathへ固定し、tmux内で旧CLIへ切り替わる問題を修正。必要なCLIを `--claude-executable` で明示できる。
+- 既知の初回確認画面の番号付き/無番号形式を厳密に識別し、選択状態を再確認してから一度だけ進める。未知gate・前面shell・不一致では停止・回収し、診断を保存する。権限・設定の範囲と証跡の受入基準は維持。
+
+## 1.4.54 — 2026-11-02
+
+- JSON形式のplugin-composition.yamlを既存の構造検査へ接続し、破損・型不正を拒否する。最上位の版だけを変更し、整形と入れ子の値を保持する。
+- manifest集合に基づく監査とplatform同期の動的照合を保持し、feedback非搭載pluginの免除条件を検証する。
+
 ## [Unreleased]
 
 ### Changed (2026-10-09 rubric 1.5.0 と、cooldown・承認の照合の修正, ubm-goal-setting の elegant-review 継続 run)

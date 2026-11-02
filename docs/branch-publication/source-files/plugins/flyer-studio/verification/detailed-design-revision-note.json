@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "createdAt": "2026-10-21T23:31:45.293703+00:00",
+  "originalFindings": "detailed-design-review.json",
+  "scope": "親担当の判断に従う制作資料の修正。元の独立所見を保持し、修正担当による確認として記録する。実装の独立再評価は別途必要。",
+  "changes": [
+    {
+      "finding": "D01",
+      "status": "documentation-resolved",
+      "resolution": "下部短文の意味群は全紙面中央かつ群内もcenterに統一。左揃えの例外案内を削除し、長い説明は詳細先へ移管する。"
+    },
+    {
+      "finding": "D02",
+      "status": "documentation-resolved",
+      "resolution": "白黒各1案必須と2案以上へ統一。単一案・単一配色のみの出力は未対応と明記し、利用可能な白黒2案を案内する。"
+    },
+    {
+      "finding": "privacy-contract",
+      "status": "documentation-updated",
+      "resolution": "新写真のreviewed:trueに加え5項目の空でない確認内容と対象なしの明示、JSON例を記載。"
+    },
+    {
+      "finding": "white-edge-contract",
+      "status": "documentation-updated",
+      "resolution": "外周既定8mm、変更時も4mm以上かつsafe以下に統一。"
+    },
+    {
+      "finding": "manifest-wiring",
+      "status": "verified",
+      "resolution": "create13件、review6件の実在する相対resourcesを各phaseのresourceIdsと双方向接続。全パスの実在を検査。"
+    }
+  ],
+  "files": [
+    {
+      "path": "references/design-rules.md",
+      "sha256": "5acdb47fcd8f2b9c09bcc82c0c784d198e5f5720603d84446ffbab19dc56bb8b"
+    },
+    {
+      "path": "references/interview.md",
+      "sha256": "8f79b880190047754f157a3790fd55df055b1ac1b688cc376bf01ad216766c7a"
+    },
+    {
+      "path": "references/workflow.md",
+      "sha256": "720f45f4a20ec1acc653e821c0b867b86891ad688694af8a598ced390d57f43f"
+    },
+    {
+      "path": "references/runtime.md",
+      "sha256": "8cf8cb005fbfaf48dacb46c4beedac1f82bad8dcd00eaa9218b8207a042c276c"
+    },
+    {
+      "path": "skills/run-create-flyer/workflow-manifest.json",
+      "sha256": "1344d9a5480b1485111b406297afee7c806c4c857d4ed3ebd7aaf1e4f748ba1d"
+    },
+    {
+      "path": "skills/assign-flyer-review/workflow-manifest.json",
+      "sha256": "6aa36e0159ee7535c854176930ea5ec3ffb76ce527a9c96717b75ea40c290d73"
+    }
+  ],
+  "verification": {
+    "resourcePathsExist": true,
+    "allPhasesHaveResources": true,
+    "originalFindingsRetained": true,
+    "runtimeTestsRunByThisAgent": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-21T23:40:39.671913+00:00",
+  "version": "1.0.1",
+  "review_choice": "detailed",
+  "status": "reviewed-local-plugin-ready",
+  "plan": {
+    "status": "PASS",
+    "round": 2,
+    "gates_pass": 11,
+    "conditions": {
+      "C1": "PASS",
+      "C2": "PASS",
+      "C3": "PASS",
+      "C4": "PASS"
+    },
+    "evidence": "../development-plan/plan-findings.json",
+    "scope": "計画の構造・意味・依存の整合。全工程実行完了とは異なる。"
+  },
+  "runtime": {
+    "regressions": 25,
+    "pass": 25,
+    "skip": 0,
+    "independent_mutation_cases": 54,
+    "independent_pass": 54
+  },
+  "design": {
+    "methods_used": 30,
+    "original_findings": [
+      "D01 lower text alignment mismatch",
+      "D02 unsupported single-color exception"
+    ],
+    "resolution": "資料と実装を下部全幅中心かつ中央揃え、白黒各1必須へ統一。既存独立所見は履歴として保持。",
+    "evidence": [
+      "detailed-design-review.json",
+      "detailed-design-revision-note.json",
+      "detailed-runtime-recheck.json"
+    ]
+  },
+  "scope_limits": [
+    "実背景新生成と新構図13案の制作実走は未実施",
+    "漫画・手書きなど全形式の生成実走は未実施",
+    "両ホスト新規会話での制作通し試験と実環境導入は未実施",
+    "実機印刷・集客効果は未測定"
+  ],
+  "runtime_evidence": "runtime-detailed-final (local project output); portable receipt snapshots in verification/",
+  "global_installation": false
+}

@@ -12,7 +12,7 @@ import _harness as H
 ALLOWED_IMPORTS = {
     "json", "sys", "os", "argparse", "html", "unicodedata", "collections",
     "math", "pathlib", "typing", "dataclasses", "re", "io", "textwrap",
-    "functools", "itertools", "__future__",
+    "functools", "itertools", "__future__", "datetime",  # 入力日付の検証のみ。現在時刻は使用禁止
 }
 
 FORBIDDEN_IMPORTS = {"yaml", "lxml", "jinja2", "requests", "numpy", "svgwrite", "cairosvg"}

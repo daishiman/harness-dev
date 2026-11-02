@@ -1,0 +1,28 @@
+{
+  "status": "ERROR",
+  "stage": "system-spec-evaluator",
+  "code": "native_audit_attribution_route_unavailable",
+  "source": "/private/tmp/harness-codex-ci5-20261102/providers/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R2-delegate.md",
+  "reason": "正規監査帰属はPostToolUse/SubagentStop hook層だけが書く台帳へ束縛する。Codex native collaborationは利用可能だが当該hook観測証跡の正式生成経路は提供されず、台帳は未存在。評価者による手書きや補正は禁止。",
+  "ledger_path": "eval-log/system-spec-harness/audit-fork-ledger.jsonl",
+  "ledger_exists": false,
+  "additional_input_conflict": {
+    "native_output": "system-spec/evaluation-report.json",
+    "validated_C19_helper_output": "eval-log/system-spec-completeness-report.json"
+  },
+  "completed": [
+    "C19 R0/R1独立監査",
+    "C01 resume正規検証",
+    "doc-fetch正規assembler・出典検証・保存証拠再利用",
+    "C03正規compile・独立受入確認・63テストPASS"
+  ],
+  "not_completed": [
+    "C05独立完成度評価と帰属gate",
+    "C02登録",
+    "C19最終lineage gate"
+  ],
+  "graph_mutations": 0,
+  "evaluation_pass_created": false,
+  "import_payload_created": false,
+  "next_action": "Codex nativeの監査帰属を正規validatorへ接地するsource所有の正式対応経路と評価出力引数を整合させた後、C05から再実行する。source/provider/controlの変更は今回行わない。"
+}

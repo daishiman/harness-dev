@@ -1,0 +1,195 @@
+{
+  "plan_dir": "plugins/flyer-studio/development-plan",
+  "target_plugin_slug": "flyer-studio",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C03",
+      "component_kind": "sub-agent",
+      "name": "visual-review-coordinator",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "visual-review-coordinator"
+      },
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "artifact-analyst",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "artifact-analyst"
+      },
+      "build_target": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "analysis-evaluator",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "analysis-evaluator"
+      },
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "flyer-producer",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "flyer-producer"
+      },
+      "build_target": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "flyer.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/flyer.py"
+      },
+      "build_target": "plugins/flyer-studio/scripts/flyer.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "assign-flyer-review",
+      "depends_on": [
+        "C03",
+        "C12"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-flyer-review",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "name": "assign-flyer-analysis-review",
+      "depends_on": [
+        "C07",
+        "C12"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-flyer-analysis-review",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C05.json"
+      },
+      "build_target": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "name": "run-analyze-flyer",
+      "depends_on": [
+        "C05",
+        "C06",
+        "C12"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-analyze-flyer",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C04.json"
+      },
+      "build_target": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-create-flyer",
+      "depends_on": [
+        "C04",
+        "C02",
+        "C08",
+        "C12"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-create-flyer",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/flyer-studio/skills/run-create-flyer/",
+      "spec": "phase-05-implementation.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "P02-architect",
+      "status": "manual-user-gated",
+      "build_target": "plugins/flyer-studio/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "approval_reason": "プラグイン改善はユーザーが明示依頼済み。正本に具体manifestを適用し、global導入は対象にしない。 planner entry_pointsは技能一覧の契約射影。native manifestには独自キーを転記せず、skillsディレクトリとagents標準discoveryへ変換してvalidateする。 stage local agent4本はskill配下に置き、共有専門役3本は参照資料のlensへ畳むため、plugin rootのagents/には何も残さない。"
+    },
+    "marketplace": {
+      "owner": "P13-package",
+      "status": "manual-user-gated",
+      "build_target": "local-kit/.claude-plugin/marketplace.json",
+      "approval_reason": "非公開ローカルキット内のみ。repo共通/公開catalog登録と実環境installはユーザー未依頼につきdeferred。"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffoldはrun-build-skillの7 capability kindではなくplanner上のcontract-only builder語彙。C12 flyer.pyは既存の共有入口を更新する対象で、harness-creatorのbuild-script-route.pyが消費するか手作業で更新する。gap_refはrouting語彙の明示参照として維持する"
+    }
+  ],
+  "execution_boundary": {
+    "shape": "fixed-13-phase",
+    "dispatch_ready": false,
+    "reason": "canonical graphは前提と受入条件を示す参照射影。verification-claim/task_spec_ref:nullを含み、自動dispatch入力ではない。routes.statusは計画宣言で実装完了判定ではない。",
+    "execution_evidence": "../verification/README.md"
+  }
+}

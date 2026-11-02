@@ -121,6 +121,62 @@ def build_plugin(root: Path, composition: str, plugin_json: dict | None) -> Path
 # parse_composition
 # --------------------------------------------------------------------------
 
+def json_composition_document():
+    caps, outputs, errors = MOD.parse_composition(VALID_COMPOSITION)
+    assert not errors
+    return {"name": "fixture-plugin", "version": "1.2.3", "capabilities": caps,
+            "contract": {"interface": {"outputs": outputs}}, "dependencies": []}
+
+
+def test_json_composition_runs_existing_structural_checks(tmp_path):
+    document = json_composition_document()
+    comp = build_plugin(tmp_path, json.dumps(document), VALID_PLUGIN_JSON)
+    findings, warnings, error = MOD.lint_composition(comp)
+    assert not findings and error is None
+    assert any("proposals/*.md" in warning for warning in warnings)
+    document["dependencies"] = [
+        {"from": "skills/run-alpha", "to": "commands/do-thing", "type": "calls"},
+        {"from": "commands/do-thing", "to": "skills/run-alpha", "type": "calls"},
+    ]
+    comp.write_text(json.dumps(document))
+    findings, _, error = MOD.lint_composition(comp)
+    assert error is None and any("cycle" in finding for finding in findings)
+    document["dependencies"][1] = {"from": "skills/run-alpha", "to": "commands/missing", "type": "revision"}
+    comp.write_text(json.dumps(document))
+    findings, _, _ = MOD.lint_composition(comp)
+    assert any("type invalid" in finding for finding in findings)
+    assert any("dangling" in finding for finding in findings)
+    document["dependencies"] = []
+    document["version"] = "latest"
+    comp.write_text(json.dumps(document))
+    assert any("SemVer" in finding for finding in MOD.lint_composition(comp)[0])
+
+
+@pytest.mark.parametrize("payload", [
+    "{broken", "[]", {"capabilities": {}}, {"capabilities": [None]},
+    {"capabilities": [{"kind": "skill", "ref": []}]},
+    {"capabilities": [], "dependencies": {}},
+    {"capabilities": [], "dependencies": [{"from": 1, "to": "x", "type": "calls"}]},
+    {"capabilities": [], "external_dependencies": []},
+    {"capabilities": [], "external_dependencies": {"other": None}},
+    {"capabilities": [], "external_dependencies": {"other": {"edges": {}, "required_entry_points": []}}},
+    {"capabilities": [], "external_dependencies": {"other": {"edges": [], "required_entry_points": "run-other"}}},
+])
+def test_invalid_json_composition_is_unmeasured_failure(tmp_path, payload):
+    text = payload if isinstance(payload, str) else json.dumps(payload)
+    comp = build_plugin(tmp_path, text, None)
+    findings, _, error = MOD.lint_composition(comp)
+    assert error is not None
+    assert any("未実施" in finding for finding in findings)
+
+
+def test_json_external_dependencies_preserve_edges_and_required_entrypoints():
+    external = {"other": {"version": ">=1.0.0", "required_entry_points": ["run-other"],
+                "edges": [{"from": "skills/run-alpha", "to": "skills/run-other", "type": "calls"}]}}
+    parsed, errors = MOD.parse_external_dependencies(json.dumps({"external_dependencies": external}))
+    assert not errors and parsed == external
+
+
 def test_parse_flow_entries_and_outputs():
     caps, outputs, errors = MOD.parse_composition(VALID_COMPOSITION)
     assert errors == []
@@ -777,12 +833,17 @@ def test_external_dependency_requires_declared_entrypoint_and_package_edge(tmp_p
 
 def test_repo_all_compositions_pass_as_one_fleet():
     compositions = sorted((ROOT / "plugins").glob("*/plugin-composition.yaml"))
-    assert len(compositions) == 23
+    expected_plugins = {
+        path.parents[1]
+        for path in (ROOT / "plugins").glob("*/.claude-plugin/plugin.json")
+    }
+    assert expected_plugins
+    assert {path.parent for path in compositions} == expected_plugins
 
     proc = run_cli(*(str(path) for path in compositions))
 
     assert proc.returncode == 0, proc.stderr
-    assert "OK: 23 composition file(s) passed" in proc.stdout
+    assert f"OK: {len(compositions)} composition file(s) passed" in proc.stdout
 
 
 # --------------------------------------------------------------------------

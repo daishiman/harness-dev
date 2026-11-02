@@ -4,6 +4,7 @@
 # purpose: repo 全域の全 test_*.py / *_test.py が CI のテスト実行で 1 回以上到達することを fail-closed 検証するメタ lint。境界外 (tests/・plugins/ 以外) に置かれた test の無言未実行を封鎖する。
 # inputs:
 #   - repo 全域の test_*.py / *_test.py (discover_repo_tests 経由)
+#   - SHA固定の before-manifest.json とそこに列挙された歴史証跡の test 原本
 #   - .github/workflows/harness-creator-kit-ci.yml (到達 root の実行 step 検証; 不在なら skip)。
 #     照合するのは各 step の run: の値からコメントを除いた本文だけ (PyYAML が無ければファイル全体からコメントと step 名を除いた本文)
 #   - argv: --repo-root (既定 = repo root。存在しない・未知の引数は usage error)
@@ -51,6 +52,8 @@ Exit 0 = ok, 1 = violation, 2 = usage error。
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -74,6 +77,54 @@ ALLOWLIST: dict[str, str] = {
         "このパスで参照する"
     ),
 }
+
+# 改善前のraw test原本は実行コードではなく比較証跡。manifest自体のSHAも固定し、
+# 後からmanifestへ未知のtestを足して例外を拡張する経路を作らない。
+_HANDOUT_REVIEW = "eval-log/guide-doc-generator/run-handout-build/elegant-review/20261031-html-route-review"
+_HANDOUT_MANIFEST_SHA256 = "ff6df494d1f1a1002288ee8ccd619c230c795d151afe19591e1d73c7067c6ac6"
+_HANDOUT_SOURCE_PREFIX = "plugins/guide-doc-generator/"
+_HANDOUT_EVIDENCE_REASON = (
+    "2026-10-31のelegant-review改善前testをrawのまま保持した非実行の比較証跡。"
+    "SHA固定のbefore-manifest.jsonと各原本のSHAを照合済み。通常のsource testは対象外。"
+)
+
+
+def historical_test_allowlist(root: Path) -> tuple[dict[str, str], list[str]]:
+    """今回の固定manifestが指す、バイト一致したtest原本だけを理由付き例外へ写す。"""
+    manifest_ref = f"{_HANDOUT_REVIEW}/before-manifest.json"
+    root = root.resolve()
+    snapshot = root / _HANDOUT_REVIEW / "before"
+    # この履歴を持たない別repoには要求しない。壊れたsymlinkは不在と見なさず検査する。
+    if not snapshot.exists() and not snapshot.is_symlink():
+        return {}, []
+    try:
+        manifest_path = (root / manifest_ref).resolve(strict=True)
+        manifest_path.relative_to(root)
+        raw = manifest_path.read_bytes()
+    except (OSError, ValueError) as exc:
+        return {}, [f"historical evidence {manifest_ref} を読めない: {exc}"]
+    if hashlib.sha256(raw).hexdigest() != _HANDOUT_MANIFEST_SHA256:
+        return {}, [f"historical evidence {manifest_ref}: manifest SHA不一致 (例外を拡張しない)"]
+    entries = json.loads(raw)
+    allowed: dict[str, str] = {}
+    errors: list[str] = []
+    for entry in entries:
+        source = entry["path"]
+        if not source.startswith(_HANDOUT_SOURCE_PREFIX + "tests/") or not drt._is_test_filename(Path(source).name):
+            continue
+        rel = f"{_HANDOUT_REVIEW}/before/{source.removeprefix(_HANDOUT_SOURCE_PREFIX)}"
+        try:
+            path = (root / rel).resolve(strict=True)
+            path.relative_to(root)
+            actual_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        except (OSError, ValueError) as exc:
+            errors.append(f"historical evidence {rel} を読めない: {exc}")
+            continue
+        if actual_sha != entry["sha256"]:
+            errors.append(f"historical evidence {rel}: source SHA不一致 (例外に含めない)")
+            continue
+        allowed[rel] = _HANDOUT_EVIDENCE_REASON
+    return allowed, errors
 
 # 各到達 top-level が CI で実際に実行されている証跡 (harness-creator-kit-ci.yml 内の耐久的部分文字列)。
 # 二次ガード: orphan=0 (test が root 配下にある) を満たしても、その root を CI が実行
@@ -136,8 +187,10 @@ def check_orphans(
     root: Path, allowlist: dict[str, str] | None = None
 ) -> tuple[list[str], list[str]]:
     """(errors, report) を返す。orphan test と allowlist の健全性を検査する。"""
-    allowlist = ALLOWLIST if allowlist is None else allowlist
     errors: list[str] = []
+    if allowlist is None:
+        historical, errors = historical_test_allowlist(root)
+        allowlist = {**ALLOWLIST, **historical}
     report: list[str] = []
 
     all_tests = drt.discover_test_files(root)

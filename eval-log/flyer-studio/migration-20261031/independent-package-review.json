@@ -1,0 +1,223 @@
+{
+  "reviewer": "独立した assign-plugin-package-evaluator context",
+  "reviewed_at": "2026-10-30T23:05:09.590163+00:00",
+  "plugin": "flyer-studio",
+  "version": "1.3.1",
+  "verdict": "PASS",
+  "scope": "manifest・contract・公開面・内部担当・差し戻し・初稿/納品境界・単独kitの静的独立確認。ホスト実セッション、画像の美観、グローバルinstallは未実施。",
+  "mechanical_result": "/Users/dm/dev/dev/個人開発/harness/eval-log/flyer-studio/migration-20261031/independent-package-check.json",
+  "mechanical_verdict": {
+    "total": 8,
+    "pass": 8,
+    "fail": 0
+  },
+  "schema_validation": {
+    "formal_findings": "pass",
+    "package_contract": "pass"
+  },
+  "checks": [
+    {
+      "id": "SURFACE",
+      "status": "pass",
+      "observation": "3manifestのname/version/description/authorは一致。公開入口4つはuser-invocable=true、評価skill2つはfalse/context:forkで委任専用。root専門agent3は明示したCodex orchestrated-byの完成評価経路へ接続する。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.claude-plugin/plugin.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.codex-plugin/plugin.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/package-contract.json"
+      ]
+    },
+    {
+      "id": "OWNERSHIP",
+      "status": "pass",
+      "observation": "分析/制作/提案評価/画像評価の4内部担当は責任参照から到達する。評価者が生成済み台帳だけを記入し、分析/制作元・画像・テンプレート再発行・finalizeを変更しない所有範囲が一貫する。WriteやBashの広いtool許可はその範囲を自動強制するsandboxではないため、契約に従う運用が必要。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/architecture.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/stage-common.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md"
+      ]
+    },
+    {
+      "id": "RETURN",
+      "status": "pass",
+      "observation": "FIXのdeterministic/within-planは制作、premiseはintakeから、提案評価FIXは分析へ返る。様式未確定の非FIX差し戻しと改善cycle消費を分け、個別PASSと全案finalizeを区別している。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/workflow.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/plugin-composition.yaml",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-create-flyer/SKILL.md"
+      ]
+    },
+    {
+      "id": "ARTIFACT_FIRST",
+      "status": "pass",
+      "observation": "未納品初稿と独立PASS後finalizeを明示的に区別する。accept-as-isで未実施評価や納品完了を主張せず、最初から独立検査を依頼済みなら既存指示を選択として再確認しない。生成手段や事実の捏造も禁じており、今回追加文による完了条件の緩和は認めない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-create-flyer/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-intake-flyer/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-learn-flyer/SKILL.md"
+      ]
+    },
+    {
+      "id": "MANUAL_PKG_003",
+      "status": "pass",
+      "observation": "hooks/settings/permissions断片は本pluginに存在せず、同一marketplaceのevent/matcher/permission衝突を新規導入しない。技能・agentの名前衝突は正式PKG-003でもpass。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/package-contract.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.claude-plugin/plugin.json"
+      ]
+    },
+    {
+      "id": "MANUAL_PKG_007",
+      "status": "pass",
+      "observation": "6skillにscript_refs宣言やskill内scriptsはない。rootのPython3本にはshebangと+xがあり、正式PKG-007もpass。Node backendはPython入口からself-relativeに接続する。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/flyer.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/build-asset-gallery.py"
+      ]
+    },
+    {
+      "id": "MANUAL_PKG_008",
+      "status": "pass",
+      "observation": "settings/*.jsonは存在せずLayer3のpermissions/env/enableを上書きする断片を持たない。INV-1〜12の設定マージを起動する新規surfaceがないため、本pluginで新たなLayer3衝突は見つからない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/package-contract.json",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.claude-plugin/plugin.json"
+      ]
+    },
+    {
+      "id": "KIT",
+      "status": "pass",
+      "observation": "既存の生成済み単独kitを読取確認。native依存skill-governance-adaptersとcontract.depends_onからrepository専用依存を除去し、node_modules/セッション/開発計画/過去検証は持ち込まない。2製品catalogはローカルsourceを指し、kit-manifest全157fileのSHA再照合に差異0。npm依存はlockfileで導入する前提。 repository専用artifact-delivery投影も実物と必要ファイル台帳から除かれ、スキル自身の初稿/改善契約は保持される。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/INSTALL.md"
+      ]
+    }
+  ],
+  "findings": [],
+  "kit_evidence": {
+    "root": "/private/tmp/flyer-harness-migration-final-20261031",
+    "manifest_files_verified": 157,
+    "sha_mismatches": 0,
+    "archive_sha256": "004a7e21f543ea94db116b9e1a66c85a9c50cafe7b5d8e4ff1a6aebeadf76ab6",
+    "artifact_delivery_repository_projection_absent": true,
+    "repository_runtime_dependency_absent": true
+  },
+  "evaluated_inputs": [
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.claude-plugin/plugin.json",
+      "sha256": "b11375ee307883a0fe31e86cf272c214815cc26a6276fd6df3e7ce57d4637f9e"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.codex-plugin/plugin.json",
+      "sha256": "79698dae45f23aa587865cdb1828719e3b7e8179ba15facb2560a81b08ee11a5"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/.codex-plugin-overrides.json",
+      "sha256": "fbfe97529198ee7dd3334eefce1e3ae0612876250ec588dd7b230dc24b0c39fe"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/INSTALL.md",
+      "sha256": "1e234f68cdd7d6094b4d4c72941267ba79c6983d534e811cab9de7ab0b219bc7"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/agents/flyer-color-reviewer.md",
+      "sha256": "277f7d01cdb878f586fa3e0f0ddfde79336a43679b6130bc50cc08a0e93ad8a5"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/agents/flyer-composition-reviewer.md",
+      "sha256": "668ba04a5406e42acd151b7ef87453b2a0396fb51af9bf666eb0f6d38c084ee4"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/agents/flyer-typography-reviewer.md",
+      "sha256": "83ef25abb362e0dd42b465cd442ff2ba474760f56a3c9ce77180144ecd1a6e0a"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/artifact-delivery.json",
+      "sha256": "b027fca44c0d44ab3fe8c57141106f5a1affde3fc645503d68ad27c4aae26e5c"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/plugin-composition.yaml",
+      "sha256": "af8f77061d680a58ed67df9ef145d3396cfac89116b9abff7ed618fce80558bd"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/plugin.json",
+      "sha256": "80c52df06cbefbcb603bd6ce67b0a1e21f6996b042885ae23cf03451e39520c5"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/package-contract.json",
+      "sha256": "d64f4a15507aa0d6a75b5de2910e43e7719f197498bcb5095220043decc3aa0c"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/stage-common.md",
+      "sha256": "cb0d07853cc1eb7f35188b4d46e68eb6f1b169ddd2f0c61d5212fdce05d7994e"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/references/workflow.md",
+      "sha256": "7a84986825673919695bb331f436fe8d9358210153449880cb472bd47f59e5a4"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/package.py",
+      "sha256": "655d1d7aadf9177e6749e42ef65fe77b8626b958303e0bca9062c6d7a78a0e2b"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-analysis-review/SKILL.md",
+      "sha256": "8515544319f1dae28a0042c94fb2c242b43c3490475c84ca84b734e28a8ab9d9"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "sha256": "e8de2eb77ef469092cce64e789c65b5ea07f6d28a79c1ac014032eb837ad23e1"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-review/SKILL.md",
+      "sha256": "d7bcb2fbbedd8bd921ad4c4d1a175b49396dfcf83a0d082eb69ea99292709972"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "sha256": "8c4ee72c198ae27e7e7c78d2e381f638b90dade60858e674f530834dcc3982ce"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-analyze-flyer/SKILL.md",
+      "sha256": "76e414a6a74218688b0450a4d1f751b0ab9fcfda763a1e3b61e4157ddb941d88"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "sha256": "c2a59f4d4fc8680f762e1f683a7de847d9fbf3016f6a232b8e912ac0ed51799e"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-create-flyer/SKILL.md",
+      "sha256": "001925014dcf8c1ff7f44ee464d3cb4806c227bea0f00a50d6e6c396ff9652ae"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "sha256": "67be78efbd80ca28e294ec2bec65b913446e7e6c7a779bcd9bc0c6ffc1a579dd"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-intake-flyer/SKILL.md",
+      "sha256": "7841718d4cfbfe2776b1bdee559d306f375c53c8867fe175837004afa32f0fd1"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/skills/run-learn-flyer/SKILL.md",
+      "sha256": "b9534226674e922006eb8a84cc924e7020fddb103ba6a92771790a281cffe2a8"
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/tests/package-contract.test.cjs",
+      "sha256": "edbb5cc4432ca2d0dbe2645fac442c0f6e0405321bccaba193464c94b00c9031"
+    }
+  ],
+  "staleness_rule": "evaluated_inputsのいずれかが変更されたら、その変更箇所に対する本レビューは再確認を要する。",
+  "resolved_findings": [
+    {
+      "code": "KIT_OBSERVATION_METADATA_REMAINS",
+      "resolution": "package.py EXCLUDEにrepository用artifact-delivery.jsonを追加し生成先required_filesも同期する修正を読取確認。新キット現物に同ファイルと台帳項目がなく、manifest/depends_onに観測runtime依存がないことを独立確認。全157fileとzipのSHAを照合して差異0。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/scripts/package.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/tests/package-contract.test.cjs",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/flyer-studio/INSTALL.md",
+        "/private/tmp/flyer-harness-migration-final-20261031/kit-manifest.json"
+      ]
+    }
+  ]
+}

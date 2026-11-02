@@ -1,0 +1,85 @@
+{
+  "verdict": "pass_for_initial_artifact_only",
+  "scope": "初回成果物の独立semantic評価。全体完了判定ではない",
+  "invocation_id": "init-first-20261102T044256722396Z",
+  "choice": "standard",
+  "graph_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+  "checks": {
+    "six_roots": {
+      "status": "pass",
+      "evidence": [
+        "issues",
+        "tasks",
+        "specs",
+        "architecture",
+        "features",
+        "docs"
+      ]
+    },
+    "local_state": {
+      "status": "pass"
+    },
+    "routing_policy": {
+      "status": "pass",
+      "evidence": {
+        "layout": "hybrid",
+        "leaf_threshold": 200,
+        "partition_order": [
+          "domain",
+          "project_id",
+          "YYYY/MM"
+        ],
+        "placement": "artifact_kind"
+      }
+    },
+    "preflight": {
+      "status": "pass",
+      "evidence": {
+        "in_use": false,
+        "link_state": "absent",
+        "status": "pass",
+        "validator": "validate-harness-link.py"
+      }
+    },
+    "c11": {
+      "status": "pass",
+      "exit_code": 0,
+      "violation_count": 0,
+      "validator": "validate-graph-schema.py --require-canonical-envelope"
+    },
+    "templates": {
+      "status": "pass",
+      "source_file_count": 21,
+      "missing": [],
+      "intentional_user_edits": [
+        "task.md"
+      ]
+    },
+    "config_storage": {
+      "status": "pass",
+      "findings": [],
+      "github_enabled": false
+    },
+    "plugin_source_selection": {
+      "status": "pass",
+      "config_source": "plugin",
+      "receipt_source": "plugin",
+      "hook_delivery_verified": false
+    },
+    "context": {
+      "status": "pass",
+      "evidence": "独立C24 exit0、caller repoとhost project root一致、repository_idとconfig一致",
+      "repository_id": "local:sha256:ed44ccea2cd44dbd51da79c20a4e4454ae326f348aaa8cd7bec73cb2c3905ea3"
+    }
+  },
+  "findings": [],
+  "pending": [
+    "init-secondのnative適用とplanned_changes=0/write_count=0",
+    "READMEと利用者編集templateのbytes保持",
+    "OUT3の複数repo・拒否系検証は未実施",
+    "OUT5 fallback rollbackとClaude hook実配達は未実施"
+  ],
+  "write_scope": [
+    "eval-log/init-first-independent-audit.json"
+  ]
+}

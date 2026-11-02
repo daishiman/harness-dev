@@ -1,0 +1,219 @@
+{
+  "mode": "dry-run",
+  "macro_report": {
+    "architecture": [
+      {
+        "id": "ARCH-LT-001",
+        "existing": true,
+        "binding": "none"
+      }
+    ],
+    "features": [
+      {
+        "id": "LT-FEATURE-001",
+        "existing": true,
+        "binding": "none",
+        "state": "active/confirmed/pass/complete",
+        "ready": true,
+        "ready_note": "package 登録済み (receipt package-registration-receipt-LT-FEATURE-001.json)。dry-run では planner を起動しない"
+      },
+      {
+        "id": "feature-render-diff",
+        "planned": true,
+        "binding": "beads",
+        "depends_on": [
+          "LT-FEATURE-001"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ],
+        "state": "draft/draft/pending/complete",
+        "ready": false,
+        "not_ready_reason": "draft (評価前・未確定)。exact-13 package 未生成"
+      },
+      {
+        "id": "feature-render-diff-summary",
+        "planned": true,
+        "binding": "beads",
+        "depends_on": [
+          "feature-render-diff"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ],
+        "state": "draft/draft/pending/complete",
+        "ready": false,
+        "not_ready_reason": "依存先 feature-render-diff が未完了の draft。自身も draft"
+      }
+    ],
+    "macro_edges": [
+      [
+        "feature-render-diff",
+        "LT-FEATURE-001"
+      ],
+      [
+        "feature-render-diff-summary",
+        "feature-render-diff"
+      ]
+    ]
+  },
+  "package_receipts": [],
+  "package_note": "--package 指定なし。dry-run のため system-dev-planner を起動しない (Macro flow 4)",
+  "publication_report": {
+    "targets": [
+      {
+        "id": "feature-render-diff",
+        "binding": "beads",
+        "operation": "none (C28 create epic は実行しない)",
+        "c28_create_dry_run": {
+          "blocked": [
+            {
+              "graph_node_id": "feature-render-diff",
+              "planned": true,
+              "reason": "not confirmed/pass/readiness complete",
+              "state": {
+                "confirmation_status": "draft",
+                "evaluation_status": "pending",
+                "implementation_readiness": "complete"
+              }
+            }
+          ],
+          "dry_run": true,
+          "gate": {
+            "graph": ".dev-graph/state/graph.json",
+            "graph_revision": 3,
+            "planned_graph_digest": "sha256:ab549a4a00f85ef1725f641c40b4e7e9d0b927cd9ff876cf719554c0e5ce486a",
+            "planned_node_ids": [
+              "feature-render-diff",
+              "feature-render-diff-summary"
+            ],
+            "planned_preview": "/Users/dm/dev/dev/個人開発/harness/.build/ci-fix-live/20261102T000242-ci-fix2/decompose/fixture/.dev-graph/cache/decompose-input/c02-preview.json"
+          },
+          "op": "create",
+          "reason": "promotion_gate",
+          "status": "blocked",
+          "write_count": 0
+        },
+        "verdict": "blocked",
+        "reasons": [
+          "promotion_gate: not confirmed/pass/readiness complete (planned: true)",
+          "cross_binding_dependency"
+        ],
+        "cross_binding_origin_edge": {
+          "from": {
+            "id": "feature-render-diff",
+            "binding": "beads"
+          },
+          "to": {
+            "id": "LT-FEATURE-001",
+            "binding": "none"
+          }
+        }
+      },
+      {
+        "id": "feature-render-diff-summary",
+        "binding": "beads",
+        "operation": "none (C28 create epic は実行しない)",
+        "c28_create_dry_run": {
+          "blocked": [
+            {
+              "graph_node_id": "feature-render-diff-summary",
+              "planned": true,
+              "reason": "not confirmed/pass/readiness complete",
+              "state": {
+                "confirmation_status": "draft",
+                "evaluation_status": "pending",
+                "implementation_readiness": "complete"
+              }
+            }
+          ],
+          "dry_run": true,
+          "gate": {
+            "graph": ".dev-graph/state/graph.json",
+            "graph_revision": 3,
+            "planned_graph_digest": "sha256:ab549a4a00f85ef1725f641c40b4e7e9d0b927cd9ff876cf719554c0e5ce486a",
+            "planned_node_ids": [
+              "feature-render-diff",
+              "feature-render-diff-summary"
+            ],
+            "planned_preview": "/Users/dm/dev/dev/個人開発/harness/.build/ci-fix-live/20261102T000242-ci-fix2/decompose/fixture/.dev-graph/cache/decompose-input/c02-preview.json"
+          },
+          "op": "create",
+          "reason": "promotion_gate",
+          "status": "blocked",
+          "write_count": 0
+        },
+        "verdict": "blocked",
+        "reasons": [
+          "promotion_gate: not confirmed/pass/readiness complete (planned: true)",
+          "cross_binding_dependency (held dependency chain)"
+        ],
+        "cross_binding_origin_edge": {
+          "from": {
+            "id": "feature-render-diff",
+            "binding": "beads"
+          },
+          "to": {
+            "id": "LT-FEATURE-001",
+            "binding": "none"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "feature-render-diff",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001",
+        "to_binding": "none",
+        "classification": "beads→none: Beads に張れない",
+        "operation": "dep-add 呼出しなし (create の後に張る edge ではない)",
+        "held_reason": "cross_binding_dependency"
+      },
+      {
+        "from": "feature-render-diff-summary",
+        "from_binding": "beads (held)",
+        "to": "feature-render-diff",
+        "to_binding": "beads (held)",
+        "classification": "beads→保留 beads: Beads に張れない",
+        "operation": "dep-add 呼出しなし (create の後に張る edge ではない)",
+        "held_reason": "cross_binding_dependency",
+        "chain_origin_edge": {
+          "from": {
+            "id": "feature-render-diff",
+            "binding": "beads"
+          },
+          "to": {
+            "id": "LT-FEATURE-001",
+            "binding": "none"
+          }
+        }
+      }
+    ],
+    "github_targets": [],
+    "none_targets": [],
+    "human_confirmation_required": "feature-render-diff (beads) が LT-FEATURE-001 (none) に依存する。どちらかの binding をそろえるか確認が必要 (apply 前)"
+  },
+  "digests": {
+    "c02_preview": {
+      "graph_revision_before": 3,
+      "graph_digest_after": "sha256:ab549a4a00f85ef1725f641c40b4e7e9d0b927cd9ff876cf719554c0e5ce486a",
+      "pre_write_validation": {
+        "findings": 0,
+        "validator": "validate-graph-schema.py"
+      }
+    },
+    "register_package": null
+  },
+  "write_counts": {
+    "local": 0,
+    "beads": 0,
+    "github": 0,
+    "projects": 0,
+    "c02_preview_write_count": 0,
+    "c28_write_count": [
+      0,
+      0
+    ]
+  }
+}

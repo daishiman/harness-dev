@@ -180,7 +180,7 @@ def test_mvp_compat_existing_plan_keys_unchanged(tmp_path, monkeypatch, capsys):
         "lease_sha256_before", "lease_sha256_after",
     }
     assert existing_keys <= set(plan)
-    assert set(plan) - existing_keys == {"selection_receipt"}
+    assert set(plan) - existing_keys == {"selection_receipt", "planned_features"}
     assert plan["batches"] == {"features": [], "tasks": [["t-a", "t-b", "t-c"]]}
     assert plan["conflicts"] == [] and plan["read_only"] is True
     # 未設定 node も receipt からは silent drop されない (rank 2 で必ず記録)。

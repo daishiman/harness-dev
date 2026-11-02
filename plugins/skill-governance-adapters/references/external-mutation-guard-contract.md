@@ -12,6 +12,12 @@
    - The basename alone proves nothing. `python3 '-c…;1/build-external-mutation-guard.py'`, `python3 -Xdev/build-external-mutation-guard.py` and a same-named file anywhere else fail closed even when byte-identical, because Python puts the script's directory first on `sys.path`.
 6. The hook blocks recognized direct remote-mutation commands. Once a live preview creates project-local pending guard context, it blocks every other Bash command until the bound flow completes successfully or the preview expires; this includes otherwise-unrecognized mutation programs.
 
+## 実行元の指定
+
+登録したhook commandで`hook-confirm --runtime codex`と`pretool --runtime codex`を明示した場合だけCodexとして処理する。省略時は既存のClaude動作を維持し、未知のruntimeは拒否する。native hookの原JSONは変換せず、確認・意図receiptの`producer`を署名時にそれぞれ`codex-user-prompt-submit` / `claude-code-user-prompt-submit`として記録する。payloadのruntime自己申告から実行元を決めない。
+
+両ホストのshell hookは`Bash`と`tool_input.command`を使う。Codexでも実際のUserPromptSubmitと信頼済みhookを通す必要があり、controllerが確認receiptを代作してはならない。既存のpreview・nonce・署名・期限・一回性・exact argvによる認可は共通である。Codexのhook信頼は利用者の許可を得て正規の`/hooks`から設定し、未信頼の定義を自動で有効化しない。
+
 ## Intent grants (typed challenge の代替経路)
 
 The typed challenge is one way to prove a human asked for the mutation; it is not the property itself. A natural-language request submitted through the same registered `UserPromptSubmit` event proves the same thing, so `hook-confirm` also seals an `intent` receipt when the prompt matches a declared intent pattern.

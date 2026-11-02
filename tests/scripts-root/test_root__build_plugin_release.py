@@ -322,6 +322,35 @@ def test_bump_keeps_plugin_composition_version_in_the_same_atomic_release(mod, t
     assert mod.main(["--check"]) == 0
 
 
+@pytest.mark.parametrize("text", [
+    '{"name":"probe","version" : "0.1.0","nested":{"version":"9.0.0"}}\n',
+    '{\n "nested": {"version": "9.0.0"},\n "version": "0.1.0", "label":"version: 0.1.0"\n}\n',
+])
+def test_json_composition_bump_changes_only_root_version(mod, tmp_path, text):
+    plugin = tmp_path / "probe"
+    plugin.mkdir()
+    composition = plugin / "plugin-composition.yaml"
+    composition.write_text(text)
+    mod.sync_plugin_composition_version(plugin, "0.1.1")
+    expected = text.replace('"0.1.0"', '"0.1.1"', 1)
+    assert composition.read_text() == expected
+    assert json.loads(composition.read_text())["nested"]["version"] == "9.0.0"
+
+
+@pytest.mark.parametrize("text", [
+    '{broken', '[]', '{}', '{"version":1}',
+    '{"version":"0.1.0","version":"0.1.0"}',
+])
+def test_invalid_json_composition_bump_leaves_original_bytes(mod, tmp_path, text):
+    plugin = tmp_path / "probe"
+    plugin.mkdir()
+    composition = plugin / "plugin-composition.yaml"
+    composition.write_text(text)
+    with pytest.raises(SystemExit):
+        mod.sync_plugin_composition_version(plugin, "0.1.1")
+    assert composition.read_text() == text
+
+
 def test_build_artifacts_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
     """__pycache__ 等の副産物は fingerprint に入れない (pytest を回すだけで
     version が上がるノイズを防ぐ)。"""

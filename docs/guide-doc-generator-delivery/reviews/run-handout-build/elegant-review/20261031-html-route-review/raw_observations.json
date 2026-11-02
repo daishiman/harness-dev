@@ -1,0 +1,82 @@
+{
+  "purpose": "先入観を外し、候補表・実描画・選定証跡・HTML生成経路を現物から観察する",
+  "scope": {
+    "in_scope": [
+      "候補カタログ",
+      "視覚方針",
+      "描画と検証経路",
+      "設計指示と参照の到達先"
+    ],
+    "out_of_scope": [
+      "採点",
+      "改善実行",
+      "ファイル変更",
+      "表示の合否判定"
+    ]
+  },
+  "stakeholders": [
+    "利用者",
+    "読み手",
+    "設計担当",
+    "描画担当",
+    "保守担当"
+  ],
+  "first_impressions": [
+    "候補と描画語彙と媒体が別層にある",
+    "HTMLは出力形式と直接記述禁止対象の両方で登場する",
+    "候補表には内蔵パターンを持たない行もある"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "候補表は34関係、内蔵描画は16型",
+      "候補表の表示列はrelation/forms/selection_noteでpatternsを表示しない",
+      "カタログ外は表・カード・事前描画したIMGを認める",
+      "architectはJSONを設計しHTML/CSS/SVGを出力しない",
+      "レンダラは構成データからHTMLを生成し、DIAGRAMはC14のSVG、IMGは素材レジストリを使う",
+      "選定証跡は構成ハッシュ・部品参照・媒体と本編部品カバレッジを検査するが意味の最適性は保証しない",
+      "表示幅と最小文字の方針、図内スクロール、拡大dialog、details/summaryと印刷状態復元を持つ",
+      "Phase1はスクリプト実行・表示・対象編集・git操作を行っていない"
+    ],
+    "assumptions": [
+      "任意の関係が意味を保って表せるかは未検証",
+      "全ての実起動で方針が実行されるかは未検証",
+      "HTMLを明記するという問いの対象は初見では曖昧"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {
+      "value": "34関係と16描画型",
+      "kind": "other",
+      "abstraction_hint": "候補の意味と実装可能性を分ける"
+    },
+    {
+      "value": "diagram/image/part/text",
+      "kind": "other",
+      "abstraction_hint": "媒体の選択"
+    },
+    {
+      "value": "config_sha256とtarget_part_ids",
+      "kind": "other",
+      "abstraction_hint": "証跡と実配置の接続"
+    }
+  ],
+  "read_files": [
+    "README.md",
+    ".claude-plugin/plugin.json",
+    "plugin-composition.yaml",
+    "config/handout-diagrams.json",
+    "config/handout-visual-policy.json",
+    "config/handout-parts.json",
+    "schemas/handout-config.schema.json",
+    "scripts/build-diagram-gallery.py",
+    "scripts/validate-visual-selection.py",
+    "scripts/render-handout.py",
+    "scripts/render-diagram-svg.py",
+    "skills/run-handout-build/SKILL.md",
+    "skills/run-handout-build/prompts/R2-design.md",
+    "skills/run-handout-build/prompts/R2a-design-config.md",
+    "skills/run-handout-build/prompts/R3-render.md",
+    "skills/run-handout-build/references/visual-selection-contract.md",
+    "agents/handout-content-architect.md"
+  ]
+}

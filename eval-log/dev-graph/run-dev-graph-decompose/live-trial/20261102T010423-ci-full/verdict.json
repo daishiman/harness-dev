@@ -1,0 +1,162 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /Users/dm/dev/dev/個人開発/harness/.build/ci-full/20261102T010423-ci-full/decompose/fixture --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "必須順序違反。task.mdは実在する最小成果物のpathとbytes digestをassistantメッセージで提示してからstandard選択記録を保存し、以後に独立Agentを起動するよう要求する。transcript.jsonl:103の本文は「Minimal artifact created. Digests:」だけでpath/digestが無い。実値は105のuser/tool_resultにだけ存在し、145でartifact_presentedを自己記録、149で遷移を宣言、162でAgentを起動した。起動前の全assistant本文にもpath+digest提示は無い。事前指定standardと最終4観測の成立はこの欠落を免除しないため、status.jsonおよびDONEのPASSは契約上成立しない。",
+      "責務promptの事前読込不足。正規SkillはR1-elicit/R2-planをprompt_required:trueとし、task.mdも責務promptを出力前に読むよう要求するが、transcriptの実tool呼出しで読まれた責務promptは80のR3-decompose/R6-dryrunのみ。100でmacro inputとC02 previewを生成する前にも、その後にもR1-elicit.md/R2-plan.mdの読込記録が無い。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "df0682eaa0cb09bcaa460f104c0fbd79c52d8058839088bd71ac2d50324df830",
+    "result": "FAIL",
+    "blockers": [
+      "必須順序違反。task.mdは実在する最小成果物のpathとbytes digestをassistantメッセージで提示してからstandard選択記録を保存し、以後に独立Agentを起動するよう要求する。transcript.jsonl:103の本文は「Minimal artifact created. Digests:」だけでpath/digestが無い。実値は105のuser/tool_resultにだけ存在し、145でartifact_presentedを自己記録、149で遷移を宣言、162でAgentを起動した。起動前の全assistant本文にもpath+digest提示は無い。事前指定standardと最終4観測の成立はこの欠落を免除しないため、status.jsonおよびDONEのPASSは契約上成立しない。",
+      "責務promptの事前読込不足。正規SkillはR1-elicit/R2-planをprompt_required:trueとし、task.mdも責務promptを出力前に読むよう要求するが、transcriptの実tool呼出しで読まれた責務promptは80のR3-decompose/R6-dryrunのみ。100でmacro inputとC02 previewを生成する前にも、その後にもR1-elicit.md/R2-plan.mdの読込記録が無い。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci_full_decompose_goal"
+    },
+    "transcript_sha256": "1b321074b1b81f5af983259e65603742e00d840460511fd5a363a910085e78cd",
+    "evidence_refs": [
+      "task.md",
+      "scenario.json",
+      "transcript.jsonl",
+      "transcript/subagents/agent-a06d0df3924f61d46.jsonl",
+      "fixture-final/eval-log/run-dev-graph-decompose-artifact-delivery.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c02-input.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-lt-render-diff-summary.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-before.json",
+      "guard.jsonl",
+      "evidence-freeze.json",
+      "out/status.json",
+      "poll-state.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "9aadd495ea1a7c5a3f84442a67358f5eaf43f3bd5895c22fe3fa8d2ddde293a4",
+  "transcript_sha256": "1b321074b1b81f5af983259e65603742e00d840460511fd5a363a910085e78cd",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 283.73300790786743
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+  "scenario_contract": {
+    "scenario_file": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261102T010423-ci-full/scenario.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "evidence_ref": "transcript/subagents/agent-a06d0df3924f61d46.jsonl"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "evidence_ref": "transcript.jsonl"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0",
+        "evidence_ref": "transcript.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 283.73300790786743,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "055bd4eaec69534bd5ada406d7b2072b4ed2a2fc37ddadb987ce8cd3df176878",
+      "tokens": {
+        "input_tokens": 66,
+        "cache_creation_input_tokens": 100348,
+        "cache_read_input_tokens": 2212120,
+        "output_tokens": 18989,
+        "total_tokens": 2331523,
+        "assistant_messages": 32,
+        "assistant_message_ids": 32,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

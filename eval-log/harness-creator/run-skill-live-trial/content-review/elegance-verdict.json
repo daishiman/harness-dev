@@ -2,20 +2,19 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "490ef914c638d6c20b13ee10af7179e01f0ddaa63dcf6f4f84750b4d329d3310"
+    "skill_md_sha256": "91b027cf66f28277a856044c8b1adb2600d80766571088fdb82fd90bc03ba1eb"
   },
-  "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "grok-fresh-content-review-live-trial-ci13",
+  "reviewed_at": "2026-11-03T08:23:16+09:00",
+  "iterations": 2,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 8
+    "smell": 0
   },
-  "reviewer": "cr-run-skill-live-trial (independent focused combined reviewer; not the SKILL.md author)",
-  "reviewed_at": "2026-10-29T12:38:05Z",
-  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,24 +26,15 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "差分の主張を実装で確かめ、一致を確認した: boot の --run-id 必須化と READY 行の OWNER_PID (L216-230) は live-trial-boot.py と、scoped reap (session 名 prefix・@lt_run_id・@lt_owner_pid の 3 点一致) は live-trial-backend.py の session_belongs_to_run / reap と、finalizer (L278-292) は build-live-trial-verdict.py の try/finally による reap と一致した。test_finalizer_reaps_even_when_verdict_fails・test_finalizer_never_kills_session_when_tmux_ownership_mismatches・test_backend_real_tmux_reap_is_limited_to_its_owned_run で固定されている。",
-      "scenario 予算の上限を env 側から引き上げられない設計 (poll の hard_cap=min(env, scenario)、L246) と、壊れた state・token 計測不能で経過時間を 0 に戻さず停止する fail-closed は、test_poll_scenario_wall_cap_cannot_be_raised_by_environment・test_poll_corrupt_state_file_fails_closed_without_reset・test_poll_missing_usage_fails_closed で機械的に担保されており、自己申告で予算を緩める経路が無い。",
-      "goal 判定を fresh evaluator の goal-evaluation.json (evaluator.mode=fresh-independent-context・transcript sha 束縛・evidence_refs の workdir 内実在) と goal_seek 配線の実体検証 (validate-goal-seek-evidence.py) の 2 段で機械 gate 化し (L274・L303-305)、L305 で「template が実態と違うなら gate を緩めず scenario_id を bump する」と緩和方向の逃げ道を明文で塞いでいる。scenario-contract-superseded による再利用無効化 (plan-live-trials.py) とも整合する。"
+      "正規の STALL は分岐表の不合格として FAIL に残し、BLOCKED へ昇格させない。derive_overall の BLOCKED は blocked=True のままである。",
+      "poll exit 3 の STATE_CORRUPT と TOKEN_UNMEASURED はチェックリストと poll 表にあり、--poll-exit にその名前を渡したとき blocked_cause_for が tmux 不在の既定文と分ける。"
     ],
-    "negative_feedback": [
-      "low/smell: SKILL.md L248-255 の poll exit 表に exit 3 (BLOCKED: tmux 不在 / STATE_CORRUPT / TOKEN_UNMEASURED。live-trial-poll.py L193・L227) の行が無い。挙動は fail-closed で、stdout の `BLOCKED:` 行で停止理由は分かるが、表だけ見た運用者は次の行動を引けない。`| 3 BLOCKED | state 破損・token 計測不能・tmux 不在 | 記録 → kill-session → verdict --blocked |` の 1 行追加で解消する。",
-      "low/smell: Checklist L153 の終端 exit 列挙が (DONE / STALL / GATE / HARD_CAP) のままで、差分で追加された exit 6 TOKEN_CAP (L255) が入っていない。",
-      "low/smell: 判定ロジック L314 の BLOCKED 条件が「tmux 不在 / HARD_CAP 超過」だけで TOKEN_CAP・計測不能を含まない。Gotchas L332 は「到達または計測不能で BLOCKED」と書くが、poll を経ずに verdict 側で事後に予算超過を検出した場合は validate-live-trial-resource-budget.py の budget_violations → completion=FAIL → overall FAIL になる (BLOCKED ではない)。どちらも fail-closed なので受け入れ判定の緩みは無いが、L314 と L332 に「poll が止めた場合は --blocked で BLOCKED、verdict が事後検出した場合は FAIL」と書き分けると一致する。",
-      "low/smell: 検証節 L324 の `python3 -m pytest -q tests/test_live_trial_*.py` は INT ルートで tests/test_live_trial_harness.py の 1 本にしか一致せず、差分で追加された plugins/harness-creator/tests/test_live_trial_plan_scenario_reuse.py と test_live_trial_verdict_scenario_contract.py (scenario 契約・再利用判定) を拾わない。コメントの「scenario 検証」は harness 側の poll scenario テストで部分的には成り立つ。glob に plugins/harness-creator/tests/test_live_trial_*.py を併記すると漏れが無くなる。",
-      "low/smell: validate-live-trial-scenario-contract.py の validate_invocation_contract (scenario の forbidden_invoked_skills を invoked_skills と突合して goal_fit を落とす gate) と verdict schema の scenario_contract.invocation_contract が、SKILL.md の判定ロジック L303-305 にも task.md 契約表 L190-212 にも記述されていない。task_contract (L200) と resource_budget (L201) は書かれているので、L305 の scenario 契約の箇条に「forbidden_invoked_skills の呼出しも goal_fit=FAIL」を 1 文足すと記述と実装がそろう。",
-      "low/smell (script 側の記述ずれ): validate-goal-seek-evidence.py ヘッダ L6 の argv 表記は `[--require-declared]` だが、実装 L184 の引数は `--allow-undeclared` (既定で宣言必須)。SKILL.md 本文 (L304) の主張とは矛盾しないが、ヘッダを実装に合わせるべき。",
-      "low/smell (script 間の境界値ずれ): token 上限の比較が live-trial-poll.py L231 では `total_tokens >= token_cap` (到達で停止)、validate-live-trial-resource-budget.py L171 では `total_tokens > max_total_tokens` (超過のみ違反)。ちょうど上限値で poll が止まった場合は --blocked 経由で BLOCKED になるので実害は無いが、L255 の「予算到達」と L332 の「到達」に対し verdict 側は「超過」なので、どちらかにそろえると境界の解釈が一本になる。",
-      "medium (前回から継続・非 blocking): rubric PD-002。body 先頭 30 行に機械採点対象の MUST/NEVER/禁止/必ず token が無い。high ではなく required_fixes も空で、score 90/80 で PASS。"
-    ],
-    "iteration": 1,
+    "negative_feedback": [],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual: 前回FAILのSTALLとexit 3を現行SKILL.mdとscriptで再照合",
     "next_action": "none"
   },
-  "notes": "incremental profile の focused combined review (1 context で (a)〜(e) を判定)。30 思考法は incremental のため適用していない。審査開始時に shasum -a 256 で SKILL.md を実測し 490ef914…3310 で brief の期待値と一致。読んだもの: SKILL.md 全文 (339 行・v0.3.0)、基準 d46ca8ad からの skilldir 差分 (2605 行) のうち SKILL.md 差分と、それが参照する task-template.md、live-trial-backend.py、live-trial-boot.py、live-trial-poll.py、validate-live-trial-resource-budget.py、live-trial-verdict.py、build-live-trial-verdict.py、validate-live-trial-scenario-contract.py、validate-goal-seek-evidence.py、plan-live-trials.py、live-trial-verdict.schema.json、参照 docs (goal-seek-paradigm.md・convergence-policy.json・orchestrate-gate-pattern.md・validate-build-plan.py L192)、dev-graph の live-trial-positive-scenarios.json (4 件全てが resource_budget を持つ)、前回 verdict (2026-08-24, sha 4d7cd3c2…)。実行したコマンドと結果: live-trial-backend.py / live-trial-status.py / live-trial-boot.py の --self-test は 3 本とも exit 0。pytest (-p no:cacheprovider、PYTHONDONTWRITEBYTECODE=1、cwd=scratchpad、--rootdir INT) で tests/test_live_trial_harness.py・plugins/harness-creator/tests/test_live_trial_plan_scenario_reuse.py・plugins/harness-creator/tests/test_live_trial_verdict_scenario_contract.py・tests/test_validate_goal_seek_evidence.py・tests/test_lint_live_trial_verdict.py を実行し 161 passed (52.55s)。判定: (a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 はいずれも違反なし、(e) high 0 件。negative_feedback 8 件のうち 7 件は fail-closed を保ったままの記述の粗さ・script 間の表記ずれ (low/smell)、残る 1 件は前回から継続の PD-002 medium で、いずれも PASS を妨げない。前回指摘の追跡: PD-002 は継続。前回の goal-seek generic lint 3 WARN と llm-coverage under_derived=true は今回は再実行しておらず未確認。 書き込み後の確認: 2 ファイルとも jsonschema 4.25.1 で content-review-verdict.schema.json に合格。python3 scripts/lint-content-review.py --all は他 skill の stale-sha 等で全体 exit 1 だが、_all_skills() が harness-creator/run-skill-live-trial を列挙 (127 skill 中) していることを確認したうえで、本 skill の行は 0 件 (合格)。"
+  "review_kind": "elegance",
+  "notes": "再計算した skill_md_sha256 は SKILL.md 全バイトの sha256。前回2件を現行バイトで再照合した。STALL 分岐表 #5/#6 と判定ロジックは不合格の FAIL で、--blocked も --poll-exit STALL も付けない。derive_overall は blocked=True のときだけ BLOCKED を返し、poll_exit=STALL だけでは completion=FAIL の FAIL になり downgrade_reason は STALL に分かれない。poll 表とチェックリストは exit 3 BLOCKED を終端に含み、STATE_CORRUPT と TOKEN_UNMEASURED は --blocked とその名前の --poll-exit を渡す。blocked_cause_for はその2名を tmux 不在の既定文と別の原因文にする。空の --poll-exit 付き --blocked だけが既定文へ落ちる。boot 先頭コメントの exit 3 は tmux 不在で、poll 前の --blocked かつ poll_exit なしと一致する。この静的照合は live 実走の goal 達成を証明しない。"
 }

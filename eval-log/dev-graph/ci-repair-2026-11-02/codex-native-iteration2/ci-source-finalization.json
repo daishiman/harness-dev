@@ -1,0 +1,36 @@
+{
+  "recorded_at": "2026-11-02T03:46:23.676925+00:00",
+  "record_kind": "ci-naming-and-reference-index-correction",
+  "source_sha256": {
+    "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md": "92ef3b4902dfc92f45e7f45291966b418533a7ab07f8939a6b5a09590f6b02d0",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/resource-map.yaml": "e5141649d6d090d8400254caa0c5e573238a3cc768217ffd916bd12a11475f7d",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md": "345c89bf70f450a29c065fa06e03ac105ca6a1ead33fa8845ce11af568706c1e",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "18e8b744dd4ed9865f024dd915728fbfdfbb36ce7ca22ee34b77b92a4c70a421",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/extract-codex-transcript.py": "bb71d09aa5cb188619d2904412ff14d594054c302fdd03cd58fc11bae75edf4d",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "ced2092435082fca1ee696910fad6d296c1165a31367701f6e903fdf85dcede4",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-resource-budget.py": "e9bca23e26cb068aa6eee4394b965654ea2625fc024c39b18d2bbaff1ffd3716"
+  },
+  "changes": [
+    "既存命名規約に従い2scriptをmanage/extractへ改名し現source/test参照だけ同期。旧run/frozen sourceは変更しない。",
+    "references3件の索引resource-map.yamlを追加。",
+    "利用者の継続指示を根拠に4manifestの現SHAへ承認記録を追記。旧履歴は保持。"
+  ],
+  "validation": {
+    "related_suite": {
+      "passed": 347,
+      "duration_s": 26.73
+    },
+    "failed_ci_inner_criteria": {
+      "passed": 2,
+      "deselected": 301
+    },
+    "naming_violations": 0,
+    "skill_tree": "OK",
+    "release_check": "23 plugins OK",
+    "governance_blocked": []
+  },
+  "native_acceptance_passes": 0,
+  "ci_success": false,
+  "previous_iteration_record_preserved": "correction-receipt.json",
+  "next": "新commitのsourceを固定してC19/renderから実走を再開。C03 native hook trustは別gate保留。"
+}

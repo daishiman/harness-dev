@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "review_kind": "task-contract",
+  "verdict": "PASS",
+  "claim_type": "design",
+  "reviewer": "handout_final_fit（タスク実装担当とは別の独立評価者）",
+  "target": {
+    "path": "tasks/branch-remaining-publication.md",
+    "sha256": "6b57a5c05e5cdde62f95568df0d8333b10092fc0fe1af6bb8494cbb93d5523aa"
+  },
+  "reviewed_at": "2026-11-01T21:41:19.700417Z",
+  "scope_authority": {
+    "kind": "explicit_user_scope_confirmation",
+    "evidence_source": "親から伝達された、このセッションのユーザー最新指示",
+    "instruction": "元ブランチの全残存をremote main取込・競合解消して全てPR #87へ",
+    "interpretation": "guide関連だけに限定せず、元HEADからの残存変更全体を棚卸しする。既にmainへ入った実装と古い元版を区別し、未反映の意味差分をPRへ統合する。"
+  },
+  "conditions": [
+    {
+      "id": "C1",
+      "name": "矛盾なし",
+      "verdict": "PASS",
+      "evidence": [
+        "目的は「元ブランチに残る全変更を、最新リモートを取り込んだPRへ漏れなく統合する。」で最新指示と一致する。",
+        "「古い元ファイルでmainの修正を戻さない」と3-way統合・main側変更保存は両立し、単純上書きを要求していない。"
+      ]
+    },
+    {
+      "id": "C2",
+      "name": "漏れなし",
+      "verdict": "PASS",
+      "evidence": [
+        "全件棚卸しからremote→local main→PR、競合解消、最小ゲート、commit/push/CIまでを対象としている。",
+        "「全元差分について、反映済み/統合/元版保存/一時状態の扱いを実パスで説明できる」とあり、残存実装だけでなく元版・素材・一時状態の対応先まで追跡する。実装対象の列挙は全件棚卸しを狭める限定列挙として扱わない。"
+      ]
+    },
+    {
+      "id": "C3",
+      "name": "規約整合",
+      "verdict": "PASS",
+      "evidence": [
+        "PR作業ツリーのみを変更し元worktreeを保持する。所有を分担し他者の変更とBeadsを無断で完了にしない。",
+        "仕様影響受領書と対象別の必須ゲートを要求し、全30思考法の再走を一律の完了条件にしていない。",
+        "taskはdraft・evaluation pendingの評価前資料として読んだ。本判定は契約評価であり、PR・CI・mergeの完了証跡ではない。"
+      ]
+    },
+    {
+      "id": "C4",
+      "name": "依存関係整合",
+      "verdict": "PASS",
+      "evidence": [
+        "入力に元HEAD 8c1eb6c8・未commit差分・PR #87・main基準76abc53dを置き、先にremoteを取り込んでから統合する。76abc53dは記載時の基準であり、remote再取得を禁止する固定値ではない。",
+        "既存task-gdg-reviewとは関連として記録し、この統合タスクが他者のタスク完了authorityを奪わない。"
+      ]
+    }
+  ],
+  "completion_observation_contract": {
+    "inventory": "元ブランチの全残存を実パスで列挙し、各項目のmain既反映/今回統合/元版保存/一時状態の扱いと根拠を対応付ける。",
+    "source_preservation": "旧版・素材・検証記録を実装への巻き戻しで保存せず、元worktreeを保持したうえでPR内の保存先・digest等を示す。",
+    "unreflected_zero": "対応先と根拠の無い元差分が0件であること。Git statusがcleanなだけでは達成としない。",
+    "publication": "PR #87のhead/base、pushされた対象commit、必要ゲート・CIの結果を別の実行証跡で確認する。"
+  },
+  "findings": [],
+  "not_verified": [
+    "remote main取得・競合解消・全件棚卸しの実行完了",
+    "PR #87への全残存反映と未反映0件の実測",
+    "push・CI・mergeの実行結果",
+    "本レビューで未取得の保存・mutationの承認receipt"
+  ],
+  "execution_completed": false,
+  "approval_receipt_created": false,
+  "notes": "ユーザーの明示scope確認を根拠に契約を評価した。新しいユーザー承認や実行完了を捏造していない。親のC02→C28追跡に使えるdesign verdictであり、公開・merge完了判定は別途必要。"
+}

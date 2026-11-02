@@ -1,0 +1,62 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {
+    "graph_revision": 2,
+    "graph_digest": "sha256:da99f6503188a37be558ea365fbc3f65a4efe6c7661c22ce7200996081606175"
+  },
+  "writer_receipts": [],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "update-context-receipt.json/update-postchoice-context.json、config identityおよび全対象realpath一致。R0分離検証。"
+    },
+    {
+      "id": "classification",
+      "status": "not_applicable",
+      "evidence": "verb=update、decision新規生成なし、既存分類metadata保持。"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "update-schema-report.json valid=true violations=[]。R4分離検証:既存body保持、各H2一つだけappend、frontmatter/kind/path/template一致。"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verb=update、register-packageではない。"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": ".dev-graph/state/receipts/node-r000002-update.json pre-choice commit1回。revision_after=2 graph_digest_after=sha256:da99f6503188a37be558ea365fbc3f65a4efe6c7661c22ce7200996081606175 がgraph_baselineと一致、node_ids/本文SHA一致。preview before=1/input CAS=1/receipt before=1。"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "schema検査"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "evidence": "live trial・受入テスト"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "evidence": "live trial・受入テスト"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "evidence": "live trial・受入テスト"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:da99f6503188a37be558ea365fbc3f65a4efe6c7661c22ce7200996081606175"
+  }
+}

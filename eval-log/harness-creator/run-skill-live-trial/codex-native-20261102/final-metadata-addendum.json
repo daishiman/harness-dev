@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "claim_type": "design",
+  "reviewed_at": "2026-11-02T02:39:45.256649Z",
+  "scope": "採番後に追加されたCLI要件説明の静的3file限定整合確認。新採点・全体再review・実target起動なし。",
+  "reviewed_inputs": {
+    "plugins/harness-creator/references/package-contract.json": "3c69a74947e5266b507fa320d241a9f26698fbf915ad90f3b33ae77c995ed1f7",
+    "plugin-plans/harness-creator/envelope-draft/plugin.json": "4b7204e75f396a4d0bfc9ddf5873b860c6c62d871a6993877445f49a84491f46",
+    "doc/harness-creator-完全解剖.md": "4b746c5593138510d574eca855d90ae426419fa073b736b92e14a7c76f0de71b"
+  },
+  "findings": [],
+  "evidence": [
+    "package-contract正本とactive plan envelopeのrequirements.external_clisは理由・required_forを含めて一致。tmuxはruntime=claudeだけ、codexは利用者がruntime=codexを明示選択した場合だけ必要と明記。",
+    "plannerの省略時runtime=claude、専用Codex runnerのcodex_executable検証、共通verdictのtmux_available呼出しがClaude分岐だけという既レビュー済み実選択と一致。両CLIを同時に必須にする実行経路へ変更していない。",
+    "完全解剖532行付近の説明はruntime別原ログ・閉包・実userturnを記載し、両CLI同時必須を否定、未確認hook/起動停止をPASSへ読み替えない。",
+    "SKILLと起動/判定codeを含む既レビュー全14入力は前回のSHAから不変。今回3fileは元reviewed_sha256/reviewed_inputsに含まれていないため、元の採点根拠を付替えず本addendumに最終bytesSHAを別記。"
+  ],
+  "release_context": {
+    "source": "親からの手続状況報告。remote/install操作の独立実行や公開確認は行っていない。",
+    "published_harness_creator_version": "1.4.55",
+    "local_unpublished_uninstalled_version": "1.4.56",
+    "fingerprint_handling": "未公開1.4.56の最終メタ反映後に正規release writerで再生成する方針。公開済み版fingerprint付替えを認める判定ではない。"
+  },
+  "verification": "正本Draft7Validator+FormatCheckerと正本contentlint._check_verdictを対象2件に再適用。"
+}

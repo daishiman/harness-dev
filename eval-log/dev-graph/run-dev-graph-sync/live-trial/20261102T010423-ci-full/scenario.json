@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "C03-OUT1-positive-second-sync-zero-r2",
+      "component_id": "C03",
+      "skill": "run-dev-graph-sync",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 7000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0145-pr85: wall_clock_s=597, total_tokens=3.18M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> を同じ入力で 2 回続けて実行する (remote は DEV_GRAPH_GH=<contained-fixture-repo>/tools/fake-gh.py が読む fixture 内 github-adapter.json だけ)",
+      "fixture_contract": "A deterministic GitHub adapter fixture (github-adapter.json read only through the fixture's tools/fake-gh.py via DEV_GRAPH_GH) has one valid import and one valid export, stable timestamps, IDs, aliases, and snapshots, so sync converges without touching any external GitHub API.",
+      "required_observations": [
+        "the first sync applies the expected import and export",
+        "the second sync reports imports changes=0 and exports changes=0",
+        "stable IDs and snapshots are unchanged on the second run"
+      ]
+    }
+  ]
+}

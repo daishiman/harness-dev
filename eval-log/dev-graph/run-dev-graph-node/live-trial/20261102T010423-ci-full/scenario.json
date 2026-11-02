@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+      "component_id": "C02",
+      "skill": "run-dev-graph-node",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0528-pr85: wall_clock_s=520, total_tokens=2.19M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "fixture_contract": "A contained initialized repository supplies one valid issue, task, specification, architecture, and document artifact in a single input batch.",
+      "required_observations": [
+        "all five artifacts are routed to canonical kind paths",
+        "frontmatter kind and stored path agree after a consecutive update",
+        "no feature is created outside the C14 macro-feature contract"
+      ]
+    }
+  ]
+}

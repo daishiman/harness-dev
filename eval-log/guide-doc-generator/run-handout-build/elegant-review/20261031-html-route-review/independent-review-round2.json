@@ -1,0 +1,140 @@
+{
+  "reviewer": "elegant_verifier",
+  "independent_of_implementers": true,
+  "reset_statement": "修正を正解と仮定せず、変更3ファイルを再読込し、同じdescription付き入力で独立再検証。対象は変更しない。",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+        "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+        "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+        "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+        "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+      ]
+    }
+  },
+  "finding_resolutions": [
+    {
+      "id": "F-0001",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0002",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0003",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0004",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0005",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0006",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0007",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0008",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0009",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0010",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0011",
+      "status": "resolved",
+      "evidence": [
+        "round1の独立判定を維持"
+      ]
+    },
+    {
+      "id": "F-0012",
+      "status": "resolved",
+      "evidence": [
+        "同一入力のAX説明復元、欠落/改変拒否、説明なしの初期表示維持を独立確認"
+      ]
+    }
+  ],
+  "new_findings": [],
+  "reviewed_file_hashes": [
+    {
+      "path": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "sha256": "4d1542cacf7948e92b3f3ae4ded2452dd1c0e62194b4d981f20be663bfa03c3c"
+    },
+    {
+      "path": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+      "sha256": "136ff05b9bb128b7d51ec42b88f46916043d01862c4eff9d1fdf7b81ba38fc86"
+    },
+    {
+      "path": "plugins/guide-doc-generator/tests/visual-expressions/test_readable_media.py",
+      "sha256": "d8097452bd4a7dd5b8a4b051d7b99b390907abefa729e19780edd4de9639c6aa"
+    }
+  ],
+  "limits": [
+    "Chromeのアクセシビリティツリーで検証し、個別スクリーンリーダーの音声は未検証。",
+    "任意の資料・図・元画像・印刷版面・環境の作図ツールの存在は保証しない。"
+  ]
+}

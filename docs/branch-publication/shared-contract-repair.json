@@ -1,0 +1,35 @@
+{
+  "proposal_id": "PROP-2026-11-02-PR87-SHARED-CONTRACT-REPAIR",
+  "timestamp": "2026-11-01T22:27:37.457451+00:00",
+  "category": "P1_structural",
+  "status": "approved",
+  "approver": "solo_operator（今回の依頼者）",
+  "proposer": "Codex",
+  "authorization_basis": "利用者の全残存をremote main取込・競合解消して全てPRへ反映する継続指示と、既存のCI修正依頼に基づく。未収録差分の共有契約正本への反映と必要な採番のみ。",
+  "target_path": [
+    "plugins/system-dev-planner/.claude-plugin/plugin.json",
+    "plugins/system-dev-planner/.codex-plugin/plugin.json"
+  ],
+  "target_sha256": {
+    "plugins/system-dev-planner/.claude-plugin/plugin.json": "b0ed8c7f6c09cd081743b29cb5ff73e1e5a8e199802176b7f0c038a929a27f3d",
+    "plugins/system-dev-planner/.codex-plugin/plugin.json": "b8c45f360ac06ca67ba1b9a6a5b5b099610954735f1b78397b440af870076080"
+  },
+  "incident_fix": true,
+  "rationale": "実CIのvendored SSOT検査2件が、元差分の契約追記がdev-graphの同梱側だけに残ったため失敗。元のmaterialize/confirm-feature契約を正本system-dev-plannerへ反映しbyte一致を回復する。新たな機能拡張でなく公開統合不整合の修復。",
+  "rollback_plan": "shared contractをmainの両コピーへ戻し、system-dev-plannerの版・fingerprintを揃える。元版snapshotと承認履歴は保持。",
+  "impact_report": "system-spec/branch-publication/spec-impact-receipt.json",
+  "rubric_hash": null,
+  "template_hash": null,
+  "grace_period": "統合不整合修復のためなし",
+  "canonical_ref": "plugins/system-dev-planner/references/feature-execution-package-contract.md",
+  "vendored_ref": "plugins/dev-graph/references/feature-execution-package-contract.md",
+  "shared_sha256": "7ddcd012decd536116dcb4fbb5a8fc89fbae2e1f5d2600a707c36c3c194e4563",
+  "validation": {
+    "vendored_ssot": "124 copies byte-identical",
+    "root_regression": "20 passed",
+    "commands": [
+      "python3 scripts/lint-vendored-ssot.py",
+      "python3 -m pytest tests/scripts-root/test_root__lint_vendored_ssot.py -q"
+    ]
+  }
+}

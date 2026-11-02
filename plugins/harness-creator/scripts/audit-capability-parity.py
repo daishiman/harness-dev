@@ -308,6 +308,33 @@ def _composition_surfaces(plugin: Path, actual_hooks: list[str]) -> tuple[dict[s
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return empty, str(exc)
+    if text.lstrip().startswith(("{", "[")):
+        try:
+            document = json.loads(text)
+        except json.JSONDecodeError as exc:
+            return empty, f"composition JSON parse error: {exc}"
+        if not isinstance(document, dict):
+            return empty, "composition must be an object"
+        if document.get("name", document.get("plugin")) != plugin.name:
+            return empty, "composition name/plugin does not match plugin directory"
+        capabilities = document.get("capabilities")
+        if not isinstance(capabilities, list):
+            return empty, "composition capabilities must be an array"
+        # JSON は YAML の有効な表現。公開面だけを既存の YAML subset に射影し、
+        # 以下の同じ名前解決と双方向照合へ渡す。
+        lines = [f"name: {plugin.name}", "capabilities:"]
+        for capability in capabilities:
+            if not isinstance(capability, dict) or not all(
+                isinstance(capability.get(key), str) and capability[key]
+                for key in ("kind",)
+            ):
+                return empty, "composition capability must have a string kind"
+            ref = capability.get("ref", capability.get("path"))
+            if not isinstance(ref, str) or not ref:
+                return empty, "composition capability must have a string ref/path"
+            lines.extend((f"  - kind: {json.dumps(capability['kind'])}",
+                          f"    ref: {json.dumps(ref)}"))
+        text = "\n".join(lines)
     identity = re.search(r"^(?:name|plugin):\s*([^\s#]+)", text, re.MULTILINE)
     if identity is None or identity.group(1).strip("\"'") != plugin.name:
         return empty, "composition name/plugin does not match plugin directory"

@@ -1,0 +1,107 @@
+{
+  "skill": "run-elegant-review",
+  "goal": "指定された図解選定一覧・実装・資料生成経路を先入観を外して30思考法すべてで検証し、HTMLを含む表現方法の選択と図の意味を分け、抜け漏れ・矛盾・不整合・依存切れを改善する。成果物は削除せず対象箇所を更新する。",
+  "original_goal_hash": "636785c6e45d3c4002f2206c69c556c880b10ec0a482c7900f4d4c305b9861ed",
+  "iteration": 7,
+  "max_loops": 12,
+  "status": "completed",
+  "checklist": [
+    {
+      "id": "C1",
+      "text": "別contextで思考リセット・素観察",
+      "status": "done",
+      "depends_on": [],
+      "evidence": [
+        "raw_observations.json",
+        "shared_state.md"
+      ]
+    },
+    {
+      "id": "C2",
+      "text": "3担当による30思考法の独立並列分析を集約",
+      "status": "done",
+      "depends_on": [
+        "C1"
+      ],
+      "evidence": [
+        "issues-phase2.json",
+        "3分析担当の30思考法適用結果"
+      ]
+    },
+    {
+      "id": "C3",
+      "text": "所見に基づく差分改善",
+      "status": "done",
+      "depends_on": [
+        "C2"
+      ],
+      "evidence": [
+        "phase3-implementation.json",
+        "after-manifest.json"
+      ]
+    },
+    {
+      "id": "C4",
+      "text": "機械検証と表示確認",
+      "status": "done",
+      "depends_on": [
+        "C3"
+      ],
+      "evidence": [
+        "gallery-display-measurements.json",
+        "phase3-implementation.json"
+      ]
+    },
+    {
+      "id": "C5",
+      "text": "実装担当と異なるcontextで4条件再検証",
+      "status": "done",
+      "depends_on": [
+        "C4"
+      ],
+      "evidence": [
+        "独立レビュー11所見解消の報告",
+        "finding-F-0012.json"
+      ]
+    },
+    {
+      "id": "C6",
+      "text": "追加所見F-0012を最小差分で修復",
+      "status": "done",
+      "depends_on": [
+        "C5"
+      ],
+      "introduced_at_iteration": 5,
+      "evidence": [
+        "phase3-description-fix.json"
+      ]
+    },
+    {
+      "id": "C7",
+      "text": "追加説明の機械・表示検証",
+      "status": "done",
+      "depends_on": [
+        "C6"
+      ],
+      "introduced_at_iteration": 5,
+      "evidence": [
+        "phase3-description-fix.json"
+      ]
+    },
+    {
+      "id": "C8",
+      "text": "別contextで追加修正を再検証し4条件を確定",
+      "status": "done",
+      "depends_on": [
+        "C7"
+      ],
+      "introduced_at_iteration": 5,
+      "evidence": [
+        "independent-review-round2.json",
+        "validation-summary.json",
+        "verdict.json"
+      ]
+    }
+  ],
+  "engine": "task-graph"
+}

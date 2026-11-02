@@ -1,12 +1,12 @@
 # 回答の型
 
-この skill は参照回答しか返さない。問い合わせを 4 面のどれかへ割り当て、正本を
+この skill は参照回答しか返さない。問い合わせを SKILL.md に宣言した面へ割り当て、正本を
 読んでから答える。読まずに記憶で答えない。
 
 ## 手順
 
 1. 問い合わせを分類する。部品の話か、トークンの話か、アイコンの話か、文章の
-   書き方の話か。どれにも当たらないなら「この skill の担当外」と答え、担当する
+   書き方や図解選定・開閉の話か。どれにも当たらないなら「この skill の担当外」と答え、担当する
    component を指す。
 2. 語彙に関する問いなら、正本のデータファイルを Read で開いてから答える。
    - 部品の id と属性: `config/handout-parts.json` (owner: C11)
@@ -14,7 +14,8 @@
    - セクション種別: `config/handout-sections.json` (writer: C12)
 3. 値に関する問いなら `assets/tokens/<theme>.json` を開く。テーマ名が指定されて
    いないときは、どのテーマの値を聞かれているかを確認してから答える。
-4. 考え方に関する問いなら `assets/jp-web-design-mode-b.md` を引用する。
+4. 文章からの図解選定・開閉に関する問いなら `config/handout-visual-policy.json` と
+   `config/handout-diagrams.json`、その他の考え方なら `assets/jp-web-design-mode-b.md` を読む。
 5. 回答には出典のファイルパスを添える。出典を書けない主張は書かない。
 
 ## 答え方の規律

@@ -1,0 +1,1409 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/guide-doc-generator",
+    "reviewed_at": "2026-10-31T07:14:17.761777+00:00"
+  },
+  "loop_count": 2,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 候補表は索引であり全図種の実装保証ではない。媒体を分けて示す必要がある。",
+        "plugins/guide-doc-generator/config/handout-diagrams.json:5",
+        "解消検証: F-0001。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "批判的思考"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 全図への表示方針から、専用作図IMGにも文字・操作の保護が必要と検証した。",
+        "plugins/guide-doc-generator/scripts/render-handout.py:1561",
+        "解消検証: F-0003。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "演繹思考"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 16型の例は全て描画でき型集合も一致したが、任意入力の可読性へ一般化できない。",
+        "plugins/guide-doc-generator/scripts/render-diagram-svg.py:1338"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "帰納的思考"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: HTMLの欠落という疑問は、図の意味と実装経路の対応が見えないことで最小に説明できる。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "アブダクション"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 選定記録の正本と検査が要求する項目名まで追い、別名の不一致を確認した。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:499",
+        "解消検証: F-0008。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "垂直思考"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 関係・表現形式・記法・描画媒体・配布形式を分け、UML/記法/SVG/HTMLを同列に置かない。",
+        "plugins/guide-doc-generator/skills/ref-handout-design-system/references/visual-expression-review.md:36",
+        "解消検証: F-0012。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "要素分解"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 関係分類は意図的に重なる候補索引。未分類経路があり、34件で網羅性を証明する設計ではない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "MECE"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 意味の忠実さと可読性を別軸にし、内蔵図と専用図の表示保護の差を確認した。",
+        "plugins/guide-doc-generator/scripts/render-handout.py:2252"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "2軸思考"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 設計→正規化→選定記録→描画→独立レビューの接続と保証範囲を追跡した。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:274"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "プロセス思考"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 候補の網羅・意味保持・表示可読性を別の確認事項に分け、記録検査を万能視しない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/references/visual-selection-contract.md:60"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "メタ思考"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: HTMLは配布形式であり既存HTML/CSS部品も描画経路だが、選定指示では隠れている。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:498",
+        "解消検証: F-0001。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "抽象化思考"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 図の必要性を関係から決める方針に、挿絵変更で全節1図へ戻す旧前提が残っていた。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:362",
+        "解消検証: F-0009。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "ダブル・ループ思考"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 6案を比較し、分類の増設より既存経路・実例リンク・単純図の表示改善を選んだ。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "ブレインストーミング"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 単一KPIの375px実表示で、数値が初期表示範囲から完全に外れる反例を確認した。",
+        "実表示: 図領域291px、数値位置379〜420px",
+        "解消検証: F-0002。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "水平思考"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 全16図が14px以上でもKPIの核心情報が見えず、文字下限だけで可読とは言えない。",
+        "実表示1440/768/375px: フォント14px以上だがKPIは領域外"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "逆説思考"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 候補表を図鑑の索引として検証し、35行に実例リンクがないことを確認した。",
+        "plugins/guide-doc-generator/scripts/build-diagram-gallery.py:39",
+        "解消検証: F-0001。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "類推思考"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 1440では収まるが768/375ではスクロールになる。媒体全体を不可とせず図ごとに判断する。",
+        "実表示: 375pxの図幅291px、内容幅753〜860px"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "if思考"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初回検証: 375pxで候補表の関係列38px・高さ4977pxとなり、実装語の混在と共に探索を難しくしていた。",
+        "実表示375px: 表幅293px/高さ4977.1px",
+        "解消検証: F-0001。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "素人思考"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 専用作図を新規に生成するソース作成担当が、設計からIMGまでの間に接続されていない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R3-render.md:42",
+        "解消検証: F-0004。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "システム思考"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 読みにくさの原因を常にテーマと見なすと、分図が必要な構成へ戻れない。",
+        "plugins/guide-doc-generator/skills/run-handout-build/prompts/R5-refine.md:75",
+        "解消検証: F-0007。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "因果関係分析"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 実表示できない→未確認→high指摘なし→合格という誤った完了ループを検証した。",
+        "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md:255",
+        "解消検証: F-0006。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "因果ループ"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 親が表示証跡を取得し独立レビュアーへ渡せば、書込禁止と表示確認を両立できる。",
+        "plugins/guide-doc-generator/agents/handout-readability-reviewer.md:228",
+        "解消検証: F-0005。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "トレードオン思考"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 全関係へ個別エンジンを作らず、既存の部品と素材経路へ接続する方式を保護する。",
+        "plugins/guide-doc-generator/config/handout-diagrams.json:639"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "プラスサム思考"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 利用者がHTMLを毎回指定しなくても資料生成側の契約で保証すべきであり、候補表だけを実装保証としない。",
+        "plugins/guide-doc-generator/README.md:295"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "価値提案思考"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 候補数より専用作図と実表示確認の接続が優先。ギャラリー試験は実資料レビューの代替ではない。",
+        "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:17"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "戦略的思考"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "初回検証: 再現性のため自由HTMLを禁じることは既存HTML部品の禁止ではない。選定証跡が納品へ届かない原因も追跡した。",
+        "plugins/guide-doc-generator/scripts/route-handout-output.py:497",
+        "解消検証: F-0010。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "why思考"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 全ての短文へ形式的2候補を作るより、同じ情報単位としてまとめる指示で負荷を抑える。",
+        "plugins/guide-doc-generator/scripts/validate-visual-selection.py:46",
+        "解消検証: F-0011。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "改善思考"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 厳密ER図の新規生成と、任意入力の可読性を反例に、全実装・全可読という仮説を検証した。",
+        "plugins/guide-doc-generator/tests/visual-expressions/test_browser.py:38"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "仮説思考"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 候補の存在・描画可能性・実表示を分け、選定記録の正本に並行フィールドが残ることを確認した。",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json:499",
+        "解消検証: F-0008。independent-review-round1.json / independent-review-round2.jsonの実体・表示・検査証拠を参照。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "論点思考"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "初回検証: 所見を候補の意味・作図の実行・表示確認・証跡引継ぎへまとめ、層間の接続を改善対象にした。",
+        "plugins/guide-doc-generator/scripts/route-handout-output.py:72"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+            "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+            "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+            "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+            "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "paradigm_label_ja": "KJ法"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "前回の原因別差戻しと枚数自動復帰禁止の証拠を維持。追加修正は既存descriptionの復元で矛盾を追加しない。"
+      ],
+      "violation_count": 0
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "初期11所見の解消判定を維持。説明の有無・空白・特殊文字・欠落・改変に対する独立6試験成功。"
+      ],
+      "violation_count": 0
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "非空descriptionがfigureのaria-descriptionへ安全に接続される。",
+        "Chrome AXツリーのfigure.descriptionが「土日祝を除く受付日の翌日から数える。」と一致。",
+        "C16は説明欠落と「暦日で数える」への改変をそれぞれ違反1件として拒否。",
+        "説明あり/なしで375pxの図と表示要素の座標・寸法が一致し、ページ幅とscrollWidthはともに375px。"
+      ],
+      "violation_count": 0
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "前回の作図・表示証跡・選定証跡同梱の接続判定を維持。",
+        "元データ→HTML属性→アクセシビリティツリーと、C16の元データとの照合が接続。"
+      ],
+      "violation_count": 0
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "score_note": "scoreは観測されたblocking所見の有無の二値投影。最適性の点数や意味評価の代替にはしない。",
+  "why_cross_check": "利用者指定どおりシステム担当も26whyを独立適用。論理担当の補助確認と統合し、集約では同一IDを1行にまとめた。",
+  "resolved_findings": [
+    "F-0001",
+    "F-0002",
+    "F-0003",
+    "F-0004",
+    "F-0005",
+    "F-0006",
+    "F-0007",
+    "F-0008",
+    "F-0009",
+    "F-0010",
+    "F-0011",
+    "F-0012"
+  ],
+  "independent_approval_ref": "independent-review-round2.json",
+  "limitations": [
+    "Chromeのアクセシビリティツリーで検証し、個別スクリーンリーダーの音声は未検証。",
+    "任意の資料・図・元画像・印刷版面・環境の作図ツールの存在は保証しない。"
+  ]
+}

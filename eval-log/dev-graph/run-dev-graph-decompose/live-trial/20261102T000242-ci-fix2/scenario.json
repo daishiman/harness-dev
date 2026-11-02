@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3",
+      "component_id": "C14",
+      "skill": "run-dev-graph-decompose",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0331-pr85: wall_clock_s=490, total_tokens=2.29M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "fixture_contract": "A contained repository transplanted from the accepted render seed fixture (architecture ARCH-LT-001, feature LT-FEATURE-001 with its exact-13 package), rekeyed to the new repository, with execution_tracker.mode=beads and a contained fake Beads adapter at tools/fake-bd.py; the decompose run is a macro proposal preview whose projection is checked through C28 dry-run.",
+      "required_observations": [
+        "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+      ]
+    }
+  ]
+}

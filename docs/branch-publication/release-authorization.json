@@ -1,0 +1,41 @@
+{
+  "proposal_id": "PROP-2026-11-02-PR87-ALL-BRANCH-OMISSION-REPAIR",
+  "timestamp": "2026-11-01T21:52:39.834705+00:00",
+  "category": "P1_structural",
+  "status": "approved",
+  "proposer": "Codex（全残存公開漏れの修復担当）",
+  "approver": "solo_operator（今回の依頼者）",
+  "authorization_basis": "利用者が「今このブランチ上で残っているもの」に対し、さらに「リモートで上がっている内容をマージした上で、コンフリクトを解消してから、全てです。全てですよ。全ての内容をプロリグに出すこと」と明示した。元から存在した全差分の公開・統合と必要な正規採番の実施許可として記録。新たな承認回答や未実施の実走を取得したとは主張しない。",
+  "target_path": [
+    "plugins/dev-graph/.claude-plugin/plugin.json",
+    "plugins/dev-graph/.codex-plugin/plugin.json",
+    "plugins/harness-creator/.claude-plugin/plugin.json",
+    "plugins/harness-creator/.codex-plugin/plugin.json",
+    "plugins/skill-governance-lint/.claude-plugin/plugin.json",
+    "plugins/skill-governance-lint/.codex-plugin/plugin.json",
+    "plugins/system-briefing-book/.claude-plugin/plugin.json",
+    "plugins/system-briefing-book/.codex-plugin/plugin.json",
+    "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+    "plugins/ubm-goal-setting/.codex-plugin/plugin.json"
+  ],
+  "target_sha256": {
+    "plugins/dev-graph/.claude-plugin/plugin.json": "ddb24e857d5cadca9e13977dd4c2d1fc560bf32b31581eae95e2e4f982cd50ac",
+    "plugins/dev-graph/.codex-plugin/plugin.json": "1cd01c7a8239e04e490f9fc0ebe2ab32c1ed8c92fe0fd5ba5ef315b500502551",
+    "plugins/harness-creator/.claude-plugin/plugin.json": "94a0b04b444284c7cf63bb9ef8b66b51eb078a45a40ba9f1413206510155abc7",
+    "plugins/harness-creator/.codex-plugin/plugin.json": "aec4d4424086a3df3d9ea2ec303c2ff732e963e56df87cbe99348a569ec1c1fb",
+    "plugins/skill-governance-lint/.claude-plugin/plugin.json": "5c84f0bb4f675e7648db1be4cd61d2c38bcd4913a42d7cec25f221f430eefa34",
+    "plugins/skill-governance-lint/.codex-plugin/plugin.json": "a0f61048dba9b758f7962c39bd5b6ffcf006fcac1b9ee4a2d484086a26a683a1",
+    "plugins/system-briefing-book/.claude-plugin/plugin.json": "cc88c6551d12c7791a48c395636c7383f4096cc65bba4556a304fdc618b8867d",
+    "plugins/system-briefing-book/.codex-plugin/plugin.json": "221f0d6cbda91bafea7ef03d25b0b13a8b3269674de559857d20734b56a0a893",
+    "plugins/ubm-goal-setting/.claude-plugin/plugin.json": "c936af0fdfc6ce406195b0f7b0df73b172480149fc14d0d077d5dc42bef0071e",
+    "plugins/ubm-goal-setting/.codex-plugin/plugin.json": "57187998ffa563c4f7c5193fd409201ec73a369602df959d4b4af0f005eb7095"
+  },
+  "incident_fix": true,
+  "rationale": "前回、既存ブランチのguide以外の差分を除外したため、利用者が求めた全差分の公開漏れが生じていた。その申告に対する修復に限り、元から存在したdev-graph/UBM/JSON composition/SBB変更をmainの修正を保持して統合し、配布copyの採番を追従する。新規の自由改善や無関係な追加機能の承認ではない。根拠は元HEAD8c1eb6c8と全1440 status項目・source snapshot。policy/分類器/ゲートを変更せず、既存のapproved incident例外だけを使用。",
+  "rollback_plan": "PR #87のこの統合分をrevertし、main由来の実装・版・fingerprintへ戻す。元版・承認履歴・source snapshotは消さない。",
+  "rubric_hash": null,
+  "template_hash": null,
+  "impact_report": "system-spec/branch-publication/spec-impact-receipt.json",
+  "grace_period": "公開漏れ修復のためなし",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/87"
+}

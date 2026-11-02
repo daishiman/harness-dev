@@ -4,7 +4,7 @@
 # version: 0.3.0
 # purpose: C05 完成度評価レポートを fail-closed で集約し、matrix/出典記録/知識グラフの決定論ゲートを実行する
 # inputs:
-#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--spec-dir DIR] / --matrix FILE [--require-complete] / --source-citation FILE --state FILE [--repo-root DIR] / --knowledge-graph / --hearing FILE --state FILE
+#   - argv: --report FILE [--fork-ledger FILE] [--session ID] [--runtime claude|codex] [--spec-dir DIR] / --matrix FILE [--require-complete] / --source-citation FILE --state FILE [--repo-root DIR] / --knowledge-graph / --hearing FILE --state FILE
 # outputs:
 #   - stdout: OK/violation 一覧または gate 結果 JSON
 #   - exit: 0=OK / 1=violation or gate fail / 2=usage error
@@ -58,6 +58,7 @@ from audit_fork_attribution import (  # noqa: E402,F401
     ledger_corroborates,
     load_fork_ledger,
     required_delegations,
+    select_runtime,
     validate_attribution,
 )
 _JSON_SCHEMA_SUBSET = Path(__file__).with_name("validate-json-schema-subset.py")
@@ -110,7 +111,7 @@ def _high_count(findings: list) -> int:
 
 
 def validate_report(
-    report: dict, ledger: dict | None = None, expected_session: str | None = None
+    report: dict, ledger: dict | None = None, expected_session: str | None = None, runtime: str | None = None
 ) -> list[str]:
     """レポート形状、総合判定、実 fork 帰属を検証し違反リストを返す。"""
     violations: list[str] = []
@@ -237,7 +238,7 @@ def validate_report(
             )
     if verdict == "FAIL" and not gaps:
         violations.append("verdict=FAIL だが gaps (不足事項一覧) が空 (差し戻し材料が無い)")
-    violations.extend(validate_attribution(report, ledger, expected_session))
+    violations.extend(validate_attribution(report, ledger, expected_session, runtime=runtime))
     return violations
 
 
@@ -492,6 +493,7 @@ def main(argv: list | None = None) -> int:
     parser = argparse.ArgumentParser(description="C05 完成度評価レポートの形状検証 / 決定論ゲート実行")
     parser.add_argument("--report", help="評価レポート JSON のパス")
     parser.add_argument("--fork-ledger", help="監査 fork 台帳 JSONL のパス")
+    parser.add_argument("--runtime", choices=("claude", "codex"), help="hostが選択した監査runtime (既定は環境選択、未設定ならClaude)")
     parser.add_argument("--session", help="現在の評価 run の session_id (receipt と照合)")
     parser.add_argument("--matrix", help="spec-state.json のパス (matrix gate を実行)")
     parser.add_argument("--require-complete", action="store_true", help="matrix gate を未収集 0 必須で実行")
@@ -506,6 +508,11 @@ def main(argv: list | None = None) -> int:
     parser.add_argument("--hearing", help="C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input 判定を導く")
     parser.add_argument("--state", help="--hearing / --source-citation が読む spec-state.json")
     args = parser.parse_args(argv)
+    try:
+        runtime = select_runtime(args.runtime)
+    except ValueError as exc:
+        print(f"audit runtime invalid: {exc}", file=sys.stderr)
+        return 2
     if not any((args.report, args.matrix, args.source_citation, args.knowledge_graph, args.hearing)):
         parser.error("--report / --matrix / --source-citation / --knowledge-graph / --hearing のいずれかが必要")
     if bool(args.hearing or args.source_citation) != bool(args.state):
@@ -555,8 +562,8 @@ def main(argv: list | None = None) -> int:
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             print(f"report の JSON parse 失敗: {exc}", file=sys.stderr)
             return 2
-        ledger = load_fork_ledger(args.fork_ledger or default_ledger_path())
-        violations = validate_report(report, ledger, expected_session=args.session)
+        ledger = load_fork_ledger(args.fork_ledger or default_ledger_path(), runtime=runtime)
+        violations = validate_report(report, ledger, expected_session=args.session, runtime=runtime)
         if args.spec_dir is not None:
             if not Path(args.spec_dir).expanduser().is_dir():
                 print(f"spec-dir ディレクトリが存在しない: {args.spec_dir}", file=sys.stderr)

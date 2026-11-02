@@ -1,0 +1,19 @@
+{
+  "source": "ユーザーとのチラシ制作会話とプラグイン要件の回答",
+  "requirements": [
+    {"id":"R01","requirement":"Claude Code/Codex両方","implementation":[".claude-plugin/plugin.json",".codex-plugin/plugin.json","plugin.json","INSTALL.md"]},
+    {"id":"R02","requirement":"毎回新構図、13案は品質見本","implementation":["skills/run-create-flyer/SKILL.md","prompts/design.md","scripts/project.cjs"]},
+    {"id":"R03","requirement":"写真・漫画・手書き・イラスト等を毎回ヒアリング","implementation":["references/interview.md","prompts/design.md","schemas/concepts.schema.json"]},
+    {"id":"R04","requirement":"白黒最低各1、白外周と白gradient","implementation":["scripts/project.cjs","scripts/render.cjs","scripts/checks.cjs"]},
+    {"id":"R05","requirement":"自然な画像・情報群の境界","implementation":["references/design-rules.md","scripts/render.cjs","prompts/visual-review.md"]},
+    {"id":"R06","requirement":"紙面全体中心、QR除外中心禁止、F07/F11基準","implementation":["scripts/project.cjs","tests/contract.test.cjs","assets/catalog.json"]},
+    {"id":"R07","requirement":"写真・最新ロゴを選択でき、参考画像も同梱","implementation":["assets/catalog.json","assets/index.html","scripts/project.cjs"]},
+    {"id":"R08","requirement":"本人顔出し、第三者保護、子供除外、端末画面保護、別イベント文字除外","implementation":["assets/catalog.json","references/production-history","tests/contract.test.cjs"]},
+    {"id":"R09","requirement":"情報は最小、文字サイズ/書体/色/親子の近接","implementation":["references/design-rules.md","references/runtime.md","prompts/visual-review.md"]},
+    {"id":"R10","requirement":"実背景生成とプロンプト/生成履歴の保存","implementation":["prompts/background.md","scripts/cli.cjs","scripts/project.cjs"]},
+    {"id":"R11","requirement":"文字/QR/ロゴを独立し印刷検査と全案目視","implementation":["scripts/render.cjs","scripts/checks.cjs","skills/assign-flyer-review/SKILL.md"]},
+    {"id":"R12","requirement":"開発仕様・13フェーズ・実体目録・依存グラフ","implementation":["development-plan/index.md","development-plan/component-inventory.json","development-plan/task-graph.json"]},
+    {"id":"R13","requirement":"ユーザー指定HarnessHub/plugins/flyer-studio配置","implementation":["README.md","scripts/package.py"]}
+  ],
+  "not_claimed": ["集客効果の測定","実機印刷済み","画像生成ツールが未接続のホストでの自動生成","両ホストの新しい実セッションでの全面的な実行検証"]
+}

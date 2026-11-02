@@ -79,15 +79,23 @@ main { min-width: 0; padding: 28px clamp(16px, 4vw, 56px) 64px; }
 /* ボード */
 .board-page .message { margin: -6px 0 16px; font-size: 17px; font-weight: 700; color: var(--text-secondary); }
 figure.shot { margin: 0; }
-figure.shot > a.zoom { display: block; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; cursor: zoom-in; background: var(--app-background); }
+figure.shot > .frame { position: relative; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; background: var(--app-background); }
+figure.shot a.zoom { display: block; cursor: zoom-in; }
 figure.shot img { display: block; width: 100%; height: auto; }
 figure.shot figcaption { margin-top: 6px; font-size: 12.5px; color: var(--text-muted); text-align: right; }
 figure.shot .close { display: none; }
 figure.shot:target { position: fixed; inset: 0; z-index: 60; background: var(--overlay); overflow: auto; padding: 56px 20px 20px; }
-figure.shot:target > a.zoom { width: max-content; max-width: none; margin: 0 auto; cursor: default; border: 0; }
+figure.shot:target > .frame { width: max-content; max-width: none; margin: 0 auto; border: 0; border-radius: 0; }
+figure.shot:target a.zoom { cursor: default; }
 figure.shot:target img { width: min(1680px, calc(100vw - 40px)); max-width: none; }
 figure.shot:target figcaption { display: none; }
 figure.shot:target .close { display: block; position: fixed; top: 12px; right: 16px; padding: 6px 14px; border-radius: var(--radius-btn); background: var(--surface); color: var(--text-primary); font-weight: 700; text-decoration: none; }
+/* 画像の中の番号の上に重ねる押せる枠 (位置は画像に対する %)。マウスを画像に載せると枠が見え、指で触る端末ではいつも見える */
+figure.shot .hot { position: absolute; inset: 0; pointer-events: none; }
+figure.shot .hot a.go { position: absolute; pointer-events: auto; border-radius: 6px; }
+figure.shot .frame:hover a.go { box-shadow: inset 0 0 0 1.5px var(--link); }
+figure.shot .hot a.go:hover, figure.shot .hot a.go:focus-visible { background: color-mix(in srgb, var(--link) 18%, transparent); box-shadow: inset 0 0 0 2px var(--link-hover); outline-offset: 1px; }
+@media (hover: none) { figure.shot .hot a.go { box-shadow: inset 0 0 0 1.5px var(--link); } }
 .board-notes { margin-top: 20px; }
 .board-notes h3 { margin: 18px 0 10px; font-size: 14px; font-weight: 800; color: var(--text-muted); letter-spacing: .04em; }
 .board-notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
@@ -145,7 +153,7 @@ figure.shot:target .close { display: block; position: fixed; top: 12px; right: 1
 @page board { size: A4 landscape; margin: 8mm; }
 @media print {
   body { background: none; font-size: 10.5pt; }
-  .topbar, .toc, .pg-nav, .skip, figure.shot figcaption, figure.shot .close, .board-notes { display: none !important; }
+  .topbar, .toc, .pg-nav, .skip, figure.shot figcaption, figure.shot .close, figure.shot .hot, .board-notes { display: none !important; }
   .layout { display: block; }
   main { padding: 0; }
   main > .page, .js main > .page { display: block !important; break-before: page; border: 0; box-shadow: none; padding: 0; margin: 0; max-width: none; }
@@ -153,7 +161,7 @@ figure.shot:target .close { display: block; position: fixed; top: 12px; right: 1
   .board-page { page: board; }
   .board-page .page-head { margin-bottom: 4mm; padding-bottom: 2mm; }
   .board-page .message { display: none; }
-  figure.shot > a.zoom { border: 0; }
+  figure.shot > .frame { border: 0; }
   figure.shot img { width: auto; max-width: 100%; max-height: 170mm; margin: 0 auto; }
   .tw { overflow: visible; border: 0; }
   .tw tr { break-inside: avoid; }

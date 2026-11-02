@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -110,6 +112,31 @@ def test_valid_pass_verdict_exit0(lint, capsys):
     _write_verdict(lint, _valid_doc(lint, skill_dir))
     assert lint.run_lint() == 0
     assert "[OK]" in capsys.readouterr().out
+
+
+def test_codex_lint_uses_native_runtime_guard(lint, monkeypatch):
+    """runtimeのラベルとPASSの自己申告だけでは合格させない。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["environment"]["runtime"] = "codex"
+    path = _write_verdict(lint, doc)
+    verdict_mod, backend_mod, schema = lint.load_harness()
+    # schema/closureは別の単体テストで検証。この境界ではnative検査への委譲を測る。
+    monkeypatch.setattr(verdict_mod, "validate_schema", lambda *_: [])
+    seen = []
+
+    def digest(source, runtime="claude"):
+        seen.append(runtime)
+        return doc["skill_dir_tree_sha"]
+
+    monkeypatch.setattr(verdict_mod, "skill_dir_tree_sha", digest)
+    monkeypatch.setattr(
+        verdict_mod, "validate_runtime_evidence",
+        lambda *_: ["native activation missing"], raising=False,
+    )
+    errors = lint.check_verdict(path, "demo-plugin", "run-demo", verdict_mod, backend_mod, schema)
+    assert seen == ["codex"]
+    assert any("runtime-evidence: native activation missing" in item for item in errors)
 
 
 def test_contractual_gate_exemption_is_surfaced(lint, capsys):
@@ -223,6 +250,41 @@ def test_stale_sha_hard_fails(lint, capsys):
     assert "stale-sha" in capsys.readouterr().out
 
 
+def test_stale_sha_names_drifted_skill_and_skips_manifest_version(lint, monkeypatch, tmp_path, capsys):
+    """未追跡の合成 fixture はファイル名を足さない。git 上の受領ツリーなら挙動ファイルだけ足す。"""
+    monkeypatch.setattr(lint, "ROOT", tmp_path)
+    plugin = tmp_path / "plugins" / "demo-plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps({"name": "demo-plugin", "version": "0.0.1", "dependencies": []}),
+        encoding="utf-8",
+    )
+    skill_dir = _make_skill(lint)
+    verdict_path = _write_verdict(lint, _valid_doc(lint, skill_dir))
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=tmp_path, check=True, env=env)
+    manifest = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    manifest["version"] = "9.9.9"
+    (plugin / ".claude-plugin" / "plugin.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        SKILL_MD_DECLARING.format(name="run-demo") + "\nchanged\n", encoding="utf-8"
+    )
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "stale-sha" in out
+    assert "plugins/demo-plugin/skills/run-demo/SKILL.md" in out
+    assert "plugin.json" not in out
+    assert verdict_path.name == "verdict.json"
+
+
 def test_downgraded_tier_hard_fails(lint, capsys):
     skill_dir = _make_skill(lint)
     doc = _valid_doc(lint, skill_dir)
@@ -269,6 +331,54 @@ def test_latest_run_id_wins_newer_fail(lint):
     _write_verdict(lint, good, run_id="20260701T000000")
     _write_verdict(lint, bad, run_id="20260702T000000")
     assert lint.run_lint() == 1
+
+
+def _receipt(lint, ref, skill="run-demo"):
+    path = lint.EVAL_LOG / "demo-plugin" / skill / "criteria-test" / "scenario-verdict.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({
+        "criteria_results": {
+            "OUT1": {"verify_by": "live-trial", "live_trial_verdict_ref": ref},
+        },
+    }), encoding="utf-8")
+    return path
+
+
+def test_criteria_receipt_pass_beats_newer_non_pass(lint):
+    """辞書順で新しい失敗 run は、receipt が採用した current PASS を受理証跡にしない。"""
+    skill_dir = _make_skill(lint)
+    good = _valid_doc(lint, skill_dir)
+    bad = _valid_doc(lint, skill_dir)
+    bad["overall"]["verdict"] = "BLOCKED"
+    bad["downgrade_reason"] = "tmux 不在 / HARD_CAP 超過等の fail-closed"
+    _write_verdict(lint, good, run_id="20260701T000000")
+    _write_verdict(lint, bad, run_id="20260702T000000")
+    _receipt(lint, "eval-log/demo-plugin/run-demo/live-trial/20260701T000000/verdict.json")
+    assert lint.run_lint() == 0
+
+
+def test_corrupt_criteria_receipt_does_not_fall_through(lint, capsys):
+    skill_dir = _make_skill(lint)
+    _write_verdict(lint, _valid_doc(lint, skill_dir), run_id="20260702T000000")
+    path = _receipt(lint, "eval-log/demo-plugin/run-demo/live-trial/20260702T000000/verdict.json")
+    path.write_text("{", encoding="utf-8")
+    assert lint.run_lint() == 1
+    assert "criteria-receipt-invalid-json" in capsys.readouterr().out
+
+
+def test_stale_receipt_verdict_is_reported_instead_of_newer_fail(lint, capsys):
+    skill_dir = _make_skill(lint)
+    good = _valid_doc(lint, skill_dir)
+    good["skill_dir_tree_sha"] = "0" * 64
+    bad = _valid_doc(lint, skill_dir)
+    bad["overall"]["verdict"] = "FAIL"
+    _write_verdict(lint, good, run_id="20260701T000000")
+    _write_verdict(lint, bad, run_id="20260702T000000")
+    _receipt(lint, "eval-log/demo-plugin/run-demo/live-trial/20260701T000000/verdict.json")
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "20260701T000000/verdict.json stale-sha" in out
+    assert "verdict=FAIL" not in out
 
 
 def test_latest_run_id_wins_newer_pass(lint):

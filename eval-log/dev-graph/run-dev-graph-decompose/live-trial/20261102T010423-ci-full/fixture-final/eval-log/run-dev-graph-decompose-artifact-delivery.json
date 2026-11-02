@@ -1,0 +1,46 @@
+{
+ "contract": "artifact-delivery-v1",
+ "skill": "dev-graph:run-dev-graph-decompose",
+ "recorded_at": "2026-11-02T01:12:59.484756+00:00",
+ "artifacts": [
+  {
+   "path": ".dev-graph/cache/decompose-input/c02-input.json",
+   "bytes": 2592,
+   "sha256": "f941e8d690fcbec552a9aa9f32d5587d7d438e6f1f4f4ec233faf89646a7ce6b"
+  },
+  {
+   "path": ".dev-graph/cache/decompose-input/c02-preview.json",
+   "bytes": 2739,
+   "sha256": "155d969fa16e758d183e413e99ac12b613aae6a0f93b631f8a96f4976edd92c6",
+   "open_with": "jq . <path>"
+  }
+ ],
+ "minimum_guard": {
+  "parse": "json ok",
+  "secret": "C02 secret scan passed",
+  "irreversible": "dry_run write_count 0",
+  "corrupt": "pre_write_validation findings 0"
+ },
+ "transitions": [
+  {
+   "event": "minimum_guard_pass",
+   "to": "minimal_guard_passed"
+  },
+  {
+   "event": "present_actual_artifact",
+   "to": "artifact_presented"
+  },
+  {
+   "event": "record_user_choice",
+   "to": "user_choice_recorded"
+  },
+  {
+   "event": "standard",
+   "to": "semantic_evaluator_started"
+  }
+ ],
+ "choice": "standard",
+ "choice_source": "pre-specified by task.md for isolated trial decompose-macro-promotion-gate-beads-fixture-standard-v3",
+ "state": "semantic_evaluator_started",
+ "agents_started_before_choice": 0
+}

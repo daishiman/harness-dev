@@ -1,0 +1,753 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "role": "図解候補・入力例の単一正本。候補数や掲載例は採用の上限ではない",
+    "pattern_authority": "scripts/render-diagram-svg.py#BUILDERS",
+    "extension": "既存表現へ無理に丸めない。関係の分解・組合せ・専用描画を選べる。Mermaid/PlantUML等はローカルでSVG/PNGへ事前描画してIMGとして埋め込み、ソースも素材として同梱。記法やCDNをHTMLへ貼るだけでは図の完成ではない"
+  },
+  "patterns": {
+    "flow": {
+      "title": "申請から承認までの流れ",
+      "input": "steps 2-6 件。各件 {label, note?}",
+      "example": {
+        "description": "申請者が出してから承認が下りるまでの 3 段階",
+        "steps": [
+          {
+            "id": "st1",
+            "label": "申請する",
+            "note": "様式Aを使う"
+          },
+          {
+            "id": "st2",
+            "label": "確認する"
+          },
+          {
+            "id": "st3",
+            "label": "承認する"
+          }
+        ]
+      }
+    },
+    "compare": {
+      "title": "案Aと案Bの比較",
+      "input": "axes 1-6 件・items 2-4 件・cells は items×axes の全マス",
+      "example": {
+        "axes": [
+          "費用",
+          "速さ"
+        ],
+        "items": [
+          "案A",
+          "案B"
+        ],
+        "cells": [
+          [
+            "高い",
+            "速い"
+          ],
+          [
+            "安い",
+            "遅い"
+          ]
+        ]
+      }
+    },
+    "hierarchy": {
+      "title": "組織の階層",
+      "input": "root {label} と children 1-5 件。深さは root を第1層として 3 まで",
+      "example": {
+        "root": {
+          "label": "全社"
+        },
+        "children": [
+          {
+            "label": "営業部",
+            "children": [
+              {
+                "label": "第1課"
+              }
+            ]
+          },
+          {
+            "label": "開発部"
+          }
+        ]
+      }
+    },
+    "cycle": {
+      "title": "改善のサイクル",
+      "input": "steps 3-6 件。各件 {label}",
+      "example": {
+        "steps": [
+          {
+            "id": "cy1",
+            "label": "計画する"
+          },
+          {
+            "id": "cy2",
+            "label": "実行する"
+          },
+          {
+            "id": "cy3",
+            "label": "見直す"
+          }
+        ]
+      }
+    },
+    "matrix": {
+      "title": "施策の位置づけ",
+      "input": "x_axis/y_axis の {low, high} と items 1-8 件。各件 {label, x, y} は 0.0-1.0",
+      "example": {
+        "x_axis": {
+          "low": "低い",
+          "high": "高い"
+        },
+        "y_axis": {
+          "low": "小さい",
+          "high": "大きい"
+        },
+        "items": [
+          {
+            "id": "mx1",
+            "label": "施策A",
+            "x": 0.2,
+            "y": 0.8
+          },
+          {
+            "id": "mx2",
+            "label": "施策B",
+            "x": 0.7,
+            "y": 0.3
+          }
+        ]
+      }
+    },
+    "versus": {
+      "title": "自前で作るか既製品を使うか",
+      "input": "left/right の {label, bullets 1-5 件}",
+      "example": {
+        "left": {
+          "label": "自前で作る",
+          "bullets": [
+            "自由度が高い",
+            "工数がかかる"
+          ]
+        },
+        "right": {
+          "label": "既製品を使う",
+          "bullets": [
+            "早く始められる"
+          ]
+        }
+      }
+    },
+    "before_after": {
+      "title": "手作業から自動化へ",
+      "input": "before/after の {label, bullets 0-4 件} と arrow_label?",
+      "example": {
+        "before": {
+          "label": "変更前",
+          "bullets": [
+            "毎回手入力"
+          ]
+        },
+        "after": {
+          "label": "変更後",
+          "bullets": [
+            "自動で反映"
+          ]
+        },
+        "arrow_label": "切り替える"
+      }
+    },
+    "analogy": {
+      "title": "倉庫にたとえる",
+      "input": "known/target の {label, note?} と pairs 1-4 件 {from, to}",
+      "example": {
+        "known": {
+          "label": "倉庫",
+          "note": "品物をしまう"
+        },
+        "target": {
+          "label": "データベース",
+          "note": "情報をしまう"
+        },
+        "pairs": [
+          {
+            "from": "棚",
+            "to": "テーブル"
+          }
+        ]
+      }
+    },
+    "bignumber": {
+      "title": "回答までの時間",
+      "input": "{value, unit?, caption, sub?}",
+      "example": {
+        "value": "3",
+        "unit": "営業日",
+        "caption": "回答まで",
+        "sub": "最短の場合"
+      }
+    },
+    "relationship": {
+      "title": "条件で承認先を分ける",
+      "input": "nodes[{id,label,row:0..7,col:0..2,shape?:box|decision}], edges[{from,to,label?}]",
+      "example": {
+        "nodes": [
+          {
+            "id": "a",
+            "label": "金額確認",
+            "row": 0,
+            "col": 1,
+            "shape": "decision"
+          },
+          {
+            "id": "b",
+            "label": "担当が承認",
+            "row": 1,
+            "col": 0
+          },
+          {
+            "id": "c",
+            "label": "上長が承認",
+            "row": 1,
+            "col": 2
+          },
+          {
+            "id": "d",
+            "label": "結果を記録",
+            "row": 2,
+            "col": 1
+          }
+        ],
+        "edges": [
+          {
+            "from": "a",
+            "to": "b",
+            "label": "範囲内"
+          },
+          {
+            "from": "a",
+            "to": "c",
+            "label": "範囲外"
+          },
+          {
+            "from": "b",
+            "to": "d"
+          },
+          {
+            "from": "c",
+            "to": "d"
+          }
+        ]
+      }
+    },
+    "sequence": {
+      "title": "依頼と結果の受け渡し",
+      "input": "actors[string] 2-4, messages[{from,to,label}] 1-10。配列順が時系列",
+      "example": {
+        "actors": [
+          "利用者",
+          "受付",
+          "担当"
+        ],
+        "messages": [
+          {
+            "from": "利用者",
+            "to": "受付",
+            "label": "申請する"
+          },
+          {
+            "from": "受付",
+            "to": "担当",
+            "label": "確認を頼む"
+          },
+          {
+            "from": "担当",
+            "to": "利用者",
+            "label": "結果を返す"
+          }
+        ]
+      }
+    },
+    "timeline": {
+      "title": "準備から公開までの節目",
+      "input": "events[{date:string,label}] 2-10。等間隔の出来事列で期間の長さは表さない",
+      "example": {
+        "events": [
+          {
+            "date": "第1週",
+            "label": "目的を決める"
+          },
+          {
+            "date": "第2週",
+            "label": "小さく試す"
+          },
+          {
+            "date": "第3週",
+            "label": "結果を確認する"
+          }
+        ]
+      }
+    },
+    "gantt": {
+      "title": "確認と実装を並行する",
+      "input": "tasks[{label,start:YYYY-MM-DD,end:YYYY-MM-DD}] 1-10。終了日を含む",
+      "example": {
+        "tasks": [
+          {
+            "label": "要件確認",
+            "start": "2026-10-01",
+            "end": "2026-10-03"
+          },
+          {
+            "label": "試作",
+            "start": "2026-10-02",
+            "end": "2026-10-07"
+          },
+          {
+            "label": "利用確認",
+            "start": "2026-10-06",
+            "end": "2026-10-09"
+          }
+        ]
+      }
+    },
+    "bar": {
+      "title": "同じ単位で件数を比べる",
+      "input": "unit:string, items[{label,value:有限非負数}] 1-10。棒の起点は0",
+      "example": {
+        "unit": "件",
+        "items": [
+          {
+            "label": "受付",
+            "value": 24
+          },
+          {
+            "label": "確認中",
+            "value": 8
+          },
+          {
+            "label": "完了",
+            "value": 16
+          }
+        ]
+      }
+    },
+    "line": {
+      "title": "週ごとの変化を見る",
+      "input": "unit:string, items[{label,value:有限非負数}] 2-10。等間隔系列に限る",
+      "example": {
+        "unit": "件",
+        "items": [
+          {
+            "label": "第1週",
+            "value": 4
+          },
+          {
+            "label": "第2週",
+            "value": 9
+          },
+          {
+            "label": "第3週",
+            "value": 7
+          },
+          {
+            "label": "第4週",
+            "value": 15
+          }
+        ]
+      }
+    },
+    "stages": {
+      "title": "対象を段階的に絞る",
+      "input": "levels[{label}] 2-6, direction:narrowing|widening|equal。面積は数量ではない",
+      "example": {
+        "direction": "narrowing",
+        "levels": [
+          {
+            "label": "候補を集める"
+          },
+          {
+            "label": "条件で絞る"
+          },
+          {
+            "label": "優先する1案を決める"
+          }
+        ]
+      }
+    }
+  },
+  "intents": [
+    {
+      "relation": "順序",
+      "forms": "ステップ図・工程フロー",
+      "patterns": [
+        "flow"
+      ],
+      "selection_note": "前後の順序が事実であるとき。選択肢の列挙へ矢印を付けない",
+      "html_examples": [
+        "steps"
+      ]
+    },
+    {
+      "relation": "条件",
+      "forms": "決定木・判断フロー",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "判断ノードと全ての出口条件を明記する"
+    },
+    {
+      "relation": "分配と回収",
+      "forms": "分岐型・合流型・並列処理",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "誰に分け何をまとめるか。並列と順次を混同しない"
+    },
+    {
+      "relation": "因果",
+      "forms": "因果関係図・問題構造図",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "原因と結果を原文が支持するとき。相関だけなら因果の矢印にしない"
+    },
+    {
+      "relation": "依存",
+      "forms": "依存関係図・前提関係図",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "前提から利用先へ向きを統一する"
+    },
+    {
+      "relation": "階層",
+      "forms": "ロジックツリー・分類木・WBS・組織図",
+      "patterns": [
+        "hierarchy"
+      ],
+      "selection_note": "親子の包含関係を示す。時間順や因果と取り違えない"
+    },
+    {
+      "relation": "深い階層",
+      "forms": "多段のロジックツリー・マインドマップ",
+      "patterns": [
+        "relationship",
+        "hierarchy"
+      ],
+      "selection_note": "深い木は概要と枝の詳細へ分図する"
+    },
+    {
+      "relation": "反復",
+      "forms": "サイクル・PDCA・フィードバック",
+      "patterns": [
+        "cycle"
+      ],
+      "selection_note": "最後から最初へ戻る関係があるときだけ"
+    },
+    {
+      "relation": "比較",
+      "forms": "対比・選択肢比較・メリットと制約",
+      "patterns": [
+        "versus",
+        "compare"
+      ],
+      "selection_note": "全対象に同じ比較軸を当てる",
+      "html_examples": [
+        "table"
+      ]
+    },
+    {
+      "relation": "変化",
+      "forms": "Before/After・現状と目標",
+      "patterns": [
+        "before_after"
+      ],
+      "selection_note": "変化の軸を一致させる"
+    },
+    {
+      "relation": "位置づけ",
+      "forms": "2軸マトリックス・優先順位",
+      "patterns": [
+        "matrix"
+      ],
+      "selection_note": "軸の意味と高低を定義する。主観位置を実測と見せない"
+    },
+    {
+      "relation": "対応",
+      "forms": "アナロジー・対応関係",
+      "patterns": [
+        "analogy"
+      ],
+      "selection_note": "たとえが成立する範囲と限界を短く添える"
+    },
+    {
+      "relation": "受け渡し",
+      "forms": "シーケンス・担当間のやり取り",
+      "patterns": [
+        "sequence"
+      ],
+      "selection_note": "送り手・受け手・内容・時系列を保持する"
+    },
+    {
+      "relation": "時点",
+      "forms": "タイムライン・ロードマップ",
+      "patterns": [
+        "timeline"
+      ],
+      "selection_note": "出来事の順序を示す。正確な所要期間を伝えるなら期間図を選ぶ"
+    },
+    {
+      "relation": "期間と並行",
+      "forms": "ガントチャート・日程表",
+      "patterns": [
+        "gantt"
+      ],
+      "selection_note": "実日付と期間の重なりを保持する"
+    },
+    {
+      "relation": "担当と工程",
+      "forms": "スイムレーン・業務フロー",
+      "patterns": [
+        "sequence",
+        "relationship"
+      ],
+      "selection_note": "担当の受け渡しが中心か、条件分岐が中心かで表現を選ぶ",
+      "rendering_note": "厳密なレーンが要る場合は専用作図し、図表素材として取り込む"
+    },
+    {
+      "relation": "状態",
+      "forms": "状態遷移・ライフサイクル",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "状態と操作を区別し、遷移する条件を示す",
+      "rendering_note": "自己遷移など内蔵図で保てない記号は専用作図で描く"
+    },
+    {
+      "relation": "構造",
+      "forms": "UMLクラス図・ER図・コンポーネント図",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "要素のつながりと、多重度や継承など省けない規約を区別する",
+      "rendering_note": "箱と線の概略は内蔵図。厳密なUML・ERの規約は専用作図で保持する"
+    },
+    {
+      "relation": "利用関係",
+      "forms": "ユースケース・アクター図",
+      "patterns": [
+        "relationship"
+      ],
+      "selection_note": "主体と、主体ができることの関係を示す",
+      "rendering_note": "厳密なUML記号が必要なら専用作図で保持する"
+    },
+    {
+      "relation": "数値比較",
+      "forms": "横棒・順位比較",
+      "patterns": [
+        "bar"
+      ],
+      "selection_note": "同じ単位、0起点。順位を主張するときだけ並べ替える"
+    },
+    {
+      "relation": "時系列数値",
+      "forms": "折れ線・推移",
+      "patterns": [
+        "line"
+      ],
+      "selection_note": "根拠のある等間隔系列のみ。欠測を補間で捏造しない"
+    },
+    {
+      "relation": "数値強調",
+      "forms": "KPI・ビッグナンバー",
+      "patterns": [
+        "bignumber"
+      ],
+      "selection_note": "単位・対象期間・出典を添える"
+    },
+    {
+      "relation": "絞り込み",
+      "forms": "ファネル・選別過程",
+      "patterns": [
+        "stages"
+      ],
+      "selection_note": "段階的な選別を示す。実測の減少量を伝えるなら数量図を選ぶ"
+    },
+    {
+      "relation": "積み上げ",
+      "forms": "ピラミッド・上昇型・成熟段階",
+      "patterns": [
+        "stages"
+      ],
+      "selection_note": "方向を選び、数量比を面積から推測させない"
+    },
+    {
+      "relation": "背景の整理",
+      "forms": "背景列挙型・並列列挙・グルーピング",
+      "patterns": [],
+      "selection_note": "独立した項目をまとめ、関係のない項目は線で結ばない",
+      "html_examples": [
+        "features"
+      ]
+    },
+    {
+      "relation": "責任分担",
+      "forms": "RACI・役割表",
+      "patterns": [],
+      "selection_note": "責任を持つ人と、実際に作業する人を区別する",
+      "html_examples": [
+        "table"
+      ]
+    },
+    {
+      "relation": "検討の枠組み",
+      "forms": "SWOT・3C・4P・PEST・バリューチェーン",
+      "patterns": [
+        "compare",
+        "relationship"
+      ],
+      "selection_note": "枠の名前で図を決めず、比較か因果かから選ぶ。表やカードも使う",
+      "html_examples": [
+        "features",
+        "table"
+      ]
+    },
+    {
+      "relation": "割合と内訳",
+      "forms": "積み上げ棒・円・ドーナツ・ツリーマップ",
+      "patterns": [],
+      "selection_note": "合計・分母・単位が判明した実数だけを使う。比較が目的なら棒を優先する",
+      "rendering_note": "内蔵の棒以外は専用作図し、図表素材として取り込む"
+    },
+    {
+      "relation": "相関と分布",
+      "forms": "散布図・ヒストグラム・箱ひげ・ヒートマップ",
+      "patterns": [],
+      "selection_note": "観測値・軸・集計法が必要。位置づけの概念図で実測図を代用しない",
+      "rendering_note": "専用作図で観測値を描き、図表素材として取り込む"
+    },
+    {
+      "relation": "増減の寄与",
+      "forms": "ウォーターフォール・パレート・サンキー",
+      "patterns": [],
+      "selection_note": "加減の整合、累積、流量保存を確かめてから使う",
+      "rendering_note": "専用作図し、図表素材として取り込む"
+    },
+    {
+      "relation": "空間と重なり",
+      "forms": "ベン図・包含図・ポジショニングマップ",
+      "patterns": [],
+      "selection_note": "面積が量を表すかを明示し、必要な重なりの正確さを保つ",
+      "rendering_note": "正確な重なりが必要なら専用作図で描く"
+    },
+    {
+      "relation": "課題の分析",
+      "forms": "魚骨図・なぜなぜ・目的手段ツリー",
+      "patterns": [
+        "hierarchy",
+        "relationship"
+      ],
+      "selection_note": "根拠のある因果と仮説を区別する。大きい枝は分図"
+    },
+    {
+      "relation": "体験",
+      "forms": "カスタマージャーニー・サービスブループリント",
+      "patterns": [],
+      "selection_note": "工程・主体・接点の違いが追える単位へ分ける",
+      "rendering_note": "表または専用作図で表す",
+      "html_examples": [
+        "table"
+      ]
+    },
+    {
+      "relation": "未分類",
+      "forms": "カタログ外・複合表現",
+      "patterns": [],
+      "selection_note": "関係を分解して複数の図や表を組み合わせ、適用範囲と理由を残す",
+      "rendering_note": "忠実に表せなければ専用作図を選ぶ。描画済み素材を取り込み、未描画の記法だけで完成としない",
+      "html_examples": [
+        "steps",
+        "features",
+        "table"
+      ]
+    }
+  ],
+  "html_examples": {
+    "steps": {
+      "title": "短い手順を順番に読む",
+      "block_type": "steps",
+      "input": "行ごとに操作と短い補足を持つ。番号の並びで順序を示す。",
+      "example": {
+        "rows": [
+          {
+            "key": "prepare",
+            "text": "目的を決める",
+            "sub": "誰に何を伝えるか"
+          },
+          {
+            "key": "try",
+            "text": "小さく試す",
+            "sub": "一つの題材で確かめる"
+          },
+          {
+            "key": "review",
+            "text": "結果を見る",
+            "sub": "次の改善を選ぶ"
+          }
+        ]
+      }
+    },
+    "features": {
+      "title": "独立した要点を並べる",
+      "block_type": "features",
+      "input": "カードごとに一つの要点と短い補足を持つ。無関係な項目を線でつながない。",
+      "example": {
+        "cards": [
+          {
+            "title": "相手を決める",
+            "body": "読む人の前提を揃える"
+          },
+          {
+            "title": "結論を絞る",
+            "body": "持ち帰ることを一つ選ぶ"
+          },
+          {
+            "title": "根拠を添える",
+            "body": "確かめ方を残す"
+          }
+        ]
+      }
+    },
+    "table": {
+      "title": "同じ観点で比べる",
+      "block_type": "table",
+      "input": "各案へ同じ比較軸を当てる。多い列は分割し、見出しを省かない。",
+      "example": {
+        "columns": [
+          "会議",
+          "共有メモ"
+        ],
+        "rows": [
+          {
+            "header": "向く場面",
+            "cells": [
+              "その場で相談",
+              "後から確認"
+            ]
+          },
+          {
+            "header": "残すもの",
+            "cells": [
+              "話した結論",
+              "説明の記録"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

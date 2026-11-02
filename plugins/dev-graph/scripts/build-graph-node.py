@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-graph-node
-# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, or switch confirmed issue/task nodes to the github binding with an immutable receipt, and apply the C26 completion lifecycle request as its built-in consumer.
-# inputs: ["argv: add|update|bind-github|link-github --repo-root PATH --input JSON [--config PATH] [--dry-run]", "argv: --operation apply-lifecycle-request --request PATH --receipt PATH [--repo-root PATH] [--config PATH]"]
+# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, switch confirmed issue/task nodes to the github binding, record GitHub or Beads linkage, or confirm a feature from its promoted exact-13 package with an immutable receipt, and apply the C26 completion lifecycle request as its built-in consumer.
+# inputs: ["argv: add|update|bind-github|link-github|link-beads|confirm-feature --repo-root PATH --input JSON [--config PATH] [--dry-run]", "argv: --operation apply-lifecycle-request --request PATH --receipt PATH [--repo-root PATH] [--config PATH]"]
 # outputs: ["stdout: JSON preview/receipt or rejection report", "file: <git-common-dir>/dev-graph/completion-receipts/*.writer-receipt.json"]
 # requires-python = ">=3.10"
 # dependencies: [_common.py, validate-graph-schema.py, validate-source-lineage.py, resolve-repo-context.py]
@@ -10,7 +10,7 @@
 # network: false
 # write-scope: caller repository content roots, the C24-resolved graph, immutable receipts beside that graph, and the lifecycle receipt C26 names under <git-common-dir>/dev-graph/completion-receipts
 # ///
-"""C02 artifact writer (add/update/bind-github/link-github/apply-lifecycle-request) that shares the register-package writer lock."""
+"""C02 artifact writer (add/update/bind-github/link-github/link-beads/confirm-feature/apply-lifecycle-request) that shares the register-package writer lock."""
 from __future__ import annotations
 
 import argparse
@@ -32,7 +32,7 @@ from typing import Any, Callable, Iterator
 sys.dont_write_bytecode = True
 
 from _common import (PACKAGE_KEYS, ContractError, ParentNotDirectoryError, atomic_bytes, atomic_json, contained,
-                     dump, is_package_member, json_bytes, load_json, utc_now)
+                     dump, frontmatter_block, is_package_member, json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -78,6 +78,15 @@ ADD_KEYS = {
 # C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).
 SPEC_EVALUATOR = "system-spec-harness:assign-system-spec-completeness-evaluator"
 SPEC_IMPORT_KINDS = {"specification", "architecture"}
+# The planner's fork evaluator whose PASS on a promoted exact-13 package confirms the feature it was planned from.
+FEATURE_EVALUATOR = "system-dev-planner:assign-system-dev-plan-evaluator"
+PLAN_EVALUATOR_NAME = FEATURE_EVALUATOR.split(":", 1)[1]
+# bd-bridge.PROMOTED: the state register-package gives every member, and the one the tracker gate requires.
+PROMOTED_STATE = ("confirmed", "pass", "complete")
+# graph-node.schema beads_linkage.sync_state: an unlinked node is beads_linkage=null, never a state.
+BEADS_SYNC_STATES = {"linked", "synced", "pending_retry", "conflict"}
+CONFIRM_KEYS = {"graph_node_id", "package", "receipt", "feature_context"}
+DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
 PATCH_KEYS = {
     "title", "project_id", "domain", "owners", "tags", "priority", "start_date", "target_date",
     "iteration", "depends_on", "related_nodes", "resource_scope", "status",
@@ -461,8 +470,7 @@ def _front_line(key: str, value: Any) -> str:
     return f"{key}: {text}\n"
 
 
-def _frontmatter(node: dict[str, Any], keys: list[str], unmanaged: list[str] | None = None) -> str:
-    return "---\n" + "".join(_front_line(key, node[key]) for key in keys) + "".join(unmanaged or []) + "---\n"
+_frontmatter = frontmatter_block
 
 
 def _split_frontmatter(text: str, label: str) -> tuple[list[str], list[str]]:
@@ -1123,7 +1131,8 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
     field_snapshot (C03 の 3-way base) はキーごとに重ねる: 渡されなかったキーは前の観測を残し、値の消去は null で渡す。
     exact-13 package member も受ける: C14 は package member も投影し、linkage は system-dev-planner が持つ内容
     (本文・binding・package key) ではなく GitHub 側の状態なので、update/bind-github と違って register-package へ回さない。
-    member は register-package と同じく graph だけに記録する (artifact file と内容 key は求めず、receipt は graph_only)。
+    member の task 文書は register-package が書く。linkage は graph だけに記録し (receipt は graph_only)、文書の
+    frontmatter が graph より古くなったら `register-package.py materialize` で揃える。
     """
     entries = payload.get("links")
     if set(payload) - {"links"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
@@ -1143,7 +1152,7 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
             raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
         seen.add(graph_node_id)
         before_node = by_id[graph_node_id]
-        # register-package registers a member to the graph only, without the content keys or an artifact file.
+        # A member's task document belongs to register-package (materialize refreshes it), so link-github writes the graph only.
         member = is_package_member(before_node)
         _require_keys(before_node, [] if member else keys, label)
         if before_node["tracker_binding"] != "github":
@@ -1234,6 +1243,221 @@ def _plan_lifecycle(payload: dict[str, Any], nodes: list[dict[str, Any]], root: 
              "member": member, "detail": {"graph_node_id": graph_node_id, "file_path": node["file_path"],
                                           "status": {"before": before_node.get("status"), "after": node["status"]},
                                           "body_preserved": True, "package_member": member}}]
+
+
+def _plan_link_beads(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                     composer: Composer, now: str) -> list[dict[str, Any]]:
+    """C28 (bd-bridge create) の起票結果を、beads 束縛の node の beads_linkage として記録する。
+
+    link-github と対称に、linkage は Beads 側の状態の写しなので evaluation_status と updated_at は変えず、最初の
+    linked_at と github_mirror (bd github sync --push-only の viewer) を保つ。bd issue の付け替えと、同じ bd issue を
+    2つの node に付けることは拒否する (external_ref=graph_node_id が冪等キーで、1 node に 1 issue)。linkage を外す
+    操作はしない。exact-13 package member も受け、member の linkage は graph だけに記録する (receipt は graph_only。
+    文書は `register-package.py materialize` で揃える)。
+    """
+    entries = payload.get("links")
+    if set(payload) - {"links"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "link-beads input is {links:[{graph_node_id, bd_issue_id, sync_state?}]}")
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    by_id = {node.get("graph_node_id"): node for node in nodes}
+    owners = {(node.get("beads_linkage") or {}).get("bd_issue_id"): node.get("graph_node_id")
+              for node in nodes if node.get("beads_linkage")}
+    seen: set[str] = set()
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"links[{index}]"
+        _check_keys(entry, {"graph_node_id", "bd_issue_id", "sync_state"}, label)
+        graph_node_id = entry.get("graph_node_id")
+        if graph_node_id not in by_id or graph_node_id in seen:
+            raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
+        seen.add(graph_node_id)
+        before_node = by_id[graph_node_id]
+        member = is_package_member(before_node)
+        _require_keys(before_node, [] if member else keys, label)
+        if before_node["tracker_binding"] != "beads":
+            raise WriterError("link_beads_requires_beads_binding",
+                              f"{label}: {graph_node_id} is tracker_binding={before_node['tracker_binding']}; only beads-bound nodes link to bd issues")
+        issue_id = entry.get("bd_issue_id")
+        if not isinstance(issue_id, str) or not issue_id.strip():
+            raise WriterError("invalid_input", f"{label}.bd_issue_id must be a non-empty string")
+        current = before_node["beads_linkage"] or {}
+        state = entry.get("sync_state") or current.get("sync_state") or "linked"
+        if state not in BEADS_SYNC_STATES:
+            raise WriterError("invalid_input", f"{label}.sync_state must be one of {sorted(BEADS_SYNC_STATES)}")
+        if current.get("bd_issue_id") not in {None, issue_id}:
+            raise WriterError("beads_linkage_conflict", f"{label}: {graph_node_id} is already linked to {current['bd_issue_id']}")
+        if owners.get(issue_id, graph_node_id) != graph_node_id:
+            raise WriterError("beads_linkage_conflict", f"{label}: {issue_id} is already linked to {owners[issue_id]}")
+        owners[issue_id] = graph_node_id  # a second entry naming the same issue in this batch hits the check above
+        node = copy.deepcopy(before_node)
+        node["beads_linkage"] = {**current, "bd_issue_id": issue_id, "linked_at": current.get("linked_at") or now, "sync_state": state}
+        if node == before_node:
+            continue
+        detail = {"graph_node_id": graph_node_id, "file_path": node["file_path"], "bd_issue_id": issue_id,
+                  "sync_state": {"before": current.get("sync_state"), "after": state},
+                  "body_preserved": True, "graph_only": member}
+        if member:
+            plan.append({"node": node, "before_node": before_node, "path": None, "before": None, "text": None, "detail": detail})
+            continue
+        target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+        before_bytes = target_path.read_bytes()
+        frontmatter = VGS.frontmatter_of(target_path)
+        if frontmatter.get("graph_node_id") != graph_node_id or frontmatter.get("file_path") != before_node["file_path"]:
+            raise WriterError("artifact_parity_error", f"{label}: frontmatter identity differs from the graph node")
+        front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+        plan.append({"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+                     "detail": detail})
+    return plan
+
+
+def _repo_json(root: Path, ref: Any, label: str) -> tuple[str, bytes, dict[str, Any]]:
+    """A repo-relative JSON object as (normalized ref, bytes, value); anything else is an input error."""
+    if not isinstance(ref, str) or not ref or Path(ref).is_absolute() or ".." in Path(ref).parts:
+        raise WriterError("invalid_input", f"{label} must be a repo-relative path")
+    try:
+        data = contained(root / ref, root, must_exist=True).read_bytes()
+        value = json.loads(data)
+    except (ContractError, OSError, ValueError) as exc:
+        raise WriterError("invalid_input", f"{label}: {ref} is unreadable ({exc})") from exc
+    if not isinstance(value, dict):
+        raise WriterError("invalid_input", f"{label}: {ref} is not a JSON object")
+    return Path(ref).as_posix(), data, value
+
+
+def _promoted_member(node: dict[str, Any] | None, feature: str, package_id: Any) -> bool:
+    if not node or (node.get("parent_feature"), node.get("feature_package_id")) != (feature, package_id):
+        return False
+    readiness = (node.get("implementation_readiness") or {}).get("status")
+    return node.get("status") != "tombstoned" and (node.get("confirmation_status"), node.get("evaluation_status"), readiness) == PROMOTED_STATE
+
+
+def _plan_confirm_feature(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                          composer: Composer, now: str) -> list[dict[str, Any]]:
+    """system-dev-planner の評価 PASS で昇格し register-package が登録した exact-13 package を根拠に、計画元の feature を確定する。
+
+    feature は C14 の macro contract で draft として登録され、確定へ進める経路はこれだけである (update は pass を
+    stale へ戻すだけ)。根拠の鎖は feature context → package の source_feature_digest → 昇格の receipt と
+    plan-findings (同じ canonical digest で PASS) → C02 の登録 receipt → graph 上の昇格済みの 13 member で、1 つでも
+    食い違えば止める。evaluated_digest には evaluator が実際に評価した package の canonical digest を pin する
+    (member の evaluated_digest と同じ値なので、validate-readiness-binding と同じ物差しで照合できる)。
+    本文は変えず frontmatter だけを再生成する (bind-github と同じ形)。
+    """
+    entries = payload.get("confirmations")
+    if set(payload) - {"confirmations"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "confirm-feature input is {confirmations:[{graph_node_id, package, receipt, feature_context}]}")
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    by_id = {node.get("graph_node_id"): node for node in nodes}
+    seen: set[str] = set()
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"confirmations[{index}]"
+        _check_keys(entry, CONFIRM_KEYS, label)
+        if set(entry) != CONFIRM_KEYS:
+            raise WriterError("invalid_input", f"{label} lacks {sorted(CONFIRM_KEYS - set(entry))}")
+        graph_node_id = entry.get("graph_node_id")
+        if graph_node_id not in by_id or graph_node_id in seen:
+            raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
+        seen.add(graph_node_id)
+        before_node = by_id[graph_node_id]
+        # The kind comes first: a task lacks the macro keys, and "not a feature" is the reason to report.
+        if before_node.get("artifact_kind") != "feature" or before_node.get("status") in {"closed", "tombstoned"}:
+            raise WriterError("feature_confirmation_requires_feature",
+                              f"{label}: {graph_node_id} is a {before_node.get('status')} {before_node.get('artifact_kind')}; only a live feature is confirmed")
+        _require_keys(before_node, keys, label)
+        context_ref, context_bytes, context = _repo_json(root, entry["feature_context"], f"{label}.feature_context")
+        package_ref, _, package = _repo_json(root, entry["package"], f"{label}.package")
+        receipt_ref, _, receipt = _repo_json(root, entry["receipt"], f"{label}.receipt")
+        published = Path(package_ref).parent
+        promotion_ref, _, promotion = _repo_json(root, (published / "atomic-promotion-receipt.json").as_posix(), f"{label}.package")
+        _, _, registration = _repo_json(root, (published / "dev-graph-registration.json").as_posix(), f"{label}.package")
+        findings_ref, _, findings = _repo_json(root, (published / "plan-findings.json").as_posix(), f"{label}.package")
+
+        # The context the planner read must still say what the feature node says (architecture_refs are cited by id or path).
+        if context.get("graph_node_id") != graph_node_id or context.get("artifact_kind") != "feature":
+            raise WriterError("feature_context_mismatch", f"{label}: {context_ref} is not the feature context of {graph_node_id}")
+        differ = [key for key in (*MACRO_TEXT_KEYS, *MACRO_LIST_KEYS) if key != "architecture_refs" and context.get(key) != before_node.get(key)]
+        cited = context.get("architecture_refs")
+        cited = {ref for ref in cited if isinstance(ref, str)} if isinstance(cited, list) else set()
+        uncited = [ref for ref in before_node["architecture_refs"] if ref not in cited and (by_id.get(ref) or {}).get("file_path") not in cited]
+        if differ or uncited:
+            raise WriterError("feature_context_mismatch",
+                              f"{label}: {context_ref} differs from {graph_node_id} in {differ} and does not cite architecture {uncited}")
+        context_digest = "sha256:" + hashlib.sha256(context_bytes).hexdigest()
+
+        package_id, digest, members = package.get("feature_package_id"), receipt.get("source_digest"), package.get("task_node_ids")
+        registered = receipt.get("node_ids")
+        promotion_path = registration.get("promotion_receipt")
+        chain = {
+            "package.parent_feature": package.get("parent_feature") == graph_node_id,
+            "package.source_feature_digest": package.get("source_feature_digest") == context_digest,
+            "package.task_node_ids": isinstance(members, list) and len(members) == len(set(members)) == 13,
+            "receipt.status": receipt.get("status") == "registered",
+            "receipt.package": (receipt.get("parent_feature"), receipt.get("feature_package_id")) == (graph_node_id, package_id),
+            "receipt.node_ids": isinstance(registered, list) and isinstance(members, list) and sorted(registered) == sorted(members),
+            "receipt.source_digest": isinstance(digest, str) and bool(DIGEST.match(digest)),
+            "registration": (registration.get("source_digest"), registration.get("parent_feature"), registration.get("feature_package_id"))
+            == (digest, graph_node_id, package_id) and isinstance(promotion_path, str)
+            and (root / promotion_path).resolve() == (root / promotion_ref).resolve(),
+        }
+        broken = sorted(name for name, ok in chain.items() if not ok)
+        if broken:
+            raise WriterError("package_receipt_mismatch", f"{label}: {context_ref}, {package_ref} and {receipt_ref} disagree on {broken}")
+        quality = promotion.get("quality_conditions")
+        if (promotion.get("status") != "promoted" or promotion.get("implementation_readiness") != "complete"
+                or {promotion.get(key) for key in ("staging_digest", "evaluated_digest", "published_digest")} != {digest}
+                or not isinstance(quality, dict) or not quality or set(quality.values()) != {"PASS"}):
+            raise WriterError("package_not_promoted", f"{label}: {promotion_ref} is not a promotion of {digest} with every quality condition PASS")
+        evaluator = findings.get("evaluator")
+        if (findings.get("verdict") != "PASS" or findings.get("evaluated_digest") != digest
+                or not isinstance(evaluator, dict) or evaluator.get("name") != PLAN_EVALUATOR_NAME):
+            raise WriterError("plan_evaluation_not_pass", f"{label}: {findings_ref} is not a {PLAN_EVALUATOR_NAME} PASS on {digest}")
+        unpromoted = [member for member in members if not _promoted_member(by_id.get(member), graph_node_id, package_id)]
+        if unpromoted:
+            raise WriterError("package_member_not_promoted", f"{label}: {unpromoted} are not promoted members of {package_id} in the graph",
+                              [{"node": member, "code": "package_member_not_promoted", "detail": str(package_id)} for member in unpromoted])
+
+        target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+        before_bytes = target_path.read_bytes()
+        frontmatter = VGS.frontmatter_of(target_path)
+        if frontmatter.get("graph_node_id") != graph_node_id or frontmatter.get("file_path") != before_node["file_path"]:
+            raise WriterError("artifact_parity_error", f"{label}: frontmatter identity differs from the graph node")
+        front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+        # The body is kept as is, so its projections must already mirror the macro being confirmed.
+        top: dict[str, dict[str, Any]] = {}
+        for head in _headings(lines):
+            if head["level"] <= 2:
+                top.setdefault(head["title"], head)
+        state = {"subtypes": [], "api_count": 0, "node": before_node}
+        diverged = [name for name in MACRO_SECTIONS if name not in top
+                    or _own_text(lines, top[name]).strip("\n") != composer.expected("feature", name, state).strip("\n")]
+        if diverged:
+            raise WriterError("feature_projection_diverged",
+                              f"{label}: {diverged} no longer mirror the frontmatter; re-render them with `update` before confirming")
+        fill = composer.readiness("feature", before_node["artifact_subtypes"], lines)
+        if fill:
+            raise WriterError("feature_readiness_incomplete", f"{label}: fill {[item['item'] for item in fill]} before confirming",
+                              [{"node": graph_node_id, "code": "missing_section", "detail": item["item"]} for item in fill])
+
+        evidence = {"evaluator": FEATURE_EVALUATOR, "evidence_ref": findings_ref, "evaluated_digest": digest.split(":", 1)[1]}
+        status = "active" if before_node["status"] == "draft" else before_node["status"]
+        readiness = (before_node["implementation_readiness"] or {}).get("status")
+        if (before_node["status"], before_node["confirmation_status"], before_node["evaluation_status"], readiness,
+                before_node["confirmation_evidence"]) == (status, *PROMOTED_STATE, evidence):
+            continue
+        node = copy.deepcopy(before_node)
+        node.update({"status": status, "confirmation_status": "confirmed", "evaluation_status": "pass",
+                     "confirmation_evidence": evidence, "updated_at": now,
+                     "implementation_readiness": {"status": "complete", "missing_sections": [], "checked_at": now}})
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+        plan.append({"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+                     "detail": {"graph_node_id": graph_node_id, "file_path": node["file_path"],
+                                **{key: {"before": before_node[key], "after": node[key]}
+                                   for key in ("status", "confirmation_status", "evaluation_status")},
+                                "confirmation_evidence": evidence, "feature_context": context_ref,
+                                "feature_context_digest": context_digest, "package": package_ref, "receipt": receipt_ref,
+                                "promoted_members": len(members), "body_preserved": True}})
+    return plan
 
 
 # ---------------------------------------------------------------- transaction
@@ -1499,7 +1723,8 @@ def _apply_lifecycle(args: argparse.Namespace) -> dict[str, Any]:
 
 
 PLANNERS: dict[str, Callable[..., list[dict[str, Any]]]] = {
-    "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github, "link-github": _plan_link_github}
+    "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github, "link-github": _plan_link_github,
+    "link-beads": _plan_link_beads, "confirm-feature": _plan_confirm_feature}
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -1508,7 +1733,7 @@ def _parser() -> argparse.ArgumentParser:
     for name in PLANNERS:
         command = sub.add_parser(name)
         command.add_argument("--repo-root", required=True)
-        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}")
+        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}, link-beads={links:[{graph_node_id, bd_issue_id, sync_state?}]}, confirm-feature={confirmations:[{graph_node_id, package, receipt, feature_context}]}")
         command.add_argument("--config", default=".dev-graph/config.json")
         command.add_argument("--dry-run", action="store_true")
     return parser

@@ -1,0 +1,1096 @@
+ ▐▛███▛█   Claude Code v2.1.316
+▝▜██████▀  Opus 5.5 · API Usage Billing
+ ▝▝   ▝▝   /private/tmp/harness-claude-ci10-20261102/cases/node/fx
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手:
+  /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261102T233246-claude-ci10c-node/task.md
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; S=plugins/dev-graph/skills/run-dev-graph-node; ls -R $S; head -60 $S/SKILL.md; cat mixed-artifacts.j…)
+  ⎿  prompts
+     SKILL.md
+     … +196 lines (ctrl+o to expand)
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; S=plugins/dev-graph/skills/run-dev-graph-node; sed -n 60,200p $S/SKILL.md | head -80; for f in $S/pr…)
+  ⎿        text: "validate-graph-schema.py でノード書込み前検証しスキーマの必須キー欠落が 0 件"
+           verify_by: script
+         - id: OUT1
+     … +241 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ R0〜R4 の責務 prompt を読み終えたので、まず R0 の C24 context を解決します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; python3 $P/resolve-repo-context.py --help 2>&1 | head -30; python3 $P/r…)
+  ⎿  usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]
+                                    [--mode {read,write}]
+     … +190 lines (ctrl+o to expand)
+
+⏺ R0の検査は通過し、5件はいずれも自動確定の基準を満たしています。次にwriterの--dry-runでR2のプレビューを実行します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; G=.dev-graph/state/graph.json; python3 -c "import json,hashlib;g=json.l…)
+  ⎿  0 0 sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245
+     {
+       "applied_count": 0,
+     … +523 lines (ctrl+o to expand)
+
+⏺ Preview: 5件とも decision=auto、正規 path、write_count 0、graph_revision_before=0。apply 入力を作って C02 writer で commit します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; jq '{expected_graph_revision:0, artifacts:.artifacts}' mixed-artifacts.…)
+  ⎿  SAME
+     {
+       "status": "applied",
+     … +38 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/state/.graph.json.register.lock (+0 -0)
+  ⎿  Created architecture/lt-search-service.md (+186 -0)
+        1 +---
+        2 +graph_node_id: "arch-lt-search-service"
+        3 +artifact_kind: "architecture"
+        4 +artifact_subtypes: ["backend", "data"]
+        5 +title: "メモ検索サービスの構成"
+        6 +project_id: "lt-notes"
+        7 +domain: "notes-search"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "architecture/lt-search-service.md"
+       16 +template_id: "architecture"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-11-02T14:34:47.129450Z"
+       23 +updated_at: "2026-11-02T14:34:47.129450Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.89
+       37 +classification_reason: "検索サービスの境界・構成要素・データ配置を決める設計で、要件の仕様ではない"
+       38 +classification_candidates: [{"artifact_kind": "architecture", "candidate_path": "architecture/lt-search-service.md", "confidence": 0.89}, {"artifact_kind": "specification", "candidate_path": "specs/lt-s
+          +earch-service.md", "confidence": 0.08}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 146 more lines (ctrl+o to expand)
+  ⎿  Created docs/lt-search-runbook.md (+85 -0)
+       1 +---
+       2 +graph_node_id: "doc-lt-search-runbook"
+       3 +artifact_kind: "document"
+       4 +artifact_subtypes: []
+       5 +title: "メモ検索 index の運用手順"
+       6 +project_id: "lt-notes"
+       7 +domain: "notes-search"
+       8 +status: "draft"
+       9 +priority: null
+      10 +start_date: null
+      11 +target_date: null
+      12 +iteration: null
+      13 +owners: []
+      14 +tags: []
+      15 +file_path: "docs/lt-search-runbook.md"
+      16 +template_id: "document"
+      17 +template_version: "1.0.0"
+      18 +confirmation_status: "draft"
+      19 +evaluation_status: "pending"
+      20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22 +created_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:34:47.129450Z"
+      24 +depends_on: []
+      25 +related_nodes: []
+      26 +resource_scope: []
+      27 +purpose: null
+      28 +goal: null
+      29 +scope_in: []
+      30 +scope_out: []
+      31 +acceptance: []
+      32 +architecture_refs: []
+      33 +parent_feature: null
+      34 +feature_package_id: null
+      35 +phase_ref: null
+      36 +classification_confidence: 0.92
+      37 +classification_reason: "運用者が読む手順と決定事項の記録で、作業単位や仕様ではない"
+      38 +classification_candidates: [{"artifact_kind": "document", "candidate_path": "docs/lt-search-runbook.md", "confidence": 0.92}, {"artifact_kind": "task", "candidate_path": "tasks/lt-search-runbook.md", "co
+         +nfidence": 0.04}]
+      39 +tracker_binding: "none"
+      40 +beads_linkage: null
+     … 45 more lines (ctrl+o to expand)
+  ⎿  Created issues/lt-search-empty-result.md (+96 -0)
+       1 +---
+       2 +graph_node_id: "issue-lt-search-empty-result"
+       3 +artifact_kind: "issue"
+       4 +artifact_subtypes: []
+       5 +title: "メモ検索で一致があるのに 0 件と表示される"
+       6 +project_id: "lt-notes"
+       7 +domain: "notes-search"
+       8 +status: "draft"
+       9 +priority: null
+      10 +start_date: null
+      11 +target_date: null
+      12 +iteration: null
+      13 +owners: []
+      14 +tags: []
+      15 +file_path: "issues/lt-search-empty-result.md"
+      16 +template_id: "issue"
+      17 +template_version: "1.0.0"
+      18 +confirmation_status: "draft"
+      19 +evaluation_status: "pending"
+      20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22 +created_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:34:47.129450Z"
+      24 +depends_on: []
+      25 +related_nodes: []
+      26 +resource_scope: []
+      27 +purpose: null
+      28 +goal: null
+      29 +scope_in: []
+      30 +scope_out: []
+      31 +acceptance: []
+      32 +architecture_refs: []
+      33 +parent_feature: null
+      34 +feature_package_id: null
+      35 +phase_ref: null
+      36 +classification_confidence: 0.93
+      37 +classification_reason: "利用者が観測した不具合 (期待と現在の挙動の差) の報告で、作業手順や仕様ではない"
+      38 +classification_candidates: [{"artifact_kind": "issue", "candidate_path": "issues/lt-search-empty-result.md", "confidence": 0.93}, {"artifact_kind": "task", "candidate_path": "tasks/lt-search-empty-result
+         +.md", "confidence": 0.05}]
+      39 +tracker_binding: "none"
+      40 +beads_linkage: null
+     … 56 more lines (ctrl+o to expand)
+  ⎿  Created mixed-artifacts.apply.json (+138 -0)
+        1 +{
+        2 +  "expected_graph_revision": 0,
+        3 +  "artifacts": [
+        4 +    {
+        5 +      "artifact_kind": "issue",
+        6 +      "slug": "lt-search-empty-result",
+        7 +      "title": "メモ検索で一致があるのに 0 件と表示される",
+        8 +      "project_id": "lt-notes",
+        9 +      "domain": "notes-search",
+       10 +      "tracker_binding": "none",
+       11 +      "classification": {
+       12 +        "reason": "利用者が観測した不具合 (期待と現在の挙動の差) の報告で、作業手順や仕様ではない",
+       13 +        "candidates": [
+       14 +          {
+       15 +            "artifact_kind": "issue",
+       16 +            "confidence": 0.93
+       17 +          },
+       18 +          {
+       19 +            "artifact_kind": "task",
+       20 +            "confidence": 0.05
+       21 +          }
+       22 +        ]
+       23 +      },
+       24 +      "sections": {
+       25 +        "概要": "タイトルに含まれる語で検索しても結果が 0 件と表示される。",
+       26 +        "現在の挙動": "「議事録」で検索すると、タイトルが「週次議事録」のメモがあっても 0 件と表示される。",
+       27 +        "期待する挙動": "タイトルまたは本文に検索語を含むメモがすべて結果に出る。"
+       28 +      }
+       29 +    },
+       30 +    {
+       31 +      "artifact_kind": "task",
+       32 +      "slug": "lt-add-search-index",
+       33 +      "title": "メモ検索の部分一致 index を追加する",
+       34 +      "project_id": "lt-notes",
+       35 +      "domain": "notes-search",
+       36 +      "tracker_binding": "none",
+       37 +      "classification": {
+       38 +        "reason": "実装対象と成果物が決まった 1 単位の作業で、不具合報告や仕様ではない",
+       39 +        "candidates": [
+       40 +          {
+     … 98 more lines (ctrl+o to expand)
+  ⎿  … 4 more files changed
+  ⎿  (files that changed while this command ran, by the command or by another process; a convenience view, not a review or audit of the command)
+
+⏺ Minimal guard (parse/schema) を通し、実成果物を提示します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; python3 $P/validate-graph-schema.py --help 2>&1|head -15; python3 $P/va…)
+  ⎿  usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]
+                                     [--require-canonical-envelope]
+                                     [--strict-artifact-readiness]
+     … +52 lines (ctrl+o to expand)
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; python3 $P/validate-graph-schema.py --graph .dev-graph/state/graph.json…)
+  ⎿  EXIT=0
+     {
+       "valid": true,
+     … +3 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/validate-after-add.json (+372 -0)
+        1 +{
+        2 +  "artifact_readiness": {
+        3 +    "enforced": false,
+        4 +    "finding_count": 43,
+        5 +    "findings": [
+        6 +      {
+        7 +        "code": "placeholder_only_section",
+        8 +        "detail": "Architecture decisions",
+        9 +        "node": "arch-lt-search-service"
+       10 +      },
+       11 +      {
+       12 +        "code": "placeholder_only_section",
+       13 +        "detail": "Container and component view",
+       14 +        "node": "arch-lt-search-service"
+       15 +      },
+       16 +      {
+       17 +        "code": "placeholder_only_section",
+       18 +        "detail": "Context and drivers",
+       19 +        "node": "arch-lt-search-service"
+       20 +      },
+       21 +      {
+       22 +        "code": "placeholder_only_section",
+       23 +        "detail": "Cross-cutting contracts",
+       24 +        "node": "arch-lt-search-service"
+       25 +      },
+       26 +      {
+       27 +        "code": "placeholder_only_section",
+       28 +        "detail": "Delivery, migration and rollback",
+       29 +        "node": "arch-lt-search-service"
+       30 +      },
+       31 +      {
+       32 +        "code": "placeholder_only_section",
+       33 +        "detail": "Risks and verification",
+       34 +        "node": "arch-lt-search-service"
+       35 +      },
+       36 +      {
+       37 +        "code": "placeholder_only_section",
+       38 +        "detail": "System context and boundaries",
+       39 +        "node": "arch-lt-search-service"
+       40 +      },
+     … 332 more lines (ctrl+o to expand)
+
+⏺ 成果物（ファイル5点とグラフ改訂1、検証はエラーなし）を提示しました。事前に指定された配布方式を記録し、次は事後選択のゴールシークに進みます。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; python3 $P/resolve-repo-context.py --mode write --repo-root $PWD > .dev…)
+  ⎿  /private/tmp/harness-claude-ci10-20261102/cases/node/fx /private/tmp/harness-claude-ci10-20261102/cases/node/fx /private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/state/graph.json
+     1 sha256:cef1bfd54a2cc2fd7e3abf210e22a384fe6b7e7ab7348e5dec7b44d2d23f1aaa
+     ls: eval-log: No such file or directory
+     … +5 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/c24-post-choice.json (+42 -0)
+       1 +{
+       2 +  "branch": "main",
+       3 +  "content_roots": {
+       4 +    "architecture": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/architecture",
+       5 +    "documents": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/docs",
+       6 +    "features": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/features",
+       7 +    "issues": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/issues",
+       8 +    "repository": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx",
+       9 +    "specifications": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/specs",
+      10 +    "system_spec": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/system-spec",
+      11 +    "tasks": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/tasks"
+      12 +  },
+      13 +  "coordination_paths": {
+      14 +    "events": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.git/dev-graph/events.json",
+      15 +    "leases": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.git/dev-graph/leases.json",
+      16 +    "root": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.git/dev-graph"
+      17 +  },
+      18 +  "default_branch": "main",
+      19 +  "diagnostics": [
+      20 +    "default_branch_fallback_main"
+      21 +  ],
+      22 +  "git_common_dir": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.git",
+      23 +  "git_dir": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.git",
+      24 +  "head_sha": "f8c9591b4fed561e429c2a8c303e045a2ff42097",
+      25 +  "local_state_paths": {
+      26 +    "cache": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/cache",
+      27 +    "config": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/config.json",
+      28 +    "graph": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/state/graph.json",
+      29 +    "locks": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/locks"
+      30 +  },
+      31 +  "mode": "write",
+      32 +  "plugin_source": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/plugins/dev-graph",
+      33 +  "repo_root": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx",
+      34 +  "repository_id": "local:sha256:ca0b9d6d00bae3711acbba0e649e3cfe38bbb5a9d7624df765aa1ae8c8e6b1f3",
+      35 +  "root_trust_evidence": {
+      36 +    "claude_project_dir_verified": true,
+      37 +    "git_common_dir_ownership_verified": true,
+      38 +    "git_toplevel_verified": true,
+      39 +    "selected_by": "explicit --repo-root"
+      40 +  },
+     … 2 more lines (ctrl+o to expand)
+
+⏺ Baseline = rev 1 / sha256:cef1bf…（pre-choice receipt と一致）。goal-spec と progress を書きます。
+
+⏺ Write(eval-log/run-dev-graph-node-goal-spec.json)
+  ⎿  Wrote 17 lines to eval-log/run-dev-graph-node-goal-spec.json
+       1 {
+       2   "skill": "run-dev-graph-node",
+       3   "scenario": "C02-OUT1-positive-mixed-artifacts-r2",
+       4   "original_goal": "通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ"
+         ,
+       5   "artifact_delivery_choice": "standard",
+       6   "artifact_delivery_choice_source": "isolated fixture pre-answered contract (task.md)",
+       7   "dev_graph_root": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx",
+       8   "dev_graph_graph": "/private/tmp/harness-claude-ci10-20261102/cases/node/fx/.dev-graph/state/graph.json",
+       9   "c24_receipt": ".dev-graph/tmp/c24-post-choice.json",
+     … +8 lines (ctrl+o to expand)
+
+⏺ Write(eval-log/run-dev-graph-node-progress.json)
+  ⎿  Wrote 21 lines to eval-log/run-dev-graph-node-progress.json
+       1 {
+       2   "overall": "in_progress",
+       3   "artifact_delivery": {"state": "semantic_evaluator_started", "choice": "standard"},
+       4   "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:cef1bfd54a2cc2fd7e3abf210e22a384fe6b7e7ab7348e5dec7b44d2d23f1aaa"},
+       5   "pre_choice_receipts": [".dev-graph/state/receipts/node-r000001-add.json"],
+       6   "writer_receipts": [],
+       7   "checklist": [
+       8     {"id": "containment", "status": "achieved", "evidence": "C24 resolve-repo-context --mode write: repo_root == content_roots.repository realpath, repository_id matches config (.dev-graph/tmp/c24-post-ch
+         oice.json)"},
+       9     {"id": "classification", "status": "achieved", "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81)"},
+     … +12 lines (ctrl+o to expand)
+
+⏺ Now 本題 2: update 入力を作成し skill を再呼び出し。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; mkdir -p .dev-graph/tmp/body-before; for f in issues/lt-search-empty-result.md tasks/lt-add-search-i…)
+  ⎿  ## 関連グラフ
+     ## 受入条件
+     ## 検証証跡
+     … +6 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/body-before/lt-add-search-index.md (+126 -0)
+        1 +---
+        2 +graph_node_id: "task-lt-add-search-index"
+        3 +artifact_kind: "task"
+        4 +artifact_subtypes: []
+        5 +title: "メモ検索の部分一致 index を追加する"
+        6 +project_id: "lt-notes"
+        7 +domain: "notes-search"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "tasks/lt-add-search-index.md"
+       16 +template_id: "task"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-11-02T14:34:47.129450Z"
+       23 +updated_at: "2026-11-02T14:34:47.129450Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.9
+       37 +classification_reason: "実装対象と成果物が決まった 1 単位の作業で、不具合報告や仕様ではない"
+       38 +classification_candidates: [{"artifact_kind": "task", "candidate_path": "tasks/lt-add-search-index.md", "confidence": 0.9}, {"artifact_kind": "issue", "candidate_path": "issues/lt-add-search-index.md",
+          +"confidence": 0.06}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 86 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/body-before/lt-note-search.md (+137 -0)
+        1 +---
+        2 +graph_node_id: "spec-lt-note-search"
+        3 +artifact_kind: "specification"
+        4 +artifact_subtypes: []
+        5 +title: "メモ検索の仕様"
+        6 +project_id: "lt-notes"
+        7 +domain: "notes-search"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "specs/lt-note-search.md"
+       16 +template_id: "specification"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-11-02T14:34:47.129450Z"
+       23 +updated_at: "2026-11-02T14:34:47.129450Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.91
+       37 +classification_reason: "検索機能の成功状態・範囲・要件を定める仕様で、個別の作業や設計構造ではない"
+       38 +classification_candidates: [{"artifact_kind": "specification", "candidate_path": "specs/lt-note-search.md", "confidence": 0.91}, {"artifact_kind": "architecture", "candidate_path": "architecture/lt-note
+          +-search.md", "confidence": 0.07}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 97 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/body-before/lt-search-empty-result.md (+96 -0)
+       1 +---
+       2 +graph_node_id: "issue-lt-search-empty-result"
+       3 +artifact_kind: "issue"
+       4 +artifact_subtypes: []
+       5 +title: "メモ検索で一致があるのに 0 件と表示される"
+       6 +project_id: "lt-notes"
+       7 +domain: "notes-search"
+       8 +status: "draft"
+       9 +priority: null
+      10 +start_date: null
+      11 +target_date: null
+      12 +iteration: null
+      13 +owners: []
+      14 +tags: []
+      15 +file_path: "issues/lt-search-empty-result.md"
+      16 +template_id: "issue"
+      17 +template_version: "1.0.0"
+      18 +confirmation_status: "draft"
+      19 +evaluation_status: "pending"
+      20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22 +created_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:34:47.129450Z"
+      24 +depends_on: []
+      25 +related_nodes: []
+      26 +resource_scope: []
+      27 +purpose: null
+      28 +goal: null
+      29 +scope_in: []
+      30 +scope_out: []
+      31 +acceptance: []
+      32 +architecture_refs: []
+      33 +parent_feature: null
+      34 +feature_package_id: null
+      35 +phase_ref: null
+      36 +classification_confidence: 0.93
+      37 +classification_reason: "利用者が観測した不具合 (期待と現在の挙動の差) の報告で、作業手順や仕様ではない"
+      38 +classification_candidates: [{"artifact_kind": "issue", "candidate_path": "issues/lt-search-empty-result.md", "confidence": 0.93}, {"artifact_kind": "task", "candidate_path": "tasks/lt-search-empty-result
+         +.md", "confidence": 0.05}]
+      39 +tracker_binding: "none"
+      40 +beads_linkage: null
+     … 56 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/body-before/lt-search-runbook.md (+85 -0)
+       1 +---
+       2 +graph_node_id: "doc-lt-search-runbook"
+       3 +artifact_kind: "document"
+       4 +artifact_subtypes: []
+       5 +title: "メモ検索 index の運用手順"
+       6 +project_id: "lt-notes"
+       7 +domain: "notes-search"
+       8 +status: "draft"
+       9 +priority: null
+      10 +start_date: null
+      11 +target_date: null
+      12 +iteration: null
+      13 +owners: []
+      14 +tags: []
+      15 +file_path: "docs/lt-search-runbook.md"
+      16 +template_id: "document"
+      17 +template_version: "1.0.0"
+      18 +confirmation_status: "draft"
+      19 +evaluation_status: "pending"
+      20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22 +created_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:34:47.129450Z"
+      24 +depends_on: []
+      25 +related_nodes: []
+      26 +resource_scope: []
+      27 +purpose: null
+      28 +goal: null
+      29 +scope_in: []
+      30 +scope_out: []
+      31 +acceptance: []
+      32 +architecture_refs: []
+      33 +parent_feature: null
+      34 +feature_package_id: null
+      35 +phase_ref: null
+      36 +classification_confidence: 0.92
+      37 +classification_reason: "運用者が読む手順と決定事項の記録で、作業単位や仕様ではない"
+      38 +classification_candidates: [{"artifact_kind": "document", "candidate_path": "docs/lt-search-runbook.md", "confidence": 0.92}, {"artifact_kind": "task", "candidate_path": "tasks/lt-search-runbook.md", "co
+         +nfidence": 0.04}]
+      39 +tracker_binding: "none"
+      40 +beads_linkage: null
+     … 45 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/body-before/lt-search-service.md (+186 -0)
+        1 +---
+        2 +graph_node_id: "arch-lt-search-service"
+        3 +artifact_kind: "architecture"
+        4 +artifact_subtypes: ["backend", "data"]
+        5 +title: "メモ検索サービスの構成"
+        6 +project_id: "lt-notes"
+        7 +domain: "notes-search"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "architecture/lt-search-service.md"
+       16 +template_id: "architecture"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-11-02T14:34:47.129450Z"
+       23 +updated_at: "2026-11-02T14:34:47.129450Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.89
+       37 +classification_reason: "検索サービスの境界・構成要素・データ配置を決める設計で、要件の仕様ではない"
+       38 +classification_candidates: [{"artifact_kind": "architecture", "candidate_path": "architecture/lt-search-service.md", "confidence": 0.89}, {"artifact_kind": "specification", "candidate_path": "specs/lt-s
+          +earch-service.md", "confidence": 0.08}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 146 more lines (ctrl+o to expand)
+  ⎿  … 1 more file changed
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; G=.dev-graph/state/graph.json; dg(){ python3 -c "import json,hashlib;g=…)
+  ⎿  1 sha256:cef1bfd54a2cc2fd7e3abf210e22a384fe6b7e7ab7348e5dec7b44d2d23f1aaa
+     EXIT=0
+     {
+     … +60 lines (ctrl+o to expand)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+⏺ Update preview は valid、write 0、digest 不変。expected_graph_revision=1 で apply します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; jq '{expected_graph_revision:1, updates:.updates}' node-updates.json >…)
+  ⎿  EXIT=0
+     {
+       "status": "applied",
+     … +15 lines (ctrl+o to expand)
+  ⎿  Updated .dev-graph/state/graph.json (+11 -11)
+      1  {
+      2 -  "graph_revision": 1,
+      2 +  "graph_revision": 2,
+      3    "nodes": [
+      4      {
+      5        "acceptance": [],
+     ...
+      52        "goal": null,
+      53        "graph_node_id": "issue-lt-search-empty-result",
+      54        "implementation_readiness": {
+      55 -        "checked_at": "2026-11-02T14:34:47.129450Z",
+      55 +        "checked_at": "2026-11-02T14:35:45.362778Z",
+      56          "missing_sections": [
+      57            "背景と問題",
+      58            "再現手順またはユースケース",
+     ...
+      93        "template_version": "1.0.0",
+      94        "title": "メモ検索で一致があるのに 0 件と表示される",
+      95        "tracker_binding": "none",
+      96 -      "updated_at": "2026-11-02T14:34:47.129450Z"
+      96 +      "updated_at": "2026-11-02T14:35:45.362778Z"
+      97      },
+      98      {
+      99        "acceptance": [],
+     ...
+      146        "goal": null,
+      147        "graph_node_id": "task-lt-add-search-index",
+      148        "implementation_readiness": {
+      149 -        "checked_at": "2026-11-02T14:34:47.129450Z",
+      149 +        "checked_at": "2026-11-02T14:35:45.362778Z",
+      150          "missing_sections": [
+      151            "背景",
+      152            "入力と前提条件",
+     ...
+      190        "template_version": "1.0.0",
+      191        "title": "メモ検索の部分一致 index を追加する",
+      192        "tracker_binding": "none",
+      193 -      "updated_at": "2026-11-02T14:34:47.129450Z"
+      193 +      "updated_at": "2026-11-02T14:35:45.362778Z"
+      194      },
+      195      {
+      196        "acceptance": [],
+     ...
+      243        "goal": null,
+      244        "graph_node_id": "spec-lt-note-search",
+     … 46 more lines (ctrl+o to expand)
+  ⎿  Updated architecture/lt-search-service.md (+6 -2)
+      20  confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21  source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-11-02T14:34:47.129450Z"
+      23 -updated_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:35:45.362778Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: []
+     ...
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46  completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
+      47 -implementation_readiness: {"checked_at": "2026-11-02T14:34:47.129450Z", "missing_sections": ["Context and drivers", "System context and boundaries", "Container and component view", "Cross-cutting contrac
+         -ts", "Architecture decisions", "Delivery, migration and rollback", "Risks and verification", "backend:Runtime and architecture pattern", "backend:Domain and module boundaries", "backend:API and service c
+         -ontracts", "backend:Data and transaction behavior", "backend:Async processing", "backend:Security and resilience", "backend:Operations and verification", "data:Data domains and ownership", "data:Logical
+         -and physical model", "data:Access and consistency", "data:Lifecycle and governance", "data:Migration and recovery", "data:Data verification"], "status": "incomplete"}
+      47 +implementation_readiness: {"checked_at": "2026-11-02T14:35:45.362778Z", "missing_sections": ["Context and drivers", "System context and boundaries", "Container and component view", "Cross-cutting contrac
+         +ts", "Architecture decisions", "Delivery, migration and rollback", "Risks and verification", "backend:Runtime and architecture pattern", "backend:Domain and module boundaries", "backend:API and service c
+         +ontracts", "backend:Data and transaction behavior", "backend:Async processing", "backend:Security and resilience", "backend:Operations and verification", "data:Data domains and ownership", "data:Logical
+         +and physical model", "data:Access and consistency", "data:Lifecycle and governance", "data:Migration and recovery", "data:Data verification"], "status": "incomplete"}
+      48  ---
+      49
+      50  # Architecture overview
+     ...
+      184  - Architecture fitness test: <automated check>
+      185  - Load/failure/security validation: <evidence plan>
+      186
+      187 +## 追記メモ
+      188 +
+      189 +index 更新ジョブは保存イベントを受けて非同期に動く。
+      190 +
+  ⎿  Updated docs/lt-search-runbook.md (+6 -2)
+      20  confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21  source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-11-02T14:34:47.129450Z"
+      23 -updated_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:35:45.362778Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: []
+     ...
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46  completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
+      47 -implementation_readiness: {"checked_at": "2026-11-02T14:34:47.129450Z", "missing_sections": ["本文", "決定事項", "運用・更新方法", "関連資料", "変更履歴"], "status": "incomplete"}
+      47 +implementation_readiness: {"checked_at": "2026-11-02T14:35:45.362778Z", "missing_sections": ["本文", "決定事項", "運用・更新方法", "関連資料", "変更履歴"], "status": "incomplete"}
+      48  ---
+      49
+      50  # 目的
+     ...
+      83  |---|---|---|
+      84  | <YYYY-MM-DD> | <summary> | <owner> |
+      85
+      86 +## 追記メモ
+      87 +
+      88 +作り直しの所要時間はメモ 1 万件で約 5 分を目安とする。
+      89 +
+  ⎿  Updated issues/lt-search-empty-result.md (+6 -2)
+      20  confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21  source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-11-02T14:34:47.129450Z"
+      23 -updated_at: "2026-11-02T14:34:47.129450Z"
+      23 +updated_at: "2026-11-02T14:35:45.362778Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: []
+     ...
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46  completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
+      47 -implementation_readiness: {"checked_at": "2026-11-02T14:34:47.129450Z", "missing_sections": ["背景と問題", "再現手順またはユースケース", "影響と優先度", "スコープ", "関連グラフ", "受入条件", "検証証跡"],
+         - "status": "incomplete"}
+      47 +implementation_readiness: {"checked_at": "2026-11-02T14:35:45.362778Z", "missing_sections": ["背景と問題", "再現手順またはユースケース", "影響と優先度", "スコープ", "関連グラフ", "受入条件", "検証証跡"],
+         + "status": "incomplete"}
+      48  ---
+      49
+      50  # 概要
+     ...
+       94  - コマンド/テスト: <how-to-verify>
+       95  - 証跡 path: <path-or-url>
+       96
+       97 +## 追記メモ
+       98 +
+       99 +2026-11-02 の調査で、検索語の大文字小文字の正規化漏れが原因候補と分かった。
+      100 +
+  ⎿  Created node-updates.apply.json (+35 -0)
+       1 +{
+       2 +  "expected_graph_revision": 1,
+       3 +  "updates": [
+       4 +    {
+       5 +      "graph_node_id": "issue-lt-search-empty-result",
+       6 +      "append_sections": {
+       7 +        "追記メモ": "2026-11-02 の調査で、検索語の大文字小文字の正規化漏れが原因候補と分かった。"
+       8 +      }
+       9 +    },
+      10 +    {
+      11 +      "graph_node_id": "task-lt-add-search-index",
+      12 +      "append_sections": {
+      13 +        "追記メモ": "index の作成処理は既存の保存処理のあとに呼び出す。"
+      14 +      }
+      15 +    },
+      16 +    {
+      17 +      "graph_node_id": "spec-lt-note-search",
+      18 +      "append_sections": {
+      19 +        "追記メモ": "検索結果の並び順は更新日時の新しい順とする。"
+      20 +      }
+      21 +    },
+      22 +    {
+      23 +      "graph_node_id": "arch-lt-search-service",
+      24 +      "append_sections": {
+      25 +        "追記メモ": "index 更新ジョブは保存イベントを受けて非同期に動く。"
+      26 +      }
+      27 +    },
+      28 +    {
+      29 +      "graph_node_id": "doc-lt-search-runbook",
+      30 +      "append_sections": {
+      31 +        "追記メモ": "作り直しの所要時間はメモ 1 万件で約 5 分を目安とする。"
+      32 +      }
+      33 +    }
+      34 +  ]
+      35 +}
+  ⎿  … 4 more files changed
+
+⏺ Update apply 成功 (rev 1→2)。本文差分と frontmatter/graph 整合を確認します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; for f in issues/lt-search-empty-result.md tasks/lt-add-search-index.md specs/lt-note-search.md archi…)
+  ⎿  == issues/lt-search-empty-result.md
+     23c23
+     < updated_at: "2026-11-02T14:34:47.129450Z"
+     … +77 lines (ctrl+o to expand)
+
+⏺ 追記だけが増え、id/path/kind は graph と一致・不変。周回 1 の intermediate を記録し、本題 3 (feature 直接 add) へ進みます。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; G="$(jq -r .original_goal eval-log/run-dev-graph-node-goal-spec.json)"; H=$(printf '%s' "$G" | shasu…)
+  ⎿  "feature"
+  ⎿  Created eval-log/run-dev-graph-node-intermediate.jsonl (+1 -0)
+      1 +{"loop":1,"original_goal":"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合
+        +を保つ","original_goal_hash":"eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2","current_goal_snapshot":"5 normal artifacts added (pre-choice r1) and consecutively updated via append_secti
+        +ons (r2 receipt node-r000002-update.json); id/path/kind invariant","delta_from_original":"none; feature/package paths not yet exercised in this run","merged_directive_for_next":"submit a direct feature ad
+        +d without C14 macro contract through the C02 writer and confirm fail-closed (applied_count=0), then run integrity auditor on final graph","drift_signal":"none"}
+  ⎿  Updated eval-log/run-dev-graph-node-progress.json (+58 -13)
+       1  {
+       2    "overall": "in_progress",
+       3 -  "artifact_delivery": {"state": "semantic_evaluator_started", "choice": "standard"},
+       4 -  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:cef1bfd54a2cc2fd7e3abf210e22a384fe6b7e7ab7348e5dec7b44d2d23f1aaa"},
+       5 -  "pre_choice_receipts": [".dev-graph/state/receipts/node-r000001-add.json"],
+       6 -  "writer_receipts": [],
+       3 +  "artifact_delivery": {
+       4 +    "state": "semantic_evaluator_started",
+       5 +    "choice": "standard"
+       6 +  },
+       7 +  "graph_baseline": {
+       8 +    "graph_revision": 1,
+       9 +    "graph_digest": "sha256:cef1bfd54a2cc2fd7e3abf210e22a384fe6b7e7ab7348e5dec7b44d2d23f1aaa"
+      10 +  },
+      11 +  "pre_choice_receipts": [
+      12 +    ".dev-graph/state/receipts/node-r000001-add.json"
+      13 +  ],
+      14 +  "writer_receipts": [
+      15 +    ".dev-graph/state/receipts/node-r000002-update.json"
+      16 +  ],
+      17    "checklist": [
+       8 -    {"id": "containment", "status": "achieved", "evidence": "C24 resolve-repo-context --mode write: repo_root == content_roots.repository realpath, repository_id matches config (.dev-graph/tmp/c24-post-c
+         -hoice.json)"},
+       9 -    {"id": "classification", "status": "achieved", "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81)"},
+      10 -    {"id": "schema", "status": "not_achieved", "evidence": "pending"},
+      11 -    {"id": "package", "status": "not_applicable", "evidence": "verbs run: add, update (no register-package)"},
+      12 -    {"id": "receipt", "status": "not_achieved", "evidence": "pending"}
+      18 +    {
+      19 +      "id": "containment",
+      20 +      "status": "achieved",
+      21 +      "evidence": "C24 resolve-repo-context --mode write: repo_root == content_roots.repository realpath, repository_id matches config (.dev-graph/tmp/c24-post-choice.json)"
+      22 +    },
+      23 +    {
+      24 +      "id": "classification",
+      25 +      "status": "achieved",
+      26 +      "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81)"
+      27 +    },
+      28 +    {
+      29 +      "id": "schema",
+      30 +      "status": "not_achieved",
+      31 +      "evidence": "pending"
+     … 39 more lines (ctrl+o to expand)
+  ⎿  Created feature-direct-add.json (+20 -0)
+       1 +{
+       2 +  "artifacts": [
+       3 +    {
+       4 +      "artifact_kind": "feature",
+       5 +      "slug": "lt-search-feature",
+       6 +      "title": "メモ検索機能",
+       7 +      "project_id": "lt-notes",
+       8 +      "domain": "notes-search",
+       9 +      "tracker_binding": "none",
+      10 +      "classification": {
+      11 +        "reason": "検索機能全体をまとめる機能単位",
+      12 +        "candidates": [
+      13 +          {"artifact_kind": "feature", "confidence": 0.9},
+      14 +          {"artifact_kind": "specification", "confidence": 0.05}
+      15 +        ]
+      16 +      },
+      17 +      "sections": {"概要": "メモ検索機能を feature として直接登録する試行。"}
+      18 +    }
+      19 +  ]
+      20 +}
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ R2 preview (--dry-run) を実行し、その後 apply 入力で実際に writer へ投入します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; G=.dev-graph/state/graph.json; dg(){ python3 -c "import json,hashlib;g=…)
+  ⎿  2 sha256:62b0ba59a11cf2b46e7e783e367689419a9fb3a372f05ccbeb523548cfa8c2b8
+     --- dry-run
+     {
+     … +25 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/feature-apply-rejection.out (+9 -0)
+      1 +{
+      2 +  "applied_count": 0,
+      3 +  "code": "feature_requires_c14_macro_contract",
+      4 +  "error": "feature nodes are declared by the C14 macro contract (add with artifact_kind=feature and macro{...}); R1/R2 routing never yields them",
+      5 +  "findings": [],
+      6 +  "status": "rejected",
+      7 +  "valid": false,
+      8 +  "write_count": 0
+      9 +}
+  ⎿  Created .dev-graph/tmp/feature-preview.out (+9 -0)
+      1 +{
+      2 +  "applied_count": 0,
+      3 +  "code": "feature_requires_c14_macro_contract",
+      4 +  "error": "feature nodes are declared by the C14 macro contract (add with artifact_kind=feature and macro{...}); R1/R2 routing never yields them",
+      5 +  "findings": [],
+      6 +  "status": "rejected",
+      7 +  "valid": false,
+      8 +  "write_count": 0
+      9 +}
+  ⎿  Created feature-direct-add.apply.json (+29 -0)
+       1 +{
+       2 +  "expected_graph_revision": 2,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "artifact_kind": "feature",
+       6 +      "slug": "lt-search-feature",
+       7 +      "title": "メモ検索機能",
+       8 +      "project_id": "lt-notes",
+       9 +      "domain": "notes-search",
+      10 +      "tracker_binding": "none",
+      11 +      "classification": {
+      12 +        "reason": "検索機能全体をまとめる機能単位",
+      13 +        "candidates": [
+      14 +          {
+      15 +            "artifact_kind": "feature",
+      16 +            "confidence": 0.9
+      17 +          },
+      18 +          {
+      19 +            "artifact_kind": "specification",
+      20 +            "confidence": 0.05
+      21 +          }
+      22 +        ]
+      23 +      },
+      24 +      "sections": {
+      25 +        "概要": "メモ検索機能を feature として直接登録する試行。"
+      26 +      }
+      27 +    }
+      28 +  ]
+      29 +}
+
+⏺ C14 で fail-closed (feature_requires_c14_macro_contract, applied 0, write 0)、graph 不変、features/ 空、feature node 0。exit code を確認し、最終 validator を走らせます。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; P=plugins/dev-graph/scripts; python3 $P/build-graph-node.py add --repo-root $PWD --input $PWD/featur…)
+  ⎿  apply_exit=1
+     validate_exit=0
+     {
+     … +16 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/tmp/validate-final.json (+372 -0)
+        1 +{
+        2 +  "artifact_readiness": {
+        3 +    "enforced": false,
+        4 +    "finding_count": 43,
+        5 +    "findings": [
+        6 +      {
+        7 +        "code": "placeholder_only_section",
+        8 +        "detail": "Architecture decisions",
+        9 +        "node": "arch-lt-search-service"
+       10 +      },
+       11 +      {
+       12 +        "code": "placeholder_only_section",
+       13 +        "detail": "Container and component view",
+       14 +        "node": "arch-lt-search-service"
+       15 +      },
+       16 +      {
+       17 +        "code": "placeholder_only_section",
+       18 +        "detail": "Context and drivers",
+       19 +        "node": "arch-lt-search-service"
+       20 +      },
+       21 +      {
+       22 +        "code": "placeholder_only_section",
+       23 +        "detail": "Cross-cutting contracts",
+       24 +        "node": "arch-lt-search-service"
+       25 +      },
+       26 +      {
+       27 +        "code": "placeholder_only_section",
+       28 +        "detail": "Delivery, migration and rollback",
+       29 +        "node": "arch-lt-search-service"
+       30 +      },
+       31 +      {
+       32 +        "code": "placeholder_only_section",
+       33 +        "detail": "Risks and verification",
+       34 +        "node": "arch-lt-search-service"
+       35 +      },
+       36 +      {
+       37 +        "code": "placeholder_only_section",
+       38 +        "detail": "System context and boundaries",
+       39 +        "node": "arch-lt-search-service"
+       40 +      },
+     … 332 more lines (ctrl+o to expand)
+
+⏺ Writer の rejection は exit 1、最終 graph の validator は exit 0 / finding 0。必須の独立 verifier を起動します。
+
+⏺ dev-graph:dev-graph-integrity-auditor(Integrity audit of final graph)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+⏺ Verifier 実行中。結果を待ちます。
+
+✻ Waiting for 1 background agent to finish
+
+⏺ Agent "Integrity audit of final graph" finished · 25s
+
+⏺ Verifier PASS。progress と intermediate を確定し、ゴールシーク検証を実行します。
+
+⏺ Bash(cd /private/tmp/harness-claude-ci10-20261102/cases/node/fx; R=$PWD; jq '.overall="PASS"
+      | .checklist=[…)
+  ⎿  GS_EXIT=0
+  ⎿  Created .dev-graph/tmp/gs-check.sh (+48 -0)
+       1 +python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-progress.json" "$DEV_G
+         +RAPH_GRAPH" "$DEV_GRAPH_ROOT" <<'PY'
+       2 +import hashlib, json, os, sys
+       3 +goal = json.load(open(sys.argv[1], encoding='utf-8'))
+       4 +rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
+       5 +progress = json.load(open(sys.argv[3], encoding='utf-8'))
+       6 +graph = json.load(open(sys.argv[4], encoding='utf-8'))
+       7 +required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+       8 +expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
+       9 +assert rows, 'intermediate.jsonl is empty'
+      10 +for row in rows:
+      11 +    assert required_keys <= row.keys(), required_keys - row.keys()
+      12 +    assert row['original_goal'] == goal['original_goal']
+      13 +    assert row['original_goal_hash'] == expected
+      14 +digest = 'sha256:' + hashlib.sha256(json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')).hexdigest()
+      15 +receipts = [json.load(open(os.path.join(sys.argv[5], p), encoding='utf-8')) for p in progress.get('writer_receipts') or []]
+      16 +baseline = progress.get('graph_baseline') or {}
+      17 +revisions = [baseline.get('graph_revision')] + [r.get('graph_revision_after') for r in receipts]
+      18 +assert all(r.get('graph_revision_before') == before for r, before in zip(receipts, revisions)), f'writer receipts do not chain from the baseline: {[(r.get("graph_revision_before"), r.get("graph_revision_
+         +after")) for r in receipts]}'
+      19 +last = (receipts[-1].get('graph_revision_after'), receipts[-1].get('graph_digest_after')) if receipts else (baseline.get('graph_revision'), baseline.get('graph_digest'))
+      20 +assert last == (graph.get('graph_revision'), digest), f'graph changed after the last writer receipt or the graph baseline: {last}'
+      21 +verifier = progress.get('independent_verifier') or {}
+      22 +assert verifier.get('agent') in {'dev-graph-integrity-auditor', 'dev-graph:dev-graph-integrity-auditor'}, 'independent verifier not run'
+      23 +assert verifier.get('verdict') in {'PASS', 'FAIL'}, verifier
+      24 +assert verifier.get('graph_digest') == digest, f'verifier audited {verifier.get("graph_digest")}, not the current graph {digest}'
+      25 +def entries(value):
+      26 +    pairs = list(value.items() if isinstance(value, dict) else ((c.get('id'), c) for c in value))
+      27 +    out = {cid: (c if isinstance(c, dict) else {'status': c}) for cid, c in pairs}
+      28 +    assert len(out) == len(pairs), f'duplicate ids: {sorted(map(str, out))}'
+      29 +    return out
+      30 +status = {cid: c.get('status') for cid, c in entries(progress.get('feedback_criteria') or {}).items()}
+      31 +assert set(status) == {'IN1', 'OUT1', 'OUT2', 'OUT3'}, sorted(map(str, status))
+      32 +outer = {cid: s for cid, s in status.items() if cid != 'IN1'}
+      33 +assert set(outer.values()) == {'external_pending'}, f'outer criteria are judged outside this run: {outer}'
+      34 +checklist = entries(progress.get('checklist') or {})
+      35 +assert set(checklist) == {'containment', 'classification', 'schema', 'package', 'receipt'}, sorted(map(str, checklist))
+      36 +assert all(c.get('status') in {'achieved', 'not_achieved', 'not_applicable'} for c in checklist.values()), checklist
+      37 +assert checklist['containment'].get('status') != 'not_applicable' and checklist['schema'].get('status') != 'not_applicable', 'containment and schema are never not_applicable'
+      38 +assert all(str(c.get('evidence') or '').strip() for c in checklist.values() if c.get('status') == 'not_applicable'), 'not_applicable needs evidence'
+      39 +na = {cid for cid, c in checklist.items() if c.get('status') == 'not_applicable'}
+      40 +classified = any(r.get('operation') == 'add' and any((a.get('classification') or {}).get('decision') != 'c14_macro_contract' for a in r.get('artifacts') or []) for r in receipts)
+     … 8 more lines (ctrl+o to expand)
+  ⎿  Updated eval-log/run-dev-graph-node-intermediate.jsonl (+1 -0)
+      1  {"loop":1,"original_goal":"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合
+         を保つ","original_goal_hash":"eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2","current_goal_snapshot":"5 normal artifacts added (pre-choice r1) and consecutively updated via append_secti
+         ons (r2 receipt node-r000002-update.json); id/path/kind invariant","delta_from_original":"none; feature/package paths not yet exercised in this run","merged_directive_for_next":"submit a direct feature ad
+         d without C14 macro contract through the C02 writer and confirm fail-closed (applied_count=0), then run integrity auditor on final graph","drift_signal":"none"}
+      2 +{"loop":2,"original_goal":"通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合
+        +を保つ","original_goal_hash":"eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2","current_goal_snapshot":"direct feature add submitted to C02 writer (dry-run and apply) rejected feature_req
+        +uires_c14_macro_contract, applied 0; graph rev 2 unchanged; integrity auditor PASS on sha256:62b0ba...","delta_from_original":"exact-13 package path not exercised (no register-package in this scenario)","
+        +merged_directive_for_next":"none; stop: checklist achieved/not_applicable, IN1 PASS, verifier PASS","drift_signal":"none"}
+  ⎿  Updated eval-log/run-dev-graph-node-progress.json (+16 -10)
+      1  {
+      2 -  "overall": "in_progress",
+      2 +  "overall": "PASS",
+      3    "artifact_delivery": {
+      4      "state": "semantic_evaluator_started",
+      5      "choice": "standard"
+     ...
+      18      {
+      19        "id": "containment",
+      20        "status": "achieved",
+      21 -      "evidence": "C24 resolve-repo-context --mode write: repo_root == content_roots.repository realpath, repository_id matches config (.dev-graph/tmp/c24-post-choice.json)"
+      21 +      "evidence": "C24 resolve-repo-context --mode write: repo_root == content_roots.repository realpath, repository_id matches config (.dev-graph/tmp/c24-post-choice.json); writer inputs all inside repo
+         +"
+      22      },
+      23      {
+      24        "id": "classification",
+      25        "status": "achieved",
+      26 -      "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81)"
+      26 +      "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (conf>=0.89, margin>=0.81); post-choice verbs: update (no classification), feature add
+         + rejected feature_requires_c14_macro_contract"
+      27      },
+      28      {
+      29        "id": "schema",
+      30 -      "status": "not_achieved",
+      31 -      "evidence": "pending"
+      30 +      "status": "achieved",
+      31 +      "evidence": "writer pre_write_validation findings=0 on add and update; final validate-graph-schema.py exit 0, valid=true, 0 violations (.dev-graph/tmp/validate-final.json)"
+      32      },
+      33      {
+      34        "id": "package",
+      35        "status": "not_applicable",
+      36 -      "evidence": "verbs run: add, update (no register-package)"
+      36 +      "evidence": "verbs run: add, update, add(feature, rejected). no register-package"
+      37      },
+      38      {
+      39        "id": "receipt",
+      40 -      "status": "not_achieved",
+      41 -      "evidence": "pending"
+      40 +      "status": "achieved",
+      41 +      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json graph_revision_after=1, graph_digest_after=sha256:cef1bf... == graph_baseline; post-choice receipt node-r000002-updat
+         +e.json 1->2, digest sha256:62b0ba... and node_ids (5) match current graph; feature add rejected applied_count=0 write_count=0, no receipt"
+      42      }
+      43    ],
+      44    "feedback_criteria": [
+     … 19 more lines (ctrl+o to expand)
+
+⏺ ゴールシーク検証 exit 0。status.json を書きます。
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261102T233246-claude-ci10c-node/out/status.json)
+  ⎿  Wrote 1 line to ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261102T233246-claude-ci10c-node/out/status.json
+      1 {"status": "PASS", "scenario": "C02-OUT1-positive-mixed-artifacts-r2"}
+
+⏺ DONE: PASS
+
+✻ Baked for 3m 19s · done 11:37 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)                                                                                                                                     new task? /clear to save 119.1k tokens
+
+

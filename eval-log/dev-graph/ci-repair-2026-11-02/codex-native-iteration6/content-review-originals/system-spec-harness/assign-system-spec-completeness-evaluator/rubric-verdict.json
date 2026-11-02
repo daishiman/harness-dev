@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "assign-system-spec-completeness-evaluator",
+    "skill_md_sha256": "b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "cr-assign-system-spec-completeness-evaluator (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T13:36:16Z",
+  "iterations": 3,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "foundation_trace",
+      "decision_guidance",
+      "matrix_coverage",
+      "design_knowledge_reflection",
+      "doc_freshness",
+      "prompt_quality"
+    ],
+    "positive_feedback": [
+      "render-findings-score の機械採点は 100 (rubric 1.6.0、threshold 80、findings 0 件、required_fixes 0 件、applicable 20 のうち scored 19、pending_human は BD-004 だけ、not_applicable 21)。kind 省略と --kind skill で同じ結果で、iteration 2 と同じ点数を保っている。",
+      "BD-004 (pending_human) を自分で判定して PASS: description (SKILL.md L3) の trigger「独立 context で評価したい」は context: fork (L6) と Steps 0-4 (L188-234) に、「6 観点で合否判定したい」は総合判定 (L169-174) と Step 4 の aggregate による再導出 (L224) に対応する。今回の修正は Step 2・Step 4 の手順を実装に寄せたもので、trigger との対応は崩れていない。lint-skill-description は VIOLATION 0。",
+      "iteration 2 の smell 1 (gate_results の例に文字列の placeholder と object が混ざる) は解消した。SKILL.md L133-138 は G-matrix / G-source-citation / G-knowledge-graph の object を 1 つずつ書き、文字列の要素は無くなった。id と name は aggregate-completeness.py の run_coverage_gate (L422-423)・run_source_citation_gate (L444-445)・run_knowledge_graph_gate (L483-484) と一致する。subgates の例 (L137) の key 4 つ (profile・command・exit_code・stderr) は、実装 L473-478 の subgate dict と schemas/completeness-findings.schema.json の knowledge_subgate の required に、過不足なく一致する。scratchpad の e2e_it3.py で実測した: 3 gate を CLI で実行し、例に書かれた key はどれも実出力の部分集合 (実出力にだけある key は G-matrix / G-source-citation が command・conditions・stdout・stderr、G-knowledge-graph が conditions で、いずれも schema 上は任意)。subgates は knowledge / doctrine / required-info / cross の 4 件で、どれも key が例と同じ。",
+      "iteration 2 の smell 2 (Step 2 の主手順が validate-coverage-matrix.py の直接実行で、G-matrix の gate_result が手元に残らない) は解消した。SKILL.md L199-203 の主手順は aggregate-completeness.py --matrix <spec-state.json> --require-complete になり、L203 の「内部で validate-coverage-matrix.py --require-complete を実行し、結果を G-matrix の gate_result として出す」は実装 (run_coverage_gate L414-429 が --require-complete を付けて plugin root の validate-coverage-matrix.py を実行し、main L517-521 が exit_code≠0 を CLI exit 1 にする) と一致する。e2e_it3.py での実測: 完全な matrix では CLI exit 0・G-matrix.exit_code 0・command に validate-coverage-matrix.py と --require-complete を含む。未完了の matrix では aggregate の CLI exit 1・G-matrix.exit_code 1 で、直接実行の --require-complete も exit 1 (フラグ無しの直接実行は exit 0)。未完了の G-matrix を入れた PASS report は --report で exit 1 (PASS report lacks passing gate: G-matrix)。"
+    ],
+    "negative_feedback": [
+      "smell (low、今回の修正で入った): SKILL.md L226 と R1-score.md L88 は、receipt を求める呼び出し側に output=system-spec/completeness-report.json を「渡す」ことを求めるが、例外の条件は「総合 PASS で」であり、PASS かどうかは呼び出しの時点では分からない。そのため、output に canonical を渡された run が総合 FAIL で終わったときの書き先が書かれていない (SKILL.md L223 と R1 L61 は「output は system-spec/ の外」なので、そのまま output に書くと規則外になる)。あわせて「書かずに差し戻す」の「書かず」が、レポート自体を書かないのか、canonical へ書かないだけなのかが読み取りにくい。また R1 L88 は差し戻しの文を挟んだため、その後の「この場合も hearing-audit.json は ... eval-log/ 配下に置く」の「この場合」が差し戻しの場合を指すように読める。実害は小さい (guard-confirmed-chapter-overwrite.py L116 は completeness-report.json を保護外にしており、writer は FAIL report から receipt を作らない。canonical の report を読む呼び出し側は plugins/ 内に他に無い)。直し方の例: 例外の条件を「呼び出し側が再利用 receipt を求めた場合 (output=canonical を渡す)。総合 FAIL でもレポートはそこへ書き、receipt は作らない」に書き換え、「書かずに」を「canonical へ書き換えず、receipt も作らずに」とし、R1 L88 の「この場合も」を「canonical に書く場合も」にする。",
+      "smell (low、前回から残る): lint-skill-tree.py が LS-203 (規約外の top-level dir tests/) を warn で報告する (exit 0・ok なので合否には影響しない)。今回の差分の範囲外で、skill 直下の tests/ は system-spec-harness の 5 skill (repo 全体では 127 skill 中 9) に共通する形なので、この skill だけで直すものではない。直すなら、LS-203 の許可リストに tests を足すか、plugin 単位の plugins/system-spec-harness/tests/ へ寄せるかを repo の規約として決める。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "rubric 採点: score 100 / threshold 80 (機械採点は passed)、rubric_version 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9。findings: なし。pending_human は BD-004 で、自分の判定は PASS。rubric の high は 0 なので (e) を満たす。--kind assign は rubric の applies_to_kinds に assign が無く skill 向け規則が外れるため使っていない。 combined review の投影なので verdict は elegance と同じ規則で決め、(a)〜(d) の違反が 0 件のため PASS。 iteration 3 の incremental profile の focused combined review (1 context で (a) 矛盾・(b) 漏れ・(c) 規約整合・(d) 依存整合・(e) rubric high 0 を判定し、2 verdict へ投影)。 対象 SKILL.md の sha256 を shasum -a 256 で審査開始時と verdict 作成前の 2 回実測し、どちらも b829d01a4cdcc6eecf467b7f894083a4d355b7f3777ad3f3d8d046e78b266de6 (作者側の申告と一致、262 行)。 読んだもの: SKILL.md 全文、git -C <INT> diff HEAD -- <skill dir> の SKILL.md・prompts・references の差分、scratchpad の iteration 2 時点の skilldir.diff と completeness-evaluator.it3.skilldir.diff の突き合わせ (iteration 2→3 で変わったのは SKILL.md の gate_results 例・Step 2・Step 4 の receipt 段落、R1-score.md 4.3、resource-map.yaml の citation_gate だけ)、aggregate-completeness.py の report の gate 検査 (L207-229)・3 gate 関数 (L414-488)・main (L491-531)、schemas/completeness-findings.schema.json の gate_result / knowledge_subgate、R1-score.md 2.3-2.4 (L41-61)・4.3 (L87-89)・5.3 (L115-116)、R2-delegate.md 2.4 (L50-62)、references/resource-map.yaml 全文、build-resume-receipt.py の canonical 検査 (L196-212・L271-273)、resume-receipt.schema.json の evaluator.report_path、guard-confirmed-chapter-overwrite.py L116。plugins/ 全体で completeness-report.json と resume-receipt を grep し、この skill と guard 以外に読む側が無いことを確認した。 実行したコマンドと結果: (1) (cd <INT> && PYTHONDONTWRITEBYTECODE=1 python3 -m pytest <skill>/tests -q -p no:cacheprovider) は 127 passed。(2) 同じ形で plugins/system-spec-harness 全体は 1130 passed (iteration 2 の記録は 1127。作業ツリーには他の作業の変更もあり、差の原因は未確認)。実行前後の git -C <INT> status --porcelain --untracked-files=all は同一。 (3) scratchpad の it3/e2e_it3.py (python3 -B、作業 dir は scratchpad 配下で最後に削除、INT には書かない): test support の write_matrix (complete/未完了)・golden_report・write_ledger で一時入力を作り、aggregate の --matrix --require-complete / --source-citation --state --repo-root / --knowledge-graph を CLI で実行。3 つとも CLI exit 0・gate exit_code 0、id と name は SKILL.md L134-136 の例と一致、例の key は実出力の部分集合、subgates 4 件の key は例と同一。未完了 matrix では aggregate CLI exit 1・G-matrix.exit_code 1・直接実行 --require-complete exit 1・フラグ無し exit 0。3 gate の stdout JSON を無改変で入れた PASS report は --report --fork-ledger で exit 0、G-matrix を未完了版に差し替えた report は exit 1 (PASS report lacks passing gate: G-matrix)。ledger は test fixture であり、hook が書いた実 ledger による live-trial は未確認。 (4) render-findings-score.py --rubric-refs <ref-skill-design-rubric/references/rubric.json> --target <skill> は kind 省略と --kind skill の両方で score 100・threshold 80・passed・rubric 1.6.0・rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9・applicable 20 / scored 19 / pending_human 1 (BD-004) / not_applicable 21・findings 0 件・required_fixes 0 件。(5) lint-skill-tree.py <skill> は LS-203 の warn だけで ok (exit 0)。lint-skill-description.py --report --skills-dir plugins/system-spec-harness/skills は VIOLATION 0。validate-frontmatter.py <SKILL.md> は ok。 判定: contradiction・omission・inconsistency・dependency_break は 0 件、high/critical も 0 件。iteration 2 の smell 5 件のうち 4 件 (作者が直したもの) は positive_feedback 1・2・4・5 のとおり実物で解消を確認した。残る smell は 2 件 (今回の receipt 段落の修正で入った FAIL 時の書き先の未記述、前回から残る LS-203) で、どちらも low。ブリーフの規則では PASS を妨げないため PASS、next_action=none。 書き換えたのはこの verdict 2 ファイルだけで、SKILL.md・script・test は読むだけ。"
+}

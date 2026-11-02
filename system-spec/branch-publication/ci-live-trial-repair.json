@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T00:06:06.995303+00:00",
+  "beads_id": "harness-86kh",
+  "pr": "https://github.com/daishiman/harness-dev/pull/87",
+  "impact": "既存CI実走基盤の起動CLI契約に影響あり。資料生成のUI/HTML/図種/HTTP/DB/認証基盤の新設なし。",
+  "root_cause": [
+    "tmux paneのshell側で裸claudeが旧CLIへ再解決される",
+    "native CLI2.1.316の既知初回確認画面に番号がなく旧検出条件と一致しない"
+  ],
+  "contract_changes": [
+    "--claude-executableで実行可能な絶対pathを固定。省略時はcaller PATHで解決。ユーザーPATHやstartup設定を変更しない。",
+    "既知の番号付き/無番号形式を正確な二択・順序・選択状態・footerで検査。選択後も同形式のYesだけ選択を確認し、一度だけ進める。",
+    "未知/混在/前面shell/選択不一致では停止・回収。権限モード、setting sources、model、宣言plugin pinningは維持。"
+  ],
+  "canonical_contract": "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md",
+  "implementation": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-boot.py",
+  "regression": {
+    "file": "tests/test_live_trial_harness.py",
+    "focused": "64 passed",
+    "full_module": "145 passed",
+    "self_test": "PASS"
+  },
+  "target_sha256": {
+    "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md": "fa514f93ae7bfbef617064a87ef2f4769580d960c1aec44a31d645e896c1aa7a",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-boot.py": "804076eef1797c871fefd7d3917ffdb2f7f249e7f1f126a937d4c9b3024004b3",
+    "tests/test_live_trial_harness.py": "44a7e24630340f35dc105dcbdf30a77911620c229180bcee6ebfcf915e866d29"
+  },
+  "plugin_version": "harness-creator 1.4.55（正規release writer）",
+  "specification_flow": "既存の正本SKILLの起動契約と実装を同時更新し、この受領書で既存branch-publication仕様影響へ追加。新規system-spec編纂やfeature/task promotionは行わない。",
+  "unchanged_acceptance": "live PASSの本文/閉包/transcript/scenarioの一致検査とfresh goal評価は維持。旧PASSのSHA付替えやtest skipを行わない。",
+  "live_trial_scope": {
+    "default_plan": "2 run, 7 defer",
+    "exhaustive": "CI必須9対象の再実走について利用者へ確認中。未取得の許可やPASSを作らない。"
+  },
+  "not_claimed": [
+    "CI成功",
+    "9対象すべての有効PASS",
+    "この更新のcommit/push完了"
+  ],
+  "updated_at": "2026-11-02T00:30:52.244373+00:00",
+  "observed_trials": {
+    "results": "eval-log/dev-graph/ci-repair-2026-11-02/repair-results.json",
+    "init": "PASS",
+    "decompose": "DEGRADED (goal FAIL)",
+    "remaining_targets": 8,
+    "sessions_remaining": 0
+  },
+  "followup": "decomposeの次回task候補を準備したが未実行。全件実走の確認回答前に既定2を超えて起動しない。"
+}

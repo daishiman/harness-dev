@@ -1,0 +1,7683 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "P01",
+      "title": "requirements",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-01",
+      "title": "C03が全案の最終PNGとSHAを受け取り、各画像に中央軸・公開範囲・読み順の具体所見を返す契約がreview-contract.mdにあり、旧agents/flyer-reviewer.mdの共通完成レビュー手順がそこへ吸収されている。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "C03が全案の最終PNGとSHAを受け取り、各画像に中央軸・公開範囲・読み順の具体所見を返す契約がreview-contract.mdにあり、旧agents/flyer-reviewer.mdの共通完成レビュー手順がそこへ吸収されている。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-02",
+      "title": "C03が未実見・素材許可未確認・必須修正残ありをPASSにせず、C5/C9に対応する拒否条件をprompts/visual-review.mdに持つ。制作へ直接戻した修正の再評価では、briefの必須事実の欠落と公開範囲の変化も拒否条件にする(C15)。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "C03が未実見・素材許可未確認・必須修正残ありをPASSにせず、C5/C9に対応する拒否条件をprompts/visual-review.mdに持つ。制作へ直接戻した修正の再評価では、briefの必須事実の欠落と公開範囲の変化も拒否条件にする(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-03",
+      "title": "C07が元画像・最新要望・analysis.jsonのSHAを受け取り、観察一致・網羅・変更規律・実現性の根拠とPASS/FIXの戻り先を返し、未照合の元画像をPASSにしない契約がevaluation-contract.mdにある。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "C07が元画像・最新要望・analysis.jsonのSHAを受け取り、観察一致・網羅・変更規律・実現性の根拠とPASS/FIXの戻り先を返し、未照合の元画像をPASSにしない契約がevaluation-contract.mdにある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-04",
+      "title": "references/essence.jsonが本質課題・二値の本質成果E*・非目的・予算・golden事例の5項目を持ち、C03/C07が所見ごとに本質成果IDと本質/好みの区分を返す契約がある。本質区分の所見は該当E*の二値基準の失敗を示す観測(画像SHA・領域・失敗した基準の文言)を必須とし、観測の無い所見とE*に結び付かない所見はFIXにせず、好みの提案として分けて返す(C15)。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "references/essence.jsonが本質課題・二値の本質成果E*・非目的・予算・golden事例の5項目を持ち、C03/C07が所見ごとに本質成果IDと本質/好みの区分を返す契約がある。本質区分の所見は該当E*の二値基準の失敗を示す観測(画像SHA・領域・失敗した基準の文言)を必須とし、観測の無い所見とE*に結び付かない所見はFIXにせず、好みの提案として分けて返す(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-05",
+      "title": "C03/C07がchecks.json・analysis-validateで判定済みの項目を再判定せず、実見が要る項目だけを返し、構図・文字・配色の知見はdesign-knowledge-index.jsonのlensから必要な分だけ読む(C16)。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "C03/C07がchecks.json・analysis-validateで判定済みの項目を再判定せず、実見が要る項目だけを返し、構図・文字・配色の知見はdesign-knowledge-index.jsonのlensから必要な分だけ読む(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C03-06",
+      "title": "C03/C07のtoolsがReadのみで、判定JSONの書込みは呼出元assign skillが行い、評価担当が制作物・分析を変更できない。専門役をagentとして起動する経路が無い(C13)。",
+      "phase_ref": "P01",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md",
+      "acceptance_criterion": "C03/C07のtoolsがReadのみで、判定JSONの書込みは呼出元assign skillが行い、評価担当が制作物・分析を変更できない。専門役をagentとして起動する経路が無い(C13)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C03",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-01",
+      "title": "C03が全案の最終PNGとSHAを受け取り、各画像に中央軸・公開範囲・読み順の具体所見を返す契約がreview-contract.mdにあり、旧agents/flyer-reviewer.mdの共通完成レビュー手順がそこへ吸収されている。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "C03が全案の最終PNGとSHAを受け取り、各画像に中央軸・公開範囲・読み順の具体所見を返す契約がreview-contract.mdにあり、旧agents/flyer-reviewer.mdの共通完成レビュー手順がそこへ吸収されている。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-02",
+      "title": "C03が未実見・素材許可未確認・必須修正残ありをPASSにせず、C5/C9に対応する拒否条件をprompts/visual-review.mdに持つ。制作へ直接戻した修正の再評価では、briefの必須事実の欠落と公開範囲の変化も拒否条件にする(C15)。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "C03が未実見・素材許可未確認・必須修正残ありをPASSにせず、C5/C9に対応する拒否条件をprompts/visual-review.mdに持つ。制作へ直接戻した修正の再評価では、briefの必須事実の欠落と公開範囲の変化も拒否条件にする(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-03",
+      "title": "C07が元画像・最新要望・analysis.jsonのSHAを受け取り、観察一致・網羅・変更規律・実現性の根拠とPASS/FIXの戻り先を返し、未照合の元画像をPASSにしない契約がevaluation-contract.mdにある。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "C07が元画像・最新要望・analysis.jsonのSHAを受け取り、観察一致・網羅・変更規律・実現性の根拠とPASS/FIXの戻り先を返し、未照合の元画像をPASSにしない契約がevaluation-contract.mdにある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-04",
+      "title": "references/essence.jsonが本質課題・二値の本質成果E*・非目的・予算・golden事例の5項目を持ち、C03/C07が所見ごとに本質成果IDと本質/好みの区分を返す契約がある。本質区分の所見は該当E*の二値基準の失敗を示す観測(画像SHA・領域・失敗した基準の文言)を必須とし、観測の無い所見とE*に結び付かない所見はFIXにせず、好みの提案として分けて返す(C15)。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "references/essence.jsonが本質課題・二値の本質成果E*・非目的・予算・golden事例の5項目を持ち、C03/C07が所見ごとに本質成果IDと本質/好みの区分を返す契約がある。本質区分の所見は該当E*の二値基準の失敗を示す観測(画像SHA・領域・失敗した基準の文言)を必須とし、観測の無い所見とE*に結び付かない所見はFIXにせず、好みの提案として分けて返す(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-05",
+      "title": "C03/C07がchecks.json・analysis-validateで判定済みの項目を再判定せず、実見が要る項目だけを返し、構図・文字・配色の知見はdesign-knowledge-index.jsonのlensから必要な分だけ読む(C16)。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "C03/C07がchecks.json・analysis-validateで判定済みの項目を再判定せず、実見が要る項目だけを返し、構図・文字・配色の知見はdesign-knowledge-index.jsonのlensから必要な分だけ読む(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-C07-06",
+      "title": "C03/C07のtoolsがReadのみで、判定JSONの書込みは呼出元assign skillが行い、評価担当が制作物・分析を変更できない。専門役をagentとして起動する経路が無い(C13)。",
+      "phase_ref": "P01",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md",
+      "acceptance_criterion": "C03/C07のtoolsがReadのみで、判定JSONの書込みは呼出元assign skillが行い、評価担当が制作物・分析を変更できない。専門役をagentとして起動する経路が無い(C13)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C07",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02",
+      "title": "design",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-01",
+      "title": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-02",
+      "title": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-03",
+      "title": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-04",
+      "title": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-05",
+      "title": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-06",
+      "title": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-07",
+      "title": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-08",
+      "title": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-09",
+      "title": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C02-10",
+      "title": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-review/",
+      "acceptance_criterion": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C02",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-01",
+      "title": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-02",
+      "title": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-03",
+      "title": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-04",
+      "title": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-05",
+      "title": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-06",
+      "title": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-07",
+      "title": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-08",
+      "title": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-09",
+      "title": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C05-10",
+      "title": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/assign-flyer-analysis-review/",
+      "acceptance_criterion": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C05",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-01",
+      "title": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C02がverify結果と全PNG一覧をC03へ渡し、各案のSHA・具体所見・必須修正・判定をvisual-review.jsonへ集約する契約がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-02",
+      "title": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C02が画像未実見/古いSHA/未解消修正を拒否し、C8/C9の検査結果とC03の主観所見を混同しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-03",
+      "title": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C05がanalysis-sealの済んだanalysis.jsonと元画像をC07へ渡し、返った判定をanalysis-review.jsonへ書き、FIXはrun-analyze-flyerへ戻す契約がある。C05とC02はcontext forkで起動する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-04",
+      "title": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C12としてscripts/flyer.pyを4skill共通の実行入口にし、plugin-composition.yamlのimplementation.shared_script_componentをtrueへ改め、Node未導入時はexit 2で案内する設計がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-05",
+      "title": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "旧agents/flyer-reviewer.mdと共有専門役3本をagentsディレクトリから外し、前者はreview-contract.mdへ、後者はdesign-knowledge-index.jsonのlensへ吸収する。plugin-composition.yamlのcapabilitiesとconsults辺、参照元(prompts/visual-review.md・references/*.json/*.md・scripts/package.pyの必須一覧)の張替え一覧がある。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-06",
+      "title": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "revisionBudget(工程全体maxCycles 3・提案再評価でリセットしない・同一画像と所見の反復を進捗にしない・上限でINCOMPLETE)を4skillの戻り先と1対1で対応付けた表があり、stopWhenを「該当する本質成果が全てPASS」へ改め、好みだけの所見を周回に数えない(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-07",
+      "title": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C02のFIXが元要件ID・本質成果ID・種類を持ち、決定論検査の失敗(QR読取・安全域・文字欠け・中心軸・外縁)はC01の制作へ直接、目的・事実・公開範囲のずれはrun-analyze-flyerへ戻す振分表がある。直接戻しの修正でbriefの必須事実・公開範囲が変わればC03が拒否して分析へ戻し、失敗したE*基準の観測が無い、または観測の画像SHAが現行の案と・引用した基準文言が現行E*と一致しない本質区分の所見はC02が好みへ回してFIXにしない(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-08",
+      "title": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C02が案単位の実見判定のうち3 digestが一致したものだけを再利用し、変わった案と集合に掛かる判定をC03へ渡す。LLM担当の起動数は宣言値でなく呼出記録から数え、essence.jsonの予算と突き合わせる。担当への入力束はflyer.pyだけが発行して発行時に呼出記録へ追記し、C02は記録に無い入力束IDの判定を受け付けないので、追記漏れは過少申告でなく判定の欠落として表に出る。再利用した判定は元の入力束IDを引き継ぎ、essence-checkは再利用元の判定が呼出記録に残っていることを確かめる(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-09",
+      "title": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "C12にessence-check(Python標準ライブラリ・読取専用)を置く設計がある。--project指定時は原依頼hashの不変・本質区分の観測の有無・FIX振分・呼出記録の起動数と予算を、指定なしではplugin-composition.yamlの各capabilityと規則のservesが現行essence.jsonのE*に、evidenceが同梱の実事例(production-history・hyogo-v13-feedback)のpathかIDに解決すること、担当数・LLM評価予算・E*の数が基準を超えないこと、golden事例と試験の対応を検査する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C12-10",
+      "title": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/scripts/flyer.py",
+      "acceptance_criterion": "比較の基準は直前リリースでscripts/package.pyが書き出すreferences/essence-baseline.json(担当数・LLM評価予算・E*とgoldenのID集合・元のessence.json digest・版)とし、改善の変更では書き換えない。基準の版が、CHANGELOGのうちplugin.jsonの現在版以下で最新のリリース版と異なる(基準が古い。版を上げる前の作業中の新版の項目は数えない)、または基準を超えるとessence-checkは常に失敗し、例外は対象digestと利用者の発言原文を持つ承認記録が一致する場合に限る。リリースではpackage.pyが版を上げる前にessence-checkを呼び、通過した時だけ新版の基準を書き出し、その後に版を上げる。基準が無い状態はplugin.jsonの現在版がessence.jsonのbaseline_introduced_in(1.3.0想定)より前の初期化中だけ許し、初期化中はessence.jsonのdigestに一致する承認記録(build時に利用者が確定した値)を必須として予算と担当数をessence.jsonの値と比べ、基準比較以外の検査は通常どおり行う。導入版より後で基準が無ければ失敗する(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C12",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P03",
+      "title": "design-review",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P03-x-01",
+      "title": "独立担当がassign-plugin-plan-evaluatorの11ゲートと意味検証を実行し、C1〜C4/重大度/入力SHAを記録する。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-01",
+      "acceptance_criterion": "独立担当がassign-plugin-plan-evaluatorの11ゲートと意味検証を実行し、C1〜C4/重大度/入力SHAを記録する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P03-x-02",
+      "title": "high/mediumの修正を13phase・inventory・handoffへ反映後、canonical deriveを実行して再評価へ渡す。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-02",
+      "acceptance_criterion": "high/mediumの修正を13phase・inventory・handoffへ反映後、canonical deriveを実行して再評価へ渡す。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04",
+      "title": "test-design",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-01",
+      "title": "tests/contract.test.cjsが中央ずれ、白黒欠落、未確認素材、U01crop逸脱、生成履歴欠落をそれぞれ失敗として検査する。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-01",
+      "acceptance_criterion": "tests/contract.test.cjsが中央ずれ、白黒欠落、未確認素材、U01crop逸脱、生成履歴欠落をそれぞれ失敗として検査する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-02",
+      "title": "tests/acceptance.test.cjsがreview無し/古いfingerprint/PNG改変/古いreview SHAでfinalize失敗、現行証拠のみ成功を確認する。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-02",
+      "acceptance_criterion": "tests/acceptance.test.cjsがreview無し/古いfingerprint/PNG改変/古いreview SHAでfinalize失敗、現行証拠のみ成功を確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-03",
+      "title": "analysis-review.jsonのPASS無し・analysisSha不一致・seal後の分析書換えで制作開始が失敗し、評価担当のtoolsにWrite/Edit/Bashがあれば検査が失敗する(C13)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-03",
+      "acceptance_criterion": "analysis-review.jsonのPASS無し・analysisSha不一致・seal後の分析書換えで制作開始が失敗し、評価担当のtoolsにWrite/Edit/Bashがあれば検査が失敗する(C13)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-04",
+      "title": "周回4回目の開始、提案再評価による周回数の初期化、同一画像SHAと同一所見の再提出を失敗とし、上限到達時はINCOMPLETEと未解決項目を返すことを確認する(C14)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-04",
+      "acceptance_criterion": "周回4回目の開始、提案再評価による周回数の初期化、同一画像SHAと同一所見の再提出を失敗とし、上限到達時はINCOMPLETEと未解決項目を返すことを確認する(C14)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-05",
+      "title": "agentsディレクトリにcomposition未登録のagentがある、またはSKILL.mdがnode scripts/cli.cjsを直接起動していると、package-contractの検査が失敗する。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-05",
+      "acceptance_criterion": "agentsディレクトリにcomposition未登録のagentがある、またはSKILL.mdがnode scripts/cli.cjsを直接起動していると、package-contractの検査が失敗する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-06",
+      "title": "原依頼hashの書換え、本質成果IDの無いFIX、失敗したE*基準の観測が無い本質区分のFIX、好みだけの所見による周回開始、決定論の失敗を分析へ・目的のずれを制作へ戻す誤振分を、essence-check --projectが失敗とする(C15)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-06",
+      "acceptance_criterion": "原依頼hashの書換え、本質成果IDの無いFIX、失敗したE*基準の観測が無い本質区分のFIX、好みだけの所見による周回開始、決定論の失敗を分析へ・目的のずれを制作へ戻す誤振分を、essence-check --projectが失敗とする(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-07",
+      "title": "3 digestが全て同じ案の案単位の判定は再利用され、どれか1つ(規範digestならlens 1項目)でも変わった案と、案の集合に掛かる判定は再評価になる。決定論検査で判定済みの項目がvisual-review.jsonの必須修正に重複して現れる、呼出記録から数えたLLM担当の起動数が予算を超える、または呼出記録に無い入力束IDの判定が混ざると、essence-check --projectが失敗する(C16)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-07",
+      "acceptance_criterion": "3 digestが全て同じ案の案単位の判定は再利用され、どれか1つ(規範digestならlens 1項目)でも変わった案と、案の集合に掛かる判定は再評価になる。決定論検査で判定済みの項目がvisual-review.jsonの必須修正に重複して現れる、呼出記録から数えたLLM担当の起動数が予算を超える、または呼出記録に無い入力束IDの判定が混ざると、essence-check --projectが失敗する(C16)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-x-08",
+      "title": "serves/evidenceの無いcapabilityや規則の追加、実在しないE*や同梱されていない事例を指すserves/evidence、承認記録の無いE*の追加や担当数・LLM評価予算の基準超過、基準ファイルがplugin.jsonの現在版以下で最新のリリース版と異なる状態(作業中の新版の項目だけがCHANGELOGに先に入った状態は通す)・導入版より後の基準欠落・承認記録の無い初期化、golden事例(中心軸・白黒欠落・旧SHA)の削除を、essence-check(プラグイン)が失敗とする。対象digestの一致する承認記録がある超過だけが通る(C17)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-08",
+      "acceptance_criterion": "serves/evidenceの無いcapabilityや規則の追加、実在しないE*や同梱されていない事例を指すserves/evidence、承認記録の無いE*の追加や担当数・LLM評価予算の基準超過、基準ファイルがplugin.jsonの現在版以下で最新のリリース版と異なる状態(作業中の新版の項目だけがCHANGELOGに先に入った状態は通す)・導入版より後の基準欠落・承認記録の無い初期化、golden事例(中心軸・白黒欠落・旧SHA)の削除を、essence-check(プラグイン)が失敗とする。対象digestの一致する承認記録がある超過だけが通る(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05",
+      "title": "implementation",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P05",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-01",
+      "title": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-02",
+      "title": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-03",
+      "title": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-04",
+      "title": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-05",
+      "title": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-06",
+      "title": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-07",
+      "title": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-08",
+      "title": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/",
+      "acceptance_criterion": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C01",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-01",
+      "title": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-02",
+      "title": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-03",
+      "title": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-04",
+      "title": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-05",
+      "title": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-06",
+      "title": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-07",
+      "title": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C04-08",
+      "title": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/",
+      "acceptance_criterion": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C04",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-01",
+      "title": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-02",
+      "title": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-03",
+      "title": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-04",
+      "title": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-05",
+      "title": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-06",
+      "title": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-07",
+      "title": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C06-08",
+      "title": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md",
+      "acceptance_criterion": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C06",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-01",
+      "title": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C01のinit→import→prompts→validate→render→verify→review-template→finalizeがscripts/flyer.pyから実行でき、projectのbrief/assets/concepts/sceneとoutのHTML/PDF/PNGを生成する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-02",
+      "title": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C01がC1/C2/C5の確認をbriefへ保存し、C3/C4/C7の文字・外周・写真条件とC8/C9の鮮度/個別目視gateをfail closedで実装する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-03",
+      "title": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C01が背景のgenerated/reuse-approvedの由来、実際のtool/prompt/出力SHAを保持し、ホスト生成ツールが無い時は接続か明示再利用を確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-04",
+      "title": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C04がanalysis-template→全元画像の実見→analysis-seal→analysis-validate→C05呼出の順で進み、領域付き所見・保持点・要求別の候補と採否理由・nextActionsを欠落なく持つ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-05",
+      "title": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C06がC04のstage契約だけを読み、完成画像の合格判定をせず、構図・文字・配色のlensを必要な分だけ読んで、所見を原依頼の本質成果IDへ結ぶ。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-06",
+      "title": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C01がinit時に原依頼の原文とhash・該当する本質成果IDをbriefへ固定し、各周回の原依頼との差分と所見区分をdelivery.jsonへ記録し、該当する本質成果が全てPASSになった時点で周回を止める(C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-07",
+      "title": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "C08がanalysis-review.jsonのPASSか決定論検査の失敗項目を確認してから制作・修正し、新しいPDF/PNGをC02へ渡す。C02のFIXのうち目的・事実・公開範囲のずれはC04の改訂案とC05の再評価を経て戻り、工程全体の周回を3で打ち切る(C14/C15)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C08-08",
+      "title": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md",
+      "acceptance_criterion": "4skillのSKILL.mdとreferences/runtime.mdの実行例がpython3 scripts/flyer.py経由にそろい、node scripts/cli.cjsの直接起動が残らない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "draft",
+      "route_ref": "C08",
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06",
+      "title": "test-run",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06-x-01",
+      "title": "npm testの実行結果を保存し、skipがある場合は対象を未実施と明示する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-01",
+      "acceptance_criterion": "npm testの実行結果を保存し、skipがある場合は対象を未実施と明示する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06-x-02",
+      "title": "node tests/render-acceptance.cjs <新規証拠dir>で黒/白2案を描画し、実見後FLYER_ACCEPTANCE_PROJECT=<証拠dir> npm testが失敗0となる。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-02",
+      "acceptance_criterion": "node tests/render-acceptance.cjs <新規証拠dir>で黒/白2案を描画し、実見後FLYER_ACCEPTANCE_PROJECT=<証拠dir> npm testが失敗0となる。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06-x-03",
+      "title": "verifyが両案のQR/白外縁/紙面中心/安全域/埋込font/鮮度を検査し、各異常系の拒否理由が試験結果に残る。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-03",
+      "acceptance_criterion": "verifyが両案のQR/白外縁/紙面中心/安全域/埋込font/鮮度を検査し、各異常系の拒否理由が試験結果に残る。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06-x-04",
+      "title": "python3 -m unittest tests/test_essence_check.pyの結果をverification/test-results.txtへ保存し、python3 scripts/flyer.py essence-checkと、描画した証拠projectへの--project指定がともにexit 0である(C15-C17)。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-04",
+      "acceptance_criterion": "python3 -m unittest tests/test_essence_check.pyの結果をverification/test-results.txtへ保存し、python3 scripts/flyer.py essence-checkと、描画した証拠projectへの--project指定がともにexit 0である(C15-C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07",
+      "title": "acceptance-criteria",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07-x-01",
+      "title": "C1/C2のヒアリングと新構図設計、C3の白黒、C6の生成未実施境界、C9の全案実見条件をrequirements.jsonで個別判定する。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-01",
+      "acceptance_criterion": "C1/C2のヒアリングと新構図設計、C3の白黒、C6の生成未実施境界、C9の全案実見条件をrequirements.jsonで個別判定する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07-x-02",
+      "title": "写真以外の表現形式を受理する契約と、漫画/手書きの本番画像を実生成した証拠の有無を区別する。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-02",
+      "acceptance_criterion": "写真以外の表現形式を受理する契約と、漫画/手書きの本番画像を実生成した証拠の有無を区別する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07-x-03",
+      "title": "C13の4段階分離(担当の別context・local agentとstage契約・評価担当の読取専用)とC14の工程全体3周上限を、実走記録と試験結果の両方で個別判定する。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-03",
+      "acceptance_criterion": "C13の4段階分離(担当の別context・local agentとstage契約・評価担当の読取専用)とC14の工程全体3周上限を、実走記録と試験結果の両方で個別判定する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07-x-04",
+      "title": "C15-C17を、実走記録(原依頼hash・所見の本質/好み区分・FIXの振分先・再利用した判定・起動したLLM担当数)とessence-checkの結果で個別判定し、試験の成功だけで本質に適合したと扱わない。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-04",
+      "acceptance_criterion": "C15-C17を、実走記録(原依頼hash・所見の本質/好み区分・FIXの振分先・再利用した判定・起動したLLM担当数)とessence-checkの結果で個別判定し、試験の成功だけで本質に適合したと扱わない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08",
+      "title": "refactoring",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08-x-01",
+      "title": "中央計算とsemantic group対応はproject.cjs/schema、素材履歴はcatalogへ集約し、SKILLには正本参照を置く。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-01",
+      "acceptance_criterion": "中央計算とsemantic group対応はproject.cjs/schema、素材履歴はcatalogへ集約し、SKILLには正本参照を置く。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08-x-02",
+      "title": "python3 scripts/package.py --checkが外部symlink/不整合素材/必要資材欠落を拒否し、変更後のnpm testが通る。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-02",
+      "acceptance_criterion": "python3 scripts/package.py --checkが外部symlink/不整合素材/必要資材欠落を拒否し、変更後のnpm testが通る。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08-x-03",
+      "title": "旧専門役3本の観点はdesign-knowledge-index.jsonのlensだけに置き、stage agent・SKILL・promptsの本文へ複製しない。整理で規則を消す/足す時もessence-checkを通し、本質成果IDの無い規則を残さない。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-03",
+      "acceptance_criterion": "旧専門役3本の観点はdesign-knowledge-index.jsonのlensだけに置き、stage agent・SKILL・promptsの本文へ複製しない。整理で規則を消す/足す時もessence-checkを通し、本質成果IDの無い規則を残さない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09",
+      "title": "quality-assurance",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-01",
+      "title": "全案のprint.pngを個別実見し、顔保護・写真境界・主題の読み順・下部中央軸・QR衝突を具体所見に記す。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-01",
+      "acceptance_criterion": "全案のprint.pngを個別実見し、顔保護・写真境界・主題の読み順・下部中央軸・QR衝突を具体所見に記す。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-02",
+      "title": "mandatoryFixesが0でない画像、未実見画像、古いSHAはfinalize不可であり、連絡先/住所/料金/Peatix補足の意味群も検査する。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-02",
+      "acceptance_criterion": "mandatoryFixesが0でない画像、未実見画像、古いSHAはfinalize不可であり、連絡先/住所/料金/Peatix補足の意味群も検査する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-03",
+      "title": "scripts/package.pyの必須ファイル検査がplugin-composition.yamlのcapabilitiesから導出され、4skill・stage local agent4本・references/essence.jsonを漏れなく含み(essence-baseline.jsonは導入版の初期化中だけ欠落を許し、以降の版では必須とする)、旧agents/flyer-reviewer.mdと共有専門役3本を要求しない。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-03",
+      "acceptance_criterion": "scripts/package.pyの必須ファイル検査がplugin-composition.yamlのcapabilitiesから導出され、4skill・stage local agent4本・references/essence.jsonを漏れなく含み(essence-baseline.jsonは導入版の初期化中だけ欠落を許し、以降の版では必須とする)、旧agents/flyer-reviewer.mdと共有専門役3本を要求しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-04",
+      "title": "python3 scripts/flyer.py essence-checkがプラグイン全体でexit 0で、essence-baseline.json(初期化中は承認済みのessence.json)より担当数・LLM評価予算・E*の数が増えず(一致する承認記録のある超過を除く)、golden事例(過去の中心軸・白黒欠落・旧SHA)が全て試験に対応して残る(C17)。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-04",
+      "acceptance_criterion": "python3 scripts/flyer.py essence-checkがプラグイン全体でexit 0で、essence-baseline.json(初期化中は承認済みのessence.json)より担当数・LLM評価予算・E*の数が増えず(一致する承認記録のある超過を除く)、golden事例(過去の中心軸・白黒欠落・旧SHA)が全て試験に対応して残る(C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-05",
+      "title": "plugins/flyer-studio/node_modules配下にある他製品のSKILL.mdが、repoのskill走査・governance検査・配布キットのいずれにも混入しないことを確認する。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-05",
+      "acceptance_criterion": "plugins/flyer-studio/node_modules配下にある他製品のSKILL.mdが、repoのskill走査・governance検査・配布キットのいずれにも混入しないことを確認する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10",
+      "title": "final-review",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10-x-01",
+      "title": "独立担当がC1〜C4を最新入力SHAで判定し、high/medium残件が0である。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-01",
+      "acceptance_criterion": "独立担当がC1〜C4を最新入力SHAで判定し、high/medium残件が0である。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10-x-02",
+      "title": "独立担当が改善版の実出力を原依頼の本質成果E*で判定し、好みだけの所見を必須修正に混ぜず、利用者への提案として分けて返す。本質区分の所見を抜き出して観測と区分が合うかを確かめ、essence-approvals.jsonlの各承認記録を利用者の発言原文と照合する(C15/C17)。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-02",
+      "acceptance_criterion": "独立担当が改善版の実出力を原依頼の本質成果E*で判定し、好みだけの所見を必須修正に混ぜず、利用者への提案として分けて返す。本質区分の所見を抜き出して観測と区分が合うかを確かめ、essence-approvals.jsonlの各承認記録を利用者の発言原文と照合する(C15/C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10-x-03",
+      "title": "python3 scripts/flyer.py essence-checkがプラグイン全体と納品projectの両方でexit 0である(C16/C17)。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-03",
+      "acceptance_criterion": "python3 scripts/flyer.py essence-checkがプラグイン全体と納品projectの両方でexit 0である(C16/C17)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10-x-04",
+      "title": "今回未実施のhost session/新生成/13案制作/global installを最終説明で未検証・deferredとして残し、自己レビューを独立実施と称しない。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-04",
+      "acceptance_criterion": "今回未実施のhost session/新生成/13案制作/global installを最終説明で未検証・deferredとして残し、自己レビューを独立実施と称しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11",
+      "title": "evidence",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-01",
+      "title": "python3 scripts/package.py --checkとclaude plugin validateのログを保存し、Codex manifest/catalogは構造確認と本物session実走を分けて記録する。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-01",
+      "acceptance_criterion": "python3 scripts/package.py --checkとclaude plugin validateのログを保存し、Codex manifest/catalogは構造確認と本物session実走を分けて記録する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-02",
+      "title": "キットを別場所へコピーしてnpm ci --ignore-scripts、doctor、package --checkを実行し、元の素材パス無しで成功する。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-02",
+      "acceptance_criterion": "キットを別場所へコピーしてnpm ci --ignore-scripts、doctor、package --checkを実行し、元の素材パス無しで成功する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-03",
+      "title": "results.jsonに実際の環境・依存version・出力SHA・試験skip/未実施経路を記録し、P06/P09の証拠へ到達できる。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-03",
+      "acceptance_criterion": "results.jsonに実際の環境・依存version・出力SHA・試験skip/未実施経路を記録し、P06/P09の証拠へ到達できる。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-04",
+      "title": "verification/README.mdの1.2.0未検証経路(新しい背景の実生成・漫画/手書き表現・両ホストの新規会話での完走・実機印刷・告知効果)を、新版で実施/未実施/対象外の3値に分けて理由付きで記録し、1.2.0のPASSを新版の証拠に転用しない。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-04",
+      "acceptance_criterion": "verification/README.mdの1.2.0未検証経路(新しい背景の実生成・漫画/手書き表現・両ホストの新規会話での完走・実機印刷・告知効果)を、新版で実施/未実施/対象外の3値に分けて理由付きで記録し、1.2.0のPASSを新版の証拠に転用しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-05",
+      "title": "4段階の実走記録が、analysis.json→analysis-review.json PASS→新しい描画と検査→visual-review.json PASS→納品の順で同一案件dirにそろい、各段階の担当名とSHAが追える。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-05",
+      "acceptance_criterion": "4段階の実走記録が、analysis.json→analysis-review.json PASS→新しい描画と検査→visual-review.json PASS→納品の順で同一案件dirにそろい、各段階の担当名とSHAが追える。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12",
+      "title": "documentation",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-01",
+      "title": "READMEの開始例から素材候補・形式ヒアリング・白黒・新構図・実生成・個別検査・納品へ辿れ、実CLIと矛盾しない。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-01",
+      "acceptance_criterion": "READMEの開始例から素材候補・形式ヒアリング・白黒・新構図・実生成・個別検査・納品へ辿れ、実CLIと矛盾しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-02",
+      "title": "INSTALLがClaude/Codexの導入surfaceと外部依存、未検証経路、global導入未依頼の境界を説明する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-02",
+      "acceptance_criterion": "INSTALLがClaude/Codexの導入surfaceと外部依存、未検証経路、global導入未依頼の境界を説明する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-03",
+      "title": "README・references/runtime.md・root SKILL.mdの実行例がpython3 scripts/flyer.py入口にそろい、4段階の入口(既存紙面の改善はrun-analyze-flyer、新規はrun-create-flyer)を同じ言葉で説明する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-03",
+      "acceptance_criterion": "README・references/runtime.md・root SKILL.mdの実行例がpython3 scripts/flyer.py入口にそろい、4段階の入口(既存紙面の改善はrun-analyze-flyer、新規はrun-create-flyer)を同じ言葉で説明する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-04",
+      "title": "README・references/workflow.mdが、原依頼と本質成果を基準にする制作の周回と、プラグインを改善する時のessence-check手順(本質成果IDと実事例を添えて変更を出し、基準を超える変更は利用者の承認記録が無い限り受け付けられない)を説明する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-04",
+      "acceptance_criterion": "README・references/workflow.mdが、原依頼と本質成果を基準にする制作の周回と、プラグインを改善する時のessence-check手順(本質成果IDと実事例を添えて変更を出し、基準を超える変更は利用者の承認記録が無い限り受け付けられない)を説明する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-05",
+      "title": ".codex-plugin/plugin.jsonのlongDescriptionとdefaultPromptを4段階の説明へ更新し、plugin.json・.claude-plugin/plugin.json・.codex-plugin/plugin.jsonのname/version/descriptionが一致する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-05",
+      "acceptance_criterion": ".codex-plugin/plugin.jsonのlongDescriptionとdefaultPromptを4段階の説明へ更新し、plugin.json・.claude-plugin/plugin.json・.codex-plugin/plugin.jsonのname/version/descriptionが一致する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13",
+      "title": "release",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-01",
+      "title": "python3 scripts/package.py --checkが成功し、--out <新規kit dir>で旧成果物を上書きせずprivate zipを作り、kit-manifest.jsonのSHAが現物に一致する。版を上げる前に、package.pyがessence-checkの通過を確かめてから新版のreferences/essence-baseline.jsonを書き出し、その後にbuild-plugin-release.pyで版を上げる(導入版ではこれが最初の基準となり初期化を終える)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-01",
+      "acceptance_criterion": "python3 scripts/package.py --checkが成功し、--out <新規kit dir>で旧成果物を上書きせずprivate zipを作り、kit-manifest.jsonのSHAが現物に一致する。版を上げる前に、package.pyがessence-checkの通過を確かめてから新版のreferences/essence-baseline.jsonを書き出し、その後にbuild-plugin-release.pyで版を上げる(導入版ではこれが最初の基準となり初期化を終える)。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-02",
+      "title": "C10/C12の納品範囲と未実施経路をverification/README.mdに記し、公開registry/利用者設定を変更しない。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-02",
+      "acceptance_criterion": "C10/C12の納品範囲と未実施経路をverification/README.mdに記し、公開registry/利用者設定を変更しない。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-03",
+      "title": "CHANGELOG を先に書き、`python3 scripts/build-plugin-release.py --only flyer-studio` で版を上げ、`python3 scripts/build-plugin-release.py --check` が drift 0 で通っている。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-03",
+      "acceptance_criterion": "CHANGELOG を先に書き、`python3 scripts/build-plugin-release.py --only flyer-studio` で版を上げ、`python3 scripts/build-plugin-release.py --check` が drift 0 で通っている。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-04",
+      "title": "両製品の package を維持し、`python3 scripts/build-local-marketplace.py --check` と `python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-04",
+      "acceptance_criterion": "両製品の package を維持し、`python3 scripts/build-local-marketplace.py --check` と `python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-05",
+      "title": "`claude plugin validate --strict plugins/flyer-studio` が通っている。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-05",
+      "acceptance_criterion": "`claude plugin validate --strict plugins/flyer-studio` が通っている。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-06",
+      "title": "`python3 plugins/harness-creator/scripts/install-local-plugins.py --plugin flyer-studio --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-06",
+      "acceptance_criterion": "`python3 plugins/harness-creator/scripts/install-local-plugins.py --plugin flyer-studio --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-07",
+      "title": "実環境 install は `plugin_meta.install.verify.live_skip_reason` の明示理由により省略する。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-07",
+      "acceptance_criterion": "実環境 install は `plugin_meta.install.verify.live_skip_reason` の明示理由により省略する。",
+      "execution_kind": "verification-claim",
+      "execution_stage": "release",
+      "route_ref": null,
+      "task_spec_ref": null
+    }
+  ],
+  "edges": [
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-03",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-04",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-05",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-06",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-07",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-08",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-09",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-10",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-03",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-04",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-05",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-06",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-07",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-08",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-09",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-10",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-01",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-02",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-03",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-04",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-05",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-06",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-07",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-08",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-09",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-10",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-01",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-02",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-02",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-03",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-06",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-07",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-08",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-02",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-03",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-04",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-05",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-06",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-07",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-08",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-02",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-03",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-04",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-05",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-06",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-07",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-08",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-02",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-03",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-04",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-05",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-06",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-07",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-08",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-02",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-03",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-04",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-05",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-06",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-07",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-08",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-01",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-02",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-03",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-04",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-01",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-02",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-03",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-04",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-01",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-02",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-03",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-01",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-02",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-03",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-04",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-05",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-01",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-02",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-03",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-04",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-01",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-02",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-03",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-04",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-05",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-01",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-02",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-03",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-04",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-05",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-01",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-02",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-03",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-04",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-05",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-06",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-07",
+      "to": "P12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C03-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-C07-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-07"
+    },
+    {
+      "type": "produces",
+      "from": "P01-C03-01",
+      "to": "plugins/flyer-studio/skills/assign-flyer-review/agents/visual-review-coordinator.md"
+    },
+    {
+      "type": "produces",
+      "from": "P01-C07-01",
+      "to": "plugins/flyer-studio/skills/assign-flyer-analysis-review/agents/analysis-evaluator.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C02-01",
+      "to": "plugins/flyer-studio/skills/assign-flyer-review/"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C05-01",
+      "to": "plugins/flyer-studio/skills/assign-flyer-analysis-review/"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C12-01",
+      "to": "plugins/flyer-studio/scripts/flyer.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C01-01",
+      "to": "plugins/flyer-studio/skills/run-create-flyer/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C04-01",
+      "to": "plugins/flyer-studio/skills/run-analyze-flyer/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C06-01",
+      "to": "plugins/flyer-studio/skills/run-analyze-flyer/agents/artifact-analyst.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C08-01",
+      "to": "plugins/flyer-studio/skills/run-create-flyer/agents/flyer-producer.md"
+    }
+  ]
+}

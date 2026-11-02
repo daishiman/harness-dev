@@ -311,6 +311,33 @@ def test_composition_is_required_and_matches_public_surfaces(tmp_path):
     assert "composition_surface_drift" in codes(report)
 
 
+def test_json_composition_uses_the_same_surface_inventory(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    composition = plugin / "plugin-composition.yaml"
+    document = {"name": "sample-plugin", "capabilities": [
+        {"kind": "skill", "ref": "skills/run-sample"}
+    ]}
+    write_json(composition, document)
+    assert mod.audit_plugin(tmp_path, plugin)["verdict"] == "PASS"
+    document["capabilities"][0]["ref"] = "skills/run-ghost"
+    write_json(composition, document)
+    assert "composition_surface_drift" in codes(mod.audit_plugin(tmp_path, plugin))
+
+
+@pytest.mark.parametrize("document", [
+    "{broken", "[]", '{"name":"sample-plugin","capabilities":{}}',
+    '{"name":"sample-plugin","capabilities":[null]}',
+    '{"name":"sample-plugin","capabilities":[{"kind":"skill","ref":42}]}',
+    '{"name":"other-plugin","capabilities":[]}',
+])
+def test_invalid_json_composition_fails_closed(tmp_path, document):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    (plugin / "plugin-composition.yaml").write_text(document)
+    assert "composition_missing" in codes(mod.audit_plugin(tmp_path, plugin))
+
+
 def test_executable_bare_claude_plugin_root_in_prompt_fails(tmp_path):
     mod = load_module()
     plugin = make_plugin(tmp_path, with_command=False)
@@ -668,6 +695,12 @@ def test_all_package_contracts_match_schema_and_feedback_boundary():
             for item in payload["runtime_dependencies"]
             if item["capability"] == "run-skill-feedback"
         ]
+        feedback_skill = path.parents[1] / "skills/run-skill-feedback/SKILL.md"
+        # feedback を持たない自己完結 plugin には workflow を強制しない。
+        # 宣言か実体の一方でもあれば、両方の存在と厳密な所有契約を検査する。
+        if not feedback and not feedback_skill.is_file():
+            continue
+        assert feedback_skill.is_file(), path
         assert feedback == [
             {
                 "capability": "run-skill-feedback",

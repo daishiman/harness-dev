@@ -1,0 +1,68 @@
+{
+  "session_id": "01a199f1-5e57-70a1-85f3-ee877cfcfac2",
+  "models": [
+    "gpt-6.1-sol"
+  ],
+  "cli_version": "0.165.0",
+  "format": "codex-rollout-jsonl",
+  "invoked_skills": [
+    "harness-native-skill-probe-20261102"
+  ],
+  "format_errors": [],
+  "activation_errors": [],
+  "completed": true,
+  "usage": {
+    "input_tokens": 154444,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 465,
+    "total_tokens": 154909,
+    "assistant_messages": 6,
+    "transcript_files": 1,
+    "measured": true
+  },
+  "sandbox_contexts": [
+    {
+      "mode": "workspace-write",
+      "approval_policy": "never",
+      "network_access": false,
+      "writable_roots": [
+        "/private/tmp/harness-codex-native-skill-probe-20261102"
+      ],
+      "special_write_roots": [
+        "slash_tmp",
+        "tmpdir"
+      ],
+      "exclude_tmpdir_env_var": false,
+      "exclude_slash_tmp": false,
+      "profile_restricted": true
+    }
+  ],
+  "source": "/private/tmp/harness-codex-native-skill-probe-20261102/native-rollout.jsonl",
+  "user_turn_count": 2,
+  "spawn_count": 1,
+  "children": [
+    {
+      "session_id": "01a199f1-c685-7ab3-a64f-6fb8bb70b47a",
+      "parent_thread_id": "01a199f1-5e57-70a1-85f3-ee877cfcfac2",
+      "agent_path": "/root/native_read_only_probe",
+      "models": [
+        "gpt-6.1-sol"
+      ],
+      "completed": true,
+      "usage": {
+        "input_tokens": 49459,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 99,
+        "total_tokens": 49558,
+        "assistant_messages": 2,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "format_errors": []
+    }
+  ],
+  "claim_limit": "既存probeのnative形状とparser適合のみ。新runner/実target/隔離/hook/C03の実走PASS証拠ではない。probeには旧tmp許可が残り、新runnerの隔離要件を満たしたと主張しない。",
+  "authentication_data": "認証ファイルの読込・値表示なし。明示されたrolloutとprobe SKILLのみ参照。"
+}

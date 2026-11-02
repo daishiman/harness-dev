@@ -1,0 +1,54 @@
+{
+  "verdict": "PASS",
+  "scenario": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+  "scope": "scenarioの3要件と利用者編集template保持の独立監査",
+  "choice_record": "eval-log/init-second-artifact-choice.json",
+  "checks": {
+    "initial_roots_routing_graph_c11": {
+      "status": "pass"
+    },
+    "second_noop": {
+      "status": "pass"
+    },
+    "all_baseline_bytes_and_structure_preserved": {
+      "status": "pass"
+    },
+    "readme_bytes_preserved": {
+      "status": "pass"
+    },
+    "edited_template_preserved": {
+      "status": "pass"
+    },
+    "config_no_forbidden_information": {
+      "status": "pass"
+    },
+    "plugin_source_selected": {
+      "status": "pass"
+    },
+    "second_c11": {
+      "status": "pass"
+    }
+  },
+  "evidence": {
+    "cli_result": "eval-log/init-second-cli-result.json",
+    "status": "noop",
+    "planned_changes": 0,
+    "write_count": 0,
+    "baseline_file_count": 24,
+    "baseline_directory_count": 5,
+    "changed_files": [],
+    "missing_directories": [],
+    "readme_sha256": "895dbddcf5122d54cd6833595ad40c475006f2d8c1243d550798243f47216391",
+    "edited_template_sha256": "af24421b47d5607214d0a21bfb8e74c6d378badee503aab8d421e315c6aafd5e",
+    "forbidden_config_findings": [],
+    "c11_validator": "validate-graph-schema.py --require-canonical-envelope",
+    "c11_exit_code": 0,
+    "c11_violation_count": 0
+  },
+  "excluded_claims": [
+    "source全OUT3/OUT5の網羅検証",
+    "Claude Stop hookまたはnative hook実配達",
+    "外部Beads/GitHub/Projects接続・mutation"
+  ],
+  "findings": []
+}

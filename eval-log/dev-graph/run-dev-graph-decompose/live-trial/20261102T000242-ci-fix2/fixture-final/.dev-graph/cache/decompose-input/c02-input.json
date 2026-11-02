@@ -1,0 +1,94 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "owners": [
+        "harness maintainers"
+      ],
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "priority": "medium",
+      "slug": "render-diff",
+      "title": "前回 render との差分検出",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "resource_scope": [
+        "features/",
+        "tasks/feature-render-diff/"
+      ],
+      "macro": {
+        "purpose": "render 結果が前回からどう変わったかを graph 実値の比較だけで特定できるようにするため",
+        "goal": "今回の render 出力と前回の render 出力を比べた feature/task/edge/進捗の差分が決定論的な差分レコードとして得られている状態",
+        "scope_in": [
+          "前回 render 出力 (または snapshot) の読取",
+          "feature/task/edge/進捗値の追加・削除・変更の検出",
+          "決定論的な差分レコードの出力"
+        ],
+        "scope_out": [
+          "差分の要約文生成と読み手への提示",
+          "render 本体の描画変更",
+          "外部 tracker への同期"
+        ],
+        "acceptance": [
+          "同一 graph の二回の render を比べた差分が 0 件である",
+          "node を 1 件追加した graph との比較で追加差分がちょうど 1 件検出される",
+          "同一入力から二回生成した差分レコードの digest が一致する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "owners": [
+        "harness maintainers"
+      ],
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "priority": "medium",
+      "slug": "render-diff-summary",
+      "title": "render 差分の要約提示",
+      "depends_on": [
+        "feature-render-diff"
+      ],
+      "resource_scope": [
+        "features/",
+        "tasks/feature-render-diff-summary/"
+      ],
+      "macro": {
+        "purpose": "読み手が render の変化を差分レコードを読み解かずに把握できるようにするため",
+        "goal": "差分レコードから生成した要約が変化の件数と主要な変更点を読み手に示している状態",
+        "scope_in": [
+          "差分レコードの読取",
+          "変更種別ごとの件数集計",
+          "読み手向け要約の生成と提示"
+        ],
+        "scope_out": [
+          "差分そのものの検出",
+          "render 本体の描画変更",
+          "外部 tracker への同期"
+        ],
+        "acceptance": [
+          "要約に示す変更件数が差分レコードの件数と一致する",
+          "差分 0 件のとき変化なしと示す",
+          "同一差分レコードから二回生成した要約が一致する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ]
+}

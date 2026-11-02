@@ -1,0 +1,57 @@
+<!-- guide-doc-generator マスコット定義 (P05-x-02 / 参照解析 §9 D1・D2)
+     inline SVG 断片として <body> 直後へ 1 度だけ埋め込む。単体の .svg ファイルとして
+     ブラウザへ直接読ませる用途を持たないため xmlns を宣言しない (xmlns 依存を持たない)。
+     色は assets/tokens/<theme>.json の mascot_css_variables 11 変数の var() 参照だけで解決し、
+     このファイルに実値を持たない。外部参照は 1 件も無く、参照は全て同一文書内の断片識別子。
+     使う側: <svg class="mascot-img" width="34" height="35" data-hb-kind="mascot" aria-hidden="true"><use href="#hbm-plain"/></svg> -->
+<svg width="0" height="0" style="position:absolute" data-hb-kind="mascot" aria-hidden="true">
+  <defs>
+    <linearGradient id="hbm-border-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="var(--border-light)"/>
+      <stop offset="48%" stop-color="var(--border-mid)"/>
+      <stop offset="100%" stop-color="var(--border-dark)"/>
+    </linearGradient>
+    <radialGradient id="hbm-body-gradient" cx="35%" cy="28%" r="85%">
+      <stop offset="0%" stop-color="var(--body-light)"/>
+      <stop offset="58%" stop-color="var(--body-main)"/>
+      <stop offset="100%" stop-color="var(--body-dark)"/>
+    </radialGradient>
+    <linearGradient id="hbm-pupil-gradient" x1="20%" y1="10%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="var(--pupil-light)"/>
+      <stop offset="100%" stop-color="var(--pupil-dark)"/>
+    </linearGradient>
+    <filter id="hbm-soft-shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/>
+      <feOffset dy="2" result="offsetBlur"/>
+      <feColorMatrix in="offsetBlur" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <g id="hbm-face">
+      <rect x="130" y="126" width="989" height="1024" rx="258" fill="url(#hbm-body-gradient)"/>
+      <g filter="url(#hbm-soft-shadow)">
+        <ellipse cx="486" cy="574" rx="173" ry="180" fill="var(--eye-white)"/>
+        <ellipse cx="770" cy="576" rx="170" ry="177" fill="var(--eye-white)"/>
+      </g>
+      <g>
+        <g transform="rotate(8 491 570)">
+          <ellipse cx="491" cy="570" rx="73" ry="88" fill="url(#hbm-pupil-gradient)"/>
+          <ellipse cx="472" cy="527" rx="20" ry="18" fill="var(--highlight)"/>
+          <path d="M458 621 Q490 638 523 615" fill="none" stroke="var(--pupil-gloss)" stroke-width="17" stroke-linecap="round"/>
+        </g>
+        <g transform="rotate(8 766 574)">
+          <ellipse cx="766" cy="574" rx="72" ry="86" fill="url(#hbm-pupil-gradient)"/>
+          <ellipse cx="747" cy="532" rx="19" ry="18" fill="var(--highlight)"/>
+          <path d="M733 625 Q764 640 798 618" fill="none" stroke="var(--pupil-gloss)" stroke-width="17" stroke-linecap="round"/>
+        </g>
+      </g>
+    </g>
+    <symbol id="hbm-bordered" viewBox="49 40 1155 1194" data-hb-kind="mascot">
+      <rect x="59" y="50" width="1135" height="1174" rx="315" fill="url(#hbm-border-gradient)"/>
+      <use href="#hbm-face"/>
+    </symbol>
+    <symbol id="hbm-plain" viewBox="120 116 1009 1044" data-hb-kind="mascot">
+      <use href="#hbm-face"/>
+    </symbol>
+  </defs>
+</svg>

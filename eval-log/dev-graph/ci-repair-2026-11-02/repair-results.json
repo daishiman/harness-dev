@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T00:30:52.244373+00:00",
+  "plan": "初期incremental計画の2対象を実走。追加の起動はしていない。",
+  "init": {
+    "verdict": "PASS",
+    "ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/verdict.json",
+    "wall_s": 320,
+    "goal": "fresh independent PASS、全3obs・goal-seek・予算・closure機械gateを通過"
+  },
+  "decompose": {
+    "verdict": "DEGRADED",
+    "goal": "FAIL",
+    "ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261102T000242-ci-fix2/verdict.json",
+    "wall_s": 351,
+    "reason": "最終4観測は満たしたが、artifact提示→standard記録→監査の順序違反。受入scopeを最終状態だけへ狭めない。",
+    "review_history": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261102T000242-ci-fix2/goal-review-history.json",
+    "candidate_task": "eval-log/dev-graph/ci-repair-2026-11-02/next-decompose-task-template.md",
+    "candidate_task_sha256": "063ebf5be5496e0032b8630c559c92fadd696c63cc34d95c1f6665d5cc89d09b",
+    "candidate_executed": false
+  },
+  "budget_control": {
+    "initial_targets": 2,
+    "new_targets_started": 2,
+    "additional_targets_started": 0,
+    "max_concurrency": 2,
+    "nudge": 0,
+    "budget_extensions": 0,
+    "remaining_acceptance_targets": 8,
+    "exhaustive_permission": "未回答のため未実行"
+  },
+  "safety": "秘密鍵/credentialsはpublic snapshotから除外。private原transcriptを収集時点で固定、公開SHA/変換規則を各runに保存。scoped reapで残session0。",
+  "subsequent_attempt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/approved-exhaustive-progress.json",
+  "history_note": "本ファイルの計画・許可待ち・未実行はrecorded_at当時の記録。後続の利用者ok承認とexhaustive実走結果はsubsequent_attempt_refを参照。"
+}
