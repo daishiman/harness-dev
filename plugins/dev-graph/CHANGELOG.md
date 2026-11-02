@@ -1,5 +1,9 @@
 # 変更履歴
 
+## 0.1.32 — 2026-11-03
+
+- node、requirements、sync、system-spec の live-trial 受領を、現行閉包の Claude PASS へ結び直した。
+
 ## 0.1.31 — 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

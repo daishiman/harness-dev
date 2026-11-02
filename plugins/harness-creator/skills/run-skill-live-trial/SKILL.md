@@ -162,7 +162,7 @@ fork subagent では自走 / 入れ子 Skill / 対話 gate / 本番 hook ロー�
 
 - [ ] 被験 skill が denylist 外で、workdir が `eval-log/<plugin>/<skill>/live-trial/<run-id>/` に作られた
 - [ ] task.md が契約 8 項目 (下表) を満たし、`READY:` 確認後にファイル経由で送信された
-- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP / TOKEN_CAP) で閉じ、`--state-file` で counter が呼び越し永続化された
+- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP / TOKEN_CAP / BLOCKED) で閉じ、`--state-file` で counter が呼び越し永続化された。`TICK_BUDGET` (exit 5) は終端ではなく、同一 `--state-file` で再呼びする
 - [ ] out/ + pane.txt + transcript.jsonl の 3 点が workdir に揃った (回収完了条件)
 - [ ] fresh evaluator が PASS | FAIL + blocker 列挙のみを返した (点数出力なし。正本 = goal-seek-paradigm.md 達成判定節)
 - [ ] `verdict.json` が schema 自己検証を通過して書き出され、scenario 観測の `evidence_ref` が workdir 内の実在ファイルへ解決した (proof trial は actual_model 機械 gate 込み)
@@ -262,9 +262,10 @@ SESSION_ID="$SESSION_ID" python3 $SCRIPTS/live-trial-poll.py --state-file "$WORK
 | 0 DONE | 成果物出現 + busy 不在安定 | 回収へ |
 | 4 GATE | 対話入力待ち (jsonl 判定時のみ) | `python3 $SCRIPTS/live-trial-backend.py send-line "$SESSION" '<応答>'` → 再 poll。**gate 応答回数と種別 (rescue / contractual) を記録** |
 | 2 STALL | 進捗停止 | 下の STALL 分岐表を上から順に |
-| 1 HARD_CAP | 絶対打切り (安全弁) | 記録 → kill-session → verdict `--blocked` |
+| 1 HARD_CAP | 絶対打切り (安全弁) | 記録 → kill-session → verdict `--blocked --poll-exit HARD_CAP` |
 | 5 TICK_BUDGET | tick 予算消化 | 同一 state-file で再呼び (エラーではない) |
-| 6 TOKEN_CAP | scenario token 予算到達 | 記録 → kill-session → verdict `--blocked`。上限延長禁止 |
+| 6 TOKEN_CAP | scenario token 予算到達 | 記録 → kill-session → verdict `--blocked --poll-exit TOKEN_CAP`。上限延長禁止 |
+| 3 BLOCKED | state 破損 (`STATE_CORRUPT`) または token 計測不能 (`TOKEN_UNMEASURED`) | 記録 → kill-session → verdict `--blocked` に `--poll-exit STATE_CORRUPT` または `--poll-exit TOKEN_UNMEASURED` を付ける。経過を 0 に戻さない。欠測を 0 token としない。`--poll-exit` を空にすると原因が tmux 不在の既定文になる。tmux 不在自体は poll の前に boot / send / backend が exit 3 で止まり、この行には来ない |
 
 ### STALL 分岐表 (上から順。各行 1 回判定で次へ — 裁量で順序を入れ替えない)
 
@@ -301,7 +302,7 @@ python3 $SCRIPTS/build-live-trial-verdict.py --session "$SESSION" --run-id "$RUN
    --observation "1=<evidence ref>" --observation "2=<evidence ref>" ...]
 ```
 
-verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、**boot が load するのと同じ union の** direct dependency (manifest `dependencies` ∪ package-contract `depends_on` の skill 単位射影) の manifest/hooks/entry point/scripts/schemas を含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。scenario の wall-clock は呼出側 `--wall-clock-s` でなく、必須 `poll-state.json` の開始・最終観測時刻/elapsed から再計算し、その SHA を verdict へ束縛する。**DONE / STALL / HARD_CAP / 中断の全経路で必ず `build-live-trial-verdict.py` を使う**。finalizer は verdict が usage/schema error で失敗しても `finally` で scoped `reap(run-id, owner PID)` を実行し、所有 metadata が一致しない session を直接 kill しない。boot は tmux session に `@lt_run_id` と `@lt_owner_pid` を記録し、通常の reap は session 名の prefix・`@lt_run_id`・READY が返した `@lt_owner_pid` の 3 点が一致する自分の trial だけを回収する。同じ run-id 内の別 owner も対象外である。
+verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、**boot が load するのと同じ union の** direct dependency (manifest `dependencies` ∪ package-contract `depends_on` の skill 単位射影) の manifest/hooks/entry point/scripts/schemas を含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。scenario の wall-clock は呼出側 `--wall-clock-s` でなく、必須 `poll-state.json` の開始・最終観測時刻/elapsed から再計算し、その SHA を verdict へ束縛する。**DONE / STALL / HARD_CAP / TOKEN_CAP / BLOCKED / 中断の全経路で必ず `build-live-trial-verdict.py` を使う**。finalizer は verdict が usage/schema error で失敗しても `finally` で scoped `reap(run-id, owner PID)` を実行し、所有 metadata が一致しない session を直接 kill しない。boot は tmux session に `@lt_run_id` と `@lt_owner_pid` を記録し、通常の reap は session 名の prefix・`@lt_run_id`・READY が返した `@lt_owner_pid` の 3 点が一致する自分の trial だけを回収する。同じ run-id 内の別 owner も対象外である。
 
 ## 判定ロジック
 
@@ -323,8 +324,11 @@ verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから
   - **`contractual` の主張は被験 skill 側の宣言へ接地させる**。免除を申告するのは trial を回す当人なので、無検証で信じると「実際は stall 救済だった介入を contractual と言い換えるだけで `DEGRADED` を `PASS` へ反転できる」= 受け入れ基準の自己申告による緩和になる。gate 応答 > 0 かつ `contractual` のとき、`live-trial-verdict.py` は被験 skill の frontmatter に `external_mutation_guard` か `allowed-tools` の `AskUserQuestion` / `ExitPlanMode` (= `live-trial-status.py` の `GATE_TOOLS`) があることを確認し、**根拠 0 件なら exit 2 で拒否して verdict を書かない**。認めた根拠は verdict の `gate_contract_evidence` へ焼き付ける。本文の散文は根拠にしない (書き足すだけで主張が通るなら接地にならない)。
   - 回数上限は置かない。gate は transcript の pending `AskUserQuestion` / `ExitPlanMode` が無ければ発生せず捏造できないので、上限そのものより「その gate が契約上必須か」の接地が本質であり、根拠のない閾値は緩められる。
 - **proof trial** は「人手介入なし PASS」が受け入れ条件 — 種別を問わず gate 応答 > 0 は `FAIL`、DEGRADED 相当も `FAIL`、さらに actual_model ≠ requested_model で `FAIL` (機械 gate)。
-- tmux 不在、wall-clock の `HARD_CAP`、token 予算の `TOKEN_CAP`、進捗停止の `STALL` はどれも `BLOCKED` (fail-closed)。`downgrade_reason` は止めた原因を分けて記録する。Codex の token 到達を tmux 不在と書かない。
-- この表の機械実装は `live-trial-verdict.py` の `derive_overall()`。
+- tmux 不在は boot / send / backend が poll の前に exit 3 で止まる。verdict は `--blocked` だけを渡し、`--poll-exit` は空にする。`downgrade_reason` は原因を特定できないときの既定文（tmux 不在）になる。
+- poll exit 3 は `STATE_CORRUPT` と `TOKEN_UNMEASURED` だけ。どちらも `--blocked` と、その名前の `--poll-exit` を渡して `BLOCKED` にする。`blocked_cause_for()` がその名前を `downgrade_reason` に分ける。空の `--poll-exit` で `--blocked` だけ渡すと、token 計測不能が tmux 不在の既定文へ落ちる。
+- wall-clock の `HARD_CAP`（poll exit 1）と token 予算の `TOKEN_CAP`（poll exit 6）は poll 表どおり `--blocked` と対応する `--poll-exit` を渡したとき `BLOCKED` になる。Codex の token 到達を tmux 不在と書かない。
+- 進捗停止の `STALL`（poll exit 2）は分岐表へ進む。#5 と #6 は不合格として回収または中断し、`--blocked` も `--poll-exit STALL` も付けない。判定表の hang 行は `FAIL`。`derive_overall()` は `blocked=True` のときだけ `BLOCKED` を返す。`poll_exit=STALL` だけでは `completion=FAIL` の `FAIL` になり、`downgrade_reason` は STALL に分かれない。
+- この表の機械実装は `live-trial-verdict.py` の `derive_overall()` と `blocked_cause_for()`。
 
 ## 検証
 
@@ -341,8 +345,8 @@ python3 -m pytest -q tests/test_live_trial_*.py       # 責務別 fixture の po
 - **完了検知の急所**: busy 中の jsonl は完全無音 (長 Bash で 200s 級) — 経過時間で busy 判定しない。kill/crash したセッションは jsonl 上 BUSY_GENERATING のまま凍結 → tmux 生存確認が最終 fallback。TUI 層の busy 判定は ASCII マーカー (経過秒/token) のみ。詳細と版依存性は `references/transcript-jsonl.md` (spec-drift 監視対象)。
 - **claude 起動は `--dangerously-skip-permissions`**。trust 済み project が前提 (未 trust だと boot がプロンプトで止まる)。
 - **外部 CLI 依存 skill** (codex/cursor 委譲等) は usage limit で成果物が空振りしうる。
-- **scenario の絶対上限を持つ**。`max_wall_clock_s` / `max_total_tokens` は実行中に延長せず、到達または計測不能で BLOCKED とする。
-- **tmux 依存**: 輸送層の唯一の境界は `live-trial-backend.py` (版依存モジュール境界)。plugin.json `requirements.external_clis` に登録済み。不在は BLOCKED。
+- **scenario の絶対上限を持つ**。`max_wall_clock_s` / `max_total_tokens` は実行中に延長しない。到達は poll の `HARD_CAP` / `TOKEN_CAP` で、`--blocked` と対応する `--poll-exit` を渡して `BLOCKED` にする。token 計測不能は poll exit 3 の `TOKEN_UNMEASURED` で、`--blocked --poll-exit TOKEN_UNMEASURED` にする。進捗停止の `STALL` はこの `BLOCKED` に含めない。
+- **tmux 依存**: 輸送層の唯一の境界は `live-trial-backend.py` (版依存モジュール境界)。plugin.json `requirements.external_clis` に登録済み。不在は poll 前の exit 3 で、verdict は `--blocked` かつ `--poll-exit` なしで記録する。
 
 ## 関連
 

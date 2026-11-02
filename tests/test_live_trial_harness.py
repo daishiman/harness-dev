@@ -587,6 +587,23 @@ def test_blocked_reason_names_token_cap_separately_from_tmux(tmp_path, transcrip
     assert "tmux" not in doc["downgrade_reason"]
     rc, out = _run_verdict(tmp_path, transcript, ["--blocked"])
     assert "tmux 不在" in json.loads(out.read_text())["downgrade_reason"]
+    rc, out = _run_verdict(tmp_path, transcript, ["--blocked", "--poll-exit", "TOKEN_UNMEASURED"])
+    reason = json.loads(out.read_text())["downgrade_reason"]
+    assert rc == 0
+    assert "TOKEN_UNMEASURED" in reason
+    assert "tmux" not in reason
+    rc, out = _run_verdict(tmp_path, transcript, ["--blocked", "--poll-exit", "STATE_CORRUPT"])
+    reason = json.loads(out.read_text())["downgrade_reason"]
+    assert "STATE_CORRUPT" in reason
+    assert "tmux" not in reason
+    rc, out = _run_verdict(
+        tmp_path, transcript, ["--completion", "FAIL", "--poll-exit", "STALL"],
+    )
+    stalled = json.loads(out.read_text())
+    assert rc == 0
+    assert stalled["overall"]["verdict"] == "FAIL"
+    assert stalled["timeline"]["poll_exit"] == "STALL"
+    assert stalled["downgrade_reason"] is None
 
 
 def test_codex_pasted_skill_xml_without_native_provenance_is_not_activation(tmp_path):

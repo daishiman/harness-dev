@@ -1175,6 +1175,10 @@ def blocked_cause_for(*, poll_exit: str | None, resource_violations: list[str]) 
         causes.append("TOKEN_CAP: scenario の token 予算到達")
     if poll_exit == "HARD_CAP" or wall:
         causes.append("HARD_CAP: scenario の wall-clock 到達")
+    if poll_exit == "TOKEN_UNMEASURED":
+        causes.append("TOKEN_UNMEASURED: assistant usage が欠落/不正")
+    if poll_exit == "STATE_CORRUPT":
+        causes.append("STATE_CORRUPT: poll state が壊れて経過を保持できない")
     if poll_exit == "STALL":
         causes.append("STALL: 進捗停止で打ち切り")
     if not causes:

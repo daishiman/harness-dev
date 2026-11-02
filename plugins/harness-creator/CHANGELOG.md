@@ -2,6 +2,15 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.63 — 2026-11-03
+
+- live-trial の STALL は不合格の FAIL のままにし、BLOCKED へ昇格しない手順へ本文を合わせた。
+- poll exit 3 の状態破損と token 計測不能を、tmux 不在とは別の原因文として記録する。
+
+## 1.4.62 — 2026-11-03
+
+- live-trial の受入証跡と verdict 検査を、現行の挙動閉包へ合わせた。
+
 ## 1.4.61 — 2026-11-02
 
 - Codexの実監査をactor書込外の原ログと台帳へ結び、専用consumerによる再検証へ対応。
