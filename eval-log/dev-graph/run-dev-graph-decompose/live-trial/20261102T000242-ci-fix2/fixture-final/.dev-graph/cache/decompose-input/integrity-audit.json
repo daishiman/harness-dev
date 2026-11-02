@@ -1,0 +1,31 @@
+{
+  "verdict": "PASS",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "auditor": "dev-graph:dev-graph-integrity-auditor (Agent fork)",
+  "checks": [
+    "1_graph_digest PASS",
+    "2_macro_dag PASS",
+    "3_no_phase_task_in_macro PASS",
+    "4_macro_fields PASS",
+    "5_draft_and_binding PASS (cross_binding_dependency warning)",
+    "6_exact13_package PASS",
+    "7_schema_validation PASS"
+  ],
+  "findings": [
+    {
+      "node": "feature-render-diff",
+      "severity": "warning",
+      "evidence": "beads feature が none の LT-FEATURE-001 に依存 (cross_binding_dependency)"
+    },
+    {
+      "node": "feature-render-diff-summary",
+      "severity": "warning",
+      "evidence": "feature-render-diff 経由で連鎖する cross_binding_dependency"
+    },
+    {
+      "node": "LT-FEATURE-001",
+      "severity": "info",
+      "evidence": "package receipt digest は revision 2 時点の値"
+    }
+  ]
+}

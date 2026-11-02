@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T00:25:31.691267+00:00",
+  "claim_scope": "scenarioの最終4観測だけでなく、taskとSKILLの必須手順順序を含むgoal評価",
+  "initial_review_report": "fresh evaluatorは最初に最終4観測をPASSと報告したが、必須順序をscope外にしたため不十分だった。初回JSONの原bytesは親が別保存しておらず、元SHAは主張しない。",
+  "revised_result": "FAIL",
+  "revised_goal_evaluation_sha256": "53cb5b34582f956330442688f31e2b8820771cc88d1f9b7856e09edd54cce006",
+  "blockers": [
+    "artifact_deliveryの必須依存順に違反。task.mdはstandardを事前指定すると同時に「fixture内成果物を提示してからこの指定を記録し後続検証へ」と明示しており、SKILLのartifact_presented→user_choice_recorded→semantic_evaluator_startedおよびpre_choice_forbidden（semantic-evaluator/subagent）を免除していない。transcript.jsonlでは独立Agent監査の起動が0始まり行index 173、成果物report pathの提示がindex 181、standardの成果物提示後記録がindex 194で、監査が提示・記録より先に実行された。required_observations 4項目の最終状態は達成しているが、これを全task契約の合格に置き換えられない。"
+  ],
+  "observed_final_goal": "macro DAG/依存・dry-run/独立audit・draft projection拒否/原graph不変は達成。これだけでtask全体をPASSとしない。",
+  "violated_order": {
+    "actual_zero_based_transcript_indices": {
+      "agent_audit": 173,
+      "artifact_path_presentation": 181,
+      "standard_choice_record": 194
+    },
+    "required": "artifact_presented → user_choice_recorded → semantic evaluator/Agent",
+    "root_cause_scope": "タスクで順序を明示したが、被験実走がそれに従わなかった。原本・受入基準を後から変更しない。"
+  },
+  "fixture_findings": [
+    "private guardが2>&1の1を未知CLIとして誤拒否した3件。source/guardを書き換えて進行させず、全traceを保持。"
+  ],
+  "next_candidate": "次の許可済み再実走では既存の必須順序をtask冒頭の番号付きpreconditionとして明示する。scenario観測・sourceの境界・PASS条件は緩めない。"
+}

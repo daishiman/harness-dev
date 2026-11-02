@@ -1223,6 +1223,99 @@ def test_build_only_plan_never_schedules_live_session(tmp_path):
 
 # ---- backend / boot / send: オフライン検査 ------------------------------------
 
+@pytest.fixture(autouse=True)
+def boot_test_cli(monkeypatch, tmp_path, request):
+    """boot のoffline検査は実際のClaude install/PATHに依存させない。"""
+    if not request.node.name.startswith("test_boot_"):
+        return None
+    executable = tmp_path / "claude"
+    executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    executable.chmod(0o700)
+    original_which = shutil.which
+    monkeypatch.setattr(
+        boot_mod.shutil, "which",
+        lambda command: str(executable) if command == "claude" else original_which(command),
+    )
+    return executable.resolve()
+
+
+def test_boot_executable_is_fixed_before_tmux(monkeypatch, boot_test_cli, tmp_path):
+    explicit = tmp_path / "native CLI"
+    explicit.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    explicit.chmod(0o700)
+    argv = boot_mod.build_claude_argv("u-1", "model-1")
+    pinned = boot_mod.build_claude_argv("u-1", "model-1", claude_executable=str(explicit))
+    assert argv[0] == str(boot_test_cli)
+    assert pinned[0] == str(explicit.resolve())
+    assert pinned[1:] == argv[1:]
+    assert backend_mod.shlex.split(boot_mod.build_claude_command(
+        "u-1", "model-1", claude_executable=str(explicit),
+    )) == list(pinned)
+    monkeypatch.setattr(boot_mod.shutil, "which", lambda _command: "/wrong/tmux/claude")
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    fb = FakeBootBackend(["❯ "], ["claude"])
+    assert boot_mod.boot(
+        fb, "lt-x", "x", str(tmp_path), "model-1", "u-1", 1, 0,
+        claude_executable=str(explicit),
+    ) == 0
+    assert fb.argv == pinned
+
+
+@pytest.mark.parametrize("kind", ["relative", "missing", "directory", "not-executable", "newline", "nul"])
+def test_boot_rejects_invalid_cli_before_session(tmp_path, monkeypatch, kind):
+    candidate = tmp_path / "invalid-cli"
+    if kind == "relative":
+        value = "claude"
+    elif kind in {"newline", "nul"}:
+        value = str(candidate) + ("\n--dangerously-skip-permissions" if kind == "newline" else "\x00")
+    else:
+        value = str(candidate)
+        if kind == "directory":
+            candidate.mkdir()
+        elif kind == "not-executable":
+            candidate.write_text("text", encoding="utf-8")
+            candidate.chmod(0o600)
+    fb = FakeBootBackend([], [])
+    with pytest.raises(ValueError):
+        boot_mod.boot(fb, "lt-x", "x", str(tmp_path), "", "u-1", 1, 0,
+                      claude_executable=value)
+    assert fb.argv is None
+    assert fb.killed == []
+    assert boot_mod.main([
+        "lt-x", str(tmp_path), "--run-id", "x", "--claude-executable", value,
+    ]) == 2
+
+
+def test_boot_missing_caller_cli_is_rejected(monkeypatch):
+    monkeypatch.setattr(boot_mod.shutil, "which", lambda _command: None)
+    with pytest.raises(ValueError, match="caller PATH"):
+        boot_mod.build_claude_argv("u-1", "")
+
+
+def test_boot_main_forwards_validated_explicit_cli(monkeypatch, tmp_path, boot_test_cli):
+    calls = []
+    monkeypatch.setattr(boot_mod, "_load_sibling", lambda _name: backend_mod)
+    monkeypatch.setattr(backend_mod, "require_tmux", lambda: None)
+    monkeypatch.setattr(boot_mod, "boot", lambda *args, **kwargs: calls.append((args, kwargs)) or 0)
+    assert boot_mod.main([
+        "lt-x", str(tmp_path), "--run-id", "x", "--model", "model-1",
+        "--session-id", "u-1", "--claude-executable", str(boot_test_cli),
+    ]) == 0
+    assert len(calls) == 1
+    assert calls[0][1]["claude_executable"] == str(boot_test_cli)
+    assert calls[0][1]["plugin_dir"] == ()
+    assert calls[0][0][4:6] == ("model-1", "u-1")
+
+
+def test_boot_explicit_cli_symlink_pins_resolved_file(tmp_path):
+    link = tmp_path / "selected-cli"
+    link.symlink_to(sys.executable)
+    assert boot_mod.resolve_claude_executable(str(link)) == str(Path(sys.executable).resolve())
+    link.unlink()
+    link.symlink_to(tmp_path / "missing")
+    with pytest.raises(ValueError):
+        boot_mod.resolve_claude_executable(str(link))
+
 def test_backend_denylist_and_session_names():
     assert backend_mod.deny_target_skill("run-skill-live-trial")
     assert backend_mod.deny_target_skill("harness-creator:run-skill-iter-improve")
@@ -1589,17 +1682,45 @@ def test_boot_ready_line_contract(monkeypatch, capsys):
     assert fb.key_sends == []
 
 
-def test_boot_accepts_exact_bypass_gate_once_then_waits_for_prompt(monkeypatch, capsys):
+def _bypass_gate(*, native=False, selected="no"):
+    no = "No, exit" if native else "1. No, exit"
+    yes = "Yes, I accept" if native else "2. Yes, I accept"
+    return "\n".join([
+        boot_mod._BYPASS_CONFIRM_MARKERS[0],
+        ("❯ " if selected == "no" else "  ") + no,
+        ("❯ " if selected == "yes" else "  ") + yes,
+        "Enter to confirm · Esc to cancel",
+    ])
+
+
+@pytest.mark.parametrize("native", [False, True])
+def test_boot_accepts_exact_bypass_gate_once_then_waits_for_prompt(monkeypatch, capsys, native):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
-    gate = "\n".join(boot_mod._BYPASS_CONFIRM_MARKERS)
+    gate = _bypass_gate(native=native)
     fb = FakeBootBackend(
-        [gate, "Welcome to Claude Code\nType /help for shortcuts\n❯ "],
-        ["claude", "claude"],
+        [gate, _bypass_gate(native=native, selected="yes"),
+         "Welcome to Claude Code\nType /help for shortcuts\n❯ "],
+        ["claude", "claude", "claude"],
     )
     rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=4, grace=1)
     assert rc == 0
     assert fb.key_sends == [("Down",), ("Enter",)]
     assert "READY: lt-x (2s)" in capsys.readouterr().out
+
+
+def test_boot_accepts_native_warning_with_real_wrapped_body(monkeypatch):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    gate = _bypass_gate(native=True).replace(
+        "\n❯ No, exit",
+        "\n\n  In Bypass Permissions mode, Claude Code will not ask for your approval before running potentially dangerous commands.\n"
+        "  This mode should only be used in a sandboxed container/VM that has restricted internet access and can easily be restored if damaged.\n\n"
+        "  By proceeding, you accept all responsibility for actions taken while running in Bypass Permissions mode.\n\n"
+        "  https://code.claude.com/docs/en/security\n\n  ❯ No, exit",
+    )
+    selected = gate.replace("❯ No, exit", "  No, exit").replace("  Yes, I accept", "❯ Yes, I accept")
+    fb = FakeBootBackend([gate, selected, "❯\u00a0Try something"], ["claude"])
+    assert boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", 2, 0) == 0
+    assert fb.key_sends == [("Down",), ("Enter",)]
 
 
 def test_boot_ready_regex_matches_real_nbsp_try_prompt_not_numbered_gate():
@@ -1610,14 +1731,75 @@ def test_boot_ready_regex_matches_real_nbsp_try_prompt_not_numbered_gate():
     assert not boot_mod._READY_RE.search("❯\u00a01. No, exit")
 
 
-def test_boot_never_repeats_bypass_gate_acceptance(monkeypatch, capsys):
+@pytest.mark.parametrize("native", [False, True])
+def test_boot_never_repeats_bypass_gate_acceptance(monkeypatch, capsys, native):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
-    gate = "\n".join(boot_mod._BYPASS_CONFIRM_MARKERS)
-    fb = FakeBootBackend([gate], ["claude"])
+    fb = FakeBootBackend([
+        _bypass_gate(native=native), _bypass_gate(native=native, selected="yes"),
+        _bypass_gate(native=native),
+    ], ["claude"])
     rc = boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=3, grace=1)
     assert rc == 1
     assert fb.key_sends == [("Down",), ("Enter",)]
     assert "TIMEOUT" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("replacement", [
+    "unchanged", "unknown", "mixed-format", "shell", "ready-without-selection",
+])
+def test_boot_never_confirms_without_matching_selection(monkeypatch, replacement):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    selected = _bypass_gate(selected="yes")
+    command = "claude"
+    if replacement == "unchanged":
+        selected = _bypass_gate()
+    elif replacement == "unknown":
+        selected = selected.replace("Yes, I accept", "Continue")
+    elif replacement == "mixed-format":
+        selected = _bypass_gate(native=True, selected="yes")
+    elif replacement == "shell":
+        command = "zsh"
+    else:
+        selected = "❯ "
+    fb = FakeBootBackend([_bypass_gate(), selected], ["claude", command])
+    assert boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", timeout=2, grace=0) == 1
+    assert fb.key_sends == [("Down",)]
+    assert fb.killed == ["lt-x"]
+
+
+@pytest.mark.parametrize("gate", [
+    _bypass_gate().replace("2. Yes, I accept", "Yes, I accept"),
+    _bypass_gate().replace("❯ 1. No, exit", "1. No, exit"),
+    _bypass_gate().replace("2. Yes, I accept", "❯ 2. Yes, I accept"),
+    _bypass_gate(selected="yes"),
+    _bypass_gate().replace("Yes, I accept", "Yes, continue"),
+    _bypass_gate().replace("Enter to confirm", "Press Enter"),
+    _bypass_gate().replace("  2. Yes, I accept", "  2. Yes, I accept\n  3. Other"),
+    _bypass_gate().replace("❯ 1. No, exit", "❯ 2. Yes, I accept").replace("  2. Yes, I accept", "  1. No, exit"),
+    _bypass_gate().replace(boot_mod._BYPASS_CONFIRM_MARKERS[0], "Do you trust this folder?"),
+])
+def test_boot_never_answers_nearby_or_ambiguous_gate(monkeypatch, gate):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    fb = FakeBootBackend([gate], ["claude"])
+    assert boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", 1, 0) == 1
+    assert fb.key_sends == []
+    assert fb.killed == ["lt-x"]
+
+
+@pytest.mark.parametrize("command", sorted(boot_mod._SHELL_BLACKLIST))
+def test_boot_never_answers_gate_from_shell(monkeypatch, command):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    fb = FakeBootBackend([_bypass_gate()], [command])
+    assert boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", 1, 0) == 1
+    assert fb.key_sends == []
+    assert fb.killed == ["lt-x"]
+
+
+def test_boot_does_not_report_ready_while_bypass_warning_remains(monkeypatch):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    fb = FakeBootBackend([_bypass_gate(selected="yes") + "\nfor shortcuts"], ["claude"])
+    assert boot_mod.boot(fb, "lt-x", "x", "/tmp", "", "u-1", 1, 0) == 1
+    assert fb.key_sends == []
 
 
 def test_boot_does_not_answer_non_exact_gate(monkeypatch):

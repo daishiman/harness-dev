@@ -3,7 +3,7 @@
 # name: live-trial-boot
 # purpose: 隔離 claude セッションを tmux 上で起動し READY まで待つ (session UUID 固定で transcript を決定的に引けるようにする)。
 # inputs:
-#   - argv: <session> <cwd> --run-id ID [--model M] [--session-id UUID] [--target-skill plugin:skill] [--audit-fork-ledger PATH] [--self-test]
+#   - argv: <session> <cwd> --run-id ID [--claude-executable ABS_PATH] [--model M] [--session-id UUID] [--target-skill plugin:skill] [--audit-fork-ledger PATH] [--self-test]
 #   - env: BOOT_TIMEOUT(90) BOOT_GRACE(3)、hook routing 変数 (tmux stale 値を session 単位で上書き)
 # outputs:
 #   - stdout: "READY: <session> (Ns) MODEL:<model|default> OWNER_PID:<pid> SESSION_ID:<uuid>" / BOOT_FAIL / TIMEOUT
@@ -34,6 +34,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import sys
 import time
 import uuid
@@ -53,11 +54,13 @@ _BYPASS_CONFIRM_MARKERS = (
     "2. Yes, I accept",
     "Enter to confirm",
 )
+_BYPASS_OPTION_RE = re.compile(r"^(❯[ \u00a0]+)?(?:(1|2)\. )?(No, exit|Yes, I accept)$")
+_BYPASS_FOOTERS = {"Enter to confirm", "Enter to confirm · Esc to cancel"}
 # pane_current_command 実測: claude (native binary) 起動中は版数文字列 (node とは限らない)
 # → whitelist でなく shell blacklist (+ 空 = tmux 消失) 固定で判定。ワイルドカード不使用
-# (`*sh` は ssh 等を誤爆)。blacklist 外 shell (tcsh/ksh/nu/pwsh) では BOOT_FAIL も READY
-# 偽陽性 guard も無効 → TIMEOUT へ縮退 (安全側)。
-_SHELL_BLACKLIST = {"zsh", "bash", "sh", "fish", "dash", ""}
+# (`*sh` は ssh 等を誤爆)。既知 shell は初回同意の応答対象からも除外する。
+_SHELL_BLACKLIST = {"zsh", "bash", "sh", "fish", "dash", "csh", "tcsh", "ksh",
+                    "mksh", "nu", "pwsh", "powershell", ""}
 _SESSION_SCOPED_ENV = ("SYSTEM_SPEC_AUDIT_FORK_LEDGER",)
 
 
@@ -307,9 +310,29 @@ def _normalize_plugin_dirs(
     return tuple(resolved)
 
 
+def resolve_claude_executable(value: str = "") -> str:
+    """caller の PATH または明示絶対 path を起動前に固定する。"""
+    candidate = value or shutil.which("claude")
+    if not candidate:
+        raise ValueError("claude executable not found in caller PATH")
+    if any(char in candidate for char in "\x00\n\r"):
+        raise ValueError("invalid claude executable path")
+    path = Path(candidate)
+    if not path.is_absolute():
+        raise ValueError("claude executable must be an absolute path")
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("claude executable path cannot be resolved") from exc
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise ValueError("claude executable must be an executable file")
+    return str(resolved)
+
+
 def build_claude_argv(
     session_id: str, model: str,
     plugin_dir: str | Path | tuple[str | Path, ...] | list[str | Path] | None = None,
+    *, claude_executable: str = "",
 ) -> tuple[str, ...]:
     """validated values からだけ claude argv を構成する。"""
     if not valid_session_id(session_id):
@@ -318,7 +341,7 @@ def build_claude_argv(
         raise ValueError(f"invalid model: {model}")
     # trust 済み project 前提。多数のツール呼びを止めないため bypass で起動
     argv = [
-        "claude", "--session-id", session_id,
+        resolve_claude_executable(claude_executable), "--session-id", session_id,
         "--dangerously-skip-permissions",
         # live-trial はplugin本体とそのhooksを --plugin-dir からロードし、
         # 無関係なuser/project settings driftはacceptance環境から除外する。
@@ -335,31 +358,65 @@ def build_claude_argv(
 def build_claude_command(
     session_id: str, model: str,
     plugin_dir: str | Path | tuple[str | Path, ...] | list[str | Path] | None = None,
+    *, claude_executable: str = "",
 ) -> str:
     """後方互換用の表示形。実起動は build_claude_argv を使う。"""
-    return shlex.join(build_claude_argv(session_id, model, plugin_dir))
+    return shlex.join(build_claude_argv(
+        session_id, model, plugin_dir, claude_executable=claude_executable,
+    ))
 
 
 def _tail(text: str, n: int = 15) -> str:
     return "\n".join(text.splitlines()[-n:])
 
 
+def bypass_permissions_selection(text: str) -> tuple[str, str] | None:
+    """既知の番号付き/native二択だけを識別し、形式と選択状態を返す。"""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if lines.count(_BYPASS_CONFIRM_MARKERS[0]) != 1:
+        return None
+    options = [(i, _BYPASS_OPTION_RE.fullmatch(line)) for i, line in enumerate(lines)]
+    options = [(i, match) for i, match in options if match]
+    if len(options) != 2:
+        return None
+    option_indices = {i for i, _match in options}
+    if any(i not in option_indices and re.match(r"^(?:❯|\d+\.)[ \u00a0]+", line)
+           for i, line in enumerate(lines)):
+        return None
+    (first_i, first), (second_i, second) = options
+    if (first_i <= lines.index(_BYPASS_CONFIRM_MARKERS[0])
+            or second_i != first_i + 1 or second_i + 1 != len(lines) - 1
+            or lines[-1] not in _BYPASS_FOOTERS):
+        return None
+    if (first.group(3), second.group(3)) != ("No, exit", "Yes, I accept"):
+        return None
+    numbers = (first.group(2), second.group(2))
+    if numbers not in (("1", "2"), (None, None)):
+        return None
+    if bool(first.group(1)) == bool(second.group(1)):
+        return None
+    return ("numbered" if numbers[0] else "native", "no" if first.group(1) else "yes")
+
+
 def is_bypass_permissions_confirm(text: str) -> bool:
-    """自動応答を許す唯一の既知gate。4 markerのAND一致に限定する。"""
-    return all(marker in text for marker in _BYPASS_CONFIRM_MARKERS)
+    selection = bypass_permissions_selection(text)
+    return selection is not None and selection[1] == "no"
 
 
 def boot(backend, session: str, run_id: str, cwd: str, model: str, session_id: str,
          timeout: int, grace: int,
          plugin_dir: str | Path | tuple[str | Path, ...] | list[str | Path] | None = None,
-         owner_pid: int | None = None, audit_fork_ledger: str = "") -> int:
+         owner_pid: int | None = None, audit_fork_ledger: str = "",
+         claude_executable: str = "") -> int:
     # tmux 既定の対話 shell 起動→send-line に依存せず、検証済み
     # claude argv を pane の直接 shell-command として起動する。
     effective_owner_pid = os.getpid() if owner_pid is None else owner_pid
     backend.new_session(
         session,
         cwd,
-        command_argv=build_claude_argv(session_id, model, plugin_dir),
+        command_argv=build_claude_argv(
+            session_id, model, plugin_dir, claude_executable=claude_executable,
+        ),
         run_id=run_id,
         owner_pid=effective_owner_pid,
         environment_overrides={
@@ -376,24 +433,35 @@ def boot(backend, session: str, run_id: str, cwd: str, model: str, session_id: s
         cap = backend.capture_pane(session)
         cmd = backend.pane_current_command(session)
         at_shell = cmd in _SHELL_BLACKLIST
-        exact_bypass_gate = is_bypass_permissions_confirm(cap)
-        if exact_bypass_gate and not bypass_confirmed:
+        selection = bypass_permissions_selection(cap)
+        at_bypass_gate = _BYPASS_CONFIRM_MARKERS[0] in cap
+        if selection and selection[1] == "no" and not at_shell and not bypass_confirmed:
             # `--dangerously-skip-permissions` 初回起動で出る既知gateだけを
             # 一度だけ受理する。他の質問/gateは自動応答しない。
             # 実TUIで数字`2`は選択移動として受理されないため、
             # option 1 から Down で1段移動し Enter で確定する。
             backend.send_keys(session, "Down")
+            bypass_confirmed = True  # 選択再確認が失敗しても再試行/別gate受理しない。
             # TUIが選択移動をrenderする前にEnterを連続送信すると
             # option 1を確定し得るため、key境界を分ける。
             time.sleep(0.25)
-            backend.send_keys(session, "Enter")
-            bypass_confirmed = True
+            selected_cap = backend.capture_pane(session)
+            selected_cmd = backend.pane_current_command(session)
+            if (selected_cmd not in _SHELL_BLACKLIST
+                    and bypass_permissions_selection(selected_cap) == (selection[0], "yes")):
+                backend.send_keys(session, "Enter")
+            else:
+                print("BOOT_FAIL: bypass selection did not match the known confirmation")
+                print("--- capture tail ---")
+                print(_tail(selected_cap))
+                backend.kill_session(session)
+                return 1
             time.sleep(1)
             continue
         # READY = 「READY パターン + 前面プロセスが shell でない」の AND
         # (shell prompt の ❯ で偽 READY しない)。受理済みgateが
         # 残っている間もREADYにせず、実入力promptまで待つ。
-        if not exact_bypass_gate and not at_shell and _READY_RE.search(cap):
+        if not at_bypass_gate and not at_shell and _READY_RE.search(cap):
             print(
                 f"READY: {session} ({i}s) MODEL:{model or 'default'} "
                 f"OWNER_PID:{effective_owner_pid} SESSION_ID:{session_id}"
@@ -423,7 +491,7 @@ def _self_test() -> int:
     assert valid_session_id("550e8400-e29b-41d4-a716-446655440000")
     assert not valid_session_id("bad; touch /tmp/nope")
     assert not valid_session_id("../bad")
-    gate = "\n".join(_BYPASS_CONFIRM_MARKERS)
+    gate = "\n".join(_BYPASS_CONFIRM_MARKERS).replace("1. No, exit", "❯ 1. No, exit")
     assert is_bypass_permissions_confirm(gate)
     assert not is_bypass_permissions_confirm(gate.replace("2. Yes, I accept", "2. Continue"))
     assert resolve_target_plugin_dir("/tmp", "plain-skill") is None
@@ -435,15 +503,16 @@ def _self_test() -> int:
     assert _merge_dependency_slugs(("b",), ("c", "a")) == ("a", "b", "c")
     assert _merge_dependency_slugs(("a",), ("a",)) == ("a",)
     assert backend.deny_target_skill("run-skill-live-trial")
-    argv = build_claude_argv("u-1", "claude-opus-4-8")
+    executable = resolve_claude_executable(sys.executable)
+    argv = build_claude_argv("u-1", "claude-opus-4-8", claude_executable=executable)
     assert argv == (
-        "claude", "--session-id", "u-1", "--dangerously-skip-permissions",
+        executable, "--session-id", "u-1", "--dangerously-skip-permissions",
         "--setting-sources", "local",
         "--model", "claude-opus-4-8",
     )
-    cmd = build_claude_command("u-1", "claude-opus-4-8")
+    cmd = build_claude_command("u-1", "claude-opus-4-8", claude_executable=executable)
     assert "--session-id u-1" in cmd and "--model claude-opus-4-8" in cmd
-    assert "--model" not in build_claude_command("u-1", "")
+    assert "--model" not in build_claude_command("u-1", "", claude_executable=executable)
     print("OK: live-trial-boot self-test")
     return 0
 
@@ -458,6 +527,8 @@ def main(argv: list[str] | None = None) -> int:
         help="session の所有 run-id。session 名は lt-<run-id>[-<slug>] にする",
     )
     ap.add_argument("--model", default="", help="空=ユーザー既定 model。proof trial は full id 必須")
+    ap.add_argument("--claude-executable", default="",
+                    help="Claude CLI の実行可能な絶対path。省略時はcaller PATHで解決して固定")
     ap.add_argument("--session-id", default="", help="transcript 固定用 UUID (省略時は自動生成)")
     ap.add_argument("--target-skill", default="",
                     help="被験 skill (denylist 再帰遮断の機械 gate。省略可だが指定推奨)")
@@ -509,6 +580,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         plugin_dirs = resolve_target_plugin_dirs(ns.cwd, ns.target_skill)
+        claude_executable = resolve_claude_executable(ns.claude_executable)
     except ValueError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 2
@@ -518,6 +590,7 @@ def main(argv: list[str] | None = None) -> int:
     return boot(
         backend, ns.session, ns.run_id, ns.cwd, ns.model, session_id, timeout, grace,
         plugin_dir=plugin_dirs, audit_fork_ledger=audit_fork_ledger,
+        claude_executable=claude_executable,
     )
 
 

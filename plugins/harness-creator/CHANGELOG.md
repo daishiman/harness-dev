@@ -2,6 +2,11 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.55 — 2026-11-02
+
+- live trial起動時のClaude CLIを呼出し元で解決した実行可能な絶対pathへ固定し、tmux内で旧CLIへ切り替わる問題を修正。必要なCLIを `--claude-executable` で明示できる。
+- 既知の初回確認画面の番号付き/無番号形式を厳密に識別し、選択状態を再確認してから一度だけ進める。未知gate・前面shell・不一致では停止・回収し、診断を保存する。権限・設定の範囲と証跡の受入基準は維持。
+
 ## 1.4.54 — 2026-11-02
 
 - JSON形式のplugin-composition.yamlを既存の構造検査へ接続し、破損・型不正を拒否する。最上位の版だけを変更し、整形と入れ子の値を保持する。

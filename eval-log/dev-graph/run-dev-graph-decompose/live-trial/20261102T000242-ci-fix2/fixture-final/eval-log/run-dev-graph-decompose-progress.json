@@ -1,0 +1,48 @@
+{
+  "overall": "PASS",
+  "inner_criteria": {
+    "IN1": "PASS (C02 pre_write_validation findings 0、validate-graph-schema の必須キー欠落 0)"
+  },
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "checklist": [
+    {
+      "item": "macro result が feature/architecture/機能間 depends_on だけを持ち循環と phase-task 混入が0件である",
+      "status": "achieved",
+      "evidence": "integrity-audit.json checks 2,3 PASS; c02-preview planned_nodes は feature 2件のみ"
+    },
+    {
+      "item": "draft/unconfirmed/evaluation非pass/readiness非complete の tracker publication が0件である",
+      "status": "achieved",
+      "evidence": "C28 create --dry-run --planned-preview が両 draft feature を promotion_gate blocked (planned:true, write_count 0)。dep-add 呼出し0。cross_binding_dependency で保留"
+    },
+    {
+      "item": "各 ready feature package が P01..P13 exact 13、共通 parent/package、13-node DAG を満たす",
+      "status": "not_applicable",
+      "evidence": "--dry-run かつ --package 指定なし (Macro flow 4)。新 feature は draft で ready でない (render-diff: draft・package 未生成、summary: 依存先 draft)。既存 LT-FEATURE-001 package は登録済みで auditor check 6 PASS"
+    },
+    {
+      "item": "C02 local commit が all-or-none で、自動/手動経路の重複 node が0件である",
+      "status": "not_applicable",
+      "evidence": "--dry-run: commit しない。dry-run-preview-report.json に全 target の operation・判定・digest (rev 3→preview digest sha256:ab549a4a...) と write count 0"
+    },
+    {
+      "item": "beads/github/none の各 task が単一 projection authority と linkage を持つ",
+      "status": "not_applicable",
+      "evidence": "--dry-run: 投影しない。preview report に binding 別判定 (beads 2件 blocked, github 0, none 0) を記載"
+    },
+    {
+      "item": "`--dry-run` の local/Beads/GitHub/Projects write count が0である",
+      "status": "achieved",
+      "evidence": "C02 write_count 0, C28 write_count 0/0, graph digest 前後とも sha256:4356f126...c43b0 (rev 3), github target 0"
+    }
+  ],
+  "loop": 1
+}

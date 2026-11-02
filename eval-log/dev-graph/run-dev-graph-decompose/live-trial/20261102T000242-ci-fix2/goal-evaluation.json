@@ -1,0 +1,29 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "artifact_deliveryの必須依存順に違反。task.mdはstandardを事前指定すると同時に「fixture内成果物を提示してからこの指定を記録し後続検証へ」と明示しており、SKILLのartifact_presented→user_choice_recorded→semantic_evaluator_startedおよびpre_choice_forbidden（semantic-evaluator/subagent）を免除していない。transcript.jsonlでは独立Agent監査の起動が0始まり行index 173、成果物report pathの提示がindex 181、standardの成果物提示後記録がindex 194で、監査が提示・記録より先に実行された。required_observations 4項目の最終状態は達成しているが、これを全task契約の合格に置き換えられない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "ci_decompose_goal"
+  },
+  "transcript_sha256": "4a35190a1f5c2289440aa0524e0e1d0c5f431c70387317380b35b05693454a1b",
+  "evidence_refs": [
+    "task.md",
+    "scenario.json",
+    "transcript.jsonl",
+    "pane.txt",
+    "transcript/subagents/agent-a8a5aefcdf413c107.jsonl",
+    "fixture-before.json",
+    "fixture-final/.dev-graph/state/graph.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c02-input.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-render-diff.json",
+    "fixture-final/.dev-graph/cache/decompose-input/c28-create-feature-render-diff-summary.json",
+    "fixture-final/.dev-graph/cache/decompose-input/dry-run-preview-report.json",
+    "fixture-final/.dev-graph/cache/decompose-input/integrity-audit.json",
+    "fixture-final/eval-log/run-dev-graph-decompose-goal-spec.json",
+    "guard.jsonl",
+    "out/status.json"
+  ]
+}
