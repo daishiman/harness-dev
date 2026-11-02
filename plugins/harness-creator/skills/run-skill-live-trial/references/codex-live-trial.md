@@ -29,6 +29,10 @@ Codexで`Agent`相当の責務を実施するときは、元の責務promptを�
 
 controllerは選択receipt・署名・承認イベントを自作しない。外部変更の確認はこの深度選択とは別契約である。実native hookや正規guard consumerが未到達なら保留し、generic resumeを契約上の承認へ読み替えない。
 
+外部確認を検証するfixtureだけは、起動前に確認対象のsource・実cwd・許可argv・局所adapterとhook定義を固定する。利用者が正規`/hooks`で信頼した定義を照合し、Codex用の`hook-confirm --runtime codex`と`pretool --runtime codex`を実イベントで動かす。controllerが送れるのは、実assistantが提示した署名済みpreviewに一致する確認行だけである。原hook入力・出力と正本が発行した確認receiptを事後照合し、救済の`continue`と区別して回数を記録する。fixtureのadapterや実行対象のbytesが変わった場合は不合格とし、未観測のhookや未取得の利用者許可を補完しない。
+
+外部確認の信頼照合には、標準のTOML readerを使えるPython 3.11以上が必要。`--ignore-user-config`を保ったまま、利用者が保存した当該fixtureのproject trustと2hookのnative hashだけを明示継承する。定義・native `hooks/list`の値・実際の保存値の不一致では起動せず、一般的なhook trust bypassは使わない。
+
 ## 証跡と終了
 
 native JSONLをClaude形式へ変換しない。モデルはturn_context、CLI版とidentityはsession_meta、usageは原累積値から読み、同一threadの累積値を重ねて足さない。親子関係が証明できる子だけを合算し、不明・欠落・未完は合格にしない。

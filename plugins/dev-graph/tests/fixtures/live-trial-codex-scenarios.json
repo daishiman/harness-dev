@@ -2,6 +2,25 @@
   "schema_version": "1.0.0",
   "scenarios": [
     {
+      "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+      "component_id": "C01",
+      "skill": "run-dev-graph-init",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 900,
+        "max_total_tokens": 4000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0117-pr85: wall_clock_s=375, total_tokens=1.61M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --hook-source plugin",
+      "fixture_contract": "A contained plain git repository with one committed README and no dev-graph state; the same init is run twice with identical arguments.",
+      "required_observations": [
+        "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+        "a second init with the same arguments plans 0 changes and preserves user edits",
+        "the repo config stores no absolute path, token, or node ID and the plugin hook source is used"
+      ]
+    },
+    {
       "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
       "component_id": "C14",
       "skill": "run-dev-graph-decompose",

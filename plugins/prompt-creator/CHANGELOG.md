@@ -26,6 +26,10 @@
 - `R1-interview.md` の裸 TODO 残存 (validate-prompt FAIL) と、open_questions 処遇の矛盾 (TODO(human) 保持 vs auto-resolve) を「AI 最尤補完+仮定記録、TODO(human) 生成禁止」へ統一。
 - `parse_known_args` による未知引数黙殺を 5 scripts で failfast 化。
 
+## [2.1.16] - 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [2.1.15] - 2026-10-30
 
 - `subagent-hybrid-format.md`: agent の frontmatter の tools の宣言を「`tools` か `tools-inherit: true` のどちらか一方が必須」に改めた。正本は harness-creator の `capability-manifest.schema.json` の kindAgent (oneOf) である。`tools: inherit` とは書かないこと、advisor では `tools-inherit` を使わないことを書き足した。

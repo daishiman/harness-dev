@@ -1,0 +1,23 @@
+.........................F........                                       [100%]
+=================================== FAILURES ===================================
+____________ test_all_projections_pin_the_executable_guard_runtime _____________
+
+    def test_all_projections_pin_the_executable_guard_runtime():
+        runner_sha = hashlib.sha256(RUNNER.read_bytes()).hexdigest()
+        schema_sha = hashlib.sha256(SCHEMA.read_bytes()).hexdigest()
+        projections = sorted(ROOT.glob("plugins/*/artifact-delivery.json"))
+        assert len(projections) == 23
+        external = 0
+        for path in projections:
+            projection = json.loads(path.read_text())
+            runtime = projection["external_mutation_runtime"]
+>           assert runtime["runner_sha256"] == runner_sha
+E           AssertionError: assert 'e50fdb18bcb4...11a7fea30f4e5' == 'b3bc33be3ddf...72007b2ff902e'
+E             
+E             - b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e
+E             + e50fdb18bcb4bf80adb314006cab1de1cc499bef88a6a3448e211a7fea30f4e5
+
+tests/scripts-root/test_root__external_mutation_guard.py:716: AssertionError
+=========================== short test summary info ============================
+FAILED tests/scripts-root/test_root__external_mutation_guard.py::test_all_projections_pin_the_executable_guard_runtime
+1 failed, 33 passed in 28.88s

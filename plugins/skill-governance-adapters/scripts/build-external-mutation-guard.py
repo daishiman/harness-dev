@@ -4,7 +4,8 @@
 # purpose: Bind an external mutation to a preview receipt, an actual UserPromptSubmit confirmation or intent event, and an exact argv consumer.
 # inputs:
 #   - argv: preview | hook-confirm | authorize | authorize-intent | cancel | execute | pretool
-#   - stdin: Claude hook JSON for hook-confirm/pretool
+#   - --runtime: claude (default) | codex for hook-confirm/pretool; selected by the registered hook command
+#   - stdin: native hook JSON for hook-confirm/pretool (both runtimes use Bash/command)
 # outputs:
 #   - stdout: sealed receipt metadata or official PreToolUse deny JSON
 # contexts: [A, C, E]
@@ -392,7 +393,17 @@ def _read_hook_payload() -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def hook_confirm() -> dict[str, Any] | None:
+def _hook_producer(runtime: str) -> str:
+    """Use the registered command's runtime, never an untrusted payload field."""
+    if runtime == "claude":
+        return "claude-code-user-prompt-submit"
+    if runtime == "codex":
+        return "codex-user-prompt-submit"
+    raise GuardError(f"unsupported hook runtime: {runtime!r}")
+
+
+def hook_confirm(*, runtime: str = "claude") -> dict[str, Any] | None:
+    _hook_producer(runtime)
     payload = _read_hook_payload()
     if payload.get("hook_event_name") not in {None, "UserPromptSubmit"}:
         return None
@@ -405,11 +416,11 @@ def hook_confirm() -> dict[str, Any] | None:
     root = _project_root(cwd)
     matched = CONFIRM_RE.fullmatch(stripped)
     if matched is not None:
-        return _confirm_challenge(root, stripped, session_id, matched.group(1))
+        return _confirm_challenge(root, stripped, session_id, matched.group(1), runtime=runtime)
     granted = _intent_classes(stripped)
     if not granted:
         return None
-    return _grant_intent(root, stripped, session_id, granted)
+    return _grant_intent(root, stripped, session_id, granted, runtime=runtime)
 
 
 def _user_event_id(session_id: str, prompt: str) -> str:
@@ -417,13 +428,14 @@ def _user_event_id(session_id: str, prompt: str) -> str:
 
 
 def _confirm_challenge(
-    root: Path, prompt: str, session_id: str, challenge: str
+    root: Path, prompt: str, session_id: str, challenge: str, *, runtime: str = "claude"
 ) -> dict[str, Any]:
     """Bind a typed challenge to its single live preview.
 
     A challenge that matches no live preview creates no receipt and does not block the
     prompt: refusing the user's message buys no safety and strands the session.
     """
+    producer = _hook_producer(runtime)
     unmatched = {
         "contract_id": CONTRACT_ID,
         "status": "confirmation-unmatched",
@@ -452,7 +464,7 @@ def _confirm_challenge(
         **_base("confirmation", receipt_id, now=now),
         "preview_receipt_id": preview_receipt["receipt_id"],
         "preview_receipt_sha256": _sha256_file(preview_path),
-        "producer": "claude-code-user-prompt-submit",
+        "producer": producer,
         "user_event_id": _user_event_id(session_id, prompt),
         "decision": "confirm",
     }
@@ -466,9 +478,10 @@ def _confirm_challenge(
 
 
 def _grant_intent(
-    root: Path, prompt: str, session_id: str, granted: frozenset[str]
+    root: Path, prompt: str, session_id: str, granted: frozenset[str], *, runtime: str = "claude"
 ) -> dict[str, Any]:
     """Seal a single-use grant proving a human asked for this class of mutation."""
+    producer = _hook_producer(runtime)
     state = _state_dir(root, create=True)
     key = _key(state, create=True)
     now = int(time.time())
@@ -476,7 +489,7 @@ def _grant_intent(
     body = {
         **_base(INTENT_KIND, receipt_id, now=now),
         "granted_classes": sorted(granted),
-        "producer": "claude-code-user-prompt-submit",
+        "producer": producer,
         "user_event_id": _user_event_id(session_id, prompt),
         "prompt_excerpt": " ".join(prompt.split())[:200],
         "decision": "confirm-by-intent",
@@ -913,7 +926,10 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
-def pretool() -> dict[str, Any] | None:
+def pretool(*, runtime: str = "claude") -> dict[str, Any] | None:
+    # Codex supplies the canonical Bash/command hook payload itself. Do not
+    # synthesize Claude tool events or rewrite native payloads here.
+    _hook_producer(runtime)
     payload = _read_hook_payload()
     if payload.get("hook_event_name") not in {None, "PreToolUse"}:
         return None
@@ -958,7 +974,8 @@ def _parser() -> argparse.ArgumentParser:
     preview_parser.add_argument("--diff-summary", required=True)
     preview_parser.add_argument("--side-effect-summary", required=True)
     preview_parser.add_argument("--command-json", required=True)
-    commands.add_parser("hook-confirm")
+    hook_parser = commands.add_parser("hook-confirm")
+    hook_parser.add_argument("--runtime", choices=("claude", "codex"), default="claude")
     authorize_parser = commands.add_parser("authorize")
     authorize_parser.add_argument("--project-root", required=True)
     authorize_parser.add_argument("--preview-receipt", required=True)
@@ -974,7 +991,8 @@ def _parser() -> argparse.ArgumentParser:
     execute_parser.add_argument("--project-root", required=True)
     execute_parser.add_argument("--authorization-receipt", required=True)
     execute_parser.add_argument("--command-json", required=True)
-    commands.add_parser("pretool")
+    pretool_parser = commands.add_parser("pretool")
+    pretool_parser.add_argument("--runtime", choices=("claude", "codex"), default="claude")
     return parser
 
 
@@ -985,7 +1003,7 @@ def main(argv: list[str] | None = None) -> int:
             print(_ordered_output(preview(args)))
             return 0
         if args.action == "hook-confirm":
-            result = hook_confirm()
+            result = hook_confirm(runtime=args.runtime)
             if result is not None:
                 print(
                     _compact(
@@ -1012,7 +1030,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.action == "execute":
             return execute(args)
-        result = pretool()
+        result = pretool(runtime=args.runtime)
         if result is not None:
             print(_compact(result))
         return 0

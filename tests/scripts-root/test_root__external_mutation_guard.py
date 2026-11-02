@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import pathlib
 import shlex
@@ -9,6 +10,8 @@ import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+
+import pytest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -81,6 +84,98 @@ def _confirm(project: pathlib.Path, challenge: str) -> dict:
     context = hook_output["hookSpecificOutput"]["additionalContext"]
     assert context.startswith("[external-mutation-confirmation]\n")
     return json.loads(context.split("\n", 1)[1])
+
+
+def test_codex_native_confirmation_preserves_exact_authorization_and_single_use(tmp_path):
+    output = tmp_path / "native-confirmed.txt"
+    command = [sys.executable, "-c", f"from pathlib import Path; Path({str(output)!r}).write_text('ok')"]
+    preview = _preview(tmp_path, command)
+    native_payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": str(tmp_path),
+        "session_id": "codex-session-fixture",
+        "prompt": f"CONFIRM EXTERNAL MUTATION {preview['challenge']}",
+        # Untrusted payload labels cannot override the registered command.
+        "runtime": "claude",
+        "producer": "claude-code-user-prompt-submit",
+    }
+    result = _run("hook-confirm", "--runtime", "codex", input_text=json.dumps(native_payload))
+    assert result.returncode == 0, result.stderr
+    context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    confirmation = json.loads(context.split("\n", 1)[1])
+    sealed = json.loads(pathlib.Path(confirmation["receipt_path"]).read_text())
+    assert sealed["producer"] == "codex-user-prompt-submit"
+    assert sealed["preview_receipt_sha256"] == hashlib.sha256(pathlib.Path(preview["receipt_path"]).read_bytes()).hexdigest()
+    authorization_args = (
+        "authorize", "--project-root", str(tmp_path),
+        "--preview-receipt", preview["receipt_path"],
+        "--confirmation-receipt", confirmation["receipt_path"],
+    )
+    authorization = _run(*authorization_args)
+    assert authorization.returncode == 0, authorization.stderr
+    assert not output.exists()
+    replay = _run(*authorization_args)
+    assert replay.returncode == 2
+    assert "already consumed" in replay.stderr
+    execute = _run(
+        "execute", "--project-root", str(tmp_path),
+        "--authorization-receipt", json.loads(authorization.stdout)["receipt_path"],
+        "--command-json", json.dumps(command),
+    )
+    assert execute.returncode == 0, execute.stderr
+    assert output.read_text() == "ok"
+
+
+@pytest.mark.parametrize("runtime_args,producer", [
+    ([], "claude-code-user-prompt-submit"),
+    (["--runtime", "claude"], "claude-code-user-prompt-submit"),
+    (["--runtime", "codex"], "codex-user-prompt-submit"),
+])
+def test_hook_command_selects_intent_producer_not_payload(tmp_path, runtime_args, producer):
+    payload = {
+        "hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path),
+        "session_id": "native-session", "prompt": "この変更でプルリクを出して",
+        "runtime": "codex" if producer.startswith("claude") else "claude",
+    }
+    result = _run("hook-confirm", *runtime_args, input_text=json.dumps(payload))
+    assert result.returncode == 0, result.stderr
+    context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    grant = json.loads(context.split("\n", 1)[1])
+    sealed = json.loads(pathlib.Path(grant["receipt_path"]).read_text())
+    assert sealed["producer"] == producer
+    assert sealed["granted_classes"] == ["github-pr-write"]
+
+
+def test_codex_pretool_enforces_native_bash_command_without_payload_conversion(tmp_path):
+    payload = {
+        "hook_event_name": "PreToolUse", "tool_name": "Bash", "cwd": str(tmp_path),
+        "tool_input": {"command": "gh issue create --title fixture"},
+    }
+    claude = _run("pretool", input_text=json.dumps(payload))
+    codex = _run("pretool", "--runtime", "codex", input_text=json.dumps(payload))
+    assert codex.returncode == claude.returncode == 0
+    assert codex.stdout == claude.stdout
+    assert json.loads(codex.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    payload["tool_input"]["command"] = "python3 read_only.py"
+    assert _run("pretool", "--runtime", "codex", input_text=json.dumps(payload)).stdout == ""
+    _preview(tmp_path, [sys.executable, "-c", "print('pending')"])
+    pending = _run("pretool", "--runtime", "codex", input_text=json.dumps(payload))
+    assert pending.returncode == 0
+    assert json.loads(pending.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+@pytest.mark.parametrize("action", ["hook-confirm", "pretool"])
+def test_unknown_hook_runtime_fails_before_writing_receipts(tmp_path, action):
+    payload = {"cwd": str(tmp_path), "session_id": "fixture", "prompt": "プルリクを出して"}
+    result = _run(action, "--runtime", "unknown", input_text=json.dumps(payload))
+    assert result.returncode == 2
+    assert not (tmp_path / ".artifact-delivery").exists()
+    spec = importlib.util.spec_from_file_location("native_guard_runtime_test", RUNNER)
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    with pytest.raises(guard.GuardError, match="unsupported hook runtime"):
+        getattr(guard, "hook_confirm" if action == "hook-confirm" else "pretool")(runtime="unknown")
+    assert not (tmp_path / ".artifact-delivery").exists()
 
 
 def test_public_guard_cli_executes_only_the_confirmed_preview(tmp_path):

@@ -2,6 +2,10 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`skill-intake` plugin の変更履歴を記録する。skill-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.1.25] - 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [0.1.24] - 2026-10-30
 
 - `post-keychain-add.sh` を `hooks/` から `scripts/` へ移した。これは自動では動かない手動の確認用 script で、hook ではないため。README・hooks/README・keychain-setup (2 か所)・package-contract の参照先と hook の本数 (5 本 → 4 本) を合わせた。

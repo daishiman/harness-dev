@@ -1,0 +1,46 @@
+{
+  "recorded_at": "2026-11-02T03:59:42.799142+00:00",
+  "cause": "SGA confirmation/intent producer was fixed to Claude despite the requested Codex runtime. The native canonical Bash/command hook schema itself is compatible and is not rewritten.",
+  "source_runtime_repair": "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+  "guard_sha256": "b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e",
+  "validation": {
+    "guard_behavior": {
+      "passed": 33,
+      "source_log": "/tmp/harness-codex-guard-runtime-tests.log",
+      "initial_projection_failure_retained": true
+    },
+    "projection_after_canonical_writer": {
+      "passed": 1,
+      "deselected": 33,
+      "source_log": "/tmp/harness-codex-sga-projection-test.log"
+    }
+  },
+  "generated_projection_change": "All 23 artifact-delivery.json files change only the central runner SHA; their functionality and source SKILL content are unchanged. Normal release numbering is required.",
+  "acceptance_impact": "The common SGA runtime source is part of all nine dev-graph closures. The former valid init trace is historical for its old closure; all nine need new source-bound evidence.",
+  "new_c01_scenario": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+  "c01_contract_preserved": [
+    "task_args_template",
+    "required_observations",
+    "resource_budget",
+    "resource_budget_basis",
+    "fixture_contract"
+  ],
+  "iteration2": {
+    "source_head": "43a57526d17084dc07ab77bd04256927ffbca08a",
+    "private_base": "/private/tmp/harness-codex-ci2-20261102",
+    "run_id": "20261102T034837-codex-ci2",
+    "system_spec": "prepared_not_started",
+    "other_targets": "not_started",
+    "actors_started": 0,
+    "source_and_fixture_preserved": true
+  },
+  "next": {
+    "private_base": "/private/tmp/harness-codex-ci3-20261102",
+    "max_concurrency": 2,
+    "runtime": "codex",
+    "source_freeze": "pending typed external-confirmation handler and final tests/release",
+    "native_hook_user_trust": "not requested / not granted yet",
+    "native_acceptance_passes": 0,
+    "ci_success": false
+  }
+}

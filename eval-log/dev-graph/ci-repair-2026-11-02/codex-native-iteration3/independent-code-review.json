@@ -1,0 +1,59 @@
+{
+  "recorded_at": "2026-11-02T04:16:46.916309+00:00",
+  "reviewer": "/root/codex_acceptance_contract",
+  "authors": [
+    "codex_guard_runtime",
+    "/root"
+  ],
+  "scope": "SGA runtime producer/defaultClaude、HC typed外部CONFIRM/原hook proof/public CI再検査、native_hook_trust_argvの限定継承。全repo監査・native実走受入ではない。",
+  "verdict": "PASS_IN_REVIEWED_SCOPE",
+  "source_sha256_reviewed": {
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "6fd68faac4f58f08bfbadeedfe6ae2310226980a4a5dde75b6c37fc5383f911f",
+    "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py": "b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "21cbb0aed760d48d4870446f9e33cc554c8116cc130e31ef81da5ed57e491976"
+  },
+  "source_sha256_at_save": {
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "6fd68faac4f58f08bfbadeedfe6ae2310226980a4a5dde75b6c37fc5383f911f",
+    "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py": "b3bc33be3ddf2373be1309777882970764f244ad6aaa8610ff472007b2ff902e",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "21cbb0aed760d48d4870446f9e33cc554c8116cc130e31ef81da5ed57e491976"
+  },
+  "source_unchanged_at_save": true,
+  "conditions": {
+    "矛盾なし": {
+      "result": "PASS",
+      "evidence": "既定Claude producer維持、明示Codex producer、raw native Bash/command、generic continueとCONFIRMを別分類。native原イベントをClaudeへ変換しない。"
+    },
+    "漏れなし": {
+      "result": "PASS",
+      "evidence": "署名前runtime選択、actor外原log・exact challenge/preview/command/target/session/cwd/順序・sealed receipt・公開proof/現在guard源SHAへの再束縛を確認。"
+    },
+    "整合性あり": {
+      "result": "PASS",
+      "evidence": "guard既存deny形式とnative hook出力を維持。private HMAC再検証とpublic側の原bytes/source/user-turn照合の境界を明記。作者試験や合成検査を実native PASSへ流用しない。"
+    },
+    "依存関係整合": {
+      "result": "PASS",
+      "evidence": "canonical SGAをpinしたproviderから使用しsource変化を検出。native hook trustは実userconfigに既存保存されたexact fixture project trust＋native hooks/listの2currentHashのみ継承し、他user設定やbypassフラグを引き継がない。actor writable aliasも拒否。"
+    }
+  },
+  "independent_probes": {
+    "ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration3/independent-boundary-results.json",
+    "sha256": "df044c02b0a1276854acbfea76e8f85897cc002d765714e5db138167525927c0",
+    "count": 3,
+    "passed": 3,
+    "kind": "synthetic",
+    "native_acceptance_pass": false
+  },
+  "findings": [],
+  "limitations": [
+    "C03 native hooksの信頼許可取得・実発火・fixture syncの新受入は未確認。コードレビュー合格と区別する。",
+    "public CIはprivate HMAC鍵を公開せず再計算しない。原native hook入力/出力・署名receipt bytes・sourceSHA・native user turnへ再束縛し、fresh独立goalを別途必須とする。",
+    "記録後のsource変更はこのレビューの対象外。採番/freeze前に保存SHAを照合する。"
+  ],
+  "external_actions": {
+    "llm_or_native_trial_starts": 0,
+    "real_user_config_writes": 0,
+    "source_or_doc_writes": 0,
+    "git_or_beads_mutations": 0
+  }
+}

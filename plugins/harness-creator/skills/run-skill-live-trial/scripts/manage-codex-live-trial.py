@@ -86,6 +86,77 @@ def records(path: Path):
                 yield obj
 
 
+def _codex_user_config() -> Path:
+    return Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "config.toml"
+
+
+def native_hook_trust_argv(config: dict) -> list[str]:
+    """Reapply only exact, persisted user trust while ignoring other user config.
+
+    This reads native hooks/list hashes and the real user config; it neither
+    computes trusted hashes nor writes trust. The native engine checks them too.
+    """
+    declaration = config.get("native_hook_trust")
+    external = config.get("external_confirmation_fixture")
+    if declaration is None:
+        if external is not None:
+            raise ValueError("external confirmation requires persisted native hook trust")
+        return []
+    if external is None or not isinstance(declaration, dict):
+        raise ValueError("native hook trust is limited to an external confirmation fixture")
+    try:
+        import tomllib
+    except ImportError as exc:
+        raise ValueError("native hook trust verification requires Python 3.11+") from exc
+    root = Path(config["repo_root"]).resolve()
+    hooks_path = root / ".codex/hooks.json"
+    if (str(hooks_path) != declaration.get("hooks_file") or hooks_path.is_symlink()
+            or digest(hooks_path) != declaration.get("hooks_sha256")):
+        raise ValueError("native hook definition drift")
+    inspection = Path(declaration.get("native_list_file", ""))
+    writable = [root, (Path(config["workdir"]) / "out").resolve()]
+    if (not inspection.is_absolute() or any(inspection.resolve().is_relative_to(p) for p in writable)
+            or digest(inspection) != declaration.get("native_list_sha256")):
+        raise ValueError("native hook inspection is missing, mutable, or changed")
+    if any((part.parent.resolve() / part.name).is_relative_to(p)
+           for part in (inspection, *inspection.parents) for p in writable):
+        raise ValueError("native hook inspection alias is actor writable")
+    native = json.loads(inspection.read_text(encoding="utf-8"))
+    listing = native.get("hooks_list", native)
+    rows = [row for group in listing.get("data", [])
+            if group.get("cwd") == str(root) for row in group.get("hooks", [])
+            if row.get("sourcePath") == str(hooks_path)]
+    definitions = json.loads(hooks_path.read_text(encoding="utf-8"))
+    if set(definitions.get("hooks", {})) != {"UserPromptSubmit", "PreToolUse"}:
+        raise ValueError("native hook trust requires exactly two declared events")
+    expected = {}
+    for event, suffix in (("UserPromptSubmit", "user_prompt_submit"), ("PreToolUse", "pre_tool_use")):
+        groups = definitions["hooks"][event]
+        if not isinstance(groups, list) or len(groups) != 1 or len(groups[0].get("hooks", [])) != 1:
+            raise ValueError("native hook trust requires exactly two handlers")
+        handler = groups[0]["hooks"][0]
+        if handler.get("type") != "command" or handler.get("async", False):
+            raise ValueError("native confirmation hooks must be synchronous commands")
+        expected[f"{hooks_path}:{suffix}:0:0"] = handler["command"]
+    if len(rows) != 2 or {row.get("key") for row in rows} != set(expected):
+        raise ValueError("native hook inspection has different handlers")
+    user = tomllib.loads(_codex_user_config().read_text(encoding="utf-8"))
+    if user.get("projects", {}).get(str(root), {}).get("trust_level") != "trusted":
+        raise ValueError("native fixture project trust is not persisted")
+    state = user.get("hooks", {}).get("state", {})
+    argv = ["-c", "features.hooks=true", "-c", f"projects.{json.dumps(str(root))}.trust_level=\"trusted\""]
+    for row in sorted(rows, key=lambda item: item["key"]):
+        key, current = row["key"], row.get("currentHash")
+        if (row.get("command") != expected[key] or row.get("handlerType") != "command"
+                or row.get("async") is True or row.get("enabled") is not True
+                or row.get("trustStatus") != "trusted"
+                or not isinstance(current, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", current)
+                or state.get(key, {}).get("trusted_hash") != current):
+            raise ValueError("native hook trust is not the exact persisted native hash")
+        argv += ["-c", f"hooks.state.{json.dumps(key)}.trusted_hash={json.dumps(current)}"]
+    return argv
+
+
 def codex_argv(config: dict, session_id: str | None = None) -> list[str]:
     if session_id is not None and (not ID_RE.fullmatch(session_id) or ".." in session_id):
         raise ValueError("invalid exact session identity")
@@ -98,6 +169,7 @@ def codex_argv(config: dict, session_id: str | None = None) -> list[str]:
             str((Path(config["workdir"]) / "out").resolve()),
             "-c", "sandbox_workspace_write.exclude_tmpdir_env_var=true",
             "-c", "sandbox_workspace_write.exclude_slash_tmp=true"]
+    argv += native_hook_trust_argv(config)
     model = config.get("requested_model", "")
     if model:
         if not re.fullmatch(r"[A-Za-z0-9._-]+", model):
@@ -117,6 +189,8 @@ def actor_environment(config: dict) -> dict[str, str]:
     environment = os.environ.copy()
     environment["TMPDIR"] = str(temporary)
     environment["TMPPREFIX"] = str(temporary / "zsh")
+    if config.get("external_confirmation_fixture") is not None:
+        environment["DEV_GRAPH_GH"] = config["external_confirmation_fixture"]["fake_adapter"]
     return environment
 
 
@@ -262,6 +336,176 @@ def validate_choice_request(request: dict, *, fixture: Path, assistant_text: str
     return {"invocation_id": identity, "target_skill": request["target_skill"], "artifacts": checked}
 
 
+def external_fixture(cfg: dict) -> dict | None:
+    value = cfg.get("external_confirmation_fixture")
+    if value is None:
+        return None
+    required = {"guard_script", "hook_wrapper", "hook_event_log", "fake_adapter", "allowed_commands", "target_scopes"}
+    if not isinstance(value, dict) or not required.issubset(value):
+        raise ValueError("external confirmation fixture declaration incomplete")
+    if "frontmatter.external_mutation_guard" not in sibling("live-trial-verdict").contract_gate_evidence(Path(cfg["skill_dir"]) / "SKILL.md"):
+        raise ValueError("external confirmation requires the target's declared mutation guard")
+    for key in ("guard_script", "hook_wrapper", "hook_event_log", "fake_adapter"):
+        if not isinstance(value[key], str) or not Path(value[key]).is_absolute():
+            raise ValueError(f"external fixture {key} must be absolute")
+    adapter = Path(cfg["repo_root"]) / "tools/fake-gh.py"
+    if (Path(value["fake_adapter"]) != adapter or adapter.is_symlink() or not adapter.is_file()
+            or not adapter.resolve(strict=True).is_relative_to(Path(cfg["repo_root"]).resolve(strict=True))):
+        raise ValueError("external confirmation requires the literal fixture fake-gh")
+    commands = value["allowed_commands"]
+    if not isinstance(commands, list) or not commands or any(not isinstance(argv, list) or not argv or not all(isinstance(x, str) and x for x in argv) for argv in commands):
+        raise ValueError("external confirmation requires exact predeclared argv")
+    scopes = value["target_scopes"]
+    if not isinstance(scopes, list) or not scopes or not all(isinstance(x, str) and x for x in scopes):
+        raise ValueError("external confirmation requires exact target scopes")
+    relative = Path(value.get("request_relative", "external-confirmation-request.json"))
+    if relative.is_absolute() or ".." in relative.parts or str(relative) in {"", "."}:
+        raise ValueError("external confirmation request must remain in fixture")
+    return value
+
+
+def external_source_pin(cfg: dict) -> dict | None:
+    fixture = external_fixture(cfg)
+    if fixture is None:
+        return None
+    return {key + "_sha256": digest(Path(fixture[key])) for key in ("guard_script", "hook_wrapper", "fake_adapter")}
+
+
+def external_guard(cfg: dict, state: dict):
+    fixture = external_fixture(cfg)
+    if fixture is None or external_source_pin(cfg) != state.get("external_fixture_pin"):
+        raise ValueError("external fixture source/adapter pin drift")
+    path = Path(fixture["guard_script"]).resolve(strict=True)
+    if path.name != "build-external-mutation-guard.py" or path.parent.name != "scripts" or path.parents[1].name != "skill-governance-adapters":
+        raise ValueError("external confirmation guard is not the canonical provider")
+    if not any(path.is_relative_to(Path(root).resolve()) for root in cfg["loaded_provider_roots"]):
+        raise ValueError("external confirmation guard is outside pinned providers")
+    spec = importlib.util.spec_from_file_location("native_external_guard", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def external_hook_rows(path: Path) -> list[dict]:
+    if not path.is_file():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        value = json.loads(line)
+        if not isinstance(value, dict):
+            raise ValueError("external hook log contains a non-object record")
+        rows.append(value)
+    return rows
+
+
+def validate_external_request(cfg: dict, state: dict, request: dict, *, assistant_text: str, inspected: dict) -> dict:
+    fixture, guard = external_fixture(cfg), external_guard(cfg, state)
+    if request.get("kind") != "external-mutation-confirmation" or request.get("state") != "waiting_user_confirmation":
+        raise ValueError("unknown external confirmation checkpoint")
+    identity, challenge = request.get("invocation_id"), request.get("challenge")
+    if not isinstance(identity, str) or not ID_RE.fullmatch(identity) or any(r.get("invocation_id") == identity for r in state["responses"]):
+        raise ValueError("external confirmation identity invalid/already answered")
+    if not isinstance(challenge, str) or not re.fullmatch(r"[0-9A-F]{24}", challenge):
+        raise ValueError("external confirmation challenge invalid")
+    challenge_sha = hashlib.sha256(challenge.encode()).hexdigest()
+    if any(r.get("challenge_sha256") == challenge_sha for r in state["responses"]):
+        raise ValueError("external confirmation challenge already answered")
+    fx = Path(cfg["repo_root"]).resolve(strict=True)
+    if request.get("project_root") != str(fx):
+        raise ValueError("external confirmation project root mismatch")
+    if inspected.get("pending_tools") or not inspected.get("completed") or inspected.get("session_id") != state["session_id"]:
+        raise ValueError("external confirmation requires a completed native turn")
+    contexts = [row.get("payload", {}) for row in records(Path(state["native_rollout"])) if row.get("type") in {"session_meta", "turn_context"}]
+    if not contexts or contexts[-1].get("cwd") != str(fx):
+        raise ValueError("external confirmation native cwd mismatch")
+    preview_id = request.get("preview_receipt_id")
+    if not isinstance(preview_id, str) or not re.fullmatch(r"[0-9a-f]{32}", preview_id):
+        raise ValueError("external confirmation preview identity invalid")
+    directory = guard._state_dir(fx, create=False)
+    path, preview = guard._receipt(directory, str(directory / f"preview-{preview_id}.json"), "preview", guard._key(directory, create=False))
+    sha = digest(path)
+    entrypoint = "plugin:" + cfg["target_skill"].replace(":", "/skills/", 1) + "/SKILL.md"
+    if preview.get("entrypoint_ref") != entrypoint or preview.get("challenge_sha256") != challenge_sha or request.get("preview_sha256") != sha:
+        raise ValueError("external confirmation signed preview binding mismatch")
+    if preview.get("command_argv") not in fixture["allowed_commands"] or preview.get("target_scope") not in fixture["target_scopes"]:
+        raise ValueError("external confirmation argv/target is not the predeclared fixture")
+    if preview.get("command_sha256") != guard._command_sha256(preview["command_argv"]):
+        raise ValueError("external confirmation command digest mismatch")
+    if (f"GATE-CHALLENGE: {challenge}" not in assistant_text or str(path) not in assistant_text or sha not in assistant_text
+            or preview["target_scope"] not in assistant_text or not all(arg in assistant_text for arg in preview["command_argv"])):
+        raise ValueError("current assistant did not present the exact external preview")
+    return {"kind": "external-mutation-confirmation", "invocation_id": identity, "target_skill": cfg["target_skill"],
+            "challenge_sha256": challenge_sha, "preview_receipt_id": preview_id, "preview_sha256": sha,
+            "preview_path": str(path), "command_sha256": preview["command_sha256"], "project_root": str(fx),
+            "presentation_sha256": hashlib.sha256(assistant_text.encode()).hexdigest(),
+            "hook_records_before": len(external_hook_rows(Path(fixture["hook_event_log"]))),
+            "confirmation_receipt_created_by_controller": False}
+
+
+def verify_external_confirmation(cfg: dict, state: dict, response: dict, turn: dict) -> None:
+    fixture, guard = external_fixture(cfg), external_guard(cfg, state)
+    rows = external_hook_rows(Path(fixture["hook_event_log"]))
+    matching = []
+    for index, row in enumerate(rows):
+        if index < response["hook_records_before"]:
+            continue
+        if not isinstance(row.get("input_raw"), str) or not isinstance(row.get("output_raw"), str):
+            raise ValueError("external hook log lacks original UTF-8 input/output")
+        payload = json.loads(row["input_raw"])
+        if payload.get("hook_event_name") == "UserPromptSubmit" and payload.get("session_id") == state["session_id"] and payload.get("prompt", "").strip().startswith("CONFIRM EXTERNAL MUTATION "):
+            matching.append((index, row, payload))
+    if len(matching) != 1:
+        raise ValueError("exactly one actual native confirmation hook event is required")
+    index, row, payload = matching[0]
+    actual_prompt = payload.get("prompt")
+    if (payload.get("cwd") != cfg["repo_root"] or not isinstance(actual_prompt, str)
+            or not re.fullmatch(r"CONFIRM EXTERNAL MUTATION [0-9A-F]{24}\s*", actual_prompt)
+            or hashlib.sha256(actual_prompt.strip().split()[-1].encode()).hexdigest() != response["challenge_sha256"]
+            or row.get("runtime") != "codex" or row.get("returncode") != 0
+            or row.get("guard_script_sha256") != state["external_fixture_pin"]["guard_script_sha256"]):
+        raise ValueError("native confirmation hook identity/source mismatch")
+    output = json.loads(row["output_raw"])
+    context = output.get("hookSpecificOutput", {}).get("additionalContext", "")
+    if not context.startswith("[external-mutation-confirmation]\n"):
+        raise ValueError("native confirmation hook did not emit canonical context")
+    result = json.loads(context.split("\n", 1)[1])
+    if result.get("status") != "confirmation-created":
+        raise ValueError("native confirmation hook did not create a receipt")
+    directory = guard._state_dir(Path(cfg["repo_root"]), create=False)
+    path = Path(result["receipt_path"])
+    if path.parent.resolve() != directory or not re.fullmatch(r"confirmation-[0-9a-f]{32}\.json", path.name):
+        raise ValueError("native confirmation receipt path is not canonical")
+    confirmation = json.loads(path.read_text())
+    key = guard._key(directory, create=False)
+    if not guard.hmac.compare_digest(confirmation.get("seal", ""), guard._seal(confirmation, key)):
+        raise ValueError("native confirmation receipt seal invalid")
+    if (digest(path) != result.get("receipt_sha256") or confirmation.get("kind") != "confirmation"
+            or confirmation.get("producer") != "codex-user-prompt-submit"
+            or confirmation.get("preview_receipt_id") != response["preview_receipt_id"]
+            or confirmation.get("preview_receipt_sha256") != response["preview_sha256"]
+            or confirmation.get("user_event_id") != guard._user_event_id(state["session_id"], actual_prompt.strip())):
+        raise ValueError("native confirmation receipt binding/producer mismatch")
+    preview_path = Path(response["preview_path"])
+    if digest(preview_path) != response["preview_sha256"]:
+        raise ValueError("external preview changed after confirmation")
+    preview = json.loads(preview_path.read_text())
+    if not preview["issued_at"] <= confirmation["issued_at"] <= preview["expires_at"]:
+        raise ValueError("native confirmation was outside preview validity")
+    proof = {"runtime": "codex", "native_hook_record_index": index, "native_hook_record": row,
+             "preview": preview, "confirmation": confirmation, "confirmation_sha256": digest(path),
+             "fixture_pin": state["external_fixture_pin"], "project_root": cfg["repo_root"],
+             "entrypoint_ref": preview["entrypoint_ref"], "allowed_commands": fixture["allowed_commands"],
+             "target_scopes": fixture["target_scopes"], "private_seal_verified": True,
+             "public_hmac_recheck": "not_available: guard key remains private; public checks bind original event/output, receipt bytes, source and native user turn"}
+    proof_path = Path(cfg["workdir"]) / "external-confirmations" / f"{response['invocation_id']}.json"
+    if proof_path.exists():
+        raise ValueError("external confirmation proof must not be overwritten")
+    dump(proof_path, proof)
+    response.update({"proof_ref": str(proof_path.relative_to(cfg["workdir"])), "proof_sha256": digest(proof_path),
+                     "hook_event_index": index, "confirmation_receipt_sha256": digest(path),
+                     "hook_verified": True})
+
+
 def stop_owned_process_group(process, *, expected_pid: int) -> None:
     if process is None or process.pid != expected_pid or expected_pid <= 1:
         raise ValueError("process cleanup ownership mismatch")
@@ -330,6 +574,9 @@ def load_config(path: Path) -> dict:
     protected.append(("config file", path.absolute()))
     if cfg.get("projection_receipt_file"):
         protected.append(("projection receipt", Path(cfg["projection_receipt_file"])))
+    external = external_fixture(cfg)
+    if external is not None:
+        protected.extend(("external " + name, Path(external[name])) for name in ("guard_script", "hook_wrapper", "hook_event_log"))
     effective_provider_roots = cfg.get("loaded_provider_roots", [cfg["skill_dir"]])
     protected.extend(("loaded provider", Path(value)) for value in effective_provider_roots)
     protected.extend(("operation provider", Path(item["skill_dir"])) for item in cfg.get("native_operations", []))
@@ -406,6 +653,8 @@ def verify_pin(cfg: dict, state: dict) -> None:
         expected = state.get("operation_source_sha256", {}).get(operation["id"])
         if expected != digest(Path(operation["skill_dir"]) / "SKILL.md"):
             raise ValueError("native operation source drift")
+    if cfg.get("external_confirmation_fixture") is not None and external_source_pin(cfg) != state.get("external_fixture_pin"):
+        raise ValueError("external fixture source/adapter pin drift")
 
 
 def verify_native_skill_paths(cfg: dict, state: dict) -> dict:
@@ -510,6 +759,13 @@ def init_state(cfg: dict) -> dict:
     state["native_operation_turns"] = []
     state["operation_source_sha256"] = {item["id"]: digest(Path(item["skill_dir"]) / "SKILL.md")
                                         for item in operations}
+    if cfg.get("external_confirmation_fixture") is not None:
+        state["external_fixture_pin"] = external_source_pin(cfg)
+        ext = external_fixture(cfg)
+        state["external_fixture_policy"] = {"allowed_commands": ext["allowed_commands"], "target_scopes": ext["target_scopes"],
+             "guard_source_ref": "external-confirmations/guard-source.py", "hook_wrapper_ref": "external-confirmations/hook-wrapper.py",
+             "hook_events_ref": "external-confirmations/hook-events.jsonl", "fake_adapter_ref": "fixture-final/tools/fake-gh.py"}
+        state["actor_environment_override"]["DEV_GRAPH_GH"] = environment["DEV_GRAPH_GH"]
     bind_projection_receipt(cfg, state)
     # Creation is exclusive; a second controller cannot reset the clock.
     with state_path(cfg).open("x", encoding="utf-8") as stream:
@@ -748,6 +1004,12 @@ def drive(cfg: dict, state: dict, prompt: Path, response_pending=None) -> dict:
                 except ValueError as exc:
                     response_pending["native_validation_error"] = str(exc)
                     state["status"] = "NATIVE_OPERATION_ACTIVATION_FAIL"
+            if response_pending["kind"] == "external-mutation-confirmation" and state["status"] == "turn_complete":
+                try:
+                    verify_external_confirmation(cfg, state, response_pending, turn)
+                except (ValueError, OSError, KeyError) as exc:
+                    response_pending["native_validation_error"] = str(exc)
+                    state["status"] = "EXTERNAL_CONFIRMATION_FAIL"
             response_pending["submitted"] = state["status"] == "turn_complete"
             response_pending["native_turn"] = turn["number"]
             dump(state_path(cfg), state)
@@ -758,6 +1020,27 @@ def drive(cfg: dict, state: dict, prompt: Path, response_pending=None) -> dict:
             state["status"] = "DONE"
             dump(state_path(cfg), state)
             return state
+        external = external_fixture(cfg)
+        if external is not None:
+            external_path = Path(cfg["repo_root"]) / external.get("request_relative", "external-confirmation-request.json")
+            if not external_path.resolve().is_relative_to(Path(cfg["repo_root"]).resolve()):
+                raise ValueError("external confirmation request escapes fixture")
+            request = json.loads(external_path.read_text()) if external_path.is_file() else None
+            previous_external = next((r for r in state["responses"] if request and r.get("kind") == "external-mutation-confirmation" and r["invocation_id"] == request.get("invocation_id")), None)
+            if previous_external and digest(external_path) != previous_external["request_sha256"]:
+                raise ValueError("answered external confirmation checkpoint was rewritten")
+            if request is not None and previous_external is None:
+                checked = validate_external_request(cfg, state, request,
+                          assistant_text=latest_agent_text(Path(turn["stdout"])), inspected=verify_native_skill_paths(cfg, state))
+                prompt = Path(cfg["private_dir"]) / f"external-confirmation-{len(state['responses']) + 1:03d}.txt"
+                with prompt.open("x", encoding="utf-8") as stream:
+                    stream.write(f"CONFIRM EXTERNAL MUTATION {request['challenge']}\n")
+                response = {**checked, "request_sha256": digest(external_path), "sent_after_turn": turn["number"],
+                            "prompt_sha256": digest(prompt), "submitted": False}
+                state["responses"].append(response)
+                dump(state_path(cfg), state)
+                response_pending = response
+                continue
         request_path = Path(cfg.get("choice_request", str(Path(cfg["repo_root"]) / "artifact-choice-request.json")))
         request = json.loads(request_path.read_text()) if request_path.is_file() else None
         previous = next((r for r in state["responses"] if request and r["invocation_id"] == request.get("invocation_id")), None)
@@ -907,6 +1190,12 @@ def collect(cfg: dict) -> dict:
                 continue
             path = Path(turn[key])
             publish(path, work / "native-exec" / path.name)
+    if cfg.get("external_confirmation_fixture") is not None:
+        ext = external_fixture(cfg)
+        for key, name in (("guard_script", "guard-source.py"), ("hook_wrapper", "hook-wrapper.py"), ("hook_event_log", "hook-events.jsonl")):
+            path = Path(ext[key])
+            if path.is_file():
+                publish(path, work / "external-confirmations" / name)
     snapshot = work / "fixture-final"
     def ignore(directory, names):
         return [name for name in names if name in {".git", ".agents", ".codex", "__pycache__"}

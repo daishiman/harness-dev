@@ -1,5 +1,9 @@
 # 変更履歴
 
+## 1.3.3 — 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 1.3.2 — 2026-11-01
 
 - **Codex で使うときの宣言（harness へ取り込んだときに追加）**: references/package-contract.json の codex_alternatives.agents に、構図・文字・色の専門レンズ 3 体の代わりの経路を書いた。Codex には Claude の agent が無いため、レンズを workflow-manifest.json で使う 4 つの stage（assign-flyer-evaluator・assign-flyer-analysis-evaluator・run-analyze-flyer・run-create-flyer）が、同じ知見を自分の context で使う。run-intake-flyer には frontmatter の `runtime_root_policy: host-skill-path` と「実行時のルートの決め方」の節を足した。局面カタログが PLUGIN_ROOT で build-flyer.py を実行するためで、決め方は stage-common の「`skills/<stage>/SKILL.md` の 2 階層上」と同じ場所になる。Codex では定義ファイルの name が flyer-studio と一致することも確認し、不一致・不正時はスクリプトを実行せず停止する。

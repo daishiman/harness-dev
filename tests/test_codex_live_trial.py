@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 import signal
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +17,131 @@ import pytest
 
 SCRIPT = (Path(__file__).resolve().parents[1] / "plugins/harness-creator/skills/"
           "run-skill-live-trial/scripts/manage-codex-live-trial.py")
+
+
+def _external_gate_case(tmp_path):
+    """Synthetic hook I/O for boundary tests only; never an actual live acceptance."""
+    mod = load()
+    fx, private, work = tmp_path/'fx', tmp_path/'private', tmp_path/'work'
+    for path in (fx, private, work):
+        path.mkdir()
+    provider = tmp_path/'providers/plugins/skill-governance-adapters/scripts'
+    provider.mkdir(parents=True)
+    guard_source = SCRIPT.parents[4]/'skill-governance-adapters/scripts/build-external-mutation-guard.py'
+    guard = provider/'build-external-mutation-guard.py'
+    shutil.copyfile(guard_source, guard)
+    wrapper = private/'wrapper.py'; wrapper.write_text('# synthetic test wrapper source\n')
+    adapter = fx/'tools/fake-gh.py'; adapter.parent.mkdir(); adapter.write_text('# local fixture adapter\n')
+    skill = tmp_path/'providers/plugins/dev-graph/skills/run-dev-graph-sync'
+    skill.mkdir(parents=True)
+    (skill/'SKILL.md').write_text('---\nname: run-dev-graph-sync\nexternal_mutation_guard: required\n---\n')
+    command = [sys.executable, '-c', "print('fixture only')"]
+    ext = {'guard_script':str(guard), 'hook_wrapper':str(wrapper),
+           'hook_event_log':str(private/'hook-events.jsonl'), 'fake_adapter':str(adapter),
+           'allowed_commands':[command], 'target_scopes':['fixture:sync']}
+    cfg = {'repo_root':str(fx), 'private_dir':str(private), 'workdir':str(work),
+           'target_skill':'dev-graph:run-dev-graph-sync','skill_dir':str(skill),
+           'loaded_provider_roots':[str(tmp_path/'providers')], 'external_confirmation_fixture':ext}
+    rollout = private/'native.jsonl'
+    rollout.write_text(json.dumps({'type':'session_meta','payload':{'id':'native-test','cwd':str(fx)}})+'\n')
+    state = {'responses':[], 'session_id':'native-test', 'native_rollout':str(rollout),
+             'external_fixture_pin':mod.external_source_pin(cfg), 'writable_roots':[str(fx)]}
+    preview_cmd = [sys.executable,str(guard),'preview','--project-root',str(fx),
+        '--entrypoint-ref','plugin:dev-graph/skills/run-dev-graph-sync/SKILL.md',
+        '--target-scope','fixture:sync','--diff-summary','local fixture sync',
+        '--side-effect-summary','local adapter only','--command-json',json.dumps(command)]
+    process = subprocess.run(preview_cmd,capture_output=True,text=True,check=True)
+    preview = json.loads(process.stdout)
+    request = {'kind':'external-mutation-confirmation','state':'waiting_user_confirmation',
+               'invocation_id':'external-1','challenge':preview['challenge'],
+               'preview_receipt_id':Path(preview['receipt_path']).stem.removeprefix('preview-'),
+               'preview_sha256':preview['receipt_sha256'],'project_root':str(fx)}
+    text = f"GATE-CHALLENGE: {preview['challenge']} {preview['receipt_path']} {preview['receipt_sha256']} fixture:sync " + ' '.join(command)
+    inspected = {'completed':True, 'pending_tools':[], 'session_id':'native-test'}
+    return mod,cfg,state,request,text,inspected
+
+
+@pytest.mark.parametrize('mutation', ['challenge','argv','cwd','presentation','native_pending','adapter','trait','replay'])
+def test_external_confirmation_rejects_unbound_or_unpresented_fixture(tmp_path, mutation):
+    mod,cfg,state,request,text,inspected = _external_gate_case(tmp_path)
+    if mutation == 'challenge': request['challenge']='0'*24
+    elif mutation == 'argv': cfg['external_confirmation_fixture']['allowed_commands']=[['gh','issue','create']]
+    elif mutation == 'cwd': request['project_root']=str(tmp_path)
+    elif mutation == 'presentation': text='a preview exists'
+    elif mutation == 'native_pending': inspected['pending_tools']=['pending']
+    elif mutation == 'adapter': Path(cfg['external_confirmation_fixture']['fake_adapter']).write_text('changed')
+    elif mutation == 'trait': (Path(cfg['skill_dir'])/'SKILL.md').write_text('---\nname: run-dev-graph-sync\n---\n')
+    elif mutation == 'replay': state['responses']=[{'invocation_id':request['invocation_id']}]
+    with pytest.raises(ValueError):
+        mod.validate_external_request(cfg,state,request,assistant_text=text,inspected=inspected)
+    assert not list(Path(cfg['repo_root']).glob('.artifact-delivery/external-mutation/confirmation-*.json'))
+
+
+def _complete_synthetic_external_hook(mod,cfg,state,request,text,inspected, *, runtime='codex'):
+    response = mod.validate_external_request(cfg,state,request,assistant_text=text,inspected=inspected)
+    response.update({'sent_after_turn':1,'native_turn':2})
+    prompt = f"CONFIRM EXTERNAL MUTATION {request['challenge']}\n"
+    response['prompt_sha256']=hashlib.sha256(prompt.encode()).hexdigest()
+    payload = {'hook_event_name':'UserPromptSubmit','session_id':state['session_id'],
+               'cwd':cfg['repo_root'],'prompt':prompt.strip()}
+    raw = json.dumps(payload)
+    cp = subprocess.run([sys.executable,cfg['external_confirmation_fixture']['guard_script'],
+        'hook-confirm','--runtime',runtime],input=raw,text=True,capture_output=True,check=True)
+    row = {'runtime':'codex','guard_script_sha256':state['external_fixture_pin']['guard_script_sha256'],
+           'input_raw':raw,'output_raw':cp.stdout,'returncode':cp.returncode}
+    Path(cfg['external_confirmation_fixture']['hook_event_log']).write_text(json.dumps(row)+'\n')
+    return response,prompt
+
+
+def test_external_confirmation_requires_real_hook_receipt_and_preserves_raw_log(tmp_path):
+    mod,cfg,state,request,text,inspected = _external_gate_case(tmp_path)
+    response,prompt = _complete_synthetic_external_hook(mod,cfg,state,request,text,inspected)
+    raw_before = Path(cfg['external_confirmation_fixture']['hook_event_log']).read_bytes()
+    mod.verify_external_confirmation(cfg,state,response,{'stdin_sha256':hashlib.sha256(prompt.encode()).hexdigest()})
+    assert response['hook_verified'] is True
+    assert response['confirmation_receipt_created_by_controller'] is False
+    assert Path(cfg['external_confirmation_fixture']['hook_event_log']).read_bytes()==raw_before
+    with pytest.raises(ValueError,match='overwritten'):
+        mod.verify_external_confirmation(cfg,state,response,{})
+
+
+@pytest.mark.parametrize('mutation',['missing_hook','claude_producer','tampered_receipt','wrong_session'])
+def test_external_confirmation_never_promotes_a_missing_or_wrong_native_hook(tmp_path,mutation):
+    mod,cfg,state,request,text,inspected = _external_gate_case(tmp_path)
+    response,_ = _complete_synthetic_external_hook(mod,cfg,state,request,text,inspected,
+                                                  runtime='claude' if mutation=='claude_producer' else 'codex')
+    log = Path(cfg['external_confirmation_fixture']['hook_event_log'])
+    if mutation=='missing_hook': log.write_text('')
+    elif mutation=='wrong_session':
+        row=json.loads(log.read_text());payload=json.loads(row['input_raw']);payload['session_id']='wrong';row['input_raw']=json.dumps(payload);log.write_text(json.dumps(row)+'\n')
+    elif mutation=='tampered_receipt':
+        path=next(Path(cfg['repo_root']).glob('.artifact-delivery/external-mutation/confirmation-*.json'))
+        value=json.loads(path.read_text());value['producer']='wrong';path.write_text(json.dumps(value))
+    with pytest.raises(ValueError):mod.verify_external_confirmation(cfg,state,response,{})
+    assert 'proof_ref' not in response
+
+
+def test_external_confirmation_public_proof_survives_private_removal_and_detects_tampering(tmp_path):
+    mod,cfg,state,request,text,inspected = _external_gate_case(tmp_path)
+    response,prompt = _complete_synthetic_external_hook(mod,cfg,state,request,text,inspected)
+    mod.verify_external_confirmation(cfg,state,response,{})
+    work=Path(cfg['workdir']); folder=work/'external-confirmations'
+    ext=cfg['external_confirmation_fixture']
+    for source,name in [('guard_script','guard-source.py'),('hook_wrapper','hook-wrapper.py'),('hook_event_log','hook-events.jsonl')]:
+        shutil.copyfile(ext[source],folder/name)
+    shutil.copytree(cfg['repo_root'],work/'fixture-final',ignore=shutil.ignore_patterns('.guard-key'))
+    state['external_fixture_policy']={'allowed_commands':ext['allowed_commands'],'target_scopes':ext['target_scopes'],
+        'guard_source_ref':'external-confirmations/guard-source.py','hook_wrapper_ref':'external-confirmations/hook-wrapper.py',
+        'hook_events_ref':'external-confirmations/hook-events.jsonl','fake_adapter_ref':'fixture-final/tools/fake-gh.py'}
+    user={'normalized_text_sha256':hashlib.sha256(prompt.strip().encode()).hexdigest()}
+    events=work/'native-exec';events.mkdir()
+    (events/'turn-001.jsonl').write_text(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':text}})+'\n')
+    shutil.rmtree(cfg['private_dir'])  # public CI must not rely on private HMAC key or raw paths
+    shutil.rmtree(cfg['repo_root'])
+    verdict=mod.sibling('live-trial-verdict')
+    assert verdict.external_confirmation_proof_errors(work,state,response,user)==[]
+    (work/'fixture-final/tools/fake-gh.py').write_text('modified')
+    assert verdict.external_confirmation_proof_errors(work,state,response,user)
 
 
 def load():

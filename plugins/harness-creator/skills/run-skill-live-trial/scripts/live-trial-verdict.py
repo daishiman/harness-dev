@@ -247,6 +247,101 @@ def validate_runtime_evidence(doc: dict, transcript_path: Path | None,
     return sorted(set(errors))
 
 
+def external_confirmation_proof_errors(workdir: Path, state: dict, entry: dict, user: dict) -> list[str]:
+    """Recheck public native event/receipt/source bindings without exposing the guard key.
+
+    Public CI cannot recheck the private HMAC. It checks the original hook input and
+    stdout, native user turn, canonical receipt bytes, source and adapter digests.
+    The fresh independent goal evaluator remains required.
+    """
+    try:
+        def contained(ref):
+            path = (workdir / ref).resolve(strict=True)
+            path.relative_to(workdir.resolve(strict=True))
+            return path
+        def sha(path):
+            return hashlib.sha256(path.read_bytes()).hexdigest()
+        def encoded(document):
+            return (json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        proof_path = contained(entry["proof_ref"])
+        if sha(proof_path) != entry["proof_sha256"] or entry.get("hook_verified") is not True:
+            raise ValueError("proof digest/verification missing")
+        proof = json.loads(proof_path.read_text())
+        pin, policy = state["external_fixture_pin"], state["external_fixture_policy"]
+        if proof.get("fixture_pin") != pin or proof.get("allowed_commands") != policy["allowed_commands"] or proof.get("target_scopes") != policy["target_scopes"]:
+            raise ValueError("fixture policy/pin mismatch")
+        for ref, key in (("guard_source_ref", "guard_script_sha256"), ("hook_wrapper_ref", "hook_wrapper_sha256"), ("fake_adapter_ref", "fake_adapter_sha256")):
+            if sha(contained(policy[ref])) != pin[key]:
+                raise ValueError("source/adapter digest mismatch")
+        canonical_guard = Path(__file__).resolve().parents[4] / "skill-governance-adapters/scripts/build-external-mutation-guard.py"
+        if not canonical_guard.is_file() or sha(canonical_guard) != pin["guard_script_sha256"]:
+            raise ValueError("guard source differs from the current canonical dependency")
+        rows = [json.loads(line) for line in contained(policy["hook_events_ref"]).read_text().splitlines()]
+        index = entry["hook_event_index"]
+        if isinstance(index, bool) or not isinstance(index, int) or index < entry["hook_records_before"] or rows[index] != proof["native_hook_record"]:
+            raise ValueError("original hook log record mismatch")
+        row = proof["native_hook_record"]
+        payload, output = json.loads(row["input_raw"]), json.loads(row["output_raw"])
+        prompt = payload["prompt"].strip()
+        match = re.fullmatch(r"CONFIRM EXTERNAL MUTATION ([0-9A-F]{24})", prompt)
+        if (not match or hashlib.sha256(prompt.encode()).hexdigest() != user["normalized_text_sha256"]
+                or hashlib.sha256(match.group(1).encode()).hexdigest() != entry["challenge_sha256"]):
+            raise ValueError("hook challenge/native user input mismatch")
+        if (row.get("runtime") != "codex" or row.get("returncode") != 0
+                or row.get("guard_script_sha256") != pin["guard_script_sha256"]
+                or payload.get("hook_event_name") != "UserPromptSubmit"
+                or payload.get("session_id") != state["session_id"]
+                or payload.get("cwd") != entry["project_root"]
+                or entry["project_root"] != state["writable_roots"][0]):
+            raise ValueError("native hook source/identity mismatch")
+        specific = output["hookSpecificOutput"]
+        if specific.get("hookEventName") != "UserPromptSubmit" or not specific["additionalContext"].startswith("[external-mutation-confirmation]\n"):
+            raise ValueError("canonical native hook output missing")
+        result = json.loads(specific["additionalContext"].split("\n", 1)[1])
+        preview, confirmation = proof["preview"], proof["confirmation"]
+        preview_sha = hashlib.sha256(encoded(preview)).hexdigest()
+        confirmation_sha = hashlib.sha256(encoded(confirmation)).hexdigest()
+        prior = entry["sent_after_turn"]
+        if isinstance(prior, bool) or not isinstance(prior, int) or prior < 1 or entry["native_turn"] != prior + 1:
+            raise ValueError("external confirmation response turn order mismatch")
+        events = [json.loads(line) for line in contained(f"native-exec/turn-{prior:03d}.jsonl").read_text().splitlines()]
+        texts = [row["item"].get("text", "") for row in events if row.get("type") == "item.completed" and row.get("item", {}).get("type") == "agent_message"]
+        text = texts[-1] if texts else ""
+        preview_path = str(Path(entry["project_root"]) / ".artifact-delivery/external-mutation" / f"preview-{preview['receipt_id']}.json")
+        if (hashlib.sha256(text.encode()).hexdigest() != entry["presentation_sha256"]
+                or f"GATE-CHALLENGE: {match.group(1)}" not in text or preview_path not in text
+                or preview_sha not in text or preview.get("target_scope", "") not in text
+                or not all(arg in text for arg in preview.get("command_argv", []))):
+            raise ValueError("original assistant did not present the exact preview before confirmation")
+        command_sha = hashlib.sha256(json.dumps(preview.get("command_argv"), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        if preview.get("command_sha256") != command_sha or entry["command_sha256"] != command_sha:
+            raise ValueError("external command digest mismatch")
+        if (result.get("status") != "confirmation-created" or result.get("receipt_sha256") != confirmation_sha
+                or confirmation_sha != entry["confirmation_receipt_sha256"] or preview_sha != entry["preview_sha256"]
+                or confirmation.get("producer") != "codex-user-prompt-submit"
+                or confirmation.get("kind") != "confirmation" or confirmation.get("decision") != "confirm"
+                or confirmation.get("preview_receipt_sha256") != preview_sha
+                or confirmation.get("preview_receipt_id") != entry["preview_receipt_id"]
+                or confirmation.get("user_event_id") != hashlib.sha256(f"{state['session_id']}\0{prompt}".encode()).hexdigest()):
+            raise ValueError("receipt producer/preview/user binding mismatch")
+        if (preview.get("kind") != "preview" or preview.get("receipt_id") != entry["preview_receipt_id"]
+                or preview.get("challenge_sha256") != entry["challenge_sha256"]
+                or preview.get("entrypoint_ref") != "plugin:" + entry["target_skill"].replace(":", "/skills/", 1) + "/SKILL.md"
+                or preview.get("command_argv") not in policy["allowed_commands"]
+                or preview.get("target_scope") not in policy["target_scopes"]
+                or not preview["issued_at"] <= confirmation["issued_at"] <= preview["expires_at"]):
+            raise ValueError("predeclared preview/validity mismatch")
+        for document, name in ((preview, f"preview-{preview['receipt_id']}.json"), (confirmation, f"confirmation-{confirmation['receipt_id']}.json")):
+            path = contained("fixture-final/.artifact-delivery/external-mutation/" + name)
+            if path.read_bytes() != encoded(document):
+                raise ValueError("collected receipt bytes mismatch")
+        if proof.get("private_seal_verified") is not True or not proof.get("public_hmac_recheck", "").startswith("not_available:"):
+            raise ValueError("private/public verification boundary missing")
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
+        return [f"native-external-confirmation-invalid:{exc}"]
+    return []
+
+
 def native_run_metadata(workdir: Path, state_path: Path | None, info: dict | None,
                         *, nudge: int, gate: int) -> tuple[dict, list[str]]:
     """Bind the disclosure ledger to actual native user turns; it never grants PASS."""
@@ -299,6 +394,8 @@ def native_run_metadata(workdir: Path, state_path: Path | None, info: dict | Non
         user = info["user_turns"][number - 1]
         if entry.get("prompt_sha256") != user["text_sha256"]:
             errors.append("native-run-state-prompt-mismatch")
+        if entry.get("kind") == "external-mutation-confirmation":
+            errors.extend(external_confirmation_proof_errors(workdir, state, entry, user))
         if entry in operations:
             target, args = entry.get("target_skill"), entry.get("args")
             if not isinstance(target, str) or not isinstance(args, str):
