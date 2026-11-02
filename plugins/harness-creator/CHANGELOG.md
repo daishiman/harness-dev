@@ -2,6 +2,12 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.57 — 2026-11-02
+
+- 実カタログの修飾名 `plugin:skill` でCodex nativeを起動し、別namespace・未宣言依存・source対応表の改変を拒否する。controllerの対応表を起動前に固定し、移設後も元pathとsource bytesを照合する。
+- 原ログを行単位で読み、子session探索を実走の日付・開始時刻へ限定してmetadataを有限cacheする。過去の全履歴本文を繰り返し読み込んでいた遅延を修正。
+- 実測の経過時間を維持したままpoll-stateの共通整数形式へ接続する。初回に正規適用へ至らなかった試行はBLOCKEDとして保持。
+
 ## 1.4.56 — 2026-11-02
 
 - 明示選択のCodex native実走を追加。実skill適用・全文Read・親子session・モデル・累積usageを原rolloutから検査し、Claude形式への変換を行わない。

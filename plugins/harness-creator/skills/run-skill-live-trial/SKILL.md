@@ -42,8 +42,8 @@ script_refs:
   - scripts/live-trial-poll.py
   - scripts/validate-live-trial-resource-budget.py
   - scripts/live-trial-verdict.py
-  - scripts/live-trial-codex.py
-  - scripts/live-trial-codex-transcript.py
+  - scripts/manage-codex-live-trial.py
+  - scripts/extract-codex-transcript.py
   - scripts/build-live-trial-verdict.py
   - scripts/validate-live-trial-scenario-contract.py
   - scripts/validate-goal-seek-evidence.py
@@ -113,7 +113,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Runtimeの選択
 
-計画時に`--runtime claude|codex`を指定し、省略時は従来どおりClaudeを使う。以下のtmux・Skill tool・Claude確認画面の手順はClaude専用。Codexは[専用契約](references/codex-live-trial.md)と`live-trial-codex.py --config <path> run|collect|finalize`を使い、Claudeの起動器へ渡さない。
+計画時に`--runtime claude|codex`を指定し、省略時は従来どおりClaudeを使う。以下のtmux・Skill tool・Claude確認画面の手順はClaude専用。Codexは[専用契約](references/codex-live-trial.md)と`manage-codex-live-trial.py --config <path> run|collect|finalize`を使い、Claudeの起動器へ渡さない。
 
 Codexではnativeの`$skill`適用・本文の実Read・subagent・実user turnを原JSONLで検査する。`Skill`/`Agent`やStop/権限hookのClaudeイベントを生成しない。native operationを複数user turnで渡した試行は、その回数と順序を記録し、単一入力での無対話自走とは主張しない。未確認のnative hookを必要とするscenarioは保留し、代替receiptを自作しない。
 

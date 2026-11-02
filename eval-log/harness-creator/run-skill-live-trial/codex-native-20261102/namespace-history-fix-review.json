@@ -1,0 +1,79 @@
+{
+  "status": "PASS",
+  "claim_type": "design",
+  "profile": "incremental",
+  "reviewer": "independent-codex-native-content-review",
+  "reviewed_at": "2026-11-02T03:23:57.149702Z",
+  "base_anchor": "8c710295",
+  "scope": "実走で判明したnamespace/history/projection/elapsed修正の限定独立review。旧採点は再実行しない。source edit・採番・Git mutation・Beads mutation・実target起動なし。",
+  "reviewed_inputs_sha256": {
+    "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md": "458b96059bf84a732b7e92ba79fec822daa1f9fb93b966ccbfc3082cb5484fc9",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex.py": "d7ef3176d506b9928ec34bc667eba373acd206b531b8f7b3dffe305f766fc1bc",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex-transcript.py": "ce29a863730b1ee21a1bd292c899672b477592d9f18167261d9431fb3308f3bd",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "a6d54cf7c10754c8add5d02a32e28d8137c28aa5e0f79b4efd6e9df7e2ba70ea",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md": "4415bbbe9f48e45f8a1ab85750046e14fda10a509a97287992ed15d0f798258d",
+    "tests/test_codex_live_trial.py": "cd1b43b5f307367ff246d0b9d6a5a25f8d1b9c75446cb0bf239ec465f03edf76",
+    "tests/test_live_trial_harness.py": "97c69bf9e6e34881b422be64a8f3b9c69258c89d1ba635d6e8700a2dbeb9026f"
+  },
+  "input_history_policy": "この表が今回差分の新source bytesを示す。先行reviewed_sha256やfinal_metadata_addendumのhashは当時の証跡として改変しない。SKILL SHAは開始/保存直前とも不変。",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "native_operation_promptは$plugin:skillをそのまま送信、coreの実userturn expected promptも同時変更。qualified名のplugin部をsuffixだけで同一視せずwrongnamespaceを拒否。非修飾host名の互換受理も指定source path/body/Readを必須とし、wrongqualified名をfallbackしない。pluginの呼出し文ではnamespaceを省略しないと専用契約も明記。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "project projectionはcontroller private receiptをactor起動前に実source/symlink/bytesと許可provider rootsへ照合、公開copyのSHAをstateへpin。archive/CIでは同一sessionのcollected state/refSHA、exact qualified name/project path/source末尾構造/current source SHA、実注入本文と全文Readを合わせて検査し、private path不存在を無条件PASSにしない。receipt不存在/namespace違い/改変はactivation不成立。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "recordsを逐行readerへ変更しnext(records)で全履歴を読む旧挙動を除去。day directoryを親filename/開始秒の同日・翌日に限定し過去全root rglobを使わない。metadata cacheはdev/ino+realpathと上限2048で反復読込を抑え、collectではfresh headerと凍結raw全parse/子関係検査を残す。最終report自体はPASSを与えない。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "poll elapsedはfloatを切り捨てずceil intへ合わせ、実started/observed timestampを保持し共通poll_wall_usageのmax(elapsed,actual observed-start)へ接続。元high修正の全actor writable roots対private/provider/control非交差、native tmp公開除外、生存supervisor所有group回収は今回diffで維持。CLI版/model/token/原SHA/freshgoal/schema/共通runtime gatesも緩和しない。"
+    }
+  },
+  "current_findings": [],
+  "previous_high_fixes_preserved": [
+    "CN-ISOLATION-001: repo_root/workdir-outとprotected realpaths/aliasprefix非交差を保持。projection receiptもprotectedへ追加。",
+    "CN-CLEANUP-002: 生存supervisorをgroup leaderとしてPGID予約、ownedalive groupだけTERM/KILL/reap、ownershiplostならCLEANUP_FAILEDを保持。"
+  ],
+  "independent_execution": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 /usr/bin/arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest -q -p no:cacheprovider tests/test_codex_live_trial.py tests/test_live_trial_harness.py -k \"archived_projection_requires_exact_controller_mapping or wrong_namespace_or_invalid_qualified_name or first_metadata_cache_and_final_fresh_check or records_reads_only_the_requested_line or collected_poll_state_keeps_closed_integer_wall_clock or controller_projection_receipt_is_copied_and_bound_before_execution\"",
+    "returncode": 0,
+    "result": "13 passed, 201 deselected in 0.55s。LLM/API/実target起動なし。",
+    "coverage": "wrongnamespace/invalidqualified8、archived exactprojection1、streamreader1、metadata finalfresh1、ceil elapsed1、projection bind1。"
+  },
+  "test_report_boundary": "作者報告core175PASS/runner39PASSおよび親の合同regressionは当reviewerの実行として主張しない。",
+  "old_runtime_evidence": {
+    "reviewer_verified": {
+      "workdir": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci",
+      "overall": {
+        "launch": "PASS",
+        "completion": "FAIL",
+        "goal_fit": "NOT_EVALUATED",
+        "verdict": "BLOCKED"
+      },
+      "selected_skill_instructions": 0,
+      "nice_failure_tool_outputs": 1,
+      "frozen_files_checked": 83,
+      "frozen_file_mismatches": [],
+      "transcript_sha256": "a02b99045367c7e9c3418f1cf31575978669034ce9d5a792c1d2c403e2833a6e",
+      "freeze_sha256": "82df278a1f65001ca41b6d81cab22c3af1d284aa3bf04614291d393c6ae021f4",
+      "verdict_sha256": "9d73d28625cc90e2105bad519eaafd5d59c8231d187eece3ea9c4c201a0bd08c"
+    },
+    "parent_reported_scope": "初回2traceはselected_skill0でBLOCKED、旧原SHA/freeze計137を保持。この137全件はreviewer自身の実照合とは主張せず、上記render83件を独立確認した。",
+    "behavioral_false_pass_count": 0,
+    "claim_limit": "旧BLOCKEDは失敗の一次情報として保持。今回design PASSで旧試行を成功へ読み替えない。新codeの実対象合格は未取得。"
+  },
+  "read_output_policy": "旧原tool出力のnice警告混入を構造集計で確認。_successful_read_outputのexact source bytes判定は変更していない。次taskでlogin:falseを用いるcontroller側方針は、本文警告のprefixstripやRead gate緩和を許すものではない。",
+  "sourcehelper_scope": "/private/tmp/harness-codex-ci-20261102/prepare.pyのsource無改変projection/symlink対応表と専用契約を読取で照合。helper/原fixture/旧sourcecopyを編集・実行していない。",
+  "limits": [
+    "本判定は今回diffのdesign-only。実対象の起動/完走/goal/proof受入れを代替しない。",
+    "native hook未発火とC03保留を継続し、代替receipt/署名/承認イベントを自作しない。",
+    "旧negative8件/旧原verdict bytes/既存review履歴はそのまま保持。",
+    "新採点/全repo/30思考法再走は実施しない。"
+  ],
+  "verification": "正本content-review Draft7 schema+FormatCheckerと正本lint._check_verdictを対象2件へ再適用。"
+}

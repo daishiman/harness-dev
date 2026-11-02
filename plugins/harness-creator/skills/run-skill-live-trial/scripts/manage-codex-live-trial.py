@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: live-trial-codex
+# name: manage-codex-live-trial
 # purpose: Codex native exec の fresh/resume、原本採取、予算、所有process回収を管理する。
 # inputs: [argv: action --config PATH]
 # outputs: [private state/raw, workdir evidence, shared live-trial verdict]
@@ -18,9 +18,11 @@ collect 後に別個体が評価した goal JSON を finalize へ渡す。自己
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import re
 import shutil
@@ -28,6 +30,7 @@ import signal
 import subprocess
 import sys
 import time
+from collections import OrderedDict
 from pathlib import Path
 
 
@@ -35,6 +38,9 @@ ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$")
 SECRET_NAMES = {".guard-key", "credentials.json", "auth.json", ".env"}
 TOKEN_RE = re.compile(r"\b(?:sk-(?:ant-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})")
 SUPERVISOR_MODE = "--supervise-owned-turn"
+_METADATA_CACHE: OrderedDict = OrderedDict()
+_METADATA_CACHE_LIMIT = 2048
+_ROLLOUT_TIME = re.compile(r"^rollout-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})-")
 
 
 def secret_file(path: Path) -> bool:
@@ -70,13 +76,14 @@ def copy_once(source: Path, destination: Path) -> None:
 def records(path: Path):
     if not path.is_file():
         return
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        try:
-            obj = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(obj, dict):
-            yield obj
+    with path.open(encoding="utf-8", errors="replace") as stream:
+        for line in stream:
+            try:
+                obj = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(obj, dict):
+                yield obj
 
 
 def codex_argv(config: dict, session_id: str | None = None) -> list[str]:
@@ -113,34 +120,106 @@ def actor_environment(config: dict) -> dict[str, str]:
     return environment
 
 
-def child_rollouts(session_root: Path, parent_id: str) -> list[Path]:
+def _rollout_time(path: Path) -> datetime.datetime | None:
+    match = _ROLLOUT_TIME.match(path.name)
+    if not match:
+        return None
+    try:
+        return datetime.datetime.strptime(match[1], "%Y-%m-%dT%H-%M-%S")
+    except ValueError:
+        return None
+
+
+def _session_candidates(root: Path, *, started_at_unix=None, parent_rollout=None, session_id=None):
+    anchor = _rollout_time(Path(parent_rollout)) if parent_rollout else None
+    if anchor is None and started_at_unix is not None:
+        anchor = datetime.datetime.fromtimestamp(started_at_unix).replace(microsecond=0)
+    pattern = f"rollout-*{session_id}.jsonl" if session_id else "rollout-*.jsonl"
+    if anchor is None:
+        # Flat deterministic fixtures remain usable; never fall back to rglob.
+        yield from sorted(root.glob(pattern))
+        return
+    for offset in (0, 1):
+        day = anchor.date() + datetime.timedelta(days=offset)
+        directory = root / f"{day.year:04d}" / f"{day.month:02d}" / f"{day.day:02d}"
+        for path in sorted(directory.glob(pattern)):
+            stamp = _rollout_time(path)
+            if stamp is None:
+                raise ValueError("unknown native rollout filename in active dates")
+            if stamp >= anchor:
+                yield path
+
+
+def _typed_parent(meta: dict) -> str | None:
+    source = meta.get("source", {})
+    subagent = source.get("subagent", {}) if isinstance(source, dict) else {}
+    spawn = subagent.get("thread_spawn", {}) if isinstance(subagent, dict) else {}
+    values = [meta.get("parent_thread_id")]
+    if isinstance(spawn, dict):
+        values.append(spawn.get("parent_thread_id"))
+    known = [value for value in values if value is not None]
+    if any(not isinstance(value, str) or not value for value in known) or len(set(known)) > 1:
+        raise ValueError("native parent metadata is invalid or contradictory")
+    return known[0] if known else None
+
+
+def _first_metadata(path: Path, *, fresh=False) -> dict | None:
+    stat = path.stat()
+    key = (stat.st_dev, stat.st_ino)
+    identity = str(path.resolve())
+    cached = _METADATA_CACHE.get(key)
+    if not fresh and cached is not None and cached[0] == identity:
+        _METADATA_CACHE.move_to_end(key)
+        return cached[1]
+    with path.open(encoding="utf-8", errors="replace") as stream:
+        line = stream.readline()
+    try:
+        first = json.loads(line)
+    except ValueError:
+        if fresh:
+            raise ValueError("native first metadata is missing or incomplete")
+        return None  # an in-progress first append is retried, never cached
+    meta = first.get("payload") if isinstance(first, dict) and first.get("type") == "session_meta" else None
+    if not isinstance(meta, dict) or not isinstance(meta.get("id"), str) or not meta["id"]:
+        raise ValueError("native first metadata identity is invalid")
+    _typed_parent(meta)
+    if not path.name.endswith(f"-{meta['id']}.jsonl"):
+        raise ValueError("native rollout filename and metadata identity differ")
+    _METADATA_CACHE[key] = (identity, meta)
+    _METADATA_CACHE.move_to_end(key)
+    while len(_METADATA_CACHE) > _METADATA_CACHE_LIMIT:
+        _METADATA_CACHE.popitem(last=False)
+    return meta
+
+
+def child_rollouts(session_root: Path, parent_id: str, *, parent_rollout=None,
+                   started_at_unix=None, fresh=False) -> list[Path]:
     found = []
-    for path in sorted(session_root.rglob("rollout-*.jsonl")):
-        first = next(records(path), {})
-        if first.get("type") != "session_meta":
-            continue
-        meta = first.get("payload", {})
-        if meta.get("parent_thread_id") == parent_id:
-            found.append(path)
-            continue
-        source = meta.get("source", {})
-        subagent = source.get("subagent", {}) if isinstance(source, dict) else {}
-        spawn = subagent.get("thread_spawn", {}) if isinstance(subagent, dict) else {}
-        if isinstance(spawn, dict) and spawn.get("parent_thread_id") == parent_id:
+    for path in _session_candidates(session_root, started_at_unix=started_at_unix, parent_rollout=parent_rollout):
+        meta = _first_metadata(path, fresh=fresh)
+        if meta is not None and _typed_parent(meta) == parent_id:
             found.append(path)
     return found
 
 
-def find_rollout(session_root: Path, session_id: str) -> Path | None:
-    candidates = list(session_root.rglob(f"rollout-*{session_id}.jsonl"))
+def find_rollout(session_root: Path, session_id: str, *, started_at_unix=None, parent_rollout=None) -> Path | None:
     valid = []
-    for path in candidates:
-        first = next(records(path), {})
-        if first.get("type") == "session_meta" and first.get("payload", {}).get("id") == session_id:
+    for path in _session_candidates(session_root, started_at_unix=started_at_unix,
+                                    parent_rollout=parent_rollout, session_id=session_id):
+        meta = _first_metadata(path)
+        if meta is not None and meta["id"] == session_id:
             valid.append(path)
     if len(valid) > 1:
         raise ValueError("native session rollout is not unique")
     return valid[0] if valid else None
+
+
+def native_skill_name_matches(actual: str, expected: str) -> bool:
+    return actual == expected or (":" not in actual and actual == expected.split(":")[-1])
+
+
+def native_operation_prompt(operation: dict) -> str:
+    return "$" + operation["target_skill"] + " " + operation["args"] + "\n"
 
 
 def validate_choice_request(request: dict, *, fixture: Path, assistant_text: str,
@@ -249,6 +328,8 @@ def load_config(path: Path) -> dict:
     protected = [(key, Path(cfg[key])) for key in
                  ("private_dir", "skill_dir", "task_file", "scenario_file", "codex_executable")]
     protected.append(("config file", path.absolute()))
+    if cfg.get("projection_receipt_file"):
+        protected.append(("projection receipt", Path(cfg["projection_receipt_file"])))
     effective_provider_roots = cfg.get("loaded_provider_roots", [cfg["skill_dir"]])
     protected.extend(("loaded provider", Path(value)) for value in effective_provider_roots)
     protected.extend(("operation provider", Path(item["skill_dir"])) for item in cfg.get("native_operations", []))
@@ -284,6 +365,8 @@ def load_config(path: Path) -> dict:
     cfg["loaded_provider_roots"] = [str(Path(value).resolve()) for value in effective_provider_roots]
     for operation in cfg.get("native_operations", []):
         operation["skill_dir"] = str(Path(operation["skill_dir"]).resolve())
+    if cfg.get("projection_receipt_file"):
+        cfg["projection_receipt_file"] = str(Path(cfg["projection_receipt_file"]).resolve())
     relative = Path(cfg.get("goal_seek_eval_root_relative", "eval-log"))
     if relative.is_absolute() or ".." in relative.parts or str(relative) in {"", "."}:
         raise ValueError("goal_seek_eval_root_relative must be a contained fixture-relative directory")
@@ -314,6 +397,11 @@ def verify_pin(cfg: dict, state: dict) -> None:
         raise ValueError("task input drift")
     if digest(Path(cfg["scenario_file"])) != state["scenario_file_sha256"]:
         raise ValueError("scenario contract drift")
+    if state.get("projection_receipt_ref"):
+        expected = state["projection_receipt_sha256"]
+        if (digest(Path(cfg["projection_receipt_file"])) != expected
+                or digest(Path(cfg["workdir"]) / state["projection_receipt_ref"]) != expected):
+            raise ValueError("controller projection receipt drift")
     for operation in cfg.get("native_operations", []):
         expected = state.get("operation_source_sha256", {}).get(operation["id"])
         if expected != digest(Path(operation["skill_dir"]) / "SKILL.md"):
@@ -326,7 +414,7 @@ def verify_native_skill_paths(cfg: dict, state: dict) -> dict:
         raise ValueError("native rollout unavailable for contractual response")
     live_usage(cfg, state)
     cached = Path(cfg["private_dir"]) / "live-usage-cache/transcript.jsonl"
-    inspected = sibling("live-trial-codex-transcript").inspect_transcript(cached)
+    inspected = sibling("extract-codex-transcript").inspect_transcript(cached)
     roots = [Path(p).resolve() for p in cfg.get("loaded_provider_roots", [cfg["skill_dir"]])]
     for injection in inspected.get("injected_skills", []):
         path = Path(injection["path"]).resolve(strict=True)
@@ -336,8 +424,12 @@ def verify_native_skill_paths(cfg: dict, state: dict) -> dict:
 
 
 def pre_choice_agent_started(cfg: dict, state: dict, request: dict, inspected: dict) -> bool:
-    name = request["target_skill"].split(":")[-1]
-    starts = [item["index"] for item in inspected.get("injected_skills", []) if item["name"] == name]
+    target = request["target_skill"]
+    sources = ([Path(cfg["skill_dir"])] if target == cfg["target_skill"] else [])
+    sources += [Path(item["skill_dir"]) for item in cfg.get("native_operations", []) if item["target_skill"] == target]
+    expected = {(path / "SKILL.md").resolve() for path in sources}
+    starts = [item["index"] for item in inspected.get("injected_skills", [])
+              if native_skill_name_matches(item["name"], target) and Path(item["path"]).resolve() in expected]
     if not starts:
         raise ValueError("native skill injection missing for declared choice")
     start = max(starts)
@@ -348,6 +440,46 @@ def pre_choice_agent_started(cfg: dict, state: dict, request: dict, inspected: d
         if payload.get("type") in {"function_call", "custom_tool_call"} and payload.get("name", "").split(".")[-1] == "spawn_agent":
             return True
     return False
+
+
+def bind_projection_receipt(cfg: dict, state: dict) -> None:
+    if not cfg.get("projection_receipt_file"):
+        return
+    original = Path(cfg["projection_receipt_file"])
+    raw = original.read_bytes()
+    receipt = json.loads(raw)
+    entries = receipt.get("skills") if isinstance(receipt, dict) else None
+    if (not isinstance(entries, list) or not entries or receipt.get("source_body_modified") is not False
+            or receipt.get("provider_inside_workspace") is not False):
+        raise ValueError("invalid controller projection receipt")
+    roots = [Path(value).resolve() for value in cfg.get("loaded_provider_roots", [cfg["skill_dir"]])]
+    project_root = Path(cfg["repo_root"]).resolve() / ".agents/skills"
+    seen = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"qualified_skill", "project_path", "source_path", "sha256"}:
+            raise ValueError("invalid controller projection entry")
+        qualified = entry["qualified_skill"]
+        if not isinstance(qualified, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._-]*", qualified) or qualified in seen:
+            raise ValueError("invalid or duplicate qualified projection name")
+        seen.add(qualified)
+        project, source = Path(entry["project_path"]), Path(entry["source_path"])
+        if (not project.is_absolute() or not source.is_absolute() or project.name != "SKILL.md"
+                or not project.absolute().is_relative_to(project_root)
+                or project.resolve(strict=True) != source.resolve(strict=True)
+                or not any(source.resolve().is_relative_to(root) for root in roots)
+                or digest(source) != entry["sha256"]):
+            raise ValueError("controller projection source/path/bytes mismatch")
+    destination = Path(cfg["workdir"]) / "project-projection.json"
+    if destination.exists():
+        if destination.read_bytes() != raw:
+            raise ValueError("existing public projection differs from controller original")
+    else:
+        with destination.open("xb") as stream:
+            stream.write(raw)
+    sha = hashlib.sha256(raw).hexdigest()
+    if digest(original) != sha:
+        raise ValueError("controller projection changed while binding")
+    state.update({"projection_receipt_ref": "project-projection.json", "projection_receipt_sha256": sha})
 
 
 def init_state(cfg: dict) -> dict:
@@ -378,6 +510,7 @@ def init_state(cfg: dict) -> dict:
     state["native_operation_turns"] = []
     state["operation_source_sha256"] = {item["id"]: digest(Path(item["skill_dir"]) / "SKILL.md")
                                         for item in operations}
+    bind_projection_receipt(cfg, state)
     # Creation is exclusive; a second controller cannot reset the clock.
     with state_path(cfg).open("x", encoding="utf-8") as stream:
         json.dump(state, stream, ensure_ascii=False, indent=2)
@@ -423,14 +556,15 @@ def live_usage(cfg: dict, state: dict) -> dict:
         path.unlink()  # disposable measurement cache only, never frozen evidence
     while queue:
         parent = queue.pop()
-        for child in child_rollouts(session_root(), parent):
-            identity = next(records(child))["payload"]["id"]
+        for child in child_rollouts(session_root(), parent, parent_rollout=raw,
+                                    started_at_unix=state["started_at_unix"]):
+            identity = _first_metadata(child)["id"]
             if identity in seen:
                 continue
             seen.add(identity)
             queue.append(identity)
             shutil.copyfile(child, children / f"{identity}.jsonl")
-    return sibling("live-trial-codex-transcript").transcript_token_usage(main)
+    return sibling("extract-codex-transcript").transcript_token_usage(main)
 
 
 def _elapsed(state: dict) -> float:
@@ -491,7 +625,9 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
                     if ids:
                         state["session_id"] = ids.pop()
                 if state["session_id"]:
-                    raw = find_rollout(session_root(), state["session_id"])
+                    raw = find_rollout(session_root(), state["session_id"],
+                                       started_at_unix=state["started_at_unix"],
+                                       parent_rollout=state.get("native_rollout"))
                     if raw:
                         state["native_rollout"] = str(raw)
                         usage = live_usage(cfg, state)
@@ -522,7 +658,8 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
         if len(ids) == 1:
             state["session_id"] = ids.pop()
     if state["session_id"]:
-        raw = find_rollout(session_root(), state["session_id"])
+        raw = find_rollout(session_root(), state["session_id"],
+                           started_at_unix=state["started_at_unix"], parent_rollout=state.get("native_rollout"))
         if raw:
             state["native_rollout"] = str(raw)
     state["elapsed"] = _elapsed(state)
@@ -579,11 +716,10 @@ def _marker(cfg: dict, state: dict) -> bool:
 def verify_operation_activation(cfg: dict, state: dict, operation: dict, turn: dict) -> None:
     live_usage(cfg, state)
     cached = Path(cfg["private_dir"]) / "live-usage-cache/transcript.jsonl"
-    inspected = sibling("live-trial-codex-transcript").inspect_transcript(
+    inspected = sibling("extract-codex-transcript").inspect_transcript(
         cached, skill_dir=Path(operation["skill_dir"]), target_skill=operation["target_skill"])
-    name = operation["target_skill"].split(":")[-1]
     injections = [item["index"] for item in inspected.get("injected_skills", [])
-                  if item["name"] == name and item["index"] >= turn["native_records_before"]
+                  if native_skill_name_matches(item["name"], operation["target_skill"]) and item["index"] >= turn["native_records_before"]
                   and Path(item["path"]).resolve() == (Path(operation["skill_dir"]) / "SKILL.md").resolve()]
     if not injections:
         raise ValueError("new native operation skill injection missing")
@@ -657,7 +793,7 @@ def drive(cfg: dict, state: dict, prompt: Path, response_pending=None) -> dict:
             expected = validate_operation_request(cfg, state, operation)
             prompt = Path(cfg["private_dir"]) / f"operation-{len(state['native_operation_turns']) + 1:03d}.txt"
             with prompt.open("x", encoding="utf-8") as stream:
-                stream.write("$" + expected["target_skill"].split(":")[-1] + " " + expected["args"] + "\n")
+                stream.write(native_operation_prompt(expected))
             response = {"kind": "native-operation", "operation_id": expected["id"],
                         "target_skill": expected["target_skill"], "args": expected["args"],
                         "source_sha256": state["operation_source_sha256"][expected["id"]],
@@ -748,14 +884,23 @@ def collect(cfg: dict) -> dict:
         seen = set(pending)
         while pending:
             parent_id = pending.pop()
-            for child in child_rollouts(session_root(), parent_id):
-                meta = next(records(child))["payload"]
+            for child in child_rollouts(session_root(), parent_id, parent_rollout=Path(state["native_rollout"]),
+                                        started_at_unix=state["started_at_unix"], fresh=True):
+                meta = _first_metadata(child)
                 identity = meta["id"]
                 if identity in seen:
                     continue
                 seen.add(identity)
                 pending.append(identity)
                 publish(child, work / "transcript/subagents" / f"{identity}.jsonl")
+        native_validation = sibling("extract-codex-transcript").inspect_transcript(rawdir / "transcript.jsonl")
+        dump(work / "native-collection-validation.json", {
+            "full_frozen_raw_revalidated": True,
+            "format_errors": native_validation.get("format_errors", []),
+            "pending_tools": native_validation.get("pending_tools", []),
+            "agent_sessions": native_validation.get("agent_sessions", []),
+            "completed": native_validation.get("completed", False),
+            "note": "Missing spawned children and malformed native records remain acceptance failures; this report never grants PASS."})
     for turn in state["turns"]:
         for key in ("stdout", "stderr", "supervisor_status_file"):
             if key not in turn:
@@ -784,7 +929,7 @@ def collect(cfg: dict) -> dict:
                                "public_sha256": digest(path)})
     state["collected"] = True
     dump(work / "native-run-state.json", state)
-    dump(work / "poll-state.json", {"elapsed": state["elapsed"],
+    dump(work / "poll-state.json", {"elapsed": math.ceil(state["elapsed"]),
           "started_at_unix": state["started_at_unix"], "observed_at_unix": time.time()})
     dump(work / "public-copy-receipt.json", {"runtime": "codex", "copies": copies,
           "excluded_fixture_files": excluded, "private_original_fixed_before_public_copy": True,

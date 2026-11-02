@@ -82,7 +82,7 @@ def _codex_rollout(tmp_path, *, read_ok=True, inject=True, complete=True):
 
 
 def test_codex_native_activation_binds_injected_source_and_successful_read(tmp_path):
-    native = _load("live-trial-codex-transcript")
+    native = _load("extract-codex-transcript")
     path, skill = _codex_rollout(tmp_path)
     result = native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
     assert result["models"] == ["gpt-native"]
@@ -95,29 +95,111 @@ def test_codex_native_activation_binds_injected_source_and_successful_read(tmp_p
     assert result["format_errors"] == []
 
 
+def _rename_native_injection(path, name):
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    for row in rows:
+        payload = row.get("payload", {})
+        for content in payload.get("content", []):
+            if isinstance(content, dict) and "<skill>" in content.get("text", ""):
+                content["text"] = content["text"].replace("<name>run-native</name>", f"<name>{name}</name>")
+    _write_jsonl(path, rows)
+
+
+def test_codex_qualified_native_skill_activates_exact_namespace(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    _rename_native_injection(path, "demo:run-native")
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == ["demo:run-native"]
+    assert result["activation_errors"] == []
+
+
+@pytest.mark.parametrize("name", ["other:run-native", "demo:run-native:extra", "demo::run-native", ":run-native", "demo:", "../demo:run-native", "demo:../run-native", "demo*:run-native"])
+def test_codex_wrong_namespace_or_invalid_qualified_name_is_rejected(tmp_path, name):
+    path, skill = _codex_rollout(tmp_path)
+    _rename_native_injection(path, name)
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert "demo:run-native" not in result["invoked_skills"]
+    assert result["activation_errors"]
+
+
+@pytest.mark.parametrize("namespace", ["provider", "outside"])
+def test_codex_qualified_nested_skill_requires_declared_provider(tmp_path, namespace):
+    target = _write_trial_plugin(tmp_path, "demo", "demo", "run-native")
+    provider = _write_trial_plugin(tmp_path, "provider", "provider", "run-delegate")
+    outside = _write_trial_plugin(tmp_path, "outside", "outside", "run-delegate")
+    _write_package_contract(target, ["provider"], skills=["run-native"])
+    for root in (provider, outside):
+        _write_package_contract(root, [], skills=["run-delegate"])
+    for root in (target, provider, outside):
+        (root / ".codex-plugin").mkdir()
+        (root / ".codex-plugin/plugin.json").write_text(json.dumps({"name": root.name}))
+    path, skill = _codex_rollout(target)
+    nested = (provider if namespace == "provider" else outside) / "skills/run-delegate/SKILL.md"
+    body = nested.read_text()
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    rows[-1:-1] = [
+        {"type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": f"<skill>\n<name>{namespace}:run-delegate</name>\n<path>{nested}</path>\n{body}\n</skill>"}], "internal_chat_message_metadata_passthrough": {"content_item_kinds": ["skills.selected_skill_instructions"]}}},
+        {"type": "response_item", "payload": {"type": "custom_tool_call", "call_id": "nested-read", "name": "exec", "input": f'text(await tools.exec_command({{cmd:"cat {nested}"}}));'}},
+        {"type": "response_item", "payload": {"type": "custom_tool_call_output", "call_id": "nested-read", "output": [{"type": "input_text", "text": json.dumps({"exit_code": 0, "output": body})}]}},
+    ]
+    _write_jsonl(path, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert "demo:run-native" in result["invoked_skills"]
+    assert (f"{namespace}:run-delegate" in result["invoked_skills"]) is (namespace == "provider")
+    assert bool(result["activation_errors"]) is (namespace == "outside")
+
+
+def test_codex_archived_projection_requires_exact_controller_mapping(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    _rename_native_injection(path, "demo:run-native")
+    original = str(skill / "SKILL.md")
+    archived = "/gone/fixture/.agents/skills/run-native/SKILL.md"
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    _write_jsonl(path, [json.loads(json.dumps(row).replace(original, archived)) for row in rows])
+    native = _load("extract-codex-transcript")
+    assert native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")["invoked_skills"] == []
+    receipt = {"skills": [{"qualified_skill": "demo:run-native", "project_path": archived,
+                           "source_path": "/gone/providers/plugins/demo/skills/run-native/SKILL.md",
+                           "sha256": hashlib.sha256((skill / "SKILL.md").read_bytes()).hexdigest()}],
+               "source_body_modified": False}
+    receipt_path = path.parent / "project-projection.json"
+    receipt_path.write_text(json.dumps(receipt))
+    state = {"runtime": "codex", "session_id": "native-root", "collected": True,
+             "projection_receipt_ref": receipt_path.name,
+             "projection_receipt_sha256": hashlib.sha256(receipt_path.read_bytes()).hexdigest()}
+    state_path = path.parent / "native-run-state.json"
+    state_path.write_text(json.dumps(state))
+    assert native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")["invoked_skills"] == ["demo:run-native"]
+    receipt["skills"][0]["source_path"] = "/gone/providers/plugins/other/skills/run-native/SKILL.md"
+    receipt_path.write_text(json.dumps(receipt))
+    state["projection_receipt_sha256"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+    state_path.write_text(json.dumps(state))
+    assert native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")["invoked_skills"] == []
+
+
 @pytest.mark.parametrize("read_ok,inject", [(False, True), (True, False)])
 def test_codex_mention_or_failed_read_is_not_native_activation(tmp_path, read_ok, inject):
     path, skill = _codex_rollout(tmp_path, read_ok=read_ok, inject=inject)
-    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
     assert result["invoked_skills"] == []
 
 
 def test_codex_modified_source_is_not_accepted_as_current_activation(tmp_path):
     path, skill = _codex_rollout(tmp_path)
     (skill / "SKILL.md").write_text("changed source\n")
-    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
     assert result["invoked_skills"] == []
 
 
 def test_codex_missing_completion_is_not_overridden_by_caller(tmp_path):
     path, skill = _codex_rollout(tmp_path, complete=False)
-    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
     assert result["completed"] is False
 
 
 def test_codex_claude_transcript_cannot_be_relabelled_native(tmp_path):
     path = _write_jsonl(tmp_path / "claude.jsonl", [_tool_use("s1", "Skill", {"skill": "demo:run-native"})])
-    result = _load("live-trial-codex-transcript").inspect_transcript(path)
+    result = _load("extract-codex-transcript").inspect_transcript(path)
     assert result["format_errors"]
     assert result["models"] == []
     assert result["usage"]["measured"] is False
@@ -127,7 +209,7 @@ def test_codex_missing_usage_is_unmeasured(tmp_path):
     path, skill = _codex_rollout(tmp_path)
     rows = [row for row in map(json.loads, path.read_text().splitlines()) if row.get("payload", {}).get("type") != "token_count"]
     _write_jsonl(path, rows)
-    assert _load("live-trial-codex-transcript").inspect_transcript(path)["usage"]["measured"] is False
+    assert _load("extract-codex-transcript").inspect_transcript(path)["usage"]["measured"] is False
 
 
 def test_codex_model_and_runtime_identity_are_not_caller_claims(tmp_path):
@@ -136,7 +218,7 @@ def test_codex_model_and_runtime_identity_are_not_caller_claims(tmp_path):
                 "environment": {"runtime": "codex", "claude_version": None, "codex_version": "0.165.0",
                                 "native_transcript_format": "codex-rollout-jsonl", "tmux": False},
                 "overall": {"verdict": "PASS", "completion": "PASS"}}
-    document["environment"].update({"permissions_mode": "workspace-write", "native_sandbox_contexts": _load("live-trial-codex-transcript").inspect_transcript(path)["sandbox_contexts"]})
+    document["environment"].update({"permissions_mode": "workspace-write", "native_sandbox_contexts": _load("extract-codex-transcript").inspect_transcript(path)["sandbox_contexts"]})
     assert verdict_mod.validate_runtime_evidence(document, path, skill) == []
     document["actual_model"] = ["invented"]
     assert "native-actual-model-mismatch" in verdict_mod.validate_runtime_evidence(document, path, skill)
@@ -185,7 +267,7 @@ def test_codex_children_are_parent_bound_and_cumulative_usage_is_counted_once(tm
         {"type": "response_item", "payload": {"type": "function_call_output", "call_id": "spawn-1", "output": json.dumps({"task_name": "/root/child"})}},
     ]
     _write_jsonl(path, rows)
-    native = _load("live-trial-codex-transcript")
+    native = _load("extract-codex-transcript")
     assert "native-spawned-child-transcript-missing" in native.inspect_transcript(path)["format_errors"]
     child_dir = path.with_suffix("") / "subagents"
     child_dir.mkdir(parents=True)
@@ -210,7 +292,7 @@ def test_codex_duplicate_usage_record_does_not_double_count(tmp_path):
     rows = list(map(json.loads, path.read_text().splitlines()))
     rows.insert(-1, {"type": "token_usage_record", "payload": {"thread_id": "native-root", "thread_token_usage": {"input_tokens": 150, "output_tokens": 30, "total_tokens": 180}}})
     _write_jsonl(path, rows)
-    usage = _load("live-trial-codex-transcript").transcript_token_usage(path)
+    usage = _load("extract-codex-transcript").transcript_token_usage(path)
     assert usage["measured"] is True
     assert usage["total_tokens"] == 180
 
@@ -237,7 +319,7 @@ def test_codex_verdict_uses_native_runtime_gates(tmp_path, complete, read_ok, ex
 
 def test_codex_run_state_is_bound_to_actual_user_turns(tmp_path):
     path, _skill = _codex_rollout(tmp_path)
-    info = _load("live-trial-codex-transcript").inspect_transcript(path)
+    info = _load("extract-codex-transcript").inspect_transcript(path)
     state = {"runtime": "codex", "session_id": "native-root", "collected": True,
              "writable_roots": [str(tmp_path)],
              "native_operation_turns": [], "responses": [],
@@ -264,13 +346,13 @@ def test_codex_pasted_skill_xml_without_native_provenance_is_not_activation(tmp_
         if "skills.selected_skill_instructions" in metadata.get("content_item_kinds", []):
             metadata["content_item_kinds"] = ["user.text"]
     _write_jsonl(path, rows)
-    info = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    info = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
     assert info["invoked_skills"] == []
 
 
 def test_codex_sandbox_cannot_be_claimed_independently_of_raw_context(tmp_path):
     path, skill = _codex_rollout(tmp_path)
-    info = _load("live-trial-codex-transcript").inspect_transcript(path)
+    info = _load("extract-codex-transcript").inspect_transcript(path)
     doc = {"target_skill": "demo:run-native", "actual_model": ["gpt-native"],
            "environment": {"runtime": "codex", "claude_version": None, "codex_version": "0.165.0", "tmux": False,
                            "native_transcript_format": "codex-rollout-jsonl", "permissions_mode": "danger-full-access",

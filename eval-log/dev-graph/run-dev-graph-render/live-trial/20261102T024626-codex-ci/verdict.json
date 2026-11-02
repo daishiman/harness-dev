@@ -1,0 +1,155 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/harness-codex-ci-20261102/cases/render/fx --output /private/tmp/harness-codex-ci-20261102/cases/render/fx/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "native Codex run stopped: turn_complete",
+      "poll-state-invalid:poll state.elapsed must be a non-negative integer"
+    ]
+  },
+  "goal_evaluation": null,
+  "invoked_skills": [],
+  "missing_goal_seek_artifacts": [
+    "goal-spec.json",
+    "progress.json",
+    "intermediate.jsonl"
+  ],
+  "goal_seek_evidence_violations": [
+    "goal-spec-missing: run-dev-graph-render-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "progress-missing: run-dev-graph-render-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "intermediate-missing: run-dev-graph-render-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+  ],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "NOT_EVALUATED",
+    "verdict": "BLOCKED"
+  },
+  "skill_dir_tree_sha": "aae752b20a306ef6af8ca7779f72f0b633b4f28538c4b3d6e17a04feb8cb5d4c",
+  "transcript_sha256": "a02b99045367c7e9c3418f1cf31575978669034ce9d5a792c1d2c403e2833a6e",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/out",
+          "/private/tmp/harness-codex-ci-20261102/cases/render/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": true,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "2afab22dc0570eacba7e2f372fac71b00907987e745b372d1e4f8b72897f216b"
+  },
+  "tier": "live",
+  "downgrade_reason": "tmux 不在 / HARD_CAP 超過等の fail-closed",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "STALL",
+    "wall_clock_s": null
+  },
+  "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci-20261102/cases/render/control/scenario.json",
+    "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+      "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+      "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+      "two consecutive renders produce identical output digests"
+    ],
+    "observed": [],
+    "unobserved": [
+      {
+        "index": 1,
+        "observation": "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG"
+      },
+      {
+        "index": 2,
+        "observation": "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids"
+      },
+      {
+        "index": 3,
+        "observation": "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest"
+      },
+      {
+        "index": 4,
+        "observation": "two consecutive renders produce identical output digests"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "template_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 3000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": null,
+      "poll_state_ref": null,
+      "poll_state_sha256": null,
+      "tokens": {
+        "input_tokens": 287804,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 1836,
+        "total_tokens": 289640,
+        "assistant_messages": 8,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": [
+        "wall-clock-unmeasured"
+      ]
+    }
+  }
+}

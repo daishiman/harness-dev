@@ -1,0 +1,150 @@
+{
+  "status": "PASS",
+  "claim_type": "incremental-design",
+  "profile": "incremental",
+  "reviewer": "/root/codex_rename_review",
+  "reviewed_at": "2026-11-02T03:46:24.026306Z",
+  "scope": "CI命名規約に合わせた2scriptの改名とreferences索引追加。先行phase2からの意味変更がないことを逆変換bytes照合・正本再採点・独立テストで確認。30思考法/全repo/実target実走の再検証はしない。",
+  "reviewed_inputs_sha256": {
+    "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md": "92ef3b4902dfc92f45e7f45291966b418533a7ab07f8939a6b5a09590f6b02d0",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py": "18e8b744dd4ed9865f024dd915728fbfdfbb36ce7ca22ee34b77b92a4c70a421",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/extract-codex-transcript.py": "bb71d09aa5cb188619d2904412ff14d594054c302fdd03cd58fc11bae75edf4d",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "ced2092435082fca1ee696910fad6d296c1165a31367701f6e903fdf85dcede4",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-resource-budget.py": "e9bca23e26cb068aa6eee4394b965654ea2625fc024c39b18d2bbaff1ffd3716",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md": "345c89bf70f450a29c065fa06e03ac105ca6a1ead33fa8845ce11af568706c1e",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/resource-map.yaml": "e5141649d6d090d8400254caa0c5e573238a3cc768217ffd916bd12a11475f7d",
+    "tests/test_codex_live_trial.py": "4773008017b23ad4c9f814e8dcc85eb6d7070c909cd66c6d99beedba3e395b17",
+    "tests/test_live_trial_harness.py": "146c7cabe93d5639859140c4cfceefd56b2883ed68fd7d854b476db24c0e0a60"
+  },
+  "previous_review_ref": "namespace-history-fix-review.json",
+  "name_only_equivalence": [
+    {
+      "current_path": "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md",
+      "previous_path": "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md",
+      "previous_sha256": "458b96059bf84a732b7e92ba79fec822daa1f9fb93b966ccbfc3082cb5484fc9",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/manage-codex-live-trial.py",
+      "previous_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex.py",
+      "previous_sha256": "d7ef3176d506b9928ec34bc667eba373acd206b531b8f7b3dffe305f766fc1bc",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/extract-codex-transcript.py",
+      "previous_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex-transcript.py",
+      "previous_sha256": "ce29a863730b1ee21a1bd292c899672b477592d9f18167261d9431fb3308f3bd",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+      "previous_path": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+      "previous_sha256": "a6d54cf7c10754c8add5d02a32e28d8137c28aa5e0f79b4efd6e9df7e2ba70ea",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md",
+      "previous_path": "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md",
+      "previous_sha256": "4415bbbe9f48e45f8a1ab85750046e14fda10a509a97287992ed15d0f798258d",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "tests/test_codex_live_trial.py",
+      "previous_path": "tests/test_codex_live_trial.py",
+      "previous_sha256": "cd1b43b5f307367ff246d0b9d6a5a25f8d1b9c75446cb0bf239ec465f03edf76",
+      "reverse_name_only_bytes_equal": true
+    },
+    {
+      "current_path": "tests/test_live_trial_harness.py",
+      "previous_path": "tests/test_live_trial_harness.py",
+      "previous_sha256": "97c69bf9e6e34881b422be64a8f3b9c69258c89d1ba635d6e8700a2dbeb9026f",
+      "reverse_name_only_bytes_equal": true
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "SKILL script_refs・Runtime節・専用契約・budget loader・verdict sibling loader・runner sibling loader・両test loaderが正規新名を参照。旧名script実体は廃止され、過去eval/private試行は歴史として保持。7入力を旧名へ逆変換したbytesは先行review SHAと完全一致。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "resource-map.yamlは既存references配下のtask-template.md/transcript-jsonl.md/codex-live-trial.mdを各1回索引し、topic/read_whenがClaude/Codex別の参照局面を示す。既存reference_refsと相反しない。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "PEP723 nameとfilenameがmanage-codex-live-trial/extract-codex-transcriptへ一致。正本命名CLI VIOLATION0・ledger_stale0、skill-tree OK。正本SSOT機械採点を新sourceへ実行しscore100/threshold80、findings0、unscored0。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "parser/runner本体は旧名逆変換後に既レビューbytesと完全一致し、namespace・projection・原ログ・sourceRead・親子session・予算・独立goal・所有group回収のgateを維持。改名したpathへのimportとsource bindingを独立pytestで実行。"
+    }
+  },
+  "rubric": {
+    "result_ref": "script-rename-rubric-score.json",
+    "score": 100,
+    "threshold": 80,
+    "rubric_hash": "sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9",
+    "composition_hash": "sha256:2171ad1e1d531aede71eae179cafeb53474d112a14380b507c6aade6ff936935",
+    "coverage": {
+      "applicable_rules": 24,
+      "scored": 23,
+      "pending_human": 1,
+      "unscored": 0,
+      "not_applicable": 21,
+      "scored_ratio": 0.958
+    },
+    "BD_004": {
+      "verdict": "PASS",
+      "evidence": "descriptionの本物Claude/Codex新規session、runtime別呼出し・対話gate・goal達成・原ログ・独立評価はPurpose/Runtime選択/専用契約/run-collect-finalize/goal verificationに対応。今回変わったのは実script名だけで約束と実装の対応を保つ。"
+    }
+  },
+  "current_findings": [],
+  "independent_execution": [
+    {
+      "command": "pytest -q -p no:cacheprovider tests/test_codex_live_trial.py tests/test_live_trial_harness.py",
+      "result": "213 passed, 1 failed in 15.56s",
+      "log_ref": "script-rename-tests-first.log",
+      "failure": "test_backend_real_tmux_eight_parallel_pastes_are_session_isolated: tmux set-optionでsessionが消失。親と同suiteの同時実行があり固定session名の競合が疑われるが原因確定とは主張しない。"
+    },
+    {
+      "command": "pytest -q -p no:cacheprovider tests/test_live_trial_harness.py::test_backend_real_tmux_eight_parallel_pastes_are_session_isolated",
+      "result": ".                                                                        [100%]\n1 passed in 4.90s",
+      "log_ref": "script-rename-tests-tmux-retry.log",
+      "returncode": 0,
+      "scope": "親suite終了後に失敗した1件だけを単独再実行。test/code変更・skip・gate緩和なし。"
+    },
+    {
+      "command": "render-findings-score.py --rubric-refs L0 L2 --target plugins/harness-creator/skills/run-skill-live-trial --emit-hash",
+      "result": "score100/80、23機械rule、BD-004のみ本reviewerが意味判断、unscored0",
+      "returncode": 0
+    },
+    {
+      "command": "lint-skill-tree.py plugins/harness-creator/skills/run-skill-live-trial",
+      "result": "ok: run-skill-live-trial",
+      "returncode": 0
+    },
+    {
+      "command": "lint-script-naming.py --report",
+      "result": {
+        "OK": 325,
+        "EXCEPTION": 20,
+        "PERMANENT_EXCEPTION": 30,
+        "PENDING_RENAME": 205,
+        "VIOLATION": 0,
+        "pending_rename_only": 7,
+        "pending_verb_list_change": 0,
+        "pending_hook_pattern": 15,
+        "pending_undecided": 183,
+        "ledger_stale": 0
+      },
+      "returncode": 0
+    }
+  ],
+  "test_report_boundary": "親347PASSおよび先行275PASSは今回reviewer自身の実行ではない。本reviewは上記独立214件の初回結果と失敗1件の単独再実行を原文で保持。",
+  "limits": [
+    "design PASSのみ。実対象のnative適用/完走/goal/proof受入れを代替しない。",
+    "旧BLOCKED2件、旧原SHA、過去negative8件、先行review原文は改変しない。",
+    "ソース・docs・private helper・Git・Beads・ユーザー設定・releaseを変更していない。"
+  ],
+  "source_hashes_rechecked_before_save": true
+}

@@ -54,7 +54,7 @@ def transcript_paths(main: Path) -> list[Path]:
 def transcript_token_usage(main: Path | None, runtime: str = "claude") -> dict[str, Any]:
     """Sum unique assistant-message usage records from transcript JSONL files."""
     if runtime == "codex":
-        path = Path(__file__).with_name("live-trial-codex-transcript.py")
+        path = Path(__file__).with_name("extract-codex-transcript.py")
         spec = importlib.util.spec_from_file_location("live_trial_codex_budget", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

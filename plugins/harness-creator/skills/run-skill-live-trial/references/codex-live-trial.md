@@ -5,13 +5,13 @@
 ## 起動と隔離
 
 - `plan-live-trials.py --runtime codex`で対象・再利用・予算を決める。既定の新規2件・同時2件、明示承認後のexhaustiveという境界は共通。
-- `live-trial-codex.py --config <absolute-json-path> run`は、絶対pathで検証したCodex CLIの新規`exec`を起動する。継続は得られた同一sessionだけの`exec resume`。
+- `manage-codex-live-trial.py --config <absolute-json-path> run`は、絶対pathで検証したCodex CLIの新規`exec`を起動する。継続は得られた同一sessionだけの`exec resume`。
 - source provider、private control/raw、公開workdirはactorのworkspace外に置く。actorが書けるのは新fixtureと完了マーカー用の`workdir/out`だけ。HOME・CODEX_HOME・auth・ユーザー設定を別用途に使わず、sandboxを無効化しない。
 - projectの`.agents/skills`から選択した実体を参照する。global/systemのskillカタログは残る場合があるため、「カタログが指定providerだけ」と主張しない。実際に適用・読込したskillは許可集合とsource bytesへ照合する。
 
 ## 本物の適用・呼出し
 
-最初のuser入力にはnativeの`$<skill-name>`と業務argsを置く。原rolloutの自動`<skill>`注入と成功した全文Readを、指定されたSKILL.mdのbytesへ束縛する。単なる名前・pathの言及、script直実行、架空のClaude `Skill`イベントは適用証拠ではない。
+最初のuser入力にはnativeカタログの実登録名と業務argsを置く。plugin skillは`$<plugin>:<skill-name>`を使い、namespaceを省略しない。単独skillは実登録名が非修飾である場合だけ`$<skill-name>`を使う。原rolloutの自動`<skill>`注入・source対応表・成功した全文Readを、指定されたSKILL.mdのbytesへ束縛する。単なる名前・pathの言及、script直実行、架空のClaude `Skill`イベントは適用証拠ではない。
 
 Codexで`Agent`相当の責務を実施するときは、元の責務promptを読んでnative subagentへ渡す。実spawn/waitと子の原ログを採取し、親sessionへの関係と終了を確認する。提供されない`close_agent`等を必須操作として捏造しない。
 

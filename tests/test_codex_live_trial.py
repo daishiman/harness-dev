@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import datetime
 import importlib.util
 import json
 import os
@@ -14,7 +15,7 @@ import pytest
 
 
 SCRIPT = (Path(__file__).resolve().parents[1] / "plugins/harness-creator/skills/"
-          "run-skill-live-trial/scripts/live-trial-codex.py")
+          "run-skill-live-trial/scripts/manage-codex-live-trial.py")
 
 
 def load():
@@ -289,7 +290,8 @@ def _safe_runner_config(tmp_path):
 
 
 @pytest.mark.parametrize('key', ['private_dir', 'skill_dir', 'loaded_provider_roots',
-                                 'native_operation', 'task_file', 'scenario_file', 'config_file'])
+                                 'native_operation', 'task_file', 'scenario_file', 'config_file',
+                                 'projection_receipt_file'])
 def test_source_and_controls_may_not_overlap_actor_output_root(tmp_path, key):
     mod = load()
     cfg = _safe_runner_config(tmp_path)
@@ -424,3 +426,136 @@ def test_cleanup_never_signals_a_numeric_group_after_ownership_leader_exited(mon
     with pytest.raises(RuntimeError, match='group ownership unavailable'):
         mod.stop_owned_process_group(leader, expected_pid=leader.pid)
     assert signals == []
+
+
+def test_records_reads_only_the_requested_line(tmp_path, monkeypatch):
+    mod = load()
+    source = tmp_path/'stream.jsonl'
+    source.write_text('{"first":true}\n' + ('x' * 2_000_000) + '\n')
+    original = Path.read_text
+    def refuse_whole_file(path, *args, **kwargs):
+        if path == source:
+            raise AssertionError('metadata lookup read an entire native history file')
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'read_text', refuse_whole_file)
+    iterator = mod.records(source)
+    assert next(iterator) == {'first':True}
+    iterator.close()
+
+
+def _native_meta(path, identity, parent=None):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {'id':identity}
+    if parent is not None:
+        payload['parent_thread_id'] = parent
+    path.write_text(json.dumps({'type':'session_meta','payload':payload})+'\n')
+
+
+def test_active_day_lookup_never_opens_large_unrelated_history(tmp_path, monkeypatch):
+    mod = load()
+    sessions = tmp_path/'sessions'
+    start = datetime.datetime(2026,11,2,23,59,30).timestamp()
+    parent = sessions/'2026/11/02/rollout-2026-11-02T23-59-30-parent.jsonl'
+    child = sessions/'2026/11/03/rollout-2026-11-03T00-00-01-child.jsonl'
+    _native_meta(parent, 'parent')
+    _native_meta(child, 'child', 'parent')
+    for index in range(200):
+        old = sessions/f'2025/10/12/rollout-2025-10-12T00-00-00-old{index}.jsonl'
+        _native_meta(old, f'old{index}', 'parent')
+    same_day_old = sessions/'2026/11/02/rollout-2026-11-02T01-00-00-oldtoday.jsonl'
+    _native_meta(same_day_old, 'oldtoday', 'parent')
+    original = Path.open
+    def checked_open(path, *args, **kwargs):
+        if '/2025/' in str(path) or path == same_day_old:
+            raise AssertionError('unrelated prior rollout was opened')
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', checked_open)
+    assert mod.child_rollouts(sessions, 'parent', parent_rollout=parent, started_at_unix=start) == [child]
+    assert mod.find_rollout(sessions, 'parent', parent_rollout=parent, started_at_unix=start) == parent
+
+
+def test_first_metadata_cache_and_final_fresh_check(tmp_path, monkeypatch):
+    mod = load()
+    sessions = tmp_path/'sessions'
+    parent = sessions/'2026/11/02/rollout-2026-11-02T10-00-00-parent.jsonl'
+    child = sessions/'2026/11/02/rollout-2026-11-02T10-00-01-child.jsonl'
+    _native_meta(parent, 'parent')
+    _native_meta(child, 'child', 'parent')
+    original = Path.open
+    opens = []
+    def counted(path, *args, **kwargs):
+        if path == child:
+            opens.append(path)
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', counted)
+    args = {'parent_rollout':parent,'started_at_unix':datetime.datetime(2026,11,2,10).timestamp()}
+    assert mod.child_rollouts(sessions, 'parent', **args) == [child]
+    first_count = len(opens)
+    assert first_count == 1
+    assert mod.child_rollouts(sessions, 'parent', **args) == [child]
+    assert len(opens) == first_count
+    assert mod.child_rollouts(sessions, 'parent', fresh=True, **args) == [child]
+    assert len(opens) == first_count + 1
+    _native_meta(child, 'child', 123)  # same inode; final check cannot trust cached header
+    with pytest.raises(ValueError, match='parent'):
+        mod.child_rollouts(sessions, 'parent', fresh=True, **args)
+
+
+def test_unknown_child_parent_metadata_cannot_be_silently_collected(tmp_path):
+    mod = load()
+    sessions = tmp_path/'sessions'
+    parent = sessions/'2026/11/02/rollout-2026-11-02T10-00-00-parent.jsonl'
+    bad = sessions/'2026/11/02/rollout-2026-11-02T10-00-01-bad.jsonl'
+    _native_meta(parent, 'parent')
+    _native_meta(bad, 'bad', 123)
+    with pytest.raises(ValueError, match='parent'):
+        mod.child_rollouts(sessions, 'parent', parent_rollout=parent, fresh=True,
+                           started_at_unix=datetime.datetime(2026,11,2,10).timestamp())
+
+
+def test_native_names_and_operation_prompt_preserve_the_exact_namespace():
+    mod = load()
+    assert mod.native_skill_name_matches('dev-graph:run-example', 'dev-graph:run-example')
+    assert mod.native_skill_name_matches('run-example', 'dev-graph:run-example')
+    assert not mod.native_skill_name_matches('other:run-example', 'dev-graph:run-example')
+    assert mod.native_operation_prompt({'target_skill':'dev-graph:run-example','args':'update exact.json'}) == '$dev-graph:run-example update exact.json\n'
+
+
+def test_collected_poll_state_keeps_closed_integer_wall_clock(tmp_path, monkeypatch):
+    mod = load()
+    cfg = _safe_runner_config(tmp_path)
+    private = Path(cfg['private_dir']); private.mkdir()
+    start = mod.time.time()-1.75
+    state = {'runtime':'codex','run_id':cfg['run_id'],'status':'BLOCKED','session_id':None,
+             'collected':False,'turns':[],'behavior_sha256':'0'*64,
+             'elapsed':1.75,'started_at_unix':start}
+    (private/'runner-state.json').write_text(json.dumps(state))
+    monkeypatch.setattr(mod, 'verify_pin', lambda *_: None)
+    mod.collect(cfg)
+    poll = json.loads((Path(cfg['workdir'])/'poll-state.json').read_text())
+    assert type(poll['elapsed']) is int and poll['elapsed'] >= state['elapsed']
+    assert poll['started_at_unix'] == start
+
+
+def test_controller_projection_receipt_is_copied_and_bound_before_execution(tmp_path):
+    mod = load()
+    cfg = _safe_runner_config(tmp_path)
+    source = Path(cfg['skill_dir'])/'SKILL.md'; source.write_text('pinned source body\n')
+    project = Path(cfg['repo_root'])/'.agents/skills/run-example/SKILL.md'
+    project.parent.mkdir(parents=True); project.symlink_to(source)
+    receipt = tmp_path/'project-projection.json'
+    data = {'skills':[{'qualified_skill':cfg['target_skill'],'project_path':str(project),
+                       'source_path':str(source),'sha256':hashlib.sha256(source.read_bytes()).hexdigest()}],
+            'global_catalog_policy':'metadata only; actual selected skills must be pinned',
+            'source_body_modified':False,'provider_inside_workspace':False}
+    receipt.write_text(json.dumps(data))
+    cfg['projection_receipt_file'] = str(receipt)
+    state = {}
+    mod.bind_projection_receipt(cfg, state)
+    published = Path(cfg['workdir'])/'project-projection.json'
+    assert published.read_bytes() == receipt.read_bytes()
+    assert state['projection_receipt_ref'] == 'project-projection.json'
+    assert state['projection_receipt_sha256'] == hashlib.sha256(receipt.read_bytes()).hexdigest()
+    published.write_text('not the controller original')
+    with pytest.raises(ValueError, match='projection'):
+        mod.bind_projection_receipt(cfg, {})

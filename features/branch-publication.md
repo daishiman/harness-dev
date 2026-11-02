@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "generated", "source_digest": null, "source_path": null, "source_plugin": "dev-graph", "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-02T02:21:20.724109Z"
+updated_at: "2026-11-02T03:21:23.487201Z"
 depends_on: []
 related_nodes: []
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-02T02:21:20.724109Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-02T03:21:23.487201Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -97,7 +97,11 @@ feature の目的・受入・macro field は保持し、現在の実走契約と
 
 書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。
 
-現時点の Codex 実走は残8対象すべて0件。C03/sync は必要な native hook が未確認・未発火のため保留で、他7対象は準備済みである。準備・unit test・文書登録を実走 PASS に数えない。source の最終隔離修正・独立 review、最終 source SHA・試験結果・版採番は親の追記待ち。harness-creator 1.4.56 / dev-graph 0.1.29 は採番予定であり、本受領書は採番完了を認定しない。
+前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。
+
+次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。
+
+新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。
 
 再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。
 

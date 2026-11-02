@@ -78,7 +78,7 @@ def iter_transcript(path: Path):
 
 def extract_models(path: Path, runtime: str = "claude") -> list[str]:
     if runtime == "codex":
-        return _load_sibling("live-trial-codex-transcript").extract_models(path)
+        return _load_sibling("extract-codex-transcript").extract_models(path)
     if runtime != "claude":
         raise ValueError(f"unsupported live-trial runtime: {runtime}")
     models: set[str] = set()
@@ -100,7 +100,7 @@ def extract_skill_invocations(path: Path, runtime: str = "claude", *,
     起動の有無を orchestrator の自己申告ではなく transcript から機械判定する。
     """
     if runtime == "codex":
-        return _load_sibling("live-trial-codex-transcript").extract_skill_invocations(
+        return _load_sibling("extract-codex-transcript").extract_skill_invocations(
             path, skill_dir=skill_dir, target_skill=target_skill
         )
     if runtime != "claude":
@@ -197,7 +197,7 @@ def validate_runtime_evidence(doc: dict, transcript_path: Path | None,
     blocked = overall.get("verdict") == "BLOCKED"
     if transcript_path is None or not transcript_path.is_file():
         return errors + ([] if blocked else ["native-transcript-missing"])
-    info = _load_sibling("live-trial-codex-transcript").inspect_transcript(
+    info = _load_sibling("extract-codex-transcript").inspect_transcript(
         transcript_path, skill_dir=skill_dir, target_skill=doc.get("target_skill")
     )
     if environment.get("codex_version") != info["cli_version"]:
@@ -304,7 +304,7 @@ def native_run_metadata(workdir: Path, state_path: Path | None, info: dict | Non
             if not isinstance(target, str) or not isinstance(args, str):
                 errors.append("native-run-state-operation-invalid")
             else:
-                expected = f"${target.split(':')[-1]} {args}\n"
+                expected = f"${target} {args}\n"
                 if user["normalized_text_sha256"] != hashlib.sha256(expected.strip().encode()).hexdigest():
                     errors.append("native-run-state-operation-prompt-mismatch")
             count += 1
@@ -1127,7 +1127,7 @@ def main(argv: list[str] | None = None) -> int:
     actual_model = extract_models(transcript_dst, runtime=ns.runtime) if transcript_dst else []
     claude_version = extract_claude_version(transcript_dst) if transcript_dst and ns.runtime == "claude" else None
     codex_info = (
-        _load_sibling("live-trial-codex-transcript").inspect_transcript(
+        _load_sibling("extract-codex-transcript").inspect_transcript(
             transcript_dst, skill_dir=skill_dir, target_skill=ns.target_skill
         ) if transcript_dst and ns.runtime == "codex" else None
     )

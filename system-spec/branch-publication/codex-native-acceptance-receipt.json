@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "record_kind": "codex-native-acceptance-contract",
   "recorded_at": "2026-11-02T02:21:01.213810+00:00",
-  "status": "documentation_prepared_source_and_live_acceptance_pending",
+  "status": "source_repair_recorded_native_acceptance_pending",
   "source_head_observed": "3587f53e178aeb26814f88c11e0ab2f3d5f041d6",
   "authorization": {
     "source": "親からの利用者指示引継ぎ",
@@ -42,25 +42,30 @@
   ],
   "current_acceptance": {
     "codex_targets_total": 8,
-    "codex_trials_executed": 0,
+    "codex_trials_executed": 2,
+    "codex_trials_executed_definition": "前sourceで起動して正規BLOCKEDとなった2試行。native skill適用または受入完了は0。",
+    "native_skill_activation_count": 0,
     "codex_pass_count": 0,
-    "prepared_targets_count": 7,
-    "held_targets": [
-      {
-        "component": "C03",
-        "skill": "run-dev-graph-sync",
-        "reason": "必要なnative hookが未確認・未発火。準備完了や承認済みとしない。"
-      }
-    ],
-    "prepared_skills": [
+    "blocked_trials_count": 2,
+    "goal_evaluated_trials_count": 0,
+    "new_source_trials_executed": 0,
+    "new_source_pass_count": 0,
+    "unstarted_targets_count": 6,
+    "candidate_unstarted_skills": [
       "run-dev-graph-decompose",
       "run-dev-graph-node",
-      "run-dev-graph-render",
-      "run-dev-graph-system-spec",
       "run-dev-graph-requirements",
       "run-dev-graph-schedule",
       "run-dev-graph-status"
     ],
+    "held_targets": [
+      {
+        "component": "C03",
+        "skill": "run-dev-graph-sync",
+        "reason": "native hook user-hook-trust必須。未確認・未発火のため保留。"
+      }
+    ],
+    "remaining_actor_processes": 0,
     "current_criteria_parent_report": {
       "passed": 1,
       "failed": 8,
@@ -104,17 +109,17 @@
     "claude_results_replaced_by_codex_pass": false
   },
   "pending": [
-    "最終source SHA・隔離修正・独立review・全最終試験結果の親追記",
-    "親による正規採番とその検証",
-    "Codex残8対象の実走、C03 native hook/正規guard consumer確認",
+    "新sourceの独立コード追補reviewの完了",
+    "次BASEci2のsource freezeとcommit/SHA固定",
+    "新sourceに対する8対象の実受入。C03はnative hook user-hook-trustと正規guard consumerを確認",
     "fresh goal・全scenario観測・予算・閉包を含む現行受入の成立",
     "CI再確認・最終commit/push/PR結果"
   ],
   "not_claimed": [
-    "Codex実走または8対象の合格",
+    "新sourceでのnative実走または8対象の合格",
     "native hook/Claude hookの同一性",
     "単一入力での複数operation自走",
-    "最終source/test/版採番の確定",
+    "独立コード追補review完了や次BASEci2 freeze完了",
     "CI成功、feature/task承認やpromotion、Git/Beads/PR完了"
   ],
   "external_mutations_by_documentation_agent": {
@@ -644,5 +649,694 @@
     "unrelated_nodes_unchanged": true,
     "canonical_criteria_receipts_updated": false
   },
-  "documentation_completed_at": "2026-11-02T02:22:13.560061+00:00"
+  "documentation_completed_at": "2026-11-02T02:22:13.560061+00:00",
+  "implementation_iterations": [
+    {
+      "id": "qualified-native-activation-and-collector-repair",
+      "recorded_at": "2026-11-02T03:22:26.248056+00:00",
+      "evidence_authority": "旧2試行とfreezeは文書担当がローカル照合。source修正・sample/lsof・回帰・releaseは親の引継ぎ。",
+      "previous_source_finalization_preserved": true,
+      "previous_current_acceptance": {
+        "codex_targets_total": 8,
+        "codex_trials_executed": 0,
+        "codex_pass_count": 0,
+        "prepared_targets_count": 7,
+        "held_targets": [
+          {
+            "component": "C03",
+            "skill": "run-dev-graph-sync",
+            "reason": "必要なnative hookが未確認・未発火。準備完了や承認済みとしない。"
+          }
+        ],
+        "prepared_skills": [
+          "run-dev-graph-decompose",
+          "run-dev-graph-node",
+          "run-dev-graph-render",
+          "run-dev-graph-system-spec",
+          "run-dev-graph-requirements",
+          "run-dev-graph-schedule",
+          "run-dev-graph-status"
+        ],
+        "current_criteria_parent_report": {
+          "passed": 1,
+          "failed": 8,
+          "rerun_by_documentation_agent": false,
+          "canonical_receipts_updated": false
+        },
+        "ci_success": false
+      },
+      "previous_pending": [
+        "最終source SHA・隔離修正・独立review・全最終試験結果の親追記",
+        "親による正規採番とその検証",
+        "Codex残8対象の実走、C03 native hook/正規guard consumer確認",
+        "fresh goal・全scenario観測・予算・閉包を含む現行受入の成立",
+        "CI再確認・最終commit/push/PR結果"
+      ],
+      "previous_not_claimed": [
+        "Codex実走または8対象の合格",
+        "native hook/Claude hookの同一性",
+        "単一入力での複数operation自走",
+        "最終source/test/版採番の確定",
+        "CI成功、feature/task承認やpromotion、Git/Beads/PR完了"
+      ],
+      "stopped_trials": [
+        {
+          "target_skill": "dev-graph:run-dev-graph-render",
+          "source_commit": "8c7102952e40279b152bc91e7a0d0a3d7b854932",
+          "overall": {
+            "launch": "PASS",
+            "completion": "FAIL",
+            "goal_fit": "NOT_EVALUATED",
+            "verdict": "BLOCKED"
+          },
+          "native_skill_injection_observed": false,
+          "native_skill_injection_count": 0,
+          "remaining_actor_processes": 0,
+          "canonical_blocked_finalizer": true,
+          "artifacts": [
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/verdict.json",
+              "sha256": "9d73d28625cc90e2105bad519eaafd5d59c8231d187eece3ea9c4c201a0bd08c"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/controller-stop.json",
+              "sha256": "f3bb6e8a444ad912588b18c98f1b0e09ba676958b0a3ea7e8a0b130b9b32f289"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/evidence-freeze.json",
+              "sha256": "82df278a1f65001ca41b6d81cab22c3af1d284aa3bf04614291d393c6ae021f4"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T024626-codex-ci/transcript.jsonl",
+              "sha256": "a02b99045367c7e9c3418f1cf31575978669034ce9d5a792c1d2c403e2833a6e"
+            }
+          ],
+          "frozen_files_checked": 83,
+          "freeze_all_hashes_match": true
+        },
+        {
+          "target_skill": "dev-graph:run-dev-graph-system-spec",
+          "source_commit": "8c7102952e40279b152bc91e7a0d0a3d7b854932",
+          "overall": {
+            "launch": "PASS",
+            "completion": "FAIL",
+            "goal_fit": "NOT_EVALUATED",
+            "verdict": "BLOCKED"
+          },
+          "native_skill_injection_observed": false,
+          "native_skill_injection_count": 0,
+          "remaining_actor_processes": 0,
+          "canonical_blocked_finalizer": true,
+          "artifacts": [
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T024626-codex-ci/verdict.json",
+              "sha256": "f59a0fb84ea8523774a719e1b7bf73f3db6fdca846aacddd9603cea56c9d4aae"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T024626-codex-ci/controller-stop.json",
+              "sha256": "e78de5e32916a70e26f331e9787f3bdf5fa1df866bd7c7b83096d40e7977d248"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T024626-codex-ci/evidence-freeze.json",
+              "sha256": "796a4586d86c5a58d6c83fd2d4fc9ea66e545086d787d74e763e5862468466d4"
+            },
+            {
+              "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T024626-codex-ci/transcript.jsonl",
+              "sha256": "c743e619ca5322d33a5a49ff8b51cfc2cc93c32b8d90c91f0b253a595b533442"
+            }
+          ],
+          "frozen_files_checked": 54,
+          "freeze_all_hashes_match": true
+        }
+      ],
+      "frozen_files_checked": 137,
+      "native_injection_failure": {
+        "catalog_names": "plugin:skill",
+        "producer_sent": "$suffix",
+        "observed_native_auto_injections": 0,
+        "unknown_hook_or_missing_injection_treated_as_pass": false
+      },
+      "next_implementation": {
+        "versions": {
+          "harness-creator": "1.4.57",
+          "dev-graph": "0.1.29"
+        },
+        "versioning": "親が正規採番済み、文書同期時点ではcommit前。文書担当は採番しない。",
+        "source_commit": null,
+        "state": "source_changes_recorded_review_and_BASEci2_freeze_pending",
+        "changes": [
+          "qualified namespace全体とsourceの対応表をboot時に固定し移設後も検査",
+          "原rolloutをstreaming readへ変更",
+          "開始時刻windowと2日分の探索",
+          "session情報cacheを有限化",
+          "poll elapsedをceilした非負整数で出力"
+        ],
+        "performance_root_cause_parent_report": {
+          "old_collector_full_history_count": 1278,
+          "evidence": "親がsampleとlsofでrecords()→TextIOWrapper.readによる全履歴全文読込を実証",
+          "observed_by_documentation_agent": false,
+          "sample_evidence_parent_label": "sample653/lsof（親の報告表記）"
+        },
+        "validation_parent_report": {
+          "related_regression": "275 passed",
+          "regression_log_diagnostic_path": "/tmp/harness-codex-qualified-final-regression.log",
+          "regression_log_sha256": "ec911bd4a6b27bf3f769cc05c7ea1b38fd9916ac8c83b4afffaf23441ff159b7",
+          "regression_log_utf8": "........................................................................ [ 26%]\n........................................................................ [ 52%]\n........................................................................ [ 78%]\n...........................................................              [100%]\n275 passed in 23.20s\n",
+          "release": "23 plugins PASS",
+          "independent_code_addendum_review": "in_progress",
+          "run_by_documentation_agent": false
+        },
+        "native_acceptance_pass_count": 0,
+        "native_retrial_condition": "新BASEci2 source freeze後。旧sourceの失敗状態やPASSを新sourceへ付け替えない。"
+      },
+      "c02": {
+        "writer": "C02/run-dev-graph-node",
+        "operation": "update",
+        "writer_input_utf8": "{\n  \"expected_graph_revision\": 9,\n  \"updates\": [\n    {\n      \"graph_node_id\": \"doc-branch-publication\",\n      \"set_sections\": {\n        \"2026年11月2日のCI実走と再開条件\": \"現在の運用状態を Codex 切替へ同期する。旧 CLI 固定・native 確認画面修復と Claude 実走履歴を保持し、今回の新契約・停止結果・未達・保留・再開条件を以下に記録する。\\n\\n利用者の「codexで進めて」に基づき、承認済みの残8対象を明示的な `--runtime codex` で検証するため、harness-creator の live-trial 契約を追加している。省略時は既存の Claude 経路を維持し、runtime をまたいだ PASS 再利用は禁止する。旧 runtime 未記録の証跡は Claude として保持する。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md) と [Codex native 契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、今回の受領書は [Codex native 受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) とする。\\n\\n今回の仕様影響は製品契約への影響あり。native `exec` / 同一 session の `exec resume`、原 rollout parser、runtime 別の schema・挙動閉包・再利用・CLI 引数を追加する。native の実際の skill 注入と成功した全文 Read を source bytes に束縛し、実 model・親子 session・終了・累積 token・実 user turn を原ログから検査する。Claude の `Skill` / `Agent` / Stop / 権限 hook と同一のイベントや同一能力とは主張しない。\\n\\n複数 operation は、宣言済みの順序付き native handoff と checkpoint を controller が照合し、各操作を実 user turn で渡す。入力回数・順序を記録し、単一入力による自走や救済 nudge と区別する。最小成果物の実 path・bytes SHA・開き方・深度四択を assistant 本文で提示し、実 user turn の standard 応答前に選択記録や Agent 評価へ進めない。native hook や正規 guard consumer の未到達を、generic resume や自作 receipt で承認済みに置き換えない。\\n\\n書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。\\n\\n前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。\\n\\n次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。\\n\\n新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。\\n\\n再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。\\n\\n現行 criteria は親の前回確認で1 passed・8 failed、CI の残8対象は未達のまま。canonical criteria receipt は今回更新せず、古い PASS を現行の合格証拠に流用しない。CI 成功・全8対象完了・commit/push・PR 完了・feature/task の承認や promotion は主張しない。\"\n      }\n    },\n    {\n      \"graph_node_id\": \"feature-branch-publication\",\n      \"set_sections\": {\n        \"2026年11月2日のCI実走と再開条件\": \"feature の目的・受入・macro field は保持し、現在の実走契約と未達状態だけを更新する。draft / evaluation pending / tracker none を維持し、13計画生成や promotion へ進めない。\\n\\n利用者の「codexで進めて」に基づき、承認済みの残8対象を明示的な `--runtime codex` で検証するため、harness-creator の live-trial 契約を追加している。省略時は既存の Claude 経路を維持し、runtime をまたいだ PASS 再利用は禁止する。旧 runtime 未記録の証跡は Claude として保持する。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md) と [Codex native 契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、今回の受領書は [Codex native 受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) とする。\\n\\n今回の仕様影響は製品契約への影響あり。native `exec` / 同一 session の `exec resume`、原 rollout parser、runtime 別の schema・挙動閉包・再利用・CLI 引数を追加する。native の実際の skill 注入と成功した全文 Read を source bytes に束縛し、実 model・親子 session・終了・累積 token・実 user turn を原ログから検査する。Claude の `Skill` / `Agent` / Stop / 権限 hook と同一のイベントや同一能力とは主張しない。\\n\\n複数 operation は、宣言済みの順序付き native handoff と checkpoint を controller が照合し、各操作を実 user turn で渡す。入力回数・順序を記録し、単一入力による自走や救済 nudge と区別する。最小成果物の実 path・bytes SHA・開き方・深度四択を assistant 本文で提示し、実 user turn の standard 応答前に選択記録や Agent 評価へ進めない。native hook や正規 guard consumer の未到達を、generic resume や自作 receipt で承認済みに置き換えない。\\n\\n書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。\\n\\n前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。\\n\\n次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。\\n\\n新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。\\n\\n再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。\\n\\n現行 criteria は親の前回確認で1 passed・8 failed、CI の残8対象は未達のまま。canonical criteria receipt は今回更新せず、古い PASS を現行の合格証拠に流用しない。CI 成功・全8対象完了・commit/push・PR 完了・feature/task の承認や promotion は主張しない。\"\n      }\n    },\n    {\n      \"graph_node_id\": \"spec-branch-publication\",\n      \"set_sections\": {\n        \"2026年11月2日のCI実走と再開条件\": \"前回の実走結果追加は製品影響なしだったが、今回の Codex native 経路追加は CLI・schema・実行と証跡・権限境界に製品契約の影響がある。既存 owner の正本を参照して以下の受入契約を追加し、過去の影響判断は当時の記録として保持する。\\n\\n利用者の「codexで進めて」に基づき、承認済みの残8対象を明示的な `--runtime codex` で検証するため、harness-creator の live-trial 契約を追加している。省略時は既存の Claude 経路を維持し、runtime をまたいだ PASS 再利用は禁止する。旧 runtime 未記録の証跡は Claude として保持する。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md) と [Codex native 契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、今回の受領書は [Codex native 受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) とする。\\n\\n今回の仕様影響は製品契約への影響あり。native `exec` / 同一 session の `exec resume`、原 rollout parser、runtime 別の schema・挙動閉包・再利用・CLI 引数を追加する。native の実際の skill 注入と成功した全文 Read を source bytes に束縛し、実 model・親子 session・終了・累積 token・実 user turn を原ログから検査する。Claude の `Skill` / `Agent` / Stop / 権限 hook と同一のイベントや同一能力とは主張しない。\\n\\n複数 operation は、宣言済みの順序付き native handoff と checkpoint を controller が照合し、各操作を実 user turn で渡す。入力回数・順序を記録し、単一入力による自走や救済 nudge と区別する。最小成果物の実 path・bytes SHA・開き方・深度四択を assistant 本文で提示し、実 user turn の standard 応答前に選択記録や Agent 評価へ進めない。native hook や正規 guard consumer の未到達を、generic resume や自作 receipt で承認済みに置き換えない。\\n\\n書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。\\n\\n前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。\\n\\n次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。\\n\\n新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。\\n\\n再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。\\n\\n現行 criteria は親の前回確認で1 passed・8 failed、CI の残8対象は未達のまま。canonical criteria receipt は今回更新せず、古い PASS を現行の合格証拠に流用しない。CI 成功・全8対象完了・commit/push・PR 完了・feature/task の承認や promotion は主張しない。\"\n      }\n    },\n    {\n      \"graph_node_id\": \"arch-branch-publication\",\n      \"set_sections\": {\n        \"2026年11月2日のCI実走と再開条件\": \"既存 live-trial の planner / verdict / schema に runtime 分岐を接続し、Codex runner と原 rollout parser を専用経路として加える。文書と graph は C02 単一 writer と C11 を利用し、revision8・revision9 の immutable receipt を保持して revision10 に更新する。\\n\\n利用者の「codexで進めて」に基づき、承認済みの残8対象を明示的な `--runtime codex` で検証するため、harness-creator の live-trial 契約を追加している。省略時は既存の Claude 経路を維持し、runtime をまたいだ PASS 再利用は禁止する。旧 runtime 未記録の証跡は Claude として保持する。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md) と [Codex native 契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、今回の受領書は [Codex native 受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) とする。\\n\\n今回の仕様影響は製品契約への影響あり。native `exec` / 同一 session の `exec resume`、原 rollout parser、runtime 別の schema・挙動閉包・再利用・CLI 引数を追加する。native の実際の skill 注入と成功した全文 Read を source bytes に束縛し、実 model・親子 session・終了・累積 token・実 user turn を原ログから検査する。Claude の `Skill` / `Agent` / Stop / 権限 hook と同一のイベントや同一能力とは主張しない。\\n\\n複数 operation は、宣言済みの順序付き native handoff と checkpoint を controller が照合し、各操作を実 user turn で渡す。入力回数・順序を記録し、単一入力による自走や救済 nudge と区別する。最小成果物の実 path・bytes SHA・開き方・深度四択を assistant 本文で提示し、実 user turn の standard 応答前に選択記録や Agent 評価へ進めない。native hook や正規 guard consumer の未到達を、generic resume や自作 receipt で承認済みに置き換えない。\\n\\n書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。\\n\\n前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。\\n\\n次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。\\n\\n新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。\\n\\n再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。\\n\\n現行 criteria は親の前回確認で1 passed・8 failed、CI の残8対象は未達のまま。canonical criteria receipt は今回更新せず、古い PASS を現行の合格証拠に流用しない。CI 成功・全8対象完了・commit/push・PR 完了・feature/task の承認や promotion は主張しない。\"\n      }\n    },\n    {\n      \"graph_node_id\": \"task-branch-remaining-publication\",\n      \"set_sections\": {\n        \"2026年11月2日のCI実走と再開条件\": \"再開条件は新 source の独立コード追補 review と BASEci2 source freeze、新 source に対する8対象の実受入である。旧2件の BLOCKED と未起動6対象を分け、C03/sync は native hook user-hook-trust と正規 guard consumer の確認まで保留する。実走・採番・Beads・Git・PR は親の担当とし、この文書更新では実行しない。\\n\\n利用者の「codexで進めて」に基づき、承認済みの残8対象を明示的な `--runtime codex` で検証するため、harness-creator の live-trial 契約を追加している。省略時は既存の Claude 経路を維持し、runtime をまたいだ PASS 再利用は禁止する。旧 runtime 未記録の証跡は Claude として保持する。正本は [live-trial Skill](../plugins/harness-creator/skills/run-skill-live-trial/SKILL.md) と [Codex native 契約](../plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md)、今回の受領書は [Codex native 受入受領書](../system-spec/branch-publication/codex-native-acceptance-receipt.json) とする。\\n\\n今回の仕様影響は製品契約への影響あり。native `exec` / 同一 session の `exec resume`、原 rollout parser、runtime 別の schema・挙動閉包・再利用・CLI 引数を追加する。native の実際の skill 注入と成功した全文 Read を source bytes に束縛し、実 model・親子 session・終了・累積 token・実 user turn を原ログから検査する。Claude の `Skill` / `Agent` / Stop / 権限 hook と同一のイベントや同一能力とは主張しない。\\n\\n複数 operation は、宣言済みの順序付き native handoff と checkpoint を controller が照合し、各操作を実 user turn で渡す。入力回数・順序を記録し、単一入力による自走や救済 nudge と区別する。最小成果物の実 path・bytes SHA・開き方・深度四択を assistant 本文で提示し、実 user turn の standard 応答前に選択記録や Agent 評価へ進めない。native hook や正規 guard consumer の未到達を、generic resume や自作 receipt で承認済みに置き換えない。\\n\\n書込み権限は fresh fixture と完了マーカー用の `workdir/out` に限定する。source provider・private control/raw・公開 workdir を actor workspace の外へ分離し、workspace・tmp・source・private の境界と書込み先の交差を検査する。HOME・CODEX_HOME・auth・利用者設定を転用せず、sandbox を無効化しない。既存 Claude の schema・digest・受入規則は維持する。\\n\\n前 source `8c710295`（harness-creator 1.4.56 / dev-graph 0.1.29）では C05/render と C19/system-spec の2件を起動したが、native catalog の名前は `plugin:skill` である一方、producer が `$suffix` を送ったため自動 skill 注入は0件だった。両件は正規 `--blocked` finalizer で終了し、BLOCKED・goal_fit NOT_EVALUATED、残 actor process 0。旧 freeze の137ファイルは不変であり、旧 source の失敗状態や PASS を新 source へ付け替えない。その他6対象は未起動で、C03/sync は native hook `user-hook-trust` が必須のため保留、他5対象は候補である。\\n\\n次 source は harness-creator 1.4.57 を正規採番済みで、dev-graph 0.1.29 を維持する（この文書同期時点では commit 前）。qualified name 全体と source の対応表を boot 時に固定し、移設後にも対応を検査する修正、原ログの streaming read・開始時刻 window と2日分探索・有限 cache、poll elapsed の切上げ整数化を追加した。旧 collector が1278履歴を全文 read していたことは親が sample 653 と lsof で確認した。関連合同回帰は親実行で275 passed、release は23 plugin PASS。独立コード追補 review は進行中であり、この文書担当が回帰や実走を再実行した結果ではない。\\n\\n新 source の実受入 PASS は0件で、CI の残8対象は未解消。次の native 試行は新しい BASEci2 の source freeze 後に行う。今回は旧2 trace の停止確定と source 修正の記録であり、8対象の合格・native hook の成立・複数 operation の単一入力自走を認定しない。\\n\\n再開時も同時上限2、scenario 全観測、時間/token 予算、goal-seek 実体、原 SHA と runtime 閉包、fixture-final/freeze、別 context の fresh goal 評価を維持する。作者・runner は goal PASS を作らない。過去の C14/decompose と C02/node の fresh FAIL・最終 DEGRADED、C19/system-spec と C05/render の利用上限 BLOCKED、未起動4対象、および private relocation の照合は [以前の CI 実走受領書](../system-spec/branch-publication/ci-exhaustive-attempt-receipt.json) に不変の履歴として残す。Codex への切替で上書きしない。\\n\\n現行 criteria は親の前回確認で1 passed・8 failed、CI の残8対象は未達のまま。canonical criteria receipt は今回更新せず、古い PASS を現行の合格証拠に流用しない。CI 成功・全8対象完了・commit/push・PR 完了・feature/task の承認や promotion は主張しない。\"\n      }\n    }\n  ]\n}\n",
+        "writer_input_sha256": "d4167aff8e34718be5487f854918a0bcc14449240ac0011e751c6626102a38fa",
+        "temporary_input_path": ".dev-graph/cache/codex-native-documentation-r10-input.json",
+        "temporary_input_removed_after_apply": true,
+        "preview_exit_code": 0,
+        "preview": {
+          "applied_count": 0,
+          "artifacts": [
+            {
+              "api_contracts_added": [],
+              "file_path": "docs/branch-publication.md",
+              "graph_node_id": "doc-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "8a890a0d03a5087f1480c0ff7d3482aa666a7f28a486608a3c23d32df98cae48",
+              "sha256_before": "bc4a226a2da60809a641b892a07ffbe92b9d5b293f3a04064fc95c64c406506a",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "features/branch-publication.md",
+              "graph_node_id": "feature-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "6e92d714628d9355b789388a26cafa848ee9243534f4ee45afe82aefb9d1624e",
+              "sha256_before": "86165fbe68d0db6e46810d3c5887237cb457c12702c716362587a56271956ad2",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "specs/branch-publication.md",
+              "graph_node_id": "spec-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "6a72a06c8dbafff7d9409271659a9019509f724981011724e391d02c461fddb7",
+              "sha256_before": "03e19ad1715a06cf8a775897653f67247ccb4e8ecd8c50348dd7a8a23cb9cf35",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "architecture/branch-publication.md",
+              "graph_node_id": "arch-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "66cee789cb30034820418fa9ccdbeb6bc259b4b41396955d457f55b4bc328f3a",
+              "sha256_before": "4a5053907e1c6ffa56dfac5ef8f6b5cacc043271b096a2e3e58a0c10d9bb7e33",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "tasks/branch-remaining-publication.md",
+              "graph_node_id": "task-branch-remaining-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "b58cee49ab6310555ea99de80a01624349f39bac0e1d5e71b0328d0e9868b524",
+              "sha256_before": "9281f727c8a6ce9a803ab9f96b7975d5b75c73ccf1a66aaad054f666e415141f",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            }
+          ],
+          "dry_run": true,
+          "graph_digest_after": "sha256:91b562cdb62b2f8c0023245d3b4adad8c2435e65b5948505d931c86c82d102e8",
+          "graph_path": ".dev-graph/state/graph.json",
+          "graph_revision_after": 10,
+          "graph_revision_before": 9,
+          "input_sha256": "d4167aff8e34718be5487f854918a0bcc14449240ac0011e751c6626102a38fa",
+          "node_ids": [
+            "doc-branch-publication",
+            "feature-branch-publication",
+            "spec-branch-publication",
+            "arch-branch-publication",
+            "task-branch-remaining-publication"
+          ],
+          "operation": "update",
+          "owner": "C02/run-dev-graph-node",
+          "planned_count": 5,
+          "planned_nodes": [
+            {
+              "artifact_kind": "document",
+              "confirmation_status": "draft",
+              "depends_on": [],
+              "evaluation_status": "pending",
+              "graph_node_id": "doc-branch-publication",
+              "implementation_readiness": {
+                "status": "complete"
+              },
+              "parent_feature": null,
+              "status": "draft",
+              "tracker_binding": "none"
+            },
+            {
+              "artifact_kind": "feature",
+              "confirmation_status": "draft",
+              "depends_on": [],
+              "evaluation_status": "pending",
+              "graph_node_id": "feature-branch-publication",
+              "implementation_readiness": {
+                "status": "complete"
+              },
+              "parent_feature": null,
+              "status": "draft",
+              "tracker_binding": "none"
+            },
+            {
+              "artifact_kind": "specification",
+              "confirmation_status": "draft",
+              "depends_on": [],
+              "evaluation_status": "pending",
+              "graph_node_id": "spec-branch-publication",
+              "implementation_readiness": {
+                "status": "complete"
+              },
+              "parent_feature": null,
+              "status": "draft",
+              "tracker_binding": "none"
+            },
+            {
+              "artifact_kind": "architecture",
+              "confirmation_status": "draft",
+              "depends_on": [
+                "spec-branch-publication"
+              ],
+              "evaluation_status": "pending",
+              "graph_node_id": "arch-branch-publication",
+              "implementation_readiness": {
+                "status": "complete"
+              },
+              "parent_feature": null,
+              "status": "draft",
+              "tracker_binding": "none"
+            },
+            {
+              "artifact_kind": "task",
+              "confirmation_status": "draft",
+              "depends_on": [],
+              "evaluation_status": "pending",
+              "graph_node_id": "task-branch-remaining-publication",
+              "implementation_readiness": {
+                "status": "complete"
+              },
+              "parent_feature": null,
+              "status": "draft",
+              "tracker_binding": "none"
+            }
+          ],
+          "pre_write_validation": {
+            "findings": 0,
+            "validator": "validate-graph-schema.py"
+          },
+          "receipt_path": ".dev-graph/state/receipts/node-r000010-update.json",
+          "recorded_at": "2026-11-02T03:21:13.038091Z",
+          "repository_id": "github:daishiman/harness-dev",
+          "schema_version": "1.0.0",
+          "status": "preview",
+          "template_sources": [
+            "repository:architecture-backend.md",
+            "repository:architecture-frontend.md",
+            "repository:architecture.md",
+            "repository:document.md",
+            "repository:feature.md",
+            "repository:specification.md",
+            "repository:task.md"
+          ],
+          "valid": true,
+          "write_count": 0
+        },
+        "apply_exit_code": 0,
+        "apply": {
+          "applied_count": 5,
+          "artifacts": [
+            {
+              "api_contracts_added": [],
+              "file_path": "docs/branch-publication.md",
+              "graph_node_id": "doc-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "9fb68b317c31acf956b98e9c773300d98d616443d2c9362c661762ca08b6f1dd",
+              "sha256_before": "bc4a226a2da60809a641b892a07ffbe92b9d5b293f3a04064fc95c64c406506a",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "features/branch-publication.md",
+              "graph_node_id": "feature-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "eb678ea4fc4df7460cdb0d65d2973bd866e2a34581c63f61c7dd486efc9f8491",
+              "sha256_before": "86165fbe68d0db6e46810d3c5887237cb457c12702c716362587a56271956ad2",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "specs/branch-publication.md",
+              "graph_node_id": "spec-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "6d78737250c0abd26b8478767e2d97ddd684a9ae43c8eb4798590740e1443d1b",
+              "sha256_before": "03e19ad1715a06cf8a775897653f67247ccb4e8ecd8c50348dd7a8a23cb9cf35",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "architecture/branch-publication.md",
+              "graph_node_id": "arch-branch-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "ac7eae30befa6f30ba0718d638903566e8622d37a938250d64e7bd24bf911f7d",
+              "sha256_before": "4a5053907e1c6ffa56dfac5ef8f6b5cacc043271b096a2e3e58a0c10d9bb7e33",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            },
+            {
+              "api_contracts_added": [],
+              "file_path": "tasks/branch-remaining-publication.md",
+              "graph_node_id": "task-branch-remaining-publication",
+              "implementation_readiness": "complete",
+              "macro_fields_patched": [],
+              "missing_sections": [],
+              "node_fields_patched": [],
+              "readiness_fill": [],
+              "sections_appended": [],
+              "sections_regenerated": [],
+              "sections_replaced": [
+                "2026年11月2日のCI実走と再開条件"
+              ],
+              "sha256_after": "a6b5e1b3d52d7bb2fef63850b9ac070f67bfcfaa4706e2b643770429974d378c",
+              "sha256_before": "9281f727c8a6ce9a803ab9f96b7975d5b75c73ccf1a66aaad054f666e415141f",
+              "subtypes_added": [],
+              "unmanaged_body_preserved": true,
+              "unmanaged_frontmatter_kept": []
+            }
+          ],
+          "dry_run": false,
+          "graph_digest_after": "sha256:837fba9aefe8a1cf80c683b62e5ae97124db77caebd8cc7cbe84c502dbec662b",
+          "graph_path": ".dev-graph/state/graph.json",
+          "graph_revision_after": 10,
+          "graph_revision_before": 9,
+          "input_sha256": "d4167aff8e34718be5487f854918a0bcc14449240ac0011e751c6626102a38fa",
+          "node_ids": [
+            "doc-branch-publication",
+            "feature-branch-publication",
+            "spec-branch-publication",
+            "arch-branch-publication",
+            "task-branch-remaining-publication"
+          ],
+          "operation": "update",
+          "owner": "C02/run-dev-graph-node",
+          "pre_write_validation": {
+            "findings": 0,
+            "validator": "validate-graph-schema.py"
+          },
+          "receipt_path": ".dev-graph/state/receipts/node-r000010-update.json",
+          "recorded_at": "2026-11-02T03:21:23.487201Z",
+          "repository_id": "github:daishiman/harness-dev",
+          "schema_version": "1.0.0",
+          "status": "applied",
+          "template_sources": [
+            "repository:architecture-backend.md",
+            "repository:architecture-frontend.md",
+            "repository:architecture.md",
+            "repository:document.md",
+            "repository:feature.md",
+            "repository:specification.md",
+            "repository:task.md"
+          ],
+          "valid": true,
+          "write_count": 7
+        },
+        "graph_revision_before": 9,
+        "graph_revision_after": 10,
+        "graph_sha256_before": "cdeb50ea06f0634831362fc15348a2cf3fc73db7b22dff9c8664b0442f5aacf9",
+        "graph_sha256_after": "6ab5fc950f6e4d08df7e25f6ab71b3fe52e46ea9618ce7f9d283b858ee9016a7",
+        "immutable_receipt": ".dev-graph/state/receipts/node-r000010-update.json",
+        "immutable_receipt_sha256": "31fd10904fc0ed9310bf7c938c9e5ba0731da18403ec674cb040afc622cc68e7",
+        "observed_head": "8c7102952e40279b152bc91e7a0d0a3d7b854932"
+      },
+      "validation": {
+        "c11_exit_code": 0,
+        "c11_command": [
+          "python3",
+          "-B",
+          "plugins/dev-graph/scripts/validate-graph-schema.py",
+          "--graph",
+          ".dev-graph/state/graph.json",
+          "--repo-root",
+          "<resolved repository>",
+          "--strict-artifact-readiness"
+        ],
+        "c11": {
+          "artifact_readiness": {
+            "enforced": true,
+            "finding_count": 0,
+            "findings": [],
+            "missing_sections": [],
+            "status": "complete"
+          },
+          "graph_validation": {
+            "status": "pass",
+            "violation_count": 0
+          },
+          "implementation_readiness": "complete",
+          "missing_sections": [],
+          "node_readiness": {
+            "complete": 10,
+            "incomplete": 0,
+            "incomplete_nodes": [],
+            "not_applicable": 0,
+            "unknown": 0
+          },
+          "schema": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/graph-node.schema.json",
+          "valid": true,
+          "violations": []
+        },
+        "artifacts": [
+          {
+            "path": "docs/branch-publication.md",
+            "graph_node_id": "doc-branch-publication",
+            "sha256_before": "bc4a226a2da60809a641b892a07ffbe92b9d5b293f3a04064fc95c64c406506a",
+            "sha256_after": "9fb68b317c31acf956b98e9c773300d98d616443d2c9362c661762ca08b6f1dd",
+            "only_requested_section_changed_except_writer_timestamps": true,
+            "identity_macro_draft_state_unchanged": true,
+            "c02_artifact_sha_matches": true,
+            "heading_count": 1
+          },
+          {
+            "path": "features/branch-publication.md",
+            "graph_node_id": "feature-branch-publication",
+            "sha256_before": "86165fbe68d0db6e46810d3c5887237cb457c12702c716362587a56271956ad2",
+            "sha256_after": "eb678ea4fc4df7460cdb0d65d2973bd866e2a34581c63f61c7dd486efc9f8491",
+            "only_requested_section_changed_except_writer_timestamps": true,
+            "identity_macro_draft_state_unchanged": true,
+            "c02_artifact_sha_matches": true,
+            "heading_count": 1
+          },
+          {
+            "path": "specs/branch-publication.md",
+            "graph_node_id": "spec-branch-publication",
+            "sha256_before": "03e19ad1715a06cf8a775897653f67247ccb4e8ecd8c50348dd7a8a23cb9cf35",
+            "sha256_after": "6d78737250c0abd26b8478767e2d97ddd684a9ae43c8eb4798590740e1443d1b",
+            "only_requested_section_changed_except_writer_timestamps": true,
+            "identity_macro_draft_state_unchanged": true,
+            "c02_artifact_sha_matches": true,
+            "heading_count": 1
+          },
+          {
+            "path": "architecture/branch-publication.md",
+            "graph_node_id": "arch-branch-publication",
+            "sha256_before": "4a5053907e1c6ffa56dfac5ef8f6b5cacc043271b096a2e3e58a0c10d9bb7e33",
+            "sha256_after": "ac7eae30befa6f30ba0718d638903566e8622d37a938250d64e7bd24bf911f7d",
+            "only_requested_section_changed_except_writer_timestamps": true,
+            "identity_macro_draft_state_unchanged": true,
+            "c02_artifact_sha_matches": true,
+            "heading_count": 1
+          },
+          {
+            "path": "tasks/branch-remaining-publication.md",
+            "graph_node_id": "task-branch-remaining-publication",
+            "sha256_before": "9281f727c8a6ce9a803ab9f96b7975d5b75c73ccf1a66aaad054f666e415141f",
+            "sha256_after": "a6b5e1b3d52d7bb2fef63850b9ac070f67bfcfaa4706e2b643770429974d378c",
+            "only_requested_section_changed_except_writer_timestamps": true,
+            "identity_macro_draft_state_unchanged": true,
+            "c02_artifact_sha_matches": true,
+            "heading_count": 1
+          }
+        ],
+        "preserved_history": [
+          {
+            "path": ".dev-graph/state/receipts/node-r000008-update.json",
+            "sha256": "96f430a05cc8cfbd19e857b59cb5e433b1d93d49461ffb837261157c9a20dabc",
+            "unchanged": true
+          },
+          {
+            "path": ".dev-graph/state/receipts/node-r000009-update.json",
+            "sha256": "d987cf28cd2aa4850980be23666cfd0ba8e2e5b5419be6eee30357f2308b4575",
+            "unchanged": true
+          },
+          {
+            "path": "system-spec/branch-publication/ci-exhaustive-attempt-receipt.json",
+            "sha256": "bf19c309a4f15065c619797b31c5d4f06992b0bed41b8c0cda7bd20045bd3534",
+            "unchanged": true
+          },
+          {
+            "path": "system-spec/branch-publication/spec-impact-receipt.json",
+            "sha256": "951fd6cbc87a3f00826f81e2c16a3f1978b561dd41364873dedaaa68150e6e47",
+            "unchanged": true
+          }
+        ],
+        "local_links_count": 20,
+        "local_links_all_exist": true,
+        "unrelated_nodes_unchanged": true,
+        "canonical_criteria_receipts_updated": false
+      },
+      "external_mutations_by_documentation_agent": {
+        "beads": 0,
+        "git_commit_push": 0,
+        "pr": 0,
+        "source_edits": 0,
+        "actor_launches": 0,
+        "versioning": 0
+      }
+    },
+    {
+      "record_kind": "ci-naming-and-reference-index-correction",
+      "recorded_at": "2026-11-02T03:46:23.676925+00:00",
+      "receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration2/ci-source-finalization.json",
+      "impact": "機能契約の変更なし。正規命名と参照索引への修復。既存r10文書/C02受領書を維持し、旧sourceSHAは当時の記録として保持。",
+      "validation": {
+        "related_suite": {
+          "passed": 347,
+          "duration_s": 26.73
+        },
+        "failed_ci_inner_criteria": {
+          "passed": 2,
+          "deselected": 301
+        },
+        "naming_violations": 0,
+        "skill_tree": "OK",
+        "release_check": "23 plugins OK",
+        "governance_blocked": []
+      },
+      "native_acceptance_complete": false
+    }
+  ],
+  "namespace_fix_source_finalization": {
+    "correction_receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration2/correction-receipt.json",
+    "validation": {
+      "related_regression": "275 passed in 23.20s",
+      "release": "23 plugins OK",
+      "design_review_ref": "eval-log/harness-creator/run-skill-live-trial/codex-native-20261102/namespace-history-fix-review.json",
+      "new_native_passes": 0,
+      "old_freeze_files_unchanged": 137,
+      "old_processes_remaining": 0
+    },
+    "versions": {
+      "harness-creator": "1.4.57",
+      "dev-graph": "0.1.29"
+    },
+    "native_acceptance_complete": false
+  }
 }

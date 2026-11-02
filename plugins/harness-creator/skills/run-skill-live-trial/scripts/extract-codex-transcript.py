@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: live-trial-codex-transcript
+# name: extract-codex-transcript
 # purpose: Codex native rolloutを変換せずに読み、実skill適用・終了・モデル・資源使用を検証する。
 # inputs:
 #   - argv: なし（live-trial-verdict/runtime runnerからimport）
@@ -24,6 +24,7 @@ is counted. Cached/reasoning tokens are subsets, not additions to that total.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -33,6 +34,78 @@ from typing import Any
 
 FORMAT = "codex-rollout-jsonl"
 _SKILL = re.compile(r"<skill>\s*<name>([^<]+)</name>\s*<path>([^<]+)</path>\s*(.*?)\s*</skill>", re.S)
+_SKILL_NAME = re.compile(r"(?:(?P<plugin>[a-z0-9][a-z0-9-]{0,127}):)?(?P<skill>[a-z0-9][a-z0-9-]{0,127})")
+
+
+def _declared_source_roots(skill_dir: Path) -> dict[str, Path] | None:
+    """Use the canonical closure resolver, rather than a second dependency map."""
+    if skill_dir.parent.name != "skills" or skill_dir.parent.parent.parent.name != "plugins":
+        return None
+    source = Path(__file__).with_name("live-trial-verdict.py")
+    spec = importlib.util.spec_from_file_location("codex_declared_behavior", source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    files = module.behavior_closure_files(skill_dir, runtime="codex")
+    return {path.parent.parent.name: path.parent.parent for _label, path in files
+            if path.parent.name == ".codex-plugin" and path.name == "plugin.json"}
+
+
+def _projection_entries(path: Path, session_id: str | None) -> list[dict]:
+    state_path = path.parent / "native-run-state.json"
+    if not state_path.is_file():
+        return []
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    reference = state.get("projection_receipt_ref") if isinstance(state, dict) else None
+    if reference is None or state.get("collected") is not True:
+        return []
+    if state.get("runtime") != "codex" or state.get("session_id") != session_id or not isinstance(reference, str):
+        raise ValueError("projection state identity mismatch")
+    receipt = (path.parent / reference).resolve(strict=True)
+    receipt.relative_to(path.parent.resolve())
+    raw = receipt.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != state.get("projection_receipt_sha256"):
+        raise ValueError("projection receipt digest mismatch")
+    document = json.loads(raw)
+    entries = document.get("skills") if isinstance(document, dict) else None
+    if not isinstance(entries, list) or document.get("source_body_modified") is not False:
+        raise ValueError("projection receipt shape invalid")
+    seen = set()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"qualified_skill", "project_path", "source_path", "sha256"}:
+            raise ValueError("projection entry shape invalid")
+        name = _SKILL_NAME.fullmatch(entry["qualified_skill"]) if isinstance(entry["qualified_skill"], str) else None
+        if name is None or name.group("plugin") is None or not re.fullmatch(r"[a-f0-9]{64}", str(entry["sha256"])):
+            raise ValueError("projection entry identity invalid")
+        if any(not isinstance(entry[key], str) or not Path(entry[key]).is_absolute() for key in ("project_path", "source_path")):
+            raise ValueError("projection paths must be absolute")
+        identity = (entry["qualified_skill"], entry["project_path"])
+        if identity in seen:
+            raise ValueError("projection entry duplicated")
+        seen.add(identity)
+    return entries
+
+
+def _matches_source_path(injected: Path, source: Path, namespace: str | None,
+                         qualified: str, projections: list[dict]) -> bool:
+    if injected.exists():
+        if injected.resolve() == source.resolve():
+            return True
+    # Archived/remote-CI verification cannot dereference the original private
+    # root. A controller-owned, state-SHA-bound mapping preserves the exact alias,
+    # namespace and source bytes; a coincidental path suffix is never enough.
+    if namespace:
+        expected = ("plugins", namespace, "skills", source.parent.name, "SKILL.md")
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        for entry in projections:
+            if entry["qualified_skill"] != qualified or entry["project_path"] != str(injected) or entry["sha256"] != digest:
+                continue
+            original = Path(entry["source_path"])
+            if tuple(original.parts[-len(expected):]) != expected:
+                continue
+            if injected.exists() and original.exists() and injected.resolve() != original.resolve():
+                continue
+            return True
+    return injected == source and injected.exists()
 
 
 def _records(path: Path) -> tuple[list[dict], list[str]]:
@@ -186,28 +259,56 @@ def _inspect_one(path: Path, *, skill_dir: Path | None = None, target_skill: str
                 usage_checkpoints.add(tuple(current[key] for key in ("input_tokens", "output_tokens", "total_tokens")))
     activations, activation_errors = [], []
     if source is not None:
+        try:
+            projections = _projection_entries(path, meta.get("id"))
+        except (OSError, ValueError) as exc:
+            projections = []
+            errors.append(f"native-projection-receipt-invalid:{exc}")
         expected_name = target_skill.split(":")[-1] if target_skill else skill_dir.name
+        target_namespace = target_skill.split(":")[0] if target_skill and ":" in target_skill else None
+        try:
+            source_roots = _declared_source_roots(skill_dir)
+        except (OSError, ValueError) as exc:
+            source_roots = {}
+            errors.append(f"native-dependency-pin-invalid:{exc}")
+        if source_roots is not None:
+            actual_namespace = skill_dir.parent.parent.name
+            if target_namespace is not None and target_namespace != actual_namespace:
+                errors.append("native-target-namespace-source-mismatch")
+            target_namespace = actual_namespace
         for entry in injections:
-            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", entry["name"]):
+            parsed_name = _SKILL_NAME.fullmatch(entry["name"])
+            if parsed_name is None:
                 activation_errors.append("native-skill-name-invalid")
                 continue
-            possible = [(target_skill or expected_name, source)] if entry["name"] == expected_name else []
-            if entry["name"] != expected_name and skill_dir.parent.name == "skills" and skill_dir.parent.parent.parent.name == "plugins":
-                for candidate in skill_dir.parent.parent.parent.glob(f"*/skills/{entry['name']}/SKILL.md"):
+            namespace, local_name = parsed_name.group("plugin"), parsed_name.group("skill")
+            possible = []
+            if local_name == expected_name and namespace in {None, target_namespace}:
+                qualified_target = f"{target_namespace}:{expected_name}" if target_namespace else expected_name
+                possible.append((qualified_target, source, skill_dir / "SKILL.md", target_namespace))
+            elif source_roots is not None:
+                roots = {namespace: source_roots[namespace]} if namespace in source_roots else (source_roots if namespace is None else {})
+                for slug, root in roots.items():
+                    candidate = root / "skills" / local_name / "SKILL.md"
+                    if not candidate.is_file():
+                        continue
                     try:
-                        candidate.resolve().relative_to(skill_dir.parent.parent.parent.resolve())
+                        candidate.resolve().relative_to(root.resolve())
                     except ValueError:
                         activation_errors.append("native-skill-source-escape")
                         continue
-                    possible.append((f"{candidate.parents[2].name}:{entry['name']}", candidate.read_bytes().decode("utf-8")))
-            matching = [(name, body) for name, body in possible if entry["body"].strip() == body.strip()]
+                    possible.append((f"{slug}:{local_name}", candidate.read_bytes().decode("utf-8"), candidate, slug))
+            matching = [candidate for candidate in possible if entry["body"].strip() == candidate[1].strip()]
             if len(matching) != 1:
                 activation_errors.append(f"native-skill-source-unproven:{entry['name']}")
                 continue
-            qualified, selected_source = matching[0]
+            qualified, selected_source, source_path, selected_namespace = matching[0]
             injected = Path(entry["path"])
             if not injected.is_absolute() or injected.name != "SKILL.md":
                 activation_errors.append(f"native-skill-path-invalid:{entry['name']}")
+                continue
+            if not _matches_source_path(injected, source_path, selected_namespace, qualified, projections):
+                activation_errors.append(f"native-skill-path-source-mismatch:{entry['name']}")
                 continue
             cwd = meta.get("cwd")
             relative = os.path.relpath(injected, cwd) if isinstance(cwd, str) and cwd else None
