@@ -1,0 +1,22 @@
+{
+  "invocation_id": "native-system-dev-plan-c04-r2-01",
+  "target_skill": "system-dev-planner:run-system-dev-plan",
+  "feature_id": "FEATURE-1",
+  "status": "blocked",
+  "stage": "C13-acquire-before-staging",
+  "context_evidence": "eval-log/system-dev-plan-native-context.json",
+  "readiness_evidence": "eval-log/system-dev-plan-native-readiness.json",
+  "gate_evidence": "eval-log/system-dev-plan-native-lock-acquire.json",
+  "gate_exit": 1,
+  "gate_report": {"error_kind": "domain", "message": "active system plan lock exists: system-dev-plan-lock.json", "status": "blocked"},
+  "existing_lock": {"run_id": "current-ci-fixture", "session_owner": "session-current-ci-fixture", "expires_at": "2099-01-01T00:00:00Z"},
+  "decision": "未知gateで停止。既存lockを解除・改変せず、所有者を流用しない。",
+  "artifact_state": "artifact_created未到達",
+  "semantic_evaluator_started": false,
+  "promotion_performed": false,
+  "lock_acquired_by_this_invocation": false,
+  "lock_release": "今回取得できたlockが無いため、他ownerのlockをreleaseしない。",
+  "package_modified": false,
+  "implementation_source_files_generated": [],
+  "scenario_verdict": "FAIL"
+}

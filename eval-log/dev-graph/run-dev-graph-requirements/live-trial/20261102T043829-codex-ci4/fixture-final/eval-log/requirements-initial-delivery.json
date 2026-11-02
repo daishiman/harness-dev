@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "invocation_id": "requirements-initial-20261102-c04-r2-01",
+  "artifact_state": "minimal_guard_passed",
+  "parent_feature": "FEATURE-1",
+  "feature_package_id": "feature-package/feat",
+  "source_digest": "sha256:89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997",
+  "graph_snapshot_digest": "sha256:e3d055e09b7fcbf7b4ebdde38fd7758a4d9a08f7a5eeeb1dbea589c9a4ac0a42",
+  "package_reference": ".dev-graph/plans/generations/feature-package-feat/89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997/feature-package.json",
+  "requirements_document": {
+    "purpose": "FEATURE-1の確定済み要件と既存exact-13計画を実装担当へ引き渡す。",
+    "source": "features/FEATURE-1.md",
+    "architecture_reference": "architecture/system.md",
+    "scope_in": ["system"],
+    "scope_out": ["unrelated"],
+    "acceptance": ["accepted"],
+    "requirements": [
+      {"id": "REQ-01", "text": "既存FEATURE-1の目的と受入条件を満たす。", "source": "features/FEATURE-1.md", "system_task": "SYS-P01", "phase_ref": "P01", "handoff_field": "requirements_document"},
+      {"id": "REQ-02", "text": "既存P01..P13の計画、依存関係、task specを維持して後段で実行する。", "source": ".dev-graph/plans/generations/feature-package-feat/89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997/task-graph.json", "system_tasks": ["SYS-P01", "SYS-P02", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P08", "SYS-P09", "SYS-P10", "SYS-P11", "SYS-P12", "SYS-P13"], "handoff_field": "package_reference"}
+    ],
+    "lineage_observation": "この入力のclosureはfeature、task、architecture。system-spec-harness由来のlineageおよび残りのartifact kindは入力に見当たらず、存在を捏造しない。後続独立評価で確認する。"
+  },
+  "readiness_matrix": {
+    "binding_report": "eval-log/requirements-initial-binding.json",
+    "guard_report": "eval-log/requirements-initial-guard.json",
+    "binding_exit": 0,
+    "guard_exit": 0,
+    "members_reference": "eval-log/requirements-initial-binding.json#/members",
+    "closure_reference": "eval-log/requirements-initial-guard.json#/closure",
+    "missing_sections": [],
+    "blocked": []
+  },
+  "capability_build_handoff": {
+    "target": "capability-build/task-graph build",
+    "reference": "eval-log/requirements-initial-delivery.json#/capability_build_handoff",
+    "nodes": ["FEATURE-1", "SYS-P01", "SYS-P02", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P08", "SYS-P09", "SYS-P10", "SYS-P11", "SYS-P12", "SYS-P13"],
+    "state": "artifact_presented",
+    "external_execution_count": 0
+  },
+  "implementation_source_files_generated": [],
+  "pending": ["利用者の評価方法選択", "system-dev-planner:run-system-dev-planのnative適用", "選択後の独立評価"]
+}

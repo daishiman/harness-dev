@@ -1,0 +1,15 @@
+{
+  "state": "stopped_owner_gate_blocked",
+  "checklist": [
+    {"id": "lineage_closure", "status": "pending", "evidence": "eval-log/requirements-initial-guard.json"},
+    {"id": "binding", "status": "pass", "evidence": "eval-log/requirements-initial-binding.json"},
+    {"id": "guard", "status": "pass", "evidence": "eval-log/requirements-initial-guard.json"},
+    {"id": "snapshot_handoff", "status": "pending", "evidence": "eval-log/requirements-initial-delivery.json"},
+    {"id": "no_implementation", "status": "pending", "evidence": "独立監査待ち"}
+  ],
+  "criteria": {"IN1": "pass", "OUT1": "pending", "OUT2": "pending"},
+  "independent_audit": "eval-log/requirements-initial-independent-audit.json",
+  "next": "C13 acquireが既存active lockによりblocked。未知gateで停止。最終handoff未完了。",
+  "blocker_evidence": "eval-log/system-dev-plan-native-blocker.json",
+  "scenario_verdict": "FAIL"
+}

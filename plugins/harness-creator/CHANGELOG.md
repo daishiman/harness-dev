@@ -2,6 +2,10 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.60 — 2026-11-02
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 1.4.59 — 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

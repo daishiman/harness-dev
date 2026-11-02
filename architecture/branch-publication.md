@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-02T04:35:15.160101Z"
+updated_at: "2026-11-02T05:20:06.808023Z"
 depends_on: ["spec-branch-publication"]
 related_nodes: []
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-02T04:35:15.160101Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-02T05:20:06.808023Z", "missing_sections": [], "status": "complete"}
 ---
 
 # Architecture overview
@@ -155,13 +155,13 @@ source commit d71ac0a6は元path全体の正確な版を保持する。main 76ab
 
 ## 2026年11月2日のCI実走と再開条件
 
-最新 origin/main 26cc8692 の3更新をローカル main 経由で統合した。競合6件は版・生成fingerprintの差分であり、今回のruntime対応を保持し、上流の仕様cache/historyの2ファイルは原bytesと一致する状態で採用した。harness-creator は統合内容と子履歴parser修復を含め1.4.59へ正規採番し、他22pluginの版は維持する。
+最新main26cc8692はローカルmain経由で統合済みで、6競合を解消したmerge commit9d981850を両branchへ公開し、GitHubのMERGEABLEを確認した。上流cache/historyの原bytesと今回runtime対応を両方保持している。
 
-Codexのfork_turns=all子ログは、物理先頭の子metadataに続いて親履歴を持つ。公式0.165.0のv2/paginated ordinal境界・親chain・連番と子固有threadを厳密に検査し、原ログ全体を残したまま子固有の呼出し・model・完了・usageだけを集計する。境界不明や欠落は拒否する。合同244件、最終native46件と独立4条件・実raw再照合は成功しているが、製品goalの成功を意味しない。
+現行業務sourceに対する初期化・描画・構想分解・状態照会の4試行はfresh独立goalと共通verdictでPASS。C01/C05/C14/C18のcanonical受入testも計4件PASS。描画の判定CLIが4番目の証拠指定を漏らした記録は旧DEGRADEDのまま保持し、同じ実行の全原bytes/SID/token/clock/sourceを残した別judgmentで回収指定だけ訂正した。追加actor起動0であり、新実走を装わない。
 
-旧source4d54dabaのci3先行2試行は原freeze176件を保持した。C19は入口・選択・監査後、後続owner操作前のcontroller解析不備で停止し、fresh goal FAIL・正規verdict FAIL。renderは静的成果物・5/13・receipt・外部参照0・二回同bytesを確認したが、Chrome起動未達でfresh goal FAIL・正規verdict DEGRADED。旧結果やSHAを新sourceのPASSへ付け替えない。
+source照合は、controllerのstate SHAに束縛した対応表の正確なprovider正本pathとproject aliasを、同namespace・現repo本文SHA・実Readと突合する。private元実体が残る場合の本文改変も拒否し、suffix一致では受理しない。native58件と現物C05受入を確認した。harness-creatorは1.4.60へ正規採番した。
 
-次試行は最新main統合後の固定sourceを使い、全9対象を最大同時2で検証する。render用の既存headless-shellは同等の書込・通信制限で実起動・DOM・画像を確認済みで、その起動条件を新試行前に固定する。C03は試行fixtureと2hookだけの信頼許可を利用者へ質問済みで回答待ち。ユーザー設定・信頼状態を未許可で変更しない。
+scheduleの既存read-only契約に反してlistがlockをwrite-openしていた不具合を修復した。既存lockをread-onlyで開き共有lockで2ledgerを取得し、context/listでディレクトリや空ファイルを作らない。mutation側の排他lockは維持し、部分store/破損/読取中変更を拒否する。18製品検査と、旧fixtureを同native sandboxで参照する非LLM smokeが成功、旧109entryは全状態不変。変更される被験閉包はschedule/syncだけで、他7対象と既存成功は不変。dev-graphは0.1.31へ正規採番した。
 
-新sourceの受入PASSは0、CI未達を維持する。9対象の原観測・時間/token予算・goal-seek実体・source閉包・原transcript SHA・fixture-final/freezeとfresh独立goalを省略しない。仕様影響と旧r9/r10/r11の履歴、検査・source SHAはCodex native受入受領書に接続する。
+残る再試行はC19の成果物全件提示、nodeの元5Mtoken予算内でのfresh独立監査、requirementsの準備担当所有lockの正規release後入力、scheduleの修復済み参照処理である。元観測・引数・予算を省略/拡張せず、新run/newFXで実施し旧FAIL/BLOCKED/DEGRADEDと原freezeは保持する。C03は同じfixtureと2hookへの信頼許可が質問済み・未回答で、勝手に信頼を有効化しない。最大同時2、原source/goal-seek/実transcript/独立goalを維持し、全CI成功はまだ未確認。
 

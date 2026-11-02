@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-render",
+    "component_id": "C05",
+    "skill_md_sha256": "25b0d1afbfd4d8739f92a057496fe0c85945c24c6c986b415e13000478ab25c1"
+  },
+  "verdict": "PASS",
+  "reviewer": "/root/ci4_render_goal（同一Codex原実行の観測指定訂正を独立確認し、現sourceのrender関連7件を再検証）",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/scripts/render-graph-html.py",
+        "plugins/dev-graph/tests/test_runtime_coverage.py",
+        "plugins/dev-graph/tests/test_render_receipt.py",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-static-tests.log",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-canonical-before-observation-correction.json"
+      ],
+      "observed": "2026-11-02、現sourceのrender関連製品テスト7件を独立実行し全件PASS（test_render_receipt.py 5件、test_runtime_coverage.pyのrender 2件）。固定templateはinline CSSと2つのinline scriptを持ち、入力値はhtml.escape、埋込みJSONの「<」は\\u003cへ変換する。今回の実HTMLもHTMLParserで外部参照0、SVG 1、inline script 2を確認した。製品に生成後HTMLを検査する独立guardはなく、保証はtemplateとescapeの構造に依存する。過去のscratch試験・長文観測は保存済み原canonicalを履歴として参照し、今回は再実施扱いにしない。履歴: eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-canonical-before-observation-correction.json。今回の実測: eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-static-tests.log。"
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/judgment-correction-receipt.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/goal-evaluation.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-receipt-initial.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-receipt-repeat.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-independent-audit.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-browser-dom.html",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-browser.png",
+        "plugins/dev-graph/scripts/render-graph-html.py",
+        "plugins/dev-graph/tests/test_render_receipt.py",
+        "plugins/dev-graph/tests/test_runtime_coverage.py",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-static-tests.log",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-observation-correction-review.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-canonical-before-observation-correction.json"
+      ],
+      "observed": "Codex原実行20261102T043829-codex-ci4を独立評価しPASS。親の判定CLIが4番目の観測参照を指定し忘れた旧DEGRADED判定は原bytesで保持し、同一原実行の観測参照だけを訂正した記録を採用した。新actor実行は0、SID・transcript・source digest・token・clockは同一で、原freeze 102ファイルと訂正copyの全bytes一致を確認した。実renderはregistration receiptを--receiptで渡し、15ノード・12エッジ、進捗5/13、Y=expected_count=13、子集合=node_ids、全子taskのsource_digestが一致。指定ブラウザを親が実起動してDOMと画像を目視、SVG/edge/5/13表示と外部参照0を確認。standardの実user応答・選択保存後にchildが独立静的監査を行った。2回の正規renderは同一bytes、graph SHAも前後不変。4観測すべてが既存実証へ束縛され、goal PASS・blocker 0、tier live・降格なし。現sourceの製品7件も今回PASS。過去の試験・長文観測は保存済み原canonicalの履歴として参照する。今回のfixtureにfeature間edgeはなく、検索操作によるinline JS動作は未検証。",
+      "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/verdict.json"
+    }
+  }
+}

@@ -166,6 +166,50 @@ def _persist(ledger_path: Path, events_path: Path, ledger: dict[str, Any], event
     atomic_json(events_path, events)
 
 
+def read_only_snapshot(coord: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Read the coordinated pair without creating a directory, lock or ledger."""
+    ledger_path, events_path = coord / "leases.json", coord / "events.json"
+    empty = ({"schema_version": "1.1", "workspace_identity": None, "leases": []},
+             {"schema_version": "1.0", "events": []})
+    def signature(path: Path):
+        try:
+            value = path.stat()
+            return value.st_ino, value.st_size, value.st_mtime_ns
+        except FileNotFoundError:
+            return None
+    try:
+        lock = (coord / "leases.lock").open("r")
+    except FileNotFoundError:
+        if ledger_path.exists():
+            raise ContractError("lease coordination data exists without its lock")
+        # C26 can atomically publish completion events before any lease exists.
+        # Read that valid events-only state without initializing C27 storage.
+        before = signature(events_path)
+        events = load_json(events_path) if before is not None else empty[1]
+        if (before != signature(events_path) or ledger_path.exists() or (coord / "leases.lock").exists()):
+            raise ContractError("lease coordination files changed while reading")
+        if (not isinstance(events, dict) or events.get("schema_version") != "1.0"
+                or not isinstance(events.get("events"), list)
+                or not all(isinstance(row, dict) and row.get("type") == "completion" for row in events["events"])):
+            raise ContractError("unlocked event ledger must contain C26 completion events")
+        return empty[0], events
+    except OSError as exc:
+        raise ContractError(f"lease coordination lock cannot be read: {exc}") from exc
+    with lock:
+        # Mutation operations keep their existing exclusive lock on this file.
+        fcntl.flock(lock, fcntl.LOCK_SH)
+        before = signature(ledger_path), signature(events_path)
+        ledger = load_json(ledger_path) if before[0] is not None else empty[0]
+        events = load_json(events_path) if before[1] is not None else empty[1]
+        if before != (signature(ledger_path), signature(events_path)):
+            raise ContractError("lease coordination files changed while reading")
+        if not isinstance(ledger, dict) or not isinstance(ledger.get("leases"), list) or not all(isinstance(row, dict) for row in ledger["leases"]):
+            raise ContractError("lease ledger must contain leases[] objects")
+        if not isinstance(events, dict) or not isinstance(events.get("events"), list) or not all(isinstance(row, dict) for row in events["events"]):
+            raise ContractError("lease event ledger must contain events[] objects")
+        return ledger, events
+
+
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--repo-root", default="."); p.add_argument("--op", required=True, choices=("context", "claim", "heartbeat", "park", "release", "system-release", "list", "reclaim"))
     p.add_argument("--graph-node-id"); p.add_argument("--session-id"); p.add_argument("--branch"); p.add_argument("--completion-event-key"); p.add_argument("--ttl", type=int, default=1800); p.add_argument("--resource", action="append", default=[])
@@ -175,7 +219,20 @@ def main() -> int:
     ctx = context(root, Path(a.context_resolver).resolve() if a.context_resolver else None)
     if a.ttl < 300: raise ContractError("ttl must be >=300")
     if a.op == "context": dump(ctx); return 0
-    coord = Path(ctx["git_common_dir"]) / "dev-graph"; coord.mkdir(parents=True, exist_ok=True)
+    coord = Path(ctx["git_common_dir"]) / "dev-graph"
+    if a.op == "list":
+        ledger, events = read_only_snapshot(coord)
+        now = datetime.now(timezone.utc)
+        for lease in ledger["leases"]:
+            expiry = lease.get("expires_at")
+            if lease.get("state") in {"reserving", "claimed", "in_progress", "claim_pending_local_repair"} and expiry:
+                try:
+                    if datetime.fromisoformat(expiry.replace("Z", "+00:00")) < now: lease["state"] = "expired"
+                except (ValueError, TypeError, AttributeError) as exc:
+                    raise ContractError("invalid lease expiry") from exc
+        dump({**ctx, "workspace_identity": ledger.get("workspace_identity"), "leases": ledger["leases"], "events": events["events"]})
+        return 0
+    coord.mkdir(parents=True, exist_ok=True)
     ledger_path, events_path, lock_path = coord / "leases.json", coord / "events.json", coord / "leases.lock"
     bridge = Path(a.bd_bridge).resolve() if a.bd_bridge else Path(__file__).with_name("bd-bridge.py")
     with lock_path.open("a+") as lock:
@@ -196,7 +253,6 @@ def main() -> int:
             x for x in reversed(leases)
             if x.get("graph_node_id") == a.graph_node_id and x.get("state") == "expired"
         ), None)
-        if a.op == "list": dump({**ctx, "workspace_identity": ledger.get("workspace_identity"), "leases": leases, "events": events["events"]}); return 0
         if not a.graph_node_id: raise ContractError("operation requires --graph-node-id")
         if a.op == "claim":
             if not a.session_id: raise ContractError("claim requires --session-id")

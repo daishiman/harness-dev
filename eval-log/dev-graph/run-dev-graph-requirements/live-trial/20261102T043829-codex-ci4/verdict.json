@@ -1,0 +1,179 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-requirements",
+  "args": "--repo-root /private/tmp/harness-codex-ci4-20261102/cases/requirements/fx --feature-id FEATURE-1 --package-dir /private/tmp/harness-codex-ci4-20261102/cases/requirements/fx/.dev-graph/plans/generations/feature-package-feat/89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "正規binding/guardはexit 0でexact P01..P13、FEATURE-1/source_digest、同一graph snapshotへの初期handoffドラフトの結合を確認できるが、必須のsystem-dev-planner:run-system-dev-plan native適用がC13 acquireで既存owner（current-ci-fixture、期限2099-01-01）の有効lockによりblockedとなった。requirements-finish native適用と最終capability-build/task-graph handoff完了は実証されていない。",
+      "standard選択後のnative子監査はpending_owner_native_applicationで、progressのlineage_closure/snapshot_handoff/OUT1もpendingのまま停止した。上流の合成findingsや初期artifact_presentedを今回の完了した独立評価へ読み替えることはできない。実装source新規生成は証跡上0件だが、必要な全観測・手続きは未完了。"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "e5cac80c7bdd4d3e752b45639aa6556b604984e630d80d54df8dccd0fd3d9acd",
+    "result": "FAIL",
+    "blockers": [
+      "正規binding/guardはexit 0でexact P01..P13、FEATURE-1/source_digest、同一graph snapshotへの初期handoffドラフトの結合を確認できるが、必須のsystem-dev-planner:run-system-dev-plan native適用がC13 acquireで既存owner（current-ci-fixture、期限2099-01-01）の有効lockによりblockedとなった。requirements-finish native適用と最終capability-build/task-graph handoff完了は実証されていない。",
+      "standard選択後のnative子監査はpending_owner_native_applicationで、progressのlineage_closure/snapshot_handoff/OUT1もpendingのまま停止した。上流の合成findingsや初期artifact_presentedを今回の完了した独立評価へ読み替えることはできない。実装source新規生成は証跡上0件だが、必要な全観測・手続きは未完了。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci4_requirement_schedule_goals"
+    },
+    "transcript_sha256": "0e447dffd3f44849c08ff17eb75b6550f37519234ac4e998936bb4fab3d5d388",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "native-run-state.json",
+      "native-exec/turn-003.jsonl",
+      "out/status.json",
+      "fixture-final/eval-log/requirements-initial-delivery.json",
+      "fixture-final/eval-log/requirements-initial-binding.json",
+      "fixture-final/eval-log/requirements-initial-guard.json",
+      "fixture-final/eval-log/requirements-initial-independent-audit.json",
+      "fixture-final/eval-log/run-dev-graph-requirements-progress.json",
+      "fixture-final/eval-log/system-dev-plan-native-lock-acquire.json",
+      "fixture-final/eval-log/system-dev-plan-native-blocker.json",
+      "transcript/subagents/01a19a9c-a771-7cb3-98fb-584d3339e6d1.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-requirements",
+    "system-dev-planner:run-system-dev-plan"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "6362dedbde79083a6ce6ca6d2805579ff63b0dc79d5adb2063ff12e8bc89a407",
+  "transcript_sha256": "0e447dffd3f44849c08ff17eb75b6550f37519234ac4e998936bb4fab3d5d388",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261102T043829-codex-ci4/out",
+          "/private/tmp/harness-codex-ci4-20261102/cases/requirements/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 1,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "a8483a458de09a9df9668477e836420748b1e27987ba97ca515254902d8a912a"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 530.4363720417023
+  },
+  "scenario_id": "C04-OUT1-positive-ready-handoff-r2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci4-20261102/cases/requirements/control/scenario.json",
+    "scenario_id": "C04-OUT1-positive-ready-handoff-r2-codex-v1",
+    "required_observations": [
+      "a capability-build task-graph handoff is emitted for the exact-13 package",
+      "the handoff remains bound to the feature and source digest",
+      "the requirements skill generates no implementation source file"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "a capability-build task-graph handoff is emitted for the exact-13 package",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 2,
+        "observation": "the handoff remains bound to the feature and source digest",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 3,
+        "observation": "the requirements skill generates no implementation source file",
+        "evidence_ref": "goal-evaluation.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --feature-id <ready-feature-id> --package-dir <published-package-dir>",
+      "template_flags": [
+        "--feature-id",
+        "--package-dir",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--feature-id",
+        "--package-dir",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 7000000,
+      "max_wall_clock_s": 1500
+    },
+    "resource_usage": {
+      "wall_clock_s": 530.4363720417023,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "66ed2de1fa0a3a57647271d4fba3c859091b08016968386da5702e87a4207851",
+      "tokens": {
+        "input_tokens": 2550491,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 10629,
+        "total_tokens": 2561120,
+        "assistant_messages": 33,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

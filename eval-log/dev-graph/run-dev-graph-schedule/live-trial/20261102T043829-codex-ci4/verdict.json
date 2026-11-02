@@ -1,0 +1,184 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-schedule",
+  "args": "--repo-root /private/tmp/harness-codex-ci4-20261102/cases/schedule/fx --max-parallel 4",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "正規manage-worktree-lease.py --op listが.git/dev-graph/leases.lockへの書込み時にPermissionErrorとなり、leases.jsonは0 byte、schedule-graph.pyもinvalid JSONで失敗しschedule-report.jsonは0 byteのまま停止した。依存doneを満たす推薦、blocked/draft/unconfirmed/evaluation非pass/readiness非completeの除外、parallel batchのresource_scope非重複と有効lease尊重、一意suggested_branch/公的worktree claim commandの四観測を確認できる実reportが存在しない。",
+      "最小実成果物の提示・実ユーザー選択・選択後の独立native監査に到達しておらず、source要求のgoal/progress/intermediateと全完了checklistも実証されていない。ERROR markerと輸送完了を成功の証拠にはできない。",
+      "ゴールシーク配線の実体検証に失敗: goal-spec-missing: run-dev-graph-schedule-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | progress-missing: run-dev-graph-schedule-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い | intermediate-missing: run-dev-graph-schedule-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "1e05e377b64257dd0e2bfbe20260d4cb3da27b1f4b7f91eb4c3bf985a1159126",
+    "result": "FAIL",
+    "blockers": [
+      "正規manage-worktree-lease.py --op listが.git/dev-graph/leases.lockへの書込み時にPermissionErrorとなり、leases.jsonは0 byte、schedule-graph.pyもinvalid JSONで失敗しschedule-report.jsonは0 byteのまま停止した。依存doneを満たす推薦、blocked/draft/unconfirmed/evaluation非pass/readiness非completeの除外、parallel batchのresource_scope非重複と有効lease尊重、一意suggested_branch/公的worktree claim commandの四観測を確認できる実reportが存在しない。",
+      "最小実成果物の提示・実ユーザー選択・選択後の独立native監査に到達しておらず、source要求のgoal/progress/intermediateと全完了checklistも実証されていない。ERROR markerと輸送完了を成功の証拠にはできない。"
+    ],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci4_requirement_schedule_goals"
+    },
+    "transcript_sha256": "78c41ab9a3b7aeecfa8a3d30ee092a56c1ceece2fa018e69817d55fdb5d08b87",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "native-run-state.json",
+      "native-exec/turn-001.jsonl",
+      "out/status.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/context.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/leases.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule-report.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-schedule"
+  ],
+  "missing_goal_seek_artifacts": [
+    "goal-spec.json",
+    "progress.json",
+    "intermediate.jsonl"
+  ],
+  "goal_seek_evidence_violations": [
+    "goal-spec-missing: run-dev-graph-schedule-goal-spec.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "progress-missing: run-dev-graph-schedule-progress.json が無い — skill をロードしながらゴールシーク配線を実行していない疑い",
+    "intermediate-missing: run-dev-graph-schedule-intermediate.jsonl が無い — skill をロードしながらゴールシーク配線を実行していない疑い"
+  ],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "0f73a05b3323c01f98c84b5d8fd9b8df2fc56fb0f49747809e47acb22f7ec04e",
+  "transcript_sha256": "78c41ab9a3b7aeecfa8a3d30ee092a56c1ceece2fa018e69817d55fdb5d08b87",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-schedule/live-trial/20261102T043829-codex-ci4/out",
+          "/private/tmp/harness-codex-ci4-20261102/cases/schedule/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": true,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "615b1428b2d01d908e7d882d968cf4bbd28c1c96401bf78c484f336bc0f4a64d"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 181.2444257736206
+  },
+  "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci4-20261102/cases/schedule/control/scenario.json",
+    "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "every recommended task has all depends_on satisfied (ready)",
+      "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+      "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+      "suggested_branch and the worktree claim command are unique per recommended task"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "every recommended task has all depends_on satisfied (ready)",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 2,
+        "observation": "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 3,
+        "observation": "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+        "evidence_ref": "goal-evaluation.json"
+      },
+      {
+        "index": 4,
+        "observation": "suggested_branch and the worktree claim command are unique per recommended task",
+        "evidence_ref": "goal-evaluation.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "template_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 181.2444257736206,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "3cdab57d0b24079fe0b6fc794b7ce601e64454c8e77ffa8540134a446ba2d4b1",
+      "tokens": {
+        "input_tokens": 255599,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 1227,
+        "total_tokens": 256826,
+        "assistant_messages": 6,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

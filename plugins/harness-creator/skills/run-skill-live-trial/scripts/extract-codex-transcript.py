@@ -90,19 +90,27 @@ def _matches_source_path(injected: Path, source: Path, namespace: str | None,
     if injected.exists():
         if injected.resolve() == source.resolve():
             return True
-    # Archived/remote-CI verification cannot dereference the original private
-    # root. A controller-owned, state-SHA-bound mapping preserves the exact alias,
-    # namespace and source bytes; a coincidental path suffix is never enough.
+    # A relocated checkout and remote CI need the same proof: the controller's
+    # state-SHA-bound mapping names the exact original alias AND provider path.
+    # Native Codex may inject either path; neither is the current checkout path.
+    # Namespace, source bytes and the real subsequent Read remain mandatory.
     if namespace:
         expected = ("plugins", namespace, "skills", source.parent.name, "SKILL.md")
         digest = hashlib.sha256(source.read_bytes()).hexdigest()
         for entry in projections:
-            if entry["qualified_skill"] != qualified or entry["project_path"] != str(injected) or entry["sha256"] != digest:
+            if (entry["qualified_skill"] != qualified or str(injected) not in {entry["project_path"], entry["source_path"]}
+                    or entry["sha256"] != digest):
                 continue
             original = Path(entry["source_path"])
             if tuple(original.parts[-len(expected):]) != expected:
                 continue
             if injected.exists() and original.exists() and injected.resolve() != original.resolve():
+                continue
+            # Private source may still exist during local verification. Its
+            # bytes must match the recorded source and the current checkout;
+            # absence in CI never turns a coincidental suffix into a match.
+            if any(path.exists() and (not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest)
+                   for path in (injected, original)):
                 continue
             return True
     return injected == source and injected.exists()

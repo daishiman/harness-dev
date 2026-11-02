@@ -1,0 +1,171 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-status",
+  "args": "--repo-root /private/tmp/harness-codex-ci4-20261102/cases/status/fx --id task-lt-task-001",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "409f1adf45a82dbad2fe155ce4c1d84feffd4f7be1b6c7d70d0c1a9efdba4d41",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci4_status_goal"
+    },
+    "transcript_sha256": "387ff890fb0c14ef03108e4d0cd539b46269aac9904a5db49a415aff03d3886b",
+    "evidence_refs": [
+      "task.md",
+      "evidence-freeze.json",
+      "transcript.jsonl",
+      "transcript/subagents/01a19aa3-dde4-75d3-98cf-8eec356ad080.jsonl",
+      "native-exec/turn-001.jsonl",
+      "native-exec/turn-002.jsonl",
+      "out/status.json",
+      "fixture-final/status-report.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/eval-log/status-independent-audit.json",
+      "fixture-final/eval-log/run-dev-graph-status-artifact-choice.json",
+      "fixture-final/eval-log/run-dev-graph-status-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-status-progress.json",
+      "fixture-final/eval-log/run-dev-graph-status-intermediate.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-status"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "ed451670e48d404adb80667246177852f8457532f9ab707d3a4b5e4c5b215e71",
+  "transcript_sha256": "387ff890fb0c14ef03108e4d0cd539b46269aac9904a5db49a415aff03d3886b",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/out",
+          "/private/tmp/harness-codex-ci4-20261102/cases/status/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "8f5b25dbf2f29c40705649843a01e395a843af3f59f948c374edf3d4a1a252cd"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 410.1794629096985
+  },
+  "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci4-20261102/cases/status/control/scenario.json",
+    "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+      "C11 validate-graph-schema exits 0 on the queried graph",
+      "the graph digest is unchanged across the status run and GitHub/Beads writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+        "evidence_ref": "fixture-final/status-report.json"
+      },
+      {
+        "index": 2,
+        "observation": "C11 validate-graph-schema exits 0 on the queried graph",
+        "evidence_ref": "fixture-final/eval-log/status-independent-audit.json"
+      },
+      {
+        "index": 3,
+        "observation": "the graph digest is unchanged across the status run and GitHub/Beads writes are 0",
+        "evidence_ref": "fixture-final/eval-log/status-independent-audit.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --id task-lt-task-001",
+      "template_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 8000000,
+      "max_wall_clock_s": 1800
+    },
+    "resource_usage": {
+      "wall_clock_s": 410.1794629096985,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "8e9fe76d90ade147ee164baf4aca297e4428fb91c2a476e405e0f215ec79a182",
+      "tokens": {
+        "input_tokens": 1059812,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 6432,
+        "total_tokens": 1066244,
+        "assistant_messages": 23,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

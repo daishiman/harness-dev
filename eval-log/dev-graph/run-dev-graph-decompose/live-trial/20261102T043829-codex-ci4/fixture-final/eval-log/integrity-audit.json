@@ -1,0 +1,410 @@
+{
+  "verdict": "PASS",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "graph_digest_target": ".dev-graph/state/graph.json",
+  "macro_snapshot_digest": "sha256:cf97d8c6749badbbe0534409fa842ff92fcefb50bb360f4c6b868e88f16e19ca",
+  "planned_graph_digest": "sha256:4097ca8efb2b0a3052a87d42468e02ad0d26c49be5265dbfc8f67b381229e072",
+  "checks": [
+    {
+      "id": "canonical_schema",
+      "verdict": "PASS",
+      "evidence": {
+        "rc": 0,
+        "stdout": "{\n  \"artifact_readiness\": {\n    \"enforced\": false,\n    \"finding_count\": 0,\n    \"findings\": [],\n    \"missing_sections\": [],\n    \"status\": \"complete\"\n  },\n  \"graph_validation\": {\n    \"status\": \"pass\",\n    \"violation_count\": 0\n  },\n  \"implementation_readiness\": \"complete\",\n  \"missing_sections\": [],\n  \"node_readiness\": {\n    \"complete\": 15,\n    \"incomplete\": 0,\n    \"incomplete_nodes\": [],\n    \"not_applicable\": 0,\n    \"unknown\": 0\n  },\n  \"schema\": \"/private/tmp/harness-codex-ci4-20261102/providers/plugins/dev-graph/schemas/graph-node.schema.json\",\n  \"valid\": true,\n  \"violations\": []\n}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "macro_dag",
+      "verdict": "PASS",
+      "evidence": {
+        "node_ids": [
+          "ARCH-LT-001",
+          "LT-FEATURE-001",
+          "feature-render-diff",
+          "feature-render-diff-summary"
+        ],
+        "cycles": [],
+        "task_count": 0
+      }
+    },
+    {
+      "id": "macro_orphan_refs",
+      "verdict": "PASS",
+      "evidence": {
+        "all_macro_edges_resolve": true
+      }
+    },
+    {
+      "id": "macro_contract",
+      "verdict": "PASS",
+      "evidence": {
+        "classification": [
+          {
+            "confidence": 1.0,
+            "decision": "c14_macro_contract",
+            "margin": 1.0
+          },
+          {
+            "confidence": 1.0,
+            "decision": "c14_macro_contract",
+            "margin": 1.0
+          }
+        ],
+        "source_preview_findings": {
+          "findings": 0,
+          "validator": "validate-graph-schema.py"
+        }
+      }
+    },
+    {
+      "id": "path_containment",
+      "verdict": "PASS",
+      "evidence": {
+        "canonical_nodes": 15,
+        "planned_nodes": 2
+      }
+    },
+    {
+      "id": "draft_gate",
+      "verdict": "PASS",
+      "evidence": {
+        "drafts": [
+          {
+            "artifact_kind": "feature",
+            "confirmation_status": "draft",
+            "depends_on": [
+              "LT-FEATURE-001"
+            ],
+            "evaluation_status": "pending",
+            "graph_node_id": "feature-render-diff",
+            "implementation_readiness": {
+              "status": "complete"
+            },
+            "parent_feature": null,
+            "status": "draft",
+            "tracker_binding": "beads"
+          },
+          {
+            "artifact_kind": "feature",
+            "confirmation_status": "draft",
+            "depends_on": [
+              "feature-render-diff"
+            ],
+            "evaluation_status": "pending",
+            "graph_node_id": "feature-render-diff-summary",
+            "implementation_readiness": {
+              "status": "complete"
+            },
+            "parent_feature": null,
+            "status": "draft",
+            "tracker_binding": "beads"
+          }
+        ],
+        "draft_publication_count": 0
+      }
+    },
+    {
+      "id": "pass_gate",
+      "verdict": "PASS",
+      "evidence": {
+        "node_id": "LT-FEATURE-001-P13",
+        "promotion_gate": {
+          "graph": ".dev-graph/state/graph.json",
+          "graph_revision": 3,
+          "planned_graph_digest": "sha256:4097ca8efb2b0a3052a87d42468e02ad0d26c49be5265dbfc8f67b381229e072",
+          "planned_node_ids": [
+            "feature-render-diff",
+            "feature-render-diff-summary"
+          ],
+          "planned_preview": "/private/tmp/harness-codex-ci4-20261102/cases/decompose/fx/.dev-graph/cache/decompose-input/c02-preview.json",
+          "status": "pass",
+          "targets": [
+            "LT-FEATURE-001-P13"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cross_binding_chain",
+      "verdict": "PASS",
+      "evidence": {
+        "origin": {
+          "from": "feature-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "held_nodes": [
+          "feature-render-diff",
+          "feature-render-diff-summary"
+        ]
+      }
+    },
+    {
+      "id": "exact13_package",
+      "verdict": "PASS",
+      "evidence": {
+        "count": 13,
+        "phase_refs": [
+          "P01",
+          "P02",
+          "P03",
+          "P04",
+          "P05",
+          "P06",
+          "P07",
+          "P08",
+          "P09",
+          "P10",
+          "P11",
+          "P12",
+          "P13"
+        ],
+        "package_id": "feature-package/LT-FEATURE-001",
+        "registered_receipt_status": "registered"
+      }
+    },
+    {
+      "id": "protected_bytes",
+      "verdict": "PASS",
+      "evidence": {
+        "baseline_file_count": 19,
+        "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+        "reported_original_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0"
+      }
+    },
+    {
+      "id": "digest_binding",
+      "verdict": "PASS",
+      "evidence": {
+        "current": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+        "planned": "sha256:4097ca8efb2b0a3052a87d42468e02ad0d26c49be5265dbfc8f67b381229e072"
+      }
+    },
+    {
+      "id": "external_mutation_zero",
+      "verdict": "PASS",
+      "evidence": {
+        "bd_calls": [
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          },
+          {
+            "argv": [
+              "version"
+            ]
+          },
+          {
+            "argv": [
+              "where",
+              "--json"
+            ]
+          }
+        ],
+        "write_counts": {
+          "graph": 0,
+          "content": 0,
+          "receipt": 0,
+          "beads": 0,
+          "github": 0,
+          "projects": 0
+        }
+      }
+    },
+    {
+      "id": "publication_all_targets",
+      "verdict": "PASS",
+      "evidence": {
+        "supplement": ".dev-graph/cache/decompose-input/publication-report-final.json",
+        "eligible_task_count": 13,
+        "draft_count": 2,
+        "eligible_draft_count": 0
+      }
+    },
+    {
+      "id": "package_edges",
+      "verdict": "PASS",
+      "evidence": {
+        "expected_package_edges": 12,
+        "reported_edges": 14,
+        "all_beads_linkages_missing": true
+      }
+    },
+    {
+      "id": "full_graph_dag",
+      "verdict": "PASS",
+      "evidence": {
+        "cycles": [],
+        "node_count": 15
+      }
+    },
+    {
+      "id": "protected_and_delivered_bytes",
+      "verdict": "PASS",
+      "evidence": {
+        "protected_file_count": 19,
+        "delivered_sha256": "11d14ca1b7e8264922921032069a1b685402ebf0d59af9d8b334a1a8b13e37ad"
+      }
+    },
+    {
+      "id": "final_external_writes",
+      "verdict": "PASS",
+      "evidence": {
+        "call_count": 26,
+        "write_calls": 0
+      }
+    }
+  ],
+  "findings": [],
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "resolved_findings": [
+    {
+      "id": "publication_all_targets",
+      "resolution": "追補の全13 task・12 package edgeを独立検査済み"
+    }
+  ],
+  "scenario_checks": {
+    "macro_dag_acyclic_and_no_task": "PASS",
+    "new_nodes_draft_c14_preview_only": "PASS",
+    "beads_projection_only_promoted": "PASS",
+    "original_graph_and_external_mutation_zero": "PASS"
+  }
+}

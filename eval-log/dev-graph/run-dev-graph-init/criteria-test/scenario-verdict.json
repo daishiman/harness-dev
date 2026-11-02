@@ -7,7 +7,7 @@
     "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
   },
   "verdict": "PASS",
-  "reviewer": "/root/handout_final_fit（新runの一次証跡を独立に読んで束縛・schema・3観測を再検証。静的基準はsource不変の既存証跡を継承）",
+  "reviewer": "/root/codex_acceptance_contract（現source/原証拠を独立照合。旧長文観測はiteration4/canonical-originals/positive-refreshの原bytesへ保持）",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -21,38 +21,32 @@
         "plugins/dev-graph/schemas/graph-node.schema.json",
         "plugins/dev-graph/schemas/repo-config.schema.json",
         "plugins/dev-graph/tests/test_build_init_scaffold.py",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl"
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-first-independent-audit.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "静的基準の継承（2026-11-02）: 今回はinitの実装を変更せず、SKILL.mdのSHAは旧canonicalと一致する。下記は旧canonicalの既存静的証跡を保持した記録であり、「今回」「自分で回し」は旧reviewerの当時の実行を指す。今回のreviewerはこれらの製品pytest・scratch再現を再実行したとは主張しない。関連source/test/schema/hookの16参照は新run準備時fingerprintと現行bytesの一致を独立照合した。新runで再確認した受入範囲はOUT1だけである。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json に保存。\n\n旧観測（原文）:\nbuild-init-scaffold.py の _plan は、どの write よりも前に、config を repo-config.schema.json で、グラフストアを validate-graph-schema.py の validate（L45 の _load_validator で読み込む）で検査し、findings が1件でもあれば pre_write_validation_failed で止まる（L200-207、write 0）。新規のグラフストアは EMPTY_GRAPH（L40。graph_revision 0、nodes []、schema_version 1.0.0）。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、init が作った graph.json を validate-graph-schema.py の CLI にかけ、exit 0、valid true、missing_sections []、violation_count 0。既にある graph.json から nodes を抜いたもの（graph_invalid）と、必須キーの欠けた node を持つもの（schema_violation など）は、dry-run でも本番でも pre_write_validation_failed、write 0、repo の tree は不変。live trial（20261013T0117-pr85）の transcript L101-102 でも、validate-graph-schema.py は exit 0、violation_count 0、missing_sections []。"
+      "observed": "現行初期化のschema事前検査をsourceで確認し、invalid configが書込前に停止する製品テストを今回再実行した。新実走の初回C11も違反0。過去のscratch検査を今回の実行として扱わない。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/goal-evaluation.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/transcript.jsonl",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/scenario.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/task.md",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/.dev-graph/config.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/.dev-graph/state/graph.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/.dev-graph/state/receipts/init-20261102T001235617222Z.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/README.md",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/eval-log/run-dev-graph-init-goal-spec.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/eval-log/run-dev-graph-init-progress.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/eval-log/run-dev-graph-init-intermediate.jsonl",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/fixture-final/eval-log/run-dev-graph-init-artifact-delivery.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/transcript/subagents/agent-a64c7d6380487c09f.jsonl",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/poll-state.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/evidence-freeze.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prepared-fingerprints.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/finalizer.log",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/goal-seek-collected-files.json"
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/goal-evaluation.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/native-run-state.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/project-projection.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/evidence-freeze.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-positive-review.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/scenario-result.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-second-cli-result.json",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-second-independent-audit.json"
       ],
-      "observed": "2026-11-02 独立receipt更新: /root/handout_final_fit が新run 20261102T000242-ci-fix2のtask/scenario、fresh goal-evaluation、verdict、一次transcriptの実tool結果、収集済snapshotを自ら読み、OUT1の証拠束をこの新runへ更新した。旧liveのPASSをSHAだけ付け替えていない。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json（SHA256 92295e2ac1c7a7b777dd02dca2677f15ed9c2b488299f07c39fd4da727405d1a）に保存。\n新verdictは同梱live-trial schemaに合格し、launch/completion/goal_fit/overallは全PASS、tier=live、downgradeなし、nudge=0・gate_response=0。fresh evaluator /root/ci_init_goal のPASS・blockers空はgoal-evaluation.jsonの実SHA256とtranscript SHAに束縛され、load_goal_evaluationで一致を確認した。current skill closureは 058711bd7bfbb666b76c2da714bc70514ce25fc550d8ad1fece8d431e8ffdcda で、verdictおよびpreparedのsource/copied closureと一致。transcript SHA256は 01a4ea0857e66b608ab8bcb87ce7ca46e26613ac5b1be46de6435e35292e65b6。実transcript抽出actual_modelはclaude-opus-5-5。requested_modelは空（既定modelの通常trial）であり、特定requested modelのproof合格を主張しない。evidence-freezeの49 fileすべての実SHAを照合し一致、scenarioの必須3観測は逐語一致・unobserved空・args/task/invocation契約matches、budget violations空。\n観測1: transcript L75-76のcanonical writerはexit0、applied・planned_changes36・write_count36、preflight passで6rootおよびstate/cache/locks/templatesを列挙。L104-105のC11はexit0、valid=true、graph_validation pass、violation0・missing_sections空。snapshotのinit receiptは6 content rootsとrouting_policyとschema_resultを持ち、graph.jsonはschema_version1.0.0・graph_revision0・nodes空。\n観測2: transcript L113-114で同じrepo-root/hook-sourceを再指定。READMEへ利用者メモ追記後、2回目はexit0、noop・planned_changes0・write_count0。追記直後と再init後のREADME SHAはともに91346bc1d24e186b7b6b1bf2ae31629f37528b15ec92e07a2430c6e6f1736e20で、収集済READMEの実bytesとも一致。独立subagent transcript L30-31のdry-runも変更0。\n観測3: snapshot configはrepo-relative roots/state・routing_policyを持ち、claude_hooks.source=plugin・github.enabled=false。config/receiptの保存値を読み、絶対path/token/node IDなしを確認。transcript L117-118はtemplate欠落0・digest差分0・機微値hit0・project .claude settings不存在、L121-122はplugin hooksのpython3 -B commandを列挙。独立subagent L34-35もtemplate21件一致・config/receipt hit0を実toolで記録。\ngoal-seekは収集済3fileを正規verify関数で再検証しvalid=true、original_goal/hash一致、intermediate1行の必須6キー充足、missing/violations空。artifact-deliveryはfixture成果物提示後の事前指定standard記録を保持する。これは実repoの承認を意味しない。finalizer.logは正規finalizerの全軸PASS出力を記録し、所有session lt-20261102T000242-ci-fix2-initが現在存在しないことをread-only backend.has_sessionで確認した。今回reviewer自身が新liveを起動したとは主張しない。\n静的IN1/OUT2/OUT3/OUT4/OUT5はsource不変の既存証跡を継承し、新runのOUT1 PASSでA/B symlink隔離やproject fallback全経路を再実走したとは主張しない。decomposeは更新対象外。",
-      "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/verdict.json"
+      "observed": "Codex新原実行を独立再照合。初回の6root/routing/graph/C11、同引数2回目のplanned_changes=0/write0、README/編集template保持、config禁則0・plugin hook sourceの3観測を全回収。native適用・実Read・親子・予算・goal-seek・fresh goalとcurrent/frozen両source対応が一致。複数native入力の試行であり単一入力自走とは主張しない。",
+      "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
@@ -60,10 +54,13 @@
       "evidence_kind": "pytest",
       "test_refs": [
         "plugins/dev-graph/tests/test_build_init_scaffold.py",
-        "plugins/dev-graph/scripts/build-init-scaffold.py",
-        "plugins/dev-graph/templates/template-contract.json"
+        "plugins/dev-graph/templates/template-contract.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-second-independent-audit.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "静的基準の継承（2026-11-02）: 今回はinitの実装を変更せず、SKILL.mdのSHAは旧canonicalと一致する。下記は旧canonicalの既存静的証跡を保持した記録であり、「今回」「自分で回し」は旧reviewerの当時の実行を指す。今回のreviewerはこれらの製品pytest・scratch再現を再実行したとは主張しない。関連source/test/schema/hookの16参照は新run準備時fingerprintと現行bytesの一致を独立照合した。新runで再確認した受入範囲はOUT1だけである。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json に保存。\n\n旧観測（原文）:\n_plan は plugin の templates/ の全ファイルを `.dev-graph/templates/` へ、欠けているときだけ写す。既にあって bytes が違うものは preserved と migration_preview（plugin_sha256 と local_sha256）に載せ、上書きしない。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_first_run_scaffolds_once_and_rerun_is_noop と test_edited_template_is_kept_and_only_missing_parts_are_created を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、1回目で `.dev-graph/templates/` が plugin の templates/ の21ファイルと名前も bytes も一致し、template-contract.json が名指す template はすべてある。issue.md を編集して再実行すると noop、tree は不変、migration_preview は issue.md だけ。task.md を消して再実行すると task.md だけが作られ、編集した issue.md は bytes ごと残る。live trial でも templates は 21/21 で、2回目の後も編集は残った（transcript L89-90）。"
+      "observed": "今回、初回scaffold・再実行noop・編集済みtemplate保持の製品テストを実行。新実走でも編集task templateのSHA保持と欠落0を独立auditで照合した。"
     },
     "OUT3": {
       "status": "PASS",
@@ -72,28 +69,28 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_acceptance_gaps_a1.py",
         "plugins/dev-graph/tests/test_init_preflight_gate.py",
-        "plugins/dev-graph/tests/test_no_bytecode_in_harness.py",
-        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py",
-        "plugins/dev-graph/scripts/build-init-scaffold.py",
         "plugins/dev-graph/scripts/validate-harness-link.py",
         "plugins/dev-graph/scripts/resolve-repo-context.py",
-        "plugins/dev-graph/scripts/build-project-hook-fallback.py",
-        "plugins/dev-graph/hooks/hooks.json",
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261013T0117-pr85/transcript.jsonl"
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "静的基準の継承（2026-11-02）: 今回はinitの実装を変更せず、SKILL.mdのSHAは旧canonicalと一致する。下記は旧canonicalの既存静的証跡を保持した記録であり、「今回」「自分で回し」は旧reviewerの当時の実行を指す。今回のreviewerはこれらの製品pytest・scratch再現を再実行したとは主張しない。関連source/test/schema/hookの16参照は新run準備時fingerprintと現行bytesの一致を独立照合した。新runで再確認した受入範囲はOUT1だけである。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json に保存。\n\n旧観測（原文）:\n前回の FAIL の理由（共有の harness に bytecode を書いていた）は、製品の側で直っている。build-init-scaffold.py（L30）・validate-harness-link.py（L40）・build-project-hook-fallback.py（L34）などは sibling の import より前に sys.dont_write_bytecode = True を置き、子は sys.executable -B で起こす（scaffold の _preflight と _context）。hooks.json の4本は python3 -B で始まる。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_no_bytecode_in_harness.py の4件は、静的な検査3件と、env を外して全 script を --help で、全 hook を -B なしで起こす動的な1件。test_acceptance_gaps_a1.py の OUT3 の test は、env を外し -B なしで、frozen copy の harness を symlink で A と B から使い、相手の repo を chmod 0 で塞いで回す。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。(1) A と B のそれぞれで、相手の repo を chmod 0 にして、preflight、init の dry-run と本番、C24 の write、validate-graph-schema.py、link の作成、preflight（project-fallback）、fallback の preview・apply・再 apply（noop）、hooks.json の4本の link 経由の起動（stub の bd と gh を PATH の先頭に置く。exit はすべて 0）、init の再実行（noop）を回した。相手の repo の tree は不変、harness の tree は bytes も entry も不変で bytecode 0、偽の HOME と TMPDIR は空のまま、.git の外に保存された file に絶対パス0。(2) CLAUDE_PROJECT_DIR を相手の repo にすると c24_context_failed（disagree の診断）、issues を壊れた symlink にすると broken content symlink、相手の repo の issues への symlink は escapes の診断。どれも write 0、両方の repo の tree は不変。(3) harness の実体を rename して link を切ると、dry-run でも本番でも harness_link_broken、write_count 0、planned_changes null、preflight の link_state broken、broken_hop と missing_target を示し、remediation は relink-shared-harness と relink-this-repo（python3 の手順はどれも -B 付き）。返された relink-shared-harness の手順を実行すると init は applied になり、消した docs だけを作る。test_init_preflight_gate.py は、preflight が答えないときに _context を呼ばず harness_link_preflight_error で止まることも見ている。live trial でも plugin の file の sha は不変で、新しい __pycache__ は無かった（transcript L101-102）。残りの穴：reconcile-task-lifecycle.py が detached で起こす子（-B 付き）は、検査の後にも走りうる。"
+      "observed": "今回、同一symlink harnessのrepo A/B分離、project-root不一致・broken content linkの拒否、harness切断のwrite前停止と修復後実行をlinked製品テストで再確認した。実サービスやhook実配達の成功とは主張しない。"
     },
     "OUT4": {
       "status": "PASS",
       "verify_by": "test",
-      "evidence_kind": "pytest",
+      "evidence_kind": "hybrid",
       "test_refs": [
+        "plugins/dev-graph/tests/test_build_init_scaffold.py",
         "plugins/dev-graph/schemas/repo-config.schema.json",
         "plugins/dev-graph/templates/repo-config.example.json",
-        "plugins/dev-graph/tests/test_build_init_scaffold.py",
-        "plugins/dev-graph/scripts/build-init-scaffold.py"
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/.dev-graph/config.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "静的基準の継承（2026-11-02）: 今回はinitの実装を変更せず、SKILL.mdのSHAは旧canonicalと一致する。下記は旧canonicalの既存静的証跡を保持した記録であり、「今回」「自分で回し」は旧reviewerの当時の実行を指す。今回のreviewerはこれらの製品pytest・scratch再現を再実行したとは主張しない。関連source/test/schema/hookの16参照は新run準備時fingerprintと現行bytesの一致を独立照合した。新runで再確認した受入範囲はOUT1だけである。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json に保存。\n\n旧観測（原文）:\n_new_config は repo-config.example.json を雛形にし、repository_id と issue_prefix だけを埋め、github.enabled は false のまま（L111-121）。repo-config.schema.json は各階層で additionalProperties false で、github.projects の項目は alias・auto_add・default・field_mappings・owner_login・owner_type・project_number だけ。_plan は既存の config もこの schema で検査してから書く。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_example_config_satisfies_repo_config_schema_and_names_every_content_root と test_existing_config_that_fails_the_schema_stops_before_any_write を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、1回目の config は github.enabled false、projects は owner_login・project_number・field の名前（Status と Priority）を持ち、config と receipt の文字列に token・node_id・PVT_ などの印は0、絶対パス0。2回目は noop で config は bytes のまま。既にある config に github.token、projects の project_node_id、field_mappings の field_node_id、github.item_ids、最上位の github_token を足すと、5件とも dry-run でも本番でも pre_write_validation_failed、write 0、tree は不変。残りの穴：alias や option_map の値のような自由な文字列の field に node ID の文字列を書くことは、schema では止まらない。init が作る config は example からなので、そこに node ID は入らない。"
+      "observed": "現行exampleのGitHub enabled=false、owner/project number/field mappingと、schemaのadditionalProperties=falseを直接確認した。config不正時の無書込・冪等scaffold製品テストを今回実行し、新実走configのtoken/node-ID/絶対path禁則finding0も照合した。自由文字列すべての秘密判定を保証するものではない。"
     },
     "OUT5": {
       "status": "PASS",
@@ -102,10 +99,12 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_build_project_hook_fallback.py",
         "plugins/dev-graph/scripts/build-project-hook-fallback.py",
-        "plugins/dev-graph/scripts/build-init-scaffold.py",
-        "plugins/dev-graph/hooks/hooks.json"
+        "plugins/dev-graph/hooks/hooks.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.log",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
+        "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "静的基準の継承（2026-11-02）: 今回はinitの実装を変更せず、SKILL.mdのSHAは旧canonicalと一致する。下記は旧canonicalの既存静的証跡を保持した記録であり、「今回」「自分で回し」は旧reviewerの当時の実行を指す。今回のreviewerはこれらの製品pytest・scratch再現を再実行したとは主張しない。関連source/test/schema/hookの16参照は新run準備時fingerprintと現行bytesの一致を独立照合した。新runで再確認した受入範囲はOUT1だけである。旧canonical原bytesは eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T000242-ci-fix2/prior-scenario-verdict.json に保存。\n\n旧観測（原文）:\nbuild-init-scaffold.py の --hook-source の既定は plugin で、init は .claude/ を作らない。build-project-hook-fallback.py の既定の mode は preview。apply は既存の settings に追記だけをし（_merge）、既存の key と group の canonical hash と重複を _verify で確かめ、rollback の manifest を create-only で先に書いてから atomic に置き換える。rollback は after の sha が一致する file だけを戻し、ずれていれば rollback_drift で止まる。今回、製品 test 41件（test_build_init_scaffold.py・test_init_preflight_gate.py・test_build_project_hook_fallback.py・test_no_bytecode_in_harness.py・test_semantic_contract_boundaries_c10_c11_c24.py・test_shared_writer_sync_regressions.py）と、test_acceptance_gaps_a1.py の init・OUT3・C24・harness の6件を、PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest -p no:cacheprovider で自分で回し、すべて PASS。test_build_project_hook_fallback.py の5件を含む。scratch の再現 test_c01_repro.py（repo には置いていない）16件も自分で回し、すべて PASS。repro は plugin を bytecode と tests を除いて写し、symlink の harness 経由で、子の env から PYTHONDONTWRITEBYTECODE と PYTHONPYCACHEPREFIX を外し、-B も付けずに起こす。repro では、init の後に .claude/ は無く、config の claude_hooks.source は plugin。既存の settings.json（model・permissions・既存の PreToolUse の hook）に apply すると、既存の key と group の hash は不変、hooks.json の全 command が link 経由でそれぞれ1回だけ入り（python3 -B で始まる）、config の source は project になる。再 apply は noop で tree は不変。rollback で settings.json と config.json は bytes ごと戻り、2回目の rollback は noop。apply の後に settings を書き換えると rollback_drift、write 0。user settings の enabledPlugins の dev-graph（plugin_hook_effective）、local settings の disableAllHooks（hooks_disabled）、managed の allowManagedHooksOnly（managed_hooks_only）、user settings の別の dev-graph hook（duplicate_registration）は、preview でも apply でも write 0 で止まる。残りの穴：fallback を選ぶかどうかは R5（LLM）の判断に頼る。plugin hook が効いていれば script が拒む。live trial は plugin を選んだので、fallback の経路は trial では通っていない。"
+      "observed": "今回、plugin既定からfallbackへの非破壊merge・event各1回/既存hash保持、正確なrollback/再実行noop/漂流拒否、disabled/managed/duplicate/link条件のwrite0を製品テストで確認した。Codex native hookの実発火をこの静的結果で認定しない。"
     }
   }
 }

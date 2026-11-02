@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "agent": "/root/c01_resume_audit",
+  "host": "Codex native subagent",
+  "goal": "既存利用者根拠を保ち、U1-U9と全matrixを終端状態として正規resume検証する",
+  "directive": "未収集0なら再質問せずgate検証後doc-fetchへ引継ぐ",
+  "artifact": "/private/tmp/harness-codex-ci4-20261102/cases/system-spec/fx/system-spec/spec-state.json",
+  "sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2",
+  "uncollected": 0,
+  "state_unchanged": true,
+  "new_qa_or_approval": false,
+  "writer_invoked": false,
+  "gates": [
+    {
+      "script": "scripts/validate-coverage-matrix.py",
+      "exit_code": 0,
+      "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)+basis(根拠の性質宣言)+foundation(上位概念トレース)) を満たす\n",
+      "stderr": ""
+    },
+    {
+      "script": "scripts/validate-knowledge-graph.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"ok\",\n  \"collection_order\": [\n    \"product-goal\",\n    \"context-of-use\",\n    \"domain-model\",\n    \"api-contract\",\n    \"auth-model\",\n    \"data-persistence\",\n    \"information-priority\",\n    \"infra-topology\",\n    \"ops-runbook\",\n    \"security-posture\",\n    \"target-platforms\",\n    \"frontend-arch\"\n  ],\n  \"coverage_certificate\": {\n    \"in_scope_domains\": [\n      \"api\",\n      \"auth\",\n      \"backend\",\n      \"database\",\n      \"frontend\",\n      \"infrastructure\",\n      \"maintenance-ops\",\n      \"security\",\n      \"ui-ux\"\n    ],\n    \"domains_covered_by_item\": [\n      \"api\",\n      \"auth\",\n      \"backend\",\n      \"database\",\n      \"frontend\",\n      \"infrastructure\",\n      \"maintenance-ops\",\n      \"security\",\n      \"ui-ux\"\n    ],\n    \"na_approved_domains\": [],\n    \"total_items\": 12,\n    \"blocking_items\": [\n      \"auth-model\",\n      \"context-of-use\",\n      \"domain-model\",\n      \"product-goal\",\n      \"security-posture\",\n      \"target-platforms\"\n    ],\n    \"grounded_blocking_items\": [\n      \"auth-model\",\n      \"context-of-use\",\n      \"domain-model\",\n      \"product-goal\",\n      \"security-posture\",\n      \"target-platforms\"\n    ],\n    \"ungrounded_blocking_items\": []\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "script": "scripts/validate-design-knowledge-refs.py",
+      "exit_code": 0,
+      "stdout": "OK: design knowledge_ref は全て実在する (検査 21 件)\n",
+      "stderr": ""
+    }
+  ],
+  "blockers": []
+}

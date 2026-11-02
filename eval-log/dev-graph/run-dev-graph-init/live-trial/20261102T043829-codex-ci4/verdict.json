@@ -1,0 +1,182 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-init",
+  "args": "--repo-root /private/tmp/harness-codex-ci4-20261102/cases/init/fx --hook-source plugin",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 2,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "271bd03a5fca6a15979a540591e05be577874dd04136bbda1632406c5e12e8d5",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci4_init_goal"
+    },
+    "transcript_sha256": "bb6253646593cf4f1ad8b70e6b479238c2855d4e4b1ad4be18bc82ff776182eb",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a19a92-418b-7940-bd12-08207be373d7.jsonl",
+      "native-exec/turn-001.jsonl",
+      "native-exec/turn-002.jsonl",
+      "native-exec/turn-003.jsonl",
+      "native-exec/turn-004.jsonl",
+      "project-projection.json",
+      "native-run-state.json",
+      "fixture-final/.dev-graph/config.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/state/receipts/init-20261102T044256722396Z.json",
+      "fixture-final/eval-log/scenario-result.json",
+      "fixture-final/eval-log/init-first-independent-audit.json",
+      "fixture-final/eval-log/init-second-independent-audit.json",
+      "fixture-final/eval-log/init-first-preservation-baseline.json",
+      "fixture-final/eval-log/README-after-first-init.bytes",
+      "fixture-final/eval-log/init-second-cli-result.json",
+      "fixture-final/eval-log/init-first-artifact-choice.json",
+      "fixture-final/eval-log/init-second-artifact-choice.json",
+      "fixture-final/eval-log/run-dev-graph-init-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-init-progress.json",
+      "fixture-final/eval-log/run-dev-graph-init-intermediate.jsonl",
+      "out/status.json",
+      "evidence-freeze.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-init"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "8158903c3b44a82c309db17854675278c827d6a7667bfbf09dc2789f87a9e6fa",
+  "transcript_sha256": "bb6253646593cf4f1ad8b70e6b479238c2855d4e4b1ad4be18bc82ff776182eb",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/out",
+          "/private/tmp/harness-codex-ci4-20261102/cases/init/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 1,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "3d8164016dcd7dd0adbfc51310cffa81e93c3f94eb35e1ea8ce035b0d822e919"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 361.7764799594879
+  },
+  "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci4-20261102/cases/init/control/scenario.json",
+    "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+      "a second init with the same arguments plans 0 changes and preserves user edits",
+      "the repo config stores no absolute path, token, or node ID and the plugin hook source is used"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "after the first init the six content roots, the routing policy, and the graph store exist and the initial graph passes C11",
+        "evidence_ref": "fixture-final/eval-log/scenario-result.json"
+      },
+      {
+        "index": 2,
+        "observation": "a second init with the same arguments plans 0 changes and preserves user edits",
+        "evidence_ref": "fixture-final/eval-log/init-second-cli-result.json"
+      },
+      {
+        "index": 3,
+        "observation": "the repo config stores no absolute path, token, or node ID and the plugin hook source is used",
+        "evidence_ref": "fixture-final/eval-log/init-second-independent-audit.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --hook-source plugin",
+      "template_flags": [
+        "--hook-source",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--hook-source",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 4000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": 361.7764799594879,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "7fd9a0eb195a41c27bbde201efa6d304cd074ce718de21f1b7af5d2c5baa12ac",
+      "tokens": {
+        "input_tokens": 2602622,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 11762,
+        "total_tokens": 2614384,
+        "assistant_messages": 38,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

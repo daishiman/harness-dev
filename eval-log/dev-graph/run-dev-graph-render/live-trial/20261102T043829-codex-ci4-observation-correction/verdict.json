@@ -1,0 +1,190 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /private/tmp/harness-codex-ci4-20261102/cases/render/fx --output /private/tmp/harness-codex-ci4-20261102/cases/render/fx/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "6c7c6d3aa9c80fdd9d707855d9bca72c04ad04d8d81c7984c125023c298c63f0",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci4_render_goal"
+    },
+    "transcript_sha256": "61fb2c7cab4fc42ba11cb9eccdce4f878a7cac970ae75e73f24015d6f0fbd7d2",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a19a8f-3f9f-7552-874e-b953802dfe74.jsonl",
+      "native-exec/turn-001.jsonl",
+      "native-exec/turn-002.jsonl",
+      "native-run-state.json",
+      "native-collection-validation.json",
+      "project-projection.json",
+      "evidence-freeze.json",
+      "out/status.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+      "fixture-final/.dev-graph/render/index.html",
+      "fixture-final/.dev-graph/render/repeat.html",
+      "fixture-final/eval-log/artifact-delivery-choice.json",
+      "fixture-final/eval-log/render-receipt-initial.json",
+      "fixture-final/eval-log/render-receipt-repeat.json",
+      "fixture-final/eval-log/render-independent-audit.json",
+      "fixture-final/eval-log/render-live-trial.json",
+      "fixture-final/eval-log/render-browser-dom.html",
+      "fixture-final/eval-log/render-browser.png",
+      "fixture-final/eval-log/render-browser-stderr.log",
+      "fixture-final/eval-log/render-context-receipt.json",
+      "fixture-final/eval-log/render-schema-receipt.json",
+      "fixture-final/eval-log/run-dev-graph-render-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-render-progress.json",
+      "fixture-final/eval-log/run-dev-graph-render-intermediate.jsonl"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-render"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "fae898714999ded14e50912471101ed924da0991e063ec6a4fd5487241e99353",
+  "transcript_sha256": "61fb2c7cab4fc42ba11cb9eccdce4f878a7cac970ae75e73f24015d6f0fbd7d2",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4/out",
+          "/private/tmp/harness-codex-ci4-20261102/cases/render/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "9666f53e68f30d1efeadf35b1e6d7d250a752260c073a7bd52c600581a7831e4"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 176.12380528450012
+  },
+  "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci4-20261102/cases/render/control/scenario.json",
+    "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+      "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+      "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+      "two consecutive renders produce identical output digests"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "evidence_ref": "fixture-final/eval-log/render-browser-dom.html"
+      },
+      {
+        "index": 2,
+        "observation": "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "evidence_ref": "fixture-final/eval-log/render-live-trial.json"
+      },
+      {
+        "index": 3,
+        "observation": "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "evidence_ref": "fixture-final/eval-log/render-receipt-initial.json"
+      },
+      {
+        "index": 4,
+        "observation": "two consecutive renders produce identical output digests",
+        "evidence_ref": "fixture-final/eval-log/render-receipt-repeat.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "template_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--output",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 3000000,
+      "max_wall_clock_s": 900
+    },
+    "resource_usage": {
+      "wall_clock_s": 176.12380528450012,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "9e1f3066642736234b715b88ff9abcddb52c4e27afcea0340c56cb7bafee4491",
+      "tokens": {
+        "input_tokens": 829986,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 6322,
+        "total_tokens": 836308,
+        "assistant_messages": 18,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

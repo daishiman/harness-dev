@@ -1,0 +1,27 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "正規binding/guardはexit 0でexact P01..P13、FEATURE-1/source_digest、同一graph snapshotへの初期handoffドラフトの結合を確認できるが、必須のsystem-dev-planner:run-system-dev-plan native適用がC13 acquireで既存owner（current-ci-fixture、期限2099-01-01）の有効lockによりblockedとなった。requirements-finish native適用と最終capability-build/task-graph handoff完了は実証されていない。",
+    "standard選択後のnative子監査はpending_owner_native_applicationで、progressのlineage_closure/snapshot_handoff/OUT1もpendingのまま停止した。上流の合成findingsや初期artifact_presentedを今回の完了した独立評価へ読み替えることはできない。実装source新規生成は証跡上0件だが、必要な全観測・手続きは未完了。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/ci4_requirement_schedule_goals"
+  },
+  "transcript_sha256": "0e447dffd3f44849c08ff17eb75b6550f37519234ac4e998936bb4fab3d5d388",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "native-run-state.json",
+    "native-exec/turn-003.jsonl",
+    "out/status.json",
+    "fixture-final/eval-log/requirements-initial-delivery.json",
+    "fixture-final/eval-log/requirements-initial-binding.json",
+    "fixture-final/eval-log/requirements-initial-guard.json",
+    "fixture-final/eval-log/requirements-initial-independent-audit.json",
+    "fixture-final/eval-log/run-dev-graph-requirements-progress.json",
+    "fixture-final/eval-log/system-dev-plan-native-lock-acquire.json",
+    "fixture-final/eval-log/system-dev-plan-native-blocker.json",
+    "transcript/subagents/01a19a9c-a771-7cb3-98fb-584d3339e6d1.jsonl"
+  ]
+}

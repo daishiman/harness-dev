@@ -1,0 +1,26 @@
+{
+  "recorded_at": "2026-11-02T05:37:24.587272+00:00",
+  "source_finalization": "HC60/DG31 committed candidates; original upstream and raw failures preserved",
+  "read_only_lease_contract": "C26の正規events-only(lease/lock未作成)は前後安定性検査でread-only受理。ledgerありlock無しや並行更新は拒否。existing SH/EX同期・他7closure不変。",
+  "lease_tests": 22,
+  "native_source_tests": 58,
+  "canonical_tests": {
+    "passed": 4,
+    "deselected": 36
+  },
+  "fresh_common_pass": [
+    "init",
+    "render",
+    "decompose",
+    "status"
+  ],
+  "next_retry": [
+    "system-spec",
+    "node",
+    "requirements",
+    "schedule"
+  ],
+  "retry_policy": "new FX/new run、元obs/args/予算不変、最大同時2。nodefreshchildは責務と入力を維持し親履歴の不要な継承だけを除く。requirementsはpreparer所有lockのみ正規release。",
+  "c03_trust": "asked_pending",
+  "ci_success": false
+}

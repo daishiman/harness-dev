@@ -1,0 +1,27 @@
+{
+  "auditor": "/root/requirements_r2_audit",
+  "choice_reference": "eval-log/requirements-initial-artifact-choice.json",
+  "artifact_reference": "eval-log/requirements-initial-delivery.json",
+  "verdict": "pending_owner_native_application",
+  "R2b": {"status": "ready", "evidence": ["eval-log/requirements-initial-binding.json", "eval-log/requirements-initial-guard.json"]},
+  "R2": {
+    "status": "pending",
+    "findings": ["graph closureにはC19 lineageが無いが、既存task specを経由したsystem-spec参照は存在する。", "system-dev-planner:run-system-dev-planの今回のnative適用は未実施。"],
+    "trace_supplement": {
+      "requirement": "REQ-01",
+      "system_task": "SYS-P01",
+      "phase_ref": "P01",
+      "sources": ["system-spec/index.md", "system-spec/00-requirements-definition.md", "features/FEATURE-1.md"],
+      "task_reference": ".dev-graph/plans/generations/feature-package-feat/89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997/task-specs/phase-01-requirements.md",
+      "handoff_field": "requirements_document"
+    }
+  },
+  "upstream_fixture_findings_are_current_independent_evaluation": false,
+  "preserve": {
+    "source_digest": "sha256:89de16372c684653e87315f99744dec301c9cea432eec80d2731ea20b4314997",
+    "lock_owner": "session-current-ci-fixture",
+    "lock_action": "変更しない"
+  },
+  "implementation_source_files_generated": [],
+  "next_operation": "system-dev-plan"
+}

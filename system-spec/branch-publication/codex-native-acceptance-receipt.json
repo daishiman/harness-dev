@@ -44,18 +44,21 @@
     "native hook/正規guard consumer未到達をgeneric resumeや自作承認receiptで補わない"
   ],
   "current_acceptance": {
-    "codex_targets_total": 9,
-    "new_source_pass_count": 0,
-    "ci3_source": "4d54daba",
-    "ci3_trials_executed": 2,
-    "ci3_fresh_goals": {
-      "system-spec": "FAIL",
-      "render": "FAIL"
-    },
-    "ci3_verdicts": {
-      "system-spec": "FAIL",
-      "render": "DEGRADED"
-    },
+    "targets_total": 9,
+    "fresh_and_common_pass": 4,
+    "passed": [
+      "init",
+      "render",
+      "decompose",
+      "status"
+    ],
+    "canonical_rechecked": 4,
+    "retry_required": [
+      "system-spec",
+      "node",
+      "requirements",
+      "schedule"
+    ],
     "c03_trust": "asked_pending",
     "ci_success": false
   },
@@ -2440,6 +2443,43 @@
       "versions": {
         "harness-creator": "1.4.59"
       },
+      "ci_success": false
+    },
+    {
+      "id": "relocated-native-source-and-readonly-lease",
+      "recorded_at": "2026-11-02T05:15:56.501260+00:00",
+      "receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/source-and-progress-receipt.json",
+      "previous_current_acceptance": {
+        "codex_targets_total": 9,
+        "new_source_pass_count": 0,
+        "ci3_source": "4d54daba",
+        "ci3_trials_executed": 2,
+        "ci3_fresh_goals": {
+          "system-spec": "FAIL",
+          "render": "FAIL"
+        },
+        "ci3_verdicts": {
+          "system-spec": "FAIL",
+          "render": "DEGRADED"
+        },
+        "c03_trust": "asked_pending",
+        "ci_success": false
+      },
+      "impact": "native測定の正確なsource同一性を復元し、既存lease参照のwrite0契約を復元する。業務観測やPASS基準、予算、storage schemaの緩和なし。",
+      "ci_success": false
+    },
+    {
+      "id": "four-canonical-and-source-finalization",
+      "recorded_at": "2026-11-02T05:20:07.038522+00:00",
+      "receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/four-canonical-and-source-finalization.json",
+      "c02_graph_revision": 14,
+      "ci_success": false
+    },
+    {
+      "id": "lease-c26-compat-and-final-source",
+      "recorded_at": "2026-11-02T05:37:24.587272+00:00",
+      "receipt_ref": "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/final-source-receipt.json",
+      "business_contract": "read-only契約の復元、既存C26 producer互換を保持。storage schemaとwrite mutationの契約は変更しない。",
       "ci_success": false
     }
   ],

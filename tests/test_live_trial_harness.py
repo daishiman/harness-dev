@@ -177,6 +177,73 @@ def test_codex_archived_projection_requires_exact_controller_mapping(tmp_path):
     assert native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")["invoked_skills"] == []
 
 
+def _codex_relocated_source(tmp_path, *, alias=False, remove_private=False):
+    path, skill = _codex_rollout(tmp_path / "checkout")
+    _rename_native_injection(path, "demo:run-native")
+    source = tmp_path / "private/providers/plugins/demo/skills/run-native/SKILL.md"
+    source.parent.mkdir(parents=True)
+    source.write_bytes((skill / "SKILL.md").read_bytes())
+    project = tmp_path / "private/fixture/.agents/skills/run-native/SKILL.md"
+    project.parent.mkdir(parents=True)
+    project.symlink_to(source)
+    injected = project if alias else source
+    original = str(skill / "SKILL.md")
+    rows = [json.loads(json.dumps(row).replace(original, str(injected)))
+            for row in map(json.loads, path.read_text().splitlines())]
+    _write_jsonl(path, rows)
+    receipt = {"skills":[{"qualified_skill":"demo:run-native", "project_path":str(project),
+                           "source_path":str(source), "sha256":hashlib.sha256(source.read_bytes()).hexdigest()}],
+               "source_body_modified":False}
+    receipt_path = path.parent / "project-projection.json"
+    receipt_path.write_text(json.dumps(receipt))
+    state = {"runtime":"codex", "session_id":"native-root", "collected":True,
+             "projection_receipt_ref":receipt_path.name,
+             "projection_receipt_sha256":hashlib.sha256(receipt_path.read_bytes()).hexdigest()}
+    (path.parent / "native-run-state.json").write_text(json.dumps(state))
+    if remove_private:
+        source.unlink()
+        project.unlink()
+    return path, skill, source, project, receipt, state
+
+
+@pytest.mark.parametrize("alias,remove_private", [(False,False),(True,False),(False,True),(True,True)])
+def test_codex_relocated_checkout_requires_exact_alias_or_source_and_identical_bytes(tmp_path,alias,remove_private):
+    path, skill, _source, _project, _receipt, _state = _codex_relocated_source(tmp_path,alias=alias,remove_private=remove_private)
+    before = path.read_bytes()
+    result = _load("extract-codex-transcript").inspect_transcript(path,skill_dir=skill,target_skill="demo:run-native")
+    assert result["invoked_skills"] == ["demo:run-native"]
+    assert result["activation_errors"] == []
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("mutation", ["namespace","receipt_body","current_body","private_body","read_output",
+                                     "user_xml","unmapped_suffix","mapping_sha"])
+def test_codex_relocation_never_accepts_namespace_body_read_or_mapping_shortcuts(tmp_path,mutation):
+    path, skill, source, _project, receipt, state = _codex_relocated_source(tmp_path)
+    rows = list(map(json.loads,path.read_text().splitlines()))
+    if mutation == "namespace": receipt["skills"][0]["qualified_skill"] = "other:run-native"
+    elif mutation == "receipt_body": receipt["skills"][0]["sha256"] = "0"*64
+    elif mutation == "current_body": (skill/"SKILL.md").write_text("changed current source")
+    elif mutation == "private_body": source.write_text("changed original provider source")
+    elif mutation == "read_output":
+        for row in rows:
+            if row.get("payload",{}).get("type")=="custom_tool_call_output":
+                row["payload"]["output"]=[{"type":"input_text","text":json.dumps({"exit_code":0,"output":"different read body"})}]
+    elif mutation == "user_xml":
+        for row in rows:
+            if "skills.selected_skill_instructions" in row.get("payload",{}).get("internal_chat_message_metadata_passthrough",{}).get("content_item_kinds",[]):
+                row["payload"]["internal_chat_message_metadata_passthrough"]["content_item_kinds"]=["user.text"]
+    elif mutation == "unmapped_suffix":
+        rows=[json.loads(json.dumps(row).replace(str(source),"/unmapped/providers/plugins/demo/skills/run-native/SKILL.md"))for row in rows]
+    _write_jsonl(path,rows)
+    receipt_path=path.parent/"project-projection.json"
+    receipt_path.write_text(json.dumps(receipt))
+    state["projection_receipt_sha256"]="0"*64 if mutation=="mapping_sha" else hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+    (path.parent/"native-run-state.json").write_text(json.dumps(state))
+    result=_load("extract-codex-transcript").inspect_transcript(path,skill_dir=skill,target_skill="demo:run-native")
+    assert result["invoked_skills"]==[]
+
+
 @pytest.mark.parametrize("read_ok,inject", [(False, True), (True, False)])
 def test_codex_mention_or_failed_read_is_not_native_activation(tmp_path, read_ok, inject):
     path, skill = _codex_rollout(tmp_path, read_ok=read_ok, inject=inject)
