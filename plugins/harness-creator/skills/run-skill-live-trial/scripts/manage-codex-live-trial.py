@@ -27,6 +27,7 @@ import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -157,6 +158,49 @@ def native_hook_trust_argv(config: dict) -> list[str]:
     return argv
 
 
+def native_skill_exclusion_argv(config: dict) -> list[str]:
+    """Disable only explicitly pinned, unrelated catalog entries for this CLI call."""
+    entries = config.get("native_skill_exclusions", [])
+    if not isinstance(entries, list):
+        raise ValueError("native skill exclusions must be a list")
+    if not entries:
+        return []
+    writable = [Path(config["repo_root"]).resolve(), (Path(config["workdir"]) / "out").resolve()]
+    roots = [Path(value).resolve() for value in config.get("loaded_provider_roots", [config["skill_dir"]])]
+    roots += [Path(item["skill_dir"]).resolve() for item in config.get("native_operations", [])]
+    allowed = set()
+    if config.get("projection_receipt_file"):
+        projection = json.loads(Path(config["projection_receipt_file"]).read_text())
+        if not isinstance(projection, dict) or not isinstance(projection.get("skills"), list):
+            raise ValueError("native exclusion projection mapping is invalid")
+        for row in projection["skills"]:
+            for key in ("project_path", "source_path"):
+                value = row.get(key)
+                if not isinstance(value, str) or not Path(value).is_absolute():
+                    raise ValueError("native exclusion projection source is invalid")
+                allowed.add(Path(value).resolve())
+    disabled, seen = [], set()
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"path", "sha256"} or not isinstance(entry["path"], str):
+            raise ValueError("native exclusion requires exact path and sha256")
+        path = Path(entry["path"])
+        if not path.is_absolute() or path.name != "SKILL.md" or not path.is_file():
+            raise ValueError("native exclusion must name an existing absolute SKILL.md")
+        resolved = path.resolve(strict=True)
+        if resolved in seen:
+            raise ValueError("native exclusion duplicate source")
+        seen.add(resolved)
+        if (resolved in allowed or any(resolved.is_relative_to(root) for root in roots)
+                or any(resolved.is_relative_to(root) for root in writable)
+                or any((part.parent.resolve() / part.name).is_relative_to(root)
+                       for part in (path, *path.parents) for root in writable)):
+            raise ValueError("native exclusion may not disable an actor/project/provider source")
+        if not isinstance(entry["sha256"], str) or not re.fullmatch(r"[a-f0-9]{64}", entry["sha256"]) or digest(path) != entry["sha256"]:
+            raise ValueError("native exclusion source digest changed")
+        disabled.append("{path=" + json.dumps(str(path), ensure_ascii=False) + ",enabled=false}")
+    return ["-c", "skills.config=[" + ",".join(disabled) + "]"]
+
+
 def codex_argv(config: dict, session_id: str | None = None) -> list[str]:
     if session_id is not None and (not ID_RE.fullmatch(session_id) or ".." in session_id):
         raise ValueError("invalid exact session identity")
@@ -170,6 +214,7 @@ def codex_argv(config: dict, session_id: str | None = None) -> list[str]:
             "-c", "sandbox_workspace_write.exclude_tmpdir_env_var=true",
             "-c", "sandbox_workspace_write.exclude_slash_tmp=true"]
     argv += native_hook_trust_argv(config)
+    argv += native_skill_exclusion_argv(config)
     model = config.get("requested_model", "")
     if model:
         if not re.fullmatch(r"[A-Za-z0-9._-]+", model):
@@ -191,6 +236,8 @@ def actor_environment(config: dict) -> dict[str, str]:
     environment["TMPPREFIX"] = str(temporary / "zsh")
     if config.get("external_confirmation_fixture") is not None:
         environment["DEV_GRAPH_GH"] = config["external_confirmation_fixture"]["fake_adapter"]
+    if config.get("codex_audit_fixture") is not None:
+        environment.update(sibling("record-codex-audit").environment(config))
     return environment
 
 
@@ -574,6 +621,8 @@ def load_config(path: Path) -> dict:
     protected.append(("config file", path.absolute()))
     if cfg.get("projection_receipt_file"):
         protected.append(("projection receipt", Path(cfg["projection_receipt_file"])))
+    if cfg.get("codex_audit_fixture") is not None:
+        protected.append(("Codex audit provider", Path(cfg["codex_audit_fixture"]["plugin_root"])))
     external = external_fixture(cfg)
     if external is not None:
         protected.extend(("external " + name, Path(external[name])) for name in ("guard_script", "hook_wrapper", "hook_event_log"))
@@ -766,6 +815,9 @@ def init_state(cfg: dict) -> dict:
              "guard_source_ref": "external-confirmations/guard-source.py", "hook_wrapper_ref": "external-confirmations/hook-wrapper.py",
              "hook_events_ref": "external-confirmations/hook-events.jsonl", "fake_adapter_ref": "fixture-final/tools/fake-gh.py"}
         state["actor_environment_override"]["DEV_GRAPH_GH"] = environment["DEV_GRAPH_GH"]
+    if cfg.get("codex_audit_fixture") is not None:
+        sibling("record-codex-audit").initialize(cfg, state)
+        state["actor_environment_override"].update(sibling("record-codex-audit").environment(cfg))
     bind_projection_receipt(cfg, state)
     # Creation is exclusive; a second controller cannot reset the clock.
     with state_path(cfg).open("x", encoding="utf-8") as stream:
@@ -825,6 +877,23 @@ def live_usage(cfg: dict, state: dict) -> dict:
 
 def _elapsed(state: dict) -> float:
     return max(float(state.get("elapsed", 0)), time.time() - state["started_at_unix"])
+
+
+def observe_native_audit(cfg: dict, state: dict) -> None:
+    if cfg.get("codex_audit_fixture") is None:
+        return
+    root = Path(state["native_rollout"])
+    paths, pending, seen = [root], [root], {state["session_id"]}
+    while pending:
+        current = pending.pop()
+        meta = _first_metadata(current)
+        for child in child_rollouts(session_root(), meta["id"], parent_rollout=root, started_at_unix=state["started_at_unix"]):
+            identity = _first_metadata(child)["id"]
+            if identity not in seen:
+                seen.add(identity)
+                paths.append(child)
+                pending.append(child)
+    sibling("record-codex-audit").observe(cfg, state, paths)
 
 
 def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
@@ -887,6 +956,7 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
                     if raw:
                         state["native_rollout"] = str(raw)
                         usage = live_usage(cfg, state)
+                        observe_native_audit(cfg, state)
                         if usage.get("measured") and usage["total_tokens"] > state["budget"]["max_total_tokens"]:
                             terminated = "HARD_CAP"
                             break
@@ -918,6 +988,7 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
                            started_at_unix=state["started_at_unix"], parent_rollout=state.get("native_rollout"))
         if raw:
             state["native_rollout"] = str(raw)
+            observe_native_audit(cfg, state)
     state["elapsed"] = _elapsed(state)
     turn = {"number": turn_no, "argv": argv, "stdin_sha256": digest(prompt),
             "stdout": str(stdout), "stderr": str(stderr), "returncode": actual_returncode,
@@ -1111,11 +1182,14 @@ def continue_run(cfg: dict, response_file: Path) -> dict:
     return drive(cfg, state, response_file)
 
 
-def public_bytes(raw: bytes, secrets: list[str]) -> bytes:
+def public_bytes(raw: bytes, secrets: list[str], aliases: dict[str, str] | None = None) -> bytes:
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         return raw
+    for original, alias in (aliases or {}).items():
+        text = text.replace(original, alias)
+        text = text.replace(json.dumps(original)[1:-1], json.dumps(alias)[1:-1])
     for secret in secrets:
         if len(secret) >= 8:
             text = text.replace(secret, "[REDACTED_FIXTURE_SECRET]")
@@ -1126,7 +1200,222 @@ def public_bytes(raw: bytes, secrets: list[str]) -> bytes:
     return text.encode("utf-8")
 
 
-def collect(cfg: dict) -> dict:
+def fixture_ignored(root: Path, parent: Path, name: str) -> bool:
+    return (name in {".git", ".agents", ".codex", "__pycache__"}
+            or (parent == root and name == ".native-tmp") or secret_file(Path(name)) or Path(name).suffix == ".pyc")
+
+
+def tree_inventory(root: Path, *, fixture: bool = False) -> dict:
+    """Record links as links, never read their external targets."""
+    result = {}
+    def scan_error(error):
+        raise error
+    for directory, dirs, files in os.walk(root, followlinks=False, onerror=scan_error):
+        parent = Path(directory)
+        dirs[:] = sorted(name for name in dirs if not fixture or not fixture_ignored(root, parent, name))
+        for name in sorted([*dirs, *files]):
+            if fixture and fixture_ignored(root, parent, name):
+                continue
+            path = parent / name
+            metadata = path.lstat()
+            item = {"mode": stat.S_IMODE(metadata.st_mode), "mtime_ns": metadata.st_mtime_ns}
+            if path.is_symlink():
+                target = os.readlink(path)
+                item.update(kind="symlink", target=target, target_sha256=hashlib.sha256(os.fsencode(target)).hexdigest())
+            elif path.is_dir():
+                item["kind"] = "directory"
+            elif path.is_file():
+                item.update(kind="file", sha256=digest(path), bytes=metadata.st_size)
+            else:
+                raise ValueError("unsupported collection entry: " + str(path))
+            result[str(path.relative_to(root))] = item
+    return result
+
+
+def snapshot_fixture(source: Path, destination: Path) -> dict:
+    """Publish internal pointers relative to the snapshot, preserving originals."""
+    source = source.resolve(strict=True)
+    before = tree_inventory(source, fixture=True)
+    links = []
+    for relative, item in before.items():
+        if item["kind"] != "symlink":
+            continue
+        original = source / relative
+        try:
+            target = original.resolve(strict=True)
+            target_relative = target.relative_to(source)
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise ValueError("fixture symlink escapes or has no resolvable target: " + relative) from exc
+        if str(target_relative) not in before and target_relative != Path("."):
+            raise ValueError("fixture symlink points to an excluded target: " + relative)
+        public_target = os.path.relpath(destination / target_relative, (destination / relative).parent)
+        links.append({"path": relative, "original_target": item["target"], "original_target_sha256": item["target_sha256"],
+                      "original_metadata": {k:item[k] for k in ("mode", "mtime_ns")},
+                      "resolved_fixture_target": str(target_relative), "public_target": public_target,
+                      "target_evidence": before.get(str(target_relative), {"kind":"fixture-root"})})
+    shutil.copytree(source, destination, symlinks=True,
+                    ignore=lambda directory, names: [name for name in names if fixture_ignored(source, Path(directory), name)])
+    copied = tree_inventory(destination)
+    if copied != before or tree_inventory(source, fixture=True) != before:
+        raise ValueError("fixture bytes/metadata changed during snapshot")
+    for link in links:
+        path = destination / link["path"]
+        path.unlink()  # Only this new publication's copied link; the original is untouched.
+        path.symlink_to(link["public_target"])
+    for link in links:
+        target = (destination / link["path"]).resolve(strict=True)
+        target.relative_to(destination.resolve(strict=True))
+        if target != (destination / link["resolved_fixture_target"]).resolve(strict=True):
+            raise ValueError("published symlink target mismatch")
+    if tree_inventory(source, fixture=True) != before:
+        raise ValueError("original fixture changed during publication")
+    return {"source_inventory": before, "links": links, "original_fixture_modified": False,
+            "rule": "resolve-in-original-fixture-then-publish-snapshot-relative; external/secret targets rejected"}
+
+
+def publication_paths(cfg: dict, ordinal: int) -> tuple[Path, Path]:
+    if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal < 1:
+        raise ValueError("collection publication ordinal must be a positive integer")
+    suffix = "" if ordinal == 1 else f"-{ordinal}"
+    original = Path(cfg["workdir"])
+    return (original.with_name(original.name + "-publication-recovery" + suffix),
+            Path(cfg["private_dir"]) / ("raw-at-recollection" + suffix))
+
+
+def fixed_child_metadata(path: Path) -> dict:
+    """A fixed collection uses exact UUID aliases, never live rollout discovery."""
+    with path.open(encoding="utf-8") as stream:
+        first = json.loads(stream.readline())
+    meta = first.get("payload") if isinstance(first, dict) and first.get("type") == "session_meta" else None
+    if (not isinstance(meta, dict) or not isinstance(meta.get("id"), str)
+            or not re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", meta["id"])
+            or path.name != meta["id"] + ".jsonl"):
+        raise ValueError("fixed child snapshot filename and metadata identity differ")
+    _typed_parent(meta)
+    return meta
+
+
+def fixed_native_preflight(raw: Path, session_id: str) -> dict:
+    main = raw / "transcript.jsonl"
+    with main.open(encoding="utf-8") as stream:
+        first = json.loads(stream.readline())
+    if first.get("type") != "session_meta" or first.get("payload", {}).get("id") != session_id:
+        raise ValueError("fixed original main session identity mismatch")
+    for child in sorted((raw / "transcript/subagents").glob("*.jsonl")):
+        fixed_child_metadata(child)
+    info = sibling("extract-codex-transcript").inspect_transcript(main)
+    if info.get("format_errors"):
+        raise ValueError("fixed native evidence invalid before recollection: " + ",".join(info["format_errors"]))
+    return {"session_id": info["session_id"], "agent_sessions": info["agent_sessions"],
+            "format_errors": info["format_errors"], "completed": info["completed"]}
+
+
+def previous_collection_attempts(cfg: dict, state: dict, ordinal: int, logs: list[Path], secrets: list[str], aliases: dict) -> list[dict]:
+    if len(logs) != ordinal - 1:
+        raise ValueError("each previous publication ordinal requires its original failure log")
+    records = []
+    original_raw = Path(cfg["private_dir"]) / "raw-at-collection"
+    original_work = Path(cfg["workdir"])
+    writable = [Path(cfg["repo_root"]).resolve(), (original_work / "out").resolve()]
+    for number, error_log in enumerate(logs, 1):
+        work, raw = publication_paths(cfg, number)
+        if (not work.is_dir() or not raw.is_dir() or (work / "evidence-freeze.json").exists()
+                or (work / "verdict.json").exists()):
+            raise ValueError("prior collection ordinal missing or already frozen/finalized")
+        if not error_log.is_absolute() or not error_log.is_file() or any(error_log.resolve().is_relative_to(root) for root in writable):
+            raise ValueError("previous failure log must be a controller-owned absolute file")
+        if not error_log.read_text().strip().startswith("[ERROR]"):
+            raise ValueError("previous publication failure log has no native collector error")
+        for relative, item in tree_inventory(raw).items():
+            if item["kind"] == "directory":
+                continue
+            if item["kind"] != "file":
+                raise ValueError("prior fixed raw cannot contain links")
+            path = raw / relative
+            if relative == "runner-state-before.json":
+                expected = state_path(cfg)
+            elif re.fullmatch(r"previous-failure-[0-9]{3}\.log", relative):
+                index = int(relative.removeprefix("previous-failure-").removesuffix(".log")) - 1
+                if index >= len(logs):
+                    raise ValueError("unknown prior failure log copy")
+                expected = logs[index]
+            else:
+                expected = original_raw / relative
+                if not expected.is_file() and relative.startswith("fixture-final/"):
+                    expected = Path(cfg["repo_root"]) / relative.removeprefix("fixture-final/")
+            if not expected.is_file() or path.read_bytes() != expected.read_bytes():
+                raise ValueError("previous collection raw differs from fixed original: " + relative)
+        # Previously published native copies must still be the exact declared
+        # publication transform of the fixed raw; no new interpretation is used.
+        for path in sorted(raw.rglob("*")):
+            relative = str(path.relative_to(raw))
+            if path.is_file() and relative != "runner-state-before.json" and not relative.startswith("previous-failure-"):
+                published = work / relative
+                if published.is_file() and published.read_bytes() != public_bytes(path.read_bytes(), secrets, aliases):
+                    raise ValueError("previous partial publication differs from fixed raw: " + relative)
+        records.append({"ordinal": number, "workdir": str(work), "raw_root": str(raw),
+                        "public_inventory": tree_inventory(work), "raw_inventory": tree_inventory(raw),
+                        "failure_log_path": str(error_log), "failure_log_sha256": digest(error_log),
+                        "inventory_time": "recollection preflight observation, not a retrospective freeze"})
+    return records
+
+
+def recovery_preflight(cfg: dict, state: dict, secrets: list[str], aliases: dict[str, str] | None = None,
+                       *, ordinal: int = 1, failure_logs: list[Path] | None = None) -> dict:
+    work, private = Path(cfg["workdir"]), Path(cfg["private_dir"])
+    observation = private / "collection-failure-observation.json"
+    failure = json.loads(observation.read_text())
+    original_raw = private / "raw-at-collection"
+    if (failure.get("state") != "failed_collection_preserved_no_retry" or failure.get("actor_collected") is not False
+            or failure.get("evidence_freeze_exists") is not False or state.get("collected")
+            or (work / "verdict.json").exists() or (work / "evidence-freeze.json").exists()
+            or Path(failure.get("original_fixed_raw_main", "")).resolve() != (original_raw / "transcript.jsonl").resolve()
+            or digest(original_raw / "transcript.jsonl") != failure.get("original_fixed_raw_sha256")
+            or digest(work / "transcript.jsonl") != failure.get("partial_public_main_sha256")):
+        raise ValueError("recollection requires the unchanged observed partial failure and fixed original raw")
+    source, partial = Path(cfg["repo_root"]), work / "fixture-final"
+    expected, prior = tree_inventory(source, fixture=True), tree_inventory(partial)
+    if set(expected) != set(prior):
+        raise ValueError("partial fixture and original fixture entries differ")
+    for relative, item in expected.items():
+        old = prior[relative]
+        if item["kind"] != old["kind"] or item["mode"] != old["mode"]:
+            raise ValueError("partial fixture type/mode differs from original: " + relative)
+        if item["kind"] == "symlink" and item != old:
+            raise ValueError("partial fixture original link metadata differs: " + relative)
+        if item["kind"] == "file":
+            raw, published = (source / relative).read_bytes(), (partial / relative).read_bytes()
+            if published not in (raw, public_bytes(raw, secrets, aliases)):
+                raise ValueError("partial fixture bytes differ from original: " + relative)
+            fixed = original_raw / "fixture-final" / relative
+            if fixed.exists() and fixed.read_bytes() != raw:
+                raise ValueError("fixed fixture raw differs from original: " + relative)
+    native = fixed_native_preflight(original_raw, state["session_id"])
+    previous = previous_collection_attempts(cfg, state, ordinal, failure_logs or [], secrets, aliases or {})
+    return {"failure_observation_sha256": digest(observation), "original_state_sha256": digest(state_path(cfg)),
+            "original_workdir": str(work), "original_raw_root": str(original_raw),
+            "original_raw_inventory": tree_inventory(original_raw), "partial_public_inventory": tree_inventory(work),
+            "source_fixture_inventory": expected,
+            "fixed_native_validation": native, "publication_ordinal": ordinal, "previous_failed_attempts": previous,
+            "inventory_time": "official recollection preflight; original partial was not retrospectively frozen"}
+
+
+def collection_workdir(cfg: dict, state: dict) -> Path:
+    original = Path(cfg["workdir"])
+    binding = state.get("collection_publication")
+    if binding is None:
+        return original
+    expected, _raw = publication_paths(cfg, binding.get("ordinal", 1) if isinstance(binding, dict) else 1)
+    if not isinstance(binding, dict) or binding.get("original_workdir") != str(original) or binding.get("workdir") != str(expected):
+        raise ValueError("invalid collection publication binding")
+    receipt = expected / "collection-recovery-receipt.json"
+    if digest(receipt) != binding.get("receipt_sha256"):
+        raise ValueError("collection recovery receipt drift")
+    return expected
+
+
+def collect(cfg: dict, *, recollect: bool = False, publication_ordinal: int = 1,
+            previous_failure_logs: list[Path] | None = None) -> dict:
     state = load_state(cfg)
     verify_pin(cfg, state)
     if state.get("active_process") or state.get("collected"):
@@ -1134,8 +1423,6 @@ def collect(cfg: dict) -> dict:
     work, private = Path(cfg["workdir"]), Path(cfg["private_dir"])
     if (work / "evidence-freeze.json").exists():
         raise ValueError("frozen evidence exists")
-    rawdir = private / "raw-at-collection"
-    rawdir.mkdir(exist_ok=False)
     secrets, excluded = [], []
     native_temporary = Path(cfg["repo_root"]) / ".native-tmp"
     if native_temporary.exists():
@@ -1150,27 +1437,66 @@ def collect(cfg: dict) -> dict:
                     secrets.append(path.read_text().strip())
                 except UnicodeDecodeError:
                     pass
+    aliases = {entry["path"]: "catalog-exclusion-" + hashlib.sha256(entry["path"].encode()).hexdigest()[:24] + "/SKILL.md"
+               for entry in cfg.get("native_skill_exclusions", [])}
+    recovery = recovery_preflight(cfg, state, secrets, aliases, ordinal=publication_ordinal,
+                                  failure_logs=previous_failure_logs) if recollect else None
+    fixed_prior = private / "raw-at-collection" if recollect else None
+    if recollect:
+        work, recovery_raw = publication_paths(cfg, publication_ordinal)
+        if work.exists() or recovery_raw.exists():
+            raise ValueError("recollection publication/attempt already exists; never overwrite or retry")
+        work.mkdir()
+    rawdir = recovery_raw if recollect else private / "raw-at-collection"
+    rawdir.mkdir(exist_ok=False)
+    if recollect:
+        copy_once(state_path(cfg), rawdir / "runner-state-before.json")
+        for number, error_log in enumerate(previous_failure_logs or [], 1):
+            copy_once(error_log, rawdir / f"previous-failure-{number:03d}.log")
+        original_work = Path(cfg["workdir"])
+        for name in ("task.md", state.get("projection_receipt_ref")):
+            if name:
+                copy_once(original_work / name, work / name)
+        if (original_work / "out").is_dir():
+            if any(item["kind"] == "symlink" for item in tree_inventory(original_work / "out").values()):
+                raise ValueError("recollection output markers may not contain symlinks")
+            shutil.copytree(original_work / "out", work / "out", symlinks=True)
+        for response in state.get("responses", []):
+            if response.get("proof_ref"):
+                path = original_work / response["proof_ref"]
+                if digest(path) != response["proof_sha256"]:
+                    raise ValueError("original external proof drift")
+                copy_once(path, work / response["proof_ref"])
     copies = []
     def publish(source: Path, destination: Path):
+        if fixed_prior is not None:
+            source = fixed_prior / destination.relative_to(work)
+            if not source.is_file() or source.is_symlink():
+                raise ValueError("recollection cannot replace an unavailable fixed original: " + str(source))
         fixed = rawdir / destination.relative_to(work)
         copy_once(source, fixed)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        data = public_bytes(fixed.read_bytes(), secrets)
+        data = public_bytes(fixed.read_bytes(), secrets, aliases)
         with destination.open("xb") as stream:
             stream.write(data)
         copies.append({"path": str(destination.relative_to(work)),
                        "original_sha256": digest(fixed), "public_sha256": digest(destination)})
     if state.get("native_rollout"):
-        verify_native_skill_paths(cfg, state)
+        if not recollect:
+            verify_native_skill_paths(cfg, state)
         publish(Path(state["native_rollout"]), work / "transcript.jsonl")
         pending = [state["session_id"]]
         seen = set(pending)
         while pending:
             parent_id = pending.pop()
-            for child in child_rollouts(session_root(), parent_id, parent_rollout=Path(state["native_rollout"]),
-                                        started_at_unix=state["started_at_unix"], fresh=True):
-                meta = _first_metadata(child)
+            candidates = (list((fixed_prior / "transcript/subagents").glob("*.jsonl")) if recollect else
+                          child_rollouts(session_root(), parent_id, parent_rollout=Path(state["native_rollout"]),
+                                         started_at_unix=state["started_at_unix"], fresh=True))
+            for child in candidates:
+                meta = fixed_child_metadata(child) if recollect else _first_metadata(child)
                 identity = meta["id"]
+                if recollect and _typed_parent(meta) != parent_id:
+                    continue
                 if identity in seen:
                     continue
                 seen.add(identity)
@@ -1196,12 +1522,17 @@ def collect(cfg: dict) -> dict:
             path = Path(ext[key])
             if path.is_file():
                 publish(path, work / "external-confirmations" / name)
+    if cfg.get("codex_audit_fixture") is not None:
+        audit = private / "codex-audit"
+        if not audit.is_dir():
+            raise ValueError("Codex audit host evidence is missing")
+        for path in sorted(audit.rglob("*")):
+            if path.is_symlink():
+                raise ValueError("Codex audit evidence must not contain symlinks")
+            if path.is_file() and not secret_file(path):
+                publish(path, work / "codex-audit" / path.relative_to(audit))
     snapshot = work / "fixture-final"
-    def ignore(directory, names):
-        return [name for name in names if name in {".git", ".agents", ".codex", "__pycache__"}
-                or (Path(directory).resolve() == Path(cfg["repo_root"]).resolve() and name == ".native-tmp")
-                or secret_file(Path(name)) or Path(name).suffix == ".pyc"]
-    shutil.copytree(cfg["repo_root"], snapshot, symlinks=True, ignore=ignore)
+    publication = snapshot_fixture(Path(cfg["repo_root"]), snapshot)
     for path in snapshot.rglob("*"):
         if path.is_symlink():
             try:
@@ -1209,26 +1540,57 @@ def collect(cfg: dict) -> dict:
             except (ValueError, FileNotFoundError):
                 raise ValueError("public fixture contains an escaping symlink")
         elif path.is_file():
-            data = public_bytes(path.read_bytes(), secrets)
+            data = public_bytes(path.read_bytes(), secrets, aliases)
             if data != path.read_bytes():
                 fixed = rawdir / path.relative_to(work)
                 copy_once(path, fixed)
                 path.write_bytes(data)
                 copies.append({"path": str(path.relative_to(work)), "original_sha256": digest(fixed),
                                "public_sha256": digest(path)})
+    dump(work / "fixture-publication-receipt.json", publication)
+    if recollect:
+        if (tree_inventory(Path(cfg["workdir"])) != recovery["partial_public_inventory"]
+                or tree_inventory(fixed_prior) != recovery["original_raw_inventory"]
+                or tree_inventory(Path(cfg["repo_root"]), fixture=True) != recovery["source_fixture_inventory"]):
+            raise ValueError("original partial/raw/fixture changed during recollection")
+        for previous in recovery["previous_failed_attempts"]:
+            if (tree_inventory(Path(previous["workdir"])) != previous["public_inventory"]
+                    or tree_inventory(Path(previous["raw_root"])) != previous["raw_inventory"]
+                    or digest(Path(previous["failure_log_path"])) != previous["failure_log_sha256"]):
+                raise ValueError("previous failed collection changed during recollection")
+        recovery.update({"new_workdir": str(work), "new_raw_root": str(rawdir),
+                         "config_sha256": state["config_sha256"], "run_id": state["run_id"],
+                         "execution_binding_changed": False, "original_raw_or_partial_modified": False})
+        recovery["collected_at_unix"] = time.time()
+        recovery["execution_observed_at_unix"] = state["started_at_unix"] + state["elapsed"]
+        dump(work / "collection-recovery-receipt.json", recovery)
+        state["collection_publication"] = {"original_workdir": cfg["workdir"], "workdir": str(work), "ordinal": publication_ordinal,
+                                          "receipt_sha256": digest(work / "collection-recovery-receipt.json")}
     state["collected"] = True
     dump(work / "native-run-state.json", state)
+    if aliases:
+        public_state = work / "native-run-state.json"
+        public_state.write_bytes(public_bytes(public_state.read_bytes(), secrets, aliases))
     dump(work / "poll-state.json", {"elapsed": math.ceil(state["elapsed"]),
-          "started_at_unix": state["started_at_unix"], "observed_at_unix": time.time()})
+          "started_at_unix": state["started_at_unix"],
+          "observed_at_unix": state["started_at_unix"] + state["elapsed"]})
     dump(work / "public-copy-receipt.json", {"runtime": "codex", "copies": copies,
+          "collected_at_unix": time.time(), "execution_observed_at_unix": state["started_at_unix"] + state["elapsed"],
           "excluded_fixture_files": excluded, "private_original_fixed_before_public_copy": True,
           "native_temporary_exclusion": {"path": ".native-tmp", "publicly_included": False,
                 "reason": "native CLI communication/runtime temporary data; business artifacts belong outside this directory",
                 "private_original_retained": native_temporary.exists()},
           "native_format_converted": False})
+    if aliases:
+        dump(work / "catalog-exclusion-publication.json", {"paths_anonymized": len(aliases),
+             "aliases": [{"alias": alias, "original_path_sha256": hashlib.sha256(path.encode()).hexdigest()}
+                         for path, alias in aliases.items()],
+             "note": "Only excluded external catalog paths are anonymized in publication copies; private argv/raw and execution config remain unchanged. Catalog isolation is not established by this receipt."})
     dump(work / "evidence-freeze.json", {"files": {
           str(path.relative_to(work)): digest(path) for path in sorted(work.rglob("*"))
-          if path.is_file() and not path.is_symlink()}, "behavior_sha256": state["behavior_sha256"]})
+          if path.is_file() and not path.is_symlink()}, "symlinks": {
+          str(path.relative_to(work)): os.readlink(path) for path in sorted(work.rglob("*")) if path.is_symlink()},
+          "behavior_sha256": state["behavior_sha256"]})
     dump(state_path(cfg), state)
     return state
 
@@ -1237,13 +1599,18 @@ def finalize(cfg: dict, goal: Path | None, observations: list[str], blocked: boo
     state = load_state(cfg)
     if not state.get("collected"):
         raise ValueError("collect before independent evaluation/finalize")
-    work = Path(cfg["workdir"])
+    work = collection_workdir(cfg, state)
     if (work / "verdict.json").exists():
         raise ValueError("existing verdict must never be overwritten")
     frozen = json.loads((work / "evidence-freeze.json").read_text())
     for rel, sha in frozen["files"].items():
         if digest(work / rel) != sha:
             raise ValueError(f"frozen evidence drift: {rel}")
+    for rel, target in frozen.get("symlinks", {}).items():
+        path = work / rel
+        if not path.is_symlink() or os.readlink(path) != target:
+            raise ValueError(f"frozen publication link drift: {rel}")
+        path.resolve(strict=True).relative_to(work.resolve(strict=True))
     verify_pin(cfg, state)
     fixture = (work / "fixture-final").resolve(strict=True)
     eval_root = (fixture / cfg.get("goal_seek_eval_root_relative", "eval-log")).resolve()
@@ -1276,15 +1643,19 @@ def finalize(cfg: dict, goal: Path | None, observations: list[str], blocked: boo
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("run", "continue", "collect", "finalize", "status"))
+    parser.add_argument("action", choices=("run", "continue", "collect", "recollect", "finalize", "status"))
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--response-file", type=Path)
     parser.add_argument("--goal-evaluation", type=Path)
     parser.add_argument("--observation", action="append", default=[])
     parser.add_argument("--blocked", action="store_true")
+    parser.add_argument("--publication-ordinal", type=int, default=1)
+    parser.add_argument("--previous-failure-log", type=Path, action="append", default=[])
     ns = parser.parse_args(argv)
     try:
         cfg = load_config(ns.config)
+        if ns.action != "recollect" and (ns.publication_ordinal != 1 or ns.previous_failure_log):
+            raise ValueError("publication ordinal/failure logs are only valid for recollect")
         if ns.action == "finalize":
             return finalize(cfg, ns.goal_evaluation, ns.observation, ns.blocked)
         if ns.action == "run":
@@ -1295,10 +1666,14 @@ def main(argv=None) -> int:
             state = continue_run(cfg, ns.response_file)
         elif ns.action == "collect":
             state = collect(cfg)
+        elif ns.action == "recollect":
+            state = collect(cfg, recollect=True, publication_ordinal=ns.publication_ordinal,
+                            previous_failure_logs=ns.previous_failure_log)
         else:
             state = load_state(cfg)
         print(json.dumps({"runtime": "codex", "run_id": cfg["run_id"], "status": state["status"],
-                          "session_id": state.get("session_id"), "collected": state.get("collected")}, ensure_ascii=False))
+                          "session_id": state.get("session_id"), "collected": state.get("collected"),
+                          "publication_workdir": str(collection_workdir(cfg, state))}, ensure_ascii=False))
         return 0
     except (ValueError, OSError, KeyError, json.JSONDecodeError) as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)

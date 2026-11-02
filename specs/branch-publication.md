@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-01T21:51:01.228579Z"
-updated_at: "2026-11-02T05:20:06.808023Z"
+updated_at: "2026-11-02T07:05:48.789253Z"
 depends_on: []
 related_nodes: ["task-branch-remaining-publication"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-02T05:20:06.808023Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-02T07:05:48.789253Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的と成功状態
@@ -112,7 +112,7 @@ C02 previewとapplyのrevisionがずれればCAS拒否から再previewする。n
 
 ## テストと受入条件
 
-元1440差分のsource保存と現行/保存先の説明、main修正保持、raw eval-log1063件と旧flyer165件の所在、C02更新5文書のfinding0・draft保持を確認する。最終のroot未commit/未追跡0件、両branch同一HEAD、両push、同名追跡先を親が実測する。旧init PASSと残8対象の結果は当時の履歴として保持する。共有SGA変更後の現行受入には全9対象の再実走が必要であり、新PASS0件・CI未達を明記する。過去テスト写し188件のdiscovery対応は別担当の既存記録を参照する。
+元1440差分のsource保存と現行/保存先の説明、main修正保持、raw eval-log1063件と旧flyer165件の所在、C02更新5文書のfinding0・draft保持を確認する。最終のroot未commit/未追跡0件、両branch同一HEAD、両push、同名追跡先を親が実測する。旧init PASSと残8対象の結果は当時の履歴として保持する。共有SGA変更後の現行受入には全9対象の再実走が必要であり、当時の新PASS0件・CI未達を履歴として保持し、現在の結果は後掲のCI実走と再開条件を参照する。過去テスト写し188件のdiscovery対応は別担当の既存記録を参照する。
 
 ## 未決事項
 
@@ -120,13 +120,7 @@ C02 previewとapplyのrevisionがずれればCAS拒否から再previewする。n
 
 ## 2026年11月2日のCI実走と再開条件
 
-最新main26cc8692はローカルmain経由で統合済みで、6競合を解消したmerge commit9d981850を両branchへ公開し、GitHubのMERGEABLEを確認した。上流cache/historyの原bytesと今回runtime対応を両方保持している。
+Codex監査は専用producer/schemaを使い、実spawn call・親子identity・fresh fork・agent/SSOT全文Read・実completion・応答SHAをhost保護原本へ束縛し、consumerが再構築する。Claude Task/Agentやhookイベントへの偽変換、actor自作台帳、任意JSONへの置換を認めない。外部変更の確認hookは別契約で、未回答の信頼許可をこの経路で代替しない。
 
-現行業務sourceに対する初期化・描画・構想分解・状態照会の4試行はfresh独立goalと共通verdictでPASS。C01/C05/C14/C18のcanonical受入testも計4件PASS。描画の判定CLIが4番目の証拠指定を漏らした記録は旧DEGRADEDのまま保持し、同じ実行の全原bytes/SID/token/clock/sourceを残した別judgmentで回収指定だけ訂正した。追加actor起動0であり、新実走を装わない。
-
-source照合は、controllerのstate SHAに束縛した対応表の正確なprovider正本pathとproject aliasを、同namespace・現repo本文SHA・実Readと突合する。private元実体が残る場合の本文改変も拒否し、suffix一致では受理しない。native58件と現物C05受入を確認した。harness-creatorは1.4.60へ正規採番した。
-
-scheduleの既存read-only契約に反してlistがlockをwrite-openしていた不具合を修復した。既存lockをread-onlyで開き共有lockで2ledgerを取得し、context/listでディレクトリや空ファイルを作らない。mutation側の排他lockは維持し、部分store/破損/読取中変更を拒否する。18製品検査と、旧fixtureを同native sandboxで参照する非LLM smokeが成功、旧109entryは全状態不変。変更される被験閉包はschedule/syncだけで、他7対象と既存成功は不変。dev-graphは0.1.31へ正規採番した。
-
-残る再試行はC19の成果物全件提示、nodeの元5Mtoken予算内でのfresh独立監査、requirementsの準備担当所有lockの正規release後入力、scheduleの修復済み参照処理である。元観測・引数・予算を省略/拡張せず、新run/newFXで実施し旧FAIL/BLOCKED/DEGRADEDと原freezeは保持する。C03は同じfixtureと2hookへの信頼許可が質問済み・未回答で、勝手に信頼を有効化しない。最大同時2、原source/goal-seek/実transcript/独立goalを維持し、全CI成功はまだ未確認。
+公開snapshotでは元fixture内部のリンクだけ相対化し、元target・metadata・解決先と変換後の証拠を保存する。外部・欠落・除外対象は拒否する。recollectは旧partialと固定rawを残した各公開先へ一度だけの別publication（前の失敗先を保持し、新ordinalでの再収集を明示する）とし、task/config/source/clock/予算を不変に保つ。実行時刻と回収時刻は分ける。native_skill_exclusionsは起動前の実path/bytes SHAへ固定し、fixture/provider/projectionの許可sourceは除外しない。旧FAIL/BLOCKED/DEGRADEDと原freezeは履歴として保持する。未実走、未回収、未取得の許可をPASSへ置き換えない。
 

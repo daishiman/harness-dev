@@ -1,0 +1,31 @@
+{
+  "reviewer": "/root/ci6_content_review",
+  "profile": "incremental-combined",
+  "verdict": "FAIL",
+  "targets": {
+    "harness-creator/run-skill-live-trial": "7ffdac5a305b88351173cb20bcdf8af3f53abf99553b7f3d7e44546e61023fdb",
+    "system-spec-harness/assign-system-spec-completeness-evaluator": "966417926982b2bccc7ecc3c0a7a8a0e52f9b3cc5518981481d1aff36397d9fb"
+  },
+  "blockers": [
+    {
+      "id": "CI6-RUNTIME-DOWNGRADE-001",
+      "severity": "high",
+      "conditions": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "observation": "runtime=codex下でも旧schema1.2とAgent dispatchをledger_corroboratesがTrueで受理し、native protected検証を迂回できる。",
+      "reproduction": "独立reviewerによるisolated in-memory。偽ledger file作成0、実受入証跡変更0。",
+      "required_fix": "host選択Codex時のlegacy/mixed拒否、unknown runtime拒否、既定Claude互換維持。"
+    }
+  ],
+  "machine_score_both": 100,
+  "machine_threshold": 80,
+  "machine_score_is_semantic_pass": false,
+  "source_modified_by_reviewer": false,
+  "actual_runtime_acceptance_claimed": false,
+  "runner_final_review": "pending_source_repair",
+  "not_a_full_30_paradigm_rerun": true
+}

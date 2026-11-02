@@ -44,6 +44,7 @@ script_refs:
   - scripts/aggregate-completeness.py
   - scripts/validate-json-schema-subset.py
   - scripts/audit_fork_attribution.py
+  - scripts/validate-codex-audit.py
   - scripts/build-resume-receipt.py
   - ../../scripts/validate-coverage-matrix.py
   - ../../scripts/validate-source-citation.py
@@ -145,7 +146,7 @@ runtime_root_policy: host-skill-path
 
 > **本節は要約であり、dispatch 規約の正本は `prompts/R2-delegate.md` Layer 1.1。** 差分が生じたら R2-delegate.md を優先する (二重正本を作らない)。
 
-> `aspects[].auditor` は評価者自身が書く文字列であり、それ単体では独立監査の実在を示さない。旧実装は定数との文字列一致しか見ておらず、**監査を 1 件も fork しない実行でも「独立 auditor が PASS を出した」と名乗るレポートが `--report` を exit 0 で通過できた**。監査 agent は `Write` を持たず自力で痕跡を残せないため、証跡は「モデルが書けない層」= PostToolUse hook に書かせる。
+> `aspects[].auditor` は評価者自身が書く文字列であり、それ単体では独立監査の実在を示さない。旧実装は定数との文字列一致しか見ておらず、**監査を 1 件も fork しない実行でも「独立 auditor が PASS を出した」と名乗るレポートが `--report` を exit 0 で通過できた**。監査 agent は `Write` を持たず自力で痕跡を残せないため、証跡は「モデルが書けない層」(Claude=PostToolUse/SubagentStop hook、Codex=actor書込外のnative rollout observer) に書かせる。
 
 | 必須 receipt (`audit_delegations[]`) | role | auditor | component |
 |---|---|---|---|
@@ -153,7 +154,11 @@ runtime_root_policy: host-skill-path
 | `matrix_coverage` | `sub_input` | `system-spec-hearing-auditor` | C06 |
 | `doc_freshness` | `primary` | `system-spec-doc-freshness-auditor` | C08 |
 
-- 証跡台帳: `eval-log/system-spec-harness/audit-fork-ledger.jsonl` (writer = `hooks/record-audit-fork.py`。PostToolUse: `Task|Agent` が dispatch 行、`SubagentStop` が completion 行 (schema 1.3) を書く)。`--fork-ledger` または env `SYSTEM_SPEC_AUDIT_FORK_LEDGER` で上書き可。
+- Claudeの証跡台帳: `eval-log/system-spec-harness/audit-fork-ledger.jsonl` (writer = `hooks/record-audit-fork.py`。PostToolUse: `Task|Agent` が dispatch 行、`SubagentStop` が completion 行 (schema 1.3) を書く)。`--fork-ledger` または env `SYSTEM_SPEC_AUDIT_FORK_LEDGER` で上書き可。
+- Codexは `SYSTEM_SPEC_AUDIT_RUNTIME=codex` と専有hostが指定した `SYSTEM_SPEC_AUDIT_FORK_LEDGER` を使う。schema 2.0の `spawn_agent` 帰属はconfig/source pin・原native prefix・fresh子thread・agent定義/SSOT全文Read・完成応答SHAへ束縛する。実行方法の正本はR2-delegateのRuntime境界。host observer不在時は停止し、Claude互換台帳を自作しない。
+
+以下のhook/schema 1.xの詳細はClaude経路に適用する。
+
 - C05 自前評価の 4 観点に `primary` receipt を付けるのは **虚偽の独立性主張** として violation。
 - 台帳が無い/空 = 裏取り 0 件 → fail-closed で violation (緑にしない)。
 - **PostToolUse の per-call 契約**: 現行 PostToolUse は matching tool call ごとに 1 回、top-level `tool_use_id` と当該 call の `tool_response` を渡す。parallel dispatch 時も call ごとの hook が並行発火し、batch 全体の lifecycle は PostToolBatch が担う。writer は schema 1.2 で top-level `tool_use_id` / `verdict_state` と、**当該 per-call `tool_response` 全体**の canonical digest を記録する。nested ID block を探索して response の一部だけを digest 化しない。
@@ -163,7 +168,7 @@ runtime_root_policy: host-skill-path
 - **2 行 join (schema 1.3 / 非同期 fork)**: 非同期・background 起動は、上の直列化 gate が解除されるまで canary 専用である。本項と次項の token・completion digest の規則は、その canary と gate 解除後の運用に適用する。台帳は 1 fork につき最大 2 行を持つ。PostToolUse が書く **dispatch 行 (schema 1.2)** と、`SubagentStop` が書く **completion 行 (schema 1.3)** である。両者を繋ぐ join key は R2 が起動 prompt 先頭へ置く `AUDIT_DISPATCH: <token>` の 1 行 (`[A-Za-z0-9._-]{8,64}`・session 内で一意・使い回さない) で、auditor は同じ 1 行を応答本文へ 1 回だけ echo する。ハーネスは親の `tool_use_id` と子の `agent_id` を繋ぐ field を提供しないため、token を発行しない並列起動は帰属が一意に決まらず `verdict_state=pending` のまま fail-closed になる (単発の 1 対 1 起動に限り読取側が fallback 昇格する)。token は R2 が発行するだけで、台帳へは書かない。
 - **非同期 fork の `response_sha256` は completion 行の digest**: 非同期起動の per-call `tool_response` は起動受理 payload であって監査結果を含まない。これを receipt の束縛先にすると「起動しただけ」が verdict の根拠になる。読取側は dispatch 行を completion 行で `resolved` へ昇格させ、昇格後の digest を照合対象にする。同期 fork では従来どおり per-call `tool_response` 全体の digest を使う。
 - **監査 fork に `name` を付けない**: `name` 付き Agent は `taskKind=in_process_teammate` になり、最終応答を返した後も session 終端まで生存するため `SubagentStop` が発火しない。completion 行が永久に書かれず dispatch 行が `pending` のまま残る。加えて payload の `agent_type` が `name` の値になり (`customAgentType` が本来の auditor 名を持つ) `subagent_type` 照合も外れる。監査 fork は `subagent_type` だけを指定して起動する。
-- **台帳の書込み権限**: `audit-fork-ledger.jsonl` は PostToolUse / SubagentStop hook の append-only 出力であり、評価者が手書き・補正してはならない。`prompt_sha256` / `response_sha256` が空・`manual`・64桁16進数以外、または response 最終行の `AUDIT_VERDICT` marker が無効な行は集約対象から除外される。
+- **台帳の書込み権限**: `audit-fork-ledger.jsonl` は選択runtimeの専有writer (Claude=PostToolUse/SubagentStop hook、Codex=host native observer) のappend-only出力であり、評価者が手書き・補正してはならない。`prompt_sha256` / `response_sha256` が空・`manual`・64桁16進数以外、または response 最終行の `AUDIT_VERDICT` marker が無効な行は集約対象から除外される。
 - **機械層の限界 (正直な境界)**: 台帳は実際の response が返した verdict の書換えを拒否するが、監査 prompt の意味的十分性や証拠の妥当性そのものは content-review / human が検証する。台帳ファイルを意図的に改ざん可能な実行環境では hook 証跡だけで完全な敵対者耐性は得られないため、書込み権限の分離も必要である。
 
 ## 総合判定 (fail-closed 集約)
@@ -255,6 +260,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-complet
 - `schemas/completeness-findings.schema.json` — 評価レポート出力スキーマ
 - `scripts/aggregate-completeness.py` — 公開 schema によるレポート形状検証 + 総合 fail-closed 集約 + 帰属の fork 証跡接地検証 (決定論、外部 Python package 不要)
 - `scripts/validate-json-schema-subset.py` — `completeness-findings.schema.json` が出荷する Draft 7 語彙だけを stdlib で解釈する import 専用 module。未知 keyword / 非対応形状 / 非 local または未解決 `$ref` は schema 構築時に fail-closed で拒否する。`pattern` は edge anchor + ASCII literal + 正の英数字 class/range + 基本 quantifier の portable subset のみで、escape / dot / group / alternation / lookaround / negated class は受理しない
+- `scripts/validate-codex-audit.py` — schema 2.0のhost/config pin、protected境界、実native親子・正本Read・完成応答を再構築して検証する読取専用モジュール
 - `scripts/audit_fork_attribution.py` — fork 台帳集計・schema 1.2 の tool-use ID を含む receipt 照合・run/session 束縛、および schema 1.1 legacy 互換を担う import 専用モジュール。公開 CLI と総合判定は `aggregate-completeness.py` が継続して所有する
 - `scripts/build-resume-receipt.py` / `schemas/resume-receipt.schema.json` — canonical PASS report、gate 結果、fork ledger session、固定ゲート入力と `system-spec/` 全 Markdown の artifact digest に束縛した再利用 receipt の production writer / schema
 - `../../hooks/record-audit-fork.py` — 監査 fork 台帳 writer。PostToolUse (`Task|Agent`) が dispatch 行 (schema 1.2: top-level `tool_use_id` / `verdict_state` / whole per-call response digest) を、`SubagentStop` が completion 行 (schema 1.3) を書き、`AUDIT_DISPATCH` token で 2 行を接合する帰属検証の証跡正本

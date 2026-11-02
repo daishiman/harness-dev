@@ -2,9 +2,9 @@
   "schema_version": 1,
   "plugin": "dev-graph",
   "runtime": "codex",
-  "profile": "exhaustive",
+  "profile": "incremental",
   "policy": {
-    "max_live_trials": null,
+    "max_live_trials": 4,
     "max_concurrency": 2,
     "effective_concurrency": 2,
     "evidence_reuse_requires": [
@@ -17,29 +17,18 @@
   },
   "counts": {
     "static": 0,
-    "fork": 1,
-    "reuse": 0,
-    "run": 9,
+    "fork": 0,
+    "reuse": 5,
+    "run": 4,
     "defer": 0
   },
   "live_batches": [
     [
-      "run-dev-graph-decompose",
-      "run-dev-graph-init"
-    ],
-    [
       "run-dev-graph-node",
-      "run-dev-graph-render"
+      "run-dev-graph-requirements"
     ],
     [
-      "run-dev-graph-requirements",
-      "run-dev-graph-schedule"
-    ],
-    [
-      "run-dev-graph-status",
-      "run-dev-graph-sync"
-    ],
-    [
+      "run-dev-graph-sync",
       "run-dev-graph-system-spec"
     ]
   ],
@@ -49,18 +38,18 @@
       "runtime": "codex",
       "acceptance_tier": "live",
       "behavior_sha256": "341644f71f05d30aa095f9a90cc85a818d8488f869c6d78bfdfda871bee68323",
-      "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
+      "action": "reuse",
+      "reason": "current-pass",
+      "reused_evidence": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261102T043829-codex-ci4/verdict.json"
     },
     {
       "skill": "run-dev-graph-init",
       "runtime": "codex",
       "acceptance_tier": "live",
       "behavior_sha256": "8158903c3b44a82c309db17854675278c827d6a7667bfbf09dc2789f87a9e6fa",
-      "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
+      "action": "reuse",
+      "reason": "current-pass",
+      "reused_evidence": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/verdict.json"
     },
     {
       "skill": "run-dev-graph-node",
@@ -68,7 +57,7 @@
       "acceptance_tier": "live",
       "behavior_sha256": "c850c2c33da2cf11f94b80dcbbca9515709e601196762f51671beb5509dd9b63",
       "action": "run",
-      "reason": "exhaustive-profile",
+      "reason": "latest-evidence-not-pass",
       "reused_evidence": null
     },
     {
@@ -76,9 +65,9 @@
       "runtime": "codex",
       "acceptance_tier": "live",
       "behavior_sha256": "fae898714999ded14e50912471101ed924da0991e063ec6a4fd5487241e99353",
-      "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
+      "action": "reuse",
+      "reason": "current-pass",
+      "reused_evidence": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/verdict.json"
     },
     {
       "skill": "run-dev-graph-requirements",
@@ -86,52 +75,43 @@
       "acceptance_tier": "live",
       "behavior_sha256": "6362dedbde79083a6ce6ca6d2805579ff63b0dc79d5adb2063ff12e8bc89a407",
       "action": "run",
-      "reason": "exhaustive-profile",
+      "reason": "latest-evidence-not-pass",
       "reused_evidence": null
     },
     {
       "skill": "run-dev-graph-schedule",
       "runtime": "codex",
       "acceptance_tier": "live",
-      "behavior_sha256": "0f73a05b3323c01f98c84b5d8fd9b8df2fc56fb0f49747809e47acb22f7ec04e",
-      "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
+      "behavior_sha256": "5aedb2dabfb666dc01ac7ac227031112059989bcefa5306635e8402833cee3a1",
+      "action": "reuse",
+      "reason": "current-pass",
+      "reused_evidence": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-schedule/live-trial/20261102T054148-codex-ci5-publication-recovery-2-evaluation-contract-correction/verdict.json"
     },
     {
       "skill": "run-dev-graph-status",
       "runtime": "codex",
       "acceptance_tier": "live",
       "behavior_sha256": "ed451670e48d404adb80667246177852f8457532f9ab707d3a4b5e4c5b215e71",
-      "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
+      "action": "reuse",
+      "reason": "current-pass",
+      "reused_evidence": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/verdict.json"
     },
     {
       "skill": "run-dev-graph-sync",
       "runtime": "codex",
       "acceptance_tier": "live",
-      "behavior_sha256": "e04af2c2a980c3fb1ff69205e3362c478bf94d1e2f765df1b88c16ec4285afdb",
+      "behavior_sha256": "b317225b13eab93a6054f490365a3888775c17776ff017bbace9632700365449",
       "action": "run",
-      "reason": "exhaustive-profile",
+      "reason": "runtime-mismatch",
       "reused_evidence": null
     },
     {
       "skill": "run-dev-graph-system-spec",
       "runtime": "codex",
       "acceptance_tier": "live",
-      "behavior_sha256": "61f01c76fd32403c012fa3f228bee9f536dfdccc34467622c90305ce36e98c42",
+      "behavior_sha256": "11e31238e294df35cce2225584d06666f554135a7b0316160f7fc7659a806fd1",
       "action": "run",
-      "reason": "exhaustive-profile",
-      "reused_evidence": null
-    },
-    {
-      "skill": "run-skill-feedback",
-      "runtime": "codex",
-      "acceptance_tier": "fork",
-      "behavior_sha256": "09f4b1231bbd15a834e7bdeb44f71e6506c39a83fc2d6f0773b7dce5a854c928",
-      "action": "fork",
-      "reason": "acceptance-tier-fork",
+      "reason": "latest-evidence-not-pass",
       "reused_evidence": null
     }
   ]

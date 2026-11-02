@@ -7,13 +7,15 @@
 - `plan-live-trials.py --runtime codex`で対象・再利用・予算を決める。既定の新規2件・同時2件、明示承認後のexhaustiveという境界は共通。
 - `manage-codex-live-trial.py --config <absolute-json-path> run`は、絶対pathで検証したCodex CLIの新規`exec`を起動する。継続は得られた同一sessionだけの`exec resume`。
 - source provider、private control/raw、公開workdirはactorのworkspace外に置く。actorが書けるのは新fixtureと完了マーカー用の`workdir/out`だけ。HOME・CODEX_HOME・auth・ユーザー設定を別用途に使わず、sandboxを無効化しない。
-- projectの`.agents/skills`から選択した実体を参照する。global/systemのskillカタログは残る場合があるため、「カタログが指定providerだけ」と主張しない。実際に適用・読込したskillは許可集合とsource bytesへ照合する。
+- projectの`.agents/skills`から選択した実体を参照する。既定ではglobal/systemのskillカタログも残る。任意の`native_skill_exclusions`には、起動前に読み取った不要なSKILL.mdの絶対pathと実bytesの`sha256`だけを指定できる。当該exec/resumeの`skills.config`で無効化し、ユーザー設定は書き換えない。fixture・provider・projectionの許可sourceを除外してはならない。実際のcatalog分離を主張するときはnative原ログでも確認し、必要な本文Read・責務・ツール・観測・予算を削減しない。実際に適用・読込したskillは許可集合とsource bytesへ照合する。
 
 ## 本物の適用・呼出し
 
 最初のuser入力にはnativeカタログの実登録名と業務argsを置く。plugin skillは`$<plugin>:<skill-name>`を使い、namespaceを省略しない。単独skillは実登録名が非修飾である場合だけ`$<skill-name>`を使う。原rolloutの自動`<skill>`注入・source対応表・成功した全文Readを、指定されたSKILL.mdのbytesへ束縛する。単なる名前・pathの言及、script直実行、架空のClaude `Skill`イベントは適用証拠ではない。
 
 Codexで`Agent`相当の責務を実施するときは、元の責務promptを読んでnative subagentへ渡す。実spawn/waitと子の原ログを採取し、親sessionへの関係と終了を確認する。提供されない`close_agent`等を必須操作として捏造しない。
+
+system-specの独立監査では、起動前の`codex_audit_fixture`に取得元の`plugin_root`と`validate-codex-audit.py`の`verifier_sha256`を固定する。`record-codex-audit.py`はhost側から実spawn・親子identity・fresh fork・監査定義の全文Read・終了応答を原rolloutへ結び、actor書込外の`private_dir/codex-audit`へCodex専用台帳を作る。consumerはhost bindingと原ログを再検証する。Claude hookのTask/Agent台帳へ変換せず、actorによる台帳自作・原ログ不足・未完監査を受理しない。実行用台帳はprotected原本を参照し、収集時に公開snapshotを別途保存する。この機能は外部変更hookの信頼許可を代替しない。
 
 同じskillの複数operationや別skillへの正規handoffには、configの順序付き`native_operations`を使える。actorが指定されたcheckpointを出し、controllerが次の名前・args・sourceと完全一致する場合だけ、実user turnでnative適用を行う。これは明示的な複数入力の試行であり、救済nudgeや単一入力の自走と区別して記録する。未宣言の操作・順序逆転・Readだけを別のnative呼出しと数えることは拒否する。
 
@@ -38,6 +40,8 @@ controllerは選択receipt・署名・承認イベントを自作しない。外
 native JSONLをClaude形式へ変換しない。モデルはturn_context、CLI版とidentityはsession_meta、usageは原累積値から読み、同一threadの累積値を重ねて足さない。親子関係が証明できる子だけを合算し、不明・欠落・未完は合格にしない。
 
 `collect`で原本をprivateへ固定してから公開copyを作り、除外・変換・SHAを保存する。fixture-finalとfreezeを取得後、別contextのfresh evaluatorへ渡す。作者・runnerはgoalのPASSを作らない。
+
+fixture内部を指すsymlinkは、元target文字列・metadata・解決先の証拠を保存し、公開snapshot内部の相対linkへ変換する。元fixtureは変更せず、外部・欠落・除外対象へのlinkは拒否する。収集が途中で失敗した場合の`recollect`は、固定raw・原fixture・旧partialの一致を先に検査し、旧partialを残した新しい`-publication-recovery`へ収集する。各公開先は一度だけ使用する。再収集自体が失敗した場合も上書きせず、前の失敗logと全inventoryを検証して明示した次のordinalへ進む。凍結・判定・収集完了後の再収集は認めない。実行済みtask/config/source/clock/予算は変更せず、収集時刻と実行終了時刻を分けて記録する。新しいpublication bindingに従ってfresh評価とfinalizeを行い、旧partialを後から凍結済みと扱わない。
 
 `finalize --goal-evaluation <path>`は共通verdictの`--runtime codex`へ接続する。scenario全観測・goal-seek実体・予算・原SHA・閉包・独立goalをすべて維持する。未実行/停止は`--blocked`で記録し、PASSへ変えない。自ら起動したprocess groupだけを終了し、他sessionへ操作しない。
 

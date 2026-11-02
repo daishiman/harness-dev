@@ -1,0 +1,24 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "必須観測1は未達。初回requirements文書は試行全体の完了判定を保留した候補であり、最終requirements-handoff-withheld.jsonはstatus=withheld、handoff_count=0、初回候補を最終handoffとして使用しないと明記する。requirements-finishは実行されておらず、exact-13 packageの最終capability-build/task-graph handoffは発行されていない。",
+    "sourceのdescription/Goalが要求する確定成果物からの実装要件導出と実装handoffに到達していない。後続run-system-dev-planは独立評価C1/C2 FAILで停止し、goal-spec.json・system-spec/spec-state.jsonの欠落、具体的要件・検証条件の不足、evidence/P01.jsonの出力要求とsrc/p01のみの書込許可の矛盾を実体で確認した。",
+    "必須観測2は初回候補のFEATURE-1・source_digest・graph snapshotへの結び付きまでは確認できるが、最終handoffが存在しないため必要なhandoffとしての充足を確認できない。必須観測3の実装source生成0件はtranscriptとfixture-finalで確認できるものの、handoff未発行を補えない。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/ci5_requirements_goal"
+  },
+  "transcript_sha256": "4fb5dff915060792192f1348c871263c56962f9edcbe181c72efc7ad33dfcaf8",
+  "evidence_refs": [
+    "task.md",
+    "evidence-freeze.json",
+    "transcript.jsonl",
+    "fixture-final/docs/requirements-FEATURE-1.md",
+    "fixture-final/eval-log/requirements-handoff-withheld.json",
+    "fixture-final/eval-log/run-dev-graph-requirements-progress.json",
+    "fixture-final/eval-log/run-system-dev-plan-final.json",
+    "fixture-final/.dev-graph/state/plan-findings-native-system-plan-01.json",
+    "fixture-final/.dev-graph/plans/generations/feature-package-feat/d716ee132ac54c611c0869e8e90b32c7be485d5b53b238845658b1ada136a093/task-specs/phase-01-requirements.md"
+  ]
+}

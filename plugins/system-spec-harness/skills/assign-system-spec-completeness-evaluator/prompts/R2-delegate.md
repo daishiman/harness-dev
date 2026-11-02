@@ -14,6 +14,19 @@
 ## Layer 1: 基本定義層
 
 ### 1.1 不変ルール
+
+**Runtimeの境界**: 以下の `Task` / `Agent` / `PostToolUse` / `SubagentStop` の記述はClaude経路の契約である。Codexでは次のnative経路を使い、Claudeのイベントや台帳行へ読み替えない。
+
+- 起動前に `SYSTEM_SPEC_AUDIT_RUNTIME=codex` と `SYSTEM_SPEC_AUDIT_FORK_LEDGER` が示すactor書込外の台帳・`host-binding.json` を確認する。host observer未配備・source pin不一致・台帳不在なら監査を開始せず停止する。評価者自身がobserverを起動したり台帳を作ってはならない。
+- runtimeの選択は `audit_fork_attribution.select_runtime` に一元化する。未設定だけClaude既定を維持し、`CODEX_THREAD_ID` の存在だけではCodexへ切り替えない。`SYSTEM_SPEC_AUDIT_RUNTIME` またはAPI/CLIの `--runtime` が空・未知・相互不一致なら停止する。hostがCodexを選択した経路ではschema 2.0のverified `spawn_agent` だけを受理し、legacy/mixed/破損行を含む台帳全体を拒否する。memory上のindexを信じず、集約・resume writerも同じruntimeを伝播してprotected原本を再照合する。
+- **信頼境界**: actorはサブプロセスの環境変数とargvを変更できるため、consumer自身のenv/CLI宣言だけで実際のhost runtimeを完全に証明できるとは主張しない。host固定の実行config・stateのruntime/override・native原ログ・schema 2.0の専有writerを外側の受入でも再照合し、actorがruntime宣言や経路を変更した証跡は不合格にする。両宣言を消した検査プロセスは旧Claude互換検査としてしか扱えず、Codex実走の受入証拠にはならない。
+- `spawn_agent` で `fork_turns="none"`、`task_name` はauditor名のハイフンをunderscoreへ変えた一意名 (`system_spec_matrix_auditor` / `system_spec_hearing_auditor` / `system_spec_doc_freshness_auditor`) を指定する。親の文脈を継承せず、1件ずつ完了まで待つ。受理通知は監査結果にしない。
+- 各子へ、対応agent定義とその `prompt_ssot` の正本絶対パス、入力、読取専用境界、最終行 `AUDIT_VERDICT: <PASS|FAIL|INDETERMINATE>` を渡す。子は両正本をliteralの絶対パスで実際に全文Readする。`cat` / `read_file` の出力上限は全文を収める値にし、途中切断した出力を全文とみなさない。定義・SSOT本文や判定を親が代理作成しない。
+- hostの `record-codex-audit.py` だけがnative原rolloutを観測し、protected領域へschema 2.0 (`producer=codex-native-rollout-observer`, `tool_name=spawn_agent`) と原snapshotを追記する。call ID→native返却agent path→子metadataの親thread/agent pathを一意に照合し、fresh context・実Read・完了・最終markerを検証する。暗号化済みspawn promptを復号・補完せず、子の実user入力をdigestする。
+- R2はその完成行の `session_id` / `tool_use_id` / `subagent_type` / `response_sha256` / `audit_verdict` をreceiptへそのまま転記し、`dispatch.tool=spawn_agent` とする。response digestは子の最終応答全文のUTF-8 SHA-256。`aggregate-completeness.py --report ... --fork-ledger ... --runtime codex --session <現在のCODEX_THREAD_ID>` はconfig/source pin・実sandboxの書込境界・native原本prefix・原snapshot・応答を再照合する。任意のschema 2.0 JSON、actor内台帳、古いsession、未完了、重複、source読取欠落を受理しない。
+- このhost observerはhook信頼設定を変更しない。公開用snapshotは実走後の証跡保管であり、実走時のprotected原本検査を代替しない。R2および監査agentの台帳作成・追記・補正は禁止する。
+
+Claudeの委譲規約:
 - sub-agent担当観点は **独立 context (`isolation: fork`) で起動**し、foundation/decision/deep-knowledge/prompt品質は必要入力と機械gate結果をR1へ透過する。
 - 監査は現行 `Agent` tool で対応 sub-agent (`system-spec-matrix-auditor` / `system-spec-hearing-auditor` / `system-spec-doc-freshness-auditor`) を起動して得る (`Task` は legacy 互換のみ)。R2 自身は監査ロジックを再実装しない (単一情報源 = 各 agent の SSOT prompt)。
 - **正式 evaluator は 1 件ずつ foreground で直列実行する**: 現行 PostToolUse は matching tool call ごとに top-level `tool_use_id` と当該 call の response を受け取り、parallel dispatch 時も各 hook が並行発火する (batch 全体は PostToolBatch の責務)。ただし parallel 対応は defensive hardening / canary であり、正式 evaluator の parallel 許可ではない。current runtime の fresh live-trial で schema 1.2 の end-to-end 帰属を実証するまでは、1 回の assistant message に複数の Task/Agent tool call を並べず、1 件の完全な応答と最終行 `AUDIT_VERDICT` が返り PostToolUse 台帳行が確定したことを確認してから次の 1 件を起動する。
@@ -85,7 +98,7 @@
 - rubric全観点の入力/evidenceが揃うことを記録する。
 
 ### 4.3 セキュリティ
-- 仕様書と監査対象は書き換えない (read-only)。書くのは 2.4 の C06 出力の保存だけ。各監査 sub-agent も read-only (書込・状態更新・再取得を行わない)。台帳 (`audit-fork-ledger.jsonl`) は hook 層だけが書く。
+- 仕様書と監査対象は書き換えない (read-only)。書くのは 2.4 の C06 出力の保存だけ。各監査 sub-agent も read-only (書込・状態更新・再取得を行わない)。台帳 (`audit-fork-ledger.jsonl`) は選択runtimeの専有writerだけが書く (Claude=hook、Codex=host observer)。
 
 ## Layer 5: エージェント層
 
@@ -129,4 +142,4 @@
 
 ## 出力指示
 
-現行 `Agent` tool で `system-spec-matrix-auditor` (C07) / `system-spec-doc-freshness-auditor` (C08) / `system-spec-hearing-auditor` (C06) をそれぞれ独立 context (fork) で起動する (`Task` は legacy 互換のみ)。現行 PostToolUse は per-call だが、fresh live-trial gate が未完了の正式 evaluator では 1 回の message で複数を同時起動せず、**1 件ずつ foreground で完全応答と `AUDIT_VERDICT` を受け取ってから次へ進む**。background/非同期 launch の受理応答は最終 verdict ではなく receipt に使わない。C07 を matrix_coverage の一次根拠、C08 を doc_freshness の一次根拠とし、C06 のヒアリング監査 (R6 の監査 5 軸・重大度付きの検出) は matrix_coverage の sub-input として併せる (独立観点に昇格させない。判定への対応は `aspect-criteria.md` 1a)。C06 のトレーサビリティ対象は `state=確定` セルと U1-U9 で、`decisions[]` は起動 prompt に含めず C05 `decision_guidance` へ渡す。**design_knowledge_reflection には監査 sub-agent を立てず** (C06 は仕様書 Markdown を読めない)、`spec_docs` を R1-score へ渡して自前評価に委ねる。監査ロジックは各 agent の SSOT に委ね、R2 は結果を書き換えず集約するだけにする。INDETERMINATE は隠さず明示し、集約結果を R1-score へ渡す。余計な前置きは禁止。
+選択runtimeの上記起動契約で `system-spec-matrix-auditor` (C07) / `system-spec-doc-freshness-auditor` (C08) / `system-spec-hearing-auditor` (C06) をそれぞれ独立 context (fork) で起動する (`Task` は legacy 互換のみ)。現行 PostToolUse は per-call だが、fresh live-trial gate が未完了の正式 evaluator では 1 回の message で複数を同時起動せず、**1 件ずつ foreground で完全応答と `AUDIT_VERDICT` を受け取ってから次へ進む**。background/非同期 launch の受理応答は最終 verdict ではなく receipt に使わない。C07 を matrix_coverage の一次根拠、C08 を doc_freshness の一次根拠とし、C06 のヒアリング監査 (R6 の監査 5 軸・重大度付きの検出) は matrix_coverage の sub-input として併せる (独立観点に昇格させない。判定への対応は `aspect-criteria.md` 1a)。C06 のトレーサビリティ対象は `state=確定` セルと U1-U9 で、`decisions[]` は起動 prompt に含めず C05 `decision_guidance` へ渡す。**design_knowledge_reflection には監査 sub-agent を立てず** (C06 は仕様書 Markdown を読めない)、`spec_docs` を R1-score へ渡して自前評価に委ねる。監査ロジックは各 agent の SSOT に委ね、R2 は結果を書き換えず集約するだけにする。INDETERMINATE は隠さず明示し、集約結果を R1-score へ渡す。余計な前置きは禁止。

@@ -1,0 +1,77 @@
+{
+  "result": "PASS",
+  "blockers": [],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "/root/ci5_schedule_goal"
+  },
+  "transcript_sha256": "a29f204d3676f58b1f555be6ef83e367a55c6fbab2f1ec75e645e7ec74fb6192",
+  "evidence_refs": [
+    "task.md",
+    "transcript.jsonl",
+    "transcript/subagents/01a19ad7-c2e7-72e0-9d3e-fb30f46f36ee.jsonl",
+    "native-run-state.json",
+    "native-collection-validation.json",
+    "collection-recovery-receipt.json",
+    "fixture-publication-receipt.json",
+    "public-copy-receipt.json",
+    "evidence-freeze.json",
+    "fixture-final/.dev-graph/state/graph.json",
+    "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json",
+    "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/leases.json",
+    "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/leases-after.json",
+    "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/source-tests.txt",
+    "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/graph-validation.json",
+    "fixture-final/eval-log/schedule-safety-audit/verdict.json",
+    "fixture-final/eval-log/schedule-safety-audit/recomputed-schedule.json",
+    "fixture-final/eval-log/schedule-safety-audit/c27-test.txt",
+    "fixture-final/eval-log/run-dev-graph-schedule-goal-spec.json",
+    "fixture-final/eval-log/run-dev-graph-schedule-progress.json",
+    "fixture-final/eval-log/run-dev-graph-schedule-intermediate.jsonl",
+    "fixture-final/eval-log/run-dev-graph-schedule-artifact-choice.json",
+    "fixture-final/artifact-choice-request.json"
+  ],
+  "evaluation_basis": "原scenario/task/config、sourceのdescription/Goal/完了条件、全required_observationsを独立に照合。out markerや監査PASS、テスト成功だけを根拠にせず、全13 nodeの状態・依存・resource_scopeと実lease snapshotから推薦集合を再判定した。",
+  "required_observations": [
+    {
+      "observation": "全推薦taskの全depends_onがdone",
+      "result": "PASS",
+      "evidence": "task-api-orders→task-base-schema(done)、task-cache-warmup→task-base-auth(done)、task-docs-runbook→依存なし。推移的依存にも未完了なし。推薦集合はこの3件と完全一致。"
+    },
+    {
+      "observation": "blocked/draft/unconfirmed/evaluation非pass/readiness非completeのready混入0件",
+      "result": "PASS",
+      "evidence": "全13 nodeを確認。release-gate、draft-idea、unconfirmed-migration、eval-failed-report、readiness-incomplete-uiは推薦なし。api-users-e2eも依存api-usersがactiveのため除外。完了済みbase2件も推薦なし。"
+    },
+    {
+      "observation": "batch内resource_scope重複0件とactive lease尊重",
+      "result": "PASS",
+      "evidence": "並列上限4に対し1 batch3件。src/api/orders/、src/cache/、docs/runbook/は親子prefixを含め互いに非重複。原実行終了06:02:50 UTC時点でtask-api-usersのclaimed leaseは06:27:32 UTCまで有効。自身とsrc/api/users/を共有するtask-api-users-cacheの双方を除外。conflict_pairsにもlease2件とready pair2件が記録されている。"
+    },
+    {
+      "observation": "各推薦taskのsuggested_branchとpublic worktree claim commandが一意",
+      "result": "PASS",
+      "evidence": "推薦3件それぞれdevgraph/<graph_node_id>と/dev-graph worktree claim <graph_node_id> --branch devgraph/<graph_node_id> --session-id <session>が正確に対応。branch/commandに重複なし。正規C27テスト内の同一Gへの別session claimがContractErrorになる実assertionと1 passedを確認。"
+    }
+  ],
+  "source_goal_checks": {
+    "read_only": "PASS。graph bytes SHAは9286b16320dabad5c8407e22c527f399ca84302f1fa2adf8482296025f8067c8でschedule前後・最終現物・controller preboot後SHAが一致。leases.jsonとleases-after.jsonもbytes一致。全nodeのbinding=noneでtracker digest nullは非該当。実CLIのlease listはDG31 read_only_snapshot経路で、既存lockをr/LOCK_SHで読み、mkdir/書込経路より前にreturnする。実run内でこのread-onlyテスト本文を読み、当該source testsを実行している。",
+    "feature_task_separation": "PASS。fixture内feature入力0件なのでfeature ready/batchは空、task3件のみをtask batchへ出力。非空featureやBeads parityの検証まで拡張した主張はしない。",
+    "native_choice_and_audit": "PASS。単独cat全文Readのsource SHAは387a64c8f36ae5788d3dd8af697657c2f77eb0c5dbc61675d8fbca025689c2e9。原transcript ordinal52で実schedule path/同一SHA/開き方/四択を提示、ordinal59の実user standardを受け、ordinal85で選択記録、ordinal90でnative独立監査起動。pre-choice spawnなし。C17再計算schedule bytes一致、全候補除外理由/resource_scope/branch/claimを実reportに保存。",
+    "goal_anchor": "PASS。親・独立監査のgoal/progress/intermediate実在。各1行のoriginal_goal/hash/current_goal_snapshot一致、drift_signal=false。",
+    "tests": "正規source pytest35件、独立監査内の隔離C27テスト1件を確認。再実行やfixture改変はしていない。"
+  },
+  "publication_recovery_checks": {
+    "result": "PASS",
+    "same_execution": "原run_id/session_id/started_at/elapsed287.07922410964966/2 turn/responses/budgetは原runner-state-beforeと一致。差分はcollectedとcollection_publicationのみ。原wall1200秒・tokens5000000を維持し時計reset/新actorなし。親1901381＋子868990=2770371 total tokensで原予算内。",
+    "raw_and_partial_preservation": "原raw11 entry・旧partial192 entry・source fixture175 entryと前回失敗publication/rawの全inventoryについてSHA/bytes/mode/mtime一致を確認。原failure observation/config/state SHAおよび前回failure log SHA一致。原rawと回収raw transcriptはbytes一致。native-exec6ファイルも原rawと公開copyがbytes一致。",
+    "public_transcript": "主/子のraw対public差分は既定instruction内basic instructionsを[REDACTED_AUTHORIZATION]へ置換した箇所のみ。実task・tools・観測結果・actor順序の改変なし。native collection validationは全raw再検査済み、pending_tools/format_errors空、子session完了。",
+    "symlinks": "23件の元FX内解決先とpublication receiptを照合。元linkは保持され、公開copyだけ内部相対targetへ変換。全件実在しrun外へ逸脱なし。",
+    "freeze": "保存直前に112ファイル全SHA、23 symlink全targetと実在・containment、指定transcript SHAを再照合。"
+  },
+  "limitations": [
+    "fixtureの全bindingがnoneのためBeads parityは非該当。feature入力0件のため非空featureの分離挙動は本実走の証明範囲外。",
+    "DG31の後続source修復を新actor実走として数えず、原実行5の公開回収として評価した。",
+    "旧partial inventoryはrecollection preflightで採取されたものであり、過去の失敗時点へ遡ったfreezeと主張しない。"
+  ]
+}

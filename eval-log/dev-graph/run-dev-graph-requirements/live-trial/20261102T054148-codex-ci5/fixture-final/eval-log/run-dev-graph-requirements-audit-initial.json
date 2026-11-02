@@ -1,0 +1,22 @@
+{
+  "evaluator": {"name":"requirements_audit","context":"native-subagent","responsibilities":["R1-elicit","R2-plan"]},
+  "scope":"初回stageの独立監査。最終完了判定ではない",
+  "verdict":"CONTINUE_NATIVE_SYSTEM_DEV_PLAN",
+  "choice_evidence":"eval-log/run-dev-graph-requirements-artifact-choice.json",
+  "user_choice":"standard",
+  "artifact":{"path":"docs/requirements-FEATURE-1.md","sha256":"ee294d1cb2c68ffcbe7e1e23631e5a74ba22c13df6d254358b535c99abd24951","matches_presented_bytes":true},
+  "binding_gate":{"script":"validate-readiness-binding.py","exit_code":0,"status":"pass","violations":[],"parent_feature":"FEATURE-1","feature_package_id":"feature-package/feat","validated_digest":"sha256:d716ee132ac54c611c0869e8e90b32c7be485d5b53b238845658b1ada136a093","graph_digest":"sha256:7011ea840d6edc7f85d3b7c822de86c8034274a7b89ec579a3ff5381257c5e1d","graph_revision":2,"readiness_digest":{"c11":"sha256:9f03cc54090768b5d195625dd5156fff969cb052976ed758cd11ff1577cf5be3","c02":"sha256:9f03cc54090768b5d195625dd5156fff969cb052976ed758cd11ff1577cf5be3"}},
+  "findings":[
+    {"severity":"info","observation":"実user選択standardとuser_choice_recorded記録を読み取った後に独立監査を開始した"},
+    {"severity":"info","observation":"対象13 taskとFEATURE-1、architecture-systemは実在し、package memberのsource_lineageはsystem-dev-plannerの既存generationを参照する。正規binding gateがfeature、package、source、readinessの整合をPASSした"},
+    {"severity":"info","observation":"graphのartifact kindはfeature、architecture、task。issueとspecificationのnodeは存在せず、文書もその不在を明示している"},
+    {"severity":"limitation","observation":"C19によるsystem-spec lineageはgraphに存在せず、system-specへのファイルリンクだけではC19取込の証明にならない。入力fixtureの制約として明示し、取込や確認根拠を補作してはならない"},
+    {"severity":"limitation","observation":"要件の内容は抽象的で、現文書はfeatureのscopeと原文acceptance、phase別task参照までを追跡する最小成果物である。具体的な製品要件の完全性を証明するものではない"},
+    {"severity":"pending","observation":"run-system-dev-planのnative適用、既存generationのidempotency・lineage検証、今回の独立system-plan評価は未実行。合成上流findingsを今回の評価とは扱わない"},
+    {"severity":"pending","observation":"最終requirements-finishによるhandoff確定とOUT2の不足時保留受入試験は未完了"}
+  ],
+  "implementation_source_audit":{"observed_new_source_files":[],"observation":"親contextの生成記録はMarkdownとJSONのみ。repo内のtoolsおよびreadonly skill sourceを除く一般的な実装拡張子の探索は該当0件。過去時点の全filesystem比較を代替する証明ではない"},
+  "next_operation":{"operation_id":"system-dev-plan","target_skill":"system-dev-planner:run-system-dev-plan","feature_context":"features/feature.json","preserve_source_digest":true},
+  "final_completion":false,
+  "mutated_inputs":false
+}

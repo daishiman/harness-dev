@@ -43,6 +43,7 @@ script_refs:
   - scripts/validate-live-trial-resource-budget.py
   - scripts/live-trial-verdict.py
   - scripts/manage-codex-live-trial.py
+  - scripts/record-codex-audit.py
   - scripts/extract-codex-transcript.py
   - scripts/build-live-trial-verdict.py
   - scripts/validate-live-trial-scenario-contract.py

@@ -1,0 +1,271 @@
+{
+  "verdict": "PASS",
+  "role": "C17/dev-graph-parallel-safety-verifier",
+  "selected_improvement": "standard",
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS",
+    "OUT2": "PASS",
+    "OUT3": "PASS"
+  },
+  "recomputed_ready_set": {
+    "features": [],
+    "tasks": [
+      "task-api-orders",
+      "task-cache-warmup",
+      "task-docs-runbook"
+    ]
+  },
+  "canonical_recomputed_bytes_identical": true,
+  "unsafe_pairs": [],
+  "stale_leases": [],
+  "active_leases": [
+    {
+      "graph_node_id": "task-api-users",
+      "state": "claimed",
+      "expires_at": "2026-11-02T06:27:32.701689Z",
+      "resource_scope": [
+        "src/api/users/"
+      ]
+    }
+  ],
+  "node_dispositions": [
+    {
+      "graph_node_id": "task-base-schema",
+      "resource_scope": [
+        "src/db/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=done"
+      ]
+    },
+    {
+      "graph_node_id": "task-base-auth",
+      "resource_scope": [
+        "src/auth/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=done"
+      ]
+    },
+    {
+      "graph_node_id": "task-api-users",
+      "resource_scope": [
+        "src/api/users/"
+      ],
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "active_lease:task-api-users"
+      ]
+    },
+    {
+      "graph_node_id": "task-api-orders",
+      "resource_scope": [
+        "src/api/orders/"
+      ],
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "unmet_transitive_dependencies": [],
+      "disposition": "ready",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-api-users-cache",
+      "resource_scope": [
+        "src/api/users/",
+        "src/cache/"
+      ],
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "active_lease:task-api-users"
+      ]
+    },
+    {
+      "graph_node_id": "task-cache-warmup",
+      "resource_scope": [
+        "src/cache/"
+      ],
+      "depends_on": [
+        "task-base-auth"
+      ],
+      "unmet_transitive_dependencies": [],
+      "disposition": "ready",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-docs-runbook",
+      "resource_scope": [
+        "docs/runbook/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "ready",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-api-users-e2e",
+      "resource_scope": [
+        "tests/e2e/users/"
+      ],
+      "depends_on": [
+        "task-api-users"
+      ],
+      "unmet_transitive_dependencies": [
+        "task-api-users"
+      ],
+      "disposition": "excluded",
+      "reasons": [
+        "dependency_unsatisfied:task-api-users"
+      ]
+    },
+    {
+      "graph_node_id": "task-release-gate",
+      "resource_scope": [
+        "release/"
+      ],
+      "depends_on": [
+        "task-api-orders"
+      ],
+      "unmet_transitive_dependencies": [
+        "task-api-orders"
+      ],
+      "disposition": "excluded",
+      "reasons": [
+        "status=blocked",
+        "dependency_unsatisfied:task-api-orders"
+      ]
+    },
+    {
+      "graph_node_id": "task-draft-idea",
+      "resource_scope": [
+        "src/api/users/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=draft",
+        "confirmation_status=draft",
+        "evaluation_status=pending",
+        "readiness=incomplete",
+        "active_lease:task-api-users"
+      ]
+    },
+    {
+      "graph_node_id": "task-unconfirmed-migration",
+      "resource_scope": [
+        "src/db/migrations/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=draft",
+        "confirmation_status=draft",
+        "evaluation_status=pending"
+      ]
+    },
+    {
+      "graph_node_id": "task-eval-failed-report",
+      "resource_scope": [
+        "reports/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=draft",
+        "evaluation_status=fail"
+      ]
+    },
+    {
+      "graph_node_id": "task-readiness-incomplete-ui",
+      "resource_scope": [
+        "src/ui/"
+      ],
+      "depends_on": [],
+      "unmet_transitive_dependencies": [],
+      "disposition": "excluded",
+      "reasons": [
+        "status=draft",
+        "evaluation_status=pending",
+        "readiness=incomplete"
+      ]
+    }
+  ],
+  "assignment_hints": [
+    {
+      "claim_command": "/dev-graph worktree claim task-api-orders --branch devgraph/task-api-orders --session-id <session>",
+      "graph_node_id": "task-api-orders",
+      "suggested_branch": "devgraph/task-api-orders"
+    },
+    {
+      "claim_command": "/dev-graph worktree claim task-cache-warmup --branch devgraph/task-cache-warmup --session-id <session>",
+      "graph_node_id": "task-cache-warmup",
+      "suggested_branch": "devgraph/task-cache-warmup"
+    },
+    {
+      "claim_command": "/dev-graph worktree claim task-docs-runbook --branch devgraph/task-docs-runbook --session-id <session>",
+      "graph_node_id": "task-docs-runbook",
+      "suggested_branch": "devgraph/task-docs-runbook"
+    }
+  ],
+  "input_sha256": {
+    ".dev-graph/state/graph.json": "9286b16320dabad5c8407e22c527f399ca84302f1fa2adf8482296025f8067c8",
+    "eval-log/dev-graph/run-dev-graph-schedule/schedule.json": "0e4516aee2f1bcbaeb23d8c5623f1f18845dca0db625b3d99234e180caa3e71a",
+    "eval-log/dev-graph/run-dev-graph-schedule/leases.json": "1002bdb1b75583654cd186e99374424f35411ff534c211c8aab24aa1b0a12332"
+  },
+  "input_digest_before_after_equal": true,
+  "feature_task_separation": true,
+  "tracker_parity": "not_applicable: all tracker_binding=none; external access=0",
+  "c27_duplicate_claim_acceptance": {
+    "source_test": "tests/test_c27_c28_projection_contract.py::test_c27_fail_closed_owner_pending_release_and_projection_repair",
+    "result": "PASS",
+    "accepted_duplicate_claims": 0,
+    "evidence": "c27-test.txt",
+    "isolation": "FX内pytest-tmpのみ。本物graph/leaseへのclaimなし"
+  },
+  "read_only_target_mutations": 0,
+  "notes": [
+    "正規CLIの再計算およびsource pytestを使用。独立監査のnode判定はC17が入力snapshotを読んで確認した観察記録であり正規gateの代用driverではない。",
+    "MVP順序は全3件mvp_fit未設定、sort_rank=2、purpose/background/rationale=null。id順を保持。"
+  ],
+  "responsibility_acceptance": {
+    "R1-elicit": {
+      "verdict": "PASS",
+      "evidence": "ユーザー引数は実在C24 repository全体、scope=null、max_parallel=4の正整数。feature/task候補種別を分離。追加ヒアリング不要。"
+    },
+    "R2-plan": {
+      "verdict": "PASS",
+      "evidence": "全node tracker_binding=none。candidate source=self、confirmed/pass/readiness completeと全依存完了を要求。active leaseおよびresource_scope partition適用。claimなし。"
+    },
+    "R3-schedule": {
+      "verdict": "PASS",
+      "evidence": "canonical schedule再計算のbytes一致、独立ready再計算一致。推薦3件は全gate充足、unsafe pair=0、正準branch/public claim commandを一意返却。"
+    }
+  },
+  "semantic_acceptance": {
+    "standard": "PASS",
+    "feedback_iterations": 1,
+    "blockers": [],
+    "limitations": [
+      "feature入力0件のためfeature/task分離は空feature batchとtask種別確認。Beads parityはbinding=noneのため非該当。",
+      "C27二重claim抑止は正規source pytestのFX内isolated fixtureで実行。本物leaseはread-only。"
+    ]
+  }
+}

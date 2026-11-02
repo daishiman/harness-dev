@@ -2,6 +2,12 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.61 — 2026-11-02
+
+- Codexの実監査をactor書込外の原ログと台帳へ結び、専用consumerによる再検証へ対応。
+- 公開snapshotの内部リンク変換と、原データ・失敗先・実行時計を保持した別公開先への再収集を追加。
+- 不要なスキル一覧を試行単位で除外する任意設定を追加。必要なsource・検査・予算・ユーザー設定は維持。
+
 ## 1.4.60 — 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

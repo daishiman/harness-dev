@@ -1,0 +1,15 @@
+{
+  "agent": "dev-graph-integrity-auditor",
+  "verdict": "PASS",
+  "graph_digest": "sha256:da99f6503188a37be558ea365fbc3f65a4efe6c7661c22ce7200996081606175",
+  "checks": {
+    "snapshot": "指定bytes SHA一致",
+    "schema": "正規validator --require-canonical-envelope exit0 valid=true violations=[]",
+    "DAG": "全5node depends_on空、循環なし",
+    "orphan": "正規rootのMarkdown5件がgraph file_path集合と一致",
+    "path_containment": "全5pathがrepo内・kind正規root一致",
+    "feature_package_boundary": "feature/package memberなし、parent/package/phase null",
+    "receipt": "update applied_count5 revision1→2 graphとcanonical digest/全artifact SHA一致"
+  },
+  "findings": []
+}

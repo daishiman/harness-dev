@@ -19,6 +19,9 @@ scripts:
   - id: audit_fork_attribution
     path: scripts/audit_fork_attribution.py
     read_when: 独立監査 receipt と PostToolUse fork 台帳の照合・run/session 束縛を確認する時
+  - id: codex_audit_verifier
+    path: scripts/validate-codex-audit.py
+    read_when: Codexのprotected native監査台帳と原rolloutの親子・Read・完了・応答digestを再検証する時
   - id: build_resume_receipt
     path: scripts/build-resume-receipt.py
     read_when: aggregate 検証・全 production gate・artifact snapshot 現在値照合が全て PASS した後だけ、resume receipt を atomic 生成する時

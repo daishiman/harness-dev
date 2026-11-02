@@ -1,0 +1,186 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-schedule",
+  "args": "--repo-root /private/tmp/harness-codex-ci5-20261102/cases/schedule/fx --max-parallel 4",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation-contract.json",
+    "sha256": "b7616318f6a7866e46df56c1dae7f39d52fc754f0c2c52aa5f96bee3e7b141cb",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "/root/ci5_schedule_goal"
+    },
+    "transcript_sha256": "a29f204d3676f58b1f555be6ef83e367a55c6fbab2f1ec75e645e7ec74fb6192",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a19ad7-c2e7-72e0-9d3e-fb30f46f36ee.jsonl",
+      "native-run-state.json",
+      "native-collection-validation.json",
+      "collection-recovery-receipt.json",
+      "fixture-publication-receipt.json",
+      "public-copy-receipt.json",
+      "evidence-freeze.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/leases.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/leases-after.json",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/source-tests.txt",
+      "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/graph-validation.json",
+      "fixture-final/eval-log/schedule-safety-audit/verdict.json",
+      "fixture-final/eval-log/schedule-safety-audit/recomputed-schedule.json",
+      "fixture-final/eval-log/schedule-safety-audit/c27-test.txt",
+      "fixture-final/eval-log/run-dev-graph-schedule-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-schedule-progress.json",
+      "fixture-final/eval-log/run-dev-graph-schedule-intermediate.jsonl",
+      "fixture-final/eval-log/run-dev-graph-schedule-artifact-choice.json",
+      "fixture-final/artifact-choice-request.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-schedule"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "5aedb2dabfb666dc01ac7ac227031112059989bcefa5306635e8402833cee3a1",
+  "transcript_sha256": "a29f204d3676f58b1f555be6ef83e367a55c6fbab2f1ec75e645e7ec74fb6192",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-schedule/live-trial/20261102T054148-codex-ci5/out",
+          "/private/tmp/harness-codex-ci5-20261102/cases/schedule/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "a020316bbe12f52edf7fd1eeee70516c42c5a32f34c472a97e6daa110f88d184"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 288.0
+  },
+  "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "/private/tmp/harness-codex-ci5-20261102/cases/schedule/control/scenario.json",
+    "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "every recommended task has all depends_on satisfied (ready)",
+      "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+      "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+      "suggested_branch and the worktree claim command are unique per recommended task"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "every recommended task has all depends_on satisfied (ready)",
+        "evidence_ref": "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      },
+      {
+        "index": 2,
+        "observation": "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+        "evidence_ref": "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      },
+      {
+        "index": 3,
+        "observation": "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+        "evidence_ref": "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      },
+      {
+        "index": 4,
+        "observation": "suggested_branch and the worktree claim command are unique per recommended task",
+        "evidence_ref": "fixture-final/eval-log/dev-graph/run-dev-graph-schedule/schedule.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "template_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 288.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "644c9f54d2ef857b9d84931d5ff787448690d61dbd800cf3fa4a79253a9850e4",
+      "tokens": {
+        "input_tokens": 2758752,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 11619,
+        "total_tokens": 2770371,
+        "assistant_messages": 40,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}
