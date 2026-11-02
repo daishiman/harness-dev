@@ -2,9 +2,11 @@
 """live-trial 実走 acceptance 証拠 (verdict.json) を機械検査する (offline, tmux/LLM 不実行)。
 
 役割境界 (D9: lint-content-review 同型の最終強制層):
-  - 機械層: eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json (最新 run-id) の
-            schema 適合 / skill_dir_tree_sha 再計算突合 / overall.verdict=PASS /
-            tier 降格・denylist 被験体の除外 を検査
+  - 機械層: 受理証跡 1 件の schema 適合 / skill_dir_tree_sha 再計算突合 /
+            overall.verdict=PASS / tier 降格・denylist 被験体の除外 を検査。
+            criteria receipt が live-trial PASS を指すときはその verdict を受理証跡にする。
+            辞書順で新しい BLOCKED/DEGRADED/FAIL は、receipt が採用した current PASS を
+            隠さない。receipt が無い skill だけ最新 run-id を見る。
   - 実走層 (本 lint の対象外): trial 実行はローカル claude + tmux で run-skill-live-trial
             を起動して行う (リモート CI での LLM/tmux 実行は D14 で却下済み)
 
@@ -15,6 +17,9 @@ D13 パイロットゲート: verdict **不在** は FAIL にしない (record-o
 --enforce (P3 常設化 go/no-go で昇格するまで既定 OFF) 指定時のみ不在も FAIL。
 verdict が **存在する** 場合の stale-sha / schema 不適合 / FAIL verdict / downgrade は
 パイロット中も exit 1 (存在する証拠の偽装・陳腐化は soft にしない)。
+stale-sha は、verdict を commit したツリーと今の挙動閉包を比べ、挙動投影が
+変わったファイル名を同じ行に出す。manifest の version だけが動いたファイルは
+出さない。sha の手書き更新はしない。
 
 Usage:
   python3 scripts/lint-live-trial-verdict.py --all [--enforce]
@@ -36,6 +41,10 @@ EVAL_LOG = ROOT / "eval-log"
 HARNESS_SKILL_DIR = (
     Path(__file__).resolve().parent.parent
     / "plugins" / "harness-creator" / "skills" / "run-skill-live-trial"
+)
+EVIDENCE_SELECTION = (
+    Path(__file__).resolve().parent.parent
+    / "plugins" / "dev-graph" / "lib" / "live_trial_evidence_selection.py"
 )
 
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -94,6 +103,27 @@ def _declares_live_trial(plugin, skill):
     )
 
 
+def _evidence_selection():
+    """criteria receipt の受理選択。PLUGINS_DIR を差し替えても実装元は repo に固定する。"""
+    return _load_module(EVIDENCE_SELECTION)
+
+
+def acceptance_verdict_path(plugin, skill):
+    """受理証跡。receipt の PASS を優先し、receipt が無いときだけ最新 run-id。
+
+    戻り値は (path, error)。error があるとき path は使わない (壊れた receipt を
+    新しい FAIL/PASS へ読み替えない)。
+    """
+    selected, error = _evidence_selection().verdict_selection_from_criteria_receipt(
+        EVAL_LOG.parent, plugin, skill,
+    )
+    if error:
+        return None, error
+    if selected is not None:
+        return selected, None
+    return latest_verdict_path(plugin, skill), None
+
+
 def latest_verdict_path(plugin, skill):
     """最新 run-id (辞書順最大) の verdict.json。無ければ None。"""
     base = EVAL_LOG / plugin / skill / "live-trial"
@@ -132,10 +162,16 @@ def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
         current_sha = (verdict_mod.skill_dir_tree_sha(skill_dir, runtime=runtime)
                        if runtime == "codex" else verdict_mod.skill_dir_tree_sha(skill_dir))
         if data.get("skill_dir_tree_sha") != current_sha:
-            errs.append(
-                f"stale-sha: 記録 {data.get('skill_dir_tree_sha')} != 現在 {current_sha} "
-                "(被験 skill の挙動面が verdict 後に変更された — 再 trial 要)"
-            )
+            used_runtime = runtime if runtime == "codex" else "claude"
+            labels = None
+            commit = verdict_mod.verdict_baseline_commit(ROOT, path)
+            if commit:
+                labels = verdict_mod.closure_drift_labels(
+                    ROOT, skill_dir, commit, runtime=used_runtime,
+                )
+            errs.append(verdict_mod.format_stale_sha(
+                data.get("skill_dir_tree_sha"), current_sha, labels,
+            ))
         if runtime == "codex":
             for error in verdict_mod.validate_runtime_evidence(
                 data, path.parent / "transcript.jsonl", skill_dir,
@@ -192,7 +228,10 @@ def run_lint(plugin_filter=None, enforce=False):
             _declares_live_trial(plugin, skill)
             and not backend_mod.deny_target_skill(skill)
         )
-        latest = latest_verdict_path(plugin, skill)
+        latest, selection_error = acceptance_verdict_path(plugin, skill)
+        if selection_error:
+            violations.append(f"{plugin}/{skill}: {selection_error}")
+            continue
         if latest is None:
             if required:
                 missing.append(
@@ -224,8 +263,9 @@ def run_lint(plugin_filter=None, enforce=False):
         for v in violations:
             print(f"  - {v}")
         print()
-        print("Fix: 指定runtime（Claude Code / Codex）で run-skill-live-trial を対象 skill に対し実行し")
-        print("     eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json を保存してください。")
+        print("Fix: 違反行の挙動差分 path に対し、指定 runtime（Claude Code / Codex）で")
+        print("     run-skill-live-trial を実行し、その PASS の verdict.json を保存する。")
+        print("     criteria receipt の ref はその run へ更新する。sha の手書きは証拠の偽装になる。")
         return 1
     if enforce and missing:
         return 1

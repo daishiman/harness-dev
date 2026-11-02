@@ -1,0 +1,55 @@
+{
+  "verdict": "PASS",
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈の3論点を名指しで1問に束ねていた。superseded_by=qa-019 は1論点の開いた問で中立(N1-N4に違反なし)、JTBDの論点が同じ、basis=user-decision で answered_at(2026-10-12T00:16:45Z) が旧 superseded_at より前に記録済み。active consumer は0件で、確定セルの qa_ref と foundation の根拠のどちらにも使われていない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "info",
+      "qa_id": "qa-037",
+      "supersession_valid": true,
+      "observation": "閉じた検出。問の文面は3案と保留の道を備え N1-N4 の違反は読み取れない。置き換えの理由は basis/provenance の根拠不足(orchestrator の既定値)。superseded_by=qa-csrf-written-v7 は問の文面が中立で、CSRF防御という同論点を扱う。書面 section「CSRF防御」の逐語実在と sha256 一致を確認した。active consumer は0件。旧 entry は matrix の qa_ref/qa_refs から外れている。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。保存先の選択と、有効期限・ログアウトの扱いという独立した2論点を1問に束ねていた。superseded_by=qa-session-written-v7 は問の文面が中立で、セッション保存の論点が同じ。書面 section「セッション保存」の逐語実在と sha256 一致を確認した。active consumer は0件。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "observation": "U1-U9 の要約確認を1問にまとめている。ただし「直すところを指摘する」「保留」の道があり、承認の確認であって値の決定問ではない。どの確定セルの qa_ref/qa_refs にも使われず、approval_ref の根拠にとどまるため、主たる接地根拠ではない(PASSに残す注記)。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "observation": "請求漏れの定義・検知時期・提示先・計測データの4論点を名指しで並べた開いた問。N4『開いた問』の但し書きにあるとおり、論点を複数名指す問は束ねに当たる。4つの確定セルの補助 qa_refs(database/ui-ux/backend/maintenance-ops)だけで、主たる qa_ref ではない(PASSに残す注記)。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-job-choice-fixture-v3",
+      "criteria": ["N1"],
+      "observation": "選択肢(1)に D4 の recommendation と同じ案(pg-worker-cron)が先頭に置かれ、案 id 昇順(api-background-http が先)と食い違う。推奨の印や不利な点の片寄りはなく、「別案・保留も選べます」と明記されているので、答えを左右したとは読めない。確定セルの補助 qa_refs だけ。"
+    },
+    {
+      "axis": "traceability",
+      "severity": "info",
+      "cell": "ui-ux/web",
+      "observation": "補助 qa_refs に置き換え済み(retired)の qa-009 が残っている。主たる qa_ref は qa-003 で、qa-009 の置き換え先 qa-019 も同じ qa_refs にある。active consumer の定義(qa_ref と effective_source_refs)には当たらないため qa-009 は閉じた検出のまま。ただし C01 で qa_refs から qa-009 を外せば現行参照が整理される。"
+    }
+  ]
+}

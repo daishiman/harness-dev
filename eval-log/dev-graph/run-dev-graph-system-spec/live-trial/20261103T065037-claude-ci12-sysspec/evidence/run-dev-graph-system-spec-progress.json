@@ -1,0 +1,21 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "loop": 2,
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json + R0 独立 Agent PASS"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/preflight-report.json + R1 独立 Agent PASS"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/R2/*.json + R2 独立 Agent PASS"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "coverage exit0 / source-citation exit0 / eval-log/system-spec-completeness-report.json verdict=PASS (loop 2 でも再実行 exit0)"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/R3/import-report.json / C02 receipt .dev-graph/state/receipts/node-r000001-add.json / lineage gate exit0 (R3/lineage-gate.json) / integrity auditor PASS / R3 独立 Agent PASS"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R1/R2/R3 独立 Agent の確認で 0 件"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "loops": [
+      {"loop": 1, "coverage": 0, "source_citation": 0, "graph_schema": 0, "status": "PASS"},
+      {"loop": 2, "coverage": 0, "source_citation": 0, "graph_schema": 0, "status": "PASS"}
+    ]},
+    {"id": "OUT1", "status": "external_pending"}
+  ],
+  "blockers": [],
+  "next": null
+}

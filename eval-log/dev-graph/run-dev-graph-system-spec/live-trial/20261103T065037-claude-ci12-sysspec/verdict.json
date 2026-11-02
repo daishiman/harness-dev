@@ -1,0 +1,153 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "--repo-root /private/tmp/harness-claude-ci10-20261102/cases/system-spec/fx --resume",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "46387dc41801c49d148c3b5de9071fee0beb52bb41d34e875ed2dce6d6fe0771",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "grok-fresh-evaluator-system-spec-ci12"
+    },
+    "transcript_sha256": "36748a42b3eef903c532e95f72af6eedae6e0cb06cf7fa01c7283842a8c34123",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "evidence/graph.json",
+      "evidence/lineage-validation.json",
+      "evidence/system-spec-completeness-report.json",
+      "evidence/run-dev-graph-system-spec__R3__import-report.json",
+      "evidence/run-dev-graph-system-spec__R2__doc-fetch-decision.json",
+      "evidence/run-dev-graph-system-spec__R2__elicit-receipt.json",
+      "evidence/run-dev-graph-system-spec__R2__compile-receipt.json",
+      "evidence/run-dev-graph-system-spec__R2__evaluator-receipt.json",
+      "evidence/run-dev-graph-system-spec__R3__lineage-gate.json",
+      "evidence/run-dev-graph-node__schema-report.json",
+      "evidence/run-dev-graph-system-spec__preflight-report.json",
+      "evidence/goal-seek-validation.json",
+      "evidence/run-dev-graph-system-spec-progress.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node",
+    "dev-graph:run-dev-graph-system-spec",
+    "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "system-spec-harness:run-system-spec-compile",
+    "system-spec-harness:run-system-spec-elicit"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "ac549b4e03476f5685d27e1a46d42e879595b1c3debf3547ff5c2979179ecbfe",
+  "transcript_sha256": "36748a42b3eef903c532e95f72af6eedae6e0cb06cf7fa01c7283842a8c34123",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.316",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1696.26922082901
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+    "required_observations": [
+      "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+      "the imported specification and architecture retain source lineage and evaluator evidence",
+      "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "evidence_ref": "evidence/run-dev-graph-system-spec__preflight-report.json"
+      },
+      {
+        "index": 2,
+        "observation": "the imported specification and architecture retain source lineage and evaluator evidence",
+        "evidence_ref": "evidence/graph.json"
+      },
+      {
+        "index": 3,
+        "observation": "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph",
+        "evidence_ref": "evidence/run-dev-graph-system-spec__R3__import-report.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "template_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "actual_flags": [
+        "--repo-root",
+        "--resume"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 23000000,
+      "max_wall_clock_s": 3300
+    },
+    "resource_usage": {
+      "wall_clock_s": 1696.26922082901,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "d42567e95a36463637e33cd24407d71b0d7e98a0cfe03c66b419fb2bb87e42d5",
+      "tokens": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 412375,
+        "cache_read_input_tokens": 7615258,
+        "output_tokens": 66934,
+        "total_tokens": 8094727,
+        "assistant_messages": 77,
+        "assistant_message_ids": 77,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

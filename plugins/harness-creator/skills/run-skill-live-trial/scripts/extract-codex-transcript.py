@@ -164,6 +164,54 @@ def _successful_read_output(output: Any, source: str) -> bool:
     return False
 
 
+_PATH_TOKEN_CHAR = re.compile(r"[A-Za-z0-9._/-]")
+_SKILL_PATH_TOKEN = re.compile(r"/[^\s'\"`;|&<>]+/SKILL\.md(?![^\s'\"`;|&<>])")
+
+
+def _contains_bounded_path(raw_input: str, value: str) -> bool:
+    """Match a path token, not a longer path that merely contains that spelling."""
+    if not value:
+        return False
+    start = 0
+    while True:
+        index = raw_input.find(value, start)
+        if index < 0:
+            return False
+        before = raw_input[index - 1] if index else ""
+        after_index = index + len(value)
+        after = raw_input[after_index] if after_index < len(raw_input) else ""
+        if not (before and _PATH_TOKEN_CHAR.fullmatch(before)) and not (after and _PATH_TOKEN_CHAR.fullmatch(after)):
+            return True
+        start = index + 1
+
+
+def _command_reads_injected_file(raw_input: str, injected: Path, relative: str | None) -> bool:
+    """Accept the injected spelling or another spelling of that same file.
+
+    Codex may inject the real path while the model reads a symlink spelling, or
+    the reverse. Both name one file when ``resolve()`` agrees. A same-byte copy
+    at another path, or a ``SKILL.md`` prefix of a longer filename, is not that
+    file. The caller still requires the read output to equal the pinned source.
+    """
+    literals = [str(injected)]
+    if relative:
+        literals.append(relative)
+    if any(_contains_bounded_path(raw_input, value) for value in literals):
+        return True
+    try:
+        target = injected.resolve()
+    except OSError:
+        return False
+    for match in _SKILL_PATH_TOKEN.finditer(raw_input):
+        candidate = Path(match.group(0))
+        try:
+            if candidate.exists() and candidate.resolve() == target:
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def _usage(payload: dict) -> dict[str, int] | None:
     info = payload.get("info")
     raw = info.get("total_token_usage") if isinstance(info, dict) else payload.get("thread_token_usage")
@@ -384,7 +432,7 @@ def _inspect_one(path: Path, *, skill_dir: Path | None = None, target_skill: str
                     continue
                 if not re.search(r"\b(?:cat|sed|read_file)\b|\.read_(?:text|bytes)\s*\(", raw_input):
                     continue
-                if not any(value and value in raw_input for value in (str(injected), relative)):
+                if not _command_reads_injected_file(raw_input, injected, relative):
                     continue
                 if _successful_read_output(successful[call_id], selected_source):
                     activations.append({"skill": qualified, "path": str(injected),

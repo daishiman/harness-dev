@@ -1,0 +1,11 @@
+{
+  "contract": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "transitions": [
+    {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed", "evidence": "preflight-report.json JSON parse OK / secret 0 / irreversible 0"},
+    {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented", "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json", "sha256": "239105b0b4ba59e6ac6a32d599f98c124943e1d48d5ca09752efa04776afdb2f", "open_with": "python3 -m json.tool eval-log/run-dev-graph-system-spec/preflight-report.json"},
+    {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded", "choice": "standard", "choice_source": "隔離 fixture の事前回答契約 (task.md: artifact_delivery の選択は standard)"},
+    {"from": "user_choice_recorded", "event": "standard", "to": "semantic_evaluator_started"}
+  ],
+  "state": "semantic_evaluator_started"
+}

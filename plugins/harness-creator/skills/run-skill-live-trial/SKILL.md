@@ -118,7 +118,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 Codexではnativeの`$skill`適用・本文の実Read・subagent・実user turnを原JSONLで検査する。`Skill`/`Agent`やStop/権限hookのClaudeイベントを生成しない。native operationを複数user turnで渡した試行は、その回数と順序を記録し、単一入力での無対話自走とは主張しない。未確認のnative hookを必要とするscenarioは保留し、代替receiptを自作しない。
 
-runtimeをまたいだPASS再利用は禁止。旧runtime未記録の証跡はClaudeとして保持する。CodexはCodex面を含む閉包・CLI版・実model・累積usage・親子session・原transcriptを検査し、既存の全観測・予算・fresh独立goal判定を省略しない。
+runtimeをまたいだPASS再利用は禁止。旧runtime未記録の証跡はClaudeとして保持する。`--profile refresh` は受領 verdict の runtime へ計画を合わせ、その runtime の current PASS だけを再利用する。別 runtime の PASS を、指定 runtime の合格としては使わない。CodexはCodex面を含む閉包・CLI版・実model・累積usage・親子session・原transcriptを検査し、既存の全観測・予算・fresh独立goal判定を省略しない。
 
 ## 適用境界 (fork acceptance との直交)
 
@@ -135,7 +135,7 @@ runtimeをまたいだPASS再利用は禁止。旧runtime未記録の証跡はCl
 
 - **acceptance 専用**: 「対象 skill が fresh context で期待どおり動くか」だけを扱う。**selection (複数 skill / 設定の比較) は扱わない** — acceptance に品質比較を混ぜると目的がぼやける。1 回の実走 = 1 skill の受け入れ。
 - **常設 = 常時発火可能 + 条件必須** (D9): 本 skill はいつでも起動できるが、無条件の全 kind 実行はしない。発火は「behavioral trait 該当 × 挙動面 SHA 差分 × 予算内」の三積、非該当は queue へ deferred 記録。**proof trial のみ無条件**。
-- **既定は incremental plan**: 複数 skill を検証するときは、実セッションを起動する前に `scripts/plan-live-trials.py` を必ず実行する。schema-valid PASS verdict・挙動閉包 SHA・stable `scenario_id`・transcript SHA が一致する証跡は再利用し、既定では新規 live trial を最大2本・同時2本までに制限する。scenario 契約を変更したら `scenario_id` も更新して旧証跡を無効化する。全件再実走は利用者が `--profile exhaustive` を明示した場合だけ許可する。
+- **既定は incremental plan**: 複数 skill を検証するときは、実セッションを起動する前に `scripts/plan-live-trials.py` を必ず実行する。criteria receipt が live-trial PASS を指す skill は、その verdict だけを再利用候補にする。辞書順で新しい BLOCKED / DEGRADED / FAIL は、その PASS を隠さない。壊れた receipt は別の PASS へ読み替えず、実走枠にも入れない。receipt が無い skill だけ、新しい順で schema-valid PASS・挙動閉包 SHA・stable `scenario_id`・transcript SHA が一致する証跡を再利用する。既定では新規 live trial を最大2本・同時2本までとし、枠は `behavior-changed` から使う。予算で遅れた skill は `evidence_reason` と `behavior_drift` を残す。scenario 契約を変更したら `scenario_id` も更新して旧証跡を無効化する。current PASS を再実走せず、再利用できない live skill をすべて実走するのは `--profile refresh`。refresh は受領 verdict の runtime で閉包を見て、current ならその runtime のまま再利用し、stale ならその runtime で再実走する。`--runtime` は receipt が無い skill の実行基盤だけを決める。incremental と exhaustive は runtime をまたいだ PASS を再利用しない。受領閉包が stale なら runtime が違っても `behavior-changed` と `behavior_drift` と `acceptance_runtime` を残し、予算は `behavior-changed` から使う。`live_batches` は同じ runtime だけを同時に走らせる。current PASS を含めて全件再実走するのは、利用者が `--profile exhaustive` を明示した場合だけ。
 - **ローカル開発環境限定** (D14): 本 skill は harness-creator の開発環境でのみ動かす。**量産先 plugin への配備対象外** (composition invariant)。
 - **被験 skill denylist (再帰遮断)**: `run-skill-live-trial` / `run-skill-iter-improve` 自身は被験体にできない (trial 内で trial/改善ループが入れ子起動して発散するため)。正本は `scripts/live-trial-backend.py` の `DENY_TARGET_SKILLS` で、boot / verdict が機械拒否する。
 
@@ -162,7 +162,7 @@ fork subagent では自走 / 入れ子 Skill / 対話 gate / 本番 hook ロー�
 
 - [ ] 被験 skill が denylist 外で、workdir が `eval-log/<plugin>/<skill>/live-trial/<run-id>/` に作られた
 - [ ] task.md が契約 8 項目 (下表) を満たし、`READY:` 確認後にファイル経由で送信された
-- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP) で閉じ、`--state-file` で counter が呼び越し永続化された
+- [ ] poll が終端 exit (DONE / STALL / GATE / HARD_CAP / TOKEN_CAP) で閉じ、`--state-file` で counter が呼び越し永続化された
 - [ ] out/ + pane.txt + transcript.jsonl の 3 点が workdir に揃った (回収完了条件)
 - [ ] fresh evaluator が PASS | FAIL + blocker 列挙のみを返した (点数出力なし。正本 = goal-seek-paradigm.md 達成判定節)
 - [ ] `verdict.json` が schema 自己検証を通過して書き出され、scenario 観測の `evidence_ref` が workdir 内の実在ファイルへ解決した (proof trial は actual_model 機械 gate 込み)
@@ -189,7 +189,7 @@ python3 "$SCRIPTS/plan-live-trials.py" \
   --max-concurrency 2
 ```
 
-`skills[].action` が `reuse` のものは実走しない。`run` だけを `live_batches` の順に実走し、`defer` は予算超過として queue / 最終報告へ残す。`exhaustive` は明示指定時だけ全 live candidate を再実走する。planner はLLMを起動せず、既存証跡と挙動閉包だけで決定する。
+`skills[].action` が `reuse` のものは実走しない。`run` だけを `live_batches` の順に実走する。`defer` のうち `live-budget-exhausted` は予算超過で、`evidence_reason` が再実走の理由、`behavior_drift` が変わった挙動ファイルである。`criteria-receipt-` で始まる `defer` は受領書の修復待ちで、実走しない。再利用できないものだけをすべて実走するときは `--profile refresh`。refresh の `run` と `reuse` は `skills[].runtime` に受領 verdict の runtime を書く。receipt が無い skill だけ計画の `--runtime` を使う。1 つの `live_batches` 要素は同じ runtime だけを含む。incremental で受領が current だが runtime が違う skill は `runtime-mismatch` で、再利用しない。受領閉包が stale なら runtime が違っても `behavior-changed`、`behavior_drift`、`acceptance_runtime` を残す。`exhaustive` は明示指定時だけ、current PASS を含めて全 live candidate を再実走する。planner は LLM を起動せず、受領証跡と挙動閉包だけで決定する。sha は手で書き換えない。
 
 ### 準備: 入力解析 + workdir + task.md
 
@@ -323,7 +323,7 @@ verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから
   - **`contractual` の主張は被験 skill 側の宣言へ接地させる**。免除を申告するのは trial を回す当人なので、無検証で信じると「実際は stall 救済だった介入を contractual と言い換えるだけで `DEGRADED` を `PASS` へ反転できる」= 受け入れ基準の自己申告による緩和になる。gate 応答 > 0 かつ `contractual` のとき、`live-trial-verdict.py` は被験 skill の frontmatter に `external_mutation_guard` か `allowed-tools` の `AskUserQuestion` / `ExitPlanMode` (= `live-trial-status.py` の `GATE_TOOLS`) があることを確認し、**根拠 0 件なら exit 2 で拒否して verdict を書かない**。認めた根拠は verdict の `gate_contract_evidence` へ焼き付ける。本文の散文は根拠にしない (書き足すだけで主張が通るなら接地にならない)。
   - 回数上限は置かない。gate は transcript の pending `AskUserQuestion` / `ExitPlanMode` が無ければ発生せず捏造できないので、上限そのものより「その gate が契約上必須か」の接地が本質であり、根拠のない閾値は緩められる。
 - **proof trial** は「人手介入なし PASS」が受け入れ条件 — 種別を問わず gate 応答 > 0 は `FAIL`、DEGRADED 相当も `FAIL`、さらに actual_model ≠ requested_model で `FAIL` (機械 gate)。
-- tmux 不在 / HARD_CAP 超過は `BLOCKED` (fail-closed)。
+- tmux 不在、wall-clock の `HARD_CAP`、token 予算の `TOKEN_CAP`、進捗停止の `STALL` はどれも `BLOCKED` (fail-closed)。`downgrade_reason` は止めた原因を分けて記録する。Codex の token 到達を tmux 不在と書かない。
 - この表の機械実装は `live-trial-verdict.py` の `derive_overall()`。
 
 ## 検証

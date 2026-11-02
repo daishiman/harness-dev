@@ -4,7 +4,7 @@
 
 ## 起動と隔離
 
-- `plan-live-trials.py --runtime codex`で対象・再利用・予算を決める。既定の新規2件・同時2件、明示承認後のexhaustiveという境界は共通。
+- `plan-live-trials.py --runtime codex`で対象・再利用・予算を決める。既定の新規2件・同時2件、明示承認後のexhaustiveという境界は共通。`--profile refresh` は受領 verdict の runtime で閉包を見る。Codex の current PASS は Claude の計画でも再利用し、Claude の stale を Codex の `runtime-mismatch` に読み替えない。別 runtime の PASS を Codex の合格にはしない。
 - `manage-codex-live-trial.py --config <absolute-json-path> run`は、絶対pathで検証したCodex CLIの新規`exec`を起動する。継続は得られた同一sessionだけの`exec resume`。
 - source provider、private control/raw、公開workdirはactorのworkspace外に置く。actorが書けるのは新fixtureと完了マーカー用の`workdir/out`だけ。HOME・CODEX_HOME・auth・ユーザー設定を別用途に使わず、sandboxを無効化しない。
 - projectの`.agents/skills`から選択した実体を参照する。既定ではglobal/systemのskillカタログも残る。任意の`native_skill_exclusions`には、起動前に読み取った不要なSKILL.mdの絶対pathと実bytesの`sha256`だけを指定できる。当該exec/resumeの`skills.config`で無効化し、ユーザー設定は書き換えない。fixture・provider・projectionの許可sourceを除外してはならない。実際のcatalog分離を主張するときはnative原ログでも確認し、必要な本文Read・責務・ツール・観測・予算を削減しない。実際に適用・読込したskillは許可集合とsource bytesへ照合する。

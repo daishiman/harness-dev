@@ -48,6 +48,40 @@ def _load_live_trial_verdict():
     return module
 
 
+def _behavior_drift_suffix(verdict_mod, skill_dir: Path, receipt: dict) -> str:
+    """受領 verdict の commit から見た挙動差分。git 不能や ref 不一致では空。"""
+    results = receipt.get("criteria_results")
+    if not isinstance(results, dict):
+        return ""
+    refs = {
+        result.get("live_trial_verdict_ref")
+        for result in results.values()
+        if isinstance(result, dict) and result.get("live_trial_verdict_ref")
+    }
+    if len(refs) != 1:
+        return ""
+    ref = next(iter(refs))
+    if not isinstance(ref, str):
+        return ""
+    verdict_path = (REPO / ref)
+    if not verdict_path.is_file():
+        return ""
+    try:
+        verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    runtime = "claude"
+    environment = verdict.get("environment") if isinstance(verdict, dict) else None
+    if isinstance(environment, dict) and environment.get("runtime") == "codex":
+        runtime = "codex"
+    commit = verdict_mod.verdict_baseline_commit(REPO, verdict_path)
+    if not commit:
+        return ""
+    labels = verdict_mod.closure_drift_labels(REPO, skill_dir, commit, runtime=runtime)
+    drift = verdict_mod.format_closure_drift(labels)
+    return f" {drift}" if drift else ""
+
+
 def _skill_metadata(skill_path: Path) -> dict:
     text = skill_path.read_text(encoding="utf-8")
     assert text.startswith("---\n")
@@ -122,6 +156,16 @@ def test_independent_scenario_receipt_covers_exact_criteria(
     receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
     current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+    recorded_sha = receipt["target"].get("skill_md_sha256")
+    live_verdict_module = _load_live_trial_verdict()
+    drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
+    assert recorded_sha == current_sha, (
+        f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+        f"(receipt={recorded_sha} current={current_sha})。"
+        " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+        " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+        f"{drift}"
+    )
     assert receipt["target"] == {
         "plugin": "dev-graph",
         "skill": skill_name,
@@ -137,7 +181,6 @@ def test_independent_scenario_receipt_covers_exact_criteria(
     assert set(results) == criteria_ids
     criteria = _skill_criteria(skill_path)
     assert set(criteria) == criteria_ids
-    live_verdict_module = _load_live_trial_verdict()
     live_schema = json.loads(LIVE_TRIAL_SCHEMA.read_text(encoding="utf-8"))
     for criterion_id, result in results.items():
         assert result["status"] == "PASS", f"{component_id}/{criterion_id}"
@@ -182,7 +225,11 @@ def test_independent_scenario_receipt_covers_exact_criteria(
         digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
                   if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
         assert verdict["skill_dir_tree_sha"] == digest, (
-            f"{component_id}/{criterion_id}: stale behavior closure digest"
+            f"{component_id}/{criterion_id}: stale behavior closure digest "
+            f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+            " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+            f"{drift}"
         )
         if runtime == "codex":
             assert not live_verdict_module.validate_runtime_evidence(

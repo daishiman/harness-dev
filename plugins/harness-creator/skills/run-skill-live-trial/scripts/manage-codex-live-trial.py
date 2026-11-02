@@ -896,6 +896,27 @@ def observe_native_audit(cfg: dict, state: dict) -> None:
     sibling("record-codex-audit").observe(cfg, state, paths)
 
 
+def stop_cause(state: dict, usage: dict | None = None) -> str | None:
+    """wall-clock と token 予算は別の打切り原因。どちらも tmux 不在ではない。"""
+    budget = state.get("budget") or {}
+    elapsed = state.get("elapsed") or 0
+    wall = budget.get("max_wall_clock_s")
+    if isinstance(wall, (int, float)) and not isinstance(wall, bool) and wall > 0 and elapsed >= wall:
+        return "HARD_CAP"
+    tokens = budget.get("max_total_tokens")
+    if (usage and usage.get("measured") and isinstance(tokens, int) and not isinstance(tokens, bool)
+            and usage.get("total_tokens", 0) > tokens):
+        return "TOKEN_CAP"
+    return None
+
+
+def poll_exit_for_status(status: str) -> str:
+    """controller status を verdict の poll_exit へ写す。未知の停止は STALL。"""
+    if status in {"DONE", "HARD_CAP", "TOKEN_CAP", "STALL"}:
+        return status
+    return "STALL"
+
+
 def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
     verify_pin(cfg, state)
     if state.get("collected"):
@@ -938,8 +959,9 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
                     if child_status.get("status") in {"child_exited", "supervisor_error"}:
                         break
                 state["elapsed"] = _elapsed(state)
-                if state["elapsed"] >= state["budget"]["max_wall_clock_s"]:
-                    terminated = "HARD_CAP"
+                cause = stop_cause(state)
+                if cause:
+                    terminated = cause
                     break
                 if not state["session_id"]:
                     ids = {obj.get("thread_id") for obj in records(stdout)
@@ -957,8 +979,9 @@ def execute_turn(cfg: dict, state: dict, prompt: Path) -> dict:
                         state["native_rollout"] = str(raw)
                         usage = live_usage(cfg, state)
                         observe_native_audit(cfg, state)
-                        if usage.get("measured") and usage["total_tokens"] > state["budget"]["max_total_tokens"]:
-                            terminated = "HARD_CAP"
+                        cause = stop_cause(state, usage)
+                        if cause:
+                            terminated = cause
                             break
                 time.sleep(0.5)
         except Exception as exc:
@@ -1622,7 +1645,7 @@ def finalize(cfg: dict, goal: Path | None, observations: list[str], blocked: boo
             "--requested-model", cfg.get("requested_model", ""),
             "--launch", "PASS" if state.get("session_id") else "FAIL",
             "--completion", "PASS" if state["status"] == "DONE" else "FAIL",
-            "--poll-exit", "DONE" if state["status"] == "DONE" else "HARD_CAP" if state["status"] == "HARD_CAP" else "STALL",
+            "--poll-exit", poll_exit_for_status(state["status"]),
             "--poll-state", str(work / "poll-state.json"), "--permissions-mode", "workspace-write",
             "--scenario-file", cfg["scenario_file"], "--scenario-id", cfg["scenario_id"],
             "--goal-seek-eval-root", str(eval_root),

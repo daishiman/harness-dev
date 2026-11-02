@@ -16,6 +16,7 @@ import importlib.util
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -242,6 +243,59 @@ def test_codex_relocation_never_accepts_namespace_body_read_or_mapping_shortcuts
     (path.parent/"native-run-state.json").write_text(json.dumps(state))
     result=_load("extract-codex-transcript").inspect_transcript(path,skill_dir=skill,target_skill="demo:run-native")
     assert result["invoked_skills"]==[]
+
+
+def test_codex_symlink_spelling_of_the_same_skill_file_counts_as_read(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    alias = tmp_path / "alias" / "skills" / "run-native"
+    alias.parent.mkdir(parents=True)
+    alias.symlink_to(skill, target_is_directory=True)
+    real = str(skill / "SKILL.md")
+    spelled = str(alias / "SKILL.md")
+    assert Path(spelled).resolve() == Path(real).resolve()
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    for row in rows:
+        payload = row.get("payload", {})
+        if payload.get("call_id") == "read-1" and payload.get("type") == "custom_tool_call":
+            payload["input"] = payload["input"].replace(real, spelled)
+    _write_jsonl(path, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == ["demo:run-native"]
+    assert result["activation_errors"] == []
+    assert result["activations"][0]["path"] == real
+    assert result["activations"][0]["source_sha256"] == hashlib.sha256((skill / "SKILL.md").read_text().encode()).hexdigest()
+
+
+def test_codex_identical_copy_at_another_path_is_not_the_pinned_read(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    copy = tmp_path / "other" / "skills" / "run-native" / "SKILL.md"
+    copy.parent.mkdir(parents=True)
+    copy.write_bytes((skill / "SKILL.md").read_bytes())
+    real = str(skill / "SKILL.md")
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    for row in rows:
+        payload = row.get("payload", {})
+        if payload.get("call_id") == "read-1" and payload.get("type") == "custom_tool_call":
+            payload["input"] = payload["input"].replace(real, str(copy))
+    _write_jsonl(path, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == []
+    assert any(item.startswith("native-skill-read-unproven:") for item in result["activation_errors"])
+
+
+def test_codex_skill_md_filename_suffix_is_not_a_resolved_read(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    decoy = skill / "SKILL.md.backup"
+    decoy.write_bytes((skill / "SKILL.md").read_bytes())
+    real = str(skill / "SKILL.md")
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    for row in rows:
+        payload = row.get("payload", {})
+        if payload.get("call_id") == "read-1" and payload.get("type") == "custom_tool_call":
+            payload["input"] = payload["input"].replace(real, str(decoy))
+    _write_jsonl(path, rows)
+    result = _load("extract-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == []
 
 
 @pytest.mark.parametrize("read_ok,inject", [(False, True), (True, False)])
@@ -482,6 +536,57 @@ def test_codex_run_state_is_bound_to_actual_user_turns(tmp_path):
     metadata, errors = verdict_mod.native_run_metadata(tmp_path, ledger, info, nudge=0, gate=0)
     assert "native-run-state-execution-prompt-mismatch" in errors
     assert metadata["single_input_autonomous"] is False
+
+
+def _native_info(tmp_path, turns):
+    return {
+        "session_id": "native-root",
+        "completed": False,
+        "sandbox_contexts": [{"writable_roots": [str(tmp_path)]}],
+        "user_turns": turns,
+    }
+
+
+def test_terminated_unsubmitted_turn_is_classified_and_not_counted(tmp_path):
+    """HARD_CAP / TOKEN_CAP で submitted にならなかった turn を未分類入力にしない。"""
+    first, second = "a" * 64, "c" * 64
+    info = _native_info(tmp_path, [
+        {"text_sha256": first, "normalized_text_sha256": "b" * 64},
+        {"text_sha256": second, "normalized_text_sha256": "d" * 64},
+    ])
+    state = {
+        "runtime": "codex", "session_id": "native-root", "collected": True,
+        "writable_roots": [str(tmp_path)], "responses": [],
+        "turns": [
+            {"number": 1, "stdin_sha256": first, "terminated": None, "native_turn_complete": True},
+            {"number": 2, "stdin_sha256": second, "terminated": "TOKEN_CAP", "native_turn_complete": False},
+        ],
+        "native_operation_turns": [{
+            "kind": "native-operation", "submitted": False, "native_turn": 2,
+            "prompt_sha256": second, "target_skill": "demo:run-native", "args": "add",
+        }],
+    }
+    ledger = tmp_path / "native-run-state.json"
+    ledger.write_text(json.dumps(state))
+    metadata, errors = verdict_mod.native_run_metadata(tmp_path, ledger, info, nudge=0, gate=0)
+    assert "native-run-state-unclassified-user-turns" not in errors
+    assert metadata["native_operation_turns"] == 0
+    state["turns"][1]["terminated"] = None
+    ledger.write_text(json.dumps(state))
+    _, errors = verdict_mod.native_run_metadata(tmp_path, ledger, info, nudge=0, gate=0)
+    assert "native-run-state-unclassified-user-turns" in errors
+
+
+def test_blocked_reason_names_token_cap_separately_from_tmux(tmp_path, transcript):
+    rc, out = _run_verdict(tmp_path, transcript, ["--blocked", "--poll-exit", "TOKEN_CAP"])
+    doc = json.loads(out.read_text())
+    assert rc == 0
+    assert doc["overall"]["verdict"] == "BLOCKED"
+    assert doc["timeline"]["poll_exit"] == "TOKEN_CAP"
+    assert "TOKEN_CAP" in doc["downgrade_reason"]
+    assert "tmux" not in doc["downgrade_reason"]
+    rc, out = _run_verdict(tmp_path, transcript, ["--blocked"])
+    assert "tmux 不在" in json.loads(out.read_text())["downgrade_reason"]
 
 
 def test_codex_pasted_skill_xml_without_native_provenance_is_not_activation(tmp_path):
@@ -1343,6 +1448,39 @@ def test_tree_sha_ignores_manifest_release_metadata(tmp_path):
     assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
 
 
+def _commit_tree(repo: Path) -> None:
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True, env=env)
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=repo, check=True, env=env)
+
+
+def test_closure_drift_names_behavior_files_and_skips_version(tmp_path):
+    """stale の説明は挙動ファイルだけを名指しする。version bump は digest と同じく無視する。"""
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    _commit_tree(tmp_path)
+    commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True,
+    ).strip()
+    manifest_path = (skill_dir / "../../.claude-plugin/plugin.json").resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["version"] = "9.9.9"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(skill_md.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+
+    labels = verdict_mod.closure_drift_labels(tmp_path, skill_dir, commit)
+    assert labels == ["plugins/dev-graph/skills/run-behavior/SKILL.md"]
+    assert "plugin.json" not in verdict_mod.format_closure_drift(labels)
+    assert "SKILL.md" in verdict_mod.format_stale_sha("a" * 64, "b" * 64, labels)
+
+
 def test_tree_sha_ignores_dependency_manifest_release_metadata(tmp_path):
     """依存 plugin 側の bump も同じ。巻き添えの範囲は依存を辿って更に広い。"""
     _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
@@ -1566,6 +1704,10 @@ def _planner_plugin(tmp_path: Path, skills: list[str]) -> Path:
     (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
         json.dumps({"name": "sample-plugin"}), encoding="utf-8"
     )
+    (plugin_dir / ".codex-plugin").mkdir()
+    (plugin_dir / ".codex-plugin" / "plugin.json").write_text(
+        json.dumps({"name": "sample-plugin"}), encoding="utf-8"
+    )
     for skill in skills:
         skill_dir = plugin_dir / "skills" / skill
         skill_dir.mkdir(parents=True)
@@ -1644,6 +1786,282 @@ def test_incremental_plan_invalidates_evidence_on_behavior_change(tmp_path):
     )
     assert [record["action"] for record in plan["skills"]] == ["run", "defer"]
     assert plan["skills"][0]["reason"] == "behavior-changed"
+
+
+def _receipt(eval_root: Path, plugin: str, skill: str, ref: str, body: str | None = None) -> None:
+    path = eval_root / plugin / skill / "criteria-test" / "scenario-verdict.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body if body is not None else json.dumps({
+        "criteria_results": {
+            "OUT1": {"verify_by": "live-trial", "live_trial_verdict_ref": ref},
+        },
+    }), encoding="utf-8")
+
+
+def test_receipt_pass_is_reused_ahead_of_newer_blocked(tmp_path):
+    """新しい BLOCKED は、receipt が指す current PASS を再利用対象から外さない。"""
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    newer = evidence.parent.parent / "20260714T000000"
+    newer.mkdir()
+    blocked = json.loads(evidence.read_text(encoding="utf-8"))
+    blocked["overall"]["verdict"] = "BLOCKED"
+    blocked["downgrade_reason"] = "TOKEN_CAP: scenario の token 予算到達 (fail-closed)"
+    blocked["timeline"]["poll_exit"] = "TOKEN_CAP"
+    (newer / "verdict.json").write_text(json.dumps(blocked), encoding="utf-8")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+
+    plan = planner_mod.build_plan(plugin_dir, eval_root, profile="incremental", max_live_trials=1)
+    record = plan["skills"][0]
+    assert record["action"] == "reuse"
+    assert record["reused_evidence"] == str(evidence)
+
+
+def test_stale_receipt_reports_behavior_change_not_newer_pass(tmp_path):
+    """receipt の PASS が古いとき、より新しい current PASS へ黙って乗り換えない。"""
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    accepted = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    stale_doc = json.loads(accepted.read_text(encoding="utf-8"))
+    stale_doc["skill_dir_tree_sha"] = "0" * 64
+    accepted.write_text(json.dumps(stale_doc), encoding="utf-8")
+    fresh = accepted.parent.parent / "20260714T000000"
+    fresh.mkdir()
+    current = json.loads(accepted.read_text(encoding="utf-8"))
+    current["skill_dir_tree_sha"] = verdict_mod.skill_dir_tree_sha(plugin_dir / "skills" / "run-a")
+    (fresh / "verdict.json").write_text(json.dumps(current), encoding="utf-8")
+    (fresh / "transcript.jsonl").write_text(
+        accepted.parent.joinpath("transcript.jsonl").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+
+    plan = planner_mod.build_plan(plugin_dir, eval_root, profile="incremental", max_live_trials=1)
+    record = plan["skills"][0]
+    assert record["action"] == "run"
+    assert record["reason"] == "behavior-changed"
+    assert record["reused_evidence"] is None
+
+
+def test_corrupt_receipt_is_not_replaced_by_another_pass(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    _receipt(eval_root, "sample-plugin", "run-a", "unused", body="{")
+
+    plan = planner_mod.build_plan(plugin_dir, eval_root, profile="refresh")
+    record = plan["skills"][0]
+    assert record["action"] == "defer"
+    assert record["reason"].startswith("criteria-receipt-invalid-json")
+    assert plan["live_batches"] == []
+
+
+def test_behavior_changed_is_scheduled_before_missing_evidence(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-b")
+    with (plugin_dir / "skills" / "run-b" / "SKILL.md").open("a", encoding="utf-8") as handle:
+        handle.write("changed\n")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental", max_live_trials=1,
+    )
+    by_skill = {record["skill"]: record for record in plan["skills"]}
+    assert by_skill["run-b"]["action"] == "run"
+    assert by_skill["run-b"]["reason"] == "behavior-changed"
+    assert by_skill["run-a"]["action"] == "defer"
+    assert by_skill["run-a"]["evidence_reason"] == "missing-evidence"
+    assert by_skill["run-a"]["reason"] == "live-budget-exhausted:1"
+    assert plan["live_batches"] == [["run-b"]]
+
+
+def test_refresh_runs_every_nonreusable_skill_and_keeps_current_pass(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b", "run-c"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    _write_reusable_verdict(eval_root, plugin_dir, "run-b")
+    with (plugin_dir / "skills" / "run-b" / "SKILL.md").open("a", encoding="utf-8") as handle:
+        handle.write("changed\n")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="refresh", max_live_trials=0,
+    )
+    actions = {record["skill"]: record["action"] for record in plan["skills"]}
+    assert actions == {"run-a": "reuse", "run-b": "run", "run-c": "run"}
+    assert plan["skills"][0]["reused_evidence"] == str(evidence)
+    assert plan["policy"]["max_live_trials"] is None
+    assert plan["live_batches"] == [["run-b", "run-c"]]
+
+
+def test_behavior_drift_names_files_for_stale_receipt(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=tmp_path, check=True, env=env)
+    skill_md = plugin_dir / "skills" / "run-a" / "SKILL.md"
+    skill_md.write_text(skill_md.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+
+    plan = planner_mod.build_plan(plugin_dir, eval_root, profile="refresh")
+    record = plan["skills"][0]
+    assert record["reason"] == "behavior-changed"
+    assert record["behavior_drift"] == ["plugins/sample-plugin/skills/run-a/SKILL.md"]
+    assert evidence.name == "verdict.json"
+
+
+def test_refresh_reuses_claude_receipt_when_plan_runtime_is_codex(tmp_path):
+    """受領が Claude で current なら、Codex の refresh は再実走しない。"""
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="refresh", runtime="codex",
+    )
+    record = plan["skills"][0]
+    assert record["action"] == "reuse"
+    assert record["runtime"] == "claude"
+    assert record["reused_evidence"] == str(evidence)
+
+
+def test_incremental_does_not_reuse_current_pass_across_runtime(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental", runtime="codex",
+    )
+    record = plan["skills"][0]
+    assert record["action"] == "run"
+    assert record["reason"] == "runtime-mismatch"
+    assert record["runtime"] == "codex"
+    assert record["acceptance_runtime"] == "claude"
+    assert "behavior_drift" not in record
+
+
+def test_cross_runtime_stale_keeps_behavior_priority(tmp_path):
+    """runtime が違っても、受領閉包の stale は欠測より先に実走する。"""
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    accepted = _write_reusable_verdict(eval_root, plugin_dir, "run-b")
+    stale = json.loads(accepted.read_text(encoding="utf-8"))
+    stale["skill_dir_tree_sha"] = "0" * 64
+    accepted.write_text(json.dumps(stale), encoding="utf-8")
+    ref = "eval-log/sample-plugin/run-b/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-b", ref)
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental", runtime="codex", max_live_trials=1,
+    )
+    by_skill = {record["skill"]: record for record in plan["skills"]}
+    assert by_skill["run-b"]["action"] == "run"
+    assert by_skill["run-b"]["reason"] == "behavior-changed"
+    assert by_skill["run-b"]["runtime"] == "codex"
+    assert by_skill["run-b"]["acceptance_runtime"] == "claude"
+    assert by_skill["run-a"]["action"] == "defer"
+    assert by_skill["run-a"]["evidence_reason"] == "missing-evidence"
+
+
+def test_refresh_reruns_stale_receipt_on_its_own_runtime(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=tmp_path, check=True, env=env)
+    skill_md = plugin_dir / "skills" / "run-a" / "SKILL.md"
+    skill_md.write_text(skill_md.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="refresh", runtime="codex", max_concurrency=2,
+    )
+    by_skill = {record["skill"]: record for record in plan["skills"]}
+    assert by_skill["run-a"]["action"] == "run"
+    assert by_skill["run-a"]["reason"] == "behavior-changed"
+    assert by_skill["run-a"]["runtime"] == "claude"
+    assert by_skill["run-a"]["behavior_drift"] == [
+        "plugins/sample-plugin/skills/run-a/SKILL.md",
+    ]
+    assert by_skill["run-b"]["action"] == "run"
+    assert by_skill["run-b"]["runtime"] == "codex"
+    assert by_skill["run-b"]["reason"] == "missing-evidence"
+    assert plan["live_batches"] == [["run-a"], ["run-b"]]
+    assert evidence.name == "verdict.json"
+
+
+def test_refresh_reuses_codex_receipt_when_plan_runtime_is_claude(tmp_path, monkeypatch):
+    """native 検査は別テストの責務。ここでは受領 runtime の採用だけを見る。"""
+    plugin_dir = _planner_plugin(tmp_path, ["run-a"])
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    document = json.loads(evidence.read_text(encoding="utf-8"))
+    document["environment"] = {
+        "claude_version": None,
+        "tmux": False,
+        "transcript_layer": "jsonl",
+        "permissions_mode": "test",
+        "runtime": "codex",
+        "codex_version": "0.0.0-test",
+        "native_transcript_format": "codex-rollout-jsonl",
+    }
+    document["skill_dir_tree_sha"] = verdict_mod.skill_dir_tree_sha(
+        plugin_dir / "skills" / "run-a", runtime="codex",
+    )
+    evidence.write_text(json.dumps(document), encoding="utf-8")
+    ref = "eval-log/sample-plugin/run-a/live-trial/20260713T000000/verdict.json"
+    _receipt(eval_root, "sample-plugin", "run-a", ref)
+    real_load = planner_mod._load_sibling
+
+    def wrapped(name):
+        module = real_load(name)
+        if name == "live-trial-verdict":
+            module.validate_runtime_evidence = lambda *_args, **_kwargs: []
+        return module
+
+    monkeypatch.setattr(planner_mod, "_load_sibling", wrapped)
+    refreshed = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="refresh", runtime="claude",
+    )
+    record = refreshed["skills"][0]
+    assert record["action"] == "reuse"
+    assert record["runtime"] == "codex"
+    assert record["reused_evidence"] == str(evidence)
+
+    incremental = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental", runtime="claude",
+    )
+    blocked = incremental["skills"][0]
+    assert blocked["action"] == "run"
+    assert blocked["reason"] == "runtime-mismatch"
+    assert blocked["runtime"] == "claude"
+    assert blocked["acceptance_runtime"] == "codex"
 
 
 def test_exhaustive_plan_explicitly_reruns_current_evidence(tmp_path):

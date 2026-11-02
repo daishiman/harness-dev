@@ -262,6 +262,19 @@ def test_resume_does_not_accept_latest_or_unbound_session(tmp_path):
                         "workdir": str(tmp_path / "evidence")}, "--last")
 
 
+def test_stop_cause_separates_token_budget_from_wall_clock():
+    mod = load()
+    assert mod.stop_cause({"elapsed": 10, "budget": {"max_wall_clock_s": 1200, "max_total_tokens": 100}},
+                           {"measured": True, "total_tokens": 101}) == "TOKEN_CAP"
+    assert mod.stop_cause({"elapsed": 1200, "budget": {"max_wall_clock_s": 1200, "max_total_tokens": 100}},
+                           {"measured": True, "total_tokens": 101}) == "HARD_CAP"
+    assert mod.stop_cause({"elapsed": 10, "budget": {"max_wall_clock_s": 1200, "max_total_tokens": 100}},
+                           {"measured": True, "total_tokens": 100}) is None
+    assert mod.poll_exit_for_status("TOKEN_CAP") == "TOKEN_CAP"
+    assert mod.poll_exit_for_status("HARD_CAP") == "HARD_CAP"
+    assert mod.poll_exit_for_status("WAITING_DECLARED_RESPONSE") == "STALL"
+
+
 def test_timeout_stops_only_its_owned_process_group(tmp_path, monkeypatch):
     mod = load()
     cli = tmp_path / "fake-codex"

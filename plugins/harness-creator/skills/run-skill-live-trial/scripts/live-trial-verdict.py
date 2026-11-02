@@ -40,6 +40,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -378,13 +379,30 @@ def native_run_metadata(workdir: Path, state_path: Path | None, info: dict | Non
             if not isinstance(turn, dict) or turn.get("number") != number or turn.get("stdin_sha256") != user["text_sha256"]:
                 errors.append("native-run-state-execution-prompt-mismatch")
     matched, count = {1}, 0
+    turns_by_number = {
+        turn.get("number"): turn
+        for turn in turns
+        if isinstance(turn, dict) and isinstance(turn.get("number"), int) and not isinstance(turn.get("number"), bool)
+    } if isinstance(turns, list) else {}
     for entry in [*operations, *responses]:
         if not isinstance(entry, dict):
             errors.append("native-run-state-entry-invalid")
             continue
-        if not entry.get("submitted"):
-            continue
         number = entry.get("native_turn")
+        if not entry.get("submitted"):
+            # 打切りで submitted にならない turn は、台帳に無い隠し入力ではない。
+            # 完了していない終端 turn として分類し、提出済み operation には数えない。
+            turn = turns_by_number.get(number)
+            user = info["user_turns"][number - 1] if isinstance(number, int) and not isinstance(number, bool) and 1 <= number <= len(info["user_turns"]) else None
+            if (isinstance(turn, dict) and user is not None and turn.get("terminated")
+                    and turn.get("native_turn_complete") is False
+                    and turn.get("stdin_sha256") == user["text_sha256"]):
+                if number in matched:
+                    errors.append("native-run-state-user-turn-duplicate")
+                matched.add(number)
+                if entry.get("prompt_sha256") != user["text_sha256"]:
+                    errors.append("native-run-state-prompt-mismatch")
+            continue
         if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= len(info["user_turns"]):
             errors.append("native-run-state-user-turn-missing")
             continue
@@ -974,19 +992,149 @@ _MANIFEST_SUFFIXES = (".claude-plugin/plugin.json", ".codex-plugin/plugin.json")
 _MANIFEST_NON_BEHAVIOR_KEYS: frozenset[str] = frozenset({"version"})
 
 
+def behavior_projection(label: str, raw: bytes) -> bytes:
+    """digest と差分一覧が共有するバイト列。manifest は挙動に効くキーだけを残す。
+
+    壊れた manifest は raw に戻さず失敗する。未知のバイト列を黙って digest すると、
+    読めない manifest の変更が stale に出なくなる。
+    """
+    if not label.endswith(_MANIFEST_SUFFIXES):
+        return raw
+    try:
+        manifest = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"plugin manifest read/parse error: {label}: {exc}") from exc
+    if not isinstance(manifest, dict):
+        return raw
+    projected = {k: v for k, v in manifest.items() if k not in _MANIFEST_NON_BEHAVIOR_KEYS}
+    return json.dumps(
+        projected, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")
+
+
 def _behavior_bytes(label: str, path: Path) -> bytes:
     """digest へ与えるバイト列。manifest だけは挙動に効く投影へ正規化する。"""
-    if not label.endswith(_MANIFEST_SUFFIXES):
-        return path.read_bytes()
     try:
-        manifest = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"plugin manifest read/parse error: {path}: {exc}") from exc
-    if not isinstance(manifest, dict):
-        return path.read_bytes()
-    projected = {k: v for k, v in manifest.items() if k not in _MANIFEST_NON_BEHAVIOR_KEYS}
-    return json.dumps(projected, ensure_ascii=False, sort_keys=True,
-                      separators=(",", ":")).encode("utf-8")
+        raw = path.read_bytes()
+    except OSError as exc:
+        if label.endswith(_MANIFEST_SUFFIXES):
+            raise ValueError(f"plugin manifest read/parse error: {path}: {exc}") from exc
+        raise
+    return behavior_projection(label, raw)
+
+
+def changed_behavior_labels(
+    skill_dir: Path,
+    baseline_raw: dict[str, bytes | None],
+    runtime: str = "claude",
+) -> list[str]:
+    """現在の閉包のうち、受領時の挙動投影と違う label を返す。
+
+    ``baseline_raw`` の値 ``None`` は、その label が受領時に無かったことを表す。
+    manifest の version だけが変わった label は返さない。受領時にあって現在の
+    閉包から消えたファイルは、この関数には見えない。
+    """
+    drifted: list[str] = []
+    for label, path in behavior_closure_files(skill_dir, runtime=runtime):
+        if label not in baseline_raw:
+            continue
+        old = baseline_raw[label]
+        new = path.read_bytes()
+        if old is None or behavior_projection(label, old) != behavior_projection(label, new):
+            drifted.append(label)
+    return drifted
+
+
+def git_baseline_bytes(repo: Path, commit: str, labels: list[str]) -> dict[str, bytes | None] | None:
+    """``commit`` の blob を label ごとに読む。git が読めないときは None。"""
+    if not labels:
+        return {}
+    proc = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        cwd=repo,
+        input="".join(f"{commit}:{label}\n" for label in labels).encode(),
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        return None
+    data = proc.stdout
+    offset = 0
+    found: dict[str, bytes | None] = {}
+    for label in labels:
+        newline = data.find(b"\n", offset)
+        if newline < 0:
+            return None
+        header = data[offset:newline]
+        offset = newline + 1
+        if header.endswith(b" missing"):
+            found[label] = None
+            continue
+        parts = header.split()
+        if len(parts) != 3 or parts[1] != b"blob":
+            return None
+        try:
+            size = int(parts[2])
+        except ValueError:
+            return None
+        if offset + size > len(data):
+            return None
+        found[label] = data[offset:offset + size]
+        offset += size + 1
+    return found
+
+
+def verdict_baseline_commit(repo: Path, verdict_path: Path) -> str | None:
+    """verdict ファイルを最後に commit した revision。未追跡なら None。"""
+    try:
+        relative = verdict_path.resolve().relative_to(repo.resolve())
+    except ValueError:
+        return None
+    proc = subprocess.run(
+        ["git", "log", "-1", "--format=%H", "--", relative.as_posix()],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return None
+    commit = proc.stdout.strip()
+    return commit or None
+
+
+def closure_drift_labels(
+    repo: Path, skill_dir: Path, commit: str, runtime: str = "claude",
+) -> list[str] | None:
+    """受領 commit のツリーと現在の挙動閉包の差分 label。git 不能なら None。"""
+    labels = [
+        label for label, _path in behavior_closure_files(skill_dir, runtime=runtime)
+    ]
+    baseline = git_baseline_bytes(repo, commit, labels)
+    if baseline is None:
+        return None
+    return changed_behavior_labels(skill_dir, baseline, runtime=runtime)
+
+
+def format_closure_drift(labels: list[str] | None, *, limit: int = 30) -> str:
+    """差分 label の1行。空なら空文字。"""
+    if not labels:
+        return ""
+    shown = labels[:limit]
+    text = "挙動差分: " + ", ".join(shown)
+    if len(labels) > limit:
+        text += f" ほか{len(labels) - limit}件"
+    return text
+
+
+def format_stale_sha(recorded: object, current: str, labels: list[str] | None) -> str:
+    """stale-sha 違反。label があるときだけ挙動ファイル名を足す。"""
+    text = (
+        f"stale-sha: 記録 {recorded} != 現在 {current} "
+        "(被験 skill の挙動面が verdict 後に変更された — 再 trial 要)"
+    )
+    drift = format_closure_drift(labels)
+    if drift:
+        text += "。" + drift
+    return text
 
 
 def skill_dir_tree_sha(skill_dir: Path, runtime: str = "claude") -> str:
@@ -1018,14 +1166,30 @@ budget_violations = _BUDGET.budget_violations
 poll_wall_usage = _BUDGET.poll_wall_usage
 
 
+def blocked_cause_for(*, poll_exit: str | None, resource_violations: list[str]) -> str | None:
+    """打切り原因を分ける。原因が特定できないときだけ呼出側が tmux 不在の文言を使う。"""
+    causes: list[str] = []
+    token = any(item.startswith("token-budget-exceeded:") for item in resource_violations)
+    wall = any(item.startswith("wall-clock-exceeded:") for item in resource_violations)
+    if poll_exit == "TOKEN_CAP" or token:
+        causes.append("TOKEN_CAP: scenario の token 予算到達")
+    if poll_exit == "HARD_CAP" or wall:
+        causes.append("HARD_CAP: scenario の wall-clock 到達")
+    if poll_exit == "STALL":
+        causes.append("STALL: 進捗停止で打ち切り")
+    if not causes:
+        return None
+    return " / ".join(causes) + " (fail-closed)"
+
+
 def derive_overall(*, launch: str, completion: str, goal_result: str | None,
                    nudge: int, gate: int, gate_kind: str, proof: bool,
                    requested_model: str, actual_model: list[str],
-                   blocked: bool) -> tuple[str, str, str | None]:
+                   blocked: bool, blocked_cause: str | None = None) -> tuple[str, str, str | None]:
     """判定ロジック表 (SKILL.md) の機械実装。returns (goal_fit, verdict, downgrade_reason)。"""
     goal_fit = goal_result if goal_result else "NOT_EVALUATED"
     if blocked:
-        return goal_fit, "BLOCKED", "tmux 不在 / HARD_CAP 超過等の fail-closed"
+        return goal_fit, "BLOCKED", blocked_cause or "tmux 不在 / HARD_CAP 超過等の fail-closed"
     if launch == "FAIL":
         return goal_fit, "FAIL", None
     if completion == "FAIL":
@@ -1308,6 +1472,7 @@ def main(argv: list[str] | None = None) -> int:
     # 回収状況を開示する。scenario_id の一致だけでは「契約が要求する観測を一つも
     # 取っていない run」も PASS になる (HarnessHub-dyxr)。
     scenario_contract: dict | None = None
+    resource_violations: list[str] = []
     if ns.scenario_id and not ns.scenario_file:
         print(
             "[ERROR] --scenario-id を名乗る trial は --scenario-file が必須 "
@@ -1379,6 +1544,9 @@ def main(argv: list[str] | None = None) -> int:
         gate_kind=gate_kind, proof=ns.proof,
         requested_model=ns.requested_model, actual_model=actual_model,
         blocked=ns.blocked,
+        blocked_cause=blocked_cause_for(
+            poll_exit=ns.poll_exit or None, resource_violations=resource_violations,
+        ) if ns.blocked else None,
     )
     doc = {
         "target_skill": ns.target_skill,
