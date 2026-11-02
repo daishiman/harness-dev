@@ -24,6 +24,7 @@ LIVE_SIGNAL_TOOLS = {"Skill", "Agent", "AskUserQuestion"}
 LOOP_KINDS = {"run", "wrap", "delegate"}
 # plugin が live-trial の scenario 正本を置く慣例パス。
 SCENARIO_FIXTURE_REL = ("tests", "fixtures", "live-trial-positive-scenarios.json")
+CODEX_SCENARIO_FIXTURE_REL = ("tests", "fixtures", "live-trial-codex-scenarios.json")
 
 
 def _load_sibling(name: str):
@@ -107,14 +108,15 @@ def _entry_skills(plugin_dir: Path) -> list[str]:
     return skills
 
 
-def _current_scenario_ids(plugin_dir: Path, skill: str) -> set[str] | None:
+def _current_scenario_ids(plugin_dir: Path, skill: str, runtime: str = "claude") -> set[str] | None:
     """scenario 正本が定める、その skill の現行 scenario_id 集合を返す。
 
     正本を持たない plugin だけは None を返して突合しない。正本が存在するのに対象
     skill の scenario が 0 件なら空集合を返す。0 件を None と同一視すると、scenario を
     削除しても削除前の PASS 証拠を再利用でき、契約の失効操作が無効になるため。
     """
-    path = plugin_dir.joinpath(*SCENARIO_FIXTURE_REL)
+    relative = CODEX_SCENARIO_FIXTURE_REL if runtime == "codex" else SCENARIO_FIXTURE_REL
+    path = plugin_dir.joinpath(*relative)
     if not path.is_file():
         return None
     try:
@@ -140,6 +142,7 @@ def _current_scenario_ids(plugin_dir: Path, skill: str) -> set[str] | None:
 def _valid_reusable_evidence(
     verdict_module, schema: dict, eval_root: Path, plugin: str, skill: str,
     behavior_sha: str, scenario_ids: set[str] | None = None,
+    runtime: str = "claude", skill_dir: Path | None = None,
 ) -> tuple[Path | None, str]:
     trial_root = eval_root / plugin / skill / "live-trial"
     verdicts = sorted(trial_root.glob("*/verdict.json"), reverse=True)
@@ -160,6 +163,9 @@ def _valid_reusable_evidence(
             continue
         if doc.get("target_skill") != f"{plugin}:{skill}":
             reasons.append("target-mismatch")
+            continue
+        if doc.get("environment", {}).get("runtime", "claude") != runtime:
+            reasons.append("runtime-mismatch")
             continue
         if doc.get("overall", {}).get("verdict") != "PASS" or doc.get("tier") != "live":
             reasons.append("latest-evidence-not-pass")
@@ -185,6 +191,11 @@ def _valid_reusable_evidence(
         if _sha256(transcript) != expected_transcript_sha:
             reasons.append("transcript-digest-mismatch")
             continue
+        if runtime == "codex":
+            source = skill_dir or Path(__file__).resolve().parents[4] / plugin / "skills" / skill
+            if verdict_module.validate_runtime_evidence(doc, transcript, source):
+                reasons.append("invalid-runtime-evidence")
+                continue
         return path, "current-pass"
     return None, reasons[0] if reasons else "no-current-pass"
 
@@ -194,11 +205,14 @@ def build_plan(
     max_live_trials: int = DEFAULT_MAX_LIVE_TRIALS,
     max_concurrency: int = DEFAULT_MAX_CONCURRENCY,
     selected_skills: list[str] | None = None,
+    runtime: str = "claude",
 ) -> dict:
     plugin_dir = plugin_dir.resolve()
     eval_root = eval_root.resolve()
     if profile not in {"incremental", "exhaustive", "build-only"}:
         raise ValueError(f"unsupported profile: {profile}")
+    if runtime not in {"claude", "codex"}:
+        raise ValueError(f"unsupported runtime: {runtime}")
     if max_live_trials < 0:
         raise ValueError("max_live_trials must be >= 0")
     if max_concurrency < 1:
@@ -222,9 +236,11 @@ def build_plan(
         if not (skill_dir / "SKILL.md").is_file():
             raise ValueError(f"declared skill is missing: {skill_dir / 'SKILL.md'}")
         tier = derive_acceptance_tier(skill_dir)
-        behavior_sha = verdict_module.skill_dir_tree_sha(skill_dir)
+        behavior_sha = (verdict_module.skill_dir_tree_sha(skill_dir, runtime=runtime)
+                        if runtime == "codex" else verdict_module.skill_dir_tree_sha(skill_dir))
         record = {
             "skill": skill,
+            "runtime": runtime,
             "acceptance_tier": tier,
             "behavior_sha256": behavior_sha,
             "action": tier,
@@ -236,7 +252,7 @@ def build_plan(
             continue
         evidence, reason = _valid_reusable_evidence(
             verdict_module, schema, eval_root, plugin_dir.name, skill, behavior_sha,
-            _current_scenario_ids(plugin_dir, skill),
+            _current_scenario_ids(plugin_dir, skill, runtime), runtime, skill_dir,
         )
         if profile == "build-only":
             record.update({
@@ -278,6 +294,7 @@ def build_plan(
     return {
         "schema_version": 1,
         "plugin": plugin_dir.name,
+        "runtime": runtime,
         "profile": profile,
         "policy": {
             "max_live_trials": (
@@ -291,6 +308,7 @@ def build_plan(
                 "matching behavior closure digest",
                 "stable scenario_id (bump when scenario contract changes)",
                 "matching transcript digest",
+                "matching runtime and native activation evidence",
             ],
         },
         "counts": counts,
@@ -310,12 +328,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-live-trials", type=int, default=DEFAULT_MAX_LIVE_TRIALS)
     parser.add_argument("--max-concurrency", type=int, default=DEFAULT_MAX_CONCURRENCY)
     parser.add_argument("--skill", action="append", dest="skills")
+    parser.add_argument("--runtime", choices=("claude", "codex"), default="claude")
     parser.add_argument("--out")
     args = parser.parse_args(argv)
     try:
         plan = build_plan(
             Path(args.plugin_dir), Path(args.eval_root), args.profile,
-            args.max_live_trials, args.max_concurrency, args.skills,
+            args.max_live_trials, args.max_concurrency, args.skills, args.runtime,
         )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)

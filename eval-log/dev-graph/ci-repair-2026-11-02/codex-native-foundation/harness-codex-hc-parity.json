@@ -1,0 +1,163 @@
+{
+  "plugin_count": 1,
+  "pass_count": 1,
+  "fail_count": 0,
+  "error_count": 0,
+  "dependency_scc": [
+    {
+      "members": [
+        "dev-graph",
+        "system-dev-planner"
+      ],
+      "edges": [
+        {
+          "from": "dev-graph",
+          "to": "system-dev-planner"
+        },
+        {
+          "from": "system-dev-planner",
+          "to": "dev-graph"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    },
+    {
+      "members": [
+        "harness-creator",
+        "skill-governance-adapters"
+      ],
+      "edges": [
+        {
+          "from": "harness-creator",
+          "to": "skill-governance-adapters"
+        },
+        {
+          "from": "skill-governance-adapters",
+          "to": "harness-creator"
+        }
+      ],
+      "catalog": ".agents/plugins/marketplace.json",
+      "resolvable": true
+    }
+  ],
+  "plugins": [
+    {
+      "plugin": "harness-creator",
+      "inventory": {
+        "skills": 32,
+        "agents": 8,
+        "commands": 6,
+        "hooks": 11,
+        "scripts": 33,
+        "mcp": 0,
+        "apps": 0,
+        "config_assets_references": 25
+      },
+      "surfaces": {
+        "skills": [
+          "assign-plugin-package-evaluator",
+          "assign-skill-design-evaluator",
+          "delegate-codex-skill-review",
+          "ref-claude-code-skill-spec",
+          "ref-cross-platform-runtime",
+          "ref-domain-rubric-template",
+          "ref-domain-task-spec-rubric",
+          "ref-knowledge-loop",
+          "ref-output-routing",
+          "ref-pkg-contract",
+          "ref-skill-design-rubric",
+          "ref-skill-glossary",
+          "ref-skill-naming-convention",
+          "ref-task-context-map",
+          "ref-yaml-spec-fetcher",
+          "run-build-skill",
+          "run-codex-plugin-install",
+          "run-codex-plugin-package",
+          "run-elegant-review",
+          "run-goal-elicit",
+          "run-goal-seek",
+          "run-migrate-audit",
+          "run-plugin-package-check",
+          "run-skill-create",
+          "run-skill-elicit",
+          "run-skill-feedback",
+          "run-skill-iter-improve",
+          "run-skill-live-trial",
+          "run-skill-rename",
+          "run-skill-rubric-governance",
+          "run-skill-update-notifier",
+          "wrap-git-commit-safe"
+        ],
+        "agents": [
+          "elegant-bounded-improvement-executor",
+          "elegant-improvement-executor",
+          "elegant-initial-draft-evaluator",
+          "elegant-logical-structural-analyst",
+          "elegant-meta-divergent-analyst",
+          "elegant-reset-observer",
+          "elegant-system-strategic-analyst",
+          "run-build-skill-subagent"
+        ],
+        "commands": [
+          "capability-build",
+          "capability-review",
+          "install-bundle",
+          "marketplace-register",
+          "plugin-compose",
+          "skill-improve"
+        ],
+        "hooks": [
+          "aggregate-evals.py",
+          "auto-sync-on-session-start.py",
+          "cache-refresh.py",
+          "content-review-queue.py",
+          "diff-rubric-impact.py",
+          "elegant-review-trigger.py",
+          "external-intelligence-observe.py",
+          "lint-capability-manifest.py",
+          "notify-skill-end.py",
+          "ref-task-context-map-preload.py",
+          "wrap-git-commit-safe.py"
+        ]
+      },
+      "hooks": {
+        "claude_events": [
+          "PostToolUse",
+          "PostToolUseFailure",
+          "PreToolUse",
+          "SessionEnd",
+          "SessionStart",
+          "Stop",
+          "UserPromptSubmit"
+        ],
+        "codex_events": [
+          "PostToolUse",
+          "PostToolUseFailure",
+          "PreToolUse",
+          "SessionEnd",
+          "SessionStart",
+          "Stop",
+          "UserPromptSubmit"
+        ],
+        "omitted_events": []
+      },
+      "components": {
+        "mcpServers": {
+          "claude": false,
+          "codex": false
+        },
+        "apps": {
+          "claude": false,
+          "codex": false
+        }
+      },
+      "violations": [],
+      "verdict": "PASS",
+      "dependencies": [
+        "skill-governance-adapters"
+      ]
+    }
+  ],
+  "verdict": "PASS"
+}

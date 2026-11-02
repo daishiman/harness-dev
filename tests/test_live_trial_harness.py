@@ -52,6 +52,233 @@ send_mod = _load("live-trial-send")
 finalize_mod = _load("build-live-trial-verdict")
 
 
+def _codex_rollout(tmp_path, *, read_ok=True, inject=True, complete=True):
+    skill = tmp_path / "skills" / "run-native"
+    skill.mkdir(parents=True, exist_ok=True)
+    source = "---\nname: run-native\ndescription: native test\n---\n\n# Native\nRead this source.\n"
+    (skill / "SKILL.md").write_text(source)
+    rows = [
+        {"type": "session_meta", "payload": {"id": "native-root", "cwd": str(tmp_path), "cli_version": "0.165.0", "source": "exec"}},
+        {"type": "event_msg", "payload": {"type": "task_started", "turn_id": "turn-1"}},
+        {"type": "turn_context", "payload": {"model": "gpt-native", "approval_policy": "never",
+         "sandbox_policy": {"type": "workspace-write", "network_access": False, "exclude_tmpdir_env_var": True, "exclude_slash_tmp": True},
+         "permission_profile": {"file_system": {"type": "restricted", "entries": [{"path": {"type": "path", "path": str(tmp_path)}, "access": "write"}]}}}},
+        {"type": "response_item", "payload": {"type": "message", "id": "user-1", "role": "user", "content": [{"type": "input_text", "text": "$run-native"}], "internal_chat_message_metadata_passthrough": {"turn_id": "turn-1", "content_item_kinds": ["user.text"]}}},
+    ]
+    if inject:
+        rows.append({"type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": f"<skill>\n<name>run-native</name>\n<path>{skill / 'SKILL.md'}</path>\n{source}\n</skill>"}], "internal_chat_message_metadata_passthrough": {"turn_id": "turn-1", "content_item_kinds": ["skills.selected_skill_instructions"]}}})
+    else:
+        rows.append({"type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "$run-native"}]}})
+    rows.extend([
+        {"type": "response_item", "payload": {"type": "custom_tool_call", "call_id": "read-1", "name": "exec", "input": f'text(await tools.exec_command({{cmd:"cat {skill / "SKILL.md"}"}}));'}},
+        {"type": "response_item", "payload": {"type": "custom_tool_call_output", "call_id": "read-1", "output": [{"type": "input_text", "text": json.dumps({"exit_code": 0 if read_ok else 1, "output": source})}]}},
+        {"type": "event_msg", "payload": {"type": "token_count", "info": {"total_token_usage": {"input_tokens": 100, "cached_input_tokens": 80, "output_tokens": 20, "reasoning_output_tokens": 5, "total_tokens": 120}}}},
+        {"type": "event_msg", "payload": {"type": "token_count", "info": {"total_token_usage": {"input_tokens": 150, "cached_input_tokens": 100, "output_tokens": 30, "reasoning_output_tokens": 10, "total_tokens": 180}}}},
+    ])
+    if complete:
+        rows.append({"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "turn-1"}})
+    path = _write_jsonl(tmp_path / "native.jsonl", rows)
+    return path, skill
+
+
+def test_codex_native_activation_binds_injected_source_and_successful_read(tmp_path):
+    native = _load("live-trial-codex-transcript")
+    path, skill = _codex_rollout(tmp_path)
+    result = native.inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["models"] == ["gpt-native"]
+    assert result["cli_version"] == "0.165.0"
+    assert result["invoked_skills"] == ["demo:run-native"]
+    assert result["completed"] is True
+    assert result["usage"]["total_tokens"] == 180
+    assert result["usage"]["input_tokens"] == 150
+    assert result["usage"]["cache_read_input_tokens"] == 0
+    assert result["format_errors"] == []
+
+
+@pytest.mark.parametrize("read_ok,inject", [(False, True), (True, False)])
+def test_codex_mention_or_failed_read_is_not_native_activation(tmp_path, read_ok, inject):
+    path, skill = _codex_rollout(tmp_path, read_ok=read_ok, inject=inject)
+    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == []
+
+
+def test_codex_modified_source_is_not_accepted_as_current_activation(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    (skill / "SKILL.md").write_text("changed source\n")
+    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["invoked_skills"] == []
+
+
+def test_codex_missing_completion_is_not_overridden_by_caller(tmp_path):
+    path, skill = _codex_rollout(tmp_path, complete=False)
+    result = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert result["completed"] is False
+
+
+def test_codex_claude_transcript_cannot_be_relabelled_native(tmp_path):
+    path = _write_jsonl(tmp_path / "claude.jsonl", [_tool_use("s1", "Skill", {"skill": "demo:run-native"})])
+    result = _load("live-trial-codex-transcript").inspect_transcript(path)
+    assert result["format_errors"]
+    assert result["models"] == []
+    assert result["usage"]["measured"] is False
+
+
+def test_codex_missing_usage_is_unmeasured(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    rows = [row for row in map(json.loads, path.read_text().splitlines()) if row.get("payload", {}).get("type") != "token_count"]
+    _write_jsonl(path, rows)
+    assert _load("live-trial-codex-transcript").inspect_transcript(path)["usage"]["measured"] is False
+
+
+def test_codex_model_and_runtime_identity_are_not_caller_claims(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    document = {"target_skill": "demo:run-native", "actual_model": ["gpt-native"],
+                "environment": {"runtime": "codex", "claude_version": None, "codex_version": "0.165.0",
+                                "native_transcript_format": "codex-rollout-jsonl", "tmux": False},
+                "overall": {"verdict": "PASS", "completion": "PASS"}}
+    document["environment"].update({"permissions_mode": "workspace-write", "native_sandbox_contexts": _load("live-trial-codex-transcript").inspect_transcript(path)["sandbox_contexts"]})
+    assert verdict_mod.validate_runtime_evidence(document, path, skill) == []
+    document["actual_model"] = ["invented"]
+    assert "native-actual-model-mismatch" in verdict_mod.validate_runtime_evidence(document, path, skill)
+    document["environment"]["runtime"] = "claude"
+    assert any("runtime-mismatch" in error for error in verdict_mod.validate_runtime_evidence(document, path, skill))
+
+
+def test_codex_missing_model_is_not_accepted(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    rows = [row for row in map(json.loads, path.read_text().splitlines()) if row.get("type") != "turn_context"]
+    _write_jsonl(path, rows)
+    document = {"target_skill": "demo:run-native", "actual_model": [],
+                "environment": {"runtime": "codex", "claude_version": None, "codex_version": "0.165.0",
+                                "native_transcript_format": "codex-rollout-jsonl", "tmux": False},
+                "overall": {"verdict": "PASS", "completion": "PASS"}}
+    assert "native-actual-model-unmeasured" in verdict_mod.validate_runtime_evidence(document, path, skill)
+
+
+def test_codex_native_surface_changes_only_codex_closure(tmp_path):
+    plugin, skill = _behavior_closure_fixture(tmp_path)
+    # fixture declares provider as its dependency; materialize a native manifest
+    # for exactly the same roots, without changing their Claude surfaces.
+    for root in plugin.parent.iterdir():
+        manifest = root / ".claude-plugin/plugin.json"
+        if not manifest.is_file():
+            continue
+        native = root / ".codex-plugin"
+        native.mkdir()
+        name = json.loads(manifest.read_text())["name"]
+        (native / "plugin.json").write_text(json.dumps({"name": name, "version": "1", "hooks": "./codex/hooks.json"}))
+        (root / "codex").mkdir()
+        (root / "codex/hooks.json").write_text('{"hooks":{}}')
+    claude = verdict_mod.skill_dir_tree_sha(skill)
+    native = verdict_mod.skill_dir_tree_sha(skill, runtime="codex")
+    assert native != claude
+    (plugin / "codex/hooks.json").write_text('{"hooks":{"SessionStart":[]}}')
+    assert verdict_mod.skill_dir_tree_sha(skill) == claude
+    assert verdict_mod.skill_dir_tree_sha(skill, runtime="codex") != native
+
+
+def test_codex_children_are_parent_bound_and_cumulative_usage_is_counted_once(tmp_path):
+    path, _skill = _codex_rollout(tmp_path)
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    rows[-1:-1] = [
+        {"type": "response_item", "payload": {"type": "function_call", "call_id": "spawn-1", "name": "spawn_agent", "arguments": "{}"}},
+        {"type": "response_item", "payload": {"type": "function_call_output", "call_id": "spawn-1", "output": json.dumps({"task_name": "/root/child"})}},
+    ]
+    _write_jsonl(path, rows)
+    native = _load("live-trial-codex-transcript")
+    assert "native-spawned-child-transcript-missing" in native.inspect_transcript(path)["format_errors"]
+    child_dir = path.with_suffix("") / "subagents"
+    child_dir.mkdir(parents=True)
+    child = child_dir / "child.jsonl"
+    child_rows = [json.loads(json.dumps(row)) for row in rows if row.get("payload", {}).get("call_id") != "spawn-1"]
+    child_rows[0]["payload"].update({"id": "native-child", "parent_thread_id": "native-root", "agent_path": "/root/child"})
+    _write_jsonl(child, child_rows)
+    result = native.inspect_transcript(path)
+    assert result["format_errors"] == []
+    assert result["completed"] is True
+    assert result["usage"]["total_tokens"] == 360
+    assert result["usage"]["transcript_files"] == 2
+    child_rows[0]["payload"]["parent_thread_id"] = "unrelated"
+    _write_jsonl(child, child_rows)
+    result = native.inspect_transcript(path)
+    assert result["completed"] is False
+    assert result["usage"]["measured"] is False
+
+
+def test_codex_duplicate_usage_record_does_not_double_count(tmp_path):
+    path, _skill = _codex_rollout(tmp_path)
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    rows.insert(-1, {"type": "token_usage_record", "payload": {"thread_id": "native-root", "thread_token_usage": {"input_tokens": 150, "output_tokens": 30, "total_tokens": 180}}})
+    _write_jsonl(path, rows)
+    usage = _load("live-trial-codex-transcript").transcript_token_usage(path)
+    assert usage["measured"] is True
+    assert usage["total_tokens"] == 180
+
+
+@pytest.mark.parametrize("complete,read_ok,expected", [(True, True, "PASS"), (False, True, "FAIL"), (True, False, "FAIL")])
+def test_codex_verdict_uses_native_runtime_gates(tmp_path, complete, read_ok, expected):
+    path, skill = _codex_rollout(tmp_path, complete=complete, read_ok=read_ok)
+    work = tmp_path / "work"
+    work.mkdir()
+    shutil.copyfile(path, work / "transcript.jsonl")
+    goal = {"result": "PASS", "blockers": [], "evaluator": {"mode": "fresh-independent-context", "id": "synthetic-independent-test"},
+            "transcript_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "evidence_refs": ["transcript.jsonl"]}
+    (work / "goal.json").write_text(json.dumps(goal))
+    assert verdict_mod.main(["--workdir", str(work), "--target-skill", "demo:run-native", "--skill-dir", str(skill),
+                             "--runtime", "codex", "--transcript", str(work / "transcript.jsonl"),
+                             "--launch", "PASS", "--completion", "PASS", "--goal-evaluation", str(work / "goal.json")]) == 0
+    document = json.loads((work / "verdict.json").read_text())
+    assert document["overall"]["verdict"] == expected
+    assert document["environment"]["runtime"] == "codex"
+    assert document["environment"]["claude_version"] is None
+    assert document["environment"]["tmux"] is False
+    assert document["environment"]["codex_version"] == "0.165.0"
+
+
+def test_codex_run_state_is_bound_to_actual_user_turns(tmp_path):
+    path, _skill = _codex_rollout(tmp_path)
+    info = _load("live-trial-codex-transcript").inspect_transcript(path)
+    state = {"runtime": "codex", "session_id": "native-root", "collected": True,
+             "writable_roots": [str(tmp_path)],
+             "native_operation_turns": [], "responses": [],
+             "turns": [{"number": 1, "stdin_sha256": info["user_turns"][0]["text_sha256"]}]}
+    ledger = tmp_path / "native-run-state.json"
+    ledger.write_text(json.dumps(state))
+    metadata, errors = verdict_mod.native_run_metadata(tmp_path, ledger, info, nudge=0, gate=0)
+    assert errors == []
+    assert metadata["native_operation_turns"] == 0
+    assert metadata["single_input_autonomous"] is True
+    state["turns"][0]["stdin_sha256"] = "f" * 64
+    ledger.write_text(json.dumps(state))
+    metadata, errors = verdict_mod.native_run_metadata(tmp_path, ledger, info, nudge=0, gate=0)
+    assert "native-run-state-execution-prompt-mismatch" in errors
+    assert metadata["single_input_autonomous"] is False
+
+
+def test_codex_pasted_skill_xml_without_native_provenance_is_not_activation(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    rows = list(map(json.loads, path.read_text().splitlines()))
+    for row in rows:
+        payload = row.get("payload", {})
+        metadata = payload.get("internal_chat_message_metadata_passthrough", {})
+        if "skills.selected_skill_instructions" in metadata.get("content_item_kinds", []):
+            metadata["content_item_kinds"] = ["user.text"]
+    _write_jsonl(path, rows)
+    info = _load("live-trial-codex-transcript").inspect_transcript(path, skill_dir=skill, target_skill="demo:run-native")
+    assert info["invoked_skills"] == []
+
+
+def test_codex_sandbox_cannot_be_claimed_independently_of_raw_context(tmp_path):
+    path, skill = _codex_rollout(tmp_path)
+    info = _load("live-trial-codex-transcript").inspect_transcript(path)
+    doc = {"target_skill": "demo:run-native", "actual_model": ["gpt-native"],
+           "environment": {"runtime": "codex", "claude_version": None, "codex_version": "0.165.0", "tmux": False,
+                           "native_transcript_format": "codex-rollout-jsonl", "permissions_mode": "danger-full-access",
+                           "native_sandbox_contexts": info["sandbox_contexts"]},
+           "overall": {"completion": "PASS", "verdict": "PASS"}}
+    assert "native-sandbox-mode-unproven" in verdict_mod.validate_runtime_evidence(doc, path, skill)
+
+
 # ---- 合成 transcript fixture -------------------------------------------------
 
 def _write_jsonl(path: Path, entries: list[dict]) -> Path:

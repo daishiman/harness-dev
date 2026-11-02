@@ -41,7 +41,7 @@
       "items": {
         "type": "string"
       },
-      "description": "transcript の assistant.message.model の unique 集合 (実走 model の唯一の証明)。proof trial は [requested_model] と完全一致必須"
+      "description": "Claude assistant.message.model または Codex native turn_context.model の unique 集合 (実走 model の証明)。proof trial は [requested_model] と完全一致必須"
     },
     "nudge_count": {"type": "integer", "minimum": 0},
     "gate_response_count": {"type": "integer", "minimum": 0},
@@ -365,6 +365,7 @@
     },
     "environment": {
       "type": "object",
+      "allOf": [{"if": {"required": ["runtime"], "properties": {"runtime": {"const": "codex"}}}, "then": {"required": ["codex_version", "native_transcript_format"], "properties": {"claude_version": {"type": "null"}, "tmux": {"const": false}, "native_transcript_format": {"const": "codex-rollout-jsonl"}}}}],
       "required": [
         "claude_version",
         "tmux",
@@ -373,6 +374,14 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "runtime": {"enum": ["claude", "codex"], "description": "実実行基盤。旧記録の省略はclaudeとして扱う。"},
+        "codex_version": {"type": ["string", "null"]},
+        "native_sandbox_contexts": {"type": "array", "items": {"type": "object"}},
+        "native_operation_turns": {"type": ["integer", "null"], "minimum": 0, "description": "初回後に追加した宣言済みnative operationの実user turn数。未計測はnull。"},
+        "single_input_autonomous": {"type": "boolean"},
+        "native_run_state_ref": {"type": "string", "minLength": 1},
+        "native_run_state_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "native_transcript_format": {"enum": ["claude-transcript-jsonl", "codex-rollout-jsonl"]},
         "claude_version": {
           "type": [
             "string",

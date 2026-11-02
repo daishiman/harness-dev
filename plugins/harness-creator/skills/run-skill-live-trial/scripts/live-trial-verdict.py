@@ -76,7 +76,11 @@ def iter_transcript(path: Path):
             yield obj
 
 
-def extract_models(path: Path) -> list[str]:
+def extract_models(path: Path, runtime: str = "claude") -> list[str]:
+    if runtime == "codex":
+        return _load_sibling("live-trial-codex-transcript").extract_models(path)
+    if runtime != "claude":
+        raise ValueError(f"unsupported live-trial runtime: {runtime}")
     models: set[str] = set()
     for obj in iter_transcript(path):
         if obj.get("type") == "assistant":
@@ -86,13 +90,21 @@ def extract_models(path: Path) -> list[str]:
     return sorted(models)
 
 
-def extract_skill_invocations(path: Path) -> list[str]:
+def extract_skill_invocations(path: Path, runtime: str = "claude", *,
+                              skill_dir: Path | None = None,
+                              target_skill: str | None = None) -> list[str]:
     """transcript に残る Skill ツール呼出しの skill 名を返す (重複なし・昇順)。
 
     「被験 skill を起動せず、その中で使われる script を Bash から直接叩く」実走は、
     成果物が出ても skill の受け入れ検証になっていない (2026-07-21 live-trial r14 の C05)。
     起動の有無を orchestrator の自己申告ではなく transcript から機械判定する。
     """
+    if runtime == "codex":
+        return _load_sibling("live-trial-codex-transcript").extract_skill_invocations(
+            path, skill_dir=skill_dir, target_skill=target_skill
+        )
+    if runtime != "claude":
+        raise ValueError(f"unsupported live-trial runtime: {runtime}")
     skills: set[str] = set()
     for obj in iter_transcript(path):
         content = (obj.get("message") or {}).get("content")
@@ -150,6 +162,158 @@ def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     h.update(path.read_bytes())
     return h.hexdigest()
+
+
+def validate_runtime_evidence(doc: dict, transcript_path: Path | None,
+                              skill_dir: Path | None = None) -> list[str]:
+    """Check native-runtime identity independently of the caller's PASS fields."""
+    if not isinstance(doc, dict) or not isinstance(doc.get("environment"), dict):
+        return ["runtime-environment-invalid"]
+    environment = doc["environment"]
+    overall = doc.get("overall", {})
+    if not isinstance(overall, dict):
+        return ["runtime-overall-invalid"]
+    runtime = environment.get("runtime", "claude")
+    if runtime not in {"claude", "codex"}:
+        return [f"runtime-unsupported:{runtime}"]
+    errors = []
+    if runtime == "claude":
+        if environment.get("codex_version") is not None:
+            errors.append("runtime-mismatch:Claude evidence declares Codex version")
+        if environment.get("native_transcript_format") not in {None, "claude-transcript-jsonl"}:
+            errors.append("runtime-mismatch:Claude evidence declares non-Claude transcript")
+        if transcript_path is not None:
+            for obj in iter_transcript(transcript_path):
+                if obj.get("type") in {"session_meta", "turn_context", "response_item", "event_msg"}:
+                    errors.append("runtime-mismatch:Codex native records in Claude evidence")
+                    break
+        return errors
+    if environment.get("claude_version") is not None:
+        errors.append("runtime-mismatch:Codex evidence declares Claude version")
+    if environment.get("native_transcript_format") != "codex-rollout-jsonl":
+        errors.append("runtime-mismatch:Codex native transcript format is required")
+    if environment.get("tmux") is not False:
+        errors.append("runtime-mismatch:Codex native exec evidence is not a tmux trial")
+    blocked = overall.get("verdict") == "BLOCKED"
+    if transcript_path is None or not transcript_path.is_file():
+        return errors + ([] if blocked else ["native-transcript-missing"])
+    info = _load_sibling("live-trial-codex-transcript").inspect_transcript(
+        transcript_path, skill_dir=skill_dir, target_skill=doc.get("target_skill")
+    )
+    if environment.get("codex_version") != info["cli_version"]:
+        errors.append("native-cli-version-mismatch")
+    if doc.get("actual_model") != info["models"]:
+        errors.append("native-actual-model-mismatch")
+    if environment.get("native_sandbox_contexts") != info["sandbox_contexts"]:
+        errors.append("native-sandbox-context-mismatch")
+    state_ref = environment.get("native_run_state_ref")
+    if state_ref is not None:
+        if not isinstance(state_ref, str):
+            errors.append("native-run-state-ref-invalid")
+        else:
+            metadata, metadata_errors = native_run_metadata(
+                transcript_path.parent, transcript_path.parent / state_ref, info,
+                nudge=doc.get("nudge_count", 0), gate=doc.get("gate_response_count", 0),
+            )
+            errors.extend(metadata_errors)
+            if any(environment.get(key) != value for key, value in metadata.items()):
+                errors.append("native-run-state-metadata-mismatch")
+    elif environment.get("single_input_autonomous") is True or environment.get("native_operation_turns") is not None:
+        errors.append("native-run-state-missing-for-autonomy-claim")
+    if not blocked:
+        errors.extend(info["format_errors"])
+        errors.extend(info["activation_errors"])
+        if not info["cli_version"]:
+            errors.append("native-cli-version-unmeasured")
+        if not info["models"]:
+            errors.append("native-actual-model-unmeasured")
+        if skill_dir is not None and doc.get("target_skill") not in info["invoked_skills"]:
+            errors.append("native-skill-activation-unproven")
+        if overall.get("completion") == "PASS" and not info["completed"]:
+            errors.append("native-completion-unproven")
+        if not info["usage"]["measured"]:
+            errors.append("native-tokens-unmeasured")
+        contexts = info["sandbox_contexts"]
+        if not contexts or any(context["mode"] != environment.get("permissions_mode") for context in contexts):
+            errors.append("native-sandbox-mode-unproven")
+        for context in contexts:
+            if context["mode"] == "workspace-write" and (
+                context["network_access"] is not False or not context["profile_restricted"]
+                or not context["writable_roots"] or any(not Path(root).is_absolute() for root in context["writable_roots"])
+                or context["exclude_tmpdir_env_var"] is not True or context["exclude_slash_tmp"] is not True
+                or context["special_write_roots"]
+            ):
+                errors.append("native-workspace-sandbox-unproven")
+    return sorted(set(errors))
+
+
+def native_run_metadata(workdir: Path, state_path: Path | None, info: dict | None,
+                        *, nudge: int, gate: int) -> tuple[dict, list[str]]:
+    """Bind the disclosure ledger to actual native user turns; it never grants PASS."""
+    result = {"native_operation_turns": None, "single_input_autonomous": False}
+    if state_path is None or info is None:
+        return result, []
+    try:
+        resolved = state_path.resolve(strict=True)
+        reference = str(resolved.relative_to(workdir.resolve()))
+        raw = resolved.read_bytes()
+        state = json.loads(raw)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return result, [f"native-run-state-invalid:{exc}"]
+    errors = []
+    if not isinstance(state, dict) or state.get("runtime") != "codex" or state.get("session_id") != info["session_id"] or state.get("collected") is not True:
+        return result, ["native-run-state-identity-or-freeze-mismatch"]
+    operations, responses = state.get("native_operation_turns"), state.get("responses")
+    if not isinstance(operations, list) or not isinstance(responses, list):
+        return result, ["native-run-state-turns-invalid"]
+    roots = state.get("writable_roots")
+    if not isinstance(roots, list) or not roots or not all(isinstance(root, str) and Path(root).is_absolute() for root in roots):
+        errors.append("native-run-state-write-roots-invalid")
+    else:
+        for context in info["sandbox_contexts"]:
+            for actual in context["writable_roots"]:
+                actual_path = Path(os.path.normpath(actual))
+                if not any(actual_path == Path(os.path.normpath(root)) or Path(os.path.normpath(root)) in actual_path.parents for root in roots):
+                    errors.append("native-sandbox-write-root-outside-ledger")
+    turns = state.get("turns")
+    if not isinstance(turns, list) or len(turns) != len(info["user_turns"]):
+        errors.append("native-run-state-execution-count-mismatch")
+    else:
+        for number, (turn, user) in enumerate(zip(turns, info["user_turns"]), 1):
+            if not isinstance(turn, dict) or turn.get("number") != number or turn.get("stdin_sha256") != user["text_sha256"]:
+                errors.append("native-run-state-execution-prompt-mismatch")
+    matched, count = {1}, 0
+    for entry in [*operations, *responses]:
+        if not isinstance(entry, dict):
+            errors.append("native-run-state-entry-invalid")
+            continue
+        if not entry.get("submitted"):
+            continue
+        number = entry.get("native_turn")
+        if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= len(info["user_turns"]):
+            errors.append("native-run-state-user-turn-missing")
+            continue
+        if number in matched:
+            errors.append("native-run-state-user-turn-duplicate")
+        matched.add(number)
+        user = info["user_turns"][number - 1]
+        if entry.get("prompt_sha256") != user["text_sha256"]:
+            errors.append("native-run-state-prompt-mismatch")
+        if entry in operations:
+            target, args = entry.get("target_skill"), entry.get("args")
+            if not isinstance(target, str) or not isinstance(args, str):
+                errors.append("native-run-state-operation-invalid")
+            else:
+                expected = f"${target.split(':')[-1]} {args}\n"
+                if user["normalized_text_sha256"] != hashlib.sha256(expected.strip().encode()).hexdigest():
+                    errors.append("native-run-state-operation-prompt-mismatch")
+            count += 1
+    if set(range(1, len(info["user_turns"]) + 1)) != matched:
+        errors.append("native-run-state-unclassified-user-turns")
+    result.update({"native_operation_turns": count,
+                   "single_input_autonomous": len(info["user_turns"]) == 1 and info["completed"] and count == 0 and nudge == 0 and gate == 0 and not errors,
+                   "native_run_state_ref": reference, "native_run_state_sha256": hashlib.sha256(raw).hexdigest()})
+    return result, errors
 
 
 def load_goal_evaluation(
@@ -514,8 +678,10 @@ def _is_ephemeral_artifact(path: Path) -> bool:
     return path.suffix in _EPHEMERAL_SUFFIXES or path.name in _EPHEMERAL_FILE_NAMES
 
 
-def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
+def behavior_closure_files(skill_dir: Path, runtime: str = "claude") -> list[tuple[str, Path]]:
     """Resolve the declared behavior closure, fail-closed on missing/unsafe refs."""
+    if runtime not in {"claude", "codex"}:
+        raise ValueError(f"unsupported live-trial runtime: {runtime}")
     skill_dir = Path(skill_dir).resolve()
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.is_file():
@@ -623,6 +789,29 @@ def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
                 if directory.is_dir():
                     add_tree(directory, f"dependency {dirname} {dependency}")
 
+    if runtime == "codex" and context:
+        # Preserve Claude's existing digest exactly. Codex additionally binds the
+        # native manifests and hook delivery source actually used by its runner.
+        for slug in (plugin_root.name, *declared_dependencies):
+            native_root = repo_root / "plugins" / slug
+            manifest_path = native_root / ".codex-plugin" / "plugin.json"
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(f"Codex manifest read/parse error: {manifest_path}: {exc}") from exc
+            if not isinstance(manifest, dict) or manifest.get("name") != slug:
+                raise ValueError(f"Codex manifest name mismatch: {manifest_path}")
+            add_file(manifest_path, f"Codex manifest {slug}")
+            native_hooks = manifest.get("hooks")
+            if native_hooks is not None:
+                if not isinstance(native_hooks, str) or Path(native_hooks).is_absolute():
+                    raise ValueError(f"Codex hooks must be a relative path: {manifest_path}")
+                hook_path = _contained(native_root / native_hooks, native_root, "Codex hooks")
+                add_file(hook_path, f"Codex hooks {slug}")
+            native_assets = native_root / "codex"
+            if native_assets.is_dir():
+                add_tree(native_assets, f"Codex runtime surface {slug}")
+
     declared_set = set(declared_dependencies)
     for ref in _frontmatter_refs(skill_md):
         raw = Path(ref)
@@ -703,10 +892,10 @@ def _behavior_bytes(label: str, path: Path) -> bytes:
                       separators=(",", ":")).encode("utf-8")
 
 
-def skill_dir_tree_sha(skill_dir: Path) -> str:
+def skill_dir_tree_sha(skill_dir: Path, runtime: str = "claude") -> str:
     """Declared behavior closure digest (legacy field name retained for compatibility)."""
     h = hashlib.sha256()
-    for label, path in behavior_closure_files(skill_dir):
+    for label, path in behavior_closure_files(skill_dir, runtime=runtime):
         h.update(label.encode("utf-8"))
         h.update(b"\0")
         h.update(_behavior_bytes(label, path))
@@ -844,6 +1033,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workdir", required=True, help="eval-log/<plugin>/<skill>/live-trial/<run-id>/")
     ap.add_argument("--target-skill", required=True, help="plugin:skill")
     ap.add_argument("--skill-dir", required=True, help="被験 skill のディレクトリ (tree sha 対象)")
+    ap.add_argument("--runtime", choices=["claude", "codex"], default="claude")
+    ap.add_argument("--native-run-state", default="", help="Codex controllerの収集済みturn台帳（workdir内）")
     ap.add_argument("--args", default="", dest="trial_args")
     ap.add_argument("--requested-model", default="")
     ap.add_argument("--session-id", default="", help="transcript 回収用 UUID")
@@ -880,7 +1071,7 @@ def main(argv: list[str] | None = None) -> int:
                     help="回収済み required_observation を N=<evidence ref> で指定 (複数可)")
     ap.add_argument("--tier", default="live", choices=["static", "fork", "live"])
     ap.add_argument("--downgrade-reason", default="")
-    ap.add_argument("--permissions-mode", default="bypassPermissions")
+    ap.add_argument("--permissions-mode", default=None)
     ap.add_argument("--boot-s", type=float, default=None)
     ap.add_argument("--poll-exit", default="")
     ap.add_argument("--poll-state", default="", help="scenario wall time の正本 poll-state.json")
@@ -925,7 +1116,7 @@ def main(argv: list[str] | None = None) -> int:
         "CLAUDE_PROJECTS_DIR", str(Path.home() / ".claude" / "projects")
     )
     src: Path | None = Path(ns.transcript) if ns.transcript else None
-    if src is None and ns.session_id:
+    if src is None and ns.session_id and ns.runtime == "claude":
         src = find_transcript(projects_dir, ns.session_id)
     transcript_dst: Path | None = None
     if src is not None and src.is_file():
@@ -933,12 +1124,23 @@ def main(argv: list[str] | None = None) -> int:
         if src.resolve() != transcript_dst.resolve():
             shutil.copyfile(src, transcript_dst)
 
-    actual_model = extract_models(transcript_dst) if transcript_dst else []
-    claude_version = extract_claude_version(transcript_dst) if transcript_dst else None
+    actual_model = extract_models(transcript_dst, runtime=ns.runtime) if transcript_dst else []
+    claude_version = extract_claude_version(transcript_dst) if transcript_dst and ns.runtime == "claude" else None
+    codex_info = (
+        _load_sibling("live-trial-codex-transcript").inspect_transcript(
+            transcript_dst, skill_dir=skill_dir, target_skill=ns.target_skill
+        ) if transcript_dst and ns.runtime == "codex" else None
+    )
+    native_metadata, native_metadata_errors = native_run_metadata(
+        workdir, Path(ns.native_run_state) if ns.native_run_state else None,
+        codex_info, nudge=ns.nudge_count, gate=ns.gate_response_count,
+    ) if ns.runtime == "codex" else ({}, [])
     transcript_sha = sha256_file(transcript_dst) if transcript_dst else None
     transcript_layer = "jsonl" if transcript_dst else "tui"
 
-    invoked_skills = extract_skill_invocations(transcript_dst) if transcript_dst else []
+    invoked_skills = extract_skill_invocations(
+        transcript_dst, runtime=ns.runtime, skill_dir=skill_dir, target_skill=ns.target_skill
+    ) if transcript_dst else []
 
     goal_result = ns.goal_result or None
     blockers = list(ns.blocker)
@@ -965,11 +1167,22 @@ def main(argv: list[str] | None = None) -> int:
     launch = ns.launch
     if transcript_dst and not ns.blocked and ns.target_skill not in invoked_skills:
         launch = "FAIL"
+        invocation_label = "native skill適用と本文Read" if ns.runtime == "codex" else "Skill 呼出し"
         blockers.append(
-            f"被験 skill {ns.target_skill} の Skill 呼出しが transcript に0件 "
+            f"被験 skill {ns.target_skill} の {invocation_label}が transcript に0件 "
             f"(実行された Skill: {invoked_skills or 'なし'})。skill を起動せず script を"
             "直接実行した実走は受け入れ検証にならない"
         )
+    if ns.runtime == "codex" and not ns.blocked:
+        if codex_info is None or codex_info["format_errors"] or codex_info["activation_errors"] or not actual_model or not codex_info["cli_version"]:
+            launch = "FAIL"
+            blockers.append("Codex native transcript/model/CLI-versionの実測が不足または形式不一致")
+        if codex_info is None or not codex_info["completed"]:
+            ns.completion = "FAIL"
+            blockers.append("Codex native実turnまたは子agentが未完了")
+        if native_metadata_errors:
+            goal_result = "FAIL"
+            blockers.extend(native_metadata_errors)
 
     # 配線の機械 gate: ファイル名の transcript 言及ではなく、成果物の実体・必須キー・
     # original_goal/hash の整合を検証する。fresh evaluator の PASS より機械判定を優先する。
@@ -1020,7 +1233,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         observed, unobserved = observation_coverage(required_observations, claims)
         budget = resource_budget(scenario)
-        token_usage = transcript_token_usage(transcript_dst)
+        token_usage = transcript_token_usage(transcript_dst, runtime=ns.runtime)
         try:
             wall_usage = poll_wall_usage(
                 workdir, Path(ns.poll_state) if ns.poll_state else None
@@ -1095,14 +1308,18 @@ def main(argv: list[str] | None = None) -> int:
             "goal_fit": goal_fit,
             "verdict": verdict,
         },
-        "skill_dir_tree_sha": skill_dir_tree_sha(skill_dir),
+        "skill_dir_tree_sha": skill_dir_tree_sha(skill_dir, runtime=ns.runtime),
         "transcript_sha256": transcript_sha,
         "scenario_origin": ns.scenario_origin,
         "environment": {
             "claude_version": claude_version,
-            "tmux": backend.tmux_available(),
+            "tmux": backend.tmux_available() if ns.runtime == "claude" else False,
             "transcript_layer": transcript_layer,
-            "permissions_mode": ns.permissions_mode,
+            "permissions_mode": ns.permissions_mode or ("workspace-write" if ns.runtime == "codex" else "bypassPermissions"),
+            **({"runtime": "codex", "codex_version": codex_info["cli_version"] if codex_info else None,
+                "native_transcript_format": "codex-rollout-jsonl",
+                "native_sandbox_contexts": codex_info["sandbox_contexts"] if codex_info else [],
+                **native_metadata} if ns.runtime == "codex" else {}),
         },
         "tier": ns.tier,
         "downgrade_reason": ns.downgrade_reason or auto_reason,
@@ -1122,6 +1339,12 @@ def main(argv: list[str] | None = None) -> int:
 
     schema = json.loads(_schema_path().read_text(encoding="utf-8"))
     errs = validate_schema(doc, schema)
+    # These cross-field checks are explicit because the small validator does not
+    # implement JSON Schema if/then. Preserve a truthful FAIL/BLOCKED artifact,
+    # while forbidding an inconsistent runtime record from claiming PASS.
+    runtime_errors = validate_runtime_evidence(doc, transcript_dst, skill_dir)
+    if runtime_errors and doc["overall"]["verdict"] == "PASS":
+        errs.extend(runtime_errors)
     if errs:
         print("[ERROR] verdict が schema 不適合 (書き出し中止):", file=sys.stderr)
         for e in errs:

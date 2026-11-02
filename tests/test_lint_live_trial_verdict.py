@@ -112,6 +112,31 @@ def test_valid_pass_verdict_exit0(lint, capsys):
     assert "[OK]" in capsys.readouterr().out
 
 
+def test_codex_lint_uses_native_runtime_guard(lint, monkeypatch):
+    """runtimeのラベルとPASSの自己申告だけでは合格させない。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["environment"]["runtime"] = "codex"
+    path = _write_verdict(lint, doc)
+    verdict_mod, backend_mod, schema = lint.load_harness()
+    # schema/closureは別の単体テストで検証。この境界ではnative検査への委譲を測る。
+    monkeypatch.setattr(verdict_mod, "validate_schema", lambda *_: [])
+    seen = []
+
+    def digest(source, runtime="claude"):
+        seen.append(runtime)
+        return doc["skill_dir_tree_sha"]
+
+    monkeypatch.setattr(verdict_mod, "skill_dir_tree_sha", digest)
+    monkeypatch.setattr(
+        verdict_mod, "validate_runtime_evidence",
+        lambda *_: ["native activation missing"], raising=False,
+    )
+    errors = lint.check_verdict(path, "demo-plugin", "run-demo", verdict_mod, backend_mod, schema)
+    assert seen == ["codex"]
+    assert any("runtime-evidence: native activation missing" in item for item in errors)
+
+
 def test_contractual_gate_exemption_is_surfaced(lint, capsys):
     """契約 gate 免除は合格だが黙って通さない — [NOTE] で必ず可視化されること。"""
     skill_dir = _make_skill(lint)

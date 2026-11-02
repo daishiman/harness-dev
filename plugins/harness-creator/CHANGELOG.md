@@ -2,6 +2,12 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.56 — 2026-11-02
+
+- 明示選択のCodex native実走を追加。実skill適用・全文Read・親子session・モデル・累積usageを原rolloutから検査し、Claude形式への変換を行わない。
+- runtime別の閉包と再利用判定を導入し、既存Claudeの証拠・既定動作を維持。成果物提示後の実user選択と、宣言済み複数operationの実user turnを分けて記録する。
+- actorのworkspaceとsource/private証拠を分離し、時間・token予算・独立goal評価・scoped cleanupを共通の受入条件へ接続。未確認のnative hookを必要とする試行は合格にしない。
+
 ## 1.4.55 — 2026-11-02
 
 - live trial起動時のClaude CLIを呼出し元で解決した実行可能な絶対pathへ固定し、tmux内で旧CLIへ切り替わる問題を修正。必要なCLIを `--claude-executable` で明示できる。

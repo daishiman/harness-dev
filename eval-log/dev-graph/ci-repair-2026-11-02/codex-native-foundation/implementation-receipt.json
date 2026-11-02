@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-02T02:41:41.695272+00:00",
+  "state": "SOURCE_READY_NATIVE_ACCEPTANCE_PENDING",
+  "beads_id": "harness-86kh",
+  "authorization": "利用者のcodexで進めて。既存の全件実走・commit/push/PR更新の認可を維持。",
+  "base_head": "3587f53e178aeb26814f88c11e0ab2f3d5f041d6",
+  "versions": {
+    "harness-creator": "1.4.56",
+    "dev-graph": "0.1.29"
+  },
+  "source_sha256": {
+    "plugins/dev-graph/.claude-plugin/plugin.json": "1fa7b3c0d9e3363822e0ac37fa1e0c48a1568a3c4674ee47a600d7724d5a35f4",
+    "plugins/dev-graph/.codex-plugin/plugin.json": "5f8dd31d6369c25891c3c8eff46903c927e14f573225d462f9dc27be8f162fbc",
+    "plugins/dev-graph/plugin-composition.yaml": "711bb48aad10dd7c0a7562622bc6e29349da3d2bef93daff9a447c41ee3bcf65",
+    "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json": "75d4c6ca639c26c5ee4dca15a025b4909f46a81cdef49f6675f0d8120ade83fe",
+    "plugins/dev-graph/tests/test_skill_criteria_evidence.py": "ebafc7d13bf53005fb55e84b7748c1be93aa0e52c1ea8d34e3f7e5e64facfd2c",
+    "plugins/harness-creator/.claude-plugin/plugin.json": "02234079bef3da395846da1681c5c12c82398a6cdd073776d2e270b376edd5f9",
+    "plugins/harness-creator/.codex-plugin/plugin.json": "fd7976bc83b312113203d8f180aa414d4f5f20e50e84e3c637a017c86dfc1d9d",
+    "plugins/harness-creator/CHANGELOG.md": "32bfa1c8b7ea5d1a5b36355be7a76d2d1fe2e22a0e6831c75f43d0b954b9db77",
+    "plugins/harness-creator/plugin-composition.yaml": "c2a8c10b3bc08f68f993ac8fcea1514f26cd9c0f7bae961757df876407038eaa",
+    "plugins/harness-creator/references/package-contract.json": "3c69a74947e5266b507fa320d241a9f26698fbf915ad90f3b33ae77c995ed1f7",
+    "plugins/harness-creator/skills/run-skill-live-trial/SKILL.md": "458b96059bf84a732b7e92ba79fec822daa1f9fb93b966ccbfc3082cb5484fc9",
+    "plugins/harness-creator/skills/run-skill-live-trial/references/codex-live-trial.md": "01b344cc2480a0d7300d3f7215933532936a4d36259ff1e0146ace1ac28dffd1",
+    "plugins/harness-creator/skills/run-skill-live-trial/schemas/live-trial-verdict.schema.json": "38b1b7eb0a9715759892dca086382f2ed8212c31a8a75d92e1551d1d95028447",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex-transcript.py": "36b12c9f720ebfcde10342a8ff8f2eacf6f260ee1d77eb1b0fc76cd7d156d12c",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex.py": "1ca7ea10ddefca9ba3ee8a2654ef5f15b030017e3b492b0c76e9e870da39e29c",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py": "b04553058338cde6ec3aaed12706959eaaa869b0f19e304dfda4816ccc4a45c6",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/plan-live-trials.py": "dc6140f17ee16f5fa3ceb2474b244d212b07278033aa73a1567946fc85764ada",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-resource-budget.py": "ef77890fd97badd061cffe2a6e600f802e3f9a4c93a2bcbe2d150b7af886c40f",
+    "scripts/lint-live-trial-verdict.py": "6b96ec3d95289a50750dca3cb943cafef938512076bc79918310c81463345ac1",
+    "tests/test_codex_live_trial.py": "1c705900ef17b1a7bc929811fcdc5c3a267425cdc892f81937fc4aecb517410a",
+    "tests/test_lint_live_trial_verdict.py": "45da0905c359fe301144fb6c666ba86e740758be35d0d9f8ab4eacb23dd470ef",
+    "tests/test_live_trial_harness.py": "34befc629bd45342ecef7d716fdc0bd264be1d737309df02dbbdbc9e87576a57",
+    "tests/test_live_trial_runtime_planner.py": "48602f6fdd124cbadd96b54f0ad87eb20d916e227ff6d683285732dcdf7a7534"
+  },
+  "validation": {
+    "related_regression": "255 passed",
+    "command": "PYTHONDONTWRITEBYTECODE=1 /usr/bin/arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -B -m pytest -q -p no:cacheprovider tests/test_live_trial_harness.py tests/test_codex_live_trial.py tests/test_live_trial_runtime_planner.py tests/test_lint_live_trial_verdict.py tests/test_validate_goal_seek_evidence.py plugins/harness-creator/tests/test_live_trial_plan_scenario_reuse.py plugins/harness-creator/tests/test_live_trial_verdict_scenario_contract.py",
+    "after_regression": "CLI要件の説明のみを正本/計画/案内へ同期。独立限定再確認PASS、動作code/SKILL不変。",
+    "release": "23 plugins OK",
+    "content_review": "96 skills OK",
+    "discovery": "orphan0",
+    "capability_parity": "HC/dev-graph PASS",
+    "package": "dev-graph8checks PASS。HCは6pass/2fail、PKG004=35/PKG014=34の全所見が3587 baselineと同一、新規0。未解消をPASSへ変更しない。",
+    "independent_design_review": "eval-log/harness-creator/run-skill-live-trial/codex-native-20261102/independent-review-final.json"
+  },
+  "acceptance": {
+    "new_target_passes": 0,
+    "target_runs_started": 0,
+    "codex_target_count": 8,
+    "prepared_candidates": 7,
+    "held": [
+      "run-dev-graph-sync"
+    ],
+    "held_reason": "native execでUserPromptSubmit/PreToolUse未発火。READONLY hooks/listは自作fixtureの6handlerがuntrustedであることを確認。未信頼hookを承認済みと捏造せず既存C03 guardを保持。",
+    "old_claude_evidence_preserved": true,
+    "ci_success": false
+  },
+  "diagnostic_side_effects": {
+    "native_skills_and_child_resume": "本物のprivate probeで確認。製品受入PASSではない。",
+    "global_config_probe_observation": "native workerの一回CLI project-trust probeで前後SHA差を観測。before原bytes未保存で帰属不明、CLIか並行変更か断定しない。直接userconfig/auth編集0、無断復元0。その後inline probeではconfig SHA不変。詳細はprivate probe reportに保持。"
+  },
+  "release_adoption": "remote/publicHCは1.4.55のまま、1.4.56未公開未installの最終CLI要件説明後だけ採番入力を正規writerで再生成。公開版のfingerprint対応は変更しない。",
+  "logs_sha256": {
+    "harness-codex-final-regression.log": "8e5a07e5bbe2a358071b4967d3662e17513887a02ab0a4304fcd86eae31d81e4",
+    "harness-codex-release-check.log": "f392962c75aa31cc88bfaf80dfe503639800d20a9d352cc0dfca5b1d74cd1293",
+    "harness-codex-content-review-check.log": "7d68dd234c1d139ce25aa6d6323059360a5df5930608bc19b011892d7ecce60d",
+    "harness-codex-discovery.log": "b59284090ef3e09b25a0996a8eb385e30c5b9551a093d5d1a90332e1f313e1f2",
+    "harness-codex-hc-parity.json": "94681080958332123e5661717e8de22e154e89b4a49bc1636802f6e2c80bafc0",
+    "harness-codex-dg-parity.json": "41f9714cda39090d6e5fa6be0be87c137433038624b758c616faed58c219928b",
+    "harness-codex-hc-package.json": "63ab4bd4c121a61ed8a92891cddb505fcafb6b59b8d246c5412515449c875405",
+    "harness-codex-dg-package.json": "2766f3106cf00cc339daf0ae62fb8715c0225defd478954738abe1fbed273598",
+    "harness-codex-baseline-pkg004.json": "ab7d9a37c5842c8eb66908712bd96d035af4f253a7cbde9c2f92817ae091e44e",
+    "harness-codex-baseline-pkg014.json": "179d13a65b54ae4841d6bebe79f09be762f925138df28da3d49bc24f365f7b73"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: run-skill-live-trial
-description: 対象skillを本物のclaudeセッション(tmux)でfresh contextのまま実走させて受け入れ確認したいとき、fork実行では観測できない自走・入れ子Skill・対話gateの本番挙動をgoal適合まで検証したいときに起動する。
+description: 対象skillを本物のClaudeまたはCodexの新規セッションで実走させて受け入れ確認したいとき、実行基盤ごとの呼出し・対話gate・goal達成を原ログと独立評価で検証したいときに起動する。
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<plugin:skill> [args] [--proof] [--model <model-id>]"
@@ -29,6 +29,7 @@ schema_refs:
 reference_refs:
   - references/task-template.md
   - references/transcript-jsonl.md
+  - references/codex-live-trial.md
   - ../run-elegant-review/references/convergence-policy.json
   - ../run-build-skill/references/goal-seek-paradigm.md
   - ../../references/orchestrate-gate-pattern.md
@@ -41,6 +42,8 @@ script_refs:
   - scripts/live-trial-poll.py
   - scripts/validate-live-trial-resource-budget.py
   - scripts/live-trial-verdict.py
+  - scripts/live-trial-codex.py
+  - scripts/live-trial-codex-transcript.py
   - scripts/build-live-trial-verdict.py
   - scripts/validate-live-trial-scenario-contract.py
   - scripts/validate-goal-seek-evidence.py
@@ -73,7 +76,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: live-trial
     - id: OUT3
       loop_scope: outer
-      text: 全終了経路で tmux セッションが所有 run-id と owner PID の完全一致に限定した reaper により回収され denylist 被験 skill の起動が boot と verdict の機械 gate で拒否される
+      text: 全終了経路でClaudeはrun-idとowner PIDが一致するtmuxセッションだけ、Codexは自ら起動したprocess groupだけを回収し、denylist被験skillを起動・verdictの機械gateで拒否する
       verify_by: script
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -106,7 +109,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Purpose & Output Contract
 
-対象 skill を**別プロセスの本物の claude セッション** (tmux backend) で fresh context のまま実走させ、**期待どおり動くか (受け入れ) を確認する** acceptance harness。実走証拠 (verdict + transcript) は behavioral claim (自走完遂 / 入れ子 Skill / 対話 gate 越え / goal 達成) の唯一の収束根拠であり、静的レビューの design claim とは直交する (`../../references/orchestrate-gate-pattern.md` **Gate D**)。
+対象skillを**別プロセスの本物のClaudeまたはCodexセッション**で実走させ、**期待どおり動くかを確認する**acceptance harness。既定はClaudeのtmux方式。Codexは明示指定した場合だけnative exec/resumeと原rolloutを使う。実走証拠はそのruntimeで実際に観測した挙動だけを裏づけ、静的レビューとは区別する (`../../references/orchestrate-gate-pattern.md` **Gate D**)。
+
+## Runtimeの選択
+
+計画時に`--runtime claude|codex`を指定し、省略時は従来どおりClaudeを使う。以下のtmux・Skill tool・Claude確認画面の手順はClaude専用。Codexは[専用契約](references/codex-live-trial.md)と`live-trial-codex.py --config <path> run|collect|finalize`を使い、Claudeの起動器へ渡さない。
+
+Codexではnativeの`$skill`適用・本文の実Read・subagent・実user turnを原JSONLで検査する。`Skill`/`Agent`やStop/権限hookのClaudeイベントを生成しない。native operationを複数user turnで渡した試行は、その回数と順序を記録し、単一入力での無対話自走とは主張しない。未確認のnative hookを必要とするscenarioは保留し、代替receiptを自作しない。
+
+runtimeをまたいだPASS再利用は禁止。旧runtime未記録の証跡はClaudeとして保持する。CodexはCodex面を含む閉包・CLI版・実model・累積usage・親子session・原transcriptを検査し、既存の全観測・予算・fresh独立goal判定を省略しない。
 
 ## 適用境界 (fork acceptance との直交)
 

@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+      "component_id": "C14",
+      "skill": "run-dev-graph-decompose",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0331-pr85: wall_clock_s=490, total_tokens=2.29M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "fixture_contract": "A contained repository transplanted from the accepted render seed fixture (architecture ARCH-LT-001, feature LT-FEATURE-001 with its exact-13 package), rekeyed to the new repository, with execution_tracker.mode=beads and a contained fake Beads adapter at tools/fake-bd.py; the decompose run is a macro proposal preview whose projection is checked through C28 dry-run.",
+      "required_observations": [
+        "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+      ]
+    },
+    {
+      "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2-codex-v1",
+      "component_id": "C02",
+      "skill": "run-dev-graph-node",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0528-pr85: wall_clock_s=520, total_tokens=2.19M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "fixture_contract": "A contained initialized repository supplies one valid issue, task, specification, architecture, and document artifact in a single input batch.",
+      "required_observations": [
+        "all five artifacts are routed to canonical kind paths",
+        "frontmatter kind and stored path agree after a consecutive update",
+        "no feature is created outside the C14 macro-feature contract"
+      ]
+    },
+    {
+      "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
+      "component_id": "C05",
+      "skill": "run-dev-graph-render",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 900,
+        "max_total_tokens": 3000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2212-pr85: wall_clock_s=385, total_tokens=1.29M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --output <contained-fixture-repo>/.dev-graph/render/index.html",
+      "fixture_contract": "A contained repository transplanted from the accepted render seed fixture (feature LT-FEATURE-001, its exact-13 package with a registration receipt, some tasks done), rekeyed to the new repository and with the previous render output excluded.",
+      "required_observations": [
+        "the generated HTML has zero external resource references and draws features, tasks, and edges as inline SVG",
+        "LT-FEATURE-001 progress X/Y matches the graph, Y equals the registration receipt expected_count, and the child task set equals the receipt node_ids",
+        "the render is invoked with the registration receipt and its target corresponds to the receipt source_digest",
+        "two consecutive renders produce identical output digests"
+      ]
+    },
+    {
+      "scenario_id": "C04-OUT1-positive-ready-handoff-r2-codex-v1",
+      "component_id": "C04",
+      "skill": "run-dev-graph-requirements",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1500,
+        "max_total_tokens": 7000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2252-pr85: wall_clock_s=655, total_tokens=3.24M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --feature-id <ready-feature-id> --package-dir <published-package-dir>",
+      "fixture_contract": "The feature is confirmed/evaluation-pass/readiness-complete and the package is a valid P01..P13 exact-13 DAG with matching source digest and parent feature.",
+      "required_observations": [
+        "a capability-build task-graph handoff is emitted for the exact-13 package",
+        "the handoff remains bound to the feature and source digest",
+        "the requirements skill generates no implementation source file"
+      ]
+    },
+    {
+      "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+      "component_id": "C15",
+      "skill": "run-dev-graph-schedule",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 5000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0456-pr85: wall_clock_s=580, total_tokens=2.09M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "fixture_contract": "A contained repository transplanted from the accepted schedule seed fixture, rekeyed to the new repository, mixing ready tasks (overlapping and disjoint resource_scope), blocked tasks, draft/unconfirmed/evaluation-non-pass/readiness-non-complete tasks, and one active lease.",
+      "required_observations": [
+        "every recommended task has all depends_on satisfied (ready)",
+        "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+        "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+        "suggested_branch and the worktree claim command are unique per recommended task"
+      ]
+    },
+    {
+      "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
+      "component_id": "C18",
+      "skill": "run-dev-graph-status",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1800,
+        "max_total_tokens": 8000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261012T2229-pr85: wall_clock_s=775, total_tokens=3.91M incl. subagents and the in-trial init/node preparation), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --id task-lt-task-001",
+      "fixture_contract": "A contained plain git repository that the trial initializes with the canonical init and populates through the C02 single writer (task-lt-task-001 with depends_on and a meaningful closed_at) before the status run.",
+      "required_observations": [
+        "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+        "C11 validate-graph-schema exits 0 on the queried graph",
+        "the graph digest is unchanged across the status run and GitHub/Beads writes are 0"
+      ]
+    },
+    {
+      "scenario_id": "C03-OUT1-positive-second-sync-zero-r2-codex-v1",
+      "component_id": "C03",
+      "skill": "run-dev-graph-sync",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 1200,
+        "max_total_tokens": 7000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0145-pr85: wall_clock_s=597, total_tokens=3.18M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> を同じ入力で 2 回続けて実行する (remote は DEV_GRAPH_GH=<contained-fixture-repo>/tools/fake-gh.py が読む fixture 内 github-adapter.json だけ)",
+      "fixture_contract": "A deterministic GitHub adapter fixture (github-adapter.json read only through the fixture's tools/fake-gh.py via DEV_GRAPH_GH) has one valid import and one valid export, stable timestamps, IDs, aliases, and snapshots, so sync converges without touching any external GitHub API.",
+      "required_observations": [
+        "the first sync applies the expected import and export",
+        "the second sync reports imports changes=0 and exports changes=0",
+        "stable IDs and snapshots are unchanged on the second run"
+      ]
+    },
+    {
+      "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2-codex-v1",
+      "component_id": "C19",
+      "skill": "run-dev-graph-system-spec",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "resource_budget": {
+        "max_wall_clock_s": 3300,
+        "max_total_tokens": 23000000
+      },
+      "resource_budget_basis": "2x the PR85 measured run (20261013T0349-pr85: wall_clock_s=1542, total_tokens=11.42M incl. subagents), rounded up to 300 s / 1M tokens; fixed before the re-run and never raised afterwards.",
+      "task_args_template": "--repo-root <contained-fixture-repo> --resume",
+      "fixture_contract": "A contained system-spec workspace and the declared system-spec-harness plugin provide all four required entry points, confirmed output, citations, and evaluator PASS.",
+      "required_observations": [
+        "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "the imported specification and architecture retain source lineage and evaluator evidence",
+        "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+      ]
+    }
+  ]
+}

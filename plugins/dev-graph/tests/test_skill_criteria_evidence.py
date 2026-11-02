@@ -178,9 +178,16 @@ def test_independent_scenario_receipt_covers_exact_criteria(
             "goal_fit": "PASS",
             "verdict": "PASS",
         }
-        assert verdict["skill_dir_tree_sha"] == live_verdict_module.skill_dir_tree_sha(
-            skill_path.parent
-        ), f"{component_id}/{criterion_id}: stale behavior closure digest"
+        runtime = verdict.get("environment", {}).get("runtime", "claude")
+        digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
+                  if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
+        assert verdict["skill_dir_tree_sha"] == digest, (
+            f"{component_id}/{criterion_id}: stale behavior closure digest"
+        )
+        if runtime == "codex":
+            assert not live_verdict_module.validate_runtime_evidence(
+                verdict, verdict_path.parent / "transcript.jsonl", skill_path.parent,
+            ), f"{component_id}/{criterion_id}: invalid native runtime evidence"
 
 
 def _synthetic_scenario_receipt(verdict: str, statuses: tuple[str, ...]) -> dict:

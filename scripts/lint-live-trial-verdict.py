@@ -127,13 +127,20 @@ def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
         )
 
     skill_dir = PLUGINS_DIR / plugin / "skills" / skill
+    runtime = data.get("environment", {}).get("runtime", "claude")
     if (skill_dir / "SKILL.md").is_file():
-        current_sha = verdict_mod.skill_dir_tree_sha(skill_dir)
+        current_sha = (verdict_mod.skill_dir_tree_sha(skill_dir, runtime=runtime)
+                       if runtime == "codex" else verdict_mod.skill_dir_tree_sha(skill_dir))
         if data.get("skill_dir_tree_sha") != current_sha:
             errs.append(
                 f"stale-sha: 記録 {data.get('skill_dir_tree_sha')} != 現在 {current_sha} "
                 "(被験 skill の挙動面が verdict 後に変更された — 再 trial 要)"
             )
+        if runtime == "codex":
+            for error in verdict_mod.validate_runtime_evidence(
+                data, path.parent / "transcript.jsonl", skill_dir,
+            ):
+                errs.append(f"runtime-evidence: {error}")
 
     # 降格除外: tier が live 未満 or downgrade_reason 有りは PASS 扱い禁止 (D13)
     if data.get("tier") != "live" or data.get("downgrade_reason") is not None:
@@ -217,7 +224,7 @@ def run_lint(plugin_filter=None, enforce=False):
         for v in violations:
             print(f"  - {v}")
         print()
-        print("Fix: ローカル Claude Code で run-skill-live-trial を対象 skill に対し実行し")
+        print("Fix: 指定runtime（Claude Code / Codex）で run-skill-live-trial を対象 skill に対し実行し")
         print("     eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json を保存してください。")
         return 1
     if enforce and missing:

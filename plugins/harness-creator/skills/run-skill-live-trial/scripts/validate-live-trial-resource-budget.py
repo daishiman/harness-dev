@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import importlib.util
 from pathlib import Path
 from typing import Any
 
@@ -50,8 +51,16 @@ def transcript_paths(main: Path) -> list[Path]:
     return [path for path in paths if path.is_file()]
 
 
-def transcript_token_usage(main: Path | None) -> dict[str, Any]:
+def transcript_token_usage(main: Path | None, runtime: str = "claude") -> dict[str, Any]:
     """Sum unique assistant-message usage records from transcript JSONL files."""
+    if runtime == "codex":
+        path = Path(__file__).with_name("live-trial-codex-transcript.py")
+        spec = importlib.util.spec_from_file_location("live_trial_codex_budget", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.transcript_token_usage(main)
+    if runtime != "claude":
+        raise ValueError(f"unsupported live-trial runtime: {runtime}")
     totals = {key: 0 for key in USAGE_FIELDS}
     # Claude assistant message id は session/subagent transcript を横断して一意。path を
     # identity に含めると同一 record の main/subagent 複写を二重計上するため id だけで束縛する。

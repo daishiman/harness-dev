@@ -1,0 +1,28 @@
+{
+  "reviewer": "independent-codex-native-content-review",
+  "profile": "incremental",
+  "claim_type": "design",
+  "status": "BLOCKED_PENDING_SOURCE_FIX",
+  "started_skill_md_sha256": "458b96059bf84a732b7e92ba79fec822daa1f9fb93b966ccbfc3082cb5484fc9",
+  "current_skill_md_sha256": "458b96059bf84a732b7e92ba79fec822daa1f9fb93b966ccbfc3082cb5484fc9",
+  "findings": [
+    {
+      "id": "CN-ISOLATION-001",
+      "severity": "high",
+      "blocking": true,
+      "signal": "inconsistency",
+      "location": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-codex.py:200",
+      "message": "load_configはprivate_dir/skill_dirのrepo_root配下のみを拒否する。実際のactor書込可能範囲にはworkdir/outも含まれるため、private_dirまたはproviderをworkdir/out配下へ置くconfigを受理する。actorに制御台帳・原本・sourceの書換権限が与えられ、private/sourceはactor workspace外という契約を破る。native_operationsのskill_dirにも全writable rootsとの非交差検査がない。",
+      "reproduction": "boundary-repro/config.jsonをload_configのみで検証。CLI・実target起動なし。結果boundary-repro/result.jsonにaccepted=true、private_inside_actor_add_dir=true、provider_inside_actor_add_dir=true。",
+      "suggestion": "起動前にrepo_rootおよびworkdir/outの両actor writable rootsをresolveし、private/config/task/scenario/providerおよびnative_operationsのsourceとの包含・交差を拒否する。workdir/private/control/source間の必要な境界も検査する。"
+    }
+  ],
+  "execution_limits": [
+    "実行したのはread-onlyコード/差分調査とload_config最小再現のみ。",
+    "作者/親報告の163 coretests・17runner・24downstream testsを当reviewerの実行と主張しない。",
+    "実対象live trial・native hooks・C03は未実施。design reviewでbehavioral PASSを代替しない。",
+    "重大所見を親へ即時通知し、source/正規verdictは変更していない。",
+    "現行rubric採点・最終4条件・verdict schema/lintは停止時点では未実施。"
+  ],
+  "historical_feedback": "旧content-reviewのnegative8件は履歴として保持対象。今回所見へ転記・解消・再採点していない。"
+}
