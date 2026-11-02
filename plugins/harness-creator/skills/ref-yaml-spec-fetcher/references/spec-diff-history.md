@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-11-02T04:20:49Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -10,6 +10,8 @@
+ /docs/llms.txt
+ Use this file to discover all available pages before exploring further.
+ Skip to main content
++Assistant
++Responses are generated using AI and may contain mistakes.
+ Skills extend what Claude can do. Create a
+ SKILL.md
+ file with instructions, and Claude adds it to its toolkit. Claude uses skills when relevant, or you can invoke one directly with
+@@ -125,7 +127,7 @@
+ pre-approve
+ read-only commands that you frequently deny
+ Usage
+-: on a Pro, Max, Team, or Enterprise plan, the
++: on a Pro, Max, Ultra, Team, or Enterprise plan, the
+ changes
+ /usage
+ recommends
+@@ -242,9 +244,7 @@
+ Update your existing Claude API code to a newer model
+ Earlier than v2.1.221
+ upgrade
+-Move your project’s Anthropic SDK dependency across a major version, currently the Python
+-anthropic
+-package from 0.x to 1.x
++Upgrade your project’s Anthropic SDK to a new major version and update your code for its breaking changes
+ v2.1.236 or later
+ api-version
+ Update your Claude API code for a newer
+@@ -1058,7 +1058,23 @@
+ Your skill instructions here...
+ All fields are optional. Only
+ description
+-is recommended so Claude knows when to use the skill. A field name must match the table exactly, hyphens included: Claude Code ignores a field it doesn’t recognize without reporting an error.
++is recommended so Claude knows when to use the skill. A field name must match the table exactly, hyphens included: Claude Code ignores a field it doesn’t recognize without reporting an error. Boolean fields accept
++yes
++,
++no
++,
++on
++,
++off
++,
++1
++, and
++0
++in any letter case, in addition to
++true
++and
++false
++.
+ Claude Code reads the frontmatter only when the opening
+ ---
+ is the file’s first line. Otherwise it treats the whole file,
+@@ -1066,27 +1082,6 @@
+ markers included, as skill content. If the YAML between the markers doesn’t parse, the skill still loads with no fields set; see
+ Skill not triggering
+ to find and fix the error.
+-Boolean fields accept
+-yes
+-,
+-no
+-,
+-on
+-,
+-off
+-,
+-1
+-, and
+-0
+-in any letter case, in addition to
+-true
+-and
+-false
+-. Before v2.1.218, Claude Code recognized only
+-true
+-and
+-false
+... (1291 more lines)
+```
+
 ## 2026-10-26T03:08:57Z
 
 実仕様ページに変更を検知。
