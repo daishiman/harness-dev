@@ -6,7 +6,7 @@
 name: ubm-goal-setting
 description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。会話で作る日次ジャーナルと挑戦宣言と企画も同じ plugin で扱う。
 kind: plugin-composition
-version: 0.9.1
+version: 0.9.3
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
@@ -14,11 +14,11 @@ last-audited: 2026-07-11
 contract:
   intent: UBM (北原さん式ゴールセッティング) の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract) を継承した 1 plugin へ漏れなく移植し、会話で作る日次ジャーナルと挑戦宣言と企画を同じ規律で加える。
   interface:
-    inputs: [目標種別(weekly|monthly|quarterly。bimonthlyは後方互換の別名), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md), ジャーナルの日付(YYYY-MM-DD), 挑戦の仮タイトル]
+    inputs: [目標種別(yearly|weekly|monthly|quarterly。bimonthlyは後方互換の別名), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md), ジャーナルの日付(YYYY-MM-DD), 挑戦の仮タイトル]
     outputs: [統一ハイブリッド構造の公式21ブロックの目標設定ファイル, Daily.md embed更新, knowledge/*.json更新, router.json/registry.json/sync-log.jsonl追記, 同期レポート, 日次ジャーナル(02_Configs/Daily/YYYY-MM-DD.md), 挑戦宣言と企画のファイル(05_Project/UBM/挑戦宣言/)と提出用テキスト]
   invariant:
     - 目標設定出力は統一ハイブリッド構造の公式21ブロックを満たし validate-goal-output.py の全チェックに PASS すること
-    - 数値は半角のみ・差分は +/- 付き・行動目標は「誰に・何を・いつまで・何件」を含むこと
+    - 数値は半角のみ・差分は +/- 付き・行動目標は output-formats.md の「共通部品A 行動行」に従うこと (何をする＋期日)
     - 「頑張る/意識する/気をつける」等の精神論は行動目標として不可 (具体化を要求)
     - 「やらないこと」3項目以上 + 判断基準1文で迷いを排除すること
     - capability A (goal-setting) と capability B (knowledge-sync) は knowledge/*.json を plugin-root 共有 SSOT (schema契約) として整合し、skill 間の実行時 depends_on は張らないこと

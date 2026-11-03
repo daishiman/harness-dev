@@ -459,8 +459,9 @@ def test_no_args_usage_exit2():
 
 # ---- 実 knowledge に対する非後退確認 ----------------------------------
 
-def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
-    # 実 knowledge/ を relations 無しで検証 → dangling related があっても非致命 exit0。
+def test_real_knowledge_exit0(tmp_path: Path):
+    # 実 knowledge/ をそのまま検証 → dangling related があっても非致命 exit0。
+    # 2026-11-03 から knowledge-relations.json (承認待ちの辺) を含む。
     # 出力は tmp_path へ逃がし正本 knowledge/ を汚さない。
     real = PLUGIN_ROOT / "knowledge"
     out = tmp_path / "real-graph.json"
@@ -480,7 +481,9 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 738 -> 750: 全国支部会 (2026-09-06) の要約メモから 12 件を追加、削除 0 件。
     # 750 -> 937: アカデミー勉強会 (2026-09-09) から 187 件を追加、削除 0 件。
     # 937 -> 982: PR #74 (2026-07 の YouTube/合宿 増分) から 45 件を採番し直して追加、削除 0 件。
-    assert graph["node_count"] == 982
+    # 982 -> 988: 北原さんの「成果を出す人の原理原則」(2026-11-03) から 6 件を追加、削除 0 件。
+    # 988 -> 1006: YouTube「ネイルサロンを経営する女性に本気で要求したこと」(HhepN-yxgsc) から 18 件を追加、削除 0 件。
+    assert graph["node_count"] == 1006
 
 
 # ---- 読めない入力・形の違い・重複・巨大な値・長い鎖 ----------------------

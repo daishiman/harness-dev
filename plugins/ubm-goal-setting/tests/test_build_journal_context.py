@@ -711,6 +711,34 @@ def test_day_tasks_respect_the_year_when_written():
     assert mod.extract_day_tasks(text, date(2025, 8, 19))[0] == ["去年のタスク"]
 
 
+def test_date_index_splits_items_and_not_doing():
+    """日付索引 (共通部品A) の1行を、項目名の列とその日のやらないことに分ける。
+
+    分けないと「説明日程、個別メッセージ｜やらない：…」が1件のタスクになり、
+    やらないことまで「どうなりましたか？」と聞かれる。
+    """
+    from datetime import date
+
+    mod = _mod()
+    text = (
+        "## 今週の大きな到達ライン\n"
+        "- 6/29（月）：説明日程、個別メッセージ｜やらない：新規サービスの開発に手を出さない\n"
+        "- 6/30（火）：なし｜やらない：夜に資料を作らない\n"
+        "- 7/1（水）：提案書\n"
+    )
+    r = mod.extract_day_index(text, date(2026, 6, 29))
+    assert r["tasks"] == ["説明日程", "個別メッセージ"]
+    assert r["not_doing"] == "新規サービスの開発に手を出さない"
+    assert r["found"] is True
+    # 行動の無い日: タスク0件でも行はある (「行が無い」の警告を出さないための区別)
+    r = mod.extract_day_index(text, date(2026, 6, 30))
+    assert (r["tasks"], r["not_doing"], r["found"]) == ([], "夜に資料を作らない", True)
+    r = mod.extract_day_index(text, date(2026, 7, 1))
+    assert (r["tasks"], r["not_doing"]) == (["提案書"], "")
+    r = mod.extract_day_index(text, date(2026, 7, 2))
+    assert (r["tasks"], r["found"]) == ([], False)
+
+
 def test_section_body_prefers_exact_heading_over_retrospective():
     """`### 1年目標` を探して `### 1年目標の振り返り` を掴むと先週の結果が目標になる。"""
     mod = _mod()

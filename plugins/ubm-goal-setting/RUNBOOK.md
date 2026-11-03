@@ -8,7 +8,7 @@
 
 ## 入口
 
-- `/ubm-goal-setting [weekly|monthly|quarterly]`: 目標設定・振り返り対話を生成し、`references/validation-gates.md` の表に従い下書きと保存後のファイルを検証する。期報は 3 ヶ月。旧値 `bimonthly` は `quarterly` の後方互換の別名として受理する。
+- `/ubm-goal-setting [yearly|weekly|monthly|quarterly]`: 目標設定・振り返り対話を生成し、`references/validation-gates.md` の表に従い下書きと保存後のファイルを検証する。期報は 3 ヶ月。旧値 `bimonthly` は `quarterly` の後方互換の別名として受理する。
 - `/ubm-knowledge-sync [--all] [--since YYYY-MM-DD] [--dry-run]`: L2 の vault のソースの差分を検知し、ナレッジ JSON を同期する。
 - `/ubm-youtube-ingest [--url URL | --backfill | --sync] [--source SOURCE] [--dry-run]` (v0.2.0): 北原さん YouTube を 3 モード（URL 単発 / 厳格全量 / スケジューラによる無人差分）で手動起動・再実行・試し実行する。手動の同期はスケジューラの1回きりの実行と同一の最終実行の記録（`cursor`） / 冪等キー（`video_id`）を共有する。モード（`--url`/`--backfill`/`--sync`）は相互排他。
 - `/ubm-consult "[相談内容]"` (v0.2.0): 具体解を処方せず考え方（思考フレーム）を提示するコーチング型相談。本コマンドは `run-ubm-consult` スキルを `Skill` ツールで起動する（スキルは `disable-model-invocation: false`。コマンドからの起動を推奨の入口とする）。挑戦宣言を作る相談は `/ubm-challenge` へ、目標設定そのものは `/ubm-goal-setting`（`run-ubm-goal-setting`）へ委譲する。
@@ -176,7 +176,7 @@ python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
 
 ## 受入の根拠
 
-- C16: 週報/月報/期報を生成し、`validate-goal-output.py --type weekly|monthly|quarterly` が PASS すること。
+- C16: 1年目標/週報/月報/期報を生成し、`validate-goal-output.py --type yearly|weekly|monthly|quarterly` が PASS すること。
 - C17: 既知の更新済みソースで `NEW`/`MODIFIED` を検知し、`knowledge-extractor` が6カテゴリ分類と `router.json` / `registry.json` 同期を完了すること。
 - C04: `UBM_VAULT_ROOT` 配下の許可外のパスへの `Write`/`Edit`/`MultiEdit` が終了コード 2 で阻止されること。
 
@@ -184,7 +184,7 @@ python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
 
 - `UBM_VAULT_ROOT` が未接続の場合、ナレッジ同期は 0件の報告として正常終了する。vault を接続して再実行する。
 - `check-knowledge-split.py` が 500行超過を検知した場合、25エントリ基準でサブテーマを設計し、`{category}-{subtopic}.json` へ分割する。
-- 目標設定出力が検証に失敗した場合、未展開 `{{...}}`、全角数字、差分の `+/-`、やらないこと3項目（月報・期報）、種別別必須見出し、逆算チェーン（C1〜C6: 売上貢献の式の明示と検算・実行完了型・突合・成果グループ見出しでの紐づけ）を優先して直す。
+- 目標設定出力が検証に失敗した場合、未展開 `{{...}}`、全角数字、差分の `+/-`、やらないこと3項目（月報・期報・1年）、種別別必須見出し、逆算チェーン（C1〜C6: 売上貢献の式の明示と検算・実行完了型・突合・成果グループ見出しでの紐づけ）を優先して直す。
 - (v0.2.0) `youtube-registry.json` 未存在時、1回きりの実行は `required-primary` + 保留中の第2ソースで自動初期化する（`--dry-run` は初期化も書込まない）。破損した登録簿は上書きしない（終了コード 1）ため、破損時はバックアップから復旧して再実行する。
 - (v0.2.0) `--backfill` の完全性ゲートが終了コード 1 の場合、標準エラー出力の `pending` / `temporary_failure` / `unapproved_unavailable` / 免除の欠落 / 重複 ID / ページ送りの欠落 の動画 ID を確認し、除外で分母を縮めず取得を再試行する。承認済み除外は `waiver_ref` を付ける。
 - (v0.2.0) `validate-knowledge-graph.py` が終了コード 1 の場合、標準エラー出力の違反（自己ループ / 根拠の欠落 / 確信度の範囲外 / `review_status` 欠落 / 循環）を確認し、C08（`knowledge-relation-extractor`）の辺の引き継ぎを修正して再生成する。`related` は無方向連想（循環の対象外）である点に注意する。読めない・非 UTF-8・形の違う入力（`knowledge-relations.json` の object が `edges[]` と `relations[]` のちょうど一方を持たない場合を含む）も終了コード 1 で、書き込み失敗と引数の誤りは終了コード 2 になる。

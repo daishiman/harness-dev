@@ -14,7 +14,7 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 
 1. **目標設定・振り返り対話** (`/ubm-goal-setting`)
    - 「1 週間（週報）・1 ヶ月（月報）・3 ヶ月（期報）」の目標を、AI との短い対話で作ります。
-   - できあがった目標は決まった型（**公式21ブロック**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、「誰に・何を・いつまでに・何件」まで具体化させます。
+   - できあがった目標は決まった型（**公式21ブロック**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、行動は「何をする＋期日」で判定できる1行にします。
    - 目標には「**やらないこと**」も 3 つ以上書きます。やることを増やすより、迷いを減らすほうが行動につながるからです。
 
 2. **ナレッジ同期** (`/ubm-knowledge-sync`)
@@ -128,7 +128,7 @@ export UBM_VAULT_ROOT="$HOME/dev/dev/ObsidianMemo"
 /ubm-knowledge-sync --dry-run  # ナレッジ差分の検知だけ試す (書き込みなし)
 ```
 
-引数なしの `/ubm-goal-setting` は、どの種別（週報/月報/期報）かの確認から始まります。種別の引数は `weekly` / `monthly` / `quarterly`（期報＝3 ヶ月）です。旧値 `bimonthly` も後方互換で受理されます。
+引数なしの `/ubm-goal-setting` は、どの種別（1年/期報/月報/週報）かの確認から始まります。種別の引数は `yearly` / `quarterly` / `monthly` / `weekly`（1年＝暦の1年、期報＝3 ヶ月）です。旧値 `bimonthly` も後方互換で受理されます。
 
 ---
 
@@ -188,7 +188,7 @@ python3 "${PLUGIN_ROOT:?absolute plugin root required}"/skills/run-ubm-youtube-i
 /ubm-consult "最近チームの動きが鈍い。どう考えればいい？"
 ```
 
-起動は `/ubm-consult "相談内容"` コマンドから行います。コマンドは `run-ubm-consult` スキルを `Skill` ツールで起動します（スキルは `disable-model-invocation: false` なので、コマンドから呼べます）。週報/月報/期報の目標そのものを作りたい場合は `/ubm-goal-setting`（`run-ubm-goal-setting`）へ誘導されます（責務境界）。
+起動は `/ubm-consult "相談内容"` コマンドから行います。コマンドは `run-ubm-consult` スキルを `Skill` ツールで起動します（スキルは `disable-model-invocation: false` なので、コマンドから呼べます）。1年目標/期報/月報/週報の目標そのものを作りたい場合は `/ubm-goal-setting`（`run-ubm-goal-setting`）へ誘導されます（責務境界）。
 
 ### (e) ナレッジグラフの再生成・検証
 
@@ -239,12 +239,12 @@ python3 "${PLUGIN_ROOT:?absolute plugin root required}"/scripts/consult-harness-
 
 | 段階 | 責務 | 実行体 |
 |---|---|---|
-| Phase0-init | 種別（`weekly`/`monthly`/`quarterly`）と実行日を確定 | 本スキル / `AskUserQuestion` |
+| Phase0-init | 種別（`yearly`/`quarterly`/`monthly`/`weekly`）と実行日を確定 | 本スキル / `AskUserQuestion` |
 | Phase1-2-collect | 過去目標・合宿情報・ナレッジ・ジャーナルを並列収集 | `info-collector` サブエージェント |
 | Phase2b-review | 振り返り時に既存目標を再評価（検査項目は `agents/goal-reviewer.md` の「レビューフレームワーク（13項目 + 北原視点）」節が正本。件数・内訳は本 README に書かず、その節を見てください） | `goal-reviewer` サブエージェント |
 | Phase3-dialogue | step1〜5 対話（現状振り返り→ギャップ→目標→行動計画→最終確認） | `phase3-coordinator` + 責務プロンプト `prompts/R1-R5` |
 | Phase4-format | テンプレート整形 + コンテンツ品質チェック（項目は `agents/output-formatter.md` の品質チェックリスト節が正本） | `output-formatter` サブエージェント |
-| Phase5-validate | `validate-goal-output.py` で **公式21ブロック**を決定論検証（最大 3 回改善） | スクリプト |
+| Phase5-validate | `validate-goal-output.py` で **公式21ブロック**を決定論検証（修復は決定論ゲートの修復上限まで。正本 `skills/run-ubm-goal-setting/references/validation-gates.md`） | スクリプト |
 | Phase6-daily-update | `Daily.md` の種別に該当する埋め込みのみ最新目標へ置換 | 本スキル |
 
 公式 21 ブロック（出力構造）の定義正本は `skills/run-ubm-goal-setting/references/output-formats.md` + `data-contract.md`、保存前コンテンツ検証の項目は `agents/output-formatter.md` の品質チェックリスト節が正本です（件数は本 README に書かず、その節を見てください）。
@@ -287,9 +287,9 @@ AI は聞き手と `challenge-advisor`（読み取り専用エージェント）
 
 ### 品質ゲート
 
-- `validate-goal-output.py`: 統一ハイブリッド構造の公式21ブロック・NG 表現・やらないこと 3 項目以上（月報・期報の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
+- `validate-goal-output.py`: 統一ハイブリッド構造の公式21ブロック・NG 表現・やらないこと 3 項目以上（月報・期報・1年の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
 - `validate-goal-linkage.py`: 一本筋（成果目標 ↔ 行動目標のグループ見出し）を両方向で照合する。照合規則は `validate-goal-output.py` と共用して二重に実装せず、上乗せするのは「1つの行動が複数の成果目標を指す `・` 区切りと、支える行動の無い成果目標を `rc=1` にする」「免除を `（土台）`／`（関係維持）` に限る」「月報の管理用グループだけを照合する」「分母0を `rc=3` にする」だけ（正本は `references/output-formats.md`「一本筋の照合は validate-goal-output.py と validate-goal-linkage.py で分担する」）。
-- `validate-cross-level.py`: 期報・月報・週報を同時に読み、期アンカー8種が三層で一致しているかを照合する（`rc=1` で停止。単一ファイルの検査では層をまたぐズレを検出できないため）。
+- `validate-cross-level.py`: 1年目標・期報・月報・週報を同時に読み、期アンカーが4層で一致しているかを照合する（1年層の引数は `skills/run-ubm-goal-setting/references/validation-gates.md` の「IN3 の1年層の引数」。不一致は `rc=1` で停止。単一ファイルの検査では層をまたぐズレを検出できないため）。
 - `tests/`（`pytest`）: スクリプト / フックの機能テスト + ナレッジ台帳整合 + 手本（`golden-sample`）の回帰。**件数は本 README に書きません。** `RUNBOOK.md` の「検証」節の手順で実行し、その出力の件数と終了コードを見てください（`0`=全通過 / `3`=収集エラー / `5`=収集0件）。
 - `EVALS.json`: 機械的な検査（`mechanical`）13 本と受入基準（`criteria-test`）の配線宣言。実行手順は `RUNBOOK.md` の「検証」節。
 

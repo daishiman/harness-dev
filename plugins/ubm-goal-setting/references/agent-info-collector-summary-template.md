@@ -31,6 +31,10 @@
 - 次回の壁打ち予定日: {{next_sparring_date}} [自動取得] / [要ヒアリング]
 - 壁打ちで到達したい状態: {{sparring_target_state}} [自動取得] / [要ヒアリング]
 - 壁打ちまでの成果物: {{sparring_deliverables}} [自動取得] / [要ヒアリング]
+### 1年層の現在地と成果の候補（yearly のみ）
+- 直近の月商（直近の月報の前回ブロックにある前月の売上実績。R2 の現在地）: {{recent_monthly_sales}} [自動取得] / [要ヒアリング] — 出所: {{recent_monthly_path}}
+- 直近の期報の成果目標の本文（前年の1年目標が無いときだけ。R3 ターン3C-2 の候補）: {{recent_quarterly_outcomes}} [自動取得] / [要ヒアリング] — 出所: {{recent_quarterly_path}}
+- 直近の月報の成果目標の本文（同上）: {{recent_monthly_outcomes}} [自動取得] / [要ヒアリング] — 出所: {{recent_monthly_path}}
 ### 前回の目標と実績
 - 売上目標: {{target}} / 実績: [要ヒアリング] / 差分: [要計算]
 - 成果目標: {{other_target}} / 実績: [要ヒアリング]

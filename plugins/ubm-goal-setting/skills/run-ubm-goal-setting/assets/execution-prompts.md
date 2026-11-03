@@ -103,9 +103,9 @@ Agent ツールでサブエージェントを起動する際の設定:
 - `$PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/interview-quick-templates.md`
 - `$PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md`
 
-**所要時間目安**: 週報 5-8ターン / 月報 8-12ターン / 期報 12-15ターン（1年は期報と同じ骨格で、到達点を挑戦宣言から持ち込むため、挑戦宣言が確定していることを前提とする）
+**所要時間目安**: 4層それぞれの値は `output-formats.md` の「共通部品F 層別差分表」。1年は到達点を挑戦宣言から持ち込むため、挑戦宣言が確定していることを前提とする。
 
-**1年層の対話での扱い**: 種別が `yearly` のときは【今年の最重要数字】に到達点（月間売上到達点・継続コンサル人数）を置き、そこから 3ヶ月 → 1ヶ月 → 1週間 へ割る前提で聞く。種別が `quarterly` / `monthly` / `weekly` のときも、Phase 1-2 が持ち上げた1年層の到達点を対話の起点に置き、下位層の数字がそこから割られているかを確認する（直す向きは上から下）。
+**4層の対話での扱い**: 設計順序と4層は `output-formats.md` の「共通部品C 設計順序と4層」、月・週の軌道修正と記録は `output-formats.md` の「共通部品E 軌道修正記録」。
 
 ---
 

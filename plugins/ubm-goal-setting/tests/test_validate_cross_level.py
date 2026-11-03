@@ -16,13 +16,20 @@
 - 分母（照合対象 N 件）を必ず出すこと。「不一致0件」だけでは検査したことにならない
 - 【仮置き事項】【確定済み・解消済みの記録】の中の値を現在値として拾わないこと
 - --weekly 省略で2ファイルでも動くこと
+- 1年層は `--yearly PATH` か `--no-yearly REASON` のどちらか一方を必須にし、どちらも無い・両方ある・
+  理由が空白だけのときは rc=2 で止めること（1年層の照合を黙って省かない）
+- 時点値（事業パートナー数・グリッドパートナー数・次回の壁打ち予定日）は照合せず INFO で並べるだけで、
+  rc にも分母にも数えないこと
 """
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = PLUGIN_ROOT / "skills/run-ubm-goal-setting/scripts/validate-cross-level.py"
@@ -30,6 +37,8 @@ SCRIPT = PLUGIN_ROOT / "skills/run-ubm-goal-setting/scripts/validate-cross-level
 Q_NAME = "UBM - 3-月報（３ヶ月） - 2026-10-01〜2026-12-31.md"
 M_NAME = "UBM - 2-月報（１ヶ月） - 2026-09-28〜2026-10-25.md"
 W_NAME = "UBM - 1-週報 - 2026-09-28〜2026-10-04.md"
+# 1年目標を渡さないテストで使う --no-yearly の理由。
+NO_YEARLY_REASON = "1年目標を置く前の期"
 
 
 def quarterly(
@@ -77,6 +86,7 @@ def monthly(
     period_sales: str = "2,320,000",
     month_sales_body: str = "600,000",
     key_number: str = (
+        "今月の売上目標：600000\n"
         "無料相談を実施した実人数：30名（延べ回数56回以上）　"
         "そこから月額継続コンサルへつながった件数：4件"
     ),
@@ -153,8 +163,11 @@ def write_set(tmp_path: Path, q: str | None, m: str | None, w: str | None) -> di
     return out
 
 
-def run(paths: dict, *extra: str) -> subprocess.CompletedProcess:
+def run(paths: dict, *extra: str, no_yearly: str | None = NO_YEARLY_REASON) -> subprocess.CompletedProcess:
+    """--yearly を渡さない呼び出しには既定で --no-yearly を付ける。no_yearly=None なら付けない。"""
     cmd = [sys.executable, str(SCRIPT)]
+    if no_yearly is not None and "--yearly" not in extra:
+        cmd += ["--no-yearly", no_yearly]
     if "q" in paths:
         cmd += ["--quarterly", str(paths["q"])]
     if "m" in paths:
@@ -185,7 +198,7 @@ def test_all_three_match_is_rc0(tmp_path: Path):
 
 def test_rc0_prints_denominator(tmp_path: Path):
     r = run_default(tmp_path)
-    assert "照合対象 8 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
+    assert "照合対象 5 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
 
 
 def test_rc0_shows_all_three_values_side_by_side(tmp_path: Path):
@@ -214,7 +227,7 @@ def test_monthly_sales_diverging_from_quarterly_breakdown_is_rc1(tmp_path: Path)
     assert r.returncode == 1, r.stdout
     assert "[NG] 当月の売上目標" in r.stdout
     assert "不一致のアンカー: 当月の売上目標" in r.stdout
-    assert "照合対象 8 件中 不一致 1 件（抽出不可 0 件）" in r.stdout
+    assert "照合対象 5 件中 不一致 1 件（抽出不可 0 件）" in r.stdout
     assert "STATUS: FAIL" in r.stdout
 
 
@@ -228,10 +241,33 @@ def test_quarterly_breakdown_change_not_followed_is_rc1(tmp_path: Path):
     assert "当月の売上目標" in r.stdout
 
 
-def test_sparring_date_mismatch_is_rc1(tmp_path: Path):
-    r = run_default(tmp_path, q=quarterly(sparring="2026-10-09"), m=monthly(sparring="2027-03-25"))
-    assert r.returncode == 1, r.stdout
-    assert "[NG] 次回の壁打ち予定日" in r.stdout
+def test_snapshot_values_are_listed_as_info_and_not_compared(tmp_path: Path):
+    # 時点値は層ごとに書いた日が違う。違っていても不一致にせず、並べて見せるだけにする。
+    r = run_default(
+        tmp_path,
+        q=quarterly(partners="7", grid="0", sparring="2026-10-09"),
+        m=monthly(partners="8", grid="1", sparring="2027-03-25"),
+    )
+    assert r.returncode == 0, r.stdout
+    assert "[INFO] 次回の壁打ち予定日（時点値・照合しない）  期報=2026-10-09（" in r.stdout
+    assert "月報=2027-03-25（" in r.stdout
+    assert "[INFO] 現在事業パートナー数（時点値・照合しない）  期報=7（" in r.stdout
+    assert "[INFO] 現在のグリッドパートナー数（時点値・照合しない）" in r.stdout
+    for name in ("次回の壁打ち予定日", "現在事業パートナー数", "現在のグリッドパートナー数"):
+        assert f"[NG] {name}" not in r.stdout
+        assert f"[OK] {name}" not in r.stdout
+    assert "照合対象 5 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
+
+
+def test_snapshot_values_alone_are_not_counted_as_judged(tmp_path: Path):
+    # 時点値だけが書けているファイルは、何も照合していない（rc=3）。抽出件数に数えない。
+    q = "\n".join(["# UBM - 3-月報（３ヶ月） - 2026-10-01〜2026-12-31", "",
+                   "## 【現在事業パートナー数】", "7", "", "## 【次回の壁打ち予定日】", "2026-10-09", ""])
+    m = "\n".join(["# UBM - 2-月報（１ヶ月） - 2026-09-28〜2026-10-25", "",
+                   "## 【現在事業パートナー数】", "7", "", "## 【次回の壁打ち予定日】", "2026-10-09", ""])
+    r = run(write_set(tmp_path, q, m, None))
+    assert r.returncode == 3, r.stdout
+    assert "[INFO] 現在事業パートナー数（時点値・照合しない）  期報=7（" in r.stdout
 
 
 def test_consult_count_mismatch_names_the_anchor(tmp_path: Path):
@@ -257,7 +293,7 @@ def test_unextractable_anchor_is_listed_separately_and_rc1(tmp_path: Path):
     assert r.returncode == 1, r.stdout
     assert "[抽出不可] 当月の売上目標" in r.stdout
     assert "抽出不可のアンカー: 当月の売上目標" in r.stdout
-    assert "照合対象 8 件中 不一致 0 件（抽出不可 1 件）" in r.stdout
+    assert "照合対象 5 件中 不一致 0 件（抽出不可 1 件）" in r.stdout
 
 
 def test_zenkaku_digit_is_unextractable_not_mismatch(tmp_path: Path):
@@ -301,6 +337,29 @@ def test_quarterly_only_is_rc2(tmp_path: Path):
 def test_no_args_is_rc2():
     r = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True)
     assert r.returncode == 2
+
+
+def test_neither_yearly_nor_no_yearly_is_rc2(tmp_path: Path):
+    # 1年目標のパスも、渡さない理由も無い呼び出しは、1年層を黙って省いたことになる。
+    r = run(write_set(tmp_path, quarterly(), monthly(), weekly()), no_yearly=None)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "--yearly" in r.stderr and "--no-yearly" in r.stderr
+    assert "STATUS: PASS" not in r.stdout
+
+
+@pytest.mark.parametrize("reason", ["", "　", "  "])
+def test_blank_no_yearly_reason_is_rc2(tmp_path: Path, reason: str):
+    r = run(write_set(tmp_path, quarterly(), monthly(), weekly()), no_yearly=reason)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "引数不正: --no-yearly には1年目標を渡さない理由を書いてください" in r.stdout
+
+
+def test_both_yearly_and_no_yearly_is_rc2(tmp_path: Path):
+    paths = write_set(tmp_path, quarterly(), monthly(), weekly())
+    yp = tmp_path / Y_NAME
+    yp.write_text(yearly(), encoding="utf-8")
+    r = run(paths, "--yearly", str(yp), "--no-yearly", NO_YEARLY_REASON, no_yearly=None)
+    assert r.returncode == 2, r.stdout + r.stderr
 
 
 def test_missing_file_is_rc2(tmp_path: Path):
@@ -369,7 +428,7 @@ def test_weekly_omitted_works_with_two_files(tmp_path: Path):
     r = run(paths)
     assert r.returncode == 0, r.stdout
     assert "週報: （未指定）" in r.stdout
-    assert "照合対象 8 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
+    assert "照合対象 5 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
 
 
 def test_weekly_omitted_still_detects_monthly_divergence(tmp_path: Path):
@@ -458,11 +517,11 @@ def run_with_yearly(tmp_path: Path, y: str, q_note: str, m_note: str) -> subproc
     return run(paths, "--yearly", str(yp))
 
 
-def test_yearly_anchors_match_is_rc0_with_10_targets(tmp_path: Path):
+def test_yearly_anchors_match_is_rc0_with_7_targets(tmp_path: Path):
     note = YEARLY_NOTE.format(sales="1,500,000", count="10")
     r = run_with_yearly(tmp_path, yearly(), note, note)
     assert r.returncode == 0, r.stdout
-    assert "照合対象 10 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
+    assert "照合対象 7 件中 不一致 0 件（抽出不可 0 件）" in r.stdout
     assert "[OK] 1年後の月間売上到達点  1年目標=1500000" in r.stdout
     assert "[OK] 1年後の月額継続コンサル人数  1年目標=10" in r.stdout
     assert "[未照合]" not in r.stdout
@@ -487,10 +546,201 @@ def test_yearly_note_missing_in_quarterly_is_unextractable(tmp_path: Path):
     assert "[抽出不可] 1年後の月間売上到達点" in r.stdout
 
 
-def test_without_yearly_the_yearly_anchors_are_listed_as_not_compared(tmp_path: Path):
-    # --yearly を渡さなければ1年層の2アンカーは照合せず、分母にも数えず、そのことを明記する。
+def test_no_yearly_lists_the_yearly_anchors_as_not_compared_with_reason(tmp_path: Path):
+    # --no-yearly なら1年層の2アンカーは照合せず、分母にも数えず、渡さない理由と一緒に明記する。
     r = run_default(tmp_path)
     assert r.returncode == 0, r.stdout
-    assert "[未照合] 1年後の月間売上到達点（1年目標が未指定のため照合していない）" in r.stdout
-    assert "照合対象 8 件中" in r.stdout
+    assert f"1年目標: （--no-yearly: {NO_YEARLY_REASON}）" in r.stdout
+    assert f"[未照合] 1年後の月間売上到達点（--no-yearly: {NO_YEARLY_REASON}のため照合していない）" in r.stdout
+    assert "照合対象 5 件中" in r.stdout
     assert "未照合のアンカー 2 件" in r.stdout
+
+
+# --- --no-yearly の渡し忘れ: 期報と同じフォルダに期報の期間を含む1年目標があれば WARN（rc は変えない） ---
+
+def _load_cross_level():
+    spec = importlib.util.spec_from_file_location("validate_cross_level_inproc", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_no_yearly_warns_when_covering_yearly_is_in_same_folder(tmp_path: Path):
+    (tmp_path / Y_NAME).write_text(yearly(), encoding="utf-8")
+    r = run_default(tmp_path)
+    assert r.returncode == 0, r.stdout
+    assert "1年目標の確認（--no-yearly）: 期報と同じフォルダの1年目標 1 件、うち期報の期間（中日 2026-11-15）を含むもの 1 件" in r.stdout
+    assert f"[WARN] 期報の期間を含む1年目標があります: {Y_NAME}" in r.stdout
+
+
+def test_no_yearly_does_not_warn_for_yearly_of_another_year(tmp_path: Path):
+    other = "UBM - 4-年報（１年） - 2025-10-01〜2026-09-30.md"
+    (tmp_path / other).write_text(yearly().replace("2026-10-01〜2027-09-30", "2025-10-01〜2026-09-30"), encoding="utf-8")
+    r = run_default(tmp_path)
+    assert r.returncode == 0, r.stdout
+    assert "期報と同じフォルダの1年目標 1 件、うち期報の期間（中日 2026-11-15）を含むもの 0 件" in r.stdout
+    assert "[WARN]" not in r.stdout
+
+
+def test_no_yearly_check_uses_quarterly_midpoint_not_strict_containment(tmp_path: Path):
+    # 期報は月曜起点（9/28〜12/27）、1年目標は暦（10/1〜）。完全包含は成り立たないが中日は入る。
+    mod = _load_cross_level()
+    (tmp_path / Y_NAME).write_text(yearly(), encoding="utf-8")
+    q_path = tmp_path / "UBM - 3-月報（３ヶ月） - 2026-09-28〜2026-12-27.md"
+    lines = mod.yearly_covering_quarterly(q_path, "")
+    assert "うち期報の期間（中日 2026-11-12）を含むもの 1 件" in lines[0]
+    assert lines[1].startswith(f"[WARN] 期報の期間を含む1年目標があります: {Y_NAME}")
+    # 別フォルダの1年目標は数えない（同じフォルダだけを見る）。
+    q_elsewhere = tmp_path / "other" / q_path.name
+    q_elsewhere.parent.mkdir()
+    assert mod.yearly_covering_quarterly(q_elsewhere, "") == [
+        "1年目標の確認（--no-yearly）: 期報と同じフォルダの1年目標 0 件、うち期報の期間（中日 2026-11-12）を含むもの 0 件"
+    ]
+
+
+# --- 月の内訳の軌道修正。上位計画を消さず、実行値と理由を記録する ---
+
+def adjustment(anchor="当月の売上目標", before="600000", after="650000",
+               reason="受注時期の変更", impact="翌月配分を見直す"):
+    return (f"- 上位配分の見直し：{anchor}｜上位計画：{before}｜実行目標：{after}"
+            f"｜理由：{reason}｜上位への影響：{impact}")
+
+
+def adjustment_section(record):
+    return f"## 【確認された情報】\n{record}\n"
+
+
+@pytest.mark.parametrize("include_weekly", [False, True])
+def test_monthly_sales_adjustment_accepts_matching_record_and_weekly_propagation(tmp_path, include_weekly):
+    paths = write_set(
+        tmp_path, quarterly(),
+        monthly(month_sales_body="650000", extra=adjustment_section(adjustment())),
+        weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）", week_sales="162500") if include_weekly else None,
+    )
+    r = run(paths)
+    assert r.returncode == 0, r.stdout
+    assert "[調整確認] 当月の売上目標" in r.stdout
+    assert "軌道修正確認済 1 件" in r.stdout
+    assert "[OK] 当月の売上目標" not in r.stdout
+
+
+@pytest.mark.parametrize("anchor,before,after,key", [
+    ("無料相談の延べ回数", "56", "60", "実人数：30名（延べ回数60回以上） 件数：4件"),
+    ("1回目の実人数", "30", "32", "実人数：32名（延べ回数56回以上） 件数：4件"),
+    ("月額継続コンサルの累積件数", "4", "5", "実人数：30名（延べ回数56回以上） 件数：5件"),
+])
+def test_other_permitted_monthly_allocations_can_be_adjusted(tmp_path, anchor, before, after, key):
+    r = run_default(tmp_path, m=monthly(key_number=key, extra=adjustment_section(adjustment(anchor, before, after))))
+    assert r.returncode == 0, r.stdout
+    assert f"[調整確認] {anchor}" in r.stdout
+
+
+@pytest.mark.parametrize("record", [
+    adjustment(reason=""),
+    adjustment(impact="　"),
+    adjustment().replace("｜理由：受注時期の変更", ""),
+    adjustment().replace("上位計画：600000", "上位計画：590000"),
+    adjustment().replace("実行目標：650000", "実行目標：640000"),
+    adjustment().replace("上位計画：600000", "上位計画：６０００００"),
+    adjustment().replace("実行目標：650000", "実行目標：確認中"),
+    adjustment().replace("｜上位への影響：翌月配分を見直す", "｜理由：重複"),
+    adjustment() + "\n" + adjustment(),
+    adjustment("未知のアンカー"),
+    adjustment("今期の売上目標", "2320000", "2400000"),
+    adjustment("1年後の月間売上到達点", "1500000", "1600000"),
+    adjustment("1年後の月額継続コンサル人数", "10", "12"),
+    adjustment("現在事業パートナー数", "7", "8"),
+    "- 上位配分の見直し：当月の売上目標",
+])
+def test_invalid_adjustment_record_is_not_a_mismatch_exemption(tmp_path, record):
+    r = run_default(tmp_path, m=monthly(month_sales_body="650000", extra=adjustment_section(record)),
+                    w=weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    assert r.returncode == 1, r.stdout
+    assert "STATUS: FAIL" in r.stdout
+
+
+def test_invalid_record_also_fails_when_all_current_values_match(tmp_path):
+    r = run_default(tmp_path, m=monthly(extra=adjustment_section(adjustment(reason="")) ))
+    assert r.returncode == 1, r.stdout
+    assert "調整記録の不備" in r.stdout
+
+
+def test_old_weekly_month_reference_is_not_accepted_after_monthly_adjustment(tmp_path):
+    r = run_default(tmp_path, m=monthly(month_sales_body="650000", extra=adjustment_section(adjustment())))
+    assert r.returncode == 1, r.stdout
+    assert "[NG] 当月の売上目標" in r.stdout
+
+
+def test_adjustment_does_not_override_unextractable_value(tmp_path):
+    r = run_default(tmp_path, m=monthly(month_sales_body="確認中", extra=adjustment_section(adjustment())))
+    assert r.returncode == 1, r.stdout
+    assert "[抽出不可] 当月の売上目標" in r.stdout
+
+
+@pytest.mark.parametrize("extra", [
+    "## 【確認された情報（提出）】\n" + adjustment(),
+    "## 【前月の振り返り】\n" + adjustment(),
+    adjustment_section("<!--\n" + adjustment() + "\n-->"),
+    adjustment_section("```text\n" + adjustment() + "\n```"),
+])
+def test_adjustment_is_read_only_from_active_managed_information(tmp_path, extra):
+    r = run_default(tmp_path, m=monthly(month_sales_body="650000", extra=extra),
+                    w=weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    assert r.returncode == 1, r.stdout
+    assert "[調整確認] 当月の売上目標" not in r.stdout
+
+
+def test_adjustment_cannot_change_period_total(tmp_path):
+    r = run_default(tmp_path, m=monthly(period_sales="2400000", month_sales_body="650000",
+                                      extra=adjustment_section(adjustment())),
+                    w=weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    assert r.returncode == 1, r.stdout
+    assert "[調整確認] 当月の売上目標" in r.stdout
+    assert "[NG] 今期の売上目標" in r.stdout
+
+
+@pytest.mark.parametrize("sales,count,anchor", [
+    ("1800000", "10", "1年後の月間売上到達点"),
+    ("1500000", "12", "1年後の月額継続コンサル人数"),
+])
+def test_valid_monthly_adjustment_does_not_relax_yearly_arrival_anchors(tmp_path, sales, count, anchor):
+    q_note = YEARLY_NOTE.format(sales="1500000", count="10")
+    m_note = YEARLY_NOTE.format(sales=sales, count=count)
+    q = quarterly().replace("## 【今期の売上以外の成果目標】",
+                            "## 【今期の売上以外の成果目標】\n" + q_note)
+    m = monthly(month_sales_body="650000", extra=adjustment_section(adjustment())).replace(
+        "## 【今月の最重要数字】", "## 【今月の最重要数字】\n" + m_note)
+    paths = write_set(tmp_path, q, m, weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    year_path = tmp_path / Y_NAME
+    year_path.write_text(yearly(), encoding="utf-8")
+    r = run(paths, "--yearly", str(year_path))
+    assert r.returncode == 1, r.stdout
+    assert "[調整確認] 当月の売上目標" in r.stdout
+    assert f"[NG] {anchor}" in r.stdout
+
+
+@pytest.mark.parametrize("opening,closing", [
+    ("```markdown\n", "\n```"),
+    ("<!--\n", "\n-->"),
+    ("~~~markdown\n", "\n~~~"),
+    ("````markdown\n```\n", "\n````"),  # 短いフェンスでは閉じない
+    ("```markdown\n~~~\n", "\n```"),    # 別の文字では閉じない
+    ("```markdown\n", ""),
+    ("<!--\n", ""),
+])
+def test_whole_adjustment_section_inside_comment_or_fence_is_not_executed(tmp_path, opening, closing):
+    hidden = opening + adjustment_section(adjustment()) + closing
+    r = run_default(tmp_path, m=monthly(month_sales_body="650000", extra=hidden),
+                    w=weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    assert r.returncode == 1, r.stdout
+    assert "[調整確認] 当月の売上目標" not in r.stdout
+    assert "[NG] 当月の売上目標" in r.stdout
+
+
+def test_comment_marker_in_code_does_not_hide_later_visible_adjustment(tmp_path):
+    extra = "```html\n<!--\n```\n" + adjustment_section(adjustment())
+    r = run_default(tmp_path, m=monthly(month_sales_body="650000", extra=extra),
+                    w=weekly(week_note="（※ 650000 ÷ 28日 × 7日 ＝ 162500）"))
+    assert r.returncode == 0, r.stdout
+    assert "[調整確認] 当月の売上目標" in r.stdout

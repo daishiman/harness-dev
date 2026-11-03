@@ -20,7 +20,7 @@
       "python3 plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py --dir plugins/ubm-goal-setting/knowledge"
     ],
     "llm_eval": [
-      "run-ubm-goal-setting feedback_contract OUT1 (criteria-test, verify_by:test): 週報/月報/期報を実際に生成し validate-goal-output.py が PASS することを受入テストで確認する",
+      "run-ubm-goal-setting feedback_contract OUT1 (criteria-test, verify_by:test): 1年目標/週報/月報/期報を実際に生成し validate-goal-output.py が PASS することを受入テストで確認する",
       "run-ubm-knowledge-sync feedback_contract OUT1 (criteria-test, verify_by:test): 既知の更新済みソースを投入し knowledge-extractor が6カテゴリへ分類し router.json/registry.json が同期完了することを受入テストで確認する",
       "run-ubm-youtube-ingest feedback_contract OUT1 (criteria-test, verify_by:test): ユーザー操作なしの scheduler fixture で新着1件が一度だけ正規化ソース+registry へ反映され二回目0件・失敗後 retry で回復する (skill セッション経由の --sync は ingested>0 時に R3 相当を再実行し knowledge/graph まで反映)。IN1: required-primary の authoritative inventory 全 ID について check-youtube-backfill-completeness.py の stdout JSON full_backfill_pass==true (content_coverage=100%・temporary_failure=0・unapproved_unavailable=0。exit0=ACCOUNTABILITY_PASS は waiver 込みのため IN1 判定に使わない) を確認する",
       "run-ubm-consult OUT1: validate-consult-session.py が outcome分岐・保存同意・role=user provenance・action/reflection closure・ownership・evidence modeを検証する。IN1: 単一解を押し付けず、ユーザーが選んだ collaboration_mode に沿って考え方を提示する",

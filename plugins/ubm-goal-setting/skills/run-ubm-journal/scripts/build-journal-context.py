@@ -79,7 +79,7 @@ stdout は以下の形の JSON オブジェクト 1 個。キーは常に全て�
       "weekly_report":  {} | {              # 週報が見つからないときだけ空 dict
         "path": str, "period": str,
         "habit_goals": [{"title": str, "items": [{"text": str, "checked_in_report": bool}]}],
-        "judgment_criteria": str, "day_tasks": [str],
+        "judgment_criteria": str, "day_tasks": [str], "day_not_doing": str,  # 無ければ ""
         "key_numbers": [str], "outcome_goals": [str], "weekly_revenue_goal": str
       },
       "daily_habits": [ … ],                # references/daily-habits.json の habits をそのまま
@@ -672,17 +672,38 @@ def looks_like_day(s: str) -> bool:
 BULLET_LINE_RE = re.compile(r"^[-*+]\s")
 
 
-def extract_day_tasks(text: str, target: date, notes: list[str] | None = None) -> tuple[list[str], list[str]]:
-    """【今週の大きな到達ライン】から対象日 (M/D) の子タスクを取り出す。
+# 日付索引 (output-formats.md の「共通部品A 行動行」) の1行は
+# `- 6/29（月）：説明日程、個別メッセージ｜やらない：新規サービスの開発に手を出さない`。
+# 項目名は「、」区切り、その日のやらないことは `｜やらない：` の後ろ、行動の無い日は `なし`。
+# 分けずに1件として渡すと、やらないことが当日タスクに化けて「どうなりましたか？」と聞かれる。
+NOT_DOING_SPLIT_RE = re.compile(r"\s*[｜|]\s*やらない\s*[：:]\s*")
+NO_TASK_MARK = "なし"
 
-    返り値は (対象日のタスク, 日付見出しと判別しきれなかった行) の組。
+
+def split_index_rest(rest: str) -> tuple[list[str], str]:
+    """日付索引の見出し行の本文を (項目名の列, その日のやらないこと) に分ける。"""
+    parts = NOT_DOING_SPLIT_RE.split(rest, maxsplit=1)
+    head = parts[0].strip()
+    not_doing = parts[1].strip() if len(parts) > 1 else ""
+    if head in ("", NO_TASK_MARK):
+        return [], not_doing
+    return [t.strip() for t in head.split("、") if t.strip()], not_doing
+
+
+def extract_day_index(text: str, target: date, notes: list[str] | None = None) -> dict[str, Any]:
+    """【今週の大きな到達ライン】から対象日 (M/D) の行を読む。
+
+    返り値は {"tasks": 対象日のタスク, "not_doing": その日のやらないこと,
+    "found": 対象日の行があったか, "ambiguous": 日付見出しと判別しきれなかった行}。
+    `found` を分けるのは、`なし` と書いた日 (タスク0件) を「行が無い」と誤って警告しないため。
     """
+    result: dict[str, Any] = {"tasks": [], "not_doing": "", "found": False, "ambiguous": []}
     body = section_body(text, "今週の大きな到達ライン", notes=notes)
     if not body:
-        return [], []
+        return result
     collecting = False
-    tasks: list[str] = []
-    ambiguous: list[str] = []
+    tasks: list[str] = result["tasks"]
+    ambiguous: list[str] = result["ambiguous"]
     for line in body.splitlines():
         s = line.strip()
         m = match_day_heading(s)
@@ -695,9 +716,14 @@ def extract_day_tasks(text: str, target: date, notes: list[str] | None = None) -
             same_day = int(m.group("month")) == target.month and int(m.group("day")) == target.day
             collecting = same_day and (year is None or int(year) == target.year)
             rest = (m.group("rest") or "").strip()
+            if collecting:
+                result["found"] = True
             if collecting and rest:
                 # 見出しと同じ行に書かれた本文。continue で捨てると黙って消える。
-                tasks.append(rest)
+                items, not_doing = split_index_rest(rest)
+                tasks.extend(items)
+                if not_doing:
+                    result["not_doing"] = not_doing
             continue
         if not BULLET_LINE_RE.match(s):
             continue
@@ -707,7 +733,13 @@ def extract_day_tasks(text: str, target: date, notes: list[str] | None = None) -
         item = re.sub(r"^\[[ xX]\]\s*", "", item).strip()
         if collecting and item:
             tasks.append(item)
-    return tasks, ambiguous
+    return result
+
+
+def extract_day_tasks(text: str, target: date, notes: list[str] | None = None) -> tuple[list[str], list[str]]:
+    """対象日のタスクと、日付見出しと判別しきれなかった行の組 (extract_day_index の簡易版)。"""
+    r = extract_day_index(text, target, notes=notes)
+    return r["tasks"], r["ambiguous"]
 
 
 def load_daily_habits() -> list[dict[str, Any]]:
@@ -973,18 +1005,20 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
     weekly_payload: dict[str, Any] = {}
     if weekly_report:
         wtext = weekly_report["text"]
-        day_tasks, ambiguous_days = extract_day_tasks(wtext, target, notes=wk_notes)
+        day_index = extract_day_index(wtext, target, notes=wk_notes)
+        day_tasks, ambiguous_days = day_index["tasks"], day_index["ambiguous"]
         weekly_payload = {
             "path": str(weekly_report["path"]),
             "period": f"{weekly_report['start'].isoformat()}〜{weekly_report['end'].isoformat()}",
             "habit_goals": extract_habit_goals(wtext, notes=wk_notes),
             "judgment_criteria": section_body(wtext, "今週の判断基準", notes=wk_notes).strip(),
             "day_tasks": day_tasks,
+            "day_not_doing": day_index["not_doing"],
             "key_numbers": bullets(section_body(wtext, "今週の最重要数字", notes=wk_notes)),
             "outcome_goals": bullets(section_body(wtext, "今週の売上以外の成果目標", notes=wk_notes)),
             "weekly_revenue_goal": section_body(wtext, "今週の売上目標", notes=wk_notes).strip(),
         }
-        if not weekly_payload["day_tasks"]:
+        if not day_index["found"]:
             warnings.append(
                 f"週報の到達ラインに {target.month}/{target.day} の行が無く、当日タスクを引き継げませんでした。"
             )

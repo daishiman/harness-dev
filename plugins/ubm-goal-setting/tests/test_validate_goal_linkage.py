@@ -23,6 +23,7 @@ rc の意味を固定するのが目的。特に **rc=0（検査して未解決0
 from __future__ import annotations
 
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -57,7 +58,7 @@ def _doc(outcomes: list[str], action_body: str) -> str:
     lines = ["# UBM - 2-月報（１ヶ月） - 2026-09-28〜2026-10-25", ""]
     lines.append(HEAD_OUTCOME)
     for o in outcomes:
-        lines += [f"- {o}", "  → 売上貢献：0（継続の見込み）", ""]
+        lines += [f"- {o}", "  → 売上貢献：0（11月計上・継続コンサルの初月分）", ""]
     lines.append(HEAD_ACTION)
     lines.append(action_body.rstrip("\n"))
     lines.append("")
@@ -76,8 +77,8 @@ def _out(text: str) -> str:
 
 OK_OUTCOMES = ["継続コンサル：成約3件　期日10/25"]
 OK_ACTIONS = (
-    "### → 継続コンサル：成約3件（0円・継続の見込み）\n"
-    "- [ ] 4回目の場で条件を提示する　期日10/22\n"
+    "### → 継続コンサル：成約3件（0円）\n"
+    "- [ ] 条件提示：4回目の場で条件を示す　期日10/22\n"
 )
 
 
@@ -101,11 +102,11 @@ def test_golden_sample_is_rc0():
 def test_every_action_in_group_counts_toward_denominator():
     text = _doc(
         OK_OUTCOMES,
-        "### → 継続コンサル：成約3件（0円・継続の見込み）\n"
-        "- [ ] 日程を打診する　期日10/8\n"
-        "- [ ] 状況を聞く　期日10/15\n"
+        "### → 継続コンサル：成約3件（0円）\n"
+        "- [ ] 日程打診：次回の日程を打診する　期日10/8\n"
+        "- [ ] 状況確認：困りごとを聞く　期日10/15\n"
         "      【考え】先に困りごとを聞かないと条件が合わない\n"
-        "- [ ] 条件を提示する　期日10/22\n",
+        "- [ ] 条件提示：条件を示す　期日10/22\n",
     )
     out = _out(text)
     assert _rc(text) == 0
@@ -118,7 +119,7 @@ def test_forward_break_is_rc1():
     text = _doc(
         OK_OUTCOMES,
         "### → 継続相談：成約3件（0円）\n"
-        "- [ ] 条件を提示する　期日10/22\n",
+        "- [ ] 条件提示：条件を示す　期日10/22\n",
     )
     assert _rc(text) == 1
     out = _out(text)
@@ -130,7 +131,7 @@ def test_one_character_difference_is_detected():
     """参照が成果目標キーの部分文字列になる1文字違いを落とす（部分一致では通る入力）。"""
     text = _doc(
         ["継続コンサル会：成約3件　期日10/25"],
-        "### → 継続コンサル：成約3件（0円）\n- [ ] 条件を提示する　期日10/22\n",
+        "### → 継続コンサル：成約3件（0円）\n- [ ] 条件提示：条件を示す　期日10/22\n",
     )
     assert _rc(text) == 1
     assert "参照「継続コンサル」" in _out(text)
@@ -140,7 +141,7 @@ def test_whitespace_difference_is_tolerated():
     """空白の差だけは同じ名前として扱う（validator の _ref_matches_key と同じ）。"""
     text = _doc(
         ["継続 コンサル：成約3件　期日10/25"],
-        "### → 継続コンサル：成約3件（0円）\n- [ ] 条件を提示する　期日10/22\n",
+        "### → 継続コンサル：成約3件（0円）\n- [ ] 条件提示：条件を示す　期日10/22\n",
     )
     assert _rc(text) == 0
 
@@ -156,28 +157,26 @@ def test_backward_break_is_rc1():
 def test_backward_break_is_only_warn_in_validator(tmp_path):
     """同じ入力で validator は C6 を WARN に留める。linkage が FAIL に上げる分担を固定する。"""
     golden = _GOLDEN.read_text(encoding="utf-8")
-    text = golden.replace(
-        "### → Cさん：7月勉強会の開催枠の確保（0円・8月の仕込み）\n"
-        "- [ ] 7月の開催枠を確認する　期日7/1\n"
-        "      【思い】商工会経由は信頼が高く、母集団を広げられる\n",
-        "",
-        1,
-    )
-    assert text != golden
+    # 最初の0円グループの見出しと、その下の行動を次のグループ見出しの手前まで消す
+    # （成果目標の項目名・行の文言に依存しない。項目名は見出しの「：」より前）。
+    m = re.search(r"(?ms)^### → ([^：\n]+)：[^\n]*（0円）\n.*?(?=^### )", golden)
+    assert m is not None
+    key = m.group(1).strip()
+    text = golden[:m.start()] + golden[m.end():]
     p = tmp_path / "UBM - 1-週報 2026-06-29〜2026-07-05.md"
     p.write_text(text, encoding="utf-8")
     r = subprocess.run(
         [sys.executable, str(_VALIDATE), "--file", str(p), "--type", "weekly"],
         capture_output=True, text=True,
     )
-    assert "WARN: 成果目標「Cさん」を支える行動目標がありません" in r.stdout
+    assert f"WARN: 成果目標「{key}」を支える行動目標がありません" in r.stdout
     assert vgl.main(["--file", str(p)]) == 1
 
 
 # --- 所属の読み方 ---
 
 def test_action_without_group_or_inline_is_rc1():
-    text = _doc(OK_OUTCOMES, "- [ ] 条件を提示する　期日10/22\n" + OK_ACTIONS)
+    text = _doc(OK_OUTCOMES, "- [ ] 条件提示：条件を示す　期日10/22\n" + OK_ACTIONS)
     assert _rc(text) == 1
     assert "どの成果目標に属するか分かりません" in _out(text)
 
@@ -186,7 +185,7 @@ def test_inline_colon_notation_is_read_but_warned():
     """見出しの無い旧ファイルは行内の `→ 支える成果目標：` で読む（validator と同じフォールバック）。"""
     text = _doc(
         OK_OUTCOMES,
-        "- [ ] 条件を提示する　期日10/22\n"
+        "- [ ] 条件提示：条件を示す　期日10/22\n"
         "      → 支える成果目標：継続コンサル\n",
     )
     assert _rc(text) == 0
@@ -197,7 +196,7 @@ def test_legacy_bracket_notation_is_rejected_with_hint():
     """ローカル版のカギ括弧記法は受理しない。validator の C4 と同じく所属不明として落とす。"""
     text = _doc(
         OK_OUTCOMES,
-        "- [ ] 条件を提示する　期日10/22　→ 支える成果目標「継続コンサル」\n",
+        "- [ ] 条件提示：条件を示す　期日10/22　→ 支える成果目標「継続コンサル」\n",
     )
     assert _rc(text) == 1
     assert "カギ括弧の行内注記" in _out(text)
@@ -207,7 +206,7 @@ def test_group_heading_wins_over_inline_note():
     text = _doc(
         OK_OUTCOMES,
         "### → 継続コンサル：成約3件（0円）\n"
-        "- [ ] 条件を提示する　期日10/22\n"
+        "- [ ] 条件提示：条件を示す　期日10/22\n"
         "      → 支える成果目標：存在しない成果\n",
     )
     assert _rc(text) == 0
@@ -217,7 +216,7 @@ def test_multiple_references_in_one_group_is_rc1():
     """1つの行動が複数の成果目標を指す `・` 区切りを落とす（OUTPUT_012）。"""
     text = _doc(
         OK_OUTCOMES + ["勉強会：参加申込5名　期日10/17"],
-        "### → 継続コンサル・勉強会：まとめて（0円）\n- [ ] 案内を出す　期日10/10\n",
+        "### → 継続コンサル・勉強会：まとめて（0円）\n- [ ] 案内：勉強会の案内を出す　期日10/10\n",
     )
     assert _rc(text) == 1
     assert "成果目標を 2 件参照しています" in _out(text)
@@ -229,7 +228,7 @@ def test_multiple_references_in_one_group_is_rc1():
 def test_two_exempt_groups_are_allowed(name: str):
     text = _doc(
         OK_OUTCOMES,
-        OK_ACTIONS + f"\n### → {name}\n- [ ] 習慣目標を毎日チェックする　期日 毎日\n",
+        OK_ACTIONS + f"\n### → {name}\n- [ ] 習慣チェック：習慣目標を毎日チェックする　期日 毎日\n",
     )
     out = _out(text)
     assert _rc(text) == 0
@@ -239,14 +238,14 @@ def test_two_exempt_groups_are_allowed(name: str):
 def test_other_paren_name_is_not_exempt():
     text = _doc(
         OK_OUTCOMES,
-        OK_ACTIONS + "\n### → （準備）\n- [ ] 名簿を作る　期日10/3\n",
+        OK_ACTIONS + "\n### → （準備）\n- [ ] 名簿作成：参加者の名簿を作る　期日10/3\n",
     )
     assert _rc(text) == 1
     assert "括弧名「（準備）」は免除されません" in _out(text)
 
 
 def test_exempt_only_file_without_outcomes_is_rc3():
-    text = _doc([], "### → （土台）\n- [ ] 習慣目標を毎日チェックする　期日 毎日\n")
+    text = _doc([], "### → （土台）\n- [ ] 習慣チェック：習慣目標を毎日チェックする　期日 毎日\n")
     assert _rc(text) == 3
 
 
@@ -288,7 +287,7 @@ def test_achievement_and_diff_sections_are_out_of_scope():
 def test_weekly_and_quarterly_headings_are_recognised(period: str):
     text = (
         f"## 【今{period}の売上以外の成果目標】\n"
-        "- 継続コンサル：成約3件　期日10/25\n  → 売上貢献：0（継続の見込み）\n\n"
+        "- 継続コンサル：成約3件　期日10/25\n  → 売上貢献：0（11月計上・継続コンサルの初月分）\n\n"
         f"## 【今{period}の行動目標（行動管理・優先順位付き）】\n" + OK_ACTIONS
     )
     assert _rc(text) == 0
@@ -298,9 +297,9 @@ def test_weekly_file_does_not_pick_period_anchor_sections():
     """週報の中の期アンカー（今期）の節を、今週の照合対象に混ぜない。"""
     text = (
         "## 【今期の売上以外の成果目標】\n"
-        "- 期の成果：成約9件　期日9/27\n  → 売上貢献：0（期の見込み）\n\n"
+        "- 期の成果：成約9件　期日9/27\n  → 売上貢献：0（10月計上・期の成約分）\n\n"
         "## 【今週の売上以外の成果目標】\n"
-        "- 継続コンサル：成約3件　期日10/25\n  → 売上貢献：0（継続の見込み）\n\n"
+        "- 継続コンサル：成約3件　期日10/25\n  → 売上貢献：0（11月計上・継続コンサルの初月分）\n\n"
         "## 【今週の行動目標（行動管理・優先順位付き）】\n" + OK_ACTIONS
     )
     assert _rc(text) == 0
@@ -345,7 +344,7 @@ def test_main_worst_rc_across_files(tmp_path):
     ok.write_text(_doc(OK_OUTCOMES, OK_ACTIONS), encoding="utf-8")
     bad = tmp_path / "bad.md"
     bad.write_text(
-        _doc(OK_OUTCOMES, "### → 別の成果：x（0円）\n- [ ] 提示する　期日10/22\n"),
+        _doc(OK_OUTCOMES, "### → 別の成果：x（0円）\n- [ ] 提示：条件を示す　期日10/22\n"),
         encoding="utf-8",
     )
     assert vgl.main(["--file", str(ok), "--file", str(bad)]) == 1
@@ -387,7 +386,7 @@ def _two_section_doc(detail_action_body: str, *, with_detail: bool = True,
     return "\n".join(lines)
 
 
-DETAIL_OK = "### → 有料コンサル：成約3件（150000円）\n- [ ] 4回目の場で条件を提示する　期日10/22\n"
+DETAIL_OK = "### → 有料コンサル：成約3件（150000円）\n- [ ] 条件提示：4回目の場で条件を示す　期日10/22\n"
 
 
 def test_split_groups_returns_one_group_without_group_headings():
@@ -424,7 +423,7 @@ def test_two_sections_detail_resolved_is_rc0(tmp_path, capsys):
 def test_detail_break_is_still_rc1_in_two_section_file(tmp_path):
     p = tmp_path / MONTHLY_NAME
     p.write_text(
-        _two_section_doc("### → 有料相談：成約3件（150000円）\n- [ ] 条件を提示する　期日10/22\n"),
+        _two_section_doc("### → 有料相談：成約3件（150000円）\n- [ ] 条件提示：条件を示す　期日10/22\n"),
         encoding="utf-8",
     )
     assert vgl.main(["--file", str(p)]) == 1
