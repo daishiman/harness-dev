@@ -1,0 +1,47 @@
+{
+  "overall": "PASS",
+  "checklist": [
+    {
+      "id": "macro_dag",
+      "status": "achieved",
+      "evidence": "eval-log/integrity-auditor-report.json: 既存+新規4-node macro DAG、循環/task混入0、semantic PASS"
+    },
+    {
+      "id": "draft_publication_zero",
+      "status": "achieved",
+      "evidence": ".dev-graph/cache/decompose-input/*-c28.json: blocked, planned=true, write_count=0"
+    },
+    {
+      "id": "exact13",
+      "status": "not_applicable",
+      "evidence": "--package指定なし。既存13件はread-only監査対象。新規featureは依存未完了でreadyでない。"
+    },
+    {
+      "id": "c02_commit",
+      "status": "not_applicable",
+      "evidence": "dry-run: c02-preview.json write_count=0、draft2件"
+    },
+    {
+      "id": "projection_authority",
+      "status": "not_applicable",
+      "evidence": "dry-run: publication-report.jsonで全target/operation/digestを表示"
+    },
+    {
+      "id": "dry_run_zero",
+      "status": "achieved",
+      "evidence": "baseline bytes不変、全C28 write_count=0、fake bdはversion/whereのみ"
+    }
+  ],
+  "IN1": "PASS",
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "artifact_delivery_state": "handoff_complete",
+  "independent_audit": "eval-log/integrity-auditor-report.json"
+}

@@ -1,0 +1,142 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-node",
+  "args": "add --repo-root /private/tmp/harness-pr89-20261104/cases/node/fx --input /private/tmp/harness-pr89-20261104/cases/node/fx/mixed-artifacts.json",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "95f9c53ac0e0a6715eea5bcb899aa7e4b360cd83a10918f72a85dfd4dbb695d6",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "grok-fresh-evaluator-node-pr89-20261104"
+    },
+    "transcript_sha256": "102087312150506abd2a0544973ece05dde17e92e8d17caff881deffcc10542b",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "task.md",
+      "evidence/graph.json",
+      "evidence/add-receipt.json",
+      "evidence/update-receipt.json",
+      "evidence/feature-reject.json",
+      "evidence/issue.md"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "44a9dec7743bf48a9980f261b451f2b8f7ae225e7f97185f59c8618cf1fc9fa7",
+  "transcript_sha256": "102087312150506abd2a0544973ece05dde17e92e8d17caff881deffcc10542b",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.317",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": 3.0,
+    "poll_exit": "DONE",
+    "wall_clock_s": 286.2659649848938
+  },
+  "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+    "required_observations": [
+      "all five artifacts are routed to canonical kind paths",
+      "frontmatter kind and stored path agree after a consecutive update",
+      "no feature is created outside the C14 macro-feature contract"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "all five artifacts are routed to canonical kind paths",
+        "evidence_ref": "evidence/graph.json"
+      },
+      {
+        "index": 2,
+        "observation": "frontmatter kind and stored path agree after a consecutive update",
+        "evidence_ref": "evidence/issue.md"
+      },
+      {
+        "index": 3,
+        "observation": "no feature is created outside the C14 macro-feature contract",
+        "evidence_ref": "evidence/intermediate.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "template_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 286.2659649848938,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "eb1c1e132dbebad5cac23234da91f189b6043d6ef013097d826c855cea7e0381",
+      "tokens": {
+        "input_tokens": 58,
+        "cache_creation_input_tokens": 119504,
+        "cache_read_input_tokens": 2034733,
+        "output_tokens": 11352,
+        "total_tokens": 2165647,
+        "assistant_messages": 25,
+        "assistant_message_ids": 25,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

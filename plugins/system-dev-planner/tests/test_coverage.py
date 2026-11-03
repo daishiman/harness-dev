@@ -251,6 +251,79 @@ class HookCoverageTests(unittest.TestCase):
             code, stderr = self.call(payload, env)
             self.assertEqual(code, 2); self.assertIn("BLOCKED", stderr)
 
+    @staticmethod
+    def write_active_lock(root: Path, name: str = "system-dev-plan-run-xyz.json", rel: str = ".dev-graph/locks") -> Path:
+        expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+        lock = root / rel / name
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        fx.dump(lock, {
+            "repository_id": C09.derive_repository_id(root)[0], "run_id": "run-xyz",
+            "session_owner": "session-xyz", "feature_id": "FEATURE-1",
+            "feature_digest": "sha256:" + "a" * 64,
+            "acquired_at": (expires - timedelta(minutes=10)).isoformat(),
+            "heartbeat_at": (expires - timedelta(minutes=5)).isoformat(),
+            "expires_at": expires.isoformat(),
+        })
+        return lock
+
+    def test_missing_plan_roots_without_lock_does_not_deadlock(self):
+        # Regression: dev-graph init writes a config without the sdp-only plan_roots
+        # section. Before sdp init ran, the guard blocked EVERY Bash/Task (deadlock,
+        # because dev-graph guard also denies editing config.json). Absent plan_roots
+        # means "sdp not initialised" and no canonical lock can exist -> pass-through.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td).resolve(); fx.make_repo(root)
+            config = root / ".dev-graph/config.json"
+            value = json.loads(config.read_text(encoding="utf-8")); value.pop("plan_roots"); fx.dump(config, value)
+            env = {**os.environ, "CLAUDE_PROJECT_DIR": str(root)}
+            for tool in ("Bash", "Task"):
+                code, stderr = self.call({"tool_name": tool, "tool_input": {"command": "ls"}}, env)
+                self.assertEqual((code, stderr), (0, ""))
+
+    def test_missing_plan_roots_with_active_lock_blocks_with_recovery_hint(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td).resolve(); fx.make_repo(root); readiness_files(root)
+            config = root / ".dev-graph/config.json"
+            value = json.loads(config.read_text(encoding="utf-8")); value.pop("plan_roots"); fx.dump(config, value)
+            self.write_active_lock(root)
+            env = {**os.environ, "CLAUDE_PROJECT_DIR": str(root)}
+            payload = {"tool_name": "Bash", "tool_input": {"command": "build"}}
+            code, stderr = self.call(payload, env)
+            self.assertEqual(code, 2)
+            self.assertIn("active system plan lock requires a complete repository context", stderr)
+            # the block must name a recovery command for a separate terminal
+            self.assertIn("init-project-layout.py", stderr); self.assertIn(f"--repo-root {root}", stderr)
+            self.assertIn("別ターミナル", stderr)
+            # following that hint (C10 non-destructive merge) restores the guard to normal
+            self.assertEqual(invoke(C10, ["--repo-root", str(root)], env)[0], 0)
+            self.assertIn("plan_roots", json.loads(config.read_text(encoding="utf-8")))
+            self.assertEqual(self.call(payload, env)[0], 0)
+
+    def test_present_but_invalid_plan_roots_still_fail_closed(self):
+        # Only ABSENCE is tolerated; a present-but-malformed or escaping plan_roots
+        # is tampering/drift and stays fail-closed even without any lock.
+        for bad in ("not-an-object", {"published": "../outside"}):
+            with self.subTest(plan_roots=bad), tempfile.TemporaryDirectory() as td:
+                root = Path(td).resolve(); fx.make_repo(root)
+                config = root / ".dev-graph/config.json"
+                value = json.loads(config.read_text(encoding="utf-8")); value["plan_roots"] = bad; fx.dump(config, value)
+                code, stderr = self.call({"tool_name": "Bash"}, {**os.environ, "CLAUDE_PROJECT_DIR": str(root)})
+                self.assertEqual(code, 2); self.assertIn("managed repository context is invalid", stderr)
+                self.assertIn("init-project-layout.py", stderr)
+
+    def test_repointed_local_state_locks_cannot_hide_canonical_lock(self):
+        # The lock manager only writes under LOCK_ROOT_REL; re-pointing
+        # local_state.locks in config must not make the guard scan an empty dir.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td).resolve(); fx.make_repo(root); readiness_files(root, placeholder=True)
+            config = root / ".dev-graph/config.json"
+            value = json.loads(config.read_text(encoding="utf-8"))
+            value["local_state"]["locks"] = ".dev-graph/decoy-locks"; fx.dump(config, value)
+            (root / ".dev-graph/decoy-locks").mkdir()
+            self.write_active_lock(root)
+            code, stderr = self.call({"tool_name": "Bash"}, {**os.environ, "CLAUDE_PROJECT_DIR": str(root)})
+            self.assertEqual(code, 2); self.assertIn("implementation_readiness incomplete", stderr)
+
 
 class ContextCoverageTests(unittest.TestCase):
     def test_git_helpers_env_marker_and_identity_sources(self):
@@ -300,6 +373,12 @@ class ContextCoverageTests(unittest.TestCase):
             with self.assertRaises(C09.PolicyError): C09.build_context(["--repo-root", str(root)], env)
             config["repository_id"] = C09.derive_repository_id(root)[0]; config.pop("plan_roots"); fx.dump(config_path, config)
             with self.assertRaises(C09.PolicyError): C09.build_context(["--repo-root", str(root)], env)
+            # guard-only minimal mode: absent plan_roots -> None, identity still enforced
+            minimal = C09.build_context(["--repo-root", str(root)], env, require_plan_roots=False)
+            self.assertIsNone(minimal["plan_roots"]); self.assertEqual(minimal["repository_id"], config["repository_id"])
+            config["repository_id"] = "github:wrong/repository"; fx.dump(config_path, config)
+            with self.assertRaises(C09.PolicyError):
+                C09.build_context(["--repo-root", str(root)], env, require_plan_roots=False)
 
     def test_feature_context_is_schema_identity_and_containment_bound(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as other:

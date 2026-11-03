@@ -1,0 +1,1293 @@
+{
+  "graph_revision": 2,
+  "nodes": [
+    {
+      "acceptance": [],
+      "architecture_refs": [],
+      "artifact_kind": "architecture",
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "beads_linkage": null,
+      "classification_candidates": [],
+      "classification_confidence": 1.0,
+      "classification_reason": "explicit fixture",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "linked_pr_merged_all",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evaluator": "reviewer",
+        "evidence_ref": "evidence/feature.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-07-13T00:00:00Z",
+      "depends_on": [],
+      "domain": "system",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "architecture/system.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "goal": null,
+      "graph_node_id": "architecture-system",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": null,
+      "project_id": "project",
+      "pull_request_linkages": [],
+      "purpose": null,
+      "related_nodes": [],
+      "resource_scope": [],
+      "scope_in": [],
+      "scope_out": [],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [],
+      "target_date": null,
+      "template_id": "architecture",
+      "template_version": "1.0.0",
+      "title": "UTF-8 line-count CLI architecture",
+      "tracker_binding": "none",
+      "updated_at": "2026-07-13T00:00:00Z"
+    },
+    {
+      "acceptance": [
+        "AC01: 空UTF-8ファイルはstdoutが0と改行、exit 0。",
+        "AC02: a\\nb\\nは2行、a\\nbも末尾改行なしで2行。",
+        "AC03: 日本語の2行は文字数によらず2。UTF-8 strictで読む。",
+        "AC04: LF・CRLF・単独CRをPython universal newlineの1境界として扱う。",
+        "AC05: 存在しないpath・directory・権限拒否はstdout空、stderrに説明、exit 2、traceback無し。",
+        "AC06: 不正UTF-8はstdout空、stderrに説明、exit 2、traceback無し。",
+        "AC07: 引数が0件または2件以上ならusageをstderrへ出しexit 2、stdout空。",
+        "AC08: 入力ファイルのbytesを変更せず、外部network・DB・認証・サービスを使わない。",
+        "AC09: ファイルを行iteratorで読み、ファイル全体readで保持しない。カウンタ以外の追加メモリは1行分。"
+      ],
+      "architecture_refs": [
+        "architecture-system"
+      ],
+      "artifact_kind": "feature",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [],
+      "classification_confidence": 1.0,
+      "classification_reason": "explicit fixture",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "linked_pr_merged_all",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evaluator": "reviewer",
+        "evidence_ref": "evidence/feature.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-07-13T00:00:00Z",
+      "depends_on": [],
+      "domain": "system",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "features/FEATURE-1.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "goal": "python3 src/utf8_line_count.py PATH がAC01..AC09を満たし、CLI利用説明と検証記録を伴うローカル配布ZIPとして引き渡せる状態。",
+      "graph_node_id": "FEATURE-1",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": null,
+      "project_id": "project",
+      "pull_request_linkages": [],
+      "purpose": "UTF-8のテキストファイルの行数を、Linux/macOSの利用者がPython標準ライブラリだけで安全に取得できるようにする。",
+      "related_nodes": [],
+      "resource_scope": [],
+      "scope_in": [
+        "1ファイルpathのCLI入力",
+        "UTF-8 strictとuniversal newlineの逐次カウント",
+        "整数と改行だけの成功出力",
+        "入力/復号/usage失敗時exit 2",
+        "stdlib unittestとローカルZIP・手動利用説明"
+      ],
+      "scope_out": [
+        "stdin・複数ファイル・再帰探索",
+        "GUI・HTTP API・DB・認証",
+        "Windowsでの動作保証",
+        "pip公開・クラウドdeploy・実GitHub/Beads mutation"
+      ],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [],
+      "target_date": null,
+      "template_id": "feature",
+      "template_version": "1.0.0",
+      "title": "UTF-8 text line-count CLI",
+      "tracker_binding": "none",
+      "updated_at": "2026-07-13T00:00:00Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P01.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP01責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [],
+      "domain": "documentation",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P01.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P01",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P01",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/requirements-utf8-lines.md",
+        "evidence/utf8-lines/P01.json",
+        "evidence/utf8-lines/P01/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-01-requirements.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p01"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "要件を固定 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P02.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP02責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P01"
+      ],
+      "domain": "backend",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P02.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P02",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P02",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/architecture-utf8-lines.md",
+        "evidence/utf8-lines/P02.json",
+        "evidence/utf8-lines/P02/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-02-architecture.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p02"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "CLI構造を設計 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P03.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP03責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P02"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P03.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P03",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P03",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/design-review-utf8-lines.json",
+        "evidence/utf8-lines/P03.json",
+        "evidence/utf8-lines/P03/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-03-design-review.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p03"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "設計を独立レビュー (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P04.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP04責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P03"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P04.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P04",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P04",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/test-matrix-utf8-lines.json",
+        "evidence/utf8-lines/P04.json",
+        "evidence/utf8-lines/P04/",
+        "tests/fixtures/",
+        "tests/test_utf8_line_count.py"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-04-test-design.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p04"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "境界テストを設計 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P05.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP05責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P04"
+      ],
+      "domain": "backend",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P05.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P05",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P05",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "evidence/utf8-lines/P05.json",
+        "evidence/utf8-lines/P05/",
+        "src/utf8_line_count.py"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-05-implementation.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p05"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "逐次CLIを実装 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P06.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP06責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P05"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P06.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P06",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P06",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "evidence/utf8-lines/P06.json",
+        "evidence/utf8-lines/P06/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-06-test-run.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p06"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "全境界テストを実行 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P07.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP07責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P06"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P07.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P07",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P07",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "evidence/utf8-lines/P07.json",
+        "evidence/utf8-lines/P07/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-07-acceptance.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p07"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "利用者経路で受入確認 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P08.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP08責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P07"
+      ],
+      "domain": "backend",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P08.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P08",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P08",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/refactoring-utf8-lines.md",
+        "evidence/utf8-lines/P08.json",
+        "evidence/utf8-lines/P08/",
+        "src/utf8_line_count.py",
+        "tests/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-08-refactoring-migration.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p08"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "外部挙動を保ち整理 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P09.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP09責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P08"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P09.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P09",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P09",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/quality-utf8-lines.json",
+        "evidence/utf8-lines/P09.json",
+        "evidence/utf8-lines/P09/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-09-quality-assurance.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p09"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "品質と非変更を確認 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P10.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP10責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P09"
+      ],
+      "domain": "quality",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P10.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P10",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P10",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/final-review-utf8-lines.json",
+        "evidence/utf8-lines/P10.json",
+        "evidence/utf8-lines/P10/"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-10-final-review.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p10"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "最終独立レビュー (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P11.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP11責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P10"
+      ],
+      "domain": "documentation",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P11.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P11",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P11",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "evidence/utf8-lines/P11.json",
+        "evidence/utf8-lines/P11/",
+        "evidence/utf8-lines/manifest.json"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-11-evidence.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p11"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "証跡manifestを固定 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P12.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP12責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P11"
+      ],
+      "domain": "documentation",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P12.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P12",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P12",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "docs/README-utf8-lines.md",
+        "evidence/utf8-lines/P12.json",
+        "evidence/utf8-lines/P12/",
+        "examples/input.txt"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-12-documentation-operations.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p12"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "利用と保守を説明 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    },
+    {
+      "artifact_kind": "task",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "task",
+          "candidate_path": "tasks/FEATURE-1/SYS-P13.md",
+          "confidence": 1
+        }
+      ],
+      "classification_confidence": 1,
+      "classification_reason": "UTF-8 CLI単一機能のP13責務を明示した入力。feature増設ではない。",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "in_progress"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "evaluator": "system-dev-plan-evaluator",
+        "evidence_ref": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/plan-findings.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-11-02T07:22:50Z",
+      "depends_on": [
+        "SYS-P12"
+      ],
+      "domain": "operations",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": "feature-package/feat",
+      "file_path": "tasks/FEATURE-1/SYS-P13.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "SYS-P13",
+      "implementation_readiness": {
+        "checked_at": "2026-07-13T00:00:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "team"
+      ],
+      "parent_feature": "FEATURE-1",
+      "phase_ref": "P13",
+      "priority": null,
+      "project_id": "feature-package-feat",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "architecture/system.md",
+        "dist/utf8-line-count.zip",
+        "evidence/utf8-lines/P13.json",
+        "evidence/utf8-lines/P13/",
+        "system-spec/index.md"
+      ],
+      "source_lineage": {
+        "imported_at": "2026-11-02T07:22:50Z",
+        "origin_kind": "system-dev-planner",
+        "source_digest": "df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282",
+        "source_path": ".dev-graph/plans/generations/feature-package-feat/df0004510031618ff0b0d6f485eb6a9973f84c4e60ec09c51e24e4cf13f89282/task-specs/phase-13-release-deploy.md",
+        "source_plugin": "system-dev-planner",
+        "source_version": "0.1.0"
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "p13"
+      ],
+      "target_date": null,
+      "template_id": "task",
+      "template_version": "1.1.0",
+      "title": "ローカル配布と仕様反映 (UTF-8 line-count)",
+      "tracker_binding": "none",
+      "updated_at": "2026-11-02T07:22:50Z"
+    }
+  ],
+  "schema_version": "1.0.0"
+}

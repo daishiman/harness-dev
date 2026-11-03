@@ -1,0 +1,72 @@
+{
+  "overall": "PASS",
+  "artifact_delivery_choice": "standard",
+  "pre_choice_receipts": [
+    ".dev-graph/state/receipts/node-r000001-add.json"
+  ],
+  "graph_baseline": {
+    "graph_revision": 1,
+    "graph_digest": "sha256:7beb15c15b0e08015780f4000bc49d83c07ea9937d774e41db510d80108e528f"
+  },
+  "writer_receipts": [
+    ".dev-graph/state/receipts/node-r000002-update.json"
+  ],
+  "checklist": [
+    {
+      "id": "containment",
+      "status": "achieved",
+      "evidence": "C24 resolve-repo-context --mode write (pre/post): repo_root == content_roots.repository; repository_id local:sha256:21028a71...; all paths under repo root (auditor PASS)"
+    },
+    {
+      "id": "classification",
+      "status": "achieved",
+      "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (confidence 0.89-0.93, margin>=0.81); update has no classification; direct feature add rejected feature_requires_c14_macro_contract"
+    },
+    {
+      "id": "schema",
+      "status": "achieved",
+      "evidence": "validate-graph-schema.py exit 0 valid=true findings=0 on graph r2; frontmatter kind/id/path match graph for 5 nodes"
+    },
+    {
+      "id": "package",
+      "status": "not_applicable",
+      "evidence": "verbs run: add, update, add(feature, rejected); register-package not invoked"
+    },
+    {
+      "id": "receipt",
+      "status": "achieved",
+      "evidence": "pre-choice receipt node-r000001-add.json r0->r1 graph_digest_after sha256:7beb15c1... == graph_baseline; post-choice node-r000002-update.json r1->r2 graph_digest_after sha256:fe52f00b... == current graph; node_ids 5 present"
+    }
+  ],
+  "feedback_criteria": [
+    {
+      "id": "IN1",
+      "status": "PASS",
+      "evidence": "pre-write validation of add and update valid; final validate-graph-schema exit 0, 0 missing required keys"
+    },
+    {
+      "id": "OUT1",
+      "status": "external_pending",
+      "judged_by": "live trial C02-OUT1-positive-mixed-artifacts-r2"
+    },
+    {
+      "id": "OUT2",
+      "status": "external_pending",
+      "judged_by": "live trial / acceptance test"
+    },
+    {
+      "id": "OUT3",
+      "status": "external_pending",
+      "judged_by": "live trial / acceptance test"
+    }
+  ],
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-integrity-auditor",
+    "verdict": "PASS",
+    "graph_digest": "sha256:fe52f00b9e8a6d27c2e3296885eddc9b88fd276c5e029ebaa4d3c563c957e638"
+  },
+  "feature_rejection_evidence": [
+    ".dev-graph/tmp/run/feature-preview.stdout",
+    ".dev-graph/tmp/run/feature-apply.stdout"
+  ]
+}

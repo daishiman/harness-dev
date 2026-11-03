@@ -1,0 +1,476 @@
+{
+  "logical": {
+    "loop0_resolution": [
+      {
+        "ref": "1-0",
+        "status": "partial",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:13-27 で解消。残りは plugins/ubm-goal-setting/plugin-composition.yaml:21、plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md:313-319/:406、plugins/ubm-goal-setting/references/agent-goal-reviewer-report-template.md:29"
+      },
+      {
+        "ref": "1-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting 配下の現役文書で kitahara-mindset の参照は grep 0件"
+      },
+      {
+        "ref": "1-2",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:7（共通部品C 参照）"
+      },
+      {
+        "ref": "2-0",
+        "status": "partial",
+        "evidence": "action-goals-best-practices.md:51/72/91/94 と validate-goal-output.py:800-802 は解消。残りは plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:65/231/366、golden-sample-weekly.md:186/189、output-formats.md:406"
+      },
+      {
+        "ref": "2-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:24、golden-sample-weekly.md に【考え】なし、data-contract.md:496"
+      },
+      {
+        "ref": "3-0",
+        "status": "partial",
+        "evidence": "規則は output-formats.md:87 に定められたが、反復は残っている。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md:23 ほか約20箇所"
+      },
+      {
+        "ref": "4-0",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:272/276、output-formats.md:114"
+      },
+      {
+        "ref": "5-0",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:129/:146/:1090-1092"
+      },
+      {
+        "ref": "5-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:38、R5-step5-final-check.md:39、references/thinking-guide.md:150"
+      },
+      {
+        "ref": "6-0",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:17-20、data-contract.md:215-216（行動行は A に一本化。成果目標の1行例示 output-formatter.md:120 は新規 issue として別に計上）"
+      },
+      {
+        "ref": "6-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:235（string[]）、prompts/R2-step2-gap-analysis.md:63"
+      },
+      {
+        "ref": "7-0",
+        "status": "partial",
+        "evidence": "README.md:131/292 と data-contract.md:106 は解消。残りは plugins/ubm-goal-setting/RUNBOOK.md:179、EVALS.json:23、plugin-composition.yaml:17、skills/run-ubm-goal-setting/references/resource-map.yaml:9、data-contract.md:220/226、output-formats.md:637、assets/interview-quick-templates.md:17"
+      },
+      {
+        "ref": "8-0",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md:40、references/output-formats.md:26"
+      },
+      {
+        "ref": "8-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/workflow-manifest.json:117/121、scripts/validate-cross-level.py:550-567"
+      },
+      {
+        "ref": "9-0",
+        "status": "partial",
+        "evidence": "data-contract.md:233-237 と output-formats.md:109-112 は解消。残りは plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:117（受け渡しに差分がない）と :44-53（prev_action_target/actual がない）"
+      },
+      {
+        "ref": "9-1",
+        "status": "partial",
+        "evidence": "R5-step5-final-check.md:94 と output-formats.md:151-157 で名前を分けた。残りは plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:97"
+      }
+    ],
+    "residual_verdicts": [
+      {
+        "item": "1. output-formats.md 一貫した例の「提案書：作る」と採否基準の食い違い",
+        "true": true,
+        "note": "真。output-formats.md:403 と :316/:512 が矛盾する。C1 low として deduction に計上"
+      },
+      {
+        "item": "2. 月報提出用「本文に具体日を埋め込まない」と粒度節「開催日等が必要なら残す」の食い違い",
+        "true": true,
+        "note": "真。output-formats.md:1229 と :1149 が矛盾する。C1 low として deduction に計上。:1417 の規則名の参照切れ（C4、process）もこれに関係する"
+      },
+      {
+        "item": "3. 注釈「○/△/× は最小限」と実績セクション「記号は書かない」の食い違い",
+        "true": true,
+        "note": "真。output-formats.md:947/967/1301/1393 と :750 が矛盾する。C1 low として deduction に計上"
+      },
+      {
+        "item": "4. selection-focus-goal-frame.md の表に1年列がない",
+        "true": true,
+        "note": "真。selection-focus-goal-frame.md:3/:52。C2 low として vertical に計上"
+      },
+      {
+        "item": "5. thinking-guide.md 4-B「毎日やること（トリガー付き）」と共通部品A の食い違い",
+        "true": true,
+        "note": "真。thinking-guide.md:406（:313-319 の SMART も同じ）。C1 low として critical に計上"
+      },
+      {
+        "item": "6. RUNBOOK.md L179（C16）の種別が3つだけ",
+        "true": true,
+        "note": "真。RUNBOOK.md:179。EVALS.json:23 も同じ欠落。C2 medium として mece に計上"
+      },
+      {
+        "item": "7. スタブ thinking-methods-toolkit.md / thinking-process.md の削除保留",
+        "true": true,
+        "note": "真。2ファイルは実在するが、現役文書からの参照はなく参照切れはない。計画（削除）との差は orchestrator の判断待ちなので、C1-C4 の issue にはしない"
+      },
+      {
+        "item": "8. references/version-history.md が CHANGELOG.md と役割重複",
+        "true": true,
+        "note": "真。version-history.md は残っていて、SKILL.md:78/:322 と resource-map.yaml:20 から参照されている。重複の smell で計画の範囲外。C1-C4 に該当しないので issue にはしない"
+      },
+      {
+        "item": "9. data-contract §3.1.3 の1年列で #24/#25 を必須にした",
+        "true": true,
+        "note": "記述は真。data-contract.md:278-279 は output-formats.md:1605-1606 の1年必須見出しと検査器に一致していて、依頼（任意）との差はあるが文書内の不整合はない。issue にはしない"
+      },
+      {
+        "item": "10. 見直し記録の行書式は検査器が見出し有無のみ検査",
+        "true": true,
+        "note": "真。output-formats.md:129「理由と影響の妥当性はレビューで確認する」に書かれた設計どおりで、不整合ではない。issue にはしない"
+      },
+      {
+        "item": "11. validate-goal-output.py / validate-cross-level.py 0.4.0 が CHANGELOG 未記載",
+        "true": true,
+        "note": "真。両スクリプトのヘッダは 0.4.0 だが、CHANGELOG.md の最上位は 0.9.3 で、0.4.0 の記載がない（:61 は 0.3.3 止まり）。版上げ工程で orchestrator が記載する予定なので、この時点では issue にしない"
+      }
+    ]
+  },
+  "system": {
+    "loop0_resolution": [
+      {
+        "ref": "19-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:17-19; output-formats.md:1388; validate-goal-output.py:309-310"
+      },
+      {
+        "ref": "20-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:20; validate-goal-output.py:1204-1226; agents/goal-reviewer.md:63; agents/phase3-coordinator.md:27"
+      },
+      {
+        "ref": "20-2",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:439"
+      },
+      {
+        "ref": "21-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:175; output-formats.md:24"
+      },
+      {
+        "ref": "22-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1204-1205; output-formats.md:18"
+      },
+      {
+        "ref": "23-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py:211-229; data-contract.md:371-382"
+      },
+      {
+        "ref": "24-1",
+        "status": "partial",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1104-1106（週報の必須見出しに前週が無い）; validate-goal-output.py:317-319（節が無ければ continue）; data-contract.md:599 と output-formats.md:98 で初回の扱いが割れている"
+      },
+      {
+        "ref": "25-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md:282-289; prompts/R4-step4-action-goals.md:47,114"
+      },
+      {
+        "ref": "26-1",
+        "status": "partial",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:636,698-699（括弧なら何でも受け入れる）; assets/golden-sample-weekly.md:139,142,186,189; references/output-formats.md:392,406; references/data-contract.md:506"
+      },
+      {
+        "ref": "27-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:116-133; scripts/validate-goal-output.py:1105"
+      },
+      {
+        "ref": "28-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:274-287; prompts/R3-step3-goal-setting.md:38"
+      },
+      {
+        "ref": "29-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:24"
+      },
+      {
+        "ref": "29-2",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:614-616"
+      },
+      {
+        "ref": "30-1",
+        "status": "resolved",
+        "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:414; output-formats.md:142"
+      }
+    ],
+    "residual_verdicts": [
+      {
+        "item": 1,
+        "true": true,
+        "note": "事実。OF L403「- [ ] 提案書：作る　期日6/29」は OF L316「一人で完結する作業は段として立てない」と矛盾し、golden L183-184（説明日程の打診・提案書の提出）とも違う。例の写しが2つある件として 19 systems で計上した。"
+      },
+      {
+        "item": 2,
+        "true": true,
+        "note": "事実。OF L1149「開催日等は残す」と L1229「本文に具体日を埋め込まない」が矛盾する。22 trade-on で計上した。"
+      },
+      {
+        "item": 3,
+        "true": true,
+        "note": "事実。OF L750「記号は書かない」と L947・L967・L1301・L1393「○/△/× や状態説明は最小限」が矛盾する。22 trade-on で計上した。"
+      },
+      {
+        "item": 4,
+        "true": true,
+        "note": "事実。selection-focus-goal-frame.md L52 の表は週間・月間・期報の3列だけ。RUNBOOK L179・resource-map L9 とあわせて 25 strategic で計上した。"
+      },
+      {
+        "item": 5,
+        "true": true,
+        "note": "事実。thinking-guide.md L406「毎日やること（トリガー付き）」は共通部品A（OF L20）および同じファイルの L391 と矛盾する。30 kj で計上した。"
+      },
+      {
+        "item": 6,
+        "true": true,
+        "note": "事実。RUNBOOK.md L179 の C16 の種別は weekly|monthly|quarterly だけで、yearly が無い。25 strategic で計上した。"
+      },
+      {
+        "item": 7,
+        "true": true,
+        "note": "事実。スタブ2本は残っており、参照しているのは version-history L27-28 と plugin-plans/finish/ubm-goal-setting/component-inventory.json L1057-1063 だけ。保留の判断について：finish/ は索引の対象外なので、仕組みの上では削除しても安全で、保留の根拠は弱い。一方、finish/ の参照の整合を後の Change Governance PR でまとめて直す慣行（lint-script-naming.py L361-364）には沿っており、保留そのものは条件付きで妥当。ただし解消の条件が記録されていないため、bead に条件を残すべき（29 issue で smell として計上した）。"
+      },
+      {
+        "item": 8,
+        "true": true,
+        "note": "事実。references/version-history.md（12.0.0〜27.0.0）と CHANGELOG.md で、変更履歴の正本が2つある。27 kaizen の issue に含めた。"
+      },
+      {
+        "item": 9,
+        "true": true,
+        "note": "事実。DC §3.1.3 の1年の列で #24/#25 は必須になっていて、VGO L1144 の必須見出しと一致する。依頼（任意）より検査器との一致を優先した判断は妥当なので、issue にしない。依頼との違いは CHANGELOG に書くべき（27 kaizen の issue の版上げ時の記載に含めた）。"
+      },
+      {
+        "item": 10,
+        "true": true,
+        "note": "事実。VGO L1105 は【今週の見直し記録】の見出しがあるかだけを検査し、共通部品E の行書式は検査していない。21 causal-loop で計上した。"
+      },
+      {
+        "item": 11,
+        "true": true,
+        "note": "事実。validate-goal-output.py と validate-cross-level.py の L4 は 0.4.0 だが、CHANGELOG での最新の言及は L61 の 0.3.3 のまま。保留の判断について：版上げの工程で記載するなら、作業の分け方として保留は妥当。ただし 0.9.1 が「未記入」のまま残っている前例と同じ穴で、loop の検証証跡と版の対応が切れる危険がある。版上げ PR の完了条件、または bead に記録すべき（27 kaizen で計上した）。"
+      }
+    ]
+  },
+  "meta": {
+    "loop0_resolution": [
+      {
+        "ref": "10-0",
+        "status": "partial",
+        "evidence": "SKILL.md:283-289 は参照表になった。一方で「正本が勝つ」が SKILL.md:282 ほか9ファイル14箇所に残り、期日の逆算規則の本文が output-formats.md:219,317,1053,1230,1338,1481 に再掲されている。再掲検出の lint は無い。"
+      },
+      {
+        "ref": "10-1",
+        "status": "resolved",
+        "evidence": "output-formats.md:151-157 で上限の名前を3つに分けた。phase3-coordinator.md:154 は「次問案の作り直し上限」、validation-gates.md:55 が修復上限の正本。F に値のコピーが残る件は新しい smell として扱う。"
+      },
+      {
+        "ref": "11-0",
+        "status": "resolved",
+        "evidence": "output-formats.md:17-20 に合格基準を集約した。R4-step4-action-plan.md:73 と phase3-coordinator.md:27,58,150 は共通部品A を参照している。"
+      },
+      {
+        "ref": "11-1",
+        "status": "resolved",
+        "evidence": "output-formats.md:124-133 で2つの書式と記録先を定義し、L1090-1092 に週報の記録先を置き、validate-goal-output.py:1105 で見出しを必須にした。行書式が未検査な件は新しい issue として扱う。"
+      },
+      {
+        "ref": "12-0",
+        "status": "resolved",
+        "evidence": "output-formats.md:53-55 の2つの形が、data-contract.md:506、validate-goal-output.py:802、action-goals-best-practices.md:72、interview-quick-templates.md:73,228,363 にそろった。"
+      },
+      {
+        "ref": "12-1",
+        "status": "resolved",
+        "evidence": "interview-quick-templates.md:7 が「共通部品C 設計順序と4層」を参照するようになり、参照先が実在する。"
+      },
+      {
+        "ref": "12-2",
+        "status": "resolved",
+        "evidence": "output-formats.md:1581 に外部 rules の参照が無い。プラグイン全体の grep でも kitahara-mindset は0件。"
+      },
+      {
+        "ref": "13-0",
+        "status": "partial",
+        "evidence": "現役文書からの参照は0件になった（残りは version-history.md:27-28 の履歴だけ）。ただし thinking-process.md:1-5 と thinking-methods-toolkit.md が実在し、component-inventory.json:1057-1063 が2本を指している。"
+      },
+      {
+        "ref": "14-0",
+        "status": "resolved",
+        "evidence": "output-formats.md:25、R4-step4-action-plan.md:117、SKILL.md:295 は、NG 語について action-language-policy.json を参照するだけで、語を列挙していない。"
+      },
+      {
+        "ref": "15-0",
+        "status": "resolved",
+        "evidence": "output-formats.md:24 は「テンプレート・例には置かない」とし、テンプレートと例の【考え】は0件。validate-goal-output.py:1216-1217 は WARN で知らせる。"
+      },
+      {
+        "ref": "15-1",
+        "status": "partial",
+        "evidence": "理由は output-formats.md:149 に集約された。しかし data-contract.md:60 に理由文が残っている。"
+      },
+      {
+        "ref": "16-0",
+        "status": "resolved",
+        "evidence": "phase3-coordinator.md:215,229 は projects の要否を output-formats.md:142（共通部品F）で参照している。"
+      },
+      {
+        "ref": "17-0",
+        "status": "partial",
+        "evidence": "validate-goal-output.py:276 で週報を照合の対象にした。ただし validate-goal-output.py:1104-1106 に前週の見出しの必須化が無く、L317-319 と L329-330 で前週ブロックが無くても素通りする。"
+      },
+      {
+        "ref": "17-1",
+        "status": "partial",
+        "evidence": "validate-cross-level.py:7-11,566-567 で機械による強制は済んだ。一方で、規則本文の再掲は SKILL.md:97,136,235 ほか約20箇所に増え、output-formats.md:87 の「文書で繰り返さない」に反している。"
+      },
+      {
+        "ref": "18-0",
+        "status": "resolved",
+        "evidence": "R4-step4-action-plan.md:76,78 が output-formats.md:143（共通部品F のやらないことの出力先）を参照している。"
+      },
+      {
+        "ref": "18-1",
+        "status": "resolved",
+        "evidence": "R3-step3-goal-setting.md:276-285 のターン3D は、売上目標を残したうえで、直接成果→中間成果→行動の順に組み替えるようになった。"
+      },
+      {
+        "ref": "18-2",
+        "status": "resolved",
+        "evidence": "R3-step3-goal-setting.md:38 と thinking-guide.md:258 は1年→3ヶ月→1ヶ月→1週間になった。R2-step2-gap-analysis.md:38 は売上差から成果へ向かう仮説になった。"
+      }
+    ],
+    "residual_verdicts": [
+      {
+        "item": 1,
+        "true": true,
+        "note": "output-formats.md L403 の `提案書：作る　期日6/29` は、採否基準 L316/L512/L526 に反する。同じ場面の golden-sample-weekly.md L183-184 とも違う（思考法18で issue 化）。"
+      },
+      {
+        "item": 2,
+        "true": true,
+        "note": "output-formats.md L1149「本文の開催日等が必要な情報なら残す」と、L1229・SKILL.md L208「本文に具体日を埋め込まない」が矛盾する（思考法16）。"
+      },
+      {
+        "item": 3,
+        "true": true,
+        "note": "output-formats.md L750 は記号「○/△/×」を書かないとし、L947/L967/L1301/L1393 の注記は「最小限」とする（思考法15）。"
+      },
+      {
+        "item": 4,
+        "true": true,
+        "note": "selection-focus-goal-frame.md L52 の表は週間・月間・期報の3列で、3-2 の期間ごとの主目的にも1年が無い（思考法13）。"
+      },
+      {
+        "item": 5,
+        "true": true,
+        "note": "thinking-guide.md L406「ルーティン行動（トリガー付き）」が、共通部品A L20「トリガーは必須にしない」と食い違う。例「毎朝9時に◯◯を◯件」自体は A に合っている（思考法15）。"
+      },
+      {
+        "item": 6,
+        "true": true,
+        "note": "RUNBOOK.md L179 の C16 は `--type weekly|monthly|quarterly` だけで、yearly が無い（思考法13）。"
+      },
+      {
+        "item": 7,
+        "true": true,
+        "note": "現役文書からの参照は0件（version-history.md L27-28 の履歴だけ）。スタブ2本は実在し、component-inventory.json L1057-1063 の build_target が指している。loop0 の抽象「外部から参照されている墓標は残してよい」に当てはまるかは、計画書が現役かどうかで決まる（思考法13）。"
+      },
+      {
+        "item": 8,
+        "true": true,
+        "note": "version-history.md は 27.0.0（2026-10-10）で止まり、CHANGELOG.md は 0.9.3（2026-11-03）まで続いている。SKILL.md L78/L322 と resource-map.yaml L20 が今も version-history.md を参照している（思考法12）。"
+      },
+      {
+        "item": 9,
+        "true": true,
+        "note": "data-contract.md L278-279 の1年の列「必須（必須見出し）」は、validate-goal-output.py L1144 と一致する。ただし、他の列はヒアリングの要否を書いていて軸が混ざっている。週報の #25 は「任意（継承）」なのに、検査器 L1106 は見出しを必須にしている（思考法13で issue 化）。"
+      },
+      {
+        "item": 10,
+        "true": true,
+        "note": "validate-goal-output.py L1105 は【今週の見直し記録】の見出しの有無だけを見ている。行動の見直しの行の書式は未検査。月報の上位配分の見直しだけは、validate-cross-level.py L379-415 が検査する（思考法11）。"
+      },
+      {
+        "item": 11,
+        "true": true,
+        "note": "validate-goal-output.py L4 と validate-cross-level.py L4 は `# version: 0.4.0` になっているが、CHANGELOG.md の 0.9.3（L3-7）にも、それより前の版にも記載が無い（思考法12）。"
+      }
+    ],
+    "amplified_pattern_candidates": [
+      {
+        "source_paradigm_id": 10,
+        "reusable_abstraction": "正本の節を作ったら、同じファイルのテンプレート注記も参照1行にし、特徴語句の出現回数を lint で数える。共通部品は置く範囲を宣言する。",
+        "reuse_surface": "rubric",
+        "re_audit_trigger": "共通部品A〜F またはテンプレート注記が変更されたとき"
+      },
+      {
+        "source_paradigm_id": 11,
+        "reusable_abstraction": "前回と今回をつなぐ部品は、項目名の対応と基準値の変化だけを持ち、行動行を写さない。新しい記録の書式には、同じ変更で検査を付ける。",
+        "reuse_surface": "template",
+        "re_audit_trigger": "共通部品D・E、要因分析セクション、または手本の前週ブロックが変更されたとき"
+      },
+      {
+        "source_paradigm_id": 12,
+        "reusable_abstraction": "仕様を入れ替えるときは新仕様を既定値にし、旧仕様は明示の指定があるときだけにする（opt-in のフラグで新仕様を追記しない）。",
+        "reuse_surface": "config",
+        "re_audit_trigger": "frontmatter のキー、または種別ごとの必須条件が変更されたとき"
+      },
+      {
+        "source_paradigm_id": 13,
+        "reusable_abstraction": "層を列挙する表と受入条件を、列挙の正本と照合する lint で洗い出す。",
+        "reuse_surface": "rubric",
+        "re_audit_trigger": "対象種別の表が変更されたとき、または層を列挙する表が追加されたとき"
+      },
+      {
+        "source_paradigm_id": 14,
+        "reusable_abstraction": "同じ事実は正本の節1つで状態を更新し、ほかの節は項目名で参照する索引にする。",
+        "reuse_surface": "template",
+        "re_audit_trigger": "週報テンプレートの節、または振り返りチェックリストが変更されたとき"
+      },
+      {
+        "source_paradigm_id": 15,
+        "reusable_abstraction": "規則の要素を減らすときは、残した要素の検査を FAIL へ強める。",
+        "reuse_surface": "rubric",
+        "re_audit_trigger": "共通部品A の合格基準、または期日検査の正規表現・重大度が変更されたとき"
+      },
+      {
+        "source_paradigm_id": 16,
+        "reusable_abstraction": "派生した表示は射影か集約のどちらか一方に決めて同期検査を選び、自由記述の参照欄は外部キーとして完全一致を検査する。",
+        "reuse_surface": "template",
+        "re_audit_trigger": "提出用テンプレート、または共通部品B の貢献0の形が変更されたとき"
+      },
+      {
+        "source_paradigm_id": 17,
+        "reusable_abstraction": "前回ブロックの検査で best・worst・edge（初回・転記漏れ・旧形式）を別々の結果に分け、省略は明示の形でだけ許す。",
+        "reuse_surface": "script-frontmatter",
+        "re_audit_trigger": "種別ごとの必須見出し、check_report_alignment、または共通部品D の初回の規則が変更されたとき"
+      },
+      {
+        "source_paradigm_id": 18,
+        "reusable_abstraction": "手本と例は1つの場面につき1本にし、規則を改定したら例も検査器に通す。",
+        "reuse_surface": "reference",
+        "re_audit_trigger": "採否基準、必須の見出し名、または golden-sample-weekly.md が変更されたとき"
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "skill": "run-ubm-knowledge-sync",
+  "run_date": "2026-11-03",
+  "status": "completed",
+  "dry_run": false,
+  "original_goal_hash": "641af2299cedb88ba2bd9ed6dd1a5406796afa879365b58653e7d4de64e8069f",
+  "detection": {
+    "scanned": 154,
+    "excluded": 85,
+    "new": 57,
+    "modified": 0,
+    "processed": 1,
+    "processed_sources": [
+      "05_Project/UBM/LINE/2026-11-03 - 成果を出す人の原理原則｜北原孝彦メッセージ.md"
+    ],
+    "deferred_reason": "残りの NEW 56件には利用者自身の記録が含まれ、EXCLUDED_SUBDIRS が除いていないため、一括取り込みは禁則に触れる"
+  },
+  "extracted_entries": {
+    "MS-150": "knowledge/mindset-growth-habit-action-cycle.json",
+    "AG-233": "knowledge/action-guides-relationship-networking.json",
+    "PR-434": "knowledge/principles-people-before-revenue.json",
+    "PR-435": "knowledge/principles-relationship-trust-learning.json",
+    "PR-436": "knowledge/principles-relationship-trust-leadership.json",
+    "PR-437": "knowledge/principles-relationship-mentorship-bond.json"
+  },
+  "updated_files": [
+    "plugins/ubm-goal-setting/knowledge/mindset-growth-habit-action-cycle.json",
+    "plugins/ubm-goal-setting/knowledge/action-guides-relationship-networking.json",
+    "plugins/ubm-goal-setting/knowledge/principles-people-before-revenue.json",
+    "plugins/ubm-goal-setting/knowledge/principles-relationship-trust-learning.json",
+    "plugins/ubm-goal-setting/knowledge/principles-relationship-trust-leadership.json",
+    "plugins/ubm-goal-setting/knowledge/principles-relationship-mentorship-bond.json",
+    "plugins/ubm-goal-setting/knowledge/router.json",
+    "plugins/ubm-goal-setting/knowledge/registry.json",
+    "plugins/ubm-goal-setting/knowledge/sync-log.jsonl",
+    "plugins/ubm-goal-setting/knowledge/knowledge-relations.json",
+    "plugins/ubm-goal-setting/knowledge/knowledge-graph.json",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md"
+  ],
+  "publication": {
+    "method": "guard-staged-publication (preview -> confirm -> authorize -> execute)",
+    "manifest_sha256": "f891c0d8cb8903f83e7ae417a01ca6826465fd63a6da30d494af765a5d2b1802",
+    "saved": 12,
+    "batch_atomic": false,
+    "completion_receipt": ".artifact-delivery/external-mutation/completion-preview-bfd71c18c90241498bf9fa119591f353.json",
+    "completion_status": "executed-successfully"
+  },
+  "split_check": {
+    "check_knowledge_split_rc": 0,
+    "split_required": false,
+    "largest_file": "case-studies-success.json (492行)"
+  },
+  "graph_validation": {
+    "validate_knowledge_entry_source_rc": 0,
+    "entries": 988,
+    "validate_knowledge_graph_rc": 0,
+    "nodes": 988,
+    "edges": 5,
+    "associations": 2056,
+    "regenerated_graph_matches_published": true,
+    "relations_merge_idempotent": "再 merge で added=0 kept=5、2ファイルともバイト不変",
+    "edges_review_status": "pending_review (5本すべて)",
+    "relations_candidate": "eval-log/ubm-goal-setting/run-ubm-knowledge-sync/relations-20261103/relations-candidate.json"
+  },
+  "goal_seek_validation": {
+    "validate_inline_goal_seek_anchor_rc": 0,
+    "validate_knowledge_sync_task_graph_rc": 0,
+    "iterations": 6
+  },
+  "report": "eval-log/ubm-goal-setting/run-ubm-knowledge-sync/report-20261103.md",
+  "open_issues": [
+    "辺の過去分の埋め戻しが未実施。RUNBOOK の完了判定 edges>0 が差分5本で満たされ、WARN edges=0 も消えたため、未完了が見えなくなっている",
+    "検知の除外漏れ: EXCLUDED_SUBDIRS が利用者の記録（提出用月報/・北原さんへの報告/ など）を除いていない",
+    "残りの NEW 56件が未処理（除外の修正後に仕分ける）",
+    "usage-log の正式な保存先 eval-log/ubm-goal-setting/knowledge/ が、ナレッジ同期の書き込み範囲の外にある",
+    "capability graph の記録スクリプトが絶対パスを書くため、knowledge/ への記録を見送った",
+    "case-studies-success.json が 492行で、500行の上限に近い"
+  ]
+}

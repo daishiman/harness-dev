@@ -1,0 +1,267 @@
+{
+  "consumer": "capability-build (task-graph mode)",
+  "feature_id": "FEATURE-1",
+  "feature_package_id": "feature-package/feat",
+  "gates": {
+    "guard_requirements_handoff": {
+      "digest_match": true,
+      "exit": 0,
+      "handoff_count": 14,
+      "status": "handoff"
+    },
+    "validate_readiness_binding": {
+      "exit": 0,
+      "status": "pass",
+      "violations": 0
+    },
+    "validate_system_plan": {
+      "validated_digest": "sha256:155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6"
+    }
+  },
+  "graph": {
+    "digest": "sha256:5c3e88eb932e718f4c89b71c6122df4b09f4cae40e8a06ffb23927aab31f2f45",
+    "graph_revision": 2,
+    "path": ".dev-graph/state/graph.json",
+    "relation": "registered_snapshot"
+  },
+  "handoff_nodes": [
+    "FEATURE-1",
+    "SYS-P01",
+    "SYS-P02",
+    "SYS-P03",
+    "SYS-P04",
+    "SYS-P05",
+    "SYS-P06",
+    "SYS-P07",
+    "SYS-P08",
+    "SYS-P09",
+    "SYS-P10",
+    "SYS-P11",
+    "SYS-P12",
+    "SYS-P13"
+  ],
+  "implementation_code_generated": 0,
+  "kind": "capability-build/task-graph-handoff",
+  "package_ref": {
+    "dir": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6",
+    "files": {
+      "atomic-promotion-receipt.json": "sha256:ccfdd65da5d7270eb8c29f3e28eb2c3b44c3af3704a843fa82ef72e7fd371143",
+      "dev-graph-registration.json": "sha256:7376bdc9fd897a57474b22439d76cb909bd2deedb89211d1cfdb5df8fc0314a3",
+      "feature-package.json": "sha256:d691fa1af32ee98c8c6e886907e96e3dd2296901607a8887a96ccb4017747361",
+      "plan-findings.json": "sha256:8e36d1f42ae302dbc9b40087f3a672f572c4abaff720ad7826666da8dcc7e068",
+      "system-build-handoff.json": "sha256:9d72009ba0d4fdb2677631a4c2918cb6e9946985f4c2c0396d54794913f59e74",
+      "task-graph.json": "sha256:507a83333140712db23c2d1e775a08c3e31d006b8ef4e6906aa4c10dc08c0a60"
+    }
+  },
+  "parent_feature": "FEATURE-1",
+  "phase_refs": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "P10",
+    "P11",
+    "P12",
+    "P13"
+  ],
+  "producer": "dev-graph:run-dev-graph-requirements",
+  "readiness_digest": "sha256:237d61bc757937c4fbae77ed1acbdc95452c6ac5ea0fca09ef6b0dfbdfe9ae35",
+  "readiness_matrix": "readiness-matrix.json",
+  "requirements_document": "requirements.md",
+  "schema_version": "1.0.0",
+  "source_digest": "sha256:155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6",
+  "status": "ready",
+  "tasks": [
+    {
+      "depends_on": [],
+      "graph_node_id": "SYS-P01",
+      "phase_ref": "P01",
+      "resource_scope": [
+        "docs/requirements-utf8-lines.md",
+        "evidence/utf8-lines/P01.json",
+        "evidence/utf8-lines/P01/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-01-requirements.md",
+      "task_spec_sha256": "sha256:50136586af7f7fe805662a724a5d39ea4b24a37d30d7864340fad80b1dc4682b"
+    },
+    {
+      "depends_on": [
+        "SYS-P01"
+      ],
+      "graph_node_id": "SYS-P02",
+      "phase_ref": "P02",
+      "resource_scope": [
+        "docs/architecture-utf8-lines.md",
+        "evidence/utf8-lines/P02.json",
+        "evidence/utf8-lines/P02/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-02-architecture.md",
+      "task_spec_sha256": "sha256:0e918879bad60a3602efa7014ac7df8a37b24fbda8928a9f08157bfd6747d6f5"
+    },
+    {
+      "depends_on": [
+        "SYS-P02"
+      ],
+      "graph_node_id": "SYS-P03",
+      "phase_ref": "P03",
+      "resource_scope": [
+        "docs/design-review-utf8-lines.json",
+        "evidence/utf8-lines/P03.json",
+        "evidence/utf8-lines/P03/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-03-design-review.md",
+      "task_spec_sha256": "sha256:c2a8e7111b82291426f06a17424f1a18dd0ba5e2fc3078573d3c73055df19e7c"
+    },
+    {
+      "depends_on": [
+        "SYS-P03"
+      ],
+      "graph_node_id": "SYS-P04",
+      "phase_ref": "P04",
+      "resource_scope": [
+        "docs/test-matrix-utf8-lines.json",
+        "evidence/utf8-lines/P04.json",
+        "evidence/utf8-lines/P04/",
+        "tests/fixtures/",
+        "tests/test_utf8_line_count.py"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-04-test-design.md",
+      "task_spec_sha256": "sha256:932168a3cc9d54c2a93797c75fbdf19b5ba8f43a2c5f17c359e874d593e2b888"
+    },
+    {
+      "depends_on": [
+        "SYS-P04"
+      ],
+      "graph_node_id": "SYS-P05",
+      "phase_ref": "P05",
+      "resource_scope": [
+        "evidence/utf8-lines/P05.json",
+        "evidence/utf8-lines/P05/",
+        "src/utf8_line_count.py"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-05-implementation.md",
+      "task_spec_sha256": "sha256:70656b7970e31c9103c761554233e11393f90cc56c56feeb11ff6409c276a6bc"
+    },
+    {
+      "depends_on": [
+        "SYS-P05"
+      ],
+      "graph_node_id": "SYS-P06",
+      "phase_ref": "P06",
+      "resource_scope": [
+        "evidence/utf8-lines/P06.json",
+        "evidence/utf8-lines/P06/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-06-test-run.md",
+      "task_spec_sha256": "sha256:4c192e85e3959ecc48017694dd0259b6cffecc0fbbad319122af06406472cc65"
+    },
+    {
+      "depends_on": [
+        "SYS-P06"
+      ],
+      "graph_node_id": "SYS-P07",
+      "phase_ref": "P07",
+      "resource_scope": [
+        "evidence/utf8-lines/P07.json",
+        "evidence/utf8-lines/P07/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-07-acceptance.md",
+      "task_spec_sha256": "sha256:2b3b210a0d4be3dd43bc6767bbd73f666c13fbcddcde5120657c2e56f6d325e9"
+    },
+    {
+      "depends_on": [
+        "SYS-P07"
+      ],
+      "graph_node_id": "SYS-P08",
+      "phase_ref": "P08",
+      "resource_scope": [
+        "docs/refactoring-utf8-lines.md",
+        "evidence/utf8-lines/P08.json",
+        "evidence/utf8-lines/P08/",
+        "src/utf8_line_count.py",
+        "tests/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-08-refactoring-migration.md",
+      "task_spec_sha256": "sha256:6e94be1e002fc8dc3e682222595eda4c9487eab3da34815afcfac485522e2b28"
+    },
+    {
+      "depends_on": [
+        "SYS-P08"
+      ],
+      "graph_node_id": "SYS-P09",
+      "phase_ref": "P09",
+      "resource_scope": [
+        "docs/quality-utf8-lines.json",
+        "evidence/utf8-lines/P09.json",
+        "evidence/utf8-lines/P09/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-09-quality-assurance.md",
+      "task_spec_sha256": "sha256:52cc3e923a127ce9f20dfc57af69ef523f8acdda797062faf4ecfc4b3ccf0231"
+    },
+    {
+      "depends_on": [
+        "SYS-P09"
+      ],
+      "graph_node_id": "SYS-P10",
+      "phase_ref": "P10",
+      "resource_scope": [
+        "docs/final-review-utf8-lines.json",
+        "evidence/utf8-lines/P10.json",
+        "evidence/utf8-lines/P10/"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-10-final-review.md",
+      "task_spec_sha256": "sha256:8822665609aabf529cf1de87962fd4fa03f2e6391516cdc2e9a55711697101ff"
+    },
+    {
+      "depends_on": [
+        "SYS-P10"
+      ],
+      "graph_node_id": "SYS-P11",
+      "phase_ref": "P11",
+      "resource_scope": [
+        "evidence/utf8-lines/P11.json",
+        "evidence/utf8-lines/P11/",
+        "evidence/utf8-lines/manifest.json"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-11-evidence.md",
+      "task_spec_sha256": "sha256:191f02e84269f6857efa808c6a2d27b4c6c250ae375b08583b36d7a5921b613c"
+    },
+    {
+      "depends_on": [
+        "SYS-P11"
+      ],
+      "graph_node_id": "SYS-P12",
+      "phase_ref": "P12",
+      "resource_scope": [
+        "docs/README-utf8-lines.md",
+        "evidence/utf8-lines/P12.json",
+        "evidence/utf8-lines/P12/",
+        "examples/input.txt"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-12-documentation-operations.md",
+      "task_spec_sha256": "sha256:d6b3940432a5cd950b948ad2c3d5fe658b1489eef8a2945101e6c8e8c220ff31"
+    },
+    {
+      "depends_on": [
+        "SYS-P12"
+      ],
+      "graph_node_id": "SYS-P13",
+      "phase_ref": "P13",
+      "resource_scope": [
+        "architecture/system.md",
+        "dist/utf8-line-count.zip",
+        "evidence/utf8-lines/P13.json",
+        "evidence/utf8-lines/P13/",
+        "system-spec/index.md"
+      ],
+      "task_spec": ".dev-graph/plans/generations/feature-package-feat/155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6/task-specs/phase-13-release-deploy.md",
+      "task_spec_sha256": "sha256:acbcefff1f6f0203bada749f8f32004a4247242df56f53815a59d62b7754b012"
+    }
+  ],
+  "validated_digest": "sha256:155c3673635e04c33e09350391c06f532d079deda45052dfd6d5351b3cd6bda6"
+}

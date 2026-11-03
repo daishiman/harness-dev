@@ -1,0 +1,755 @@
+{
+  "agent_id": "loop3-meta",
+  "version": 1,
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "scope_mode": "plugin"
+  },
+  "loop_count": 3,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "共通部品A〜G の正本は1か所にまとまった。output-formats.md:14 で G を全層の大前提にしている。R5-step5-final-check.md:58、interview-quick-templates.md:133/252/386、thinking-guide.md:470、SKILL.md:294、R3-step3-goal-setting.md:24、phase3-coordinator.md:49 は、どれも G への参照に置き換わっている。",
+        "kitahara-principles-db.md:88/92 は iter3 で「共通部品A に従う」に置き換わった。ところが同じ節の kitahara-principles-db.md:98-106 の「目標設定への落とし込み方」は、考え・思い・行動を行動行に書く手本のまま残っている。",
+        "phase3-coordinator.md:203 によると、coordinator は Phase 3 の開始時にこの DB を Read する。そのため、DB に残った独自の規則は対話に直接効く。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "kitahara-principles-db.md:104-106 の NG/OK 例が、output-formats.md:25（何をする＋期日）および :30（考え・思いの注記は依頼されたときだけ）と食い違う"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "共通部品A〜G は output-formats.md:12-191 に全部ある。SKILL.md:289 の参照一覧にも G が入っている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "R1〜R5、coordinator、quick-templates の関係構築チェックは、どれも G への1行参照で書き方がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "G の参照先（DB の「成果を出す人の原理原則」節、knowledge_candidates の source_ref）は実在する（output-formats.md:178）"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md",
+            "line": 98,
+            "section": "目標設定への落とし込み方"
+          },
+          "description": "DB の L98-106 は、「行動目標を設計する際」に考え・思い・行動の3問で深掘りするとしている。そのうえで NG 例を「個別メッセージを3件送る」（行動だけ）、OK 例を「佐藤さんは4月のセミナー集客で困っている（思い）。…（考え）。だから佐藤さんにAI集客の事例3つをまとめて送る（行動）」としている。一方、共通部品A は合格基準を「何をする＋期日」とし（output-formats.md:25）、【考え】【思い】の注記は依頼されたときだけ書く（:30）と定めている。つまり NG 例は A の合格形そのもので、OK 例は思い・考えを行動行に書き込み、期日トークンも無い。直前の L88/L92 は iter3 で A 参照に置き換わったが、同じ節にある例のブロックだけが残った（loop2 5-1 の置き換え漏れ）。coordinator がこの DB を読むので（phase3-coordinator.md:203）、行動行が長くなり、期日が欠ける行が生まれうる。",
+          "recommended_intervention": "L98-102 は「3問は行動を選ぶための内部の検討に使う。出力する行動行は共通部品A の形（何をする＋期日）で書く」と書き換える。L104-106 の NG/OK 例は削除するか、OK 例を A の合格形（例: `- 佐藤さんにAI集客の事例3つをまとめて送る　期日4/10`）に差し替える。",
+          "root_cause": "旧基準の置き換えを、語単位の grep と「参照行があるか」の確認だけで閉じた。同じ節の中に例として残った独自の規則を検出する手順が無かった。"
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "正本を1か所に集めるときは、参照行に置き換えた節に残っている例（NG/OK）まで、正本の合格形で再検査する。例は規則より強く模倣される。",
+      "template_variables": [
+        "canonical_part（例: 共通部品A）",
+        "satellite_file（例: 原則DB）",
+        "example_block_range",
+        "pass_form（何をする＋期日）"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "例が北原さんの引用本文（> 行）の場合は対象外",
+        "例が内部の検討手順（出力しない）だと明記されている場合は矛盾にならない"
+      ],
+      "re_audit_trigger": "共通部品A の合格基準を変えたとき、または原則DB に NG/OK 例を追加したとき"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "確定事項O の抽象「金額を追う。成果・行動はその手段」は G（output-formats.md:187）に1か所だけ置かれた。週報（:1017）、月報（:1378）、1年（:1575）の具体的な置き方はテンプレートの注記に分かれていて、構造としては正しい。",
+        "ただし G:187 の末尾「売上の数字を目標・最重要数字から外さない」は全層に一律にかかる全称文になっている。R3-step3-goal-setting.md:130 はそれをチェック項目「売上目標を最重要数字から外さず」として書き直している。",
+        "月報の【今月の最重要数字】は人数・回数・件数を本体にしている（output-formats.md:1378）。売上の到達点の注記は1年目標がある期だけ置かれ（:1444、:1551）、中身も当月の売上目標ではなく、1年後の月間売上到達点である（:1449）。",
+        "R3-step3-goal-setting.md:49 は「成果目標の最重要数字」という語を使っている。この概念は G にもテンプレートにも無く、G の書き直しになっている（R7）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R3:130 と G:187 の全称文が、承認済みの月報テンプレート output-formats.md:1378（人数・回数・件数＋到達点の注記）と両立しない"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "層ごとの最重要数字の置き方は :1017/:1378/:1575 に全部ある"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "OUTPUT_009（agent-output-formatter-rules.md:27）は G 参照で、置き方を書き直していない"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3:49/:130 の参照先である G は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+            "line": 130,
+            "section": "完了チェックリスト"
+          },
+          "description": "R3:130 のチェック「売上目標を最重要数字から外さず」と、G の output-formats.md:187 の末尾「売上の数字を目標・最重要数字から外さない」は、全層に一律にかかる書き方になっている。一方、確定事項O で承認された月報の【今月の最重要数字】（:1378）は「当月の売上目標につながる人数・回数・件数」で書き、売上は「到達点の注記で継承」するだけである。その注記も1年目標がある期に限られ（:1444、:1551）、値は1年後の月間売上到達点で、当月の売上目標ではない（:1449）。このため月報では R3:130 を満たせず、1年目標の無い期の月報は G:187 の字面にも反する。チェックに従って月報の最重要数字に当月の売上を足すと、O の月報の文言から外れてしまう。さらに R3:49 は G を言い換えて「成果目標の最重要数字」という存在しない概念を作っており、規則の書き直し（R7）にもなっている。",
+          "recommended_intervention": "O の月報の文言（:1378）は変えない。G:187 の末尾は「売上の数字を目標から外さない。最重要数字での置き方は各層のテンプレートの注記に従う（週報・1年＝売上と人数・件数を対で置く／月報＝当月の売上目標につながる人数・回数・件数で書き、売上は【今月の売上目標】と到達点の注記に置く）」に直す。R3:49 と :130 は G への1行参照に縮め、「成果目標の最重要数字」の語を消す。",
+          "root_cause": "O の「売上を外さない」を抽象化するとき、層ごとの例外（月報は人数・回数が本体）を条件として抽象に含めなかった。その全称文を G と R3 の2か所に書いた。"
+        }
+      ],
+      "score": 0.7,
+      "reusable_abstraction": "全層共通の部品に置く全称文は、層別テンプレートの承認済みの例外を条件として含めるか、層ごとの注記に置き方を任せる1行にする。チェックリストは全称文を写さず、正本を参照する。",
+      "template_variables": [
+        "universal_rule",
+        "layer_exception（例: 月報の最重要数字）",
+        "checklist_file",
+        "approved_decision_id（例: O）"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "全層で同じ形のフィールド（例: 期日トークン）は全称文でよい",
+        "例外が1層だけでも、テンプレートの注記が全称文を明示的に上書きしている場合は矛盾にならない"
+      ],
+      "re_audit_trigger": "最重要数字の層別の置き方（:1017/:1378/:1575）を変えたとき、または G に全称の禁止文を足したとき"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブルループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "前提の見直し（O: 根本で追うのは売上）は G・coordinator・R3 に反映された（output-formats.md:187、phase3-coordinator.md:49、R3:49）。",
+        "確定事項P の「前回 YES の人から聞く」は、R3 の実発話（R3-step3-goal-setting.md:216）と G:188-189 には入った。一方、言い回しの写しである interview-quick-templates.md の成果目標ターン（:65 週報、:208 月報、:344 期報）は「相手ごとに…挙げてください」のままである。",
+        "shared_state-loop3.md:1 は「旧語grepは0件」と書いている。しかし語の一致による grep では、言い換え（kitahara-principles-db.md:98-106、:314、consult-frames.md:46）を検出できない。点検の前提そのもの（語の一致で網羅できる）を見直す必要がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "quick-templates:5 は R 側を正本と宣言しており、写しが正本と正面から矛盾するわけではない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "最終確認（:133/:252/:386）には前回 YES の連続確認がある"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R3:216 と quick-templates:65/:208/:344 で、成果目標を聞く順が食い違う"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R1:121 で prev_other_target/actual が R3 へ渡り、R3:66-67 が #8/#9 を受け取る"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md",
+            "line": 65,
+            "section": "週報ターン4（成果目標）／月報ターン6 :208／期報ターン7 :344"
+          },
+          "description": "R3 の実発話（R3:216）は「まず前回 YES をくれた人…から挙げ、そのあと新規の人を足してください」に直った。ところが、coordinator が Phase 3 の開始時に読む quick-templates の成果目標の問い（:65、:208、:344）は「相手ごとに「先方が下す判断・受諾・合意・継続」を挙げてください」のままで、前回 YES の人から先に聞く順が無い。G:188 の「先に検討し」は、最終確認（:133/:252/:386）で後から確かめる形でしか働かない。",
+          "recommended_intervention": "3箇所の「1.」を R3:216 の言い回しに合わせて、「まず前回 YES をくれた人（前回の成果目標の相手）との次の判断・受諾・合意・継続を挙げ、そのあと新規の人を足してください」にする。",
+          "root_cause": "確定事項P を R3 の本文に入れたところで止まり、写しにある同じ問いへ追随させる点検が無かった。旧基準の点検を語の grep に頼り、変更した問いの写しを列挙する手順を持っていない。"
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "正本の問いを変えたら、宣言上は正本でない写し（quick-templates など）にある同じ問いまで追随させる。旧基準の点検は語の grep だけでなく、旧基準のラベル（例: 関係構築ファースト）を起点に、プラグイン内の全スキルで意味を確認する。",
+      "template_variables": [
+        "canonical_prompt_line",
+        "copy_files[]",
+        "old_label",
+        "plugin_scope"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "写しが「言い回しのみ」で問いの順序を持たない場合は追随不要",
+        "引用本文（> 行）の言い換えは対象外"
+      ],
+      "re_audit_trigger": "R1〜R5 のターンテンプレートの問いを変えたとき、または旧基準を廃止したとき"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "引用上限の正本は SKILL.md:302 に移り、「ターンテンプレートに固定した引用のほかに1対話あたり1〜2回まで」になった（orchestrator の判断どおり）。",
+        "Phase 3 の実行主体である phase3-coordinator.md:93 の CONST_004 は「1回の対話で引用する北原原則は1〜2個まで」のままで、固定引用の例外が無い。",
+        "CONST_004 は相談スキルからも参照されている（run-ubm-consult/prompts/R3-frame-consult.md:27、consult-frames.md:60、run-ubm-consult/SKILL.md:204）。そのため、例外は目標設定に限定して書く必要がある。",
+        "#38 principles（月報のみ・Step 4）の案出し経路は R4:245 と quick-templates:234 の2か所で、どちらも G の当てはめ（引用ではない）なので、引用の上限を消費しない。整合している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "SKILL.md:302 と phase3-coordinator.md:93 で引用上限の数え方が違う"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#38 の生成元・Step・出力先がそろっている（data-contract.md:239/:411、output-formats.md:1433）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "引用でなく当てはめで書くことが R4:96/:245、quick-templates:234、DC:239 で同じ表現になっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "consult からの CONST_004 参照先は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+            "line": 93,
+            "section": "CONST_004"
+          },
+          "description": "SKILL.md:302 は iter3 で、固定引用を数えない上限に変わった。しかし、実際に対話を回す coordinator の CONST_004 は「1回の対話で引用する北原原則は1〜2個まで」のままである。R3 3C-1 と R4 4C の固定引用を通るだけで上限に達するので、条件付きターンで引用を出すと CONST_004 違反になる。loop2 13-0 の修正が片方だけに入った状態。",
+          "recommended_intervention": "CONST_004 に「run-ubm-goal-setting では、ターンテンプレートに固定した引用を数えない（SKILL.md の引用上限）」の1文を足す。相談スキル側の意味（1〜2件まで）は変えない。",
+          "root_cause": "上限の正本が SKILL と coordinator の2か所にあり、iter3 で SKILL 側だけを更新した。"
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "数の上限を持つ制約が複数のスキルから参照されるとき、例外はスキルを限定する条件文として制約の正本に1か所だけ書き、各 SKILL は参照だけを持つ。",
+      "template_variables": [
+        "constraint_id（例: CONST_004）",
+        "limit_value",
+        "exception_scope（skill 名）",
+        "referencing_skills[]"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "参照元が1スキルだけなら、SKILL 側だけに置いてもよい",
+        "上限が数でなく禁止（0件）の場合、例外の書き方が異なる"
+      ],
+      "re_audit_trigger": "ターンテンプレートに固定引用を追加・削除したとき、または CONST_004 を参照するスキルが増えたとき"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "目標設定スキルの外へ視点を移すと、同じプラグイン内の相談スキルが「関係構築ファースト」の旧い意味を持ち続けている。consult-frames.md:46 GF-07「売上を「追う」でなく、誰との関係を「育む」順で考えると？（売上は関係の結果）」がそれに当たる。",
+        "consult-frames.md:17/:25 は、関係構築ファーストの正本を thinking-guide の Step 5（関係構築軸の最終確認）としている。その正本である thinking-guide.md:468-470 は、iter3 で G 参照に置き換わっている。",
+        "#37（週報・月報）と #38（月報のみ）の拡張は、data-contract.md:238/:239/:308/:408/:411、R1:63/:121、R4:96/:157/:245、agents/output-formatter.md:92、agent-output-formatter-steps.md:23、output-formats.md:1086/:1422/:1433 で一貫しており、構造に収まっている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "consult-frames.md:46 が確定事項O と G:187、および自らが正本と宣言した thinking-guide 5-C と逆向き"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#37/#38 の生成元・Step・テンプレート変数がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "#37 の対象層の表記が全ファイルで「週報・月報」にそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "consult-frames.md:25 の参照先（thinking-guide の Step 5）は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-consult/references/consult-frames.md",
+            "line": 46,
+            "section": "GF-07 関係構築ファースト"
+          },
+          "description": "相談スキルの思考フレーム GF-07 の核となる問いが「売上を「追う」でなく、誰との関係を「育む」順で考えると？（売上は関係の結果）」になっている。確定事項O が誤りとした旧基準の言い換えである。O・G:187・phase3-coordinator.md:49 は「根本で追うのは売上。成果・行動はその手段」としている。consult-frames.md:17/:25 は自分の正本を thinking-guide の Step 5 と宣言しているが、その 5-C（thinking-guide.md:468-470）は G 参照に置き換わっている。つまり、宣言した正本と問いの中身が逆向きになっている。相談で示した見方が、そのまま次の目標設定に持ち込まれる。iter3 の旧語 grep は語の一致だけを見ていて、この言い換えも別スキルの範囲も覆っていなかった。",
+          "recommended_intervention": "GF-07 の問いを G の当てはめに合わせる。例:「その売上に至る YES を、まず前回 YES をくれた人から、誰に何をもらうかで考えると？（人数・回数は売上に至る手段）」。L25 の対応先に「output-formats.md の共通部品G」も併記する。",
+          "root_cause": "旧基準を除去する範囲を、目標設定スキルと固定語の grep で閉じた。プラグイン内の他スキルにある、同じラベル（関係構築ファースト）の言い換えを探す手順が無かった。"
+        }
+      ],
+      "score": 0.7,
+      "reusable_abstraction": "上位の基準を反転・再定義したら、その基準のラベル名でプラグイン全体（他スキルのカタログ・フレーム・テスト文言を含む）を検索し、ラベルに付いた説明文の向きを新しい正本と照合する。",
+      "template_variables": [
+        "label（例: 関係構築ファースト）",
+        "new_canonical（例: 共通部品G）",
+        "decision_id（例: O）",
+        "sibling_skills[]"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "ラベルが引用本文（> 行）や表の中の北原さんの言葉に出る場合は対象外",
+        "ラベルだけで説明文を持たない箇所は、向きの矛盾ではなく定義不足（smell）として扱う"
+      ],
+      "re_audit_trigger": "共通部品G の基準文を変えたとき、または run-ubm-consult に思考フレームを追加したとき"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "G:187 は逆説「売上を追うために、日々は人数・回数を追う」を、北原さんの「売上目標は追わない」の読み方として解いた。逆説の解き方は1か所に置かれている。",
+        "kitahara-principles-db.md:314 の適用ガイドの状況の列（プラグイン側の文）は「売上目標を追い始めている」のままである。この状況のときに右列の「売上目標は追わない」を引用する。右列は北原さんの言葉なので対象外だが、状況の列は O と逆向きになっている。",
+        "goal-reviewer.md:62 の項目6は（土台）を除外し、G:190 の「（土台）は対象外」と一致している（P どおり）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "G:187 は引用の読み方を明示しており、引用本文と G 自体は矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "goal-reviewer.md:62 の除外条件が G:190 と対応している"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "kitahara-principles-db.md:314 の発火条件が G:187 の読み方と食い違う"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "DB:313 の PR-435 行は G:188 と同じ向きで、依存は切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md",
+            "line": 314,
+            "section": "フェーズ別の適用ガイド／全フェーズ共通"
+          },
+          "description": "状況の列が「売上目標を追い始めている」で、このとき「売上目標は追わない…」の引用を使うと指示している。確定事項O と G:187 では、売上を追うことは根本として正しく、この引用は「売上に至る手段として人数・回数を日々管理する」と読む。発火条件を字面どおりに使うと、O に沿って売上を追っている利用者に反対向きの引用が出てしまい、G の読み方と逆になる。",
+          "recommended_intervention": "左列（プラグイン側の文）を「売上の数字だけを追い、その売上に至る人数・回数が置かれていない」に変える。右列の引用本文は変えず、G:187 の読み方で届ける。",
+          "root_cause": "逆説（売上を追うために、日々は売上でなく人数を追う）を、引用の発火条件では単純な否定のまま残した。"
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "逆説を含む引用の発火条件は、目的を持っている状態（売上を追う）ではなく、目的に至る手段が欠けている状態（人数・回数が無い）で書く。引用の読み方は正本の1か所に置き、発火条件は読み方と同じ向きにそろえる。",
+      "template_variables": [
+        "quote_id",
+        "goal_metric（売上）",
+        "means_metric（人数・回数）",
+        "trigger_condition"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "引用本文や北原さんの言葉の列は書き換えない",
+        "手段の指標がすでに置かれている状態で売上を追うのは発火条件に当たらない"
+      ],
+      "re_audit_trigger": "原則DB の適用ガイド表に行を追加したとき、または G:187 の読み方を変えたとき"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "#37（前回のやらないこと）と #38（原則）の拡張を、既存フィールドの型（番号・Step・層・生成元・テンプレート変数）になぞらえて比べた。どちらも data-contract.md:238/:239 の行の形、Step の完了条件（:408/:411）、テンプレート変数の注記（output-formats.md:1086/:1422/:1433）の3点がそろっていて、既存フィールドと同じ構造に収まっている。総数の表記「全37フィールド（#1-38、#15 は欠番）」も data-contract.md:19/:198/:469 で一致している。",
+        "最重要数字を週報・月報・1年で比べると、どれも確定事項O の文言どおりである（:1017 売上＋核心成果、:1378 人数・回数・件数＋注記、:1575 売上と人数を対で置く）。層の間の矛盾は、それらを全称化した G:187/R3:130 だけに出ている（11 で1回だけ数える）。",
+        "R1:39 と R2:40 は同じ「前回 YES の確認」を持つ。ただし確定事項P と G:190（Step 1 の R1／Step 2 の R2）で承認された配置なので、issue にしない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "#37/#38 の定義が全参照箇所で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#38 の Step 4 収集（R4:245、quick-templates:234）と出力先（OF:1433）がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "全37フィールドの件数表記が3か所で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R4:157 で principles が R5 へ渡り、agent-output-formatter-steps.md:23 で出力へつながる"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9,
+      "reusable_abstraction": "フィールドを新設するときは、既存フィールドの5点（番号・層・Step・生成元・テンプレート変数）を型として写し、同じ5点が data-contract・R・出力手順・テンプレートに1回ずつ現れることで構造に収まったと判定する。",
+      "template_variables": [
+        "field_no",
+        "field_name",
+        "layers",
+        "step",
+        "template_var"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "Phase 4 だけで使う派生値（例: 差分）は Step の完了条件に載らなくてもよい",
+        "層が「なし（null）」のフィールドはテンプレート変数を持たなくてよい",
+        "承認済みの二重配置（R1:39/R2:40 の前回 YES の確認）は型の重複として数えない"
+      ],
+      "re_audit_trigger": "data-contract に #39 以降を追加したとき、またはフィールドの対象層を変えたとき"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best: 前回正本があり、前回 YES の相手が成果目標の本文に残っている場合。G:189 の読み方、R1:121 の受け渡し、R3:66-67 の入力契約、R3:216 の問いでつながる。",
+        "worst: 1年目標が無い期の月報。【今月の最重要数字】に売上の数字が一切現れない（output-formats.md:1378/:1551）。この条件の矛盾は 11 で計上済み。",
+        "edge: 初回（前回正本なし）。#37 には初回の扱い（null と `- 初回（前回正本なし）`、data-contract.md:238）がある。一方、G:188-189 と goal-reviewer.md:62 の項目6には初回の扱いが無く、「前回 YES をくれた人との連続が1件も無い状態」を必ず指摘することになる。",
+        "edge: 月報の提出用はグループ見出しを置かない（OUTPUT_010）。項目6の「`### → （土台）` グループの行を除いて」は、読むセクションを指定していない（項目7は管理用セクションと明記している）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "初回の扱いが無いだけで、既存の文同士は矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "G:188-189 と goal-reviewer.md:62 に初回（前回正本なし）の分岐が無い"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "best ケースの経路は R1・R3・G で一貫している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回 YES の材料は R1:121 から R3:66-67 へ契約上つながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 189,
+            "section": "共通部品G 原理原則の基準（同じ人と連続する）"
+          },
+          "description": "G:188-189 は「前回 YES をくれた人は前回正本の成果目標から読む」「新規の人だけを並べない」と定めている。goal-reviewer.md:62 の項目6は「前回 YES をくれた人との連続が1件も無い状態」を指摘する。しかし初回（前回正本なし）の分岐がどちらにも無い。#37 は初回を null と `- 初回（前回正本なし）` で扱っている（data-contract.md:238）のに、G だけは初回の利用者を必ず指摘することになる。",
+          "recommended_intervention": "G:189 の下に「初回（前回正本なし）は、対話で既存の取引先・紹介元・可愛がってくれた人を確かめて候補にする。いなければ連続の指摘は対象外とする」を1行足す。項目6のチェック方法は G 参照で足りる。",
+          "root_cause": "G の新設時に、前回正本を前提とする基準へ、#37 と同じ初回の分岐を写さなかった。"
+        },
+        {
+          "severity": "low",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+            "line": 62,
+            "section": "項目6 関係構築軸"
+          },
+          "description": "項目6の「`### → （土台）` グループの行を除いて行動目標を1行ずつ読み」は、読むセクションを指定していない。月報の提出用にはグループ見出しが無いので、提出用を読むと（土台）の行を見分けられない。項目7（:63）は「管理用セクションの行動目標」と明記している。",
+          "recommended_intervention": "項目6のチェック方法を「管理用セクションの行動目標を」で始め、項目7とそろえる。",
+          "root_cause": "（土台）除外を足したとき、グループ見出しが無い提出用の場合を想定しなかった。",
+          "condition_signal": "smell"
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "前回の実績を前提とする基準を新設するときは、既存の前回参照フィールド（例: #37）が持つ初回の分岐を同じ形で写す。除外条件が見出しに依存する場合は、見出しを持つセクションを指定する。",
+      "template_variables": [
+        "best: 前回正本あり・相手が本文に残る",
+        "worst: 1年目標なしの月報（最重要数字に売上が無い）",
+        "edge: 初回（前回正本なし）／提出用に見出しが無い",
+        "baseline_field（例: #37）"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "前回正本があり相手をまとめた項目の場合は、G:189 の「確認中」で既に扱われている",
+        "週報・期報の提出用はグループ見出しの扱いが月報と異なる可能性があり、そのまま一般化しない"
+      ],
+      "re_audit_trigger": "前回正本を前提とする基準・フィールドを追加したとき、または初回のマーカー仕様を変えたとき"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "素人の目で見ると、月報の軌道修正の記録先「冒頭の【確認された情報】（両群に共通のヘッダー）」（output-formats.md:143/:144/:163/:1163/:1378）は見つけられる位置にある。",
+        "週報の振り返りの見出し「▼ 行動目標の進捗」（output-formats.md:1103-1105、golden-sample-weekly.md:203）は中身と名前が合っている。",
+        "「関係構築ファースト」というラベルは、coordinator（phase3-coordinator.md:49）で「根本で追うのは売上（金額）」と定義されている。一方 R5-step5-final-check.md:163 の「「関係構築ファースト」の軸と一致していますか？」と thinking-guide.md:322 の SMART-R は、定義なしでラベルだけを出す。字面からは「売上より関係が先」と読め、定義と逆の印象を与える。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "ラベルの定義は coordinator:49 に1か所あり、文として矛盾してはいない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "記録先・見出しの所在は明記されている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "記録先の呼び方が E/F/テンプレートで一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R5:58 の関係構築チェックは G に依存しており、参照は切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md",
+            "line": 163,
+            "section": "ターン5C"
+          },
+          "description": "ユーザーへの問い「「関係構築ファースト」の軸と一致していますか？」は、ラベルだけで基準を示していない。素人は字面から「売上より関係を先に」と受け取り、確定事項O（根本で追うのは売上）と逆の自己評価をしうる。thinking-guide.md:322 も同様。",
+          "recommended_intervention": "問いを G の中身で言い直す。例:「売上目標に向けて、誰からどの YES をもらうか、前回 YES をくれた人との次の挑戦が入っているか」。ラベルは内部用にとどめる。",
+          "root_cause": "O でラベルの意味を再定義したが、ユーザーに見える問いではラベル名をそのまま使い続けた。",
+          "condition_signal": "smell"
+        }
+      ],
+      "score": 0.88,
+      "reusable_abstraction": "意味を再定義したラベルは、ユーザーに見える問いでは名前ではなく中身（基準の問い）で出す。ラベル名は内部の索引に限る。",
+      "template_variables": [
+        "label",
+        "redefined_meaning",
+        "user_facing_prompt_lines[]"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "内部の評価表（coordinator の表）でラベルの直後に定義がある場合は問題にならない",
+        "ラベル名が意味と同じ向きの場合は言い直し不要"
+      ],
+      "re_audit_trigger": "ユーザー向けのターンテンプレートに上位基準のラベルを追加したとき"
+    }
+  ],
+  "amplified_pattern_candidates": [
+    {
+      "source_paradigm_id": 14,
+      "pattern": "上位基準を反転・再定義したら、ラベル名でプラグイン全体（他スキル含む）を検索し、説明文の向きを新しい正本と照合する（語の grep 0件を完了条件にしない）",
+      "reuse_surface": "rubric",
+      "re_audit_trigger": "共通部品の基準文を変えたとき"
+    },
+    {
+      "source_paradigm_id": 11,
+      "pattern": "共通部品の全称文は、承認済みの層別例外を条件に含めるか、層ごとの注記に置き方を任せる。チェックリストは全称文を写さず参照する",
+      "reuse_surface": "reference",
+      "re_audit_trigger": "層別テンプレートの置き方を変えたとき"
+    },
+    {
+      "source_paradigm_id": 10,
+      "pattern": "参照行に置き換えた節に残った NG/OK 例を、正本の合格形で再検査する",
+      "reuse_surface": "reference",
+      "re_audit_trigger": "合格基準を変えたとき、または衛星ファイルに例を追加したとき"
+    }
+  ],
+  "loop2_resolution": [
+    {
+      "paradigm_id": 10,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "R5-step5-final-check.md:58 が G への1行参照になった。interview-quick-templates.md:133/:252/:386、thinking-guide.md:470、SKILL.md:294 も G 参照に置き換わった"
+    },
+    {
+      "paradigm_id": 10,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "agent-output-formatter-rules.md:3 から「ここと矛盾した場合は正本が勝つ」が消え、「内容規則の正本は output-formats.md」という所在の宣言だけになった"
+    },
+    {
+      "paradigm_id": 11,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "SKILL.md:289 の Read 対象の一覧に共通部品G が入った"
+    },
+    {
+      "paradigm_id": 11,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md:1115 に「行動目標・成果目標の行を写さない」が入り、golden-sample-weekly.md:213-214 は売上貢献の着地確認だけで、行動の再チェックが無い"
+    },
+    {
+      "paradigm_id": 12,
+      "issue_index": 0,
+      "status": "partially_resolved",
+      "evidence": "R3-step3-goal-setting.md:216 は「まず前回 YES をくれた人…から」に直った。interview-quick-templates.md:65/:208/:344 は「相手ごとに…挙げてください」のまま（paradigm 12 の新しい issue）"
+    },
+    {
+      "paradigm_id": 13,
+      "issue_index": 0,
+      "status": "partially_resolved",
+      "evidence": "SKILL.md:302 は固定引用を数えない上限に直った。phase3-coordinator.md:93 の CONST_004 は旧いまま（paradigm 13 の新しい issue）"
+    },
+    {
+      "paradigm_id": 14,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "data-contract.md:239 に #38 principles が新設され、生成元は output-formats.md:1433、収集は R4-step4-action-plan.md:96/:157/:245 と interview-quick-templates.md:234。期報の同じ問いは削除された"
+    },
+    {
+      "paradigm_id": 14,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md:1103-1105 と golden-sample-weekly.md:203 が「▼ 行動目標の進捗」に改名された"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "goal-reviewer.md:62 が（土台）を除外し、「連続が1件も無い状態」を指摘する形になった。G output-formats.md:188/:190 と整合する"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md:188 が「成果目標の候補として先に検討し（並び順は共通部品A）」になり、選ぶ順と並び順が分けられた"
+    },
+    {
+      "paradigm_id": 16,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "確定事項O により、週報の最重要数字（売上＋核心成果の人数・件数）が正しいと確定した。output-formats.md:1017 の注記と G:187 が同じ向きになっている（全称化の副作用は paradigm 11 の新しい issue）"
+    },
+    {
+      "paradigm_id": 16,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "data-contract.md:238/:308/:408、R1-step1-current-review.md:63/:121、agents/output-formatter.md:92、agent-output-formatter-steps.md:23 がすべて「週報・月報」にそろった"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "output-formats.md:189 に前回 YES の読み方（本文の相手と実績、まとめた項目は対話で確認）が入った。R1:121 から R3 へ prev_other_target/actual が渡り、R3:66-67 が受け取る"
+    },
+    {
+      "paradigm_id": 18,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "記録先が output-formats.md:143/:144/:163/:1163/:1378 で「冒頭の【確認された情報】（両群に共通のヘッダー）」にそろった（確定事項N）"
+    },
+    {
+      "paradigm_id": 18,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md:1200-1201/:1214 で、提出用は共通部品D の対応行だけ、3点の骨格は管理用の同じ見出しに置くと明記された。:644 にも「（月報は管理用の見出しだけ）」がある"
+    }
+  ]
+}
