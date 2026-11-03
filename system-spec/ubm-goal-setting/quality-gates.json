@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "ran_at": "2026-11-03T12:40:00Z",
+  "graph_node_id": "task-ubm-goal-contract",
+  "beads_ids": ["harness-3skp"],
+  "mvp": true,
+  "gates": [
+    {
+      "name": "pytest-ubm-goal-contract",
+      "command": "python3 -m pytest tests/test_field_closure.py tests/test_goal_alignment.py tests/test_turn_question_limit.py tests/test_validate_goal_output.py tests/test_validate_cross_level.py tests/test_validate_goal_linkage.py tests/test_validate_knowledge_graph.py tests/test_build_journal_context.py -q",
+      "cwd": "plugins/ubm-goal-setting",
+      "result": "pass",
+      "detail": "479 passed"
+    },
+    {
+      "name": "validate-graph-schema",
+      "command": "python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root . --require-canonical-envelope --strict-artifact-readiness",
+      "result": "pass",
+      "detail": "valid=true graph_validation.status=pass violation_count=0 artifact_readiness.status=complete"
+    },
+    {
+      "name": "build-plugin-release --check --only ubm-goal-setting",
+      "result": "pass",
+      "detail": "fingerprint 95d1945c7c4177b5f6450ccae6f707a003f02e4e41b042299f63c6062a155f9f version 0.9.3"
+    },
+    {
+      "name": "content-review skill_md_sha256",
+      "result": "not-run",
+      "detail": "run-ubm-goal-setting の SKILL.md は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc。記録済み verdict は d847fbe62976b50455cb1f2c8b0f68d6f4d4bc070f0be7db6f06934ee51b95e8。判定の取り直しは残作業。SHA の書き換えはしていない。"
+    }
+  ]
+}

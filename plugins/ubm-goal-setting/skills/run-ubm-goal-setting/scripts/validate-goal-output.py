@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-goal-output
-# version: 0.3.3
+# version: 0.4.0
 # purpose: 目標設定・振り返り対話の出力 Markdown を保存前に検証する決定論ゲート。
 #          未展開プレースホルダ/ファイル名日付パターン/全角数字/差分+-表記/種別別必須見出し/
-#          見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針 等を検査。
+#          見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針/行末の期日トークン/
+#          貢献0の括弧3形/前回ブロックの初回マーカーと挽回の対応行/行動の見直し記録/日付索引 等を検査。
+#          軌道修正記録の分割規則（split_revision_record）は validate-cross-level.py と共用する。
 #          旧 validate-goal-output.sh 474 行の契約移植 (逐語移植ではない)。
-#          --peer 指定時のみ、他層ファイルとの期アンカー3値の層間整合を WARN で報告する。
+#          --peer 指定時のみ、他層ファイルとの期アンカー2値の層間整合を WARN で報告する。
 # inputs:
 #   - fs: plugin references/action-language-policy.json（欠落・不正は終了コード2。--help は読まずに出す）
 #   - argv: --file PATH --type weekly|monthly|quarterly|yearly (bimonthly は後方互換の別名)
@@ -32,8 +34,8 @@
 ただし --type と本文のタイトル見出しラベルの不一致は error とする (種別の取り違え検出)。
 
 `--peer PATH` を渡したときだけ他層のファイルを開き、期アンカー (今期の売上目標 /
-今期の累計売上実績 / 最重要数字) を突き合わせる。不一致は WARN で、rc は変えない。
-最重要数字はどちらか一方でも週報レベルなら比較対象外 (週報は上位の内訳を書く)。
+今期の累計売上実績) を突き合わせる。不一致は WARN で、rc は変えない。
+最重要数字はどの組でも比較しない (各層の売上とその内訳で、層ごとに値が違うのが正しい)。
 --peer 未指定時のコードパスは従来と同一。
 """
 from __future__ import annotations
@@ -145,36 +147,19 @@ def judge_sales_coverage(total: int, target: int) -> tuple[str, str]:
 PEER_ANCHORS = [
     ("今期の売上目標", r"^## 【今期の売上目標】", "number"),
     ("今期の累計売上実績", r"^## 【今期の累計売上実績】", "number"),
-    ("最重要数字", r"^## 【今(週|月|期|年)の最重要数字】", "text"),
 ]
 
-# 週報レベルが絡むときは一致検査から外すアンカー。
-# 週報の【今週の最重要数字】は、期・月の最重要数字を今週分へ割った内訳であって、
-# 上位と同じ値になるべき数字ではない（例: 期「困りごとを解決した件数：6件」に対して
-# 週「サンプル運送さんの困りごとを書き出した件数：3件」）。ここを比較すると、正しい書き方が
-# 毎週 WARN になる。金額2値（今期の売上目標・今期の累計売上実績）は週報でも全レベル同値
-# が正しい契約なので、除外しない。
-WEEKLY_EXEMPT_ANCHORS = {"最重要数字"}
-
-# 本文のタイトル見出しから読む階層。--file 側は --type を正本とし、peer 側は本文から判定する。
-_WEEK_TITLE_RX = re.compile(r"^## 【[0-9]*週間の目標】")
-_WEEK_KEYNUM_RX = re.compile(r"^## 【今週の最重要数字】")
-
-
-def detect_level(text: str) -> str:
-    """本文から階層を判定する。'week' か 'other'（月報・期報・判定不能）。
-
-    タイトル見出し「## 【1週間の目標】」を第一の根拠にし、見つからないときだけ
-    「## 【今週の最重要数字】」の有無で補う（タイトル行が編集途中で欠けていても
-    週報を月報・期報と取り違えないため）。
-    """
-    for line in text.split("\n"):
-        if _WEEK_TITLE_RX.search(line):
-            return "week"
-    for line in text.split("\n"):
-        if _WEEK_KEYNUM_RX.search(line):
-            return "week"
-    return "other"
+# 【今(週|月|期|年)の最重要数字】は、どの組でも一致検査の対象にしない。各層の最重要数字は、
+# その層の売上（月報・期報は `今(月|期)の売上目標：` の1行）と、その売上につながる人数・件数の内訳で、
+# 層ごとに値が違うのが正しい（例: 期「今期の売上目標：1000000」と「困りごとを解決した件数：6件」に対して
+# 週「- [ ] 今週の売上：150000」と「- [ ] 提案の受諾・月額顧問の成約：2件」）。旧版は月報・期報の組だけを比べていたが、月報に当月の売上を
+# 置いた（確定事項Q）ので、その組も正しい書き方が毎回 WARN になる。1年の到達点（#0a/#0b）の
+# 継承は validate-cross-level.py が rc を持って照合する。比べていないことが分かるよう、peer ごとに
+# この SKIP 行を印字し、分母には入れない。
+KEY_NUMBER_SKIP_NOTE = (
+    "  SKIP: 最重要数字（各層の売上とその内訳のため一致検査の対象外。"
+    "1年の到達点は validate-cross-level.py で照合）"
+)
 
 # 値ではなく注釈である行。継承元の記載や補足は値として拾わない。
 _NOTE_PREFIXES = ("（", "(", "※")
@@ -208,8 +193,59 @@ def _content_lines(body: list[str]) -> list[str]:
     return out
 
 
+def _bullet_text(line: str) -> str | None:
+    """箇条書き行なら記号を外した本文を、箇条書きでなければ None を返す。"""
+    s = line.strip()
+    m = re.match(r"^(?:[*-] |・)\s*(.*)$", s)
+    return m[1].strip() if m else None
+
+
+def _norm_name(name: str) -> str:
+    """項目名の照合キー。空白と強調記号だけを落とす（同義の判定はしない）。"""
+    return re.sub(r"[\s　]+", "", name).strip("*")
+
+
+# 前回正本が無い初回に、前回ブロックの各欄へ置く1行（共通部品D）。
+INITIAL_MARKER = "初回（前回正本なし）"
+
+# 軌道修正記録（共通部品E）の種類ごとの欄。validate-cross-level.py もこの定義と
+# split_revision_record を読み込んで使う。同じ記録を2つの検査器が別々の規則で割ると、
+# 片方だけが通る行が生まれる。
+REVISION_RECORD_FIELDS = {
+    "上位配分の見直し": ("上位計画", "実行目標", "理由", "上位への影響"),
+    "行動の見直し": ("変更前", "変更後", "理由", "上位への影響"),
+}
+
+
+def split_revision_record(body: str, record_kind: str) -> tuple[str, dict[str, str] | None] | None:
+    """`{種類}：{対象}｜欄：値｜…` の1行（箇条書き記号は外したもの）を割る。
+
+    Returns:
+        種類の語で始まらない行は None。
+        それ以外は (対象, 欄)。対象が読めなければ対象は空文字。欄は
+        REVISION_RECORD_FIELDS の欄名がちょうど各1件・空欄なしのときだけ dict、
+        そうでなければ None（呼び出し側が「欄の不備」として報告する）。
+    """
+    if not body.startswith(record_kind):
+        return None
+    parts = re.split(r"[｜|]", body)
+    first = re.fullmatch(re.escape(record_kind) + r"[：:]\s*(.+)", parts[0].strip())
+    if not first:
+        return "", None
+    target = first[1].strip()
+    required = REVISION_RECORD_FIELDS[record_kind]
+    fields: dict[str, str] = {}
+    for part in parts[1:]:
+        pair = re.fullmatch(r"([^：:]+)[：:]\s*(.*)", part.strip())
+        if pair and pair[1].strip() not in fields:
+            fields[pair[1].strip()] = pair[2].strip()
+    if len(parts) != len(required) + 1 or set(fields) != set(required) or not all(fields.values()):
+        return target, None
+    return target, fields
+
+
 def extract_peer_anchors(text: str) -> dict[str, str | None]:
-    """期アンカー3値を正規化して取り出す。見つからない項目は None（＝比較対象外）。"""
+    """期アンカー2値を正規化して取り出す。見つからない項目は None（＝比較対象外）。"""
     lines = text.split("\n")
     result: dict[str, str | None] = {}
     for name, head_rx, kind in PEER_ANCHORS:
@@ -239,6 +275,13 @@ class Validator:
         self.text = text
         self.basename = basename
         self.kind = kind  # week | month | period
+        # 本文中の記述では切り替えない。月報の frontmatter で明示した場合だけ適用。
+        frontmatter = re.match(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n|$)", text, re.S)
+        self.concise_monthly = kind == "month" and bool(
+            frontmatter and re.search(
+                r"^monthly_action_style:\s*concise\s*$", frontmatter[1], re.M
+            )
+        )
         # 元の --type の値。kind へ潰す前の値で、ラベル照合の正本。
         self.type_name = type_name or next(
             (t for t, k in TYPE_MAP.items() if k == kind), ""
@@ -258,6 +301,368 @@ class Validator:
 
     def ok(self, msg: str) -> None:
         print(f"PASS: {msg}")
+
+    def check_key_number_sales_line(self) -> None:
+        """月報・期報の最重要数字にある売上の1行が、その層の売上目標と同じ値かを照合する。
+
+        最重要数字は、その層の売上と、その売上に至る人数・回数・件数を置く節で、
+        売上の行（`今月の売上目標：{金額}` / `今期の売上目標：{金額}`）は
+        【今(月|期)の売上目標】の値を写す。写し間違えると、毎日見る数字と目標の金額が
+        食い違ったまま運用されるのに、どの検査も赤くならなかった。
+        月報は節を置くのが既定（無ければ WARN）、期報は任意（無ければ何もしない）。
+        週報・1年は最重要数字の書き方が違う（週は `- [ ]` 形式、1年は到達点）ので対象外。
+        """
+        if self.kind not in ("month", "period"):
+            return
+        word = self._period_word()
+        body = _section_body(self.lines, r"^## 【" + word + r"の最重要数字】")
+        if body is None:
+            if self.kind == "month":
+                self.warn(f"【{word}の最重要数字】が無い（`{word}の売上目標：{{金額}}` の1行と、"
+                          "その売上に至る人数・回数・件数を置く）")
+            return
+        # 行頭の `- ` `- [ ] ` `・` は validate-cross-level.py の _BULLET と同じく読み飛ばす
+        rx = re.compile(r"^\s*(?:[*-]\s*(?:\[[ xX]\]\s*)?|・\s*(?:\[[ xX]\]\s*)?)?"
+                        + word + r"の売上目標[：:]\s*([0-9][0-9,]*)\s*円?\s*$")
+        amounts = [int(m.group(1).replace(",", "")) for m in map(rx.match, body) if m]
+        if not amounts:
+            self.fail(f"【{word}の最重要数字】に `{word}の売上目標：{{金額}}` の1行が無い"
+                      f"（金額は【{word}の売上目標】と同じ値を半角数字で）")
+            return
+        target = self._current_sales_target()
+        if target is None:
+            return  # 売上目標そのものの欠落は check_goal_section が FAIL にする
+        wrong = [a for a in amounts if a != target]
+        if wrong:
+            self.fail(f"【{word}の最重要数字】の `{word}の売上目標：{wrong[0]}` が"
+                      f"【{word}の売上目標】の {target} と違う（同じ値を写す）")
+        else:
+            self.ok(f"【{word}の最重要数字】の売上の行が【{word}の売上目標】と一致（{target}）")
+
+    def check_report_alignment(self) -> None:
+        """前期間の項目落ちと、月報の二重管理の数量・単位・期日ずれを検査する。
+
+        前回ブロック（前回の目標→実績→差分）の項目一致は週報・月報・期報・1年で共通。
+        自然言語の同義判定や人数の推定はしない。項目名・順序・数値トークンを
+        比較し、自然言語で書かれた対象の意味は生成時のレビューに残す。
+        """
+        previous_word = {"week": "前週", "month": "前月", "period": "前期", "year": "前年"}.get(self.kind)
+        if previous_word is None:
+            return
+
+        def section(label):
+            # 行動の管理用見出しだけが（行動管理）等の補足を持つ。
+            base = label.removesuffix("（提出）")
+            suffix = "（提出）" if label.endswith("（提出）") else ""
+            extra = r"(?:（行動管理[^）]*）)?" if "行動" in base else ""
+            matches = self.sections_by_regex("【" + re.escape(base) + extra + re.escape(suffix) + "】")
+            return matches[0][1] if matches else None
+
+        def items(lines):
+            return [re.sub(r"^([*-] |・)\s*(\[[ xX]\]\s*)?", "", line).strip()
+                    for line in (lines or []) if self._is_bullet(line)]
+
+        def key(item):
+            return re.sub(r"\s+", "", re.split(r"[：:]", item, maxsplit=1)[0]).strip("*")
+
+        def signature(item):
+            # 人数と期日の月を入れ替えても同じ数字の袋になる、という誤一致を防ぐ。
+            text = re.sub(r"(?<=\d),(?=\d)", "", item)
+            dates = re.findall(r"(?<!\d)(?:\d{4}[-/])?\d{1,2}[-/]\d{1,2}(?!\d)", text)
+            normalized_dates = tuple(tuple(int(n) for n in re.split(r"[-/]", date)) for date in dates)
+            text = re.sub(r"(?<!\d)(?:\d{4}[-/])?\d{1,2}[-/]\d{1,2}(?!\d)", "", text)
+            quantities = tuple(re.findall(
+                r"([+-]?\d+(?:\.\d+)?)\s*(ヶ月|か月|時間|人|名|件|回|社|円|通|分|日|週|月|年)?\s*(以上|以下|未満|超)?", text
+            ))
+            # 数字を持たない期日（各回翌日・毎週金曜等）も省略・変更しない。
+            deadline = re.search(r"期日\s*(.*)$", text)
+            relative_deadline = re.sub(r"\s+", "", deadline[1]) if deadline else ""
+            return normalized_dates, quantities, relative_deadline
+
+        def named(entries):
+            return all(re.search(r"[：:]", i) for i in entries)
+
+        def is_initial(body):
+            content = _content_lines(body or [])
+            return len(content) == 1 and _bullet_text(content[0]) == INITIAL_MARKER
+
+        marker_hint = f"初回は `- {INITIAL_MARKER}` の1行"
+
+        # 売上の欄（数値1つ）も前回ブロックの一部。空欄は転記漏れで、初回はマーカーを置く。
+        for suffix in ("", "（提出）"):
+            for tail in ("目標", "実績", "目標と実績の差分"):
+                label = f"{previous_word}の売上{tail}{suffix}"
+                body = section(label)
+                if body is not None and not _content_lines(body):
+                    self.fail(f"前回ブロック: 【{label}】が空です（前回の値を転記する。{marker_hint}）")
+
+        # 前期間の目標・実績・差分は、提出用（月報だけ）と管理用それぞれで全項目を保持する。
+        for family in ("売上以外の成果", "行動"):
+            for suffix in ("", "（提出）"):
+                tails = ("目標", "実績", "目標と実績の差分")
+                labels = [f"{previous_word}の{family}{tail}{suffix}" for tail in tails]
+                target_body = section(labels[0])
+                if target_body is None:
+                    continue  # 見出しの有無は必須見出しの検査が担う（提出用は行動ブロックを持たない）。
+                if is_initial(target_body):
+                    for label in labels[1:]:
+                        body = section(label)
+                        if body is not None and not is_initial(body):
+                            self.fail(f"前期間の項目一致: 【{labels[0]}】が初回なので【{label}】も `- {INITIAL_MARKER}` の1行にしてください")
+                    self.ok(f"前期間の項目一致: 【{labels[0]}】は初回（前回正本なし）のため照合しない")
+                    continue
+                if not _content_lines(target_body):
+                    self.fail(f"前期間の項目一致: 【{labels[0]}】が空です（前回の目標を転記する。{marker_hint}）")
+                    continue
+                # 目標に項目があるのに実績・差分の欄が無いと、項目ごとの対応が取れない。
+                # 提出用は差分の欄を持たない既定テンプレートなので、差分だけは求めない。
+                for tail, label in zip(tails[1:], labels[1:]):
+                    if section(label) is None and not (suffix and tail == "目標と実績の差分"):
+                        self.fail(f"前期間の項目一致: 【{labels[0]}】に項目があるのに【{label}】がありません")
+                reference = items(target_body)
+                if not reference or not named(reference):
+                    self.warn(f"前期間の項目一致: 【{labels[0]}】は項目名のない旧形式のため未照合")
+                    continue
+                expected = [key(i) for i in reference]
+                if len(set(expected)) != len(expected):
+                    self.fail(f"前期間の項目一致: 【{labels[0]}】に重複した項目名があります")
+                for label in labels[1:]:
+                    body = section(label)
+                    if body is None:
+                        continue  # 欄の欠落は上で報告済み（提出用の差分は対象外）。
+                    if not _content_lines(body):
+                        self.fail(f"前期間の項目一致: 【{label}】が空です（確認中も項目ごとに残す）")
+                        continue
+                    actual_items = items(body)
+                    if actual_items and not named(actual_items):
+                        self.warn(f"前期間の項目一致: 【{label}】は項目名のない旧形式のため未照合")
+                    elif [key(i) for i in actual_items] != expected:
+                        self.fail(f"前期間の項目一致: 【{label}】の項目名・順序を【{labels[0]}】に揃えてください（確認中も項目ごとに残す）")
+
+        if self.kind != "month":
+            return  # 提出用・管理用の二重構造は月報だけ。
+
+        # 説明の省略は許すが、同じ項目の数値・期日は省略・変更しない。
+        for label in ("前月の売上目標", "前月の売上実績", "今月の売上目標",
+                      "前月の売上以外の成果目標", "前月の売上以外の成果実績",
+                      "前月の行動目標", "前月の行動実績",
+                      "今月の売上以外の成果目標", "今月の行動目標"):
+            managed, submitted = section(label), section(label + "（提出）")
+            if managed is None or submitted is None:
+                continue
+            if is_initial(managed) and is_initial(submitted):
+                continue  # 両方とも初回マーカー。照合する値が無い。
+            left, right = items(managed), items(submitted)
+            if label in ("前月の売上目標", "前月の売上実績", "今月の売上目標"):
+                # 売上欄の正本は総額。表示側の内訳だけを省略しても不一致ではない。
+                managed_total = self._first_sales_amount(managed)
+                submitted_total = self._first_sales_amount(submitted)
+                if managed_total is None or submitted_total is None:
+                    self.warn(f"月報同期: 【{label}】の総額を読み取れないため未照合")
+                elif managed_total != submitted_total:
+                    self.fail(f"月報同期: 【{label}】の提出用と管理用の総額が異なります")
+                if not left or not right:
+                    continue  # 内訳は両方にある場合だけ、項目・数量を照合する。
+            if not left and not right:
+                if signature("\n".join(managed)) != signature("\n".join(submitted)):
+                    self.fail(f"月報同期: 【{label}】の提出用と管理用の数値が異なります")
+                continue
+            # 管理用は成果ごとのグループ順。行動は順序ではなく項目名で照合する。
+            if named(left + right):
+                left_keys, right_keys = [key(i) for i in left], [key(i) for i in right]
+                keys_match = (sorted(left_keys) == sorted(right_keys) if label == "今月の行動目標"
+                              else left_keys == right_keys)
+                if not keys_match or len(set(left_keys)) != len(left_keys):
+                    self.fail(f"月報同期: 【{label}】の提出用と管理用の項目が異なります")
+                    continue
+                pairs = [(i, next(j for j in right if key(j) == key(i))) for i in left]
+            else:
+                self.warn(f"月報同期: 【{label}】は項目名のない旧形式のため未照合（項目名：内容 に揃えてください）")
+                pairs = []
+            for a, b in pairs:
+                if signature(a) != signature(b):
+                    self.fail(f"月報同期: 【{label}】「{key(a)}」の数量・単位・期日が提出用と管理用で異なります")
+
+        # 明確に結果を数えるラベルだけを検出。一般の動詞の推測で誤判定しない。
+        for label in ("今月の行動目標（提出）", "今月の行動目標（行動管理・優先順位付き）"):
+            for item in items(section(label)):
+                if re.match(r"(?:初回の無料相談の実人数|面談の実人数|再面談の実人数|紹介してくださった人数|新規成約件数)[：:]", item):
+                    self.fail(f"月報の成果・行動分離: 結果を数える項目は成果目標へ移してください: {item}")
+
+    # --- 期日トークン（共通部品A）---
+    # 行末が `期日` ＋任意の空白＋トークン＋任意の `まで`／`までに` で終わること。
+    # `今週` は週報だけのトークン（月報以上で書くと、どの週かが決まらない）。
+    # `毎月`・`今月中` はトークンではない（月の中のいつかが決まらない）。
+    DEADLINE_TOKEN = (r"[0-9]{1,2}/[0-9]{1,2}(?:（[月火水木金土日]）)?|[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                      r"|[月火水木金土日]曜(?:日)?|毎日|毎朝|毎週(?:[月火水木金土日]曜(?:日)?)?")
+
+    def _deadline_rx(self) -> re.Pattern:
+        token = self.DEADLINE_TOKEN + ("|今週" if self.kind == "week" else "")
+        return re.compile(r"期日\s*(?:" + token + r")(?:までに|まで)?\s*$")
+
+    def _deadline_hint(self) -> str:
+        week = "・今週" if self.kind == "week" else ""
+        return ("行末を `期日` ＋ M/D（後ろに（曜）可）・YYYY-MM-DD・{月〜日}曜・毎日・毎朝・"
+                f"毎週（後ろに{{曜}}曜 可）{week} ＋任意の まで／までに で終える。毎月・今月中はトークンではない")
+
+    # --- 前回ブロックの挽回（共通部品D）---
+    # `- {前回の項目名}：{起点}→{到達点}（今回の行動目標「{今回の項目名}」で実行）`
+    RECOVERY_LINE_RX = re.compile(
+        r"^(?:[*-] |・)(?P<prev>[^：:]+?)[：:](?P<start>.+?)→(?P<goal>.+?)"
+        r"（今回の行動目標「(?P<item>[^」]+)」で実行）\s*$"
+    )
+    RECOVERY_FORM = "`- {前回の項目名}：{起点}→{到達点}（今回の行動目標「{今回の項目名}」で実行）`"
+
+    def check_recovery_lines(self) -> None:
+        """「…未達を挽回するための行動」の対応行を検査する（4層・月報は提出用と管理用の両方）。
+
+        対象は見出しの直下から最初の `###` まで。要因分析の `###` 小見出し以下は対象外。
+        挽回の中身の妥当性（起点・到達点が足りるか）はレビューに残し、ここでは
+        「今回のどの行動目標で実行するか」が実在する行動へつながっていることだけを見る。
+        """
+        names = self._current_action_names()
+        deadline_in_text = re.compile(r"期日\s*(?:" + self.DEADLINE_TOKEN + r"|今週)")
+        checked = 0
+        for start, body in self.sections_by_regex("未達を挽回するための行動"):
+            heading = self.lines[start].strip()
+            head_lines: list[str] = []
+            for line in body:
+                if re.match(r"^#{3,6}\s", line):
+                    break
+                head_lines.append(line)
+            content = _content_lines(head_lines)
+            if not content:
+                self.fail(f"挽回の対応行: {heading} が空です（未達が無ければ `- なし`、初回は `- {INITIAL_MARKER}`）")
+                continue
+            for line in content:
+                checked += 1
+                text = _bullet_text(line)
+                if text in ("なし", INITIAL_MARKER):
+                    if len(content) > 1:
+                        self.fail(f"挽回の対応行: {heading} の `- {text}` はほかの行と並べられません")
+                    continue
+                m = self.RECOVERY_LINE_RX.match(line)
+                if m is None:
+                    self.fail(f"挽回の対応行: {heading} の行は {self.RECOVERY_FORM} か `- なし` か "
+                              f"`- {INITIAL_MARKER}` で書いてください: {line}")
+                    continue
+                # 「判断期日の確認」のような語は期日ではない。`期日` ＋トークンの形だけを見る。
+                if deadline_in_text.search(m["prev"] + m["start"] + m["goal"]):
+                    self.fail(f"挽回の対応行: 期日は今回の行動目標の側にだけ書きます（挽回行には書かない）: {line}")
+                if _norm_name(m["item"]) not in names:
+                    self.fail(f"挽回の対応行: 「{m['item']}」が今回の行動目標の項目名にありません: {line}")
+        if checked:
+            print(f"INFO: 挽回の対応行 {checked} 行を照合しました（今回の行動目標の項目名 {len(names)} 件）")
+
+    # --- 軌道修正記録（共通部品E）---
+    def _check_action_revision(self, body: str, names: set[str], where: str) -> None:
+        target, fields = split_revision_record(body, "行動の見直し")
+        form = "`- 行動の見直し：{項目名}｜変更前：…｜変更後：…｜理由：…｜上位への影響：…`"
+        if not target:
+            self.fail(f"行動の見直し: {where} に項目名がありません（{form}）: {body}")
+        elif fields is None:
+            self.fail(f"行動の見直し: {where} の「{target}」は変更前・変更後・理由・上位への影響を各1件、空欄なく書いてください（{form}）")
+        elif _norm_name(target) not in names:
+            self.fail(f"行動の見直し: {where} の「{target}」が今回の行動目標の項目名にありません")
+        elif _norm_name(fields["変更前"]) == _norm_name(fields["変更後"]):
+            self.fail(f"行動の見直し: {where} の「{target}」は変更前と変更後が同じで、見直しを確認できません")
+        else:
+            self.ok(f"行動の見直し: {where} の「{target}」")
+
+    def check_revision_records(self) -> None:
+        """週報の【今週の見直し記録】と、月報の冒頭の【確認された情報】の行動の見直しを検査する。
+
+        理由・上位への影響の妥当性はレビューに残す。ここで見るのは欄がそろっていること、
+        項目名が今回の行動目標に実在すること、変更前と変更後が違うことだけ。
+        上位配分の見直しの数値の対応は validate-cross-level.py が照合する。
+        """
+        names = self._current_action_names()
+        if self.kind == "week":
+            for _, body in self.sections_by_regex(r"【今週の見直し記録】"):
+                content = _content_lines(body)
+                where = "【今週の見直し記録】"
+                if not content:
+                    self.fail(f"{where} が空です（見直しが無い週は `- なし`）")
+                    continue
+                for line in content:
+                    text = _bullet_text(line)
+                    if text == "なし":
+                        if len(content) > 1:
+                            self.fail(f"{where} の `- なし` はほかの行と並べられません")
+                        continue
+                    if text is not None and text.startswith("行動の見直し"):
+                        self._check_action_revision(text, names, where)
+                        continue
+                    if text is not None and text.startswith("上位配分の見直し"):
+                        target, fields = split_revision_record(text, "上位配分の見直し")
+                        if not target or fields is None:
+                            self.fail(f"{where} の上位配分の見直しは対象・上位計画・実行目標・理由・上位への影響を各1件、空欄なく書いてください: {line}")
+                        continue
+                    self.fail(f"{where} の行は `- なし` か `- 行動の見直し：…` か `- 上位配分の見直し：…` で書いてください: {line}")
+        elif self.kind == "month":
+            for start, body in self.sections_by_regex(r"【確認された情報】"):
+                where = self.lines[start].strip()
+                for line in _content_lines(body):
+                    text = _bullet_text(line)
+                    text = line if text is None else text
+                    if text.startswith("行動の見直し"):
+                        self._check_action_revision(text, names, where)
+
+    # --- 日付索引（共通部品A）---
+    # `- {M/D（曜）}：{項目名}、{項目名}｜やらない：{内容}`（行動の無い日は `- {M/D（曜）}：なし｜やらない：{内容}`）
+    DATE_INDEX_RX = re.compile(
+        r"^(?:[*-] |・)(?P<date>[0-9]{1,2}/[0-9]{1,2}（[月火水木金土日]）)[：:]\s*(?P<items>.+?)"
+        r"(?:\s*[｜|]\s*やらない[：:]\s*(?P<notdo>.*?))?\s*$"
+    )
+    DATE_INDEX_FORM = "`- {M/D（曜）}：{項目名}、{項目名}｜やらない：{内容}`"
+
+    def _project_task_names(self) -> set[str]:
+        lines = self.sed_range("【プロジェクト別タスク】", r"^## ")
+        return {self._item_name(l) for l in lines
+                if re.match(r"^(?:- |・)\[[ xX]\]", l) and self._item_name(l)}
+
+    def check_date_index(self) -> None:
+        """週報の【今週の大きな到達ライン】と月報の【今月の日別タスク】を日付索引として検査する。
+
+        済／未済のチェックは行動目標の行だけに付ける（週の正本は行動目標）。索引は
+        「どの日にどの行動目標を進めるか」を引くための目次なので、チェックボックスを
+        持たず、項目名は同じ文書の行動目標（月報は【プロジェクト別タスク】も）に実在すること。
+        """
+        if self.kind == "week":
+            label, allowed = "今週の大きな到達ライン", self._current_action_names()
+        elif self.kind == "month":
+            label = "今月の日別タスク"
+            allowed = self._current_action_names() | self._project_task_names()
+        else:
+            return
+        checked = 0
+        for _, body in self.sections_by_regex("【" + re.escape(label) + "】"):
+            for raw in body:
+                if not re.match(r"^\s*(?:[*-] |・)", raw):
+                    continue
+                line = raw.strip()
+                checked += 1
+                if raw != raw.lstrip():
+                    self.fail(f"日付索引: 【{label}】は入れ子にしません（1日1行の {self.DATE_INDEX_FORM}）: {line}")
+                    continue
+                if re.match(r"^(?:[*-] |・)\s*\[[ xX]\]", line):
+                    self.fail(f"日付索引: 【{label}】にチェックボックスは付けません（済／未済は行動目標の行で付ける）: {line}")
+                    continue
+                m = self.DATE_INDEX_RX.match(line)
+                if m is None:
+                    self.fail(f"日付索引: 【{label}】の行は {self.DATE_INDEX_FORM} で書いてください: {line}")
+                    continue
+                if m["items"].strip() == "なし":
+                    if not (m["notdo"] or "").strip():
+                        self.fail(f"日付索引: 行動の無い日は `- {{M/D（曜）}}：なし｜やらない：{{内容}}` で書いてください: {line}")
+                    continue
+                if m["notdo"] is not None and not m["notdo"].strip():
+                    self.fail(f"日付索引: `｜やらない：` の後が空です: {line}")
+                for item in m["items"].split("、"):
+                    if _norm_name(item) not in allowed:
+                        self.fail(f"日付索引: 【{label}】の「{item.strip()}」が行動目標の項目名にありません: {line}")
+        if checked:
+            print(f"INFO: 日付索引 {checked} 行を照合しました（参照できる項目名 {len(allowed)} 件）")
 
     # --- セクション抽出ヘルパ ---
     def sections_by_regex(self, pattern: str):
@@ -400,9 +805,8 @@ class Validator:
     # --- 逆算チェーン（売上 → 成果 → 行動）ヘルパ ---
 
     # --- シンプルさの上限 ---
-    # 目標は複雑にした瞬間に自分で回せなくなる。長さと件数を上限で止めておかないと、
-    # 「気をつける」では必ず膨らむ。数字は運用可能な範囲の実測から置いた上限であり、
-    # 足りないと感じたら項目を削るのが正しい（上限を上げるのではない）。
+    # 週報は実行を絞るため件数も上限。長期3層は独立項目を保持し、件数は推奨とする。
+    # 文章量は件数削減でなく、各項目の短さで抑える。
     MAX_OUTCOME_ITEMS = 5      # 成果目標の件数
     MAX_OUTCOME_CHARS = 50     # 成果目標1項目の本体（`→ 売上貢献` の前まで）
     MAX_ACTION_ITEMS = 8       # 行動目標の件数
@@ -459,7 +863,7 @@ class Validator:
     def _outcome_head(item: str) -> str:
         """成果目標の1項目から本文（`→` より前）だけを取り出す。
 
-        `→ 売上貢献：0（翌月の提案書を作成するための材料）` のような理由欄は
+        `→ 売上貢献：0（無料相談を支える）` のような理由欄は
         自由記述であり、実行完了型の判定対象にしてはいけない。C1 が理由を書けと
         要求しているのに C2 がその理由で FAIL させる、という自家撞着を避ける。
         """
@@ -513,6 +917,17 @@ class Validator:
     # 出どころを説明していない注記でも通ってしまう。
     CONTRIB_BASIS_RX = re.compile(r"^[0-9][0-9,]*\s*[（(]\s*[^）)]")
 
+    # 貢献0の括弧は次の3形だけ（共通部品B）。0より大きい貢献の括弧は自由記述のまま。
+    #   形1 `0（{同じ文書の直接成果の項目名}を支える）`  当期の直接成果を支える中間成果
+    #   形2 `0（{M}月の{直接成果の項目名}を支える）`     来期以降の直接成果を支える中間成果
+    #   形3 `0（{M}月計上・{根拠}）`                     翌期に計上する直接成果
+    # 「見込み」等の自由記述を許すと、将来の金額・時期の推測が根拠の欄に紛れ込む。
+    ZERO_BOOKED_RX = re.compile(r"^0\s*[（(]\s*(?:1[0-2]|[1-9])月計上・\s*\S.*?\s*[）)]\s*$")
+    ZERO_FUTURE_RX = re.compile(r"^0\s*[（(]\s*(?:1[0-2]|[1-9])月の\s*\S.*?を支える\s*[）)]\s*$")
+    ZERO_SUPPORT_RX = re.compile(r"^0\s*[（(]\s*(?P<target>.+?)を支える\s*[）)]\s*$")
+    ZERO_FORMS_HINT = ("`0（{同じ文書の直接成果の項目名}を支える）`／"
+                       "`0（{M}月の{直接成果の項目名}を支える）`／`0（{M}月計上・{根拠}）`")
+
     # 件数に付いてはいけない期間単位。`50000 × 3ヶ月 = 150000` を今期間の売上として
     # 計上すると、今期間に入らない金銭で目標が埋まる（月額顧問なら初月の 50000 だけが
     # 今期間の売上に立つ）。`件`/`名`/`回`/`本` は今期間に確定する数え方なので許す。
@@ -554,19 +969,26 @@ class Validator:
             return int(num.group(1).replace(",", "")), None, raw, ""
         return None, None, raw, ""
 
+    @staticmethod
+    def _first_sales_amount(lines: list[str]) -> int | None:
+        for line in lines:
+            match = re.match(r"^\s*([0-9][0-9,]*)\s*円?\s*$", line)
+            if match:
+                return int(match[1].replace(",", ""))
+        return None
+
     def _current_sales_target(self) -> int | None:
         pat = r"【" + self._period_word() + r"の売上目標】"
         for _, body in self.sections_by_regex(pat):
-            for l in body:
-                m = re.match(r"^\s*([0-9][0-9,]*)\s*円?\s*$", l)
-                if m:
-                    return int(m.group(1).replace(",", ""))
+            amount = self._first_sales_amount(body)
+            if amount is not None:
+                return amount
         return None
 
-    # `### → Aさん：月額顧問の成約（150000円）` のグループ見出し。
+    # `### → 月額顧問の成約：Aさんの成約（150000円）` のグループ見出し（項目名に個人名を入れない）。
     ACTION_GROUP_RX = re.compile(r"^#{3,6}\s*→\s*(.+?)\s*$")
 
-    # 見出しの括弧内に書かれた金額。`（0円・8月の仕込み）` のように補足が続く形も拾う。
+    # 見出しの括弧内に書かれた金額。`（0円・8月の仕込み）` のように補足が続く形も拾う（C4c で FAIL にするため）。
     GROUP_AMOUNT_RX = re.compile(r"[（(]\s*([0-9][0-9,]*)\s*円")
 
     @classmethod
@@ -586,6 +1008,31 @@ class Validator:
         """
         m = cls.GROUP_AMOUNT_RX.search(heading)
         return int(m.group(1).replace(",", "")) if m else None
+
+    def _is_current_action_heading(self, line: str) -> bool:
+        """今期間の行動目標の見出しか（管理用と、月報の提出用の両方）。"""
+        return ("行動目標" in line and self._period_word() in line
+                and not re.search(r"差分|実績", line))
+
+    def _is_managed_action_heading(self, line: str) -> bool:
+        """今期間の行動目標の管理用見出しか（月報の提出用 `（提出）` を除く）。"""
+        return self._is_current_action_heading(line) and "（提出）" not in line
+
+    @staticmethod
+    def _item_name(line: str) -> str:
+        """箇条書き1行（チェックボックス可）の項目名（「：」より前）。項目名が無ければ空文字。"""
+        body = re.sub(r"^\s*([*-] |・)\s*(\[[ xX]\]\s*)?", "", line)
+        if not re.search(r"[：:]", body):
+            return ""
+        return _norm_name(re.split(r"[：:]", body, maxsplit=1)[0])
+
+    def _current_action_names(self) -> set[str]:
+        """今回の行動目標の項目名（管理用・提出用）。挽回の対応行・見直し記録・日付索引の参照先。"""
+        names = set()
+        for line in self.capture_awk(self._is_current_action_heading):
+            if self._is_bullet(line) and self._item_name(line):
+                names.add(self._item_name(line))
+        return names
 
     def _current_action_groups(self) -> list[tuple[str, int | None, list[list[str]]]]:
         """今期間の行動目標を、支える成果目標ごとのグループへ束ねる。
@@ -607,14 +1054,9 @@ class Validator:
         # 月報の提出用セクション（`## 【今月の行動目標（提出）】`）はグループ見出しを
         # 持たない1行1行動の規定なので、所属の検査（C4/C5）と件数（S3）から外す。
         # 成果・売上側の抽出が `】` 直前一致で `（提出）` を拾わないのと揃える。
-        def pred(line: str) -> bool:
-            return ("行動目標" in line and self._period_word() in line
-                    and "（提出）" not in line
-                    and not re.search(r"差分|実績", line))
-
         groups: list[tuple[str, int | None, list[list[str]]]] = [("", None, [])]
         cur: list[str] | None = None
-        for line in self.capture_awk(pred):
+        for line in self.capture_awk(self._is_managed_action_heading):
             if self.ACTION_GROUP_RX.match(line):
                 groups.append((self._group_ref(line), self._group_amount(line), []))
                 cur = None
@@ -649,6 +1091,9 @@ class Validator:
         missing: list[str] = []
         amounts: list[int] = []
         key_amounts: dict[str, int] = {}
+        # 直接成果（貢献額が0より大きい、または形3）の項目名と、形を後で照合する貢献0の項目。
+        direct_keys: list[str] = []
+        zero_items: list[tuple[str, str]] = []
         for i in outcome_items:
             amount, factors, raw, count_unit = self._parse_contribution(i)
             head = self._outcome_head(i)
@@ -658,6 +1103,10 @@ class Validator:
             total += amount
             amounts.append(amount)
             key_amounts[self._outcome_key(i)] = amount
+            if amount > 0 or (factors is None and self.ZERO_BOOKED_RX.match(raw)):
+                direct_keys.append(self._outcome_key(i))
+            elif factors is None and self.CONTRIB_BASIS_RX.match(raw):
+                zero_items.append((head, raw))
 
             # C1a（R-a）: 貢献額には式か括弧の根拠のどちらかが必ず随伴する。
             # 裸の数字を通すと、式で書いた人だけが C1c の検算 FAIL を負い、根拠を
@@ -669,7 +1118,9 @@ class Validator:
                     "売上貢献に式または括弧の根拠がありません"
                     "（例: `→ 売上貢献：50000 × 3 = 150000` / "
                     "`→ 売上貢献：150000（値引き後の一括見積）` / "
-                    "`→ 売上貢献：0（8月に 300000 の見込み）`）: " + head
+                    "`→ 売上貢献：0（無料相談を支える）` / "
+                    "`→ 売上貢献：0（9月の顧問契約を支える）` / "
+                    "`→ 売上貢献：0（8月計上・顧問契約の初月分）`）: " + head
                 )
 
             # C1c: 式の検算。`50000 × 3 = 200000` のような計算違いを見逃すと、
@@ -701,13 +1152,33 @@ class Validator:
         else:
             self.ok(f"全 {len(outcome_items)} 件の成果目標に売上貢献額あり（合計 {total}）")
 
+        # C1f: 貢献0の括弧の形。形1の支える先は同じ文書の直接成果に実在すること。
+        # 直接成果を全項目読み終えてから照合する（支える先が後ろに書かれていてもよい）。
+        for head, raw in zero_items:
+            if self.ZERO_FUTURE_RX.match(raw):
+                continue
+            support = self.ZERO_SUPPORT_RX.match(raw)
+            if support is None:
+                self.fail(f"貢献0の括弧は3形だけです（{self.ZERO_FORMS_HINT}）: {head} → 売上貢献：{raw}")
+            elif not any(self._ref_matches_key(support["target"], k) for k in direct_keys):
+                self.fail(
+                    f"貢献0の支える先「{support['target']}」が同じ文書の直接成果"
+                    "（貢献額が0より大きい成果目標、または `0（{M}月計上・…）` の成果目標）の項目名にありません"
+                    "（来期以降の直接成果なら `0（{M}月の{項目名}を支える）`）: "
+                    f"{head} → 売上貢献：{raw}"
+                )
+        if zero_items:
+            print(f"INFO: 貢献0の括弧 {len(zero_items)} 件の形を照合しました（直接成果 {len(direct_keys)} 件）")
+
         # C1d: 貢献 0 の偏りを見る。0 の項目は「今期間の売上には乗らないが、先に繋がる」
         # 仕込みであり、一定数はあってよい。ただし大半が 0 なら、その期間は売上から
         # 逆算した目標になっていない（＝今週やることが今週の数字に効かない）。
         # amounts には、貢献額が読み取れた項目だけが入っている。
         # 1件しかない期間は母数が小さすぎて偏りを論じられないので判定しない。
         zeros = [a for a in amounts if a == 0]
-        if len(amounts) >= 2 and len(zeros) * 2 > len(amounts):
+        if self.kind != "week" and zeros:
+            print("INFO: 売上貢献0の中間成果は、受注への対応と二重計上がないことを確認してください")
+        elif len(amounts) >= 2 and len(zeros) * 2 > len(amounts):
             self.warn(
                 f"売上貢献 0 の成果目標が {len(zeros)}/{len(amounts)} 件です。"
                 f"{self._period_word()}の売上に効く成果を1件足すか、"
@@ -716,10 +1187,10 @@ class Validator:
 
         # S1/S2: シンプルさ（成果目標の件数・長さ・1項目1成果）
         if len(outcome_items) > self.MAX_OUTCOME_ITEMS:
-            self.fail(
-                f"成果目標が{len(outcome_items)}件です（上限{self.MAX_OUTCOME_ITEMS}件）。"
-                "絞り込んでください（増やすほど、どれも動かなくなる）"
-            )
+            if self.kind == "week":
+                self.fail(f"成果目標が{len(outcome_items)}件です（上限{self.MAX_OUTCOME_ITEMS}件）。絞り込んでください")
+            else:
+                self.warn(f"成果目標が{len(outcome_items)}件です（推奨{self.MAX_OUTCOME_ITEMS}件以下）。独立項目は保持し、重複と説明量を確認してください")
         else:
             self.ok(f"成果目標 {len(outcome_items)} 件（上限{self.MAX_OUTCOME_ITEMS}件）")
         for i in outcome_items:
@@ -729,7 +1200,7 @@ class Validator:
                 self.fail(
                     f"成果目標が長すぎます（{len(head)}字・上限{self.MAX_OUTCOME_CHARS}字）: {head}"
                 )
-            if "・" in head:
+            if "・" in head and self.kind == "week":
                 self.fail(f"成果目標に複数の成果が入っています（1項目1成果に分ける）: {head}")
 
         # C2: 実行完了型を成果目標に置いていないか
@@ -784,10 +1255,10 @@ class Validator:
             return
         # S3: シンプルさ（行動目標の件数・長さ）
         if len(blocks) > self.MAX_ACTION_ITEMS:
-            self.fail(
-                f"行動目標が{len(blocks)}件です（上限{self.MAX_ACTION_ITEMS}件）。"
-                "やることを増やすのではなく、やらないことを増やしてください"
-            )
+            if self.kind == "week":
+                self.fail(f"行動目標が{len(blocks)}件です（上限{self.MAX_ACTION_ITEMS}件）。やらないことを増やしてください")
+            else:
+                self.warn(f"行動目標が{len(blocks)}件です（推奨{self.MAX_ACTION_ITEMS}件以下）。必要な主要行動を残し、重複を確認してください")
         else:
             self.ok(f"行動目標 {len(blocks)} 件（上限{self.MAX_ACTION_ITEMS}件）")
         for block in blocks:
@@ -810,6 +1281,15 @@ class Validator:
         # R-d: グループの並び順（貢献額の降順）は機械検査しない。同額のときに順序が
         # 一意に決まらず、正しく書いても直しようのない FAIL が出るため、意図的に
         # 非検査としている（実装し忘れではない）。
+        # C4c: 0円の見出しは `（0円）` だけ。`（0円・8月の仕込み）` のような補足は、成果目標の
+        # 貢献0の括弧（C1f）と別の自由記述の置き場になり、同じ理由が2か所でずれていく。
+        for line in self.capture_awk(self._is_managed_action_heading):
+            if not self.ACTION_GROUP_RX.match(line) or self._group_amount(line) != 0:
+                continue
+            bracket = re.search(r"[（(]\s*[0-9][0-9,]*\s*円[^）)]*[）)]?", line)
+            if bracket is None or bracket.group(0) != "（0円）":
+                self.fail(f"0円のグループ見出しは `（0円）` だけで書いてください（補足は成果目標の貢献0の括弧へ）: {line.strip()}")
+
         for group_ref, group_amount, _blocks in action_groups:
             if not group_ref or group_amount is None:
                 continue
@@ -868,7 +1348,7 @@ class Validator:
             self.ok("全ての成果目標に、それを支える行動目標があります")
 
     def check_peer_consistency(self) -> None:
-        """他層ファイルとの期アンカー3値の突き合わせ。不一致は WARN（FAIL にしない）。
+        """他層ファイルとの期アンカー2値の突き合わせ。不一致は WARN（FAIL にしない）。
 
         「不一致0件」は「比較して0件だった」と「比較対象が0件だった」を区別しないので、
         必ず比較した項目数（分母）を印字する。
@@ -876,21 +1356,14 @@ class Validator:
         print("")
         print("--- 層間整合チェック（--peer） ---")
         mine = extract_peer_anchors(self.text)
-        # --file 側の階層は --type を正本にする（本文から読み直さない）。
-        my_level = "week" if self.kind == "week" else "other"
         for peer_name, peer_text in self.peers:
             theirs = extract_peer_anchors(peer_text)
-            peer_level = detect_level(peer_text)
             print(f"PEER: {peer_name}")
+            print(KEY_NUMBER_SKIP_NOTE)
             compared = 0
             mismatched = 0
             for name, _rx, _kind in PEER_ANCHORS:
                 a, b = mine.get(name), theirs.get(name)
-                if name in WEEKLY_EXEMPT_ANCHORS and "week" in (my_level, peer_level):
-                    print(
-                        f"  SKIP: {name}（週報の最重要数字は上位の内訳のため一致検査の対象外）"
-                    )
-                    continue
                 if a is None or b is None:
                     missing = []
                     if a is None:
@@ -968,9 +1441,18 @@ class Validator:
         self.check_title_matches_type()
 
         if self.kind == "week":
-            for lbl in ["今週の最重要数字", "今週の売上目標", "今週の売上以外の成果目標",
-                        "今週の行動目標（行動管理・優先順位付き）", "習慣目標（仕組みで動く土台）",
-                        "今週の判断基準", "現在のグリッドパートナー数"]:
+            # 今週の見直し記録: 週の途中で行動を軌道修正した記録の置き場（無い週は `- なし`）。
+            # 前週ブロック12見出しは他の層と同じく必須（初回は各欄に初回マーカーを置く）。
+            for lbl in ["前週の売上目標", "前週の売上実績", "前週の売上目標と実績の差分",
+                        "前週の売上に対して未達を挽回するための行動",
+                        "前週の売上以外の成果目標", "前週の売上以外の成果実績",
+                        "前週の売上以外の成果目標と実績の差分",
+                        "前週の売上以外の成果に対して未達を挽回するための行動",
+                        "前週の行動目標（行動管理）", "前週の行動実績（行動管理）",
+                        "前週の行動目標と実績の差分", "前週の行動に対して未達を挽回するための行動",
+                        "今週の最重要数字", "今週の売上目標", "今週の売上以外の成果目標",
+                        "今週の行動目標（行動管理・優先順位付き）", "今週の見直し記録",
+                        "習慣目標（仕組みで動く土台）", "今週の判断基準", "現在のグリッドパートナー数"]:
                 self.check_require_exact(lbl)
             for opt in ["到達ライン", "今期の売上目標", "前回のアカデミーへの参加日",
                         "次回のアカデミーへの参加日", "次回の壁打ち予定日", "現在事業パートナー数"]:
@@ -984,6 +1466,8 @@ class Validator:
                         "前月の行動に対して未達を挽回するための行動", "今月の売上目標", "今月の売上以外の成果目標",
                         "今月の行動目標（行動管理・優先順位付き）", "現在事業パートナー数", "現在のグリッドパートナー数",
                         "プロジェクト別タスク", "今月やらないこと（明確に排除するもの）", "今月末の振り返りチェックリスト"]:
+                if self.concise_monthly and lbl == "プロジェクト別タスク":
+                    continue
                 self.check_require_exact(lbl)
         elif self.kind == "period":
             for lbl in ["確認された情報", "今期の累計売上実績", "前期の売上目標", "前期の売上実績",
@@ -1056,48 +1540,42 @@ class Validator:
         self.check_goal_section(r"【前.*の行動目標と実績の差分】", "前期間の行動差分", "bullet")
 
         self.check_goal_chain()
+        self.check_report_alignment()
+        self.check_key_number_sales_line()
+
+        print("")
+        print("--- 挽回の対応行・見直し記録・日付索引 ---")
+        self.check_recovery_lines()
+        self.check_revision_records()
+        self.check_date_index()
 
         # --- 品質チェック ---
         print("")
         print("--- 品質チェック ---")
 
-        def action_pred(line: str) -> bool:
-            return ("行動目標" in line and self._period_word() in line
-                    and not re.search(r"差分|実績", line))
-
-        # 提出用セクション（`（提出）`）は1行1行動の箇条書きで、期日と内訳は管理用の側に
-        # 置く規定。数値・期日はそちらで検査するので、提出用を同じ検査に通すと規定どおりの
-        # ファイルが毎回 WARN 2件を出し、本当に期日の無い管理用の行が埋もれる。
-        # グループ見出しの抽出（C4/C5/S3）が `（提出）` を外しているのと同じ範囲に揃える。
-        # 精神論（NG表現）は提出用でも許さないので、そちらは両方を対象に残す。
-        def action_managed_pred(line: str) -> bool:
-            return action_pred(line) and "（提出）" not in line
-
-        action_section = self.capture_awk(action_pred)
-        action_items = [
-            l for l in self.capture_awk(action_managed_pred)
-            if re.match(r"^([*-] |・)", l)
-        ]
+        # 行動行の合格基準は「何をする＋期日」。誰に・数値・人名は必須にしない。
+        # 提出用は管理用と同じ期日を必ず書くので、期日の検査は提出用も対象にする。
+        action_section = self.capture_awk(self._is_current_action_heading)
+        action_items = [l for l in action_section if re.match(r"^([*-] |・)", l)]
         if action_section:
             ng = [l for l in action_section if GOAL_SPIRIT_RE.search(l)]
             if not ng:
                 self.ok("NG表現なし（行動目標セクション）")
             else:
                 self.fail("行動目標に精神論が含まれています")
+            # 【考え】【思い】の注記は依頼されたときだけ書く。依頼の有無は本文から
+            # 判定できないので FAIL にはせず、既定の出力に紛れ込んだことを知らせる。
+            if any(re.match(r"^\s*(?:→\s*)?【(?:考え|思い)】", l) for l in action_section):
+                self.warn("行動目標に【考え】【思い】の注記があります（依頼されたときだけ書く）")
             if action_items:
-                no_number = [l for l in action_items if not re.search(r"[0-9]", l)]
-                if not no_number:
-                    self.ok("行動目標に数値あり")
-                else:
-                    self.warn("数値のない行動目標があります")
-                no_date = [
-                    l for l in action_items
-                    if not re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}/[0-9]{1,2}|月曜|火曜|水曜|木曜|金曜|毎日|毎朝|毎週|今週|までに", l)
-                ]
+                # 今回の期間の行動行だけに掛ける。前回ブロックへの転記・習慣目標・振り返りは
+                # 見出しが別なのでここには入らない（前回は当時のまま転記するため）。
+                deadline_rx = self._deadline_rx()
+                no_date = [l for l in action_items if not deadline_rx.search(l)]
                 if not no_date:
-                    self.ok("行動目標に期日あり")
-                else:
-                    self.warn("期日のない行動目標があります")
+                    self.ok(f"行動目標 {len(action_items)} 行の行末に期日あり")
+                for l in no_date:
+                    self.fail(f"期日のない行動目標があります（{self._deadline_hint()}）: {l.strip()}")
 
         # 9. やらないこと 3項目以上
         def notdoing_pred(line: str) -> bool:
@@ -1115,13 +1593,6 @@ class Validator:
             else:
                 self.fail(f"「やらないこと」が{total}項目です（必須: 3項目以上）")
 
-        # 10. 固有名詞
-        if action_section:
-            if any(re.search(r"さん|様", l) for l in action_section):
-                self.ok("行動目標に固有名詞あり")
-            else:
-                self.warn("行動目標に人の名前が入っていません（推奨: 具体的な人名を含める）")
-
         # 11. プロジェクト別タスク
         project_section = self.sed_range("【プロジェクト別タスク】", r"^## ")
         has_project = any("【プロジェクト別タスク】" in l for l in self.lines)
@@ -1129,19 +1600,31 @@ class Validator:
             self.fail("期報にプロジェクト別タスクが含まれています（期報では出力禁止）")
         if self.kind == "year" and has_project:
             self.fail("1年目標にプロジェクト別タスクが含まれています（1年層では出力禁止）")
-        if self.kind == "month" and not has_project:
+        if self.kind == "week" and has_project:
+            self.fail("週報にプロジェクト別タスクが含まれています（週報の実行管理は【今週の行動目標】と"
+                      "【今週の大きな到達ライン】の日付索引だけ。週報では出力しない）")
+        if self.kind == "month" and not has_project and not self.concise_monthly:
             self.fail("月報にプロジェクト別タスクがありません（月報では必須）")
-        if has_project and self.kind not in ("period", "year"):
-            checkbox_count = sum(1 for l in project_section if re.match(r"^(- |・)\[[ x]\] ", l))
+        if has_project and self.kind == "month":
+            checkbox_lines = [l for l in project_section if re.match(r"^(- |・)\[[ x]\] ", l)]
+            checkbox_count = len(checkbox_lines)
             if checkbox_count >= 1:
                 self.ok(f"プロジェクト別タスクにチェックボックスが {checkbox_count} 件あり")
             else:
                 self.fail("プロジェクト別タスクにチェックボックス（- [ ] / - [x]）が1件もありません")
-            recipient_count = sum(1 for l in project_section if re.match(r"^(- |・)\[[ x]\] \[[^\]]+\] \[[^\]]+\] .+", l))
-            if recipient_count >= checkbox_count:
-                self.ok("プロジェクト別タスクが [期日] [提出先・宛先] 形式")
-            else:
-                self.fail("プロジェクト別タスクは '- [ ] [期日] [提出先・宛先] 対象物・行動' 形式で記載してください")
+            # 行の書式は共通部品A の管理用と同じ。宛先が判定に必要なら本文に書く。
+            deadline_rx = self._deadline_rx()
+            bad_task = 0
+            for l in checkbox_lines:
+                m = deadline_rx.search(l)
+                body = l[:m.start()] if m else l
+                parts = re.match(r"^(?:- |・)\[[ x]\]\s*([^：:\s][^：:]*?)\s*[：:]\s*(\S.*?)\s*$", body)
+                if m is None or parts is None:
+                    bad_task += 1
+                    self.fail("プロジェクト別タスクは '- [ ] {項目名}：{何をする}　期日{トークン}' で書いてください"
+                              f"（{self._deadline_hint()}）: {l.strip()}")
+            if checkbox_count and not bad_task:
+                self.ok("プロジェクト別タスクが '- [ ] {項目名}：{何をする}　期日{トークン}' 形式")
             client_owner = sum(1 for l in project_section if re.match(r"^(- |・)先方担当者: .+", l))
             project_heading = sum(1 for l in project_section if re.match(r"^### ", l))
             if client_owner >= project_heading:
@@ -1238,7 +1721,7 @@ def main(argv: list[str]) -> int:
                     help="目標種別 weekly|monthly|quarterly|yearly（bimonthly は quarterly の後方互換の別名）")
     ap.add_argument("--peer", action="append", default=None, metavar="PATH",
                     help="層間整合を突き合わせる他層のファイル（任意・複数指定可）。"
-                         "期アンカー3値の不一致を WARN で報告する（FAIL にはしない）")
+                         "期アンカー2値の不一致を WARN で報告する（FAIL にはしない）")
     if ACTION_POLICY_ERROR is not None and not {"-h", "--help"} & set(argv):
         print(f"ERROR: 行動の語彙契約を読めません: {ACTION_POLICY_PATH}: {ACTION_POLICY_ERROR}", file=sys.stderr)
         return 2

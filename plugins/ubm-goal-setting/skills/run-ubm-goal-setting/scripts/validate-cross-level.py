@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-cross-level
-# version: 0.2.0
-# purpose: 期報と月報（1年目標と週報は任意。全部渡せば四層）を読み、アンカーの値が層をまたいで一致しているかを照合する
+# version: 0.4.0
+# purpose: 四層の同値継承と、記録された月別配分の軌道修正が上位計画・実行値に一致するかを照合する
 # inputs:
-#   - argv: [--yearly PATH] --quarterly PATH --monthly PATH [--weekly PATH] [--month N]
+#   - argv: (--yearly PATH | --no-yearly REASON) --quarterly PATH --monthly PATH [--weekly PATH] [--month N]
+#           （--yearly と --no-yearly はどちらか一方を必須。REASON は空白だけ不可）
+#   - fs: --no-yearly のとき、--quarterly と同じフォルダのファイル名（`UBM - 4-年報` を含む *.md）
+#   - fs: 同じディレクトリの validate-goal-output.py（軌道修正記録の分割規則を共用する）
 # outputs:
-#   - stdout: アンカーごとの層並記 / 照合対象 N 件中 不一致 M 件（抽出不可 K 件）/ 未照合のアンカー / STATUS
-#   - exit: 0=全一致 / 1=不一致または抽出不可あり / 2=引数・入力不正（UTF-8 で読めないファイルを含む） / 3=抽出0件（何も判定していない）
+#   - stdout: アンカーごとの一致または調整確認 / 時点値の並列表示（INFO） / 照合件数・調整確認件数 / 未照合のアンカー / STATUS
+#             / --no-yearly のとき期報の期間を含む1年目標の件数と [WARN]（rc は変えない）
+#   - exit: 0=同値一致または記録済み調整を確認 / 1=不一致・抽出不可・調整記録不備 / 2=引数・入力不正（--yearly と --no-yearly がどちらも無い・両方ある・理由が空を含む） / 3=抽出0件（何も判定していない）
 # contexts: [E, C]
 # network: false
 # write-scope: none
@@ -18,12 +22,18 @@
 
 `validate-goal-output.py --peer` との役割分担:
 
-- `validate-goal-output.py --peer` は **2ファイルの総当たり・WARN のみ・3アンカー**。
+- `validate-goal-output.py --peer` は **2ファイルの総当たり・WARN のみ・2アンカー**（金額2値。最重要数字は比べない）。
   単一ファイルの保存前バリデーションに付随する補助検査で、不一致でも rc は上がらない。
-- 本スクリプトは **期報と月報（1年目標と週報は任意）を同時に読む・rc を持つ・10アンカー**。上位層を正本とした
-  継承関係が崩れていないかを判定するための独立した検査スクリプトで、不一致があれば rc=1 を返す。
-  10アンカーのうち2つ（1年後の月間売上到達点・継続コンサル人数）は 1年層のもので、`--yearly` を
-  渡したときだけ照合する。渡さなければ「未照合」と明記し、照合対象の件数には数えない。
+- 本スクリプトは **期報と月報（週報は任意）を同時に読む・rc を持つ・7アンカー**。上位層を正本とした
+  継承関係を判定する独立した検査スクリプトで、同値一致または記録済みの月配分調整を
+  確認できれば rc=0、未説明の不一致・抽出不可・調整記録不備があれば rc=1 を返す。
+  7アンカーのうち2つ（1年後の月間売上到達点・継続コンサル人数）は 1年層のもので、`--yearly PATH` を
+  渡したときだけ照合する。1年目標を置かない期は `--no-yearly REASON` で理由を明記し、その2つを
+  「未照合」と表示して照合対象の件数には数えない。どちらも無ければ使い方エラー（rc=2）で止め、
+  1年層の照合を黙って省けないようにする。`--no-yearly` なのに期報と同じフォルダに期報の期間を
+  含む1年目標（ファイル名に `UBM - 4-年報`）があれば WARN を出す（rc は変えない）。
+- 現在事業パートナー数・現在のグリッドパートナー数・次回の壁打ち予定日は時点値（スナップショット）で、
+  層ごとに書いた時点が違う。照合せず INFO として各層の値を並べて表示するだけで、rc にも件数にも影響しない。
 
 照合の考え方:
 
@@ -39,6 +49,12 @@
 対象月は月報のファイル名の末尾の日付から決める（最終月曜起点のため、期間終了日の月が当月）。
 月の数字の直前に数字があれば当てない（1月の照合で「11月」の値を拾わない）。
 
+月の内訳4アンカーだけは、月報の冒頭の【確認された情報】（両群の前に1回だけ置く共通ヘッダー）に上位配分の見直しを
+1行で記録できる。上位計画が期報の当月値、実行目標が月報の実値、週報に同じ参照が
+あれば修正後の月値と一致し、理由・上位への影響が空でない場合だけ「調整確認」とする。
+年の到達点・今期の目標等の同値継承は緩めない。記録の完全性と数値の一致を検査する
+ものであり、自然言語で書かれた理由や影響の妥当性はレビューで確認する。
+
 **rc=1（照合して不一致あり）と rc=3（1件も抽出できず何も判定していない）は別物。**
 抽出できなかったアンカーは「不一致」に混ぜず「抽出不可」として個別に列挙し、1件でも
 あれば rc=1 にする（検査できていない状態を PASS にしない）。
@@ -52,10 +68,28 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import importlib.util
 import io
 import re
 import sys
 from pathlib import Path
+
+
+def _load_goal_output():
+    """軌道修正記録の分割規則の正本（validate-goal-output.py）を読み込む。
+
+    `上位配分の見直し：…｜…` と `行動の見直し：…｜…` は同じ分割規則で割る。
+    2つの検査器が別々に割ると、片方だけが通る行が生まれる。
+    """
+    path = Path(__file__).resolve().parent / "validate-goal-output.py"
+    spec = importlib.util.spec_from_file_location("ubm_validate_goal_output_for_cross_level", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+split_revision_record = _load_goal_output().split_revision_record
 
 LEVELS = ("yearly", "quarterly", "monthly", "weekly")
 LEVEL_JA = {"yearly": "1年目標", "quarterly": "期報", "monthly": "月報", "weekly": "週報"}
@@ -70,10 +104,9 @@ _EXCLUDE_SECTION = re.compile(
     r"|前(?:週|月|期|年)の"
 )
 
-# 節本文に限って落とす前処理。validate-journal-output.py と同じ形を使う
-# （新しい前処理を考えない）。ファイル全体ではなく節本文だけに当てる。
-_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
-_FENCED_CODE_RE = re.compile(r"^```.*?^```", re.DOTALL | re.MULTILINE)
+# 見出しの切り出しより前に、可視でない行を空行へ置き換える。
+# 全文へDOTALL正規表現を当てず、開始・終了の状態だけを行ごとに追う。
+_FENCE_MARKER = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 
 _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 _BULLET = re.compile(r"^(?:[*-]\s*(?:\[[ xX]\]\s*)?|・\s*(?:\[[ xX]\]\s*)?)")
@@ -113,7 +146,7 @@ class Anchor:
         self.specs = specs  # dict[level] -> list[Spec]
         # この層のファイルが渡されていないときは、このアンカーを照合しない。
         # 1年層のアンカーは期報・月報の両方にも spec を持つため、これが無いと
-        # --yearly を渡していない呼び出し（1年目標を置く前の期・過去期の再検査）でも
+        # --no-yearly で呼んだとき（1年目標を置く前の期・過去期の再検査）でも
         # active 2層として数えられ、注記が無いことを「抽出不可」として FAIL させる。
         # 照合しなかったことは出力に明記する（黙って件数から消すと分母が変わる）。
         self.requires_level = requires_level
@@ -195,7 +228,11 @@ ANCHORS = [
                          allow_note=True,
                          why="【今月の最重要数字】に「件数：…件」が無い")],
     }),
-    # 6-8. 同値継承（スナップショットだが三層で同じ時点を書く約束のもの）。
+]
+
+# 時点値（スナップショット）。期報・月報・週報は書いた日が違うので、値が違っても不一致ではない。
+# 取り違えに気づけるよう各層の値を INFO で並べるだけにし、rc・照合件数・抽出件数には数えない。
+SNAPSHOTS = [
     Anchor("現在事業パートナー数", "number", {
         "quarterly": _scalar(r"^【現在事業パートナー数】$"),
         "monthly": _scalar(r"^【現在事業パートナー数】$"),
@@ -213,6 +250,11 @@ ANCHORS = [
     }),
 ]
 
+# 年の到達点や期全体の目標は含めない。変更可能なのは期→月の配分4件だけ。
+ADJUSTABLE_ANCHORS = frozenset({
+    "当月の売上目標", "無料相談の延べ回数", "1回目の実人数", "月額継続コンサルの累積件数",
+})
+
 
 class Section:
     def __init__(self, heading: str, start: int):
@@ -222,20 +264,43 @@ class Section:
         self.excluded = bool(_EXCLUDE_SECTION.search(heading))
 
     def body(self) -> list[tuple[int, str]]:
-        """節本文からコメント・コードフェンスを落として返す。
+        """parse_sectionsが可視行だけを入れた本文を、元の行番号付きで返す。"""
+        return list(self.lines)
 
-        範囲を節本文（数百字程度）に限ってから落とす。素朴な正規表現をファイル全体へ
-        広げると本文が消えるため、ここを広げてはいけない。
-        """
-        raw = "\n".join(t for _, t in self.lines)
-        if "<!--" not in raw and "```" not in raw:
-            return list(self.lines)
-        # 行番号を保つため、落とした範囲の改行は残す（行数が変わると行番号がずれる）。
-        def _blank(m: "re.Match[str]") -> str:
-            return "\n" * m.group(0).count("\n")
 
-        cleaned = _FENCED_CODE_RE.sub(_blank, _HTML_COMMENT_RE.sub(_blank, raw)).split("\n")
-        return [(no, text) for (no, _), text in zip(self.lines, cleaned)]
+def visible_lines(text: str):
+    """コメント・コード内の見出しも隠し、元の行数を保って逐次返す。"""
+    in_comment = False
+    fence_char, fence_length = "", 0
+    for raw in text.split("\n"):
+        marker = _FENCE_MARKER.match(raw)
+        if fence_char:
+            if (marker and marker[1][0] == fence_char
+                    and len(marker[1]) >= fence_length and not marker[2].strip()):
+                fence_char, fence_length = "", 0
+            yield ""
+            continue  # コード内のHTMLコメント記号は状態を変えない。
+        if not in_comment and marker and not (marker[1][0] == "`" and "`" in marker[2]):
+            fence_char, fence_length = marker[1][0], len(marker[1])
+            yield ""
+            continue
+        parts, position = [], 0
+        while position < len(raw):
+            if in_comment:
+                end = raw.find("-->", position)
+                if end < 0:
+                    break
+                in_comment = False
+                position = end + 3
+            else:
+                start = raw.find("<!--", position)
+                if start < 0:
+                    parts.append(raw[position:])
+                    break
+                parts.append(raw[position:start])
+                in_comment = True
+                position = start + 4
+        yield "".join(parts)
 
 
 def parse_sections(text: str) -> list[Section]:
@@ -249,7 +314,7 @@ def parse_sections(text: str) -> list[Section]:
     sections: list[Section] = []
     current: Section | None = None
     sub_excluded = False
-    for i, line in enumerate(text.split("\n"), start=1):
+    for i, line in enumerate(visible_lines(text), start=1):
         m = _HEADING.match(line)
         if m:
             depth = len(m.group(1))
@@ -330,31 +395,124 @@ def normalize(value: str, kind: str) -> str:
     return value.replace(",", "") if kind == "number" else value
 
 
-def verify(docs: dict, month: int | None) -> tuple[int, list[str]]:
-    """docs: level -> (path, sections)。未指定レベルは含めない。"""
+def monthly_adjustments(sections: list[Section]) -> tuple[dict, list[str]]:
+    """管理用の現在情報だけから調整記録と構造エラーを取り出す。"""
+    records, errors, seen = {}, [], set()
+    for sec in sections:
+        if sec.excluded or sec.heading != "【確認された情報】":
+            continue
+        for no, raw in sec.body():
+            line = _BULLET.sub("", raw).strip()
+            # 分割規則は validate-goal-output.py の split_revision_record と共用する。
+            record = split_revision_record(line, "上位配分の見直し")
+            if record is None:
+                continue
+            name, fields = record
+            if not name:
+                errors.append(f"{no}行目: 調整対象のアンカー名がありません")
+                continue
+            if name not in ADJUSTABLE_ANCHORS:
+                errors.append(f"{no}行目: 調整を許可していないアンカー「{name}」です")
+                continue
+            if name in seen:
+                records.pop(name, None)
+                errors.append(f"{no}行目: 「{name}」の調整記録が重複しています")
+                continue
+            seen.add(name)
+            if fields is None:
+                errors.append(f"{no}行目: 「{name}」に上位計画・実行目標・理由・上位への影響を各1件、空欄なく記載してください")
+                continue
+            if any(not re.fullmatch(_NUM, fields[key]) for key in ("上位計画", "実行目標")):
+                errors.append(f"{no}行目: 「{name}」の上位計画・実行目標は半角の数値で記載してください")
+                continue
+            fields["上位計画"] = normalize(fields["上位計画"], "number")
+            fields["実行目標"] = normalize(fields["実行目標"], "number")
+            if fields["上位計画"] == fields["実行目標"]:
+                errors.append(f"{no}行目: 「{name}」の上位計画と実行目標が同値で、変更を確認できません")
+                continue
+            records[name] = fields
+    return records, errors
+
+
+_YEARLY_NAME_MARK = "UBM - 4-年報"
+
+
+def _period_of(name: str, first_line: str = "") -> tuple[datetime.date, datetime.date] | None:
+    """ファイル名（無ければ本文1行目）の `YYYY-MM-DD〜YYYY-MM-DD` を期間として読む。"""
+    for source in (name, first_line):
+        found = _DATE_IN_NAME.findall(source)
+        if len(found) >= 2:
+            try:
+                start, end = (datetime.date(int(y), int(m), int(d)) for y, m, d in found[-2:])
+            except ValueError:
+                return None
+            return (start, end) if start <= end else None
+    return None
+
+
+def yearly_covering_quarterly(quarterly_path: Path, quarterly_text: str) -> list[str]:
+    """--no-yearly のとき、期報と同じフォルダに期報の期間を含む1年目標が無いかを確かめる。
+
+    1年目標は暦の区切り（10/1〜9/30 等）、期報は最終月曜起点の区切りなので、端の数日が
+    ずれて「期間を完全に含む」は成り立たないことがある。そのため期報の期間の中日が
+    1年目標の期間に入れば「含む」とみなす（端のずれを吸収し、隣の年とは取り違えない）。
+    該当があっても rc は変えない（WARN）。1年目標の照合を渡し忘れた疑いを知らせるだけ。
+    """
+    folder = quarterly_path.resolve().parent
+    yearly_files = sorted(p for p in folder.glob("*.md") if _YEARLY_NAME_MARK in p.name)
+    q_period = _period_of(quarterly_path.name, quarterly_text.split("\n")[0] if quarterly_text else "")
+    if q_period is None:
+        return [f"1年目標の確認（--no-yearly）: 期報の期間を読み取れないため、同じフォルダの1年目標 {len(yearly_files)} 件を照らし合わせていない"]
+    middle = q_period[0] + (q_period[1] - q_period[0]) / 2
+    covering = []
+    for path in yearly_files:
+        y_period = _period_of(path.name)
+        if y_period and y_period[0] <= middle <= y_period[1]:
+            covering.append(path.name)
+    lines = [f"1年目標の確認（--no-yearly）: 期報と同じフォルダの1年目標 {len(yearly_files)} 件、"
+             f"うち期報の期間（中日 {middle.isoformat()}）を含むもの {len(covering)} 件"]
+    lines.extend(f"[WARN] 期報の期間を含む1年目標があります: {name}"
+                 "（1年層を照合するなら --no-yearly ではなく --yearly で渡してください。rc は変えない）"
+                 for name in covering)
+    return lines
+
+
+def verify(docs: dict, month: int | None,
+           no_yearly_reason: str | None = None,
+           yearly_notes: list[str] | None = None) -> tuple[int, list[str]]:
+    """docs: level -> (path, sections)。未指定レベルは含めない。
+
+    no_yearly_reason: --no-yearly の理由。1年層を照合しなかった理由として表示する。
+    yearly_notes: --no-yearly のときの1年目標の確認行（yearly_covering_quarterly の結果）。
+                  WARN を含んでも rc は変えない。
+    """
     lines: list[str] = []
     lines.append("UBM目標設定 四層（1年目標・期報・月報・週報）アンカー横断照合")
     lines.append(f"対象月: {month}月" if month else "対象月: 不明")
     for level in LEVELS:
         if level in docs:
             lines.append(f"{LEVEL_JA[level]}: {docs[level][0]}")
+        elif level == "yearly" and no_yearly_reason:
+            lines.append(f"{LEVEL_JA[level]}: （--no-yearly: {no_yearly_reason}）")
         else:
             lines.append(f"{LEVEL_JA[level]}: （未指定）")
+    lines.extend(yearly_notes or [])
     lines.append("")
 
     compared = 0
     mismatched: list[str] = []
     unextractable: list[str] = []
     extracted_total = 0
+    adjustments, adjustment_errors = monthly_adjustments(docs["monthly"][1]) if "monthly" in docs else ({}, [])
+    adjusted = []
 
     skipped: list[str] = []
     for anchor in ANCHORS:
         if anchor.requires_level and anchor.requires_level not in docs:
             skipped.append(anchor.name)
-            lines.append(
-                f"[未照合] {anchor.name}"
-                f"（{LEVEL_JA[anchor.requires_level]}が未指定のため照合していない）"
-            )
+            why = (f"--no-yearly: {no_yearly_reason}" if anchor.requires_level == "yearly" and no_yearly_reason
+                   else f"{LEVEL_JA[anchor.requires_level]}が未指定")
+            lines.append(f"[未照合] {anchor.name}（{why}のため照合していない）")
             continue
         active = [lv for lv in LEVELS if lv in docs and lv in anchor.specs]
         if len(active) < 2:
@@ -379,27 +537,57 @@ def verify(docs: dict, month: int | None) -> tuple[int, list[str]]:
             lines.append(f"[抽出不可] {anchor.name}  {joined}")
             for m in missing:
                 lines.append(f"    - {m}")
+        elif anchor.name in adjustments:
+            record = adjustments[anchor.name]
+            valid = (values.get("quarterly") == record["上位計画"]
+                     and values.get("monthly") == record["実行目標"]
+                     and all(value == record["実行目標"] for level, value in values.items() if level != "quarterly"))
+            if valid:
+                adjusted.append(anchor.name)
+                lines.append(f"[調整確認] {anchor.name}  {joined}（上位計画→実行目標：{record['上位計画']}→{record['実行目標']}、軌道修正確認済）")
+            else:
+                mismatched.append(anchor.name)
+                lines.append(f"[NG] {anchor.name}  {joined}")
+                lines.append(f"    - 調整記録の上位計画={record['上位計画']}・実行目標={record['実行目標']}が実際の期報・月報・週報の値と一致しません")
         elif len(set(values.values())) > 1:
             mismatched.append(anchor.name)
             lines.append(f"[NG] {anchor.name}  {joined}")
         else:
             lines.append(f"[OK] {anchor.name}  {joined}")
 
+    # 時点値は照合せず並べるだけ。抽出できなくても rc・件数に数えない。
+    for snapshot in SNAPSHOTS:
+        shown = []
+        for level in LEVELS:
+            if level not in docs or level not in snapshot.specs:
+                continue
+            raw, no, _ = extract(docs[level][1], snapshot.specs[level], month)
+            shown.append(f"{LEVEL_JA[level]}=（読み取れず）" if raw is None
+                         else f"{LEVEL_JA[level]}={normalize(raw, snapshot.kind)}（{no}行目）")
+        if shown:
+            lines.append(f"[INFO] {snapshot.name}（時点値・照合しない）  " + "  ".join(shown))
+
     lines.append("")
     lines.append(
         f"照合対象 {compared} 件中 不一致 {len(mismatched)} 件"
         f"（抽出不可 {len(unextractable)} 件）"
+        f" / 軌道修正確認済 {len(adjusted)} 件"
     )
+    if adjustment_errors:
+        lines.append(f"調整記録の不備 {len(adjustment_errors)} 件")
+        lines.extend(f"    - {error}" for error in adjustment_errors)
     if mismatched:
         lines.append("不一致のアンカー: " + " / ".join(mismatched))
     if unextractable:
         lines.append("抽出不可のアンカー: " + " / ".join(unextractable))
     if skipped:
         lines.append(
-            f"未照合のアンカー {len(skipped)} 件（1年目標を渡せば照合する）: "
+            f"未照合のアンカー {len(skipped)} 件（--yearly で1年目標を渡せば照合する）: "
             + " / ".join(skipped)
         )
 
+    if adjustment_errors:
+        return 1, lines
     if extracted_total == 0:
         lines.append(
             "どのアンカーも1件も抽出できませんでした。"
@@ -420,7 +608,11 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         description="UBM目標設定 1年目標・期報・月報・週報のアンカー横断照合", add_help=True
     )
-    ap.add_argument("--yearly", metavar="PATH", help="1年目標（任意・4層の最上位）")
+    # 1年層の照合を黙って省けないよう、1年目標のパスか、置かない理由のどちらか一方を必須にする。
+    yearly = ap.add_mutually_exclusive_group(required=True)
+    yearly.add_argument("--yearly", metavar="PATH", help="1年目標（4層の最上位）")
+    yearly.add_argument("--no-yearly", metavar="REASON",
+                        help="1年目標を渡さない理由（例: 1年目標を置く前の期。空白だけは不可）")
     ap.add_argument("--quarterly", required=True, metavar="PATH", help="期報（正本）")
     ap.add_argument("--monthly", required=True, metavar="PATH", help="月報")
     ap.add_argument("--weekly", metavar="PATH", help="週報（任意）")
@@ -432,6 +624,10 @@ def main(argv: list[str]) -> int:
     except SystemExit as e:
         if e.code == 0:
             return 0
+        _print_trailer(measured_at, argv)
+        return 2
+    if args.no_yearly is not None and not args.no_yearly.strip():
+        print("引数不正: --no-yearly には1年目標を渡さない理由を書いてください（空白だけは不可）")
         _print_trailer(measured_at, argv)
         return 2
 
@@ -465,7 +661,10 @@ def main(argv: list[str]) -> int:
         _print_trailer(measured_at, argv)
         return 2
 
-    rc, lines = verify(docs, month)
+    yearly_notes = (yearly_covering_quarterly(Path(args.quarterly), texts["quarterly"])
+                    if args.no_yearly is not None else None)
+    rc, lines = verify(docs, month, args.no_yearly.strip() if args.no_yearly is not None else None,
+                       yearly_notes)
     for line in lines:
         print(line)
     _print_trailer(measured_at, argv)

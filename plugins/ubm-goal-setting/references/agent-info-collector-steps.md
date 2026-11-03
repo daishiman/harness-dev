@@ -4,16 +4,19 @@
 
 ## Step 1: 過去目標ファイルの収集
 
+ユーザー指定の前回ファイルを `previous_goal_source` として収集サマリーへ記録し、正本に固定する。転記・実績収集は `output-formats.md` の「共通部品D 前回ブロック」に従う。今回の目標や別版から前回値を作らない。
+
 **並列実行**: Step 2/3.5/3.7/3.8/3.9 と同時に実行可能（Step 3 は本 Step の課題を待つ）
 
 1. `Glob: $UBM_VAULT_ROOT/05_Project/UBM/目標設定/UBM - *.md` で一覧取得
-2. goal_typeに応じてフィルタリング（`agents/info-collector.md` の「ビジネスルール（取得スコープ）」参照）
+2. goal_typeに応じてフィルタリングし、対象期間に対応する直属上位（期→年、月→期、週→月）のファイル・成果・期限も確認する（`agents/info-collector.md` の取得スコープ参照）。不明な親目標は作らず未確認と示す。対応付けと月・週の軌道修正は正本「四層（1年目標・期報・月報・週報）の連携」に従う
 3. 該当ファイルをReadで読み込み（複数ファイルは並列Read）、目標値・実績値・行動変化を抽出
-4. **プロジェクト別タスクの抽出**: 前回月報（`monthly` 時）の【プロジェクト別タスク】セクションがある場合、各プロジェクト名・目的・タスク（[ ]/[x]）・サブプロジェクトを抽出。完了/未完了の比率と、未完了のまま繰り越されているタスクをリストアップする。未完了[ ]のタスクは当月月報への繰越供給候補として明示する
+4. **プロジェクト別タスクの抽出**: 前回月報（`monthly` 時）の【プロジェクト別タスク】セクションがある場合、各プロジェクト名・先方担当者・タスク（[ ]/[x]）・サブプロジェクトを抽出（旧形式の「目的」「提出先」は読み飛ばす）。完了/未完了の比率と、未完了のまま繰り越されているタスクをリストアップする。未完了[ ]のタスクは当月月報への繰越供給候補として明示する
 5. **習慣目標の抽出（`weekly` のみ）**: 前回週報に【習慣目標】セクションがある場合、3原則（30分切替・大物分散・粒度の粗さ）の各チェック項目の達成状況を抽出
-6. **継承文脈フィールドの抽出**: `weekly` は『現在の月報』、`monthly`/`quarterly`/`yearly` は『現在の期報』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定 `null`。取得不可の項目は[要ヒアリング]を付与する。`yearly` で現在の期報が無ければ10種すべてに[要ヒアリング]を付与する（前回の1年目標は抽出元にしない。1年層での10種の必須度は `skills/run-ubm-goal-setting/references/data-contract.md` §3.1.3 の「1年層（yearly）の扱い」の段落で未決のままで、1年目標がこの10種を持つ保証が無く、初回は前回の1年目標そのものが無い）
+6. **継承文脈フィールドの抽出**: `weekly` は『現在の月報』、`monthly`/`quarterly`/`yearly` は『現在の期報』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定 `null`。取得不可の項目は[要ヒアリング]を付与する。`yearly` で現在の期報が無ければ10種すべてに[要ヒアリング]を付与する（前回の1年目標は抽出元にしない。初回は前回の1年目標そのものが無いため。1年層での10種の必須度は `skills/run-ubm-goal-setting/references/data-contract.md` §3.1.3 の表の「1年」列に従う）
+7. **1年層の現在地と成果の候補（`yearly` のみ）**: 期報と月報それぞれで期間の開始日が最も新しいもの（各1件。`archive/` は見ない）を選ぶ。直近の月報の前回ブロックにある前月の売上実績を「直近の月商」として出所のパス付きで取る（R2 の現在地）。前年の1年目標が無いとき（1年だけが初回）は、その期報・月報の成果目標の本文をそのまま（要約せず）出所のパス付きで取る（R3 ターン3C-2 の候補。`skills/run-ubm-goal-setting/references/output-formats.md` の「共通部品G 原理原則の基準」）。取れない項目は[要ヒアリング]を付与する
 
-**完了条件**: 前回の目標と実績の数値、プロジェクト別タスクの継続状況、習慣目標の達成状況（`weekly` のみ）、継承文脈フィールドが抽出済みまたは[要ヒアリング]付与済みである
+**完了条件**: 前回の目標と実績の数値、直属上位の参照元と対応する成果・期限、プロジェクト別タスクの継続状況、習慣目標の達成状況（`weekly` のみ）、継承文脈フィールド、1年層の現在地と成果の候補（`yearly` のみ）が抽出済みまたは[要ヒアリング]付与済みである
 
 ## Step 2: 合宿情報の収集（最重要）
 

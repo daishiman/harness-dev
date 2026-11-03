@@ -114,13 +114,13 @@
       "actor": "output-formatter + 検査スクリプト",
       "input": "Markdown ファイル候補と goal_type。1年目標・期報・月報・週報のファイルがあればそれも",
       "output": "各スクリプトの rc の値そのものと、使った引数。期報か月報のファイルが無いときは、validate-cross-level.py について rc ではなく not_applicable を記録する。保存した目標設定ファイルと、「（提出）」付きの既存ファイルが見つかったときだけ、それを削除せず 05_Project/UBM/目標設定/archive/ へ移した結果",
-      "gate": "validate-goal-output.py と validate-goal-linkage.py がどちらも終了コード 0（rc=3 は何も検査していないので失敗）。期報と月報のファイルがどちらもあるときは、validate-cross-level.py も終了コード 0（rc=3 は失敗。--weekly は週報のファイルがあるときだけ渡す）。いずれも output-formatter の改善3回以内で満たす",
+      "gate": "validate-goal-output.py と validate-goal-linkage.py がどちらも終了コード 0（rc=3 は何も検査していないので失敗）。期報と月報のファイルがどちらもあるときは、validate-cross-level.py も終了コード 0（rc=3 は失敗。1年層の引数は references/validation-gates.md の「IN3 の1年層の引数」。--weekly は週報のファイルがあるときだけ渡す）。いずれも output-formatter の改善3回以内で満たす",
       "commands": [
         "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type>",
         "python3 scripts/validate-goal-linkage.py --file <candidate>",
-        "python3 scripts/validate-cross-level.py --quarterly <quarterly> --monthly <monthly>"
+        "python3 scripts/validate-cross-level.py --yearly <yearly> --quarterly <quarterly> --monthly <monthly>"
       ],
-      "commands_note": "すべてのコマンドを実行し、rc を1本ずつ別に記録する（&& でつながない。最初の失敗でほかの結果が隠れないようにするため）。rc は Bash ツールが返す終了コードをそのまま記録し、リダイレクト・echo・パイプを付けない（許可は Bash(python3 *) だけ。取り方の正本は references/validation-gates.md の「決定論ゲート」）。--weekly <weekly> は、週報のファイルがあるときだけ validate-cross-level.py のコマンドに足す。1年目標のファイルがある期では --yearly <yearly> を必ず足す（省くと1年層のアンカーが照合されず [未照合] のまま rc=0 になるため、省いたときはその件数を記録する）。期報か月報のファイルが無いときは validate-cross-level.py を飛ばし、rc ではなく not_applicable を記録する。",
+      "commands_note": "すべてのコマンドを実行し、rc を1本ずつ別に記録する（&& でつながない。最初の失敗でほかの結果が隠れないようにするため）。rc は Bash ツールが返す終了コードをそのまま記録し、リダイレクト・echo・パイプを付けない（許可は Bash(python3 *) だけ。取り方の正本は references/validation-gates.md の「決定論ゲート」）。--weekly <weekly> は、週報のファイルがあるときだけ validate-cross-level.py のコマンドに足す。--yearly <yearly> と --no-yearly <reason> の使い分けは references/validation-gates.md の「IN3 の1年層の引数」 に従う。期報か月報のファイルが無いときは validate-cross-level.py を飛ばし、rc ではなく not_applicable を記録する。",
       "fatal_exit_codes": [1, 2, 3],
       "resourceIds": ["scripts/validate-goal-output.py", "scripts/validate-goal-linkage.py", "scripts/validate-cross-level.py", "references/data-contract.md"]
     },

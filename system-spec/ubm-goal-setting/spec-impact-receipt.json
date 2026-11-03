@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "received_at": "2026-11-03T12:40:00Z",
+  "beads_ids": ["harness-3skp"],
+  "graph_node_id": "task-ubm-goal-contract",
+  "related_graph_nodes": [
+    "spec-ubm-goal-contract",
+    "arch-ubm-goal-contract",
+    "feature-ubm-goal-contract",
+    "doc-ubm-goal-contract"
+  ],
+  "branch": "devgraph/task-ubm-goal-contract",
+  "base_branch": "main",
+  "impact": "あり",
+  "judgment": "目標文書の項目、書式、対話の問い数、検査の合否が変わるため、仕様と設計へ影響がある。HTTP API・認証・DB・インフラ・他プラグインには影響がない。",
+  "applied_changes": [
+    "売上から成果、成果から行動への逆算を年・期・月・週の共通部品へ集約",
+    "提出用と管理用の項目名・件数・単位・期日を一致させる",
+    "行動項目を actions 配列へ統合し、期日トークンと貢献0の括弧を検査する",
+    "層間の機械照合を今期の売上目標と累計売上実績の2値に限る",
+    "1回の問いは3問までとし、問番号は通しにする",
+    "個人名を項目名に入れず、未確定の実績は確認中と書く",
+    "plugins/ubm-goal-setting を 0.9.3 として marketplace と指紋へ記録する"
+  ],
+  "no_impact": [
+    {
+      "area": "HTTP API/認証/DB/インフラ",
+      "reason": "追加した経路はローカルの Markdown と Python 検査だけである。エンドポイント、権限、永続化サービスは無い。"
+    },
+    {
+      "area": "他プラグイン",
+      "reason": "差分の対象は ubm-goal-setting と、その版を示す marketplace の1行、正規文書だけである。system-dev-planner の未コミット差分は別作業として除外した。"
+    },
+    {
+      "area": "既存の月報本文",
+      "reason": "検査で不一致を検出したが、本文は変換していない。続きは harness-3skp に残す。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02 build-graph-node.py",
+    "operation": "add のあと feature の Handoff だけ update",
+    "graph_revision": 17,
+    "add_receipt": ".dev-graph/state/receipts/node-r000016-add.json",
+    "update_receipt": ".dev-graph/state/receipts/node-r000017-update.json",
+    "validation": "validate-graph-schema.py --require-canonical-envelope --strict-artifact-readiness が valid=true",
+    "status": "5ノードは draft のまま。confirmed や pass にはしていない。13フェーズへ昇格していない。"
+  },
+  "merge_provenance": {
+    "remote_base": "origin/main",
+    "remote_dev_exists": false,
+    "local_base_before": "fe49599b68259762e3911a9d1f8c3e0afdf7a56e",
+    "note": "fetch 時点で origin/main とローカル main は同一。dev ブランチは無い。"
+  },
+  "evidence": [
+    {"path": "specs/ubm-goal-contract.md", "sha256": "926e4eb09ea78d76cea6dcad6bed42e2da48b866d5337fba2fba5dad7e3013ac"},
+    {"path": "architecture/ubm-goal-contract.md", "sha256": "d33ae0e7f1453f6146abbf1da80a9848375926c1ff80853e9e60cd8834086a0c"},
+    {"path": "features/ubm-goal-contract.md", "sha256": "13209304be2fd498e4cf82a17c31b219c93fe572a48791051e84c5ecd80b39a6"},
+    {"path": "docs/ubm-goal-contract.md", "sha256": "e3b8d8a74b69cef70a0848d359526172e6296f93f5d8a30b660f4ca9418342fe"},
+    {"path": "tasks/ubm-goal-contract.md", "sha256": "c409dcedb5e62c6d6543843d72efc25003a5af9f7dc6e8d485b514dd8983f15f"},
+    {"path": ".dev-graph/state/graph.json", "sha256": "1e8f32ccd17636f0193d9694082abd0b0bb7cbaa1c3bed6002fa76a89f6bbb81"},
+    {"path": ".dev-graph/state/receipts/node-r000016-add.json", "sha256": "4590bb380ec11dbe1704384b15597e64703ec43c5901353c2da4bed987022bf4"},
+    {"path": ".dev-graph/state/receipts/node-r000017-update.json", "sha256": "8f05d7a673ae8193d4bda484223ab9dd17acc93486256a69e8d9f6811c161adf"}
+  ]
+}
