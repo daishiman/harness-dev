@@ -2,21 +2,21 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "d847fbe62976b50455cb1f2c8b0f68d6f4d4bc070f0be7db6f06934ee51b95e8"
+    "skill_md_sha256": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc"
   },
-  "review_kind": "elegance",
-  "verdict": "PASS",
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T20:35:43Z",
-  "iterations": 4,
+  "reviewed_at": "2026-11-03T13:30:01Z",
+  "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
+  "review_kind": "elegance",
+  "verdict": "PASS",
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -27,20 +27,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "矛盾なし: rc の取り方を正本1か所（references/validation-gates.md:52）に決め、写しの data-contract.md:368-374・output-formats.md:467-468・480-483・workflow-manifest.json の commands_note・agents/output-formatter.md:252 は、形をそろえたうえで正本を指すだけにした。前回 F1 の原因だった「正本に無い `$gate_log` を写しが使う」食い違いが、構造ごと起きにくくなった。",
-      "漏れなし: 禁止の文（validation-gates.md:52）が、付けてはいけないもの（リダイレクト・`; rc=$?`・`; echo`・パイプ）ごとに、付けたときに何が起きるか（許可の外に出る、末尾のコマンドの終了コードになる、python3 が起動しないまま rc=1、新しいシェルの rc=0）を書いている。L53 が「ログを残したいなら Write で一時ディレクトリの下に書く」と代わりの道まで示すので、次に誰かがリダイレクトを足したくなったときの抜け道を先にふさいでいる。",
-      "整合性: 許可が `Bash(python3 *)` だけ、という制約から「python3 で始まる1つのコマンド」「rc は Bash ツールの終了コード」を導いており、規約（allowed-tools）と手順が1本の理由でつながっている。goal-seek-anchor-contract.md の「シェル変数は呼び出しをまたいで残らない」と同じ理由を、ゲートの側にも当てはめた。",
-      "依存関係: F3 の削減は、削った記述（出力の節・Step 5 完了後・責務プロンプト一覧の説明）の中身を `## Context Boundary (AG-002)`（L294）と `## Handoff`（L300）へ移しただけで、情報を失っていない。L16 の参照元の説明は R1〜R5 からの実際の参照と一致する。",
-      "merge で入った変更（execution-prompts.md の ls を Glob で探す形、validate-cross-level.py の docstring の 来年・前年、version-history 27.0.0 の括弧書きの言い直し）は、どれも許可の範囲とこのスキルの契約に沿う。テスト1025件が rc=0 で通る。"
+      "共通部品A〜Gは手順本文に写さず、見出し名で output-formats.md へ寄せた。A の行動行と期日、B の2行記法、C の売上→成果→行動と4層の順、D の前回ブロック、E の軌道修正、F の層別差分と名前で区別する上限3つ、G の原理原則、のポインタが「守ること」に揃っている。修復回数の数字は書かず validation-gates.md の決定論ゲートを指す。F が SKILL.md に置くと定めた OUT1 の周回上限だけ本文に5周と残している。",
+      "提出用と管理用の同値は、Phase4b の「中身は管理用の射影」と、つまずきやすい点の「提出用でも期日を落とさない」に分かれている。IN2 が管理用だけを照合し提出用グループを SKIP するのは、提出用がグループ見出しを持たないためで、項目・数量・単位・期日を削ってよいという意味には読めない。旧 Phase4b の人数集約は残っていない。",
+      "層間の金額2値: 旧文の「--peer は3アンカー」を、今期の売上目標と今期の累計売上実績の2値に直した。この2件は validate-goal-output.py の PEER_ANCHORS と一致し、不一致は WARN で rc を上げない。IN3 の横断照合の代わりにしない、と手順が分けている。",
+      "軌道修正と関係構築の旧規則を外した。旧「ズレは常に上から下へ直し、下から上へは直さない」と「売上を追わず関係を先に置く」は、共通部品E（同値の誤記は正本へ合わせ、正当な月・週の配分変更は記録して消さない）と共通部品G（金額を追い、成果は YES、行動は原理原則の動き）と衝突していた。手順は今は両節を指すだけである。",
+      "1ターンの問い数は SKILL.md が上書きしていない。Phase3 は R1〜R5 を参照し、必要なときだけ phase3-coordinator の次問案を受ける。問いの上限は prompts と coordinator の CONST_001（1ターン1〜3問。回が分かれていれば回ごとに数える）側にあり、手順が4問以上を1回の発話にまとめろとは書いていない。"
     ],
     "negative_feedback": [
-      "[N1 / low / inconsistency / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md:269] 何が起きるか: F2 の直し方の案のうち、プレースホルダーは取り込まれたが、ルートの展開は `\"$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py\"` のまま（変更前と同じ）。正本の plugins/ubm-goal-setting/references/goal-seek-anchor-contract.md:18 と、同じ plugin の5スキル（run-ubm-challenge/SKILL.md:274・run-ubm-consult/SKILL.md:198・run-ubm-journal/SKILL.md:263・run-ubm-knowledge-sync/SKILL.md:227・run-ubm-youtube-ingest/SKILL.md:231）は `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/...\"` で、このスキルだけ形が違う。PLUGIN_ROOT が未設定のまま展開せずに起動すると `/scripts/validate-inline-goal-seek-anchor.py` を開けず、python3 は rc=2 で止まる（止まる側に倒れるので low）。このスキルの Phase5 の例（SKILL.md:218-232）も `$PLUGIN_ROOT` の形で、validation-gates.md:46 が「すべてのパスとプレースホルダーを確定値へ展開してから起動する」と書いているので、スキルの中では筋が通っている。直し方の案: L269 を契約と同じ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` にそろえる。スキル全体で `$PLUGIN_ROOT` に統一するなら、goal-seek-anchor-contract.md 側にも「解決済みの絶対パスへ展開してから起動する」と書き、正本と写しのどちらに寄せるかを決める。",
-      "[N2 / low / smell / plugins/ubm-goal-setting/CHANGELOG.md:3-5] 何が起きるか: merge で入った最新の見出し `## 0.8.1 - 2026-10-10` は「build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。」だけで、iteration 3 の後の修正（F1: ゲートの rc の取り方を Bash ツールの終了コードへ一本化、F2: ゴールシーク検証のプレースホルダー化、F3: phase3-coordinator の本文の削減）が、CHANGELOG にも skills/run-ubm-goal-setting/references/version-history.md（最新は 27.0.0）にも記録されていない。F1 は output-formatter と親が守る実行の契約を変えたので、記録が無いと後から rc の取り方が変わった時点を追えない。build-plugin-release.py の fingerprint は CHANGELOG.md を含むので、bump の後に書くと版の番号が1つずれる。直し方の案: 次の版の見出し（0.8.2）を先に CHANGELOG へ書いて F1〜F3 を記録し、そのあと build-plugin-release.py を1回回して bump する。version-history.md にも同じ版の行を足す。対象スキルの内容の正しさには影響しないので low。"
+      "[N1 / low / inconsistency / plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:212] 何が起きるか: SKILL.md:127 は、月報の提出・管理の同期に output-formats.md の「月報の項目保持と同期」を適用すると書く。その節は、提出用と管理用の項目・数量・単位・期日の一致を `validate-goal-output.py --type month` で検査すると書く。スクリプトの --type の choices は weekly|monthly|quarterly|yearly（bimonthly は別名）だけで、month は内部 kind 名であり引数ではない。そのまま起動すると argparse が拒否し rc=2 になる。SKILL.md:221-225 と validation-gates.md の決定論ゲートは --type monthly で、数量・単位・期日の同期検査はその呼び出しの中で走る。黙って同値検査が抜ける形ではない（止まる側）。直し方の案: 参照節のフラグを monthly に直す。SKILL.md の手順本文は monthly のままなので、この low は PASS を妨げない。"
     ],
-    "iteration": 4,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual:ci-stale-sha",
     "next_action": "none"
   },
-  "notes": "[elegance] 4条件と設計の筋の観点。iteration_limit 3 に達した後、利用者が 2026-10-12 に1回の追加レビューを承認した（human decision）。これが4回目で最後の評価。force_pass ではなく、通常の再レビューとして判定し直した。評価の範囲: content-review-protocol.md の「incremental: unresolved semantic batch」に沿った incremental の focused review で、(a) 矛盾が無い (b) 漏れが無い (c) 規約と整合している (d) 依存関係が整合している (e) rubric の high が0件、を1つの context でまとめて判定した。exhaustive の30思考法は実施していない。live trial（OUT2 の verify_by: live-trial）はしていない。この verdict は設計の妥当さ（design claim）についてのもので、実走での受け入れは Gate D（run-skill-live-trial）の役目として残る。SKILL.md の sha256 は d847fbe62976b50455cb1f2c8b0f68d6f4d4bc070f0be7db6f06934ee51b95e8（python3 の hashlib で計算）。 4条件の判定: (a) 矛盾: 0件。rc の取り方は正本1か所と写しがそろい、goal-seek のプレースホルダーも契約と一致する。(b) 漏れ: 0件。前回の F1〜F3 はどれも正本と写しの両方で直っている。(c) 規約との整合: `Bash(python3 *)` の外に出る行は、SKILL.md・references・workflow-manifest・commands に残っていない。ルートの展開の形だけが契約と違う（N1・low）。(d) 依存関係: dependency_break は0件になった。前回の F1（medium）が唯一の dependency_break だった。(e) rubric の high: SKILL.md は 100 点で high 0件、agent 3本も BD-003 を含む high の finding は無い（AG-001/AG-002 は checker が未実装で、手で確かめて満たす）。 前回の指摘ごとに直ったか: (F1) 直った。validation-gates.md:35-39・46-53・63 と写し4か所。(F2) 直った。SKILL.md:269-270。(F3) 直った。phase3-coordinator.md の本文は299行（全体308行・frontmatter L1-9）で、lint と render-findings-score.py のどちらの数え方でも300行以下。上限までの余裕は1行で、次に本文を足すときは references/ へ逃がす設計が要る（観察として記録し、指摘には数えない）。 設計の筋の観察: rc の取り方を「許可されたコマンドの形」から導いたことで、手順の正しさが allowed-tools の1行に依存する形になった。allowed-tools を広げるときは validation-gates.md:52 の理由も見直す必要がある。 迷った例（FAIL にしていない）: SKILL.md:146 の「シェルを呼ぶたびに…PLUGIN_ROOT に入れる」は、validation-gates.md:46 の「確定値へ展開してから起動する」と合わせて、値の解決の説明と読んだ（前回と同じ判断）。範囲外の観察: plugins/ubm-goal-setting/skills/run-skill-feedback/SKILL.md:227 にシェル変数の `\"$progress_path\" \"$intermediate_path\"` が残っている（別スキル。F2 と同じ性質）。RUNBOOK.md:49 の pytest 用の `cmd > out.txt 2>&1; rc=$?` は開発者向けの手順で、今回の差分にも無い。"
+  "notes": "[elegance] incremental の focused combined review。共通部品A〜G、提出用と管理用の同値、期日、1ターン3問、層間の金額2値が、SKILL.md の手順と矛盾しないかを見た。読んだ見出しは output-formats.md の共通部品A〜G、簡潔な記述の共通原則、月報の項目保持と同期、月報の提出用と管理用の節、四層連携、data-contract.md の層間一致検査と四層横断照合、validation-gates.md の決定論ゲートと IN3 の1年層の引数。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は、手順が AskUserQuestion の先の Phase3 対話→Phase5 検証→Phase6 の埋め込み更新を live trial に渡す、という静的確認だけ。OUT1 の受入テストもこのレビューでは再実行していない。手順と frontmatter の対応だけを見た。SKILL.md の sha256 は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc（python3 の hashlib.sha256 で対象ファイルのバイト列を計算）。判定: (a) 矛盾 0。上の5点は手順と食い違わない。(b) 漏れ 0。A〜G の見出しは参照先にあり、手順のポインタと対応する。(c) 規約との整合は低い不一致1件（N1）。ゲートの --type は手順上 monthly で、参照節の month は choices に無い。(d) 依存関係の切断は 0。1年層の引数は validation-gates、横断照合の一覧は data-contract §3.1.3、版履歴は CHANGELOG で、ポインタは解決できる。(e) rubric の high は 0。"
 }
